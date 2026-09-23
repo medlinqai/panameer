@@ -2,7 +2,7 @@ import Link from "next/link";
 import { StatFigureRow } from "@/components/console/StatFigureRow";
 import { FlipCard } from "@/components/motion/FlipCard";
 import { ActionBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
-import type { Statistics } from "@/lib/statistics";
+import type { Figure, Statistics } from "@/lib/statistics";
 import "@/components/motion/flip-card.css";
 
 /**
@@ -98,6 +98,12 @@ export function StatisticsCards({
     Array.isArray(s.network.inviteSeries) && s.network.inviteSeries.some((n) => n > 0);
   const learningHasHistory =
     Array.isArray(s.learning.lessonSeries) && s.learning.lessonSeries.some((n) => n > 0);
+  const workHasHistory =
+    Array.isArray(s.work.orderSeries) && s.work.orderSeries.some((n) => n > 0);
+  /* ⚠⚠ ONLY COUNTED FIGURES VOTE — Proposals and Earnings are dashes, and a
+     dash is not a zero. `allZero` enforces that; it is repeated here only to
+     say which three are actually being asked. */
+  const workEmpty = allZero([s.work.requestsReceived, s.work.interviews, s.work.workOrders]);
 
   return (
     <>
@@ -218,6 +224,88 @@ export function StatisticsCards({
             }
           />
         </Shell>
+        {/*
+          ── ⚠⚠⚠ YOUR WORK — SHIPPED BECAUSE UNRENDERED CODE IS UNREVIEWED CODE ──
+
+          ⚠ SCOTT, 2026-09-23: *"Unrendered code is unreviewed code — `s.work`
+          computing five figures that reach no screen is exactly how defect 3
+          survived."*
+          ⚠⚠ THE DEFECT HE MEANS: `workOrders` was `prisma.workOrder.count()`
+          with **no `where` at all** — the platform total, presented as one
+          member's figure. It survived review because nothing drew it. ⚠⚠⚠ A
+          FIGURE NOBODY SEES IS A FIGURE NOBODY CHECKS.
+
+          ⚠ ALL FIVE ARE SCOPED OR DASHED, AND `check:statistics` §13 ASSERTS
+          THE SCOPE BY SHAPE rather than trusting an empty result — the three
+          counted ones all filter `provider_person_id`, which is the PROVIDER
+          column on each model (each also carries a separate buyer-side column,
+          `invited_by_person_id` / `requested_by_person_id`).
+        */}
+        <Shell>
+          <FlipCard
+            title="Your Work"
+            backLabel={workHasHistory ? "Trend" : "What to do next"}
+            /* ⚠ Three of the five are counted zeros, so the card is not "all
+               zero" in the sense that turns it face-down — but with no orders
+               on record there is no line to draw, so the back is the ACTION
+               back and the front still leads. */
+            initialBack={workEmpty && !workHasHistory}
+            front={
+              <Card
+                title="Your Work"
+                note="Work you were invited to, and what came of it."
+              >
+                <StatFigureRow
+                  label="Work Requests"
+                  figure={s.work.requestsReceived}
+                  hint="Buyers who invited you to bid"
+                />
+                <StatFigureRow label="Proposals Sent" figure={s.work.proposalsSent} />
+                <StatFigureRow label="Interviews" figure={s.work.interviews} />
+                <StatFigureRow label="Work Orders" figure={s.work.workOrders} />
+                <StatFigureRow label="Earnings" figure={s.work.earnings} />
+              </Card>
+            }
+            back={
+              /*
+                ⚠⚠⚠ DOES THIS CARD EARN A CONTROL? YES — AND THE REASON IS THAT
+                ITS BACK IS NOT THIN EITHER WAY (`E579`).
+                ⚠ THE SERIES IS **WORK ORDERS STARTED**, not work requests
+                received: a request is something a BUYER does TO the member, so
+                charting it would chart somebody else's behaviour and teach the
+                member nothing they can act on.
+                ⚠⚠ AND THE TWO FIGURES A MEMBER WOULD MOST WANT A TREND OF —
+                Proposals and Earnings — ARE UNCOUNTABLE, so a trend cannot
+                pretend to cover them. **The data picks the variant**, and with
+                `WorkOrder` holding zero rows platform-wide, every member sees
+                the action back today.
+              */
+              workHasHistory ? (
+                <TrendBack
+                  title="Your Work"
+                  series={s.work.orderSeries}
+                  period={period}
+                  subject="Work orders started"
+                  hrefFor={trendHref("work")}
+                />
+              ) : (
+                <ActionBack
+                  title="Your Work"
+                  credit={workCreditLine(s)}
+                  /* ⚠⚠ EVERY LINK HERE ALSO LIVES IN THE APPLICATION MENU — a
+                     link that exists only behind a flip is a hidden door.
+                     `Work` → /find-work · `Sell` → /my-services ·
+                     `Orders` → /orders. Verified against `PROVIDER_NAV`. */
+                  links={[
+                    { label: "Find Work", href: "/find-work" },
+                    { label: "Manage Service Products", href: "/my-services" },
+                    { label: "See Your Orders", href: "/orders" },
+                  ]}
+                />
+              )
+            }
+          />
+        </Shell>
       </div>
 
       {/*
@@ -271,6 +359,32 @@ export function StatisticsCards({
    this function never runs). ⚠⚠⚠ A BRANCH NO RENDER CAN REACH IS PROVEN BY
    ASSERTION OR IT IS NOT PROVEN — the alternative is seeding, and seeding is
    forbidden during the test window. */
+/**
+ * ⚠⚠ THE WORK CARD'S CREDIT LINE — the same rule as the network one: a COUNT,
+ * never a compliment, and it reads only the figures the card prints.
+ * ⚠⚠⚠ IT CANNOT CREDIT A DASH. Proposals and Earnings are uncountable, so they
+ * are absent from this sentence entirely — crediting *"0 proposals sent"* would
+ * report a result where there is no mechanism.
+ * ⚠ At genuine zero it names the FIRST MOVE rather than reporting emptiness
+ * (Scott, 2026-09-23) — and the first move for work is being findable, which is
+ * what the links beneath it go to.
+ */
+export function workCreditLine(s: Statistics): string {
+  const bits: string[] = [];
+  const n = (f: Figure) => (typeof f === "number" ? f : 0);
+  if (n(s.work.requestsReceived) > 0)
+    bits.push(
+      `${n(s.work.requestsReceived)} work request${n(s.work.requestsReceived) === 1 ? "" : "s"} received`
+    );
+  if (n(s.work.interviews) > 0)
+    bits.push(`${n(s.work.interviews)} interview${n(s.work.interviews) === 1 ? "" : "s"}`);
+  if (n(s.work.workOrders) > 0)
+    bits.push(`${n(s.work.workOrders)} work order${n(s.work.workOrders) === 1 ? "" : "s"}`);
+  return bits.length
+    ? `${bits.join(", ")}.`
+    : "No work has reached you yet. Buyers find you through your profile and your service products.";
+}
+
 export function creditLine(s: Statistics): string {
   const bits: string[] = [];
   const n = (f: typeof s.network.colleagues) => (typeof f === "number" ? f : 0);

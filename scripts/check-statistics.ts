@@ -40,7 +40,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { trendBuckets, type Figure } from "../src/lib/statistics";
 import { allZero } from "../src/components/console/StatCardBacks";
-import { creditLine } from "../src/components/console/StatisticsCards";
+import { creditLine, workCreditLine } from "../src/components/console/StatisticsCards";
 import type { Statistics } from "../src/lib/statistics";
 
 let pass = 0;
@@ -66,6 +66,7 @@ const BACKS = "src/components/console/StatCardBacks.tsx";
 const FLIP = "src/components/motion/FlipCard.tsx";
 const FLIPCSS = "src/components/motion/flip-card.css";
 const LIB = "src/lib/statistics.ts";
+const PAGE = "src/app/(app)/stats/page.tsx";
 
 const src = {
   cards: stripTs(read(CARDS)),
@@ -74,6 +75,7 @@ const src = {
   flip: stripTs(read(FLIP)),
   flipcss: read(FLIPCSS).replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")),
   lib: stripTs(read(LIB)),
+  page: stripTs(read(PAGE)),
 };
 
 /* ⚠⚠ `E586` — A GATE WITH NO INPUTS MUST FAIL. Every assertion below reads one
@@ -216,6 +218,43 @@ check(
   "back={null} ⇒ no door"
 );
 
+/**
+ * ⚠⚠ ONE FIXTURE, AT MODULE SCOPE, FOR EVERY PURE-FUNCTION ASSERTION BELOW.
+ * ⚠ A second copy would drift from this one the first time the type changed,
+ * and the two suites would then be testing two different shapes while both
+ * reported green — `E585` in a test file.
+ * ⚠⚠⚠ EVERY COUNTED FIGURE IS 0 AND EVERY UNCOUNTABLE ONE IS A REASON, so each
+ * assertion states its own deviation from zero and nothing is inherited
+ * silently.
+ */
+const baseStats: Statistics = {
+    window: "all",
+    profile: { views: 0, shownInSearch: { uncounted: "x" }, rateSeen: { uncounted: "x" } },
+    network: { colleagues: 0, invitesSent: 0, joined: 0, growthScore: 0, inviteSeries: [] },
+    learning: {
+      lessonsCompleted: 0,
+      pathsEnrolled: 0,
+      certifications: 0,
+      pathsTaught: 0,
+      lessonSeries: [],
+    },
+    work: {
+      requestsReceived: 0,
+      proposalsSent: { uncounted: "x" },
+      interviews: 0,
+      workOrders: 0,
+      earnings: { uncounted: "x" },
+      orderSeries: [],
+    },
+    teaching: {
+      teaches: false,
+      learners: 0,
+      lessonsByThem: 0,
+      questions: 0,
+      questionsWaiting: { uncounted: "x" },
+    },
+  };
+
 /* ── 4 · THE PURE FUNCTIONS, INCLUDING THE BRANCHES NO RENDER REACHES ───── */
 
 /**
@@ -284,32 +323,7 @@ check(
  * absolutes."*
  */
 {
-  const base: Statistics = {
-    window: "all",
-    profile: { views: 0, shownInSearch: { uncounted: "x" }, rateSeen: { uncounted: "x" } },
-    network: { colleagues: 0, invitesSent: 0, joined: 0, growthScore: 0, inviteSeries: [] },
-    learning: {
-      lessonsCompleted: 0,
-      pathsEnrolled: 0,
-      certifications: 0,
-      pathsTaught: 0,
-      lessonSeries: [],
-    },
-    work: {
-      requestsReceived: 0,
-      proposalsSent: { uncounted: "x" },
-      interviews: 0,
-      workOrders: 0,
-      earnings: { uncounted: "x" },
-    },
-    teaching: {
-      teaches: false,
-      learners: 0,
-      lessonsByThem: 0,
-      questions: 0,
-      questionsWaiting: { uncounted: "x" },
-    },
-  };
+  const base = baseStats;
   const withNet = (n: Partial<Statistics["network"]>): Statistics => ({
     ...base,
     network: { ...base.network, ...n },
@@ -361,6 +375,22 @@ check(
  * figure.**
  */
 {
+  /*
+    ⚠⚠⚠ THE WHERE CLAUSE IS PRINTED, NOT INFERRED FROM AN EMPTY RESULT.
+    ⚠ SCOTT, 2026-09-23: *"Scope is asserted, never inferred from an empty
+    result."* ⚠⚠ `workOrders` read as correct for exactly as long as the table
+    held zero rows — an empty result is evidence of nothing.
+  */
+  console.log("\n  ── every count in statistics.ts, with its where clause ──");
+  for (const m of src.lib.matchAll(/prisma\.(\w+)\.count\(\s*\{?\s*(where:[^;]*?)?\}?\s*\)/g)) {
+    const where = (m[2] ?? "").replace(/\s+/g, " ").trim();
+    console.log(`     ${m[1].padEnd(18)} ${where || "⚠⚠ NO WHERE CLAUSE"}`);
+  }
+  for (const m of src.lib.matchAll(/prisma\.(\w+)\.findMany\(\s*\{\s*(where:[^;]*?),\s*select/g)) {
+    console.log(`     ${(m[1] + " (findMany)").padEnd(18)} ${m[2].replace(/\s+/g, " ").trim()}`);
+  }
+  console.log("");
+
   const counts = [...src.lib.matchAll(/prisma\.(\w+)\.count\(([^;]*?)\)/g)];
   const unscoped = counts.filter((m) => !/where/.test(m[2])).map((m) => m[1]);
   check(
@@ -397,6 +427,96 @@ check(
   "15 — ⚠⚠⚠ a genuinely empty series is stated, not drawn",
   /total === 0 \?/.test(src.backs) && /no line to draw/.test(src.backs),
   "no zero line"
+);
+
+/**
+ * ⚠⚠⚠ THE WORK CARD'S THREE COUNTED FIGURES SCOPE ON THE **PROVIDER** COLUMN.
+ * ⚠ `BidRequest` and `InterviewRequest` each carry TWO person columns — the
+ * provider and the buyer who invited them (`invited_by_person_id` /
+ * `requested_by_person_id`). ⚠⚠ SCOPING ON THE WRONG ONE WOULD COUNT THE
+ * MEMBER'S OWN OUTGOING INVITATIONS AS WORK THEY WERE OFFERED, and on today's
+ * data both are zero, so no render could tell the two apart.
+ */
+{
+  for (const model of ["bidRequest", "interviewRequest", "workOrder"]) {
+    const re = new RegExp(`prisma\\.${model}\\.count\\([^;]*?provider_person_id:\\s*personId`);
+    check(
+      `16 — ⚠⚠⚠ ${model} counts the PROVIDER's rows, not the buyer's`,
+      re.test(src.lib),
+      "where: { provider_person_id: personId }"
+    );
+  }
+  check(
+    "16 — ⚠⚠ the work order SERIES is scoped too, not just the count",
+    /workOrder\.findMany\(\{\s*where:\s*\{\s*provider_person_id:\s*personId/.test(
+      src.lib.replace(/\s+/g, " ").replace(/ \{/g, "{").replace(/\{ /g, "{")
+    ) || /provider_person_id: personId, created_at/.test(src.lib.replace(/\s+/g, " ")),
+    "the series cannot outrun the figure"
+  );
+}
+
+/**
+ * ⚠⚠ THE WORK CARD RENDERS ALL FIVE FIGURES. ⚠⚠⚠ THIS IS THE ASSERTION THAT
+ * STOPS `s.work` GOING BACK TO BEING COMPUTED AND UNDRAWN — which is how the
+ * unscoped count survived review in the first place. **Unrendered code is
+ * unreviewed code** (Scott, 2026-09-23).
+ */
+{
+  const drawn = ["requestsReceived", "proposalsSent", "interviews", "workOrders", "earnings"].filter(
+    (f) => new RegExp(`figure=\\{s\\.work\\.${f}\\}`).test(src.cards)
+  );
+  check(
+    "17 — ⚠⚠⚠ every work figure reaches the screen",
+    drawn.length === 5,
+    `${drawn.length}/5 drawn${drawn.length < 5 ? ` — missing ${["requestsReceived", "proposalsSent", "interviews", "workOrders", "earnings"].filter((f) => !drawn.includes(f)).join(", ")}` : ""}`
+  );
+}
+
+/**
+ * ⚠⚠ THE WORK CREDIT LINE CANNOT CREDIT A DASH. ⚠ Proposals and Earnings are
+ * uncountable, so they are absent from the sentence entirely — *"0 proposals
+ * sent"* would report a result where there is no mechanism.
+ */
+{
+  const w = (over: Partial<Statistics["work"]>): Statistics => ({
+    ...baseStats,
+    work: { ...baseStats.work, ...over },
+  });
+  check(
+    "18 — ⚠⚠ at genuine zero it names the first move, not the emptiness",
+    workCreditLine(baseStats).startsWith("No work has reached you yet."),
+    workCreditLine(baseStats)
+  );
+  check(
+    "18 — ⚠ counts read in the singular where they are one",
+    workCreditLine(w({ requestsReceived: 1, interviews: 1, workOrders: 1 })) ===
+      "1 work request received, 1 interview, 1 work order.",
+    workCreditLine(w({ requestsReceived: 1, interviews: 1, workOrders: 1 }))
+  );
+  check(
+    "18 — ⚠⚠⚠ an uncountable figure is never credited",
+    !/proposal|earn/i.test(workCreditLine(w({ requestsReceived: 4, workOrders: 2 }))),
+    workCreditLine(w({ requestsReceived: 4, workOrders: 2 }))
+  );
+}
+
+/**
+ * ⚠⚠⚠ THE COMPLETION FIGURE IS OFF `/stats` ENTIRELY (correction 2, 2 of 2).
+ * ⚠ WS-A took it off the NEW cards and left the old tile rendering
+ * `{profile.completeness}% of required details` above them, so the ruling was
+ * half-applied. ⚠⚠ THE CARD IS NOT DELETED — the link that replaced the figure
+ * is the only entrance to the score page from this screen, and removing a card
+ * can remove a capability's only entrance.
+ */
+check(
+  "19 — ⚠⚠⚠ no completion percentage renders on /stats",
+  !/\{profile\.completeness\}%/.test(src.page),
+  "the figure is gone"
+);
+check(
+  "19 — ⚠⚠ …and the score page is still reachable from here",
+  /href="\/community\/score"/.test(src.page),
+  "the door survived the figure"
 );
 
 console.log(

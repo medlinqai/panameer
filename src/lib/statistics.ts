@@ -157,6 +157,13 @@ export type Statistics = {
     interviews: Figure;
     workOrders: Figure;
     earnings: Figure;
+    /* ⚠⚠ THE SERIES IS **WORK ORDERS STARTED**, not requests received, and the
+       choice is deliberate: a request is something a BUYER does TO the member,
+       so a trend of it charts somebody else's behaviour. An order started is
+       the outcome the member worked for. ⚠ Same bucketing as the other two
+       series — one bucketer, or the three cards would disagree about what
+       "90 days" means on one screen. */
+    orderSeries: number[] | { uncounted: string };
   };
   teaching: {
     teaches: boolean;
@@ -277,6 +284,15 @@ export async function getStatistics(
       select: { created_at: true },
     }),
   ]);
+  const orderRows = await prisma.workOrder.findMany({
+    where: { provider_person_id: personId, created_at: { gte: since } },
+    select: { created_at: true },
+  });
+  const orderSeries = countInBuckets(
+    orderRows.map((r) => r.created_at),
+    buckets
+  );
+
   const lessonSeries = countInBuckets(
     lessonRows.map((r) => r.completed_at).filter((d): d is Date => d !== null),
     buckets
@@ -355,6 +371,7 @@ export async function getStatistics(
         reported at the gate rather than resolved silently.
       */
       earnings: { uncounted: "Starts counting when an order settles — none has" },
+      orderSeries,
     },
     teaching: {
       teaches,

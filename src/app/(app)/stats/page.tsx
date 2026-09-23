@@ -630,9 +630,39 @@ export default async function MyStatsPage({
             magenta figures on this page are recorded, not swept, because a
             page-wide recolour is not this workstream.
           */}
-          <p className="font-display text-[30px] font-bold leading-none text-ink">
-            {profile.completeness}% of required details
-          </p>
+          {/*
+            ── ⚠⚠⚠ THE COMPLETION FIGURE IS GONE FROM `/stats` (`E603` WS-A, 2 of 2) ──
+
+            ⚠ SCOTT, 2026-09-23: *"Profile completion and application usage are
+            different things. Completion belongs to the score page. Statistics
+            measures what the application DID with the profile."*
+            ⚠⚠ WS-A TOOK IT OFF THE NEW CARDS AND LEFT IT HERE, so the ruling was
+            half-applied and the page still led with the number it forbade. **The
+            correction is not complete until the OLD surface changes too.**
+
+            ⚠⚠⚠ THE CARD IS NOT DELETED, AND THAT IS THE LOAD-BEARING PART.
+            Removing it outright would take away the only entrance to the score
+            page from this screen — `E579`'s inverse, and the same defect as
+            `E601`'s `OwnerResumeRerun`, which survived intact and unreachable.
+            ⚠ **A ZERO IS INFORMATION; AN ABSENT CARD IS A DEAD END.** So the
+            figure is replaced by the door it was sitting on top of.
+
+            ⚠ THE GATE, THE CHECKLIST AND THE INVENTORY COUNTS BELOW ALL STAY:
+            they are VISIBILITY — whether buyers can find you — which is a
+            different question from how complete the profile is, and is squarely
+            what this page measures.
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <p className="font-display text-[30px] font-bold leading-none text-ink">
+            //     {profile.completeness}% of required details
+            //   </p>
+          */}
+          <Link
+            href="/community/score"
+            className="inline-block font-display text-[19px] font-bold leading-tight text-magenta hover:underline"
+          >
+            See Your Profile Score &rarr;
+          </Link>
 
           {/*
             ── FACT 2 — THE GATE, IN WORDS. No percentage in this sentence. ──
