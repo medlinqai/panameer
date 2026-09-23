@@ -28,6 +28,31 @@ def rows(ws, header_row):
             continue
         yield {hdr[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(r) if i < len(hdr)}
 
+# ── ⚠⚠⚠ REAL ACCOUNTS NEVER REACH THE TEST-USER FILE (`P2-A2-E603`) ─────────
+#
+# ⚠ SCOTT'S REAL ACCOUNT WAS IN THIS FILE, WITH A PASSWORD. `seed-test-data.ts`
+#   upserts `password_hash` for every entry here, so the only thing standing
+#   between a seed run and his password was the runtime PROTECTED check —
+#   derived from whoever holds `learn_lessons.expert_person_id` (rule 10).
+# ⚠⚠ THAT GUARD WORKS TODAY AND WAS PROVEN TO WORK. **IT IS ALSO CONDITIONAL:**
+#   the day he stops holding a lesson, the derivation stops protecting him and
+#   the seed overwrites a real person's password.
+# ⚠⚠⚠ A REAL ACCOUNT SHOULD NOT BE IN THE TEST-USER FILE AT ALL — then no guard
+#   has to hold for the file to be safe.
+#
+# ⚠ THE EXCLUSION LIVES HERE, IN THE GENERATOR, BECAUSE THE FILE IS GENERATED.
+#   Deleting the row from the JSON alone is undone by the next regeneration from
+#   `Users.xlsx` — the roster still lists him, and it should: he IS a provider.
+#   ⚠⚠ THE ROSTER IS RIGHT AND THE TEST FILE IS THE WRONG PLACE FOR HIM.
+#
+# ⚠ It is a SHORT, NAMED list of real human accounts, not a pattern — a pattern
+#   over `outlook.com` would quietly drop future testers, and a silent drop is
+#   how the opposite mistake gets made.
+REAL_ACCOUNTS = {
+    "iamscottwalls@outlook.com",   # Scott Walls — owner; holds Learn lessons
+}
+
+
 def clean(v):
     return (v or "").strip()
 
@@ -39,12 +64,14 @@ out = {"_source": "4. Project Documents/4. Decide/Users.xlsx",
 for r in rows(wb["Admins"], 2):
     email = clean(r.get("Username"))
     if "@" not in email: continue
+    if email.lower() in REAL_ACCOUNTS: continue   # real person, never seeded
     out["admins"].append({"pid": clean(r.get("PID")), "name": clean(r.get("Person")),
                           "email": email, "password": clean(r.get("Password")) or "Panameer123"})
 
 for r in rows(wb["Buyers"], 2):
     email = clean(r.get("Username"))
     if "@" not in email: continue
+    if email.lower() in REAL_ACCOUNTS: continue   # real person, never seeded
     out["buyers"].append({"pid": clean(r.get("UID")), "name": clean(r.get("Person")),
                           "email": email, "password": clean(r.get("Password")) or "Panameer123",
                           "company": clean(r.get("Company")), "job": clean(r.get("USER_JOB"))})
@@ -52,6 +79,7 @@ for r in rows(wb["Buyers"], 2):
 for r in rows(wb["Sellers"], 2):
     email = clean(r.get("Username/Login"))
     if "@" not in email: continue
+    if email.lower() in REAL_ACCOUNTS: continue   # real person, never seeded
     out["sellers"].append({"pid": clean(r.get("PID")), "name": clean(r.get("Person")),
                            "email": email, "password": clean(r.get("Password")) or "Panameer123",
                            "team": clean(r.get("Team")), "job": clean(r.get("User Job")),
