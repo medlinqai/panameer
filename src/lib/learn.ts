@@ -1,4 +1,10 @@
-import { prisma } from "@/lib/prisma";
+/* ⚠ `prisma` WENT WITH THE THREE DEAD EXPORTS (`E608`) — they were the only
+   queries in this file. ⚠⚠ WHAT REMAINS IS PURE: `isPlayable`,
+   `pathHasPlayableLessons` and `pathIsOpenTo` are predicates over rows a
+   CALLER already fetched, which is why they can be shared by the data layer,
+   the page and a gate without any of them importing a client.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { prisma } from "@/lib/prisma"; */
 
 /**
  * Public Learn queries (brief_learn_v1 WS2).
@@ -258,170 +264,195 @@ export type BrowsePath = {
 };
 
 /** Every published path, with its counts, grouped for the browse page. */
-export async function getBrowseTree(): Promise<
-  { audience: string; groups: { group: string; paths: BrowsePath[] }[] }[]
-> {
-  const paths = await prisma.learningPath.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: [{ audience: "asc" }, { group: "asc" }, { sort_order: "asc" }],
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      summary: true,
-      group: true,
-      audience: true,
-      expert: { select: { first_name: true, last_name: true } },
-      courses: {
-        select: {
-          sections: {
-            select: {
-              lessons: { select: { vimeo_ref: true, production_status: true } },
-            },
-          },
-        },
-      },
-    },
-  });
+/*
+  ── ⚠⚠⚠ THREE DEAD EXPORTS, DELETED (`P2-A4-E608`) ───────────────────────
 
-  const flat: BrowsePath[] = paths.map((p) => {
-    const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
-    return {
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      summary: p.summary,
-      group: p.group,
-      audience: p.audience,
-      lessons: lessons.length,
-      playable: lessons.filter(isPlayable).length,
-      expert: p.expert
-        ? `${p.expert.first_name ?? ""} ${p.expert.last_name ?? ""}`.trim() || null
-        : null,
-    };
-  });
+  ⚠ `getBrowseTree`, `getLearningPath` and `getLesson` had **no consumer
+  anywhere** — confirmed across `src`, `scripts`, `e2e*` and `prisma` with
+  comments stripped first, so an `E164` quote could not read as a caller.
 
-  const byAudience = new Map<string, Map<string, BrowsePath[]>>();
-  for (const p of flat) {
-    if (!byAudience.has(p.audience)) byAudience.set(p.audience, new Map());
-    const groups = byAudience.get(p.audience)!;
-    const key = p.group ?? "Other";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(p);
-  }
+  ⚠⚠ THEY WERE FOUND BY THE `E607` SWEEP FOR A THIRD DEFINITION, and they were
+  the most dangerous kind of dead code: **each selected a path or a lesson on
+  `status: "PUBLISHED"` ALONE**, with no playable clause. Anyone wiring one up
+  would have re-opened the hole `E607` closed, and it would have looked like
+  reuse rather than a new bug.
+  ⚠ `getLearningPath` even took an `includeDraft` flag, so it could return a
+  path the catalogue has never published.
 
-  return AUDIENCE_ORDER.filter((a) => byAudience.has(a)).map((audience) => ({
-    audience,
-    groups: [...byAudience.get(audience)!.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([group, paths]) => ({ group, paths })),
-  }));
-}
+  ⚠⚠⚠ UNRENDERED CODE IS UNREVIEWED CODE — the rule that already removed the
+  unscoped `workOrders` count and `orderSeries`. A helper nobody calls is a
+  helper nobody has checked, sitting in the file the next person will search.
 
-/**
- * One path with its full outline, for the landing page.
- *
- * `includeDraft` exists ONLY for the admin preview (WS4) and is never derived
- * from a query string here — the caller has to have already proved the viewer
- * is an admin, and passes an explicit boolean. Keeping the decision at the page
- * boundary rather than inside this function means the default read stays
- * PUBLISHED-only and a future caller can't opt into draft rows by accident.
- */
-export async function getLearningPath(slug: string, includeDraft = false) {
-  return prisma.learningPath.findFirst({
-    where: { slug, ...(includeDraft ? {} : { status: "PUBLISHED" }) },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      summary: true,
-      group: true,
-      audience: true,
-      // Selected so a preview can tell the admin they're looking at a draft.
-      status: true,
-      expert: { select: { first_name: true, last_name: true, photo_url: true } },
-      courses: {
-        orderBy: { sort_order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          style: true,
-          summary: true,
-          sections: {
-            orderBy: { sort_order: "asc" },
-            select: {
-              id: true,
-              title: true,
-              lessons: {
-                orderBy: { sort_order: "asc" },
-                select: {
-                  id: true,
-                  title: true,
-                  run_time: true,
-                  vimeo_ref: true,
-                  production_status: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-}
+  ⚠ `isPlayable`, `pathHasPlayableLessons` and `pathIsOpenTo` ABOVE ARE
+  UNTOUCHED and are what live code uses.
 
-/** One lesson plus the sibling list needed to render prev / next. */
-export async function getLesson(pathSlug: string, lessonId: string, includeDraft = false) {
-  const lesson = await prisma.lesson.findFirst({
-    where: {
-      id: lessonId,
-      section: {
-        course: {
-          learningPath: {
-            slug: pathSlug,
-            ...(includeDraft ? {} : { status: "PUBLISHED" }),
-          },
-        },
-      },
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      run_time: true,
-      vimeo_ref: true,
-      production_status: true,
-      expert: { select: { first_name: true, last_name: true } },
-      section: {
-        select: {
-          id: true,
-          title: true,
-          course: {
-            select: {
-              id: true,
-              title: true,
-              learningPath: { select: { id: true, title: true, slug: true } },
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!lesson) return null;
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   export async function getBrowseTree(): Promise<
+//     { audience: string; groups: { group: string; paths: BrowsePath[] }[] }[]
+//   > {
+//     const paths = await prisma.learningPath.findMany({
+//       where: { status: "PUBLISHED" },
+//       orderBy: [{ audience: "asc" }, { group: "asc" }, { sort_order: "asc" }],
+//       select: {
+//         id: true,
+//         title: true,
+//         slug: true,
+//         summary: true,
+//         group: true,
+//         audience: true,
+//         expert: { select: { first_name: true, last_name: true } },
+//         courses: {
+//           select: {
+//             sections: {
+//               select: {
+//                 lessons: { select: { vimeo_ref: true, production_status: true } },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     });
+//   
+//     const flat: BrowsePath[] = paths.map((p) => {
+//       const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+//       return {
+//         id: p.id,
+//         title: p.title,
+//         slug: p.slug,
+//         summary: p.summary,
+//         group: p.group,
+//         audience: p.audience,
+//         lessons: lessons.length,
+//         playable: lessons.filter(isPlayable).length,
+//         expert: p.expert
+//           ? `${p.expert.first_name ?? ""} ${p.expert.last_name ?? ""}`.trim() || null
+//           : null,
+//       };
+//     });
+//   
+//     const byAudience = new Map<string, Map<string, BrowsePath[]>>();
+//     for (const p of flat) {
+//       if (!byAudience.has(p.audience)) byAudience.set(p.audience, new Map());
+//       const groups = byAudience.get(p.audience)!;
+//       const key = p.group ?? "Other";
+//       if (!groups.has(key)) groups.set(key, []);
+//       groups.get(key)!.push(p);
+//     }
+//   
+//     return AUDIENCE_ORDER.filter((a) => byAudience.has(a)).map((audience) => ({
+//       audience,
+//       groups: [...byAudience.get(audience)!.entries()]
+//         .sort((a, b) => a[0].localeCompare(b[0]))
+//         .map(([group, paths]) => ({ group, paths })),
+//     }));
+//   }
+//   
+//   /**
+//    * One path with its full outline, for the landing page.
+//    *
+//    * `includeDraft` exists ONLY for the admin preview (WS4) and is never derived
+//    * from a query string here — the caller has to have already proved the viewer
+//    * is an admin, and passes an explicit boolean. Keeping the decision at the page
+//    * boundary rather than inside this function means the default read stays
+//    * PUBLISHED-only and a future caller can't opt into draft rows by accident.
+//    * /
+//   export async function getLearningPath(slug: string, includeDraft = false) {
+//     return prisma.learningPath.findFirst({
+//       where: { slug, ...(includeDraft ? {} : { status: "PUBLISHED" }) },
+//       select: {
+//         id: true,
+//         title: true,
+//         slug: true,
+//         summary: true,
+//         group: true,
+//         audience: true,
+//         // Selected so a preview can tell the admin they're looking at a draft.
+//         status: true,
+//         expert: { select: { first_name: true, last_name: true, photo_url: true } },
+//         courses: {
+//           orderBy: { sort_order: "asc" },
+//           select: {
+//             id: true,
+//             title: true,
+//             style: true,
+//             summary: true,
+//             sections: {
+//               orderBy: { sort_order: "asc" },
+//               select: {
+//                 id: true,
+//                 title: true,
+//                 lessons: {
+//                   orderBy: { sort_order: "asc" },
+//                   select: {
+//                     id: true,
+//                     title: true,
+//                     run_time: true,
+//                     vimeo_ref: true,
+//                     production_status: true,
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     });
+//   }
+//   
+//   /** One lesson plus the sibling list needed to render prev / next. * /
+//   export async function getLesson(pathSlug: string, lessonId: string, includeDraft = false) {
+//     const lesson = await prisma.lesson.findFirst({
+//       where: {
+//         id: lessonId,
+//         section: {
+//           course: {
+//             learningPath: {
+//               slug: pathSlug,
+//               ...(includeDraft ? {} : { status: "PUBLISHED" }),
+//             },
+//           },
+//         },
+//       },
+//       select: {
+//         id: true,
+//         title: true,
+//         description: true,
+//         run_time: true,
+//         vimeo_ref: true,
+//         production_status: true,
+//         expert: { select: { first_name: true, last_name: true } },
+//         section: {
+//           select: {
+//             id: true,
+//             title: true,
+//             course: {
+//               select: {
+//                 id: true,
+//                 title: true,
+//                 learningPath: { select: { id: true, title: true, slug: true } },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     });
+//     if (!lesson) return null;
+//   
+//     // Flat running order across the whole path, so prev/next crosses section and
+//     // course boundaries the way a learner actually moves through it.
+//     const path = await getLearningPath(pathSlug, includeDraft);
+//     const order = (path?.courses ?? []).flatMap((c) =>
+//       c.sections.flatMap((s) => s.lessons.map((l) => ({ ...l, sectionTitle: s.title })))
+//     );
+//     const i = order.findIndex((l) => l.id === lessonId);
+//     return {
+//       lesson,
+//       path,
+//       prev: i > 0 ? order[i - 1] : null,
+//       next: i >= 0 && i < order.length - 1 ? order[i + 1] : null,
+//       position: i + 1,
+//       total: order.length,
+//     };
+//   }
+*/
 
-  // Flat running order across the whole path, so prev/next crosses section and
-  // course boundaries the way a learner actually moves through it.
-  const path = await getLearningPath(pathSlug, includeDraft);
-  const order = (path?.courses ?? []).flatMap((c) =>
-    c.sections.flatMap((s) => s.lessons.map((l) => ({ ...l, sectionTitle: s.title })))
-  );
-  const i = order.findIndex((l) => l.id === lessonId);
-  return {
-    lesson,
-    path,
-    prev: i > 0 ? order[i - 1] : null,
-    next: i >= 0 && i < order.length - 1 ? order[i + 1] : null,
-    position: i + 1,
-    total: order.length,
-  };
-}

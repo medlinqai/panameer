@@ -15,7 +15,7 @@
  * be the joke version of this file.
  */
 import { prisma } from "@/lib/prisma";
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 let pass = 0;
@@ -168,6 +168,62 @@ function routes(dir = "src/app", out: string[] = []): string[] {
       "4 — ⚠⚠ …and a path discovery SHOWS is reported ready",
       wrong.length === 0 && shown.length > 0,
       wrong.length ? `reported not-ready: ${wrong.join(", ")}` : `${Math.min(shown.length, 5)} of ${shown.length} startable paths checked`
+    );
+
+    /*
+      ── ⚠⚠⚠ THE WRITE ROUTES, NOT ONLY THE RENDERING ONES (`E608`) ──────────
+
+      ⚠ A page that says *"no videos yet"* while the API happily enrols you in
+      the same path is still a dead end — the refusal has to be where the WRITE
+      is, not only where the reader is.
+      ⚠⚠ ASSERTED BY SHAPE (`E587`): every route under `src/app/api/learn` that
+      resolves a `learningPath` must ask `pathIsOpenTo`. Nothing here names
+      `enroll` or `test` — a third write route added tomorrow is caught tomorrow,
+      with no edit.
+      ⚠ `progress` IS EXPECTED TO BE ABSENT FROM THE POPULATION and that is not
+      an exemption: it resolves a LESSON, never a path, so it never matches.
+    */
+    const apiDir = join(process.cwd(), "src", "app", "api", "learn");
+    const routes: string[] = [];
+    (function walkApi(dir: string) {
+      for (const e of readdirSync(dir)) {
+        const full = join(dir, e);
+        if (statSync(full).isDirectory()) walkApi(full);
+        else if (e === "route.ts") routes.push(full);
+      }
+    })(apiDir);
+    const stripTs = (src: string) =>
+      src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+    const pathRoutes = routes.filter((f) =>
+      /prisma\.learningPath\.(findFirst|findUnique)/.test(stripTs(readFileSync(f, "utf8")))
+    );
+    check(
+      "4 — ⚠ the sweep found Learn write routes that resolve a path (E586)",
+      pathRoutes.length > 0,
+      pathRoutes.map((f) => f.replace(process.cwd() + "/", "")).join(", ")
+    );
+    /*
+      ⚠⚠ THE CALL MUST SIT IN A CONTROL-FLOW POSITION, not merely appear. A
+      bare `pathIsOpenTo(…)` whose result nothing reads would satisfy a
+      contains-check and gate nothing — the "present but unused" shape.
+      ⚠⚠⚠ AND THE LIMIT, STATED RATHER THAN GLOSSED: **this reads source. It
+      proves the refusal is WIRED, not that it FIRES.** Proving it fires needs
+      an HTTP request with a session, which is `check:stats-live`'s shape and
+      not this gate's. The `4 — no path-rendering route reports a hidden path
+      as ready` assertion above is the behavioural half, and it calls the real
+      functions.
+    */
+    const ungated = pathRoutes.filter(
+      (f) => !/(if\s*\(\s*!?\s*pathIsOpenTo\(|return\s+!?pathIsOpenTo\()/.test(
+        stripTs(readFileSync(f, "utf8"))
+      )
+    );
+    check(
+      "4 — ⚠⚠⚠ no Learn write route admits a path discovery hides",
+      ungated.length === 0,
+      ungated.length
+        ? `UNGATED: ${ungated.map((f) => f.replace(process.cwd() + "/", "")).join(", ")}`
+        : `${pathRoutes.length} path-resolving write routes, all gated`
     );
   }
 

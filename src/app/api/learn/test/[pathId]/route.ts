@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pathHasPlayableLessons, pathIsOpenTo } from "@/lib/learn";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
@@ -38,6 +39,52 @@ import {
  * review gate would spend money to produce something the same request then
  * refuses. Generation is the admin trigger and the batch script; this is a read.
  */
+
+/**
+ * ── ⚠⚠⚠ NO TEST ON MATERIAL NOBODY COULD WATCH (`P2-A4-E608`) ────────────
+ *
+ * ⚠ SCOTT, 2026-09-23: *"A test on material nobody could watch is not
+ * arguable."* This route issues a CREDENTIAL that goes on a professional
+ * profile; awarding one for a path with no videos would make the credential
+ * mean nothing at all.
+ *
+ * ⚠⚠ BOTH VERBS, AND THAT IS NOT BELT-AND-BRACES. `GET` looked the path up and
+ * `POST` **did not look it up at all** — it went straight to grading. So a
+ * gate on `GET` alone would have stopped the questions being served and still
+ * graded a submission somebody had kept, or replayed, or built by hand.
+ * ⚠ The route's own docblock already holds the same line about drafts:
+ * *"GET does not serve its questions and POST does not grade against it."*
+ *
+ * ⚠ `pathIsOpenTo(…, false)` — the enrolment clause does not apply. It exists
+ * to protect somebody who enrolled before the videos went missing; it is not a
+ * reason to hand them a certificate for material that was never watchable.
+ * ⚠ 409, matching the draft refusal beside it: *"still being reviewed"* and
+ * *"no videos yet"* are both states of the world, not faults.
+ */
+async function notReadyResponse(pathId: string): Promise<NextResponse | null> {
+  const path = await prisma.learningPath.findFirst({
+    where: { id: pathId, status: "PUBLISHED" },
+    select: {
+      courses: {
+        select: {
+          sections: {
+            select: { lessons: { select: { vimeo_ref: true, production_status: true } } },
+          },
+        },
+      },
+    },
+  });
+  if (!path) return null; /* ⚠ 404 is the caller's job; this answers readiness only. */
+  if (pathIsOpenTo(pathHasPlayableLessons(path), false)) return null;
+  return NextResponse.json(
+    {
+      error: "That path has no videos yet, so there is no test to take.",
+      code: "PATH_NOT_READY",
+    },
+    { status: 409 }
+  );
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ pathId: string }> }
@@ -55,6 +102,8 @@ export async function GET(
   if (!path) {
     return NextResponse.json({ error: "That path isn't available." }, { status: 404 });
   }
+  const notReadyGet = await notReadyResponse(pathId);
+  if (notReadyGet) return notReadyGet;
 
   /*
     ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
@@ -117,6 +166,10 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: "That isn't a valid submission." }, { status: 400 });
   }
+
+  /* ⚠⚠ POST NEVER LOOKED THE PATH UP — see `notReadyResponse`'s header. */
+  const notReadyPost = await notReadyResponse(pathId);
+  if (notReadyPost) return notReadyPost;
 
   /*
     ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
