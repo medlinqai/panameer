@@ -949,7 +949,21 @@ check(
   const creatable = new Set<string>();
   for (const f of allTs) {
     const code = stripTs(readFileSync(f, "utf8"));
-    for (const m of code.matchAll(/prisma\.([a-zA-Z]+)\.(create|createMany|upsert)\b/g)) {
+    /*
+      ⚠⚠⚠ ANY CLIENT IDENTIFIER, NOT JUST `prisma.` — A TRANSACTION CLIENT IS
+      STILL A WRITER. ⚠ FOUND WHILE MEASURING LEARN (`E606`): `lib/forums.ts`
+      creates a `ForumPost` as `tx.forumPost.create` inside a `$transaction`,
+      and the `prisma.`-only pattern reported that model as having NO WRITER.
+      ⚠⚠ THAT IS A FALSE POSITIVE IN THE DANGEROUS DIRECTION FOR THIS GATE — it
+      would push somebody to DASH a figure that is genuinely countable, the
+      mirror image of the bug this assertion exists to catch.
+      ⚠ RE-VERIFIED WITH THE WIDER PATTERN: `providerBid`, `interviewRequest`
+      and `workOrder` still have **no creator under any identifier**, so the
+      three dashes this commit-set made stand.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   for (const m of code.matchAll(/prisma\.([a-zA-Z]+)\.(create|createMany|upsert)\b/g))
+    */
+    for (const m of code.matchAll(/\b[a-zA-Z_$]+\.([a-zA-Z]+)\.(create|createMany|upsert)\b/g)) {
       creatable.add(m[1]);
     }
   }
