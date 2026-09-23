@@ -77,10 +77,33 @@ export default async function Page() {
             the two sides arrive for different reasons. It also names the DIRECT
             route in, since that is the half a reader would not guess.
           */}
+          {/*
+            ── ⚠⚠⚠ IT PROMISED TWO ROUTES THAT DO NOT EXIST (`E603` correction) ──
+
+            ⚠ MEASURED 2026-09-23: **there is no `workOrder.create` anywhere in
+            the repository.** Not in `src/`, not in `scripts/`, not in `prisma/`.
+            `orders.ts` can only `updateMany` an order that nothing ever built,
+            so `ISSUED` is never written and even the ACCEPT and RELEASE paths
+            are unreachable code.
+            ⚠⚠ SO NEITHER PROMISED ROUTE CAN FIRE. A work request cannot be
+            "awarded" into an order, and nothing can "bring in" a direct one.
+            ⚠⚠⚠ THIS IS THE SAME SHAPE AS THE TWO TILES `E603` RETIRED —
+            *"once you complete your first paid work order"* and *"once buyers
+            rate completed work orders."* **A page may not promise a mechanism
+            that does not exist**, and the sentence must not imply the member is
+            the one who has not done the thing.
+            ⚠ WHAT REPLACES IT SAYS WHAT A WORK ORDER **IS** — which is true and
+            useful — and then names the truncation plainly, with no next step
+            invented for the reader.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   A work order is the SOW — what is to be done, for how long, and for how
+            //   much. One appears here when a work request is awarded, or when an order
+            //   agreed elsewhere is brought in as a direct work order.
+          */}
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] leading-relaxed text-ink-2">
-            A work order is the SOW — what is to be done, for how long, and for how
-            much. One appears here when a work request is awarded, or when an order
-            agreed elsewhere is brought in as a direct work order.
+            A work order is the SOW &mdash; what is to be done, for how long, and
+            for how much. Nothing creates one yet, so this list stays empty for
+            everyone.
           </p>
         </div>
       ) : (

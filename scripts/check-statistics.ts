@@ -456,34 +456,45 @@ check(
  * data both are zero, so no render could tell the two apart.
  */
 {
-  for (const model of ["bidRequest", "interviewRequest", "workOrder"]) {
-    const re = new RegExp(`prisma\\.${model}\\.count\\([^;]*?provider_person_id:\\s*personId`);
+  /*
+    ⚠⚠⚠ DERIVED FROM THE SCHEMA, NOT FROM A LIST OF THREE MODELS (`E587`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it named the three models it
+    knew about, and went red the moment two of those counts were correctly
+    DELETED for having no writer:
+    //   for (const model of ["bidRequest", "interviewRequest", "workOrder"]) { … }
+    ⚠⚠ THE RULE IT CARRIED IS REAL AND SURVIVES: a model with BOTH a provider
+    and a buyer person column must be counted on the PROVIDER one. Scoping on
+    the wrong column would count the member's own outgoing invitations as work
+    they were offered, and on today's empty tables no render could tell them
+    apart.
+  */
+  const schema = readFileSync(join(process.cwd(), "prisma/schema.prisma"), "utf8");
+  const countedModels = [...src.lib.matchAll(/prisma\.([a-zA-Z]+)\.count\(([^;]*?)\)/g)];
+  let twoSided = 0;
+  for (const [, model, body] of countedModels) {
+    /* ⚠ the model's block, found by its PascalCase name */
+    const M = model[0].toUpperCase() + model.slice(1);
+    const block = new RegExp(`^model ${M} \\{[\\s\\S]*?^\\}`, "m").exec(schema)?.[0];
+    if (!block) continue;
+    const hasProvider = /provider_person_id\s/.test(block);
+    const hasOtherPerson = /(invited_by_person_id|requested_by_person_id|buyer_person_id)\s/.test(block);
+    if (!hasProvider || !hasOtherPerson) continue;
+    twoSided++;
     check(
       `16 — ⚠⚠⚠ ${model} counts the PROVIDER's rows, not the buyer's`,
-      re.test(src.lib),
-      "where: { provider_person_id: personId }"
+      /provider_person_id/.test(body),
+      body.replace(/\s+/g, " ").trim().slice(0, 70)
     );
   }
-  /*
-    ⚠⚠⚠ EVERY `findMany` IS SCOPED TOO, ASSERTED BY SHAPE RATHER THAN BY NAME.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it named the work-order series,
-    which was deleted because nothing drew it:
-    //   "16 — the work order SERIES is scoped too, not just the count"
-    ⚠⚠ REPLACING IT RATHER THAN DELETING IT IS THE POINT: the rule it carried —
-    a series must not be wider than the figure beside it — outlived the one
-    series it happened to name. `E587`: gate by shape, not by a named list.
-  */
-  {
-    const finds = [...src.lib.matchAll(/prisma\.(\w+)\.findMany\(\s*\{\s*([\s\S]{0,120})/g)];
-    const unscoped = finds.filter((m) => !/where/.test(m[2])).map((m) => m[1]);
-    check(
-      "16 — ⚠⚠⚠ every findMany is scoped, so no series outruns its figure",
-      unscoped.length === 0 && finds.length > 0,
-      unscoped.length ? `unscoped: ${unscoped.join(", ")}` : `${finds.length} findMany calls, all scoped`
-    );
-  }
-}
+  check(
+    "16 — ⚠⚠ the schema sweep found two-sided models to check (E586)",
+    countedModels.length > 0,
+    twoSided > 0
+      ? `${twoSided} of ${countedModels.length} counted models carry both a provider and a buyer column`
+      : `${countedModels.length} counted models, none two-sided today`
+  );
 
+}
 /**
  * ⚠⚠ THE WORK CARD RENDERS ALL FIVE FIGURES. ⚠⚠⚠ THIS IS THE ASSERTION THAT
  * STOPS `s.work` GOING BACK TO BEING COMPUTED AND UNDRAWN — which is how the
@@ -769,11 +780,23 @@ check(
  * `proposalsSent` was declared uncountable because no model was named
  * `Proposal` while `ProviderBid` had been counting it all along.
  */
+/*
+  ⚠⚠⚠ SUPERSEDED BY THE WRITER TEST, quoted not deleted (`E164`):
+  //   "29 — proposals are COUNTED, from ProviderBid, and only when submitted",
+  //   /providerBid\.count\(\{[^}]*submitted_at:\s*\{\s*not:\s*null/.test(…)
+  ⚠ IT WAS RIGHT ABOUT THE FILTER AND WRONG ABOUT THE FIGURE. `submitted_at`
+  IS the correct predicate for "sent" — a draft is not a proposal — but the
+  question never got that far: **nothing creates a `ProviderBid` at all**, so
+  the count could only ever be a confident zero about a mechanism that does not
+  exist. ⚠⚠ ASSERTION 31 NOW OWNS THIS, from the writer side, and it will keep
+  owning it if somebody builds the creator tomorrow.
+  ⚠ What survives here is the half that is still true regardless: the FALSE
+  REASON must not come back.
+*/
 check(
-  "29 — ⚠⚠⚠ proposals are COUNTED, from ProviderBid, and only when submitted",
-  /providerBid\.count\(\{[^}]*submitted_at:\s*\{\s*not:\s*null/.test(src.lib.replace(/\s+/g, " ")) &&
-    !/No Proposal model exists/.test(src.lib),
-  "sent means submitted; a draft is not a proposal"
+  "29 — ⚠⚠ the false 'no Proposal model exists' claim stays retired",
+  !/No Proposal model exists/.test(src.lib),
+  "the model is ProviderBid — an absent name is not an absent thing"
 );
 check(
   "29 — ⚠⚠ work requests count only those actually ISSUED",
@@ -882,6 +905,111 @@ check(
     "30 — ⚠⚠ no page selects the column without using it",
     !/rating:\s*true/.test(src.page),
     "nothing puts it in scope for free"
+  );
+}
+
+
+/* ── 8 · THE WRITER TEST (Scott's correction of his own ruling, 2026-09-23) ── */
+
+/**
+ * ── ⚠⚠⚠ NO FIGURE RENDERS AS A COUNT IF ITS MODEL HAS NO WRITER ──────────
+ *
+ * ⚠ SCOTT, 2026-09-23, CORRECTING HIS OWN RULING: *"The writer test — a figure
+ * is countable when the state it counts has a writer, not when something
+ * upstream does — was not applied to the three figures I flipped to counted."*
+ *
+ * ⚠⚠ THE THREE: `ProviderBid`, `InterviewRequest` and `WorkOrder`. **None of
+ * them has a `create` anywhere in the repository.** Each rendered a confident
+ * `0`, and ⚠⚠⚠ **A ZERO THERE CLAIMS THE MECHANISM WORKS AND NOBODY HAS USED
+ * IT.** None of those mechanisms exist.
+ *
+ * ⚠ **THIS IS THE ASSERTION THAT WOULD HAVE CAUGHT IT**, and the one that stops
+ * the next three — because the next three will arrive the same way: a table in
+ * the schema, a plausible `count()`, and no code that ever puts a row in it.
+ *
+ * ── ⚠⚠ BOTH SETS ARE DERIVED AT RUN TIME (`E587`) ────────────────────────
+ *
+ * ⚠⚠⚠ A LIST WOULD ROT THE DAY SOMEBODY BUILDS ONE OF THESE. Nothing here
+ * names a model:
+ *   · **counted** — every `prisma.X.count(` inside `getStatistics`. Those are
+ *     the figures.
+ *   · **creatable** — every model with a `create`, `createMany` or `upsert`
+ *     ANYWHERE under `src/`. ⚠⚠ `update` AND `updateMany` DO NOT COUNT, and
+ *     that distinction is the whole test: `orders.ts` updates a `WorkOrder`
+ *     twice, but nothing ever builds one, so those updates can never run. **A
+ *     model you can only update is a model with no rows.**
+ * ⚠ The gate then intersects them and fails on the difference.
+ */
+{
+  const libSrc = src.lib;
+  const counted = new Set(
+    [...libSrc.matchAll(/prisma\.([a-zA-Z]+)\.count\(/g)].map((m) => m[1])
+  );
+  const allTs = walkSrc(/\.tsx?$/);
+  const creatable = new Set<string>();
+  for (const f of allTs) {
+    const code = stripTs(readFileSync(f, "utf8"));
+    /*
+      ⚠⚠⚠ ANY CLIENT IDENTIFIER, NOT JUST `prisma.` — A TRANSACTION CLIENT IS
+      STILL A WRITER. ⚠ FOUND WHILE MEASURING LEARN (`E606`): `lib/forums.ts`
+      creates a `ForumPost` as `tx.forumPost.create` inside a `$transaction`,
+      and the `prisma.`-only pattern reported that model as having NO WRITER.
+      ⚠⚠ THAT IS A FALSE POSITIVE IN THE DANGEROUS DIRECTION FOR THIS GATE — it
+      would push somebody to DASH a figure that is genuinely countable, the
+      mirror image of the bug this assertion exists to catch.
+      ⚠ RE-VERIFIED WITH THE WIDER PATTERN: `providerBid`, `interviewRequest`
+      and `workOrder` still have **no creator under any identifier**, so the
+      three dashes this commit-set made stand.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   for (const m of code.matchAll(/prisma\.([a-zA-Z]+)\.(create|createMany|upsert)\b/g))
+    */
+    for (const m of code.matchAll(/\b[a-zA-Z_$]+\.([a-zA-Z]+)\.(create|createMany|upsert)\b/g)) {
+      creatable.add(m[1]);
+    }
+  }
+  check(
+    "31 — ⚠ the sweep found counted models and creatable models (E586)",
+    counted.size > 0 && creatable.size > 0,
+    `${counted.size} counted · ${creatable.size} creatable`
+  );
+
+  const noWriter = [...counted].filter((m) => !creatable.has(m)).sort();
+  check(
+    "31 — ⚠⚠⚠ every counted model has something that can create a row in it",
+    noWriter.length === 0,
+    noWriter.length
+      ? `COUNTED BUT NOTHING CREATES ONE: ${noWriter.join(", ")} — a zero there claims the mechanism works and nobody used it`
+      : `counted: ${[...counted].sort().join(", ")}`
+  );
+
+  /* ⚠⚠ AND THE THREE THAT WERE WRONG ARE PINNED AS DASHES, so a later edit
+     cannot quietly re-count them while their models stay unwritable. */
+  for (const [field, model] of [
+    ["proposalsSent", "providerBid"],
+    ["interviews", "interviewRequest"],
+    ["workOrders", "workOrder"],
+  ] as const) {
+    const isDash = new RegExp(`${field}:\\s*\\{\\s*uncounted:`).test(libSrc);
+    check(
+      `31 — ⚠⚠ ${field} is a dash while nothing creates a ${model}`,
+      creatable.has(model) || isDash,
+      creatable.has(model) ? `${model} is now creatable — re-examine this figure` : "dashed, with its reason"
+    );
+  }
+
+  /* ⚠ THE REASON NAMES THE TRUNCATION, NOT THE MEMBER (Scott). "Once you…"
+     blames the reader for the absence of a mechanism. */
+  const reasons = [...libSrc.matchAll(/uncounted:\s*"([^"]+)"/g)].map((m) => m[1]);
+  check(
+    "31 — ⚠ the sweep found reasons to read (E586)",
+    reasons.length > 0,
+    `${reasons.length} reasons`
+  );
+  const blaming = reasons.filter((r) => /^once you|when you |after you |complete your/i.test(r));
+  check(
+    "31 — ⚠⚠⚠ no reason blames the member for a missing mechanism",
+    blaming.length === 0,
+    blaming.length ? blaming.join(" · ") : "every reason names the truncation"
   );
 }
 
