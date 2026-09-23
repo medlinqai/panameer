@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StatFigureRow } from "@/components/console/StatFigureRow";
 import { FlipCard } from "@/components/motion/FlipCard";
 import { ActionBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
+import { Honeycomb, type HoneyCell } from "@/components/console/Honeycomb";
 import type { Figure, Statistics } from "@/lib/statistics";
 import "@/components/motion/flip-card.css";
 
@@ -107,7 +108,13 @@ export function StatisticsCards({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* ⚠⚠ THE HONEYCOMB LEADS (WS-B) — one cell per area, on `E600` WS-D's
+          shared 15-second rebuild. ⚠⚠⚠ ITS CELLS ARE DERIVED FROM THE SAME `s`
+          THE CARDS BELOW DRAW, so a cell and its card cannot disagree about the
+          same member in the same render. */}
+      <Honeycomb cells={honeyCells(s)} />
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {/*
           ⚠⚠ YOUR PROFILE — USAGE ONLY, NO COMPLETION (correction 2).
           ⚠ Scott: *"Statistics measures what the application DID with the
@@ -359,6 +366,69 @@ export function StatisticsCards({
    this function never runs). ⚠⚠⚠ A BRANCH NO RENDER CAN REACH IS PROVEN BY
    ASSERTION OR IT IS NOT PROVEN — the alternative is seeding, and seeding is
    forbidden during the test window. */
+/**
+ * ── ⚠⚠⚠ ONE CELL PER AREA, DERIVED FROM THE FIGURES THE CARDS DRAW ───────
+ *
+ * ⚠ Each area's HEADLINE figure — the one a member would name if asked how that
+ * area is going. ⚠⚠ THEY COME FROM `s`, NOT FROM A SECOND QUERY: a honeycomb
+ * that counted for itself would be a second definition of every figure on the
+ * page, and the two would disagree the first time one of them changed
+ * (`E585`).
+ *
+ * ⚠⚠⚠ `Teaching` FOLLOWS THE CARD'S RULE AND HIDES ON THE **CAPABILITY**, not
+ * on emptiness — a teacher with no learners still gets a cell showing `0`,
+ * because a zero is information. Somebody who does not teach gets no cell,
+ * because the area does not exist for them.
+ *
+ * ⚠ AN UNCOUNTABLE HEADLINE IS PASSED THROUGH AS THE DASH IT IS. `Your
+ * Profile`'s headline is views, which is uncountable for a member with no
+ * provider profile — that cell then carries its reason, and the honeycomb has
+ * a worked example of the two-dashes rule on ordinary data rather than only in
+ * a gate.
+ */
+export function honeyCells(s: Statistics): HoneyCell[] {
+  const cells: HoneyCell[] = [
+    {
+      key: "profile",
+      label: "Your Profile",
+      figure: s.profile.views,
+      counts: "profile views",
+      href: "/profile",
+    },
+    {
+      key: "network",
+      label: "Your Network",
+      figure: s.network.colleagues,
+      counts: "colleagues",
+      href: "/community",
+    },
+    {
+      key: "learning",
+      label: "Your Learning",
+      figure: s.learning.lessonsCompleted,
+      counts: "lessons completed",
+      href: "/learn",
+    },
+    {
+      key: "work",
+      label: "Your Work",
+      figure: s.work.workOrders,
+      counts: "work orders",
+      href: "/find-work",
+    },
+  ];
+  if (s.teaching.teaches) {
+    cells.push({
+      key: "teaching",
+      label: "Teaching",
+      figure: s.teaching.learners,
+      counts: "learners",
+      href: "/learn",
+    });
+  }
+  return cells;
+}
+
 /**
  * ⚠⚠ THE WORK CARD'S CREDIT LINE — the same rule as the network one: a COUNT,
  * never a compliment, and it reads only the figures the card prints.

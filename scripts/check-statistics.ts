@@ -67,6 +67,8 @@ const FLIP = "src/components/motion/FlipCard.tsx";
 const FLIPCSS = "src/components/motion/flip-card.css";
 const LIB = "src/lib/statistics.ts";
 const PAGE = "src/app/(app)/stats/page.tsx";
+const HIVE = "src/components/console/Honeycomb.tsx";
+const HIVECSS = "src/components/console/honeycomb.css";
 
 const src = {
   cards: stripTs(read(CARDS)),
@@ -76,6 +78,8 @@ const src = {
   flipcss: read(FLIPCSS).replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")),
   lib: stripTs(read(LIB)),
   page: stripTs(read(PAGE)),
+  hive: stripTs(read(HIVE)),
+  hivecss: read(HIVECSS).replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")),
 };
 
 /* ⚠⚠ `E586` — A GATE WITH NO INPUTS MUST FAIL. Every assertion below reads one
@@ -517,6 +521,132 @@ check(
   "19 — ⚠⚠ …and the score page is still reachable from here",
   /href="\/community\/score"/.test(src.page),
   "the door survived the figure"
+);
+
+
+/* ── 5 · THE HONEYCOMB (WS-B) ───────────────────────────────────────────── */
+
+/**
+ * ⚠⚠⚠ THE REBUILD CANNOT CHANGE A NUMBER, RATHER THAN MERELY HAPPENING NOT TO.
+ * ⚠ The cells arrive as a PROP and the component holds no fetch, no refresh and
+ * no state carrying a figure. ⚠⚠ `useRebuild` RETURNS A COUNTER, AND A COUNTER
+ * CANNOT CARRY DATA — that is the structural guarantee, and this assertion is
+ * what stops somebody adding a refresh to "keep it live".
+ */
+check(
+  "20 — ⚠⚠⚠ the honeycomb fetches nothing, so a rebuild cannot change a figure",
+  !/\bfetch\(|router\.refresh|useSWR|revalidate/.test(src.hive),
+  "no data path in the component"
+);
+check(
+  "20 — ⚠⚠ it uses the SHARED rebuild clock, not a second timer",
+  /useRebuild\(/.test(src.hive) && !/setInterval|setTimeout/.test(src.hive),
+  "E600 WS-D's clock, inherited"
+);
+
+/**
+ * ⚠⚠ THE ORDER IS DETERMINISTIC AT CYCLE 0. ⚠⚠⚠ A `Math.random()` SHUFFLE WOULD
+ * RENDER ONE ORDER ON THE SERVER AND ANOTHER IN THE BROWSER — a hydration
+ * error, which a reader sees as the page flickering before it settles.
+ */
+check(
+  "21 — ⚠⚠⚠ the rearrange is deterministic, never random",
+  !/Math\.random/.test(src.hive) && /rotate\(cells, cycle\)/.test(src.hive),
+  "rotation by cycle; cycle 0 is the identity"
+);
+
+/**
+ * ⚠⚠⚠ REDUCED MOTION FREEZES THE **ORDER**, NOT ONLY THE FADE. ⚠ Cells silently
+ * swapping places with no transition is the WORST version of motion for a
+ * reader who asked for none — it happens with nothing to explain it.
+ */
+check(
+  "22 — ⚠⚠⚠ reduced motion freezes the order itself",
+  /still \? cells : rotate\(/.test(src.hive),
+  "a still picture, not a silent swap"
+);
+check(
+  "22 — ⚠⚠ …and there is no countdown for that reader",
+  /RebuildBadge/.test(src.hive) && /secondsLeft === null/.test(stripTs(read("src/components/motion/Rebuild.tsx"))),
+  "the badge renders nothing when the picture is still"
+);
+
+/**
+ * ⚠⚠⚠ THE TWO DASHES DIFFER IN THREE WAYS AT ONCE — glyph, outline and reason.
+ * ⚠ SCOTT: *"A dashed cell meaning 'nothing here' and one meaning 'we can't
+ * count this' must not look identical."* ⚠⚠ ONE CUE IS NOT ENOUGH: colour alone
+ * fails for a colour-blind reader, a border alone fails in a low-contrast
+ * screenshot. **The distinction survives with the colour removed.**
+ */
+check(
+  "23 — ⚠ cue 1 — the glyph: a measured zero is never softened into a dash",
+  /counted \? fig\.toLocaleString/.test(src.hive),
+  "0 prints as 0"
+);
+/*
+  ⚠⚠⚠ CUE 2 IS THE **FILL**, AND THE BORDER IS ONLY THE SECOND HALF OF IT.
+  ⚠ `clip-path` clips the border with the box, so on a hexagon a dashed border
+  survives ONLY on the two straight sides — it rendered as two faint ticks.
+  ⚠⚠ A FILL IS CLIPPED **TO** THE SHAPE RATHER THAN AWAY, so the hatch is what
+  actually carries the distinction on screen. ⚠⚠⚠ THIS ASSERTION EXISTS
+  BECAUSE THE BORDER-ONLY VERSION PASSED ITS GATE AND STILL FAILED THE
+  SCREENSHOT.
+*/
+check(
+  "23 — ⚠⚠⚠ cue 2a — the FILL: an uncountable cell is hatched, a counted one solid",
+  /\[data-counted="no"\]::before\s*\{[^}]*repeating-linear-gradient/.test(src.hivecss),
+  "a fill survives clip-path; a border does not"
+);
+check(
+  "23 — ⚠⚠ cue 2b — the outline is dashed as well, where clipping lets it show",
+  /\[data-counted="no"\]::before\s*\{[^}]*border-style:\s*dashed/.test(src.hivecss),
+  "border-style differs"
+);
+check(
+  "23 — ⚠⚠⚠ cue 3 — the reason, and it cannot be omitted",
+  /\{fig\.uncounted\}/.test(src.hive),
+  "the cell reads the reason off the figure itself"
+);
+check(
+  "23 — ⚠⚠ a screen reader gets the distinction in WORDS, not in a border",
+  /not counted/.test(src.hive) && /aria-label=/.test(src.hive),
+  "the dashed outline is invisible to assistive tech"
+);
+
+/**
+ * ⚠⚠⚠ THE DERIVED LINE MUST NOT MERGE "EMPTY" WITH "UNCOUNTABLE" — the exact
+ * distinction the cells above are careful about. ⚠ Found in the WS-B render,
+ * not in review: a buyer has three measured zeros AND an uncountable Profile
+ * cell, and the first version reported all four as empty.
+ */
+check(
+  "24 — ⚠⚠⚠ the all-zero sentence still names the areas nobody could count",
+  /could not be counted at all/.test(src.hive),
+  "empty and unmeasured stay apart"
+);
+check(
+  "24 — ⚠⚠ an uncountable area never votes for busiest or quietest",
+  /cells\.filter\(\s*\(c\): c is HoneyCell & \{ figure: number \} => isCounted/.test(
+    src.hive.replace(/\s+/g, " ")
+  ) || /isCounted\(c\.figure\)/.test(src.hive),
+  "only counted figures are compared"
+);
+check(
+  "24 — ⚠ the line states what it compared, rather than implying more",
+  /Compared by count only/.test(src.hive),
+  "areas count different things"
+);
+
+/**
+ * ⚠⚠ THE HONEYCOMB'S FIGURES COME FROM THE SAME `s` THE CARDS DRAW. ⚠⚠⚠ A
+ * SECOND QUERY WOULD BE A SECOND DEFINITION OF EVERY FIGURE ON THE PAGE, and
+ * the two would disagree the first time one of them changed (`E585`).
+ */
+check(
+  "25 — ⚠⚠⚠ the cells are derived from the cards' own figures",
+  /export function honeyCells\(s: Statistics\)/.test(src.cards) &&
+    !/prisma\./.test(src.hive),
+  "one source for both"
 );
 
 console.log(
