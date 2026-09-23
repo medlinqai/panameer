@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pathHasPlayableLessons, pathIsOpenTo } from "@/lib/learn";
 import { z } from "zod";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -64,7 +65,20 @@ export async function POST(request: Request) {
 
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
-    select: { id: true, title: true, slug: true },
+    /* ⚠ THE LESSON ROWS COME BACK SO `pathHasPlayableLessons` CAN BE ASKED —
+       the same helper discovery uses, not a second query shaped like it. */
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      courses: {
+        select: {
+          sections: {
+            select: { lessons: { select: { vimeo_ref: true, production_status: true } } },
+          },
+        },
+      },
+    },
   });
   if (!path) {
     return NextResponse.json({ error: "That learning path isn't available." }, { status: 404 });
@@ -75,6 +89,41 @@ export async function POST(request: Request) {
       where: { user_id: viewer.userId, learning_path_id: pathId },
     });
     return NextResponse.json({ ok: true, enrolled: false });
+  }
+
+  /*
+    ── ⚠⚠⚠ YOU CANNOT ENROL IN A PATH YOU CANNOT START (`P2-A4-E608`) ────────
+
+    ⚠ SCOTT, 2026-09-23: *"The enrolment clause in `pathIsOpenTo` exists to
+    protect someone who enrolled BEFORE the videos went missing — not to admit
+    new members. Enrolling in a path you cannot start is a dead end, and
+    enrolment then becomes the thing that keeps it open to you."*
+
+    ⚠⚠ SO THE SECOND ARGUMENT IS `false`, DELIBERATELY. It is not a mistake and
+    it is not shorthand for "ignore that clause": it is the statement that **a
+    new enrolment does not get to count itself as the reason it is allowed.**
+    Passing `true` here would make the rule circular — enrol, therefore
+    enrollable.
+
+    ⚠ IT SITS AFTER THE UN-ENROL BRANCH. Somebody already enrolled in a path
+    whose videos vanished must still be able to LEAVE it; blocking that would
+    trap them in exactly the dead end this prevents.
+    ⚠ `pathIsOpenTo` AND `pathHasPlayableLessons` ARE BOTH IMPORTED. The
+    condition is not restated here — a hand-rolled copy agrees until the rule
+    changes, which is what cost two gates at `E603`.
+
+    ⚠ MEASURED 2026-09-23: **11 of 23 published paths are in this state**, every
+    one because not a single lesson has a `vimeo_ref`.
+  */
+  if (!pathIsOpenTo(pathHasPlayableLessons(path), false)) {
+    return NextResponse.json(
+      {
+        error:
+          "That path has no videos yet, so there is nothing to start. You can still read its outline.",
+        code: "PATH_NOT_READY",
+      },
+      { status: 409 }
+    );
   }
 
   // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
