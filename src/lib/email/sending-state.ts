@@ -1,3 +1,4 @@
+import { NON_PRODUCTION_ALLOWLIST } from "@/lib/email/non-production-allowlist";
 import { EMAIL_FROM, mailCaptureEnabled, sendingEnvironment } from "@/lib/resend";
 
 /**
@@ -32,6 +33,18 @@ export type SendingState = {
   alarming: boolean;
   /** Still on Resend's shared sandbox, which only delivers to the account owner. */
   sandbox: boolean;
+  /**
+   * ── ⚠⚠⚠ THE CONTAINMENT, AS THIS ENVIRONMENT WOULD ACTUALLY APPLY IT ─────
+   * ⚠ `true` when the transport will REFUSE every recipient that is not named
+   * on the non-production allow-list — i.e. anywhere that is not production.
+   * ⚠⚠ SCOTT: *"The card must state what the transport would do in the
+   * environment it is actually running in."* **A static check cannot see an
+   * environment it does not run in; this is read at request time, in the
+   * environment being asked about.**
+   */
+  containedToAllowlist: boolean;
+  /** ⚠ How many addresses are named. `0` is the intended resting state. */
+  allowlistCount: number;
 };
 
 export function sendingState(): SendingState {
@@ -50,13 +63,26 @@ export function sendingState(): SendingState {
      sender that physically refuses everyone but the account owner. */
   const live = !captured && !sandbox;
 
+  /* ⚠⚠ THE SAME PREDICATE THE TRANSPORT USES — `environment !== "production"`
+     — read from the same `sendingEnvironment()`. ⚠⚠⚠ IF THIS AND THE TRANSPORT
+     EVER DISAGREE, THE CARD IS LYING, and a line that lies is worse than no
+     line (the build-line lesson, 2026-09-17). */
+  const containedToAllowlist = environment !== "production";
+
   return {
     environment,
     domain,
     captured,
     live,
     sandbox,
-    alarming: live && environment === "preview",
+    containedToAllowlist,
+    allowlistCount: NON_PRODUCTION_ALLOWLIST.length,
+    /* ⚠ `alarming` NARROWS: a live preview is no longer the unguarded case it
+       was, because the transport now refuses every unnamed recipient there.
+       ⚠⚠ IT IS STILL ALARMING IF SOMEBODY HAS NAMED ADDRESSES — that is a
+       preview that CAN reach real people, which is exactly what nobody
+       intends by default. */
+    alarming: live && environment === "preview" && NON_PRODUCTION_ALLOWLIST.length > 0,
   };
 }
 

@@ -292,19 +292,59 @@ const SRC = walk("src");
     superseded.length === 0,
     superseded.map((h) => h.path).join(", ")
   );
-  const v2 = SRC.filter((f) =>
-    /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-lockup-ink\.png`/.test(f.code)
+  /*
+    ── ⚠⚠⚠ THE SHAPE, NOT THE TALLY (`P2-ALL-E607`, `E587`) ─────────────────
+
+    ⚠ THESE TWO ASSERTED LITERAL COUNTS — *"(6 files)"* and *"exactly 7 call
+    sites"* — and they ROTTED the moment a seventh sender was added. They had
+    been failing on trunk, red for a correct change, saying nothing about the
+    rule they were meant to hold.
+    ⚠⚠ **A GATE THAT ASSERTS A LITERAL COUNT ROTS INTO A FALSE RED, AND A FALSE
+    RED TRAINS PEOPLE TO IGNORE IT.** That is worse than the gate not existing:
+    a red nobody believes is a red nobody reads.
+
+    ⚠⚠⚠ THE RULE THEY WERE REACHING FOR IS **"every sender that passes a logo
+    passes the v2 lockup"** — which is true of six senders, seven, or seventy,
+    and fails the instant one points somewhere else. ⚠ The count is still
+    PRINTED, because watching it move is useful; it is simply not asserted.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   check("4 — the email senders hotlink the v2 lockup (6 files)", v2.length === 6, …);
+    //   check("4 — exactly 7 call sites", sites === 7, `${sites}`);
+  */
+  const V2 = "/brand/panameer-lockup-ink.png";
+  /*
+    ⚠⚠⚠ SCOPED BY THE VALUE'S SHAPE — a `logoUrl` pointing at a `/brand/` ASSET.
+
+    ⚠ TWO WRONG POPULATIONS BEFORE THIS ONE, AND BOTH ARE WORTH RECORDING:
+      · every `logoUrl:` in `src/` — flagged twenty-one, almost all of them
+        company branding and employer logos on the PROFILE. A gate is only as
+        good as the population it reads.
+      · files calling `emailShell(` — found FIFTEEN sender files and ZERO logo
+        call sites, because the senders pass `logoUrl` to their TEMPLATE
+        helpers, not to the shell. ⚠⚠ THAT ONE WOULD HAVE PASSED VACUOUSLY
+        WITHOUT THE `E586` COUNT-ABOVE-ZERO CHECK BESIDE IT.
+    ⚠ A brand asset is what this rule is about; `e.logo_url` and
+    `person.company.logo_url` are member data and are none of its business.
+  */
+  const logoUrls = SRC.flatMap((f) =>
+    [...f.code.matchAll(/logoUrl:\s*([^,\n]+)/g)]
+      .map((m) => ({ path: f.path, expr: m[1].trim() }))
+      .filter((l) => l.expr.includes("/brand/"))
   );
   check(
-    "4 — the email senders hotlink the v2 lockup (6 files)",
-    v2.length === 6,
-    `${v2.length} files: ${v2.map((h) => h.path).join(", ")}`
+    "4 — ⚠ the sweep found senders passing a logo (E586)",
+    logoUrls.length > 0,
+    `${logoUrls.length} brand-asset call sites across ${new Set(logoUrls.map((l) => l.path)).size} files`
   );
-  const sites = SRC.reduce(
-    (n, f) => n + [...f.code.matchAll(/\/brand\/panameer-lockup-ink\.png`/g)].length,
-    0
+  const wrong = logoUrls.filter((l) => !l.expr.includes(V2));
+  check(
+    "4 — ⚠⚠⚠ every sender's logoUrl is the v2 lockup",
+    wrong.length === 0,
+    wrong.length
+      ? wrong.map((w) => `${w.path}: ${w.expr}`).join(" · ")
+      : `${logoUrls.length} call sites, all ${V2}`
   );
-  check("4 — exactly 7 call sites", sites === 7, `${sites}`);
   /* ⚠⚠ AND THE MARK THE SENDERS NAME MUST BE IN THE INTRINSIC TABLE, or §2's
      derivation silently drops the height attribute on every email. This is the
      assertion that ties the repoint to the geometry. */

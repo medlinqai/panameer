@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable, playableProgress } from "@/lib/learn";
+import { isPlayable, pathIsOpenTo, playableProgress } from "@/lib/learn";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -79,6 +79,9 @@ export type AppPathView = {
   courses: AppCourse[];
   /** Where to send Resume; null when everything is watched. */
   nextLesson: { id: string; title: string; position: number; playable: boolean } | null;
+  /** ⚠ `false` = PUBLISHED but nothing in it plays. The page says so; it does
+   *  not 404, because links to these slugs already exist. */
+  ready: boolean;
   test: {
     /** ⚠ READ FROM THE ROW, never printed as 70 / 3. Null when none exists. */
     passThreshold: number | null;
@@ -309,6 +312,11 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
     /* ⚠ `E364` WS-5 — playable denominator, path level. */
     percent: playableProgress(allLessons, done).percent,
     enrolled: Boolean(enrolment),
+    /* ⚠⚠⚠ THE SAME PREDICATE DISCOVERY USES (`E607`). This was the THIRD
+       selection of a path and the second that admitted one discovery hides:
+       `findFirst({ where: { slug, status: "PUBLISHED" } })`, no playable
+       clause. ⚠ `pathIsOpenTo` is imported, never restated. */
+    ready: pathIsOpenTo(allLessons.some(isPlayable), Boolean(enrolment)),
     instructors: pathInstructors,
     courses,
     nextLesson:

@@ -109,6 +109,68 @@ function routes(dir = "src/app", out: string[] = []): string[] {
   check("3 — ⚠ no Learn route appeared unannounced",
     added.length === 0, added.length ? `NEW: ${added.join(", ")}` : "none");
 
+
+  /* ── ⚠⚠⚠ ONE DEFINITION OF "A PATH A MEMBER CAN OPEN" (`E607`) ────────── */
+  /**
+   * ⚠ SCOTT: *"Assert that no path-rendering route admits a path that discovery
+   * hides, derived on both sides rather than listed."*
+   *
+   * ⚠⚠ BOTH SIDES ARE COMPUTED FROM THE DATABASE, NOT NAMED. `hidden` is every
+   * PUBLISHED path discovery drops; the assertion then asks each path-rendering
+   * entry point what it returns for that slug. ⚠⚠⚠ A LIST WOULD HAVE TO BE
+   * EDITED THE DAY A VIDEO IS UPLOADED — and the whole point of the filter is
+   * that a path returns on its own when one is.
+   */
+  {
+    const { getLearnPath } = await import("@/lib/learn-home");
+    const { getAppPath } = await import("@/lib/learn-path-app");
+    const { pathIsOpenTo } = await import("@/lib/learn");
+
+    const all = await prisma.learningPath.findMany({
+      where: { status: "PUBLISHED" },
+      select: {
+        slug: true,
+        courses: { select: { sections: { select: { lessons: {
+          select: { vimeo_ref: true, production_status: true } } } } } },
+      },
+    });
+    const { pathHasPlayableLessons } = await import("@/lib/learn");
+    const hidden = all.filter((p) => !pathIsOpenTo(pathHasPlayableLessons(p), false));
+    check(
+      "4 — ⚠ discovery hides at least one path, so this assertion has inputs (E586)",
+      hidden.length > 0 && hidden.length < all.length,
+      `${hidden.length} hidden of ${all.length} published`
+    );
+
+    /* ⚠⚠ A VISITOR — `null` userId, so the enrolment clause cannot rescue it. */
+    const leaks: string[] = [];
+    for (const p of hidden) {
+      const view = await getLearnPath(p.slug, null);
+      if (view && view.ready) leaks.push(`getLearnPath(${p.slug}).ready === true`);
+      const app = await getAppPath(p.slug, "00000000-0000-0000-0000-000000000000");
+      if (app && app.ready) leaks.push(`getAppPath(${p.slug}).ready === true`);
+    }
+    check(
+      "4 — ⚠⚠⚠ no path-rendering route reports a hidden path as ready",
+      leaks.length === 0,
+      leaks.length ? leaks.slice(0, 3).join(" · ") : `${hidden.length} hidden paths, all reported not-ready by both routes`
+    );
+
+    /* ⚠ AND A PATH DISCOVERY SHOWS MUST REPORT READY — or the assertion above
+       passes by reporting EVERYTHING not-ready, which is `E586` inverted. */
+    const shown = all.filter((p) => pathIsOpenTo(pathHasPlayableLessons(p), false));
+    const wrong: string[] = [];
+    for (const p of shown.slice(0, 5)) {
+      const view = await getLearnPath(p.slug, null);
+      if (view && !view.ready) wrong.push(p.slug);
+    }
+    check(
+      "4 — ⚠⚠ …and a path discovery SHOWS is reported ready",
+      wrong.length === 0 && shown.length > 0,
+      wrong.length ? `reported not-ready: ${wrong.join(", ")}` : `${Math.min(shown.length, 5)} of ${shown.length} startable paths checked`
+    );
+  }
+
   if (failures.length) {
     console.error(`\ncheck:learn-live — ${failures.length} FAILED, ${pass} passed\n`);
     for (const f of failures) console.error(`  ✗ ${f}`);
