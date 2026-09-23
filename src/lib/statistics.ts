@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { growthScore, windowRange, type GrowthWindow } from "@/lib/growth-score";
+/* ⚠⚠⚠ ONE INSTRUCTOR PREDICATE AND ONE FORUM QUERY, IMPORTED NOT COPIED.
+   ⚠ `check:forums` §3 and `check:community` GUARD 2 both went red on this file
+   for the same reason: it had hand-rolled its own copies of logic that already
+   existed elsewhere. ⚠⚠ BOTH GATES WERE RIGHT AND THIS MODULE WAS WRONG. */
+import { teachesPathWhere } from "@/lib/learn-home";
+import { countThreadsWaitingOn } from "@/lib/forums";
 import { type Figure, type TrendPeriod, trendBuckets, countInBuckets } from "@/lib/figure";
 
 /*
@@ -155,12 +161,19 @@ export async function getStatistics(
    *  would make the period links silently re-count the front faces too. */
   trend: TrendPeriod = "90d"
 ): Promise<Statistics> {
-  const teachesWhere = {
-    OR: [
-      { expert_person_id: personId },
-      { courses: { some: { sections: { some: { lessons: { some: { expert_person_id: personId } } } } } } },
-    ],
-  };
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — a hand-rolled SECOND COPY of
+     `teachesPathWhere`, which `check:forums` §3 exists to catch:
+     //   const teachesWhere = {
+     //     OR: [
+     //       { expert_person_id: personId },
+     //       { courses: { some: { sections: { some: { lessons: { some: { expert_person_id: personId } } } } } } },
+     //     ],
+     //   };
+     ⚠⚠ THE PREDICATE IS EXPORTED ONCE, FROM `learn-home.ts`, and `E383`
+     extracted it precisely so a second copy could not drift. ⚠⚠⚠ A COPY THAT
+     AGREES TODAY IS STILL A SECOND DEFINITION — and this one would have locked
+     a teacher out of her own lessons the moment the rule changed. */
+  const teachesWhere = teachesPathWhere(personId);
 
   const [taughtPaths, score] = await Promise.all([
     prisma.learningPath.findMany({ where: teachesWhere, select: { id: true } }),
@@ -298,44 +311,9 @@ export async function getStatistics(
           where: { lesson: { section: { course: { learning_path_id: { in: pathIds } } } } },
         }),
         prisma.forumThread.count({ where: { board: { learning_path_id: { in: pathIds } } } }),
-        /*
-          ── ⚠⚠⚠ QUESTIONS WAITING ON YOU — SCOTT'S DEFINITION, 2026-09-23 ────
-
-          ⚠ *"A thread in a path you teach, where the teacher has not replied,
-          AND no reply is marked helpful."* ⚠⚠ BOTH CLAUSES ARE REQUIRED, and
-          each answers a different way the queue would otherwise lie:
-            · ⚠ WITHOUT the teacher clause, a thread somebody ELSE resolved
-              would still sit in the teacher's queue — it is not waiting on
-              them.
-            · ⚠⚠ WITHOUT the helpful clause, a thread answered well but never
-              marked would sit there FOREVER. `marked_helpful_at` is set by the
-              ASKER, so it can simply never arrive.
-
-          ⚠⚠⚠ I PREVIOUSLY DECLARED THIS UNCOUNTABLE AND THAT WAS WRONG — the
-          same error as `proposalsSent`: I searched for a noun (`answered`)
-          instead of the BEHAVIOUR. `ForumPost.marked_helpful_at` is exactly a
-          resolution signal, documented in the schema as *"did this answer
-          answer"*, and `reply_count` and `instructor_confirmed_at` sit beside
-          it. ⚠ **AN ABSENT NAME IS NOT AN ABSENT THING.**
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   questionsWaiting: { uncounted: "A thread does not record whether it is answered" },
-
-          ⚠⚠ TWO `posts` FILTERS, SO THEY GO IN AN `AND` — one object cannot
-          carry the key twice, and merging them into a single `none` would ask
-          a different question: *"no post is BOTH the teacher's and helpful"*,
-          which is true of almost every thread.
-          ⚠ `ForumThread` holds ZERO rows, so this renders a measured `0`. That
-          is a real zero and must print as `0`, never as a dash.
-        */
-        prisma.forumThread.count({
-          where: {
-            board: { learning_path_id: { in: pathIds } },
-            AND: [
-              { posts: { none: { author_id: personId } } },
-              { posts: { none: { marked_helpful_at: { not: null } } } },
-            ],
-          },
-        }),
+        /* ⚠⚠ THE QUERY LIVES IN `lib/forums.ts` — see its header for Scott's
+           definition and for why `check:community` GUARD 2 moved it there. */
+        countThreadsWaitingOn(personId, pathIds),
       ])
     : [0, 0, 0, 0];
 
