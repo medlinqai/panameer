@@ -29,11 +29,27 @@ export function MailHealth() {
       ? "border-amber-300 bg-amber-50"
       : "border-line bg-bg-soft";
 
+  /* ⚠⚠⚠ THE CONTAINMENT IS THE HEADLINE WHEREVER IT APPLIES (`E607`).
+     ⚠ SCOTT: *"The card must state what the transport would do in the
+     environment it is actually running in."* An environment that refuses every
+     unnamed recipient must not read *"Real sending: LIVE"* — that sentence was
+     true of the sender and false about the reach, which is the exact confusion
+     `check:email`'s source-reading assertion created for two months.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const headline = s.captured
+     //     ? "Captured — no mail leaves this environment"
+     //     : s.sandbox
+     //       ? "Sandbox — only the Resend account owner can receive"
+     //       : `Real sending: LIVE from ${s.environment}`; */
   const headline = s.captured
     ? "Captured — no mail leaves this environment"
     : s.sandbox
       ? "Sandbox — only the Resend account owner can receive"
-      : `Real sending: LIVE from ${s.environment}`;
+      : s.containedToAllowlist
+        ? s.allowlistCount === 0
+          ? `Contained — ${s.environment} is not production, and no address is allow-listed, so every recipient is refused`
+          : `Contained — ${s.environment} is not production; only ${s.allowlistCount} allow-listed address${s.allowlistCount === 1 ? "" : "es"} can be reached`
+        : `Real sending: LIVE from ${s.environment}`;
 
   return (
     <section className={`rounded-brand border p-5 ${tone}`}>

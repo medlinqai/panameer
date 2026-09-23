@@ -7,6 +7,7 @@ import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { undeliverableRule } from "@/lib/email/undeliverable-domains";
+import { allowedOutsideProduction } from "@/lib/email/non-production-allowlist";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
 /**
@@ -275,12 +276,48 @@ export async function sendEmail({
     `E526`'s bulk invite is ~89 hard bounces in one run against a sending domain
     days old.
   */
+  /*
+    ── ⚠⚠⚠ OUTSIDE PRODUCTION, A RECIPIENT MUST BE NAMED (`P2-ALL-E607`) ──────
+
+    ⚠ MEASURED: `EMAIL_FROM` has been set in Vercel PRODUCTION **and PREVIEW**
+    since 2026-07-23; `MAIL_CAPTURE` is a local-only variable and is not in
+    Vercel at all; **previews share the one production database.** So any branch
+    deploy could reach any real address with nothing in front of it.
+
+    ⚠⚠ `sendingEnvironment()` ALREADY EXISTED AND THE TRANSPORT ALREADY CALLED
+    IT — at line ~244, to stamp the receipt, AFTER the send. **It knew where it
+    was running and only ever said so afterwards.** This asks the same function
+    the same question before Resend is touched.
+
+    ⚠ IT SITS BESIDE THE UNDELIVERABLE-DOMAIN REFUSAL DELIBERATELY: same shape,
+    same `status: "refused"`, same absent `resend_message_id` because Resend
+    never saw it, same loud `console.warn`. **A skip that records nothing is the
+    defect that whole brief existed to kill.**
+
+    ⚠⚠⚠ PRODUCTION IS UNTOUCHED. `sendingEnvironment()` returns `"production"`
+    only for `VERCEL_ENV === "production"`, and this branch cannot run there.
+    A real tester is on production today; this must be invisible to them.
+
+    ⚠ ORDER: after the undeliverable-domain check, because an `example.com`
+    address is refusable everywhere and the cheaper, more specific reason should
+    be the one reported.
+  */
+  const env = sendingEnvironment();
+  const isProduction = env === "production";
+
   const deliverable: string[] = [];
   const refused: string[] = [];
   for (const r of recipients) {
     const rule = undeliverableRule(r);
     if (rule) {
       console.warn(`[mail] REFUSED (undeliverable domain, matched "${rule}") ${subject} -> ${r}`);
+      refused.push(r);
+      continue;
+    }
+    if (!isProduction && !allowedOutsideProduction(r)) {
+      console.warn(
+        `[mail] REFUSED (environment "${env}" is not production and ${r} is not on the non-production allow-list) ${subject}`
+      );
       refused.push(r);
       continue;
     }
