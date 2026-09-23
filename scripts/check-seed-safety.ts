@@ -37,7 +37,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { SURVIVORS } from "../prisma/reset/survivors-spec";
 
 let pass = 0;
 const failures: string[] = [];
@@ -51,39 +50,58 @@ const prisma = new PrismaClient({
 });
 
 /*
-  ── ⚠⚠⚠ KNOWN-OPEN — FOUR SEEDED PERSONAS THAT ARE ALSO SURVIVORS ─────────
+  ── ⚠⚠⚠ HOW YOU TELL A SEEDED PERSONA FROM A REAL PERSON ──────────────────
 
-  ⚠ THE RULE BELOW IS ASSERTED IN FULL, AND IT CURRENTLY FINDS FOUR MORE
-  ADDRESSES BESIDES SCOTT'S. They are NOT the same kind of thing, which is why
-  they are listed rather than deleted:
+  ⚠⚠⚠ **YOU CANNOT, FROM THE DATA. THAT IS THE HONEST ANSWER AND IT SHAPES THIS
+  WHOLE GATE.** A seeded persona and a real human's account are the same rows:
+  a `User` with an email and a hash, a `Person`, sometimes a provider profile.
+  ⚠ Nothing in the schema records *"a human owns this and chose this password."*
+  ⚠⚠ A DOMAIN RULE WOULD BE A GUESS — `@panameer.com` holds both the seeded
+  admin and real staff addresses, and a real tester on `@straterp.com` would be
+  waved straight through.
 
-    `iamscottwalls@outlook.com`  a REAL PERSON'S PERSONAL ADDRESS  → REMOVED
-    `sw_user2/3/4@straterp.com`  seeded personas that hold lessons → known-open
-    `admin@panameer.com`         the seeded admin (named "Scott Walls") → known-open
+  ⚠ **SO THE DISTINCTION IS A NAMED LIST, AND IT IS SAID OUT LOUD RATHER THAN
+  DISGUISED AS A HEURISTIC.** Two lists, each short, each commented:
 
-  ⚠⚠ REMOVING THE OTHER FOUR HAS A CONSEQUENCE AND IS SCOTT'S CALL:
-  `admin@panameer.com` is the ONLY entry in the `admins` group, and the seed
-  creates the system admin from it — **delete it and a fresh database has no
-  admin at all.** ⚠ The three `sw_user` personas are the virtual-firm cast the
-  demo data is built around.
+  ⚠⚠ **1. `REAL_ACCOUNTS` — AND IT IS NOT DECLARED HERE.** It lives in
+  `scripts/build-test-users.py`, the GENERATOR, and this gate parses it back
+  out. ⚠⚠⚠ ONE DEFINITION, NOT TWO: a second copy here is `E585`'s shape — one
+  concept stated twice and kept in step by hand — and it is the exact mistake
+  this brief has already paid for three times.
 
-  ⚠⚠⚠ THE TWO SAFEGUARDS THAT MAKE A KNOWN-OPEN SAFE, BOTH REQUIRED (the
-  `check:email` pattern):
-    1. **A KNOWN-OPEN ENTRY THAT STARTS *PASSING* FAILS THE GATE**, so it cannot
-       rot silently once somebody does remove one.
-    2. **EACH CARRIES THE DATE IT WAS OPENED AND ITS AGE IS PRINTED EVERY RUN**,
-       so this cannot become a parking lot.
-  ⚠ Scott's own address is deliberately NOT here: it is enforced hard.
+  ⚠⚠ **2. `APPROVED_PERSONAS` — seeded cast that legitimately belongs in the
+  file**, even though they are SURVIVORS and hold Learn lessons.
+  ⚠ SCOTT'S RULE, 2026-09-23: *"A seeded persona MAY appear in
+  test-users.json. A real person's account MAY NOT."*
+
+  ── ⚠⚠ AND THE DERIVATION STILL GUARDS THE GENERAL CASE ───────────────────
+
+  ⚠ The named list only knows about today's people. ⚠⚠⚠ SO THE PROTECTED SET IS
+  STILL DERIVED FROM THE DATABASE AND STILL ASSERTED — **any protected account
+  in the file that is NOT an approved persona fails.** That is what catches the
+  NEXT real person who starts teaching a lesson, without anyone remembering to
+  add them anywhere.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the first version asserted that no
+  SURVIVOR appears in the file at all:
+  //   const survivorHits = survivorEmails.filter((e) => seeded.has(e));
+  //   check("1 — no SURVIVOR address appears in test-users.json", …)
+  ⚠⚠ **THAT WAS WRONG AND SCOTT RULED IT SO: THREE SURVIVORS BELONG IN THAT FILE
+  BY DESIGN.** Survivorship says "the reset must keep this row", not "a human
+  owns it" — they are different questions and the gate was asking the wrong one.
 */
-const KNOWN_OPEN: { email: string; since: string; why: string }[] = [
-  { email: "sw_user2@straterp.com", since: "2026-09-23", why: "seeded persona, holds Learn lessons" },
-  { email: "sw_user3@straterp.com", since: "2026-09-23", why: "seeded persona, holds Learn lessons" },
-  { email: "sw_user4@straterp.com", since: "2026-09-23", why: "seeded persona, holds Learn lessons" },
-  { email: "admin@panameer.com", since: "2026-09-23", why: "the ONLY admins entry — removing it leaves a fresh database with no admin" },
+const APPROVED_PERSONAS: { email: string; why: string }[] = [
+  /* ⚠⚠⚠ `admin@panameer.com` IS THE **ONLY** ENTRY IN THE `admins` GROUP, and
+     the seed creates the system admin from it. ⚠ REMOVING IT LEAVES A FRESHLY
+     SEEDED DATABASE WITH NO ADMIN AT ALL — a worse failure than the one this
+     gate guards against. ⚠⚠ DO NOT "TIDY" THIS AWAY. Scott, 2026-09-23. */
+  { email: "admin@panameer.com", why: "the only admins entry — a seeded database would have no admin without it" },
+  /* ⚠ The virtual-firm cast the demo data is built around. They hold Learn
+     lessons, which is why they are protected, but they are personas. */
+  { email: "sw_user2@straterp.com", why: "virtual-firm cast (Linus Erley)" },
+  { email: "sw_user3@straterp.com", why: "virtual-firm cast (Eddie Cairnie)" },
+  { email: "sw_user4@straterp.com", why: "virtual-firm cast (Marelise Steenkamp)" },
 ];
-const KNOWN = new Set(KNOWN_OPEN.map((k) => k.email.toLowerCase()));
-const ageDays = (iso: string) =>
-  Math.floor((Date.now() - new Date(iso + "T00:00:00Z").getTime()) / 86_400_000);
+const APPROVED = new Set(APPROVED_PERSONAS.map((p) => p.email.toLowerCase()));
 
 const SEED_FILE = join("prisma", "seed-data", "test-users.json");
 const GENERATOR = join("scripts", "build-test-users.py");
@@ -103,18 +121,21 @@ async function main() {
   check("0 — ⚠⚠ the seed file has accounts to check (E586)", seeded.size > 0, `${seeded.size}`);
   if (seeded.size === 0) return;
 
-  /* ── 1 · NO SURVIVOR IS IN THE FILE ───────────────────────────────────── */
-  const survivorEmails = SURVIVORS.map((s) => s.email.toLowerCase().trim());
+  /* ── 1 · NO **REAL ACCOUNT** IS IN THE FILE ───────────────────────────── */
+  /* ⚠⚠ PARSED OUT OF THE GENERATOR — one definition, not two (`E585`). */
+  const genSrc = readFileSync(GENERATOR, "utf8");
+  const block = genSrc.match(/REAL_ACCOUNTS\s*=\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+  const realAccounts = [...block.matchAll(/"([^"]+@[^"]+)"/g)].map((m) => m[1].toLowerCase().trim());
   check(
-    "1 — ⚠⚠ the survivors list is non-empty (E586)",
-    survivorEmails.length > 0,
-    `${survivorEmails.length}`
+    "1 — ⚠⚠ REAL_ACCOUNTS was readable from the generator (E586)",
+    realAccounts.length > 0,
+    `${realAccounts.length}`
   );
-  const survivorHits = survivorEmails.filter((e) => seeded.has(e) && !KNOWN.has(e));
+  const realHits = realAccounts.filter((e) => seeded.has(e));
   check(
-    "1 — ⚠⚠⚠ no SURVIVOR address appears in test-users.json",
-    survivorHits.length === 0,
-    survivorHits.join(", ")
+    "1 — ⚠⚠⚠ no REAL account appears in test-users.json",
+    realHits.length === 0,
+    realHits.join(", ")
   );
 
   /* ── 2 · NO PROTECTED ACCOUNT IS IN THE FILE ──────────────────────────── */
@@ -132,9 +153,12 @@ async function main() {
     protectedEmails.length > 0,
     `${protectedEmails.length} lesson-holders`
   );
-  const protectedHits = protectedEmails.filter((e) => seeded.has(e) && !KNOWN.has(e));
+  /* ⚠⚠⚠ THE CANARY FOR THE NEXT REAL PERSON. An approved persona is allowed;
+     anything else that is protected AND in the file is somebody nobody
+     classified, and it fails before a seed run can reach their password. */
+  const protectedHits = protectedEmails.filter((e) => seeded.has(e) && !APPROVED.has(e));
   check(
-    "2 — ⚠⚠⚠ no PROTECTED (lesson-holding) address appears in test-users.json",
+    "2 — ⚠⚠⚠ no UNAPPROVED protected account appears in test-users.json",
     protectedHits.length === 0,
     protectedHits.join(", ")
   );
@@ -158,23 +182,19 @@ async function main() {
     `${skipSites} of 3`
   );
 
-  /* ── ⚠⚠ THE KNOWN-OPEN LEDGER, PRINTED EVERY RUN ───────────────────────── */
-  const stillThere = KNOWN_OPEN.filter((k) => seeded.has(k.email.toLowerCase()));
-  const fixed = KNOWN_OPEN.filter((k) => !seeded.has(k.email.toLowerCase()));
-  for (const k of stillThere) {
-    console.log(`check:seed-safety — KNOWN OPEN (${ageDays(k.since)}d): ${k.email} — ${k.why}`);
-  }
-  /* ⚠⚠⚠ A KNOWN-OPEN THAT STARTS PASSING FAILS THE GATE. Somebody removed the
-     address and did not remove the exemption; leaving it would let the next
-     regression hide behind a stale entry. */
+  /* ── ⚠⚠ THE APPROVED LIST MUST STAY TRUE ──────────────────────────────── */
+  /* ⚠⚠⚠ AN APPROVED PERSONA THAT IS NO LONGER IN THE FILE FAILS. Somebody
+     removed the address and left the exemption behind; a stale entry is a hole
+     the next real account could sit in unnoticed. */
+  const gone = APPROVED_PERSONAS.filter((k) => !seeded.has(k.email.toLowerCase()));
   check(
-    "4 — ⚠⚠⚠ no KNOWN-OPEN entry has been quietly fixed (remove it from the list)",
-    fixed.length === 0,
-    fixed.map((k) => k.email).join(", ")
+    "4 — ⚠⚠⚠ every APPROVED persona is still in the file (remove stale exemptions)",
+    gone.length === 0,
+    gone.map((k) => k.email).join(", ")
   );
 
   console.log(
-    `check:seed-safety — ${seeded.size} seeded addresses · ${survivorEmails.length} survivors · ${protectedEmails.length} protected · ${skipSites}/3 generator sites`
+    `check:seed-safety — ${seeded.size} seeded addresses · ${protectedEmails.length} protected · ${skipSites}/3 generator sites`
   );
 }
 
