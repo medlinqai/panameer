@@ -251,14 +251,13 @@ const baseStats: Statistics = {
       interviewsDeclined: 0,
       workOrders: 0,
       earnings: { uncounted: "x" },
-      orderSeries: [],
     },
     teaching: {
       teaches: false,
       learners: 0,
       lessonsByThem: 0,
       questions: 0,
-      questionsWaiting: { uncounted: "x" },
+      questionsWaiting: 0,
     },
   };
 
@@ -453,13 +452,24 @@ check(
       "where: { provider_person_id: personId }"
     );
   }
-  check(
-    "16 — ⚠⚠ the work order SERIES is scoped too, not just the count",
-    /workOrder\.findMany\(\{\s*where:\s*\{\s*provider_person_id:\s*personId/.test(
-      src.lib.replace(/\s+/g, " ").replace(/ \{/g, "{").replace(/\{ /g, "{")
-    ) || /provider_person_id: personId, created_at/.test(src.lib.replace(/\s+/g, " ")),
-    "the series cannot outrun the figure"
-  );
+  /*
+    ⚠⚠⚠ EVERY `findMany` IS SCOPED TOO, ASSERTED BY SHAPE RATHER THAN BY NAME.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it named the work-order series,
+    which was deleted because nothing drew it:
+    //   "16 — the work order SERIES is scoped too, not just the count"
+    ⚠⚠ REPLACING IT RATHER THAN DELETING IT IS THE POINT: the rule it carried —
+    a series must not be wider than the figure beside it — outlived the one
+    series it happened to name. `E587`: gate by shape, not by a named list.
+  */
+  {
+    const finds = [...src.lib.matchAll(/prisma\.(\w+)\.findMany\(\s*\{\s*([\s\S]{0,120})/g)];
+    const unscoped = finds.filter((m) => !/where/.test(m[2])).map((m) => m[1]);
+    check(
+      "16 — ⚠⚠⚠ every findMany is scoped, so no series outruns its figure",
+      unscoped.length === 0 && finds.length > 0,
+      unscoped.length ? `unscoped: ${unscoped.join(", ")}` : `${finds.length} findMany calls, all scoped`
+    );
+  }
 }
 
 /**

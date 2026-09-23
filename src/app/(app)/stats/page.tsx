@@ -19,11 +19,14 @@ import { RequestValidationAction } from "@/components/console/RequestValidationA
    above; the merged meter is written out because `StatValue` renders MAGENTA and
    `E433` puts a figure in INK. ⚠ The component itself stays: `StatValue` is
    still the right thing for a tile whose value is a plain measured number. */
-import {
-  NotTrackedYet,
-  StatRow,
-  StatTile,
-} from "@/components/console/StatTile";
+/* ⚠ `NotTrackedYet` IS NO LONGER IMPORTED — its two callers, `Earnings` and
+   `Job Success Score`, are retired above. ⚠⚠ THE COMPONENT STAYS ON DISK
+   (`E164`): it is still the right thing for a tile whose figure genuinely has
+   no source, and `StatFigureRow` is its replacement only where a `Figure`
+   carries its own reason.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { NotTrackedYet, StatRow, StatTile } from "@/components/console/StatTile"; */
+import { StatRow, StatTile } from "@/components/console/StatTile";
 
 /**
  * MY STATS (J2.4 WS-D / E010).
@@ -613,9 +616,29 @@ export default async function MyStatsPage({
           //   </StatTile>
         */}
 
-        <StatTile label="Job Success Score">
-          <NotTrackedYet unlocks="buyers rate completed work orders" />
-        </StatTile>
+        {/*
+          ── ⚠⚠⚠ `Job Success Score` RETIRED (`E603` item 3) ─────────────────
+
+          ⚠ SCOTT, 2026-09-23: *"Same treatment as Earnings. A static string
+          promising a mechanism is a claim about a mechanism, and there is
+          none."*
+          ⚠⚠ MEASURED BY BEHAVIOUR, NOT BY NAME: there is **no `Review`,
+          `Rating` or `Feedback` model**, **no rating relation on `WorkOrder`**,
+          and **no runtime writer for `ProviderProfile.rating`** — its single
+          value, `4.90`, is hardcoded at `prisma/seed.ts:260`. ⚠ So *"once
+          buyers rate completed work orders"* named a thing a buyer cannot do.
+          ⚠⚠⚠ AND IT HAD NO QUERY — `NotTrackedYet` is static: no number, no
+          source, just the promise.
+          ⚠ NOTHING IS STRANDED: the tile carried **zero links** (checked, not
+          assumed), so retiring it removes no entrance to anything.
+          ⚠ `check:sourcing` STILL FAILS THE BUILD if anything averages
+          `InterviewNote.rating` into a provider score. **Leave that guard
+          alone — it is the right one.**
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <StatTile label="Job Success Score">
+          //     <NotTrackedYet unlocks="buyers rate completed work orders" />
+          //   </StatTile>
+        */}
 
         {/*
           ── ⚠⚠ `Proposals` (`E563` WS-C item 10) ───────────────────────────

@@ -96,13 +96,18 @@ export type Statistics = {
     interviewsDeclined: Figure;
     workOrders: Figure;
     earnings: Figure;
-    /* ⚠⚠ THE SERIES IS **WORK ORDERS STARTED**, not requests received, and the
-       choice is deliberate: a request is something a BUYER does TO the member,
-       so a trend of it charts somebody else's behaviour. An order started is
-       the outcome the member worked for. ⚠ Same bucketing as the other two
-       series — one bucketer, or the three cards would disagree about what
-       "90 days" means on one screen. */
-    orderSeries: number[] | { uncounted: string };
+    /*
+      ⚠⚠⚠ `orderSeries` IS DELETED (Scott, 2026-09-23). It was computed on every
+      page load and drawn NOWHERE once the Work card's back became a BREAKDOWN
+      rather than a trend. ⚠ *"Unrendered code is unreviewed code — that is
+      exactly how the unscoped `workOrders` survived."* ⚠⚠ If a Work trend
+      returns, it is rebuilt then.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   THE SERIES IS WORK ORDERS STARTED, not requests received: a request is
+      //   something a BUYER does TO the member, so a trend of it charts somebody
+      //   else's behaviour. Same bucketing as the other two series.
+      //   orderSeries: number[] | { uncounted: string };
+    */
   };
   teaching: {
     teaches: boolean;
@@ -261,15 +266,14 @@ export async function getStatistics(
       select: { created_at: true },
     }),
   ]);
-  const orderRows = await prisma.workOrder.findMany({
-    where: { provider_person_id: personId, created_at: { gte: since } },
-    select: { created_at: true },
-  });
-  const orderSeries = countInBuckets(
-    orderRows.map((r) => r.created_at),
-    buckets
-  );
-
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the work-order series, deleted
+     because nothing draws it:
+     //   const orderRows = await prisma.workOrder.findMany({
+     //     where: { provider_person_id: personId, created_at: { gte: since } },
+     //     select: { created_at: true },
+     //   });
+     //   const orderSeries = countInBuckets(orderRows.map((r) => r.created_at), buckets);
+  */
   const lessonSeries = countInBuckets(
     lessonRows.map((r) => r.completed_at).filter((d): d is Date => d !== null),
     buckets
@@ -281,7 +285,7 @@ export async function getStatistics(
 
   /* ── teaching ───────────────────────────────────────────────────────────── */
   const teaches = pathIds.length > 0;
-  const [learners, lessonsByThem, questions] = teaches
+  const [learners, lessonsByThem, questions, questionsWaiting] = teaches
     ? await Promise.all([
         prisma.learnEnrollment
           .findMany({
@@ -294,8 +298,46 @@ export async function getStatistics(
           where: { lesson: { section: { course: { learning_path_id: { in: pathIds } } } } },
         }),
         prisma.forumThread.count({ where: { board: { learning_path_id: { in: pathIds } } } }),
+        /*
+          ── ⚠⚠⚠ QUESTIONS WAITING ON YOU — SCOTT'S DEFINITION, 2026-09-23 ────
+
+          ⚠ *"A thread in a path you teach, where the teacher has not replied,
+          AND no reply is marked helpful."* ⚠⚠ BOTH CLAUSES ARE REQUIRED, and
+          each answers a different way the queue would otherwise lie:
+            · ⚠ WITHOUT the teacher clause, a thread somebody ELSE resolved
+              would still sit in the teacher's queue — it is not waiting on
+              them.
+            · ⚠⚠ WITHOUT the helpful clause, a thread answered well but never
+              marked would sit there FOREVER. `marked_helpful_at` is set by the
+              ASKER, so it can simply never arrive.
+
+          ⚠⚠⚠ I PREVIOUSLY DECLARED THIS UNCOUNTABLE AND THAT WAS WRONG — the
+          same error as `proposalsSent`: I searched for a noun (`answered`)
+          instead of the BEHAVIOUR. `ForumPost.marked_helpful_at` is exactly a
+          resolution signal, documented in the schema as *"did this answer
+          answer"*, and `reply_count` and `instructor_confirmed_at` sit beside
+          it. ⚠ **AN ABSENT NAME IS NOT AN ABSENT THING.**
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   questionsWaiting: { uncounted: "A thread does not record whether it is answered" },
+
+          ⚠⚠ TWO `posts` FILTERS, SO THEY GO IN AN `AND` — one object cannot
+          carry the key twice, and merging them into a single `none` would ask
+          a different question: *"no post is BOTH the teacher's and helpful"*,
+          which is true of almost every thread.
+          ⚠ `ForumThread` holds ZERO rows, so this renders a measured `0`. That
+          is a real zero and must print as `0`, never as a dash.
+        */
+        prisma.forumThread.count({
+          where: {
+            board: { learning_path_id: { in: pathIds } },
+            AND: [
+              { posts: { none: { author_id: personId } } },
+              { posts: { none: { marked_helpful_at: { not: null } } } },
+            ],
+          },
+        }),
       ])
-    : [0, 0, 0];
+    : [0, 0, 0, 0];
 
   return {
     window,
@@ -366,16 +408,13 @@ export async function getStatistics(
         //   the old tile: "This starts counting once you complete your first paid work order."
       */
       earnings: { uncounted: "Settlement isn't finished yet — no order can reach paid" },
-      orderSeries,
     },
     teaching: {
       teaches,
       learners,
       lessonsByThem,
       questions,
-      /* ⚠ "Waiting on you" needs an answered/unanswered flag on a thread, and
-         `ForumThread` carries none. Counted would be a guess. */
-      questionsWaiting: { uncounted: "A thread does not record whether it is answered" },
+      questionsWaiting,
     },
   };
 }
