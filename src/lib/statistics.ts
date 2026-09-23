@@ -202,10 +202,6 @@ export async function getStatistics(
     enrolled,
     certs,
     bids,
-    interviews,
-    proposalsSent,
-    interviewsTaken,
-    interviewsDeclined,
   ] = await Promise.all([
       providerProfileId
         ? countWindowed(window, "viewed_on", "profileView", { profile_id: providerProfileId })
@@ -240,16 +236,26 @@ export async function getStatistics(
       prisma.bidRequest.count({
         where: { provider_person_id: personId, issued_at: { not: null } },
       }),
-      prisma.interviewRequest.count({ where: { provider_person_id: personId } }),
-      prisma.providerBid.count({
-        where: { provider_person_id: personId, submitted_at: { not: null } },
-      }),
-      prisma.interviewRequest.count({
-        where: { provider_person_id: personId, status: "COMPLETED" },
-      }),
-      prisma.interviewRequest.count({
-        where: { provider_person_id: personId, status: { in: ["DECLINED", "CANCELLED"] } },
-      }),
+      /*
+        ⚠⚠⚠ FOUR QUERIES DELETED — THEY COUNTED TABLES NOTHING WRITES.
+        ⚠ Every one returned a true `0` and would have returned a true `0`
+        forever, because no code creates a `ProviderBid` or an
+        `InterviewRequest`. ⚠⚠ THEY ARE REMOVED RATHER THAN LEFT COMPUTING,
+        because **unrendered code is unreviewed code** — the rule that has now
+        caught the unscoped `workOrders` count and `orderSeries` in this same
+        file.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   prisma.interviewRequest.count({ where: { provider_person_id: personId } }),
+        //   prisma.providerBid.count({
+        //     where: { provider_person_id: personId, submitted_at: { not: null } },
+        //   }),
+        //   prisma.interviewRequest.count({
+        //     where: { provider_person_id: personId, status: "COMPLETED" },
+        //   }),
+        //   prisma.interviewRequest.count({
+        //     where: { provider_person_id: personId, status: { in: ["DECLINED", "CANCELLED"] } },
+        //   }),
+      */
     ]);
 
   /* ── the two series, BOTH BUCKETED BY THE SELECTED PERIOD ───────────────
@@ -339,12 +345,42 @@ export async function getStatistics(
       lessonSeries,
     },
     work: {
+      /*
+        ⚠⚠⚠ THE WRITER TEST, APPLIED — SCOTT'S CORRECTION OF HIS OWN RULING, 2026-09-23.
+
+        ⚠ THE RULE: *"a figure is countable when the state it counts HAS A WRITER,
+        not when something upstream of it does."* ⚠⚠ I FLIPPED THREE FIGURES TO
+        COUNTED WITHOUT APPLYING IT, and this brief's own Work premise check is
+        what measured the truth:
+          · **`ProviderBid` — no `providerBid.create` EXISTS ANYWHERE.**
+          · **`InterviewRequest` — no `interviewRequest.create` EXISTS ANYWHERE.**
+          · **`WorkOrder` — no `workOrder.create` EXISTS ANYWHERE.** `orders.ts`
+            can only `updateMany` an order that nothing ever built, so even
+            `ACCEPTED` and `RELEASED` are unreachable code.
+        ⚠⚠⚠ A ZERO HERE WOULD CLAIM THE MECHANISM WORKS AND NOBODY HAS USED IT.
+        None of these mechanisms exist. **That is the difference between a
+        measured zero and an absence, and it is the whole point of the type.**
+
+        ⚠ `requestsReceived` STAYS A COUNTED ZERO, and that was CONFIRMED rather
+        than assumed: `work-request-invite.ts:116` does `bidRequest.create` with
+        `issued_at: new Date()` and `status: "ISSUED"`, and `inviteProviders` is
+        reachable from `/api/work-requests/[id]/invite/route.ts`. **A real writer,
+        on a real route, setting the exact column this figure filters on.**
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   requestsReceived: bids,
+        //   proposalsSent,
+        //   invitationsToPropose: bids,
+        //   interviews,
+        //   interviewsTaken,
+        //   interviewsDeclined,
+      */
       requestsReceived: bids,
-      proposalsSent,
+      proposalsSent: { uncounted: "Proposals aren't recorded yet — nothing creates one" },
       invitationsToPropose: bids,
-      interviews,
-      interviewsTaken,
-      interviewsDeclined,
+      interviews: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
+      interviewsTaken: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
+      interviewsDeclined: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
       /*
         ⚠⚠⚠ SCOPED TO THIS PROVIDER. ⚠ SUPERSEDED, quoted not deleted (`E164`):
         //   workOrders: await prisma.workOrder.count(),
@@ -358,7 +394,12 @@ export async function getStatistics(
         ⚠ `provider_person_id` is REQUIRED on the model and indexed, so the
         scoped count is the cheap one as well as the correct one.
       */
-      workOrders: await prisma.workOrder.count({ where: { provider_person_id: personId } }),
+      /* ⚠⚠ NOTHING CREATES A WORK ORDER — see the writer-test note above. ⚠ The
+         scoped count is kept in the quote because the SCOPE was a real fix; it
+         is the COUNTING that was wrong.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   workOrders: await prisma.workOrder.count({ where: { provider_person_id: personId } }), */
+      workOrders: { uncounted: "Work orders aren't created yet" },
       /*
         ⚠⚠⚠ EARNINGS IS A DASH, NOT `$0.00`, AND THE MOCKUP DISAGREES.
         ⚠ The mockup renders `$0.00`. ⚠⚠ THE PAGE'S STANDING DECISION SAYS NOT
