@@ -928,14 +928,39 @@ export function ConnectProfile({
           )}
         </ProfileCard>
 
-        <div className="pm-cp-three">
-          <ProfileCard
-            id="specializations"
-            title="Specializations"
-            edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
-          >
-            <SpecializationsBody specializations={p.specializations} />
-          </ProfileCard>
+        {/*
+          ── ⚠⚠⚠ SPECIALIZATIONS SPANS THE PAGE (`P2-A2-E602` WS-C 1 + 3) ─────
+
+          ⚠ SCOTT'S WALK (`E020`): *"The Specializations card spans the page,
+          like Skills — not a third of a row."* ⚠⚠ AND IT NOW HAS SOMETHING TO
+          SPEND THE WIDTH ON: grouped by `kind` with a labelled eyebrow per
+          group, exactly as Skills groups by product family. In a third of a row
+          the group headings had nowhere to go.
+          ⚠⚠⚠ THE THREE-ACROSS ROW BECOMES **TWO**: Certifications · Education,
+          with Specializations above them, and it uses a NEW `pm-cp-pair`.
+          ⚠⚠ `pm-cp-three` IS A FIXED `repeat(3, …)`, NOT `auto-fit` — keeping
+          it would have left a DEAD THIRD COLUMN and made both remaining cards
+          narrower than the full-width card above them. ⚠ MEASURED: a first pass
+          kept the class on the strength of a comment that said `auto-fit`, and
+          the stylesheet said otherwise. ⚠ `pm-cp-three` is now unused and is
+          LEFT ON DISK (`E164`).
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — Specializations inside the
+          three-across row:
+          //   <div className="pm-cp-three">
+          //     <ProfileCard id="specializations" title="Specializations" …>
+          //       <SpecializationsBody specializations={p.specializations} />
+          //     </ProfileCard>
+          //     <ProfileCard id="certifications" …>
+        */}
+        <ProfileCard
+          id="specializations"
+          title="Specializations"
+          edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
+        >
+          <SpecializationsBody specializations={p.specializations} />
+        </ProfileCard>
+
+        <div className="pm-cp-pair">
           <ProfileCard
             id="certifications"
             title="Certifications"

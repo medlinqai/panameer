@@ -213,7 +213,11 @@ export function dateRange(
 // ---------------------------------------------------------------------------
 
 export type SkillItem = { id: string; name: string };
-export type SpecializationItem = { id: string; name: string };
+/** ⚠ `kind` IS `SpecializationKind` — `PRODUCT` · `METHODOLOGY` · `INDUSTRY`.
+ *  ⚠⚠ It was ALREADY selected and mapped by `provider-profile-view.ts`; only
+ *  this type and the render never used it (`E602` WS-C). Optional so an older
+ *  caller that omits it still typechecks and falls into `Other`. */
+export type SpecializationItem = { id: string; name: string; kind?: string | null };
 export type LanguageItem = {
   id?: string;
   name: string;
@@ -809,15 +813,72 @@ export function EducationBody({
   );
 }
 
+/**
+ * ── ⚠⚠⚠ GROUPED BY KIND (`P2-A2-E602` WS-C 2) ────────────────────────────
+ *
+ * ⚠ SCOTT: *"Grouped by type (Industry · Business Process · Product · …), with
+ * each group labelled the way Skills groups by product family."*
+ * ⚠⚠ THE BRIEF SAID **STOP AND REPORT IF THE DATA CARRIES NO TYPE.** It does:
+ * `Specialization.kind` is a real enum — **PRODUCT 11 · METHODOLOGY 6 ·
+ * INDUSTRY 10** — and it was ALREADY selected and mapped. Nothing is invented.
+ *
+ * ⚠⚠⚠ THE ORDER IS FIXED, NOT ALPHABETICAL, AND NOT BY COUNT. Product first
+ * (what a buyer searches), then Industry (where they work), then Methodology
+ * (how they work). ⚠ Ordering by count would reshuffle the page whenever
+ * somebody edited their profile, which is the `check:catalog` lesson about two
+ * pickers in two different orders.
+ * ⚠ `METHODOLOGY` renders as **"Business Process"** — the enum is the storage
+ * name and the label is the person's word; Scott's own list says *"Industry ·
+ * Business Process · Product"*.
+ */
+const SPEC_KIND_ORDER: { key: string; label: string }[] = [
+  { key: "PRODUCT", label: "Product" },
+  { key: "INDUSTRY", label: "Industry" },
+  { key: "METHODOLOGY", label: "Business Process" },
+];
+
 export function SpecializationsBody({
   specializations,
 }: {
   specializations: SpecializationItem[];
 }) {
   if (specializations.length === 0) return <Empty>None listed.</Empty>;
+  /* ⚠⚠ A ROW WITH AN UNKNOWN OR MISSING `kind` IS NOT DROPPED — it falls into
+     `Other`. ⚠⚠⚠ SILENTLY HIDING A SPECIALIZATION BECAUSE ITS ENUM GREW A
+     FOURTH MEMBER IS THE DEFECT THIS WHOLE BRIEF KEEPS FINDING. */
+  const known = new Set(SPEC_KIND_ORDER.map((k) => k.key));
+  const groups = [
+    ...SPEC_KIND_ORDER.map((k) => ({
+      label: k.label,
+      items: specializations.filter((s) => s.kind === k.key),
+    })),
+    { label: "Other", items: specializations.filter((s) => !s.kind || !known.has(s.kind)) },
+  ].filter((g) => g.items.length > 0);
+
+  /* ⚠ ONE GROUP IS NOT A GROUPING. With everything under a single kind the
+     heading says nothing the card's title has not already said. */
+  if (groups.length === 1) return <SpecChips items={groups[0].items} />;
+
+  return (
+    <div>
+      {groups.map((g) => (
+        <div key={g.label} className="mb-3 last:mb-0">
+          {/* ⚠ The same eyebrow Skills uses for its product families, so the
+              two cards read as one idea. */}
+          <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+            {g.label}
+          </p>
+          <SpecChips items={g.items} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpecChips({ items }: { items: SpecializationItem[] }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {specializations.map((s) => (
+      {items.map((s) => (
         <span
           key={s.id}
           className={CHIP_SPEC}

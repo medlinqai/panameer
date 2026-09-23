@@ -157,8 +157,33 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/*
+  ── ⚠⚠⚠ THE PAIR — TWO EQUAL COLUMNS (`P2-A2-E602` WS-C 3) ────────────────
+
+  ⚠ Specializations left the three-across row for full width, so what remains is
+  **Certifications · Education**. ⚠⚠ `pm-cp-three` IS A FIXED `repeat(3, …)`,
+  NOT `auto-fit`: leaving two cards in it would have left a **dead third
+  column** and made both cards narrower than the page they now sit on.
+  ⚠⚠⚠ MEASURED, NOT ASSUMED — a first pass kept the class and claimed the grid
+  was `auto-fit`. It is not. That comment was wrong and is not left standing.
+  ⚠ `pm-cp-two` IS NOT REUSED EITHER: it is deliberately ASYMMETRIC
+  (`1.55fr / 1fr`) for Bio's row. Certifications and Education are peers.
+  ⚠ It collapses at 800px with its siblings, on the same schedule.
+*/
+.pm-cp-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+/* ⚠ Same `:only-child` rule as `pm-cp-two`, and for the same reason: the next
+   card to move out of this row must not leave half a page empty. */
+.pm-cp-pair > :only-child {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 800px) {
   .pm-cp-two,
+  .pm-cp-pair,
   .pm-cp-three {
     grid-template-columns: minmax(0, 1fr);
   }

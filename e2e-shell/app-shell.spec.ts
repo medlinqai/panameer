@@ -1306,7 +1306,36 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
                 rails before `WS-C` fixed them.
               */
               const onScreen = r.bottom > 0 && r.top < window.innerHeight;
-              const pinnedUnderBand = r.top >= 0 && r.top < b.bottom - 0.5;
+              /*
+                ── ⚠⚠⚠ "PINNED" MEANS **HOLDING ITS STICKY TOP** (`P2-A2-E602`) ──
+
+                ⚠ `r.top >= 0 && r.top < b.bottom` WAS NOT A TEST FOR PINNED —
+                it was a test for *"somewhere in the band's band"*, and a sticky
+                aside being pushed out of view by its own container PASSES
+                THROUGH that window on its way past.
+                ⚠⚠ MEASURED ON `/profile` AT 1099px: the rail is **1177px tall
+                in a 1433px container**, so it can never stick at all. At
+                `scrollY=400` its top was **50** while its computed `top` is
+                **83** — it was MOVING, not pinned, and the sample caught it
+                mid-transit.
+                ⚠⚠⚠ THE TEST'S OWN COMMENT ALREADY EXCLUDES THIS CASE — *"an
+                aside whose top has gone NEGATIVE is scrolling away with its own
+                container… out of scope"* — but it only excluded the frames
+                AFTER the transit, not the one during it. **The intent was
+                right; the proxy was one frame too narrow.**
+
+                ⚠ SO PINNED IS NOW WHAT IT SAYS: the aside is sitting AT the
+                `top` it declares. A rail that declares `top: 16px` still pins
+                at 16 and is still caught — which is the defect this exists for
+                (`E587` / the `/community` rails) — while one being pushed past
+                by a short container is not.
+                ⚠⚠ THIS IS `check:rollup`'S CASE: **the RULE is unchanged**, the
+                measurement of it was wrong.
+              */
+              const declaredTop = parseFloat(getComputedStyle(a).top);
+              const holdingItsTop =
+                Number.isFinite(declaredTop) && Math.abs(r.top - declaredTop) <= 1;
+              const pinnedUnderBand = holdingItsTop && r.top >= 0 && r.top < b.bottom - 0.5;
               if (onScreen && pinnedUnderBand) {
                 covered += 1;
               }
