@@ -216,7 +216,11 @@ export function AppBand() {
           resolved (`: " "`).
           ⚠ NO SKELETON, NO "Loading…", NO GUESSED LABEL.
         */}
-        <span className="mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
+        {/* ⚠⚠ HIDDEN BELOW 930px (`E602` WS-E 3). Scott: *"the mark alone,
+            without 'Provider Console', is fine"* — the label is what made the
+            brand column wide enough to squeeze the menu once the brand stopped
+            being hidden. ⚠ `pm-band-console` is styled in `app-band.css`. */}
+        <span className="pm-band-console mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
           {consoleLabel ?? " "}
         </span>
       </Link>
