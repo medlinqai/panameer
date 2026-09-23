@@ -266,27 +266,43 @@ check(
   somebody drops the provenance from the module, this one does. Neither guard is
   sufficient alone, which is why there are two.
 */
-const countsPath = join("src", "lib", "learn-catalog-counts.ts");
-const counts = readFileSync(countsPath, "utf8");
-check(
-  "GUARD 3c — the catalog counts module records the date it was measured",
-  /CATALOG_COUNTS_MEASURED_ON\s*=\s*"\d{4}-\d{2}-\d{2}"/.test(counts),
-  "an undated catalog total cannot be told from a stale one"
-);
-check(
-  "GUARD 3c — it names the queries the numbers came from, not a seed file",
-  /prisma\.learningPath\.count\(\)/.test(counts) &&
-    /prisma\.course\.count\(\)/.test(counts) &&
-    /prisma\.lesson\.count\(\)/.test(counts),
-  "chat_kickoff.md: a fact about content may only be stated from a live DB read"
-);
-check(
-  "GUARD 3c — /learn's hero reads the counts from that module rather than inlining them",
-  /import\s*\{\s*CATALOG_COUNTS\s*\}\s*from\s*"@\/lib\/learn-catalog-counts"/.test(
-    readFileSync(join("src", "components", "learn", "LearnPublic.tsx"), "utf8")
-  ),
-  "if the hero stops importing them, the digits came back into the component"
-);
+/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — GUARD 3c was its only reader,
+   and GUARD 3c went with the literal it guarded:
+   //   const countsPath = join("src", "lib", "learn-catalog-counts.ts");
+   //   const counts = readFileSync(countsPath, "utf8");
+   ⚠⚠ The `E606 WS-C` block below reads the same file for itself, so nothing is
+   lost — but leaving an unread `readFileSync` behind is the shape that makes a
+   later reader think a guard still runs. */
+/*
+  ── ⚠⚠ GUARD 3c IS RETIRED (`E606` R4) — `check:rollup`'s CASE ────────────
+  ⚠ It asserted that `/learn`'s hero IMPORTS `CATALOG_COUNTS` rather than
+  inlining the digits. **That was the right guard for a literal.** R4 retired
+  the literal itself: the hero now awaits `getCatalogCounts()`, so there is no
+  constant to import and nothing for this to hold.
+  ⚠⚠ THE RULE IT PROTECTED IS STRONGER NOW, NOT WEAKER — the `E606 WS-C`
+  assertions below forbid the digits as literals anywhere on the learner
+  surface AND require the module to export a function rather than an array.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   check(
+//     "GUARD 3c — the catalog counts module records the date it was measured",
+//     /CATALOG_COUNTS_MEASURED_ON\s*=\s*"\d{4}-\d{2}-\d{2}"/.test(counts),
+//     "an undated catalog total cannot be told from a stale one"
+//   );
+//   check(
+//     "GUARD 3c — it names the queries the numbers came from, not a seed file",
+//     /prisma\.learningPath\.count\(\)/.test(counts) &&
+//       /prisma\.course\.count\(\)/.test(counts) &&
+//       /prisma\.lesson\.count\(\)/.test(counts),
+//     "chat_kickoff.md: a fact about content may only be stated from a live DB read"
+//   );
+//   check(
+//     "GUARD 3c — /learn's hero reads the counts from that module rather than inlining them",
+//     /import\s*\{\s*CATALOG_COUNTS\s*\}\s*from\s*"@\/lib\/learn-catalog-counts"/.test(
+//       readFileSync(join("src", "components", "learn", "LearnPublic.tsx"), "utf8")
+//     ),
+//     "if the hero stops importing them, the digits came back into the component"
+//   );
+*/
 
 /* Stated positively: the totals reach the UI from a query result. */
 const dash = readFileSync(join("src", "lib", "learn-dashboard.ts"), "utf8");
@@ -590,6 +606,208 @@ check(
   "E043: with no BEGINNERS path at all, Foundations still resolves to something real",
   pickSuggestion([PAY, PROC], { skills: [], years: 0, hasProfile: false })?.slug === PAY.slug
 );
+
+
+
+/**
+ * ⚠⚠ DERIVED REACHABILITY, NOT A PATH PREFIX (`E587`).
+ * ⚠ `src/lib/learn-bulk.ts` writes `lesson.update` and is an AUTHORING tool —
+ * but it does not live under `src/app/admin`, so a path rule called it
+ * learner-facing. **Its only importer is `src/app/api/admin/learn/bulk-urls`.**
+ * ⚠⚠⚠ THE HONEST TEST IS WHO CAN REACH IT, and that is computed from the
+ * import graph rather than asserted from a folder name.
+ */
+const ALL_SRC = walk("src");
+function importersOf(file: string): string[] {
+  /* module specifier without extension, e.g. "@/lib/learn-bulk" */
+  const spec = "@/" + file.replace(/^src\//, "").replace(/\.tsx?$/, "");
+  return ALL_SRC.filter(
+    (f) => f !== file && new RegExp(`from ["']${spec}["']`).test(readFileSync(f, "utf8"))
+  );
+}
+const isAdminPath = (f: string) =>
+  /^src\/app\/(admin|api\/admin)\//.test(f) || /^src\/components\/admin\//.test(f);
+/**
+ * ⚠ Admin-only when it HAS importers and every one of them is admin.
+ * ⚠⚠ MEMOISED, NOT A SHARED `seen` SET. The first version threaded one visited
+ * set through every sibling, so a file reached twice returned FALSE the second
+ * time and a genuinely admin-only module read as learner-facing. **A cycle
+ * guard is not a result cache**, and conflating them is how this said
+ * `learn-admin.ts` was reachable from the learner surface.
+ */
+const adminMemo = new Map<string, boolean>();
+function adminOnly(file: string, stack = new Set<string>()): boolean {
+  const cached = adminMemo.get(file);
+  if (cached !== undefined) return cached;
+  if (stack.has(file)) return true; /* ⚠ a cycle proves nothing either way */
+  stack.add(file);
+  const imps = importersOf(file);
+  const result = isAdminPath(file)
+    ? true
+    : imps.length > 0 && imps.every((i) => adminOnly(i, new Set(stack)));
+  stack.delete(file);
+  adminMemo.set(file, result);
+  return result;
+}
+/** ⚠ Nothing imports it — a retired component kept on disk (`E164`). */
+const isOrphan = (file: string) => importersOf(file).length === 0;
+
+// ---------------------------------------------------------------------------
+// ⚠⚠⚠ E606 WS-C — the catalogue is untouchable, and the figures are counted
+// ---------------------------------------------------------------------------
+
+/**
+ * ── ⚠⚠⚠ SCOTT'S 522 LESSONS ARE NOT WRITEABLE FROM THE LEARN SURFACE ─────
+ *
+ * ⚠ The catalogue is **23 paths and 522 lessons Scott wrote by hand.** This
+ * brief restyles the pages around it and must never change a row.
+ * ⚠⚠ ASSERTED BY SHAPE, NOT BY A ROW COUNT ALONE: a row count taken before and
+ * after proves only that *this run* did not write. **A write path that exists
+ * will be taken eventually.** So the gate forbids the write from existing
+ * anywhere the learner-facing surface can reach.
+ * ⚠ The ADMIN authoring routes are where catalogue writes belong and are
+ * excluded BY PATH, derived rather than listed: anything under `src/app/admin`
+ * or `src/lib/learn-admin.ts`.
+ */
+{
+  const CATALOGUE_MODELS = ["lesson", "learningPath", "course", "section"];
+  const WRITE_OPS = "(create|createMany|update|updateMany|upsert|delete|deleteMany)";
+  const offenders: string[] = [];
+  let scanned = 0;
+  for (const f of learnFiles) {
+    /* ⚠ the authoring surface is allowed to author — decided by who can REACH
+       the file, not by where it sits. */
+    if (adminOnly(f)) continue;
+    scanned++;
+    const code = stripComments(readFileSync(f, "utf8"));
+    for (const m of CATALOGUE_MODELS) {
+      const re = new RegExp(`\\b[a-zA-Z_$]+\\.${m}\\.${WRITE_OPS}\\b`, "g");
+      for (const hit of code.matchAll(re)) offenders.push(`${f}: ${hit[0]}`);
+    }
+  }
+  check(
+    "E606 WS-C: the sweep read the learner-facing Learn files (E586)",
+    scanned > 5,
+    `${scanned} files scanned, ${learnFiles.length} total`
+  );
+  check(
+    "E606 WS-C: ⚠⚠⚠ nothing outside admin can write Lesson, LearningPath, Course or Section",
+    offenders.length === 0,
+    offenders.length ? offenders.join(" · ") : "the catalogue is read-only from here"
+  );
+}
+
+/**
+ * ── ⚠⚠ NO CATALOGUE COUNT IS A LITERAL (`E606` R4) ───────────────────────
+ *
+ * ⚠ `CATALOG_COUNTS` held `23`, `54` and `522` as strings for a month. They
+ * were true when written and the catalogue moved underneath them.
+ * ⚠⚠ THE NUMBERS THE PAGES ACTUALLY SHOW — 12 · 39 · 305 — ARE FORBIDDEN AS
+ * LITERALS TOO, because a "fix" that hard-codes today's computed answer is the
+ * same defect with a fresher number.
+ */
+{
+  const FORBIDDEN = ["23", "54", "522", "12", "39", "305"];
+  const offenders: string[] = [];
+  for (const f of learnFiles) {
+    if (adminOnly(f)) continue;
+    const code = stripComments(readFileSync(f, "utf8"));
+    for (const n of FORBIDDEN) {
+      /* ⚠ a quoted literal next to a catalogue word — not every occurrence of
+         the digits, which would flag pixel sizes and durations. */
+      const re = new RegExp(`["'\`]${n}["'\`]\\s*,\\s*label|label[^\\n]{0,40}["'\`]${n}["'\`]`, "g");
+      if (re.test(code)) offenders.push(`${f}: "${n}" beside a label`);
+    }
+  }
+  check(
+    "E606 WS-C: ⚠⚠ no catalogue count is a hard-coded literal",
+    offenders.length === 0,
+    offenders.length ? offenders.join(" · ") : "every count is computed"
+  );
+  check(
+    "E606 WS-C: ⚠⚠ the counts module exports a FUNCTION, not an array",
+    /export async function getCatalogCounts/.test(
+      readFileSync("src/lib/learn-catalog-counts.ts", "utf8")
+    ) && !/export const CATALOG_COUNTS/.test(
+      stripComments(readFileSync("src/lib/learn-catalog-counts.ts", "utf8"))
+    ),
+    "CATALOG_COUNTS is retired"
+  );
+  /* ⚠⚠⚠ AND THE LABEL CARRIES THE DEFINITION. A number with no definition is
+     how one page said 12 and another said 23 about the same catalogue. */
+  const countsSrc = readFileSync("src/lib/learn-catalog-counts.ts", "utf8");
+  check(
+    "E606 WS-C: ⚠⚠⚠ every count label says what it counts",
+    /Paths You Can Start/.test(countsSrc) &&
+      /Courses With Video/.test(countsSrc) &&
+      /Lessons You Can Watch/.test(countsSrc),
+    "no bare 'Learning Paths' label"
+  );
+  /* ⚠ ONE RULE, IMPORTED — a second copy of `isPlayable` is what let the two
+     numbers diverge in the first place. */
+  check(
+    "E606 WS-C: ⚠⚠ the counts reuse lib/learn.ts's isPlayable rather than restating it",
+    /import \{ isPlayable \} from "@\/lib\/learn"/.test(countsSrc) &&
+      !/vimeo_ref\?\.trim/.test(stripComments(countsSrc)),
+    "one playability rule"
+  );
+}
+
+/**
+ * ── ⚠⚠⚠ LEVELS, RANKS AND STREAKS ARE GONE AND STAY GONE (`E606` R1/R3) ──
+ *
+ * ⚠ RULING 1: there is no XP and there are no levels in Panameer. ⚠⚠ THIS IS
+ * THE ASSERTION THAT STOPS THEM COMING BACK, and it is by SHAPE — it does not
+ * know the words "Newcomer" or "streak_10", it knows the concepts.
+ */
+{
+  const BANNED = /\b(levelFor|LEVEL_BANDS|LevelState|streak_?10|StreakTile|clientComputed)\b/;
+  /* ⚠⚠ AN ORPHAN IS ALLOWED. `StreakTile.tsx` stays on disk under `E164` — a
+     retired component is not deleted. ⚠⚠⚠ WHAT IS FORBIDDEN IS A RETIRED
+     SURFACE THAT SOMETHING STILL IMPORTS, which is the state that puts it back
+     on a page. */
+  const offenders = learnFiles.filter(
+    (f) => !isOrphan(f) && BANNED.test(stripComments(readFileSync(f, "utf8")))
+  );
+  check(
+    "E606 WS-C: ⚠⚠⚠ no level, rank or streak surface survives in Learn",
+    offenders.length === 0,
+    offenders.length ? offenders.join(" · ") : "ruling 1 holds"
+  );
+  /* ⚠ AND THE ACHIEVEMENTS THAT REMAIN ARE COUNTED, NOT INSTRUCTIONAL. A
+     locked badge says what unlocks it as a number the member can check. */
+  const dash = stripComments(readFileSync("src/lib/learn-dashboard.ts", "utf8"));
+  const instructional = [
+    "Pass a path test",
+    "Score 100% on a test",
+    "Finish every lesson in a course",
+  ].filter((t) => dash.includes(t));
+  check(
+    "E606 WS-C: ⚠⚠ every locked achievement states its threshold as a count",
+    instructional.length === 0,
+    instructional.length ? `still instructional: ${instructional.join(" · ")}` : "counted in both states"
+  );
+}
+
+/**
+ * ── ⚠⚠ THE BANNER PROMISES NOTHING ABOUT DATA (`E606` R5) ────────────────
+ * ⚠ A real external tester has been told his data will not be wiped; the
+ * banner said the opposite on every page. ⚠⚠ IT MUST NOT SWING THE OTHER WAY
+ * EITHER — "your data is safe" is a promise nobody can keep.
+ */
+{
+  const banner = stripComments(readFileSync("src/components/DevBanner.tsx", "utf8"));
+  check(
+    "E606 WS-C: ⚠⚠⚠ the banner does not promise a reset",
+    !/may be reset|will be reset|wiped/i.test(banner),
+    "no reset promise"
+  );
+  check(
+    "E606 WS-C: ⚠⚠ …and does not promise safety either",
+    !/data is safe|never be reset|won't be reset|guaranteed/i.test(banner),
+    "no promise in either direction"
+  );
+}
 
 // ---------------------------------------------------------------------------
 // report

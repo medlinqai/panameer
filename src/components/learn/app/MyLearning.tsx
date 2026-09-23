@@ -237,7 +237,14 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
             tone="magenta"
             value={`${mine.pathsCertified}`}
-            sub={`of ${totals.paths}`}
+            /* ⚠⚠⚠ THE DENOMINATOR IS PATHS, SO IT SAYS PATHS (`E606` R4).
+               ⚠ It read *"0 of 12"* under the label *"Certificates Awarded"*,
+               which reads as *"twelve certificates exist"*. Twelve is the
+               number of paths a member can START — one certificate per path —
+               and that is a different noun from the one above it.
+               ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   sub={`of ${totals.paths}`} */
+            sub={`of ${totals.paths} paths`}
             label="Certificates Awarded"
           />
         </div>
@@ -403,7 +410,13 @@ function subhead(d: MyLearningData): string {
   if (d.mine.enrolledPaths > 0) {
     return `You're enrolled in ${d.mine.enrolledPaths} path${d.mine.enrolledPaths === 1 ? "" : "s"}. Everything in them is watched — the path tests are what's left.`;
   }
-  return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`;
+  /* ⚠⚠ THE SUBHEAD NAMES WHAT IT COUNTS (`E606` R4). *"12 learning paths"* and
+     *"23 learning paths"* were both true of this catalogue and neither said
+     which question it answered. `d.totals` is the STARTABLE set — paths with a
+     playable lesson — so the sentence says so.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`; */
+  return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
 }
 
 function SectionHead({ title, children }: { title: string; children?: React.ReactNode }) {

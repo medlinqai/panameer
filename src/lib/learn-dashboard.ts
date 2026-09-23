@@ -109,7 +109,10 @@ export type Achievement = {
   detail: string;
   earned: boolean;
   /** `streak` is resolved in the browser — see learn-progress.ts. */
-  clientComputed?: "streak10";
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the only badge the browser
+     filled in was the streak, and a streak rewards a habit (`E606` R3). With it
+     gone every achievement is decided on the server from a count:
+     //   clientComputed?: "streak10"; */
 };
 
 export type MyLearning = {
