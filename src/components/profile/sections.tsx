@@ -10,6 +10,43 @@ import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
 
 /**
+ * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
+ *
+ * ⚠ SCOTT'S WALK (`E019`): *"Skills chips are outlined grey; Specializations
+ * chips are magenta; one wraps to two lines and sits in a taller pill."*
+ *
+ * ⚠⚠ MEASURED — THREE CHIP STYLES IN THIS FILE, AND **TWO DIFFERENT PADDINGS**:
+ * skills at `px-3 py-1 text-[13.5px]` (twice, identical), specializations at
+ * `px-2.5 py-0.5 text-[12.5px]`. ⚠⚠⚠ THE PADDING DIFFERENCE IS THE "TALLER
+ * PILL" — nothing to do with wrapping. Two hand-written copies of one style are
+ * also how a third variant appears next.
+ *
+ * ⚠ THE COLOUR DIFFERENCE **STAYS AND IS THE RULE**: a skill and a
+ * specialization are different kinds of thing, and Scott asked for one style
+ * per kind — not one style for everything.
+ *
+ * ⚠⚠ A LONG NAME **WRAPS**, AND THAT IS SCOTT'S WORD. The shape that must not
+ * change is the PADDING, RADIUS, FONT AND COLOUR — all of which are now shared
+ * — and a wrapped chip keeps every one of them. `max-w-full` + `break-words`
+ * keep it inside its container instead of overflowing the row.
+ *
+ * ⚠⚠⚠ `whitespace-nowrap` + `text-ellipsis` WAS TRIED AND REVERTED, AND THE
+ * MEASUREMENT IS WHY: it made every chip exactly one line (heights 29–30, no
+ * 49) with no horizontal overflow — but it **TRUNCATED
+ * `Technology, Media, & Telecommunications` to `…Telecommunica…`.**
+ * ⚠ HIDING A SPECIALIZATION'S NAME TO KEEP A ROW TIDY IS THE WRONG TRADE, and
+ * Scott asked for it to *wrap*, not to fit. ⚠⚠ THE CONSEQUENCE IS REPORTED
+ * RATHER THAN HIDDEN: a two-line chip IS taller than its neighbours. That is
+ * what wrapping costs, and it is the cost that was chosen.
+ */
+const CHIP_BASE =
+  "inline-flex max-w-full items-center rounded-full px-3 py-1 text-[13px] font-semibold break-words";
+/** ⚠ A SKILL — outlined, ink. It is a fact about the person, not a link (`E433`). */
+const CHIP_SKILL = `${CHIP_BASE} border border-line text-ink-2`;
+/** ⚠ A SPECIALIZATION — magenta-tinted, and deliberately a DIFFERENT kind. */
+const CHIP_SPEC = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
+
+/**
  * The Profile-View section vocabulary (brief_X / E056).
  *
  * ONE set of section renderers, shared by the two surfaces that must look the
@@ -580,7 +617,7 @@ export function ProfileHero({
                 {shownSkills.map((sk) => (
                   <span
                     key={sk.id}
-                    className="rounded-full border border-line px-3 py-1 text-[13.5px] font-semibold text-ink-2"
+                    className={CHIP_SKILL}
                   >
                     {sk.name}
                   </span>
@@ -783,7 +820,7 @@ export function SpecializationsBody({
       {specializations.map((s) => (
         <span
           key={s.id}
-          className="rounded-full border border-magenta/30 bg-magenta/[0.06] px-2.5 py-0.5 text-[12.5px] font-semibold text-magenta-dark"
+          className={CHIP_SPEC}
         >
           {s.name}
         </span>
@@ -830,7 +867,7 @@ export function SkillsBody({
           {skills.map((s) => (
             <span
               key={s.id}
-              className="rounded-full border border-line px-3 py-1 text-[13.5px] font-semibold text-ink-2"
+              className={CHIP_SKILL}
             >
               {s.name}
             </span>

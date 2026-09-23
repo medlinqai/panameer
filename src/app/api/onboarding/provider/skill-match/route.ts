@@ -1,4 +1,4 @@
-import { OFFERABLE } from "@/lib/catalog";
+import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
@@ -33,9 +33,34 @@ export async function GET(request: Request) {
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, 120);
   if (!q) return NextResponse.json({ kind: "none" });
 
+  /*
+    ── ⚠⚠⚠ SUGGESTIONS COME FROM THE **ACTIVE CATALOGUE** ONLY (`E602` WS-B) ──
+
+    ⚠ SCOTT, 2026-09-22: *"Legacy rows stay for existing data but are never
+    offered to someone typing a new skill. That closes 'Did you mean purchase
+    requisitons?' at the source instead of fixing one row while 700 others can
+    do the same thing."*
+
+    ⚠⚠ `OFFERABLE` IS `{ status: "ACTIVE" }` — A STATUS, NOT A SCOPE. This route
+    asked the whole `skill` table, so every row in the retired `ERP` catalogue
+    was a candidate. ⚠⚠⚠ THAT IS THE `E483` DEFECT ON A NEW SITE, and the one
+    the codebase already names: *"`OFFERABLE` is status-only, no catalog scope."*
+
+    ⚠ MEASURED: `catalog/skills` (via `offerScope`) and `skill-suggestions` (via
+    `activeCatalogId`) WERE ALREADY SCOPED. **This route was the only gap** —
+    which is why the picker looked right and the *"did you mean"* did not.
+    ⚠⚠ `activeCatalogId()` BY CODE, NEVER `findFirst()` (`E483`), the same call
+    `skill-suggestions` makes.
+    ⚠⚠⚠ A `null` id DEGRADES TO THE OLD, WIDER BEHAVIOUR rather than matching
+    nothing — `offerScope`'s own rule: *"an empty picker is a worse failure than
+    a wide one."* ⚠ A never-seeded database must not silently stop suggesting.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   where: OFFERABLE,
+  */
+  const catalogId = await activeCatalogId();
   const rows = await prisma.skill.findMany({
     /* ⚠ `E481` — a retired skill is never suggested. */
-    where: OFFERABLE,
+    where: catalogId ? { ...OFFERABLE, catalog_id: catalogId } : OFFERABLE,
     select: { id: true, name: true, is_custom: true },
   });
   /* ⚠ `is_custom` -> `isCustom`. A BASELINE catalog row outranks a

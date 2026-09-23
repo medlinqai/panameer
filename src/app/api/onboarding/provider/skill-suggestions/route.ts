@@ -6,6 +6,7 @@ import { suggestableSkills } from "@/lib/resume/match";
 import { getOnboardingState } from "@/lib/onboarding";
 import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
 import { activeCatalogId } from "@/lib/catalog";
+import { titleCaseSkill } from "@/lib/skill-match";
 
 /**
  * Confirm imported skill terms the catalog didn't recognise (WS-B / E051-5).
@@ -71,7 +72,13 @@ export async function POST(request: Request) {
 
   const added: string[] = [];
   for (const term of terms) {
-    const name = term.slice(0, 120);
+    /* ⚠⚠ STORED IN TITLE CASE (`E602` WS-B 3), and `titleCaseSkill` leaves a
+       word alone when it already carries an upper-case letter — so a provider
+       typing `iProcurement` or `OTBI` keeps it, while `purchase requisitions`
+       is stored as `Purchase Requisitions`.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   const name = term.slice(0, 120); */
+    const name = titleCaseSkill(term.slice(0, 120));
     const skill = await prisma.skill.upsert({
       where: {
         catalog_id_role_type_id_pillar_id_name: {
