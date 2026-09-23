@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { CATALOG_COUNTS } from "@/lib/learn-catalog-counts";
+import { getCatalogCounts } from "@/lib/learn-catalog-counts";
 
 /**
  * THE THREE NUMBERS `/hire-talent`'s HERO PRINTS (`P1-J1-E029`).
@@ -87,7 +87,11 @@ export async function talentHeroStats(): Promise<TalentStat[]> {
     prisma.package.count({ where: { status: "PUBLISHED" } }),
   ]);
 
-  const lessons = CATALOG_COUNTS.find((c) => c.label === "Lessons");
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the label moved with R4:
+     //   const lessons = CATALOG_COUNTS.find((c) => c.label === "Lessons"); */
+  /* ⚠⚠ BY `key`, NOT BY LABEL — the label pluralises off the number, so a
+     label lookup silently drops the tile at n === 1. */
+  const lessons = (await getCatalogCounts()).find((c) => c.key === "lessons");
 
   /*
     ⚠ THE ORDER IS THE BRIEF'S TABLE ORDER — Lessons, Providers, Service Products.

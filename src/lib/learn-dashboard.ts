@@ -8,7 +8,10 @@ import {
   tallyExperts,
 } from "@/lib/learn-instructors";
 import { lessonFace, withoutPlaceholders } from "@/lib/learn-faces";
-import { headlineFor, levelFor, type LevelState } from "@/lib/learn-progress";
+/* ⚠ `levelFor` AND `LevelState` ARE GONE (`E606` R1/R2) — there are no levels.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { headlineFor, levelFor, type LevelState } from "@/lib/learn-progress"; */
+import { headlineFor } from "@/lib/learn-progress";
 import type { Instructor } from "@/lib/learn-instructor-format";
 import { getLearnerSignal, pickSuggestion, type Suggestion } from "@/lib/learn-suggestion";
 
@@ -106,12 +109,16 @@ export type Achievement = {
   detail: string;
   earned: boolean;
   /** `streak` is resolved in the browser — see learn-progress.ts. */
-  clientComputed?: "streak10";
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the only badge the browser
+     filled in was the streak, and a streak rewards a habit (`E606` R3). With it
+     gone every achievement is decided on the server from a count:
+     //   clientComputed?: "streak10"; */
 };
 
 export type MyLearning = {
   headline: string;
-  level: LevelState;
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — retired with the badge:
+     //   level: LevelState; */
   totals: { paths: number; courses: number; lessons: number };
   mine: {
     lessonsCompleted: number;
@@ -434,17 +441,29 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     {
       key: "first_certificate",
       title: "First Certificate",
-      detail: pathsCertified > 0 ? `${pathsCertified} earned` : "Pass a path test",
+      /* ⚠ COUNTED IN BOTH STATES (R3) — a locked badge says what unlocks it as a
+         number the member can check, not as an instruction.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   detail: pathsCertified > 0 ? `${pathsCertified} earned` : "Pass a path test", */
+      detail: pathsCertified > 0 ? `${pathsCertified} earned` : `0 of 1 path certified`,
       earned: pathsCertified > 0,
     },
-    {
-      key: "streak_10",
-      title: "10-Day Streak",
-      /* Filled in by the browser — the server can't know their timezone. */
-      detail: "Ten days in a row",
-      earned: false,
-      clientComputed: "streak10",
-    },
+    /*
+      ── ⚠⚠⚠ `streak_10` IS RETIRED (`P2-A4-E606` R3) ────────────────────────
+
+      ⚠ SCOTT'S TEST: **keep what is a genuine record of something DONE; retire
+      anything that rewards a HABIT rather than an accomplishment. A streak is a
+      habit.** Ten consecutive days is not a thing the member achieved in the
+      catalogue — it is a pattern of showing up, and rewarding it pushes toward
+      opening a lesson to keep a number alive.
+      ⚠⚠ IT WAS ALSO THE ONLY BADGE THE SERVER COULD NOT EARN — `earned: false`
+      always, with `clientComputed` filling it in from the browser's timezone.
+      **The one badge that was not a count was also the one that was not
+      counted.**
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   { key: "streak_10", title: "10-Day Streak",
+      //     detail: "Ten days in a row",  earned: false, clientComputed: "streak10" },
+    */
     {
       key: "hundred_lessons",
       title: "100 Lessons",
@@ -454,7 +473,11 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     {
       key: "perfect_test",
       title: "Perfect Test",
-      detail: attempts.some((a) => a.score === 100) ? "100% on a path test" : "Score 100% on a test",
+      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   detail: attempts.some((a) => a.score === 100) ? "100% on a path test" : "Score 100% on a test", */
+      detail: attempts.some((a) => a.score === 100)
+        ? "100% on a path test"
+        : `Best so far: ${attempts.length ? Math.max(...attempts.map((a) => a.score ?? 0)) : 0}% of 100%`,
       earned: attempts.some((a) => a.score === 100),
     },
     {
@@ -466,13 +489,17 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       */
       key: "course_finisher",
       title: "Course Finisher",
-      detail: coursesFinished > 0 ? `${coursesFinished} of ${totalCourses} courses` : "Finish every lesson in a course",
+      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   detail: coursesFinished > 0 ? `${coursesFinished} of ${totalCourses} courses` : "Finish every lesson in a course", */
+      detail: `${coursesFinished} of ${totalCourses} courses finished`,
       earned: coursesFinished > 0,
     },
     {
       key: "path_finisher",
       title: "Path Finisher",
-      detail: pathsCertified >= 5 ? "Five paths certified" : `Certify 5 paths — ${pathsCertified} so far`,
+      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   detail: pathsCertified >= 5 ? "Five paths certified" : `Certify 5 paths — ${pathsCertified} so far`, */
+      detail: `${pathsCertified} of 5 paths certified`,
       earned: pathsCertified >= 5,
     },
   ];
@@ -503,7 +530,8 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         .filter((r) => r.enrolled && !r.certified)
         .map((r) => ({ title: r.title, remaining: r.lessons - r.completed, completed: r.completed })),
     }),
-    level: levelFor(lessonsCompleted),
+    /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   level: levelFor(lessonsCompleted), */
     totals: { paths: rows.length, courses: totalCourses, lessons: totalLessons },
     mine: {
       lessonsCompleted,

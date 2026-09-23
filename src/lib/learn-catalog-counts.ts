@@ -62,13 +62,114 @@
  * behind the same door.
  */
 
-/** ⚠ THE DATE THE THREE BELOW WERE READ FROM THE LIVE DB. Bump it when you re-read. */
-export const CATALOG_COUNTS_MEASURED_ON = "2026-08-24";
+/*
+  ── ⚠⚠⚠ THE LITERALS ARE RETIRED — EVERY COUNT IS COMPUTED (`E606` R4) ────
 
-export type CatalogCount = { value: string; label: string };
+  ⚠ SCOTT, 2026-09-23: *"No catalogue count is a literal. Retire
+  `CATALOG_COUNTS` entirely. Every count is computed, and every count states
+  what it counts — a number with no definition is how one page says 12 and
+  another says 23 about the same catalogue."*
 
-export const CATALOG_COUNTS: CatalogCount[] = [
-  { value: "23", label: "Learning Paths" },
-  { value: "54", label: "Courses" },
-  { value: "522", label: "Lessons" },
-];
+  ⚠⚠ THAT IS EXACTLY WHAT HAD HAPPENED. `/learn`'s public hero printed
+  **23 · 54 · 522** from the literals below, while `/learn/paths` printed
+  **12 paths · 305 lessons** and the signed-in dashboard used **12 · 39 · 305**
+  as its denominators — including *"0 of 12 Certificates Awarded"*, where 12 is
+  a PATH count wearing a certificate label. ⚠⚠⚠ ALL OF THOSE NUMBERS WERE TRUE.
+  None of them said what it counted.
+
+  ── ⚠⚠ ONE DEFINITION, NAMED ON SCREEN ───────────────────────────────────
+
+  ⚠ **"Published paths a member can start"** — a `PUBLISHED` path holding at
+  least one PLAYABLE lesson. ⚠⚠ `isPlayable` IS `lib/learn.ts`'s, IMPORTED NOT
+  REWRITTEN: a vimeo ref plus a production status on the playable list. **A
+  second copy of that rule is how the two numbers diverged in the first place.**
+  ⚠ Courses and lessons are counted INSIDE those paths, on the same filter, so
+  the three figures describe one catalogue rather than three.
+
+  ⚠⚠ SUPERSEDED, quoted not deleted (`E164`) — and note the decision it
+  carried: *"a visitor never sees a catalog query"* (`E223`). **R4 overrides it
+  by rule 13**, and the cost is one cached query on a page that already awaits
+  the session, so it was never static. ⚠ Reported rather than assumed away.
+//   /** ⚠ THE DATE THE THREE BELOW WERE READ FROM THE LIVE DB. Bump it when you re-read. * /
+//   export const CATALOG_COUNTS_MEASURED_ON = "2026-08-24";
+//   
+//   export type CatalogCount = { value: string; label: string };
+//   
+//   export const CATALOG_COUNTS: CatalogCount[] = [
+//     { value: "23", label: "Learning Paths" },
+//     { value: "54", label: "Courses" },
+//     { value: "522", label: "Lessons" },
+//   ];
+*/
+
+import { prisma } from "@/lib/prisma";
+import { isPlayable } from "@/lib/learn";
+
+/**
+ * ⚠⚠ `key` IS THE STABLE HANDLE; `label` IS DISPLAY AND PLURALISES OFF THE
+ * NUMBER. ⚠⚠⚠ CALLERS LOOK UP BY `key`, NEVER BY `label` — a label that
+ * changes with the count cannot be a lookup key, and `check:ui` §61 caught
+ * exactly that: *"305 Lessons You Can Watch"* is right and *"1 Lessons You Can
+ * Watch"* would not be.
+ */
+export type CatalogCount = { key: "paths" | "courses" | "lessons"; value: string; label: string };
+
+/**
+ * ⚠⚠ THE LABEL CARRIES THE DEFINITION. *"Learning Paths"* is what produced the
+ * disagreement; *"Paths You Can Start"* cannot be read as anything else.
+ * ⚠ The counts are computed from one query and one filter, so they cannot
+ * disagree with each other even if the catalogue changes mid-render.
+ */
+export async function getCatalogCounts(): Promise<CatalogCount[]> {
+  const paths = await prisma.learningPath.findMany({
+    where: { status: "PUBLISHED" },
+    select: {
+      id: true,
+      courses: {
+        select: {
+          id: true,
+          sections: {
+            select: { lessons: { select: { vimeo_ref: true, production_status: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  let startablePaths = 0;
+  let courses = 0;
+  let lessons = 0;
+  for (const p of paths) {
+    const all = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
+    const playable = all.filter(isPlayable).length;
+    /* ⚠ A path with no playable lesson is not one a member can start, so it
+       contributes NOTHING — not its courses and not its lessons. */
+    if (playable === 0) continue;
+    startablePaths++;
+    lessons += playable;
+    courses += p.courses.filter((c) =>
+      c.sections.some((s) => s.lessons.some(isPlayable))
+    ).length;
+  }
+
+  /* ⚠ The plural is on the NOUN, not appended to the whole phrase — "Lesson
+     You Can Watch" + "s" would read "Lesson You Can Watchs". */
+  const p = (n: number, one: string, many: string) => (n === 1 ? one : many);
+  return [
+    {
+      key: "paths",
+      value: String(startablePaths),
+      label: p(startablePaths, "Path You Can Start", "Paths You Can Start"),
+    },
+    {
+      key: "courses",
+      value: String(courses),
+      label: p(courses, "Course With Video", "Courses With Video"),
+    },
+    {
+      key: "lessons",
+      value: String(lessons),
+      label: p(lessons, "Lesson You Can Watch", "Lessons You Can Watch"),
+    },
+  ];
+}

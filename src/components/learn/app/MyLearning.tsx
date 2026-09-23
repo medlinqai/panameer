@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight, Compass } from "lucide-react";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
-import { ProgressRing } from "@/components/learn/app/ProgressRing";
+/* ⚠ `ProgressRing` went with the level badge (`E606` R1). ⚠ SUPERSEDED (`E164`):
+   //   import { ProgressRing } from "@/components/learn/app/ProgressRing"; */
 import { StatTile } from "@/components/learn/app/StatTile";
 import { CourseSpineBar } from "@/components/learn/app/CourseSpineBar";
 /*
@@ -48,7 +49,10 @@ import type { Suggestion } from "@/lib/learn-suggestion";
  * is no total to add up, so the page shows counts, which are exact.
  */
 export function MyLearning({ data }: { data: MyLearningData }) {
-  const { level, totals, mine, continueCard, inProgress, paths, suggestion } = data;
+  /* ⚠ `level` IS GONE (R1) — the badge it fed is retired and `LevelState` no
+     longer travels. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const { level, totals, mine, continueCard, inProgress, paths, suggestion } = data; */
+  const { totals, mine, continueCard, inProgress, paths, suggestion } = data;
 
   return (
     <div className="-mx-5 -mt-6 sm:-mx-8">
@@ -100,43 +104,65 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </div>
 
           {/*
-            THE LEVEL BADGE. ⚠ NOT A CURRENCY. "Level 3 · Practitioner" is a
-            BANDING of lessons completed and nothing else — no XP column, no
-            Community Credits (those still return a hard zero with pending:true
-            and stay future tense). The ring shows progress through the band, and
-            the line under it counts LESSONS to the next one, which is the thing
-            it is actually a band of.
+            ── ⚠⚠⚠ THE LEVEL BADGE IS RETIRED (`P2-A4-E606` R1) ───────────────
+
+            ⚠ RULING 1: **there is no XP and there are no levels in Panameer.**
+            This rendered a numeral `1`, the band name *"Newcomer"*, a progress
+            ring, a progress bar, and *"5 more lessons to Starter"*.
+            ⚠⚠ ITS OWN COMMENT ARGUED IT WAS NOT A CURRENCY — *"a BANDING of
+            lessons completed and nothing else"* — and that argument is exactly
+            what the ruling overrides: **a band with a name, a numeral and a
+            next rung IS a level, whatever the column behind it is called.**
+
+            ⚠⚠⚠ THE HOLE IS LEFT AND REPORTED, NOT FILLED (Scott's instruction).
+            The hero now runs headline → counts, with nothing where the badge
+            sat. **No replacement was invented.**
+
+            ⚠ `levelFor` AND `LEVEL_BANDS` ARE DELETED WITH IT (R2) — this was
+            their only consumer. ⚠⚠ I PREVIOUSLY REPORTED THEM AS DEAD EXPORTS
+            AND THAT WAS WRONG: the grep that "proved" it was truncated by
+            `head -5`, which cut the `learn-dashboard.ts` hits and left only the
+            unrelated `levelFor` in `user-levels.ts`. **A truncated grep is not
+            a measurement.**
+
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   {/*
+            //   THE LEVEL BADGE. ⚠ NOT A CURRENCY. "Level 3 · Practitioner" is a
+            //   BANDING of lessons completed and nothing else — no XP column, no
+            //   Community Credits (those still return a hard zero with pending:true
+            //   and stay future tense). The ring shows progress through the band, and
+            //   the line under it counts LESSONS to the next one, which is the thing
+            //   it is actually a band of.
+            //   <div className="flex items-center gap-4 rounded-[16px] border border-white/20 bg-white/10 px-5 py-4 backdrop-blur-[6px]">
+            //   <ProgressRing
+            //   value={Math.round(level.fraction * 100)}
+            //   max={100}
+            //   size={74}
+            //   stroke={7}
+            //   gradient={{ id: "lvl", from: "var(--color-learn-gold)", to: "var(--color-magenta)" }}
+            //   label={String(level.level)}
+            //   labelClassName="text-[23px] text-white"
+            //   />
+            //   <div className="min-w-0">
+            //   <h4 className="font-display text-[15px] font-bold">{level.name}</h4>
+            //   <p className="mt-1 text-[11.5px] leading-relaxed text-white/70">
+            //   {level.nextName ? (
+            //   <>
+            //   {level.toNext} more lesson{level.toNext === 1 ? "" : "s"} to{" "}
+            //   <b className="font-semibold text-white">{level.nextName}</b>
+            //   </>
+            //   ) : (
+            //   <>Top band — {mine.lessonsCompleted} lessons watched</>
+            //   )}
+            //   </p>
+            //   <span className="mt-2 block h-[5px] w-[150px] max-w-full overflow-hidden rounded-full bg-white/20">
+            //   <span
+            //   className="block h-full rounded-full bg-[linear-gradient(90deg,var(--color-learn-gold),var(--color-magenta))]"
+            //   style={{ width: `${Math.round(level.fraction * 100)}%` }}
+            //   />
+            //   </span>
+            //   </div>
           */}
-          <div className="flex items-center gap-4 rounded-[16px] border border-white/20 bg-white/10 px-5 py-4 backdrop-blur-[6px]">
-            <ProgressRing
-              value={Math.round(level.fraction * 100)}
-              max={100}
-              size={74}
-              stroke={7}
-              gradient={{ id: "lvl", from: "var(--color-learn-gold)", to: "var(--color-magenta)" }}
-              label={String(level.level)}
-              labelClassName="text-[23px] text-white"
-            />
-            <div className="min-w-0">
-              <h4 className="font-display text-[15px] font-bold">{level.name}</h4>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-white/70">
-                {level.nextName ? (
-                  <>
-                    {level.toNext} more lesson{level.toNext === 1 ? "" : "s"} to{" "}
-                    <b className="font-semibold text-white">{level.nextName}</b>
-                  </>
-                ) : (
-                  <>Top band — {mine.lessonsCompleted} lessons watched</>
-                )}
-              </p>
-              <span className="mt-2 block h-[5px] w-[150px] max-w-full overflow-hidden rounded-full bg-white/20">
-                <span
-                  className="block h-full rounded-full bg-[linear-gradient(90deg,var(--color-learn-gold),var(--color-magenta))]"
-                  style={{ width: `${Math.round(level.fraction * 100)}%` }}
-                />
-              </span>
-            </div>
-          </div>
         </div>
         <span
           className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[70px] bg-[linear-gradient(to_bottom,transparent,var(--color-canvas))]"
@@ -211,7 +237,14 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
             tone="magenta"
             value={`${mine.pathsCertified}`}
-            sub={`of ${totals.paths}`}
+            /* ⚠⚠⚠ THE DENOMINATOR IS PATHS, SO IT SAYS PATHS (`E606` R4).
+               ⚠ It read *"0 of 12"* under the label *"Certificates Awarded"*,
+               which reads as *"twelve certificates exist"*. Twelve is the
+               number of paths a member can START — one certificate per path —
+               and that is a different noun from the one above it.
+               ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   sub={`of ${totals.paths}`} */
+            sub={`of ${totals.paths} paths`}
             label="Certificates Awarded"
           />
         </div>
@@ -356,7 +389,10 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </>
         )}
 
-        <AchievementGrid achievements={data.achievements} completedAt={data.completedAt} />
+        {/* ⚠ `completedAt` NO LONGER TRAVELS (`E606` R3) — the streak it fed is gone.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <AchievementGrid achievements={data.achievements} completedAt={data.completedAt} /> */}
+        <AchievementGrid achievements={data.achievements} />
       </div>
     </div>
   );
@@ -374,7 +410,13 @@ function subhead(d: MyLearningData): string {
   if (d.mine.enrolledPaths > 0) {
     return `You're enrolled in ${d.mine.enrolledPaths} path${d.mine.enrolledPaths === 1 ? "" : "s"}. Everything in them is watched — the path tests are what's left.`;
   }
-  return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`;
+  /* ⚠⚠ THE SUBHEAD NAMES WHAT IT COUNTS (`E606` R4). *"12 learning paths"* and
+     *"23 learning paths"* were both true of this catalogue and neither said
+     which question it answered. `d.totals` is the STARTABLE set — paths with a
+     playable lesson — so the sentence says so.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`; */
+  return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
 }
 
 function SectionHead({ title, children }: { title: string; children?: React.ReactNode }) {

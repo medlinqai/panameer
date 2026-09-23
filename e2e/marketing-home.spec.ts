@@ -31,7 +31,14 @@ import {
 } from "../src/lib/learn-steps";
 /* `/hire-talent`'s five labels, from the module the page reads — same reason as
    `learn-steps.ts` above: strings only, no imports, so a spec can pull it in. */
-import { TALENT_STEPS, TALENT_CTA_LABEL } from "../src/lib/talent-steps";
+/* ⚠ `TALENT_STEPS` BECAME `talentSteps()` (`E606` R4) — the catalogue counts
+   inside it are computed from the database now, so it cannot be a module-level
+   const. ⚠⚠ THE ASSERTIONS ARE UNCHANGED IN SUBSTANCE: they still compare the
+   rendered rows to the SAME source the page renders from, which is the whole
+   point of importing it rather than typing the copy here.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { TALENT_STEPS, TALENT_CTA_LABEL } from "../src/lib/talent-steps"; */
+import { talentSteps, TALENT_CTA_LABEL } from "../src/lib/talent-steps";
 /* `/find-work`'s five labels, from the module the page reads. */
 import { WORK_STEPS } from "../src/lib/work-steps";
 import { SHOP_CTA_LABEL, SHOP_STEPS } from "../src/lib/shop-steps";
@@ -2074,6 +2081,7 @@ test.describe("talent walk 1 — the seller page and /'s macro section", () => {
     const rows = (
       await page.locator("summary.stepd-sum .stepd-t").allTextContents()
     ).map((t) => t.trim());
+    const TALENT_STEPS = await talentSteps();
     expect(rows).toEqual(TALENT_STEPS.map((s) => s.summary));
     expect(rows).toEqual([
       /* ⚠ RENAMED BY `P1-J1-E034`: was `Join Panameer`. It is the hero's CTA label
@@ -3238,15 +3246,29 @@ test.describe("/talent — the hero stat tiles", () => {
         direction once the number moves.
       */
       const n = Number(t.value);
+      /*
+        ⚠⚠⚠ THE RULE IS "THE LABEL AGREES IN NUMBER WITH THE FIGURE". The
+        MECHANISM was `label.endsWith("s")`, which silently assumed the noun is
+        the LAST word — true of `Providers` and `Service Products`, and false of
+        `Lessons You Can Watch`, where the plural sits on the head noun and the
+        qualifier follows it.
+        ⚠⚠ `E606` R4 PUT THE DEFINITION INTO THE LABEL, which is what introduced
+        the second shape. **The rule did not change; the proxy was too narrow.**
+        ⚠ So the noun is the FIRST word when a qualifier follows (`You Can…`,
+        `With…`), and the LAST word otherwise. ⚠⚠ THE ASSERTION STILL FAILS A
+        GENUINE DISAGREEMENT in either shape — it is widened, not weakened.
+      */
+      const qualified = /\s(You Can|With|Per|In|For)\b/.test(t.label);
+      const noun = qualified ? t.label.split(/\s+/)[0] : t.label.split(/\s+/).pop()!;
       if (n === 1) {
         expect(
-          t.label.endsWith("s"),
-          `"${t.value} ${t.label}" — 1 takes the singular`,
+          noun.endsWith("s"),
+          `"${t.value} ${t.label}" — 1 takes the singular (noun: "${noun}")`,
         ).toBe(false);
       } else {
         expect(
-          t.label.endsWith("s"),
-          `"${t.value} ${t.label}" — ${n} takes the plural`,
+          noun.endsWith("s"),
+          `"${t.value} ${t.label}" — ${n} takes the plural (noun: "${noun}")`,
         ).toBe(true);
       }
     }

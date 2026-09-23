@@ -98,47 +98,68 @@ export function streakFrom(completedAt: (string | Date)[], timeZone: string, now
  * how much of the catalog someone has watched, in the vocabulary this catalog
  * already uses about consultants.
  */
-export const LEVEL_BANDS: { level: number; name: string; from: number }[] = [
-  { level: 1, name: "Newcomer", from: 0 },
-  { level: 2, name: "Starter", from: 5 },
-  { level: 3, name: "Practitioner", from: 25 },
-  { level: 4, name: "Specialist", from: 75 },
-  { level: 5, name: "Authority", from: 175 },
-  { level: 6, name: "Master", from: 350 },
-];
+/*
+  ── ⚠⚠⚠ LEVELS ARE RETIRED (`P2-A4-E606` R1/R2) ──────────────────────────
 
-export type LevelState = {
-  level: number;
-  name: string;
-  /** Lessons at the bottom of this band. */
-  from: number;
-  /** Lessons needed for the next band; null at the top. */
-  next: number | null;
-  nextName: string | null;
-  /** How far through this band, 0–1 — what the ring draws. */
-  fraction: number;
-  toNext: number;
-};
+  ⚠ RULING 1: **there is no XP and there are no levels in Panameer.**
+  `LEVEL_BANDS`, `LevelState` and `levelFor` existed only to draw the
+  "Newcomer · 5 more lessons to Starter" badge on `/learn`, and that badge is
+  gone. ⚠⚠ THE BLOCK ABOVE ARGUED ITS OWN CASE — *"if these two ever get
+  conflated the learner is being shown a balance"* — and the ruling settles it
+  the other way: **a band with a numeral, a name and a next rung is a level, no
+  matter what the column behind it is.**
 
-export function levelFor(lessonsCompleted: number): LevelState {
-  const n = Math.max(0, lessonsCompleted);
-  let i = 0;
-  for (let k = 0; k < LEVEL_BANDS.length; k++) if (n >= LEVEL_BANDS[k].from) i = k;
-  const band = LEVEL_BANDS[i];
-  const next = LEVEL_BANDS[i + 1] ?? null;
-  return {
-    level: band.level,
-    name: band.name,
-    from: band.from,
-    next: next?.from ?? null,
-    nextName: next?.name ?? null,
-    /* Top band: the ring is full rather than empty — there is no next target,
-       and an empty ring would read as "no progress" for the most-progressed
-       learner on the platform. */
-    fraction: next ? (n - band.from) / (next.from - band.from) : 1,
-    toNext: next ? Math.max(0, next.from - n) : 0,
-  };
-}
+  ⚠ CONFIRMED BEFORE DELETING, with comments stripped so an `E164` quote could
+  not be mistaken for a consumer: **zero live consumers** of `LEVEL_BANDS`,
+  `LevelState` or this `levelFor`. ⚠⚠ THE `levelFor` HITS IN
+  `src/app/admin/**` AND `src/lib/user-levels.ts` ARE A DIFFERENT FUNCTION of
+  the same name — user account levels, nothing to do with Learn. **That
+  collision is what made my first report call these dead when they were live,
+  and it is what could make the next reader call them live when they are dead.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   export const LEVEL_BANDS: { level: number; name: string; from: number }[] = [
+//     { level: 1, name: "Newcomer", from: 0 },
+//     { level: 2, name: "Starter", from: 5 },
+//     { level: 3, name: "Practitioner", from: 25 },
+//     { level: 4, name: "Specialist", from: 75 },
+//     { level: 5, name: "Authority", from: 175 },
+//     { level: 6, name: "Master", from: 350 },
+//   ];
+//   
+//   export type LevelState = {
+//     level: number;
+//     name: string;
+//     /** Lessons at the bottom of this band. * /
+//     from: number;
+//     /** Lessons needed for the next band; null at the top. * /
+//     next: number | null;
+//     nextName: string | null;
+//     /** How far through this band, 0–1 — what the ring draws. * /
+//     fraction: number;
+//     toNext: number;
+//   };
+//   
+//   export function levelFor(lessonsCompleted: number): LevelState {
+//     const n = Math.max(0, lessonsCompleted);
+//     let i = 0;
+//     for (let k = 0; k < LEVEL_BANDS.length; k++) if (n >= LEVEL_BANDS[k].from) i = k;
+//     const band = LEVEL_BANDS[i];
+//     const next = LEVEL_BANDS[i + 1] ?? null;
+//     return {
+//       level: band.level,
+//       name: band.name,
+//       from: band.from,
+//       next: next?.from ?? null,
+//       nextName: next?.name ?? null,
+//       /* Top band: the ring is full rather than empty — there is no next target,
+//          and an empty ring would read as "no progress" for the most-progressed
+//          learner on the platform. * /
+//       fraction: next ? (n - band.from) / (next.from - band.from) : 1,
+//       toNext: next ? Math.max(0, next.from - n) : 0,
+//     };
+//   }
+*/
 
 // ---------------------------------------------------------------------------
 // The computed headline
