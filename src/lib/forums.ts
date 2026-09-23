@@ -995,3 +995,53 @@ export async function getForumsHome(viewer: Viewer) {
     teaches: expertBoardIds.length > 0,
   };
 }
+
+/**
+ * ── ⚠⚠⚠ THREADS WAITING ON THE TEACHER (`P2-A2-E603` WS-C) ───────────────
+ *
+ * ⚠ SCOTT'S DEFINITION, 2026-09-23: *"A thread in a path you teach, where the
+ * teacher has not replied, AND no reply is marked helpful."*
+ * ⚠⚠ BOTH CLAUSES ARE REQUIRED, and each answers a different way the queue
+ * would otherwise lie:
+ *   · ⚠ WITHOUT the teacher clause, a thread somebody ELSE resolved still sits
+ *     in the teacher's queue — it is not waiting on them.
+ *   · ⚠⚠ WITHOUT the helpful clause, a thread answered well but never marked
+ *     sits there FOREVER. `marked_helpful_at` is set by the ASKER, so it can
+ *     simply never arrive.
+ *
+ * ── ⚠⚠⚠ IT LIVES HERE, NOT IN `lib/statistics.ts`, AND A GATE SAID SO ────
+ *
+ * ⚠ It was written in `statistics.ts` first, and **`check:community` GUARD 2
+ * went red**: *"`marked_helpful_*` is written in exactly one file"*.
+ * ⚠⚠ THE GUARD WAS RIGHT AND THE CODE WAS WRONG. Its own comment states the
+ * rule — *"the mapping is the lib's job"* — and a statistics module reaching
+ * into forum internals is exactly the coupling it exists to prevent. ⚠⚠⚠ THE
+ * FIX IS TO MOVE THE QUERY, NOT TO EXEMPT THE FILE: *"exempting the file is
+ * exactly how a guard stops guarding"*, in the guard's own words.
+ * ⚠ Strictly it is a READ — `marked_helpful_at: { not: null }` is a FILTER, not
+ * an assignment — so the guard is over-broad by a hair. **It is still not worth
+ * widening**: the query belongs here on the merits, and a narrower regex would
+ * be a change to a gate in order to keep code where it did not belong.
+ *
+ * ⚠ `ForumThread` holds ZERO rows today, so this returns a measured `0`. That
+ * is a real zero and renders as `0`, never as a dash.
+ */
+export async function countThreadsWaitingOn(
+  personId: string,
+  pathIds: string[]
+): Promise<number> {
+  if (pathIds.length === 0) return 0;
+  return prisma.forumThread.count({
+    where: {
+      board: { learning_path_id: { in: pathIds } },
+      /* ⚠⚠ TWO `posts` FILTERS, SO THEY GO IN AN `AND` — one object cannot
+         carry the key twice, and merging them into a single `none` would ask a
+         different question: *"no post is BOTH the teacher's and helpful"*,
+         which is true of almost every thread. */
+      AND: [
+        { posts: { none: { author_id: personId } } },
+        { posts: { none: { marked_helpful_at: { not: null } } } },
+      ],
+    },
+  });
+}

@@ -1,0 +1,189 @@
+/*
+  ── ⚠⚠⚠ THE HONEYCOMB (`P2-A2-E603` WS-B) ────────────────────────────────
+
+  ⚠ ONE CELL PER AREA, on `E600` WS-D's shared 15-second rebuild.
+
+  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
+  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
+  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
+  still see the name, but nobody ever finds out the token was wrong.
+  ⚠⚠ `--color-ink-3` AND `--color-line-2` ARE **NOT** TOKENS (Scott ruled
+  against promoting them at `E601` WS-D). They exist as Tailwind utilities
+  only, so they are used as CLASSES in the TSX and never as `var()` here.
+*/
+
+.pm-hive {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 8px;
+}
+
+@media (min-width: 640px) {
+  .pm-hive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/*
+  ── ⚠⚠ THE CELL ──────────────────────────────────────────────────────────
+  ⚠ A hexagon by `clip-path`, so the shape costs no images and scales with the
+  cell. ⚠⚠ THE CLIP IS ON A WRAPPER, NOT ON THE TEXT: clipping a box that holds
+  text can shave a descender at some widths, so the hexagon is the BACKGROUND
+  layer and the content sits above it with its own padding.
+*/
+.pm-hive-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 104px;
+  padding: 14px 10px;
+  text-align: center;
+  isolation: isolate;
+}
+
+.pm-hive-cell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-line);
+}
+
+/*
+  ── ⚠⚠⚠ THE TWO DASHES MUST NOT LOOK ALIKE ───────────────────────────────
+
+  ⚠ SCOTT: *"A dashed cell meaning 'nothing here' and one meaning 'we can't
+  count this' must not look identical."*
+
+  ⚠⚠ THEY DIFFER IN THREE WAYS AT ONCE, NOT ONE — a single cue (colour alone,
+  or a border alone) fails for a colour-blind reader, at low contrast, and in a
+  screenshot:
+    1. ⚠ THE GLYPH — a measured zero prints `0`; an uncountable figure prints an
+       em-dash. **A real zero is never softened into a dash.**
+    2. ⚠⚠ THE FILL — a counted cell is SOLID, an uncountable one is HATCHED.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   2. THE OUTLINE — counted cells are SOLID, uncountable cells are DASHED.
+       ⚠⚠⚠ THE OUTLINE ALONE DID NOT SURVIVE `clip-path` — see the block below.
+       The dashed border is kept, but it is the second half of this cue, not the
+       cue itself.
+    3. ⚠⚠ THE REASON — an uncountable cell CARRIES ITS REASON and a counted one
+       has none. `StatFigureRow`'s rule, in a hexagon: the component cannot
+       print a dash without saying why.
+  ⚠⚠⚠ SO AN EMPTY AREA AND AN UNKNOWN ONE ARE DISTINGUISHABLE BY SHAPE ALONE,
+  WITH THE COLOUR REMOVED.
+*/
+/*
+  ⚠⚠⚠ THE UNCOUNTABLE CELL IS **HATCHED**, NOT MERELY DASHED, AND THE REASON IS
+  A MEASURED RENDERING DEFECT, NOT A TASTE:
+
+  ⚠⚠ `clip-path` CLIPS THE BORDER ALONG WITH THE BOX. On a hexagon that means
+  the border SURVIVES ONLY ON THE TWO STRAIGHT SIDES and is cut away on all
+  four diagonals — so `border-style: dashed` rendered as two faint vertical
+  ticks rather than a dashed hexagon. ⚠ Seen in the WS-B screenshot, not in the
+  CSS: every gate was green and the rule was still not carried on screen.
+
+  ⚠⚠⚠ A FILL IS NOT CLIPPED AWAY — it is clipped TO the hexagon, which is
+  exactly what we want. So the load-bearing cue is the hatch, and the dashed
+  border is kept as the SECOND cue where it does show.
+  ⚠ The hatch is drawn in `--color-line`, a token that exists, with no fallback.
+*/
+.pm-hive-cell[data-counted="no"]::before {
+  border-style: dashed;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    var(--color-line) 5px 6px
+  );
+}
+
+.pm-hive-figure {
+  font-weight: 700;
+  line-height: 1;
+  /* ⚠ `E433` — a figure is INK. Magenta means interactive, and a statistic is
+     not a link even when the cell around it is one. */
+  color: var(--color-ink);
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-hive-cell[data-counted="no"] .pm-hive-figure {
+  /*
+    ⚠ Faint, because it must not read as a RESULT — but ⚠⚠⚠ STILL LEGIBLE,
+    because the rule is *"a dash carries its reason"* and a dash nobody can see
+    carries nothing. ⚠ At 0.45 the em-dash had all but vanished against the
+    hatch in the WS-B screenshot; the hatch was doing the whole job and the
+    glyph cue was gone.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   opacity: 0.45;
+  */
+  color: var(--color-ink-2);
+  opacity: 0.75;
+}
+
+.pm-hive-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+  line-height: 1.15;
+}
+
+.pm-hive-why {
+  font-size: 9.5px;
+  line-height: 1.2;
+  color: var(--color-ink-2);
+  opacity: 0.8;
+  max-width: 13ch;
+}
+
+/* ⚠ The whole cell is the link, so the tap target is the hexagon and not a
+   6px word. ⚠⚠ 104px tall — a real target on a phone. */
+a.pm-hive-cell:hover::before {
+  border-color: var(--color-magenta);
+}
+a.pm-hive-cell:focus-visible {
+  outline: 2px solid var(--color-magenta);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/*
+  ── ⚠⚠⚠ THE REARRANGE ────────────────────────────────────────────────────
+  ⚠ Each cell fades and lifts a little, staggered by its position, replayed on
+  every cycle. ⚠⚠ THE ANIMATION IS DECORATION — THE REARRANGE IS THE ORDER
+  CHANGE ITSELF, which happens in the markup whether or not this runs. A gate
+  that watched the animation would be watching the wrong thing.
+*/
+@keyframes pm-hive-settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pm-hive[data-still="no"] .pm-hive-cell {
+  animation: pm-hive-settle 420ms ease-out both;
+}
+
+/*
+  ⚠⚠⚠ REDUCED MOTION: A STILL PICTURE AND NO COUNTDOWN (Scott's rule 4).
+  ⚠ THE ORDER STOPS CHANGING TOO, not just the fade. A grid whose cells
+  silently swap places without animating is still motion to somebody who asked
+  for none — it is the worst version, because it happens with no transition to
+  explain it. ⚠⚠ The ORDER is frozen in the component; this rule only stops the
+  decoration, and the media query is belt-and-braces for a reader whose
+  preference the JS has not seen yet.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .pm-hive .pm-hive-cell {
+    animation: none;
+  }
+}
