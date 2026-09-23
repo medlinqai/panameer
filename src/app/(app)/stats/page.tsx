@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
-import { getStatistics, type StatWindow } from "@/lib/statistics";
+import { getStatistics } from "@/lib/statistics";
+import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
@@ -43,11 +44,19 @@ import {
  */
 export const metadata = { title: "My Stats · Panameer" };
 
-/* ⚠⚠ ONE READING OF THE PARAM, AND ANYTHING UNRECOGNISED IS `month`. A URL is
-   user input: `?period=banana` must not throw and must not silently become
-   "all time", which would quietly widen every figure on the page. */
-function periodOf(sp: { period?: string }): StatWindow {
-  return sp.period === "all" ? "all" : "month";
+/* ⚠⚠ ONE READING OF THE PARAM, AND ANYTHING UNRECOGNISED IS THE DEFAULT. A URL
+   is user input: `?period=banana` must not throw and must not silently widen a
+   window.
+   ⚠⚠⚠ THE FRONT-FACE SWITCH IS GONE (`E603` correction 4) — the BACK face owns
+   every time window now, so this param drives the TREND back, not the figures.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   function periodOf(sp: { period?: string }): StatWindow {
+   //     return sp.period === "all" ? "all" : "month";
+   //   }
+   ⚠ The front figures are simply "as they stand today", which is why they need
+   no tag and no switch. */
+function trendOf(sp: { period?: string }): TrendPeriod {
+  return sp.period === "ytd" ? "ytd" : "90d";
 }
 
 export default async function MyStatsPage({
@@ -153,7 +162,8 @@ export default async function MyStatsPage({
         </p>
       );
     }
-    const s = await getStatistics(person.id, viewer.userId, null, periodOf(await searchParams));
+    const sp = await searchParams;
+    const s = await getStatistics(person.id, viewer.userId, null, "all", trendOf(sp));
     return (
       <>
         <PageTabs
@@ -167,7 +177,7 @@ export default async function MyStatsPage({
             How your account is doing. Anything marked &ldquo;&mdash;&rdquo;
             isn&apos;t being counted yet, and says why.
           </p>
-          <BuyerStatistics s={s} />
+          <BuyerStatistics s={s} period={trendOf(sp)} />
         </div>
       </>
     );
@@ -179,11 +189,18 @@ export default async function MyStatsPage({
 
   /* ⚠ ONE CALL, THE SAME MODULE THE BUYER BRANCH USES — two shapes of this page
      asking two different questions is how the figures start to disagree. */
+  const sp = await searchParams;
+  /* ⚠ `"all"` — the FRONT face shows figures as they stand, with no window
+     (`E603` correction 4). The trend back does the windowing. */
   const stats = await getStatistics(
     profile.person_id,
     viewer.userId,
     profile.id,
-    periodOf(await searchParams)
+    "all",
+    /* ⚠⚠ THE PERIOD REACHES THE QUERY, NOT JUST THE PILL. Until this argument
+       existed the trend back drew the SAME EIGHT WEEKS under both periods, so
+       `YTD` moved the highlight and nothing else. */
+    trendOf(sp)
   );
 
   /* ⚠ OWNER-SCOPED INSIDE THE HELPER — the profile is resolved from the
@@ -810,7 +827,7 @@ export default async function MyStatsPage({
         existing subject and are untouched.
       */}
       <div className="mt-6 space-y-4">
-        <StatisticsCards s={stats} />
+        <StatisticsCards s={stats} period={trendOf(sp)} />
       </div>
 
       <p className="mt-6 text-[13px] text-ink-2">
