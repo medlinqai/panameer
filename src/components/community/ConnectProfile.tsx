@@ -47,6 +47,7 @@ import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
+import { OwnerResumeRerun } from "@/components/profile/OwnerAiPass";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
   CertificationsBody,
@@ -971,8 +972,35 @@ export function ConnectProfile({
               empty="No certifications yet."
               emptyAction={
                 owner ? (
+                  /*
+                    ── ⚠⚠⚠ THE LINE SHIPS, BECAUSE THE TEST EXISTS (`E602` WS-E 1)
+
+                    ⚠ SCOTT: the line ships *"only if a free certification test
+                    actually exists"*, and `E600` had recorded that path tests
+                    *"may be unbuilt"*.
+                    ⚠⚠ MEASURED 2026-09-22, AND THAT CAVEAT IS SUPERSEDED: **two
+                    `LearnAssessment` rows are `PUBLISHED`** — Basic Procurement
+                    (30 questions) and Advanced Procurement (20) — six more are
+                    `DRAFT`, `/learn/<slug>/test` renders 200, and the page
+                    contains **no price, no paywall, no upgrade**. It is free.
+
+                    ⚠⚠⚠ IT LINKS TO `/learn`, NOT TO `/test`, AND THAT IS THE
+                    HONEST DESTINATION. The test is GATED ON FINISHING THE PATH
+                    — the gate persona sees *"Finish the path first. You've
+                    completed 0 of 65 lessons."* ⚠ A link straight to `/test`
+                    would be a door that opens onto a wall (`E579`); the path is
+                    where the certificate actually begins.
+                    ⚠ Scott's own wording — *"linking to Learn's certification
+                    path"* — is the path, and `/learn` is where the two
+                    certification paths are chosen from.
+
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   <Link href="/learn" …>Earn One in Learn</Link>
+                    ⚠⚠ The DESTINATION is unchanged; only the promise is new,
+                    and it is one the destination keeps.
+                  */
                   <Link href="/learn" className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline">
-                    Earn One in Learn
+                    Click Here to Take a Free Certification Test Now
                   </Link>
                 ) : undefined
               }
@@ -1002,7 +1030,39 @@ export function ConnectProfile({
         <ProfileCard
           id="work-history"
           title="Work History"
-          edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
+          /*
+            ── ⚠⚠⚠ THE RÉSUMÉ RE-RUN, MOUNTED (`P2-A2-E602` WS-E 2) ────────────
+
+            ⚠ SCOTT'S WALK (`E021`): *"an icon on the profile to re-run the AI
+            resume parser… it asks first, naming what it will replace, and never
+            silently overwrites a field the person edited by hand."*
+
+            ⚠⚠⚠ NOTHING NEW WAS BUILT, AND THAT IS THE FINDING.
+            `OwnerResumeRerun` ALREADY EXISTS in `components/profile/OwnerAiPass.tsx`,
+            wrapping `ResumeImportAction` — which already implements the exact
+            rule Scott asked for: **confirm → PREVIEW (parses, writes NOTHING) →
+            a ticked diff → save.** ⚠ MEASURED: **nothing imported it.** It was
+            rendered in the gaps panel `E600` WS-B rebuilt away, so the component
+            survived and its entry point did not.
+            ⚠⚠ BUILDING A SECOND ONE WOULD HAVE BEEN A SECOND CONFIRM DIALOG
+            AND A SECOND OVERWRITE RULE TO KEEP IN STEP — `E585`'s shape, which
+            this brief has already paid for twice.
+
+            ⚠ THE OVERWRITE RULE, RE-READ AT THE PREMISE CHECK RATHER THAN
+            ASSUMED: skills use `skipDuplicates`, so a hand-added row is never
+            downgraded; `headline` and `overview` are **fill-only-when-empty**,
+            computed inside the writer from the PROFILE. ⚠⚠ THAT IS WHY THE COPY
+            READS *"a title (yours is empty)"* AND NEVER *"will replace"* — the
+            component says what it will do, and what it will do is add.
+          */
+          edit={
+            owner ? (
+              <span className="flex items-center gap-3">
+                <OwnerResumeRerun />
+                <EditLink href={editHref("work-history")} title="Work History" />
+              </span>
+            ) : undefined
+          }
         >
           <WorkHistoryBody
             employers={p.employers}
