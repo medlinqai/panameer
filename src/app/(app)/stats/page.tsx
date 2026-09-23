@@ -87,7 +87,18 @@ export default async function MyStatsPage({
          profile. `BidRequest.provider_person_id` and
          `InterviewRequest.provider_person_id` are both person ids. */
       person_id: true,
-      rating: true,
+      /* ⚠⚠⚠ `rating: true` IS GONE — IT WAS SELECTED AND NEVER USED.
+         ⚠ SCOTT, 2026-09-23: *"Unrendered code is unreviewed code, and an
+         unused select is how the expression gets written by accident."* An
+         unused field in a `select` is an invitation: the value is already in
+         scope, so rendering it is one expression and no new query.
+         ⚠⚠ `ProviderProfile.rating` HAS NO RUNTIME WRITER — its only value is
+         `4.90`, hardcoded at `prisma/seed.ts:260`. Rendering it anywhere a
+         member or a buyer can see would be a FABRICATED RATING.
+         ⚠ `check:statistics` §30 now fails the build if any component reads it
+         while no writer exists.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   rating: true, */
       updated_at: true,
       created_at: true,
       onboarding_completed_at: true,

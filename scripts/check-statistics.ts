@@ -36,7 +36,7 @@
  * quotes, including the exact strings assertions 4–7 forbid, and scanning raw
  * text would fail on the QUOTE rather than on live code.
  */
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { trendBuckets, type Figure } from "../src/lib/statistics";
 import { allZero } from "../src/components/console/StatCardBacks";
@@ -59,6 +59,18 @@ const stripTs = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+
+/** ⚠ Derives its inputs from the tree at run time (`E587`) — nothing here
+ *  knows which files exist. */
+function walkSrc(test: RegExp, dir = "src", out: string[] = []): string[] {
+  for (const e of readdirSync(dir)) {
+    const full = `${dir}/${e}`;
+    if (statSync(full).isDirectory()) {
+      if (!/node_modules|\.next/.test(full)) walkSrc(test, full, out);
+    } else if (test.test(full)) out.push(full);
+  }
+  return out;
+}
 
 const CARDS = "src/components/console/StatisticsCards.tsx";
 const ROW = "src/components/console/StatFigureRow.tsx";
@@ -780,6 +792,98 @@ check(
   /no order can reach paid/.test(src.lib) && !/complete your first paid work order/.test(src.page),
   "no promise about a mechanism that does not exist"
 );
+
+
+/* ── 7 · THE FABRICATED RATING (pre-merge guard) ────────────────────────── */
+
+/**
+ * ── ⚠⚠⚠ NO COMPONENT RENDERS `ProviderProfile.rating` WHILE NOTHING WRITES IT ──
+ *
+ * ⚠ SCOTT, 2026-09-23: *"'No component reads it' is true today and nothing keeps
+ * it true — it is one JSX expression from being a fabricated rating on a
+ * member-facing page."*
+ *
+ * ⚠⚠ THE COLUMN HOLDS `4.90` ON ONE PROFILE, HARDCODED AT `prisma/seed.ts:260`,
+ * AND NOTHING COMPUTES IT. There is no `Review`, `Rating` or `Feedback` model
+ * and no rating relation on `WorkOrder`, so a buyer cannot produce one.
+ *
+ * ── ⚠⚠ BY SHAPE, NOT BY A LIST OF THE FOUR VIEW MODELS (`E587`) ──────────
+ *
+ * ⚠⚠⚠ A LIST WOULD MISS THE FIFTH. All three sets below are DERIVED from the
+ * tree at run time:
+ *   · **writers** — any `providerProfile` create/update/upsert whose data sets
+ *     `rating`. ⚠ **THE GUARD IS ARMED ONLY WHILE THIS IS EMPTY.** The day a
+ *     real writer lands, the figure becomes a measurement and this assertion
+ *     must stop forbidding it — so the gate reads that fact rather than being
+ *     told it.
+ *   · **carriers** — every file that maps `rating:` from something's `.rating`.
+ *     Reported, not forbidden: carrying it is how it reaches a component, and
+ *     seeing the list grow is the early warning.
+ *   · **renderers** — any `.tsx` under `components/` or `app/` that reads
+ *     `.rating`, EXCLUDING files that define their own numeric rating literal.
+ *     ⚠ That exclusion is by SHAPE too: `TestimonialCarousel` holds a local
+ *     array with `rating: 3.0`, which is marketing copy it owns, not this
+ *     column. A file that supplies its own value is not reading the database's.
+ */
+{
+  const tsxFiles = walkSrc(/\.tsx$/).filter((f) => /\/(components|app)\//.test(f));
+  const tsFiles = walkSrc(/\.ts$/);
+  check(
+    "30 — ⚠ the sweep found component files to read (E586)",
+    tsxFiles.length > 0 && tsFiles.length > 0,
+    `${tsxFiles.length} tsx · ${tsFiles.length} ts`
+  );
+
+  /* ⚠ WRITERS — derived, so the guard disarms itself when one appears. */
+  const writers: string[] = [];
+  for (const f of tsFiles.concat(tsxFiles)) {
+    const code = stripTs(readFileSync(f, "utf8")).replace(/\s+/g, " ");
+    for (const m of code.matchAll(/providerProfile\.(create|update|upsert|updateMany|createMany)\(([^;]{0,400})/g)) {
+      if (/\brating\s*:/.test(m[2])) writers.push(`${f.replace(/^src\//, "")}:${m[1]}`);
+    }
+  }
+  check(
+    "30 — ⚠⚠ the guard is ARMED because nothing writes the column",
+    writers.length === 0,
+    writers.length
+      ? `a writer now exists (${writers.join(", ")}) — the rating may be real; REVIEW THIS ASSERTION`
+      : "no runtime writer; the only value is seeded"
+  );
+
+  /* ⚠ CARRIERS — reported, so the list growing is visible. */
+  const carriers = tsFiles.filter((f) =>
+    /rating:\s*[^,;]*\.rating/.test(stripTs(readFileSync(f, "utf8")).replace(/\s+/g, " "))
+  );
+  check(
+    "30 — ⚠ the carriers are derived, not listed — a fifth cannot slip past",
+    carriers.length > 0,
+    carriers.map((f) => f.replace(/^src\//, "")).join(", ")
+  );
+
+  /* ⚠⚠⚠ RENDERERS — the assertion itself. */
+  const renderers: string[] = [];
+  for (const f of tsxFiles) {
+    const code = stripTs(readFileSync(f, "utf8"));
+    if (!/\.rating\b/.test(code)) continue;
+    /* ⚠ A file holding its own numeric rating literal supplies its own value
+       and is not reading this column. */
+    if (/rating:\s*[0-9]/.test(code)) continue;
+    renderers.push(f.replace(/^src\//, ""));
+  }
+  check(
+    "30 — ⚠⚠⚠ no component reads a rating while nothing computes one",
+    writers.length > 0 || renderers.length === 0,
+    renderers.length ? `FABRICATED RATING RENDERED BY: ${renderers.join(", ")}` : "zero renderers"
+  );
+
+  /* ⚠⚠ AND THE UNUSED SELECT STAYS GONE — a selected-but-unused field puts the
+     value in scope, which is how the expression gets written by accident. */
+  check(
+    "30 — ⚠⚠ no page selects the column without using it",
+    !/rating:\s*true/.test(src.page),
+    "nothing puts it in scope for free"
+  );
+}
 
 console.log(
   `check:statistics — ${Object.keys(src).length} files read · ` +
