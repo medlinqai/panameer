@@ -89,7 +89,9 @@ export async function talentHeroStats(): Promise<TalentStat[]> {
 
   /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the label moved with R4:
      //   const lessons = CATALOG_COUNTS.find((c) => c.label === "Lessons"); */
-  const lessons = (await getCatalogCounts()).find((c) => c.label === "Lessons You Can Watch");
+  /* ⚠⚠ BY `key`, NOT BY LABEL — the label pluralises off the number, so a
+     label lookup silently drops the tile at n === 1. */
+  const lessons = (await getCatalogCounts()).find((c) => c.key === "lessons");
 
   /*
     ⚠ THE ORDER IS THE BRIEF'S TABLE ORDER — Lessons, Providers, Service Products.

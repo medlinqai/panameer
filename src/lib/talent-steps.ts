@@ -69,9 +69,9 @@ import { getCatalogCounts } from "@/lib/learn-catalog-counts";
    argued for it — *"a missing label throws at module load instead, which is the
    failure you want"* — and that is still right: a renamed label must break
    loudly, not print the wrong number or silently drop a tile. */
-const countIn = (counts: { value: string; label: string }[], label: string): string => {
-  const hit = counts.find((c) => c.label === label);
-  if (!hit) throw new Error(`talent-steps: no catalog count labelled "${label}"`);
+const countIn = (counts: { key: string; value: string }[], key: string): string => {
+  const hit = counts.find((c) => c.key === key);
+  if (!hit) throw new Error(`talent-steps: no catalog count keyed "${key}"`);
   return hit.value;
 };
 
@@ -191,7 +191,7 @@ export async function talentSteps(): Promise<TalentStepLabel[]> {
        ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   `Work through the catalog for free — ${count("Learning Paths")} learning paths,
        //    ${count("Courses")} courses and ${count("Lessons")} lessons, taught by …` */
-    description: `Work through the catalog for free — ${count("Paths You Can Start")} paths you can start today, ${count("Courses With Video")} courses with video and ${count("Lessons You Can Watch")} lessons you can watch, taught by the people who implement this software.`,
+    description: `Work through the catalog for free — ${count("paths")} paths you can start today, ${count("courses")} courses with video and ${count("lessons")} lessons you can watch, taught by the people who implement this software.`,
   },
   {
     n: 3,

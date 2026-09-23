@@ -105,7 +105,14 @@
 import { prisma } from "@/lib/prisma";
 import { isPlayable } from "@/lib/learn";
 
-export type CatalogCount = { value: string; label: string };
+/**
+ * ⚠⚠ `key` IS THE STABLE HANDLE; `label` IS DISPLAY AND PLURALISES OFF THE
+ * NUMBER. ⚠⚠⚠ CALLERS LOOK UP BY `key`, NEVER BY `label` — a label that
+ * changes with the count cannot be a lookup key, and `check:ui` §61 caught
+ * exactly that: *"305 Lessons You Can Watch"* is right and *"1 Lessons You Can
+ * Watch"* would not be.
+ */
+export type CatalogCount = { key: "paths" | "courses" | "lessons"; value: string; label: string };
 
 /**
  * ⚠⚠ THE LABEL CARRIES THE DEFINITION. *"Learning Paths"* is what produced the
@@ -145,9 +152,24 @@ export async function getCatalogCounts(): Promise<CatalogCount[]> {
     ).length;
   }
 
+  /* ⚠ The plural is on the NOUN, not appended to the whole phrase — "Lesson
+     You Can Watch" + "s" would read "Lesson You Can Watchs". */
+  const p = (n: number, one: string, many: string) => (n === 1 ? one : many);
   return [
-    { value: String(startablePaths), label: "Paths You Can Start" },
-    { value: String(courses), label: "Courses With Video" },
-    { value: String(lessons), label: "Lessons You Can Watch" },
+    {
+      key: "paths",
+      value: String(startablePaths),
+      label: p(startablePaths, "Path You Can Start", "Paths You Can Start"),
+    },
+    {
+      key: "courses",
+      value: String(courses),
+      label: p(courses, "Course With Video", "Courses With Video"),
+    },
+    {
+      key: "lessons",
+      value: String(lessons),
+      label: p(lessons, "Lesson You Can Watch", "Lessons You Can Watch"),
+    },
   ];
 }

@@ -1,4 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
+/*
+  ── ⚠⚠ THE TEST PROCESS NEEDS THE DATABASE NOW (`P2-A4-E606` R4) ─────────
+  ⚠ `§40` imports `talentSteps()` so it can compare the rendered rows to the
+  SAME source the page renders from — which is the whole reason it imports
+  rather than retyping the copy. ⚠⚠ R4 MADE THAT SOURCE QUERY THE DATABASE,
+  because the catalogue counts inside it are no longer literals.
+  ⚠⚠⚠ THE WEBSERVER HAD `.env.local`; THE TEST RUNNER DID NOT — so the page
+  rendered fine and the assertion's own call threw
+  `PrismaClientKnownRequestError`. **Two processes, one of them unconfigured,
+  and only the second one failed.**
+*/
+import { config as loadEnv } from "dotenv";
+loadEnv({ path: ".env.local" });
 
 /**
  * THE BEHAVIOUR GATE — one spec, one contract.
