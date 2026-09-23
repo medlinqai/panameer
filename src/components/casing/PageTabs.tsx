@@ -109,6 +109,7 @@ export function PageTabs({
   className = "",
   children,
   eyebrow,
+  wrap = false,
 }: {
   tabs: PageTab[];
   /** The active tab's `match` (or href). Resolved by the page, which knows its
@@ -117,6 +118,27 @@ export function PageTabs({
   /** ⚠ Declared by the set in `nav.ts` via `tabSequenceFor()`, never guessed. */
   sequence?: TabSequence;
   className?: string;
+  /**
+   * ── ⚠⚠⚠ WRAP INSTEAD OF SCROLL (`P2-A2-E609`) ───────────────────────────
+   *
+   * ⚠ MEASURED AT 390px: the Settings row cut *"Profile Setti…"* in half.
+   * ⚠⚠ IT IS NOT ELLIPSIS TRUNCATION — the row is `overflow-x-auto` with
+   * `whitespace-nowrap`, so the label is whole and the SCROLLER's edge slices
+   * it. **A word cut mid-stroke with no affordance reads as broken, not as
+   * scrollable**, which is the defect: nothing tells the member to swipe.
+   * ⚠⚠ THE COMPONENT'S OWN COMMENT CLAIMED *"No tab is truncated and none is
+   * dropped"*. That was true of the DOM and false on the screen — corrected in
+   * `SettingsTabs`, because the stated rule is the half that misleads next.
+   *
+   * ⚠⚠⚠ OPT-IN, DEFAULT `false`, SO NO OTHER TAB ROW MOVES. `PageTabs` is
+   * shared chrome — Connect, the profile row, Learn. Changing the default would
+   * restyle every one of them inside a Settings brief.
+   * ⚠ WRAP RATHER THAN SHORTEN: shortening the labels would also shorten every
+   * page HEADING, because `SETTINGS_NAV` is deliberately one definition for
+   * both — and it would still only make clipping *less likely* at 360, never
+   * impossible. Wrapping makes it impossible.
+   */
+  wrap?: boolean;
   /** Trailing controls — a Filters button, a count. Sits after the tabs. */
   children?: React.ReactNode;
   /**
@@ -149,7 +171,14 @@ export function PageTabs({
       */}
       <div
         data-testid="page-tabs"
-        className="-mx-1 mb-4 flex items-center gap-0.5 overflow-x-auto border-b border-line px-1"
+        className={
+          "-mx-1 mb-4 flex items-center gap-0.5 border-b border-line px-1 " +
+          /* ⚠ `flex-wrap` AND NO `overflow-x-auto` — leaving the scroller on a
+             wrapping row gives a container that can both wrap and scroll, which
+             is neither. `items-center` becomes `items-end` so wrapped rows sit
+             on the shared bottom rule rather than floating. */
+          (wrap ? "flex-wrap items-end gap-y-0" : "items-center overflow-x-auto")
+        }
       >
         {/* ⚠ THE EYEBROW AND ITS RULE (`P2-J3-E557`). `shrink-0` so it survives
             the horizontal scroll that the row relies on at narrow widths, and

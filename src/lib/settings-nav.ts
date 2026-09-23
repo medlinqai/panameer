@@ -43,16 +43,23 @@ export type SettingsNavItem = {
   requires?: Capability;
 };
 
+/*
+  ⚠⚠ CONTACT INFO IS FIRST (`E609`) — `/settings` lands here, and it must land
+  on a page a member can change. ⚠ Membership follows it: it displays a real
+  cycle date and an honest note about billing, so it keeps a place; it simply
+  is not a door.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): Membership was first.
+*/
 export const SETTINGS_NAV: SettingsNavItem[] = [
-  {
-    label: "Membership",
-    href: "/settings/membership",
-    blurb: "Your plan, what it includes, and when it renews.",
-  },
   {
     label: "Contact Info",
     href: "/settings/contact",
     blurb: "Your account details, additional memberships and where you are.",
+  },
+  {
+    label: "Membership",
+    href: "/settings/membership",
+    blurb: "Your plan, what it includes, and when it renews.",
   },
   {
     label: "Profile Settings",
