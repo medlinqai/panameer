@@ -38,7 +38,9 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { sectionKind, normalizeSectionTitle } from "@/lib/learn-sections";
-import { streakFrom, levelFor, headlineFor, spell } from "@/lib/learn-progress";
+/* ⚠ `levelFor` IS GONE (`E606` R2). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { streakFrom, levelFor, headlineFor, spell } from "@/lib/learn-progress"; */
+import { streakFrom, headlineFor, spell } from "@/lib/learn-progress";
 import { isPlaceholderInstructor, lessonFace } from "@/lib/learn-faces";
 import { certificateClaims, leaderLabel } from "@/lib/learn-path-app";
 import type { Instructor } from "@/lib/learn-instructor-format";
@@ -436,23 +438,36 @@ check(
 );
 
 // Levels — a banding of lessons, with a real bottom and a real top
-check("level: 0 lessons is the bottom band, empty ring", levelFor(0).level === 1 && levelFor(0).fraction === 0);
-check("level: 0 lessons still names a next band", levelFor(0).nextName !== null);
-check("level: the top band's ring is full, not empty", levelFor(10_000).fraction === 1);
-check("level: the top band has no next", levelFor(10_000).nextName === null && levelFor(10_000).toNext === 0);
-check("level: bands are monotonic", (() => {
-  let prev = -1;
-  for (const n of [0, 4, 5, 24, 25, 74, 75, 174, 175, 349, 350]) {
-    const l = levelFor(n).level;
-    if (l < prev) return false;
-    prev = l;
-  }
-  return true;
-})());
-check("level: fraction stays inside 0..1", [0, 1, 30, 200, 349].every((n) => {
-  const f = levelFor(n).fraction;
-  return f >= 0 && f <= 1;
-}));
+/*
+  ── ⚠⚠⚠ THE LEVEL ASSERTIONS ARE RETIRED (`P2-A4-E606` R1/R2) ────────────
+
+  ⚠ THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`' — **the RULING
+  changed, the code did not drift.** Ruling 1: there is no XP and there are no
+  levels in Panameer, so `LEVEL_BANDS`, `LevelState` and `levelFor` are gone and
+  there is nothing left for these six to assert.
+  ⚠⚠ THEY WERE GOOD ASSERTIONS. Monotonic bands, a full ring at the top rather
+  than an empty one, a fraction inside 0..1 — **none of them was wrong; the
+  feature underneath them was.** That is why they are quoted rather than
+  quietly dropped.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   check("level: 0 lessons is the bottom band, empty ring", levelFor(0).level === 1 && levelFor(0).fraction === 0);
+//   check("level: 0 lessons still names a next band", levelFor(0).nextName !== null);
+//   check("level: the top band's ring is full, not empty", levelFor(10_000).fraction === 1);
+//   check("level: the top band has no next", levelFor(10_000).nextName === null && levelFor(10_000).toNext === 0);
+//   check("level: bands are monotonic", (() => {
+//     let prev = -1;
+//     for (const n of [0, 4, 5, 24, 25, 74, 75, 174, 175, 349, 350]) {
+//       const l = levelFor(n).level;
+//       if (l < prev) return false;
+//       prev = l;
+//     }
+//     return true;
+//   })());
+//   check("level: fraction stays inside 0..1", [0, 1, 30, 200, 349].every((n) => {
+//     const f = levelFor(n).fraction;
+//     return f >= 0 && f <= 1;
+//   }));
+*/
 
 // The computed headline — the empty account is the case that catches hardcoding
 check(

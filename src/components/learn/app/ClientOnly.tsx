@@ -26,20 +26,34 @@ import dynamic from "next/dynamic";
  * costs SSR on exactly two elements rather than papering over a mismatch.
  */
 
-const TILE_SKELETON = (
-  <div className="flex items-center gap-3 rounded-brand border border-line bg-white p-4 shadow-[0_18px_40px_-22px_rgba(23,30,62,0.4)]">
-    <span className="h-[38px] w-[38px] shrink-0 animate-pulse rounded-[11px] bg-bg-soft" />
-    <div className="min-w-0 flex-1">
-      <span className="block h-[21px] w-20 animate-pulse rounded bg-bg-soft" />
-      <span className="mt-1 block h-[11px] w-24 animate-pulse rounded bg-bg-soft" />
-    </div>
-  </div>
-);
+/*
+  ⚠ `TILE_SKELETON` WENT WITH `StreakTile` (`E606` R3) — it was that dynamic
+  import's `loading` placeholder and had no other reader.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   const TILE_SKELETON = (
+//     <div className="flex items-center gap-3 rounded-brand border border-line bg-white p-4 shadow-[0_18px_40px_-22px_rgba(23,30,62,0.4)]">
+//       <span className="h-[38px] w-[38px] shrink-0 animate-pulse rounded-[11px] bg-bg-soft" />
+//       <div className="min-w-0 flex-1">
+//         <span className="block h-[21px] w-20 animate-pulse rounded bg-bg-soft" />
+//         <span className="mt-1 block h-[11px] w-24 animate-pulse rounded bg-bg-soft" />
+//       </div>
+//     </div>
+//   );
+*/
 
-export const StreakTile = dynamic(() => import("@/components/learn/app/StreakTile"), {
-  ssr: false,
-  loading: () => TILE_SKELETON,
-});
+/*
+  ⚠⚠ THE `StreakTile` EXPORT IS RETIRED (`E606` R2/R3). A streak rewards a
+  HABIT, not an accomplishment, and ruling 1 puts it out of scope. ⚠ It had
+  already left the tile row at `E364`; this removes the last thing that could
+  put it back on a page by autocomplete.
+  ⚠ `StreakTile.tsx` STAYS ON DISK (`E164` — a retired component is not
+  deleted); nothing imports it.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   export const StreakTile = dynamic(() => import("@/components/learn/app/StreakTile"), {
+//     ssr: false,
+//     loading: () => TILE_SKELETON,
+//   });
+*/
 
 export const AchievementGrid = dynamic(
   () => import("@/components/learn/app/AchievementGrid"),

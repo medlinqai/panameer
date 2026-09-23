@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+/* ⚠ `useMemo` went with the streak resolution (`E606` R3). ⚠ SUPERSEDED (`E164`):
+   //   import { useMemo } from "react"; */
 import { ShieldCheck, Flame, ListChecks, CircleCheckBig, GraduationCap, Trophy, Lock } from "lucide-react";
-import { streakFrom } from "@/lib/learn-progress";
+/* ⚠ `streakFrom` went with the streak badge (`E606` R3). ⚠ SUPERSEDED (`E164`):
+   //   import { streakFrom } from "@/lib/learn-progress"; */
 import type { Achievement } from "@/lib/learn-dashboard";
 
 /**
@@ -43,24 +45,37 @@ const MEDAL: Record<string, string> = {
 
 export default function AchievementGrid({
   achievements,
-  completedAt,
 }: {
   achievements: Achievement[];
-  completedAt: string[];
+  /* ⚠⚠ `completedAt` IS REMOVED FROM THE CONTRACT (`E606` R3), not left
+     unread. Its only reader was the streak resolution. ⚠ Leaving an unused
+     prop on the signature is how the next person re-adds a streak "because the
+     data is already here".
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   completedAt: string[]; */
 }) {
-  const streak = useMemo(
-    () => streakFrom(completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
-    [completedAt]
-  );
-
-  const resolved = achievements.map((a) => {
-    if (a.clientComputed !== "streak10") return a;
-    return {
-      ...a,
-      earned: streak.best >= 10,
-      detail: streak.best > 0 ? `Best run: ${streak.best} day${streak.best === 1 ? "" : "s"}` : a.detail,
-    };
-  });
+  /*
+    ── ⚠⚠⚠ THE STREAK RESOLUTION IS RETIRED (`P2-A4-E606` R3) ───────────────
+    ⚠ The only `clientComputed` badge was `streak10`, and a streak rewards a
+    HABIT rather than an accomplishment. ⚠⚠ WITH IT GONE, **every badge is
+    computed on the server from a count**, so there is nothing left for the
+    browser to fill in and no badge whose `earned` is decided anywhere but in
+    `learn-dashboard.ts`.
+    ⚠ `completedAt` is still a prop — `MyLearning` passes it and the type still
+    carries it — but nothing here reads it now; that is reported, not silently
+    tidied, because removing a prop is a change to the component's contract.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const streak = useMemo(
+    //     () => streakFrom(completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
+    //     [completedAt]
+    //   );
+    //   const resolved = achievements.map((a) => {
+    //     if (a.clientComputed !== "streak10") return a;
+    //     return { ...a, earned: streak.best >= 10,
+    //       detail: streak.best > 0 ? `Best run: ${streak.best} days` : a.detail };
+    //   });
+  */
+  const resolved = achievements;
 
   const unlocked = resolved.filter((a) => a.earned).length;
 
