@@ -103,6 +103,26 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
           trailing={<RevealButton shown={nextReveal.shown} onToggle={nextReveal.toggle} />}
         />
       </div>
+      {/*
+        ── ⚠⚠⚠ WHAT A PASSWORD CHANGE DOES NOT DO (`P2-A2-E609`, E554) ────────
+
+        ⚠ SCOTT, 2026-09-23: *"A member reasonably expects otherwise. Do not
+        leave it silent."*
+        ⚠⚠ SESSIONS ARE JWTs AND NOTHING INVALIDATES ONE EARLY. There is no
+        token-version column, so a session opened before the change keeps
+        working until it expires — `maxAge` is now seven days, which bounds it
+        rather than ending it.
+        ⚠⚠⚠ THE SENTENCE NAMES THE MECHANISM, NOT THE MEMBER, and makes no
+        promise it cannot keep: it does not say *"sign out everywhere"*, because
+        there is no such control on this page and building one is its own brief.
+        ⚠ NO ABSOLUTES — it says what happens, and how long, without telling the
+        member they are safe.
+      */}
+      <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
+        Changing your password does not sign out sessions already open on other
+        devices. Those stay signed in until they expire, which is up to seven
+        days.
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"

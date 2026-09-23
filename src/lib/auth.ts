@@ -325,7 +325,30 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  /*
+    ── ⚠⚠⚠ `maxAge` — SEVEN DAYS, AND IT WAS NEVER BUILT (`P2-A2-E609`) ──────
+
+    ⚠ `decisions_2026-09-23.md` §4 recorded E554 as *"JWT; `maxAge` cut to 7
+    days as mitigation, not a fix."* ⚠⚠ **THERE WAS NO `maxAge` IN THIS FILE AT
+    ALL** — measured 2026-09-23 — so NextAuth's default applied and a stolen
+    session lasted **30 days**, not 7. A mitigation recorded as done and never
+    written is worse than one nobody claimed: the exposure was four times what
+    the record said, and the record is what anyone would have quoted.
+
+    ⚠⚠ IT IS A MITIGATION, NOT A FIX, AND THE DISTINCTION MATTERS. Changing a
+    password still does not end other sessions — nothing invalidates a JWT
+    early. Seven days only bounds how long a stolen one survives.
+    ⚠ THE REAL FIX IS A TOKEN VERSION and it is NOT built here: a column on
+    `User`, bumped on password change, compared in the `jwt` callback. ⚠⚠ THAT
+    ADDS A DATABASE READ TO EVERY AUTHENTICATED REQUEST — today the callback
+    touches the DB only at OAuth sign-in — which is a cost Scott rules on in
+    its own brief.
+
+    ⚠ SEVEN DAYS IS A SIGN-IN A WEEK for an active member, which is the trade
+    being made: a session that outlives a password change for a month is the
+    thing being bounded.
+  */
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   /*
     ⚠ ONLY THE DOMAIN IS BEING WIDENED. httpOnly, sameSite, path and secure are
     NextAuth's own defaults, restated because overriding this entry replaces it

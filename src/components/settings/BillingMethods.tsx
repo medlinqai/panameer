@@ -65,7 +65,24 @@ export function BillingMethods({ methods }: { methods: Method[] }) {
     <div className="space-y-4">
       <Card
         title="Billing Methods"
-        description="What Panameer charges for your membership. Provider Basic is free, so nothing is charged until you move to a paid plan."
+        description=/*
+          ── ⚠⚠⚠ IT NAMES THE MECHANISM, NOT THE MEMBER (`P2-A2-E609`) ──────────
+
+          ⚠ SCOTT, 2026-09-23: *"never 'you have no billing set up' when the
+          truth is billing isn't switched on yet."*
+          ⚠⚠ MEASURED: **nothing creates a `Payment` and `PAID` is never
+          written** — there is no charging mechanism at all, not merely no plan
+          to move to. The old line said *"nothing is charged until you move to a
+          paid plan"*, which is true today and quietly promises that moving to
+          one would charge. It cannot.
+          ⚠ A stored method is kept, because storing one is a real thing this
+          page can do and removing it would strand the methods already saved —
+          but the copy no longer implies it can be charged.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   "What Panameer charges for your membership. Provider Basic is
+          //    free, so nothing is charged until you move to a paid plan."
+        */
+        "Provider Basic is free. Panameer cannot charge a card yet — there is no payment mechanism switched on — so anything saved here is stored for later and nothing is billed."
       >
         {methods.length === 0 ? (
           <p className="text-[14px] text-ink-2">No billing method on file.</p>

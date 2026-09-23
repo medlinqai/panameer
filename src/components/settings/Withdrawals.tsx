@@ -62,7 +62,8 @@ export function Withdrawals({
     <div className="space-y-4">
       <Card
         title="Available Balance"
-        description="What Panameer is holding for you."
+        /* ⚠ *"holding for you"* implied a custody mechanism that does not exist. */
+        description="What Panameer would owe you once settlement is built."
       >
         {/*
           A DASH, NOT "$0.00". There is no settlement engine yet, so a zero here
@@ -73,9 +74,25 @@ export function Withdrawals({
         <p className="font-display text-[30px] font-bold leading-none text-ink-2/25">
           —
         </p>
+        {/*
+          ── ⚠⚠⚠ IT NAMES THE TRUNCATION, NOT A FUTURE EVENT (`P2-A2-E609`) ────
+
+          ⚠ *"Balances appear once work orders settle"* is the exact shape
+          `E603` retired twice — *"once you complete your first paid work
+          order"* and *"once buyers rate completed work orders"*.
+          ⚠⚠ MEASURED: **there is no `workOrder.create` anywhere in `src/`**, so
+          no work order can be built, let alone settle; and **`PAID` is never
+          written** with no `Payment` ever created. A sentence beginning *"once
+          work orders settle"* promises a chain that stops at its first step.
+          ⚠ The dash above is unchanged and is right — a measured zero and an
+          absent mechanism must not look the same.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   Balances appear once work orders settle on Panameer. Nothing is
+          //   being held back — there is nothing to hold yet.
+        */}
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
-          Balances appear once work orders settle on Panameer. Nothing is being
-          held back — there is nothing to hold yet.
+          Settlement isn&apos;t built yet, so there is no balance to show.
+          Nothing is being held back.
         </p>
       </Card>
 

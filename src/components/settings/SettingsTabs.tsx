@@ -50,11 +50,18 @@ export function SettingsTabs({ isProvider }: { isProvider: boolean }) {
     ⚠ Settings has NO stat cards and gains none. This is the only thing in that
     slot.
 
-    ⚠⚠ THE HORIZONTAL OVERFLOW SURVIVES, WHICH WAS THE THING AT RISK. `PageTabs`
-    already scrolls (`overflow-x-auto`) because Settings has ten tabs where Learn
-    has three, and moving the row onto the gradient does not touch that: the
-    scroller is INSIDE this tile, so the tile clips its own corners while the row
-    scrolls within it. No tab is truncated and none is dropped.
+    ⚠⚠⚠ THE ROW WRAPS NOW; IT DOES NOT SCROLL (`P2-A2-E609`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   THE HORIZONTAL OVERFLOW SURVIVES, WHICH WAS THE THING AT RISK. `PageTabs`
+    //   already scrolls (`overflow-x-auto`) … No tab is truncated and none is dropped.
+    ⚠⚠ **THAT LAST SENTENCE WAS TRUE OF THE DOM AND FALSE ON THE SCREEN.** At
+    390px the row cut *"Profile Setti…"* in half. Nothing was ellipsised and
+    nothing was dropped — the scroller's edge simply sliced a word, with no
+    affordance saying it could be swiped. ⚠ A stated rule that contradicts what
+    a person sees is the half that misleads the next reader, so it is corrected
+    here rather than only in the CSS.
+    ⚠ `wrap` IS OPT-IN ON `PageTabs` and defaults to `false`, so Connect, the
+    profile row and Learn are untouched.
 
     ⚠ AND THAT IS THE ONE PLACE "SAME AS LEARN'S CARDS" CANNOT BE LITERAL, SO IT
     IS REPORTED RATHER THAN FUDGED. Scott liked *"the way the cards line up on
@@ -67,6 +74,7 @@ export function SettingsTabs({ isProvider }: { isProvider: boolean }) {
   return (
     <div className="overflow-hidden rounded-brand border border-line bg-white px-3 shadow-brand">
     <PageTabs
+      wrap
       tabs={items.map((i) => ({ label: i.label, href: i.href }))}
       /* ⚠ The ACTIVE item's href, resolved by the same matcher the heading uses,
          so a nested path like /settings/security/2fa still lights its parent. */
