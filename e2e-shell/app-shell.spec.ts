@@ -50,8 +50,28 @@ const WIDTHS = [360, 375, 640, 760, 900, 1000, 1100, 1180, 1282, 1440, 1562];
  * ⚠ `SEARCH_NAV` still exists in `nav.ts` and `/search` still resolves; only the
  * shell affordance is gone, so this is a CHROME change, not a route removal.
  */
+/*
+  ── ⚠⚠⚠ `Home` BECAME `Panameer home` (`P2-A2-E602` WS-E 3) ───────────────
+
+  ⚠ SCOTT'S WALK (`E024`): *"Remove the Home icon from the band's right-hand
+  cluster. The logo is home."*
+  ⚠⚠ THIS IS `check:rollup`'S CASE AGAIN — THE RULING CHANGED, THE CODE DID NOT
+  DRIFT — and it is the SECOND entry in this list to go that way, after `Search`.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   { label: "Home", how: "icon" as const },
+
+  ⚠⚠⚠ IT IS REPLACED, NOT DELETED, AND THAT IS THE WHOLE POINT. Dropping the row
+  would have left **nothing asserting that the band offers a way home** — which
+  is `E600`'s lost-assertion defect and `E602` WS-D's coverage hole, both of
+  which this session has already paid for. **A removal without a replacement is
+  how a gate silently gets smaller.**
+  ⚠ The logo carries `aria-label="Panameer home"` and links to `/dashboard` —
+  the destination the removed icon had — so the RULE (*"home is reachable from
+  the band, at every width"*) is unchanged; only the control that satisfies it
+  moved. ⚠⚠ `how: "either"` because the logo is an `<a>` wrapping an image, not
+  a `BandIcon`.
+*/
 const UNIVERSAL = [
-  { label: "Home", how: "icon" as const },
   { label: "Notifications", how: "icon" as const },
   { label: "Account menu", how: "button" as const },
   { label: "Report a bug", how: "optional" as const },
@@ -266,7 +286,9 @@ async function measure(p: Page) {
       offLeft,
       wrapped,
       controls: {
-        Home: control("Home"),
+        /* ⚠ The band's way home left this map (`E602` WS-E 3) — it is asserted
+           by DESTINATION, not by label, in its own test below. ⚠ SUPERSEDED,
+           quoted not deleted (`E164`):  Home: control("Home"), */
         Notifications: control("Notifications"),
         "Account menu": control("Account menu"),
         "Report a bug": control("Report a bug"),
@@ -274,6 +296,68 @@ async function measure(p: Page) {
     };
   });
 }
+
+/*
+  ── ⚠⚠⚠ THE BAND OFFERS A WAY HOME, AT EVERY WIDTH (`P2-A2-E602` WS-E 3) ───
+
+  ⚠ SCOTT'S WALK (`E024`): *"Remove the Home icon from the band's right-hand
+  cluster. The logo is home."* ⚠⚠ HIS REASON WAS *"they can click the logo in
+  the upper left"* — **a claim about every width**, and it was only true above
+  1100px: `.pm-band-brand` was `display: none` below 930px, so removing the icon
+  left **ZERO visible links to `/dashboard`** at 360, 390 and 780px. The account
+  menu carries none either.
+  ⚠ Scott's ruling, 2026-09-22: **make the logo true on a phone, not put the
+  icon back.**
+
+  ⚠⚠⚠ THE ASSERTION IS A **VISIBLE LINK TO `/dashboard`**, NOT THE PRESENCE OF A
+  PARTICULAR LABEL — Scott's own condition, *"so the next person who renames it
+  doesn't silently strand the door again."*
+  ⚠ `Home` was an `aria-label`; `Panameer home` is a different one; the RULE
+  survives both, because it is about the DESTINATION. ⚠⚠ A label-based check
+  would go green on a rename while the door was gone, which is precisely how
+  this defect reached a gate that was otherwise watching.
+
+  ⚠ It replaces the `{ label: "Home", how: "icon" }` row in `UNIVERSAL` —
+  **replaced, not deleted.** A removal without a replacement is how a gate
+  silently gets smaller (`E600`'s lost assertion, `E602` WS-D's coverage hole).
+*/
+test("⚠⚠⚠ the band offers a VISIBLE way home at every width — E602 WS-E", async ({
+  browser,
+}) => {
+  /* ⚠ The four widths Scott named, spanning both sides of the 930px breakpoint
+     the old `display: none` sat on. */
+  for (const width of [360, 390, 780, 1100]) {
+    const page = await browser.newPage({ viewport: { width, height: 800 } });
+    await signIn(page);
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    const home = await page.evaluate(() => {
+      const links = [...document.querySelectorAll('a[href="/dashboard"]')];
+      const seen = links.filter((a) => {
+        const r = a.getBoundingClientRect();
+        const cs = getComputedStyle(a);
+        return (
+          r.width > 0 &&
+          r.height > 0 &&
+          cs.display !== "none" &&
+          cs.visibility !== "hidden" &&
+          r.left >= 0 &&
+          r.right <= window.innerWidth
+        );
+      });
+      return { total: links.length, visible: seen.length };
+    });
+    console.log(
+      `E602/WS-E  @${width}px — ${home.visible} visible link(s) to /dashboard of ${home.total}`
+    );
+    /* ⚠⚠ `E586`: zero links would also mean "nothing to measure", so the
+       assertion is > 0 rather than a count that could pass on an empty page. */
+    expect(
+      home.visible,
+      `@${width}px there is NO visible link to /dashboard — the band has no way home`
+    ).toBeGreaterThan(0);
+    await page.close();
+  }
+});
 
 for (const url of PAGES) {
   test(`GUARD 1+2 — the shell is clean and usable across the width sweep on ${url}`, async () => {
@@ -1306,7 +1390,36 @@ test.describe("⚠ THE BAND NEVER COVERS A STICKY ASIDE — P2-ALL-E587", () => 
                 rails before `WS-C` fixed them.
               */
               const onScreen = r.bottom > 0 && r.top < window.innerHeight;
-              const pinnedUnderBand = r.top >= 0 && r.top < b.bottom - 0.5;
+              /*
+                ── ⚠⚠⚠ "PINNED" MEANS **HOLDING ITS STICKY TOP** (`P2-A2-E602`) ──
+
+                ⚠ `r.top >= 0 && r.top < b.bottom` WAS NOT A TEST FOR PINNED —
+                it was a test for *"somewhere in the band's band"*, and a sticky
+                aside being pushed out of view by its own container PASSES
+                THROUGH that window on its way past.
+                ⚠⚠ MEASURED ON `/profile` AT 1099px: the rail is **1177px tall
+                in a 1433px container**, so it can never stick at all. At
+                `scrollY=400` its top was **50** while its computed `top` is
+                **83** — it was MOVING, not pinned, and the sample caught it
+                mid-transit.
+                ⚠⚠⚠ THE TEST'S OWN COMMENT ALREADY EXCLUDES THIS CASE — *"an
+                aside whose top has gone NEGATIVE is scrolling away with its own
+                container… out of scope"* — but it only excluded the frames
+                AFTER the transit, not the one during it. **The intent was
+                right; the proxy was one frame too narrow.**
+
+                ⚠ SO PINNED IS NOW WHAT IT SAYS: the aside is sitting AT the
+                `top` it declares. A rail that declares `top: 16px` still pins
+                at 16 and is still caught — which is the defect this exists for
+                (`E587` / the `/community` rails) — while one being pushed past
+                by a short container is not.
+                ⚠⚠ THIS IS `check:rollup`'S CASE: **the RULE is unchanged**, the
+                measurement of it was wrong.
+              */
+              const declaredTop = parseFloat(getComputedStyle(a).top);
+              const holdingItsTop =
+                Number.isFinite(declaredTop) && Math.abs(r.top - declaredTop) <= 1;
+              const pinnedUnderBand = holdingItsTop && r.top >= 0 && r.top < b.bottom - 0.5;
               if (onScreen && pinnedUnderBand) {
                 covered += 1;
               }

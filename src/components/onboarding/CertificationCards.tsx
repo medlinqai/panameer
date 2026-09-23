@@ -1,5 +1,10 @@
 "use client";
 
+/* ⚠⚠ `"use client"` MUST BE THE FIRST STATEMENT IN THE FILE. An import placed
+   above it demotes the directive to a plain string expression — the file stops
+   being a client component and lint reports it as an unused expression, which is
+   how this was caught. */
+import Link from "next/link";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea } from "@/components/onboarding/controls";
@@ -315,10 +320,27 @@ export function CertificationCards({
           ))}
         </ul>
       ) : (
-        <p className="text-[14px] text-ink-2">
-          No certifications yet. Adding your credentials increases your chances
-          of getting hired.
-        </p>
+        <div className="text-[14px] text-ink-2">
+          <p>
+            No certifications yet. Adding your credentials increases your chances
+            of getting hired.
+          </p>
+          {/*
+            ⚠⚠ THE SAME LINE AS THE PROFILE'S CERTIFICATIONS CARD (`E602` WS-E 1),
+            because this editor is the other place a member stares at an empty
+            Certifications list. ⚠ It ships because the test EXISTS: two
+            `LearnAssessment` rows are PUBLISHED and free (measured 2026-09-22).
+            ⚠⚠⚠ `/learn`, NOT `/test` — the test is gated on finishing the path,
+            so a link straight to it would open onto *"Finish the path first"*,
+            which is `E579`.
+          */}
+          <Link
+            href="/learn"
+            className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            Click Here to Take a Free Certification Test Now
+          </Link>
+        </div>
       )}
 
       {/*

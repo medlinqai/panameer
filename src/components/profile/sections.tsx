@@ -10,6 +10,43 @@ import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
 
 /**
+ * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
+ *
+ * ⚠ SCOTT'S WALK (`E019`): *"Skills chips are outlined grey; Specializations
+ * chips are magenta; one wraps to two lines and sits in a taller pill."*
+ *
+ * ⚠⚠ MEASURED — THREE CHIP STYLES IN THIS FILE, AND **TWO DIFFERENT PADDINGS**:
+ * skills at `px-3 py-1 text-[13.5px]` (twice, identical), specializations at
+ * `px-2.5 py-0.5 text-[12.5px]`. ⚠⚠⚠ THE PADDING DIFFERENCE IS THE "TALLER
+ * PILL" — nothing to do with wrapping. Two hand-written copies of one style are
+ * also how a third variant appears next.
+ *
+ * ⚠ THE COLOUR DIFFERENCE **STAYS AND IS THE RULE**: a skill and a
+ * specialization are different kinds of thing, and Scott asked for one style
+ * per kind — not one style for everything.
+ *
+ * ⚠⚠ A LONG NAME **WRAPS**, AND THAT IS SCOTT'S WORD. The shape that must not
+ * change is the PADDING, RADIUS, FONT AND COLOUR — all of which are now shared
+ * — and a wrapped chip keeps every one of them. `max-w-full` + `break-words`
+ * keep it inside its container instead of overflowing the row.
+ *
+ * ⚠⚠⚠ `whitespace-nowrap` + `text-ellipsis` WAS TRIED AND REVERTED, AND THE
+ * MEASUREMENT IS WHY: it made every chip exactly one line (heights 29–30, no
+ * 49) with no horizontal overflow — but it **TRUNCATED
+ * `Technology, Media, & Telecommunications` to `…Telecommunica…`.**
+ * ⚠ HIDING A SPECIALIZATION'S NAME TO KEEP A ROW TIDY IS THE WRONG TRADE, and
+ * Scott asked for it to *wrap*, not to fit. ⚠⚠ THE CONSEQUENCE IS REPORTED
+ * RATHER THAN HIDDEN: a two-line chip IS taller than its neighbours. That is
+ * what wrapping costs, and it is the cost that was chosen.
+ */
+const CHIP_BASE =
+  "inline-flex max-w-full items-center rounded-full px-3 py-1 text-[13px] font-semibold break-words";
+/** ⚠ A SKILL — outlined, ink. It is a fact about the person, not a link (`E433`). */
+const CHIP_SKILL = `${CHIP_BASE} border border-line text-ink-2`;
+/** ⚠ A SPECIALIZATION — magenta-tinted, and deliberately a DIFFERENT kind. */
+const CHIP_SPEC = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
+
+/**
  * The Profile-View section vocabulary (brief_X / E056).
  *
  * ONE set of section renderers, shared by the two surfaces that must look the
@@ -176,7 +213,11 @@ export function dateRange(
 // ---------------------------------------------------------------------------
 
 export type SkillItem = { id: string; name: string };
-export type SpecializationItem = { id: string; name: string };
+/** ⚠ `kind` IS `SpecializationKind` — `PRODUCT` · `METHODOLOGY` · `INDUSTRY`.
+ *  ⚠⚠ It was ALREADY selected and mapped by `provider-profile-view.ts`; only
+ *  this type and the render never used it (`E602` WS-C). Optional so an older
+ *  caller that omits it still typechecks and falls into `Other`. */
+export type SpecializationItem = { id: string; name: string; kind?: string | null };
 export type LanguageItem = {
   id?: string;
   name: string;
@@ -580,7 +621,7 @@ export function ProfileHero({
                 {shownSkills.map((sk) => (
                   <span
                     key={sk.id}
-                    className="rounded-full border border-line px-3 py-1 text-[13.5px] font-semibold text-ink-2"
+                    className={CHIP_SKILL}
                   >
                     {sk.name}
                   </span>
@@ -772,18 +813,75 @@ export function EducationBody({
   );
 }
 
+/**
+ * ── ⚠⚠⚠ GROUPED BY KIND (`P2-A2-E602` WS-C 2) ────────────────────────────
+ *
+ * ⚠ SCOTT: *"Grouped by type (Industry · Business Process · Product · …), with
+ * each group labelled the way Skills groups by product family."*
+ * ⚠⚠ THE BRIEF SAID **STOP AND REPORT IF THE DATA CARRIES NO TYPE.** It does:
+ * `Specialization.kind` is a real enum — **PRODUCT 11 · METHODOLOGY 6 ·
+ * INDUSTRY 10** — and it was ALREADY selected and mapped. Nothing is invented.
+ *
+ * ⚠⚠⚠ THE ORDER IS FIXED, NOT ALPHABETICAL, AND NOT BY COUNT. Product first
+ * (what a buyer searches), then Industry (where they work), then Methodology
+ * (how they work). ⚠ Ordering by count would reshuffle the page whenever
+ * somebody edited their profile, which is the `check:catalog` lesson about two
+ * pickers in two different orders.
+ * ⚠ `METHODOLOGY` renders as **"Business Process"** — the enum is the storage
+ * name and the label is the person's word; Scott's own list says *"Industry ·
+ * Business Process · Product"*.
+ */
+const SPEC_KIND_ORDER: { key: string; label: string }[] = [
+  { key: "PRODUCT", label: "Product" },
+  { key: "INDUSTRY", label: "Industry" },
+  { key: "METHODOLOGY", label: "Business Process" },
+];
+
 export function SpecializationsBody({
   specializations,
 }: {
   specializations: SpecializationItem[];
 }) {
   if (specializations.length === 0) return <Empty>None listed.</Empty>;
+  /* ⚠⚠ A ROW WITH AN UNKNOWN OR MISSING `kind` IS NOT DROPPED — it falls into
+     `Other`. ⚠⚠⚠ SILENTLY HIDING A SPECIALIZATION BECAUSE ITS ENUM GREW A
+     FOURTH MEMBER IS THE DEFECT THIS WHOLE BRIEF KEEPS FINDING. */
+  const known = new Set(SPEC_KIND_ORDER.map((k) => k.key));
+  const groups = [
+    ...SPEC_KIND_ORDER.map((k) => ({
+      label: k.label,
+      items: specializations.filter((s) => s.kind === k.key),
+    })),
+    { label: "Other", items: specializations.filter((s) => !s.kind || !known.has(s.kind)) },
+  ].filter((g) => g.items.length > 0);
+
+  /* ⚠ ONE GROUP IS NOT A GROUPING. With everything under a single kind the
+     heading says nothing the card's title has not already said. */
+  if (groups.length === 1) return <SpecChips items={groups[0].items} />;
+
+  return (
+    <div>
+      {groups.map((g) => (
+        <div key={g.label} className="mb-3 last:mb-0">
+          {/* ⚠ The same eyebrow Skills uses for its product families, so the
+              two cards read as one idea. */}
+          <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+            {g.label}
+          </p>
+          <SpecChips items={g.items} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpecChips({ items }: { items: SpecializationItem[] }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {specializations.map((s) => (
+      {items.map((s) => (
         <span
           key={s.id}
-          className="rounded-full border border-magenta/30 bg-magenta/[0.06] px-2.5 py-0.5 text-[12.5px] font-semibold text-magenta-dark"
+          className={CHIP_SPEC}
         >
           {s.name}
         </span>
@@ -830,7 +928,7 @@ export function SkillsBody({
           {skills.map((s) => (
             <span
               key={s.id}
-              className="rounded-full border border-line px-3 py-1 text-[13.5px] font-semibold text-ink-2"
+              className={CHIP_SKILL}
             >
               {s.name}
             </span>

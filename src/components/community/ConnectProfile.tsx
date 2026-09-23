@@ -47,6 +47,7 @@ import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
+import { OwnerResumeRerun } from "@/components/profile/OwnerAiPass";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
   CertificationsBody,
@@ -149,6 +150,7 @@ export function ConnectProfile({
   youBothKnow = null,
   messagePermission = null,
   connect,
+  previewAsBuyer = false,
 }: {
   p: ProviderProfileView;
   taughtPaths?: TaughtPath[];
@@ -230,6 +232,20 @@ export function ConnectProfile({
   /** ⚠ `ConnectControls`, resolved by the page that knows it is showing
    *  somebody else. Carried over unchanged from `/providers/[id]`. */
   connect?: ReactNode;
+  /**
+   * ── ⚠⚠⚠ THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING (`E602` WS-D) ──
+   *
+   * ⚠ SCOTT'S WALK (`E022`/`E023`): `/providers/[id]` showed the owner their own
+   * Grow card, Edit controls, *"Complete Your Profile"* and a
+   * *"See What Buyers See"* button **pointing at the page they were already on.**
+   * ⚠⚠ *"See What Buyers See" MEANS EXACTLY THAT* — a page that shows the
+   * owner's tools while claiming to be the buyer's view teaches the wrong thing
+   * about what buyers see.
+   * ⚠⚠⚠ IT DOES **NOT** MAKE `isOwner` FALSE. The page still knows who is
+   * looking — that is how the owner gets a way back, and how `recordProfileView`
+   * keeps NOT writing a view row for the owner (`E598`).
+   */
+  previewAsBuyer?: boolean;
 }) {
   /*
     ── ⚠⚠⚠ THE SINGLE `isOwner` POINT (`P2-J3-E588` WS-B) ────────────────────
@@ -242,7 +258,15 @@ export function ConnectProfile({
     ⚠ **A future edit that reaches for `p.isOwner` again has broken the
     guarantee.** Add to this block instead.
   */
-  const owner = p.isOwner;
+  /*
+    ⚠⚠⚠ `previewAsBuyer` FOLDS IN **HERE**, AT THE ONE POINT, AND NOWHERE ELSE
+    (`E602` WS-D). That is what makes *"every owner affordance is absent in the
+    buyer preview"* answerable by reading one line — the same guarantee `E588`
+    WS-B bought, extended rather than bypassed.
+    ⚠ A second flag threaded through thirty branches is how this component
+    stops being auditable.
+  */
+  const owner = p.isOwner && !previewAsBuyer;
 
   /* ⚠ The groups this profile belongs to — see the card in the right rail.
      ⚠⚠ DERIVED FROM PROPS THIS COMPONENT ALREADY RECEIVES; no new read, and no
@@ -905,14 +929,39 @@ export function ConnectProfile({
           )}
         </ProfileCard>
 
-        <div className="pm-cp-three">
-          <ProfileCard
-            id="specializations"
-            title="Specializations"
-            edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
-          >
-            <SpecializationsBody specializations={p.specializations} />
-          </ProfileCard>
+        {/*
+          ── ⚠⚠⚠ SPECIALIZATIONS SPANS THE PAGE (`P2-A2-E602` WS-C 1 + 3) ─────
+
+          ⚠ SCOTT'S WALK (`E020`): *"The Specializations card spans the page,
+          like Skills — not a third of a row."* ⚠⚠ AND IT NOW HAS SOMETHING TO
+          SPEND THE WIDTH ON: grouped by `kind` with a labelled eyebrow per
+          group, exactly as Skills groups by product family. In a third of a row
+          the group headings had nowhere to go.
+          ⚠⚠⚠ THE THREE-ACROSS ROW BECOMES **TWO**: Certifications · Education,
+          with Specializations above them, and it uses a NEW `pm-cp-pair`.
+          ⚠⚠ `pm-cp-three` IS A FIXED `repeat(3, …)`, NOT `auto-fit` — keeping
+          it would have left a DEAD THIRD COLUMN and made both remaining cards
+          narrower than the full-width card above them. ⚠ MEASURED: a first pass
+          kept the class on the strength of a comment that said `auto-fit`, and
+          the stylesheet said otherwise. ⚠ `pm-cp-three` is now unused and is
+          LEFT ON DISK (`E164`).
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — Specializations inside the
+          three-across row:
+          //   <div className="pm-cp-three">
+          //     <ProfileCard id="specializations" title="Specializations" …>
+          //       <SpecializationsBody specializations={p.specializations} />
+          //     </ProfileCard>
+          //     <ProfileCard id="certifications" …>
+        */}
+        <ProfileCard
+          id="specializations"
+          title="Specializations"
+          edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
+        >
+          <SpecializationsBody specializations={p.specializations} />
+        </ProfileCard>
+
+        <div className="pm-cp-pair">
           <ProfileCard
             id="certifications"
             title="Certifications"
@@ -923,8 +972,35 @@ export function ConnectProfile({
               empty="No certifications yet."
               emptyAction={
                 owner ? (
+                  /*
+                    ── ⚠⚠⚠ THE LINE SHIPS, BECAUSE THE TEST EXISTS (`E602` WS-E 1)
+
+                    ⚠ SCOTT: the line ships *"only if a free certification test
+                    actually exists"*, and `E600` had recorded that path tests
+                    *"may be unbuilt"*.
+                    ⚠⚠ MEASURED 2026-09-22, AND THAT CAVEAT IS SUPERSEDED: **two
+                    `LearnAssessment` rows are `PUBLISHED`** — Basic Procurement
+                    (30 questions) and Advanced Procurement (20) — six more are
+                    `DRAFT`, `/learn/<slug>/test` renders 200, and the page
+                    contains **no price, no paywall, no upgrade**. It is free.
+
+                    ⚠⚠⚠ IT LINKS TO `/learn`, NOT TO `/test`, AND THAT IS THE
+                    HONEST DESTINATION. The test is GATED ON FINISHING THE PATH
+                    — the gate persona sees *"Finish the path first. You've
+                    completed 0 of 65 lessons."* ⚠ A link straight to `/test`
+                    would be a door that opens onto a wall (`E579`); the path is
+                    where the certificate actually begins.
+                    ⚠ Scott's own wording — *"linking to Learn's certification
+                    path"* — is the path, and `/learn` is where the two
+                    certification paths are chosen from.
+
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   <Link href="/learn" …>Earn One in Learn</Link>
+                    ⚠⚠ The DESTINATION is unchanged; only the promise is new,
+                    and it is one the destination keeps.
+                  */
                   <Link href="/learn" className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline">
-                    Earn One in Learn
+                    Click Here to Take a Free Certification Test Now
                   </Link>
                 ) : undefined
               }
@@ -954,7 +1030,39 @@ export function ConnectProfile({
         <ProfileCard
           id="work-history"
           title="Work History"
-          edit={owner ? <EditLink href={editHref("work-history")} title="Work History" /> : undefined}
+          /*
+            ── ⚠⚠⚠ THE RÉSUMÉ RE-RUN, MOUNTED (`P2-A2-E602` WS-E 2) ────────────
+
+            ⚠ SCOTT'S WALK (`E021`): *"an icon on the profile to re-run the AI
+            resume parser… it asks first, naming what it will replace, and never
+            silently overwrites a field the person edited by hand."*
+
+            ⚠⚠⚠ NOTHING NEW WAS BUILT, AND THAT IS THE FINDING.
+            `OwnerResumeRerun` ALREADY EXISTS in `components/profile/OwnerAiPass.tsx`,
+            wrapping `ResumeImportAction` — which already implements the exact
+            rule Scott asked for: **confirm → PREVIEW (parses, writes NOTHING) →
+            a ticked diff → save.** ⚠ MEASURED: **nothing imported it.** It was
+            rendered in the gaps panel `E600` WS-B rebuilt away, so the component
+            survived and its entry point did not.
+            ⚠⚠ BUILDING A SECOND ONE WOULD HAVE BEEN A SECOND CONFIRM DIALOG
+            AND A SECOND OVERWRITE RULE TO KEEP IN STEP — `E585`'s shape, which
+            this brief has already paid for twice.
+
+            ⚠ THE OVERWRITE RULE, RE-READ AT THE PREMISE CHECK RATHER THAN
+            ASSUMED: skills use `skipDuplicates`, so a hand-added row is never
+            downgraded; `headline` and `overview` are **fill-only-when-empty**,
+            computed inside the writer from the PROFILE. ⚠⚠ THAT IS WHY THE COPY
+            READS *"a title (yours is empty)"* AND NEVER *"will replace"* — the
+            component says what it will do, and what it will do is add.
+          */
+          edit={
+            owner ? (
+              <span className="flex items-center gap-3">
+                <OwnerResumeRerun />
+                <EditLink href={editHref("work-history")} title="Work History" />
+              </span>
+            ) : undefined
+          }
         >
           <WorkHistoryBody
             employers={p.employers}

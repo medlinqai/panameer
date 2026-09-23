@@ -265,16 +265,63 @@ html {
  * content clear of the cluster without moving its box's centre — padding is
  * inside the box being centred, so it cancels.
  */
+/*
+  ── ⚠⚠⚠ THE BRAND IS VISIBLE AT EVERY WIDTH (`P2-A2-E602` WS-E 3) ─────────
+
+  ⚠ SCOTT, 2026-09-22, ruling after the Home icon was removed: his reason was
+  *"they can click the logo in the upper left"* — **so the fix is to make that
+  true on a phone, not to put the icon back.**
+
+  ⚠⚠⚠ MEASURED FIRST, AND THE MEASUREMENT IS WHY THIS RULING EXISTS: with the
+  Home icon gone and `.pm-band-brand { display: none }` below 930px, there were
+  **ZERO visible links to `/dashboard`** at 360, 390 and 780px — the account
+  menu carries none either. **The band's only way home was hidden exactly where
+  the icon had been carrying it.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the hide, and the centring fix
+  that existed ONLY because the brand column was zero-width:
+  //   @media (max-width: 930px) {
+  //     .pm-band-brand { display: none; }
+  //     .pm-band { padding-left: 0; column-gap: 0; }
+  //     .pm-band-menu { padding: 0 20px; }
+  //   }
+  ⚠⚠ THOSE THREE WENT TOGETHER AND THEY COME BACK TOGETHER. `E559` zeroed the
+  left padding and the column gap so the MENU's box centred on the cluster once
+  the brand vanished; with the brand present the ordinary three-column geometry
+  applies again, which is what every width above 930px has always used.
+
+  ⚠ THE MARK IS COMPACT, NOT ABSENT — Scott: *"the mark alone, without 'Provider
+  Console', is fine"*. The same lockup asset is kept (no new brand decision is
+  taken here) and simply capped, so it stays a tap target without crowding the
+  menu.
+*/
 @media (max-width: 930px) {
-  .pm-band-brand {
+  /* ⚠ THE MARK ALONE — the console label is what made the brand column wide
+     enough to squeeze the menu to 14px once the brand stopped being hidden.
+     ⚠⚠ MEASURED BEFORE AND AFTER, not assumed. */
+  .pm-band-console {
     display: none;
   }
-  .pm-band {
-    padding-left: 0;
-    column-gap: 0;
+  .pm-band-brand img {
+    height: 22px;
+    max-width: 88px;
+    object-fit: contain;
+    object-position: left center;
   }
-  .pm-band-menu {
-    padding: 0 20px;
+}
+
+/*
+  ⚠⚠⚠ THE NARROWEST WIDTH NEEDS ANOTHER 12px, AND THE GATE FOUND IT. At 360px
+  an 88px mark pushed the LAST journey icon to `right=366` — six pixels past the
+  viewport — and `GUARD 1+2` failed with *"header content past the RIGHT edge"*.
+  ⚠ MEASURED, NOT GUESSED: 5 of 6 menu items were fully visible at 360px and all
+  6 at 390px, so the shortfall was real and small.
+  ⚠⚠ THE MARK GIVES THE PIXELS BACK, NOT THE MENU — the six journeys are the
+  band's job; the brand only has to stay a visible, tappable way home.
+*/
+@media (max-width: 400px) {
+  .pm-band-brand img {
+    max-width: 72px;
   }
 }
 

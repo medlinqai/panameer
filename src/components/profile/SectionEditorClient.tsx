@@ -90,6 +90,28 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
   const [roleTypes, setRoleTypes] = useState<
     { id: string; name: string; display: string }[]
   >([]);
+  /*
+    ── ⚠⚠⚠ THE CERTIFICATIONS ADD TRIGGER (`P2-A2-E602` WS-A) ────────────────
+
+    ⚠ SCOTT'S WALK (`E016`): `/profile/edit/certifications` rendered *"No
+    certifications yet"*, Save and Cancel — **and no way to add one.**
+    ⚠⚠ MEASURED: the controls on that page were `Back · × · Attach PDF or Image ·
+    Delete · Cancel · Save · Save · Cancel`. The modal was in the DOM the whole
+    time; **nothing opened it.**
+
+    ⚠⚠⚠ THE CAUSE IS THAT THE CAPABILITY LIVES IN THE **CALLER**, NOT THE
+    COMPONENT. `CertificationCards` deliberately has NO body Add button
+    (`walk7` WS6 / `E144`): the review page wraps it in a card whose HEADER
+    carries *"+ Add Certification"*, and that button fires `openSignal`. ⚠ The
+    wizard is the only caller that passes it. ⚠⚠ `E597`'s one-section editor
+    mounted the component WITHOUT that wrapper, so the only affordance vanished.
+
+    ⚠ THE FIX KEEPS `E144` RATHER THAN REVERSING IT: this caller now supplies
+    the header button, exactly as the wizard does, instead of putting a second
+    button back in the component's body — which is the duplication `E144`
+    removed. ⚠⚠ ONE COUNTER, ONE `openSignal`, same shape as `join/provider`.
+  */
+  const [certSignal, setCertSignal] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -519,14 +541,27 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           the SAME `certifications` step through the SAME endpoint, and the
           page's own Save button becomes `Done`: there is nothing left to post.
         */
-        <CertificationCards
-          items={draft.certifications}
-          busy={busy}
-          onSave={async (certifications) => {
-            patch({ certifications });
-            return postSection({ certifications });
-          }}
-        />
+        <div className="space-y-3">
+          {/* ⚠ Title Case on the label (rule 11), and the `+` is the same
+              affordance the wizard's header uses, so the two screens teach the
+              same gesture. */}
+          <button
+            type="button"
+            onClick={() => setCertSignal((n) => n + 1)}
+            className="text-[13.5px] font-bold text-magenta hover:underline"
+          >
+            + Add Certification
+          </button>
+          <CertificationCards
+            items={draft.certifications}
+            busy={busy}
+            openSignal={certSignal}
+            onSave={async (certifications) => {
+              patch({ certifications });
+              return postSection({ certifications });
+            }}
+          />
+        </div>
       );
       break;
     case "education":

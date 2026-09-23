@@ -153,6 +153,110 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     await page.close();
   });
 
+  /*
+    ── ⚠⚠⚠ THE HOLE BETWEEN THE TWO CASES (`P2-A2-E602` WS-D item 4) ────────
+
+    ⚠ SCOTT'S WALK (`E022`/`E023`): the owner's OWN `/providers/[id]` showed the
+    Grow card, Edit controls, *"Complete Your Profile"* and a
+    *"See What Buyers See"* button pointing at the page they were already on —
+    **and this suite passed the whole time.**
+
+    ⚠⚠⚠ WHY THE SIX MISSED IT, EXACTLY: coverage was a UNION WITH A HOLE IN THE
+    MIDDLE.
+      · *"the visitor sees no owner-only surface"* signs in and goes to **a
+        COLLEAGUE's** provider page — someone else's, never the viewer's own.
+      · *"the OWNER's view is unchanged"* asserts owner surfaces DO render, at
+        **`/profile`** — a different ROUTE.
+    ⚠⚠ **"MY OWN PROVIDER PAGE" IS NEITHER**, so the one combination that was
+    broken — *this viewer* × *this route* — was the one nothing visited. ⚠ A
+    hole does not fail; it simply never runs, which is `E586`'s shape again and
+    the same defect class as `E600`'s lost assertion.
+
+    ⚠ THIS CASE IS THE THIRD VIEWER AND IS PERMANENT.
+    ⚠⚠ NO TEARDOWN IS OWED: `recordProfileView` does not write a view row for the
+    owner (`E598`), and this test signs in as nobody else.
+  */
+  test("⚠⚠⚠ the OWNER on their OWN /providers/[id] sees the BUYER's view", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await signIn(page);
+    /* ⚠ The owner's own provider page is reached from their profile, so the id
+       is discovered rather than hardcoded — a seed change cannot silently point
+       this at somebody else. */
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    const own = await page.evaluate(
+      () => document.querySelector<HTMLAnchorElement>('a[href^="/providers/"]')?.getAttribute("href") ?? null
+    );
+    expect(own, "E586: no link to the owner's own provider page was found").toBeTruthy();
+    await page.goto(own!, { waitUntil: "networkidle" });
+
+    /*
+      ⚠⚠⚠ `main`, NOT `body`, AND THE DISTINCTION IS THE RULING ITSELF. Scott
+      asked for TWO owner-only things ON this page: the way back, and the
+      profile tab row (`Score · Statistics · Account Health · …`). ⚠ Those are
+      CHROME — navigation the owner is entitled to while previewing — and they
+      sit OUTSIDE `<main>`.
+      ⚠⚠ THE RULE BEING ASSERTED IS ABOUT THE PROFILE CONTENT: what a buyer
+      would read. ⚠⚠⚠ MEASURED — asserting over `body` failed on
+      *"account health"*, which is a TAB LABEL in the row Scott asked for, not
+      an owner affordance in the page. **A correct assertion against the wrong
+      scope is still a wrong assertion.**
+      ⚠ LOWER-CASED for the reason the other cases record: `innerText` returns
+      RENDERED text and `Grow Your Income Faster` is uppercased by CSS, so a
+      case-sensitive absent-check is a test that cannot fail.
+    */
+    /* ⚠⚠⚠ `.last()` BECAUSE THIS PAGE HAS **THREE NESTED `<main>` ELEMENTS** —
+       the app shell's, this route's, and `ConnectProfile`'s `.pm-cp3-main`. The
+       innermost is the profile CONTENT, which is what this rule is about.
+       ⚠⚠ NESTED `<main>` IS INVALID HTML AND IS **REPORTED, NOT FIXED HERE** —
+       it predates this workstream, spans the shell and the component, and
+       changing it inside a visitor-view fix would be a structural change
+       smuggled into a behaviour fix. */
+    const body = (await page.locator("main").last().innerText()).toLowerCase();
+    for (const needle of [
+      "grow your income faster",
+      "complete your profile",
+      "see what buyers see",
+      "account health",
+      "profile completion",
+    ]) {
+      expect(body.includes(needle), `"${needle}" leaked into the owner's buyer preview`).toBe(false);
+    }
+    /* ⚠⚠⚠ THE EDIT CONTROLS, BY SHAPE RATHER THAN BY LABEL — every one of them
+       resolves under `/profile/edit/`, so this cannot be defeated by renaming a
+       button. */
+    const edits = await page.evaluate(
+      () => {
+        const mains = document.querySelectorAll("main");
+        const scope = mains.length ? mains[mains.length - 1] : document.body;
+        return scope.querySelectorAll('a[href^="/profile/edit/"]').length;
+      }
+    );
+    expect(edits, "Edit controls rendered in the owner's buyer preview").toBe(0);
+
+    /* ⚠ AND THE THREE THINGS THE OWNER **SHOULD** GET HERE. */
+    /* ⚠ The way back is chrome, so it is checked against the whole page. */
+    const whole = (await page.locator("body").innerText()).toLowerCase();
+    expect(whole.includes("this is how buyers see you"), "the owner has no way back").toBe(true);
+    const h1s = await page.evaluate(() =>
+      [...document.querySelectorAll("h1")].map((h) => h.textContent?.trim() ?? "")
+    );
+    /* ⚠⚠ EXACTLY ONE. The page had NONE at the premise check, and a first fix
+       added an `sr-only` heading that made TWO once the visitor branch supplied
+       its own — a duplicate heading is a worse defect than the one it fixed. */
+    expect(h1s.length, `expected exactly one <h1>, got ${h1s.join(" | ")}`).toBe(1);
+    const tabRow = await page.evaluate(
+      () => document.querySelectorAll('a[href="/profile"]').length
+    );
+    expect(tabRow, "the profile tab row is missing on the owner's provider page").toBeGreaterThan(0);
+
+    console.log(
+      `E602/WS-D  owner at ${own} — 0 owner affordances, ${h1s.length} h1, back-bar present`
+    );
+    await page.close();
+  });
+
   test("⚠⚠ the OWNER's view is unchanged — every owner surface still renders", async ({
     browser,
   }) => {

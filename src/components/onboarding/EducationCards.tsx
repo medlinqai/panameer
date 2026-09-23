@@ -87,6 +87,37 @@ const FIELDS_OF_STUDY = [
  * Autocomplete source for School. A representative list — the field accepts
  * anything typed, so an unlisted institution is never blocked.
  */
+/**
+ * ── ⚠⚠⚠ THE FIELD ACCEPTS ANYTHING. NOW IT SAYS SO (`P2-A2-E602` WS-D) ────
+ *
+ * ⚠ SCOTT, 2026-09-22: *"When the typed value matches no option, show a plain
+ * line under the field: **'No match — we'll save it as you typed it.'** The same
+ * rule for Field of Study."*
+ *
+ * ⚠⚠ THE CONTROL WAS NEVER BROKEN — `School` is wired exactly as `Degree` is,
+ * with a `datalist` of 38 universities, and it has always accepted free text.
+ * ⚠⚠⚠ WHAT IT NEVER DID WAS **SAY SO**, so a `datalist` that filtered down to
+ * nothing read as a REJECTION rather than as "type whatever you like". That is
+ * why School looked empty while Degree's 13 common values almost always matched.
+ *
+ * ⚠ IT IS DELIBERATELY SILENT WHILE THE FIELD IS EMPTY — a warning on an
+ * untouched field is noise, not help.
+ */
+function NoMatchHint({ value, options }: { value: string; options: readonly string[] }) {
+  const typed = value.trim();
+  if (!typed) return null;
+  /* ⚠ Case-insensitive and substring-based, matching what the browser's own
+     `datalist` does — otherwise the hint would contradict the dropdown the
+     person is looking at. */
+  const needle = typed.toLowerCase();
+  if (options.some((o) => o.toLowerCase().includes(needle))) return null;
+  return (
+    <p className="mt-1 text-[12.5px] text-ink-3">
+      No match &mdash; we&rsquo;ll save it as you typed it.
+    </p>
+  );
+}
+
 const UNIVERSITIES = [
   "Arizona State University",
   "Boston University",
@@ -297,6 +328,7 @@ export function EducationCards({
                 <option key={u} value={u} />
               ))}
             </datalist>
+            <NoMatchHint value={draft.institution} options={UNIVERSITIES} />
           </Field>
           <Field label="Degree *" hint="Choose one or type your own.">
             <TextInput
@@ -318,6 +350,7 @@ export function EducationCards({
               onChange={(e) => setDraft({ ...draft, field: e.target.value || null })}
               placeholder="Information Systems"
             />
+            <NoMatchHint value={draft.field ?? ""} options={FIELDS_OF_STUDY} />
             <datalist id="edu-fields">
               {FIELDS_OF_STUDY.map((f) => (
                 <option key={f} value={f} />

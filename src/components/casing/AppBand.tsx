@@ -11,12 +11,15 @@ import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
+/* ⚠ `HOME_NAV` LEFT THIS IMPORT with the Home icon (`E602` WS-E 3). It is
+   still exported and still a member of `UTILITY_NAV`; this file just no longer
+   renders it, and an unused import is a NEW lint problem against a zero-new
+   baseline. ⚠ SUPERSEDED, quoted not deleted (`E164`): `HOME_NAV,` */
 import {
   navForRoles,
   railPersona,
   ADMIN_NAV,
   ADMIN_HOME,
-  HOME_NAV,
   NOTIFICATIONS_NAV,
   bandPrefixesFor,
 } from "@/lib/nav";
@@ -213,7 +216,11 @@ export function AppBand() {
           resolved (`: " "`).
           ⚠ NO SKELETON, NO "Loading…", NO GUESSED LABEL.
         */}
-        <span className="mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
+        {/* ⚠⚠ HIDDEN BELOW 930px (`E602` WS-E 3). Scott: *"the mark alone,
+            without 'Provider Console', is fine"* — the label is what made the
+            brand column wide enough to squeeze the menu once the brand stopped
+            being hidden. ⚠ `pm-band-console` is styled in `app-band.css`. */}
+        <span className="pm-band-console mt-0.5 block text-[11px] font-medium tracking-wide text-white/45">
           {consoleLabel ?? " "}
         </span>
       </Link>
@@ -292,13 +299,38 @@ export function AppBand() {
           // the WS-B2 gate and reported, not spent.
         }
 
-        <BandIcon
-          href={HOME_NAV.href}
-          label={HOME_NAV.label}
-          active={pathname === HOME_NAV.href}
-        >
-          <HomeIcon />
-        </BandIcon>
+        {/*
+          ── ⚠⚠⚠ THE HOME ICON IS GONE (`P2-A2-E602` WS-E 3) ──────────────────
+
+          ⚠ SCOTT'S WALK (`E024`): *"Remove the Home icon from the band's
+          right-hand cluster. The logo is home."*
+          ⚠⚠ MEASURED BEFORE REMOVING, because the ruling depends on it: the
+          logo links to `isAdmin ? ADMIN_HOME.href : "/dashboard"`, and
+          `HOME_NAV.href` IS `/dashboard`. **They were the same destination**,
+          so this removes a genuine duplicate rather than a door.
+          ⚠⚠⚠ NOTHING IS STRANDED — that is the whole test for removing an
+          affordance, and it passes here only because the logo already goes
+          there. ⚠ For an admin the logo goes to the ADMIN home instead, which
+          is the more useful of the two, not a loss.
+
+          ⚠ THE FREED WIDTH IS NOT REDISTRIBUTED — the band's own standing rule,
+          recorded a few lines above: Scott's goal is simplification, so the band
+          gets QUIETER, not refilled.
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <BandIcon
+          //     href={HOME_NAV.href}
+          //     label={HOME_NAV.label}
+          //     active={pathname === HOME_NAV.href}
+          //   >
+          //     <HomeIcon />
+          //   </BandIcon>
+          ⚠⚠ `HOME_NAV` IS STILL EXPORTED AND STILL A MEMBER OF `UTILITY_NAV` —
+          only this file's IMPORT of it went, because an unused import is a NEW
+          lint problem against a zero-new baseline. ⚠ `HomeIcon` STAYS ON DISK
+          BELOW, unrendered, under `E164`, with a named disable rather than a
+          deletion. Only this ONE rendering is removed.
+        */}
 
         <BandIcon href="/support/bug" label="Report a bug">
           <BugIcon />
@@ -459,6 +491,12 @@ const S = {
 // code on disk (`E559`), and the two were never shared — measured with comments
 // stripped before removing this one.
 
+/* ⚠⚠⚠ RETIRED BY `E602` WS-E 3 AND KEPT ON DISK (`E164`) — the band no longer
+   renders a Home icon because the logo already goes to `/dashboard`.
+   ⚠ THE DISABLE IS NAMED RATHER THAN BLANKET: `E164` says superseded code stays,
+   and the lint baseline's rule is ZERO NEW, so the two rules are reconciled here
+   explicitly instead of by deleting the component or by ignoring the file. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function HomeIcon() {
   return (
     <svg {...S}>
