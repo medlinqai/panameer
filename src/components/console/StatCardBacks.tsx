@@ -173,3 +173,139 @@ export function allZero(figures: Figure[]): boolean {
   const counted = figures.filter(isCounted);
   return counted.length > 0 && counted.every((n) => n === 0);
 }
+
+/**
+ * ── ⚠⚠⚠ THE BREAKDOWN BACK — A DIFFERENT CUT OF THE SAME NUMBER ──────────
+ *
+ * ⚠ SCOTT, 2026-09-23: *"The old tiles' detail moves to the new card's flip
+ * back. That is what a trend back is for: a different cut of the same number."*
+ *
+ * ⚠⚠⚠ THE SUBSETS ARE DRAWN **FROM** THE TOTAL, NEVER ADDED **TO** IT, AND
+ * THAT IS WHY THE REMAINDER IS RENDERED RATHER THAN LEFT IMPLICIT.
+ * ⚠ `Offered` IS the total — `interviewRequest.count({ provider_person_id })`,
+ * byte-identical to the front's figure. `Taken` is `COMPLETED`; `Declined or
+ * cancelled` is `DECLINED + CANCELLED`. ⚠⚠ THE STATES `REQUESTED`,
+ * `SLOTS_OFFERED` AND `SCHEDULED` ARE IN NEITHER SUBSET, so the two parts
+ * genuinely do not add up to the total and never will.
+ * ⚠⚠⚠ SCOTT: *"A breakdown that doesn't add up is a breakdown that's wrong —
+ * show the remainder or don't show the split."* The remainder is named and
+ * rendered, so the four rows reconcile on screen by inspection.
+ *
+ * ── ⚠⚠ AND IF IT STILL DOES NOT RECONCILE, IT SAYS SO ────────────────────
+ *
+ * ⚠ A negative remainder means a subset exceeded its own total — impossible by
+ * construction, which is exactly why it must be caught rather than assumed:
+ * it would mean the two queries had drifted apart. ⚠⚠ THE CARD THEN REFUSES TO
+ * PRINT THE SPLIT and says the figures disagree, rather than showing numbers a
+ * reader would have to reconcile themselves and could not.
+ */
+export function BreakdownBack({
+  title,
+  totalLabel,
+  total,
+  parts,
+  remainderLabel,
+  note,
+  links,
+}: {
+  title: string;
+  totalLabel: string;
+  total: Figure;
+  parts: { label: string; figure: Figure }[];
+  /** ⚠ What the unaccounted-for rows ARE — never just "other". */
+  remainderLabel: string;
+  note?: string;
+  links?: { label: string; href: string }[];
+}) {
+  /* ⚠⚠ ONLY COUNTED FIGURES CAN BE RECONCILED. If the total or any part is a
+     dash, there is no arithmetic to do and the split is not shown — an
+     uncountable figure is not a zero and must not be treated as one. */
+  const countable = isCounted(total) && parts.every((p) => isCounted(p.figure));
+  const partSum = countable
+    ? parts.reduce((a, p) => a + (p.figure as number), 0)
+    : 0;
+  const remainder = countable ? (total as number) - partSum : 0;
+
+  return (
+    <div className="flex h-full flex-col">
+      <h2 className="font-display text-[16px] font-bold">{title}</h2>
+
+      {!countable ? (
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
+          {isCounted(total) ? "Part of this breakdown" : totalLabel} cannot be
+          counted, so there is no split to show.
+        </p>
+      ) : remainder < 0 ? (
+        /* ⚠⚠⚠ SAY IT, DO NOT PRINT IT. */
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
+          These figures disagree — the parts come to {partSum.toLocaleString("en-US")},
+          which is more than the {(total as number).toLocaleString("en-US")} counted.
+          The split is not shown until they reconcile.
+        </p>
+      ) : (
+        <>
+          <div className="mt-2">
+            <StatSplitRow label={totalLabel} figure={total} strong />
+            {parts.map((p) => (
+              <StatSplitRow key={p.label} label={p.label} figure={p.figure} indent />
+            ))}
+            {/* ⚠ The remainder is a real row, named, so the column adds up. */}
+            <StatSplitRow label={remainderLabel} figure={remainder} indent />
+          </div>
+          {note && <p className="mt-2 text-[12px] leading-snug text-ink-3">{note}</p>}
+        </>
+      )}
+
+      {links && links.length > 0 && (
+        <ul className="mt-auto space-y-1.5 border-t border-line pt-2.5">
+          {links.map((l) => (
+            <li key={l.href}>
+              <Link href={l.href} className="text-[13px] font-bold text-magenta hover:underline">
+                {l.label} &rarr;
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** ⚠ One row of a breakdown. ⚠⚠ A dash still carries its reason here, exactly
+ *  as in `StatFigureRow` — the rule does not relax on a back face. */
+function StatSplitRow({
+  label,
+  figure,
+  indent,
+  strong,
+}: {
+  label: string;
+  figure: Figure;
+  indent?: boolean;
+  strong?: boolean;
+}) {
+  return (
+    <div
+      className={
+        "flex items-baseline justify-between gap-3 border-b border-line py-1.5 last:border-0 " +
+        (indent ? "pl-3" : "")
+      }
+    >
+      <span className={"text-[13px] " + (strong ? "font-bold text-ink" : "text-ink-2")}>
+        {label}
+      </span>
+      {isCounted(figure) ? (
+        <span
+          className={
+            "font-display leading-none tabular-nums " +
+            (strong ? "text-[17px] font-bold" : "text-[15px] font-bold text-ink-2")
+          }
+        >
+          {figure.toLocaleString("en-US")}
+        </span>
+      ) : (
+        <span className="text-[12px] text-ink-3">{figure.uncounted}</span>
+      )}
+    </div>
+  );
+}

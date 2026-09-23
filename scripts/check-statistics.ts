@@ -244,8 +244,11 @@ const baseStats: Statistics = {
     },
     work: {
       requestsReceived: 0,
-      proposalsSent: { uncounted: "x" },
+      proposalsSent: 0,
+      invitationsToPropose: 0,
       interviews: 0,
+      interviewsTaken: 0,
+      interviewsDeclined: 0,
       workOrders: 0,
       earnings: { uncounted: "x" },
       orderSeries: [],
@@ -647,6 +650,125 @@ check(
   /export function honeyCells\(s: Statistics\)/.test(src.cards) &&
     !/prisma\./.test(src.hive),
   "one source for both"
+);
+
+
+/* ── 6 · NO FIGURE IS COMPUTED TWICE (WS-C) ─────────────────────────────── */
+
+/**
+ * ── ⚠⚠⚠ THE RULE, IN SCOTT'S CORRECTED WORDING (2026-09-23) ──────────────
+ *
+ * ⚠ *"THE RULE IS **NO FIGURE IS COMPUTED TWICE**, NOT RENDERED TWICE. Two
+ * renders of one computation cannot drift; two computations of one concept are
+ * free to disagree, and will."*
+ *
+ * ⚠⚠ ASSERTED BY SHAPE, NOT BY A NAMED LIST (`E587`): the two sets are derived
+ * from the source at run time and INTERSECTED. Nothing here knows that
+ * `certification` was the offender — it knows that a model counted in
+ * `getStatistics` must not be counted again on the page.
+ * ⚠⚠⚠ IT IS WHAT CAUGHT ALL FOUR: `certification` (two different scoping
+ * columns), `interviewRequest` (×3), `bidRequest` and `providerBid` were each
+ * computed on BOTH sides. Every one of them rendered, and every one was free to
+ * disagree with its twin.
+ * ⚠ `package` is expected to remain page-only — `Service Products` is genuinely
+ * uncovered by the cards, so it is counted once, on the page. The assertion
+ * does not name it; it simply is not in the library's set.
+ */
+{
+  const modelsIn = (src: string) =>
+    new Set([...src.matchAll(/prisma\.([a-zA-Z]+)\.(?:count|aggregate|groupBy)\(/g)].map((m) => m[1]));
+  const lib = modelsIn(src.lib);
+  const page = modelsIn(src.page);
+  const both = [...page].filter((m) => lib.has(m));
+  check(
+    "26 — ⚠⚠⚠ no model is counted in BOTH getStatistics and the page",
+    both.length === 0,
+    both.length
+      ? `computed twice: ${both.join(", ")}`
+      : `lib counts ${[...lib].sort().join(", ")} · page counts ${[...page].sort().join(", ")}`
+  );
+  check(
+    "26 — ⚠ the sweep found counts on both sides to compare (E586)",
+    lib.size > 0 && page.size > 0,
+    `${lib.size} lib · ${page.size} page`
+  );
+}
+
+/**
+ * ⚠⚠⚠ THE HONEYCOMB'S EXEMPTION IS NARROW AND **ASSERTED**, NOT ASSUMED.
+ * ⚠ SCOTT: *"The honeycomb is exempt — it reads the same object, so it can't
+ * drift. But the exemption is narrow and asserted, not assumed: the gate proves
+ * the cell and the card read the same value, rather than skipping them."*
+ * ⚠⚠ STATICALLY: every cell's figure is an `s.<group>.<field>` expression, so
+ * it is READ from the same object the cards are handed, never recomputed.
+ * ⚠ The RUNTIME half — cell value equals card value on a rendered page — is in
+ * `check:stats-live`, because only a render can compare two drawn numbers.
+ */
+{
+  const cellFigures = [...src.cards.matchAll(/figure:\s*(s\.[a-z]+\.[A-Za-z]+)/g)].map((m) => m[1]);
+  check(
+    "27 — ⚠⚠⚠ every honeycomb cell READS a card figure rather than computing one",
+    cellFigures.length >= 4 && cellFigures.every((f) => /^s\.[a-z]+\.[A-Za-z]+$/.test(f)),
+    cellFigures.join(", ")
+  );
+  check(
+    "27 — ⚠⚠ the honeycomb component itself touches no database",
+    !/prisma\./.test(src.hive),
+    "it is handed its cells"
+  );
+}
+
+/**
+ * ⚠⚠ THE BREAKDOWN RECONCILES OR REFUSES. ⚠ `Offered` is the TOTAL and the two
+ * subsets are drawn from it; `REQUESTED`, `SLOTS_OFFERED` and `SCHEDULED` sit
+ * in neither, so the remainder must be NAMED or the column does not add up.
+ * ⚠⚠⚠ AND A NEGATIVE REMAINDER — a subset larger than its own total, which can
+ * only mean the queries drifted — PRINTS NOTHING AND SAYS SO.
+ */
+check(
+  "28 — ⚠⚠ the breakdown names its remainder, so the column adds up",
+  /remainderLabel/.test(src.backs) && /remainderLabel="Still in progress"/.test(src.cards),
+  "the in-flight states are a row, not an omission"
+);
+check(
+  "28 — ⚠⚠⚠ a breakdown that cannot reconcile refuses to print the split",
+  /remainder < 0/.test(src.backs) && /These figures disagree/.test(src.backs),
+  "say it, do not print it"
+);
+check(
+  "28 — ⚠ the label never says a state the schema does not have",
+  !/expired/i.test(src.cards),
+  "InterviewStatus has no EXPIRED"
+);
+
+/**
+ * ⚠⚠⚠ THE THREE FIGURES THAT WERE WRONG, PINNED SO THEY CANNOT SILENTLY RETURN.
+ * ⚠ Each was found by searching for the BEHAVIOUR rather than the noun, after
+ * `proposalsSent` was declared uncountable because no model was named
+ * `Proposal` while `ProviderBid` had been counting it all along.
+ */
+check(
+  "29 — ⚠⚠⚠ proposals are COUNTED, from ProviderBid, and only when submitted",
+  /providerBid\.count\(\{[^}]*submitted_at:\s*\{\s*not:\s*null/.test(src.lib.replace(/\s+/g, " ")) &&
+    !/No Proposal model exists/.test(src.lib),
+  "sent means submitted; a draft is not a proposal"
+);
+check(
+  "29 — ⚠⚠ work requests count only those actually ISSUED",
+  /bidRequest\.count\(\{ where: \{ provider_person_id: personId, issued_at: \{ not: null \}/.test(
+    src.lib.replace(/\s+/g, " ")
+  ),
+  "an unissued request was never sent to anybody"
+);
+check(
+  "29 — ⚠⚠⚠ certifications are counted on the NOT-NULL column",
+  /certification\.count\(\{ where: \{ user_id: userId \} \}\)/.test(src.lib.replace(/\s+/g, " ")),
+  "provider_profile_id is nullable and undercounts"
+);
+check(
+  "29 — ⚠⚠ earnings name the truncation, not the member's action",
+  /no order can reach paid/.test(src.lib) && !/complete your first paid work order/.test(src.page),
+  "no promise about a mechanism that does not exist"
 );
 
 console.log(

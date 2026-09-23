@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
+import { isCounted } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs } from "@/lib/profile-tabs";
@@ -183,9 +184,22 @@ export default async function MyStatsPage({
     );
   }
 
-  const certificationCount = await prisma.certification.count({
-    where: { user_id: viewer.userId },
-  });
+  /*
+    ⚠⚠⚠ THE CERTIFICATION COUNT IS COMPUTED ONCE, IN `getStatistics`, AND READ
+    HERE. ⚠ It was computed in TWO places with DIFFERENT SCOPING COLUMNS —
+    `{ user_id }` here and `{ provider_profile_id }` on the Learning card.
+    ⚠⚠ `Certification.user_id` IS NOT NULL AND `provider_profile_id` IS
+    NULLABLE, so the profile-scoped one UNDERCOUNTS and returns 0 for a member
+    with no provider profile. **This one was the correct one**; the Learning
+    card now uses it, and this line no longer queries.
+    ⚠ MEASURED 2026-09-23: 5 certifications, 0 with a null profile id, 61 people
+    holding exactly one profile each — **so the two agreed today by accident of
+    the data, not by construction.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const certificationCount = await prisma.certification.count({
+    //     where: { user_id: viewer.userId },
+    //   });
+  */
 
   /* ⚠ ONE CALL, THE SAME MODULE THE BUYER BRANCH USES — two shapes of this page
      asking two different questions is how the figures start to disagree. */
@@ -202,6 +216,13 @@ export default async function MyStatsPage({
        `YTD` moved the highlight and nothing else. */
     trendOf(sp)
   );
+
+  /* ⚠⚠ THE ONE COMPUTATION, READ BY BOTH SURFACES. ⚠ `certCount` is what the
+     `Profile` tile's inventory renders and what `Your Learning` renders — one
+     number, two renders, which is allowed; two counts would not be. */
+  const certCount = isCounted(stats.learning.certifications)
+    ? stats.learning.certifications
+    : 0;
 
   /* ⚠ OWNER-SCOPED INSIDE THE HELPER — the profile is resolved from the
      session, never from a parameter (`E563` WS-B item 8). */
@@ -234,57 +255,69 @@ export default async function MyStatsPage({
     asking directly is the signal, not the answer."* ⚠ That is the opposite of a
     decline counter and stays that way.
   */
-  const [
-    publishedProducts,
-    draftProducts,
-    invitationsToPropose,
-    proposalsSent,
-    interviewsOffered,
-    interviewsTaken,
-    interviewsClosed,
-  ] = await Promise.all([
+  /*
+    ── ⚠⚠⚠ FIVE QUERIES REMOVED — EACH WAS A **SECOND COMPUTATION** (`E603`) ──
+
+    ⚠ SCOTT'S RULE, CORRECTING HIS OWN EARLIER WORDING, 2026-09-23: *"The rule
+    is NO FIGURE IS COMPUTED TWICE, not rendered twice. Two renders of one
+    computation cannot drift; two computations of one concept are free to
+    disagree, and will."*
+    ⚠⚠ `invitationsToPropose`, `proposalsSent`, `interviewsOffered`,
+    `interviewsTaken` and `interviewsClosed` are ALL computed in
+    `getStatistics` now and read off `stats.work` below. ⚠⚠⚠ THE PACKAGE COUNTS
+    STAY — `Service Products` is genuinely uncovered by the new cards and is
+    the only place either figure is computed.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const [
+    //       publishedProducts,
+    //       draftProducts,
+    //       invitationsToPropose,
+    //       proposalsSent,
+    //       interviewsOffered,
+    //       interviewsTaken,
+    //       interviewsClosed,
+    //     ] = await Promise.all([
+    //       prisma.package.count({
+    //         where: { provider_profile_id: profile.id, status: "PUBLISHED" },
+    //       }),
+    //       prisma.package.count({
+    //         where: { provider_profile_id: profile.id, status: "DRAFT" },
+    //       }),
+    //     [inner comment paraphrased per rule 12 — it cannot be copied,
+    //      because a quoted `* /` closes the comment that quotes it:
+    //      OFFERED is every request aimed at this provider, whatever
+    //      became of it, i.e. the denominator. The schema has NO EXPIRED
+    //      state, so the label read DECLINED + CANCELLED and the query
+    //      counted exactly those two.]
+    //       prisma.bidRequest.count({
+    //         where: { provider_person_id: profile.person_id, issued_at: { not: null } },
+    //       }),
+    //       prisma.providerBid.count({
+    //         where: {
+    //           provider_person_id: profile.person_id,
+    //           submitted_at: { not: null },
+    //         },
+    //       }),
+    //       prisma.interviewRequest.count({
+    //         where: { provider_person_id: profile.person_id },
+    //       }),
+    //       prisma.interviewRequest.count({
+    //         where: { provider_person_id: profile.person_id, status: "COMPLETED" },
+    //       }),
+    //       prisma.interviewRequest.count({
+    //         where: {
+    //           provider_person_id: profile.person_id,
+    //           status: { in: ["DECLINED", "CANCELLED"] },
+    //         },
+    //       }),
+    //     ]);
+  */
+  const [publishedProducts, draftProducts] = await Promise.all([
     prisma.package.count({
       where: { provider_profile_id: profile.id, status: "PUBLISHED" },
     }),
     prisma.package.count({
       where: { provider_profile_id: profile.id, status: "DRAFT" },
-    }),
-    /* ⚠ `issued_at: { not: null }` RATHER THAN A STATUS LIST. A DRAFT ITB was
-       never sent, so it is not an invitation anybody received; and keying on the
-       timestamp instead of a status keeps the answer out of this query
-       entirely. */
-    prisma.bidRequest.count({
-      where: { provider_person_id: profile.person_id, issued_at: { not: null } },
-    }),
-    prisma.providerBid.count({
-      where: {
-        provider_person_id: profile.person_id,
-        submitted_at: { not: null },
-      },
-    }),
-    /* ⚠ OFFERED IS EVERY REQUEST AIMED AT THIS PROVIDER, whatever became of it —
-       the denominator the brief wants beside `taken`. */
-    prisma.interviewRequest.count({
-      where: { provider_person_id: profile.person_id },
-    }),
-    prisma.interviewRequest.count({
-      where: { provider_person_id: profile.person_id, status: "COMPLETED" },
-    }),
-    /*
-      ⚠⚠ THE BRIEF SAYS *"declined or expired"* AND THE SCHEMA HAS NO `EXPIRED`.
-      `InterviewStatus` is REQUESTED · SLOTS_OFFERED · SCHEDULED · COMPLETED ·
-      DECLINED · CANCELLED. ⚠ So this counts DECLINED + CANCELLED and the label
-      says so. Rendering the word "expired" would name a state that cannot
-      occur — reported at the WS-C gate rather than invented here.
-      ⚠ This is `interviewRequest`, NOT a bid document: `E366`'s ban covers the
-      ITB and the bid, and says nothing about interviews. The name avoids every
-      banned token regardless.
-    */
-    prisma.interviewRequest.count({
-      where: {
-        provider_person_id: profile.person_id,
-        status: { in: ["DECLINED", "CANCELLED"] },
-      },
     }),
   ]);
 
@@ -559,9 +592,26 @@ export default async function MyStatsPage({
           </Link>
         </StatTile>
 
-        <StatTile label="Earnings (12 Months)">
-          <NotTrackedYet unlocks="you complete your first paid work order" />
-        </StatTile>
+        {/*
+          ── ⚠⚠⚠ `Earnings (12 Months)` RETIRED (`E603` item 1) ──────────────
+
+          ⚠ SCOTT, 2026-09-23: *"Retire the old tile — it has no query and its
+          string is false."*
+          ⚠⚠ IT HAD NO QUERY AT ALL. `NotTrackedYet` is a static component: no
+          number, no source, just a promise. ⚠⚠⚠ AND THE PROMISE WAS FALSE —
+          *"once you complete your first paid work order"* says the member's own
+          work starts the counter. It cannot: nothing writes `PAID` and no
+          `Payment` is ever created, so a provider can finish paid work and
+          still count nothing. **A promise about what will start counting is a
+          claim about a mechanism; do not make one for a mechanism that does not
+          exist.**
+          ⚠ Earnings now renders ONCE, on the Work card, with the accurate
+          reason.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <StatTile label="Earnings (12 Months)">
+          //     <NotTrackedYet unlocks="you complete your first paid work order" />
+          //   </StatTile>
+        */}
 
         <StatTile label="Job Success Score">
           <NotTrackedYet unlocks="buyers rate completed work orders" />
@@ -586,23 +636,39 @@ export default async function MyStatsPage({
           counter and must never become one — `E366`, enforced by
           `check:sourcing`.
         */}
-        <StatTile label="Proposals">
-          {/* ⚠ `E433` — a count is a figure, so INK. */}
-          <p className="font-display text-[30px] font-bold leading-none text-ink">
-            {proposalsSent}
-          </p>
-          <p className="mt-1.5 text-[13px] text-ink-2">Sent</p>
-          <div className="mt-4">
-            <StatRow
-              label="Invitations to propose"
-              value={String(invitationsToPropose)}
-            />
-          </div>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-            An invitation counts whether or not you bid — a buyer asking you
-            directly is the signal.
-          </p>
-        </StatTile>
+        {/*
+          ── ⚠⚠⚠ `Proposals` RETIRED — AND IT WAS THE ONE THAT WAS RIGHT ──────
+
+          ⚠⚠⚠ THIS TILE DISPROVED MY OWN WORK CARD. It counted
+          `providerBid.count({ provider_person_id, submitted_at: { not: null } })`
+          — a real number — while the Work card printed a DASH reading *"No
+          Proposal model exists"*. ⚠⚠ THE SAME FIGURE RENDERED AS BOTH A NUMBER
+          AND A DASH, and the dash was the lie: the model is named
+          **`ProviderBid`**, not `Proposal`, and it had been counted here all
+          along. ⚠ **AN ABSENT NAME IS NOT AN ABSENT THING — search for the
+          behaviour, not the noun** (Scott, 2026-09-23).
+          ⚠ Both rows moved: `Sent` is the Work card's `Proposals Sent` (same
+          `submitted_at` filter — sent means submitted, and a draft is not a
+          proposal), and `Invitations to propose` is beside it on the front.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <StatTile label="Proposals">
+          //   {/* ⚠ `E433` — a count is a figure, so INK. * /}
+          //   <p className="font-display text-[30px] font-bold leading-none text-ink">
+          //   {proposalsSent}
+          //   </p>
+          //   <p className="mt-1.5 text-[13px] text-ink-2">Sent</p>
+          //   <div className="mt-4">
+          //   <StatRow
+          //   label="Invitations to propose"
+          //   value={String(invitationsToPropose)}
+          //   />
+          //   </div>
+          //   <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+          //   An invitation counts whether or not you bid — a buyer asking you
+          //   directly is the signal.
+          //   </p>
+          //   </StatTile>
+        */}
 
         {/*
           ── ⚠⚠ ONE `Profile` TILE (`P2-J2-E563` WS-A) ─────────────────────────
@@ -770,7 +836,7 @@ export default async function MyStatsPage({
             */}
             <StatRow
               label="Certifications"
-              value={String(certificationCount)}
+              value={String(certCount)}
             />
           </div>
         </StatTile>
@@ -798,19 +864,34 @@ export default async function MyStatsPage({
           CANCELLED. ⚠ Naming a state that cannot occur would be a fabricated
           fact; reported at the WS-C gate instead.
         */}
-        <StatTile label="Interviews">
-          <p className="font-display text-[30px] font-bold leading-none text-ink">
-            {interviewsOffered}
-          </p>
-          <p className="mt-1.5 text-[13px] text-ink-2">Offered</p>
-          <div className="mt-4">
-            <StatRow label="Taken" value={String(interviewsTaken)} />
-            <StatRow
-              label="Declined or cancelled"
-              value={String(interviewsClosed)}
-            />
-          </div>
-        </StatTile>
+        {/*
+          ── ⚠⚠⚠ `Interviews` RETIRED — ITS DETAIL MOVED, NOT DELETED (item 5) ──
+
+          ⚠ SCOTT, 2026-09-23: *"Retire the duplicate tiles by moving their
+          detail, not deleting it (`E585` — one concept in N places)."*
+          ⚠⚠ `Offered` WAS THE SAME QUERY AS THE WORK CARD'S `Interviews` —
+          `interviewRequest.count({ provider_person_id })`, byte for byte. Two
+          renders of one computation cannot drift; but these were TWO
+          COMPUTATIONS of one concept, which are free to disagree and will.
+          ⚠⚠⚠ ALL THREE ROWS NOW LIVE ON THE WORK CARD'S BREAKDOWN BACK, with
+          the in-flight remainder NAMED so the column reconciles — `Offered` is
+          the total and the two subsets are drawn from it, which is why they
+          never added up here.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <StatTile label="Interviews">
+          //   <p className="font-display text-[30px] font-bold leading-none text-ink">
+          //   {interviewsOffered}
+          //   </p>
+          //   <p className="mt-1.5 text-[13px] text-ink-2">Offered</p>
+          //   <div className="mt-4">
+          //   <StatRow label="Taken" value={String(interviewsTaken)} />
+          //   <StatRow
+          //   label="Declined or cancelled"
+          //   value={String(interviewsClosed)}
+          //   />
+          //   </div>
+          //   </StatTile>
+        */}
 
         {/*
           ── ⚠⚠ THE `Rising Talent` TILE IS GONE (`P2-J2-E563` WS-A item 3) ────

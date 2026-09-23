@@ -69,9 +69,31 @@ export type Statistics = {
      call, not a tidy-up.** ⚠ The unscoped `workOrders` count below was found
      by asking this question. */
   work: {
+    /* ⚠⚠⚠ RECEIVED MEANS **ISSUED** (Scott, 2026-09-23). ⚠ SUPERSEDED, quoted
+       not deleted (`E164`): this counted every `BidRequest` including
+       `issued_at: null`, i.e. requests **nobody ever sent** — the member was
+       shown invitations that do not exist yet. ⚠⚠ THE OLD `/stats` TILE HAD
+       THE FILTER RIGHT ALL ALONG; my new card dropped it. */
     requestsReceived: Figure;
+    /* ⚠⚠⚠ COUNTED, FROM `ProviderBid`. ⚠ SUPERSEDED, quoted not deleted
+       (`E164`): //   proposalsSent: { uncounted: "No Proposal model exists" }
+       ⚠⚠ THAT CLAIM WAS FALSE AND THE PAGE ALREADY DISPROVED IT — the old tile
+       has been counting `providerBid` all along. **The model is named
+       `ProviderBid`, not `Proposal`.** An absent NAME is not an absent THING;
+       search for the behaviour, not the noun.
+       ⚠ `submitted_at: { not: null }` — SENT means SUBMITTED. An unsubmitted
+       bid is a draft, and a draft is not a proposal. */
     proposalsSent: Figure;
+    /** ⚠ The back-face cut: requests issued to them, answered or not. */
+    invitationsToPropose: Figure;
+    /** ⚠⚠ THE TOTAL — every interview request aimed at them, whatever became
+     *  of it. The two subsets below are drawn FROM this, never added to it. */
     interviews: Figure;
+    /** ⚠ `COMPLETED`. */
+    interviewsTaken: Figure;
+    /** ⚠ `DECLINED` + `CANCELLED`. ⚠⚠ THE SCHEMA HAS NO `EXPIRED`, so the label
+     *  must never say "expired" — it would name a state that cannot occur. */
+    interviewsDeclined: Figure;
     workOrders: Figure;
     earnings: Figure;
     /* ⚠⚠ THE SERIES IS **WORK ORDERS STARTED**, not requests received, and the
@@ -154,8 +176,19 @@ export async function getStatistics(
     select: { id: true },
   });
 
-  const [views, invitesSent, joined, lessons, enrolled, certs, bids, interviews] =
-    await Promise.all([
+  const [
+    views,
+    invitesSent,
+    joined,
+    lessons,
+    enrolled,
+    certs,
+    bids,
+    interviews,
+    proposalsSent,
+    interviewsTaken,
+    interviewsDeclined,
+  ] = await Promise.all([
       providerProfileId
         ? countWindowed(window, "viewed_on", "profileView", { profile_id: providerProfileId })
         : Promise.resolve(0),
@@ -167,11 +200,38 @@ export async function getStatistics(
       }),
       countWindowed(window, "completed_at", "lessonProgress", { user_id: userId }),
       countWindowed(window, "created_at", "learnEnrollment", { user_id: userId }),
-      providerProfileId
-        ? prisma.certification.count({ where: { provider_profile_id: providerProfileId } })
-        : Promise.resolve(0),
-      prisma.bidRequest.count({ where: { provider_person_id: personId } }),
+      /*
+        ⚠⚠⚠ BY `user_id`, AND THE COLUMN NULLABILITY IS THE WHOLE ARGUMENT.
+        `Certification.user_id` is NOT NULL; `provider_profile_id` is NULLABLE.
+        ⚠ So scoping by the profile UNDERCOUNTS every certification whose
+        profile id was never set, and returns 0 for a member with no provider
+        profile even when they hold some.
+        ⚠⚠ MEASURED 2026-09-23: 5 certifications, 0 with a null profile id, and
+        61 people hold exactly one provider profile each — **so the two queries
+        agree today by accident of the data, not by construction.** That is
+        precisely the disagreement that cannot be seen until it bites.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   providerProfileId
+        //     ? prisma.certification.count({ where: { provider_profile_id: providerProfileId } })
+        //     : Promise.resolve(0),
+        ⚠⚠⚠ THIS IS NOW THE **ONLY** COMPUTATION OF THIS FIGURE. `/stats`'s
+        Profile tile renders the same value rather than counting again.
+      */
+      prisma.certification.count({ where: { user_id: userId } }),
+      /* ⚠⚠ ISSUED ONLY — an unissued request was never sent to anybody. */
+      prisma.bidRequest.count({
+        where: { provider_person_id: personId, issued_at: { not: null } },
+      }),
       prisma.interviewRequest.count({ where: { provider_person_id: personId } }),
+      prisma.providerBid.count({
+        where: { provider_person_id: personId, submitted_at: { not: null } },
+      }),
+      prisma.interviewRequest.count({
+        where: { provider_person_id: personId, status: "COMPLETED" },
+      }),
+      prisma.interviewRequest.count({
+        where: { provider_person_id: personId, status: { in: ["DECLINED", "CANCELLED"] } },
+      }),
     ]);
 
   /* ── the two series, BOTH BUCKETED BY THE SELECTED PERIOD ───────────────
@@ -260,8 +320,11 @@ export async function getStatistics(
     },
     work: {
       requestsReceived: bids,
-      proposalsSent: { uncounted: "No Proposal model exists — a proposal is not recorded yet" },
+      proposalsSent,
+      invitationsToPropose: bids,
       interviews,
+      interviewsTaken,
+      interviewsDeclined,
       /*
         ⚠⚠⚠ SCOPED TO THIS PROVIDER. ⚠ SUPERSEDED, quoted not deleted (`E164`):
         //   workOrders: await prisma.workOrder.count(),
@@ -287,7 +350,22 @@ export async function getStatistics(
         ⚠ The RULING is followed over the mockup's pixels, and the conflict is
         reported at the gate rather than resolved silently.
       */
-      earnings: { uncounted: "Starts counting when an order settles — none has" },
+      /*
+        ⚠⚠⚠ THE STRING NAMES THE TRUNCATION, NOT THE MEMBER'S ACTION.
+        ⚠ SCOTT, 2026-09-23: *"A promise about what will start counting is a
+        claim about a mechanism. Don't make one for a mechanism that doesn't
+        exist."*
+        ⚠⚠ RE-VERIFIED BY BEHAVIOUR, NOT BY NAME (2026-09-23): the ONLY
+        occurrences of `"PAID"` in `src/` are a READ filter in `settlements.ts`
+        and two gate assertions. **Nothing writes it.** There is no `Payout`
+        model at all — only `PayoutMethod` — and no `payment.create` anywhere.
+        A `SettlementRequest` reaches `APPROVED` and the chain stops.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — both said the same false
+        thing, that finishing paid work starts the counter:
+        //   earnings: { uncounted: "Starts counting when an order settles — none has" },
+        //   the old tile: "This starts counting once you complete your first paid work order."
+      */
+      earnings: { uncounted: "Settlement isn't finished yet — no order can reach paid" },
       orderSeries,
     },
     teaching: {

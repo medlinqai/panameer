@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { StatFigureRow } from "@/components/console/StatFigureRow";
 import { FlipCard } from "@/components/motion/FlipCard";
-import { ActionBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
+import { ActionBack, BreakdownBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
 import { Honeycomb, type HoneyCell } from "@/components/console/Honeycomb";
 import type { Figure, Statistics } from "@/lib/statistics";
 import "@/components/motion/flip-card.css";
@@ -99,12 +99,14 @@ export function StatisticsCards({
     Array.isArray(s.network.inviteSeries) && s.network.inviteSeries.some((n) => n > 0);
   const learningHasHistory =
     Array.isArray(s.learning.lessonSeries) && s.learning.lessonSeries.some((n) => n > 0);
-  const workHasHistory =
-    Array.isArray(s.work.orderSeries) && s.work.orderSeries.some((n) => n > 0);
-  /* ⚠⚠ ONLY COUNTED FIGURES VOTE — Proposals and Earnings are dashes, and a
-     dash is not a zero. `allZero` enforces that; it is repeated here only to
-     say which three are actually being asked. */
-  const workEmpty = allZero([s.work.requestsReceived, s.work.interviews, s.work.workOrders]);
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the Work card's back is now a
+     BREAKDOWN, so nothing chooses a variant or a starting face for it:
+     //   const workHasHistory =
+     //     Array.isArray(s.work.orderSeries) && s.work.orderSeries.some((n) => n > 0);
+     //   const workEmpty = allZero([s.work.requestsReceived, s.work.interviews, s.work.workOrders]);
+     ⚠⚠ `orderSeries` IS STILL COMPUTED AND IS NOW UNDRAWN — reported at the
+     gate rather than deleted, because deleting it is a decision about whether
+     the Work card ever gets a trend, and that is Scott's. */
 
   return (
     <>
@@ -251,12 +253,15 @@ export function StatisticsCards({
         <Shell>
           <FlipCard
             title="Your Work"
-            backLabel={workHasHistory ? "Trend" : "What to do next"}
-            /* ⚠ Three of the five are counted zeros, so the card is not "all
-               zero" in the sense that turns it face-down — but with no orders
-               on record there is no line to draw, so the back is the ACTION
-               back and the front still leads. */
-            initialBack={workEmpty && !workHasHistory}
+            backLabel="The detail"
+            /* ⚠⚠ THE FRONT ALWAYS LEADS NOW. ⚠ SUPERSEDED, quoted not deleted
+               (`E164`):
+               //   backLabel={workHasHistory ? "Trend" : "What to do next"}
+               //   initialBack={workEmpty && !workHasHistory}
+               ⚠⚠⚠ THE DATA NO LONGER PICKS THE VARIANT HERE, because there is
+               only ONE variant worth turning to: a breakdown of figures the
+               front is already showing. Starting face-down on a breakdown of
+               zeros would hide the figures to show their parts. */
             front={
               <Card
                 title="Your Work"
@@ -267,7 +272,15 @@ export function StatisticsCards({
                   figure={s.work.requestsReceived}
                   hint="Buyers who invited you to bid"
                 />
-                <StatFigureRow label="Proposals Sent" figure={s.work.proposalsSent} />
+                <StatFigureRow
+                  label="Proposals Sent"
+                  figure={s.work.proposalsSent}
+                  hint="Bids you submitted — a draft is not a proposal"
+                />
+                <StatFigureRow
+                  label="Invitations to Propose"
+                  figure={s.work.invitationsToPropose}
+                />
                 <StatFigureRow label="Interviews" figure={s.work.interviews} />
                 <StatFigureRow label="Work Orders" figure={s.work.workOrders} />
                 <StatFigureRow label="Earnings" figure={s.work.earnings} />
@@ -275,41 +288,36 @@ export function StatisticsCards({
             }
             back={
               /*
-                ⚠⚠⚠ DOES THIS CARD EARN A CONTROL? YES — AND THE REASON IS THAT
-                ITS BACK IS NOT THIN EITHER WAY (`E579`).
-                ⚠ THE SERIES IS **WORK ORDERS STARTED**, not work requests
-                received: a request is something a BUYER does TO the member, so
-                charting it would chart somebody else's behaviour and teach the
-                member nothing they can act on.
-                ⚠⚠ AND THE TWO FIGURES A MEMBER WOULD MOST WANT A TREND OF —
-                Proposals and Earnings — ARE UNCOUNTABLE, so a trend cannot
-                pretend to cover them. **The data picks the variant**, and with
-                `WorkOrder` holding zero rows platform-wide, every member sees
-                the action back today.
+                ⚠⚠⚠ THE BACK IS NOW THE **BREAKDOWN** THE OLD TILES CARRIED
+                (`E603` item 5). Scott: *"The old tiles' detail moves to the new
+                card's flip back — that is what a trend back is for: a different
+                cut of the same number."*
+                ⚠⚠ `Offered` IS the front's `Interviews`, byte for byte — the
+                same query, not a second one. The two subsets are drawn FROM it,
+                and the in-flight remainder is NAMED so the column reconciles on
+                screen. ⚠ `REQUESTED`, `SLOTS_OFFERED` and `SCHEDULED` are the
+                states in neither subset; the schema has **no `EXPIRED`**, so
+                the label must never say it.
+                ⚠ The links stay, because retiring the old tiles must not retire
+                the entrances they carried — all three also live in the
+                Application menu.
               */
-              workHasHistory ? (
-                <TrendBack
-                  title="Your Work"
-                  series={s.work.orderSeries}
-                  period={period}
-                  subject="Work orders started"
-                  hrefFor={trendHref("work")}
-                />
-              ) : (
-                <ActionBack
-                  title="Your Work"
-                  credit={workCreditLine(s)}
-                  /* ⚠⚠ EVERY LINK HERE ALSO LIVES IN THE APPLICATION MENU — a
-                     link that exists only behind a flip is a hidden door.
-                     `Work` → /find-work · `Sell` → /my-services ·
-                     `Orders` → /orders. Verified against `PROVIDER_NAV`. */
-                  links={[
-                    { label: "Find Work", href: "/find-work" },
-                    { label: "Manage Service Products", href: "/my-services" },
-                    { label: "See Your Orders", href: "/orders" },
-                  ]}
-                />
-              )
+              <BreakdownBack
+                title="Your Work"
+                totalLabel="Interviews offered"
+                total={s.work.interviews}
+                parts={[
+                  { label: "Taken", figure: s.work.interviewsTaken },
+                  { label: "Declined or cancelled", figure: s.work.interviewsDeclined },
+                ]}
+                remainderLabel="Still in progress"
+                note="An invitation counts whether or not you bid — a buyer asking you directly is the signal."
+                links={[
+                  { label: "Find Work", href: "/find-work" },
+                  { label: "Manage Service Products", href: "/my-services" },
+                  { label: "See Your Orders", href: "/orders" },
+                ]}
+              />
             }
           />
         </Shell>
