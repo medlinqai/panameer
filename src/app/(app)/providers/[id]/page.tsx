@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs } from "@/lib/profile-tabs";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 /*
@@ -272,7 +276,78 @@ export default async function PublicProviderPage({
         already places the courses strip below the sections (E137); rendering it
         here as well would print it twice.
       */}
+      {/*
+        ── ⚠⚠⚠ THE OWNER'S ONE WAY BACK (`P2-A2-E602` WS-D item 2) ────────────
+
+        ⚠ SCOTT: *"The owner gets one way back: 'This Is How Buyers See You —
+        Back to My Profile'."*
+        ⚠⚠ IT RENDERS **ONLY** FOR THE OWNER, and it is the ONLY thing on this
+        page that knows who is looking — every other owner affordance is
+        suppressed by `previewAsBuyer` below. ⚠⚠⚠ THAT IS THE WHOLE SHAPE OF
+        THE FIX: the page does not pretend the owner is a stranger, it stops
+        OFFERING them their own tools while calling itself the buyer's view.
+        ⚠ It replaces the *"See What Buyers See"* button that used to render
+        here — a link to the page you were already standing on (`E023`).
+      */}
+      {/*
+        ── ⚠⚠ THE PROFILE TAB ROW RENDERS HERE TOO (`E602` WS-D item 4) ──────
+        ⚠ `E600` WS-A's rule: there is never a page under the avatar with no
+        row. ⚠⚠ MEASURED: this page drew none — the same defect `E600` WS-A
+        found on `/company`.
+        ⚠⚠⚠ OWNER ONLY, AND THAT IS NOT AN EXCEPTION TO THE RULE — the row is
+        `My Profile · Score · Stats · …`, which are the OWNER's destinations. A
+        buyer looking at somebody else's profile has no business being offered
+        them, and `profileTabs(viewer)` would be answering about the wrong
+        person. ⚠ For a visitor this is not "a page with no row"; it is not one
+        of the owner's pages at all.
+      */}
+      {profile.isOwner && (
+        <PageTabs
+          eyebrow="MY PROFILE"
+          sequence={tabSequenceFor("/profile")}
+          tabs={profileTabs(viewer)}
+          current="/profile"
+        />
+      )}
+
+      {profile.isOwner && (
+        <div className="border-b border-line bg-bg-soft px-4 py-2.5 text-[13.5px] text-ink-2 sm:px-6">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+            <span>
+              This Is How Buyers See You
+            </span>
+            <Link
+              href="/profile"
+              className="font-semibold text-magenta hover:underline"
+            >
+              &larr; Back to My Profile
+            </Link>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
+        {/*
+          ── ⚠⚠⚠ THE `<h1>` COMES BACK BY ITSELF (`E602` WS-D item 3) ─────────
+
+          ⚠ MEASURED AT THE PREMISE CHECK: this page had **no `<h1>` at all**,
+          and the cause is exact. `ConnectProfile` renders the name as an `<h2>`
+          for the OWNER and an `<h1>` for a visitor, because — in its own words —
+          *"the OWNER's `<h1>` is the tab row's (`E600` WS-A); a visitor has no
+          row, so the name is the page's title there."*
+          ⚠⚠ ON THIS ROUTE THE OWNER GOT THE `<h2>` **AND THERE WAS NO TAB ROW**,
+          so the promised `<h1>` existed nowhere. Two correct rules met and left
+          a hole between them.
+          ⚠⚠⚠ `previewAsBuyer` CLOSES IT WITHOUT A NEW HEADING: the owner now
+          gets the visitor branch, which carries the real `<h1>`.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — an `sr-only` heading added
+          here first, which produced TWO `<h1>`s once the visitor branch supplied
+          its own. **A duplicate heading is a worse defect than the one it fixed.**
+          //   <h1 className="sr-only">
+          //     {`${profile.person.firstName} ${profile.person.lastName}`.trim()}
+          //     {profile.headline ? ` — ${profile.headline}` : ""}
+          //   </h1>
+        */}
         {/* ⚠ `colleagueCount` IS NO LONGER A PROP (`P2-A2-E600` WS-B) — the
               name card carries name, title and location only. ⚠ SUPERSEDED,
               quoted not deleted (`E164`):
@@ -286,6 +361,11 @@ export default async function PublicProviderPage({
           youBothKnow={youBothKnow}
           messagePermission={messagePermission}
           {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}
+          /* ⚠⚠⚠ THE BUYER'S VIEW, ALWAYS. `isOwner` stays true on the view
+             model — the bar above needs it and `recordProfileView` still must
+             not write a view row for the owner (`E598`) — but every owner
+             AFFORDANCE is suppressed at `ConnectProfile`'s single owner point. */
+          previewAsBuyer
         />
       </main>
     </div>

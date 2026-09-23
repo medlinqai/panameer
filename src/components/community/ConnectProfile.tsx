@@ -149,6 +149,7 @@ export function ConnectProfile({
   youBothKnow = null,
   messagePermission = null,
   connect,
+  previewAsBuyer = false,
 }: {
   p: ProviderProfileView;
   taughtPaths?: TaughtPath[];
@@ -230,6 +231,20 @@ export function ConnectProfile({
   /** ⚠ `ConnectControls`, resolved by the page that knows it is showing
    *  somebody else. Carried over unchanged from `/providers/[id]`. */
   connect?: ReactNode;
+  /**
+   * ── ⚠⚠⚠ THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING (`E602` WS-D) ──
+   *
+   * ⚠ SCOTT'S WALK (`E022`/`E023`): `/providers/[id]` showed the owner their own
+   * Grow card, Edit controls, *"Complete Your Profile"* and a
+   * *"See What Buyers See"* button **pointing at the page they were already on.**
+   * ⚠⚠ *"See What Buyers See" MEANS EXACTLY THAT* — a page that shows the
+   * owner's tools while claiming to be the buyer's view teaches the wrong thing
+   * about what buyers see.
+   * ⚠⚠⚠ IT DOES **NOT** MAKE `isOwner` FALSE. The page still knows who is
+   * looking — that is how the owner gets a way back, and how `recordProfileView`
+   * keeps NOT writing a view row for the owner (`E598`).
+   */
+  previewAsBuyer?: boolean;
 }) {
   /*
     ── ⚠⚠⚠ THE SINGLE `isOwner` POINT (`P2-J3-E588` WS-B) ────────────────────
@@ -242,7 +257,15 @@ export function ConnectProfile({
     ⚠ **A future edit that reaches for `p.isOwner` again has broken the
     guarantee.** Add to this block instead.
   */
-  const owner = p.isOwner;
+  /*
+    ⚠⚠⚠ `previewAsBuyer` FOLDS IN **HERE**, AT THE ONE POINT, AND NOWHERE ELSE
+    (`E602` WS-D). That is what makes *"every owner affordance is absent in the
+    buyer preview"* answerable by reading one line — the same guarantee `E588`
+    WS-B bought, extended rather than bypassed.
+    ⚠ A second flag threaded through thirty branches is how this component
+    stops being auditable.
+  */
+  const owner = p.isOwner && !previewAsBuyer;
 
   /* ⚠ The groups this profile belongs to — see the card in the right rail.
      ⚠⚠ DERIVED FROM PROPS THIS COMPONENT ALREADY RECEIVES; no new read, and no
