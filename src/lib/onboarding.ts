@@ -204,7 +204,25 @@ export type ProviderStep =
     mid-flow will too — refusing it would 400 a surface this brief doesn't
     touch. It is simply no longer in the itinerary.
   */
-  | "catalog";
+  | "catalog"
+  /*
+    ── ⚠⚠⚠ THE SECTION EDITORS' OWN STEPS (`P2-A2-E602` WS-A) ───────────────
+
+    ⚠ `photo`, `work_method` and `certifications` each have a `case` in the save
+    switch and each was MISSING FROM THIS UNION and from `SAVEABLE_STEPS`, so
+    `/api/onboarding/provider/step` answered `{"error":"Unknown step"}` and the
+    handlers were unreachable.
+    ⚠⚠ ADDING THEM HERE IS WHAT MADE THE COMPILER POINT AT `SAVEABLE_STEPS` —
+    the pattern Scott asked to be repeated: *"a forgetful sender being a compile
+    error rather than a silent gap is worth more than any check we could write
+    after the fact."* ⚠⚠⚠ THREE PLACES STATED ONE CONCEPT — the `case`, this
+    union and the array — and only two of the three were kept in step.
+    ⚠ `picture` (the wizard's step) and `photo` (the section's) are DIFFERENT
+    NAMES FOR DIFFERENT SURFACES, which is part of why this read as covered.
+  */
+  | "photo"
+  | "work_method"
+  | "certifications";
 
 /** The uncounted screens that precede the numbered steps. */
 export const PRE_STEPS = ["tell_us"] as const;
@@ -227,6 +245,33 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   "education",
   "languages",
   "bio",
+  /*
+    ── ⚠⚠⚠ THREE STEPS HAD A HANDLER AND NO WHITELIST ENTRY (`P2-A2-E602` WS-A)
+
+    ⚠ `saveProviderStep` has carried `case "photo"`, `case "work_method"` and
+    `case "certifications"` all along. ⚠⚠ **THE ROUTE NEVER REACHED THEM**:
+    `/api/onboarding/provider/step` validates against this list FIRST and
+    returned `{"error":"Unknown step"}` with a 400, so the handlers were
+    unreachable code and the editors could not save at all.
+
+    ⚠⚠⚠ THIS IS `E585`'s SHAPE — TWO COMPUTATIONS OF ONE CONCEPT KEPT IN STEP BY
+    HAND. "What the server can save" is stated twice: once as a `case`, once as
+    this array. Nothing made them agree, so one drifted and nobody noticed.
+
+    ⚠ HOW IT SURVIVED: `certifications` was only ever saved from the wizard's
+    review screen, which posts through its own path — so the gap was invisible
+    until `E597`/`E600` gave each section its own editor posting through THIS
+    route. ⚠⚠ `photo` and `work_method` were shipped by `E600` WS-F, whose save
+    proof covered `title` ONLY. **One section proved is not the section set
+    proved** — measured here, 2026-09-22, by a no-op save against every step.
+
+    ⚠ `PROVIDER_STEPS` carries `"picture"`, NOT `"photo"` — a different name for
+    a different thing (the wizard's step vs the section's), which is part of why
+    this read as covered.
+  */
+  "photo",
+  "work_method",
+  "certifications",
 ];
 
 /**
@@ -348,6 +393,19 @@ export const PROVIDER_STEP_LABELS: Record<
     this brief does not authorise.
   */
   bio: { stepper: "Your Overview", next: "" },
+  /*
+    ── ⚠⚠ NOT WIZARD STOPS, SO THEY CARRY NO STEPPER COPY (`E602` WS-A) ─────
+    ⚠ `photo`, `work_method` and `certifications` are SECTION editors reached
+    from the profile, never stops on the itinerary — nothing renders a stepper
+    or a *"Next: …"* for them. ⚠⚠ THEY ARE PRESENT ONLY BECAUSE THIS MAP IS
+    `Record<ProviderStep, …>` AND THE COMPILER REQUIRES TOTALITY, which is
+    exactly the behaviour that found the missing whitelist entries.
+    ⚠⚠⚠ THE EMPTY `next` IS DELIBERATE AND MUST STAY EMPTY: a label here would
+    be a promise of a following step that does not exist.
+  */
+  photo: { stepper: "Photo", next: "" },
+  work_method: { stepper: "How You Work", next: "" },
+  certifications: { stepper: "Certifications", next: "" },
 };
 
 /*
@@ -977,6 +1035,18 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     */
     company: true,
     finish: pp.onboarding_completed_at != null,
+    /*
+      ⚠⚠⚠ ALWAYS `true`, AND THAT IS THE POINT: **NEVER A RESUME TARGET.**
+      `photo`, `work_method` and `certifications` are edited from the profile,
+      not walked in the wizard, so a returning provider must never be sent
+      "back" to one. ⚠ `true` here means *"nothing incomplete to resume at"* —
+      it is a statement about the ITINERARY, not about the data.
+      ⚠⚠ Marking them `false` would strand a provider on a step the wizard has
+      no screen for, which is `E283`'s failure exactly.
+    */
+    photo: true,
+    work_method: true,
+    certifications: true,
   };
   // Walk the list THIS profile actually has, so a recruiter is never parked on
   // a step (Education, Rate) their journey doesn't include.
