@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable, pathHasPlayableLessons, playableProgress, playableProgressOfRows } from "@/lib/learn";
+import { isPlayable, pathHasPlayableLessons, pathIsOpenTo, playableProgress, playableProgressOfRows } from "@/lib/learn";
 import { lessonFace } from "@/lib/learn-faces";
 import {
   instructorIdsFor,
@@ -134,8 +134,13 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
     ⚠ `getPathsTaughtBy` / `getPathsTaughtByProfile` BELOW ARE DELIBERATELY NOT
     FILTERED — that is the instructor's own work queue. See `lib/learn.ts`.
   */
-  const discoverable = paths.filter(
-    (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the predicate is extracted so
+     `getLearnPath` can call the SAME one instead of having none:
+     //   const discoverable = paths.filter(
+     //     (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
+     //   ); */
+  const discoverable = paths.filter((p) =>
+    pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id))
   );
 
   return discoverable.map((p) => {
@@ -250,6 +255,14 @@ export type LearnPathView = {
   completed: number;
   progress: number;
   courses: LearnCourseView[];
+  /**
+   * ⚠⚠⚠ THE SAME PREDICATE DISCOVERY USES (`E607`). `false` means this path is
+   * not one a member can open — it is PUBLISHED but nothing in it plays.
+   * ⚠ THE VIEW IS STILL RETURNED, NOT NULLED: links to these slugs already
+   * exist, and a 404 would punish the reader for a content gap. The page says
+   * so plainly instead.
+   */
+  ready: boolean;
 };
 
 /**
@@ -397,6 +410,9 @@ export async function getLearnPath(
     /* ⚠ `E364` WS-5 — playable denominator, same rule as above. */
     progress: playableProgressOfRows(allLessons).percent,
     courses,
+    /* ⚠ `l.playable` IS ALREADY `isPlayable(l)` FROM LINE ~348 — the rule is
+       applied once per lesson and read here, never re-applied. */
+    ready: pathIsOpenTo(allLessons.some((l) => l.playable), Boolean(enrollment)),
   };
 }
 

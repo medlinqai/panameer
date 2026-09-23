@@ -165,6 +165,31 @@ export function playableProgressOfRows(
   };
 }
 
+/**
+ * ── ⚠⚠⚠ ONE DEFINITION OF "A PATH A MEMBER CAN OPEN" (`P2-ALL-E607`) ──────
+ *
+ * ⚠ SCOTT, 2026-09-23: *"One definition, one place (`E585`)."*
+ *
+ * ⚠⚠ THE DEFECT IT CLOSES: discovery required PUBLISHED **and** playable — 12
+ * paths — while `getLearnPath(slug)` required PUBLISHED alone, so **all 11
+ * unstartable paths rendered 200 by direct URL.** Two definitions of the same
+ * idea, and the looser one was the one a link could reach.
+ *
+ * ⚠ THE ENROLMENT CLAUSE IS PART OF THE DEFINITION, NOT AN EXCEPTION TO IT.
+ * `E362`: hiding a path somebody is already enrolled in is the same mistake as
+ * hiding a teacher's own work. ⚠⚠ SO IT LIVES HERE, WITH THE RULE — a caller
+ * that remembered the playable half and forgot this one would quietly evict
+ * enrolled learners, which is exactly the shape a second copy produces.
+ *
+ * ⚠ It takes two booleans rather than a path, because its two callers hold the
+ * facts in different shapes: discovery has raw prisma rows, the path view has
+ * already mapped each lesson through `isPlayable`. **Both call this; neither
+ * restates it.**
+ */
+export function pathIsOpenTo(hasPlayableLessons: boolean, isEnrolled: boolean): boolean {
+  return hasPlayableLessons || isEnrolled;
+}
+
 export function pathHasPlayableLessons(path: {
   courses: { sections: { lessons: { vimeo_ref: string | null; production_status: string }[] }[] }[];
 }): boolean {

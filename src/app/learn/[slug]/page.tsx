@@ -22,6 +22,48 @@ import { learnGaps } from "@/lib/gate-reads";
  * their time needs to see what it covers, and a page showing only finished
  * lessons would today show almost nothing.
  */
+
+/**
+ * ── ⚠⚠⚠ A PATH THAT IS NOT READY SAYS SO (`P2-ALL-E607`) ─────────────────
+ *
+ * ⚠ SCOTT, 2026-09-23: *"Not a 404 — links to those slugs may already exist. A
+ * path that isn't ready says so plainly, with no player and a way to the
+ * catalogue."*
+ *
+ * ⚠⚠ ELEVEN OF 23 PUBLISHED PATHS ARE IN THIS STATE, and every one fails for
+ * the same reason: **not one of their lessons has a video attached.** Measured
+ * 2026-09-23 — `vimeo_ref` is non-null on 305 of 522 lessons, exactly the
+ * playable count, so the production status never independently blocks a path.
+ *
+ * ⚠⚠⚠ THE WORDING NAMES THE CONTENT, NOT THE READER. It does not say "you do
+ * not have access" — the member has done nothing wrong and there is nothing
+ * for them to fix. ⚠ It makes no promise about WHEN, because nothing in the
+ * schema knows: there is no publish date, no ETA and no queue position, and
+ * inventing "coming soon" would be a claim about a mechanism that does not
+ * exist. ⚠ The curriculum is still listed below it — somebody deciding whether
+ * this path is worth waiting for needs to see what it covers (`isPlayable`'s
+ * own standing rule: gate playback, not visibility).
+ */
+function NotReadyNotice() {
+  return (
+    <div className="mb-7 rounded-brand border border-dashed border-line bg-bg-soft px-5 py-6">
+      <p className="font-display text-[17px] font-bold">
+        This Path Has No Videos Yet
+      </p>
+      <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-ink-2">
+        The outline below is real — these are the lessons this path will cover.
+        None of them has a video attached yet, so there is nothing to play.
+      </p>
+      <Link
+        href="/learn/paths"
+        className="mt-4 inline-block text-[14px] font-bold text-magenta hover:underline"
+      >
+        Browse Paths You Can Start &rarr;
+      </Link>
+    </div>
+  );
+}
+
 export default async function LearningPathPage({
   params,
 }: {
@@ -54,7 +96,18 @@ export default async function LearningPathPage({
     /* ⚠ `P1-ALL-E034` — the `LEARN` gate shown BEFORE the block. Only the
        signed-in branch computes it; the public body below is a read and stays
        completely open. */
-    return <AppPath path={app} signedIn learnGaps={await learnGaps(viewer.userId)} />;
+    /* ⚠ THE NOTICE SITS ABOVE THE SPINE, and `AppPath` is unchanged — the
+       curriculum still renders in full beneath it. */
+    return (
+      <>
+        {!app.ready && (
+          <div className="mx-auto w-full max-w-5xl px-6 pt-8">
+            <NotReadyNotice />
+          </div>
+        )}
+        <AppPath path={app} signedIn learnGaps={await learnGaps(viewer.userId)} />
+      </>
+    );
   }
 
   const path = await getLearnPath(slug, null);
@@ -73,6 +126,7 @@ export default async function LearningPathPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 sm:py-10">
+      {!path.ready && <NotReadyNotice />}
       <nav className="text-[13.5px] text-ink-2">
         <Link href="/learn" className="font-semibold hover:text-magenta">
           Learn
