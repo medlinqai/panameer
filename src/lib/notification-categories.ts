@@ -59,8 +59,29 @@ export type NotificationGroup = "messages" | "email" | "tax";
  */
 export type NotificationAudience = "seller" | "buyer" | "both";
 
+/**
+ * ── ⚠⚠⚠ WHICH FILTER A CATEGORY ANSWERS TO (`P2-A3-E620` WS-C) ───────────
+ *
+ * ⚠ `/notifications` offers **All · Unread · Work · Community**, and those last
+ * two are a partition of the SAME rows. ⚠⚠ EVERY CATEGORY MUST HAVE A LANE, or
+ * its rows would be reachable under `All` and under nothing else — a filter set
+ * with a hole in it, where the rows you cannot find are the ones nobody knows
+ * are missing.
+ * ⚠⚠⚠ `check:notify-prefs` ASSERTS THE PARTITION IS TOTAL, so adding a
+ * seventeenth category without choosing a lane fails the build rather than
+ * quietly hiding it.
+ *
+ * ⚠ A TS FIELD, NOT A MIGRATION — the same call `audience` made above, for the
+ * same reason: `NotificationPreference.category` is a plain string and nothing
+ * in the database changes.
+ * ⚠⚠ THE SPLIT IS THE MARKETPLACE vs THE PEOPLE: money, orders and tax are
+ * `work`; messages, the profile, Learn and the community are `community`.
+ */
+export type NotificationLane = "work" | "community";
+
 export type NotificationCategory = {
   key: string;
+  lane: NotificationLane;
   audience: NotificationAudience;
   group: NotificationGroup;
   label: string;
@@ -95,6 +116,7 @@ export const NOTIFICATION_GROUPS: {
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   {
     key: "message.received",
+    lane: "community",
     audience: "both",
     group: "messages",
     label: "New message from a buyer",
@@ -103,6 +125,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_request.matched",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "A work request matches your profile",
@@ -111,6 +134,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_order.status",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "Work order status changes",
@@ -119,6 +143,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "milestone.due",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "Milestone and timesheet deadlines",
@@ -184,6 +209,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "buyer.proposals.received",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "Proposals on your work request",
@@ -192,6 +218,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.provider.responded",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A provider accepted or declined",
@@ -200,6 +227,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.work_order.status",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "Your work order status changes",
@@ -208,6 +236,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.settlement.approval",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A settlement request needs your approval",
@@ -216,6 +245,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "buyer.timesheet.approval",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A timesheet needs approving",
@@ -245,6 +275,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "profile.visibility",
+    lane: "community",
     audience: "seller",
     group: "email",
     label: "Profile and visibility",
@@ -254,6 +285,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "recommendation.received",
+    lane: "community",
     audience: "seller",
     group: "email",
     label: "Recommendations and validations",
@@ -262,6 +294,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "learn.progress",
+    lane: "community",
     audience: "both",
     group: "email",
     label: "Learn — courses and certifications",
@@ -289,6 +322,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "community.activity",
+    lane: "community",
     audience: "both",
     group: "messages",
     label: "Community activity",
@@ -297,6 +331,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "product.updates",
+    lane: "community",
     audience: "both",
     group: "email",
     label: "Product news from Panameer",
@@ -305,6 +340,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "tax.documents",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "Tax documents",
@@ -313,6 +349,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "tax.form_required",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "A tax form is required before payout",
@@ -323,6 +360,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "payout.sent",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "Withdrawals and payouts",

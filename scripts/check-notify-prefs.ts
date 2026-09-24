@@ -58,6 +58,44 @@ async function main() {
     `${off.join(", ")} — 8 shipped off and Scott ruled all of them on`
   );
 
+  /*
+    ── ⚠⚠⚠ 1b · THE FILTER PARTITION IS TOTAL (`E620` WS-C item 2) ─────────
+
+    ⚠ `/notifications` offers **All · Unread · Work · Community**, and the last
+    two are a partition of the same rows read off `NotificationCategory.lane`.
+    ⚠⚠ A CATEGORY WITH NO LANE WOULD BE REACHABLE UNDER `All` AND UNDER NOTHING
+    ELSE — a filter set with a hole, where the rows you cannot find are exactly
+    the ones nobody knows are missing.
+    ⚠⚠⚠ SO ADDING A CATEGORY WITHOUT CHOOSING A LANE FAILS HERE rather than
+    quietly hiding its rows. ⚠ And both lanes must be non-empty: a partition
+    where everything is on one side is a filter that does nothing.
+  */
+  const laneless = NOTIFICATION_CATEGORIES.filter((c) => !c.lane).map((c) => c.key);
+  check(
+    "1b — ⚠⚠⚠ every category answers to a filter lane",
+    laneless.length === 0,
+    `${laneless.join(", ")} — reachable under All and under nothing else`
+  );
+  for (const lane of ["work", "community"] as const) {
+    check(
+      `1b — the "${lane}" lane has categories (E586)`,
+      NOTIFICATION_CATEGORIES.some((c) => c.lane === lane),
+      "an empty lane is a filter that can only ever show nothing"
+    );
+  }
+  /* ⚠⚠ AND EVERY REGISTERED EVENT'S CATEGORY EXISTS, so no delivered row can
+     carry a category the page cannot place. `check:notifications` asserts the
+     category is declared; this asserts it is still FINDABLE by the lane lookup
+     the page actually performs. */
+  const orphanEvents = Object.entries(NOTIFICATION_EVENTS)
+    .filter(([, e]) => !NOTIFICATION_CATEGORIES.some((c) => c.key === e.category))
+    .map(([k]) => k);
+  check(
+    "1b — ⚠⚠ every event's category is findable by the page's lane lookup",
+    orphanEvents.length === 0,
+    `${orphanEvents.join(", ")}`
+  );
+
   /* ── 2 · ⚠⚠⚠ EVERY WORKLIST EVENT HAS SOMETHING THAT CLEARS IT ──────────
      ⚠ Ruling 34e: *"an item disappears when the thing is DONE, not when it is
      read."* ⚠⚠ So a `requiresAction` event whose dedupe key nothing ever
@@ -179,6 +217,47 @@ async function main() {
       });
       check("3 — ⚠ the probe cleaned up after itself", left === 0, `${left} row(s) left`);
     }
+  }
+
+  /*
+    ── ⚠⚠⚠ 4 · A FAILED NOTIFICATION CANNOT BREAK THE ACTION ───────────────
+
+    ⚠ WS-B item 2: *"A notification is never the thing itself. Writing it can't
+    fail the action that caused it."* ⚠⚠ `notify()` wraps its whole body in
+    try/catch and logs instead of rethrowing — **but that is a claim about the
+    code, and this is the proof.**
+
+    ⚠⚠⚠ THE INPUT IS DELIBERATELY INVALID. An unknown event key makes `notify`
+    throw INSIDE its own try — the same shape as a database outage or a bad
+    template — and the assertion is that the caller never sees it. ⚠ If this
+    ever rejects, then `joinGroup`, `createThread`, `requestColleague` and
+    `recordProfileView` all inherit a new failure mode: a notification outage
+    would turn "you joined" into an error the member has to read.
+
+    ⚠⚠ AND IT WRITES NOTHING. A swallowed failure that still left a half-formed
+    row would be worse than throwing, because the row would be delivered.
+  */
+  if (person) {
+    let threw = false;
+    const before = await prisma.notification.count({ where: { person_id: person.id } });
+    try {
+      /* ⚠ `as never` — the type system correctly refuses this key, which is the
+         point: we are proving the RUNTIME guard, not the compile-time one. */
+      await notify({ event: "e620.no.such.event" as never, personId: person.id });
+    } catch {
+      threw = true;
+    }
+    check(
+      "4 — ⚠⚠⚠ a failed notification does NOT throw into its caller",
+      !threw,
+      "an action that succeeded would report as failed because telling somebody about it did not"
+    );
+    const after = await prisma.notification.count({ where: { person_id: person.id } });
+    check(
+      "4 — ⚠ and it wrote no row",
+      after === before,
+      `${before} -> ${after} — a swallowed failure that still wrote would be delivered`
+    );
   }
 
   await prisma.$disconnect();

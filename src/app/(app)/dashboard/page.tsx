@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getSessionViewer } from "@/lib/session";
 import { PublishedDialog } from "@/components/home/PublishedDialog";
 import { AttentionStrip } from "@/components/home/AttentionStrip";
+import { WorklistPanel } from "@/components/home/WorklistPanel";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getAttentionCards } from "@/lib/attention";
 /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
@@ -99,6 +100,11 @@ export default async function DashboardPage({
 
     return (
       <div className="mx-auto w-full max-w-6xl">
+        {/* ⚠ WHAT'S WAITING ON YOU (`P2-A3-E620` WS-C 3) — the brief puts the
+            worklist on the band's home as well as on `/notifications`.
+            ⚠⚠ It renders NOTHING at zero: a permanent "nothing is waiting"
+            panel on the page a member opens daily is furniture. */}
+        <WorklistPanel userId={viewer.userId} />
         <Suspense fallback={null}>
           <PublishedDialog />
         </Suspense>
@@ -152,11 +158,17 @@ export default async function DashboardPage({
     ]);
 
     return (
-      <RequesterHome
+      /* ⚠ The requester's home is a COMPONENT, so the worklist sits beside it
+         in a fragment rather than being threaded through as a prop — the panel
+         fetches its own rows and cannot be handed the wrong ones. */
+      <>
+        <WorklistPanel userId={viewer.userId} />
+        <RequesterHome
         firstName={displayFirstName(requester.person.first_name ?? "")}
         openWorkCount={openWorkCount}
         experts={experts.slice(0, 8)}
       />
+      </>
     );
   }
 
@@ -189,6 +201,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-8">
+      <WorklistPanel userId={viewer.userId} />
       <header>
         <h1 className="text-3xl tracking-tight">
           Welcome Back{firstName ? `, ${firstName}` : ""}

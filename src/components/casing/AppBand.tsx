@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NotificationBell } from "@/components/casing/NotificationBell";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 // ⚠ `useSyncExternalStore` LEFT WITH THE CLOCK (`P2-ALL-E587` WS-B2).
@@ -396,25 +397,34 @@ export function AppBand() {
         </button>
 
 
-        <BandIcon
-          href={NOTIFICATIONS_NAV.href}
-          label={NOTIFICATIONS_NAV.label}
-          active={pathname.startsWith(NOTIFICATIONS_NAV.href)}
-        >
-          <span className="relative inline-flex">
-            <BellIcon />
-            {/* ⚠ ABSENT AT ZERO, NEVER A `0` BADGE — and it counts unread AND
-                DELIVERED only, so a DIGEST row nobody was sent cannot badge. */}
-            {unreadCount > 0 && (
-              <span
-                aria-label={`${unreadCount} unread notifications`}
-                className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-magenta px-1 text-[10px] font-bold text-white"
-              >
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </span>
-        </BandIcon>
+        {/*
+          ── ⚠⚠⚠ STAGE 2 HAS LANDED (`P2-A3-E620` WS-C item 1) ──────────────
+
+          ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification
+          bell...icon...and it opens on the right."* ⚠⚠ Recorded as **Stage 2**
+          when `E559` shipped the band, and deferred for a measured reason: the
+          notification table held ONE ROW, so a panel would have been an empty
+          box behind a badge that could never appear. ⚠⚠⚠ `E620` REGISTERED THE
+          EVENTS THAT PRODUCE ROWS, which is what made this buildable.
+
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the interim, a plain link
+          to the page with the badge on it:
+          //   <BandIcon href={NOTIFICATIONS_NAV.href} label={NOTIFICATIONS_NAV.label} …>
+          //     <span className="relative inline-flex">
+          //       <BellIcon />
+          //       {unreadCount > 0 && <span …>{unreadCount > 9 ? "9+" : unreadCount}</span>}
+          //     </span>
+          //   </BandIcon>
+
+          ⚠⚠ THE BADGE IS UNCHANGED AND IS STILL `me`'s COUNT — absent at zero,
+          delivered-and-unread only. The panel fetches its own rows and never
+          feeds the number, so the two cannot drift.
+          ⚠ `See All` inside the panel is the page's door; the bell itself no
+          longer navigates, which is what lets it open instead.
+        */}
+        <NotificationBell unreadCount={unreadCount} label={NOTIFICATIONS_NAV.label}>
+          <BellIcon />
+        </NotificationBell>
 
         {/* ⚠ THE ACCOUNT MENU — still the ONE home for Sign Out (locked spec),
             and still where `My Company` lives since `E099`. */}

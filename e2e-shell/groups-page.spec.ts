@@ -41,6 +41,27 @@ import { createGroup } from "@/lib/group-membership";
  * ⚠ Memberships cascade with the board.
  */
 test.afterAll(async () => {
+  /*
+    ── ⚠⚠⚠ AND THEIR NOTIFICATIONS, WHICH DID NOT EXIST WHEN THIS WAS WRITTEN ─
+
+    ⚠ `P2-A3-E620` wired `joinGroup`, `decideJoinRequest` and `createThread` to
+    `notify()`, so these walks now produce notification rows as a SIDE EFFECT.
+    ⚠⚠ `Notification` has no foreign key to `ForumBoard` — it carries loose
+    `entity_type`/`entity_id` references — **so deleting the board leaves them
+    behind**, and they accumulate in the shared database run after run.
+    ⚠⚠⚠ MEASURED: the count went 1 -> 13 across two brief's gate runs before
+    anybody noticed, and nothing failed to report it. ⚠ A teardown written
+    before a side effect existed is not wrong; it is just no longer complete.
+  */
+  const boards = await prisma.forumBoard.findMany({
+    where: { AND: [{ slug: { startsWith: "g-e619-" } }, { title: { startsWith: "E619 " } }] },
+    select: { id: true },
+  });
+  if (boards.length > 0) {
+    await prisma.notification.deleteMany({
+      where: { entity_type: "forum_board", entity_id: { in: boards.map((b) => b.id) } },
+    });
+  }
   const swept = await prisma.forumBoard.deleteMany({
     where: {
       AND: [{ slug: { startsWith: "g-e619-" } }, { title: { startsWith: "E619 " } }],
@@ -389,6 +410,16 @@ test("groups — a member can start a group, and lands somewhere real", async ({
       protecting** (`decisions_2026-09-23` §12). ⚠ The membership row cascades
       with the board.
     */
+    /* ⚠ Notifications first, while the board id still resolves (`E620`). */
+    const made = await prisma.forumBoard.findMany({
+      where: { title: TITLE },
+      select: { id: true },
+    });
+    if (made.length > 0) {
+      await prisma.notification.deleteMany({
+        where: { entity_type: "forum_board", entity_id: { in: made.map((b) => b.id) } },
+      });
+    }
     await prisma.forumBoard.deleteMany({ where: { title: TITLE } });
     await prisma.$disconnect();
   }
@@ -629,6 +660,16 @@ test("groups — one member asks, the owner approves, and the row says who decid
   } finally {
     /* ⚠⚠ SCOPED BY TITLE, and `deleteMany` never `delete` — a teardown that can
        throw can hide the result it was protecting. Memberships cascade. */
+    /* ⚠ Notifications first, while the board id still resolves (`E620`). */
+    const made = await prisma.forumBoard.findMany({
+      where: { title: TITLE },
+      select: { id: true },
+    });
+    if (made.length > 0) {
+      await prisma.notification.deleteMany({
+        where: { entity_type: "forum_board", entity_id: { in: made.map((b) => b.id) } },
+      });
+    }
     await prisma.forumBoard.deleteMany({ where: { title: TITLE } });
     await prisma.$disconnect();
   }
@@ -749,6 +790,16 @@ test("groups — a stranger cannot decide, and a decline is told", async ({ page
       `E619/decline  stranger refused ${refused.status}/${refused.body?.code} · owner declined -> ${declined!.state}, row kept, asker told`
     );
   } finally {
+    /* ⚠ Notifications first, while the board id still resolves (`E620`). */
+    const made = await prisma.forumBoard.findMany({
+      where: { title: TITLE },
+      select: { id: true },
+    });
+    if (made.length > 0) {
+      await prisma.notification.deleteMany({
+        where: { entity_type: "forum_board", entity_id: { in: made.map((b) => b.id) } },
+      });
+    }
     await prisma.forumBoard.deleteMany({ where: { title: TITLE } });
     await prisma.$disconnect();
   }
