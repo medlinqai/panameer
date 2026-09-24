@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { shownRunTime } from "@/lib/lesson-duration";
 import { isPlayable, pathHasPlayableLessons, playableProgress } from "@/lib/learn";
 import { buildSpine, type Spine } from "@/lib/learn-spine";
 import {
@@ -174,6 +175,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
                     title: true,
                     description: true,
                     run_time: true,
+                  duration_source: true,
                     thumbnail_url: true,
                     vimeo_ref: true,
                     production_status: true,
@@ -415,7 +417,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
           id: hit.l.id,
           title: hit.l.title,
           description: hit.l.description,
-          runTime: hit.l.run_time,
+          runTime: shownRunTime(hit.l),
           playable: isPlayable(hit.l),
           thumbnailUrl: hit.l.thumbnail_url,
         },

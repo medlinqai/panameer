@@ -6,7 +6,7 @@ import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
 /* ⚠ `P1-J3-E383` — a count, never content. */
 import { getPathForumTeaser } from "@/lib/forums";
-import { AUDIENCE_LABEL, STYLE_LABEL } from "@/lib/learn";
+import { AUDIENCE_LABEL, AUDIENCE_PREFIX, STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
 import { ProgressBar } from "@/components/learn/ProgressBar";
@@ -91,7 +91,7 @@ export default async function LearningPathPage({
     full outline to whoever it was shared with.
   */
   if (viewer) {
-    const app = await getAppPath(slug, viewer.userId);
+    const app = await getAppPath(slug, viewer);
     if (!app) notFound();
     /* ⚠ `P1-ALL-E034` — the `LEARN` gate shown BEFORE the block. Only the
        signed-in branch computes it; the public body below is a read and stays
@@ -132,7 +132,8 @@ export default async function LearningPathPage({
           Learn
         </Link>
         <span className="mx-2">/</span>
-        <span>{AUDIENCE_LABEL[path.audience] ?? path.audience}</span>
+        {/* ⚠ `P2-A4-E611` — an AUDIENCE, said as one. No level column exists. */}
+        <span>{`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[path.audience] ?? path.audience}`}</span>
         {path.group && (
           <>
             <span className="mx-2">/</span>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { isPlayable, pathHasPlayableLessons, pathIsOpenTo, playableProgress, playableProgressOfRows } from "@/lib/learn";
+import { shownRunTime } from "@/lib/lesson-duration";
+import { LESSON_STATE_LABEL, OTHER_GROUP, isPlayable, lessonState, pathHasPlayableLessons, pathIsOpenTo, playableProgress, playableProgressOfRows } from "@/lib/learn";
 import { lessonFace } from "@/lib/learn-faces";
 import {
   instructorIdsFor,
@@ -28,6 +29,8 @@ export type LearnCard = {
   group: string | null;
   audience: string;
   coverImage: string | null;
+  /** ⚠ `P2-A4-E611` — can a member start this today? Decided by `pathIsOpenTo`. */
+  ready: boolean;
   lessons: number;
   playable: number;
   /**
@@ -134,16 +137,37 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
     ⚠ `getPathsTaughtBy` / `getPathsTaughtByProfile` BELOW ARE DELIBERATELY NOT
     FILTERED — that is the instructor's own work queue. See `lib/learn.ts`.
   */
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the predicate is extracted so
-     `getLearnPath` can call the SAME one instead of having none:
-     //   const discoverable = paths.filter(
-     //     (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
-     //   ); */
-  const discoverable = paths.filter((p) =>
-    pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id))
-  );
+  /*
+    ── ⚠⚠⚠ THE CATALOGUE SHOWS ALL 23 PATHS (`P2-A4-E611` · production signal)
 
-  return discoverable.map((p) => {
+    ⚠⚠ THIS DELIBERATELY SUPERSEDES `E606`'s DECISION TO SHOW ONLY THE 12.
+    ⚠ SCOTT'S REASON, RECORDED 2026-09-23: **hiding a path means the demand
+    signal can never arrive.** *"There is no way for anyone to ask for them.
+    Absence of requests is not absence of demand when there is no request
+    button."*
+
+    ⚠⚠⚠ WHAT DOES **NOT** CHANGE, AND IT IS THE LOAD-BEARING HALF:
+      · the hero count stays **"12 paths you can start today"** —
+        `getCatalogCounts` is untouched and still counts `isPlayable`;
+      · `ready` on each card still comes from `pathIsOpenTo`, so **a path a
+        member cannot start never looks startable** — no Enrol, no progress bar;
+      · the two figures are NEVER SUMMED into 23 anywhere a member can see, and
+        `check:learn-build` §7 fails the build if one appears.
+
+    ⚠ `pathIsOpenTo` IS STILL THE RULE — it moved from deciding WHETHER a card
+    renders to deciding HOW it renders. The predicate is unchanged and is still
+    imported, never restated.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the filter that hid the 11:
+    //   const discoverable = paths.filter((p) =>
+    //     pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id))
+    //   );
+    ⚠ and before it, the hand-rolled form the predicate replaced:
+    //   const discoverable = paths.filter(
+    //     (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
+    //   );
+  */
+  return paths.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
     /* ⚠ ONE DEFINITION — `lib/learn.ts`. Numerator AND denominator are playable. */
     const prog = playableProgress(lessons, done);
@@ -157,6 +181,9 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       group: p.group,
       audience: p.audience,
       coverImage: p.cover_image,
+      /* ⚠ `P2-A4-E611` — THE CARD CARRIES ITS OWN STARTABILITY. The 11 unready
+         paths are listed now, so every card has to say which kind it is. */
+      ready: pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id)),
       lessons: lessons.length,
       playable: lessons.filter(isPlayable).length,
       instructors: resolveInstructors(
@@ -188,8 +215,27 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
 export function groupChips(cards: LearnCard[]): { group: string; paths: number; lessons: number }[] {
   const map = new Map<string, { group: string; paths: number; lessons: number }>();
   for (const c of cards) {
-    if (!c.group) continue;
-    const row = map.get(c.group) ?? { group: c.group, paths: 0, lessons: 0 };
+    /*
+      ── ⚠⚠⚠ A NULL GROUP BUCKETS AS `Other` (`P2-A4-E611`, Q5) ──────────────
+
+      ⚠ SCOTT, 2026-09-23: *"filter on group, null → 'Other'. 11 distinct
+      values. Never invent a taxonomy."*
+      ⚠⚠ MEASURED 2026-09-23: `LearningPath.group` holds 11 distinct values and
+      **3 paths carry null**. Those three had NO chip at all, so no filter could
+      reach them and the chip counts did not add up to the catalogue.
+      ⚠⚠⚠ THE MOCKUP'S SIX FILTERS — Beginners · Procurement · Payables ·
+      HR & Payroll · Finance · Implementers — ARE NOT THIS AXIS. They mix
+      `group` with `audience`, and `audience` is a 4-value enum
+      (`BEGINNERS`/`END_USER`/`IMPLEMENTER`/`CONTENT_CREATOR`). **Building the
+      mockup's set would have meant inventing a taxonomy the data does not
+      carry.**
+      ⚠ `Other` IS A BUCKET, NOT A CATEGORY: it is where "nobody filed this
+      yet" goes, and a path leaves it by being filed.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   if (!c.group) continue;
+    */
+    const key = c.group ?? OTHER_GROUP;
+    const row = map.get(key) ?? { group: key, paths: 0, lessons: 0 };
     row.paths += 1;
     /*
       ⚠ PLAYABLE, FOR THE SAME REASON THE HEADLINE TOTAL IS (`P1-J3-E362`).
@@ -202,7 +248,7 @@ export function groupChips(cards: LearnCard[]): { group: string; paths: number; 
       than by catalogued weight.
     */
     row.lessons += c.playable;
-    map.set(c.group, row);
+    map.set(key, row);
   }
   return [...map.values()].sort((a, b) => b.lessons - a.lessons || a.group.localeCompare(b.group));
 }
@@ -218,6 +264,8 @@ export type LearnLessonRow = {
   runTime: string | null;
   playable: boolean;
   completed: boolean;
+  /** ⚠ `P2-A4-E611` — the honest state, decided by `lessonState`. Never a promise. */
+  stateLabel: string;
 };
 
 export type LearnCourseView = {
@@ -313,6 +361,7 @@ export async function getLearnPath(
                   title: true,
                   description: true,
                   run_time: true,
+                  duration_source: true,
                   vimeo_ref: true,
                   production_status: true,
                   expert_person_id: true,
@@ -357,7 +406,8 @@ export async function getLearnPath(
         id: l.id,
         title: l.title,
         description: l.description,
-        runTime: l.run_time,
+        runTime: shownRunTime(l),
+        stateLabel: LESSON_STATE_LABEL[lessonState(l)],
         playable: isPlayable(l),
         completed: done.has(l.id),
       })),
@@ -430,6 +480,8 @@ export type LearnLessonView = {
     thumbnailUrl: string | null;
     playable: boolean;
     completed: boolean;
+    /** ⚠ `P2-A4-E611` — the honest state. Never "Coming soon". */
+    stateLabel: string;
   };
   path: { id: string; title: string; slug: string; enrolled: boolean };
   course: { id: string; title: string; slug: string };
@@ -512,6 +564,9 @@ export async function getLearnLesson(
       thumbnailUrl: own?.thumbnail_url ?? null,
       playable: here.lesson.playable,
       completed: here.lesson.completed,
+      /* ⚠ `P2-A4-E611` — the row already carries the state decided by
+         `lessonState`; it is not re-derived here. */
+      stateLabel: here.lesson.stateLabel,
     },
     path: { id: path.id, title: path.title, slug: path.slug, enrolled: path.enrolled },
     course: { id: here.course.id, title: here.course.title, slug: here.course.slug },
@@ -691,6 +746,10 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
       taughtByThem: mine,
       playable: lessons.filter(isPlayable).length,
       coverImage: p.cover_image,
+      /* ⚠⚠ NO `ready` HERE, AND THAT IS DELIBERATE. This is the INSTRUCTOR'S own
+         work queue, not a learner's catalogue — `getPathsTaughtBy` has never
+         been filtered by playability and has no `enrolled` set to ask about.
+         ⚠ For a teacher an un-shot lesson is a TO-DO, not a closed door. */
     };
   });
 }

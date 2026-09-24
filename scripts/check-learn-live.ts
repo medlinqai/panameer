@@ -147,7 +147,15 @@ function routes(dir = "src/app", out: string[] = []): string[] {
     for (const p of hidden) {
       const view = await getLearnPath(p.slug, null);
       if (view && view.ready) leaks.push(`getLearnPath(${p.slug}).ready === true`);
-      const app = await getAppPath(p.slug, "00000000-0000-0000-0000-000000000000");
+      /* ⚠ `P2-A4-E611` — `getAppPath` takes a `Viewer` now, because the path
+         view carries the forum teaser and that asks `canAccessPathForum`.
+         ⚠⚠ A STRANGER WITH A REAL-LOOKING ID IS STILL THE POINT: the id owns
+         nothing, so the enrolment clause cannot rescue the path.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   const app = await getAppPath(p.slug, "00000000-0000-0000-0000-000000000000"); */
+      const app = await getAppPath(p.slug, {
+        userId: "00000000-0000-0000-0000-000000000000",
+      } as never);
       if (app && app.ready) leaks.push(`getAppPath(${p.slug}).ready === true`);
     }
     check(

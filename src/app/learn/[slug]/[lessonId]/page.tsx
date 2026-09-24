@@ -109,6 +109,7 @@ export default async function LessonPage({
               instructor ? { name: instructor.name, photoUrl: instructor.photoUrl } : null
             }
             thumbnailUrl={lesson.thumbnailUrl}
+            stateLabel={lesson.stateLabel}
           />
 
           {lesson.description && (
@@ -198,7 +199,7 @@ export default async function LessonPage({
                     <span className="min-w-0">
                       <span className="block">{l.title}</span>
                       {!l.playable && (
-                        <span className="text-[12px] text-ink-2">Coming soon</span>
+                        <span className="text-[12px] text-ink-2">{l.stateLabel}</span>
                       )}
                     </span>
                   </Link>

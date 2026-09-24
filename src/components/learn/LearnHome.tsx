@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { PathCard } from "@/components/learn/PathCard";
+import { OTHER_GROUP } from "@/lib/learn";
 import type { LearnCard } from "@/lib/learn-home";
 
 /**
@@ -49,7 +50,10 @@ export function LearnHome({
     return cards.filter(
       (c) =>
         (tab === "all" || c.enrolled) &&
-        (!group || c.group === group) &&
+        /* ⚠ `P2-A4-E611` Q5 — the `Other` chip selects the paths with NO group.
+           ⚠⚠ The chip builder and this filter share `OTHER_GROUP`; two spellings
+           of the same word would make the chip select nothing. */
+        (!group || (c.group ?? OTHER_GROUP) === group) &&
         (!needle ||
           c.title.toLowerCase().includes(needle) ||
           (c.summary ?? "").toLowerCase().includes(needle) ||
@@ -145,7 +149,7 @@ export function LearnHome({
                   : "text-white/80 hover:text-white")
               }
             >
-              My learning paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
+              My Learning Paths{enrolledCount > 0 ? ` (${enrolledCount})` : ""}
             </button>
 
             {/*
