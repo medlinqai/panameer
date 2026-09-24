@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { canLeaveGroup, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* ⚠ `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
 import { teachesPathWhere } from "@/lib/learn-home";
 import type { Viewer } from "@/lib/access";
@@ -148,45 +149,33 @@ function authorView(a: {
   };
 }
 
-/** The board list, with live thread counts. */
-export async function listBoards() {
-  await ensureBoards();
-  const boards = await prisma.forumBoard.findMany({
-    /*
-      ⚠⚠ THE FOUR GENERAL BOARDS ONLY (`P1-J3-E383`). Path boards live on their
-      path page and are DELIBERATELY absent here.
+/*
+  ── ⚠⚠⚠ `listBoards()` IS DELETED, AND SO IS THE RULE IT CLAIMED TO CARRY
+     (`P2-A3-E612`, 2026-09-24) ─────────────────────────────────────────────
 
-      Listing them beside the four would make this page twelve mostly-empty
-      rooms sitting next to four that have a chance of filling — the exact
-      fragmentation this file's own docblock warns about, and it would damage
-      the four that already work. ⚠ `check:forums` asserts this list is the
-      four seed slugs and nothing else.
-    */
-    where: { learning_path_id: null },
-    orderBy: { sort_order: "asc" },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      description: true,
-      _count: { select: { threads: true } },
-      threads: {
-        orderBy: { last_post_at: "desc" },
-        take: 1,
-        select: { title: true, last_post_at: true },
-      },
-    },
-  });
-  return boards.map((b) => ({
-    slug: b.slug,
-    title: b.title,
-    description: b.description,
-    threadCount: b._count.threads,
-    latest: b.threads[0]
-      ? { title: b.threads[0].title, at: b.threads[0].last_post_at.toISOString() }
-      : null,
-  }));
-}
+  ⚠⚠ SCOTT: **`E164` preserves superseded DECISIONS, quoted in comments — it
+  does not preserve dead exports.** Three dead Learn exports went the same way
+  at `E608`. ⚠ Measured before removal, comments stripped: **zero callers in
+  `src/`**; only its own declaration and two gate assertions.
+
+  ⚠⚠⚠ AND THE RULE IT GUARDED IS ALREADY FALSE ON THE LIVE PATH. It said *"a
+  path board NEVER appears in the general listing"*. ⚠ MEASURED **AND
+  RENDERED** 2026-09-24, signed in as a teacher at `/community/forums`: **8
+  board links, 4 of them path boards**, each marked `Teach`, beside the four
+  general rooms. A stranger sees 4 general and **0** path boards.
+
+  ⚠ THAT IS NOT A DEFECT — IT IS `E591`'s DESIGN. The rail is *"Your Groups"*,
+  and it lists the rooms you are IN. The fragmentation the old rule feared was
+  *"twelve mostly-empty rooms sitting next to four that have a chance of
+  filling"* — rooms you have nothing to do with. A room you teach is not that.
+  ⚠⚠ SO THE OLD RULE IS SUPERSEDED IN FACT, and `check:forums` §4 was green
+  about a function nobody called while the live listing did the opposite.
+
+  ⚠⚠⚠ WHAT REPLACES IT, AND IT IS THE RULE WORTH HAVING: **a path board is
+  listed only to someone enrolled in or teaching that path — never to a
+  stranger.** That is the access rule, applied to the listing, and it is
+  asserted against the LIVE path in `check:forums` §4.
+*/
 
 /** One board and its threads, newest activity first. */
 /**
@@ -210,9 +199,12 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
   /* ⚠⚠ THE GATE RUNS BEFORE THE READ, so a closed board never assembles its
      thread titles at all — the same ordering `/providers/[id]` uses. A payload
      built and then discarded is one refactor away from being returned. */
+  /* ⚠ `P2-A3-E612` — the verdict is kept, not re-asked. The page needs it
+     again below to say whether the viewer is in the room. */
+  let pathAccess = false;
   if (gate?.learning_path_id) {
-    const allowed = await canAccessPathForum(viewer, gate.learning_path_id);
-    if (!allowed) return null;
+    pathAccess = await canAccessPathForum(viewer, gate.learning_path_id);
+    if (!pathAccess) return null;
   }
   const board = await prisma.forumBoard.findUnique({
     where: { slug },
@@ -226,6 +218,18 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
          breadcrumb is unchanged. */
       learningPath: { select: { slug: true, title: true } },
       description: true,
+      /* ⚠ `P2-A3-E612` — the group's own facts. `id` so the join control has
+         something to post; `type` and the price so the page can say what this
+         room IS. ⚠⚠ `host_person_id` COMES BACK FOR DISPLAY ONLY — `E572` and
+         Scott, 2026-09-23: **ownership is not authority for access**, and
+         approval authority for a paid group is ruled when Shop can sell. */
+      id: true,
+      type: true,
+      price_cents: true,
+      price_period: true,
+      learning_path_id: true,
+      hostPerson: { select: { id: true, first_name: true, last_name: true } },
+      _count: { select: { members: { where: { state: "ACTIVE" } } } },
       threads: {
         orderBy: { last_post_at: "desc" },
         select: {
@@ -240,10 +244,41 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
     },
   });
   if (!board) return null;
+  const member = await isGroupMember(
+    viewer,
+    { id: board.id, learning_path_id: board.learning_path_id },
+    pathAccess
+  );
+
   return {
+    id: board.id,
     slug: board.slug,
     title: board.title,
     description: board.description,
+    /* ⚠ `P2-A3-E612` — what this group is, and what it offers THIS viewer. */
+    type: board.type,
+    priceCents: board.price_cents,
+    pricePeriod: board.price_period,
+    /* ⚠⚠ THE OWNER IS A NAME ON THE PAGE AND NOTHING ELSE. */
+    owner: board.hostPerson
+      ? {
+          id: board.hostPerson.id,
+          name: `${board.hostPerson.first_name} ${board.hostPerson.last_name}`.trim(),
+        }
+      : null,
+    /* ⚠ A COUNTED FIGURE — `ACTIVE` rows only, scoped to this board. */
+    memberCount: board._count.members,
+    isMember: member,
+    canLeave: canLeaveGroup({ learning_path_id: board.learning_path_id }),
+    offer: groupOffer(
+      {
+        type: board.type,
+        price_cents: board.price_cents,
+        price_period: board.price_period,
+        learning_path_id: board.learning_path_id,
+      },
+      member
+    ),
     /* ⚠ `null` FOR THE FOUR GENERAL BOARDS (`P1-ALL-E381` WS-2). The page
        breadcrumbs to the path when this is set, and to `/community/forums` when
        it is not — which is the general boards' unchanged behaviour. */

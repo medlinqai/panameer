@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
+import { getForumsHome } from "@/lib/forums";
 
 /**
  * check:forums — forums had NO harness at all until `P1-J3-E383`.
@@ -168,12 +169,85 @@ async function main() {
     !/model BoardMember\b/.test(schema) && !/model ForumMember\b/.test(schema)
   );
 
-  /* ── 4 · A PATH BOARD NEVER APPEARS IN listBoards() ─────────────────────── */
+  /* ── 4 · ⚠⚠⚠ A PATH BOARD IS LISTED ONLY TO SOMEBODY IN IT ───────────────
+
+     ⚠⚠ THE OLD ASSERTION GUARDED `listBoards()`, WHICH NOTHING CALLED, AND THE
+     RULE IT STATED — *"a path board never appears in the general listing"* —
+     IS FALSE ON THE LIVE PATH. Measured and RENDERED 2026-09-24 at
+     `/community/forums` as a teacher: **4 path boards listed beside the 4
+     general rooms**, each marked `Teach`. ⚠ That is `E591`'s design: the rail
+     is *"Your Groups"*.
+
+     ⚠⚠⚠ SO THIS ASSERTS THE RULE THAT IS ACTUALLY LIVE, AGAINST THE LIVE
+     LISTING AND THE REAL DATABASE: a stranger — nothing enrolled, nothing
+     taught — sees the general rooms and **zero** path boards, while somebody
+     who teaches sees theirs. ⚠ A source grep could not have told the
+     difference; that is why this one runs the function.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   check("4 — listBoards excludes path boards",
+     //     /listBoards[\s\S]{0,400}?where: \{ learning_path_id: null \}/.test(forums), …); */
   check(
-    "4 — listBoards excludes path boards",
-    /listBoards[\s\S]{0,400}?where: \{ learning_path_id: null \}/.test(forums),
-    "twelve mostly-empty rooms beside four that can fill is the fragmentation forums.ts warns about"
+    "4 — listBoards is gone rather than dead",
+    !/export async function listBoards/.test(forums),
+    "E164 preserves superseded decisions in comments, not dead exports"
   );
+  {
+    const pathBoardIds = new Set(
+      (
+        await prisma.forumBoard.findMany({
+          where: { learning_path_id: { not: null } },
+          select: { id: true },
+        })
+      ).map((b) => b.id)
+    );
+    /* ⚠⚠ COUNT > 0 (`E586`) — with no path boards the comparison proves nothing. */
+    check("4 — there are path boards to hide (E586)", pathBoardIds.size > 0, `${pathBoardIds.size}`);
+
+    const stranger = await prisma.user.findFirst({
+      where: {
+        learnEnrollments: { none: {} },
+        person: { learnLessons: { none: {} }, learnPaths: { none: {} } },
+      },
+      select: { id: true },
+    });
+    const teacher = await prisma.person.findFirst({
+      where: { learnLessons: { some: {} } },
+      select: { user_id: true },
+    });
+    check(
+      "4 — the probe found a stranger and a teacher (E586)",
+      Boolean(stranger && teacher?.user_id),
+      "two viewers with DIFFERENT relationships, or the comparison is one value twice"
+    );
+
+    if (stranger && teacher?.user_id) {
+      const strangerRooms = (await getForumsHome({ userId: stranger.id } as never)).rooms as {
+        slug: string;
+      }[];
+      const teacherRooms = (await getForumsHome({ userId: teacher.user_id } as never)).rooms as {
+        slug: string;
+      }[];
+      const slugToId = new Map(
+        (
+          await prisma.forumBoard.findMany({ select: { id: true, slug: true } })
+        ).map((b) => [b.slug, b.id])
+      );
+      const strangerPaths = strangerRooms.filter((r) => pathBoardIds.has(slugToId.get(r.slug) ?? ""));
+      const teacherPaths = teacherRooms.filter((r) => pathBoardIds.has(slugToId.get(r.slug) ?? ""));
+      check(
+        "4 — ⚠⚠ a stranger is listed NO path board",
+        strangerPaths.length === 0,
+        `${strangerPaths.length} leaked: ${strangerPaths.map((r) => r.slug).join(", ")}`
+      );
+      /* ⚠⚠⚠ AND THE OTHER HALF, WITHOUT WHICH THE FIRST IS SATISFIED BY A
+         LISTING THAT SHOWS NOBODY ANYTHING. Two zeros agree. */
+      check(
+        "4 — ⚠⚠ and somebody who teaches IS listed theirs",
+        teacherPaths.length > 0,
+        `${teacherPaths.length} — if zero, the rail has stopped listing rooms rather than started hiding them`
+      );
+    }
+  }
 
   /* ── 4b · ⚠⚠ THE TEASER LEAKS NO CONTENT ────────────────────────────────── */
   check(
@@ -314,8 +388,20 @@ async function main() {
      it. What must stay unique is a WRITE. */
   const BACKFILL = join("prisma", "backfill-path-group-owner.ts");
   check("8 — the one-time backfill script is on disk", (bodies.get(BACKFILL) ?? "").length > 0);
+  /*
+    ⚠⚠⚠ THE LOOKAHEAD MUST SIT INSIDE IT, NOT AFTER IT (`P2-A3-E612`).
+    ⚠ `/host_person_id:\s*(?!true\b)/` COULD NOT TELL A READ FROM A WRITE:
+    `\s*` backtracks to zero width, the lookahead then inspects the SPACE rather
+    than the word after it, and `host_person_id: true` — the read this
+    assertion's own comment says is fine — matched.
+    ⚠⚠ IT HAD NEVER FIRED ONLY BECAUSE NO FILE OUTSIDE THE BACKFILL MENTIONED
+    THE COLUMN. `check:groups` reads it to assert the four general boards are
+    ownerless, and the latent bug surfaced immediately.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   /host_person_id:\s*(?!true\b)/.test(b)
+  */
   const writers = [...bodies.entries()]
-    .filter(([f, b]) => f !== BACKFILL && /host_person_id:\s*(?!true\b)/.test(b))
+    .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
     .map(([f]) => f);
   check(
     "8 — only the one-time backfill writes an owner",

@@ -5,6 +5,8 @@ import { getBoard } from "@/lib/forums";
 import { relativeDay } from "@/lib/relative-day";
 import { Avatar } from "@/components/Avatar";
 import { ForumComposer } from "@/components/community/ForumComposer";
+import { GroupJoin } from "@/components/community/GroupJoin";
+import { GROUP_OFFER_COPY } from "@/lib/group-membership";
 import { communityIdentityGaps } from "@/lib/community-identity";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -43,7 +45,7 @@ export default async function BoardPage({
         {board.learningPath ? (
           <BackLink href={`/learn/${board.learningPath.slug}`} label={board.learningPath.title} />
         ) : (
-          <BackLink href="/community/forums" label="Forums" />
+          <BackLink href="/community/forums" label="Groups" />
         )}
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {board.title}
@@ -53,6 +55,33 @@ export default async function BoardPage({
             {board.description}
           </p>
         )}
+
+        {/*
+          ── ⚠⚠⚠ WHAT THIS GROUP IS, AND WHAT IT OFFERS YOU (`P2-A3-E612`) ──
+
+          ⚠ Every figure here is counted and scoped: `memberCount` is `ACTIVE`
+          membership rows for THIS board. ⚠⚠ It has a writer now — before this
+          brief *"Groups You Joined"* would have been a dash, because joining did
+          not exist as a concept.
+          ⚠⚠ THE OWNER IS A NAME AND NOTHING MORE (`E572`, reaffirmed
+          2026-09-23): **ownership is not authority for access.** All four
+          general groups are ownerless, which is exactly why they are `OPEN`.
+        */}
+        <div className="mt-4 rounded-brand border border-line bg-white p-5">
+          <p className="text-[13px] text-ink-2">
+            {board.memberCount} {board.memberCount === 1 ? "member" : "members"}
+            {board.owner ? ` · Run by ${board.owner.name}` : ""}
+          </p>
+          <div className="mt-3">
+            <GroupJoin
+              boardId={board.id}
+              offer={board.offer}
+              copy={GROUP_OFFER_COPY[board.offer.kind]}
+              canLeave={board.canLeave}
+              pathSlug={board.learningPath?.slug ?? null}
+            />
+          </div>
+        </div>
       </header>
 
       {board.threads.length === 0 ? (

@@ -136,8 +136,12 @@ check(
 // GUARD 2 — ⚠⚠ NO READ PATH IS GATED
 // ---------------------------------------------------------------------------
 
+/* ⚠ `listBoards` DELETED AT `P2-A3-E612` — zero callers, comments stripped.
+   ⚠⚠ THE RULE IS UNCHANGED for the three read paths that remain: the population
+   shrank because a function went, not because the rule was relaxed.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   "export async function listBoards", */
 const READ_FNS = [
-  "export async function listBoards",
   "export async function getBoard",
   "export async function getThread",
   "export async function viewerPersonId",
