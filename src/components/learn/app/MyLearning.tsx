@@ -68,229 +68,117 @@ export function MyLearning({ data }: { data: MyLearningData }) {
   const { totals, continueCard, inProgress, paths, suggestion, certificates, teaching } = data;
 
   return (
-    <div className="-mx-5 -mt-6 sm:-mx-8">
+    /*
+      ── ⚠⚠⚠ THE FRAME, REBUILT TO THE MOCKUP (`P2-A4-E617`) ────────────────
+
+      ⚠⚠ SCOTT, 2026-09-24, walking `/learn` after `E615`: *"pick a path is
+      wrong. that whole color thing at the top is wrong… looks closer, but still
+      VERY different."*
+
+      ⚠⚠⚠ `E615` REBUILT THE PAGE'S SECTIONS AND KEPT AN INVENTED CHROME. The
+      three-bucket comparison was run for the page's CONTENT and never for its
+      FRAME — background, band, content width, tab shape, tab order, tab labels,
+      and which column a card sits in were all outside the comparison, and all
+      of them were wrong. ⚠ **That is the hole in how the comparison was run,
+      not a taste dispute.**
+
+      ⚠ THE MOCKUP'S BODY IS `--canvas #fbfafc` WITH NO PAGE-WIDE COLOURED BAND
+      ANYWHERE. Its only purple on My Learning is INSIDE the continue card —
+      a rounded card within the 1120px column. ⚠⚠ **The mockup colours a CARD;
+      the page coloured the PAGE.** Different visual language, not a near miss.
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the full-bleed band, its
+      radial wash, the rail-matching first stop and the `-mt-[52px]` pull-up
+      that existed only to overlap it:
+      //   <div className="-mx-5 -mt-6 sm:-mx-8">
+      //     <section className="relative overflow-hidden bg-[radial-gradient(900px_340px_at_84%_-10%,rgba(215,44,214,0.42),transparent_62%),linear-gradient(118deg,var(--color-rail)_0%,var(--color-learn-plum)_44%,#3d1560_72%,#5c1668_100%)] px-5 pt-7 pb-[78px] text-white sm:px-8">
+      //       … eyebrow `Learn` · <h1>{data.headline}</h1> · <p>{subhead(data)}</p> …
+      //     </section>
+      //     <div className="relative z-[3] -mt-[52px] px-5 pb-8 sm:px-8">
+      ⚠⚠ THE HEADLINE AND SUBHEAD ARE GONE WITH IT, AND THAT IS ITEM 2: **My
+      Learning has no page headline in the mockup.** It opens on the continue
+      card — whose own eyebrow is *"Pick up where you left off"* — or, at zero,
+      on its empty state. `data.headline` and `subhead()` were an invention.
+      ⚠ `headlineFor` and `subhead` STAY ON DISK (`E164`); this page stopped
+      calling them.
+    */
+    <div className="-mx-5 -mt-6 bg-canvas sm:-mx-8">
       {/*
-        FULL-BLEED INSIDE AppShell's PADDED `main`. The negative margins exactly
-        cancel `px-5 py-6 sm:px-8`, so the hero meets the rail the way the mockup
-        shows. `overflow-hidden` is load-bearing: the radial wash is wider than
-        the box on purpose.
+        ── ⚠⚠ THE TAB ROW (item 4) ───────────────────────────────────────────
 
-        ── ⚠⚠ THE 0% STOP IS `--color-rail`, AND THAT IS THE SEAM FIX (`E400`) ──
+        ⚠ MOCKUP `.tabs`: `background:#fff`, `border-bottom:1px solid --line`,
+        `display:flex; gap:26px; align-items:center; padding:0 24px`, opening
+        with a `LEARN` app eyebrow in Comfortaa at `letter-spacing:.12em` with a
+        `border-right` divider, then the tabs. Active tab is
+        `--magenta-ink` ink PLUS a `2px` magenta underline.
+        ⚠⚠ LIVE WAS plain text links on the canvas under a gradient fade — no
+        bar, no eyebrow, no divider, no underline.
 
-        Scott: *"we talked about matching the colors at the top, but i have not
-        seen that change happen."* ⚠ THERE ARE TWO HERO SYSTEMS AND ONLY THIS ONE
-        WAS WRONG. `casing/ConsoleHero.tsx` already starts at `var(--color-rail)`,
-        so Work, Sell and Orders have matched the rail all along — which is exactly
-        why the step showed up on Learn and nowhere else.
-
-        ⚠ MEASURED off the running app, sampled not asserted, at four heights:
-            BEFORE   rail #272334  |  hero left edge #0f0b1c–#100b1e
-            AFTER    rail #272334  |  hero left edge #272334
-        This section is FULL-BLEED, so its left edge physically abuts the rail;
-        that is what makes the step visible here and not on `LearnHome` or
-        `FindWorkHero`, which are rounded cards inside padded content.
-
-        ⚠⚠ THE STOP MOVED, NOT THE TOKEN. `--color-learn-night` is untouched, and
-        `globals.css:93` says why: *"Repointing --color-learn-hot to #6b1a6e would
-        have silently restyled…"*. Learn keeps its own palette from the 44% stop
-        onward — only the first stop, the one that touches the rail, is the rail.
+        ⚠⚠⚠ THE ORDER AND THE LABELS WERE WRONG TOO, and the order is the part
+        that matters: **My Learning is FIRST in the mockup because it is the
+        page you are on.** Live it sat third, behind two catalogue tabs, under
+        the invented names *"All Learning Paths"* and *"All Courses"*.
+        ⚠ `overflow-x-auto` is the mockup's own, and it is what makes five tabs
+        behave at 390px without wrapping into two rows.
       */}
-      <section className="relative overflow-hidden bg-[radial-gradient(900px_340px_at_84%_-10%,rgba(215,44,214,0.42),transparent_62%),linear-gradient(118deg,var(--color-rail)_0%,var(--color-learn-plum)_44%,#3d1560_72%,#5c1668_100%)] px-5 pt-7 pb-[78px] text-white sm:px-8">
-        <div className="relative z-[2] grid items-center gap-8 min-[900px]:grid-cols-[1fr_auto]">
-          <div className="min-w-0">
-            {/* ⚠ THE EYEBROW IS THE PAGE NAME (`P2-J1.1-E048` WS-3), so `Learn`.
-                ⚠ SUPERSEDED, quoted not deleted: `My Learning`.
-                ⚠⚠ THE EYEBROW ONLY. The headline below is COMPUTED by
-                `headlineFor`, and this file's docblock warns that NOTHING ON THIS
-                PAGE IS HARDCODED COPY — the headline, the counts and the level
-                band are untouched. The component keeps its name: `MyLearning` is
-                a symbol, not a label. */}
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
-              Learn
-            </p>
-            <h1 className="max-w-[560px] font-display text-[26px] font-bold leading-[1.16] tracking-[-0.4px] sm:text-[31px]">
-              {data.headline}
-            </h1>
-            <p className="mt-3 max-w-[520px] text-[14.5px] leading-relaxed text-white/80">
-              {subhead(data)}
-            </p>
-          </div>
-
-          {/*
-            ── ⚠⚠⚠ THE LEVEL BADGE IS RETIRED (`P2-A4-E606` R1) ───────────────
-
-            ⚠ RULING 1: **there is no XP and there are no levels in Panameer.**
-            This rendered a numeral `1`, the band name *"Newcomer"*, a progress
-            ring, a progress bar, and *"5 more lessons to Starter"*.
-            ⚠⚠ ITS OWN COMMENT ARGUED IT WAS NOT A CURRENCY — *"a BANDING of
-            lessons completed and nothing else"* — and that argument is exactly
-            what the ruling overrides: **a band with a name, a numeral and a
-            next rung IS a level, whatever the column behind it is called.**
-
-            ⚠⚠⚠ THE HOLE IS LEFT AND REPORTED, NOT FILLED (Scott's instruction).
-            The hero now runs headline → counts, with nothing where the badge
-            sat. **No replacement was invented.**
-
-            ⚠ `levelFor` AND `LEVEL_BANDS` ARE DELETED WITH IT (R2) — this was
-            their only consumer. ⚠⚠ I PREVIOUSLY REPORTED THEM AS DEAD EXPORTS
-            AND THAT WAS WRONG: the grep that "proved" it was truncated by
-            `head -5`, which cut the `learn-dashboard.ts` hits and left only the
-            unrelated `levelFor` in `user-levels.ts`. **A truncated grep is not
-            a measurement.**
-
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   {/*
-            //   THE LEVEL BADGE. ⚠ NOT A CURRENCY. "Level 3 · Practitioner" is a
-            //   BANDING of lessons completed and nothing else — no XP column, no
-            //   Community Credits (those still return a hard zero with pending:true
-            //   and stay future tense). The ring shows progress through the band, and
-            //   the line under it counts LESSONS to the next one, which is the thing
-            //   it is actually a band of.
-            //   <div className="flex items-center gap-4 rounded-[16px] border border-white/20 bg-white/10 px-5 py-4 backdrop-blur-[6px]">
-            //   <ProgressRing
-            //   value={Math.round(level.fraction * 100)}
-            //   max={100}
-            //   size={74}
-            //   stroke={7}
-            //   gradient={{ id: "lvl", from: "var(--color-learn-gold)", to: "var(--color-magenta)" }}
-            //   label={String(level.level)}
-            //   labelClassName="text-[23px] text-white"
-            //   />
-            //   <div className="min-w-0">
-            //   <h4 className="font-display text-[15px] font-bold">{level.name}</h4>
-            //   <p className="mt-1 text-[11.5px] leading-relaxed text-white/70">
-            //   {level.nextName ? (
-            //   <>
-            //   {level.toNext} more lesson{level.toNext === 1 ? "" : "s"} to{" "}
-            //   <b className="font-semibold text-white">{level.nextName}</b>
-            //   </>
-            //   ) : (
-            //   <>Top band — {mine.lessonsCompleted} lessons watched</>
-            //   )}
-            //   </p>
-            //   <span className="mt-2 block h-[5px] w-[150px] max-w-full overflow-hidden rounded-full bg-white/20">
-            //   <span
-            //   className="block h-full rounded-full bg-[linear-gradient(90deg,var(--color-learn-gold),var(--color-magenta))]"
-            //   style={{ width: `${Math.round(level.fraction * 100)}%` }}
-            //   />
-            //   </span>
-            //   </div>
-          */}
-        </div>
-        <span
-          className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[70px] bg-[linear-gradient(to_bottom,transparent,var(--color-canvas))]"
-          aria-hidden
-        />
-      </section>
-
-      <div className="relative z-[3] -mt-[52px] px-5 pb-8 sm:px-8">
-        {/*
-            ⚠ `xl:`, NOT `min-[1100px]:` — MEASURED, NOT PREFERRED.
-
-            This row was `sm:grid-cols-2 min-[1100px]:grid-cols-4` and rendered
-            2×2 at 1440px, where both media queries match and SOURCE ORDER
-            decides. Tailwind v4 does not guarantee an arbitrary `min-[…]`
-            variant sorts after a named one, so `sm:grid-cols-2` won. Named
-            breakpoints are ordered by definition, so they are what a class that
-            has to BEAT another one uses. (The `min-[…]` variants elsewhere in
-            this build are all on properties with no unprefixed competitor, which
-            is why they work.)
-          */}
-        {/*
-          ── ⚠⚠⚠ THE FOUR `0 of N` TILES ARE RETIRED (`P2-A4-E615`, ruling 5) ─
-
-          ⚠⚠ SCOTT, 2026-09-24: **"Kill them. The four 0-of-N tiles come off
-          /learn entirely."**
-
-          ⚠⚠⚠ THEY ARE THE SHAPE `E611` ALREADY RETIRED ON THIS EXACT PAGE.
-          `E611` Q2 took off the Achievements grid on Scott's words — *"a badge
-          earned is a record; five padlocks reading '0 of 5' is a progress
-          system."* ⚠ Four tiles reading `0 of 12`, `0 of 39`, `0 of 305` and
-          `0 of 12 paths` then stayed at the top of the same page.
-          ⚠⚠ **A RULE APPLIED TO ONE COMPONENT AND NOT TO THE COMPONENT BESIDE
-          IT IS NOT A RULE YET.** That is the whole finding.
-
-          ⚠ AND THE MOCKUP HAS NO TILE ROW ANYWHERE — they were never a build
-          of it.
-
-          ⚠⚠ `StatTile` IS NOT DELETED (`E164`) — the component stays on disk and
-          other surfaces use it. Only this page stopped rendering these four.
-          ⚠ The figures themselves are NOT lost: `mine.enrolledPaths`,
-          `coursesFinished`, `lessonsCompleted` and `pathsCertified` still travel
-          on the view model, and the path cards below now carry what a member
-          actually needs from them.
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the row as it stood:
-          //   <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-          //     <StatTile … value={`${mine.enrolledPaths}`} sub={`of ${totals.paths}`}
-          //       label="Learning Paths Enrolled In" />
-          //     <StatTile … value={`${mine.coursesFinished}`} sub={`of ${totals.courses}`}
-          //       label="Courses Registered For" />
-          //     <StatTile … value={`${mine.lessonsCompleted}`} sub={`of ${totals.lessons}`}
-          //       label="Lessons Watched" />
-          //     <StatTile … value={`${mine.pathsCertified}`} sub={`of ${totals.paths} paths`}
-          //       label="Certificates Awarded" />
-          //   </div>
-        */}
-
-        {/*
-          ── ⚠ TWO CATALOG DESTINATIONS, NOT THREE (`P1-J3-E362` WS-3) ──────────
-
-          ⚠ SUPERSEDED, quoted, because a stale explanation is a trap for whoever
-          reads it next: *"THE THREE CATALOG DESTINATIONS, KEPT REACHABLE.
-          `LearnHome`'s pill row carried links to /learn/courses and
-          /learn/my-courses… which would have left this page, the Learn front
-          door, with no way to reach either."*
-
-          ⚠ `/learn/my-courses` WAS DEAD — a `ComingSoon` while
-          `/learn/paths?tab=mine` already worked. It now REDIRECTS there (not
-          deleted; the URL may be linked) and this row points at the real tab.
-          ⚠ `My learning` RATHER THAN `My courses`: the tab lists PATHS.
-
-          ⚠⚠ `/learn/courses` STAYS, AND THAT IS A REPORTED DEPARTURE FROM `E362`.
-          It asked for that route to redirect here too, as a duplicate. It cannot:
-          `/learn/courses` is PUBLIC (`P1-J0-E316` — *"a gate there turns the
-          public hero's second CTA into a login wall"*) while `/learn/paths`
-          redirects signed-out visitors to `/login` (`P1-J3-E036` — *"THIS ROUTE
-          STAYS GATED"*). The duplication is the residue of two opposite recorded
-          decisions and reconciling them is Scott's call.
-        */}
-        <nav className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px]">
-          <Link href="/learn/paths" className="font-semibold text-magenta hover:underline">
-            All Learning Paths
-          </Link>
-          <Link href="/learn/courses" className="text-ink-2 hover:text-magenta">
-            All Courses
-          </Link>
-          <Link href="/learn/paths?tab=mine" className="text-ink-2 hover:text-magenta">
-            My Learning
-          </Link>
-          {/*
-            ── ⚠⚠⚠ CERTIFICATES AND TEACHING (`P2-A4-E615`, ruling 7) ─────────
-
-            ⚠⚠ SCOTT, 2026-09-24: **"Add both tabs."**
-
-            ⚠⚠⚠ THEY ARE ANCHORS ON THIS PAGE, NOT NEW ROUTES, AND THAT IS
-            DELIBERATE. A tab that navigates to a route which does not exist is
-            a door onto a wall (`E579`); both panels live below, so the tab
-            takes the member to the thing rather than to a 404.
-            ⚠ THE ROUTE SET IS THEREFORE UNCHANGED — `check:learn-build` §1
-            derives it on both sides and would fail if it moved.
-
-            ⚠⚠ TEACHING RENDERS ONLY FOR SOMEONE WHO TEACHES (`CLAUDE.md` rule
-            5: a card hides only when the CAPABILITY is absent, not when the
-            count is zero). A member who teaches nothing has no Teaching tab;
-            one who teaches sees it with an honest count.
-          */}
-          <a href="#certificates" className="text-ink-2 hover:text-magenta">
-            Certificates
+      <nav className="flex items-center gap-[26px] overflow-x-auto border-b border-line bg-white px-5 sm:px-6">
+        <span className="shrink-0 border-r border-line py-[14px] pr-[22px] font-display text-[12px] font-bold tracking-[0.12em] text-ink">
+          LEARN
+        </span>
+        {/* ⚠⚠ THE ACTIVE TAB IS A `<span>`, NOT A `<Link>` TO ITSELF. A link to
+            the page you are standing on is the defect `E023` named. */}
+        <span className="shrink-0 whitespace-nowrap border-b-2 border-magenta py-[14px] text-[13.5px] font-semibold text-magenta-ink">
+          My Learning
+        </span>
+        <Link
+          href="/learn/paths"
+          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+        >
+          Learning Paths
+        </Link>
+        <Link
+          href="/learn/courses"
+          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+        >
+          Courses
+        </Link>
+        <a
+          href="#certificates"
+          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+        >
+          Certificates
+        </a>
+        {/* ⚠ Teaching renders only for somebody who teaches — rule 5: a card
+            hides when the CAPABILITY is absent, not when a count is zero. */}
+        {teaching.length > 0 && (
+          <a
+            href="#teaching"
+            className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
+          >
+            Teaching
           </a>
-          {teaching.length > 0 && (
-            <a href="#teaching" className="text-ink-2 hover:text-magenta">
-              Teaching
-            </a>
-          )}
-        </nav>
+        )}
+      </nav>
+
+      {/* ⚠⚠ ITEM 6 — THE MOCKUP'S `.wrap`: `max-width:1120px; margin:0 auto;
+          padding:22px 20px 60px`. A centred column is part of the design, not a
+          detail; the page ran edge to edge. */}
+      <div className="mx-auto w-full max-w-[1120px] px-5 pt-[22px] pb-[60px] sm:px-5">
+        {/*
+          ── ⚠⚠ ITEM 5 — CERTIFICATES IS A RAIL, NOT A BAND ─────────────────
+
+          ⚠ MOCKUP `.row2`: `grid-template-columns: minmax(0,1fr) 320px; gap:20px;
+          align-items:start` — the member's own content on the left, Certificates
+          in the rail beside it, **collapsing to one column under 900px.**
+          ⚠⚠ `E615` rendered it as a FULL-WIDTH section between the empty state
+          and Teaching. ⚠⚠⚠ Ruling 6 said *build it*; it did not say *where*.
+          **The mockup says where.**
+          ⚠ `items-start` is load-bearing: without it the rail card stretches to
+          the height of the left column and its border draws around empty space.
+        */}
+        <div className="grid items-start gap-5 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+
 
         {continueCard ? (
           <>
@@ -415,7 +303,10 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             </div>
           </>
         )}
+          </div>
 
+          {/* ⚠ THE RAIL. One column under 900px — the grid does it. */}
+          <aside className="min-w-0">
         {/*
           ── ⚠⚠⚠ CERTIFICATES (`P2-A4-E615`, ruling 6) ───────────────────────
 
@@ -473,6 +364,8 @@ export function MyLearning({ data }: { data: MyLearningData }) {
               </p>
             </>
           )}
+        </div>
+          </aside>
         </div>
 
         {/*
@@ -555,46 +448,65 @@ export function MyLearning({ data }: { data: MyLearningData }) {
  * The hero's second line. Computed like the headline — a fixed sentence here
  * would be wrong for a new account in exactly the same way.
  */
-function subhead(d: MyLearningData): string {
-  if (d.continueCard) {
-    const left = d.continueCard.pathLessons - d.continueCard.pathCompleted;
-    return `You're in ${d.continueCard.courseTitle} — ${left} lesson${left === 1 ? "" : "s"} left in ${d.continueCard.pathTitle}.`;
-  }
-  if (d.mine.enrolledPaths > 0) {
-    return `You're enrolled in ${d.mine.enrolledPaths} path${d.mine.enrolledPaths === 1 ? "" : "s"}. Everything in them is watched — the path tests are what's left.`;
-  }
-  /* ⚠⚠ THE SUBHEAD NAMES WHAT IT COUNTS (`E606` R4). *"12 learning paths"* and
-     *"23 learning paths"* were both true of this catalogue and neither said
-     which question it answered. `d.totals` is the STARTABLE set — paths with a
-     playable lesson — so the sentence says so.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`; */
-  /*
-    ── ⚠⚠⚠ TWO FIGURES, NEVER ONE (`P2-A4-E613`, Scott 2026-09-24) ──────────
+/*
+  ── ⚠⚠⚠ `subhead()` IS RETIRED (`P2-A4-E617`, item 2) ─────────────────────
 
-    ⚠⚠ SCOTT: *"Show it. '11 in production' appears as its own labelled figure…
-    the two numbers are never summed into 23 anywhere a member can see."*
+  ⚠⚠ THE MOCKUP'S MY LEARNING HAS NO PAGE SUBHEAD. The page opens on the
+  continue card — whose own eyebrow is *"Pick up where you left off"* — or, at
+  zero, on its empty state. This sentence was an invention, and it is the one
+  Scott named: *"pick a path is wrong."*
 
-    ⚠⚠⚠ THEY SIT IN SEPARATE SENTENCES ON PURPOSE. Inside one clause —
-    *"12 paths you can start today and 11 in production"* — a reader adds them,
-    and 23 is the number this whole brief exists to stop anyone printing.
-    ⚠ A FULL STOP IS THE MECHANISM: the second sentence names what it counts and
-    what it is NOT, so the figure cannot be read as more of the first.
-    ⚠ It renders ONLY above zero. *"0 in production"* is an anti-advertisement
-    and, once every path is shot, a sentence about nothing.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
-  */
-  const open = `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
-  if (d.totals.inProduction <= 0) return open;
-  /* ⚠⚠⚠ NO CLAIM ABOUT WHICH STAGE, AND THAT IS A CORRECTION I MADE TO MY OWN
-     FIRST DRAFT. It read *"written, not yet filmed"* — which WS-A had just made
-     FALSE for `How to Implement`, whose 26 lessons Scott confirmed were filmed
-     and are now `RAW_SHOT`. ⚠ The eleven are not all at one rung, so a sentence
-     that names a rung is wrong about some of them. **"In production" is the
-     only thing true of all eleven.** */
-  return `${open} Another ${d.totals.inProduction} are in production.`;
-}
+  ⚠ ITS THIRD BRANCH CARRIED RULING 3's *"Another N are in production"*, WHICH
+  IS NOT DELETED — it MOVED to `LearnHome`, the Learning Paths page's own
+  header, which is where the mockup puts a catalogue count. **My Learning is
+  about the member; the catalogue count is about the catalogue.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole function, as `//`
+  LINE COMMENTS. ⚠⚠ RULE 12 BIT TWICE HERE: the quoted body contains a
+  comment terminator, which closed this block early and broke the parse — and
+  then so did the sentence explaining it. Both are written `* /` instead.
+*/
+//   function subhead(d: MyLearningData): string {
+//     if (d.continueCard) {
+//       const left = d.continueCard.pathLessons - d.continueCard.pathCompleted;
+//       return `You're in ${d.continueCard.courseTitle} — ${left} lesson${left === 1 ? "" : "s"} left in ${d.continueCard.pathTitle}.`;
+//     }
+//     if (d.mine.enrolledPaths > 0) {
+//       return `You're enrolled in ${d.mine.enrolledPaths} path${d.mine.enrolledPaths === 1 ? "" : "s"}. Everything in them is watched — the path tests are what's left.`;
+//     }
+//     /* ⚠⚠ THE SUBHEAD NAMES WHAT IT COUNTS (`E606` R4). *"12 learning paths"* and
+//        *"23 learning paths"* were both true of this catalogue and neither said
+//        which question it answered. `d.totals` is the STARTABLE set — paths with a
+//        playable lesson — so the sentence says so.
+//        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//        //   return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`; * /
+//     /*
+//       ── ⚠⚠⚠ TWO FIGURES, NEVER ONE (`P2-A4-E613`, Scott 2026-09-24) ──────────
+//
+//       ⚠⚠ SCOTT: *"Show it. '11 in production' appears as its own labelled figure…
+//       the two numbers are never summed into 23 anywhere a member can see."*
+//
+//       ⚠⚠⚠ THEY SIT IN SEPARATE SENTENCES ON PURPOSE. Inside one clause —
+//       *"12 paths you can start today and 11 in production"* — a reader adds them,
+//       and 23 is the number this whole brief exists to stop anyone printing.
+//       ⚠ A FULL STOP IS THE MECHANISM: the second sentence names what it counts and
+//       what it is NOT, so the figure cannot be read as more of the first.
+//       ⚠ It renders ONLY above zero. *"0 in production"* is an anti-advertisement
+//       and, once every path is shot, a sentence about nothing.
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//       //   return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
+//     * /
+//     const open = `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
+//     if (d.totals.inProduction <= 0) return open;
+//     /* ⚠⚠⚠ NO CLAIM ABOUT WHICH STAGE, AND THAT IS A CORRECTION I MADE TO MY OWN
+//        FIRST DRAFT. It read *"written, not yet filmed"* — which WS-A had just made
+//        FALSE for `How to Implement`, whose 26 lessons Scott confirmed were filmed
+//        and are now `RAW_SHOT`. ⚠ The eleven are not all at one rung, so a sentence
+//        that names a rung is wrong about some of them. **"In production" is the
+//        only thing true of all eleven.** * /
+//     return `${open} Another ${d.totals.inProduction} are in production.`;
+//   }
+
 
 function SectionHead({ title, children }: { title: string; children?: React.ReactNode }) {
   return (

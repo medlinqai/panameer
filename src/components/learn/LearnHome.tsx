@@ -81,6 +81,25 @@ export function LearnHome({
     WATCH. Those are different questions and only the total was lying.
   */
   const totalLessons = cards.reduce((n, c) => n + c.playable, 0);
+  /*
+    ── ⚠⚠⚠ THE CATALOGUE SENTENCE LIVES HERE (`P2-A4-E617`, item 3) ────────
+
+    ⚠⚠ RULING 3 STANDS AND MOVES. Scott, 2026-09-24: *"Show it. '11 in
+    production' appears as its own labelled figure."* ⚠ `E613` put it on My
+    Learning; the mockup puts the catalogue count in the **Learning Paths**
+    page's own header block, and that is where it belongs: **My Learning is
+    about the MEMBER, the catalogue count is about the CATALOGUE.**
+
+    ⚠⚠⚠ AND A CONFLICT WORTH NAMING: the mockup's view 2 opens *"23 paths
+    across procurement, finance, HR and implementation."* **Ruling 3 forbids
+    that number** — *"the two are never summed into 23 anywhere a member can
+    see"* — and ruling 3 is the newer statement (rule 13), so the two figures
+    stay separate here and 23 is not printed. `check:learn-build` §7 fails the
+    build on it either way.
+    ⚠ Both are COUNTED from the cards this page already has; neither is typed.
+  */
+  const startablePaths = cards.filter((c) => c.ready).length;
+  const inProduction = cards.length - startablePaths;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -115,9 +134,18 @@ export function LearnHome({
           <h1 className="max-w-2xl font-display text-[28px] font-bold leading-tight tracking-[-0.5px] sm:text-[34px]">
             Learn Oracle Cloud from the people who implement it
           </h1>
+          {/* ⚠ TWO SENTENCES, DELIBERATELY. Inside one clause a reader adds
+              the figures, and their sum is the number ruling 3 exists to stop
+              anyone printing. A full stop is the mechanism.
+              ⚠ The second renders only above zero — once every path is shot it
+              is a sentence about nothing.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {cards.length} learning paths, {totalLessons.toLocaleString()} lessons — free, and taught by working consultants. */}
           <p className="mt-3 max-w-xl text-[15.5px] text-white/80">
-            {cards.length} learning paths, {totalLessons.toLocaleString()}{" "}
-            lessons — free, and taught by working consultants.
+            {startablePaths} paths you can start today,{" "}
+            {totalLessons.toLocaleString()} lessons you can watch — free, and
+            taught by working consultants.
+            {inProduction > 0 ? ` Another ${inProduction} are in production.` : ""}
           </p>
 
           {/*

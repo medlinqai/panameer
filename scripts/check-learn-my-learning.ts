@@ -200,7 +200,92 @@ async function main() {
   );
 
   await prisma.$disconnect();
-  console.log(`check:learn-my-learning — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);
+    /* ── 8 · ⚠⚠⚠ THE FRAME, NOT ONLY THE SECTIONS (`P2-A4-E617`) ───────────
+
+     ⚠⚠ SCOTT, 2026-09-24, walking `/learn` after `E615`: *"that whole color
+     thing at the top is wrong… looks closer, but still VERY different."*
+     ⚠⚠⚠ `E615`'s three-bucket comparison was run for the page's CONTENT and
+     never for its FRAME. **Background, band, content width, tab shape, tab
+     order and tab labels were all outside the comparison, and all of them were
+     wrong.** These assertions exist so the frame is compared from now on. */
+
+  /* ⚠ THE MOCKUP HAS NO PAGE-WIDE COLOURED BAND. Its body is canvas and the
+     only purple on My Learning is inside the continue CARD. */
+  check(
+    "8 — no full-bleed gradient band on the page",
+    !/<section[^>]*linear-gradient/.test(page),
+    "the mockup colours a CARD; the page coloured the PAGE"
+  );
+  /* ⚠⚠ AND NO PAGE HEADLINE OR SUBHEAD — the page opens on the continue card
+     or its empty state. */
+  check(
+    "8 — the page renders no headline or subhead",
+    !/\{data\.headline\}/.test(page) && !/\{subhead\(data\)\}/.test(page),
+    "My Learning has no page headline in the mockup — it was an invention"
+  );
+
+  /* ⚠ THE TAB ROW IS A WHITE BAR WITH THE `LEARN` EYEBROW AND A DIVIDER. */
+  check("8 — the tab row is a white bar", /border-b border-line bg-white/.test(page));
+  check(
+    "8 — it opens with the LEARN eyebrow and a divider",
+    /border-r border-line[\s\S]{0,200}?LEARN/.test(page),
+    "the mockup's app eyebrow, letter-spaced, with a vertical rule"
+  );
+  /* ⚠⚠ THE ACTIVE TAB IS MAGENTA INK PLUS A 2px UNDERLINE — and it is not a
+     link to the page you are standing on (`E023`). */
+  check(
+    "8 — the active tab is magenta with a 2px underline",
+    /border-b-2 border-magenta[\s\S]{0,120}?text-magenta-ink/.test(page)
+  );
+
+  /* ⚠⚠⚠ ORDER MATTERS: My Learning is FIRST because it is the page you are on.
+     It sat third, behind two catalogue tabs under invented names. */
+  const tabOrder = ["My Learning", "Learning Paths", "Courses", "Certificates", "Teaching"];
+  const positions = tabOrder.map((t) => page.indexOf(`>\n          ${t}\n`) >= 0 ? page.indexOf(`>\n          ${t}\n`) : page.indexOf(t));
+  check(
+    "8 — the tabs are in the mockup's order, My Learning first",
+    positions.every((v, i) => v > -1 && (i === 0 || v > positions[i - 1])),
+    `${tabOrder.join(" · ")} — found at ${positions.join(", ")}`
+  );
+  check(
+    "8 — and not under the invented labels",
+    !/All Learning Paths|All Courses/.test(rendered(page)),
+    '"All Learning Paths" / "All Courses" are not the mockup\'s words'
+  );
+
+  /* ⚠ CONTENT SITS IN A CENTRED 1120px COLUMN — the mockup's `.wrap`. */
+  check(
+    "8 — content is a centred 1120px column",
+    /mx-auto w-full max-w-\[1120px\]/.test(page),
+    "a centred column is part of the design, not a detail"
+  );
+  /* ⚠⚠ AND CERTIFICATES IS A 320px RAIL, collapsing to one column under 900px —
+     the mockup's `.row2`. Ruling 6 said BUILD it; the mockup says WHERE. */
+  check(
+    "8 — Certificates sits in a 320px rail beside the main column",
+    /min-\[900px\]:grid-cols-\[minmax\(0,1fr\)_320px\]/.test(page),
+    "E615 rendered it as a full-width band between the empty state and Teaching"
+  );
+
+  /* ── 9 · ⚠⚠ THE CATALOGUE SENTENCE MOVED, IT WAS NOT DROPPED ──────────── */
+  const paths = strip(readFileSync(join("src", "components", "learn", "LearnHome.tsx"), "utf8"));
+  check(
+    "9 — the in-production figure lives on Learning Paths",
+    /inProduction/.test(paths),
+    "ruling 3 stands; My Learning is about the MEMBER, the catalogue count is about the CATALOGUE"
+  );
+  check(
+    "9 — and it is counted there, not typed",
+    /cards\.length - startablePaths/.test(paths),
+    "a literal stops being true at the next import"
+  );
+  check(
+    "9 — it has left My Learning",
+    !/inProduction/.test(page),
+    "the sentence moved to the page the mockup puts it on"
+  );
+
+console.log(`check:learn-my-learning — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);
   for (const f of fails) console.log(`\n  ✗ ${f}`);
   if (fails.length) process.exit(1);
 }
