@@ -50,7 +50,22 @@ export default defineConfig({
   /* ⚠ `community-figures.spec.ts` added by `P2-A3-E601` WS-A — its own config,
      its own count, so leaving it out would move THIS suite's number instead,
      which is exactly `E562`. */
-  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts", "community-figures.spec.ts"],
+  /*
+    ── ⚠⚠⚠ `explore-rates.spec.ts` WAS MISSING, AND IT HAD ALREADY BITTEN ────
+
+    ⚠⚠ `P2-A2-E618` added `explore-rates.spec.ts` to this directory WITH its own
+    config and its own script (`check:explore-rates`) — and **did not name it
+    here**. ⚠⚠⚠ SO THIS SUITE SILENTLY ABSORBED IT AND ITS COUNT MOVED, which is
+    `E562` EXACTLY, in the file whose own comment three lines up warns about it.
+    ⚠ MEASURED 2026-09-24 at `E619`: `--list` reported **47 tests in 5 files**
+    against a contract of **29 in 3**.
+    ⚠⚠ IT WENT UNNOTICED BECAUSE THE SUITE STAYED GREEN. A count that moves
+    silently does not fail — **it just stops meaning what briefs quote it as**,
+    which is why `E562` was found by a deliberate probe rather than by a red.
+    ⚠ `groups-page.spec.ts` (`P2-A3-E619` WS-A) is named at the same time, for
+    the same reason and before it can repeat it.
+  */
+  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts", "community-figures.spec.ts", "explore-rates.spec.ts", "groups-page.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",

@@ -400,13 +400,53 @@ async function main() {
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   /host_person_id:\s*(?!true\b)/.test(b)
   */
+  /*
+    ── ⚠⚠⚠ A SECOND LEGITIMATE WRITER: THE FOUNDER (`P2-A3-E619`, ruling 2) ──
+
+    ⚠ SCOTT, 2026-09-22, RULING 2: *"**Anyone can start a group.**"* ⚠⚠ A group
+    somebody starts has an owner from its first instant — the person who started
+    it — so ruling 2 REQUIRES a second writer of this column. There is no way to
+    honour it and keep "exactly one writer".
+
+    ⚠⚠⚠ THE RULE `E572` ACTUALLY STATES IS NOT WEAKENED BY THIS, AND THAT IS THE
+    WHOLE ARGUMENT: *"DERIVED ONCE, AT BACKFILL, THEN FROZEN… AN OWNER THAT
+    SILENTLY CHANGES IS A BUG WITH A BANK ACCOUNT ATTACHED."* ⚠ The danger is
+    RE-COMPUTATION — a helper that reassigns an existing group's owner when
+    somebody authors more lessons. **Setting an owner at CREATE is the frozen
+    case, not an exception to it.** ⚠⚠ This is `check:rollup`'s case (the ruling
+    moved), NOT `check:cert-skills`' (the code drifted).
+
+    ⚠⚠⚠ SO THE EXEMPTION IS NAMED, AND IT IS FENCED BY THE ASSERTION BELOW IT:
+    `createGroup` may write this column **only inside a `create`**. The moment
+    it writes one in an `update`, the fence fails and the reassignment this rule
+    exists to prevent is caught. ⚠ A bare exemption would have licensed exactly
+    that — the `check:derived-source` pattern, applied here.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
+    //   check("8 — only the one-time backfill writes an owner", writers.length === 0, …)
+  */
+  const FOUNDER = join("src", "lib", "group-membership.ts");
   const writers = [...bodies.entries()]
-    .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
+    .filter(
+      ([f, b]) =>
+        f !== BACKFILL && f !== FOUNDER && /host_person_id:(?!\s*true\b)/.test(b)
+    )
     .map(([f]) => f);
   check(
-    "8 — only the one-time backfill writes an owner",
+    "8 — only the backfill and the founder write an owner",
     writers.length === 0,
     `${writers.join(", ")} — the owner is derived ONCE and frozen; a helper the app calls is how it starts drifting`
+  );
+  /* ⚠⚠⚠ THE FENCE. The exemption is worth exactly as much as this assertion. */
+  const founderBody = bodies.get(FOUNDER) ?? "";
+  check("8 — the founder file was found by the scan (E586)", founderBody.length > 0, FOUNDER);
+  const founderUpdates = [
+    ...founderBody.matchAll(/\.update(Many)?\(\{[\s\S]{0,400}?\}\)/g),
+  ].filter((m) => /host_person_id:(?!\s*true\b)/.test(m[0]));
+  check(
+    "8 — ⚠⚠⚠ the founder sets an owner only on CREATE, never on an update",
+    founderUpdates.length === 0,
+    `${founderUpdates.length} update(s) write host_person_id — reassigning an existing group's owner is the exact drift E572 forbids`
   );
 
   /* ── 9 · ⚠⚠⚠ THE ACCESS RULE IS EXACTLY TWO CONDITIONS (`P2-J3-E572` WS-B) ──

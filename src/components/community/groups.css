@@ -1,0 +1,230 @@
+/*
+  ── ⚠⚠ GROUPS — THE PAGE'S OWN RULES (`P2-A3-E619` WS-A) ──────────────────
+
+  ⚠ PHONE FIRST. Every rule here is the narrow layout; the only widening is the
+  one `min-width` block at the bottom. ⚠⚠ The split card, the figures and the
+  cards all stack at 390px, which is the width the stop gate screenshots.
+
+  ⚠ IT REUSES `.pm-hero*` FROM `community-page.css` rather than restating the
+  split card — Grow, Score and Groups draw the SAME card, and a second copy of
+  those rules is `E585` in CSS. Only the Groups-specific parts live here.
+*/
+
+/* ── THE PICTURE ───────────────────────────────────────────────────────── */
+
+/* ⚠ `height: 100%` is what CENTRES the field in the card's left half. Without
+   it the picture is only as tall as its circles and sits against the top edge
+   while the right half runs on for another 250px — measured in the desktop
+   screenshot, where four small circles floated above an empty white box. */
+.pm-groups-pic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  padding: 8px 0;
+}
+
+.pm-groups-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 320px;
+}
+
+.pm-groups-dot {
+  display: inline-block;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--magenta) 14%, transparent);
+  border: 2px solid var(--magenta);
+  /* ⚠ The draw-in. `GroupCircles` replays it by changing the element key on
+     each rebuild cycle — the animation is the only thing the cycle drives. */
+  animation: pm-groups-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+/* ⚠⚠ DASHED WHILE QUIET, SOLID ONCE POSTED — the brief's own distinction, and
+   it is the one thing on the picture that carries meaning rather than size. */
+.pm-groups-dot.is-quiet {
+  border-style: dashed;
+  background: transparent;
+  border-color: color-mix(in srgb, var(--magenta) 55%, transparent);
+}
+
+@keyframes pm-groups-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ⚠⚠⚠ REDUCED MOTION IS NOT OPTIONAL. `useRebuild` already stops its clock
+   under `prefers-reduced-motion` (that is why `secondsLeft` can be null and
+   `RebuildBadge` renders nothing), but the CSS must not animate either — a
+   stopped clock with a popping animation is half a respect. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-groups-dot {
+    animation: none;
+  }
+}
+
+.pm-groups-legend {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* ⚠ `E433` — a figure is ink. */
+.pm-groups-legend-n {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-pic-empty {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-align: center;
+  padding: 24px 12px;
+}
+
+/* ── THE THREE FIGURES ─────────────────────────────────────────────────── */
+
+.pm-groups-figs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.pm-groups-figs dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+
+.pm-groups-figs dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE ACTIONS ───────────────────────────────────────────────────────── */
+
+.pm-groups-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ⚠ The second action is quieter than the first — two filled buttons side by
+   side is two primary actions, which is none. */
+.pm-groups-ghost {
+  display: inline-block;
+  border-radius: 9999px;
+  border: 1.5px solid var(--line);
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  transition: border-color 140ms, color 140ms;
+}
+
+.pm-groups-ghost:hover {
+  border-color: var(--magenta);
+  color: var(--magenta);
+}
+
+/* ── THE CARDS ─────────────────────────────────────────────────────────── */
+
+.pm-groups-card {
+  display: block;
+  border-radius: var(--radius-brand, 10px);
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 14px;
+  transition: border-color 140ms;
+}
+
+.pm-groups-card:hover {
+  border-color: var(--magenta);
+}
+
+.pm-groups-card-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.pm-groups-card-m {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.pm-groups-n {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-card-o {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--magenta);
+}
+
+/* ── THIS MONTH ────────────────────────────────────────────────────────── */
+
+.pm-groups-month {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pm-groups-month > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pm-groups-month dt {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.pm-groups-month dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE ONE WIDENING ──────────────────────────────────────────────────── */
+
+@media (min-width: 900px) {
+  .pm-groups-field {
+    max-width: 380px;
+    gap: 12px;
+  }
+}

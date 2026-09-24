@@ -306,6 +306,29 @@ async function main() {
     );
   }
 
+  /*
+    ── ⚠⚠⚠ 10 · WHY THE CREATE ROUND TRIP IS **NOT** HERE (`P2-A3-E619`) ────
+
+    ⚠ It WAS here, and `check:forums` §5 went red on it: *"nothing deletes a
+    forumBoard — scripts/check-groups.ts"*. ⚠⚠ THE GUARD WAS RIGHT. Its rule
+    protects conversations from ever being destroyed, and a probe that creates a
+    board has to delete one to clean up — so proving the writer HERE meant
+    putting a `forumBoard.deleteMany` into a file the rule scans.
+
+    ⚠⚠⚠ THE FIX IS TO MOVE THE PROBE, NOT TO EXEMPT THIS FILE. That is the same
+    call `check:community` GUARD 2 forced twice (`countThreadsWaitingOn`, then
+    `listThreadsWaitingOn`), and the reason is the guard's own: *"exempting the
+    file is exactly how a guard stops guarding."* ⚠ An exemption here would have
+    read as *"gates may delete boards"*, which is one edit away from
+    *"scripts may delete boards"*.
+
+    ⚠⚠ THE ROUND TRIP IS PROVEN IN FULL, IN `e2e-shell/groups-page.spec.ts` —
+    and proven BETTER there, because it goes through the actual form rather than
+    calling the function: the member types a name, the API answers, the redirect
+    lands on a real page, and the new group reaches the founder's own figures.
+    ⚠ That suite asserts the stored row's `type`, `price_cents`, `route` and
+    `auto_approved` directly, so nothing was lost in the move.
+  */
   await prisma.$disconnect();
   console.log(`check:groups — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);
   for (const f of fails) console.log(`\n  ✗ ${f}`);

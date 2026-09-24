@@ -309,3 +309,131 @@ export async function joinGroup(
   });
   return { state };
 }
+
+/**
+ * ── ⚠⚠⚠ ANYONE CAN START A GROUP — RULING 2 (`P2-A3-E619` WS-A) ──────────
+ *
+ * ⚠ SCOTT, 2026-09-22, RULING 2: *"Anyone can start a group. Every learning
+ * path still has its own group automatically; a member can also start one of
+ * their own (a topic, a region, alumni)."*
+ *
+ * ── ⚠⚠⚠ THE SCHEMA ALLOWED THIS ALREADY. NOTHING WROTE IT ────────────────
+ *
+ * ⚠⚠ RULING 12, 2026-09-24: *"Member-created groups: ALREADY POSSIBLE — no
+ * schema ruling needed."* ⚠ **That ruling is correct about the SCHEMA and was
+ * measured again here: `learning_path_id` is nullable, `GroupType` exists, and
+ * `host_person_id` exists.** ⚠⚠⚠ BUT THE PREMISE CHECK FOUND NO WRITER: the
+ * only two `forumBoard` creates in the codebase are `ensureBoards()` (the four
+ * seeded general boards) and `ensurePathBoard()` (created WITH a path), so
+ * **nothing could start a member's group and ruling 2 had no mechanism.**
+ * ⚠ This function is that mechanism, and it needed no schema change.
+ *
+ * ── ⚠⚠⚠ IT CREATES `OPEN` GROUPS ONLY, AND THAT IS DELIBERATE ────────────
+ *
+ * ⚠⚠ `GroupType.REQUEST` would land joiners in `PENDING`, **and nothing can
+ * move a `PENDING` row** — the approve/decline writer does not exist yet
+ * (measured: `decided_at`, `decided_by_person_id` and the `APPROVED`/`DECLINED`
+ * values have ZERO writers). ⚠⚠⚠ OFFERING `REQUEST` HERE WOULD MANUFACTURE A
+ * STATE THE PRODUCT CANNOT LEAVE — a member would ask to join and wait forever,
+ * with no screen anywhere able to answer them. ⚠ `E579`'s rule one level down:
+ * **do not create the state before its exit exists.** Request-to-join arrives
+ * with its approval queue, in the same workstream, or not at all.
+ * ⚠ `INVITE_ONLY` is out for the same reason — nothing sends an invite.
+ */
+export async function createGroup(
+  userId: string,
+  input: { title: string; description?: string | null }
+): Promise<{ slug: string }> {
+  const title = input.title.trim();
+  /* ⚠ The floor is a real name, not a keystroke. A one-character group is a
+     room nobody can find again, including the person who made it. */
+  if (title.length < 3) {
+    throw new GroupError("Give your group a name of at least 3 characters.", "BAD_TITLE");
+  }
+  if (title.length > 80) {
+    throw new GroupError("That name is too long — 80 characters at most.", "BAD_TITLE");
+  }
+
+  const person = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  if (!person) throw new GroupError("No person for this account.", "NOT_FOUND");
+
+  /*
+    ⚠⚠⚠ THE SLUG MUST NOT COLLIDE WITH A PATH BOARD'S. `ensurePathBoard` owns
+    the `path-` prefix (`pathBoardSlug` above), so a member naming their group
+    "Beginners" must never mint `path-beginners` and collide with a real path's
+    room. ⚠ The prefix here is `g-`, and the two namespaces cannot meet.
+  */
+  const base =
+    "g-" +
+    (title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "group");
+
+  /*
+    ⚠⚠ `slug` IS `@unique`, SO A COLLISION IS A DATABASE ERROR, NOT A GUESS.
+    ⚠ Two members naming a group the same thing on the same day is ordinary, so
+    the suffix is tried rather than assumed free. ⚠⚠⚠ THE LOOP IS BOUNDED: an
+    unbounded retry on a unique violation is how a create becomes a hang.
+  */
+  for (let n = 0; n < 25; n++) {
+    const slug = n === 0 ? base : `${base}-${n + 1}`;
+    const taken = await prisma.forumBoard.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (taken) continue;
+    try {
+      await prisma.forumBoard.create({
+        data: {
+          slug,
+          title,
+          description: input.description?.trim() || null,
+          /* ⚠⚠ NO `learning_path_id`. That is what makes it a member's group
+             rather than a path's, and it is the column ruling 12 confirmed was
+             already nullable. */
+          host_person_id: person.id,
+          /* ⚠ OPEN — see the note above on why the other two are refused. */
+          type: "OPEN",
+          /* ⚠ After the four seeded boards (0,10,20,30) and the path rooms. */
+          sort_order: 100,
+        },
+      });
+    } catch {
+      /* ⚠ Lost the race between the check and the create — try the next slug
+         rather than failing a create that is still perfectly valid. */
+      continue;
+    }
+
+    /*
+      ⚠⚠⚠ THE CREATOR IS A MEMBER OF THEIR OWN GROUP, AND THIS IS NOT COSMETIC.
+      ⚠ Without this row the founder is in a room with zero members — their own
+      Groups page would count them out of the thing they just made, and
+      "Groups You Joined" and the member count would both be wrong on day one.
+      ⚠⚠ `route: JOINED`, and `auto_approved` stays FALSE: a person acted. The
+      backfill's `auto_approved: true` means *nobody decided*, and reusing it
+      here would put a machine's fingerprint on a human's action.
+    */
+    await prisma.groupMembership.create({
+      data: {
+        board_id: (await prisma.forumBoard.findUniqueOrThrow({
+          where: { slug },
+          select: { id: true },
+        })).id,
+        person_id: person.id,
+        route: "JOINED",
+        state: "ACTIVE",
+      },
+    });
+    return { slug };
+  }
+
+  throw new GroupError(
+    "Too many groups share that name — try a different one.",
+    "SLUG_EXHAUSTED"
+  );
+}
