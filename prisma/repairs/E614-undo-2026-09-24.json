@@ -1,0 +1,128 @@
+[
+  {
+    "id": "c117b94f-99c8-4720-aac4-1636c7ec813d",
+    "path": "2. Overview",
+    "lesson": "Introducing the Oracle Cloud Overview Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "dacd4ea8-5402-4613-a1af-12fe7ab585e7",
+    "path": "Contract Management",
+    "lesson": "Introducing DocuSign",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "5a889f82-16ad-4eab-86d4-81f205472c64",
+    "path": "Basic Procurement",
+    "lesson": "4.1 - Introducing the Oracle Business Network",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "b7f5e403-9f6a-46fa-aed2-857d2398689c",
+    "path": "Core HR",
+    "lesson": "The Introducing Oracle Cloud's Core HR Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "f3c30f38-6dfb-4c21-b667-fa6f69a429ca",
+    "path": "Core HR",
+    "lesson": "Introducing OC's Core HR",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "e0e0d3c9-5e80-41c5-a88a-c25cdb7d4999",
+    "path": "Cost Accounting",
+    "lesson": "Course Overview",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "0a0d4d4f-3eaa-47a3-9807-f283a9b4e51d",
+    "path": "Cost Accounting",
+    "lesson": "Course Overview",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "03165111-3170-4eac-93d4-35ba87a89c08",
+    "path": "Cost Accounting",
+    "lesson": "Course Overview",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "cb56f524-371b-4915-8493-93004a362cb2",
+    "path": "Inventory Management",
+    "lesson": "Create Min-Max-Planning for Supplier Replenishment",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "e773dc6e-3f81-49e0-8bc6-7172276d89f8",
+    "path": "Cost Accounting",
+    "lesson": "Course Overview",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "248c8be8-cd4c-4100-9ec2-ada79dd8d3c3",
+    "path": "Basic Procurement",
+    "lesson": "The How to Use Oracle Cloud's Suppliers Application Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "d6443adc-c023-4d2d-a1f5-4f0203e6c77d",
+    "path": "Advanced Procurement",
+    "lesson": "Duplicate Initiative",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "d506e78f-e8ef-4e92-bf82-d38815658906",
+    "path": "Inventory Management",
+    "lesson": "Print Min-Max-Planning Report for Subinventory Replenishment",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "22741a37-db6e-406d-83fe-95a2543f7bac",
+    "path": "Contract Management",
+    "lesson": "What is a Contract Administrator?",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "089fae8b-a02d-4de9-bd68-951dca1b359a",
+    "path": "Basic Procurement",
+    "lesson": "The How to Use Oracle Cloud's Purchase Requisitons Application Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "628e6aa4-ab30-4e9e-8170-aef9b54adbba",
+    "path": "Basic Procurement",
+    "lesson": "The How to Use Oracle Cloud's My Receipts Application Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "40f17c2c-8a6f-4e8a-ba20-0e64129aa01f",
+    "path": "Basic Procurement",
+    "lesson": "The How to Use Oracle Cloud's Purchase Orders Application Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  },
+  {
+    "id": "89ec8b0c-9367-496e-b6aa-5b0c4ad2df2a",
+    "path": "Basic Procurement",
+    "lesson": "The Oracle Cloud Procurement Course",
+    "from": "URL_ADDED_TO_LESSON",
+    "to": "IN_CONCEPT"
+  }
+]
