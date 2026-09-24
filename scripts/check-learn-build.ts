@@ -436,7 +436,7 @@ async function main() {
     select: { id: true, vimeo_ref: true, production_status: true },
   });
   check("10 — there are lessons to check (E586)", allLessons.length > 0, `${allLessons.length}`);
-  const { urlMissing } = await import("@/lib/learn");
+  const { urlMissing, isPlayable: isPlayableFn } = await import("@/lib/learn");
   const amber = allLessons.filter(urlMissing);
 
   /* ⚠⚠⚠ ZERO INSIDE THE FOUR PATHS SCOTT RULED ON — asserted against the
@@ -474,71 +474,55 @@ async function main() {
   }
 
   /*
-    ── ⚠⚠⚠ THE EIGHTEEN NOBODY HAS RULED ON — A RATCHET, NOT A PASS ─────────
+    ── ⚠⚠⚠ ZERO. NOT A CEILING ANY MORE (`P2-A4-E614`, ruling 19) ───────────
 
-    ⚠⚠ MEASURED 2026-09-24: 59 lessons were amber catalogue-wide; 41 sat in
-    Scott's four paths, 18 did not. ⚠⚠⚠ THE 18 ARE DELIBERATELY UNTOUCHED —
-    nobody has said whether they were shot, and choosing a rung would be the
-    fabricated figure this brief removes. Most are course-intro placeholder
-    rows; two carry Scott-typed `xls` runtimes, which he ruled is NOT evidence
-    of filming; one is titled "Duplicate Initiative".
-    ⚠ A CEILING THAT ONLY GOES DOWN: a NEW false claim fails the build. It does
-    not fail when the number drops — fixing them is the point — and the names
-    print every run so they cannot be forgotten.
-    ⚠⚠ THE MEMBER-FACING HALF IS ALREADY HONEST: `lessonState` renders these as
-    "Not published yet", which claims nothing about filming. The stored column
-    is what is wrong, not the page.
+    ⚠⚠ SCOTT, 2026-09-24: **"NONE OF THEM WERE FILMED. Mark all 18 Planned."**
+    ⚠⚠⚠ **"The catalogue-wide false-claim count must then be ZERO, and the
+    gate's ceiling drops to 0 — after this there is no honest reason for any
+    lesson to claim a video it does not have, so a new one is a build failure,
+    not a backlog item."**
+
+    ⚠ THE HISTORY, SO NOBODY RE-RAISES THE CEILING TO MAKE A RED GO AWAY:
+    `E613` cleared 41 in the four paths Scott called and left 18 standing
+    because nobody had ruled on them — a ceiling of 18 was the honest way to
+    hold a measured, dated gap without pretending it was fine. ⚠⚠ Ruling 19
+    closed it. **There is no gap left to hold, so there is no ceiling.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const AMBER_CEILING = 18;
+    //   check("10 — ⚠⚠ no NEW lesson claims a URL it has not got",
+    //     amber.length <= AMBER_CEILING, …);
   */
-  const AMBER_CEILING = 18;
   check(
-    "10 — ⚠⚠ no NEW lesson claims a URL it has not got",
-    amber.length <= AMBER_CEILING,
-    `${amber.length} amber, ceiling ${AMBER_CEILING} (set 2026-09-24) — a rise means a new false claim was stored`
+    "10 — ⚠⚠⚠ NO lesson claims a URL it has not got",
+    amber.length === 0,
+    `${amber.length} amber — ruling 19 took this to zero on 2026-09-24; a lesson claiming a video it has not got is now a build failure, not a backlog item`
   );
   if (amber.length > 0) {
     const named = await prisma.lesson.findMany({
       where: { id: { in: amber.map((l) => l.id) } },
       select: {
+        title: true,
         section: { select: { course: { select: { learningPath: { select: { title: true } } } } } },
       },
     });
-    const byPath = new Map<string, number>();
-    for (const l of named) {
-      const t = l.section.course.learningPath.title;
-      byPath.set(t, (byPath.get(t) ?? 0) + 1);
-    }
-    console.log(`\n  ⚠ ${amber.length} lesson(s) still claim a URL with no vimeo_ref — Scott owes a call:`);
-    for (const [t, n] of [...byPath].sort((a, b) => b[1] - a[1]))
-      console.log(`      ${String(n).padStart(3)}  ${t}`);
+    console.log(`\n  ⚠⚠ ${amber.length} lesson(s) claim a URL with no vimeo_ref:`);
+    for (const l of named.slice(0, 20))
+      console.log(`      ${l.section.course.learningPath.title} › ${l.title.slice(0, 50)}`);
   }
 
-  /*
-    ── ⚠⚠⚠ AND THE TWO FIGURES ARE NEVER ADDED IN CODE EITHER ──────────────
-
-    ⚠⚠ §7 ABOVE SCANS RENDERED JSX TEXT, AND A COMPUTED SUM IS INVISIBLE TO IT.
-    ⚠⚠⚠ MEASURED: a mutation replacing the hero sentence with
-    `${d.totals.paths + d.totals.inProduction} learning paths` PASSED §7 —
-    it lives inside a template literal in a helper, not in a `>text<` node.
-    **A mutation its own assertion cannot fail is not a proof**, so this is the
-    half that catches it: the ADDITION itself, wherever it is written.
-
-    ⚠ DERIVED FROM THE EXPRESSION (`E587`) — any source under `src/` that adds
-    the startable count to the in-production count, in either order, however it
-    is spelled. It is never a correct thing to compute: the answer is 23, and 23
-    is the number this brief exists to stop anyone printing.
-  */
-  const SUMMED = [
-    /paths\s*\+\s*[\w.]*inProduction/,
-    /inProduction\s*\+\s*[\w.]*paths/,
-  ];
-  const summing = SRC.filter((f) => {
-    const body = strip(readFileSync(f, "utf8"));
-    return SUMMED.some((r) => r.test(body));
-  });
+  /* ⚠⚠ AND THE OTHER HALF, WITHOUT WHICH ZERO PROVES NOTHING. An empty
+     catalogue has zero false claims too. `URL_ADDED_TO_LESSON` and the playable
+     count must AGREE — every lesson claiming a URL has one, and there are some. */
+  const claiming = allLessons.filter((l) =>
+    (["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] as string[]).includes(
+      l.production_status
+    )
+  ).length;
+  const playableNow = allLessons.filter(isPlayableFn).length;
   check(
-    "7 — ⚠⚠ nothing adds the startable count to the in-production count",
-    summing.length === 0,
-    `${summing.join(", ")} — 12 startable and 11 in production answer different questions; their sum answers neither`
+    "10 — ⚠⚠ and the claim and the video agree, on a catalogue that has both",
+    claiming > 0 && claiming === playableNow,
+    `${claiming} claim a URL, ${playableNow} actually play — two zeros would agree too, which is why both are asserted`
   );
 
   /* ── 11 · ⚠⚠ THE REPAIR WROTE ONE COLUMN, DERIVED FROM ITS SOURCE ──────── */
