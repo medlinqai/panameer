@@ -68,26 +68,58 @@ check(`1 — the owner of the definition exists: ${LEARN}`, existsSync(LEARN));
 check("1 — PLAYABLE_STATUSES is the three-status ladder", JSON.stringify([...PLAYABLE_STATUSES]) === JSON.stringify(["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"]));
 
 /*
-  ⚠⚠ THE MIRROR SURVIVES, AND WHY IS RECORDED RATHER THAN GUESSED AT.
-  `lib/learn.ts` imports prisma; `StructureEditor.tsx` is `"use client"`. Importing
-  the real one there would drag prisma -> pg -> node:dns into the browser bundle,
-  which is the exact defect `P1-J1.4-E296` hit and had to split a module to fix.
-  ⚠ SO IT IS ASSERTED TO AGREE, character for character, on a real case.
+  ── ⚠⚠⚠ THE MIRROR IS GONE, AND THIS GUARD SAID THE OPPOSITE (`P2-A4-E610`)
+
+  ⚠ WHAT THIS BLOCK USED TO ASSERT: that `lib/learn.ts` imports prisma, that
+  `StructureEditor.tsx` therefore CANNOT import it, and that its hand-written
+  copy agrees character for character.
+
+  ⚠⚠⚠ EVERY PREMISE IN THAT SENTENCE IS NOW FALSE. `E608` removed the prisma
+  import — `lib/learn.ts` is pure predicates over rows a caller already
+  fetched — so a `"use client"` component can import it, and `E610` did.
+
+  ⚠⚠⚠ AND THE OLD ASSERTION WAS PASSING ON A COMMENT. It tested
+  `readFileSync(LEARN)` UNSTRIPPED, and `learn.ts` carries the deleted import
+  QUOTED under `E164`. **It was green about a line that is not code.** That is
+  rule 12's trap exactly — a gate that scans source text matches the quote as
+  if it were live — and it is why every scan below reads STRIPPED source.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ⚠⚠ THE MIRROR SURVIVES, AND WHY IS RECORDED RATHER THAN GUESSED AT.
+  //   `lib/learn.ts` imports prisma; `StructureEditor.tsx` is `"use client"`.
+  //   check("1 — lib/learn.ts still imports prisma, which is why the mirror cannot be removed",
+  //     /from "@\/lib\/prisma"/.test(readFileSync(LEARN, "utf8")));
+  //   check("1 — the mirror still declares itself a mirror", /mirrors `isPlayable`/.test(...));
+  //   check("1 — the mirror reads the SAME three statuses via CLAIMS_URL",
+  //     /CLAIMS_URL\.includes\(l\.productionStatus\)/.test(mirrorSrc) && ...);
+  //   check("1 — ⚠ CLAIMS_URL is character-for-character PLAYABLE_STATUSES",
+  //     new RegExp(`CLAIMS_URL\\s*=\\s*\\[...`).test(claims), ...);
 */
-check("1 — lib/learn.ts still imports prisma, which is why the mirror cannot be removed", /from "@\/lib\/prisma"/.test(readFileSync(LEARN, "utf8")));
-check(`1 — the mirror is still where it says it is: ${MIRROR}`, existsSync(MIRROR));
-const mirrorSrc = existsSync(MIRROR) ? strip(readFileSync(MIRROR, "utf8")) : "";
-check("1 — the mirror still declares itself a mirror", /mirrors `isPlayable`/.test(existsSync(MIRROR) ? readFileSync(MIRROR, "utf8") : ""));
+const learnSrc = strip(readFileSync(LEARN, "utf8"));
 check(
-  "1 — the mirror reads the SAME three statuses via CLAIMS_URL",
-  /CLAIMS_URL\.includes\(l\.productionStatus\)/.test(mirrorSrc) && /vimeoRef\?\.trim\(\)/.test(mirrorSrc)
+  "1 — ⚠⚠ lib/learn.ts is PURE — no prisma, so nothing needs to mirror it",
+  !/from "@\/lib\/prisma"/.test(learnSrc),
+  "asserted on STRIPPED source: the deleted import is quoted under E164 and a quote is not code"
+);
+check(`1 — the authoring tree is still where it says it is: ${MIRROR}`, existsSync(MIRROR));
+const mirrorSrc = existsSync(MIRROR) ? strip(readFileSync(MIRROR, "utf8")) : "";
+check(
+  "1 — ⚠⚠⚠ the authoring tree CALLS the real predicate rather than copying it",
+  /isPlayableRow\(\{ vimeo_ref: l\.vimeoRef, production_status: l\.productionStatus \}\)/.test(
+    mirrorSrc
+  ),
+  "a hand-rolled copy agrees until the rule changes"
+);
+check(
+  "1 — and it imports it from the one definition",
+  /from "@\/lib\/learn"/.test(mirrorSrc)
 );
 const primitives = join("src", "components", "admin", "learn", "primitives.tsx");
-const claims = existsSync(primitives) ? readFileSync(primitives, "utf8") : "";
+const claims = existsSync(primitives) ? strip(readFileSync(primitives, "utf8")) : "";
 check(
-  "1 — ⚠ CLAIMS_URL is character-for-character PLAYABLE_STATUSES",
-  new RegExp(`CLAIMS_URL\\s*=\\s*\\[${[...PLAYABLE_STATUSES].map((s) => `"${s}"`).join(", ")}\\]`).test(claims),
-  "if these ever disagree, admin and the learner see different lessons"
+  "1 — ⚠ CLAIMS_URL is PLAYABLE_STATUSES re-exported, not retyped",
+  /CLAIMS_URL:\s*readonly string\[\]\s*=\s*PLAYABLE_STATUSES/.test(claims),
+  "two arrays holding the same three strings is one concept in two places (E585)"
 );
 
 /*

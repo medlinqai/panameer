@@ -52,7 +52,12 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
 
   return (
     <div className="rounded-brand border border-line bg-white p-5">
-      <h2 className="font-display text-[15px] font-bold">Your Forums</h2>
+      {/* ⚠⚠ `P2-A3-E612` Q17 — `Groups`, matching the page it sits on. Leaving
+          this as `Forums` under a page headed `Groups` would be the same
+          two-words-for-one-thing defect Q17 exists to remove (`E459`).
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <h2 …>Your Forums</h2> */}
+      <h2 className="font-display text-[15px] font-bold">Your Groups</h2>
 
       {rooms.length === 0 ? (
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">

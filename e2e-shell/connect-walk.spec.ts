@@ -491,11 +491,14 @@ test("E567/4 — the rail still lists rooms", async () => {
   await open(ROUTES.forums);
   /* ⚠ THE PAGE IS NEVER BLANK. The rail says the rooms exist and nothing has
      been asked yet, which is true. */
-  /* ⚠ `exact` — "Your Forums" also matches "Recent in Your Forums" on this
+  /* ⚠ `exact` — "Your Groups" also matches "Recent in Your Groups" on this
      page, and a strict-mode violation reports as a failure of the thing being
-     tested rather than of the selector. */
+     tested rather than of the selector.
+     ⚠ `P2-A3-E612` Q17 — the noun moved; the assertion is unchanged.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   page.getByRole("heading", { name: "Your Forums", exact: true }) */
   await expect(
-    page.getByRole("heading", { name: "Your Forums", exact: true })
+    page.getByRole("heading", { name: "Your Groups", exact: true })
   ).toBeVisible();
 });
 
@@ -668,7 +671,12 @@ const TITLE_CASE: { route: string; strings: string[] }[] = [
     it is checked by the tool that can actually see it.
   */
   { route: ROUTES.colleagues, strings: ["Invite a Colleague", "Shared Skills"] },
-  { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] },
+  /* ⚠⚠ `P2-A3-E612` Q17 — `Forums` -> `Groups`. Scott, 2026-09-23: *"the page
+     heading becomes Groups. The nav is right; the heading is the older word."*
+     ⚠ The Title Case RULE this row asserts is unchanged — only the noun moved.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] }, */
+  { route: ROUTES.forums, strings: ["Recent in Your Groups", "Your Groups"] },
   {
     route: ROUTES.mentors,
     strings: [
@@ -706,7 +714,10 @@ test("E568 — the lower-case originals are gone", async () => {
        //   { route: ROUTES.home, strings: ["Waiting on you", "People you may know"] }, */
     { route: ROUTES.community, strings: ["Waiting on you", "People you may know"] },
     { route: ROUTES.colleagues, strings: ["Shared skills"] },
-    { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your forums"] },
+    /* ⚠ `P2-A3-E612` — the lower-case original moved with the noun.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your forums"] }, */
+    { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your groups"] },
     {
       route: ROUTES.mentors,
       strings: ["Mentors you follow", "Your mentor signal", "Paid sessions", "Find a mentor"],
