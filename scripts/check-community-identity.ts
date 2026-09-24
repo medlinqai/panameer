@@ -67,7 +67,21 @@ function walk(dir: string, out: string[] = []): string[] {
 const BAR = join("src", "lib", "identity-bar.ts");
 const COMM = join("src", "lib", "community-identity.ts");
 const FORUMS = join("src", "lib", "forums.ts");
-const ROUTE = join("src", "app", "api", "community", "groups", "route.ts");
+/*
+  ── ⚠⚠⚠ THIS IS THE **FORUMS** API ROUTE, AND IT DID NOT MOVE (`P2-A3-E619`) ─
+
+  ⚠ `E619` WS-C renamed the PAGE route `/community/forums` → `/community/groups`
+  and left the API tree alone. ⚠⚠ A BLIND REPLACE IN THAT RENAME REPOINTED THIS
+  LINE ANYWAY — the path array `"community", "forums",` looks identical whether
+  it names a page or an endpoint — and this gate then read
+  `api/community/groups/route.ts`, **which also exists** (it is join/leave) and
+  carries neither `e.code` nor `fields`.
+  ⚠⚠⚠ SO THE GATE WENT RED SAYING *"the route stopped forwarding that code"*,
+  WHICH WAS FALSE. The route was untouched; the gate was pointed somewhere else.
+  ⚠ Same shape as the `nav.ts` mistake in the same workstream: two
+  byte-identical strings that mean different things.
+*/
+const ROUTE = join("src", "app", "api", "community", "forums", "route.ts");
 const COMPOSER = join("src", "components", "community", "ForumComposer.tsx");
 const WRI = join("src", "lib", "work-request-identity.ts");
 
@@ -121,6 +135,18 @@ check(
   "1 — the refusal is its own code, distinguishable from a bad form",
   /IDENTITY_REQUIRED/.test(forums),
   "a client cannot tell 'fix your profile' from 'fix your form'"
+);
+/*
+  ⚠⚠⚠ AND THE GATE PROVES IT IS READING THE RIGHT FILE BEFORE ASSERTING ABOUT
+  IT. `E586`'s rule one step further on: an assertion whose INPUT is silently
+  the wrong file is worse than one with no input, because it fails with a
+  confident sentence about code that is fine. ⚠ The thread-write route is the
+  only one that composes a thread; join/leave never does.
+*/
+check(
+  "1 — ROUTE is the thread-write route, not another community endpoint",
+  /createThread|createPost/.test(read(ROUTE)),
+  "this gate is pointed at the wrong file — every assertion below is about code it is not testing"
 );
 check(
   "1 — the route forwards that code to the client",
