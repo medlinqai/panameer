@@ -159,6 +159,26 @@ export function PathCard({
         </p>
 
         {/*
+          ── ⚠⚠⚠ AN UNREADY PATH SAYS SO ON THE CARD (`P2-A4-E611`) ──────────
+
+          ⚠⚠ The catalogue now lists all 23 paths so a demand signal can reach
+          Scott at all — which means **11 of them are cards a member cannot
+          start**, and a card that does not say so is the dead end `E607`
+          existed to close, moved one screen earlier.
+
+          ⚠ IT IS A STATE, NOT A WARNING, AND IT PROMISES NOTHING: no date, no
+          ETA, no queue position. The schema holds no publish date.
+          ⚠⚠ THE CARD IS STILL A LINK. Reading is never gated (`E362`) — the
+          outline is real and is exactly what someone deciding whether to ask
+          for this path needs to see.
+        */}
+        {!card.ready && (
+          <p className="mt-1.5 inline-flex w-fit rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-bold text-white/75">
+            No videos yet
+          </p>
+        )}
+
+        {/*
           The progress bar only exists once you're enrolled. An empty 0% bar on
           every card would read as "you've done nothing here" across a catalog
           you haven't started, which is discouraging and untrue.

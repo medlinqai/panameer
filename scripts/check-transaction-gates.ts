@@ -283,8 +283,38 @@ check(
 // GUARD 3 — all three writes check server-side
 // ---------------------------------------------------------------------------
 
-check("3 — enroll checks LEARN server-side", /learnGaps\s*\(/.test(enroll));
-check("3 — the enroll refusal names its fields", /fields:\s*gaps/.test(enroll));
+/*
+  ── ⚠⚠⚠ THE ENROL GATE MOVED, IT DID NOT GO (`P2-A4-E610`) ───────────────
+
+  ⚠ `learnGaps` and the `fields: gaps` payload now live in
+  `lib/learn-enrolment-gate.ts`, because `/api/learn/progress` writes the SAME
+  `LearnEnrollment` and had NEITHER check — and enrolment is forum membership,
+  so the cheaper door was handing out access to a path's private room.
+
+  ⚠⚠ `check:rollup`'S CASE, NOT `check:cert-skills`': the RULING changed, the
+  code did not drift. The rule these two assertions protect is intact and is
+  asserted harder in `check:learn-enrol`, which derives its population FROM THE
+  WRITE — every route that creates an enrolment must call the gate, and must
+  call it before it writes.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("3 — enroll checks LEARN server-side", /learnGaps\s*\(/.test(enroll));
+  //   check("3 — the enroll refusal names its fields", /fields:\s*gaps/.test(enroll));
+*/
+check(
+  "3 — enroll checks LEARN server-side, through the extracted gate",
+  /await learnEnrolmentRefusal\(/.test(enroll),
+  "one rule, called twice — the progress route writes the same table"
+);
+const enrolGate = readFileSync(
+  join("src", "lib", "learn-enrolment-gate.ts"),
+  "utf8"
+);
+check(
+  "3 — the enroll refusal still names its fields",
+  /fields:\s*gaps/.test(enrolGate),
+  "the member has to be told WHICH field is missing, not just that one is"
+);
 /* ⚠ BOTH HANDLERS. Serving the questions IS sitting the test. */
 for (const handler of ["export async function GET", "export async function POST"]) {
   const i = test.indexOf(handler);

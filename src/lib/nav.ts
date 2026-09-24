@@ -503,7 +503,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   "/learn": [
     { label: "All Learning Paths", href: "/learn/paths" },
     { label: "All Courses", href: "/learn/courses" },
-    { label: "My learning", href: "/learn/paths?tab=mine" },
+    { label: "My Learning", href: "/learn/paths?tab=mine" },
   ],
   /* ⚠ `P1-ALL-E533` — rekeyed with the page; `/settings/packages` is now
      `/my-services`. This set exists to TITLE its destinations (`pageTitleFor`

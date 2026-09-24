@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { getPathForumTeaser, type PathForumTeaser } from "@/lib/forums";
+import { pathInterestFor } from "@/lib/path-interest";
+import type { Viewer } from "@/lib/access";
+import { shownRunTime } from "@/lib/lesson-duration";
 import { isPlayable, pathIsOpenTo, playableProgress } from "@/lib/learn";
 import {
   instructorIdsFor,
@@ -82,6 +86,20 @@ export type AppPathView = {
   /** ⚠ `false` = PUBLISHED but nothing in it plays. The page says so; it does
    *  not 404, because links to these slugs already exist. */
   ready: boolean;
+  /**
+   * ⚠⚠ THE PATH'S ROOM (`P2-A4-E611`, Q8). Counts only — never a thread title.
+   * ⚠ It travels on the SIGNED-IN view model because that is the branch a
+   * member actually reaches; the signed-out page computed a teaser that
+   * `canAccessPathForum` refuses by definition, so the link rendered to nobody.
+   */
+  forum: PathForumTeaser | null;
+  /**
+   * ⚠⚠ `P2-A4-E611` WS-C — the demand signal for THIS path. ⚠ It travels on
+   * every path, not only unready ones: wanting more of a path you have started
+   * is a real signal too, and hiding the control on ready paths would make the
+   * queue a measurement of unready paths only.
+   */
+  interest: { count: number; mine: boolean };
   test: {
     /** ⚠ READ FROM THE ROW, never printed as 70 / 3. Null when none exists. */
     passThreshold: number | null;
@@ -165,7 +183,16 @@ export function leaderLabel(first: string | null, last: string | null): string {
   return "A learner";
 }
 
-export async function getAppPath(slug: string, userId: string | null): Promise<AppPathView | null> {
+export async function getAppPath(
+  /* ⚠ `P2-A4-E611` — IT TAKES THE VIEWER, NOT THE ID. `getPathForumTeaser` asks
+     `canAccessPathForum`, whose signature is the `Viewer`. ⚠⚠ Reconstructing a
+     Viewer from an id inside here would be a second, thinner idea of who the
+     member is. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   export async function getAppPath(slug: string, userId: string | null) */
+  slug: string,
+  viewer: Viewer | null
+): Promise<AppPathView | null> {
+  const userId = viewer?.userId ?? null;
   const path = await prisma.learningPath.findFirst({
     where: { slug, status: "PUBLISHED" },
     select: {
@@ -195,6 +222,7 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
                   id: true,
                   title: true,
                   run_time: true,
+                  duration_source: true,
                   vimeo_ref: true,
                   production_status: true,
                   expert_person_id: true,
@@ -210,7 +238,7 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
 
   const allLessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
 
-  const [enrolment, progress, directory, enrolledCountRaw, attempts, cert] = await Promise.all([
+  const [enrolment, progress, directory, enrolledCountRaw, forum, interest, attempts, cert] = await Promise.all([
     userId
       ? prisma.learnEnrollment.findUnique({
           where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
@@ -222,6 +250,10 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
       : Promise.resolve([]),
     loadInstructors(instructorIdsFor(allLessons, path.expert_person_id)),
     prisma.learnEnrollment.count({ where: { learning_path_id: path.id } }),
+    /* ⚠ THE SAME TEASER THE PUBLIC PAGE USED — counts and `canOpen`, nothing
+       else. ⚠⚠ It is not a second query shaped like it. */
+    getPathForumTeaser(viewer, path.id),
+    pathInterestFor(userId, path.id),
     userId
       ? prisma.learnTestAttempt.findMany({
           where: { user_id: userId, learning_path_id: path.id },
@@ -265,7 +297,7 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
         return {
           id: l.id,
           title: l.title,
-          runTime: l.run_time,
+          runTime: shownRunTime(l),
           playable: isPlayable(l),
           completed: done.has(l.id),
           current: l.id === nextId,
@@ -317,6 +349,8 @@ export async function getAppPath(slug: string, userId: string | null): Promise<A
        `findFirst({ where: { slug, status: "PUBLISHED" } })`, no playable
        clause. ⚠ `pathIsOpenTo` is imported, never restated. */
     ready: pathIsOpenTo(allLessons.some(isPlayable), Boolean(enrolment)),
+    forum,
+    interest,
     instructors: pathInstructors,
     courses,
     nextLesson:

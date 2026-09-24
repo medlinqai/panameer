@@ -29,6 +29,19 @@
  * gate playback, not visibility. Someone deciding whether this path is worth
  * their time needs to see what it covers.
  */
+/**
+ * ⚠⚠ The bucket an unfiled path falls into (`P2-A4-E611`, Q5).
+ *
+ * ⚠⚠⚠ IT LIVES IN THIS FILE BECAUSE THIS FILE IS PURE. It was first written in
+ * `learn-home.ts`, which imports `prisma` — and `LearnHome.tsx` is a CLIENT
+ * component, so a VALUE import from there pulled `pg` into the browser bundle
+ * and the build failed on `Can't resolve 'dns'`. ⚠ A type-only import would
+ * have been erased; a value one is not.
+ * ⚠ One constant, shared by the chip builder (server) and the filter (client),
+ * because two spellings of the word would make the chip select nothing.
+ */
+export const OTHER_GROUP = "Other";
+
 export const PLAYABLE_STATUSES = [
   "URL_ADDED_TO_LESSON",
   "BLOG_CREATED",
@@ -69,6 +82,60 @@ export function urlMissing(lesson: {
     !lesson.vimeo_ref?.trim()
   );
 }
+
+/**
+ * ── ⚠⚠⚠ WHAT A LESSON'S STATE HONESTLY IS (`P2-A4-E611` · production signal)
+ *
+ * ⚠⚠ SCOTT, 2026-09-23: **no new column.** The existing enum already carries
+ * three states, and `Ready` is never stored — it is `isPlayable`, computed.
+ *
+ *   planned   `IN_CONCEPT` · `NEEDS_REFRESH` · `DECK_READY`        — 137
+ *   recorded  `RAW_SHOT` · `PRODUCED` · `LOADED_TO_STREAMING`      —  21
+ *   ready     `isPlayable` — the status claims a URL AND one is stored
+ *
+ * ⚠⚠⚠ AND A FOURTH THING THAT IS NOT A STATE, IT IS A DEFECT: **59 lessons
+ * claim `URL_ADDED_TO_LESSON` with an empty `vimeo_ref`.** Their real state is
+ * UNKNOWN — the stored status is the thing that lied. ⚠ Scott rules on those
+ * 59, grouped by path; until he does, this returns `unpublished`, which is the
+ * weakest TRUE statement available: it is not published. **It makes no claim
+ * about whether anything was shot**, because nothing in the data supports one.
+ *
+ * ⚠⚠ `duration_source = "xls"` IS NOT EVIDENCE A LESSON WAS SHOT. Scott typed
+ * an estimate for every planned lesson — *"always 5 min, plus or minus 1
+ * minute."* **Do not classify from it.**
+ *
+ * ⚠⚠⚠ NONE OF THESE LABELS PROMISES A DATE, AN ETA OR A NOTIFICATION. The
+ * schema holds no publish date and nothing emails anybody when a video lands —
+ * so *"it'll play here the moment it lands"* and *"written and scheduled"*,
+ * which this replaces, were both promises with no writer.
+ */
+export const RECORDED_STATUSES = [
+  "RAW_SHOT",
+  "PRODUCED",
+  "LOADED_TO_STREAMING",
+] as const;
+
+export type LessonState = "ready" | "recorded" | "unpublished" | "planned";
+
+export function lessonState(lesson: {
+  vimeo_ref: string | null;
+  production_status: string;
+}): LessonState {
+  if (isPlayable(lesson)) return "ready";
+  if ((RECORDED_STATUSES as readonly string[]).includes(lesson.production_status))
+    return "recorded";
+  /* ⚠ The 59. The status claims a URL and there is none — say only what is true. */
+  if (urlMissing(lesson)) return "unpublished";
+  return "planned";
+}
+
+/** ⚠ ONE STRING PER STATE, so no surface invents its own wording. */
+export const LESSON_STATE_LABEL: Record<LessonState, string> = {
+  ready: "Ready",
+  recorded: "Recorded — not published yet",
+  unpublished: "Not published yet",
+  planned: "Planned",
+};
 
 /**
  * A path a learner can actually START — at least one playable lesson anywhere in
@@ -253,13 +320,36 @@ export function vimeoEmbedUrl(ref: string | null | undefined): string | null {
   return null;
 }
 
-/** Audience facet → the label the catalog uses. */
+/**
+ * Audience facet → the label the catalog uses.
+ *
+ * ── ⚠⚠⚠ THIS IS AN AUDIENCE, NOT A LEVEL (`P2-A4-E611`) ─────────────────
+ *
+ * ⚠⚠ SCOTT, 2026-09-23: *"There is no level column — `LearningPath.audience`
+ * is an audience, not a level. Label it as an audience or leave it out."*
+ *
+ * ⚠ THE 2026-09-21 MOCKUP SHOWS *"6 courses · Advanced"*, *"3 courses ·
+ * Intermediate"*, *"5 courses · Beginner"*. ⚠⚠⚠ **NO SUCH COLUMN EXISTS.**
+ * `audience` is a four-value enum — `BEGINNERS`, `END_USER`, `IMPLEMENTER`,
+ * `CONTENT_CREATOR` — and three of those are not difficulty at all. An
+ * implementer is not more advanced than an end user; they are a different
+ * person doing a different job.
+ * ⚠ `BEGINNERS` is the one value that READS like a level, which is exactly why
+ * the label is rendered with `AUDIENCE_PREFIX` — *"For Beginners"* cannot be
+ * misread as a difficulty rating the way a bare *"Beginners"* can.
+ */
 export const AUDIENCE_LABEL: Record<string, string> = {
   BEGINNERS: "Beginners",
   END_USER: "End Users",
   IMPLEMENTER: "Implementers",
   CONTENT_CREATOR: "Content Creators",
 };
+
+/**
+ * ⚠ The word that makes the facet read as an audience wherever it is shown.
+ * ⚠⚠ ONE CONSTANT so the path hero and the public page cannot disagree.
+ */
+export const AUDIENCE_PREFIX = "For";
 
 export const AUDIENCE_ORDER = [
   "BEGINNERS",

@@ -24,12 +24,20 @@ export function LessonPlayer({
   title,
   instructor,
   thumbnailUrl,
+  stateLabel = "Not published yet",
 }: {
   embedUrl: string | null;
   title: string;
   instructor: { name: string; photoUrl: string | null } | null;
-  /** Imported poster art — shown behind the coming-soon state. */
+  /** Imported poster art — shown behind the unplayable state. */
   thumbnailUrl?: string | null;
+  /**
+   * ⚠⚠ `P2-A4-E611` — WHAT THIS LESSON HONESTLY IS, decided by `lessonState`
+   * on the server. ⚠ The component does not classify; it prints. ⚠⚠ A default
+   * is given so no caller can accidentally render a blank badge, and
+   * `Not published yet` is the weakest true statement of the four.
+   */
+  stateLabel?: string;
 }) {
   const [pip, setPip] = useState(true);
 
@@ -55,12 +63,21 @@ export function LessonPlayer({
               alt={title}
               className="h-full w-full object-contain"
             />
+            {/* ⚠⚠ `P2-A4-E611` — THE STATE, NOT A PROMISE. ⚠ SUPERSEDED,
+                quoted not deleted (`E164`):
+                //   Coming soon */}
             <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[12px] font-bold text-white backdrop-blur-sm">
-              Coming soon
+              {stateLabel}
             </span>
           </div>
+          {/* ⚠⚠⚠ NO DATE, NO ETA, NO NOTIFICATION. ⚠ SUPERSEDED, quoted not
+              deleted (`E164`):
+              //   The video isn't loaded yet — it'll play here the moment it lands.
+              ⚠ *"the moment it lands"* is a promise about timing with nothing
+              behind it: the schema holds no publish date and nothing emails
+              anybody when a video is uploaded. */}
           <p className="mt-2 text-[13.5px] text-ink-2">
-            The video isn&apos;t loaded yet — it&apos;ll play here the moment it lands.
+            There is no video for this lesson yet. Everything else about it is below.
           </p>
         </div>
       );
@@ -68,11 +85,17 @@ export function LessonPlayer({
 
     return (
       <div className="flex aspect-video w-full flex-col items-center justify-center rounded-brand border border-line bg-bg-soft px-6 text-center">
-        <p className="font-display text-[20px] font-bold">Coming soon</p>
+        {/* ⚠⚠⚠ `P2-A4-E611` — TWO PROMISES CAME OUT OF THIS BLOCK.
+            ⚠ *"scheduled"* asserts a plan nothing records, and *"the moment it
+            lands"* asserts a notification nothing sends.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <p className="font-display text-[20px] font-bold">Coming soon</p>
+            //   This lesson is written and scheduled — the video isn't loaded yet.
+            //   Everything else about it is below, and it'll play here the moment
+            //   it lands. */}
+        <p className="font-display text-[20px] font-bold">{stateLabel}</p>
         <p className="mt-2 max-w-md text-[14.5px] text-ink-2">
-          This lesson is written and scheduled — the video isn&apos;t loaded yet.
-          Everything else about it is below, and it&apos;ll play here the moment
-          it lands.
+          There is no video for this lesson yet. Everything else about it is below.
         </p>
       </div>
     );

@@ -93,10 +93,41 @@ check(
   /NO SUMMED DURATIONS/.test(learnSrc) && /run_time/.test(learnSrc),
   "GUARD 1 is permanent — this brief added a separate column instead of relaxing it"
 );
+/*
+  ── ⚠⚠ THE RULE IS ABOUT `parseRunTime`, NOT ABOUT THE FILE (`P2-A4-E611`) ─
+
+  ⚠ IT USED TO ASSERT that the whole module never mentions `run_time`, as a
+  proxy for *"the parser takes a plain string; it must not reach into the
+  model."* ⚠⚠ THE PROXY BROKE when `shownRunTime` arrived, and that function
+  reaches into the model ON PURPOSE: it judges whether a length may be shown,
+  which is a question about `duration_source`, and it cannot ask it without
+  both columns.
+
+  ⚠⚠⚠ SO THE ASSERTION NOW NAMES THE FUNCTION IT WAS ALWAYS ABOUT, and is
+  STRONGER for it — a file-wide grep could never have said WHICH function was
+  reaching. `check:rollup`'s case: the ruling changed, the code did not drift.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("1 — the duration lib does not read run_time as a number anywhere but the parser",
+  //     (strip(readFileSync(LIB, "utf8")).match(/run_time/g) ?? []).length === 0, …);
+*/
+const durLibSrc = strip(readFileSync(LIB, "utf8"));
+const parserBody = /export function parseRunTime[\s\S]*?\n}/.exec(durLibSrc)?.[0] ?? "";
+check("1 — parseRunTime was found by the scan", parserBody.length > 0);
 check(
-  "1 — the duration lib does not read run_time as a number anywhere but the parser",
-  (strip(readFileSync(LIB, "utf8")).match(/run_time/g) ?? []).length === 0,
+  "1 — parseRunTime takes a plain string and never reaches into the model",
+  !/run_time|duration_source/.test(parserBody),
   "the parser takes a plain string; it must not reach into the model"
+);
+/* ⚠⚠ AND THE ONE FUNCTION THAT MAY READ THE MODEL READS **BOTH** COLUMNS.
+   Reading `run_time` alone would be the fabricated-figure defect: a length with
+   no idea whether anybody measured it. */
+const shownBody = /export function shownRunTime[\s\S]*?\n}/.exec(durLibSrc)?.[0] ?? "";
+check("1 — shownRunTime was found by the scan", shownBody.length > 0);
+check(
+  "1 — shownRunTime judges the SOURCE, not just the value",
+  /duration_source/.test(shownBody) && /run_time/.test(shownBody),
+  "a length shown without checking where it came from is an estimate wearing a measurement's clothes"
 );
 
 // ---------------------------------------------------------------------------

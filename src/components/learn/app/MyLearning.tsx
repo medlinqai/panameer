@@ -13,7 +13,6 @@ import { CourseSpineBar } from "@/components/learn/app/CourseSpineBar";
 /* ⚠ `StreakTile` IS NO LONGER IMPORTED HERE (`P1-J3-E364` WS-2) — it left the
    stat row because `0 days` was the first thing a new learner saw. ⚠ THE
    COMPONENT AND ITS EXPORT STAY (`E164`); only this page stopped rendering it. */
-import { AchievementGrid } from "@/components/learn/app/ClientOnly";
 import type { DashPath, MyLearning as MyLearningData } from "@/lib/learn-dashboard";
 import type { Suggestion } from "@/lib/learn-suggestion";
 
@@ -279,7 +278,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             All Courses
           </Link>
           <Link href="/learn/paths?tab=mine" className="text-ink-2 hover:text-magenta">
-            My learning
+            My Learning
           </Link>
         </nav>
 
@@ -389,10 +388,27 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           </>
         )}
 
-        {/* ⚠ `completedAt` NO LONGER TRAVELS (`E606` R3) — the streak it fed is gone.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <AchievementGrid achievements={data.achievements} completedAt={data.completedAt} /> */}
-        <AchievementGrid achievements={data.achievements} />
+        {/*
+          ── ⚠⚠⚠ THE ACHIEVEMENTS GRID IS RETIRED (`P2-A4-E611`, Q2) ──────────
+
+          ⚠⚠ SCOTT, 2026-09-23, OVERRULING HIS OWN EARLIER RULING: *"a badge
+          earned is a record; five padlocks reading '0 of 5' is a progress
+          system."*
+
+          ⚠ `E606` retired XP, levels, bands and streaks. ⚠⚠ THIS SURVIVED THAT
+          PASS AND IS THE SAME THING IN A NEW COSTUME — measured on the phone at
+          390px, `/learn` rendered *"Achievements — 0 of 5 unlocked"* above five
+          locked tiles, on a page where one figure can be non-zero.
+          ⚠ EARNED CERTIFICATES LIVE IN THE CERTIFICATES PANEL, which is a
+          record of something that happened rather than a ladder of things that
+          have not.
+          ⚠⚠ `AchievementGrid.tsx` AND ITS `ClientOnly` WRAPPER STAY ON DISK
+          (`E164`) — nothing imports them. Do not delete the files.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   ⚠ `completedAt` NO LONGER TRAVELS (`E606` R3) — the streak it fed is gone.
+          //   <AchievementGrid achievements={data.achievements} />
+          //   <AchievementGrid achievements={data.achievements} completedAt={data.completedAt} />
+        */}
       </div>
     </div>
   );
@@ -648,6 +664,22 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
  *
  * ⚠ THE SELECTION IS NOT RE-DERIVED HERE. Title, slug, reason and the counts all
  * arrive decided from the server, so the page cannot disagree with the picker.
+ *
+ * ── ⚠⚠⚠ THE MOCKUP'S "RECOMMENDED FOR YOU" IS NOT BUILT, AND THAT IS A
+ *        RULING, NOT AN OMISSION (`P2-A4-E611`, Q3) ────────────────────────
+ *
+ * ⚠ The 2026-09-21 mockup shows a *"Recommended for You"* section subtitled
+ * **"From the gaps on your profile."**
+ * ⚠⚠⚠ NOTHING COMPUTES THAT, AND THE CODE COMPUTES THE OPPOSITE.
+ * `skillMatchesPath` matches a path to skills the member ALREADY HAS; a gap is
+ * a skill they do not have. ⚠ `ProfileGapFlags` exists but records profile
+ * COMPLETENESS — no bio, no education, no languages — and maps to no path.
+ *
+ * ⚠⚠ SCOTT, 2026-09-23: *"relabel, don't rebuild… use the code's own honest
+ * reason string. A real gap→path computation is its own brief."*
+ * ⚠ SO THIS CARD STAYS AS IT IS. `s.reason` already says *"Because Payables is
+ * on your profile"* — which is true, and is the sentence the mockup's subtitle
+ * would have contradicted. **Do not add the mockup's wording to it.**
  */
 function SuggestedFirstPath({ s }: { s: Suggestion }) {
   return (

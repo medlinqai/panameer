@@ -130,14 +130,28 @@ function SectionRows({
             </Link>
             {!l.playable && (
               <span className="ml-2 inline-block whitespace-nowrap rounded-full bg-black/[0.05] px-2 py-0.5 text-[11.5px] font-bold text-ink-2">
-                Coming soon
+                {/* ⚠ `P2-A4-E611` — the state, not a promise. ⚠ SUPERSEDED (`E164`):
+                    //   Coming soon */}
+                {l.stateLabel}
               </span>
             )}
           </td>
           <td className="px-4 py-3 text-ink-2">
             <span className="line-clamp-2">{l.description ?? "—"}</span>
           </td>
-          <td className="px-4 py-3 whitespace-nowrap text-ink-2">{l.runTime ?? "—"}</td>
+          {/*
+            ⚠⚠ `P2-A4-E611` — A MISSING LENGTH IS OMITTED, NOT DASHED.
+            ⚠ Scott, 2026-09-23: *"a missing length is a missing fact, not an
+            uncountable one."* A dash is reserved for a figure we cannot count;
+            an untimed lesson is one nobody has timed, and the honest rendering
+            of that is an empty cell.
+            ⚠ `runTime` ARRIVES ALREADY JUDGED — `shownRunTime` returned null
+            for every source that is not `vimeo`, so this component does not
+            know the rule and must not learn it.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <td className="…">{l.runTime ?? "—"}</td>
+          */}
+          <td className="px-4 py-3 whitespace-nowrap text-ink-2">{l.runTime}</td>
           <td className="px-4 py-3 text-right">
             {l.completed ? (
               <span className="whitespace-nowrap text-[14px] font-bold text-emerald-700">

@@ -27,6 +27,47 @@
  * module is the only thing that ever turns one into the other.
  */
 
+/**
+ * ── ⚠⚠⚠ THE ONLY SOURCE A LENGTH MAY BE SHOWN FROM (`P2-A4-E611`) ────────
+ *
+ * ⚠⚠ SCOTT, 2026-09-23: *"always 5 min, plus or minus 1 minute."*
+ *
+ * ⚠⚠⚠ `duration_source` HAS THREE VALUES AND ONLY ONE OF THEM IS A
+ * MEASUREMENT. Counted on the live catalogue, 2026-09-23:
+ *
+ *   `vimeo`  130 lessons — read back from Vimeo's own endpoint. ⚠ A FACT.
+ *   `xls`    206 lessons — ⚠⚠ **PLANNING ESTIMATES SCOTT TYPED**, before the
+ *                          video existed. 33 of them have no `vimeo_ref` at
+ *                          all, which is what gives the game away.
+ *   null     186 lessons — nothing recorded.
+ *
+ * ⚠⚠⚠ RENDERING AN `xls` VALUE AS A LESSON LENGTH IS A FABRICATED FIGURE. It
+ * is not an approximation of a real number; it is a number that was never
+ * measured, presented in the place a measurement goes.
+ *
+ * ⚠⚠ AND THE ANSWER FOR THE OTHER 392 IS TO OMIT THE LENGTH, NOT TO DASH IT.
+ * Scott, 2026-09-23: *"a missing length is a missing fact, not an uncountable
+ * one."* ⚠ A dash means *we cannot count this*; a lesson with no measured
+ * duration is simply a lesson we have not timed, and the honest rendering of
+ * that is nothing at all.
+ */
+export const MEASURED_DURATION_SOURCE = "vimeo";
+
+/**
+ * The length this lesson may show, or `null` for "show nothing".
+ *
+ * ⚠ It returns the STORED display string, not a re-derivation: `run_time` is
+ * what the page has always printed and Scott's ±1 minute remark is about that
+ * string. ⚠⚠ THE SOURCE IS WHAT THIS FUNCTION JUDGES, NEVER THE VALUE.
+ */
+export function shownRunTime(lesson: {
+  run_time: string | null;
+  duration_source: string | null;
+}): string | null {
+  if (lesson.duration_source !== MEASURED_DURATION_SOURCE) return null;
+  return lesson.run_time?.trim() || null;
+}
+
 /** Two hours. ⚠ A longer "lesson" is far likelier to be a bad cell than a video. */
 export const DURATION_CEILING_SECONDS = 7200;
 

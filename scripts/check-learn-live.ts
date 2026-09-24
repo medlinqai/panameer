@@ -147,7 +147,15 @@ function routes(dir = "src/app", out: string[] = []): string[] {
     for (const p of hidden) {
       const view = await getLearnPath(p.slug, null);
       if (view && view.ready) leaks.push(`getLearnPath(${p.slug}).ready === true`);
-      const app = await getAppPath(p.slug, "00000000-0000-0000-0000-000000000000");
+      /* ⚠ `P2-A4-E611` — `getAppPath` takes a `Viewer` now, because the path
+         view carries the forum teaser and that asks `canAccessPathForum`.
+         ⚠⚠ A STRANGER WITH A REAL-LOOKING ID IS STILL THE POINT: the id owns
+         nothing, so the enrolment clause cannot rescue the path.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   const app = await getAppPath(p.slug, "00000000-0000-0000-0000-000000000000"); */
+      const app = await getAppPath(p.slug, {
+        userId: "00000000-0000-0000-0000-000000000000",
+      } as never);
       if (app && app.ready) leaks.push(`getAppPath(${p.slug}).ready === true`);
     }
     check(
@@ -194,9 +202,32 @@ function routes(dir = "src/app", out: string[] = []): string[] {
     })(apiDir);
     const stripTs = (src: string) =>
       src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
-    const pathRoutes = routes.filter((f) =>
-      /prisma\.learningPath\.(findFirst|findUnique)/.test(stripTs(readFileSync(f, "utf8")))
-    );
+    /*
+      ⚠⚠⚠ THE POPULATION IS ROUTES THAT ADMIT SOMEBODY TO A PATH — not every
+      route that merely resolves one (`P2-A4-E611`).
+
+      ⚠ MEASURED: `/api/learn/interest` resolves a path and is CORRECTLY
+      ungated. It writes a `PathInterest` row, which is a member saying *"please
+      make this one"* — **the whole point is asking for a path with nothing to
+      watch.** Requiring `pathIsOpenTo` there would make the demand signal
+      impossible to send for exactly the 11 paths it exists to measure.
+      ⚠⚠ `check:rollup`'S CASE AGAIN: the ruling changed, the code did not
+      drift.
+
+      ⚠ ADMISSION IS DERIVED FROM THE WRITE (`E587`), never from a skip-list: a
+      route admits somebody if it writes a `LearnEnrollment`, a `LessonProgress`
+      or a `LearnTestAttempt`. A new route that grants access joins this gate by
+      granting it.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   const pathRoutes = routes.filter((f) =>
+      //     /prisma\.learningPath\.(findFirst|findUnique)/.test(stripTs(readFileSync(f, "utf8")))
+      //   );
+    */
+    const ADMITS = /\b(learnEnrollment|lessonProgress|learnTestAttempt)\.(create|createMany|upsert)\b/;
+    const pathRoutes = routes.filter((f) => {
+      const body = stripTs(readFileSync(f, "utf8"));
+      return /prisma\.learningPath\.(findFirst|findUnique)/.test(body) && ADMITS.test(body);
+    });
     check(
       "4 — ⚠ the sweep found Learn write routes that resolve a path (E586)",
       pathRoutes.length > 0,

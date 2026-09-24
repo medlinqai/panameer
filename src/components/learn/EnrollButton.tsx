@@ -21,11 +21,26 @@ export function EnrollButton({
   enrolled,
   signedIn,
   learnGaps = [],
+  notReady = false,
 }: {
   pathId: string;
   slug: string;
   enrolled: boolean;
   signedIn: boolean;
+  /**
+   * ── ⚠⚠⚠ THE PATH HAS NO PLAYABLE LESSON (`P2-A4-E611`, Q4) ──────────────
+   *
+   * ⚠⚠ SCOTT, 2026-09-23: *"keep Enroll disabled with a reason. A rendered
+   * control whose handler refuses is worse than no control — a disabled button
+   * that says why teaches; a hidden one looks broken."*
+   *
+   * ⚠ MEASURED 2026-09-23 at 390px: an unready path rendered a live **Enroll
+   * Now**, and `api/learn/enroll` refused it with `PATH_NOT_READY`. A door onto
+   * a wall (`E579`).
+   * ⚠⚠ THIS IS NOT THE BOUNDARY. The route refuses regardless — this only stops
+   * the page promising something the server will decline.
+   */
+  notReady?: boolean;
   /**
    * ⚠ THE `LEARN` GATE, MIRRORED (`P1-ALL-E034`). Computed on the server by the
    * same function the route refuses with. ⚠ NOT THE BOUNDARY — the route refuses
@@ -39,6 +54,32 @@ export function EnrollButton({
   /* ⚠ Already ENROLLED is never blocked. The gate is on joining, and someone who
      joined before the bar existed must still be able to LEAVE. */
   const blocked = !enrolled && learnGaps.length > 0;
+
+  /*
+    ⚠⚠ THE REFUSAL IS SHOWN BEFORE THE SIGNED-OUT PITCH, AND THAT ORDER IS THE
+    POINT: a signed-out visitor must not be sold an account in order to join a
+    path nobody can start. ⚠ The outline below it still renders — reading is
+    never gated (`E362`).
+  */
+  if (notReady) {
+    return (
+      <div>
+        <button
+          type="button"
+          disabled
+          className="w-full cursor-not-allowed rounded-[11px] border border-white/25 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white/55"
+        >
+          Enroll Now
+        </button>
+        {/* ⚠ IT NAMES THE MECHANISM, NEVER THE MEMBER. Nothing here says "you
+            cannot" — the path has no videos, which is a fact about the path. */}
+        <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
+          There are no videos in this path yet, so there is nothing to start. The
+          outline below is real, and enrolling opens when the first lesson does.
+        </p>
+      </div>
+    );
+  }
 
   if (!signedIn) {
     /*

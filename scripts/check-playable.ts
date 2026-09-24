@@ -68,26 +68,58 @@ check(`1 — the owner of the definition exists: ${LEARN}`, existsSync(LEARN));
 check("1 — PLAYABLE_STATUSES is the three-status ladder", JSON.stringify([...PLAYABLE_STATUSES]) === JSON.stringify(["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"]));
 
 /*
-  ⚠⚠ THE MIRROR SURVIVES, AND WHY IS RECORDED RATHER THAN GUESSED AT.
-  `lib/learn.ts` imports prisma; `StructureEditor.tsx` is `"use client"`. Importing
-  the real one there would drag prisma -> pg -> node:dns into the browser bundle,
-  which is the exact defect `P1-J1.4-E296` hit and had to split a module to fix.
-  ⚠ SO IT IS ASSERTED TO AGREE, character for character, on a real case.
+  ── ⚠⚠⚠ THE MIRROR IS GONE, AND THIS GUARD SAID THE OPPOSITE (`P2-A4-E610`)
+
+  ⚠ WHAT THIS BLOCK USED TO ASSERT: that `lib/learn.ts` imports prisma, that
+  `StructureEditor.tsx` therefore CANNOT import it, and that its hand-written
+  copy agrees character for character.
+
+  ⚠⚠⚠ EVERY PREMISE IN THAT SENTENCE IS NOW FALSE. `E608` removed the prisma
+  import — `lib/learn.ts` is pure predicates over rows a caller already
+  fetched — so a `"use client"` component can import it, and `E610` did.
+
+  ⚠⚠⚠ AND THE OLD ASSERTION WAS PASSING ON A COMMENT. It tested
+  `readFileSync(LEARN)` UNSTRIPPED, and `learn.ts` carries the deleted import
+  QUOTED under `E164`. **It was green about a line that is not code.** That is
+  rule 12's trap exactly — a gate that scans source text matches the quote as
+  if it were live — and it is why every scan below reads STRIPPED source.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ⚠⚠ THE MIRROR SURVIVES, AND WHY IS RECORDED RATHER THAN GUESSED AT.
+  //   `lib/learn.ts` imports prisma; `StructureEditor.tsx` is `"use client"`.
+  //   check("1 — lib/learn.ts still imports prisma, which is why the mirror cannot be removed",
+  //     /from "@\/lib\/prisma"/.test(readFileSync(LEARN, "utf8")));
+  //   check("1 — the mirror still declares itself a mirror", /mirrors `isPlayable`/.test(...));
+  //   check("1 — the mirror reads the SAME three statuses via CLAIMS_URL",
+  //     /CLAIMS_URL\.includes\(l\.productionStatus\)/.test(mirrorSrc) && ...);
+  //   check("1 — ⚠ CLAIMS_URL is character-for-character PLAYABLE_STATUSES",
+  //     new RegExp(`CLAIMS_URL\\s*=\\s*\\[...`).test(claims), ...);
 */
-check("1 — lib/learn.ts still imports prisma, which is why the mirror cannot be removed", /from "@\/lib\/prisma"/.test(readFileSync(LEARN, "utf8")));
-check(`1 — the mirror is still where it says it is: ${MIRROR}`, existsSync(MIRROR));
-const mirrorSrc = existsSync(MIRROR) ? strip(readFileSync(MIRROR, "utf8")) : "";
-check("1 — the mirror still declares itself a mirror", /mirrors `isPlayable`/.test(existsSync(MIRROR) ? readFileSync(MIRROR, "utf8") : ""));
+const learnSrc = strip(readFileSync(LEARN, "utf8"));
 check(
-  "1 — the mirror reads the SAME three statuses via CLAIMS_URL",
-  /CLAIMS_URL\.includes\(l\.productionStatus\)/.test(mirrorSrc) && /vimeoRef\?\.trim\(\)/.test(mirrorSrc)
+  "1 — ⚠⚠ lib/learn.ts is PURE — no prisma, so nothing needs to mirror it",
+  !/from "@\/lib\/prisma"/.test(learnSrc),
+  "asserted on STRIPPED source: the deleted import is quoted under E164 and a quote is not code"
+);
+check(`1 — the authoring tree is still where it says it is: ${MIRROR}`, existsSync(MIRROR));
+const mirrorSrc = existsSync(MIRROR) ? strip(readFileSync(MIRROR, "utf8")) : "";
+check(
+  "1 — ⚠⚠⚠ the authoring tree CALLS the real predicate rather than copying it",
+  /isPlayableRow\(\{ vimeo_ref: l\.vimeoRef, production_status: l\.productionStatus \}\)/.test(
+    mirrorSrc
+  ),
+  "a hand-rolled copy agrees until the rule changes"
+);
+check(
+  "1 — and it imports it from the one definition",
+  /from "@\/lib\/learn"/.test(mirrorSrc)
 );
 const primitives = join("src", "components", "admin", "learn", "primitives.tsx");
-const claims = existsSync(primitives) ? readFileSync(primitives, "utf8") : "";
+const claims = existsSync(primitives) ? strip(readFileSync(primitives, "utf8")) : "";
 check(
-  "1 — ⚠ CLAIMS_URL is character-for-character PLAYABLE_STATUSES",
-  new RegExp(`CLAIMS_URL\\s*=\\s*\\[${[...PLAYABLE_STATUSES].map((s) => `"${s}"`).join(", ")}\\]`).test(claims),
-  "if these ever disagree, admin and the learner see different lessons"
+  "1 — ⚠ CLAIMS_URL is PLAYABLE_STATUSES re-exported, not retyped",
+  /CLAIMS_URL:\s*readonly string\[\]\s*=\s*PLAYABLE_STATUSES/.test(claims),
+  "two arrays holding the same three strings is one concept in two places (E585)"
 );
 
 /*
@@ -218,11 +250,38 @@ async function live() {
   const zero = published.filter((p) => !pathHasPlayableLessons(p));
   check("2 — the catalogue really does contain unplayable paths to test with", zero.length > 0, "nothing to prove");
 
-  /* LEARNER: absent from the catalog. */
+  /*
+    ── ⚠⚠⚠ THE CATALOGUE NOW LISTS ALL 23, AND THAT IS A RULING (`P2-A4-E611`)
+
+    ⚠⚠ SCOTT, 2026-09-23: *"This deliberately supersedes E606's decision to show
+    only the 12… hiding a path means the demand signal can never arrive."*
+    ⚠ *"There is no way for anyone to ask for them. Absence of requests is not
+    absence of demand when there is no request button."*
+
+    ⚠⚠⚠ SO `HIDDEN` BECOMES `LISTED AND MARKED NOT-READY`, WHICH IS THE
+    STRONGER ASSERTION: hiding a path proves a learner cannot START it only by
+    making it invisible, and an invisible thing cannot be checked for honesty.
+    ⚠ The rule `E362` actually protects — **a member is never sent at a path
+    with nothing to watch** — is asserted directly now: the card is present AND
+    `ready` is false. `check:rollup`'s case, not `check:cert-skills`'.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   /* LEARNER: absent from the catalog. * /
+    //   const home = await getLearnHome(null);
+    //   const homeIds = new Set(home.map((c) => c.id));
+    //   for (const z of zero) {
+    //     check(`2 — ⚠ HIDDEN from getLearnHome: ${z.title}`, !homeIds.has(z.id));
+  */
   const home = await getLearnHome(null);
   const homeIds = new Set(home.map((c) => c.id));
+  const byId = new Map(home.map((c) => [c.id, c]));
   for (const z of zero) {
-    check(`2 — ⚠ HIDDEN from getLearnHome: ${z.title}`, !homeIds.has(z.id));
+    check(`2 — ⚠ LISTED in getLearnHome: ${z.title}`, homeIds.has(z.id));
+    check(
+      `2 — ⚠⚠ and MARKED NOT READY: ${z.title}`,
+      byId.get(z.id)?.ready === false,
+      "listed is not the same as startable; a card that cannot say so is the dead end E607 closed"
+    );
   }
   check("2 — and the playable ones are still there", published.filter((p) => pathHasPlayableLessons(p)).every((p) => homeIds.has(p.id)));
 
@@ -262,10 +321,29 @@ async function live() {
       catalogLessons === dash2.totals.lessons,
       `catalog ${catalogLessons} vs dashboard ${dash2.totals.lessons}`
     );
+    /*
+      ⚠⚠⚠ THE TWO FIGURES ARE SEPARATE AND MUST STAY SEPARATE (`P2-A4-E611`).
+      ⚠ The catalogue now LISTS all 23; the dashboard counts the 12 a member can
+      START. ⚠⚠ SCOTT: *"the hero count does not change — 12 paths you can start
+      today… the two are never added together into one number."*
+      ⚠ So the agreement asserted here is between the dashboard total and the
+      READY cards, and the row below proves the two numbers genuinely differ —
+      without that, this would pass on a catalogue that had quietly gone back to
+      hiding the 11.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   check("2 — and on the PATH total",
+      //     cardsForTotals.length === dash2.totals.paths, …);
+    */
+    const readyCards = cardsForTotals.filter((c) => c.ready).length;
     check(
-      "2 — and on the PATH total",
-      cardsForTotals.length === dash2.totals.paths,
-      `catalog ${cardsForTotals.length} vs dashboard ${dash2.totals.paths}`
+      "2 — and on the STARTABLE path total",
+      readyCards === dash2.totals.paths,
+      `ready cards ${readyCards} vs dashboard ${dash2.totals.paths}`
+    );
+    check(
+      "2 — ⚠⚠ and the catalogue really is longer than the startable count",
+      cardsForTotals.length > readyCards,
+      `${cardsForTotals.length} listed vs ${readyCards} startable — if equal, the 11 are hidden again and the demand signal cannot arrive`
     );
   }
   check(

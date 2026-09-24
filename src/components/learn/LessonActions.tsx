@@ -95,7 +95,12 @@ export function LessonActions({
           >
             Message {instructorName ? "the Instructor" : "the Instructor"}
           </button>
-          <span className="mt-1 text-[12px] text-ink-2">Coming soon</span>
+          {/* ⚠⚠ `P2-A4-E611` — IT NAMES THE MECHANISM, NOT A DATE. Messaging is
+              COLLEAGUE-ONLY today; learner→instructor messaging is not built and
+              nothing schedules it. ⚠ *"Coming soon"* promised a timeline with no
+              writer behind it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <span className="mt-1 text-[12px] text-ink-2">Coming soon</span> */}
+          <span className="mt-1 text-[12px] text-ink-2">Not open yet</span>
         </span>
 
         {next ? (

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react";
-import { AUDIENCE_LABEL } from "@/lib/learn";
+import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
+import { WantThisButton } from "@/components/learn/WantThisButton";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { PathSpine } from "@/components/learn/app/PathSpine";
+import type { PathForumTeaser } from "@/lib/forums";
 import { initialsOf } from "@/lib/learn-instructor-format";
 import type { AppPathView } from "@/lib/learn-path-app";
 
@@ -56,7 +58,9 @@ export function AppPath({
               <Layers className="h-3 w-3" aria-hidden />
               Learning Path
               <span aria-hidden>·</span>
-              {AUDIENCE_LABEL[path.audience] ?? path.audience}
+              {/* ⚠ `P2-A4-E611` — "For End Users", never a bare "End Users"
+                  that reads as a difficulty. There is no level column. */}
+              {`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[path.audience] ?? path.audience}`}
               {path.group && (
                 <>
                   <span aria-hidden>·</span>
@@ -117,8 +121,21 @@ export function AppPath({
             )}
           </div>
 
-          {/* The arc + the one CTA that is true for this learner's state. */}
+          {/*
+            The arc + the one CTA that is true for this learner's state.
+
+            ── ⚠⚠⚠ AN UNREADY PATH SHOWS NO ARC (`P2-A4-E611`, Q4) ───────────
+            ⚠ SCOTT, 2026-09-23: *"on an unready path: hide the progress ring
+            and the stage rail; keep Enroll disabled with a reason."*
+            ⚠⚠ A 0% RING ON A PATH WITH NOTHING TO WATCH IS NOT A ZERO — it is a
+            measurement of a thing that cannot be measured, and it reads as *you
+            have not started* when the truth is *there is nothing to start.*
+            ⚠ MEASURED at 390px on 2026-09-23: the unready path rendered the
+            ring, the full stage rail AND a live Enroll button beneath `E607`'s
+            "This Path Has No Videos Yet" notice.
+          */}
           <div className="rounded-[18px] border border-white/20 bg-white/10 p-5 text-center backdrop-blur-[6px]">
+            {path.ready && (
             <ProgressRing
               value={path.completed}
               max={path.lessons}
@@ -131,8 +148,17 @@ export function AppPath({
               sublabelClassName="text-[10px] text-white/60"
               className="mx-auto mb-3"
             />
+            )}
 
-            {!signedIn ? (
+            {!path.ready ? (
+              <EnrollButton
+                pathId={path.id}
+                slug={path.slug}
+                enrolled={false}
+                signedIn={signedIn}
+                notReady
+              />
+            ) : !signedIn ? (
               <EnrollButton pathId={path.id} slug={path.slug} enrolled={false} signedIn={false} />
             ) : !path.enrolled ? (
               <>
@@ -188,8 +214,33 @@ export function AppPath({
 
       <div className="grid items-start gap-6 px-5 pt-6 pb-8 sm:px-8 min-[1100px]:grid-cols-[1fr_296px]">
         <div className="min-w-0">
+          {/*
+            ── ⚠⚠⚠ THE STAGE RAIL DOES NOT RENDER ON AN UNREADY PATH (Q4) ────
+
+            ⚠⚠ The rail is Enrolled → Courses → Path Test → Certificate. On a
+            path with no playable lesson **every one of those stages is
+            unreachable**, so drawing them as pending says the member is part
+            way along a journey that has not opened.
+            ⚠ `E607`'s notice above already states the fact plainly; the rail
+            underneath it was contradicting the notice.
+            ⚠⚠⚠ CORRECTION, CAUGHT IN THE SCREENSHOT AND NOT BY A GATE:
+            **`PathSpine` IS THE COURSE OUTLINE, NOT THE STAGE RAIL.** My first
+            pass hid it, and the result was `E607`'s notice saying *"The outline
+            below is real — these are the lessons this path will cover"* above
+            **nothing at all**. ⚠ The notice pointed at an empty page.
+            ⚠ SO THE OUTLINE RENDERS ALWAYS. Reading is never gated (`E362`):
+            *"somebody deciding whether this path is worth waiting for needs to
+            see what it covers."* ⚠⚠ THE STAGE RAIL IS THE TEST NODE AND THE
+            CERTIFICATE NODE BELOW — those are the stages nothing can reach, and
+            those are what stay hidden.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   ⚠⚠ THE OUTLINE IS NOT HIDDEN WITH IT — `PathSpine` is the STAGE rail…
+            //   {path.ready && <PathSpine path={path} />}
+          */}
           <PathSpine path={path} />
 
+          {path.ready && (
+          <>
           {/* ── the path test node ─────────────────────────────────────────── */}
           <div className="relative mt-5 pl-[46px] sm:pl-[52px]">
             <span
@@ -315,6 +366,53 @@ export function AppPath({
               )}
             </div>
           </div>
+          </>
+          )}
+
+          {/*
+            ── ⚠⚠⚠ THE PATH FORUM PANEL (`P2-A4-E611`, Q8) ───────────────────
+
+            ⚠⚠ IT RENDERED TO NOBODY UNTIL NOW, AND THAT IS `E579` EXACTLY.
+            `[slug]/page.tsx` returns `<AppPath>` early for ANY signed-in
+            viewer — before `getPathForumTeaser` is ever reached — and the
+            teaser's `canOpen` is false for every signed-OUT viewer by
+            `canAccessPathForum`'s first line. ⚠ So the only door to a path's
+            room was drawn on the one branch where it could never open.
+
+            ⚠ THE COUNTS ARE COUNTED AND THE ROOM IS EMPTY: 27 boards,
+            **0 threads and 0 posts** on 2026-09-23. ⚠⚠ The panel says so
+            rather than implying activity.
+          */}
+          {/*
+            ── ⚠⚠ THE DEMAND SIGNAL (`P2-A4-E611` WS-C) ──────────────────────
+            ⚠ SCOTT: *"list them and mix them down only if there is an
+            interest."* ⚠⚠ Until now there was **no way to ask** — the 11
+            unready paths were hidden from discovery entirely, so silence was
+            never evidence.
+            ⚠ PER PATH, NOT PER LESSON — a tenth of the noise for the same
+            signal, and the production decision is taken a path at a time.
+            ⚠⚠ THE HEADING CHANGES WITH THE STATE, THE CONTROL DOES NOT: on an
+            unready path the ask is for the videos; on a ready one it is for
+            more of the same. **Neither promises anything.**
+          */}
+          <div className="mt-6 rounded-brand border border-line bg-white p-5">
+            <h3 className="font-display text-[16px] font-bold">
+              {path.ready ? "Want More Like This?" : "Want This One Made?"}
+            </h3>
+            <p className="mt-1.5 mb-3 text-[13px] leading-relaxed text-ink-2">
+              {path.ready
+                ? "Telling us helps decide what gets recorded next."
+                : "The outline is written. Telling us helps decide what gets recorded next."}
+            </p>
+            <WantThisButton
+              pathId={path.id}
+              initialWanted={path.interest.mine}
+              initialCount={path.interest.count}
+              signedIn={signedIn}
+            />
+          </div>
+
+          {path.forum && <PathForumPanel forum={path.forum} pathSlug={path.slug} />}
         </div>
 
         {/*
@@ -438,6 +536,68 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
     <div className="rounded-[15px] border border-line bg-white px-4 py-4 shadow-[0_14px_32px_-26px_rgba(23,30,62,0.4)]">
       <h5 className="mb-3 font-display text-[12.5px] font-bold tracking-[0.02em]">{title}</h5>
       {children}
+    </div>
+  );
+}
+
+/**
+ * ── ⚠⚠⚠ THE PATH FORUM PANEL (`P2-A4-E611`, Q8) ──────────────────────────
+ *
+ * ⚠⚠ THE MOCKUP SHOWS *"42 learners · 6 new posts this week"*. ⚠⚠⚠ BOTH ARE
+ * SAMPLES. Measured 2026-09-23: **27 boards, 0 threads, 0 posts**, and one
+ * enrolment in the whole database. **A mockup is a layout, not a data source;
+ * where they disagree the query wins.**
+ *
+ * ⚠ THE POST COUNT RENDERS ONLY ABOVE ZERO — `getPathForumTeaser`'s own note
+ * says why: *"a forum advertising '0 threads' is an anti-advertisement."*
+ * ⚠⚠ AND THE EMPTY ROOM STILL SAYS SOMETHING TRUE rather than going quiet: at
+ * genuine zero it names the first move, which is the standing rule for a zero.
+ * ⚠ IT PROMISES NOTHING — no "join the conversation", no activity implied.
+ *
+ * ⚠⚠ NO THREAD TITLE REACHES THIS COMPONENT AND NONE EVER MAY. The teaser
+ * carries counts only and `check:forums` fails the build if a title enters it.
+ *
+ * ⚠⚠ `canOpen` IS NOT THE BOUNDARY — `getBoard` refuses on the server. It only
+ * decides whether to offer a door, so a member who cannot enter is told what
+ * would let them in instead of meeting a refusal.
+ *
+ * ⚠ THE SLUG IS `path-${path.slug}`, WHICH IS `ensurePathBoard`'S OWN
+ * DERIVATION, and it is the convention `[slug]/page.tsx` already linked with.
+ */
+function PathForumPanel({
+  forum,
+  pathSlug,
+}: {
+  forum: PathForumTeaser;
+  pathSlug: string;
+}) {
+  return (
+    <div className="mt-6 rounded-brand border border-line bg-white p-5">
+      <h3 className="font-display text-[16px] font-bold">Path Forum</h3>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">
+        {/* ⚠ A COUNTED FIGURE, SCOPED TO THIS PATH — enrolments in it. */}
+        {forum.members} {forum.members === 1 ? "learner" : "learners"}
+        {forum.threads > 0 ? ` · ${forum.threads} ` : ""}
+        {forum.threads > 0 ? (forum.threads === 1 ? "thread" : "threads") : ""}
+      </p>
+      {forum.threads === 0 && (
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">
+          Nobody has posted here yet. The first question is the useful one.
+        </p>
+      )}
+      {forum.canOpen ? (
+        <Link
+          href={`/community/forums/path-${pathSlug}`}
+          className="mt-3.5 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-4 py-2 text-[13px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
+        >
+          Open the Forum
+        </Link>
+      ) : (
+        /* ⚠ IT NAMES WHAT OPENS THE DOOR, never what the member lacks. */
+        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
+          The room is for people taking this path. Enrolling opens it.
+        </p>
+      )}
     </div>
   );
 }
