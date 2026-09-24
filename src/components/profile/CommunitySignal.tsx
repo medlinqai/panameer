@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   Go to the forums
+*/
 import Link from "next/link";
 import type { CommunitySignal } from "@/lib/community-signal";
 
@@ -90,10 +99,10 @@ export function CommunitySignalBlock({
 
       {isOwner && (
         <Link
-          href="/community/forums"
+          href="/community/groups"
           className="mt-4 inline-block text-[13px] font-semibold text-magenta hover:underline"
         >
-          Go to the forums <span aria-hidden>→</span>
+          Go to Groups <span aria-hidden>→</span>
         </Link>
       )}
     </section>

@@ -60,7 +60,7 @@ export function ForumComposer({
       setTitle("");
       setBody("");
       if (mode === "thread" && data.id) {
-        router.push(`/community/forums/thread/${data.id}`);
+        router.push(`/community/groups/thread/${data.id}`);
       } else {
         router.refresh();
       }

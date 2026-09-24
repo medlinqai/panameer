@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   const track = … : "Panameer Rooms";
+*/
 import { prisma } from "@/lib/prisma";
 import {
   countThreadsWaitingOn,
@@ -392,7 +401,7 @@ export async function getDiscoverGroups(viewer: Viewer): Promise<DiscoverTrack[]
     /* ⚠ A path group with no `group` value is still a PATH group. */
     const track = b.learning_path_id
       ? (b.learningPath?.group ?? "Learning Paths")
-      : "Panameer Rooms";
+      : "Panameer Groups";
 
     if (!out.has(track)) out.set(track, []);
     out.get(track)!.push({

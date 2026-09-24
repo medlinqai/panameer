@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   Answering questions in the forums of paths you are in is how this fills in.
+*/
 import { Avatar } from "@/components/Avatar";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import "./member-row.css";
@@ -127,7 +136,7 @@ export function MentoringPanels({
           </p>
           {helpfulAnswers === 0 && (
             <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
-              No evidence yet. Answering questions in the forums of paths you are
+              No evidence yet. Answering questions in the groups of paths you are
               in is how this fills in.
             </p>
           )}

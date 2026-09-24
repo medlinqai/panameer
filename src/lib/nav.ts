@@ -624,7 +624,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     //   { label: "Home", href: "/connect" },
     //   { label: "Community", href: "/community" },
     //   { label: "Colleagues", href: "/community/colleagues" },
-    //   { label: "Forums", href: "/community/forums", state: "live" },
+    //   { label: "Forums", href: "/community/groups", state: "live" },
     //   { label: "Mentoring", href: "/community/mentors", state: "early" },
     //   { label: "Teams", href: "/community/teams", state: "live" },
 
@@ -636,7 +636,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 
     ⚠ `Groups` IS A LABEL OVER THE EXISTING FORUMS ROUTE. No redirect, no link
     rewrite — `forums` is already a noun, so `E533` does not force the URL to
-    move. ⚠⚠ THE PAID HALF OF GROUPS DOES NOT EXIST (`/community/forums` is the
+    move. ⚠⚠ THE PAID HALF OF GROUPS DOES NOT EXIST (`/community/groups` is the
     free forum-per-learning-path of `E383`). The tab names the surface; the
     money in it is unbuilt, and that is the right order — name it, then build
     into it. ⚠ DO NOT FABRICATE A PAID STATE.
@@ -690,7 +690,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
       Connect and all 31 live references still resolve.
     */
     { label: "Community", href: "/community" },
-    { label: "Groups", href: "/community/forums", state: "live" },
+    { label: "Groups", href: "/community/groups", state: "live" },
     /*
       ── ⚠⚠⚠ `Service Products` IS PROVIDER-ONLY TODAY, AND THAT IS MEASURED ──
 
@@ -713,7 +713,34 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
       §1 fails if an item's declared capability does not match its route's, and
       `connect-tabs.ts` reads this field to decide who is shown the tab at all.
     */
-    { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
+    /*
+      ── ⚠⚠⚠ `Service Products` HAS LEFT CONNECT'S ROW (`P2-A3-E619` WS-C) ────
+
+      ⚠ SCOTT, 2026-09-22, RULING 4 (his walk note `E030`): *"**Service Products
+      belongs to Sell.** It already lives at `/my-services` under the Sell band
+      item, so the duplicate tab comes out of Connect. Connect's row becomes
+      Community · Groups."*
+      ⚠⚠ IT WAS A DUPLICATE, NOT A DOOR: the SAME route is already the Sell band
+      item's destination, and it keeps its OWN tab row at `/my-services` — which
+      is a different `PAGE_TABS` set a few hundred lines up. ⚠⚠⚠ I REMOVED THE
+      WRONG ONE FIRST: the two entries are byte-identical, and a blind
+      first-match replace took the `/my-services` set's own tab, which would
+      have stripped the page's row instead of Connect's. Anchored here on
+      surrounding context, which is unique.
+
+      ⚠⚠⚠ AND `/my-services` KEEPS A SECOND ENTRANCE INSIDE CONNECT ANYWAY —
+      `ConnectProfile`'s *"Service Products I Offer"* card links to it for the
+      owner. ⚠ That card is deliberately NOT removed: *"REMOVING A CARD CAN
+      REMOVE A CAPABILITY'S ONLY ENTRANCE"* (`decisions_2026-09-23` §5).
+
+      ⚠ `Settings` IS NOT REMOVED. Ruling 4 names Service Products and nothing
+      else, and absorbing Settings into Connect is explicitly its own brief.
+      ⚠⚠ So the row is Community · Groups · Settings — three tabs, not the two
+      the brief's sentence lists. Reported, not silently resolved either way.
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
+    */
     /* ⚠ `/settings` POINTS AT `/settings` FOR NOW. Scott ruled that Settings is
        ABSORBED into Connect — it renders inside, the row persists, `/settings`
        redirects in — but that is its own id and is far too large to ride here. */
@@ -764,7 +791,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 
         { n: 1, label: "Messages", href: "/messages" },
         { n: 2, label: "Colleagues", href: "/community" },
-        { n: 3, label: "Forums", href: "/community/forums", state: "live" },
+        { n: 3, label: "Forums", href: "/community/groups", state: "live" },
         { n: 4, label: "Mentoring", href: "/community/mentors", state: "early" },
         { n: 5, label: "Teams", href: "/community/teams", state: "live" },
 

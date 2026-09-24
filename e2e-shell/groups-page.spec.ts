@@ -59,7 +59,7 @@ test.use({ viewport: PHONE });
 
 test("groups — the page renders its counted figures at 390px", async ({ page }) => {
   await signIn(page);
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
   /* ⚠ The heading is `Groups`, matching the nav (`E612` Q17). */
   await expect(page.locator("h1")).toHaveText("Groups");
@@ -128,7 +128,7 @@ test("groups — the page renders its counted figures at 390px", async ({ page }
 
 test("groups — the picture is one circle per group, dashed while quiet", async ({ page }) => {
   await signIn(page);
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
   const dots = page.locator(".pm-groups-dot");
   const n = await dots.count();
@@ -161,7 +161,7 @@ test("groups — the picture is one circle per group, dashed while quiet", async
 
 test("groups — the rebuild redraws and the numbers do not move", async ({ page }) => {
   await signIn(page);
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
   /*
     ── ⚠⚠⚠ THE BRIEF'S RULE: "THE NUMBERS NEVER CHANGE ON A REBUILD." ───────
@@ -205,7 +205,7 @@ test("groups — the rebuild redraws and the numbers do not move", async ({ page
  */
 test("groups — a host sees the groups she runs, and they are counted", async ({ page }) => {
   await signInAsSeeded(page, "sw_user4@straterp.com");
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
   const runFig = page.locator(".pm-groups-figs dd").first();
   const runCount = Number((await runFig.textContent())?.trim());
@@ -232,7 +232,7 @@ test("groups — a host sees the groups she runs, and they are counted", async (
 test("groups — desktop, and every card states counted facts", async ({ page }) => {
   await page.setViewportSize(DESK);
   await signIn(page);
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
   const cards = page.locator(".pm-groups-card");
   const n = await cards.count();
@@ -276,7 +276,7 @@ test("groups — desktop, and every card states counted facts", async ({ page })
  * place the form sends them exists.
  *
  * ⚠⚠⚠ THE REDIRECT IS THE HALF THAT COULD SILENTLY BE A WALL. `createGroup`
- * returns a slug and the form pushes to `/community/forums/<slug>`, where
+ * returns a slug and the form pushes to `/community/groups/<slug>`, where
  * `getBoard` decides. A member-created group has a NULL `learning_path_id`,
  * the same as the four general boards — so it *should* be readable by anyone.
  * ⚠ **"Should" is a reading of the code.** This walks it.
@@ -286,14 +286,14 @@ test("groups — a member can start a group, and lands somewhere real", async ({
   let slug: string | null = null;
   try {
     await signIn(page);
-    await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
 
     await page.fill("#new-group-title", TITLE);
     await page.click('button:has-text("Start a Group")');
 
     /* ⚠ The form pushes to the new room — so the URL itself is the assertion
        that a slug came back and the route resolved. */
-    await page.waitForURL(/\/community\/forums\/g-e619-walk/, { timeout: 20_000 });
+    await page.waitForURL(/\/community\/groups\/g-e619-walk/, { timeout: 20_000 });
     slug = new URL(page.url()).pathname.split("/").pop() ?? null;
 
     /* ⚠⚠⚠ NOT A 404, AND NOT AN ERROR PAGE. The heading is the group's own
@@ -302,7 +302,7 @@ test("groups — a member can start a group, and lands somewhere real", async ({
 
     /* ⚠ And it is reachable a second time, by URL — a redirect that works only
        as a push would be a room nobody can return to. */
-    await page.goto(`/community/forums/${slug}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/community/groups/${slug}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("h1")).toHaveText(TITLE);
 
     /*
@@ -319,7 +319,7 @@ test("groups — a member can start a group, and lands somewhere real", async ({
       match. ⚠⚠ Recorded rather than quietly corrected, because a test that
       asserts the wrong noun and PASSES is the version nobody ever finds.
     */
-    await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
     const run = Number(
       (await page.locator(".pm-groups-figs dd").nth(0).textContent())?.trim()
     );
@@ -400,11 +400,11 @@ test("groups — the three views each render, and Discover groups by track", asy
   await signIn(page);
 
   /* ⚠ MY GROUPS is the default — no query string. */
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".pm-groups-views a.is-on")).toHaveText("My Groups");
   await page.screenshot({ path: "/tmp/e619b-my.png", fullPage: true });
 
-  await page.goto("/community/forums?view=discover", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups?view=discover", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".pm-groups-views a.is-on")).toHaveText("Discover");
   /*
     ⚠⚠⚠ GROUPED BY TRACK, AND THE TRACK IS A REAL COLUMN. Measured:
@@ -417,7 +417,7 @@ test("groups — the three views each render, and Discover groups by track", asy
   expect(tracks.length, "Discover rendered no tracks").toBeGreaterThan(1);
   await page.screenshot({ path: "/tmp/e619b-discover.png", fullPage: true });
 
-  await page.goto("/community/forums?view=requests", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".pm-groups-views a.is-on")).toHaveText("Requests");
   await expect(
     page.getByRole("heading", { name: "People Asking to Join Your Groups" })
@@ -426,7 +426,7 @@ test("groups — the three views each render, and Discover groups by track", asy
   await page.screenshot({ path: "/tmp/e619b-requests.png", fullPage: true });
 
   /* ⚠ An unknown view falls back to My Groups rather than 404ing. */
-  await page.goto("/community/forums?view=nonsense", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups?view=nonsense", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".pm-groups-views a.is-on")).toHaveText("My Groups");
 
   console.log(`E619/views  tracks on Discover: ${tracks.length} — ${tracks.join(" · ")}`);
@@ -446,7 +446,7 @@ test("groups — the three views each render, and Discover groups by track", asy
  */
 test("groups — join, it appears in My Groups, then leave", async ({ page }) => {
   await signIn(page);
-  await page.goto("/community/forums?view=discover", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups?view=discover", { waitUntil: "domcontentloaded" });
 
   const joinButtons = page.getByRole("button", { name: "Join" });
   const available = await joinButtons.count();
@@ -470,18 +470,18 @@ test("groups — join, it appears in My Groups, then leave", async ({ page }) =>
 
   /* ⚠⚠ AND IT IS ON THE MY GROUPS LIST, not merely in a counter. A figure that
      moves while the list does not is the `E603` WS-C divergence. */
-  await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Groups You Joined" })).toBeVisible();
 
   /* ── LEAVE, which is also this walk's teardown ─────────────────────────
      ⚠⚠⚠ THE WALK CLEANS UP THROUGH THE PRODUCT, NOT THROUGH THE DATABASE. A
      teardown that deleted the row would prove the join and leave the LEAVE
      unproven — and leaving is half of what the brief asked to see. */
-  await page.goto("/community/forums?view=discover", { waitUntil: "domcontentloaded" });
+  await page.goto("/community/groups?view=discover", { waitUntil: "domcontentloaded" });
   const leaveButtons = page.getByRole("button", { name: "Leave" });
   if ((await leaveButtons.count()) === 0) {
     /* ⚠ A joined group leaves Discover, so Leave lives on the group's own page. */
-    await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
     const joinedCard = page.locator(".pm-groups-card").last();
     await joinedCard.click();
     await page.getByRole("button", { name: "Leave" }).first().click();
@@ -491,7 +491,7 @@ test("groups — join, it appears in My Groups, then leave", async ({ page }) =>
 
   await expect
     .poll(async () => {
-      await page.goto("/community/forums", { waitUntil: "domcontentloaded" });
+      await page.goto("/community/groups", { waitUntil: "domcontentloaded" });
       const t = await page.locator(".pm-groups-figs dd").nth(2).textContent();
       return Number(t?.trim());
     }, { timeout: 15_000 })
@@ -554,7 +554,7 @@ test("groups — one member asks, the owner approves, and the row says who decid
 
     /* ── 1 · THE ASKER ────────────────────────────────────────────────── */
     await signIn(page);
-    await page.goto("/community/forums?view=discover", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups?view=discover", { waitUntil: "domcontentloaded" });
 
     const card = page.locator(".pm-groups-card", { hasText: TITLE });
     await expect(card, "the REQUEST group is not offered in Discover").toBeVisible();
@@ -566,7 +566,7 @@ test("groups — one member asks, the owner approves, and the row says who decid
     /* ⚠⚠⚠ THE ASKER IS TOLD THEY ARE WAITING — "told either way", half one. */
     await expect
       .poll(async () => {
-        await page.goto("/community/forums?view=requests", { waitUntil: "domcontentloaded" });
+        await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
         return page.locator("text=Waiting on the group's owner.").count();
       }, { timeout: 15_000 })
       .toBeGreaterThan(0);
@@ -584,7 +584,7 @@ test("groups — one member asks, the owner approves, and the row says who decid
 
     /* ── 2 · THE OWNER ────────────────────────────────────────────────── */
     await signInAsSeeded(page, "sw_user4@straterp.com");
-    await page.goto("/community/forums?view=requests", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
 
     /* ⚠⚠ THE COUNT RIDES THE TAB, so a request waiting on you is visible
        without going looking for it. */
@@ -662,7 +662,7 @@ test("groups — a stranger cannot decide, and a decline is told", async ({ page
 
     /* ── the ask ──────────────────────────────────────────────────────── */
     await signIn(page);
-    await page.goto("/community/forums?view=discover", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups?view=discover", { waitUntil: "domcontentloaded" });
     const card = page.locator(".pm-groups-card", { hasText: TITLE });
     await card.getByRole("button", { name: "Ask to Join" }).click();
 
@@ -711,7 +711,7 @@ test("groups — a stranger cannot decide, and a decline is told", async ({ page
 
     /* ── the decline, by the actual owner ─────────────────────────────── */
     await signInAsSeeded(page, "sw_user4@straterp.com");
-    await page.goto("/community/forums?view=requests", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
     const row = page.locator(".pm-groups-req", { hasText: TITLE });
     await row.getByRole("button", { name: /^Decline/ }).click();
 
@@ -739,7 +739,7 @@ test("groups — a stranger cannot decide, and a decline is told", async ({ page
 
     /* ── ⚠⚠⚠ AND THE ASKER IS TOLD, IN WORDS, ON THEIR OWN PAGE ─────────── */
     await signIn(page);
-    await page.goto("/community/forums?view=requests", { waitUntil: "domcontentloaded" });
+    await page.goto("/community/groups?view=requests", { waitUntil: "domcontentloaded" });
     await expect(
       page.locator("text=The owner declined this one."),
       "the asker is never told they were declined"

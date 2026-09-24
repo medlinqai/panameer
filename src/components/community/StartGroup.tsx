@@ -47,7 +47,7 @@ export function StartGroup() {
       setTitle("");
       /* ⚠ Straight into the room they just made — a create that leaves you on
          the page you started from reads as though nothing happened. */
-      router.push(`/community/forums/${data.slug}`);
+      router.push(`/community/groups/${data.slug}`);
       router.refresh();
     } catch {
       setError("We couldn't reach the server. Check your connection.");

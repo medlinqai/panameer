@@ -117,7 +117,7 @@ export default async function GroupsPage({
     ⚠ Four cards, then a link — the mockup's own shape. A page that lists
     twenty rooms is the wall of empty rooms the old one was criticised for.
     ⚠⚠⚠ `Show All` EXPANDS THIS PAGE, IT DOES NOT NAVIGATE TO A NEW ONE. The
-    first draft linked to `/community/forums/all`, **which does not exist** —
+    first draft linked to `/community/groups/all`, **which does not exist** —
     and Scott runs 13 groups, so that link would have rendered for him and
     404'd. ⚠ `E579`: a control whose handler refuses is a door onto a wall, and
     a link to a route nobody built is the plainest form of it. ⚠⚠ A query
@@ -140,7 +140,7 @@ export default async function GroupsPage({
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community/forums"
+        current="/community/groups"
       />
 
       <div className="mx-auto max-w-5xl">
@@ -191,7 +191,7 @@ export default async function GroupsPage({
                   button is absent rather than dead. */}
               {home?.starterSlug && (
                 <Link
-                  href={`/community/forums/${home.starterSlug}`}
+                  href={`/community/groups/${home.starterSlug}`}
                   className="pm-hero-cta"
                 >
                   Post a Starter Question
@@ -246,7 +246,7 @@ export default async function GroupsPage({
                   {home.needsYou.map((t) => (
                     <Link
                       key={t.id}
-                      href={`/community/forums/thread/${t.id}`}
+                      href={`/community/groups/thread/${t.id}`}
                       className="block rounded-brand border border-line bg-white p-4 transition-colors hover:border-magenta"
                     >
                       <p className="text-[15px] font-bold">{t.title}</p>
@@ -308,7 +308,7 @@ export default async function GroupsPage({
             <div id="start-a-group" className="rounded-brand border border-line bg-white p-4">
               <h3 className="font-display text-[15px] font-bold">Start a Group</h3>
               <p className="mb-3 mt-1 text-[13px] leading-relaxed text-ink-2">
-                A topic, a region, an alumni room — anyone can start one, and
+                A topic, a region, an alumni group — anyone can start one, and
                 anyone can join it.
               </p>
               <StartGroup />
@@ -418,7 +418,7 @@ function GroupList({
             {cards.slice(0, shown).map((c) => (
               <Link
                 key={c.slug}
-                href={`/community/forums/${c.slug}`}
+                href={`/community/groups/${c.slug}`}
                 className="pm-groups-card"
               >
                 <p className="pm-groups-card-t">{c.title}</p>
@@ -499,7 +499,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
           <div className="grid gap-3 sm:grid-cols-2">
             {t.groups.map((g) => (
               <div key={g.slug} className="pm-groups-card pm-groups-card-static">
-                <Link href={`/community/forums/${g.slug}`} className="pm-groups-card-t">
+                <Link href={`/community/groups/${g.slug}`} className="pm-groups-card-t">
                   {g.title}
                 </Link>
                 <p className="pm-groups-card-m">
@@ -616,7 +616,7 @@ function Requests({
               >
                 <div className="min-w-[180px] flex-1">
                   <Link
-                    href={`/community/forums/${r.groupSlug}`}
+                    href={`/community/groups/${r.groupSlug}`}
                     className="text-[15px] font-bold hover:text-magenta"
                   >
                     {r.groupTitle}

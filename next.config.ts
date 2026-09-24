@@ -67,6 +67,37 @@ const nextConfig: NextConfig = {
         is a different authenticated route and `/:path*` here would swallow it.
       */
       { source: "/services", destination: "/shop", permanent: true },
+      /*
+        ── ⚠⚠⚠ `/community/forums` → `/community/groups` (`P2-A3-E619` WS-C) ──
+
+        ⚠ SCOTT, RULING 1: *"The word is Groups everywhere."* The words came off
+        the screen first; this moves the URL to match, so a member who reads
+        `Groups` and looks at the address bar sees the same word.
+
+        ⚠⚠ IT IS A WILDCARD HERE, AND THAT IS SAFE — UNLIKE `/services` ABOVE.
+        The whole subtree moved: `/community/forums`, `/community/forums/<slug>`
+        and `/community/forums/thread/<id>` are the only routes that ever lived
+        under it, and **all three moved together**. ⚠ Nothing authenticated was
+        left behind for `:path*` to swallow, which is the exact hazard the
+        `/services` note warns about.
+
+        ⚠⚠⚠ THE API TREE IS UNTOUCHED AND MUST STAY THAT WAY. `/api/community/
+        forums` is a different surface with its own callers; renaming a page
+        route does not rename an endpoint, and a redirect here never sees it —
+        `source` is matched against the request path, and `/api/...` does not
+        start with `/community/`.
+
+        ⚠ `permanent: true` (308), matching the house pattern for a moved route
+        (`/finances` → `/payments`, `/settings/packages` → `/my-services`).
+        ⚠⚠ A 308 IS CACHED, so this line is effectively permanent — which is
+        correct for a rename Scott has ruled, and is why it is a rename rather
+        than a copy.
+      */
+      {
+        source: "/community/forums/:path*",
+        destination: "/community/groups/:path*",
+        permanent: true,
+      },
     ];
   },
 };

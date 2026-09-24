@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   This group belongs to a learning path. Enrolling in the path puts you in the room.
+*/
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -158,7 +167,7 @@ export function groupOffer(
 export const GROUP_OFFER_COPY: Record<GroupOffer["kind"], string> = {
   member: "You're in this group.",
   by_enrolment:
-    "This group belongs to a learning path. Enrolling in the path puts you in the room.",
+    "This group belongs to a learning path. Enrolling in the path puts you in the group.",
   join: "Anyone can join this group.",
   request: "Ask to join and an owner will decide.",
   /* ⚠⚠ NO JOIN CONTROL RENDERS FOR THIS ONE — the sentence is the whole
@@ -200,7 +209,7 @@ export const GROUP_OFFER_COPY: Record<GroupOffer["kind"], string> = {
  * ⚠⚠⚠ `pathAccess` IS INJECTED, NOT IMPORTED, AND THAT IS A REAL BUG FIX.
  * The first version called `canAccessPathForum` through a dynamic
  * `import("@/lib/forums")` — **from a module `forums.ts` itself imports.** The
- * cycle threw at request time and `/community/forums/getting-started` rendered
+ * cycle threw at request time and `/community/groups/getting-started` rendered
  * *"This page couldn't load"*. ⚠ CAUGHT IN THE SCREENSHOT, NOT BY A GATE: every
  * check was green and the page was blank.
  * ⚠ So the caller — which has already asked the path question to decide whether

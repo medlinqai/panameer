@@ -1,4 +1,33 @@
 /*
+  ── ⚠ `#8a8396` IS A LITERAL ON PURPOSE (`E601` WS-D's ruling, reapplied) ──
+  ⚠⚠ `--color-ink-3` IS NOT DECLARED ANYWHERE, so `var(--color-ink-3, #8a8396)`
+  was the fallback doing all the work while LOOKING like a token read.
+  `community-page.css` settled this: **inline the literal**, because declaring
+  the token means choosing its DARK-MODE value and there is no evidence what
+  that should be. ⚠ Scott's call, still open; this file does not pre-empt it.
+*/
+/*
+  ── ⚠⚠⚠ THE TOKENS ARE `--color-*`, AND THEY CARRY A LITERAL FALLBACK ────
+
+  ⚠⚠ CAUGHT BY `check:css-vars`, AND IT WAS A REAL VISUAL DEFECT, NOT A LINT
+  NIT: this file first read `var(--magenta)`, `var(--ink-3)` and friends. **No
+  such custom properties exist** — the theme tokens are Tailwind v4's
+  `--color-magenta`, `--color-ink-3`, `--color-line` — so every one of those
+  declarations resolved to NOTHING and silently fell back to the browser
+  default. ⚠ The dashed group circles rendered GREY instead of magenta, and the
+  screenshots show it; I read them as styled and did not question the colour.
+  ⚠⚠⚠ A `var()` NAMING A PROPERTY NOBODY DEFINES DOES NOT ERROR — IT JUST
+  DISAPPEARS, which is why this needs a gate rather than an eye.
+
+  ⚠ EVERY READ BELOW CARRIES A LITERAL FALLBACK, matching `community-page.css`
+  — `var(--color-magenta, #d72cd6)`. ⚠⚠ The one place the house rule says NOT
+  to is `--pm-band-h`, where a literal fallback would hard-code a measured
+  height; a colour has no such hazard.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   border: 2px solid var(--magenta);
+  //   color: var(--ink-3);   background: var(--magenta);
+*/
+/*
   ── ⚠⚠ GROUPS — THE PAGE'S OWN RULES (`P2-A3-E619` WS-A) ──────────────────
 
   ⚠ PHONE FIRST. Every rule here is the narrow layout; the only widening is the
@@ -39,8 +68,8 @@
 .pm-groups-dot {
   display: inline-block;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--magenta) 14%, transparent);
-  border: 2px solid var(--magenta);
+  background: color-mix(in srgb, var(--color-magenta, #d72cd6) 14%, transparent);
+  border: 2px solid var(--color-magenta, #d72cd6);
   /* ⚠ The draw-in. `GroupCircles` replays it by changing the element key on
      each rebuild cycle — the animation is the only thing the cycle drives. */
   animation: pm-groups-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
@@ -51,7 +80,7 @@
 .pm-groups-dot.is-quiet {
   border-style: dashed;
   background: transparent;
-  border-color: color-mix(in srgb, var(--magenta) 55%, transparent);
+  border-color: color-mix(in srgb, var(--color-magenta, #d72cd6) 55%, transparent);
 }
 
 @keyframes pm-groups-pop {
@@ -78,21 +107,21 @@
 .pm-groups-legend {
   margin-top: 12px;
   font-size: 13px;
-  color: var(--ink-2);
+  color: var(--color-ink-2, #6b6478);
   text-align: center;
 }
 
 /* ⚠ `E433` — a figure is ink. */
 .pm-groups-legend-n {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
   font-variant-numeric: tabular-nums;
 }
 
 .pm-groups-pic-empty {
   font-size: 13.5px;
   line-height: 1.6;
-  color: var(--ink-2);
+  color: var(--color-ink-2, #6b6478);
   text-align: center;
   padding: 24px 12px;
 }
@@ -111,7 +140,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ink-3);
+  color: #8a8396;
   line-height: 1.3;
 }
 
@@ -119,7 +148,7 @@
   margin: 2px 0 0;
   font-size: 24px;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
   font-variant-numeric: tabular-nums;
 }
 
@@ -137,49 +166,49 @@
 .pm-groups-ghost {
   display: inline-block;
   border-radius: 9999px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--color-line, #e7e3ed);
   padding: 9px 18px;
   font-size: 13.5px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
   transition: border-color 140ms, color 140ms;
 }
 
 .pm-groups-ghost:hover {
-  border-color: var(--magenta);
-  color: var(--magenta);
+  border-color: var(--color-magenta, #d72cd6);
+  color: var(--color-magenta, #d72cd6);
 }
 
 /* ── THE CARDS ─────────────────────────────────────────────────────────── */
 
 .pm-groups-card {
   display: block;
-  border-radius: var(--radius-brand, 10px);
-  border: 1px solid var(--line);
+  border-radius: 10px;
+  border: 1px solid var(--color-line, #e7e3ed);
   background: #fff;
   padding: 14px;
   transition: border-color 140ms;
 }
 
 .pm-groups-card:hover {
-  border-color: var(--magenta);
+  border-color: var(--color-magenta, #d72cd6);
 }
 
 .pm-groups-card-t {
   font-size: 15px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
 }
 
 .pm-groups-card-m {
   margin-top: 3px;
   font-size: 13px;
-  color: var(--ink-2);
+  color: var(--color-ink-2, #6b6478);
 }
 
 .pm-groups-n {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
   font-variant-numeric: tabular-nums;
 }
 
@@ -188,7 +217,7 @@
   margin-top: 10px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--magenta);
+  color: var(--color-magenta, #d72cd6);
 }
 
 /* ── THIS MONTH ────────────────────────────────────────────────────────── */
@@ -209,14 +238,14 @@
 
 .pm-groups-month dt {
   font-size: 13px;
-  color: var(--ink-2);
+  color: var(--color-ink-2, #6b6478);
 }
 
 .pm-groups-month dd {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--color-ink, #1b1226);
   font-variant-numeric: tabular-nums;
 }
 
@@ -267,27 +296,27 @@
   gap: 6px;
   flex: 0 0 auto;
   border-radius: 9999px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--color-line, #e7e3ed);
   /* ⚠ 38px tall with the padding below — a real tap target on a phone. */
   padding: 8px 16px;
   font-size: 13.5px;
   font-weight: 700;
-  color: var(--ink-2);
+  color: var(--color-ink-2, #6b6478);
   white-space: nowrap;
   transition: border-color 140ms, color 140ms, background-color 140ms;
 }
 
 .pm-groups-views a:hover {
-  border-color: var(--magenta);
-  color: var(--magenta);
+  border-color: var(--color-magenta, #d72cd6);
+  color: var(--color-magenta, #d72cd6);
 }
 
 /* ⚠⚠ THE ACTIVE VIEW IS MARKED BY MORE THAN COLOUR — it is filled, so the
    distinction survives a colour-blind reader and a greyscale screenshot.
    ⚠ `aria-current="page"` carries it for a screen reader. */
 .pm-groups-views a.is-on {
-  background: var(--magenta);
-  border-color: var(--magenta);
+  background: var(--color-magenta, #d72cd6);
+  border-color: var(--color-magenta, #d72cd6);
   color: #fff;
 }
 
@@ -301,7 +330,7 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 9999px;
-  background: var(--ink);
+  background: var(--color-ink, #1b1226);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -310,7 +339,7 @@
 
 .pm-groups-views a.is-on .pm-groups-pill {
   background: #fff;
-  color: var(--magenta);
+  color: var(--color-magenta, #d72cd6);
 }
 
 /* ⚠⚠ A DISCOVER CARD IS NOT ITSELF A LINK — it carries a Join control, and a
@@ -321,9 +350,9 @@
 }
 
 .pm-groups-card-static:hover {
-  border-color: var(--line);
+  border-color: var(--color-line, #e7e3ed);
 }
 
 .pm-groups-card-static .pm-groups-card-t:hover {
-  color: var(--magenta);
+  color: var(--color-magenta, #d72cd6);
 }

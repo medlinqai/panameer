@@ -775,7 +775,7 @@ export function ConnectProfile({
               one group. ⚠ Capped at six, with the rest counted rather than
               listed: a visitor card is a summary, and the row is not a
               directory.
-              ⚠⚠ IT LINKS TO `/community/forums`, THE SURFACE — not to a
+              ⚠⚠ IT LINKS TO `/community/groups`, THE SURFACE — not to a
               specific board, because board access is gated on enrolment or
               teaching (`canAccessPathForum`) and this viewer may have neither.
               **A link that 403s is a dead door with a nicer sign.**
@@ -801,7 +801,7 @@ export function ConnectProfile({
                   </p>
                 )}
                 <Link
-                  href="/community/forums"
+                  href="/community/groups"
                   className="mt-2.5 inline-block text-[13px] font-bold text-magenta hover:underline"
                 >
                   Browse Groups

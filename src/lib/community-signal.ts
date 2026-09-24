@@ -131,7 +131,7 @@ export async function getCommunitySignalForProfile(
  * cannot happen."* ⚠ THAT WAS WRONG, and it is worth saying plainly rather than
  * quietly fixing: the same call cut the Mentor badge from `brief_learn_app_shell`
  * on the grounds that "there are no rooms". Forums exist, are shipped, and are
- * live at `/community/forums`. Mentor IS computable — from helpful answers, not
+ * live at `/community/groups`. Mentor IS computable — from helpful answers, not
  * from post count, for the reason the whole of this file exists.
  *
  * ⚠ THE THRESHOLD IS SCOTT'S TO SET AND IS NOT SET HERE. `null` is not a

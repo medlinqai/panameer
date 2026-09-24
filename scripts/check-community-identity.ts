@@ -67,7 +67,7 @@ function walk(dir: string, out: string[] = []): string[] {
 const BAR = join("src", "lib", "identity-bar.ts");
 const COMM = join("src", "lib", "community-identity.ts");
 const FORUMS = join("src", "lib", "forums.ts");
-const ROUTE = join("src", "app", "api", "community", "forums", "route.ts");
+const ROUTE = join("src", "app", "api", "community", "groups", "route.ts");
 const COMPOSER = join("src", "components", "community", "ForumComposer.tsx");
 const WRI = join("src", "lib", "work-request-identity.ts");
 

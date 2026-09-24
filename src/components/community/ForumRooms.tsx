@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   You are not in any forums yet. Enrol in a learning path and its forum opens with it.
+*/
 "use client";
 
 import { useState } from "react";
@@ -30,7 +39,7 @@ function Room({ r }: { r: RoomView }) {
   return (
     <li>
       <Link
-        href={`/community/forums/${r.slug}`}
+        href={`/community/groups/${r.slug}`}
         className="flex items-baseline justify-between gap-2 py-1.5 text-[13.5px] hover:text-magenta"
       >
         <span className="font-semibold">{r.title}</span>
@@ -61,7 +70,7 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
 
       {rooms.length === 0 ? (
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">
-          You are not in any forums yet. Enrol in a learning path and its forum
+          You are not in any groups yet. Enrol in a learning path and its group
           opens with it.
         </p>
       ) : (
@@ -91,7 +100,8 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
                   className="text-[13px] font-semibold text-magenta hover:underline"
                 >
                   Show <span className="text-ink-2">{quiet.length}</span> quiet{" "}
-                  {quiet.length === 1 ? "room" : "rooms"}
+                  {/* ⚠ Ruling 1 — SUPERSEDED (`E164`): "room" : "rooms" */}
+                  {quiet.length === 1 ? "group" : "groups"}
                 </button>
               )}
             </div>
