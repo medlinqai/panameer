@@ -36,6 +36,32 @@ export const UNDELIVERABLE_DOMAINS: readonly string[] = [
   ".test", // RFC 6761 — reserved for testing. `*.test`.
   ".invalid", // RFC 6761 — reserved, guaranteed invalid. `*.invalid`.
   ".example", // RFC 6761 — reserved for documentation. `*.example`.
+  /*
+    ── ⚠⚠⚠ `fakeemail.com` — SCOTT'S SEEDED-USER DOMAIN (`P2-A3-E620`, 34c) ──
+
+    ⚠ SCOTT, 2026-09-24, refusing a preview-wide refusal: *"stop it...send them.
+    If the user is faux...I still direct EVERYONE to a real email. **ONLY Seeded
+    users would have fake emails.** If you want to name them test@fakeemail.com,
+    then hold those only."*
+
+    ⚠⚠ THE RULE IS ADDRESS-BASED, NOT ENVIRONMENT-BASED. I had proposed refusing
+    every send from a Vercel preview; that was **overruled, and rightly** — it
+    would have held mail to real people because of where the code was running,
+    which is the wrong axis. A real person gets real mail from anywhere; only a
+    fake address is held.
+    ⚠⚠⚠ AND IT IS **NOT** RFC-RESERVED, unlike every line above it. `fakeemail.com`
+    is a real registrable domain that Panameer does not own, so this entry is a
+    PRODUCT decision rather than a standards fact — which is exactly why it is
+    commented differently from its neighbours. ⚠ If the seed ever stops using
+    it, this line should go with it.
+
+    ⚠⚠ IT HOLDS NOTHING TODAY — measured 2026-09-24: **ZERO addresses use it.**
+    The seed's 96 deliverable addresses are still `straterp.com`, `panameer.com`,
+    `gmail.com` and `medlinq.ai`. ⚠⚠⚠ THE RE-ADDRESSING IS REPORTED AND NOT DONE
+    (34c's own instruction), and the 15 `gmail.com` addresses may be real third
+    parties — `E526`'s open question, which this ruling does not resolve.
+  */
+  "fakeemail.com", // OURS — seeded users. ⚠ Not RFC-reserved; a product decision.
 ];
 
 /**

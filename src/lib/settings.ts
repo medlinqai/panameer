@@ -458,6 +458,23 @@ export async function getNotificationPrefs(viewer: Viewer) {
       inApp: row?.in_app ?? c.defaults.inApp,
       email: row?.email ?? c.defaults.email,
       sms: row?.sms ?? c.defaults.sms,
+      /*
+        ── ⚠⚠⚠ IS THIS A CHOICE, OR JUST THE DEFAULT? (`P2-A3-E620`, ruling 34d)
+
+        ⚠ SCOTT, 2026-09-24, CORRECTING RULING 13: *"Keep absent-means-default.
+        The settings page shows the EFFECTIVE value and says plainly when it is
+        the default rather than a choice."*
+        ⚠⚠ RULING 13 HAD SAID the opposite — *"never an absent row read as
+        yes"* — and it was **withdrawn** because `E612`'s group-type precedent
+        does not transfer: a stored enum where *"nobody decided"* is dangerous
+        is not a preference where *"I never touched this"* is a real and useful
+        state. ⚠⚠⚠ Writing a row on first notification would **freeze every
+        member's settings against the defaults of the day they were first
+        notified**, and those defaults should be free to improve.
+        ⚠ THE VALUES ABOVE ARE ALREADY EFFECTIVE — this flag is the only new
+        thing, and it is what lets the page say WHY a switch is where it is.
+      */
+      isDefault: row === undefined,
     };
   });
 }

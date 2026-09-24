@@ -8,6 +8,7 @@
 //   This forum is for people taking the path. Enroll to join the conversation.
 */
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import { canLeaveGroup, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* ⚠ `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
 import { teachesPathWhere } from "@/lib/learn-home";
@@ -447,7 +448,8 @@ export async function createThread(
   await requireIdentity(person.id);
   const board = await prisma.forumBoard.findUnique({
     where: { slug: input.boardSlug },
-    select: { id: true, learning_path_id: true },
+    /* ⚠ `P2-A3-E620` — the owner and title are what the worklist item needs. */
+    select: { id: true, learning_path_id: true, host_person_id: true, title: true },
   });
   if (!board) throw new ForumError("That board doesn't exist.", "NOT_FOUND");
   /* ⚠⚠ A PATH FORUM IS CLOSED TO POSTING TOO (`P1-J3-E383`) — enrolled learners
@@ -484,6 +486,31 @@ export async function createThread(
     select: { id: true },
   });
   await awardForumPost(person.id, thread.id);
+
+  /*
+    ── ⚠⚠⚠ THE GROUP'S OWNER OWES AN ANSWER (`P2-A3-E620`, ruling 34e) ──────
+
+    ⚠ A WORKLIST ITEM, cleared by answering — the same question the Groups page
+    already counts through `countThreadsWaitingOn`, so the figure and the item
+    cannot disagree about what *"waiting"* means (`E585`).
+    ⚠⚠ NOBODY IS NOTIFIED ABOUT THEIR OWN ACTION (WS-B item 3): an owner asking
+    a question in their own group does not put an item on their own list.
+    ⚠⚠⚠ THE FOUR GENERAL BOARDS ARE OWNERLESS BY DESIGN (`host_person_id` null,
+    asserted by `check:groups`), so there is nobody to tell and nothing fires —
+    which is correct, not a gap. An approval queue nobody staffs is exactly what
+    Scott refused for those rooms.
+    ⚠ Dedupe on the THREAD, so one question is one item however it is retried.
+  */
+  if (board.host_person_id && board.host_person_id !== person.id) {
+    await notify({
+      event: "group.question_asked",
+      personId: board.host_person_id,
+      entityType: "forum_thread",
+      entityId: thread.id,
+      dedupeKey: `group.question_asked:${thread.id}`,
+      vars: { groupTitle: board.title, threadTitle: title.slice(0, 200), threadId: thread.id },
+    });
+  }
   return thread;
 }
 
