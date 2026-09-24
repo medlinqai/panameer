@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { notify } from "@/lib/notifications";
 import { z } from "zod";
+import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 
@@ -75,6 +76,33 @@ export async function POST(request: Request) {
   }
 
   const pathId = lesson.section.course.learning_path_id;
+
+  /*
+    ── ⚠⚠⚠ THE SAME TWO CHECKS THE ENROL ROUTE RUNS (`P2-A4-E610`) ───────────
+
+    ⚠⚠ SCOTT, 2026-09-23: *"Enrolment is forum membership, so marking one lesson
+    complete grants forum access the enrol route refuses. Apply the same two
+    checks. One rule, called twice — import it, do not restate it."*
+
+    ⚠ MEASURED 2026-09-23: this route ran NEITHER `learnGaps` NOR `pathIsOpenTo`
+    while `/api/learn/enroll` ran both — and the `learnEnrollment.upsert` below
+    is read directly by `canAccessPathForum`, so this was the cheaper door into
+    a path's private forum.
+
+    ⚠⚠ IT SITS AFTER THE UNDO BRANCH, ON PURPOSE. Un-marking a lesson is never
+    refused: a member must always be able to take back something they said about
+    their own progress, and a refusal there would strand whatever they marked
+    before the rule changed.
+    ⚠ IT SITS BEFORE THE TRANSACTION, so a refusal writes NOTHING — not the
+    progress row and not the enrolment. A half-applied gate that records the
+    lesson but not the membership would be a third state nobody designed.
+  */
+  const refusal = await learnEnrolmentRefusal(viewer.userId, pathId);
+  if (refusal) {
+    const { status, ...body } = refusal;
+    return NextResponse.json(body, { status });
+  }
+
   await prisma.$transaction([
     prisma.lessonProgress.upsert({
       where: { user_id_lesson_id: { user_id: viewer.userId, lesson_id: lessonId } },

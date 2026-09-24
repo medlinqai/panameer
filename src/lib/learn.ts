@@ -46,6 +46,31 @@ export function isPlayable(lesson: {
 }
 
 /**
+ * ── ⚠⚠ THE AMBER CASE: THE ROW CLAIMS A URL AND HAS NOT GOT ONE ──────────
+ *
+ * ⚠ 59 lessons on 2026-09-23 — a `production_status` that says the video was
+ * added while `vimeo_ref` is empty. ⚠⚠ It is NOT `!isPlayable`: a lesson still
+ * in concept is honestly unplayable, and this one is *making a false claim*.
+ * The two must never be counted together.
+ *
+ * ⚠⚠⚠ EXTRACTED AT `P2-A4-E610` BECAUSE IT WAS WRITTEN OUT IN FOUR PLACES —
+ * `StructureEditor.tsx`, `LessonEditor.tsx`, `learn-admin.ts` and
+ * `app/admin/learn/page.tsx` — two as predicates and two as Prisma `where`
+ * clauses. ⚠ A hand-rolled copy agrees until the rule changes, and the SQL half
+ * cannot call a TypeScript predicate, which is why `PLAYABLE_STATUSES` is
+ * exported for the `where` clauses to spread.
+ */
+export function urlMissing(lesson: {
+  vimeo_ref: string | null;
+  production_status: string;
+}): boolean {
+  return (
+    (PLAYABLE_STATUSES as readonly string[]).includes(lesson.production_status) &&
+    !lesson.vimeo_ref?.trim()
+  );
+}
+
+/**
  * A path a learner can actually START — at least one playable lesson anywhere in
  * it (`P1-J3-E362`).
  *

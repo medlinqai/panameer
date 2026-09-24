@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { PLAYABLE_STATUSES } from "@/lib/learn";
 
 /**
  * Shared authoring controls for the Learn console.
@@ -43,8 +44,22 @@ export const PRODUCTION_STATUSES = [
   { value: "BLOG_RELEASED", label: "Blog Released" },
 ];
 
-/** Statuses that claim a video exists — see `learn.ts` PLAYABLE_STATUSES. */
-export const CLAIMS_URL = ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"];
+/**
+ * Statuses that claim a video exists.
+ *
+ * ⚠⚠ IT IS `learn.ts`'s LIST, RE-EXPORTED — NOT A SECOND COPY OF IT
+ * (`P2-A4-E610`). ⚠ It was a hand-typed duplicate of `PLAYABLE_STATUSES`,
+ * byte-identical on 2026-09-23 and with nothing to keep it that way. ⚠⚠ A
+ * hand-rolled copy agrees until the rule changes (`E585`), and this one had a
+ * comment pointing at the original while still being a separate array — which
+ * is the failure mode, not a mitigation of it.
+ * ⚠ The NAME stays, because three call sites read it and `CLAIMS_URL` is the
+ * right word in an authoring screen: the admin is looking at what a row
+ * CLAIMS, not at what plays.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   export const CLAIMS_URL = ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"];
+ */
+export const CLAIMS_URL: readonly string[] = PLAYABLE_STATUSES;
 
 export function Field({
   label,

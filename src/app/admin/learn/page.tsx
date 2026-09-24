@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/ConsolePage";
 import { linkVolume } from "@/lib/admin-reports";
 import { readQuestions } from "@/lib/learn-assessment";
+import { PLAYABLE_STATUSES } from "@/lib/learn";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export default async function Page() {
     prisma.lesson.count(),
     prisma.lesson.count({
       where: {
-        production_status: { in: ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] },
+        production_status: { in: [...PLAYABLE_STATUSES] },
         OR: [{ vimeo_ref: null }, { vimeo_ref: "" }],
       },
     }),

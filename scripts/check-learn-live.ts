@@ -213,11 +213,30 @@ function routes(dir = "src/app", out: string[] = []): string[] {
       as ready` assertion above is the behavioural half, and it calls the real
       functions.
     */
-    const ungated = pathRoutes.filter(
-      (f) => !/(if\s*\(\s*!?\s*pathIsOpenTo\(|return\s+!?pathIsOpenTo\()/.test(
-        stripTs(readFileSync(f, "utf8"))
-      )
-    );
+    /*
+      ⚠⚠ TWO WAYS TO BE GATED, AND THE SECOND WAS ADDED AT `P2-A4-E610`:
+      calling `pathIsOpenTo` in control flow, **or** calling
+      `learnEnrolmentRefusal` in control flow — the extracted rule that CONTAINS
+      `pathIsOpenTo` and the identity bar with it.
+      ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`' — the RULING
+      changed, the code did not drift. `/api/learn/enroll` stopped spelling the
+      condition out because `/api/learn/progress` wrote the same table with NO
+      condition at all, and the fix was one rule called twice.
+      ⚠ THE CHAIN IS ONLY HONEST BECAUSE ITS OTHER HALF IS GATED:
+      `check:learn-enrol` assertion 1 fails if `learnEnrolmentRefusal` ever
+      stops containing `pathIsOpenTo(pathHasPlayableLessons(path), false)`. ⚠⚠ A
+      delegation accepted here without that assertion there would be a hole
+      shaped exactly like the one this whole id closed.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   const ungated = pathRoutes.filter(
+      //     (f) => !/(if\s*\(\s*!?\s*pathIsOpenTo\(|return\s+!?pathIsOpenTo\()/.test(
+      //       stripTs(readFileSync(f, "utf8"))
+      //     )
+      //   );
+    */
+    const GATED =
+      /(if\s*\(\s*!?\s*pathIsOpenTo\(|return\s+!?pathIsOpenTo\(|const\s+\w+\s*=\s*await\s+learnEnrolmentRefusal\()/;
+    const ungated = pathRoutes.filter((f) => !GATED.test(stripTs(readFileSync(f, "utf8"))));
     check(
       "4 — ⚠⚠⚠ no Learn write route admits a path discovery hides",
       ungated.length === 0,

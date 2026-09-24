@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { pathHasPlayableLessons, pathIsOpenTo } from "@/lib/learn";
 import { z } from "zod";
+import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
-import { gapSentence, learnGaps } from "@/lib/gate-reads";
 
 const BODY = z.object({
   pathId: z.string().uuid(),
@@ -53,31 +52,33 @@ export async function POST(request: Request) {
     ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
     ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
     funnel and gating discovery costs the audience for everything downstream.
+
+    ⚠⚠⚠ BOTH CONDITIONS NOW LIVE IN `lib/learn-enrolment-gate.ts` AND ARE
+    CALLED FROM HERE (`P2-A4-E610`). ⚠ They are not restated in this file, and
+    they must not be: `/api/learn/progress` writes a `LearnEnrollment` too, it
+    had NEITHER check, and `canAccessPathForum` reads that table directly — so
+    the copy that did not exist was handing out forum membership.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the identity half as it stood
+    here before it was extracted:
+    //   const gaps = await learnGaps(viewer.userId);
+    //   if (gaps.length > 0) {
+    //     return NextResponse.json(
+    //       { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
+    //       { status: 403 }
+    //     );
+    //   }
   */
-  const gaps = await learnGaps(viewer.userId);
-  if (gaps.length > 0) {
-    return NextResponse.json(
-      { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
-      { status: 403 }
-    );
-  }
 
-
+  /* ⚠ The path is still read HERE, because the notification below names it.
+     ⚠⚠ THE RULE IS NOT READ FROM IT — `learnEnrolmentRefusal` asks its own
+     question. This select carries `title` and `slug` and nothing the gate
+     needs. */
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
-    /* ⚠ THE LESSON ROWS COME BACK SO `pathHasPlayableLessons` CAN BE ASKED —
-       the same helper discovery uses, not a second query shaped like it. */
     select: {
       id: true,
       title: true,
       slug: true,
-      courses: {
-        select: {
-          sections: {
-            select: { lessons: { select: { vimeo_ref: true, production_status: true } } },
-          },
-        },
-      },
     },
   });
   if (!path) {
@@ -114,16 +115,22 @@ export async function POST(request: Request) {
 
     ⚠ MEASURED 2026-09-23: **11 of 23 published paths are in this state**, every
     one because not a single lesson has a `vimeo_ref`.
+
+    ⚠⚠⚠ `P2-A4-E610` MOVED BOTH CONDITIONS INTO `learnEnrolmentRefusal`, WHICH
+    IS THE ONE CALL BELOW. ⚠ The reasoning above is unchanged and still applies
+    — it now lives beside the rule it explains as well.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   if (!pathIsOpenTo(pathHasPlayableLessons(path), false)) {
+    //     return NextResponse.json(
+    //       { error: "That path has no videos yet, …", code: "PATH_NOT_READY" },
+    //       { status: 409 }
+    //     );
+    //   }
   */
-  if (!pathIsOpenTo(pathHasPlayableLessons(path), false)) {
-    return NextResponse.json(
-      {
-        error:
-          "That path has no videos yet, so there is nothing to start. You can still read its outline.",
-        code: "PATH_NOT_READY",
-      },
-      { status: 409 }
-    );
+  const refusal = await learnEnrolmentRefusal(viewer.userId, pathId);
+  if (refusal) {
+    const { status, ...body } = refusal;
+    return NextResponse.json(body, { status });
   }
 
   // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
