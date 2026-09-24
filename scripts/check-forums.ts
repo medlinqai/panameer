@@ -314,8 +314,20 @@ async function main() {
      it. What must stay unique is a WRITE. */
   const BACKFILL = join("prisma", "backfill-path-group-owner.ts");
   check("8 — the one-time backfill script is on disk", (bodies.get(BACKFILL) ?? "").length > 0);
+  /*
+    ⚠⚠⚠ THE LOOKAHEAD MUST SIT INSIDE IT, NOT AFTER IT (`P2-A3-E612`).
+    ⚠ `/host_person_id:\s*(?!true\b)/` COULD NOT TELL A READ FROM A WRITE:
+    `\s*` backtracks to zero width, the lookahead then inspects the SPACE rather
+    than the word after it, and `host_person_id: true` — the read this
+    assertion's own comment says is fine — matched.
+    ⚠⚠ IT HAD NEVER FIRED ONLY BECAUSE NO FILE OUTSIDE THE BACKFILL MENTIONED
+    THE COLUMN. `check:groups` reads it to assert the four general boards are
+    ownerless, and the latent bug surfaced immediately.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   /host_person_id:\s*(?!true\b)/.test(b)
+  */
   const writers = [...bodies.entries()]
-    .filter(([f, b]) => f !== BACKFILL && /host_person_id:\s*(?!true\b)/.test(b))
+    .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
     .map(([f]) => f);
   check(
     "8 — only the one-time backfill writes an owner",

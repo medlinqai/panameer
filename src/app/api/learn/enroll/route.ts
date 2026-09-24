@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ensureEnrolmentMembership, removeEnrolmentMembership } from "@/lib/group-membership";
 import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -89,6 +90,10 @@ export async function POST(request: Request) {
     await prisma.learnEnrollment.deleteMany({
       where: { user_id: viewer.userId, learning_path_id: pathId },
     });
+    /* ⚠⚠ `P2-A3-E612` — LEAVING THE PATH LEAVES ITS GROUP. One door, not two:
+       Scott ruled a path group cannot be left on its own, so unenrolling is the
+       only way out and it has to actually take you out. */
+    await removeEnrolmentMembership(viewer.userId, pathId);
     return NextResponse.json({ ok: true, enrolled: false });
   }
 
@@ -133,6 +138,8 @@ export async function POST(request: Request) {
     return NextResponse.json(body, { status });
   }
 
+  /* ⚠⚠ `P2-A3-E612` — ENROLLING IS JOINING, AND NOW IT IS RECORDED AS SUCH.
+     The membership row is written AFTER the enrolment, never instead of it. */
   // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
   await prisma.learnEnrollment.upsert({
     where: {
@@ -141,6 +148,7 @@ export async function POST(request: Request) {
     create: { user_id: viewer.userId, learning_path_id: pathId },
     update: {},
   });
+  await ensureEnrolmentMembership(viewer.userId, pathId);
 
   /*
     ⚠ THE DUPLICATE-SIGNUP FIX SCOTT ASKED FOR ON THE LEARN WALK — *"add the

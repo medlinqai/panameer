@@ -497,6 +497,8 @@ model Person {
   /// `P2-J3-E572` — the path groups this person OWNS. ⚠ Ownership, not
   /// authority: confirming an answer stays `teachesPathWhere`-wide.
   hostedForumBoards ForumBoard[] @relation("ForumBoardHost")
+  groupMemberships   GroupMembership[] @relation("GroupMember")
+  groupDecisionsMade GroupMembership[] @relation("GroupMembershipDecider")
 
   // J2.4 WS-H — the payee-side records. On Person, not ProviderProfile: one
   // login can hold several memberships, and a bank account or a tax form
@@ -3126,6 +3128,36 @@ enum CredentialSource {
   LEARN
 }
 
+/// ── ⚠⚠⚠ HOW SOMEBODY GETS INTO A GROUP (`P2-A3-E612`) ────────────────────
+/// ⚠ OPEN — anyone who asks, immediately.
+/// ⚠ REQUEST — the member asks; an owner approves or declines.
+/// ⚠ INVITE_ONLY — an owner invites; **nobody can ask**, and the page shows no
+///   Join control, because a control that cannot work is a door onto a wall.
+enum GroupType {
+  OPEN
+  REQUEST
+  INVITE_ONLY
+}
+
+/// How a member came to be in the room. ⚠⚠ `BY_ENROLMENT` is the path-backed
+/// case: they never joined, enrolment did.
+enum GroupJoinRoute {
+  JOINED
+  REQUESTED
+  APPROVED
+  INVITED
+  BY_ENROLMENT
+}
+
+/// ⚠ `DECLINED` IS A FIRST-CLASS STATE, NOT A DELETE — otherwise somebody can
+/// ask forever and nobody can tell. Same ruling `Connection` already carries.
+enum GroupMemberState {
+  ACTIVE
+  PENDING
+  DECLINED
+  REMOVED
+}
+
 enum LearnPublishStatus {
   DRAFT
   PUBLISHED
@@ -4128,10 +4160,36 @@ model ForumBoard {
   /// teaches in that path may still confirm. Collapsing the two re-creates the
   /// `E558` lockout, where `expert_person_id` alone would have locked Scott out
   /// of all 16 paths he teaches.
+  /// ── ⚠⚠ THE GROUP'S TYPE (`P2-A3-E612`) ─────────────────────────────────
+  /// ⚠⚠⚠ NO DEFAULT THAT MEANS "NOBODY DECIDED". Every existing board is given
+  /// an explicit value by the backfill: the 23 path groups are `OPEN` because
+  /// enrolment is the door, and ⚠ **the 4 general groups are `OPEN` because
+  /// they are ownerless and are the product's own public rooms** — Scott,
+  /// 2026-09-23: *"an approval queue nobody staffs is worse than an open
+  /// door."* The `@default` exists for the column's sake and is the same value.
+  type GroupType @default(OPEN)
+
+  /// ── ⚠⚠⚠ THE PRICE — STORED AND SHOWN, NEVER TRANSACTABLE ────────────────
+  /// ⚠⚠ **NULL MEANS UNPAID.** It is stated here because a nullable price is
+  /// exactly the kind of column that gets read as zero, and zero would mean
+  /// *"free"* rather than *"nobody has priced this"*.
+  /// ⚠⚠⚠ NO `Payment` ROW IS EVER CREATED ANYWHERE IN THE CODEBASE AND `PAID`
+  /// IS NEVER WRITTEN, so nothing may offer a purchase against this. A
+  /// *"Join for $X"* button would promise a mechanism with no writer — the rule
+  /// that dashed Earnings at `E603`. Buying happens in Shop when Shop can sell.
+  /// ⚠ CENTS, NOT A FLOAT. Money is never a float.
+  price_cents  Int?
+  /// ⚠ The period a price buys — a group is a CALENDAR clock, so the period is
+  /// what a cancellation is measured against. ⚠⚠ Which periods are offered is a
+  /// product call Scott has not made; the column carries one so the model can
+  /// express it.
+  price_period String?
+
   host_person_id   String?       @db.Uuid
   hostPerson       Person?       @relation("ForumBoardHost", fields: [host_person_id], references: [id], onDelete: SetNull)
 
   threads ForumThread[]
+  members GroupMembership[]
 
   @@index([learning_path_id])
   @@index([host_person_id])
@@ -5938,4 +5996,54 @@ model ProfileView {
   /// ⚠ The future "who did I look at" read, and the cascade's own lookup.
   @@index([viewer_person_id, viewed_on])
   @@map("profile_views")
+}
+
+/// ── ⚠⚠⚠ ONE MEMBERSHIP TABLE (`P2-A3-E612` WS-A) ─────────────────────────
+///
+/// ⚠⚠ SCOTT, 2026-09-23: *"one membership table. Enrolling in a path writes a
+/// membership row for that path's group. Otherwise 'am I in this group?' has
+/// two answers that will drift — and a hand-rolled copy agrees until the rule
+/// changes."*
+///
+/// ⚠ ITS SHAPE IS `CompanyMembership`'S, on Scott's instruction: the unique
+/// pair, a role-ish route, a state, who decided and when, and whether it was
+/// automatic. ⚠⚠ THAT MODEL ALREADY SOLVED THIS — a request queue with an
+/// approver and a recorded decision — and inventing a second shape for the same
+/// problem is the thing `E585` is about.
+///
+/// ⚠⚠⚠ MEMBERSHIP IS NOT AUTHORITY OVER THE GROUP. `ForumBoard.host_person_id`
+/// is the owner and it is DISPLAY ONLY (`E572`, reaffirmed 2026-09-23): access
+/// stays `canAccessPathForum`, and approval authority for a PAID group is ruled
+/// when Shop can sell, because nothing can be bought yet.
+model GroupMembership {
+  id        String @id @default(uuid()) @db.Uuid
+  board_id  String @db.Uuid
+  person_id String @db.Uuid
+
+  /// ⚠ HOW they got in. `BY_ENROLMENT` is the path-backed case and is the one
+  /// route no human action creates.
+  route GroupJoinRoute   @default(JOINED)
+  state GroupMemberState @default(ACTIVE)
+
+  /// ⚠ Who approved or declined, and when. Null for `BY_ENROLMENT` — nobody
+  /// decided, enrolment did.
+  decided_at           DateTime?
+  decided_by_person_id String?   @db.Uuid
+  /// ⚠⚠ True when no human was involved. It is how the backfill's rows are
+  /// distinguishable from a real approval forever after.
+  auto_approved Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  board     ForumBoard @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  person    Person     @relation("GroupMember", fields: [person_id], references: [id], onDelete: Cascade)
+  decidedBy Person?    @relation("GroupMembershipDecider", fields: [decided_by_person_id], references: [id], onDelete: SetNull)
+
+  /// ⚠⚠ IDEMPOTENT BY CONSTRUCTION. Re-enrolling cannot create a second row,
+  /// because the database refuses it rather than the code remembering to.
+  @@unique([board_id, person_id])
+  @@index([board_id, state])
+  @@index([person_id, state])
+  @@map("group_memberships")
 }

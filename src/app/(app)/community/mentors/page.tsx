@@ -116,7 +116,13 @@ export default async function MentorsPage({
       {/* ⚠⚠ ACTIVE TAB = `Community`: this page is a SECTION of it since
           `E593` WS-A. An unmatched `current` lights nothing. ⚠ SUPERSEDED
           (`E164`): current="/community/mentors" */}
+      {/* ⚠⚠ `P2-A3-E612` Q16 — THE SAME FIX `E609` MADE FOR SETTINGS. The
+          Connect tab row clipped at 390px: measured 2026-09-23, "Service…" was
+          cut off at the right edge. ⚠ `wrap` is opt-in per caller, so this is
+          the Connect set and nothing else — an app-wide sweep of every
+          `PageTabs` caller is its own brief. */}
       <PageTabs
+        wrap
         eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>

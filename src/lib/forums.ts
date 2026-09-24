@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { canLeaveGroup, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* ⚠ `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
 import { teachesPathWhere } from "@/lib/learn-home";
 import type { Viewer } from "@/lib/access";
@@ -210,9 +211,12 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
   /* ⚠⚠ THE GATE RUNS BEFORE THE READ, so a closed board never assembles its
      thread titles at all — the same ordering `/providers/[id]` uses. A payload
      built and then discarded is one refactor away from being returned. */
+  /* ⚠ `P2-A3-E612` — the verdict is kept, not re-asked. The page needs it
+     again below to say whether the viewer is in the room. */
+  let pathAccess = false;
   if (gate?.learning_path_id) {
-    const allowed = await canAccessPathForum(viewer, gate.learning_path_id);
-    if (!allowed) return null;
+    pathAccess = await canAccessPathForum(viewer, gate.learning_path_id);
+    if (!pathAccess) return null;
   }
   const board = await prisma.forumBoard.findUnique({
     where: { slug },
@@ -226,6 +230,18 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
          breadcrumb is unchanged. */
       learningPath: { select: { slug: true, title: true } },
       description: true,
+      /* ⚠ `P2-A3-E612` — the group's own facts. `id` so the join control has
+         something to post; `type` and the price so the page can say what this
+         room IS. ⚠⚠ `host_person_id` COMES BACK FOR DISPLAY ONLY — `E572` and
+         Scott, 2026-09-23: **ownership is not authority for access**, and
+         approval authority for a paid group is ruled when Shop can sell. */
+      id: true,
+      type: true,
+      price_cents: true,
+      price_period: true,
+      learning_path_id: true,
+      hostPerson: { select: { id: true, first_name: true, last_name: true } },
+      _count: { select: { members: { where: { state: "ACTIVE" } } } },
       threads: {
         orderBy: { last_post_at: "desc" },
         select: {
@@ -240,10 +256,41 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
     },
   });
   if (!board) return null;
+  const member = await isGroupMember(
+    viewer,
+    { id: board.id, learning_path_id: board.learning_path_id },
+    pathAccess
+  );
+
   return {
+    id: board.id,
     slug: board.slug,
     title: board.title,
     description: board.description,
+    /* ⚠ `P2-A3-E612` — what this group is, and what it offers THIS viewer. */
+    type: board.type,
+    priceCents: board.price_cents,
+    pricePeriod: board.price_period,
+    /* ⚠⚠ THE OWNER IS A NAME ON THE PAGE AND NOTHING ELSE. */
+    owner: board.hostPerson
+      ? {
+          id: board.hostPerson.id,
+          name: `${board.hostPerson.first_name} ${board.hostPerson.last_name}`.trim(),
+        }
+      : null,
+    /* ⚠ A COUNTED FIGURE — `ACTIVE` rows only, scoped to this board. */
+    memberCount: board._count.members,
+    isMember: member,
+    canLeave: canLeaveGroup({ learning_path_id: board.learning_path_id }),
+    offer: groupOffer(
+      {
+        type: board.type,
+        price_cents: board.price_cents,
+        price_period: board.price_period,
+        learning_path_id: board.learning_path_id,
+      },
+      member
+    ),
     /* ⚠ `null` FOR THE FOUR GENERAL BOARDS (`P1-ALL-E381` WS-2). The page
        breadcrumbs to the path when this is set, and to `/community/forums` when
        it is not — which is the general boards' unchanged behaviour. */

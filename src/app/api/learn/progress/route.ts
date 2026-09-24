@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { notify } from "@/lib/notifications";
 import { z } from "zod";
+import { ensureEnrolmentMembership } from "@/lib/group-membership";
 import { learnEnrolmentRefusal } from "@/lib/learn-enrolment-gate";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
@@ -117,6 +118,12 @@ export async function POST(request: Request) {
       update: {},
     }),
   ]);
+  /* ⚠⚠ `P2-A3-E612` — THE SECOND ENROLMENT DOOR RECORDS MEMBERSHIP TOO.
+     ⚠⚠⚠ `E610` closed this route's gap on the GATE; leaving it out here would
+     re-open the same hole one table across — a member enrolled by watching a
+     lesson would be in the path's forum with no membership row saying so, and
+     "am I in this group?" would have two answers again. */
+  await ensureEnrolmentMembership(viewer.userId, pathId);
 
   /*
     ── ⚠⚠ FINISHING A COURSE NOTIFIES ITS INSTRUCTOR (`P1-J3-E048`, 2026-09-02) ─

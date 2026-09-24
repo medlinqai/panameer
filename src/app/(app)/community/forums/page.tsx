@@ -37,7 +37,13 @@ export default async function ForumsPage() {
 
   return (
     <>
+      {/* ⚠⚠ `P2-A3-E612` Q16 — THE SAME FIX `E609` MADE FOR SETTINGS. The
+          Connect tab row clipped at 390px: measured 2026-09-23, "Service…" was
+          cut off at the right edge. ⚠ `wrap` is opt-in per caller, so this is
+          the Connect set and nothing else — an app-wide sweep of every
+          `PageTabs` caller is its own brief. */}
       <PageTabs
+        wrap
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
@@ -45,7 +51,14 @@ export default async function ForumsPage() {
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-5">
-          <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Forums</h1>
+          {/* ⚠⚠ `P2-A3-E612` Q17 — THE HEADING IS `Groups`. The nav has said `Groups`
+            since `E533`; this heading still said `Forums`, so the tab a member
+            clicked and the page they landed on used different words for the
+            same thing — the `E459` defect exactly.
+            ⚠ SCOTT, 2026-09-23: *"the nav is right; the heading is the older
+            word."* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <h1 …>Forums</h1> */}
+        <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Groups</h1>
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
@@ -94,7 +107,7 @@ export default async function ForumsPage() {
 
             {/* ── 2 · RECENT IN YOUR FORUMS ─────────────────────────────── */}
             <section className="space-y-3">
-              <h2 className="font-display text-[17px] font-bold">Recent in Your Forums</h2>
+              <h2 className="font-display text-[17px] font-bold">Recent in Your Groups</h2>
               {home.recent.length === 0 ? (
                 <p className="text-[14px] leading-relaxed text-ink-2">
                   Nothing has been posted in your rooms yet.
