@@ -409,21 +409,54 @@ const MYLEARNING = join("src", "components", "learn", "app", "MyLearning.tsx");
 const myLearning = strip(readFileSync(MYLEARNING, "utf8"));
 const SPINEBAR = join("src", "components", "learn", "app", "CourseSpineBar.tsx");
 
-/* ⚠ Scott named these exactly; they are permanent. `Certificates AWARDED` is HIS
-   wording, so the STRING wins and this assertion matches it. */
-const TILE_LABELS = [
+/*
+  ── ⚠⚠⚠ THE TILE ROW IS RETIRED (`P2-A4-E615`, ruling 5) ──────────────────
+
+  ⚠⚠ SCOTT, 2026-09-24: **"Kill them. The four 0-of-N tiles come off /learn
+  entirely."** ⚠ They were the shape `E611` had already retired one component
+  over on this same page — *"five padlocks reading '0 of 5' is a progress
+  system"* — and they stayed beside it. **A rule applied to one component and
+  not to the one next to it is not a rule yet.**
+
+  ⚠⚠ `check:rollup`'S CASE, NOT `check:cert-skills`': the RULING changed, the
+  code did not drift. ⚠ The old block said these labels were *"permanent"*; no
+  label is permanent against Scott (rule 13 — a lock protects against drift, not
+  against him).
+
+  ⚠⚠⚠ THE ASSERTION IS NOW THE OPPOSITE ONE, AND IT IS STILL AN ASSERTION: the
+  labels must be ABSENT. Deleting the check entirely would let the row come back
+  unnoticed, which is how it survived `E611` in the first place.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const TILE_LABELS = ["Learning Paths Enrolled In", "Courses Registered For",
+  //     "Lessons Watched", "Certificates Awarded"];
+  //   for (const label of TILE_LABELS)
+  //     check(`6 — the stat row carries "${label}"`, myLearning.includes(`label="${label}"`));
+  //   check("6 — ⚠ and in Scott's order", …);
+*/
+const RETIRED_TILE_LABELS = [
   "Learning Paths Enrolled In",
   "Courses Registered For",
   "Lessons Watched",
   "Certificates Awarded",
 ];
-for (const label of TILE_LABELS) {
-  check(`6 — the stat row carries "${label}"`, myLearning.includes(`label="${label}"`));
+for (const label of RETIRED_TILE_LABELS) {
+  check(
+    `6 — the retired tile "${label}" does not render on /learn`,
+    !myLearning.includes(`label="${label}"`),
+    "ruling 5, 2026-09-24 — the four 0-of-N tiles came off this page"
+  );
 }
-check(
-  "6 — ⚠ and in Scott's order",
-  TILE_LABELS.map((l) => myLearning.indexOf(`label="${l}"`)).every((v, i, a) => v > -1 && (i === 0 || v > a[i - 1]))
-);
+/* ⚠⚠ AND THE FIGURES ARE NOT LOST WITH THE TILES. They still travel on the view
+   model, so the page could show them again in a shape Scott wants — what was
+   retired is the SCOREBOARD, not the counting. */
+const dashSrc = strip(readFileSync(join("src", "lib", "learn-dashboard.ts"), "utf8"));
+for (const field of ["enrolledPaths", "coursesFinished", "lessonsCompleted", "pathsCertified"]) {
+  check(
+    `6 — the figure \`${field}\` is still counted`,
+    new RegExp(`${field}[,:]`).test(dashSrc),
+    "the tiles were retired, not the arithmetic"
+  );
+}
 check(
   "6 — ⚠ the superseded labels are gone",
   !/label="Certificates Earned"|label="Courses Finished"|label="Lessons Completed"/.test(myLearning),
