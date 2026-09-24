@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { canSeeRate } from "@/lib/rate-visibility";
+import type { Viewer } from "@/lib/access";
 import { marketplaceVisibleWhere } from "@/lib/access";
 import { capitalizeName } from "@/lib/display";
 import { formatPlace } from "@/lib/location";
@@ -91,7 +93,16 @@ function providerTextFilter(q: string) {
   const like = { contains: q, mode: "insensitive" as const };
   return {
     OR: [
-      { headline: like },
+      /* ⚠⚠⚠ `headline` WAS REMOVED FROM `ProviderProfile` AT `E595` WS-B AND
+         THIS FILTER WAS NOT UPDATED, so **every search on the public `/explore`
+         page returned HTTP 500** — measured 2026-09-24, `?q=Steve` and
+         `?q=oracle` both 500. ⚠ Byte-identical on trunk, so it has been broken
+         since E595; found while wiring ruling 29's owner case, which needed the
+         search to work.
+         ⚠ The field it MOVED to is `Person.title` — the same move the card's
+         own select documents. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   { headline: like }, */
+      { person: { title: like } },
       { overview: like },
       { skills: { some: { skill: { name: like } } } },
       { roleType: { name: like } },
@@ -103,7 +114,22 @@ function providerTextFilter(q: string) {
 
 export async function searchProvidersTeaser(
   q: string,
-  take = TEASER_LIMIT
+  take = TEASER_LIMIT,
+  /**
+   * ── ⚠⚠⚠ THE VIEWER, FOR THE RATE AND NOTHING ELSE (`P2-A2-E618`) ──────
+   *
+   * ⚠⚠ RULING 29, Scott 2026-09-24: the rate on `/explore` obeys the SAME
+   * viewer rule as the profile — owner and signed-in buyer see it, a signed-in
+   * provider and a signed-out visitor do not.
+   *
+   * ⚠⚠⚠ **THIS IS NOT A GATE ON THE PAGE.** `/explore` stays public and stays
+   * exactly as Scott protected it (*"DO NOT GATE IT"*): the route, the cards
+   * and the browse are unchanged, and a signed-out visitor still sees every
+   * card. ⚠ **One FIELD acquires the rule it already had everywhere else.**
+   * ⚠ `undefined` is the honest default — a caller that has not resolved a
+   * session gets the safe answer rather than a rate.
+   */
+  viewer?: Viewer | null
 ): Promise<{ cards: TeaserProvider[]; total: number }> {
   const term = q.trim();
   const where = {
@@ -169,6 +195,10 @@ export async function searchProvidersTeaser(
         person: {
           select: {
             first_name: true,
+            /* ⚠ `P2-A2-E618` — so a provider browsing `/explore` still sees
+               their OWN rate on their own card. It is compared, never
+               rendered: no surname, no id leaves this select. */
+            user_id: true,
             /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
             title: true,
             photo_url: true,
@@ -219,18 +249,27 @@ export async function searchProvidersTeaser(
            three, so anyone priced onsite- or remote-only rendered blank and
            looked unpriced. `marketplaceVisibleWhere()` requires a rate, so a
            blank here was always a render bug, never a missing price. */
-        rate:
-          rateLabel(
-            p.rate_min_cents,
-            p.rate_max_cents,
-            p.hourly_rate_cents,
-            p.currency
-          ) ??
-          (p.onsite_rate_cents != null
-            ? `${rateLabel(p.onsite_rate_cents, null, null, p.currency)} onsite`
-            : p.remote_rate_cents != null
-              ? `${rateLabel(p.remote_rate_cents, null, null, p.currency)} remote`
-              : null),
+        /* ⚠⚠⚠ `canSeeRate` IS THE ONE RULE (`P2-A2-E618`, ruling 29) — the same
+           function the profile calls, never a second copy of its condition. A
+           duplicate of exactly this test is what leaked a surname and a rate
+           from `/api/providers/[id]` on the same day.
+           ⚠⚠ THE RATE IS OMITTED FROM THE PAYLOAD, not hidden in the markup:
+           `null` here means the figure never reaches the browser at all.
+           ⚠ `isOwner` is computed per card, so a provider browsing `/explore`
+           still sees their OWN rate on their own card. */
+        rate: canSeeRate({ isOwner: p.person.user_id === viewer?.userId, viewer })
+          ? rateLabel(
+              p.rate_min_cents,
+              p.rate_max_cents,
+              p.hourly_rate_cents,
+              p.currency
+            ) ??
+            (p.onsite_rate_cents != null
+              ? `${rateLabel(p.onsite_rate_cents, null, null, p.currency)} onsite`
+              : p.remote_rate_cents != null
+                ? `${rateLabel(p.remote_rate_cents, null, null, p.currency)} remote`
+                : null)
+          : null,
         validated: p.validation_status === "VALIDATED",
         photoUrl: p.person.photo_url,
       };

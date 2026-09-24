@@ -301,19 +301,53 @@ const PVIEW = code("src", "lib", "provider-profile-view.ts");
   a provider still cannot see another provider's rate — while quietly taking it
   from every buyer. **The old assertion could not tell those two apart.**
 */
+/*
+  ── ⚠⚠ THE RULE MOVED HOUSE — RULING 29, 2026-09-24 (`P2-A2-E618`) ────────
+
+  ⚠⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`'. The RULE these
+  three assertions encode is unchanged and still exactly true; what moved is
+  WHERE it lives. ⚠ The predicate was written inline in `provider-profile-view.ts`
+  and NOWHERE ELSE, so `/explore` shipped 8 real rates — Scott's own among them —
+  to signed-out visitors while the profile refused the same person the same
+  number. ⚠⚠ Ruling 29: *"build it through the ONE view model, never a second
+  predicate."* It is now `canSeeRate()` in `lib/rate-visibility.ts`, and both
+  the profile and `/explore` call it.
+
+  ⚠⚠⚠ SO THE ASSERTIONS FOLLOW THE RULE TO ITS NEW FILE — AND A FOURTH IS ADDED
+  THAT THE OLD SHAPE NEVER NEEDED: **the view model must still ASK.** ⚠ Pointing
+  these at the helper alone would leave a gate that stays green while
+  `provider-profile-view.ts` quietly stops calling it — the rule proven to exist
+  in a file nobody reads. ⚠⚠ A gate that cannot see the call site is asserting a
+  definition, not a behaviour.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the same three rules, read off the
+  file that used to hold them:
+  //   check("9 — ⚠⚠ a BUYER sees the rate — the predicate is capability, not identity",
+  //     /hasCapability\(opts\.viewer, "canHireTalent"\)/.test(PVIEW));
+  //   check("9 — ⚠ the owner always sees their own", /isOwner \|\|/.test(PVIEW));
+  //   check("9 — ⚠ a signed-out viewer is not treated as a buyer",
+  //     /opts\.viewer != null && hasCapability/.test(PVIEW));
+*/
+const RVIS = code("src", "lib", "rate-visibility.ts");
 check(
   "9 — ⚠⚠ a BUYER sees the rate — the predicate is capability, not identity",
-  /hasCapability\(opts\.viewer, "canHireTalent"\)/.test(PVIEW)
+  /hasCapability\(opts\.viewer, "canHireTalent"\)/.test(RVIS)
 );
 check(
   "9 — ⚠ the owner always sees their own",
-  /isOwner \|\|/.test(PVIEW)
+  /if \(opts\.isOwner\) return true;/.test(RVIS)
 );
 /* ⚠ A signed-out visitor is not a buyer: `viewer` is null and a null holds no
    capability, so the rate is withheld — the safe direction on a public page. */
 check(
   "9 — ⚠ a signed-out viewer is not treated as a buyer",
-  /opts\.viewer != null && hasCapability/.test(PVIEW)
+  /opts\.viewer != null && hasCapability/.test(RVIS)
+);
+/* ⚠⚠⚠ AND THE VIEW MODEL STILL ASKS. Without this, the three above prove only
+   that a correct function EXISTS somewhere. */
+check(
+  "9 — ⚠⚠⚠ the view model asks the one rule rather than deciding for itself",
+  /canSeeRate\(\{ isOwner, viewer: opts\.viewer \}\)/.test(PVIEW)
 );
 /* ⚠⚠ AND THE BLANKET FORM MUST NOT COME BACK. This is the shape that hides the
    rate from buyers, and it is the one thing this section exists to prevent. */
