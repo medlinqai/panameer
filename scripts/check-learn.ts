@@ -810,6 +810,78 @@ const isOrphan = (file: string) => importersOf(file).length === 0;
 }
 
 // ---------------------------------------------------------------------------
+// ⚠⚠⚠ `P2-A4-E610` — THE PLAYABLE RULE IS STATED ONCE, IN `lib/learn.ts`
+// ---------------------------------------------------------------------------
+/*
+  ⚠⚠ SCOTT, 2026-09-23: *"A hand-rolled copy agrees until the rule changes."*
+
+  ⚠⚠⚠ MEASURED THE SAME DAY: `StructureEditor.tsx:69` held a second
+  `isPlayable` — `Boolean(l.vimeoRef?.trim()) && CLAIMS_URL.includes(...)` — and
+  `primitives.tsx:47` held a second copy of `PLAYABLE_STATUSES` as a hand-typed
+  array. Both were byte-equivalent to the originals and nothing kept them that
+  way.
+
+  ⚠ AND THE FIRST FIX WAS UNGATED: restoring the duplicate left `check:learn`
+  green at 85, because this file's population is `src/components/learn` and
+  `src/lib` — and the copy lived in `src/components/admin/learn`. ⚠⚠ A GATE
+  THAT CANNOT SEE THE FILE THE DEFECT IS IN IS NOT GUARDING IT.
+
+  ⚠ DERIVED, NOT LISTED (`E587`): the population is every `.ts`/`.tsx` under
+  `src/`, and the finding is the SHAPE of the rule — a Vimeo-ref read conjoined
+  with a production-status list membership — not a known file name.
+*/
+{
+  const allSrc = walk("src");
+  /* ⚠ COUNT > 0 (`E586`): a scan with no inputs is not a check. */
+  check(
+    "E610: the playable-rule scan has a population",
+    allSrc.length > 200,
+    `${allSrc.length} source files — a scan with no inputs reports success without running`
+  );
+
+  /* ⚠ The conjunction, in either order, WITHIN ONE STATEMENT.
+     ⚠⚠ `[^;]` AND NOT `[\s\S]` IS LOAD-BEARING, AND IT COST A FALSE POSITIVE
+     TO LEARN: `learn-admin.ts` tests the status alone to decide whether to
+     ADVANCE the ladder, then writes `vimeo_ref` in a later statement. A window
+     that spans a `;` reads those two as one rule and flags correct code.
+     ⚠ A gate that cries wolf on correct code is a gate somebody switches off. */
+  const RESTATEMENT = [
+    /vimeo_?[Rr]ef[^;]{0,140}?\.includes\([^)]*[Pp]roduction_?[Ss]tatus/,
+    /\.includes\([^)]*[Pp]roduction_?[Ss]tatus[^;]{0,140}?vimeo_?[Rr]ef/,
+  ];
+  /* ⚠ `lib/learn.ts` IS THE ONE PLACE THE RULE MAY BE SPELLED OUT. It is
+     excluded because it is the definition, not because it is trusted. */
+  const ORIGIN = join("src", "lib", "learn.ts");
+  const copies = allSrc
+    .filter((f) => f !== ORIGIN)
+    .filter((f) => {
+      const body = stripComments(readFileSync(f, "utf8"));
+      return RESTATEMENT.some((r) => r.test(body));
+    });
+  check(
+    "E610: nothing outside lib/learn.ts restates the playable rule",
+    copies.length === 0,
+    `${copies.join(", ")} — import \`isPlayable\`; a copy agrees until the rule changes`
+  );
+
+  /* ⚠⚠ AND THE STATUS LIST ITSELF IS NOT RETYPED. `CLAIMS_URL` was a literal
+     array of the same three values; it is now a re-export. A gate on the
+     predicate alone would have missed the list. */
+  const listCopies = allSrc
+    .filter((f) => f !== ORIGIN)
+    .filter((f) =>
+      /\[\s*"URL_ADDED_TO_LESSON"\s*,\s*"BLOG_CREATED"\s*,\s*"BLOG_RELEASED"\s*\]/.test(
+        stripComments(readFileSync(f, "utf8"))
+      )
+    );
+  check(
+    "E610: the playable status list is not retyped anywhere",
+    listCopies.length === 0,
+    `${listCopies.join(", ")} — import \`PLAYABLE_STATUSES\``
+  );
+}
+
+// ---------------------------------------------------------------------------
 // report
 // ---------------------------------------------------------------------------
 

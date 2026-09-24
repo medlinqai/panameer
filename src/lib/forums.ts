@@ -723,34 +723,77 @@ export async function viewerPersonId(viewer: Viewer): Promise<string | null> {
  * established for the path itself. Playability gates the LEARNER, never the
  * person who recorded it.
  */
-export async function canAccessPathForum(
+export async function pathForumAccess(
   viewer: Viewer | null,
-  learningPathId: string
-): Promise<boolean> {
+  learningPathId?: string
+): Promise<{ enrolled: Set<string>; taught: Set<string> }> {
+  const none = { enrolled: new Set<string>(), taught: new Set<string>() };
   /* ⚠ A SIGNED-OUT VISITOR SEES THAT THE FORUM EXISTS AND NEVER ITS CONTENT. */
-  if (!viewer) return false;
-
-  const enrolled = await prisma.learnEnrollment.findFirst({
-    where: { user_id: viewer.userId, learning_path_id: learningPathId },
-    select: { id: true },
-  });
-  if (enrolled) return true;
+  if (!viewer) return none;
 
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
     select: { id: true },
   });
-  if (!person) return false;
 
-  /* ⚠ NOT `status: "PUBLISHED"` HERE. `getPathsTaughtBy` filters to published
-     because it feeds a PUBLIC profile; an instructor must reach the forum of a
-     draft path they are still recording. Same predicate, different scope, and
-     the difference is deliberate. */
-  const taught = await prisma.learningPath.findFirst({
-    where: { id: learningPathId, ...teachesPathWhere(person.id) },
-    select: { id: true },
-  });
-  return Boolean(taught);
+  /* ⚠ THE SCOPE IS THE ONLY THING `learningPathId` CHANGES. Both conditions are
+     asked either way; narrowing keeps the single-path callers cheap. */
+  const pathFilter = learningPathId ? { learning_path_id: learningPathId } : {};
+  const idFilter = learningPathId ? { id: learningPathId } : {};
+
+  const [enrolments, taughtRows] = await Promise.all([
+    prisma.learnEnrollment.findMany({
+      where: { user_id: viewer.userId, ...pathFilter },
+      select: { learning_path_id: true },
+    }),
+    /* ⚠ NOT `status: "PUBLISHED"` HERE. `getPathsTaughtBy` filters to published
+       because it feeds a PUBLIC profile; an instructor must reach the forum of a
+       draft path they are still recording. Same predicate, different scope, and
+       the difference is deliberate. */
+    person
+      ? prisma.learningPath.findMany({
+          where: { ...idFilter, ...teachesPathWhere(person.id) },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    enrolled: new Set(enrolments.map((e) => e.learning_path_id)),
+    taught: new Set(taughtRows.map((p) => p.id)),
+  };
+}
+
+/**
+ * ⚠⚠ THE SINGLE-PATH QUESTION, ANSWERED BY THE SET ABOVE AND NOWHERE ELSE.
+ *
+ * ⚠⚠⚠ `P2-A4-E610` — `getForumsHome` HELD A SECOND, INDEPENDENT COPY OF THIS
+ * RULE, and it was the copy that mattered most: the rail AND the *"Recent in
+ * Your Forums"* thread list are built from it, so **thread titles were released
+ * to a viewer by the restatement, not by this function.** ⚠ `check:forums`
+ * guarded only this one. Two implementations of a private-room rule, one of
+ * them ungated, is how a closed room quietly opens.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the body this function had while
+ * the duplicate existed:
+ * //   const enrolled = await prisma.learnEnrollment.findFirst({
+ * //     where: { user_id: viewer.userId, learning_path_id: learningPathId },
+ * //     select: { id: true },
+ * //   });
+ * //   if (enrolled) return true;
+ * //   const person = await prisma.person.findUnique({ … });
+ * //   if (!person) return false;
+ * //   const taught = await prisma.learningPath.findFirst({
+ * //     where: { id: learningPathId, ...teachesPathWhere(person.id) },
+ * //     select: { id: true },
+ * //   });
+ * //   return Boolean(taught);
+ */
+export async function canAccessPathForum(
+  viewer: Viewer | null,
+  learningPathId: string
+): Promise<boolean> {
+  const access = await pathForumAccess(viewer, learningPathId);
+  return access.enrolled.has(learningPathId) || access.taught.has(learningPathId);
 }
 
 /**
@@ -892,22 +935,32 @@ export async function getForumsHome(viewer: Viewer) {
     select: { id: true },
   });
 
-  const [enrolments, taughtBroad] = await Promise.all([
-    prisma.learnEnrollment.findMany({
-      where: { user_id: viewer.userId },
-      select: { learning_path_id: true },
-    }),
-    person
-      ? prisma.learningPath.findMany({
-          where: teachesPathWhere(person.id),
-          select: { id: true },
-        })
-      : Promise.resolve([]),
-  ]);
-
-  const enrolledPathIds = new Set(enrolments.map((e) => e.learning_path_id));
-  const taughtPathIds = new Set(taughtBroad.map((p) => p.id));
-  const myPathIds = [...new Set([...enrolledPathIds, ...taughtPathIds])];
+  /*
+    ⚠⚠⚠ THE ACCESS RULE IS CALLED, NOT RESTATED (`P2-A4-E610`).
+    ⚠ SCOTT, 2026-09-23: *"B′ is what releases thread titles to the rail, and
+    `check:forums` guards only B."* ⚠⚠ This block held a byte-different second
+    implementation of `canAccessPathForum`'s two conditions — same two facts,
+    separate code, and the ungated one was the one that decided what titles a
+    member could read.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const [enrolments, taughtBroad] = await Promise.all([
+    //     prisma.learnEnrollment.findMany({
+    //       where: { user_id: viewer.userId },
+    //       select: { learning_path_id: true },
+    //     }),
+    //     person
+    //       ? prisma.learningPath.findMany({
+    //           where: teachesPathWhere(person.id),
+    //           select: { id: true },
+    //         })
+    //       : Promise.resolve([]),
+    //   ]);
+    //   const enrolledPathIds = new Set(enrolments.map((e) => e.learning_path_id));
+    //   const taughtPathIds = new Set(taughtBroad.map((p) => p.id));
+  */
+  const access = await pathForumAccess(viewer);
+  const taughtPathIds = access.taught;
+  const myPathIds = [...new Set([...access.enrolled, ...access.taught])];
 
   /* ⚠ THE FOUR GENERAL BOARDS ARE OPEN TO EVERYONE — `learning_path_id` NULL.
      They belong in the rail beside the path rooms. */

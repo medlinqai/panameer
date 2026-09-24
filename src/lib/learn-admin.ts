@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 /* ⚠ `P1-J3-E383` — one idempotent board helper, shared with the seed and the
    backfill so the three cannot drift. */
 import { ensurePathBoard } from "@/lib/forums";
-import { isPlayable } from "@/lib/learn";
+import { PLAYABLE_STATUSES, isPlayable, urlMissing as urlMissingRow } from "@/lib/learn";
 
 /**
  * Learn authoring queries + mutations (brief_learn_admin_authoring).
@@ -113,13 +113,13 @@ export async function getLearnStats(): Promise<LearnLibraryStats> {
       prisma.lesson.count(),
       prisma.lesson.count({
         where: {
-          production_status: { in: ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] },
+          production_status: { in: [...PLAYABLE_STATUSES] },
           OR: [{ vimeo_ref: null }, { vimeo_ref: "" }],
         },
       }),
       prisma.lesson.count({
         where: {
-          production_status: { in: ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] },
+          production_status: { in: [...PLAYABLE_STATUSES] },
           NOT: [{ vimeo_ref: null }, { vimeo_ref: "" }],
         },
       }),
@@ -1030,7 +1030,7 @@ export async function setLessonUrl(id: string, rawUrl: string | null) {
   }
 
   const alreadyClaims = (
-    ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] as string[]
+    (PLAYABLE_STATUSES as readonly string[])
   ).includes(lesson.production_status);
 
   await prisma.lesson.update({
@@ -1097,12 +1097,13 @@ export async function getPublishReadiness(id: string): Promise<PublishReadiness>
 
   const lessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
   const playable = lessons.filter(isPlayable).length;
-  const urlMissing = lessons.filter(
-    (l) =>
-      (["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"] as string[]).includes(
-        l.production_status
-      ) && !l.vimeo_ref?.trim()
-  ).length;
+  /* ⚠ `P2-A4-E610` — the extracted amber predicate, not a fifth copy of it.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const urlMissing = lessons.filter(
+     //     (l) =>
+     //       CLAIMS.includes(l.production_status) && !l.vimeo_ref?.trim()
+     //   ).length; */
+  const urlMissing = lessons.filter(urlMissingRow).length;
 
   if (path.courses.length === 0) {
     blockers.push("This path has no courses. Add at least one course, section and lesson.");

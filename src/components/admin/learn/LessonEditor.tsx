@@ -15,6 +15,7 @@ import {
 } from "@/components/admin/learn/primitives";
 import { ExpertPicker } from "@/components/admin/learn/ExpertPicker";
 import type { TreeLesson, TreeSection } from "@/components/admin/learn/StructureEditor";
+import { urlMissing } from "@/components/admin/learn/StructureEditor";
 
 /**
  * The Lesson editor (WS3) — the core of this brief.
@@ -245,8 +246,11 @@ export function SectionUrlTable({
         <tbody>
           {section.lessons.map((l) => {
             const s = state[l.id];
-            const missing =
-              CLAIMS_URL.includes(l.productionStatus) && !l.vimeoRef?.trim();
+            /* ⚠ `P2-A4-E610` — the one rule, adapted once in `StructureEditor`.
+               ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   const missing =
+               //     CLAIMS_URL.includes(l.productionStatus) && !l.vimeoRef?.trim(); */
+            const missing = urlMissing(l);
             return (
               <tr key={l.id} className="align-top">
                 <td className="w-[38%] py-1.5 pr-3">
