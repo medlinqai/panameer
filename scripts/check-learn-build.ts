@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { shownRunTime, MEASURED_DURATION_SOURCE } from "@/lib/lesson-duration";
+import { setPathInterest } from "@/lib/path-interest";
 
 /**
  * ── ⚠⚠⚠ `check:learn-build` (`P2-A4-E611`) ───────────────────────────────
@@ -302,6 +303,122 @@ async function main() {
     "8 — no Learn copy promises a date or an unbuilt mechanism",
     promisers.length === 0,
     `${promisers.join(", ")} — the schema holds no publish date, and a page may not promise a mechanism with no writer`
+  );
+
+  /* ── 9 · ⚠⚠⚠ THE DEMAND SIGNAL (WS-C) ──────────────────────────────────
+     ⚠ Scott: *"idempotency and withdrawal proven."* ⚠⚠ THE FIXTURE IS SEEDED
+     AND TORN DOWN BY PRIMARY KEY IN A `finally`, and it seeds NO `Lesson` and
+     NO `LearningPath` — it borrows a path that already exists. */
+  const probePath = await prisma.learningPath.findFirst({
+    where: { status: "PUBLISHED" },
+    select: { id: true },
+  });
+  const probeUser = await prisma.user.findFirst({ select: { id: true } });
+  check(
+    "9 — the probe has a path and a user to work with (E586)",
+    Boolean(probePath && probeUser),
+    "a gate with no inputs must fail, not report success"
+  );
+
+  if (probePath && probeUser) {
+    let probeId: string | null = null;
+    try {
+      const before = await prisma.pathInterest.count({
+        where: { learning_path_id: probePath.id, wanted: true },
+      });
+
+      /* ⚠⚠ IDEMPOTENT: press it twice, one row. */
+      await setPathInterest(probeUser.id, probePath.id, true);
+      await setPathInterest(probeUser.id, probePath.id, true);
+      const rows = await prisma.pathInterest.count({
+        where: { user_id: probeUser.id, learning_path_id: probePath.id },
+      });
+      probeId =
+        (
+          await prisma.pathInterest.findUnique({
+            where: {
+              user_id_learning_path_id: {
+                user_id: probeUser.id,
+                learning_path_id: probePath.id,
+              },
+            },
+            select: { id: true },
+          })
+        )?.id ?? null;
+      check("9 — pressing twice writes one row", rows === 1, `${rows} rows`);
+
+      /* ⚠⚠⚠ THE FIXTURE DISTINGUISHES WHAT IT COMPARES. `before` and `after`
+         must DIFFER, or an assertion that they match would pass on a writer
+         that does nothing. */
+      const afterWant = await prisma.pathInterest.count({
+        where: { learning_path_id: probePath.id, wanted: true },
+      });
+      check(
+        "9 — the count went up by exactly one",
+        afterWant === before + 1,
+        `${before} -> ${afterWant}`
+      );
+
+      /* ⚠⚠ WITHDRAWAL IS RECORDED, NOT DELETED. */
+      await setPathInterest(probeUser.id, probePath.id, false);
+      const afterWithdraw = await prisma.pathInterest.count({
+        where: { learning_path_id: probePath.id, wanted: true },
+      });
+      const stillThere = await prisma.pathInterest.count({
+        where: { user_id: probeUser.id, learning_path_id: probePath.id },
+      });
+      check(
+        "9 — withdrawing removes the vote",
+        afterWithdraw === before,
+        `${afterWant} -> ${afterWithdraw}`
+      );
+      check(
+        "9 — withdrawing does NOT delete the row",
+        stillThere === 1,
+        "a delete erases the rows the count reads, so the figure could never fall for a stated reason"
+      );
+    } finally {
+      /*
+        ⚠ BY PRIMARY KEY, IN A `finally`.
+        ⚠⚠⚠ `deleteMany`, NOT `delete`, AND THAT IS NOT A STYLE CHOICE. A
+        `delete` on a row a MUTATION has already removed throws
+        `RecordNotFound`, the process dies inside `finally`, and **the failures
+        recorded moments earlier are never printed** — the run reports
+        `no-summary-line` instead of the assertion that caught the bug.
+        ⚠ MEASURED: the withdrawal-deletes mutation produced NO OUTPUT AT ALL
+        until this changed. **A teardown that can throw is a teardown that can
+        hide the result it was protecting.**
+      */
+      if (probeId) await prisma.pathInterest.deleteMany({ where: { id: probeId } });
+    }
+  }
+
+  /* ⚠⚠ AND NO COPY PROMISES A NOTIFICATION. `check:learn-build` §8 already bans
+     the date words; this bans the one claim WS-C is most tempted to make. */
+  const wantBtn = strip(
+    readFileSync(join("src", "components", "learn", "WantThisButton.tsx"), "utf8")
+  );
+  check(
+    "9 — the demand control promises no notification",
+    !/we'?ll (email|let you know|tell you)|notify/i.test(wantBtn),
+    "nothing mails anybody when a video lands, so no copy may say it will"
+  );
+  /* ⚠ AND IT IS NOT AN ANONYMOUS COUNTER (Scott: *"a count anybody can inflate
+     is worse than no count"*). */
+  const interestRoute = strip(
+    readFileSync(join("src", "app", "api", "learn", "interest", "route.ts"), "utf8")
+  );
+  check(
+    "9 — the demand writer refuses a signed-out caller",
+    /if \(!viewer\)[\s\S]{0,200}?401/.test(interestRoute),
+    "a count anybody can inflate is worse than no count"
+  );
+  /* ⚠⚠⚠ AND IT IS NOT A SECOND ENROLMENT DOOR. Wanting a path that does not
+     exist yet is the opposite of joining one. */
+  check(
+    "9 — the demand writer never writes a LearnEnrollment",
+    !/learnEnrollment\./.test(interestRoute),
+    "enrolment is forum membership; an interest vote is not"
   );
 
   await prisma.$disconnect();

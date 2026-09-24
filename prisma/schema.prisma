@@ -82,6 +82,7 @@ model User {
   /// Learn (brief_learn_v1 WS0). Keyed to the USER, not a profile: every role
   /// learns, and enrolment is the convert-to-account trigger (WS4).
   learnEnrollments  LearnEnrollment[]
+  pathInterest      PathInterest[]
   lessonProgress    LessonProgress[]
   learnTestAttempts LearnTestAttempt[]
 
@@ -3199,6 +3200,7 @@ model LearningPath {
   courses     Course[]
   enrollments LearnEnrollment[]
   credentials Certification[]
+  interest    PathInterest[]
   assessment  LearnAssessment?
   /// ⚠ `P1-J3-E383` — a path's forum. At most ONE; `check:forums` asserts it and
   /// mutation-tests the second, because two rooms for one conversation splits
@@ -5938,4 +5940,47 @@ model ProfileView {
   /// ⚠ The future "who did I look at" read, and the cascade's own lookup.
   @@index([viewer_person_id, viewed_on])
   @@map("profile_views")
+}
+
+/// ── ⚠⚠⚠ THE DEMAND SIGNAL (`P2-A4-E611` WS-C) ─────────────────────────────
+///
+/// ⚠⚠ SCOTT, 2026-09-23: *"some of them are projected… others have been shot,
+/// but not mixed down… list them and mix them down only if there is an
+/// interest."*
+///
+/// ⚠ **There is no way for anyone to ask for them today.** 11 of 23 paths were
+/// hidden from discovery, so absence of requests was never evidence of absence
+/// of demand — there was no request button. This is the button.
+///
+/// ⚠⚠ PER PATH, NOT PER LESSON. A tenth of the noise for the same signal, and
+/// the production decision is taken a path at a time anyway.
+///
+/// ⚠⚠⚠ A WITHDRAWAL IS RECORDED, NOT DELETED. Deleting the row would erase the
+/// very thing the count needs to move honestly in both directions, and it is
+/// the same defect `E528`'s consumed-not-deleted tokens fixed: a delete that
+/// erases the rows the count reads means the count can never go down for a
+/// stated reason, only vanish.
+///
+/// ⚠ NOTHING IS PROMISED BY A ROW HERE. No email is sent when a path ships —
+/// there is no writer for that — so no copy may say one will be.
+model PathInterest {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  learning_path_id String   @db.Uuid
+
+  /// ⚠⚠ `true` = they want it, `false` = they withdrew. ⚠ THE ROW SURVIVES
+  /// EITHER WAY, which is what lets the count fall without losing the history.
+  wanted     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+
+  /// ⚠⚠ IDEMPOTENT BY CONSTRUCTION. Pressing the button twice cannot count
+  /// twice, because the database refuses a second row rather than the code
+  /// remembering to.
+  @@unique([user_id, learning_path_id])
+  @@index([learning_path_id, wanted])
+  @@map("path_interest")
 }

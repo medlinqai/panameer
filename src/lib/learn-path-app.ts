@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getPathForumTeaser, type PathForumTeaser } from "@/lib/forums";
+import { pathInterestFor } from "@/lib/path-interest";
 import type { Viewer } from "@/lib/access";
 import { shownRunTime } from "@/lib/lesson-duration";
 import { isPlayable, pathIsOpenTo, playableProgress } from "@/lib/learn";
@@ -92,6 +93,13 @@ export type AppPathView = {
    * `canAccessPathForum` refuses by definition, so the link rendered to nobody.
    */
   forum: PathForumTeaser | null;
+  /**
+   * ⚠⚠ `P2-A4-E611` WS-C — the demand signal for THIS path. ⚠ It travels on
+   * every path, not only unready ones: wanting more of a path you have started
+   * is a real signal too, and hiding the control on ready paths would make the
+   * queue a measurement of unready paths only.
+   */
+  interest: { count: number; mine: boolean };
   test: {
     /** ⚠ READ FROM THE ROW, never printed as 70 / 3. Null when none exists. */
     passThreshold: number | null;
@@ -230,7 +238,7 @@ export async function getAppPath(
 
   const allLessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
 
-  const [enrolment, progress, directory, enrolledCountRaw, forum, attempts, cert] = await Promise.all([
+  const [enrolment, progress, directory, enrolledCountRaw, forum, interest, attempts, cert] = await Promise.all([
     userId
       ? prisma.learnEnrollment.findUnique({
           where: { user_id_learning_path_id: { user_id: userId, learning_path_id: path.id } },
@@ -245,6 +253,7 @@ export async function getAppPath(
     /* ⚠ THE SAME TEASER THE PUBLIC PAGE USED — counts and `canOpen`, nothing
        else. ⚠⚠ It is not a second query shaped like it. */
     getPathForumTeaser(viewer, path.id),
+    pathInterestFor(userId, path.id),
     userId
       ? prisma.learnTestAttempt.findMany({
           where: { user_id: userId, learning_path_id: path.id },
@@ -341,6 +350,7 @@ export async function getAppPath(
        clause. ⚠ `pathIsOpenTo` is imported, never restated. */
     ready: pathIsOpenTo(allLessons.some(isPlayable), Boolean(enrolment)),
     forum,
+    interest,
     instructors: pathInstructors,
     courses,
     nextLesson:

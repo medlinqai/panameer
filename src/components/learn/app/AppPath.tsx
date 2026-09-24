@@ -3,6 +3,7 @@ import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-re
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
+import { WantThisButton } from "@/components/learn/WantThisButton";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { PathSpine } from "@/components/learn/app/PathSpine";
 import type { PathForumTeaser } from "@/lib/forums";
@@ -382,6 +383,35 @@ export function AppPath({
             **0 threads and 0 posts** on 2026-09-23. ⚠⚠ The panel says so
             rather than implying activity.
           */}
+          {/*
+            ── ⚠⚠ THE DEMAND SIGNAL (`P2-A4-E611` WS-C) ──────────────────────
+            ⚠ SCOTT: *"list them and mix them down only if there is an
+            interest."* ⚠⚠ Until now there was **no way to ask** — the 11
+            unready paths were hidden from discovery entirely, so silence was
+            never evidence.
+            ⚠ PER PATH, NOT PER LESSON — a tenth of the noise for the same
+            signal, and the production decision is taken a path at a time.
+            ⚠⚠ THE HEADING CHANGES WITH THE STATE, THE CONTROL DOES NOT: on an
+            unready path the ask is for the videos; on a ready one it is for
+            more of the same. **Neither promises anything.**
+          */}
+          <div className="mt-6 rounded-brand border border-line bg-white p-5">
+            <h3 className="font-display text-[16px] font-bold">
+              {path.ready ? "Want More Like This?" : "Want This One Made?"}
+            </h3>
+            <p className="mt-1.5 mb-3 text-[13px] leading-relaxed text-ink-2">
+              {path.ready
+                ? "Telling us helps decide what gets recorded next."
+                : "The outline is written. Telling us helps decide what gets recorded next."}
+            </p>
+            <WantThisButton
+              pathId={path.id}
+              initialWanted={path.interest.mine}
+              initialCount={path.interest.count}
+              signedIn={signedIn}
+            />
+          </div>
+
           {path.forum && <PathForumPanel forum={path.forum} pathSlug={path.slug} />}
         </div>
 

@@ -4,6 +4,7 @@ import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/
 import { linkVolume } from "@/lib/admin-reports";
 import { readQuestions } from "@/lib/learn-assessment";
 import { PLAYABLE_STATUSES } from "@/lib/learn";
+import { productionQueue } from "@/lib/path-interest";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,9 @@ export default async function Page() {
       },
     }),
   ]);
+
+  /* ⚠ `P2-A4-E611` WS-C — the queue Scott reads. */
+  const prodQueue = await productionQueue();
 
   const rows = await prisma.learningPath.findMany({
     orderBy: { created_at: "desc" },
@@ -187,6 +191,39 @@ export default async function Page() {
           </Link>,
         ])}
         empty={<StubEmpty what="learning paths" why="The catalog is empty." />}
+      />
+
+      {/*
+        ── ⚠⚠⚠ THE PRODUCTION QUEUE (`P2-A4-E611` WS-C) ────────────────────
+
+        ⚠⚠ SCOTT, 2026-09-23: *"The count is visible to Scott, not necessarily
+        to members. Report where he reads it, and **if it lands in a table
+        nobody has a screen for, it is the same as losing it.**"*
+        ⚠ This is that screen.
+
+        ⚠⚠ THE ORDER IS HIS: **cost first, then demand.** A path with recorded
+        material outranks one without however many votes the second has —
+        finishing it is hours rather than days.
+        ⚠⚠⚠ THE THIRD COLUMN IS THE 59 AND IT IS NOT A STATE, IT IS AN OPEN
+        QUESTION. A lesson whose status claims a URL with no `vimeo_ref` may or
+        may not have been shot; nothing in the data says. **Scott rules on
+        those, grouped by path — that is the whole remaining ask.**
+      */}
+      <Listing
+        title="Production Queue"
+        columns={["Path", "Recorded", "Planned", "Status unclear", "Wanted by"]}
+        rows={prodQueue.map((q) => [
+          <Link key={q.id} href={`/admin/setup/learn-authoring/${q.id}`} className="font-semibold text-magenta">
+            {q.title}
+          </Link>,
+          q.recorded > 0 ? `${q.recorded}` : "—",
+          q.planned > 0 ? `${q.planned}` : "—",
+          q.unpublished > 0 ? `${q.unpublished}` : "—",
+          /* ⚠ A MEASURED ZERO PRINTS `0`. Nobody has asked yet, and that is a
+             fact, not an uncountable figure — the writer exists. */
+          `${q.votes}`,
+        ])}
+        empty={<StubEmpty what="outstanding lessons" why="Every published path is fully produced." />}
       />
 
       <VolumeFooter
