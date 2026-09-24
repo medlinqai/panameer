@@ -1,6 +1,11 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
-import { hasCapability, isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
+import { canSeeRate } from "@/lib/rate-visibility";
+/* ⚠ `hasCapability` LEFT THIS FILE WITH THE RATE RULE (`P2-A2-E618`) — the
+   condition moved to `lib/rate-visibility.ts` so `/explore` could call the SAME
+   one. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { hasCapability, isMarketplaceVisible, providerMeetsRequired } from "@/lib/access"; */
+import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
@@ -473,13 +478,17 @@ export async function getProviderProfileView(
        CHANGE (`P2-A2-E616`). A peer is by definition somebody who is NOT the
        owner and CANNOT hire here, so the preview answers the existing predicate
        as that person rather than asking a different question. ⚠ One rule. */
-    rates: opts.previewAsPeer || !(
-      isOwner ||
-      /* ⚠ A SIGNED-OUT VISITOR IS NOT A BUYER. `viewer` is null then, and a
-         null cannot hold a capability — so the rate is withheld, which is the
-         safe direction for a public page. */
-      (opts.viewer != null && hasCapability(opts.viewer, "canHireTalent"))
-    )
+    /* ⚠⚠⚠ EXTRACTED TO `lib/rate-visibility.ts` AT `P2-A2-E618`. The condition
+       used to live here and NOWHERE ELSE, which is why `/explore` shipped real
+       rates to signed-out visitors — ruling 9 said *"one rule, everywhere"* and
+       there was only ever one PLACE. ⚠ Both surfaces now call the same
+       function; neither restates it.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   rates: opts.previewAsPeer || !(
+       //     isOwner ||
+       //     (opts.viewer != null && hasCapability(opts.viewer, "canHireTalent"))
+       //   ) */
+    rates: opts.previewAsPeer || !canSeeRate({ isOwner, viewer: opts.viewer })
       ? null
       : {
       currency: profile.currency,

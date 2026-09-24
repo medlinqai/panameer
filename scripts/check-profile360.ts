@@ -109,13 +109,37 @@ for (const f of profileApiRoutes) {
     "every redaction downstream asks a capability of the viewer; an id decides nothing"
   );
 }
-/* ⚠⚠ AND THE RULE ITSELF IS STATED ONCE in the view model. Two call sites of
-   the capability test would be two places to change it. */
+/*
+  ── ⚠⚠⚠ THE RULE IS ONE FUNCTION NOW, NOT ONE LINE (`P2-A2-E618`) ────────
+
+  ⚠⚠ RULING 29 REQUIRED THE EXTRACTION: the condition lived inline in the view
+  model and NOWHERE ELSE, which is precisely why `/explore` shipped 8 real
+  rates — including Scott's own — to signed-out visitors. *"One rule,
+  everywhere"* had only ever had one PLACE.
+  ⚠ `check:rollup`'s case: the RULING changed, the code did not drift. The old
+  assertion counted `canHireTalent` inside the view model and would now read 0.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("2 — the capability test appears once in the view model",
+  //     (view.match(/canHireTalent/g) ?? []).length === 1, …);
+
+  ⚠⚠ THE ASSERTION IS STRONGER FOR IT: the test appears in exactly ONE file
+  across all of `src/`, derived rather than named.
+*/
+const RATE_RULE = join("src", "lib", "rate-visibility.ts");
+const holders = SRC.filter((f) => /hasCapability\([^)]*"canHireTalent"\)/.test(strip(readFileSync(f, "utf8"))));
 check(
-  "2 — the capability test appears once in the view model",
-  (view.match(/canHireTalent/g) ?? []).length === 1,
-  `${(view.match(/canHireTalent/g) ?? []).length} occurrences — one rule means one place`
+  "2 — the rate capability test lives in exactly one file",
+  holders.length === 1 && holders[0] === RATE_RULE,
+  `${holders.join(", ") || "none"} — a second copy of this test is what leaked the rate`
 );
+/* ⚠⚠ AND BOTH SURFACES CALL IT. A rule nobody calls is not a rule. */
+for (const caller of [VIEW, join("src", "lib", "explore.ts")]) {
+  check(
+    `2 — ${caller} calls canSeeRate`,
+    /canSeeRate\(/.test(strip(readFileSync(caller, "utf8"))),
+    "ruling 29: build it through the ONE view model, never a second predicate"
+  );
+}
 
 /* ── 3 · ⚠⚠ PROFILE360 — THE OWNER CAN PREVIEW THE PEER VIEW ─────────────
    ⚠ Ruling 11: the name stays `Profile360`. */
@@ -138,7 +162,8 @@ check(
    forbid. */
 check(
   "3 — the preview feeds the one rate rule rather than a second one",
-  /rates: opts\.previewAsPeer \|\| !\(/.test(view) && !/hideRate|suppressRate/.test(view),
+  /rates: opts\.previewAsPeer \|\| !canSeeRate\(/.test(view) &&
+    !/hideRate|suppressRate/.test(view),
   "the preview answers the capability question as that viewer, it does not fork the rule"
 );
 

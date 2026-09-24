@@ -141,11 +141,33 @@ export function LearnHome({
               is a sentence about nothing.
               ⚠ SUPERSEDED, quoted not deleted (`E164`):
               //   {cards.length} learning paths, {totalLessons.toLocaleString()} lessons — free, and taught by working consultants. */}
+          {/*
+            ── ⚠⚠⚠ RULING 30 — 23 IS THE CATALOGUE'S SIZE, WITH ITS SPLIT ────
+
+            ⚠⚠ SCOTT, 2026-09-24: **"Print 23 as the catalogue's size, and print
+            the split with it."** Shape: *"23 paths — 12 you can start today, 11
+            in production."*
+
+            ⚠⚠⚠ WHAT RULING 3 STILL FORBIDS, AND WHY THIS IS NOT THAT: a page
+            presenting **23 as the STARTABLE count** — *"23 paths you can start
+            today"* — overstates what a member can do by almost half.
+            `check:learn-build` §7 still fails the build on it. ⚠ **The test is
+            whether the sentence tells the member what they can DO**, and here
+            the arithmetic is SHOWN rather than invited: a reader has nothing
+            left to reconcile.
+
+            ⚠ ALL THREE FIGURES COME FROM ONE PREDICATE — `card.ready`, which is
+            `pathIsOpenTo` — and the total is `cards.length`, not a third count.
+            **Never three literals** (`E587`).
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   {startablePaths} paths you can start today, {totalLessons} lessons
+            //   you can watch — free, and taught by working consultants.
+            //   {inProduction > 0 ? ` Another ${inProduction} are in production.` : ""}
+          */}
           <p className="mt-3 max-w-xl text-[15.5px] text-white/80">
-            {startablePaths} paths you can start today,{" "}
-            {totalLessons.toLocaleString()} lessons you can watch — free, and
-            taught by working consultants.
-            {inProduction > 0 ? ` Another ${inProduction} are in production.` : ""}
+            {cards.length} paths — {startablePaths} you can start today,{" "}
+            {inProduction} in production. {totalLessons.toLocaleString()} lessons
+            you can watch, free, and taught by working consultants.
           </p>
 
           {/*

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSessionViewer } from "@/lib/session";
 import { ProviderCard } from "@/components/marketplace/ProviderCard";
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
@@ -53,8 +54,19 @@ export default async function ExplorePage({
   // two, and a hand-typed URL should still land somewhere sensible.
   const hiring = sp.mode !== "work";
 
+  /*
+    ⚠⚠⚠ THE VIEWER IS READ, AND THE PAGE IS STILL PUBLIC (`P2-A2-E618`,
+    ruling 29). ⚠ `getSessionViewer()` returns `null` for a signed-out visitor
+    and the page renders exactly as before — every card, the whole browse.
+    ⚠⚠ **NOTHING ABOUT THE ROUTE'S REACHABILITY CHANGES.** Scott's note in
+    `lib/public-routes.ts` — *"PUBLIC PROFILE BROWSE, AND IT WORKS… DO NOT
+    TIDY IT. DO NOT GATE IT."* — is honoured. ⚠ **One FIELD acquires the rule
+    it already had everywhere else:** the rate.
+  */
+  const viewer = await getSessionViewer();
+
   const { cards, total } = hiring
-    ? await searchProvidersTeaser(query)
+    ? await searchProvidersTeaser(query, undefined, viewer)
     : await searchWorkTeaser(query);
 
   // Back to exactly this search after signing in — the gate must not cost

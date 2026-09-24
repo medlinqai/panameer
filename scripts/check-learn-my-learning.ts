@@ -279,6 +279,48 @@ async function main() {
     /cards\.length - startablePaths/.test(paths),
     "a literal stops being true at the next import"
   );
+  /*
+    ── ⚠⚠⚠ RULING 30 — THE THREE FIGURES, AND THE SHAPE (`P2-A2-E618`) ─────
+
+    ⚠⚠ SCOTT, 2026-09-24: *"23 paths — 12 you can start today, 11 in
+    production… Derive all three from the same predicate the catalogue and the
+    gate already use, never three literals, and assert the SHAPE: total equals
+    startable plus in-production, and the three render together."*
+
+    ⚠⚠⚠ THE SHAPE IS ASSERTED AS AN IDENTITY, NOT AS A COUNT. `E587` — a gate
+    asserting a literal `23` rots into a false red the day a path is added.
+    **`inProduction` is DEFINED as `cards.length - startablePaths`, so the
+    arithmetic is true by construction** and this asserts that construction
+    rather than today's numbers.
+  */
+  check(
+    "9 — the total is the catalogue length, not a third count",
+    /\{cards\.length\} paths/.test(paths),
+    "23 is the size of the list the page already has"
+  );
+  check(
+    "9 — the startable figure comes from the one predicate",
+    /startablePaths = cards\.filter\(\(c\) => c\.ready\)\.length/.test(paths),
+    "`ready` is `pathIsOpenTo` — the same predicate the catalogue and the gate use"
+  );
+  check(
+    "9 — ⚠⚠ the split adds up BY CONSTRUCTION",
+    /inProduction = cards\.length - startablePaths/.test(paths),
+    "total = startable + in-production is an identity here, not a coincidence to re-check"
+  );
+  /* ⚠⚠ AND THE THREE RENDER TOGETHER, IN ONE SENTENCE. Ruling 30's whole test
+     is whether the arithmetic is SHOWN rather than invited — a total on its own,
+     or a split two paragraphs away, is the thing ruling 3 banned. */
+  const sentence =
+    /\{cards\.length\} paths — \{startablePaths\} you can start today,\{" "\}\s*\{inProduction\} in production\./.exec(
+      paths
+    );
+  check(
+    "9 — ⚠⚠⚠ all three render together, in one sentence",
+    Boolean(sentence),
+    "a total with its split adjacent is allowed; a total alone is what ruling 3 forbids"
+  );
+
   check(
     "9 — it has left My Learning",
     !/inProduction/.test(page),
