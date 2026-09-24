@@ -129,11 +129,34 @@ export function lessonState(lesson: {
   return "planned";
 }
 
-/** ⚠ ONE STRING PER STATE, so no surface invents its own wording. */
+/**
+ * ⚠ ONE STRING PER STATE, so no surface invents its own wording.
+ * ⚠⚠ TWO RENDERINGS, ONE DEFINITION: the full sentence for a row that has space
+ * and the chip for one that does not. Both are `Record<LessonState, string>`,
+ * so **adding a state forces both** — that is what stops them drifting (`E585`).
+ */
 export const LESSON_STATE_LABEL: Record<LessonState, string> = {
   ready: "Ready",
   recorded: "Recorded — not published yet",
   unpublished: "Not published yet",
+  planned: "Planned",
+};
+
+/**
+ * ⚠ The chip form, for a spine row where the sentence will not fit.
+ * ⚠⚠⚠ IT REPLACED A PILL READING **"Soon"** (`P2-A4-E613`). *"Soon"* is a
+ * promise about WHEN, and **nothing in the schema holds a publish date and
+ * nothing tells anybody when a video lands.** `E611` removed four such sites;
+ * this fifth one was in `PathSpine` and was missed because it is a chip, not a
+ * sentence. ⚠ Every word below states what the lesson IS, never when it will
+ * change.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   <span className="…">Soon</span>
+ */
+export const LESSON_STATE_SHORT: Record<LessonState, string> = {
+  ready: "Ready",
+  recorded: "Recorded",
+  unpublished: "Not published",
   planned: "Planned",
 };
 

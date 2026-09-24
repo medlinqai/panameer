@@ -3,7 +3,7 @@ import { getPathForumTeaser, type PathForumTeaser } from "@/lib/forums";
 import { pathInterestFor } from "@/lib/path-interest";
 import type { Viewer } from "@/lib/access";
 import { shownRunTime } from "@/lib/lesson-duration";
-import { isPlayable, pathIsOpenTo, playableProgress } from "@/lib/learn";
+import { LESSON_STATE_SHORT, isPlayable, lessonState, pathIsOpenTo, playableProgress } from "@/lib/learn";
 import {
   instructorIdsFor,
   loadInstructors,
@@ -45,6 +45,8 @@ export type AppLessonRow = {
   /** ⚠ VERBATIM AS STORED, never parsed. Null → the column is omitted. */
   runTime: string | null;
   playable: boolean;
+  /** ⚠ `P2-A4-E613` — what this lesson honestly is. Never "Soon". */
+  stateLabel: string;
   completed: boolean;
   current: boolean;
   instructor: Instructor | null;
@@ -299,6 +301,7 @@ export async function getAppPath(
           title: l.title,
           runTime: shownRunTime(l),
           playable: isPlayable(l),
+          stateLabel: LESSON_STATE_SHORT[lessonState(l)],
           completed: done.has(l.id),
           current: l.id === nextId,
           instructor: face.instructor,

@@ -432,7 +432,31 @@ function subhead(d: MyLearningData): string {
      playable lesson — so the sentence says so.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   return `${d.totals.paths} learning paths, ${d.totals.lessons} lessons, taught by working consultants. Free, and it stays free.`; */
-  return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
+  /*
+    ── ⚠⚠⚠ TWO FIGURES, NEVER ONE (`P2-A4-E613`, Scott 2026-09-24) ──────────
+
+    ⚠⚠ SCOTT: *"Show it. '11 in production' appears as its own labelled figure…
+    the two numbers are never summed into 23 anywhere a member can see."*
+
+    ⚠⚠⚠ THEY SIT IN SEPARATE SENTENCES ON PURPOSE. Inside one clause —
+    *"12 paths you can start today and 11 in production"* — a reader adds them,
+    and 23 is the number this whole brief exists to stop anyone printing.
+    ⚠ A FULL STOP IS THE MECHANISM: the second sentence names what it counts and
+    what it is NOT, so the figure cannot be read as more of the first.
+    ⚠ It renders ONLY above zero. *"0 in production"* is an anti-advertisement
+    and, once every path is shot, a sentence about nothing.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   return `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
+  */
+  const open = `${d.totals.paths} paths you can start today, ${d.totals.lessons} lessons you can watch, taught by working consultants. Free, and it stays free.`;
+  if (d.totals.inProduction <= 0) return open;
+  /* ⚠⚠⚠ NO CLAIM ABOUT WHICH STAGE, AND THAT IS A CORRECTION I MADE TO MY OWN
+     FIRST DRAFT. It read *"written, not yet filmed"* — which WS-A had just made
+     FALSE for `How to Implement`, whose 26 lessons Scott confirmed were filmed
+     and are now `RAW_SHOT`. ⚠ The eleven are not all at one rung, so a sentence
+     that names a rung is wrong about some of them. **"In production" is the
+     only thing true of all eleven.** */
+  return `${open} Another ${d.totals.inProduction} are in production.`;
 }
 
 function SectionHead({ title, children }: { title: string; children?: React.ReactNode }) {

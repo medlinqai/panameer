@@ -174,9 +174,14 @@ export function PathSpine({ path }: { path: AppPathView }) {
                                 {l.runTime}
                               </span>
                             )}
+                            {/* ⚠⚠⚠ `P2-A4-E613` — THE STATE, NOT A PROMISE.
+                                *"Soon"* said WHEN, and nothing in the schema
+                                holds a publish date. ⚠ SUPERSEDED, quoted not
+                                deleted (`E164`):
+                                //   Soon */}
                             {!l.playable && (
                               <span className="shrink-0 rounded-full bg-bg-soft px-2 py-[2px] text-[9.5px] font-semibold text-ink-2">
-                                Soon
+                                {l.stateLabel}
                               </span>
                             )}
                             {l.instructor && (
