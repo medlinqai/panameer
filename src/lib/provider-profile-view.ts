@@ -31,6 +31,25 @@ export async function getProviderProfileView(
     viewerUserId?: string;
     /** Full viewer, when available — needed for the WS5 Plus gate. */
     viewer?: import("@/lib/access").Viewer | null;
+    /**
+     * ── ⚠⚠⚠ PROFILE360 — THE OWNER PREVIEWING A PEER (`P2-A2-E616`) ───────
+     *
+     * ⚠⚠ SCOTT, 2026-09-23: *"where my profile page gets flipped 360 to be
+     * viewable for another provider."* ⚠ Ruling 11: **the name stays
+     * `Profile360`.**
+     *
+     * ⚠⚠⚠ IT CHANGES ONE THING AND ONE THING ONLY: the viewer's CAPABILITY for
+     * the purposes of the rate decision. It does not fork the rule, add a
+     * second rule, or take a rate-specific flag — ⚠ ruling 9 is **one rule,
+     * everywhere**, and a `hideRate` boolean here would be a second place the
+     * decision could be made differently.
+     *
+     * ⚠ THE PREVIEWER IS STILL THE OWNER EVERYWHERE ELSE. `isOwner` is
+     * untouched, so `recordProfileView` still refuses to write a row for
+     * somebody looking at themselves (`E598`) — a member checking their own
+     * peer view must not inflate their own count.
+     */
+    previewAsPeer?: boolean;
   } = {}
 ) {
   const profile = await prisma.providerProfile.findUnique({
@@ -450,7 +469,11 @@ export async function getProviderProfileView(
       a DUAL-ROLE member who both hires and provides is a buyer when they are
       buying, and refusing them the rate would be refusing them the marketplace.
     */
-    rates: !(
+    /* ⚠⚠⚠ `previewAsPeer` SHORT-CIRCUITS BOTH CLAUSES, AND THAT IS THE WHOLE
+       CHANGE (`P2-A2-E616`). A peer is by definition somebody who is NOT the
+       owner and CANNOT hire here, so the preview answers the existing predicate
+       as that person rather than asking a different question. ⚠ One rule. */
+    rates: opts.previewAsPeer || !(
       isOwner ||
       /* ⚠ A SIGNED-OUT VISITOR IS NOT A BUYER. `viewer` is null then, and a
          null cannot hold a capability — so the rate is withheld, which is the

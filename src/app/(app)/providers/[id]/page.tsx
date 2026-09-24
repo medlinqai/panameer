@@ -138,11 +138,39 @@ async function providerColleagueCount(userId: string | null): Promise<number> {
 
 export default async function PublicProviderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ as?: string }>;
 }) {
   const { id } = await params;
+  const { as } = await searchParams;
   const viewer = await getSessionViewer();
+  /*
+    ── ⚠⚠⚠ PROFILE360 (`P2-A2-E616`, ruling 11 keeps the name) ─────────────
+
+    ⚠⚠ SCOTT, 2026-09-23: *"where my profile page gets flipped 360 to be
+    viewable for another provider."*
+
+    ⚠ MEASURED 2026-09-24, and it is why this brief is smaller than it reads:
+    **the peer view already existed.** `E598` shipped the rate rule Scott ruled
+    on 09-24 — `provider-profile-view.ts` withholds a rate from anyone without
+    `canHireTalent`, and `check:visitor-profile` proves it live
+    (*"rate figure 210.00 — owner true · buyer true · provider false"*).
+    ⚠⚠ **WHAT DID NOT EXIST IS A WAY FOR THE OWNER TO SEE IT.** This route
+    hard-coded `previewAsBuyer`, so an owner could preview one of the two
+    non-owner views and not the other — and **61 of 62 members are providers**,
+    so the view they could not preview is the one almost everybody uses.
+
+    ⚠ A QUERY PARAMETER, NOT A ROUTE. The route set does not move, nothing new
+    needs registering in `route-access.ts`, and the page a peer actually lands
+    on is byte-identical to the page the owner previews — which is the only way
+    a preview can be trusted.
+    ⚠⚠ IT IS OWNER-ONLY BY CONSTRUCTION: `previewAsPeer` is `profile.isOwner &&
+    …` below, so a stranger appending `?as=provider` changes nothing about what
+    they were already going to see.
+  */
+  const wantsPeerPreview = as === "provider";
 
   /*
     E049 — THE GATE, before the read.
@@ -170,8 +198,14 @@ export default async function PublicProviderPage({
   const profile = await getProviderProfileView(id, {
     viewerUserId: viewer?.userId,
     viewer,
+    /* ⚠ The preview only applies to the owner — see `wantsPeerPreview` above.
+       ⚠⚠ `getProviderProfileView` re-derives `isOwner` itself, so this cannot
+       be used to widen anybody else's view. */
+    previewAsPeer: wantsPeerPreview,
   });
   if (!profile) notFound();
+  /* ⚠ Resolved AFTER the read, because only the read knows who owns this. */
+  const previewAsPeer = profile.isOwner && wantsPeerPreview;
 
   /*
     ⚠ `takenPaths` IS THE PROFILE OWNER'S ENROLMENTS, NOT THE VIEWER'S
@@ -313,15 +347,31 @@ export default async function PublicProviderPage({
       {profile.isOwner && (
         <div className="border-b border-line bg-bg-soft px-4 py-2.5 text-[13.5px] text-ink-2 sm:px-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
+            {/* ⚠⚠ THE BAR NAMES WHICH VIEW THIS IS (`P2-A2-E616`). With two
+                previews on one route, *"This Is How Buyers See You"* would be
+                false half the time — and a preview that misnames itself is
+                worse than no preview. */}
             <span>
-              This Is How Buyers See You
+              {previewAsPeer ? "This Is How Other Providers See You" : "This Is How Buyers See You"}
             </span>
-            <Link
-              href="/profile"
-              className="font-semibold text-magenta hover:underline"
-            >
-              &larr; Back to My Profile
-            </Link>
+            {/* ⚠⚠⚠ THE WAY BACK, AND THE WAY ACROSS (`E602`'s lesson: a link
+                that drops a member into a walk they cannot leave is a defect).
+                ⚠ Both render at every width — they are plain links in a
+                `flex-wrap` row, which is what makes 360px behave. */}
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <Link
+                href={previewAsPeer ? `/providers/${id}` : `/providers/${id}?as=provider`}
+                className="font-semibold text-magenta hover:underline"
+              >
+                {previewAsPeer ? "See What Buyers See" : "Profile360"}
+              </Link>
+              <Link
+                href="/profile"
+                className="font-semibold text-magenta hover:underline"
+              >
+                &larr; Back to My Profile
+              </Link>
+            </span>
           </div>
         </div>
       )}
@@ -365,6 +415,10 @@ export default async function PublicProviderPage({
              model — the bar above needs it and `recordProfileView` still must
              not write a view row for the owner (`E598`) — but every owner
              AFFORDANCE is suppressed at `ConnectProfile`'s single owner point. */
+          /* ⚠ `previewAsBuyer` SUPPRESSES OWNER AFFORDANCES and is true for
+             BOTH previews — a peer sees no owner tools either. ⚠⚠ The rate
+             difference is decided in the view model, not here, so there is one
+             rate rule and this component never learns it. */
           previewAsBuyer
         />
       </main>
