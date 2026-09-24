@@ -1,3 +1,30 @@
+/*
+  ── ⚠⚠⚠ EVERY CATEGORY SHIPS ON — IN-APP AND EMAIL (`P2-A3-E620`, ruling 34b) ─
+
+  ⚠ SCOTT, 2026-09-24, shown that 8 of 17 categories shipped email-OFF: **"All
+  on, exactly as ruled."** ⚠⚠ Ruling 13 stands unchanged — in-app AND email,
+  every category, each independently toggleable on the settings page.
+
+  ⚠⚠⚠ I TOLD SCOTT **SEVEN** WHEN I ASKED HIM. IT IS **EIGHT**. Recorded here
+  because he ruled on my number: the eighth is `product.updates`, and it is the
+  one that matters most, because it was the ONLY category shipping with **in-app
+  off as well** — it is product news, the closest thing here to marketing, and
+  the place an unexpected "on" is least welcome. ⚠ Flipped per the ruling and
+  reported, not quietly left out to make my own count true.
+
+  ⚠⚠ RAISED AND OVERRULED: volume on a sending domain verified COLD on
+  2026-09-04. Scott's instruction stands — **warm the domain before volume and
+  report bounce and complaint rates from `SentEmail`.**
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the eight as they shipped:
+  //   buyer.proposals.received   defaults: { inApp: true,  email: false, sms: false },
+  //   buyer.provider.responded   defaults: { inApp: true,  email: false, sms: false },
+  //   buyer.work_order.status    defaults: { inApp: true,  email: false, sms: false },
+  //   buyer.settlement.approval  defaults: { inApp: true,  email: false, sms: false },
+  //   buyer.timesheet.approval   defaults: { inApp: true,  email: false, sms: false },
+  //   learn.progress             defaults: { inApp: true,  email: false, sms: false },
+  //   community.activity         defaults: { inApp: true,  email: false, sms: false },
+  //   product.updates            defaults: { inApp: false, email: false, sms: false },
+*/
 /**
  * What Panameer can tell you about (J2.4 WS-H / E020).
  *
@@ -32,8 +59,29 @@ export type NotificationGroup = "messages" | "email" | "tax";
  */
 export type NotificationAudience = "seller" | "buyer" | "both";
 
+/**
+ * ── ⚠⚠⚠ WHICH FILTER A CATEGORY ANSWERS TO (`P2-A3-E620` WS-C) ───────────
+ *
+ * ⚠ `/notifications` offers **All · Unread · Work · Community**, and those last
+ * two are a partition of the SAME rows. ⚠⚠ EVERY CATEGORY MUST HAVE A LANE, or
+ * its rows would be reachable under `All` and under nothing else — a filter set
+ * with a hole in it, where the rows you cannot find are the ones nobody knows
+ * are missing.
+ * ⚠⚠⚠ `check:notify-prefs` ASSERTS THE PARTITION IS TOTAL, so adding a
+ * seventeenth category without choosing a lane fails the build rather than
+ * quietly hiding it.
+ *
+ * ⚠ A TS FIELD, NOT A MIGRATION — the same call `audience` made above, for the
+ * same reason: `NotificationPreference.category` is a plain string and nothing
+ * in the database changes.
+ * ⚠⚠ THE SPLIT IS THE MARKETPLACE vs THE PEOPLE: money, orders and tax are
+ * `work`; messages, the profile, Learn and the community are `community`.
+ */
+export type NotificationLane = "work" | "community";
+
 export type NotificationCategory = {
   key: string;
+  lane: NotificationLane;
   audience: NotificationAudience;
   group: NotificationGroup;
   label: string;
@@ -68,6 +116,7 @@ export const NOTIFICATION_GROUPS: {
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   {
     key: "message.received",
+    lane: "community",
     audience: "both",
     group: "messages",
     label: "New message from a buyer",
@@ -76,6 +125,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_request.matched",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "A work request matches your profile",
@@ -84,6 +134,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "work_order.status",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "Work order status changes",
@@ -92,6 +143,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "milestone.due",
+    lane: "work",
     audience: "seller",
     group: "messages",
     label: "Milestone and timesheet deadlines",
@@ -157,43 +209,48 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "buyer.proposals.received",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "Proposals on your work request",
     blurb: "A provider responded to work you posted.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "buyer.provider.responded",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A provider accepted or declined",
     blurb: "Someone you invited to your work request answered.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "buyer.work_order.status",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "Your work order status changes",
     blurb: "A work order you released was accepted, amended or closed.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "buyer.settlement.approval",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A settlement request needs your approval",
     blurb: "A provider submitted work for you to approve before it can be paid.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "buyer.timesheet.approval",
+    lane: "work",
     audience: "buyer",
     group: "messages",
     label: "A timesheet needs approving",
     blurb: "Hours were submitted against a work order you own.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   /*
     ── ⚠⚠ STEP 5, "Pay Panameer", HAS NO CATEGORY. STOPPED AND REPORTED. ───────
@@ -218,6 +275,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "profile.visibility",
+    lane: "community",
     audience: "seller",
     group: "email",
     label: "Profile and visibility",
@@ -227,6 +285,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "recommendation.received",
+    lane: "community",
     audience: "seller",
     group: "email",
     label: "Recommendations and validations",
@@ -235,11 +294,12 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "learn.progress",
+    lane: "community",
     audience: "both",
     group: "email",
     label: "Learn — courses and certifications",
     blurb: "A certification was issued, or a path you're enrolled in was updated.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   /*
     ⚠⚠ THE ONE CATEGORY I ADDED, AND SCOTT HAS NOT NAMED IT (`P1-ALL`, 2026-09-01).
@@ -262,22 +322,25 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   */
   {
     key: "community.activity",
+    lane: "community",
     audience: "both",
     group: "messages",
     label: "Community activity",
     blurb: "You joined, or something new was added where you follow.",
-    defaults: { inApp: true, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "product.updates",
+    lane: "community",
     audience: "both",
     group: "email",
     label: "Product news from Panameer",
     blurb: "New features, and occasional research invitations. Never sales mail.",
-    defaults: { inApp: false, email: false, sms: false },
+    defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "tax.documents",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "Tax documents",
@@ -286,6 +349,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "tax.form_required",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "A tax form is required before payout",
@@ -296,6 +360,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   },
   {
     key: "payout.sent",
+    lane: "work",
     audience: "seller",
     group: "tax",
     label: "Withdrawals and payouts",

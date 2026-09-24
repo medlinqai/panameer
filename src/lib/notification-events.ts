@@ -386,4 +386,228 @@ export const NOTIFICATION_EVENTS = {
     title: () => "Unread message reminder",
     body: () => null,
   },
+
+  /*
+    ══ ⚠⚠⚠ THE WORKLIST EVENTS (`P2-A3-E620`, ruling 34e) ═══════════════════
+
+    ⚠ SCOTT, 2026-09-24, accepting the split as proposed. **Worklist** means YOU
+    OWE AN ACTION AND IT STAYS UNTIL YOU DO IT; **notification** means you are
+    told. ⚠⚠ `requiresAction: true` is the ONLY thing that puts a row on the
+    worklist — `/notifications` already filters `requires_action &&
+    resolved_at IS NULL`, and the index for that query already exists.
+
+    ⚠⚠⚠ A CORRECTION I OWE, BECAUSE SCOTT RULED ON MY NUMBER. I reported that
+    *"every registered event has `requiresAction: false`, so no event in the
+    product can create a worklist item at all"*, and ruling 34e's preamble
+    repeats it. ⚠⚠ **THAT WAS WRONG. TWO of the 19 already carried it** —
+    `profile.details_needed` and `message.received`.
+    ⚠ THE CONCLUSION SURVIVES AND THE REASON DOES NOT: the worklist was empty
+    because **those two events have produced ZERO ROWS, ever** (measured: 0 and
+    0; `Message` holds 0 rows at all), not because nothing was capable. ⚠⚠ I had
+    read a row count of `requires_action = 0` and reported it as a fact about
+    the REGISTRY — two different questions, and the second one I never asked.
+    ⚠⚠⚠ THE GAP IS STILL REAL AND IS STILL WHAT SCOTT'S WALK NOTE FOUND: none of
+    the events a member would actually want on a worklist — a group join to
+    approve, a colleague invite, a proposal, an interview — was registered at
+    all. That is what the entries below fix.
+
+    ── ⚠⚠ WIRED vs DEFINED-AND-SILENT ───────────────────────────────────────
+    ⚠ Ruling 34e: *"No event that fires for something the product cannot do
+    yet… those ship as definitions that stay silent, never as printed states."*
+    ⚠⚠ SO THE SILENCE IS **NOTHING CALLING THEM**, not a `SILENT` visibility:
+    these carry `FEED` so that the moment `brief_work_chain` builds their
+    writers it calls `notify()` and they work — which is exactly what that brief
+    was promised (*"ONE notification writer to call, not invent its own"*).
+    ⚠ Each uncalled event says below what has to exist before it can fire.
+  */
+
+  // ── Groups — writers shipped at `P2-A3-E619` ──────────────────────────────
+  "group.join_requested": {
+    event: "group.join_requested",
+    recipient: "the group's owner",
+    category: "community.activity",
+    /* ⚠ A person is named to another person, so a human approves. */
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    /* ⚠⚠ WORKLIST. It is cleared by approving or declining — `decideJoinRequest`
+       is the writer, and it shipped in the same brief that created this state. */
+    requiresAction: true,
+    title: (v) => `${str(v, "askerName", "A member")} asked to join ${str(v, "groupTitle", "your group")}`,
+    body: () => "Approve or decline from your Requests.",
+    href: () => "/community/groups?view=requests",
+  },
+  "group.join_approved": {
+    event: "group.join_approved",
+    recipient: "the member who asked",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `You're in ${str(v, "groupTitle", "the group")}`,
+    body: () => null,
+    href: (v) => `/community/groups/${str(v, "groupSlug", "")}`,
+  },
+  /* ⚠⚠ A DECLINE IS TOLD, NOT SWALLOWED. Ruling 34e puts it on the list for the
+     same reason `E619` keeps the DECLINED row: a decline the asker never sees
+     reads as *"you never asked"*, so they ask again, forever. */
+  "group.join_declined": {
+    event: "group.join_declined",
+    recipient: "the member who asked",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Your request to join ${str(v, "groupTitle", "a group")} wasn't accepted`,
+    /* ⚠⚠⚠ IT NAMES NO REASON AND BLAMES NOBODY. The owner gave none, so
+       inventing one would be a fabrication, and *"you were rejected"* is a
+       judgement the data does not carry. */
+    body: () => "The group's owner decides who joins.",
+    href: () => "/community/groups?view=discover",
+  },
+  "group.question_asked": {
+    event: "group.question_asked",
+    recipient: "the group's owner",
+    category: "community.activity",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    /* ⚠⚠ WORKLIST — cleared by answering. This is the same question
+       `countThreadsWaitingOn` already counts on the Groups page, so the figure
+       and the worklist item cannot disagree about what "waiting" means. */
+    requiresAction: true,
+    title: (v) => `A question in ${str(v, "groupTitle", "your group")} has no answer yet`,
+    body: (v) => str(v, "threadTitle", "") || null,
+    href: (v) => `/community/groups/thread/${str(v, "threadId", "")}`,
+  },
+
+  // ── Colleagues — writers already live in `lib/connections.ts` ─────────────
+  "colleague.invite_received": {
+    event: "colleague.invite_received",
+    recipient: "the person invited",
+    category: "community.activity",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    /* ⚠⚠ WORKLIST — cleared by accepting or declining. */
+    requiresAction: true,
+    title: (v) => `${str(v, "fromName", "Someone")} wants to connect as a colleague`,
+    body: () => null,
+    href: () => "/community",
+  },
+  "colleague.invite_accepted": {
+    event: "colleague.invite_accepted",
+    recipient: "the person who invited",
+    category: "community.activity",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "fromName", "Someone")} accepted your invitation`,
+    body: () => null,
+    href: () => "/community/colleagues",
+  },
+
+  // ── The profile ───────────────────────────────────────────────────────────
+  /* ⚠⚠ `recordProfileView` IS LIVE — measured, it is called from
+     `/providers/[id]`. ⚠⚠⚠ AND IT IS `DIGEST`, NOT `FEED`: a bell that rings
+     every time somebody glances at your page is the fastest way to get muted,
+     which is the reason `learn.lesson_completed` is already DIGEST. The row is
+     recorded and the count is what the profile shows. */
+  "profile.viewed": {
+    event: "profile.viewed",
+    recipient: "the profile's owner",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "DIGEST",
+    requiresAction: false,
+    title: (v) => `${str(v, "viewerName", "Someone")} looked at your profile`,
+    body: () => null,
+    href: () => "/profile",
+  },
+
+  /*
+    ══ ⚠⚠⚠ DEFINED AND NOT YET CALLED — THE WRITER TEST (ruling 34e) ════════
+
+    ⚠ MEASURED 2026-09-24: `ProviderBid` 0 rows · `InterviewRequest` 0 · `WorkOrder`
+    0 · `SettlementRequest` 0 · `Payment` 0. ⚠⚠ Every one of these is a real
+    model with no writer that a member can reach, so **nothing calls them and no
+    row can exist.** ⚠⚠⚠ THEY ARE REGISTERED ANYWAY, ON PURPOSE: `brief_work_chain`
+    was promised ONE notification writer to call rather than inventing its own,
+    and a registry entry is what makes that a one-line call when its writer lands.
+  */
+  "work.proposal_received": {
+    event: "work.proposal_received",
+    recipient: "the buyer who posted the work request",
+    category: "buyer.proposals.received",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `A proposal on ${str(v, "requestTitle", "your work request")}`,
+    body: () => "Respond from the work request.",
+    href: (v) => `/work-requests/${str(v, "requestId", "")}`,
+  },
+  "work.interview_requested": {
+    event: "work.interview_requested",
+    recipient: "the provider asked to interview",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "buyerName", "A buyer")} asked to interview you`,
+    body: () => "Confirm a time to clear this.",
+    href: (v) => `/work-requests/${str(v, "requestId", "")}`,
+  },
+  "work.order_offered": {
+    event: "work.order_offered",
+    recipient: "the provider offered the work",
+    category: "work_order.status",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "A work order is waiting for you to accept",
+    body: (v) => str(v, "requestTitle", "") || null,
+    href: (v) => `/orders/${str(v, "orderId", "")}`,
+  },
+  "work.settlement_approval": {
+    event: "work.settlement_approval",
+    recipient: "the buyer who owes the approval",
+    category: "buyer.settlement.approval",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "A settlement needs your approval",
+    body: () => null,
+    href: (v) => `/orders/${str(v, "orderId", "")}`,
+  },
+  /*
+    ⚠⚠⚠ DEFINED AND SILENT, AND THIS ONE IS DIFFERENT FROM THE FOUR ABOVE.
+    ⚠ Ruling 25 / the standing rule: **no `Payment` row is created ANYWHERE in
+    the codebase and `PAID` is never written**, so this cannot fire — and a
+    figure or a state derived from it is uncountable, not zero (`E603`'s dash).
+    ⚠⚠ It is registered so that whoever finally writes a payment has an event to
+    call, and for no other reason. **Do not print a state from it.**
+  */
+  "payment.sent": {
+    event: "payment.sent",
+    recipient: "the provider paid",
+    category: "payout.sent",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `You've been paid${str(v, "amount", "") ? ` — ${str(v, "amount", "")}` : ""}`,
+    body: () => null,
+    href: () => "/payments",
+  },
+  /* ⚠ THERE IS NO `Recommendation` MODEL — measured, the table does not exist.
+     ⚠⚠ Registered because the CATEGORY `recommendation.received` already ships
+     a toggle, and a toggle governing an event that does not exist is the
+     mirror image of the defect ruling 13 warned about. */
+  "recommendation.received": {
+    event: "recommendation.received",
+    recipient: "the provider recommended",
+    category: "recommendation.received",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "fromName", "Someone")} recommended you`,
+    body: () => null,
+    href: () => "/profile",
+  },
 } as const satisfies Record<string, NotificationEvent>;

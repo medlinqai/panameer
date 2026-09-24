@@ -26,7 +26,17 @@ import {
  * it is the notification that unblocks getting paid, and an off switch on it is
  * a way to silently strand your own money.
  */
-type Pref = { key: string; inApp: boolean; email: boolean; sms: boolean };
+/* ⚠ `isDefault` — ruling 34d. True when NO preference row exists for this
+   category, so the switches are showing the declared default rather than a
+   choice the member made. ⚠⚠ It is resolved in `getNotificationPrefs`, not
+   here: the component must never re-derive what a default is (`E585`). */
+type Pref = {
+  key: string;
+  inApp: boolean;
+  email: boolean;
+  sms: boolean;
+  isDefault: boolean;
+};
 
 export function NotificationSettings({
   prefs,
@@ -141,7 +151,29 @@ export function NotificationSettings({
                 className="grid grid-cols-1 gap-2 border-b border-line py-3 last:border-0 sm:grid-cols-[1fr_repeat(3,64px)] sm:items-center"
               >
                 <div className="min-w-0">
-                  <p className="text-[14.5px] font-semibold">{cat.label}</p>
+                  <p className="text-[14.5px] font-semibold">
+                    {cat.label}
+                    {/*
+                      ── ⚠⚠⚠ "DEFAULT" SAYS THIS IS NOT A CHOICE YOU MADE ────
+
+                      ⚠ SCOTT, ruling 34d: the page *"shows the EFFECTIVE value
+                      and says plainly when it is the default rather than a
+                      choice."* ⚠⚠ The switches beside it are already the
+                      effective value; without this marker a member cannot tell
+                      a setting they chose from one nobody has ever touched —
+                      and those are different facts, because a default is free
+                      to change and a choice is not.
+                      ⚠⚠⚠ IT DISAPPEARS THE MOMENT THEY TOUCH ANYTHING in this
+                      category, because saving writes the row — so the marker
+                      is never stale. ⚠ It is a WORD, not a colour: a grey dot
+                      would mean nothing to anyone.
+                    */}
+                    {pref.isDefault && (
+                      <span className="ml-2 rounded-full bg-line-2 px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-[0.05em] text-ink-3">
+                        Default
+                      </span>
+                    )}
+                  </p>
                   <p className="mt-0.5 text-[13px] leading-relaxed text-ink-2">
                     {cat.blurb}
                   </p>

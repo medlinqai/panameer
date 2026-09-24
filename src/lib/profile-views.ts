@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 
 /**
  * ── ⚠⚠ PROFILE VIEWS — THE WRITE PATH AND THE READ (`P0-E595` A2 / WS-C) ───
@@ -83,10 +84,53 @@ export async function recordProfileView(opts: {
       `viewed_at` and rewriting a row to say nothing new. ⚠ This inserts once
       and then does nothing, which is what "counts once" means.
     */
-    await prisma.profileView.createMany({
+    const written = await prisma.profileView.createMany({
       data: [{ profile_id: opts.profileId, viewer_person_id: person.id, viewed_on: today() }],
       skipDuplicates: true,
     });
+
+    /*
+      ── ⚠⚠⚠ THE OWNER HEARS ABOUT IT — ONCE (`P2-A3-E620`, ruling 34e) ─────
+
+      ⚠⚠ `written.count === 0` MEANS THE VIEW WAS ALREADY RECORDED TODAY, so
+      there is nothing new to tell anybody. ⚠⚠⚠ THIS IS THE IDEMPOTENCY, AND IT
+      IS THE ROW ITSELF RATHER THAN A SECOND RULE: the notification fires
+      exactly when a view is COUNTED, so the bell and the profile's number can
+      never disagree about how many views there were (`E585`). A dedupe key
+      alone would have been a second definition of "once".
+      ⚠ RULE 2 ABOVE ALREADY RETURNED for the owner's own visit, so WS-B item 3
+      — *"the owner is never told they viewed their own page"* — is satisfied
+      before this line can run.
+
+      ⚠⚠ IT IS `DIGEST`, NOT `FEED` (see the registry): the row is recorded and
+      does NOT ring the bell. A bell that rings on every glance at your page is
+      the fastest way to get muted, which is why `learn.lesson_completed` is
+      already DIGEST. ⚠ The digest SENDER is deliberately unbuilt — rows
+      accumulate, and that is the existing, documented behaviour, not new debt.
+    */
+    if (written.count > 0) {
+      const owner = await prisma.providerProfile.findUnique({
+        where: { id: opts.profileId },
+        select: { person_id: true },
+      });
+      const viewer = await prisma.person.findUnique({
+        where: { id: person.id },
+        select: { first_name: true, last_name: true },
+      });
+      if (owner) {
+        await notify({
+          event: "profile.viewed",
+          personId: owner.person_id,
+          entityType: "provider_profile",
+          entityId: opts.profileId,
+          dedupeKey: `profile.viewed:${opts.profileId}:${person.id}:${today()}`,
+          vars: {
+            viewerName:
+              [viewer?.first_name, viewer?.last_name].filter(Boolean).join(" ") || "Someone",
+          },
+        });
+      }
+    }
   } catch {
     /* ⚠ Swallowed on purpose — see the note above. */
   }

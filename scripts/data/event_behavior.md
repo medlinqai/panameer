@@ -158,6 +158,47 @@ discipline that makes "at least 5 notifications" survivable.
 `message.received` are shipped. **Map new events onto existing categories before
 creating any — a category per event is how a settings page becomes unusable.**
 
+### Groups and colleagues — `P2-A3-E620`, ruling 34e
+
+⚠⚠ **ADDED 2026-09-24.** Scott's walk note `E025` — *"We still have NOTHING in the
+notifications bell"* — and the measurement behind it: the bell, the list and the worklist were
+all BUILT, and the table held **one row**. ⚠ None of the events a member would actually want
+was registered. These are those events.
+
+⚠⚠⚠ **`Worklist` IN THE CHANNEL COLUMN MEANS `requiresAction: true`** — the member OWES an
+action and the row stays until it is done, not until it is read. ⚠ Every one names what clears
+it, because an item with no clearing writer would sit there forever (`E579` one level down).
+⚠⚠ **ALL OF THESE HAVE LIVE WRITERS** — shipped at `P2-A3-E619` or already in `connections.ts`.
+
+| Event | Recipient | AI Mode | Channel | Notes |
+|---|---|---|---|---|
+| `group.join_requested` | the group's owner | `Send for Approval` | worklist | ⚠ Fires ONLY on a `REQUEST` group, where a decision is genuinely owed. **Cleared by `decideJoinRequest`.** |
+| `group.join_approved` | the member who asked | `Do It` | in-app | Nothing is owed by them — they asked and got an answer |
+| `group.join_declined` | the member who asked | `Do It` | in-app | ⚠⚠ **TOLD, NOT SWALLOWED.** A decline nobody sees reads as *"you never asked"*. ⚠ It names no reason and blames nobody — the owner gave none |
+| `group.question_asked` | the group's owner | `Send for Approval` | worklist | ⚠ The same question `countThreadsWaitingOn` counts on the Groups page — one definition. **Cleared by answering.** ⚠⚠ The four general boards are ownerless, so nothing fires |
+| `colleague.invite_received` | the person invited | `Send for Approval` | worklist | **Cleared by accepting OR declining** — both end the wait |
+| `colleague.invite_accepted` | the person who invited | `Do It` | in-app | ⚠ A colleague DECLINE is deliberately silent — that is a judgement this product does not deliver, unlike a group decline, where an owner is administering a room |
+| `profile.viewed` | the profile's owner | `Do It` | digest | ⚠⚠ **DIGEST, NOT FEED.** A bell that rings on every glance is the fastest way to get muted — the reason `learn.lesson_completed` is already digest. ⚠ Fires exactly when a view is COUNTED, so the bell and the profile's number cannot disagree |
+
+### The work chain — DEFINED, NOT YET CALLED
+
+⚠⚠⚠ **NOTHING CALLS THESE AND NO ROW CAN EXIST.** Measured 2026-09-24: `ProviderBid` **0 rows**
+· `InterviewRequest` **0** · `WorkOrder` **0** · `SettlementRequest` **0** · `Payment` **0**.
+⚠ Ruling 34e: *"no event that fires for something the product cannot do yet… those ship as
+definitions that stay silent, never as printed states."*
+⚠⚠ **THEY ARE REGISTERED ANYWAY, ON PURPOSE:** `brief_work_chain` was promised ONE notification
+writer to call rather than inventing its own, and a registry entry makes that a one-line call
+the day its writer lands.
+
+| Event | Recipient | AI Mode | Channel | Notes |
+|---|---|---|---|---|
+| `work.proposal_received` | the buyer who posted the work request | `Send for Approval` | worklist | Cleared by responding to the proposal |
+| `work.interview_requested` | the provider asked to interview | `Send for Approval` | worklist | Cleared by confirming a time |
+| `work.order_offered` | the provider offered the work | `Send for Approval` | worklist | Cleared by accepting the order |
+| `work.settlement_approval` | the buyer who owes the approval | `Send for Approval` | worklist | Cleared by approving the settlement |
+| `payment.sent` | the provider paid | `Do It` | in-app | ⚠⚠⚠ **DIFFERENT FROM THE FOUR ABOVE.** No `Payment` row is created ANYWHERE in the codebase and `PAID` is never written, so a figure derived from this is **uncountable, not zero**. Registered so whoever finally writes a payment has an event to call. **Do not print a state from it.** |
+| `recommendation.received` | the provider recommended | `Do It` | in-app | ⚠ **There is no `Recommendation` model** — the table does not exist. Registered because the category `recommendation.received` already ships a toggle, and a toggle governing an event that does not exist is the mirror of the defect ruling 13 warned about |
+
 ⚠⚠ **`NotificationCategory` STILL HAS NO `audience` FIELD**, and `learn.course_completed`
 needs one: the same event notifies a learner and an instructor with different messages.
 **That gap is already filed and is now blocking.**

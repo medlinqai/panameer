@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -124,9 +125,63 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
   }
   if (reverse) return reverse;
 
-  return prisma.connection.create({
+  const created = await prisma.connection.create({
     data: { from_user_id: from, to_user_id: toUserId, kind: "COLLEAGUE", status: "PENDING" },
   });
+
+  /*
+    ── ⚠⚠⚠ THE INVITE LANDS ON THEIR WORKLIST (`P2-A3-E620`, ruling 34e) ────
+
+    ⚠ IT IS A WORKLIST ITEM, NOT A NOTICE: the person invited OWES an answer,
+    and it stays until they accept or decline. ⚠⚠ Cleared in `acceptColleague`
+    and `declineColleague`, which are the two writers that end the wait — an
+    item that only a read could clear would sit there forever.
+    ⚠⚠⚠ ONLY THE **NEW** ROW NOTIFIES. Every early return above hands back an
+    EXISTING connection — an already-sent invite, a reverse invite being
+    accepted, a declined pair — and telling somebody again about a request they
+    already have is the duplicate `dedupe_key` exists to prevent. Putting this
+    after those returns is what makes it fire once.
+    ⚠ `refuseSelf` above already forbids inviting yourself (WS-B item 3).
+  */
+  const inviter = await prisma.person.findFirst({
+    where: { user_id: from },
+    select: { first_name: true, last_name: true },
+  });
+  const invitee = await prisma.person.findFirst({
+    where: { user_id: toUserId },
+    select: { id: true },
+  });
+  if (invitee) {
+    await notify({
+      event: "colleague.invite_received",
+      personId: invitee.id,
+      entityType: "connection",
+      entityId: created.id,
+      dedupeKey: `colleague.invite:${created.id}`,
+      vars: {
+        fromName:
+          [inviter?.first_name, inviter?.last_name].filter(Boolean).join(" ") || "Someone",
+      },
+    });
+  }
+  return created;
+}
+
+/**
+ * ⚠⚠ CLEAR THE INVITE'S WORKLIST ITEM. Ruling 34e: *"an item disappears when
+ * the thing is DONE, not when it is read."* ⚠ Accepting and declining both END
+ * the wait, so both clear it — a decline that left the item standing would ask
+ * the member to answer something they already answered.
+ * ⚠⚠ It never throws into the caller: clearing a list item must not fail the
+ * decision that was just recorded.
+ */
+async function clearInviteWorklist(connectionId: string) {
+  await prisma.notification
+    .updateMany({
+      where: { dedupe_key: `colleague.invite:${connectionId}`, resolved_at: null },
+      data: { resolved_at: new Date() },
+    })
+    .catch(() => {});
 }
 
 /**
@@ -184,15 +239,50 @@ export async function acceptColleague(viewer: Viewer, connectionId: string) {
   const me = await ownUserId(viewer);
   const row = await prisma.connection.findFirst({
     where: { id: connectionId, to_user_id: me, kind: "COLLEAGUE", status: "PENDING" },
-    select: { id: true },
+    /* ⚠ `from_user_id` — the invite's SENDER is who hears that it was accepted. */
+    select: { id: true, from_user_id: true },
   });
   if (!row) throw new ConnectionError("That request is no longer open", "NOT_FOUND");
-  return prisma.connection.update({
+  const updated = await prisma.connection.update({
     where: { id: row.id },
     /* ⚠ `responded_at` IS NOT OPTIONAL HERE — the harness fails the build if an
        ACCEPTED colleague row lacks one. */
     data: { status: "ACCEPTED", responded_at: new Date() },
   });
+
+  /* ⚠⚠ THE WAIT IS OVER, SO THE WORKLIST ITEM GOES (ruling 34e). */
+  await clearInviteWorklist(row.id);
+
+  /*
+    ⚠⚠⚠ AND THE PERSON WHO ASKED IS TOLD — a notice, never a worklist item.
+    ⚠ Nothing is owed by them; they asked and got an answer. ⚠⚠ The recipient is
+    the INVITER (`from_user_id`), which is the opposite direction from the
+    invite above — getting that backwards would tell the accepter that they
+    accepted, which is the "nobody is notified about their own action" rule
+    (WS-B item 3) failing in the most confusing way available.
+  */
+  const accepter = await prisma.person.findFirst({
+    where: { user_id: me },
+    select: { first_name: true, last_name: true },
+  });
+  const inviter = await prisma.person.findFirst({
+    where: { user_id: row.from_user_id },
+    select: { id: true },
+  });
+  if (inviter) {
+    await notify({
+      event: "colleague.invite_accepted",
+      personId: inviter.id,
+      entityType: "connection",
+      entityId: row.id,
+      dedupeKey: `colleague.accepted:${row.id}`,
+      vars: {
+        fromName:
+          [accepter?.first_name, accepter?.last_name].filter(Boolean).join(" ") || "Someone",
+      },
+    });
+  }
+  return updated;
 }
 
 /**
@@ -209,10 +299,22 @@ export async function declineColleague(viewer: Viewer, connectionId: string) {
     select: { id: true },
   });
   if (!row) throw new ConnectionError("That request is no longer open", "NOT_FOUND");
-  return prisma.connection.update({
+  const updated = await prisma.connection.update({
     where: { id: row.id },
     data: { status: "DECLINED", responded_at: new Date() },
   });
+
+  /*
+    ⚠⚠ DECLINING ALSO ENDS THE WAIT, SO THE ITEM GOES. ⚠⚠⚠ AND NOBODY IS TOLD:
+    `DECLINED` is a first-class state here precisely so a declined request is
+    not re-offered, and the standing rule on this surface is that a colleague
+    decline is SILENT — telling the sender they were turned down is a judgement
+    the product deliberately does not deliver. ⚠ That is the opposite of the
+    GROUP decline (ruling 34e), and the difference is real: a group owner is
+    administering a room, while a colleague request is personal.
+  */
+  await clearInviteWorklist(row.id);
+  return updated;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

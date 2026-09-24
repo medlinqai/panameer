@@ -8,6 +8,7 @@
 //   This group belongs to a learning path. Enrolling in the path puts you in the room.
 */
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 
 /**
  * ── ⚠⚠⚠ GROUP MEMBERSHIP — ONE TABLE, ONE WRITER (`P2-A3-E612`) ──────────
@@ -269,6 +270,11 @@ export async function joinGroup(
       price_cents: true,
       price_period: true,
       learning_path_id: true,
+      /* ⚠ `P2-A3-E620` — the owner is who a join REQUEST goes to, and the title
+         is what the notification says. Read here so the notify below needs no
+         second query. */
+      title: true,
+      host_person_id: true,
     },
   });
   if (!board) throw new GroupError("That group isn't available.", "NOT_FOUND");
@@ -316,6 +322,39 @@ export async function joinGroup(
        moves. A second row would double-count the room. */
     update: { route, state },
   });
+
+  /*
+    ── ⚠⚠⚠ THE OWNER IS TOLD SOMEBODY IS WAITING (`P2-A3-E620`, ruling 34e) ──
+
+    ⚠ ONLY ON `PENDING`. An OPEN group's join needs nobody's decision, so there
+    is nothing waiting on the owner and a worklist item would never clear.
+    ⚠⚠ NOBODY IS NOTIFIED ABOUT THEIR OWN ACTION (WS-B item 3): an owner who
+    asks to join their own group — which cannot happen today, because a host is
+    filtered out of Discover — would still not be told about themselves.
+    ⚠⚠⚠ THE `dedupeKey` IS THE MEMBERSHIP PAIR, SO ASKING TWICE CANNOT MAKE TWO
+    WORKLIST ITEMS. `@@unique([person_id, dedupe_key])` enforces it in the
+    database rather than this code remembering to check (WS-B item 4).
+    ⚠ `notify` catches its own failures and never rethrows, so a notification
+    outage cannot turn "you joined" into an error (WS-B item 2).
+  */
+  if (state === "PENDING" && board.host_person_id && board.host_person_id !== person.id) {
+    const asker = await prisma.person.findUnique({
+      where: { id: person.id },
+      select: { first_name: true, last_name: true },
+    });
+    await notify({
+      event: "group.join_requested",
+      personId: board.host_person_id,
+      entityType: "forum_board",
+      entityId: board.id,
+      dedupeKey: `group.join_requested:${board.id}:${person.id}`,
+      vars: {
+        askerName:
+          [asker?.first_name, asker?.last_name].filter(Boolean).join(" ") || "A member",
+        groupTitle: board.title,
+      },
+    });
+  }
   return { state };
 }
 
@@ -501,7 +540,8 @@ export async function decideJoinRequest(
     select: {
       id: true,
       state: true,
-      board: { select: { id: true, host_person_id: true } },
+      person_id: true,
+      board: { select: { id: true, host_person_id: true, title: true, slug: true } },
     },
   });
   if (!row) throw new GroupError("That request isn't available.", "NOT_FOUND");
@@ -543,5 +583,46 @@ export async function decideJoinRequest(
       auto_approved: false,
     },
   });
+
+  /*
+    ── ⚠⚠⚠ TOLD EITHER WAY (`P2-A3-E620`, ruling 34e) ──────────────────────
+
+    ⚠ THE BRIEF: *"approve or decline, **and they're told either way**."* `E619`
+    delivered that on the asker's own page; this delivers it to the bell.
+    ⚠⚠ A DECLINE IS TOLD, NOT SWALLOWED — the same reason the row is kept
+    rather than deleted: a decline nobody sees reads as *"you never asked"*.
+    ⚠⚠⚠ NEITHER IS A WORKLIST ITEM. Nothing is owed by the person being told —
+    the action was the owner's, and it is already done.
+    ⚠ Dedupe on the membership row, so a double-click cannot tell them twice.
+  */
+  await notify({
+    event: approve ? "group.join_approved" : "group.join_declined",
+    personId: row.person_id,
+    entityType: "forum_board",
+    entityId: row.board.id,
+    dedupeKey: `group.join_decided:${row.id}`,
+    vars: { groupTitle: row.board.title, groupSlug: row.board.slug },
+  });
+
+  /*
+    ⚠⚠ AND THE OWNER'S WORKLIST ITEM IS CLEARED. ⚠⚠⚠ RULING 34e: *"an item
+    disappears when the thing is DONE, not when it is read."* Marking it read
+    would leave it on the list; `resolved_at` is what takes it off, and this is
+    the moment the thing was actually done.
+    ⚠ Scoped by the SAME dedupe key `joinGroup` wrote, so it clears exactly the
+    item this decision answers and nothing else.
+  */
+  await prisma.notification
+    .updateMany({
+      where: {
+        dedupe_key: `group.join_requested:${row.board.id}:${row.person_id}`,
+        resolved_at: null,
+      },
+      data: { resolved_at: new Date() },
+    })
+    .catch(() => {
+      /* ⚠ Clearing a worklist item must not fail the decision it records. */
+    });
+
   return { state };
 }

@@ -65,7 +65,7 @@ export default defineConfig({
     ⚠ `groups-page.spec.ts` (`P2-A3-E619` WS-A) is named at the same time, for
     the same reason and before it can repeat it.
   */
-  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts", "community-figures.spec.ts", "explore-rates.spec.ts", "groups-page.spec.ts"],
+  testIgnore: ["connect-walk.spec.ts", "community-web.spec.ts", "community-page.spec.ts", "profile-height.spec.ts", "visitor-profile.spec.ts", "console-errors.spec.ts", "wizard-contract.spec.ts", "profile-edit-contract.spec.ts", "community-figures.spec.ts", "explore-rates.spec.ts", "groups-page.spec.ts", "notifications.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: {
     baseURL: "http://localhost:3100",
