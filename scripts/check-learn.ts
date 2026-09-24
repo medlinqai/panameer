@@ -306,11 +306,46 @@ check(
 
 /* Stated positively: the totals reach the UI from a query result. */
 const dash = readFileSync(join("src", "lib", "learn-dashboard.ts"), "utf8");
+/*
+  ⚠⚠ IT ASSERTS THE RULE, NOT THE FORMATTING (`P2-A4-E613`). The old regex
+  pinned the whole `totals` object on ONE LINE, so adding a fourth figure —
+  `inProduction`, which Scott ruled in on 2026-09-24 — broke it while the rule
+  it protects was untouched. ⚠ `check:rollup`'s case: the ruling changed, the
+  code did not drift.
+  ⚠⚠⚠ THE RULE IS THAT EVERY TOTAL IS A QUERY RESULT AND NONE IS A LITERAL, so
+  each field is asserted to come from something that was READ. A digit typed in
+  here still fails, which is the whole point of GUARD 3.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   /totals:\s*\{\s*paths:\s*rows\.length,\s*courses:\s*totalCourses,\s*lessons:\s*totalLessons\s*\}/
+*/
+/* ⚠⚠ ASSERTED ON THE FILE, NOT ON A CAPTURED BLOCK (`P2-A4-E613`).
+   ⚠ TWO WRONG TURNS ARE RECORDED HERE BECAUSE BOTH PRODUCED FALSE FAILURES ON
+   CORRECT CODE, WHICH IS THE ONE THING A GATE MUST NOT DO:
+     1. a dynamically-built regex escaped itself wrong;
+     2. `/totals:\s*\{[\s\S]*?\n    \}/` captured the TYPE declaration —
+        `paths: number;` — rather than the value, because the type appears first
+        in the file. **A scan that matches the wrong thing is green or red for
+        the wrong reason.**
+   ⚠ Containment on the whole file has neither failure mode and asserts exactly
+   the rule: every total is a query result. */
+const flatDash = dash.replace(/\s+/g, " ");
+for (const [field, from] of [
+  ["paths", "paths: rows.length"],
+  ["courses", "courses: totalCourses"],
+  ["lessons", "lessons: totalLessons"],
+  /* ⚠ Scott, 2026-09-24 — counted over every published path, never a literal. */
+  ["inProduction", "inProduction: paths.filter"],
+] as [string, string][]) {
+  check(
+    `GUARD 3b — totals.${field} is derived, not typed`,
+    flatDash.includes(from),
+    `expected "${from}" — a literal here stops being true at the next import`
+  );
+}
 check(
-  "GUARD 3b — the dashboard derives its totals from the tree it read",
-  /totals:\s*\{\s*paths:\s*rows\.length,\s*courses:\s*totalCourses,\s*lessons:\s*totalLessons\s*\}/.test(
-    dash
-  )
+  "GUARD 3b — no total is assigned a bare number",
+  !/\b(paths|courses|lessons|inProduction):\s*\d+/.test(dash),
+  "23 / 54 / 522 / 11 are query results, not constants"
 );
 
 /*

@@ -120,7 +120,24 @@ export type MyLearning = {
   headline: string;
   /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — retired with the badge:
      //   level: LevelState; */
-  totals: { paths: number; courses: number; lessons: number };
+  totals: {
+    paths: number;
+    courses: number;
+    lessons: number;
+    /**
+     * ── ⚠⚠⚠ PATHS IN PRODUCTION (`P2-A4-E613`, Scott 2026-09-24) ─────────
+     *
+     * ⚠⚠ SCOTT: *"Show it. '11 in production' appears as its own labelled
+     * figure."* ⚠⚠⚠ **THE TWO ARE NEVER SUMMED INTO 23 ANYWHERE A MEMBER CAN
+     * SEE** — `check:learn-build` §7 fails the build on that and stays.
+     *
+     * ⚠ IT IS A SEPARATE FIGURE BECAUSE IT ANSWERS A SEPARATE QUESTION: `paths`
+     * is what you can start now, this is what is being made. Adding them would
+     * produce a number that answers neither.
+     * ⚠ COUNTED, NOT INFERRED — a published path with no playable lesson.
+     */
+    inProduction: number;
+  };
   mine: {
     lessonsCompleted: number;
     coursesFinished: number;
@@ -534,7 +551,16 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     }),
     /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   level: levelFor(lessonsCompleted), */
-    totals: { paths: rows.length, courses: totalCourses, lessons: totalLessons },
+    totals: {
+      paths: rows.length,
+      courses: totalCourses,
+      lessons: totalLessons,
+      /* ⚠ Counted over EVERY published path, not over `visible` — `visible`
+         already includes a member's own enrolled-but-unready paths, which would
+         make this figure differ per member. What is in production is a fact
+         about the catalogue, the same number for everybody. */
+      inProduction: paths.filter((p) => !pathHasPlayableLessons(p)).length,
+    },
     mine: {
       lessonsCompleted,
       coursesFinished,

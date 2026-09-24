@@ -288,6 +288,11 @@ async function main() {
   /* ── 8 · ⚠⚠ NO COPY PROMISES A DATE, AN ETA, OR A MECHANISM WITH NO WRITER ─ */
   const PROMISES = [
     /\bcoming soon\b/i,
+    /* ⚠⚠⚠ `P2-A4-E613` — A BARE "Soon" IS THE SAME PROMISE IN FEWER WORDS.
+       `PathSpine` carried one as a chip on every unplayable lesson and `E611`'s
+       sweep missed it because the sweep looked for sentences. ⚠ Anchored so it
+       cannot match "Soonest" or a word ending in it. */
+    /(^|[\s>(])soon\b/i,
     /\bwe'?ll email you\b/i,
     /\bnotify you\b/i,
     /\bshortly\b/i,
@@ -419,6 +424,149 @@ async function main() {
     "9 — the demand writer never writes a LearnEnrollment",
     !/learnEnrollment\./.test(interestRoute),
     "enrolment is forum membership; an interest vote is not"
+  );
+
+  /* ── 10 · ⚠⚠⚠ NO STORED STATUS CLAIMS A URL IT HAS NOT GOT (`P2-A4-E613`) ─
+
+     ⚠⚠ THE DEFECT THIS BRIEF EXISTS TO REMOVE: `production_status` saying a
+     video was added while `vimeo_ref` is empty. ⚠ Readiness is `isPlayable` and
+     only `isPlayable` — derived at run time (`E587`), never a stored claim.
+     ⚠ Count > 0 (`E586`). */
+  const allLessons = await prisma.lesson.findMany({
+    select: { id: true, vimeo_ref: true, production_status: true },
+  });
+  check("10 — there are lessons to check (E586)", allLessons.length > 0, `${allLessons.length}`);
+  const { urlMissing } = await import("@/lib/learn");
+  const amber = allLessons.filter(urlMissing);
+
+  /* ⚠⚠⚠ ZERO INSIDE THE FOUR PATHS SCOTT RULED ON — asserted against the
+     DATABASE, not against the script that wrote it. A repair proved only by its
+     own script is not proved. */
+  const RULED = [
+    "How to Implement",
+    "End-to-End Business Processing (Buying Channels)",
+    "How to Configure",
+    "Implementers",
+  ];
+  const ruledPaths = await prisma.learningPath.findMany({
+    where: { title: { in: RULED } },
+    select: {
+      title: true,
+      courses: {
+        select: {
+          sections: { select: { lessons: { select: { vimeo_ref: true, production_status: true } } } },
+        },
+      },
+    },
+  });
+  check(
+    "10 — the four ruled paths were all found (E586)",
+    ruledPaths.length === RULED.length,
+    `${ruledPaths.length} of ${RULED.length} — a missing path makes the next assertion vacuous`
+  );
+  for (const rp of ruledPaths) {
+    const ls = rp.courses.flatMap((c) => c.sections.flatMap((sx) => sx.lessons));
+    check(
+      `10 — "${rp.title}" claims no URL it has not got`,
+      ls.filter(urlMissing).length === 0,
+      `${ls.filter(urlMissing).length} still amber — Scott ruled on this path and the write did not take`
+    );
+  }
+
+  /*
+    ── ⚠⚠⚠ THE EIGHTEEN NOBODY HAS RULED ON — A RATCHET, NOT A PASS ─────────
+
+    ⚠⚠ MEASURED 2026-09-24: 59 lessons were amber catalogue-wide; 41 sat in
+    Scott's four paths, 18 did not. ⚠⚠⚠ THE 18 ARE DELIBERATELY UNTOUCHED —
+    nobody has said whether they were shot, and choosing a rung would be the
+    fabricated figure this brief removes. Most are course-intro placeholder
+    rows; two carry Scott-typed `xls` runtimes, which he ruled is NOT evidence
+    of filming; one is titled "Duplicate Initiative".
+    ⚠ A CEILING THAT ONLY GOES DOWN: a NEW false claim fails the build. It does
+    not fail when the number drops — fixing them is the point — and the names
+    print every run so they cannot be forgotten.
+    ⚠⚠ THE MEMBER-FACING HALF IS ALREADY HONEST: `lessonState` renders these as
+    "Not published yet", which claims nothing about filming. The stored column
+    is what is wrong, not the page.
+  */
+  const AMBER_CEILING = 18;
+  check(
+    "10 — ⚠⚠ no NEW lesson claims a URL it has not got",
+    amber.length <= AMBER_CEILING,
+    `${amber.length} amber, ceiling ${AMBER_CEILING} (set 2026-09-24) — a rise means a new false claim was stored`
+  );
+  if (amber.length > 0) {
+    const named = await prisma.lesson.findMany({
+      where: { id: { in: amber.map((l) => l.id) } },
+      select: {
+        section: { select: { course: { select: { learningPath: { select: { title: true } } } } } },
+      },
+    });
+    const byPath = new Map<string, number>();
+    for (const l of named) {
+      const t = l.section.course.learningPath.title;
+      byPath.set(t, (byPath.get(t) ?? 0) + 1);
+    }
+    console.log(`\n  ⚠ ${amber.length} lesson(s) still claim a URL with no vimeo_ref — Scott owes a call:`);
+    for (const [t, n] of [...byPath].sort((a, b) => b[1] - a[1]))
+      console.log(`      ${String(n).padStart(3)}  ${t}`);
+  }
+
+  /*
+    ── ⚠⚠⚠ AND THE TWO FIGURES ARE NEVER ADDED IN CODE EITHER ──────────────
+
+    ⚠⚠ §7 ABOVE SCANS RENDERED JSX TEXT, AND A COMPUTED SUM IS INVISIBLE TO IT.
+    ⚠⚠⚠ MEASURED: a mutation replacing the hero sentence with
+    `${d.totals.paths + d.totals.inProduction} learning paths` PASSED §7 —
+    it lives inside a template literal in a helper, not in a `>text<` node.
+    **A mutation its own assertion cannot fail is not a proof**, so this is the
+    half that catches it: the ADDITION itself, wherever it is written.
+
+    ⚠ DERIVED FROM THE EXPRESSION (`E587`) — any source under `src/` that adds
+    the startable count to the in-production count, in either order, however it
+    is spelled. It is never a correct thing to compute: the answer is 23, and 23
+    is the number this brief exists to stop anyone printing.
+  */
+  const SUMMED = [
+    /paths\s*\+\s*[\w.]*inProduction/,
+    /inProduction\s*\+\s*[\w.]*paths/,
+  ];
+  const summing = SRC.filter((f) => {
+    const body = strip(readFileSync(f, "utf8"));
+    return SUMMED.some((r) => r.test(body));
+  });
+  check(
+    "7 — ⚠⚠ nothing adds the startable count to the in-production count",
+    summing.length === 0,
+    `${summing.join(", ")} — 12 startable and 11 in production answer different questions; their sum answers neither`
+  );
+
+  /* ── 11 · ⚠⚠ THE REPAIR WROTE ONE COLUMN, DERIVED FROM ITS SOURCE ──────── */
+  const repair = strip(
+    readFileSync(join("prisma", "repairs", "E613-apply-scotts-four-calls.ts"), "utf8")
+  );
+  const updateBodies = [...repair.matchAll(/lesson\.update\(\{[\s\S]*?\}\);/g)].map((m) => m[0]);
+  check("11 — the repair's write was found by the scan (E586)", updateBodies.length > 0);
+  for (const body of updateBodies) {
+    const fields = [...body.matchAll(/data:\s*\{([^}]*)\}/g)]
+      .flatMap((m) => m[1].split(","))
+      .map((f) => f.split(":")[0].trim())
+      .filter(Boolean);
+    check(
+      "11 — ⚠⚠⚠ production_status is the ONLY Lesson column the repair writes",
+      fields.length === 1 && fields[0] === "production_status",
+      `wrote [${fields.join(", ")}] — one column, and it is not the others`
+    );
+  }
+  check(
+    "11 — the repair never creates or deletes a Lesson",
+    !/lesson\.(create|createMany|delete|deleteMany)\b/.test(repair),
+    "no Lesson created, no Lesson deleted"
+  );
+  check(
+    "11 — and it never touches LearningPath",
+    !/learningPath\.(create|update|updateMany|upsert|delete|deleteMany)\b/.test(repair),
+    "LearningPath is not touched at all"
   );
 
   await prisma.$disconnect();
