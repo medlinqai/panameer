@@ -76,6 +76,45 @@ test.afterAll(async () => {
     where: { AND: [{ slug: { startsWith: "g-e620-" } }, { title: { startsWith: "E620 " } }] },
   });
   if (swept.count > 0) console.log(`E620/teardown  swept ${swept.count} probe group(s)`);
+
+  /*
+    ── ⚠⚠⚠ AND ANY ORPHAN A KILLED RUN LEFT BEHIND ────────────────────────
+
+    ⚠ The per-test teardowns delete notifications BEFORE their board, which is
+    correct — after the board is gone there is nothing precise to match on.
+    ⚠⚠ BUT A RUN KILLED BETWEEN THOSE TWO STATEMENTS LEAVES A NOTIFICATION
+    POINTING AT A BOARD THAT NO LONGER EXISTS. Measured: one survived exactly
+    that way, and it was found by COUNTING rows, not by anything failing.
+
+    ⚠⚠⚠ AN ORPHAN IS SAFE TO SWEEP, AND HERE IS WHY IT IS NOT A GUESS:
+    **nothing in the application ever deletes a `ForumBoard`** — `check:forums`
+    §5 asserts it, precisely so a conversation cannot be destroyed. So a
+    `forum_board` notification whose board is gone CANNOT have come from a real
+    member's group; it can only be the residue of a probe that removed its own.
+    ⚠ Narrow by construction: it never looks at any other `entity_type`, and it
+    never matches on a person or an event key.
+  */
+  const groupRows = await prisma.notification.findMany({
+    where: { entity_type: "forum_board" },
+    select: { id: true, entity_id: true },
+  });
+  if (groupRows.length > 0) {
+    const live = new Set(
+      (
+        await prisma.forumBoard.findMany({
+          where: { id: { in: groupRows.map((r) => r.entity_id!).filter(Boolean) } },
+          select: { id: true },
+        })
+      ).map((b) => b.id)
+    );
+    const orphans = groupRows.filter((r) => !r.entity_id || !live.has(r.entity_id));
+    if (orphans.length > 0) {
+      const d = await prisma.notification.deleteMany({
+        where: { id: { in: orphans.map((o) => o.id) } },
+      });
+      console.log(`E620/teardown  swept ${d.count} orphaned group notification(s)`);
+    }
+  }
   await prisma.$disconnect();
 });
 
