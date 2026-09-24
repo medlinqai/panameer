@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   This forum is for people taking the path. Enroll to join the conversation.
+*/
 import { prisma } from "@/lib/prisma";
 import { canLeaveGroup, groupOffer, isGroupMember } from "@/lib/group-membership";
 /* ⚠ `P1-J3-E383` — ONE instructor predicate, extracted rather than copied. */
@@ -160,7 +169,7 @@ function authorView(a: {
 
   ⚠⚠⚠ AND THE RULE IT GUARDED IS ALREADY FALSE ON THE LIVE PATH. It said *"a
   path board NEVER appears in the general listing"*. ⚠ MEASURED **AND
-  RENDERED** 2026-09-24, signed in as a teacher at `/community/forums`: **8
+  RENDERED** 2026-09-24, signed in as a teacher at `/community/groups`: **8
   board links, 4 of them path boards**, each marked `Teach`, beside the four
   general rooms. A stranger sees 4 general and **0** path boards.
 
@@ -213,7 +222,7 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
       title: true,
       /* ⚠ THE PATH COMES BACK SO THE PAGE CAN POINT AT IT (`P1-ALL-E381` WS-2).
          `E383` reused the general forum chrome, which breadcrumbs to
-         `/community/forums` — a list path boards are DELIBERATELY excluded from,
+         `/community/groups` — a list path boards are DELIBERATELY excluded from,
          so the link was a dead end. ⚠ `null` FOR THE FOUR GENERAL BOARDS, whose
          breadcrumb is unchanged. */
       learningPath: { select: { slug: true, title: true } },
@@ -280,7 +289,7 @@ export async function getBoard(slug: string, viewer: Viewer | null = null) {
       member
     ),
     /* ⚠ `null` FOR THE FOUR GENERAL BOARDS (`P1-ALL-E381` WS-2). The page
-       breadcrumbs to the path when this is set, and to `/community/forums` when
+       breadcrumbs to the path when this is set, and to `/community/groups` when
        it is not — which is the general boards' unchanged behaviour. */
     learningPath: board.learningPath,
     threads: board.threads.map((t) => ({
@@ -449,7 +458,7 @@ export async function createThread(
     const allowed = await canAccessPathForum(viewer, board.learning_path_id);
     if (!allowed) {
       throw new ForumError(
-        "This forum is for people taking the path. Enroll to join the conversation.",
+        "This group is for people taking the path. Enroll to join the conversation.",
         "NOT_ENROLLED"
       );
     }
@@ -497,7 +506,7 @@ export async function createPost(
     const allowed = await canAccessPathForum(viewer, thread.board.learning_path_id);
     if (!allowed) {
       throw new ForumError(
-        "This forum is for people taking the path. Enroll to join the conversation.",
+        "This group is for people taking the path. Enroll to join the conversation.",
         "NOT_ENROLLED"
       );
     }
@@ -1132,4 +1141,59 @@ export async function countThreadsWaitingOn(
       ],
     },
   });
+}
+
+/**
+ * The threads waiting on you, oldest first — the rows behind `Needs You`.
+ *
+ * ── ⚠⚠⚠ IT LIVES HERE FOR THE SAME REASON `countThreadsWaitingOn` DOES ───
+ *
+ * ⚠ `check:community` GUARD 2 — *"`marked_helpful_*` is written in exactly one
+ * file"* — went RED when this query was written in `groups-home.ts`, exactly as
+ * it did when `countThreadsWaitingOn` was written in `statistics.ts`.
+ * ⚠⚠ THE GUARD WAS RIGHT BOTH TIMES AND THE CODE WAS WRONG BOTH TIMES. The
+ * mapping from *"helpful"* to *"answered"* is this module's job, and a page's
+ * read model reaching into forum internals is the coupling the guard exists to
+ * prevent. ⚠⚠⚠ THE FIX IS TO MOVE THE QUERY, NOT TO EXEMPT THE FILE —
+ * *"exempting the file is exactly how a guard stops guarding"*, in the guard's
+ * own words, and the precedent is three lines up.
+ *
+ * ⚠ IT IS THE SAME PREDICATE AS `countThreadsWaitingOn`, BY CONSTRUCTION — the
+ * count and the list must never disagree about what "waiting" means, which is
+ * `E585` applied to a figure and the rows beneath it. ⚠⚠ The difference is
+ * SCOPE ONLY: that one takes paths, this takes boards, because a member-created
+ * group has no path and would otherwise be unreachable by the question.
+ */
+export async function listThreadsWaitingOn(
+  personId: string,
+  boardIds: string[],
+  take = 5
+) {
+  if (boardIds.length === 0) return [];
+  const rows = await prisma.forumThread.findMany({
+    where: {
+      board_id: { in: boardIds },
+      AND: [
+        { posts: { none: { author_id: personId } } },
+        { posts: { none: { marked_helpful_at: { not: null } } } },
+      ],
+    },
+    /* ⚠ OLDEST FIRST — the brief's order, and the honest one: the question that
+       has waited longest is the one that has been failed longest. */
+    orderBy: { created_at: "asc" },
+    take,
+    select: {
+      id: true,
+      title: true,
+      created_at: true,
+      board: { select: { slug: true, title: true } },
+    },
+  });
+  return rows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    boardSlug: t.board.slug,
+    boardTitle: t.board.title,
+    askedAt: t.created_at,
+  }));
 }

@@ -1,0 +1,358 @@
+/*
+  ── ⚠ `#8a8396` IS A LITERAL ON PURPOSE (`E601` WS-D's ruling, reapplied) ──
+  ⚠⚠ `--color-ink-3` IS NOT DECLARED ANYWHERE, so `var(--color-ink-3, #8a8396)`
+  was the fallback doing all the work while LOOKING like a token read.
+  `community-page.css` settled this: **inline the literal**, because declaring
+  the token means choosing its DARK-MODE value and there is no evidence what
+  that should be. ⚠ Scott's call, still open; this file does not pre-empt it.
+*/
+/*
+  ── ⚠⚠⚠ THE TOKENS ARE `--color-*`, AND THEY CARRY A LITERAL FALLBACK ────
+
+  ⚠⚠ CAUGHT BY `check:css-vars`, AND IT WAS A REAL VISUAL DEFECT, NOT A LINT
+  NIT: this file first read `var(--magenta)`, `var(--ink-3)` and friends. **No
+  such custom properties exist** — the theme tokens are Tailwind v4's
+  `--color-magenta`, `--color-ink-3`, `--color-line` — so every one of those
+  declarations resolved to NOTHING and silently fell back to the browser
+  default. ⚠ The dashed group circles rendered GREY instead of magenta, and the
+  screenshots show it; I read them as styled and did not question the colour.
+  ⚠⚠⚠ A `var()` NAMING A PROPERTY NOBODY DEFINES DOES NOT ERROR — IT JUST
+  DISAPPEARS, which is why this needs a gate rather than an eye.
+
+  ⚠ EVERY READ BELOW CARRIES A LITERAL FALLBACK, matching `community-page.css`
+  — `var(--color-magenta, #d72cd6)`. ⚠⚠ The one place the house rule says NOT
+  to is `--pm-band-h`, where a literal fallback would hard-code a measured
+  height; a colour has no such hazard.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   border: 2px solid var(--magenta);
+  //   color: var(--ink-3);   background: var(--magenta);
+*/
+/*
+  ── ⚠⚠ GROUPS — THE PAGE'S OWN RULES (`P2-A3-E619` WS-A) ──────────────────
+
+  ⚠ PHONE FIRST. Every rule here is the narrow layout; the only widening is the
+  one `min-width` block at the bottom. ⚠⚠ The split card, the figures and the
+  cards all stack at 390px, which is the width the stop gate screenshots.
+
+  ⚠ IT REUSES `.pm-hero*` FROM `community-page.css` rather than restating the
+  split card — Grow, Score and Groups draw the SAME card, and a second copy of
+  those rules is `E585` in CSS. Only the Groups-specific parts live here.
+*/
+
+/* ── THE PICTURE ───────────────────────────────────────────────────────── */
+
+/* ⚠ `height: 100%` is what CENTRES the field in the card's left half. Without
+   it the picture is only as tall as its circles and sits against the top edge
+   while the right half runs on for another 250px — measured in the desktop
+   screenshot, where four small circles floated above an empty white box. */
+.pm-groups-pic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  padding: 8px 0;
+}
+
+.pm-groups-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 320px;
+}
+
+.pm-groups-dot {
+  display: inline-block;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-magenta, #d72cd6) 14%, transparent);
+  border: 2px solid var(--color-magenta, #d72cd6);
+  /* ⚠ The draw-in. `GroupCircles` replays it by changing the element key on
+     each rebuild cycle — the animation is the only thing the cycle drives. */
+  animation: pm-groups-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+
+/* ⚠⚠ DASHED WHILE QUIET, SOLID ONCE POSTED — the brief's own distinction, and
+   it is the one thing on the picture that carries meaning rather than size. */
+.pm-groups-dot.is-quiet {
+  border-style: dashed;
+  background: transparent;
+  border-color: color-mix(in srgb, var(--color-magenta, #d72cd6) 55%, transparent);
+}
+
+@keyframes pm-groups-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ⚠⚠⚠ REDUCED MOTION IS NOT OPTIONAL. `useRebuild` already stops its clock
+   under `prefers-reduced-motion` (that is why `secondsLeft` can be null and
+   `RebuildBadge` renders nothing), but the CSS must not animate either — a
+   stopped clock with a popping animation is half a respect. */
+@media (prefers-reduced-motion: reduce) {
+  .pm-groups-dot {
+    animation: none;
+  }
+}
+
+.pm-groups-legend {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-ink-2, #6b6478);
+  text-align: center;
+}
+
+/* ⚠ `E433` — a figure is ink. */
+.pm-groups-legend-n {
+  font-weight: 700;
+  color: var(--color-ink, #1b1226);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-pic-empty {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-ink-2, #6b6478);
+  text-align: center;
+  padding: 24px 12px;
+}
+
+/* ── THE THREE FIGURES ─────────────────────────────────────────────────── */
+
+.pm-groups-figs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.pm-groups-figs dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8396;
+  line-height: 1.3;
+}
+
+.pm-groups-figs dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-ink, #1b1226);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE ACTIONS ───────────────────────────────────────────────────────── */
+
+.pm-groups-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ⚠ The second action is quieter than the first — two filled buttons side by
+   side is two primary actions, which is none. */
+.pm-groups-ghost {
+  display: inline-block;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-line, #e7e3ed);
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-ink, #1b1226);
+  transition: border-color 140ms, color 140ms;
+}
+
+.pm-groups-ghost:hover {
+  border-color: var(--color-magenta, #d72cd6);
+  color: var(--color-magenta, #d72cd6);
+}
+
+/* ── THE CARDS ─────────────────────────────────────────────────────────── */
+
+.pm-groups-card {
+  display: block;
+  border-radius: 10px;
+  border: 1px solid var(--color-line, #e7e3ed);
+  background: #fff;
+  padding: 14px;
+  transition: border-color 140ms;
+}
+
+.pm-groups-card:hover {
+  border-color: var(--color-magenta, #d72cd6);
+}
+
+.pm-groups-card-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink, #1b1226);
+}
+
+.pm-groups-card-m {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--color-ink-2, #6b6478);
+}
+
+.pm-groups-n {
+  font-weight: 700;
+  color: var(--color-ink, #1b1226);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-card-o {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-magenta, #d72cd6);
+}
+
+/* ── THIS MONTH ────────────────────────────────────────────────────────── */
+
+.pm-groups-month {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pm-groups-month > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pm-groups-month dt {
+  font-size: 13px;
+  color: var(--color-ink-2, #6b6478);
+}
+
+.pm-groups-month dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink, #1b1226);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── THE ONE WIDENING ──────────────────────────────────────────────────── */
+
+@media (min-width: 900px) {
+  .pm-groups-field {
+    max-width: 380px;
+    gap: 12px;
+  }
+}
+
+/* ── THE THREE VIEWS (`P2-A3-E619` WS-B) ───────────────────────────────── */
+
+/*
+  ── ⚠⚠ IT WRAPS RATHER THAN SCROLLING — AND NOT BECAUSE ANYTHING WAS BROKEN ─
+
+  ⚠⚠⚠ A CORRECTION, RECORDED BECAUSE I GOT THIS WRONG FIRST: I read the 390px
+  screenshot as showing the third view, `Requests`, CLIPPED at the right edge,
+  and wrote that here as a measured defect. ⚠ **IT WAS NOT CLIPPED.** Measured
+  properly afterwards, at 390px: the three tabs end at x=128, 227 and 330
+  inside a 350px row. They fit, with room to spare. The active tab is filled
+  magenta and I misread that fill as a cut edge in a thumbnail.
+  ⚠⚠ `decisions_2026-09-23` §7 — *"A SCREENSHOT IS EVIDENCE OF WHATEVER WINDOW
+  IT WAS TAKEN IN"* — and a 97px-wide thumbnail of a 390px page is not evidence
+  of a pixel boundary. **The mutation is what exposed it:** putting the
+  scrolling version back did not fail the new assertion, because there was
+  never anything to fail on.
+
+  ⚠ THE WRAP IS KEPT ANYWAY, ON ITS OWN MERITS AND NOT AS A FIX: a hidden
+  scrollbar is a promise that nothing is off-screen, and it is the one thing
+  that CANNOT tell you when something is. Wrapping cannot hide a tab at any
+  width or font size, so it needs no assertion to stay honest.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   overflow-x: auto;  scrollbar-width: none;  -webkit-overflow-scrolling: touch;
+  //   .pm-groups-views::-webkit-scrollbar { display: none; }
+*/
+.pm-groups-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.pm-groups-views a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+  border: 1.5px solid var(--color-line, #e7e3ed);
+  /* ⚠ 38px tall with the padding below — a real tap target on a phone. */
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-ink-2, #6b6478);
+  white-space: nowrap;
+  transition: border-color 140ms, color 140ms, background-color 140ms;
+}
+
+.pm-groups-views a:hover {
+  border-color: var(--color-magenta, #d72cd6);
+  color: var(--color-magenta, #d72cd6);
+}
+
+/* ⚠⚠ THE ACTIVE VIEW IS MARKED BY MORE THAN COLOUR — it is filled, so the
+   distinction survives a colour-blind reader and a greyscale screenshot.
+   ⚠ `aria-current="page"` carries it for a screen reader. */
+.pm-groups-views a.is-on {
+  background: var(--color-magenta, #d72cd6);
+  border-color: var(--color-magenta, #d72cd6);
+  color: #fff;
+}
+
+/* ⚠ The waiting-on-you count. It renders only above zero — a `0` on a tab is
+   noise, not information. */
+.pm-groups-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: var(--color-ink, #1b1226);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-views a.is-on .pm-groups-pill {
+  background: #fff;
+  color: var(--color-magenta, #d72cd6);
+}
+
+/* ⚠⚠ A DISCOVER CARD IS NOT ITSELF A LINK — it carries a Join control, and a
+   button inside an anchor is invalid HTML that swallows the button's click.
+   ⚠ The TITLE is the link instead. */
+.pm-groups-card-static {
+  display: block;
+}
+
+.pm-groups-card-static:hover {
+  border-color: var(--color-line, #e7e3ed);
+}
+
+.pm-groups-card-static .pm-groups-card-t:hover {
+  color: var(--color-magenta, #d72cd6);
+}

@@ -74,7 +74,7 @@ const ROUTES = {
   home: "/connect",
   community: "/community",
   colleagues: "/community/colleagues",
-  forums: "/community/forums",
+  forums: "/community/groups",
   mentors: "/community/mentors",
   teams: "/community/teams",
 } as const;
@@ -200,11 +200,23 @@ test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async (
     rather than pass because the first one is still right.
     ⚠ SUPERSEDED, quoted not deleted (`E164`): *"FIVE TABS"*, when `Profile` was
     the first of them (`P2-A2-E598` WS-B took it to the account menu).
-    ⚠ The gate persona is provider-only (measured, see `_auth.ts`), so it sees
-    `Service Products`. ⚠⚠ A BUYER SEES THREE, and that difference is the entire
-    reason `lib/connect-tabs.ts` exists.
+    ⚠⚠⚠ `Service Products` HAS LEFT THE ROW (`P2-A3-E619` WS-C, ruling 4).
+    SCOTT, 2026-09-22: *"Service Products belongs to Sell. It already lives at
+    `/my-services` under the Sell band item, so the duplicate tab comes out of
+    Connect."* ⚠ It was a DUPLICATE, not a door — the same route is the Sell
+    band item's own destination, and `ConnectProfile`'s card still links to it
+    from inside Connect.
+    ⚠⚠ THE RULE HERE IS UNWEAKENED AND IS STILL THE COUNT: three, asserted as a
+    list, so an appended fourth fails rather than passing because the first is
+    still right. ⚠ This is `check:rollup`'s case — the ruling moved.
+    ⚠⚠ THE PERSONA NOTE NOW CUTS THE OTHER WAY: the gate persona is
+    provider-only (measured, see `_auth.ts`), and a provider and a buyer now see
+    the SAME three tabs — which is why `connect-tabs.ts` filtering still has to
+    be proven in `check:community` rather than here.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   expect(labels).toEqual(["Community", "Groups", "Service Products", "Settings"]);
   */
-  expect(labels).toEqual(["Community", "Groups", "Service Products", "Settings"]);
+  expect(labels).toEqual(["Community", "Groups", "Settings"]);
 });
 
 /*
@@ -223,7 +235,7 @@ test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async (
   //   a guessed container. THE FIRST VERSION DID THE LATTER
   //   (closest("div")?.parentElement) AND FAILED - a layout change it was not
   //   testing would have broken it, which is a test that reports the wrong thing.
-  //   const TAB_HREFS = ["/community", "/community/colleagues", "/community/forums",
+  //   const TAB_HREFS = ["/community", "/community/colleagues", "/community/groups",
   //     "/community/mentors", "/community/teams", "/messages"];
   //   ... collects those hrefs in DOM order ...
   //   expect(order).toContain("/messages");
@@ -242,7 +254,7 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     LOSE A TAB — a route that was carrying two pages became two routes.
     ⚠ SUPERSEDED, quoted not deleted (`E164`) — the five as `E560` left them:
     //   const TAB_HREFS = ["/community", "/community/colleagues",
-    //     "/community/forums", "/community/mentors", "/community/teams"];
+    //     "/community/groups", "/community/mentors", "/community/teams"];
     ⚠⚠ THIS LIST IS DELIBERATELY STILL HREF-BASED, unlike the label assertion in
     `E567/2` above. It is asserting ORDER of DESTINATIONS — which is what the
     hrefs ARE — not the presence of a tab, so a route is the right key here.
@@ -251,7 +263,7 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     ⚠⚠ THREE HREFS LEFT THE ROW (`P2-J3-E593` WS-A) AND NOT ONE PAGE DID.
     ⚠ SUPERSEDED (`E164`), described rather than re-listed so this quote cannot
     be mistaken for the live array: the row was `/connect`, `/community`,
-    `/community/colleagues`, `/community/forums`, `/community/mentors`,
+    `/community/colleagues`, `/community/groups`, `/community/mentors`,
     `/community/teams`.
     ⚠⚠⚠ COLLEAGUES, MENTORS AND TEAMS ARE SECTIONS OF COMMUNITY NOW. Their
     survival is asserted where it now lives — `check:community`'s `E593/5` block
@@ -262,18 +274,24 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     ⚠⚠⚠ `/connect` LEFT THE ROW (`P2-A2-E598` WS-B) — it was the `Profile` tab's
     destination, and the profile is an account-menu surface now.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const TAB_HREFS = ["/connect", "/community", "/community/forums",
+    //   const TAB_HREFS = ["/connect", "/community", "/community/groups",
     //     "/my-services", "/settings"];
     ⚠⚠ THE ROUTE ITSELF IS NOT GONE — `/connect` still exists and redirects to
     `/community`. It simply is not a TAB any more, which is what this list is
     about. ⚠ The rule — ORDER of destinations, scoped to the row — is unchanged.
   */
-  const TAB_HREFS = [
-    "/community",
-    "/community/forums",
-    "/my-services",
-    "/settings",
-  ];
+  /*
+    ⚠⚠⚠ `/my-services` HAS LEFT THE ROW (`P2-A3-E619` WS-C, ruling 4). Scott:
+    *"Service Products belongs to Sell… the duplicate tab comes out of
+    Connect."* ⚠ A DUPLICATE LEFT, NOT A PAGE: `/my-services` is still the Sell
+    band item's own destination and still linked from `ConnectProfile`'s card,
+    so nothing became unreachable — which is the rule this array exists to hold.
+    ⚠⚠ `/community/forums` ALSO BECAME `/community/groups` in the same
+    workstream (ruling 1, the URL following the word), with the old path 308ing.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const TAB_HREFS = ["/community", "/community/groups", "/my-services", "/settings"];
+  */
+  const TAB_HREFS = ["/community", "/community/groups", "/settings"];
   /*
     ── ⚠⚠⚠ SCOPED TO THE TAB ROW, AND `E593` IS WHY ───────────────────────
 
@@ -487,19 +505,39 @@ test("E567/4 — with zero threads the two groups collapse to ONE panel", async 
   ).toHaveCount(0);
 });
 
-test("E567/4 — the rail still lists rooms", async () => {
+/**
+ * ── ⚠⚠⚠ THE RULE SURVIVED THE PAGE (`P2-A3-E619` WS-A) ──────────────────
+ *
+ * ⚠ THE RULE THIS TEST HOLDS IS **"THE PAGE IS NEVER BLANK"** — a member always
+ * sees that their groups exist, even when nothing has been asked in any of
+ * them. ⚠⚠ The MECHANISM it named is gone: Scott's ruling 3 replaced the page,
+ * so there is no rail and no `Your Groups` heading; the groups are cards now.
+ *
+ * ⚠⚠⚠ `CLAUDE.md` LESSON 14 — *"BEFORE DELETING DEAD CODE, CHECK WHETHER A GATE
+ * ASSERTS A LIVE RULE AGAINST IT… WHEN THE CODE A RULE NAMES GOES AWAY, THE
+ * RULE MAY NOT."* ⚠ So it is RE-ANCHORED BY SHAPE rather than deleted with the
+ * rail, exactly as `orderSeries` was.
+ *
+ * ⚠⚠ AND IT IS ANCHORED ON THE **EMPTY-STATE** HEADINGS ON PURPOSE. `Needs You`
+ * and `Groups You Run` render for a member with nothing at all — which is the
+ * only population that can actually produce a blank page, and therefore the
+ * only one worth asserting against.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   test("E567/4 - the rail still lists rooms", …)
+ * //   page.getByRole("heading", { name: "Your Groups", exact: true })
+ * //   page.getByRole("heading", { name: "Your Forums", exact: true })
+ */
+test("E567/4 — the Groups page is never blank", async () => {
   await open(ROUTES.forums);
-  /* ⚠ THE PAGE IS NEVER BLANK. The rail says the rooms exist and nothing has
-     been asked yet, which is true. */
-  /* ⚠ `exact` — "Your Groups" also matches "Recent in Your Groups" on this
-     page, and a strict-mode violation reports as a failure of the thing being
-     tested rather than of the selector.
-     ⚠ `P2-A3-E612` Q17 — the noun moved; the assertion is unchanged.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   page.getByRole("heading", { name: "Your Forums", exact: true }) */
   await expect(
-    page.getByRole("heading", { name: "Your Groups", exact: true })
+    page.getByRole("heading", { name: "Needs You", exact: true })
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Groups You Run", exact: true })
+  ).toBeVisible();
+  /* ⚠⚠ AND IT SAYS WHAT WILL APPEAR THERE rather than rendering an empty box —
+     the half of "never blank" that a heading alone does not prove. */
+  await expect(page.getByText("Nobody has asked anything yet.")).toBeVisible();
 });
 
 /* ── 5 · MENTORING — THE NO-PROMISE RULE, MADE MECHANICAL ───────────────── */
@@ -676,7 +714,14 @@ const TITLE_CASE: { route: string; strings: string[] }[] = [
      ⚠ The Title Case RULE this row asserts is unchanged — only the noun moved.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   { route: ROUTES.forums, strings: ["Recent in Your Forums", "Your Forums"] }, */
-  { route: ROUTES.forums, strings: ["Recent in Your Groups", "Your Groups"] },
+  /* ⚠⚠⚠ THE HEADINGS MOVED AGAIN (`P2-A3-E619` WS-A). Scott, ruling 3 — *"The
+     Groups page is meh, zzzzzzz."* — so the page was REPLACED, not restyled,
+     and `Recent in Your Groups` is not on it any more. ⚠ THE RULE IS THE SAME
+     RULE: every heading here is Title Case, and these three head the EMPTY
+     STATES too, so they render for a viewer with nothing.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { route: ROUTES.forums, strings: ["Recent in Your Groups", "Your Groups"] }, */
+  { route: ROUTES.forums, strings: ["Needs You", "Groups You Run", "This Month"] },
   {
     route: ROUTES.mentors,
     strings: [
@@ -717,7 +762,10 @@ test("E568 — the lower-case originals are gone", async () => {
     /* ⚠ `P2-A3-E612` — the lower-case original moved with the noun.
        ⚠ SUPERSEDED, quoted not deleted (`E164`):
        //   { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your forums"] }, */
-    { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your groups"] },
+    /* ⚠ The sentence-case forms this row FORBIDS follow the new headings.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   { route: ROUTES.forums, strings: ["In paths you teach", "Recent in your groups"] }, */
+    { route: ROUTES.forums, strings: ["Needs you", "Groups you run", "This month"] },
     {
       route: ROUTES.mentors,
       strings: ["Mentors you follow", "Your mentor signal", "Paid sessions", "Find a mentor"],

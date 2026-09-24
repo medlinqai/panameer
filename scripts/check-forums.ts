@@ -174,7 +174,7 @@ async function main() {
      ⚠⚠ THE OLD ASSERTION GUARDED `listBoards()`, WHICH NOTHING CALLED, AND THE
      RULE IT STATED — *"a path board never appears in the general listing"* —
      IS FALSE ON THE LIVE PATH. Measured and RENDERED 2026-09-24 at
-     `/community/forums` as a teacher: **4 path boards listed beside the 4
+     `/community/groups` as a teacher: **4 path boards listed beside the 4
      general rooms**, each marked `Teach`. ⚠ That is `E591`'s design: the rail
      is *"Your Groups"*.
 
@@ -400,13 +400,95 @@ async function main() {
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   /host_person_id:\s*(?!true\b)/.test(b)
   */
+  /*
+    ── ⚠⚠⚠ A SECOND LEGITIMATE WRITER: THE FOUNDER (`P2-A3-E619`, ruling 2) ──
+
+    ⚠ SCOTT, 2026-09-22, RULING 2: *"**Anyone can start a group.**"* ⚠⚠ A group
+    somebody starts has an owner from its first instant — the person who started
+    it — so ruling 2 REQUIRES a second writer of this column. There is no way to
+    honour it and keep "exactly one writer".
+
+    ⚠⚠⚠ THE RULE `E572` ACTUALLY STATES IS NOT WEAKENED BY THIS, AND THAT IS THE
+    WHOLE ARGUMENT: *"DERIVED ONCE, AT BACKFILL, THEN FROZEN… AN OWNER THAT
+    SILENTLY CHANGES IS A BUG WITH A BANK ACCOUNT ATTACHED."* ⚠ The danger is
+    RE-COMPUTATION — a helper that reassigns an existing group's owner when
+    somebody authors more lessons. **Setting an owner at CREATE is the frozen
+    case, not an exception to it.** ⚠⚠ This is `check:rollup`'s case (the ruling
+    moved), NOT `check:cert-skills`' (the code drifted).
+
+    ⚠⚠⚠ SO THE EXEMPTION IS NAMED, AND IT IS FENCED BY THE ASSERTION BELOW IT:
+    `createGroup` may write this column **only inside a `create`**. The moment
+    it writes one in an `update`, the fence fails and the reassignment this rule
+    exists to prevent is caught. ⚠ A bare exemption would have licensed exactly
+    that — the `check:derived-source` pattern, applied here.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
+    //   check("8 — only the one-time backfill writes an owner", writers.length === 0, …)
+  */
+  const FOUNDER = join("src", "lib", "group-membership.ts");
+
+  /*
+    ── ⚠⚠⚠ A WRITE IS A `data:` BLOCK. A `where:` IS A READ. ───────────────
+
+    ⚠ The regex alone could not tell them apart, and it mis-fired the moment a
+    file legitimately FILTERED on the column: `groups-home.ts` asks
+    `where: { board: { host_person_id: person.id } }` to list the requests
+    waiting on an owner, and was reported as *writing* an owner.
+    ⚠⚠ THAT IS THE SAME OVER-BROAD SHAPE THIS ASSERTION HAS ALREADY BEEN BITTEN
+    BY — the `\s*` backtracking bug quoted above, which could not tell
+    `host_person_id: true` (a select) from a write either. ⚠⚠⚠ THE ANSWER BOTH
+    TIMES IS TO MAKE THE GATE SEE WHAT IT CLAIMS TO SEE, NOT TO EXEMPT THE FILE
+    — a gate that fails on correct code is a gate somebody switches off.
+    ⚠ `extractDataBlocks` walks balanced braces from each `data:` so a nested
+    object cannot end the block early and hide a write inside it.
+  */
+  const extractDataBlocks = (body: string): string => {
+    const out: string[] = [];
+    const re = /\bdata:\s*\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body))) {
+      let depth = 1;
+      let i = m.index + m[0].length;
+      for (; i < body.length && depth > 0; i++) {
+        if (body[i] === "{") depth++;
+        else if (body[i] === "}") depth--;
+      }
+      out.push(body.slice(m.index, i));
+    }
+    return out.join("\n");
+  };
+  /* ⚠⚠ `E586` — the extractor must have a population, or every file below
+     passes vacuously and this whole section stops guarding anything. */
+  const anyData = [...bodies.values()].map(extractDataBlocks).join("\n");
+  check(
+    "8 — the data-block scan has a population (E586)",
+    /host_person_id/.test(anyData),
+    "no data: block anywhere writes host_person_id — the extractor is broken, not the code"
+  );
+
   const writers = [...bodies.entries()]
-    .filter(([f, b]) => f !== BACKFILL && /host_person_id:(?!\s*true\b)/.test(b))
+    .filter(
+      ([f, b]) =>
+        f !== BACKFILL &&
+        f !== FOUNDER &&
+        /host_person_id:(?!\s*true\b)/.test(extractDataBlocks(b))
+    )
     .map(([f]) => f);
   check(
-    "8 — only the one-time backfill writes an owner",
+    "8 — only the backfill and the founder write an owner",
     writers.length === 0,
     `${writers.join(", ")} — the owner is derived ONCE and frozen; a helper the app calls is how it starts drifting`
+  );
+  /* ⚠⚠⚠ THE FENCE. The exemption is worth exactly as much as this assertion. */
+  const founderBody = bodies.get(FOUNDER) ?? "";
+  check("8 — the founder file was found by the scan (E586)", founderBody.length > 0, FOUNDER);
+  const founderUpdates = [
+    ...founderBody.matchAll(/\.update(Many)?\(\{[\s\S]{0,400}?\}\)/g),
+  ].filter((m) => /host_person_id:(?!\s*true\b)/.test(extractDataBlocks(m[0])));
+  check(
+    "8 — ⚠⚠⚠ the founder sets an owner only on CREATE, never on an update",
+    founderUpdates.length === 0,
+    `${founderUpdates.length} update(s) write host_person_id — reassigning an existing group's owner is the exact drift E572 forbids`
   );
 
   /* ── 9 · ⚠⚠⚠ THE ACCESS RULE IS EXACTLY TWO CONDITIONS (`P2-J3-E572` WS-B) ──

@@ -52,7 +52,7 @@ export default async function ThreadPage({
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <header>
-        <BackLink href={`/community/forums/${thread.board.slug}`} label={thread.board.title} />
+        <BackLink href={`/community/groups/${thread.board.slug}`} label={thread.board.title} />
         <h1 className="mt-2 font-display text-[24px] font-bold tracking-[-0.4px]">
           {thread.title}
         </h1>

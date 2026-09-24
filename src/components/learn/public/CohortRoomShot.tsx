@@ -5,7 +5,7 @@ import { ShotCard, Avatar, InstructorChip } from "@/components/learn/public/shar
  *
  * ⚠ THIS SECTION SHIPS WITH NO BUTTON AND NO LINK, and that is deliberate. There is no
  * per-course room in the schema: `ForumThread`/`ForumBoard` exist but they are the COMMUNITY
- * forums at `/community/forums`, not a room attached to a course. `HomeFooter`'s standing rule
+ * forums at `/community/groups`, not a room attached to a course. `HomeFooter`'s standing rule
  * (Scott, 2026-08-14) is that a link ships only when its destination exists — not dimmed, not
  * stubbed, omitted. So the section describes the intent and offers nothing to click.
  *

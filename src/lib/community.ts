@@ -58,7 +58,7 @@ export type CommunitySection = {
 //       "Direct conversations with buyers and the people you work with.",
 //     state: "early",
 //   },
-//   "/community/forums": {
+//   "/community/groups": {
 //     blurb:
 //       /* ⚠ CREDITS CLAUSE PARKED 2026-09-03 (`P1-ALL-E375`). ONE COMPLETE
 //          SENTENCE REMOVED, NOT REWRITTEN — the blurb read *"Ask questions, answer

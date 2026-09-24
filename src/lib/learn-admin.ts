@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   deleting the path would take the forum and every question in it with it
+*/
 import { prisma } from "@/lib/prisma";
 /* ⚠ `P1-J3-E383` — one idempotent board helper, shared with the seed and the
    backfill so the three cannot drift. */
@@ -421,7 +430,7 @@ export async function deletePath(id: string) {
   const threads = path.forumBoards.reduce((n, b) => n + b._count.threads, 0);
   if (threads > 0) {
     throw new LearnAdminError(
-      `This path's forum has ${threads} thread${threads === 1 ? "" : "s"}. Delete those first — deleting the path would take the forum and every question in it with it, and there's no undo.`,
+      `This path's forum has ${threads} thread${threads === 1 ? "" : "s"}. Delete those first — deleting the path would take the group and every question in it with it, and there's no undo.`,
       "BLOCKED"
     );
   }

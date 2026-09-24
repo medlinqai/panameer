@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   Path forum · A private forum for the people taking this path… · Open the forum →
+*/
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLearnPath } from "@/lib/learn-home";
@@ -224,7 +233,7 @@ export default async function LearningPathPage({
             A TITLE IS A THING SOMEBODY WROTE.
           */}
           <div className="mt-5 rounded-brand border border-line bg-white p-4">
-            <p className="text-[14.5px] font-bold">Path forum</p>
+            <p className="text-[14.5px] font-bold">Path group</p>
             {forum.threads > 0 ? (
               <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
                 {forum.threads} question{forum.threads === 1 ? "" : "s"} asked by
@@ -232,16 +241,16 @@ export default async function LearningPathPage({
               </p>
             ) : (
               <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-                A private forum for the people taking this path — ask the people
+                A private group for the people taking this path — ask the people
                 who teach it.
               </p>
             )}
             {forum.canOpen ? (
               <Link
-                href={`/community/forums/path-${path.slug}`}
+                href={`/community/groups/path-${path.slug}`}
                 className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
               >
-                Open the forum &rarr;
+                Open the group &rarr;
               </Link>
             ) : (
               /* ⚠ THE DOOR IS NAMED, NOT HIDDEN. Somebody who cannot open it

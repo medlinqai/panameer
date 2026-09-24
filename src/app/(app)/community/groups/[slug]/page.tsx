@@ -36,7 +36,7 @@ export default async function BoardPage({
           ⚠ ONE CONDITIONAL, NOT A NEW LAYOUT (`P1-ALL-E381` WS-2).
 
           A PATH BOARD BREADCRUMBS TO ITS PATH. `E383` kept path boards OUT of
-          `/community/forums` on purpose — twelve mostly-empty rooms beside four
+          `/community/groups` on purpose — twelve mostly-empty rooms beside four
           that can fill is the fragmentation `forums.ts` warns about — so a link
           back to that index was a dead end: the visitor arrives at a list their
           board is not in.
@@ -45,7 +45,7 @@ export default async function BoardPage({
         {board.learningPath ? (
           <BackLink href={`/learn/${board.learningPath.slug}`} label={board.learningPath.title} />
         ) : (
-          <BackLink href="/community/forums" label="Groups" />
+          <BackLink href="/community/groups" label="Groups" />
         )}
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {board.title}
@@ -111,7 +111,7 @@ export default async function BoardPage({
           {board.threads.map((t) => (
             <li key={t.id}>
               <Link
-                href={`/community/forums/thread/${t.id}`}
+                href={`/community/groups/thread/${t.id}`}
                 className="group flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4"
               >
                 {/*

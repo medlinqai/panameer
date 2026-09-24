@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   This group belongs to a learning path. Enrolling in the path puts you in the room.
+*/
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -158,7 +167,7 @@ export function groupOffer(
 export const GROUP_OFFER_COPY: Record<GroupOffer["kind"], string> = {
   member: "You're in this group.",
   by_enrolment:
-    "This group belongs to a learning path. Enrolling in the path puts you in the room.",
+    "This group belongs to a learning path. Enrolling in the path puts you in the group.",
   join: "Anyone can join this group.",
   request: "Ask to join and an owner will decide.",
   /* ⚠⚠ NO JOIN CONTROL RENDERS FOR THIS ONE — the sentence is the whole
@@ -200,7 +209,7 @@ export const GROUP_OFFER_COPY: Record<GroupOffer["kind"], string> = {
  * ⚠⚠⚠ `pathAccess` IS INJECTED, NOT IMPORTED, AND THAT IS A REAL BUG FIX.
  * The first version called `canAccessPathForum` through a dynamic
  * `import("@/lib/forums")` — **from a module `forums.ts` itself imports.** The
- * cycle threw at request time and `/community/forums/getting-started` rendered
+ * cycle threw at request time and `/community/groups/getting-started` rendered
  * *"This page couldn't load"*. ⚠ CAUGHT IN THE SCREENSHOT, NOT BY A GATE: every
  * check was green and the page was blank.
  * ⚠ So the caller — which has already asked the path question to decide whether
@@ -306,6 +315,233 @@ export async function joinGroup(
     /* ⚠⚠ RE-JOINING AFTER LEAVING REUSES THE ROW. The history stays; the state
        moves. A second row would double-count the room. */
     update: { route, state },
+  });
+  return { state };
+}
+
+/**
+ * ── ⚠⚠⚠ ANYONE CAN START A GROUP — RULING 2 (`P2-A3-E619` WS-A) ──────────
+ *
+ * ⚠ SCOTT, 2026-09-22, RULING 2: *"Anyone can start a group. Every learning
+ * path still has its own group automatically; a member can also start one of
+ * their own (a topic, a region, alumni)."*
+ *
+ * ── ⚠⚠⚠ THE SCHEMA ALLOWED THIS ALREADY. NOTHING WROTE IT ────────────────
+ *
+ * ⚠⚠ RULING 12, 2026-09-24: *"Member-created groups: ALREADY POSSIBLE — no
+ * schema ruling needed."* ⚠ **That ruling is correct about the SCHEMA and was
+ * measured again here: `learning_path_id` is nullable, `GroupType` exists, and
+ * `host_person_id` exists.** ⚠⚠⚠ BUT THE PREMISE CHECK FOUND NO WRITER: the
+ * only two `forumBoard` creates in the codebase are `ensureBoards()` (the four
+ * seeded general boards) and `ensurePathBoard()` (created WITH a path), so
+ * **nothing could start a member's group and ruling 2 had no mechanism.**
+ * ⚠ This function is that mechanism, and it needed no schema change.
+ *
+ * ── ⚠⚠⚠ `OPEN` OR `REQUEST` — AND `REQUEST` ONLY BECAUSE WS-B LANDED ────
+ *
+ * ⚠⚠ WS-A SHIPPED THIS `OPEN`-ONLY, AND THE REASON WAS NOT CAUTION — IT WAS A
+ * MEASUREMENT: `GroupType.REQUEST` lands joiners in `PENDING`, and at that
+ * moment **nothing in the product could move a `PENDING` row** (`decided_at`,
+ * `decided_by_person_id`, `APPROVED` and `DECLINED` had zero writers between
+ * them). ⚠⚠⚠ OFFERING IT WOULD HAVE MANUFACTURED A STATE THE PRODUCT COULD NOT
+ * LEAVE — a member asking to join and waiting forever, with no screen anywhere
+ * able to answer. ⚠ `E579` one level down: **do not create the state before its
+ * exit exists.**
+ * ⚠⚠ `decideJoinRequest` IS THAT EXIT, and it lands in the same branch. The
+ * restriction is lifted because the thing it was waiting for is here — not
+ * because it was reconsidered.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   type: "OPEN",   // the only value WS-A would write
+ *
+ * ⚠⚠⚠ `INVITE_ONLY` IS STILL REFUSED, AND FOR THE ORIGINAL REASON, UNCHANGED:
+ * **nothing sends an invite.** There is no writer, so a group created that way
+ * would be a room nobody could ever enter — including its owner's colleagues.
+ */
+export async function createGroup(
+  userId: string,
+  input: { title: string; description?: string | null; type?: "OPEN" | "REQUEST" }
+): Promise<{ slug: string }> {
+  const title = input.title.trim();
+  /* ⚠ The floor is a real name, not a keystroke. A one-character group is a
+     room nobody can find again, including the person who made it. */
+  if (title.length < 3) {
+    throw new GroupError("Give your group a name of at least 3 characters.", "BAD_TITLE");
+  }
+  if (title.length > 80) {
+    throw new GroupError("That name is too long — 80 characters at most.", "BAD_TITLE");
+  }
+
+  const person = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  if (!person) throw new GroupError("No person for this account.", "NOT_FOUND");
+
+  /*
+    ⚠⚠⚠ THE SLUG MUST NOT COLLIDE WITH A PATH BOARD'S. `ensurePathBoard` owns
+    the `path-` prefix (`pathBoardSlug` above), so a member naming their group
+    "Beginners" must never mint `path-beginners` and collide with a real path's
+    room. ⚠ The prefix here is `g-`, and the two namespaces cannot meet.
+  */
+  const base =
+    "g-" +
+    (title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "group");
+
+  /*
+    ⚠⚠ `slug` IS `@unique`, SO A COLLISION IS A DATABASE ERROR, NOT A GUESS.
+    ⚠ Two members naming a group the same thing on the same day is ordinary, so
+    the suffix is tried rather than assumed free. ⚠⚠⚠ THE LOOP IS BOUNDED: an
+    unbounded retry on a unique violation is how a create becomes a hang.
+  */
+  for (let n = 0; n < 25; n++) {
+    const slug = n === 0 ? base : `${base}-${n + 1}`;
+    const taken = await prisma.forumBoard.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (taken) continue;
+    try {
+      await prisma.forumBoard.create({
+        data: {
+          slug,
+          title,
+          description: input.description?.trim() || null,
+          /* ⚠⚠ NO `learning_path_id`. That is what makes it a member's group
+             rather than a path's, and it is the column ruling 12 confirmed was
+             already nullable. */
+          host_person_id: person.id,
+          /* ⚠⚠ `OPEN` OR `REQUEST` ONLY — the union on the parameter is what
+             refuses `INVITE_ONLY`, so the compiler enforces it rather than a
+             check somebody has to remember (the pattern Scott asked be
+             repeated: make the compiler find the call sites). */
+          type: input.type ?? "OPEN",
+          /* ⚠ After the four seeded boards (0,10,20,30) and the path rooms. */
+          sort_order: 100,
+        },
+      });
+    } catch {
+      /* ⚠ Lost the race between the check and the create — try the next slug
+         rather than failing a create that is still perfectly valid. */
+      continue;
+    }
+
+    /*
+      ⚠⚠⚠ THE CREATOR IS A MEMBER OF THEIR OWN GROUP, AND THIS IS NOT COSMETIC.
+      ⚠ Without this row the founder is in a room with zero members — their own
+      Groups page would count them out of the thing they just made, and
+      "Groups You Joined" and the member count would both be wrong on day one.
+      ⚠⚠ `route: JOINED`, and `auto_approved` stays FALSE: a person acted. The
+      backfill's `auto_approved: true` means *nobody decided*, and reusing it
+      here would put a machine's fingerprint on a human's action.
+    */
+    await prisma.groupMembership.create({
+      data: {
+        board_id: (await prisma.forumBoard.findUniqueOrThrow({
+          where: { slug },
+          select: { id: true },
+        })).id,
+        person_id: person.id,
+        route: "JOINED",
+        state: "ACTIVE",
+      },
+    });
+    return { slug };
+  }
+
+  throw new GroupError(
+    "Too many groups share that name — try a different one.",
+    "SLUG_EXHAUSTED"
+  );
+}
+
+/**
+ * ── ⚠⚠⚠ A REQUEST GETS AN ANSWER (`P2-A3-E619` WS-B 3) ──────────────────
+ *
+ * ⚠ THE BRIEF: *"Requests: people asking to join groups you run (approve or
+ * decline, **and they're told either way**)."*
+ *
+ * ── ⚠⚠⚠ THIS IS THE EXIT WS-A REFUSED TO CREATE A STATE WITHOUT ─────────
+ *
+ * ⚠⚠ MEASURED AT THE PREMISE CHECK: `joinGroup` writes `PENDING` for a
+ * `REQUEST` group, and **nothing in the product could move that row** — the
+ * only API took `join | leave`, and `decided_at`, `decided_by_person_id`,
+ * `APPROVED` and `DECLINED` had ZERO writers between them. ⚠ A member could ask
+ * and wait forever, with no screen anywhere able to answer them.
+ * ⚠⚠⚠ THAT IS WHY `createGroup` SHIPPED `OPEN`-ONLY IN WS-A. This function is
+ * what makes `REQUEST` safe to offer, and the two land together on purpose.
+ *
+ * ── ⚠⚠ "TOLD EITHER WAY" MEANS THE PAGE, NOT AN EMAIL ───────────────────
+ *
+ * ⚠ Notifications about group activity are **out of scope by the brief's own
+ * list** and are `brief_notifications`'s. ⚠⚠ So the answer is delivered where
+ * the asker already looks: their own `Your Requests` list shows `DECLINED` in
+ * words, and an approval moves the group into `Groups You Joined`.
+ * ⚠⚠⚠ A DECLINE IS RECORDED, NEVER DELETED — that is what makes it tellable. A
+ * deleted row would read as *"you never asked"*, and the member would ask
+ * again, forever. ⚠ It is also why `state` moves to `DECLINED` rather than the
+ * row being removed.
+ */
+export async function decideJoinRequest(
+  userId: string,
+  membershipId: string,
+  approve: boolean
+): Promise<{ state: string }> {
+  const decider = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  if (!decider) throw new GroupError("No person for this account.", "NOT_FOUND");
+
+  const row = await prisma.groupMembership.findUnique({
+    where: { id: membershipId },
+    select: {
+      id: true,
+      state: true,
+      board: { select: { id: true, host_person_id: true } },
+    },
+  });
+  if (!row) throw new GroupError("That request isn't available.", "NOT_FOUND");
+
+  /*
+    ⚠⚠⚠ OWNER-SCOPED, AND CHECKED HERE RATHER THAN IN THE ROUTE. Load-bearing
+    rule 5: the decider is resolved from the SESSION and compared against the
+    board's host. ⚠ A page that does not render an Approve button is not a
+    boundary — the same sentence `joinGroup` carries, for the same reason.
+  */
+  if (row.board.host_person_id !== decider.id) {
+    throw new GroupError("Only the group's owner can answer this.", "NOT_OWNER");
+  }
+
+  /*
+    ⚠⚠ ONLY A PENDING ROW CAN BE DECIDED. Re-approving an ACTIVE member or
+    re-declining a DECLINED one would rewrite `decided_at` and quietly change
+    who decided and when — an audit trail that moves is worse than none.
+    ⚠ It also makes a double-click harmless rather than destructive.
+  */
+  if (row.state !== "PENDING") {
+    throw new GroupError("That request has already been answered.", "ALREADY_DECIDED");
+  }
+
+  const state = approve ? "ACTIVE" : "DECLINED";
+  await prisma.groupMembership.update({
+    where: { id: row.id },
+    data: {
+      state,
+      /* ⚠ The route records HOW they got in. An approved member arrived by
+         `APPROVED`, which is a different fact from having simply `JOINED` an
+         open group — and it is the difference a group's owner may care about. */
+      ...(approve ? { route: "APPROVED" as const } : {}),
+      decided_at: new Date(),
+      decided_by_person_id: decider.id,
+      /* ⚠⚠⚠ `auto_approved` STAYS FALSE. It means *nobody decided* — the
+         backfill's fingerprint. A person decided here, and writing `true`
+         would erase exactly the distinction the column exists to preserve. */
+      auto_approved: false,
+    },
   });
   return { state };
 }

@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   … forum is now open to you — a private room for the people taking this path…
+*/
 import type { NotificationAiMode, NotificationVisibility } from "@prisma/client";
 
 /**
@@ -233,7 +242,7 @@ export const NOTIFICATION_EVENTS = {
        It says the room is private, because that is the reason it is worth
        reading: a closed forum gets the question somebody thinks is too basic. */
     body: (v) =>
-      `The ${str(v, "pathTitle", "path")} forum is now open to you — a private room for the people taking this path, where the instructors answer questions. Ask the one you think is too basic.`,
+      `The ${str(v, "pathTitle", "path")} group is now open to you — a private space for the people taking this path, where the instructors answer questions. Ask the one you think is too basic.`,
     href: (v) => (v.pathSlug ? `/learn/${str(v, "pathSlug")}` : "/learn"),
   },
   "learn.course_registered": {

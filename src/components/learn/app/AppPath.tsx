@@ -1,3 +1,12 @@
+/*
+  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
+  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
+  disappear from the interface** — the menu, the page, the headings, the
+  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
+  `forum_boards`, `forums.ts`); only the words people READ change.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//   Path Forum · Open the Forum · The room is for people taking this path.
+*/
 import Link from "next/link";
 import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react";
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
@@ -573,7 +582,7 @@ function PathForumPanel({
 }) {
   return (
     <div className="mt-6 rounded-brand border border-line bg-white p-5">
-      <h3 className="font-display text-[16px] font-bold">Path Forum</h3>
+      <h3 className="font-display text-[16px] font-bold">Path Group</h3>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">
         {/* ⚠ A COUNTED FIGURE, SCOPED TO THIS PATH — enrolments in it. */}
         {forum.members} {forum.members === 1 ? "learner" : "learners"}
@@ -587,15 +596,15 @@ function PathForumPanel({
       )}
       {forum.canOpen ? (
         <Link
-          href={`/community/forums/path-${pathSlug}`}
+          href={`/community/groups/path-${pathSlug}`}
           className="mt-3.5 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-4 py-2 text-[13px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
         >
-          Open the Forum
+          Open the Group
         </Link>
       ) : (
         /* ⚠ IT NAMES WHAT OPENS THE DOOR, never what the member lacks. */
         <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-          The room is for people taking this path. Enrolling opens it.
+          The group is for people taking this path. Enrolling opens it.
         </p>
       )}
     </div>

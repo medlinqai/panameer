@@ -1207,28 +1207,105 @@ check(
   ABSENCE is asserted positively too — see the `E598/B` block further down,
   because dropping a name from a list proves nothing on its own.
 */
-const CONNECT_TABS = ["Community", "Groups", "Service Products", "Settings"];
+/*
+  ⚠⚠⚠ `Service Products` LEFT THE ROW (`P2-A3-E619` WS-C, ruling 4). Scott:
+  *"Service Products belongs to Sell… the duplicate tab comes out of Connect."*
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const CONNECT_TABS = ["Community", "Groups", "Service Products", "Settings"];
+  ⚠⚠ THE RULE IS UNWEAKENED: the set is asserted by exact label, the COUNT is
+  asserted below, and the ABSENCE is asserted POSITIVELY — because dropping a
+  name from a list proves nothing on its own, as this file already says twice.
+*/
+const CONNECT_TABS = ["Community", "Groups", "Settings"];
 for (const label of CONNECT_TABS) {
   check(`E593/5 — Connect tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
 }
 /* ⚠ FIVE, NOT "at least five" — Scott asked for fewer tabs, so the COUNT is the
    thing being held, and an appended sixth must fail rather than pass quietly. */
-const connectSet = /"\/connect": \[[\s\S]*?\n  \],/.exec(navLib)?.[0] ?? "";
+/*
+  ── ⚠⚠⚠ THIS REGEX WAS CAPTURING THE WRONG BLOCK (`P2-A3-E619` WS-C) ─────
+
+  ⚠⚠ `"/connect": [` OCCURS TWICE IN `nav.ts`. The first is
+  `BAND_EXTRA_PREFIXES` — `"/connect": ["/community"],` — **all on one line**,
+  and the old non-greedy match started there and ran on to the next `\n  ],`,
+  swallowing the band items and the Learn tab set. ⚠⚠⚠ SO BOTH ASSERTIONS
+  BUILT ON IT WERE ABOUT TEXT THAT IS NOT CONNECT'S ROW:
+    · *"exactly five tabs"* PASSED — on five entries that were `Connect`,
+      `Learn`, `All Learning Paths`, `All Courses` and `My Learning`.
+    · *"the two revenue tabs sit next to each other"* was **PERMANENTLY RED**,
+      because `Service Products` was never in the captured text at all and
+      `indexOf` returned `-1`. ⚠ It read as a grouping complaint and was
+      carried as a known trunk failure through at least the `E618` sweep.
+  ⚠⚠ A GATE THAT CANNOT SEE THE THING IT NAMES IS NOT GUARDING IT
+  (`decisions_2026-09-23` §9), and here it failed in BOTH directions at once —
+  one vacuous pass and one unattributable red.
+
+  ⚠ THE FIX IS THE NEWLINE: the real `PAGE_TABS` entry opens `[` and breaks
+  the line; the prefix map closes on the same one.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const connectSet = /"\/connect": \[[\s\S]*?\n  \],/.exec(navLib)?.[0] ?? "";
+*/
+const connectSet = /"\/connect": \[\n[\s\S]*?\n  \],/.exec(navLib)?.[0] ?? "";
+/* ⚠⚠ AND IT PROVES IT GRABBED THE RIGHT BLOCK. `E586` — an assertion whose
+   input is silently empty or silently wrong is not an assertion. This is the
+   guard that would have caught the defect above on the day it was written. */
 check(
-  "E593/5 — the Connect row is exactly five tabs",
-  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 5,
+  "E593/5 — the Connect set was located (E586)",
+  connectSet.includes('label: "Community"') && connectSet.includes('label: "Groups"'),
+  `captured ${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} entries — if this is not Connect's row, every assertion below is about the wrong text`
+);
+/*
+  ⚠⚠⚠ THREE — Community · Groups · Settings. ⚠ The old figure was `5` and it
+  was never Connect's row at all: it counted the WRONG BLOCK (see the note on
+  `connectSet` above). Against the real block the row held FOUR before ruling 4
+  removed `Service Products`, and holds THREE now.
+  ⚠⚠ THE COUNT IS STILL THE THING BEING HELD — an appended tab must fail rather
+  than pass quietly, which is the whole reason Scott asked for a count.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "E593/5 — the Connect row is exactly five tabs" … === 5
+*/
+check(
+  "E593/5 — the Connect row is exactly three tabs",
+  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 3,
   `${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} live entries`
 );
-/* ⚠⚠ THE REVENUE TABS ARE ADJACENT — Scott's own grouping: who you are · who
-   you know (free) · GROUPS (money) · SERVICE PRODUCTS (money) · settings. */
+/* ⚠⚠⚠ AND `Service Products` IS POSITIVELY ABSENT FROM THE CONNECT SET — not
+   merely missing from a list this gate happens to iterate. ⚠ Scoped to the
+   Connect block, because the label legitimately still exists elsewhere in
+   `nav.ts`: `/my-services` keeps its OWN tab row, and removing THAT one by a
+   blind first-match replace is a mistake `E619` actually made and caught. */
 check(
-  "E593/5 — ⚠ the two revenue tabs sit next to each other",
-  connectSet.indexOf('label: "Service Products"') - connectSet.indexOf('label: "Groups"') > 0 &&
-    !connectSet.slice(
-      connectSet.indexOf('label: "Groups"'),
-      connectSet.indexOf('label: "Service Products"')
-    ).includes('label: "Settings"')
+  "E619/WS-C — Service Products has left Connect's row",
+  !connectSet.includes('label: "Service Products"'),
+  "ruling 4: it belongs to Sell, and the duplicate comes out of Connect"
 );
+/* ⚠⚠ NOTHING 404s: the route keeps its own tab row AND a second entrance from
+   `ConnectProfile`'s card, so a provider can still reach it from Connect. */
+check(
+  "E619/WS-C — /my-services keeps its own tab row",
+  /"\/my-services": \[[\s\S]*?label: "Service Products"/.test(navLib),
+  "removing the page's own tab instead of Connect's is the error this guards"
+);
+/*
+  ── ⚠⚠⚠ THE REVENUE-ADJACENCY RULE IS RETIRED (`P2-A3-E619` WS-C) ────────
+
+  ⚠ It held `E593`'s grouping — *who you are · who you know (free) · GROUPS
+  (money) · SERVICE PRODUCTS (money) · settings* — by asserting the two money
+  tabs sat together. ⚠⚠ **RULING 4 REMOVED ONE OF THE TWO**, so there is no
+  longer a PAIR to be adjacent, and the assertion could only ever fail from
+  here. ⚠⚠⚠ A GATE THAT CANNOT PASS IS NOT A GATE — it is a permanent red
+  somebody eventually switches off (`E522`'s `KNOWN_OPEN` reasoning).
+
+  ⚠⚠ THIS IS `check:rollup`'S CASE: the RULING changed, the code did not drift.
+  ⚠ AND IT WAS ALREADY RED ON TRUNK BEFORE THIS BRIEF TOUCHED IT — measured in
+  the `E618` sweep, where it and the `/hire` classification were two of the
+  three pre-existing non-zero gates. Ruling 4 is what resolves it.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check("E593/5 — ⚠ the two revenue tabs sit next to each other",
+  //     connectSet.indexOf('label: "Service Products"') - connectSet.indexOf('label: "Groups"') > 0 &&
+  //       !connectSet.slice(connectSet.indexOf('label: "Groups"'),
+  //         connectSet.indexOf('label: "Service Products"')).includes('label: "Settings"'));
+*/
 check(
   "E378/5 — no tab repeats the journey name or says My",
   !/\{ n: \d+, label: "My /.test(navLib) && !/label: "My Community", href: "\/community" \}/.test(navLib)
@@ -1309,7 +1386,7 @@ for (const href of [
   /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
      Order is the SOW, so there is no Contract record for a route to name. */
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
-  "/orders", "/pay", "/payments", "/community", "/community/forums",
+  "/orders", "/pay", "/payments", "/community", "/community/groups",
   /*
     ⚠⚠ `/community/teams` AND `/community/mentors` LEFT THIS LIST (`E593` WS-A).
     ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/community/teams", "/community/mentors",`
@@ -1434,7 +1511,7 @@ check(
 */
 const CONNECT_PAGES = [
   ["community", "page.tsx"], ["community", "colleagues", "page.tsx"],
-  ["community", "forums", "page.tsx"], ["community", "mentors", "page.tsx"],
+  ["community", "groups", "page.tsx"], ["community", "mentors", "page.tsx"],
   /* ⚠⚠⚠ `/community/score` LEFT THIS LIST (`P2-A2-E600` WS-A 1). Scott: *"The
      Score page stops showing Connect's tab row… It's a profile page now."* It
      draws the PROFILE row through `profileTabs`, so asserting it draws Connect's
@@ -1540,10 +1617,13 @@ for (const f of PROFILE_ROW_PAGES) {
     !(PAGE_TABS["/connect"] ?? []).some((t) => t.label === "Profile"),
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
+  /* ⚠ THREE NOW (`E619` WS-C, ruling 4). ⚠ SUPERSEDED, quoted (`E164`):
+     //   "E598/B — ⚠ Connect's row still has its four tabs"
+     //   === "Community · Groups · Service Products · Settings" */
   check(
-    "E598/B — ⚠ Connect's row still has its four tabs",
+    "E598/B — ⚠ Connect's row is Community · Groups · Settings",
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ") ===
-      "Community · Groups · Service Products · Settings",
+      "Community · Groups · Settings",
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
 }
