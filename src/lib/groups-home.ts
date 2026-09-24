@@ -4,6 +4,7 @@ import {
   listThreadsWaitingOn,
   pathForumAccess,
 } from "@/lib/forums";
+import { groupOffer, type GroupOffer } from "@/lib/group-membership";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -286,4 +287,236 @@ export async function getGroupsHome(viewer: Viewer): Promise<GroupsHome> {
     thisMonth: { asked, answered, newMembers },
     starterSlug,
   };
+}
+
+/** A group you are not in, as Discover shows it. */
+export type DiscoverGroup = {
+  /** ⚠⚠ THE BOARD ID, because Discover reuses `GroupJoin` — the ONE join
+      control — and that control posts a `boardId`. A second join button here
+      would be a second predicate, which is the shape that leaked eight rates
+      on `/explore` the same day (`E618`). */
+  boardId: string;
+  slug: string;
+  title: string;
+  members: number;
+  posts: number;
+  /** ⚠ `groupOffer`'s verdict — never re-derived here. */
+  offer: GroupOffer;
+  /** ⚠⚠ The path's own slug, so `by_enrolment` can send them to the door that
+      actually opens rather than to a Join button that refuses. */
+  pathSlug: string | null;
+};
+
+export type DiscoverTrack = { track: string; groups: DiscoverGroup[] };
+
+/**
+ * ── ⚠⚠⚠ DISCOVER — GROUPS YOU ARE NOT IN (`P2-A3-E619` WS-B 1) ──────────
+ *
+ * ⚠ THE BRIEF: *"groups you're not in, **grouped by track**, each with member
+ * count and Join; a group you're already in says so and opens instead."*
+ *
+ * ── ⚠⚠ THE TRACK IS `LearningPath.group`, AND IT WAS MEASURED ───────────
+ *
+ * ⚠ The mockup's track headings are *"Procurement"* and *"Payables & Finance"*.
+ * ⚠⚠ MEASURED 2026-09-24: `LearningPath.group` holds exactly that kind of
+ * value — **Procurement 7 · Foundational Learning Paths 3 · Core HR 2 · Supply
+ * Chain Execution 2**, and six more with one each. ⚠ So the grouping is a real
+ * column, not a shape invented to match a picture.
+ *
+ * ⚠⚠⚠ THREE PATH GROUPS HAVE A **NULL** TRACK, AND THEY ARE NOT SWEPT IN WITH
+ * THE GENERAL ROOMS. A path-backed group whose path has no `group` is still a
+ * path group — filing it under *"Panameer"* would tell a member the wrong thing
+ * about how its door works. ⚠ It gets its own honest heading instead.
+ *
+ * ── ⚠⚠ WHAT IT DOES NOT DO ──────────────────────────────────────────────
+ *
+ * ⚠⚠⚠ **NO PAID SECTION.** The brief: *"Paid groups appear with their price and
+ * who leads them — **only if premise 4 finds real ones**, otherwise leave the
+ * section out and report."* ⚠ MEASURED: **0 of 27 boards carry a price**, so
+ * the section is left out, as instructed. `groupOffer` still returns `priced`
+ * if one ever appears, and the page renders that group's refusal honestly.
+ */
+export async function getDiscoverGroups(viewer: Viewer): Promise<DiscoverTrack[]> {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+
+  /* ⚠ Every board, because Discover's whole job is showing what you have NOT
+     found yet — the access rule decides what you can OPEN, not what exists. */
+  const boards = await prisma.forumBoard.findMany({
+    orderBy: [{ sort_order: "asc" }, { title: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      type: true,
+      price_cents: true,
+      price_period: true,
+      learning_path_id: true,
+      host_person_id: true,
+      learningPath: { select: { slug: true, group: true } },
+      _count: {
+        select: { threads: true, members: { where: { state: "ACTIVE" } } },
+      },
+    },
+  });
+
+  /* ⚠⚠ "IN IT" IS MEMBERSHIP **OR** OWNERSHIP. A founder is not shown their own
+     group as something to discover. */
+  const mine = person
+    ? new Set(
+        (
+          await prisma.groupMembership.findMany({
+            where: { person_id: person.id, state: "ACTIVE" },
+            select: { board_id: true },
+          })
+        ).map((m) => m.board_id)
+      )
+    : new Set<string>();
+
+  const out = new Map<string, DiscoverGroup[]>();
+  for (const b of boards) {
+    const isMine = mine.has(b.id) || (person != null && b.host_person_id === person.id);
+    if (isMine) continue;
+
+    /*
+      ⚠⚠⚠ THE OFFER COMES FROM `groupOffer`, WHICH IS THE ONE RULE. Discover
+      must not decide for itself what a group offers — that is the second
+      predicate that leaked eight rates on `/explore` this same day (`E618`).
+      ⚠ `isMember` is FALSE here by construction: everything still in this loop
+      is a group the viewer is not in.
+    */
+    const offer = groupOffer(b, false);
+
+    /* ⚠ A path group with no `group` value is still a PATH group. */
+    const track = b.learning_path_id
+      ? (b.learningPath?.group ?? "Learning Paths")
+      : "Panameer Rooms";
+
+    if (!out.has(track)) out.set(track, []);
+    out.get(track)!.push({
+      boardId: b.id,
+      slug: b.slug,
+      title: b.title,
+      members: b._count.members,
+      posts: b._count.threads,
+      offer,
+      pathSlug: b.learningPath?.slug ?? null,
+    });
+  }
+
+  /* ⚠ Biggest track first, then alphabetical — a stable order that puts the
+     fullest shelf at eye level. Ties break on name so renders do not shuffle. */
+  return [...out.entries()]
+    .map(([track, groups]) => ({ track, groups }))
+    .sort((a, b) => b.groups.length - a.groups.length || a.track.localeCompare(b.track));
+}
+
+export type JoinRequestRow = {
+  /** ⚠ The MEMBERSHIP row's id — that is what a decision acts on. */
+  id: string;
+  groupSlug: string;
+  groupTitle: string;
+  personName: string;
+  askedAt: Date;
+};
+
+export type MyRequestRow = {
+  groupSlug: string;
+  groupTitle: string;
+  state: "PENDING" | "DECLINED";
+  askedAt: Date;
+  decidedAt: Date | null;
+};
+
+/**
+ * ── ⚠⚠⚠ REQUESTS — BOTH DIRECTIONS (`P2-A3-E619` WS-B 3) ────────────────
+ *
+ * ⚠ THE BRIEF: *"people asking to join groups you run (approve or decline, and
+ * they're told either way), **and the groups you're waiting on**."*
+ *
+ * ⚠⚠ MEASURED AT THE PREMISE CHECK AND STILL TRUE OF EXISTING DATA: every one
+ * of the 27 boards that existed before this brief is `OPEN`, so **there were
+ * zero `PENDING` rows and no way to make one.** ⚠⚠⚠ THIS LIST IS NOT EMPTY
+ * BECAUSE NOBODY HAS ASKED — IT WAS EMPTY BECAUSE NOTHING COULD ASK. `E619`
+ * WS-B is what makes a `REQUEST` group creatable and a `PENDING` row
+ * answerable, so from here the emptiness is an honest *"nobody yet"*.
+ *
+ * ⚠ DECLINED ROWS ARE RETURNED TO THE ASKER, NOT HIDDEN. A decline the member
+ * cannot see reads as *"you never asked"*, and they ask again forever.
+ */
+export async function getGroupRequests(
+  viewer: Viewer
+): Promise<{ incoming: JoinRequestRow[]; mine: MyRequestRow[] }> {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (!person) return { incoming: [], mine: [] };
+
+  const [incoming, mine] = await Promise.all([
+    /* ⚠⚠ SCOPED TO BOARDS THIS PERSON HOSTS — the same predicate
+       `decideJoinRequest` enforces on the write, so the list cannot offer a
+       decision the writer would refuse. */
+    prisma.groupMembership.findMany({
+      where: { state: "PENDING", board: { host_person_id: person.id } },
+      orderBy: { created_at: "asc" },
+      select: {
+        id: true,
+        created_at: true,
+        board: { select: { slug: true, title: true } },
+        person: { select: { first_name: true, last_name: true } },
+      },
+    }),
+    prisma.groupMembership.findMany({
+      where: { person_id: person.id, state: { in: ["PENDING", "DECLINED"] } },
+      orderBy: { created_at: "desc" },
+      select: {
+        created_at: true,
+        decided_at: true,
+        state: true,
+        board: { select: { slug: true, title: true } },
+      },
+    }),
+  ]);
+
+  return {
+    incoming: incoming.map((r) => ({
+      id: r.id,
+      groupSlug: r.board.slug,
+      groupTitle: r.board.title,
+      /* ⚠ A name, not an id. `E564` — no demo data, and no bare uuid either. */
+      personName: [r.person.first_name, r.person.last_name].filter(Boolean).join(" ") || "A member",
+      askedAt: r.created_at,
+    })),
+    mine: mine.map((r) => ({
+      groupSlug: r.board.slug,
+      groupTitle: r.board.title,
+      state: r.state as "PENDING" | "DECLINED",
+      askedAt: r.created_at,
+      decidedAt: r.decided_at,
+    })),
+  };
+}
+
+/**
+ * How many join requests are waiting on YOU — the badge on the Requests tab.
+ *
+ * ⚠⚠ A COUNT, NOT THE ROWS. It is read on every view so the tab can carry it,
+ * and loading the full list three views out of three to render one number would
+ * be the waste the per-view reads exist to avoid.
+ * ⚠ SCOPED TO BOARDS YOU HOST — the same predicate `getGroupRequests` and
+ * `decideJoinRequest` use, so the badge can never promise a decision the writer
+ * would refuse.
+ */
+export async function countPendingForOwner(viewer: Viewer): Promise<number> {
+  const person = await prisma.person.findUnique({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (!person) return 0;
+  return prisma.groupMembership.count({
+    where: { state: "PENDING", board: { host_person_id: person.id } },
+  });
 }

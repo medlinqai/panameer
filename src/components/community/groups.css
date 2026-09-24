@@ -228,3 +228,102 @@
     gap: 12px;
   }
 }
+
+/* ── THE THREE VIEWS (`P2-A3-E619` WS-B) ───────────────────────────────── */
+
+/*
+  ── ⚠⚠ IT WRAPS RATHER THAN SCROLLING — AND NOT BECAUSE ANYTHING WAS BROKEN ─
+
+  ⚠⚠⚠ A CORRECTION, RECORDED BECAUSE I GOT THIS WRONG FIRST: I read the 390px
+  screenshot as showing the third view, `Requests`, CLIPPED at the right edge,
+  and wrote that here as a measured defect. ⚠ **IT WAS NOT CLIPPED.** Measured
+  properly afterwards, at 390px: the three tabs end at x=128, 227 and 330
+  inside a 350px row. They fit, with room to spare. The active tab is filled
+  magenta and I misread that fill as a cut edge in a thumbnail.
+  ⚠⚠ `decisions_2026-09-23` §7 — *"A SCREENSHOT IS EVIDENCE OF WHATEVER WINDOW
+  IT WAS TAKEN IN"* — and a 97px-wide thumbnail of a 390px page is not evidence
+  of a pixel boundary. **The mutation is what exposed it:** putting the
+  scrolling version back did not fail the new assertion, because there was
+  never anything to fail on.
+
+  ⚠ THE WRAP IS KEPT ANYWAY, ON ITS OWN MERITS AND NOT AS A FIX: a hidden
+  scrollbar is a promise that nothing is off-screen, and it is the one thing
+  that CANNOT tell you when something is. Wrapping cannot hide a tab at any
+  width or font size, so it needs no assertion to stay honest.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   overflow-x: auto;  scrollbar-width: none;  -webkit-overflow-scrolling: touch;
+  //   .pm-groups-views::-webkit-scrollbar { display: none; }
+*/
+.pm-groups-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.pm-groups-views a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+  border: 1.5px solid var(--line);
+  /* ⚠ 38px tall with the padding below — a real tap target on a phone. */
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  white-space: nowrap;
+  transition: border-color 140ms, color 140ms, background-color 140ms;
+}
+
+.pm-groups-views a:hover {
+  border-color: var(--magenta);
+  color: var(--magenta);
+}
+
+/* ⚠⚠ THE ACTIVE VIEW IS MARKED BY MORE THAN COLOUR — it is filled, so the
+   distinction survives a colour-blind reader and a greyscale screenshot.
+   ⚠ `aria-current="page"` carries it for a screen reader. */
+.pm-groups-views a.is-on {
+  background: var(--magenta);
+  border-color: var(--magenta);
+  color: #fff;
+}
+
+/* ⚠ The waiting-on-you count. It renders only above zero — a `0` on a tab is
+   noise, not information. */
+.pm-groups-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-groups-views a.is-on .pm-groups-pill {
+  background: #fff;
+  color: var(--magenta);
+}
+
+/* ⚠⚠ A DISCOVER CARD IS NOT ITSELF A LINK — it carries a Join control, and a
+   button inside an anchor is invalid HTML that swallows the button's click.
+   ⚠ The TITLE is the link instead. */
+.pm-groups-card-static {
+  display: block;
+}
+
+.pm-groups-card-static:hover {
+  border-color: var(--line);
+}
+
+.pm-groups-card-static .pm-groups-card-t:hover {
+  color: var(--magenta);
+}

@@ -426,10 +426,52 @@ async function main() {
     //   check("8 — only the one-time backfill writes an owner", writers.length === 0, …)
   */
   const FOUNDER = join("src", "lib", "group-membership.ts");
+
+  /*
+    ── ⚠⚠⚠ A WRITE IS A `data:` BLOCK. A `where:` IS A READ. ───────────────
+
+    ⚠ The regex alone could not tell them apart, and it mis-fired the moment a
+    file legitimately FILTERED on the column: `groups-home.ts` asks
+    `where: { board: { host_person_id: person.id } }` to list the requests
+    waiting on an owner, and was reported as *writing* an owner.
+    ⚠⚠ THAT IS THE SAME OVER-BROAD SHAPE THIS ASSERTION HAS ALREADY BEEN BITTEN
+    BY — the `\s*` backtracking bug quoted above, which could not tell
+    `host_person_id: true` (a select) from a write either. ⚠⚠⚠ THE ANSWER BOTH
+    TIMES IS TO MAKE THE GATE SEE WHAT IT CLAIMS TO SEE, NOT TO EXEMPT THE FILE
+    — a gate that fails on correct code is a gate somebody switches off.
+    ⚠ `extractDataBlocks` walks balanced braces from each `data:` so a nested
+    object cannot end the block early and hide a write inside it.
+  */
+  const extractDataBlocks = (body: string): string => {
+    const out: string[] = [];
+    const re = /\bdata:\s*\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body))) {
+      let depth = 1;
+      let i = m.index + m[0].length;
+      for (; i < body.length && depth > 0; i++) {
+        if (body[i] === "{") depth++;
+        else if (body[i] === "}") depth--;
+      }
+      out.push(body.slice(m.index, i));
+    }
+    return out.join("\n");
+  };
+  /* ⚠⚠ `E586` — the extractor must have a population, or every file below
+     passes vacuously and this whole section stops guarding anything. */
+  const anyData = [...bodies.values()].map(extractDataBlocks).join("\n");
+  check(
+    "8 — the data-block scan has a population (E586)",
+    /host_person_id/.test(anyData),
+    "no data: block anywhere writes host_person_id — the extractor is broken, not the code"
+  );
+
   const writers = [...bodies.entries()]
     .filter(
       ([f, b]) =>
-        f !== BACKFILL && f !== FOUNDER && /host_person_id:(?!\s*true\b)/.test(b)
+        f !== BACKFILL &&
+        f !== FOUNDER &&
+        /host_person_id:(?!\s*true\b)/.test(extractDataBlocks(b))
     )
     .map(([f]) => f);
   check(
@@ -442,7 +484,7 @@ async function main() {
   check("8 — the founder file was found by the scan (E586)", founderBody.length > 0, FOUNDER);
   const founderUpdates = [
     ...founderBody.matchAll(/\.update(Many)?\(\{[\s\S]{0,400}?\}\)/g),
-  ].filter((m) => /host_person_id:(?!\s*true\b)/.test(m[0]));
+  ].filter((m) => /host_person_id:(?!\s*true\b)/.test(extractDataBlocks(m[0])));
   check(
     "8 — ⚠⚠⚠ the founder sets an owner only on CREATE, never on an update",
     founderUpdates.length === 0,

@@ -328,21 +328,29 @@ export async function joinGroup(
  * **nothing could start a member's group and ruling 2 had no mechanism.**
  * ⚠ This function is that mechanism, and it needed no schema change.
  *
- * ── ⚠⚠⚠ IT CREATES `OPEN` GROUPS ONLY, AND THAT IS DELIBERATE ────────────
+ * ── ⚠⚠⚠ `OPEN` OR `REQUEST` — AND `REQUEST` ONLY BECAUSE WS-B LANDED ────
  *
- * ⚠⚠ `GroupType.REQUEST` would land joiners in `PENDING`, **and nothing can
- * move a `PENDING` row** — the approve/decline writer does not exist yet
- * (measured: `decided_at`, `decided_by_person_id` and the `APPROVED`/`DECLINED`
- * values have ZERO writers). ⚠⚠⚠ OFFERING `REQUEST` HERE WOULD MANUFACTURE A
- * STATE THE PRODUCT CANNOT LEAVE — a member would ask to join and wait forever,
- * with no screen anywhere able to answer them. ⚠ `E579`'s rule one level down:
- * **do not create the state before its exit exists.** Request-to-join arrives
- * with its approval queue, in the same workstream, or not at all.
- * ⚠ `INVITE_ONLY` is out for the same reason — nothing sends an invite.
+ * ⚠⚠ WS-A SHIPPED THIS `OPEN`-ONLY, AND THE REASON WAS NOT CAUTION — IT WAS A
+ * MEASUREMENT: `GroupType.REQUEST` lands joiners in `PENDING`, and at that
+ * moment **nothing in the product could move a `PENDING` row** (`decided_at`,
+ * `decided_by_person_id`, `APPROVED` and `DECLINED` had zero writers between
+ * them). ⚠⚠⚠ OFFERING IT WOULD HAVE MANUFACTURED A STATE THE PRODUCT COULD NOT
+ * LEAVE — a member asking to join and waiting forever, with no screen anywhere
+ * able to answer. ⚠ `E579` one level down: **do not create the state before its
+ * exit exists.**
+ * ⚠⚠ `decideJoinRequest` IS THAT EXIT, and it lands in the same branch. The
+ * restriction is lifted because the thing it was waiting for is here — not
+ * because it was reconsidered.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   type: "OPEN",   // the only value WS-A would write
+ *
+ * ⚠⚠⚠ `INVITE_ONLY` IS STILL REFUSED, AND FOR THE ORIGINAL REASON, UNCHANGED:
+ * **nothing sends an invite.** There is no writer, so a group created that way
+ * would be a room nobody could ever enter — including its owner's colleagues.
  */
 export async function createGroup(
   userId: string,
-  input: { title: string; description?: string | null }
+  input: { title: string; description?: string | null; type?: "OPEN" | "REQUEST" }
 ): Promise<{ slug: string }> {
   const title = input.title.trim();
   /* ⚠ The floor is a real name, not a keystroke. A one-character group is a
@@ -397,8 +405,11 @@ export async function createGroup(
              rather than a path's, and it is the column ruling 12 confirmed was
              already nullable. */
           host_person_id: person.id,
-          /* ⚠ OPEN — see the note above on why the other two are refused. */
-          type: "OPEN",
+          /* ⚠⚠ `OPEN` OR `REQUEST` ONLY — the union on the parameter is what
+             refuses `INVITE_ONLY`, so the compiler enforces it rather than a
+             check somebody has to remember (the pattern Scott asked be
+             repeated: make the compiler find the call sites). */
+          type: input.type ?? "OPEN",
           /* ⚠ After the four seeded boards (0,10,20,30) and the path rooms. */
           sort_order: 100,
         },
@@ -436,4 +447,92 @@ export async function createGroup(
     "Too many groups share that name — try a different one.",
     "SLUG_EXHAUSTED"
   );
+}
+
+/**
+ * ── ⚠⚠⚠ A REQUEST GETS AN ANSWER (`P2-A3-E619` WS-B 3) ──────────────────
+ *
+ * ⚠ THE BRIEF: *"Requests: people asking to join groups you run (approve or
+ * decline, **and they're told either way**)."*
+ *
+ * ── ⚠⚠⚠ THIS IS THE EXIT WS-A REFUSED TO CREATE A STATE WITHOUT ─────────
+ *
+ * ⚠⚠ MEASURED AT THE PREMISE CHECK: `joinGroup` writes `PENDING` for a
+ * `REQUEST` group, and **nothing in the product could move that row** — the
+ * only API took `join | leave`, and `decided_at`, `decided_by_person_id`,
+ * `APPROVED` and `DECLINED` had ZERO writers between them. ⚠ A member could ask
+ * and wait forever, with no screen anywhere able to answer them.
+ * ⚠⚠⚠ THAT IS WHY `createGroup` SHIPPED `OPEN`-ONLY IN WS-A. This function is
+ * what makes `REQUEST` safe to offer, and the two land together on purpose.
+ *
+ * ── ⚠⚠ "TOLD EITHER WAY" MEANS THE PAGE, NOT AN EMAIL ───────────────────
+ *
+ * ⚠ Notifications about group activity are **out of scope by the brief's own
+ * list** and are `brief_notifications`'s. ⚠⚠ So the answer is delivered where
+ * the asker already looks: their own `Your Requests` list shows `DECLINED` in
+ * words, and an approval moves the group into `Groups You Joined`.
+ * ⚠⚠⚠ A DECLINE IS RECORDED, NEVER DELETED — that is what makes it tellable. A
+ * deleted row would read as *"you never asked"*, and the member would ask
+ * again, forever. ⚠ It is also why `state` moves to `DECLINED` rather than the
+ * row being removed.
+ */
+export async function decideJoinRequest(
+  userId: string,
+  membershipId: string,
+  approve: boolean
+): Promise<{ state: string }> {
+  const decider = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  if (!decider) throw new GroupError("No person for this account.", "NOT_FOUND");
+
+  const row = await prisma.groupMembership.findUnique({
+    where: { id: membershipId },
+    select: {
+      id: true,
+      state: true,
+      board: { select: { id: true, host_person_id: true } },
+    },
+  });
+  if (!row) throw new GroupError("That request isn't available.", "NOT_FOUND");
+
+  /*
+    ⚠⚠⚠ OWNER-SCOPED, AND CHECKED HERE RATHER THAN IN THE ROUTE. Load-bearing
+    rule 5: the decider is resolved from the SESSION and compared against the
+    board's host. ⚠ A page that does not render an Approve button is not a
+    boundary — the same sentence `joinGroup` carries, for the same reason.
+  */
+  if (row.board.host_person_id !== decider.id) {
+    throw new GroupError("Only the group's owner can answer this.", "NOT_OWNER");
+  }
+
+  /*
+    ⚠⚠ ONLY A PENDING ROW CAN BE DECIDED. Re-approving an ACTIVE member or
+    re-declining a DECLINED one would rewrite `decided_at` and quietly change
+    who decided and when — an audit trail that moves is worse than none.
+    ⚠ It also makes a double-click harmless rather than destructive.
+  */
+  if (row.state !== "PENDING") {
+    throw new GroupError("That request has already been answered.", "ALREADY_DECIDED");
+  }
+
+  const state = approve ? "ACTIVE" : "DECLINED";
+  await prisma.groupMembership.update({
+    where: { id: row.id },
+    data: {
+      state,
+      /* ⚠ The route records HOW they got in. An approved member arrived by
+         `APPROVED`, which is a different fact from having simply `JOINED` an
+         open group — and it is the difference a group's owner may care about. */
+      ...(approve ? { route: "APPROVED" as const } : {}),
+      decided_at: new Date(),
+      decided_by_person_id: decider.id,
+      /* ⚠⚠⚠ `auto_approved` STAYS FALSE. It means *nobody decided* — the
+         backfill's fingerprint. A person decided here, and writing `true`
+         would erase exactly the distinction the column exists to preserve. */
+      auto_approved: false,
+    },
+  });
+  return { state };
 }
