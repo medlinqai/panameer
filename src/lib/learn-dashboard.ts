@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getPathsTaughtBy } from "@/lib/learn-home";
 import { shownRunTime } from "@/lib/lesson-duration";
 import { isPlayable, pathHasPlayableLessons, playableProgress } from "@/lib/learn";
 import { buildSpine, type Spine } from "@/lib/learn-spine";
@@ -157,6 +158,46 @@ export type MyLearning = {
    */
   suggestion: Suggestion | null;
   nextCertificate: { title: string; slug: string; percent: number; remaining: number; courses: number; coursesFinished: number } | null;
+  /**
+   * ── ⚠⚠⚠ THE CERTIFICATES PANEL (`P2-A4-E615`, ruling 6) ─────────────────
+   *
+   * ⚠⚠ SCOTT, 2026-09-24: **"Build it. The Certificates panel goes on /learn
+   * per the mockup."** ⚠ It was in the mockup, nobody ruled against it, and it
+   * was simply never built — a silent drop, now a decision.
+   *
+   * ⚠⚠⚠ EVERY FIGURE HERE HAS A WRITER. `learn-assessment.ts` issues the
+   * credential on a pass and writes the attempt; both are real writers. ⚠ THE
+   * TABLE HOLDS ZERO ROWS TODAY (measured 2026-09-24), so the panel is the
+   * EMPTY STATE for now — and it says so honestly rather than not rendering,
+   * because removing a surface removes a capability's only entrance
+   * (`CLAUDE.md` rule 5).
+   */
+  /**
+   * ── ⚠⚠⚠ THE TEACHING TAB (`P2-A4-E615`, ruling 7) ───────────────────────
+   *
+   * ⚠⚠ SCOTT, 2026-09-24, on what Teaching IS: *"the teaching is for the
+   * courses i added and allows me to request adding a course."*
+   *
+   * ⚠ HALF OF THAT IS BUILT HERE AND HALF IS A STOP. Listing the paths a member
+   * authored has a real reader — `getPathsTaughtBy`, on the extracted
+   * `teachesPathWhere` predicate.
+   * ⚠⚠⚠ **"REQUEST ADDING A COURSE" HAS NO WRITER AND IS NOT BUILT.** Measured
+   * 2026-09-24: no model, no route, no function anywhere records such a
+   * request; `createPath` and `course.create` are `canAdminister` only. Ruling
+   * 7 says in terms: *"if nothing writes such a request, STOP AND REPORT rather
+   * than inventing a mechanism."* **A page may not offer a mechanism with no
+   * writer.**
+   */
+  teaching: { title: string; slug: string; lessons: number; taughtByThem: number }[];
+  certificates: {
+    /** ⚠ The path's title, not the credential's — a member recognises the path. */
+    title: string;
+    slug: string;
+    /** ⚠ When it was earned. Null is possible and renders as nothing, never a guess. */
+    earnedOn: string | null;
+    /** ⚠ The passing score, where an attempt recorded one. */
+    score: number | null;
+  }[];
   achievements: Achievement[];
 };
 
@@ -225,13 +266,40 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         learning_path_id: { not: null },
         providerProfile: { person: { user_id: userId } },
       },
-      select: { learning_path_id: true },
+      /* ⚠ `P2-A4-E615`, ruling 6 — the Certificates panel names WHAT it shows
+         and WHEN it was earned, so the row carries more than an id. ⚠⚠ Still no
+         `public_credential_url` here: the panel links to the profile, which is
+         where a credential is verified. */
+      select: { learning_path_id: true, name: true, issued_on: true, created_at: true },
     }),
     prisma.learnTestAttempt.findMany({
       where: { user_id: userId },
-      select: { score: true, passed: true },
+      /* ⚠ `learning_path_id` so a score can be matched to its certificate. */
+      select: { score: true, passed: true, learning_path_id: true, created_at: true },
     }),
   ]);
+
+  /*
+    ⚠ `P2-A4-E615` ruling 7 — the paths this member AUTHORED.
+    ⚠⚠ `getPathsTaughtBy` is the ONE reader, on the extracted `teachesPathWhere`
+    predicate — `expert_person_id` alone is the known-wrong answer and has
+    already cost once. ⚠ A member with no `Person` teaches nothing, which is
+    correct rather than an error.
+  */
+  const teacherPerson = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+  const taught = teacherPerson ? await getPathsTaughtBy(teacherPerson.id) : [];
+  const teaching = taught.map((t) => ({
+    title: t.title,
+    slug: t.slug,
+    lessons: t.lessons,
+    /* ⚠ How many of them THIS person teaches — on a co-taught path, claiming
+       all of them would be the misrepresentation `getPathsTaughtBy` exists to
+       avoid. */
+    taughtByThem: t.taughtByThem,
+  }));
 
   const directory = await loadInstructors(
     paths.flatMap((p) =>
@@ -568,11 +636,57 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       enrolledPaths: rows.filter((r) => r.enrolled).length,
     },
     completedAt: progress.map((p) => p.completed_at.toISOString()),
+    /* ⚠ `P2-A4-E615` ruling 6 — one row per LEARN credential, newest first.
+       ⚠⚠ `score` comes from the PASSING attempt on that path, so a retake after
+       a pass cannot lower the number a member sees. */
+    certificates: certs
+      .filter((c) => c.learning_path_id)
+      .map((c) => {
+        const path = rows.find((r) => r.id === c.learning_path_id);
+        const best = attempts
+          .filter((a) => a.passed && a.learning_path_id === c.learning_path_id)
+          .reduce<number | null>((n, a) => (n === null || a.score > n ? a.score : n), null);
+        return {
+          title: path?.title ?? c.name,
+          slug: path?.slug ?? "",
+          earnedOn: (c.issued_on ?? c.created_at)?.toISOString() ?? null,
+          score: best,
+        };
+      })
+      .sort((a, b) => (b.earnedOn ?? "").localeCompare(a.earnedOn ?? "")),
+    teaching,
     paths: rows,
+    /*
+      ── ⚠⚠⚠ EVERY PATH THE MEMBER IS ENROLLED IN (`P2-A4-E615`, ruling 8) ───
+
+      ⚠⚠ SCOTT, 2026-09-24: **"Every path I'm enrolled in. Enrolling makes a
+      card appear, whether or not a lesson has been watched."**
+
+      ⚠⚠⚠ TWO THINGS WERE HIDING PATHS, AND THE BRIEF ONLY NAMED ONE:
+        1. ⚠ `.slice(0, 3)` — a member enrolled in a fourth path saw three
+           cards and no way to know a fourth existed. **A cap is not a filter;
+           it is a filter that does not say so.**
+        2. ⚠⚠ `!r.certified` — finishing a path made its card DISAPPEAR, which
+           reads as losing the work rather than completing it. A certified path
+           is still a path you are in; it now renders with a `Complete` pill.
+
+      ⚠ THE SORT IS UNCHANGED IN SPIRIT — furthest along first — but certified
+      paths sort last rather than vanishing, because the card a member wants
+      first is the one they can act on.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   inProgress: rows
+      //     .filter((r) => r.enrolled && !r.certified)
+      //     .sort((a, b) => b.percent - a.percent || b.completed - a.completed)
+      //     .slice(0, 3),
+    */
     inProgress: rows
-      .filter((r) => r.enrolled && !r.certified)
-      .sort((a, b) => b.percent - a.percent || b.completed - a.completed)
-      .slice(0, 3),
+      .filter((r) => r.enrolled)
+      .sort(
+        (a, b) =>
+          Number(a.certified) - Number(b.certified) ||
+          b.percent - a.percent ||
+          b.completed - a.completed
+      ),
     continueCard,
     suggestion,
     nextCertificate: nearest

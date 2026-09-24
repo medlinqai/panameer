@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight, Compass } from "lucide-react";
+/* ⚠ `ShieldCheck`, `LayoutGrid` and `GraduationCap` went with the tile row
+   (`P2-A4-E615`, ruling 5) — they were its icons and nothing else used them.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { Play, ShieldCheck, LayoutGrid, GraduationCap, ArrowRight, Compass } from "lucide-react"; */
+import { Play, ArrowRight, Compass, Award, BookOpen } from "lucide-react";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 /* ⚠ `ProgressRing` went with the level badge (`E606` R1). ⚠ SUPERSEDED (`E164`):
    //   import { ProgressRing } from "@/components/learn/app/ProgressRing"; */
-import { StatTile } from "@/components/learn/app/StatTile";
+/* ⚠ `StatTile` IS NO LONGER IMPORTED HERE (`P2-A4-E615`, ruling 5). ⚠⚠ THE
+   COMPONENT STAYS ON DISK (`E164`) and other surfaces use it; only this page
+   stopped rendering the four `0 of N` tiles.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { StatTile } from "@/components/learn/app/StatTile"; */
 import { CourseSpineBar } from "@/components/learn/app/CourseSpineBar";
 /*
   ⚠ THESE TWO ARE CLIENT-ONLY, NOT MERELY CLIENT COMPONENTS. Both compute a
@@ -51,7 +59,13 @@ export function MyLearning({ data }: { data: MyLearningData }) {
   /* ⚠ `level` IS GONE (R1) — the badge it fed is retired and `LevelState` no
      longer travels. ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   const { level, totals, mine, continueCard, inProgress, paths, suggestion } = data; */
-  const { totals, mine, continueCard, inProgress, paths, suggestion } = data;
+  /* ⚠ `mine` LEFT THIS DESTRUCTURE WITH THE TILE ROW (`P2-A4-E615`, ruling 5) —
+     it fed the four `0 of N` figures and nothing else on this page reads it.
+     ⚠⚠ IT STILL TRAVELS ON THE VIEW MODEL and other surfaces use it; only this
+     page stopped reading it.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const { totals, mine, continueCard, inProgress, paths, suggestion } = data; */
+  const { totals, continueCard, inProgress, paths, suggestion, certificates, teaching } = data;
 
   return (
     <div className="-mx-5 -mt-6 sm:-mx-8">
@@ -182,71 +196,42 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             this build are all on properties with no unprefixed competitor, which
             is why they work.)
           */}
-          {/*
-            ── ⚠⚠ THE FOUR TILES SCOTT NAMED (`P1-J3-E364` WS-2) ───────────────
+        {/*
+          ── ⚠⚠⚠ THE FOUR `0 of N` TILES ARE RETIRED (`P2-A4-E615`, ruling 5) ─
 
-            His labels, in his order, and they are PERMANENT — they do not swap by
-            state and they are the ONLY stat row on the page:
+          ⚠⚠ SCOTT, 2026-09-24: **"Kill them. The four 0-of-N tiles come off
+          /learn entirely."**
 
-              LEARNING PATHS ENROLLED IN · COURSES REGISTERED FOR ·
-              LESSONS WATCHED · CERTIFICATES AWARDED
+          ⚠⚠⚠ THEY ARE THE SHAPE `E611` ALREADY RETIRED ON THIS EXACT PAGE.
+          `E611` Q2 took off the Achievements grid on Scott's words — *"a badge
+          earned is a record; five padlocks reading '0 of 5' is a progress
+          system."* ⚠ Four tiles reading `0 of 12`, `0 of 39`, `0 of 305` and
+          `0 of 12 paths` then stayed at the top of the same page.
+          ⚠⚠ **A RULE APPLIED TO ONE COMPONENT AND NOT TO THE COMPONENT BESIDE
+          IT IS NOT A RULE YET.** That is the whole finding.
 
-            ⚠ SUPERSEDED, quoted: the row was `StreakTile` + `Courses Finished` +
-            `Certificates Earned` + `Lessons Completed`. Two of those measured
-            something else and one was a streak.
+          ⚠ AND THE MOCKUP HAS NO TILE ROW ANYWHERE — they were never a build
+          of it.
 
-            ⚠⚠ `StreakTile` IS GONE FROM THIS ROW. A new learner was shown
-            `0 days` as the FIRST thing on the page, and Scott's complaint was
-            *"coming in to a bunch of what look like incomplete tiles is not a
-            good look."* ⚠ THE COMPONENT IS NOT DELETED — `ClientOnly` still
-            exports it and `completedAt` still travels — because a streak is a
-            real thing that belongs somewhere; it just is not one of the four
-            numbers he asked for. (`E164`: a retired component stays on disk.)
+          ⚠⚠ `StatTile` IS NOT DELETED (`E164`) — the component stays on disk and
+          other surfaces use it. Only this page stopped rendering these four.
+          ⚠ The figures themselves are NOT lost: `mine.enrolledPaths`,
+          `coursesFinished`, `lessonsCompleted` and `pathsCertified` still travel
+          on the view model, and the path cards below now carry what a member
+          actually needs from them.
 
-            ⚠ `Certificates AWARDED`, not `Earned`. `E362` set the title-case rule
-            and this keeps it; Scott's wording here is `AWARDED`, so his wins and
-            the harness assertion moves to match rather than the string.
-
-            ⚠ THE DENOMINATORS ARE `E362`'s FILTERED TOTALS — 12 paths, 39
-            courses, 305 lessons — so `0 of 12` cannot disagree with the catalog.
-          */}
-          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-          <StatTile
-            icon={<LayoutGrid className="h-[19px] w-[19px]" aria-hidden />}
-            tone="magenta"
-            value={`${mine.enrolledPaths}`}
-            sub={`of ${totals.paths}`}
-            label="Learning Paths Enrolled In"
-          />
-          <StatTile
-            icon={<GraduationCap className="h-[19px] w-[19px]" aria-hidden />}
-            tone="blue"
-            value={`${mine.coursesFinished}`}
-            sub={`of ${totals.courses}`}
-            label="Courses Registered For"
-          />
-          <StatTile
-            icon={<Play className="h-[19px] w-[19px]" aria-hidden />}
-            tone="green"
-            value={`${mine.lessonsCompleted}`}
-            sub={`of ${totals.lessons}`}
-            label="Lessons Watched"
-          />
-          <StatTile
-            icon={<ShieldCheck className="h-[19px] w-[19px]" aria-hidden />}
-            tone="magenta"
-            value={`${mine.pathsCertified}`}
-            /* ⚠⚠⚠ THE DENOMINATOR IS PATHS, SO IT SAYS PATHS (`E606` R4).
-               ⚠ It read *"0 of 12"* under the label *"Certificates Awarded"*,
-               which reads as *"twelve certificates exist"*. Twelve is the
-               number of paths a member can START — one certificate per path —
-               and that is a different noun from the one above it.
-               ⚠ SUPERSEDED, quoted not deleted (`E164`):
-               //   sub={`of ${totals.paths}`} */
-            sub={`of ${totals.paths} paths`}
-            label="Certificates Awarded"
-          />
-        </div>
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the row as it stood:
+          //   <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+          //     <StatTile … value={`${mine.enrolledPaths}`} sub={`of ${totals.paths}`}
+          //       label="Learning Paths Enrolled In" />
+          //     <StatTile … value={`${mine.coursesFinished}`} sub={`of ${totals.courses}`}
+          //       label="Courses Registered For" />
+          //     <StatTile … value={`${mine.lessonsCompleted}`} sub={`of ${totals.lessons}`}
+          //       label="Lessons Watched" />
+          //     <StatTile … value={`${mine.pathsCertified}`} sub={`of ${totals.paths} paths`}
+          //       label="Certificates Awarded" />
+          //   </div>
+        */}
 
         {/*
           ── ⚠ TWO CATALOG DESTINATIONS, NOT THREE (`P1-J3-E362` WS-3) ──────────
@@ -280,6 +265,31 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           <Link href="/learn/paths?tab=mine" className="text-ink-2 hover:text-magenta">
             My Learning
           </Link>
+          {/*
+            ── ⚠⚠⚠ CERTIFICATES AND TEACHING (`P2-A4-E615`, ruling 7) ─────────
+
+            ⚠⚠ SCOTT, 2026-09-24: **"Add both tabs."**
+
+            ⚠⚠⚠ THEY ARE ANCHORS ON THIS PAGE, NOT NEW ROUTES, AND THAT IS
+            DELIBERATE. A tab that navigates to a route which does not exist is
+            a door onto a wall (`E579`); both panels live below, so the tab
+            takes the member to the thing rather than to a 404.
+            ⚠ THE ROUTE SET IS THEREFORE UNCHANGED — `check:learn-build` §1
+            derives it on both sides and would fail if it moved.
+
+            ⚠⚠ TEACHING RENDERS ONLY FOR SOMEONE WHO TEACHES (`CLAUDE.md` rule
+            5: a card hides only when the CAPABILITY is absent, not when the
+            count is zero). A member who teaches nothing has no Teaching tab;
+            one who teaches sees it with an honest count.
+          */}
+          <a href="#certificates" className="text-ink-2 hover:text-magenta">
+            Certificates
+          </a>
+          {teaching.length > 0 && (
+            <a href="#teaching" className="text-ink-2 hover:text-magenta">
+              Teaching
+            </a>
+          )}
         </nav>
 
         {continueCard ? (
@@ -375,7 +385,25 @@ export function MyLearning({ data }: { data: MyLearningData }) {
 
         {inProgress.length > 0 && (
           <>
-            <SectionHead title="Paths in Progress">
+            {/* ⚠⚠ `My Paths`, THE MOCKUP'S WORD, AND NOW TRUE (`P2-A4-E615`).
+                ⚠ *"Paths in Progress"* described a list capped at three that
+                dropped a path the moment it was finished. Ruling 8 made the
+                list every path the member is in, so the heading says that.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   <SectionHead title="Paths in Progress"> */}
+            <SectionHead title="My Paths">
+              {/* ⚠ A COUNTED SUMMARY, the mockup's *"3 in progress · 1 complete"*.
+                  ⚠⚠ Each half renders only above zero — *"0 complete"* is a
+                  sentence about nothing. */}
+              <span className="text-[12px] text-ink-2">
+                {inProgress.filter((p) => !p.certified).length > 0 &&
+                  `${inProgress.filter((p) => !p.certified).length} in progress`}
+                {inProgress.filter((p) => !p.certified).length > 0 &&
+                  inProgress.filter((p) => p.certified).length > 0 &&
+                  " · "}
+                {inProgress.filter((p) => p.certified).length > 0 &&
+                  `${inProgress.filter((p) => p.certified).length} complete`}
+              </span>
               <Link href="/learn/paths" className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline">
                 Browse all {paths.length} <span aria-hidden>→</span>
               </Link>
@@ -384,6 +412,115 @@ export function MyLearning({ data }: { data: MyLearningData }) {
               {inProgress.map((p, i) => (
                 <PathProgressCard key={p.id} path={p} index={i} />
               ))}
+            </div>
+          </>
+        )}
+
+        {/*
+          ── ⚠⚠⚠ CERTIFICATES (`P2-A4-E615`, ruling 6) ───────────────────────
+
+          ⚠⚠ SCOTT, 2026-09-24: **"Build it. The Certificates panel goes on
+          /learn per the mockup."** It was in the mockup, nobody ruled against
+          it, and it was never built — a silent drop, now a decision.
+
+          ⚠⚠⚠ IT RENDERS AT ZERO, AND THAT IS THE RULE NOT AN OVERSIGHT
+          (`CLAUDE.md` rule 5): a card renders for anyone who COULD have the
+          thing it measures, with honest zeros, and hides only when the
+          capability is absent. Every member can earn one, so every member sees
+          the panel. ⚠ **Removing it would remove the only place a member learns
+          that passing a path test puts a credential on their profile.**
+
+          ⚠ THE FIGURES HAVE WRITERS: `learn-assessment.ts` issues the
+          credential on a pass and writes the attempt. ⚠⚠ THE TABLE HOLDS ZERO
+          ROWS TODAY, so what shows is the empty state — which NAMES THE FIRST
+          MOVE rather than reporting emptiness (rule 4).
+          ⚠ NO PROMISE AND NO DATE. It says what earns one, not when.
+        */}
+        <SectionHead title="Certificates">
+          <Link
+            href="/profile"
+            className="ml-auto shrink-0 text-[12px] font-semibold text-magenta hover:underline"
+          >
+            Show on your profile <span aria-hidden>→</span>
+          </Link>
+        </SectionHead>
+        <div id="certificates" className="rounded-brand border border-line bg-white p-5">
+          {certificates.length > 0 ? (
+            <ul className="flex flex-col gap-3">
+              {certificates.map((c) => (
+                <li key={c.slug || c.title} className="flex flex-wrap items-baseline gap-x-2.5">
+                  <Award className="h-4 w-4 text-magenta" aria-hidden />
+                  <b className="text-[14px]">{c.title}</b>
+                  {/* ⚠ EACH HALF RENDERS ONLY WHERE IT IS REAL. A missing date
+                      is a missing fact, not a dash — the same rule `E611` Q6
+                      settled for a lesson length. */}
+                  <span className="text-[12.5px] text-ink-2">
+                    {c.earnedOn
+                      ? `Passed ${new Date(c.earnedOn).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+                      : ""}
+                    {c.earnedOn && c.score !== null ? " · " : ""}
+                    {c.score !== null ? `${c.score}%` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <>
+              <p className="text-[14px] font-bold">No certificates yet.</p>
+              <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-ink-2">
+                Pass a path test and the certificate lands on your profile, where
+                buyers can see it.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/*
+          ── ⚠⚠⚠ TEACHING (`P2-A4-E615`, ruling 7) ──────────────────────────
+
+          ⚠⚠ SCOTT, 2026-09-24: *"the teaching is for the courses i added and
+          allows me to request adding a course."*
+
+          ⚠⚠⚠ THE FIRST HALF IS BUILT. THE SECOND HALF IS A STOP AND IS NOT
+          BUILT. Measured 2026-09-24: **nothing anywhere writes a request to add
+          a course** — no model, no route, no function; `createPath` and
+          `course.create` are `canAdminister` only. Ruling 7 says in terms: *"if
+          nothing writes such a request, STOP AND REPORT rather than inventing a
+          mechanism."* ⚠ **So there is no Request a Course control here.** A
+          button that records nothing is worse than no button.
+
+          ⚠ THE PANEL HIDES WHEN THE CAPABILITY IS ABSENT, not when a count is
+          zero — a member who teaches nothing has no Teaching panel and no
+          Teaching tab, which is rule 5's other half.
+        */}
+        {teaching.length > 0 && (
+          <>
+            <SectionHead title="Teaching">
+              <span className="text-[12px] text-ink-2">
+                {teaching.length} path{teaching.length === 1 ? "" : "s"}
+              </span>
+            </SectionHead>
+            <div id="teaching" className="rounded-brand border border-line bg-white p-5">
+              <ul className="flex flex-col gap-2.5">
+                {teaching.map((t) => (
+                  <li key={t.slug} className="flex flex-wrap items-baseline gap-x-2.5">
+                    <BookOpen className="h-4 w-4 text-magenta" aria-hidden />
+                    <Link
+                      href={`/learn/${t.slug}`}
+                      className="text-[14px] font-semibold text-magenta hover:underline"
+                    >
+                      {t.title}
+                    </Link>
+                    {/* ⚠ A COUNTED FIGURE, SCOPED TO THIS PERSON. On a co-taught
+                        path, claiming all of its lessons would be the
+                        misrepresentation `getPathsTaughtBy` exists to avoid. */}
+                    <span className="text-[12.5px] text-ink-2">
+                      {t.taughtByThem} of {t.lessons} lesson
+                      {t.lessons === 1 ? "" : "s"} yours
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </>
         )}
@@ -632,6 +769,25 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
           `CourseSpineBar`. The line beneath stays either way, so a path with no
           spine still states its progress in words.
         */}
+        {/*
+          ── ⚠⚠ THE STATUS PILL (`P2-A4-E615`, the mockup's card) ────────────
+
+          ⚠⚠⚠ IT SAYS ONLY WHAT IS TRUE, AND THE MOCKUP'S OWN PILLS ARE NOT.
+          The mockup shows *"Test unlocks at 100%"* and *"Test ready"* — ⚠ BUT
+          `E611` Q1 DELETED THE COMPLETION GATE ON SCOTT'S RULING: *"no
+          completion gate on the path test."* **There is no unlock at 100%, so
+          a pill claiming one would be a rule the product does not have.**
+          ⚠ Every state below is read off the view model: `certified` has a
+          writer (`learn-assessment.ts` issues the credential), and `completed`
+          and `playableLessons` are counted over playable lessons.
+        */}
+        <p className="mt-1 inline-flex w-fit rounded-full bg-black/[0.05] px-2.5 py-[3px] text-[11px] font-bold text-ink-2">
+          {path.certified
+            ? "Complete"
+            : path.completed === 0
+              ? "Not started"
+              : "In progress"}
+        </p>
         <div className="my-2.5">
           <CourseSpineBar spine={path.spine} title={path.title} />
         </div>
