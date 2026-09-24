@@ -149,45 +149,33 @@ function authorView(a: {
   };
 }
 
-/** The board list, with live thread counts. */
-export async function listBoards() {
-  await ensureBoards();
-  const boards = await prisma.forumBoard.findMany({
-    /*
-      ⚠⚠ THE FOUR GENERAL BOARDS ONLY (`P1-J3-E383`). Path boards live on their
-      path page and are DELIBERATELY absent here.
+/*
+  ── ⚠⚠⚠ `listBoards()` IS DELETED, AND SO IS THE RULE IT CLAIMED TO CARRY
+     (`P2-A3-E612`, 2026-09-24) ─────────────────────────────────────────────
 
-      Listing them beside the four would make this page twelve mostly-empty
-      rooms sitting next to four that have a chance of filling — the exact
-      fragmentation this file's own docblock warns about, and it would damage
-      the four that already work. ⚠ `check:forums` asserts this list is the
-      four seed slugs and nothing else.
-    */
-    where: { learning_path_id: null },
-    orderBy: { sort_order: "asc" },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      description: true,
-      _count: { select: { threads: true } },
-      threads: {
-        orderBy: { last_post_at: "desc" },
-        take: 1,
-        select: { title: true, last_post_at: true },
-      },
-    },
-  });
-  return boards.map((b) => ({
-    slug: b.slug,
-    title: b.title,
-    description: b.description,
-    threadCount: b._count.threads,
-    latest: b.threads[0]
-      ? { title: b.threads[0].title, at: b.threads[0].last_post_at.toISOString() }
-      : null,
-  }));
-}
+  ⚠⚠ SCOTT: **`E164` preserves superseded DECISIONS, quoted in comments — it
+  does not preserve dead exports.** Three dead Learn exports went the same way
+  at `E608`. ⚠ Measured before removal, comments stripped: **zero callers in
+  `src/`**; only its own declaration and two gate assertions.
+
+  ⚠⚠⚠ AND THE RULE IT GUARDED IS ALREADY FALSE ON THE LIVE PATH. It said *"a
+  path board NEVER appears in the general listing"*. ⚠ MEASURED **AND
+  RENDERED** 2026-09-24, signed in as a teacher at `/community/forums`: **8
+  board links, 4 of them path boards**, each marked `Teach`, beside the four
+  general rooms. A stranger sees 4 general and **0** path boards.
+
+  ⚠ THAT IS NOT A DEFECT — IT IS `E591`'s DESIGN. The rail is *"Your Groups"*,
+  and it lists the rooms you are IN. The fragmentation the old rule feared was
+  *"twelve mostly-empty rooms sitting next to four that have a chance of
+  filling"* — rooms you have nothing to do with. A room you teach is not that.
+  ⚠⚠ SO THE OLD RULE IS SUPERSEDED IN FACT, and `check:forums` §4 was green
+  about a function nobody called while the live listing did the opposite.
+
+  ⚠⚠⚠ WHAT REPLACES IT, AND IT IS THE RULE WORTH HAVING: **a path board is
+  listed only to someone enrolled in or teaching that path — never to a
+  stranger.** That is the access rule, applied to the listing, and it is
+  asserted against the LIVE path in `check:forums` §4.
+*/
 
 /** One board and its threads, newest activity first. */
 /**

@@ -240,6 +240,72 @@ async function main() {
     }
   }
 
+  /* ── 9 · ⚠⚠⚠ MEMBERSHIP AND ENROLMENT CANNOT DISAGREE (Scott, 2026-09-24) ─
+
+     ⚠⚠ THE RULING: enrolment stays the DOOR for a path group and the membership
+     row stays the RECORD. The write is deliberately NON-FATAL, so it can fail
+     silently — ⚠⚠⚠ **and a swallowed bookkeeping failure must show up as a red
+     gate, not as a member locked out six months later.**
+
+     ⚠ BOTH DIRECTIONS, DERIVED AT RUN TIME ON EACH SIDE (`E587`). Neither set
+     is a list: one is every `LearnEnrollment` joined to its path's board, the
+     other is every `ACTIVE` membership row whose board has a path. A named
+     list would go stale the first time a board was added.
+     ⚠⚠ THE TWO SETS ARE BUILT FROM DIFFERENT TABLES AND COMPARED — so a rule
+     that simply returned the same set twice could not satisfy it. */
+  {
+    const pathBoards = await prisma.forumBoard.findMany({
+      where: { learning_path_id: { not: null } },
+      select: { id: true, learning_path_id: true },
+    });
+    const boardForPath = new Map(pathBoards.map((b) => [b.learning_path_id!, b.id]));
+
+    /* SIDE A — every enrolled member, as (board, person). */
+    const enrolments = await prisma.learnEnrollment.findMany({
+      select: {
+        learning_path_id: true,
+        user: { select: { person: { select: { id: true } } } },
+      },
+    });
+    const fromEnrolment = new Set<string>();
+    for (const e of enrolments) {
+      const personId = e.user.person?.id;
+      const boardId = boardForPath.get(e.learning_path_id);
+      /* ⚠ A user with no Person, or a path with no board, cannot have a row —
+         `ensureEnrolmentMembership` returns early on both, so excluding them
+         here is the same rule, not a convenience. */
+      if (personId && boardId) fromEnrolment.add(`${boardId}:${personId}`);
+    }
+
+    /* SIDE B — every ACTIVE membership row on a path board. */
+    const rows = await prisma.groupMembership.findMany({
+      where: { state: "ACTIVE", board: { learning_path_id: { not: null } } },
+      select: { board_id: true, person_id: true },
+    });
+    const fromMembership = new Set(rows.map((r) => `${r.board_id}:${r.person_id}`));
+
+    /* ⚠⚠ COUNT > 0 (`E586`). With both sets empty this assertion would pass
+       while proving nothing — two zeros agree. */
+    check(
+      "9 — there is at least one enrolment to reconcile (E586)",
+      fromEnrolment.size > 0,
+      `${fromEnrolment.size} (board, person) pairs from enrolment — an empty comparison is not a comparison`
+    );
+
+    const missingRow = [...fromEnrolment].filter((k) => !fromMembership.has(k));
+    const orphanRow = [...fromMembership].filter((k) => !fromEnrolment.has(k));
+    check(
+      "9 — ⚠⚠ every enrolled member has a membership row for that path's group",
+      missingRow.length === 0,
+      `${missingRow.length} enrolment(s) with no row — the write is non-fatal, so this is where a swallowed failure surfaces`
+    );
+    check(
+      "9 — ⚠⚠ and every path-group membership row has a matching enrolment",
+      orphanRow.length === 0,
+      `${orphanRow.length} row(s) with no enrolment — a member in a room nothing put them in`
+    );
+  }
+
   await prisma.$disconnect();
   console.log(`check:groups — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);
   for (const f of fails) console.log(`\n  ✗ ${f}`);
