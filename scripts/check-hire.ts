@@ -372,6 +372,16 @@ const TEST_WRITER = join("src", "lib", "work-tests.ts");
     writer has no use for it.
 */
 const SELECTION_WRITER = join("src", "lib", "selection.ts");
+/*
+  ── ⚠⚠⚠ AND THE WORK ORDER WRITER (`P2-A8-E621` WS-D) ───────────────────
+
+  ⚠ It touches `providerBid` for ONE reason: ruling 16 — *"a declined work order
+  goes back to the buyer to pick someone else"* — so a decline puts the other
+  proposals back in contention. ⚠⚠ **It only ever WRITES statuses. It performs no
+  `providerBid` read at all**, which is a tighter fence than any of the four
+  above, and the assertion below is an absence rather than a narrowing.
+*/
+const ORDER_WRITER = join("src", "lib", "work-orders.ts");
 {
   const hits = SRC.filter(
     (f) =>
@@ -382,7 +392,8 @@ const SELECTION_WRITER = join("src", "lib", "selection.ts");
       f.path !== STATISTICS_LIB &&
       f.path !== INTERVIEW_WRITER &&
       f.path !== TEST_WRITER &&
-      f.path !== SELECTION_WRITER
+      f.path !== SELECTION_WRITER &&
+      f.path !== ORDER_WRITER
   );
 /*
   ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
@@ -448,6 +459,17 @@ const SELECTION_WRITER = join("src", "lib", "selection.ts");
     "3 — ⚠⚠ it never reads a proposal's cover note",
     sel != null && !/cover_note/.test(sel.code),
     "the pitch is comparison material; a writer has no use for it"
+  );
+  /* ⚠⚠⚠ THE WORK ORDER WRITER NEVER READS A PROPOSAL AT ALL — only updateMany. */
+  const wo = SRC.find((f) => f.path === ORDER_WRITER);
+  check(
+    "3 — ⚠⚠⚠ ABSENCE: the work order writer never READS a proposal, it only records a decline",
+    wo != null && !/providerBid\.(findMany|findFirst|findUnique|count|aggregate|groupBy)/.test(wo.code),
+    "ruling 16 needs the statuses moved, and nothing else"
+  );
+  check(
+    "3 — ⚠⚠ and it reads no proposal price or narrative either",
+    wo != null && !/providerBidLine|cover_note/.test(wo.code)
   );
 }
 

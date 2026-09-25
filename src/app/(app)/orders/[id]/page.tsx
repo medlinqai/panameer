@@ -214,7 +214,8 @@ function LineCard({ line, currency }: { line: OrderLineView; currency: string })
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-            Line {line.lineNumber} · {line.basis === "RATE" ? "Rate" : "Fixed amount"}
+            Line {line.lineNumber} ·{" "}
+            {line.transactionType === "SERVICE_BY_AMT" ? "Fixed amount" : "Rate"}
             {line.externalLineRef && <> · PO line {line.externalLineRef}</>}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
@@ -228,7 +229,7 @@ function LineCard({ line, currency }: { line: OrderLineView; currency: string })
       </div>
 
       <div className="mt-3.5 border-t border-line pt-3.5">
-        {d.basis === "RATE" ? (
+        {d.pricedBy === "QUANTITY" ? (
           <>
             <div className="flex flex-wrap items-baseline justify-between gap-2 text-[14px]">
               <span className="text-ink-2">

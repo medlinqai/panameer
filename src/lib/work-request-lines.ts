@@ -1,9 +1,12 @@
 import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
+/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 deleted the bridge, and
+   the shape check now has a `TransactionType` door:
+   //   assertLineShape,
+   //   basisForTransactionType, */
 import {
-  assertLineShape,
-  basisForTransactionType,
+  assertTransactionLineShape,
   pricedByQuantity,
   transactionTypeForPricingType,
   workRequestIsComplete,
@@ -417,11 +420,17 @@ function validateDraft(d: LineDraft): void {
   const priced =
     pricedByQuantity(d.transaction_type) ? d.unitPriceCents != null : d.amountCents != null;
   if (priced) {
-    assertLineShape({
-      /* ⚠⚠ `assertLineShape` IS ORDER-SIDE and still speaks `LineBasis`, so the
-         type is translated through the spine's one bridge rather than compared
-         here (`basisForTransactionType`). */
-      basis: basisForTransactionType(d.transaction_type),
+    /* ⚠⚠⚠ NO TRANSLATION ANY MORE (ruling 44). The spine's rule now has a
+       `TransactionType` door onto the identical body, so the requisition line is
+       checked in its OWN vocabulary. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   ⚠⚠ `assertLineShape` IS ORDER-SIDE and still speaks `LineBasis`, so the
+       //   type is translated through the spine's one bridge rather than compared
+       //   here (`basisForTransactionType`).
+       //   assertLineShape({
+       //     basis: basisForTransactionType(d.transaction_type),
+       //     ... */
+    assertTransactionLineShape({
+      transaction_type: d.transaction_type,
       uom: pricedByQuantity(d.transaction_type) ? d.uom ?? "HOUR" : null,
       quantity: pricedByQuantity(d.transaction_type) ? d.quantity ?? 1 : null,
       unit_price_cents: d.unitPriceCents ?? null,

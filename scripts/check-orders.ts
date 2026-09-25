@@ -21,7 +21,16 @@
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { availableActions, activationMessage, drawdownFor, partyFor, termChanges, type OrderParty } from "@/lib/orders";
+import {
+  availableActions,
+  activationMessage,
+  bothPartiesAccepted,
+  canAcceptNow,
+  drawdownFor,
+  partyFor,
+  termChanges,
+  type OrderParty,
+} from "@/lib/orders";
 import { ROUTE_ACCESS } from "@/lib/route-access";
 import { PROVIDER_NAV, REQUESTER_NAV } from "@/lib/nav";
 
@@ -69,18 +78,51 @@ const PARTIES: OrderParty[] = ["BUYER", "PROVIDER", "NONE"];
 let combos = 0;
 for (const status of STATUSES) {
   for (const party of PARTIES) {
+    /* ⚠⚠⚠ THE FIXTURE NOW CARRIES `provider_accepted_at`, BECAUSE RULING 43b's
+       ORDERING IS A FACT ABOUT THE ROW AND NOT ABOUT THE STATUS. ⚠ An `ACCEPTED`
+       order whose `provider_accepted_at` is null is a row nothing legitimate
+       produces, and the buyer must NOT be able to accept against it — so the
+       sweep below exercises BOTH, and `combos` doubles to 42. */
+    for (const providerAccepted of [true, false]) {
+    /* ⚠ COUNTED HERE, INSIDE the acceptance loop, so the figure counts the cases
+       actually exercised. ⚠⚠ It sat one level out on the first pass and read 21
+       against an expected 42 — the count caught it, which is what a population
+       assertion is for (`E586`). */
     combos += 1;
-    const actions = availableActions({ status }, party);
+    const order = {
+      status,
+      provider_accepted_at: providerAccepted ? new Date("2026-09-20") : null,
+    };
+    const actions = availableActions(order, party);
 
-    /* ⚠⚠ THE TWO RULES THE BRIEF PUT IN CAPITALS. */
+    /*
+      ── ⚠⚠⚠ RE-ANCHORED BY RULING 43, AND THE REDDENING WAS CORRECT ───────
+
+      ⚠⚠ SUPERSEDED, quoted not deleted (`E164`) — the FIRST of these is now
+      INVERTED, and ruling 43 said in advance that this gate would fail and that
+      failing would be right:
+      //   ⚠⚠ THE TWO RULES THE BRIEF PUT IN CAPITALS.
+      //   check(`1 — ${party} @ ${status}: a BUYER never gets ACCEPT`,
+      //     !(party === "BUYER" && actions.includes("ACCEPT")), …);
+      //   check(`1 — ${party} @ ${status}: a PROVIDER never gets RELEASE`,
+      //     !(party === "PROVIDER" && actions.includes("RELEASE")), …);
+
+      ⚠⚠⚠ **NOT WEAKENED — REPLACED BY THE RULE THAT SURVIVED, WHICH IS
+      STRICTER:** neither party may see an action `canAcceptNow` denies them, and
+      **no party ever sees a Release control, because none exists.** ⚠ The old
+      pair could be satisfied by a function that offered nothing to anybody; this
+      one cannot, because it is an equality against the predicate.
+    */
     check(
-      `1 — ${party} @ ${status}: a BUYER never gets ACCEPT`,
-      !(party === "BUYER" && actions.includes("ACCEPT")),
-      `got [${actions.join(",")}]`
+      `1 — ${party} @ ${status} (provider accepted: ${providerAccepted}): actions match canAcceptNow EXACTLY`,
+      actions.length === (canAcceptNow(order, party) ? 1 : 0) &&
+        actions.every((a) => a === "ACCEPT"),
+      `got [${actions.join(",")}] but canAcceptNow said ${canAcceptNow(order, party)}`
     );
+    /* ⚠⚠⚠ AND RELEASE IS NOT AN ACTION AT ALL, FOR ANYONE, IN ANY STATE. */
     check(
-      `1 — ${party} @ ${status}: a PROVIDER never gets RELEASE`,
-      !(party === "PROVIDER" && actions.includes("RELEASE")),
+      `1 — ${party} @ ${status}: no party is ever offered a release`,
+      !(actions as string[]).includes("RELEASE"),
       `got [${actions.join(",")}]`
     );
     /* ⚠ AND A NON-PARTY GETS NOTHING, EVER. `NONE` is the safe default and every
@@ -93,26 +135,64 @@ for (const status of STATUSES) {
     /* ⚠ AT MOST ONE ACTION IS EVER OFFERED. Two buttons would mean the two events
        had been collapsed into one screen decision. */
     check(`1 — ${party} @ ${status}: at most one action`, actions.length <= 1);
+    }
   }
 }
-check("1 — every status × party combination was exercised", combos === 21, `${combos}`);
+/* ⚠ 7 statuses × 3 parties × 2 provider-acceptance states. ⚠ SUPERSEDED,
+   quoted not deleted (`E164`): //   combos === 21 */
+check("1 — every status × party × acceptance combination was exercised", combos === 42, `${combos}`);
 
 /* The positive half — the gate must also ALLOW the two legal moves, or it is
    passing by refusing everything. */
+const ACCEPTED_BY_PROVIDER = {
+  status: "ACCEPTED" as const,
+  provider_accepted_at: new Date("2026-09-20"),
+};
 check(
   "1 — the PROVIDER can accept an ISSUED order",
-  availableActions({ status: "ISSUED" }, "PROVIDER").join() === "ACCEPT"
+  availableActions({ status: "ISSUED", provider_accepted_at: null }, "PROVIDER").join() === "ACCEPT"
+);
+/* ⚠⚠⚠ RULING 43: THE BUYER'S ACTION IS ACCEPT. ⚠ SUPERSEDED (`E164`):
+   //   "1 — the BUYER can release an ACCEPTED order",
+   //   availableActions({ status: "ACCEPTED" }, "BUYER").join() === "RELEASE" */
+check(
+  "1 — ⚠⚠⚠ the BUYER ACCEPTS an order the provider has accepted (ruling 43)",
+  availableActions(ACCEPTED_BY_PROVIDER, "BUYER").join() === "ACCEPT"
+);
+/* ⚠⚠ THE ORDER OF THE TWO ACCEPTANCES, ASSERTED (ruling 43b: provider first). */
+check(
+  "1 — the BUYER cannot accept an ISSUED order (the provider has not accepted)",
+  availableActions({ status: "ISSUED", provider_accepted_at: null }, "BUYER").length === 0
+);
+/* ⚠⚠⚠ AND NOT EVEN AN `ACCEPTED` ROW WITH NO PROVIDER TIMESTAMP. ⚠ The status
+   alone would have let a hand-set or half-written row skip the provider
+   entirely — this is the assertion that makes `canAcceptNow` read the column
+   rather than trust the status. */
+check(
+  "1 — ⚠⚠⚠ the BUYER cannot accept an ACCEPTED order with no provider_accepted_at",
+  availableActions({ status: "ACCEPTED", provider_accepted_at: null }, "BUYER").length === 0,
+  "trusting the status alone lets a half-written row skip the provider"
+);
+/* ⚠⚠ AND RELEASE IS BOTH TIMESTAMPS — one predicate, one place (ruling 43d).
+   ⚠⚠⚠ NOT A ROW COUNT: 43d withdrew the acceptance table, so there are no rows
+   to count and `allPartiesAccepted` must not be written. */
+check(
+  "2 — ⚠⚠ release needs BOTH timestamps",
+  bothPartiesAccepted({
+    provider_accepted_at: new Date("2026-09-20"),
+    buyer_accepted_at: new Date("2026-09-21"),
+  })
 );
 check(
-  "1 — the BUYER can release an ACCEPTED order",
-  availableActions({ status: "ACCEPTED" }, "BUYER").join() === "RELEASE"
+  "2 — ⚠ the provider alone does not release",
+  !bothPartiesAccepted({ provider_accepted_at: new Date("2026-09-20"), buyer_accepted_at: null })
 );
-/* ⚠⚠ THE ORDER OF THE TWO EVENTS, ASSERTED. A buyer cannot release something the
-   provider has not accepted — that is the collapse the brief forbids. */
 check(
-  "1 — the BUYER cannot release an ISSUED order (the provider has not accepted)",
-  availableActions({ status: "ISSUED" }, "BUYER").length === 0
+  "2 — ⚠⚠⚠ and the BUYER alone does not release either — ordering is the rule",
+  !bothPartiesAccepted({ provider_accepted_at: null, buyer_accepted_at: new Date("2026-09-21") }),
+  "a buyer-only acceptance is a row nothing legitimate produces"
 );
+check("2 — ⚠ neither party is not release", !bothPartiesAccepted({}));
 check(
   "1 — the PROVIDER cannot accept twice (ACCEPTED offers them nothing)",
   availableActions({ status: "ACCEPTED" }, "PROVIDER").length === 0
@@ -143,11 +223,44 @@ check(
   activationMessage("ISSUED", "PROVIDER").includes("accept") &&
     activationMessage("ISSUED", "BUYER").toLowerCase().includes("waiting")
 );
+/* ⚠⚠⚠ RULING 43f, AND THE COPY IS ASSERTED RATHER THAN TRUSTED. ⚠ SUPERSEDED,
+   quoted not deleted (`E164`) — it required the word the ruling banned:
+   //   activationMessage("ACCEPTED", "BUYER").toLowerCase().includes("release") */
 check(
-  "1 — ACCEPTED tells the buyer to act and the provider to wait",
-  activationMessage("ACCEPTED", "BUYER").toLowerCase().includes("release") &&
+  "1 — ACCEPTED tells the buyer to accept and the provider to wait",
+  activationMessage("ACCEPTED", "BUYER").toLowerCase().includes("accept") &&
     activationMessage("ACCEPTED", "PROVIDER").toLowerCase().includes("waiting")
 );
+/* ⚠⚠⚠ THE BUYER'S LINE SAYS *REVIEW*, NOT ONLY *ACCEPT* — 43f calls this
+   load-bearing, and it is 43e in the copy: the work order is GENERATED from the
+   requisition, so the document is new to the buyer. **A buyer told only to
+   "accept" is being asked to sign something unseen.** */
+check(
+  "1 — ⚠⚠⚠ the buyer is told to REVIEW the terms, not merely to accept them",
+  activationMessage("ACCEPTED", "BUYER").toLowerCase().includes("review"),
+  "43f: a buyer told only to accept is being asked to sign something unseen"
+);
+/* ⚠⚠⚠ AND `RELEASED` NO LONGER CLAIMS SOMEBODY RELEASED ANYTHING. Nobody did —
+   it is what the second acceptance produced. */
+check(
+  "1 — ⚠⚠⚠ RELEASED says both parties accepted, and never 'Released'",
+  activationMessage("RELEASED", "BUYER").startsWith("Both parties have accepted") &&
+    !activationMessage("RELEASED", "PROVIDER").toLowerCase().includes("released"),
+  "a state with no presser must not be described as an act somebody performed"
+);
+/* ⚠⚠ THE WHOLE REGISTER, SWEPT: no activation sentence may say release, approve
+   or confirm — for any status, for either party (43f). ⚠ Derived by sweeping the
+   states rather than by naming the three that happen to be wrong today. */
+for (const st of STATUSES) {
+  for (const pt of PARTIES) {
+    const msg = activationMessage(st, pt).toLowerCase();
+    check(
+      `1 — ⚠⚠ ${st}/${pt}: the sentence avoids release, approve and confirm`,
+      !/\brelease|\breleased|\bapprove|\bconfirm/.test(msg),
+      `"${activationMessage(st, pt)}"`
+    );
+  }
+}
 
 /**
  * ⚠⚠ STRUCTURAL: NEITHER LABEL CAN REACH THE DOM BY ANOTHER PATH.
@@ -173,9 +286,15 @@ check(
     "1 — 'Accept' appears exactly once in the component",
     (act?.code.match(/Accept/g) ?? []).length === 1
   );
+  /* ⚠⚠⚠ AND `Release` APPEARS NOWHERE AT ALL — ruling 43 removed the action, so
+     there is no label to render and no endpoint to reach. ⚠ SUPERSEDED, quoted
+     not deleted (`E164`):
+     //   "1 — 'Release' appears exactly once in the component",
+     //   (act?.code.match(/Release/g) ?? []).length === 1 */
   check(
-    "1 — 'Release' appears exactly once in the component",
-    (act?.code.match(/Release/g) ?? []).length === 1
+    "1 — ⚠⚠⚠ ABSENCE: 'Release' appears NOWHERE in the component",
+    (act?.code.match(/Release/g) ?? []).length === 0,
+    "release is not an action; a label for it is a door onto a wall"
   );
 }
 /* ⚠⚠ AND NOWHERE ELSE IN THE ORDERS SURFACES. A second Accept button on the
@@ -198,13 +317,24 @@ check(
 /* ⚠ THE API REFUSES OUT OF THE SAME FUNCTION — the button is the courtesy. */
 {
   const lib = fileAt("src/lib/orders.ts");
+  /* ⚠⚠ THE API REFUSES OUT OF THE SAME PREDICATE. ⚠ SUPERSEDED, quoted not
+     deleted (`E164`) — `availableActions` is now a thin wrapper over
+     `canAcceptNow`, and `releaseOrder` no longer exists:
+     //   /availableActions\(order, party\)\.includes\("ACCEPT"\)/
+     //   "1 — releaseOrder asks availableActions too", …includes\("RELEASE"\) */
   check(
-    "1 — acceptOrder asks availableActions rather than re-testing the party",
-    !!lib && /availableActions\(order, party\)\.includes\("ACCEPT"\)/.test(lib.code)
+    "1 — acceptOrder asks the ONE predicate rather than re-testing the party",
+    !!lib && /if \(!canAcceptNow\(order, party\)\)/.test(lib.code)
   );
   check(
-    "1 — releaseOrder asks availableActions too",
-    !!lib && /availableActions\(order, party\)\.includes\("RELEASE"\)/.test(lib.code)
+    "1 — ⚠⚠ and availableActions is derived from that same predicate",
+    !!lib && /return canAcceptNow\(order, party\) \? \["ACCEPT"\] : \[\]/.test(lib.code),
+    "two definitions of eligibility is the drift this file exists to stop"
+  );
+  check(
+    "1 — ⚠⚠⚠ ABSENCE: there is no releaseOrder writer any more",
+    !!lib && !/export async function releaseOrder/.test(lib.code),
+    "RELEASED has no human writer — it is what the second acceptance produces"
   );
   /* ⚠ AND THE WRITE IS CONDITIONAL ON THE STATUS IT READ, so two clicks race to
      one winner instead of stamping the timestamp twice. */
@@ -212,9 +342,27 @@ check(
     "1 — accept writes only from ISSUED",
     !!lib && /where: \{ id: order\.id, status: "ISSUED" \}/.test(lib.code)
   );
+  /*
+    ⚠⚠⚠ THE AUTO-RELEASE WRITE, AND ITS GUARD IS THE WHOLE ASSERTION.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   "1 — release writes only from ACCEPTED",
+    //   /where: \{ id: order\.id, status: "ACCEPTED" \}/
+    ⚠⚠ The buyer's write must require `provider_accepted_at: { not: null }` IN THE
+    `where`. **A check-then-write would be a race, and the race would release an
+    order the provider never accepted.**
+  */
   check(
-    "1 — release writes only from ACCEPTED",
-    !!lib && /where: \{ id: order\.id, status: "ACCEPTED" \}/.test(lib.code)
+    "1 — ⚠⚠⚠ the second acceptance releases, and only over a row the provider already accepted",
+    !!lib &&
+      /status: "ACCEPTED", provider_accepted_at: \{ not: null \}/.test(lib.code) &&
+      /data: \{ status: "RELEASED", buyer_accepted_at: now \}/.test(lib.code),
+    "without that guard in the where, a race releases an order nobody accepted"
+  );
+  /* ⚠⚠ AND NOTHING WRITES THE RETIRED COLUMN. */
+  check(
+    "1 — ⚠⚠ ABSENCE: nothing writes buyer_released_at any more",
+    !!lib && !/buyer_released_at: new Date\(\)/.test(lib.code),
+    "the column is retained for trunk's readers and written by nothing"
   );
   check("1 — there are exactly two activation writes", (lib?.code.match(/workOrder\.updateMany/g) ?? []).length === 2);
 }
@@ -223,15 +371,15 @@ check(
 
 {
   const d = drawdownFor({
-    basis: "RATE",
+    transaction_type: "SERVICE_BY_QTY",
     uom: "HOUR",
     quantity: 160,
     unit_price_cents: 15000,
     drawn_quantity: 40,
     drawn_amount_cents: 600000,
   });
-  check("2 — a RATE line reports ordered/drawn/remaining", d.basis === "RATE");
-  if (d.basis === "RATE") {
+  check("2 — a RATE line reports ordered/drawn/remaining", d.pricedBy === "QUANTITY");
+  if (d.pricedBy === "QUANTITY") {
     check("2 — RATE remaining quantity is ordered minus drawn", d.remainingQuantity === 120);
     check("2 — RATE ordered value is quantity × unit price", d.orderedCents === 2400000);
     check("2 — RATE remaining value is ordered minus drawn", d.remainingCents === 1800000);
@@ -241,18 +389,18 @@ check(
 {
   /* ⚠ CLAMPED. The spine refuses an overdraw, so a negative remainder is a data
      fault — "-8 hours remaining" invites somebody to treat it as a number. */
-  const d = drawdownFor({ basis: "RATE", quantity: 10, unit_price_cents: 100, drawn_quantity: 18, drawn_amount_cents: 1800 });
-  if (d.basis === "RATE") {
+  const d = drawdownFor({ transaction_type: "SERVICE_BY_QTY", quantity: 10, unit_price_cents: 100, drawn_quantity: 18, drawn_amount_cents: 1800 });
+  if (d.pricedBy === "QUANTITY") {
     check("2 — an over-drawn RATE line clamps remaining at zero", d.remainingQuantity === 0);
     check("2 — and clamps the percentage at 100", d.percent === 100);
     check("2 — and clamps remaining value at zero", d.remainingCents === 0);
   }
 }
 {
-  const undrawn = drawdownFor({ basis: "AMOUNT", amount_cents: 2400000, drawn_amount_cents: 0 });
-  const drawn = drawdownFor({ basis: "AMOUNT", amount_cents: 2400000, drawn_amount_cents: 2400000 });
-  check("2 — an undrawn AMOUNT line is not drawn", undrawn.basis === "AMOUNT" && !undrawn.drawn);
-  check("2 — a drawn AMOUNT line is drawn", drawn.basis === "AMOUNT" && drawn.drawn);
+  const undrawn = drawdownFor({ transaction_type: "SERVICE_BY_AMT", amount_cents: 2400000, drawn_amount_cents: 0 });
+  const drawn = drawdownFor({ transaction_type: "SERVICE_BY_AMT", amount_cents: 2400000, drawn_amount_cents: 2400000 });
+  check("2 — an undrawn AMOUNT line is not drawn", undrawn.pricedBy === "AMOUNT" && !undrawn.drawn);
+  check("2 — a drawn AMOUNT line is drawn", drawn.pricedBy === "AMOUNT" && drawn.drawn);
   /* ⚠⚠ THE TYPE IS THE ENFORCEMENT. The AMOUNT variant carries NO quantity, NO
      remaining and NO percent — so a half-full bar is not merely "not rendered",
      it cannot be expressed. */
@@ -263,18 +411,18 @@ check(
     );
   }
   /* ⚠ THE IMPOSSIBLE STATE IS FLAGGED, NOT DRAWN. */
-  const partial = drawdownFor({ basis: "AMOUNT", amount_cents: 2400000, drawn_amount_cents: 900000 });
+  const partial = drawdownFor({ transaction_type: "SERVICE_BY_AMT", amount_cents: 2400000, drawn_amount_cents: 900000 });
   check(
     "2 — a partial AMOUNT draw is flagged inconsistent",
-    partial.basis === "AMOUNT" && partial.inconsistent
+    partial.pricedBy === "AMOUNT" && partial.inconsistent
   );
   check(
     "2 — a full AMOUNT draw is NOT flagged",
-    drawn.basis === "AMOUNT" && !drawn.inconsistent
+    drawn.pricedBy === "AMOUNT" && !drawn.inconsistent
   );
   check(
     "2 — an undrawn AMOUNT line is NOT flagged",
-    undrawn.basis === "AMOUNT" && !undrawn.inconsistent
+    undrawn.pricedBy === "AMOUNT" && !undrawn.inconsistent
   );
 }
 /* ⚠ AND THE PAGE HAS NO PROGRESS BAR IN THE AMOUNT BRANCH. */
@@ -285,9 +433,12 @@ check(
     "2 — the progress bar is inside the RATE branch only",
     !!page && (page.code.match(/role="progressbar"/g) ?? []).length === 1
   );
+  /* ⚠ SUPERSEDED (`E164`) — ruling 44 renamed the discriminant, because a
+     property called `basis` that is not the `basis` column is the trap:
+     //   /d\.basis === "RATE"/ */
   check(
-    "2 — the page branches on the drawdown basis",
-    !!page && /d\.basis === "RATE"/.test(page.code)
+    "2 — the page branches on how the line is priced",
+    !!page && /d\.pricedBy === "QUANTITY"/.test(page.code)
   );
   check(
     "2 — the inconsistent state is rendered as a warning, not as progress",
@@ -327,7 +478,8 @@ check(
 /* ═══ 4 · THE DELTA — SUBSTANTIATED, AND HONEST ABOUT WHAT IT COMPARES ═════ */
 
 const REQ = {
-  basis: "RATE" as const,
+  /* ⚠ SUPERSEDED (`E164`): //   basis: "RATE" as const, */
+  transaction_type: "SERVICE_BY_QTY" as const,
   uom: "HOUR",
   quantity: 160,
   unit_price_cents: 15000,

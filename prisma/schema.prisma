@@ -5249,6 +5249,35 @@ model WorkOrder {
   /// on the buyer" — and those need different screens and different chasing.
   /// ⚠ A settlement may only be raised against a RELEASED order (WS-3).
   provider_accepted_at DateTime?
+
+  /// ⚠⚠⚠ RULING 43 — **RELEASE IS NOT A BUTTON. BOTH PARTIES ACCEPT TERMS.**
+  ///
+  /// ⚠ SCOTT, 2026-09-24: *"both parties are accepting the terms of the WO. Then,
+  /// when all parties have accepted the terms, the WO can be auto-released. That
+  /// language will line up better with the contract language."* ⚠⚠ And 43d,
+  /// closing it: *"This is a contract. contracts are always between two parties.
+  /// let's keep it two acceptances and an auto-release."*
+  ///
+  /// ⚠⚠ SO `buyer_released_at` BECAME A COLUMN WHOSE NAME LIES. Ruling 43 said to
+  /// rename it in this window. ⚠⚠⚠ **IT IS ADDED BESIDE INSTEAD, AND THAT IS
+  /// DELIBERATE:** a rename is `DROP COLUMN` + `ADD COLUMN` to `prisma db push`,
+  /// which is a **destructive** diff needing `--accept-data-loss` — and ruling 38
+  /// governs one database serving localhost, every preview and production.
+  /// ⚠ **SCOTT'S OWN PRECEDENT FOR EXACTLY THIS SITUATION, 2026-09-24:** *"keep
+  /// `basis`, add `transaction_type` beside it. Purely additive… Dropping it
+  /// reaches trunk and every preview the instant you push, not when the branch
+  /// merges."* ⚠⚠ Same database, same shape of change, same answer.
+  ///
+  /// ⚠⚠ **THE OLD COLUMN IS OWED, NOT FORGOTTEN:** `buyer_released_at` retires on
+  /// trunk, in its own small change, where a destructive push is safe — the same
+  /// debt `basis` carries and recorded the same way.
+  /// ⚠ NOTHING WRITES `buyer_released_at` FROM THIS BRIEF ONWARD.
+  buyer_accepted_at DateTime?
+
+  /// ⚠⚠ RETIRED BY RULING 43, RETAINED BY RULING 38. See `buyer_accepted_at`.
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): this was the buyer's RELEASE
+  /// timestamp, and release no longer has a human writer — `RELEASED` is what the
+  /// SECOND ACCEPTANCE produces.
   buyer_released_at    DateTime?
 
   period_start        DateTime?
@@ -5305,7 +5334,48 @@ model WorkOrderLine {
 
   work_request_line_id String? @db.Uuid
 
-  basis       LineBasis
+  /// ⚠⚠⚠ THE THIRD VALUE, TAUGHT TONIGHT — RULING 44, 2026-09-24.
+  ///
+  /// ⚠ SCOTT, asked in plain language whether the order line should learn it now:
+  /// **"Teach it the third value now."**
+  ///
+  /// ⚠⚠ RULING 41 entry 2 recorded a knowingly-lossy `LineBasis` ⇄
+  /// `TransactionType` adapter and named its retirement trigger IN ADVANCE:
+  /// *"`WorkOrderLine` gains `TransactionType`."* **WS-D is that trigger. It
+  /// fired on schedule, into a ruling rather than into a silent call to a lossy
+  /// function.** ⚠⚠⚠ **NOTHING IS NOW LOST BETWEEN APPROVAL AND THE ORDER:** a
+  /// product by quantity is RECEIVED, a service by quantity is TIMESHEETED, and
+  /// `LineBasis` could not tell those apart.
+  ///
+  /// ⚠⚠ WHY AN EMPTY TABLE WAS THE MOMENT: `work_order_lines` holds **ZERO
+  /// rows**, because WS-D is building the first writer that creates one. Later,
+  /// every feature above it — receiving, timesheets, settlement, invoicing —
+  /// would have inherited the ambiguity and encoded it.
+  ///
+  /// ⚠ **NO `@default`**, deliberately (`E612`'s lesson, applied as `E621`
+  /// applied it to `proposal_access`): a default would quietly mean *"nobody
+  /// decided"*. Let the compiler find every creator.
+  /// ⚠⚠ `basis` IS RETAINED BESIDE IT, exactly as `WorkRequestLine` retains its
+  /// own — ruling 38, additive on a shared database. **Ruling 41 entry 1 is
+  /// UNAFFECTED and is not folded in here.** One cleanup, one place.
+  transaction_type TransactionType
+
+  /// ⚠⚠⚠ NULLABLE SINCE RULING 44, AND THIS WAS FORCED RATHER THAN CHOSEN.
+  ///
+  /// ⚠ It was NOT NULL, so the order writer had to fill it — and the only way to
+  /// fill it from a requisition line was `basisForTransactionType`, **the exact
+  /// bridge ruling 44 deleted.** ⚠⚠ Leaving it required would have re-created the
+  /// bridge inside `work-orders.ts` under another name, which is the one outcome
+  /// the ruling names: *"the bridge function is deleted, not kept."*
+  ///
+  /// ⚠⚠ SO IT IS RETAINED AND UNWRITTEN, exactly as `WorkRequestLine.basis` is
+  /// (ruling 41 entry 1) — nullable, additive against the shared database
+  /// (ruling 38), **written by nothing from this brief onward**, and retired on
+  /// trunk in its own change where a destructive push is safe.
+  /// ⚠ The live question is asked of `transaction_type` through
+  /// `pricedByQuantity`, the one definition of the three kinds.
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): //   basis       LineBasis
+  basis       LineBasis?
   description String
   unspsc_code String?
 

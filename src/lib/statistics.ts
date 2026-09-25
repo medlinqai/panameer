@@ -498,12 +498,23 @@ export async function getStatistics(
         ⚠ `provider_person_id` is REQUIRED on the model and indexed, so the
         scoped count is the cheap one as well as the correct one.
       */
-      /* ⚠⚠ NOTHING CREATES A WORK ORDER — see the writer-test note above. ⚠ The
-         scoped count is kept in the quote because the SCOPE was a real fix; it
-         is the COUNTING that was wrong.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   workOrders: await prisma.workOrder.count({ where: { provider_person_id: personId } }), */
-      workOrders: { uncounted: "Work orders aren't created yet" },
+      /*
+        ── ⚠⚠⚠ WORK ORDERS — NOW A REAL COUNT (`E621` WS-D) ─────────────────
+        ⚠ IT READ *"Work orders aren't created yet"*, and that was TRUE: measured
+        at the premise check, **`workOrder.create` existed nowhere in `src/`.**
+        ⚠⚠ `lib/work-orders.ts` is that writer — `hire()` and
+        `acceptPurchaseOrder()` both create one — so the writer test is SATISFIED
+        rather than waived (ruling 24).
+        ⚠⚠⚠ SCOPED, AND THE SCOPE IS THE PART THAT WAS ALREADY RIGHT: the quote
+        below kept `provider_person_id` because an unscoped count once presented
+        **every work order on the platform** as one member's figure. ⚠ Restored
+        WITH its scope, never without.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   workOrders: { uncounted: "Work orders aren't created yet" },
+      */
+      workOrders: await prisma.workOrder.count({
+        where: { provider_person_id: personId },
+      }),
       /*
         ⚠⚠⚠ EARNINGS IS A DASH, NOT `$0.00`, AND THE MOCKUP DISAGREES.
         ⚠ The mockup renders `$0.00`. ⚠⚠ THE PAGE'S STANDING DECISION SAYS NOT

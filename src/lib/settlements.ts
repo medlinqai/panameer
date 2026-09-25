@@ -1,10 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { LineBasis, SettlementStatus } from "@prisma/client";
+import { LineBasis, SettlementStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
   assertSettlementDraw,
   priceSettlementLine,
+  pricedByQuantity,
   type DraftSettlementLine,
   type OrderLineForDraw,
 } from "@/lib/transaction-spine";
@@ -104,7 +105,10 @@ export async function settleableOrdersFor(viewer: Viewer): Promise<SettleableOrd
 export type SettleLineOption = {
   workOrderLineId: string;
   lineNumber: number;
-  basis: LineBasis;
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 retired
+     `WorkOrderLine.basis`; this view now carries the order line's own kind:
+     //   basis: LineBasis; */
+  transactionType: TransactionType;
   description: string;
   uom: string | null;
   unitPriceCents: number | null;
@@ -172,17 +176,19 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
       return {
         workOrderLineId: l.id,
         lineNumber: l.lineNumber,
-        basis: l.basis,
+        transactionType: l.transactionType,
         description: l.description,
         uom: l.uom,
         unitPriceCents: l.unitPriceCents,
         amountCents: l.amountCents,
-        remainingQuantity: d.basis === "RATE" ? d.remainingQuantity : null,
-        alreadyDrawn: d.basis === "AMOUNT" ? d.drawn : false,
+        /* ⚠ ASKED OF THE DRAWDOWN, WHICH ALREADY ANSWERED IT — no second
+           derivation here. ⚠ SUPERSEDED (`E164`): //   d.basis === "RATE" */
+        remainingQuantity: d.pricedBy === "QUANTITY" ? d.remainingQuantity : null,
+        alreadyDrawn: d.pricedBy === "AMOUNT" ? d.drawn : false,
         /* ⚠ A RATE line with nothing left, or an AMOUNT line already drawn, is
            shown but not claimable — hiding it would make a provider wonder where
            their line went. */
-        claimable: d.basis === "RATE" ? d.remainingQuantity > 0 : !d.drawn,
+        claimable: d.pricedBy === "QUANTITY" ? d.remainingQuantity > 0 : !d.drawn,
       };
     }),
   };
@@ -200,6 +206,14 @@ async function settledCentsFor(orderId: string): Promise<number> {
         status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "PAID"] },
       },
     },
+    /* ⚠⚠ THIS QUERY IS OVER `SettlementLine`, NOT `WorkOrderLine` — and the
+       distinction matters after ruling 44. ⚠ **`SettlementLine.basis` is
+       untouched and still live**: the ruling named the ORDER line only, and this
+       is the settlement side, which keeps `LineBasis` until its own brief
+       (register entry 3). ⚠⚠⚠ I moved this to `transaction_type` on a first pass
+       by mis-reading which model it queried, and the compiler caught it —
+       recorded because "it is in settlements.ts" is not the same question as
+       "which table is this". */
     select: { basis: true, quantity: true, unit_price_cents: true, amount_cents: true },
   });
   let cents = 0;
@@ -292,19 +306,48 @@ export async function createSettlement(
   const drafts: { draft: DraftSettlementLine; orderLine: OrderLineForDraw }[] = [];
   for (const [workOrderLineId, agg] of byOrderLine) {
     const ol = orderLineById.get(workOrderLineId)!;
+    /*
+      ── ⚠⚠⚠ THE ONE TRANSLATION LEFT, AND IT IS REPORTED, NOT HIDDEN ───────
+
+      ⚠ Ruling 44 moved the **WORK ORDER** line to `TransactionType`. It named
+      `WorkOrderLine` and nothing else, and ruling 41's *"one cleanup, one
+      place"* applies: **`SettlementLine` and the spine's settlement types still
+      speak `LineBasis`**, and widening them tonight would be the fold-in the
+      ruling forbids.
+
+      ⚠⚠ SO ONE TRANSLATION HAPPENS HERE, AT THAT BOUNDARY, ONCE — and it is
+      **NOT a reusable bridge function**, deliberately: a named helper is what
+      turns a boundary into an idiom, and ruling 44 deleted the last one for
+      exactly that reason.
+
+      ⚠⚠⚠ AND IT LOSES NOTHING **FOR THIS PURPOSE**, which is why it is
+      acceptable where the old bridge was not. The settlement draw rules ask only
+      *quantity or amount*; they never ask product-versus-service, which is the
+      single distinction `LineBasis` cannot hold. ⚠ The moment a settlement rule
+      DOES need that difference — receiving versus timesheeting — this stops being
+      safe.
+
+      ⚠⚠ REGISTER ENTRY 3, OWED, WITH ITS TRIGGER STATED IN ADVANCE exactly as
+      ruling 41 entry 2 was: **retires when `SettlementLine` gains
+      `TransactionType`.** That entry is reported to Scott rather than acted on.
+    */
+    const settlementBasis: LineBasis = pricedByQuantity(ol.transactionType)
+      ? "RATE"
+      : "AMOUNT";
+    const byQuantity = pricedByQuantity(ol.transactionType);
     const orderLine: OrderLineForDraw = {
       id: ol.id,
-      basis: ol.basis,
+      basis: settlementBasis,
       uom: ol.uom,
       quantity: ol.quantity,
       unit_price_cents: ol.unitPriceCents,
       amount_cents: ol.amountCents,
-      drawn_quantity: ol.drawdown.basis === "RATE" ? ol.drawdown.drawnQuantity : 0,
+      drawn_quantity: ol.drawdown.pricedBy === "QUANTITY" ? ol.drawdown.drawnQuantity : 0,
       drawn_amount_cents: ol.drawdown.drawnCents,
     };
     /* ⚠ AN AMOUNT LINE MAY NOT BE SPLIT ACROSS ROWS — it claims once, in full,
        so more than one row against it is a milestone being invoiced twice. */
-    if (ol.basis === "AMOUNT" && agg.count > 1)
+    if (!byQuantity && agg.count > 1)
       throw new SettlementError(
         "A fixed-amount line is claimed in full, on one row — it cannot be split",
         "INVALID"
@@ -312,11 +355,11 @@ export async function createSettlement(
     drafts.push({
       draft: {
         work_order_line_id: workOrderLineId,
-        basis: ol.basis,
+        basis: settlementBasis,
         /* ⚠⚠ NO PRICE IS SUPPLIED. `priceSettlementLine` REFUSES a supplied one,
            and that refusal is the point: the rate is the order's, not the
            claimant's. */
-        quantity: ol.basis === "RATE" ? agg.quantity : null,
+        quantity: byQuantity ? agg.quantity : null,
       },
       orderLine,
     });
@@ -354,15 +397,21 @@ export async function createSettlement(
       lines: {
         create: rows.map((r, i) => {
           const ol = orderLineById.get(r.workOrderLineId)!;
+          /* ⚠⚠ THE SAME ONE TRANSLATION AS THE DRAFT BOUNDARY ABOVE, AND FOR THE
+             SAME REASON — the settlement side still speaks `LineBasis` (register
+             entry 3). ⚠ Computed from `transaction_type`, never read from the
+             retired `WorkOrderLine.basis`. */
+          const olByQuantity = pricedByQuantity(ol.transactionType);
+          const olBasis: LineBasis = olByQuantity ? "RATE" : "AMOUNT";
           const priced = priceSettlementLine(
             {
               work_order_line_id: r.workOrderLineId,
-              basis: ol.basis,
-              quantity: ol.basis === "RATE" ? Number(r.quantity ?? 0) : null,
+              basis: olBasis,
+              quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
             },
             {
               id: ol.id,
-              basis: ol.basis,
+              basis: olBasis,
               uom: ol.uom,
               quantity: ol.quantity,
               unit_price_cents: ol.unitPriceCents,
@@ -372,14 +421,14 @@ export async function createSettlement(
           return {
             line_number: i + 1,
             work_order_line_id: r.workOrderLineId,
-            basis: ol.basis,
+            basis: olBasis,
             description: ol.description,
-            uom: ol.basis === "RATE" ? ol.uom : null,
+            uom: olByQuantity ? ol.uom : null,
             /* ⚠ THE QUANTITY IS THE PROVIDER'S CLAIM; THE PRICE IS THE ORDER'S.
                `priceSettlementLine` returns only the two price columns, and that
                is the boundary exactly where it belongs — how many hours you
                worked is yours to state, what an hour is worth is not. */
-            quantity: ol.basis === "RATE" ? Number(r.quantity ?? 0) : null,
+            quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
             unit_price_cents: priced.unit_price_cents ?? null,
             amount_cents: priced.amount_cents ?? null,
             service_date: r.serviceDate ? new Date(r.serviceDate) : null,
@@ -397,7 +446,9 @@ export async function createSettlement(
      drawn and both pass. `rejectSettlement` gives it back — see there. */
   for (const [workOrderLineId, agg] of byOrderLine) {
     const ol = orderLineById.get(workOrderLineId)!;
-    if (ol.basis === "RATE") {
+    /* ⚠ ASKED OF `transaction_type` (ruling 44). SUPERSEDED (`E164`):
+       //   if (ol.basis === "RATE") { */
+    if (pricedByQuantity(ol.transactionType)) {
       await prisma.workOrderLine.update({
         where: { id: workOrderLineId },
         data: {
