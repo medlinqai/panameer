@@ -63,17 +63,31 @@ export type Statistics = {
      *  //   weeklyLessons: number[] | { uncounted: string }; */
     lessonSeries: number[] | { uncounted: string };
   };
-  /* ⚠⚠⚠ MEASURED AND REPORTED, NOT BUILT AND NOT DELETED (`E603` WS-A):
-     **NOTHING RENDERS `work`.** `StatisticsCards` draws Profile, Network,
-     Learning and Teaching; the Work figures on `/stats` come from the page's
-     OWN older cards (`Earnings (12 Months)`, `Job Success Score`, `Proposals`,
-     `Interviews`), which this brief did not touch.
-     ⚠⚠ SO THESE FIVE FIGURES COST FIVE QUERIES PER PAGE LOAD AND REACH NO
-     SCREEN. ⚠ That is `E579`'s shape inverted — not a door onto a wall, but a
-     room with no door. ⚠⚠⚠ IT IS KEPT RATHER THAN REMOVED because the mockup
-     has a Work card and WS-B/WS-C may render it; **whether it ships is Scott's
-     call, not a tidy-up.** ⚠ The unscoped `workOrders` count below was found
-     by asking this question. */
+  /* ⚠⚠⚠ CORRECTED 2026-09-24 (`E621` WS-B) — THIS DOCBLOCK WAS STALE, AND A
+     STATED RULE THAT CONTRADICTS THE CODE IS THE MORE DANGEROUS HALF.
+
+     ⚠⚠ **`work` IS RENDERED.** Measured: `StatisticsCards.tsx:284` draws
+     `s.work.interviews` on the Work card's front face and `:307–311` draws
+     `interviews` / `interviewsTaken` / `interviewsDeclined` on its back; `:457`
+     reads `interviews` for the credit line. ⚠ And `/stats`'s own older
+     `Interviews` tile was **RETIRED** in the same brief that wrote this comment
+     (`page.tsx:902` — *"ITS DETAIL MOVED, NOT DELETED"*), so the sentence below
+     stopped being true almost immediately and nobody noticed.
+
+     ⚠⚠⚠ SO THE QUERIES REACH A SCREEN, AND THE "ROOM WITH NO DOOR" READING
+     WOULD HAVE HAD SOMEBODY DELETE THEM. ⚠ Kept as the record (`E164`):
+     //   ⚠⚠⚠ MEASURED AND REPORTED, NOT BUILT AND NOT DELETED (`E603` WS-A):
+     //   **NOTHING RENDERS `work`.** `StatisticsCards` draws Profile, Network,
+     //   Learning and Teaching; the Work figures on `/stats` come from the page's
+     //   OWN older cards (`Earnings (12 Months)`, `Job Success Score`, `Proposals`,
+     //   `Interviews`), which this brief did not touch.
+     //   ⚠⚠ SO THESE FIVE FIGURES COST FIVE QUERIES PER PAGE LOAD AND REACH NO
+     //   SCREEN. ⚠ That is `E579`'s shape inverted — not a door onto a wall, but a
+     //   room with no door. ⚠⚠⚠ IT IS KEPT RATHER THAN REMOVED because the mockup
+     //   has a Work card and WS-B/WS-C may render it; whether it ships is Scott's
+     //   call, not a tidy-up.
+     ⚠ Still true and worth keeping: the unscoped `workOrders` count below was
+     found by asking who renders this group. */
   work: {
     /* ⚠⚠⚠ RECEIVED MEANS **ISSUED** (Scott, 2026-09-23). ⚠ SUPERSEDED, quoted
        not deleted (`E164`): this counted every `BidRequest` including
@@ -138,16 +152,18 @@ const NO_SEARCH_LOG = "Needs a search-results log — nothing records one today"
 async function countWindowed(
   window: StatWindow,
   field: string,
-  /* ⚠ `providerBid` added by `E621` WS-A — the proposal writer made it
-     countable. The union is deliberate: it names every model this helper may
-     count, so a typo cannot silently become a runtime `undefined.count`. */
+  /* ⚠ `providerBid` added by `E621` WS-A and `interviewRequest` by WS-B — each
+     time because a writer was built, never to make a dash tidier. The union is
+     deliberate: it names every model this helper may count, so a typo cannot
+     silently become a runtime `undefined.count`. */
   model:
     | "profileView"
     | "connection"
     | "colleagueInvite"
     | "lessonProgress"
     | "learnEnrollment"
-    | "providerBid",
+    | "providerBid"
+    | "interviewRequest",
   where: Record<string, unknown>
 ): Promise<number> {
   const { from } = windowRange(window === "all" ? "all" : "month");
@@ -212,6 +228,9 @@ export async function getStatistics(
     certs,
     bids,
     proposalsSent,
+    interviews,
+    interviewsTaken,
+    interviewsDeclined,
   ] = await Promise.all([
       providerProfileId
         ? countWindowed(window, "viewed_on", "profileView", { profile_id: providerProfileId })
@@ -285,7 +304,52 @@ export async function getStatistics(
         //   prisma.interviewRequest.count({
         //     where: { provider_person_id: personId, status: { in: ["DECLINED", "CANCELLED"] } },
         //   }),
+        ⚠⚠⚠ THREE OF THE FOUR ARE BACK, WINDOWED, BECAUSE `lib/interviews.ts`
+        NOW WRITES THEM (`E621` WS-B). ⚠ The fourth stayed deleted — it was a
+        duplicate `providerBid` count, and `proposalsSent` above is the one
+        computation of that figure.
       */
+      /*
+        ── ⚠⚠ INTERVIEWS — EVERY REQUEST AIMED AT THEM ─────────────────────
+        ⚠ WINDOWED ON `created_at`, WHICH IS WHEN THE BUYER ASKED. ⚠⚠ The
+        writer test is satisfied rather than waived: `requestInterview()` does
+        `interviewRequest.create`, and the dash it replaces said in as many
+        words *"nothing creates a request"* — which was true, and is not now.
+      */
+      countWindowed(window, "created_at", "interviewRequest", {
+        provider_person_id: personId,
+      }),
+      /*
+        ⚠⚠ TAKEN — WINDOWED ON `completed_at`, THE COLUMN THE EVENT ITSELF
+        WRITES. `completeInterview()` sets `status: "COMPLETED"` and
+        `completed_at` in the same update, so the date and the state cannot
+        disagree. ⚠ Both are filtered, not just the date: a row with a
+        `completed_at` and some later status would otherwise be counted as taken.
+      */
+      countWindowed(window, "completed_at", "interviewRequest", {
+        provider_person_id: personId,
+        status: "COMPLETED",
+        completed_at: { not: null },
+      }),
+      /*
+        ⚠⚠⚠ DECLINED — WINDOWED ON `created_at`, AND THAT IS A DELIBERATE
+        CHOICE WITH A REASON, NOT AN OVERSIGHT.
+        ⚠ **No column records WHEN an interview was declined.** `closeInterview`
+        moves the status and nothing dates it. ⚠⚠ The only other candidate is
+        `updated_at`, which is `@updatedAt` — so ANY later edit to the row would
+        drag the decline into a month it did not happen in, and the figure would
+        change without anything happening. ⚠⚠⚠ Counting by when the buyer ASKED
+        is a definition that stays true forever; counting by `updated_at` is one
+        that silently rewrites history.
+        ⚠ So this reads: *of the interviews requested in this window, how many
+        were declined or cancelled.* ⚠⚠ A dated `declined_at` column is REPORTED
+        AS OWED rather than added — a schema edit for a nicety is not this
+        brief's window (`E621` owns it for the chain, one edit at a time).
+      */
+      countWindowed(window, "created_at", "interviewRequest", {
+        provider_person_id: personId,
+        status: { in: ["DECLINED", "CANCELLED"] },
+      }),
     ]);
 
   /* ── the two series, BOTH BUCKETED BY THE SELECTED PERIOD ───────────────
@@ -411,9 +475,16 @@ export async function getStatistics(
          //   proposalsSent: { uncounted: "Proposals aren't recorded yet — nothing creates one" }, */
       proposalsSent,
       invitationsToPropose: bids,
-      interviews: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
-      interviewsTaken: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
-      interviewsDeclined: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
+      /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — all three were true until
+         `E621` WS-B built `lib/interviews.ts`, the writer whose absence they
+         named. ⚠⚠ RULING 24: *"nothing writes it"* is a reason the figure was
+         uncountable, never a reason not to build the writer:
+         //   interviews: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
+         //   interviewsTaken: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
+         //   interviewsDeclined: { uncounted: "Interviews aren't recorded yet — nothing creates a request" }, */
+      interviews,
+      interviewsTaken,
+      interviewsDeclined,
       /*
         ⚠⚠⚠ SCOPED TO THIS PROVIDER. ⚠ SUPERSEDED, quoted not deleted (`E164`):
         //   workOrders: await prisma.workOrder.count(),

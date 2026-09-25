@@ -74,6 +74,7 @@
     "check:groups-page": "playwright test --config=playwright.groups-page.config.ts",
     "check:notifications-ui": "playwright test --config=playwright.notifications.config.ts",
     "check:proposals": "npx esbuild scripts/check-proposals.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/proposals.cjs --log-level=error && node -r dotenv/config .harness/proposals.cjs dotenv_config_path=.env.local",
+    "check:interviews": "npx esbuild scripts/check-interviews.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/interviews.cjs --log-level=error && node -r dotenv/config .harness/interviews.cjs dotenv_config_path=.env.local",
     "check:notify-prefs": "npx esbuild scripts/check-notify-prefs.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/notify-prefs.cjs --log-level=error && node -r dotenv/config .harness/notify-prefs.cjs dotenv_config_path=.env.local",
     "check:profile360": "npx esbuild scripts/check-profile360.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/profile360.cjs --log-level=error && node .harness/profile360.cjs",
     "check:learn-my-learning": "npx esbuild scripts/check-learn-my-learning.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-my-learning.cjs --log-level=error && node -r dotenv/config .harness/learn-my-learning.cjs dotenv_config_path=.env.local",

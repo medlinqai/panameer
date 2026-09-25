@@ -337,6 +337,23 @@ const SOURCING_STAGE = join("src", "lib", "sourcing-stage.ts");
 */
 const PROPOSAL_WRITER = join("src", "lib", "proposals.ts");
 const STATISTICS_LIB = join("src", "lib", "statistics.ts");
+/*
+  ── ⚠⚠⚠ TWO MORE ADDED DELIBERATELY (`P2-A8-E621` WS-B) ─────────────────
+
+  ⚠ The fence names *"tests or interviews"* as forbidden, and said they would be
+  **WS-B's to add, each with its own deliberate line.** ⚠⚠ This is that line.
+
+  ⚠⚠⚠ AND WHAT THE FENCE ACTUALLY GUARDS IS STILL GUARDED, because neither file
+  is a SCREEN. The rule exists to stop **a bid list and a bid-comparison view** —
+  one buyer reading many providers' prices side by side.
+  · `interviews.ts` reaches `providerBid` for exactly ONE thing: proving the
+    named provider has proposed, by the `(work_request_id, provider_person_id)`
+    unique key. **One provider, by key, no list, no price read.**
+  · `work-tests.ts` does the identical single lookup, for the identical reason.
+  ⚠ Both are WRITERS. Neither renders anything and neither can enumerate.
+*/
+const INTERVIEW_WRITER = join("src", "lib", "interviews.ts");
+const TEST_WRITER = join("src", "lib", "work-tests.ts");
 {
   const hits = SRC.filter(
     (f) =>
@@ -344,7 +361,9 @@ const STATISTICS_LIB = join("src", "lib", "statistics.ts");
       f.path !== SOURCING_LIB &&
       f.path !== SOURCING_STAGE &&
       f.path !== PROPOSAL_WRITER &&
-      f.path !== STATISTICS_LIB
+      f.path !== STATISTICS_LIB &&
+      f.path !== INTERVIEW_WRITER &&
+      f.path !== TEST_WRITER
   );
 /*
   ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
@@ -365,6 +384,28 @@ const STATISTICS_LIB = join("src", "lib", "statistics.ts");
     writerFile != null && !/providerBid\.findMany/.test(writerFile.code),
     "it may read the viewer's own by unique key; a list is the bid screen"
   );
+  /*
+    ⚠⚠⚠ THE TWO WS-B EXEMPTIONS, FENCED THE SAME WAY AND MORE TIGHTLY: each may
+    look ONE proposal up BY KEY and must not enumerate or read a price.
+    ⚠ `findMany` is what turns a permission check into a bid list; `cover_note`
+    and the line models are what turn it into a comparison.
+  */
+  for (const [label, path] of [
+    ["the interview writer", INTERVIEW_WRITER],
+    ["the test writer", TEST_WRITER],
+  ] as const) {
+    const f = SRC.find((x) => x.path === path);
+    check(
+      `3 — ⚠⚠⚠ ${label} checks ONE proposal by key and never lists them`,
+      f != null && !/providerBid\.(findMany|count|aggregate|groupBy)/.test(f.code),
+      "a findMany here is the bid screen the WS-3 fence exists to prevent"
+    );
+    check(
+      `3 — ⚠⚠ ${label} reads no proposal PRICE or narrative`,
+      f != null && !/providerBidLine|cover_note|amount_cents|rate_cents/.test(f.code),
+      "the fence is about comparing providers' prices — that is the comparison"
+    );
+  }
 }
 
   check(
