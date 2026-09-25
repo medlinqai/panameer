@@ -1,6 +1,6 @@
 import { CommunityWeb } from "@/components/community/CommunityWeb";
 import { PatternHeader } from "@/components/casing/PatternHeader";
-import type { CommunityWeb as WebData } from "@/lib/community-web";
+import { webFigures, type CommunityWeb as WebData } from "@/lib/community-web";
 import type { CommunityHero as HeroData } from "@/lib/community-hero";
 import type { LevelStanding } from "@/lib/levels";
 
@@ -78,6 +78,10 @@ export function CommunityHero({
     naming the page rather than inventing `LEVEL 1`. ⚠ A level nobody has earned
     is a figure with no writer wearing a label.
   */
+  /* ⚠⚠ THE ARITHMETIC IS THE LIB'S, so a fixture can drive it past zero —
+     see `webFigures`. ⚠ Inline here, it could not be asserted (`E607`). */
+  const figures = webFigures(web);
+
   const eyebrow = standing
     ? `LEVEL ${standing.level.number} · ${standing.level.name.toUpperCase()}`
     : "YOUR COMMUNITY";
@@ -102,9 +106,9 @@ export function CommunityHero({
         invisible.** Two zeros agree.
       */
       figures={[
-        { label: "Joined", value: web.joined.length + web.overflow.joined },
-        { label: "Invited", value: web.invited.length + web.overflow.invited },
-        { label: "Reachable", value: web.reachable.length + web.overflow.reachable },
+        { label: "Joined", value: figures.joined },
+        { label: "Invited", value: figures.invited },
+        { label: "Reachable", value: figures.reachable },
       ]}
       move={
         <>

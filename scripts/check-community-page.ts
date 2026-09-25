@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PAGE_TABS } from "@/lib/nav";
+import { webFigures } from "@/lib/community-web";
 import { stripComments } from "./lib/strip-comments";
 
 /**
@@ -492,6 +493,57 @@ for (const [href, where, body] of [
   ["/settings", "the Connect tab row", NAV],
 ] as const) {
   check(`10 — ⚠ ${href} is still reachable, via ${where}`, body.includes(`"${href}"`));
+}
+
+/* ═══ 11 · ⚠⚠⚠ THE MEMBER'S FIGURES ARE DRAWN **PLUS** OVERFLOW ══════════
+
+   ⚠⚠ THE DEFECT THIS HOLDS: the Community header briefly showed
+   `web.joined.length` — the count the ring DREW — as the member's figure. It
+   would have UNDER-REPORTED exactly the people whose network is biggest.
+
+   ⚠⚠⚠ AND THE FIRST FIX SHIPPED WITH NO ASSERTION THAT COULD FAIL. It was
+   reported as *"today's overflow is zero, so both readings agree"* — which is
+   the `two zeros agree` trap ONE LEVEL UP: against live data the wrong code and
+   the right code produce identical output, so a gate reading the live page
+   proves nothing in either direction (`E607`).
+
+   ⚠ **SO THE FIXTURE BELOW HAS OVERFLOW GREATER THAN ZERO, AND EVERY NUMBER IN
+   IT IS DISTINCT** — drawn and overflow differ per kind, and no two of the nine
+   values collide. A fixture where they matched would pass against
+   `drawn`, against `overflow`, and against `drawn + overflow` alike. */
+{
+  /* ⚠ 2 drawn + 7 over = 9 · 3 + 11 = 14 · 5 + 1 = 6. Nine distinct numbers. */
+  const fixture = {
+    joined: [1, 2],
+    invited: [1, 2, 3],
+    reachable: [1, 2, 3, 4, 5],
+    overflow: { joined: 7, invited: 11, reachable: 1 },
+  };
+  const f = webFigures(fixture);
+  check("11 — ⚠⚠⚠ the fixture actually has overflow (E607)",
+    fixture.overflow.joined > 0 && fixture.overflow.invited > 0 && fixture.overflow.reachable > 0);
+  check("11 — ⚠⚠ joined counts drawn + overflow", f.joined === 9, `${f.joined}`);
+  check("11 — ⚠⚠ invited counts drawn + overflow", f.invited === 14, `${f.invited}`);
+  check("11 — ⚠⚠ reachable counts drawn + overflow", f.reachable === 6, `${f.reachable}`);
+  /* ⚠⚠⚠ AND IT IS NOT THE DRAWN COUNT — the assertion the first fix lacked.
+     ⚠ Stated as a separate check so the failure MESSAGE names the defect
+     rather than leaving a reader to infer it from an arithmetic mismatch. */
+  check("11 — ⚠⚠⚠ and NOT the drawn count — the bug this exists to catch",
+    f.joined !== fixture.joined.length &&
+      f.invited !== fixture.invited.length &&
+      f.reachable !== fixture.reachable.length,
+    "showing what the ring drew under-reports the biggest networks");
+  /* ⚠ A zero-overflow case still works — the fix must not break the ordinary
+     member, who is everybody today. */
+  const none = webFigures({ joined: [1, 2], invited: [], reachable: [1], overflow: { joined: 0, invited: 0, reachable: 0 } });
+  check("11 — ⚠ with no overflow it is simply the drawn count",
+    none.joined === 2 && none.invited === 0 && none.reachable === 1);
+  /* ⚠⚠ AND THE HEADER ASKS THE LIB RATHER THAN RE-DOING THE SUM INLINE —
+     the inline version is what could not be asserted in the first place. */
+  const hero = code("src", "components", "community", "CommunityHero.tsx");
+  check("11 — ⚠⚠ the header calls webFigures rather than adding inline",
+    /webFigures\(web\)/.test(hero) && !/web\.joined\.length \+/.test(hero),
+    "arithmetic in JSX cannot be driven by a fixture");
 }
 
 console.log(

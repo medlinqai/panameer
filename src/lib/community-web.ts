@@ -57,6 +57,45 @@ export type CommunityWeb = {
 };
 
 /**
+ * ── ⚠⚠⚠ THE MEMBER'S THREE FIGURES — DRAWN **PLUS** OVERFLOW ────────────
+ *
+ * ⚠⚠ **THIS EXISTS BECAUSE THE INLINE VERSION COULD NOT BE ASSERTED.** The
+ * Community header first showed `web.joined.length` — **what fitted on the ring,
+ * not how many colleagues the member has** — and it would have UNDER-REPORTED
+ * exactly the people whose network is biggest, who are the people the whole
+ * ladder exists to reward.
+ *
+ * ⚠⚠⚠ **AND THE FIX'S OWN ASSERTION COULD NOT FAIL, WHICH IS NOT AN ASSERTION**
+ * (`E607`). I reported *"today's overflow is zero, so both readings agree"* — ⚠
+ * **that is the `two zeros agree` trap one level up: the wrong code and the
+ * right code produce identical output against live data, so a gate reading the
+ * live page proves nothing either way.**
+ *
+ * ⚠ So the arithmetic moved OUT of the JSX and into a pure function that a
+ * fixture can drive past zero. **A rule that cannot be exercised is a rule that
+ * is not held.**
+ *
+ * ⚠⚠ `overflow` IS WHAT THE CAPS DROPPED, so `drawn + overflow` is the total the
+ * member actually has — and it is the same arithmetic the picture's own legend
+ * used for its aria-label (`nJ = drawnJ + overflow.joined`), which is where the
+ * defect was spotted. **One definition, one place** (`E585`).
+ */
+export type WebFigures = { joined: number; invited: number; reachable: number };
+
+export function webFigures(web: {
+  joined: unknown[];
+  invited: unknown[];
+  reachable: unknown[];
+  overflow: { joined: number; invited: number; reachable: number };
+}): WebFigures {
+  return {
+    joined: web.joined.length + web.overflow.joined,
+    invited: web.invited.length + web.overflow.invited,
+    reachable: web.reachable.length + web.overflow.reachable,
+  };
+}
+
+/**
  * ⚠⚠ CAPS EXIST BECAUSE A RING HAS A CIRCUMFERENCE. Beyond these the nodes
  * touch, and two nodes on top of each other is the exact defect Scott named in
  * the mockup. ⚠ The layout asserts its own spacing (`community-web-layout.ts`);
