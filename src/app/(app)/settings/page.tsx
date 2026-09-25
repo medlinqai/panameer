@@ -2,6 +2,7 @@ import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { canProvideServices } from "@/lib/access";
 import { settingsNavFor } from "@/lib/settings-nav";
+import { getSettingsStatuses } from "@/lib/settings";
 
 /**
  * ── ⚠⚠⚠ `/settings` IS A REAL LANDING PAGE (ruling 45 item 2, ruling 61) ──
@@ -56,6 +57,7 @@ export default async function SettingsIndex() {
      a member the layout already let in — the three-layer rule in that file. */
   const viewer = await guardPage("authenticated");
   const sections = settingsNavFor(canProvideServices(viewer));
+  const statuses = await getSettingsStatuses(viewer);
 
   return (
     <div className="pb-8">
@@ -63,7 +65,8 @@ export default async function SettingsIndex() {
         Your settings
       </h1>
       <p className="mt-1.5 max-w-xl text-[14px] leading-relaxed text-ink-2">
-        Everything about your account lives here. Each section is its own page.
+        Where each part of your account stands. The list on the left is how you
+        move between them.
       </p>
 
       {/*
@@ -82,9 +85,32 @@ export default async function SettingsIndex() {
               <b className="font-display text-[14.5px] font-bold leading-[1.3] text-ink">
                 {s.label}
               </b>
-              <span className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
-                {s.blurb}
-              </span>
+              {/*
+                ── ⚠⚠⚠ THE STATUS IS WHY THIS CARD EXISTS (ruling 77) ─────────
+
+                ⚠ SCOTT, of the page before this: *"looks like a menu within
+                the menu."* ⚠⚠ **THE RAIL AND THESE CARDS WERE THE SAME EIGHT
+                LABELS AND BLURBS SIDE BY SIDE.** Ruling 77 settles which half
+                gives way — *"de-duplicate data and logic; do not de-duplicate
+                doors"* — **so the rail stays and the cards stop repeating it.**
+                ⚠⚠⚠ **THE RAIL NAVIGATES; THE CARD SAYS WHICH SECTION NEEDS
+                THE MEMBER.**
+                ⚠ **`null` MEANS "NO HONEST STATUS", AND TWO SECTIONS RETURN
+                IT** — Membership (no plan column; *"renews"* is a money claim)
+                and Notification Settings (ruling 13 ships every category ON,
+                so the line would read identically for everybody). ⚠⚠ Those two
+                keep their blurb and gain nothing — **never an invented status,
+                never a counted zero.**
+              */}
+              {statuses[s.href] ? (
+                <span className="mt-1 text-[13px] font-semibold leading-snug text-ink">
+                  {statuses[s.href]}
+                </span>
+              ) : (
+                <span className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
+                  {s.blurb}
+                </span>
+              )}
             </Link>
           </li>
         ))}

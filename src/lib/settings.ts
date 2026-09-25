@@ -573,3 +573,123 @@ function digits(raw: string | null | undefined, n: number): string | null {
   const d = (raw ?? "").replace(/\D/g, "");
   return d ? d.slice(-n) : null;
 }
+
+/* ---- The settings landing page's status lines (ruling 77) ---------------- */
+
+/**
+ * ── ⚠⚠⚠ WHAT EACH SECTION NEEDS FROM THE MEMBER, OR `null` ──────────────
+ *
+ * ⚠ SCOTT, on the fixed `/settings`: *"looks like a menu within the menu."* The
+ * rail and the index cards were **the same eight labels and blurbs side by
+ * side.**
+ * ⚠⚠ **RULING 77 SETTLES WHICH HALF GIVES WAY: the rail is the navigation and
+ * DOES NOT GO** — *"de-duplicate data and logic; do not de-duplicate doors."*
+ * ⚠⚠⚠ **SO THE CARDS STOP REPEATING THE LIST AND START REPORTING STATE.** The
+ * rail navigates; the cards say **which section needs the member.**
+ *
+ * ── ⚠⚠ THE WRITER TEST, APPLIED PER CARD AND MEASURED BEFORE BUILDING ────
+ *
+ * ⚠ Counted across the whole database, not inferred from the schema:
+ *   `Person.phone` 61 · `Address` 233 · `providerProfile.paused_at` 0 of 63
+ *   `TwoFactorSetting` 0 · `IdentityVerification` 0 · `TaxProfile` 0
+ *   `PayoutMethod` 0 · `BillingMethod` 0 · `NotificationPreference` 0
+ *
+ * ⚠⚠⚠ **FIVE OF THOSE TABLES HOLD ZERO ROWS AND THAT IS NOT A MISSING WRITER —
+ * IT IS THE STATE.** `IdentityVerification.status` **defaults to
+ * `NOT_STARTED`**, so *"Not started"* is TRUE for everyone and a real writer
+ * (`submitIdentity`) would flip it. ⚠ *"Two-step off"* and *"No card on file"*
+ * are the same shape: **a binary whose other side has a writer.** That is
+ * ruling 24's test passing, not failing — **unlike a counted zero, which
+ * reports a quantity nobody measured.**
+ *
+ * ── ⚠⚠ TWO SECTIONS GET NO STATUS LINE, AND BOTH REFUSALS ARE DELIBERATE ─
+ *
+ * ⚠⚠⚠ **`membership` — REFUSED AS A MONEY CLAIM.** There is **no plan column
+ * anywhere in the schema**, and the membership page's own comment records that
+ * its "cycle" is **the account's anniversary, not a billing period**. ⚠ Scott's
+ * example line was *"Membership — Plus, renews 14 Oct"*; **`Plus` does not
+ * exist and `renews` asserts a charge.** Ruling 25 — no money moves — and
+ * ruling 18 — no promises. **It keeps its blurb.**
+ * ⚠⚠ **`notifications` — REFUSED AS UNINFORMATIVE.** Ruling 13 ships every
+ * category ON and the table holds 0 rows, so the status would read the same
+ * for **every member on the platform**. ⚠ A line that cannot differ is not a
+ * status; it is decoration that costs a row of the member's attention.
+ *
+ * ⚠ **THE BLURBS DO NOT MOVE.** `SETTINGS_NAV` still owns them and the rail and
+ * the cards keep reading that one source (`E585`); this adds a SECOND line, it
+ * does not replace the first.
+ */
+export async function getSettingsStatuses(
+  viewer: Viewer
+): Promise<Record<string, string | null>> {
+  const personId = await ownPersonId(viewer);
+
+  const [person, profile, twoFactor, identity, tax, payouts, billing] = await Promise.all([
+    prisma.person.findUnique({
+      where: { id: personId },
+      select: { phone: true, site: { select: { addresses: { select: { line1: true }, take: 1 } } } },
+    }),
+    prisma.providerProfile.findFirst({
+      where: { person_id: personId },
+      select: { paused_at: true },
+    }),
+    /* ⚠ KEYED ON THE USER, because two-step is an AUTH fact and
+       `TwoFactorSetting.user_id` is its `@unique`. ⚠⚠ The other rows here are
+       keyed on the PERSON — the two are not interchangeable, which is the
+       distinction `levels.ts` and `community-hero.ts` both record. */
+    prisma.twoFactorSetting.findUnique({
+      where: { user_id: viewer.userId },
+      select: { confirmed_at: true },
+    }),
+    prisma.identityVerification.findUnique({
+      where: { person_id: personId },
+      select: { status: true },
+    }),
+    prisma.taxProfile.findUnique({ where: { person_id: personId }, select: { id: true } }),
+    prisma.payoutMethod.count({ where: { person_id: personId } }),
+    prisma.billingMethod.count({ where: { person_id: personId } }),
+  ]);
+
+  const hasPhone = Boolean(person?.phone?.trim());
+  const hasAddress = Boolean(person?.site?.addresses?.[0]?.line1?.trim());
+  /* ⚠ NAMES WHAT IS MISSING, because that is what a landing page is for. When
+     both are present it says so once rather than listing them. */
+  const contact = !hasPhone && !hasAddress
+    ? "No phone or address yet"
+    : !hasPhone
+      ? "No phone yet"
+      : !hasAddress
+        ? "No address yet"
+        : "Phone and address on file";
+
+  /* ⚠⚠ THE IDV STATUS IS THE COLUMN'S OWN ENUM, mapped to the member's words.
+     ⚠ A MISSING ROW IS `NOT_STARTED` — the schema's default, so absence and
+     the explicit value say the same thing and neither is invented. */
+  const idv = identity?.status ?? "NOT_STARTED";
+  const identityLine =
+    idv === "VERIFIED" ? "Verified" : idv === "SUBMITTED" ? "In review" : "Not started";
+
+  return {
+    "/settings/contact": contact,
+    /* ⚠ REFUSED — see the docblock. No plan column, and "renews" is a money
+       claim on a page where no money moves. */
+    "/settings/membership": null,
+    "/settings/profile": profile?.paused_at ? "Paused — hidden from buyers" : "Visible to buyers",
+    "/settings/billing": billing === 0 ? "No payment method yet" : `${billing} on file`,
+    /* ⚠⚠ THE SECTION IS *"How Panameer pays you, AND the tax details required
+       first"* — so the status reads BOTH, in the order the blurb states them.
+       ⚠ I had queried `payouts` and then ignored it; lint caught the unused
+       variable and the real defect underneath was that **a provider with tax
+       details and no payout method would have been told they were done.** */
+    "/settings/withdrawals": !tax
+      ? "Tax details needed first"
+      : payouts === 0
+        ? "No payout method yet"
+        : "Tax details and payout method on file",
+    "/settings/security": twoFactor?.confirmed_at ? "Two-step on" : "Two-step off",
+    "/settings/identity": identityLine,
+    /* ⚠ REFUSED — ruling 13 ships every category ON, so this would read the
+       same for every member. A line that cannot differ is not a status. */
+    "/settings/notifications": null,
+  };
+}
