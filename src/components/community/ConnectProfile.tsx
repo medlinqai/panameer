@@ -468,13 +468,27 @@ export function ConnectProfile({
         <section className="overflow-hidden rounded-brand border border-line bg-white">
           <div className="h-[72px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
           <div className="px-[18px] pb-4">
-            <span className="-mt-[34px] inline-block overflow-hidden rounded-full ring-[3px] ring-white">
-              <Avatar
-                firstName={p.person.firstName ?? ""}
-                lastName={p.person.lastName ?? ""}
-                photoUrl={p.person.photoUrl}
-                size={72}
-              />
+            {/*
+              ── ⚠⚠⚠ EACH EDIT CONTROL MOVES BESIDE WHAT IT EDITS (WS-B) ────────
+
+              ⚠ SCOTT, of the six links that used to sit in a row under this
+              card: **"These are in the wrong place."** ⚠⚠ They were a block of
+              six identical `✏️ Edit` links — **indistinguishable without their
+              `aria-label`, and a member had to guess which one reached the
+              thing they were looking at.**
+              ⚠⚠⚠ **THIS IS THE COUNTING RULES' THIRD LINE APPLIED TO CONTROLS:**
+              *a control says what it governs AT THE POINT IT GOVERNS IT.*
+            */}
+            <span className="-mt-[34px] flex items-end gap-2">
+              <span className="inline-block overflow-hidden rounded-full ring-[3px] ring-white">
+                <Avatar
+                  firstName={p.person.firstName ?? ""}
+                  lastName={p.person.lastName ?? ""}
+                  photoUrl={p.person.photoUrl}
+                  size={72}
+                />
+              </span>
+              {owner && <EditLink href={editHref("photo")} title="Photo" />}
             </span>
             <div className="mt-2 flex items-center gap-1.5">
               {/* ⚠ The OWNER's `<h1>` is the tab row's (`E600` WS-A); a visitor
@@ -493,9 +507,26 @@ export function ConnectProfile({
                 </span>
               )}
             </div>
-            {p.headline && (
-              <p className="mt-1 text-[13px] leading-snug text-ink-2">{p.headline}</p>
+            {/*
+              ⚠⚠ THE TITLE'S EDIT SITS WITH THE TITLE. ⚠ `p.headline` IS the
+              title — the thing `/profile/edit/title` writes — so the control
+              belongs on this line and nowhere else.
+              ⚠⚠⚠ **RULING 31c: `"+AI Enabled…"` IS AN EXAMPLE OF A TITLE, SAMPLE
+              TEXT, NOT A FEATURE. NOTHING IS BUILT TOWARD IT** — no placeholder
+              carrying it, no hint suggesting it, no default.
+              ⚠ The owner gets the control and a visitor gets the line alone, so
+              a title with no owner still renders.
+            */}
+            {(p.headline || owner) && (
+              <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug text-ink-2">
+                {p.headline}
+                {owner && <EditLink href={editHref("title")} title="Title" />}
+              </p>
             )}
+            {/*
+              ⚠⚠ THE LOCATION LINE IS DERIVED FROM THE ADDRESS and is not edited
+              here — see the block below for why its control has not moved yet.
+            */}
             {p.location && <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>}
             {/*
               ── ⚠⚠⚠ THE IDENTITY CARD GROWS ITS EDIT CONTROLS (`E600` WS-F) ──
@@ -511,14 +542,68 @@ export function ConnectProfile({
               ⚠ `Contact` COVERS TWO SCORE LINES — identity and location — one
               address, one editor, one save (`E595`).
             */}
+            {/*
+              ── ⚠⚠⚠ WHAT IS LEFT OF THE ROW, AND WHY EACH ONE IS STILL HERE ──
+
+              ⚠ `Title` and `Photo` have MOVED beside their subjects above.
+              ⚠⚠⚠ **`Role` IS REMOVED.** Scott, 2026-09-24: *"Role is not
+              something I want them to edit... but all the other fields are
+              editable."*
+              ⚠⚠ **REPORTED AS THE BRIEF REQUIRES — WHAT CAN STILL SET A ROLE:**
+              · the DERIVATION from the provider's own matched skills
+                (`E507`/`E509`) — *"Role is derived from the skills"*, a PREFILL
+                that never overwrites a role the provider chose;
+              · the onboarding wizard's role step.
+              ⚠⚠⚠ **AND WHAT CANNOT: THERE IS NO ADMIN SURFACE FOR A PROVIDER'S
+              ROLE.** Measured — `role_type_id` appears under `src/app/admin`
+              only in the skill CATALOG editor, which sets a SKILL's role, never
+              a provider's. ⚠ **Reported, not built: rule 5 and ruling 21 keep an
+              admin surface out of this brief.**
+
+              ── ⚠⚠ THREE THAT HAVE NOT MOVED, EACH FOR A MEASURED REASON ──────
+
+              ⚠⚠⚠ **`Contact Details` STAYS UNTIL ITS DESTINATION EXISTS.** WS-B
+              says the address *"lives in Settings"* — ⚠ **MEASURED: IT DOES
+              NOT.** `/settings/contact` renders the sentence *"Your address
+              lives with your profile"* and **points back here.** ⚠⚠ Removing
+              this link today would leave **no entrance at all** to the one
+              editor that writes it — `CLAUDE.md` rule 5, and the failure `E598`
+              avoided by making a control *"leave and arrive in the same
+              commit."* **The move is a real build and gets its own slice.**
+              ⚠ `Address.country` **already exists** as a column, so *"ADD
+              COUNTRY — Panameer is global"* is a RENDER-and-EDIT job, **not a
+              schema window.** Measured, so nobody briefs a migration for it.
+
+              ⚠⚠ **`Languages` STAYS UNTIL ITS CARD EXISTS.** WS-B: it *"becomes
+              its own CARD, with its own Edit, and each language carries its
+              abilities."* That is a card build, not a link move, and the same
+              leave-and-arrive rule applies.
+
+              ⚠ **`How You Work` STAYS BECAUSE THIS CARD DOES NOT RENDER IT.**
+              There is no work-method line here to sit beside, so moving the
+              control would mean **moving it to nothing.** Reported rather than
+              relocated to an arbitrary spot.
+            */}
+            {/*
+              ⚠⚠⚠ **THEY NAME WHAT THEY EDIT WHILE THEY ARE STILL A ROW.**
+              ⚠ MEASURED AT 390px: three bare `✏️ Edit` links side by side, each
+              identical, each reaching a different editor — **a member has to
+              guess, and the guess is a page load.** ⚠⚠ That is Scott's *"in the
+              wrong place"* complaint in its purest form: the label was carried
+              only by `aria-label`, so **a sighted member had strictly less
+              information than a screen-reader one.**
+              ⚠ `EditLink`'s `label` prop already existed for exactly this; the
+              `aria-label` still reads *"Edit Contact Details"* and is unchanged.
+              ⚠⚠ **THIS IS NOT A SUBSTITUTE FOR MOVING THEM** — each still goes
+              beside its subject once its destination exists. It is the honest
+              state until then, rather than three anonymous controls left as-is
+              because the real fix is queued.
+            */}
             {owner && (
               <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                <EditLink href={editHref("title")} title="Title" />
-                <EditLink href={editHref("photo")} title="Photo" />
-                <EditLink href={editHref("contact")} title="Contact Details" />
-                <EditLink href={editHref("role")} title="Role" />
-                <EditLink href={editHref("languages")} title="Languages" />
-                <EditLink href={editHref("work-method")} title="How You Work" />
+                <EditLink href={editHref("contact")} title="Contact Details" label="Contact" />
+                <EditLink href={editHref("languages")} title="Languages" label="Languages" />
+                <EditLink href={editHref("work-method")} title="How You Work" label="How You Work" />
               </div>
             )}
             {owner && (
@@ -527,13 +612,35 @@ export function ConnectProfile({
                   href="/community/score"
                   className="rounded-full bg-magenta px-3.5 py-2 text-center text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  Complete Your Profile
+                  {/*
+                    ⚠ SCOTT, WS-B: rename to **"What's Missing or Incomplete?"**
+                    — *"(page is correct)"*, so the DESTINATION is untouched and
+                    only the label changes.
+                    ⚠⚠ THE OLD LABEL PROMISED AN ACTION THE PAGE DOES NOT
+                    PERFORM: *"Complete Your Profile"* reads as a button that
+                    completes it, while `/community/score` **shows you what is
+                    missing.** The new label names what is actually behind it.
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   Complete Your Profile
+                  */}
+                  What&rsquo;s Missing or Incomplete?
                 </Link>
                 <Link
                   href={`/providers/${p.id}`}
                   className="rounded-full border border-line px-3.5 py-2 text-center text-[13px] font-bold transition-colors hover:border-magenta/50"
                 >
-                  See What Buyers See
+                  {/*
+                    ⚠ SCOTT, WS-B: rename to **"How Others See My Profile"**.
+                    ⚠⚠ IT IS MORE THAN A TIDY-UP — ruling 39 settled that **ONE
+                    preview button is the only entrance** and a switch inside the
+                    preview chooses `As a Buyer` / `As a Provider`. ⚠⚠⚠ *"See
+                    What Buyers See"* names ONE of the two audiences, so the
+                    label would be **false for half of what the page now does.**
+                    "Others" is the word that covers both.
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   See What Buyers See
+                  */}
+                  How Others See My Profile
                 </Link>
               </div>
             )}
