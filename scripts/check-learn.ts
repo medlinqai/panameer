@@ -789,14 +789,32 @@ const isOrphan = (file: string) => importersOf(file).length === 0;
 }
 
 /**
- * ── ⚠⚠⚠ LEVELS, RANKS AND STREAKS ARE GONE AND STAY GONE (`E606` R1/R3) ──
+ * ── ⚠⚠⚠ LEVELS AND BANDS STAY GONE. THE STREAK COMES BACK. (`E606` R1/R3,
+ * ⚠⚠ **NARROWED BY RULING 36a, 2026-09-25**) ─────────────────────────────
  *
- * ⚠ RULING 1: there is no XP and there are no levels in Panameer. ⚠⚠ THIS IS
- * THE ASSERTION THAT STOPS THEM COMING BACK, and it is by SHAPE — it does not
- * know the words "Newcomer" or "streak_10", it knows the concepts.
+ * ⚠ RULING 1 stands for XP and levels: there are none in Learn, and this is the
+ * assertion that stops them coming back — **by SHAPE, not by vocabulary.**
+ *
+ * ⚠⚠⚠ **RULING 36a PARTLY REVERSES `E606`, AND THE BRIEF IS EXPLICIT THAT THE
+ * BAN IS NARROWED RATHER THAN LIFTED:** *"back = a streak and
+ * lessons-completed-this-month. STILL RETIRED = XP, levels, level bands, the
+ * padlock/achievement grid."*
+ * ⚠⚠ **SO `StreakTile` LEAVES THIS LIST AND EVERYTHING ELSE STAYS ON IT**, with
+ * its mutation proofs intact. ⚠ `levelFor`, `LEVEL_BANDS`, `LevelState`,
+ * `streak_10` (the ACHIEVEMENT badge, which is not the streak) and
+ * `clientComputed` are all still banned.
+ *
+ * ⚠⚠⚠ **THIS IS `check:rollup`'s CASE: THE RULING MOVED, NOT THE CODE.** The
+ * gate encoded a decision Scott has since narrowed, so the gate is taught the
+ * new truth rather than the feature being reverted to satisfy it.
+ * ⚠ **AND THE STREAK IS HONEST BECAUSE OF ITS WRITER:** the progress route
+ * DELETES the row when `completed` is false, so `completed_at` is genuinely a
+ * completion. It is a **measured zero** today, rendered as `0` (ruling 53c).
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   const BANNED = /\b(levelFor|LEVEL_BANDS|LevelState|streak_?10|StreakTile|clientComputed)\b/;
  */
 {
-  const BANNED = /\b(levelFor|LEVEL_BANDS|LevelState|streak_?10|StreakTile|clientComputed)\b/;
+  const BANNED = /\b(levelFor|LEVEL_BANDS|LevelState|streak_?10|clientComputed)\b/;
   /* ⚠⚠ AN ORPHAN IS ALLOWED. `StreakTile.tsx` stays on disk under `E164` — a
      retired component is not deleted. ⚠⚠⚠ WHAT IS FORBIDDEN IS A RETIRED
      SURFACE THAT SOMETHING STILL IMPORTS, which is the state that puts it back
@@ -805,7 +823,7 @@ const isOrphan = (file: string) => importersOf(file).length === 0;
     (f) => !isOrphan(f) && BANNED.test(stripComments(readFileSync(f, "utf8")))
   );
   check(
-    "E606 WS-C: ⚠⚠⚠ no level, rank or streak surface survives in Learn",
+    "E606 WS-C: ⚠⚠⚠ no level or band surface survives in Learn (36a: the streak may)",
     offenders.length === 0,
     offenders.length ? offenders.join(" · ") : "ruling 1 holds"
   );

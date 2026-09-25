@@ -85,7 +85,17 @@ function Figure({ figure }: { figure: HeaderFigure }) {
   const uncounted = typeof figure.value === "object";
   return (
     <div>
-      <dt className="text-[12.5px] font-semibold uppercase tracking-[0.07em] text-ink-2">
+      {/*
+        ⚠⚠ THE LABEL RESERVES TWO LINES, AND THAT IS AN ALIGNMENT FIX, NOT
+        PADDING. ⚠ MEASURED AT 390px ON `/learn`: `CERTIFICATES` fits one line
+        while `LESSONS DONE` and `PATHS ENROLLED` wrap to two — so the three
+        FIGURES sat at three different heights and the row read as ragged.
+        ⚠⚠⚠ Caught by looking at the screenshot; nothing overflowed, so no
+        measurement would have flagged it. **A row of numbers that do not share
+        a baseline is harder to compare, which is the one thing a figure row is
+        for.**
+      */}
+      <dt className="min-h-[2.4em] text-[12.5px] font-semibold uppercase leading-[1.2] tracking-[0.07em] text-ink-2">
         {figure.label}
       </dt>
       {uncounted ? (

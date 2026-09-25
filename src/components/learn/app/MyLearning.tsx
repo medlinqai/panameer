@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
+import { PatternHeader } from "@/components/casing/PatternHeader";
+import StreakTile from "@/components/learn/app/StreakTile";
+import { StatTile } from "@/components/learn/app/StatTile";
+import { GraduationCap } from "lucide-react";
 /* ⚠ `ShieldCheck`, `LayoutGrid` and `GraduationCap` went with the tile row
    (`P2-A4-E615`, ruling 5) — they were its icons and nothing else used them.
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -66,7 +70,27 @@ export function MyLearning({ data }: { data: MyLearningData }) {
      page stopped reading it.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   const { totals, mine, continueCard, inProgress, paths, suggestion } = data; */
-  const { totals, continueCard, inProgress, paths, suggestion, certificates, teaching } = data;
+  const { totals, mine, completedAt, continueCard, inProgress, paths, suggestion, certificates, teaching } = data;
+
+  /*
+    ── ⚠⚠ LESSONS DONE THIS MONTH (WS-D item 1, ruling 36a) ────────────────
+
+    ⚠⚠⚠ **A MEASURED ZERO, NOT AN UNCOUNTABLE — RULING 53c.** `lesson_progress`
+    holds 0 rows today, so this is `0` **in ink**, never a dash: the mechanism
+    exists and nobody has used it, which is exactly the distinction the counting
+    rules turn on.
+    ⚠ **IT IS HONEST BECAUSE OF THE WRITER, NOT THE COLUMN.** `completed_at` is
+    `NOT NULL @default(now())`, which looks like it makes *started* and
+    *completed* the same event — ⚠⚠ but the progress route **DELETES** the row
+    when `completed` is false and upserts only when true, so a row exists **if and
+    only if** the member completed the lesson.
+    ⚠ Counted from the same `completedAt` array the streak uses — one source,
+    two questions, never two queries that can disagree.
+  */
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const lessonsThisMonth = completedAt.filter((t) => new Date(t) >= monthStart).length;
 
   return (
     /*
@@ -148,6 +172,71 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           ⚠ `items-start` is load-bearing: without it the rail card stretches to
           the height of the left column and its border draws around empty space.
         */}
+        {/*
+          ── ⚠⚠⚠ RULING 36d — THE PATTERN HEADER, AND WHAT IT DOES NOT UNDO ──
+
+          ⚠ SCOTT: *"notice no dual card with numbers…want it in there."*
+          ⚠⚠ **`E615` DELIBERATELY REMOVED THIS PAGE'S HEADLINE** — *"My Learning
+          has no page headline in the mockup. It opens on the continue card."*
+          ⚠⚠⚠ **THAT IS NOT CONTRADICTED HERE, AND THE DISTINCTION IS THE POINT:
+          THIS IS A CARD'S HEADLINE, NOT A PAGE TITLE.** The page still opens on
+          the continue card; the card carries its own heading as the pattern
+          requires, exactly as it does on Community.
+
+          ⚠⚠ **THE THREE FIGURES, REPORTED BEFORE THEY WERE CHOSEN** (WS-D item 2
+          asks for exactly that). Four were countable; three are shown:
+          | figure | writer |
+          |---|---|
+          | Lessons Done | the progress route's upsert |
+          | Paths Enrolled | `LearnEnrollment` |
+          | Certificates | the certificate issue path |
+          ⚠ The fourth — **Courses Finished** — is left off rather than padded in:
+          ruling 45(1) is that the header takes what a page HAS, and three is
+          what this page can say without repeating itself.
+          ⚠⚠⚠ **ALL THREE ARE MEASURED ZEROS TODAY AND RENDER AS `0` IN INK**
+          (ruling 53c). **A dash here would claim the mechanism is missing, and
+          it is not.**
+
+          ⚠ The picture is the member's own activity — the streak and the month —
+          because on this page the "picture" IS what they have been doing.
+        */}
+        <PatternHeader
+          eyebrow="MY LEARNING"
+          headline="Where You're Up To"
+          figures={[
+            { label: "Lessons Done", value: mine.lessonsCompleted },
+            { label: "Paths Enrolled", value: mine.enrolledPaths },
+            { label: "Certificates", value: mine.pathsCertified },
+          ]}
+          picture={
+            <div className="flex flex-col gap-3">
+              {/* ⚠⚠ `StreakTile` IS REVIVED, NOT REWRITTEN (ruling 36a asked me
+                  to check first). It is an `E164` orphan on disk taking exactly
+                  the `completedAt: string[]` this page already has, and
+                  `streakFrom` in `lib/learn-progress.ts` imports no database —
+                  so it is safe in a client component, which is the trap that
+                  broke the build one commit ago. */}
+              <StreakTile completedAt={completedAt} />
+              <StatTile
+                icon={<GraduationCap className="h-[19px] w-[19px]" aria-hidden />}
+                tone="magenta"
+                value={`${lessonsThisMonth}`}
+                label="Lessons Done This Month"
+              />
+            </div>
+          }
+          move={
+            <>
+              {/* ⚠ Derived, never canned — and at a genuine zero it names the
+                  first move rather than reporting emptiness. */}
+              {mine.lessonsCompleted === 0
+                ? "Nothing watched yet. Starting a path is the first move."
+                : `${lessonsThisMonth} this month.`}
+            </>
+          }
+          primary={{ label: "Browse Learning Paths", href: "/learn/paths" }}
+        />
+
         <div className="grid items-start gap-5 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0">
 

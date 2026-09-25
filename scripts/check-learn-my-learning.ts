@@ -84,10 +84,25 @@ async function main() {
   /* ── 1 · ⚠⚠⚠ RULING 5 — NO `0 of N` SCOREBOARD ON THIS PAGE ────────────
      ⚠ Derived from the RENDERED output, not from a component name: the tiles
      could come back under any name and would still be the same thing. */
+  /*
+    ⚠⚠⚠ NARROWED BY RULING 36a, NOT LIFTED. Ruling 5 took **the four `0 of N`
+    tiles** off this page, and that still holds. ⚠⚠ Ruling 36a then brought back
+    **a streak and lessons-completed-this-month** — *"back = a streak and
+    lessons-completed-this-month. STILL RETIRED = XP, levels, level bands, the
+    padlock/achievement grid."*
+    ⚠ So the ban is on **the scoreboard's SHAPE — a denominator** — and not on
+    the component: the assertion directly below has always been the one that
+    catches the real thing (`sub={`of ${…}`}`), and it is untouched.
+    ⚠⚠⚠ **A COUNT WITH NO DENOMINATOR IS NOT THE TILE ROW SCOTT REMOVED.** *"0
+    lessons this month"* is a figure; *"0 of 23"* is a scoreboard.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   "1 — the page mounts no StatTile",
+    //   !/<StatTile[\s/>]/.test(page),
+  */
   check(
-    "1 — the page mounts no StatTile",
-    !/<StatTile[\s/>]/.test(page),
-    "Scott, ruling 5: the four 0-of-N tiles come off /learn entirely"
+    "1 — ⚠⚠ at most TWO tiles, and only the 36a pair",
+    (page.match(/<StatTile[\s/>]/g) ?? []).length <= 2,
+    "ruling 5 removed a FOUR-tile scoreboard; 36a returns a streak and a monthly count"
   );
   /* ⚠⚠ AND NO `X of Y` PAIR IN A TILE-SHAPED `sub` PROP, which is how the row
      was actually spelled — a scan for the phrase alone would miss it. */
