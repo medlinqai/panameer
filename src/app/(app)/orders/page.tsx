@@ -80,13 +80,24 @@ export default async function Page() {
           {/*
             ── ⚠⚠⚠ IT PROMISED TWO ROUTES THAT DO NOT EXIST (`E603` correction) ──
 
-            ⚠ MEASURED 2026-09-23: **there is no `workOrder.create` anywhere in
-            the repository.** Not in `src/`, not in `scripts/`, not in `prisma/`.
-            `orders.ts` can only `updateMany` an order that nothing ever built,
-            so `ISSUED` is never written and even the ACCEPT and RELEASE paths
-            are unreachable code.
-            ⚠⚠ SO NEITHER PROMISED ROUTE CAN FIRE. A work request cannot be
-            "awarded" into an order, and nothing can "bring in" a direct one.
+            ⚠⚠⚠ CORRECTED 2026-09-25 — **THIS MEASUREMENT IS NOW FALSE, AND
+            LEAVING IT WOULD BE WORSE THAN THE COPY IT REPLACED.** `P2-A8-E621`
+            WS-D built `lib/work-orders.ts`, so `workOrder.create` EXISTS, both
+            routes fire, and `ISSUED`/`ACCEPTED`/`RELEASED` are all reachable —
+            `check:work-orders` walks them. ⚠ The empty state below is still
+            CORRECT, because `WorkOrder` holds no rows a member has made yet;
+            what changed is that it is now empty rather than impossible.
+            ⚠⚠ **WHOEVER REWRITES THIS COPY: the two routes it once promised are
+            real now, so naming them is no longer a promise of a mechanism that
+            does not exist.** Brief 7 WS-A owns that rewrite.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — true when written:
+            //   ⚠ MEASURED 2026-09-23: **there is no `workOrder.create` anywhere in
+            //   the repository.** Not in `src/`, not in `scripts/`, not in `prisma/`.
+            //   `orders.ts` can only `updateMany` an order that nothing ever built,
+            //   so `ISSUED` is never written and even the ACCEPT and RELEASE paths
+            //   are unreachable code.
+            //   ⚠⚠ SO NEITHER PROMISED ROUTE CAN FIRE. A work request cannot be
+            //   "awarded" into an order, and nothing can "bring in" a direct one.
             ⚠⚠⚠ THIS IS THE SAME SHAPE AS THE TWO TILES `E603` RETIRED —
             *"once you complete your first paid work order"* and *"once buyers
             rate completed work orders."* **A page may not promise a mechanism

@@ -810,11 +810,50 @@ check(
   /certification\.count\(\{ where: \{ user_id: userId \} \}\)/.test(src.lib.replace(/\s+/g, " ")),
   "provider_profile_id is nullable and undercounts"
 );
-check(
-  "29 — ⚠⚠ earnings name the truncation, not the member's action",
-  /no order can reach paid/.test(src.lib) && !/complete your first paid work order/.test(src.page),
-  "no promise about a mechanism that does not exist"
-);
+/*
+  ── ⚠⚠⚠ RE-ANCHORED BY RULING 18 — AND THIS IS `check:rollup`'S CASE ──────
+
+  ⚠ The assertion pinned the literal phrase `no order can reach paid`. ⚠⚠ **RULING
+  18 OVERRULED THAT EXACT STRING** as a roadmap confession, quoting it: *"Do not
+  write roadmap confessions into the product."*
+  ⚠⚠⚠ **SO THE RULING MOVED, NOT THE CODE** — which is `check:rollup`'s case and
+  not `check:cert-skills`'. The gate encoded a WORDING; the rule underneath it was
+  always *"do not blame the member and do not promise a mechanism."*
+  ⚠ It is now asserted as that rule, DERIVED over every dash's reason rather than
+  against one phrase — so it cannot be satisfied by a string that happens to
+  contain the right words, and it survives the next rewording.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "29 — ⚠⚠ earnings name the truncation, not the member's action",
+  //   /no order can reach paid/.test(src.lib) && !/complete your first paid work order/.test(src.page),
+*/
+{
+  const reasons = [...src.lib.matchAll(/uncounted:\s*"([^"]+)"/g)].map((m) => m[1]);
+  check(
+    "29 — ⚠ every dash carries a reason, and the sweep found some (E586)",
+    reasons.length >= 1,
+    `${reasons.length}`
+  );
+  /* ⚠⚠ NEVER THE MEMBER'S ACTION. */
+  const blames = reasons.filter((r) => /\byou\b|\byour\b|\bcomplete your\b/i.test(r));
+  check(
+    "29 — ⚠⚠⚠ no dash reason blames the member",
+    blames.length === 0,
+    blames.join(" · ")
+  );
+  /* ⚠⚠⚠ AND NEVER A ROADMAP CONFESSION, A PROMISE OR A DATE (ruling 18). */
+  const confesses = reasons.filter((r) =>
+    /isn't (built|finished)|aren't (built|recorded|created)|not built yet|coming soon|will be|we('| wi)ll|once (you|buyers|work)/i.test(r)
+  );
+  check(
+    "29 — ⚠⚠⚠ no dash reason is a roadmap confession or a promise (ruling 18)",
+    confesses.length === 0,
+    `${confesses.join(" · ")} — ruling 18: never a date, a promise, or an apology`
+  );
+  check(
+    "29 — ⚠ and the page promises nothing either",
+    !/complete your first paid work order/.test(src.page)
+  );
+}
 
 
 /* ── 7 · THE FABRICATED RATING (pre-merge guard) ────────────────────────── */

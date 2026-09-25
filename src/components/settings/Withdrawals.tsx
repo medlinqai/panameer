@@ -80,10 +80,20 @@ export function Withdrawals({
           ⚠ *"Balances appear once work orders settle"* is the exact shape
           `E603` retired twice — *"once you complete your first paid work
           order"* and *"once buyers rate completed work orders"*.
-          ⚠⚠ MEASURED: **there is no `workOrder.create` anywhere in `src/`**, so
-          no work order can be built, let alone settle; and **`PAID` is never
-          written** with no `Payment` ever created. A sentence beginning *"once
-          work orders settle"* promises a chain that stops at its first step.
+          ⚠⚠⚠ CORRECTED 2026-09-25 — **HALF OF THIS MEASUREMENT IS NOW FALSE,
+          AND THE HALF THAT MATTERS HERE IS STILL TRUE.**
+          ⚠ `P2-A8-E621` WS-D built `lib/work-orders.ts`, so **a work order CAN
+          now be built** and reaches `RELEASED` when both parties accept.
+          ⚠⚠ BUT **`PAID` IS STILL WRITTEN BY NOTHING AND NO `Payment` ROW IS
+          EVER CREATED** — `check:work-chain` asserts both, literally and
+          dynamically. ⚠⚠⚠ So the copy below stands: the chain still stops before
+          a balance can exist, and the reason it stops has simply moved one step
+          later. ⚠ The dash above is unchanged and is still right.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — true when written:
+          //   ⚠⚠ MEASURED: **there is no `workOrder.create` anywhere in `src/`**, so
+          //   no work order can be built, let alone settle; and **`PAID` is never
+          //   written** with no `Payment` ever created. A sentence beginning *"once
+          //   work orders settle"* promises a chain that stops at its first step.
           ⚠ The dash above is unchanged and is right — a measured zero and an
           absent mechanism must not look the same.
           ⚠ SUPERSEDED, quoted not deleted (`E164`):

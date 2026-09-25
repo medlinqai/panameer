@@ -28,8 +28,21 @@ const WORK_TILES: Tile[] = [
   { label: "Work Orders in Last 30 Days" },
 ];
 
-const WHY_TRANSACTION =
-  "The transaction layer isn't built — there is no Work Request, Order, Contract or Payment model to read from. This page is the shape they will land in.";
+/*
+  ── ⚠⚠⚠ CORRECTED 2026-09-25 — THIS SENTENCE HAD BECOME FALSE ────────────
+
+  ⚠⚠ It told an admin *"there is no Work Request, Order, Contract or Payment model
+  to read from."* ⚠⚠⚠ **THREE OF THOSE FOUR MODELS EXIST:** `WorkRequest` and
+  `WorkOrder` since `E388`, `Payment` too — and since `E621` both `WorkRequest` and
+  `WorkOrder` have live writers. Only `Contract` genuinely does not exist, and
+  deliberately: the ToS is the MSA and the work order is the SOW, so there is no
+  third contract by design.
+  ⚠ Ruling 18 also applies — *"this page is the shape they will land in"* is a
+  roadmap promise, and those do not go in the product.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "The transaction layer isn't built — there is no Work Request, Order, Contract or Payment model to read from. This page is the shape they will land in.";
+*/
+const WHY_TRANSACTION = "Not counted yet";
 
 export type AdminPageSpec = {
   tiles: Tile[];

@@ -49,13 +49,44 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "proposals", label: "My Proposals" },
 ];
 
-/** Tabs whose data has no model yet — rendered, but honest about being empty. */
+/**
+ * ── ⚠⚠⚠ CORRECTED 2026-09-25 — TWO OF THESE THREE CLAIMS WERE FALSE ──────
+ *
+ * ⚠⚠ Brief 7's premise item 4 asks exactly this question — *"re-verify every
+ * uncountable claim BY BEHAVIOUR, not by name"* — and warns that *"an absent NAME
+ * is not an absent THING."* ⚠⚠⚠ **BOTH FAILURES HERE WERE THAT DEFECT, AND ONE OF
+ * THEM WAS THE VERY EXAMPLE THE BRIEF CITES.**
+ *
+ * | tab | the claim | verified by behaviour |
+ * |---|---|---|
+ * | `saved` | nothing records a save | ✅ **TRUE** — no `Saved*` model, no writer |
+ * | `invitations` | *"needs a work-invitation model, which doesn't exist"* | ❌ **FALSE** — the model is **`BidRequest`**, and `work-request-invite.ts:116` has been creating one all along |
+ * | `proposals` | *"needs a Proposal model, which doesn't exist"* | ❌ **FALSE TWICE** — the model is **`ProviderBid`**, and `proposals.ts:222` now creates one (`E621` WS-A) |
+ *
+ * ⚠⚠ THE `proposals` STRING ALSO BLAMED THE MEMBER — *"You haven't sent any
+ * proposals, and you can't yet"* — which ruling 18's surviving half forbids, and
+ * which was **not even true**: a provider CAN now propose.
+ *
+ * ⚠⚠⚠ **THE WORDING IS CORRECTED HERE; THE WIRING IS BRIEF 7 WS-A's.** These two
+ * tabs now have real mechanisms and therefore real (empty) data to fetch, and
+ * giving them queries means touching the page — which needs the phone screenshots
+ * WS-A asks for first. ⚠ So they are no longer LYING, and they are still not
+ * LISTING. That is reported rather than half-built.
+ *
+ * ⚠ Ruling 18 governs the new strings: short, neutral, **no roadmap confession,
+ * no promise, no date, no apology, and nothing that blames the member.**
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   Tabs whose data has no model yet — rendered, but honest about being empty.
+ * //   saved: "Saving a work request isn't built yet — nothing records a save.",
+ * //   invitations:
+ * //     "Buyers can't invite you to propose yet. That needs a work-invitation model, which doesn't exist.",
+ * //   proposals:
+ * //     "You haven't sent any proposals, and you can't yet — proposing needs a Proposal model, which doesn't exist. Nothing is being hidden here.",
+ */
 export const UNBACKED_TABS: Record<string, string> = {
-  saved: "Saving a work request isn't built yet — nothing records a save.",
-  invitations:
-    "Buyers can't invite you to propose yet. That needs a work-invitation model, which doesn't exist.",
-  proposals:
-    "You haven't sent any proposals, and you can't yet — proposing needs a Proposal model, which doesn't exist. Nothing is being hidden here.",
+  saved: "Not listed yet",
+  invitations: "None to show",
+  proposals: "None to show",
 };
 
 export type WorkCard = {

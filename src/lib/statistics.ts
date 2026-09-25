@@ -420,7 +420,19 @@ export async function getStatistics(
   return {
     window,
     profile: {
-      views: providerProfileId ? views : { uncounted: "You have no provider profile yet" },
+      /*
+        ⚠⚠ NEUTRAL, NOT ADDRESSED TO THE MEMBER (ruling 18's form).
+        ⚠⚠⚠ THIS ONE IS A DIFFERENT KIND OF UNCOUNTABLE FROM THE OTHERS AND THE
+        DISTINCTION IS WORTH STATING: the MECHANISM here is fine — profile views
+        are counted, by a real writer — what is absent is the SUBJECT. So it is
+        not the "blames the member for a missing mechanism" defect.
+        ⚠ It was still reworded, because *"You have no provider profile yet"*
+        carries a `yet` that reads as a nudge, and because a reason that comes
+        from the TYPE should not change voice depending on which figure it is.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { uncounted: "You have no provider profile yet" }
+      */
+      views: providerProfileId ? views : { uncounted: "No provider profile" },
       shownInSearch: { uncounted: NO_SEARCH_LOG },
       rateSeen: { uncounted: NO_SEARCH_LOG },
     },
@@ -541,7 +553,23 @@ export async function getStatistics(
         //   earnings: { uncounted: "Starts counting when an order settles — none has" },
         //   the old tile: "This starts counting once you complete your first paid work order."
       */
-      earnings: { uncounted: "Settlement isn't finished yet — no order can reach paid" },
+      /*
+        ⚠⚠⚠ THE REASON IS SHORT AND NEUTRAL NOW — RULING 18, 2026-09-24.
+        ⚠ SCOTT, overruling his own earlier pattern: *"None….we are in the process
+        of building the application…we just haven't gotten there."* **Do not write
+        roadmap confessions into the product.**
+        ⚠⚠ THE HALF THAT STILL BINDS: a page may not print a figure nothing
+        writes, so the DASH stays and it still carries a reason — ruling 18 names
+        the form: *"a short neutral one such as 'not counted yet'. Never a date, a
+        promise, or an apology."*
+        ⚠ The MEASUREMENT behind it is unchanged and lives in the comment above:
+        nothing writes `PAID`, no `Payment` row is ever created. That belongs in
+        the code, not on the member's screen.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — overruled by ruling 18 as a
+        roadmap confession, and it is the exact string the ruling quotes:
+        //   earnings: { uncounted: "Settlement isn't finished yet — no order can reach paid" },
+      */
+      earnings: { uncounted: "Not counted yet" },
     },
     teaching: {
       teaches,
