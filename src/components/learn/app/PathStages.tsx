@@ -63,6 +63,28 @@ type Stage = {
   done: boolean;
   /** ⚠ `null` = no destination exists. Renders as text, never as a dead link. */
   href: string | null;
+  /**
+   * ── ⚠⚠⚠ THE FOURTH STATE, AND IT CARRIES ITS OWN REASON ────────────────
+   *
+   * ⚠ **PRESENT = THIS PATH CANNOT REACH THIS STAGE, AND THIS SENTENCE SAYS
+   * WHY.** ⚠⚠ Optional, so a reachable stage costs nothing — but **when it is
+   * present it is a string, so an unavailable stage with no reason cannot be
+   * expressed.** That is `PatternHeader`'s rule in a second place: *a dash
+   * without a reason cannot be printed.*
+   *
+   * ⚠⚠⚠ **SCOTT OVERTURNED MY CALL HERE, AND THE FRAMING WAS THE DEFECT:**
+   * *"Uniform versus honest is a false choice: a rail already carries states —
+   * done, current, upcoming — so 'not available on this path' is another state,
+   * not a missing node."* ⚠ I had kept four stages and let `Certificate` render
+   * as an ordinary upcoming step on a path that awards none. ⚠⚠ **THAT IS
+   * `E579`: a node that looks like a destination where nothing can be earned.**
+   * ⚠ My own note that it *"sits oddly beside the certificate stat I just
+   * removed"* was the defect talking, not taste.
+   *
+   * ⚠⚠ **THE SHAPE STAYS THE PATTERN, THE CONTENT STAYS HONEST.** Four stages
+   * everywhere, so the rail is still one thing the whole app speaks.
+   */
+  unavailable?: string;
 };
 
 /**
@@ -76,6 +98,14 @@ export function pathStages(p: {
   slug: string;
   enrolled: boolean;
   percent: number;
+  /**
+   * ⚠⚠ WHETHER AN ASSESSMENT ROW EXISTS AT ALL — **not whether it is open.**
+   * ⚠⚠⚠ THE TWO ARE DIFFERENT FACTS AND CONFLATING THEM IS HOW THE PADLOCK
+   * COMES BACK: `testReady` says the question set is PUBLISHED (ruling 54 — a
+   * fact about the test, never about the member), while this says the path has
+   * a test in the first place. ⚠ **15 of 23 paths have neither.**
+   */
+  testExists: boolean;
   testReady: boolean;
   testPassed: boolean;
   certificateEarned: boolean;
@@ -104,18 +134,56 @@ export function pathStages(p: {
       label: "Path Test",
       done: p.testPassed,
       href: p.testReady ? `/learn/${p.slug}/test` : null,
+      /*
+        ⚠⚠ NO TEST ON THE PATH AT ALL IS A DIFFERENT STATE FROM A TEST THAT IS
+        NOT OPEN YET. ⚠ A DRAFT set is **not** unavailable — the test exists and
+        the test page says so honestly — it is simply not linked. ⚠⚠⚠ **ONLY
+        THE ABSENCE OF THE ROW EARNS THE REASON**, or this would become ruling
+        26a's gate wearing a new word.
+      */
+      ...(p.testExists ? {} : { unavailable: "This path has no test." }),
     },
     /*
       ⚠ THE CERTIFICATE'S ONLY DESTINATION IS THE ONE IT HAS WHEN IT EXISTS.
       ⚠⚠ `verifyUrl` is null until it is earned, so this is the type saying what
       a comment would otherwise have to remember.
+      ⚠⚠⚠ AND WITH NO TEST THERE IS NO ROUTE TO ONE AT ALL — a certificate is a
+      `Certification` row written on a pass, so **no test, no certificate.**
+      Measured: 15 of 23 paths, and 0 `issued_from: "LEARN"` rows ever.
     */
     {
       label: "Certificate",
       done: p.certificateEarned,
       href: p.certificateEarned ? p.certificateUrl : null,
+      /* ⚠ THE REASON SAYS WHY IT IS UNAVAILABLE, NOT HOW IT IS NORMALLY
+         EARNED. *"Earned by passing the path test"* was the first draft and it
+         is a definition, not a reason — it leaves the member to work out that
+         there is no test. ⚠⚠ Each node carries ITS OWN reason even though the
+         node beside it says something similar: a control says what it governs
+         at the point it governs it (the counting rules, rule 3). */
+      ...(p.testExists ? {} : { unavailable: "No test on this path, so none to earn." }),
     },
   ];
+}
+
+/**
+ * ── ⚠⚠⚠ WHICH STAGE THE MEMBER IS STANDING ON. EXPORTED, AND HERE IS WHY ──
+ *
+ * ⚠⚠ **THIS RULE USED TO LIVE INSIDE THE COMPONENT, AND `check:learn-views`
+ * COULD NOT SEE IT.** The gate had its own copy of the same expression, so
+ * mutating the component left the gate GREEN — ⚠⚠⚠ **an assertion its own
+ * mutation cannot fail is not an assertion (`E607`), and mine was testing the
+ * test.** Caught by running the mutation and reading the result rather than
+ * assuming the red.
+ * ⚠ Moving it here fixes both halves at once: one definition (`E585`) and a rule
+ * the gate can actually reach.
+ *
+ * ⚠⚠ **THE FIRST STAGE THAT IS NEITHER DONE NOR UNAVAILABLE.** `-1` when there
+ * is no such stage, which is the truth both when every stage is finished AND
+ * when the ones that remain cannot be reached on this path.
+ */
+export function currentStageIndex(stages: Stage[]): number {
+  return stages.findIndex((s) => !s.done && !s.unavailable);
 }
 
 export function PathStages({ path }: { path: AppPathView }) {
@@ -123,15 +191,22 @@ export function PathStages({ path }: { path: AppPathView }) {
     slug: path.slug,
     enrolled: path.enrolled,
     percent: path.percent,
+    testExists: path.test.exists,
     testReady: path.test.ready,
     testPassed: path.test.passed,
     certificateEarned: path.certificate.earned,
     certificateUrl: path.certificate.verifyUrl,
   });
 
-  /* ⚠⚠ THE FIRST STAGE THAT IS NOT DONE. `-1` when all four are, and then no
-     stage is current — see the docblock. */
-  const currentIndex = stages.findIndex((s) => !s.done);
+  /*
+    ⚠⚠⚠ **WITHOUT THE `unavailable` CLAUSE, FINISHING THE COURSES ON A
+    TEST-LESS PATH WOULD LIGHT `Path Test` AS *"you are here"*** — pointing a
+    member at a stage that does not exist, which is the defect this whole change
+    is fixing rather than a smaller cousin of it.
+    ⚠ The rule itself lives in `currentStageIndex` above, exported so the gate
+    can mutate it — see that docblock for what went wrong when it did not.
+  */
+  const currentIndex = currentStageIndex(stages);
 
   return (
     /*
@@ -156,26 +231,57 @@ export function PathStages({ path }: { path: AppPathView }) {
       className="mb-5 flex flex-wrap items-center gap-x-0.5 gap-y-1 rounded-brand border border-line bg-white px-3 py-1.5"
     >
       {stages.map((s, i) => {
-        const state: StepState =
-          i === currentIndex ? "current" : s.done ? "done" : "upcoming";
+        const state: StepState = s.unavailable
+          ? "unavailable"
+          : i === currentIndex
+            ? "current"
+            : s.done
+              ? "done"
+              : "upcoming";
         /*
           ⚠⚠ THE LABEL CARRIES THE STATE FOR A SCREEN READER, because the disc is
           `aria-hidden` and colour is not announced. ⚠ Without this the rail is
           four words in a row to anybody not looking at it.
+          ⚠⚠⚠ AND AN UNAVAILABLE STAGE SPEAKS ITS REASON, not just its state —
+          the reason is rendered as small print beside the label, and small print
+          is exactly what a screen reader user would otherwise never be told.
         */
-        const spoken = `${s.label} — ${
-          state === "done" ? "done" : state === "current" ? "you are here" : "not yet"
-        }`;
+        const spoken = s.unavailable
+          ? `${s.label} — not available on this path. ${s.unavailable}`
+          : `${s.label} — ${
+              state === "done" ? "done" : state === "current" ? "you are here" : "not yet"
+            }`;
         const inner = (
           <>
             <StepDisc n={i + 1} state={state} />
             <span
               className={
                 "whitespace-nowrap text-[13px] font-semibold " +
-                (state === "current" ? "text-magenta" : state === "done" ? "text-ink" : "text-ink-2")
+                (state === "current"
+                  ? "text-magenta"
+                  : state === "done"
+                    ? "text-ink"
+                    : "text-ink-2")
               }
             >
               {s.label}
+              {/*
+                ── ⚠⚠⚠ THE REASON RENDERS. THAT IS THE WHOLE POINT. ───────────
+
+                ⚠ Scott: *"Certificate renders unavailable, unlinked, WITH ITS
+                REASON."* ⚠⚠ A greyed node with no explanation is the same door
+                onto a wall as a live one — **the member still cannot tell
+                whether they have not got there yet or it does not exist.**
+                ⚠⚠⚠ **IT IS THE SAME CONTRACT `PatternHeader` ENFORCES:** a dash
+                carries its reason, and a reason-less dash is unrepresentable in
+                the type. ⚠ Small print, one line, neutral — no apology, no
+                promise, no date (ruling 18).
+              */}
+              {s.unavailable && (
+                <span className="mt-0.5 block whitespace-normal text-[11px] font-normal leading-snug text-ink-2">
+                  {s.unavailable}
+                </span>
+              )}
             </span>
             <span className="sr-only">{spoken}</span>
           </>

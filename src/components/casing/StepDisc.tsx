@@ -61,9 +61,29 @@
  */
 
 /**
- * ⚠⚠ THREE STATES AND NO FOURTH. `upcoming` is not `locked` — see the docblock.
+ * ── ⚠⚠⚠ FOUR STATES, AND `unavailable` IS NOT A PADLOCK ─────────────────
+ *
+ * ⚠⚠ **THE DISTINCTION IS THE WHOLE REASON THIS IS SAFE.** A padlock is a claim
+ * about **PERMISSION** — *you may not do this yet* — and ruling 26a removed the
+ * permission it claimed, with ruling 54 closing it for good. ⚠⚠⚠ `unavailable`
+ * is a claim about **THE THING ITSELF** — *this path has no such stage* — which
+ * is a fact about the path and says nothing about the member at all.
+ *
+ * ⚠ **SO IT CANNOT BE USED TO RE-GATE THE TEST.** A path whose question set is
+ * merely unpublished is NOT unavailable: the test exists, and only the absence
+ * of the row earns the state. ⚠⚠ `check:learn-views` asserts exactly that, so
+ * the distinction is held by a gate and not by this paragraph.
+ *
+ * ⚠⚠ **IT RENDERS A DASH, NOT A NUMBER**, which is deliberate vocabulary: it is
+ * the same mark `PatternHeader` uses for an uncountable figure, and it comes
+ * with the same obligation — **the caller must supply the reason**, and a
+ * reason-less unavailable stage is unrepresentable in `PathStages`' type.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   ⚠⚠ THREE STATES AND NO FOURTH. `upcoming` is not `locked` — see the docblock.
+ * //   export type StepState = "current" | "done" | "upcoming";
  */
-export type StepState = "current" | "done" | "upcoming";
+export type StepState = "current" | "done" | "upcoming" | "unavailable";
 
 /**
  * ⚠ THE DISC. `aria-hidden` because the label beside it carries the meaning and
@@ -80,10 +100,17 @@ export function StepDisc({ n, state }: { n: number; state: StepState }) {
           ? "bg-magenta text-white"
           : state === "done"
             ? "bg-emerald-600 text-white"
-            : "bg-ink-2/12 text-ink-2")
+            : state === "unavailable"
+              ? /* ⚠ FLATTER AND QUIETER THAN `upcoming`, because `upcoming` is a
+                   promise that you will get there and this is not. */
+                "bg-transparent text-ink-2 ring-1 ring-inset ring-line"
+              : "bg-ink-2/12 text-ink-2")
       }
     >
-      {state === "done" ? "✓" : n}
+      {/* ⚠⚠ A DASH, NOT A NUMBER — a stage that cannot be reached has no
+          position in a sequence the member will walk. Same mark, same
+          obligation, as `PatternHeader`'s uncountable figure. */}
+      {state === "done" ? "✓" : state === "unavailable" ? "—" : n}
     </span>
   );
 }

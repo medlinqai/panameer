@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { pathStages } from "@/components/learn/app/PathStages";
+import { pathStages, currentStageIndex } from "@/components/learn/app/PathStages";
 import { courseTotals, type CourseGroup } from "@/lib/learn-courses";
 
 /**
@@ -208,12 +208,28 @@ const stageFixture = {
   slug: "p",
   enrolled: false,
   percent: 0,
+  /* ⚠ THE FIXTURE DEFAULT IS "this path HAS a test", so the unavailable case is
+     opted into explicitly and cannot be the accidental shape of every check. */
+  testExists: true,
   testReady: false,
   testPassed: false,
   certificateEarned: false,
   certificateUrl: null as string | null,
 };
-const firstNotDone = (s: { done: boolean }[]) => s.findIndex((x) => !x.done);
+/*
+  ── ⚠⚠⚠ IT CALLS THE REAL RULE. IT NO LONGER RE-IMPLEMENTS IT. ───────────
+
+  ⚠⚠ **THIS LINE USED TO BE A LOCAL COPY OF THE COMPONENT'S EXPRESSION, AND THE
+  MUTATION PROVED IT WORTHLESS:** breaking `currentIndex` in `PathStages.tsx`
+  left this gate GREEN AT 68, because the gate was asserting its own helper.
+  ⚠⚠⚠ **AN ASSERTION ITS OWN MUTATION CANNOT FAIL IS NOT AN ASSERTION (`E607`)**
+  — and this one was testing the test. ⚠ Found by RUNNING the mutation and
+  reading the result, not by assuming the red.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const firstNotDone = (s: { done: boolean; unavailable?: string }[]) =>
+  //     s.findIndex((x) => !x.done && !x.unavailable);
+*/
+const firstNotDone = currentStageIndex;
 
 const notStarted = pathStages(stageFixture);
 check("§5 four stages, always", notStarted.length === 4, `${notStarted.length}`);
@@ -275,13 +291,68 @@ check(
 );
 
 /*
+  ── ⚠⚠⚠ §5b THE UNAVAILABLE STAGE (Scott, 2026-09-25 — overturning my call) ──
+
+  ⚠ *"A rail already carries states — done, current, upcoming — so 'not
+  available on this path' is another state, not a missing node. Keep four stages
+  everywhere; on a path with no assessment, Certificate renders unavailable,
+  unlinked, with its reason."*
+  ⚠⚠ **THE SHAPE STAYS THE PATTERN, THE CONTENT STAYS HONEST.**
+*/
+const noTest = pathStages({ ...stageFixture, enrolled: true, percent: 100, testExists: false });
+check("§5b four stages still, on a path with no test", noTest.length === 4);
+check(
+  "§5b Path Test is unavailable and carries a reason",
+  noTest[2].unavailable !== undefined && (noTest[2].unavailable ?? "").length > 0,
+  "an unavailable stage with no reason is a bare dash"
+);
+check(
+  "§5b Certificate is unavailable and carries a reason",
+  noTest[3].unavailable !== undefined && (noTest[3].unavailable ?? "").length > 0
+);
+check("§5b an unavailable stage is never linked (E579)", noTest[2].href === null && noTest[3].href === null);
+/*
+  ⚠⚠⚠ THE ONE THAT CATCHES THE REGRESSION SCOTT NAMED. With the courses done and
+  no test on the path, **nothing may be current** — lighting `Path Test` as *"you
+  are here"* points a member at a stage that does not exist.
+*/
+check(
+  "§5b nothing is current when the remaining stages cannot be reached",
+  firstNotDone(noTest) === -1,
+  "an unavailable stage must never read as 'you are here'"
+);
+/*
+  ⚠⚠ AND THE DISTINCTION THAT KEEPS THIS FROM BEING RULING 26a's GATE IN A NEW
+  COAT: a DRAFT question set is NOT unavailable. The test exists; it is simply
+  not linked, and the test page says so honestly.
+*/
+const draftTest = pathStages({ ...stageFixture, enrolled: true, percent: 100, testExists: true });
+check(
+  "§5b a test that exists but is unpublished is NOT unavailable",
+  draftTest[2].unavailable === undefined && draftTest[2].href === null,
+  "only the absence of the row earns the reason"
+);
+check(
+  "§5b and that path's Path Test is still the current stage",
+  firstNotDone(draftTest) === 2
+);
+
+/*
   ⚠⚠⚠ NO LOCKED STATE CAN BE EXPRESSED. Ruling 26a's padlock cannot return
   through a caller that forgets, because the vocabulary has no word for it.
+  ⚠ `unavailable` is NOT that word: a padlock claims PERMISSION (*you may not*),
+  and this claims **the thing itself does not exist on this path**. The gate
+  above holds the difference; this one holds the vocabulary.
 */
 const disc = strip(readFileSync(join("src", "components", "casing", "StepDisc.tsx"), "utf8"));
 check(
   "§5 the step disc offers no locked or disabled state (ruling 54)",
   !/\block(ed)?\b|\bdisabled\b/i.test(disc)
+);
+check(
+  "§5b the unavailable disc renders a dash, not a number",
+  /state === "unavailable" \? "\\u2014"/.test(disc) || /unavailable" \? "—"/.test(disc),
+  "the dash is the shared mark for something that cannot be counted or reached"
 );
 
 /* ── §6 `/learn/courses` SHOWS COURSES (ruling 53d, and E362's defect) ───── */
