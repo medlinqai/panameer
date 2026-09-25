@@ -52,6 +52,7 @@ import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
   CertificationsBody,
   EducationBody,
+  LanguagesBody,
   /* ⚠ ONE EDIT PATTERN (`E593` WS-B item 6) — `EditLink` lives beside
      `EditButton` in `sections.tsx` and shares its `EDIT_CLASS`, so the link and
      the button render identically. ⚠ It was dead code in `ProviderProfileView`
@@ -851,14 +852,19 @@ export function ConnectProfile({
 
               <TrustRow label="Experience" value={p.experience} />
               <TrustRow label="Rate" value={rateRange(p)} />
-              <TrustRow
-                label={p.languages.length > 1 ? "Languages" : "Language"}
-                value={
-                  p.languages.length > 0
-                    ? p.languages.map((l) => l.name).join(", ")
-                    : null
-                }
-              />
+              {/*
+                ⚠⚠⚠ THE LANGUAGES ROW LEFT THIS STRIP FOR ITS OWN CARD (WS-B).
+                ⚠ It flattened every language to a name and dropped the ability
+                the view model was already carrying. ⚠⚠ **IT IS NOT DUPLICATED
+                BELOW AND ABOVE** — the card replaces it, so the page states
+                each language once, with what the member can actually do in it.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   <TrustRow
+                //     label={p.languages.length > 1 ? "Languages" : "Language"}
+                //     value={p.languages.length > 0
+                //       ? p.languages.map((l) => l.name).join(", ") : null}
+                //   />
+              */}
             </section>
 
             {/*
@@ -1160,6 +1166,42 @@ export function ConnectProfile({
                 ) : undefined
               }
             />
+          </ProfileCard>
+          {/*
+            ── ⚠⚠⚠ LANGUAGES BECOMES ITS OWN CARD (brief 10 WS-B) ─────────────
+
+            ⚠ SCOTT: *"Edit Language → becomes its own CARD, with its own Edit,
+            and **each language carries its abilities**."*
+            ⚠⚠ **IT WAS A `TrustRow` THAT FLATTENED THEM TO NAMES** —
+            `p.languages.map((l) => l.name).join(", ")` — so **the ability was
+            loaded, carried on the view model, and thrown away at the last
+            step.** ⚠⚠⚠ *"Spanish, French"* tells a buyer **nothing about
+            whether this provider can run a meeting in either.**
+
+            ⚠⚠ **`LanguagesBody` ALREADY EXISTS AND ALREADY RENDERS THE ABILITY**
+            (`components/profile/sections.tsx`), reading `LEVEL_LABELS` for the
+            enum and falling back to the legacy free text. ⚠ **RULING 53a
+            CHECKED, NOT ASSUMED:** it is importable, it is NOT orphaned — the
+            wizard's review page mounts it — so **ruling 63's question does not
+            arise: the world has not moved on around it.** ⚠⚠⚠ **THE PROFILE
+            HAND-ROLLED A LESSER VERSION OF A COMPONENT THAT WAS ALREADY RIGHT**,
+            which is `E585` exactly.
+
+            ⚠ **MEASURED BEFORE BUILDING:** 4 language rows exist, **all four
+            carry both** an enum `level` (1 `NATIVE_OR_BILINGUAL`, 3 `FLUENT`)
+            **and** the legacy free text — so there is a real ability to show on
+            every row that exists, and no dash is needed.
+            ⚠⚠ **RULING 67c CHECKED ON ITS WRITER:** the `languages` step goes
+            through `replaceList`, which **throws** when the key is absent, and
+            it enforces a floor of one. **Absent and empty are already
+            distinguished; nothing to fix.**
+          */}
+          <ProfileCard
+            id="languages"
+            title="Languages"
+            edit={owner ? <EditLink href={editHref("languages")} title="Languages" /> : undefined}
+          >
+            <LanguagesBody languages={p.languages} />
           </ProfileCard>
         </div>
 
