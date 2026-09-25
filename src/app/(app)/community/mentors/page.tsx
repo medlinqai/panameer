@@ -123,7 +123,7 @@ export default async function MentorsPage({
           `PageTabs` caller is its own brief. */}
       <PageTabs
         wrap
-        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community/mentors" />
       <div className="mx-auto max-w-5xl space-y-5">
       <header>
         {/* ⚠⚠ NOBODY ON THIS PAGE IS CALLED A MENTOR, AND THAT IS THE POINT

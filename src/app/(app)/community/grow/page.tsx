@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
    the same rebuild as `/community`. */
 import { CommunityHero } from "@/components/community/CommunityHero";
 import { getCommunityHero } from "@/lib/community-hero";
+import { levelStandingFor } from "@/lib/levels";
 import { getCommunityWeb } from "@/lib/community-web";
 import "@/components/community/community-web.css";
 import "@/components/community/community-page.css";
@@ -214,7 +215,7 @@ export default async function GrowPage({
           //   </p>
         */}
         <div className="mb-5">
-          <CommunityHero web={web} hero={hero} />
+          <CommunityHero web={web} hero={hero} standing={await levelStandingFor(personId)} />
         </div>
 
         {/* ── your score ─────────────────────────────────────────────── */}

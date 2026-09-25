@@ -45,7 +45,7 @@ export default async function ColleaguesPage() {
            value lights NOTHING, so the row would silently lose its "you are
            here". ⚠ SUPERSEDED, quoted not deleted (`E164`):
            //   current="/community/colleagues" */
-        current="/community"
+        current="/community/colleagues"
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-5">

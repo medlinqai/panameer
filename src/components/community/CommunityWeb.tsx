@@ -259,20 +259,30 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         </g>
       </svg>
 
-      {/* ⚠ The legend states what each shape MEANS. Three shapes with no key is
-          a puzzle, and the states are facts about people, not styling. */}
+      {/*
+        ⚠ The legend states what each shape MEANS. Three shapes with no key is a
+        puzzle, and the states are facts about people, not styling.
+        ⚠⚠⚠ THE NUMBERS LEFT IT — SCOTT, 2026-09-25: the three figures **move
+        into the header**. ⚠ They are now stated ONCE, in ink, where the mockup
+        puts them; repeating them under the picture is the same figure in two
+        places, which is how two surfaces start disagreeing.
+        ⚠⚠ **THE KEY ITSELF STAYS**, because its job was never the counting — it
+        is what stops three colours being a puzzle.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   {nJ} joined · {nI} invited · {nR} reachable
+      */}
       <ul className="pm-web-key" aria-hidden>
         <li>
           <i className="pm-web-key-joined" />
-          {nJ} joined
+          joined
         </li>
         <li>
           <i className="pm-web-key-invited" />
-          {nI} invited
+          invited
         </li>
         <li>
           <i className="pm-web-key-reachable" />
-          {nR} reachable
+          reachable
         </li>
       </ul>
 

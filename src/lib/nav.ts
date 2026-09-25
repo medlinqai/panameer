@@ -689,7 +689,49 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
       ROUTE — `/connect` now redirects to `/community`, so the band still lights
       Connect and all 31 live references still resolve.
     */
+    /*
+      ── ⚠⚠⚠ THE ROW BECAME THE SECTIONS. SCOTT, 2026-09-25. ────────────────
+
+      ⚠ Shown the mockup beside the live page and asked which row he wanted,
+      Scott chose **the sections** — *"Colleagues · Mentors · Teams"*.
+
+      ⚠⚠⚠ **THE REASON IT IS THE RIGHT ROW IS A MEASURED DEFECT, NOT A
+      PREFERENCE.** With the old row, `/community/colleagues`, `/community/mentors`
+      and `/community/teams` all rendered the tab strip with **`Community`
+      marked `aria-current`** — the row told a member they were on Community
+      while they were on Colleagues. ⚠⚠ **THAT IS WORSE THAN NO HIGHLIGHT:** a
+      row with nothing lit says *you are somewhere else*; a row lighting the
+      parent says *you are here*, and you are not. ⚠ `PageTabs` was doing exactly
+      what it was told — `(t.match ?? t.href) === current` — so the bug was in
+      the ROW, which had no tab for three of its own pages.
+
+      ⚠⚠ **`Community` IS KEPT AS THE FIRST TAB, WHICH IS ONE MORE THAN SCOTT
+      LISTED, AND IT IS DELIBERATE:** the landing page is itself a page in this
+      family, and a row of sections with no tab for `/community` would light
+      nothing there — re-creating the same defect one page over. ⚠ Reported
+      rather than assumed: **if he wants the landing page to have no tab, that is
+      one line.**
+
+      ⚠⚠⚠ **`Settings` STAYS, AND I ALMOST REMOVED IT ON MY OWN AUTHORITY.** It
+      is the one item in this row that is not a community section, so the tidy
+      reading is that it leaves — ⚠⚠ **but the row below already carries a
+      DECISION saying otherwise**, in its own words: *"`Settings` IS NOT REMOVED.
+      Ruling 4 names Service Products and nothing else, and absorbing Settings
+      into Connect is explicitly its own brief."*
+      ⚠ Scott's 2026-09-25 answer was about WHICH SECTIONS the row names. **It was
+      not a ruling about Settings**, and overturning a recorded decision nobody
+      asked me to revisit is picking a side quietly (rule 13 forbids it in BOTH
+      directions). ⚠⚠ So the row is **six** tabs, and the width cost is measured
+      at 390px rather than assumed.
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the row before the sections:
+      //   { label: "Community", href: "/community" },
+      //   { label: "Groups", href: "/community/groups", state: "live" },
+    */
     { label: "Community", href: "/community" },
+    { label: "Colleagues", href: "/community/colleagues" },
+    { label: "Mentors", href: "/community/mentors" },
+    { label: "Teams", href: "/community/teams" },
     { label: "Groups", href: "/community/groups", state: "live" },
     /*
       ── ⚠⚠⚠ `Service Products` IS PROVIDER-ONLY TODAY, AND THAT IS MEASURED ──

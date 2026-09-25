@@ -22,6 +22,7 @@ import { JoinedCard, InvitedCardView } from "@/components/community/ColleagueCar
 import { getMyCommunity } from "@/lib/connections";
 import { getCommunityWeb } from "@/lib/community-web";
 import { getCommunityHero } from "@/lib/community-hero";
+import { standingForViewer } from "@/lib/levels";
 import { getCommunityPage } from "@/lib/community-page";
 import type { Viewer } from "@/lib/access";
 import "@/components/community/community-web.css";
@@ -89,9 +90,19 @@ export default async function CommunityPage() {
       />
       <div className="mx-auto max-w-5xl space-y-5">
         <header>
+          {/* ⚠⚠⚠ `Community`, NOT `My Community` — SCOTT, 2026-09-25:
+              *"the title is wrong"*, and the mockup
+              (`community_page_2026-09-20.html`) says `Community`.
+              ⚠ The subtitle was a SILENT DROP (ruling 22's third bucket) — the
+              mockup carries it and no ruling removed it.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <h1 …>My Community</h1> */}
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-            My Community
+            Community
           </h1>
+          <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">
+            Everyone you&rsquo;re connected to, and everyone you could be.
+          </p>
         </header>
         {viewer && <CommunityBody viewer={viewer} />}
       </div>
@@ -127,13 +138,16 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
   /* ⚠ `getMyCommunity` IS FETCHED ONCE AND PASSED DOWN. The rail wants the
      mentor half and this column wants the incoming half — two calls would be
      two identical round trips for one answer. */
-  const [web, page, mine, hero] = await Promise.all([
+  const [web, page, mine, hero, standing] = await Promise.all([
     getCommunityWeb(viewer),
     getCommunityPage(viewer),
     getMyCommunity(viewer),
     /* ⚠ Fetched alongside the rest, not in a nested await — four independent
        reads for one screen. */
     getCommunityHero(viewer),
+    /* ⚠ XP and the level, from the ALL-TIME score — the same function the
+       monthly figure uses, with a different window (`lib/levels.ts`). */
+    standingForViewer(viewer),
   ]);
   const incoming = mine.incoming
     .filter((r) => r.person)
@@ -157,7 +171,7 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
         by rendering it at desktop width and comparing against the mockup, not
         by any gate — the markup was valid and typechecked either way.
       */}
-      <CommunityHero web={web} hero={hero} />
+      <CommunityHero web={web} hero={hero} standing={standing} />
 
       <div className="pm-cm">
         <div className="min-w-0 space-y-5">

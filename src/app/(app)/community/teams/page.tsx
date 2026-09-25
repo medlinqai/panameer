@@ -112,7 +112,7 @@ export default async function MyTeamsPage() {
           `PageTabs` caller is its own brief. */}
       <PageTabs
         wrap
-        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community" />
+        eyebrow="CONNECT" sequence={tabSequenceFor("/connect")} tabs={connectTabs(viewer, unread)} current="/community/teams" />
       <div className="mx-auto max-w-4xl space-y-4">
       <header>
         <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">

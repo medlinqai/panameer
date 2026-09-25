@@ -737,9 +737,33 @@ check(
    ⚠⚠ THE CAPITAL IS ASSERTED, so lower-casing these labels again fails here. */
 const controls = bodies.get(join("src", "components", "community", "ConnectControls.tsx")) ?? "";
 check("E374/1 — ConnectControls is on disk", controls.length > 0);
+/*
+  ── ⚠⚠⚠ THE "ONE VERB" HALF IS RETIRED BY SCOTT, 2026-09-25 ─────────────
+
+  ⚠ `E374`'s formulation was **one verb, two capacities** — `Connect as
+  Colleague` and `Connect as Mentor`. ⚠⚠ Asked on 2026-09-25 what a connected
+  colleague's card should offer, Scott answered with the string:
+  *"Connected colleagues should show Message & **Request to Mentor**."*
+  ⚠⚠⚠ **THAT IS TWO VERBS, AND IT IS DELIBERATE ON HIS PART** — so the one-verb
+  rule is what moved, not the code (rule 13: the newest dated statement is the
+  live one). ⚠ **REPORTED, NOT RESOLVED QUIETLY:** if he wants the single verb
+  back, this assertion and one label are the whole change.
+
+  ⚠⚠ **AND THE NEW VERB IS THE MORE HONEST ONE**, which is why it is worth
+  keeping: a `MENTOR` row is created `ACCEPTED` unilaterally — the connection
+  model's one-way exception — so *"Connect"* understated what the control does,
+  while *"Request"* says the member is asking.
+
+  ⚠⚠ WHAT SURVIVES AND IS STILL ASSERTED: **both capacities ship as real,
+  distinct controls, in Title Case.** ⚠ Deleting a label without shipping its
+  replacement still fails here, which was the original point.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "E374/1 — one verb, two capacities: both labels ship",
+  //   /Connect as Colleague/.test(controls) && /Connect as Mentor/.test(controls)
+*/
 check(
-  "E374/1 — one verb, two capacities: both labels ship",
-  /Connect as Colleague/.test(controls) && /Connect as Mentor/.test(controls)
+  "E374/1 — both capacities ship as real labels, in Title Case",
+  /Connect as Colleague/.test(controls) && /Request to Mentor/.test(controls)
 );
 check(
   "E374/1 — Decline is a real button, not a hidden menu item",
@@ -1216,7 +1240,22 @@ check(
   asserted below, and the ABSENCE is asserted POSITIVELY — because dropping a
   name from a list proves nothing on its own, as this file already says twice.
 */
-const CONNECT_TABS = ["Community", "Groups", "Settings"];
+/*
+  ── ⚠⚠⚠ THE ROW BECAME THE SECTIONS. SCOTT, 2026-09-25. ──────────────────
+  ⚠ Shown the `community_page_2026-09-20` mockup beside the live page, Scott
+  chose **the sections** for this row. ⚠⚠ The reason is a measured defect, not a
+  preference: `/community/colleagues`, `/community/mentors` and
+  `/community/teams` all rendered this strip with **`Community` marked
+  `aria-current`** — the row told a member they were on Community while they
+  were on Colleagues, which is worse than lighting nothing.
+  ⚠⚠⚠ **THE COUNT WENT 3 → 6, AND THAT IS A REAL TENSION WORTH NAMING:** Scott
+  also said *"less tabs…simple"* on 2026-09-20. **The newest dated statement is
+  the live one (rule 13), and it is REPORTED rather than reconciled quietly** —
+  if six is too many, the landing tab and `Settings` are the two candidates.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const CONNECT_TABS = ["Community", "Groups", "Settings"];
+*/
+const CONNECT_TABS = ["Community", "Colleagues", "Mentors", "Teams", "Groups", "Settings"];
 for (const label of CONNECT_TABS) {
   check(`E593/5 — Connect tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
 }
@@ -1264,11 +1303,26 @@ check(
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   "E593/5 — the Connect row is exactly five tabs" … === 5
 */
+/* ⚠ SIX NOW (Scott, 2026-09-25 — the sections). ⚠⚠ THE COUNT IS STILL THE THING
+   BEING HELD: an appended seventh must fail rather than pass quietly, which is
+   the whole reason Scott asked for a count in the first place.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   "E593/5 — the Connect row is exactly three tabs" … === 3 */
 check(
-  "E593/5 — the Connect row is exactly three tabs",
-  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 3,
+  "E593/5 — the Connect row is exactly six tabs",
+  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 6,
   `${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} live entries`
 );
+/* ⚠⚠⚠ AND EVERY SECTION THE ROW NAMES IS A PAGE THAT EXISTS — the assertion
+   that makes the new row worth having. A tab pointing at a route with no page
+   is the defect the old row had in reverse. */
+for (const href of ["/community", "/community/colleagues", "/community/mentors", "/community/teams", "/community/groups"]) {
+  check(
+    `E593/5 — ⚠⚠ the row's ${href} tab names a real page`,
+    connectSet.includes(`href: "${href}"`),
+    "a tab for a page that does not exist is a door onto a wall"
+  );
+}
 /* ⚠⚠⚠ AND `Service Products` IS POSITIVELY ABSENT FROM THE CONNECT SET — not
    merely missing from a list this gate happens to iterate. ⚠ Scoped to the
    Connect block, because the label legitimately still exists elsewhere in
@@ -1617,13 +1671,15 @@ for (const f of PROFILE_ROW_PAGES) {
     !(PAGE_TABS["/connect"] ?? []).some((t) => t.label === "Profile"),
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
-  /* ⚠ THREE NOW (`E619` WS-C, ruling 4). ⚠ SUPERSEDED, quoted (`E164`):
+  /* ⚠ THE SECTIONS NOW (Scott, 2026-09-25). ⚠ SUPERSEDED, quoted (`E164`):
      //   "E598/B — ⚠ Connect's row still has its four tabs"
-     //   === "Community · Groups · Service Products · Settings" */
+     //   === "Community · Groups · Service Products · Settings"
+     //   "E598/B — ⚠ Connect's row is Community · Groups · Settings"
+     //   === "Community · Groups · Settings" */
   check(
-    "E598/B — ⚠ Connect's row is Community · Groups · Settings",
+    "E598/B — ⚠ Connect's row is the sections",
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ") ===
-      "Community · Groups · Settings",
+      "Community · Colleagues · Mentors · Teams · Groups · Settings",
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
 }

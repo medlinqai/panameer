@@ -209,8 +209,20 @@ export function ConnectControls({
             Decline
           </button>
         )}
+        {/*
+          ⚠⚠⚠ `Request to Mentor`, NOT `Connect as Mentor` — SCOTT, 2026-09-25,
+          answering what a connected colleague's card should offer:
+          *"Connected colleagues should show Message & Request to Mentor."*
+          ⚠ It is the more honest verb as well as his word: a `MENTOR` row is
+          created ACCEPTED unilaterally (the connection model's one-way
+          exception), so "Connect" understated what the button does and
+          "Request" says the member is ASKING.
+          ⚠ Rule 11 — Title Case on a button label.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   {mentor ? "Disconnect" : "Connect as Mentor"}
+        */}
         <button type="button" className={mentor ? QUIET : GHOST} disabled={busy} onClick={toggleMentor}>
-          {mentor ? "Disconnect" : "Connect as Mentor"}
+          {mentor ? "Disconnect" : "Request to Mentor"}
         </button>
       </div>
       {/*
