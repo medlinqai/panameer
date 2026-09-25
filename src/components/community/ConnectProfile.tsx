@@ -971,11 +971,43 @@ export function ConnectProfile({
                   >
                     Message
                   </button>
-                  {messagePermission && !messagePermission.ok && (
-                    <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
-                      {messagePermission.message}
-                    </p>
-                  )}
+                  {/*
+                    ── ⚠⚠⚠ THREE STATES, NOT TWO. `null` IS NOT `!ok`. ─────────
+
+                    ⚠ SCOTT'S WALK: ***"Message Profile (Viewing in 360) —
+                    button is not clickable."*** ⚠⚠ **MEASURED ON HIS OWN 360
+                    PREVIEW:** the section renders, the button is `disabled`,
+                    and **the reason paragraph does not render at all** — so the
+                    control was **greyed out and silent.**
+                    ⚠⚠⚠ **THAT IS A DASH WITH NO REASON, IN BUTTON FORM** — the
+                    exact thing `PatternHeader`'s type makes unrepresentable for
+                    a figure, and the counting rules' second line: *a real zero
+                    and an uncountable must not look the same.*
+
+                    ⚠ **WHY IT WAS SILENT:** `/providers/[id]` passes
+                    `messagePermission: null` when `profile.isOwner`, because
+                    `canMessage` is never asked about somebody messaging
+                    themselves. ⚠⚠ The old guard tested `messagePermission &&
+                    !ok`, so **`null` fell through both branches** — it is
+                    neither a yes nor a stated no.
+
+                    ⚠⚠⚠ **THE VERDICT IS NOT FABRICATED TO FILL THE GAP.**
+                    Inventing a `MessagePermission` for the owner in the page
+                    would put a verdict in the lib's shape that the lib never
+                    gave — `canMessage` stays byte-unchanged and this component
+                    still *reads* the rule rather than restating it. **`null`
+                    means "not applicable to this viewer", and that is rendered
+                    as its own honest sentence.**
+                    ⚠ **THE PREVIEW STAYS FAITHFUL** (`E602` WS-D: *"See What
+                    Buyers See MEANS EXACTLY THAT"*) — the control still appears
+                    where a buyer would find it, so the owner learns it exists;
+                    it simply says why *they* cannot press it.
+                  */}
+                  <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                    {messagePermission
+                      ? messagePermission.message
+                      : "This is where buyers message you. You can't message yourself."}
+                  </p>
                 </>
               )}
             </section>
