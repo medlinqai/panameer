@@ -82,7 +82,12 @@ export function LessonActions({
           <button
             type="button"
             disabled
-            title="Messages isn't built yet — it's a Medlinq port on the backlog."
+            /* ⚠⚠⚠ RULING 18, AND THIS ONE LEAKED AN INTERNAL BACKLOG TO A LEARNER —
+               "it's a Medlinq port on the backlog" names another product and a
+               work queue. ⚠ A member is owed what the control does, not our plan.
+               ⚠ SUPERSEDED (`E164`):
+               //   "Messages isn't built yet — it's a Medlinq port on the backlog." */
+            title="Messaging is not available."
             /*
               E217 — A DISABLED GHOST, not a faded primary. This sat beside
               "Next Lesson" as a second solid magenta button at 35% — two

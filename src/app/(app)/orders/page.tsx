@@ -111,10 +111,24 @@ export default async function Page() {
             //   much. One appears here when a work request is awarded, or when an order
             //   agreed elsewhere is brought in as a direct work order.
           */}
+          {/*
+            ⚠⚠⚠ THE SECOND SENTENCE WAS FALSE AS OF `E621`. ⚠ It said *"Nothing
+            creates one yet, so this list stays empty for everyone"* — and
+            `lib/work-orders.ts` now creates one by BOTH routes, so the page was
+            telling a member the machine is missing while the machine runs.
+            ⚠⚠ **A page that under-claims is not "safely conservative" — it is
+            wrong, and it sends somebody away from a thing that works.**
+            ⚠ What replaces it names the two ways in, which is what a member
+            actually needs and what the earlier `E603` copy was reaching for.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   A work order is the SOW — what is to be done, for how long, and
+            //   for how much. Nothing creates one yet, so this list stays empty for
+            //   everyone.
+          */}
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] leading-relaxed text-ink-2">
             A work order is the SOW &mdash; what is to be done, for how long, and
-            for how much. Nothing creates one yet, so this list stays empty for
-            everyone.
+            for how much. One arrives here when a buyer hires you, or when a
+            purchase order is brought in from their own system.
           </p>
         </div>
       ) : (

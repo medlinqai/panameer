@@ -97,7 +97,10 @@ export function InvitedCardView({ i }: { i: InvitedCard }) {
           <button
             type="button"
             disabled
-            title="Nudging an invitation isn't built yet."
+            /* ⚠⚠⚠ RULING 18 + `E579`: this control is DISABLED and its tooltip named a
+             backlog. A disabled control says WHAT it is, never WHEN it will work.
+             ⚠ SUPERSEDED (`E164`): //   "Nudging an invitation isn't built yet." */
+            title="Nudging an invitation is not available."
             className="rounded-brand border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
           >
             Nudge
@@ -105,7 +108,8 @@ export function InvitedCardView({ i }: { i: InvitedCard }) {
           <button
             type="button"
             disabled
-            title="Resending an invitation isn't built yet."
+            /* ⚠ SUPERSEDED (`E164`): //   "Resending an invitation isn't built yet." */
+            title="Resending an invitation is not available."
             className="rounded-brand border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
           >
             Resend

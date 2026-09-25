@@ -399,7 +399,8 @@ export function CreateWorkRequest({
                 */}
                 <JdDoor
                   title="Email Your JD"
-                  badge="Coming soon"
+                  /* ⚠ RULING 18: SUPERSEDED (`E164`): //   badge="Coming soon" */
+                  badge="Not available"
                   disabled
                   description="Forward a JD to Panameer and we'll draft it for you."
                 />

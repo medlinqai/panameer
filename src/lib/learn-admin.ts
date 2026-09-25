@@ -1142,8 +1142,22 @@ export async function getPublishReadiness(id: string): Promise<PublishReadiness>
   if (lessons.length > 0 && playable === 0) {
     warnings.push(
       lessons.length === 1
-        ? `The only lesson here has no video yet, so it will show as "coming soon". You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
-        : `None of the ${lessons.length} lessons have a video yet, so every one will show as "coming soon". You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
+        /*
+          ⚠⚠⚠ CORRECTED 2026-09-25 — THIS ADMIN GUIDANCE DESCRIBED A LEARNER
+          STRING THAT NO LONGER EXISTS. It told an admin the lesson *"will show
+          as 'coming soon'"*; ⚠ measured, there is **no `coming soon` anywhere a
+          learner can see in Learn** — `E611` removed it, and `check:learn-build`
+          and `check:learn-my-learning` both now FORBID it.
+          ⚠⚠ So the sentence was stale in the most misleading direction: it told
+          the person who could fix it that the product still says a thing it does
+          not. **The comment is half the code, and admin copy is a comment the
+          product renders.**
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   …so it will show as "coming soon".
+          //   …so every one will show as "coming soon".
+        */
+        ? `The only lesson here has no video yet, so it will not be playable. You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
+        : `None of the ${lessons.length} lessons have a video yet, so none will be playable. You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
     );
   }
   if (urlMissing > 0) {

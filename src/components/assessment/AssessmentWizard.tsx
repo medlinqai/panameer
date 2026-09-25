@@ -776,7 +776,9 @@ export function AssessmentWizard({
                   thing you forward to a colleague.
                 */
                 onClick={() => p.active && setProcess(p.key)}
-                title={p.active ? p.name : `${p.name} — coming soon`}
+                /* ⚠ RULING 18: no schedule on a disabled control. SUPERSEDED (`E164`):
+                   //   title={p.active ? p.name : `${p.name} — coming soon`} */
+                title={p.active ? p.name : `${p.name} — not available`}
                 description={
                   p.active
                     ? p.blurb

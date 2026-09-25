@@ -161,8 +161,18 @@ export function WorkFeed({
           title={query ? `Nothing matches “${query}”` : "No work posted yet"}
           detail={
             query
-              ? "Buyers aren't posting work requests on Panameer yet, so there is nothing to match against."
-              : "Buyers aren't posting work requests yet. Your profile is what they find you by in the meantime — keep it current and you'll be near the top when this opens."
+              /*
+                ⚠⚠ RULING 18: no promise, no date, no apology. ⚠⚠⚠ *"when this
+                opens"* SAID THE FEATURE WAS SHUT — and it is not: `work-request.ts`
+                creates work requests today and `/create-work` is reachable. The
+                honest fact is about the DATA (no buyer has posted yet), never about
+                the MECHANISM, and the two had been collapsed into one sentence.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   "Buyers aren't posting work requests on Panameer yet, so there is nothing to match against."
+                //   "Buyers aren't posting work requests yet. Your profile is what they find you by in the meantime — keep it current and you'll be near the top when this opens."
+              */
+              ? "No work request matches that search yet."
+              : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
           }
         />
       ) : (

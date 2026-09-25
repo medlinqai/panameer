@@ -121,7 +121,11 @@ export function SocialSignIn({
     side-picking value survives unnoticed.
   */
   callbackUrl = "/join",
-  disabledHint = "Coming soon",
+  /* ⚠⚠ RULING 18 — a disabled control must not carry a schedule. ⚠ OAuth is
+     off until the keys are added, which is a FACT about configuration and not
+     a date. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   disabledHint = "Coming soon", */
+  disabledHint = "Not available",
 }: {
   callbackUrl?: string;
   disabledHint?: string;
