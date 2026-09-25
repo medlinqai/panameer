@@ -23,6 +23,16 @@
  * ⚠ NO DATABASE AND NO BROWSER. Source is read as text; rules are exercised as
  * functions.
  */
+/*
+  ── ⚠⚠ MOVED OFF `basis` ONTO `transaction_type` (`P2-A8-E621`, ruling 37b) ─
+  ⚠ Scott's `WR_LINE` field set names THREE types where `LineBasis` had two, and
+  the requisition line now carries `TransactionType`. ⚠⚠ THE RULE THESE FIXTURES
+  ASSERT IS UNCHANGED — every line assigned and priced — only the field it reads
+  moved. ⚠ `RATE` became `SERVICE_BY_QTY` and `AMOUNT` became `SERVICE_BY_AMT`:
+  these fixtures are all SERVICES, and `PRODUCT_BY_QTY` is not reachable from a
+  buyer's budget type (see `transactionTypeForPricingType`).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: "RATE"` / `basis: "AMOUNT"`.
+*/
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { workRequestIsComplete } from "@/lib/transaction-spine";
@@ -68,7 +78,7 @@ const fileAt = (p: string) => SRC.find((f) => f.path === join(...p.split("/")));
 const L = (o: Partial<LineForCompleteness>): LineForCompleteness => ({
   line_number: 1,
   description: "a line",
-  basis: "RATE",
+  transaction_type: "SERVICE_BY_QTY",
   ...o,
 });
 
@@ -79,15 +89,15 @@ const TRUTH_TABLE: { name: string; lines: LineForCompleteness[] }[] = [
   { name: "RATE, assigned, no price", lines: [L({ provider_person_id: "p" })] },
   { name: "RATE, priced, no provider", lines: [L({ unit_price_cents: 15000 })] },
   { name: "RATE, neither", lines: [L({})] },
-  { name: "AMOUNT, assigned + priced", lines: [L({ basis: "AMOUNT", provider_person_id: "p", amount_cents: 24000 })] },
-  { name: "AMOUNT, assigned, no price", lines: [L({ basis: "AMOUNT", provider_person_id: "p" })] },
-  { name: "AMOUNT, priced, no provider", lines: [L({ basis: "AMOUNT", amount_cents: 24000 })] },
+  { name: "AMOUNT, assigned + priced", lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p", amount_cents: 24000 })] },
+  { name: "AMOUNT, assigned, no price", lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p" })] },
+  { name: "AMOUNT, priced, no provider", lines: [L({ transaction_type: "SERVICE_BY_AMT", amount_cents: 24000 })] },
   {
     /* ⚠ THE CROSS-COLUMN TRAP: an AMOUNT line carrying a unit price is NOT
        priced, and a RATE line carrying an amount is NOT priced. Reading one
        column for both bases is how half the lines render as free. */
     name: "AMOUNT line carrying a unit price is NOT priced",
-    lines: [L({ basis: "AMOUNT", provider_person_id: "p", unit_price_cents: 15000 })],
+    lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p", unit_price_cents: 15000 })],
   },
   {
     name: "RATE line carrying an amount is NOT priced",
@@ -97,14 +107,14 @@ const TRUTH_TABLE: { name: string; lines: LineForCompleteness[] }[] = [
     name: "two lines, one short",
     lines: [
       L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-      L({ line_number: 2, basis: "AMOUNT", provider_person_id: "p" }),
+      L({ line_number: 2, transaction_type: "SERVICE_BY_AMT", provider_person_id: "p" }),
     ],
   },
   {
     name: "three lines, all ready",
     lines: [
       L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-      L({ line_number: 2, basis: "AMOUNT", provider_person_id: "q", amount_cents: 900 }),
+      L({ line_number: 2, transaction_type: "SERVICE_BY_AMT", provider_person_id: "q", amount_cents: 900 }),
       L({ line_number: 3, provider_person_id: "r", unit_price_cents: 1 }),
     ],
   },
@@ -120,7 +130,7 @@ for (const row of TRUTH_TABLE) {
   );
 }
 
-/* ⚠ THE MUTATION: a `completenessFor` that ignored the basis — the single most
+/* ⚠ THE MUTATION: a `completenessFor` that ignored the transaction type — the single most
    likely wrong rewrite — must DISAGREE with the spine, or the table above is
    proving nothing. */
 function naiveComplete(lines: LineForCompleteness[]): boolean {
@@ -134,7 +144,7 @@ function naiveComplete(lines: LineForCompleteness[]): boolean {
     (r) => naiveComplete(r.lines) !== workRequestIsComplete(r.lines)
   );
   check(
-    "1 — MUTATION: a basis-blind completeness check DOES disagree with the spine",
+    "1 — MUTATION: a type-blind completeness check DOES disagree with the spine",
     disagreements.length > 0,
     "the truth table cannot tell the two apart — it is not exercising the rule"
   );
@@ -148,7 +158,7 @@ check(
 {
   const c = completenessFor([
     L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-    L({ line_number: 2, basis: "AMOUNT" }),
+    L({ line_number: 2, transaction_type: "SERVICE_BY_AMT" }),
     L({ line_number: 3, provider_person_id: "p" }),
   ]);
   check("1 — only the SHORT lines appear in gaps", c.gaps.length === 2);

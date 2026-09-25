@@ -522,6 +522,11 @@ model Person {
 
   @@index([company_id])
   @@index([site_id])
+  /// ⚠ `E621` ruling 37c — lines where this person is the RECRUITER who placed
+  /// the provider. `SetNull`, so a closed recruiter account never deletes the
+  /// record of what was bought.
+  recruitedLines           WorkRequestLine[] @relation("WorkRequestLineRecruiter")
+
   @@map("people")
 }
 
@@ -2994,6 +2999,15 @@ model WorkRequest {
   /// `RequisitioningBU`, true of every line by construction.
   lines               WorkRequestLine[]
   status              WorkRequestStatus    @default(DRAFT)
+
+  /// ⚠⚠⚠ RULING 14 — THE BUYER PICKS, PER REQUEST. ⚠ NO `@default`, AND THAT IS
+  /// DELIBERATE: a default here would mean *"nobody decided"*, which is exactly
+  /// what `E612` refused for a group's type. ⚠⚠ Required instead, so the
+  /// COMPILER finds every creator — the pattern Scott asked be repeated
+  /// (`SendEmailArgs.template`): *"a forgetful caller being a compile error is
+  /// worth more than any check we could write after the fact."*
+  /// ⚠ Safe to require: `work_requests` holds ZERO rows, measured.
+  proposal_access   WorkProposalAccess
   posted_at           DateTime?
 
   /// ── CONFIDENTIAL HIRING (`P1-J4-E025`) ────────────────────────────────────
@@ -3023,6 +3037,10 @@ model WorkRequest {
   @@index([p_account_id])
   @@index([buyer_person_id])
   @@index([status])
+  /// ⚠⚠ `E621` WS-A — EVERY proposal against this request, invited or open.
+  /// Ruling 14: the buyer picks per request, so both shapes land here.
+  proposals ProviderBid[]
+
   @@map("work_requests")
 }
 
@@ -3060,9 +3078,61 @@ enum WorkRequestDuration {
   GT_6_MONTHS
 }
 
+/// ── ⚠⚠⚠ THE HEADER'S STATES (`P2-A8-E621`, ruling 37a) ───────────────────
+///
+/// SCOTT, 2026-09-24: **"Add the statuses now, rename later."**
+///
+/// ⚠⚠ RULING 17 REQUIRES THAT CREATING THE WORK ORDER MOVES THIS STATUS — the
+/// request must not sit open behind a live work order. ⚠⚠⚠ IT COULD NOT: this
+/// enum held `DRAFT · POSTED` and nothing else, which is the stop the premise
+/// check reported.
+///
+/// ⚠ THREE ADDED, NOT FOUR, AND THE MISSING ONE IS DELIBERATE: ruling 37a says
+/// to copy `WorkRequestLineStatus` (`DRAFT · SOURCING · ASSIGNED · ORDERED ·
+/// CANCELLED`). ⚠⚠ **`SOURCING` IS NOT ADDED, BECAUSE `POSTED` ALREADY IS IT**
+/// on the header — `POST /api/work-requests/[id]/post` writes it together with
+/// `posted_at`, so it is a live, written state meaning *out for sourcing*.
+/// ⚠⚠⚠ TWO VALUES MEANING ONE THING ON ONE RECORD IS HOW A STATUS DRIFTS. The
+/// LINE needs both because a line is drafted and then sourced; the header does
+/// that as `DRAFT → POSTED`. ⚠ Reported to Scott before adding.
+///
+/// ⚠⚠ THIS ENUM BELONGS TO THE **WORK** RECORD, NOT THE REQUISITION. The
+/// premise check established that `WorkRequest` carries role, pillar, region,
+/// experience, budget, worksite, duration and skills — a job posting. ⚠ The
+/// rename to `WORK` is its own brief (ruling 37a); this is on the list it
+/// inherits.
+/// ── ⚠⚠⚠ WHO MAY PROPOSE (`P2-A8-E621` WS-A, ruling 14) ───────────────────
+///
+/// ⚠ SCOTT, 2026-09-24: **"The buyer picks, per request."** Each work request is
+/// posted as either invite-only or open to any provider, and the buyer chooses
+/// which when they post it.
+///
+/// ⚠⚠ THIS RESOLVED A CONTRADICTION RATHER THAN PICKING A SIDE:
+/// `work_request_to_settlement_flow.md` says providers are **invited**; the
+/// mockup's work record says **"Public · any provider can find and propose."**
+/// ⚠⚠⚠ NEITHER DOCUMENT WAS WRONG — they described two settings of one switch,
+/// and nothing in the schema could express the switch.
+///
+/// ⚠ RECORDED FOR `brief_work_detail_route` (brief 12), WHICH LISTS THIS
+/// MISSING COLUMN AS ONE OF ITS OPEN STOPS: it is added here, in the schema
+/// window brief 6 owns, so brief 12 inherits it rather than re-opening it.
+enum WorkProposalAccess {
+  /// ⚠ Only a provider holding an issued `BidRequest` may propose.
+  INVITE_ONLY
+  /// ⚠ Any provider who can see the posting may propose, invited or not.
+  OPEN
+}
+
 enum WorkRequestStatus {
   DRAFT
+  /// ⚠ Out for sourcing — visible to sellers, accepting proposals.
   POSTED
+  /// ⚠ A provider has been selected and the requisition exists.
+  ASSIGNED
+  /// ⚠⚠ A WORK ORDER EXISTS. This is the state ruling 17 requires.
+  ORDERED
+  /// ⚠ Withdrawn by the buyer before an order was placed.
+  CANCELLED
 }
 
 // ===========================================================================
@@ -4920,6 +4990,35 @@ model TicketMessage {
 /// AMOUNT line is a lump sum; several are milestones. There is deliberately NO
 /// settlement-method enum and NO `Milestone` model, and `check:transaction-spine`
 /// asserts their ABSENCE, because a later "improvement" will try to add them.
+/// ── ⚠⚠⚠ TRANSACTION TYPE — SCOTT'S THIRD VALUE (`P2-A8-E621`, ruling 37b) ─
+///
+/// ⚠ Scott's `WR_LINE` field set, taken from Oracle Cloud, names **three**:
+/// `Product by Qty` · `Service by Qty` · `Service by Amt`.
+///
+/// ⚠⚠⚠ `LineBasis` HELD TWO, AND COLLAPSING THE FIRST PAIR LOSES A REAL
+/// DISTINCTION: **a product by quantity is RECEIVED; a service by quantity is
+/// TIMESHEETED.** They settle differently, and settlement is what the type
+/// exists to drive (`transaction_type_2026-09-21.md`). ⚠ The requisition doc's
+/// own aside — *"RATE covers by Qty, AMOUNT covers by Amt"* — is what hid it.
+///
+/// ⚠⚠ CHARGE TYPE IS A DIFFERENT CONCEPT AND MUST NOT BE MERGED INTO THIS
+/// (ruled 2026-09-21): charge type is what **Panameer** charges; this is how a
+/// **line settles**. ⚠ They are deliberately separate fields so nobody tidies
+/// them into one.
+enum TransactionType {
+  /// Received by quantity. A good, or a pre-built deliverable.
+  PRODUCT_BY_QTY
+  /// ⚠ Settled by TIMESHEET, capped by any not-to-exceed. A person's hours.
+  SERVICE_BY_QTY
+  /// Settled by completion or milestone acceptance. A fixed-price service.
+  SERVICE_BY_AMT
+}
+
+/// ⚠⚠ SUPERSEDED BY `TransactionType` (`E621`, ruling 37b) — quoted, not
+/// deleted (`E164`). ⚠ IT IS STILL REFERENCED BY `SupplierPart.default_basis`,
+/// which this brief does not touch, so the enum REMAINS DEFINED. ⚠⚠ What moved
+/// is `WorkRequestLine.basis`, and every call site that moved is listed in the
+/// brief's report.
 enum LineBasis {
   RATE
   AMOUNT
@@ -4996,7 +5095,36 @@ model WorkRequestLine {
   work_request_id String @db.Uuid
   line_number     Int
 
-  basis       LineBasis
+  /// ── ⚠⚠⚠ THE LINE'S TRANSACTION TYPE (`P2-A8-E621`, ruling 37b) ─────────
+  ///
+  /// ⚠ Scott's `WR_LINE` field. It decides HOW THIS LINE SETTLES: received,
+  /// timesheeted, or accepted on completion.
+  ///
+  /// ⚠⚠⚠ `basis` IS **KEPT** BESIDE IT, NOT DROPPED — SCOTT'S CALL, 2026-09-24,
+  /// AND HIS REASON IS BETTER THAN THE ONE I GAVE. I argued the drop was safe
+  /// because `work_request_lines` holds ZERO ROWS. ⚠⚠ THAT ANSWERS THE WRONG
+  /// QUESTION: **`prisma db push` reaches trunk and every preview the instant
+  /// it runs, not when this branch merges** — there is ONE shared database. So
+  /// the risk was never the data, it was the CODE on trunk.
+  /// ⚠⚠⚠ AND TRUNK DOES READ IT: **`src/lib/hire.ts:81` selects `basis: true`**
+  /// on `work_request_lines`, and `check:hire` asserts a completeness rule on
+  /// it. Dropping the column would have thrown on production immediately.
+  /// ⚠ Ruling 1's hazard in its mirror form.
+  ///
+  /// ⚠⚠ SO THIS PUSH IS PURELY ADDITIVE and needs no `--accept-data-loss`.
+  /// ⚠⚠⚠ **THE DROP IS OWED, NOT CANCELLED:** `basis` is retired in its own
+  /// small change, ON TRUNK, once `transaction_type` is merged and proven —
+  /// which is where a destructive push is safe. Until then this file carries
+  /// two fields meaning one thing, which is `E585`'s shape accepted knowingly
+  /// and on a timer, not by accident.
+  transaction_type TransactionType
+
+  /// ⚠⚠ RETAINED AND NULLABLE — superseded by `transaction_type` above (`E164`:
+  /// quoted, not deleted). ⚠ NULLABLE because a line written by `E621` supplies
+  /// `transaction_type` and must not be forced to invent a value for a field
+  /// that is on its way out. ⚠⚠⚠ NOTHING NEW MAY WRITE IT; it exists so trunk's
+  /// `hire.ts` select keeps working until the retirement change lands.
+  basis       LineBasis?
   description String
   /// ⚠⚠ PER LINE. The header column is SUPERSEDED — see `WorkRequest`.
   unspsc_code String?
@@ -5025,6 +5153,16 @@ model WorkRequestLine {
   /// is also what makes the work-order fan-out (WS-2) group by provider.
   provider_person_id String? @db.Uuid
 
+  /// ── ⚠⚠ SCOTT'S `WR_LINE` FIELDS THAT DID NOT EXIST (ruling 37c) ────────
+  /// ⚠ `Recruiter ID` — a recruiter can place a provider, and it is PER LINE:
+  /// one requisition can carry a direct hire and a recruiter placement.
+  recruiter_person_id String? @db.Uuid
+  /// ⚠ `Work Order` — Scott's field, written by the requisition→order step.
+  /// ⚠⚠ ON THE LINE, NOT THE HEADER: a WORK with several positions makes one
+  /// line per winner, and each winner gets their own order.
+  /// ⚠⚠⚠ Nothing writes it yet, and that is not a reason to omit it (ruling 24).
+  work_order_id String? @db.Uuid
+
   positions        Int       @default(1)
   service_start    DateTime?
   service_end      DateTime?
@@ -5036,10 +5174,16 @@ model WorkRequestLine {
   updated_at DateTime @updatedAt
 
   workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
+  /// ⚠⚠ BOTH `SetNull` — deleting a recruiter or an order must never delete the
+  /// line that records what was bought. The purchase outlives the account.
+  recruiter Person?   @relation("WorkRequestLineRecruiter", fields: [recruiter_person_id], references: [id], onDelete: SetNull)
+  workOrder WorkOrder? @relation("WorkRequestLineOrder", fields: [work_order_id], references: [id], onDelete: SetNull)
 
   @@unique([work_request_id, line_number])
   @@index([work_request_id])
   @@index([provider_person_id])
+  @@index([recruiter_person_id])
+  @@index([work_order_id])
   @@map("work_request_lines")
 }
 
@@ -5148,6 +5292,9 @@ model WorkOrder {
   @@index([buyer_person_id])
   @@index([status])
   @@index([external_ref])
+  /// ⚠ `E621` ruling 37c — the requisition lines this order was built from.
+  requisitionLines WorkRequestLine[] @relation("WorkRequestLineOrder")
+
   @@map("work_orders")
 }
 
@@ -5528,7 +5675,22 @@ model ProviderBid {
 
   /// ⚠ `@unique`: one bid per ITB. A second bid is a REVISION of this one, not a
   /// second document — otherwise "the bid" is ambiguous at the moment of award.
-  bid_request_id String @unique @db.Uuid
+  /// ── ⚠⚠⚠ NULLABLE, BECAUSE A PROPOSAL NEED NOT BE INVITED (`E621` WS-A) ─
+  ///
+  /// ⚠ RULING 14: **the buyer picks, per request** — a work request is posted
+  /// either invite-only or open to any provider. ⚠⚠ THIS COLUMN WAS NOT NULL,
+  /// SO A PROPOSAL REQUIRED AN INVITE AND THE OPEN HALF OF THAT RULING WAS
+  /// UNREACHABLE. Both documents were right; they described two settings of
+  /// one switch, and the schema could only express one of them.
+  /// ⚠ Set on an invited proposal, null on an open one.
+  bid_request_id String? @unique @db.Uuid
+
+  /// ⚠⚠ THE REQUEST ITSELF, HELD DIRECTLY. An invited proposal could reach it
+  /// through `bid_request`, but an OPEN one has no invite to reach through —
+  /// so the link has to live here, on every proposal, either way.
+  /// ⚠⚠⚠ IT IS ALSO WHAT MAKES 'ONE PROPOSAL PER PROVIDER PER REQUEST'
+  /// ENFORCEABLE BY THE DATABASE rather than by code remembering to check.
+  work_request_id String @db.Uuid
 
   provider_person_id String @db.Uuid
 
@@ -5549,9 +5711,19 @@ model ProviderBid {
   updated_at DateTime @updatedAt
 
   lines      ProviderBidLine[]
-  bidRequest BidRequest        @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+  bidRequest  BidRequest? @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+  workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
 
+  /// ── ⚠⚠⚠ ONE PROPOSAL PER PROVIDER PER REQUEST, BY CONSTRUCTION ─────────
+  /// ⚠ WS-A item 3: *"One proposal per provider per request. Idempotent;
+  /// editing before a decision replaces rather than duplicates."*
+  /// ⚠⚠ THE DATABASE REFUSES THE SECOND ROW rather than this code remembering
+  /// to check — the same call `GroupMembership` made, and for the same reason.
+  /// ⚠ It works for BOTH shapes: an invited proposal and an open one are still
+  /// one provider against one request.
+  @@unique([work_request_id, provider_person_id])
   @@index([provider_person_id])
+  @@index([work_request_id])
   @@index([status])
   @@map("provider_bids")
 }

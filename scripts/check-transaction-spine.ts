@@ -124,13 +124,19 @@ check("3 — FIXED maps to AMOUNT", basisForPricingType("FIXED") === "AMOUNT");
 check("3 — RECURRING maps to AMOUNT", basisForPricingType("RECURRING") === "AMOUNT");
 
 /* ═══ 4 · COMPLETE means EVERY line assigned and priced ═════════════════════ */
-const priced = { basis: "RATE" as const, unit_price_cents: 100 };
+/* ⚠⚠ THE REQUISITION LINE MOVED TO `transaction_type` (`E621`, ruling 37b);
+   the ORDER-side shapes above keep `basis`, because `WorkOrderLine` still uses
+   `LineBasis`. ⚠ Two enums in one file is the migration's real state, not an
+   inconsistency — and section 3 above still asserts the old mapping because
+   `basisForPricingType` is still live for those models.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`): `{ basis: "RATE" as const, … }` */
+const priced = { transaction_type: "SERVICE_BY_QTY" as const, unit_price_cents: 100 };
 check("4 — a fully assigned, priced request is COMPLETE",
   workRequestIsComplete([{ ...priced, provider_person_id: "a" }, { ...priced, provider_person_id: "b" }]));
 check("4 — ⚠ one unassigned line makes it NOT complete",
   !workRequestIsComplete([{ ...priced, provider_person_id: "a" }, { ...priced, provider_person_id: null }]));
 check("4 — ⚠ one unpriced line makes it NOT complete",
-  !workRequestIsComplete([{ basis: "RATE", provider_person_id: "a", unit_price_cents: null }]));
+  !workRequestIsComplete([{ transaction_type: "SERVICE_BY_QTY", provider_person_id: "a", unit_price_cents: null }]));
 check("4 — an empty request is NOT complete", !workRequestIsComplete([]));
 
 /* ═══ 5 · FAN-OUT — group by provider, and BOTH PATHS IDENTICAL ════════════ */

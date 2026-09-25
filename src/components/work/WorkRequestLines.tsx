@@ -5,6 +5,15 @@ import Link from "next/link";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 import type { SerializedLine, WorkRequestDetail } from "@/lib/work-request-lines";
+import type { TransactionType } from "@prisma/client";
+import { pricedByQuantity } from "@/lib/transaction-spine";
+
+/* ⚠ ONE LABEL PER TYPE, so no branch invents its own wording. */
+const TYPE_LABEL: Record<TransactionType, string> = {
+  PRODUCT_BY_QTY: "Product by quantity",
+  SERVICE_BY_QTY: "Rate",
+  SERVICE_BY_AMT: "Fixed amount",
+};
 
 /**
  * THE LINES TABLE AND ITS ACTIONS (`P1-J4-E392` WS-2).
@@ -30,7 +39,9 @@ import type { SerializedLine, WorkRequestDetail } from "@/lib/work-request-lines
 type ProviderOption = { personId: string; name: string; headline: string };
 
 const EMPTY_DRAFT = {
-  basis: "RATE" as "RATE" | "AMOUNT",
+  /* ⚠⚠ SCOTT'S THREE-VALUE TRANSACTION TYPE (`E621`, ruling 37b). ⚠ SUPERSEDED,
+     quoted not deleted (`E164`): `basis: "RATE" as "RATE" | "AMOUNT",` */
+  transaction_type: "SERVICE_BY_QTY" as TransactionType,
   description: "",
   uom: "HOUR",
   quantity: "",
@@ -47,12 +58,12 @@ function toBody(d: Draft) {
     return v.trim() === "" || Number.isNaN(n) ? null : Math.round(n * 100);
   };
   return {
-    basis: d.basis,
+    transaction_type: d.transaction_type,
     description: d.description,
-    uom: d.basis === "RATE" ? d.uom : null,
-    quantity: d.basis === "RATE" && d.quantity.trim() !== "" ? Number(d.quantity) : null,
-    unitPriceCents: d.basis === "RATE" ? dollars(d.unitPrice) : null,
-    amountCents: d.basis === "AMOUNT" ? dollars(d.amount) : null,
+    uom: pricedByQuantity(d.transaction_type) ? d.uom : null,
+    quantity: pricedByQuantity(d.transaction_type) && d.quantity.trim() !== "" ? Number(d.quantity) : null,
+    unitPriceCents: pricedByQuantity(d.transaction_type) ? dollars(d.unitPrice) : null,
+    amountCents: !pricedByQuantity(d.transaction_type) ? dollars(d.amount) : null,
     serviceStart: d.serviceStart || null,
     serviceEnd: d.serviceEnd || null,
   };
@@ -60,7 +71,7 @@ function toBody(d: Draft) {
 
 function draftFrom(l: SerializedLine): Draft {
   return {
-    basis: l.basis,
+    transaction_type: l.transaction_type,
     description: l.description,
     uom: l.uom ?? "HOUR",
     quantity: l.quantity == null ? "" : String(l.quantity),
@@ -168,19 +179,22 @@ export function WorkRequestLines({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                    Line {l.lineNumber} · {l.basis === "RATE" ? "Rate" : "Fixed amount"}
+                    Line {l.lineNumber} · {TYPE_LABEL[l.transaction_type as TransactionType]}
                   </p>
                   <p className="mt-1 text-[16px] font-bold">{l.description}</p>
                 </div>
                 <div className="text-right">
                   {/*
-                    ⚠ THE PRICE SHOWN IS THE ONE ITS BASIS USES. A RATE line
-                    prices by `unitPriceCents` and an AMOUNT line by
+                    ⚠ THE PRICE SHOWN IS THE ONE ITS TYPE USES. A by-quantity
+                    line prices by `unitPriceCents` and a by-amount line by
                     `amountCents`; reading one column for both is how a line of
                     the other kind renders as free.
+                    ⚠⚠ `pricedByQuantity` IS THE SPINE'S PREDICATE, not a local
+                    comparison — the page and the completeness gate must not
+                    disagree about which price a line carries (`E585`).
                   */}
                   <p className="text-[15px] font-bold">
-                    {l.basis === "RATE"
+                    {pricedByQuantity(l.transaction_type)
                       ? l.unitPriceCents != null
                         ? `${formatCents(l.unitPriceCents, l.currency)} / ${(l.uom ?? "hour").toLowerCase()}`
                         : "No rate yet"
@@ -188,7 +202,7 @@ export function WorkRequestLines({
                         ? formatCents(l.amountCents, l.currency)
                         : "No amount yet"}
                   </p>
-                  {l.basis === "RATE" && l.quantity != null && (
+                  {pricedByQuantity(l.transaction_type) && l.quantity != null && (
                     <p className="text-[13px] text-ink-2">
                       {l.quantity} {(l.uom ?? "hour").toLowerCase()}s
                     </p>
@@ -374,16 +388,24 @@ function LineFields({
       <div>
         <label className="block text-[13.5px] font-semibold">How is it priced?</label>
         <select
-          value={draft.basis}
-          onChange={(e) => set({ basis: e.target.value as "RATE" | "AMOUNT" })}
+          value={draft.transaction_type}
+          onChange={(e) => set({ transaction_type: e.target.value as TransactionType })}
           className={input}
         >
-          <option value="RATE">A rate — per hour or per day</option>
-          <option value="AMOUNT">A fixed amount</option>
+          {/* ⚠⚠ SCOTT'S THREE TYPES. ⚠ `PRODUCT_BY_QTY` IS OFFERED because a
+              buyer genuinely can order a good by quantity — it is only
+              unreachable from a BUDGET TYPE (see `transactionTypeForPricingType`),
+              not from a person choosing here.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <option value="RATE">A rate — per hour or per day</option>
+              //   <option value="AMOUNT">A fixed amount</option> */}
+          <option value="SERVICE_BY_QTY">A rate — per hour or per day</option>
+          <option value="SERVICE_BY_AMT">A fixed amount</option>
+          <option value="PRODUCT_BY_QTY">A product, by quantity</option>
         </select>
       </div>
 
-      {draft.basis === "RATE" ? (
+      {pricedByQuantity(draft.transaction_type) ? (
         <>
           <div>
             <label className="block text-[13.5px] font-semibold">Unit</label>

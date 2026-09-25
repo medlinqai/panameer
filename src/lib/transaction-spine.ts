@@ -1,4 +1,4 @@
-import { LineBasis } from "@prisma/client";
+import { LineBasis, TransactionType } from "@prisma/client";
 import { rateBreakdown } from "@/lib/display";
 
 /**
@@ -139,9 +139,62 @@ export function basisForPricingType(t: "HOURLY" | "FIXED" | "RECURRING"): LineBa
   return t === "HOURLY" ? "RATE" : "AMOUNT";
 }
 
+/**
+ * ── ⚠⚠⚠ THE BUYER'S PRICING CHOICE → SCOTT'S TRANSACTION TYPE (`E621`) ───
+ *
+ * ⚠ `basisForPricingType` above maps the same input onto the OLD two-value
+ * `LineBasis`. It is kept because `SupplierPart`, `WorkOrderLine`,
+ * `ProviderBidLine` and `BidRequestLine` still use that enum — only the
+ * REQUISITION line moved (ruling 37b).
+ *
+ * ⚠⚠ WHY `HOURLY` BECOMES `SERVICE_BY_QTY` AND NOT `PRODUCT_BY_QTY`: the
+ * distinction is the whole reason Scott's field set has three values where
+ * `LineBasis` had two — **a service by quantity is TIMESHEETED, a product by
+ * quantity is RECEIVED.** Hours are a service. ⚠⚠⚠ `PRODUCT_BY_QTY` IS
+ * DELIBERATELY UNREACHABLE FROM HERE: a buyer's budget type cannot express
+ * "I am buying a good", and inventing a path to it would be guessing at a
+ * choice the buyer never made. It becomes reachable when items do (`Shop`).
+ */
+export function transactionTypeForPricingType(
+  t: "HOURLY" | "FIXED" | "RECURRING"
+): TransactionType {
+  return t === "HOURLY" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT";
+}
+
+/**
+ * ⚠⚠ PRICED BY QUANTITY, OR PRICED BY AMOUNT — the only question completeness
+ * asks of a line's type. ⚠ Both quantity shapes carry a unit price; the amount
+ * shape carries a total. ⚠⚠⚠ ONE PLACE, because the page, the API and the gate
+ * all ask it and must not answer differently (`E585`).
+ */
+/**
+ * ── ⚠⚠⚠ THE BRIDGE BETWEEN THE TWO ENUMS, WHILE BOTH EXIST (`E621`) ─────
+ *
+ * ⚠ The REQUISITION line carries `TransactionType` (Scott's three values); the
+ * ORDER line still carries `LineBasis` (two). ⚠⚠ A work order is built FROM a
+ * requisition line, and `orders.ts` compares the two to show what changed — so
+ * something has to translate, and it must be ONE thing.
+ *
+ * ⚠⚠⚠ IT IS LOSSY IN ONE DIRECTION AND THAT IS THE POINT OF RULING 37b: both
+ * quantity shapes collapse to `RATE`, which is exactly the distinction
+ * `LineBasis` cannot hold. ⚠ Going the other way is therefore NOT round-trip
+ * safe, and no inverse is offered here on purpose — a `RATE` order line cannot
+ * say whether it was a product or a service.
+ * ⚠⚠ WHEN `WorkOrderLine` GAINS `TransactionType` (its own brief), this bridge
+ * is what gets deleted, and the lossiness goes with it.
+ */
+export function basisForTransactionType(t: TransactionType): LineBasis {
+  return pricedByQuantity(t) ? "RATE" : "AMOUNT";
+}
+
+export function pricedByQuantity(t: TransactionType): boolean {
+  return t === "PRODUCT_BY_QTY" || t === "SERVICE_BY_QTY";
+}
+
 export type RequestLineForCompleteness = {
   provider_person_id?: string | null;
-  basis: LineBasis;
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;`
+  transaction_type: TransactionType;
   unit_price_cents?: number | null;
   amount_cents?: number | null;
 };
@@ -159,7 +212,7 @@ export function workRequestIsComplete(lines: RequestLineForCompleteness[]): bool
   return lines.every(
     (l) =>
       !!l.provider_person_id &&
-      (l.basis === "RATE" ? l.unit_price_cents != null : l.amount_cents != null)
+      (pricedByQuantity(l.transaction_type) ? l.unit_price_cents != null : l.amount_cents != null)
   );
 }
 

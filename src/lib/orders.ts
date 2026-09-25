@@ -1,5 +1,6 @@
 import { LineBasis, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { basisForTransactionType } from "@/lib/transaction-spine";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -552,7 +553,13 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
         where: { id: { in: originIds } },
         select: {
           id: true,
-          basis: true,
+          /* ⚠⚠ THE REQUISITION LINE'S LIVE FIELD IS `transaction_type` since
+             `E621` (ruling 37b). ⚠ `basis` is retained beside it and NULLABLE
+             so trunk's readers keep working, so selecting it here would compare
+             an order line against a column nothing writes any more.
+             ⚠⚠⚠ Translated at the boundary by `basisForTransactionType`, which
+             is the ONE bridge between the two enums while both exist. */
+          transaction_type: true,
           uom: true,
           quantity: true,
           unit_price_cents: true,
@@ -601,7 +608,11 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
         },
         origin
           ? {
-              basis: origin.basis,
+              /* ⚠⚠ TRANSLATED, NOT READ. The requisition line's live field is
+                 `transaction_type` (`E621`); `basis` beside it is retained and
+                 nullable, and reading it here would compare against a column
+                 nothing writes any more. */
+              basis: basisForTransactionType(origin.transaction_type),
               uom: origin.uom,
               quantity: origin.quantity == null ? null : Number(origin.quantity),
               unit_price_cents: origin.unit_price_cents,

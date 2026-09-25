@@ -1,9 +1,11 @@
-import { LineBasis, WorkRequestLineStatus } from "@prisma/client";
+import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
   assertLineShape,
-  basisForPricingType,
+  basisForTransactionType,
+  pricedByQuantity,
+  transactionTypeForPricingType,
   workRequestIsComplete,
 } from "@/lib/transaction-spine";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
@@ -41,7 +43,9 @@ export type LineForCompleteness = {
   line_number: number;
   description: string;
   provider_person_id?: string | null;
-  basis: LineBasis;
+  /** ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;` — moved to
+      Scott's three-value `TransactionType` (ruling 37b). */
+  transaction_type: TransactionType;
   unit_price_cents?: number | null;
   amount_cents?: number | null;
 };
@@ -91,7 +95,11 @@ export function completenessFor(lines: LineForCompleteness[]): Completeness {
     /* ⚠ THE PRICE A LINE NEEDS DEPENDS ON ITS BASIS — a RATE line is priced by
        `unit_price_cents` and an AMOUNT line by `amount_cents`. Checking only one
        column would mark every line of the other kind unpriced forever. */
-    const priced = l.basis === "RATE" ? l.unit_price_cents != null : l.amount_cents != null;
+    /* ⚠⚠ THE PREDICATE IS THE SPINE'S, NOT RE-TYPED HERE. Both quantity shapes
+       carry a unit price; the amount shape carries a total (`E585`). */
+    const priced = pricedByQuantity(l.transaction_type)
+      ? l.unit_price_cents != null
+      : l.amount_cents != null;
     if (!priced) missing.push("price");
     if (missing.length) gaps.push({ lineNumber: l.line_number, description: l.description, missing });
   }
@@ -121,7 +129,7 @@ export function completenessMessage(c: Completeness): string {
 const LINE_SELECT = {
   id: true,
   line_number: true,
-  basis: true,
+  transaction_type: true,
   description: true,
   uom: true,
   quantity: true,
@@ -138,7 +146,7 @@ const LINE_SELECT = {
 export type SerializedLine = {
   id: string;
   lineNumber: number;
-  basis: LineBasis;
+  transaction_type: TransactionType;
   description: string;
   uom: string | null;
   quantity: number | null;
@@ -239,7 +247,7 @@ export async function getWorkRequestDetail(
   const lines: SerializedLine[] = rows.map((r) => ({
     id: r.id,
     lineNumber: r.line_number,
-    basis: r.basis,
+    transaction_type: r.transaction_type,
     description: r.description,
     uom: r.uom,
     quantity: r.quantity == null ? null : Number(r.quantity),
@@ -278,7 +286,7 @@ export async function getWorkRequestDetail(
       line_number: l.lineNumber,
       description: l.description,
       provider_person_id: l.providerPersonId,
-      basis: l.basis,
+      transaction_type: l.transaction_type,
       unit_price_cents: l.unitPriceCents,
       amount_cents: l.amountCents,
     }))),
@@ -325,7 +333,15 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
   });
   if (!wr) return;
 
-  const basis: LineBasis = wr.budget_type ? basisForPricingType(wr.budget_type) : "AMOUNT";
+  /* ⚠⚠ THE TYPE COMES FROM THE SPINE'S MAPPING, NOT A LOCAL TERNARY (`E585`).
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const basis: LineBasis = wr.budget_type ? basisForPricingType(wr.budget_type) : "AMOUNT";
+     ⚠⚠⚠ `basis` IS NOT WRITTEN AT ALL ANY MORE. It is retained on the model and
+     nullable so trunk's readers keep working (ruling 37b), and a new line must
+     not invent a value for a field on its way out. */
+  const transactionType: TransactionType = wr.budget_type
+    ? transactionTypeForPricingType(wr.budget_type)
+    : "SERVICE_BY_AMT";
   const description = wr.title.trim() || "Line 1";
 
   try {
@@ -333,13 +349,13 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
       data: {
         work_request_id: workRequestId,
         line_number: 1,
-        basis,
+        transaction_type: transactionType,
         description,
         currency: wr.currency,
         /* ⚠ A FIXED budget IS a line amount; an HOURLY one is not a unit price —
            see the docblock. Only the unambiguous half is carried across. */
-        amount_cents: basis === "AMOUNT" ? wr.budget_amount_cents : null,
-        uom: basis === "RATE" ? "HOUR" : null,
+        amount_cents: pricedByQuantity(transactionType) ? null : wr.budget_amount_cents,
+        uom: pricedByQuantity(transactionType) ? "HOUR" : null,
         role_type_id: wr.role_type_id,
         service_start: wr.start_date,
         service_end: wr.end_date,
@@ -364,7 +380,8 @@ async function nextLineNumber(workRequestId: string): Promise<number> {
 }
 
 export type LineDraft = {
-  basis: LineBasis;
+  /** ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;` */
+  transaction_type: TransactionType;
   description: string;
   uom?: string | null;
   quantity?: number | null;
@@ -385,20 +402,28 @@ export type LineDraft = {
 function validateDraft(d: LineDraft): void {
   if (!d.description || d.description.trim().length < 2)
     throw new WorkRequestError("A line needs a description", "INVALID");
-  if (d.basis !== "RATE" && d.basis !== "AMOUNT")
-    throw new WorkRequestError("A line is priced by RATE or by AMOUNT", "INVALID");
+  /* ⚠⚠ SCOTT'S THREE TYPES (`E621`, ruling 37b). ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):
+     //   if (d.basis !== "RATE" && d.basis !== "AMOUNT")
+     //     throw new WorkRequestError("A line is priced by RATE or by AMOUNT", "INVALID"); */
+  const TYPES: TransactionType[] = ["PRODUCT_BY_QTY", "SERVICE_BY_QTY", "SERVICE_BY_AMT"];
+  if (!TYPES.includes(d.transaction_type))
+    throw new WorkRequestError("A line needs a transaction type", "INVALID");
   if (d.unitPriceCents != null && d.amountCents != null)
     throw new WorkRequestError(
       "A line carries a rate or an amount, never both — it could be settled twice",
       "INVALID"
     );
   const priced =
-    d.basis === "RATE" ? d.unitPriceCents != null : d.amountCents != null;
+    pricedByQuantity(d.transaction_type) ? d.unitPriceCents != null : d.amountCents != null;
   if (priced) {
     assertLineShape({
-      basis: d.basis,
-      uom: d.basis === "RATE" ? d.uom ?? "HOUR" : null,
-      quantity: d.basis === "RATE" ? d.quantity ?? 1 : null,
+      /* ⚠⚠ `assertLineShape` IS ORDER-SIDE and still speaks `LineBasis`, so the
+         type is translated through the spine's one bridge rather than compared
+         here (`basisForTransactionType`). */
+      basis: basisForTransactionType(d.transaction_type),
+      uom: pricedByQuantity(d.transaction_type) ? d.uom ?? "HOUR" : null,
+      quantity: pricedByQuantity(d.transaction_type) ? d.quantity ?? 1 : null,
       unit_price_cents: d.unitPriceCents ?? null,
       amount_cents: d.amountCents ?? null,
     });
@@ -409,12 +434,15 @@ function validateDraft(d: LineDraft): void {
 
 function draftToData(d: LineDraft) {
   return {
-    basis: d.basis,
+    /* ⚠⚠⚠ `basis` IS NOT WRITTEN. It is retained on the model and nullable so
+       trunk's readers keep working (ruling 37b); a new line carries only the
+       live field. ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: d.basis,` */
+    transaction_type: d.transaction_type,
     description: d.description.trim(),
-    uom: d.basis === "RATE" ? d.uom?.trim() || "HOUR" : null,
-    quantity: d.basis === "RATE" ? d.quantity ?? null : null,
-    unit_price_cents: d.basis === "RATE" ? d.unitPriceCents ?? null : null,
-    amount_cents: d.basis === "AMOUNT" ? d.amountCents ?? null : null,
+    uom: pricedByQuantity(d.transaction_type) ? d.uom?.trim() || "HOUR" : null,
+    quantity: pricedByQuantity(d.transaction_type) ? d.quantity ?? null : null,
+    unit_price_cents: pricedByQuantity(d.transaction_type) ? d.unitPriceCents ?? null : null,
+    amount_cents: pricedByQuantity(d.transaction_type) ? null : d.amountCents ?? null,
     service_start: d.serviceStart ? new Date(d.serviceStart) : null,
     service_end: d.serviceEnd ? new Date(d.serviceEnd) : null,
     note_to_supplier: d.noteToSupplier?.trim() || null,
@@ -562,7 +590,7 @@ export async function completeWorkRequest(viewer: Viewer, id: string) {
       line_number: true,
       description: true,
       provider_person_id: true,
-      basis: true,
+      transaction_type: true,
       unit_price_cents: true,
       amount_cents: true,
     },

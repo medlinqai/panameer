@@ -78,7 +78,7 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
       line_number: true,
       description: true,
       provider_person_id: true,
-      basis: true,
+      transaction_type: true,
       unit_price_cents: true,
       amount_cents: true,
     },

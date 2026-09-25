@@ -215,9 +215,36 @@ check(
   "3 — BidRequest is @@unique on (work_request_id, provider_person_id)",
   /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("BidRequest"))
 );
+/*
+  ── ⚠⚠⚠ STILL `@unique`, NOW NULLABLE (`P2-A8-E621` WS-A, ruling 14) ──────
+
+  ⚠ SCOTT, 2026-09-24: **"The buyer picks, per request."** A request is posted
+  either invite-only or open to any provider. ⚠⚠ `bid_request_id` WAS NOT NULL,
+  so **a proposal required an invite and the OPEN half of that ruling was
+  literally unreachable** — the contradiction between the flow doc and the
+  mockup was a switch the schema could not express.
+
+  ⚠⚠⚠ THE RULE THIS ASSERTS IS UNCHANGED AND STILL ENFORCED: `@unique` on a
+  NULLABLE column still allows exactly one bid per ITB, because Postgres treats
+  each NULL as distinct — so many OPEN proposals coexist while an invited one
+  is still one per invite. ⚠ That is precisely the behaviour wanted, not a
+  loophole.
+  ⚠⚠ AND THE OPEN CASE IS NOT LEFT UNGUARDED: idempotency for BOTH shapes is
+  `@@unique([work_request_id, provider_person_id])`, asserted directly below.
+  ⚠ This is `check:rollup`'s case — the ruling moved, the code did not drift.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   /bid_request_id\s+String\s+@unique/.test(modelBody("ProviderBid"))
+*/
 check(
   "3 — ProviderBid.bid_request_id is @unique (one bid per ITB)",
-  /bid_request_id\s+String\s+@unique/.test(modelBody("ProviderBid"))
+  /bid_request_id\s+String\?\s+@unique/.test(modelBody("ProviderBid"))
+);
+/* ⚠⚠⚠ AND ONE PROPOSAL PER PROVIDER PER REQUEST, WHICHEVER SHAPE IT IS. This
+   is what makes an OPEN proposal idempotent, and the database refuses the
+   second row rather than the writer remembering to check. */
+check(
+  "3 — ProviderBid is @@unique on (work_request_id, provider_person_id)",
+  /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("ProviderBid"))
 );
 /* ⚠ THE FAN-OUT IS THE ITB, NOT A LIST INSIDE ONE. A `provider_person_ids`
    array would be the shape that cannot be issued or declined per provider. */
