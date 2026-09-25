@@ -4,13 +4,18 @@
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { SettingsTabs } from "@/components/settings/SettingsTabs";
    //   import { ConsoleHero, ConsoleHeroRow } from "@/components/casing/ConsoleHero"; */
-import { ConsoleHero } from "@/components/casing/ConsoleHero";
+/* ⚠⚠ `ConsoleHero` AND `SettingsTitle` LEFT WITH THE HERO (ruling 73 defect 1),
+   and neither file is deleted (`E164`). ⚠⚠⚠ `69d`, ON THE COMMIT THAT RECORDED
+   IT: removing a render orphaned two imports and took lint 35 → 37 **while the
+   build stayed green.** The baseline is the test.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { ConsoleHero } from "@/components/casing/ConsoleHero";
+   //   import { SettingsTitle } from "@/components/settings/SettingsTitle"; */
 import { SettingsSectionList } from "@/components/settings/SettingsSectionList";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { canProvideServices } from "@/lib/access";
-import { SettingsTitle } from "@/components/settings/SettingsTitle";
 import { guardPage } from "@/lib/guard";
 
 /**
@@ -136,7 +141,22 @@ export default async function SettingsLayout({
         tabs={profileTabs(viewer)}
         current="/settings"
       />
-      <ConsoleHero eyebrow="Settings" title={<SettingsTitle />} />
+      {/*
+        ── ⚠⚠⚠ THE HERO IS GONE (ruling 73 defect 1) ──────────────────────────
+
+        ⚠ `E637` removed the TAB ROW from inside `ConsoleHero` under ruling 61
+        **and left the hero behind.** ⚠⚠ What remained was a gradient wash whose
+        only content was the word **"Settings" — for the third time on one
+        page**, under `ACCOUNT INFORMATION › Settings` (the lit tab) and above
+        *"Your settings"*. ⚠⚠⚠ **THAT IS `E628`'s DEFECT ON A NEW PAGE:** an
+        eyebrow repeating the thing directly beneath it.
+        ⚠ `ConsoleHero` and `SettingsTitle` are **not deleted** (`E164`); they
+        are simply no longer mounted here. ⚠⚠ `ConsoleHero` now has **no
+        caller** — recorded rather than removed, because deleting a component is
+        not this brief's business.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <ConsoleHero eyebrow="Settings" title={<SettingsTitle />} />
+      */}
       {/*
         ── ⚠⚠ THE SECTIONS BECOME AN IN-PAGE LIST, NOT A SECOND TAB ROW ───────
 

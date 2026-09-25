@@ -5,18 +5,26 @@ import { usePathname } from "next/navigation";
 import { settingsNavFor, settingsPageFor } from "@/lib/settings-nav";
 
 /**
- * ── ⚠⚠⚠ THE SETTINGS SECTION LIST. **IT IS NOT THE LEFT RAIL.** ──────────
+ * ── ⚠⚠⚠ THE SETTINGS LEFT RAIL — THE THIRD LEVEL OF THE MENU (ruling 71) ──
  *
- * ⚠⚠⚠ **READ THIS BEFORE RENAMING ANYTHING HERE.** Ruling 61a, and Scott's own
- * words of 2026-09-24: *"TO BE CLEAR — the left rail is ONLY carrying the admin
- * functions for the admin role. It is NOT visible to other roles."*
+ * ⚠ **BAND → TAB ROW → LEFT RAIL.** Scott, 2026-09-25: *"We need a third level
+ * menu...and the menu is on the left rail."*
  *
- * ⚠⚠ **AN EIGHT-SECTION "LEFT RAIL" ON `/settings`, VISIBLE TO EVERY MEMBER,
- * WOULD READ AS A DIRECT CONTRADICTION OF THAT RULING — AND WOULD BE ONE IF IT
- * SHARED THE COMPONENT.** ⚠ So this is an **IN-PAGE SECTION LIST**: its own
- * component, its own name, no `rail` anywhere in it, and **no import from the
- * app shell.** ⚠⚠⚠ **THE NEXT PERSON TO GREP `left rail` MUST NOT FIND TWO
- * THINGS WEARING ONE NAME** (ruling 51's family).
+ * ⚠⚠⚠ **RULING 71 CORRECTS 61a, AND MY READING OF IT WAS WRONG.** I read his
+ * 2026-09-24 line — *"the left rail is ONLY carrying the admin functions for the
+ * admin role. It is NOT visible to other roles"* — as **"non-admins never see a
+ * rail."** ⚠⚠ **IT MEANS NON-ADMINS NEVER SEE ADMIN FUNCTIONS IN THE RAIL.**
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — my reading:
+ * //   THE SETTINGS SECTION LIST. IT IS NOT THE LEFT RAIL.
+ * //   An eight-section "left rail" visible to every member would read as a
+ * //   direct contradiction of that ruling … So this is an IN-PAGE SECTION LIST.
+ *
+ * ⚠⚠ **SO IT IS A RAIL AND MAY BE CALLED ONE.** What still holds is the half
+ * that was never about the name: ⚠⚠⚠ **IT DOES NOT SHARE THE ADMIN RAIL'S
+ * COMPONENT**, because the contents and the capability rules differ — this one
+ * is `settingsNavFor(isProvider)`, the admin one is gated on the admin role.
+ * ⚠ **The filename keeps `SectionList` rather than churning every import for a
+ * word**; the docblock is what a reader needs, and it now says both things.
  *
  * ⚠ **THE APP-SHELL RAIL IS `AppRail.tsx`, AND IT IS NOT MOUNTED ANYWHERE** —
  * `E559` replaced it with a horizontal band on every signed-in page. **Nothing
@@ -92,22 +100,35 @@ export function SettingsSectionList({ isProvider }: { isProvider: boolean }) {
   const active = settingsPageFor(pathname);
 
   /*
-    ── ⚠⚠⚠ IT DOES NOT RENDER ON THE INDEX, AND THAT IS NOT A SPECIAL CASE ──
+    ── ⚠⚠⚠ IT RENDERS ON EVERY SETTINGS PAGE, INCLUDING THE INDEX ──────────
 
-    ⚠⚠ **MEASURED AT 390px: ON `/settings` THIS LIST AND THE PAGE'S OWN SECTION
-    CARDS ARE THE SAME EIGHT LINKS, STACKED ONE ABOVE THE OTHER.** ⚠ The index
-    IS a list of the sections; putting a second one above it is the duplication
-    `E628` fixed on the Learn catalogue — *"the same destinations, twice, in two
-    vocabularies"* — and the shape Scott rejected outright as *"DOUBLE MENUS"*.
-    ⚠⚠⚠ **THE CARDS WIN BECAUSE THEY CARRY THE BLURB AND THIS CANNOT.** A 210px
-    column has no room for *"Your password, connected sign-ins and two-step
-    verification"*, and the blurb is the reason an index is worth landing on.
-    ⚠ Everywhere else the list is the persistent *"which setting am I in"*
-    navigation and renders normally — so this is one page, not a variant.
-    ⚠⚠ It is decided HERE rather than in the layout because a server layout
-    cannot read the pathname, and this component already does.
+    ⚠⚠ **RULING 71: THIS IS THE THIRD LEVEL OF THE MENU — band → tab row →
+    LEFT RAIL** — and Scott's *"the menu is on the left rail"* makes it part of
+    the page's chrome rather than a decoration the index can do without.
+
+    ⚠⚠⚠ **I HAD IT RETURN `null` ON `/settings` AND IT BROKE THE PAGE IN A WAY
+    NO WIDTH ASSERTION COULD SEE (ruling 73).** The layout is
+    `md:grid-cols-[210px_minmax(0,1fr)]` with two children. ⚠ **RETURNING `null`
+    DOES NOT LEAVE AN EMPTY COLUMN — IT REMOVES THE GRID ITEM**, so the content
+    became the FIRST child and took the **210px** track. ⚠⚠ Eight cards then
+    rendered **100px wide**, one word per line, with two-thirds of the page
+    empty — **and `documentElement.scrollWidth === innerWidth` the whole time.**
+    ⚠⚠⚠ **`73b`: NO OVERFLOW IS NOT A LAYOUT CHECK. "Does it fit" and "is it
+    right" are different questions and only the first has a number.**
+    ⚠ **`69d` again, from the other side:** the deletion left residue — a
+    reserved track with nothing in it.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — my reasoning and my code:
+    //   ON /settings THIS LIST AND THE PAGE'S OWN SECTION CARDS ARE THE SAME
+    //   EIGHT LINKS, STACKED ONE ABOVE THE OTHER … THE CARDS WIN BECAUSE THEY
+    //   CARRY THE BLURB AND THIS CANNOT.
+    //   if (pathname === "/settings") return null;
+    ⚠⚠ **THE DUPLICATION I WAS AVOIDING IS REAL AND IS THE LESSER PROBLEM.** The
+    rail is navigation that persists across the section; the index's cards carry
+    the blurbs. **Scott has ruled the absent rail a defect, and a rail missing
+    from one page of its own section is worse than a page that lists its
+    sections twice.**
   */
-  if (pathname === "/settings") return null;
 
   return (
     <nav
