@@ -470,7 +470,11 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       body = (
         <RateEditor
           hourlyRateCents={draft.hourlyRateCents}
+          onsiteRateCents={draft.onsiteRateCents}
+          remoteRateCents={draft.remoteRateCents}
           onChange={(hourlyRateCents) => patch({ hourlyRateCents })}
+          onOnsiteChange={(onsiteRateCents) => patch({ onsiteRateCents })}
+          onRemoteChange={(remoteRateCents) => patch({ remoteRateCents })}
           serviceFeeBps={draft.serviceFeeBps}
           breakdown={rateBreakdown(draft.hourlyRateCents, draft.serviceFeeBps)}
         />

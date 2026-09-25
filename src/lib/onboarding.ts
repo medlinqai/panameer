@@ -2457,6 +2457,28 @@ export async function applyProviderSection(
       const onsite = toCents(data.onsiteDollars);
       const remote = toCents(data.remoteDollars);
 
+      /*
+        ── ⚠⚠⚠ "NOT SENT" AND "SENT EMPTY" ARE DIFFERENT (brief 10 WS-B) ──────
+
+        ⚠⚠ `toCents` maps BOTH `undefined` and `""` to `null`, so the old
+        condition below could not tell **a caller that never mentions these
+        columns** (the wizard, `E018`) from **a provider who cleared both boxes**
+        — and it resolved the ambiguity by writing NEITHER.
+        ⚠⚠⚠ **THAT WAS UNREACHABLE UNTIL THIS BRIEF AND IS REACHABLE NOW:** the
+        Rates editor previously exposed only the hourly field, so nothing could
+        clear the pair. **Making them editable is what turns a latent defect into
+        a live one — so it is fixed in the same commit that exposes it**, not
+        filed for later.
+        ⚠ The test is PRESENCE IN THE PAYLOAD, not the parsed value: `undefined`
+        means the caller is not speaking about this column at all.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   ...(onsite != null || remote != null
+        //     ? { onsite_rate_cents: onsite, remote_rate_cents: remote }
+        //     : {}),
+      */
+      const sentOnsite = data.onsiteDollars !== undefined;
+      const sentRemote = data.remoteDollars !== undefined;
+
       // E018 — the wizard posts a single required hourly rate. Settings
       // (brief_H) still posts the onsite/remote pair, so accept either shape.
       if (hourly == null && onsite == null && remote == null) {
@@ -2469,9 +2491,8 @@ export async function applyProviderSection(
         where: { id: profileId },
         data: {
           ...(hourly != null ? { hourly_rate_cents: hourly } : {}),
-          ...(onsite != null || remote != null
-            ? { onsite_rate_cents: onsite, remote_rate_cents: remote }
-            : {}),
+          ...(sentOnsite ? { onsite_rate_cents: onsite } : {}),
+          ...(sentRemote ? { remote_rate_cents: remote } : {}),
           currency: typeof data.currency === "string" ? data.currency : undefined,
         },
       });

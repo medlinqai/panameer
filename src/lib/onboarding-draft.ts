@@ -144,6 +144,10 @@ export type ProfilePayload = {
   hourlyRateCents?: number | null;
   rateMinCents?: number | null;
   rateMaxCents?: number | null;
+  /* ⚠ The status endpoint already returns both (`onboarding.ts`, the status
+     payload's rate block); this type simply never named them. */
+  onsiteRateCents?: number | null;
+  remoteRateCents?: number | null;
   serviceFeeBps?: number | null;
   photoUrl?: string | null;
   firstName?: string | null;
@@ -203,6 +207,14 @@ export type ProviderDraft = {
   hourlyRateCents: number | null;
   rateMinCents: number | null;
   rateMaxCents: number | null;
+  /* ⚠⚠ THE TWO ENGAGEMENT RATES, ADDED SO THEY CAN BE EDITED (brief 10 WS-B).
+     ⚠ The status endpoint has ALWAYS returned them and the `rate` step has
+     ALWAYS accepted them — *"Settings (brief_H) still posts the onsite/remote
+     pair, so accept either shape."* **ONLY THE DRAFT AND THE EDITOR WERE
+     MISSING**, which is why the card could SHOW a rate the owner could not
+     change. ⚠⚠⚠ NO NEW WRITER IS INVENTED HERE. */
+  onsiteRateCents: number | null;
+  remoteRateCents: number | null;
   serviceFeeBps: number;
   photoUrl: string | null;
   firstName: string;
@@ -237,6 +249,8 @@ export const emptyDraft = (): ProviderDraft => ({
   hourlyRateCents: null,
   rateMinCents: null,
   rateMaxCents: null,
+  onsiteRateCents: null,
+  remoteRateCents: null,
   /* ⚠ ONE CONSTANT, NOT A LITERAL (`P1-J4-E388`) — see its docblock. */
   serviceFeeBps: DEFAULT_SERVICE_FEE_BPS,
   photoUrl: null,
@@ -322,6 +336,8 @@ export function draftFromStatus(p: NonNullable<StatusPayload["profile"]>): Provi
       hourlyRateCents: p.hourlyRateCents ?? null,
       rateMinCents: p.rateMinCents ?? null,
       rateMaxCents: p.rateMaxCents ?? null,
+      onsiteRateCents: p.onsiteRateCents ?? null,
+      remoteRateCents: p.remoteRateCents ?? null,
       serviceFeeBps: p.serviceFeeBps ?? DEFAULT_SERVICE_FEE_BPS,
       photoUrl: p.photoUrl ?? null,
       firstName: p.firstName ?? "",

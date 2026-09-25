@@ -100,8 +100,15 @@ export const PROFILE_SECTIONS: readonly SectionSpec[] = [
     step: "rate",
     /* ⚠ DOLLARS ON THE WIRE, CENTS IN THE COLUMN — the wizard's own conversion,
        not a second one. An empty rate posts "" exactly as it does there. */
+    /* ⚠⚠ ALL THREE RATES ON THE WIRE (brief 10 WS-B). ⚠ The `rate` step has
+       always accepted `onsiteDollars`/`remoteDollars`; this payload named only
+       the hourly one, so the other two could be SHOWN on the card and never
+       SAVED from it. ⚠⚠⚠ A payload that omits a field the editor renders is
+       the `E597` WS-B defect exactly — *"the save looked like it worked."* */
     payload: (d) => ({
       hourlyDollars: d.hourlyRateCents != null ? d.hourlyRateCents / 100 : "",
+      onsiteDollars: d.onsiteRateCents != null ? d.onsiteRateCents / 100 : "",
+      remoteDollars: d.remoteRateCents != null ? d.remoteRateCents / 100 : "",
     }),
   },
   {
