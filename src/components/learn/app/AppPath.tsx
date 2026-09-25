@@ -19,6 +19,7 @@ import { EnrollButton } from "@/components/learn/EnrollButton";
 import { WantThisButton } from "@/components/learn/WantThisButton";
 import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { PathSpine } from "@/components/learn/app/PathSpine";
+import { PathStages } from "@/components/learn/app/PathStages";
 import type { PathForumTeaser } from "@/lib/forums";
 import { initialsOf } from "@/lib/learn-instructor-format";
 import type { AppPathView } from "@/lib/learn-path-app";
@@ -269,7 +270,26 @@ export function AppPath({
             //   ⚠⚠ THE OUTLINE IS NOT HIDDEN WITH IT — `PathSpine` is the STAGE rail…
             //   {path.ready && <PathSpine path={path} />}
           */}
-          <PathSpine path={path} />
+          {/*
+            ── ⚠⚠⚠ THE STAGE RAIL, WS-C ITEM 1 ──────────────────────────────
+
+            ⚠ *"The same stage tags as a WORK record… so the whole app speaks one
+            pattern."* ⚠⚠ **IT IS SIGNED-IN ONLY, AND THAT IS THE SAME RULE
+            `LearnTabs` FOLLOWS** (`E627`): all four stages are statements about
+            THIS MEMBER'S standing, so for a visitor every one of them would draw
+            as `upcoming` — **a journey they are supposedly part-way along when
+            they do not have an account.** ⚠ The enrol button already says what a
+            visitor's next move is, in one place.
+            ⚠⚠ **AND IT INHERITS Q4's RULE:** it sits inside `path.ready`, because
+            on a path with no playable lesson every stage is unreachable and
+            drawing them pending contradicts the notice above.
+          */}
+          {path.ready && signedIn && <PathStages path={path} />}
+          {/* ⚠ THE `Courses` STAGE'S DESTINATION. `scroll-mt` so the app band
+              does not cover the heading the anchor lands on. */}
+          <div id="path-courses" className="scroll-mt-24">
+            <PathSpine path={path} />
+          </div>
 
           {path.ready && (
           <>

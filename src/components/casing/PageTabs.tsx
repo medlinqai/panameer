@@ -1,4 +1,20 @@
 import Link from "next/link";
+/*
+  ⚠⚠⚠ THE DISC AND THE CONNECTOR MOVED OUT, AND NOTHING ABOUT THEM CHANGED
+  (brief 9 WS-C item 1). ⚠ They were written inline here, which made this
+  application's one visual language for a staged sequence **unavailable to the
+  next surface that needed it** — `E585`, third time in this run.
+  ⚠⚠ `/learn/<slug>`'s stage rail is the first consumer, and it could not be a
+  `PageTabs` CALL because every item here is a `<Link href>` while `Enrolled` is
+  a state with no destination. **One vocabulary, two components** — see
+  `StepDisc.tsx`, which also records why the WORK record had nothing to reuse.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — both bodies now live in that file:
+  //   <span aria-hidden className={"grid h-[22px] w-[22px] … " + (active
+  //     ? "bg-magenta text-white" : done ? "bg-emerald-600 text-white"
+  //     : "bg-ink-2/12 text-ink-2")}>{done ? "✓" : t.n}</span>
+  //   <span aria-hidden className="h-px w-3 shrink-0 bg-line sm:w-4" />
+*/
+import { StepDisc, StepConnector } from "@/components/casing/StepDisc";
 
 /**
  * The tab row a flattened rail item's children become (E216), now carrying the
@@ -204,9 +220,7 @@ export function PageTabs({
               {/* ⚠ THE CONNECTOR sits BETWEEN steps, so the first has none. It
                   is decorative and hidden from assistive tech — the numbers
                   already carry the order. */}
-              {numbered && i > 0 && (
-                <span aria-hidden className="h-px w-3 shrink-0 bg-line sm:w-4" />
-              )}
+              {numbered && i > 0 && <StepConnector />}
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
@@ -219,21 +233,10 @@ export function PageTabs({
               >
                 {/* ⚠ THE DISC survives a narrow screen better than anything
                     else in the row, which is why numbered modes keep it. */}
+                {/* ⚠ A TICK IS ONLY EVER REACHABLE IN `process` — `done` above
+                    is already gated on the mode, so the state passed here is. */}
                 {numbered && t.n !== undefined && (
-                  <span
-                    aria-hidden
-                    className={
-                      "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[12px] font-bold " +
-                      (active
-                        ? "bg-magenta text-white"
-                        : done
-                          ? "bg-emerald-600 text-white"
-                          : "bg-ink-2/12 text-ink-2")
-                    }
-                  >
-                    {/* ⚠ A TICK IS ONLY EVER REACHABLE IN `process`. */}
-                    {done ? "✓" : t.n}
-                  </span>
+                  <StepDisc n={t.n} state={active ? "current" : done ? "done" : "upcoming"} />
                 )}
                 {t.label}
                 {/* ⚠ ZERO RENDERS NOTHING. The `> 0` is the guard even though

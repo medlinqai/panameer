@@ -933,12 +933,43 @@ check(
   doneReads === 1,
   `${doneReads} read(s)`
 );
-/* ⚠ THE TICK ITSELF IS REACHABLE ONLY THROUGH `done`. */
-const tickLines = pageTabs.split("\n").filter((l) => l.includes("✓"));
+/* ── ⚠⚠⚠ RE-ANCHORED, NOT WEAKENED (brief 9 WS-C item 1) ──────────────────
+
+   ⚠⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`' — THE CODE MOVED,
+   THE RULE DID NOT.** The disc and its tick were extracted from `PageTabs` into
+   `StepDisc.tsx` so `/learn/<slug>`'s stage rail could share one vocabulary
+   instead of growing a second (`E585`). ⚠ The RULE is unchanged and still
+   binding: **a tick is reachable only from a done state.**
+   ⚠⚠⚠ **THE WRONG FIX HERE WOULD HAVE BEEN TO DROP THE ASSERTION BECAUSE ITS
+   FILE NO LONGER MATCHES** — rule 14 of the 2026-09-23 set: *"when the code a
+   rule names goes away, the rule may not."*
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const tickLines = pageTabs.split("\n").filter((l) => l.includes("✓"));
+   //   check("E378/1 — the tick glyph is rendered only from the done flag",
+   //     tickLines.length === 1 && /done \?/.test(tickLines[0]), …);           */
+const DISC = join("src", "components", "casing", "StepDisc.tsx");
+check(`the file this guard is about exists: ${DISC}`, bodies.has(DISC));
+const stepDisc = bodies.get(DISC) ?? "";
+const tickLines = stepDisc.split("\n").filter((l) => l.includes("✓"));
 check(
-  "E378/1 — the tick glyph is rendered only from the done flag",
-  tickLines.length === 1 && /done \?/.test(tickLines[0]),
+  "E378/1 — the tick glyph is rendered only from the done state",
+  tickLines.length === 1 && /state === "done" \?/.test(tickLines[0]),
   tickLines.join(" || ")
+);
+/* ⚠⚠ AND `PageTabs` MUST NOT GROW ITS OWN BACK. An extraction that leaves the
+   original behind is two definitions, which is the defect it was meant to end. */
+check(
+  "E378/1 — PageTabs renders no tick of its own; it calls the shared disc",
+  !pageTabs.includes("✓") && /<StepDisc\b/.test(pageTabs),
+  pageTabs.includes("✓") ? "a tick survives in PageTabs" : "PageTabs does not mount StepDisc"
+);
+/* ⚠⚠⚠ NO FOURTH STATE. Ruling 26a removed the completion gate and ruling 54
+   closed it for good; a `locked` state on the disc is how a padlock comes back
+   into a component nobody is watching (ruling 53b). */
+check(
+  "ruling 54 — the step disc offers no locked or disabled state",
+  !/\block(ed)?\b|\bdisabled\b/i.test(stepDisc),
+  "StepDisc names a lock or a disabled state"
 );
 /* ── ⚠⚠ THE MODE `/community` DECLARES (`P2-J3-E557` WS-A) ─────────────────
    ⚠ CONNECT IS A ROOM A MEMBER RE-ENTERS, NOT A PATH THEY WALK ONCE, so the row
