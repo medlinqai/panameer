@@ -103,11 +103,34 @@ export function AppPath({
               nowhere today. A header reading "1 ENROLLED" is worse than a header
               with one fewer figure.
             */}
+            {/*
+              ── ⚠⚠⚠ `CERTIFICATE` WAS A HARD-CODED `1` ON EVERY PATH (WS-C) ──
+
+              ⚠⚠ **MEASURED 2026-09-25, AND IT WAS FALSE ON MOST OF THE
+              CATALOGUE:** `learn_assessments` holds **8 rows against 23 paths**
+              — 2 `PUBLISHED`, 6 `DRAFT` — so ⚠⚠⚠ **FIFTEEN PATHS HAVE NO
+              ASSESSMENT AT ALL AND CANNOT PRODUCE A CERTIFICATE BY ANY ROUTE.**
+              ⚠ A certificate is a `Certification` row with `issued_from:
+              "LEARN"`, and the only way to earn one is to pass the path test.
+              **No test, no certificate.** ⚠⚠ `Certification` where
+              `issued_from = "LEARN"`: **0 rows issued, ever.**
+              ⚠⚠⚠ **SO `<Stat n={1} label="CERTIFICATE" />` WAS A FIGURE WITH NO
+              WRITER, PRINTED AS A FACT** — the counting rules' first line, and
+              the same defect class as the `ADDS SKILLS` chips (`E631`), except
+              this one was already on the screen.
+              ⚠ IT IS NOT A DASH: an uncountable figure shows a dash and its
+              reason, but this is not uncountable — **it is countable and the
+              answer is that the path offers none**, so the stat is OMITTED.
+              Rendering "0 CERTIFICATES" would be worse: it reads as a score the
+              member failed to get rather than as something the path never had.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <Stat n={1} label="CERTIFICATE" />
+            */}
             <div className="mt-5 flex flex-wrap gap-x-7 gap-y-3">
               <Stat n={path.courses.length} label={path.courses.length === 1 ? "COURSE" : "COURSES"} />
               <Stat n={path.lessons} label={path.lessons === 1 ? "LESSON" : "LESSONS"} />
               {path.enrolledCount !== null && <Stat n={path.enrolledCount} label="ENROLLED" />}
-              <Stat n={1} label="CERTIFICATE" />
+              {path.test.exists && <Stat n={1} label="CERTIFICATE" />}
             </div>
 
             {path.instructors.length > 0 && (
@@ -196,8 +219,22 @@ export function AppPath({
                   <GraduationCap className="h-4 w-4" aria-hidden />
                   Take the path test
                 </Link>
+                {/*
+                  ⚠⚠ THE CERTIFICATE IS NAMED ONLY WHERE ONE CAN BE EARNED.
+                  ⚠ 15 of 23 paths have no assessment row, so *"the last thing
+                  between you and the certificate"* named a prize that path does
+                  not award — a promise, which ruling 18 bans outright.
+                  ⚠⚠⚠ THE `allDone` BRANCH'S LINK IS DELIBERATELY NOT GATED:
+                  ruling 54 keeps the test open to anyone, and the test page
+                  itself degrades honestly (*"The test isn't open yet."*), so it
+                  is a real destination rather than a door onto a wall.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   Every lesson watched. The test is the last thing between you and the certificate.
+                */}
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
-                  Every lesson watched. The test is the last thing between you and the certificate.
+                  {path.test.exists
+                    ? "Every lesson watched. The test is the last thing between you and the certificate."
+                    : "Every lesson watched."}
                 </p>
               </>
             ) : path.nextLesson ? (
@@ -235,9 +272,24 @@ export function AppPath({
                     Or sit the path test now
                   </Link>
                 )}
+                {/*
+                  ⚠⚠ SAME RULE, SECOND SITE — and finding it twice is why the
+                  certificate claim is now driven by `test.exists` in all three
+                  places rather than written out by hand in each.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   {remaining} lesson(s) and the path test stand between you and the certificate.
+                */}
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
-                  {remaining} lesson{remaining === 1 ? "" : "s"} and the path test stand between you
-                  and the certificate.
+                  {path.test.exists ? (
+                    <>
+                      {remaining} lesson{remaining === 1 ? "" : "s"} and the path test stand between
+                      you and the certificate.
+                    </>
+                  ) : (
+                    <>
+                      {remaining} lesson{remaining === 1 ? "" : "s"} left on this path.
+                    </>
+                  )}
                 </p>
               </>
             ) : null}
@@ -406,7 +458,21 @@ export function AppPath({
               </div>
             </div>
 
-            {/* ── the certificate node ─────────────────────────────────────── */}
+            {/*
+              ── ⚠⚠⚠ THE CERTIFICATE NODE RENDERS ONLY WHERE ONE CAN BE EARNED ──
+
+              ⚠⚠ Its copy — *"Lands on your profile with a public verify link"* —
+              is a PROMISE, and on the **15 of 23 paths with no assessment row**
+              it promised something that path cannot award by any route.
+              ⚠ **A certificate comes from passing the path test. No test, no
+              certificate.** `Certification` where `issued_from = "LEARN"`:
+              **0 rows issued, ever.**
+              ⚠⚠⚠ **THE THIRD SITE OF ONE FALSEHOOD** — the `CERTIFICATE` stat,
+              the two hero sentences, and this node all asserted it separately.
+              **`E585`: one concept in N places, kept in step by hand** — which
+              is exactly why it stayed wrong in three of them at once.
+            */}
+            {path.test.exists && (
             <div className="mt-3 flex flex-col items-start gap-3 rounded-[15px] border-2 border-magenta bg-[linear-gradient(135deg,#fff,#fbeafb)] px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full bg-[linear-gradient(140deg,var(--color-magenta),#8b1fa8)]">
                 <ShieldCheck className="h-[22px] w-[22px] text-white" aria-hidden />
@@ -436,6 +502,7 @@ export function AppPath({
                 <span className="shrink-0 text-[11px] text-ink-2">panameer.com/verify/…</span>
               )}
             </div>
+            )}
           </div>
           </>
           )}
