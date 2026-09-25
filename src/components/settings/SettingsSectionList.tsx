@@ -42,19 +42,34 @@ import { settingsNavFor, settingsPageFor } from "@/lib/settings-nav";
  * //   Settings is eight siblings with no ordering and no history worth
  * //   surfacing; a left-nav is the shape for that.
  *
- * ── ⚠⚠⚠ AND WHAT ABOUT `E046`'s *"DOUBLE MENUS — LOOKS LIKE SHIT"*? ──────
+ * ── ⚠⚠⚠ `E046` — AND RULING 62, WHICH CORRECTS WHY THIS IS ALLOWED ───────
  *
- * ⚠⚠ **THE OBJECTION WAS TO A COLLISION THAT NO LONGER EXISTS, AND THIS IS
- * REPORTED RATHER THAN QUIETLY STEPPED PAST.** Scott, 2026-09-06, rejected the
- * vertical sub-nav because **it sat beside the console's own dark VERTICAL rail
- * — two vertical menus on one screen.**
- * ⚠⚠⚠ **`E559` REMOVED THAT RAIL ON 2026-09-18**, replacing it with a
- * horizontal band. ⚠ So the condition the 09-06 ruling named is gone: there is
- * **one** vertical list on this screen now, not two.
- * ⚠⚠ **THAT IS A CHANGED CONDITION, NOT A CONTRADICTION** — ruling 60a's
- * distinction: *rule 13 settles a contradiction and is the wrong tool for a
- * sequence.* ⚠ **Reported in the commit so Scott can overturn it if the dislike
- * was of vertical sub-navs in general rather than of the doubling.**
+ * ⚠ **SCOTT, 2026-09-25, RE-READING HIS OWN 09-06 RULING:** *"I said that the
+ * settings menu as it was (across the top) ugly. But it and the panameer admin
+ * menus are to big to be tabs...so they became vertical tabs."*
+ * ⚠⚠⚠ **THE OBJECTION WAS THE HORIZONTAL ROW. THE VERTICAL LIST WAS HIS OWN
+ * ANSWER, NOT THE DEFECT.** ⚠⚠ So *"DOUBLE MENUS — LOOKS LIKE SHIT"* was never a
+ * ruling against this shape; **this shape is the thing it asked for.**
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — **my reading, which reached the
+ * right build for the wrong reason:**
+ * //   THE OBJECTION WAS TO A COLLISION THAT NO LONGER EXISTS … it sat beside
+ * //   the console's own dark VERTICAL rail — two vertical menus on one screen.
+ * //   E559 REMOVED THAT RAIL, so the condition the 09-06 ruling named is gone.
+ * //   THAT IS A CHANGED CONDITION, NOT A CONTRADICTION.
+ * ⚠⚠⚠ **AND THE WRONG REASON WAS LOAD-BEARING:** it made this list conditional
+ * on the app-shell rail being absent, so **the next time any rail appeared this
+ * component would look overturnable.** ⚠ It is not. **It was always the right
+ * shape**, and it stays whatever the shell does.
+ *
+ * ⚠⚠ **RULING 62a:** *a menu too big to be tabs becomes a VERTICAL LIST — never
+ * a tab row that scrolls, wraps or truncates.* ⚠ Wrapping fixes a row that is
+ * the right shape and slightly too long; **it does not fix a menu that should
+ * never have been a row.** ⚠⚠ Eight sections with long labels is the second
+ * case, which is why this is a list and the six-item Account Information row
+ * above it is not.
+ * ⚠ **62c: `/hire` IS EXEMPT** — it is a SEQUENCE, the order is the information,
+ * and a vertical list would lose the only thing it is for (ruling 50e governs).
  *
  * ── ⚠ IT WRAPS ON A PHONE. IT DOES NOT SCROLL, AND IT DOES NOT STACK EIGHT ──
  *

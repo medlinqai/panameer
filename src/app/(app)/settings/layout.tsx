@@ -44,16 +44,32 @@ import { guardPage } from "@/lib/guard";
  *
  * ── ⚠⚠⚠ AND THE SHAPE CHANGED A THIRD TIME, 2026-09-25 (ruling 61) ───────
  *
- * ⚠⚠ **THE SECTION LIST IS BACK, AND THE `E046` OBJECTION ABOVE IS NOT BEING
- * IGNORED — ITS CONDITION IS GONE.** Scott rejected the vertical sub-nav on
- * 2026-09-06 because **it sat beside the console's own dark VERTICAL rail — two
- * vertical menus on one screen.** ⚠⚠⚠ **`E559` REMOVED THAT RAIL ON 2026-09-18**
- * and replaced it with a horizontal band, so there is now **one** vertical list
- * here, not two.
- * ⚠ **THAT IS A CHANGED CONDITION, NOT A CONTRADICTION** — ruling 60a: *rule 13
- * settles a contradiction and is the wrong tool for a sequence.* ⚠⚠ Reported to
- * Scott rather than stepped past, because if the dislike was of vertical
- * sub-navs in general rather than of the doubling, this is his to overturn.
+ * ⚠⚠⚠ **RULING 62 — `E046` RE-READ BY SCOTT, AND THE SENTENCE ABOVE IS NOT
+ * WHAT HE MEANT.** Scott, 2026-09-25: *"I said that the settings menu as it was
+ * (across the top) ugly. But it and the panameer admin menus are to big to be
+ * tabs...so they became vertical tabs."*
+ * ⚠⚠ **THE OBJECTION WAS THE HORIZONTAL ROW, NOT THE VERTICAL LIST. VERTICAL
+ * WAS SCOTT'S OWN ANSWER, NOT THE DEFECT.**
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — **my reading, right by the wrong
+ * route**, and corrected here because the wrong route is load-bearing:
+ * //   THE SECTION LIST IS BACK, AND THE E046 OBJECTION ABOVE IS NOT BEING
+ * //   IGNORED — ITS CONDITION IS GONE. Scott rejected the vertical sub-nav
+ * //   because it sat beside the console's own dark VERTICAL rail — two vertical
+ * //   menus on one screen. E559 REMOVED THAT RAIL, so there is now one vertical
+ * //   list here, not two. That is a changed condition, not a contradiction.
+ * ⚠⚠⚠ **WHY THE CORRECTION MATTERS RATHER THAN BEING PEDANTRY:** the
+ * changed-condition reading makes this list **conditional on the rail's
+ * absence** — so **the next time any rail appears it would look overturnable.**
+ * ⚠ It is not. **It was always the right shape**, and it stays whatever the
+ * shell does.
+ *
+ * ⚠⚠ **RULING 62a, THE GENERAL RULE:** *a menu too big to be tabs becomes a
+ * VERTICAL LIST — never a tab row that scrolls, wraps or truncates.* ⚠ Wrapping
+ * fixes a row that is **the right shape and slightly too long**; it does not fix
+ * **a menu that should never have been a row.** ⚠⚠ That is the difference
+ * between the Account Information row above (six items, wrapped) and these eight
+ * sections (a list).
  *
  * ⚠⚠ **WHAT THE TOP ROW IS NOW IS A DIFFERENT QUESTION ENTIRELY.** It is the
  * **ACCOUNT INFORMATION** row — which section of the account you are in — while
