@@ -31,6 +31,14 @@ export type LearnCard = {
   coverImage: string | null;
   /** ⚠ `P2-A4-E611` — can a member start this today? Decided by `pathIsOpenTo`. */
   ready: boolean;
+  /**
+   * ⚠⚠ THE PATH'S TEST IS PUBLISHED AND SITTABLE.
+   * ⚠⚠⚠ **THIS IS NOT A PERMISSION AND MUST NEVER BE READ AS ONE** (ruling 54):
+   * the test is **open to anyone at any time** — no completion gate, no padlock,
+   * no two-tier rule. ⚠ `testReady` says the QUESTION SET exists and has been
+   * reviewed, which is a fact about the test, not about the member.
+   */
+  testReady: boolean;
   lessons: number;
   playable: number;
   /**
@@ -67,6 +75,12 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         cover_image: true,
         // The declared lead — consulted only when no lesson names anybody.
         expert_person_id: true,
+        /* ⚠⚠ THE TEST'S READINESS, FOR THE CARD'S STANDING (brief 9 WS-B item 5).
+           ⚠ `ready` is the SAME expression `learn-path-app.ts:371` uses —
+           `status === "PUBLISHED"` — because a path whose question set is still
+           in DRAFT has a test nobody can sit. **One rule, asked in two places,
+           never two rules.** */
+        assessment: { select: { status: true } },
         courses: {
           select: {
             sections: {
@@ -184,6 +198,8 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       /* ⚠ `P2-A4-E611` — THE CARD CARRIES ITS OWN STARTABILITY. The 11 unready
          paths are listed now, so every card has to say which kind it is. */
       ready: pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id)),
+      /* ⚠ The same expression `learn-path-app.ts` uses. Not a permission. */
+      testReady: p.assessment?.status === "PUBLISHED",
       lessons: lessons.length,
       playable: lessons.filter(isPlayable).length,
       instructors: resolveInstructors(

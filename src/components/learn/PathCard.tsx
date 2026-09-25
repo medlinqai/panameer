@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LearnCard } from "@/lib/learn-home";
+import { standingFor } from "@/lib/learn-standing";
 import { InstructorStack } from "@/components/learn/InstructorBadge";
 
 /**
@@ -196,6 +197,31 @@ export function PathCard({
             </p>
           </div>
         )}
+
+        {/*
+          ── ⚠⚠⚠ THE STANDING, AND THE ONE ACTION THAT MATCHES IT (WS-B 5) ──
+
+          ⚠ SCOTT's note on the mockup: *"Each card states your standing (done,
+          %, test ready, or enroll), so this page doubles as 'what's next.'"*
+          ⚠⚠ The card already said WHERE YOU WERE — a badge and a bar — and never
+          **what to do about it.**
+
+          ⚠⚠⚠ **IT IS A SIGNPOST, NOT A SECOND CONTROL, AND THAT IS DELIBERATE:
+          THE WHOLE CARD IS ALREADY A `<Link>`.** A nested `<a>` is invalid HTML
+          and would give one card two destinations. ⚠ So this states the next
+          move and the card carries you to the page where that move lives —
+          `AppPath` holds `Continue`, `Review` and the test door alike.
+          ⚠⚠ **DO NOT "FIX" THIS INTO A LINK.** It is styled as a label with an
+          arrow rather than as a button precisely so it does not claim to be a
+          control it is not (`E579`).
+
+          ⚠ `standingFor` is the lib's — one derivation, one place. A second copy
+          here is how the card and the path page start disagreeing about whether
+          somebody has finished.
+        */}
+        <p className="mt-3 text-[13px] font-bold text-white">
+          {standingFor(card).action} <span aria-hidden>&rarr;</span>
+        </p>
       </div>
     </Link>
   );
