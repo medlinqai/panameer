@@ -212,9 +212,27 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
       */}
       <section className="pm-score-hero mb-4 overflow-hidden rounded-brand border border-line bg-white">
         <div className="pm-score-hero-left p-6 text-center">
-          <h2 className="mb-3 font-display text-[15px] font-bold">
-            Components of Your Score
-          </h2>
+          {/*
+            ── ⚠⚠⚠ THE HEADING WENT; THE GRAPHIC STAYED (brief 10 WS-C) ───────
+
+            ⚠ SCOTT: *"REMOVE the `Components of Your Score` card — **that card
+            is just the graphic**."*
+            ⚠⚠ **IT WAS A HEADING OVER A DIAL, AND IT NAMED THE WRONG THING.**
+            The ring shows the SCORE out of 100; *"Components of Your Score"*
+            announced a breakdown that is not in this half at all — **the
+            component counts live in the right half and the component LIST lives
+            in the cards below.** ⚠⚠⚠ A label that describes its neighbour is the
+            `E459` defect (*"a `Reports` panel beside `Reports` copy and neither
+            was obvious"*).
+            ⚠ The dial keeps its `aria-label` (*"{n} of 100"*), so removing the
+            visible heading takes nothing from a screen reader — **checked,
+            because ruling 65 is the opposite mistake and I did not want to
+            trade one for the other.**
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <h2 className="mb-3 font-display text-[15px] font-bold">
+            //     Components of Your Score
+            //   </h2>
+          */}
           <div className="pm-score-dial">
             <svg viewBox="0 0 300 300" className="pm-score-svg" role="img" aria-label={`${score.total} of 100`}>
               <circle cx="150" cy="150" r={R} fill="none" className="stroke-line-2" strokeWidth="22" />
