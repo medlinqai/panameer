@@ -1,8 +1,27 @@
 "use client";
 
-import Link from "next/link";
+/* ⚠ `Link` LEFT WITH THE SIGNPOST (brief 10 WS-B). Its only use was the
+   "edit it there" link to the wizard, which this commit removed — the markup
+   is quoted under `E164` at the site it left. ⚠⚠ An unused import is a lint
+   warning, i.e. ONE NEW problem against a baseline whose rule is zero.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import Link from "next/link"; */
 import { useState } from "react";
 import { Card, Input, SaveBar, postSetting } from "@/components/settings/controls";
+/* ⚠⚠ THE SAME SHARED BLOCK THE PROFILE EDITOR AND THE EMPLOYER MODAL USE
+   (`E123`/`E126`) — country first, because it decides what the fields under it
+   mean. ⚠⚠⚠ NOT A SECOND ADDRESS FORM: one provider must not meet two
+   different location forms in one sitting. */
+import { LocationFields } from "@/components/onboarding/LocationFields";
+
+type EditableAddress = {
+  country: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+};
 
 /**
  * Contact Info (J2.4 WS-H / E014).
@@ -30,6 +49,9 @@ export function ContactForm({
     phone: string | null;
     timeZone: string | null;
     company: { id: string; name: string } | null;
+    /* ⚠ SHAPED FOR `LocationFields` — empty strings, not nulls, because the
+       inputs are controlled. `getContactInfo` reads it off the backbone. */
+    address: EditableAddress;
     memberships: { provider: boolean; buyer: boolean; requester: boolean };
   };
 }) {
@@ -37,6 +59,7 @@ export function ContactForm({
   const [lastName, setLastName] = useState(info.lastName);
   const [phone, setPhone] = useState(info.phone ?? "");
   const [timeZone, setTimeZone] = useState(info.timeZone ?? "");
+  const [address, setAddress] = useState(info.address);
 
   return (
     <div className="space-y-4">
@@ -120,21 +143,58 @@ export function ContactForm({
             maxLength={60}
           />
         </div>
-        <p className="mt-3 text-[13px] text-ink-2">
-          Your address lives with your profile —{" "}
-          <Link
-            href="/join/provider?step=finish"
-            className="font-semibold text-magenta hover:underline"
-          >
-            edit it there
-          </Link>
-          , where it is checked against the country rules for your region.
-        </p>
+        {/*
+          ── ⚠⚠⚠ THE ADDRESS ARRIVES, AND THE SIGNPOST LEAVES WITH IT ────────
+
+          ⚠ SCOTT: *"Edit Address → lives in Settings."*
+          ⚠⚠ **THIS PAGE USED TO POINT AWAY AT THE WIZARD** — *"Your address
+          lives with your profile — edit it there"*, linking
+          `/join/provider?step=finish`. ⚠⚠⚠ **THAT SENTENCE AND THE FIELDS
+          CANNOT BOTH EXIST**: one says the address is elsewhere while the other
+          edits it here. **`69b`: the removal is half the commit.**
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   Your address lives with your profile — <Link
+          //   href="/join/provider?step=finish">edit it there</Link>, where it is
+          //   checked against the country rules for your region.
+          ⚠⚠ **THE COUNTRY RULES CLAIM IS NOT LOST — IT IS NOW TRUE HERE**,
+          because `LocationFields` is the block that enforces them.
+        */}
+        <div className="mt-4">
+          <LocationFields
+            withStreet
+            countryHint="Panameer is global — your country sets how the fields below are labelled."
+            value={{
+              country: address.country,
+              line1: address.line1,
+              city: address.city,
+              state: address.state,
+              postalCode: address.postalCode,
+            }}
+            /* ⚠⚠ `undefined` MEANS NOT TOUCHED AND `null` MEANS CLEARED, and the
+               two must not collapse — the same normalisation `ContactEditor`
+               carries, kept identical so the two callers cannot drift. */
+            onChange={(patch) =>
+              setAddress((a: EditableAddress) => ({
+                ...a,
+                ...(patch.country !== undefined ? { country: patch.country ?? "" } : {}),
+                ...(patch.line1 !== undefined ? { line1: patch.line1 ?? "" } : {}),
+                ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+                ...(patch.state !== undefined ? { state: patch.state ?? "" } : {}),
+                ...(patch.postalCode !== undefined
+                  ? { postalCode: patch.postalCode ?? "" }
+                  : {}),
+              }))
+            }
+          />
+        </div>
         <SaveBar
           onSave={() =>
             postSetting("/api/settings/contact", {
               phone: phone || null,
               timeZone: timeZone || null,
+              /* ⚠ SENT AS AN OBJECT, so the route's Zod keeps it apart from an
+                 absent key — ruling 67 at the boundary. */
+              address,
             })
           }
         />

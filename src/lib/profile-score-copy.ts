@@ -81,9 +81,12 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   identity: {
     why: "Your address and phone — how work reaches you",
     action: "Add Your Contact Details",
-    href: "/join/provider?step=finish",
+    /* ⚠⚠⚠ SETTINGS, NOT THE PROFILE EDITOR (brief 10 WS-B). ⚠ `editorSlug` is
+       DROPPED so `ProfileScoreView`'s existing fallback uses this `href` — no
+       new mechanism. ⚠⚠ It moves in the SAME COMMIT the profile's own Contact
+       link is removed, or this line becomes a dead end. */
+    href: "/settings/contact",
     minutes: 2,
-    editorSlug: "contact",
   },
 
   // ── Who You Are ──────────────────────────────────────────────────────────
@@ -97,9 +100,10 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   location: {
     why: "Buyers filter by where you are, even for remote work",
     action: "Say Where You're Based",
-    href: "/join/provider?step=finish",
+    /* ⚠ THE SECOND OF THE TWO LINES ONE ADDRESS SERVES — same move, same
+       reason. One address, one editor, one save. */
+    href: "/settings/contact",
     minutes: 1,
-    editorSlug: "contact",
   },
   languages: {
     why: "It decides which buyers can work with you",

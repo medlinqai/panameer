@@ -2795,7 +2795,12 @@ function toYear(v: unknown): number | null {
  * the model (architecture.md), so a provider's address is an Address on their
  * own company's Site. Creates the Site/Address on first save, updates after.
  */
-async function saveProviderAddress(personId: string, addr: StepData): Promise<void> {
+/* ⚠⚠⚠ EXPORTED FOR SETTINGS (brief 10 WS-B). ⚠ It is the ONE writer of a
+   provider's address and it owns the backbone step — creating the `Site` on
+   first save. ⚠⚠ Settings CALLS IT rather than writing its own upsert: a second
+   address writer would be `E585` on the one record a buyer uses to reach
+   somebody, and only one of the two would know about the Site. */
+export async function saveProviderAddress(personId: string, addr: StepData): Promise<void> {
   const line1 = (addr.line1 ?? "").trim();
   if (!line1) return; // nothing to save yet — the finish page saves partially
 

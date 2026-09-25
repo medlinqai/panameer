@@ -4,6 +4,9 @@ import { NOTIFICATION_CATEGORIES, findCategory } from "@/lib/notification-catego
 import { w9Signature } from "@/lib/w9";
 import type { TaxType } from "@prisma/client";
 import { formFor } from "@/lib/tax";
+/* ⚠ THE ONE ADDRESS WRITER (brief 10 WS-B). Settings calls it; it does not
+   write its own upsert — see `updateContactInfo`. */
+import { saveProviderAddress } from "@/lib/onboarding";
 
 /**
  * Reads and writes for the Settings sub-pages (J2.4 WS-H / E014–E020).
@@ -93,6 +96,18 @@ export async function getContactInfo(viewer: Viewer) {
       time_zone: true,
       user: { select: { id: true, email: true } },
       company: { select: { id: true, name: true } },
+      /* ⚠⚠ THE ADDRESS LIVES ON THE BACKBONE (`E019`): P-Account → Company →
+         Site → Address → Person. ⚠ Read here so Settings can EDIT it — the page
+         used to point away at the wizard instead. */
+      site: {
+        select: {
+          addresses: {
+            orderBy: { created_at: "asc" },
+            take: 1,
+            select: { line1: true, line2: true, city: true, state: true, postal_code: true, country: true },
+          },
+        },
+      },
       providerProfile: { select: { id: true } },
       buyerProfile: { select: { id: true } },
       requesterProfile: { select: { id: true } },
@@ -112,6 +127,20 @@ export async function getContactInfo(viewer: Viewer) {
     phone: person.phone,
     timeZone: person.time_zone,
     company: person.company,
+    /* ⚠ SHAPED FOR `LocationFields`, the same block the profile editor and the
+       employer modal use — empty strings rather than nulls, because the inputs
+       are controlled. */
+    address: (() => {
+      const a = person.site?.addresses?.[0];
+      return {
+        country: a?.country ?? "",
+        line1: a?.line1 ?? "",
+        line2: a?.line2 ?? "",
+        city: a?.city ?? "",
+        state: a?.state ?? "",
+        postalCode: a?.postal_code ?? "",
+      };
+    })(),
     memberships: {
       provider: !!person.providerProfile,
       buyer: !!person.buyerProfile,
@@ -120,11 +149,38 @@ export async function getContactInfo(viewer: Viewer) {
   };
 }
 
+/**
+ * ── ⚠⚠ THE ADDRESS IS WRITTEN BY `saveProviderAddress`, NOT HERE ─────────
+ *
+ * ⚠⚠⚠ **IT IS THE ONE WRITER AND IT OWNS THE BACKBONE STEP** — creating the
+ * `Site` on first save (`E019`). ⚠ A second upsert in this file would be `E585`
+ * on the record a buyer uses to reach somebody, **and only one of the two would
+ * know about the Site.**
+ * ⚠⚠ `address` IS OPTIONAL AND THE TEST IS `!== undefined` (ruling 67), the
+ * same as every other field here: **absent means "this caller is not speaking
+ * about the address", not "clear it".**
+ */
 export async function updateContactInfo(
   viewer: Viewer,
-  patch: { firstName?: string; lastName?: string; phone?: string | null; timeZone?: string | null }
+  patch: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string | null;
+    timeZone?: string | null;
+    address?: {
+      country?: string;
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+    };
+  }
 ) {
   const personId = await ownPersonId(viewer);
+  if (patch.address !== undefined) {
+    await saveProviderAddress(personId, patch.address as never);
+  }
   await prisma.person.update({
     where: { id: personId },
     data: {

@@ -602,7 +602,25 @@ export function ConnectProfile({
             */}
             {owner && (
               <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                <EditLink href={editHref("contact")} title="Contact Details" label="Contact" />
+                {/*
+                  ── ⚠⚠⚠ `Contact` HAS LEFT FOR SETTINGS (brief 10 WS-B) ───────
+
+                  ⚠ SCOTT: *"Edit Address → lives in Settings."*
+                  ⚠⚠⚠ **IT LEAVES IN THE SAME COMMIT THE EDITOR ARRIVES THERE**
+                  — `E598`'s leave-and-arrive, and `69b` aimed at a route.
+                  **`/settings/contact` now mounts the address fields**; before
+                  this commit it rendered *"Your address lives with your
+                  profile"* and pointed BACK here, so removing this link on its
+                  own would have left **the only writer of the address with no
+                  entrance at all** (rule 5).
+                  ⚠⚠ **THE TWO SEARCH-SCORE LINES MOVED WITH IT** — `identity`
+                  and `location` in `profile-score-copy.ts` — or they would have
+                  become the dead ends this removal exists to avoid.
+                  ⚠ **THE LOCATION LINE ON THE CARD STAYS**, because it is
+                  DERIVED from the address and is what Scott asked to keep.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   <EditLink href={editHref("contact")} title="Contact Details" label="Contact" />
+                */}
                 <EditLink href={editHref("languages")} title="Languages" label="Languages" />
                 <EditLink href={editHref("work-method")} title="How You Work" label="How You Work" />
               </div>
