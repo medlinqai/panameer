@@ -149,6 +149,7 @@ export default async function AccountHealthPage() {
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
           under the avatar, using the same words as the menu. */}
       <PageTabs
+        wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}

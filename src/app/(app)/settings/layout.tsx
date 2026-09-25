@@ -1,5 +1,14 @@
-import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { ConsoleHero, ConsoleHeroRow } from "@/components/casing/ConsoleHero";
+/* ⚠ `SettingsTabs` AND `ConsoleHeroRow` ARE NO LONGER MOUNTED HERE (ruling 61)
+   and neither file is deleted (`E164`). `SettingsTabs` is still mounted by
+   `/settings/packages`, which sits outside this layout.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { SettingsTabs } from "@/components/settings/SettingsTabs";
+   //   import { ConsoleHero, ConsoleHeroRow } from "@/components/casing/ConsoleHero"; */
+import { ConsoleHero } from "@/components/casing/ConsoleHero";
+import { SettingsSectionList } from "@/components/settings/SettingsSectionList";
+import { PageTabs } from "@/components/casing/PageTabs";
+import { tabSequenceFor } from "@/lib/nav";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { canProvideServices } from "@/lib/access";
 import { SettingsTitle } from "@/components/settings/SettingsTitle";
 import { guardPage } from "@/lib/guard";
@@ -32,6 +41,26 @@ import { guardPage } from "@/lib/guard";
  * being pulled out of its own chrome into the console, *"which is WS0's rule
  * applied: one casing for every authenticated page."* THE SECOND CHROME WENT AND
  * THE SECOND MENU STAYED. It goes now.
+ *
+ * ── ⚠⚠⚠ AND THE SHAPE CHANGED A THIRD TIME, 2026-09-25 (ruling 61) ───────
+ *
+ * ⚠⚠ **THE SECTION LIST IS BACK, AND THE `E046` OBJECTION ABOVE IS NOT BEING
+ * IGNORED — ITS CONDITION IS GONE.** Scott rejected the vertical sub-nav on
+ * 2026-09-06 because **it sat beside the console's own dark VERTICAL rail — two
+ * vertical menus on one screen.** ⚠⚠⚠ **`E559` REMOVED THAT RAIL ON 2026-09-18**
+ * and replaced it with a horizontal band, so there is now **one** vertical list
+ * here, not two.
+ * ⚠ **THAT IS A CHANGED CONDITION, NOT A CONTRADICTION** — ruling 60a: *rule 13
+ * settles a contradiction and is the wrong tool for a sequence.* ⚠⚠ Reported to
+ * Scott rather than stepped past, because if the dislike was of vertical
+ * sub-navs in general rather than of the doubling, this is his to overturn.
+ *
+ * ⚠⚠ **WHAT THE TOP ROW IS NOW IS A DIFFERENT QUESTION ENTIRELY.** It is the
+ * **ACCOUNT INFORMATION** row — which section of the account you are in — while
+ * the list beside the content says which SETTING. ⚠ `E636` measured that this
+ * page rendered **no Account Information row at all**, so `Settings` was a tab
+ * you could click and then lose the row from: *"the tabs lead to pages without
+ * the tabs"*, one section over from where Scott first said it.
  *
  * AUTHORITATIVE SERVER-SIDE GATE stays exactly where it was. `guardPage` is
  * what enforces access independently of the edge proxy — the edge is a fast
@@ -72,12 +101,51 @@ export default async function SettingsLayout({
         `E048` says this header must not carry. REPORTED — that is shipped copy
         no longer rendered, and Scott rules on whether it returns elsewhere.
       */}
-      <ConsoleHero eyebrow="Settings" title={<SettingsTitle />}>
-        <ConsoleHeroRow>
-          <SettingsTabs isProvider={canProvideServices(viewer)} />
-        </ConsoleHeroRow>
-      </ConsoleHero>
-      <div className="mx-auto min-w-0 max-w-5xl pt-6">{children}</div>
+      {/*
+        ── ⚠⚠⚠ THE ACCOUNT INFORMATION ROW COMES BACK (ruling 61, WS-A) ────────
+
+        ⚠⚠ **`E636` MEASURED THAT `/settings` RENDERED NO ACCOUNT INFORMATION ROW
+        AT ALL** — it showed its eight settings sections AS the tab row, ⚠⚠⚠ **so
+        a member who clicked `Settings` LOST THE ACCOUNT INFORMATION NAVIGATION
+        ENTIRELY.** ⚠ That is Scott's own 2026-09-25 complaint — *"the tabs lead
+        to pages without the tabs"* — **in a second section**, and it is the same
+        defect `E627` fixed on Learn.
+        ⚠ `current="/settings"` so the row lights `Settings` and not a parent —
+        the lie `E625` found on `/community`'s row.
+      */}
+      <PageTabs
+        wrap
+        eyebrow={ACCOUNT_MENU_NAME}
+        sequence={tabSequenceFor("/profile")}
+        tabs={profileTabs(viewer)}
+        current="/settings"
+      />
+      <ConsoleHero eyebrow="Settings" title={<SettingsTitle />} />
+      {/*
+        ── ⚠⚠ THE SECTIONS BECOME AN IN-PAGE LIST, NOT A SECOND TAB ROW ───────
+
+        ⚠⚠⚠ **TWO TAB ROWS STACKED WOULD BE THE `E046` DEFECT WITH THE MENUS
+        TURNED SIDEWAYS** — Scott rejected *"DOUBLE MENUS"* once already. One row
+        says which SECTION OF THE ACCOUNT you are in; the list says which
+        SETTING. They are different questions and must not look like the same
+        control twice.
+        ⚠ **IT IS NOT THE LEFT RAIL AND DOES NOT SHARE ITS COMPONENT** — see
+        `SettingsSectionList`'s docblock for ruling 61a and why `SettingsNav`
+        could not simply be re-mounted.
+        ⚠⚠ `SettingsTabs` IS NO LONGER MOUNTED HERE AND IS NOT DELETED (`E164`).
+        It is still mounted by `/settings/packages`, which sits OUTSIDE this
+        layout — so removing the file would break a live page.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <ConsoleHero eyebrow="Settings" title={<SettingsTitle />}>
+        //     <ConsoleHeroRow>
+        //       <SettingsTabs isProvider={canProvideServices(viewer)} />
+        //     </ConsoleHeroRow>
+        //   </ConsoleHero>
+      */}
+      <div className="mx-auto w-full max-w-6xl px-5 pt-5 sm:px-8 md:grid md:grid-cols-[210px_minmax(0,1fr)] md:gap-7">
+        <SettingsSectionList isProvider={canProvideServices(viewer)} />
+        <div className="min-w-0 pt-5 md:pt-0">{children}</div>
+      </div>
     </>
   );
 }

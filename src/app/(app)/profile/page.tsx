@@ -166,6 +166,7 @@ export default async function MyProfilePage() {
         //   eyebrow="MY PROFILE"
       */}
       <PageTabs
+        wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}

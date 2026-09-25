@@ -182,6 +182,7 @@ export default async function MyStatsPage({
     return (
       <>
         <PageTabs
+          wrap
           eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
@@ -513,6 +514,7 @@ export default async function MyStatsPage({
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
           under the avatar, using the same words as the menu. */}
       <PageTabs
+        wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}

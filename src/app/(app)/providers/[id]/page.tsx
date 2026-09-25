@@ -337,6 +337,7 @@ export default async function PublicProviderPage({
       */}
       {profile.isOwner && (
         <PageTabs
+          wrap
           eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}

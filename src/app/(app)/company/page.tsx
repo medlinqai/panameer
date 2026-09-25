@@ -85,6 +85,7 @@ export default async function CompanyPage({
             have set something up is a row that vanishes exactly when you most
             need a way out of it. */}
         <PageTabs
+          wrap
           eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
@@ -156,6 +157,7 @@ export default async function CompanyPage({
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
           under the avatar, using the same words as the menu. */}
       <PageTabs
+        wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}

@@ -92,6 +92,7 @@ export default async function ProfileScorePage() {
         belongs to the profile — the profile simply has its own row now.
       */}
       <PageTabs
+        wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
