@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LearnTabs } from "@/components/learn/app/LearnTabs";
 /* ⚠ `ShieldCheck`, `LayoutGrid` and `GraduationCap` went with the tile row
    (`P2-A4-E615`, ruling 5) — they were its icons and nothing else used them.
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -121,44 +122,15 @@ export function MyLearning({ data }: { data: MyLearningData }) {
         ⚠ `overflow-x-auto` is the mockup's own, and it is what makes five tabs
         behave at 390px without wrapping into two rows.
       */}
-      <nav className="flex items-center gap-[26px] overflow-x-auto border-b border-line bg-white px-5 sm:px-6">
-        <span className="shrink-0 border-r border-line py-[14px] pr-[22px] font-display text-[12px] font-bold tracking-[0.12em] text-ink">
-          LEARN
-        </span>
-        {/* ⚠⚠ THE ACTIVE TAB IS A `<span>`, NOT A `<Link>` TO ITSELF. A link to
-            the page you are standing on is the defect `E023` named. */}
-        <span className="shrink-0 whitespace-nowrap border-b-2 border-magenta py-[14px] text-[13.5px] font-semibold text-magenta-ink">
-          My Learning
-        </span>
-        <Link
-          href="/learn/paths"
-          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-        >
-          Learning Paths
-        </Link>
-        <Link
-          href="/learn/courses"
-          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-        >
-          Courses
-        </Link>
-        <a
-          href="#certificates"
-          className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-        >
-          Certificates
-        </a>
-        {/* ⚠ Teaching renders only for somebody who teaches — rule 5: a card
-            hides when the CAPABILITY is absent, not when a count is zero. */}
-        {teaching.length > 0 && (
-          <a
-            href="#teaching"
-            className="shrink-0 whitespace-nowrap border-b-2 border-transparent py-[14px] text-[13.5px] font-semibold text-ink-2 hover:text-magenta"
-          >
-            Teaching
-          </a>
-        )}
-      </nav>
+      {/*
+        ⚠⚠⚠ EXTRACTED TO `LearnTabs` (brief 9 WS-A). This row was hand-rolled
+        HERE, inline, which is why `/learn/paths` and `/learn/<slug>` had none —
+        **there was nothing to mount.** ⚠ `E585`: one concept written in place is
+        one concept unavailable to the next page that needs it.
+        ⚠ Every class, the divider, the `overflow-x-auto` and the active-tab-is-a
+        -span rule moved across unchanged; only the ownership changed.
+      */}
+      <LearnTabs active="my-learning" teaches={teaching.length > 0} onLearnHome />
 
       {/* ⚠⚠ ITEM 6 — THE MOCKUP'S `.wrap`: `max-width:1120px; margin:0 auto;
           padding:22px 20px 60px`. A centred column is part of the design, not a

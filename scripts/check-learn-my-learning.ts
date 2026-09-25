@@ -40,9 +40,37 @@ const DASH = join("src", "lib", "learn-dashboard.ts");
 const rendered = (body: string) =>
   [...body.matchAll(/>([^<>{}]{2,160})</g)].map((m) => m[1]).join("\n");
 
+/*
+  ── ⚠⚠⚠ THE TAB ROW MOVED TO ITS OWN COMPONENT (brief 9 WS-A) ───────────
+
+  ⚠ These five assertions read `MyLearning.tsx` for markup that is no longer
+  there: the row was **hand-rolled inline** in that one page, which is exactly
+  why `/learn/paths` and `/learn/<slug>` had NO tab row at all — there was
+  nothing to mount.
+  ⚠⚠ **THIS IS `check:cert-skills`' CASE INVERTED: THE CODE MOVED AND THE RULE
+  DID NOT.** Every rule below is unchanged and none is weakened — the white bar,
+  the `LEARN` eyebrow and divider, the magenta 2px underline, the anchor tabs,
+  and **My Learning FIRST because it is the page you are on.** They are simply
+  asserted against the file that now holds them.
+  ⚠ **AND THE ROW IS ASSERTED ONCE, WHERE IT LIVES** — the alternative was five
+  copies of these checks, one per mounting page, which is the defect the
+  extraction removed.
+*/
+const TABS = join("src", "components", "learn", "app", "LearnTabs.tsx");
+
 async function main() {
   const pageRaw = readFileSync(PAGE, "utf8");
   const page = strip(pageRaw);
+  const tabsRaw = readFileSync(TABS, "utf8");
+  const tabs = strip(tabsRaw);
+  check("0 — ⚠⚠ the extracted tab row was found (E586)", tabs.length > 200, `${tabs.length}`);
+  /* ⚠⚠⚠ AND THE PAGE MOUNTS IT RATHER THAN RESTATING IT — the assertion that
+     stops a sixth copy being written the next time a page needs the row. */
+  check(
+    "0 — ⚠⚠⚠ My Learning MOUNTS the shared row, it does not restate it",
+    /<LearnTabs\b/.test(pageRaw) && !/>\s*My Learning\s*</.test(pageRaw.replace(/<LearnTabs[^>]*>/g, "")),
+    "a row written in place is a row the next page cannot have"
+  );
   const dash = strip(readFileSync(DASH, "utf8"));
   check("0 — the page and its data module were found (E586)", page.length > 0 && dash.length > 0);
   /* ⚠⚠ AND THE SCAN REACHES THE `app/` DIRECTORY — the `E610` lesson, asserted
@@ -179,7 +207,18 @@ async function main() {
   );
   check(
     "6 — the two new tabs are anchors, not new routes",
-    /href="#certificates"/.test(pageRaw) && /href="#teaching"/.test(pageRaw),
+    /* ⚠⚠ ASSERTED AS BEHAVIOUR, NOT AS A SPELLING. The extracted row builds the
+       href through `anchor()` because the two sections live on `/learn`: ON that
+       page they are bare fragments (`#certificates`), and OFF it they are
+       `/learn#certificates` — a real page plus a real section.
+       ⚠⚠⚠ THE RULE IS UNCHANGED AND IS THE STRICTER READING: neither tab may
+       become a ROUTE of its own, because no such route exists and a tab that
+       navigates to one is a door onto a wall.
+       ⚠ SUPERSEDED (`E164`): //   /href="#certificates"/.test(pageRaw) */
+    /anchor\("certificates"\)/.test(tabsRaw) &&
+      /anchor\("teaching"\)/.test(tabsRaw) &&
+      /`#\$\{id\}`/.test(tabsRaw) &&
+      !/href="\/certificates"|href="\/teaching"/.test(tabsRaw),
     "a tab that navigates to a route which does not exist is a door onto a wall"
   );
 
@@ -225,23 +264,23 @@ async function main() {
   );
 
   /* ⚠ THE TAB ROW IS A WHITE BAR WITH THE `LEARN` EYEBROW AND A DIVIDER. */
-  check("8 — the tab row is a white bar", /border-b border-line bg-white/.test(page));
+  check("8 — the tab row is a white bar", /border-b border-line bg-white/.test(tabs));
   check(
     "8 — it opens with the LEARN eyebrow and a divider",
-    /border-r border-line[\s\S]{0,200}?LEARN/.test(page),
+    /border-r border-line[\s\S]{0,200}?LEARN/.test(tabs),
     "the mockup's app eyebrow, letter-spaced, with a vertical rule"
   );
   /* ⚠⚠ THE ACTIVE TAB IS MAGENTA INK PLUS A 2px UNDERLINE — and it is not a
      link to the page you are standing on (`E023`). */
   check(
     "8 — the active tab is magenta with a 2px underline",
-    /border-b-2 border-magenta[\s\S]{0,120}?text-magenta-ink/.test(page)
+    /border-magenta[\s\S]{0,120}?text-magenta-ink/.test(tabs)
   );
 
   /* ⚠⚠⚠ ORDER MATTERS: My Learning is FIRST because it is the page you are on.
      It sat third, behind two catalogue tabs under invented names. */
   const tabOrder = ["My Learning", "Learning Paths", "Courses", "Certificates", "Teaching"];
-  const positions = tabOrder.map((t) => page.indexOf(`>\n          ${t}\n`) >= 0 ? page.indexOf(`>\n          ${t}\n`) : page.indexOf(t));
+  const positions = tabOrder.map((t) => tabs.indexOf(t));
   check(
     "8 — the tabs are in the mockup's order, My Learning first",
     positions.every((v, i) => v > -1 && (i === 0 || v > positions[i - 1])),

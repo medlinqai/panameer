@@ -1,4 +1,5 @@
-import { getLearnHome, groupChips } from "@/lib/learn-home";
+import { getLearnHome, groupChips, viewerTeaches } from "@/lib/learn-home";
+import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { getSessionViewer } from "@/lib/session";
 import { LearnHome } from "@/components/learn/LearnHome";
 
@@ -102,13 +103,29 @@ export default async function LearnPathsPage({
   */
   const cards = await getLearnHome(viewer?.userId ?? null);
   const { tab } = await searchParams;
+  const teaches = await viewerTeaches(viewer);
 
   return (
-    <LearnHome
-      cards={cards}
-      chips={groupChips(cards)}
-      signedIn={Boolean(viewer)}
-      initialTab={tab === "mine" ? "mine" : "all"}
-    />
+    <>
+      {/*
+        ── ⚠⚠⚠ LEARN'S TAB ROW, WHICH THIS PAGE HAD NONE OF (brief 9 WS-A) ──
+
+        ⚠ SCOTT: *"It is wrong and there are ZERO tabs."* ⚠⚠ A member who clicked
+        into the catalogue **lost Learn's navigation entirely.**
+        ⚠⚠⚠ **SIGNED-IN ONLY, AND THAT IS NOT A HEDGE:** this route serves
+        signed-out visitors too, and *"My Learning"* is meaningless to somebody
+        with no account. **A tab row that names a page you cannot have is a row of
+        doors onto walls** (`E579`). The visitor keeps the marketing view.
+        ⚠ `Learning Paths` is the active tab here — the mockup's view 3 shows it
+        active on the catalogue AND on a path, not `My Learning`.
+      */}
+      {viewer && <LearnTabs active="paths" teaches={teaches} />}
+      <LearnHome
+        cards={cards}
+        chips={groupChips(cards)}
+        signedIn={Boolean(viewer)}
+        initialTab={tab === "mine" ? "mine" : "all"}
+      />
+    </>
   );
 }

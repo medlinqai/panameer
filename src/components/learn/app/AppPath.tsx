@@ -8,7 +8,11 @@
 //   Path Forum · Open the Forum · The room is for people taking this path.
 */
 import Link from "next/link";
-import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react";
+/* ⚠ `Lock` LEFT WITH THE GATE (ruling 26a). An unused import is a lint warning,
+   i.e. one NEW problem against a baseline whose rule is zero.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react"; */
+import { Check, GraduationCap, Play, ShieldCheck, Layers } from "lucide-react";
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { EnrollButton } from "@/components/learn/EnrollButton";
@@ -211,6 +215,25 @@ export function AppPath({
                     <>Open lesson {path.nextLesson.position}</>
                   )}
                 </Link>
+                {/*
+                  ⚠⚠⚠ THE TEST IS REACHABLE AT 0% (ruling 26a). Before this, the
+                  `Take the path test` link rendered ONLY in the `allDone` branch
+                  — so a member who wanted to audit the test had **no way to
+                  reach it from the page that is about it.** ⚠ That is `E579`
+                  inverted: not a control that refuses, but a control that is not
+                  drawn for somebody entitled to press it.
+                  ⚠⚠ `Resume` stays the PRIMARY action, because finishing the
+                  lessons is still the ordinary path — this is a second, quieter
+                  door, not a competing one.
+                */}
+                {path.test.ready && (
+                  <Link
+                    href={`/learn/${path.slug}/test`}
+                    className="mt-2.5 inline-block text-[11px] font-semibold text-white/80 underline underline-offset-2 hover:text-white"
+                  >
+                    Or sit the path test now
+                  </Link>
+                )}
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
                   {remaining} lesson{remaining === 1 ? "" : "s"} and the path test stand between you
                   and the certificate.
@@ -256,11 +279,16 @@ export function AppPath({
               className="absolute top-4 left-0 z-[2] grid h-10 w-10 place-items-center rounded-[13px] border-2 border-dashed border-line bg-white"
               aria-hidden
             >
-              {allDone ? (
-                <GraduationCap className="h-[17px] w-[17px] text-magenta" />
-              ) : (
-                <Lock className="h-[17px] w-[17px] text-ink-2/50" />
-              )}
+              {/*
+                ⚠⚠⚠ NO PADLOCK, EVER (ruling 26a). Scott ruled there is **no
+                completion gate — anyone may audit the certification test.**
+                `E611` removed the gate from the TEST PAGE and missed this glyph
+                and the copy below it. ⚠ A padlock is a claim about permission,
+                and the permission it claims does not exist.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   {allDone ? <GraduationCap …/> : <Lock className="… text-ink-2/50" />}
+              */}
+              <GraduationCap className="h-[17px] w-[17px] text-magenta" />
             </span>
             {/* ⚠ STACKS BELOW 640px — same defect as the coverage strip: a
                 `flex-1` prose block beside a fixed right column collapsed to one
@@ -298,9 +326,23 @@ export function AppPath({
                     </>
                   ) : (
                     <>
-                      <Lock className="h-3 w-3" aria-hidden />
-                      Unlocks when {path.lessons === 1 ? "the lesson is" : `all ${path.lessons} lessons are`}{" "}
-                      complete — {remaining} to go
+                      {/*
+                        ⚠⚠⚠ THE GATE IS GONE AND SO IS THE SENTENCE THAT NAMED IT
+                        (ruling 26a). It read *"Unlocks when all N lessons are
+                        complete"* — ⚠ **a promise about a rule that does not
+                        exist.** The test route has never checked completion, so
+                        this copy described a lock nothing enforced.
+                        ⚠⚠ What replaces it states the two TRUE facts: the test
+                        is open, and there are lessons left. **A member may sit it
+                        now; the count is information, not a barrier.**
+                        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                        //   <Lock className="h-3 w-3" aria-hidden />
+                        //   Unlocks when {path.lessons === 1 ? "the lesson is" : `all ${path.lessons} lessons are`}
+                        //   complete — {remaining} to go
+                      */}
+                      {path.test.ready
+                        ? `Open now — ${remaining} lesson${remaining === 1 ? "" : "s"} still to watch`
+                        : "Waiting on the question set"}
                     </>
                   )}
                 </span>

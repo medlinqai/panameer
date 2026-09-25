@@ -878,3 +878,32 @@ export async function getHomeSearchChips(
   }
   return out;
 }
+
+/**
+ * ⚠⚠ DOES THIS VIEWER TEACH ANYTHING? — the CAPABILITY behind Learn's
+ * `Teaching` tab (brief 9 WS-A).
+ *
+ * ⚠ `MyLearning` already knows, because `learn-dashboard` hands it a `teaching`
+ * LIST. ⚠⚠ The catalogue and a path do not build that list and have no reason
+ * to — **so this asks the capability question directly rather than making two
+ * more pages assemble a list they will only measure the length of.**
+ *
+ * ⚠⚠⚠ **IT IS `teachesPathWhere`, NOT A SECOND DEFINITION.** `check:forums` §3
+ * exists because a hand-rolled copy of that predicate once drifted, and
+ * `statistics.ts` carries the same lesson in its own header. **One predicate,
+ * asked two ways.**
+ *
+ * ⚠ `false` for a signed-out visitor and for a user with no Person row — both
+ * are "no capability", which is the honest answer and the one that hides the tab
+ * rather than showing an empty one (rule 5: hide on capability, never on a zero).
+ */
+export async function viewerTeaches(viewer: { userId: string } | null): Promise<boolean> {
+  if (!viewer) return false;
+  const person = await prisma.person.findFirst({
+    where: { user_id: viewer.userId },
+    select: { id: true },
+  });
+  if (!person) return false;
+  const n = await prisma.learningPath.count({ where: teachesPathWhere(person.id) });
+  return n > 0;
+}

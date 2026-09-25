@@ -9,7 +9,8 @@
 */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getLearnPath } from "@/lib/learn-home";
+import { getLearnPath, viewerTeaches } from "@/lib/learn-home";
+import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { getAppPath } from "@/lib/learn-path-app";
 import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
@@ -109,6 +110,20 @@ export default async function LearningPathPage({
        curriculum still renders in full beneath it. */
     return (
       <>
+        {/*
+          ── ⚠⚠⚠ LEARN'S TAB ROW (brief 9 WS-A) ──────────────────────────
+
+          ⚠ SCOTT, of this page and the catalogue: *"It is wrong and there are
+          ZERO tabs."* ⚠⚠ A member who opened a path **lost Learn's navigation
+          entirely.**
+          ⚠⚠⚠ **`Learning Paths` IS THE ACTIVE TAB, NOT `My Learning`** — the
+          mockup's view 3 shows it that way, and it is right: a path IS a
+          catalogue entry you are standing inside.
+          ⚠ Signed-in branch only. The signed-out view below keeps the marketing
+          page, because a row naming *"My Learning"* to somebody with no account
+          is a row of doors onto walls (`E579`).
+        */}
+        <LearnTabs active="paths" teaches={await viewerTeaches(viewer)} />
         {!app.ready && (
           <div className="mx-auto w-full max-w-5xl px-6 pt-8">
             <NotReadyNotice />
