@@ -5733,7 +5733,22 @@ model ProviderBidLine {
   provider_bid_id String @db.Uuid
   line_number     Int
 
-  bid_request_line_id String @db.Uuid
+  /// ⚠⚠⚠ NULLABLE SINCE `E621` WS-C, FOR THE SAME REASON THAT MADE
+  /// `ProviderBid.bid_request_id` NULLABLE IN WS-A: **an invite-shaped NOT NULL
+  /// made ruling 14's OPEN half unreachable.**
+  ///
+  /// ⚠⚠ MEASURED 2026-09-25, AND IT IS WORSE THAN THE OPEN CASE: **NOTHING IN
+  /// `src/` CREATES A `BidRequestLine` AT ALL** — 0 rows, 0 writers anywhere. So
+  /// this NOT NULL pointed at a table nobody fills, which made `ProviderBidLine`
+  /// unwritable by EVERY route, invited or open. ⚠ A proposal therefore could
+  /// not carry a price at all, and WS-A item 1 asks for exactly that:
+  /// *"their rate, their pitch"*.
+  ///
+  /// ⚠ SET when the proposal answers a specific invited line; NULL when the
+  /// provider is proposing against an open request as a whole.
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  /// //   bid_request_line_id String @db.Uuid
+  bid_request_line_id String? @db.Uuid
 
   /// ⚠⚠ THE SAME PRICING SHAPE AS `WorkOrderLine`, DELIBERATELY. AWARDING IS A
   /// COPY, FIELD FOR FIELD. If the two drift the award becomes a TRANSLATION,

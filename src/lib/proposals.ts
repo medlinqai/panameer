@@ -38,7 +38,67 @@ export type ProposalDraft = {
   workRequestId: string;
   coverNote?: string | null;
   validUntil?: string | null;
+  /**
+   * ⚠⚠⚠ THEIR RATE (WS-A item 1: *"their rate, their pitch"*), ADDED IN WS-C
+   * BECAUSE WS-C IS WHERE ITS ABSENCE BIT.
+   *
+   * ⚠ MEASURED 2026-09-25: `ProviderBidLine.bid_request_line_id` was **NOT
+   * NULL**, and **nothing in `src/` creates a `BidRequestLine`** — 0 rows, 0
+   * writers. ⚠⚠ So a proposal line was unwritable by EVERY route, and a
+   * proposal could carry no price at all. WS-C then had nothing to multiply the
+   * buyer's hours by. ⚠⚠⚠ The column is now nullable (one `DROP NOT NULL`, zero
+   * rows, zero readers — the diff was printed before it was pushed).
+   *
+   * ⚠ Optional, because a provider may pitch before pricing; **selection
+   * REFUSES a proposal with no rate** rather than inventing one.
+   */
+  rate?: {
+    unitPriceCents: number;
+    /** ⚠ Defaults to `HOUR`. A rate without a unit is a number, not a price. */
+    uom?: string | null;
+    /** ⚠ `RATE` is hours at a price; `AMOUNT` is a fixed fee for the whole job. */
+    basis?: "RATE" | "AMOUNT";
+  } | null;
 };
+
+/**
+ * ⚠⚠⚠ ONE RATE LINE, REPLACED RATHER THAN APPENDED.
+ *
+ * ⚠ A provider revising their price must end with ONE rate, not a history of
+ * them — two priced lines on one proposal is two prices, and the buyer's screen
+ * would have to pick. ⚠⚠ `deleteMany` then `create`, inside a transaction, so a
+ * failure cannot leave the proposal priceless between the two statements.
+ *
+ * ⚠ `quantity` IS DELIBERATELY NULL. **The provider states a rate; the buyer's
+ * dates decide how many hours.** A provider-supplied quantity would be a second
+ * source for the number WS-C computes from the dates.
+ */
+async function writeRate(
+  providerBidId: string,
+  rate: NonNullable<ProposalDraft["rate"]> | null
+): Promise<void> {
+  if (!rate) return;
+  if (!Number.isInteger(rate.unitPriceCents) || rate.unitPriceCents <= 0) {
+    throw new SourcingError("Enter your rate.", "BAD_RATE");
+  }
+  await prisma.$transaction([
+    prisma.providerBidLine.deleteMany({ where: { provider_bid_id: providerBidId } }),
+    prisma.providerBidLine.create({
+      data: {
+        provider_bid_id: providerBidId,
+        line_number: 1,
+        /* ⚠⚠ NULL ON AN OPEN REQUEST — see `ProposalDraft.rate`. This is the
+           half that the NOT NULL made unreachable for every route. */
+        bid_request_line_id: null,
+        basis: rate.basis ?? "RATE",
+        uom: rate.uom ?? "HOUR",
+        quantity: null,
+        unit_price_cents: rate.unitPriceCents,
+        amount_cents: null,
+      },
+    }),
+  ]);
+}
 
 async function ownProvider(viewer: Viewer) {
   const person = await prisma.person.findUnique({
@@ -155,6 +215,7 @@ export async function submitProposal(
         submitted_at: now,
       },
     });
+    await writeRate(existing.id, draft.rate ?? null);
     return { id: existing.id, replaced: true };
   }
 
@@ -175,6 +236,8 @@ export async function submitProposal(
     },
     select: { id: true },
   });
+
+  await writeRate(created.id, draft.rate ?? null);
 
   /*
     ── ⚠⚠ THE BUYER IS TOLD, THROUGH THE ONE WRITER (`E620`) ───────────────

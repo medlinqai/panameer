@@ -354,6 +354,24 @@ const STATISTICS_LIB = join("src", "lib", "statistics.ts");
 */
 const INTERVIEW_WRITER = join("src", "lib", "interviews.ts");
 const TEST_WRITER = join("src", "lib", "work-tests.ts");
+/*
+  ── ⚠⚠⚠ AND THE SELECTION WRITER (`P2-A8-E621` WS-C) ────────────────────
+
+  ⚠⚠ THIS ONE IS DIFFERENT FROM THE OTHER FOUR AND IS FENCED HARDER, BECAUSE IT
+  GENUINELY READS A PROPOSAL'S PRICE. ⚠ It has to: the requisition line is priced
+  at **the provider's own rate**, and the alternative is the buyer typing it,
+  which is the defect `selectProvider`'s docblock exists to prevent.
+
+  ⚠⚠⚠ WHAT THE FENCE ACTUALLY FORBIDS IS STILL FORBIDDEN — **many providers'
+  prices side by side.** So the narrowing below is specific rather than blanket:
+  · the WINNER is read by the `(work_request_id, provider_person_id)` UNIQUE KEY,
+    which can only ever return the one provider the buyer already chose;
+  · the one `findMany` over proposals selects **`id` alone** — it exists to clear
+    worklist notifications and to mark losers, and **cannot see a price**;
+  · `cover_note` is never read here. ⚠ The pitch is comparison material, and a
+    writer has no use for it.
+*/
+const SELECTION_WRITER = join("src", "lib", "selection.ts");
 {
   const hits = SRC.filter(
     (f) =>
@@ -363,7 +381,8 @@ const TEST_WRITER = join("src", "lib", "work-tests.ts");
       f.path !== PROPOSAL_WRITER &&
       f.path !== STATISTICS_LIB &&
       f.path !== INTERVIEW_WRITER &&
-      f.path !== TEST_WRITER
+      f.path !== TEST_WRITER &&
+      f.path !== SELECTION_WRITER
   );
 /*
   ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
@@ -406,6 +425,30 @@ const TEST_WRITER = join("src", "lib", "work-tests.ts");
       "the fence is about comparing providers' prices — that is the comparison"
     );
   }
+
+  /*
+    ⚠⚠⚠ THE SELECTION WRITER'S OWN FENCE — TIGHTER, BECAUSE IT DOES READ A PRICE.
+    ⚠ See the block above `SELECTION_WRITER` for why each of these three is the
+    assertion that matters rather than a blanket ban.
+  */
+  const sel = SRC.find((f) => f.path === SELECTION_WRITER);
+  check(
+    "3 — ⚠⚠⚠ the selection writer reads the WINNER by unique key, never a list of bidders",
+    sel != null && /work_request_id_provider_person_id/.test(sel.code),
+    "a unique key can only return the one provider the buyer already chose"
+  );
+  check(
+    "3 — ⚠⚠⚠ and its only proposal findMany selects `id` ALONE — it cannot see a price",
+    sel != null &&
+      (sel.code.match(/providerBid\.findMany/g) ?? []).length === 1 &&
+      /providerBid\.findMany\(\{[\s\S]{0,160}?select:\s*\{\s*id:\s*true,?\s*\}/.test(sel.code),
+    "widening that select is how a writer becomes the bid-comparison screen"
+  );
+  check(
+    "3 — ⚠⚠ it never reads a proposal's cover note",
+    sel != null && !/cover_note/.test(sel.code),
+    "the pitch is comparison material; a writer has no use for it"
+  );
 }
 
   check(
