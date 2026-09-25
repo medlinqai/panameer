@@ -208,6 +208,19 @@ export async function createDraft(
       buyer_person_id: personId,
       p_account_id: pAccountId,
       status: "DRAFT",
+      /*
+        ── ⚠⚠⚠ WHO MAY PROPOSE — RULING 14 (`P2-A8-E621` WS-A) ──────────────
+        ⚠ Scott: **"The buyer picks, per request."** They pick when they POST;
+        a DRAFT is visible to nobody, so the value has no effect yet.
+        ⚠⚠ IT STARTS `INVITE_ONLY` BECAUSE THAT IS THE SAFE FAILURE: if the
+        switch is never touched, the request reaches nobody it was not sent to.
+        The opposite default would publish a half-written request to every
+        provider on the platform the moment it posted.
+        ⚠⚠⚠ THE COLUMN HAS NO `@default` ON PURPOSE — that would mean "nobody
+        decided" (`E612`'s refusal). Setting it HERE is a decision this creator
+        makes and states, which is a different thing.
+      */
+      proposal_access: "INVITE_ONLY",
     },
   });
   if (section) {

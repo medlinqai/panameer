@@ -1,4 +1,4 @@
-import { LineBasis } from "@prisma/client";
+import { LineBasis, TransactionType } from "@prisma/client";
 import { rateBreakdown } from "@/lib/display";
 
 /**
@@ -79,7 +79,31 @@ export type LineShape = {
  * line *"except for amount-based service lines."*
  */
 export function assertLineShape(line: LineShape): void {
-  if (line.basis === "RATE") {
+  /* ⚠ THE `LineBasis` DOOR. `RATE` is the by-quantity shape. */
+  assertPricedShape(line.basis === "RATE", line);
+}
+
+/**
+ * ── ⚠⚠⚠ ONE RULE BODY, TWO DOORS — RULING 44's `E585` CLAUSE ────────────
+ *
+ * ⚠⚠ Ruling 44 deleted the `LineBasis` ⇄ `TransactionType` bridge and required
+ * *"ONE definition of the three kinds, shared by the requisition line and the
+ * order line."* ⚠⚠⚠ **THE TEMPTING WRONG ANSWER WAS A SECOND `assert…Shape`
+ * WRITTEN AGAINST `TransactionType`** — which is the same rule twice, and the
+ * pair would drift the first time somebody added a field to one of them.
+ *
+ * ⚠ So the RULE lives here once, keyed on the only question it actually asks —
+ * *is this line priced by quantity?* — and the two enums are nothing more than
+ * two ways of answering it. ⚠⚠ `assertLineShape` answers it from `LineBasis`
+ * (`ProviderBidLine` still carries one); `assertTransactionLineShape` answers it
+ * from `TransactionType` (the requisition line and, since ruling 44, the order
+ * line). **Neither translates into the other, which is what the ruling forbade.**
+ */
+function assertPricedShape(
+  byQuantity: boolean,
+  line: Omit<LineShape, "basis">
+): void {
+  if (byQuantity) {
     if (line.uom == null || line.uom === "")
       throw new SpineError("A RATE line needs a unit of measure", "RATE_NEEDS_UOM");
     if (line.quantity == null)
@@ -100,6 +124,24 @@ export function assertLineShape(line: LineShape): void {
       "An AMOUNT line must not carry uom, quantity or unit price",
       "AMOUNT_HAS_RATE_FIELDS"
     );
+}
+
+/**
+ * ⚠⚠ THE `TransactionType` DOOR ONTO THE SAME RULE — for the requisition line
+ * and, since ruling 44, the WORK ORDER line.
+ *
+ * ⚠⚠⚠ THE ERROR CODES ARE DELIBERATELY THE OLD ONES (`RATE_NEEDS_UOM` …). They
+ * name the SHAPE, not the enum value, and `check:sourcing` and `check:hire` both
+ * assert against them — re-coding them would be a rename dressed as a fix.
+ */
+export function assertTransactionLineShape(line: {
+  transaction_type: TransactionType;
+  uom?: string | null;
+  quantity?: number | null;
+  unit_price_cents?: number | null;
+  amount_cents?: number | null;
+}): void {
+  assertPricedShape(pricedByQuantity(line.transaction_type), line);
 }
 
 /**
@@ -139,9 +181,89 @@ export function basisForPricingType(t: "HOURLY" | "FIXED" | "RECURRING"): LineBa
   return t === "HOURLY" ? "RATE" : "AMOUNT";
 }
 
+/**
+ * ── ⚠⚠⚠ THE BUYER'S PRICING CHOICE → SCOTT'S TRANSACTION TYPE (`E621`) ───
+ *
+ * ⚠ `basisForPricingType` above maps the same input onto the OLD two-value
+ * `LineBasis`. It is kept because `SupplierPart`, `WorkOrderLine`,
+ * `ProviderBidLine` and `BidRequestLine` still use that enum — only the
+ * REQUISITION line moved (ruling 37b).
+ *
+ * ⚠⚠ WHY `HOURLY` BECOMES `SERVICE_BY_QTY` AND NOT `PRODUCT_BY_QTY`: the
+ * distinction is the whole reason Scott's field set has three values where
+ * `LineBasis` had two — **a service by quantity is TIMESHEETED, a product by
+ * quantity is RECEIVED.** Hours are a service. ⚠⚠⚠ `PRODUCT_BY_QTY` IS
+ * DELIBERATELY UNREACHABLE FROM HERE: a buyer's budget type cannot express
+ * "I am buying a good", and inventing a path to it would be guessing at a
+ * choice the buyer never made. It becomes reachable when items do (`Shop`).
+ */
+export function transactionTypeForPricingType(
+  t: "HOURLY" | "FIXED" | "RECURRING"
+): TransactionType {
+  return t === "HOURLY" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT";
+}
+
+/**
+ * ⚠⚠ PRICED BY QUANTITY, OR PRICED BY AMOUNT — the only question completeness
+ * asks of a line's type. ⚠ Both quantity shapes carry a unit price; the amount
+ * shape carries a total. ⚠⚠⚠ ONE PLACE, because the page, the API and the gate
+ * all ask it and must not answer differently (`E585`).
+ */
+/*
+  ── ⚠⚠⚠ THE BRIDGE IS DELETED. RULING 44, 2026-09-24. ───────────────────
+
+  ⚠⚠ RULING 41 entry 2 recorded this adapter as knowingly lossy and named its
+  retirement trigger in advance: **"`WorkOrderLine` gains `TransactionType`."**
+  ⚠⚠⚠ **WS-D IS THAT TRIGGER. IT FIRED, AND SCOTT RULED: *"Teach it the third
+  value now."*** So `WorkOrderLine` now carries `transaction_type` and there are
+  no longer two enums to translate between. **The lossiness went with it.**
+
+  ⚠ ITS ONE CALLER IS GONE TOO — `work-request-lines.ts` wrote `basis` from it,
+  and stopping that write is what finally makes ruling 41 entry 1's description
+  (*"written by nothing"*) true. ⚠⚠ **ENTRY 1 IS NOT FOLDED IN:** the `basis`
+  COLUMN stays, nullable, and retires on trunk in its own change. One cleanup,
+  one place.
+
+  ⚠⚠ WHY IT MATTERED THAT THIS HAPPENED TONIGHT RATHER THAN LATER: every feature
+  above it — receiving, timesheets, settlement, invoicing — would have inherited
+  the ambiguity and encoded it. **A lossy adapter is acceptable only while
+  nothing depends on what it loses.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the function and the docblock that
+  predicted its own deletion:
+  //   ── ⚠⚠⚠ THE BRIDGE BETWEEN THE TWO ENUMS, WHILE BOTH EXIST (`E621`) ─────
+  //   ⚠ The REQUISITION line carries `TransactionType` (Scott's three values); the
+  //   ORDER line still carries `LineBasis` (two). A work order is built FROM a
+  //   requisition line, and `orders.ts` compares the two to show what changed — so
+  //   something has to translate, and it must be ONE thing.
+  //   ⚠⚠⚠ IT IS LOSSY IN ONE DIRECTION AND THAT IS THE POINT OF RULING 37b: both
+  //   quantity shapes collapse to `RATE`, which is exactly the distinction
+  //   `LineBasis` cannot hold. Going the other way is therefore NOT round-trip
+  //   safe, and no inverse is offered here on purpose.
+  //   ⚠⚠ WHEN `WorkOrderLine` GAINS `TransactionType` (its own brief), this bridge
+  //   is what gets deleted, and the lossiness goes with it.
+  //
+  //   export function basisForTransactionType(t: TransactionType): LineBasis {
+  //     return pricedByQuantity(t) ? "RATE" : "AMOUNT";
+  //   }
+*/
+
+/**
+ * ⚠⚠⚠ KEPT, AND IT IS **NOT** PART OF THE DELETED BRIDGE — read the signature.
+ * It takes a `TransactionType` and returns a BOOLEAN; it never mentions
+ * `LineBasis`. ⚠ Ruling 44's `E585` clause asks for **one definition of the
+ * three kinds, shared by the requisition line and the order line**, and this is
+ * that definition. Deleting it would have forced each side to re-ask the
+ * question, which is the defect the ruling exists to remove.
+ */
+export function pricedByQuantity(t: TransactionType): boolean {
+  return t === "PRODUCT_BY_QTY" || t === "SERVICE_BY_QTY";
+}
+
 export type RequestLineForCompleteness = {
   provider_person_id?: string | null;
-  basis: LineBasis;
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;`
+  transaction_type: TransactionType;
   unit_price_cents?: number | null;
   amount_cents?: number | null;
 };
@@ -159,7 +281,7 @@ export function workRequestIsComplete(lines: RequestLineForCompleteness[]): bool
   return lines.every(
     (l) =>
       !!l.provider_person_id &&
-      (l.basis === "RATE" ? l.unit_price_cents != null : l.amount_cents != null)
+      (pricedByQuantity(l.transaction_type) ? l.unit_price_cents != null : l.amount_cents != null)
   );
 }
 

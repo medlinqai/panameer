@@ -125,9 +125,16 @@ check(
     !!api && !/body\.(type|kind|settlementType|mode)/.test(api.code)
   );
   const lib = fileAt("src/lib/settlements.ts");
+  /* ⚠⚠ RE-ANCHORED BY RULING 44 — the ORDER LINE now carries `transaction_type`
+     and its `basis` is retired, so the create path asks the shared predicate.
+     ⚠⚠⚠ THE RULE IS UNCHANGED AND IS NOT WEAKENED: *the order line decides,
+     never the request body.* Only the column it decides FROM moved.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   "1 — the create path branches on the ORDER LINE's basis",
+     //   /ol\.basis === "RATE"/ */
   check(
-    "1 — the create path branches on the ORDER LINE's basis",
-    !!lib && /ol\.basis === "RATE"/.test(lib.code)
+    "1 — the create path branches on the ORDER LINE's own kind",
+    !!lib && /pricedByQuantity\(ol\.transactionType\)/.test(lib.code)
   );
   check(
     "1 — ABSENCE: createSettlement takes no type parameter",
@@ -146,9 +153,10 @@ check(
     "1 — both renderings post to /api/settlements",
     !!ui && (ui.code.match(/fetch\("\/api\/settlements"/g) ?? []).length === 1
   );
+  /* ⚠ SUPERSEDED (`E164`): //   /l\.basis === "RATE"/ */
   check(
-    "1 — it branches on the order line's basis",
-    !!ui && /l\.basis === "RATE"/.test(ui.code)
+    "1 — it branches on the order line's own kind",
+    !!ui && /l\.transactionType === "SERVICE_BY_AMT"/.test(ui.code)
   );
   /* ⚠⚠ AN AMOUNT LINE HAS NO NUMBER INPUT — a quantity or amount field there
      invites a partial claim, which cannot exist. */
@@ -457,9 +465,10 @@ check(
     !!lib && /assertSettlementDraw\(\{/.test(lib.code)
   );
   /* ⚠ AN AMOUNT LINE CANNOT BE SPLIT ACROSS ROWS. */
+  /* ⚠ SUPERSEDED (`E164`): //   /ol\.basis === "AMOUNT" && agg\.count > 1/ */
   check(
     "5 — an AMOUNT line refuses more than one row",
-    !!lib && /ol\.basis === "AMOUNT" && agg\.count > 1/.test(lib.code)
+    !!lib && /!byQuantity && agg\.count > 1/.test(lib.code)
   );
   /* ⚠ THE DRAW IS TAKEN AT SUBMIT AND RETURNED ON REJECTION. */
   check("5 — the draw is taken at submit", !!lib && /drawn_quantity: \{ increment/.test(lib.code));

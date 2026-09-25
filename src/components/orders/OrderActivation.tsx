@@ -16,26 +16,51 @@ import type { OrderAction } from "@/lib/orders";
  * There is no `party` prop, no `isBuyer` flag and no session read in this file,
  * so there is no expression here that could evaluate to "show Accept to a buyer".
  *
- * ⚠⚠ AND THE TWO LABELS EXIST ONLY INSIDE A MAP OVER THAT ARRAY. The strings
- * "Accept" and "Release" appear exactly once each, in `LABEL`, keyed by the
- * action — so an action that is not in the array has no rendering path at all.
- * `check:orders` asserts this structurally: no `Accept`/`Release` button may
- * appear anywhere in the orders surfaces outside this map.
+ * ⚠⚠ AND THE LABEL EXISTS ONLY INSIDE A MAP OVER THAT ARRAY. The string appears
+ * exactly once, in `LABEL`, keyed by the action — so an action that is not in the
+ * array has no rendering path at all. `check:orders` asserts this structurally.
  *
- * ⚠ A GREYED-OUT BUTTON WOULD HAVE BEEN THE WRONG ANSWER. It still tells a buyer
- * that Accept is theirs to press one day, and it is not — accepting is the
- * provider agreeing to terms, and a buyer who could accept on their behalf would
- * be signing the provider's side of a SOW. Absent, not disabled.
+ * ── ⚠⚠⚠ RULING 43 — ONE ACTION NOW, AND BOTH PARTIES TAKE IT ────────────
+ *
+ * ⚠ SCOTT, 2026-09-24: *"both parties are accepting the terms of the WO. Then,
+ * when all parties have accepted the terms, the WO can be auto-released."*
+ * ⚠⚠ **THERE IS NO RELEASE CONTROL, ON EITHER SCREEN, BECAUSE THERE IS NO
+ * RELEASE ACTION.** `RELEASED` is what the second acceptance produces.
+ *
+ * ⚠⚠ SUPERSEDED, quoted not deleted (`E164`) — and its argument is now INVERTED
+ * for the buyer, which ruling 43 addresses head on:
+ * //   ⚠ A GREYED-OUT BUTTON WOULD HAVE BEEN THE WRONG ANSWER. It still tells a buyer
+ * //   that Accept is theirs to press one day, and it is not — accepting is the
+ * //   provider agreeing to terms, and a buyer who could accept on their behalf would
+ * //   be signing the provider's side of a SOW. Absent, not disabled.
+ *
+ * ⚠⚠⚠ THE BUYER'S ACTION **IS** ACCEPT — of their OWN side, after the provider,
+ * and of a document they have not seen before: the work order is GENERATED from
+ * the requisition, never authored (ruling 43e). ⚠ **Absent-not-disabled still
+ * holds**, and it is still the reason there is no `party` prop here: a buyer who
+ * may not accept YET sees no control, not a grey one.
  */
 
+/*
+  ⚠⚠⚠ RULING 43f, VERBATIM. `Accept Terms` — verb + object, Title Case (rule 11).
+  ⚠ The noun form *"Acceptance of Terms"* is contract-document register and
+  belongs on the DOCUMENT HEADING and the audit line, **never on a control**:
+  buttons take verbs. ⚠⚠ Clarity lands in the SENTENCES around it
+  (`activationMessage`), not on the button — which is why this is shorter than
+  *"Accept These Terms"* and loses nothing.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ACCEPT: "Accept these terms",
+  //   RELEASE: "Release the order",
+*/
 const LABEL: Record<OrderAction, string> = {
-  ACCEPT: "Accept these terms",
-  RELEASE: "Release the order",
+  ACCEPT: "Accept Terms",
 };
 
+/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the route has no caller after
+   ruling 43; see the note in `api/orders/[id]/release/route.ts`:
+   //   RELEASE: "release", */
 const ENDPOINT: Record<OrderAction, string> = {
   ACCEPT: "accept",
-  RELEASE: "release",
 };
 
 export function OrderActivation({

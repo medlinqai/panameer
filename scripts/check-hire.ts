@@ -23,6 +23,16 @@
  * ⚠ NO DATABASE AND NO BROWSER. Source is read as text; rules are exercised as
  * functions.
  */
+/*
+  ── ⚠⚠ MOVED OFF `basis` ONTO `transaction_type` (`P2-A8-E621`, ruling 37b) ─
+  ⚠ Scott's `WR_LINE` field set names THREE types where `LineBasis` had two, and
+  the requisition line now carries `TransactionType`. ⚠⚠ THE RULE THESE FIXTURES
+  ASSERT IS UNCHANGED — every line assigned and priced — only the field it reads
+  moved. ⚠ `RATE` became `SERVICE_BY_QTY` and `AMOUNT` became `SERVICE_BY_AMT`:
+  these fixtures are all SERVICES, and `PRODUCT_BY_QTY` is not reachable from a
+  buyer's budget type (see `transactionTypeForPricingType`).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: "RATE"` / `basis: "AMOUNT"`.
+*/
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { workRequestIsComplete } from "@/lib/transaction-spine";
@@ -68,7 +78,7 @@ const fileAt = (p: string) => SRC.find((f) => f.path === join(...p.split("/")));
 const L = (o: Partial<LineForCompleteness>): LineForCompleteness => ({
   line_number: 1,
   description: "a line",
-  basis: "RATE",
+  transaction_type: "SERVICE_BY_QTY",
   ...o,
 });
 
@@ -79,15 +89,15 @@ const TRUTH_TABLE: { name: string; lines: LineForCompleteness[] }[] = [
   { name: "RATE, assigned, no price", lines: [L({ provider_person_id: "p" })] },
   { name: "RATE, priced, no provider", lines: [L({ unit_price_cents: 15000 })] },
   { name: "RATE, neither", lines: [L({})] },
-  { name: "AMOUNT, assigned + priced", lines: [L({ basis: "AMOUNT", provider_person_id: "p", amount_cents: 24000 })] },
-  { name: "AMOUNT, assigned, no price", lines: [L({ basis: "AMOUNT", provider_person_id: "p" })] },
-  { name: "AMOUNT, priced, no provider", lines: [L({ basis: "AMOUNT", amount_cents: 24000 })] },
+  { name: "AMOUNT, assigned + priced", lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p", amount_cents: 24000 })] },
+  { name: "AMOUNT, assigned, no price", lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p" })] },
+  { name: "AMOUNT, priced, no provider", lines: [L({ transaction_type: "SERVICE_BY_AMT", amount_cents: 24000 })] },
   {
     /* ⚠ THE CROSS-COLUMN TRAP: an AMOUNT line carrying a unit price is NOT
        priced, and a RATE line carrying an amount is NOT priced. Reading one
        column for both bases is how half the lines render as free. */
     name: "AMOUNT line carrying a unit price is NOT priced",
-    lines: [L({ basis: "AMOUNT", provider_person_id: "p", unit_price_cents: 15000 })],
+    lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p", unit_price_cents: 15000 })],
   },
   {
     name: "RATE line carrying an amount is NOT priced",
@@ -97,14 +107,14 @@ const TRUTH_TABLE: { name: string; lines: LineForCompleteness[] }[] = [
     name: "two lines, one short",
     lines: [
       L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-      L({ line_number: 2, basis: "AMOUNT", provider_person_id: "p" }),
+      L({ line_number: 2, transaction_type: "SERVICE_BY_AMT", provider_person_id: "p" }),
     ],
   },
   {
     name: "three lines, all ready",
     lines: [
       L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-      L({ line_number: 2, basis: "AMOUNT", provider_person_id: "q", amount_cents: 900 }),
+      L({ line_number: 2, transaction_type: "SERVICE_BY_AMT", provider_person_id: "q", amount_cents: 900 }),
       L({ line_number: 3, provider_person_id: "r", unit_price_cents: 1 }),
     ],
   },
@@ -120,7 +130,7 @@ for (const row of TRUTH_TABLE) {
   );
 }
 
-/* ⚠ THE MUTATION: a `completenessFor` that ignored the basis — the single most
+/* ⚠ THE MUTATION: a `completenessFor` that ignored the transaction type — the single most
    likely wrong rewrite — must DISAGREE with the spine, or the table above is
    proving nothing. */
 function naiveComplete(lines: LineForCompleteness[]): boolean {
@@ -134,7 +144,7 @@ function naiveComplete(lines: LineForCompleteness[]): boolean {
     (r) => naiveComplete(r.lines) !== workRequestIsComplete(r.lines)
   );
   check(
-    "1 — MUTATION: a basis-blind completeness check DOES disagree with the spine",
+    "1 — MUTATION: a type-blind completeness check DOES disagree with the spine",
     disagreements.length > 0,
     "the truth table cannot tell the two apart — it is not exercising the rule"
   );
@@ -148,7 +158,7 @@ check(
 {
   const c = completenessFor([
     L({ line_number: 1, provider_person_id: "p", unit_price_cents: 15000 }),
-    L({ line_number: 2, basis: "AMOUNT" }),
+    L({ line_number: 2, transaction_type: "SERVICE_BY_AMT" }),
     L({ line_number: 3, provider_person_id: "p" }),
   ]);
   check("1 — only the SHORT lines appear in gaps", c.gaps.length === 2);
@@ -306,13 +316,163 @@ const WIZARD_STEPS = [
 const RESPONSE_MODELS = /\bproviderBid\b|\bProviderBid\b|\bTestResponse\b|\bInterviewResponse\b|\bShortlistLine\b|\bproviderBidLine\b/;
 const SOURCING_LIB = join("src", "lib", "sourcing.ts");
 const SOURCING_STAGE = join("src", "lib", "sourcing-stage.ts");
+/*
+  ── ⚠⚠⚠ TWO FILES ADDED DELIBERATELY (`P2-A8-E621` WS-A) ────────────────
+
+  ⚠ THE DOCBLOCK ABOVE DESCRIBES EXACTLY THIS MOMENT: *"the day somebody needs
+  one they add the file DELIBERATELY and a reviewer sees exactly the `include`
+  that opens the bid screen."* ⚠⚠ This is that addition, and it is authorised —
+  **ruling 25** makes the whole chain MVP scope and **ruling 24** says a missing
+  writer is not a reason to defer the surface that creates it.
+
+  ⚠⚠⚠ THE FENCE IS NOT WEAKENED, BECAUSE NEITHER FILE IS WHAT IT GUARDS. The
+  WS-3 fence names *"the bid list, the bid-comparison screen, scoring,
+  shortlisting, tests or interviews"* — **all of which are still forbidden here
+  and are WS-B's and WS-C's to add, each with its own deliberate line.**
+  · `proposals.ts` is the WRITER — it creates and withdraws a proposal. It
+    renders nothing and reads no other provider's bid.
+  · `statistics.ts` reads a **COUNT of the viewer's OWN proposals**, for the
+    figure that said *"nothing creates one"*. ⚠ A count of your own is not the
+    comparison screen; it cannot show you anybody else's price.
+*/
+const PROPOSAL_WRITER = join("src", "lib", "proposals.ts");
+const STATISTICS_LIB = join("src", "lib", "statistics.ts");
+/*
+  ── ⚠⚠⚠ TWO MORE ADDED DELIBERATELY (`P2-A8-E621` WS-B) ─────────────────
+
+  ⚠ The fence names *"tests or interviews"* as forbidden, and said they would be
+  **WS-B's to add, each with its own deliberate line.** ⚠⚠ This is that line.
+
+  ⚠⚠⚠ AND WHAT THE FENCE ACTUALLY GUARDS IS STILL GUARDED, because neither file
+  is a SCREEN. The rule exists to stop **a bid list and a bid-comparison view** —
+  one buyer reading many providers' prices side by side.
+  · `interviews.ts` reaches `providerBid` for exactly ONE thing: proving the
+    named provider has proposed, by the `(work_request_id, provider_person_id)`
+    unique key. **One provider, by key, no list, no price read.**
+  · `work-tests.ts` does the identical single lookup, for the identical reason.
+  ⚠ Both are WRITERS. Neither renders anything and neither can enumerate.
+*/
+const INTERVIEW_WRITER = join("src", "lib", "interviews.ts");
+const TEST_WRITER = join("src", "lib", "work-tests.ts");
+/*
+  ── ⚠⚠⚠ AND THE SELECTION WRITER (`P2-A8-E621` WS-C) ────────────────────
+
+  ⚠⚠ THIS ONE IS DIFFERENT FROM THE OTHER FOUR AND IS FENCED HARDER, BECAUSE IT
+  GENUINELY READS A PROPOSAL'S PRICE. ⚠ It has to: the requisition line is priced
+  at **the provider's own rate**, and the alternative is the buyer typing it,
+  which is the defect `selectProvider`'s docblock exists to prevent.
+
+  ⚠⚠⚠ WHAT THE FENCE ACTUALLY FORBIDS IS STILL FORBIDDEN — **many providers'
+  prices side by side.** So the narrowing below is specific rather than blanket:
+  · the WINNER is read by the `(work_request_id, provider_person_id)` UNIQUE KEY,
+    which can only ever return the one provider the buyer already chose;
+  · the one `findMany` over proposals selects **`id` alone** — it exists to clear
+    worklist notifications and to mark losers, and **cannot see a price**;
+  · `cover_note` is never read here. ⚠ The pitch is comparison material, and a
+    writer has no use for it.
+*/
+const SELECTION_WRITER = join("src", "lib", "selection.ts");
+/*
+  ── ⚠⚠⚠ AND THE WORK ORDER WRITER (`P2-A8-E621` WS-D) ───────────────────
+
+  ⚠ It touches `providerBid` for ONE reason: ruling 16 — *"a declined work order
+  goes back to the buyer to pick someone else"* — so a decline puts the other
+  proposals back in contention. ⚠⚠ **It only ever WRITES statuses. It performs no
+  `providerBid` read at all**, which is a tighter fence than any of the four
+  above, and the assertion below is an absence rather than a narrowing.
+*/
+const ORDER_WRITER = join("src", "lib", "work-orders.ts");
 {
   const hits = SRC.filter(
     (f) =>
       RESPONSE_MODELS.test(f.code) &&
       f.path !== SOURCING_LIB &&
-      f.path !== SOURCING_STAGE
+      f.path !== SOURCING_STAGE &&
+      f.path !== PROPOSAL_WRITER &&
+      f.path !== STATISTICS_LIB &&
+      f.path !== INTERVIEW_WRITER &&
+      f.path !== TEST_WRITER &&
+      f.path !== SELECTION_WRITER &&
+      f.path !== ORDER_WRITER
   );
+/*
+  ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
+  the rule exists to prevent. ⚠ An exemption worth having is one that stays
+  narrow — the `check:derived-source` pattern.
+*/
+{
+  const statsFile = SRC.find((f) => f.path === STATISTICS_LIB);
+  check(
+    "3 — ⚠⚠ statistics only COUNTS proposals, never selects their rows",
+    statsFile != null &&
+      !/providerBid\.(findMany|findFirst|findUnique)/.test(statsFile.code),
+    "a count of your own is not the comparison screen; a findMany would be"
+  );
+  const writerFile = SRC.find((f) => f.path === PROPOSAL_WRITER);
+  check(
+    "3 — ⚠⚠⚠ the proposal writer never reads ANOTHER provider's proposal",
+    writerFile != null && !/providerBid\.findMany/.test(writerFile.code),
+    "it may read the viewer's own by unique key; a list is the bid screen"
+  );
+  /*
+    ⚠⚠⚠ THE TWO WS-B EXEMPTIONS, FENCED THE SAME WAY AND MORE TIGHTLY: each may
+    look ONE proposal up BY KEY and must not enumerate or read a price.
+    ⚠ `findMany` is what turns a permission check into a bid list; `cover_note`
+    and the line models are what turn it into a comparison.
+  */
+  for (const [label, path] of [
+    ["the interview writer", INTERVIEW_WRITER],
+    ["the test writer", TEST_WRITER],
+  ] as const) {
+    const f = SRC.find((x) => x.path === path);
+    check(
+      `3 — ⚠⚠⚠ ${label} checks ONE proposal by key and never lists them`,
+      f != null && !/providerBid\.(findMany|count|aggregate|groupBy)/.test(f.code),
+      "a findMany here is the bid screen the WS-3 fence exists to prevent"
+    );
+    check(
+      `3 — ⚠⚠ ${label} reads no proposal PRICE or narrative`,
+      f != null && !/providerBidLine|cover_note|amount_cents|rate_cents/.test(f.code),
+      "the fence is about comparing providers' prices — that is the comparison"
+    );
+  }
+
+  /*
+    ⚠⚠⚠ THE SELECTION WRITER'S OWN FENCE — TIGHTER, BECAUSE IT DOES READ A PRICE.
+    ⚠ See the block above `SELECTION_WRITER` for why each of these three is the
+    assertion that matters rather than a blanket ban.
+  */
+  const sel = SRC.find((f) => f.path === SELECTION_WRITER);
+  check(
+    "3 — ⚠⚠⚠ the selection writer reads the WINNER by unique key, never a list of bidders",
+    sel != null && /work_request_id_provider_person_id/.test(sel.code),
+    "a unique key can only return the one provider the buyer already chose"
+  );
+  check(
+    "3 — ⚠⚠⚠ and its only proposal findMany selects `id` ALONE — it cannot see a price",
+    sel != null &&
+      (sel.code.match(/providerBid\.findMany/g) ?? []).length === 1 &&
+      /providerBid\.findMany\(\{[\s\S]{0,160}?select:\s*\{\s*id:\s*true,?\s*\}/.test(sel.code),
+    "widening that select is how a writer becomes the bid-comparison screen"
+  );
+  check(
+    "3 — ⚠⚠ it never reads a proposal's cover note",
+    sel != null && !/cover_note/.test(sel.code),
+    "the pitch is comparison material; a writer has no use for it"
+  );
+  /* ⚠⚠⚠ THE WORK ORDER WRITER NEVER READS A PROPOSAL AT ALL — only updateMany. */
+  const wo = SRC.find((f) => f.path === ORDER_WRITER);
+  check(
+    "3 — ⚠⚠⚠ ABSENCE: the work order writer never READS a proposal, it only records a decline",
+    wo != null && !/providerBid\.(findMany|findFirst|findUnique|count|aggregate|groupBy)/.test(wo.code),
+    "ruling 16 needs the statuses moved, and nothing else"
+  );
+  check(
+    "3 — ⚠⚠ and it reads no proposal price or narrative either",
+    wo != null && !/providerBidLine|cover_note/.test(wo.code)
+  );
+}
+
   check(
     "3 — ABSENCE: no hire surface reads a bid, test, interview or shortlist response",
     hits.length === 0,

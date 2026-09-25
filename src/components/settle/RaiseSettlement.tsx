@@ -55,8 +55,12 @@ export function RaiseSettlement({ form }: { form: SettleForm }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const rate = form.lines.filter((l) => l.basis === "RATE");
-  const amount = form.lines.filter((l) => l.basis === "AMOUNT");
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 retired
+     `WorkOrderLine.basis`, so the option carries the order line's own kind:
+     //   const rate = form.lines.filter((l) => l.basis === "RATE");
+     //   const amount = form.lines.filter((l) => l.basis === "AMOUNT"); */
+  const rate = form.lines.filter((l) => l.transactionType !== "SERVICE_BY_AMT");
+  const amount = form.lines.filter((l) => l.transactionType === "SERVICE_BY_AMT");
 
   const rowsFor = (id: string) => rowsByLine[id] ?? [];
   const setRows = (id: string, rows: Row[]) =>
