@@ -316,13 +316,57 @@ const WIZARD_STEPS = [
 const RESPONSE_MODELS = /\bproviderBid\b|\bProviderBid\b|\bTestResponse\b|\bInterviewResponse\b|\bShortlistLine\b|\bproviderBidLine\b/;
 const SOURCING_LIB = join("src", "lib", "sourcing.ts");
 const SOURCING_STAGE = join("src", "lib", "sourcing-stage.ts");
+/*
+  ── ⚠⚠⚠ TWO FILES ADDED DELIBERATELY (`P2-A8-E621` WS-A) ────────────────
+
+  ⚠ THE DOCBLOCK ABOVE DESCRIBES EXACTLY THIS MOMENT: *"the day somebody needs
+  one they add the file DELIBERATELY and a reviewer sees exactly the `include`
+  that opens the bid screen."* ⚠⚠ This is that addition, and it is authorised —
+  **ruling 25** makes the whole chain MVP scope and **ruling 24** says a missing
+  writer is not a reason to defer the surface that creates it.
+
+  ⚠⚠⚠ THE FENCE IS NOT WEAKENED, BECAUSE NEITHER FILE IS WHAT IT GUARDS. The
+  WS-3 fence names *"the bid list, the bid-comparison screen, scoring,
+  shortlisting, tests or interviews"* — **all of which are still forbidden here
+  and are WS-B's and WS-C's to add, each with its own deliberate line.**
+  · `proposals.ts` is the WRITER — it creates and withdraws a proposal. It
+    renders nothing and reads no other provider's bid.
+  · `statistics.ts` reads a **COUNT of the viewer's OWN proposals**, for the
+    figure that said *"nothing creates one"*. ⚠ A count of your own is not the
+    comparison screen; it cannot show you anybody else's price.
+*/
+const PROPOSAL_WRITER = join("src", "lib", "proposals.ts");
+const STATISTICS_LIB = join("src", "lib", "statistics.ts");
 {
   const hits = SRC.filter(
     (f) =>
       RESPONSE_MODELS.test(f.code) &&
       f.path !== SOURCING_LIB &&
-      f.path !== SOURCING_STAGE
+      f.path !== SOURCING_STAGE &&
+      f.path !== PROPOSAL_WRITER &&
+      f.path !== STATISTICS_LIB
   );
+/*
+  ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
+  the rule exists to prevent. ⚠ An exemption worth having is one that stays
+  narrow — the `check:derived-source` pattern.
+*/
+{
+  const statsFile = SRC.find((f) => f.path === STATISTICS_LIB);
+  check(
+    "3 — ⚠⚠ statistics only COUNTS proposals, never selects their rows",
+    statsFile != null &&
+      !/providerBid\.(findMany|findFirst|findUnique)/.test(statsFile.code),
+    "a count of your own is not the comparison screen; a findMany would be"
+  );
+  const writerFile = SRC.find((f) => f.path === PROPOSAL_WRITER);
+  check(
+    "3 — ⚠⚠⚠ the proposal writer never reads ANOTHER provider's proposal",
+    writerFile != null && !/providerBid\.findMany/.test(writerFile.code),
+    "it may read the viewer's own by unique key; a list is the bid screen"
+  );
+}
+
   check(
     "3 — ABSENCE: no hire surface reads a bid, test, interview or shortlist response",
     hits.length === 0,

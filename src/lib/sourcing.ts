@@ -1,4 +1,4 @@
-import { LineBasis } from "@prisma/client";
+import { BidRequestStatus, LineBasis } from "@prisma/client";
 import { assertLineShape, type LineShape } from "@/lib/transaction-spine";
 
 /**
@@ -136,6 +136,44 @@ export function assertIssuable(itb: { responds_by?: Date | null }): void {
       "An ITB cannot be issued without a closing date — a bid with no closing date never closes",
       "ITB_NO_CLOSING_DATE"
     );
+}
+
+/**
+ * ── ⚠⚠⚠ MAY THIS INVITE STILL BE PROPOSED AGAINST? (`P2-A8-E621` WS-A) ────
+ *
+ * ⚠ WS-A item 5: *"A declined or expired `BidRequest` cannot be proposed
+ * against. **Import the predicate; do not restate it.**"* ⚠⚠ It did not exist,
+ * so it is created HERE — once, beside its siblings — rather than inlined in
+ * the writer, which is what "do not restate it" is guarding against.
+ *
+ * ── ⚠⚠ TWO WAYS AN INVITE CLOSES, AND BOTH MUST BE CHECKED ───────────────
+ *
+ * ⚠ **A STATUS** — `DECLINED` (the provider said no), `WITHDRAWN` (the buyer
+ * pulled it), `EXPIRED` (already marked), and `DRAFT` (never issued at all: an
+ * invite nobody sent is not an invite).
+ * ⚠⚠⚠ **AND A DATE**, WHICH IS THE HALF A STATUS CHECK ALONE WOULD MISS.
+ * `responds_by` passing does NOT rewrite the row to `EXPIRED` — nothing sweeps
+ * these — so an invite can be `ISSUED` in the database and closed in fact. ⚠ A
+ * predicate that trusted the status would let a provider bid a week late.
+ *
+ * ⚠ `now` IS INJECTED so the rule is testable at a chosen instant rather than
+ * only at whatever time the suite happens to run.
+ */
+export type InviteForProposal = {
+  status: BidRequestStatus;
+  responds_by?: Date | null;
+};
+
+export function inviteIsOpen(itb: InviteForProposal, now: Date = new Date()): boolean {
+  /* ⚠ Only these two statuses are live. `RESPONDED` is deliberately live too:
+     editing a proposal before a decision REPLACES it (WS-A item 3), so the
+     invite it came from must still be open to receive the replacement. */
+  const liveStatus =
+    itb.status === "ISSUED" || itb.status === "VIEWED" || itb.status === "RESPONDED";
+  if (!liveStatus) return false;
+  /* ⚠⚠ A CLOSING DATE THAT HAS PASSED CLOSES IT, whatever the status says. */
+  if (itb.responds_by != null && itb.responds_by.getTime() < now.getTime()) return false;
+  return true;
 }
 
 /**

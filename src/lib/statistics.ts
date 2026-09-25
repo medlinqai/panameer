@@ -138,7 +138,16 @@ const NO_SEARCH_LOG = "Needs a search-results log — nothing records one today"
 async function countWindowed(
   window: StatWindow,
   field: string,
-  model: "profileView" | "connection" | "colleagueInvite" | "lessonProgress" | "learnEnrollment",
+  /* ⚠ `providerBid` added by `E621` WS-A — the proposal writer made it
+     countable. The union is deliberate: it names every model this helper may
+     count, so a typo cannot silently become a runtime `undefined.count`. */
+  model:
+    | "profileView"
+    | "connection"
+    | "colleagueInvite"
+    | "lessonProgress"
+    | "learnEnrollment"
+    | "providerBid",
   where: Record<string, unknown>
 ): Promise<number> {
   const { from } = windowRange(window === "all" ? "all" : "month");
@@ -202,6 +211,7 @@ export async function getStatistics(
     enrolled,
     certs,
     bids,
+    proposalsSent,
   ] = await Promise.all([
       providerProfileId
         ? countWindowed(window, "viewed_on", "profileView", { profile_id: providerProfileId })
@@ -235,6 +245,26 @@ export async function getStatistics(
       /* ⚠⚠ ISSUED ONLY — an unissued request was never sent to anybody. */
       prisma.bidRequest.count({
         where: { provider_person_id: personId, issued_at: { not: null } },
+      }),
+      /*
+        ── ⚠⚠⚠ PROPOSALS SENT — NOW A REAL COUNT (`P2-A8-E621` WS-A item 6) ──
+
+        ⚠ IT WAS A DASH READING *"Proposals aren't recorded yet — nothing
+        creates one"*, and that was TRUE. ⚠⚠ RULING 24: it was true **because
+        nobody had built the writer**, and citing it as the reason not to build
+        one is circular. `lib/proposals.ts` is that writer, so the figure is
+        countable now — the writer test is satisfied, not waived.
+
+        ⚠⚠ `submitted_at: { not: null }` IS THE WHOLE DEFINITION. WS-A item 1:
+        *"`submitted_at` is the column Proposals Sent counts."* A `DRAFT`
+        proposal was never sent to anybody, exactly as an unissued `BidRequest`
+        above was not. ⚠⚠⚠ A WITHDRAWN ONE STILL COUNTS: they did send it, and
+        the withdrawal is a later fact — the row is kept rather than deleted
+        precisely so that stays true.
+      */
+      countWindowed(window, "submitted_at", "providerBid", {
+        provider_person_id: personId,
+        submitted_at: { not: null },
       }),
       /*
         ⚠⚠⚠ FOUR QUERIES DELETED — THEY COUNTED TABLES NOTHING WRITES.
@@ -376,7 +406,10 @@ export async function getStatistics(
         //   interviewsDeclined,
       */
       requestsReceived: bids,
-      proposalsSent: { uncounted: "Proposals aren't recorded yet — nothing creates one" },
+      /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — true until `E621` built the
+         writer whose absence it named:
+         //   proposalsSent: { uncounted: "Proposals aren't recorded yet — nothing creates one" }, */
+      proposalsSent,
       invitationsToPropose: bids,
       interviews: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
       interviewsTaken: { uncounted: "Interviews aren't recorded yet — nothing creates a request" },
