@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
+import { ACCOUNT_BAND_HREF } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
 import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
 /* ⚠ `HOME_NAV` LEFT THIS IMPORT with the Home icon (`E602` WS-E 3). It is
@@ -428,7 +429,18 @@ export function AppBand() {
 
         {/* ⚠ THE ACCOUNT MENU — still the ONE home for Sign Out (locked spec),
             and still where `My Company` lives since `E099`. */}
-        <AccountMenu isAdmin={isAdmin} onDark />
+        {/*
+          ── ⚠⚠⚠ THE AVATAR LIGHTS LIKE A BAND ITEM (ruling 72) ──────────────
+
+          ⚠ SCOTT: the pills take a filled magenta when active; **the avatar
+          took a thin ring on `/profile` and nothing on `/settings`.**
+          ⚠⚠ **IT IS THE SAME PREDICATE, NOT A SECOND ONE.** `isActive` is the
+          function every pill above uses, called with the Account menu's
+          sentinel key — so the avatar cannot drift from the band, and adding an
+          Account Information route means editing **one list** in `nav.ts`.
+          ⚠⚠⚠ `E433`: **one meaning, one treatment.**
+        */}
+        <AccountMenu isAdmin={isAdmin} onDark active={isActive(ACCOUNT_BAND_HREF)} />
       </div>
 
       {/* ⚠ RENDERED BY THE BAND, which every logged-in page already has — so the

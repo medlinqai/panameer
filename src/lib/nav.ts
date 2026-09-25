@@ -155,6 +155,23 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
  * ⚠⚠ THE SETTINGS ABSORPTION BRIEF ADDS A THIRD PREFIX HERE and is blocked on
  * this landing. Add the prefix; change nothing else.
  */
+/**
+ * ⚠⚠ THE ACCOUNT MENU'S KEY IN `BAND_EXTRA_PREFIXES` (ruling 72).
+ *
+ * ⚠ It is deliberately NOT a route: the avatar opens a menu. Giving it a
+ * sentinel key lets it share `bandPrefixesFor` and `isActive` with the real
+ * band items instead of growing a parallel rule.
+ *
+ * ⚠⚠⚠ **`/community/score` IS DELIBERATELY ABSENT AND IT IS A REPORTED
+ * CONFLICT.** The Search Score page is an **Account Information** tab
+ * (`E636`), but it lives under `/community`, which `/connect` already claims —
+ * so adding it here would light **two band items on one page**, which is the
+ * thing `E433` forbids. ⚠ Resolving it means either moving the route (a 308
+ * with its own blast radius) or narrowing Connect's prefix, and **both are
+ * decisions rather than tidy-ups.** Reported, not guessed.
+ */
+export const ACCOUNT_BAND_HREF = "__account-menu__";
+
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   /* ⚠ Connect's pages live under `/community` — Community, Colleagues, Forums,
      Mentors, Teams and Score, eight routes. This is the one Scott caught. */
@@ -171,6 +188,28 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   */
   "/my-services": ["/services"],
   "/hire": ["/create-work"],
+  /*
+    ── ⚠⚠⚠ THE ACCOUNT MENU IS A BAND DESTINATION TOO (ruling 72) ──────────
+
+    ⚠ SCOTT: the band's items take a filled pill when active; **the avatar took
+    a thin ring on `/profile` and nothing on `/settings`.** ⚠⚠ `E433`'s rule —
+    **one meaning, one treatment** — so the avatar reads the SAME predicate the
+    pills do, from this same list. **There is no second rule keyed on the
+    avatar.**
+    ⚠⚠⚠ **AN EXPLICIT LIST, NEVER A LOOSER MATCH.** The docblock on `isActive`
+    records why: a `startsWith` shortcut once **lit fifteen pills at once**
+    (`E475`). These are the Account Information tab row's own routes, written
+    down one by one.
+    ⚠ `ACCOUNT_BAND_HREF` is a KEY, not a link — the avatar opens a menu rather
+    than navigating, so it owns prefixes without owning an href.
+  */
+  [ACCOUNT_BAND_HREF]: [
+    "/profile",
+    "/company",
+    "/stats",
+    "/account-health",
+    "/settings",
+  ],
 };
 
 /**

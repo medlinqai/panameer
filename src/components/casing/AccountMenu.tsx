@@ -55,8 +55,21 @@ export function AccountMenu({
   isAdmin,
   variant = "header",
   onDark = false,
+  active = false,
 }: {
   isAdmin: boolean;
+  /**
+   * ── ⚠⚠⚠ THE BAND'S VERDICT, PASSED IN (ruling 72) ─────────────────────
+   *
+   * ⚠⚠ **COMPUTED BY `AppBand` FROM THE SAME `isActive` EVERY PILL USES**, and
+   * deliberately NOT derived here. ⚠ This component does not read `pathname`
+   * for it and must not start: **a second rule keyed on the avatar is exactly
+   * how the band and the avatar would come to disagree about which application
+   * you are in.** ⚠⚠⚠ `E433`: one meaning, one treatment.
+   * ⚠ Defaults to `false` so the `header` variant and any other caller are
+   * unchanged — **the band is the only surface that knows about band state.**
+   */
+  active?: boolean;
   /**
    * ⚠ STYLING ONLY (`P2-ALL-E559`) — the `header` trigger's hover is
    * `bg-black/[0.04]`, which is invisible on the dark app band. This swaps that
@@ -337,9 +350,17 @@ export function AccountMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label="Account menu"
+          /* ⚠⚠ THE SAME FILL THE PILLS TAKE (`bg-rail-active`), not a ring and
+             not a third treatment — `E217`'s rule that active is a SOLID fill
+             and the translucent wash is hover. */
+          aria-current={active ? "page" : undefined}
           className={
             "flex items-center gap-1.5 rounded-full p-0.5 transition-colors " +
-            (onDark ? "hover:bg-white/10" : "hover:bg-black/[0.04]")
+            (active
+              ? "bg-rail-active"
+              : onDark
+                ? "hover:bg-white/10"
+                : "hover:bg-black/[0.04]")
           }
         >
           <Avatar
