@@ -65,8 +65,39 @@ export async function POST(request: Request) {
       case "deleteEmployer":
         await deleteEmployer(viewer, String(body.employerId));
         break;
-      case "createProject":
-        await createProject(viewer, String(body.employerId), body.project ?? {});
+      case "createProject": {
+        /*
+          ── ⚠⚠⚠ THREE STATES AT THE BOUNDARY, AND IT REFUSES (ruling 67/67c) ──
+
+          ⚠⚠ **`String(body.employerId)` WAS A LANDMINE:** an absent key became
+          the literal string `"undefined"`, which then failed the employer
+          lookup as *"Company not found"* — **a confusing error instead of an
+          honest refusal**, and with `employerId` now nullable it would have
+          turned `null` into `"null"` the same way.
+          ⚠ **`null` MEANS "DELIBERATELY NO COMPANY" AND `undefined` MEANS "THE
+          CALLER DID NOT SAY"** — the two must not collapse, which is exactly
+          ruling 67: *the test is presence in the payload, never the parsed
+          value.*
+          ⚠⚠⚠ **SO THE BOUNDARY REFUSES RATHER THAN RESOLVES** (`67c`, the
+          `replaceList()` shape): a throw here beats a null three layers down.
+        */
+        const raw = body.employerId;
+        if (raw === undefined) {
+          return NextResponse.json(
+            {
+              error:
+                'A project must say which company it belongs to. Send "employerId": null for a project with no company.',
+            },
+            { status: 400 }
+          );
+        }
+        await createProject(
+          viewer,
+          raw === null ? null : String(raw),
+          body.project ?? {}
+        );
+        break;
+      }
         break;
       case "updateProject":
         await updateProject(viewer, String(body.projectId), body.project ?? {});

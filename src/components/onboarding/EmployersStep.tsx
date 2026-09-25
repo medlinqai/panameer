@@ -242,8 +242,11 @@ export function EmployersStep({
   >(null);
   const [employerForm, setEmployerForm] = useState<EmployerForm>(emptyEmployerForm());
 
+  /* ⚠⚠ `employerId: null` IS A SOLO PROJECT (`P1-J2-E032`), not a missing id.
+     ⚠ The schema has always allowed it and the importer has always produced
+     it; only the CREATE path demanded a company. */
   const [projectModal, setProjectModal] = useState<
-    { employerId: string; project?: EmployerProject } | null
+    { employerId: string | null; project?: EmployerProject } | null
   >(null);
 
   /*
@@ -518,7 +521,7 @@ export function EmployersStep({
     if (ok) setEmployerModal(null);
   };
 
-  const openProject = (employerId: string, project?: EmployerProject) => {
+  const openProject = (employerId: string | null, project?: EmployerProject) => {
     setProjectForm(
       project
         ? {
@@ -589,7 +592,16 @@ export function EmployersStep({
     const ok = await post(
       projectModal?.project
         ? { action: "updateProject", projectId: projectModal.project.id, project }
-        : { action: "createProject", employerId: projectModal!.employerId, project }
+        : {
+            /* ⚠⚠⚠ PASSED THROUGH AS-IS, INCLUDING `null`. The route
+               distinguishes `null` (deliberately no company) from an ABSENT
+               key and REFUSES the latter — ruling 67: the test is presence in
+               the payload, never the parsed value. Coercing here would put the
+               string "null" on the wire. */
+            action: "createProject",
+            employerId: projectModal!.employerId,
+            project,
+          }
     );
     if (ok) setProjectModal(null);
   };
@@ -612,6 +624,30 @@ export function EmployersStep({
           >
             + Add Company
           </button>
+          {/*
+            ── ⚠⚠⚠ A PROJECT WITH NO COMPANY (`P1-J2-E032`) ──────────────────
+
+            ⚠ SCOTT: *"no way to add a project independent of an
+            employer/company."*
+            ⚠⚠ **THE COPY ABOVE MADE THE COMPANY SOUND COMPULSORY** — *"Add the
+            companies you've worked for, THEN add the projects you delivered
+            within each job"* — so an independent consultant with no employer
+            read the empty state as *"you must invent a company first."*
+            ⚠⚠⚠ **IT IS A SECOND DOOR, NOT A COMPETING ONE:** quieter than
+            `+ Add Company`, because most work does hang off a job and the
+            common path should stay the loud one (ruling 45(4)'s reasoning about
+            a second button — this one is genuinely a different action, not a
+            repeat of the first).
+          */}
+          <p className="mt-3">
+            <button
+              type="button"
+              onClick={() => openProject(null)}
+              className="min-h-[44px] text-[13.5px] font-bold text-magenta underline underline-offset-2 hover:text-magenta-dark"
+            >
+              Add a project with no company
+            </button>
+          </p>
         </div>
       ) : (
         <>
@@ -1176,13 +1212,31 @@ export function EmployersStep({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={openAddEmployer}
-            className="mt-5 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-          >
-            + Add Company
-          </button>
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button
+              type="button"
+              onClick={openAddEmployer}
+              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+            >
+              + Add Company
+            </button>
+            {/*
+              ⚠⚠ THE SAME DOOR IN THE POPULATED STATE (`P1-J2-E032`). ⚠ Putting
+              it only on the empty state would mean **the moment you add one
+              company, the ability to record independent work disappears** —
+              which is the population most likely to need it, since a consultant
+              usually has both.
+              ⚠⚠⚠ Solo projects already render in their own list below, so this
+              button has somewhere to land and is not a door onto a wall.
+            */}
+            <button
+              type="button"
+              onClick={() => openProject(null)}
+              className="min-h-[44px] text-[13.5px] font-bold text-magenta underline underline-offset-2 hover:text-magenta-dark"
+            >
+              Add a project with no company
+            </button>
+          </div>
         </>
       )}
 

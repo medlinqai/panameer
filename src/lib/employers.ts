@@ -494,26 +494,52 @@ async function writeProjectChildren(projectId: string, input: ProjectInput) {
   ]);
 }
 
+/**
+ * ── ⚠⚠⚠ `employerId: null` CREATES A SOLO PROJECT (`P1-J2-E032`) ─────────
+ *
+ * ⚠ SCOTT: *"no way to add a project independent of an employer/company."*
+ * ⚠⚠ **THE GAP WAS NEVER IN THE SCHEMA.** `Project.employer_id` is `String?`,
+ * `resume/import.ts` **already writes projects with `employer_id: null`** when
+ * the model could not place them, and `moveProject` already treats
+ * `employerId: null` as a legal DETACH. ⚠⚠⚠ **ONLY THE CREATE PATH DEMANDED
+ * ONE** — so an unattached project was a state the importer could produce and a
+ * member could reach only by creating one under a company and detaching it.
+ *
+ * ⚠⚠ **`null` IS "DELIBERATELY NO COMPANY", NEVER "NOT SUPPLIED"** (ruling 67).
+ * The caller must say which it means; **the route refuses an absent key rather
+ * than resolving it**, so this function can trust the distinction.
+ * ⚠ **THE OWNERSHIP CHECK IS NOT WEAKENED** — when an id IS given it is still
+ * resolved against the caller's own profile, and a foreign id still resolves to
+ * nothing. The null path skips a lookup it has no id for; it does not skip a
+ * check it should have made.
+ */
 export async function createProject(
   viewer: Viewer,
-  employerId: string,
+  employerId: string | null,
   input: ProjectInput
 ) {
   const profileId = await ownedProfileId(viewer);
-  const employer = await prisma.employer.findFirst({
-    where: { id: employerId, provider_profile_id: profileId },
-    select: { id: true },
-  });
-  if (!employer) throw new OnboardingError("Company not found", "INVALID");
+  let ownedEmployerId: string | null = null;
+  if (employerId !== null) {
+    const employer = await prisma.employer.findFirst({
+      where: { id: employerId, provider_profile_id: profileId },
+      select: { id: true },
+    });
+    if (!employer) throw new OnboardingError("Company not found", "INVALID");
+    ownedEmployerId = employer.id;
+  }
 
+  /* ⚠ THE ORDER IS COUNTED WITHIN THE LIST THE ROW WILL JOIN — solo projects
+     are their own list on the profile, so counting them against an employer's
+     projects would start every solo project at 0 and stack them. */
   const count = await prisma.project.count({
-    where: { employer_id: employer.id },
+    where: { provider_profile_id: profileId, employer_id: ownedEmployerId },
   });
 
   const row = await prisma.project.create({
     data: {
       provider_profile_id: profileId,
-      employer_id: employer.id,
+      employer_id: ownedEmployerId,
       sort_order: count * 10,
       ...projectData(input),
     },
