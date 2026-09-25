@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs } from "@/lib/profile-tabs";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 /*
@@ -337,7 +337,7 @@ export default async function PublicProviderPage({
       */}
       {profile.isOwner && (
         <PageTabs
-          eyebrow="MY PROFILE"
+          eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
           current="/profile"

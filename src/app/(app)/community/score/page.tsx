@@ -3,7 +3,7 @@ import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs } from "@/lib/profile-tabs";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { ownedProviderProfile } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { buildCompletenessInput } from "@/lib/onboarding";
@@ -92,7 +92,7 @@ export default async function ProfileScorePage() {
         belongs to the profile — the profile simply has its own row now.
       */}
       <PageTabs
-        eyebrow="MY PROFILE"
+        eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
         current="/community/score"

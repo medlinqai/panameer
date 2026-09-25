@@ -666,13 +666,47 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     ACCOUNT-MENU destinations and must light no band application (`E596`), which
     is what the `BAND_KNOWN_OPEN` entries below record.
   */
+  /*
+    ── ⚠⚠⚠ RULING 31b — THE ROW IS RE-LABELLED AND RE-ORDERED (brief 10 WS-A) ──
+
+    ⚠ Scott's SIT sheet, verbatim: **`Profile · Company · Search Score · Usage
+    Statistics · Account Health · Settings`**, and the menu NAME is
+    **`Account Information`**.
+    ⚠⚠ **EVERY LABEL CHANGES EXCEPT `Account Health`, AND `Company` MOVES FROM
+    FIFTH TO SECOND.** ⚠ No route changes: all six pages already existed, so this
+    is a re-label and a re-order, **not a build.**
+
+    ⚠⚠⚠ **`Usage Statistics`, NOT `Statistics` — AND THAT OVERTURNS A NOTE A FEW
+    LINES ABOVE.** This map's own comment records an earlier decision: *"`Usage`
+    IS FOLDED INTO `Statistics` (Scott): one tab, one menu item, one route."*
+    ⚠ **Ruling 31b is 2026-09-24 and says the label is `Usage Statistics`,
+    verbatim from the sheet's row 35.** ⚠⚠ **RULE 13: THE NEWEST DATED STATEMENT
+    FROM SCOTT IS THE LIVE ONE**, so the label takes the newer wording. ⚠ The
+    older note's SUBSTANCE still holds and is not contradicted — **one tab, one
+    menu item, one route (`/stats`)** — only the words on it changed.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "My Profile", href: "/profile" },
+    //   { label: "Score", href: "/community/score" },
+    //   { label: "Statistics", href: "/stats" },
+    //   { label: "Account Health", href: "/account-health" },
+    //   { label: "My Company", href: "/company" },
+    //   { label: "Account Settings", href: "/settings" },
+
+    ⚠⚠ **REPORTED, NOT FIXED — `Search Score` POINTS AT `/community/score`**, a
+    CONNECT route serving an ACCOUNT INFORMATION tab. ⚠ `E533`'s rule is *a verb
+    in the menu, a noun in the URL*; this is a page filed under the wrong section
+    entirely. **Moving it is a route change with a 308 and its own blast radius**
+    (`ProfileScoreView` is mounted from there), so it is **not folded into a
+    re-label.**
+  */
   "/profile": [
-    { label: "My Profile", href: "/profile" },
-    { label: "Score", href: "/community/score" },
-    { label: "Statistics", href: "/stats" },
+    { label: "Profile", href: "/profile" },
+    { label: "Company", href: "/company" },
+    { label: "Search Score", href: "/community/score" },
+    { label: "Usage Statistics", href: "/stats" },
     { label: "Account Health", href: "/account-health" },
-    { label: "My Company", href: "/company" },
-    { label: "Account Settings", href: "/settings" },
+    { label: "Settings", href: "/settings" },
   ],
   "/connect": [
     /*

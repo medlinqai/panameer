@@ -5,7 +5,7 @@ import { getStatistics } from "@/lib/statistics";
 import { isCounted } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs } from "@/lib/profile-tabs";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile, providerMeetsRequired } from "@/lib/access";
@@ -182,7 +182,7 @@ export default async function MyStatsPage({
     return (
       <>
         <PageTabs
-          eyebrow="MY PROFILE"
+          eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
           current="/stats"
@@ -513,7 +513,7 @@ export default async function MyStatsPage({
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
           under the avatar, using the same words as the menu. */}
       <PageTabs
-        eyebrow="MY PROFILE"
+        eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
         current="/stats"

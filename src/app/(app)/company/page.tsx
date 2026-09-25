@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs } from "@/lib/profile-tabs";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getCompanyBinding, getPendingRequests } from "@/lib/company";
@@ -85,7 +85,7 @@ export default async function CompanyPage({
             have set something up is a row that vanishes exactly when you most
             need a way out of it. */}
         <PageTabs
-          eyebrow="MY PROFILE"
+          eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
           current="/company"
@@ -156,7 +156,7 @@ export default async function CompanyPage({
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
           under the avatar, using the same words as the menu. */}
       <PageTabs
-        eyebrow="MY PROFILE"
+        eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
         current="/company"

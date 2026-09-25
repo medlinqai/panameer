@@ -3,7 +3,7 @@ import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs } from "@/lib/profile-tabs";
+import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
@@ -150,8 +150,23 @@ export default async function MyProfilePage() {
         //     My Profile
         //   </h1>
       */}
+      {/*
+        ── ⚠⚠⚠ THE MENU NAME IS `Account Information` (ruling 31b, WS-A item 1) ──
+
+        ⚠ Scott's SIT sheet names the menu, and the eyebrow is where that name
+        is rendered — `PageTabs`' own docblock calls it *"a room label, not a
+        decoration"*, and it is **the thing that stops a bare row of words
+        reading as steps rather than siblings.**
+        ⚠⚠ `MY PROFILE` was the room label AND the first tab's label, so the row
+        said *"My Profile"* twice, eight pixels apart — the same duplication
+        `E628` fixed on the Learn catalogue and `E633` fixed again on Courses.
+        ⚠⚠⚠ **NAMING THE ROOM `Account Information` AND THE TAB `Profile` MAKES
+        THEM DIFFERENT WORDS FOR DIFFERENT THINGS**, which is what they are.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   eyebrow="MY PROFILE"
+      */}
       <PageTabs
-        eyebrow="MY PROFILE"
+        eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
         current="/profile"
