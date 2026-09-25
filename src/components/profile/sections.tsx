@@ -794,21 +794,58 @@ export function EducationBody({
         {emptyAction}
       </>
     );
+  /*
+    ── ⚠⚠⚠ THE FACTS ARE LABELLED (brief 10 WS-B) ──────────────────────────
+
+    ⚠ SCOTT: *"Education → label major, minor, years, GPA."*
+    ⚠⚠ **MEASURED AGAINST `model Education` FIRST, AND TWO OF THE FOUR HAVE NO
+    COLUMN:** `institution · degree? · field? · year? · start_year? · end_year? ·
+    description?`.
+    · **major → `field`** ✅ exists, under a different name — *an absent name is
+      not an absent thing* (ruling 53e).
+    · **years → `start_year` / `end_year`** ✅ exist.
+    · ⚠⚠⚠ **minor → NO COLUMN. gpa → NO COLUMN.**
+    ⚠ **SCOTT RULED, 2026-09-25: *"Neither — don't render them."*** ⚠⚠ **AND NO
+    NULLABLE COLUMNS ARE ADDED WHILE WE ARE IN HERE** — a column nothing renders
+    is an owed cleanup waiting to happen. **So two labels appear and two do not**,
+    which is `PatternHeader`'s rule for figures applied to a record: *show what
+    you have; do not pad to a shape.*
+
+    ⚠⚠ **THE LABELS ARE VISIBLE, NOT IMPLIED (ruling 65).** `degree, field`
+    rendered as a bare comma-joined line — **"MBA, Finance" does not say which
+    word is the major**, and the reader had to infer it from position. ⚠ A row
+    renders only when its value exists, so nothing prints an empty label.
+  */
+  const Row = ({ label, value }: { label: string; value: string }) => (
+    <p className="text-[13px] text-ink-2">
+      <span className="font-semibold text-ink-3">{label}</span> {value}
+    </p>
+  );
+
   return (
-    <ul className="space-y-2.5 text-[14px]">
-      {education.map((e, i) => (
-        <li key={e.id ?? `${e.institution}-${i}`}>
-          <p className="font-semibold">{e.institution}</p>
-          <p className="text-ink-2">
-            {[e.degree, e.field].filter(Boolean).join(", ")}
-          </p>
-          {(e.startYear || e.endYear) && (
-            <p className="text-[13px] text-ink-2">
-              {[e.startYear, e.endYear].filter(Boolean).join(" – ")}
-            </p>
-          )}
-        </li>
-      ))}
+    <ul className="space-y-3 text-[14px]">
+      {education.map((e, i) => {
+        const years = [e.startYear, e.endYear].filter(Boolean).join(" – ");
+        return (
+          <li key={e.id ?? `${e.institution}-${i}`}>
+            {/*
+              ⚠⚠ AN EMPTY INSTITUTION RENDERS NOTHING, NOT AN EMPTY BOLD LINE.
+              ⚠ `institution` is a required `String`, so a row the importer
+              could not name holds `""` rather than null — and the old markup
+              printed a blank heading above the details. ⚠⚠⚠ THE PATH'S OWN
+              RULE, APPLIED AGAIN: `PathSpine` omits an untitled course rather
+              than back-filling it, because borrowing a name *"would assert a
+              name the catalog does not have."*
+            */}
+            {e.institution.trim() && (
+              <p className="font-semibold">{e.institution}</p>
+            )}
+            {e.degree && <Row label="Degree" value={e.degree} />}
+            {e.field && <Row label="Major" value={e.field} />}
+            {years && <Row label="Years" value={years} />}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -1437,6 +1474,15 @@ export function LocationBody({
  * percentage or a list of what else is absent — that would be the score page
  * said twice, which is the duplication `E588` WS-A ruled against.
  */
+/** ⚠ One labelled row, so the cert card and the education card read alike. */
+function CertRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="text-[13px] text-ink-2">
+      <span className="font-semibold text-ink-3">{label}</span> {value}
+    </p>
+  );
+}
+
 export function CertificationsBody({
   certifications,
   empty,
@@ -1454,19 +1500,35 @@ export function CertificationsBody({
       </>
     );
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {certifications.map((c, i) => {
-        const meta = [
-          c.issuer,
-          c.issuedOn ? c.issuedOn.slice(0, 4) : c.year,
-          c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
-        ].filter(Boolean);
+        /*
+          ── ⚠⚠⚠ STACKED AND LABELLED, LIKE EDUCATION (brief 10 WS-B) ────────
+
+          ⚠ SCOTT: *"Certifications → stack to the left like Education. List
+          certifying agency, expiration, and begin-or-test date. Capitalize
+          titles such as 'Expire'."*
+          ⚠⚠ **ALL THREE HAVE COLUMNS, MEASURED BEFORE BUILDING:** certifying
+          agency → `issuer`, expiration → `expires_on`, begin-or-test date →
+          `issued_on` (with `year` as the older fallback). **Nothing invented.**
+
+          ⚠⚠⚠ **WHAT THE RUN-ON LINE COST:** it rendered
+          `name — issuer · 2019 · expires 2026`, so **a bare year had no label
+          at all** and the reader had to know by position which of two dates it
+          was. ⚠ Ruling 65's shape: the information existed and the page did not
+          show what it meant.
+          ⚠ **`expires` → `Expires`** — Scott's capitalisation, and it is now a
+          LABEL rather than a word buried mid-sentence.
+          ⚠⚠ A row renders only when its value exists, so an undated
+          certification prints a name and nothing else rather than empty labels.
+        */
+        const earned = c.issuedOn ? c.issuedOn.slice(0, 4) : c.year ? String(c.year) : null;
         return (
           <li key={c.id ?? `${c.name}-${i}`} className="text-[14px]">
-            <b>{c.name}</b>
-            {meta.length > 0 && (
-              <span className="text-ink-2">{` — ${meta.join(" · ")}`}</span>
-            )}
+            <b className="block">{c.name}</b>
+            {c.issuer && <CertRow label="Agency" value={c.issuer} />}
+            {earned && <CertRow label="Earned" value={earned} />}
+            {c.expiresOn && <CertRow label="Expires" value={c.expiresOn.slice(0, 4)} />}
             {c.url && (
               <a
                 href={c.url}
