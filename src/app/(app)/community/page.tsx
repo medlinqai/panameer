@@ -206,7 +206,13 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
         */}
           <section className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-display text-[17px] font-bold">Your Colleagues</h2>
+            {/* ⚠ `Colleagues`, THE MOCKUP'S WORD (`P2-A3-E678`). Scott
+                adjudicated this on 2026-09-25 — *"take the mockup's"* — and it
+                was not done. ⚠ The rail heading beside it is already the bare
+                noun, so `Your Colleagues` was also the odd one out.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   <h2 …>Your Colleagues</h2> */}
+            <h2 className="font-display text-[17px] font-bold">Colleagues</h2>
             {page.colleagues.length > 0 && (
               <Link
                 href="/community/colleagues"

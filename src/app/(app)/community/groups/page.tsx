@@ -159,6 +159,31 @@ export default async function GroupsPage({
           </div>
 
           <div className="pm-hero-side">
+            {/*
+              ── ⚠⚠ THE EYEBROW (ruling 45(3), `P2-A3-E678`) ─────────────────
+
+              ⚠ **RULING 45(3) MAKES IT REQUIRED, NOT OPTIONAL:** it is *"the
+              part that tells a member which of six near-identical pages they
+              are on"*, and the ruling's own note records that *"the mockup has
+              it; none of the three built versions does."* ⚠⚠ This is one of
+              those three, and `groups_2026-09-22.html:138` carries the string.
+              ⚠ It is NOT `PatternHeader`'s eyebrow — this hero is still
+              hand-rolled, which is a separate and larger gap against ruling
+              33d, filed and not fixed inside a clear-up pass.
+            */}
+            {/* ⚠⚠⚠ TAILWIND, NOT `pm-hero-eyebrow` — THAT CLASS HAS NO CSS
+                RULE. `groups.css` and `community-page.css` define
+                `.pm-hero-title` and no eyebrow, so a `pm-hero-eyebrow` would
+                emit nothing and render as plain body text. **That is the
+                `HERO_SCRIM` failure: a class string that produces no CSS and
+                fails silently.** Caught before shipping by grepping for the
+                rule rather than assuming the vocabulary existed.
+                ⚠ These are `PatternHeader`'s own eyebrow classes, so this hero
+                looks like every other eyebrow in the app while it waits for
+                the ruling-33d conversion. */}
+            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
+              Your Groups
+            </p>
             <h2 className="pm-hero-title">Where Your Learners Ask</h2>
 
             {/* ⚠⚠⚠ THREE FIGURES, ALL COUNTED, ALL IN INK (`E433`). A measured
@@ -487,6 +512,25 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
   }
   return (
     <div className="mt-6 space-y-6">
+      {/*
+        ── ⚠⚠ THE VIEW SAYS WHAT IT IS (`P2-A3-E678`) ───────────────────────
+
+        ⚠ Discover opened on a bare track name with nothing saying what the
+        list was. The mockup heads it `Groups You Can Join` with a lede.
+        ⚠⚠ **THE LEDE IS NOT THE MOCKUP'S WORD FOR WORD:** its version reads
+        *"Free with the path · open to every member"*, and **"free" is a price
+        claim** — `groups/page.tsx` measures that **0 of 27 boards carry a
+        price and nothing writes `price_cents`**, so *"free"* is true only by
+        accident of there being no paid groups yet. ⚠ This says what is
+        actually known: these are groups this member is not in.
+        ⚠ It also avoids the retired word *"rooms"* (ruling 1 / `E619` WS-C).
+      */}
+      <div>
+        <h2 className="font-display text-[17px] font-bold">Groups You Can Join</h2>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
+          Groups you are not in yet, grouped by the path they belong to.
+        </p>
+      </div>
       {tracks.map((t) => (
         <section key={t.track} className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -603,10 +647,25 @@ function Requests({
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Your Requests</h2>
         {mine.length === 0 ? (
-          <p className="rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
-            You haven&rsquo;t asked to join anything. Groups that need an owner&rsquo;s
-            say-so show up here while you wait.
-          </p>
+          <div className="rounded-brand border border-line bg-white p-5">
+            <p className="text-[14px] leading-relaxed text-ink-2">
+              You haven&rsquo;t asked to join anything. Groups that need an owner&rsquo;s
+              say-so show up here while you wait.
+            </p>
+            {/* ⚠⚠ THE DOOR OUT (`P2-A3-E678`). The mockup carries
+                `Discover Groups →` here and it was dropped. ⚠⚠⚠ **AN EMPTY
+                STATE THAT NAMES NO NEXT MOVE IS A DEAD END** — the
+                2026-09-23 rules, item 4: *"AT GENUINE ZERO, NAME THE FIRST
+                MOVE RATHER THAN REPORTING EMPTINESS."* ⚠ It links to this
+                page's own `Discover` view, which exists, so it is not a door
+                onto a wall. */}
+            <Link
+              href="/community/groups?view=discover"
+              className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
+            >
+              Discover Groups &rarr;
+            </Link>
+          </div>
         ) : (
           <div className="space-y-2">
             {mine.map((r) => (

@@ -162,12 +162,32 @@ export default async function GrowPage({
           cut off at the right edge. ⚠ `wrap` is opt-in per caller, so this is
           the Connect set and nothing else — an app-wide sweep of every
           `PageTabs` caller is its own brief. */}
+      {/*
+          ── ⚠⚠⚠ NOTHING LIGHTS, AND THAT IS THE HONEST ANSWER (`P2-A3-E678`) ──
+
+          ⚠⚠ **THIS PAGE WAS TELLING THE MEMBER THEY WERE ON `Community`.**
+          `E625`'s rule, in its own words: *"a row lighting `Community` while
+          you are on `Colleagues` says you are on Community, and you are not.
+          THAT IS WORSE THAN NO HIGHLIGHT."* ⚠ Every sibling was fixed then —
+          colleagues, mentors, teams, groups — **and Grow was not in that
+          list.** It is the last of Scott's *"the tabs lead to pages without
+          the tabs"* trio.
+
+          ⚠⚠⚠ **GROW IS NOT GETTING A SEVENTH TAB.** Scott, 2026-09-26: *"Grow
+          is a destination inside Community reached from the hero button, not a
+          section. Ruling 47 already queues two more — nine tabs is a menu, not
+          a row."* ⚠ So `current` names this route, which is deliberately **not
+          in the row**, and `PageTabs` therefore lights nothing. **A row with no
+          lit tab is honest; a row lighting the wrong tab is a lie.**
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   current="/community"
+      */}
       <PageTabs
         wrap
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community"
+        current="/community/grow"
       />
       <div className="mx-auto w-full max-w-3xl">
         {/*
@@ -265,6 +285,38 @@ export default async function GrowPage({
               <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-3">
                 Not measured yet &middot; {GROWTH_WEIGHTS.ACTIVE_BONUS} points each
                 once it is
+              </span>
+            </div>
+
+            {/*
+              ── ⚠⚠⚠ THE TOTAL. A BREAKDOWN WITH NO TOTAL IS INCOMPLETE ON ITS
+              OWN TERMS (`P2-A3-E678`) ──────────────────────────────────────
+
+              ⚠⚠ **THE MEMBER COULD SEE EVERY OTHER MEMBER'S SCORE ON THE
+              LEADERBOARD BELOW AND NOT THEIR OWN.** ⚠⚠⚠ It fell between two
+              correct moves: `E601` WS-C took the total off this card *"because
+              the hero says it"*, and `E625` then replaced the hero's right
+              half with XP. **Neither noticed the other — a leave-and-arrive
+              where nothing arrived**, and `hero.score` has had no reader since.
+
+              ⚠ **SCOTT, 2026-09-26, PLACING IT HERE:** *"The card prints
+              count × weight = subtotal per row and then stops. A breakdown
+              with no total is incomplete on its own terms, regardless of the
+              leaderboard. The hero already carries XP; a second total there
+              competes with it."*
+
+              ⚠⚠ **IT IS THE SAME `me.points` THE BOARD PRINTS FOR EVERYONE
+              ELSE** (`:517`), so one computation renders twice and the two
+              cannot disagree (`E585`). ⚠ `E433` — a figure, so INK.
+              ⚠⚠ **IT IS A COUNTED TOTAL, NOT A SUM OF THE ROWS ABOVE**, and
+              that distinction is deliberate: `Became Active` contributes
+              nothing because nothing measures it, so a hand-summed figure
+              would silently disagree with the board the day it does.
+            */}
+            <div className="mt-1 flex items-baseline justify-between border-t border-line pt-2.5">
+              <span className="text-[13.5px] font-bold text-ink">Your Score</span>
+              <span className="font-display text-[20px] font-bold tabular-nums text-ink">
+                {me.points}
               </span>
             </div>
           </div>
@@ -367,7 +419,18 @@ export default async function GrowPage({
           tab row (`CONNECT · Community · Groups · …`), already rendered above;
           a second one would say this page is a second application.
         */}
-        <nav aria-label="Leaderboard" className="mt-5 flex gap-1.5 border-b border-line">
+        {/*
+          ── ⚠⚠ THE LABEL IS RENDERED, NOT ONLY ANNOUNCED (`P2-A3-E678`) ──────
+
+          ⚠ **RULING 65:** *"AN ACCESSIBLE LABEL THAT THE VISIBLE UI DOES NOT
+          CARRY IS A DEFECT… the fix is to render it."* ⚠⚠ `aria-label
+          ="Leaderboard"` told a screen reader what this was and told everybody
+          else nothing — the mockup's own `<h2>Leaderboard</h2>` had been
+          dropped. ⚠ The `aria-label` STAYS: it names the nav landmark, which
+          is a different job from the heading above it.
+        */}
+        <h2 className="mt-6 font-display text-[17px] font-bold">Leaderboard</h2>
+        <nav aria-label="Leaderboard" className="mt-2 flex gap-1.5 border-b border-line">
           {TABS.map((t) => (
             <Link
               key={t.key}

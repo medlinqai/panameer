@@ -124,6 +124,41 @@ export function CommunityHero({
                 <> · top of the ladder</>
               )}
               {". "}
+              {/*
+                ── ⚠⚠⚠ THE XP BAR — A COMPUTED VALUE THAT HAD NO READER ──────
+
+                ⚠⚠ **`LevelStanding.percent` IS COMPUTED ON EVERY RENDER AND
+                WAS READ BY NOTHING.** Its own comment in `lib/levels.ts:80`
+                says it is *"0–100 THROUGH THE CURRENT LEVEL, **for the bar**"*
+                — **and the bar was never built** (`P2-A3-E678`). The mockup's
+                `xptrack` is the one visual that makes a level legible: `340 XP`
+                and `360 to Level 4` are two numbers, and the bar is what turns
+                them into a position.
+                ⚠ `levels.ts:90` already guards the arithmetic — *"a `percent`
+                of `-4` would render as a bar pointing backwards"* — so the
+                value is safe to render as a width without further clamping.
+
+                ⚠⚠ **IT IS A PICTURE OF A FIGURE, SO IT OBEYS THE COUNTING
+                RULES:** it renders ONLY when `next` exists. At the top of the
+                ladder `percent` is 100 and a full bar would read as *"complete"*
+                rather than *"nothing further to reach"* — two different
+                meanings that must not look identical (counting rule 2, which
+                says the same rule applies to pictures).
+                ⚠ `aria-hidden` because the two numbers beside it already state
+                the position in words; announcing it twice is noise, and ruling
+                65 is about a label the UI does NOT carry — here it does.
+              */}
+              {standing.next && standing.toNext !== null ? (
+                <span
+                  aria-hidden
+                  className="mt-2 mb-1 block h-[6px] w-full overflow-hidden rounded-full bg-ink/10"
+                >
+                  <span
+                    className="block h-full rounded-full bg-magenta"
+                    style={{ width: `${standing.percent}%` }}
+                  />
+                </span>
+              ) : null}
             </>
           ) : null}
           {rankLine}

@@ -1337,7 +1337,20 @@ export function ConnectProfile({
 
         {owner && serviceProducts}
 
-        <ProfileCard title="Learning Paths I Offer">
+        {/*
+          ── ⚠⚠ THE TITLE IS WRONG FOR HALF ITS OWN ROWS (`P2-A3-E678`) ──────
+
+          ⚠ The card renders TWO groups — paths the provider **teaches** and
+          paths they are **taking** (`Teaches` / `You're Taking` below) — so
+          *"Learning Paths I Offer"* is false for the second group, on a page a
+          **visitor** reads. ⚠⚠ It also says *"I"* on somebody else's profile.
+          ⚠ `Learning Paths` is the mockup's own word
+          (`connect_profile_visitor_2026-09-19.html`), and it is true of both
+          groups for both readers.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <ProfileCard title="Learning Paths I Offer">
+        */}
+        <ProfileCard title="Learning Paths">
           {taughtPaths.length === 0 && takenPaths.length === 0 ? (
             <p className="text-[13.5px] leading-relaxed text-ink-2">
               {owner
