@@ -1387,7 +1387,26 @@ export const PERSONA_NAV_SECONDARY: NavItem[] = [
     and this is not a gap.
   */
   { label: "Request a Recommendation", href: "/recommendations" },
-  { label: "Help", href: "/support/tickets" },
+  /*
+    ── ⚠⚠ `Help` → `My Tickets` (brief 10 WS-C) ────────────────────────────
+
+    ⚠ SCOTT: *"`Help` → rename `My Tickets`."*
+    ⚠⚠ **THE ROUTE DOES NOT MOVE AND THE EARLIER RULING STILL HOLDS** — the
+    note above records that `Help` points at `/support/tickets` because **there
+    is no `/help` route and no `/support` index; both 404.** ⚠⚠⚠ **THE RENAME
+    MAKES THE LABEL MATCH THE DESTINATION IT ALREADY HAD:** the page's own `<h1>`
+    reads *"My Support Tickets"*, so the menu was promising **Help** and
+    delivering **a ticket list.**
+    ⚠ **IT ALSO NARROWS AN HONEST PROMISE RATHER THAN BREAKING ONE.** The note
+    above is explicit that this is *"the NEAREST THING THAT EXISTS, NOT the
+    right long-run answer — a real help surface would list 'Report a Bug'
+    alongside 'My Tickets', and `/support/bug` currently has no menu door at
+    all."* ⚠⚠ **THAT IS STILL TRUE AND STILL UNBUILT**, and calling the item
+    `My Tickets` stops the menu claiming otherwise.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Help", href: "/support/tickets" },
+  */
+  { label: "My Tickets", href: "/support/tickets" },
 ];
 
 /** The whole persona list, for `pageTitleFor` and anything that wants it flat. */
