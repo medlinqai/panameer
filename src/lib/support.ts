@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -328,7 +329,17 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
   const person = await actingPerson(viewer);
   const existing = await prisma.supportTicket.findUnique({
     where: { id: ticketId },
-    select: { id: true, date_solved: true },
+    /* ⚠ `status`, `reporter_person_id` and `title` are read for the ruling-82a
+       notification below — the PRIOR status is the only way to know whether the
+       status actually moved, and a notification that fires on an unchanged
+       status is the echo 82a rejects. */
+    select: {
+      id: true,
+      date_solved: true,
+      status: true,
+      reporter_person_id: true,
+      title: true,
+    },
   });
   if (!existing) throw new SupportError("That ticket no longer exists", "NOT_FOUND");
 
@@ -344,7 +355,7 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     input.status as (typeof TICKETS_TERMINAL_STATUSES)[number],
   );
 
-  return prisma.supportTicket.update({
+  const updated = await prisma.supportTicket.update({
     where: { id: ticketId },
     data: {
       ...(input.status ? { status: input.status } : {}),
@@ -358,4 +369,53 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     },
     select: { id: true },
   });
+
+  /*
+    ── ⚠⚠⚠ RULING 82a — THE EVENT IS THE ANSWER, NOT THE CREATION ───────────
+
+    ⚠ Scott, 2026-09-25: *"Notifying the creator that they created something
+    tells them what they just pressed."* ⚠⚠ So the notification is here, on the
+    STATUS CHANGE, and not in `createTicket`: filing a ticket ends on a
+    confirmation the member is already looking at, while **the answer arrives on
+    Panameer's side, days later, when they are somewhere else.**
+
+    ⚠⚠ THREE GUARDS, AND EACH ONE REFUSES A DIFFERENT ECHO:
+     1. ⚠ **ONLY WHEN THE STATUS ACTUALLY MOVED.** A priority edit, an
+        assignment or a resolution-note save changes the row without changing
+        anything the reporter is waiting on. ⚠⚠ Comparing against `existing`
+        also covers **re-saving the same status**, which is why the prior value
+        is read rather than assumed from `input.status` being present.
+     2. ⚠⚠⚠ **NEVER TO THE PERSON WHO PRESSED THE BUTTON.** An admin who files a
+        ticket and then triages it is the exact case ruling 82a names — and it
+        is real here, not hypothetical: one of the three live tickets was
+        reported by an account that can also administer.
+     3. ⚠ **DEDUPED PER TICKET PER STATUS**, so a double-submit or a bounce
+        between two statuses and back cannot fan out.
+
+    ⚠⚠ `notify()` NEVER THROWS INTO THIS CALLER — it catches, logs and
+    continues, by its own contract: *"a failed notification must not roll back"*
+    the thing that happened. ⚠ It is awaited so the write is ordered, not so the
+    triage depends on it.
+    ⚠⚠⚠ **THIS SENDS REAL EMAIL, AND THAT IS SAID HERE BECAUSE THIS IS WHERE
+    THE TRIGGER IS.** The category ships `email: true` under ruling 34b — I
+    chose `false` and `check:notify-prefs` failed the build and was right. ⚠⚠
+    `MAIL_CAPTURE` is OFF and `EMAIL_FROM` is a live verified sender, so **the
+    next status move mails a real reporter at a real address.** ⚠ See
+    `notification-categories.ts` for the full reasoning and the one boolean that
+    changes it.
+  */
+  const statusMoved = Boolean(input.status) && input.status !== existing.status;
+  const isOwnTicket = existing.reporter_person_id === person.id;
+  if (statusMoved && !isOwnTicket && existing.reporter_person_id) {
+    await notify({
+      event: "support.ticket_status",
+      personId: existing.reporter_person_id,
+      entityType: "SupportTicket",
+      entityId: ticketId,
+      dedupeKey: `support.ticket_status:${ticketId}:${input.status}`,
+      vars: { status: input.status!, ticketTitle: existing.title, ticketId },
+    });
+  }
+
+  return updated;
 }

@@ -214,6 +214,38 @@ point at the sheet from here.
 
 ---
 
+### Support tickets — `P2-A5-E656`, ruling 82a
+
+⚠⚠⚠ **THE EVENT IS THE ANSWER, NOT THE CREATION.** Scott, 2026-09-25 (ruling 82a): *"Notifying
+the creator that they created something tells them what they just pressed."* ⚠ The obvious
+event — *"your ticket was filed"* — is an **echo**: the member is looking at the confirmation
+when it would arrive. ⚠⚠ **THE STATUS CHANGE IS THE ONE THING THEY CANNOT SEE**, because it
+happens on Panameer's side, days later, while they are somewhere else.
+
+⚠ **AND IT IS THE HALF THAT IS WRITABLE TODAY.** `updateTicket` already exists and already
+moves `status`; **nothing needed to be built for this event to have a writer** (counting
+rule 1). ⚠⚠ `createTicket` would have needed no new writer either — but ruling 82a spends the
+one spec row, registry entry and category on the moment that carries information.
+
+⚠⚠ **RULING 80's PRINCIPLE IS UNTOUCHED AND THIS IS WHERE IT LANDS:** ruling 13 governs a
+notification to a **person** about **their own affairs**, so a member muting their own ticket
+updates is their business. ⚠ **THE CATEGORY IS THEREFORE NOT `locked`.** ⚠⚠⚠ Contrast the
+ADMIN side, which gets **no notification at all** — a queue plus the `Tickets Waiting on Us`
+count on `/admin` (`E654`, ruling 80b). **One ticket, two recipients, two different shapes,
+and only one of them is a notification.**
+
+| Event | Recipient | AI Mode | Channel | Notes |
+|---|---|---|---|---|
+| `support.ticket_status` | the member who reported the ticket | `Do It` | in-app + email | ⚠ Fires from `updateTicket` **only when the status actually changes**, never on a priority edit, an assignment or a resolution-note save — a notification that says nothing changed is the echo ruling 82a rejects. ⚠⚠ **`Do It` because it is a statement of fact about the member's own ticket**, with no drafting and no judgement for anybody to review. ⚠⚠⚠ **EMAIL IS ON BECAUSE RULING 34b SAYS EVERY CATEGORY SHIPS ON** — I shipped `email: false` reasoning that `MAIL_CAPTURE` is OFF and `EMAIL_FROM` is live, and **`check:notify-prefs` failed the build and was right**: the gate holds a standing ruling, so the build loses (`check:cert-skills`' case, not `check:rollup`'s). ⚠⚠ **CONSEQUENCE, STATED NOT BURIED: the next status move sends real mail to a real reporter.** One boolean in `notification-categories.ts` if Scott wants otherwise. ⚠ Deduped per ticket **per status** on `dedupe_key`, so re-saving the same status cannot fan out |
+
+⚠⚠ **NO EVENT FOR A REPLY ON THE THREAD, AND THAT IS A DECISION, NOT AN OMISSION** — the spec's
+own rule 3: *"events that deliberately do not notify are still recorded."* ⚠ `addMessage` has a
+writer and could carry one; **it is not built because the reply and the status change usually
+move together**, and two notifications for one act is how a product gets muted. ⚠ If they are
+ever decoupled, that is the row to add.
+
+---
+
 ## Email templates
 
 Transactional templates live under `src/lib/email/templates/`; sends go through

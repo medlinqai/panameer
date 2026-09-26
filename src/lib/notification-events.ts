@@ -12,8 +12,17 @@ import type { NotificationAiMode, NotificationVisibility } from "@prisma/client"
 /**
  * THE EVENT REGISTRY — one entry per (EVENT × RECIPIENT).
  *
- * ⚠⚠ THIS FILE IS DERIVED FROM `2. Claude Sub-Files/event_behavior.md` AND MUST
+ * ⚠⚠ THIS FILE IS DERIVED FROM `scripts/data/event_behavior.md` AND MUST
  * NOT INVENT ROWS. That document is the specification; this is the build. Every
+ * ⚠⚠⚠ THE PATH ABOVE WAS STALE AND IS CORRECTED (`P2-A5-E656`). The spec MOVED
+ * INTO THE REPO on 2026-09-04 (`P1-ALL-E384`, Scott: *"just move it"*) precisely
+ * because a file one level above the git root made these assertions green on one
+ * machine and unreproducible from a clean clone. ⚠ `check:notifications` has read
+ * `scripts/data/` ever since; only this sentence still pointed at the old home.
+ * ⚠⚠ A comment naming a path that does not exist sends the next person to look
+ * for a file they will not find — the comment is half the code.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   THIS FILE IS DERIVED FROM `2. Claude Sub-Files/event_behavior.md`
  * event in its tables appears here and no others, and `check:notifications`
  * parses those tables and fails the build if the two drift. MedLinq's rule,
  * adopted verbatim: *"When code drifts from the spec, the spec is the authority."*
@@ -609,5 +618,38 @@ export const NOTIFICATION_EVENTS = {
     title: (v) => `${str(v, "fromName", "Someone")} recommended you`,
     body: () => null,
     href: () => "/profile",
+  },
+
+  // ── Support tickets — P2-A5-E656, ruling 82a ──────────────────────────────
+  /*
+    ⚠⚠⚠ THE EVENT IS THE ANSWER, NOT THE CREATION (ruling 82a). Scott,
+    2026-09-25: *"Notifying the creator that they created something tells them
+    what they just pressed."* ⚠ `support.ticket_created` is an ECHO — the member
+    is looking at the confirmation screen when it would arrive. ⚠⚠ THE STATUS
+    CHANGE IS THE ONE THING THEY CANNOT SEE: it happens on Panameer's side, days
+    later, while they are somewhere else.
+
+    ⚠ UNLIKE THE WORK-CHAIN BLOCK ABOVE, THIS ONE HAS A LIVE WRITER TODAY —
+    `updateTicket` already moves `status`, and there are 3 ticket rows. It is
+    registered because it FIRES, not so that it is ready to.
+    ⚠⚠ `title` NAMES THE NEW STATUS, so the notification carries the fact rather
+    than sending the member to go and look for it — the `53c`/`79a` instinct: a
+    line that cannot differ is not a status.
+  */
+  "support.ticket_status": {
+    event: "support.ticket_status",
+    recipient: "the member who reported the ticket",
+    category: "support.ticket_status",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) =>
+      `Your support ticket is now ${str(v, "status", "updated")}`,
+    /* ⚠ The ticket's own title, so a member with several can tell them apart.
+       Null rather than a filler sentence when it is somehow absent (`67d`: never
+       manufacture a value from absence). */
+    body: (v) => (str(v, "ticketTitle") ? str(v, "ticketTitle") : null),
+    href: (v) =>
+      str(v, "ticketId") ? `/support/tickets/${str(v, "ticketId")}` : "/support/tickets",
   },
 } as const satisfies Record<string, NotificationEvent>;

@@ -253,6 +253,65 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     defaults: { inApp: true, email: true, sms: false },
   },
   /*
+    ── ⚠⚠⚠ SUPPORT — `P2-A5-E656`, ruling 82a ────────────────────────────────
+
+    ⚠⚠ **IT IS NOT `locked`, AND THAT IS RULING 13 APPLIED RATHER THAN ASSUMED.**
+    Ruling 80 and 82: ruling 13 governs a notification to a PERSON about THEIR
+    OWN AFFAIRS, so **a member muting their own ticket updates is their
+    business.** ⚠⚠⚠ The ADMIN side of the same ticket is deliberately NOT here —
+    admins get a QUEUE and the `Tickets Waiting on Us` count on `/admin`
+    (`E654`), because *"would it be a defect if the recipient turned this off?"*
+    is **yes** for the role and **no** for the reporter. One ticket, two
+    recipients, two shapes, and only one of them is a notification.
+
+    ⚠ **`group: "messages"` — CHECKED AGAINST THE BLURB, NOT ASSUMED.** That
+    group reads *"People trying to reach you about work."* ⚠⚠ The block below
+    this one is the precedent for **stopping rather than stretching a group**,
+    so this one was tested the same way: **a support reply IS a person reaching
+    out to you**, which is the part that block found missing for an invoice
+    (*"an invoice is not a person reaching out"*). ⚠ The strain is the words
+    *"about work"* — a ticket can be about anything — **and that is a narrower
+    stretch than inventing a fourth group for a single category.** Recorded, not
+    hidden.
+
+    ⚠⚠ **`lane: "community"` — the split is the MARKETPLACE vs THE PEOPLE.**
+    Money, orders and tax are `work`; this is a conversation, so it files with
+    messages and the profile. ⚠ `check:notify-prefs` asserts the partition is
+    total, so this could not have been left laneless.
+
+    ── ⚠⚠⚠ `email: true` — I SHIPPED `false` AND THE GATE WAS RIGHT ─────────
+
+    ⚠⚠ **RULING 34b ALREADY DECIDED THIS AND I DID NOT KNOW IT.** I chose
+    `email: false` on the reasoning that `MAIL_CAPTURE` is OFF and `EMAIL_FROM`
+    is a live verified sender, so a new category defaulting to email begins
+    **real outbound mail to real reporters the first time anybody triages** — on
+    the one database that also serves production. ⚠ `check:notify-prefs` failed
+    the build in three seconds: *"every category ships in-app AND email ON
+    (ruling 34b) — 8 shipped off and Scott ruled all of them on."*
+    ⚠⚠⚠ **THAT IS `check:cert-skills`' CASE, NOT `check:rollup`'s — the gate
+    holds a STANDING PRODUCT RULE and the build loses.** The ruling did not
+    move; I was simply unaware of it, and a default I picked from first
+    principles does not outrank a decision Scott already made.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   defaults: { inApp: true, email: false, sms: false },
+
+    ⚠⚠ **THE CONCERN IS REPORTED RATHER THAN ENACTED, WHICH IS THE WHOLE POINT
+    OF RULE 13:** silently obeying the ruling and silently overriding it are the
+    same failure. ⚠⚠⚠ **SO, SAID PLAINLY AND IN ONE PLACE: THE NEXT TIME ANYBODY
+    MOVES A TICKET'S STATUS, THE REPORTER GETS REAL EMAIL AT A REAL ADDRESS.**
+    Three tickets exist and their reporters are real people. **If that is not
+    wanted, it is one boolean here — but it is Scott's to flip, not mine.**
+  */
+  {
+    key: "support.ticket_status",
+    lane: "community",
+    audience: "both",
+    group: "messages",
+    label: "Updates on tickets you reported",
+    blurb: "Panameer moved one of your support tickets to a new status.",
+    defaults: { inApp: true, email: true, sms: false },
+  },
+  /*
     ── ⚠⚠ STEP 5, "Pay Panameer", HAS NO CATEGORY. STOPPED AND REPORTED. ───────
 
     A buyer-side money category — invoices raised, payment due, payment failed —
