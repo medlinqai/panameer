@@ -27,6 +27,72 @@ export const TICKET_STATUSES = ["Open", "In Progress", "Waiting on Reporter", "R
 export const TICKET_PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
 
 /**
+ * ── ⚠⚠⚠ WHICH TICKETS ARE PANAMEER'S WORK (ruling 80b) ────────────────────
+ *
+ * ⚠⚠ **RULING 80b, VERBATIM:** *"a list nobody opens is no better than a
+ * notification everybody muted… The fix is not a notification. It is a COUNT,
+ * somewhere an admin already is."* ⚠ The count needs a definition of what it
+ * counts, and **this is that definition, in one place** (`E585`).
+ *
+ * ⚠⚠⚠ **THE FIVE STATUSES SPLIT THREE WAYS, NOT TWO, AND THE MIDDLE BUCKET IS
+ * THE WHOLE POINT:** `Waiting on Reporter` is an OPEN ticket that is **not
+ * Panameer's move**. ⚠ Counting it would inflate the figure with work an admin
+ * cannot do, which is the opposite of a queue — the number would stop falling
+ * when they worked it, so they would stop reading it.
+ *
+ * ⚠⚠ **SO THE TILE IS NOT LABELLED "Open Tickets", AND THAT IS DELIBERATE:**
+ * `Open` is also one of the five STATUS VALUES, rendered as a pill on
+ * `/admin/support`. ⚠⚠⚠ **A tile reading "Open Tickets: 2" beside a list
+ * showing one pill that says `Open` is one word doing two jobs** — the same
+ * collision that kept the Account menu from being called "the Settings menu".
+ * The label names the ROLE's work instead.
+ *
+ * ── ⚠⚠⚠ EXHAUSTIVE BY THE TYPE, NOT BY A GATE ─────────────────────────────
+ *
+ * ⚠⚠ **`TICKET_OWNER` IS A `Record` KEYED BY EVERY STATUS, SO A SIXTH STATUS IS
+ * A COMPILE ERROR UNTIL SOMEBODY SAYS WHOSE MOVE IT IS.** ⚠ Both sets are
+ * DERIVED from it, so the buckets cannot drift apart or overlap.
+ * ⚠⚠⚠ **THIS IS THE PATTERN SCOTT ASKED FOR REPEATED** — *"a forgetful sender
+ * being a compile error rather than a silent gap is worth more than any check we
+ * could write after the fact"* — and it is why there is no `check:support-count`.
+ * ⚠ **I had written that gate's name into this docblock before building it.**
+ * A stated rule that nothing enforces is the half the next person implements
+ * (2026-09-23 rule 6), so the claim became a type rather than a promise.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the claim as written:
+ * //   ⚠ EXHAUSTIVE BY CONSTRUCTION: AWAITING_PANAMEER + TICKETS_TERMINAL +
+ * //   "Waiting on Reporter" is all five, and check:support-count asserts it.
+ */
+const TICKET_OWNER: Record<
+  (typeof TICKET_STATUSES)[number],
+  "panameer" | "reporter" | "done"
+> = {
+  Open: "panameer",
+  "In Progress": "panameer",
+  /* ⚠ OPEN, BUT NOT OURS — the ticket is live and the ball is with the member. */
+  "Waiting on Reporter": "reporter",
+  Resolved: "done",
+  Closed: "done",
+};
+
+function statusesOwnedBy(owner: "panameer" | "reporter" | "done") {
+  return (Object.keys(TICKET_OWNER) as (typeof TICKET_STATUSES)[number][]).filter(
+    (s) => TICKET_OWNER[s] === owner,
+  );
+}
+
+export const AWAITING_PANAMEER_STATUSES = statusesOwnedBy("panameer");
+
+/**
+ * ⚠ **CLOSED IS STATED ONCE NOW.** `updateTicket` read the pair inline —
+ * `input.status === "Resolved" || input.status === "Closed"` — while its own
+ * docblock stated the same rule in prose. ⚠⚠ One concept in three places
+ * (`E585`); `date_solved` and a future status could have disagreed.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   const closing = input.status === "Resolved" || input.status === "Closed";
+ */
+export const TICKETS_TERMINAL_STATUSES = statusesOwnedBy("done");
+
+/**
  * ⚠ WHAT A PERSON QUOTES BACK. Crockford-ish alphabet with the characters that
  * get misread aloud removed (`I`, `O`, `0`, `1`), because the entire point of a
  * short code is that somebody can read it down a phone or paste it from a note.
@@ -212,6 +278,33 @@ export async function listAllTickets() {
   });
 }
 
+/**
+ * ── ⚠⚠⚠ THE FIGURE AN ADMIN PASSES ANYWAY (ruling 80b) ────────────────────
+ *
+ * ⚠ **THE LIST ALREADY EXISTED AND THAT WAS THE PROBLEM.** `/admin/support` and
+ * its `[ticketId]` detail route are built, and `ADMIN_NAV` carries `Support
+ * Center`, so ruling 80's admin half was **69a — something else is already doing
+ * it.** ⚠⚠ What was missing is the half 80b added: *"if the admin surface has no
+ * figure row, a list there is a door nobody knows to open — rule 5's cousin."*
+ * ⚠ Measured before building: `/admin`'s `TileRow` held four tiles and **no
+ * ticket figure anywhere on the page**, nor in its `VolumeFooter`.
+ *
+ * ⚠⚠ **IT PASSES THE WRITER TEST CLEANLY (counting rule 1)** — `createTicket`
+ * writes `status: "Open"` and `updateTicket` moves it, so both ends of the chain
+ * have a writer. ⚠⚠⚠ **AND IT IS NOT A ZERO STATE: measured 2026-09-25 —
+ * 2 `Open`, 0 `In Progress`, 1 `Resolved`.** ⚠ **A measured figure renders as a
+ * number in ink, never a dash** (ruling 53c), so this returns a `number` and not
+ * `number | null`: there is no uncountable case to represent.
+ *
+ * ⚠ **NOTHING TO MUTE.** No recipient, no `person_id`, no preference row — which
+ * is the whole reason 80b chose a count over a notification.
+ */
+export async function countTicketsAwaitingPanameer(): Promise<number> {
+  return prisma.supportTicket.count({
+    where: { status: { in: [...AWAITING_PANAMEER_STATUSES] } },
+  });
+}
+
 export type TicketUpdate = {
   status?: string | null;
   priority?: string | null;
@@ -246,7 +339,10 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     throw new SupportError("Unknown priority", "INVALID");
   }
 
-  const closing = input.status === "Resolved" || input.status === "Closed";
+  /* ⚠ ONE DEFINITION — see `TICKETS_TERMINAL_STATUSES` for what this replaced. */
+  const closing = TICKETS_TERMINAL_STATUSES.includes(
+    input.status as (typeof TICKETS_TERMINAL_STATUSES)[number],
+  );
 
   return prisma.supportTicket.update({
     where: { id: ticketId },

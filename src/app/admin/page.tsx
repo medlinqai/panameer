@@ -6,6 +6,7 @@ import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/
 import { linkVolume } from "@/lib/admin-reports";
 import { ParserHealth } from "@/components/console/ParserHealth";
 import { MailHealth } from "@/components/console/MailHealth";
+import { countTicketsAwaitingPanameer } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
@@ -41,10 +42,11 @@ export default async function AdminDashboardPage() {
   */
   // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [companies, newPeople, newLessons] = await Promise.all([
+  const [companies, newPeople, newLessons, ticketsWaiting] = await Promise.all([
     getAdminCompanies(viewer!),
     prisma.person.count({ where: { created_at: { gte: since } } }),
     prisma.lesson.count({ where: { created_at: { gte: since } } }),
+    countTicketsAwaitingPanameer(),
   ]);
 
   return (
@@ -62,6 +64,33 @@ export default async function AdminDashboardPage() {
           { label: "New Lessons Last 30 Days", value: newLessons, hint: "Added in the last 30 days" },
           { label: "New Work Last 30 Days", hint: "Awaits work requests" },
           { label: "New Service Products Last 30 Days", hint: "Awaits packages" },
+          /*
+            ── ⚠⚠⚠ THE FIFTH TILE — RULING 80b's COUNT ──────────────────────
+
+            ⚠ **RULING 80b:** *"The fix is not a notification. It is a COUNT,
+            somewhere an admin already is."* ⚠⚠ The list at `/admin/support`
+            already existed and was already in `ADMIN_NAV`; **this page had no
+            ticket figure at all**, so the door had no signpost.
+
+            ⚠ **IT IS THE ONLY TILE HERE THAT IS NOT A 30-DAY WINDOW, AND IT
+            MUST NOT BE ONE.** The other four answer *"what changed"*; this one
+            answers *"what is waiting"* — ⚠⚠⚠ **a queue windowed to 30 days
+            would silently drop the oldest unanswered ticket, which is the exact
+            one an admin needs to see.** The label carries no window for the
+            same reason.
+            ⚠ **`href` POINTS AT THE EXISTING LIST** — the figure is that door's
+            signpost, not a second door (ruling 77: de-duplicate data and logic,
+            not doors).
+            ⚠⚠ **THE HINT NAMES THE EXCLUSION RATHER THAN FOOTNOTING IT**
+            (counting rule 3): a note saying *"some statuses are exempt"*
+            without saying which is worse than no note.
+          */
+          {
+            label: "Tickets Waiting on Us",
+            value: ticketsWaiting,
+            hint: "Open or in progress. Tickets waiting on the reporter are not counted.",
+            href: "/admin/support",
+          },
         ]}
       />
 

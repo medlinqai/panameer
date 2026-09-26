@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listAllTickets } from "@/lib/support";
+import { listAllTickets, AWAITING_PANAMEER_STATUSES } from "@/lib/support";
 import { supportApplicationLabel } from "@/lib/support-applications";
 
 /**
@@ -31,12 +31,34 @@ const STATUS_TONE: Record<string, string> = {
 
 export default async function AdminSupportPage() {
   const tickets = await listAllTickets();
+  /*
+    ── ⚠⚠⚠ THE SAME DEFINITION THE `/admin` TILE COUNTS (ruling 80b) ─────────
+
+    ⚠⚠ **WITHOUT THIS LINE THE TWO SURFACES CONTRADICT EACH OTHER IN PUBLIC.**
+    The tile on `/admin` reads *"Tickets Waiting on Us: 2"*; this page's header
+    read *"3 tickets"* — ⚠⚠⚠ **and an admin arriving by clicking the tile would
+    land on a bigger number with nothing explaining the difference.** That is
+    `E585` on a surface a stranger sees: one concept counted two ways.
+    ⚠ **THE LIST IS STILL UNFILTERED AND THAT IS CORRECT** — it is the TRIAGE
+    list, ordered by activity, and a closed ticket is exactly what an admin
+    needs when someone quotes a code back. ⚠⚠ **The fix is to say BOTH numbers
+    from ONE definition**, not to filter the list to match the tile.
+    ⚠ It counts the ALREADY-FETCHED rows rather than issuing a second query —
+    one read, and it cannot drift from the rows on screen.
+  */
+  const waiting = tickets.filter((t) =>
+    AWAITING_PANAMEER_STATUSES.includes(t.status as (typeof AWAITING_PANAMEER_STATUSES)[number]),
+  ).length;
 
   return (
     <div>
       <h1 className="font-display text-[24px] font-bold tracking-[-0.4px]">Support</h1>
       <p className="mt-1 text-[14.5px] text-ink-2">
         {tickets.length} ticket{tickets.length === 1 ? "" : "s"}, most recent activity first.
+        {" "}
+        {/* ⚠ A MEASURED ZERO RENDERS AS `0`, IN INK (ruling 53c) — there is no
+            uncountable case here, so there is no dash to print. */}
+        <b className="font-semibold text-ink">{waiting} waiting on us</b>.
       </p>
 
       {tickets.length === 0 ? (
