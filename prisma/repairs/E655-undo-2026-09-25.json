@@ -1,0 +1,10 @@
+{
+  "id": "P2-A5-E655",
+  "written": "2026-09-26T03:34:02.076Z",
+  "what": "admin@panameer.com password_hash reset to the committed seed value (ruling 83)",
+  "restore": "UPDATE users SET password_hash = prior_password_hash WHERE id = user_id",
+  "note": "The prior hash matches no known password — that IS the defect. Restoring it restores the broken state.",
+  "user_id": "d879f1bd-b349-48e4-a50e-7aad986d594a",
+  "email": "admin@panameer.com",
+  "prior_password_hash": "$2b$10$9PW7StUxAR56aWof8fEwEO5PKLavdZiGvFTOOEwsZCX8snlAqWFdG"
+}
