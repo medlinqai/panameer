@@ -723,6 +723,9 @@ model Skill {
   packageSkills     PackageSkill[]
   bridges           CapabilityModuleBridge[]
   jobSkills         JobSkill[]
+  /// ⚠ The Learn courses that DECLARE they teach this skill (`P2-A4-E668`,
+  /// ruling 55). ⚠⚠ Declared by a human, never derived from a text match.
+  courseSkills      CourseSkill[]
 
   /// A Skill belongs to a (Role, Domain) PAIR — brief_R, from the authoritative
   /// Service Catalog. The old `(catalog_id, name)` key was wrong for that shape:
@@ -3169,6 +3172,38 @@ enum CourseStyle {
   CONCEPTUAL
 }
 
+/// ── ⚠⚠⚠ WHAT A COURSE CLAIMS TO TEACH (`P2-A4-E668` · ruling 55, ruling 57a)
+///
+/// SCOTT, 2026-09-25: *"we can link and probably SHOULD link all courses to
+/// specific skills or say they cross all skills (like foundations)."*
+///
+/// ⚠⚠⚠ THE TRAP RULING 55b NAMES, AND IT IS WHY THIS IS AN ENUM AND NOT A ROW
+/// PER SKILL: a foundations course that claims every skill makes **the cheapest
+/// route to "assessed in everything" the easiest course on the platform** — and
+/// it silently re-claims every skill added afterwards.
+/// ⚠⚠ SO *"ALL OF THEM"* IS NOT A VALUE HERE, AND MUST NEVER BECOME ONE.
+/// A foundation declares itself a foundation, **mints no skill claims**, and
+/// ruling 48d's band ignores it.
+///
+/// ⚠ TWO VALUES, and ruling 55b is explicit that there is no third DECLARATION:
+/// a course either names the skills it teaches, or says it teaches none in
+/// particular.
+///
+/// ⚠⚠ A NULL IS NOT A THIRD VALUE — IT IS THE ABSENCE OF A DECLARATION, and it
+/// is the only honest state for the 54 courses that exist today, because
+/// **nothing has declared anything yet.** Defaulting them to `FOUNDATION` would
+/// put a claim in every row that no human made; defaulting them to
+/// `NAMED_SKILLS` would say a course names its skills while naming none. ⚠ The
+/// same rule the counting ruling sets for figures: a real zero and an
+/// undeclared thing must not look identical.
+enum CourseSkillScope {
+  /// ⚠ The skills are the rows in `CourseSkill`. An empty set here is a
+  /// contradiction, not a foundation — it means somebody declared and stopped.
+  NAMED_SKILLS
+  /// ⚠ Teaches none in particular. ⚠⚠ MINTS NO SKILL CLAIMS.
+  FOUNDATION
+}
+
 /// The catalog's 0→7 production ladder, mirrored VERBATIM so the vocabulary in
 /// the app matches the vocabulary in Scott's spreadsheet — a lesson at "3" means
 /// the same thing in both places, and nobody has to translate.
@@ -3375,12 +3410,74 @@ model Course {
   /// taxonomy uses.
   is_custom  Boolean      @default(false)
 
-  learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  /// ── ⚠⚠ THE COURSE DECLARES WHAT IT TEACHES (`P2-A4-E668` · rulings 55 / 57a)
+  ///
+  /// ⚠ NULLABLE AND NO `@default` DELIBERATELY: null means **nobody has declared
+  /// yet**, which is true of all 54 courses today. See `CourseSkillScope` for
+  /// why a default would be a claim no human made.
+  /// ⚠⚠ THE SCOPE AND THE ROWS SIT AT THE SAME GRAIN — both on the course — so
+  /// they can never disagree about which object they describe.
+  skill_scope CourseSkillScope?
+
+  learningPath LearningPath  @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
   sections     Section[]
+  /// ⚠ The skills this course declares it teaches — see `skill_scope` above.
+  skills       CourseSkill[]
 
   @@unique([learning_path_id, slug])
   @@index([learning_path_id])
   @@map("learn_courses")
+}
+
+/// ── ⚠⚠⚠ THE JOINT BETWEEN LEARN AND THE RANKING MODEL (`P2-A4-E668`) ────────
+///
+/// ⚠ RULING 55, 2026-09-25, and ruling 57a puts it here rather than in a brief
+/// of its own: `A4 — Learn/brief_cross_references_2026-09-24.md` already owns a
+/// Learn schema append, and path→skill is the same family. **One window, two
+/// Learn appends.**
+///
+/// ⚠⚠ WHAT IT CLOSES, MEASURED 2026-09-26: `LearnAssessment.learning_path_id` is
+/// `@unique` — an assessment belongs to exactly one path — and **nothing
+/// anywhere linked a path or a course to a skill.** So ruling 48d's `Assessed`
+/// band (*"passed the skill assessment in a pillar"*) had no referent at all:
+/// passing a path's assessment proved only that you passed **that path's
+/// assessment.**
+///
+/// ⚠⚠⚠ DECLARED, NEVER DERIVED (`E631`, closed by ruling 55). Not `matchSkills`
+/// — deriving inherits `E515`'s product-line ambiguity, and it would put a text
+/// matcher's INFERENCE underneath a band a buyer reads. Same shape as ruling
+/// 48d's claimed-versus-confirmed.
+///
+/// ⚠⚠ WHY THE COURSE AND NOT THE PATH, stated so it is not silently re-decided:
+/// Scott said *"link all courses"*, and `Course.learning_path_id` is required —
+/// so a path's declared set is the UNION of its courses' and is derivable in one
+/// function, whereas a path-level declaration could never be narrowed back down.
+/// ⚠⚠⚠ THE FINER GRAIN ROLLS UP; THE COARSER ONE CANNOT ROLL DOWN.
+/// ⚠ OPEN AND RAISED, NOT ASSUMED: the assessment that would MINT a claim is per
+/// PATH (`LearnAssessment.learning_path_id` is `@unique`), so whether passing
+/// one path assessment claims the union of every course in it is ruling 48d's
+/// question and is **not answered here.**
+///
+/// ⚠⚠ WRITER, STATED PLAINLY: **there is none yet.** No admin control writes
+/// this and no seed creates one; the table is empty on push, which ruling 24
+/// calls the expected first state of a thing built ahead of its data.
+/// ⚠ RULING 55c: the rail's *ADDS SKILLS* row and ruling 48's band are the same
+/// fact rendered twice — **one predicate, one place** (`E585`). This table is
+/// the one place that fact comes from.
+model CourseSkill {
+  id         String   @id @default(uuid()) @db.Uuid
+  course_id  String   @db.Uuid
+  skill_id   String   @db.Uuid
+  created_at DateTime @default(now())
+
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  /// ⚠ One declaration per (course, skill) — a second row would double-count a
+  /// claim in any rollup that sums them.
+  @@unique([course_id, skill_id])
+  @@index([skill_id])
+  @@map("learn_course_skills")
 }
 
 model Section {
@@ -3460,14 +3557,53 @@ model Lesson {
   /// taxonomy uses.
   is_custom         Boolean                @default(false)
 
+  /// ── ⚠⚠⚠ A CROSS-REFERENCE: THIS ROW IS A SIGNPOST, NOT A LESSON (`P2-A4-E667`)
+  ///
+  /// ⚠ RULING 28 + RULING 45(i), 2026-09-25: option 2(a), a nullable self-relation.
+  /// Measured 2026-09-26, by SHAPE and never from a list of ids — a description
+  /// that OPENS by pointing elsewhere · `vimeo_ref` null · `is_custom = false`:
+  /// **3 of 522 lessons.** A tight and a loose form of that predicate both
+  /// returned the same 3, so the number is stable.
+  ///
+  /// ⚠⚠ WHY NOT `LessonProductionStatus`: that ladder says WHEN content arrives;
+  /// a cross-reference says WHERE content IS. Two definitions in one enum is
+  /// `E585` by construction. ⚠ THE ENUM ABOVE IS UNTOUCHED.
+  ///
+  /// ⚠⚠⚠ THE SHAPE IS THE POPULATION; THIS COLUMN IS THE DESTINATION. They are
+  /// two different facts and neither substitutes for the other. A row matching
+  /// the shape with a NULL target has nowhere to send the learner, so it must
+  /// NOT render as a cross-reference — it stays what it honestly is today.
+  /// Ruling 45's reading: *"a cross-reference without a target must not render
+  /// as one"*, because ruling 45(ii) counts a cross-reference in the progress
+  /// denominator and lets COMPLETING THE TARGET complete it. With no target
+  /// there is nothing to complete, and 100% would be out of reach.
+  ///
+  /// ⚠ NO `@default`, by ruling 45(i). ⚠⚠ `onDelete: SetNull` and not `Restrict`:
+  /// if the target row ever goes, the pointer goes with it and the row falls
+  /// back to being an ordinary unfinished lesson. A dangling id that still
+  /// rendered a link would be a dead link on a learner's only signpost.
+  ///
+  /// ⚠⚠ WRITER, STATED PLAINLY: **there is none yet.** Ruling 45(iii) — *"Scott
+  /// sets the targets by hand once"*, and ruling 21's admin does not gate it.
+  /// Until he does, all three rows carry null and read exactly as they read
+  /// today. ⚠ NOTHING IS DELETED; the three rows stay and become honest.
+  cross_reference_lesson_id String? @db.Uuid
+
   section  Section          @relation(fields: [section_id], references: [id], onDelete: Cascade)
   expert   Person?          @relation("LearnExpertLessons", fields: [expert_person_id], references: [id], onDelete: SetNull)
   progress LessonProgress[]
+
+  /// ⚠ The lesson this row points at — see `cross_reference_lesson_id` above.
+  crossReferenceLesson Lesson?  @relation("LessonCrossReference", fields: [cross_reference_lesson_id], references: [id], onDelete: SetNull)
+  /// ⚠ The signposts pointing AT this lesson. Nothing renders this today; it is
+  /// the other half of the relation, which Prisma requires by name.
+  crossReferencedBy    Lesson[] @relation("LessonCrossReference")
 
   /// Same reasoning as Section: (section, title) is a lesson's natural key.
   @@unique([section_id, title])
   @@index([section_id])
   @@index([production_status])
+  @@index([cross_reference_lesson_id])
   @@map("learn_lessons")
 }
 
