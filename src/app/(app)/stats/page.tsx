@@ -1,16 +1,27 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
+import { PatternHeader } from "@/components/casing/PatternHeader";
 import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
 import { isCounted } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
+import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile, providerMeetsRequired } from "@/lib/access";
 import { isMarketplaceVisible } from "@/lib/access";
-import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness";
+/* ⚠⚠ `VISIBILITY_THRESHOLD` IS NO LONGER IMPORTED (`E659`). Its two live uses
+   were the visibility gate `E590` removed and the sentence that printed that
+   gate to the member; both are now `E164` quotes, and a quote needs no import.
+   ⚠⚠⚠ `69d` — A DELETION LEAVES RESIDUE. Left in place this would have been an
+   orphaned import with a GREEN BUILD and lint 35 → 36, which is exactly how
+   `E645` and `E647` shipped. **Checked before committing (`76a`), not after.**
+   ⚠ The constant itself stays in `completeness.ts` — it is still the meter's
+   own number, and this page simply no longer gates on it.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness"; */
+import { missingRequired } from "@/lib/completeness";
 import { readAttestations } from "@/lib/experience-attestation";
 import { ConfirmExperience } from "@/components/console/ConfirmExperience";
 import { RequestValidationAction } from "@/components/console/RequestValidationAction";
@@ -189,10 +200,35 @@ export default async function MyStatsPage({
           current="/stats"
         />
         <div className="mx-auto max-w-5xl space-y-4">
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
-            How your account is doing. Anything marked &ldquo;&mdash;&rdquo;
-            isn&apos;t being counted yet, and says why.
-          </p>
+          {/*
+            ── ⚠⚠ RULING 23 ON THE BUYER BRANCH TOO ──────────────────────────
+
+            ⚠⚠⚠ **THE FIGURES ARE NOT THE SELLER'S.** `profile.views` is
+            `{ uncounted: "No provider profile" }` down here **by construction**
+            — this branch is reached precisely because there is no provider
+            profile. ⚠ Leading a header with a dash whose reason is *"you are
+            not the kind of member this figure is for"* is the `E562` defect:
+            a page stating its absences before its facts.
+            ⚠⚠ So the three chosen are ones a buyer genuinely has, all counted,
+            all with writers: colleagues, lessons done, certificates.
+            ⚠ **TWO WOULD HAVE BEEN FINE** (ruling 45(1) — it must not require
+            three). These three are real; none is padding.
+          */}
+          <PatternHeader
+            eyebrow={profileTabLabel("/stats")}
+            headline="How your account is doing"
+            /* ⚠ THE PAGE'S OWN SENTENCE, MOVED NOT REWRITTEN — it already said
+               the dash rule in the member's words. */
+            lede="Anything marked “—” isn’t being counted yet, and says why."
+            figures={[
+              { label: "Colleagues", value: s.network.colleagues },
+              { label: "Lessons Done", value: s.learning.lessonsCompleted },
+              { label: "Certificates", value: s.learning.certifications },
+            ]}
+            /* ⚠⚠ NO `primary`, AND THAT IS RULING 45(4) RATHER THAN AN
+               OVERSIGHT: the cards below carry their own doors, and a button
+               repeating a link already on the page is `E579` in a nicer coat. */
+          />
           <BuyerStatistics s={s} period={trendOf(sp)} />
         </div>
       </>
@@ -420,20 +456,53 @@ export default async function MyStatsPage({
     control?: "request-validation" | null;
   }[] = [
     {
+      /*
+        ── ⚠⚠⚠ `E590`'s REMOVED GATE WAS STILL ALIVE HERE (`P2-A2-E659`) ──────
+
+        ⚠⚠ **FOUND BY LOOKING AT THE SCREENSHOT, NOT BY A MEASUREMENT** (73b).
+        On `sw_user21@straterp.com` this card said both of these at once:
+          · *"Photo, identity and the required details — all met."* (bold, from
+            `visible`)
+          · *"Buyers cannot find you yet, and your service products are not on
+            sale."* (this row, from `completeness >= VISIBILITY_THRESHOLD`)
+        ⚠⚠⚠ **TWO DEFINITIONS OF "CAN BUYERS FIND YOU", CONTRADICTING EACH
+        OTHER ON ONE CARD, THREE LINES APART.**
+
+        ⚠ **`E590` WS-A0 ALREADY RULED THIS.** `isMarketplaceVisible`'s own
+        comment: *"THE PERCENTAGE FALLBACK IS GONE… there is ONE gate now"*, and
+        it measured the two gates disagreeing on **6 real profiles — visible on
+        five surfaces, invisible on three, at the same moment.** ⚠⚠ So this is
+        not a new decision; it is a surviving copy of a gate that was removed.
+
+        ⚠⚠⚠ **AND HERE IS WHY `E590`'s OWN SAFEGUARD DID NOT CATCH IT.** That
+        brief made `meetsRequired` a REQUIRED parameter precisely so *"the type
+        checker found all five sites"* — and it did. ⚠ **BUT THIS LINE NEVER
+        CALLS `isMarketplaceVisible`. It RE-IMPLEMENTS the comparison by hand**,
+        so there was no call for the compiler to flag. ⚠⚠ **A REQUIRED TYPE
+        FINDS CALLERS; IT CANNOT FIND RE-IMPLEMENTATIONS.** That is the gap
+        between `E585` and the compile-error pattern, and it is worth stating:
+        the strongest tool in this codebase is blind to a copy that does not
+        call the thing it copies.
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   met: profile.completeness >= VISIBILITY_THRESHOLD,
+      */
       label: "Profile complete enough to be visible",
-      met: profile.completeness >= VISIBILITY_THRESHOLD,
+      met: visible,
       /* ⚠ THE CONSEQUENCE, NOT THE FLAG — folded from `/account-health`'s
          `Appear in buyer searches` row, which said the same thing about the
          same boolean. Its `Sell service packages` row read the SAME flag again,
          so its meaning is carried here too. */
+      /* ⚠ THE SAME PREDICATE AS `met` ABOVE — see that block. The note and the
+         mark beside it must never disagree about one boolean. */
       note:
         profile.paused_at
           ? "Paused by you — resume from Settings when you're ready."
-          : profile.completeness >= VISIBILITY_THRESHOLD
+          : visible
             ? "Buyers can find you, and your service products are purchasable."
             : "Buyers cannot find you yet, and your service products are not on sale.",
       action:
-        profile.completeness >= VISIBILITY_THRESHOLD
+        visible
           ? null
           : /* ⚠ `E133` — `step=finish` is the review, the profile-shaped editor.
                `/join/provider` with no step resolves to the RESUME point and
@@ -521,10 +590,82 @@ export default async function MyStatsPage({
         current="/stats"
       />
     <div className="mx-auto max-w-5xl">
-      <p className="mb-5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
-        How your profile is performing. Anything marked “—” isn&apos;t being
-        counted yet — those tiles fill in once transactions go live on Panameer.
-      </p>
+      {/*
+        ── ⚠⚠⚠ THE PATTERN HEADER (ruling 23) ─────────────────────────────────
+
+        ⚠ RULING 23: the `statistics_2026-09-23.html` mockup is the standard for
+        all six Account Information pages. ⚠⚠⚠ **THIS IS THE PAGE THAT MOCKUP
+        WAS DRAWN FOR, AND IT WAS THE LAST ONE WITHOUT THE HEADER** — `/learn`,
+        `/community` and the score page all mount `PatternHeader` already.
+
+        ⚠⚠ **THE THREE FIGURES ARE THE THREE THIS PAGE CAN HONESTLY COUNT**, and
+        each was checked for a WRITER rather than for a column (counting rule 1):
+          · `profile.views` — `model ProfileView` with a real writer,
+            `recordProfileView` (`profile-views.ts`), which `createMany`s on the
+            public profile route. ⚠ It is `{ uncounted }` only when there is no
+            provider profile, which cannot happen in this branch.
+          · `network.colleagues` — `firstDegree.length`, a counted set.
+          · `learning.lessonsCompleted` — `LessonProgress.completed_at`.
+        ⚠⚠⚠ **DELIBERATELY NOT CHOSEN: `shownInSearch` AND `rateSeen`.** Both
+        are `{ uncounted: NO_SEARCH_LOG }` — there is no search log — so a header
+        built from them would lead the page with two dashes. ⚠ They still render
+        on the Profile card below **with their reason**, which is where an
+        uncounted figure belongs: reported, not promoted.
+        ⚠⚠ **AND NOT `completeness`** — Scott, 2026-09-23: *"Completion belongs
+        to the score page. Statistics measures what the application DID with the
+        profile."* ⚠ `E603` took it off the cards and left it on this page; the
+        header must not put it back.
+
+        ⚠ The lede is the page's OWN sentence, moved rather than rewritten.
+      */}
+      <div className="mb-5">
+        <PatternHeader
+          eyebrow={profileTabLabel("/stats")}
+          headline="How your profile is performing"
+          lede="Anything marked “—” isn’t being counted yet — those tiles fill in once transactions go live on Panameer."
+          figures={[
+            { label: "Profile Views", value: stats.profile.views },
+            { label: "Colleagues", value: stats.network.colleagues },
+            { label: "Lessons Done", value: stats.learning.lessonsCompleted },
+          ]}
+          /*
+            ⚠⚠ THE MOVE IS DERIVED FROM THIS PAGE'S OWN FIGURES, never canned in
+            the component (its own contract). ⚠⚠⚠ IT NAMES THE ONE THING THAT IS
+            ACTUALLY OUTSTANDING, and `gaps` is already computed above for the
+            `Finish Your Profile` card — **one computation, two renders**, which
+            is allowed; two computations of "what is missing" would be `E585`.
+            ⚠ When nothing is outstanding it says so rather than inventing a
+            next move — ruling 53c's instinct applied to a sentence.
+          */
+          move={
+            gaps.length > 0
+              ? `Still needed on your profile: ${gaps.join(" · ")}.`
+              : visible
+                ? "Your profile is live in the marketplace."
+                : null
+          }
+          /*
+            ── ⚠⚠⚠ NO BUTTON, AND I WROTE ONE FIRST ────────────────────────
+
+            ⚠ I gave this `primary={{ label: "See Your Profile Score", href:
+            "/community/score" }}` and then found **that exact link already on
+            this page**, inside the `Profile` tile below. ⚠⚠ RULING 45(4): the
+            action slot is *"never a repeat of a link already on the page"*, and
+            `E579` — *a button that repeats a nearby link is the same failure in
+            a nicer coat.*
+            ⚠⚠⚠ **AND THE TILE'S LINK IS THE ONE THAT MUST SURVIVE:** `E603`
+            replaced the completeness figure with *"the door it was sitting on
+            top of"* precisely so the score page kept an entrance from here.
+            Promoting a copy of it into the header would leave two doors to one
+            room and no new way anywhere.
+            ⚠ **EVERY OTHER DOOR THIS PAGE OWES IS ALSO ALREADY ON IT** —
+            `Finish Your Profile`, `Manage Service Products`, `Check your
+            profile`. ⚠⚠ So the honest header has **no action**, which the
+            component supports by design: *"a page with no honest action shows
+            none."*
+          */
+        />
+      </div>
 
       {/*
         ── ⚠⚠ THE TWO ACTIONS, AT THE TOP (`P2-J2-E563` WS-B) ────────────────
@@ -840,11 +981,21 @@ export default async function MyStatsPage({
             sentence that makes a page read as unaware of its own state.
             ⚠ `E433` — a count, so ink.
           */}
+          {/*
+            ⚠⚠⚠ THE THRESHOLD CLAUSE IS GONE, FOR THE SAME REASON THE CRITERION
+            ABOVE CHANGED (`E659`). It read *"buyers can find you at 80% of
+            required details"* — ⚠ **a statement of the gate `E590` REMOVED**,
+            printed to the member as the rule. ⚠⚠ A percentage is not what makes
+            a profile visible any more; the required SET is, and the rows above
+            name exactly which parts of it are missing and link to each.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   {visible
+            //     ? "."
+            //     : ` · buyers can find you at ${VISIBILITY_THRESHOLD}% of required details.`}
+            ⚠ `E433` — a count, so ink.
+          */}
           <p className="mt-3 text-[12.5px] text-ink-2">
-            {metCount} of {criteria.length} met
-            {visible
-              ? "."
-              : ` · buyers can find you at ${VISIBILITY_THRESHOLD}% of required details.`}
+            {metCount} of {criteria.length} met.
           </p>
 
           {/* ── FACT 4 — THE INVENTORY ──────────────────────────────────── */}

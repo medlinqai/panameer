@@ -50,3 +50,31 @@ export function profileTabs(viewer: Viewer | null): PageTabItem[] {
     (t) => !t.requires || (viewer !== null && hasCapability(viewer, t.requires))
   );
 }
+
+/**
+ * ── ⚠⚠ THE EYEBROW FOR ONE OF THE SIX PAGES (ruling 23, brief 10 WS-C) ────
+ *
+ * ⚠ `PatternHeader`'s eyebrow is REQUIRED because it is *"the part that tells a
+ * member which of six near-identical pages they are on"* (ruling 45(3)). ⚠⚠ So
+ * it must say **the same word the tab row says**, and the tab row already holds
+ * that word.
+ *
+ * ⚠⚠⚠ **THIS EXISTS SO THE SIX PAGES DO NOT RETYPE IT.** `ACCOUNT_MENU_NAME`
+ * above is the record of what happens otherwise: one string written out by hand
+ * at **eight** mount sites, where renaming means editing eight lines and missing
+ * one leaves the row calling itself two different things (`E585`). ⚠ An eyebrow
+ * typed as a literal is that defect waiting to happen a second time — the tab
+ * would read `Usage Statistics` while the header beneath it read something else,
+ * **on the same screen**.
+ *
+ * ⚠ IT DOES NOT FILTER BY CAPABILITY, deliberately: this answers *"what is this
+ * page called"*, not *"may you see it"*. ⚠⚠ A page already rendering its own
+ * header has passed its own `guardPage`, and filtering here would make a
+ * legitimately-visible page fall back to its href.
+ * ⚠ The fallback is the href rather than an invented word — **a wrong label is
+ * worse than an ugly one**, and an href at least cannot lie about which page
+ * this is.
+ */
+export function profileTabLabel(href: string): string {
+  return (PAGE_TABS["/profile"] ?? []).find((t) => t.href === href)?.label ?? href;
+}

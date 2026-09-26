@@ -133,10 +133,26 @@ export function PatternHeader({
   picture,
 }: PatternHeaderProps) {
   /*
-    ⚠⚠ SIZED FROM THE LENGTH, CLAMPED AT THREE. ⚠⚠⚠ A caller passing four does
-    not silently render four in a three-wide grid — it renders the first three,
-    and `check:pattern-header` fails the build on a caller that passes more, so
-    the truncation is a belt rather than the rule.
+    ⚠⚠ SIZED FROM THE LENGTH, CLAMPED AT THREE. A caller passing four does not
+    render four in a three-wide grid — it renders the first three.
+
+    ⚠⚠⚠ **`check:pattern-header` DOES NOT EXIST, AND THIS COMMENT CLAIMED IT
+    DID** (found `P2-A2-E659`, 2026-09-26, while mounting this on `/stats`).
+    ⚠ There is no such npm script and **nothing in `scripts/` mentions
+    `PatternHeader` at all.** ⚠⚠ So the sentence below was not a belt — **the
+    truncation IS the only rule**, and a caller passing four figures loses the
+    fourth SILENTLY.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   …and `check:pattern-header` fails the build on a caller that passes
+    //   more, so the truncation is a belt rather than the rule.
+    ⚠⚠ **THIS IS THE `check:support-count` DEFECT, INHERITED RATHER THAN
+    AUTHORED** — a gate named in prose before it was built. A stated rule that
+    nothing enforces is the half the next person trusts (the 2026-09-23 rules,
+    6). ⚠⚠⚠ **THE HONEST FIX IS A TUPLE TYPE, NOT A GATE** — `[HeaderFigure]`
+    | `[…, …]` | `[…, …, …]` would make a fourth a COMPILE error, the pattern
+    Scott asks to be reached for before a check. ⚠ **NOT DONE HERE:** it
+    changes a shared component's public type and every existing caller's array
+    literal would have to be re-typed. **Filed, not smuggled into a page brief.**
   */
   const shown = figures.slice(0, 3);
   const cols =
