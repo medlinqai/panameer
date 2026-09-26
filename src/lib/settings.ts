@@ -253,7 +253,7 @@ export async function updateProfileSettings(
     paused?: boolean;
     projectPreference?: "ANY" | "SHORT_TERM" | "LONG_TERM" | "CONTRACT_TO_HIRE" | null;
     earningsPrivate?: boolean;
-    aiTrainingOptIn?: boolean;
+    /* ⚠ REMOVED (78c) — see the writer below. */
     linkedGithub?: string | null;
     linkedStackoverflow?: string | null;
   }
@@ -277,9 +277,13 @@ export async function updateProfileSettings(
       ...(patch.earningsPrivate !== undefined
         ? { earnings_private: patch.earningsPrivate }
         : {}),
-      ...(patch.aiTrainingOptIn !== undefined
-        ? { ai_training_opt_in: patch.aiTrainingOptIn }
-        : {}),
+      /* ⚠⚠⚠ `ai_training_opt_in` IS NO LONGER WRITTEN (ruling 78c). The card is
+         deleted and the route no longer accepts the key, so leaving a writer
+         here would be a way to set a CONSENT that nothing can withdraw.
+         ⚠ The COLUMN stays — dropping it is ruling 41's entry 5, on trunk.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   ...(patch.aiTrainingOptIn !== undefined
+         //     ? { ai_training_opt_in: patch.aiTrainingOptIn } : {}), */
       ...(patch.linkedGithub !== undefined
         ? { linked_github: handle(patch.linkedGithub) }
         : {}),
