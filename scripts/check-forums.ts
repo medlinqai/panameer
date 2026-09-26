@@ -95,6 +95,34 @@ async function main() {
       !/export async function ensurePathBoard[\s\S]{0,900}?forumBoard\.create\(/.test(forums)
   );
 
+  /*
+    ── ⚠⚠⚠ 2a · THE WRITER SETS AN OWNER (`P2-J3-E662`) ────────────────────
+
+    ⚠⚠ **ASSERTION 8 BELOW COULD NOT HAVE CAUGHT THIS, AND THAT IS WHY 2a
+    EXISTS.** §8 counts ownerless rows in the DATABASE — all 23 path groups
+    were owned by the backfill, so it was green while the only live writer set
+    **no `host_person_id` at all**. ⚠⚠⚠ **IT WOULD HAVE GONE RED ONLY AFTER
+    SOMEBODY CREATED A PATH IN THE ADMIN CONSOLE — a gate that reddens on a
+    future action is not guarding the code that causes it.**
+
+    ⚠ **THIS IS STRENGTHENING, NOT NARROWING.** Scott, 2026-09-26: *"the gate is
+    correct and the writer is incomplete; narrowing a gate to fit a defect is
+    `E586`."* §8 is untouched; 2a guards the writer §8 depends on.
+    ⚠ Scoped to the `ensurePathBoard` window so it cannot pass on a
+    `host_person_id` somewhere else in the file (`E607` — the assertion under
+    test must be the thing that catches the mutation).
+    ⚠⚠ It asserts the owner is set on **`create`** and deliberately says nothing
+    about `update`: `E572` freezes a derived owner, and re-running this writer
+    must never move one.
+  */
+  check(
+    "2a — ensurePathBoard's create sets host_person_id (E662)",
+    /export async function ensurePathBoard[\s\S]{0,1400}?create:\s*\{[\s\S]{0,400}?host_person_id/.test(
+      forums
+    ),
+    "a path created in the admin console would be ownerless, and §8 would redden later with nothing able to fix it"
+  );
+
   /* ── 3 · ⚠⚠ ACCESS — READ AND POST — IS ENROLMENT **OR** TEACHING ───────── */
   check(
     "3 — canAccessPathForum is in the lib",

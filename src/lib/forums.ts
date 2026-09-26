@@ -935,14 +935,80 @@ export async function getPathForumTeaser(
  * and `createPath` can all call it safely. ⚠ TITLE AND DESCRIPTION ARE THE
  * PATH'S OWN — NO NEW COPY WAS WRITTEN.
  */
+/**
+ * ── ⚠⚠⚠ TIER 3, MOVED OUT OF THE ONE-SHOT AND INTO THE WRITER (`P2-J3-E662`) ──
+ *
+ * ⚠⚠ **THE DEFECT:** `ensurePathBoard` is the **only live path-board writer** —
+ * `createPath`, the seed and the backfill all go through it — and its `create`
+ * **set no `host_person_id` at all**. ⚠⚠⚠ **So every path created in the admin
+ * console produced an OWNERLESS group, and `check:forums` §8 (*"every path
+ * group has an owner"*) would have gone RED on the first one, with nothing in
+ * the product able to assign one.** Tier 3 existed only inside
+ * `prisma/backfill-path-group-owner.ts`, a spent one-shot.
+ *
+ * ⚠ **THE GATE IS CORRECT AND THE WRITER WAS INCOMPLETE.** Scott, 2026-09-26:
+ * *"Do not narrow the gate — narrowing a gate to fit a defect is `E586`."*
+ *
+ * ⚠⚠ **RESOLVED FROM THE DATABASE, NEVER FROM A NAME OR AN ID** (load-bearing
+ * rule 10), and it **REFUSES rather than guesses** if `is_support` is not
+ * exactly one person — the backfill's own rule, inherited verbatim: *"if there
+ * is no such row, REPORT AND STOP. Do not invent one."*
+ * ⚠⚠⚠ **REFUSING IS THE RIGHT FAILURE HERE.** The alternative — returning null
+ * — writes the ownerless board this exists to prevent, silently, and reddens
+ * the gate later at a place that cannot explain itself. **Measured today:
+ * `is_support` resolves to exactly 1.**
+ *
+ * ⚠ **THE BACKFILL KEEPS ITS OWN COPY AND IS DELIBERATELY NOT REFACTORED.** It
+ * is a spent one-shot and it is the RECORD of what it wrote on the day it ran;
+ * editing it would rewrite history rather than share code (`E164`'s spirit).
+ * **It is not a live second definition — nothing calls it.**
+ */
+async function panameerOwnerId(tx: Pick<typeof prisma, "person">): Promise<string> {
+  const staff = await tx.person.findMany({
+    where: { is_support: true },
+    select: { id: true },
+  });
+  if (staff.length !== 1) {
+    throw new Error(
+      `ensurePathBoard: is_support must resolve to exactly one person, found ${staff.length}. ` +
+        `Refusing to create an ownerless path group (P2-J3-E662).`
+    );
+  }
+  return staff[0].id;
+}
+
 export async function ensurePathBoard(
-  tx: Pick<typeof prisma, "forumBoard">,
-  path: { id: string; title: string; slug: string; summary?: string | null }
+  tx: Pick<typeof prisma, "forumBoard" | "person">,
+  path: { id: string; title: string; slug: string; summary?: string | null },
+  /**
+   * ── ⚠⚠⚠ THE OWNER IS A PARAMETER, AND THE POLICY IS **SCOTT'S, NOT MINE** ──
+   *
+   * ⚠⚠ **OPEN AND DELIBERATELY UNDECIDED (`E662`, 2026-09-26):** when a path is
+   * created in the **admin console**, does its group belong to **the creating
+   * admin** or to **the path's instructor**? ⚠⚠⚠ **THAT IS A PRODUCT DECISION
+   * ABOUT WHO LATER COLLECTS ON A GROUP, AND SCOTT IS ANSWERING IT** — so this
+   * takes an owner rather than picking one.
+   * ⚠ **UNTIL HE DOES, EVERY CALLER PASSES NOTHING AND TIER 3 APPLIES**, which
+   * is exactly *"move tier 3 into `ensurePathBoard`"* and nothing more. When he
+   * rules, the change is **one argument at one call site** — not a rewrite here.
+   *
+   * ⚠⚠ **OWNERSHIP IS NOT AUTHORITY** — `E572`'s rule, unchanged: who may post
+   * or confirm is still `canAccessPathForum` / `teachesPathWhere`, and nothing
+   * on this line touches either.
+   * ⚠ **AND IT IS SET ON `create` ONLY, NEVER ON `update`.** `E572`: *"derived
+   * once at backfill and frozen… an owner that silently changes is a bug with a
+   * bank account attached."* Re-running this on an existing board must not move
+   * its owner.
+   */
+  ownerPersonId?: string
 ) {
   /* ⚠ THE SLUG IS STILL DERIVED because `slug` is `@unique` and the routes read
      it — but the RELATION is the column, so a path slug change never orphans a
      board. That is exactly why `E383` chose a column over a slug convention. */
   const slug = `path-${path.slug}`;
+  /* ⚠ RESOLVED BEFORE THE UPSERT so a refusal happens before any write, not
+     half-way through one. ⚠⚠ Tier 3 only when the caller named nobody. */
+  const owner = ownerPersonId ?? (await panameerOwnerId(tx));
   return tx.forumBoard.upsert({
     where: { slug },
     /* ⚠ ON UPDATE THE TITLE FOLLOWS THE PATH, so renaming a path renames its
@@ -958,6 +1024,11 @@ export async function ensurePathBoard(
       title: path.title,
       description: path.summary ?? null,
       learning_path_id: path.id,
+      /* ⚠⚠⚠ THE LINE THAT WAS MISSING (`E662`). Without it every path created
+         in the admin console was ownerless and `check:forums` §8 would redden
+         on the first one. ⚠ `create` ONLY — see `ownerPersonId`'s note: an
+         owner that silently changes is a bug with a bank account attached. */
+      host_person_id: owner,
       /* ⚠ SORTED AFTER THE FOUR SEEDED BOARDS (0,10,20,30) so that if a path
          board ever IS listed somewhere, it never displaces them. */
       sort_order: 1000,

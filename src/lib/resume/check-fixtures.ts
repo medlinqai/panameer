@@ -348,6 +348,42 @@ async function run() {
     console.log("\nfailures:");
     for (const f of failures) console.log(`  ✗ ${f}`);
   }
+
+  /*
+    ── ⚠⚠⚠ A ZERO-CASE RUN FAILS. THIS IS `E586`, THE NAMESAKE (`P2-J14-E586`) ──
+
+    ⚠⚠ **THE DEFECT WAS NEVER THE MISSING FIXTURES — IT IS THAT A RUN WHICH
+    FOUND NONE OF ITS SIXTEEN CASES EXITED 0.** Measured on clean `main`,
+    2026-09-19 and again 2026-09-26: `0 passed, 0 failed, 16 skipped`, **exit
+    code 0**, in **0.708 s**. ⚠⚠⚠ **IN A GATE TABLE THAT IS INDISTINGUISHABLE
+    FROM A SUITE THAT RAN AND PASSED, AND IT HAS BEEN QUOTED AS GREEN FOR
+    WEEKS.**
+
+    ⚠ **THE FIXTURES ARE DELIBERATELY NOT ADDED.** `.gitignore` excludes
+    `__fixtures__/` because they are **real people's CVs**, and `CLAUDE.md`
+    says in terms: *"DO NOT FIX IT BY ADDING FIXTURES — what the corpus should
+    be is its own decision."* ⚠⚠ Adding them would also only ever green **one
+    machine**; a clean clone would still find nothing. **What the corpus should
+    contain is Scott's decision, not a side effect of repairing a runner.**
+
+    ⚠⚠ **SO THE RUNNER STOPS CLAIMING TO BE A GATE WHEN IT HAS NOTHING TO
+    ASSERT.** `pass === 0 && fail === 0` is the only case that changes: a real
+    pass is unaffected, and a real failure still fails for its own reason — the
+    two reds stay distinguishable, which is the point of `E607`.
+    ⚠ It prints the count it found and the reason, rather than a bare red: *"a
+    gate that fails on correct code is a gate someone switches off"*, and a red
+    with no explanation is the same thing one step later.
+  */
+  if (pass === 0 && fail === 0) {
+    console.log(
+      `\n⚠⚠⚠ NOT A GATE — 0 of ${skipped} cases ran. This suite asserted NOTHING.\n` +
+        `    ${DIR} holds no fixtures on this machine, and they are gitignored on purpose\n` +
+        `    (real CVs). Reported as "0/0/${skipped} skipped", never as green (E586).`
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   process.exitCode = fail ? 1 : 0;
 }
 
