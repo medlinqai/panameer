@@ -396,13 +396,18 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     continues, by its own contract: *"a failed notification must not roll back"*
     the thing that happened. ⚠ It is awaited so the write is ordered, not so the
     triage depends on it.
-    ⚠⚠⚠ **THIS SENDS REAL EMAIL, AND THAT IS SAID HERE BECAUSE THIS IS WHERE
-    THE TRIGGER IS.** The category ships `email: true` under ruling 34b — I
-    chose `false` and `check:notify-prefs` failed the build and was right. ⚠⚠
-    `MAIL_CAPTURE` is OFF and `EMAIL_FROM` is a live verified sender, so **the
-    next status move mails a real reporter at a real address.** ⚠ See
-    `notification-categories.ts` for the full reasoning and the one boolean that
-    changes it.
+    ⚠⚠⚠ **THIS SENDS NO EMAIL, AND MY EARLIER WARNING THAT IT DID WAS WRONG.**
+    The category ships `email: true` under ruling 34b (I chose `false` and
+    `check:notify-prefs` was right to fail the build) — ⚠⚠ **but `notify()`
+    RECORDS INTENT AND DOES NOT SEND.** It imports no sender, and no path turns
+    a `Notification` row into an email. **This writes an in-app row. That is
+    all it does.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — my false warning:
+    //   THIS SENDS REAL EMAIL … the next status move mails a real reporter at
+    //   a real address.
+    ⚠⚠ **THE PRODUCT-WIDE GAP IS THE INVERSE AND IS FILED AS `E658`:** the
+    settings screen shows Email as live for all 17 categories and nothing
+    delivers. See `notification-categories.ts`.
   */
   const statusMoved = Boolean(input.status) && input.status !== existing.status;
   const isOwnTicket = existing.reporter_person_id === person.id;

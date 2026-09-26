@@ -297,10 +297,33 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
 
     ⚠⚠ **THE CONCERN IS REPORTED RATHER THAN ENACTED, WHICH IS THE WHOLE POINT
     OF RULE 13:** silently obeying the ruling and silently overriding it are the
-    same failure. ⚠⚠⚠ **SO, SAID PLAINLY AND IN ONE PLACE: THE NEXT TIME ANYBODY
-    MOVES A TICKET'S STATUS, THE REPORTER GETS REAL EMAIL AT A REAL ADDRESS.**
-    Three tickets exist and their reporters are real people. **If that is not
-    wanted, it is one boolean here — but it is Scott's to flip, not mine.**
+    same failure.
+
+    ── ⚠⚠⚠ AND THEN THE CONCERN ITSELF WAS MEASURED AND WAS FALSE ───────────
+
+    ⚠⚠⚠ **`notify()` CANNOT SEND EMAIL. `email: true` SENDS NOTHING.** It
+    imports `prisma`, `emailConfigured`, `findCategory` and the registry — **no
+    sender** — and its own comment says *"EMAIL AND SMS RECORD INTENT AND DO NOT
+    SEND."* ⚠ No path turns a `Notification` row into an email: the digest is
+    unbuilt (no `vercel.json`, no scheduler, no `last_digest_sent_at`), and the
+    one route that both reads notifications and mails (`finish-later`) reads a
+    row only as a DEDUPE CHECK and sends by hand.
+    ⚠⚠ **I RAISED THE ALARM WITHOUT READING THE FUNCTION THAT WOULD HAVE TO DO
+    THE SENDING** — reasoning from `MAIL_CAPTURE` being off and `EMAIL_FROM`
+    being live straight to *"mail goes out"*. **`53e`'s lesson on a new axis:
+    search for the behaviour, not the conditions that would enable it.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — my false warning:
+    //   SO, SAID PLAINLY AND IN ONE PLACE: THE NEXT TIME ANYBODY MOVES A
+    //   TICKET'S STATUS, THE REPORTER GETS REAL EMAIL AT A REAL ADDRESS.
+
+    ⚠⚠⚠ **THE REAL DEFECT IS THE OPPOSITE ONE, AND IT IS PRODUCT-WIDE — `E658`.**
+    `emailConfigured()` now returns **true**, so the honest *"Email delivery
+    isn't switched on yet"* note **no longer renders**, the Email column is live
+    and toggleable for **all 17 categories**, and `notify()` no longer records
+    `suppressed_reason: "email_not_configured"`. ⚠ **Nothing sends.** The
+    tripwire disarmed itself on `RESEND_API_KEY` appearing, but `E371` built
+    transactional senders — **not a notification→email path.** ⚠⚠ **A PROMISE
+    WITH NO WRITER, shown to every member.** Filed, not fixed here.
   */
   {
     key: "support.ticket_status",
