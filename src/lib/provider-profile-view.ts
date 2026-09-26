@@ -518,10 +518,34 @@ export async function getProviderProfileView(
         card follows — which is what lets a gate assert by shape rather than by
         a list it keeps in step by hand.
       */
+      /*
+        ── ⚠⚠⚠ `From` / `To` ARE NO LONGER EMITTED (`P2-A2-E673`) ────────────
+
+        ⚠⚠ **MEASURED: `rate_min_cents` / `rate_max_cents` HAVE NO WRITER
+        ANYWHERE IN `src/`.** No `prisma.*.update` assigns them, `RateEditor`
+        has no field for them, and `profile-sections.ts`'s payload omits them —
+        the only writers are `prisma/seed-test-data.ts:556` and `:708`.
+        ⚠ **They rendered on 44 of 63 provider profiles** as two rate rows
+        nobody in the product could change.
+
+        ⚠⚠⚠ **SCOTT, 2026-09-26: *"a rate row rendering on 44 of 63 profiles
+        that no code in the repo can write is the writer test failing on an
+        EDITABLE FIELD, which is worse than a figure with no writer."*** ⚠ A
+        figure with no writer renders a dash and its reason; **a RATE ROW with
+        no writer looks like something the provider chose and cannot correct.**
+
+        ⚠ **NOTHING IS DELETED.** The columns stay (ruling 38 — additive only),
+        the seed data stays, and the two lines are quoted below. This view model
+        simply stops emitting them, which is the one place that decides what the
+        card renders — *"THE LIST IS THE CONTRACT"*, as the comment above says.
+        ⚠⚠ **THEY COME BACK WITH THE THREE-RATE MIGRATION BRIEF** (rulings
+        64/66), which is where `Hybrid` and a real range editor are owed.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { key: "min", label: "From", cents: profile.rate_min_cents },
+        //   { key: "max", label: "To", cents: profile.rate_max_cents },
+      */
       columns: [
         { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
-        { key: "min", label: "From", cents: profile.rate_min_cents },
-        { key: "max", label: "To", cents: profile.rate_max_cents },
         { key: "onsite", label: "Onsite", cents: profile.onsite_rate_cents },
         { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
       ] as { key: string; label: string; cents: number | null }[],

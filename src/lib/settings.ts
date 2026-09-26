@@ -330,8 +330,15 @@ export async function addBillingMethod(
       kind: input.kind,
       label: input.label.trim().slice(0, 80),
       last4: digits(input.last4, 4),
-      exp_month: input.expMonth ?? null,
-      exp_year: input.expYear ?? null,
+      /* ⚠⚠⚠ EXPIRY IS NOT WRITTEN (`P2-A2-E672`). WS-D: *"NO card number, CVV
+         or expiry may be … stored by Panameer code."* The route no longer
+         accepts it either — see its schema for the full reasoning and why the
+         COLUMNS stay (ruling 38 is additive-only; a DROP is not additive).
+         ⚠ `last4` is a truncated PAN, not the card number, and the page says
+         so: *"we never store a full card number."*
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   exp_month: input.expMonth ?? null,
+         //   exp_year: input.expYear ?? null, */
       // First one in is the default; there is no meaningful alternative.
       is_default: count === 0,
     },
