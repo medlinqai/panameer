@@ -36,17 +36,28 @@ const Body = z.discriminatedUnion("action", [
       ADDITIVE-ONLY AND A DROP IS NOT ADDITIVE.** The columns are now orphaned
       by construction: no reader, no writer, no route. Recorded rather than
       dropped.
-      ⚠ `.strict()` is NOT set on this schema, so an unknown key is IGNORED
-      rather than refused — a caller still sending `expMonth` gets a 200 and
-      the value goes nowhere. **Reported: that is the weaker of the two
-      behaviours, and tightening it touches every settings write, so it is not
-      done inside this brief.**
+      ⚠⚠ **`.strict()` IS NOW SET — see the block below.** ⚠ SUPERSEDED,
+      quoted not deleted (`E164`), and it was true for exactly one commit:
+      //   ⚠ `.strict()` is NOT set on this schema, so an unknown key is
+      //   IGNORED rather than refused — a caller still sending `expMonth`
+      //   gets a 200 and the value goes nowhere.
       ⚠ SUPERSEDED, quoted not deleted (`E164`):
       //   expMonth: z.number().int().min(1).max(12).nullable().optional(),
       //   expYear: z.number().int().min(2024).max(2100).nullable().optional(),
     */
-  }),
-  z.object({ action: z.literal("remove"), id: z.string().uuid() }),
+    /*
+      ── ⚠⚠⚠ `.strict()` — AN UNKNOWN KEY IS REFUSED, NOT IGNORED (`P2-A2-E677`) ──
+
+      ⚠⚠ **WITHOUT IT, A CALLER STILL SENDING `expMonth` GOT A `200` FOR A WRITE
+      THAT DID NOT HAPPEN.** ⚠⚠⚠ **A SUCCESS RESPONSE FOR A SILENT NO-OP IS A
+      LIE TO THE CALLER** — Scott, 2026-09-26 — *"same family as a gate that
+      asserts nothing."* Both report success for work nobody did.
+      ⚠ It also makes `E672`'s removal enforceable rather than merely done:
+      the field is now **rejected at the boundary**, so it cannot quietly come
+      back by a client starting to send it again.
+    */
+  }).strict(),
+  z.object({ action: z.literal("remove"), id: z.string().uuid() }).strict(),
 ]);
 
 export const POST = (request: Request) =>

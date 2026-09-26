@@ -27,8 +27,13 @@ export default async function BillingPage() {
         kind: m.kind,
         label: m.label,
         last4: m.last4,
-        expMonth: m.exp_month,
-        expYear: m.exp_year,
+        /* ⚠⚠ THE EXPIRY SELECT IS GONE (`P2-A2-E677`). `E672` removed the
+           WRITER; this was the reader left behind, and a reader of a column
+           nothing can populate is residue (`69d`). ⚠ The COLUMNS stay — ruling
+           38 is additive-only — they are simply orphaned by construction now.
+           ⚠ SUPERSEDED, quoted not deleted (`E164`):
+           //   expMonth: m.exp_month,
+           //   expYear: m.exp_year, */
         isDefault: m.is_default,
       }))}
     />

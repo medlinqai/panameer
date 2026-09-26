@@ -1925,11 +1925,65 @@ export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
     Password & Security to reach Billing, and none of them completes.
   */
   "/settings": "none",
+
+  /*
+    ── ⚠⚠⚠ `/hire` — `suggested`, NOT `process` (`P2-A2-E675`) ──────────────
+
+    ⚠⚠ **THIS KEY WAS MISSING AND `check:community` HAD BEEN RED ON TRUNK
+    BECAUSE OF IT** — `E384/3`, *"unclassified: /hire"*. ⚠ It had started to
+    read as background noise, which is why it earned its own id (`E674`).
+
+    ⚠ **RULING 62c SAYS `/hire` IS A SEQUENCE** — *"the order is the
+    information"* — so `none` would be wrong. ⚠⚠⚠ **BUT `process` RENDERS A
+    DONE STATE, AND NOTHING CAN WRITE "DONE" FOR A `/hire` STEP TODAY.** Scott,
+    2026-09-26: *"a done state with no writer is the writer test failing."*
+    ⚠⚠ `suggested` is still a sequence — **numbers, no state** — so 62c is
+    satisfied and no figure is claimed that nothing can produce.
+
+    ⚠ **`process` IS OWED, AND IT IS GATED ON A WRITER, NOT ON A PREFERENCE:**
+    the day a `/hire` step can report completion, this becomes `process`. Until
+    then it must not, and this comment is the record of why.
+  */
+  "/hire": "suggested",
 };
 
-/** The mode for a tab set. ⚠ Unlisted is `none` by design. */
+/**
+ * ── ⚠⚠⚠ THE FALLBACK IS GONE — AN UNLISTED ROUTE FAILS LOUDLY (`P2-A2-E676`) ──
+ *
+ * ⚠⚠ **THE `?? "none"` WAS THE REAL DEFECT, AND `/hire` WAS ONLY THE ROUTE
+ * THAT HAPPENED TO GET CAUGHT.** Scott, 2026-09-26: *"it lets any unlisted
+ * route inherit a decision nobody made… `/hire` was the one that got caught;
+ * the next one wouldn't be."*
+ *
+ * ⚠ **THE OLD COMMENT CALLED IT DESIGN** — *"Unlisted is `none` by design"* —
+ * and that is precisely the ambiguity `E384`'s guard exists to catch: **a set
+ * rendered unnumbered because nobody decided, indistinguishable from one
+ * rendered unnumbered because somebody did.** ⚠⚠ `check:community` could only
+ * ever catch an unlisted key that was ALSO a `PAGE_TABS` key; **this catches
+ * every caller, including one passing a route that has no tab set at all.**
+ *
+ * ⚠⚠⚠ **IT THROWS RATHER THAN RETURNING A DEFAULT, AND THAT IS THE POINT.**
+ * A 500 on a route nobody classified is loud, immediate and attributable; a
+ * silently unnumbered tab row is none of those and survived until a gate
+ * noticed. ⚠ **Safe to throw: every live caller passes a string LITERAL, and
+ * every literal is a key above** — measured with comments stripped, because a
+ * raw grep matches the `E164` quotes in this very file (rule 12).
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   /** The mode for a tab set. ⚠ Unlisted is `none` by design. *\/
+ * //   export function tabSequenceFor(baseRoute: string) {
+ * //     return TAB_SEQUENCE[baseRoute] ?? "none";
+ * //   }
+ */
 export function tabSequenceFor(baseRoute: string): "process" | "suggested" | "none" {
-  return TAB_SEQUENCE[baseRoute] ?? "none";
+  const mode = TAB_SEQUENCE[baseRoute];
+  if (!mode) {
+    throw new Error(
+      `tabSequenceFor: "${baseRoute}" has no TAB_SEQUENCE entry. ` +
+        `Add one — process, suggested or none — rather than letting it default (P2-A2-E676).`
+    );
+  }
+  return mode;
 }
 
 /**

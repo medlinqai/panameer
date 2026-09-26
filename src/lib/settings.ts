@@ -320,7 +320,13 @@ export async function listBillingMethods(viewer: Viewer) {
 
 export async function addBillingMethod(
   viewer: Viewer,
-  input: { kind: "CARD" | "PAYPAL" | "BANK_DEBIT"; label: string; last4?: string | null; expMonth?: number | null; expYear?: number | null }
+  /* ⚠ `expMonth` / `expYear` REMOVED FROM THE INPUT TYPE (`P2-A2-E677`). The
+     route no longer accepts them and this function no longer writes them, so
+     declaring them kept a dead parameter that a future caller could fill in
+     believing it did something.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   … last4?: string | null; expMonth?: number | null; expYear?: number | null } */
+  input: { kind: "CARD" | "PAYPAL" | "BANK_DEBIT"; label: string; last4?: string | null }
 ) {
   const personId = await ownPersonId(viewer);
   const count = await prisma.billingMethod.count({ where: { person_id: personId } });

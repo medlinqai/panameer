@@ -1055,9 +1055,27 @@ check(
   "Scott said keep it"
 );
 
+/*
+  ── ⚠⚠⚠ THE ASSERTION'S MECHANISM CONTRADICTED ITS OWN REASON (`P2-A2-E676`) ──
+
+  ⚠ It required `TAB_SEQUENCE[baseRoute] ?? "none"` and gave as its reason
+  *"a set acquires a sequence only when somebody decides it has one."*
+  ⚠⚠⚠ **THE `??` IS WHAT LET A SET ACQUIRE ONE WITHOUT ANYBODY DECIDING.** The
+  stated intent was right and the thing it asserted was its opposite.
+
+  ⚠⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`' — THE RULING
+  MOVED.** Scott, 2026-09-26: *"the `??` is the real defect… remove the
+  fallback so an unlisted route fails loudly."* The gate is not being narrowed
+  to fit a defect (`E586`); it is being pointed at the rule that now holds.
+  ⚠ **THE REASON STRING IS KEPT WORD FOR WORD**, because it was never wrong.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "E378/1 — tabSequenceFor defaults an undeclared set to none",
+  //   /TAB_SEQUENCE\[baseRoute\] \?\? "none"/.test(navLib),
+*/
 check(
-  "E378/1 — tabSequenceFor defaults an undeclared set to none",
-  /TAB_SEQUENCE\[baseRoute\] \?\? "none"/.test(navLib),
+  "E378/1 — tabSequenceFor REFUSES an undeclared set rather than defaulting it",
+  /TAB_SEQUENCE\[baseRoute\];[\s\S]{0,200}?if \(!mode\)[\s\S]{0,200}?throw new Error/.test(navLib) &&
+    !/TAB_SEQUENCE\[baseRoute\] \?\? /.test(navLib),
   "a set acquires a sequence only when somebody decides it has one"
 );
 
