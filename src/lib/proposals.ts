@@ -1,3 +1,4 @@
+import type { ProviderBidStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SourcingError, inviteIsOpen } from "@/lib/sourcing";
 import { notify } from "@/lib/notifications";
@@ -100,6 +101,207 @@ async function writeRate(
   ]);
 }
 
+/**
+ * ── ⚠⚠⚠ IS THIS PROPOSAL STILL THE PROVIDER'S TO CHANGE? ──────────────────
+ *
+ * ⚠⚠ **A `Record`, SO AN EIGHTH `ProviderBidStatus` IS A COMPILE ERROR** rather
+ * than silently inheriting `false` and becoming editable after a decision.
+ * ⚠ It reproduces the inline list it replaced, value for value — ⚠ SUPERSEDED,
+ * quoted not deleted (`E164`):
+ * //   const decided = ["AWARDED", "NOT_SELECTED", "DECLINED", "WITHDRAWN"];
+ *
+ * ⚠⚠ `SHORTLISTED` IS DELIBERATELY *NOT* DECIDED — being on a shortlist is not
+ * an answer, and a provider may still revise their price while they are on one.
+ * ⚠ `WITHDRAWN` is decided because the provider themselves ended it.
+ */
+const PROPOSAL_IS_DECIDED: Record<ProviderBidStatus, boolean> = {
+  DRAFT: false,
+  SUBMITTED: false,
+  SHORTLISTED: false,
+  WITHDRAWN: true,
+  DECLINED: true,
+  AWARDED: true,
+  NOT_SELECTED: true,
+};
+
+/** ⚠ The one rate line, as the page reads it back. */
+export type ProposalRate = {
+  unitPriceCents: number;
+  uom: string | null;
+  basis: "RATE" | "AMOUNT";
+};
+
+/** ⚠ What this provider has already sent, if anything. */
+export type ExistingProposal = {
+  id: string;
+  status: ProviderBidStatus;
+  coverNote: string | null;
+  validUntil: Date | null;
+  submittedAt: Date | null;
+  rate: ProposalRate | null;
+  /** ⚠⚠ Computed HERE, from `PROPOSAL_IS_DECIDED`, so no caller re-decides it. */
+  editable: boolean;
+};
+
+export type ProposeVerdict =
+  | {
+      can: true;
+      request: { id: string; title: string; buyerPersonId: string };
+      /** ⚠ The open invite this proposal answers; null on an `OPEN` request. */
+      inviteId: string | null;
+      existing: ExistingProposal | null;
+    }
+  | { can: false; code: string; message: string; existing: ExistingProposal | null };
+
+/**
+ * ── ⚠⚠⚠ ONE DEFINITION OF "MAY THIS PROVIDER PROPOSE" (`E585`) ────────────
+ *
+ * ⚠⚠⚠ **WS-C EXISTS BECAUSE THE WRITER WAS UNREACHABLE, AND THE OBVIOUS WAY TO
+ * REACH IT WAS THE WRONG ONE.** A form has to decide whether to render at all,
+ * and the cheapest way to decide that is to ask the same four questions the
+ * writer asks — status, ruling 14's switch, the invite's date, the decision —
+ * **in the page**. ⚠⚠ That is two definitions of one rule, and
+ * `decisions_2026-09-23.md` §13 says exactly where they surface: *"TWO
+ * DEFINITIONS OF ONE THING WILL DISAGREE IN PUBLIC"* — here, as a form that
+ * renders and then refuses, or one that hides work a provider could have won.
+ *
+ * ⚠ **SO THE REFUSAL AND THE RENDER READ THE SAME FUNCTION.** `submitProposal`
+ * throws `verdict.message` / `verdict.code`; the page renders the form only on
+ * `can: true` and prints that same message when it is false. ⚠⚠ A provider can
+ * therefore never be shown a control whose handler would refuse it (`E579`).
+ *
+ * ⚠⚠ **THE ORDER OF THE CHECKS IS PART OF THE ANSWER** and is unchanged from the
+ * writer: missing → not posted → not invited → invite closed → already decided.
+ * ⚠ Every message and code is byte-identical to the ones `submitProposal` threw
+ * before this extraction, which is what keeps `check:proposals` honest about it.
+ *
+ * ⚠ `providerPersonId` IS RESOLVED FROM THE SESSION BY BOTH CALLERS and is never
+ * accepted from a request body (load-bearing rule 5).
+ */
+export async function proposeEligibility(
+  providerPersonId: string,
+  workRequestId: string,
+  now: Date = new Date()
+): Promise<ProposeVerdict> {
+  const request = await prisma.workRequest.findUnique({
+    where: { id: workRequestId },
+    select: {
+      id: true,
+      status: true,
+      proposal_access: true,
+      buyer_person_id: true,
+      title: true,
+    },
+  });
+
+  /* ⚠⚠ READ FIRST, SO A REFUSAL CAN STILL SHOW THE PROVIDER WHAT THEY SENT. A
+     proposal that can no longer be changed is still theirs to READ, and a page
+     that hides it on refusal would read as though it had been thrown away. */
+  const row = await prisma.providerBid.findUnique({
+    where: {
+      work_request_id_provider_person_id: {
+        work_request_id: workRequestId,
+        provider_person_id: providerPersonId,
+      },
+    },
+    select: {
+      id: true,
+      status: true,
+      cover_note: true,
+      valid_until: true,
+      submitted_at: true,
+      lines: {
+        /* ⚠ `writeRate` keeps exactly one line and replaces it, so this is the
+           rate — not the first of several prices. */
+        select: { unit_price_cents: true, uom: true, basis: true },
+        orderBy: { line_number: "asc" },
+        take: 1,
+      },
+    },
+  });
+
+  const line = row?.lines[0];
+  const existing: ExistingProposal | null = row
+    ? {
+        id: row.id,
+        status: row.status,
+        coverNote: row.cover_note,
+        validUntil: row.valid_until,
+        submittedAt: row.submitted_at,
+        rate:
+          line && line.unit_price_cents !== null
+            ? {
+                unitPriceCents: line.unit_price_cents,
+                uom: line.uom,
+                basis: line.basis,
+              }
+            : null,
+        editable: !PROPOSAL_IS_DECIDED[row.status],
+      }
+    : null;
+
+  const no = (code: string, message: string): ProposeVerdict => ({
+    can: false,
+    code,
+    message,
+    existing,
+  });
+
+  if (!request) return no("NOT_FOUND", "That work request isn't available.");
+
+  /*
+    ⚠⚠ ONLY A POSTED REQUEST TAKES PROPOSALS. A `DRAFT` is not public, and a
+    request already `ASSIGNED` or `ORDERED` has its provider — proposing into
+    either is proposing into a decision that is made.
+  */
+  if (request.status !== "POSTED") {
+    return no("REQUEST_NOT_OPEN", "This work request isn't open for proposals.");
+  }
+
+  /* ⚠⚠⚠ RULING 14, READ FROM THE REQUEST. */
+  let inviteId: string | null = null;
+  if (request.proposal_access === "INVITE_ONLY") {
+    const itb = await prisma.bidRequest.findFirst({
+      where: { work_request_id: request.id, provider_person_id: providerPersonId },
+      select: { id: true, status: true, responds_by: true },
+    });
+    if (!itb) {
+      return no(
+        "NOT_INVITED",
+        "This work request is invite only, and you haven't been invited."
+      );
+    }
+    /*
+      ⚠⚠ THE PREDICATE IS IMPORTED, NOT RESTATED (WS-A item 5). It checks the
+      STATUS **and** the closing date, because `responds_by` passing does not
+      rewrite the row — an invite can read `ISSUED` and be closed in fact.
+    */
+    if (!inviteIsOpen(itb, now)) {
+      return no("INVITE_CLOSED", "That invitation is closed.");
+    }
+    inviteId = itb.id;
+  }
+
+  /* ⚠⚠⚠ A DECIDED PROPOSAL IS NOT EDITABLE. */
+  if (existing && !existing.editable) {
+    return no(
+      "ALREADY_DECIDED",
+      "This proposal has already been answered and can't be changed."
+    );
+  }
+
+  return {
+    can: true,
+    request: {
+      id: request.id,
+      title: request.title,
+      buyerPersonId: request.buyer_person_id,
+    },
+    inviteId,
+    existing,
+  };
+}
+
 async function ownProvider(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -130,79 +332,20 @@ export async function submitProposal(
 ): Promise<{ id: string; replaced: boolean }> {
   const provider = await ownProvider(viewer);
 
-  const request = await prisma.workRequest.findUnique({
-    where: { id: draft.workRequestId },
-    select: {
-      id: true,
-      status: true,
-      proposal_access: true,
-      buyer_person_id: true,
-      title: true,
-    },
-  });
-  if (!request) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
-
   /*
-    ⚠⚠ ONLY A POSTED REQUEST TAKES PROPOSALS. A `DRAFT` is not public, and a
-    request already `ASSIGNED` or `ORDERED` has its provider — proposing into
-    either is proposing into a decision that is made.
+    ⚠⚠⚠ THE REFUSAL IS THE SAME FUNCTION THE FORM ASKED (`E585`). Every check
+    this writer used to make inline now lives in `proposeEligibility`, with its
+    message and code unchanged — see that function's docblock for why a page
+    deciding this for itself is the defect WS-C exists to avoid.
   */
-  if (request.status !== "POSTED") {
-    throw new SourcingError(
-      "This work request isn't open for proposals.",
-      "REQUEST_NOT_OPEN"
-    );
-  }
-
-  /* ⚠⚠⚠ RULING 14, READ FROM THE REQUEST. */
-  let invite: { id: string } | null = null;
-  if (request.proposal_access === "INVITE_ONLY") {
-    const itb = await prisma.bidRequest.findFirst({
-      where: { work_request_id: request.id, provider_person_id: provider.id },
-      select: { id: true, status: true, responds_by: true },
-    });
-    if (!itb) {
-      throw new SourcingError(
-        "This work request is invite only, and you haven't been invited.",
-        "NOT_INVITED"
-      );
-    }
-    /*
-      ⚠⚠ THE PREDICATE IS IMPORTED, NOT RESTATED (WS-A item 5). It checks the
-      STATUS **and** the closing date, because `responds_by` passing does not
-      rewrite the row — an invite can read `ISSUED` and be closed in fact.
-    */
-    if (!inviteIsOpen(itb, now)) {
-      throw new SourcingError(
-        "That invitation is closed.",
-        "INVITE_CLOSED"
-      );
-    }
-    invite = { id: itb.id };
-  }
-
-  const existing = await prisma.providerBid.findUnique({
-    where: {
-      work_request_id_provider_person_id: {
-        work_request_id: request.id,
-        provider_person_id: provider.id,
-      },
-    },
-    select: { id: true, status: true },
-  });
+  const verdict = await proposeEligibility(provider.id, draft.workRequestId, now);
+  if (!verdict.can) throw new SourcingError(verdict.message, verdict.code);
+  const { request, existing } = verdict;
 
   const validUntil = draft.validUntil ? new Date(draft.validUntil) : null;
   const coverNote = draft.coverNote?.trim() || null;
 
   if (existing) {
-    /* ⚠⚠⚠ A DECIDED PROPOSAL IS NOT EDITABLE — see the docblock. */
-    const decided = ["AWARDED", "NOT_SELECTED", "DECLINED", "WITHDRAWN"];
-    if (decided.includes(existing.status)) {
-      throw new SourcingError(
-        "This proposal has already been answered and can't be changed.",
-        "ALREADY_DECIDED"
-      );
-    }
     await prisma.providerBid.update({
       where: { id: existing.id },
       data: {
@@ -227,7 +370,7 @@ export async function submitProposal(
       /* ⚠⚠ NULL ON AN OPEN REQUEST. That is the whole reason the column was
          made nullable — ruling 14's open half was unreachable while a proposal
          required an invite. */
-      bid_request_id: invite?.id ?? null,
+      bid_request_id: verdict.inviteId,
       provider_person_id: provider.id,
       cover_note: coverNote,
       valid_until: validUntil,
@@ -251,7 +394,7 @@ export async function submitProposal(
   */
   await notify({
     event: "work.proposal_received",
-    personId: request.buyer_person_id,
+    personId: request.buyerPersonId,
     entityType: "provider_bid",
     entityId: created.id,
     dedupeKey: `work.proposal_received:${created.id}`,

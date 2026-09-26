@@ -3,7 +3,9 @@ import { guardPage } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/console/BackLink";
 import { WhoIsAsking } from "@/components/work/WhoIsAsking";
+import { ProposeRate } from "@/components/work/ProposeRate";
 import { getWorkDetailForProvider } from "@/lib/work-detail";
+import { proposeEligibility } from "@/lib/proposals";
 
 /**
  * ── ⚠⚠⚠ `/find-work/[id]` — THE PAGE A PROVIDER OPENS (`P2-A8-E664`) ───────
@@ -42,14 +44,24 @@ import { getWorkDetailForProvider } from "@/lib/work-detail";
  * ⚠ **STATIC SIBLINGS WIN OVER `[id]` IN NEXT'S MATCHER**, so `/find-work/new`,
  * `/saved`, `/proposals`, `/invitations` and `/for-my-skills` are untouched.
  *
- * ── ⚠⚠ NO WRITER, NO FORM, NO PROPOSE BUTTON ─────────────────────────────
+ * ── ⚠⚠⚠ THE PROPOSE FORM LANDED HERE — `E681` WS-C ───────────────────────
  *
- * ⚠⚠⚠ `lib/proposals.ts:222` HOLDS `prisma.providerBid.create` (`E621` WS-A)
- * **AND NOTHING IN `src/` IMPORTS IT** — measured 2026-09-26; its only importers
- * are three `scripts/check-*.ts` gates. ⚠ **The writer exists and is
- * unreachable**, so there is no route for a button to post to, and `E579` is
- * unambiguous: a control whose handler refuses is a door onto a wall. ⚠⚠ The
- * entry point belongs to the work chain, not to this page.
+ * ⚠ **SUPERSEDED, quoted not deleted (`E164`):** *"NO WRITER, NO FORM, NO
+ * PROPOSE BUTTON. `lib/proposals.ts:222` HOLDS `prisma.providerBid.create`
+ * (`E621` WS-A) AND NOTHING IN `src/` IMPORTS IT — measured 2026-09-26; its only
+ * importers are three `scripts/check-*.ts` gates. The writer exists and is
+ * unreachable, so there is no route for a button to post to, and `E579` is
+ * unambiguous: a control whose handler refuses is a door onto a wall. The entry
+ * point belongs to the work chain, not to this page."*
+ *
+ * ⚠⚠ **EVERY WORD OF THAT WAS TRUE AND THE CONCLUSION HELD UNTIL THE HANDLER
+ * EXISTED.** `POST /api/work-requests/[id]/propose` is now that handler, so the
+ * button has somewhere to post and `E579` is satisfied rather than dodged.
+ *
+ * ⚠⚠⚠ **AND THE PAGE DOES NOT DECIDE WHO MAY PROPOSE.** It asks
+ * `proposeEligibility` — the same function `submitProposal` throws from — so the
+ * form cannot render where the handler would refuse, and the two cannot drift
+ * (`E585`). ⚠ A refusal prints that function's own sentence.
  *
  * ── ⚠ THE FRAME IS A PROPOSAL. THERE IS NO MOCKUP FOR THIS PAGE ───────────
  *
@@ -102,6 +114,17 @@ export default async function Page({
     nonexistent id are indistinguishable facts to a provider.
   */
   if (!detail) notFound();
+
+  /*
+    ⚠⚠⚠ ONE QUESTION, ASKED OF THE WRITER'S OWN PREDICATE (`E585`). Whether to
+    render the form, and what to say when the answer is no, both come from here —
+    the page states no rule of its own about status, invitations or decisions.
+    ⚠ A provider with no `Person` row cannot propose and cannot be asked about:
+    `proposeEligibility` is skipped rather than handed an empty id.
+  */
+  const eligibility = person
+    ? await proposeEligibility(person.id, detail.id)
+    : null;
 
   /*
     ⚠ THE META ROW IS THE CARD'S, IN THE CARD'S ORDER, and `filter(Boolean)` is
@@ -175,6 +198,65 @@ export default async function Page({
               </p>
             )}
           </div>
+
+          {/*
+            ⚠⚠ THE FORM SITS UNDER THE REQUEST, NOT BESIDE IT. A provider reads
+            what is being asked for and then prices it; a rate box level with the
+            first paragraph asks for a number before the work has been described.
+            ⚠ At 390px the grid is one column anyway, so the reading order is the
+            same at both widths — which is the point.
+          */}
+          {eligibility?.can && (
+            <div className="mt-5">
+              <ProposeRate
+                workRequestId={detail.id}
+                existing={
+                  eligibility.existing
+                    ? {
+                        unitPriceCents: eligibility.existing.rate?.unitPriceCents ?? null,
+                        basis: eligibility.existing.rate?.basis ?? "RATE",
+                        coverNote: eligibility.existing.coverNote,
+                        /* ⚠ Dates cross to the client as ISO strings — a `Date`
+                           would be serialised anyway, and saying so here stops
+                           the component guessing which it got. */
+                        validUntil:
+                          eligibility.existing.validUntil?.toISOString() ?? null,
+                        submittedAt:
+                          eligibility.existing.submittedAt?.toISOString() ?? null,
+                      }
+                    : null
+                }
+              />
+            </div>
+          )}
+
+          {/*
+            ⚠⚠⚠ A REFUSAL PRINTS THE PREDICATE'S OWN SENTENCE, and it is shown
+            ONLY when there is something to explain. ⚠ `REQUEST_NOT_OPEN` is the
+            one case that needs no notice: a provider cannot reach this page for a
+            `DRAFT`, and a request that moved on already says so in the stage chip
+            above — a second line would be telling them twice.
+            ⚠⚠ `NOT_FOUND` is unreachable here by construction (the detail read
+            already 404'd), and is left to the predicate rather than special-cased.
+          */}
+          {eligibility && !eligibility.can && eligibility.code !== "REQUEST_NOT_OPEN" && (
+            <div className="mt-5 rounded-brand border border-line bg-white p-5">
+              <p className="text-[15px] text-ink-2">{eligibility.message}</p>
+              {/*
+                ⚠⚠ THEIR OWN PROPOSAL IS STILL SHOWN WHEN IT CAN NO LONGER BE
+                CHANGED. A page that hid it on refusal would read as though the
+                proposal had been thrown away — the same argument that keeps a
+                withdrawn proposal on the books rather than deleting it.
+              */}
+              {eligibility.existing?.rate && (
+                <p className="mt-2 text-[14px] text-ink-2">
+                  You proposed $
+                  {(eligibility.existing.rate.unitPriceCents / 100).toFixed(2)}
+                  {eligibility.existing.rate.basis === "RATE" ? " per hour" : " as a fixed fee"}.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/*

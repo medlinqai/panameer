@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
-import { submitProposal, withdrawProposal } from "@/lib/proposals";
+import { submitProposal, withdrawProposal, proposeEligibility } from "@/lib/proposals";
 import { inviteIsOpen } from "@/lib/sourcing";
 import { getStatistics } from "@/lib/statistics";
 
@@ -96,7 +96,11 @@ async function main() {
     check("3 — a buyer and a provider exist to walk this (E586)", false, "not found");
   } else {
     const V = (userId: string) => ({ userId }) as never;
-    let requestId: string | null = null;
+    /* ⚠⚠ EVERY PROBE REQUEST THIS RUN CREATES, so the teardown sweeps all of
+       them. ⚠ It was a single `requestId` until `E681` WS-C added a second
+       request for the rate round trip — and a teardown that knows about one row
+       while the probe makes two is how an orphan survives a green gate. */
+    const requestIds: string[] = [];
     try {
       const wr = await prisma.workRequest.create({
         data: {
@@ -108,7 +112,7 @@ async function main() {
         },
         select: { id: true },
       });
-      requestId = wr.id;
+      requestIds.push(wr.id);
 
       const first = await submitProposal(V(provider.user_id), { workRequestId: wr.id });
       check("3 — ⚠⚠ a provider CAN propose — the writer writes", !first.replaced);
@@ -169,19 +173,215 @@ async function main() {
       );
       check("5 — ⚠ and it counts this provider's proposal",
         typeof sent === "number" && sent >= 1, `${sent}`);
+
+      /* ── 6 · ⚠⚠⚠ THE WRITER IS REACHABLE FROM A PAGE (`E681` WS-C) ───────
+         ⚠⚠⚠ THIS IS THE ASSERTION THAT WOULD HAVE CAUGHT `E665`. Every check
+         above passed for weeks while `submitProposal` had **no caller outside
+         this file and two sibling gates** — a writer proved correct and proved
+         unreachable at the same time, by the same suite.
+         ⚠⚠ A GATE THAT ONLY EXERCISES A FUNCTION CANNOT SEE THAT NOTHING CALLS
+         IT. So this counts importers in `src/` specifically, and `scripts/` does
+         not count towards it — a check script importing the writer is what the
+         defect looked like, not what fixes it. */
+      /*
+        ⚠⚠⚠ IT NAMES `submitProposal`, NOT THE MODULE — AND THE FIRST DRAFT OF
+        THIS ASSERTION DID NOT. Matching `from "@/lib/proposals"` alone passes on
+        the PAGE, which imports `proposeEligibility` from the same module, so the
+        writer could go back to having no caller at all and this would stay green.
+        ⚠⚠ That is `decisions_2026-09-23.md` §11 — *"a gate can assert the right
+        rule about the wrong thing"* — caught here by asking what the mutation
+        would be before running it.
+      */
+      const importsWriter = SRC.filter((f) => {
+        const s = strip(readFileSync(f, "utf8"));
+        return /from "@\/lib\/proposals"/.test(s) && /submitProposal\(/.test(s);
+      });
+      check(
+        "6 — ⚠⚠⚠ something in src/ CALLS the proposal writer",
+        importsWriter.length > 0,
+        "the writer existed and was unreachable — scripts/ does not count, and importing the module is not calling it"
+      );
+      const routeFile = join(
+        "src", "app", "api", "work-requests", "[id]", "propose", "route.ts"
+      );
+      const routeSrc = strip(readFileSync(routeFile, "utf8"));
+      check("6 — the propose route calls submitProposal", /submitProposal\(/.test(routeSrc));
+      check(
+        "6 — ⚠⚠ and it is gated to PROVIDERS, not buyers",
+        /guardApi\("canProvideServices"\)/.test(routeSrc),
+        "canHireTalent here would gate the provider out of their own proposal"
+      );
+      /*
+        ⚠⚠⚠ BOTH SCHEMAS, NAMED SEPARATELY — AND THE FIRST DRAFT ASSERTED
+        `/\.strict\(\)/` ALONE, WHICH IS THE SAME TRAP AS §6's IMPORT CHECK. Two
+        schemas in this file carry it: the body (`.strict();`) and the nested rate
+        object (`.strict()` then `.nullish()`). ⚠⚠ A bare match passes while
+        EITHER survives, so dropping it from the body — the one that matters for a
+        misspelled `rate` — would have stayed green. ⚠ Found by mutating it and
+        watching the gate pass.
+      */
+      check(
+        "6 — ⚠⚠ the BODY schema is .strict(), so a misspelled rate is refused",
+        /\.strict\(\);/.test(routeSrc),
+        "a dropped rate key posts a proposal with no price and tells nobody"
+      );
+      check(
+        "6 — ⚠ and the nested rate object is strict too",
+        /\.strict\(\)\s*\.nullish\(\)/.test(routeSrc),
+        "unitPrice instead of unitPriceCents would be silently ignored"
+      );
+
+      /* ── 7 · ⚠⚠⚠ ONE DEFINITION OF WHO MAY PROPOSE (`E585`) ──────────────
+         ⚠⚠ The page renders the form, so it has to know the answer — and the
+         cheap way to know it is to restate the writer's four checks in the page.
+         ⚠⚠⚠ THAT IS THE DRIFT THIS ASSERTS AGAINST, and it fails on the SHAPE
+         rather than on a count: the page may not name the switch, the invite
+         predicate or the status literal at all. */
+      const pageFile = join("src", "app", "(app)", "find-work", "[id]", "page.tsx");
+      const pageSrc = strip(readFileSync(pageFile, "utf8"));
+      check(
+        "7 — the page asks proposeEligibility",
+        /proposeEligibility\(/.test(pageSrc)
+      );
+      check(
+        "7 — ⚠⚠⚠ and the page restates NONE of the rule",
+        !/proposal_access|inviteIsOpen|"POSTED"|ALREADY_DECIDED/.test(pageSrc),
+        "two definitions of 'may I propose' disagree in public — as a form that renders and then refuses"
+      );
+      /* ⚠⚠ AND THE TWO AGREE IN FACT, NOT ONLY BY IMPORT. An INVITE_ONLY
+         request this provider was never invited to: the predicate must refuse it
+         with the SAME code the writer throws. ⚠ Proving it behaviourally is what
+         makes the grep above more than a naming convention. */
+      const closed = await prisma.workRequest.create({
+        data: {
+          buyer_person_id: buyer.id,
+          p_account_id: buyer.company.p_account_id,
+          title: TAG,
+          status: "POSTED",
+          proposal_access: "INVITE_ONLY",
+        },
+        select: { id: true },
+      });
+      requestIds.push(closed.id);
+      const verdict = await proposeEligibility(provider.id, closed.id);
+      check(
+        "7 — ⚠⚠ an uninvited provider is refused NOT_INVITED by the predicate",
+        verdict.can === false && verdict.code === "NOT_INVITED",
+        JSON.stringify(verdict)
+      );
+      let thrownCode = "";
+      await submitProposal(V(provider.user_id), { workRequestId: closed.id }).catch(
+        (e: Error & { code?: string }) => {
+          thrownCode = e.code ?? "";
+        }
+      );
+      check(
+        "7 — ⚠⚠⚠ and the WRITER throws that same code — one definition",
+        thrownCode === "NOT_INVITED",
+        `${thrownCode || "nothing thrown"} — if these ever differ, the form renders where the handler refuses`
+      );
+
+      /* ── 8 · ⚠⚠⚠ THE RATE LINE — WS-C's OTHER HALF ──────────────────────
+         ⚠⚠ `ProviderBidLine` IS IN WS-C's SPEC AND §3 NEVER PRICED ANYTHING —
+         every proposal it submits has no rate, so `writeRate` was exercised only
+         by its early return. ⚠ This walks the priced path. */
+      const priced = await prisma.workRequest.create({
+        data: {
+          buyer_person_id: buyer.id,
+          p_account_id: buyer.company.p_account_id,
+          title: TAG,
+          status: "POSTED",
+          proposal_access: "OPEN",
+        },
+        select: { id: true },
+      });
+      requestIds.push(priced.id);
+      const p1 = await submitProposal(V(provider.user_id), {
+        workRequestId: priced.id,
+        rate: { unitPriceCents: 18_500 },
+      });
+      const lines1 = await prisma.providerBidLine.findMany({
+        where: { provider_bid_id: p1.id },
+        select: { unit_price_cents: true, uom: true, basis: true, quantity: true },
+      });
+      check("8 — ⚠⚠ a rate writes exactly ONE ProviderBidLine", lines1.length === 1,
+        `${lines1.length}`);
+      check("8 — ⚠ at the cents it was given", lines1[0]?.unit_price_cents === 18_500,
+        `${lines1[0]?.unit_price_cents}`);
+      check("8 — a rate with no unit defaults to HOUR", lines1[0]?.uom === "HOUR");
+      check("8 — and to the RATE basis", lines1[0]?.basis === "RATE");
+      /* ⚠⚠⚠ `quantity` IS NULL ON PURPOSE — *"the provider states a rate; the
+         buyer's dates decide how many hours"*. A provider-supplied quantity
+         would be a second source for the number the buyer's screen computes. */
+      check("8 — ⚠⚠ quantity is NULL — the buyer's dates decide the hours",
+        lines1[0]?.quantity === null, `${lines1[0]?.quantity}`);
+
+      /* ⚠⚠⚠ REPLACED, NOT APPENDED. Two priced lines on one proposal is two
+         prices, and the buyer's screen would have to pick one. */
+      const p2 = await submitProposal(V(provider.user_id), {
+        workRequestId: priced.id,
+        rate: { unitPriceCents: 22_000, basis: "AMOUNT" },
+      });
+      check("8 — revising the rate is the same proposal", p2.id === p1.id && p2.replaced);
+      const lines2 = await prisma.providerBidLine.findMany({
+        where: { provider_bid_id: p1.id },
+        select: { unit_price_cents: true, basis: true },
+      });
+      check("8 — ⚠⚠⚠ still exactly ONE line — the rate was REPLACED",
+        lines2.length === 1,
+        `${lines2.length} — a history of prices is not a price`);
+      check("8 — ⚠ and it is the NEW rate", lines2[0]?.unit_price_cents === 22_000,
+        `${lines2[0]?.unit_price_cents}`);
+      check("8 — the basis moved with it", lines2[0]?.basis === "AMOUNT");
+      /* ⚠ A rate of 0 or a fraction of a cent is refused rather than stored. */
+      let badRate = "";
+      await submitProposal(V(provider.user_id), {
+        workRequestId: priced.id,
+        rate: { unitPriceCents: 0 },
+      }).catch((e: Error & { code?: string }) => { badRate = e.code ?? ""; });
+      check("8 — ⚠⚠ a zero rate is refused", badRate === "BAD_RATE", badRate || "accepted");
+
+      /* ── 9 · ⚠⚠ THE FORM ROUNDS MONEY, IT DOES NOT TRUNCATE ─────────────
+         ⚠⚠⚠ `19.99 * 100` IS `1998.9999999999998` IN IEEE 754, so `Math.trunc`
+         bills every provider a cent light. ⚠ Asserted on the source because no
+         row can show the difference once the value is already an integer. */
+      const formSrc = strip(
+        readFileSync(join("src", "components", "work", "ProposeRate.tsx"), "utf8")
+      );
+      check(
+        "9 — ⚠⚠⚠ the form ROUNDS dollars to cents",
+        /Math\.round\([^)]*\*\s*100\)/.test(formSrc) && !/Math\.trunc|Math\.floor|parseInt/.test(formSrc),
+        "Math.trunc on 19.99 stores 1998 — a cent light on every submission"
+      );
+      /* ⚠⚠⚠ AND IT ASKS FOR NO INSTRUMENT. The standing rule is absolute: no
+         card number, CVV or expiry may be typed into Panameer code. A rate form
+         is exactly where somebody would later add "how would you like to be
+         paid", so the ban is asserted here rather than trusted. */
+      check(
+        "9 — ⚠⚠⚠ the rate form collects NO card or account details",
+        !/card[_ ]?number|cardNumber|\bcvv\b|\bcvc\b|expiry|routing|iban|account[_ ]?number/i.test(formSrc),
+        "a rate is what a provider charges, not how they get paid"
+      );
+      /* ⚠ And it moves no money: WS-C touches no Payment and computes no cut. */
+      check(
+        "9 — ⚠⚠ neither the form nor the route names Payment or a cut",
+        !/payment|payout|service[_ ]?fee|\bcut\b/i.test(formSrc) &&
+          !/payment|payout|service[_ ]?fee/i.test(routeSrc),
+        "ruling 25 — no money moves in this chain"
+      );
     } finally {
       /* ⚠⚠ SCOPED, and the proposals go first — `ProviderBid` cascades on the
          request, but the NOTIFICATION does not (no foreign key), so it is swept
          by its own dedupe key while the id still resolves (`E620`'s lesson). */
-      if (requestId) {
+      if (requestIds.length > 0) {
         const made = await prisma.providerBid.findMany({
-          where: { work_request_id: requestId },
+          where: { work_request_id: { in: requestIds } },
           select: { id: true },
         });
         await prisma.notification.deleteMany({
           where: { dedupe_key: { in: made.map((m) => `work.proposal_received:${m.id}`) } },
         });
-        await prisma.workRequest.deleteMany({ where: { id: requestId } });
+        await prisma.workRequest.deleteMany({ where: { id: { in: requestIds } } });
       }
       /*
         ⚠⚠⚠ AND ANY ORPHAN A KILLED — OR MUTATED — RUN LEFT BEHIND.
