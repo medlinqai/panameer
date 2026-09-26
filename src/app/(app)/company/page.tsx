@@ -10,20 +10,25 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
 import { CompanyRequests } from "@/components/company/CompanyRequests";
+import { CompanyDetailsForm } from "@/components/company/CompanyDetailsForm";
+import { TAX_LABELS } from "@/lib/tax-types";
 import { CompanyStepInline } from "@/components/company/CompanyStepInline";
 import { AcceptCompanyTos } from "@/components/company/AcceptCompanyTos";
 import { LegalLink } from "@/components/legal/LegalLink";
 
 export const dynamic = "force-dynamic";
 
-const TAX_LABELS: Record<string, string> = {
-  C_CORP: "C-Corporation",
-  S_CORP: "S-Corporation",
-  LLC: "LLC",
-  PARTNERSHIP: "Partnership",
-  SOLE_PROP_INDIVIDUAL: "Sole Proprietor / Individual",
-  NONPROFIT: "Non-profit",
-};
+/* ⚠⚠ MOVED TO `lib/tax-types.ts` (`P2-A2-E661`). It was a PRIVATE const here,
+   so the company editor and the PATCH route could not read it — and the six
+   values would have been written out three times (`E585`). ⚠ The shared one is
+   `Record<TaxType, string>`, so an unlabelled enum value is now a compile error.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const TAX_LABELS: Record<string, string> = {
+   //     C_CORP: "C-Corporation", S_CORP: "S-Corporation", LLC: "LLC",
+   //     PARTNERSHIP: "Partnership",
+   //     SOLE_PROP_INDIVIDUAL: "Sole Proprietor / Individual",
+   //     NONPROFIT: "Non-profit",
+   //   }; */
 
 /**
  * THE COMPANY PAGE (brief_company_model WS3 + WS6).
@@ -216,6 +221,51 @@ export default async function CompanyPage({
           </Link>
         </Card>
       )}
+
+      {/*
+        ── ⚠⚠⚠ THE COMPANY DETAILS, EDITABLE (brief 10 — `P2-A2-E661`) ──────
+
+        ⚠ **SCOTT: *"I cannot edit any of the data."*** ⚠⚠ Measured before
+        building (`69a` — is something already doing this better?):
+        `/company/settings` EXISTS and is **a placeholder** — *"The route, its
+        title and its gate are real; only the content is pending."* — and the
+        only `Company` writers were `defineCompany` (creation) and
+        `saveCompanyName` (the wizard step). ⚠⚠⚠ **NOTHING COULD EDIT A DEFINED
+        COMPANY.**
+
+        ⚠⚠ **IT IS HERE, WHERE THE DATA IS READ, NOT ONE PAGE AWAY.** This route
+        already carries the scar: `P1-J1.2-E004` records Scott blocked because
+        *"I was forced to do something with my company details and I couldn't"*.
+        A second page to go and edit on is the same shape.
+
+        ⚠⚠⚠ **ADMIN ONLY, AND THE GATE IS THE WRITER'S, NOT THIS COMPONENT'S.**
+        `updateCompanyDetails` refuses anyone who is not an APPROVED ADMIN,
+        resolved from the session. ⚠ This `isAdmin` branch decides what to
+        DRAW; it is not what enforces anything — the three-layer rule.
+        ⚠⚠ **A NON-ADMIN IS TOLD WHO CAN, RATHER THAN SHOWN NOTHING** — the
+        same shape the ToS card below already uses (*"Only a company admin can
+        accept them."*). ⚠ `53b` — a control not drawn for somebody entitled to
+        press it is a defect; so is silence for somebody who is not.
+      */}
+      <Card>
+        <h2 className="text-lg">Company Details</h2>
+        {binding.isAdmin && binding.status === "APPROVED" ? (
+          <CompanyDetailsForm
+            initial={{
+              name: c.name,
+              legalName: c.legal_name,
+              taxType: c.tax_type,
+              country: c.country,
+              stateOfFiling: c.state_of_filing,
+              ein: c.tin,
+            }}
+          />
+        ) : (
+          <p className="mt-2 text-black/70 dark:text-white/70">
+            Only a company admin can change these details.
+          </p>
+        )}
+      </Card>
 
       {/* ---- WS6: the company ToS record ---------------------------------- */}
       <Card>

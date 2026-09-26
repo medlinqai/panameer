@@ -399,12 +399,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     }
   }
 
-  // Keep the P-Account name in step — it is the placeholder's person-name
-  // otherwise, and the admin console lists accounts by it.
-  await prisma.pAccount.update({
-    where: { id: company.p_account_id },
-    data: { name },
-  });
+  await syncPAccountName(company.p_account_id, name);
 
   await prisma.companyMembership.upsert({
     where: { person_id_company_id: { person_id: person.id, company_id: company.id } },
@@ -477,6 +472,24 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
  * route (`POST /api/company/define`, name-only branch). Company writes stay in
  * one file and behind one URL.
  */
+/**
+ * ── ⚠⚠ ONE COPY OF "KEEP THE P-ACCOUNT NAME IN STEP" (`E585`, `P2-A2-E661`) ──
+ *
+ * ⚠ **THE SYNC WAS WRITTEN OUT TWICE** — in `defineCompany` and in
+ * `saveCompanyName` — each with its own comment saying the same thing, and
+ * `updateCompanyDetails` would have been the **third**. ⚠⚠ One concept in N
+ * places kept in step by hand is the defect; **a company renamed by the new
+ * editor while its P-Account kept the old name is exactly how the two drift.**
+ *
+ * ⚠ THE REASON, INHERITED FROM THE TWO CALL SITES RATHER THAN RE-DERIVED: the
+ * P-Account is *"the placeholder's person-name otherwise, and the admin console
+ * lists accounts by it"* — ⚠⚠ *"leaving it as the person's own name is how
+ * 'Layne Staley (11)' ends up in a list of companies."*
+ */
+async function syncPAccountName(pAccountId: string, name: string) {
+  await prisma.pAccount.update({ where: { id: pAccountId }, data: { name } });
+}
+
 export async function saveCompanyName(viewer: Viewer, rawName: string) {
   const person = await actingPerson(viewer);
 
@@ -508,17 +521,91 @@ export async function saveCompanyName(viewer: Viewer, rawName: string) {
     select: { id: true, name: true, p_account_id: true },
   });
 
-  /*
-    Keep the P-Account name in step, for the same reason `defineCompany` does —
-    the admin console lists accounts by it, and leaving it as the person's own
-    name is how "Layne Staley (11)" ends up in a list of companies.
-  */
-  await prisma.pAccount.update({
-    where: { id: company.p_account_id },
-    data: { name },
-  });
+  await syncPAccountName(company.p_account_id, name);
 
   return { companyId: company.id, name: company.name, status: "NAME_ONLY" as const };
+}
+
+/**
+ * ── ⚠⚠⚠ EDIT THE COMPANY'S OWN DETAILS (brief 10 — `P2-A2-E661`) ─────────
+ *
+ * ⚠ **SCOTT, walking `/company`: *"I cannot edit any of the data."*** He was
+ * right — the page rendered `name`, `tax_type` and `email_domain` as text and
+ * offered **no control at all**, and `/company/settings` is a placeholder whose
+ * own docblock says *"only the content is pending."*
+ *
+ * ── ⚠⚠ WHO MAY CALL IT — OWNER-SCOPED, ADMIN-ONLY, FROM THE SESSION ──────
+ *
+ * ⚠⚠⚠ **THE COMPANY IS RESOLVED FROM THE SESSION VIA `getCompanyBinding`, NEVER
+ * ACCEPTED FROM THE CLIENT** (load-bearing rule 5). There is no `companyId`
+ * parameter on purpose: one would be an id crossing the wire on a surface that
+ * can rename a company.
+ * ⚠ **APPROVED *AND* ADMIN.** A `PENDING` joiner has a binding and must not be
+ * able to rewrite the company they are still waiting to be let into.
+ *
+ * ── ⚠⚠⚠ `email_domain` IS DELIBERATELY NOT EDITABLE, AND THE CODEBASE ALREADY
+ * SAYS WHY ──
+ *
+ * ⚠ `defineCompany`'s own comment: *"Only a WORK domain is stored. Recording
+ * gmail.com here would auto-approve every Gmail user in the world into this
+ * company."* ⚠⚠⚠ **IT IS AN ACCESS-CONTROL FIELD WEARING THE COSTUME OF A
+ * CONTACT DETAIL** — `joinCompany` auto-approves on a domain match, so an edit
+ * box here is a self-serve way to widen who joins. **Reported, not built.**
+ * ⚠ `logo_url` is also absent: it has its own upload route
+ * (`/api/company/logo`) and a second writer would be `E585`.
+ *
+ * ⚠⚠ **NOTHING IS MADE REQUIRED THAT WAS NULLABLE.** Every field below is
+ * optional and an empty string clears to `null`, matching `defineCompany`'s
+ * shape — `tax_type`, `country`, `state_of_filing` and `tin` are all nullable
+ * columns and stay that way (ruling 38: additive only, in spirit as well as in
+ * schema).
+ */
+export type UpdateCompanyInput = {
+  name?: string;
+  legalName?: string;
+  taxType?: string | null;
+  country?: string | null;
+  stateOfFiling?: string | null;
+  ein?: string | null;
+};
+
+export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyInput) {
+  const binding = await getCompanyBinding(viewer);
+  if (!binding) throw new OnboardingError("No company on this account", "INVALID");
+  if (binding.status !== "APPROVED" || !binding.isAdmin) {
+    throw new OnboardingError("Only a company admin can change these", "GATE_UNMET");
+  }
+
+  /* ⚠ A NAME IS THE ONE FIELD THAT CANNOT BE CLEARED — the company is listed by
+     it in the admin console, and `saveCompanyName` holds the same floor. */
+  const name = input.name?.trim();
+  if (input.name !== undefined && (!name || name.length < 2)) {
+    throw new OnboardingError("A company name is required", "INVALID");
+  }
+
+  /* ⚠ `undefined` MEANS "NOT SUBMITTED" AND `""` MEANS "CLEAR IT". Collapsing
+     the two would make every save wipe the fields the form did not send —
+     `67d`'s family: never manufacture a value from absence. */
+  const blank = (v: string | null | undefined) =>
+    v === undefined ? undefined : v === null || v.trim() === "" ? null : v.trim();
+
+  const company = await prisma.company.update({
+    where: { id: binding.company.id },
+    data: {
+      ...(name ? { name } : {}),
+      ...(input.legalName !== undefined ? { legal_name: blank(input.legalName) } : {}),
+      ...(input.taxType !== undefined ? { tax_type: blank(input.taxType) as never } : {}),
+      ...(input.country !== undefined ? { country: blank(input.country) } : {}),
+      ...(input.stateOfFiling !== undefined
+        ? { state_of_filing: blank(input.stateOfFiling) }
+        : {}),
+      ...(input.ein !== undefined ? { tin: blank(input.ein) } : {}),
+    },
+    select: { id: true, name: true, p_account_id: true },
+  });
+
+  if (name) await syncPAccountName(company.p_account_id, name);
+  return { companyId: company.id, name: company.name };
 }
 
 /**
@@ -738,6 +825,16 @@ export async function getCompanyBinding(viewer: Pick<Viewer, "userId">) {
               name: true,
               legal_name: true,
               tax_type: true,
+              /* ⚠⚠ WIDENED BY `P2-A2-E661` — the three columns the company
+                 editor needs for its initial values. ⚠ THEY ARE READ, NOT
+                 CARRIED: `E563`'s `rating: true` is the warning here — *"an
+                 unused field in a `select` is an invitation"* — and all three
+                 render in `CompanyDetailsForm` on `/company`.
+                 ⚠ Additive on a row this function already fetches; no new
+                 query, no new round trip. */
+              country: true,
+              state_of_filing: true,
+              tin: true,
               website: true,
               logo_url: true,
               email_domain: true,

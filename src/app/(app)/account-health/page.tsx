@@ -12,7 +12,9 @@ import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { EnforcementHistory } from "@/components/console/EnforcementHistory";
 import { POLICIES } from "@/lib/policies";
-import { accountStandingLines } from "@/lib/account-standing";
+import { accountStandingLines, accountStandingSummary } from "@/lib/account-standing";
+import { PatternHeader } from "@/components/casing/PatternHeader";
+import { profileTabLabel } from "@/lib/profile-tabs";
 
 /**
  * ACCOUNT HEALTH CHECKLIST (J2.4 WS-E / E011).
@@ -144,6 +146,22 @@ export default async function AccountHealthPage() {
     emailVerified: !!profile.person.user?.email_verified,
   });
 
+  /*
+    ── ⚠⚠ THE HEADER'S TWO FIGURES, COUNTED FROM THE PAGE'S OWN ROWS ────────
+
+    ⚠⚠⚠ **ONE COMPUTATION, NOT A SECOND SOURCE.** These count `access` and
+    `standing` — **the exact arrays the two cards below render** — so the header
+    and the lists cannot disagree about how many checks pass. ⚠ Counting a copy
+    of the rules instead would be `E585`, and it is the defect `E659` found on
+    `/stats` this morning: two readings of one fact, three lines apart.
+    ⚠ `summary` is the SHIPPED definition (`accountStandingSummary`), not a
+    third computation — see the header's own block for why that matters.
+  */
+  const allChecks = [...access.map((a) => a.ok), ...standing.map((s) => s.ok)];
+  const checksPassing = allChecks.filter(Boolean).length;
+  const checksFailing = allChecks.length - checksPassing;
+  const summary = accountStandingSummary(standing);
+
   return (
     <>
       {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
@@ -156,6 +174,87 @@ export default async function AccountHealthPage() {
         current="/account-health"
       />
     <div className="mx-auto max-w-4xl space-y-4">
+      {/*
+        ── ⚠⚠⚠ THE HEADER GRAPHIC (brief 10, ruling 23) ─────────────────────
+
+        ⚠ THE BRIEF: *"Account Health — not in the correct format; **needs a
+        graphic at the top** (the pattern's header picture)."*
+
+        ── ⚠⚠⚠ WHAT THE GRAPHIC IS **NOT**, AND THE PAGE ITSELF IS WHY ──────
+
+        ⚠⚠ **IT IS NOT A HEALTH SCORE, AND NOT A RING.** This page's own
+        docblock rules that out in writing: *"Deliberately three lines and no
+        score: a numeric 'health score' would be a made-up aggregate of things
+        that mean different things."* ⚠⚠⚠ **SO A PERCENTAGE RING HERE WOULD
+        CONTRADICT THE PAGE ON ITS OWN SCREEN** — the `/stats` defect from
+        earlier today (`E659`), where two definitions of one fact sat three
+        lines apart. ⚠ Counting rule 2 says the same thing from the other side:
+        **a chart is a figure**, so a fabricated chart is a fabricated figure.
+
+        ⚠⚠ **AND IT IS NOT THE FOUR CHECKS REDRAWN.** Picturing the same rows
+        the two cards below already list is de-duplicating nothing and repeating
+        data — *"looks like a menu within the menu"* (ruling 77) in graphic form.
+
+        ── ⚠⚠ WHAT IT IS: THE ONE-WORD ANSWER THAT ALREADY SHIPS ────────────
+
+        ⚠⚠⚠ `accountStandingSummary` IS AN EXISTING SINGLE DEFINITION — the
+        avatar menu's `Account Health` row already renders it, and it was
+        extracted to `lib/account-standing.ts` at `E598` **precisely so a second
+        computation of "am I in good order" could not exist** (`E585`). ⚠ Using
+        it here adds a THIRD RENDER of one computation, which is allowed; a
+        third COMPUTATION would not be.
+        ⚠ Its contract, inherited not re-derived: it reports **the problem, not
+        a count** — *"a row reading '1 issue' would make you open the page to
+        find out which, and that is the question the row exists to answer."*
+
+        ⚠⚠ **THE FIGURES ARE TWO, NOT THREE, AND THAT IS RULING 45(1)** —
+        *"`PatternHeader` MUST NOT REQUIRE THREE — a required triple is what
+        forces an invented figure."* ⚠ They count the page's OWN binary checks,
+        each listed individually below; that is a count of items, not a score
+        over them. ⚠⚠⚠ `Needs Attention` AT ZERO RENDERS `0` IN INK, not a dash
+        — it is a measured zero (ruling 53c), and it is the number a member
+        most wants to be zero.
+      */}
+      <PatternHeader
+        eyebrow={profileTabLabel("/account-health")}
+        headline="Where your account stands"
+        lede="What this account can do today, and whether its record is clear."
+        figures={[
+          { label: "Checks Passing", value: checksPassing },
+          { label: "Needs Attention", value: checksFailing },
+        ]}
+        picture={
+          <div className="flex h-full flex-col justify-center gap-2">
+            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
+              Account Standing
+            </p>
+            <div className="flex items-center gap-3">
+              {/* ⚠ THE GLYPH CARRIES THE STATE AS WELL AS THE COLOUR — colour
+                  is not a label. Same rule the `/stats` checklist marks follow. */}
+              <span
+                aria-hidden
+                className={
+                  "grid h-[44px] w-[44px] flex-none place-items-center rounded-full text-[20px] font-black text-white " +
+                  (summary.ok ? "bg-emerald-500" : "bg-amber-500")
+                }
+              >
+                {summary.ok ? "✓" : "!"}
+              </span>
+              <p className="font-display text-[19px] font-bold leading-tight text-ink">
+                {summary.label}
+              </p>
+            </div>
+            <p className="text-[12.5px] leading-relaxed text-ink-2">
+              {summary.ok
+                ? "Nothing on your record needs your attention."
+                : "The line below names what to fix."}
+            </p>
+          </div>
+        }
+        /* ⚠ NO ACTION. Every door this page owes — the policies, the profile —
+           is already on it below, and ruling 45(4) forbids a button that
+           repeats a link already on the page (`E579` in a nicer coat). */
+      />
       <div className="grid gap-4 md:grid-cols-2">
         <section className="rounded-brand border border-line bg-white p-5">
           <h2 className="font-display text-[16px] font-bold">Platform Access</h2>
