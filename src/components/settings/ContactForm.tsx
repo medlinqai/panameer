@@ -52,7 +52,8 @@ export function ContactForm({
     /* ⚠ SHAPED FOR `LocationFields` — empty strings, not nulls, because the
        inputs are controlled. `getContactInfo` reads it off the backbone. */
     address: EditableAddress;
-    memberships: { provider: boolean; buyer: boolean; requester: boolean };
+    /* ⚠ `memberships` REMOVED (ruling 81) — its only reader was the deleted
+       Additional Accounts card. */
   };
 }) {
   const [firstName, setFirstName] = useState(info.firstName);
@@ -97,34 +98,45 @@ export function ContactForm({
         />
       </Card>
 
-      <Card
-        title="Additional Accounts"
-        description="One login, several memberships. Adding one of these gives this same account another role on Panameer — it does not create a second login or a second password."
-      >
-        <ul className="space-y-3">
-          <MembershipRow
-            title="Provider"
-            blurb="Sell your own time and service packages."
-            active={info.memberships.provider}
-          />
-          <MembershipRow
-            title="Client Account"
-            blurb="Buy services — post work requests and hire providers. Adds a Buyer membership."
-            active={info.memberships.buyer || info.memberships.requester}
-          />
-          <MembershipRow
-            title="Agency Account"
-            blurb="Represent other providers and bid on their behalf. Adds a Recruiter membership."
-            active={false}
-          />
-        </ul>
-        <p className="mt-4 text-[13px] leading-relaxed text-ink-2">
-          Adding a membership isn&apos;t self-service yet — the buyer and agency
-          onboarding flows are being built. Nothing here creates an account
-          behind your back in the meantime.
-        </p>
-      </Card>
+      {/*
+        ── ⚠⚠⚠ `Additional Accounts` IS DELETED (ruling 81) ───────────────────
 
+        ⚠ SCOTT, 2026-09-25, of Contact Information: *"confusing. Looks like
+        more contact details… should just be phone and email?"* ⚠⚠ **PROVIDER /
+        CLIENT / AGENCY MEMBERSHIPS ARE NOT CONTACT DETAIL.** Remove means
+        delete (ruling 78), and **rule 5 does not apply when the owner is
+        removing the capability.**
+        ⚠⚠⚠ **`78e` FOLLOWED AND THERE WAS NOTHING TO FOLLOW: THE CARD NEVER
+        WROTE ANYTHING.** `MembershipRow` took an `active` boolean and rendered
+        it — no handler, no endpoint — and the card's own copy said so:
+        *"Adding a membership isn't self-service yet."* **So no give-path
+        survives this removal**, which is the asymmetry `78e` exists to catch.
+        ⚠ **THE READ GOES TOO, BECAUSE IT FED ONLY THIS.** `memberships` had
+        exactly one reader; leaving it would keep **three relation joins**
+        (`providerProfile`, `buyerProfile`, `requesterProfile`) running on every
+        load of this page for a card that no longer exists — `76a`, and `79c`'s
+        cousin: an unused query is not tidy-up.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card and its rows:
+        //   <Card title="Additional Accounts"
+        //     description="One login, several memberships. Adding one of these
+        //     gives this same account another role on Panameer — it does not
+        //     create a second login or a second password.">
+        //     <MembershipRow title="Provider" blurb="Sell your own time and
+        //       service packages." active={info.memberships.provider} />
+        //     <MembershipRow title="Client Account" blurb="Buy services — post
+        //       work requests and hire providers. Adds a Buyer membership."
+        //       active={info.memberships.buyer || info.memberships.requester} />
+        //     <MembershipRow title="Agency Account" blurb="Represent other
+        //       providers and bid on their behalf. Adds a Recruiter membership."
+        //       active={false} />
+        //     Adding a membership isn't self-service yet — the buyer and agency
+        //     onboarding flows are being built. Nothing here creates an account
+        //     behind your back in the meantime.
+        //   </Card>
+        ⚠⚠ **NO COLUMN IS DROPPED.** The memberships are real relations and the
+        model is untouched — this removes a RENDER, not the one-login-many-
+        memberships model itself.
+      */}
       <Card title="Location">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
@@ -203,29 +215,7 @@ export function ContactForm({
   );
 }
 
-function MembershipRow({
-  title,
-  blurb,
-  active,
-}: {
-  title: string;
-  blurb: string;
-  active: boolean;
-}) {
-  return (
-    <li className="flex items-start justify-between gap-4 border-b border-line pb-3 last:border-0 last:pb-0">
-      <div className="min-w-0">
-        <p className="text-[14.5px] font-semibold">{title}</p>
-        <p className="mt-0.5 text-[13px] leading-relaxed text-ink-2">{blurb}</p>
-      </div>
-      <span
-        className={
-          "shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold uppercase tracking-wide " +
-          (active ? "bg-emerald-100 text-emerald-800" : "bg-black/[0.06] text-ink-2")
-        }
-      >
-        {active ? "Active" : "Not added"}
-      </span>
-    </li>
-  );
-}
+/* ⚠ `MembershipRow` REMOVED WITH ITS ONLY CALLER (ruling 81, `76a`). It was
+   a local presentational row with no other use, and it went with the card.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`): a `<li>` rendering a title, a
+   blurb and an Active/Not added pill. */

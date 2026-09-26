@@ -108,9 +108,13 @@ export async function getContactInfo(viewer: Viewer) {
           },
         },
       },
-      providerProfile: { select: { id: true } },
-      buyerProfile: { select: { id: true } },
-      requesterProfile: { select: { id: true } },
+      /* ⚠ THE THREE MEMBERSHIP JOINS WENT WITH THE CARD (ruling 81) — nothing
+         reads them here any more. The RELATIONS are untouched on the model;
+         this removes three joins from one query, not a capability.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   providerProfile: { select: { id: true } },
+         //   buyerProfile: { select: { id: true } },
+         //   requesterProfile: { select: { id: true } }, */
     },
   });
 
@@ -141,11 +145,13 @@ export async function getContactInfo(viewer: Viewer) {
         postalCode: a?.postal_code ?? "",
       };
     })(),
-    memberships: {
-      provider: !!person.providerProfile,
-      buyer: !!person.buyerProfile,
-      requester: !!person.requesterProfile,
-    },
+    /* ⚠⚠ `memberships` REMOVED (ruling 81). Its ONLY reader was the deleted
+       Additional Accounts card, and the three relation joins below existed
+       solely to compute it — so they go too rather than running on every load
+       for a card that no longer exists (`76a`, `79c`).
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   memberships: { provider: !!person.providerProfile,
+       //     buyer: !!person.buyerProfile, requester: !!person.requesterProfile }, */
   };
 }
 
