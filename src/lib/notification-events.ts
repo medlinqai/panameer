@@ -552,6 +552,51 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Respond from the work request.",
     href: (v) => `/work-requests/${str(v, "requestId", "")}`,
   },
+  /*
+    ── ⚠⚠⚠ THE ONE WORK-CHAIN EVENT WITH A LIVE WRITER (`P2-A8-E680`) ───────
+
+    ⚠⚠ Every other entry in this block was registered **ahead of** its writer,
+    on the reasoning recorded above: *"a registry entry makes that a one-line
+    call the day its writer lands."* ⚠⚠⚠ **THIS ONE IS THE OPPOSITE — THE
+    WRITER SHIPPED FIRST AND HAD NO EVENT.** `inviteProviders()` has been doing
+    `bidRequest.create` from a reachable page all along, and **the invited
+    provider got no bell entry and nothing on their worklist.**
+
+    ⚠ `requiresAction: true` — the invitation IS the work item, and it clears
+    when they propose a rate (WS-C). It is the provider's worklist row.
+
+    ⚠⚠⚠ **`href` GOES TO `/find-work/[id]`, AND THE SIBLING ABOVE IS WRONG
+    ABOUT THIS.** `work.interview_requested` sends *"the provider asked to
+    interview"* to `/work-requests/{id}` — which is `guardPage("canHireTalent")`
+    and would bounce that provider to `/dashboard?noaccess=1`. ⚠ Measured, not
+    assumed; **reported and NOT fixed here** — that event has no writer, so the
+    defect is unreachable, and correcting it is its own change.
+    ⚠ `/find-work/invitations` was the other candidate and is a `ComingSoon`
+    stub, so linking there would be `E579`. `/find-work/[id]` is
+    `canProvideServices` and opens `POSTED` requests — the state an invite is
+    sent in.
+
+    ⚠⚠ **NO SENDER (ruling 86).** `notify()` writes the entry; whether this
+    also becomes an email is `86c`/`86e` and is Scott's open decision.
+  */
+  "work.invited_to_propose": {
+    event: "work.invited_to_propose",
+    recipient: "the provider invited to propose",
+    /* ⚠ THE SIBLING'S CATEGORY, NOT A NEW ONE. `work_request.matched` already
+       means "work reached you"; an invitation is the strongest form of that,
+       and a seventeenth category would be a preference nobody asked for. */
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) =>
+      `${str(v, "buyerName", "A buyer")} invited you to propose a rate`,
+    /* ⚠ The work's own title, or null — never a filler sentence built from
+       absence (`67d`). */
+    body: (v) => (str(v, "workTitle") ? str(v, "workTitle") : null),
+    href: (v) =>
+      str(v, "requestId") ? `/find-work/${str(v, "requestId")}` : "/find-work",
+  },
   "work.interview_requested": {
     event: "work.interview_requested",
     recipient: "the provider asked to interview",

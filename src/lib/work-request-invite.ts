@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 import { assertIssuable } from "@/lib/sourcing";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
@@ -128,6 +129,47 @@ export async function inviteProviders(
         },
       });
       created.push({ providerPersonId, requestNumber });
+
+      /*
+        ── ⚠⚠⚠ THE BELL ENTRY (`P2-A8-E680`, ruling 86) ────────────────────
+
+        ⚠⚠ **THIS WRITER SHIPPED WITHOUT ONE.** `bidRequest.create` has been
+        running from a reachable page all along and **the invited provider was
+        never told** — no bell row, nothing on their worklist. It is the one
+        piece of WS-B that was missing; the match and the invite were already
+        built.
+
+        ⚠ **INSIDE THE LOOP AND AFTER THE ROW**, so a provider is notified only
+        about an invitation that actually exists, and a re-invite (the `continue`
+        above) notifies nobody twice.
+        ⚠⚠ **`notify()` NEVER THROWS INTO THIS CALLER** — it catches, logs and
+        continues by its own contract, so a notification outage cannot cost a
+        buyer their invitations. Awaited for ordering, not for safety.
+        ⚠⚠⚠ **NO SENDER.** Ruling 86: `notify()` writes the entry and has no
+        email half; `86c`/`86e` are Scott's open decision. Nothing here sends.
+
+        ⚠⚠ **NO BUYER NAME IS PASSED, AND THAT IS DELIBERATE.** `WorkRequest`
+        carries `company_visibility` / `company_code_name`, and
+        `buildBuyerIdentity` is the ONE redaction that decides what a provider
+        may see. ⚠⚠⚠ **A notification is precisely where that rule would be
+        bypassed** — the provider's bell is outside the page that applies it.
+        Re-implementing the redaction here would be a second definition
+        (`E585`) of the rule `check:work-request-identity` guards with 54
+        assertions. So the title falls back to *"A buyer"*, which is true for
+        both visibilities. ⚠ Passing the name safely means passing
+        `buildBuyerIdentity`'s OUTPUT, and that is a change to this function's
+        query — reported, not smuggled in.
+      */
+      await notify({
+        event: "work.invited_to_propose",
+        personId: providerPersonId,
+        entityType: "BidRequest",
+        entityId: wr.id,
+        /* ⚠ ONE ENTRY PER (PROVIDER × REQUEST). Re-inviting after a decline
+           must not stack a second identical row on their worklist. */
+        dedupeKey: `work.invited_to_propose:${wr.id}:${providerPersonId}`,
+        vars: { workTitle: wr.title, requestId: wr.id },
+      });
     } catch {
       /* ⚠ THE UNIQUE CONSTRAINT IS THE ARBITER UNDER A RACE. Two concurrent
          invites of the same provider: the second lands here and is reported as

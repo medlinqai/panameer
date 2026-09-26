@@ -192,6 +192,7 @@ the day its writer lands.
 
 | Event | Recipient | AI Mode | Channel | Notes |
 |---|---|---|---|---|
+| `work.invited_to_propose` | the provider invited to propose | `Send for Approval` | worklist | ⚠⚠⚠ **THE FIRST EVENT IN THIS TABLE WITH A LIVE, REACHABLE WRITER** — `inviteProviders()` (`work-request-invite.ts:68`) already does `bidRequest.create` at `:116` from `/work-requests/[id]/invite`, which renders `InviteToBid`. The other rows below are registered ahead of their writers; this one is catching up to its own. ⚠ Cleared by proposing a rate (WS-C). ⚠⚠ **`href` GOES TO `/find-work/[id]`, NOT `/work-requests/[id]`** — the latter is `canHireTalent`-gated and would bounce the provider it is addressed to, and `/find-work/invitations` is a `ComingSoon` stub, so linking there would be `E579`. `/find-work/[id]` is `canProvideServices` and opens `POSTED` requests, which is exactly the state an invite is sent in. ⚠ **NO SENDER — ruling 86.** `notify()` writes the bell entry; the email half is `86c`/`86e` and is Scott's open decision. |
 | `work.proposal_received` | the buyer who posted the work request | `Send for Approval` | worklist | Cleared by responding to the proposal |
 | `work.interview_requested` | the provider asked to interview | `Send for Approval` | worklist | Cleared by confirming a time |
 | `work.order_offered` | the provider offered the work | `Send for Approval` | worklist | Cleared by accepting the order |
