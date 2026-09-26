@@ -624,14 +624,18 @@ export async function getSettingsStatuses(
 ): Promise<Record<string, string | null>> {
   const personId = await ownPersonId(viewer);
 
-  const [person, profile, twoFactor, identity, tax, payouts, billing] = await Promise.all([
+  /* ⚠⚠ THE `providerProfile` READ WENT WITH THE `/settings/profile` STATUS
+     (ruling 78). ⚠ `76a` again: removing the line left its QUERY behind — an
+     unused variable, and a round trip to the database for a card that no
+     longer exists. **A deletion leaves a hole with a shape, and sometimes the
+     shape is a query.**
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   prisma.providerProfile.findFirst({
+     //     where: { person_id: personId }, select: { paused_at: true } }), */
+  const [person, twoFactor, identity, tax, payouts, billing] = await Promise.all([
     prisma.person.findUnique({
       where: { id: personId },
       select: { phone: true, site: { select: { addresses: { select: { line1: true }, take: 1 } } } },
-    }),
-    prisma.providerProfile.findFirst({
-      where: { person_id: personId },
-      select: { paused_at: true },
     }),
     /* ⚠ KEYED ON THE USER, because two-step is an AUTH fact and
        `TwoFactorSetting.user_id` is its `@unique`. ⚠⚠ The other rows here are
@@ -674,7 +678,8 @@ export async function getSettingsStatuses(
     /* ⚠ REFUSED — see the docblock. No plan column, and "renews" is a money
        claim on a page where no money moves. */
     "/settings/membership": null,
-    "/settings/profile": profile?.paused_at ? "Paused — hidden from buyers" : "Visible to buyers",
+    /* ⚠ `/settings/profile` IS GONE (ruling 78) — the section is deleted and
+       Visibility lives on `/profile` now, so there is no card to status. */
     "/settings/billing": billing === 0 ? "No payment method yet" : `${billing} on file`,
     /* ⚠⚠ THE SECTION IS *"How Panameer pays you, AND the tax details required
        first"* — so the status reads BOTH, in the order the blurb states them.

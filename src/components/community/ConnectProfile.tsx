@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
+import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 /* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
    row asks it rather than deciding the fallback a second time. */
 /* ⚠⚠ THE FACES ROW IS GONE (`P2-A2-E598` WS-C item 3) — Scott: *"The colleague
@@ -665,6 +666,22 @@ export function ConnectProfile({
             )}
           </div>
         </section>
+
+        {/*
+          ── ⚠⚠⚠ VISIBILITY ARRIVES FROM SETTINGS (ruling 78) ───────────────
+
+          ⚠ The Profile Visibility SECTION is deleted and this one control moves
+          here, **in the same commit** (`E598`'s leave-and-arrive). ⚠⚠ It is the
+          only lever that touches the marketplace gate, so a window where it has
+          no home is a window where a provider **cannot take themselves out of
+          the market**.
+          ⚠⚠⚠ OWNER ONLY, and that is not cosmetic: `p.paused` and
+          `p.completeness` are the owner's own figures, and a visitor must not
+          be told whether somebody has paused themselves.
+        */}
+        {owner && (
+          <ProfileVisibilityCard paused={p.paused} completeness={p.completeness} />
+        )}
 
         {/*
           ── ⚠⚠ RATES, ITS OWN SIDE CARD AGAIN (`E014`) ────────────────────

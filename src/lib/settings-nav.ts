@@ -61,13 +61,30 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     href: "/settings/membership",
     blurb: "Your plan, what it includes, and when it renews.",
   },
-  {
-    label: "Profile Settings",
-    /* ⚠ SELLER-ONLY (`P2-J1.1-E050`): provider-profile management — one of only TWO call sites that genuinely needs a `profileId`, and it still throws for a buyer BY DESIGN. */
-    requires: "canProvideServices",
-    href: "/settings/profile",
-    blurb: "Who can see your profile, what work you want, and your categories.",
-  },
+  /*
+    ── ⚠⚠⚠ `Profile Settings` IS DELETED (ruling 78) ───────────────────────
+
+    ⚠ **RULING 78 SUPERSEDES 74's *"the other four stay"*.** Project
+    Preference, Linked Accounts, AI Data Training, Earnings Privacy **and**
+    Categories are all deleted; **Visibility moves to My Profile**, where every
+    other control edits what buyers see and this one decides whether they see
+    any of it.
+    ⚠⚠ **THE RAIL ITEM GOES WITH THE SECTION**, in the same commit the control
+    arrives on `/profile` — otherwise the marketplace gate has no home
+    (`E598`, `69b`).
+    ⚠⚠⚠ **THE COLUMNS ARE NOT DROPPED AND THAT IS DELIBERATE.**
+    `project_preference`, `earnings_private`, `ai_training_opt_in`,
+    `linked_github` and `linked_stackoverflow` stay on `ProviderProfile`:
+    **dropping a column is a destructive schema change** (ruling 41b — a rename
+    is `DROP`+`ADD` and is never free), and this brief has no schema window.
+    ⚠ **They are now orphaned — written by nothing and read by nothing** — and
+    that is recorded rather than tidied, because removing them is its own
+    decision with its own migration.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Profile Settings", requires: "canProvideServices",
+    //     href: "/settings/profile",
+    //     blurb: "Who can see your profile, what work you want, and your categories." },
+  */
   {
     label: "Billing & Payments",
     href: "/settings/billing",
