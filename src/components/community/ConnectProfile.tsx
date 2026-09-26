@@ -67,6 +67,8 @@ import {
   SoloProjectsBody,
   SpecializationsBody,
   WorkHistoryBody,
+  CHIP_TAG,
+  locationLines,
 } from "@/components/profile/sections";
 import "./connect-profile.css";
 
@@ -529,7 +531,20 @@ export function ConnectProfile({
               ⚠⚠ THE LOCATION LINE IS DERIVED FROM THE ADDRESS and is not edited
               here — see the block below for why its control has not moved yet.
             */}
-            {p.location && <p className="mt-1 text-[12.5px] text-ink-3">{p.location}</p>}
+            {/* ⚠⚠ COUNTRY IS RENDERED HERE NOW (`P2-A2-E671`) — WS-B's *"ADD
+                COUNTRY — Panameer is global"*. The value was already on the view
+                model and reached this component unused; only the render was
+                missing. ⚠ It reads `locationLines`, the same rule the Location
+                card uses, so the two cannot disagree (`E585`). */}
+            {(() => {
+              const lines = locationLines(p.location, p.country);
+              return lines ? (
+                <p className="mt-1 text-[12.5px] text-ink-3">
+                  {lines.primary}
+                  {lines.secondary ? ` · ${lines.secondary}` : ""}
+                </p>
+              ) : null;
+            })()}
             {/*
               ── ⚠⚠⚠ THE IDENTITY CARD GROWS ITS EDIT CONTROLS (`E600` WS-F) ──
 
@@ -576,10 +591,20 @@ export function ConnectProfile({
               COUNTRY — Panameer is global"* is a RENDER-and-EDIT job, **not a
               schema window.** Measured, so nobody briefs a migration for it.
 
-              ⚠⚠ **`Languages` STAYS UNTIL ITS CARD EXISTS.** WS-B: it *"becomes
-              its own CARD, with its own Edit, and each language carries its
-              abilities."* That is a card build, not a link move, and the same
-              leave-and-arrive rule applies.
+              ⚠⚠⚠ **`Languages` HAS LEFT THIS ROW (`P2-A2-E671`).** ⚠ SUPERSEDED,
+              quoted not deleted (`E164`):
+              //   ⚠⚠ **`Languages` STAYS UNTIL ITS CARD EXISTS.** WS-B: it
+              //   *"becomes its own CARD, with its own Edit, and each language
+              //   carries its abilities."* That is a card build, not a link
+              //   move, and the same leave-and-arrive rule applies.
+              ⚠⚠ **THE CARD LANDED IN `0429791` (`E643`) AND THIS LINK WAS NEVER
+              REMOVED**, so the page carried TWO doors to
+              `/profile/edit/languages` — and the sentence above went on
+              justifying a link whose condition had already been met.
+              ⚠⚠⚠ **THAT IS THE 2026-09-23 RULES ITEM 6 IN ITS PUREST FORM: the
+              code was right, the stated rule was wrong, and the stated rule is
+              what the next reader would have implemented.** Found by reading
+              during `E670`'s verification pass — no gate asserts it.
 
               ⚠ **`How You Work` STAYS BECAUSE THIS CARD DOES NOT RENDER IT.**
               There is no work-method line here to sit beside, so moving the
@@ -622,7 +647,16 @@ export function ConnectProfile({
                   ⚠ SUPERSEDED, quoted not deleted (`E164`):
                   //   <EditLink href={editHref("contact")} title="Contact Details" label="Contact" />
                 */}
-                <EditLink href={editHref("languages")} title="Languages" label="Languages" />
+                {/* ⚠⚠⚠ REMOVED (`P2-A2-E671`): THE LANGUAGES CARD NOW EXISTS AND
+                    CARRIES ITS OWN EDIT, so this row link was a SECOND door to
+                    `/profile/edit/languages` — and one that is not beside the
+                    thing it edits, which is the whole point of WS-B.
+                    ⚠ It is residue: `0429791` (`E643`) ADDED the card and never
+                    removed this line. ⚠⚠ The comment above that justified keeping
+                    it — *"`Languages` STAYS UNTIL ITS CARD EXISTS"* — became false
+                    the moment that commit landed, and is corrected there.
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   <EditLink href={editHref("languages")} title="Languages" label="Languages" /> */}
                 <EditLink href={editHref("work-method")} title="How You Work" label="How You Work" />
               </div>
             )}
@@ -935,10 +969,11 @@ export function ConnectProfile({
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {visitorGroups.slice(0, 6).map((g) => (
-                    <span
-                      key={g}
-                      className="rounded-full border border-line bg-white px-3 py-1 text-[12.5px] text-ink-2"
-                    >
+                    /* ⚠ A TAG CHIP, SO MAGENTA (ruling 31e, `P2-A2-E670`) — and
+                       it reads the ONE definition rather than hand-rolling a
+                       second magenta string, which is how the skill/spec split
+                       arose in the first place (`E585`). */
+                    <span key={g} className={CHIP_TAG}>
                       {g}
                     </span>
                   ))}
@@ -1332,7 +1367,12 @@ export function ConnectProfile({
               {takenPaths.length > 0 && (
                 <div>
                   <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-                    {owner ? "You&rsquo;re Taking" : "Taking"}
+                    {/* ⚠⚠⚠ `’`, NOT `&rsquo;` — AN HTML ENTITY INSIDE A JS STRING IS NOT
+                        DECODED BY REACT (`P2-A2-E671`). This rendered literally as
+                        `You&rsquo;re Taking` on the page. ⚠ Line 1093 in this same
+                        file already does it correctly with the character, which is
+                        what made the inconsistency findable. */}
+                    {owner ? "You’re Taking" : "Taking"}
                   </p>
                   {/* ⚠ INK, NOT MAGENTA — `E433`. These are still links, so
                       they keep the underline on hover, but a taken path is

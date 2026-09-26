@@ -21,9 +21,29 @@ import { projectMonogram } from "@/lib/project-monogram";
  * PILL" — nothing to do with wrapping. Two hand-written copies of one style are
  * also how a third variant appears next.
  *
- * ⚠ THE COLOUR DIFFERENCE **STAYS AND IS THE RULE**: a skill and a
- * specialization are different kinds of thing, and Scott asked for one style
- * per kind — not one style for everything.
+ * ── ⚠⚠⚠ THE COLOUR DIFFERENCE IS GONE — RULING 31e (`P2-A2-E670`) ────────
+ *
+ * ⚠⚠ **SCOTT, 2026-09-24, RULING 31e:** *"ALL TAG CHIPS ARE MAGENTA. Skills
+ * matches Specializations."* ⚠ It is an **explicit written carve-out from
+ * `E433`**, which otherwise reserves magenta for interactive things — so a tag
+ * chip is now magenta **because a ruling says so**, not because it became a
+ * link.
+ * ⚠⚠⚠ **THE PARAGRAPH BELOW SAID THE OPPOSITE AND SAID IT AS SETTLED LAW**,
+ * which is the 2026-09-23 rules item 6 exactly: *"a stated rule that
+ * contradicts correct behaviour is the more dangerous half — the next person
+ * implements the comment."* It survived `E670`'s own verification pass and was
+ * found by reading, not by a gate.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   ⚠ THE COLOUR DIFFERENCE **STAYS AND IS THE RULE**: a skill and a
+ * //   specialization are different kinds of thing, and Scott asked for one
+ * //   style per kind — not one style for everything.
+ *
+ * ⚠⚠ **THE SCOPE IS TAG CHIPS ONLY.** 31e: *"a figure stays ink, a label stays
+ * ink, a status pill keeps its own rule."* ⚠ The six live magenta FIGURES this
+ * pass measured (`sections.tsx:1161`, `CommunitySignal.tsx:66`,
+ * `ProfileScoreView.tsx:333`/`:480`, `WizardShell.tsx:285`,
+ * `ParserHealth.tsx:55`) are **their own sweep** — Scott, 2026-09-26: a sweep
+ * inside another brief is the opposite of going function by function.
  *
  * ⚠⚠ A LONG NAME **WRAPS**, AND THAT IS SCOTT'S WORD. The shape that must not
  * change is the PADDING, RADIUS, FONT AND COLOUR — all of which are now shared
@@ -41,10 +61,23 @@ import { projectMonogram } from "@/lib/project-monogram";
  */
 const CHIP_BASE =
   "inline-flex max-w-full items-center rounded-full px-3 py-1 text-[13px] font-semibold break-words";
-/** ⚠ A SKILL — outlined, ink. It is a fact about the person, not a link (`E433`). */
-const CHIP_SKILL = `${CHIP_BASE} border border-line text-ink-2`;
-/** ⚠ A SPECIALIZATION — magenta-tinted, and deliberately a DIFFERENT kind. */
-const CHIP_SPEC = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
+/*
+  ── ⚠⚠⚠ ONE TAG-CHIP STYLE (ruling 31e, `P2-A2-E670`) ──────────────────────
+
+  ⚠⚠ **`CHIP_SKILL` IS NOW `CHIP_SPEC`'s STYLE, EXPRESSED AS ONE CONSTANT
+  RATHER THAN TWO THAT HAPPEN TO MATCH.** Two identical strings kept in step by
+  hand is `E585`, and this file's own docblock already records that *"two
+  hand-written copies of one style are also how a third variant appears next."*
+  ⚠ Both names are kept so the call sites still read as what they render — a
+  skill chip and a specialization chip — while resolving to one definition.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const CHIP_SKILL = `${CHIP_BASE} border border-line text-ink-2`;
+*/
+export const CHIP_TAG = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
+/** ⚠ A SKILL — a tag chip, magenta since ruling 31e. */
+const CHIP_SKILL = CHIP_TAG;
+/** ⚠ A SPECIALIZATION — the same tag chip. 31e: *"Skills matches Specializations."* */
+const CHIP_SPEC = CHIP_TAG;
 
 /**
  * The Profile-View section vocabulary (brief_X / E056).
@@ -1441,6 +1474,38 @@ export function ContactBody({
 }
 
 /** Location card (mockup pg2 grid). */
+/**
+ * ── ⚠⚠ THE COUNTRY RULE, IN ONE PLACE (`P2-A2-E671`) ──────────────────────
+ *
+ * ⚠ WS-B: *"ADD COUNTRY — Panameer is global."* ⚠⚠ The identity card's location
+ * line and the Location card answer the SAME question, and before this they
+ * answered it differently: the card showed the country, the identity line did
+ * not — while `country` was on the view model the whole time
+ * (`provider-profile-view.ts:420`), loaded, carried and never rendered.
+ *
+ * ⚠⚠⚠ **THE RULE IS NOT "APPEND THE COUNTRY".** It is *show the country unless
+ * the location already names it* — otherwise a provider in `London, England`
+ * with `country: England` reads `London, England · England`. ⚠ That rule was
+ * already written, once, inside `LocationBody`; this extracts it so the second
+ * caller reads it rather than restating it (`E585`).
+ *
+ * ⚠ **`formatLocality` IS DELIBERATELY NOT CHANGED.** `provider-profile-view.ts`
+ * removed country from it for a measured reason and quotes the removal under
+ * `E164`; putting it back would re-open that, and would change every OTHER
+ * consumer of `location` at the same time.
+ */
+export function locationLines(
+  location?: string | null,
+  country?: string | null
+): { primary: string; secondary: string | null } | null {
+  const primary = location || country;
+  if (!primary) return null;
+  return {
+    primary,
+    secondary: location && country && !location.includes(country) ? country : null,
+  };
+}
+
 export function LocationBody({
   location,
   country,
@@ -1448,14 +1513,12 @@ export function LocationBody({
   location?: string | null;
   country?: string | null;
 }) {
-  const text = location || country;
-  if (!text) return <Empty>No location listed.</Empty>;
+  const lines = locationLines(location, country);
+  if (!lines) return <Empty>No location listed.</Empty>;
   return (
     <div className="text-[14.5px]">
-      <p>{location || country}</p>
-      {location && country && !location.includes(country) && (
-        <p className="text-ink-2">{country}</p>
-      )}
+      <p>{lines.primary}</p>
+      {lines.secondary && <p className="text-ink-2">{lines.secondary}</p>}
     </div>
   );
 }

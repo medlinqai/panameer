@@ -28,7 +28,16 @@ export default async function MyTicketsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">My Support Tickets</h1>
+      {/* ⚠⚠ `My Tickets`, MATCHING THE MENU (`P2-A2-E671`). Scott's ruling was
+          *"`Help` → rename `My Tickets`"*, and `nav.ts` carries that — but this
+          heading still read `My Support Tickets`, so **the menu item and the
+          page it opens called the page two different things.**
+          ⚠ That is the defect `PageTabs` records as *"the heading and the nav
+          read one definition, so the two cannot disagree about what a page is
+          called"*, on a page that has no tab row to enforce it.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <h1 …>My Support Tickets</h1> */}
+      <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">My Tickets</h1>
       <p className="mt-2 text-[15px] text-ink-2">
         Bugs you&apos;ve reported, and anything Panameer has replied.
       </p>
