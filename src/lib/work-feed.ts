@@ -131,8 +131,62 @@ const TITLE_CASE: Record<string, string> = {
   HYBRID: "Hybrid",
 };
 
-const pretty = (v: string | null | undefined) =>
+export const pretty = (v: string | null | undefined) =>
   v ? (TITLE_CASE[v] ?? v.replace(/_/g, " ").toLowerCase()) : null;
+
+/**
+ * ── ⚠⚠⚠ THE BUDGET STRING — ONE DEFINITION (`P2-A8-E664`) ─────────────────
+ *
+ * ⚠ EXTRACTED BECAUSE `/find-work/[id]` NEEDS THE SAME STRING THE CARD SHOWS.
+ * ⚠⚠ A detail page computing its own would be `E585` in its exact form: one
+ * concept in two places, kept in step by hand, disagreeing in public on the
+ * page a provider decides on.
+ *
+ * ── ⚠⚠⚠ IT NOW READS THE RANGE, AND THAT IS A MEASURED FIX, NOT A FLOURISH ─
+ *
+ * ⚠⚠ THE CARD READ `budget_amount_cents` ONLY — **and the current wizard does
+ * not write that column.** `work-request.ts:430` (step 6, *"the budget, as a
+ * RANGE"*) writes `budget_min_cents` / `budget_max_cents`; `budget_amount_cents`
+ * is the FIRST wizard's single figure, kept for back-compat, and the schema says
+ * so in its own words: *"Kept for back-compat; the range below is what the
+ * current flow writes."*
+ * ⚠⚠⚠ SO EVERY REQUEST THE LIVE WIZARD CREATES RENDERED ITS BUDGET AS THE BARE
+ * WORD `Hourly` — the buyer's `$150–$200 / hr` never reached a provider at all.
+ * ⚠ `explore.ts:338` already reads all three columns, so this is the feed
+ * catching up with a rule the codebase already had, not a new one.
+ * ⚠⚠ **IT CHANGES ZERO ROWS TODAY: `work_requests` holds 0** (measured
+ * 2026-09-26). Reported as a deliberate deviation rather than smuggled in.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card's inline expression:
+ * //   budgetLabel:
+ * //     w.budget_amount_cents != null
+ * //       ? `${money(w.budget_amount_cents, w.currency)}${w.budget_type === "HOURLY" ? " / hr" : ""}`
+ * //       : pretty(w.budget_type),
+ *
+ * ⚠⚠ PRECEDENCE IS SINGLE-FIGURE FIRST, and deliberately: a row holding BOTH
+ * was written by the old wizard and then edited by the new one, and the single
+ * figure is the one a requester typed as *the* number. A row holding neither
+ * falls back to the TYPE — `Hourly`, `Fixed price` — which is still a fact the
+ * buyer stated, and `null` when they stated nothing either.
+ */
+export function workBudgetLabel(input: {
+  amountCents: number | null;
+  minCents: number | null;
+  maxCents: number | null;
+  currency: string;
+  budgetType: string | null;
+}): string | null {
+  const per = input.budgetType === "HOURLY" ? " / hr" : "";
+  if (input.amountCents != null) {
+    return `${money(input.amountCents, input.currency)}${per}`;
+  }
+  if (input.minCents != null && input.maxCents != null && input.maxCents !== input.minCents) {
+    return `${money(input.minCents, input.currency)}–${money(input.maxCents, input.currency)}${per}`;
+  }
+  const one = input.minCents ?? input.maxCents;
+  if (one != null) return `${money(one, input.currency)}${per}`;
+  return pretty(input.budgetType);
+}
 
 /**
  * One tab's worth of work.
@@ -189,6 +243,11 @@ export async function getWorkFeed(input: {
       description: true,
       budget_type: true,
       budget_amount_cents: true,
+      /* ⚠⚠ `P2-A8-E664` — THE RANGE THE CURRENT WIZARD ACTUALLY WRITES. Without
+         these two the card printed `Hourly` where the buyer set a figure; see
+         `workBudgetLabel` above for the measurement. */
+      budget_min_cents: true,
+      budget_max_cents: true,
       currency: true,
       experience_level: true,
       duration: true,
@@ -280,10 +339,14 @@ export async function getWorkFeed(input: {
     id: w.id,
     title: w.title || "Untitled work request",
     description: w.description,
-    budgetLabel:
-      w.budget_amount_cents != null
-        ? `${money(w.budget_amount_cents, w.currency)}${w.budget_type === "HOURLY" ? " / hr" : ""}`
-        : pretty(w.budget_type),
+    /* ⚠ ONE DEFINITION, SHARED WITH `/find-work/[id]` (`P2-A8-E664`). */
+    budgetLabel: workBudgetLabel({
+      amountCents: w.budget_amount_cents,
+      minCents: w.budget_min_cents,
+      maxCents: w.budget_max_cents,
+      currency: w.currency,
+      budgetType: w.budget_type,
+    }),
     experienceLevel: pretty(w.experience_level),
     duration: pretty(w.duration),
     location: w.location_country,

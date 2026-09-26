@@ -241,14 +241,36 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
               {/*
-                `/work/[id]` DOES NOT EXIST YET — there is no work-request detail
-                page, and building one is beyond this brief. The link is written to
-                where that page belongs rather than to a stand-in, and it is
-                unreachable today because no buyer has posted a work request, so no
-                card renders. It becomes live the moment the detail route lands.
+                ── ⚠⚠⚠ THE DETAIL ROUTE EXISTS NOW (`P2-A8-E664`) ──────────────
+
+                ⚠⚠ THE LINK AND ITS TARGET MOVED IN ONE CHANGE, deliberately: a
+                link landing in one commit and its page in the next is a window
+                where the 404 is still live.
+
+                ⚠ IT IS `/find-work/[id]`, NOT `/work/[id]`, AND THE REASONS ARE
+                MEASURED — `/work` is the PUBLIC marketing page (allowlisted
+                category 1, EXACT, no subtree) and has NO entry in `ROUTE_ACCESS`,
+                while `/find-work` is already gated `canProvideServices` at the
+                edge. ⚠⚠ The full reasoning, and the open question about whether a
+                stranger should be able to read one, is in
+                `src/app/(app)/find-work/[id]/page.tsx`.
+
+                ⚠⚠⚠ ONE ROUTE SERVES BOTH SURFACES. This component renders on
+                `/dashboard` as well as `/find-work`, and `basePath` is NOT used
+                here on purpose: the card's target is the work request, which is
+                the same page whichever feed you arrived from. Only the TAB hrefs
+                are relative to where the feed lives.
+
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   `/work/[id]` DOES NOT EXIST YET — there is no work-request
+                //   detail page, and building one is beyond this brief. The link
+                //   is written to where that page belongs rather than to a
+                //   stand-in, and it is unreachable today because no buyer has
+                //   posted a work request, so no card renders. It becomes live
+                //   the moment the detail route lands.
               */}
               <h3 className="text-[16.5px] font-bold">
-                <Link href={`/work/${card.id}`} className="hover:text-magenta">
+                <Link href={`/find-work/${card.id}`} className="hover:text-magenta">
                   {card.title}
                 </Link>
               </h3>
@@ -289,13 +311,21 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
               the description at 390px it renders a word per line, which is the
               failure `CoverageCard`'s closing strip already documents.
 
-              ⚠⚠ THIS IS THE ONLY SURFACE A PROVIDER CAN SEE A WORK REQUEST ON
-              TODAY, which is why the block lands here. `/work/[id]` — the
-              detail route this card's title has always linked to — STILL DOES
-              NOT EXIST; that 404 is pre-existing and was reported at `E025`
-              rather than fixed inside this brief. `WhoIsAsking` takes a
-              `BuyerIdentity` and reads nothing else, so it moves there unchanged
-              on the day that page lands.
+              ⚠⚠ IT IS NO LONGER THE ONLY SURFACE (`P2-A8-E664`). The detail
+              route exists — `/find-work/[id]` — and `WhoIsAsking` renders there
+              UNEDITED, which is what its own docblock promised. ⚠ The block stays
+              on the card too: a provider scanning a list needs to know who is
+              asking BEFORE deciding to open one, which is the whole argument
+              `E025` made.
+
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   ⚠⚠ THIS IS THE ONLY SURFACE A PROVIDER CAN SEE A WORK REQUEST
+              //   ON TODAY, which is why the block lands here. `/work/[id]` — the
+              //   detail route this card's title has always linked to — STILL
+              //   DOES NOT EXIST; that 404 is pre-existing and was reported at
+              //   `E025` rather than fixed inside this brief. `WhoIsAsking` takes
+              //   a `BuyerIdentity` and reads nothing else, so it moves there
+              //   unchanged on the day that page lands.
 
               ⚠ SUPERSEDED, quoted not deleted: a bare 40px company logo sat here
               — *"The buyer's mark, when they have one. Absent rather than a grey

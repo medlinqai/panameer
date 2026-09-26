@@ -54,6 +54,46 @@ export const SOURCING_STAGES = [
 export type SourcingStage = (typeof SOURCING_STAGES)[number];
 
 /**
+ * ── ⚠⚠ THE PROVIDER-FACING WORDS FOR A STAGE (`P2-A8-E664`) ───────────────
+ *
+ * ⚠⚠ THEY LIVE BESIDE THE ENUM BECAUSE THE ENUM IS WHERE THE VOCABULARY LIVES
+ * (`E585` — one concept, one place). ⚠ A page that spelled these out itself
+ * would be a second vocabulary kept in step by hand, and this file already
+ * exists to stop exactly that for the DERIVATION.
+ *
+ * ⚠⚠⚠ `Record<SourcingStage, string>` IS THE POINT OF THE TYPE: an eighth stage
+ * added to `SOURCING_STAGES` becomes a COMPILE ERROR here rather than a silently
+ * missing label. **A required type before a gate** — Scott's pattern, and there
+ * is no `check:sourcing` assertion about labels (checked, 2026-09-26).
+ *
+ * ── ⚠ THEY ARE THE PROVIDER'S SIDE OF THE SAME ROW ───────────────────────
+ *
+ * ⚠⚠ THE SAME STAGE READS DIFFERENTLY TO THE TWO SIDES, and these are the
+ * PROVIDER's words — *"Your proposal is in"*, not *"Bid received"*. A buyer-side
+ * grid wanting its own wording adds a SECOND map here, beside this one, rather
+ * than re-deriving the stage.
+ *
+ * ⚠⚠ `DECLINED` IS DELIBERATELY NEUTRAL ABOUT WHO DECLINED. The evidence type
+ * says so in its own words — *"the ITB or the bid was declined — by EITHER
+ * side"* — so any label naming an actor would be an invention. It names the
+ * STATE and stops.
+ *
+ * ⚠⚠⚠ THESE SEVEN STRINGS ARE CC'S WORDS, REPORTED FOR SCOTT TO OVERRULE —
+ * the same treatment `VERIFICATION_COPY` records for its four. Nothing else
+ * writes them. ⚠ None of them promises anything, carries a date, or apologises
+ * (ruling 18).
+ */
+export const SOURCING_STAGE_LABEL: Record<SourcingStage, string> = {
+  ASSIGNED: "This work is assigned to you",
+  DECLINED: "This one was declined",
+  SHORTLISTED: "You are on the shortlist",
+  INTERVIEWED: "Your interview is done",
+  TESTED: "Your work test is done",
+  BID: "Your proposal is in",
+  INVITED: "You were invited to propose",
+};
+
+/**
  * The documents that exist for ONE provider on ONE work request. Booleans, not
  * rows: the stage is a question about EXISTENCE, and passing rows in would
  * tempt a caller into deriving something else from them here.
