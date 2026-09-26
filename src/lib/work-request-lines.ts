@@ -1,4 +1,5 @@
 import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
+import type { WorkRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 deleted the bridge, and
@@ -186,7 +187,12 @@ export type WorkRequestDetail = {
   id: string;
   title: string;
   description: string;
-  status: string;
+  /* ⚠⚠ THE ENUM, NOT `string` (`P2-A8-E679`) — same reason as `hire.ts`:
+     `string` is what let `status === "POSTED" ? … : "Draft"` compile while
+     three values fell through it. ⚠ `WorkRequestLineStatus` beside it was
+     already narrowed; only the REQUEST's status was loose.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   status: string; */
+  status: WorkRequestStatus;
   postedAt: string | null;
   currency: string;
   startDate: string | null;

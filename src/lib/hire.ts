@@ -1,3 +1,4 @@
+import type { WorkRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
 import { resolveBuyer } from "@/lib/work-request";
@@ -19,7 +20,12 @@ import { completenessFor, type Completeness } from "@/lib/work-request-lines";
 export type WorkRequestRow = {
   id: string;
   title: string;
-  status: string;
+  /* ⚠⚠ THE ENUM, NOT `string` (`P2-A8-E679`). Widening it here is how the
+     `status === "POSTED" ? … : "Draft"` ternary survived: with `string`, no
+     compiler could say the other three values were unhandled. ⚠ Narrowed so
+     `WORK_REQUEST_STATUS_LABEL[status]` is exhaustive by construction.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   status: string; */
+  status: WorkRequestStatus;
   postedAt: string | null;
   updatedAt: string;
   currency: string;

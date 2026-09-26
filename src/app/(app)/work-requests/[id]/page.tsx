@@ -8,6 +8,10 @@ import { WorkRequestLines } from "@/components/work/WorkRequestLines";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { matchProvidersFor } from "@/lib/work-request-match";
+import {
+  WORK_REQUEST_STATUS_LABEL,
+  workRequestStatusPillClass,
+} from "@/lib/work-request-status";
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -81,6 +85,9 @@ export default async function Page({
     }))
     .filter((p) => p.personId);
 
+  /* ⚠ `posted` STAYS — it gates the draft-only wizard door and the invite
+     controls below, which are genuinely about "is it out for sourcing", not
+     about what word the pill shows. Only the COPY moved (`P2-A8-E679`). */
   const posted = detail.status === "POSTED";
 
   return (
@@ -94,17 +101,25 @@ export default async function Page({
           </h1>
           <p className="mt-1.5 text-[14px] text-ink-2">
             {detail.roleName && <>{detail.roleName} · </>}
-            {posted ? `Posted ${detail.postedAt?.slice(0, 10)}` : "Draft"}
+            {/* ⚠ THE DATE RIDES ON `POSTED` ONLY, and that is correct: a
+                request is posted ONCE, so `postedAt` is that moment. A
+                `Provider Selected` request keeps its posted date but the
+                subtitle now names where it IS, not where it has been
+                (`P2-A8-E679`).
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   {posted ? `Posted ${detail.postedAt?.slice(0,10)}` : "Draft"} */}
+            {posted && detail.postedAt
+              ? `Posted ${detail.postedAt.slice(0, 10)}`
+              : WORK_REQUEST_STATUS_LABEL[detail.status]}
           </p>
         </div>
-        <span
-          className={
-            posted
-              ? "rounded-full bg-emerald-50 px-3 py-1 text-[12.5px] font-bold text-emerald-700"
-              : "rounded-full bg-ink/[0.05] px-3 py-1 text-[12.5px] font-bold text-ink-2"
-          }
-        >
-          {posted ? "Posted" : "Draft"}
+        {/* ⚠⚠ ONE PLACE (`P2-A8-E679`) — this pill read `posted ? … : "Draft"`,
+            so an ORDERED request was badged `Draft`.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   className={ posted ? "…emerald…" : "…ink…" }
+            //   {posted ? "Posted" : "Draft"} */}
+        <span className={workRequestStatusPillClass(detail.status)}>
+          {WORK_REQUEST_STATUS_LABEL[detail.status]}
         </span>
       </div>
 

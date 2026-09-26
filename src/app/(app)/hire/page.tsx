@@ -5,6 +5,10 @@ import { getSessionViewer } from "@/lib/session";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 import { listWorkRequests, type WorkRequestRow } from "@/lib/hire";
+import {
+  WORK_REQUEST_STATUS_LABEL,
+  workRequestStatusPillClass,
+} from "@/lib/work-request-status";
 
 /**
  * `/hire` — THE REQUESTER'S WORK REQUESTS (`P1-J4-E392` WS-1).
@@ -119,14 +123,17 @@ export default async function Page() {
                       {budget && <> · {budget}</>}
                     </p>
                   </div>
-                  <span
-                    className={
-                      r.status === "POSTED"
-                        ? "rounded-full bg-emerald-50 px-3 py-1 text-[12.5px] font-bold text-emerald-700"
-                        : "rounded-full bg-ink/[0.05] px-3 py-1 text-[12.5px] font-bold text-ink-2"
-                    }
-                  >
-                    {r.status === "POSTED" ? "Posted" : "Draft"}
+                  {/* ⚠⚠ ONE PLACE (`P2-A8-E679`). This read
+                      `status === "POSTED" ? "Posted" : "Draft"`, so **ASSIGNED,
+                      ORDERED and CANCELLED all rendered as "Draft"** — a
+                      request under contract reading as unfinished.
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      //   className={ r.status === "POSTED"
+                      //     ? "…bg-emerald-50…text-emerald-700"
+                      //     : "…bg-ink/[0.05]…text-ink-2" }
+                      //   {r.status === "POSTED" ? "Posted" : "Draft"} */}
+                  <span className={workRequestStatusPillClass(r.status)}>
+                    {WORK_REQUEST_STATUS_LABEL[r.status]}
                   </span>
                 </div>
 
