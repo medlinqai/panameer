@@ -2,6 +2,7 @@ import type { ProviderBidStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SourcingError, inviteIsOpen } from "@/lib/sourcing";
 import { notify } from "@/lib/notifications";
+import { loadOwned, resolveBuyer } from "@/lib/work-request";
 import type { Viewer } from "@/lib/access";
 
 /**
@@ -445,4 +446,151 @@ export async function withdrawProposal(
       data: { resolved_at: new Date() },
     })
     .catch(() => {});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WS-D · THE BUYER READS THE PROPOSALS. ⚠⚠⚠ READ-ONLY — NO DECISION IS TAKEN.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠ **A `Record`, SO AN EIGHTH `ProviderBidStatus` IS A COMPILE ERROR.** The
+ * same call `WORK_REQUEST_STATUS_LABEL` made in WS-A, and for the reason WS-A
+ * measured: two pages there turned a five-value enum into copy with a ternary
+ * on ONE value, so three states silently read *"Draft"*.
+ * ⚠ **THE MODEL'S NAMES ARE NOT THE MEMBER'S NAMES.** A buyer reading
+ * `NOT_SELECTED` learns less than one reading *"Not selected"*, and
+ * `SHORTLISTED` is the buyer's own earlier act, not a status the provider set.
+ */
+export const PROPOSAL_STATUS_LABEL: Record<ProviderBidStatus, string> = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  SHORTLISTED: "Shortlisted",
+  WITHDRAWN: "Withdrawn",
+  DECLINED: "Declined",
+  AWARDED: "Awarded",
+  NOT_SELECTED: "Not selected",
+};
+
+/** One proposal as the buyer's compare view reads it. */
+export type ProposalForBuyer = {
+  id: string;
+  bidNumber: string;
+  providerPersonId: string;
+  providerName: string;
+  status: ProviderBidStatus;
+  statusLabel: string;
+  submittedAt: Date | null;
+  validUntil: Date | null;
+  coverNote: string | null;
+  /**
+   * ⚠⚠⚠ NULL IS A REAL STATE, NOT AN UNCOUNTABLE ONE. `ProposalDraft.rate` is
+   * optional — *"a provider may pitch before pricing"* — so a proposal with no
+   * rate is a thing that happened, and the page says **"No rate given"** rather
+   * than printing a dash. ⚠ Ruling 18: a dash means *we cannot count this*, and
+   * this is not that.
+   */
+  rate: ProposalRate | null;
+  /** ⚠ Set when the proposal answers an invitation; null on an open request. */
+  invited: boolean;
+};
+
+/**
+ * ── ⚠⚠⚠ EVERY PROPOSAL ON ONE WORK REQUEST, FOR ITS BUYER (`E682` WS-D) ───
+ *
+ * ⚠⚠ **WHY THIS IS READ-ONLY AND MUST STAY SO.** WS-D's line in the brief is
+ * *"the requester's view of all bids on one `WorkRequest`. **READ-ONLY — no
+ * decision is taken here.**"* ⚠⚠⚠ So this function returns rows and **nothing
+ * on the page it feeds may write** — shortlisting, declining and awarding are
+ * WS-F's `selectProvider`, which does not yet have a surface. ⚠ Rendering a
+ * `Select` button here would be `E579` exactly: a control whose handler does
+ * not exist.
+ *
+ * ── ⚠⚠ OWNER-SCOPED TWICE, DELIBERATELY ─────────────────────────────────
+ *
+ * ⚠ `resolveBuyer` + `loadOwned` are `invitedOn`'s pattern, and they are what
+ * make *"not yours"* and *"does not exist"* the same answer (`loadOwned`
+ * throws, the page 404s). ⚠⚠ The page that calls this ALREADY proved ownership
+ * through `getWorkRequestDetail`, and this repeats it on purpose: a lib that
+ * trusts its caller's earlier check is a lib that leaks the first time somebody
+ * calls it from somewhere else (load-bearing rule 5).
+ *
+ * ── ⚠⚠⚠ `submitted_at IS NOT NULL`, WHICH IS NOT THE SAME AS "not DRAFT" ──
+ *
+ * ⚠⚠ **A PROVIDER'S UNSENT DRAFT IS NOT A PROPOSAL AND THE BUYER MUST NOT SEE
+ * ONE.** `status` defaults to `DRAFT` in the schema, so filtering on the status
+ * enum would depend on nothing ever writing a draft row; filtering on
+ * `submitted_at` asks the question directly. ⚠ It is also the column *Proposals
+ * Sent* already counts, so the compare view and Statistics cannot disagree
+ * about what a sent proposal is (`E585`).
+ *
+ * ⚠⚠ **WITHDRAWN PROPOSALS ARE INCLUDED, AND THAT IS THE POINT OF RECORDING
+ * RATHER THAN DELETING THEM.** `withdrawProposal`'s own reason: *"a deleted
+ * proposal reads to the buyer as though it was never sent."* Hiding it here
+ * would recreate exactly that, one layer up.
+ *
+ * ⚠ **ARRIVAL ORDER, AND THE PAGE SAYS SO.** Sorting by price would be a
+ * ranking, and a ranking is a judgement this read has no business making on a
+ * screen whose whole instruction is that no decision is taken.
+ */
+export async function proposalsOn(
+  viewer: Viewer,
+  workRequestId: string
+): Promise<ProposalForBuyer[]> {
+  const { pAccountId } = await resolveBuyer(viewer);
+  const wr = await loadOwned(viewer, workRequestId, pAccountId);
+
+  const rows = await prisma.providerBid.findMany({
+    where: { work_request_id: wr.id, submitted_at: { not: null } },
+    select: {
+      id: true,
+      bid_number: true,
+      provider_person_id: true,
+      status: true,
+      submitted_at: true,
+      valid_until: true,
+      cover_note: true,
+      bid_request_id: true,
+      lines: {
+        select: { unit_price_cents: true, uom: true, basis: true },
+        orderBy: { line_number: "asc" },
+        take: 1,
+      },
+    },
+    orderBy: { submitted_at: "asc" },
+  });
+  if (rows.length === 0) return [];
+
+  const people = await prisma.person.findMany({
+    where: { id: { in: rows.map((r) => r.provider_person_id) } },
+    select: { id: true, first_name: true, last_name: true },
+  });
+  const nameOf = new Map(
+    people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
+  );
+
+  return rows.map((r) => {
+    const line = r.lines[0];
+    return {
+      id: r.id,
+      bidNumber: r.bid_number,
+      providerPersonId: r.provider_person_id,
+      /* ⚠ `invitedOn`'s fallback, for the same reason — a missing name is not a
+         blank cell, and "A provider" is true of every row that hits it. */
+      providerName: nameOf.get(r.provider_person_id) || "A provider",
+      status: r.status,
+      statusLabel: PROPOSAL_STATUS_LABEL[r.status],
+      submittedAt: r.submitted_at,
+      validUntil: r.valid_until,
+      coverNote: r.cover_note,
+      rate:
+        line && line.unit_price_cents !== null
+          ? {
+              unitPriceCents: line.unit_price_cents,
+              uom: line.uom,
+              basis: line.basis,
+            }
+          : null,
+      invited: r.bid_request_id !== null,
+    };
+  });
 }

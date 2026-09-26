@@ -7,6 +7,7 @@ import { formatCents } from "@/lib/display";
 import { WorkRequestLines } from "@/components/work/WorkRequestLines";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
+import { proposalsOn } from "@/lib/proposals";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
   WORK_REQUEST_STATUS_LABEL,
@@ -61,9 +62,12 @@ export default async function Page({
     throw e;
   }
 
-  const [{ providers }, invited] = await Promise.all([
+  const [{ providers }, invited, proposals] = await Promise.all([
     matchProvidersFor(viewer, id),
     invitedOn(viewer, id),
+    /* ⚠ `E682` WS-D. Owner-scoped inside `proposalsOn` as well as here — see
+       that function on why it does not trust this page's earlier check. */
+    proposalsOn(viewer, id),
   ]);
 
   /*
@@ -181,10 +185,106 @@ export default async function Page({
         <WorkRequestLines initial={detail} providers={options} />
       </div>
 
+      {/* ══ THE PROPOSALS THAT CAME BACK ═══════════════════════════════════
+          ⚠⚠⚠ `P2-A8-E682` WS-D. **READ-ONLY — NO DECISION IS TAKEN HERE.**
+          Shortlisting, declining and awarding are `selectProvider` (WS-F),
+          which has no surface yet, so this section renders NO control that
+          writes. ⚠ A `Select` button here would be `E579` exactly.
+
+          ⚠⚠ IT SITS ABOVE THE INVITATIONS, AND THE NOTIFICATION IS WHY. The
+          registry sends `work.proposal_received` to `/work-requests/{id}` —
+          this page — so a buyer arriving from their bell is here to read a
+          PROPOSAL. Landing them above the list of who was asked, and making
+          them scroll past it to find what came back, would answer a different
+          question than the one they clicked. */}
+      <div className="mt-8">
+        <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
+          Proposals <span className="font-normal text-ink-2">({proposals.length})</span>
+        </h2>
+        {proposals.length === 0 ? (
+          /*
+            ⚠⚠ AN HONEST ZERO WITH THE FIRST MOVE NAMED (§4), not a report of
+            emptiness — and the two reasons are genuinely different, so the copy
+            splits on the one fact that decides it.
+          */
+          <p className="mt-3 text-[14.5px] text-ink-2">
+            {posted
+              ? "No proposals yet. Providers can find this request, and inviting someone puts it in front of them directly."
+              : "No proposals yet. A request takes proposals once it is posted."}
+          </p>
+        ) : (
+          <>
+            {/*
+              ⚠⚠⚠ THE ORDER IS STATED BECAUSE IT IS NOT A RANKING. Sorting by
+              price would be a judgement, on a screen whose whole instruction is
+              that no decision is taken here.
+            */}
+            <p className="mt-1 text-[13px] text-ink-2">In the order they arrived.</p>
+            <ul className="mt-3 grid gap-3">
+              {proposals.map((p) => (
+                <li
+                  key={p.id}
+                  className="rounded-[12px] border border-line bg-white px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                    <span className="font-semibold">{p.providerName}</span>
+                    <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">
+                      {p.statusLabel}
+                    </span>
+                  </div>
+
+                  <p className="mt-1.5 text-[15px]">
+                    {/*
+                      ⚠⚠⚠ "No rate given" IS NOT A DASH, AND THE DIFFERENCE IS
+                      RULING 18. A dash means *we cannot count this*; a proposal
+                      with no price is a thing that HAPPENED — the writer allows
+                      a pitch before pricing — so it is reported in words.
+                    */}
+                    {p.rate ? (
+                      <>
+                        <span className="font-bold">
+                          {formatCents(p.rate.unitPriceCents)}
+                        </span>
+                        <span className="text-ink-2">
+                          {p.rate.basis === "RATE" ? " per hour" : " fixed fee"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-ink-2">No rate given</span>
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-[13.5px] text-ink-2">
+                    {p.bidNumber}
+                    {p.invited ? " · Invited" : " · Found this request"}
+                    {p.submittedAt && (
+                      <> · sent {p.submittedAt.toISOString().slice(0, 10)}</>
+                    )}
+                    {p.validUntil && (
+                      <> · good until {p.validUntil.toISOString().slice(0, 10)}</>
+                    )}
+                  </p>
+
+                  {p.coverNote && (
+                    <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-relaxed text-ink-2">
+                      {p.coverNote}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
       {/* ══ WHO HAS BEEN INVITED ═══════════════════════════════════════════
-          ⚠⚠ THE INVITATIONS, NOT THE RESPONSES. `E392`'s fence: this brief
-          creates invites and renders nothing that comes back. No bid rows, no
-          statuses, no comparison — those are their own brief. */}
+          ⚠⚠ THE INVITATIONS, NOT THE RESPONSES.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`): *"`E392`'s fence: this
+          brief creates invites and renders nothing that comes back. No bid
+          rows, no statuses, no comparison — those are their own brief."*
+          ⚠⚠ That brief is `E682` WS-D and it is the section ABOVE. The fence
+          was right for `E392` and is simply spent; this section still shows the
+          invitations only, which is what it was always for. */}
       <div className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">

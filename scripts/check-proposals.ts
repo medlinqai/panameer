@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
-import { submitProposal, withdrawProposal, proposeEligibility } from "@/lib/proposals";
+import { submitProposal, withdrawProposal, proposeEligibility, proposalsOn } from "@/lib/proposals";
 import { inviteIsOpen } from "@/lib/sourcing";
 import { getStatistics } from "@/lib/statistics";
 
@@ -368,6 +368,130 @@ async function main() {
         !/payment|payout|service[_ ]?fee|\bcut\b/i.test(formSrc) &&
           !/payment|payout|service[_ ]?fee/i.test(routeSrc),
         "ruling 25 — no money moves in this chain"
+      );
+
+      /* ── 10 · ⚠⚠⚠ WS-D — THE BUYER READS THEM, AND WRITES NOTHING ────────
+         ⚠ `proposalsOn` needs a viewer `resolveBuyer` accepts, which means
+         `is_service_buyer`. The §3 buyer is picked on "has a user_id" alone, so
+         this section resolves its own and SKIPS rather than failing if the seed
+         has none — a gate that cannot find its population says so (`E586`). */
+      const realBuyer = await prisma.person.findFirst({
+        where: { NOT: { user_id: null }, is_service_buyer: true },
+        select: { id: true, user_id: true, company: { select: { p_account_id: true } } },
+      });
+      if (!realBuyer?.user_id) {
+        check("10 — a service buyer exists to read proposals (E586)", false, "none seeded");
+      } else {
+        const wr2 = await prisma.workRequest.create({
+          data: {
+            buyer_person_id: realBuyer.id,
+            p_account_id: realBuyer.company.p_account_id,
+            title: TAG, status: "POSTED", proposal_access: "OPEN",
+          },
+          select: { id: true },
+        });
+        requestIds.push(wr2.id);
+        await submitProposal(V(provider.user_id), {
+          workRequestId: wr2.id,
+          coverNote: "ten years of this",
+          rate: { unitPriceCents: 15_000 },
+        });
+
+        const seen = await proposalsOn(V(realBuyer.user_id), wr2.id);
+        check("10 — ⚠⚠ the buyer sees the proposal", seen.length === 1, `${seen.length}`);
+        check("10 — ⚠ with its rate", seen[0]?.rate?.unitPriceCents === 15_000,
+          `${seen[0]?.rate?.unitPriceCents}`);
+        check("10 — with the provider's NAME, not an id",
+          !!seen[0]?.providerName && seen[0].providerName !== seen[0].providerPersonId);
+        check("10 — and a member-facing status label",
+          seen[0]?.statusLabel === "Submitted", seen[0]?.statusLabel);
+        /* ⚠⚠ ON AN OPEN REQUEST THE PROPOSAL IS NOT INVITED, and the page prints
+           "Found this request" off exactly this. */
+        check("10 — ⚠ an uninvited proposal reports itself as such",
+          seen[0]?.invited === false);
+
+        /* ⚠⚠⚠ A PROVIDER'S UNSENT DRAFT IS NOT A PROPOSAL. `status` defaults to
+           DRAFT in the schema, so the filter is on `submitted_at` — the column
+           *Proposals Sent* already counts — rather than on the enum. ⚠ Written
+           directly here because NOTHING in the app writes a draft bid, which is
+           precisely why a filter on the enum would look correct and prove
+           nothing. */
+        const other = await prisma.person.findFirst({
+          where: { NOT: [{ user_id: null }, { id: provider.id }, { id: realBuyer.id }] },
+          select: { id: true },
+        });
+        if (other) {
+          await prisma.providerBid.create({
+            data: {
+              bid_number: `PB-DRAFT-${Date.now().toString(36)}`,
+              work_request_id: wr2.id,
+              provider_person_id: other.id,
+              status: "DRAFT",
+              submitted_at: null,
+            },
+          });
+          const withDraft = await proposalsOn(V(realBuyer.user_id), wr2.id);
+          check(
+            "10 — ⚠⚠⚠ an UNSENT draft is NOT shown to the buyer",
+            withDraft.length === 1,
+            `${withDraft.length} — submitted_at is the question, not the status enum`
+          );
+        }
+
+        /* ⚠⚠ A WITHDRAWN PROPOSAL STAYS VISIBLE. `withdrawProposal`'s own
+           reason: *"a deleted proposal reads to the buyer as though it was never
+           sent"* — hiding it here would recreate that one layer up. */
+        const mine = await prisma.providerBid.findFirst({
+          where: { work_request_id: wr2.id, provider_person_id: provider.id },
+          select: { id: true },
+        });
+        await withdrawProposal(V(provider.user_id), mine!.id);
+        const afterW = await proposalsOn(V(realBuyer.user_id), wr2.id);
+        check("10 — ⚠⚠ a WITHDRAWN proposal is still shown", afterW.length === 1);
+        check("10 — ⚠ and it says so", afterW[0]?.statusLabel === "Withdrawn",
+          afterW[0]?.statusLabel);
+
+        /* ⚠⚠⚠ OWNER-SCOPED: ANOTHER BUYER SEES NOTHING, AND NOT AN EMPTY LIST —
+           `loadOwned` throws, so "not yours" and "does not exist" are the same
+           answer (the page 404s on both). */
+        const otherBuyer = await prisma.person.findFirst({
+          where: { NOT: [{ user_id: null }, { id: realBuyer.id }], is_service_buyer: true,
+            company: { p_account_id: { not: realBuyer.company.p_account_id } } },
+          select: { user_id: true },
+        });
+        if (otherBuyer?.user_id) {
+          let refused = false;
+          await proposalsOn(V(otherBuyer.user_id), wr2.id).catch(() => { refused = true; });
+          check(
+            "10 — ⚠⚠⚠ a DIFFERENT buyer cannot read these proposals",
+            refused,
+            "owner-scoped in the lib, not only in the page that calls it"
+          );
+        }
+      }
+
+      /* ── 11 · ⚠⚠⚠ WS-D IS READ-ONLY, AND THE PAGE MUST STAY THAT WAY ─────
+         ⚠⚠ The brief's line is *"READ-ONLY — no decision is taken here."*
+         Shortlisting, declining and awarding are `selectProvider` (WS-F), which
+         has NO surface — so a control here would be `E579`: a button whose
+         handler does not exist. ⚠ Asserted on the source, because the day
+         somebody adds a Select button this is the only thing that objects. */
+      const buyerPage = strip(
+        readFileSync(join("src", "app", "(app)", "work-requests", "[id]", "page.tsx"), "utf8")
+      );
+      check(
+        "11 — the buyer's page reads proposals through proposalsOn",
+        /proposalsOn\(/.test(buyerPage)
+      );
+      check(
+        "11 — ⚠⚠⚠ and it takes NO decision — no selection writer is reachable from it",
+        !/selectProvider|@\/lib\/selection|shortlist|Shortlist|awardTo|declineProposal/.test(buyerPage),
+        "WS-D is read-only; selectProvider is WS-F and has no surface, so a control here is E579"
+      );
+      check(
+        "11 — ⚠⚠ and it POSTs nothing about a proposal",
+        !/fetch\([^)]*propos/i.test(buyerPage),
+        "a read-only compare view that posts is not read-only"
       );
     } finally {
       /* ⚠⚠ SCOPED, and the proposals go first — `ProviderBid` cascades on the
