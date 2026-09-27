@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
 import { ConfigDrawer } from "@/components/casing/ConfigDrawer";
+import { BottomNav } from "@/components/casing/BottomNav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { ACCOUNT_BAND_HREF } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
@@ -217,6 +218,7 @@ export function AppBand() {
       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
 
   return (
+    <>
     <header className="pm-band border-b border-white/10 bg-rail px-5 py-2.5 sm:px-6">
       {/* ── LEFT: the brand, always left-justified while visible ──────────── */}
       <Link
@@ -377,9 +379,24 @@ export function AppBand() {
         */}
         {isAdmin && <ConfigDrawer groups={ADMIN_NAV} label="Configuration" />}
 
-        <BandIcon href="/support/bug" label="Report a bug">
-          <BugIcon />
-        </BandIcon>
+        {/*
+          ── ⚠⚠⚠ THE BUG ICON HIDES AT PHONE WIDTH (`P2-ALL-E694` WS-A) ──────
+
+          ⚠ WS-A: at phone width the band keeps *"the logo mark, and the
+          avatar"*. ⚠⚠ **IT DOES NOT DISAPPEAR — IT MOVES (rule 5).** A
+          `Report a Bug` row was added to `AccountMenu`, rendered **only below
+          `md`**, so the door appears in exactly the window where this icon
+          leaves. ⚠⚠⚠ **MEASURED FIRST: this was `/support/bug`'s ONLY
+          unconditional door in the logged-in shell** — `AppHeader.tsx:434` has
+          been dead since `E559` — so hiding it without that row would have taken
+          the last one at the width where people actually report bugs.
+          ⚠ Above `md` nothing changes: same icon, same place, same markup.
+        */}
+        <span className="hidden md:contents">
+          <BandIcon href="/support/bug" label="Report a bug">
+            <BugIcon />
+          </BandIcon>
+        </span>
 
         {/*
           ── ⚠⚠ MESSAGES (`P2-ALL-E560` STAGE 1, 2026-09-18) ──────────────────
@@ -495,6 +512,20 @@ export function AppBand() {
         />
       )}
     </header>
+
+      {/*
+        ── ⚠⚠⚠ M1 MOVES TO THE BOTTOM AT PHONE WIDTH (WS-B, ruling 88) ───────
+
+        ⚠ **THE SAME `items`, READ ONCE ABOVE.** The bar does not compute its own
+        list — `navForRoles(me)` is evaluated once and handed to both surfaces,
+        so the band and the bar can never disagree about what a member's five
+        are. ⚠⚠ **That is the test the brief sets: changing which five appear is
+        a `lib/nav.ts` edit and nothing else.**
+        ⚠ It is `md:hidden` itself, and `.pm-band-menu` is hidden below `md` in
+        `app-band.css` — **one row is visible at any width, never both.**
+      */}
+      <BottomNav items={items} />
+    </>
   );
 }
 

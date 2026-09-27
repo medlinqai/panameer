@@ -92,6 +92,7 @@
     "backfill:path-group-owner": "npx esbuild prisma/backfill-path-group-owner.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-path-group-owner.cjs --log-level=error && node -r dotenv/config .harness/backfill-path-group-owner.cjs dotenv_config_path=.env.local",
     "backfill:assessment-domains": "npx esbuild prisma/backfill-assessment-domains.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-assessment-domains.cjs --log-level=error && node -r dotenv/config .harness/backfill-assessment-domains.cjs dotenv_config_path=.env.local",
     "check:assessment-instance": "npx esbuild scripts/check-assessment-instance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/assessment-instance.cjs --log-level=error && node .harness/assessment-instance.cjs",
+    "check:mobile-rows": "playwright test --config=playwright.mobile-rows.config.ts",
     "check:app-shell": "playwright test --config=playwright.app-shell.config.ts",
     "check:validation-answers": "npx esbuild scripts/check-validation-answers.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/validation-answers.cjs --log-level=error && node .harness/validation-answers.cjs",
     "check:work-request-identity": "npx esbuild scripts/check-work-request-identity.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/wri.cjs --log-level=error && node .harness/wri.cjs",

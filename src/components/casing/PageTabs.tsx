@@ -1,3 +1,4 @@
+import "./page-tabs.css";
 import Link from "next/link";
 /*
   ⚠⚠⚠ THE DISC AND THE CONNECTOR MOVED OUT, AND NOTHING ABOUT THEM CHANGED

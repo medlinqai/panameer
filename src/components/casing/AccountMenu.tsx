@@ -679,6 +679,38 @@ export function AccountMenu({
               />
             </Fragment>
           ))}
+          {/*
+            ── ⚠⚠⚠ `Report a Bug` — PHONE WIDTH ONLY (`P2-ALL-E694` WS-A) ─────
+
+            ⚠ WS-A sheds the band's bug icon at phone width. ⚠⚠ **IT DOES NOT
+            DISAPPEAR — IT ARRIVES HERE (rule 5)**, and `md:hidden` means the
+            door opens in **exactly** the window where the icon closes: never
+            both, never neither.
+            ⚠⚠⚠ **MEASURED: the band icon was `/support/bug`'s ONLY
+            unconditional door in the logged-in shell** — `AppHeader.tsx:434`
+            has been dead since `E559`, and `/support/tickets` only links on once
+            you are already in support.
+
+            ⚠⚠ **IT IS NOT ONE OF RULING 89f's NAV ROWS AND IT IS DELIBERATELY
+            NOT IN THAT LIST.** 89f settled the menu as `My Profile · My Company ·
+            My Account Settings · Invite a Colleague · Request a Recommendation ·
+            Theme · My Tickets`, and said the identity block, the messages toggle
+            and `Sign Out` are *"not nav rows, not touched"*. ⚠ This sits in that
+            same utility area, below the rule, beside `Sign Out` — **so a ruled
+            list is not quietly extended by a breakpoint change.**
+          */}
+          <div className="border-t border-line md:hidden">
+            <a
+              role="menuitem"
+              data-menu-item
+              href="/support/bug"
+              onClick={close}
+              className={rowClass}
+            >
+              Report a Bug
+            </a>
+          </div>
+
           {/* ---- Sign out ----------------------------------------------- */}
           <div className="border-t border-line">
             <button

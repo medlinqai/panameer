@@ -1,0 +1,98 @@
+/*
+ * ── ⚠⚠⚠ M2 FITS ONE LINE AT PHONE WIDTH (`P2-ALL-E694` WS-E, ruling 88b/91) ──
+ *
+ * ⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS — the same reason `app-band.css`
+ * gives: `check:app-shell` GUARD 3 forbids a `min-[…]` variant competing with a
+ * named one, and the row's own classes are composed in TSX where a media query
+ * cannot reach.
+ *
+ * ── ⚠⚠ THE 202px WAS MEASURED AND IT WAS NEVER THE WORDS ──────────────────
+ *
+ * ⚠⚠⚠ **MEASURED AT 390 ON `/messages`, WHERE THE ROW HID 202px:**
+ *
+ *     available (row clientWidth)      358px
+ *     the five labels' TEXT alone      323px   <-- fits, with 35px to spare
+ *     the same five WITH link padding  443px   <-- 12px + 12px each, 120px total
+ *     the `CONNECT` eyebrow            +89px   <-- a quarter of the row, not a tab
+ *
+ * ⚠⚠ **SO THE TABS WERE NEVER TOO LONG. `/connect`'s five are already ONE WORD
+ * EACH** (`E687` made them so). ⚠⚠⚠ **THE ROW WAS SPENDING 209px ON PADDING AND
+ * A SECTION LABEL, AND THEN HIDING THE RESULT BEHIND A SCROLLBAR NOBODY DRAWS.**
+ * ⚠ **That is why `89h` does not block this and why no tab is renamed here:
+ * renaming would have been solving the wrong number.**
+ *
+ * ── ⚠ WHAT IS NOT DONE HERE, AND WHY ──────────────────────────────────────
+ *
+ * ⚠⚠ **NOT `overflow-x: auto`** — that is the defect ruling 91 is named for.
+ * ⚠⚠ **NOT `flex-wrap`** — Scott on a second row: *"downright unprofessional."*
+ * ⚠ **No tab is renamed** — `89h` is open and unruled, and the measurement above
+ * says the words were never the problem.
+ */
+
+@media (max-width: 767.98px) {
+  /*
+    ⚠⚠⚠ THE SCROLLER COMES OFF. With the row fitting, `overflow-x: auto` has
+    nothing to scroll — but leaving it would keep the hidden-scrollbar escape
+    hatch alive, so the next thing that does not fit would vanish quietly again
+    instead of failing `check:mobile-rows`. ⚠ **The gate asserts its absence by
+    shape, so this line is load-bearing rather than tidy.**
+  */
+  [data-testid="page-tabs"] {
+    overflow-x: visible;
+  }
+
+  /*
+    ⚠⚠ THE EYEBROW GOES — 89px, AND IT IS NOT A TAB. It names the section you
+    are in, which at phone width the bottom bar's active item already says.
+    ⚠ It is HIDDEN, not deleted: above `md` it is unchanged, and it is still read
+    by screen readers on the widths that show it.
+  */
+  [data-testid="page-tabs"] > span:first-child {
+    display: none;
+  }
+
+  /*
+    ⚠⚠ PADDING WAS THE BIGGEST WASTE — 120px across five tabs — BUT NOT THE ONLY
+    ONE. ⚠ SUPERSEDED, quoted not deleted (`E164`), because it was written after
+    the first lever and was wrong by the second:
+    //   The text stays at its own size so the labels are still legible; only the
+    //   air around them shrinks.
+    ⚠⚠⚠ `min-width: 0` IS LOAD-BEARING: a flex item refuses to shrink below its
+    content without it, which is exactly how a row ends up overflowing while
+    every individual tab looks fine.
+  */
+  /*
+    ⚠ THE ROW'S OWN SIDE PADDING GOES TOO — 8px of the 358, and the tabs are
+    already inset by their own. Measured, not guessed: it takes the available
+    width from 358 to 366.
+  */
+  [data-testid="page-tabs"] {
+    padding-left: 0;
+    padding-right: 0;
+    /*
+      ⚠⚠ AND THE GAP. ⚠ MEASURED: with the padding fixed the row still hid
+      **9px** — `gap-0.5` is 2px between five tabs, and four gaps is 8px. ⚠⚠⚠ **A
+      LAST 9px IS STILL A ROW THAT DOES NOT FIT**, and ruling 91's whole point is
+      that a small hidden overflow is exactly as invisible as a large one.
+      ⚠ The tabs are separated by their own padding; the gap was buying nothing.
+    */
+    gap: 0;
+  }
+
+  /*
+    ⚠⚠ TWO LEVERS, BOTH SMALL, BECAUSE ONE ALONE DID NOT REACH.
+    ⚠ MEASURED IN ORDER: padding 12→5 took the tabs 443 → 373 against 358
+    available — **still 15px short**, and dropping padding further would have put
+    adjacent tap targets within a few pixels of each other, which is a touch
+    defect traded for a layout one.
+    ⚠⚠ So the type scales a little as well. **The label is never removed** (88a
+    bans icon-only) and never truncated — it is set slightly smaller on the width
+    where the whole row has to fit.
+  */
+  [data-testid="page-tabs"] a {
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 12.5px;
+    min-width: 0;
+  }
+}

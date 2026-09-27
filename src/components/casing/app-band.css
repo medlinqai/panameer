@@ -363,3 +363,28 @@ html {
 .pm-band-item {
   flex-shrink: 0;
 }
+
+/*
+ * ── ⚠⚠⚠ M1 LEAVES THE BAND BELOW `md` (`P2-ALL-E694` WS-B, ruling 88) ───────
+ *
+ * ⚠ The operational menu becomes a fixed BOTTOM BAR at phone width
+ * (`BottomNav.tsx` / `bottom-nav.css`), so the band's centre column is not
+ * narrowed here — **it is not rendered at all.**
+ *
+ * ⚠⚠⚠ **THIS IS WHAT ACTUALLY FIXES THE 122px.** Every earlier attempt bought
+ * width by taking something away from the row and leaving it in place: the
+ * console label went at 930, the mark shrank at 400, and `.pm-band-label` — the
+ * word that says what an icon IS — went at 780. ⚠ **The row still hid 122px
+ * afterwards, and 52px even with only two items** (`E692`). Squeezing a row that
+ * does not fit produces a smaller row that does not fit.
+ *
+ * ⚠⚠ **767.98px IS TAILWIND'S `md` BOUNDARY, DELIBERATELY** — `BottomNav` is
+ * `md:hidden`, so the two must switch at the same pixel or there is a width with
+ * two menus or none. ⚠ The brief's own line: *"Above `md`, the band is
+ * unchanged."*
+ */
+@media (max-width: 767.98px) {
+  .pm-band-menu {
+    display: none;
+  }
+}

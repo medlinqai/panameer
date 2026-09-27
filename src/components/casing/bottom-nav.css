@@ -1,0 +1,156 @@
+/*
+ * ── ⚠⚠ M1's BOTTOM BAR (`P2-ALL-E694` WS-B) ────────────────────────────────
+ *
+ * ⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS — the same reason `app-band.css`
+ * and `messages-drawer.css` give: `check:app-shell` GUARD 3 forbids a `min-[…]`
+ * variant competing with a named one, and this needs `env()` for the iOS safe
+ * area, which the named scale does not express.
+ */
+
+.pm-bottomnav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--rail, #211c2e);
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+
+  /*
+    ── ⚠⚠⚠ iOS SAFARI'S CHROME SITS AT THE BOTTOM AND WILL FIGHT A FIXED BAR ──
+    ⚠ Ruling 88a names this explicitly. `env(safe-area-inset-bottom)` is the home
+    indicator's strip on a notched iPhone; without it the last 34px of this bar
+    sits UNDER the indicator and the labels are half-eaten.
+    ⚠⚠ `max()` not `+`: on a device with no inset the value is `0px`, and the bar
+    still needs its own padding. A bare `+` would give 6px there and 40px on an
+    iPhone, which is two different bars.
+  */
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  padding-top: 6px;
+}
+
+.pm-bottomnav-row {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /*
+    ⚠⚠⚠ NO `overflow-x`. NOT `auto`, NOT `scroll`, NOT AT ANY WIDTH.
+    ⚠ That is the defect this whole brief exists to remove, and ruling 91's
+    namesake case: a row that scrolls with a hidden scrollbar satisfies every
+    check that never ran against it. `check:mobile-rows` asserts its absence BY
+    SHAPE, so writing one here fails a named test rather than passing quietly.
+  */
+}
+
+/*
+  ⚠⚠ EQUAL CELLS, AND THAT IS WHAT MAKES IT FIT RATHER THAN SCROLL. Five cells
+  at `1 1 0` share 390px as 78px each; the label truncates inside its own cell
+  instead of pushing the row wider.
+  ⚠ `min-width: 0` IS LOAD-BEARING — without it a flex item refuses to shrink
+  below its content and the row overflows again, which is precisely how the band
+  ended up hiding 122px.
+*/
+.pm-bottomnav-cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pm-bottomnav-link,
+.pm-bottomnav-more > summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 10.5px;
+  line-height: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 120ms ease, background-color 120ms ease;
+  border-radius: 8px;
+}
+
+.pm-bottomnav-link:hover,
+.pm-bottomnav-more > summary:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 0.08);
+}
+
+/* ⚠ `E217`'s ONE RULE, carried over rather than re-invented: active is a solid
+   fill; the translucent wash is hover and nothing else. */
+.pm-bottomnav-link.is-active {
+  background: var(--rail-active, #3a3150);
+  color: #fff;
+}
+
+/*
+  ⚠⚠ THE LABEL TRUNCATES; IT DOES NOT WRAP AND IT DOES NOT PUSH.
+  ⚠ Wrapping would make the bar two lines tall on one long word — Scott on the
+  tab row: *"downright unprofessional"* — and pushing is the overflow this brief
+  removes. ⚠⚠⚠ THE LABEL IS NEVER REMOVED, only narrowed: 88a bans icon-only.
+*/
+.pm-bottomnav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-bottomnav-more {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pm-bottomnav-more > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.pm-bottomnav-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ⚠ The overflow opens UPWARD — there is nothing below a bottom bar. */
+.pm-bottomnav-overflow {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  min-width: 180px;
+  margin: 0 0 6px;
+  padding: 4px;
+  list-style: none;
+  background: var(--rail, #211c2e);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 10px;
+  box-shadow: 0 -10px 28px rgb(0 0 0 / 0.35);
+}
+
+.pm-bottomnav-overflow-link {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: rgb(255 255 255 / 0.8);
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 8px;
+}
+.pm-bottomnav-overflow-link:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+}
+
+/*
+  ── ⚠⚠⚠ THE PAGE MUST NOT END UNDERNEATH THE BAR ──────────────────────────
+  ⚠ A fixed bar covers whatever the page's last element is, and on a phone that
+  is usually the primary action. ⚠⚠ The reserve is the bar's own height plus the
+  safe-area inset, expressed once so the two cannot drift.
+*/
+@media (max-width: 767.98px) {
+  body {
+    padding-bottom: calc(58px + max(6px, env(safe-area-inset-bottom)));
+  }
+}
