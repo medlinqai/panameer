@@ -1,0 +1,22 @@
+{
+  "id": "P2-A5-E685",
+  "written": "2026-09-27T13:56:29.356Z",
+  "authorised": "Scott, explicitly, 2026-09-27",
+  "database": "ofkctqkhclnaihnmbyfx — the one database, which also serves production",
+  "what": "admin@panameer.com password_hash set to the committed seed value; the lockout cleared",
+  "restore": "UPDATE users SET password_hash = prior_password_hash, failed_login_attempts = prior_failed_login_attempts, locked_until = prior_locked_until WHERE id = user_id",
+  "note": "The prior hash matched no password anybody held — that IS the defect. Restoring it restores the broken state, including the lockout.",
+  "user_id": "d879f1bd-b349-48e4-a50e-7aad986d594a",
+  "email": "admin@panameer.com",
+  "prior_password_hash": "$2b$10$39FUkyrv48jiiL9mrMY99u5ckhC9Owwq5Guv/8CeRMJjSQjlQJrXK",
+  "prior_failed_login_attempts": 5,
+  "prior_locked_until": "2026-09-27T14:21:27.264Z",
+  "prior_locked": true,
+  "correction": {
+    "id": "P2-A5-E685a",
+    "written": "2026-09-27T13:58:00.410Z",
+    "what": "E685 nulled locked_until and left locked=true, which lockActive() reads as an INDEFINITE lock. This clears locked.",
+    "restore": "UPDATE users SET locked = true WHERE id = user_id  -- restores the permanent lock E685 created, not the original state",
+    "original_state": "locked=true, locked_until=2026-09-27T14:21:27.264Z (a lock that would have expired on its own)"
+  }
+}
