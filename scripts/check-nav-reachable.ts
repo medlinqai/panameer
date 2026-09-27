@@ -37,6 +37,8 @@
  * `requires` omitted means *"everyone signed in sees it"* (nav.ts), so an
  * omitted `requires` against a capability-gated route is the defect itself.
  */
+import { readFileSync } from "fs";
+import { join } from "path";
 import { ROUTE_ACCESS, type RouteRequirement } from "@/lib/route-access";
 import {
   ADMIN_NAV,
@@ -424,6 +426,48 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
     `onboarding`, which is there for the same reason — **and this asserts it,
     because a future rail edit could silently take it away again.**
   */
+  /*
+    ── ⚠⚠⚠ THE SELLER'S DOOR INTO `/my-services` (`P2-ALL-E693`, ruling `89e`
+       corrected) ────────────────────────────────────────────────────────
+
+    ⚠ Scott, 2026-09-27: *"Slot 4 is Shop for everyone — Sell is gone, it becomes
+    a button inside Shop."* ⚠⚠ **MEASURED BEFORE THE BUTTON WAS WRITTEN:
+    `/my-services` had EXACTLY ONE unconditional door — the `Sell` rail entry.**
+    Everything else is conditional (a profile link, two stats cards) or is
+    already inside `/my-services`' own tab row.
+
+    ⚠⚠⚠ **SO THIS ASSERTS THE REPLACEMENT DOOR, NOT THE MENU ITEM.** Once `Sell`
+    leaves slot 4, this button is what stands between a provider and an 89-line
+    live page — the same shape as `check:orders` §6 for the money surface.
+    ⚠ The capability guard is asserted too: `/my-services` requires
+    `canProvideServices`, so an ungated button would be `E579` inside the very
+    page that exists to prevent it.
+  */
+  {
+    const shop = readFileSync(join("src", "app", "(app)", "packages", "page.tsx"), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    check(
+      "6 — ⚠⚠ Shop carries the seller's door into /my-services (89e corrected)",
+      /href="\/my-services"/.test(shop),
+      "Sell left the menu; this button is what replaces it"
+    );
+    check(
+      "6 — ⚠ and that door is gated on canProvideServices, not shown to everyone",
+      /canProvideServices\(viewer\)/.test(shop) && /from "@\/lib\/access"/.test(shop)
+    );
+    /* ⚠⚠⚠ AND SHOP ITSELF MUST OPEN FOR EVERYONE, or slot 4 is a door onto a
+       wall for sellers. `guardPage` refuses by redirecting to
+       `/dashboard?noaccess=1` — visibly bouncing a member out of their own menu.
+       ⚠ `/packages` is NOT in `route-access.ts`, so §1 reads it as public and
+       cannot see this; the guard lives in the page and is asserted here. */
+    check(
+      "6 — ⚠⚠⚠ Shop opens for everyone signed in, because slot 4 is universal",
+      /guardPage\("authenticated"\)/.test(shop),
+      "a capability-gated Shop would bounce sellers out of their own menu (E579)"
+    );
+  }
+
   check(
     "6 — ⚠⚠⚠ `payments` is still a filable support category (rule 5)",
     allSupportApplicationValues().includes("payments"),
