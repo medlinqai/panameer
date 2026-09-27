@@ -2,8 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { emailConfigured } from "@/lib/email-status";
 import { findCategory } from "@/lib/notification-categories";
 import { sendEmail } from "@/lib/resend";
-import { notificationEmailAllowed } from "@/lib/notification-email";
-import { notificationEmail } from "@/lib/email/templates/notification";
+import {
+  notificationEmailAllowed,
+  renderNotificationMail,
+} from "@/lib/notification-email";
 import {
   NOTIFICATION_EVENTS,
   type NotificationEvent,
@@ -285,11 +287,26 @@ async function emailFor(a: {
     if (claim.count === 0) return;
 
     try {
-      const mail = notificationEmail({
+      /* ⚠ THE LINK IS RESOLVED ONCE, HERE, AND HANDED TO WHICHEVER RENDERER RUNS
+         — a relative path is meaningless in a mail client, and two renderers
+         each doing their own resolution is the drift `E585` names. ⚠⚠ An
+         already-absolute `href` is left alone so a future event pointing at a
+         full URL is not mangled. */
+      const base = (
+        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100"
+      ).replace(/\/+$/, "");
+      const link = a.href
+        ? /^https?:\/\//i.test(a.href)
+          ? a.href
+          : `${base}/${a.href.replace(/^\/+/, "")}`
+        : null;
+
+      const mail = renderNotificationMail(a.event, {
         firstName: person.user?.first_name ?? null,
         title: a.title,
         body: a.body,
-        href: a.href,
+        link,
+        logoUrl: `${base}/brand/panameer-lockup-ink.png`,
       });
       const result = await sendEmail({
         to,
@@ -297,7 +314,12 @@ async function emailFor(a: {
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
-        template: "notification",
+        /* ⚠⚠ THE EVENT'S OWN TEMPLATE NAME, NOT A CONSTANT. `E522` makes
+           `template` required precisely so a receipt says WHICH mail went, and
+           stamping every notification `"notification"` would have made the
+           `finish-later` receipts indistinguishable from the rest the day a
+           bounce needed tracing. */
+        template: mail.template,
         subjectType: "notification",
         subjectId: a.notificationId,
         userId: person.user?.id ?? null,

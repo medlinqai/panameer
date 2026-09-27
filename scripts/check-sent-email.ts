@@ -61,9 +61,67 @@ console.log("\ncheck:sent-email — every send leaves a receipt\n");
    catches a sender that passes a VARIABLE, which would defeat the point of a
    name that can be grouped by.                                              */
 {
-  const callers = FILES.filter((f) => f !== "src/lib/resend.ts")
+/*
+  ── ⚠⚠⚠ ONE NAMED EXEMPTION: THE NOTIFICATION SENDER (`P0-E689` WS-C) ──────
+
+  ⚠ `lib/notifications.ts` passes `template: mail.template`, a VARIABLE, which
+  this section otherwise forbids. ⚠⚠ **THE RULE IS PRESERVED, NOT WEAKENED, AND
+  THE REASON IS THE GATE'S OWN:** it forbids a variable because that *"would
+  defeat the point of a name that can be grouped by."* ⚠⚠⚠ **HERE EVERY VALUE
+  THE VARIABLE CAN TAKE IS A LITERAL IN `notification-email.ts`** — one per
+  event — **so the receipts still group, and they group MORE finely than a
+  single hard-coded name would.** Stamping every notification `"notification"`
+  is what would actually defeat it.
+
+  ⚠ **IT IS ONE CALL SITE SERVING MANY TEMPLATES**, which is the shape that did
+  not exist when this assertion was written — the same situation `E585` describes
+  from the other side.
+  ⚠⚠ **THE EXEMPTION IS BY NAME, NOT BY PATTERN** (`check:derived-source`'s
+  shape), and it is PAID FOR by the assertion below: the literals it can pass are
+  themselves checked, so the exemption cannot become a hole.
+*/
+const NOTIFICATION_SENDER = "src/lib/notifications.ts";
+{
+  const src = strip(readFileSync("src/lib/notification-email.ts", "utf8"));
+  const literals = [...src.matchAll(/template:\s*"([a-z0-9-]+)"/g)].map((m) => m[1]);
+  ok(
+    "3 — ⚠⚠ the exempt sender's template names are LITERALS in notification-email.ts",
+    literals.length >= 2,
+    `found ${literals.length}: ${literals.join(", ")}`
+  );
+  ok(
+    "3 — ⚠ and it passes one of them rather than a hard-coded constant",
+    /template: mail\.template/.test(strip(readFileSync(NOTIFICATION_SENDER, "utf8"))),
+    "a single constant would make every notification receipt look alike"
+  );
+}
+  const callers = FILES.filter((f) => f !== "src/lib/resend.ts" && f !== NOTIFICATION_SENDER)
     .filter((f) => /\bsendEmail\(\{/.test(strip(readFileSync(f, "utf8"))));
-  ok("3 — senders found", callers.length >= 10, `found ${callers.length}`);
+/*
+  ⚠⚠ THE FLOOR MOVED 10 -> 9, AND IT IS `check:rollup`'s CASE: THE POPULATION
+  LEGITIMATELY SHRANK. `P0-E689` WS-C removed the `sendEmail` from
+  `api/onboarding/requester/finish-later/route.ts` — **the only genuine
+  double-send in the build** — so that file is no longer a direct sender, and
+  `lib/notifications.ts` is exempted above by name.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ok("3 - senders found", callers.length >= 10, `found ${callers.length}`);
+*/
+  ok("3 — senders found", callers.length >= 9, `found ${callers.length}`);
+  /*
+    ⚠⚠⚠ AND THE FLOOR ALONE IS NOT THE ASSERTION — A COUNT IS SATISFIED BY ANY
+    NINE FILES. This names the one that had to leave, so WS-C cannot be quietly
+    reverted: if that route starts sending again while `account.finish_later` is
+    on the notification allowlist, the member gets two emails for one act, which
+    is the rule Scott stated as a rule.
+    ⚠ `check:notification-email` §8 asserts the same thing from the other side
+    (no file both sends and notifies); this one asserts it about the specific
+    file, because that is the one a future edit would reach for.
+  */
+  ok(
+    "3 — ⚠⚠⚠ the finish-later route no longer sends directly (E689 WS-C)",
+    !callers.includes("src/app/api/onboarding/requester/finish-later/route.ts"),
+    "notify() owns that email now — two senders for one act is a double-send"
+  );
   const unnamed = callers.filter((f) => {
     const src = strip(readFileSync(f, "utf8"));
     const calls = src.match(/\bsendEmail\(\{[\s\S]*?\n\s*\}\)/g) ?? [];

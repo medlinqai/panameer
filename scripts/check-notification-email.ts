@@ -1,5 +1,9 @@
-import { readFileSync } from "fs";
-import { NOTIFICATION_EMAIL_EVENTS } from "@/lib/notification-email";
+import { readFileSync, readdirSync, statSync } from "fs";
+import { join } from "path";
+import {
+  NOTIFICATION_EMAIL_EVENTS,
+  PER_EVENT_TEMPLATE_KEYS,
+} from "@/lib/notification-email";
 import { NOTIFICATION_EVENTS } from "@/lib/notification-events";
 import { ROUTE_ACCESS } from "@/lib/route-access";
 import { NON_PRODUCTION_ALLOWLIST } from "@/lib/email/non-production-allowlist";
@@ -200,6 +204,80 @@ if (NON_PRODUCTION_ALLOWLIST.length > 0) {
       `Real addresses can be written to from a preview. Take them out.\n`
   );
   failures.push("NON_PRODUCTION_ALLOWLIST must ship empty");
+}
+
+/* ═══ 8 · ⚠⚠⚠ NOTHING SENDS *AND* NOTIFIES FOR THE SAME ACT (`P0-E689` WS-C) ══
+
+   ⚠ Scott, 2026-09-27: *"We never want to send multiple emails to the same
+   person for the same event. That is a rule."*
+
+   ⚠⚠ **THE INVARIANT IS MEASURABLE AND WAS ALREADY TRUE ONCE: ZERO FILES CALL
+   BOTH `sendEmail()` AND `notify()`.** `CLAUDE.md` records it as measured on
+   2026-09-26 by sweeping every `sendEmail` caller. ⚠⚠⚠ **IT WAS TRUE ONLY
+   BECAUSE `notify()` COULD NOT SEND. NOW THAT IT CAN, THE SAME SENTENCE IS A
+   DOUBLE-SEND GUARD** — and `finish-later` was the one file that broke it.
+
+   ⚠ It is asserted over the whole of `src/` rather than over a list of three
+   templates, because **the next double-send will be in a file nobody has
+   thought of yet.** ⚠⚠ `lib/notifications.ts` is the one legitimate exception:
+   it IS the sender, and it is excluded by name rather than by pattern so the
+   exemption is auditable (`check:derived-source`'s shape). */
+{
+  const walk = (dir: string, out: string[] = []): string[] => {
+    for (const e of readdirSync(dir)) {
+      if (e === "node_modules" || e.startsWith(".")) continue;
+      const full = join(dir, e);
+      if (statSync(full).isDirectory()) walk(full, out);
+      else if (/\.tsx?$/.test(e)) out.push(full);
+    }
+    return out;
+  };
+  const THE_SENDER = join("src", "lib", "notifications.ts");
+  const files = walk("src").filter((f) => f !== THE_SENDER);
+  let both = 0;
+  for (const f of files) {
+    const code = stripComments(readFileSync(f, "utf8"));
+    if (/\bsendEmail\s*\(/.test(code) && /\bnotify\s*\(\s*\{/.test(code)) {
+      both += 1;
+      check(`8 — ${f} must not both send and notify`, false, "one act, two emails to one person");
+    }
+  }
+  check("8 — ⚠⚠⚠ zero files both send and notify (the double-send guard)", both === 0, `${both} file(s)`);
+  /* ⚠ `E586` — the sweep must have actually swept. */
+  check("8 — the sweep enumerated src/", files.length > 200, `${files.length} file(s)`);
+  /* ⚠⚠ AND THE ONE EXEMPTION MUST STILL BE THE SENDER, or the rule above is
+     satisfiable by deleting the send from `notifications.ts` entirely. */
+  check(
+    "8 — the exempted file is still the sender",
+    /\bsendEmail\s*\(/.test(notifications) && /notificationEmailAllowed\(/.test(notifications)
+  );
+}
+
+/* ═══ 9 · SCOTT'S COPY SURVIVES THE MOVE (`P0-E689` WS-C) ═════════════════
+
+   ⚠⚠⚠ **"ONE EMAIL BEFORE, ONE AFTER" IS A CLAIM ABOUT THE MEMBER'S
+   EXPERIENCE, NOT ABOUT A NUMBER.** Routing `account.finish_later` through the
+   generic row renderer would have kept the count at one and **replaced Scott's
+   verbatim copy with the registry's bell paraphrase** — *"Continue your
+   registration / Pick up where you left off"* instead of his own words, which
+   `finish-later.ts` protects by name. */
+{
+  const allow = read("src/lib/notification-email.ts");
+  check(
+    "9 — account.finish_later renders through its OWN template, not the generic one",
+    /"account\.finish_later":\s*\(i\)\s*=>/.test(allow) && /finishLaterTemplate\(/.test(allow)
+  );
+  check(
+    "9 — and its receipt names that template, so a bounce can be traced to it",
+    /template: "finish-later"/.test(allow)
+  );
+  /* ⚠ EVERY ALLOWLISTED EVENT IS EITHER GIVEN ITS OWN TEMPLATE OR KNOWINGLY ON
+     THE GENERIC ONE — printed, so switching an event on cannot quietly inherit
+     wording nobody chose. */
+  for (const key of NOTIFICATION_EMAIL_EVENTS) {
+    const own = PER_EVENT_TEMPLATE_KEYS.includes(key);
+    console.log(`  · ${key} -> ${own ? "its own template" : "the generic row renderer"}`);
+  }
 }
 
 if (failures.length) {
