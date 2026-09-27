@@ -239,10 +239,6 @@ const TAB_ROUTES = [
       *"a visible age is what stops this becoming a parking lot."*
 */
 const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> = {
-  "/settings": {
-    since: "2026-09-21",
-    why: "Settings is an ACCOUNT-menu destination, not a band application. Resolved by the Settings absorption brief, which P2-A3-E596 WS-A unblocks.",
-  },
   /*
     ── ⚠⚠⚠ THE PROFILE TAB ROW IS ACCOUNT-MENU TERRITORY (`P2-A2-E600` WS-A) ──
 
@@ -271,10 +267,17 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     since: "2026-09-22",
     why: "Account standing is between a member and Panameer, not an application in the band.",
   },
-  "/company": {
-    since: "2026-09-22",
-    why: "My Company is reached from the avatar menu (E099, reversing E225). It is the org you belong to, not a band application.",
-  },
+  /* ⚠⚠⚠ `/company` AND `/settings` ARE NO LONGER TAB DESTINATIONS AT ALL
+     (`P2-ALL-E687` WS-B, rulings 89a/89b), SO THEIR KNOWN-OPEN ENTRIES DESCRIBE
+     NOTHING AND ARE REMOVED. ⚠⚠ **THE GATE CAUGHT THIS ITSELF** — its own
+     safeguard says *"every entry must name a real tab route, so deleting a
+     route without clearing its entry is caught"*, and it went red the moment
+     the rows changed. **That is the safeguard working, not a gate to weaken.**
+     ⚠ Both routes are still reachable, from the avatar menu: `My Company` and
+     `My Account Settings` (`7abd2a4`).
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   "/company": { since: "2026-09-22", why: "My Company is reached from the avatar menu…" },
+     //   "/settings": { since: …, why: … } */
 };
 
 for (const route of TAB_ROUTES) {
@@ -306,6 +309,63 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
     `4 — known-open route ${route} is still a real tab destination`,
     TAB_ROUTES.includes(route)
   );
+}
+
+/* ═══ 5 · ⚠⚠⚠ THE RULED ROWS, AND THE COUNT LIMIT (`P2-ALL-E687` WS-B) ══════
+
+   ⚠⚠⚠ **THIS SECTION EXISTS BECAUSE A MUTATION FOUND NOTHING HOLDING IT.**
+   Appending a SIXTH tab to `/profile` left every gate green — `check:community`
+   owns the `/connect` row and **nothing owned `/profile`'s at all**, so the
+   brief's own criterion (*"/profile renders exactly Profile · Score · Usage ·
+   Health"*) had no assertion behind it. ⚠ Ruling 90: a gate proved only toward
+   the defect proves it can fail, not that it fails for the right reason — and
+   this one could not fail at all.
+
+   ⚠⚠ **THE COUNT LIMIT IS RULED (88a/88b) AND IS ASSERTED FOR EVERY ROW.**
+   Measured at 390px: a 5-character tab is ~64px and five fit; the limit is what
+   makes a single row possible, and Lane 1's mobile brief depends on it.
+
+   ⚠⚠⚠ **ONE-WORD IS *NOT* ASSERTED, AND THAT IS DELIBERATE.** `89h` is OPEN —
+   `All Learning Paths`, `Offers for My Services`, `Create a Request`,
+   `Payment Requests` are under the count and over the word rule, and **Scott
+   has not ruled.** ⚠ Asserting it would redden four rows of correct,
+   unruled code, which is the false red §10 and ruling 90 both forbid. **They
+   are PRINTED below so the open ruling stays visible instead.** */
+{
+  const rows = PAGE_TABS as Record<string, { label: string; href: string }[]>;
+  const keys = Object.keys(rows);
+  check("5 — PAGE_TABS has rows to check (E586)", keys.length >= 4, `${keys.length}`);
+
+  /* ⚠ 89c, exact. ⚠⚠ `Company` and `Settings` left (89b/89a); their doors are
+     `My Company` and `My Account Settings` in the avatar menu, which §1 walks. */
+  check(
+    "5 — ⚠⚠⚠ /profile is exactly Profile · Score · Usage · Health (89c)",
+    (rows["/profile"] ?? []).map((t) => t.label).join(" · ") === "Profile · Score · Usage · Health",
+    (rows["/profile"] ?? []).map((t) => t.label).join(" · ")
+  );
+  /* ⚠ Asserted POSITIVELY as well, because dropping a name from a list proves
+     nothing on its own — the same discipline `check:community` applies to
+     Connect's row. */
+  for (const gone of ["Company", "Settings"]) {
+    check(
+      `5 — ⚠⚠ \`${gone}\` is not a /profile tab — the avatar menu owns it`,
+      !(rows["/profile"] ?? []).some((t) => t.label === gone),
+      (rows["/profile"] ?? []).map((t) => t.label).join(" · ")
+    );
+  }
+
+  /* ⚠⚠ THE LIMIT, EVERY ROW (88a/88b). A sixth tab is the defect this catches. */
+  for (const k of keys) {
+    check(
+      `5 — ⚠ ${k} is at most five tabs (88b — one row, no sideways scroll)`,
+      (rows[k] ?? []).length <= 5,
+      `${(rows[k] ?? []).length} tabs: ${(rows[k] ?? []).map((t) => t.label).join(" · ")}`
+    );
+  }
+
+  const multi = keys
+    .flatMap((k) => (rows[k] ?? []).filter((t) => t.label.trim().includes(" ")).map((t) => `${k}:${t.label}`));
+  console.log(`  · 89h OPEN — ${multi.length} multi-word tab(s), reported not asserted: ${multi.join(", ")}`);
 }
 
 /* ⚠⚠⚠ `E586` — A GATE WITH NO INPUTS MUST FAIL. If `PAGE_TABS` were empty, or

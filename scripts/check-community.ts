@@ -1304,7 +1304,16 @@ check(
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //   const CONNECT_TABS = ["Community", "Groups", "Settings"];
 */
-const CONNECT_TABS = ["Community", "Colleagues", "Mentors", "Teams", "Groups", "Settings"];
+/* ⚠⚠⚠ `Settings` LEFT THE ROW (`P2-ALL-E687` WS-B, ruling 89a, 2026-09-27).
+   ⚠⚠ **THIS GATE'S OWN COMMENT PREDICTED IT** — see just above: *"if six is too
+   many, the landing tab and `Settings` are the two candidates."* Scott chose
+   `Settings`, so this is the anticipated resolution, not drift.
+   ⚠ **`check:rollup`'s CASE, NOT `check:cert-skills`':** the RULING moved and
+   the gate's copy of the old list moves with it. The rule is UNWEAKENED — the
+   set is still asserted by exact label and the count is still asserted below.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const CONNECT_TABS = ["Community", "Colleagues", "Mentors", "Teams", "Groups", "Settings"]; */
+const CONNECT_TABS = ["Community", "Colleagues", "Mentors", "Teams", "Groups"];
 for (const label of CONNECT_TABS) {
   check(`E593/5 — Connect tab "${label}" ships`, new RegExp(`label: "${label}"`).test(navLib));
 }
@@ -1357,9 +1366,14 @@ check(
    the whole reason Scott asked for a count in the first place.
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   "E593/5 — the Connect row is exactly three tabs" … === 3 */
+/* ⚠ FIVE NOW (`P2-ALL-E687` WS-B, ruling 89a — `Settings` moved to the avatar
+   menu). ⚠⚠ THE COUNT IS STILL THE THING BEING HELD: an appended sixth must
+   fail rather than pass quietly, which is the whole reason Scott asked for a
+   count. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   "E593/5 — the Connect row is exactly six tabs" … === 6 */
 check(
-  "E593/5 — the Connect row is exactly six tabs",
-  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 6,
+  "E593/5 — the Connect row is exactly five tabs",
+  (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 5,
   `${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} live entries`
 );
 /* ⚠⚠⚠ AND EVERY SECTION THE ROW NAMES IS A PAGE THAT EXISTS — the assertion
@@ -1725,10 +1739,28 @@ for (const f of PROFILE_ROW_PAGES) {
      //   === "Community · Groups · Service Products · Settings"
      //   "E598/B — ⚠ Connect's row is Community · Groups · Settings"
      //   === "Community · Groups · Settings" */
+  /* ⚠ `Settings` LEFT (`P2-ALL-E687` WS-B, ruling 89a — the avatar menu owns it).
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   === "Community · Colleagues · Mentors · Teams · Groups · Settings" */
   check(
     "E598/B — ⚠ Connect's row is the sections",
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ") ===
-      "Community · Colleagues · Mentors · Teams · Groups · Settings",
+      "Community · Colleagues · Mentors · Teams · Groups",
+    (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
+  );
+  /*
+    ── ⚠⚠⚠ AND `Settings` IS ASSERTED ABSENT **POSITIVELY** ─────────────────
+    ⚠⚠ This file already records why, twelve hundred lines up: *"its ABSENCE is
+    asserted positively too… because dropping a name from a list proves nothing
+    on its own."* ⚠ The exact-string check above would still pass if somebody
+    replaced the whole row; this says the specific word is gone.
+    ⚠⚠⚠ **AND IT NAMES THE DOOR, SO THE ABSENCE IS NEVER MISTAKEN FOR A LOST
+    CAPABILITY** (rule 5) — `My Account Settings` in the avatar menu is the only
+    entrance now, and `check:nav-reachable` walks it.
+  */
+  check(
+    "E598/B — ⚠⚠ `Settings` is not a Connect tab — the avatar menu owns it",
+    !(PAGE_TABS["/connect"] ?? []).some((t) => t.label === "Settings"),
     (PAGE_TABS["/connect"] ?? []).map((t) => t.label).join(" · ")
   );
 }

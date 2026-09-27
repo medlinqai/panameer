@@ -739,13 +739,43 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     (`ProfileScoreView` is mounted from there), so it is **not folded into a
     re-label.**
   */
+  /*
+    ── ⚠⚠⚠ FOUR TABS, ONE WORD EACH (`P2-ALL-E687` WS-B, ruling 89c) ────────
+
+    ⚠⚠⚠ **THIS SUPERSEDES RULING 31b, WHICH SAID *"render them exactly"* OF THE
+    OLD SIX — AND 31b HAS BEEN TREATED AS BINDING ALL WEEK.** ⚠ SUPERSEDED,
+    quoted not deleted (`E164`), so the next run does not "correct" it back:
+    //   RULING 31b: "Order and labels are the sheet's, render them exactly."
+    //   "/profile": [
+    //     { label: "Profile", href: "/profile" },
+    //     { label: "Company", href: "/company" },
+    //     { label: "Search Score", href: "/community/score" },
+    //     { label: "Usage Statistics", href: "/stats" },
+    //     { label: "Account Health", href: "/account-health" },
+    //     { label: "Settings", href: "/settings" },
+    //   ],
+    ⚠⚠ **RULE 13: SCOTT'S 2026-09-27 STATEMENT IS NEWER AND WINS. THIS IS NOT
+    DRIFT.** A `LOCKED` list locks against drift, not against Scott.
+
+    ⚠ **ONE WORD EACH IS NOT A STYLE CHOICE — IT IS WHAT MAKES FIVE FIT** (88b):
+    measured at 390px, a 5-character tab is ~64px and five fit; an 8-character
+    tab is ~90px and **three** fit. `Search Score` → `Score`, `Usage Statistics`
+    → `Usage`, `Account Health` → `Health`.
+
+    ⚠⚠ **`Company` LEFT (89b): IT IS A LEGAL ENTITY, NOT A PROFILE SURFACE** —
+    `legal_name`, `tin`, `state_of_filing`, a terms acceptance. **Door:
+    `My Company` in the avatar menu** (`AccountMenu.tsx`, shipped in WS-A).
+    ⚠⚠ **`Settings` LEFT (89a), AND REMOVING IT CLOSES AN `E585` IN THE MENU:
+    ONE WORD SAT ON BOTH THIS ROW AND `/connect`'s, POINTING AT ONE
+    DESTINATION FROM TWO PLACES.** ⚠⚠⚠ **Door: `My Account Settings`, which
+    shipped in WS-A `7abd2a4` — it is now the ONLY entrance to `/settings`, and
+    it existed before this line was touched (rule 5).**
+  */
   "/profile": [
     { label: "Profile", href: "/profile" },
-    { label: "Company", href: "/company" },
-    { label: "Search Score", href: "/community/score" },
-    { label: "Usage Statistics", href: "/stats" },
-    { label: "Account Health", href: "/account-health" },
-    { label: "Settings", href: "/settings" },
+    { label: "Score", href: "/community/score" },
+    { label: "Usage", href: "/stats" },
+    { label: "Health", href: "/account-health" },
   ],
   "/connect": [
     /*
@@ -867,7 +897,18 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
        ⚠⚠ THEY ARE DIFFERENT ROWS WITH DIFFERENT JOBS: this one is a slice of
        CONNECT; the profile row's `Account Settings` is a page under the avatar.
        ⚠ Absorbing Settings into Connect is its own brief and is out of scope. */
-    { label: "Settings", href: "/settings" },
+    /*
+      ⚠⚠⚠ `Settings` LEFT THIS ROW (`P2-ALL-E687` WS-B, ruling 89a).
+      ⚠ Scott, 2026-09-27: *"let's make settings only visible from the avatar
+      menu."* ⚠⚠ **IT SAT ON BOTH THIS ROW AND `/profile`'s — ONE WORD, TWO
+      PLACES, ONE DESTINATION.** Removing it closes that `E585` in the menu.
+      ⚠⚠⚠ **DOOR: `My Account Settings` IN THE AVATAR MENU, SHIPPED IN WS-A
+      (`7abd2a4`) BEFORE THIS LINE WAS TOUCHED — rule 5, add before you remove.**
+      ⚠ The note above about `check:community`'s `E598/B` assertion still
+      applies and is why this row is edited by hand rather than by a sweep.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   { label: "Settings", href: "/settings" },
+    */
     /*
       ── ⚠⚠ MESSAGES HAS LEFT THIS ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ─────
 

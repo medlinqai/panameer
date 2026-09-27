@@ -506,9 +506,17 @@ export function AccountMenu({
               ⚠⚠ IT REPLACES THE `My Profile` ROW, which left `PERSONA_NAV_
               PRIMARY` — quoted, not deleted, in `nav.ts`. ⚠ The href is
               UNCHANGED (`/profile`), so nothing that linked there has moved.
-              ⚠⚠⚠ `/profile` STILL REDIRECTS TO `/connect` TODAY. WS-B is what
-              makes it the profile itself; pointing at the stable route now
-              means this button does not change when that lands (`E591`).
+              ⚠⚠⚠ **CORRECTED 2026-09-27 (`P2-ALL-E687` WS-B) — THIS CLAIM WAS
+              FALSE AND IT IS THE DANGEROUS HALF (§6, rule 6).** ⚠ SUPERSEDED,
+              quoted not deleted (`E164`):
+              //   `/profile` STILL REDIRECTS TO `/connect` TODAY. WS-B is what
+              //   makes it the profile itself; pointing at the stable route now
+              //   means this button does not change when that lands (`E591`).
+              ⚠⚠ **MEASURED: `/profile` RENDERS.** `app/(app)/profile/page.tsx`
+              mounts `MyProfilePage` with its own `PageTabs`; the redirect is
+              commented out at `:52` as an `E164` quote of the old behaviour.
+              ⚠ **A stated rule that contradicts correct behaviour is the more
+              dangerous half — the next person implements the comment.**
             */}
             <Link
               href="/profile"
