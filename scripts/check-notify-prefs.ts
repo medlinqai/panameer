@@ -261,6 +261,52 @@ async function main() {
   }
 
   await prisma.$disconnect();
+  /* ═══ ⚠⚠⚠ THE LATENT DOUBLE-SEND (`P2-P0-E686`) ══════════════════════════
+
+     ⚠⚠ **A COLLISION THAT IS ABSENT TODAY AND ONE LINE AWAY.** Measured at the
+     notification-sender brief's premise gate: `profile.validated` is
+     **registered in the event registry and called from nowhere**, while
+     `project-validation.ts` sends the `project-validated` template. ⚠ So there
+     is no double-send — **and the day somebody calls that event, there is**,
+     because the member would get the transactional email AND the notification
+     email for one act.
+
+     ⚠⚠⚠ **SCOTT, 2026-09-27: *"Leave `profile.validated` uncalled. Add a gate
+     that reddens if it gains a caller while `project-validation.ts` still
+     sends."*** ⚠ The pair is the assertion: **either is fine alone; together
+     they are the defect.** A gate on one half would forbid a legitimate state.
+
+     ⚠ Comments are stripped, so an `E164` quote of either half cannot trip it
+     (rule 12). ⚠⚠ It is a SOURCE check because the collision is structural —
+     it does not need a row to exist to be real. */
+  const COLLISION_SRC = walk("src");
+  check("collision — the source scan has a population (E586)", COLLISION_SRC.length > 50, `${COLLISION_SRC.length}`);
+  const callers = COLLISION_SRC.filter(
+    (f) => f !== join("src", "lib", "notification-events.ts") &&
+      /["'`]profile\.validated["'`]/.test(strip(readFileSync(f, "utf8")))
+  );
+  const stillSends = /template:\s*["'`]project-validated["'`]/.test(
+    strip(readFileSync(join("src", "lib", "project-validation.ts"), "utf8"))
+  );
+  /*
+    ⚠⚠⚠ THE OTHER HALF IS **PRINTED, NOT ASSERTED**, AND THE FIRST DRAFT GOT
+    THIS WRONG. I wrote it as a `check` requiring the send to exist — so
+    **removing the send, which is the LEGITIMATE resolution, failed the gate.**
+    ⚠⚠ Caught by mutating toward the correct state rather than only toward the
+    defect: a gate that reddens on the fix is a gate that blocks the fix (§10).
+    ⚠ The pair is the only thing worth asserting; either half alone is a valid
+    state of the world.
+  */
+  console.log(
+    `  · project-validation.ts still sends project-validated: ${stillSends}` +
+      `${stillSends ? "" : " — the pair below is moot and this section can be retired"}`
+  );
+  check(
+    "collision — ⚠⚠⚠ profile.validated has NO caller while that send remains",
+    !(callers.length > 0 && stillSends),
+    `${callers.join(", ")} calls profile.validated AND project-validation.ts still sends project-validated — one act, two emails to one person`
+  );
+
   console.log(
     `check:notify-prefs — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`
   );
