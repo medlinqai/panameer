@@ -4109,6 +4109,25 @@ model Notification {
   /// "email_not_configured" · "sms_not_configured".
   suppressed_reason   String?
 
+  /// ⚠⚠⚠ SET WHEN THE NOTIFICATION LAYER ACTUALLY SENT AN EMAIL FOR THIS ROW
+  /// (`P0-E689` WS-A). Null means no email went — either the member did not want
+  /// one, the category does not offer one, the transport is unconfigured, or the
+  /// event is not yet on the sender's allowlist.
+  ///
+  /// ⚠⚠ IT IS NOT BOOKKEEPING. It is the WRITER that makes *"did we email you"*
+  /// answerable at all — the same gap `E556` and `E522` exist for, one layer up.
+  /// Without it `suppressed_reason` can say why nothing was sent but **nothing
+  /// can say that something WAS**, so "I didn't get it" has no evidence either way.
+  ///
+  /// ⚠ AND IT IS WHAT LETS A SWEEP JOB EXIST LATER WITHOUT REWORK — a row that
+  /// wanted email and has a null stamp is findable. ⚠⚠ **THIS BRIEF BUILDS NO
+  /// SUCH JOB**; the column is what stops one needing a migration.
+  ///
+  /// ⚠⚠⚠ ADDITIVE ONLY, NULLABLE, NO `@default` (ruling 38 — ONE database serves
+  /// localhost, every preview and production). A default would have written a
+  /// claim about history onto every existing row.
+  email_sent_at DateTime?
+
   read_at     DateTime?
   resolved_at DateTime?
   created_at  DateTime  @default(now())
