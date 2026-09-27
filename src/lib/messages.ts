@@ -355,7 +355,33 @@ export async function unreadCount(viewer: Viewer): Promise<number> {
 }
 
 /**
- * ⚠ THE UNREAD BADGE, APPLIED TO A TAB SET (`P1-ALL-E379`).
+ * ── ⚠⚠⚠ DEAD SINCE `8f71ac2`. IT MATCHES NOTHING (`P2-ALL-E691`, rule 6) ────
+ *
+ * ⚠⚠ **IT LOOKS FOR A TAB WHOSE `href` IS `/messages`, AND THE CONNECT ROW HAS
+ * NOT CONTAINED ONE SINCE `8f71ac2`** (*"`P2-J3-E557` WS-A — Connect is a room,
+ * not a path"*). ⚠ **MEASURED: feeding it the live row with `unread = 7`
+ * produces ZERO badges.**
+ *
+ * ⚠⚠⚠ **SO THIS RETURNED ITS INPUT UNCHANGED FOR WEEKS WHILE `unreadCount()`
+ * RAN ON EVERY `/messages` AND `/community` PAGE LOAD.** The figure's WRITER was
+ * live and its READER was dead, which is the quietest way for a number to
+ * disappear: nothing errors, nothing logs, and the query still costs.
+ * ⚠ **THE COUNT NOW RENDERS IN THE TITLE LINE** on `/messages` (ruling `88b`),
+ * which is where 88b puts it anyway.
+ *
+ * ⚠⚠ **NOT DELETED, AND THE REASON IS §14: BEFORE DELETING DEAD CODE, CHECK
+ * WHETHER A GATE ASSERTS A LIVE RULE AGAINST IT.** The zero rule below is live,
+ * quoted by the page that replaced this, and `PageTabs` still honours `badge`
+ * for any row that grows one later. ⚠ It is kept, marked, and asserted dead by
+ * `check:community` so it cannot come back to life unnoticed.
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — what it claimed to do:
+ * //   THE UNREAD BADGE, APPLIED TO A TAB SET (P1-ALL-E379). The /community tab
+ * //   row is shared by five pages, so the badge is put on here rather than in
+ * //   each of them - five copies of "which tab is Messages" is five chances to
+ * //   disagree.
+ *
+ * ⚠ ORIGINAL NOTE, STILL TRUE AND STILL THE RULE:
  *
  * The `/community` tab row is shared by five pages, so the badge is put on here
  * rather than in each of them — five copies of "which tab is Messages" is five

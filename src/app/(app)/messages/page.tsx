@@ -100,9 +100,42 @@ export default async function MessagesPage({
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-4">
+          {/*
+            ── ⚠⚠⚠ THE UNREAD COUNT LIVES IN THE TITLE LINE (`P2-ALL-E691`,
+               ruling `88b`, Scott 2026-09-27) ─────────────────────────────
+
+            ⚠ **88b:** *"the count badge leaves the tab and lands in the title
+            text immediately below the row."* ⚠⚠ A badge costs ~26px in the tab
+            row and takes it **from five tabs to three** at 390px — the row has
+            to fit on one line, and a number is the part that can move.
+
+            ⚠⚠⚠ **AND IT IS A RESTORATION, NOT A RELOCATION — MEASURED.**
+            `tabsWithUnread` (`lib/messages.ts:377`) looks for a tab whose href is
+            `/messages`, and **the Connect row has not contained one since
+            `8f71ac2`** (*"Connect is a room, not a path"*). ⚠ Proven: feeding it
+            the live row with **7 unread produces ZERO badges.** So the figure's
+            WRITER has been running on every page load — `unreadCount(viewer)`
+            above — **while its reader was dead.**
+            ⚠⚠ *"A count that stops rendering is a figure whose writer still
+            exists, and dropping it silently is the defect, not the fix."*
+
+            ⚠ **ZERO RENDERS NOTHING, AND THAT IS THE EXISTING RULE KEPT, NOT A
+            NEW ONE.** `tabsWithUnread`'s own docblock: *"ZERO PASSES
+            `undefined`, NEVER `0`… a '0' badge reports an absence as a
+            measurement."* ⚠⚠ Here that means **no clause at all** rather than
+            *"0 unread"* — the same reason `declinedCount` stays off the page.
+          */}
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">Messages</h1>
           <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
             Direct conversations with the colleagues you have connected with.
+            {unread > 0 && (
+              <>
+                {" "}
+                <span className="font-semibold text-ink">
+                  {unread} unread.
+                </span>
+              </>
+            )}
           </p>
         </header>
 

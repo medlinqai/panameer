@@ -2016,6 +2016,48 @@ check(
   );
 }
 
+/* ═══ ⚠⚠⚠ THE UNREAD COUNT RENDERS SOMEWHERE (`P2-ALL-E691`, ruling 88b) ═══
+
+   ⚠⚠ **MEASURED 2026-09-27: `tabsWithUnread` MATCHED NOTHING AND HAD NOT SINCE
+   `8f71ac2`.** It looks for a tab whose `href` is `/messages`; the Connect row
+   has held no such tab for weeks. Feeding it the live row with `unread = 7`
+   produced **zero badges**, while `unreadCount()` kept running on every
+   `/messages` and `/community` page load.
+   ⚠⚠⚠ **A FIGURE WHOSE WRITER IS LIVE AND WHOSE READER IS DEAD DISAPPEARS
+   SILENTLY — nothing errors, nothing logs, and the query still costs.**
+
+   ⚠ 88b puts the count in the title line anyway, so the fix and the restoration
+   are the same edit. This asserts the destination exists, **so the number cannot
+   go quiet a second time.** */
+{
+  const page = readFileSync("src/app/(app)/messages/page.tsx", "utf8");
+  const code = strip(page);
+  check(
+    "E691 — the unread count renders in the /messages title line (88b)",
+    /* ⚠⚠ ANCHORED TO THE TITLE LINE'S OWN SHAPE. A bare `/unread > 0 &&/` also
+       matches the PER-CONVERSATION pip (`c.unread > 0 &&`) forty lines below,
+       so it would have stayed green with the title-line count deleted — `E607`,
+       an assertion its own mutation cannot fail. */
+    /\{unread > 0 && \(/.test(code) && /\{unread\} unread/.test(code),
+    "88b moves the count out of the tab and into the title text below the row"
+  );
+  /* ⚠⚠ AND IT MUST NOT RENDER A ZERO. The rule is `tabsWithUnread`'s own and it
+     outlived the function: *"a '0' badge reports an absence as a measurement."* */
+  check(
+    "E691 — and it is guarded so a zero never renders",
+    /\{unread > 0 && \(/.test(code),
+    "a 0 reports an absence as a measurement"
+  );
+  /* ⚠⚠⚠ THE TAB ROW MUST NOT GROW A BADGE BACK WITHOUT SOMEBODY NOTICING. If a
+     `/messages` tab returns to the Connect row, `tabsWithUnread` wakes up and the
+     count renders TWICE — once in the tab and once in the title. */
+  check(
+    "E691 — the Connect row still has no /messages tab, so the count cannot render twice",
+    !/"\/messages"/.test(strip(navLib).split('"/connect": [')[1]?.split("],")[0] ?? ""),
+    "a revived tab badge would double the figure 88b just moved"
+  );
+}
+
 if (failures.length > 0) {
   console.error(`check:community — ${failures.length} FAILED, ${pass} passed\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
