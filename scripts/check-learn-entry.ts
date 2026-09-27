@@ -1,0 +1,225 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { prisma } from "@/lib/prisma";
+import { decideStarter, starterPath } from "@/lib/learn-home";
+
+/**
+ * ── ⚠⚠⚠ `check:learn-entry` (`P2-A4-E683`) ──────────────────────────────
+ *
+ * ⚠⚠ **THE CONSTRAINT THAT SHAPES THE WHOLE BRIEF, AND THEREFORE THIS GATE:**
+ * Scott, 2026-09-26 — *"I will ultimately want to get a better training provider
+ * with a much bigger selection on the platform."* ⚠⚠⚠ **SO THE 54 COURSES ARE
+ * TEMPORARY AND NO COURSE TITLE, PATH SLUG OR SKILL NAME MAY BE HARDCODED.** A
+ * catalog swap must not require a code change, and §1 is what makes that a
+ * failing build rather than a promise.
+ *
+ * ⚠ **IT WRITES NOTHING.** The starter rule is proved as a PURE function and the
+ * live database is only READ — flagging a row to test ambiguity would publish a
+ * probe path to real members on the one database that also serves production
+ * (ruling 38).
+ */
+let pass = 0;
+const fails: string[] = [];
+const check = (name: string, ok: boolean, why = "") => {
+  if (ok) pass += 1;
+  else fails.push(`${name}${why ? ` — ${why}` : ""}`);
+};
+const strip = (s: string) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+function walk(d: string, o: string[] = []): string[] {
+  for (const e of readdirSync(d)) {
+    const f = join(d, e);
+    if (statSync(f).isDirectory()) walk(f, o);
+    else if (/\.tsx?$/.test(f)) o.push(f);
+  }
+  return o;
+}
+
+async function main() {
+  const SRC = walk("src");
+  check("0 — the source scan has a population (E586)", SRC.length > 50, `${SRC.length}`);
+
+  /* ── 1 · ⚠⚠⚠ NO CATALOG CONTENT IS HARDCODED ─────────────────────────────
+     ⚠⚠ The titles and slugs are read FROM THE DATABASE and asserted absent from
+     source, so this gate re-derives its own needles every run. ⚠⚠⚠ **IT CANNOT
+     GO STALE WHEN THE CATALOG IS SWAPPED** — a hardcoded list of forbidden
+     strings would be the very thing it is banning, one level up. */
+  const paths = await prisma.learningPath.findMany({
+    select: { title: true, slug: true, courses: { select: { title: true } } },
+  });
+  check("1 — the catalog has rows to check against (E586)", paths.length > 0, `${paths.length}`);
+  /* ⚠ Short or generic names would match half the codebase and say nothing —
+     `ERP`, `w`, `Beginners`. The rule is about IDENTIFIABLE catalog content, so
+     the needle set is the names long enough to be unmistakably from it. */
+  const needles = paths
+    .flatMap((p) => p.courses.map((c) => c.title))
+    .map((s) => (s ?? "").trim())
+    .filter((s) => s.length >= 18);
+  /*
+    ── ⚠⚠⚠ SLUGS, ACROSS ALL OF `src/` — THE DEFECT THE BRIEF NAMES ─────────
+
+    ⚠⚠ **THE BRIEF'S OWN WORDING: *"A HARDCODED SLUG would have to be found and
+    edited by someone who does not know it exists."*** ⚠ Slugs are URL-shaped
+    and unique, so unlike a path TITLE they collide with nothing — which is why
+    this half needs **no scoping and no exclusions**, and is clean at zero today.
+
+    ⚠⚠⚠ **PATH TITLES ARE DELIBERATELY NOT SCANNED, AND THAT IS MEASURED, NOT
+    LAZY.** They are ordinary English that legitimately appears as other things:
+    `"Contract Management"` is a **capability domain** in `capability-domains.ts`
+    and both assessment banks; `"Implementers"` is the `LearnAudience` **enum
+    label** in `learn.ts`. ⚠ Failing on those would flag correct code, and **a
+    gate that fails on correct code is a gate someone switches off** (§10).
+  */
+  const slugs = paths.map((p) => p.slug).filter((s): s is string => !!s && s.length >= 6);
+  check("1 — there are slugs to scan for (E586)", slugs.length > 10, `${slugs.length}`);
+  const slugHits: string[] = [];
+  for (const f of SRC) {
+    const body = strip(readFileSync(f, "utf8"));
+    for (const s of slugs) if (body.includes(s)) slugHits.push(`${f} :: ${s}`);
+  }
+  check(
+    "1 — ⚠⚠⚠ NO path slug appears anywhere in src/ — the whole tree, no exclusions",
+    slugHits.length === 0,
+    `${slugHits.slice(0, 5).join(" | ")} — this is the defect the flag exists to avoid`
+  );
+
+  const unique = [...new Set(needles)];
+  check("1 — and enough distinctive course titles to test with", unique.length > 10, `${unique.length}`);
+
+  /*
+    ── ⚠⚠⚠ THE POPULATION IS PART OF THE ASSERTION (`E610`), SO IT IS NAMED ──
+
+    ⚠⚠ **THE FIRST VERSION OF THIS SCANNED ALL OF `src/` AND WENT RED ON FOUR
+    FILES, AND ALL FOUR WERE FALSE.** Measured before believing it:
+      · `admin/.../bulk-urls/page.tsx` — a CSV FORMAT EXAMPLE in help text
+      · `admin/learn/PathForm.tsx`     — a `placeholder` attribute
+      · `admin/learn/primitives.tsx`   — ⚠⚠ NOT CATALOG CONTENT AT ALL: the
+        `LearnAudience` enum label `"Implementers"`, which collides with a path
+        of the same name **by coincidence**
+      · `learn/public/spine-shots.tsx` — a marketing ILLUSTRATION, dated
+        2026-08-20 in its own comment
+    ⚠⚠⚠ **NONE OF THEM IS A FUNCTIONAL DEPENDENCY: A CATALOG SWAP LEAVES EVERY
+    ONE OF THEM WORKING**, merely showing a stale example. The rule is *"a swap
+    must not require a CODE CHANGE"*, and stale illustrative copy does not.
+    ⚠ **A GATE THAT FAILS ON CORRECT CODE IS A GATE SOMEONE SWITCHES OFF** (§10)
+    — and the cost is not the false red, it is that people stop believing the
+    green.
+
+    ⚠⚠ **SO THE SCAN IS THE LEARN RUNTIME: what a member's page actually reads.**
+    Admin authoring is ruling 21's, explicitly out of this brief; the marketing
+    shots are illustration, the same class as a mockup (§7).
+    ⚠ **THE EXCLUSIONS ARE ASSERTED TO STILL EXIST**, so a rename cannot silently
+    widen the hole into a scan of nothing.
+  */
+  const EXCLUDED = [
+    join("src", "components", "admin"),
+    join("src", "app", "admin"),
+    join("src", "components", "learn", "public"),
+  ];
+  for (const e of EXCLUDED) {
+    check(`1 — the excluded surface ${e} still exists`, SRC.some((f) => f.startsWith(e)), e);
+  }
+  const RUNTIME = SRC.filter(
+    (f) =>
+      !EXCLUDED.some((e) => f.startsWith(e)) &&
+      (f.startsWith(join("src", "lib")) ||
+        f.startsWith(join("src", "app", "learn")) ||
+        f.startsWith(join("src", "components", "learn")))
+  );
+  check("1 — the learn runtime has files to scan (E586)", RUNTIME.length > 10, `${RUNTIME.length}`);
+  const offenders: string[] = [];
+  for (const f of RUNTIME) {
+    const body = strip(readFileSync(f, "utf8"));
+    for (const n of unique) if (body.includes(n)) offenders.push(`${f} :: "${n}"`);
+  }
+  check(
+    "1 — ⚠⚠ no distinctive course title appears in the Learn runtime",
+    offenders.length === 0,
+    `${offenders.slice(0, 5).join(" | ")} — a catalog swap must not need a code change`
+  );
+
+  /* ── 2 · ⚠⚠ THE RDS→COURSE LINK STAYS AT ZERO WRITERS ───────────────────
+     ⚠ Scott withdrew it 2026-09-26: *"we don't want to show them courses for
+     what they know… really just let them search."* ⚠⚠ Asserted so that building
+     it later is a deliberate act with a failing gate in front of it, rather than
+     something that drifts back in. */
+  const writes = SRC.filter((f) => {
+    const b = strip(readFileSync(f, "utf8"));
+    return /courseSkill\s*\.\s*(create|createMany|upsert|update)/.test(b) ||
+      /skill_scope\s*:/.test(b);
+  });
+  check(
+    "2 — ⚠⚠ CourseSkill and Course.skill_scope still have ZERO writers",
+    writes.length === 0,
+    `${writes.join(", ")} — withdrawn by Scott, do not build it`
+  );
+
+  /* ── 3 · ⚠⚠⚠ THE STARTER IS A FLAG, NEVER A SLUG ────────────────────────── */
+  const schema = readFileSync(join("prisma", "schema.prisma"), "utf8");
+  const lp = schema.slice(schema.indexOf("model LearningPath "));
+  const lpBody = lp.slice(0, lp.indexOf("\n}"));
+  check("3 — `is_starter` exists on LearningPath", /is_starter\s+Boolean/.test(lpBody));
+  check(
+    "3 — ⚠⚠ it defaults to FALSE, never true (E612)",
+    /is_starter\s+Boolean\s+@default\(false\)/.test(lpBody),
+    "a default of true makes every existing row a starter the moment the column lands"
+  );
+  /* ⚠⚠⚠ THE POINT OF THE WHOLE COLUMN: the selection reads the FLAG and nothing
+     else, so a catalog swap marks a different row and no code changes. */
+  const home = strip(readFileSync(join("src", "lib", "learn-home.ts"), "utf8"));
+  check(
+    "3 — ⚠⚠⚠ the starter is chosen by the flag, not by a slug or title",
+    /is_starter:\s*true/.test(home) && !/slug:\s*["'`]/.test(home),
+    "a hardcoded slug has to be found and edited by somebody who does not know it exists"
+  );
+
+  /* ── 4 · ⚠⚠⚠ MORE THAN ONE STARTER IS REFUSED, NOT RESOLVED ──────────────
+     ⚠⚠ Scott, 2026-09-26: *"REFUSE and say so — do not silently take the first
+     by sort_order."* ⚠ Proved on the PURE function, exhaustively, with no
+     writes: flagging rows to test this would publish a probe path to real
+     members (ruling 38). */
+  check("4 — none marked reads as `none`", decideStarter([]).kind === "none");
+  check("4 — exactly one is the answer", decideStarter([{ id: "a" }]).kind === "one");
+  const two = decideStarter([{ id: "a" }, { id: "b" }]);
+  check(
+    "4 — ⚠⚠⚠ TWO marked paths are REFUSED, not resolved",
+    two.kind === "ambiguous",
+    `${two.kind} — silently taking the first by sort_order is how a second starter goes unnoticed`
+  );
+  check(
+    "4 — ⚠ and the refusal names every id, so it can be fixed",
+    two.kind === "ambiguous" && two.ids.length === 2 && two.ids.includes("b"),
+    JSON.stringify(two)
+  );
+  check("4 — three are refused too", decideStarter([{ id: "a" }, { id: "b" }, { id: "c" }]).kind === "ambiguous");
+  /* ⚠⚠ AND THE LIVE STATE, READ-ONLY. This is the half that actually reaches a
+     person: if somebody flags a second path in the database, THIS fails. */
+  const flagged = await prisma.learningPath.count({
+    where: { is_starter: true, status: "PUBLISHED" },
+  });
+  check(
+    "4 — ⚠⚠ at most ONE published path is flagged in the database today",
+    flagged <= 1,
+    `${flagged} are flagged — the page will refuse to show any starter until that is one`
+  );
+  const verdict = await starterPath(null);
+  check(
+    "4 — starterPath() agrees with the database",
+    (flagged === 0 && verdict.kind === "none") ||
+      (flagged === 1 && verdict.kind === "one") ||
+      (flagged > 1 && verdict.kind === "ambiguous"),
+    `flagged=${flagged} verdict=${verdict.kind}`
+  );
+
+  /* ── 5 · ⚠ THE CHIPS ARE WS-D's AND ARE ASSERTED IN THAT COMMIT, NOT THIS ONE.
+     ⚠⚠ Writing the assertion now would commit a RED gate against code that has
+     not landed yet, and a gate nobody can run green is a gate somebody switches
+     off. It arrives with the change it guards. */
+
+  await prisma.$disconnect();
+  console.log(`check:learn-entry — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);
+  for (const f of fails) console.log(`\n  ✗ ${f}`);
+  if (fails.length) process.exitCode = 1;
+}
+
+main();

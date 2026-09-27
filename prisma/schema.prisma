@@ -3332,6 +3332,25 @@ model LearningPath {
   /// touched by a human and an XLS re-run leaves it alone. Same rule the service
   /// taxonomy uses.
   is_custom        Boolean            @default(false)
+  /// ── ⚠⚠⚠ THE STARTER PATH IS A FLAG, NEVER A SLUG (`P2-A4-E683` WS-A) ─────
+  ///
+  /// ⚠⚠ **SCOTT, 2026-09-26: *"I will ultimately want to get a better training
+  /// provider with a much bigger selection on the platform."*** So the current
+  /// 54 courses are TEMPORARY, and nothing may be built that assumes them.
+  /// ⚠⚠⚠ **WHEN THAT CATALOG ARRIVES, THEIR OWN ONBOARDING PATH IS MARKED HERE
+  /// AND NOT ONE LINE OF CODE CHANGES.** A hardcoded slug would have to be found
+  /// and edited by somebody who does not know it exists — that is the defect
+  /// this column avoids, and it is the whole reason it is a column at all.
+  ///
+  /// ⚠ **`@default(false)`, NEVER `@default(true)`** (`E612`): a default that
+  /// says yes makes every existing row a starter the moment the column lands,
+  /// and 23 starter paths is not a state anybody would have chosen.
+  /// ⚠⚠ **MORE THAN ONE STARTER IS REFUSED OUT LOUD, NOT RESOLVED QUIETLY** —
+  /// see `starterPath()` in `lib/learn-home.ts`. Silently taking the first by
+  /// `sort_order` is how two starter paths go unnoticed for a month.
+  /// ⚠ **NO INDEX.** 23 rows, and a boolean index over a column that is true
+  /// for one of them earns nothing; `@@index([status])` already serves the read.
+  is_starter       Boolean            @default(false)
 
   expert      Person?           @relation("LearnExpertPaths", fields: [expert_person_id], references: [id], onDelete: SetNull)
   courses     Course[]

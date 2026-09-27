@@ -923,3 +923,96 @@ export async function viewerTeaches(viewer: { userId: string } | null): Promise<
   const n = await prisma.learningPath.count({ where: teachesPathWhere(person.id) });
   return n > 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ THE STARTER PATH (`P2-A4-E683` WS-A) — A FLAG, NEVER A SLUG
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚠⚠ **WHY A VERDICT AND NOT A `LearningPath | null`.** Three answers are
+ * genuinely different and a nullable return can only carry two:
+ *   · `none`     — nobody has marked one yet. Correct on the day the column
+ *                  lands, and NOT an error.
+ *   · `one`      — the answer.
+ *   · `ambiguous`— more than one is marked. ⚠⚠⚠ **REFUSED, NOT RESOLVED.**
+ */
+export type StarterVerdict =
+  | { kind: "none" }
+  | { kind: "one"; path: LearnCard }
+  | { kind: "ambiguous"; ids: string[] };
+
+/**
+ * ── ⚠⚠⚠ MORE THAN ONE STARTER PATH IS REFUSED OUT LOUD ───────────────────
+ *
+ * ⚠⚠ **SCOTT, 2026-09-26, ACCEPTING THE RECOMMENDATION: *"REFUSE and say so —
+ * do not silently take the first by `sort_order`."*** ⚠⚠⚠ The quiet resolution
+ * is the dangerous one: picking the lowest `sort_order` produces a page that
+ * looks completely normal while a second starter path sits marked and unseen,
+ * and nobody finds out until somebody asks why their new onboarding path never
+ * appeared. **A wrong answer that looks right outlives a missing one.**
+ *
+ * ⚠ **WHAT "SAY SO" MEANS HERE, AND WHAT IT DELIBERATELY DOES NOT.** It does
+ * NOT mean telling a learner: *"two starter paths are configured"* is an
+ * operator's sentence, and putting a misconfiguration on a member's screen
+ * spends their attention on something they cannot act on. ⚠⚠ It means
+ * (a) the card does not render, (b) `console.error` names the ids, and
+ * (c) **`check:learn-entry` FAILS on the live database** — the assertion is
+ * what actually reaches a person, which is the same argument `E556` settled:
+ * a schema comment is where obligations go to be forgotten.
+ *
+ * ⚠ **IT READS THE FLAG AND NOTHING ELSE.** No slug, no title, no group — a
+ * catalog swap marks a different row and this function is untouched, which is
+ * the entire reason the column exists.
+ * ⚠⚠ `PUBLISHED` is inherited from `getLearnHome`, so an unpublished path
+ * cannot be the starter even if somebody flags it — a starter nobody can open
+ * is `E579` in data rather than in code.
+ */
+/**
+ * ⚠⚠⚠ **THE DECISION, AS A PURE FUNCTION, AND THAT IS NOT TIDINESS.** The rule
+ * worth proving is *"two marked paths are refused"* — and proving it against
+ * the database would mean **flagging rows in the one database that also serves
+ * production** (ruling 38). ⚠⚠ A `PUBLISHED` probe path is visible to real
+ * members for as long as the probe runs, and a gate that crashes mid-run leaves
+ * a real path flagged. ⚠ So the LOGIC is tested exhaustively here with no
+ * writes at all, and the LIVE state is asserted read-only ("at most one is
+ * flagged today"). **Neither half needs a write to a shared database.**
+ */
+export type StarterDecision =
+  | { kind: "none" }
+  | { kind: "one"; id: string }
+  | { kind: "ambiguous"; ids: string[] };
+
+export function decideStarter(marked: { id: string }[]): StarterDecision {
+  if (marked.length === 0) return { kind: "none" };
+  if (marked.length > 1) return { kind: "ambiguous", ids: marked.map((m) => m.id) };
+  return { kind: "one", id: marked[0].id };
+}
+
+export async function starterPath(userId: string | null): Promise<StarterVerdict> {
+  const marked = await prisma.learningPath.findMany({
+    where: { is_starter: true, status: "PUBLISHED" },
+    select: { id: true },
+  });
+  const decided = decideStarter(marked);
+  if (decided.kind === "none") return { kind: "none" };
+  if (decided.kind === "ambiguous") {
+    console.error(
+      `[learn] ⚠ ${decided.ids.length} paths are marked is_starter — refusing to choose. ids: ${decided.ids.join(", ")}`
+    );
+    return decided;
+  }
+  /*
+    ⚠⚠ THE CARD COMES FROM `getLearnHome`, NOT FROM A SECOND QUERY (`E585`).
+    Its `ready`, `playable` and `lessons` are computed there, and a starter card
+    that counted its lessons differently from every other card on the page would
+    disagree with them in public.
+  */
+  const cards = await getLearnHome(userId);
+  /* ⚠ `decided.id`, not `marked[0].id` — reading the array again would re-derive
+     what `decideStarter` has already decided, which is how the two drift. */
+  const card = cards.find((c) => c.id === decided.id);
+  /* ⚠ A flagged path `getLearnHome` does not return is the unpublished case the
+     `where` already excludes — but `find` can still miss, so this says "none"
+     rather than asserting a card it does not have. */
+  return card ? { kind: "one", path: card } : { kind: "none" };
+}
