@@ -492,6 +492,16 @@ export type ProposalForBuyer = {
   rate: ProposalRate | null;
   /** ⚠ Set when the proposal answers an invitation; null on an open request. */
   invited: boolean;
+  /**
+   * ── ⚠⚠ THE TWO OPTIONAL STEPS (`E683a` WS-E) ───────────────────────────
+   * ⚠ `null` means *"not asked"*, which is a real and common state — **not an
+   * uncountable one** (ruling 18). The page says *"Not requested"* rather than
+   * printing a dash.
+   * ⚠⚠⚠ **NEITHER IS A PRECONDITION OF SELECTION**, and `check:work-chain`
+   * fails if `selection.ts` ever reads either table.
+   */
+  interviewStatus: string | null;
+  testStatus: string | null;
 };
 
 /**
@@ -560,10 +570,36 @@ export async function proposalsOn(
   });
   if (rows.length === 0) return [];
 
-  const people = await prisma.person.findMany({
-    where: { id: { in: rows.map((r) => r.provider_person_id) } },
-    select: { id: true, first_name: true, last_name: true },
-  });
+  const providerIds = rows.map((r) => r.provider_person_id);
+  /*
+    ⚠⚠ THE TWO OPTIONAL STEPS, READ ONCE FOR THE WHOLE LIST (`E683a` WS-E).
+    ⚠ One query each rather than one per row — 23 proposals would otherwise be
+    46 round trips for two columns.
+    ⚠⚠⚠ **READ, NEVER WRITTEN HERE.** This function feeds a view; the writers
+    are `requestInterview` and `sendTest`, reached through their own routes.
+  */
+  const [people, interviews, tests] = await Promise.all([
+    prisma.person.findMany({
+      where: { id: { in: providerIds } },
+      select: { id: true, first_name: true, last_name: true },
+    }),
+    prisma.interviewRequest.findMany({
+      where: { work_request_id: wr.id, provider_person_id: { in: providerIds } },
+      select: { provider_person_id: true, status: true },
+      orderBy: { created_at: "desc" },
+    }),
+    prisma.testRequest.findMany({
+      where: { work_request_id: wr.id, provider_person_id: { in: providerIds } },
+      select: { provider_person_id: true, status: true },
+      orderBy: { created_at: "desc" },
+    }),
+  ]);
+  /* ⚠ The NEWEST per provider wins — `orderBy` desc then first-write, because a
+     buyer may ask again after a decline and the latest ask is the live one. */
+  const interviewOf = new Map<string, string>();
+  for (const i of interviews) if (!interviewOf.has(i.provider_person_id)) interviewOf.set(i.provider_person_id, i.status);
+  const testOf = new Map<string, string>();
+  for (const t of tests) if (!testOf.has(t.provider_person_id)) testOf.set(t.provider_person_id, t.status);
   const nameOf = new Map(
     people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
   );
@@ -591,6 +627,8 @@ export async function proposalsOn(
             }
           : null,
       invited: r.bid_request_id !== null,
+      interviewStatus: interviewOf.get(r.provider_person_id) ?? null,
+      testStatus: testOf.get(r.provider_person_id) ?? null,
     };
   });
 }

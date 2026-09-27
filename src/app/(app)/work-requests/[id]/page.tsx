@@ -8,6 +8,7 @@ import { WorkRequestLines } from "@/components/work/WorkRequestLines";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { proposalsOn } from "@/lib/proposals";
+import { ProposalSteps } from "@/components/work/ProposalSteps";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
   WORK_REQUEST_STATUS_LABEL,
@@ -69,6 +70,24 @@ export default async function Page({
        that function on why it does not trust this page's earlier check. */
     proposalsOn(viewer, id),
   ]);
+
+  /*
+    ── ⚠⚠ THE TESTS A BUYER MAY SEND (`E683a` WS-E) ───────────────────────
+    ⚠⚠⚠ **A QUERY, NEVER A LITERAL.** 2 published and 6 draft today, and the
+    Learn brief's whole constraint is that the catalog is temporary — a list of
+    test names in code would have to be found and edited by somebody who does
+    not know it exists.
+    ⚠ PUBLISHED only, which is the same rule `sendTest` enforces through
+    `assertTestRequestLine`: this picker is a convenience and the writer is the
+    boundary. ⚠⚠ Read once for the page rather than per proposal.
+  */
+  const sendableTests = (
+    await prisma.learnAssessment.findMany({
+      where: { status: "PUBLISHED" },
+      select: { id: true, learningPath: { select: { title: true } } },
+      orderBy: { created_at: "asc" },
+    })
+  ).map((t) => ({ id: t.id, title: t.learningPath?.title ?? "Path test" }));
 
   /*
     ⚠ THE PICKER NEEDS PERSON IDS AND `matchProvidersFor` RETURNS PROFILE IDS.
@@ -270,6 +289,27 @@ export default async function Page({
                       {p.coverNote}
                     </p>
                   )}
+
+                  {/*
+                    ── ⚠⚠⚠ THE TWO OPTIONAL STEPS (`E683a` WS-E) ─────────────
+                    ⚠⚠ **WS-D MADE THIS SECTION READ-ONLY, AND THAT RULE IS
+                    UNCHANGED: it forbids a DECISION.** Shortlisting, declining
+                    and awarding are `selectProvider` (WS-F) and still have no
+                    control here — `check:proposals` §11 names those writers and
+                    fails if any becomes reachable from this page.
+                    ⚠⚠⚠ An interview and a test are **not** decisions about who
+                    gets the work: the brief calls both optional and says
+                    **neither may be a precondition of WS-F**, and
+                    `selection.ts` reads neither table.
+                  */}
+                  <ProposalSteps
+                    workRequestId={detail.id}
+                    providerPersonId={p.providerPersonId}
+                    providerName={p.providerName}
+                    interviewStatus={p.interviewStatus}
+                    testStatus={p.testStatus}
+                    tests={sendableTests}
+                  />
                 </li>
               ))}
             </ul>

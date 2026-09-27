@@ -606,7 +606,53 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "buyerName", "A buyer")} asked to interview you`,
     body: () => "Confirm a time to clear this.",
-    href: (v) => `/work-requests/${str(v, "requestId", "")}`,
+    /*
+      ── ⚠⚠⚠ `/find-work/`, NOT `/work-requests/` (`E680(b)`, FIXED BY `E683a`) ─
+
+      ⚠⚠ **THE RECIPIENT IS THE PROVIDER** — `recipient` says so one line up, and
+      `requestInterview` notifies `input.providerPersonId`. ⚠⚠⚠ `/work-requests`
+      is `guardPage("canHireTalent")`, so this href **sent the provider to a
+      buyer-only route and bounced them to `/dashboard?noaccess=1`** — a bell
+      entry that cannot be opened by the person it was written for.
+      ⚠ **IT WAS FILED AS UNREACHABLE AND DEFERRED ON THAT GROUND** (`E680(b)`,
+      2026-09-26): *"that event has no writer, so the defect is unreachable, and
+      correcting it is its own change."* ⚠⚠⚠ **WS-E BUILDS THE WRITER'S DOOR, SO
+      IT STOPS BEING UNREACHABLE — fixing it is a precondition of shipping WS-E,
+      not a separate errand.**
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   href: (v) => `/work-requests/${str(v, "requestId", "")}`,
+    */
+    href: (v) => `/find-work/${str(v, "requestId", "")}`,
+  },
+  /**
+   * ── ⚠⚠ THE PROVIDER IS TOLD A TEST WAS SENT (`P2-A8-E683a` WS-E) ────────
+   *
+   * ⚠⚠⚠ **`sendTest` WROTE A `TestRequest` AND TOLD NOBODY.** Measured: zero
+   * `notify()` calls in `work-tests.ts`, and no `work.test_*` event existed in
+   * this registry at all — the same shape `E680` found on the invite, where the
+   * writer shipped ahead of its event.
+   * ⚠ Same category as the interview: `work_request.matched` already means
+   * *"work reached you"*, and a seventeenth category would be a preference
+   * nobody asked for (ruling 37 — call the event that exists).
+   * ⚠⚠ `requiresAction` — the test IS the work item, and it clears when they
+   * sit it or decline it.
+   * ⚠⚠⚠ **NO BUYER NAME IS PASSED BY THE CALLER**, for the reason `E680` records:
+   * `buildBuyerIdentity` is the one redaction deciding what a provider may see,
+   * and a notification is outside the page that applies it. The fallback *"A
+   * buyer"* is true under both visibilities.
+   */
+  "work.test_requested": {
+    event: "work.test_requested",
+    recipient: "the provider sent a skills test",
+    category: "work_request.matched",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "buyerName", "A buyer")} sent you a skills test`,
+    body: () => "Sit it or decline to clear this.",
+    /* ⚠ The provider's own route, for the reason recorded on the interview
+       event directly above — and checked here rather than copied. */
+    href: (v) => `/find-work/${str(v, "requestId", "")}`,
   },
   "work.order_offered": {
     event: "work.order_offered",

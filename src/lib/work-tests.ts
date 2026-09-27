@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 import {
   SourcingError,
   assertTestRequestLine,
@@ -159,6 +160,37 @@ export async function sendTest(
       },
     },
     select: { id: true },
+  });
+
+  /*
+    ── ⚠⚠⚠ THE PROVIDER IS TOLD (`P2-A8-E683a` WS-E) ───────────────────────
+
+    ⚠⚠ **THIS WRITER SHIPPED WITHOUT AN EVENT AND TOLD NOBODY.** Measured at
+    WS-E's premise check: **zero `notify()` calls in this file**, and no
+    `work.test_*` entry in the registry at all — so a buyer could send a test
+    and the provider would never learn it existed. ⚠ It is `E680`'s shape
+    exactly: the writer landed ahead of its event.
+
+    ⚠⚠ **IT IS A WORKLIST ITEM** — the provider owes a response, and it clears
+    when they sit the test or decline it.
+    ⚠⚠⚠ **NO BUYER NAME IS PASSED**, and that is the load-bearing omission:
+    `WorkRequest` carries `company_visibility`/`company_code_name`, and
+    `buildBuyerIdentity` is the ONE redaction deciding what a provider may see.
+    A notification is outside the page that applies it, so passing the name here
+    would bypass the rule `check:work-request-identity` guards. The title falls
+    back to *"A buyer"*, which is true under both visibilities.
+    ⚠ Deduped on the request, so re-sending cannot stack a second worklist row —
+    and `sendTest` already returns the open one rather than creating a second.
+    ⚠⚠ `notify` catches its own failures and never rethrows, so a notification
+    outage cannot turn a sent test into an error the buyer sees.
+  */
+  await notify({
+    event: "work.test_requested",
+    personId: input.providerPersonId,
+    entityType: "test_request",
+    entityId: created.id,
+    dedupeKey: `work.test_requested:${created.id}`,
+    vars: { requestId: wr.id },
   });
 
   return { id: created.id, created: true };
