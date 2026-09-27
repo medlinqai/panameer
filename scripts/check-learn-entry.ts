@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
-import { decideStarter, starterPath } from "@/lib/learn-home";
+import { decideStarter, starterPath, getLearnHome, groupChips } from "@/lib/learn-home";
 import { starterIsDone } from "@/lib/learn-dashboard";
 
 /**
@@ -276,10 +276,126 @@ async function main() {
     "it drew the same path as the starter card, disagreeing about its size"
   );
 
-  /* ── 6 · ⚠ THE CHIPS ARE WS-D's AND ARE ASSERTED IN THAT COMMIT, NOT THIS ONE.
-     ⚠⚠ Writing the assertion now would commit a RED gate against code that has
-     not landed yet, and a gate nobody can run green is a gate somebody switches
-     off. It arrives with the change it guards. */
+  /* ── 6 · ⚠⚠⚠ WS-D — SEARCH, AND EVERY TRACK REACHABLE ──────────────────── */
+  const learnHomeTsx = strip(readFileSync(join("src", "components", "learn", "LearnHome.tsx"), "utf8"));
+  const cards = await getLearnHome(null);
+  const chips = groupChips(cards);
+
+  check(
+    "6 — ⚠⚠⚠ the chip list is NOT sliced — every track is reachable",
+    !/chips\.slice\(/.test(learnHomeTsx),
+    "6 of 11 rendered left 5 tracks with no way in, and the cut was by playable weight, so the hidden five were the emptiest"
+  );
+  check("6 — there are chips to render", chips.length > 0, `${chips.length}`);
+  /* ⚠⚠ THE COUNTS ARE PRINTED, NOT MERELY COMPUTED. `groupChips` has always
+     returned `paths` and `lessons` and nothing read them (WS-D item 4). */
+  check(
+    "6 — ⚠ each chip prints its own count",
+    /\{c\.paths\}/.test(learnHomeTsx),
+    "the number groupChips computes was never rendered"
+  );
+  check(
+    "6 — ⚠⚠ and the chip counts reconcile with the catalogue",
+    chips.reduce((n, c) => n + c.paths, 0) === cards.length,
+    `${chips.reduce((n, c) => n + c.paths, 0)} vs ${cards.length} — every card sits under exactly one chip`
+  );
+
+  /* ⚠⚠⚠ A SIGNED-IN MEMBER GETS THE SEARCH. It lived entirely in the
+     `!signedIn` branch, so a member got neither the field nor the chips. */
+  /*
+    ⚠⚠ IT COUNTS THE INPUTS BOUND TO `query`, NOT A PLACEHOLDER STRING — and
+    the first draft did the latter, which **survived its own mutation**: the
+    identical text also sits in the `aria-label`, so changing the placeholder
+    left the assertion matching. ⚠ An assertion pinned to a string that appears
+    twice is pinned to nothing (§11).
+    ⚠⚠⚠ TWO is the whole rule: one input in the signed-out hero, one for the
+    member. One means a branch lost its search; three means somebody added a
+    third surface without telling the filter.
+  */
+  const searchInputs = [...learnHomeTsx.matchAll(/value=\{query\}/g)].length;
+  check(
+    "6 — ⚠⚠⚠ the search renders for BOTH a visitor and a signed-in member",
+    searchInputs === 2,
+    `${searchInputs} inputs bound to query — it lived only in the !signedIn hero, so a member had no way to search at all`
+  );
+  /* ⚠⚠ ONE PREDICATE (`E585`). Two `.includes(needle)` filters would be two
+     searches that can drift — the signed-out hero searching less than the
+     signed-in catalogue, or the reverse. */
+  const needleUses = [...learnHomeTsx.matchAll(/includes\(needle\)/g)].length;
+  check(
+    "6 — ⚠⚠ ONE search predicate serves both branches",
+    needleUses === 1,
+    `${needleUses} — two predicates are two searches that drift`
+  );
+
+  /* ⚠⚠⚠ THE SEARCH REACHES COURSES AND LESSONS, NOT JUST PATHS — proved on the
+     DATA, not on the source, because the string is built server-side. */
+  const homeLib = strip(readFileSync(join("src", "lib", "learn-home.ts"), "utf8"));
+  check("6 — the card carries a searchText", /searchText/.test(homeLib));
+  const withCourses = cards.filter((c) => c.searchText.length > 0);
+  check("6 — every card has searchable text", withCourses.length === cards.length,
+    `${withCourses.length} of ${cards.length}`);
+  /* ⚠ A REAL LESSON TITLE MUST FIND ITS PATH. The needle is read from the
+     database, so this cannot go stale when the catalog is swapped. */
+  const lessonRow = await prisma.lesson.findFirst({
+    where: { title: { not: "" } },
+    select: { title: true, section: { select: { course: { select: { learning_path_id: true } } } } },
+    orderBy: { title: "desc" },
+  });
+  if (lessonRow?.title && lessonRow.title.length >= 8) {
+    const needle = lessonRow.title.toLowerCase();
+    const hit = cards.find((c) => c.searchText.includes(needle));
+    check(
+      "6 — ⚠⚠⚠ searching a LESSON title finds its PATH",
+      !!hit && hit.id === lessonRow.section.course.learning_path_id,
+      `"${lessonRow.title}" -> ${hit ? hit.title : "no path"}`
+    );
+  } else {
+    check("6 — a lesson title long enough to search with exists (E586)", false, "none");
+  }
+  const courseRow = await prisma.course.findFirst({
+    where: { title: { not: "" } },
+    select: { title: true, learning_path_id: true },
+    orderBy: { title: "desc" },
+  });
+  if (courseRow?.title && courseRow.title.length >= 8) {
+    const hit = cards.find((c) => c.searchText.includes(courseRow.title.toLowerCase()));
+    check(
+      "6 — ⚠⚠ searching a COURSE title finds its PATH",
+      !!hit && hit.id === courseRow.learning_path_id,
+      `"${courseRow.title}" -> ${hit ? hit.title : "no path"}`
+    );
+  }
+  /*
+    ⚠⚠⚠ AND EVERY RESULT TYPE LANDS ON THE PATH, WHICH IS TRUE BY CONSTRUCTION
+    RATHER THAN BY A RULE SOMEBODY HAS TO REMEMBER. Scott, 2026-09-26: *"when
+    anything is selected, the provider is shown the LP and asked to enroll…
+    a course or lesson result does NOT open the course directly."*
+    ⚠ There IS no course result and no lesson result to click — a match on
+    either surfaces the PATH's card, and `PathCard` links to `/learn/[slug]`,
+    which renders `EnrollButton`. **The rule cannot be violated because the
+    other two result types do not exist as links.**
+  */
+  const card = strip(readFileSync(join("src", "components", "learn", "PathCard.tsx"), "utf8"));
+  check(
+    "6 — ⚠⚠ every result links to the PATH, never to a course or lesson",
+    /\/learn\/\$\{card\.slug\}/.test(card) && !/\/course\/|\/lesson\//.test(card),
+    "a course result that opened a course would skip the enrol prompt"
+  );
+  const pathPage = strip(readFileSync(join("src", "app", "learn", "[slug]", "page.tsx"), "utf8"));
+  check(
+    "6 — ⚠ and the path it lands on asks them to enrol",
+    /EnrollButton/.test(pathPage),
+    "landing on the path is only the rule if the path actually asks"
+  );
+
+  /* ⚠ THE CATALOGUE GROUPS BY TRACK (WS-D item 5). */
+  check(
+    "6 — the catalogue groups by track with a head per track",
+    /grouped/.test(learnHomeTsx) && /grouped\.map/.test(learnHomeTsx),
+    "the frame groups; the live page was a flat grid"
+  );
+  console.log(`   chips: ${chips.length} · ${chips.map((c) => `${c.group}(${c.paths})`).join(" ")}`);
 
   await prisma.$disconnect();
   console.log(`check:learn-entry — ${fails.length ? `${fails.length} FAILED, ` : ""}${pass} passed`);

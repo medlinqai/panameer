@@ -55,12 +55,49 @@ export function LearnHome({
            ⚠⚠ The chip builder and this filter share `OTHER_GROUP`; two spellings
            of the same word would make the chip select nothing. */
         (!group || (c.group ?? OTHER_GROUP) === group) &&
-        (!needle ||
-          c.title.toLowerCase().includes(needle) ||
-          (c.summary ?? "").toLowerCase().includes(needle) ||
-          c.instructors.some((i) => i.name.toLowerCase().includes(needle))),
+        /*
+          ── ⚠⚠⚠ ONE PREDICATE, OVER ONE FIELD (`E683` WS-D, `E585`) ─────────
+
+          ⚠⚠ **IT NOW REACHES COURSES AND LESSONS**, because `searchText` carries
+          every course and lesson title. ⚠ SUPERSEDED, quoted not deleted
+          (`E164`) — it searched three fields on the PATH only, so a member who
+          typed a lesson's name got nothing:
+          //   c.title.toLowerCase().includes(needle) ||
+          //   (c.summary ?? "").toLowerCase().includes(needle) ||
+          //   c.instructors.some((i) => i.name.toLowerCase().includes(needle))
+          ⚠⚠⚠ **BOTH BRANCHES RUN THIS SAME LINE** — the signed-out hero and the
+          signed-in catalogue share one control and one filter, so they cannot
+          search different things.
+        */
+        (!needle || c.searchText.includes(needle)),
     );
   }, [cards, tab, group, query]);
+
+  /*
+    ── ⚠⚠⚠ THE CATALOGUE GROUPS BY TRACK, WITH A HEAD PER TRACK (WS-D item 5) ─
+
+    ⚠ The frame groups; the live page was a flat grid.
+    ⚠⚠ **GROUPED ONLY WHEN NOTHING IS FILTERING.** A search result set is
+    already a narrow answer, and slicing it into eight one-card sections buries
+    the answer under headings; a chip filter has by definition selected ONE
+    track, so a heading over the whole page would restate the chip.
+    ⚠ The order is the order `chips` arrives in — sorted by playable weight —
+    so the page and the chip row cannot disagree about which track leads.
+  */
+  const grouped = useMemo(() => {
+    if (query.trim() || group) return null;
+    const byGroup = new Map<string, LearnCard[]>();
+    for (const c of visible) {
+      const k = c.group ?? OTHER_GROUP;
+      const list = byGroup.get(k);
+      if (list) list.push(c);
+      else byGroup.set(k, [c]);
+    }
+    const order = chips.map((c) => c.group);
+    return [...byGroup.entries()].sort(
+      (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
+    );
+  }, [visible, query, group, chips]);
 
   /*
     ── ⚠⚠ PLAYABLE LESSONS, NOT ALL LESSONS (`P1-J3-E362`) ────────────────────
@@ -295,7 +332,19 @@ export function LearnHome({
 
                 {chips.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {chips.slice(0, 6).map((c) => {
+                    {/*
+                      ── ⚠⚠⚠ EVERY TRACK, NOT SIX (`E683` WS-D item 4) ────────
+                      ⚠⚠ **11 CHIPS EXISTED AND 6 RENDERED, SO 5 TRACKS HAD NO
+                      WAY IN AT ALL** — and the cut was by playable weight, so
+                      the hidden five were exactly the emptiest.
+                      ⚠ SCOTT, 2026-09-26, ruling 1: *"Show all 11 chips with
+                      their real counts. An empty chip is not `E579` — the
+                      filter returns zero, which is true. Clicking an empty
+                      track lands on an honest empty state."*
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                      //   {chips.slice(0, 6).map((c) => {
+                    */}
+                    {chips.map((c) => {
                       const active = group === c.group;
                       return (
                         <button
@@ -310,7 +359,11 @@ export function LearnHome({
                               : "border-white/35 text-white/90 hover:border-white")
                           }
                         >
-                          {c.group} <span aria-hidden>→</span>
+                          {/* ⚠⚠ THE COUNT `groupChips` HAS ALWAYS COMPUTED AND
+                              NOTHING EVER READ (WS-D item 4). ⚠ It is a
+                              measured number, so it prints even at 0 — ruling
+                              53c: a counted zero renders as 0, in ink. */}
+                          {c.group} <span className="opacity-70">({c.paths})</span>
                         </button>
                       );
                     })}
@@ -327,6 +380,64 @@ export function LearnHome({
                 )}
               </div>
             </section>
+      )}
+
+      {/*
+        ── ⚠⚠⚠ THE SIGNED-IN MEMBER GETS THE SEARCH TOO (`E683` WS-D) ────────
+
+        ⚠⚠⚠ **IT LIVED ENTIRELY IN THE `!signedIn` BRANCH, SO A MEMBER GOT
+        NEITHER THE FIELD NOR THE CHIPS** — measured at the premise check:
+        `signedIn ?` at :177, the else at :203, closing at :367, with the input
+        and the chip row inside it. ⚠ **SCOTT: *"really just let them search."*
+        THIS IS THE PRIMARY PATH, NOT A FEATURE.**
+
+        ⚠⚠ **IT IS THE SAME `query` AND `group` STATE AND THE SAME FILTER** —
+        one implementation, two skins (`E585`). The hero's copy is white-on-dark
+        because it sits on the gradient; this one is the page's own ink. **The
+        predicate above is shared and cannot drift between them.**
+      */}
+      {signedIn && (
+        <div className="mt-6">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search paths, courses and lessons"
+            aria-label="Search paths, courses and lessons"
+            className="w-full max-w-md rounded-full border border-line bg-white px-5 py-2.5 text-[14.5px] outline-none focus:border-magenta"
+          />
+          {chips.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {chips.map((c) => {
+                const active = group === c.group;
+                return (
+                  <button
+                    key={c.group}
+                    type="button"
+                    onClick={() => setGroup(active ? null : c.group)}
+                    aria-pressed={active}
+                    className={
+                      "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
+                      (active
+                        ? "border-magenta bg-magenta text-white"
+                        : "border-line text-ink-2 hover:border-ink/25")
+                    }
+                  >
+                    {c.group} <span className="opacity-70">({c.paths})</span>
+                  </button>
+                );
+              })}
+              {group && (
+                <button
+                  type="button"
+                  onClick={() => setGroup(null)}
+                  className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
 
@@ -353,10 +464,37 @@ export function LearnHome({
           Nothing matches that. Try a different search or clear the filters.
         </p>
       ) : (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((c) => (
-            <PathCard key={c.id} card={c} />
-          ))}
+        /*
+          ── ⚠⚠ GROUPED BY TRACK, WITH A HEAD PER TRACK (WS-D item 5) ────────
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the flat grid:
+          //   <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          //     {visible.map((c) => <PathCard key={c.id} card={c} />)}
+          //   </div>
+          ⚠⚠ `grouped` is null while a search or a chip is filtering, and the
+          flat grid is used then — see where it is computed for why.
+        */
+        <div className="mt-8">
+          {grouped ? (
+            grouped.map(([track, list]) => (
+              <section key={track} className="mb-9 last:mb-0">
+                <h2 className="font-display text-[18px] font-bold tracking-[-0.3px]">
+                  {track}{" "}
+                  <span className="font-normal text-ink-2">({list.length})</span>
+                </h2>
+                <div className="mt-3 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {list.map((c) => (
+                    <PathCard key={c.id} card={c} />
+                  ))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((c) => (
+                <PathCard key={c.id} card={c} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

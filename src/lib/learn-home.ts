@@ -51,6 +51,13 @@ export type LearnCard = {
   /** 0–100, of lessons completed. Null when not enrolled. */
   progress: number | null;
   completedLessons: number;
+  /**
+   * ⚠⚠ Everything this path can be found by — its own title and summary, its
+   * group, **every course title, every lesson title** and its instructors,
+   * lowercased and joined. ⚠ Built once on the server; see the block where it
+   * is assembled for why it is one field and not three arrays.
+   */
+  searchText: string;
 };
 
 /**
@@ -82,12 +89,16 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
            never two rules.** */
         assessment: { select: { status: true } },
         courses: {
+          /* ⚠ `title` ADDED BY `E683` WS-D — the search reaches COURSES and
+             LESSONS, not just paths, and this walk already existed. */
           select: {
+            title: true,
             sections: {
               select: {
                 lessons: {
                   select: {
                     id: true,
+                    title: true,
                     vimeo_ref: true,
                     production_status: true,
                     expert_person_id: true,
@@ -217,6 +228,35 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       */
       progress: isEnrolled ? prog.percent : null,
       completedLessons: prog.completed,
+      /*
+        ── ⚠⚠⚠ ONE SEARCHABLE STRING, BUILT ONCE, ON THE SERVER (`E683` WS-D) ──
+
+        ⚠⚠ **SCOTT, 2026-09-26: *"really just let them search."* THIS IS THE
+        PRIMARY PATH, NOT A FEATURE** — and it has to reach **paths, courses AND
+        lessons**, which is why the course and lesson titles joined the query
+        above rather than a second read being added beside it.
+
+        ⚠⚠⚠ **IT IS ONE FIELD, NOT THREE, BECAUSE THE FILTER MUST NOT BE ABLE TO
+        DRIFT PER SURFACE** (`E585`): the signed-out hero and the signed-in
+        catalogue run the SAME predicate over the SAME string. Three arrays would
+        let one caller forget lessons and quietly search less than the other.
+        ⚠ Lowercased here so the filter never re-lowercases 23 strings per
+        keystroke, and so casing can never differ between the two callers.
+        ⚠⚠ **A MATCH ON A LESSON STILL SURFACES THE PATH CARD** — which is
+        exactly Scott's rule that *"when anything is selected, the provider is
+        shown the LP and asked to enroll"*: there is no course or lesson result
+        to click, so a course result cannot open a course.
+      */
+      searchText: [
+        p.title,
+        p.summary ?? "",
+        p.group ?? "",
+        ...p.courses.map((c) => c.title),
+        ...p.courses.flatMap((c) => c.sections.flatMap((sec) => sec.lessons.map((l) => l.title))),
+        ...resolveInstructors(tallyExperts(lessons), directory, p.expert_person_id).map((i) => i.name),
+      ]
+        .join(" ")
+        .toLowerCase(),
     };
   });
 }
