@@ -26,8 +26,9 @@ import { CourseSpineBar } from "@/components/learn/app/CourseSpineBar";
 /* ⚠ `StreakTile` IS NO LONGER IMPORTED HERE (`P1-J3-E364` WS-2) — it left the
    stat row because `0 days` was the first thing a new learner saw. ⚠ THE
    COMPONENT AND ITS EXPORT STAY (`E164`); only this page stopped rendering it. */
-import type { DashPath, MyLearning as MyLearningData } from "@/lib/learn-dashboard";
-import type { Suggestion } from "@/lib/learn-suggestion";
+import type { DashPath, MyLearning as MyLearningData, StarterCard } from "@/lib/learn-dashboard";
+/* ⚠ SUPERSEDED with the card (`E164`):
+   //   import type { Suggestion } from "@/lib/learn-suggestion"; */
 
 /**
  * MY LEARNING — the signed-in `/learn` (brief_learn_app_shell WS2).
@@ -70,7 +71,11 @@ export function MyLearning({ data }: { data: MyLearningData }) {
      page stopped reading it.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   const { totals, mine, continueCard, inProgress, paths, suggestion } = data; */
-  const { totals, mine, completedAt, continueCard, inProgress, paths, suggestion, certificates, teaching } = data;
+  /* ⚠ `suggestion` LEFT THIS DESTRUCTURE WITH ITS CARD (`E683` WS-C). It still
+     travels on the view model; this page stopped reading it.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const { totals, mine, completedAt, continueCard, inProgress, paths, suggestion, starter, certificates, teaching } = data; */
+  const { totals, mine, completedAt, continueCard, inProgress, paths, starter, certificates, teaching } = data;
 
   /*
     ── ⚠⚠ LESSONS DONE THIS MONTH (WS-D item 1, ruling 36a) ────────────────
@@ -241,6 +246,25 @@ export function MyLearning({ data }: { data: MyLearningData }) {
           <div className="min-w-0">
 
 
+        {/*
+          ── ⚠⚠⚠ THE STARTER PATH, ABOVE EVERYTHING AND GATED ON NOTHING ─────
+
+          ⚠⚠ **IT SITS OUTSIDE THE `continueCard` TERNARY ON PURPOSE.** The old
+          `suggestion` was the right half of an EMPTY STATE and vanished the
+          moment a member had anything on the go; Scott's rule is the opposite —
+          *"every new user should go through those courses regardless."*
+          ⚠⚠⚠ **A MEMBER WITH THREE PATHS IN FLIGHT STILL HAS NOT DONE THE
+          FOUNDATIONS**, so hiding it from them would be the one case the rule
+          exists to cover.
+          ⚠ It disappears on COMPLETION and on nothing else — `learn-dashboard`
+          returns null once `completedLessons >= playable`.
+        */}
+        {starter && (
+          <div className="mb-6">
+            <StarterPathCard s={starter} />
+          </div>
+        )}
+
         {continueCard ? (
           <>
             <SectionHead title="Pick Up Where You Left Off">
@@ -273,7 +297,10 @@ export function MyLearning({ data }: { data: MyLearningData }) {
               suggest; the left half then fills the row rather than sitting
               beside an empty box. That is the "do not render half a row" case.
             */}
-            <div className={suggestion ? "grid gap-4 min-[900px]:grid-cols-2" : ""}>
+            {/* ⚠ SUPERSEDED with the card above (`E164`) — the two-column
+                split existed only to sit this half beside the suggestion:
+                //   <div className={suggestion ? "grid gap-4 min-[900px]:grid-cols-2" : ""}> */}
+            <div>
             <div className="rounded-brand border border-line bg-white p-6">
               <p className="text-[15px] font-bold">Nothing on the go yet.</p>
               <p className="mt-1.5 max-w-lg text-[13.5px] leading-relaxed text-ink-2">
@@ -307,7 +334,20 @@ export function MyLearning({ data }: { data: MyLearningData }) {
                 Browse the Catalog <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
-            {suggestion && <SuggestedFirstPath s={suggestion} />}
+            {/*
+              ── ⚠⚠⚠ THE SUGGESTED-FIRST-PATH CARD NO LONGER RENDERS (`E683` WS-C)
+
+              ⚠⚠ **IT WAS STILL DRAWING, AND THE SCREENSHOT IS WHAT CAUGHT IT:**
+              the starter card and this one showed **the same path, thirty
+              pixels apart, disagreeing about its size** — *"0 of 25 lessons"*
+              against *"4 courses · 53 lessons"*. ⚠⚠⚠ Two definitions of one
+              thing, in public (§13), which is the failure the starter flag
+              exists to end.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {suggestion && <SuggestedFirstPath s={suggestion} />}
+              ⚠ The component itself is quoted below and `learn-suggestion.ts`
+              is untouched on disk.
+            */}
             </div>
           </>
         )}
@@ -834,25 +874,92 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
  * on your profile"* — which is true, and is the sentence the mockup's subtitle
  * would have contradicted. **Do not add the mockup's wording to it.**
  */
-function SuggestedFirstPath({ s }: { s: Suggestion }) {
+/**
+ * ── ⚠⚠⚠ THE STARTER PATH CARD (`P2-A4-E683` WS-C) ───────────────────────
+ *
+ * ⚠⚠ **IT REPLACES `SuggestedFirstPath`'s REASON-BASED SUGGESTION**, which is
+ * still on disk below and still rendered in the empty state. ⚠ SUPERSEDED as
+ * the answer to *"what should I do first"*, quoted not deleted (`E164`) — the
+ * rule it encoded was **withdrawn by Scott on 2026-09-26**:
+ * //   the 2-years / no-RDS / no-match suggestion rule
+ * //   <p className="mt-1.5 …">{s.reason}</p>   e.g. "Because Payables is on your profile"
+ * ⚠⚠⚠ **HIS REPLACEMENT: *"I would always show them the foundations… every new
+ * user should go through those courses regardless."*** No RDS read, no years,
+ * no conditional — **and no `reason` line, because there is no longer a reason
+ * to give: it is shown to everybody.**
+ *
+ * ⚠⚠ **THE NUMBER IS A COUNT, NOT A PERCENTAGE OR A DASH.** `LessonProgress`
+ * holds 0 rows today, so every member is honestly at *"0 of N lessons"* — ⚠ a
+ * **measured zero rendered in ink** (ruling 53c), which a dash would have
+ * turned into *"we cannot count this"*, and a `0%` bar would have turned into
+ * a reproach.
+ * ⚠ `playable`, not total lessons: the figure is a promise about what they can
+ * actually watch (`E362`).
+ */
+function StarterPathCard({ s }: { s: StarterCard }) {
+  const started = s.completedLessons > 0;
   return (
     <div className="flex flex-col rounded-brand border border-magenta/30 bg-[linear-gradient(160deg,rgba(215,44,214,0.07),rgba(215,44,214,0.01))] p-6">
       <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-magenta">
         <Compass className="h-3.5 w-3.5" aria-hidden />
-        Suggested First Path
+        Start Here
       </p>
       <p className="text-[15px] font-bold">{s.title}</p>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{s.reason}</p>
+      <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
+        The foundations everyone starts with.
+      </p>
+      {/*
+        ⚠⚠ THE COUNT, IN INK. ⚠ It reads "0 of 25 lessons" on a fresh account
+        rather than hiding — that IS the credit rule (§4): name the first move
+        at genuine zero instead of reporting emptiness.
+      */}
       <p className="mt-1 text-[12px] text-ink-2">
-        {s.courses} course{s.courses === 1 ? "" : "s"} · {s.lessons} lesson
-        {s.lessons === 1 ? "" : "s"}
+        {s.completedLessons} of {s.playable} lesson{s.playable === 1 ? "" : "s"}
+        {started ? " done" : ""}
       </p>
       <Link
         href={`/learn/${s.slug}`}
         className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-5 py-2.5 text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
       >
-        Start This Path <ArrowRight className="h-4 w-4" aria-hidden />
+        {/* ⚠ Title Case (rule 11) — and the label names what the button IS, so
+            it changes with the member's state rather than lying about it. */}
+        {started ? "Keep Going" : s.enrolled ? "Continue This Path" : "Start Here"}{" "}
+        <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </div>
   );
 }
+
+/*
+  ⚠⚠⚠ RETIRED BY `E683` WS-C AND QUOTED, NEVER DELETED (`E164`). It rendered
+  a REASON — the 2-years / no-RDS / no-match rule Scott withdrew on 2026-09-26.
+  ⚠ Kept as `//` line comments (rule 12) so no inner comment terminator can
+  close this block early.
+  ⚠⚠⚠ AND THE FIRST DRAFT OF THIS VERY SENTENCE BROKE THE BUILD: it spelled the
+  terminator out literally, which CLOSED THE BLOCK HERE and left everything
+  below parsing as code. **Rule 12's trap, sprung by the sentence explaining
+  rule 12's trap.** Paraphrase the delimiter; never quote it.
+
+//   function SuggestedFirstPath({ s }: { s: Suggestion }) {
+//     return (
+//       <div className="flex flex-col rounded-brand border border-magenta/30 bg-[linear-gradient(160deg,rgba(215,44,214,0.07),rgba(215,44,214,0.01))] p-6">
+//         <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-magenta">
+//           <Compass className="h-3.5 w-3.5" aria-hidden />
+//           Suggested First Path
+//         </p>
+//         <p className="text-[15px] font-bold">{s.title}</p>
+//         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">{s.reason}</p>
+//         <p className="mt-1 text-[12px] text-ink-2">
+//           {s.courses} course{s.courses === 1 ? "" : "s"} · {s.lessons} lesson
+//           {s.lessons === 1 ? "" : "s"}
+//         </p>
+//         <Link
+//           href={`/learn/${s.slug}`}
+//           className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-5 py-2.5 text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
+//         >
+//           Start This Path <ArrowRight className="h-4 w-4" aria-hidden />
+//         </Link>
+//       </div>
+//     );
+//   }
+*/

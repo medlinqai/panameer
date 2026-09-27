@@ -16,6 +16,7 @@ import { lessonFace, withoutPlaceholders } from "@/lib/learn-faces";
 import { headlineFor } from "@/lib/learn-progress";
 import type { Instructor } from "@/lib/learn-instructor-format";
 import { getLearnerSignal, pickSuggestion, type Suggestion } from "@/lib/learn-suggestion";
+import { starterPath } from "@/lib/learn-home";
 
 /**
  * MY LEARNING — everything the signed-in `/learn` dashboard says, computed once
@@ -117,6 +118,35 @@ export type Achievement = {
      //   clientComputed?: "streak10"; */
 };
 
+/**
+ * ── ⚠⚠⚠ WHEN IS THE STARTER PATH DONE? A PURE FUNCTION. ──────────────────
+ *
+ * ⚠⚠ **`playable > 0` IS THE LOAD-BEARING HALF AND IT IS EASY TO DROP.**
+ * Without it `0 >= 0` is true, so a freshly flagged path **with nothing to
+ * watch yet marks itself complete the instant it is flagged** — and the card
+ * a member is supposed to always see would never appear once.
+ * ⚠ Measured: four of the eleven tracks carry zero playable lessons, so a path
+ * in that state is not hypothetical.
+ * ⚠⚠ `>=`, not `===`, because a lesson retired after a member watched it would
+ * leave `completed` above `playable` and strand them one short forever.
+ */
+export function starterIsDone(playable: number, completedLessons: number): boolean {
+  return playable > 0 && completedLessons >= playable;
+}
+
+/**
+ * ⚠ What the starter card needs and nothing more. ⚠⚠ It carries a COUNT, not a
+ * percentage: *"0 of 25 lessons"* is a fact a member can act on, and a `0%` bar
+ * on a path nobody has started says the same thing less kindly.
+ */
+export type StarterCard = {
+  title: string;
+  slug: string;
+  playable: number;
+  completedLessons: number;
+  enrolled: boolean;
+};
+
 export type MyLearning = {
   headline: string;
   /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — retired with the badge:
@@ -157,6 +187,19 @@ export type MyLearning = {
    * and thrown away.
    */
   suggestion: Suggestion | null;
+  /**
+   * ── ⚠⚠⚠ THE STARTER PATH (`P2-A4-E683` WS-C) ────────────────────────────
+   *
+   * ⚠⚠ **SCOTT, 2026-09-26, REPLACING THE 2-YEARS / NO-RDS / NO-MATCH RULE:**
+   * *"I would always show them the foundations… every new user should go
+   * through those courses regardless."*
+   * ⚠⚠⚠ **SO THERE IS NO CONDITION EXCEPT COMPLETION** — no RDS read, no years
+   * of experience, no *"recommended"*, and **crucially not `continueCard`**:
+   * unlike `suggestion` above, this is NOT the right half of an empty state.
+   * A member with three paths on the go still has not done the foundations.
+   * ⚠ `null` once it is complete, and `null` while no path is flagged.
+   */
+  starter: StarterCard | null;
   nextCertificate: { title: string; slug: string; percent: number; remaining: number; courses: number; coursesFinished: number } | null;
   /**
    * ── ⚠⚠⚠ THE CERTIFICATES PANEL (`P2-A4-E615`, ruling 6) ─────────────────
@@ -601,6 +644,39 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
   */
   const suggestion = continueCard ? null : pickSuggestion(rows, await getLearnerSignal(userId));
 
+  /*
+    ── ⚠⚠⚠ THE STARTER PATH, AND IT IS NOT GATED ON ANYTHING (`E683` WS-C) ──
+
+    ⚠⚠ **COMPLETION MUST HAVE A WRITER OR THE CARD CANNOT SAY IT**, and it does:
+    `LearnCard.completedLessons` is computed by `getLearnHome` from real
+    `LessonProgress` rows. ⚠⚠⚠ **MEASURED 2026-09-26: `LessonProgress` HOLDS
+    ZERO ROWS**, so today every member is honestly at *"0 of N"* — which is a
+    **counted zero rendered in ink**, not a dash (ruling 53c).
+
+    ⚠ **`playable`, NOT `lessons`.** The card's number is a promise about what
+    the member can actually watch, the same rule the chips and the headline
+    total already follow (`E362`). A path of 53 lessons with 25 playable would
+    otherwise show a bar that can never fill.
+    ⚠⚠ **DONE IS `completedLessons >= playable`, AND ONLY WHEN `playable > 0`** —
+    with no playable lessons, `0 >= 0` would mark an empty path complete the
+    moment it is flagged, which is the worst possible first impression.
+  */
+  const starterVerdict = await starterPath(userId);
+  let starter: StarterCard | null = null;
+  if (starterVerdict.kind === "one") {
+    const p = starterVerdict.path;
+    const done = starterIsDone(p.playable, p.completedLessons);
+    starter = done
+      ? null
+      : {
+          title: p.title,
+          slug: p.slug,
+          playable: p.playable,
+          completedLessons: p.completedLessons,
+          enrolled: p.enrolled,
+        };
+  }
+
   return {
     headline: headlineFor({
       /*
@@ -689,6 +765,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       ),
     continueCard,
     suggestion,
+    starter,
     nextCertificate: nearest
       ? {
           title: nearest.title,

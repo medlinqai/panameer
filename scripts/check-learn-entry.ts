@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { decideStarter, starterPath } from "@/lib/learn-home";
+import { starterIsDone } from "@/lib/learn-dashboard";
 
 /**
  * ── ⚠⚠⚠ `check:learn-entry` (`P2-A4-E683`) ──────────────────────────────
@@ -211,7 +212,71 @@ async function main() {
     `flagged=${flagged} verdict=${verdict.kind}`
   );
 
-  /* ── 5 · ⚠ THE CHIPS ARE WS-D's AND ARE ASSERTED IN THAT COMMIT, NOT THIS ONE.
+  /* ── 5 · ⚠⚠⚠ WS-C — THE STARTER IS SHOWN UNTIL IT IS DONE, AND NOTHING ELSE
+     ⚠⚠ Scott, 2026-09-26, replacing the withdrawn 2-years / no-RDS rule:
+     *"I would always show them the foundations… every new user should go
+     through those courses regardless."* */
+  check("5 — nothing done, something to do → NOT done", !starterIsDone(25, 0));
+  check("5 — partway → NOT done", !starterIsDone(25, 24));
+  check("5 — all of them → done", starterIsDone(25, 25));
+  /* ⚠⚠⚠ THE HALF THAT IS EASY TO DROP: without `playable > 0`, `0 >= 0` marks a
+     path with nothing to watch COMPLETE the instant it is flagged, and the card
+     a member must always see would never appear once. */
+  check(
+    "5 — ⚠⚠⚠ a path with NOTHING PLAYABLE is NOT done",
+    !starterIsDone(0, 0),
+    "0 >= 0 would mark an empty path complete the moment it is flagged"
+  );
+  check("5 — ⚠ and more completed than playable is still done, not stranded", starterIsDone(3, 5));
+
+  const dash = strip(readFileSync(join("src", "lib", "learn-dashboard.ts"), "utf8"));
+  /* ⚠⚠⚠ THE STARTER IS NOT GATED ON `continueCard`, AND THAT IS THE WHOLE
+     DIFFERENCE FROM THE `suggestion` IT REPLACES. `suggestion` is the right half
+     of an empty state and vanishes the moment a member has anything on the go;
+     a member with three paths in flight still has not done the foundations. */
+  const starterBlock = dash.slice(dash.indexOf("const starterVerdict"), dash.indexOf("return {", dash.indexOf("const starterVerdict")));
+  check("5 — the starter block was found to scan (E586)", starterBlock.length > 50, `${starterBlock.length}`);
+  check(
+    "5 — ⚠⚠⚠ the starter is NOT gated on continueCard",
+    !/continueCard/.test(starterBlock),
+    "that gate is what made the old suggestion an empty-state half"
+  );
+  const ml = strip(readFileSync(join("src", "components", "learn", "app", "MyLearning.tsx"), "utf8"));
+  check("5 — the page renders the starter card", /StarterPathCard/.test(ml));
+  /* ⚠ RULING 53c: a measured zero renders as a COUNT in ink. `LessonProgress`
+     holds 0 rows, so every member is at "0 of N" — a dash would say *we cannot
+     count this*, which is false, and a percentage bar would say it unkindly. */
+  check(
+    "5 — ⚠⚠ the card prints a COUNT, not a percentage or a dash",
+    /\{s\.completedLessons\} of \{s\.playable\}/.test(ml) &&
+      !/starterPercent|s\.percent/.test(ml),
+    "a measured zero renders as 0 in ink (53c)"
+  );
+  /*
+    ── ⚠⚠⚠ WHAT IT REPLACES IS QUOTED, NOT DELETED (`E164`) ────────────────
+
+    ⚠⚠ **THIS ONE READS THE RAW FILE, AND THE EXCEPTION IS THE WHOLE POINT.**
+    Every other scan here strips comments first, because a live-code rule must
+    not match an `E164` quote (rule 12). ⚠⚠⚠ **BUT THIS ASSERTION IS ABOUT THE
+    QUOTE ITSELF** — the retired component now lives *inside* a comment, so a
+    stripped read cannot see it and reports the opposite of the truth.
+    ⚠ Caught by the gate going red the moment the component was correctly
+    retired: the assertion was right about the rule and wrong about where to
+    look.
+  */
+  const mlRaw = readFileSync(join("src", "components", "learn", "app", "MyLearning.tsx"), "utf8");
+  check(
+    "5 — ⚠ SuggestedFirstPath is still on disk, quoted not deleted",
+    /function SuggestedFirstPath/.test(mlRaw),
+    "E164 — superseded code is quoted, never deleted"
+  );
+  check(
+    "5 — ⚠⚠ and it no longer RENDERS — the starter replaced it",
+    !/<SuggestedFirstPath/.test(ml),
+    "it drew the same path as the starter card, disagreeing about its size"
+  );
+
+  /* ── 6 · ⚠ THE CHIPS ARE WS-D's AND ARE ASSERTED IN THAT COMMIT, NOT THIS ONE.
      ⚠⚠ Writing the assertion now would commit a RED gate against code that has
      not landed yet, and a gate nobody can run green is a gate somebody switches
      off. It arrives with the change it guards. */
