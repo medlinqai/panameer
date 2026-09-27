@@ -1,15 +1,27 @@
-import type { NotificationEventKey } from "@/lib/notification-events";
+import {
+  NOTIFICATION_EVENTS,
+  type NotificationEventKey,
+} from "@/lib/notification-events";
+import { emailConfigured } from "@/lib/email-status";
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { notificationEmail } from "@/lib/email/templates/notification";
 
 /**
- * ── ⚠⚠⚠ THE EVENT ALLOWLIST. **IT SHIPS EMPTY, AND THAT IS THE DELIVERABLE.**
+ * ── ⚠⚠⚠ THE EVENT ALLOWLIST. **ONE EVENT IS ON.** ─────────────────────────
  *
- * `P0-E689` WS-B. ⚠ **Scott, 2026-09-27:** *"Ship the sender behind an explicit
- * allowlist of event keys, starting with one."* ⚠⚠ **AND FOR THIS RUN HE IS
- * AWAY, SO IT STARTS WITH NONE:** the SUPER RUN says **WS-B ships with the event
- * allowlist EMPTY — the sender exists, the wiring is proved under capture, and
- * no event is switched on. Which event goes first is Scott's.**
+ * `P0-E689`. ⚠ **Scott, 2026-09-27:** *"Ship the sender behind an explicit
+ * allowlist of event keys, starting with one."*
+ *
+ * ⚠⚠ **CORRECTED (rule 6 / §6) — THIS BLOCK SAID "IT SHIPS EMPTY" AND THAT IS
+ * NO LONGER TRUE.** WS-B shipped it empty on purpose, because Scott was away and
+ * **which event goes first was his to name.** ⚠ He named it in WS-C:
+ * `account.finish_later`. **A comment that still said "empty" would send the
+ * next reader looking for a bug in the sender.**
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   THE EVENT ALLOWLIST. IT SHIPS EMPTY, AND THAT IS THE DELIVERABLE.
+ * //   AND FOR THIS RUN HE IS AWAY, SO IT STARTS WITH NONE: the SUPER RUN says
+ * //   WS-B ships with the event allowlist EMPTY - the sender exists, the wiring
+ * //   is proved under capture, and no event is switched on.
  *
  * ── ⚠⚠⚠ WHY AN ALLOWLIST AND NOT "JUST READ THE PREFERENCE" ────────────────
  *
@@ -155,3 +167,54 @@ export function renderNotificationMail(
 
 /** ⚠ Read by the gate so it can assert the map without importing its internals. */
 export const PER_EVENT_TEMPLATE_KEYS = Object.keys(PER_EVENT) as NotificationEventKey[];
+
+/**
+ * ── ⚠⚠⚠ DOES THIS CATEGORY'S EMAIL ACTUALLY SEND? (`P0-E689` WS-D) ─────────
+ *
+ * ⚠⚠ **SCOTT, 2026-09-27, REJECTING MY PARK AS MIS-SPECIFIED:** *"`emailConfigured()`
+ * is GLOBAL; the allowlist is PER-EVENT. With one event on, the honest screen is
+ * neither 'email works' nor 'email doesn't' — it is per-category: one sends,
+ * seventeen record intent."*
+ *
+ * ⚠⚠⚠ **THAT IS WHAT CLOSES `E658` RATHER THAN RESTATING IT.** The old predicate
+ * was *"is there a key"* — `emailConfigured()`, `Boolean(RESEND_API_KEY)` — which
+ * has been **true for weeks while the notification layer sent nothing**, so the
+ * Email column was already live and already lying. ⚠ The new predicate is **"is
+ * this category's event on the allowlist"**, which is the question the member's
+ * toggle is actually asking.
+ *
+ * ⚠ **BOTH HALVES ARE REQUIRED AND NEITHER IS REDUNDANT:** a key with no
+ * allowlisted event sends nothing, and an allowlisted event with no key sends
+ * nothing either. ⚠⚠ **THE GLOBAL FACT IS NOT REPLACED, IT IS NARROWED** —
+ * `emailConfigured()` keeps its job and `email-status.ts` keeps being the one
+ * place that answers it.
+ *
+ * ⚠ **A CATEGORY WITH NO EVENTS AT ALL ANSWERS `false`, CORRECTLY** — and there
+ * are **seven** of them today (`milestone.due`, `buyer.provider.responded`,
+ * `buyer.work_order.status`, `buyer.timesheet.approval`, `product.updates`,
+ * `tax.documents`, `tax.form_required`). ⚠⚠ **THEY ARE A STRONGER FORM OF
+ * "RECORDS INTENT": nothing fires for them in ANY channel, not even the bell.**
+ * Reported at the WS-D gate as its own finding; **not given a third UI state,
+ * because Scott named two.**
+ */
+export function categoryEmailSends(categoryKey: string): boolean {
+  if (!emailConfigured()) return false;
+  return NOTIFICATION_EMAIL_EVENTS.some(
+    (k) => (NOTIFICATION_EVENTS[k] as { category?: string } | undefined)?.category === categoryKey
+  );
+}
+
+/**
+ * ⚠ Every category that sends today, for the gate and for the screen's summary
+ * line. ⚠⚠ Derived, never listed by hand — a hand-kept second list is the
+ * `E585` this whole module exists to avoid.
+ */
+export function categoriesThatSendEmail(): string[] {
+  return [
+    ...new Set(
+      NOTIFICATION_EMAIL_EVENTS.map(
+        (k) => (NOTIFICATION_EVENTS[k] as { category?: string } | undefined)?.category
+      ).filter((c): c is string => !!c)
+    ),
+  ];
+}

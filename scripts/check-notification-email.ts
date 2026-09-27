@@ -5,6 +5,7 @@ import {
   PER_EVENT_TEMPLATE_KEYS,
 } from "@/lib/notification-email";
 import { NOTIFICATION_EVENTS } from "@/lib/notification-events";
+import { NOTIFICATION_CATEGORIES } from "@/lib/notification-categories";
 import { ROUTE_ACCESS } from "@/lib/route-access";
 import { NON_PRODUCTION_ALLOWLIST } from "@/lib/email/non-production-allowlist";
 
@@ -277,6 +278,94 @@ if (NON_PRODUCTION_ALLOWLIST.length > 0) {
   for (const key of NOTIFICATION_EMAIL_EVENTS) {
     const own = PER_EVENT_TEMPLATE_KEYS.includes(key);
     console.log(`  · ${key} -> ${own ? "its own template" : "the generic row renderer"}`);
+  }
+}
+
+/* ═══ 10 · THE SCREEN ASKS THE RIGHT QUESTION (`P0-E689` WS-D) ════════════
+
+   ⚠⚠⚠ **SCOTT, 2026-09-27, REJECTING THE PARK:** *"`emailConfigured()` is
+   GLOBAL; the allowlist is PER-EVENT. With one event on, the honest screen is
+   neither 'email works' nor 'email doesn't' — it is per-category: one sends,
+   seventeen record intent. That closes `E658` properly rather than restating it
+   — the predicate stops being 'is there a key' and becomes 'is this category's
+   event on the allowlist'."* */
+{
+  const page = read("src/app/(app)/settings/notifications/page.tsx");
+  const comp = read("src/components/settings/NotificationSettings.tsx");
+
+  check(
+    "10 — the screen asks per category, not once for the whole column",
+    /categoryEmailSends\(/.test(page) && /emailSendsFor/.test(comp)
+  );
+  /* ⚠⚠ THE OLD GLOBAL PROP MUST BE GONE FROM THE COMPONENT'S LOGIC, or both
+     predicates exist and the day they disagree the screen lies again (`E585`). */
+  check(
+    "10 — the single global emailEnabled prop is gone",
+    !/emailEnabled/.test(comp),
+    "two predicates for one fact is how E658 happened"
+  );
+  /* ⚠⚠⚠ AND THE GLOBAL FACT IS NARROWED, NOT REPLACED. `E382` says there is ONE
+     place that answers "can this build send at all". If `categoryEmailSends`
+     stopped calling it, a build with no RESEND_API_KEY would show live toggles. */
+  check(
+    "10 — the per-category answer still requires the global one (E382)",
+    /if \(!emailConfigured\(\)\) return false;/.test(allowlistFile)
+  );
+  /* ⚠ 86a — IN-APP IS A RULE, NOT A SETTING. The email predicate must never
+     reach the in-app column. */
+  check(
+    "10 — the email predicate only disables the email channel (86a)",
+    /channel === "email" && !emailSendsFor\[cat\.key\]/.test(comp) &&
+      !/emailSendsFor\[cat\.key\][\s\S]{0,40}inApp/.test(comp)
+  );
+  /* ⚠ 86e / 90b — SMS stays dark, and its stated reason is now the true one. */
+  check(
+    "10 — the SMS note names the real reason, not the old false one",
+    /text delivery isn/.test(comp) && !/connected in test mode only/.test(comp)
+  );
+}
+
+/* ═══ 11 · ⚠⚠⚠ CAN THE RECIPIENT SEE THE TOGGLE FOR THE MAIL THEY GET? ═════
+
+   ⚠⚠ **FOUND AT THE WS-D GATE, BY WALKING THE SCREEN AS THE WRONG PERSONA AND
+   NOTICING THE ROW WAS ABSENT.** `account.finish_later` fires from the
+   **requester (buyer)** wizard, but its category `profile.visibility` is
+   `audience: "seller"` — ⚠⚠⚠ **SO THE ONE MEMBER WHO ACTUALLY RECEIVES THE ONE
+   LIVE EMAIL HAS NO ROW FOR IT IN THEIR OWN NOTIFICATION SETTINGS.**
+
+   ⚠ **IT IS NOT A TRAP, AND THAT IS WHY THIS PRINTS RATHER THAN FAILS:** the
+   email carries a **category-scoped unsubscribe link** (`c=profile.visibility`,
+   verified in a captured message), so the member can still stop it. ⚠⚠ But the
+   SETTINGS SCREEN — the surface that exists to answer *"what will you send
+   me?"* — does not show it to them.
+
+   ⚠⚠ **THE FIX IS A PRODUCT DECISION, NOT A TIDY-UP:** widening
+   `profile.visibility` to `audience: "both"` is purely additive (sellers already
+   see it) but puts eight seller-shaped events in front of buyers. **Scott's
+   call.** Printed every run so it cannot go quiet. */
+{
+  const cats = NOTIFICATION_CATEGORIES as unknown as {
+    key: string;
+    audience: string;
+  }[];
+  const unseen: string[] = [];
+  for (const key of NOTIFICATION_EMAIL_EVENTS) {
+    const cat = (NOTIFICATION_EVENTS[key] as { category?: string } | undefined)?.category;
+    const row = cats.find((c) => c.key === cat);
+    if (row && row.audience !== "both") unseen.push(`${key} -> ${cat} (audience: ${row.audience})`);
+  }
+  check(
+    "11 — the audience sweep ran over the allowlist",
+    NOTIFICATION_EMAIL_EVENTS.length === 0 || cats.length > 0
+  );
+  if (unseen.length) {
+    console.log(
+      `\n⚠⚠⚠ AN ALLOWLISTED EVENT'S CATEGORY IS NOT VISIBLE TO EVERY AUDIENCE:\n` +
+        unseen.map((u) => `     ${u}`).join("\n") +
+        `\n   A member outside that audience RECEIVES the email and has NO TOGGLE for it.\n` +
+        `   The category-scoped unsubscribe link in the mail is their only off switch.\n` +
+        `   Widening the audience is a product decision — reported, not guessed.\n`
+    );
   }
 }
 

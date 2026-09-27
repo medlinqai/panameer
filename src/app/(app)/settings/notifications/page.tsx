@@ -1,4 +1,9 @@
-import { emailConfigured, EMAIL_UNAVAILABLE_NOTE } from "@/lib/email-status";
+import { emailConfigured } from "@/lib/email-status";
+import {
+  categoryEmailSends,
+  categoriesThatSendEmail,
+} from "@/lib/notification-email";
+import { NOTIFICATION_CATEGORIES } from "@/lib/notification-categories";
 import { guardPage } from "@/lib/guard";
 import { getNotificationPrefs } from "@/lib/settings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
@@ -38,18 +43,38 @@ export default async function NotificationsPage() {
   const prefs = await getNotificationPrefs(viewer);
   return (
     <>
-      {/* ⚠ ONE HONEST LINE (`P1-ALL-E382`), shown only while the pipe is down.
-          It disappears on its own when `E371` lands — nothing to remember. */}
-      {!emailConfigured() && (
-        <p className="mb-4 rounded-brand border border-dashed border-line px-4 py-3 text-[13.5px] leading-relaxed text-ink-2">
-          {EMAIL_UNAVAILABLE_NOTE}
-        </p>
-      )}
-      {/* ⚠ `emailConfigured()` IS THE SAME FUNCTION `notify()` CALLS
-          (`P1-ALL-E382`) — read HERE, on the server, because `process.env` is
-          empty in the browser. One fact, two readers, never two switches. */}
+      {/*
+        ── ⚠⚠⚠ THE PREDICATE CHANGED, AND THAT IS WHAT CLOSES `E658` (`P0-E689` WS-D)
+
+        ⚠⚠ **SCOTT, 2026-09-27:** *"`emailConfigured()` is GLOBAL; the allowlist is
+        PER-EVENT. With one event on, the honest screen is neither 'email works'
+        nor 'email doesn't' — it is per-category: one sends, seventeen record
+        intent."*
+
+        ⚠⚠⚠ **THE OLD LINE WAS ALREADY LYING AND HAD BEEN FOR WEEKS.** It showed
+        `EMAIL_UNAVAILABLE_NOTE` only when `!emailConfigured()` — i.e. only when
+        `RESEND_API_KEY` was absent — and that key has been set since long before
+        the notification layer could send anything. ⚠ **So the note was hidden,
+        the Email column was live, and every toggle on it controlled nothing.
+        That IS `E658`.**
+
+        ⚠ **THE FACT IS NOW ASKED PER CATEGORY**, on the server, because
+        `process.env` is empty in the browser. ⚠⚠ `emailConfigured()` is NOT
+        replaced — `categoryEmailSends()` calls it first, so the global fact still
+        has exactly one home (`E382`) and the per-event fact is layered on top.
+        **One fact, one place, narrowed — not two switches.**
+
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   {!emailConfigured() && (<p …>{EMAIL_UNAVAILABLE_NOTE}</p>)}
+        //   <NotificationSettings emailEnabled={emailConfigured()} …/>
+      */}
       <NotificationSettings
-        emailEnabled={emailConfigured()}
+        emailSendsFor={Object.fromEntries(
+          NOTIFICATION_CATEGORIES.map((c) => [c.key, categoryEmailSends(c.key)])
+        )}
+        emailConfigured={emailConfigured()}
+        sendingCount={categoriesThatSendEmail().length}
+        totalCategories={NOTIFICATION_CATEGORIES.length}
         prefs={prefs}
         isSeller={viewer.isServiceProvider || viewer.isServiceCoordinator}
         isBuyer={viewer.isServiceBuyer}
