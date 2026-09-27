@@ -393,8 +393,19 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
     ["PROVIDER_NAV", [...PROVIDER_NAV]],
     ["REQUESTER_NAV", [...REQUESTER_NAV]],
   ];
+  /*
+    ⚠⚠ `Sell` → `Shop` (`P2-ALL-E693`, ruling `89e` CORRECTED). Scott,
+    2026-09-27: *"Slot 4 is Shop for everyone — Sell is gone, it becomes a button
+    inside Shop. Role-dependence is slot 3 only."*
+    ⚠⚠⚠ **SO THE TWO ROWS NOW DIFFER IN EXACTLY ONE POSITION, AND THAT IS
+    ASSERTABLE RATHER THAN DESCRIBABLE** — see the slot-3 check below.
+    ⚠ `check:rollup`'s case: the ruling moved, so the gate moves. The code did
+    not drift.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   PROVIDER_NAV: "Connect · Learn · Work · Sell · Orders",
+  */
   const EXPECTED: Record<string, string> = {
-    PROVIDER_NAV: "Connect · Learn · Work · Sell · Orders",
+    PROVIDER_NAV: "Connect · Learn · Work · Shop · Orders",
     REQUESTER_NAV: "Connect · Learn · Hire · Shop · Orders",
   };
   for (const [name, items] of rails) {
@@ -408,6 +419,35 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
         `6 — ⚠⚠ \`${gone}\` is not on ${name} — Orders owns the money door now`,
         !items.some((i) => i.label === gone),
         got
+      );
+    }
+  }
+
+  /*
+    ── ⚠⚠⚠ ROLE-DEPENDENCE IS SLOT 3 ONLY (`P2-ALL-E693`, ruling `89e`) ──────
+
+    ⚠ Scott's wording is a STRUCTURAL claim, not a description: *"Role-dependence
+    is slot 3 only."* ⚠⚠ **A pair of exact-row assertions cannot express it** —
+    they would both stay green if slot 4 diverged again, because each row would
+    still match its own expected string. **This asserts the SHAPE the two rows
+    share.**
+  */
+  {
+    const prov = [...PROVIDER_NAV].map((i) => i.label);
+    const req = [...REQUESTER_NAV].map((i) => i.label);
+    const differing = prov.map((l, n) => (l === req[n] ? null : n)).filter((n) => n !== null);
+    check(
+      "6 — ⚠⚠⚠ the two rails differ at slot 3 and NOWHERE ELSE (89e)",
+      differing.length === 1 && differing[0] === 2,
+      `differ at index ${JSON.stringify(differing)} — ${prov.join("·")} vs ${req.join("·")}`
+    );
+    /* ⚠ AND SLOT 4 IS UNIVERSAL ON BOTH — no capability, or an admin holding
+       neither service flag loses it and the slot stops being "for everyone". */
+    for (const [name, items] of [["PROVIDER_NAV", PROVIDER_NAV], ["REQUESTER_NAV", REQUESTER_NAV]] as const) {
+      check(
+        `6 — ⚠⚠ ${name}'s slot 4 (Shop) declares no capability — it is universal`,
+        items[3]?.label === "Shop" && !items[3]?.requires,
+        `${items[3]?.label} requires ${items[3]?.requires ?? "nothing"}`
       );
     }
   }

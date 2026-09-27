@@ -1167,7 +1167,6 @@ for (const [verb, journey] of [
   ["Hire", "Work Requests"],
   ["Work", "Work Requests"],
   ["Shop", "Service Products"],
-  ["Sell", "Service Products"],
   /* ⚠⚠ `P1-ALL-E533` — `Orders` IS NO LONGER A RAIL LABEL ON EITHER SIDE. Scott,
      2026-09-16: *"These are all verbs. Should read Manage Orders and Get Paid."*
      and then the buyer half: `Track Orders` / `Pay`. ⚠ SUPERSEDED, quoted not
@@ -1184,6 +1183,14 @@ for (const [verb, journey] of [
      two-word verb phrase is the widest thing in the row. ⚠ Every other slot
      still carries the verb rule, and the BUYER side below is untouched. */
   ["Orders", "Work Orders"],
+  /* ⚠⚠ `Sell` → `Shop` (`P2-ALL-E693`, ruling `89e` corrected). The journey name
+     is UNCHANGED — the rail says the journey in one word and the full name stays
+     on `heading`, which is the rule this pair list exists to hold.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   ["Sell", "Service Products"],
+     ⚠⚠⚠ AND `Shop` NOW SATISFIES IT FROM BOTH RAILS, which is the point of 89e:
+     one label, one journey, no mirror. */
+  ["Shop", "Service Products"],
   /*
     ⚠⚠ `Track Orders` -> `Orders` (`P2-ALL-E688` WS-B, ruling `89e`). Both rails
     read `Orders` now; the journey name is unchanged and still lives on

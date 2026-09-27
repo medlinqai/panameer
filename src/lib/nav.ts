@@ -186,7 +186,19 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     ⚠ They are fixed here rather than reported and left, because the assertion
     Scott asked for goes red on them and a gate that ships red is not a gate.
   */
-  "/my-services": ["/services"],
+  /*
+    ── ⚠⚠⚠ SELL ROLLED INTO SHOP, SO SHOP OWNS ITS PREFIXES (`P2-ALL-E693`) ──
+
+    ⚠ Ruling `89e` corrected: `Sell` left slot 4 and became a button inside Shop.
+    ⚠⚠ **SO `/my-services` AND `/services` ARE NO LONGER ANY BAND ITEM'S HREF**,
+    and their tab rows went DARK-BAND the moment the entry changed — the same
+    defect `/payments` hit in `E688` WS-B, found the same way, by the same gate.
+    ⚠ **This is the roll-up rendered:** a provider inside Service Products is in
+    the Shop section now, and the band says so.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   "/my-services": ["/services"],
+  */
+  "/packages": ["/my-services", "/services"],
   "/hire": ["/create-work"],
   /*
     ── ⚠⚠⚠ MONEY BELONGS TO ORDERS NOW, AND THE BAND HAS TO SAY SO
@@ -361,7 +373,18 @@ export const REQUESTER_NAV: NavItem[] = [
     heading: "Service Products",
     href: "/packages",
     icon: "Package",
-    requires: "canHireTalent",
+    /*
+      ⚠⚠⚠ NO `requires` — SLOT 4 IS UNIVERSAL (`P2-ALL-E693`, ruling `89e`
+      corrected): *"Slot 4 is Shop for everyone… Role-dependence is slot 3
+      only."* ⚠ `/packages` became `authenticated` in `86f78c7` so the entry and
+      its route agree.
+      ⚠⚠ **A CONSEQUENCE WORTH NAMING RATHER THAN DISCOVERING: an admin who
+      holds neither service capability now sees Shop.** They saw two slots before
+      and see three now. That is the ruling applied, not a slot placed — **where
+      the admin's five point is still Scott's** (`89i`).
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   requires: "canHireTalent",
+    */
   },
   /*
     ── ⚠⚠ THE CONTRACT DOCTRINE (`P1-ALL-E380`, 2026-09-04) ─────────────────
@@ -1230,12 +1253,41 @@ export const PROVIDER_NAV: NavItem[] = [
     requires: "canProvideServices",
   },
   {
-    /* ⚠ MIRRORED — the provider SELLS where the buyer SHOPS. */
-    label: "Sell",
+    /*
+      ── ⚠⚠⚠ SLOT 4 IS `Shop` FOR EVERYONE (`P2-ALL-E693`, ruling `89e`
+         CORRECTED, Scott 2026-09-27) ────────────────────────────────────
+
+      ⚠ *"Slot 4 is Shop for everyone — Sell is gone, it becomes a button inside
+      Shop. Role-dependence is slot 3 only."*
+
+      ⚠⚠ **SO THE MIRROR IS OVER.** The old entry's comment was *"MIRRORED — the
+      provider SELLS where the buyer SHOPS"*, and that symmetry is exactly what
+      was dropped: both rails now read `Shop` and point at `/packages`, and the
+      ONLY role-dependent slot is 3 — `Work` for a provider, `Hire` for a buyer.
+
+      ⚠⚠⚠ **`/my-services` IS NOT ORPHANED: ITS DOOR SHIPPED FIRST, IN
+      `86f78c7`** — a `canProvideServices`-gated `Sell Your Services` button
+      inside `/packages`. ⚠ It was measured to have had **exactly one
+      unconditional door** before that, this entry, so the order was not
+      optional. Rule 5, proven by commit order.
+
+      ⚠ **AND `/packages` HAD TO STOP REFUSING SELLERS** in that same earlier
+      commit — a universal slot pointing at a `canHireTalent` page bounces a
+      provider to `/dashboard?noaccess=1` out of their own menu.
+
+      ⚠ **NO `requires` HERE, DELIBERATELY:** slot 4 is universal now, and
+      `/packages` is `authenticated`. Declaring a capability would put
+      `check:nav-reachable` §1 in disagreement with the route it points at.
+
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   MIRRORED - the provider SELLS where the buyer SHOPS.
+      //   { label: "Sell", heading: "Service Products", href: "/my-services",
+      //     icon: "Tag", requires: "canProvideServices" },
+    */
+    label: "Shop",
     heading: "Service Products",
-    href: "/my-services",
+    href: "/packages",
     icon: "Tag",
-    requires: "canProvideServices",
   },
   /* ⚠⚠ `P1-ALL-E533` PART B — EVERY RAIL ITEM IS A VERB PHRASE. Scott,
      2026-09-16: *"These are all verbs. Should read Manage Orders and Get
