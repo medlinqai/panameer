@@ -50,6 +50,13 @@ import {
   type NavItem,
 } from "@/lib/nav";
 import { SETTINGS_NAV } from "@/lib/settings-nav";
+/* ⚠ §6 asserts that removing a rail item did not take a support-ticket category
+   with it — the two are coupled through `journeyKey()`, and nothing else in the
+   harness would notice. */
+import {
+  allSupportApplicationValues,
+  supportApplicationLabel,
+} from "@/lib/support-applications";
 
 let pass = 0;
 const failures: string[] = [];
@@ -366,6 +373,78 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
   const multi = keys
     .flatMap((k) => (rows[k] ?? []).filter((t) => t.label.trim().includes(" ")).map((t) => `${k}:${t.label}`));
   console.log(`  · 89h OPEN — ${multi.length} multi-word tab(s), reported not asserted: ${multi.join(", ")}`);
+}
+
+/* ═══ 6 · THE OPERATIONAL MENU IS FIVE PER ROLE (`P2-ALL-E688`, ruling 89e) ══
+
+   ⚠ Scott, 2026-09-27: *"roll it up into orders. NOTHING gets paid without an
+   Order."* ⚠⚠ Money leaves the row on BOTH sides; the doors live on `/orders`
+   and `check:orders` §6 owns them.
+
+   ⚠⚠⚠ **ASSERTED AS THE EXACT ROW, NOT AS A COUNT.** A count of five is
+   satisfied by any five items, so it would pass while somebody swapped `Sell`
+   for `Settle` — the `E603` lesson that a gate can assert the right rule about
+   the wrong thing. The count is asserted too, because it is what ruling 88b
+   limits and what the mobile brief's gates depend on. */
+{
+  const rails: [string, { label: string }[]][] = [
+    ["PROVIDER_NAV", [...PROVIDER_NAV]],
+    ["REQUESTER_NAV", [...REQUESTER_NAV]],
+  ];
+  const EXPECTED: Record<string, string> = {
+    PROVIDER_NAV: "Connect · Learn · Work · Sell · Orders",
+    REQUESTER_NAV: "Connect · Learn · Hire · Shop · Orders",
+  };
+  for (const [name, items] of rails) {
+    const got = items.map((i) => i.label).join(" · ");
+    check(`6 — ⚠⚠⚠ ${name} is exactly ${EXPECTED[name]} (89e)`, got === EXPECTED[name], got);
+    check(`6 — ⚠ ${name} is FIVE items, the M1 limit (88b)`, items.length === 5, `${items.length}`);
+    /* ⚠ POSITIVELY ABSENT. Dropping a name from a list proves nothing on its
+       own — the same discipline §5 applies to the profile row. */
+    for (const gone of ["Get Paid", "Pay", "Track Orders"]) {
+      check(
+        `6 — ⚠⚠ \`${gone}\` is not on ${name} — Orders owns the money door now`,
+        !items.some((i) => i.label === gone),
+        got
+      );
+    }
+  }
+
+  /*
+    ── ⚠⚠⚠ RULE 5, ON THE SURFACE THE BRIEF DID NOT SCOPE ────────────────────
+
+    ⚠⚠ `support-applications.ts` BUILDS THE SUPPORT-TICKET CATEGORY LIST OUT OF
+    THESE TWO RAILS. `Get Paid` and `Pay` both carried `heading: "Payments"`, so
+    both keyed to `payments` — **and removing them would have taken the category
+    with them, leaving no way to file a payments ticket** while a live row sat on
+    that exact value.
+
+    ⚠⚠⚠ **SCOTT RULED IT STAYS (option a), 2026-09-27: *"Support categories match
+    the complaint, not the data model."*** ⚠ So it moved to `EXTRA`, beside
+    `onboarding`, which is there for the same reason — **and this asserts it,
+    because a future rail edit could silently take it away again.**
+  */
+  check(
+    "6 — ⚠⚠⚠ `payments` is still a filable support category (rule 5)",
+    allSupportApplicationValues().includes("payments"),
+    allSupportApplicationValues().join(", ")
+  );
+  /* ⚠ AND IT STILL HAS A LABEL. `supportApplicationLabel` returns an unknown
+     value AS ITSELF, so a lost category does not blank — it degrades to the raw
+     slug, which is quieter and therefore easier to miss. */
+  check(
+    "6 — ⚠⚠ and the live row's `payments` value still renders a LABEL, not a slug",
+    supportApplicationLabel("payments") === "Payments",
+    supportApplicationLabel("payments")
+  );
+  /* ⚠ THE OTHER RAIL-DERIVED CATEGORIES MUST SURVIVE THE RENAME TOO. `Track
+     Orders` became `Orders`, and `journeyKey()` reads `heading ?? label` — so
+     the key is `work-orders` either way. Asserted rather than reasoned about. */
+  check(
+    "6 — ⚠ the `Track Orders` -> `Orders` rename did not move its ticket key",
+    allSupportApplicationValues().includes("work-orders"),
+    allSupportApplicationValues().join(", ")
+  );
 }
 
 /* ⚠⚠⚠ `E586` — A GATE WITH NO INPUTS MUST FAIL. If `PAGE_TABS` were empty, or

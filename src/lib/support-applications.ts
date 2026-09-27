@@ -62,6 +62,37 @@ export type SupportApplication = { value: string; label: string };
  */
 const EXTRA: SupportApplication[] = [
   { value: "onboarding", label: "Onboarding" },
+  /*
+    ── ⚠⚠⚠ `payments` — ON NEITHER RAIL SINCE ruling `89e`, AND THAT IS EXACTLY
+       WHY IT IS HERE (`P2-ALL-E688` WS-B) ──────────────────────────────────
+
+    ⚠ `Get Paid` and `Pay` left the two rails when money rolled into Orders. Both
+    carried `heading: "Payments"`, so both keyed to `payments` — ⚠⚠ **and this
+    list is built FROM the rails, so removing them would have taken the category
+    with them and NO MEMBER COULD FILE A PAYMENTS TICKET.** That is rule 5: the
+    capability must never be absent.
+
+    ⚠⚠⚠ **SCOTT RULED IT STAYS, 2026-09-27, AND THE REASONING IS THE PART WORTH
+    KEEPING:**
+
+      · *"A live ticket already sits on that value, so folding it into
+        `work-orders` leaves an existing row filed under a category that does not
+        describe it."* ⚠ Measured: `support_tickets` holds 3 rows —
+        `onboarding: 1`, **`payments: 1`**, `community: 1`.
+
+      · ⚠⚠ *"'Nothing gets paid without an Order' is a rule about HOW MONEY
+        FLOWS, not how a member describes trouble — someone whose payment hasn't
+        arrived thinks PAYMENT PROBLEM."*
+
+      · ⚠⚠⚠ ***"SUPPORT CATEGORIES MATCH THE COMPLAINT, NOT THE DATA MODEL."***
+
+    ⚠ **THAT LAST LINE GOVERNS THIS WHOLE LIST AND NOT JUST THIS ENTRY.** The menu
+    may reorganise around the model as often as the model earns it; **the words a
+    person reaches for when something has gone wrong do not move with it.** ⚠⚠ It
+    is the same argument `onboarding` is here for — the rails describe the app,
+    and a category has to describe the trouble.
+  */
+  { value: "payments", label: "Payments" },
   { value: "other", label: "Other" },
 ];
 

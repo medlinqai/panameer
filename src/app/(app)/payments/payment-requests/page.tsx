@@ -33,7 +33,14 @@ export const metadata = { title: "Payment Requests · Panameer" };
 export default async function Page() {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
-  if (!viewer) redirect("/login?callbackUrl=%2Ffinances%2Fpayment-requests");
+  /* ⚠ CORRECTED (`P2-ALL-E688` WS-B, rule 6): this sent a signed-out member back
+     to `/finances/payment-requests`, which has been a **308 to this page** since
+     `E533`. It worked — through the redirect — and it named a retired route, so
+     the bounce was one hop longer than it needed to be and the string described
+     an address that no longer exists.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   redirect("/login?callbackUrl=%2Ffinances%2Fpayment-requests"); */
+  if (!viewer) redirect("/login?callbackUrl=%2Fpayments%2Fpayment-requests");
 
   const [all, settleable] = await Promise.all([
     listSettlements(viewer),

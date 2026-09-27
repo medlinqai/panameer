@@ -189,6 +189,33 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   "/my-services": ["/services"],
   "/hire": ["/create-work"],
   /*
+    ── ⚠⚠⚠ MONEY BELONGS TO ORDERS NOW, AND THE BAND HAS TO SAY SO
+       (`P2-ALL-E688` WS-B, ruling `89e`) ──────────────────────────────────
+
+    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
+    an Order."* ⚠⚠ **THIS IS THE ROLL-UP, RENDERED.** `Get Paid` and `Pay` left
+    the row; a member now reaches the money surface from `/orders`, so while they
+    are on it the band must light **Orders** — the section it moved into, and the
+    one they came from.
+
+    ⚠⚠⚠ **FOUND BY THE GATE, NOT BY THE BRIEF, AND IT WOULD HAVE BEEN A REAL
+    DEFECT.** Removing the two rail items made `/payments` and
+    `/payments/payment-requests` **dark-band routes with a tab row** — the exact
+    shape Scott caught on `/community/score`: *"the tab row said CONNECT ·
+    Profile while the band said he was nowhere."* ⚠ Two navigation layers on one
+    page, disagreeing about which application he is in.
+
+    ⚠⚠ **IT CANNOT OVER-MATCH AND THAT WAS CHECKED, NOT ASSUMED.** No other band
+    item's prefix matches `/payments` or `/pay` — the ten items are `/connect`,
+    `/learn`, `/find-work`, `/my-services`, `/hire`, `/packages` and `/orders`
+    across the two rails — so **exactly one pill lights**, which is what `E433`
+    requires. ⚠ `/pay` is listed in full rather than relied on as a prefix of
+    `/payments`: they are two different routes on two different sides, and
+    `"/payments".startsWith("/pay")` being true is a coincidence of spelling that
+    already produced one false positive in `check:notification-email`.
+  */
+  "/orders": ["/payments", "/pay", "/finances"],
+  /*
     ── ⚠⚠⚠ THE ACCOUNT MENU IS A BAND DESTINATION TOO (ruling 72) ──────────
 
     ⚠ SCOTT: the band's items take a filled pill when active; **the avatar took
@@ -448,23 +475,60 @@ export const REQUESTER_NAV: NavItem[] = [
        nouns and already clean. ⚠⚠ THE `heading` VALUES ARE UNTOUCHED TOO —
        Scott ruled them not in conflict: the rail is a VERB (what you are
        about to do), the heading is a NOUN (what you are looking at). */
-    label: "Track Orders",
+    /*
+      ── ⚠ `Track Orders` → `Orders` (`P2-ALL-E688` WS-B, ruling `89e`) ────────
+
+      ⚠⚠ **BOTH RAILS NOW READ `Orders`.** The provider side became `Orders` at
+      `E559`; this is the buyer side catching up, and the two are no longer
+      deliberately different words. ⚠ **SUPERSEDED, quoted not deleted
+      (`E164`):** *"THE BUYER SIDE IS UNTOUCHED: it still reads `Track Orders`,
+      because a buyer WATCHES and a provider WORKS a queue."*
+      ⚠⚠ **WHAT CHANGED IS THAT THE SLOT NO LONGER MEANS "WATCH":** with money
+      rolled in, a buyer PAYS from here, which is not watching. **The distinction
+      the old word carried stopped being true**, so keeping it would have been a
+      label describing a narrower page than the one it opens.
+
+      ⚠⚠⚠ **THE `heading` IS DELIBERATELY UNCHANGED AND IT IS LOAD-BEARING:**
+      `journeyKey()` in `support-applications.ts` derives a support-ticket
+      category from `heading ?? label`, so renaming the LABEL cannot orphan a
+      filed ticket. `check:orders` §5 asserts the heading, not the label, and is
+      untouched by this rename — **checked, not assumed.**
+    */
+    label: "Orders",
     heading: "Work Orders",
     href: "/orders",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
   },
-  {
-    /* ⚠⚠ THE SECOND PLURAL NOUN, SAME DECISION. `Settle` is the one label
-       nobody arrives already understanding, in the ONE SECTION WHERE MONEY
-       LIVES. ⚠ The href is `/pay` on this side and `/finances` on the
-       provider's — mirrored routes, unchanged by this brief. */
-    label: "Pay",
-    heading: "Payments",
-    href: "/pay",
-    icon: "CreditCard",
-    requires: "canHireTalent",
-  },
+  /*
+    ── ⚠⚠⚠ `Pay` IS REMOVED — THE BUYER'S HALF OF ruling `89e` ───────────────
+
+    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
+    an Order."* ⚠⚠ Five per role: `Connect · Learn · Hire · Shop · Orders`.
+
+    ⚠⚠⚠ **THE DOOR SHIPPED FIRST, IN WS-A (`8d0aaa1`):** `orders/page.tsx`
+    renders `Pay → /pay`, gated on `canHireTalent` — **required, not decoration,
+    because `/pay` is itself gated `canHireTalent` (`route-access.ts:226`) and
+    offering it to a seller would be `E579`'s door onto a wall.** ⚠ Rule 5 held
+    at every commit, proven by commit order.
+
+    ⚠⚠ **CORRECTED IN PASSING (rule 6 / §6) — THIS ENTRY'S OWN COMMENT WAS
+    FALSE.** It claimed *"the href is `/pay` on this side and `/finances` on the
+    provider's — mirrored routes"*. ⚠⚠⚠ **MEASURED FALSE: the provider's href was
+    `/payments`, and `/finances` has been a 308 redirect since `E533`.** It is 21
+    lines of `permanentRedirect("/payments")` with **zero live doors of any
+    kind** — so the sentence named a route nobody could reach as though it were
+    one of a matched pair. ⚠ **They were never mirrored; they were a live route
+    and a retired alias.**
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the entry and its false comment:
+    //   THE SECOND PLURAL NOUN, SAME DECISION. `Settle` is the one label nobody
+    //   arrives already understanding, in the ONE SECTION WHERE MONEY LIVES.
+    //   The href is `/pay` on this side and `/finances` on the provider's —
+    //   mirrored routes, unchanged by this brief.
+    //   { label: "Pay", heading: "Payments", href: "/pay", icon: "CreditCard",
+    //     requires: "canHireTalent" },
+  */
   /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
      and the reasoning are at the head of the array. */
 ];
@@ -1197,29 +1261,41 @@ export const PROVIDER_NAV: NavItem[] = [
      reads `Track Orders`, because a buyer WATCHES and a provider WORKS a queue. */
   { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
   /*
-    ── ⚠⚠⚠ `Get Paid` IS RETAINED, AND THAT IS A DEPARTURE FROM THE BRIEF ──────
+    ── ⚠⚠⚠ `Get Paid` IS REMOVED. **THE PRECONDITION ITS OWN COMMENT SET HAS NOW
+       BEEN MET** (`P2-ALL-E688` WS-B, ruling `89e`). ────────────────────────
 
-    WS-A 3 says to REMOVE it — *"I will make payments available from orders"* —
-    with an explicit precondition: *"Removing the entry must leave `/payments`
-    reachable from Orders, or payments become unreachable."*
+    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
+    an Order."* ⚠⚠ The operational menu is **five per role**, and money is not one
+    of the five: `Connect · Learn · Work · Sell · Orders`.
 
-    ⚠⚠ MEASURED 2026-09-18, AND THE PRECONDITION IS NOT MET:
-      · `/orders` has NO `PAGE_TABS` entry at all — there is no tab row on it.
-      · No orders page links `/payments`. The only match under
-        `app/(app)/orders/` is the WORD "payments" inside prose.
-      · `/payments`' other doors are `attention.ts` (conditional — it only
-        surfaces when something needs attention), a back-link from INSIDE
-        payments, and the legacy `/finances` 308.
-    ⚠ So removing this entry buries a provider's money surface behind a
-    conditional notification — the same shape as `E559`'s own `/recommendations`
-    finding, which Scott ruled on the same day: KEEP THE ENTRY UNTIL THE DOOR
-    EXISTS.
+    ⚠⚠⚠ **THIS IS THE LINE THE RETAINED-ENTRY BLOCK PROMISED, AND IT IS BEING
+    REMOVED FOR EXACTLY THE REASON IT NAMED.** That block was written 2026-09-18
+    and kept the entry because the door did not exist; it ended *"One line to
+    remove once that door exists."* ⚠ **The door shipped in WS-A (`8d0aaa1`) —
+    `orders/page.tsx` now renders `Get Paid → /payments`, gated on
+    `canProvideServices`, above the empty-state branch so it survives a non-empty
+    list.** ⚠⚠ **RULE 5 HELD AT EVERY COMMIT AND THE COMMIT ORDER PROVES IT**, not
+    a promise: the door landed first, in a commit of its own.
 
-    ⚠⚠ REPORTED AT THE WS-A GATE, NOT DECIDED HERE. Building the Orders→payments
-    door is an Orders-surface change this brief does not scope. ⚠ One line to
-    remove once that door exists.
+    ⚠ **THE SCHEMA ALREADY CARRIED SCOTT'S RULE BEFORE THE MENU DID, WHICH IS WHY
+    THIS IS A CORRECTION AND NOT A PREFERENCE:** `Payment` holds **no order
+    reference at all**; `PaymentLine.settlement_request_id` does, so cash cannot
+    reach anybody without traversing a settlement request, which hangs off an
+    order. ⚠⚠ **THE MENU NOW MATCHES THE MODEL.** Whoever reads this later and
+    thinks a money tab is missing: **it is not missing, it is downstream** — and
+    restoring one would put a door on the menu that the data model says is a room
+    inside Orders.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the entry as it stood:
+    //   { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
+    ⚠ And the reasoning that retained it, true when written and now spent:
+    //   MEASURED 2026-09-18, AND THE PRECONDITION IS NOT MET: /orders has NO
+    //   PAGE_TABS entry at all; no orders page links /payments; /payments' other
+    //   doors are attention.ts (conditional), a back-link from INSIDE payments,
+    //   and the legacy /finances 308. So removing this entry buries a provider's
+    //   money surface behind a conditional notification — KEEP THE ENTRY UNTIL
+    //   THE DOOR EXISTS.
   */
-  { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
   /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
      and the reasoning are at the head of the array. */
 ];

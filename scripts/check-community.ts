@@ -1015,8 +1015,38 @@ check(
    unnumbered because somebody did, and only one of those is a decision.
    ⚠ `E384`'s brief said only ONE set was classified. That was wrong — `E378`
    classified all four. The missing piece was the guard, not the classification. */
-const pageTabKeys = [...navLib.matchAll(/^\s*"(\/[^"]*)":\s*\[/gm)].map((m) => m[1]);
+/*
+  ── ⚠⚠⚠ SCOPED TO THE `PAGE_TABS` BLOCK. **IT SCANNED THE WHOLE FILE AND THAT
+     WAS A LATENT FALSE RED** (`P2-ALL-E688` WS-B) ─────────────────────────
+
+  ⚠ The scan matched **any** `"/path": [` line in `nav.ts`, and `PAGE_TABS` is not
+  the only map of that shape — `BAND_EXTRA_PREFIXES` has exactly the same
+  syntax. ⚠⚠ So a band prefix was read as a tab set and demanded a
+  `TAB_SEQUENCE` mode it can never have.
+
+  ⚠⚠⚠ **IT SAT THERE UNSEEN BECAUSE OF A COINCIDENCE:** every existing
+  `BAND_EXTRA_PREFIXES` key — `/connect`, `/my-services`, `/hire` — **also
+  happens to be a real `PAGE_TABS` key**, so all three were classified anyway and
+  the over-match produced no failure. ⚠ Ruling `89e` added `"/orders"`, the first
+  prefix key that is **not** a tab set, and the gate went red **on correct code**.
+
+  ⚠⚠ **THE ASYMMETRY WAS THE TELL AND IT WAS ALREADY IN THE CODE:** the
+  `TAB_SEQUENCE` side of this very assertion is scoped to its own block
+  (`seqBlock`, below) while the `PAGE_TABS` side was not. ⚠ §9's rule — **a
+  gate's population is part of its assertion** — and §10's — **a gate that fails
+  on correct code is a gate someone switches off.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const pageTabKeys = [...navLib.matchAll(/^\s*"(\/[^"]*)":\s*\[/gm)].map((m) => m[1]);
+*/
+const tabsBlock = /export const PAGE_TABS[\s\S]*?\n\};/.exec(navLib)?.[0] ?? "";
+const pageTabKeys = [...tabsBlock.matchAll(/^\s*"(\/[^"]*)":\s*\[/gm)].map((m) => m[1]);
 const seqBlock = /export const TAB_SEQUENCE[\s\S]*?\n\};/.exec(navLib)?.[0] ?? "";
+/* ⚠⚠⚠ `E586` — THE NARROWER SCAN COULD NOW FIND NOTHING AT ALL, AND A SCAN THAT
+   FINDS NOTHING PASSES EVERY "is it classified" TEST VACUOUSLY. Both the block
+   and its keys are asserted, so scoping the population cannot become a way of
+   emptying it. */
+check("E384/3 — the PAGE_TABS block was found by the scan", tabsBlock.length > 0);
 check(
   "E384/3 — the PAGE_TABS keys were found by the scan",
   pageTabKeys.length >= 4,
@@ -1154,7 +1184,17 @@ for (const [verb, journey] of [
      two-word verb phrase is the widest thing in the row. ⚠ Every other slot
      still carries the verb rule, and the BUYER side below is untouched. */
   ["Orders", "Work Orders"],
-  ["Track Orders", "Work Orders"],
+  /*
+    ⚠⚠ `Track Orders` -> `Orders` (`P2-ALL-E688` WS-B, ruling `89e`). Both rails
+    read `Orders` now; the journey name is unchanged and still lives on
+    `heading`. ⚠⚠⚠ **THE HEADING NOT MOVING IS LOAD-BEARING, NOT COSMETIC:**
+    `support-applications.ts` derives a ticket category from `heading ?? label`,
+    so a LABEL rename cannot orphan a filed ticket — asserted in
+    `check:nav-reachable` §6, not reasoned about here.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   ["Track Orders", "Work Orders"],
+  */
+  ["Orders", "Work Orders"],
   /*
     ── ⚠⚠ `Connect`'s JOURNEY NAME IS `My Profile` NOW (`P2-J3-E591` WS-A) ───
 
@@ -1213,14 +1253,37 @@ for (const [verb, journey] of [
    because `/payments` is not reachable from Orders (no `PAGE_TABS` entry, no
    link). Reported at the WS-A gate; this assertion is what fails if it is
    dropped before that door exists. */
-check(
-  "E378/4 — the seller money slots are Orders | Get Paid",
-  /label: "Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
-);
-check(
-  "E378/4 — the buyer money slots are Track Orders | Pay",
-  /label: "Track Orders"/.test(navLib) && /label: "Pay"/.test(navLib)
-);
+/*
+  ── ⚠⚠⚠ THE MONEY SLOTS ARE GONE, AND THIS ASSERTION DID ITS JOB FIRST ──────
+
+  ⚠ Ruling `89e`, Scott 2026-09-27: *"roll it up into orders. NOTHING gets paid
+  without an Order."* Five per role; money is not one of the five.
+
+  ⚠⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`': THE RULING MOVED,
+  SO THE GATE MOVES.** The code did not drift.
+
+  ⚠⚠⚠ **AND THE OLD ASSERTION IS BEING RETIRED HAVING WORKED EXACTLY AS WRITTEN.**
+  Its own comment said: *"`Get Paid` IS RETAINED and is still asserted — the brief
+  said to remove it, and it was NOT removed because `/payments` is not reachable
+  from Orders… this assertion is what fails if it is dropped before that door
+  exists."* ⚠ **The door shipped in `E688` WS-A (`8d0aaa1`) — one commit BEFORE
+  the row was removed — so the condition it guarded was met before it fired.**
+
+  ⚠⚠ **WHAT REPLACES IT ASSERTS THE RULE AND NOT THE MECHANISM.** The rule was
+  never *"a menu item called Get Paid exists"*; it was **"a provider can reach
+  their money."** That reachability now lives on `/orders` and is owned by
+  `check:orders` §6, which asserts the href, the capability guarding it, and that
+  it renders above the empty-state branch. ⚠ Asserting the absence here and the
+  door there is one rule in its right place, not two half-rules (`E585`).
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   "E378/4 - the seller money slots are Orders | Get Paid",
+  //   /label: "Orders"/.test(navLib) && /label: "Get Paid"/.test(navLib)
+  //   "E378/4 - the buyer money slots are Track Orders | Pay",
+  //   /label: "Track Orders"/.test(navLib) && /label: "Pay"/.test(navLib)
+*/
+/* ⚠⚠⚠ THE ASSERTION ITSELF IS MOVED BELOW `railsOnly`'s DECLARATION — see the
+   note there. Placing it here read GREEN WHILE ASSERTING NOTHING. */
 /*
   ⚠⚠ SCOPED TO THE TWO RAIL ARRAYS, NOT THE WHOLE FILE. The first draft of this
   check scanned `navLib` entire and failed on `PAGE_TABS`, which legitimately has
@@ -1236,6 +1299,41 @@ const railsOnly = (() => {
   };
   return grab("PROVIDER_NAV") + grab("REQUESTER_NAV");
 })();
+
+/*
+  ── ⚠⚠⚠ THIS LOOP LIVES *HERE*, BELOW `railsOnly`, AND THE REASON IS A DEFECT I
+     SHIPPED AND CAUGHT ONE MINUTE LATER (`P2-ALL-E688` WS-B) ───────────────
+
+  ⚠ It was first written ~40 lines ABOVE, beside the assertions it replaces.
+  `railsOnly` is a `const` declared after that point, so at that moment it was
+  **the empty string** — and `!/label: "Get Paid",/.test("")` is `true`.
+  ⚠⚠ **THE GATE READ 203/203 WHILE THESE THREE ASSERTED NOTHING AT ALL.**
+  ⚠⚠⚠ **IT WAS FOUND THE ONLY WAY IT COULD BE: PUTTING `Get Paid` BACK ON
+  `PROVIDER_NAV` AND WATCHING THE GATE STAY GREEN.** Reading the code did not
+  find it; running the mutation did.
+
+  ⚠ **`E607`, IN ITS PUREST FORM — AN ASSERTION ITS OWN MUTATION CANNOT FAIL IS
+  NOT AN ASSERTION** — and a near-identical failure happened earlier in this same
+  session, where a bulk replace removed a headline assertion and the gate still
+  read green at its old count. **A count is not coverage.**
+*/
+for (const gone of ["Get Paid", "Pay", "Track Orders"]) {
+  check(
+    `E378/4 — \`${gone}\` has left both rails (89e — Orders owns the money door)`,
+    !new RegExp(`label: "${gone}",`).test(railsOnly),
+    "the door is on /orders and check:orders §6 owns it"
+  );
+}
+/* ⚠⚠ AND THE POPULATION IS ASSERTED, because the bug above was ultimately an
+   EMPTY HAYSTACK passing a "needle is absent" test. ⚠⚠⚠ IT GUARDS MORE THAN MY
+   OWN LINES: the pre-existing "no RAIL label reverts to a bare noun" assertion
+   reads the same string and was vulnerable to exactly the same emptiness —
+   proven, because emptying `railsOnly` reddens BOTH. */
+check(
+  "E378/4 — railsOnly actually captured both rail arrays",
+  railsOnly.includes('label: "Connect"') && railsOnly.length > 500,
+  `${railsOnly.length} chars`
+);
 check(
   "E378/4 — no RAIL label reverts to a bare noun or to the Order | Settle draft",
   railsOnly.length > 0 &&
