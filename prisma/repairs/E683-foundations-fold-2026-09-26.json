@@ -1,0 +1,73 @@
+{
+  "id": "P2-A4-E683 WS-B — the Foundations fold",
+  "written_at": "2026-09-27T01:32:38.331Z",
+  "database": "ofkctqkhclnaihnmbyfx (the one database — also serves production)",
+  "how_to_undo": [
+    "1. For each course below, set learning_path_id and sort_order back to `was`.",
+    "2. For each path below, set status back to `was_status` (PUBLISHED).",
+    "3. Delete the created path named in `created_slug` — and its forum board.",
+    "⚠ NOTHING WAS DELETED BY THE REPAIR, so the undo only reverses moves and statuses."
+  ],
+  "created_slug": "oracle-cloud-foundations",
+  "paths": [
+    {
+      "id": "15e83bc9-146c-4746-8846-a01313e3f1f8",
+      "title": "2. Overview",
+      "was_status": "PUBLISHED"
+    },
+    {
+      "id": "b39fd678-9540-4e22-ba5e-76af49a55b2a",
+      "title": "3. Roles & Careers",
+      "was_status": "PUBLISHED"
+    },
+    {
+      "id": "4f036a44-a060-4d1b-847e-3847c2a5f150",
+      "title": "4. How to Login & Get Started",
+      "was_status": "PUBLISHED"
+    },
+    {
+      "id": "d2329e96-dbdc-422b-81f5-2e1f2a2caa4f",
+      "title": "1. Background",
+      "was_status": "PUBLISHED"
+    }
+  ],
+  "courses": [
+    {
+      "id": "bfc376ce-c484-42af-9438-265f0b37ab95",
+      "title": "2. Overview",
+      "was": {
+        "learning_path_id": "15e83bc9-146c-4746-8846-a01313e3f1f8",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "5717a554-188b-4048-acc5-a151027624c7",
+      "title": "3. Roles & Careers",
+      "was": {
+        "learning_path_id": "b39fd678-9540-4e22-ba5e-76af49a55b2a",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "c3ee94ac-b579-4e9a-b947-d5e910c0495a",
+      "title": "4. How to Login & Get Started",
+      "was": {
+        "learning_path_id": "4f036a44-a060-4d1b-847e-3847c2a5f150",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "2b99319d-0828-4298-bcf9-6d39d2f70d7e",
+      "title": "1. Background",
+      "was": {
+        "learning_path_id": "d2329e96-dbdc-422b-81f5-2e1f2a2caa4f",
+        "sort_order": 0
+      }
+    }
+  ],
+  "not_touched": {
+    "assessment_on_1_background": "LearnAssessment stays attached to 1. Background, which becomes DRAFT. Its test is then unreachable. Reported, not moved — Scott did not authorise moving a test.",
+    "experts": "learn_lessons.expert_person_id untouched (load-bearing rule 10).",
+    "old_forum_boards": "left in place on the four unpublished paths."
+  }
+}
