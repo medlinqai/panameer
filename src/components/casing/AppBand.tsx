@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 //   import { useRef, useState, useSyncExternalStore } from "react";
 import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
+import { ConfigDrawer } from "@/components/casing/ConfigDrawer";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { ACCOUNT_BAND_HREF } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
@@ -152,10 +153,42 @@ export function AppBand() {
     deliberately and it survives this one: hard-coding the labels is exactly the
     drift one definition exists to prevent.
     ⚠⚠ THIS BRIEF DOES NOT CHANGE WHO SEES WHICH MENU. `navForRoles` already
-    gates on `hasCapability`-equivalent flags; the admin branch is a different
-    LIST, flattened here because a band has no room for group headers.
+    gates on `hasCapability`-equivalent flags.
+
+    ── ⚠⚠⚠ THE ADMIN BRANCH IS GONE (`P2-ALL-E692`, ruling `89i`) ────────────
+
+    ⚠⚠ **SCOTT, 2026-09-27:** *"Admin's M1 is the same five transaction slots as
+    a member's. No separate admin bottom bar, no 'first five of `ADMIN_NAV`'.
+    The gear pops the configuration menu as a drawer, so ruling 88's five-item
+    limit does not apply to it."*
+
+    ⚠⚠⚠ **WHAT THE OLD LINE DID, MEASURED: it flattened `ADMIN_NAV` into FIFTEEN
+    band items and dropped three group headings on the way** — the comment above
+    even said so, *"flattened here because a band has no room for group
+    headers."* ⚠ **That sentence was the defect describing itself.** The room was
+    never there; the items went in anyway and `.pm-band-menu-row` hid the
+    overflow behind `overflow-x: auto` with `scrollbar-width: none`.
+    ⚠⚠ **AT 390px THAT ROW HIDES 122px ON EVERY PAGE WHILE THE PAGE REPORTS 0px
+    OVERFLOW**, so every `E609` gate passed over it.
+
+    ⚠ **`ADMIN_NAV` IS NOT REWRITTEN, NOT REORDERED AND NOT TRUNCATED** — it
+    moves, whole and grouped, into `ConfigDrawer` below, which ships in THIS
+    commit so the fifteen destinations are never unreachable (rule 5).
+
+    ⚠⚠ **AND THE ADMIN'S FIVE SLOTS ARE NOT INVENTED HERE.** Scott: *"Where the
+    admin's five slots point is data and Scott is still placing them — report the
+    mapping you would need, do not invent it."* ⚠⚠⚠ **MEASURED: the one real
+    system admin holds `is_service_provider = false` AND `is_service_buyer =
+    false`, so `navForRoles` returns TWO items for them — `Connect · Learn`.**
+    The other three slots are gated on capabilities that account does not hold.
+    **That gap is the mapping, and it is reported rather than filled.**
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   the admin branch is a different LIST, flattened here because a band has
+    //   no room for group headers.
+    //   const items = isAdmin ? ADMIN_NAV.flatMap((g) => g.items) : navForRoles(me);
   */
-  const items = isAdmin ? ADMIN_NAV.flatMap((g) => g.items) : navForRoles(me);
+  const items = navForRoles(me);
 
   /* ⚠ EXACT MATCH for the two landing routes. `/admin` is a prefix of every
      admin page and a startsWith test lit fifteen pills at once — the rail
@@ -333,6 +366,16 @@ export function AppBand() {
           BELOW, unrendered, under `E164`, with a named disable rather than a
           deletion. Only this ONE rendering is removed.
         */}
+
+        {/*
+          ⚠⚠⚠ THE GEAR — THE CONFIGURATION MENU'S ONLY DOOR (`P2-ALL-E692`).
+          ⚠ It ships in the SAME COMMIT that takes `ADMIN_NAV` out of the band,
+          so those fifteen destinations are never unreachable — rule 5, proven by
+          both edits being in this one file and this one change.
+          ⚠⚠ Admin-only, because `ADMIN_NAV` is admin-only. A gear rendered to a
+          member would open an empty panel, which is a door onto a wall (`E579`).
+        */}
+        {isAdmin && <ConfigDrawer groups={ADMIN_NAV} label="Configuration" />}
 
         <BandIcon href="/support/bug" label="Report a bug">
           <BugIcon />
