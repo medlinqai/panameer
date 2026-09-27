@@ -102,7 +102,18 @@ export const NOTIFICATION_EVENTS = {
   "account.finish_later": {
     event: "account.finish_later",
     recipient: "the new user",
-    category: "profile.visibility",
+    /*
+      ⚠⚠⚠ MOVED OUT OF `profile.visibility` (`P0-E690`, Scott 2026-09-27) ────
+
+      ⚠ It fires from the **requester (BUYER)** wizard, and `profile.visibility`
+      is `audience: "seller"` — so the recipient of **Panameer's only live
+      notification email** had no row for it in their own settings (`E689(q)`).
+      ⚠⚠ **SCOTT RULED IT GETS ITS OWN CATEGORY RATHER THAN WIDENING THAT ONE**,
+      because widening puts eight seller-shaped events in front of buyers.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   category: "profile.visibility",
+    */
+    category: "account.registration",
     aiMode: "DO_IT",
     visibility: "FEED",
     requiresAction: false,

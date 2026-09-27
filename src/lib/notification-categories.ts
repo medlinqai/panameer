@@ -355,9 +355,49 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     THAT DID NOT SHIP, and it needs Scott to either name a fourth group or widen
     `tax`'s blurb to cover money in both directions.
   */
+  /*
+    ── ⚠⚠⚠ `account.registration` — ITS OWN CATEGORY (`P0-E690`, Scott 2026-09-27)
+
+    ⚠⚠ **THE DEFECT IT CLOSES (`E689(q)`):** `account.finish_later` fires from the
+    **requester (BUYER)** wizard, but it sat in `profile.visibility`, which is
+    `audience: "seller"`. ⚠⚠⚠ **SO THE ONE MEMBER WHO ACTUALLY RECEIVED PANAMEER'S
+    ONLY LIVE NOTIFICATION EMAIL HAD NO ROW FOR IT IN THEIR OWN SETTINGS.** The
+    mail's category-scoped unsubscribe link was their only off switch.
+
+    ⚠⚠ **SCOTT RULED THE FIX, 2026-09-27: *"give `account.finish_later` its OWN
+    category. Do not widen `profile.visibility` to 'both'."*** ⚠ Widening would
+    have been the smaller diff and the worse answer — it puts **eight
+    seller-shaped events** (profile went live, dropped below the threshold, going
+    stale) in front of buyers who have no provider profile at all. ⚠⚠⚠ **A
+    CATEGORY IS A PROMISE ABOUT WHAT IS INSIDE IT. Stretching one to cover an
+    unrelated event is how a settings screen stops meaning anything.**
+
+    ⚠ **`audience: "both"` IS CORRECT HERE AND IS NOT THE SAME DECISION:** both
+    wizards can be abandoned, the template already has a provider variant that
+    `check:email` tests, and **the event is about REGISTRATION, which every role
+    does.**
+
+    ⚠⚠ **`E382` IS NOT BREACHED — NO EXISTING DEFAULT IS TOUCHED.** This is a NEW
+    row, and it takes the same `email: true` every other category already has, so
+    nobody's recorded intent is rewritten. ⚠ What a member actually receives is
+    still governed by the allowlist, not by this default.
+  */
+  {
+    key: "account.registration",
+    lane: "community",
+    audience: "both",
+    group: "email",
+    label: "Finishing your registration",
+    blurb: "You saved your registration part-way and can pick it up again.",
+    defaults: { inApp: true, email: true, sms: false },
+  },
   {
     key: "profile.visibility",
     lane: "community",
+    /*
+      ⚠ UNCHANGED, DELIBERATELY. `E689(q)` was fixed by giving the registration
+      event its own home, **not** by widening this one — see the block above.
+    */
     audience: "seller",
     group: "email",
     label: "Profile and visibility",
