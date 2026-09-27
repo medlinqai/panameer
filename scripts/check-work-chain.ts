@@ -459,6 +459,14 @@ function wsE() {
     { module: "work-request-invite", writer: "inviteProviders", ws: "WS-B" },
     { module: "interviews", writer: "requestInterview", ws: "WS-E" },
     { module: "work-tests", writer: "sendTest", ws: "WS-E" },
+    /* ⚠⚠⚠ PROMOTED FROM *PRINTED* TO *ASSERTED* BY WS-F. These two were in the
+       note list below precisely because asserting code that does not exist
+       commits a red gate — WS-F built both doors, so the reason for the
+       exemption is gone and the exemption goes with it. ⚠⚠ THE WHOLE CHAIN IS
+       NOW REACHABLE, which is the sentence `E665` existed to make true. */
+    { module: "selection", writer: "selectProvider", ws: "WS-F" },
+    { module: "selection", writer: "assignProviderDirectly", ws: "WS-F" },
+    { module: "work-orders", writer: "hire", ws: "WS-F" },
   ];
   for (const w of WIRED) {
     const callers = SRC.filter(
@@ -474,9 +482,17 @@ function wsE() {
   /* ⚠⚠ THE TWO STILL-UNREACHABLE WRITERS ARE PRINTED, NOT ASSERTED.
      `selectProvider` and the work-order writer are WS-F's, which is not built;
      asserting them would commit a RED gate against code that does not exist. */
-  for (const m of ["selection", "work-orders"]) {
-    const n = SRC.filter(({ code }) => code.includes(`from "@/lib/${m}"`)).length;
-    notes.push(`WS-F, not asserted: @/lib/${m} has ${n} importer(s) in src/`);
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the two were PRINTED while WS-F
+     was unbuilt, so the count stayed honest without a red gate:
+     //   for (const m of ["selection", "work-orders"]) {
+     //     notes.push(`WS-F, not asserted: @/lib/${m} has N importer(s) in src/`);
+     //   }
+     ⚠⚠ Both are asserted above now. What remains genuinely unreachable is
+     ACCEPTANCE — `acceptPurchaseOrder` / `declineWorkOrder` — which is ruling
+     43's and deliberately out of scope, so it is printed, not asserted. */
+  for (const w of ["acceptPurchaseOrder", "declineWorkOrder"]) {
+    const n = SRC.filter(({ code }) => new RegExp(`${w}\\(`).test(code)).length;
+    notes.push(`ruling 43, out of scope and not asserted: ${w} has ${n} caller(s) in src/`);
   }
 
   /* ⚠⚠⚠ THE INTERVIEW AND THE TEST ARE OPTIONAL — a PRODUCT rule a plausible
@@ -526,10 +542,40 @@ function wsE() {
   const page =
     SRC.find(({ f }) => f.endsWith(join("work-requests", "[id]", "page.tsx")))?.code ?? "";
   check("8 — the compare view offers the two optional steps", /ProposalSteps/.test(page));
+  /*
+    ⚠⚠⚠ UPDATED BY `E684` WS-F, AND THE REASON IS THE RULING, NOT DRIFT. This
+    asserted that no selection writer was reachable — true and right while
+    `selectProvider` had no surface, when a control would have been `E579`.
+    WS-F built that surface, ruled by Scott 2026-09-27, so the page reaches it
+    on purpose. ⚠ It is `check:rollup`'s case, not `check:cert-skills`'.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   "8 — and STILL no selection writer is reachable from it",
+    //   !/selectProvider|awardTo|declineProposal/.test(page),
+    ⚠⚠ THE RULE THAT REPLACES IT IS STRONGER: both transitions must be reachable
+    and SEPARATE (ruling 17) — selecting is reversible, ordering is not, and one
+    button doing both is the failure that ruling exists to prevent.
+  */
+  check("8 — transition ONE is reachable — select", /SelectProposal/.test(page));
+  check("8 — transition TWO is reachable — order", /CreateOrder/.test(page));
   check(
-    "8 — ⚠⚠⚠ and STILL no selection writer is reachable from it",
-    !/selectProvider|@\/lib\/selection|awardTo|declineProposal/.test(page),
-    "WS-F is where a decision is taken, and it has no surface yet"
+    "8 — the two transitions are SEPARATE controls (ruling 17)",
+    /SelectProposal/.test(page) && /CreateOrder/.test(page),
+    "one button doing both makes choosing somebody and committing to them the same click"
+  );
+  check(
+    "8 — the direct route has a door, so the capability is never absent",
+    /AssignDirectly/.test(page),
+    "the line PATCH stopped accepting providerPersonId in the same commit (rule 5)"
+  );
+  /* ⚠⚠⚠ AND THE NARROWED PATCH IS ASSERTED, because the reconciliation is only
+     real if the third writer is actually refused AT THE ROUTE. */
+  const linePatch =
+    SRC.find(({ f }) => f.endsWith(join("lines", "[lineId]", "route.ts")))?.code ?? "";
+  check("8 — the line route was found (E586)", linePatch.length > 100, `${linePatch.length}`);
+  check(
+    "8 — the line PATCH REFUSES providerPersonId — one writer of who, not three",
+    /USE_SELECTION/.test(linePatch) && !/assignProvider\(/.test(linePatch),
+    "a name with no rate, no line status and no bid is the half-state selection avoids"
   );
 }
 

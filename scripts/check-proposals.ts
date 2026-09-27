@@ -483,10 +483,32 @@ async function main() {
         "11 — the buyer's page reads proposals through proposalsOn",
         /proposalsOn\(/.test(buyerPage)
       );
+      /*
+        ── ⚠⚠⚠ THIS ASSERTION CHANGED BECAUSE THE RULING CHANGED (`E684` WS-F) ─
+
+        ⚠⚠ **IT IS `check:rollup`'s CASE, NOT `check:cert-skills`'.** WS-D
+        asserted that NO selection writer was reachable from this page, and that
+        was right **while `selectProvider` had no surface** — a control then
+        would have been `E579`, a door onto a wall. ⚠⚠⚠ **WS-F IS THAT SURFACE,
+        ruled by Scott on 2026-09-27**, so the page now reaches it on purpose.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   "11 — ⚠⚠⚠ and it takes NO decision — no selection writer is reachable from it",
+        //   !/selectProvider|@/lib/selection|shortlist|Shortlist|awardTo|declineProposal/.test(buyerPage),
+
+        ⚠⚠ **WHAT SURVIVES IS THE HALF THAT WAS NEVER ABOUT TIMING:** selecting
+        is a DECISION and gets a deliberate control; **shortlisting and
+        declining still have no writer at all**, so a control for either would
+        still be a door onto a wall.
+      */
       check(
-        "11 — ⚠⚠⚠ and it takes NO decision — no selection writer is reachable from it",
-        !/selectProvider|@\/lib\/selection|shortlist|Shortlist|awardTo|declineProposal/.test(buyerPage),
-        "WS-D is read-only; selectProvider is WS-F and has no surface, so a control here is E579"
+        "11 — ⚠⚠ the decision is DELIBERATE — selection is reached through its own route",
+        /\/select|SelectProposal/.test(buyerPage),
+        "WS-F gave selectProvider a surface; this page is it"
+      );
+      check(
+        "11 — ⚠⚠⚠ and still NO writer exists for shortlisting or declining",
+        !/shortlist|Shortlist|awardTo|declineProposal/.test(buyerPage),
+        "neither has a writer, so a control for either is still E579"
       );
       check(
         "11 — ⚠⚠ and it POSTs nothing about a proposal",

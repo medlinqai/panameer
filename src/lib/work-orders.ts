@@ -229,6 +229,29 @@ async function buildWorkOrder(
         period_start: periodStart,
         period_end: periodEnd,
         fee_bps: feeBps,
+        /*
+          ── ⚠⚠⚠ THE CAP, WHICH NOTHING HAS EVER WRITTEN (`P2-A8-E684` WS-F) ──
+
+          ⚠⚠ **MEASURED BEFORE WRITING IT: `not_to_exceed_cents` HAD ZERO
+          WRITERS IN `src/`** — every order ever created carries `null` — while
+          `transaction-spine.ts:495` **already enforces it whenever it is set**:
+          a draw that would take the settled total past this cap is refused.
+          ⚠⚠⚠ So the enforcement existed and the number it enforces did not,
+          which means **no order has ever had a ceiling.** The schema says the
+          field *"caps the WHOLE order"*; this is the line that makes that true.
+
+          ⚠⚠ **IT IS THE ORDER'S OWN TOTAL, NOT A NEW NUMBER.** `valueCents` is
+          summed from the lines that were just copied, so the cap says *"no more
+          than what was ordered"* — a restatement of the order, never an
+          estimate, a forecast or a budget somebody would have to defend.
+          ⚠ **NO FEE ARITHMETIC AND NO CUT.** `fee_bps` is written beside this
+          and is neither multiplied nor divided here — `check:work-chain` §6
+          fails the build on `fee_bps`/`feeBps` arithmetic anywhere in `src/`,
+          and it passed before this change and after it.
+          ⚠⚠ **IT MOVES NO MONEY.** No `Payment` row, no `PAID`, nothing
+          settled — a ceiling is a refusal, not a transfer.
+        */
+        not_to_exceed_cents: valueCents,
         /* ⚠ Recorded, never branched on. */
         external_ref: input.externalRef?.trim() || null,
         lines: {

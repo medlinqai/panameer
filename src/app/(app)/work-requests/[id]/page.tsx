@@ -9,6 +9,7 @@ import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { proposalsOn } from "@/lib/proposals";
 import { ProposalSteps } from "@/components/work/ProposalSteps";
+import { SelectProposal, AssignDirectly, CreateOrder } from "@/components/work/HireControls";
 import { matchProvidersFor } from "@/lib/work-request-match";
 import {
   WORK_REQUEST_STATUS_LABEL,
@@ -186,7 +187,23 @@ export default async function Page({
         this one. The route it calls is the existing `POST .../post`, unchanged —
         including its identity gate.
       */}
-      {!posted && (
+      {/*
+        ── ⚠⚠⚠ DRAFT-ONLY, NOT "NOT POSTED" (`P2-A8-E684b`) ─────────────────
+
+        ⚠⚠⚠ **AN ORDERED REQUEST WAS TOLD IT WAS STILL A DRAFT.** `posted` is
+        `status === "POSTED"`, so `!posted` is TRUE for `ASSIGNED`, `ORDERED`
+        **and** `CANCELLED` — this panel offered *"This request is still a
+        draft"* and a wizard link on a request that is under contract.
+        ⚠⚠ **IT IS `E679`'s FAMILY EXACTLY** — a boolean standing in for a
+        five-value enum — and WS-A fixed the pill and the subtitle while this
+        block kept the old shape. ⚠ It was unreachable until now because
+        nothing could move a request past `POSTED`; **WS-F builds both
+        transitions, so it went live with them** — the same expiry that made
+        `E680(b)` this brief's problem rather than a later one.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   {!posted && (
+      */}
+      {detail.status === "DRAFT" && (
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-5">
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-bold">This request is still a draft</p>
@@ -201,7 +218,19 @@ export default async function Page({
       )}
 
       <div className="mt-8">
-        <WorkRequestLines initial={detail} providers={options} />
+        {/*
+          ⚠⚠⚠ `key` FORCES A REMOUNT WHEN THE STATUS MOVES (`P2-A8-E684c`).
+          `WorkRequestLines` holds `useState(initial)`, and React KEEPS client
+          state across a `router.refresh()` — so after selecting, the section
+          still read *"No provider assigned · Needs provider and price"* for a
+          line that had just been given a provider and a rate.
+          ⚠⚠ **I MADE THIS REACHABLE:** until WS-F, nothing outside that
+          component ever changed a line, so its local copy could not go stale.
+          ⚠ The key is the STATUS because that is precisely what moves when
+          selection or ordering rewrites the lines; a remount then is correct
+          and costs one render.
+        */}
+        <WorkRequestLines key={detail.status} initial={detail} />
       </div>
 
       {/* ══ THE PROPOSALS THAT CAME BACK ═══════════════════════════════════
@@ -310,12 +339,48 @@ export default async function Page({
                     testStatus={p.testStatus}
                     tests={sendableTests}
                   />
+
+                  {/*
+                    ── ⚠⚠⚠ TRANSITION ONE (`E684` WS-F) ───────────────────────
+                    ⚠⚠ **WS-D's READ-ONLY RULE ENDS HERE, DELIBERATELY AND BY
+                    RULING**, not by drift: WS-D said *"no decision is taken
+                    here"* because `selectProvider` had no surface and a control
+                    would have been `E579`. WS-F is that surface.
+                    ⚠ `check:proposals` §11 and `check:work-chain` §8 were
+                    updated in this same commit and say so — the gate changed
+                    because the RULING changed (`check:rollup`'s case), not
+                    because the code drifted past it.
+                  */}
+                  <SelectProposal
+                    workRequestId={detail.id}
+                    providerPersonId={p.providerPersonId}
+                    providerName={p.providerName}
+                    hasRate={p.rate !== null}
+                    selected={p.status === "AWARDED"}
+                  />
                 </li>
               ))}
             </ul>
           </>
         )}
       </div>
+
+      {/*
+        ── ⚠⚠⚠ THE OTHER ROUTE, AND THE SECOND TRANSITION (`E684` WS-F) ──────
+
+        ⚠⚠ **`AssignDirectly` IS WHAT REPLACES `Assign a provider…`'s WRITE.**
+        That select wrote a NAME with no rate, no line status and no bid; this
+        writes the pair through `assignProviderDirectly`, the `route: "DIRECT"`
+        the model already named. ⚠ It is offered while nobody is selected yet —
+        `ASSIGNED` and `ORDERED` both mean that question is answered.
+        ⚠⚠⚠ **THE CAPABILITY IS NEVER ABSENT (rule 5):** the line PATCH stops
+        accepting `providerPersonId` in this same commit, and this is the door
+        that takes over from it.
+      */}
+      {(detail.status === "DRAFT" || detail.status === "POSTED") && options.length > 0 && (
+        <AssignDirectly workRequestId={detail.id} providers={options} />
+      )}
+      {detail.status === "ASSIGNED" && <CreateOrder workRequestId={detail.id} />}
 
       {/* ══ WHO HAS BEEN INVITED ═══════════════════════════════════════════
           ⚠⚠ THE INVITATIONS, NOT THE RESPONSES.

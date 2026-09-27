@@ -36,7 +36,10 @@ const TYPE_LABEL: Record<TransactionType, string> = {
  * disagree even about the words.
  */
 
-type ProviderOption = { personId: string; name: string; headline: string };
+/* ⚠ RETIRED WITH THE WRITING SELECT (`P2-A8-E684` WS-F) — it typed this
+   component's `providers` prop and nothing else. ⚠ SUPERSEDED, quoted not
+   deleted (`E164`):
+   //   type ProviderOption = { personId: string; name: string; headline: string }; */
 
 const EMPTY_DRAFT = {
   /* ⚠⚠ SCOTT'S THREE-VALUE TRANSACTION TYPE (`E621`, ruling 37b). ⚠ SUPERSEDED,
@@ -82,13 +85,17 @@ function draftFrom(l: SerializedLine): Draft {
   };
 }
 
-export function WorkRequestLines({
-  initial,
-  providers,
-}: {
-  initial: WorkRequestDetail;
-  providers: ProviderOption[];
-}) {
+/* ⚠ `providers` LEFT THIS COMPONENT WITH THE WRITING SELECT (`P2-A8-E684`
+   WS-F). It fed the picker's options and nothing else here reads it; the list
+   now goes to `AssignDirectly`, which is the control that still needs it.
+   ⚠ `ProviderOption` was LOCAL to this file, not exported, so it is retired
+   with the prop and quoted above — the page builds `options` itself and
+   `AssignDirectly` declares the shape it needs.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   export function WorkRequestLines({ initial, providers }: {
+   //     initial: WorkRequestDetail; providers: ProviderOption[];
+   //   }) { */
+export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
   const [detail, setDetail] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -240,34 +247,37 @@ export function WorkRequestLines({
                   re-checks `is_service_provider` regardless, because the picker
                   is a convenience and the route is the boundary.
                 */}
-                <select
-                  value={l.providerPersonId ?? ""}
-                  disabled={busy}
-                  onChange={(e) =>
-                    send(`${base}/lines/${l.id}`, {
-                      method: "PATCH",
-                      body: JSON.stringify({ providerPersonId: e.target.value || null }),
-                    })
-                  }
-                  className="rounded-[10px] border border-line bg-white px-3 py-2 text-[14px] outline-none focus:border-magenta"
-                >
-                  <option value="">Assign a provider…</option>
-                  {providers.map((p) => (
-                    <option key={p.personId} value={p.personId}>
-                      {p.name}
-                    </option>
-                  ))}
-                  {/* ⚠ A provider assigned earlier who no longer matches the
-                      skills must still render as the current value, or the select
-                      would silently show "Assign a provider…" for an assigned
-                      line and the next change would look like an edit. */}
-                  {l.providerPersonId &&
-                    !providers.some((p) => p.personId === l.providerPersonId) && (
-                      <option value={l.providerPersonId}>
-                        {l.providerName ?? "Assigned provider"}
-                      </option>
-                    )}
-                </select>
+                {/*
+                  ── ⚠⚠⚠ READ-ONLY NOW (`P2-A8-E684` WS-F) ──────────────────
+
+                  ⚠⚠⚠ **THIS SELECT WAS A THIRD WRITER OF *"WHO IS DOING THIS
+                  WORK"*, AND THE WEAKEST OF THE THREE.** It PATCHed a NAME and
+                  nothing else — no rate, no line status, no bid, no request
+                  status — producing the half-state `selectProvider` and
+                  `assignProviderDirectly` are both careful to avoid. ⚠ It could
+                  also put a different provider on line 2 while line 1 had been
+                  awarded, and could silently contradict an award afterwards.
+
+                  ⚠⚠ **SCOTT, 2026-09-27:** *"The select becomes a read-only
+                  display of whoever the two real routes set."* ⚠ Enforced in
+                  the ROUTE, not here — the PATCH refuses `providerPersonId`
+                  with `USE_SELECTION`; this is the display catching up with the
+                  boundary, not the boundary itself.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the writing select
+                  and its PATCH, with the "assigned earlier, no longer matches"
+                  option that existed only because this control could write:
+                  //   <select value={l.providerPersonId ?? ""} disabled={busy}
+                  //     onChange={(e) => send(`${base}/lines/${l.id}`, {
+                  //       method: "PATCH",
+                  //       body: JSON.stringify({ providerPersonId: e.target.value || null }),
+                  //     })}>
+                  //     <option value="">Assign a provider…</option>
+                  //     {providers.map(...)}
+                  //   </select>
+                */}
+                <span className="rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[14px] text-ink-2">
+                  {l.providerName ?? "No provider yet"}
+                </span>
 
                 <Button
                   variant="quiet"

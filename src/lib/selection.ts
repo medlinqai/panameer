@@ -257,7 +257,34 @@ async function writeRequisitionLine(args: {
       uom: args.uom ?? "HOUR",
       quantity: math.hours,
       unit_price_cents: math.unitPriceCents,
-      amount_cents: math.amountCents,
+      /*
+        ── ⚠⚠⚠ NO `amount_cents` ON A RATE LINE (`P2-A8-E684a`) ─────────────
+
+        ⚠⚠⚠ **THIS LINE CARRIED BOTH, AND IT MADE EVERY ORDER IMPOSSIBLE.**
+        `assertPricedShape` in `transaction-spine.ts:114` refuses it by name —
+        *"A RATE line must not carry an amount — it would be settleable
+        twice"* — and `buildWorkOrder` runs that assertion over every
+        requisition line before it copies one. ⚠⚠ So `selectProvider` wrote a
+        line the order builder was guaranteed to reject: **`POST /order`
+        returned 500 with `RATE_HAS_AMOUNT` the first time anything called it.**
+
+        ⚠ **NOBODY HAD EVER CALLED IT.** `WorkOrder` holds 0 rows and had no
+        door until WS-F — the two modules disagreed in private for as long as
+        neither was reachable. **`E585` in the money layer, and the door is what
+        found it.**
+
+        ⚠⚠ **THE AMOUNT WAS REDUNDANT, WHICH IS WHY THIS IS SAFE AND NOT A
+        TRADE:** the order's value for a quantity-priced line is
+        `quantity × unit_price_cents` (`work-orders.ts:198`) and **never reads
+        `amount_cents`**, and completeness checks `unit_price_cents` for a
+        quantity line (`work-request-lines.ts:106`). The total and the
+        completeness verdict are byte-identical either way.
+        ⚠ `math.amountCents` IS STILL COMPUTED AND STILL RETURNED — the caller
+        reports it; it simply stops being stored on a line that must not hold it.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   amount_cents: math.amountCents,
+      */
+      amount_cents: null,
       provider_person_id: args.providerPersonId,
       recruiter_person_id: args.recruiterPersonId,
       /* ⚠⚠ NO `supplier_part_id` — a person's time is not an item. */
@@ -272,7 +299,10 @@ async function writeRequisitionLine(args: {
       uom: args.uom ?? "HOUR",
       quantity: math.hours,
       unit_price_cents: math.unitPriceCents,
-      amount_cents: math.amountCents,
+      /* ⚠⚠ THE SAME ON THE UPDATE HALF — and it has to be NULL rather than
+         omitted, or re-selecting would leave the old amount behind on a line
+         that must not carry one. See the create branch for why. */
+      amount_cents: null,
       provider_person_id: args.providerPersonId,
       recruiter_person_id: args.recruiterPersonId,
       service_start: wr.start_date,

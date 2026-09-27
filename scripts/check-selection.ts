@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
+/* ⚠ `E684a` — the gate asserts the line is ORDERABLE using the spine's own
+   check, not a copy of its rules (`E585`). */
+import { assertTransactionLineShape } from "@/lib/transaction-spine";
 import { submitProposal } from "@/lib/proposals";
 import {
   selectProvider,
@@ -182,7 +185,55 @@ async function main() {
     check("2 — ⚠⚠ SERVICE_BY_QTY — hours at a rate",
       lineA?.transaction_type === "SERVICE_BY_QTY");
     check("2 — the quantity is the computed hours", Number(lineA?.quantity) === 80, `${lineA?.quantity}`);
-    check("2 — the amount is the computed total", lineA?.amount_cents === 1_200_000, `${lineA?.amount_cents}`);
+    /*
+      ── ⚠⚠⚠ THE LINE MUST **NOT** CARRY AN AMOUNT (`P2-A8-E684a`) ──────────
+
+      ⚠⚠ **THIS ASSERTED THE MECHANISM AND THE MECHANISM WAS WRONG.** It
+      required the stored amount to equal the computed total — and storing it at
+      all is what `transaction-spine.ts:114` refuses by name: *"A RATE line must
+      not carry an amount — it would be settleable twice."* ⚠⚠⚠ Because
+      `buildWorkOrder` runs that assertion over every requisition line, **every
+      order was impossible: `POST /order` returned 500 with `RATE_HAS_AMOUNT`
+      the first time anything called it** (WS-F, 2026-09-27).
+      ⚠ It is `check:rollup`'s case, not `check:cert-skills`': the RULING the
+      spine states won, and the gate's copy of the old mechanism moved.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   check("2 — the amount is the computed total", lineA?.amount_cents === 1_200_000, ...);
+
+      ⚠⚠ **THE TOTAL DID NOT VANISH AND THAT IS ASSERTED SEPARATELY BELOW** —
+      it is still computed, still 1,200,000, and still what the order is priced
+      at (`quantity × unit_price`). Only its STORAGE on a rate line went.
+    */
+    check(
+      "2 — ⚠⚠⚠ the rate line carries NO amount — it would be settleable twice",
+      lineA?.amount_cents === null,
+      `${lineA?.amount_cents} — transaction-spine refuses a RATE line with an amount`
+    );
+    check(
+      "2 — ⚠⚠ and the total is still computed and still right",
+      selA.math.amountCents === 1_200_000,
+      `${selA.math.amountCents}`
+    );
+    /* ⚠⚠⚠ AND THE LINE PASSES THE SPINE'S OWN SHAPE CHECK, which is the
+       assertion that actually protects the order: a line this throws on cannot
+       become a work order at all. */
+    let spineOk = true;
+    try {
+      assertTransactionLineShape({
+        transaction_type: lineA!.transaction_type,
+        uom: lineA!.uom,
+        quantity: lineA!.quantity == null ? null : Number(lineA!.quantity),
+        unit_price_cents: lineA!.unit_price_cents,
+        amount_cents: lineA!.amount_cents,
+      });
+    } catch {
+      spineOk = false;
+    }
+    check(
+      "2 — ⚠⚠⚠ the requisition line is ORDERABLE — the spine accepts its shape",
+      spineOk,
+      "buildWorkOrder runs this over every line; a refusal here is an order nobody can create"
+    );
     check("2 — the provider is on the line", lineA?.provider_person_id === winner.person);
     /* ⚠⚠⚠ A PERSON'S TIME IS NOT AN ITEM (`requisition_model_2026-09-21.md`). */
     check("2 — ⚠⚠⚠ a talent line carries NO Item ID",
