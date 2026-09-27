@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
+import { canHireTalent, canProvideServices } from "@/lib/access";
 import { formatCents } from "@/lib/display";
 import { listOrders, type OrderRow } from "@/lib/orders";
 import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
@@ -52,6 +53,61 @@ export default async function Page() {
   const asBuyer = orders.filter((o) => o.party === "BUYER").length;
   const asProvider = orders.filter((o) => o.party === "PROVIDER").length;
 
+  /*
+    ── ⚠⚠⚠ THE MONEY DOORS (`P2-ALL-E688` WS-A). **THEY GO IN BEFORE THE MENU
+       ROWS COME OUT, AND THAT ORDER IS THE WHOLE POINT (rule 5).** ─────────────
+
+    ⚠ Ruling `89e`, Scott 2026-09-27: *"roll it up into orders. NOTHING gets paid
+    without an Order."* So `Get Paid` (`/payments`) leaves `PROVIDER_NAV` and
+    `Pay` (`/pay`) leaves `REQUESTER_NAV`.
+
+    ⚠⚠⚠ **MEASURED BEFORE A LINE WAS WRITTEN, AND IT IS WHY THIS COMMIT EXISTS
+    ON ITS OWN: THE MENU ROW WAS THE ONLY UNCONDITIONAL DOOR TO EITHER ROUTE.**
+    A comment-stripped sweep of `src/` found, for `/payments`, exactly one
+    unconditional entrance — the rail entry — and for `/pay` the same. Everything
+    else is CONDITIONAL and therefore not a door: `attention.ts` surfaces
+    `/payments` only when something needs attention, `notification-events.ts`
+    only if a notification fires, and the settlement components only once you are
+    already inside a settlement. ⚠⚠ **AND FROM THIS PAGE THERE WAS NOTHING AT
+    ALL** — zero `/payments` strings under `src/app/(app)/orders/`, and no
+    `PAGE_TABS["/orders"]` key to hang a tab on. **Deleting the rows first would
+    have orphaned both destinations**, the same defect that caught `Settings` and
+    `Company` earlier the same day (`E687`).
+
+    ── ⚠⚠ WHY THE CAPABILITY GATE IS REQUIRED HERE AND NOT DECORATION ─────────
+
+    ⚠⚠⚠ **`/pay` IS GATED `canHireTalent` (`route-access.ts:226`), SO OFFERING
+    IT TO A SELLER WOULD BE A DOOR ONTO A WALL** — `E579`'s exact shape, a
+    control whose handler refuses. `/payments` is gated `authenticated`, so it
+    would not refuse anyone; ⚠ it is still gated on `canProvideServices` because
+    *"Get Paid"* is a false promise to somebody who sells nothing.
+    ⚠ **The check goes through `access.ts`'s own helpers, never an inline role
+    test** (load-bearing rule 5).
+
+    ⚠⚠ **SOMEBODY WHO IS BOTH SEES BOTH DOORS, and that is this page's own
+    doctrine rather than a new one** — see the docblock above: *"somebody who is
+    both sees both, which is a real case on a marketplace where a consultancy
+    buys and sells."*
+    ⚠⚠⚠ **THE SIDE CANNOT BE DERIVED FROM THE ORDER ROWS AND THAT IS THE TRAP.**
+    `listOrders` derives a party PER ROW, so a member with **no orders yet** has
+    no row to derive a side from — and a member with no orders is precisely the
+    one who needs to find where the money surface went. **The capability is the
+    only thing that answers this at zero.**
+
+    ── ⚠ WHAT THIS IS NOT ────────────────────────────────────────────────────
+
+    ⚠⚠ **IT IS A DOOR, NOT A SECOND PAYMENTS SURFACE.** No payments view is
+    rebuilt here; nothing about money is computed, read or rendered on this page.
+    ⚠ Rolling the two pages together is its own decision — Scott: *"I am just not
+    there yet."*
+    ⚠⚠ **VISIBLE WITHOUT A HOVER, because there is no hover on touch** (88a), and
+    rendered ABOVE the list so it does not disappear at zero orders.
+    ⚠ **IT KEEPS THE WORD THE MEMBER LOST** — a seller who used `Get Paid` reads
+    `Get Paid` here. ⚠ `88b`'s one-word rule governs TABS; these are links.
+  */
+  const sells = canProvideServices(viewer);
+  const buys = canHireTalent(viewer);
+
   return (
     <div className="mx-auto w-full max-w-5xl">
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">Work Orders</h1>
@@ -68,6 +124,30 @@ export default async function Page() {
               .filter(Boolean)
               .join(" · ")}
       </p>
+
+      {(sells || buys) && (
+        <nav
+          aria-label="Payments"
+          className="mt-4 flex flex-wrap items-center gap-2"
+        >
+          {sells && (
+            <Link
+              href="/payments"
+              className="inline-flex min-h-11 items-center rounded-brand border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
+            >
+              Get Paid
+            </Link>
+          )}
+          {buys && (
+            <Link
+              href="/pay"
+              className="inline-flex min-h-11 items-center rounded-brand border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
+            >
+              Pay
+            </Link>
+          )}
+        </nav>
+      )}
 
       {orders.length === 0 ? (
         <div className="mt-8 rounded-brand border border-dashed border-line px-6 py-12 text-center">

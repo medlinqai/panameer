@@ -562,6 +562,67 @@ check("5 — /orders is gated `authenticated`", gated.get("/orders") === "authen
   check("5 — the provider rail offers /orders", !!providerItem);
   check("5 — both rails call the journey Work Orders", buyerItem?.heading === "Work Orders" && providerItem?.heading === "Work Orders");
 }
+
+/* ═══ 6 · THE MONEY DOORS (`P2-ALL-E688` WS-A) ════════════════════════════════
+
+   ⚠⚠⚠ **THIS SECTION EXISTS BECAUSE THE RAIL ROW WAS THE ONLY UNCONDITIONAL
+   DOOR TO EACH MONEY ROUTE, AND RULING `89e` REMOVES BOTH ROWS.** Measured
+   2026-09-27, comments stripped: `/payments` had exactly one unconditional
+   entrance (`nav.ts:1222`) and `/pay` exactly one (`nav.ts:464`); everything
+   else is conditional on attention, a notification or an in-flight settlement,
+   and **nothing under `src/app/(app)/orders/` pointed at either.**
+
+   ⚠⚠ **SO THE ASSERTION IS RULE 5 ITSELF: the capability must never be absent.**
+   Once WS-B lands, THIS is what stands between the member and an orphaned
+   destination — which is why it is asserted on the page and not on the menu.
+
+   ⚠ It deliberately asserts the DOOR, not a layout: the href, the capability
+   guarding it, and the fact that it is not buried in the empty state. */
+{
+  const page = fileAt("src/app/(app)/orders/page.tsx");
+  const code = page?.code ?? "";
+
+  check("6 — the orders page opens the seller's money route", /href="\/payments"/.test(code));
+  check("6 — the orders page opens the buyer's money route", /href="\/pay"/.test(code));
+
+  /* ⚠⚠⚠ THE CAPABILITY IS HALF THE ASSERTION AND THE REASON IS `E579`.
+     `/pay` is gated `canHireTalent` (`route-access.ts`), so a `/pay` link shown
+     to a seller is a control whose handler refuses — a door onto a wall.
+     ⚠ An UNGATED link would satisfy the two checks above, which is exactly the
+     mutation these two exist to catch. */
+  check(
+    "6 — the seller's door is gated on canProvideServices",
+    /const sells = canProvideServices\(viewer\)/.test(code) &&
+      /\{sells && \([\s\S]{0,260}href="\/payments"/.test(code)
+  );
+  check(
+    "6 — the buyer's door is gated on canHireTalent",
+    /const buys = canHireTalent\(viewer\)/.test(code) &&
+      /\{buys && \([\s\S]{0,260}href="\/pay"/.test(code)
+  );
+
+  /* ⚠ THE CHECK GOES THROUGH `access.ts`, NEVER AN INLINE ROLE TEST — load-bearing
+     rule 5. A page that read `viewer.isServiceProvider` directly would pass the
+     two gating checks above if they named the field instead of the helper. */
+  check(
+    "6 — the capability comes from access.ts, not an inline role test",
+    /from "@\/lib\/access"/.test(code) && !/viewer\.is(ServiceProvider|ServiceBuyer)/.test(code)
+  );
+
+  /* ⚠⚠⚠ THE POSITION IS LOAD-BEARING AND IT IS THE ONE A REVIEWER WOULD MISS.
+     A door rendered INSIDE the `orders.length === 0` branch disappears the moment
+     the member has an order — so the person who most needs it (zero orders) would
+     find it and everyone else would lose it. ⚠ Asserted as "before the branch",
+     which is a fact about reachability, not about styling. */
+  {
+    const door = code.indexOf('href="/payments"');
+    const branch = code.indexOf("orders.length === 0 ?");
+    check(
+      "6 — the doors render above the empty-state branch, so they survive a non-empty list",
+      door > -1 && branch > -1 && door < branch
+    );
+  }
+}
 for (const p of ["src/app/(app)/orders/page.tsx", "src/app/(app)/orders/[id]/page.tsx"]) {
   const f = fileAt(p);
   check(`5 — ${p.split("/").slice(-2).join("/")} calls guardPage`, !!f && /guardPage\(/.test(f.code));
