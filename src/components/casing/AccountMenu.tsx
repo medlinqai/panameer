@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
@@ -10,8 +10,8 @@ import { membershipBadge } from "@/lib/membership";
 import {
   ADMIN_PERSONA_NAV,
   COMPANY_NAV,
-  PERSONA_NAV_PRIMARY,
-  PERSONA_NAV_SECONDARY,
+  PERSONA_NAV,
+  THEME_BEFORE_HREF,
 } from "@/lib/nav";
 import {
   applyThemeChoice,
@@ -210,8 +210,12 @@ export function AccountMenu({
     too: /settings requires canProvideServices, so offering it to an employee is
     offering them a redirect to /dashboard?noaccess=1.
   */
-  const primary = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV_PRIMARY;
-  const secondary = isAdmin ? [] : PERSONA_NAV_SECONDARY;
+  /* ⚠⚠ ONE LIST NOW (`P2-ALL-E687` WS-A, ruling 89f). ⚠ SUPERSEDED, quoted not
+     deleted (`E164`):
+     //   const primary = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV_PRIMARY;
+     //   const secondary = isAdmin ? [] : PERSONA_NAV_SECONDARY;
+     ⚠ The admin still keeps the short list; only the split went. */
+  const rows = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
 
   /*
     OPTIMISTIC, WITH A REVERT. The toggle is a two-state switch on a fast write;
@@ -309,6 +313,76 @@ export function AccountMenu({
     }
     return null;
   };
+
+  /*
+    ⚠⚠ THE `Theme` SUBMENU, LIFTED TO A LOCAL ELEMENT (`E687` WS-A) so the
+    row loop can place it where ruling 89f put it — immediately before
+    `My Tickets`. ⚠ The JSX itself is UNCHANGED, byte for byte; only where
+    it is rendered moved. ⚠⚠ It keeps its own state (`themeOpen`), which is
+    why it is a local element and not a module constant.
+  */
+  const themeBlock = (
+    <>
+          {/*
+            THEME IS A SUBMENU, NOT A PAGE (E021). Three mutually exclusive
+            values with an instant effect is a radio group; sending someone to a
+            settings page to flip it would cost two navigations to change
+            something they can see change behind the menu.
+          */}
+          <button
+            type="button"
+            aria-expanded={themeOpen}
+            data-menu-item
+            onClick={() => setThemeOpen((v) => !v)}
+            className={`${rowClass} flex items-center justify-between`}
+          >
+            {/*
+              THE LABEL CARRIES THE VALUE — "Theme: Light ›", per the deck. A
+              row reading just "Theme" makes you open the submenu to find out
+              what you are already on, which is the one question the row is
+              there to answer at a glance.
+            */}
+            <span>
+              Theme: {THEME_OPTIONS.find((t) => t.value === theme)?.label}
+            </span>
+            <span
+              aria-hidden
+              className={"text-ink-2 " + (themeOpen ? "inline-block rotate-90" : "")}
+            >
+              ›
+            </span>
+          </button>
+          {themeOpen && (
+            <div role="radiogroup" aria-label="Theme" className="bg-black/[0.02] py-1">
+              {THEME_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  data-menu-item
+                  aria-checked={theme === option.value}
+                  onClick={() => applyThemeChoice(option.value)}
+                  className="flex w-full items-center gap-2.5 px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
+                >
+                  <span
+                    aria-hidden
+                    className={
+                      "w-3 text-[13px] font-black " +
+                      (theme === option.value ? "text-magenta" : "text-transparent")
+                    }
+                  >
+                    ✓
+                  </span>
+                  <span className="flex-1">{option.label}</span>
+                  {option.hint && (
+                    <span className="text-[12.5px] text-ink-2">{option.hint}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+    </>
+  );
 
   return (
     <>
@@ -443,7 +517,11 @@ export function AccountMenu({
               onClick={close}
               className="mt-3 block w-full rounded-[10px] border border-magenta px-3 py-2 text-center text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta/[0.06]"
             >
-              View Profile
+              {/* ⚠ `View Profile` → `My Profile` (`P2-ALL-E687` WS-A, ruling 89f),
+                  consistent with `My Company` and `My Tickets` beside it. The href
+                  is unchanged. ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old
+                  label was the two words `View` and `Profile`. */}
+              My Profile
             </Link>
 
             {/*
@@ -488,23 +566,6 @@ export function AccountMenu({
               </button>
             )}
           </div>
-
-          {/* ---- Your surfaces, then Theme, then the rest ---------------- */}
-          {/*
-            ⚠⚠ ONE ROW RENDERER FOR BOTH LISTS. The value (`78%`, `All good`) is
-            looked up by `href`, so a row without one is byte-identical to what
-            shipped before this brief — the label is never waiting on a fetch.
-          */}
-          {primary.map((item) => (
-            <MenuRow
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              value={valueFor(item.href)}
-              onClick={close}
-              className={rowClass}
-            />
-          ))}
 
           {/*
             ── MY COMPANY (E099, and it REVERSES E225) ────────────────────────
@@ -577,75 +638,39 @@ export function AccountMenu({
             ))}
 
           {/*
-            THEME IS A SUBMENU, NOT A PAGE (E021). Three mutually exclusive
-            values with an instant effect is a radio group; sending someone to a
-            settings page to flip it would cost two navigations to change
-            something they can see change behind the menu.
+            ── ⚠⚠⚠ ONE LIST, IN 89f's ORDER (`P2-ALL-E687` WS-A) ─────────────
+
+            ⚠⚠ **`My Company` MOVED ABOVE THE ROWS** and `Theme` now renders
+            immediately BEFORE `My Tickets`, which is the order Scott settled:
+            `My Profile · My Company · My Account Settings · Invite a Colleague ·
+            Request a Recommendation · Theme · My Tickets`.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old three-part
+            render, `primary.map` then My Company then Theme then
+            `secondary.map`:
+            //   {primary.map((item) => ( <MenuRow … /> ))}
+            //   …My Company…
+            //   …Theme…
+            //   {secondary.map((item) => ( <MenuRow … /> ))}
+
+            ⚠⚠ **`Theme` IS PLACED BY HREF, NOT BY INDEX** (`THEME_BEFORE_HREF`)
+            — a `slice(-1)` would move it silently the day a row is appended.
+            ⚠ `valueFor()` is still called per row and still keys on `href`; the
+            two rows that HAD values are gone, so it now returns null for every
+            row. **It is left in place deliberately** — see `nav.ts` on the
+            dropped figures, and `/api/me/menu-summary` is not changed.
           */}
-          <button
-            type="button"
-            aria-expanded={themeOpen}
-            data-menu-item
-            onClick={() => setThemeOpen((v) => !v)}
-            className={`${rowClass} flex items-center justify-between`}
-          >
-            {/*
-              THE LABEL CARRIES THE VALUE — "Theme: Light ›", per the deck. A
-              row reading just "Theme" makes you open the submenu to find out
-              what you are already on, which is the one question the row is
-              there to answer at a glance.
-            */}
-            <span>
-              Theme: {THEME_OPTIONS.find((t) => t.value === theme)?.label}
-            </span>
-            <span
-              aria-hidden
-              className={"text-ink-2 " + (themeOpen ? "inline-block rotate-90" : "")}
-            >
-              ›
-            </span>
-          </button>
-          {themeOpen && (
-            <div role="radiogroup" aria-label="Theme" className="bg-black/[0.02] py-1">
-              {THEME_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  data-menu-item
-                  aria-checked={theme === option.value}
-                  onClick={() => applyThemeChoice(option.value)}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
-                >
-                  <span
-                    aria-hidden
-                    className={
-                      "w-3 text-[13px] font-black " +
-                      (theme === option.value ? "text-magenta" : "text-transparent")
-                    }
-                  >
-                    ✓
-                  </span>
-                  <span className="flex-1">{option.label}</span>
-                  {option.hint && (
-                    <span className="text-[12.5px] text-ink-2">{option.hint}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {secondary.map((item) => (
-            <MenuRow
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              value={valueFor(item.href)}
-              onClick={close}
-              className={rowClass}
-            />
+          {rows.map((item) => (
+            <Fragment key={item.href}>
+              {item.href === THEME_BEFORE_HREF && !isAdmin && themeBlock}
+              <MenuRow
+                href={item.href}
+                label={item.label}
+                value={valueFor(item.href)}
+                onClick={close}
+                className={rowClass}
+              />
+            </Fragment>
           ))}
-
           {/* ---- Sign out ----------------------------------------------- */}
           <div className="border-t border-line">
             <button

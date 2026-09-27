@@ -1238,182 +1238,247 @@ export const PROVIDER_NAV: NavItem[] = [
   ⚠ Scott ruled it omitted until a page exists rather than pointed at a
   near-miss — WS-A's own rule is that every item goes somewhere that exists.
 */
-export const PERSONA_NAV_PRIMARY: NavItem[] = [
-  /* ⚠ `/community/score` — shipped by `P2-J3-E590` WS-B. The menu shows the
-     percentage beside it, fetched when the menu OPENS (see
-     `/api/me/menu-summary`), never on every page render. */
-  /* ⚠ RENAMED TO MATCH THE TAB ROW (`P2-A2-E600` WS-A 2). ⚠ SUPERSEDED,
-     quoted not deleted (`E164`): `{ label: "Profile Score", href: … }` */
-  { label: "Score", href: "/community/score" },
-  /* ⚠⚠ `Usage` IS FOLDED INTO `Statistics` (Scott, 2026-09-22) — one tab, one
-     menu item, one route. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Usage Stats", href: "/stats" },
-     ⚠ and before it, `E559` WS-D's `{ label: "My Stats", href: "/stats" }`. */
-  { label: "Statistics", href: "/stats" },
-  /*
-    ── ⚠⚠⚠ `Invite a Colleague`, AND IT IS **ONE** ENTRY (`P2-A3-E599` WS-C) ──
-
-    ⚠ SCOTT RULED THE LABEL AT THE WS-B GATE, 2026-09-22: *"add 'Invite a
-    Colleague' (opens the invite panel on `/community/grow`), not 'Grow the
-    Network'. It's one entry."*
-    ⚠⚠ `E598` WS-A LEFT THIS SLOT EMPTY ON PURPOSE — the brief asked for `Grow
-    Your Network` and MEASURED IT HAD NO PAGE (`/grow` and `/community/grow`
-    both 404), so Scott ruled it omitted rather than linked nowhere.
-    ⚠⚠⚠ `E599` WS-A BUILT THE PAGE, SO THE DOOR CAN EXIST NOW. This is that
-    ruling being closed, not reversed.
-    ⚠ THE LABEL NAMES THE ACTION, NOT THE SURFACE: *"Invite a Colleague"* is
-    what a person wants to do; *"Grow the Network"* is what Panameer wants them
-    to do, and the menu is theirs.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-A's note:
-    //   ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE … `/grow` and
-    //   `/community/grow` both 404 … omitted until a page exists.
-  */
+/**
+ * ── ⚠⚠⚠ THE AVATAR MENU, ONE FLAT LIST (`P2-ALL-E687` WS-A, ruling 89f) ───
+ *
+ * ⚠⚠ **IT WAS TWO LISTS, `PERSONA_NAV_PRIMARY` AND `PERSONA_NAV_SECONDARY`,
+ * AND AFTER 89f's REMOVALS THE SPLIT SEPARATED ONE ROW FROM THREE.**
+ * ⚠ Scott, 2026-09-27: *"that is residue, not grouping. Scott's final list is
+ * flat."* ⚠⚠⚠ **A DIVIDER THAT ONCE MEANT SOMETHING AND NOW SEPARATES NOTHING
+ * IS WORSE THAN NO DIVIDER — it tells the reader there is a distinction and
+ * then refuses to say what it is.**
+ *
+ * ── ⚠⚠ WHAT LEFT, AND WHY IT IS NOT A LOSS OF A DOOR (89f) ───────────────
+ *
+ * ⚠⚠⚠ **`Score`, `Statistics` AND `Account Health` WERE IN TWO PLACES AT ONCE.**
+ * All three are `/profile` TABS under 89c (`Score · Usage · Health`), so the
+ * same destinations had two menus. ⚠ **The tab row is the canonical home and
+ * the tabs ARE the entrance** — rule 5 is satisfied by the move, not despite it.
+ *
+ * ⚠⚠⚠ **WHAT IS KNOWINGLY GIVEN UP, RECORDED HERE SO IT IS NOT REDISCOVERED AS
+ * A DEFECT:** those two rows carried **figures**, not just links — `Score 93%`
+ * and `Account Health All good`, looked up by `href` in `AccountMenu`'s
+ * `valueFor()` from `/api/me/menu-summary`. ⚠⚠ **THE TAB ROW SHOWS LABELS ONLY,
+ * SO THE AT-A-GLANCE STATUS IS GONE.** ⚠ **That is a decision, not a
+ * regression:** Scott, asked about putting them on the tabs — *"let them go. no
+ * space."* Consistent with 88b, which moved counts out of tabs for the reason.
+ * ⚠ **The endpoint is NOT changed.** Two of its fields now have no caller;
+ * Scott, 2026-09-27: *"an unused field is not a defect, and removing it is its
+ * own decision."*
+ *
+ * ── ⚠⚠ `My Account Settings` IS LOAD-BEARING ─────────────────────────────
+ *
+ * ⚠⚠⚠ **ONCE WS-B RUNS IT IS THE ONLY ENTRANCE TO `/settings`.** Measured:
+ * `/settings` has exactly three live doors — the `/profile` tab row
+ * (`nav.ts:748`), the `/connect` tab row (`nav.ts:870`) and this row. **89a
+ * removes the first two.** ⚠ It is renamed and in place in THIS commit, before
+ * WS-B touches a tab row (rule 5 — add before you remove).
+ *
+ * ⚠ **`My Profile` IS NOT IN THIS LIST AND THAT IS CORRECT** — it is the header
+ * BUTTON in `AccountMenu`, renamed from `View Profile` in this same commit.
+ * ⚠ **`My Company` is rendered by `AccountMenu` directly** (it carries an admin
+ * popover), and **`Theme` is a submenu**, so neither is a row here either.
+ *
+ * ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — both lists exactly as they stood,
+ * including every earlier supersede they carried. ⚠⚠ THE QUOTE IS BELOW THIS
+ * BLOCK AS `//` LINES, NOT INSIDE IT, AND ITS COMMENT DELIMITERS ARE
+ * PARAPHRASED — rule 12: a copied `<end-comment>` closes the enclosing block and
+ * breaks the parse, which is exactly what the first draft of this did.
+ */
+//   export const PERSONA_NAV_PRIMARY: NavItem[] = [
+//     <begin-comment> ⚠ `/community/score` — shipped by `P2-J3-E590` WS-B. The menu shows the
+//        percentage beside it, fetched when the menu OPENS (see
+//        `/api/me/menu-summary`), never on every page render. <end-comment>
+//     <begin-comment> ⚠ RENAMED TO MATCH THE TAB ROW (`P2-A2-E600` WS-A 2). ⚠ SUPERSEDED,
+//        quoted not deleted (`E164`): `{ label: "Profile Score", href: … }` <end-comment>
+//     { label: "Score", href: "/community/score" },
+//     <begin-comment> ⚠⚠ `Usage` IS FOLDED INTO `Statistics` (Scott, 2026-09-22) — one tab, one
+//        menu item, one route. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//        //   { label: "Usage Stats", href: "/stats" },
+//        ⚠ and before it, `E559` WS-D's `{ label: "My Stats", href: "/stats" }`. <end-comment>
+//     { label: "Statistics", href: "/stats" },
+//     <begin-comment>
+//       ── ⚠⚠⚠ `Invite a Colleague`, AND IT IS **ONE** ENTRY (`P2-A3-E599` WS-C) ──
+//   
+//       ⚠ SCOTT RULED THE LABEL AT THE WS-B GATE, 2026-09-22: *"add 'Invite a
+//       Colleague' (opens the invite panel on `/community/grow`), not 'Grow the
+//       Network'. It's one entry."*
+//       ⚠⚠ `E598` WS-A LEFT THIS SLOT EMPTY ON PURPOSE — the brief asked for `Grow
+//       Your Network` and MEASURED IT HAD NO PAGE (`/grow` and `/community/grow`
+//       both 404), so Scott ruled it omitted rather than linked nowhere.
+//       ⚠⚠⚠ `E599` WS-A BUILT THE PAGE, SO THE DOOR CAN EXIST NOW. This is that
+//       ruling being closed, not reversed.
+//       ⚠ THE LABEL NAMES THE ACTION, NOT THE SURFACE: *"Invite a Colleague"* is
+//       what a person wants to do; *"Grow the Network"* is what Panameer wants them
+//       to do, and the menu is theirs.
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-A's note:
+//       //   ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE … `/grow` and
+//       //   `/community/grow` both 404 … omitted until a page exists.
+//     <end-comment>
+//     { label: "Invite a Colleague", href: "/community/grow" },
+//   ];
+//   
+//   export const PERSONA_NAV_SECONDARY: NavItem[] = [
+//     <begin-comment>
+//       ── ⚠⚠ `Request Recommendations` STAYS (`P2-ALL-E559` WS-D, ruling 2026-09-18)
+//   
+//       The brief said to remove it alongside `Invite a Colleague` — *"these are now
+//       options within the CONNECT application"*. ⚠⚠ MEASURED AT THE PREMISE CHECK,
+//       AND IT IS NOT TRUE OF THIS ONE: `E558` gave the ACTION a home on Connect
+//       (`ColleagueRowActions.tsx` POSTs to `/api/recommendations` inline) but it
+//       NEVER LINKS THE `/recommendations` PAGE.
+//       ⚠ Every inbound link to that page, measured: THIS ENTRY, and
+//       `ProviderProfileView.tsx` — which is doubly conditional on
+//       `testimonials.length === 0` AND `p.isOwner`, so ⚠⚠ IT CLOSES ITSELF the
+//       moment a provider receives their first recommendation.
+//       ⚠⚠⚠ REMOVING THIS ENTRY WOULD ORPHAN THE PAGE FOR EVERY PROVIDER WHO ALREADY
+//       HAS A RECOMMENDATION — this brief's own named failure: *"a feature whose only
+//       door is closed is how `E493`'s invite and `E519`'s résumé re-run got buried."*
+//       ⚠ SO THE MENU HAS SEVEN ITEMS, NOT THE SIX THE BRIEF SPECIFIES. Deliberate,
+//       and reversible in ONE LINE once something on Connect links the page.
+//       ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
+//     <end-comment>
+//     <begin-comment>
+//       ── ⚠⚠⚠ `Request Recommendations` LEFT THE MENU FOR THE PROFILE'S `Grow`
+//          CARD (`P2-A2-E598` WS-C) ──────────────────────────────────────────────
+//   
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//       //   { label: "Request Recommendations", href: "/recommendations" },
+//   
+//       ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
+//       `E598` WS-A deliberately KEPT it here — Scott: *"Keep it until WS-C rehomes
+//       it"* — so the page never had two doors to `/recommendations` and never had
+//       none. WS-C builds the `Grow` card; this line goes in that same change.
+//   
+//       ⚠⚠⚠ THE REASON IT SURVIVED `E559` WS-D IS NOW ANSWERED, NOT IGNORED. That
+//       brief tried to remove it and the premise check refused: *"`E558` gave the
+//       ACTION a home on Connect… but it NEVER LINKS THE `/recommendations` PAGE"*,
+//       and the only two inbound links were this entry and the (since deleted)
+//       `ProviderProfileView`. ⚠ The owner profile's `Grow` card is that missing
+//       link, so the condition `E559` named is finally met.
+//       ⚠ MEASURED BEFORE REMOVING, exactly as `E559` did: the `Grow` card renders
+//       it for every owner, unconditionally, in the same file that renders the
+//       profile.
+//     <end-comment>
+//     <begin-comment>
+//       ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
+//   
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//       // `P2-J3-E493` - DIRECTLY UNDER Request Recommendations, where Scott put it:
+//       //   "This would be under the request recommendation option on the Setting menu."
+//       // THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT - one asks
+//       // somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
+//       // what makes the difference legible.
+//       // { label: "Invite a Colleague", href: "/invite-colleague" },
+//   
+//       ⚠⚠ THE ROUTE STAYS LIVE; ONLY THE MENU ENTRY GOES. ⚠ VERIFIED BEFORE
+//       REMOVING, which is the whole reason `Request Recommendations` above did NOT
+//       go: `/community/colleagues` carries a STANDING right-rail card linking
+//       `/invite-colleague` — ⚠ no capability gate on the page, no conditional
+//       wrapper around the card, same route. `E558` even left a comment there saying
+//       this removal is `E559` WS-D.
+//       ⚠ THE `E493` ADJACENCY ARGUMENT IS WHAT IS LOST, and it was real. The two
+//       asks now live in different places: vouching here, inviting on Connect.
+//     <end-comment>
+//     <begin-comment>
+//       E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
+//       top-left chip owns the company and this menu owns the person; an entry that
+//       opened /company from the personal popover was the last thing crossing that
+//       line.
+//   
+//       The route did not simply vanish for non-admins, which it would have: the
+//       chip only renders a MENU for admins, so removing this would have left an
+//       ordinary member with no way to reach their own company page. The chip is a
+//       plain link for them now — same zone, same destination, read-only.
+//     <end-comment>
+//     <begin-comment> ⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted
+//        (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
+//        the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
+//        DIFFERENT list and is not in scope.
+//        ⚠⚠⚠ RENAMED AGAIN BY `P2-A2-E600` WS-A so the MENU and the PROFILE TAB ROW
+//        use the same word. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//        //   { label: "Settings", href: "/settings" },
+//        ⚠ It is the third name for this item (`Settings` → `My Settings` → `Settings`
+//        → `Account Settings`), and each time the ROUTE was unchanged. <end-comment>
+//     { label: "Account Settings", href: "/settings" },
+//     <begin-comment> ⚠⚠ MOVED DOWN FROM `PERSONA_NAV_PRIMARY` (`P2-A2-E598` WS-A) — option B
+//        groups it with Settings and Help, because all three are about the ACCOUNT
+//        rather than about how you are doing. ⚠ The route is unchanged. <end-comment>
+//     { label: "Account Health", href: "/account-health" },
+//     <begin-comment>
+//       ── ⚠⚠⚠ `Help` POINTS AT `/support/tickets`, AND THAT IS A RULING ─────────
+//   
+//       ⚠ MEASURED AT THE PREMISE CHECK: there is NO `/help` route and NO `/support`
+//       index — both 404. The only live pages under support are `/support/bug` and
+//       `/support/tickets`.
+//       ⚠⚠ Scott ruled it points at `/support/tickets` rather than a new page being
+//       built inside a menu brief. ⚠⚠⚠ IT IS THE NEAREST THING THAT EXISTS, NOT THE
+//       right long-run answer — a real help surface would list "Report a Bug"
+//       alongside "My Tickets", and `/support/bug` currently has no menu door at all.
+//     <end-comment>
+//     <begin-comment>
+//       ── ⚠⚠⚠ `Request a Recommendation` IS BACK, AND IT IS IN **BOTH** PLACES ──
+//   
+//       ⚠ SCOTT, 2026-09-22: *"Add back 'Request a Recommendation' (E598 moved it to
+//       the Grow card; it's now in **both**)."*
+//       ⚠⚠ THAT IS A DELIBERATE SECOND DOOR, NOT A DUPLICATE. `E598` WS-C moved it
+//       OUT of this menu in the same commit that gave it a home on the profile,
+//       precisely so the page never had two doors or none — ⚠⚠⚠ AND SCOTT HAS NOW
+//       RULED THAT TWO IS RIGHT FOR THIS ONE: it is an errand you think of from
+//       anywhere, not only while looking at your profile.
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-C's removal note:
+//       //   ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
+//       //   `E598` WS-A deliberately KEPT it here … so the page never had two doors
+//       //   to `/recommendations` and never had none.
+//       ⚠⚠ THE REASONING IS NOT WRONG, IT IS SUPERSEDED: it argued against a GAP,
+//       and this is not a gap.
+//     <end-comment>
+//     { label: "Request a Recommendation", href: "/recommendations" },
+//     <begin-comment>
+//       ── ⚠⚠ `Help` → `My Tickets` (brief 10 WS-C) ────────────────────────────
+//   
+//       ⚠ SCOTT: *"`Help` → rename `My Tickets`."*
+//       ⚠⚠ **THE ROUTE DOES NOT MOVE AND THE EARLIER RULING STILL HOLDS** — the
+//       note above records that `Help` points at `/support/tickets` because **there
+//       is no `/help` route and no `/support` index; both 404.** ⚠⚠⚠ **THE RENAME
+//       MAKES THE LABEL MATCH THE DESTINATION IT ALREADY HAD:** the page's own `<h1>`
+//       reads *"My Support Tickets"*, so the menu was promising **Help** and
+//       delivering **a ticket list.**
+//       ⚠ **IT ALSO NARROWS AN HONEST PROMISE RATHER THAN BREAKING ONE.** The note
+//       above is explicit that this is *"the NEAREST THING THAT EXISTS, NOT the
+//       right long-run answer — a real help surface would list 'Report a Bug'
+//       alongside 'My Tickets', and `/support/bug` currently has no menu door at
+//       all."* ⚠⚠ **THAT IS STILL TRUE AND STILL UNBUILT**, and calling the item
+//       `My Tickets` stops the menu claiming otherwise.
+//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+//       //   { label: "Help", href: "/support/tickets" },
+//     <end-comment>
+//     { label: "My Tickets", href: "/support/tickets" },
+//   ];
+//   
+//   <begin-comment>* The whole persona list, for `pageTitleFor` and anything that wants it flat. <end-comment>
+//   export const PERSONA_NAV: NavItem[] = [
+//     ...PERSONA_NAV_PRIMARY,
+//     ...PERSONA_NAV_SECONDARY,
+//   ];
+export const PERSONA_NAV: NavItem[] = [
+  /* ⚠⚠ RENAMED FROM `Account Settings` (89f) — consistent with `My Profile`,
+     `My Company` and `My Tickets` beside it. ⚠⚠⚠ THE ONLY DOOR TO `/settings`
+     once WS-B lands. */
+  { label: "My Account Settings", href: "/settings" },
   { label: "Invite a Colleague", href: "/community/grow" },
-];
-
-export const PERSONA_NAV_SECONDARY: NavItem[] = [
-  /*
-    ── ⚠⚠ `Request Recommendations` STAYS (`P2-ALL-E559` WS-D, ruling 2026-09-18)
-
-    The brief said to remove it alongside `Invite a Colleague` — *"these are now
-    options within the CONNECT application"*. ⚠⚠ MEASURED AT THE PREMISE CHECK,
-    AND IT IS NOT TRUE OF THIS ONE: `E558` gave the ACTION a home on Connect
-    (`ColleagueRowActions.tsx` POSTs to `/api/recommendations` inline) but it
-    NEVER LINKS THE `/recommendations` PAGE.
-    ⚠ Every inbound link to that page, measured: THIS ENTRY, and
-    `ProviderProfileView.tsx` — which is doubly conditional on
-    `testimonials.length === 0` AND `p.isOwner`, so ⚠⚠ IT CLOSES ITSELF the
-    moment a provider receives their first recommendation.
-    ⚠⚠⚠ REMOVING THIS ENTRY WOULD ORPHAN THE PAGE FOR EVERY PROVIDER WHO ALREADY
-    HAS A RECOMMENDATION — this brief's own named failure: *"a feature whose only
-    door is closed is how `E493`'s invite and `E519`'s résumé re-run got buried."*
-    ⚠ SO THE MENU HAS SEVEN ITEMS, NOT THE SIX THE BRIEF SPECIFIES. Deliberate,
-    and reversible in ONE LINE once something on Connect links the page.
-    ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
-  */
-  /*
-    ── ⚠⚠⚠ `Request Recommendations` LEFT THE MENU FOR THE PROFILE'S `Grow`
-       CARD (`P2-A2-E598` WS-C) ──────────────────────────────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Request Recommendations", href: "/recommendations" },
-
-    ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
-    `E598` WS-A deliberately KEPT it here — Scott: *"Keep it until WS-C rehomes
-    it"* — so the page never had two doors to `/recommendations` and never had
-    none. WS-C builds the `Grow` card; this line goes in that same change.
-
-    ⚠⚠⚠ THE REASON IT SURVIVED `E559` WS-D IS NOW ANSWERED, NOT IGNORED. That
-    brief tried to remove it and the premise check refused: *"`E558` gave the
-    ACTION a home on Connect… but it NEVER LINKS THE `/recommendations` PAGE"*,
-    and the only two inbound links were this entry and the (since deleted)
-    `ProviderProfileView`. ⚠ The owner profile's `Grow` card is that missing
-    link, so the condition `E559` named is finally met.
-    ⚠ MEASURED BEFORE REMOVING, exactly as `E559` did: the `Grow` card renders
-    it for every owner, unconditionally, in the same file that renders the
-    profile.
-  */
-  /*
-    ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    // `P2-J3-E493` - DIRECTLY UNDER Request Recommendations, where Scott put it:
-    //   "This would be under the request recommendation option on the Setting menu."
-    // THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT - one asks
-    // somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
-    // what makes the difference legible.
-    // { label: "Invite a Colleague", href: "/invite-colleague" },
-
-    ⚠⚠ THE ROUTE STAYS LIVE; ONLY THE MENU ENTRY GOES. ⚠ VERIFIED BEFORE
-    REMOVING, which is the whole reason `Request Recommendations` above did NOT
-    go: `/community/colleagues` carries a STANDING right-rail card linking
-    `/invite-colleague` — ⚠ no capability gate on the page, no conditional
-    wrapper around the card, same route. `E558` even left a comment there saying
-    this removal is `E559` WS-D.
-    ⚠ THE `E493` ADJACENCY ARGUMENT IS WHAT IS LOST, and it was real. The two
-    asks now live in different places: vouching here, inviting on Connect.
-  */
-  /*
-    E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
-    top-left chip owns the company and this menu owns the person; an entry that
-    opened /company from the personal popover was the last thing crossing that
-    line.
-
-    The route did not simply vanish for non-admins, which it would have: the
-    chip only renders a MENU for admins, so removing this would have left an
-    ordinary member with no way to reach their own company page. The chip is a
-    plain link for them now — same zone, same destination, read-only.
-  */
-  /* ⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted
-     (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
-     the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
-     DIFFERENT list and is not in scope.
-     ⚠⚠⚠ RENAMED AGAIN BY `P2-A2-E600` WS-A so the MENU and the PROFILE TAB ROW
-     use the same word. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Settings", href: "/settings" },
-     ⚠ It is the third name for this item (`Settings` → `My Settings` → `Settings`
-     → `Account Settings`), and each time the ROUTE was unchanged. */
-  { label: "Account Settings", href: "/settings" },
-  /* ⚠⚠ MOVED DOWN FROM `PERSONA_NAV_PRIMARY` (`P2-A2-E598` WS-A) — option B
-     groups it with Settings and Help, because all three are about the ACCOUNT
-     rather than about how you are doing. ⚠ The route is unchanged. */
-  { label: "Account Health", href: "/account-health" },
-  /*
-    ── ⚠⚠⚠ `Help` POINTS AT `/support/tickets`, AND THAT IS A RULING ─────────
-
-    ⚠ MEASURED AT THE PREMISE CHECK: there is NO `/help` route and NO `/support`
-    index — both 404. The only live pages under support are `/support/bug` and
-    `/support/tickets`.
-    ⚠⚠ Scott ruled it points at `/support/tickets` rather than a new page being
-    built inside a menu brief. ⚠⚠⚠ IT IS THE NEAREST THING THAT EXISTS, NOT THE
-    right long-run answer — a real help surface would list "Report a Bug"
-    alongside "My Tickets", and `/support/bug` currently has no menu door at all.
-  */
-  /*
-    ── ⚠⚠⚠ `Request a Recommendation` IS BACK, AND IT IS IN **BOTH** PLACES ──
-
-    ⚠ SCOTT, 2026-09-22: *"Add back 'Request a Recommendation' (E598 moved it to
-    the Grow card; it's now in **both**)."*
-    ⚠⚠ THAT IS A DELIBERATE SECOND DOOR, NOT A DUPLICATE. `E598` WS-C moved it
-    OUT of this menu in the same commit that gave it a home on the profile,
-    precisely so the page never had two doors or none — ⚠⚠⚠ AND SCOTT HAS NOW
-    RULED THAT TWO IS RIGHT FOR THIS ONE: it is an errand you think of from
-    anywhere, not only while looking at your profile.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-C's removal note:
-    //   ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
-    //   `E598` WS-A deliberately KEPT it here … so the page never had two doors
-    //   to `/recommendations` and never had none.
-    ⚠⚠ THE REASONING IS NOT WRONG, IT IS SUPERSEDED: it argued against a GAP,
-    and this is not a gap.
-  */
   { label: "Request a Recommendation", href: "/recommendations" },
-  /*
-    ── ⚠⚠ `Help` → `My Tickets` (brief 10 WS-C) ────────────────────────────
-
-    ⚠ SCOTT: *"`Help` → rename `My Tickets`."*
-    ⚠⚠ **THE ROUTE DOES NOT MOVE AND THE EARLIER RULING STILL HOLDS** — the
-    note above records that `Help` points at `/support/tickets` because **there
-    is no `/help` route and no `/support` index; both 404.** ⚠⚠⚠ **THE RENAME
-    MAKES THE LABEL MATCH THE DESTINATION IT ALREADY HAD:** the page's own `<h1>`
-    reads *"My Support Tickets"*, so the menu was promising **Help** and
-    delivering **a ticket list.**
-    ⚠ **IT ALSO NARROWS AN HONEST PROMISE RATHER THAN BREAKING ONE.** The note
-    above is explicit that this is *"the NEAREST THING THAT EXISTS, NOT the
-    right long-run answer — a real help surface would list 'Report a Bug'
-    alongside 'My Tickets', and `/support/bug` currently has no menu door at
-    all."* ⚠⚠ **THAT IS STILL TRUE AND STILL UNBUILT**, and calling the item
-    `My Tickets` stops the menu claiming otherwise.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Help", href: "/support/tickets" },
-  */
+  /* ⚠ `Theme` renders immediately BEFORE this row — see `THEME_BEFORE_HREF`. */
   { label: "My Tickets", href: "/support/tickets" },
 ];
 
-/** The whole persona list, for `pageTitleFor` and anything that wants it flat. */
-export const PERSONA_NAV: NavItem[] = [
-  ...PERSONA_NAV_PRIMARY,
-  ...PERSONA_NAV_SECONDARY,
-];
+/**
+ * ⚠⚠ WHERE THE `Theme` SUBMENU SITS, NAMED BY HREF RATHER THAN BY INDEX.
+ * ⚠ 89f's order puts it between `Request a Recommendation` and `My Tickets`.
+ * ⚠⚠⚠ **A `slice(-1)` WOULD MOVE IT SILENTLY THE DAY SOMEBODY APPENDS A ROW**;
+ * keyed on the href it follows the row it was ruled to precede.
+ */
+export const THEME_BEFORE_HREF = "/support/tickets";
 
 /** What a Panameer employee keeps of that list. */
 export const ADMIN_PERSONA_NAV: NavItem[] = [

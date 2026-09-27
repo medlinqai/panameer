@@ -44,8 +44,6 @@ import {
   ADMIN_SETUP,
   PAGE_TABS,
   PERSONA_NAV,
-  PERSONA_NAV_PRIMARY,
-  PERSONA_NAV_SECONDARY,
   PROVIDER_NAV,
   REQUESTER_NAV,
   bandPrefixesFor,
@@ -92,8 +90,11 @@ const MENUS: { name: string; items: NavItem[] }[] = [
   { name: "REQUESTER_NAV", items: flatten(REQUESTER_NAV) },
   { name: "PROVIDER_NAV", items: flatten(PROVIDER_NAV) },
   { name: "PERSONA_NAV", items: flatten(PERSONA_NAV) },
-  { name: "PERSONA_NAV_PRIMARY", items: flatten(PERSONA_NAV_PRIMARY) },
-  { name: "PERSONA_NAV_SECONDARY", items: flatten(PERSONA_NAV_SECONDARY) },
+  /* ⚠⚠ ONE LIST NOW (`P2-ALL-E687` WS-A, ruling 89f) — `PERSONA_NAV` above is
+     the merged list, so walking the two halves separately would walk it twice.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { name: "PERSONA_NAV_PRIMARY", items: flatten(PERSONA_NAV_PRIMARY) },
+     //   { name: "PERSONA_NAV_SECONDARY", items: flatten(PERSONA_NAV_SECONDARY) }, */
   { name: "ADMIN_PERSONA_NAV", items: flatten(ADMIN_PERSONA_NAV) },
   { name: "ADMIN_SETUP", items: [ADMIN_SETUP] },
   { name: "ADMIN_NAV", items: flatten(ADMIN_NAV.flatMap((g) => g.items)) },
