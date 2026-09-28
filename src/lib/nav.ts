@@ -1999,6 +1999,14 @@ export const ADMIN_NAV: NavGroup[] = [
         //   { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
       */
       { label: "Assessment Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
+      /*
+        ⚠⚠ **APPLICATION COMMISSIONS SITS BESIDE THE ASSESSMENT RATE ON PURPOSE**
+        (`P2-A15-E696` WS-E, ruling 97). Same group, same shape of page, **and
+        opposite lifetime rules** — which is why each page states its own in full.
+        ⚠ Configuration Data: a value the platform computes with, like the rate
+        above it.
+      */
+      { label: "Application Commissions", href: "/admin/application-commissions", icon: "Percent" },
     ],
   },
   {
