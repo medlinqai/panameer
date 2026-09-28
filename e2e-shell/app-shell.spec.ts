@@ -476,7 +476,17 @@ const BACKLINK_EXEMPT = new Set([
   "src/components/legal/LegalPlaceholder.tsx", // same, shared
   "src/app/explore/page.tsx", // a ghost CTA button
   "src/app/verify-email/page.tsx", // a pill button inside the verify flow
-  "src/components/work/InviteToBid.tsx", // in-flow returns under a form
+  /*
+    ⚠⚠⚠ RE-ANCHORED BY `P2-ALL-E698` — IT WENT RED WHEN `P2-A8-E695` WS-A RENAMED
+    THE FILE (`InviteToBid.tsx` -> `InviteToPropose.tsx`) AND DID NOT MOVE THIS
+    EXEMPTION WITH IT. ⚠ Third gate that brief pair left red and reported green —
+    ruling 98e, which says a change runs the gates that assert what it touched, BY
+    NAME. A rename touches every list that names the old path.
+    ⚠ THE EXEMPTION AND ITS REASON ARE UNCHANGED; only the filename moved.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   "src/components/work/InviteToBid.tsx", // in-flow returns under a form
+  */
+  "src/components/work/InviteToPropose.tsx", // in-flow returns under a form
   "src/components/learn/TestRunner.tsx", // in-test controls, one a pill
 ]);
 
@@ -641,7 +651,7 @@ const PUBLIC_NAV_ITEMS = [
      labels and never sets them, the same way it followed `/assess` -> `/optimize`.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   { label: "Learn", href: "/learn" }, */
-  { label: "Training", href: "/training" },
+  { label: "Learn", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
   /*
@@ -651,7 +661,7 @@ const PUBLIC_NAV_ITEMS = [
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   { label: "Shop", href: "/marketplace" },
   */
-  { label: "Marketplace", href: "/marketplace" },
+  { label: "Shop", href: "/marketplace" },
   /*
     ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
     assertion caught the change, which is what it is for. `/assess` is the wizard

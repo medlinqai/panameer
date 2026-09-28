@@ -218,25 +218,23 @@ export type MarketingNavItem = {
 */
 export const MARKETING_NAV: MarketingNavItem[] = [
   /*
-    ⚠⚠⚠ `Learn` MOVED TO THE APPLICATION (`P2-ALL-E698` WS-C). Scott, 2026-09-28,
-    on the shape `/learn` had: *"changing the content based on if logged in seems
-    confusing when someone reports an error with /learn."* ⚠ The public front door
-    is `/training` now; `/learn` is the member's dashboard and nothing else.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Learn", href: "/learn" },
+    ⚠⚠⚠ THE URL MOVED; THE LABEL DID NOT, AND THAT IS A MEASURED DECISION
+    (`P2-ALL-E698`). Scott's principle is about URLs — *"NEVER let a public page
+    steal the best URL"* — and `E533` already rules that the menu word and the URL
+    deliberately differ (*"a verb in the menu, a noun in the URL"*).
+    ⚠⚠ **RENAMING THE LABELS WAS TRIED AND REVERTED BECAUSE IT BROKE THE HEADER.**
+    `Learn` -> `Training` and `Shop` -> `Marketplace` add roughly 72px to a nav row
+    this file budgets to 0.1px: `app-shell.spec.ts`'s width sweep failed with
+    *"/ @768: marketing header clipped off the LEFT"*, 31px of overflow.
+    ⚠ THE TRADE IS SCOTT'S AND IS REPORTED: labels matching their URLs cost ~72px
+    and need the `md:` breakpoint moved, and short labels mean the public nav and
+    the app rail both say "Shop" while pointing at different pages.
   */
-  { label: "Training", href: "/training" },
+  { label: "Learn", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
-  /*
-    ⚠⚠⚠ `Shop` MOVED TO THE APPLICATION (`P2-ALL-E698`, Scott 2026-09-28): *"the
-    real 'shop' page SHOULD be named shop because of the menu name."* The public
-    page gives way — it is marketing and it is expected to change; the app's routes
-    are what members learn, bookmark and quote in a bug report.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Shop", href: "/shop" },
-  */
-  { label: "Marketplace", href: "/marketplace" },
+  /* ⚠ SAME MEASURED DECISION AS `Learn` ABOVE — the URL moved, the label did not. */
+  { label: "Shop", href: "/marketplace" },
   { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/integrate" },
 ];

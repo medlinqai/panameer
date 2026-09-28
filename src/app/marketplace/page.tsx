@@ -66,14 +66,16 @@ export const metadata: Metadata = {
   /* ⚠ MIRRORS THE NAV LABEL, so it moved with it (E222). The other three nav
      destinations' titles are their own sentences rather than the menu word, so
      they were left alone.
-     ⚠⚠⚠ RENAMED WITH THE ROUTE (`P2-ALL-E698`, ruling 98d + Scott 2026-09-28):
+     ⚠⚠ THE ROUTE MOVED; THIS TITLE AND THE NAV LABEL DID NOT (`P2-ALL-E698`) —
+     renaming them clipped the marketing header at 768. Measured, then reverted.
+     ⚠ ORIGINAL INTENT, kept for the reasoning (ruling 98d + Scott 2026-09-28):
      *"NEVER let a public page steal the best URL… the real 'shop' page SHOULD be
      named shop because of the menu name."* ⚠⚠ THE TITLE HAD TO MOVE TOO, NOT JUST
      THE URL — two pages both titled "Shop" is the exact bug-report ambiguity this
      change exists to remove.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   title: "Shop — Panameer",  at /shop */
-  title: "Marketplace — Panameer",
+  title: "Shop — Panameer",
   description:
     "Productized services on Panameer — a fixed scope, a fixed price, a named expert.",
 };
