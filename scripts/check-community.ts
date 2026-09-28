@@ -1604,7 +1604,7 @@ for (const href of [
      left Settings so it would stop wearing the SETTINGS eyebrow and tab row.
      ⚠⚠ `/find-work` STAYS — Scott ruled it accurate and already a verb phrase,
      so it does NOT move to `/work` (which the public Seller page holds). */
-  "/learn", "/create-work", "/find-work", "/packages", "/my-services",
+  "/learn", "/create-work", "/find-work", "/shop", "/my-services",
   /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
      Order is the SOW, so there is no Contract record for a route to name. */
   /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */

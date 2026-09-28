@@ -198,7 +198,10 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   "/my-services": ["/services"],
   */
-  "/packages": ["/my-services", "/services"],
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the route took the menu's own
+     word at `P2-ALL-E698`:
+     //   "/packages": ["/my-services", "/services"], */
+  "/shop": ["/my-services", "/services"],
   "/hire": ["/create-work"],
   /*
     ── ⚠⚠⚠ MONEY BELONGS TO ORDERS NOW, AND THE BAND HAS TO SAY SO
@@ -371,7 +374,16 @@ export const REQUESTER_NAV: NavItem[] = [
     /* ⚠ MIRRORED SLOT — buyer shops, provider sells. */
     label: "Shop",
     heading: "Service Products",
-    href: "/packages",
+    /*
+      ⚠⚠⚠ THE LABEL AND THE URL AGREE NOW (`P2-ALL-E698`). Scott, 2026-09-28:
+      *"the real 'shop' page SHOULD be named shop because of the menu name."*
+      ⚠ The public `/shop` moved to `/marketplace` in the commit before this one —
+      it had to, because route groups do NOT namespace URLs and Turbopack refuses
+      to build with both present (ruling 98d).
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   href: "/packages",
+    */
+    href: "/shop",
     icon: "Package",
     /*
       ⚠⚠⚠ NO `requires` — SLOT 4 IS UNIVERSAL (`P2-ALL-E693`, ruling `89e`
@@ -1286,7 +1298,10 @@ export const PROVIDER_NAV: NavItem[] = [
     */
     label: "Shop",
     heading: "Service Products",
-    href: "/packages",
+    /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — moved with the requester's
+       mirrored slot at `P2-ALL-E698`:
+       //   href: "/packages", */
+    href: "/shop",
     icon: "Tag",
   },
   /* ⚠⚠ `P1-ALL-E533` PART B — EVERY RAIL ITEM IS A VERB PHRASE. Scott,

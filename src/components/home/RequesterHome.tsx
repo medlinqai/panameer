@@ -268,7 +268,7 @@ export function RequesterHome({
         <p className="mt-1 text-[15px] text-ink-2">
           Fixed scope, fixed price, published by the provider who delivers it.
         </p>
-        <form action="/packages" className="mt-4 flex max-w-xl flex-wrap gap-2">
+        <form action="/shop" className="mt-4 flex max-w-xl flex-wrap gap-2">
           <input
             name="q"
             placeholder="Search service products…"
