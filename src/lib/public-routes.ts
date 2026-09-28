@@ -81,6 +81,14 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     is GATED. They swapped on 2026-08-26 (`P1-ALL-E017`); do not put them back.
   */
   { route: "/", category: 1 },
+  /*
+    ⚠⚠⚠ `/training` (`P2-ALL-E698` WS-C) — LEARN'S PUBLIC FRONT DOOR AT ITS OWN
+    ADDRESS, so `/learn` can be the member's dashboard and nothing else.
+    ⚠⚠ `/learn`'s OWN ROW IS STILL BELOW AND IS REMOVED IN THE NEXT COMMIT, NOT THIS
+    ONE. Public page in first, then the app page takes over — so the public browse
+    is never absent, not even for one commit (rule 5).
+  */
+  { route: "/training", category: 1 },
   { route: "/learn", category: 1 },
   { route: "/optimize", category: 1 },
   { route: "/talent", category: 1 },

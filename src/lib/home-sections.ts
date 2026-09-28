@@ -484,7 +484,7 @@ export const HOME_SECTIONS: HomeSection[] = [
     ],
     ctaLabel: HOME_LEARN_CTA,
     ctaHref: "/learn/paths",
-    learnMoreHref: "/learn",
+    learnMoreHref: "/training",
   },
   {
     key: "talent",

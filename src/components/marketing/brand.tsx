@@ -217,7 +217,15 @@ export type MarketingNavItem = {
   ⚠ `/work-marketplace` IS A DIFFERENT ROUTE and was not touched by any of this.
 */
 export const MARKETING_NAV: MarketingNavItem[] = [
-  { label: "Learn", href: "/learn" },
+  /*
+    ⚠⚠⚠ `Learn` MOVED TO THE APPLICATION (`P2-ALL-E698` WS-C). Scott, 2026-09-28,
+    on the shape `/learn` had: *"changing the content based on if logged in seems
+    confusing when someone reports an error with /learn."* ⚠ The public front door
+    is `/training` now; `/learn` is the member's dashboard and nothing else.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Learn", href: "/learn" },
+  */
+  { label: "Training", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
   /*

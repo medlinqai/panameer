@@ -140,7 +140,7 @@ export default async function VerifyPage({
 
           <p className="mt-8 text-center text-[13.5px] text-ink-2">
             Panameer issues this credential and stands behind it. Courses are free —{" "}
-            <Link href="/learn" className="font-bold text-magenta hover:underline">
+            <Link href="/training" className="font-bold text-magenta hover:underline">
               start one
             </Link>
             .

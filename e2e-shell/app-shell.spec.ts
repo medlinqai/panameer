@@ -627,7 +627,7 @@ test("GUARD 3 — no arbitrary min-[…] variant competes with a named breakpoin
  */
 const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282, 1440, 1562];
 
-const PUBLIC_PAGES = ["/", "/learn", "/talent", "/work", "/marketplace"];
+const PUBLIC_PAGES = ["/", "/training", "/talent", "/work", "/marketplace"];
 
 /**
  * ⚠ SIX ITEMS SINCE `P1-J0-E245`, AND THIS SUITE READS THEM, NEVER SETS THEM.
@@ -637,7 +637,11 @@ const PUBLIC_PAGES = ["/", "/learn", "/talent", "/work", "/marketplace"];
  * see the note on `navByHref`.
  */
 const PUBLIC_NAV_ITEMS = [
-  { label: "Learn", href: "/learn" },
+  /* ⚠ FOLLOWED THE DESTINATION AT `P2-ALL-E698` WS-C — this suite READS Scott's
+     labels and never sets them, the same way it followed `/assess` -> `/optimize`.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Learn", href: "/learn" }, */
+  { label: "Training", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
   /*
@@ -926,7 +930,8 @@ test.describe("the MARKETING header", () => {
 */
 const BOXED_HERO_PAGES = [
   "/optimize",
-  "/learn",
+  /* ⚠ THE PUBLIC LEARN HERO LIVES AT `/training` SINCE `P2-ALL-E698` WS-C. */
+  "/training",
   "/talent",
   "/work",
   "/marketplace",

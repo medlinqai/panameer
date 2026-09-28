@@ -1406,7 +1406,7 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
  */
 test.describe("/learn — the spine as five disclosures", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/learn");
+    await page.goto("/training");
   });
 
   /**
@@ -1604,9 +1604,9 @@ test.describe("/learn — the spine as five disclosures", () => {
       '"use client" in StepDisclosures.tsx spends /optimize\'s static render — nothing in it needs one',
     ).toBe(false);
 
-    for (const url of ["/optimize", "/learn"]) {
+    for (const url of ["/optimize", "/training"]) {
       const html = await (await request.get(url)).text();
-      for (const label of url === "/learn"
+      for (const label of url === "/training"
         ? LEARN_STEPS.map((s) => s.summary)
         : ["Select a Business Process"]) {
         expect(
@@ -1698,7 +1698,7 @@ test.describe("/learn — the spine as five disclosures", () => {
  */
 test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/learn");
+    await page.goto("/training");
   });
 
   /**
@@ -1964,7 +1964,7 @@ test.describe("/learn — walk 2: the hero and the how-it-works block", () => {
   test("§39 the footer renders sanely on every page that has one", async ({
     page,
   }) => {
-    for (const url of ["/", "/optimize", "/learn"]) {
+    for (const url of ["/", "/optimize", "/training"]) {
       await page.goto(url);
       const r = await page.evaluate(() => {
         const f = document.querySelector("footer");
@@ -2665,7 +2665,7 @@ test.describe("work walk 1 — the buyer's page", () => {
       "/optimize",
       "/integrate",
       "/marketplace",
-      "/learn",
+      "/training",
       /*
         ⚠ ADDED BY `P1-J0-E352`. This test's own docblock says *"RUN ON EVERY PUBLIC
         MARKETING PAGE"*, and `/capability-domains` is one. ⚠ THIS WIDENS THE TEST,
@@ -3008,7 +3008,7 @@ test.describe("shop walk 1 — /shop", () => {
       "/marketplace",
       "/optimize",
       "/integrate",
-      "/learn",
+      "/training",
       "/why-panameer",
     ]) {
       await page.goto(url);
@@ -3171,7 +3171,7 @@ test.describe("hero clips — the -hero cuts, and only those", () => {
     page,
   }) => {
     for (const [url, needle] of [
-      ["/learn", "courses to certification"],
+      ["/training", "courses to certification"],
       /* ⚠ `E546` — the headline no longer makes a time claim. SUPERSEDED, quoted
          (`E164`): `["/talent", "in under one minute"]`. Lowercase: the probe
          lower-cases the heading text before matching. */
@@ -3332,7 +3332,7 @@ test.describe("/talent — the hero stat tiles", () => {
  * the whole brief, which is exactly the shape a test has to hold.
  */
 test.describe("hero clips — every one has a poster", () => {
-  const POSTERED = ["/talent", "/marketplace", "/integrate", "/work", "/learn"];
+  const POSTERED = ["/talent", "/marketplace", "/integrate", "/work", "/training"];
 
   for (const url of POSTERED) {
     test(`§62 ${url}'s hero clip has a poster`, async ({ page }) => {
@@ -3427,7 +3427,7 @@ test.describe("§64 one hero treatment", () => {
   const CARD_LINEAR = "linear-gradient(150deg, rgb(13, 18, 48) 0%, rgb(25, 26, 68) 55%, rgb(58, 28, 83) 100%)";
   const SCRIM = "linear-gradient(150deg, rgba(13, 18, 48, 0.86) 0%, rgba(25, 26, 68, 0.72) 55%, rgba(58, 28, 83, 0.62) 100%)";
 
-  for (const url of ["/", "/optimize", "/talent", "/work", "/marketplace", "/integrate", "/learn", "/why-panameer"]) {
+  for (const url of ["/", "/optimize", "/talent", "/work", "/marketplace", "/integrate", "/training", "/why-panameer"]) {
     test(`${url} paints the shared card and scrim`, async ({ page }) => {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForSelector("h1");
@@ -3502,7 +3502,7 @@ test.describe("§64 one hero treatment", () => {
       `HERO_BRIDGE_CLASS` are untouched and still serve all six.
       ⚠ IF `/` EVER GROWS A STEP SPINE, PUT IT BACK IN THIS ARRAY.
     */
-    for (const url of ["/optimize", "/talent", "/work", "/marketplace", "/integrate", "/learn"]) {
+    for (const url of ["/optimize", "/talent", "/work", "/marketplace", "/integrate", "/training"]) {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForSelector("h1");
       const n = await page.evaluate(
