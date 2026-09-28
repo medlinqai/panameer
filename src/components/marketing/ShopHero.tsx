@@ -228,7 +228,7 @@ export async function ShopHero() {
                   class string stays whole and Tailwind still sees it.
                 */}
                 <div className="-mt-4">
-                  <Link href="/service-products" className={HERO_BUTTON_OUTLINE}>
+                  <Link href="/pre-defined-services" className={HERO_BUTTON_OUTLINE}>
                     {SERVICE_PRODUCTS_EXPLAINED_LABEL}
                   </Link>
                 </div>

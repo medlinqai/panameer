@@ -68,7 +68,12 @@ import "@/components/marketing-home/home.css";
   metadata, not approved copy.
 */
 export const metadata: Metadata = {
-  title: "Service Products — Panameer",
+  /* ⚠⚠⚠ RENAMED WITH THE ROUTE (`P2-ALL-E698`). The title had to move too: a
+     public page titled "Service Products" beside an application route at
+     `/service-products` is the bug-report ambiguity Scott is removing.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   title: "Service Products — Panameer",  at /service-products */
+  title: "Pre-Defined Services — Panameer",
   description:
     "Pre-built AI agents for Oracle applications — reports and dashboards, " +
     "price alerts, document validation, and extending your apps.",

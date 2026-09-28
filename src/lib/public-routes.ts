@@ -108,15 +108,21 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   */
   { route: "/ai-method", category: 1 },
   /*
-    ⚠ `/service-products` (`P1-J0-E358`) — `ErpPackages` at its own address, MOVED
-    off `/shop`. Reached from `/shop`'s second hero button. Renders that one section
-    and nothing else: no form, no session read, no data. Category 1 like the eight
-    above.
+    ⚠ `/pre-defined-services` (`P1-J0-E358`) — `ErpPackages` at its own address,
+    MOVED off `/shop`. Reached from `/marketplace`'s second hero button. Renders that
+    one section and nothing else: no form, no session read, no data. Category 1 like
+    the eight above.
     ⚠ NOT OPTIONAL. The default is DENY and the app-shell suite asserts every page is
     explicitly allowlisted or gated — `E352` learned that when `/capability-domains`
     failed the guard.
+    ⚠⚠⚠ RENAMED AT `P2-ALL-E698` SO THE APPLICATION CAN HAVE THE NAME. Scott,
+    2026-09-28: *"NEVER let a public page steal the best URL."* ⚠ Its two other
+    references moved in the same commit — `/shop` became `/marketplace` one commit
+    earlier, which is why the sentence above now names it.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { route: "/service-products", category: 1 },
   */
-  { route: "/service-products", category: 1 },
+  { route: "/pre-defined-services", category: 1 },
   /*
     ⚠ `/erp-integration` (`P1-J0-E359`) — `ErpIntegration` at its own address, MOVED
     off `/integrate`. Reached from that page's hero button AND from HOME section 6.

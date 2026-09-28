@@ -126,7 +126,7 @@ const ENTERPRISE = "/erp-integration";
   WITH ITS SUBJECT, NOT BEING LOOSENED: §12b still proves the grid renders exactly
   once, on the page that owns it.
 */
-const SERVICE_PRODUCTS = "/service-products";
+const SERVICE_PRODUCTS = "/pre-defined-services";
 
 const CARDS: Card[] = [
   // ErpPackages — the four agent categories. On /service-products only (E358).
@@ -2961,7 +2961,7 @@ test.describe("shop walk 1 — /shop", () => {
       ⚠ AND THE PRIMARY CONTROL IS STILL ASSERTED HREF-LESS below — that half is the
       one `E002` is actually about and it is unchanged in substance.
     */
-    const HERO_LINK_ALLOWLIST = ["/service-products"];
+    const HERO_LINK_ALLOWLIST = ["/pre-defined-services"];
     const heroHrefs = await hero.locator("a[href]").evaluateAll((els) =>
       els.map((e) => e.getAttribute("href")),
     );
