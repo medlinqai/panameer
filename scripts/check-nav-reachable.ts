@@ -37,7 +37,7 @@
  * `requires` omitted means *"everyone signed in sees it"* (nav.ts), so an
  * omitted `requires` against a capability-gated route is the defect itself.
  */
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { ROUTE_ACCESS, type RouteRequirement } from "@/lib/route-access";
 import {
@@ -52,6 +52,9 @@ import {
   type NavItem,
 } from "@/lib/nav";
 import { SETTINGS_NAV } from "@/lib/settings-nav";
+/* ⚠ `P2-ALL-E698` WS-D — the ONE map from an app route to the public page it took
+   the name from. Imported rather than restated so the gate cannot drift from it. */
+import { PUBLIC_TWIN } from "@/lib/public-twin";
 /* ⚠ §6 asserts that removing a rail item did not take a support-ticket category
    with it — the two are coupled through `journeyKey()`, and nothing else in the
    harness would notice. */
@@ -484,7 +487,18 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
     page that exists to prevent it.
   */
   {
-    const shop = readFileSync(join("src", "app", "(app)", "packages", "page.tsx"), "utf8")
+    /* ⚠⚠ RE-ANCHORED BY `P2-ALL-E698` WS-A — the route took the menu's own word,
+       so the file moved from `(app)/packages` to `(app)/shop`.
+       ⚠⚠⚠ IT DID NOT FAIL, IT **CRASHED** — `ENOENT` from `readFileSync`, with no
+       assertion output at all. A gate that throws reports nothing, which is worse
+       than a red: the run ends with a stack trace where a count should be, and
+       ruling 98g's rule (assert the file exists FIRST, as its own named assertion)
+       is exactly what would have turned this into one legible line.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   join("src", "app", "(app)", "packages", "page.tsx") */
+    const SHOP_PAGE = join("src", "app", "(app)", "shop", "page.tsx");
+    check("6 — the Shop page is where this guard expects it", existsSync(SHOP_PAGE));
+    const shop = readFileSync(SHOP_PAGE, "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
     check(
@@ -501,10 +515,33 @@ for (const route of Object.keys(BAND_KNOWN_OPEN)) {
        `/dashboard?noaccess=1` — visibly bouncing a member out of their own menu.
        ⚠ `/packages` is NOT in `route-access.ts`, so §1 reads it as public and
        cannot see this; the guard lives in the page and is asserted here. */
+    /*
+      ⚠⚠ THE RULE IS UNCHANGED AND IS STILL THE POINT; THE MECHANISM MOVED.
+      `P2-ALL-E698` WS-D replaced `guardPage("authenticated")` with
+      `memberOrPublicTwin("/shop")`, because this URL was the PUBLIC shop until WS-A
+      and an anonymous visitor should reach `/marketplace` rather than a login wall.
+      ⚠⚠⚠ **AND THIS IS NOW A STRONGER ASSERTION THAN THE ONE IT REPLACES:** it says
+      the guard is session-only AND that no capability guard has crept in, where the
+      old one only matched the session-only shape and would have gone quiet if a
+      second `guardPage` were added beside it.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   /guardPage\("authenticated"\)/.test(shop)
+    */
     check(
       "6 — ⚠⚠⚠ Shop opens for everyone signed in, because slot 4 is universal",
-      /guardPage\("authenticated"\)/.test(shop),
+      /memberOrPublicTwin\("\/shop"\)/.test(shop),
       "a capability-gated Shop would bounce sellers out of their own menu (E579)"
+    );
+    check(
+      "6 — ⚠⚠ and NO capability guard sits beside it — slot 4 is universal",
+      !/guardPage\(/.test(shop),
+      "any guardPage here re-opens E579: a door in everyone's menu onto a wall"
+    );
+    /* ⚠⚠ WS-D's RULE, ASSERTED WHERE THE DOOR IS: an anonymous visitor to this URL
+       reaches the public page it replaced, and the pairing lives in ONE map. */
+    check(
+      "6 — ⚠⚠⚠ an anonymous visitor to /shop reaches /marketplace, not /login",
+      PUBLIC_TWIN["/shop"] === "/marketplace"
     );
   }
 

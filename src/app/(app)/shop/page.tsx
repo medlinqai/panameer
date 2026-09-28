@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ComingSoon } from "@/components/ComingSoon";
-import { guardPage } from "@/lib/guard";
+import { memberOrPublicTwin } from "@/lib/public-twin";
 import { canProvideServices } from "@/lib/access";
 
 /**
@@ -34,7 +34,19 @@ import { canProvideServices } from "@/lib/access";
 export const metadata = { title: "Search Service Products · Panameer" };
 
 export default async function Page() {
-  const viewer = await guardPage("authenticated");
+  /*
+    ── ⚠⚠ AN ANONYMOUS VISITOR GOES TO `/marketplace`, NOT TO `/login` ─────────
+
+    ⚠⚠⚠ **`P2-ALL-E698` WS-D. THIS URL WAS THE PUBLIC SHOP UNTIL WS-A**, so it is in
+    people's history, their bookmarks and their notes. A login wall answers a
+    question a stranger did not ask; the public page answers the one they did.
+    ⚠ The pairing lives in ONE map (`lib/public-twin.ts`), not repeated per page
+    (`E585`), and it is not the shape Scott rejected: nothing renders two ways at one
+    address — the visitor is MOVED to a URL they can then name.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const viewer = await guardPage("authenticated");
+  */
+  const viewer = await memberOrPublicTwin("/shop");
 
   return (
     <div className="mx-auto w-full max-w-5xl">
