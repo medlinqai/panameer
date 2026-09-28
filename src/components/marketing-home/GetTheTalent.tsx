@@ -40,7 +40,7 @@ const NEEDS = [
     when: "when the fix needs judgement — a rate structure to renegotiate, a process to redesign",
   },
   {
-    what: "a package",
+    what: "a service product",
     when: "when it is a known piece of work with a known shape and a fixed price",
   },
   {

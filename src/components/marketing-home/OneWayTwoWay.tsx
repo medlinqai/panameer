@@ -95,7 +95,7 @@ const LAYERS: { layer: string; sellable: string; built: string }[] = [
     layer: "Your service products",
     /* ⚠ `/settings/packages` PUBLISHES A REAL ONE. `Package` is the productized
        offering with a title, a scope and a price. */
-    sellable: "Publish a fixed-scope package at a fixed price",
+    sellable: "Publish a fixed-scope service product at a fixed price",
     built: "A real listing with its own scope and price.",
   },
   {

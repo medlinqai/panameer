@@ -1,4 +1,4 @@
-import { PackagesManager } from "@/components/packages/PackagesManager";
+import { ServiceProductsManager } from "@/components/service-products/ServiceProductsManager";
 import Link from "next/link";
 import { guardPage } from "@/lib/guard";
 import { sellGaps } from "@/lib/gate-reads";
@@ -12,9 +12,9 @@ import { canProvideServices } from "@/lib/access";
  * catalog once they're live, and can keep adding to it forever.
  *
  * The provider-only gate is the settings layout's `guardPage`; every write
- * re-checks ownership server-side in `src/lib/packages.ts`.
+ * re-checks ownership server-side in `src/lib/service-products.ts`.
  */
-export default async function SettingsPackagesPage() {
+export default async function SettingsServiceProductsPage() {
   /* ⚠ `P1-ALL-E034` — the `SELL` gate, computed here and MIRRORED in the manager.
      The boundary is `setPackageStatus`; this is so a seller learns what
      publishing needs while they are still building, not at the button. */
@@ -82,7 +82,7 @@ export default async function SettingsPackagesPage() {
       </section>
 
       <section className="rounded-brand border border-line p-6">
-        <PackagesManager sellGaps={gaps} />
+        <ServiceProductsManager sellGaps={gaps} />
       </section>
     </div>
   );

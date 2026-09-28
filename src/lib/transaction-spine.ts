@@ -154,18 +154,18 @@ export function assertTransactionLineShape(line: {
 export function assertSupplierPartSubject(part: {
   kind: "PROVIDER" | "PACKAGE";
   provider_profile_id?: string | null;
-  package_id?: string | null;
+  service_product_id?: string | null;
 }): void {
   const hasProvider = !!part.provider_profile_id;
-  const hasPackage = !!part.package_id;
-  if (hasProvider && hasPackage)
+  const hasServiceProduct = !!part.service_product_id;
+  if (hasProvider && hasServiceProduct)
     throw new SpineError("A supplier part names one subject, not two", "PART_TWO_SUBJECTS");
-  if (!hasProvider && !hasPackage)
+  if (!hasProvider && !hasServiceProduct)
     throw new SpineError("A supplier part must name a subject", "PART_NO_SUBJECT");
   if (part.kind === "PROVIDER" && !hasProvider)
     throw new SpineError("kind=PROVIDER but no provider profile", "PART_KIND_MISMATCH");
-  if (part.kind === "PACKAGE" && !hasPackage)
-    throw new SpineError("kind=PACKAGE but no package", "PART_KIND_MISMATCH");
+  if (part.kind === "PACKAGE" && !hasServiceProduct)
+    throw new SpineError("kind=SERVICE_PRODUCT but no service product", "PART_KIND_MISMATCH");
 }
 
 /**

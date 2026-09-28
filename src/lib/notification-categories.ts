@@ -129,7 +129,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     audience: "seller",
     group: "messages",
     label: "A work request matches your profile",
-    blurb: "A buyer posted work your skills and packages fit.",
+    blurb: "A buyer posted work your skills and service products fit.",
     defaults: { inApp: true, email: true, sms: false },
   },
   {

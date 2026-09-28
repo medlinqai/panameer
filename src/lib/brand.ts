@@ -604,7 +604,7 @@ export const TWO_PAINS = {
     },
     {
       title: "Break the hourly ceiling.",
-      body: "Stop trading hours for dollars. Sell courses, packages, and consults alongside your work — and earn off the clock.",
+      body: "Stop trading hours for dollars. Sell courses, service products, and consults alongside your work — and earn off the clock.",
     },
   ],
 } as const;
@@ -631,7 +631,7 @@ export const OMNI_CHANNEL = {
     },
     {
       icon: "◫",
-      title: "Packages",
+      title: "Service Products",
       body: "Pre-scoped services, off the shelf.",
     },
     {
@@ -802,7 +802,7 @@ export const PAGE_BEATS = {
       },
       {
         beat: "Create",
-        body: "Every way there is: consultations, courses, packages, engagements, retainers. Productize once, sell many.",
+        body: "Every way there is: consultations, courses, service products, engagements, retainers. Productize once, sell many.",
       },
       {
         beat: "Settle",
@@ -889,7 +889,7 @@ export const ROADMAP_COPY = {
     },
     {
       phase: "Weeks 3–8",
-      title: "Quick-win packages",
+      title: "Quick-win service products",
       body: "The gaps that close in days — fixed price, a named expert on each.",
     },
     {
@@ -1009,6 +1009,6 @@ export const APP_SHOTS_COPY = {
   work: {
     eyebrow: "Inside the product",
     headline: "See what you'd be working in.",
-    lead: "Your profile, incoming work, packages and payouts — the provider side, end to end.",
+    lead: "Your profile, incoming work, service products and payouts — the provider side, end to end.",
   },
 } as const;

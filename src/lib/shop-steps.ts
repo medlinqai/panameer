@@ -72,7 +72,7 @@ export const SHOP_STEPS: ShopStepLabel[] = [
 
       ⚠ UNBACKED AS A SURFACE, BACKED AS A MECHANISM, and the sentence is written to
       be the second and not the first. There is NO public listing of `Package` rows
-      anywhere in the app — `listPublishedPackages` (`lib/packages.ts:407`) has ONE
+      anywhere in the app — `listPublishedPackages` (`lib/service-products.ts:407`) has ONE
       caller, `provider-profile-view.ts`, and the page it feeds is `(app)/providers/
       [id]`, which 307s an anonymous visitor to `/login`. So nothing here may say
       "browse the shelf".

@@ -9,7 +9,7 @@ import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
-import { listPublishedPackages } from "@/lib/packages";
+import { listPublishedServiceProducts } from "@/lib/service-products";
 import { toView as toArtifactView } from "@/lib/artifacts";
 import {
   viewerIsPlus,
@@ -185,7 +185,7 @@ export async function getProviderProfileView(
   // brief_V — the sellable catalog. PUBLISHED only, for the owner too: what a
   // provider sees here is exactly what a buyer sees, so a draft can never look
   // live. Drafts are managed at /settings/packages.
-  const packages = await listPublishedPackages(profile.id);
+  const packages = await listPublishedServiceProducts(profile.id);
 
   /**
    * WS5 — the Plus gate is applied HERE, at the read, so a non-Plus viewer's

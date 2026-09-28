@@ -40,7 +40,7 @@ export async function makeAdminsEmployees(
               id: true,
               /* headline COLUMN GONE (E595 WS-B) - title is on the person. */
               _count: {
-                select: { employers: true, packages: true, certifications: true },
+                select: { employers: true, serviceProducts: true, certifications: true },
               },
             },
           },
@@ -131,11 +131,11 @@ export async function makeAdminsEmployees(
     if (pp) {
       const c = pp._count;
       const hasContent =
-        c.employers > 0 || c.packages > 0 || c.certifications > 0;
+        c.employers > 0 || c.serviceProducts > 0 || c.certifications > 0;
       if (hasContent && !force) {
         log(
           `  ! ${a.email} keeps a seeded provider profile with content ` +
-            `(${c.employers} employers, ${c.packages} packages, ${c.certifications} certs).\n` +
+            `(${c.employers} employers, ${c.serviceProducts} service products, ${c.certifications} certs).\n` +
             `    It is inert — the admin profile view is the employee type and the row\n` +
             `    is not marketplace-visible. Pass --force to delete it.`
         );

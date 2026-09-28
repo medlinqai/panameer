@@ -57,8 +57,8 @@
  */
 
 /** Mirrors `enum PackageKind` in schema.prisma. ⚠ Not `EXPERT`. Not `DEPLOYMENT`. */
-export const PACKAGE_KINDS = ["DEPLOYABLE", "HOURS", "DELIVERABLE"] as const;
-export type PackageKind = (typeof PACKAGE_KINDS)[number];
+export const SERVICE_PRODUCT_KINDS = ["DEPLOYABLE", "HOURS", "DELIVERABLE"] as const;
+export type ServiceProductKind = (typeof SERVICE_PRODUCT_KINDS)[number];
 
 /** Mirrors `enum PackagePricingType`. */
 export const PRICING_TYPES = ["FIXED", "HOURLY", "TM", "RECURRING"] as const;
@@ -74,7 +74,7 @@ export type BillingPeriod = (typeof BILLING_PERIODS)[number];
  * ⚠ `DEPLOYABLE` HAS EXACTLY ONE. An agent that runs until cancelled cannot be a
  * lump sum or a timesheet; if it could, `RECURRING` would not have needed adding.
  */
-export const PRICING_FOR_KIND: Record<PackageKind, readonly PricingType[]> = {
+export const PRICING_FOR_KIND: Record<ServiceProductKind, readonly PricingType[]> = {
   DEPLOYABLE: ["RECURRING"],
   HOURS: ["HOURLY", "RECURRING"],
   DELIVERABLE: ["FIXED"],
@@ -86,7 +86,7 @@ export const PRICING_FOR_KIND: Record<PackageKind, readonly PricingType[]> = {
  * select every column of `Package`.
  */
 export type SolutionRow = {
-  kind: PackageKind;
+  kind: ServiceProductKind;
   pricing_type: PricingType;
   billing_period: BillingPeriod | null;
   duration_weeks: number | null;

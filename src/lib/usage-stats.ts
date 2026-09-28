@@ -47,7 +47,7 @@ export async function getUsageStats(
     prisma.proposalRequest.count({
       where: { provider_person_id: personId, issued_at: { not: null } },
     }),
-    prisma.package.count({
+    prisma.serviceProduct.count({
       where: { provider_profile_id: profileId, status: "PUBLISHED" },
     }),
     prisma.workOrder.count({ where: { provider_person_id: personId } }),

@@ -54,17 +54,17 @@ const READS = join("src", "lib", "gate-reads.ts");
 const COMPLETENESS = join("src", "lib", "completeness.ts");
 const ENROLL = join("src", "app", "api", "learn", "enroll", "route.ts");
 const TEST = join("src", "app", "api", "learn", "test", "[pathId]", "route.ts");
-const PACKAGES = join("src", "lib", "packages.ts");
+const SERVICE_PRODUCTS = join("src", "lib", "service-products.ts");
 const NOTICE = join("src", "components", "GateNotice.tsx");
 
-for (const f of [BAR, READS, COMPLETENESS, ENROLL, TEST, PACKAGES, NOTICE]) {
+for (const f of [BAR, READS, COMPLETENESS, ENROLL, TEST, SERVICE_PRODUCTS, NOTICE]) {
   check(`the file this guard is about exists: ${f}`, existsSync(f));
 }
 const bar = read(BAR);
 const reads = read(READS);
 const enroll = read(ENROLL);
 const test = read(TEST);
-const packages = read(PACKAGES);
+const serviceProducts = read(SERVICE_PRODUCTS);
 
 // ---------------------------------------------------------------------------
 // GUARD 1 — one file, and SEARCHABLE is the existing rule
@@ -322,8 +322,8 @@ for (const handler of ["export async function GET", "export async function POST"
   const body = i < 0 ? "" : test.slice(i, next < 0 ? test.length : next);
   check(`3 — the test route's ${handler.includes("GET") ? "GET" : "POST"} checks LEARN`, /learnGaps\s*\(/.test(body));
 }
-check("3 — setPackageStatus checks SELL server-side", /sellGaps\s*\(/.test(packages));
-check("3 — the publish refusal has its own code", /GATE_UNMET/.test(packages));
+check("3 — setServiceProductStatus checks SELL server-side", /sellGaps\s*\(/.test(serviceProducts));
+check("3 — the publish refusal has its own code", /GATE_UNMET/.test(serviceProducts));
 
 /*
   ⚠⚠ NO COMPLETION GATE ON TESTS. Scott: *"I want to allow every panameerian to
@@ -345,8 +345,8 @@ check(
   DRAFT ⇄ DRAFT and PUBLISHED → DRAFT would both be refused — a seller could
   neither build a product nor withdraw one.
 */
-const spStart = packages.indexOf("export async function setPackageStatus");
-const spBody = packages.slice(spStart);
+const spStart = serviceProducts.indexOf("export async function setServiceProductStatus");
+const spBody = serviceProducts.slice(spStart);
 const branchAt = spBody.indexOf('status === "PUBLISHED"');
 const gateAt = spBody.indexOf("sellGaps(");
 check(

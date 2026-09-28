@@ -84,7 +84,7 @@ export async function talentHeroStats(): Promise<TalentStat[]> {
       "published" is the strongest true statement available. ⚠ DRAFT ROWS ARE
       EXCLUDED: there are 2 today and they are nobody's product yet.
     */
-    prisma.package.count({ where: { status: "PUBLISHED" } }),
+    prisma.serviceProduct.count({ where: { status: "PUBLISHED" } }),
   ]);
 
   /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the label moved with R4:

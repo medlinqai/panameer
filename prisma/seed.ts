@@ -550,7 +550,7 @@ async function main() {
   // One PUBLISHED demo Package (brief_V) so the profile's catalog section has
   // something to render. Deliberately a single package: it's an illustration of
   // the shape, not a store. Idempotent on (profile, title).
-  const packageSpec = {
+  const serviceProductSpec = {
     title: "Install DocuSign for Oracle Cloud",
     summary:
       "Integrate Oracle Cloud with DocuSign end to end: connected app, resource organization, and your contract admins onboarded and trained.",
@@ -568,26 +568,26 @@ async function main() {
       { label: "On completion", percent: 50, sequence: 1 },
     ],
   };
-  const existingPackage = await prisma.package.findFirst({
-    where: { provider_profile_id: providerProfile.id, title: packageSpec.title },
+  const existingServiceProduct = await prisma.serviceProduct.findFirst({
+    where: { provider_profile_id: providerProfile.id, title: serviceProductSpec.title },
     select: { id: true },
   });
-  if (!existingPackage) {
-    await prisma.package.create({
+  if (!existingServiceProduct) {
+    await prisma.serviceProduct.create({
       data: {
         provider_profile_id: providerProfile.id,
-        title: packageSpec.title,
-        summary: packageSpec.summary,
-        duration_weeks: packageSpec.duration_weeks,
-        price_cents: packageSpec.price_cents,
+        title: serviceProductSpec.title,
+        summary: serviceProductSpec.summary,
+        duration_weeks: serviceProductSpec.duration_weeks,
+        price_cents: serviceProductSpec.price_cents,
         status: "PUBLISHED",
         deliverables: {
-          create: packageSpec.deliverables.map((text, sequence) => ({
+          create: serviceProductSpec.deliverables.map((text, sequence) => ({
             text,
             sequence,
           })),
         },
-        milestones: { create: packageSpec.milestones },
+        milestones: { create: serviceProductSpec.milestones },
       },
     });
   }

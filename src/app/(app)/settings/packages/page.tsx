@@ -20,6 +20,6 @@ import { permanentRedirect } from "next/navigation";
  * ⚠ 308, not 307 — the address is in browser history, in bookmarks and in the
  * Account menu people have been using for weeks.
  */
-export default function RetiredSettingsPackagesRoute() {
+export default function RetiredSettingsServiceProductsRoute() {
   permanentRedirect("/my-services");
 }

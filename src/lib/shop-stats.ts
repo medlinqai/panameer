@@ -34,7 +34,7 @@ export async function shopHeroStats(): Promise<TalentStat[]> {
       `packages.status`. ⚠ DO NOT DROP THE FILTER: draft rows are nobody's product
       yet, and the brief is explicit that this predicate is reused, not re-decided.
     */
-    prisma.package.count({ where: { status: "PUBLISHED" } }),
+    prisma.serviceProduct.count({ where: { status: "PUBLISHED" } }),
     /* ⚠ A REAL COUNT NOW (`P1-J4-E388`). It was `WORK_ORDERS_STUB` until
        `WorkOrder` landed, and the `E041` tripwire fired the moment it did. */
     prisma.workOrder.count(),

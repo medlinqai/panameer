@@ -139,7 +139,7 @@ export async function getAttentionCards(input: {
       icon: "Tag",
     },
     null,
-    "an offer model (Package exists; nothing records an offer against one)"
+    "an offer model (ServiceProduct exists; nothing records an offer against one)"
   );
 
   /* 5 — Invitations to propose. NO MODEL — see the note in `countInvites`. */

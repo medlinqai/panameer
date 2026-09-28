@@ -599,7 +599,7 @@ model RoleType {
   providerProfiles ProviderProfile[]
   /// WS2 — providers who work in this role, including as a secondary one.
   profileRoles     ProviderProfileRole[]
-  packages         Package[]
+  serviceProducts  ServiceProduct[]
 
   @@map("role_types")
 }
@@ -720,7 +720,7 @@ model Skill {
   application       Application?             @relation(fields: [application_id], references: [id], onDelete: SetNull)
   providerSkills    ProviderSkill[]
   workRequestSkills WorkRequestSkill[]
-  packageSkills     PackageSkill[]
+  serviceProductSkills ServiceProductSkill[]
   bridges           CapabilityModuleBridge[]
   jobSkills         JobSkill[]
   /// ⚠ The Learn courses that DECLARE they teach this skill (`P2-A4-E668`,
@@ -812,7 +812,7 @@ model CapabilityDomain {
   updated_at DateTime @updatedAt
 
   bridges  CapabilityModuleBridge[]
-  packages PackageCapabilityDomain[]
+  serviceProducts ServiceProductCapabilityDomain[]
 
   @@unique([process, name])
   /// One key per process — the join the value model depends on.
@@ -1168,7 +1168,7 @@ model ProviderProfile {
   specializations   ProviderProfileSpecialization[]
   employers         Employer[]
   projects          Project[]
-  packages          Package[]
+  serviceProducts   ServiceProduct[]
   education         Education[]
   languages         Language[]
   certifications    Certification[]
@@ -1953,13 +1953,66 @@ model ProjectOutcome {
 /// A productized, a-la-carte offering the provider SELLS (brief_V / E045).
 ///
 /// Standalone on the provider — their sellable catalog — deliberately NOT tied
-/// to a past Project. A Project is proof of work already delivered; a Package
-/// is something a buyer can buy today. Example: "Install DocuSign for Oracle
-/// Cloud" — 5 weeks, $40,000, 50% upfront / 50% on completion.
+/// to a past Project. A Project is proof of work already delivered; a
+/// ServiceProduct is something a buyer can buy today. Example: "Install
+/// DocuSign for Oracle Cloud" — 5 weeks, $40,000, 50% upfront / 50% on
+/// completion.
 ///
-/// Optional throughout: packages never gate publishing and carry no
+/// Optional throughout: service products never gate publishing and carry no
 /// completeness weight (brief_R/U invariant untouched).
-model Package {
+///
+/// ── ⚠⚠⚠ `Package` BECAME `ServiceProduct` (`P2-A6-E697`, 2026-09-28) ────────
+///
+/// ⚠⚠ **SCOTT, 2026-09-27, AND THE REASON IS NOT COSMETIC:** *"I keep seeing
+/// packages...that is not the correct word."* and the argument that makes it
+/// structural: ***"If we ultimately let users build their own reports, they will
+/// have NO clue what a package is...or, worse yet, mistake it for a technical
+/// grouping of code."***
+///
+/// ⚠⚠⚠ **THE MOMENT A REPORT BUILDER EXISTS, THE SCHEMA IS USER-FACING. A DATA
+/// DICTIONARY IS DOCUMENTATION WHETHER ANYONE MEANT IT TO BE** — `Package` reads
+/// as a code grouping to a developer and as nothing at all to a procurement
+/// person. ⚠ **So do not name the next table after an implementation detail.**
+///
+/// ⚠ SUPERSEDED, quoted not deleted (`E164`) — every name this replaced:
+///     Package                  -> ServiceProduct                  @@map packages                   -> service_products
+///     PackageDeliverable       -> ServiceProductDeliverable        @@map package_deliverables       -> service_product_deliverables
+///     PackageMilestone         -> ServiceProductMilestone          @@map package_milestones         -> service_product_milestones
+///     PackageSkill             -> ServiceProductSkill              @@map package_skills             -> service_product_skills
+///     PackageCapabilityDomain  -> ServiceProductCapabilityDomain   @@map package_capability_domains -> service_product_capability_domains
+///     PackageValueFactor       -> ServiceProductValueFactor        @@map package_value_factors      -> service_product_value_factors
+///     PackageKind              -> ServiceProductKind
+///     PackagePricingType       -> ServiceProductPricingType
+///     PackageStatus            -> ServiceProductStatus
+///     package_id               -> service_product_id   (5 child tables AND `supplier_parts`)
+///     SupplierPartKind.PACKAGE -> SupplierPartKind.SERVICE_PRODUCT
+///
+/// ⚠⚠⚠ **THIS ONE WAS A SUPERVISED MIGRATION OVER LIVE ROWS, NOT A FREE RENAME,
+/// AND THAT IS THE DIFFERENCE FROM `E695`'s bid->proposal WORK.** 23 rows existed
+/// across four of the six tables — including Daniel Damasceno's `PUBLISHED`
+/// *"Install DocuSign for Oracle Cloud"*. ⚠⚠ **SO IT WAS DONE AS
+/// `ALTER TABLE … RENAME TO`, NEVER DROP+ADD:** a rename carries the rows, and
+/// `db push` offering to drop and recreate is data loss wearing a migration's
+/// clothes. ⚠ Backed up first to `prisma/repairs/E697-package-rename-backup-2026-09-28.json`,
+/// committed BEFORE the first DDL statement, then reconciled row by row and
+/// field by field — 23 -> 23, zero differences.
+/// ⚠ **`db push` afterwards reported NO data-loss prompt:** its whole diff was
+/// `RENAME INDEX` / `RENAME CONSTRAINT` / `RENAME FOREIGN KEY`, 27 statements,
+/// zero destructive.
+///
+/// ⚠⚠ **NOT RENAMED, DELIBERATELY, AND EACH FOR ITS OWN REASON:**
+///   · **the ROUTES** (`/packages`, `/settings/packages`, `/admin/packages`) —
+///     ⚠⚠⚠ `/service-products` IS ALREADY A LIVE PUBLIC MARKETING PAGE
+///     (`P1-J0-E358`) and `E533` already ruled on this exact collision. Awaiting
+///     Scott's word on the names; the model rename does not depend on it.
+///   · **`WorkMethod.PACKAGES`** — an `E164`-superseded VALUE kept on purpose.
+///     Renaming a preserved record would make the history lie.
+///   · **`WorkType.PACKAGES`** — dead enum, referenced by no column.
+///   · **`/admin/work-packages`** — a DIFFERENT CONCEPT. It sits in the
+///     Transaction Data group between Work Orders and Contracts: a work package
+///     is a chunk of work, not a thing you sell. ⚠ The rename RESOLVES that
+///     collision rather than leaving one.
+model ServiceProduct {
   id                  String             @id @default(uuid()) @db.Uuid
   provider_profile_id String             @db.Uuid
   title               String
@@ -1981,7 +2034,7 @@ model Package {
    * The kind constrains this — see `lib/catalog/solution-types.ts`, which is the one
    * place the rule is written down.
    */
-  pricing_type        PackagePricingType @default(FIXED)
+  pricing_type        ServiceProductPricingType @default(FIXED)
   /// Integer cents, like every other money value in the app.
   price_cents         Int?
   currency            String             @default("USD")
@@ -2009,26 +2062,26 @@ model Package {
    * there is NO first-party flag, NO nullable owner and NO `HouseProduct` model, and
    * `provider_profile_id` STAYS NOT NULL.
    */
-  kind                PackageKind        @default(DELIVERABLE)
-  status              PackageStatus      @default(DRAFT)
+  kind                ServiceProductKind        @default(DELIVERABLE)
+  status              ServiceProductStatus      @default(DRAFT)
   sort_order          Int                @default(100)
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 
   providerProfile   ProviderProfile           @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   roleType          RoleType?                 @relation(fields: [role_type_id], references: [id], onDelete: SetNull)
-  deliverables      PackageDeliverable[]
-  milestones        PackageMilestone[]
-  skills            PackageSkill[]
+  deliverables      ServiceProductDeliverable[]
+  milestones        ServiceProductMilestone[]
+  skills            ServiceProductSkill[]
   /// Which capability domains this product operates on — MANY, see the join model.
-  capabilityDomains PackageCapabilityDomain[]
+  capabilityDomains ServiceProductCapabilityDomain[]
   /// How this product's value is estimated. MANY: a product can save contract value
   /// AND avoid a fixed risk, so these are rows, not columns.
-  valueFactors      PackageValueFactor[]
+  valueFactors      ServiceProductValueFactor[]
 
   @@index([provider_profile_id])
   @@index([role_type_id])
-  @@map("packages")
+  @@map("service_products")
 }
 
 /// ⚠ WHAT YOU ARE BUYING — NOT HOW IT BILLS. That is `PackagePricingType`, and the
@@ -2058,7 +2111,7 @@ model Package {
 /// expert · package · agent — and only two of them are rows in this table. Adding
 /// `EXPERT` here would permit a package with no human attached, which is the one thing
 /// the `provider_profile_id NOT NULL` constraint exists to prevent.
-enum PackageKind {
+enum ServiceProductKind {
   /// An agent an expert publishes. Runs under a standing SOW until cancelled: no end
   /// date, no milestones, no duration. Bills `RECURRING`.
   DEPLOYABLE
@@ -2081,7 +2134,7 @@ enum BillingPeriod {
 }
 
 /// ⚠ HOW IT BILLS — the other half of `PackageKind`.
-enum PackagePricingType {
+enum ServiceProductPricingType {
   /// A lump sum or milestone total. The only shape shipped before 2026-08-21.
   FIXED
   /// A rate against a timesheet.
@@ -2094,7 +2147,7 @@ enum PackagePricingType {
   RECURRING
 }
 
-enum PackageStatus {
+enum ServiceProductStatus {
   DRAFT
   PUBLISHED
 }
@@ -2108,17 +2161,17 @@ enum PackageStatus {
 /// ⚠ WHETHER THIS CAN CARRY AN AGENT'S OWN THREE FACTS — `Runs · Setup · Covers`,
 /// where a package draws `Scope · Duration · Delivered` — IS AN OPEN QUESTION AND IS
 /// NOT ANSWERED HERE. See the report on brief_solution_types.
-model PackageDeliverable {
+model ServiceProductDeliverable {
   id         String   @id @default(uuid()) @db.Uuid
-  package_id String   @db.Uuid
+  service_product_id String   @db.Uuid
   text       String
   sequence   Int      @default(0)
   created_at DateTime @default(now())
 
-  pkg Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
 
-  @@index([package_id])
-  @@map("package_deliverables")
+  @@index([service_product_id])
+  @@map("service_product_deliverables")
 }
 
 /// A payment term: "50% Upfront", "50% On completion".
@@ -2130,33 +2183,33 @@ model PackageDeliverable {
 /// Percent OF THE TOTAL rather than an amount, so editing the price can never
 /// leave the milestones summing to something other than the package price. The
 /// writer validates the percents sum to exactly 100.
-model PackageMilestone {
+model ServiceProductMilestone {
   id         String   @id @default(uuid()) @db.Uuid
-  package_id String   @db.Uuid
+  service_product_id String   @db.Uuid
   label      String
   percent    Int
   sequence   Int      @default(0)
   created_at DateTime @default(now())
 
-  pkg Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
 
-  @@index([package_id])
-  @@map("package_milestones")
+  @@index([service_product_id])
+  @@map("service_product_milestones")
 }
 
 /// Skill tags on a package — categorization for the catalog and future matching.
-model PackageSkill {
+model ServiceProductSkill {
   id         String   @id @default(uuid()) @db.Uuid
-  package_id String   @db.Uuid
+  service_product_id String   @db.Uuid
   skill_id   String   @db.Uuid
   created_at DateTime @default(now())
 
-  pkg   Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  service_product   ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
   skill Skill   @relation(fields: [skill_id], references: [id], onDelete: Cascade)
 
-  @@unique([package_id, skill_id])
+  @@unique([service_product_id, skill_id])
   @@index([skill_id])
-  @@map("package_skills")
+  @@map("service_product_skills")
 }
 
 /// A role this provider works in (brief_onboarding_slimdown WS2 / E172, E173).
@@ -4933,22 +4986,22 @@ model TaxRate {
 ///
 /// ⚠ `Package.role_type_id` IS UNAFFECTED. It answers a different question — what kind of
 /// PRACTITIONER — and nothing here replaces it.
-model PackageCapabilityDomain {
+model ServiceProductCapabilityDomain {
   id                   String   @id @default(uuid()) @db.Uuid
-  package_id           String   @db.Uuid
+  service_product_id           String   @db.Uuid
   capability_domain_id String   @db.Uuid
   created_at           DateTime @default(now())
 
-  package          Package          @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  service_product          ServiceProduct          @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
   capabilityDomain CapabilityDomain @relation(fields: [capability_domain_id], references: [id], onDelete: Cascade)
 
   /// One row per pair — selecting a domain twice is not a different fact.
-  @@unique([package_id, capability_domain_id])
+  @@unique([service_product_id, capability_domain_id])
   /// Indexed BOTH ways: "which domains does this product cover" and "which products
   /// cover this domain" are both first-class queries.
-  @@index([package_id])
+  @@index([service_product_id])
   @@index([capability_domain_id])
-  @@map("package_capability_domains")
+  @@map("service_product_capability_domains")
 }
 
 /// WHICH ASSESSMENT VARIABLE A PRODUCT'S ESTIMATE MULTIPLIES.
@@ -4990,9 +5043,9 @@ enum ValueFactorBasis {
 /// `DOLLAR_WEIGHTS` model in `lib/assessment/scoring.ts` is Scott's decision and was
 /// explicitly out of scope. Do not wire it to scoring or to the dashboard on the strength
 /// of this model existing.
-model PackageValueFactor {
+model ServiceProductValueFactor {
   id                 String           @id @default(uuid()) @db.Uuid
-  package_id         String           @db.Uuid
+  service_product_id         String           @db.Uuid
   basis              ValueFactorBasis
   /// ⚠ INTEGER, AND THE UNIT IS DECIDED BY `basis` — basis points for every proportional
   /// basis, CENTS when `basis = FLAT`. Same rule as every other money value in the app: a
@@ -5009,11 +5062,11 @@ model PackageValueFactor {
   created_at         DateTime         @default(now())
   updated_at         DateTime         @updatedAt
 
-  package Package @relation(fields: [package_id], references: [id], onDelete: Cascade)
+  service_product ServiceProduct @relation(fields: [service_product_id], references: [id], onDelete: Cascade)
 
-  @@index([package_id])
+  @@index([service_product_id])
   @@index([basis])
-  @@map("package_value_factors")
+  @@map("service_product_value_factors")
 }
 
 /// ── ⚠⚠ THE RELATIONSHIP MODEL (`P1-ALL-E372`) ─────────────────────────────────
@@ -5294,7 +5347,8 @@ enum LineBasis {
 
 enum SupplierPartKind {
   PROVIDER
-  PACKAGE
+  /// ⚠ Was `PACKAGE`. Renamed with the model (`P2-A6-E697`) at ZERO rows.
+  SERVICE_PRODUCT
 }
 
 /// ── ⚠⚠ ONE IDENTIFIER NAMESPACE OVER TWO SUBJECTS ──────────────────────────
@@ -5326,7 +5380,7 @@ model SupplierPart {
   /// DIRECTIONS — neither both nor neither. `@unique` on each so one provider and
   /// one package can never mint two part numbers.
   provider_profile_id String? @unique @db.Uuid
-  package_id          String? @unique @db.Uuid
+  service_product_id          String? @unique @db.Uuid
 
   /// ── the cXML line, resolved ONCE, here ────────────────────────────────────
   display_name        String

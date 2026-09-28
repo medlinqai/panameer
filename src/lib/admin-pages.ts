@@ -73,7 +73,7 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   "work-orders": {
     tiles: WORK_TILES,
     listingTitle: "Work Orders",
-    columns: ["Provider - Company", "Package", "Status", "Posted Date", "Message"],
+    columns: ["Provider - Company", "ServiceProduct", "Status", "Posted Date", "Message"],
     what: "work orders",
     why: WHY_TRANSACTION,
     volume: [
@@ -87,7 +87,7 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   "work-packages": {
     tiles: WORK_TILES,
     listingTitle: "Work Packages",
-    columns: ["Provider - Company", "Package", "Status", "Posted Date", "Message"],
+    columns: ["Provider - Company", "ServiceProduct", "Status", "Posted Date", "Message"],
     what: "work packages",
     why: WHY_TRANSACTION,
     volume: [

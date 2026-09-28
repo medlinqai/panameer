@@ -49,16 +49,16 @@ async function main() {
     });
     if (p2p.length < 2) throw new Error("expected several Procure-to-Pay capability domains");
 
-    const upsertPackage = async (title: string, summary: string) => {
-      const found = await prisma.package.findFirst({
+    const upsertServiceProduct = async (title: string, summary: string) => {
+      const found = await prisma.serviceProduct.findFirst({
         where: { provider_profile_id: provider.id, title },
         select: { id: true },
       });
       if (found) {
-        await prisma.package.update({ where: { id: found.id }, data: { summary } });
+        await prisma.serviceProduct.update({ where: { id: found.id }, data: { summary } });
         return found.id;
       }
-      const made = await prisma.package.create({
+      const made = await prisma.serviceProduct.create({
         data: { provider_profile_id: provider.id, title, summary, pricing_type: "FIXED" },
         select: { id: true },
       });
@@ -69,14 +69,14 @@ async function main() {
        Scott's case for many-to-many, verbatim: "Might have to be a 'select all CDs' as
        opposed to choose which CD this agent runs on." A health check is exactly that — it
        looks at every domain in the process, so it links to all of them. */
-    const healthCheck = await upsertPackage(
+    const healthCheck = await upsertServiceProduct(
       "Procure-to-Pay AI Health Check",
       "Reviews every Procure-to-Pay capability domain and reports where AI can be applied. Seed row proving the many-to-many shape."
     );
     for (const d of p2p) {
-      await prisma.packageCapabilityDomain.upsert({
-        where: { package_id_capability_domain_id: { package_id: healthCheck, capability_domain_id: d.id } },
-        create: { package_id: healthCheck, capability_domain_id: d.id },
+      await prisma.serviceProductCapabilityDomain.upsert({
+        where: { service_product_id_capability_domain_id: { service_product_id: healthCheck, capability_domain_id: d.id } },
+        create: { service_product_id: healthCheck, capability_domain_id: d.id },
         update: {},
       });
     }
@@ -86,21 +86,21 @@ async function main() {
        CONTRACTED spend and separately avoids a fixed risk, which is precisely why factors
        are rows rather than columns. */
     const contracts = p2p.find((d) => d.name === "Contract Management") ?? p2p[0];
-    const alertAgent = await upsertPackage(
+    const alertAgent = await upsertServiceProduct(
       "Contract Price Alert Agent",
       "Watches for off-contract spend and renewal drift. Seed row proving the multi-factor shape."
     );
-    await prisma.packageCapabilityDomain.upsert({
-      where: { package_id_capability_domain_id: { package_id: alertAgent, capability_domain_id: contracts.id } },
-      create: { package_id: alertAgent, capability_domain_id: contracts.id },
+    await prisma.serviceProductCapabilityDomain.upsert({
+      where: { service_product_id_capability_domain_id: { service_product_id: alertAgent, capability_domain_id: contracts.id } },
+      create: { service_product_id: alertAgent, capability_domain_id: contracts.id },
       update: {},
     });
     /* delete-then-write, scoped to this package only — a factor has no natural key */
-    await prisma.packageValueFactor.deleteMany({ where: { package_id: alertAgent } });
-    await prisma.packageValueFactor.createMany({
+    await prisma.serviceProductValueFactor.deleteMany({ where: { service_product_id: alertAgent } });
+    await prisma.serviceProductValueFactor.createMany({
       data: [
         {
-          package_id: alertAgent,
+          service_product_id: alertAgent,
           basis: "CONTRACT_SPEND",
           /* 120 bps = 1.2% of the spend that sits on negotiated contracts. bps because the
              basis is proportional — see `factorUnit()`. */
@@ -111,7 +111,7 @@ async function main() {
           note: "1.2% of contracted spend recovered on off-contract and renewal drift.",
         },
         {
-          package_id: alertAgent,
+          service_product_id: alertAgent,
           basis: "FLAT",
           /* ⚠ CENTS, not bps — FLAT is the one basis whose rate is an amount. $50,000. */
           rate: 5_000_000,
@@ -122,11 +122,11 @@ async function main() {
     });
 
     /* ── report ── */
-    const links = await prisma.packageCapabilityDomain.count();
-    const factors = await prisma.packageValueFactor.count();
-    const hcLinks = await prisma.packageCapabilityDomain.count({ where: { package_id: healthCheck } });
-    const agentFactors = await prisma.packageValueFactor.findMany({
-      where: { package_id: alertAgent },
+    const links = await prisma.serviceProductCapabilityDomain.count();
+    const factors = await prisma.serviceProductValueFactor.count();
+    const hcLinks = await prisma.serviceProductCapabilityDomain.count({ where: { service_product_id: healthCheck } });
+    const agentFactors = await prisma.serviceProductValueFactor.findMany({
+      where: { service_product_id: alertAgent },
       select: { basis: true, rate: true, applies_below_rung: true },
       orderBy: { basis: "asc" },
     });
@@ -138,7 +138,7 @@ async function main() {
         `      ${f.basis.padEnd(20)} rate ${String(f.rate).padStart(9)} ${f.basis === "FLAT" ? "cents" : "bps  "}   applies_below_rung ${f.applies_below_rung ?? "any"}`
       )
     );
-    console.log(`\n  totals: ${links} PackageCapabilityDomain rows, ${factors} PackageValueFactor rows`);
+    console.log(`\n  totals: ${links} ServiceProductCapabilityDomain rows, ${factors} ServiceProductValueFactor rows`);
   } finally {
     await prisma.$disconnect();
   }

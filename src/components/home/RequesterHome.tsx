@@ -271,8 +271,8 @@ export function RequesterHome({
         <form action="/packages" className="mt-4 flex max-w-xl flex-wrap gap-2">
           <input
             name="q"
-            placeholder="Search service provider packages…"
-            aria-label="Search service provider packages"
+            placeholder="Search service products…"
+            aria-label="Search service products"
             className="min-w-0 flex-1 rounded-full border border-line bg-white px-5 py-3 text-[15px] outline-none placeholder:text-ink-2/70 focus:border-magenta"
           />
           <Button type="submit" variant="ghost">

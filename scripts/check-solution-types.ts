@@ -27,10 +27,10 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import {
-  PACKAGE_KINDS,
+  SERVICE_PRODUCT_KINDS,
   PRICING_FOR_KIND,
   solutionViolations,
-  type PackageKind,
+  type ServiceProductKind,
   type SolutionRow,
 } from "@/lib/catalog/solution-types";
 
@@ -68,12 +68,12 @@ const enumBody = (name: string) => {
     .filter((l) => /^[A-Z_]+$/.test(l));
 };
 
-const kinds = enumBody("PackageKind");
-check("1 — enum PackageKind exists in schema.prisma", kinds !== null);
+const kinds = enumBody("ServiceProductKind");
+check("1 — enum ServiceProductKind exists in schema.prisma", kinds !== null);
 check(
-  "1 — PackageKind is exactly DEPLOYABLE, HOURS, DELIVERABLE",
+  "1 — ServiceProductKind is exactly DEPLOYABLE, HOURS, DELIVERABLE",
   JSON.stringify([...(kinds ?? [])].sort()) ===
-    JSON.stringify([...PACKAGE_KINDS].sort()),
+    JSON.stringify([...SERVICE_PRODUCT_KINDS].sort()),
   (kinds ?? []).join(", ")
 );
 /*
@@ -83,21 +83,21 @@ check(
 */
 for (const banned of ["EXPERT", "DEPLOYMENT"]) {
   check(
-    `1 — PackageKind does NOT contain ${banned}`,
+    `1 — ServiceProductKind does NOT contain ${banned}`,
     !(kinds ?? []).includes(banned),
     banned === "EXPERT"
-      ? "an expert is a Person with a rate, not a Package"
+      ? "an expert is a Person with a rate, not a ServiceProduct"
       : "one letter from DEPLOYABLE and the opposite meaning"
   );
 }
 check(
   "1 — the lib mirror matches the schema, so the rule and the column cannot drift",
-  JSON.stringify([...PACKAGE_KINDS].sort()) === JSON.stringify([...(kinds ?? [])].sort())
+  JSON.stringify([...SERVICE_PRODUCT_KINDS].sort()) === JSON.stringify([...(kinds ?? [])].sort())
 );
 
-const pricing = enumBody("PackagePricingType");
+const pricing = enumBody("ServiceProductPricingType");
 check(
-  "1 — PackagePricingType gained RECURRING and kept the other three",
+  "1 — ServiceProductPricingType gained RECURRING and kept the other three",
   JSON.stringify([...(pricing ?? [])].sort()) ===
     JSON.stringify(["FIXED", "HOURLY", "RECURRING", "TM"]),
   (pricing ?? []).join(", ")
@@ -110,7 +110,7 @@ check(
 );
 check(
   "1 — kind defaults to DELIVERABLE, so a pre-existing row keeps behaving as it did",
-  /kind\s+PackageKind\s+@default\(DELIVERABLE\)/.test(SCHEMA_RAW)
+  /kind\s+ServiceProductKind\s+@default\(DELIVERABLE\)/.test(SCHEMA_RAW)
 );
 check(
   "1 — billing_period is NULLABLE — a FIXED package has no period to store",
@@ -122,8 +122,8 @@ check(
   nullable owner, no house-product model — and the owner column stays NOT NULL.
 */
 check(
-  "1 — provider_profile_id on Package is still NOT NULL — an agent has an owner",
-  /model Package \{[\s\S]{0,400}provider_profile_id String\s+@db\.Uuid/.test(SCHEMA_RAW),
+  "1 — provider_profile_id on ServiceProduct is still NOT NULL — an agent has an owner",
+  /model ServiceProduct \{[\s\S]{0,400}provider_profile_id String\s+@db\.Uuid/.test(SCHEMA_RAW),
   "E007 was dissolved by making an agent an expert's product, not by loosening this"
 );
 check(
@@ -158,7 +158,7 @@ const mapOffenders = [...bodies.entries()]
   .filter(([, b]) => KIND_KEYED.test(b))
   .map(([f]) => f);
 check(
-  "5 — no file maps a PackageKind to a price, a rail or a label",
+  "5 — no file maps a ServiceProductKind to a price, a rail or a label",
   mapOffenders.length === 0,
   mapOffenders.join(", ")
 );
@@ -183,7 +183,7 @@ check(
   ⚠ AND THE RENDER PATH MUST STAY AN EXPLICIT PROJECTION — this is what makes adding
   a column to `Package` safe at all.
 
-  `lib/packages.ts` is the ONLY reader of `Package` rows in the repo
+  `lib/service-products.ts` is the ONLY reader of `Package` rows in the repo
   (`listOwnPackages`, behind `/settings/packages` and `/api/provider/packages`). It
   uses `include`, which returns EVERY scalar — so if `shape()` spread the row, `kind`
   and `billing_period` would have appeared in every payload the moment this brief
@@ -194,7 +194,7 @@ check(
   contains neither new key, and still reads `priceCents 4000000` and
   `durationWeeks 5`. Asserted here so a future `...p` cannot quietly undo it.
 */
-const PKG_LIB = join("src", "lib", "packages.ts");
+const PKG_LIB = join("src", "lib", "service-products.ts");
 const pkgLib = bodies.get(PKG_LIB) ?? "";
 check("2 — the package read path exists where this guard expects it", pkgLib.length > 0);
 check(
@@ -212,7 +212,7 @@ check(
 // 3 + 4 — the rule itself, on literals (fast, and independent of the database)
 // ---------------------------------------------------------------------------
 
-const row = (o: Partial<SolutionRow> & { kind: PackageKind }): SolutionRow => ({
+const row = (o: Partial<SolutionRow> & { kind: ServiceProductKind }): SolutionRow => ({
   pricing_type: o.kind === "DEPLOYABLE" ? "RECURRING" : o.kind === "HOURS" ? "HOURLY" : "FIXED",
   billing_period: o.kind === "DEPLOYABLE" ? "MONTHLY" : null,
   duration_weeks: null,
@@ -277,7 +277,7 @@ check(
 // ---------------------------------------------------------------------------
 
 async function live() {
-  const rows = await prisma.package.findMany({
+  const rows = await prisma.serviceProduct.findMany({
     select: {
       id: true,
       title: true,
@@ -311,7 +311,7 @@ async function live() {
     .map((r) => ({
       title: r.title,
       bad: solutionViolations({
-        kind: r.kind as PackageKind,
+        kind: r.kind as ServiceProductKind,
         pricing_type: r.pricing_type as SolutionRow["pricing_type"],
         billing_period: r.billing_period as SolutionRow["billing_period"],
         duration_weeks: r.duration_weeks,

@@ -22,10 +22,10 @@ import { GateNotice, type GateNoticeGap } from "@/components/GateNotice";
  * endpoint, which re-checks each id against the session's own profile.
  */
 
-export type PackageMilestone = { id?: string; label: string; percent: number };
-export type PackageDeliverable = { id?: string; text: string };
+export type ServiceProductMilestone = { id?: string; label: string; percent: number };
+export type ServiceProductDeliverable = { id?: string; text: string };
 
-export type ProviderPackage = {
+export type ProviderServiceProduct = {
   id: string;
   title: string;
   summary: string | null;
@@ -35,8 +35,8 @@ export type ProviderPackage = {
   currency: string;
   coverImageUrl: string | null;
   status: string;
-  deliverables: PackageDeliverable[];
-  milestones: PackageMilestone[];
+  deliverables: ServiceProductDeliverable[];
+  milestones: ServiceProductMilestone[];
   skills: { id: string; name: string }[];
   /** The saved classification — see the note on the form controls. */
   capabilityDomainIds: string[];
@@ -52,7 +52,7 @@ export type CapabilityDomainOption = {
 };
 
 /** The default payment terms Scott specified. */
-const DEFAULT_MILESTONES: PackageMilestone[] = [
+const DEFAULT_MILESTONES: ServiceProductMilestone[] = [
   { label: "Upfront", percent: 50 },
   { label: "On completion", percent: 50 },
 ];
@@ -75,13 +75,13 @@ type Form = ReturnType<typeof emptyForm>;
  * ⚠ `sellGaps` IS COMPUTED ON THE SERVER (`P1-ALL-E034`) and passed down. It
  * MIRRORS the publish gate in `setPackageStatus`; the lib is the boundary.
  */
-export function PackagesManager({
+export function ServiceProductsManager({
   sellGaps = [],
 }: {
   sellGaps?: GateNoticeGap[];
 } = {}) {
   const cannotPublish = sellGaps.length > 0;
-  const [packages, setPackages] = useState<ProviderPackage[]>([]);
+  const [packages, setServiceProducts] = useState<ProviderServiceProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,10 +95,10 @@ export function PackagesManager({
     fetch("/api/provider/packages")
       .then((r) => (r.ok ? r.json() : { packages: [], capabilityDomains: [] }))
       .then((d) => {
-        setPackages(d.packages ?? []);
+        setServiceProducts(d.packages ?? []);
         setDomains(d.capabilityDomains ?? []);
       })
-      .catch(() => setError("We couldn't load your packages."))
+      .catch(() => setError("We couldn't load your service products."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -116,7 +116,7 @@ export function PackagesManager({
         setError(data.error ?? "Could not save.");
         return false;
       }
-      setPackages(data.packages ?? []);
+      setServiceProducts(data.packages ?? []);
       return true;
     } finally {
       setBusy(false);
@@ -129,7 +129,7 @@ export function PackagesManager({
     setModal({});
   };
 
-  const openEdit = (p: ProviderPackage) => {
+  const openEdit = (p: ProviderServiceProduct) => {
     setForm({
       title: p.title,
       /*
@@ -189,7 +189,7 @@ export function PackagesManager({
     };
     const ok = await post(
       modal?.id
-        ? { action: "update", packageId: modal.id, package: pkg }
+        ? { action: "update", serviceProductId: modal.id, package: pkg }
         : { action: "create", package: pkg },
     );
     if (ok) setModal(null);
@@ -216,7 +216,7 @@ export function PackagesManager({
     }
   };
 
-  if (loading) return <p className="text-ink-2">Loading your packages…</p>;
+  if (loading) return <p className="text-ink-2">Loading your service products…</p>;
 
   return (
     <div>
@@ -330,7 +330,7 @@ export function PackagesManager({
                       onClick={() =>
                         void post({
                           action: "setStatus",
-                          packageId: p.id,
+                          serviceProductId: p.id,
                           status:
                             p.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED",
                         })
@@ -353,7 +353,7 @@ export function PackagesManager({
                       type="button"
                       onClick={() => {
                         if (confirm(`Delete "${p.title}"?`)) {
-                          void post({ action: "delete", packageId: p.id });
+                          void post({ action: "delete", serviceProductId: p.id });
                         }
                       }}
                       className="text-[13.5px] font-bold text-ink-2 hover:text-red-600"
@@ -379,7 +379,7 @@ export function PackagesManager({
       <Modal
         open={modal !== null}
         onClose={() => setModal(null)}
-        title={modal?.id ? "Edit Package" : "Create a Service Product"}
+        title={modal?.id ? "Edit ServiceProduct" : "Create a Service Product"}
         width="max-w-2xl"
       >
         <div className="space-y-4">
@@ -737,7 +737,7 @@ export function PackagesManager({
             disabled={busy || !form.title.trim() || milestoneTotal !== 100}
             className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
-            {busy ? "Saving…" : "Save Package"}
+            {busy ? "Saving…" : "Save ServiceProduct"}
           </button>
         </div>
       </Modal>

@@ -28,7 +28,7 @@ export const DEFAULT_MILESTONES = [
 
 export type MilestoneInput = { label: string; percent: number };
 
-export type PackageInput = {
+export type ServiceProductInput = {
   title: string;
   summary?: string | null;
   deliverables?: string[];
@@ -139,9 +139,9 @@ export async function listCapabilityDomains() {
 }
 
 /** Every package the owner has, draft and published. */
-export async function listOwnPackages(viewer: Viewer) {
+export async function listOwnServiceProducts(viewer: Viewer) {
   const profileId = await ownedProfileId(viewer);
-  const rows = await prisma.package.findMany({
+  const rows = await prisma.serviceProduct.findMany({
     where: { provider_profile_id: profileId },
     orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
     include: INCLUDE,
@@ -185,9 +185,9 @@ function normalizeMilestones(input?: MilestoneInput[]) {
   return milestones;
 }
 
-function packageData(input: PackageInput) {
+function serviceProductData(input: ServiceProductInput) {
   const title = clean(input.title, 200);
-  if (!title) throw new OnboardingError("A package needs a title", "INVALID");
+  if (!title) throw new OnboardingError("A service product needs a title", "INVALID");
 
   const price =
     input.priceCents == null || input.priceCents === ("" as unknown)
@@ -214,7 +214,7 @@ function packageData(input: PackageInput) {
   };
 }
 
-const deliverableRows = (input: PackageInput) =>
+const deliverableRows = (input: ServiceProductInput) =>
   (input.deliverables ?? [])
     .map((d) => clean(d, 500))
     .filter((d): d is string => Boolean(d))
@@ -283,23 +283,23 @@ function requireDomains(resolved: string[], hadBefore: number, isCreate: boolean
   }
 }
 
-export async function createPackage(viewer: Viewer, input: PackageInput) {
+export async function createServiceProduct(viewer: Viewer, input: ServiceProductInput) {
   const profileId = await ownedProfileId(viewer);
   const milestones = normalizeMilestones(input.milestones);
   const skillIds = await validSkillIds(input.skillIds);
   const domainIds = await validCapabilityDomainIds(input.capabilityDomainIds);
   requireDomains(domainIds, 0, true);
-  const count = await prisma.package.count({
+  const count = await prisma.serviceProduct.count({
     where: { provider_profile_id: profileId },
   });
 
-  const row = await prisma.package.create({
+  const row = await prisma.serviceProduct.create({
     data: {
       provider_profile_id: profileId,
       sort_order: count * 10,
       // New packages start as DRAFT so nothing half-written is ever public.
       status: "DRAFT",
-      ...packageData(input),
+      ...serviceProductData(input),
       deliverables: { create: deliverableRows(input) },
       milestones: { create: milestones },
       skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
@@ -312,24 +312,24 @@ export async function createPackage(viewer: Viewer, input: PackageInput) {
   return row.id;
 }
 
-export async function updatePackage(
+export async function updateServiceProduct(
   viewer: Viewer,
-  packageId: string,
-  input: PackageInput
+  serviceProductId: string,
+  input: ServiceProductInput
 ) {
   const profileId = await ownedProfileId(viewer);
-  const owned = await prisma.package.findFirst({
-    where: { id: packageId, provider_profile_id: profileId },
+  const owned = await prisma.serviceProduct.findFirst({
+    where: { id: serviceProductId, provider_profile_id: profileId },
     select: { id: true },
   });
-  if (!owned) throw new OnboardingError("Package not found", "INVALID");
+  if (!owned) throw new OnboardingError("ServiceProduct not found", "INVALID");
 
   const milestones = normalizeMilestones(input.milestones);
   const skillIds = await validSkillIds(input.skillIds);
   const domainIds = await validCapabilityDomainIds(input.capabilityDomainIds);
   /* how many it had BEFORE this edit — that is what decides whether zero is allowed */
-  const hadDomains = await prisma.packageCapabilityDomain.count({
-    where: { package_id: owned.id },
+  const hadDomains = await prisma.serviceProductCapabilityDomain.count({
+    where: { service_product_id: owned.id },
   });
   requireDomains(domainIds, hadDomains, false);
 
@@ -337,14 +337,14 @@ export async function updatePackage(
   // than diffing, inside one transaction so a package can never be left with
   // milestones from one edit and deliverables from another.
   await prisma.$transaction([
-    prisma.packageDeliverable.deleteMany({ where: { package_id: owned.id } }),
-    prisma.packageMilestone.deleteMany({ where: { package_id: owned.id } }),
-    prisma.packageSkill.deleteMany({ where: { package_id: owned.id } }),
-    prisma.packageCapabilityDomain.deleteMany({ where: { package_id: owned.id } }),
-    prisma.package.update({
+    prisma.serviceProductDeliverable.deleteMany({ where: { service_product_id: owned.id } }),
+    prisma.serviceProductMilestone.deleteMany({ where: { service_product_id: owned.id } }),
+    prisma.serviceProductSkill.deleteMany({ where: { service_product_id: owned.id } }),
+    prisma.serviceProductCapabilityDomain.deleteMany({ where: { service_product_id: owned.id } }),
+    prisma.serviceProduct.update({
       where: { id: owned.id },
       data: {
-        ...packageData(input),
+        ...serviceProductData(input),
         deliverables: { create: deliverableRows(input) },
         milestones: { create: milestones },
         skills: { create: skillIds.map((skill_id) => ({ skill_id })) },
@@ -356,12 +356,12 @@ export async function updatePackage(
   ]);
 }
 
-export async function deletePackage(viewer: Viewer, packageId: string) {
+export async function deleteServiceProduct(viewer: Viewer, serviceProductId: string) {
   const profileId = await ownedProfileId(viewer);
-  const res = await prisma.package.deleteMany({
-    where: { id: packageId, provider_profile_id: profileId },
+  const res = await prisma.serviceProduct.deleteMany({
+    where: { id: serviceProductId, provider_profile_id: profileId },
   });
-  if (res.count === 0) throw new OnboardingError("Package not found", "INVALID");
+  if (res.count === 0) throw new OnboardingError("ServiceProduct not found", "INVALID");
 }
 
 /**
@@ -391,17 +391,17 @@ export async function deletePackage(viewer: Viewer, packageId: string) {
  * already-PUBLISHED row is never re-checked. `check:transaction-gates` asserts
  * that placement.
  */
-export async function setPackageStatus(
+export async function setServiceProductStatus(
   viewer: Viewer,
-  packageId: string,
+  serviceProductId: string,
   status: "DRAFT" | "PUBLISHED"
 ) {
   const profileId = await ownedProfileId(viewer);
-  const pkg = await prisma.package.findFirst({
-    where: { id: packageId, provider_profile_id: profileId },
+  const pkg = await prisma.serviceProduct.findFirst({
+    where: { id: serviceProductId, provider_profile_id: profileId },
     include: { deliverables: true, milestones: true },
   });
-  if (!pkg) throw new OnboardingError("Package not found", "INVALID");
+  if (!pkg) throw new OnboardingError("ServiceProduct not found", "INVALID");
 
   if (status === "PUBLISHED") {
     /*
@@ -436,15 +436,15 @@ export async function setPackageStatus(
     }
   }
 
-  await prisma.package.update({ where: { id: pkg.id }, data: { status } });
+  await prisma.serviceProduct.update({ where: { id: pkg.id }, data: { status } });
 }
 
 /**
  * PUBLISHED packages for the buyer-facing catalog. Takes a profile id, not a
  * viewer — the profile page has already applied brief_K's visibility gate.
  */
-export async function listPublishedPackages(profileId: string) {
-  const rows = await prisma.package.findMany({
+export async function listPublishedServiceProducts(profileId: string) {
+  const rows = await prisma.serviceProduct.findMany({
     where: { provider_profile_id: profileId, status: "PUBLISHED" },
     orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
     include: INCLUDE,

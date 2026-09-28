@@ -35,7 +35,7 @@ export const PLANS: PlanDefinition[] = [
     tagline: "Everything you need to be found and to win work.",
     features: [
       "Public marketplace profile",
-      "Unlimited service packages",
+      "Unlimited service products",
       "Résumé import and AI profile build",
       "Free access to Panameer Learn",
       "Messages with buyers",

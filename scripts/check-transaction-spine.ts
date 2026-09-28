@@ -104,9 +104,9 @@ refuses("1 — ⚠ AMOUNT ALSO carrying quantity/price is refused", () =>
 accepts("2 — a PROVIDER part with a provider is accepted", () =>
   assertSupplierPartSubject({ kind: "PROVIDER", provider_profile_id: "p1" }));
 accepts("2 — a PACKAGE part with a package is accepted", () =>
-  assertSupplierPartSubject({ kind: "PACKAGE", package_id: "k1" }));
+  assertSupplierPartSubject({ kind: "PACKAGE", service_product_id: "k1" }));
 refuses("2 — a part naming BOTH subjects is refused", () =>
-  assertSupplierPartSubject({ kind: "PROVIDER", provider_profile_id: "p1", package_id: "k1" }),
+  assertSupplierPartSubject({ kind: "PROVIDER", provider_profile_id: "p1", service_product_id: "k1" }),
   "PART_TWO_SUBJECTS");
 refuses("2 — a part naming NEITHER subject is refused", () =>
   assertSupplierPartSubject({ kind: "PROVIDER" }), "PART_NO_SUBJECT");
@@ -115,7 +115,7 @@ refuses("2 — kind and subject disagreeing is refused", () =>
 check("2 — part_number is unique in the schema", /part_number\s+String\s+@unique/.test(SCHEMA_CODE));
 check(
   "2 — each subject id is unique, so one subject cannot mint two part numbers",
-  /provider_profile_id String\? @unique/.test(SCHEMA_CODE) && /package_id\s+String\? @unique/.test(SCHEMA_CODE)
+  /provider_profile_id String\? @unique/.test(SCHEMA_CODE) && /service_product_id\s+String\? @unique/.test(SCHEMA_CODE)
 );
 
 /* ═══ 3 · PRICING-TYPE MAPPING ═════════════════════════════════════════════ */
@@ -349,8 +349,8 @@ for (const forbidden of ["Milestone", "SettlementMilestone", "WorkOrderMilestone
     !new RegExp(`^model\\s+${forbidden}\\s*\\{`, "m").test(SCHEMA_CODE)
   );
 }
-check("9 — ⚠ `PackageMilestone` is untouched — it AUTHORS milestones, it does not settle them",
-  /^model PackageMilestone \{/m.test(SCHEMA_CODE));
+check("9 — ⚠ `ServiceProductMilestone` is untouched — it AUTHORS milestones, it does not settle them",
+  /^model ServiceProductMilestone \{/m.test(SCHEMA_CODE));
 /*
   ⚠ NARROWED DELIBERATELY. `BillingMethodKind` and `PayoutMethodKind` pre-exist
   and are PAYMENT INSTRUMENTS (card, ACH) — not settlement methods. Banning the
@@ -393,8 +393,37 @@ check("10 — ⚠ p_account_id STAYS on the WorkRequest header (the Requisitioni
   /model WorkRequest \{[\s\S]*?p_account_id[\s\S]*?\n\}/.test(SCHEMA_CODE));
 check("10 — punchout_line_ref is unique — it is the join key on the return leg",
   /punchout_line_ref String\? @unique/.test(SCHEMA_CODE));
+/*
+  ── ⚠⚠ RE-ANCHORED BY `P2-A6-E697`, AND THE RULE DID NOT CHANGE ─────────────
+
+  ⚠⚠⚠ **THIS WENT RED WHEN `P2-A15-E696` MADE THE HEADER NULLABLE, AND `E696` DID
+  NOT RUN THIS GATE, SO IT SHIPPED RED.** Recorded rather than quietly fixed: the
+  miss is the finding, not the regex.
+
+  ⚠ **THE RULE IS UNTOUCHED AND IS STILL THE POINT** — `fee_bps` carries NO
+  `@default`, because it is a SNAPSHOT and a default is a number nobody chose.
+  ⚠⚠ What moved is the TYPE: `E696` made the header `Int?` because a mixed order
+  has no single true rate, and inventing one would be `90b` — a false value in a
+  column that claims somebody decided. **`check:rollup`'s case, not
+  `check:cert-skills`'.**
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   /fee_bps Int\s*$/m.test(workOrderBlock) && !/fee_bps Int\s+@default/.test(workOrderBlock)
+*/
 check("10 — ⚠ WorkOrder.fee_bps has NO @default — it is a SNAPSHOT, copied not invented",
-  /fee_bps Int\s*$/m.test(workOrderBlock) && !/fee_bps Int\s+@default/.test(workOrderBlock));
+  /fee_bps Int\?\s*$/m.test(workOrderBlock) && !/fee_bps Int\??\s+@default/.test(workOrderBlock));
+/*
+  ⚠⚠⚠ THE ASSERTION `E696` OWED AND NEVER WROTE: the HEADER is nullable and the
+  LINE is not. A mixed cart stamps two rates on two lines, so only the line can be
+  NOT NULL — and if the header ever becomes NOT NULL again, something has invented
+  a rate for an order that does not have one.
+*/
+const workOrderLineBlock = /model WorkOrderLine \{[\s\S]*?\n\}/.exec(SCHEMA_CODE)?.[0] ?? "";
+check("10 — the WorkOrderLine model block was found by the scan", workOrderLineBlock.length > 0);
+check("10 — ⚠⚠ the HEADER fee_bps is NULLABLE (a mixed order has no single true rate)",
+  /fee_bps Int\?/.test(workOrderBlock));
+check("10 — ⚠⚠ the LINE fee_bps is NOT NULL — it is the authority, and every line has one rate",
+  workOrderLineBlock.length > 0 && /fee_bps Int(?!\?)/.test(workOrderLineBlock));
 
 if (failures.length > 0) {
   console.error(`check:transaction-spine — ${failures.length} FAILED, ${pass} passed\n`);

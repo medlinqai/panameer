@@ -53,7 +53,7 @@ export function ProfileSettingsForm({
     <div className="space-y-4">
       <Card
         title="Visibility"
-        description="Whether buyers can find you in the marketplace. Pausing hides your profile without deleting anything — your work history, packages and skills are exactly where you left them."
+        description="Whether buyers can find you in the marketplace. Pausing hides your profile without deleting anything — your work history, service products and skills are exactly where you left them."
       >
         <ToggleRow
           label="Visible to buyers"

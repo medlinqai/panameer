@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   title: "Sell Your Expertise Direct — Panameer",
   description:
     "Find consistent work and break the hourly ceiling. Sell consultations, " +
-    "courses, packages and engagements under your own name — contracts, " +
+    "courses, service products and engagements under your own name — contracts, " +
     "compliance and settlement carried by the platform.",
 };
 

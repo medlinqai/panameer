@@ -105,7 +105,7 @@ check(
   ⚠ SCOPED TO `learnAssessment` WRITES, AND THAT NARROWING IS CORRECT RATHER THAN
   CONVENIENT. `PackageStatus`, `LearnPublishStatus` on a LearningPath and the
   seeds all legitimately write `status: "PUBLISHED"` and have no reviewer to
-  stamp — the first version of this scan flagged `lib/packages.ts` and two seeds.
+  stamp — the first version of this scan flagged `lib/service-products.ts` and two seeds.
   The property is about ASSESSMENT publishes; the scan now says so.
 */
 const publishWrites = [...bodies.entries()].flatMap(([f, b]) =>

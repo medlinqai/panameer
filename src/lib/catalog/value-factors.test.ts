@@ -125,7 +125,7 @@ console.log("\n=== the rate's unit is decided in exactly one place ===");
   check(
     "schema stores rate as Int, not a float",
     /\n\s+rate\s+Int\b/.test(schema),
-    schema.slice(schema.indexOf("model PackageValueFactor"), schema.indexOf("model PackageValueFactor") + 900)
+    schema.slice(schema.indexOf("model ServiceProductValueFactor"), schema.indexOf("model ServiceProductValueFactor") + 900)
       .split("\n")
       .find((l) => l.includes("rate "))
   );
@@ -134,19 +134,19 @@ console.log("\n=== the rate's unit is decided in exactly one place ===");
 console.log("\n=== the join is many-to-many, and process is not duplicated ===");
 {
   const join = schema.slice(
-    schema.indexOf("model PackageCapabilityDomain"),
-    schema.indexOf("}", schema.indexOf("@@map(\"package_capability_domains\")"))
+    schema.indexOf("model ServiceProductCapabilityDomain"),
+    schema.indexOf("}", schema.indexOf("@@map(\"service_product_capability_domains\")"))
   );
-  check("unique on the pair", /@@unique\(\[package_id, capability_domain_id\]\)/.test(join));
-  check("indexed both ways", /@@index\(\[package_id\]\)/.test(join) && /@@index\(\[capability_domain_id\]\)/.test(join));
-  check("cascades on package delete", /package_id\], references: \[id\], onDelete: Cascade/.test(join));
+  check("unique on the pair", /@@unique\(\[service_product_id, capability_domain_id\]\)/.test(join));
+  check("indexed both ways", /@@index\(\[service_product_id\]\)/.test(join) && /@@index\(\[capability_domain_id\]\)/.test(join));
+  check("cascades on service product delete", /service_product_id\], references: \[id\], onDelete: Cascade/.test(join));
   check(
     "⚠ no `process` column on the join — CapabilityDomain.process is the one source",
     !/\bprocess\b/.test(join.replace(/\/\/.*/g, "")),
     join.split("\n").filter((l) => /\bprocess\b/.test(l) && !l.trim().startsWith("///"))
   );
   check(
-    "⚠ Package.role_type_id survives — it answers a different question",
+    "⚠ ServiceProduct.role_type_id survives — it answers a different question",
     /role_type_id\s+String\?/.test(schema)
   );
 }

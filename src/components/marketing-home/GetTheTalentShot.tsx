@@ -99,7 +99,7 @@ const CARDS: Card[] = [
     actionTone: "",
   },
   {
-    chip: "A package",
+    chip: "A service product",
     Icon: FileText,
     name: "Contract Renegotiation Sprint",
     sub: "StratERP",

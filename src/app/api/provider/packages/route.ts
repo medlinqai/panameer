@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import {
-  listOwnPackages,
-  createPackage,
-  updatePackage,
-  deletePackage,
-  setPackageStatus,
+  listOwnServiceProducts,
+  createServiceProduct,
+  updateServiceProduct,
+  deleteServiceProduct,
+  setServiceProductStatus,
   listCapabilityDomains,
-} from "@/lib/packages";
+} from "@/lib/service-products";
 import { OnboardingError } from "@/lib/onboarding";
 
 /**
@@ -28,12 +28,12 @@ export async function GET() {
   try {
     /* the taxonomy rides along — see `listCapabilityDomains` for why it is not its own route */
     const [packages, capabilityDomains] = await Promise.all([
-      listOwnPackages(gate),
+      listOwnServiceProducts(gate),
       listCapabilityDomains(),
     ]);
     return NextResponse.json({ packages, capabilityDomains });
   } catch (e) {
-    return handle(e, "Could not load packages");
+    return handle(e, "Could not load service products");
   }
 }
 
@@ -47,17 +47,17 @@ export async function POST(request: Request) {
   try {
     switch (body?.action) {
       case "create":
-        await createPackage(viewer, body.package ?? {});
+        await createServiceProduct(viewer, body.package ?? {});
         break;
       case "update":
-        await updatePackage(viewer, String(body.packageId), body.package ?? {});
+        await updateServiceProduct(viewer, String(body.serviceProductId), body.package ?? {});
         break;
       case "delete":
-        await deletePackage(viewer, String(body.packageId));
+        await deleteServiceProduct(viewer, String(body.serviceProductId));
         break;
       case "setStatus": {
         const status = body.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
-        await setPackageStatus(viewer, String(body.packageId), status);
+        await setServiceProductStatus(viewer, String(body.serviceProductId), status);
         break;
       }
       default:
@@ -65,11 +65,11 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({
       ok: true,
-      packages: await listOwnPackages(viewer),
+      packages: await listOwnServiceProducts(viewer),
       capabilityDomains: await listCapabilityDomains(),
     });
   } catch (e) {
-    return handle(e, "Could not save the package");
+    return handle(e, "Could not save the service product");
   }
 }
 
@@ -84,6 +84,6 @@ function handle(e: unknown, fallback: string) {
       { status }
     );
   }
-  console.error("[packages]", e);
+  console.error("[service-products]", e);
   return NextResponse.json({ error: fallback }, { status: 500 });
 }

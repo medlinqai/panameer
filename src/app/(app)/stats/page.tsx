@@ -143,7 +143,7 @@ export default async function MyStatsPage({
           skills: true,
           employers: true,
           projects: true,
-          packages: true,
+          serviceProducts: true,
         },
       },
     },
@@ -364,10 +364,10 @@ export default async function MyStatsPage({
     //     ]);
   */
   const [publishedProducts, draftProducts] = await Promise.all([
-    prisma.package.count({
+    prisma.serviceProduct.count({
       where: { provider_profile_id: profile.id, status: "PUBLISHED" },
     }),
-    prisma.package.count({
+    prisma.serviceProduct.count({
       where: { provider_profile_id: profile.id, status: "DRAFT" },
     }),
   ]);
@@ -522,14 +522,18 @@ export default async function MyStatsPage({
             },
     },
     {
-      /* ⚠⚠ `package` IS GONE FROM THE RENDERED WORD (`E563` WS-A item 6). The
-         field is still `_count.packages` — the MODEL is `Package` and renaming
-         it is not this brief's job; only the COPY changes. */
+      /* ⚠⚠ `package` IS GONE FROM THE RENDERED WORD (`E563` WS-A item 6) AND NOW
+         FROM THE FIELD TOO (`P2-A6-E697`) — the copy and the model finally agree.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   The field is still `_count.packages` — the MODEL is `Package` and
+         //   renaming it is not this brief's job; only the COPY changes.
+         ⚠⚠ That comment was accurate when written and named the job it was
+         deferring. `E697` is that job. */
       label: "At least one service product listed",
-      met: profile._count.packages > 0,
+      met: profile._count.serviceProducts > 0,
       note: "A service product is what a buyer actually buys.",
       action:
-        profile._count.packages > 0
+        profile._count.serviceProducts > 0
           ? null
           : { label: "Add a Service Product", href: "/my-services" },
     },
