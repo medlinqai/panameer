@@ -344,7 +344,15 @@ export async function addBillingMethod(
          so: *"we never store a full card number."*
          ⚠ SUPERSEDED, quoted not deleted (`E164`):
          //   exp_month: input.expMonth ?? null,
-         //   exp_year: input.expYear ?? null, */
+         //   exp_year: input.expYear ?? null,
+         ⚠⚠ THE TERMINATOR SITS ON ITS OWN LINE, AND THAT IS THE FIX, NOT A TIDY-UP
+         (`P2-ALL-E699` Lane 0.2). It used to be glued to the end of the quoted
+         `exp_year` line, so the QUOTE ITSELF appeared to contain `*` + `/` — which is
+         load-bearing rule 12's trap verbatim: copy that line anywhere and you carry a
+         stray terminator that closes its new enclosing comment early.
+         ⚠ `check:comment-quotes` exists for exactly this shape and had been RED on
+         this line since `4f8c7c0`. The quote was fixed; the gate was not touched.
+      */
       // First one in is the default; there is no meaningful alternative.
       is_default: count === 0,
     },

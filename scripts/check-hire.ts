@@ -313,7 +313,40 @@ const WIZARD_STEPS = [
  * they add the file deliberately and a reviewer sees exactly the `include` that
  * opens the bid screen.
  */
-const RESPONSE_MODELS = /\bproposal\b|\bProposal\b|\bTestResponse\b|\bInterviewResponse\b|\bShortlistLine\b|\bproposalLine\b/;
+/*
+  ── ⚠⚠⚠ RE-ANCHORED ON THE CALL SHAPE, NOT THE WORD (`P2-ALL-E699` Lane 0.3) ──
+
+  ⚠⚠ **RULED IN `98f`: THE RULE IS RIGHT AND THE UNIT IS WRONG. ANCHOR ON THE
+  FUNCTION, NOT THE FILE — AND DO NOT CUT A NEEDLE EXCEPTION.**
+
+  ⚠⚠⚠ **BUT THE FILE SCOPE WAS ONLY HALF THE DEFECT, AND THE OTHER HALF IS WORSE.**
+  This regex used to read `/\bproposal\b|\bProposal\b|.../`, which matched the
+  ENGLISH WORD. ⚠ While the model was called `ProviderBid`, "proposal" appeared
+  nowhere but in prose nobody scanned — so the pattern was specific by accident.
+  ⚠⚠ **`P2-A8-E695` RENAMED `ProviderBid` -> `Proposal`, AND THE SAME PATTERN BECAME A
+  PROSE MATCHER OVERNIGHT:** it started hitting `content/legal/terms.ts`,
+  `user-agreement.ts`, `email/templates/work-request-invite.ts`,
+  `notification-events.ts` and `assessment-data.ts` — none of which reads a
+  proposal. They contain the word, inside live string literals, which
+  `stripComments` cannot and should not remove.
+  ⚠⚠⚠ **THAT IS RULING `98a`'s FAMILY: A RENAME MADE A STRING-BASED CHECK MEAN
+  SOMETHING ELSE, AND NOTHING FAILED AT THE MOMENT IT CHANGED MEANING.**
+
+  ⚠ **SO THE SUBJECT IS NOW A CALL SHAPE AND A TYPE USE, NAMED EXPLICITLY (ruling
+  96 — a census names the shapes it searched):**
+    · a Prisma READ on one of the response models, via `prisma.` OR `tx.`
+      (`tx.` matters: a read inside `$transaction` is the shape `E693`'s census
+      missed, and it is how "0 readers" became a false sentence)
+    · a RENDER over one of those types — an annotation or an array type, which is
+      how a comparison screen shows up before any query does
+  ⚠⚠ **PROSE NO LONGER MATCHES, AND THAT IS THE POINT: the fence is about reading
+  another provider's price, not about saying the word.**
+*/
+const RESPONSE_READ =
+  /\b(?:prisma|tx)\.(?:proposal|proposalLine|testResponse|interviewResponse|shortlist|shortlistLine)\.(?:findMany|findFirst|findUnique|count|aggregate|groupBy)/;
+const RESPONSE_RENDER =
+  /:\s*(?:Proposal|ProposalLine|ShortlistLine|TestResponse|InterviewResponse)\b|\b(?:Proposal|ProposalLine|ShortlistLine|TestResponse|InterviewResponse)\[\]/;
+const RESPONSE_MODELS = new RegExp(`${RESPONSE_READ.source}|${RESPONSE_RENDER.source}`);
 const SOURCING_LIB = join("src", "lib", "sourcing.ts");
 const SOURCING_STAGE = join("src", "lib", "sourcing-stage.ts");
 /*
@@ -408,12 +441,50 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
       !/proposal\.(findMany|findFirst|findUnique)/.test(statsFile.code),
     "a count of your own is not the comparison screen; a findMany would be"
   );
+  /*
+    ── ⚠⚠⚠ ANCHORED ON THE FUNCTIONS, NOT THE FILE (`98f`, Lane 0.3) ───────────
+
+    ⚠⚠ **THIS WENT RED AT `22cf82d`, WHICH PUT `proposalsOn` — A LEGITIMATE,
+    OWNER-SCOPED *BUYER* READ — INTO `proposals.ts`**, while the assertion treated
+    the whole FILE as the provider's writer. ⚠ Scott, `98f`: *"THE RULE IS RIGHT AND
+    THE UNIT IS WRONG… DO NOT SILENCE IT AND DO NOT CUT A NEEDLE EXCEPTION FOR
+    `22cf82d`'s LINE. A file-scoped gate with one hand-cut hole is a gate that will
+    be wrong again and will look deliberate."*
+
+    ⚠⚠⚠ **SO `proposalsOn` IS EXCLUDED BY SCOPE, NOT BY NAME-MATCHING ITS LINE.** The
+    three PROVIDER-side functions are named and each body is asserted on its own. A
+    fourth writer added tomorrow must be added here — which is the point: the list is
+    of WRITERS, and a writer that is not on it is not asserted, so the gate says so.
+    ⚠ Ruling 92: each function must EXIST, asserted before anything is measured —
+    a renamed writer must not silently stop being checked (`98g`, `99c`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   writerFile != null && !/proposal\.findMany/.test(writerFile.code)
+  */
   const writerFile = SRC.find((f) => f.path === PROPOSAL_WRITER);
-  check(
-    "3 — ⚠⚠⚠ the proposal writer never reads ANOTHER provider's proposal",
-    writerFile != null && !/proposal\.findMany/.test(writerFile.code),
-    "it may read the viewer's own by unique key; a list is the bid screen"
-  );
+  check("3 — the proposal writer file is where this guard expects it", writerFile != null);
+  /** The body of one top-level `export function` / `export async function`. */
+  const fnBody = (code: string, name: string): string | null => {
+    const m = new RegExp(`export\\s+(?:async\\s+)?function\\s+${name}\\b`).exec(code);
+    if (!m) return null;
+    const rest = code.slice(m.index);
+    const next = /\n(?=export\s+(?:async\s+)?function\s)/.exec(rest.slice(1));
+    return next ? rest.slice(0, next.index + 1) : rest;
+  };
+  /*
+    ⚠ THE PROVIDER'S WRITERS. `proposalsOn` is deliberately ABSENT — it is the
+    BUYER's read of proposals on their OWN work request (`E682` WS-D), owner-scoped
+    through `loadOwned`, and comparing proposals is the buyer's whole job.
+  */
+  const PROPOSAL_WRITER_FNS = ["proposeEligibility", "submitProposal", "withdrawProposal"];
+  for (const fn of PROPOSAL_WRITER_FNS) {
+    const body = writerFile ? fnBody(writerFile.code, fn) : null;
+    check(`3 — the writer \`${fn}\` exists to be asserted on`, body != null);
+    check(
+      `3 — ⚠⚠⚠ \`${fn}\` never reads ANOTHER provider's proposal`,
+      body != null && !/proposal\.findMany/.test(body),
+      "it may read the viewer's own by unique key; a list is the bid screen"
+    );
+  }
   /*
     ⚠⚠⚠ THE TWO WS-B EXEMPTIONS, FENCED THE SAME WAY AND MORE TIGHTLY: each may
     look ONE proposal up BY KEY and must not enumerate or read a price.
