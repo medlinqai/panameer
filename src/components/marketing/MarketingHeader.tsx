@@ -248,7 +248,36 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
           requires — the two outer zones are different widths, so centring the
           nav in the ROW would not centre it between them.
         */}
-        <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 md:flex lg:gap-[34px]">
+        {/*
+          ── ⚠⚠⚠ `md:` BECAME `min-[1100px]:` (`P2-ALL-E699`, ruling `100a`) ────────
+
+          ⚠⚠ **RULING 100 GAVE THE APPLICATION THE WORDS `Learn` AND `Shop`, so the
+          public labels are `Training` and `Marketplace` — and Scott ruled the layout
+          cost is an ENGINEERING problem:** *"MOVE THE `md:` BREAKPOINT… DO NOT SOLVE A
+          LAYOUT PROBLEM BY TAKING THE APPLICATION'S VOCABULARY."*
+
+          ⚠ **RE-MEASURED IN THE BROWSER, NOT DERIVED (load-bearing rule 4):**
+            Training 63.28   Talent 48.98   Work 41.77
+            Marketplace 96.22   Optimize 70.95   Integrate 71.09
+            ────────────────
+            labels 392.29  +  5 gaps x 34 = 562.29 nav required   (was 486.12)
+
+          ⚠ So the worst public page needs 158.78 + 562.29 + 212.20 + 64 + 48 =
+          **1045.27**, and the old `md:` (768) was short by ~277px — which is why the
+          sweep read *"clipped 31px off the LEFT"* once the ☰ stopped taking the slack.
+          ⚠⚠ **1100 LEAVES 54.73px OF MARGIN. `lg` (1024) WOULD NOT — it is 21px short
+          of the requirement, and that is the kind of gap a sweep that tests 1000 and
+          1100 but not 1024 would never show.**
+
+          ⚠⚠⚠ **THE ☰ MOVED WITH IT, AND IT HAD TO.** This file already warns about
+          exactly that: *"That is the trap in moving one breakpoint without the other."*
+          The ☰ carries the nav links AND the auth buttons, so leaving it at
+          `lg:hidden` would have left **1024–1099 with no nav links anywhere** — the
+          same defect one row down.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   className="hidden flex-1 justify-center gap-7 ... md:flex lg:gap-[34px]"
+        */}
+        <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 min-[1100px]:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
             /*
@@ -449,7 +478,13 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle navigation"
           aria-expanded={open}
-          className="ml-auto cursor-pointer text-2xl lg:hidden"
+          /* ⚠⚠ `min-[1100px]:hidden`, MATCHING THE NAV — see the block above the
+             `<nav>`. It still also matches the auth cluster's need: the cluster shows
+             from `lg` (1024), and between 1024 and 1099 this ☰ is what carries the NAV
+             LINKS while the cluster carries the buttons, so both exist at every width.
+             ⚠ SUPERSEDED, quoted not deleted (`E164`):
+             //   className="ml-auto cursor-pointer text-2xl lg:hidden" */
+          className="ml-auto cursor-pointer text-2xl min-[1100px]:hidden"
         >
           ☰
         </button>
@@ -462,8 +497,12 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
         contents change at a breakpoint, and a person who opens it at 800px and
         finds the nav there is not surprised by it.
       */}
+      {/* ⚠ THE PANEL'S BREAKPOINT MOVED WITH THE ☰ (`P2-ALL-E699`) — a toggle whose
+          panel cannot render is a control that does nothing.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   className="border-t border-line bg-white px-6 py-4 lg:hidden" */}
       {open && (
-        <div className="border-t border-line bg-white px-6 py-4 lg:hidden">
+        <div className="border-t border-line bg-white px-6 py-4 min-[1100px]:hidden">
           <nav className="flex flex-col gap-1 text-[15px] font-semibold text-ink-2">
             {MARKETING_NAV.map((item, i) => {
               const on = isActive(item.href);

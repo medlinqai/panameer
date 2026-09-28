@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   /* ⚠ MIRRORS THE NAV LABEL (`E222`). ⚠⚠ THE LABEL DID **NOT** MOVE — it is still
      `Learn`; only the URL did. Renaming it to `Training` added ~72px to a nav row
      budgeted to 0.1px and clipped the marketing header at 768 (measured). */
-  title: "Learn — Panameer",
+  title: "Training — Panameer",
   description:
     "Free Oracle Cloud courses: procurement, finance, supply chain and HR, taught by the people who implement them.",
 };

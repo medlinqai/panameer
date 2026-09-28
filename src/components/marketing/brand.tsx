@@ -230,11 +230,30 @@ export const MARKETING_NAV: MarketingNavItem[] = [
     and need the `md:` breakpoint moved, and short labels mean the public nav and
     the app rail both say "Shop" while pointing at different pages.
   */
-  { label: "Learn", href: "/training" },
+  /*
+    ⚠⚠⚠ RULING 100 — THE APPLICATION OWNS THE WORD, NOT JUST THE URL. Scott,
+    2026-09-28: *"leave them short, but do not take the correct name and put it on
+    the public page. The application is more important."*
+    ⚠⚠ `98d` said the public namespace gives way on URLs; `100` extends it to the
+    LABEL — the member-facing word is the one members learn, and marketing takes the
+    descriptive one.
+    ⚠⚠⚠ **THIS REVERSES `E698`'s REVERT, AND THE REVERT WAS STILL RIGHT AT THE TIME:**
+    the longer labels clipped the header 31px at 768, which is a real defect and was
+    measured rather than guessed. ⚠ Ruling `100a`: *"MOVE THE `md:` BREAKPOINT… DO NOT
+    SOLVE A LAYOUT PROBLEM BY TAKING THE APPLICATION'S VOCABULARY."* The breakpoint
+    moved — see `MarketingHeader.tsx`.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — both earlier states:
+    //   { label: "Learn", href: "/learn" },       (before `E698` moved the URL)
+    //   { label: "Learn", href: "/training" },    (`E698`'s revert, ruled over by 100)
+  */
+  { label: "Training", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
-  /* ⚠ SAME MEASURED DECISION AS `Learn` ABOVE — the URL moved, the label did not. */
-  { label: "Shop", href: "/marketplace" },
+  /* ⚠ SAME RULING AS `Training` ABOVE (100). `Shop` belongs to the application.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Shop", href: "/shop" },          (before `E698`)
+     //   { label: "Shop", href: "/marketplace" },   (`E698`'s revert) */
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/integrate" },
 ];

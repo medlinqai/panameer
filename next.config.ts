@@ -75,6 +75,20 @@ const nextConfig: NextConfig = {
       */
       { source: "/services", destination: "/marketplace", permanent: true },
       /*
+        ⚠⚠⚠ `/service-products` 404ed BETWEEN `E698` AND HERE, AND THAT WAS REPORTED
+        RATHER THAN HIDDEN. `E698` WS-B freed the name — its brief assumed an app
+        catalogue page that does not exist — and nothing claimed it.
+        ⚠ **308 TO `/shop`, WHICH IS WHERE A BUYER BROWSES TODAY.** The URL is in
+        history, in notes and in anything already shared, and a 404 on a route that
+        worked yesterday reads as a regression rather than a restructure.
+        ⚠⚠ **WHETHER A DISTINCT BUYER-FACING BROWSE PAGE EARNS THIS NAME IS `A1`'s TO
+        DECIDE, NOT THIS REDIRECT'S** (Scott, 2026-09-28). ⚠ When one exists, this line
+        comes out in the commit that adds it.
+        ⚠ `permanent: true` (308), the house pattern for a moved route — and note it is
+        CACHED, so reversing it later is not instant for anyone who followed it once.
+      */
+      { source: "/service-products", destination: "/shop", permanent: true },
+      /*
         ── ⚠⚠⚠ `/community/forums` → `/community/groups` (`P2-A3-E619` WS-C) ──
 
         ⚠ SCOTT, RULING 1: *"The word is Groups everywhere."* The words came off

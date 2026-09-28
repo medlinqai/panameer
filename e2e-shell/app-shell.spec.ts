@@ -651,17 +651,24 @@ const PUBLIC_NAV_ITEMS = [
      labels and never sets them, the same way it followed `/assess` -> `/optimize`.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
      //   { label: "Learn", href: "/learn" }, */
-  { label: "Learn", href: "/training" },
+  /* ⚠⚠ FOLLOWED THE LABEL AT `P2-ALL-E699` (ruling 100) — this suite READS Scott's
+     labels and never sets them. ⚠ `Learn` and `Shop` belong to the application now;
+     the public nav takes the descriptive word.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   { label: "Learn", href: "/training" },   (`E698`'s revert) */
+  { label: "Training", href: "/training" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
   /*
-    ⚠⚠ `Shop` LEFT THE PUBLIC NAV FOR THE APPLICATION (`P2-ALL-E698`). This suite
-    READS Scott's labels and never sets them, so it follows the destination — the
-    same way it followed `/assess` -> `/optimize` at `P1-J0-E266`.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Shop", href: "/marketplace" },
+    ⚠⚠ `Shop` LEFT THE PUBLIC NAV FOR THE APPLICATION — the URL at `P2-ALL-E698` and
+    the LABEL at `P2-ALL-E699` (ruling 100). This suite READS Scott's labels and never
+    sets them, so it follows both, the same way it followed `/assess` -> `/optimize`
+    at `P1-J0-E266`.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — both earlier states:
+    //   { label: "Shop", href: "/shop" },          (before `E698`)
+    //   { label: "Shop", href: "/marketplace" },   (`E698`'s revert, ruled over by 100)
   */
-  { label: "Shop", href: "/marketplace" },
+  { label: "Marketplace", href: "/marketplace" },
   /*
     ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
     assertion caught the change, which is what it is for. `/assess` is the wizard

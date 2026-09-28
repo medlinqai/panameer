@@ -74,7 +74,7 @@ export const metadata: Metadata = {
      THE URL — two pages both titled "Shop" is the exact bug-report ambiguity this
      change exists to remove.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   title: "Shop — Panameer",  at /shop */
+     //   title: "Marketplace — Panameer",  at /shop */
   title: "Shop — Panameer",
   description:
     "Productized services on Panameer — a fixed scope, a fixed price, a named expert.",
