@@ -38,7 +38,7 @@ const V = (userId: string) => ({ userId }) as never;
 
 async function main() {
   const requestIds: string[] = [];
-  let providerBidIds: string[] = [];
+  let proposalIds: string[] = [];
   /*
     ⚠⚠⚠ TRACKED FROM THE MOMENT EACH IS CREATED, AND SWEPT IN THE `finally`.
     ⚠ `LearnTestAttempt` rows are written into a **real member's** attempt
@@ -285,13 +285,13 @@ async function main() {
         select: {
           status: true,
           issued_at: true,
-          provider_bid_id: true,
+          proposal_id: true,
           lines: { select: { learn_assessment_id: true } },
         },
       });
       check("2 — it is ISSUED in one act, never left DRAFT", trRow?.status === "ISSUED");
       check("2 — ⚠ and dated, because that is what 'sent' means", trRow?.issued_at != null);
-      check("2 — ⚠ it is tied to the proposal it followed", trRow?.provider_bid_id != null);
+      check("2 — ⚠ it is tied to the proposal it followed", trRow?.proposal_id != null);
       /* ⚠⚠⚠ THE WHOLE ANSWER, IN ONE ASSERTION: the work test POINTS AT the
          Learn assessment. No second engine, no copied questions. */
       check("2 — ⚠⚠⚠ the line POINTS AT the Learn assessment — the FK *is* the reuse",
@@ -448,7 +448,7 @@ async function main() {
        WS-C's, so what is provable HERE is that nothing makes an interview or a
        test a precondition — asserted on the schema and on the proposal row. */
     const rNone = await makeRequest();
-    const bare = await prisma.providerBid.findFirst({
+    const bare = await prisma.proposal.findFirst({
       where: { work_request_id: rNone },
       select: { id: true, status: true },
     });
@@ -456,12 +456,12 @@ async function main() {
     const noIv = await prisma.interviewRequest.count({ where: { work_request_id: rNone } });
     const noTest = await prisma.testRequest.count({ where: { work_request_id: rNone } });
     check("3 — ⚠ and neither was created for it", noIv === 0 && noTest === 0, `${noIv}/${noTest}`);
-    /* ⚠⚠⚠ THE STRUCTURAL HALF: `ProviderBid` carries no required link to
+    /* ⚠⚠⚠ THE STRUCTURAL HALF: `Proposal` carries no required link to
        either, so no selection path CAN demand one. */
     const schema = readFileSync(join("prisma", "schema.prisma"), "utf8");
-    const bidModel = (schema.match(/model ProviderBid \{([\s\S]*?)\n\}/) ?? [, ""])[1]!;
-    check("3 — ⚠⚠⚠ ProviderBid requires no interview and no test",
-      !/interview_request_id\s+String\s/.test(bidModel) && !/test_request_id\s+String\s/.test(bidModel),
+    const proposalModel = (schema.match(/model Proposal \{([\s\S]*?)\n\}/) ?? [, ""])[1]!;
+    check("3 — ⚠⚠⚠ Proposal requires no interview and no test",
+      !/interview_request_id\s+String\s/.test(proposalModel) && !/test_request_id\s+String\s/.test(proposalModel),
       "a NOT NULL link either way would make interviews compulsory in the schema");
 
     /* ═══ 4 · ⚠⚠⚠ THE DASH BECAME A COUNT (WS-B item 6) ════════════════ */
@@ -498,8 +498,8 @@ async function main() {
        Everything here is wrapped, and the row counts are checked after. */
     try {
       if (requestIds.length > 0) {
-        providerBidIds = (
-          await prisma.providerBid.findMany({
+        proposalIds = (
+          await prisma.proposal.findMany({
             where: { work_request_id: { in: requestIds } },
             select: { id: true },
           })
@@ -515,7 +515,7 @@ async function main() {
           where: {
             dedupe_key: {
               in: [
-                ...providerBidIds.map((id) => `work.proposal_received:${id}`),
+                ...proposalIds.map((id) => `work.proposal_received:${id}`),
                 ...ivs.map((iv) => `work.interview_requested:${iv.id}`),
               ],
             },
@@ -526,7 +526,7 @@ async function main() {
           FINDING THAT OUT IS WHY THIS GATE COUNTS ROWS AFTERWARDS.
 
           ⚠ MEASURED 2026-09-25: `InterviewRequest.work_request_id`,
-          `TestRequest.work_request_id`, `BidRequest`, `WorkOrder` and
+          `TestRequest.work_request_id`, `ProposalRequest`, `WorkOrder` and
           `Requisition` are **bare `String @db.Uuid` columns with no
           `@relation`**. `WorkRequest` declares exactly four cascading children —
           `lines`, `skills`, `specializations`, `proposals` — and **none of the
@@ -593,7 +593,7 @@ async function main() {
          reason `check:proposals`' sweep is: nothing in the application deletes
          a bid or an interview — both RECORD — so a notification whose entity
          is gone is by definition probe residue. */
-      for (const entityType of ["provider_bid", "interview_request"] as const) {
+      for (const entityType of ["proposal", "interview_request"] as const) {
         const notifs = await prisma.notification.findMany({
           where: { entity_type: entityType },
           select: { id: true, entity_id: true },
@@ -601,8 +601,8 @@ async function main() {
         if (notifs.length === 0) continue;
         const ids = notifs.map((n) => n.entity_id!).filter(Boolean);
         const live = new Set(
-          entityType === "provider_bid"
-            ? (await prisma.providerBid.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id)
+          entityType === "proposal"
+            ? (await prisma.proposal.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id)
             : (await prisma.interviewRequest.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id)
         );
         const orphans = notifs.filter((n) => !n.entity_id || !live.has(n.entity_id));

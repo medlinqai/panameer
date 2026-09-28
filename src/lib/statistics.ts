@@ -90,16 +90,16 @@ export type Statistics = {
      found by asking who renders this group. */
   work: {
     /* ⚠⚠⚠ RECEIVED MEANS **ISSUED** (Scott, 2026-09-23). ⚠ SUPERSEDED, quoted
-       not deleted (`E164`): this counted every `BidRequest` including
+       not deleted (`E164`): this counted every `ProposalRequest` including
        `issued_at: null`, i.e. requests **nobody ever sent** — the member was
        shown invitations that do not exist yet. ⚠⚠ THE OLD `/stats` TILE HAD
        THE FILTER RIGHT ALL ALONG; my new card dropped it. */
     requestsReceived: Figure;
-    /* ⚠⚠⚠ COUNTED, FROM `ProviderBid`. ⚠ SUPERSEDED, quoted not deleted
+    /* ⚠⚠⚠ COUNTED, FROM `Proposal`. ⚠ SUPERSEDED, quoted not deleted
        (`E164`): //   proposalsSent: { uncounted: "No Proposal model exists" }
        ⚠⚠ THAT CLAIM WAS FALSE AND THE PAGE ALREADY DISPROVED IT — the old tile
-       has been counting `providerBid` all along. **The model is named
-       `ProviderBid`, not `Proposal`.** An absent NAME is not an absent THING;
+       has been counting `proposal` all along. **The model is named
+       `Proposal`, not `Proposal`.** An absent NAME is not an absent THING;
        search for the behaviour, not the noun.
        ⚠ `submitted_at: { not: null }` — SENT means SUBMITTED. An unsubmitted
        bid is a draft, and a draft is not a proposal. */
@@ -152,7 +152,7 @@ const NO_SEARCH_LOG = "Needs a search-results log — nothing records one today"
 async function countWindowed(
   window: StatWindow,
   field: string,
-  /* ⚠ `providerBid` added by `E621` WS-A and `interviewRequest` by WS-B — each
+  /* ⚠ `proposal` added by `E621` WS-A and `interviewRequest` by WS-B — each
      time because a writer was built, never to make a dash tidier. The union is
      deliberate: it names every model this helper may count, so a typo cannot
      silently become a runtime `undefined.count`. */
@@ -162,7 +162,7 @@ async function countWindowed(
     | "colleagueInvite"
     | "lessonProgress"
     | "learnEnrollment"
-    | "providerBid"
+    | "proposal"
     | "interviewRequest",
   where: Record<string, unknown>
 ): Promise<number> {
@@ -262,7 +262,7 @@ export async function getStatistics(
       */
       prisma.certification.count({ where: { user_id: userId } }),
       /* ⚠⚠ ISSUED ONLY — an unissued request was never sent to anybody. */
-      prisma.bidRequest.count({
+      prisma.proposalRequest.count({
         where: { provider_person_id: personId, issued_at: { not: null } },
       }),
       /*
@@ -276,26 +276,26 @@ export async function getStatistics(
 
         ⚠⚠ `submitted_at: { not: null }` IS THE WHOLE DEFINITION. WS-A item 1:
         *"`submitted_at` is the column Proposals Sent counts."* A `DRAFT`
-        proposal was never sent to anybody, exactly as an unissued `BidRequest`
+        proposal was never sent to anybody, exactly as an unissued `ProposalRequest`
         above was not. ⚠⚠⚠ A WITHDRAWN ONE STILL COUNTS: they did send it, and
         the withdrawal is a later fact — the row is kept rather than deleted
         precisely so that stays true.
       */
-      countWindowed(window, "submitted_at", "providerBid", {
+      countWindowed(window, "submitted_at", "proposal", {
         provider_person_id: personId,
         submitted_at: { not: null },
       }),
       /*
         ⚠⚠⚠ FOUR QUERIES DELETED — THEY COUNTED TABLES NOTHING WRITES.
         ⚠ Every one returned a true `0` and would have returned a true `0`
-        forever, because no code creates a `ProviderBid` or an
+        forever, because no code creates a `Proposal` or an
         `InterviewRequest`. ⚠⚠ THEY ARE REMOVED RATHER THAN LEFT COMPUTING,
         because **unrendered code is unreviewed code** — the rule that has now
         caught the unscoped `workOrders` count and `orderSeries` in this same
         file.
         ⚠ SUPERSEDED, quoted not deleted (`E164`):
         //   prisma.interviewRequest.count({ where: { provider_person_id: personId } }),
-        //   prisma.providerBid.count({
+        //   prisma.proposal.count({
         //     where: { provider_person_id: personId, submitted_at: { not: null } },
         //   }),
         //   prisma.interviewRequest.count({
@@ -306,7 +306,7 @@ export async function getStatistics(
         //   }),
         ⚠⚠⚠ THREE OF THE FOUR ARE BACK, WINDOWED, BECAUSE `lib/interviews.ts`
         NOW WRITES THEM (`E621` WS-B). ⚠ The fourth stayed deleted — it was a
-        duplicate `providerBid` count, and `proposalsSent` above is the one
+        duplicate `proposal` count, and `proposalsSent` above is the one
         computation of that figure.
       */
       /*
@@ -458,7 +458,7 @@ export async function getStatistics(
         not when something upstream of it does."* ⚠⚠ I FLIPPED THREE FIGURES TO
         COUNTED WITHOUT APPLYING IT, and this brief's own Work premise check is
         what measured the truth:
-          · **`ProviderBid` — no `providerBid.create` EXISTS ANYWHERE.**
+          · **`Proposal` — no `proposal.create` EXISTS ANYWHERE.**
           · **`InterviewRequest` — no `interviewRequest.create` EXISTS ANYWHERE.**
           · **`WorkOrder` — no `workOrder.create` EXISTS ANYWHERE.** `orders.ts`
             can only `updateMany` an order that nothing ever built, so even
@@ -468,7 +468,7 @@ export async function getStatistics(
         measured zero and an absence, and it is the whole point of the type.**
 
         ⚠ `requestsReceived` STAYS A COUNTED ZERO, and that was CONFIRMED rather
-        than assumed: `work-request-invite.ts:116` does `bidRequest.create` with
+        than assumed: `work-request-invite.ts:116` does `proposalRequest.create` with
         `issued_at: new Date()` and `status: "ISSUED"`, and `inviteProviders` is
         reachable from `/api/work-requests/[id]/invite/route.ts`. **A real writer,
         on a real route, setting the exact column this figure filters on.**

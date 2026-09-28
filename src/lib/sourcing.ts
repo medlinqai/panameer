@@ -1,4 +1,4 @@
-import { BidRequestStatus, LineBasis } from "@prisma/client";
+import { ProposalRequestStatus, LineBasis } from "@prisma/client";
 import { assertLineShape, type LineShape } from "@/lib/transaction-spine";
 
 /**
@@ -37,7 +37,7 @@ export class SourcingError extends Error {
    ═════════════════════════════════════════════════════════════════════════ */
 
 /**
- * ⚠⚠ THE PRICING SHAPE `ProviderBidLine` AND `WorkOrderLine` BOTH CARRY.
+ * ⚠⚠ THE PRICING SHAPE `ProposalLine` AND `WorkOrderLine` BOTH CARRY.
  *
  * **AWARDING IS A COPY, FIELD FOR FIELD.** If the two models drift, the award
  * stops being a copy and becomes a TRANSLATION — and a translation is where a
@@ -60,7 +60,7 @@ export const PRICING_SHAPE_FIELDS = [
 
 export type ShapeDiff = {
   ok: boolean;
-  missingFromBid: string[];
+  missingFromProposal: string[];
   missingFromOrder: string[];
 };
 
@@ -71,23 +71,23 @@ export type ShapeDiff = {
  * cosmetic and a formatter may change it. What must not change is WHICH fields
  * are present.
  */
-export function pricingShapeDiff(bidFields: string[], orderFields: string[]): ShapeDiff {
-  const bid = new Set(bidFields);
+export function pricingShapeDiff(proposalFields: string[], orderFields: string[]): ShapeDiff {
+  const bid = new Set(proposalFields);
   const order = new Set(orderFields);
-  const missingFromBid = PRICING_SHAPE_FIELDS.filter((f) => !bid.has(f));
+  const missingFromProposal = PRICING_SHAPE_FIELDS.filter((f) => !bid.has(f));
   const missingFromOrder = PRICING_SHAPE_FIELDS.filter((f) => !order.has(f));
   return {
-    ok: missingFromBid.length === 0 && missingFromOrder.length === 0,
-    missingFromBid,
+    ok: missingFromProposal.length === 0 && missingFromOrder.length === 0,
+    missingFromProposal,
     missingFromOrder,
   };
 }
 
-export function assertPricingShapesAgree(bidFields: string[], orderFields: string[]): void {
-  const d = pricingShapeDiff(bidFields, orderFields);
+export function assertPricingShapesAgree(proposalFields: string[], orderFields: string[]): void {
+  const d = pricingShapeDiff(proposalFields, orderFields);
   if (!d.ok)
     throw new SourcingError(
-      `ProviderBidLine and WorkOrderLine have drifted — missing from the bid line: [${d.missingFromBid.join(", ")}]; missing from the order line: [${d.missingFromOrder.join(", ")}]`,
+      `ProposalLine and WorkOrderLine have drifted — missing from the bid line: [${d.missingFromProposal.join(", ")}]; missing from the order line: [${d.missingFromOrder.join(", ")}]`,
       "PRICING_SHAPE_DRIFT"
     );
 }
@@ -104,11 +104,11 @@ export function assertPricingShapesAgree(bidFields: string[], orderFields: strin
  * FEATURE — a second document with its own status, not a relaxed check here. The
  * error code says so, so the day someone hits it the next step is legible.
  */
-export function assertBidLineBasis(bidBasis: LineBasis, workRequestLineBasis: LineBasis): void {
-  if (bidBasis !== workRequestLineBasis)
+export function assertProposalLineBasis(proposalBasis: LineBasis, workRequestLineBasis: LineBasis): void {
+  if (proposalBasis !== workRequestLineBasis)
     throw new SourcingError(
-      `A ${bidBasis} bid cannot answer a ${workRequestLineBasis} request line — that is a counter-offer, which is a different feature`,
-      "BID_BASIS_COUNTER_OFFER"
+      `A ${proposalBasis} bid cannot answer a ${workRequestLineBasis} request line — that is a counter-offer, which is a different feature`,
+      "PROPOSAL_BASIS_COUNTER_OFFER"
     );
 }
 
@@ -120,8 +120,8 @@ export function assertBidLineBasis(bidBasis: LineBasis, workRequestLineBasis: Li
  * "RATE needs a quantity, AMOUNT must not carry one" is the drift this whole
  * work stream exists to prevent, one level up.
  */
-export function assertBidLine(line: LineShape, workRequestLineBasis: LineBasis): void {
-  assertBidLineBasis(line.basis, workRequestLineBasis);
+export function assertProposalLine(line: LineShape, workRequestLineBasis: LineBasis): void {
+  assertProposalLineBasis(line.basis, workRequestLineBasis);
   assertLineShape(line);
 }
 
@@ -141,7 +141,7 @@ export function assertIssuable(itb: { responds_by?: Date | null }): void {
 /**
  * ── ⚠⚠⚠ MAY THIS INVITE STILL BE PROPOSED AGAINST? (`P2-A8-E621` WS-A) ────
  *
- * ⚠ WS-A item 5: *"A declined or expired `BidRequest` cannot be proposed
+ * ⚠ WS-A item 5: *"A declined or expired `ProposalRequest` cannot be proposed
  * against. **Import the predicate; do not restate it.**"* ⚠⚠ It did not exist,
  * so it is created HERE — once, beside its siblings — rather than inlined in
  * the writer, which is what "do not restate it" is guarding against.
@@ -160,7 +160,7 @@ export function assertIssuable(itb: { responds_by?: Date | null }): void {
  * only at whatever time the suite happens to run.
  */
 export type InviteForProposal = {
-  status: BidRequestStatus;
+  status: ProposalRequestStatus;
   responds_by?: Date | null;
 };
 

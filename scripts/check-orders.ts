@@ -515,7 +515,7 @@ check("4 — no originating line produces no changes", termChanges({ ...REQ }, n
     !!detail && /o\.hasChanges &&/.test(detail.code)
   );
   /* ⚠⚠ AND THE HEADING SAYS WHAT IS BEING COMPARED. `WorkOrderLine` has NO link
-     to `ProviderBidLine`, so an order-versus-BID diff cannot be computed and the
+     to `ProposalLine`, so an order-versus-BID diff cannot be computed and the
      UI must not imply one. */
   check(
     "4 — the UI names the work request as the comparison, not the bid",

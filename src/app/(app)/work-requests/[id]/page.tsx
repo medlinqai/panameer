@@ -303,7 +303,7 @@ export default async function Page({
                   </p>
 
                   <p className="mt-1 text-[13.5px] text-ink-2">
-                    {p.bidNumber}
+                    {p.proposalNumber}
                     {p.invited ? " · Invited" : " · Found this request"}
                     {p.submittedAt && (
                       <> · sent {p.submittedAt.toISOString().slice(0, 10)}</>

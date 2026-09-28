@@ -77,7 +77,7 @@ export async function requestInterview(
   const me = await ownPerson(viewer);
   const wr = await assertIsBuyer(input.workRequestId, me.id);
 
-  const proposal = await prisma.providerBid.findUnique({
+  const proposal = await prisma.proposal.findUnique({
     where: {
       work_request_id_provider_person_id: {
         work_request_id: wr.id,

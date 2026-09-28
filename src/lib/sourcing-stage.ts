@@ -47,7 +47,15 @@ export const SOURCING_STAGES = [
   "SHORTLISTED",
   "INTERVIEWED",
   "TESTED",
-  "BID",
+  /* ⚠⚠ PAST PARTICIPLE, LIKE EVERY OTHER STAGE HERE — and that is why it is
+     not `PROPOSAL`. `P2-A8-E695` WS-A renamed the model `ProviderBid` →
+     `Proposal`, and naming this stage `"PROPOSAL"` collided with
+     `selection.ts`'s unrelated `route: "PROPOSAL" | "DIRECT"`, tripping
+     `check:sourcing` §8's one-derivation scan on a file that derives nothing.
+     ⚠⚠⚠ ONE WORD, TWO UNRELATED FUNCTIONS (ruling 93m) — caught by a gate
+     rather than by review.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`): `"BID"`. */
+  "PROPOSED",
   "INVITED",
 ] as const;
 
@@ -89,7 +97,7 @@ export const SOURCING_STAGE_LABEL: Record<SourcingStage, string> = {
   SHORTLISTED: "You are on the shortlist",
   INTERVIEWED: "Your interview is done",
   TESTED: "Your work test is done",
-  BID: "Your proposal is in",
+  PROPOSED: "Your proposal is in",
   INVITED: "You were invited to propose",
 };
 
@@ -102,7 +110,7 @@ export type SourcingEvidence = {
   /** An ITB was issued to this provider. */
   invited: boolean;
   /** A bid was SUBMITTED — a DRAFT bid the provider never sent is not a bid. */
-  bid: boolean;
+  proposal: boolean;
   /** A test response reached COMPLETED. */
   tested: boolean;
   /** An interview request reached COMPLETED. */
@@ -133,7 +141,7 @@ export function sourcingStage(e: SourcingEvidence): SourcingStage | null {
   if (e.shortlisted) return "SHORTLISTED";
   if (e.interviewed) return "INTERVIEWED";
   if (e.tested) return "TESTED";
-  if (e.bid) return "BID";
+  if (e.proposal) return "PROPOSED";
   if (e.invited) return "INVITED";
   return null;
 }
@@ -145,7 +153,7 @@ export function stageRank(stage: SourcingStage): number {
 
 const EMPTY: SourcingEvidence = {
   invited: false,
-  bid: false,
+  proposal: false,
   tested: false,
   interviewed: false,
   shortlisted: false,
@@ -175,12 +183,12 @@ export async function sourcingEvidenceForWorkRequest(
   };
 
   const [itbs, bids, tests, interviews, shortlisted, orders] = await Promise.all([
-    /* 1 */ prisma.bidRequest.findMany({
+    /* 1 */ prisma.proposalRequest.findMany({
       where: { work_request_id: workRequestId },
       select: { id: true, provider_person_id: true, status: true },
     }),
-    /* 2 */ prisma.providerBid.findMany({
-      where: { bidRequest: { work_request_id: workRequestId } },
+    /* 2 */ prisma.proposal.findMany({
+      where: { proposalRequest: { work_request_id: workRequestId } },
       select: { provider_person_id: true, status: true, submitted_at: true },
     }),
     /* 3 */ prisma.testResponse.findMany({
@@ -209,8 +217,8 @@ export async function sourcingEvidenceForWorkRequest(
   for (const b of bids) {
     const e = at(b.provider_person_id);
     /* ⚠ A DRAFT BID IS NOT A BID. The provider has not sent it, and showing the
-       buyer "BID" for a draft nobody submitted is an invented response. */
-    if (b.submitted_at != null && b.status !== "DRAFT") e.bid = true;
+       buyer "PROPOSED" for a draft nobody submitted is an invented response. */
+    if (b.submitted_at != null && b.status !== "DRAFT") e.proposal = true;
     if (b.status === "DECLINED") e.declined = true;
   }
   for (const t of tests) at(t.provider_person_id).tested = true;

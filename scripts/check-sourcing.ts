@@ -35,8 +35,8 @@ import { join, relative } from "node:path";
 import {
   SourcingError,
   PRICING_SHAPE_FIELDS,
-  assertBidLine,
-  assertBidLineBasis,
+  assertProposalLine,
+  assertProposalLineBasis,
   assertInterviewSlot,
   assertIssuable,
   assertPricingShapesAgree,
@@ -123,32 +123,32 @@ const SRC = walk("src");
 /* ═══ 1 · `basis` ON A BID LINE MATCHES ITS WORK-REQUEST LINE ═══════════════ */
 
 accepts("1 — a RATE bid against a RATE request line is accepted", () =>
-  assertBidLineBasis("RATE", "RATE")
+  assertProposalLineBasis("RATE", "RATE")
 );
 accepts("1 — an AMOUNT bid against an AMOUNT request line is accepted", () =>
-  assertBidLineBasis("AMOUNT", "AMOUNT")
+  assertProposalLineBasis("AMOUNT", "AMOUNT")
 );
 /* ⚠ BOTH DIRECTIONS. A guard that only refuses AMOUNT-answers-RATE lets the
    mirror image through, and the mirror image is the same defect. */
 refuses(
   "1 — an AMOUNT lump sum cannot answer an HOURLY (RATE) request line",
-  () => assertBidLineBasis("AMOUNT", "RATE"),
-  "BID_BASIS_COUNTER_OFFER"
+  () => assertProposalLineBasis("AMOUNT", "RATE"),
+  "PROPOSAL_BASIS_COUNTER_OFFER"
 );
 refuses(
   "1 — a RATE bid cannot answer a fixed-price (AMOUNT) request line",
-  () => assertBidLineBasis("RATE", "AMOUNT"),
-  "BID_BASIS_COUNTER_OFFER"
+  () => assertProposalLineBasis("RATE", "AMOUNT"),
+  "PROPOSAL_BASIS_COUNTER_OFFER"
 );
 accepts("1 — a well-formed RATE bid line passes both basis and shape", () =>
-  assertBidLine({ basis: "RATE", uom: "HOUR", quantity: 160, unit_price_cents: 15000 }, "RATE")
+  assertProposalLine({ basis: "RATE", uom: "HOUR", quantity: 160, unit_price_cents: 15000 }, "RATE")
 );
 /* ⚠ THE SHAPE RULE IS IMPORTED FROM THE SPINE, NOT REIMPLEMENTED — assert it is
-   really running here, or `assertBidLine` is only half a check. */
+   really running here, or `assertProposalLine` is only half a check. */
 refuses(
   "1 — a RATE bid line carrying an amount is refused (the spine's shape rule runs)",
   () =>
-    assertBidLine(
+    assertProposalLine(
       { basis: "RATE", uom: "HOUR", quantity: 160, unit_price_cents: 15000, amount_cents: 2400000 },
       "RATE"
     ),
@@ -156,25 +156,25 @@ refuses(
 );
 refuses(
   "1 — a RATE bid line with no unit price is refused",
-  () => assertBidLine({ basis: "RATE", uom: "HOUR", quantity: 160 }, "RATE"),
+  () => assertProposalLine({ basis: "RATE", uom: "HOUR", quantity: 160 }, "RATE"),
   "RATE_NEEDS_UNIT_PRICE"
 );
 
-/* ═══ 2 · `ProviderBidLine` AND `WorkOrderLine` CARRY THE SAME PRICING SHAPE ═
+/* ═══ 2 · `ProposalLine` AND `WorkOrderLine` CARRY THE SAME PRICING SHAPE ═
    ⚠⚠ AWARDING IS A COPY, FIELD FOR FIELD. If they drift, the award becomes a
    TRANSLATION — and a translation is where a rate silently changes between what
    was bid and what was ordered. */
 
-const BID_LINE_FIELDS = fieldNames(modelBody("ProviderBidLine"));
+const PROPOSAL_LINE_FIELDS = fieldNames(modelBody("ProposalLine"));
 const ORDER_LINE_FIELDS = fieldNames(modelBody("WorkOrderLine"));
 
-check("2 — ProviderBidLine was found in the schema", BID_LINE_FIELDS.length > 0);
+check("2 — ProposalLine was found in the schema", PROPOSAL_LINE_FIELDS.length > 0);
 check("2 — WorkOrderLine was found in the schema", ORDER_LINE_FIELDS.length > 0);
 accepts("2 — the two models agree on the pricing shape as shipped", () =>
-  assertPricingShapesAgree(BID_LINE_FIELDS, ORDER_LINE_FIELDS)
+  assertPricingShapesAgree(PROPOSAL_LINE_FIELDS, ORDER_LINE_FIELDS)
 );
 for (const f of PRICING_SHAPE_FIELDS) {
-  check(`2 — ProviderBidLine declares ${f}`, BID_LINE_FIELDS.includes(f));
+  check(`2 — ProposalLine declares ${f}`, PROPOSAL_LINE_FIELDS.includes(f));
   check(`2 — WorkOrderLine declares ${f}`, ORDER_LINE_FIELDS.includes(f));
 }
 /* ⚠⚠ THE MUTATION, AND IT RUNS ONCE PER FIELD IN BOTH DIRECTIONS. Removing a
@@ -182,44 +182,44 @@ for (const f of PRICING_SHAPE_FIELDS) {
    test (only checking the bid side) is how the order side drifts. */
 for (const f of PRICING_SHAPE_FIELDS) {
   refuses(
-    `2 — MUTATION: dropping ${f} from ProviderBidLine fails the shape check`,
-    () => assertPricingShapesAgree(BID_LINE_FIELDS.filter((x) => x !== f), ORDER_LINE_FIELDS),
+    `2 — MUTATION: dropping ${f} from ProposalLine fails the shape check`,
+    () => assertPricingShapesAgree(PROPOSAL_LINE_FIELDS.filter((x) => x !== f), ORDER_LINE_FIELDS),
     "PRICING_SHAPE_DRIFT"
   );
   refuses(
     `2 — MUTATION: dropping ${f} from WorkOrderLine fails the shape check`,
-    () => assertPricingShapesAgree(BID_LINE_FIELDS, ORDER_LINE_FIELDS.filter((x) => x !== f)),
+    () => assertPricingShapesAgree(PROPOSAL_LINE_FIELDS, ORDER_LINE_FIELDS.filter((x) => x !== f)),
     "PRICING_SHAPE_DRIFT"
   );
 }
 {
   const d = pricingShapeDiff(
-    BID_LINE_FIELDS.filter((x) => x !== "unit_price_cents"),
+    PROPOSAL_LINE_FIELDS.filter((x) => x !== "unit_price_cents"),
     ORDER_LINE_FIELDS
   );
   check(
     "2 — the diff names WHICH side lost the field, not just that they differ",
-    d.missingFromBid.includes("unit_price_cents") && d.missingFromOrder.length === 0
+    d.missingFromProposal.includes("unit_price_cents") && d.missingFromOrder.length === 0
   );
 }
 /* ⚠ `unit_price_cents` IS THE ROW `E366` WAS BLOCKED ON — *"a proposed rate has
    nowhere to live."* Named on its own so the reason survives the list. */
 check(
-  "2 — ProviderBidLine.unit_price_cents exists (E366's missing row)",
-  /unit_price_cents\s+Int\?/.test(modelBody("ProviderBidLine"))
+  "2 — ProposalLine.unit_price_cents exists (E366's missing row)",
+  /unit_price_cents\s+Int\?/.test(modelBody("ProposalLine"))
 );
 
 /* ═══ 3 · ONE ITB PER PROVIDER PER WORK REQUEST ════════════════════════════ */
 
 check(
-  "3 — BidRequest is @@unique on (work_request_id, provider_person_id)",
-  /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("BidRequest"))
+  "3 — ProposalRequest is @@unique on (work_request_id, provider_person_id)",
+  /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("ProposalRequest"))
 );
 /*
   ── ⚠⚠⚠ STILL `@unique`, NOW NULLABLE (`P2-A8-E621` WS-A, ruling 14) ──────
 
   ⚠ SCOTT, 2026-09-24: **"The buyer picks, per request."** A request is posted
-  either invite-only or open to any provider. ⚠⚠ `bid_request_id` WAS NOT NULL,
+  either invite-only or open to any provider. ⚠⚠ `proposal_request_id` WAS NOT NULL,
   so **a proposal required an invite and the OPEN half of that ruling was
   literally unreachable** — the contradiction between the flow doc and the
   mockup was a switch the schema could not express.
@@ -233,25 +233,25 @@ check(
   `@@unique([work_request_id, provider_person_id])`, asserted directly below.
   ⚠ This is `check:rollup`'s case — the ruling moved, the code did not drift.
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   /bid_request_id\s+String\s+@unique/.test(modelBody("ProviderBid"))
+  //   /proposal_request_id\s+String\s+@unique/.test(modelBody("Proposal"))
 */
 check(
-  "3 — ProviderBid.bid_request_id is @unique (one bid per ITB)",
-  /bid_request_id\s+String\?\s+@unique/.test(modelBody("ProviderBid"))
+  "3 — Proposal.proposal_request_id is @unique (one bid per ITB)",
+  /proposal_request_id\s+String\?\s+@unique/.test(modelBody("Proposal"))
 );
 /* ⚠⚠⚠ AND ONE PROPOSAL PER PROVIDER PER REQUEST, WHICHEVER SHAPE IT IS. This
    is what makes an OPEN proposal idempotent, and the database refuses the
    second row rather than the writer remembering to check. */
 check(
-  "3 — ProviderBid is @@unique on (work_request_id, provider_person_id)",
-  /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("ProviderBid"))
+  "3 — Proposal is @@unique on (work_request_id, provider_person_id)",
+  /@@unique\(\[work_request_id,\s*provider_person_id\]\)/.test(modelBody("Proposal"))
 );
 /* ⚠ THE FAN-OUT IS THE ITB, NOT A LIST INSIDE ONE. A `provider_person_ids`
    array would be the shape that cannot be issued or declined per provider. */
 check(
-  "3 — BidRequest carries ONE provider, not a list",
-  /provider_person_id\s+String\s+@db\.Uuid/.test(modelBody("BidRequest")) &&
-    !/provider_person_ids/.test(modelBody("BidRequest"))
+  "3 — ProposalRequest carries ONE provider, not a list",
+  /provider_person_id\s+String\s+@db\.Uuid/.test(modelBody("ProposalRequest")) &&
+    !/provider_person_ids/.test(modelBody("ProposalRequest"))
 );
 accepts("3 — an ITB with a closing date can be issued", () =>
   assertIssuable({ responds_by: new Date("2026-10-01") })
@@ -376,8 +376,8 @@ check(
    single row is fine and the requester who issued the ITB reads it; THE
    AGGREGATE is the scarlet letter. */
 
-check("5 — a decline is recordable on the ITB", /declined_at/.test(modelBody("BidRequest")));
-check("5 — a decline is recordable on the bid", /declined_at/.test(modelBody("ProviderBid")));
+check("5 — a decline is recordable on the ITB", /declined_at/.test(modelBody("ProposalRequest")));
+check("5 — a decline is recordable on the bid", /declined_at/.test(modelBody("Proposal")));
 check(
   "5 — the requester who issued the ITB can see the decline",
   canSeeDecline({ viewerPersonId: "buyer-1", invitedByPersonId: "buyer-1", providerPersonId: "p-1" })
@@ -424,14 +424,14 @@ check(
 const DECLINE_COUNTER_NAMES =
   /\b(decline_?(count|counts|rate|ratio|score)|declines?Count|declined_?count|responsiveness_?(score|rate)|acceptance_?rate|reliability_?score)\b/i;
 /** Does this file handle a sourcing document at all? */
-const SOURCING_CONTEXT = /\b(bidRequest|providerBid|BidRequest|ProviderBid|bid_request|provider_bid|ITB)\b/;
+const SOURCING_CONTEXT = /\b(proposalRequest|proposal|ProposalRequest|Proposal|proposal_request|proposal|ITB)\b/;
 function aggregatesDeclines(code: string): string | null {
   const named = code.match(DECLINE_COUNTER_NAMES);
   if (named && (SOURCING_CONTEXT.test(code) || /provider/i.test(named[0])))
     return `named counter: ${named[0]}`;
   if (/\bprovider_?(decline|refus)/i.test(code)) return "a per-provider decline counter";
-  if (/prisma\.(bidRequest|providerBid)\.groupBy/.test(code)) return "groupBy over a bid document";
-  const counts = code.match(/prisma\.(bidRequest|providerBid)\.count\(([\s\S]{0,400}?)\)/g) ?? [];
+  if (/prisma\.(proposalRequest|proposal)\.groupBy/.test(code)) return "groupBy over a bid document";
+  const counts = code.match(/prisma\.(proposalRequest|proposal)\.count\(([\s\S]{0,400}?)\)/g) ?? [];
   for (const c of counts) if (/DECLINED/.test(c)) return "count() filtered to DECLINED";
   return null;
 }
@@ -441,11 +441,11 @@ function aggregatesDeclines(code: string): string | null {
    existed. */
 check(
   "5 — MUTATION: the scan catches a named decline counter in a bid file",
-  aggregatesDeclines("const declineCount = await prisma.bidRequest.findMany();") !== null
+  aggregatesDeclines("const declineCount = await prisma.proposalRequest.findMany();") !== null
 );
 check(
   "5 — MUTATION: the scan catches a responsiveness score on a bid document",
-  aggregatesDeclines("function responsivenessScore(b: ProviderBid) {}") !== null
+  aggregatesDeclines("function responsivenessScore(b: Proposal) {}") !== null
 );
 /* ⚠ A COUNTER THAT NAMES THE PROVIDER IS THE SCARLET LETTER WHEREVER IT LIVES —
    it does not get to hide in a file that never mentions a bid. */
@@ -474,17 +474,17 @@ check(
 );
 check(
   "5 — MUTATION: the scan catches a groupBy over bid requests",
-  aggregatesDeclines("await prisma.bidRequest.groupBy({ by: ['provider_person_id'] })") !== null
+  aggregatesDeclines("await prisma.proposalRequest.groupBy({ by: ['provider_person_id'] })") !== null
 );
 check(
   "5 — MUTATION: the scan catches a count filtered to DECLINED",
   aggregatesDeclines(
-    "await prisma.providerBid.count({ where: { provider_person_id: id, status: 'DECLINED' } })"
+    "await prisma.proposal.count({ where: { provider_person_id: id, status: 'DECLINED' } })"
   ) !== null
 );
 check(
   "5 — the scan does NOT fire on an ordinary bid count",
-  aggregatesDeclines("await prisma.providerBid.count({ where: { bid_request_id: id } })") === null
+  aggregatesDeclines("await prisma.proposal.count({ where: { proposal_request_id: id } })") === null
 );
 {
   const hits = SRC.map((f) => ({ f, why: aggregatesDeclines(f.code) })).filter((h) => h.why);
@@ -657,7 +657,7 @@ refuses(
 
 const NONE = {
   invited: false,
-  bid: false,
+  proposal: false,
   tested: false,
   interviewed: false,
   shortlisted: false,
@@ -668,29 +668,29 @@ check("8 — no documents at all is null, NOT 'INVITED'", sourcingStage(NONE) ==
 check("8 — an ITB alone is INVITED", sourcingStage({ ...NONE, invited: true }) === "INVITED");
 check(
   "8 — a submitted bid is BID",
-  sourcingStage({ ...NONE, invited: true, bid: true }) === "BID"
+  sourcingStage({ ...NONE, invited: true, proposal: true }) === "PROPOSED"
 );
 check(
   "8 — a completed test is TESTED",
-  sourcingStage({ ...NONE, invited: true, bid: true, tested: true }) === "TESTED"
+  sourcingStage({ ...NONE, invited: true, proposal: true, tested: true }) === "TESTED"
 );
 check(
   "8 — a completed interview is INTERVIEWED",
-  sourcingStage({ ...NONE, invited: true, bid: true, tested: true, interviewed: true }) ===
+  sourcingStage({ ...NONE, invited: true, proposal: true, tested: true, interviewed: true }) ===
     "INTERVIEWED"
 );
 check(
   "8 — a shortlist line is SHORTLISTED",
-  sourcingStage({ ...NONE, invited: true, bid: true, shortlisted: true }) === "SHORTLISTED"
+  sourcingStage({ ...NONE, invited: true, proposal: true, shortlisted: true }) === "SHORTLISTED"
 );
 check(
   "8 — a work order is ASSIGNED",
-  sourcingStage({ ...NONE, invited: true, bid: true, shortlisted: true, assigned: true }) ===
+  sourcingStage({ ...NONE, invited: true, proposal: true, shortlisted: true, assigned: true }) ===
     "ASSIGNED"
 );
 check(
   "8 — a decline outranks progress",
-  sourcingStage({ ...NONE, invited: true, bid: true, declined: true }) === "DECLINED"
+  sourcingStage({ ...NONE, invited: true, proposal: true, declined: true }) === "DECLINED"
 );
 /* ⚠ ASSIGNED OUTRANKS DECLINED. A provider who declined an ITB and was hired
    anyway — off a second conversation, which is a marketplace, not a bug — is
@@ -710,7 +710,7 @@ check(
 );
 check(
   "8 — every stage the brief names is in the enum",
-  ["INVITED", "BID", "TESTED", "INTERVIEWED", "SHORTLISTED", "ASSIGNED", "DECLINED"].every((s) =>
+  ["INVITED", "PROPOSED", "TESTED", "INTERVIEWED", "SHORTLISTED", "ASSIGNED", "DECLINED"].every((s) =>
     (SOURCING_STAGES as readonly string[]).includes(s)
   )
 );
@@ -725,7 +725,7 @@ check(
  */
 function derivesStageLocally(path: string, code: string): boolean {
   if (path === join("src", "lib", "sourcing-stage.ts")) return false;
-  const named = ["INVITED", "BID", "TESTED", "INTERVIEWED", "SHORTLISTED", "ASSIGNED"].filter((s) =>
+  const named = ["INVITED", "PROPOSED", "TESTED", "INTERVIEWED", "SHORTLISTED", "ASSIGNED"].filter((s) =>
     new RegExp(`["'\`]${s}["'\`]`).test(code)
   );
   if (named.length < 3) return false;
@@ -735,14 +735,14 @@ check(
   "8 — MUTATION: the scan catches a second derivation",
   derivesStageLocally(
     join("src", "app", "fake", "page.tsx"),
-    `const s = bid ? "BID" : tested ? "TESTED" : "INVITED";`
+    `const s = bid ? "PROPOSED" : tested ? "TESTED" : "INVITED";`
   )
 );
 check(
   "8 — MUTATION: the scan does NOT fire on a file that imports the one function",
   !derivesStageLocally(
     join("src", "app", "fake", "page.tsx"),
-    `import { sourcingStage } from "@/lib/sourcing-stage";\nconst x = ["BID","TESTED","INVITED"];`
+    `import { sourcingStage } from "@/lib/sourcing-stage";\nconst x = ["PROPOSED","TESTED","INVITED"];`
   )
 );
 {
@@ -787,11 +787,11 @@ check(
     /\.map\(\s*(async\s*)?\([^)]*\)\s*=>[^}]*prisma\./.test(c);
   check(
     "8 — MUTATION: the loop scan catches a query inside a for",
-    queryInLoop("for (const p of providers) {\n  await prisma.bidRequest.count();\n}")
+    queryInLoop("for (const p of providers) {\n  await prisma.proposalRequest.count();\n}")
   );
   check(
     "8 — MUTATION: the loop scan catches a query inside a map",
-    queryInLoop("providers.map(async (p) => prisma.providerBid.findFirst())")
+    queryInLoop("providers.map(async (p) => prisma.proposal.findFirst())")
   );
   check(
     "8 — the loop scan does NOT fire on a loop that only reads memory",
@@ -807,7 +807,7 @@ check(
 }
 check(
   "8 — ABSENCE: no stage is STORED on a sourcing document",
-  !/\bSourcingStage\b/.test(SCHEMA_CODE) && !/\bstage\s+\w+/.test(modelBody("ProviderBid"))
+  !/\bSourcingStage\b/.test(SCHEMA_CODE) && !/\bstage\s+\w+/.test(modelBody("Proposal"))
 );
 
 /* ═══ 9 · NO INTERVIEW-SCORE AVERAGE IS COMPUTED ═══════════════════════════
@@ -888,8 +888,8 @@ check(
    back later. */
 
 for (const [header, line] of [
-  ["BidRequest", "BidRequestLine"],
-  ["ProviderBid", "ProviderBidLine"],
+  ["ProposalRequest", "ProposalRequestLine"],
+  ["Proposal", "ProposalLine"],
   ["TestRequest", "TestRequestLine"],
   ["TestResponse", "TestResponseLine"],
   ["InterviewResponse", "InterviewResponseLine"],
@@ -923,7 +923,7 @@ check(
 /* ⚠ ABSENCE: the shortcuts that were NOT taken. */
 check(
   "pattern — ABSENCE: no `shortlisted` boolean on a bid",
-  !/shortlisted\s+Boolean/.test(modelBody("ProviderBid"))
+  !/shortlisted\s+Boolean/.test(modelBody("Proposal"))
 );
 check(
   "pattern — ABSENCE: interview slots are rows, not a Json column",
@@ -932,8 +932,8 @@ check(
 /* ⚠ EVERY HEADER IS QUOTABLE. A document a person cannot name in an email is a
    document support cannot find. */
 for (const [model, col] of [
-  ["BidRequest", "request_number"],
-  ["ProviderBid", "bid_number"],
+  ["ProposalRequest", "request_number"],
+  ["Proposal", "proposal_number"],
   ["TestRequest", "request_number"],
   ["TestResponse", "response_number"],
   ["InterviewRequest", "request_number"],

@@ -1,4 +1,4 @@
-import type { ProviderBidStatus } from "@prisma/client";
+import type { ProposalStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SourcingError, inviteIsOpen } from "@/lib/sourcing";
 import { notify } from "@/lib/notifications";
@@ -9,7 +9,7 @@ import type { Viewer } from "@/lib/access";
  * ── ⚠⚠⚠ A PROVIDER PROPOSES (`P2-A8-E621` WS-A) ─────────────────────────
  *
  * ⚠⚠ **THE FIRST MISSING WRITER, AND EVERYTHING DOWNSTREAM WAITED ON IT.**
- * `ProviderBid` has existed since `E388` with zero rows, and Statistics said
+ * `Proposal` has existed since `E388` with zero rows, and Statistics said
  * *"Proposals aren't recorded yet — nothing creates one"*. ⚠⚠⚠ RULING 24: that
  * sentence was true **because nobody built the form that creates one**, and
  * citing it as the reason not to build the writer is circular — the rule then
@@ -18,7 +18,7 @@ import type { Viewer } from "@/lib/access";
  * ── ⚠⚠ WHO MAY PROPOSE — RULING 14, AND IT IS THE REQUEST'S OWN SWITCH ───
  *
  * ⚠ SCOTT, 2026-09-24: **"The buyer picks, per request."**
- * · `INVITE_ONLY` → the provider must hold an OPEN `BidRequest`.
+ * · `INVITE_ONLY` → the provider must hold an OPEN `ProposalRequest`.
  * · `OPEN` → any provider may propose, invited or not.
  * ⚠⚠ THE SWITCH IS READ FROM THE REQUEST, NEVER INFERRED from whether an
  * invite happens to exist — inferring it would silently make every request
@@ -44,8 +44,8 @@ export type ProposalDraft = {
    * ⚠⚠⚠ THEIR RATE (WS-A item 1: *"their rate, their pitch"*), ADDED IN WS-C
    * BECAUSE WS-C IS WHERE ITS ABSENCE BIT.
    *
-   * ⚠ MEASURED 2026-09-25: `ProviderBidLine.bid_request_line_id` was **NOT
-   * NULL**, and **nothing in `src/` creates a `BidRequestLine`** — 0 rows, 0
+   * ⚠ MEASURED 2026-09-25: `ProposalLine.proposal_request_line_id` was **NOT
+   * NULL**, and **nothing in `src/` creates a `ProposalRequestLine`** — 0 rows, 0
    * writers. ⚠⚠ So a proposal line was unwritable by EVERY route, and a
    * proposal could carry no price at all. WS-C then had nothing to multiply the
    * buyer's hours by. ⚠⚠⚠ The column is now nullable (one `DROP NOT NULL`, zero
@@ -76,7 +76,7 @@ export type ProposalDraft = {
  * source for the number WS-C computes from the dates.
  */
 async function writeRate(
-  providerBidId: string,
+  proposalId: string,
   rate: NonNullable<ProposalDraft["rate"]> | null
 ): Promise<void> {
   if (!rate) return;
@@ -84,14 +84,14 @@ async function writeRate(
     throw new SourcingError("Enter your rate.", "BAD_RATE");
   }
   await prisma.$transaction([
-    prisma.providerBidLine.deleteMany({ where: { provider_bid_id: providerBidId } }),
-    prisma.providerBidLine.create({
+    prisma.proposalLine.deleteMany({ where: { proposal_id: proposalId } }),
+    prisma.proposalLine.create({
       data: {
-        provider_bid_id: providerBidId,
+        proposal_id: proposalId,
         line_number: 1,
         /* ⚠⚠ NULL ON AN OPEN REQUEST — see `ProposalDraft.rate`. This is the
            half that the NOT NULL made unreachable for every route. */
-        bid_request_line_id: null,
+        proposal_request_line_id: null,
         basis: rate.basis ?? "RATE",
         uom: rate.uom ?? "HOUR",
         quantity: null,
@@ -105,7 +105,7 @@ async function writeRate(
 /**
  * ── ⚠⚠⚠ IS THIS PROPOSAL STILL THE PROVIDER'S TO CHANGE? ──────────────────
  *
- * ⚠⚠ **A `Record`, SO AN EIGHTH `ProviderBidStatus` IS A COMPILE ERROR** rather
+ * ⚠⚠ **A `Record`, SO AN EIGHTH `ProposalStatus` IS A COMPILE ERROR** rather
  * than silently inheriting `false` and becoming editable after a decision.
  * ⚠ It reproduces the inline list it replaced, value for value — ⚠ SUPERSEDED,
  * quoted not deleted (`E164`):
@@ -115,7 +115,7 @@ async function writeRate(
  * an answer, and a provider may still revise their price while they are on one.
  * ⚠ `WITHDRAWN` is decided because the provider themselves ended it.
  */
-const PROPOSAL_IS_DECIDED: Record<ProviderBidStatus, boolean> = {
+const PROPOSAL_IS_DECIDED: Record<ProposalStatus, boolean> = {
   DRAFT: false,
   SUBMITTED: false,
   SHORTLISTED: false,
@@ -135,7 +135,7 @@ export type ProposalRate = {
 /** ⚠ What this provider has already sent, if anything. */
 export type ExistingProposal = {
   id: string;
-  status: ProviderBidStatus;
+  status: ProposalStatus;
   coverNote: string | null;
   validUntil: Date | null;
   submittedAt: Date | null;
@@ -198,7 +198,7 @@ export async function proposeEligibility(
   /* ⚠⚠ READ FIRST, SO A REFUSAL CAN STILL SHOW THE PROVIDER WHAT THEY SENT. A
      proposal that can no longer be changed is still theirs to READ, and a page
      that hides it on refusal would read as though it had been thrown away. */
-  const row = await prisma.providerBid.findUnique({
+  const row = await prisma.proposal.findUnique({
     where: {
       work_request_id_provider_person_id: {
         work_request_id: workRequestId,
@@ -262,7 +262,7 @@ export async function proposeEligibility(
   /* ⚠⚠⚠ RULING 14, READ FROM THE REQUEST. */
   let inviteId: string | null = null;
   if (request.proposal_access === "INVITE_ONLY") {
-    const itb = await prisma.bidRequest.findFirst({
+    const itb = await prisma.proposalRequest.findFirst({
       where: { work_request_id: request.id, provider_person_id: providerPersonId },
       select: { id: true, status: true, responds_by: true },
     });
@@ -347,7 +347,7 @@ export async function submitProposal(
   const coverNote = draft.coverNote?.trim() || null;
 
   if (existing) {
-    await prisma.providerBid.update({
+    await prisma.proposal.update({
       where: { id: existing.id },
       data: {
         cover_note: coverNote,
@@ -363,15 +363,15 @@ export async function submitProposal(
     return { id: existing.id, replaced: true };
   }
 
-  const created = await prisma.providerBid.create({
+  const created = await prisma.proposal.create({
     data: {
       /* ⚠ A readable identifier, not a uuid, because a person says it aloud. */
-      bid_number: `PB-${now.getTime().toString(36).toUpperCase()}-${provider.id.slice(0, 4)}`,
+      proposal_number: `PRO-${now.getTime().toString(36).toUpperCase()}-${provider.id.slice(0, 4)}`,
       work_request_id: request.id,
       /* ⚠⚠ NULL ON AN OPEN REQUEST. That is the whole reason the column was
          made nullable — ruling 14's open half was unreachable while a proposal
          required an invite. */
-      bid_request_id: verdict.inviteId,
+      proposal_request_id: verdict.inviteId,
       provider_person_id: provider.id,
       cover_note: coverNote,
       valid_until: validUntil,
@@ -396,7 +396,7 @@ export async function submitProposal(
   await notify({
     event: "work.proposal_received",
     personId: request.buyerPersonId,
-    entityType: "provider_bid",
+    entityType: "proposal",
     entityId: created.id,
     dedupeKey: `work.proposal_received:${created.id}`,
     vars: { requestTitle: request.title, requestId: request.id },
@@ -422,7 +422,7 @@ export async function withdrawProposal(
   /* ⚠⚠ OWNER-SCOPED IN THE `where`, so a crafted id cannot withdraw somebody
      else's proposal (load-bearing rule 5). `updateMany` matches nothing rather
      than throwing on a row that was never yours. */
-  const res = await prisma.providerBid.updateMany({
+  const res = await prisma.proposal.updateMany({
     where: {
       id: proposalId,
       provider_person_id: provider.id,
@@ -453,7 +453,7 @@ export async function withdrawProposal(
    ═════════════════════════════════════════════════════════════════════════ */
 
 /**
- * ⚠⚠ **A `Record`, SO AN EIGHTH `ProviderBidStatus` IS A COMPILE ERROR.** The
+ * ⚠⚠ **A `Record`, SO AN EIGHTH `ProposalStatus` IS A COMPILE ERROR.** The
  * same call `WORK_REQUEST_STATUS_LABEL` made in WS-A, and for the reason WS-A
  * measured: two pages there turned a five-value enum into copy with a ternary
  * on ONE value, so three states silently read *"Draft"*.
@@ -461,7 +461,7 @@ export async function withdrawProposal(
  * `NOT_SELECTED` learns less than one reading *"Not selected"*, and
  * `SHORTLISTED` is the buyer's own earlier act, not a status the provider set.
  */
-export const PROPOSAL_STATUS_LABEL: Record<ProviderBidStatus, string> = {
+export const PROPOSAL_STATUS_LABEL: Record<ProposalStatus, string> = {
   DRAFT: "Draft",
   SUBMITTED: "Submitted",
   SHORTLISTED: "Shortlisted",
@@ -474,10 +474,10 @@ export const PROPOSAL_STATUS_LABEL: Record<ProviderBidStatus, string> = {
 /** One proposal as the buyer's compare view reads it. */
 export type ProposalForBuyer = {
   id: string;
-  bidNumber: string;
+  proposalNumber: string;
   providerPersonId: string;
   providerName: string;
-  status: ProviderBidStatus;
+  status: ProposalStatus;
   statusLabel: string;
   submittedAt: Date | null;
   validUntil: Date | null;
@@ -549,17 +549,17 @@ export async function proposalsOn(
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, workRequestId, pAccountId);
 
-  const rows = await prisma.providerBid.findMany({
+  const rows = await prisma.proposal.findMany({
     where: { work_request_id: wr.id, submitted_at: { not: null } },
     select: {
       id: true,
-      bid_number: true,
+      proposal_number: true,
       provider_person_id: true,
       status: true,
       submitted_at: true,
       valid_until: true,
       cover_note: true,
-      bid_request_id: true,
+      proposal_request_id: true,
       lines: {
         select: { unit_price_cents: true, uom: true, basis: true },
         orderBy: { line_number: "asc" },
@@ -608,7 +608,7 @@ export async function proposalsOn(
     const line = r.lines[0];
     return {
       id: r.id,
-      bidNumber: r.bid_number,
+      proposalNumber: r.proposal_number,
       providerPersonId: r.provider_person_id,
       /* ⚠ `invitedOn`'s fallback, for the same reason — a missing name is not a
          blank cell, and "A provider" is true of every row that hits it. */
@@ -626,7 +626,7 @@ export async function proposalsOn(
               basis: line.basis,
             }
           : null,
-      invited: r.bid_request_id !== null,
+      invited: r.proposal_request_id !== null,
       interviewStatus: interviewOf.get(r.provider_person_id) ?? null,
       testStatus: testOf.get(r.provider_person_id) ?? null,
     };

@@ -60,8 +60,8 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
  * | tab | the claim | verified by behaviour |
  * |---|---|---|
  * | `saved` | nothing records a save | ✅ **TRUE** — no `Saved*` model, no writer |
- * | `invitations` | *"needs a work-invitation model, which doesn't exist"* | ❌ **FALSE** — the model is **`BidRequest`**, and `work-request-invite.ts:116` has been creating one all along |
- * | `proposals` | *"needs a Proposal model, which doesn't exist"* | ❌ **FALSE TWICE** — the model is **`ProviderBid`**, and `proposals.ts:222` now creates one (`E621` WS-A) |
+ * | `invitations` | *"needs a work-invitation model, which doesn't exist"* | ❌ **FALSE** — the model is **`ProposalRequest`**, and `work-request-invite.ts:116` has been creating one all along |
+ * | `proposals` | *"needs a Proposal model, which doesn't exist"* | ❌ **FALSE TWICE** — the model is **`Proposal`**, and `proposals.ts:222` now creates one (`E621` WS-A) |
  *
  * ⚠⚠ THE `proposals` STRING ALSO BLAMED THE MEMBER — *"You haven't sent any
  * proposals, and you can't yet"* — which ruling 18's surviving half forbids, and

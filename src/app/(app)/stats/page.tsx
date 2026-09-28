@@ -95,7 +95,7 @@ export default async function MyStatsPage({
       paused_at: true,
       validation_status: true,
       /* ⚠ `E563` WS-C — the sourcing documents key on the PERSON, not the
-         profile. `BidRequest.provider_person_id` and
+         profile. `ProposalRequest.provider_person_id` and
          `InterviewRequest.provider_person_id` are both person ids. */
       person_id: true,
       /* ⚠⚠⚠ `rating: true` IS GONE — IT WAS SELECTED AND NEVER USED.
@@ -283,7 +283,7 @@ export default async function MyStatsPage({
     ── ⚠⚠ THE WS-C COUNTS (`P2-J2-E563`) ─────────────────────────────────────
 
     ⚠⚠ THESE ARE REAL COUNTS OF REAL ROWS, and today every sourcing one is
-    ZERO — measured 2026-09-19: `BidRequest` 0, `ProviderBid` 0,
+    ZERO — measured 2026-09-19: `ProposalRequest` 0, `Proposal` 0,
     `InterviewRequest` 0, across the WHOLE database. ⚠ That is a TRUE zero, not
     an untracked one, and the distinction decides how each tile renders:
       · a model exists and the count is 0 → PRINT 0. The Counters decision is
@@ -298,7 +298,7 @@ export default async function MyStatsPage({
     ⚠⚠ *"A recorded refusal becomes a scarlet letter on a marketplace."*
     `check:sourcing` FAILS THE BUILD on a named decline counter in any file that
     also handles a sourcing document — and this file now does.
-    ⚠ SO: no `prisma.bidRequest.count()` filtered to `DECLINED`, no `groupBy`
+    ⚠ SO: no `prisma.proposalRequest.count()` filtered to `DECLINED`, no `groupBy`
     over a bid document, and NO IDENTIFIER matching `declineCount` /
     `declineRate` / `responsivenessScore` / `acceptanceRate` and friends.
     ⚠⚠ THE INVITATION COUNT IS DELIBERATELY BLIND TO THE ANSWER — it counts what
@@ -340,10 +340,10 @@ export default async function MyStatsPage({
     //      became of it, i.e. the denominator. The schema has NO EXPIRED
     //      state, so the label read DECLINED + CANCELLED and the query
     //      counted exactly those two.]
-    //       prisma.bidRequest.count({
+    //       prisma.proposalRequest.count({
     //         where: { provider_person_id: profile.person_id, issued_at: { not: null } },
     //       }),
-    //       prisma.providerBid.count({
+    //       prisma.proposal.count({
     //         where: {
     //           provider_person_id: profile.person_id,
     //           submitted_at: { not: null },
@@ -802,7 +802,7 @@ export default async function MyStatsPage({
           //   <NotTrackedYet unlocks="you start bidding on work requests" />
           // </StatTile>
 
-          ⚠⚠ IT IS NO LONGER UNTRACKED — `BidRequest` and `ProviderBid` are in
+          ⚠⚠ IT IS NO LONGER UNTRACKED — `ProposalRequest` and `Proposal` are in
           the schema and `lib/sourcing.ts` writes them, so these are real counts.
           ⚠ They read 0 today because the marketplace holds zero of both, and a
           TRUE zero is printed, not hidden behind a dash (the Counters decision
@@ -817,11 +817,11 @@ export default async function MyStatsPage({
           ── ⚠⚠⚠ `Proposals` RETIRED — AND IT WAS THE ONE THAT WAS RIGHT ──────
 
           ⚠⚠⚠ THIS TILE DISPROVED MY OWN WORK CARD. It counted
-          `providerBid.count({ provider_person_id, submitted_at: { not: null } })`
+          `proposal.count({ provider_person_id, submitted_at: { not: null } })`
           — a real number — while the Work card printed a DASH reading *"No
           Proposal model exists"*. ⚠⚠ THE SAME FIGURE RENDERED AS BOTH A NUMBER
           AND A DASH, and the dash was the lie: the model is named
-          **`ProviderBid`**, not `Proposal`, and it had been counted here all
+          **`Proposal`**, not `Proposal`, and it had been counted here all
           along. ⚠ **AN ABSENT NAME IS NOT AN ABSENT THING — search for the
           behaviour, not the noun** (Scott, 2026-09-23).
           ⚠ Both rows moved: `Sent` is the Work card's `Proposals Sent` (same

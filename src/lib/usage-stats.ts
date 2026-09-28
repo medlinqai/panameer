@@ -15,7 +15,7 @@ import { prisma } from "@/lib/prisma";
  * what is in the database, seeded rows included, or a number Scott specifies.
  * Count it and print it. No seed-reporting, no gating."*
  * ⚠⚠ SO A ZERO HERE IS A MEASUREMENT, NOT A GAP. Three of the six read zero
- * platform-wide today (measured 2026-09-20: `BidRequest` issued 0, `WorkOrder`
+ * platform-wide today (measured 2026-09-20: `ProposalRequest` issued 0, `WorkOrder`
  * 0, `Payment` 0), and that is the true state of a marketplace whose
  * transaction spine has shipped but never been walked end to end.
  * ⚠ Scott's own ruling on the stats card: *"THE FIGURE STAYS A TRUE `$0`"*, with
@@ -44,7 +44,7 @@ export async function getUsageStats(
   const [work, sell, orders] = await Promise.all([
     /* ⚠ An invitation somebody actually received — `issued_at` rather than a
        status list, the same rule `/stats` uses so the two cannot disagree. */
-    prisma.bidRequest.count({
+    prisma.proposalRequest.count({
       where: { provider_person_id: personId, issued_at: { not: null } },
     }),
     prisma.package.count({

@@ -145,7 +145,7 @@ function main() {
      exists, assert no in-scope file claims its absence. */
   const WRITERS: [string, string, RegExp][] = [
     ["a work order", p("src", "lib", "work-orders.ts"), /nothing creates (one|a work order)|no work order can be (built|created)/i],
-    ["a proposal", p("src", "lib", "proposals.ts"), /Proposal model, which doesn'?t exist|nothing creates a (ProviderBid|proposal)/i],
+    ["a proposal", p("src", "lib", "proposals.ts"), /Proposal model, which doesn'?t exist|nothing creates a (Proposal|proposal)/i],
     ["an interview", p("src", "lib", "interviews.ts"), /nothing creates an? (InterviewRequest|interview)/i],
     ["an invitation", p("src", "lib", "work-request-invite.ts"), /work-invitation model, which doesn'?t exist|can'?t invite you to propose/i],
   ];

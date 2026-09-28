@@ -411,7 +411,7 @@ export async function getProviderProfileView(
       */
       userId: profile.person.user_id,
       /* ⚠ The PERSON id. ⚠⚠ THE TRANSACTION MODELS ARE KEYED ON IT, NOT ON THE
-         PROFILE — `BidRequest.provider_person_id`, `WorkOrder.provider_person_id`
+         PROFILE — `ProposalRequest.provider_person_id`, `WorkOrder.provider_person_id`
          — so the usage comb cannot be counted without it (`E593`). It is not
          new data: the row is already loaded. */
       personId: profile.person.id,

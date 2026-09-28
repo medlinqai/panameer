@@ -13,12 +13,12 @@ import { Avatar } from "@/components/Avatar";
  * **THIS CREATES THE INVITE AND NOTHING MORE.** No bid list, no comparison, no
  * scoring, no shortlist, no tests, no interviews. `E395` built the models those
  * screens will read; the screens are their own brief. ⚠ NOTHING HERE RENDERS A
- * `ProviderBid`, and `check:hire` asserts that absence — *"just show whether
+ * `Proposal`, and `check:hire` asserts that absence — *"just show whether
  * they replied"* is one `include` away and is the beginning of the bid screen.
  *
  * ⚠ THE STUB THIS REPLACES WAS RIGHT TO BE A STUB. It said *"THERE IS NO
  * WORK-INVITATION MODEL… wiring this button to `CoordinatorInvite` would be
- * fabrication by mislabelling."* `BidRequest` landed on 2026-09-07 (`E395`), so
+ * fabrication by mislabelling."* `ProposalRequest` landed on 2026-09-07 (`E395`), so
  * the invitation now has somewhere honest to write.
  */
 
@@ -37,7 +37,7 @@ type ProviderOption = {
 
 type LineOption = { id: string; lineNumber: number; description: string; invitedCount: number };
 
-export function InviteToBid({
+export function InviteToPropose({
   workRequestId,
   lines,
   providers,
@@ -134,7 +134,7 @@ export function InviteToBid({
           <label className="block text-[13.5px] font-semibold">Which line? *</label>
           {/*
             ⚠ THE INVITE NAMES A LINE, and that is `E395`'s shape:
-            `BidRequestLine.work_request_line_id`. Not every ITB covers every
+            `ProposalRequestLine.work_request_line_id`. Not every ITB covers every
             line — a request for a DBA and a developer goes out as two different
             invitations naming two different lines.
           */}

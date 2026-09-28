@@ -13,7 +13,7 @@ import { getStatistics } from "@/lib/statistics";
  *
  * ⚠⚠ IT WRITES REAL ROWS THROUGH THE REAL WRITER AND TEARS THEM DOWN. A gate
  * that only greps would pass against a `submitProposal` that never wrote
- * anything — and *"nothing creates a ProviderBid"* is the exact sentence this
+ * anything — and *"nothing creates a Proposal"* is the exact sentence this
  * brief exists to make false.
  */
 let pass = 0;
@@ -116,17 +116,17 @@ async function main() {
 
       const first = await submitProposal(V(provider.user_id), { workRequestId: wr.id });
       check("3 — ⚠⚠ a provider CAN propose — the writer writes", !first.replaced);
-      const row = await prisma.providerBid.findUnique({
+      const row = await prisma.proposal.findUnique({
         where: { id: first.id },
-        select: { submitted_at: true, status: true, bid_request_id: true, work_request_id: true },
+        select: { submitted_at: true, status: true, proposal_request_id: true, work_request_id: true },
       });
       /* ⚠ WS-A item 1: `submitted_at` is what *Proposals Sent* counts. */
       check("3 — ⚠ submitted_at is set", row?.submitted_at != null);
       check("3 — status is SUBMITTED", row?.status === "SUBMITTED");
       /* ⚠⚠⚠ THE OPEN SHAPE: no invite, and ruling 14's open half is reachable. */
       check("3 — ⚠⚠ an OPEN request takes a proposal with NO invite",
-        row?.bid_request_id === null,
-        "this is the half that was unreachable while bid_request_id was NOT NULL");
+        row?.proposal_request_id === null,
+        "this is the half that was unreachable while proposal_request_id was NOT NULL");
       check("3 — it is attached to the request directly", row?.work_request_id === wr.id);
 
       /* ── ⚠⚠⚠ IDEMPOTENCY: the second submit REPLACES ──────────────────── */
@@ -136,10 +136,10 @@ async function main() {
       });
       check("3 — ⚠⚠⚠ proposing twice REPLACES, it does not duplicate", second.replaced);
       check("3 — ⚠ and it is the same row", second.id === first.id);
-      const count = await prisma.providerBid.count({ where: { work_request_id: wr.id } });
+      const count = await prisma.proposal.count({ where: { work_request_id: wr.id } });
       check("3 — ⚠⚠ exactly ONE proposal exists for this provider",
         count === 1, `${count} — the @@unique is what makes this true`);
-      const revised = await prisma.providerBid.findUnique({
+      const revised = await prisma.proposal.findUnique({
         where: { id: first.id },
         select: { cover_note: true },
       });
@@ -147,7 +147,7 @@ async function main() {
 
       /* ── 4 · ⚠⚠ WITHDRAWAL IS RECORDED, NOT DELETED ───────────────────── */
       await withdrawProposal(V(provider.user_id), first.id);
-      const after = await prisma.providerBid.findUnique({
+      const after = await prisma.proposal.findUnique({
         where: { id: first.id },
         select: { status: true, submitted_at: true },
       });
@@ -282,7 +282,7 @@ async function main() {
       );
 
       /* ── 8 · ⚠⚠⚠ THE RATE LINE — WS-C's OTHER HALF ──────────────────────
-         ⚠⚠ `ProviderBidLine` IS IN WS-C's SPEC AND §3 NEVER PRICED ANYTHING —
+         ⚠⚠ `ProposalLine` IS IN WS-C's SPEC AND §3 NEVER PRICED ANYTHING —
          every proposal it submits has no rate, so `writeRate` was exercised only
          by its early return. ⚠ This walks the priced path. */
       const priced = await prisma.workRequest.create({
@@ -300,11 +300,11 @@ async function main() {
         workRequestId: priced.id,
         rate: { unitPriceCents: 18_500 },
       });
-      const lines1 = await prisma.providerBidLine.findMany({
-        where: { provider_bid_id: p1.id },
+      const lines1 = await prisma.proposalLine.findMany({
+        where: { proposal_id: p1.id },
         select: { unit_price_cents: true, uom: true, basis: true, quantity: true },
       });
-      check("8 — ⚠⚠ a rate writes exactly ONE ProviderBidLine", lines1.length === 1,
+      check("8 — ⚠⚠ a rate writes exactly ONE ProposalLine", lines1.length === 1,
         `${lines1.length}`);
       check("8 — ⚠ at the cents it was given", lines1[0]?.unit_price_cents === 18_500,
         `${lines1[0]?.unit_price_cents}`);
@@ -323,8 +323,8 @@ async function main() {
         rate: { unitPriceCents: 22_000, basis: "AMOUNT" },
       });
       check("8 — revising the rate is the same proposal", p2.id === p1.id && p2.replaced);
-      const lines2 = await prisma.providerBidLine.findMany({
-        where: { provider_bid_id: p1.id },
+      const lines2 = await prisma.proposalLine.findMany({
+        where: { proposal_id: p1.id },
         select: { unit_price_cents: true, basis: true },
       });
       check("8 — ⚠⚠⚠ still exactly ONE line — the rate was REPLACED",
@@ -421,9 +421,9 @@ async function main() {
           select: { id: true },
         });
         if (other) {
-          await prisma.providerBid.create({
+          await prisma.proposal.create({
             data: {
-              bid_number: `PB-DRAFT-${Date.now().toString(36)}`,
+              proposal_number: `PRO-DRAFT-${Date.now().toString(36)}`,
               work_request_id: wr2.id,
               provider_person_id: other.id,
               status: "DRAFT",
@@ -441,7 +441,7 @@ async function main() {
         /* ⚠⚠ A WITHDRAWN PROPOSAL STAYS VISIBLE. `withdrawProposal`'s own
            reason: *"a deleted proposal reads to the buyer as though it was never
            sent"* — hiding it here would recreate that one layer up. */
-        const mine = await prisma.providerBid.findFirst({
+        const mine = await prisma.proposal.findFirst({
           where: { work_request_id: wr2.id, provider_person_id: provider.id },
           select: { id: true },
         });
@@ -516,11 +516,11 @@ async function main() {
         "a read-only compare view that posts is not read-only"
       );
     } finally {
-      /* ⚠⚠ SCOPED, and the proposals go first — `ProviderBid` cascades on the
+      /* ⚠⚠ SCOPED, and the proposals go first — `Proposal` cascades on the
          request, but the NOTIFICATION does not (no foreign key), so it is swept
          by its own dedupe key while the id still resolves (`E620`'s lesson). */
       if (requestIds.length > 0) {
-        const made = await prisma.providerBid.findMany({
+        const made = await prisma.proposal.findMany({
           where: { work_request_id: { in: requestIds } },
           select: { id: true },
         });
@@ -536,19 +536,19 @@ async function main() {
         mutation that made `withdrawProposal` DELETE instead of record left
         exactly that orphan, and it was found by counting rows rather than by
         anything failing.
-        ⚠⚠⚠ SAFE TO SWEEP FOR THE SAME REASON `E620`'s IS: a `provider_bid`
+        ⚠⚠⚠ SAFE TO SWEEP FOR THE SAME REASON `E620`'s IS: a `proposal`
         notification whose bid no longer exists cannot belong to a real
         proposal — nothing in the application deletes one (withdrawal RECORDS,
         it does not delete), so an orphan is by definition probe residue.
       */
       const notifs = await prisma.notification.findMany({
-        where: { entity_type: "provider_bid" },
+        where: { entity_type: "proposal" },
         select: { id: true, entity_id: true },
       });
       if (notifs.length > 0) {
         const live = new Set(
           (
-            await prisma.providerBid.findMany({
+            await prisma.proposal.findMany({
               where: { id: { in: notifs.map((n) => n.entity_id!).filter(Boolean) } },
               select: { id: true },
             })

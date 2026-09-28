@@ -360,7 +360,7 @@ async function main() {
        sweep above — the neighbour-matching trap (`E607`). */
     for (const [figure, needle] of [
       ["workOrders", /workOrders: await prisma\.workOrder\.count\(\{\s*where: \{ provider_person_id: personId \}/],
-      ["proposalsSent", /countWindowed\(window, "submitted_at", "providerBid", \{\s*provider_person_id: personId/],
+      ["proposalsSent", /countWindowed\(window, "submitted_at", "proposal", \{\s*provider_person_id: personId/],
       ["interviews", /countWindowed\(window, "created_at", "interviewRequest", \{\s*provider_person_id: personId/],
     ] as const) {
       check(

@@ -8,7 +8,7 @@ import { submitProposal } from "@/lib/proposals";
  * ── ⚠⚠⚠ POST /api/work-requests/[id]/propose (`P2-A8-E681` WS-C) ───────────
  *
  * ⚠⚠⚠ **THE WRITER EXISTED AND NOTHING COULD REACH IT.** `lib/proposals.ts`
- * has held `providerBid.create` since `E621` WS-A, and its only importers were
+ * has held `proposal.create` since `E621` WS-A, and its only importers were
  * three `scripts/check-*.ts` gates — measured again at WS-C's premise check.
  * ⚠⚠ `/find-work/[id]` recorded that in its own docblock and deliberately
  * shipped **no propose button**, because *"a control whose handler refuses is a

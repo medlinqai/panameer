@@ -24,7 +24,7 @@ import { relativeDay } from "@/lib/relative-day";
  * ── ⚠⚠⚠ WHAT IT DELIBERATELY DOES NOT DO ─────────────────────────────────
  *
  * ⚠⚠ **NO WRITER. NO FORM. NO PROPOSE ACTION.** `lib/proposals.ts:222` already
- * holds `prisma.providerBid.create` (`E621` WS-A) — ⚠⚠⚠ **and NOTHING IN `src/`
+ * holds `prisma.proposal.create` (`E621` WS-A) — ⚠⚠⚠ **and NOTHING IN `src/`
  * IMPORTS IT.** Measured 2026-09-26: the only importers of `@/lib/proposals` are
  * `scripts/check-proposals.ts`, `scripts/check-interviews.ts` and
  * `scripts/check-selection.ts`. **The writer exists and is unreachable**, so
@@ -42,7 +42,7 @@ import { relativeDay } from "@/lib/relative-day";
  *
  * ⚠⚠ **NO PROVIDER RATE REACHES THIS MODULE.** The select below takes no
  * `ProviderProfile`, no `hourly_rate_cents`, no `onsite_rate_cents`, no
- * `remote_rate_cents`, no `ProviderBidLine` and no `SettlementLine` — so there
+ * `remote_rate_cents`, no `ProposalLine` and no `SettlementLine` — so there
  * is nothing for the predicate to govern, and calling `canSeeRate()` on a value
  * that is not a rate would state a rule about the wrong thing.
  * ⚠⚠⚠ **`canSeeRate()` IN `src/lib/rate-visibility.ts` IS THE ONE RULE, AND ANY

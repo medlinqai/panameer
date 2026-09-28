@@ -95,7 +95,7 @@ export function assertLineShape(line: LineShape): void {
  * ⚠ So the RULE lives here once, keyed on the only question it actually asks —
  * *is this line priced by quantity?* — and the two enums are nothing more than
  * two ways of answering it. ⚠⚠ `assertLineShape` answers it from `LineBasis`
- * (`ProviderBidLine` still carries one); `assertTransactionLineShape` answers it
+ * (`ProposalLine` still carries one); `assertTransactionLineShape` answers it
  * from `TransactionType` (the requisition line and, since ruling 44, the order
  * line). **Neither translates into the other, which is what the ruling forbade.**
  */
@@ -186,7 +186,7 @@ export function basisForPricingType(t: "HOURLY" | "FIXED" | "RECURRING"): LineBa
  *
  * ⚠ `basisForPricingType` above maps the same input onto the OLD two-value
  * `LineBasis`. It is kept because `SupplierPart`, `WorkOrderLine`,
- * `ProviderBidLine` and `BidRequestLine` still use that enum — only the
+ * `ProposalLine` and `ProposalRequestLine` still use that enum — only the
  * REQUISITION line moved (ruling 37b).
  *
  * ⚠⚠ WHY `HOURLY` BECOMES `SERVICE_BY_QTY` AND NOT `PRODUCT_BY_QTY`: the

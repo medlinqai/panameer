@@ -14,13 +14,13 @@ import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
  * screen, no scoring, no shortlist, no tests, no interviews — every one of those
  * is its own brief, and `E395` built the models they will write to.
  *
- * ⚠ SO NOTHING IN THIS FILE READS `ProviderBid`. It writes `BidRequest` +
- * `BidRequestLine` and it counts invitations. `check:hire` asserts the absence,
+ * ⚠ SO NOTHING IN THIS FILE READS `Proposal`. It writes `ProposalRequest` +
+ * `ProposalRequestLine` and it counts invitations. `check:hire` asserts the absence,
  * because "just show whether they replied" is one `include` away and is the
  * beginning of the bid screen.
  *
  * ⚠ WS-3 IS IN SCOPE ONLY BECAUSE `E395` LANDED. The brief made it conditional —
- * *"do not invent an invite flow with nowhere to write"* — and `BidRequest` is on
+ * *"do not invent an invite flow with nowhere to write"* — and `ProposalRequest` is on
  * main at `54d272b`, so it has somewhere to write.
  */
 
@@ -62,7 +62,7 @@ export type InviteResult = {
  * not get a wall of "already invited" and no sixth invitation. The unique
  * constraint decides; the result reports both halves.
  *
- * ⚠ AND THE LINE IS NAMED ON THE ITB. `BidRequestLine.work_request_line_id` is
+ * ⚠ AND THE LINE IS NAMED ON THE ITB. `ProposalRequestLine.work_request_line_id` is
  * why — not every ITB covers every line, and a request for a DBA and a developer
  * goes out as two different invitations naming two different lines.
  */
@@ -103,7 +103,7 @@ export async function inviteProviders(
   if (unknown.length)
     throw new WorkRequestError("One of those people is not a service provider", "INVALID");
 
-  const existing = await prisma.bidRequest.findMany({
+  const existing = await prisma.proposalRequest.findMany({
     where: { work_request_id: wr.id, provider_person_id: { in: ids } },
     select: { provider_person_id: true },
   });
@@ -114,7 +114,7 @@ export async function inviteProviders(
     if (already.has(providerPersonId)) continue;
     const requestNumber = newRequestNumber();
     try {
-      await prisma.bidRequest.create({
+      await prisma.proposalRequest.create({
         data: {
           request_number: requestNumber,
           work_request_id: wr.id,
@@ -133,7 +133,7 @@ export async function inviteProviders(
       /*
         ── ⚠⚠⚠ THE BELL ENTRY (`P2-A8-E680`, ruling 86) ────────────────────
 
-        ⚠⚠ **THIS WRITER SHIPPED WITHOUT ONE.** `bidRequest.create` has been
+        ⚠⚠ **THIS WRITER SHIPPED WITHOUT ONE.** `proposalRequest.create` has been
         running from a reachable page all along and **the invited provider was
         never told** — no bell row, nothing on their worklist. It is the one
         piece of WS-B that was missing; the match and the invite were already
@@ -163,7 +163,7 @@ export async function inviteProviders(
       await notify({
         event: "work.invited_to_propose",
         personId: providerPersonId,
-        entityType: "BidRequest",
+        entityType: "ProposalRequest",
         entityId: wr.id,
         /* ⚠ ONE ENTRY PER (PROVIDER × REQUEST). Re-inviting after a decline
            must not stack a second identical row on their worklist. */
@@ -201,7 +201,7 @@ export type InvitedProvider = {
  * Who has already been invited on this request.
  *
  * ⚠⚠ THIS RETURNS THE INVITATIONS, NOT THE RESPONSES. There is deliberately no
- * `status` of the bid here and no `include: { bid: true }` — see the fence at the
+ * `status` of the bid here and no `include: { proposal: true }` — see the fence at the
  * top of the file. A buyer looking at this page learns who was asked; what came
  * back is the bid screen's job and the bid screen is not this brief.
  */
@@ -212,7 +212,7 @@ export async function invitedOn(
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, workRequestId, pAccountId);
 
-  const rows = await prisma.bidRequest.findMany({
+  const rows = await prisma.proposalRequest.findMany({
     where: { work_request_id: wr.id },
     select: {
       provider_person_id: true,

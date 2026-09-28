@@ -10,7 +10,7 @@ import { inviteProviders } from "@/lib/work-request-invite";
  *
  * ⚠⚠ THE FENCE: THIS CREATES INVITATIONS AND READS NOTHING BACK. There is no GET
  * here returning bids, and `lib/work-request-invite.ts` never touches
- * `ProviderBid`. The bid list and the comparison screen are their own brief.
+ * `Proposal`. The bid list and the comparison screen are their own brief.
  *
  * ⚠ `SourcingError` REACHES HERE when the ITB has no closing date — `E395`'s
  * rule, thrown by `E395`'s function. Passed through with its own message, since

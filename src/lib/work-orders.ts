@@ -401,7 +401,7 @@ export async function declineWorkOrder(
     });
     if (order.work_request_id) {
       /* ⚠ The declining provider's own proposal records the refusal. */
-      await tx.providerBid.updateMany({
+      await tx.proposal.updateMany({
         where: {
           work_request_id: order.work_request_id,
           provider_person_id: me.id,
@@ -414,7 +414,7 @@ export async function declineWorkOrder(
       });
       /* ⚠⚠ AND EVERYONE ELSE IS BACK IN CONTENTION. ⚠ `WITHDRAWN` and `DECLINED`
          are left alone — those providers ended their own involvement. */
-      await tx.providerBid.updateMany({
+      await tx.proposal.updateMany({
         where: {
           work_request_id: order.work_request_id,
           provider_person_id: { not: me.id },

@@ -125,7 +125,7 @@ export default async function Page({
         ⚠⚠ AND THE HEADING SAYS EXACTLY WHAT IS BEING COMPARED. This is the ORDER
         against the WORK-REQUEST LINE — what the provider was ASKED to price. It
         is NOT the bid: `WorkOrderLine` has no link of any kind to
-        `ProviderBidLine`, so an order-versus-bid diff cannot be computed today
+        `ProposalLine`, so an order-versus-bid diff cannot be computed today
         and this does not imply one. See `termChanges` and the report.
       */}
       {o.hasChanges && (

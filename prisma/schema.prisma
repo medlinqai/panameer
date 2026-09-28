@@ -3042,7 +3042,7 @@ model WorkRequest {
   @@index([status])
   /// ⚠⚠ `E621` WS-A — EVERY proposal against this request, invited or open.
   /// Ruling 14: the buyer picks per request, so both shapes land here.
-  proposals ProviderBid[]
+  proposals Proposal[]
 
   @@map("work_requests")
 }
@@ -3120,7 +3120,7 @@ enum WorkRequestDuration {
 /// MISSING COLUMN AS ONE OF ITS OPEN STOPS: it is added here, in the schema
 /// window brief 6 owns, so brief 12 inherits it rather than re-opening it.
 enum WorkProposalAccess {
-  /// ⚠ Only a provider holding an issued `BidRequest` may propose.
+  /// ⚠ Only a provider holding an issued `ProposalRequest` may propose.
   INVITE_ONLY
   /// ⚠ Any provider who can see the posting may propose, invited or not.
   OPEN
@@ -5816,7 +5816,7 @@ model ProviderPayoutLine {
  * ⚠⚠ EVERY INTERACTION IS A REQUEST AND A RESPONSE, EACH HEADER + LINES.
  * This is Scott's own shape (`Steps Across Journeys.docx`) and it is how an ERP
  * models RFQ → Quote:
- * invite to bid  BidRequest (the ITB)  →  ProviderBid
+ * invite to bid  ProposalRequest (the ITB)  →  Proposal
  * ask for a test TestRequest           →  TestResponse
  * ask for times  InterviewRequest      →  InterviewResponse  (⚠ SLOTS ARE LINES)
  * select         Shortlist             →  —
@@ -5830,7 +5830,39 @@ model ProviderPayoutLine {
  * trunk and a second convention inside one journey is worse than either.
  */
 
-enum BidRequestStatus {
+/// ── ⚠⚠⚠ THE SOURCING DOCUMENTS WERE CALLED "BID" AND SCOTT RULED THEM WRONG ──
+///
+/// `P2-A8-E695` WS-A, 2026-09-28. ⚠ **SCOTT: *"requester requests a proposal
+/// (bid is wrong)."***
+///
+/// ⚠⚠⚠ **AND THE SCHEMA HAD AGREED WITH HIM ALL ALONG IN ONE PLACE:
+/// `WorkRequest.proposals` HAS BEEN THE RELATION NAME FOR THIS MODEL FOR
+/// MONTHS.** The model disagreed with its own relation.
+///
+/// ⚠ SUPERSEDED, quoted not deleted (`E164`) — every name this replaced:
+///     BidRequest        -> ProposalRequest        @@map bid_requests       -> proposal_requests
+///     BidRequestLine    -> ProposalRequestLine    @@map bid_request_lines  -> proposal_request_lines
+///     ProviderBid       -> Proposal               @@map provider_bids      -> proposals
+///     ProviderBidLine   -> ProposalLine           @@map provider_bid_lines -> proposal_lines
+///     BidRequestStatus  -> ProposalRequestStatus
+///     ProviderBidStatus -> ProposalStatus
+///     bid_request_id    -> proposal_request_id    provider_bid_id -> proposal_id
+///     bid_number        -> proposal_number
+///
+/// ⚠⚠ **THE TABLES MOVED WITH THE MODELS, AND THAT WAS THE POINT.** A
+/// Prisma-only rename leaving `@@map("provider_bids")` behind is HALF a rename —
+/// reports, raw SQL and anyone reading the database would still see "bid".
+///
+/// ⚠⚠⚠ **DONE AS DROP+ADD, AND RULING 38 PERMITTED IT ONLY BECAUSE THE ROWS
+/// WERE COUNTED FIRST AND WERE ZERO:** `BidRequest` 0 · `BidRequestLine` 0 ·
+/// `ProviderBid` 0 · `ProviderBidLine` 0, measured 2026-09-28 against the one
+/// shared database. ⚠ **At one row this rename would not have been done today.**
+///
+/// ⚠ **`PB-` BECAME `PRO-` IN `proposal_number`'s GENERATOR, AND THAT IS A
+/// JUDGEMENT CALL, FLAGGED:** `PB` stood for Provider Bid, so leaving it would
+/// have spelled the retired word into every future proposal number. It is a
+/// VALUE not a name, it was free at zero rows, and it is one line to reverse.
+enum ProposalRequestStatus {
   DRAFT
   ISSUED
   VIEWED
@@ -5840,7 +5872,7 @@ enum BidRequestStatus {
   WITHDRAWN
 }
 
-enum ProviderBidStatus {
+enum ProposalStatus {
   DRAFT
   SUBMITTED
   WITHDRAWN
@@ -5850,7 +5882,7 @@ enum ProviderBidStatus {
   NOT_SELECTED
 }
 
-model BidRequest {
+model ProposalRequest {
   id             String @id @default(uuid()) @db.Uuid
   request_number String @unique
 
@@ -5869,7 +5901,7 @@ model BidRequest {
   /// decided yet; `assertIssuable` is what refuses to ISSUE without one.
   responds_by DateTime?
 
-  status  BidRequestStatus @default(DRAFT)
+  status  ProposalRequestStatus @default(DRAFT)
   message String?
 
   /// ⚠ THE DECLINE IS RECORDED, AND `E366`'S RULE HOLDS: it shows to the
@@ -5884,19 +5916,19 @@ model BidRequest {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  lines BidRequestLine[]
-  bid   ProviderBid?
+  lines ProposalRequestLine[]
+  bid   Proposal?
 
   @@unique([work_request_id, provider_person_id])
   @@index([work_request_id])
   @@index([provider_person_id])
   @@index([status])
-  @@map("bid_requests")
+  @@map("proposal_requests")
 }
 
-model BidRequestLine {
+model ProposalRequestLine {
   id             String @id @default(uuid()) @db.Uuid
-  bid_request_id String @db.Uuid
+  proposal_request_id String @db.Uuid
   line_number    Int
 
   /// ⚠ WHICH work-request line this provider is asked to price. NOT every ITB
@@ -5906,16 +5938,16 @@ model BidRequestLine {
 
   created_at DateTime @default(now())
 
-  bidRequest BidRequest @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+  proposalRequest ProposalRequest @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
 
-  @@unique([bid_request_id, line_number])
-  @@index([bid_request_id])
-  @@map("bid_request_lines")
+  @@unique([proposal_request_id, line_number])
+  @@index([proposal_request_id])
+  @@map("proposal_request_lines")
 }
 
-model ProviderBid {
+model Proposal {
   id         String @id @default(uuid()) @db.Uuid
-  bid_number String @unique
+  proposal_number String @unique
 
   /// ⚠ `@unique`: one bid per ITB. A second bid is a REVISION of this one, not a
   /// second document — otherwise "the bid" is ambiguous at the moment of award.
@@ -5927,10 +5959,10 @@ model ProviderBid {
   /// UNREACHABLE. Both documents were right; they described two settings of
   /// one switch, and the schema could only express one of them.
   /// ⚠ Set on an invited proposal, null on an open one.
-  bid_request_id String? @unique @db.Uuid
+  proposal_request_id String? @unique @db.Uuid
 
   /// ⚠⚠ THE REQUEST ITSELF, HELD DIRECTLY. An invited proposal could reach it
-  /// through `bid_request`, but an OPEN one has no invite to reach through —
+  /// through `proposal_request`, but an OPEN one has no invite to reach through —
   /// so the link has to live here, on every proposal, either way.
   /// ⚠⚠⚠ IT IS ALSO WHAT MAKES 'ONE PROPOSAL PER PROVIDER PER REQUEST'
   /// ENFORCEABLE BY THE DATABASE rather than by code remembering to check.
@@ -5939,7 +5971,7 @@ model ProviderBid {
   provider_person_id String @db.Uuid
 
   submitted_at DateTime?
-  status       ProviderBidStatus @default(DRAFT)
+  status       ProposalStatus @default(DRAFT)
 
   currency    String    @default("USD")
   valid_until DateTime?
@@ -5954,8 +5986,8 @@ model ProviderBid {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  lines      ProviderBidLine[]
-  bidRequest  BidRequest? @relation(fields: [bid_request_id], references: [id], onDelete: Cascade)
+  lines      ProposalLine[]
+  proposalRequest  ProposalRequest? @relation(fields: [proposal_request_id], references: [id], onDelete: Cascade)
   workRequest WorkRequest @relation(fields: [work_request_id], references: [id], onDelete: Cascade)
 
   /// ── ⚠⚠⚠ ONE PROPOSAL PER PROVIDER PER REQUEST, BY CONSTRUCTION ─────────
@@ -5969,21 +6001,21 @@ model ProviderBid {
   @@index([provider_person_id])
   @@index([work_request_id])
   @@index([status])
-  @@map("provider_bids")
+  @@map("proposals")
 }
 
-model ProviderBidLine {
+model ProposalLine {
   id              String @id @default(uuid()) @db.Uuid
-  provider_bid_id String @db.Uuid
+  proposal_id String @db.Uuid
   line_number     Int
 
   /// ⚠⚠⚠ NULLABLE SINCE `E621` WS-C, FOR THE SAME REASON THAT MADE
-  /// `ProviderBid.bid_request_id` NULLABLE IN WS-A: **an invite-shaped NOT NULL
+  /// `Proposal.proposal_request_id` NULLABLE IN WS-A: **an invite-shaped NOT NULL
   /// made ruling 14's OPEN half unreachable.**
   ///
   /// ⚠⚠ MEASURED 2026-09-25, AND IT IS WORSE THAN THE OPEN CASE: **NOTHING IN
-  /// `src/` CREATES A `BidRequestLine` AT ALL** — 0 rows, 0 writers anywhere. So
-  /// this NOT NULL pointed at a table nobody fills, which made `ProviderBidLine`
+  /// `src/` CREATES A `ProposalRequestLine` AT ALL** — 0 rows, 0 writers anywhere. So
+  /// this NOT NULL pointed at a table nobody fills, which made `ProposalLine`
   /// unwritable by EVERY route, invited or open. ⚠ A proposal therefore could
   /// not carry a price at all, and WS-A item 1 asks for exactly that:
   /// *"their rate, their pitch"*.
@@ -5991,8 +6023,8 @@ model ProviderBidLine {
   /// ⚠ SET when the proposal answers a specific invited line; NULL when the
   /// provider is proposing against an open request as a whole.
   /// ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  /// //   bid_request_line_id String @db.Uuid
-  bid_request_line_id String? @db.Uuid
+  /// //   proposal_request_line_id String @db.Uuid
+  proposal_request_line_id String? @db.Uuid
 
   /// ⚠⚠ THE SAME PRICING SHAPE AS `WorkOrderLine`, DELIBERATELY. AWARDING IS A
   /// COPY, FIELD FOR FIELD. If the two drift the award becomes a TRANSLATION,
@@ -6019,12 +6051,12 @@ model ProviderBidLine {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  providerBid ProviderBid @relation(fields: [provider_bid_id], references: [id], onDelete: Cascade)
+  proposal Proposal @relation(fields: [proposal_id], references: [id], onDelete: Cascade)
 
-  @@unique([provider_bid_id, line_number])
-  @@index([provider_bid_id])
-  @@index([bid_request_line_id])
-  @@map("provider_bid_lines")
+  @@unique([proposal_id, line_number])
+  @@index([proposal_id])
+  @@index([proposal_request_line_id])
+  @@map("proposal_lines")
 }
 
 /**
@@ -6070,7 +6102,7 @@ model TestRequest {
   /// ⚠ `E366`'S ENABLE CONDITION: the SUBMITTED bid this was triggered from.
   /// Nullable because a buyer may test before inviting, but the button `E366`
   /// could not build reads this.
-  provider_bid_id String? @db.Uuid
+  proposal_id String? @db.Uuid
 
   issued_at   DateTime?
   responds_by DateTime?
@@ -6086,7 +6118,7 @@ model TestRequest {
 
   @@index([work_request_id])
   @@index([provider_person_id])
-  @@index([provider_bid_id])
+  @@index([proposal_id])
   @@index([status])
   @@map("test_requests")
 }
@@ -6334,7 +6366,7 @@ model ShortlistLine {
   line_number Int
 
   provider_person_id String  @db.Uuid
-  provider_bid_id    String? @db.Uuid
+  proposal_id    String? @db.Uuid
   note               String?
 
   created_at DateTime @default(now())

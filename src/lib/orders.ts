@@ -388,7 +388,7 @@ export type TermChange = {
  * The brief's reason for the delta is *"its terms may differ from WHAT THE
  * PROVIDER BID."* ⚠ **THAT COMPARISON CANNOT BE COMPUTED TODAY AND THIS DOES NOT
  * PRETEND TO.** `WorkOrderLine` carries `work_request_line_id` and **no link of
- * any kind to `ProviderBidLine`** — not on the line, not on the header. `E388`
+ * any kind to `ProposalLine`** — not on the line, not on the header. `E388`
  * built the order, `E395` built the bid, and **nothing joins the two**, because
  * awarding is `E392`/`E393` territory and no award path exists yet.
  *

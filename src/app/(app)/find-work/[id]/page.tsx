@@ -47,7 +47,7 @@ import { proposeEligibility } from "@/lib/proposals";
  * ── ⚠⚠⚠ THE PROPOSE FORM LANDED HERE — `E681` WS-C ───────────────────────
  *
  * ⚠ **SUPERSEDED, quoted not deleted (`E164`):** *"NO WRITER, NO FORM, NO
- * PROPOSE BUTTON. `lib/proposals.ts:222` HOLDS `prisma.providerBid.create`
+ * PROPOSE BUTTON. `lib/proposals.ts:222` HOLDS `prisma.proposal.create`
  * (`E621` WS-A) AND NOTHING IN `src/` IMPORTS IT — measured 2026-09-26; its only
  * importers are three `scripts/check-*.ts` gates. The writer exists and is
  * unreachable, so there is no route for a button to post to, and `E579` is

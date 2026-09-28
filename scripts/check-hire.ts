@@ -11,7 +11,7 @@
  *      STEPS array or restructuring the wizard, STOP AND REPORT."*
  *   3. **THE WS-3 FENCE: CREATE THE INVITE, NOTHING MORE.** No bid list, no
  *      comparison, no scoring, no shortlist. *"If you find yourself rendering
- *      ProviderBid rows, STOP AND REPORT."*
+ *      Proposal rows, STOP AND REPORT."*
  *
  * ⚠ ALL THREE ARE THINGS A LATER CHANGE WOULD BREAK WHILE LOOKING LIKE AN
  * IMPROVEMENT. Adding a tenth wizard step is an obvious feature; showing whether
@@ -302,7 +302,7 @@ const WIZARD_STEPS = [
 
 /* ═══ 3 · THE WS-3 FENCE — CREATE THE INVITE, NOTHING MORE ═════════════════
    ⚠⚠ *"Do NOT build the bid list, the bid-comparison screen, scoring,
-   shortlisting, tests or interviews… If you find yourself rendering ProviderBid
+   shortlisting, tests or interviews… If you find yourself rendering Proposal
    rows, STOP AND REPORT."* */
 
 /**
@@ -313,7 +313,7 @@ const WIZARD_STEPS = [
  * they add the file deliberately and a reviewer sees exactly the `include` that
  * opens the bid screen.
  */
-const RESPONSE_MODELS = /\bproviderBid\b|\bProviderBid\b|\bTestResponse\b|\bInterviewResponse\b|\bShortlistLine\b|\bproviderBidLine\b/;
+const RESPONSE_MODELS = /\bproposal\b|\bProposal\b|\bTestResponse\b|\bInterviewResponse\b|\bShortlistLine\b|\bproposalLine\b/;
 const SOURCING_LIB = join("src", "lib", "sourcing.ts");
 const SOURCING_STAGE = join("src", "lib", "sourcing-stage.ts");
 /*
@@ -346,7 +346,7 @@ const STATISTICS_LIB = join("src", "lib", "statistics.ts");
   ⚠⚠⚠ AND WHAT THE FENCE ACTUALLY GUARDS IS STILL GUARDED, because neither file
   is a SCREEN. The rule exists to stop **a bid list and a bid-comparison view** —
   one buyer reading many providers' prices side by side.
-  · `interviews.ts` reaches `providerBid` for exactly ONE thing: proving the
+  · `interviews.ts` reaches `proposal` for exactly ONE thing: proving the
     named provider has proposed, by the `(work_request_id, provider_person_id)`
     unique key. **One provider, by key, no list, no price read.**
   · `work-tests.ts` does the identical single lookup, for the identical reason.
@@ -375,10 +375,10 @@ const SELECTION_WRITER = join("src", "lib", "selection.ts");
 /*
   ── ⚠⚠⚠ AND THE WORK ORDER WRITER (`P2-A8-E621` WS-D) ───────────────────
 
-  ⚠ It touches `providerBid` for ONE reason: ruling 16 — *"a declined work order
+  ⚠ It touches `proposal` for ONE reason: ruling 16 — *"a declined work order
   goes back to the buyer to pick someone else"* — so a decline puts the other
   proposals back in contention. ⚠⚠ **It only ever WRITES statuses. It performs no
-  `providerBid` read at all**, which is a tighter fence than any of the four
+  `proposal` read at all**, which is a tighter fence than any of the four
   above, and the assertion below is an absence rather than a narrowing.
 */
 const ORDER_WRITER = join("src", "lib", "work-orders.ts");
@@ -405,13 +405,13 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
   check(
     "3 — ⚠⚠ statistics only COUNTS proposals, never selects their rows",
     statsFile != null &&
-      !/providerBid\.(findMany|findFirst|findUnique)/.test(statsFile.code),
+      !/proposal\.(findMany|findFirst|findUnique)/.test(statsFile.code),
     "a count of your own is not the comparison screen; a findMany would be"
   );
   const writerFile = SRC.find((f) => f.path === PROPOSAL_WRITER);
   check(
     "3 — ⚠⚠⚠ the proposal writer never reads ANOTHER provider's proposal",
-    writerFile != null && !/providerBid\.findMany/.test(writerFile.code),
+    writerFile != null && !/proposal\.findMany/.test(writerFile.code),
     "it may read the viewer's own by unique key; a list is the bid screen"
   );
   /*
@@ -427,12 +427,12 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
     const f = SRC.find((x) => x.path === path);
     check(
       `3 — ⚠⚠⚠ ${label} checks ONE proposal by key and never lists them`,
-      f != null && !/providerBid\.(findMany|count|aggregate|groupBy)/.test(f.code),
+      f != null && !/proposal\.(findMany|count|aggregate|groupBy)/.test(f.code),
       "a findMany here is the bid screen the WS-3 fence exists to prevent"
     );
     check(
       `3 — ⚠⚠ ${label} reads no proposal PRICE or narrative`,
-      f != null && !/providerBidLine|cover_note|amount_cents|rate_cents/.test(f.code),
+      f != null && !/proposalLine|cover_note|amount_cents|rate_cents/.test(f.code),
       "the fence is about comparing providers' prices — that is the comparison"
     );
   }
@@ -451,8 +451,8 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
   check(
     "3 — ⚠⚠⚠ and its only proposal findMany selects `id` ALONE — it cannot see a price",
     sel != null &&
-      (sel.code.match(/providerBid\.findMany/g) ?? []).length === 1 &&
-      /providerBid\.findMany\(\{[\s\S]{0,160}?select:\s*\{\s*id:\s*true,?\s*\}/.test(sel.code),
+      (sel.code.match(/proposal\.findMany/g) ?? []).length === 1 &&
+      /proposal\.findMany\(\{[\s\S]{0,160}?select:\s*\{\s*id:\s*true,?\s*\}/.test(sel.code),
     "widening that select is how a writer becomes the bid-comparison screen"
   );
   check(
@@ -464,12 +464,12 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
   const wo = SRC.find((f) => f.path === ORDER_WRITER);
   check(
     "3 — ⚠⚠⚠ ABSENCE: the work order writer never READS a proposal, it only records a decline",
-    wo != null && !/providerBid\.(findMany|findFirst|findUnique|count|aggregate|groupBy)/.test(wo.code),
+    wo != null && !/proposal\.(findMany|findFirst|findUnique|count|aggregate|groupBy)/.test(wo.code),
     "ruling 16 needs the statuses moved, and nothing else"
   );
   check(
     "3 — ⚠⚠ and it reads no proposal price or narrative either",
-    wo != null && !/providerBidLine|cover_note/.test(wo.code)
+    wo != null && !/proposalLine|cover_note/.test(wo.code)
   );
 }
 
@@ -481,7 +481,7 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
 }
 check(
   "3 — MUTATION: the scan would catch a bid list",
-  RESPONSE_MODELS.test("const bids = await prisma.providerBid.findMany();")
+  RESPONSE_MODELS.test("const bids = await prisma.proposal.findMany();")
 );
 check(
   "3 — MUTATION: the scan would catch a shortlist render",
@@ -491,8 +491,8 @@ check(
   const inv = fileAt("src/lib/work-request-invite.ts");
   check("3 — the invite lib exists (E395 landed, so WS-3 is in scope)", !!inv);
   check(
-    "3 — it writes BidRequest",
-    !!inv && /prisma\.bidRequest\.create/.test(inv.code)
+    "3 — it writes ProposalRequest",
+    !!inv && /prisma\.proposalRequest\.create/.test(inv.code)
   );
   check(
     "3 — it names the LINE on the ITB",
@@ -507,7 +507,7 @@ check(
     "3 — the closing date is enforced by E395's own function",
     !!inv && /assertIssuable\(/.test(inv.code)
   );
-  const ui = fileAt("src/components/work/InviteToBid.tsx");
+  const ui = fileAt("src/components/work/InviteToPropose.tsx");
   check("3 — the invite screen exists", !!ui);
   check(
     "3 — ABSENCE: the invite screen is no longer a ComingSoon stub",

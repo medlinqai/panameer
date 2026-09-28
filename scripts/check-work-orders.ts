@@ -374,18 +374,18 @@ async function main() {
     /* ═══ 4 · ⚠⚠⚠ RULING 16 — A DECLINE GOES BACK TO THE BUYER ════════════ */
     const rDecline = await makeRequisition(provider.id, [KINDS[0]!]);
     /* ⚠ A losing proposal, so the decline has somebody to hand the work back to. */
-    await prisma.providerBid.create({
+    await prisma.proposal.create({
       data: {
-        bid_number: `PB-PROBE-${Date.now().toString(36)}`,
+        proposal_number: `PRO-PROBE-${Date.now().toString(36)}`,
         work_request_id: rDecline,
         provider_person_id: other.id,
         status: "NOT_SELECTED",
         submitted_at: new Date(),
       },
     });
-    await prisma.providerBid.create({
+    await prisma.proposal.create({
       data: {
-        bid_number: `PB-PROBE2-${Date.now().toString(36)}`,
+        proposal_number: `PRO-PROBE2-${Date.now().toString(36)}`,
         work_request_id: rDecline,
         provider_person_id: provider.id,
         status: "AWARDED",
@@ -411,12 +411,12 @@ async function main() {
     check("4 — ⚠ its line loses the provider and the order",
       lineBack?.provider_person_id === null && lineBack?.work_order_id === null &&
         lineBack?.status === "SOURCING");
-    const bidsBack = await prisma.providerBid.findMany({
+    const proposalsBack = await prisma.proposal.findMany({
       where: { work_request_id: rDecline },
       select: { provider_person_id: true, status: true, declined_at: true, decline_reason: true },
     });
-    const mine = bidsBack.find((b) => b.provider_person_id === provider.id);
-    const theirs = bidsBack.find((b) => b.provider_person_id === other.id);
+    const mine = proposalsBack.find((b) => b.provider_person_id === provider.id);
+    const theirs = proposalsBack.find((b) => b.provider_person_id === other.id);
     check("4 — ⚠⚠ the declining provider's proposal records the refusal",
       mine?.status === "DECLINED" && mine?.declined_at != null &&
         mine?.decline_reason === "Booked elsewhere");
@@ -507,7 +507,7 @@ async function main() {
           where: { work_request_id: { in: requestIds } },
           select: { id: true },
         });
-        const bids = await prisma.providerBid.findMany({
+        const bids = await prisma.proposal.findMany({
           where: { work_request_id: { in: requestIds } },
           select: { id: true },
         });

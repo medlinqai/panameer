@@ -475,7 +475,7 @@ check(
    may stand in for one. */
 check(
   "10 — every cell but earnings comes from a count",
-  /prisma\.bidRequest\.count/.test(USAGE) &&
+  /prisma\.proposalRequest\.count/.test(USAGE) &&
     /prisma\.package\.count/.test(USAGE) &&
     /prisma\.workOrder\.count/.test(USAGE)
 );

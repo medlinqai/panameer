@@ -545,7 +545,7 @@ export const NOTIFICATION_EVENTS = {
   /*
     ══ ⚠⚠⚠ DEFINED AND NOT YET CALLED — THE WRITER TEST (ruling 34e) ════════
 
-    ⚠ MEASURED 2026-09-24: `ProviderBid` 0 rows · `InterviewRequest` 0 · `WorkOrder`
+    ⚠ MEASURED 2026-09-24: `Proposal` 0 rows · `InterviewRequest` 0 · `WorkOrder`
     0 · `SettlementRequest` 0 · `Payment` 0. ⚠⚠ Every one of these is a real
     model with no writer that a member can reach, so **nothing calls them and no
     row can exist.** ⚠⚠⚠ THEY ARE REGISTERED ANYWAY, ON PURPOSE: `brief_work_chain`
@@ -570,7 +570,7 @@ export const NOTIFICATION_EVENTS = {
     on the reasoning recorded above: *"a registry entry makes that a one-line
     call the day its writer lands."* ⚠⚠⚠ **THIS ONE IS THE OPPOSITE — THE
     WRITER SHIPPED FIRST AND HAD NO EVENT.** `inviteProviders()` has been doing
-    `bidRequest.create` from a reachable page all along, and **the invited
+    `proposalRequest.create` from a reachable page all along, and **the invited
     provider got no bell entry and nothing on their worklist.**
 
     ⚠ `requiresAction: true` — the invitation IS the work item, and it clears

@@ -449,7 +449,7 @@ check(
 
 /**
  * ⚠⚠⚠ THE WORK CARD'S THREE COUNTED FIGURES SCOPE ON THE **PROVIDER** COLUMN.
- * ⚠ `BidRequest` and `InterviewRequest` each carry TWO person columns — the
+ * ⚠ `ProposalRequest` and `InterviewRequest` each carry TWO person columns — the
  * provider and the buyer who invited them (`invited_by_person_id` /
  * `requested_by_person_id`). ⚠⚠ SCOPING ON THE WRONG ONE WOULD COUNT THE
  * MEMBER'S OWN OUTGOING INVITATIONS AS WORK THEY WERE OFFERED, and on today's
@@ -461,7 +461,7 @@ check(
     ⚠ SUPERSEDED, quoted not deleted (`E164`) — it named the three models it
     knew about, and went red the moment two of those counts were correctly
     DELETED for having no writer:
-    //   for (const model of ["bidRequest", "interviewRequest", "workOrder"]) { … }
+    //   for (const model of ["proposalRequest", "interviewRequest", "workOrder"]) { … }
     ⚠⚠ THE RULE IT CARRIED IS REAL AND SURVIVES: a model with BOTH a provider
     and a buyer person column must be counted on the PROVIDER one. Scoping on
     the wrong column would count the member's own outgoing invitations as work
@@ -700,7 +700,7 @@ check(
  * `certification` was the offender — it knows that a model counted in
  * `getStatistics` must not be counted again on the page.
  * ⚠⚠⚠ IT IS WHAT CAUGHT ALL FOUR: `certification` (two different scoping
- * columns), `interviewRequest` (×3), `bidRequest` and `providerBid` were each
+ * columns), `interviewRequest` (×3), `proposalRequest` and `proposal` were each
  * computed on BOTH sides. Every one of them rendered, and every one was free to
  * disagree with its twin.
  * ⚠ `package` is expected to remain page-only — `Service Products` is genuinely
@@ -778,15 +778,15 @@ check(
  * ⚠⚠⚠ THE THREE FIGURES THAT WERE WRONG, PINNED SO THEY CANNOT SILENTLY RETURN.
  * ⚠ Each was found by searching for the BEHAVIOUR rather than the noun, after
  * `proposalsSent` was declared uncountable because no model was named
- * `Proposal` while `ProviderBid` had been counting it all along.
+ * `Proposal` while `Proposal` had been counting it all along.
  */
 /*
   ⚠⚠⚠ SUPERSEDED BY THE WRITER TEST, quoted not deleted (`E164`):
-  //   "29 — proposals are COUNTED, from ProviderBid, and only when submitted",
-  //   /providerBid\.count\(\{[^}]*submitted_at:\s*\{\s*not:\s*null/.test(…)
+  //   "29 — proposals are COUNTED, from Proposal, and only when submitted",
+  //   /proposal\.count\(\{[^}]*submitted_at:\s*\{\s*not:\s*null/.test(…)
   ⚠ IT WAS RIGHT ABOUT THE FILTER AND WRONG ABOUT THE FIGURE. `submitted_at`
   IS the correct predicate for "sent" — a draft is not a proposal — but the
-  question never got that far: **nothing creates a `ProviderBid` at all**, so
+  question never got that far: **nothing creates a `Proposal` at all**, so
   the count could only ever be a confident zero about a mechanism that does not
   exist. ⚠⚠ ASSERTION 31 NOW OWNS THIS, from the writer side, and it will keep
   owning it if somebody builds the creator tomorrow.
@@ -796,11 +796,11 @@ check(
 check(
   "29 — ⚠⚠ the false 'no Proposal model exists' claim stays retired",
   !/No Proposal model exists/.test(src.lib),
-  "the model is ProviderBid — an absent name is not an absent thing"
+  "the model is Proposal — an absent name is not an absent thing"
 );
 check(
   "29 — ⚠⚠ work requests count only those actually ISSUED",
-  /bidRequest\.count\(\{ where: \{ provider_person_id: personId, issued_at: \{ not: null \}/.test(
+  /proposalRequest\.count\(\{ where: \{ provider_person_id: personId, issued_at: \{ not: null \}/.test(
     src.lib.replace(/\s+/g, " ")
   ),
   "an unissued request was never sent to anybody"
@@ -957,7 +957,7 @@ check(
  * is countable when the state it counts has a writer, not when something
  * upstream does — was not applied to the three figures I flipped to counted."*
  *
- * ⚠⚠ THE THREE: `ProviderBid`, `InterviewRequest` and `WorkOrder`. **None of
+ * ⚠⚠ THE THREE: `Proposal`, `InterviewRequest` and `WorkOrder`. **None of
  * them has a `create` anywhere in the repository.** Each rendered a confident
  * `0`, and ⚠⚠⚠ **A ZERO THERE CLAIMS THE MECHANISM WORKS AND NOBODY HAS USED
  * IT.** None of those mechanisms exist.
@@ -996,7 +996,7 @@ check(
       ⚠⚠ THAT IS A FALSE POSITIVE IN THE DANGEROUS DIRECTION FOR THIS GATE — it
       would push somebody to DASH a figure that is genuinely countable, the
       mirror image of the bug this assertion exists to catch.
-      ⚠ RE-VERIFIED WITH THE WIDER PATTERN: `providerBid`, `interviewRequest`
+      ⚠ RE-VERIFIED WITH THE WIDER PATTERN: `proposal`, `interviewRequest`
       and `workOrder` still have **no creator under any identifier**, so the
       three dashes this commit-set made stand.
       ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -1024,7 +1024,7 @@ check(
   /* ⚠⚠ AND THE THREE THAT WERE WRONG ARE PINNED AS DASHES, so a later edit
      cannot quietly re-count them while their models stay unwritable. */
   for (const [field, model] of [
-    ["proposalsSent", "providerBid"],
+    ["proposalsSent", "proposal"],
     ["interviews", "interviewRequest"],
     ["workOrders", "workOrder"],
   ] as const) {

@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { InviteToBid } from "@/components/work/InviteToBid";
+import { InviteToPropose } from "@/components/work/InviteToPropose";
 import { getWorkRequestDetail } from "@/lib/work-request-lines";
 import { invitedOn } from "@/lib/work-request-invite";
 import { matchProvidersFor } from "@/lib/work-request-match";
@@ -19,8 +19,8 @@ import { BackLink } from "@/components/console/BackLink";
  * different relationship — and wiring this button to it would be fabrication by
  * mislabelling, which is worse than an honest 'not yet'."*
  *
- * **THAT WAS CORRECT AND IT IS NO LONGER TRUE.** `E395` landed `BidRequest` and
- * `BidRequestLine` on 2026-09-07, so the invitation has somewhere honest to
+ * **THAT WAS CORRECT AND IT IS NO LONGER TRUE.** `E395` landed `ProposalRequest` and
+ * `ProposalRequestLine` on 2026-09-07, so the invitation has somewhere honest to
  * write. The brief made this work stream conditional on exactly that — *"if it
  * has not landed, leave the stub and say so"* — and it had.
  *
@@ -103,7 +103,7 @@ export default async function Page({
       </p>
 
       <div className="mt-7">
-        <InviteToBid
+        <InviteToPropose
           workRequestId={id}
           lines={detail.lines.map((l) => ({
             id: l.id,

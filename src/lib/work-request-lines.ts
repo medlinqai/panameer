@@ -238,7 +238,7 @@ export async function getWorkRequestDetail(
 
   /* ⚠ A COUNT OF INVITES PER LINE — NOT THE BIDS. `E395`'s fence: this brief
      creates invitations and renders none of what comes back. */
-  const inviteRows = await prisma.bidRequestLine.findMany({
+  const inviteRows = await prisma.proposalRequestLine.findMany({
     where: { work_request_line_id: { in: rows.map((r) => r.id) } },
     select: { work_request_line_id: true },
   });
@@ -527,7 +527,7 @@ export async function removeLine(viewer: Viewer, id: string, lineId: string) {
       "INVALID"
     );
 
-  const invited = await prisma.bidRequestLine.count({
+  const invited = await prisma.proposalRequestLine.count({
     where: { work_request_line_id: lineId },
   });
   if (invited > 0)

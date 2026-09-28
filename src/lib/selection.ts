@@ -177,7 +177,7 @@ export type Selection = {
   workRequestLineId: string;
   providerPersonId: string;
   /** ⚠ Null on Route B — there was no proposal to award. */
-  providerBidId: string | null;
+  proposalId: string | null;
   math: TalentLineMath;
   /** How many other proposals were marked `NOT_SELECTED`. */
   notSelected: number;
@@ -200,7 +200,7 @@ export type Selection = {
 async function writeRequisitionLine(args: {
   workRequest: { id: string; title: string; start_date: Date | null; end_date: Date | null };
   providerPersonId: string;
-  providerBidId: string | null;
+  proposalId: string | null;
   unitPriceCents: number;
   uom: string | null;
   recruiterPersonId: string | null;
@@ -342,7 +342,7 @@ export async function selectProvider(
     throw new SourcingError("This work request was cancelled.", "CANCELLED");
   }
 
-  const winner = await prisma.providerBid.findUnique({
+  const winner = await prisma.proposal.findUnique({
     where: {
       work_request_id_provider_person_id: {
         work_request_id: wr.id,
@@ -365,8 +365,8 @@ export async function selectProvider(
   if (winner.status === "WITHDRAWN" || winner.status === "DECLINED") {
     throw new SourcingError("That proposal is no longer open.", "PROPOSAL_CLOSED");
   }
-  const bidLine = winner.lines[0];
-  if (!bidLine || bidLine.unit_price_cents == null) {
+  const proposalLine = winner.lines[0];
+  if (!proposalLine || proposalLine.unit_price_cents == null) {
     /* ⚠⚠⚠ A REFUSAL, NOT A FALLBACK. Without their rate there is nothing to
        multiply, and the provider's listed profile rate is what they advertise —
        not what they proposed for this work. */
@@ -379,9 +379,9 @@ export async function selectProvider(
   const { lineId, math } = await writeRequisitionLine({
     workRequest: wr,
     providerPersonId: input.providerPersonId,
-    providerBidId: winner.id,
-    unitPriceCents: bidLine.unit_price_cents,
-    uom: bidLine.uom ?? null,
+    proposalId: winner.id,
+    unitPriceCents: proposalLine.unit_price_cents,
+    uom: proposalLine.uom ?? null,
     recruiterPersonId: null,
     route: "PROPOSAL",
   });
@@ -393,7 +393,7 @@ export async function selectProvider(
     ⚠ Only OPEN ones move: a proposal already `WITHDRAWN` or `DECLINED` reached
     its own end and overwriting that would rewrite what happened.
   */
-  const losers = await prisma.providerBid.updateMany({
+  const losers = await prisma.proposal.updateMany({
     where: {
       work_request_id: wr.id,
       id: { not: winner.id },
@@ -403,7 +403,7 @@ export async function selectProvider(
   });
 
   await prisma.$transaction([
-    prisma.providerBid.update({ where: { id: winner.id }, data: { status: "AWARDED" } }),
+    prisma.proposal.update({ where: { id: winner.id }, data: { status: "AWARDED" } }),
     /* ⚠⚠ RULING 17: creating the ORDER moves the status to `ORDERED`; selecting
        moves it to `ASSIGNED`, which is the state a reversal can still leave. */
     prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ASSIGNED" } }),
@@ -421,14 +421,14 @@ export async function selectProvider(
     invent a second.* So a provider learns it from their own proposal's status,
     and the missing event is REPORTED AS OWED.
   */
-  const allBids = await prisma.providerBid.findMany({
+  const allProposals = await prisma.proposal.findMany({
     where: { work_request_id: wr.id },
     select: { id: true },
   });
   await prisma.notification
     .updateMany({
       where: {
-        dedupe_key: { in: allBids.map((b) => `work.proposal_received:${b.id}`) },
+        dedupe_key: { in: allProposals.map((b) => `work.proposal_received:${b.id}`) },
         resolved_at: null,
       },
       data: { resolved_at: new Date() },
@@ -439,7 +439,7 @@ export async function selectProvider(
     workRequestId: wr.id,
     workRequestLineId: lineId,
     providerPersonId: input.providerPersonId,
-    providerBidId: winner.id,
+    proposalId: winner.id,
     math,
     notSelected: losers.count,
     route: "PROPOSAL",
@@ -498,7 +498,7 @@ export async function assignProviderDirectly(
   const { lineId, math } = await writeRequisitionLine({
     workRequest: wr,
     providerPersonId: input.providerPersonId,
-    providerBidId: null,
+    proposalId: null,
     unitPriceCents: input.unitPriceCents,
     uom: input.uom ?? null,
     recruiterPersonId: input.recruiterPersonId ?? null,
@@ -511,7 +511,7 @@ export async function assignProviderDirectly(
     workRequestId: wr.id,
     workRequestLineId: lineId,
     providerPersonId: input.providerPersonId,
-    providerBidId: null,
+    proposalId: null,
     math,
     notSelected: 0,
     route: "DIRECT",
@@ -527,7 +527,7 @@ export async function assignProviderDirectly(
  * ⚠⚠ MEASURED BEFORE BUILDING IT, AS WS-C ITEM 4 REQUIRES — **the models CAN
  * express this, and here is exactly how:** `WorkRequestLine.work_order_id` is
  * nullable, so "has an order" is a readable fact rather than an inference;
- * `ProviderBidStatus` carries both `AWARDED` and `NOT_SELECTED`, so an award can
+ * `ProposalStatus` carries both `AWARDED` and `NOT_SELECTED`, so an award can
  * be walked back to `SUBMITTED`; and `WorkRequestStatus` has `POSTED` to return
  * to. ⚠⚠⚠ **NOTHING HERE IS INVENTED — no reversal column was added.**
  *
@@ -558,7 +558,7 @@ export async function reverseSelection(
   /* ⚠ Back to the state before the choice: the award returns to `SUBMITTED` and
      so does every proposal the choice closed. ⚠⚠ A `WITHDRAWN` or `DECLINED`
      one is NOT revived — the provider ended those, not the buyer. */
-  const reopened = await prisma.providerBid.updateMany({
+  const reopened = await prisma.proposal.updateMany({
     where: {
       work_request_id: wr.id,
       status: { in: ["AWARDED", "NOT_SELECTED"] },

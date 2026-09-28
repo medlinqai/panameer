@@ -105,7 +105,7 @@ export async function sendTest(
 
   /* ⚠ The provider must have proposed — the same rule `requestInterview` holds,
      for the same reason: a test is a step in a conversation already started. */
-  const proposal = await prisma.providerBid.findUnique({
+  const proposal = await prisma.proposal.findUnique({
     where: {
       work_request_id_provider_person_id: {
         work_request_id: wr.id,
@@ -141,7 +141,7 @@ export async function sendTest(
       work_request_id: wr.id,
       provider_person_id: input.providerPersonId,
       requested_by_person_id: me.id,
-      provider_bid_id: proposal.id,
+      proposal_id: proposal.id,
       /* ⚠⚠ ISSUED IN ONE ACT. A `DRAFT` test request would be a test nobody
          sent, and no screen resumes one — a state with no way out is the
          door-onto-a-wall shape `E579` names. */

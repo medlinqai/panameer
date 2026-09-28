@@ -140,19 +140,19 @@ async function main() {
       bids.push({ id: r.id, person: p.id });
     }
     check("2 — ⚠ three proposals exist, each with a rate", bids.length === 3);
-    const pricedLines = await prisma.providerBidLine.count({
-      where: { providerBid: { work_request_id: rA } },
+    const pricedLines = await prisma.proposalLine.count({
+      where: { proposal: { work_request_id: rA } },
     });
     /* ⚠⚠⚠ THE HALF THE `NOT NULL` MADE UNREACHABLE. Before WS-C dropped it,
-       `ProviderBidLine` could not be written by ANY route — 0 writers for
-       `BidRequestLine` — so a proposal could carry no price at all. */
+       `ProposalLine` could not be written by ANY route — 0 writers for
+       `ProposalRequestLine` — so a proposal could carry no price at all. */
     check("2 — ⚠⚠⚠ a proposal on an OPEN request CAN carry a rate",
-      pricedLines === 3, `${pricedLines} — bid_request_line_id had to become nullable`);
-    const openRate = await prisma.providerBidLine.findFirst({
-      where: { providerBid: { work_request_id: rA } },
-      select: { bid_request_line_id: true, unit_price_cents: true, quantity: true },
+      pricedLines === 3, `${pricedLines} — proposal_request_line_id had to become nullable`);
+    const openRate = await prisma.proposalLine.findFirst({
+      where: { proposal: { work_request_id: rA } },
+      select: { proposal_request_line_id: true, unit_price_cents: true, quantity: true },
     });
-    check("2 — ⚠ with no invited line to point at", openRate?.bid_request_line_id === null);
+    check("2 — ⚠ with no invited line to point at", openRate?.proposal_request_line_id === null);
     check("2 — ⚠⚠ and NO quantity — the buyer's dates decide the hours",
       openRate?.quantity === null,
       "a provider-supplied quantity is a second source for the number WS-C computes");
@@ -160,7 +160,7 @@ async function main() {
     /* ⚠ One provider withdraws first, so the losers' sweep has something it
        must NOT touch. */
     const withdrawn = bids[2]!;
-    await prisma.providerBid.update({ where: { id: withdrawn.id }, data: { status: "WITHDRAWN" } });
+    await prisma.proposal.update({ where: { id: withdrawn.id }, data: { status: "WITHDRAWN" } });
 
     const winner = bids[0]!;
     const selA = await selectProvider(V(buyer.user_id), {
@@ -244,7 +244,7 @@ async function main() {
     /* ── ⚠⚠ THE LOSERS (item 2) ──────────────────────────────────────────── */
     check("2 — ⚠ two other proposals were on the table", selA.notSelected === 1,
       `${selA.notSelected} — one had already withdrawn, so only one loses`);
-    const after = await prisma.providerBid.findMany({
+    const after = await prisma.proposal.findMany({
       where: { work_request_id: rA },
       select: { id: true, status: true },
     });
@@ -273,15 +273,15 @@ async function main() {
     console.log(`  Route B: ${selB.math.formula}\n`);
     check("3 — ⚠⚠ a buyer can assign directly, with NO proposal",
       selB.workRequestLineId != null);
-    const bidsOnB = await prisma.providerBid.count({ where: { work_request_id: rB } });
+    const proposalsOnB = await prisma.proposal.count({ where: { work_request_id: rB } });
     const ivOnB = await prisma.interviewRequest.count({ where: { work_request_id: rB } });
     check("3 — ⚠⚠⚠ and it reached the requisition with no proposal and no interview",
-      bidsOnB === 0 && ivOnB === 0, `${bidsOnB}/${ivOnB}`);
+      proposalsOnB === 0 && ivOnB === 0, `${proposalsOnB}/${ivOnB}`);
     check("3 — the rate the buyer stated was used", selB.math.unitPriceCents === RATE_B_CENTS);
     check("3 — ⚠ the arithmetic is the SAME arithmetic", selB.math.hours === 80, `${selB.math.hours}`);
     check("3 — and its own total", selB.math.amountCents === 80 * RATE_B_CENTS, `${selB.math.amountCents}`);
     check("3 — ⚠ the route is recorded on the result", selB.route === "DIRECT" && selA.route === "PROPOSAL");
-    check("3 — ⚠ and Route B has no proposal to point at", selB.providerBidId === null);
+    check("3 — ⚠ and Route B has no proposal to point at", selB.proposalId === null);
 
     /* ── ⚠⚠⚠ IDENTICAL IN SHAPE — THE STOP GATE'S OWN WORDS ─────────────── */
     const lineB = await prisma.workRequestLine.findUnique({
@@ -323,7 +323,7 @@ async function main() {
     const rev = await reverseSelection(V(buyer.user_id), rA);
     check("4 — ⚠⚠ the selection can be reversed before any order",
       rev.reopened === 2, `${rev.reopened} — the award and the one NOT_SELECTED`);
-    const reopened = await prisma.providerBid.findMany({
+    const reopened = await prisma.proposal.findMany({
       where: { work_request_id: rA }, select: { id: true, status: true },
     });
     check("4 — the award went back to SUBMITTED",
@@ -476,7 +476,7 @@ async function main() {
 
       if (requestIds.length > 0) {
         const bidIds = (
-          await prisma.providerBid.findMany({
+          await prisma.proposal.findMany({
             where: { work_request_id: { in: requestIds } },
             select: { id: true },
           })

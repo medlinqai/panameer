@@ -8,7 +8,7 @@ import { Button } from "@/components/casing/Button";
  * ── ⚠⚠⚠ THE PROVIDER'S PROPOSE-A-RATE FORM (`P2-A8-E681` WS-C) ────────────
  *
  * ⚠⚠⚠ **THIS COMPONENT IS THE REACHABILITY, AND THAT IS THE WHOLE POINT OF
- * WS-C.** `providerBid.create` has existed since `E621` WS-A with **zero
+ * WS-C.** `proposal.create` has existed since `E621` WS-A with **zero
  * importers outside three check scripts**; `/find-work/[id]` shipped with no
  * button on purpose and said so. ⚠ The writer, its rate line and its `notify()`
  * were all already built — **the only missing thing was a way in.**
