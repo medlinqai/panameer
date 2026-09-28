@@ -89,7 +89,18 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     is never absent, not even for one commit (rule 5).
   */
   { route: "/training", category: 1 },
-  { route: "/learn", category: 1 },
+  /*
+    ⚠⚠⚠ `/learn` IS GONE FROM THIS LIST AT `P2-ALL-E698` WS-C — IT IS A MEMBER ROUTE
+    NOW and self-guards via `memberOrPublicTwin("/learn")`, which sends an anonymous
+    visitor to `/training` rather than to `/login`.
+    ⚠⚠ **ITS FOUR PUBLIC SUB-ROUTES STAY, AND THEIR ROWS ARE BELOW.** `/learn/courses`,
+    `/learn/paths`, `/learn/[slug]` and `/learn/[slug]/course/[courseSlug]` are public
+    on purpose. ⚠⚠⚠ **SO THE PARENT IS GATED WHILE FOUR CHILDREN ARE PUBLIC, WHICH IS
+    EXACTLY WHY THIS FILE ALREADY SAYS *"THE PREFIX DECIDES NOTHING HERE — check each
+    one."*** ⚠ Do not "tidy" this by gating the subtree; that removes public browse.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { route: "/learn", category: 1 },
+  */
   { route: "/optimize", category: 1 },
   { route: "/talent", category: 1 },
   { route: "/work", category: 1 },

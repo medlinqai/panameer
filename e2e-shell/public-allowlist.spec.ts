@@ -64,12 +64,36 @@ function selfGuards(file: string): boolean {
   const src = readFileSync(file, "utf8");
   if (/\bguardPage\s*\(/.test(src)) return true;
   /*
+    ── ⚠⚠⚠ THE THIRD GUARD SHAPE (`P2-ALL-E698` WS-C) ─────────────────────────
+
+    ⚠⚠ **`memberOrPublicTwin(...)` REDIRECTS AN ANONYMOUS VISITOR TO THE PUBLIC PAGE
+    THAT USED TO OWN THE URL** (`lib/public-twin.ts`). It is a real guard, and the
+    two patterns below cannot see it because the `redirect()` is inside the HELPER,
+    not in the page.
+
+    ⚠⚠⚠ **RECORDED BECAUSE I GOT IT WRONG FIRST AND THE GATE CAUGHT ME.** This
+    comment initially claimed *"the pattern below … now also catches `/learn`"* —
+    an assertion made without running it. ⚠ The gate answered
+    `+ "/learn (src/app/learn/page.tsx)"`, which is `87b` in miniature: a proxy for
+    a claim (the guard exists) reported as the claim (the gate sees the guard).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the false half:
+      //   ⚠ THE PATTERN BELOW IS STILL EXACTLY RIGHT AND IS UNCHANGED, and it now
+      //   also catches `/learn`: `memberOrPublicTwin` redirects, so the route reads
+      //   as gated, which is what it is.
+
+    ⚠ **AND THE ORIGINAL NOTE IS SUPERSEDED TOO, quoted not deleted (`E164`):**
+      //   ⚠ `if (!viewer) return <LearnPublic />` must NOT match — `/learn` renders
+      //   a PUBLIC variant instead of redirecting, and reading it as a guard would
+      //   let a genuinely public page look gated.
+    ⚠⚠ **THAT SHAPE NO LONGER EXISTS ANYWHERE.** `/learn` stopped rendering a public
+    variant — the sales page is `/training` — because one URL rendering two things
+    cannot be named in a bug report (Scott, 2026-09-28).
+  */
+  if (/\bmemberOrPublicTwin\s*\(/.test(src)) return true;
+  /*
     The other shape in this codebase: resolve the session, then bail. Matched
     across up to two lines because both the one-liner and the braced form are in
     use (`/company/page.tsx:42` vs `/providers/[id]/page.tsx:68`).
-    ⚠ `if (!viewer) return <LearnPublic />` must NOT match — `/learn` renders a
-    PUBLIC variant instead of redirecting, and reading it as a guard would let a
-    genuinely public page look gated.
   */
   return /if\s*\(\s*!\s*(viewer|session)\s*\)\s*\{?\s*\n?\s*redirect\s*\(/.test(src);
 }
