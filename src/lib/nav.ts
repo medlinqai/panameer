@@ -1973,7 +1973,32 @@ export const ADMIN_NAV: NavGroup[] = [
         catalog above it, rather than an operational tool. Additive — the four-nav
         model and every other menu are untouched.
       */
-      { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
+      /*
+        ── ⚠⚠⚠ RELABELLED. IT WAS NAMED AFTER A THING IT IS NOT (`P2-A15-E696` WS-A)
+
+        ⚠⚠ **SCOTT, 2026-09-28: *"that is for assessments. got it. name it as
+        such."*** ⚠ Ruling `97a`.
+
+        ⚠⚠⚠ **THE CODE ALREADY KNEW AND THE LABEL DID NOT: the comment directly
+        above says "THE ASSESSMENT'S FUNDING RATE", the editor lives in
+        `components/assessment/`, and every reader of `TaxRate` is in
+        `lib/assessment/`.** ⚠ **ONLY THE WORD A HUMAN READS WAS WRONG, WHICH IS
+        THE WORST PLACE FOR IT TO BE WRONG** — a correct comment nobody opens
+        cannot stop somebody clicking the wrong menu item.
+
+        ⚠⚠ **AND IT MATTERED THE MOMENT PLATFORM COMMISSIONS ARRIVED:** ruling 97
+        introduces three funding rates that have nothing to do with this page, so
+        `Funding Rate` was about to name two unrelated things in one admin menu —
+        ruling `93m`'s failure, except already wired to the wrong page.
+
+        ⚠ **THE ROUTE, THE `TaxRate` MODEL AND THE TABLE ARE DELIBERATELY
+        UNCHANGED.** They are accurate — it *is* a tax rate, used by assessment
+        funding — and renaming an admin-only route is churn with no reader.
+        ⚠ Measured: **0 stored `Notification.href` rows point at `/admin/tax-rates`.**
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
+      */
+      { label: "Assessment Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
     ],
   },
   {

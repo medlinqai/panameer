@@ -33,6 +33,24 @@ export default async function TaxRatesPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
+      {/*
+        ── ⚠⚠⚠ THE PAGE HAD NO NAME AT ALL (`P2-A15-E696` WS-A, ruling 95 check 1)
+
+        ⚠⚠ Ruling 95's first check is *"verify page name — the `<h1>` and the menu
+        label disagree, **or the page has no name at all**."* ⚠ **This page had
+        none: it opened straight onto a `TileRow`.** So the only name it had was
+        the menu label, and that label said `Funding Rate`, which is the thing
+        ruling `97a` says it is not.
+        ⚠ It now names the assessment, and it matches the menu word for word.
+      */}
+      <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
+        Assessment Funding Rate
+      </h1>
+      <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
+        The tax-credit rate the assessment report multiplies EBITDA by. ⚠ This is
+        not a platform commission — those live on Application Commissions.
+      </p>
+      <div className="mt-5" />
       <TileRow
         tiles={[
           {
