@@ -66,7 +66,14 @@ const nextConfig: NextConfig = {
         server again. ⚠ STILL NOT A WILDCARD, for the reason above: `(app)/services/offers`
         is a different authenticated route and `/:path*` here would swallow it.
       */
-      { source: "/services", destination: "/shop", permanent: true },
+      /*
+        ⚠⚠⚠ REPOINTED TO `/marketplace` (`P2-ALL-E698`). `/shop` IS AN APPLICATION
+        ROUTE NOW, so leaving this would 308 an ANONYMOUS visitor straight into a
+        guarded route — a redirect whose destination refuses its own traffic.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { source: "/services", destination: "/shop", permanent: true },
+      */
+      { source: "/services", destination: "/marketplace", permanent: true },
       /*
         ── ⚠⚠⚠ `/community/forums` → `/community/groups` (`P2-A3-E619` WS-C) ──
 

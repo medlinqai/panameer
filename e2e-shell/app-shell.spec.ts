@@ -627,7 +627,7 @@ test("GUARD 3 — no arbitrary min-[…] variant competes with a named breakpoin
  */
 const PUBLIC_WIDTHS = [360, 375, 640, 767, 768, 769, 900, 1000, 1100, 1180, 1282, 1440, 1562];
 
-const PUBLIC_PAGES = ["/", "/learn", "/talent", "/work", "/shop"];
+const PUBLIC_PAGES = ["/", "/learn", "/talent", "/work", "/marketplace"];
 
 /**
  * ⚠ SIX ITEMS SINCE `P1-J0-E245`, AND THIS SUITE READS THEM, NEVER SETS THEM.
@@ -640,7 +640,14 @@ const PUBLIC_NAV_ITEMS = [
   { label: "Learn", href: "/learn" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
-  { label: "Shop", href: "/shop" },
+  /*
+    ⚠⚠ `Shop` LEFT THE PUBLIC NAV FOR THE APPLICATION (`P2-ALL-E698`). This suite
+    READS Scott's labels and never sets them, so it follows the destination — the
+    same way it followed `/assess` -> `/optimize` at `P1-J0-E266`.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Shop", href: "/marketplace" },
+  */
+  { label: "Marketplace", href: "/marketplace" },
   /*
     ⚠ `/optimize`, NOT `/assess` — REPOINTED 2026-08-21 (`P1-J0-E266`). This
     assertion caught the change, which is what it is for. `/assess` is the wizard
@@ -922,7 +929,7 @@ const BOXED_HERO_PAGES = [
   "/learn",
   "/talent",
   "/work",
-  "/shop",
+  "/marketplace",
   "/integrate",
   "/why-panameer",
 ];

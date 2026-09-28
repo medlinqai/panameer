@@ -220,7 +220,15 @@ export const MARKETING_NAV: MarketingNavItem[] = [
   { label: "Learn", href: "/learn" },
   { label: "Talent", href: "/talent" },
   { label: "Work", href: "/work" },
-  { label: "Shop", href: "/shop" },
+  /*
+    ⚠⚠⚠ `Shop` MOVED TO THE APPLICATION (`P2-ALL-E698`, Scott 2026-09-28): *"the
+    real 'shop' page SHOULD be named shop because of the menu name."* The public
+    page gives way — it is marketing and it is expected to change; the app's routes
+    are what members learn, bookmark and quote in a bug report.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Shop", href: "/shop" },
+  */
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Optimize", href: "/optimize" },
   { label: "Integrate", href: "/integrate" },
 ];

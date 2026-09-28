@@ -85,7 +85,7 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/optimize", category: 1 },
   { route: "/talent", category: 1 },
   { route: "/work", category: 1 },
-  { route: "/shop", category: 1 },
+  { route: "/marketplace", category: 1 },
   { route: "/integrate", category: 1 },
   /*
     ⚠ `/capability-domains` (`P1-J0-E352`) — the `/optimize` hero's second button

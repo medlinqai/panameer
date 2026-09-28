@@ -107,7 +107,7 @@ type Card = {
  * `.pm-home`-prefixed in `home.css`, so a passing test on `/` proved nothing
  * about either — which is exactly why these tests now run there.
  */
-const SHOP = "/shop";
+const SHOP = "/marketplace";
 /*
   ⚠ REPOINTED BY `P1-J0-E359` — `ErpIntegration`, its `.pm-home` wrapper and
   `id="punchout"` MOVED off `/integrate` to `/erp-integration`. Every use of this
@@ -1209,7 +1209,7 @@ test.describe("optimize walk 1 — the product name, the sub-line, the total", (
   test("§26 no public page says the retired product name; the live one is present", async ({
     page,
   }) => {
-    const PAGES = ["/", "/optimize", "/talent", "/shop", "/integrate"];
+    const PAGES = ["/", "/optimize", "/talent", "/marketplace", "/integrate"];
     let sawLive = false;
     for (const url of PAGES) {
       await page.goto(url);
@@ -2624,7 +2624,7 @@ test.describe("work walk 1 — the buyer's page", () => {
   test("§47 all three buyer/seller pages carry the same three hero tiles", async ({
     page,
   }) => {
-    for (const url of ["/talent", "/work", "/shop"]) {
+    for (const url of ["/talent", "/work", "/marketplace"]) {
       await page.goto(url);
       const tiles = await page.evaluate(() => {
         const h1 = document.querySelector("h1");
@@ -2664,7 +2664,7 @@ test.describe("work walk 1 — the buyer's page", () => {
       "/talent",
       "/optimize",
       "/integrate",
-      "/shop",
+      "/marketplace",
       "/learn",
       /*
         ⚠ ADDED BY `P1-J0-E352`. This test's own docblock says *"RUN ON EVERY PUBLIC
@@ -2832,7 +2832,7 @@ test.describe("shop walk 1 — /shop", () => {
   test("§53 /shop renders the five Shop steps, every panel graphic-free", async ({
     page,
   }) => {
-    await page.goto("/shop");
+    await page.goto("/marketplace");
 
     const body = await page.locator("body").innerText();
     expect(
@@ -2909,7 +2909,7 @@ test.describe("shop walk 1 — /shop", () => {
   test("§54 the Shop hero's button is a real control with no false destination", async ({
     page,
   }) => {
-    await page.goto("/shop");
+    await page.goto("/marketplace");
     const hero = page
       .locator("h1")
       .first()
@@ -3005,7 +3005,7 @@ test.describe("shop walk 1 — /shop", () => {
       "/",
       "/work",
       "/talent",
-      "/shop",
+      "/marketplace",
       "/optimize",
       "/integrate",
       "/learn",
@@ -3017,7 +3017,7 @@ test.describe("shop walk 1 — /shop", () => {
       }
     }
     expect(hits, "the moved headline is on the wrong number of pages").toEqual([
-      "/shop",
+      "/marketplace",
     ]);
   });
 });
@@ -3081,7 +3081,7 @@ test.describe("home — the four audiences LEARN is sold to", () => {
 test.describe("hero clips — the -hero cuts, and only those", () => {
   const EXPECT: Record<string, { clip: string; maxMB: number }> = {
     "/talent": { clip: "connect-hero.mp4", maxMB: 0.3 },
-    "/shop": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
+    "/marketplace": { clip: "get-paid-hero.mp4", maxMB: 1.0 },
     "/integrate": { clip: "consultation-hero.mp4", maxMB: 0.4 },
     /*
       ⚠ `/find-work` JOINED ON 2026-08-25 (`P1-J4-E019`). Its master —
@@ -3332,7 +3332,7 @@ test.describe("/talent — the hero stat tiles", () => {
  * the whole brief, which is exactly the shape a test has to hold.
  */
 test.describe("hero clips — every one has a poster", () => {
-  const POSTERED = ["/talent", "/shop", "/integrate", "/work", "/learn"];
+  const POSTERED = ["/talent", "/marketplace", "/integrate", "/work", "/learn"];
 
   for (const url of POSTERED) {
     test(`§62 ${url}'s hero clip has a poster`, async ({ page }) => {
@@ -3427,7 +3427,7 @@ test.describe("§64 one hero treatment", () => {
   const CARD_LINEAR = "linear-gradient(150deg, rgb(13, 18, 48) 0%, rgb(25, 26, 68) 55%, rgb(58, 28, 83) 100%)";
   const SCRIM = "linear-gradient(150deg, rgba(13, 18, 48, 0.86) 0%, rgba(25, 26, 68, 0.72) 55%, rgba(58, 28, 83, 0.62) 100%)";
 
-  for (const url of ["/", "/optimize", "/talent", "/work", "/shop", "/integrate", "/learn", "/why-panameer"]) {
+  for (const url of ["/", "/optimize", "/talent", "/work", "/marketplace", "/integrate", "/learn", "/why-panameer"]) {
     test(`${url} paints the shared card and scrim`, async ({ page }) => {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForSelector("h1");
@@ -3502,7 +3502,7 @@ test.describe("§64 one hero treatment", () => {
       `HERO_BRIDGE_CLASS` are untouched and still serve all six.
       ⚠ IF `/` EVER GROWS A STEP SPINE, PUT IT BACK IN THIS ARRAY.
     */
-    for (const url of ["/optimize", "/talent", "/work", "/shop", "/integrate", "/learn"]) {
+    for (const url of ["/optimize", "/talent", "/work", "/marketplace", "/integrate", "/learn"]) {
       await page.goto(url, { waitUntil: "load" });
       await page.waitForSelector("h1");
       const n = await page.evaluate(

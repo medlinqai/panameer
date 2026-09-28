@@ -654,7 +654,7 @@ export const HOME_SECTIONS: HomeSection[] = [
       ⚠ DO NOT give this an `href="#"`, an empty `href`, or a dead click handler.
     */
     ctaHref: null,
-    learnMoreHref: "/shop",
+    learnMoreHref: "/marketplace",
   },
   {
     key: "work",

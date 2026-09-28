@@ -208,7 +208,7 @@ export function ErpPackages() {
             AND `P1-J1-E032` REMAIN OPEN — there is still no public catalogue, and
             `/shop`'s primary hero button is still `aria-disabled` with a `Soon` pill.
           */}
-          <Link className="btn btn-solid" href="/shop">
+          <Link className="btn btn-solid" href="/marketplace">
             Explore Service Products &rsaquo;
           </Link>
         </div>
