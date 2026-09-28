@@ -6292,6 +6292,108 @@ model InterviewRequest {
   @@map("interview_requests")
 }
 
+enum ProviderEvaluationStatus {
+  DRAFT
+  SUBMITTED
+}
+
+/// ── ⚠⚠⚠ THE REQUESTER'S JUDGEMENT. A DIFFERENT AUTHOR, SO A DIFFERENT DOCUMENT
+///
+/// `P2-A8-E695` WS-D, 2026-09-28. ⚠⚠ **SCOTT: *"The interview table IS a
+/// scheduling tool….BUT there needs to be a place where the results of that
+/// interview are recorded."***
+///
+/// ⚠⚠⚠ **THE PROVIDER AUTHORS THE SCHEDULING REPLY. THE REQUESTER AUTHORS THE
+/// EVALUATION. TWO AUTHORS, TWO DOCUMENTS** — which is the sourcing pattern's
+/// own rule (`P1-J4-E395`), not a new one.
+///
+/// ⚠⚠ **THE EVALUATION FIELDS ARE DELIBERATELY *NOT* ON `InterviewResponse`.**
+/// Putting them there would leave nobody able to tell, later, **which rows meant
+/// scheduling and which meant judgement** — and `InterviewResponse` is the
+/// provider's row. A requester writing into it would be one party editing
+/// another party's document.
+///
+/// ⚠ **IT HANGS OFF THE WORK REQUEST AND THE PROVIDER, NOT OFF THE SHORTLIST.**
+/// ⚠⚠⚠ **SHORTLIST IS OPTIONAL AND IS NOT A STAGE** — Scott, 2026-09-28: *"if
+/// the requester gets a proposal and does not interview, they will not
+/// shortlist…they will add them to the WR."* Hanging evaluation off a shortlist
+/// would make the commonest path impossible.
+///
+/// ⚠ **NOT SCOPED TO AN INTERVIEW EITHER, AND THAT IS ON PURPOSE:** a requester
+/// may judge a provider on a proposal alone. `interview_request_id` is NULLABLE
+/// — it records *what the judgement followed*, when it followed something.
+///
+/// ⚠⚠ **IDS WITH INDEXES, NOT CROSS-MODEL FOREIGN KEYS (`E388`)** — except the
+/// lines' link to their own header, which is how every document in this family
+/// is shaped.
+model ProviderEvaluation {
+  id                String @id @default(uuid()) @db.Uuid
+  evaluation_number String @unique
+
+  /// ⚠ The request being sourced. Plain id + index (`E388`).
+  work_request_id String @db.Uuid
+  /// ⚠ Who is being judged.
+  provider_person_id String @db.Uuid
+  /// ⚠ Who is judging. The requester — never the provider.
+  created_by_person_id String @db.Uuid
+
+  /// ⚠⚠ NULLABLE ON PURPOSE. An evaluation may follow an interview, a test, or
+  /// nothing but a proposal. A NOT NULL here would have made the judgement
+  /// impossible on the commonest path.
+  interview_request_id String? @db.Uuid
+  test_request_id      String? @db.Uuid
+
+  status       ProviderEvaluationStatus @default(DRAFT)
+  /// ⚠ Null until the requester submits. A draft judgement is not a judgement.
+  submitted_at DateTime?
+
+  /// ⚠⚠ THE OVERALL CALL, AND IT IS NULLABLE BECAUSE A DRAFT HAS NOT MADE ONE.
+  /// ⚠ A number with no scale is a figure nobody can read — the scale is stated
+  /// in `ProviderEvaluationLine.rating`'s comment and is 1–5.
+  overall_rating Int?
+  /// ⚠ The requester's words. Optional — a rating with no note is still a call.
+  summary String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  lines ProviderEvaluationLine[]
+
+  /// ⚠⚠ ONE EVALUATION PER (REQUEST, PROVIDER, AUTHOR). A second judgement of
+  /// the same provider on the same request REPLACES rather than accumulates —
+  /// otherwise "what did they think" has no answer, only a list.
+  @@unique([work_request_id, provider_person_id, created_by_person_id])
+  @@index([work_request_id])
+  @@index([provider_person_id])
+  @@index([status])
+  @@map("provider_evaluations")
+}
+
+/// ⚠ One criterion, one judgement. ⚠⚠ Lines exist so the evaluation can be read
+/// back as *why*, not only *how much* — the same reason every other document in
+/// this family has them rather than a blob.
+model ProviderEvaluationLine {
+  id                     String @id @default(uuid()) @db.Uuid
+  provider_evaluation_id String @db.Uuid
+  line_number            Int
+
+  /// ⚠ What is being judged — "Technical depth", "Communication".
+  criterion String
+  /// ⚠⚠ 1–5, AND THE SCALE LIVES HERE. Nullable: a criterion may be recorded as
+  /// relevant and left unscored rather than guessed at.
+  rating Int?
+  note   String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  providerEvaluation ProviderEvaluation @relation(fields: [provider_evaluation_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_evaluation_id, line_number])
+  @@index([provider_evaluation_id])
+  @@map("provider_evaluation_lines")
+}
+
 model InterviewResponse {
   id                   String @id @default(uuid()) @db.Uuid
   interview_request_id String @unique @db.Uuid
