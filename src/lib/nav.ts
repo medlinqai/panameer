@@ -2013,7 +2013,19 @@ export const ADMIN_NAV: NavGroup[] = [
         ⚠ SUPERSEDED, quoted not deleted (`E164`):
         //   { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
       */
-      { label: "Assessment Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
+      /*
+        ⚠⚠⚠ SHORTENED BY SCOTT 2026-09-28 (ruling `100b`), AND IT IS NOT COSMETIC:
+        at 184px against a 166px budget this label was TRUNCATING in the 240px rail,
+        and because `app-shell.spec.ts` runs `describe.configure({ mode: "serial" })`
+        that one failure was SWITCHING OFF TEN ASSERTIONS AFTER IT — including both
+        `E587` band guards (ruling 99).
+        ⚠⚠ `E696` WROTE THIS LABEL AND THE GATE SAID *"the label is the thing to
+        shorten, and that is Scott's call."* He called it.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { label: "Assessment Funding Rate", href: "/admin/tax-rates", ... },
+        //   and before it: { label: "Funding Rate", ... } — which named the wrong thing.
+      */
+      { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },
       /*
         ⚠⚠ **APPLICATION COMMISSIONS SITS BESIDE THE ASSESSMENT RATE ON PURPOSE**
         (`P2-A15-E696` WS-E, ruling 97). Same group, same shape of page, **and
@@ -2021,7 +2033,11 @@ export const ADMIN_NAV: NavGroup[] = [
         ⚠ Configuration Data: a value the platform computes with, like the rate
         above it.
       */
-      { label: "Application Commissions", href: "/admin/application-commissions", icon: "Percent" },
+      /* ⚠⚠ SHORTENED BY SCOTT 2026-09-28 (ruling `100b`) — 178px against 166px, the
+         second label truncating in the rail and the second half of ruling 99's cost.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   { label: "Application Commissions", href: "/admin/application-commissions", ... }, */
+      { label: "Commission Rate", href: "/admin/application-commissions", icon: "Percent" },
     ],
   },
   {

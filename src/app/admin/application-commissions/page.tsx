@@ -20,7 +20,10 @@ export const dynamic = "force-dynamic";
  * ⚠ The two sit side by side in the admin menu, which is exactly why each says
  * its own rule in full rather than relying on the reader.
  */
-export const metadata = { title: "Application Commissions · Panameer" };
+/* ⚠ FOLLOWS THE MENU LABEL, shortened by Scott 2026-09-28 (ruling `100b`).
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   title: "Application Commissions · Panameer" */
+export const metadata = { title: "Commission Rate · Panameer" };
 
 export default async function ApplicationCommissionsPage() {
   await guardPage("canAdminister");
@@ -45,7 +48,7 @@ export default async function ApplicationCommissionsPage() {
       {/* ⚠ Ruling 95 check 1 — the page is named, and the name matches the menu
           label word for word. */}
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
-        Application Commissions
+        Commission Rate
       </h1>
       <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
         What Panameer takes on a transaction, by how much sourcing the platform
