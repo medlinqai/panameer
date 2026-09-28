@@ -406,7 +406,16 @@ export async function selectProvider(
     prisma.proposal.update({ where: { id: winner.id }, data: { status: "AWARDED" } }),
     /* ⚠⚠ RULING 17: creating the ORDER moves the status to `ORDERED`; selecting
        moves it to `ASSIGNED`, which is the state a reversal can still leave. */
-    prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ASSIGNED" } }),
+    /* ⚠⚠ `sole_sourced: false` IS STATED, NOT LEFT TO THE DEFAULT
+       (`P2-A15-E696` WS-D). ⚠⚠⚠ The column's `@default(false)` means *"nobody
+       decided"*; writing it HERE means **this path decided** — and those are
+       different facts (`90b`). ⚠ This is the proposal route: Panameer matched
+       and proposed, so the platform did the sourcing and the rate is
+       `APP_SOURCED`. */
+    prisma.workRequest.update({
+      where: { id: wr.id },
+      data: { status: "ASSIGNED", sole_sourced: false },
+    }),
   ]);
 
   /*
@@ -505,7 +514,26 @@ export async function assignProviderDirectly(
     route: "DIRECT",
   });
 
-  await prisma.workRequest.update({ where: { id: wr.id }, data: { status: "ASSIGNED" } });
+  /*
+    ── ⚠⚠⚠ `sole_sourced` IS WRITTEN HERE, AND IT IS A CONTROL, NOT A FLAG ────
+
+    `P2-A15-E696` WS-D, ruling `97d`. ⚠⚠ **AN HOUR AGO IT WAS A CONVENIENCE SO A
+    REQUEST COULD BE TOLD APART LATER. IT NOW DECIDES A THREE-TIMES DIFFERENCE IN
+    THE FEE** — 4.99% here against 9.99% on the proposal route.
+
+    ⚠⚠⚠ **WRITTEN FROM THE PATH THE REQUEST ACTUALLY TOOK, IN THE SAME UPDATE AS
+    THE STATUS — TWO FACTS FROM ONE DECISION, SO THEY CANNOT DISAGREE.** This is
+    `assignProviderDirectly`: the buyer named the provider and Panameer sourced
+    nothing.
+
+    ⚠⚠ **AND IT IS NEVER SETTABLE BY HAND** — no route, form or update surface
+    accepts it. ⚠⚠⚠ **OTHERWISE THE CHEAPEST ROUTE THROUGH THE PRODUCT IS "TICK
+    SOLE-SOURCED", AND THE 9.99 AND 14.99 TIERS COLLECT NOTHING.**
+  */
+  await prisma.workRequest.update({
+    where: { id: wr.id },
+    data: { status: "ASSIGNED", sole_sourced: true },
+  });
 
   return {
     workRequestId: wr.id,

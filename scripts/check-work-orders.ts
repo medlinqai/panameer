@@ -467,8 +467,30 @@ async function main() {
     /* ⚠ And the surface DOES take the two things it legitimately needs. */
     check("5 — ⚠ it takes the work request, and the PO door takes a PO number",
       /workRequestId: string/.test(inputSurface) && /poNumber: string/.test(inputSurface));
-    check("5 — ⚠ the fee is snapshotted from the profile, not recomputed later",
-      /service_fee_bps/.test(woSrc) && /fee_bps: feeBps/.test(woSrc));
+    /*
+      ── ⚠⚠⚠ THE RULE SURVIVED; THE SOURCE MOVED (`P2-A15-E696` WS-C, ruling 97)
+
+      ⚠⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`': THE RULING
+      MOVED, SO THE GATE MOVES.** The code did not drift.
+      ⚠ **The rule is unchanged and is still the point:** the fee is SNAPSHOTTED
+      at creation and never recomputed later — *"so an in-flight engagement
+      finishes at the rate it was agreed at."*
+      ⚠⚠⚠ **WHAT CHANGED IS WHERE IT COMES FROM: the sourcing kind, not the
+      person** (Scott: *"Providers don't stay at a rate"*), **and WHERE IT LANDS:
+      the LINE, not the header**, because a cart can mix kinds.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   "5 - the fee is snapshotted from the profile, not recomputed later",
+      //   /service_fee_bps/.test(woSrc) && /fee_bps: feeBps/.test(woSrc)
+    */
+    check("5 — ⚠ the fee is resolved from the commission table, not the provider",
+      /resolveCommissionBps\(/.test(woSrc) && !/service_fee_bps/.test(woSrc));
+    check("5 — ⚠⚠ and it is stamped on the LINE, because a cart can mix kinds",
+      /fee_bps: lineFees\.get\(l\.id\)/.test(woSrc));
+    /* ⚠⚠⚠ THE STAMP IS THE WHOLE POINT: resolved ONCE, at creation. A reader of
+       the commission table anywhere in the settlement path would re-price a
+       signed contract. */
+    check("5 — ⚠⚠⚠ the header rate is null when the lines disagree, never invented",
+      /distinct\.length === 1 \? distinct\[0\]! : null/.test(woSrc));
     check("5 — ⚠⚠ and the period is derived from the lines",
       /Math\.min\(\.\.\.starts/.test(woSrc) && /Math\.max\(\.\.\.ends/.test(woSrc));
 

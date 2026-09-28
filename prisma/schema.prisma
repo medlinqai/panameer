@@ -4833,6 +4833,73 @@ model AssessmentInvite {
  * Basis points, not a float: 18% is 1800, exact, and money math that starts
  * with 0.18 in binary floating point starts with a rounding error.
  */
+/// ── ⚠⚠⚠ HOW MUCH SOURCING WORK DID THE PLATFORM ACTUALLY DO? ──────────────
+///
+/// `P2-A15-E696` WS-B, ruling 97. ⚠⚠ **SCOTT, 2026-09-28:**
+///     SOLE_SOURCED    4.99%   the buyer already knew them
+///     APP_SOURCED     9.99%   the platform matched, proposed, tested, shortlisted
+///     SERVICE_PRODUCT 14.99%  the platform's catalogue made the sale
+///
+/// ⚠⚠⚠ **THE RATE TRACKS THE WORK, WHICH IS A PRINCIPLE RATHER THAN A PAIR OF
+/// NUMBERS.** ⚠ **SUPERSEDES `94b`, quoted not deleted (`E164`):** *"THE
+/// COMMISSION ON SERVICE PRODUCTS IS THE SAME 14.9%… the fee keys on how the
+/// counterparty was found — internal 14.9% vs external 4.99% — not on which
+/// document the row came in through."* ⚠ Ruling 13: the newest dated statement
+/// from Scott wins, and three tiers keyed on sourcing effort is the better
+/// structure.
+///
+/// ⚠⚠ **THIS IS NOT `TaxRate` AND MUST NEVER BE FOLDED INTO IT** (ruling 97a).
+/// That table is the ASSESSMENT's tax-credit rate — a different product, a
+/// different number, and a different lifetime rule (see `applies_to` below).
+enum SourcingKind {
+  /// ⚠ The buyer already knew the provider. Cheapest, because Panameer did the
+  /// least. ⚠⚠ Written from the path the request took, never typed by a buyer —
+  /// see `WorkRequest.sole_sourced`.
+  SOLE_SOURCED
+  /// ⚠ Panameer matched, proposed, tested or shortlisted.
+  APP_SOURCED
+  /// ⚠ The catalogue made the sale.
+  SERVICE_PRODUCT
+}
+
+/// ── ⚠⚠ THE COMMISSION MATRIX. **MOST SPECIFIC WINS, LIKE THE PAGE BESIDE IT** ─
+///
+/// `P2-A15-E696` WS-B. ⚠ Same resolution shape as `TaxRate`'s geography
+/// overrides, deliberately: **the admin page beside this one already teaches the
+/// rule, so a reader arrives knowing it.**
+///
+/// ⚠⚠⚠ **`transaction_type` IS NULLABLE AND NULL MEANS "ANY".** A row naming a
+/// transaction type beats the `null` row for that sourcing kind.
+/// ⚠⚠ **IT SHIPS WITH THE THREE `null` ROWS AND NOTHING ELSE.** The matrix
+/// exists **so hourly can be split from fixed-price later without a migration —
+/// not so it ships full.** An override row nobody asked for is a rate nobody
+/// chose.
+///
+/// ⚠⚠⚠ **AND `TransactionType` CANNOT BE THE KEY ON ITS OWN, WHICH IS WHY
+/// `sourcing_kind` EXISTS:** it is `PRODUCT_BY_QTY · SERVICE_BY_QTY ·
+/// SERVICE_BY_AMT`, and it describes **how something settles, not how it was
+/// sourced.** It cannot tell 4.99 from 9.99.
+model ApplicationCommission {
+  id String @id @default(uuid()) @db.Uuid
+
+  sourcing_kind SourcingKind
+  /// ⚠⚠ NULL = applies to every transaction type for this sourcing kind.
+  transaction_type TransactionType?
+
+  rate_bps Int
+  note     String?
+
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  /// ⚠ One rate per (kind, type). The `null` row is the kind's default; a typed
+  /// row overrides it. ⚠⚠ NULLS DO NOT COLLIDE IN POSTGRES, so several kinds can
+  /// each hold their own `null` row under this constraint — which is exactly the
+  /// shape wanted, and the same behaviour `Notification.dedupe_key` relies on.
+  @@unique([sourcing_kind, transaction_type])
+  @@map("application_commissions")
+}
+
 model TaxRate {
   id         String   @id @default(uuid()) @db.Uuid
   /**
@@ -5501,7 +5568,16 @@ model WorkOrder {
   /// correct. The value must be COPIED from the provider's profile at order
   /// time, so an order AGREED at one rate KEEPS THAT RATE FOR LIFE even after
   /// the provider's current rate changes. Snapshot, never lookup.
-  fee_bps Int
+  /// ⚠⚠⚠ NULLABLE SINCE `P2-A15-E696` WS-C, AND THE NULL IS THE HONEST ANSWER.
+  /// ⚠ The authority is `WorkOrderLine.fee_bps`. This holds the order-level rate
+  /// **only when every line resolved to the same one**; when an order mixes
+  /// sourcing kinds it is **NULL**, because no single number is true of it.
+  /// ⚠⚠ **A SUMMARY THAT INVENTS A NUMBER FOR A MIXED ORDER WOULD BE WORSE THAN
+  /// NO SUMMARY** — somebody would settle against it. `90b`: a value nobody
+  /// chose, in a column that claims somebody did.
+  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `fee_bps Int` — NOT NULL, one
+  /// rate per order, snapshotted from `ProviderProfile.service_fee_bps`.
+  fee_bps Int?
 
   /// ⚠⚠ THE BUYER'S PO NUMBER, AND IT IS **NOT UNIQUE** — SEE THE FAN-OUT NOTE.
   /// The buyer's ERP sees ONE supplier (Panameer), so ONE PO FANS OUT INTO N
@@ -5529,6 +5605,23 @@ model WorkOrder {
 }
 
 model WorkOrderLine {
+  /// ── ⚠⚠⚠ THE COMMISSION, STAMPED ON THE LINE AT CREATION ──────────────────
+  ///
+  /// `P2-A15-E696` WS-C, ruling `97b`. ⚠⚠ **RESOLVED ONCE, FROM
+  /// `ApplicationCommission`, AND NEVER READ FROM THAT TABLE AGAIN.**
+  ///
+  /// ⚠⚠⚠ **IT IS ON THE LINE AND NOT THE HEADER BECAUSE A CART CAN MIX KINDS:**
+  /// `transaction_type` lives here, and one order may hold a sole-sourced
+  /// service line at 4.99% beside a service-product line at 14.99%. **A single
+  /// header rate cannot describe that order.**
+  ///
+  /// ⚠⚠ **THE TAX PAGE'S RULE IS THE OPPOSITE AND IS RIGHT FOR A REPORT:**
+  /// *"a change here applies to reports that have already been sent."*
+  /// ⚠⚠⚠ **CATASTROPHIC FOR A FEE — change 9.99 to 11 and every settled
+  /// transaction silently reprices. A fee is a term of the contract, and a term
+  /// that moves after signature is not a term.**
+  fee_bps Int
+
   id            String @id @default(uuid()) @db.Uuid
   work_order_id String @db.Uuid
   line_number   Int

@@ -632,7 +632,11 @@ export type OrderDetail = {
   periodStart: string | null;
   periodEnd: string | null;
   notToExceedCents: number | null;
-  feeBps: number;
+  /* ⚠⚠ NULLABLE SINCE `P2-A15-E696` WS-C: the fee is stamped per LINE now, and
+     the header rate is `null` when an order mixes sourcing kinds. ⚠ A reader
+     that wants the money must go to the lines; this is the convenience value and
+     it knows when to say nothing. */
+  feeBps: number | null;
   externalRef: string | null;
   workRequestId: string | null;
   providerAcceptedAt: string | null;

@@ -1,8 +1,18 @@
 import { WorkOrderOrigin } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  resolveCommissionBps,
+  sourcingKindForLine,
+} from "@/lib/application-commissions";
 import { SourcingError } from "@/lib/sourcing";
 import { assertTransactionLineShape, pricedByQuantity } from "@/lib/transaction-spine";
-import { DEFAULT_SERVICE_FEE_BPS } from "@/lib/display";
+/* ⚠ `DEFAULT_SERVICE_FEE_BPS` IS NO LONGER IMPORTED HERE — `P2-A15-E696` WS-C
+   took the fee off the provider, so this file has no fallback of its own to
+   reach for. ⚠⚠ The commission table's own floor lives in
+   `application-commissions.ts` and `check:service-fee` still pins the legacy
+   constant to the schema default for the screens that DISPLAY it.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { DEFAULT_SERVICE_FEE_BPS } from "@/lib/display"; */
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
@@ -87,6 +97,9 @@ async function buildWorkOrder(
       p_account_id: true,
       status: true,
       currency: true,
+      /* ⚠⚠ `P2-A15-E696` WS-C — the buyer's declaration is half the fee key.
+         The other half is whether the line carries a catalogue part. */
+      sole_sourced: true,
       lines: {
         where: { status: "ASSIGNED" },
         orderBy: { line_number: "asc" },
@@ -158,19 +171,49 @@ async function buildWorkOrder(
   const providerPersonId = providerIds[0]!;
 
   /*
-    ── ⚠⚠ THE FEE IS SNAPSHOTTED, NOT LOOKED UP LATER ──────────────────────
-    ⚠ `display.ts` states the reason in its own docblock: existing providers are
-    grandfathered on purpose, and `WorkOrder.fee_bps` exists *"so an in-flight
-    engagement finishes at the rate it was agreed at."* ⚠⚠ Reading the profile at
-    settlement time instead would re-price a live engagement whenever the default
-    moved. ⚠ A provider with no profile falls back to the ONE TypeScript copy of
-    the default, which `check:service-fee` pins to the schema's `@default`.
+    ── ⚠⚠⚠ THE FEE IS RESOLVED PER LINE AND STAMPED. **IT NO LONGER COMES FROM
+       THE PROVIDER** (`P2-A15-E696` WS-C, ruling 97) ──────────────────────
+
+    ⚠ **THE SNAPSHOT PRINCIPLE IS UNCHANGED AND IS THE WHOLE POINT** — the old
+    docblock's reason still holds word for word: *"`WorkOrder.fee_bps` exists so
+    an in-flight engagement finishes at the rate it was agreed at."*
+    ⚠⚠ **WHAT CHANGED IS WHERE THE RATE COMES FROM: the sourcing kind, not the
+    person.** Scott, 2026-09-28: *"Providers don't stay at a rate. Rates
+    determined by TRANSACTION_TYPE and at the time of transaction."*
+
+    ⚠⚠⚠ **PER LINE, BECAUSE A CART CAN MIX KINDS.** A sole-sourced service line
+    at 4.99% can sit beside a service-product line at 14.99% in one order, and a
+    single order-level rate cannot describe that.
+
+    ⚠⚠ **`ProviderProfile.service_fee_bps` IS NO LONGER READ HERE — THIS WAS ITS
+    ONLY DECIDER.** ⚠ It is NOT dropped, NOT backfilled, and the five rows sitting
+    at 1000 bps are NOT migrated (ruling `97c`). **Nobody's fee is raised; the
+    column simply goes quiet**, and the three remaining readers only display it.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const profile = await prisma.providerProfile.findFirst({
+    //     where: { person_id: providerPersonId },
+    //     select: { service_fee_bps: true },
+    //   });
+    //   const feeBps = profile?.service_fee_bps ?? DEFAULT_SERVICE_FEE_BPS;
   */
-  const profile = await prisma.providerProfile.findFirst({
-    where: { person_id: providerPersonId },
-    select: { service_fee_bps: true },
-  });
-  const feeBps = profile?.service_fee_bps ?? DEFAULT_SERVICE_FEE_BPS;
+  const lineFees = new Map<string, number>();
+  for (const l of lines) {
+    const kind = sourcingKindForLine({
+      soleSourced: wr.sole_sourced,
+      supplierPartId: l.supplier_part_id,
+    });
+    const resolved = await resolveCommissionBps(kind, l.transaction_type);
+    lineFees.set(l.id, resolved.bps);
+  }
+  /*
+    ⚠⚠⚠ THE HEADER RATE IS THE UNIFORM ONE, OR **NULL**. ⚠ A mixed order has no
+    single true rate, and inventing one — the first line's, the highest — would
+    be a number nobody chose in a column that claims somebody did (`90b`).
+    ⚠⚠ **THE LINE IS THE AUTHORITY FOR MONEY. THE HEADER IS A CONVENIENCE THAT
+    KNOWS WHEN TO SAY NOTHING.**
+  */
+  const distinct = [...new Set(lineFees.values())];
+  const feeBps = distinct.length === 1 ? distinct[0]! : null;
 
   /* ⚠ The period is the span the requisition lines actually cover — derived, not
      typed. ⚠⚠ `null` where no line carries a date, rather than today's date,
@@ -264,6 +307,9 @@ async function buildWorkOrder(
                ⚠ `basis` is NOT written — it is retired and nullable, and writing
                it would mean deriving it, which is the deleted bridge. */
             transaction_type: l.transaction_type,
+            /* ⚠⚠⚠ THE STAMP. Resolved above, written here, never looked up
+               again — ruling `97b`. */
+            fee_bps: lineFees.get(l.id)!,
             description: l.description,
             unspsc_code: l.unspsc_code,
             uom: l.uom,
