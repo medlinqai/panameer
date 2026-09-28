@@ -2942,6 +2942,33 @@ enum CoordinatorInviteStatus {
 // ---------------------------------------------------------------------------
 
 model WorkRequest {
+  /// ── ⚠⚠⚠ SOLE-SOURCED IS A WRITTEN FACT NOW, NOT AN INFERENCE ─────────────
+  ///
+  /// `P2-A8-E695` WS-B1, 2026-09-28. ⚠ **SCOTT: *"pre-sourced is not the
+  /// industry term, my mistake…let's use SOLE-SOURCED (PRC people will know what
+  /// this means)."***
+  ///
+  /// ⚠⚠ **BEFORE THIS COLUMN IT WAS ONLY INFERABLE FROM A STATUS THAT GOT
+  /// SKIPPED:** a sole-sourced request goes `DRAFT → ASSIGNED` past `POSTED`,
+  /// and afterwards is **indistinguishable from a request that was posted and
+  /// got a fast proposal.** ⚠ If sole-sourcing ever carries a different fee or
+  /// rulebook, it has to be a written fact, not a reconstruction.
+  ///
+  /// ⚠⚠⚠ **EXISTING ROWS ARE `false` BECAUSE THAT IS THE DEFAULT, NOT BECAUSE
+  /// ANYBODY MEASURED THEM.** There is no backfill and there must not be one:
+  /// ruling `90b` — a false value in a true column is worse than a null, and
+  /// inferring it from a skipped status is exactly the reconstruction this
+  /// column exists to replace.
+  ///
+  /// ⚠⚠⚠ **WS-B2 OF THE SAME BRIEF WAS NOT BUILT, BECAUSE IT ALREADY EXISTS.**
+  /// It asked for `provider_accepted_at` and `buyer_accepted_at` on `WorkOrder`;
+  /// **RULING 43 ADDED BOTH ALREADY**, with the two-sided reasoning and the
+  /// `buyer_released_at` retirement debt recorded beside them. ⚠ The brief
+  /// assumed their absence and did not ask for it to be confirmed — **the
+  /// compiler caught it, not the premise check.** ⚠⚠ *The codebase is
+  /// repeatedly further along than the notes about it.*
+  sole_sourced Boolean @default(false)
+
   id                  String               @id @default(uuid()) @db.Uuid
   buyer_person_id     String               @db.Uuid
   p_account_id        String               @db.Uuid
