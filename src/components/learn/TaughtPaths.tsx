@@ -35,7 +35,12 @@ export function TaughtPaths({
     <section className="rounded-brand border border-line bg-white p-6">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="font-display text-[20px] font-bold">
-          {isOwner ? "Courses You Teach" : `Learn From ${firstName}`}
+          {/* ⚠⚠ `Courses You Teach` → `Teaching` (`P2-A2-E713`, brief item 10). ⚠ The LEARN
+              lane is finished, so the amended brief makes this file editable.
+              ⚠⚠⚠ THE VISITOR STRING IS UNTOUCHED: `Learn From {name}` is not the same
+              concept — it addresses a buyer, not the owner's own capacity.
+              ⚠ SUPERSEDED (`E164`): //   isOwner ? "Courses You Teach" : … */}
+          {isOwner ? "Teaching" : `Learn From ${firstName}`}
         </h2>
         <p className="text-[13.5px] text-ink-2">
           {paths.length} learning path{paths.length === 1 ? "" : "s"} ·{" "}

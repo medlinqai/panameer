@@ -39,8 +39,15 @@ export function ProfileVisibilityCard({
   paused: boolean;
   completeness: number;
 }) {
+  /*
+    ⚠⚠ THE BOX IS GONE (`P2-A2-E713` WS-A item 9). Scott: Visibility "loses its box too",
+    separated by a thin line instead. ⚠ This component is rendered ONLY by `ConnectProfile`
+    (measured), so nothing else is restyled by flattening it here.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): the section carried
+    rounded-brand + border + border-line + bg-white + px-[18px] + py-4.
+  */
   return (
-    <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+    <section className="mt-7 border-t border-line pt-5">
       <h3 className="mb-1 font-display text-[14.5px] font-bold leading-tight">
         Visibility
       </h3>

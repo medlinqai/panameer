@@ -920,8 +920,12 @@ const SPEC_KIND_ORDER: { key: string; label: string }[] = [
 
 export function SpecializationsBody({
   specializations,
+  /* ⚠⚠ SAME REASON AS `SkillsBody` (`P2-A2-E713`): `/join/provider:4012` renders this and
+     must not change, so `CHIP_SPEC` stays the DEFAULT and the clean profile passes its own. */
+  chipClass,
 }: {
   specializations: SpecializationItem[];
+  chipClass?: string;
 }) {
   if (specializations.length === 0) return <Empty>None listed.</Empty>;
   /* ⚠⚠ A ROW WITH AN UNKNOWN OR MISSING `kind` IS NOT DROPPED — it falls into
@@ -938,7 +942,8 @@ export function SpecializationsBody({
 
   /* ⚠ ONE GROUP IS NOT A GROUPING. With everything under a single kind the
      heading says nothing the card's title has not already said. */
-  if (groups.length === 1) return <SpecChips items={groups[0].items} />;
+  if (groups.length === 1)
+    return <SpecChips items={groups[0].items} chipClass={chipClass} />;
 
   return (
     <div>
@@ -949,20 +954,27 @@ export function SpecializationsBody({
           <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
             {g.label}
           </p>
-          <SpecChips items={g.items} />
+          <SpecChips items={g.items} chipClass={chipClass} />
         </div>
       ))}
     </div>
   );
 }
 
-function SpecChips({ items }: { items: SpecializationItem[] }) {
+function SpecChips({
+  items,
+  /* ⚠ Threaded from `SpecializationsBody` — see its `chipClass` note. */
+  chipClass,
+}: {
+  items: SpecializationItem[];
+  chipClass?: string;
+}) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((s) => (
         <span
           key={s.id}
-          className={CHIP_SPEC}
+          className={chipClass ?? CHIP_SPEC}
         >
           {s.name}
         </span>
@@ -993,9 +1005,22 @@ export function OverviewBody({
 export function SkillsBody({
   skills,
   field,
+  /*
+    ── ⚠⚠⚠ THE CHIP LOOK ARRIVES AS A PROP (`P2-A2-E713` WS-A item 4) ──────────
+
+    ⚠⚠ **`/join/provider:3994` RENDERS THIS COMPONENT AND MUST LOOK EXACTLY AS IT DOES
+    NOW** (premise 2). ⚠⚠⚠ **SO `CHIP_SKILL` IS NOT EDITED — IT IS THE DEFAULT.** Changing
+    the constant would have restyled the onboarding review, which is the one page this brief
+    is forbidden to touch, and it would have done so silently.
+    ⚠ The clean profile passes `CleanChip`'s thinner 1px-outline class; every other caller
+    passes nothing and is unaffected. **The brief's own words: the box leaves by a prop or a
+    new component.**
+  */
+  chipClass,
 }: {
   skills: SkillItem[];
   field?: { role: string; domain: string } | null;
+  chipClass?: string;
 }) {
   return (
     <>
@@ -1009,7 +1034,7 @@ export function SkillsBody({
           {skills.map((s) => (
             <span
               key={s.id}
-              className={CHIP_SKILL}
+              className={chipClass ?? CHIP_SKILL}
             >
               {s.name}
             </span>
@@ -1303,6 +1328,19 @@ export function WorkHistoryBody({
   contactFor,
   condensed = false,
   cap,
+  /*
+    ── ⚠⚠⚠ THE TIMELINE, OPT-IN (`P2-A2-E713` WS-A item 7) ─────────────────────
+
+    ⚠ **SCOTT: *"a thin dashed line runs from employer to employer, with a small dot at each
+    one."*** ⚠⚠ **IT IS A PROP AND IT DEFAULTS OFF BECAUSE `E084` MADE THIS COMPONENT SHARED
+    ON PURPOSE:** `/join/provider` renders it in two places (`:2525`, `:3907`) and must look
+    exactly as it does now. ⚠⚠⚠ A dashed magenta line appearing in the onboarding review
+    would be this brief leaking into the one page it may not touch.
+    ⚠ The line and the dot are `::before`/`::after` in `connect-profile.css`, so switching
+    this on adds **one class** and **no markup** — no decorative `<div>` for a screen reader
+    to read out as an empty item.
+  */
+  timeline = false,
 }: {
   employers: EmployerItem[];
   empty: string;
@@ -1314,6 +1352,7 @@ export function WorkHistoryBody({
   contactFor?: (employerId: string) => React.ReactNode;
   /** One tight line per role — the "You're live" page (WS1/E146). */
   condensed?: boolean;
+  timeline?: boolean;
   /**
    * Show at most this many entries, the rest behind a "N more — pending"
    * disclosure (walk7 WS5). Used only by the "You're live" page.
@@ -1349,7 +1388,7 @@ export function WorkHistoryBody({
           ? projects.filter((p) => nested.some((n) => n.id === p.id))
           : projects.filter((p) => p.employer === e.name);
         return (
-          <li key={e.id}>
+          <li key={e.id} className={timeline ? "pm-tl-job" : undefined}>
             <WorkHistoryEntry
               employer={e}
               projects={mine}

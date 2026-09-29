@@ -376,13 +376,32 @@ check(
   `p.rates`, not just its rows, because a heading reading `Rates` over an empty
   box tells a visitor a rate exists and is being withheld. Only the element it
   gates changed — again.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`), both previous shapes:
+  ⚠ SUPERSEDED, quoted not deleted (`E164`), all three previous shapes:
   //   /\{p\.rates && \(\s*<ProfileCard/            (E593 — a centre card)
   //   /\{p\.rates && \(\s*<div className="pm-cp2-rates"/   (E598 — in the hero)
+  //   /\{p\.rates && \(\s*<ProfileCard\s*\n\s*id="rates"/  (E600 — the rail card)
+
+  ── ⚠⚠⚠ FOURTH SHAPE, SAME RULE (`P2-A2-E713` WS-A item 9) ─────────────────
+
+  ⚠⚠ **`brief_clean_page` TAKES THE BOX OFF THE LEFT COLUMN**, so Rates is now a
+  `CleanSide` — a 12px eyebrow over a thin rule — rather than a bordered card. ⚠ Scott:
+  Rates, Search Score, Visibility and Rank Higher *"lose their boxes too, and are separated
+  by thin lines."*
+  ⚠⚠⚠ **THE RULE THIS ASSERTION HOLDS HAS NOT MOVED AN INCH: the WHOLE BLOCK is gated on
+  `p.rates`, not just its rows, because a heading reading `Rates` over an empty box tells a
+  visitor a rate exists and is being withheld.** Only the element changed — for the fourth
+  time, which is why this comment keeps a list.
+  ⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`':** the gate's pattern went
+  stale against correct code, so the GATE is taught the new shape. Had the RULE been
+  overturned, the build would lose instead.
+  ⚠⚠ `id="rates"` IS GONE WITH THE CARD — `CleanSide` takes no anchor id, because nothing
+  scrolls to Rates; the What's-Missing links target main-column sections.
 */
 check(
   "9 — ⚠ the Rates BLOCK is gated, not only its rows",
-  /\{p\.rates && \(\s*<ProfileCard\s*\n\s*id="rates"/.test(CARDS_PROFILE)
+  /\{p\.rates && \(\s*(?:\/\*[\s\S]*?\*\/\s*)?<CleanSide\s*\n\s*title="Rates"/.test(
+    CARDS_PROFILE
+  )
 );
 check(
   "9 — ⚠ both rate consumers handle the null",

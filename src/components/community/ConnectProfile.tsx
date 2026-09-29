@@ -58,9 +58,7 @@ import {
      `EditButton` in `sections.tsx` and shares its `EDIT_CLASS`, so the link and
      the button render identically. ⚠ It was dead code in `ProviderProfileView`
      until this brief; it was MOVED, not copied. */
-  EditLink,
   OverviewBody,
-  ProfileCard,
   /* ⚠ THE SAME CHIPS THE OWNER'S HERO USES (`P2-A3-E596` WS-G item 1) — reused,
      never re-implemented. */
   SkillsBody,
@@ -71,6 +69,18 @@ import {
   locationLines,
 } from "@/components/profile/sections";
 import "./connect-profile.css";
+/*
+  ⚠⚠⚠ THE CLEAN DIRECTION'S OWN PIECES (`P2-A2-E713` WS-A). ⚠ `ProfileCard`/`EditLink`
+  are still imported below where this file needs them — they are NOT deleted, because
+  `/join/provider` renders them and must look exactly as it does now (premise 2).
+*/
+import {
+  CleanSection,
+  CleanEdit,
+  CLEAN_CHIP,
+  CleanSide,
+} from "@/components/profile/CleanSection";
+
 
 /**
  * ── ⚠⚠ CONNECT HOME IS THE PROFILE (`P2-J3-E588` WS-A, OWNER MODE) ─────────
@@ -355,6 +365,23 @@ export function ConnectProfile({
      //     p.accountHealth.statusActive && p.accountHealth.emailVerified;
   */
 
+  /*
+    ── ⚠⚠⚠ WHAT A VISITOR MAY SEE OF SOMEBODY'S LEARNING (WS-A item 6 / brief item 11) ──
+
+    ⚠ **SCOTT: *"Completed items are visible to buyers. In-progress items stay private to
+    the member."*** ⚠⚠ So the owner sees everything they are enrolled in; **a visitor sees
+    only what was finished.**
+    ⚠⚠⚠ **THE FILTER IS HERE, ONCE, AND NOT AT EACH RENDER POINT.** A second place deciding
+    who may see an in-progress enrolment is a second place to get somebody's privacy wrong.
+    ⚠ `completed` is DERIVED in `getPathsTakenBy` (every lesson of the path has a progress
+    row) — no column was added, and `t > 0` there stops an empty path certifying itself.
+    ⚠⚠ **MEASURED 2026-09-29: `LearnEnrollment` 2, `LessonProgress` 4 — NOTHING IS COMPLETE
+    FOR ANYBODY, so the buyer-visible half is EMPTY BY CONSTRUCTION today.** That is the
+    data being young, not a defect, and the empty-section rule already hides it from a
+    visitor rather than showing them a heading with nothing under it.
+  */
+  const visibleTaken = owner ? takenPaths : takenPaths.filter((t) => t.completed);
+
   const soloProjects = p.projects.filter(
     (pr) => !p.employers.some((e) => (e.projects ?? []).some((n) => n.id === pr.id))
   );
@@ -371,8 +398,25 @@ export function ConnectProfile({
     — `WorkOrder` holds zero rows. ⚠ A `Buy` button that silently did nothing
     would be the worst kind of dead control: it looks like the product works.
   */
+  /*
+    ⚠⚠ RENAMED `Services` (`P2-A2-E713` WS-A item 7 / brief item 10). ⚠ Scott:
+    `Service Products I Offer` → **`Services`**. ⚠⚠⚠ THE MODEL KEEPS ITS NAME —
+    `ServiceProduct` is what `E697` renamed it TO, and this is the heading a member
+    READS, not the noun the schema uses.
+    ⚠⚠ A JSX COMMENT COULD NOT GO HERE: this is the first element of the expression, so a
+    braced JSX comment made it a second root. The comment belongs OUTSIDE the parenthesis.
+    ⚠⚠⚠ AND THE FIRST ATTEMPT AT THIS NOTE BROKE THE PARSE — it spelled that JSX comment
+    out literally, and a block comment CANNOT CONTAIN a comment terminator. Load-bearing
+    rule 12, third recorded occurrence. **PARAPHRASE, NEVER QUOTE, INSIDE A BLOCK.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   <CleanSection title="Service Products I Offer">
+  */
   const serviceProducts = (
-    <ProfileCard title="Service Products I Offer">
+    <CleanSection
+          title="Services"
+          isEmpty={p.packages.length === 0}
+          showWhenEmpty={owner}
+        >
       {p.packages.length === 0 ? (
         <p className="text-[13.5px] leading-relaxed text-ink-2">
           {owner ? (
@@ -446,7 +490,7 @@ export function ConnectProfile({
           )}
         </>
       )}
-    </ProfileCard>
+    </CleanSection>
   );
 
   return (
@@ -469,9 +513,26 @@ export function ConnectProfile({
         growth down one rail and gives the whole width to the record.
       */}
       <aside className="pm-cp3-rail">
-        <section className="overflow-hidden rounded-brand border border-line bg-white">
-          <div className="h-[72px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
-          <div className="px-[18px] pb-4">
+        {/*
+          ── ⚠⚠⚠ THE IDENTITY BOX IS GONE (`P2-A2-E713` WS-A item 1 / brief item 2) ──
+
+          ⚠⚠ **SCOTT: *"The cards are not obvious, bordered"* · *"No grey background… boxes
+          cut up the page."*** ⚠ So the border, the radius, the white fill and the
+          `overflow-hidden` that existed only to clip that radius are all removed.
+          ⚠⚠⚠ **AND THE 72px GRADIENT BANNER GOES WITH THEM.** It was the boxiest thing on
+          the page and the only place a second colour appeared — brief item 4 is *"all one
+          color, on white"*, so a three-stop ink→purple→magenta gradient is exactly what that
+          rules out. ⚠ It also existed to give the avatar something to overlap (`-mt-[34px]`
+          below), so that offset goes too.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <section className="overflow-hidden rounded-brand border border-line bg-white">
+          //     <div className="h-[72px] bg-gradient-to-br from-ink via-[#4b2d63] to-magenta-dark" />
+          //     <div className="px-[18px] pb-4">
+          ⚠⚠ **`/join/provider` IS UNAFFECTED: this markup is local to `ConnectProfile`**, not
+          `ProfileCard`, so nothing shared changed to achieve it.
+        */}
+        <section>
+          <div>
             {/*
               ── ⚠⚠⚠ EACH EDIT CONTROL MOVES BESIDE WHAT IT EDITS (WS-B) ────────
 
@@ -483,7 +544,10 @@ export function ConnectProfile({
               ⚠⚠⚠ **THIS IS THE COUNTING RULES' THIRD LINE APPLIED TO CONTROLS:**
               *a control says what it governs AT THE POINT IT GOVERNS IT.*
             */}
-            <span className="-mt-[34px] flex items-end gap-2">
+            {/* ⚠ `-mt-[34px]` REMOVED WITH THE BANNER IT OVERLAPPED. ⚠⚠ Left in place it would
+                pull the avatar up into the tab row. ⚠ SUPERSEDED (`E164`):
+                //   <span className="-mt-[34px] flex items-end gap-2"> */}
+            <span className="flex items-end gap-2">
               <span className="inline-block overflow-hidden rounded-full ring-[3px] ring-white">
                 <Avatar
                   firstName={p.person.firstName ?? ""}
@@ -492,7 +556,7 @@ export function ConnectProfile({
                   size={72}
                 />
               </span>
-              {owner && <EditLink href={editHref("photo")} title="Photo" />}
+              {owner && <CleanEdit href={editHref("photo")} title="Photo" />}
             </span>
             <div className="mt-2 flex items-center gap-1.5">
               {/* ⚠ The OWNER's `<h1>` is the tab row's (`E600` WS-A); a visitor
@@ -524,7 +588,7 @@ export function ConnectProfile({
             {(p.headline || owner) && (
               <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug text-ink-2">
                 {p.headline}
-                {owner && <EditLink href={editHref("title")} title="Title" />}
+                {owner && <CleanEdit href={editHref("title")} title="Title" />}
               </p>
             )}
             {/*
@@ -657,7 +721,7 @@ export function ConnectProfile({
                     the moment that commit landed, and is corrected there.
                     ⚠ SUPERSEDED, quoted not deleted (`E164`):
                     //   <EditLink href={editHref("languages")} title="Languages" label="Languages" /> */}
-                <EditLink href={editHref("work-method")} title="How You Work" label="How You Work" />
+                <CleanEdit href={editHref("work-method")} title="How You Work" label="How You Work" />
               </div>
             )}
             {owner && (
@@ -729,13 +793,23 @@ export function ConnectProfile({
           ⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY.
         */}
         {p.rates && (
-          <ProfileCard
-            id="rates"
+          /*
+            ── ⚠⚠⚠ RATES IS A SIDE BLOCK, NOT A SECTION (`P2-A2-E713` WS-A item 9) ──
+
+            ⚠ **SCOTT: Rates, Search Score, Visibility and Rank Higher *"lose their boxes
+            too, and are separated by thin lines."*** ⚠⚠ `CleanSide` is that treatment — a
+            12px uppercase eyebrow over a thin top rule — and it is deliberately NOT
+            `CleanSection`: **the left column does not fold.** A chevron on a three-row rate
+            list would be a control with nothing to reveal.
+            ⚠ The `owner`/visitor rule is untouched: `p.rates` is already `null` for anyone
+            who may not see it, which is the VIEW MODEL's decision and not this component's.
+          */
+          <CleanSide
             title="Rates"
-            edit={owner ? <EditLink href={editHref("rates")} title="Rates" /> : undefined}
+            action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
           >
             <RateRows p={p} />
-          </ProfileCard>
+          </CleanSide>
         )}
 
         {owner ? (
@@ -743,7 +817,7 @@ export function ConnectProfile({
             {score && (
               <Link
                 href="/community/score"
-                className="group block rounded-brand border border-line bg-white px-[18px] py-4 transition-colors hover:border-magenta/40"
+                className="group mt-7 block border-t border-line pt-5"
               >
                 <CompletionRing score={score} />
                 <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
@@ -778,7 +852,7 @@ export function ConnectProfile({
               </Link>
             )}
 
-            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+            <section className="mt-7 border-t border-line pt-5">
                             {/*
                               ⚠⚠ THE TITLE STAYS `Grow` FOR NOW (Scott, 2026-09-22, at the
                               `E599` WS-B gate): *"keep its title 'Grow' for now. The
@@ -879,7 +953,7 @@ export function ConnectProfile({
                 both personas; this is the overlap with the VIEWER, a different
                 fact.
               */}
-              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+              <section className="mt-7 border-t border-line pt-5">
                 <div className="flex items-center justify-between gap-2.5 text-[13.5px]">
                   <span className="text-ink-2">You Both Know</span>
                   {/* ⚠ `E433` — a figure is INK. */}
@@ -892,7 +966,7 @@ export function ConnectProfile({
               absent, never `$0`; a missing language is absent, never "English"
               as a default — that would be a fact about a person nobody stated.
             */}
-            <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+            <section className="mt-7 border-t border-line pt-5">
               {p.validated ? (
                 <>
                   <div className="flex items-center gap-2">
@@ -963,7 +1037,7 @@ export function ConnectProfile({
               **A link that 403s is a dead door with a nicer sign.**
             */}
             {visitorGroups.length > 0 && (
-              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+              <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
                   Groups
                 </h3>
@@ -993,7 +1067,7 @@ export function ConnectProfile({
             )}
 
             {connect && (
-              <section className="rounded-brand border border-line bg-white px-[18px] py-4">
+              <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
                   Connect as a Colleague
                 </h3>
@@ -1027,7 +1101,7 @@ export function ConnectProfile({
               "become colleagues" sends people to do something that will not
               help. ⚠ **Reported at the WS-B gate.**
             */}
-            <section className="rounded-brand border border-line bg-white px-[18px] py-4 text-center">
+            <section className="mt-7 border-t border-line pt-5 text-center">
               <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
                 Message
               </h3>
@@ -1093,16 +1167,18 @@ export function ConnectProfile({
 
       <main className="pm-cp3-main">
         {/* ⚠ `About` IS `Bio` AGAIN (WS-B 5). Anchor and editor unchanged. */}
-        <ProfileCard
+        <CleanSection
           id="bio"
           title="Bio"
-          edit={owner ? <EditLink href={editHref("bio")} title="Bio" /> : undefined}
+          isEmpty={!p.overview}
+          showWhenEmpty={owner}
+          action={owner ? <CleanEdit href={editHref("bio")} title="Bio" /> : undefined}
         >
           <OverviewBody
             overview={p.overview}
             empty="Nothing here yet. A short bio is the first thing a buyer reads."
           />
-        </ProfileCard>
+        </CleanSection>
 
         {/* ⚠ THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
         {!owner && serviceProducts}
@@ -1118,10 +1194,12 @@ export function ConnectProfile({
           need. ⚠ SUPERSEDED, quoted not deleted (`E164`): the merged card, with
           `<div id="specializations" className="mt-4 border-t …">` inside it.
         */}
-        <ProfileCard
+        <CleanSection
           id="skills"
           title="Skills"
-          edit={owner ? <EditLink href={editHref("skills")} title="Skills" /> : undefined}
+          isEmpty={p.skills.length === 0}
+          showWhenEmpty={owner}
+          action={owner ? <CleanEdit href={editHref("skills")} title="Skills" /> : undefined}
         >
           {p.skills.length > 0 ? (
             groupSkillsByPillar(p.skills).map((g) => (
@@ -1129,7 +1207,7 @@ export function ConnectProfile({
                 <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
                   {g.pillar ?? "Other"}
                 </p>
-                <SkillsBody skills={g.skills} />
+                <SkillsBody skills={g.skills} chipClass={CLEAN_CHIP} />
               </div>
             ))
           ) : (
@@ -1142,7 +1220,7 @@ export function ConnectProfile({
               )}
             </p>
           )}
-        </ProfileCard>
+        </CleanSection>
 
         {/*
           ── ⚠⚠⚠ SPECIALIZATIONS SPANS THE PAGE (`P2-A2-E602` WS-C 1 + 3) ─────
@@ -1168,19 +1246,23 @@ export function ConnectProfile({
           //     </ProfileCard>
           //     <ProfileCard id="certifications" …>
         */}
-        <ProfileCard
+        <CleanSection
           id="specializations"
           title="Specializations"
-          edit={owner ? <EditLink href={editHref("specializations")} title="Specializations" /> : undefined}
+          isEmpty={p.specializations.length === 0}
+          showWhenEmpty={owner}
+          action={owner ? <CleanEdit href={editHref("specializations")} title="Specializations" /> : undefined}
         >
-          <SpecializationsBody specializations={p.specializations} />
-        </ProfileCard>
+          <SpecializationsBody specializations={p.specializations} chipClass={CLEAN_CHIP} />
+        </CleanSection>
 
         <div className="pm-cp-pair">
-          <ProfileCard
+          <CleanSection
             id="certifications"
             title="Certifications"
-            edit={owner ? <EditLink href={editHref("certifications")} title="Certifications" /> : undefined}
+          isEmpty={p.certifications.length === 0}
+          showWhenEmpty={owner}
+            action={owner ? <CleanEdit href={editHref("certifications")} title="Certifications" /> : undefined}
           >
             <CertificationsBody
               certifications={p.certifications}
@@ -1220,11 +1302,13 @@ export function ConnectProfile({
                 ) : undefined
               }
             />
-          </ProfileCard>
-          <ProfileCard
+          </CleanSection>
+          <CleanSection
             id="education"
             title="Education"
-            edit={owner ? <EditLink href={editHref("education")} title="Education" /> : undefined}
+          isEmpty={p.education.length === 0}
+          showWhenEmpty={owner}
+            action={owner ? <CleanEdit href={editHref("education")} title="Education" /> : undefined}
           >
             <EducationBody
               education={p.education}
@@ -1236,7 +1320,7 @@ export function ConnectProfile({
                 ) : undefined
               }
             />
-          </ProfileCard>
+          </CleanSection>
           {/*
             ── ⚠⚠⚠ LANGUAGES BECOMES ITS OWN CARD (brief 10 WS-B) ─────────────
 
@@ -1266,21 +1350,25 @@ export function ConnectProfile({
             it enforces a floor of one. **Absent and empty are already
             distinguished; nothing to fix.**
           */}
-          <ProfileCard
+          <CleanSection
             id="languages"
             title="Languages"
-            edit={owner ? <EditLink href={editHref("languages")} title="Languages" /> : undefined}
+            isEmpty={p.languages.length === 0}
+            showWhenEmpty={owner}
+            action={owner ? <CleanEdit href={editHref("languages")} title="Languages" /> : undefined}
           >
             <LanguagesBody languages={p.languages} />
-          </ProfileCard>
+          </CleanSection>
         </div>
 
         {/* ⚠⚠ WORK HISTORY AND SOLO PROJECTS ARE TWO CARDS AGAIN (WS-B). They
             were merged as `Experience` by `E598` WS-C; Layout A separates them,
             and each keeps its own anchor and its own editor. */}
-        <ProfileCard
+        <CleanSection
           id="work-history"
           title="Work History"
+          isEmpty={p.employers.length === 0}
+          showWhenEmpty={owner}
           /*
             ── ⚠⚠⚠ THE RÉSUMÉ RE-RUN, MOUNTED (`P2-A2-E602` WS-E 2) ────────────
 
@@ -1306,11 +1394,11 @@ export function ConnectProfile({
             READS *"a title (yours is empty)"* AND NEVER *"will replace"* — the
             component says what it will do, and what it will do is add.
           */
-          edit={
+          action={
             owner ? (
               <span className="flex items-center gap-3">
                 <OwnerResumeRerun />
-                <EditLink href={editHref("work-history")} title="Work History" />
+                <CleanEdit href={editHref("work-history")} title="Work History" />
               </span>
             ) : undefined
           }
@@ -1319,21 +1407,25 @@ export function ConnectProfile({
             employers={p.employers}
             projects={p.projects}
             isOwner={owner}
+            /* ⚠ THE CLEAN PROFILE IS THE ONLY CALLER THAT ASKS FOR THE TIMELINE (WS-A item 7). */
+            timeline
             empty="No work history yet."
           />
-        </ProfileCard>
+        </CleanSection>
 
-        <ProfileCard
+        <CleanSection
           id="solo-projects"
           title="Solo Projects"
-          edit={owner ? <EditLink href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
+          isEmpty={soloProjects.length === 0}
+          showWhenEmpty={owner}
+          action={owner ? <CleanEdit href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
         >
           <SoloProjectsBody
             projects={soloProjects}
             isOwner={owner}
             empty="Employee projects sit under their employer in Work History. No solo projects yet."
           />
-        </ProfileCard>
+        </CleanSection>
 
         {owner && serviceProducts}
 
@@ -1350,12 +1442,21 @@ export function ConnectProfile({
           ⚠ SUPERSEDED, quoted not deleted (`E164`):
           //   <ProfileCard title="Learning Paths I Offer">
         */}
-        <ProfileCard title="Learning Paths">
-          {taughtPaths.length === 0 && takenPaths.length === 0 ? (
+        {/* ⚠⚠ RENAMED `Teaching` (WS-A item 7 / brief item 10). ⚠ Scott: `Learning Paths I
+            Offer` / `You Teach` → **`Teaching`**. ⚠⚠ One word for the capacity, not a
+            sentence about it.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <CleanSection title="Learning Paths"> */}
+        <CleanSection
+          title="Teaching"
+          isEmpty={taughtPaths.length === 0}
+          showWhenEmpty={owner}
+        >
+          {taughtPaths.length === 0 ? (
             <p className="text-[13.5px] leading-relaxed text-ink-2">
               {owner
-                ? "You aren\u2019t teaching or taking any learning paths yet."
-                : "No learning paths yet."}
+                ? "You aren\u2019t teaching any learning paths yet."
+                : "Not teaching any learning paths yet."}
             </p>
           ) : (
             <div className="flex flex-col gap-3.5">
@@ -1377,38 +1478,71 @@ export function ConnectProfile({
                   </div>
                 </div>
               )}
-              {takenPaths.length > 0 && (
-                <div>
-                  <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-                    {/* ⚠⚠⚠ `’`, NOT `&rsquo;` — AN HTML ENTITY INSIDE A JS STRING IS NOT
-                        DECODED BY REACT (`P2-A2-E671`). This rendered literally as
-                        `You&rsquo;re Taking` on the page. ⚠ Line 1093 in this same
-                        file already does it correctly with the character, which is
-                        what made the inconsistency findable. */}
-                    {owner ? "You’re Taking" : "Taking"}
-                  </p>
-                  {/* ⚠ INK, NOT MAGENTA — `E433`. These are still links, so
-                      they keep the underline on hover, but a taken path is
-                      not an offer and must not read as one beside the set
-                      this person actually teaches. */}
-                  <div className="flex flex-wrap gap-2">
-                    {takenPaths.map((t) => (
-                      <Link
-                        key={t.slug}
-                        href={`/learn/${t.slug}`}
-                        className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline"
-                      >
-                        {t.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
-        </ProfileCard>
+        </CleanSection>
 
-        <ProfileCard title="Recommendations">
+        {/*
+          ── ⚠⚠⚠ LEARNING — ITS OWN SECTION (`P2-A2-E713` WS-A item 6 / brief item 11) ──
+
+          ⚠ **SCOTT: a new section for *"paths and courses the member takes"*, with
+          *"completed items visible to buyers"* and *"in-progress items private to the
+          member."***
+          ⚠⚠ **IT WAS THE SECOND HALF OF `Teaching` AND THAT WAS THE DEFECT.** One card
+          rendered `You Teach` and `You're Taking` together, so **what somebody OFFERS and
+          what they are STUDYING read as one claim** — and a visitor saw the studying half,
+          which Scott has now ruled private until it is finished.
+          ⚠⚠⚠ **THE TWO ARE DIFFERENT STATEMENTS ABOUT A PERSON:** teaching is an offer a
+          buyer can act on; learning is a fact about them that only counts once complete.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the block that lived inside Teaching:
+          //   {takenPaths.length > 0 && ( <div> "You're Taking" … ink chips … </div> )}
+        */}
+        <CleanSection
+          title="Learning"
+          isEmpty={visibleTaken.length === 0}
+          showWhenEmpty={owner}
+        >
+          {visibleTaken.length === 0 ? (
+            <p className="text-[13.5px] leading-relaxed text-ink-2">
+              {/* ⚠ Ruling 18: neutral, no apology, no roadmap, nothing blaming the member. */}
+              You aren&rsquo;t enrolled in a learning path yet.{" "}
+              <Link href="/learn" className="font-bold text-magenta hover:underline">
+                Browse learning paths
+              </Link>
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {visibleTaken.map((t) => (
+                <Link
+                  key={t.slug}
+                  href={`/learn/${t.slug}`}
+                  /* ⚠⚠ INK, NOT MAGENTA (`E433`) — carried over from the block this
+                     replaces. A path somebody is TAKING is not an offer and must not read
+                     as one. */
+                  className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline"
+                >
+                  {t.title}
+                  {/*
+                    ⚠⚠⚠ THE WORD IS ONLY PRINTED WHEN IT IS TRUE. `Completed` on a
+                    half-finished path would be a false claim on the page Panameer sells on.
+                    ⚠ And the OWNER is the only reader who ever sees an unfinished one, so
+                    the absence of the word is never ambiguous to a visitor — everything
+                    they can see is complete.
+                  */}
+                  {t.completed && (
+                    <span className="ml-1.5 font-semibold text-ink">· Completed</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
+        </CleanSection>
+
+        <CleanSection
+          title="Recommendations"
+          isEmpty={testimonials.length === 0}
+          showWhenEmpty={owner}
+        >
           {testimonials.length === 0 ? (
             <p className="text-[13.5px] leading-relaxed text-ink-2">
               {owner ? (
@@ -1460,7 +1594,7 @@ export function ConnectProfile({
               ))}
             </div>
           )}
-        </ProfileCard>
+        </CleanSection>
         {/* ⚠⚠ FORUM INVOLVEMENT — "groups". Renders nothing when the signal is
             null, which is every profile today. `check:community` GUARD 3
             asserts this page supplies it. */}
@@ -1666,7 +1800,7 @@ function ActionCard({
   note?: string;
 }) {
   return (
-    <section className="rounded-brand border border-line bg-white px-[18px] py-4 text-center">
+    <section className="mt-7 border-t border-line pt-5 text-center">
       <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
         {title}
       </h3>

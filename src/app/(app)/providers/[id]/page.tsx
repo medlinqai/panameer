@@ -403,6 +403,21 @@ export default async function PublicProviderPage({
               name card carries name, title and location only. ⚠ SUPERSEDED,
               quoted not deleted (`E164`):
               //   colleagueCount={colleagueCount} */}
+        {/*
+          ── ⚠⚠⚠ THE SAME CLEAN SURFACE, BECAUSE THE COMPONENT IS SHARED (`P2-A2-E713`) ──
+
+          ⚠⚠ **`ConnectProfile` RENDERS BOTH THE OWNER'S `/profile` AND THIS BUYER-FACING
+          PAGE**, so `WS-A`'s restyle reaches here whether or not the wrapper is added.
+          ⚠⚠⚠ **WITHOUT THE WRAPPER THIS PAGE WOULD GET THE BOXLESS SECTIONS AND KEEP
+          COMFORTAA HEADINGS — half the redesign, which is worse than either whole.**
+          ⚠ **AND IT IS THE `VISITOR VIEW` THE BRIEF'S STOP GATE ASKS FOR:** *"the owner view
+          AND the visitor view (visitor view has no empty sections…)"*. There is nowhere else
+          to photograph a visitor looking at a profile.
+          ⚠⚠ **REPORTED: `/providers/[id]` IS NOT AN "ACCOUNT INFORMATION" PAGE**, so this is a
+          consequence of the shared component rather than a page this brief set out to change.
+          Stated so it is not a surprise.
+        */}
+        <div className="account-surface">
         <ConnectProfile
           p={profile}
           taughtPaths={taughtPaths}
@@ -422,6 +437,7 @@ export default async function PublicProviderPage({
              rate rule and this component never learns it. */
           previewAsBuyer
         />
+        </div>
       </main>
     </div>
   );

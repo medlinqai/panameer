@@ -398,3 +398,70 @@
   .pm-cp3-rail > :nth-child(n + 3) { order: 1; }
   .pm-cp3-main > * { order: 0; }
 }
+
+/*
+  ══ ⚠⚠⚠ THE CLEAN DIRECTION (`P2-A2-E713` WS-A, `brief_clean_page`) ═══════════
+
+  ⚠⚠ **SCOTT, 2026-09-26, APPROVING THE MOCKUP: *"MUCH better."*** The rules these three
+  lines exist to serve, in his words: *"The cards are not obvious, bordered"* · *"No grey
+  background… boxes cut up the page"* · *"I definitely like the section expanders."*
+
+  ⚠⚠⚠ **THE CHEVRON ROTATES HERE, IN PLAIN CSS, AND NOT WITH A TAILWIND VARIANT.**
+  `group-open:` appears NOWHERE else in this codebase, and Tailwind v4 emits **no CSS at
+  all** for a class it does not recognise — silently (the `HERO_SCRIM` failure, `E338`).
+  ⚠ The working precedent is `step-disclosures.css:96`, which does exactly this, and
+  `StepDisclosures` decision 3 is why the chevron is `aria-hidden` decoration rather than a
+  control: *"the summary already announces its own expanded state."*
+*/
+.pm-clean-chev {
+  transition: transform 0.2s;
+}
+.pm-clean-sec[open] > summary .pm-clean-chev {
+  transform: rotate(180deg);
+}
+
+/*
+  ⚠⚠ THE LAST SECTION CLOSES THE STACK. Every section draws its own `border-t`, so without
+  this the run of sections would end on an open edge. ⚠⚠⚠ A `border-b` on EVERY section
+  would double each internal rule to 2px — which is why it is only the last one.
+*/
+.pm-clean-stack > .pm-clean-sec:last-of-type {
+  border-bottom: 1px solid var(--color-line);
+}
+
+/*
+  ── ⚠⚠ THE WORK HISTORY TIMELINE (WS-A item 7 / brief item 7) ────────────────
+
+  ⚠ **SCOTT: *"a thin dashed line runs from employer to employer, with a small dot at each
+  one. Title and company on the left, dates on the right."***
+  ⚠⚠ The line is a `::before` on each entry and the dot an `::after`, so **the markup carries
+  no spacer elements** — a decorative `<div>` per employer would be read out by a screen
+  reader as an empty item.
+  ⚠⚠⚠ **THE LAST ENTRY DRAWS NO LINE.** Without that the dashes run past the final dot into
+  nothing, which reads as a missing employer.
+*/
+.pm-tl-job {
+  position: relative;
+  padding: 0 0 30px 34px;
+}
+.pm-tl-job::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 10px;
+  bottom: -10px;
+  border-left: 1px dashed var(--color-magenta);
+}
+.pm-tl-job:last-child::before {
+  display: none;
+}
+.pm-tl-job::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-magenta);
+}

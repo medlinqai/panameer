@@ -206,6 +206,17 @@ export default async function MyProfilePage() {
               //     taughtPathsList.length + takenPaths.length, colleagues)}
               //   colleagueCount={colleagues}
           */}
+      {/*
+        ── ⚠⚠⚠ THE CLEAN SURFACE STARTS HERE, BELOW THE MENUING (`P2-A2-E713` WS-A) ──
+
+        ⚠ **SCOTT: the design applies *"on the page (meaning below the menuing)"*.** ⚠⚠ So the
+        wrapper opens AFTER `PageTabs` — **the band, the top menu, the tab row and the eyebrow
+        are out of scope and keep Comfortaa.**
+        ⚠⚠⚠ **THIS CLASS IS THE ONLY THING SCOPING MONTSERRAT** (`globals.css`, beside
+        `.marketing-surface`). Removing it silently returns every heading below to Comfortaa —
+        which is a visual regression with no error attached to it.
+      */}
+      <div className="account-surface">
       <ConnectProfile
         p={profile}
         /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
@@ -235,6 +246,7 @@ export default async function MyProfilePage() {
         }}
         score={await ownerScore(profile.id)}
       />
+      </div>
     </>
   );
 }

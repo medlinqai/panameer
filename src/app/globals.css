@@ -452,6 +452,31 @@ body {
   .marketing-surface :is(p, li) {
     text-wrap: pretty;
   }
+
+  /*
+    ── ⚠⚠⚠ MONTSERRAT HEADINGS, SCOPED (`P2-A2-E713` WS-A item 2) ──────────────
+
+    ⚠ **SCOTT, 2026-09-26:** *"Headings in Montserrat."* · **Comfortaa stays on the logo
+    only.**
+    ⚠⚠⚠ **THE GLOBAL `h1, h2, h3 { font-family: var(--font-display) }` RULE ABOVE IS NOT
+    TOUCHED, AND THAT IS THE ONE FENCE THIS BRIEF KEEPS: changing it restyles EVERY page in
+    the app**, including the marketing surface and everything the WORK and LEARN lanes
+    shipped. ⚠ The brief names the fence and names the way round it.
+    ⚠⚠ **`.marketing-surface` DIRECTLY ABOVE IS THE PRECEDENT** — a wrapper class inside
+    `@layer base` that narrows a global typographic rule to one surface. This is the same
+    mechanism for the same reason.
+    ⚠ **SPECIFICITY IS WHAT MAKES IT WIN, NOT ORDER:** `.account-surface :is(h1…)` is
+    (0,1,1) against the global's (0,0,1), and both sit in `@layer base`, so the scoped rule
+    takes precedence wherever the wrapper is present and **nowhere else**.
+    ⚠⚠ `--font-body` IS ALREADY MONTSERRAT (`:236`), so this is not a new face being loaded
+    — it is the heading giving up Comfortaa and inheriting what the page already uses.
+    ⚠⚠⚠ **`h4` IS INCLUDED DELIBERATELY** even though the global rule stops at `h3`: the
+    clean left column's eyebrows are `h4`, and leaving them out would have left one row of
+    headings in a different face for no reason anybody could see.
+  */
+  .account-surface :is(h1, h2, h3, h4) {
+    font-family: var(--font-body);
+  }
 }
 
 .marketing-surface {

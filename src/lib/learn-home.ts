@@ -728,6 +728,20 @@ export type TakenPath = {
   slug: string;
   group: string | null;
   coverImage: string | null;
+  /*
+    ── ⚠⚠⚠ DERIVED, NOT STORED (`P2-A2-E713` WS-A item 6 / brief item 11) ──────
+
+    ⚠⚠ **`LearnEnrollment` HAS NO COMPLETION FIELD AND THIS BRIEF ADDS NO COLUMN.**
+    `LessonProgress` exists and a row appears **only when a lesson is finished**, and
+    `Lesson` hangs off `LearningPath` directly — so *complete* is "every lesson of this
+    path has a progress row for this user", and that is computable today.
+    ⚠⚠⚠ **RULING 38 AND THE BRIEF BOTH FORBID A SCHEMA CHANGE HERE, AND NONE IS NEEDED.**
+    ⚠ **MEASURED 2026-09-29: `LearnEnrollment` 2 ROWS, `LessonProgress` 4 — SO NOTHING IS
+    COMPLETE FOR ANYBODY TODAY.** That is not a bug and not a blocker: the buyer-visible
+    half of `Learning` is **empty by construction** until somebody finishes a path, and the
+    section's own rule ("a visitor does not see it at all") already covers that.
+  */
+  completed: boolean;
 };
 
 export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[]> {
@@ -745,13 +759,67 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
      `playable` and `lessons` — three facts about AUTHORSHIP that an enrolment
      does not have. ⚠ Reusing it would have meant inventing a `0` for each, and
      a zero nobody measured is the `E433` fabricated-figure problem in a type. */
-  return rows.map((r) => ({
-    id: r.learningPath.id,
-    title: r.learningPath.title,
-    slug: r.learningPath.slug,
-    group: r.learningPath.group,
-    coverImage: r.learningPath.cover_image,
-  }));
+  /*
+    ⚠⚠ TWO GROUPED READS, NOT ONE PER PATH. ⚠ A per-path count would be N+1 queries for a
+    figure that decides one word on a profile.
+  */
+  const pathIds = rows.map((r) => r.learningPath.id);
+  /*
+    ⚠⚠⚠ THE HIERARCHY IS `LearningPath → Course → Section → Lesson`, AND I HAD IT WRONG.
+    ⚠ My first version keyed on `Lesson.learning_path_id`. **That column does not exist** —
+    a lesson belongs to a `Section`, a section to a `Course`, a course to a path — and
+    `tsc` refused it. ⚠⚠ The compiler caught a premise a grep had told me was true, which
+    is exactly why the branded-id work in `E711` reached for a type rather than a gate.
+    ⚠ Both reads therefore traverse the full path, and neither is per-path (no N+1).
+  */
+  const [lessonTotals, mine] = await Promise.all([
+    prisma.lesson.groupBy({
+      by: ["section_id"],
+      where: { section: { course: { learning_path_id: { in: pathIds } } } },
+      _count: { _all: true },
+    }),
+    prisma.lessonProgress.findMany({
+      where: {
+        user_id: userId,
+        lesson: { section: { course: { learning_path_id: { in: pathIds } } } },
+      },
+      select: { lesson: { select: { section: { select: { course: { select: { learning_path_id: true } } } } } } },
+    }),
+  ]);
+  /* ⚠ `section_id → learning_path_id`, so the totals can be summed per PATH. */
+  const sections = await prisma.section.findMany({
+    where: { id: { in: lessonTotals.map((t) => t.section_id) } },
+    select: { id: true, course: { select: { learning_path_id: true } } },
+  });
+  const pathOfSection = new Map(sections.map((x) => [x.id, x.course.learning_path_id]));
+  const total = new Map<string, number>();
+  for (const t of lessonTotals) {
+    const k = pathOfSection.get(t.section_id);
+    if (k) total.set(k, (total.get(k) ?? 0) + t._count._all);
+  }
+  const done = new Map<string, number>();
+  for (const m of mine) {
+    const k = m.lesson.section.course.learning_path_id;
+    done.set(k, (done.get(k) ?? 0) + 1);
+  }
+  return rows.map((r) => {
+    const t = total.get(r.learningPath.id) ?? 0;
+    /*
+      ⚠⚠⚠ `t > 0` IS LOAD-BEARING. A path with NO lessons would otherwise satisfy
+      "every lesson is done" vacuously and be reported COMPLETE to a buyer.
+      ⚠ That is not hypothetical here: **4 of 24 paths carry zero courses** (premise 5),
+      and an empty path certifying itself is the `E586` shape in a credential.
+    */
+    const completed = t > 0 && (done.get(r.learningPath.id) ?? 0) >= t;
+    return {
+      id: r.learningPath.id,
+      title: r.learningPath.title,
+      slug: r.learningPath.slug,
+      group: r.learningPath.group,
+      coverImage: r.learningPath.cover_image,
+      completed,
+    };
+  });
 }
 
 export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
