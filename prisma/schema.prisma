@@ -5460,6 +5460,30 @@ model WorkRequestLine {
   amount_cents     Int?
 
   supplier_part_id String? @db.Uuid
+  /**
+   * ── ⚠⚠ WHICH SERVICE PRODUCT THIS LINE IS (`P2-A6-E700` WS-B) ──────────────
+   *
+   * ⚠⚠⚠ **ADDED BECAUSE WITHOUT IT AN ACCEPTED OFFER'S LINE CANNOT SAY WHAT WAS
+   * BOUGHT — AND THIS IS AN ADDITION BEYOND THE BRIEF, FLAGGED RATHER THAN SLIPPED IN.**
+   * ⚠ `supplier_part_id` was the only existing route to a product, and **`supplier_parts`
+   * holds ZERO rows**, measured 2026-09-29. So on the day the offer flow ships there is no
+   * part number to point at — and minting one is a real act: `part_number` is documented
+   * *"IMMUTABLE AND IS NEVER REUSED"* because it reaches the buyer's ERP and sits on
+   * their POs, receipts and invoices forever.
+   * ⚠⚠ **THE CHOICE WAS: MINT AN ERP IDENTIFIER AS A SIDE EFFECT OF ACCEPTING AN OFFER,
+   * OR NAME THE PRODUCT DIRECTLY. Naming it is the smaller claim.**
+   * ⚠ NULLABLE, because most lines are not service products — a skill-based requisition
+   * line has no product at all. ⚠⚠ **IT DOES NOT REPLACE `supplier_part_id`:** that stays
+   * the cXML punchout surface, and a line may eventually carry both.
+   * ⚠ No `@relation`, matching this model's other subject ids.
+   *
+   * ⚠⚠⚠ **`WorkOrderLine` DOES NOT GET THIS COLUMN HERE, AND THAT IS NAMED NOT
+   * FORGOTTEN:** checkout copies a request line into an order line, so the order line
+   * will need it the day an accepted offer is checked out. **Checkout is not in this
+   * brief**, and adding a column that nothing populates is how a half-migration looks
+   * finished. Reported.
+   */
+  service_product_id String? @db.Uuid
 
   /// ⚠⚠ WRITTEN INTO `SupplierPartAuxiliaryID` ON THE WAY OUT AND MATCHED ON THE
   /// WAY BACK. It is the ONLY field proven to survive the punchout round trip:
@@ -6830,4 +6854,132 @@ model GroupMembership {
   @@index([board_id, state])
   @@index([person_id, state])
   @@map("group_memberships")
+}
+
+/// ── ⚠⚠⚠ THE SHOP OFFER. **ACCEPT OR DENY, AND A DENY MAY CARRY A FLOOR.** ─────
+///
+/// `P2-A6-E700` WS-A, rulings 94 and 94a.
+///
+/// ⚠⚠ **SCOTT, 2026-09-28, REFUSING THE CHAIN:** *"not sure i want to get into a
+/// back and forth negotiation on a product...either it is an accept or deny. if the
+/// provider denies it, the requester either buys it at list or removes it from their
+/// cart."*
+/// ⚠ **AND THEN THE REFINEMENT, WHICH IS NOT A REVERSAL:** *"having to re-enter
+/// things....but look, the provider might tell them make another offer above $1000 or
+/// something."*
+///
+/// ⚠⚠⚠ **SO THE SHAPE IS: ONE OPEN OFFER PER (BUYER, SERVICE PRODUCT) · A DENY SETS A
+/// STATUS AND MAY CARRY A MESSAGE AND AN OPTIONAL MINIMUM · A RE-OFFER IS A NEW ROW
+/// AND MUST CLEAR ANY FLOOR THAT WAS GIVEN.**
+/// ⚠⚠ **THAT IS A GUIDED SECOND ATTEMPT, NOT A NEGOTIATION: the seller never names a
+/// price they are bound to**, which is the thing Scott did not want.
+/// ⚠⚠⚠ **AND THE FLOOR IS GUIDANCE, NOT A CONTRACT — AN OFFER AT THE FLOOR IS STILL
+/// DENIABLE. A floor that silently auto-accepted would be the counter chain wearing a
+/// hat.**
+///
+/// ── ⚠⚠⚠ THERE IS NO COUNTER FIELD, NO `replies_to`, AND NO CHAIN ─────────────
+///
+/// ⚠ **RULED OUT 2026-09-28. DO NOT ADD ONE "FOR LATER" — a chain added for later is
+/// the feature arriving early.** ⚠⚠ `deny_floor_cents` is the ONLY number the seller
+/// ever puts on a deny, and it binds nobody: the next offer must clear it, and may
+/// still be refused.
+///
+/// ── ⚠⚠ HEADER ONLY, AND THE DEVIATION FROM THE FAMILY IS DELIBERATE ─────────
+///
+/// ⚠ Every other document in this family is header + lines (`P1-J4-E395`). ⚠⚠ **AN
+/// OFFER IS ON ONE PRODUCT FOR ONE AMOUNT, SO A LINE TABLE WOULD HOLD EXACTLY ONE ROW
+/// PER HEADER AND NOBODY WOULD EVER QUERY IT.** ⚠⚠⚠ Scott ruled the unit: *"one open
+/// offer per buyer per SERVICE PRODUCT"* — **a multi-product offer is not the model**,
+/// so lines would be structure invented for a shape that was explicitly not chosen.
+/// ⚠ **Flagged in the report rather than built quietly.**
+///
+/// ⚠⚠ **NO CROSS-MODEL FOREIGN KEYS**, matching `ProviderEvaluation` exactly: the ids
+/// are bare `@db.Uuid` columns. A sourcing document names its subjects; it does not
+/// own them, and a cascade from `Person` must never delete somebody's offer history.
+enum ServiceProductOfferStatus {
+  OPEN
+  ACCEPTED
+  DENIED
+  /// ⚠ The BUYER pulling their own offer. Not a counter and not a seller action —
+  /// removing it from the cart is Scott's own second option on a deny.
+  WITHDRAWN
+}
+
+model ServiceProductOffer {
+  id           String @id @default(uuid()) @db.Uuid
+  /// ⚠ Human-readable and unique. `OFR-` collides with nothing: `PRO-` is a proposal,
+  /// `PE-` an evaluation.
+  offer_number String @unique
+
+  buyer_person_id    String @db.Uuid
+  service_product_id String @db.Uuid
+  /**
+   * ⚠⚠ THE PRODUCT'S OWNER, COPIED AT OFFER TIME AND NEVER RE-READ.
+   * ⚠⚠⚠ **A PRODUCT CHANGING HANDS MUST NOT SILENTLY RE-POINT AN OLD OFFER AT A
+   * SELLER WHO NEVER SAW IT.** The same reason `E696` stamps the commission on the
+   * line: who it was agreed with is a fact about the moment, not a lookup.
+   */
+  provider_person_id String @db.Uuid
+
+  /// ⚠ Integer cents, like every other money value in the app.
+  amount_cents Int
+  currency     String @default("USD")
+
+  status ServiceProductOfferStatus @default(OPEN)
+
+  /**
+   * ── ⚠⚠⚠ THE OPEN MARKER — THIS IS HOW "ONE OPEN OFFER" IS ENFORCED BY THE
+   *    DATABASE RATHER THAN BY A HANDLER, AND IT LOOKS ODD ON PURPOSE ──────────
+   *
+   * ⚠ **IT HOLDS `service_product_id` WHILE THE OFFER IS `OPEN`, AND `NULL` ONCE IT
+   * IS DECIDED.** Paired with `@@unique([buyer_person_id, open_service_product_id])`
+   * that is exactly *"one OPEN offer per buyer per product, unlimited history"*.
+   *
+   * ⚠⚠ **IT WORKS BECAUSE POSTGRES TREATS NULLs AS DISTINCT IN A UNIQUE INDEX** — the
+   * same fact that made `E696`'s upsert dangerous is the thing that makes this safe.
+   * Two decided offers both hold `NULL`, do not collide, and accumulate forever; two
+   * OPEN ones on the same pair hold the same uuid and the **database refuses the
+   * second**.
+   *
+   * ⚠⚠⚠ **WHY NOT A PARTIAL UNIQUE INDEX (`… WHERE status = 'OPEN'`), WHICH IS WHAT A
+   * DBA WOULD REACH FOR: PRISMA CANNOT EXPRESS ONE.** It would have to be raw SQL
+   * outside the schema, and `db push` is declarative — an index it does not know about
+   * is surplus, and surplus is what `db push` removes. **A constraint that a routine
+   * migration silently drops is worse than no constraint**, because the day it goes the
+   * handler still looks correct.
+   * ⚠ **DO NOT "TIDY" THIS INTO A BOOLEAN.** `is_open Boolean` cannot work: two
+   * `false` rows collide, so history would be impossible.
+   * ⚠⚠ **AND DO NOT DERIVE IT IN APPLICATION CODE ON READ** — it is written in the
+   * same statement as `status`, and `check:offers` asserts the two can never disagree.
+   */
+  open_service_product_id String? @db.Uuid
+
+  /// When it was accepted or denied. Null while OPEN.
+  decided_at DateTime?
+  /**
+   * ⚠⚠ THE DENY'S GUIDANCE. Both are null on an accept and both are OPTIONAL on a
+   * deny — Scott's *"the provider might tell them"* is a MAY, not a MUST.
+   * ⚠⚠⚠ **`deny_floor_cents` IS NOT A PRICE THE SELLER IS BOUND TO.** It is the floor
+   * the buyer's NEXT offer must clear, and that next offer is still deniable.
+   */
+  deny_message     String?
+  deny_floor_cents Int?
+  /**
+   * ⚠ THE FLOOR THIS OFFER HAD TO CLEAR, copied from the deny that preceded it.
+   * ⚠⚠ **RECORDED SO THE RULE IS AUDITABLE AFTER THE FACT** — without it, "was this
+   * re-offer allowed?" can only be answered by re-deriving history, and the row that
+   * would prove it may itself have been withdrawn.
+   * ⚠ Null on a first offer, which is the common case.
+   */
+  cleared_floor_cents Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  /// ⚠⚠⚠ THE CONSTRAINT THE WHOLE RULE RESTS ON. See `open_service_product_id`.
+  @@unique([buyer_person_id, open_service_product_id])
+  @@index([service_product_id])
+  @@index([provider_person_id, status])
+  @@index([buyer_person_id, status])
+  @@map("service_product_offers")
 }

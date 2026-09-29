@@ -165,7 +165,8 @@
     "check:wizard-contract": "playwright test --config=playwright.wizard-contract.config.ts",
     "check:profile-edit": "playwright test --config=playwright.profile-edit.config.ts",
     "check:match-rank": "npx esbuild scripts/check-match-rank.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/match-rank.cjs --log-level=error && node .harness/match-rank.cjs",
-    "check:evaluations": "npx esbuild scripts/check-evaluations.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/evaluations.cjs --log-level=error && node .harness/evaluations.cjs"
+    "check:evaluations": "npx esbuild scripts/check-evaluations.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/evaluations.cjs --log-level=error && node .harness/evaluations.cjs",
+    "check:offers": "npx esbuild scripts/check-offers.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/offers.cjs --log-level=error && node -r dotenv/config .harness/offers.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
