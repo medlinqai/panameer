@@ -473,11 +473,37 @@ check(
 );
 /* ⚠ Every figure is a real count — the LOCKED Counters decision. No literal
    may stand in for one. */
+/*
+  ── ⚠⚠⚠ RED ON TRUNK SINCE `E697`, AND FOUND BY RUNNING IT (`P2-A4-E710`) ────
+
+  ⚠⚠ **THE RULE IS UNCHANGED AND STILL CORRECT. ONLY THE NOUN MOVED.** `E697` renamed
+  `Package` → `ServiceProduct`, so `usage-stats.ts:50` counts `prisma.serviceProduct`
+  and this pattern went on asking for `prisma.package`. ⚠ The gate has been **1 FAILED,
+  72 passed** ever since — verified at `2406844` in a clean worktree before assuming.
+  ⚠⚠⚠ **THIS IS RULING 101a, MISSED BY THE RENAME THAT RULING EXISTS FOR:** *"a rename
+  checks the gates' patterns against the new word."* `E697` updated the gates it knew
+  about and never ran this one, which is `98e` in the same breath — **a change that
+  alters a name runs the gates that assert it, BY NAME.**
+  ⚠ **IT IS `check:rollup`'s CASE, NOT `check:cert-skills`':** the code moved past a
+  stale pattern, so the GATE is taught the new word. Had the rule itself been overturned,
+  the build would lose instead.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   /prisma\.package\.count/.test(USAGE) &&
+*/
 check(
   "10 — every cell but earnings comes from a count",
   /prisma\.proposalRequest\.count/.test(USAGE) &&
-    /prisma\.package\.count/.test(USAGE) &&
+    /prisma\.serviceProduct\.count/.test(USAGE) &&
     /prisma\.workOrder\.count/.test(USAGE)
+);
+/*
+  ⚠⚠ AND THE DEAD WORD MAY NOT COME BACK. Without this, the rename could be reverted in
+  `usage-stats.ts` and the assertion above would still pass on the new name alone.
+*/
+check(
+  "10 — ⚠⚠ ABSENCE: no cell counts the retired `Package` model (`E697`)",
+  !/prisma\.package\./.test(USAGE),
+  "the model is ServiceProduct; a reappearance means the rename regressed"
 );
 /*
   ⚠⚠ NOTHING BECAME UNREACHABLE. Each of the four links the removed card

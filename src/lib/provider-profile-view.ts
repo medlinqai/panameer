@@ -711,6 +711,18 @@ export async function getProviderProfileView(
       name: c.name,
       issuer: c.issuer,
       year: c.year,
+      /*
+        ── ⚠⚠⚠ PROVENANCE, ON THE BUYER-FACING PATH (`P2-A4-E710`) ────────────
+
+        ⚠⚠ **THE QUERY ABOVE HAS NO `select`, SO `issued_from` WAS ALREADY FETCHED AND
+        THIS MAPPER SIMPLY DROPPED IT.** ⚠ That is why the defect was invisible: nothing
+        was missing from the database round trip, only from the shape the page sees.
+        ⚠⚠⚠ **AN UPLOADED PDF AND A PANAMEER-EARNED PASS RENDERED IDENTICALLY TO A
+        BUYER, AND THE VERIFICATION IS THE ENTIRE VALUE OF THE TEST.**
+        ⚠ `credentialId` was already carried below — it is what makes the earned row
+        offer its public `/verify/{id}` page.
+      */
+      issuedFrom: c.issued_from,
       issuedOn: c.issued_on ? c.issued_on.toISOString().slice(0, 10) : null,
       expiresOn: c.expires_on ? c.expires_on.toISOString().slice(0, 10) : null,
       credentialId: c.credential_id,

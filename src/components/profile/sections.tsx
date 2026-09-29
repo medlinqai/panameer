@@ -8,6 +8,8 @@ import { CappedList } from "@/components/profile/CappedList";
 import type { MentorState } from "@/lib/community-signal";
 import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
+/* ⚠ ONE component owns how a credential states its provenance (`P2-A4-E710`, `E585`). */
+import { CredentialProvenance } from "@/components/profile/CredentialProvenance";
 
 /**
  * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
@@ -358,6 +360,15 @@ export type CertificationItem = {
   url?: string | null;
   notes?: string | null;
   attachmentName?: string | null;
+  /*
+    ⚠⚠ PROVENANCE (`P2-A4-E710`). ⚠ Optional because three callers fill this type and
+    they arrived at different times; **absent is rendered as self-reported**, which is
+    the truthful default — every one of the 12 rows in the database is exactly that.
+    ⚠⚠⚠ It is NOT defaulted to earned for any reason, ever: an unset field claiming a
+    Panameer test would be the trust defect this brief exists to remove.
+  */
+  issuedFrom?: string | null;
+  credentialId?: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -1589,6 +1600,20 @@ export function CertificationsBody({
         return (
           <li key={c.id ?? `${c.name}-${i}`} className="text-[14px]">
             <b className="block">{c.name}</b>
+            {/*
+              ── ⚠⚠⚠ WHERE IT CAME FROM, ON ITS OWN LINE (`P2-A4-E710`) ──────────
+
+              ⚠⚠ **DIRECTLY UNDER THE NAME, BECAUSE THAT IS WHERE A BUYER'S EYE ALREADY
+              IS** — and above `Agency`, because who issued it and whether Panameer
+              witnessed it are different facts and the second one qualifies the first.
+              ⚠ One component decides the treatment for all three renderers (`E585`);
+              this file chooses only the POSITION.
+            */}
+            <CredentialProvenance
+              issuedFrom={c.issuedFrom ?? null}
+              credentialId={c.credentialId ?? null}
+              className="mt-0.5 block"
+            />
             {c.issuer && <CertRow label="Agency" value={c.issuer} />}
             {earned && <CertRow label="Earned" value={earned} />}
             {c.expiresOn && <CertRow label="Expires" value={c.expiresOn.slice(0, 4)} />}

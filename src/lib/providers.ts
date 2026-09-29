@@ -74,7 +74,22 @@ export async function getPublicProviderProfile(
     ? await prisma.certification.findMany({
         where: { user_id: profile.person.user_id },
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
-        select: { id: true, name: true, issuer: true, year: true },
+        /*
+          ⚠⚠ `issued_from` AND `credential_id` ADDED AT `P2-A4-E710`. ⚠⚠⚠ **UNLIKE THE
+          PROFILE VIEW, THIS ONE OMITTED THEM FROM THE QUERY** — so the card could not
+          have shown provenance even if it wanted to. Two readers, two different
+          omissions, one defect.
+          ⚠ `credential_id` rides along because it is what turns *"Verified by
+          Panameer"* into a link a stranger can actually open.
+        */
+        select: {
+          id: true,
+          name: true,
+          issuer: true,
+          year: true,
+          issued_from: true,
+          credential_id: true,
+        },
       })
     : [];
 
@@ -150,6 +165,10 @@ export async function getPublicProviderProfile(
       name: c.name,
       issuer: c.issuer,
       year: c.year,
+      /* ⚠⚠ `P2-A4-E710` — the card said WHAT the credential is and never WHERE it came
+         from. One component renders both these fields; see `CredentialProvenance`. */
+      issuedFrom: c.issued_from,
+      credentialId: c.credential_id,
     })),
     education: profile.education.map((e) => ({
       id: e.id,

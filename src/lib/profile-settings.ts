@@ -182,6 +182,15 @@ export async function getProviderSettings(viewer: Viewer) {
       name: c.name,
       issuer: c.issuer,
       year: c.year,
+      /*
+        ⚠⚠ `P2-A4-E710` — THE OWNER SEES IT TOO, AND THAT IS NOT A COURTESY. ⚠⚠⚠ A
+        provider who cannot tell which of their own credentials Panameer witnessed
+        cannot tell what sitting a test would ADD, which is the one thing this screen
+        should make obvious. ⚠ The nested read carries every column, so this is a
+        pass-through rather than a widened query.
+      */
+      issuedFrom: c.issued_from,
+      credentialId: c.credential_id,
     })),
   };
 }
