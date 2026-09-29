@@ -7083,3 +7083,91 @@ model LearningPathSkill {
   @@index([skill_id])
   @@map("learning_path_skills")
 }
+
+/// ── ⚠⚠⚠ THE ONBOARDING REQUEST (`P2-A8-E704` WS-A, ruling 93h) ──────────────
+///
+/// ⚠ The last box in both flow diagrams: `Work Order` → provider accepts → requester
+/// accepts → **`Onboarding Request`** → *"API the Onboarding Application."*
+///
+/// ── ⚠⚠⚠ NAMED SO IT CANNOT BE CONFUSED WITH THE OTHER "ONBOARDING" ──────────
+///
+/// ⚠⚠ **`"onboarding"` ALREADY MEANS SOMETHING IN THIS SCHEMA: A PROVIDER FINISHING THEIR
+/// OWN PROFILE (`ProviderProfile.onboarding_completed_at`). A DIFFERENT THING ENTIRELY.**
+/// ⚠⚠⚠ **SO THE WORD WAS ABOUT TO CARRY TWO MEANINGS, AND THIS IS `93m`'s LESSON APPLIED
+/// BEFORE THE COLLISION EXISTS RATHER THAN AFTER IT** — the `Assessment` rename cost a
+/// supervised migration because nobody did this in time.
+/// ⚠ **THE MODEL IS `OnboardingRequest`, ALWAYS WITH THE NOUN.** A bare `Onboarding` would
+/// have been the collision.
+///
+/// ── ⚠⚠ IT IS CREATED WHEN BOTH ACCEPTS ARE PRESENT, AND NOT BEFORE ──────────
+///
+/// ⚠⚠⚠ **ONE ACCEPT IS HALF A CONTRACT.** Onboarding somebody into a deal that is not
+/// agreed is the kind of thing nobody notices until a real person is emailed.
+/// ⚠ **MEASURED 2026-09-29: BOTH TIMESTAMPS EXIST AND BOTH HAVE WRITERS** —
+/// `provider_accepted_at` at `orders.ts:913` (status → `ACCEPTED`) and `buyer_accepted_at`
+/// at `orders.ts:931` (status → `RELEASED`, guarded on the first being non-null).
+/// ⚠⚠ **SO "BOTH ACCEPTS PRESENT" IS EXACTLY `RELEASED`, AND THAT CORRECTS THE BRIEF:** it
+/// claimed `WorkOrderStatus`'s comment says `ACCEPTED` means both. **That enum has no
+/// comment at all, and `ACCEPTED` means only the PROVIDER has accepted.**
+///
+/// ── ⚠⚠ HEADER ONLY, AND THE QUESTION IS FLAGGED RATHER THAN ANSWERED ────────
+///
+/// ⚠ The family is header + lines (`P1-J4-E395`). ⚠⚠ **A WORK ORDER CAN CARRY SEVERAL
+/// LINES AND SEVERAL POSITIONS, SO A PER-PERSON ONBOARDING LINE MIGHT BE REAL — BUT THE
+/// BRIEF NAMES ONLY HEADER FIELDS, AND NOBODY HAS SAID WHETHER ONBOARDING IS PER ORDER OR
+/// PER PERSON.** ⚠⚠⚠ **THAT IS SCOTT'S, AND INVENTING A LINE TABLE WOULD ANSWER IT
+/// SILENTLY.** Flagged in the report.
+///
+/// ⚠⚠ **NO CROSS-MODEL FOREIGN KEYS**, matching `ProviderEvaluation` and
+/// `ServiceProductOffer`: the ids are bare `@db.Uuid` with indexes. A cascade from `Person`
+/// must never delete the record that a contract was agreed.
+enum OnboardingRequestStatus {
+  /**
+   * ⚠⚠⚠ ONE VALUE, AND THAT IS A DELIBERATE STATEMENT RATHER THAN AN OVERSIGHT.
+   *
+   * ⚠ The delivery lifecycle — sent, confirmed, failed — belongs to **WS-B, the outbound
+   * call**, and ⚠⚠ **WS-B IS NOT BUILT BECAUSE NOTHING NAMES "THE ONBOARDING
+   * APPLICATION": no env var, no route, no service, no client. Measured 2026-09-29.**
+   * ⚠⚠⚠ **AN ENUM VALUE NOTHING CAN WRITE IS THE SAME DEFECT AS A FIGURE NOTHING CAN
+   * COUNT** (the 2026-09-23 counting rules): it reads as a state the system can reach,
+   * and it cannot.
+   * ⚠ **SO THE VALUES WS-B WILL NEED ARE NAMED HERE AND NOT DECLARED:** `SENT`,
+   * `CONFIRMED`, `FAILED`. **WS-B adds them in the commit that can write them.**
+   */
+  RAISED
+}
+
+model OnboardingRequest {
+  id String @id @default(uuid()) @db.Uuid
+  /// ⚠ Human-readable and unique. `ONB-` collides with nothing: `OFR-` is an offer,
+  /// `PRO-` a proposal, `PE-` an evaluation, `SL-` a shortlist.
+  onboarding_request_number String @unique
+
+  /**
+   * ⚠⚠ IT HANGS OFF THE WORK ORDER, BECAUSE THAT IS THE CONTRACT BOTH PARTIES SIGNED —
+   * not off the work request, which may not exist at all (a `DIRECT` order has none).
+   * ⚠⚠⚠ **`@unique`, SO ONE ORDER CAN RAISE EXACTLY ONE. IDEMPOTENT BY CONSTRUCTION: a
+   * second attempt is refused by the DATABASE rather than by a handler remembering to
+   * check** — and the release path may be retried.
+   */
+  work_order_id String @unique @db.Uuid
+
+  /// ⚠ Both parties, copied at the moment the contract completed. Never re-read: who
+  /// agreed is a fact about that moment (`E696`'s stamping argument).
+  provider_person_id String @db.Uuid
+  buyer_person_id    String @db.Uuid
+
+  status OnboardingRequestStatus @default(RAISED)
+
+  /// ⚠⚠ WHEN IT WAS RAISED — which is when the SECOND acceptance landed, not when a call
+  /// was attempted. There is no call to attempt.
+  raised_at DateTime @default(now())
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([provider_person_id])
+  @@index([buyer_person_id])
+  @@index([status])
+  @@map("onboarding_requests")
+}

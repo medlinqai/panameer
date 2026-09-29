@@ -926,9 +926,46 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
     accepted.
   */
   const now = new Date();
-  const done = await prisma.workOrder.updateMany({
-    where: { id: order.id, status: "ACCEPTED", provider_accepted_at: { not: null } },
-    data: { status: "RELEASED", buyer_accepted_at: now },
+  /*
+    ── ⚠⚠⚠ THE ONBOARDING REQUEST IS RAISED IN THE SAME TRANSACTION (`P2-A8-E704` WS-A)
+
+    ⚠⚠ **RULING 93h: `Work Order` → provider accepts → requester accepts → `Onboarding
+    Request`.** This is the only place in the codebase where the second acceptance lands, so
+    it is the only place the record can be raised.
+
+    ⚠⚠⚠ **BOTH OR NEITHER, AND THAT IS THE POINT OF THE TRANSACTION: A RELEASED ORDER WITH
+    NO ONBOARDING REQUEST IS A SIGNED CONTRACT WITH NOTHING RAISED AGAINST IT — a half state
+    nobody would notice until somebody went looking for the onboarding.**
+    ⚠ **THE `updateMany` GUARD IS UNCHANGED AND STILL DOES THE RACE WORK:** the first
+    acceptance must be a FACT in the row at the moment this commits. The transaction adds
+    atomicity with the new row; it does not replace the guard, and a check-then-write here
+    would still be the race ruling 43a's comment warns about.
+    ⚠⚠ **`work_order_id` IS `@unique`, SO A RETRY CANNOT RAISE A SECOND ONE** — and it
+    cannot even reach the create, because a retried release reads `status: "ACCEPTED"` and
+    matches nothing.
+    ⚠ **NOTHING IS SENT. WS-B IS NOT BUILT** because nothing names *"the onboarding
+    application"* — no env var, no route, no service, no client, measured 2026-09-29.
+    ⚠⚠⚠ **SO THE ROW IS THE WHOLE FEATURE TODAY, AND THAT IS DELIBERATE: THE RECORD EXISTS
+    BEFORE THE REQUEST, WHICH IS RULING 86's LESSON FROM `sendEmail` — it returned
+    success-shaped when it refused, and `email_sent_at` was stamped on mail nobody received.**
+  */
+  const done = await prisma.$transaction(async (tx) => {
+    const moved = await tx.workOrder.updateMany({
+      where: { id: order.id, status: "ACCEPTED", provider_accepted_at: { not: null } },
+      data: { status: "RELEASED", buyer_accepted_at: now },
+    });
+    if (moved.count === 0) return moved;
+    await tx.onboardingRequest.create({
+      data: {
+        onboarding_request_number: `ONB-${Date.now().toString(36).toUpperCase()}-${order.id.slice(0, 4)}`,
+        work_order_id: order.id,
+        /* ⚠ Both parties copied from the order that was agreed, never re-read later. */
+        provider_person_id: order.provider_person_id,
+        buyer_person_id: order.buyer_person_id,
+        raised_at: now,
+      },
+    });
+    return moved;
   });
   if (done.count === 0) {
     throw new OrderError("This order is not waiting for your acceptance", "INVALID");
