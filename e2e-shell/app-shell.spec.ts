@@ -30,7 +30,26 @@ import { join } from "node:path";
  * breaking it a month later for a reason nobody connects.
  */
 
-const WIDTHS = [360, 375, 640, 760, 900, 1000, 1100, 1180, 1282, 1440, 1562];
+/*
+  ── ⚠⚠⚠ THE FRAMEWORK'S OWN BREAKPOINTS, NOT A LADDER OF ROUND NUMBERS (101b) ─
+
+  ⚠⚠ **RULING 101b, FOUND ON THE PUBLIC HEADER 2026-09-28:** moving a breakpoint to `lg`
+  (1024) *"would not have worked — 21px short"*, and **a sweep testing 1000 and 1100 but
+  not 1024 would never have shown it.**
+  ⚠⚠⚠ **THIS LADDER HAD EXACTLY THAT HOLE AND NOBODY HAD CLOSED IT: it carried `760`,
+  `1282` and `1562` — NEAR-MISSES — while Tailwind's own `md` 768, `lg` 1024, `xl` 1280 and
+  `2xl` 1536 were absent.** ⚠ `PUBLIC_WIDTHS` below was fixed for `md` (767/768/769) and
+  this one was not, so the signed-in shell was being swept either side of every breakpoint
+  that matters and never AT one.
+  ⚠ **THE FAILURE HIDES AT THE VALUE NOBODY CHOSE TO TEST BECAUSE IT IS NOT ROUND.**
+  ⚠⚠ `1100` is here on purpose too — it is the custom `min-[1100px]` the public header took
+  at `P2-ALL-E699`, and a custom breakpoint is as real as a framework one.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const WIDTHS = [360, 375, 640, 760, 900, 1000, 1100, 1180, 1282, 1440, 1562];
+*/
+const WIDTHS = [
+  360, 375, 640, 760, 768, 900, 1000, 1024, 1100, 1180, 1280, 1282, 1440, 1536, 1562,
+];
 
 /**
  * The things that may never disappear, whatever the width.
@@ -81,6 +100,12 @@ const UNIVERSAL = [
 const PAGES = [
   "/dashboard",
   "/profile",
+  /*
+    ⚠⚠ ADDED AT `P2-A6-E705`, WHEN THE PAGE STOPPED BEING A PLACEHOLDER. Ruling 95's
+    second check is *"mobile view"*, and the house mechanism for it on a SIGNED-IN page is
+    this sweep — a page that is only eyeballed at one width has not been checked.
+  */
+  "/services/offers",
   "/learn/courses",
   "/learn",
   "/learn/end-user-procurement-advanced-procurement",

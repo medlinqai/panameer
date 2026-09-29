@@ -170,6 +170,76 @@ const MONEY = /(?:prisma|tx)\.(?:payment|paymentLine|settlementRequest|settlemen
 check("2 — ⚠⚠ ABSENCE: the offer module moves no money and computes no cut", !MONEY.test(lib));
 check("2 — MUTATION: that scan would catch a payment write", MONEY.test("await tx.payment.create({});"));
 
+/* ═══ 2b · THE SELLER'S SCREEN (`P2-A6-E705` — WS-C) ═══════════════════════ */
+
+/*
+  ⚠⚠ THE SCREEN EXISTS NOW, SO THE FENCE MOVES ONTO IT. `E700` reported WS-C as NOT BUILT
+  and this gate printed that in its own output; ⚠⚠⚠ **the rule that mattered most —
+  *"TWO BUTTONS. NOT THREE"* — could not be asserted anywhere until there were buttons.**
+  ⚠ Now it can be, and the defect would arrive as a THIRD control.
+*/
+const PAGE = join("src", "app", "(app)", "services", "offers", "page.tsx");
+const INBOX = join("src", "components", "service-products", "OffersInbox.tsx");
+check("2b — the seller's page exists where this guard expects it", existsSync(PAGE), PAGE);
+check("2b — the offers inbox component exists", existsSync(INBOX), INBOX);
+const page = existsSync(PAGE) ? stripComments(readFileSync(PAGE, "utf8")) : "";
+const inbox = existsSync(INBOX) ? stripComments(readFileSync(INBOX, "utf8")) : "";
+check("2b — the page is no longer a ComingSoon placeholder", page.length > 0 && !/ComingSoon/.test(page),
+  "E700 shipped the data layer and left the room empty; E705 is the room");
+
+/* ⚠ Ruling 95 check 1 — the page is NAMED and the name matches its tab label. */
+check("2b — ⚠ the page has an <h1> and it matches the tab label word for word",
+  /<h1[\s\S]{0,160}Offers for My Services/.test(page));
+check("2b — and the <title> mirrors it", /title: "Offers for My Services/.test(page));
+
+/*
+  ⚠⚠⚠ TWO ACTIONS, NOT THREE — ASSERTED ON THE SCREEN AND ON THE ROUTE.
+  ⚠ Scott ruled the counter chain out; a third control is how it would come back, and it
+  would look reasonable to whoever added it.
+*/
+const ROUTE = join("src", "app", "api", "provider", "offers", "route.ts");
+check("2b — the seller's route exists", existsSync(ROUTE), ROUTE);
+const route = existsSync(ROUTE) ? stripComments(readFileSync(ROUTE, "utf8")) : "";
+check(
+  '2b — ⚠⚠⚠ the route accepts EXACTLY "accept" and "deny" — no third action',
+  /z\.literal\("accept"\)/.test(route) &&
+    /z\.literal\("deny"\)/.test(route) &&
+    !/z\.literal\("counter"\)/.test(route) &&
+    !/z\.literal\("propose"\)/.test(route)
+);
+const COUNTER_UI = /counter|Counter|Suggest a price|propose a price|make an offer back/;
+check(
+  "2b — ⚠⚠⚠ ABSENCE: the screen offers no counter control (ruled out 2026-09-28)",
+  !COUNTER_UI.test(inbox),
+  "a third button is how the chain Scott refused comes back"
+);
+check("2b — MUTATION: that scan WOULD catch a counter control",
+  COUNTER_UI.test('<button>Counter</button>') && COUNTER_UI.test('"Suggest a price"'));
+/*
+  ⚠⚠ AND THE SENTENCE THAT KEEPS A MINIMUM FROM READING AS A QUOTE. Without it a seller
+  believes they have named a price, which is the misunderstanding a counter field creates —
+  so the wording is asserted, not trusted.
+*/
+check(
+  "2b — ⚠⚠ the deny form SAYS a minimum is guidance, not a quote",
+  /guidance, not a quote/i.test(inbox),
+  "an offer at the minimum is still deniable (94a)"
+);
+check(
+  "2b — ⚠ and it says the buyer may still be declined after clearing it",
+  /still decline/i.test(inbox)
+);
+/* ⚠ THE SCREEN READS, IT DOES NOT DECIDE: no ownership test in the component. */
+check(
+  "2b — ⚠ the page passes no identifier in — the library scopes from the session",
+  /openOffersForSeller\(viewer\)/.test(page) && !/providerPersonId:/.test(page)
+);
+/* ⚠⚠ A REAL ZERO IN INK, WITH ITS REASON — not a dash, not a fabricated row. */
+check(
+  "2b — ⚠ the empty state names the first move instead of reporting emptiness",
+  /No open offers/.test(inbox) && /publish/i.test(inbox)
+);
+
 /* ═══ 3 · LIVE — THE CONSTRAINT IS PROVED BY BREAKING IT ═══════════════════ */
 
 const prisma = new PrismaClient({
@@ -313,5 +383,7 @@ live()
       process.exit(1);
     }
     console.log(`check:offers — ${pass}/${pass} passed, 0 failed, 0 not run`);
-    console.log("  ⚠ NOTE: no UI is asserted — /services/offers is still a ComingSoon placeholder.");
+    console.log("  ⚠ NOTE: the screen IS asserted now (E705). NOT built: the three notifications");
+    console.log("    shop.offer_received · shop.offer_accepted · shop.offer_denied — NAMED, not invented,");
+    console.log("    because the event registry is Scott's and E382 governs the category defaults.");
   });
