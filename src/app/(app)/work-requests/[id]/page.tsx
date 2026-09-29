@@ -245,6 +245,26 @@ export default async function Page({
           PROPOSAL. Landing them above the list of who was asked, and making
           them scroll past it to find what came back, would answer a different
           question than the one they clicked. */}
+      {/*
+        ── ⚠⚠⚠ THE BRANCH (`P2-A8-E712` WS-B) — NOT RENDERED, NOT HIDDEN ──────────
+
+        ⚠⚠ **SCOTT, 2026-09-27:** an externally sourced request *"skips the sourcing
+        process"* — *"no invite step, no bid list, no compare view."*
+        ⚠⚠⚠ **THE BRIEF IS EXPLICIT AND SO IS THIS: `NOT HIDDEN WITH CSS. NOT RENDERED.`
+        A CONTROL THAT EXISTS AND REFUSES IS `E579`** — and a `hidden` class would leave
+        `Invite providers` in the DOM, reachable by keyboard, readable by a screen reader,
+        and clickable by anyone who opened the panel.
+        ⚠ **THE SOURCING RAIL IS TWO BLOCKS — THIS ONE (Proposals, with its steps and the
+        award transition) AND `Invited to bid` BELOW.** Both are guarded on the same
+        boolean, and `check:externally-sourced` asserts the pair together so one cannot be
+        guarded while the other is forgotten.
+        ⚠⚠ **WHAT DELIBERATELY STAYS: `AssignDirectly` BETWEEN THEM.** That is
+        `assignProviderDirectly`, `route: "DIRECT"` — **the externally sourced path's own
+        destination**, naming a provider and a rate. ⚠⚠⚠ Hiding it here would remove the
+        one door this kind of request is supposed to walk through, which would be `E579`
+        committed in the other direction.
+      */}
+      {!detail.soleSourced && (
       <div className="mt-8">
         <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
           Proposals <span className="font-normal text-ink-2">({proposals.length})</span>
@@ -364,6 +384,7 @@ export default async function Page({
           </>
         )}
       </div>
+      )}
 
       {/*
         ── ⚠⚠⚠ THE OTHER ROUTE, AND THE SECOND TRANSITION (`E684` WS-F) ──────
@@ -390,6 +411,13 @@ export default async function Page({
           ⚠⚠ That brief is `E682` WS-D and it is the section ABOVE. The fence
           was right for `E392` and is simply spent; this section still shows the
           invitations only, which is what it was always for. */}
+      {/*
+        ⚠⚠⚠ THE SECOND HALF OF THE SAME BRANCH (`P2-A8-E712` WS-B). ⚠ Guarded on the same
+        boolean as the Proposals block above, because **the `Invite providers` button lives
+        here** — and an externally sourced request that still offers to invite bidders is
+        the sourcing process it was created to skip.
+      */}
+      {!detail.soleSourced && (
       <div className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
@@ -421,6 +449,7 @@ export default async function Page({
           </ul>
         )}
       </div>
+      )}
 
       <div className="mt-9 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         <Button href="/hire" variant="ghost">

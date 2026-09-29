@@ -30,7 +30,21 @@ export function OriginBadge({ origin }: { origin: WorkOrderOrigin }) {
       className="rounded-full border border-line px-2.5 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.06em] text-ink-2"
       title="Agreed outside Panameer and brought in — Panameer records this order rather than issuing it."
     >
-      Direct
+      {/*
+        ── ⚠⚠⚠ THE WORD, RENAMED (`P2-A8-E712` WS-D) ──────────────────────────
+
+        ⚠⚠ **SCOTT, 2026-09-27:** *"we should change the name — and this name has been used
+        in the terms of service — from 'direct' (borrowed from Upwork) to 'externally
+        sourced'."*
+        ⚠⚠⚠ **`DIRECT` SURVIVES ONLY AS THE STORED ENUM VALUE AND INSIDE `E164` QUOTES.**
+        The check above still reads `origin !== "DIRECT"` — **the column is not renamed**
+        (WS-A is superseded by ruling 97), only what a member reads.
+        ⚠ **Externally Sourced** is Title Case because this is a badge, and rule 11 governs
+        a label rather than a sentence.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   Direct
+      */}
+      Externally Sourced
     </span>
   );
 }

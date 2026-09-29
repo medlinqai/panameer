@@ -1624,7 +1624,21 @@ export function CertificationsBody({
                 rel="noreferrer"
                 className="ml-2 text-[13px] font-bold text-magenta hover:text-magenta-dark"
               >
-                Verify
+                {/*
+                  ── ⚠⚠⚠ SCOTT RULED IT, 2026-09-29 (`P2-ALL-E712`) ─────────────
+
+                  ⚠⚠ **IT SAID `Verify`, ON A URL THE PROVIDER TYPED IN.** `E710` reported
+                  it: the word invited a buyer to believe Panameer had checked something,
+                  and it sat inches from *"Earned on Panameer"*, which is the one that
+                  means verification. Two meanings of one word on one credential — `E459`.
+                  ⚠ **SCOTT CHOSE `View Credential` OVER MY `Issuer's link`:** mine was
+                  more precise, **his is shorter and claims nothing**, which is the whole
+                  requirement. ⚠⚠ *"Earned on Panameer"* vs *"Self-reported"* stays as
+                  built.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   Verify
+                */}
+                View Credential
               </a>
             )}
             {c.attachmentName && (

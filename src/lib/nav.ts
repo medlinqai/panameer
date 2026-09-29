@@ -1102,7 +1102,18 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
  */
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
-  { label: "Work Requests for My Skills", href: "/find-work/for-my-skills" },
+  /*
+    ── ⚠⚠ SCOTT RULED THE PAIR, 2026-09-29 (`P2-ALL-E712`, ruling 95 check 1) ────
+
+    ⚠ **THE MENU MOVED, NOT THE TAB.** `E708` pointed this item at `/find-work?tab=best`,
+    whose tab reads *"Best Matches"* — so the name a member clicked and the name they
+    arrived at disagreed. ⚠⚠ **SCOTT: the menu becomes `Best Matches` — *"shorter, and
+    true now `E709` ranks"*.** ⚠⚠⚠ It was only ever a description of the same view:
+    `work-feed.ts` says so itself — *"'Work Requests for My Skills' IS Best Matches."*
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   { label: "Work Requests for My Skills", href: "/find-work/for-my-skills" },
+  */
+  { label: "Best Matches", href: "/find-work/for-my-skills" },
   { label: "My Work Requests (Saved)", href: "/find-work/saved" },
   { label: "Invitations to Propose My Rate", href: "/find-work/invitations" },
   { label: "My Proposals", href: "/find-work/proposals" },

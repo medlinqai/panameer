@@ -81,7 +81,15 @@ export default async function Page({
       */}
       {o.origin === "DIRECT" && (
         <div className="mt-4 rounded-brand border border-line bg-ink/[0.02] p-5">
-          <p className="text-[15px] font-bold">A direct work order</p>
+          {/*
+            ⚠⚠⚠ RENAMED (`P2-A8-E712` WS-D) — *"from 'direct' (borrowed from Upwork) to
+            'externally sourced'"* (Scott, 2026-09-27). ⚠ The sentence below already
+            described the thing correctly — *"agreed outside Panameer and brought in"* —
+            so only the heading carried the borrowed word.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <p className="text-[15px] font-bold">A direct work order</p>
+          */}
+          <p className="text-[15px] font-bold">An externally sourced work order</p>
           <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
             This deal was agreed outside Panameer and brought in to use settlement
             and payments. Panameer records this order rather than issuing it, and

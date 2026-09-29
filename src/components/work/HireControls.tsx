@@ -126,7 +126,28 @@ export function AssignDirectly({
 
   return (
     <div className="mt-4 rounded-brand border border-line bg-white p-5">
-      <h3 className="text-[15px] font-bold">Assign someone directly</h3>
+      {/*
+        ── ⚠⚠⚠ THE WORD, RENAMED (`P2-A8-E712` WS-D) ──────────────────────────
+
+        ⚠⚠ **SCOTT, 2026-09-27:** *"change the name… from 'direct' (borrowed from Upwork)
+        to 'externally sourced'."* ⚠ Here it was the ADVERB form of the same borrowed
+        concept — *"directly"* meaning *"without Panameer's sourcing"* — so it is the same
+        rename, not a different word that happens to look like it.
+        ⚠⚠⚠ **THE THING THAT IS EXTERNALLY SOURCED IS THE PROVIDER**, which is Scott's own
+        framing: *"externally sourced transactions (when the provider is sourced
+        off-platform)."*
+        ⚠ **A HEADING, SO SENTENCE CASE** — rule 11 governs a button LABEL, not this.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <h3 className="text-[15px] font-bold">Assign someone directly</h3>
+      */}
+      {/*
+        ⚠⚠ **SCOTT'S PHRASE, NOT A PLAINER ONE OF MINE.** I first wrote *"a provider you
+        sourced yourself"*, which reads more easily — ⚠⚠⚠ **but WS-D says *"externally
+        sourced" everywhere a member can read it*, AND THE PHRASE IS IN THE TERMS OF
+        SERVICE.** One word for one thing (`E585`) matters more than my better sentence
+        when the word is contractual.
+      */}
+      <h3 className="text-[15px] font-bold">Assign an externally sourced provider</h3>
       <p className="mt-1 text-[13.5px] text-ink-2">
         No proposal needed — but their rate is, because the order is priced from it.
       </p>

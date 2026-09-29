@@ -172,7 +172,8 @@
     "check:onboarding": "npx esbuild scripts/check-onboarding.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/onboarding.cjs --log-level=error && node -r dotenv/config .harness/onboarding.cjs dotenv_config_path=.env.local",
     "check:provider-search": "npx esbuild scripts/check-provider-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/provider-search.cjs --log-level=error && node .harness/provider-search.cjs",
     "check:credential-provenance": "npx esbuild scripts/check-credential-provenance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/credential-provenance.cjs --log-level=error && node .harness/credential-provenance.cjs",
-    "check:learn-identity": "npx esbuild scripts/check-learn-identity.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-identity.cjs --log-level=error && node -r dotenv/config .harness/learn-identity.cjs dotenv_config_path=.env.local"
+    "check:learn-identity": "npx esbuild scripts/check-learn-identity.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-identity.cjs --log-level=error && node -r dotenv/config .harness/learn-identity.cjs dotenv_config_path=.env.local",
+    "check:externally-sourced": "npx esbuild scripts/check-externally-sourced.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/externally-sourced.cjs --log-level=error && node -r dotenv/config .harness/externally-sourced.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

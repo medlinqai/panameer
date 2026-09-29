@@ -193,6 +193,21 @@ export type WorkRequestDetail = {
      already narrowed; only the REQUEST's status was loose.
      ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   status: string; */
   status: WorkRequestStatus;
+  /*
+    ── ⚠⚠⚠ THE KIND, AND IT DECIDES WHETHER SOURCING EXISTS (`P2-A8-E712` WS-B) ──
+
+    ⚠⚠ **SCOTT, 2026-09-27:** *"There are two types of work requests — direct and
+    sourced"*, renamed to **externally sourced**, and *"this will allow web and ERP users
+    to skip the sourcing process."*
+    ⚠⚠⚠ **AN EXTERNALLY SOURCED REQUEST SKIPS INVITE → PROPOSE → COMPARE ENTIRELY, SO THE
+    PAGE MUST KNOW FROM THE START WHETHER TO RENDER A SOURCING RAIL — rather than
+    rendering one and discovering nobody used it.**
+    ⚠ `loadOwned` uses `include` with no `select`, so this column was **already fetched
+    and only dropped here** — the same shape `E710` found on the provider profile. Nothing
+    was missing from the round trip, only from what the page could see.
+    ⚠ Measured 2026-09-29: before this, `sole_sourced` was read by **nothing** in `src/`.
+  */
+  soleSourced: boolean;
   postedAt: string | null;
   currency: string;
   startDate: string | null;
@@ -277,6 +292,8 @@ export async function getWorkRequestDetail(
     title: wr.title,
     description: wr.description ?? "",
     status: wr.status,
+    /* ⚠ `P2-A8-E712` WS-B — the branch above the sourcing chain. See the type. */
+    soleSourced: wr.sole_sourced,
     postedAt: wr.posted_at ? wr.posted_at.toISOString() : null,
     currency: wr.currency,
     startDate: wr.start_date ? wr.start_date.toISOString().slice(0, 10) : null,
