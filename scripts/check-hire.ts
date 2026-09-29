@@ -415,6 +415,23 @@ const SELECTION_WRITER = join("src", "lib", "selection.ts");
   above, and the assertion below is an absence rather than a narrowing.
 */
 const ORDER_WRITER = join("src", "lib", "work-orders.ts");
+/*
+  ── ⚠⚠⚠ A THIRD DELIBERATE ADDITION (`P2-A8-E703`) ──────────────────────────
+
+  ⚠ **THE DOCBLOCK ABOVE DESCRIBES EXACTLY THIS MOMENT:** *"the day somebody needs one
+  they add the file DELIBERATELY and a reviewer sees exactly the `include` that opens the
+  bid screen."* ⚠⚠ This is that addition, and it is authorised: `A4`'s brief adds the
+  `source` column so suggested and shortlisted can live in one table (ruling 94e).
+
+  ⚠⚠⚠ **AND IT IS NOT A NEEDLE EXCEPTION FOR ONE LINE, WHICH `98f` FORBIDS — IT IS A
+  NAMED FILE WITH A FENCE UNDER IT.** The WS-3 fence names *"the bid list, the
+  bid-comparison screen, scoring, shortlisting, tests or interviews"*; ⚠ **shortlisting is
+  now built, so the fence narrows to what it was really protecting: THE PRICE.**
+  ⚠⚠ `lib/shortlists.ts` may name providers and carry a `note`. **It must never read a
+  proposal's PRICE or narrative** — that is what turns a list into a comparison screen,
+  and the assertions below hold it to that.
+*/
+const SHORTLIST_LIB = join("src", "lib", "shortlists.ts");
 {
   const hits = SRC.filter(
     (f) =>
@@ -426,7 +443,8 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
       f.path !== INTERVIEW_WRITER &&
       f.path !== TEST_WRITER &&
       f.path !== SELECTION_WRITER &&
-      f.path !== ORDER_WRITER
+      f.path !== ORDER_WRITER &&
+      f.path !== SHORTLIST_LIB
   );
 /*
   ⚠⚠⚠ AND THE TWO EXEMPTIONS ARE FENCED, so neither can grow into the screen
@@ -530,6 +548,21 @@ const ORDER_WRITER = join("src", "lib", "work-orders.ts");
     "3 — ⚠⚠ it never reads a proposal's cover note",
     sel != null && !/cover_note/.test(sel.code),
     "the pitch is comparison material; a writer has no use for it"
+  );
+  /*
+    ── ⚠⚠ THE SHORTLIST LIB'S FENCE — IT MAY LIST, IT MAY NOT COMPARE ──────────
+  */
+  const slLib = SRC.find((f) => f.path === SHORTLIST_LIB);
+  check("3 — the shortlist lib exists to be fenced", slLib != null);
+  check(
+    "3 — ⚠⚠⚠ it reads NO proposal price and NO cover note — a list, never a comparison",
+    slLib != null && !/proposalLine|cover_note|unit_price_cents|amount_cents/.test(slLib.code),
+    "the price is what turns a shortlist into the bid-comparison screen"
+  );
+  check(
+    "3 — ⚠⚠ and it never reads a Proposal row at all — `proposal_id` is carried, not followed",
+    slLib != null && !/(?:prisma|tx)\.proposal\w*\.(findMany|findFirst|findUnique)/.test(slLib.code),
+    "a suggestion has no proposal behind it (94e); following one would be the screen"
   );
   /* ⚠⚠⚠ THE WORK ORDER WRITER NEVER READS A PROPOSAL AT ALL — only updateMany. */
   const wo = SRC.find((f) => f.path === ORDER_WRITER);

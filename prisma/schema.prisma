@@ -6668,6 +6668,20 @@ model Shortlist {
   @@map("shortlists")
 }
 
+/// ── ⚠⚠ WHERE A SHORTLIST LINE CAME FROM (`P2-A8-E703`, ruling 94e) ──────────
+///
+/// ⚠⚠⚠ **THREE VALUES AND NO FOURTH.** A fourth would be a workflow, and a workflow
+/// needs a ruling. ⚠ See `ShortlistLine.source` for the replace rule this drives.
+enum ShortlistLineSource {
+  /// ⚠ Derived by the search. **A snapshot — replaceable wholesale on a re-run.**
+  SUGGESTED
+  /// ⚠⚠ The buyer kept this one. **Never overwritten by a re-run.**
+  SHORTLISTED
+  /// ⚠⚠ Straight onto the request, skipping the shortlist entirely — the commonest
+  /// path (93b: the shortlist is OPTIONAL). **Never overwritten by a re-run.**
+  ADDED
+}
+
 model ShortlistLine {
   id           String @id @default(uuid()) @db.Uuid
   shortlist_id String @db.Uuid
@@ -6681,6 +6695,35 @@ model ShortlistLine {
   provider_person_id String  @db.Uuid
   proposal_id    String? @db.Uuid
   note               String?
+
+  /**
+   * ── ⚠⚠⚠ WHICH END OF THE FLOW THIS ROW CAME FROM (`P2-A8-E703`) ────────────
+   *
+   * ⚠⚠ **ONE TABLE, NOT TWO. Scott's diagram adds *Suggested Providers*, and it is the
+   * SAME SHAPE** — a set of providers against a work request, each with a reason.
+   * ⚠⚠⚠ **TWO TABLES FOR ONE SHAPE IS TWO QUERIES, TWO GRIDS AND TWO PLACES TO FIX
+   * EVERY LATER BUG** (`E585`).
+   *
+   * ⚠ `SUGGESTED` — what the RDS search proposed · `SHORTLISTED` — what the buyer kept ·
+   * `ADDED` — what went straight onto the request.
+   *
+   * ⚠⚠⚠ **AND THE COLUMN EXISTS FOR ONE RULE, WHICH IS THE WHOLE POINT OF IT: A
+   * SUGGESTION IS DERIVED, NOT AUTHORED (ruling 94e), SO A `SUGGESTED` ROW IS A SNAPSHOT
+   * AND MAY BE REPLACED WHOLESALE WHEN THE SEARCH RE-RUNS. A `SHORTLISTED` OR `ADDED`
+   * ROW IS THE BUYER'S AND IS NEVER OVERWRITTEN BY A RE-RUN.**
+   * ⚠⚠ Without the column a re-run cannot tell the two apart, and **the only safe
+   * re-run would be one that deletes nothing — which means suggestions accumulate
+   * forever.** `lib/shortlists.ts` enforces it and `check:shortlists` asserts it.
+   *
+   * ⚠ **DEFAULTS TO `ADDED`, DELIBERATELY: THAT IS THE SAFE FAILURE.** A row whose
+   * origin nobody recorded must not be eligible for wholesale deletion — and `ADDED` is
+   * also the commonest path, the one Scott named: *"they will not shortlist…they will
+   * add them to the WR."*
+   *
+   * ⚠⚠ **`proposal_id` STAYS NULLABLE AND THAT IS THE DIFFERENCE BETWEEN THE ENDS:** a
+   * suggestion has no proposal behind it; a shortlisted provider usually does.
+   */
+  source ShortlistLineSource @default(ADDED)
 
   created_at DateTime @default(now())
 

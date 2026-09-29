@@ -167,7 +167,8 @@
     "check:match-rank": "npx esbuild scripts/check-match-rank.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/match-rank.cjs --log-level=error && node .harness/match-rank.cjs",
     "check:evaluations": "npx esbuild scripts/check-evaluations.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/evaluations.cjs --log-level=error && node .harness/evaluations.cjs",
     "check:offers": "npx esbuild scripts/check-offers.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/offers.cjs --log-level=error && node -r dotenv/config .harness/offers.cjs dotenv_config_path=.env.local",
-    "check:certification-tests": "npx esbuild scripts/check-certification-tests.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/certification-tests.cjs --log-level=error && node -r dotenv/config .harness/certification-tests.cjs dotenv_config_path=.env.local"
+    "check:certification-tests": "npx esbuild scripts/check-certification-tests.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/certification-tests.cjs --log-level=error && node -r dotenv/config .harness/certification-tests.cjs dotenv_config_path=.env.local",
+    "check:shortlists": "npx esbuild scripts/check-shortlists.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/shortlists.cjs --log-level=error && node -r dotenv/config .harness/shortlists.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
