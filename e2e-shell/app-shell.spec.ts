@@ -117,6 +117,13 @@ const PAGES = [
     the PAGE across `md` `lg` `xl` `2xl`, and the two are not substitutes.
   */
   "/find-work",
+  /*
+    ⚠⚠ ADDED AT `P2-A5-E709`, WHEN `/search` STOPPED BEING A PLACEHOLDER — the same
+    reason `/services/offers` joined at `E705`. ⚠ It was **eight lines of `ComingSoon`
+    while sitting in the primary chrome** (`AppHeader` renders `SEARCH_NAV` twice), so
+    it was `E579` on the surface a curious member clicks first.
+  */
+  "/search",
   "/learn/courses",
   "/learn",
   "/learn/end-user-procurement-advanced-procurement",

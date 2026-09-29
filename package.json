@@ -169,7 +169,8 @@
     "check:offers": "npx esbuild scripts/check-offers.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/offers.cjs --log-level=error && node -r dotenv/config .harness/offers.cjs dotenv_config_path=.env.local",
     "check:certification-tests": "npx esbuild scripts/check-certification-tests.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/certification-tests.cjs --log-level=error && node -r dotenv/config .harness/certification-tests.cjs dotenv_config_path=.env.local",
     "check:shortlists": "npx esbuild scripts/check-shortlists.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/shortlists.cjs --log-level=error && node -r dotenv/config .harness/shortlists.cjs dotenv_config_path=.env.local",
-    "check:onboarding": "npx esbuild scripts/check-onboarding.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/onboarding.cjs --log-level=error && node -r dotenv/config .harness/onboarding.cjs dotenv_config_path=.env.local"
+    "check:onboarding": "npx esbuild scripts/check-onboarding.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/onboarding.cjs --log-level=error && node -r dotenv/config .harness/onboarding.cjs dotenv_config_path=.env.local",
+    "check:provider-search": "npx esbuild scripts/check-provider-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/provider-search.cjs --log-level=error && node .harness/provider-search.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

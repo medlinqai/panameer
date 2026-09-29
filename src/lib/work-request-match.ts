@@ -122,29 +122,53 @@ export function rankMatchedProviders<
   );
 }
 
-export async function matchProvidersFor(
-  viewer: Viewer,
-  workRequestId: string
-): Promise<{ skillIds: string[]; providers: MatchedProvider[] }> {
-  // Ownership + tenancy are enforced by `getWorkRequest`; a request the viewer
-  // does not own throws before any provider is read.
-  const wr = await getWorkRequest(viewer, workRequestId);
-  if (wr.skillIds.length === 0) return { skillIds: wr.skillIds, providers: [] };
+/**
+ * ── ⚠⚠⚠ THE ONE RANKER, ADDRESSED BY SKILL SET RATHER THAN BY REQUEST ───────
+ *
+ * `P2-A5-E709`, WS-A of `brief_provider_search_rds`. ⚠⚠ **THIS IS AN EXTRACTION,
+ * NOT A NEW MATCHER.** Every line below used to sit inside `matchProvidersFor`,
+ * which now calls it; the only change is that the two inputs arrive as arguments
+ * instead of being read off a `WorkRequest`.
+ *
+ * ⚠⚠⚠ **WHY IT MATTERS THAT THIS IS ONE FUNCTION AND NOT TWO:** the brief asked for
+ * *"RDS in → ranked providers out… sharing its ranking rules — NOT a copy of
+ * them"*, and warned that **two rankers that drift is `E585`.** ⚠ A second copy here
+ * would disagree with the buyer's own suggested-providers list on the same data,
+ * **on the surface a stranger sees first** — which is exactly `E585`'s shape.
+ *
+ * ── ⚠⚠ IT TAKES NO `Viewer`, AND THAT IS A FACT ABOUT THE SCOPING ──────────
+ *
+ * ⚠ The provider set is scoped by `marketplaceVisibleWhere()` — **marketplace
+ * visibility, not the caller's identity.** ⚠⚠ `matchProvidersFor` needs a viewer
+ * only to prove the caller OWNS THE REQUEST before reading it; nothing in the
+ * ranking depends on who is asking. ⚠⚠⚠ **SO A CALLER THAT HAS NO REQUEST MUST
+ * STILL GUARD ITS OWN PAGE** (load-bearing rule 5) — the absence of a `Viewer`
+ * here is not permission to skip one there.
+ * ⚠ The ids that cross the wire from a search form are **CATALOG** ids (role,
+ * pillar, skill), which are public rows carrying no ownership — not the
+ * profile-or-person ids rule 5 forbids accepting from a client.
+ */
+export async function matchProvidersForSkills(input: {
+  skillIds: string[];
+  /** Null means "any suite" — the widen signal, not a missing value. */
+  pillarId: string | null;
+}): Promise<{ skillIds: string[]; providers: MatchedProvider[] }> {
+  if (input.skillIds.length === 0) return { skillIds: input.skillIds, providers: [] };
 
   /*
     No pillar means the buyer chose "Any / not sure" on a vendor role. That is
     the signal to widen: match the same capability wherever it is implemented,
     rather than only where this request happened to name it.
   */
-  const anySuite = !wr.pillarId;
-  const skillIds = await widenThroughBridge(wr.skillIds, anySuite);
+  const anySuite = !input.pillarId;
+  const skillIds = await widenThroughBridge(input.skillIds, anySuite);
 
   /** The suite the request named, if any — a booster, never a filter. */
-  const requestedSuite = wr.pillarId
+  const requestedSuite = input.pillarId
     ? suiteFromPillar(
         (
           await prisma.pillar.findUnique({
-            where: { id: wr.pillarId },
+            where: { id: input.pillarId },
             select: { name: true },
           })
         )?.name
@@ -349,4 +373,28 @@ export async function matchProvidersFor(
     });
 
   return { skillIds, providers };
+}
+
+/**
+ * Providers matched to one Work Request — **the original entry point, unchanged in
+ * behaviour** (`P2-A5-E709` WS-A made it a wrapper).
+ *
+ * ⚠⚠ **THE OWNERSHIP CHECK IS THE WHOLE REASON THIS FUNCTION STILL EXISTS
+ * SEPARATELY.** `getWorkRequest` enforces ownership and tenancy, and it throws
+ * **before any provider is read** — so a request the viewer does not own never
+ * reaches the ranker. ⚠ Keeping that in the wrapper rather than the core is what
+ * lets the core be addressed by a skill set without inventing a fake request.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the body moved, it did not change:
+ * //   const anySuite = !wr.pillarId;
+ * //   const skillIds = await widenThroughBridge(wr.skillIds, anySuite);
+ * //   ...everything through rankMatchedProviders, now in matchProvidersForSkills
+ */
+export async function matchProvidersFor(
+  viewer: Viewer,
+  workRequestId: string
+): Promise<{ skillIds: string[]; providers: MatchedProvider[] }> {
+  // Ownership + tenancy are enforced by `getWorkRequest`; a request the viewer
+  // does not own throws before any provider is read.
+  const wr = await getWorkRequest(viewer, workRequestId);
+  return matchProvidersForSkills({ skillIds: wr.skillIds, pillarId: wr.pillarId });
 }
