@@ -98,7 +98,37 @@ export function WorkFeed({
       </div>
 
       {/* ---- Tabs ---------------------------------------------------------- */}
-      <div className="-mx-1 mb-3 flex gap-1 overflow-x-auto border-b border-line px-1">
+      {/*
+        ⚠⚠ NAMED SO IT CAN BE MEASURED (`P2-ALL-E708`, ruling 91). The row is the
+        thing that overflows, and a row with no handle can only be asserted through
+        a brittle structural selector — the `page-tabs` precedent, applied.
+        ⚠ This same component renders on `/dashboard` AND `/find-work`, so the
+        handle is what lets one row be measured on both pages.
+      */}
+      {/*
+        ── ⚠⚠⚠ IT WRAPS, IT DOES NOT SCROLL (`P2-ALL-E708`, ride-along `E694(e)`) ──
+
+        ⚠⚠ **MEASURED AT 390: THIS ROW HID 317px OF ITSELF WHILE THE PAGE REPORTED
+        0px** — on `/find-work` and `/dashboard` alike, because both render this
+        component. ⚠ Six tabs of whole labels need ~707px; the viewport has 390.
+        ⚠⚠⚠ **A HIDDEN SCROLLBAR MEANT FOUR OF THE SIX VIEWS HAD NO VISIBLE
+        ENTRANCE AT PHONE WIDTH** — including the two `E216` folded in from the
+        rail, so the fold-in quietly cost them their door on mobile.
+
+        ⚠ **`flex-wrap` AND NO `overflow-x-auto`, WHICH IS `PageTabs`' OWN RULE AND
+        NOT A NEW IDEA** (`E585` — one answer, one place): *"leaving the scroller on
+        a wrapping row gives a container that can both wrap and scroll, which is
+        neither."* ⚠⚠ `items-end` so a wrapped second line still sits on the border,
+        and `gap-y-0` so the two lines do not drift apart.
+        ⚠ The children keep `shrink-0 whitespace-nowrap`, so **no label truncates** —
+        the row gets taller instead of the words getting shorter. ⚠⚠ **SHORTENING THE
+        LABELS WAS THE OTHER FIX AND IS NOT MINE TO MAKE: these are menu names, and
+        menu names are Scott's** (`E533`, and the 2026-09-23 vocabulary ruling).
+      */}
+      <div
+        data-testid="work-feed-tabs"
+        className="-mx-1 mb-3 flex flex-wrap items-end gap-x-1 gap-y-0 border-b border-line px-1"
+      >
         {WORK_FEED_TABS.map((t) => (
           <Link
             key={t.id}

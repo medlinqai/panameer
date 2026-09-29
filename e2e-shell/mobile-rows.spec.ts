@@ -85,6 +85,45 @@ const ROWS = [
     selector: 'nav[aria-label="Settings sections"]',
     path: "/settings/notifications",
   },
+  /*
+    ── ⚠⚠⚠ M4 — THE WORK FEED'S TAB ROW (`P2-ALL-E708`, ride-along `E694(e)`) ──
+
+    ⚠⚠ **IT IS A PRIMARY NAV ROW, WHICH IS WHY IT BELONGS HERE AND THE ATTENTION
+    STRIP DOES NOT.** `E216` folded the rail's five Find Work children INTO this
+    row and de-duplicated them — *"Work Requests for My Skills IS Best Matches,
+    All Work Requests IS Most Recent…"*. ⚠⚠⚠ **SO THIS ROW IS NOT A FILTER BESIDE
+    THE NAVIGATION, IT ABSORBED THE NAVIGATION**, and the rule this file already
+    states applies to it: *"a primary nav row must FIT, not scroll."*
+
+    ⚠ **ASSERTED ON BOTH PAGES THAT RENDER IT, DELIBERATELY** (ruling 91 — the row,
+    and the row lives in two places). `WorkFeed` is shared, so one CSS change moves
+    both; a single-path assertion would let a page-specific wrapper regress the
+    other silently.
+    ⚠⚠ **`/find-work` IS LISTED FIRST BECAUSE THERE THE ROW *IS* THE PAGE'S
+    NAVIGATION.** On `/dashboard` it is one section among several.
+
+    ⚠⚠⚠ **NOT ADDED: THE `Needs Your Attention` CARD ROW, AND THAT IS A DECISION.**
+    `E694(e)` measured it hiding 82px at 390, but `AttentionStrip.tsx:76-81` records
+    that scroll as the INTENDED behaviour in its own words — *"Horizontal scroll
+    below sm… `overflow-x-auto` with `shrink-0` children is what makes the mobile
+    behaviour a swipe rather than a squeeze — labels never wrap and never truncate
+    to nonsense."* ⚠⚠ **A CARD CAROUSEL IS CONTENT, NOT NAVIGATION**, and asserting
+    `<= 1` on it would fail correct code to satisfy a number. ⚠ Ruling 10: **the
+    cost of a false red is that people stop believing the green.** Reported, not
+    gated — if Scott wants that strip to fit, it is a design change, not a gate.
+  */
+  {
+    level: "M4",
+    what: "the work feed's tab row, which absorbed the rail's Find Work children",
+    selector: '[data-testid="work-feed-tabs"]',
+    path: "/find-work",
+  },
+  {
+    level: "M4-dashboard",
+    what: "the same work feed tab row, on the page that also renders it",
+    selector: '[data-testid="work-feed-tabs"]',
+    path: "/dashboard",
+  },
 ] as const;
 
 /** Measure one element's hidden width, or `null` when it is not on the page. */

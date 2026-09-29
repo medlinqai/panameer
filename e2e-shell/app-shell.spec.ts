@@ -106,6 +106,17 @@ const PAGES = [
     this sweep — a page that is only eyeballed at one width has not been checked.
   */
   "/services/offers",
+  /*
+    ⚠⚠ ADDED AT `P2-ALL-E708`, BECAUSE THIS RUN CHANGED ITS PRIMARY NAV ROW.
+    `E694(e)` measured the work-feed tab row hiding **317px** at 390 on this page and on
+    `/dashboard`; the fix was `flex-wrap` and no scroller, in the shared `WorkFeed`.
+    ⚠⚠⚠ **`/dashboard` WAS ALREADY IN THIS LADDER AND `/find-work` WAS NOT, WHICH IS HOW
+    A ROW SHARED BY TWO PAGES WAS ONLY EVER SWEPT ON ONE OF THEM** — ruling 104's lesson
+    about a ladder with a hole in it, on the page axis rather than the width axis.
+    ⚠ `check:mobile-rows` asserts the ROW at 390 (ruling 91); this sweep is what checks
+    the PAGE across `md` `lg` `xl` `2xl`, and the two are not substitutes.
+  */
+  "/find-work",
   "/learn/courses",
   "/learn",
   "/learn/end-user-procurement-advanced-procurement",
