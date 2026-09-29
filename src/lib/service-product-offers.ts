@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
+import { notify } from "@/lib/notifications";
+import { formatCents } from "@/lib/display";
 
 /**
  * ── ⚠⚠⚠ THE SHOP OFFER: ACCEPT OR DENY, AND A DENY MAY CARRY A FLOOR ────────
@@ -142,6 +144,32 @@ export async function makeOffer(
       },
       select: { id: true, offer_number: true, cleared_floor_cents: true },
     });
+
+    /*
+      ── ⚠⚠⚠ TELL THE SELLER (`P2-A6-E707`, `105d`) ─────────────────────────────
+
+      ⚠⚠ **AFTER THE WRITE, NOT INSIDE A TRANSACTION, BECAUSE THERE IS NO TRANSACTION
+      HERE** (`106b`). ⚠ The brief asked for *"the same transaction as the transition"*
+      and for this writer that was never a question — `prisma.serviceProductOffer.create`
+      above is a single statement on the shared client. **Opening a transaction just to
+      satisfy the phrasing would add a mechanism to make a sentence true.**
+
+      ⚠⚠⚠ **RECIPIENT IS THE OWNER STAMPED ON THE ROW WE JUST WROTE**, which is
+      `product.providerProfile.person_id` — the same value, taken from the same read that
+      wrote it. ⚠ Never re-read from the product later: a product changing hands must not
+      re-point this at a seller who never saw the offer.
+    */
+    await notify({
+      event: "shop.offer_received",
+      personId: product.providerProfile.person_id,
+      entityType: "ServiceProductOffer",
+      entityId: row.id,
+      vars: {
+        productTitle: product.title,
+        amount: formatCents(input.amountCents, product.currency),
+      },
+    });
+
     return {
       id: row.id,
       offerNumber: row.offer_number,
@@ -201,7 +229,9 @@ export async function denyOffer(
   input: { offerId: string; message?: string | null; floorCents?: number | null }
 ): Promise<{ id: string; status: "DENIED" }> {
   const me = await ownPerson(viewer);
-  await loadOpenForSeller(input.offerId, me.id);
+  /* ⚠ THE OFFER IS KEPT NOW, not discarded: the notification below needs the BUYER's
+     identity, and this is the read that already resolved it under the owner check. */
+  const offer = await loadOpenForSeller(input.offerId, me.id);
 
   if (input.floorCents != null) {
     if (!Number.isInteger(input.floorCents) || input.floorCents <= 0) {
@@ -209,19 +239,47 @@ export async function denyOffer(
     }
   }
 
+  const message = input.message?.trim() || null;
+  const floorCents = input.floorCents ?? null;
+
   const row = await prisma.serviceProductOffer.update({
     where: { id: input.offerId },
     data: {
       status: "DENIED",
       decided_at: new Date(),
-      deny_message: input.message?.trim() || null,
-      deny_floor_cents: input.floorCents ?? null,
+      deny_message: message,
+      deny_floor_cents: floorCents,
       /* ⚠⚠⚠ THE MARKER CLEARS HERE, IN THE SAME STATEMENT AS THE STATUS. That is what
          frees the pair for a re-offer while keeping this row forever. */
       open_service_product_id: null,
     },
     select: { id: true },
   });
+
+  /*
+    ── ⚠⚠⚠ TELL THE BUYER, AND CARRY THE FLOOR (`P2-A6-E707`, `105d` / `94a`) ────
+
+    ⚠⚠ **AFTER THE WRITE. NO TRANSACTION EXISTS HERE EITHER** (`106b`) — the update above
+    is one statement.
+    ⚠⚠⚠ **THE MESSAGE AND THE FLOOR GO INTO THE NOTIFICATION ITSELF**, because the floor
+    is the actionable part and the buyer has **nowhere to go and read it** — there is no
+    buyer-side offer surface at all. ⚠ The event's `body` is what adds *"guidance, not a
+    quote"* beside the number; that sentence is not optional and lives with the figure.
+    ⚠ **THE SAME VALUES THAT WERE WRITTEN, NOT THE RAW INPUT** — `message` and
+    `floorCents` are the trimmed/normalised pair the row got, so the bell can never
+    report a floor the record does not hold (`90b`).
+  */
+  await notify({
+    event: "shop.offer_denied",
+    personId: offer.buyer_person_id,
+    entityType: "ServiceProductOffer",
+    entityId: row.id,
+    vars: {
+      denyMessage: message,
+      floor: floorCents != null ? formatCents(floorCents, offer.currency) : null,
+    },
+  });
+
   return { id: row.id, status: "DENIED" };
 }
 
@@ -270,7 +328,16 @@ export async function acceptOffer(
   }
   const pAccountId = buyer.company.p_account_id;
 
-  return prisma.$transaction(async (tx) => {
+  /*
+    ── ⚠⚠⚠ ROW INSIDE, SEND OUTSIDE (`106a`) ───────────────────────────────────
+
+    ⚠⚠ **THE SEND IS CARRIED OUT OF THE TRANSACTION RATHER THAN CAPTURED IN A `let`.**
+    A variable assigned inside the callback and read after it is exactly the shape
+    TypeScript cannot narrow, and the failure mode is a silently skipped email.
+    **Returning it makes the compiler carry the obligation** — the pattern Scott asked
+    to be repeated: *"a forgetful sender being a compile error rather than a silent gap."*
+  */
+  const { result, sendAfterCommit } = await prisma.$transaction(async (tx) => {
     const existing = await tx.workRequest.findFirst({
       where: { buyer_person_id: buyer.id, status: "DRAFT" },
       orderBy: { updated_at: "desc" },
@@ -346,8 +413,56 @@ export async function acceptOffer(
       },
     });
 
-    return { id: offer.id, status: "ACCEPTED" as const, workRequestId: cart.id, lineId: line.id };
+    /*
+      ── ⚠⚠⚠ THE BELL ROW, INSIDE THIS TRANSACTION (`106a`, `106b`) ─────────────
+
+      ⚠⚠ **THIS IS THE ONE OF THE THREE THAT MATTERS AND THE ONLY ONE WITH A
+      TRANSACTION TO BE IN.** It has just written a **cart line** the buyer will be
+      billed from. ⚠⚠⚠ **A LOST NOTIFICATION HERE LEAVES A COMMERCIAL ACT
+      UNANNOUNCED** — a line appears on somebody's cart at a price they offered days
+      ago and nothing told them.
+      ⚠ Passing `tx` puts the row on this transaction: it commits with the line and
+      the status, or it does not happen at all. ⚠⚠ **RULING 86's *"notification will
+      ALWAYS add to the bell"* IS ONLY TRUE IF THE ROW CANNOT BE LOST AFTER A
+      SUCCESSFUL WRITE.**
+      ⚠⚠ **THE SEND IS NOT RUN HERE.** It is a network call and this transaction is
+      still open; it is handed back and run below, after commit.
+    */
+    const bell = await notify({
+      event: "shop.offer_accepted",
+      personId: offer.buyer_person_id,
+      entityType: "ServiceProductOffer",
+      entityId: offer.id,
+      vars: {
+        productTitle: product.title,
+        amount: formatCents(offer.amount_cents, offer.currency),
+        workRequestId: cart.id,
+      },
+      tx,
+    });
+
+    return {
+      result: {
+        id: offer.id,
+        status: "ACCEPTED" as const,
+        workRequestId: cart.id,
+        lineId: line.id,
+      },
+      sendAfterCommit: bell.sendAfterCommit,
+    };
   });
+
+  /*
+    ⚠⚠⚠ AFTER COMMIT. The line, the status and the bell row are durable by the time
+    this runs, so a mail outage can no longer affect any of them. ⚠ `sendAfterCommit`
+    never throws — the contract `emailFor` has always had — so the accept cannot fail
+    on the way out. ⚠⚠ The `await` is deliberate: the caller is a POST that is about to
+    answer, and firing a promise nobody waits for is how a send disappears on a
+    serverless invocation that ends the moment the response is written.
+  */
+  if (sendAfterCommit) await sendAfterCommit();
+
+  return result;
 }
 
 /**

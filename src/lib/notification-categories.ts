@@ -253,6 +253,65 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     defaults: { inApp: true, email: true, sms: false },
   },
   /*
+    ── ⚠⚠⚠ THE SHOP OFFER — TWO CATEGORIES, NOT ONE (`P2-A6-E707`, `105d`/`106e`)
+
+    ⚠⚠ **SCOTT RULED THE THREE EVENTS AND THEIR DEFAULTS ON 2026-09-29: BELL ALWAYS,
+    EMAIL ON.** ⚠ `106e` corrects the MECHANISM and not the content: *"`105d`'s table
+    names CATEGORIES. THE WORK NEEDS EVENTS."* So his three names are EVENT keys in
+    `notification-events.ts`, and these two rows are the categories they map to.
+
+    ── ⚠⚠⚠ WHY TWO, AND IT IS THE `audience` FIELD THAT DECIDES IT ─────────────
+
+    ⚠ The three events split **one to the SELLER** (`shop.offer_received`) and **two to
+    the BUYER** (`shop.offer_accepted`, `shop.offer_denied`). ⚠⚠ `audience` is a single
+    value per category, so **no one category can carry both without becoming `"both"`** —
+    and `"both"` would show *"Offers on your service products"* to every buyer who has
+    never published one.
+    ⚠⚠⚠ **THAT IS THE EXACT DEFECT `E689(q)` MEASURED**, and the precedent is already in
+    this file twice: `work_order.status` / `buyer.work_order.status` and
+    `profile.visibility`, which Scott REFUSED to widen to `"both"` on 2026-09-27 —
+    *"give it its OWN category."* ⚠ **A CATEGORY IS A PROMISE ABOUT WHAT IS INSIDE IT.**
+
+    ── ⚠⚠ THE KEYS ARE MINE AND ARE FLAGGED, WHICH IS THE HOUSE RULE ──────────
+
+    ⚠ **CATEGORY NAMES HAVE BEEN SCOTT'S TO APPROVE SINCE `P1-ALL-E032`** and `E382`
+    repeats it. ⚠⚠ Scott named the EVENTS; he did not name these two. Renaming either is
+    **one line here plus one `category:` value per event** — no migration, because
+    `NotificationPreference.category` is a plain string and an absent row means the
+    defaults declared here. ⚠ Same treatment `community.activity` got, for the same
+    reason. **`buyer.` prefixes the buying side, matching the five rows above.**
+
+    ── ⚠ `email: true` ON BOTH, AND IT IS NOT A CHOICE I MADE ──────────────────
+
+    ⚠⚠ **RULING 34b: EVERY CATEGORY SHIPS IN-APP AND EMAIL ON**, and
+    `check:notify-prefs` fails the build on `email: false` — it has already overruled one
+    attempt. ⚠ `E382` is not breached: these are NEW rows taking the same default every
+    other category has, so **nobody's recorded intent is rewritten.**
+    ⚠⚠⚠ **AND WHAT A MEMBER ACTUALLY RECEIVES IS GOVERNED BY THE ALLOWLIST, NOT BY THIS
+    DEFAULT** — `NOTIFICATION_EMAIL_EVENTS` holds only `account.finish_later`, so neither
+    of these sends mail today. **`lane: "work"` — an offer is the marketplace, not the
+    people;** `check:notify-prefs` asserts the partition is total, so neither could have
+    shipped laneless.
+  */
+  {
+    key: "service_product.offers",
+    lane: "work",
+    audience: "seller",
+    group: "messages",
+    label: "Offers on your service products",
+    blurb: "A buyer offered below your list price on something you published.",
+    defaults: { inApp: true, email: true, sms: false },
+  },
+  {
+    key: "buyer.offers.answered",
+    lane: "work",
+    audience: "buyer",
+    group: "messages",
+    label: "Answers to your offers",
+    blurb: "A provider accepted or declined an offer you made on a service product.",
+    defaults: { inApp: true, email: true, sms: false },
+  },
+  /*
     ── ⚠⚠⚠ SUPPORT — `P2-A5-E656`, ruling 82a ────────────────────────────────
 
     ⚠⚠ **IT IS NOT `locked`, AND THAT IS RULING 13 APPLIED RATHER THAN ASSUMED.**

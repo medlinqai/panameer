@@ -754,4 +754,112 @@ export const NOTIFICATION_EVENTS = {
     href: (v) =>
       str(v, "ticketId") ? `/support/tickets/${str(v, "ticketId")}` : "/support/tickets",
   },
+
+  // ── Shop — service product offers — P2-A6-E707, rulings 94a / 105d / 106 ───
+  /*
+    ⚠⚠⚠ SCOTT NAMED THESE THREE ON 2026-09-29 (`105d`). ⚠ `106e` corrects the shape
+    and not the content: his table *names categories*, and **the work needs EVENTS
+    mapped to categories** — which is what these are. Two categories carry them,
+    because one goes to the SELLER and two go to the BUYER and `audience` is one
+    value per category (see `notification-categories.ts`).
+
+    ⚠⚠ **THE BUYER AND THE SELLER MUST NOT RECEIVE EACH OTHER'S**, and that is not
+    something a count can prove: a test asserting *"one notification exists"* passes
+    when it went to the wrong person. ⚠⚠⚠ **`check:offers` ASSERTS `person_id`
+    AGAINST THE EXPECTED IDENTITY FOR ALL THREE.**
+  */
+  "shop.offer_received": {
+    event: "shop.offer_received",
+    recipient: "the seller who owns the service product",
+    category: "service_product.offers",
+    /* ⚠ A fact about the member's own product. Nothing drafted, nobody named to a
+       third party — so autonomy, not `SEND_FOR_APPROVAL`. */
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    /* ⚠⚠ THE SELLER MUST ANSWER — accept or deny, and nothing happens until they
+       do. The worklist is exactly the right place for it, and `/services/offers`
+       is a real guarded page rather than a stub. */
+    requiresAction: true,
+    title: () => "A buyer made an offer on your service product",
+    /* ⚠ The product and the amount, because "which one and how much" is the whole
+       decision. ⚠⚠ Null rather than a filler sentence if the caller gives neither
+       (`67d` — never manufacture a value out of absence). */
+    body: (v) => {
+      const title = str(v, "productTitle");
+      const amount = str(v, "amount");
+      if (!title && !amount) return null;
+      if (!amount) return title;
+      return title ? `${title} — offered ${amount}` : `Offered ${amount}`;
+    },
+    href: () => "/services/offers",
+  },
+  "shop.offer_accepted": {
+    event: "shop.offer_accepted",
+    recipient: "the buyer who made the offer",
+    category: "buyer.offers.answered",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    /* ⚠⚠ A LINE IS SITTING ON THEIR CART AT THE OFFERED AMOUNT AND NOBODY HAS BEEN
+       PAID YET — the buy is still owed, so this belongs on the worklist. */
+    requiresAction: true,
+    title: () => "Your offer was accepted",
+    body: (v) => {
+      const title = str(v, "productTitle");
+      const amount = str(v, "amount");
+      if (!title && !amount) return null;
+      const what = title || "The service product";
+      return amount
+        ? `${what} is on your cart at ${amount}.`
+        : `${what} is on your cart at the amount you offered.`;
+    },
+    /* ⚠ THE CART IS A `WorkRequest` IN `DRAFT` — there is no cart table (ruling
+       94c), so the buyer's own request page IS the destination. */
+    href: (v) =>
+      str(v, "workRequestId") ? `/work-requests/${str(v, "workRequestId")}` : null,
+  },
+  "shop.offer_denied": {
+    event: "shop.offer_denied",
+    recipient: "the buyer who made the offer",
+    category: "buyer.offers.answered",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    /* ⚠ THE BUYER NOW OWES A DECISION — buy at list, offer again, or walk away. */
+    requiresAction: true,
+    title: () => "Your offer wasn't accepted",
+    /*
+      ── ⚠⚠⚠ THE MESSAGE AND THE FLOOR TRAVEL WITH THE DENIAL (`105d`) ─────────
+
+      ⚠⚠ **THE FLOOR IS THE ACTIONABLE PART. BURYING IT ON A PAGE THE BUYER HAS TO
+      FIND DEFEATS THE REASON IT EXISTS** — and there is no such page today anyway.
+      ⚠⚠⚠ **AND IT IS STILL NOT A QUOTE (`94a`): AN OFFER AT THE FLOOR REMAINS
+      DENIABLE. THE SENTENCE THAT SAYS SO SHIPS IN THE SAME BREATH AS THE NUMBER,
+      NOT NEAR IT** — a buyer who reads the floor as a promise will feel cheated by
+      a legitimate second denial, and that misunderstanding is created by the gap
+      between the figure and its caveat.
+      ⚠ The seller's own words come first when they gave any; they are the reason,
+      and Panameer's framing should not talk over them.
+    */
+    body: (v) => {
+      const parts: string[] = [];
+      const said = str(v, "denyMessage");
+      if (said) parts.push(said);
+      const floor = str(v, "floor");
+      if (floor) {
+        parts.push(
+          `They would consider ${floor} or more. That is guidance, not a quote — a new offer has to clear it and can still be declined.`
+        );
+      }
+      return parts.length > 0 ? parts.join(" ") : null;
+    },
+    /*
+      ⚠⚠⚠ NULL ON PURPOSE, AND THIS IS THE HONEST ANSWER RATHER THAN THE TIDY ONE.
+      The buyer's two moves are **buy at list** and **offer again**. ⚠ `/shop` is an
+      8-line `ComingSoon` stub and **no buyer-side offer surface exists at all** —
+      `makeOffer` is called from nowhere in `src/`, measured 2026-09-29.
+      ⚠⚠ **A LINK TO EITHER WOULD BE `E579`: A LIVE DOOR ONTO A WALL**, which is
+      worse than no link, because it spends the member's trust to show them nothing.
+      ⚠ It becomes non-null the day the buyer's shop surface lands.
+    */
+    href: () => null,
+  },
 } as const satisfies Record<string, NotificationEvent>;

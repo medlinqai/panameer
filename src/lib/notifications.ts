@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { emailConfigured } from "@/lib/email-status";
 import { findCategory } from "@/lib/notification-categories";
@@ -14,16 +15,53 @@ import {
 } from "@/lib/notification-events";
 
 /**
+ * ⚠⚠⚠ WHAT `notify()` HANDS BACK (`P2-A6-E707`, ruling `106a`).
+ *
+ * ⚠ `sendAfterCommit` is **non-null ONLY when a caller lent its transaction.** The
+ * row is already written on that transaction; the SEND has deliberately not run,
+ * because it is a network call and the caller's transaction is still open.
+ * ⚠⚠ **THE CALLER RUNS IT AFTER COMMIT.** It never throws — the same contract the
+ * inline path has always had.
+ * ⚠⚠⚠ **IGNORING IT LOSES THE EMAIL AND NEVER THE BELL ROW**, which is the safe
+ * direction and is exactly today's behaviour for every non-allowlisted event.
+ * `check:offers` asserts the one caller that has a transaction does not drop it.
+ */
+export type NotifyResult = { sendAfterCommit: (() => Promise<void>) | null };
+
+/**
  * THE ONE WRITE PATH FOR NOTIFICATIONS (`P1-ALL`, 2026-09-01).
  *
  * ⚠⚠ NOTHING ELSE MAY CALL `prisma.notification.create`. `check:notifications`
  * fails the build if anything does — one write path, or the dedupe and preference
  * logic is bypassed on day two by someone in a hurry.
  *
- * ⚠ IT NEVER THROWS INTO THE CALLER'S TRANSACTION. A failed notification must not
- * roll back an enrollment: the notification is a side effect of the thing that
+ * ── ⚠⚠⚠ ROW INSIDE, SEND OUTSIDE (`P2-A6-E707`, ruling `106a`) ───────────────
+ *
+ * ⚠⚠ **THE 2026-09-01 RULE AND THE 2026-09-29 REQUIREMENT WERE ABOUT TWO DIFFERENT
+ * OBJECTS, AND READING THEM AS ONE IS WHAT STOPPED A RUN.**
+ * · **The row** is a database insert on the caller's own connection. ⚠ It cannot fail
+ *   independently — if it fails, the transaction was already failing — **so it cannot
+ *   roll back anything that was not already rolling back.**
+ * · **The send** is a network call to somebody else's machine. ⚠⚠ **IT FAILS ON ITS
+ *   OWN, ROUTINELY, AND THAT IS WHAT THE 2026-09-01 RULE PROTECTS AGAINST.**
+ *
+ * ⚠⚠⚠ **SO: PASS `tx` AND THE ROW IS WRITTEN INSIDE YOUR TRANSACTION AND THE SEND IS
+ * HANDED BACK FOR YOU TO RUN AFTER COMMIT. PASS NOTHING AND NOTHING CHANGES.**
+ * ⚠ **AND WITH `tx` THE ROW'S FAILURE IS RE-THROWN, DELIBERATELY:** swallowing it
+ * would leave the caller running inside a Postgres transaction that is already
+ * aborted, so every later statement fails with a message about a transaction the
+ * caller never knew was broken. ⚠⚠ **A swallowed error there does not protect the
+ * caller, it disguises the caller's own failure.**
+ * ⚠⚠⚠ **AND RULING 86 REQUIRES IT: *"notification will ALWAYS add to the bell."* If
+ * the row can be lost after a successful write, "always" is false — silently.**
+ *
+ * ⚠ **WITHOUT `tx` IT STILL NEVER THROWS INTO THE CALLER.** A failed notification must
+ * not roll back an enrollment: the notification is a side effect of the thing that
  * happened, never a condition of it. Catch, log, continue — the same contract
  * `lookupLogos` follows in `EmployersStep.tsx`.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — it read, without qualification:
+ * //   ⚠ IT NEVER THROWS INTO THE CALLER'S TRANSACTION. A failed notification must
+ * //   not roll back an enrollment ... Catch, log, continue.
  * ⚠ THE ONE EXCEPTION IS AN UNKNOWN EVENT KEY, which throws in development so a
  * typo fails loudly instead of vanishing. In production it is logged and
  * swallowed like everything else, because a typo must not take down a signup.
@@ -36,7 +74,21 @@ export async function notify(input: {
   /** Natural key for idempotency. Null/omitted always inserts. */
   dedupeKey?: string | null;
   vars?: Vars;
-}): Promise<void> {
+  /**
+   * ⚠⚠⚠ THE CALLER'S TRANSACTION, FOR THE ROW ONLY (`106a`).
+   *
+   * ⚠ Omit it and the row goes on the shared client and the email sends inline —
+   * byte-for-byte today's behaviour. ⚠⚠ Pass it and you MUST run the returned
+   * `sendAfterCommit` after your transaction commits, or the email is skipped.
+   */
+  tx?: Prisma.TransactionClient;
+}): Promise<NotifyResult> {
+  /*
+    ⚠⚠ ONE NAME FOR "WHERE THE ROW GOES", RESOLVED ONCE. A `?? prisma` repeated at
+    each write is the second definition that eventually disagrees (`E585`).
+    ⚠ The SEND deliberately does NOT use this — see `emailFor`'s call below.
+  */
+  const db: Prisma.TransactionClient = input.tx ?? prisma;
   try {
     /* ⚠ WIDENED DELIBERATELY. The registry is `as const satisfies` so each entry
        keeps its literal key for callers, but that also narrows every entry to its
@@ -64,7 +116,9 @@ export async function notify(input: {
       "never configured" into "configured exactly as the defaults were on the day
       you were first notified", which is a different and worse thing.
     */
-    const pref = await prisma.notificationPreference.findFirst({
+    /* ⚠ ON `db` (`106a`): read the preference on the same connection the row is
+       written on, so a caller's transaction sees one consistent snapshot. */
+    const pref = await db.notificationPreference.findFirst({
       where: { person_id: input.personId, category: spec.category },
       select: { in_app: true, email: true, sms: true },
     });
@@ -156,7 +210,7 @@ export async function notify(input: {
     if (input.dedupeKey) {
       /* ⚠ THE DUPLICATE-ENROLLMENT FIX. Upsert on the unique pair, so enrolling
          twice updates one row rather than producing two. */
-      row = await prisma.notification.upsert({
+      row = await db.notification.upsert({
         where: {
           person_id_dedupe_key: {
             person_id: input.personId,
@@ -168,27 +222,50 @@ export async function notify(input: {
         select: { id: true, email_sent_at: true },
       });
     } else {
-      row = await prisma.notification.create({
+      row = await db.notification.create({
         data,
         select: { id: true, email_sent_at: true },
       });
     }
 
-    await emailFor({
-      event: input.event,
-      notificationId: row.id,
-      alreadySent: row.email_sent_at != null,
-      personId: input.personId,
-      category: spec.category,
-      title: data.title,
-      body: data.body,
-      href: data.href,
-      wantsEmail,
-      suppressed,
-    });
+    /*
+      ⚠⚠⚠ THE SEND, BOUND BUT NOT YET RUN (`106a`). It reads and writes through
+      `prisma`, NEVER `db` — a network call must not sit inside the caller's open
+      transaction, and stamping `email_sent_at` on a transaction that later rolls
+      back would claim an email that did go with a row that no longer exists.
+    */
+    const send = () =>
+      emailFor({
+        event: input.event,
+        notificationId: row.id,
+        alreadySent: row.email_sent_at != null,
+        personId: input.personId,
+        category: spec.category,
+        title: data.title,
+        body: data.body,
+        href: data.href,
+        wantsEmail,
+        suppressed,
+      });
+
+    /* ⚠⚠ ROW INSIDE, SEND OUTSIDE. The caller owns the commit, so the caller owns
+       the moment the send becomes safe. */
+    if (input.tx) return { sendAfterCommit: send };
+
+    await send();
+    return { sendAfterCommit: null };
   } catch (e) {
-    /* ⚠ NEVER INTO THE CALLER'S TRANSACTION — see the docblock. */
+    /*
+      ⚠⚠⚠ WITH A LENT TRANSACTION THE FAILURE IS THE CALLER'S AND IS RE-THROWN
+      (`106a`). Postgres has already aborted their transaction; swallowing here
+      would hand them a broken connection and a confusing failure several
+      statements later. ⚠ See the docblock — this is not a weakening of the
+      2026-09-01 rule, it is that rule applied to the object it was written about.
+    */
+    if (input.tx) throw e;
+    /* ⚠ NEVER INTO THE CALLER — see the docblock. */
     console.error("[notify] failed:", input.event, e);
+    return { sendAfterCommit: null };
   }
 }
 

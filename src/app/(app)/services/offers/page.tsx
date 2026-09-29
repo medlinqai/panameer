@@ -28,17 +28,37 @@ import { OffersInbox } from "@/components/service-products/OffersInbox";
  * ⚠ **1 PAGE NAME** — the `<h1>` matches the tab label *"Offers for My Services"* word for
  * word, and the `<title>` mirrors it.
  * ⚠ **2 MOBILE VIEW** — measured at 390 **on the row** (ruling 91), not on the page.
- * ⚠⚠⚠ **3 NOTIFICATION — NOT BUILT, AND NAMED RATHER THAN INVENTED:**
- * `shop.offer_received` (to the seller, when a buyer offers) · `shop.offer_accepted` and
- * `shop.offer_denied` (to the buyer, when the seller answers).
- * ⚠⚠⚠ **4 CFG EVENT TO THE WORKLIST — NOT BUILT**, same three names; the worklist and the
- * bell are one table, two views.
- * ⚠⚠ **NOT INVENTED HERE BECAUSE THE EVENT REGISTRY IS SCOTT'S AND `E382` GOVERNS THE
- * CATEGORY DEFAULTS** — `notification-categories.ts` says it in its own words: *"names are
- * Scott's to approve"* and *"their defaults are Scott's to change."*
- * ⚠⚠⚠ **SO AN OFFER ARRIVES AND NOBODY IS TOLD. THE SELLER MUST OPEN THIS PAGE TO FIND
- * OUT — THAT IS A REAL GAP AND IT IS REPORTED, NOT IMPLIED** (`87b`; and ruling 86's whole
- * point is that an offer nobody is told about is what the notification layer is for).
+ * ⚠⚠ **`P2-A6-E707` CHANGED NO MARKUP ON THIS PAGE** — the docblock below it is the only
+ * edit — so `E705`'s measurement still stands and was not re-taken.
+ * ⚠⚠⚠ **3 NOTIFICATION — BUILT (`P2-A6-E707`, ruling `105d`).** Scott ruled all three on
+ * 2026-09-29: `shop.offer_received` (to the **seller**, when a buyer offers) ·
+ * `shop.offer_accepted` and `shop.offer_denied` (to the **buyer**, when the seller answers).
+ * ⚠ Bell always, email default on; **two categories carry them**, because `audience` is one
+ * value per category and the three split one seller / two buyer.
+ * ⚠⚠⚠ **4 CFG EVENT TO THE WORKLIST — BUILT.** `requires_action: true` on all three, and the
+ * worklist and the bell are one table, two views. ⚠ `check:offers` asserts it **on the
+ * stored row**, not on the source, because only the row proves what a member will see.
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — this block read, and it was true when written:
+ * //   3 NOTIFICATION - NOT BUILT, AND NAMED RATHER THAN INVENTED ...
+ * //   4 CFG EVENT TO THE WORKLIST - NOT BUILT, same three names ...
+ * //   NOT INVENTED HERE BECAUSE THE EVENT REGISTRY IS SCOTT'S AND E382 GOVERNS THE
+ * //   CATEGORY DEFAULTS ... "names are Scott's to approve" ...
+ * //   SO AN OFFER ARRIVES AND NOBODY IS TOLD. THE SELLER MUST OPEN THIS PAGE TO FIND OUT.
+ * ⚠⚠ **NAMING THEM RATHER THAN INVENTING THEM IS WHY THIS WAS CHEAP TO CLOSE** — Scott had
+ * three names to rule on, and `106e` only had to correct the mechanism (his table named
+ * categories; the work needed events).
+ *
+ * ── ⚠⚠⚠ WHAT IS STILL MISSING, AND IT IS THE BUYER'S WHOLE HALF ─────────────
+ *
+ * ⚠⚠ **`makeOffer` IS CALLED FROM NOWHERE IN `src/` — MEASURED 2026-09-29.** `E700` built
+ * the library and this page is the seller's room, but **no buyer can make an offer**, so
+ * `shop.offer_received` is wired and **cannot fire yet.** ⚠ Stated, not implied (`87b`).
+ * ⚠⚠⚠ **AND `shop.offer_denied` HAS NO `href` FOR THE SAME REASON:** the buyer's two moves
+ * are *buy at list* (`/shop` is a `ComingSoon` stub) and *offer again* (no surface at all),
+ * so a link to either would be `E579` — a live door onto a wall.
+ * ⚠ **NONE OF THE THREE IS ON `NOTIFICATION_EMAIL_EVENTS`**, which holds only
+ * `account.finish_later`; all three record intent and do not send. **Adding a key there is a
+ * product decision, not a refactor.**
  */
 export const metadata = { title: "Offers for My Services · Panameer" };
 

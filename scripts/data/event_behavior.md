@@ -40,6 +40,7 @@ the buyer block *"is written from the SELLER's point of view"*):
 | `tax.documents` | Tax documents |
 | `tax.form_required` | A tax form is required before payout |
 | `payout.sent` | Withdrawals and payouts |
+| `service_product.offers` | Offers on your service products |
 
 **Buyer-facing — the five added in `98f9675`. Names approved by Scott 2026-08-31.**
 
@@ -50,6 +51,14 @@ the buyer block *"is written from the SELLER's point of view"*):
 | `buyer.work_order.status` | Your work order status changes |
 | `buyer.settlement.approval` | A settlement request needs your approval |
 | `buyer.timesheet.approval` | A timesheet needs approving |
+| `buyer.offers.answered` | Answers to your offers |
+
+⚠⚠ **`service_product.offers` AND `buyer.offers.answered` WERE ADDED BY `P2-A6-E707`
+(2026-09-29) AND THEIR KEYS ARE CC'S, NOT SCOTT'S.** ⚠ He named the three EVENTS (`105d`);
+`106e` is what made clear the categories were a separate naming decision. **Flagged for his
+approval — one line each to rename, no migration** (see the block in
+`notification-categories.ts`). ⚠ Two rather than one because `audience` is one value per
+category and the events split **1 seller / 2 buyer.**
 
 ⚠ These are **categories, not events.** Nothing fires them.
 ⚠ `buyer.work_order.status` and `buyer.settlement.approval` both name a
@@ -245,6 +254,41 @@ own rule 3: *"events that deliberately do not notify are still recorded."* ⚠ `
 writer and could carry one; **it is not built because the reply and the status change usually
 move together**, and two notifications for one act is how a product gets muted. ⚠ If they are
 ever decoupled, that is the row to add.
+
+---
+
+### Shop — service product offers — `P2-A6-E707`, rulings 94a / 105d / 106
+
+⚠⚠⚠ **SCOTT RULED ALL THREE ON 2026-09-29 (`105d`): BELL ALWAYS, EMAIL ON.** ⚠ `106e` corrects
+the shape of that ruling and not its content: **`105d`'s table names CATEGORIES, and the work
+needs EVENTS** — these three rows, each mapped to a category. **The two files are not
+interchangeable.**
+
+⚠⚠ **ONE SELLER EVENT AND TWO BUYER EVENTS, SO THEY CANNOT SHARE ONE CATEGORY.**
+`NotificationCategory.audience` exists precisely to stop a buyer being shown seller-shaped rows
+(`E689(q)` is the measured harm), so these map to **two** categories following the established
+`work_order.status` / `buyer.work_order.status` split. ⚠ **A category is a promise about what is
+inside it**, and stretching one across both sides is the shortcut Scott refused for
+`account.finish_later`.
+
+⚠⚠⚠ **`shop.offer_received` HAS A WRITER AND NO CALLER, AND THAT IS STATED RATHER THAN IMPLIED.**
+`makeOffer` (`service-product-offers.ts:124`) is called from **nowhere in `src/`** — measured
+2026-09-29. ⚠ `E700` built the library and `E705` built the seller's room; **the buyer's half of
+the flow does not exist**, so this event is correctly wired and **cannot fire yet.** ⚠⚠ That is
+`104c`'s shape one step earlier: not *"the flow is built and nobody is told"* but ***"nobody can
+start it."*** **Counting rule 1 applies — do not report this event as live.**
+
+| Event | Recipient | AI Mode | Channel | Notes |
+|---|---|---|---|---|
+| `shop.offer_received` | the seller who owns the service product | `Do It` | in-app + email | ⚠ Fires from `makeOffer` (`service-product-offers.ts:124`), **after** the create — that writer is in no transaction (`106b`), so *"in the same transaction"* was never a question for it. ⚠⚠ **RECIPIENT IS `provider_person_id` AS STAMPED ON THE OFFER, not re-read from the product** — a product changing hands must not re-point an offer at a seller who never saw it, the same reason `E696` stamps commission on the line. ⚠⚠⚠ **`requires_action: true` — the seller MUST answer, and `/services/offers` is a real guarded page, so the worklist entry has somewhere to go.** ⚠ `Do It`: a statement of fact about the member's own product, nothing drafted and nothing to review. ⚠⚠ **NOT ON THE EMAIL ALLOWLIST** — `NOTIFICATION_EMAIL_EVENTS` holds only `account.finish_later`, so this records intent and does not send. Turning it on is a product decision, not a refactor |
+| `shop.offer_accepted` | the buyer who made the offer | `Do It` | in-app + email | ⚠⚠⚠ **THE ONE THAT MATTERS, AND THE ONLY ONE WHOSE ROW IS WRITTEN INSIDE A TRANSACTION** (`106a`/`106b`): `acceptOffer` writes a **cart line** at the offered amount, so a lost notification here leaves a **commercial act unannounced.** ⚠ The row goes on the caller's `tx`; the send is handed back and run **after commit.** ⚠⚠ `requires_action: true` — the line is on their cart waiting to be bought, and `/work-requests/{id}` is real and is the buyer's own |
+| `shop.offer_denied` | the buyer who made the offer | `Do It` | in-app + email | ⚠⚠⚠ **THE BODY CARRIES THE SELLER'S MESSAGE AND THE FLOOR, AND SAYS IN THE SAME BREATH THAT THE FLOOR IS NOT A QUOTE** (`94a`, `105d`). ⚠ **THE FLOOR IS THE ACTIONABLE PART — burying it on a page the buyer has to find defeats the reason it exists.** ⚠⚠ A buyer who reads the floor as a promise will feel cheated by a legitimate second denial, **so the sentence that prevents that ships with the number, not near it.** ⚠ Fires from `denyOffer` (`:212`), after the update, **no transaction** (`106b`). ⚠⚠⚠ **`href` IS DELIBERATELY NULL: THERE IS NOWHERE TO SEND THEM.** Their two moves are *buy at list* — `/shop` is an 8-line `ComingSoon` stub — and *offer again*, which has no surface at all. **A link to either would be `E579`, a door onto a wall.** It becomes non-null the day the buyer's shop surface exists |
+
+⚠⚠ **NO EVENT FOR `withdrawOffer`, AND THAT IS A DECISION** (the spec's rule 3 — events that
+deliberately do not notify are still recorded). ⚠ The buyer pulling their own offer is **the
+member acting on their own record**; telling the seller *"something you had not answered is
+gone"* is noise about a thing they may never have seen. ⚠⚠ **And ruling 82a's echo test kills the
+buyer-facing half outright** — they are looking at the screen that did it.
 
 ---
 
