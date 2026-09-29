@@ -735,6 +735,9 @@ model Skill {
   @@unique([catalog_id, role_type_id, pillar_id, name])
   @@index([role_type_id])
   @@index([pillar_id])
+  /// ⚠ Which learning paths certify this skill (`P2-A4-E701`).
+  learningPaths LearningPathSkill[]
+
   @@map("skills")
 }
 
@@ -3445,6 +3448,9 @@ model LearningPath {
 
   @@index([audience, group])
   @@index([status])
+  /// ⚠⚠ WHICH SKILLS THIS PATH CERTIFIES (`P2-A4-E701` WS-A). See `LearningPathSkill`.
+  skills           LearningPathSkill[]
+
   @@map("learning_paths")
 }
 
@@ -6982,4 +6988,48 @@ model ServiceProductOffer {
   @@index([provider_person_id, status])
   @@index([buyer_person_id, status])
   @@map("service_product_offers")
+}
+
+/// ── ⚠⚠⚠ WHICH SKILLS A LEARNING PATH CERTIFIES (`P2-A4-E701` WS-A) ──────────
+///
+/// ⚠⚠ **SCOTT'S RULE THIS EXISTS TO MAKE BUILDABLE:** *"the test that is being
+/// requested is the actual certification test"* and *"that button should be greyed out
+/// if there is no certification for that/those skills."*
+///
+/// ⚠⚠⚠ **THE BUTTON COULD NOT KNOW, AND THE MEASUREMENT IS WHY: `LearnAssessment.
+/// learning_path_id` IS `@unique` — ONE TEST PER PATH — WHILE THE RULE KEYS ON SKILL,
+/// AND `LearningPath` HAD NO SKILL LINK AT ALL.** It carries `pillar` and `group` as
+/// FREE STRINGS, which cannot be joined to `Skill`.
+/// ⚠ `TestRequestLine` already carried **both** `learn_assessment_id` and a nullable
+/// `skill_id` — the two ideas sitting on one row **with nothing joining them.** This is
+/// the join.
+///
+/// ── ⚠⚠ A JOIN TABLE, NOT A COLUMN, AND BOTH DIRECTIONS ARE REAL ─────────────
+///
+/// ⚠ **A path covers SEVERAL skills, and a skill may be covered by SEVERAL paths.** A
+/// column either way would force a lie the first time somebody publishes a second path
+/// over overlapping ground.
+///
+/// ⚠⚠⚠ **SEEDED WITH NOTHING, DELIBERATELY. AN EMPTY JOIN IS THE HONEST ANSWER TODAY:
+/// *"no certification exists for any skill yet."*** ⚠ Filling it would assert coverage
+/// nobody reviewed — and `93e` says **generation is automatic while PUBLISHING is the
+/// human act.** The same argument applies to claiming a path certifies a skill.
+///
+/// ⚠⚠ **NO RELEASE STAMP.** Whether a certification carries `24A`/`25B` is **still
+/// Scott's, unanswered** — so no version field was invented here. Flagged, not guessed.
+model LearningPathSkill {
+  id               String @id @default(uuid()) @db.Uuid
+  learning_path_id String @db.Uuid
+  skill_id         String @db.Uuid
+
+  created_at DateTime @default(now())
+
+  learningPath LearningPath @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  skill        Skill        @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  /// ⚠⚠ IDEMPOTENT BY CONSTRUCTION — the same pair cannot be claimed twice, because the
+  /// database refuses it rather than a handler remembering to.
+  @@unique([learning_path_id, skill_id])
+  @@index([skill_id])
+  @@map("learning_path_skills")
 }
