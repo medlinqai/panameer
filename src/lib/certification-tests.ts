@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ The branded account id and the ONE Person->User resolver (`P2-A4-E711`, 102c). */
+import type { UserId } from "@/lib/learn-identity";
 
 /**
  * ── ⚠⚠⚠ IS THERE A PUBLISHED CERTIFICATION TEST FOR THIS SKILL? ─────────────
@@ -92,8 +94,19 @@ export async function certificationTestForSkill(
  * is `ALREADY_PASSED` collapsing into `CAN_REQUEST` and a provider being asked to re-sit
  * a test they passed. **The parameter is named for what it is, and reported.**
  */
+/*
+  ── ⚠⚠⚠ THE COMMENT ABOVE WAS A WARNING. IT IS NOW A COMPILE ERROR (`P2-A4-E711`) ──
+
+  ⚠⚠ The paragraph above says *"PASSING A `personId` HERE WOULD COMPILE THE DAY THE TYPES
+  ARE BOTH `string`"* — and they were both `string`, so it did. ⚠⚠⚠ **A COMMENT THAT
+  CORRECTLY PREDICTS A DEFECT DOES NOT PREVENT IT.** `UserId` is branded, so the
+  prediction can no longer come true: a `PersonId`, or a bare `string` that nobody has
+  named, is rejected by `tsc`.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   userId: string,
+*/
 export async function hasPassed(
-  userId: string,
+  userId: UserId,
   assessmentId: string
 ): Promise<boolean> {
   const attempt = await prisma.certificationAttempt.findFirst({
@@ -120,8 +133,15 @@ export type TestButtonState =
  * somebody would eventually render it.
  */
 export async function testButtonState(
-  /* ⚠⚠ THE ACCOUNT id, NOT THE PERSON id — see `hasPassed`. Learn keys on `User`. */
-  userId: string,
+  /*
+    ⚠⚠⚠ THE ACCOUNT id, AND THE TYPE NOW SAYS SO (`P2-A4-E711`, ruling 102c). Learn keys
+    on `User`; the sourcing surface that will call this holds a `Person`.
+    ⚠⚠ **A CALLER WITH A `personId` MUST GO THROUGH `userIdForPerson`** — one named place,
+    which REFUSES when a person has no account rather than answering *"has not passed"*.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   userId: string,
+  */
+  userId: UserId,
   skillId: string
 ): Promise<TestButtonState> {
   const test = await certificationTestForSkill(skillId);
