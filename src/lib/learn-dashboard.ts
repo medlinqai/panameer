@@ -315,7 +315,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
          where a credential is verified. */
       select: { learning_path_id: true, name: true, issued_on: true, created_at: true },
     }),
-    prisma.learnTestAttempt.findMany({
+    prisma.certificationAttempt.findMany({
       where: { user_id: userId },
       /* ⚠ `learning_path_id` so a score can be matched to its certificate. */
       select: { score: true, passed: true, learning_path_id: true, created_at: true },

@@ -244,11 +244,11 @@ async function main() {
        ⚠⚠ This is the half where my premise answer was WRONG and ruling 37
        recorded the wrong answer. The assertions below are what the measurement
        actually supports. */
-    const published = await prisma.learnAssessment.findFirst({
+    const published = await prisma.certificationTest.findFirst({
       where: { status: "PUBLISHED" },
       select: { id: true, learning_path_id: true, max_attempts: true },
     });
-    const draft = await prisma.learnAssessment.findFirst({
+    const draft = await prisma.certificationTest.findFirst({
       where: { status: "DRAFT" },
       select: { id: true },
     });
@@ -286,7 +286,7 @@ async function main() {
           status: true,
           issued_at: true,
           proposal_id: true,
-          lines: { select: { learn_assessment_id: true } },
+          lines: { select: { certification_test_id: true } },
         },
       });
       check("2 — it is ISSUED in one act, never left DRAFT", trRow?.status === "ISSUED");
@@ -295,11 +295,11 @@ async function main() {
       /* ⚠⚠⚠ THE WHOLE ANSWER, IN ONE ASSERTION: the work test POINTS AT the
          Learn assessment. No second engine, no copied questions. */
       check("2 — ⚠⚠⚠ the line POINTS AT the Learn assessment — the FK *is* the reuse",
-        trRow?.lines[0]?.learn_assessment_id === published.id,
+        trRow?.lines[0]?.certification_test_id === published.id,
         "a second assessment engine would have its own questions here");
 
       /* ── ⚠⚠ ATTEMPTS ARE LEARN'S, AND A BUYER'S REQUEST CHANGES NEITHER ── */
-      const before = await prisma.learnTestAttempt.count({
+      const before = await prisma.certificationAttempt.count({
         where: { user_id: provider.user_id, learning_path_id: published.learning_path_id },
       });
       const state = await testStateFor(V(provider.user_id), test.id);
@@ -308,7 +308,7 @@ async function main() {
       check("2 — ⚠ and the allowance comes from the assessment, not from the buyer",
         state.attemptsAllowed === published.max_attempts,
         `${state.attemptsAllowed} vs ${published.max_attempts}`);
-      const after = await prisma.learnTestAttempt.count({
+      const after = await prisma.certificationAttempt.count({
         where: { user_id: provider.user_id, learning_path_id: published.learning_path_id },
       });
       check("2 — ⚠⚠⚠ sending a test CONSUMED NO ATTEMPT", before === after, `${before} → ${after}`);
@@ -317,9 +317,9 @@ async function main() {
          ⚠ A real attempt is written directly here — `learnTestAttempt.create`
          is Learn's writer and this gate is not testing Learn, it is testing
          that the WORK side reads it rather than inventing a score. */
-      const attempt = await prisma.learnTestAttempt.create({
+      const attempt = await prisma.certificationAttempt.create({
         data: {
-          assessment_id: published.id,
+          certification_test_id: published.id,
           user_id: provider.user_id,
           learning_path_id: published.learning_path_id,
           score: 88,
@@ -340,11 +340,11 @@ async function main() {
       check("2 — and the pass flag came with it", result.passed === true);
       const line = await prisma.testResponseLine.findFirst({
         where: { testResponse: { test_request_id: test.id } },
-        select: { score: true, passed: true, learn_test_attempt_id: true, completed_at: true },
+        select: { score: true, passed: true, certification_attempt_id: true, completed_at: true },
       });
       check("2 — ⚠⚠⚠ the row POINTS BACK at the attempt it came from",
-        line?.learn_test_attempt_id === attempt.id,
-        "LearnTestAttempt stays the system of record");
+        line?.certification_attempt_id === attempt.id,
+        "CertificationAttempt stays the system of record");
       check("2 — the denormalised pair matches", line?.score === 88 && line?.passed === true);
       check("2 — ⚠ and `completed_at` is the ATTEMPT's date, not now",
         line?.completed_at != null);
@@ -400,9 +400,9 @@ async function main() {
         providerPersonId: provider.id,
         learnAssessmentId: published.id,
       });
-      const foreign = await prisma.learnTestAttempt.create({
+      const foreign = await prisma.certificationAttempt.create({
         data: {
-          assessment_id: published.id,
+          certification_test_id: published.id,
           user_id: buyer.user_id,
           learning_path_id: published.learning_path_id,
           score: 100,
@@ -550,7 +550,7 @@ async function main() {
       /* ⚠⚠⚠ THE ATTEMPTS THIS PROBE WROTE — BY ID, in the teardown, so a throw
          anywhere above cannot leave one spending a real provider's tries. */
       if (attemptIds.length > 0) {
-        await prisma.learnTestAttempt.deleteMany({ where: { id: { in: attemptIds } } });
+        await prisma.certificationAttempt.deleteMany({ where: { id: { in: attemptIds } } });
       }
 
       /*
@@ -633,7 +633,7 @@ async function main() {
     const leakedAttempts =
       attemptIds.length === 0
         ? 0
-        : await prisma.learnTestAttempt.count({ where: { id: { in: attemptIds } } });
+        : await prisma.certificationAttempt.count({ where: { id: { in: attemptIds } } });
     check("5 — ⚠⚠⚠ no probe attempt was left in a member's attempt history",
       leakedAttempts === 0,
       `${leakedAttempts} — a leak here spends a real provider's attempts`);

@@ -83,7 +83,7 @@ export default async function Page({
     boundary. ⚠⚠ Read once for the page rather than per proposal.
   */
   const sendableTests = (
-    await prisma.learnAssessment.findMany({
+    await prisma.certificationTest.findMany({
       where: { status: "PUBLISHED" },
       select: { id: true, learningPath: { select: { title: true } } },
       orderBy: { created_at: "asc" },

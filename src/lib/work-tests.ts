@@ -95,7 +95,7 @@ export async function sendTest(
     throw new SourcingError("Only the buyer can send a test.", "NOT_BUYER");
   }
 
-  const assessment = await prisma.learnAssessment.findUnique({
+  const assessment = await prisma.certificationTest.findUnique({
     where: { id: input.learnAssessmentId },
     select: { id: true, status: true },
   });
@@ -154,7 +154,7 @@ export async function sendTest(
           {
             line_number: 1,
             /* ⚠⚠⚠ THE FOREIGN KEY **IS** THE REUSE. No engine is copied. */
-            learn_assessment_id: assessment!.id,
+            certification_test_id: assessment!.id,
           },
         ],
       },
@@ -220,7 +220,7 @@ export async function testStateFor(
     select: {
       id: true,
       lines: {
-        select: { learn_assessment_id: true },
+        select: { certification_test_id: true },
         orderBy: { line_number: "asc" },
         take: 1,
       },
@@ -230,8 +230,8 @@ export async function testStateFor(
   const line = tr.lines[0];
   if (!line) throw new SourcingError("That test has no questions.", "NO_LINES");
 
-  const assessment = await prisma.learnAssessment.findUnique({
-    where: { id: line.learn_assessment_id },
+  const assessment = await prisma.certificationTest.findUnique({
+    where: { id: line.certification_test_id },
     select: { id: true, learning_path_id: true, max_attempts: true },
   });
   if (!assessment) throw new SourcingError("That test doesn't exist.", "NOT_FOUND");
@@ -243,8 +243,8 @@ export async function testStateFor(
     learning_path_id: assessment.learning_path_id,
   };
   const [attemptsUsed, passed] = await Promise.all([
-    prisma.learnTestAttempt.count({ where }),
-    prisma.learnTestAttempt.findFirst({
+    prisma.certificationAttempt.count({ where }),
+    prisma.certificationAttempt.findFirst({
       where: { ...where, passed: true },
       orderBy: { created_at: "desc" },
       select: { id: true },
@@ -283,7 +283,7 @@ export async function recordTestResult(
       id: true,
       status: true,
       lines: {
-        select: { id: true, learn_assessment_id: true },
+        select: { id: true, certification_test_id: true },
         orderBy: { line_number: "asc" },
         take: 1,
       },
@@ -296,7 +296,7 @@ export async function recordTestResult(
   const line = tr.lines[0];
   if (!line) throw new SourcingError("That test has no questions.", "NO_LINES");
 
-  const attempt = await prisma.learnTestAttempt.findUnique({
+  const attempt = await prisma.certificationAttempt.findUnique({
     where: { id: input.learnTestAttemptId },
     select: {
       id: true,
@@ -304,7 +304,7 @@ export async function recordTestResult(
       passed: true,
       created_at: true,
       user_id: true,
-      assessment_id: true,
+      certification_test_id: true,
     },
   });
   if (!attempt) throw new SourcingError("That attempt doesn't exist.", "NOT_FOUND");
@@ -317,7 +317,7 @@ export async function recordTestResult(
   if (attempt.user_id !== viewer.userId) {
     throw new SourcingError("That attempt isn't yours.", "ATTEMPT_NOT_YOURS");
   }
-  if (attempt.assessment_id !== line.learn_assessment_id) {
+  if (attempt.certification_test_id !== line.certification_test_id) {
     throw new SourcingError("That attempt is for a different test.", "ATTEMPT_WRONG_TEST");
   }
 

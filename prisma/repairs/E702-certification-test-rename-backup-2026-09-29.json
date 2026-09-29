@@ -1,0 +1,1795 @@
+{
+  "id": "P2-A4-E702",
+  "taken_at": "2026-09-29T16:22:59.547Z",
+  "counts": {
+    "learn_assessments": 8,
+    "learn_test_attempts": 0
+  },
+  "rows": {
+    "learn_assessments": [
+      {
+        "id": "5fcf7e8b-309f-4f50-9bc8-5f4624dcd07a",
+        "learning_path_id": "d2329e96-dbdc-422b-81f5-2e1f2a2caa4f",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "A model where the provider delivers fundamental computing resources like servers, storage, and networking, while the customer manages the operating system and applications",
+              "A model where the customer only accesses finished software applications over the internet with no infrastructure management",
+              "A model where the provider hosts a development platform including runtime, database, and middleware for building applications",
+              "A model where the customer purchases physical hardware and installs it in their own data center"
+            ],
+            "question": "Which statement best describes Infrastructure as a Service (IaaS)?",
+            "courseTitle": "1. Background",
+            "explanation": "IaaS provides core computing infrastructure (servers, storage, networking) while the customer retains responsibility for operating systems, middleware, and applications.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "PaaS eliminates the need for any provider-managed hardware, unlike IaaS",
+              "PaaS provides a complete finished application ready for end users, unlike IaaS",
+              "PaaS adds a managed platform layer (such as runtime, middleware, and database tools) on top of infrastructure, letting developers focus on building applications rather than managing servers",
+              "PaaS is only used for storage while IaaS is used for computing power"
+            ],
+            "question": "What best distinguishes PaaS from IaaS?",
+            "courseTitle": "1. Background",
+            "explanation": "PaaS builds on infrastructure services by also providing a managed platform layer for application development, removing the need to manage underlying servers directly.",
+            "correctIndex": 2
+          },
+          {
+            "id": "q3",
+            "options": [
+              "A company uses a web-based email and collaboration suite maintained entirely by a vendor, accessing it through a browser without installing or maintaining any software",
+              "A company rents virtual servers and configures its own operating system and applications",
+              "A company builds a custom application using a vendor's provided development framework and database services",
+              "A company purchases raw compute and storage capacity to run its own custom-built ERP system"
+            ],
+            "question": "Which scenario best exemplifies Software as a Service (SaaS)?",
+            "courseTitle": "1. Background",
+            "explanation": "SaaS delivers fully functional, vendor-maintained applications directly to end users, requiring no infrastructure or platform management by the customer.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "To provide a single point-of-sale tool exclusively for retail transactions",
+              "To integrate core business processes such as finance, procurement, and human resources into a unified system for consistent data and streamlined operations",
+              "To serve solely as a customer relationship management tool for sales teams",
+              "To replace the need for any specialized departmental software within an organization"
+            ],
+            "question": "What is the primary purpose of an ERP (Enterprise Resource Planning) application?",
+            "courseTitle": "1. Background",
+            "explanation": "ERP systems are designed to integrate and standardize core business functions across departments, enabling consistent data and coordinated processes.",
+            "correctIndex": 1
+          },
+          {
+            "id": "q5",
+            "options": [
+              "They have moved away from integrating business functions and instead specialize in single-task tools",
+              "They evolved from standalone, function-specific systems and on-premises installations toward integrated, cloud-based platforms accessible across an organization",
+              "They started as cloud-based platforms and have since moved toward on-premises-only deployments",
+              "They have remained largely unchanged since their inception, with only minor interface updates"
+            ],
+            "question": "How have ERP applications generally evolved over time, according to their history?",
+            "courseTitle": "1. Background",
+            "explanation": "ERP systems historically began as separate, function-specific tools installed on-premises and have progressively evolved into integrated, cloud-delivered platforms.",
+            "correctIndex": 1
+          },
+          {
+            "id": "q6",
+            "options": [
+              "Offshore workers are used exclusively for physical hardware manufacturing rather than software or support services",
+              "Organizations can access skilled talent at competitive costs while providing round-the-clock support and scalability for global operations",
+              "Offshore workers replace the need for any cloud-based infrastructure or platforms",
+              "Offshoring is primarily driven by legal requirements rather than business or talent considerations"
+            ],
+            "question": "What is a key factor driving the rise of the offshore worker in the context of ERP and IT services described in the course?",
+            "courseTitle": "1. Background",
+            "explanation": "The rise of offshore talent is largely driven by organizations seeking cost-effective, skilled resources that can provide extended support coverage and scalability.",
+            "correctIndex": 1
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-01T05:52:00.423Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-01T05:52:00.423Z",
+        "updated_at": "2026-08-01T05:52:00.423Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "dd3fe6d7-5b86-4d4a-a398-67f6a27220a7",
+        "learning_path_id": "9b590f05-df82-4ceb-a697-67641a8b9f04",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "Stores and manages core worker data used across other HCM processes like hiring, transfers, and terminations",
+              "Handles only payroll tax calculations for employees",
+              "Is exclusively used to post job requisitions externally",
+              "Replaces the need for any other HCM applications",
+              "Manages only benefits enrollment for retirees"
+            ],
+            "lessonId": "f3c30f38-6dfb-4c21-b667-fa6f69a429ca",
+            "question": "In Oracle Cloud's Core HR functional area overview, Core HR is best described as the foundation that:",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Core HR provides the central person and work data foundation that other Quick Actions and applications (hire, transfer, termination) build upon.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "To create and manage records for new people entering the organization, such as pending workers or new hires",
+              "To process employee payroll runs",
+              "To generate financial reports for HR budgets",
+              "To manage employee benefits enrollment exclusively",
+              "To track vendor contracts"
+            ],
+            "lessonId": "f112cf9d-1f5f-43a9-b213-caea8196f2e2",
+            "question": "What is the primary purpose of the New Person application in Oracle Cloud Core HR?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The New Person application is used to initiate and manage records for individuals newly entering the organization, including pending worker scenarios.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "Find, view, and maintain existing person records after they have been created",
+              "Only submit resignation letters",
+              "Design the organizational chart from scratch",
+              "Configure system security roles",
+              "Process third-party vendor invoices"
+            ],
+            "lessonId": "8008a3ae-8bad-444e-938f-3cd0e063590d",
+            "question": "The Person Management application in Oracle Cloud Core HR is primarily used to:",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Person Management is focused on locating and maintaining records for people already in the system, distinct from the New Person application used for initial creation.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "Quickly initiate the process of bringing a new worker into the organization with their essential details",
+              "Approve final payroll disbursements",
+              "Terminate an existing employee's work relationship",
+              "Transfer a worker between departments",
+              "Generate year-end tax documents"
+            ],
+            "lessonId": "90671fd3-cbc5-46dd-9b1e-d421d2e6388d",
+            "question": "What does the Hire Quick Action in Oracle Cloud Core HR allow an HR user to do?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Hire Quick Action is designed to streamline entering a new worker into the system, distinct from Transfer or Termination actions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "To move a worker to a new position, department, or location within the organization",
+              "To permanently end a worker's employment",
+              "To create a brand-new person record from scratch",
+              "To manage compensation for external contractors only",
+              "To process retirement benefits",
+              "is invalid distractor placeholder"
+            ],
+            "lessonId": "7fb2c0df-86c8-451a-ab34-1fb093dd455c",
+            "question": "What is the main function of the Transfer Quick Action in Oracle Cloud Core HR?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Transfer action updates a worker's assignment details to reflect a move within the organization, distinct from Hire and Termination actions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "The worker's work relationship with the organization is ended and their record reflects that status",
+              "The worker is automatically transferred to a new department",
+              "The worker's personal contact information is deleted permanently",
+              "A new hire record is generated for the same person",
+              "The worker's role is reassigned to a manager position"
+            ],
+            "lessonId": "c5d10ca5-3c29-450f-ac21-818cde4a4274",
+            "question": "When using the Termination Quick Action in Oracle Cloud Core HR, what is the key outcome for the worker's record?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Termination is used to formally end a worker's relationship with the organization, updating their status accordingly.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "A person who has been entered into the system but whose hire has not yet been fully converted into an active employee record",
+              "An employee who has already retired",
+              "A worker whose employment has been terminated",
+              "A contractor who has completed all onboarding steps",
+              "A manager awaiting a promotion decision"
+            ],
+            "lessonId": "e6d7bd3c-87ad-4464-9966-ab93e1652702",
+            "question": "In the New Person application workflow, what is a 'pending worker' most accurately described as?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A pending worker exists in the system prior to their official start/conversion date, requiring further action to become a full employee record.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "Correcting or updating details like personal information or assignment data prior to the worker becoming active",
+              "Processing their final paycheck",
+              "Deleting the record permanently",
+              "Assigning them to retirement benefits",
+              "Converting them into a vendor contact"
+            ],
+            "lessonId": "34817ba0-1b0e-4187-89b9-55d5bb75b505",
+            "question": "When editing a pending worker's record, what type of changes would typically be made before conversion?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Editing a pending worker allows HR to correct or update information before the record is converted to an active worker.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "First find the existing person record, then edit and maintain the relevant details",
+              "First terminate the employee, then create a new record for them",
+              "First transfer the employee, then find their record",
+              "First delete the record, then recreate it from scratch",
+              "First run payroll, then locate the record"
+            ],
+            "lessonId": "260f5257-63fc-4ee5-90bf-7c16323ddb16",
+            "question": "In the 'How to manage person records' course, what is the correct general sequence when needing to update an employee's information?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The course structure teaches locating an existing person record before making edits or updates to it, which is the logical workflow taught.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-20T20:26:30.818Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-20T20:26:30.818Z",
+        "updated_at": "2026-08-20T20:26:30.818Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "7b003eae-7bd6-490d-b6aa-d1b3f2d477df",
+        "learning_path_id": "19a7bc7d-b002-4f1a-9c78-efc429db6237",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "To calculate employee pay by processing earnings, deductions, and statutory requirements based on data from other HR processes",
+              "To manage the recruitment and onboarding of new employees",
+              "To track employee performance reviews and career development plans",
+              "To design organizational charts and reporting hierarchies"
+            ],
+            "lessonId": "b4361128-19f3-433d-9a8b-caac82d249fb",
+            "question": "In the context of Oracle Cloud Payroll, what is the primary purpose of the Payroll functional area within the broader HCM suite?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Payroll's core function is to take employee and work data from other HR areas and use it to accurately calculate pay, including earnings, deductions, and compliance requirements.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "Because payroll calculations depend on accurate, up-to-date employee and work data to produce correct pay outcomes",
+              "Because payroll is only used to generate organizational reports, not to pay employees",
+              "Because Core HR and Payroll are entirely separate systems with no shared data",
+              "Because payroll only needs data once a year during annual reviews"
+            ],
+            "lessonId": "e024f924-0d81-4bd5-baa3-d72086ef9427",
+            "question": "Why does Oracle Cloud Payroll rely heavily on integration with Core HR data such as employee assignments and compensation records?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Payroll depends on Core HR information like assignments, compensation, and personal data to ensure pay is calculated correctly for each employee.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "It supports processing pay runs that account for earnings, deductions, and statutory compliance requirements",
+              "It is solely used to post job openings to external job boards",
+              "It exclusively manages employee training certifications",
+              "It only handles physical asset inventory tracking for a company"
+            ],
+            "lessonId": "e024f924-0d81-4bd5-baa3-d72086ef9427",
+            "question": "Which of the following best describes a key capability of the Oracle Cloud Payroll application as introduced in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Payroll application is designed to run payroll processes that calculate pay, apply deductions, and meet statutory obligations.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "Supporting employee-related processes such as onboarding, records management, and policy administration",
+              "Designing the company's financial statements and balance sheets",
+              "Writing the source code for payroll calculation engines",
+              "Managing the company's external marketing campaigns"
+            ],
+            "lessonId": "c003936d-a35d-40b7-a0d5-fa571b47a9ef",
+            "question": "According to the course, which responsibility is most closely associated with the role of an HR Specialist?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "An HR Specialist typically focuses on employee-facing HR processes like onboarding, records, and policy support, rather than technical or unrelated business functions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "Because Payroll processes rely on accurate employee and organizational data that originates in Core HR",
+              "Because Core HR and Payroll are unrelated modules that never share information",
+              "Because Payroll replaces the need for any Core HR data entirely",
+              "Because Core HR is only used for scheduling employee vacations"
+            ],
+            "lessonId": "92a04b18-c634-4c09-91bd-375c2103f276",
+            "question": "Why is understanding Oracle Cloud's Core HR foundation important before working with Payroll, as emphasized in the course overview?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The course overview establishes that Payroll builds on the employee and organizational data maintained in Core HR, making that foundation essential for accurate payroll processing.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-20T20:27:53.943Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-20T20:27:53.943Z",
+        "updated_at": "2026-08-20T20:27:53.943Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "bcb00f16-5cc6-4a38-8f09-9f3091b913e7",
+        "learning_path_id": "063931cf-41b4-43f6-8041-3f4d6c7c2a89",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "It stores reusable clauses, sections, and templates that can be assembled into contract documents",
+              "It is used exclusively to track supplier invoices and payments",
+              "It replaces the need for a Contracts application entirely",
+              "It is only used to digitally sign completed contracts"
+            ],
+            "lessonId": "aac3fae3-1b81-46ff-a7e6-39cf64f07e84",
+            "question": "In Oracle Cloud Contract Management, what is the primary purpose of the Terms Library application relative to the Contracts application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Terms Library holds reusable content such as sections, clauses, constants, and templates that feed into the Contracts application when authoring documents.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "Managing the end-to-end lifecycle of contract records, from creation through fulfillment",
+              "Only generating financial reports for the finance department",
+              "Storing HR employee records for contract administrators",
+              "Serving solely as a repository for clause language with no transactional capability",
+              "None"
+            ],
+            "lessonId": "35afe16b-c4ce-4801-b752-0a0e994b04db",
+            "question": "Which of the following best describes the role of the Contracts application in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Contracts application is the transactional tool used to create, author, approve, sign, and fulfill contract records.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "Standardized contract language and structural elements like sections and clauses",
+              "Purchase order line items only",
+              "Supplier bank account details",
+              "Employee performance reviews",
+              "None"
+            ],
+            "lessonId": "9a8c3a1f-3427-4870-8e37-1d5765c2ea3f",
+            "question": "According to the lesson on the Terms Library application, what kind of content does it manage?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Terms Library application is introduced as the place to manage standardized contract terms content, including sections and clauses.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "It enables legally binding electronic signatures to be captured on contract documents",
+              "It is required to calculate contract pricing",
+              "It replaces the Terms Library for storing clauses",
+              "It is used to manage supplier invoices instead of Payables",
+              "None"
+            ],
+            "lessonId": "dacd4ea8-5402-4613-a1af-12fe7ab585e7",
+            "question": "Why is DocuSign commonly integrated with Oracle Cloud Contract Management, according to the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "DocuSign is introduced as an integration that lets organizations capture electronic signatures, supporting the digital signing step of the contract process.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "Creating and managing contract records and documents throughout their lifecycle",
+              "Approving all company purchase orders regardless of contract status",
+              "Designing the user interface of Oracle Cloud",
+              "Setting corporate tax policy",
+              "None"
+            ],
+            "lessonId": "22741a37-db6e-406d-83fe-95a2543f7bac",
+            "question": "What is a primary responsibility of a Contract Administrator as described in the related careers section?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Contract Administrator role centers on creating, authoring, and managing contract records and documents.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "The Contract Terms Administrator focuses on maintaining reusable terms library content like clauses and templates, rather than individual contract records",
+              "The Contract Terms Administrator only handles supplier payments",
+              "The Contract Terms Administrator has no interaction with the Terms Library",
+              "The Contract Terms Administrator role is identical to a Contract Approver",
+              "None"
+            ],
+            "lessonId": "90396d61-4491-40f1-90bf-4f91bd1a5b83",
+            "question": "How does the role of a Contract Terms Administrator differ from a general Contract Administrator?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Contract Terms Administrator role is focused on the Terms Library content that supports contract authoring, distinct from managing individual contract transactions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "Inconsistent processes and lack of standardization make it hard to verify compliance",
+              "Because Oracle Cloud does not allow audits at all",
+              "Because contracts are automatically deleted after signing",
+              "Because auditors are not allowed to view contract records",
+              "None"
+            ],
+            "lessonId": "15b83c23-16fc-487a-84c4-541a7071ac22",
+            "question": "Why do contract audits commonly fail, based on the course discussion?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The lesson explains that inconsistency and lack of standardized processes are common reasons contract audits fail.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "A supplier redlines and returns the contract document",
+              "The contract is automatically signed by all parties",
+              "The contract record is deleted and recreated",
+              "Fulfillment transactions are created",
+              "None"
+            ],
+            "lessonId": "d499a797-bef8-44cf-8a49-89f71b469629",
+            "question": "In the 8-step contract creation process, what happens immediately after a Contract Admin authors the contract document (Step 2)?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Step 3 in the process is the supplier reviewing, redlining, and returning the contract document after it has been authored.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "Reviews and approves the contract record before it proceeds to signature",
+              "Creates the initial contract record",
+              "Digitally signs on behalf of the supplier",
+              "Uploads the final signed document only",
+              "None"
+            ],
+            "lessonId": "ad399e85-df31-45cb-955a-bd3dd7f36e31",
+            "question": "What action does a Contract Approver take in the contract lifecycle described in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Step 5 shows the Contract Approver reviewing and approving the contract record, a gate before the signing step.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q10",
+            "options": [
+              "A contract document format based on the supplier's own template rather than the buying organization's standard template",
+              "A physical paper copy required for every contract regardless of digital signature",
+              "A report showing supplier payment history",
+              "A required field when creating a purchase order",
+              "None"
+            ],
+            "lessonId": "09c53ca5-0602-4d5f-aafc-3a53e30c5a23",
+            "question": "What is 'Supplier Paper' in the context of Oracle Cloud contract management, as covered in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Supplier Paper refers to setting up and using contract documents based on a supplier-provided template instead of the organization's own standard paper.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q11",
+            "options": [
+              "To connect the governing contractual terms to the specific transaction fulfilling that agreement",
+              "To delete the original purchase order automatically",
+              "To bypass the need for contract approval",
+              "To convert the purchase order into a new contract type",
+              "None"
+            ],
+            "lessonId": "de48d7c9-02f2-48d5-a7c2-ea7a423dc639",
+            "question": "What is the purpose of linking a Master Service Contract to a Purchase Order, as taught in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Linking a Master Service Contract to a Purchase Order ties the overarching contract terms to the specific transactional document that fulfills it.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q12",
+            "options": [
+              "To continue an existing agreement's term without restarting the entire contract creation process",
+              "Because active contracts cannot be modified in any way",
+              "Because extending is required before any approval can happen",
+              "Because the original contract record must be deleted first",
+              "None"
+            ],
+            "lessonId": "4b50bf7f-db9d-47bd-8231-f2313f028907",
+            "question": "According to the lesson on extending active contracts, why might a Contract Administrator extend a contract rather than create a new one?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Extending an active contract lets the administrator prolong the agreement's term while preserving the existing contract record.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q13",
+            "options": [
+              "The Contracts application may be more complex than needed for organizations with simple agreement needs",
+              "Because Oracle Cloud Contracts is only available in certain countries",
+              "Because it requires a DocuSign subscription to function at all",
+              "Because the Terms Library cannot be used with Contracts",
+              "None"
+            ],
+            "lessonId": "4aae04e2-b7fd-48b7-9cf4-1c2221536130",
+            "question": "Why does the course caution that 'Contracts won't work for everyone'?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The lesson discusses that the full Contracts application may be overkill for organizations without complex contract management needs.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q14",
+            "options": [
+              "It represents a reusable value or variable that can be inserted into clause text, such as a company name or standard number",
+              "It is a fixed clause that can never be edited once created",
+              "It is a type of approval workflow rule",
+              "It is used only to define payment terms in the Contracts application",
+              "None"
+            ],
+            "lessonId": "608af0ae-94a9-4c5a-97d2-bd2d309da800",
+            "question": "In the Terms Library, what is the function of a 'Constant' when creating contract terms?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A Constant is a reusable variable value that can be referenced within clause text to keep terminology consistent across documents.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q15",
+            "options": [
+              "Questions capture inputs during authoring, and Rules use those answers to determine which clauses or sections are automatically included",
+              "Questions are only used for reporting purposes and have no effect on documents",
+              "Rules define user login permissions unrelated to contract content",
+              "Questions replace the need for clauses entirely",
+              "None"
+            ],
+            "lessonId": "b8e754b4-b7f2-412a-971c-d3f13688e12a",
+            "question": "What role do 'Questions' and 'Rules' play together in the Terms Library application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Questions gather authoring input, and Rules use the answers to drive automated inclusion or exclusion of clauses and sections in generated documents.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q16",
+            "options": [
+              "Structured templates support advanced features like rules, questions, and variable clauses, while Simplified templates offer a more basic, static document structure",
+              "Simplified templates require DocuSign while Structured templates do not",
+              "Structured templates cannot include any sections or clauses",
+              "Simplified templates are only used for supplier paper contracts",
+              "None"
+            ],
+            "lessonId": "aa15b45a-bf5e-4878-8e26-a3b306947e5d",
+            "question": "What distinguishes a Structured Terms Template from a Simplified Terms Template in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Structured templates leverage the full rules/questions engine for dynamic clause inclusion, whereas Simplified templates provide a more straightforward, less dynamic document layout.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q17",
+            "options": [
+              "It defines an obligation or task tied to the contract that can be tracked for fulfillment",
+              "It represents the final signed PDF copy of the contract",
+              "It is a financial ledger entry for contract payments",
+              "It is a security setting controlling who can view a contract",
+              "None"
+            ],
+            "lessonId": "0132c420-96dd-4ac0-9b96-53a34054679c",
+            "question": "What is the purpose of the 'Deliverable' object created in the Terms Library, as described in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A Deliverable represents a tracked obligation or task associated with the contract, which later ties into fulfillment tracking in the Contracts application.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-21T21:00:27.898Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-21T21:00:27.898Z",
+        "updated_at": "2026-08-21T21:00:27.898Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "077f2bec-3c64-4595-899a-de7176ed528b",
+        "learning_path_id": "41fdc4fc-9fc9-4687-b321-38e2e1c93cc0",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "It defines the scope, deliverables, and boundaries of what the project team is contracted to deliver",
+              "It replaces the need for any project schedule or timeline",
+              "It is only relevant to the sales team and not to implementers",
+              "It only lists the client's internal org chart"
+            ],
+            "lessonId": "388532b0-2319-40c9-bf1a-5c73013f50ce",
+            "question": "According to the kick-off presentation on the SOW and contracting process, why is the Statement of Work important for a consultant to understand before starting project work?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The SOW defines scope and contracted deliverables, which consultants must understand to avoid scope creep and deliver correctly.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "It builds client confidence and trust in the consulting team's credibility",
+              "It is only required on the first day of the engagement",
+              "It has no impact on client perception as long as the work is good",
+              "It is only relevant for remote meetings, not onsite visits"
+            ],
+            "lessonId": "e91018d6-1efa-431c-9514-5a25ac189109",
+            "question": "What is a key reason emphasized for maintaining professional dress and demeanor on a client project?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Professionalism and dress code build client trust and credibility, which was the emphasis of this lesson.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "To gather information about the client's current processes and systems before design begins",
+              "To finalize the invoice for the project",
+              "To replace the need for a kick-off meeting entirely",
+              "To document the consultant's personal travel preferences"
+            ],
+            "lessonId": "1c3f5100-cc3b-44ce-8b40-5b20838de07a",
+            "question": "What is the main purpose of the Pre-Implementation Questionnaire discussed in the kick-off section?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The questionnaire is used to collect information about the client's current state ahead of design discussions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "It provides a consistent, repeatable framework for phases like design, build, test, and deploy",
+              "It eliminates the need for client meetings",
+              "It guarantees the client will not request any changes",
+              "It is only used for internal training purposes and not actual delivery"
+            ],
+            "lessonId": "06dd0d70-cc58-4aab-9f02-42af51e76310",
+            "question": "In the context of the implementation methodology explained during kick-off, what is the primary benefit of following a structured methodology across the project lifecycle?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A structured methodology gives a consistent, repeatable approach to guide the project through its phases.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "To track project tasks, timelines, and status in a shared, organized manner",
+              "To serve as the client's accounting ledger",
+              "To replace the Statement of Work",
+              "To manage the client's IT security policies"
+            ],
+            "lessonId": "3423c7dc-356b-4e04-afe9-5b28a9f85faa",
+            "question": "What is the purpose of SmartSheets as introduced in the kick-off presentation?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "SmartSheets was introduced as a tool for tracking tasks and project status, not as a financial or legal document.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "It ensures consistency and makes it easy for team members to find and share project artifacts",
+              "It is required by Oracle's software licensing terms",
+              "It automatically syncs with the client's ERP system",
+              "It eliminates the need for version control of documents"
+            ],
+            "lessonId": "ad6908e4-f7bd-4757-9f2f-94d06dc57317",
+            "question": "Why does the instructor recommend a specific folder structure approach for organizing project documentation?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A consistent folder structure helps the team locate and share documents efficiently across the project.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "Presenting the project plan, team, and approach to align expectations with the client",
+              "Finalizing the chart of accounts design",
+              "Conducting user acceptance testing",
+              "Signing the final contract with the client"
+            ],
+            "lessonId": "d70ce0f9-7266-4a8a-a1cf-38664f7ed176",
+            "question": "What is the main focus of the Kick-Off Deck Week during Project Kick-Off?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Kick-Off Deck is used to align expectations by presenting the plan, team, and approach to the client at the start of the engagement.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "To create an accurate reference for decisions and requirements discussed, reducing miscommunication later",
+              "To use the recordings for marketing purposes",
+              "Because client meetings are legally required to be recorded",
+              "To avoid having to take any written notes at all"
+            ],
+            "lessonId": "90af9bc5-1ab7-4272-ad40-b39634b893f6",
+            "question": "Why is it recommended to record every client meeting during CRP 0, according to the pro-tip lesson?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Recording meetings creates a reliable reference to confirm what was discussed and decided, reducing later disputes or confusion.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "To capture critical items, requirements, or risks that must be tracked and addressed during the project",
+              "To document the client's final go-live date",
+              "To list the software licenses purchased by the client",
+              "To replace the RTM entirely"
+            ],
+            "lessonId": "748be9ee-7850-4875-97a5-0f17707bdec2",
+            "question": "What is the purpose of creating an NTM (Not-to-Miss list / Needs to Manage tracker) during the Current State review in CRP 0?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The NTM is used to capture critical items that need to be tracked so nothing important is missed during the project.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q10",
+            "options": [
+              "To track client requirements and ensure they are addressed and validated throughout the project",
+              "To schedule consultant travel arrangements",
+              "To calculate project billing rates",
+              "To design the chart of accounts structure"
+            ],
+            "lessonId": "4f0316f3-f452-4be9-b703-f12a93e697f3",
+            "question": "What is the primary purpose of the RTM (Requirements Traceability Matrix) created during the Current State review?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The RTM tracks requirements so they can be traced and validated as the project progresses, ensuring nothing is overlooked.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q11",
+            "options": [
+              "To understand existing pain points and workflows so the future design can address them appropriately",
+              "To immediately configure the new P2P system without further analysis",
+              "To finalize the supplier contracts",
+              "To skip requirements gathering and move straight to testing"
+            ],
+            "lessonId": "a5e53efc-edbf-40ff-84bf-770b57daf177",
+            "question": "During the CRP 0 client meeting on Procure-to-Pay (P2P) current state, what is the main goal of discussing the client's existing P2P process?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Discussing current state P2P processes helps the team understand pain points and workflows to inform future state design.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q12",
+            "options": [
+              "How responsibilities and transactions will be structured and shared across business units to support the future organization",
+              "Only the client's current IT hardware specifications",
+              "The color scheme of the client's new reporting dashboards",
+              "The personal preferences of individual employees for their job titles"
+            ],
+            "lessonId": "717eb5eb-7d15-4084-bbd3-a21d091a1a17",
+            "question": "What is a key consideration when discussing Business Unit (BU) and Shared Service future state design with the client?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "BU and Shared Service future state design focuses on structuring responsibilities and transactions across business units to support the desired future organization.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-21T21:01:02.023Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-21T21:01:02.023Z",
+        "updated_at": "2026-08-21T21:01:02.023Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "640a6c7d-1caa-4e24-bcd4-06fa4726f91a",
+        "learning_path_id": "2b1a96b1-8543-4abe-b891-340a3b47b7db",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "To provide different methods for entering and processing accounting transactions based on their source and purpose",
+              "To restrict which users can log into the General Ledger module",
+              "To define the chart of accounts structure for a ledger",
+              "To determine which currency an organization must report in"
+            ],
+            "lessonId": "8f93b4ea-7c02-4d5d-9e41-1e5f6dd254dd",
+            "question": "In the Journals application, what is the primary purpose of the 8 main journal types covered in the overview lesson?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The overview lesson explains that the different journal types exist to support various ways transactions can be entered and processed depending on their source and purpose.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "It is entered and created directly within the application interface rather than uploaded from an external file",
+              "It can only be used for statistical, non-monetary entries",
+              "It automatically reverses itself after posting",
+              "It requires a spreadsheet template to be downloaded first",
+              "a"
+            ],
+            "lessonId": "9d6d46da-5c15-4a7f-9527-fd5033ec28cd",
+            "question": "What is a key characteristic of an On-Line Journal compared to other journal creation methods?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "An On-Line Journal is created directly in the application, distinguishing it from methods like Excel Upload which rely on external spreadsheet files.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "It allows users to prepare journal entries offline in a spreadsheet template and then upload them into the system",
+              "It automatically posts the journal without approval",
+              "It converts the journal into a statistical journal",
+              "It eliminates the need for a balanced entry"
+            ],
+            "lessonId": "c14fdfd7-3fe6-42c6-88ae-7b6992a564f8",
+            "question": "What is the main advantage of creating a journal via Excel Upload rather than entering it online?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Excel Upload method lets users prepare journal data in a spreadsheet offline and then load it into the application, which is its key benefit over manual online entry.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "It records non-monetary quantities such as units or headcount rather than currency amounts",
+              "It can only be created through Excel Upload",
+              "It must always be reversed in the following period",
+              "It automatically calculates foreign currency conversion rates"
+            ],
+            "lessonId": "c71c3f8d-ee3f-4243-83cd-0bb2649f6e2b",
+            "question": "What distinguishes a Statistical Journal from a standard monetary journal?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Statistical journals are used to track non-monetary data like units, headcount, or square footage rather than dollar amounts.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "To distribute an amount from one or more source accounts to multiple target accounts based on defined rules",
+              "To convert journal amounts from foreign currency to functional currency",
+              "To automatically post journals at the end of every period",
+              "To reverse journals that were posted to a prior period"
+            ],
+            "lessonId": "8e1ec1a9-07de-4647-8eac-2715cf2c93ed",
+            "question": "What is the purpose of an Allocation Journal?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Allocation journals are used to spread or distribute amounts across multiple accounts according to allocation rules, rather than simply recording a single transaction.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "It allows a journal entry with the same structure to be generated automatically in multiple periods without re-entering it each time",
+              "It converts a statistical journal into a monetary journal",
+              "It ensures the journal can never be reversed",
+              "It automatically approves the journal without review"
+            ],
+            "lessonId": "19229580-0081-4cc9-88ba-8844b26cb03f",
+            "question": "What is the main benefit of setting up a Recurring Journal?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Recurring journals are designed to save time by automatically generating the same journal entry pattern in subsequent periods rather than requiring manual re-entry.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "To validate and authorize the journal entry before it can be posted to the ledger",
+              "To automatically convert the journal into a different journal type",
+              "To generate the journal's source document from scratch",
+              "To permanently delete journals that are no longer needed"
+            ],
+            "lessonId": "65e0249d-73d7-4222-905c-d40a53b0eb2a",
+            "question": "When approving a journal in the workflow described in the course, what is the primary purpose of this step?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Approval acts as a control step that authorizes a journal, confirming it is correct and ready, before it proceeds to posting.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "It automatically posts eligible journals that meet defined criteria without requiring manual posting of each one",
+              "It automatically reverses all journals at period end",
+              "It converts online journals into Excel upload journals",
+              "It manually approves journals one at a time"
+            ],
+            "lessonId": "f1fc8104-7c28-4fef-a4fa-dbedda330cd4",
+            "question": "What is the function of the Journal Autopost process?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Autopost feature is designed to automatically post journals that meet specified criteria, reducing the need for manual, individual posting.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "To review detailed transaction activity and balances for specific accounts over a period",
+              "To automatically generate new recurring journals",
+              "To reverse journals posted in error",
+              "To upload new journal entries from a spreadsheet"
+            ],
+            "lessonId": "1a928092-6dab-4527-828d-decb7b99d855",
+            "question": "What is a key purpose of running the Account Analysis Report after journals have been posted?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Account Analysis Report is used to review and analyze the detailed activity and resulting balances for specific accounts, helping verify posted transactions.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-21T21:06:08.169Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-21T20:57:01.895Z",
+        "updated_at": "2026-08-21T21:11:32.462Z",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "source_note": null,
+        "status": "DRAFT"
+      },
+      {
+        "id": "1f811006-1eea-46ae-a8a8-9a3837ddcd53",
+        "learning_path_id": "30f939d7-8f08-4b72-8273-33885453b97c",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "The supplier completes and submits the registration in Oracle Cloud",
+              "Procurement automatically approves the registration",
+              "The supplier is promoted directly to Spend Authorized",
+              "The supplier's profile is archived"
+            ],
+            "lessonId": "bd712585-14bb-46c6-8586-c19f438dba52",
+            "question": "In the Supplier Registration process flow, what happens immediately after a supplier requests an access code?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "After requesting an access code, the supplier uses it to register in Oracle Cloud, which is the next step in the flow.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "An approved registration request kicking off the promotion process",
+              "The supplier requesting more information",
+              "The buyer creating a purchase agreement",
+              "The supplier submitting an ASN",
+              "None"
+            ],
+            "lessonId": "34f7e765-08f8-4c02-873c-1b4849903e58",
+            "question": "What triggers the 'promotion to Spend Authorized' step in the supplier registration lifecycle?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Once a registration request is approved, it automatically kicks off the promotion process toward Spend Authorized status.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "Internal registrations are initiated by procurement staff on behalf of a supplier, while external registrations are initiated by the supplier themselves",
+              "Internal registrations never require approval",
+              "External registrations skip the promotion to Spend Authorized step",
+              "Internal registrations can only be used for one-time suppliers",
+              "None"
+            ],
+            "lessonId": "3af3dca6-1775-4a13-9ffe-3b3b1dbc97c7",
+            "question": "What is a key distinction between internal and external supplier registration?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The key difference covered is who initiates the registration—procurement internally versus the supplier externally.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "Acting as a container for questions used to evaluate a particular aspect of a supplier",
+              "Storing purchase order line details",
+              "Defining catalog category hierarchies",
+              "Recording supplier payment history",
+              "None"
+            ],
+            "lessonId": "e8b72a67-d4b6-4c89-a96f-0bdd46f510d2",
+            "question": "According to the SQM lessons, what is a qualification area primarily used for?",
+            "sourceKind": "LESSON_PLUS_DOCS",
+            "courseTitle": "",
+            "explanation": "A qualification area is a container for questions that evaluate a specific aspect of a supplier, later used to build a questionnaire.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "All evaluators must approve the submitted responses",
+              "The supplier must sign a purchase agreement",
+              "The buyer must create a new catalog",
+              "The supplier must acknowledge a purchase order schedule",
+              "None"
+            ],
+            "lessonId": "603a1bb4-7084-43bd-bcb4-788297c3ce2c",
+            "question": "In the SQM process, what must happen before a qualification is created for a supplier in a given qualification area?",
+            "sourceKind": "LESSON_PLUS_DOCS",
+            "courseTitle": "",
+            "explanation": "Once all responders submit replies, evaluators review the answers, and only if all evaluators approve is a qualification created.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "To create a new initiative quickly by copying the structure of an existing one",
+              "To permanently delete an old initiative",
+              "To automatically approve all pending qualifications",
+              "To merge two supplier profiles",
+              "None"
+            ],
+            "lessonId": "ea7783d9-8ccc-46c3-9bcf-5e442c7be80b",
+            "question": "What is the purpose of the 'Duplicate an Initiative' feature in the Supplier Qualification application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Duplicating an initiative lets a user reuse the setup of an existing initiative as a starting point for a new one, saving setup time.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "To help evaluators gather additional background information on a supplier during the qualification process",
+              "To automatically generate purchase agreements",
+              "To create a new negotiation from scratch",
+              "To reset a supplier's login credentials",
+              "None"
+            ],
+            "lessonId": "8ee8b727-4b49-4281-bad6-87dd9ff0c5c4",
+            "question": "What is the function of the Research Supplier tool in the Supplier Qualification application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The Research Supplier function is used to look up additional information about a supplier while working through qualification decisions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "Plan and request a negotiation, then create and publish it",
+              "Award the negotiation, then request BAFO",
+              "Publish the negotiation, then plan it",
+              "Respond to the negotiation, then monitor responses",
+              "None"
+            ],
+            "lessonId": "e0db7cb9-ead5-4aa9-913e-1aa4256f5705",
+            "question": "In the Negotiations application, what is the correct order of the first two steps in creating a new negotiation?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The workflow starts with planning/requesting a negotiation, followed by creating and publishing it.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "To ask suppliers to submit their most competitive final response before award decisions are made",
+              "To automatically close the negotiation without further review",
+              "To cancel the negotiation entirely",
+              "To create a brand-new negotiation round from a purchase agreement",
+              "None"
+            ],
+            "lessonId": "98d03921-ae75-4938-932f-b7dda51e4206",
+            "question": "What is the purpose of requesting a Best and Final Offer (BAFO) in a negotiation?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "BAFO is used to solicit suppliers' best and final offers, typically before the buyer finalizes an award decision.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q10",
+            "options": [
+              "When further competitive bidding among suppliers is needed after reviewing initial responses",
+              "When the negotiation needs to be permanently deleted",
+              "When only the negotiation's internal notes need updating",
+              "When the supplier registration needs to be changed",
+              "None"
+            ],
+            "lessonId": "3a4690f8-3abb-49b6-9b4f-e1cf730d0841",
+            "question": "When should a buyer create a new round in a negotiation rather than a new version?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "A new round is created to continue competitive bidding after an initial round of responses, distinct from versioning which changes negotiation terms before responses are due.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q11",
+            "options": [
+              "Sourcing is used more broadly to describe the overall category of activity, while Negotiations is the specific application/tool used to run the events",
+              "Sourcing only applies to catalog items while Negotiations applies to services",
+              "Negotiations cannot involve multiple suppliers while Sourcing can",
+              "Sourcing is only used by suppliers, never by buyers",
+              "None"
+            ],
+            "lessonId": "21091231-d555-4139-b56e-cce324ea217f",
+            "question": "What is a key difference between Negotiations and Sourcing in Oracle Cloud as covered in the course?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The lesson clarifies that 'Sourcing' is a general term for competitive buying activity, while 'Negotiations' refers to the specific Oracle Cloud application used to conduct it.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q12",
+            "options": [
+              "The supplier is given the ability to create and manage releases or updates against the agreement",
+              "The buyer is completely removed from the agreement once created",
+              "It cannot include pricing terms",
+              "It is only used for one-time purchases",
+              "None"
+            ],
+            "lessonId": "bfbaf137-1b94-4e26-b836-ba240c1e0fd1",
+            "question": "What best characterizes a Supplier-Managed Blanket Purchase Agreement compared to a Buyer-Managed one?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "In a supplier-managed blanket purchase agreement, the supplier takes on responsibility for managing certain agreement activities, unlike a buyer-managed one.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q13",
+            "options": [
+              "A Blanket Purchase Agreement includes pricing and terms that generate releases for actual purchases, while a Contract Purchase Agreement primarily establishes terms without predefined pricing for releases",
+              "A Contract Purchase Agreement can only be created by suppliers",
+              "A Blanket Purchase Agreement cannot be changed once created",
+              "A Contract Purchase Agreement always requires a negotiation first",
+              "None"
+            ],
+            "lessonId": "fcfcf168-4136-45b8-a36c-d1e280454705",
+            "question": "What is the main functional difference between a Blanket Purchase Agreement and a Contract Purchase Agreement?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Blanket Purchase Agreements are used for repeat purchases with pricing terms, while Contract Purchase Agreements establish contractual terms and conditions that govern purchases without the same release/pricing structure.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q14",
+            "options": [
+              "By searching for the agreement and viewing the transactions generated against it, such as orders or releases",
+              "By creating a brand-new negotiation",
+              "By checking the supplier's qualification record",
+              "By navigating to the Catalogs application",
+              "None"
+            ],
+            "lessonId": "9e73c0fd-e459-4203-8c55-ef76bbef4ba9",
+            "question": "How does a buyer typically find transactions associated with an existing purchase agreement?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "The lesson covers how a buyer locates transactions tied to a purchase agreement, such as releases and orders created against it.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q15",
+            "options": [
+              "A Punchout Catalog redirects the requester to the supplier's external website to select items, while a Local Catalog stores items directly within Oracle Cloud",
+              "A Local Catalog can only contain services, never goods",
+              "A Punchout Catalog requires no supplier involvement at all",
+              "A Local Catalog is always more expensive to maintain",
+              "None"
+            ],
+            "lessonId": "5a7427ce-372a-491e-96d0-1344ea21979a",
+            "question": "What distinguishes a Remote (Punchout) Catalog from a Local Catalog in the Catalogs application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Punchout catalogs connect out to a supplier's hosted site for item selection, whereas local catalogs house catalog content directly in Oracle Cloud.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q16",
+            "options": [
+              "To provide a structured form for requesting items or services that don't exist as standard catalog items",
+              "To automatically generate supplier registrations",
+              "To replace the need for purchase agreements entirely",
+              "To manage supplier payment terms",
+              "None"
+            ],
+            "lessonId": "64b2ba6a-7358-4535-bffa-afd850862fc0",
+            "question": "What is the purpose of a SmartForm in the Catalogs application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "SmartForms let requesters submit structured requests for goods or services not available as predefined catalog items.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q17",
+            "options": [
+              "It organizes catalog content into categories used for structuring and reporting on procurement items",
+              "It defines supplier payment schedules",
+              "It replaces the need for content zones",
+              "It manages user access to the negotiation application",
+              "None"
+            ],
+            "lessonId": "d74a65e5-3e8a-4eae-86e7-cd575f8e328f",
+            "question": "What is the role of the Procurement Catalog Category Hierarchy (PCCH)?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "PCCH categories are used to organize catalog items hierarchically, supporting structure and reporting within the Catalogs application.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q18",
+            "options": [
+              "Confirm receipt and acceptance of the delivery/payment schedule terms specified on the purchase order",
+              "Submit an invoice for immediate payment",
+              "Create a new blanket purchase agreement",
+              "Cancel the purchase order entirely",
+              "None"
+            ],
+            "lessonId": "4310d131-93fb-4f93-9e56-9437d16b8377",
+            "question": "In the Supplier Portal, what does a supplier do when acknowledging a Purchase Order schedule?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Acknowledging a PO schedule means the supplier confirms they accept the specified delivery or payment terms on that schedule line.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q19",
+            "options": [
+              "To notify the buyer in advance of an upcoming shipment's contents and expected delivery details",
+              "To request payment before goods are shipped",
+              "To register as a new supplier",
+              "To respond to a negotiation",
+              "None"
+            ],
+            "lessonId": "d05a809b-843c-420e-86d3-422766dfa2a1",
+            "question": "What is the purpose of an ASN (Advance Shipment Notice) created by a supplier in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "An ASN is created by the supplier to inform the buyer ahead of time about the shipment being sent, including contents and delivery details.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q20",
+            "options": [
+              "The invoice details must match against the purchase order and/or receipt without discrepancies that block payment",
+              "The supplier must first submit an ASN",
+              "The buyer must create a new catalog item",
+              "The negotiation must be re-awarded",
+              "None"
+            ],
+            "lessonId": "ac5f075a-c7a3-4db3-9796-e606dae8a06f",
+            "question": "In the Supplier Portal, what must be true for a supplier's invoice to be considered 'Validated' and ready to be paid?",
+            "sourceKind": "LESSON",
+            "courseTitle": "",
+            "explanation": "Validation occurs when invoice details reconcile correctly against the PO and/or receipt, clearing it for payment processing.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-20T20:26:02.406Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-20T20:26:02.406Z",
+        "updated_at": "2026-09-03T04:18:06.093Z",
+        "reviewed_at": "2026-09-03T04:18:06.073Z",
+        "reviewed_by": "9a423ae1-1a7a-4dbe-a949-af48b83a5697",
+        "source_note": "https://docs.oracle.com/en/cloud/saas/procurement/26c/oaprc/qualification-areas.html",
+        "status": "PUBLISHED"
+      },
+      {
+        "id": "d6f509ef-94f9-4e66-9eaa-7818efaedbb0",
+        "learning_path_id": "9982e837-b93b-46ce-8698-21b4ba58ccc1",
+        "questions": [
+          {
+            "id": "q1",
+            "options": [
+              "Purchase Requisitions",
+              "Purchase Orders",
+              "My Receipts",
+              "Supplier Portal"
+            ],
+            "lessonId": "3d521a44-0f3f-4ed1-8ff8-6995acd5d9f4",
+            "question": "In the Oracle Cloud Procure-to-Pay process, which application area is generally used FIRST to request goods or services?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Requisitions are created first to request goods/services, which are then converted into purchase orders.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q2",
+            "options": [
+              "One company's purchase order process (Procure-to-Pay) corresponds to the other company's sales order process (Order-to-Cash)",
+              "They are unrelated processes that never share data",
+              "Order-to-Cash always precedes Procure-to-Pay for the same transaction",
+              "Procure-to-Pay only applies to services while Order-to-Cash only applies to goods"
+            ],
+            "lessonId": "9401e12d-4d54-40aa-963d-3c80810c8f77",
+            "question": "How does Procure-to-Pay typically interact with Order-to-Cash between two trading partners?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Procure-to-Pay on the buyer side mirrors Order-to-Cash on the supplier side for the same transaction.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q3",
+            "options": [
+              "A centralized organization that performs procurement functions on behalf of multiple business units or client organizations",
+              "A model where each department manages its own suppliers independently",
+              "A supplier classification for companies that only provide services, not goods",
+              "A reporting hierarchy used only for approval routing"
+            ],
+            "lessonId": "c0a725bf-2b2e-47c2-818a-25d30f610be5",
+            "question": "What best describes a 'Service Provider Model' in Oracle Cloud Procurement?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "The Service Provider Model describes a shared, centralized procurement structure that provides services to multiple client organizations.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q4",
+            "options": [
+              "To assess and vet suppliers against defined criteria before they can fully participate in sourcing or transactions",
+              "To process supplier invoice payments",
+              "To create purchase orders directly from requisitions",
+              "To manage internal employee expense reports"
+            ],
+            "lessonId": "8d754297-2eb7-4ec1-b3cd-bb622e2a3ec1",
+            "question": "What is a key purpose of the Supplier Qualification application in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Supplier Qualification is used to evaluate and qualify suppliers based on set criteria before onboarding or engaging them further.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q5",
+            "options": [
+              "To run competitive sourcing events like RFQs and auctions to select suppliers and negotiate terms",
+              "To register brand-new suppliers into the system",
+              "To receive goods against a purchase order",
+              "To approve purchase requisitions submitted by employees"
+            ],
+            "lessonId": "10d4e6ca-a234-46e7-9204-648287a9ae87",
+            "question": "What is the primary purpose of the Negotiations application in Oracle Cloud Procurement?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Negotiations supports sourcing activities such as RFQs, RFIs, and auctions to compare and select suppliers.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q6",
+            "options": [
+              "A Purchase Agreement establishes longer-term terms and pricing that can be referenced by multiple future orders, rather than a single one-time transaction",
+              "A Purchase Agreement can only be used for services, never goods",
+              "A Purchase Agreement does not require supplier acceptance",
+              "A Purchase Agreement is only visible to the Accounts Payable team"
+            ],
+            "lessonId": "5619a9e1-62e6-44cb-b5d0-44345bc02a48",
+            "question": "What distinguishes a Purchase Agreement from a standard Purchase Order in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Purchase Agreements set up negotiated terms for ongoing use, unlike a one-time purchase order.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q7",
+            "options": [
+              "To provide a curated set of pre-approved items and pricing that requesters can browse and add to a requisition",
+              "To manage supplier qualification questionnaires",
+              "To track outstanding invoice approvals",
+              "To configure procurement organization structures"
+            ],
+            "lessonId": "326262c1-3799-45e2-aa05-35d07b7e19ac",
+            "question": "What is the main function of the Catalogs application in Oracle Cloud Procurement?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Catalogs let requesters shop for pre-negotiated items, similar to an online shopping experience, when creating requisitions.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q8",
+            "options": [
+              "To give suppliers self-service visibility into their purchase orders, invoices, and payments",
+              "To let internal employees create purchase requisitions",
+              "To let buyers configure approval hierarchies",
+              "To register new employees as internal requesters"
+            ],
+            "lessonId": "88e02cec-a7f0-43f2-8cf5-6b5457920d83",
+            "question": "What is the main purpose of the Supplier Portal application?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Supplier Portal is an external-facing application that lets suppliers view and manage their own transactional data such as POs and invoices.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q9",
+            "options": [
+              "It acts as a network connecting buyers and suppliers to exchange transactional documents electronically",
+              "It is a marketplace for hiring sourcing specialists",
+              "It replaces the need for a Supplier Portal entirely",
+              "It is used only for internal employee communications"
+            ],
+            "lessonId": "5a889f82-16ad-4eab-86d4-81f205472c64",
+            "question": "What is the primary role of the Oracle Business Network integration in the procurement process?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "The Oracle Business Network facilitates electronic document exchange (like POs and invoices) between buyers and suppliers.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q10",
+            "options": [
+              "Capturing electronic signatures on contracts and agreements",
+              "Automating purchase order creation",
+              "Managing supplier qualification scoring",
+              "Tracking inventory receipts"
+            ],
+            "lessonId": "85b525a8-2d38-4345-b4a8-bb44919773e7",
+            "question": "In the context of Oracle Cloud Procurement integrations, what is DocuSign primarily used for?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "DocuSign integration is used to obtain electronic signatures, commonly for contract management purposes.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q11",
+            "options": [
+              "Running competitive sourcing events and negotiating with suppliers to secure the best terms",
+              "Physically receiving and inspecting shipped goods",
+              "Approving employee expense reports",
+              "Managing the company's general ledger accounts"
+            ],
+            "lessonId": "dadce534-6dc3-4e29-ae58-b70c092ace87",
+            "question": "What is a primary responsibility of a Sourcing Specialist role as described in the procurement career overview?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "A Sourcing Specialist focuses on running sourcing/negotiation events to find and secure supplier terms.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q12",
+            "options": [
+              "A Category Manager typically owns strategy across a broader spend category while a Commodity Buyer focuses on tactical buying for specific commodities",
+              "A Category Manager only handles invoice payments while a Commodity Buyer handles supplier registration",
+              "A Commodity Buyer manages the entire supplier lifecycle while a Category Manager only creates receipts",
+              "There is no meaningful difference between the two roles"
+            ],
+            "lessonId": "677a3e53-0bfc-4663-81b3-f4e3d865f07d",
+            "question": "What distinguishes a Category Manager from a Commodity Buyer in a procurement organization?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Category Managers generally take a strategic, category-wide view while Commodity Buyers handle more tactical, day-to-day buying tasks for specific commodities.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q13",
+            "options": [
+              "Self Service allows casual requesters to create their own requisitions, while Full Service typically involves a dedicated buyer or procurement staff handling the process",
+              "Self Service is only used by suppliers, never by internal employees",
+              "Full Service Procurement does not support purchase orders",
+              "Self Service Procurement is exclusively for services, not goods"
+            ],
+            "lessonId": "835bf328-b9b1-4a7d-9cf4-dbcadd2cbe89",
+            "question": "What is the key difference between Self Service Procurement and Full Service Procurement in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Self Service Procurement empowers casual/occasional requesters to shop and request items directly, while Full Service typically routes through dedicated procurement staff.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q14",
+            "options": [
+              "Centralizing common administrative or transactional functions to serve multiple business units efficiently",
+              "A feature that lets suppliers share their catalogs with competitors",
+              "A method for splitting a single purchase order across multiple companies",
+              "A tool exclusively for tracking receiving discrepancies"
+            ],
+            "lessonId": "161f7782-e838-49ad-92a9-e16d4ce504e6",
+            "question": "What is the general concept behind 'Shared Services' in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "Introducing Oracle Cloud Procurement",
+            "explanation": "Shared Services centralizes common functions (like procurement or finance operations) to serve multiple business units with efficiency and consistency.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q15",
+            "options": [
+              "The requester suggests creating the new supplier, which then goes through a review/creation process",
+              "The requester directly enters the supplier into the payment system without review",
+              "The requester must contact Oracle Support to add the supplier",
+              "The supplier must first register itself with no requester involvement possible"
+            ],
+            "lessonId": "c7511341-16fb-4b5e-ab86-7fd5afc804aa",
+            "question": "When a requester identifies a new company they want to buy from, what is the typical first step in Oracle Cloud before that company can be paid?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Suppliers Application",
+            "explanation": "Requesters can suggest a new supplier be created, initiating a workflow for that supplier to be properly vetted and set up.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q16",
+            "options": [
+              "A prospective supplier being brought in to participate in sourcing events before becoming a fully transactable supplier",
+              "A supplier that has already received full payment authorization",
+              "An internal employee bidding on a project",
+              "A supplier that has been permanently disqualified from future business"
+            ],
+            "lessonId": "72e689ac-55a3-4a41-8390-c4ca13c8ec26",
+            "question": "What does creating a 'Bidder' supplier record in Oracle Cloud typically represent?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Suppliers Application",
+            "explanation": "A Bidder record represents a prospective supplier that can participate in negotiations/sourcing events, without yet being fully spend-authorized.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q17",
+            "options": [
+              "Researching involves reviewing deeper details and history about a supplier's profile, performance, or qualifications rather than just locating a record",
+              "Researching means deleting outdated supplier records",
+              "Researching is only available to external auditors",
+              "Researching automatically creates a new purchase order"
+            ],
+            "lessonId": "2b51c08e-807d-47f3-a378-0fea38d8acbf",
+            "question": "What is the main purpose of 'researching' a supplier as opposed to simply 'finding' one in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Suppliers Application",
+            "explanation": "Researching suppliers involves reviewing more detailed information such as history and qualifications, going beyond a simple search/lookup.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q18",
+            "options": [
+              "A supplier created under an existing supplier's structure, often to track subcontracted work performed on their behalf",
+              "A supplier used only for internal IT services",
+              "A category of supplier that bypasses all qualification requirements",
+              "An automatically generated duplicate of an existing supplier record"
+            ],
+            "lessonId": "2eb5841f-ac0b-4790-9845-242f7c69d55e",
+            "question": "What is a Sub-Consultant in the context of Oracle Cloud's Supplier Control feature?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Suppliers Application",
+            "explanation": "Supplier Control can be used to create sub-consultants, which are linked to a parent supplier, often to track subcontracted relationships.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q19",
+            "options": [
+              "Having a requester suggest a supplier, having a buyer create one directly, or having a supplier self-register",
+              "Only through a batch file upload with no other options",
+              "Only by contacting Oracle technical support",
+              "Only through an automated nightly system job"
+            ],
+            "lessonId": "87e6226d-e1d8-4481-95c3-b685abe89964",
+            "question": "According to the lesson on ways to create suppliers in Oracle Cloud, which of these is one of the common methods to create a supplier?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Suppliers Application",
+            "explanation": "Suppliers can typically be created via requester suggestion, direct buyer/procurement creation, or supplier self-registration.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q20",
+            "options": [
+              "A Local Catalog is hosted within Oracle Cloud itself, while a Remote/Punchout Catalog redirects the requester to an external supplier website to select items",
+              "A Local Catalog can only be used by suppliers, not employees",
+              "A Remote Catalog does not allow items to be added to a requisition",
+              "A Local Catalog requires a purchase order to already exist"
+            ],
+            "lessonId": "6e3bd478-66f7-468d-a8dd-3109ebc7809f",
+            "question": "What is the key difference between a Local Catalog requisition and a Remote/Punchout Catalog requisition?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Requisitons Application",
+            "explanation": "Local catalogs are maintained within Oracle Cloud, while punchout/remote catalogs send the user to an external supplier site to shop before returning items to the requisition.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q21",
+            "options": [
+              "Allowing a requester to browse and request items organized by category when a specific catalog item isn't readily searchable",
+              "Automatically generating a purchase order without approval",
+              "Replacing the need for any catalog structure entirely",
+              "Only requesting items already received on a prior PO"
+            ],
+            "lessonId": "9d752f17-5ebf-4214-9714-69d5a30b94ec",
+            "question": "What is a 'Shop by Category' requisition used for in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Requisitons Application",
+            "explanation": "Shop by Category lets requesters browse items grouped by category, useful when they don't know the exact catalog item to search for.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q22",
+            "options": [
+              "When the item or service needed isn't available in any existing catalog and details must be manually entered",
+              "When the requester wants automatic approval without manager review",
+              "Only when creating a purchase agreement",
+              "Only for correcting an already-approved purchase order"
+            ],
+            "lessonId": "8b8b60d7-e275-4e79-a29a-98aa9c4da8e4",
+            "question": "When would a requester typically use a Non-Catalog requisition instead of a catalog-based one?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Requisitons Application",
+            "explanation": "Non-Catalog requisitions are used when the needed item/service isn't in a catalog, requiring the requester to manually enter the details.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q23",
+            "options": [
+              "A Draft Cart is a saved, incomplete requisition not yet submitted, while a Shopping Cart holds items actively being added before checkout/submission",
+              "A Draft Cart can never be edited once created",
+              "A Shopping Cart is only visible to approvers, not requesters",
+              "There is no functional difference between the two"
+            ],
+            "lessonId": "90d43eaa-217d-4e7f-9b8e-23ab0aaa1b81",
+            "question": "What is the key distinction between a Draft Cart and a Shopping Cart in Oracle Cloud requisitioning?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Requisitons Application",
+            "explanation": "A Draft Cart represents a saved requisition-in-progress that hasn't been submitted, distinct from the active shopping cart used while adding items.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q24",
+            "options": [
+              "Changing the PO via the originating requisition, which can update the associated purchase order",
+              "Deleting the supplier record to force a new order",
+              "Only Accounts Payable can make any changes to a PO",
+              "The PO can never be changed once created from a requisition"
+            ],
+            "lessonId": "de4587b8-3970-4128-847e-1ef6856ce58e",
+            "question": "If a requester needs to modify quantities or details on a purchase order that was created from a requisition, what approach does Oracle Cloud support?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Requisitons Application",
+            "explanation": "Oracle Cloud supports changing a PO through the requisition it originated from, propagating updates to the PO.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q25",
+            "options": [
+              "Complex POs support advanced features like milestone billing, financing, or retainage typically used for services or projects",
+              "Complex POs cannot be approved by managers",
+              "Regular POs allow multiple suppliers on a single order while Complex POs allow only one line item",
+              "Complex POs are only used for receiving goods, never services"
+            ],
+            "lessonId": "81fe63a7-b7ef-423a-857e-14cce99d088d",
+            "question": "What is a key characteristic of a Complex Purchase Order compared to a Regular Purchase Order in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Orders Application",
+            "explanation": "Complex POs support advanced commercial terms such as milestones, retainage, and financing, often used for services-based or project-based purchases.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q26",
+            "options": [
+              "It streamlines the process by converting already-approved requisition demand directly into a PO without re-entering details",
+              "It bypasses the need for a supplier to be qualified",
+              "It automatically issues payment to the supplier",
+              "It removes the ability to edit any PO details before submission"
+            ],
+            "lessonId": "ca0a5896-61db-43a6-95ca-735cd93ee51c",
+            "question": "What is the primary purpose of creating a Purchase Order 'from an Approved Requisition' rather than manually via online pages?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Orders Application",
+            "explanation": "Creating a PO from an approved requisition leverages previously entered and approved requisition data, saving time versus manual entry.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q27",
+            "options": [
+              "To adjust quantities, pricing, or dates after the order was already placed due to changing business needs",
+              "To create a brand-new supplier record",
+              "To register the purchase order with DocuSign",
+              "To generate a new procurement organization structure"
+            ],
+            "lessonId": "d8bd9d6d-ecdb-4e7e-8b86-345c20d572c7",
+            "question": "What is a common reason a buyer would need to change an existing purchase order in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the Purchase Orders Application",
+            "explanation": "Purchase orders are commonly changed to adjust quantities, pricing, dates, or other terms after initial placement.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q28",
+            "options": [
+              "To allow requesters/receivers to confirm that ordered goods or services were received before invoice processing continues",
+              "To allow suppliers to submit invoices directly",
+              "To allow buyers to negotiate pricing with suppliers",
+              "To allow finance teams to close the general ledger period"
+            ],
+            "lessonId": "f3709d48-0c65-4fdb-9b37-6faa7529a3b4",
+            "question": "What is the primary purpose of the My Receipts application in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the My Receipts Application",
+            "explanation": "My Receipts lets the requester or receiving party confirm receipt of goods/services, which is often a prerequisite for invoice matching and payment.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q29",
+            "options": [
+              "To correct errors such as receiving the wrong quantity or condition of goods after the initial receipt was recorded",
+              "To reassign the purchase order to a different supplier",
+              "To submit a new sourcing negotiation",
+              "To modify the original purchase requisition's approval hierarchy"
+            ],
+            "lessonId": "a4b7b5a7-4320-46d8-bd28-85e065a307b3",
+            "question": "Why might a user need to change an already-created receipt in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the My Receipts Application",
+            "explanation": "Receipts may need correction if the recorded quantity or condition doesn't match what was actually received.",
+            "correctIndex": 0
+          },
+          {
+            "id": "q30",
+            "options": [
+              "Creating a receipt confirms physical goods/services were received, while offline/accrual invoice approval handles matching and approving costs without a formal receipt step",
+              "They are functionally identical processes with different names",
+              "Invoice Approval always happens before any purchase order is created",
+              "Receipts are only used for services while accrual approval is only used for goods"
+            ],
+            "lessonId": "68278417-e97b-45c1-a104-9c9cfdc9063b",
+            "question": "What is the key distinction between creating a Receipt and Invoice Approval under an offline/accrual approach in Oracle Cloud?",
+            "sourceKind": "LESSON",
+            "courseTitle": "How to Use the My Receipts Application",
+            "explanation": "Receipting confirms actual receipt of goods/services, while offline/accrual invoice approval is an alternative approach to approving costs, particularly relevant when formal receiving isn't performed the same way.",
+            "correctIndex": 0
+          }
+        ],
+        "model": "claude-sonnet-5",
+        "generated_at": "2026-08-21T20:59:36.081Z",
+        "pass_threshold": 70,
+        "max_attempts": 3,
+        "created_at": "2026-08-21T20:59:36.081Z",
+        "updated_at": "2026-09-03T04:19:13.432Z",
+        "reviewed_at": "2026-09-03T04:19:13.432Z",
+        "reviewed_by": "9a423ae1-1a7a-4dbe-a949-af48b83a5697",
+        "source_note": null,
+        "status": "PUBLISHED"
+      }
+    ],
+    "learn_test_attempts": []
+  }
+}

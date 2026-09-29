@@ -135,7 +135,7 @@ async function main() {
     inTok += outcome.usage.inputTokens;
     outTok += outcome.usage.outputTokens;
 
-    await prisma.learnAssessment.upsert({
+    await prisma.certificationTest.upsert({
       where: { learning_path_id: p.id },
       update: {
         questions: outcome.questions,

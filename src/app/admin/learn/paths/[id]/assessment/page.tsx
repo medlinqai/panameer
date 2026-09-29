@@ -75,7 +75,7 @@ export default async function Page({
   });
   if (!path) notFound();
 
-  const row = await prisma.learnAssessment.findUnique({
+  const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: id },
   });
   const reviewer = row?.reviewed_by

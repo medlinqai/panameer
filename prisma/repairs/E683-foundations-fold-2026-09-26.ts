@@ -136,7 +136,7 @@ async function main() {
     })),
     not_touched: {
       assessment_on_1_background:
-        "LearnAssessment stays attached to 1. Background, which becomes DRAFT. Its test is then unreachable. Reported, not moved — Scott did not authorise moving a test.",
+        "CertificationTest stays attached to 1. Background, which becomes DRAFT. Its test is then unreachable. Reported, not moved — Scott did not authorise moving a test.",
       experts: "learn_lessons.expert_person_id untouched (load-bearing rule 10).",
       old_forum_boards: "left in place on the four unpublished paths.",
     },

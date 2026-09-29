@@ -282,8 +282,8 @@ refuses(
   "TEST_ASSESSMENT_NOT_PUBLISHED"
 );
 check(
-  "4 — TestRequestLine.learn_assessment_id is NOT NULL",
-  /learn_assessment_id\s+String\s+@db\.Uuid/.test(modelBody("TestRequestLine"))
+  "4 — TestRequestLine.certification_test_id is NOT NULL",
+  /certification_test_id\s+String\s+@db\.Uuid/.test(modelBody("TestRequestLine"))
 );
 
 /* ── WS-2 RULES 2 AND 3 · A BUYER'S REQUEST DOES NOT TOUCH THE ATTEMPT COUNT ─ */
@@ -350,14 +350,14 @@ check(
 
 check(
   "4 — TestResponseLine references the attempt",
-  /learn_test_attempt_id\s+String\?\s+@db\.Uuid/.test(modelBody("TestResponseLine"))
+  /certification_attempt_id\s+String\?\s+@db\.Uuid/.test(modelBody("TestResponseLine"))
 );
 {
   const attempt = { id: "att-9", score: 88, passed: true, created_at: new Date("2026-09-01") };
   const copied = copyResultFromAttempt({}, attempt);
   check(
     "4 — the score is copied from the attempt, verbatim",
-    copied.score === 88 && copied.passed === true && copied.learn_test_attempt_id === "att-9"
+    copied.score === 88 && copied.passed === true && copied.certification_attempt_id === "att-9"
   );
   refuses(
     "4 — MUTATION: a hand-supplied score is refused",

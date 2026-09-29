@@ -223,7 +223,7 @@ function routes(dir = "src/app", out: string[] = []): string[] {
       //     /prisma\.learningPath\.(findFirst|findUnique)/.test(stripTs(readFileSync(f, "utf8")))
       //   );
     */
-    const ADMITS = /\b(learnEnrollment|lessonProgress|learnTestAttempt)\.(create|createMany|upsert)\b/;
+    const ADMITS = /\b(learnEnrollment|lessonProgress|certificationAttempt)\.(create|createMany|upsert)\b/;
     const pathRoutes = routes.filter((f) => {
       const body = stripTs(readFileSync(f, "utf8"));
       return /prisma\.learningPath\.(findFirst|findUnique)/.test(body) && ADMITS.test(body);

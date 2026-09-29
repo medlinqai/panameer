@@ -96,8 +96,8 @@ export async function hasPassed(
   userId: string,
   assessmentId: string
 ): Promise<boolean> {
-  const attempt = await prisma.learnTestAttempt.findFirst({
-    where: { user_id: userId, assessment_id: assessmentId, passed: true },
+  const attempt = await prisma.certificationAttempt.findFirst({
+    where: { user_id: userId, certification_test_id: assessmentId, passed: true },
     select: { id: true },
   });
   return attempt != null;

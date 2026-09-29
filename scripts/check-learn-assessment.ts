@@ -204,7 +204,7 @@ const callArgument = (src: string, from: number): string => {
   return src.slice(open);
 };
 const publishesOnWrite = (src: string) =>
-  [...src.matchAll(/learnAssessment\.(create|update|upsert)\(/g)].some((m) => {
+  [...src.matchAll(/certificationTest\.(create|update|upsert)\(/g)].some((m) => {
     const arg = callArgument(src, (m.index ?? 0) + m[0].length);
     return /questions:/.test(arg) && /status:\s*"PUBLISHED"/.test(arg);
   });

@@ -111,7 +111,7 @@ check(
 const publishWrites = [...bodies.entries()].flatMap(([f, b]) =>
   [...b.matchAll(/status:\s*"PUBLISHED"/g)]
     .map((m) => ({ f, at: m.index ?? 0, b }))
-    .filter(({ b: body, at }) => /learnAssessment/.test(body.slice(Math.max(0, at - 400), at)))
+    .filter(({ b: body, at }) => /certificationTest/.test(body.slice(Math.max(0, at - 400), at)))
 );
 check(
   "2 — there is at least one publish write to judge",
@@ -216,7 +216,7 @@ check(
 
 check(
   "5 — nothing in the review path deletes an attempt",
-  !/learnTestAttempt\.delete|testAttempt\.delete|attempts:\s*\{\s*delete/.test(lib) &&
+  !/certificationAttempt\.delete|testAttempt\.delete|attempts:\s*\{\s*delete/.test(lib) &&
     !/delete/.test(api),
   "someone who passed last week passed a real test"
 );
@@ -255,7 +255,7 @@ check("5 — and the provenance the reviewer needs", /sourceNote/.test(screen));
 // ---------------------------------------------------------------------------
 
 async function live() {
-  const rows = await prisma.learnAssessment.findMany({
+  const rows = await prisma.certificationTest.findMany({
     select: { status: true, reviewed_by: true, reviewed_at: true, learning_path_id: true },
   });
   check("live — there are sets to judge", rows.length > 0, `${rows.length}`);

@@ -257,7 +257,7 @@ export async function getAppPath(
     getPathForumTeaser(viewer, path.id),
     pathInterestFor(userId, path.id),
     userId
-      ? prisma.learnTestAttempt.findMany({
+      ? prisma.certificationAttempt.findMany({
           where: { user_id: userId, learning_path_id: path.id },
           select: { passed: true },
         })

@@ -38,7 +38,7 @@ export async function GET(
   if (gate instanceof NextResponse) return gate;
   const { id } = await params;
 
-  const row = await prisma.learnAssessment.findUnique({ where: { learning_path_id: id } });
+  const row = await prisma.certificationTest.findUnique({ where: { learning_path_id: id } });
   /*
     ⚠ THE REVIEWER NEEDS THE PROVENANCE, NOT JUST THE QUESTIONS. `source_note`
     holds which documentation URLs informed the set and `status`/`reviewed_*` say
@@ -134,7 +134,7 @@ export async function POST(
     doesn't undo that, and cascading the attempts away would quietly revoke
     credentials that were properly earned.
   */
-  const row = await prisma.learnAssessment.upsert({
+  const row = await prisma.certificationTest.upsert({
     where: { learning_path_id: id },
     create: { learning_path_id: id, questions: outcome.questions, model: outcome.model },
     update: { questions: outcome.questions, model: outcome.model, generated_at: new Date() },

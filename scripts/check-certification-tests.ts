@@ -105,7 +105,7 @@ check(
 );
 check(
   "2 — ⚠⚠ the pass is read from the ATTEMPT, not from a Certification row",
-  /learnTestAttempt\.findFirst/.test(lib) && !/certification\.(findFirst|findMany)/.test(lib),
+  /certificationAttempt\.findFirst/.test(lib) && !/certification\.(findFirst|findMany)/.test(lib),
   "all 12 Certification rows are SELF_REPORTED — a PDF is not a pass"
 );
 check(
@@ -142,7 +142,7 @@ async function live() {
   const { certificationTestForSkill } = await import("@/lib/certification-tests");
   const before = {
     paths: await prisma.learningPath.count(),
-    assessments: await prisma.learnAssessment.count(),
+    assessments: await prisma.certificationTest.count(),
     joins: await prisma.learningPathSkill.count(),
     certs: await prisma.certification.count(),
   };
@@ -166,7 +166,7 @@ async function live() {
     });
     pathId = path.id;
     /* ⚠⚠ THE ASSESSMENT STARTS `DRAFT` — that is the state the rule is about. */
-    const a = await prisma.learnAssessment.create({
+    const a = await prisma.certificationTest.create({
       data: {
         learning_path_id: path.id,
         status: "DRAFT",
@@ -191,8 +191,27 @@ async function live() {
       whileDraft ? `resolved to ${whileDraft.learningPathTitle}` : "null"
     );
 
-    /* ⚠⚠⚠ DIRECTION TWO: PUBLISH IT AND WATCH THE ANSWER FLIP. */
-    await prisma.learnAssessment.update({ where: { id: a.id }, data: { status: "PUBLISHED" } });
+    /*
+      ── ⚠⚠⚠ DIRECTION TWO: PUBLISH IT AND WATCH THE ANSWER FLIP ────────────────
+
+      ⚠⚠ **A REVIEWER IS WRITTEN WITH THE PUBLISH, AND THAT IS NOT DECORATION IN A
+      FIXTURE.** `check:learn-review` asserts *"every write of status PUBLISHED also
+      writes `reviewed_by` AND `reviewed_at`"* — and it **caught this gate** when
+      `P2-A4-E702` renamed the model and the whole family was re-run.
+      ⚠⚠⚠ **THE RED WAS REAL AND IT WAS MINE: `P2-A4-E701` ADDED THIS FIXTURE AND NEVER
+      RAN `check:learn-review`, WHICH IS THE GATE ASSERTING THE RULE IT BROKE (98e).**
+      ⚠ **AND A FIXTURE THAT MODELS THE WRONG SHAPE TEACHES THE WRONG SHAPE** — the rule
+      exists because a test published with no reviewer is `93e`'s harm exactly: *"a
+      generated test nobody has read must not award a certificate."*
+      ⚠ The reviewer is any real Person; this fixture is deleted moments later, but it
+      publishes the way the product must.
+    */
+    const reviewer = await prisma.person.findFirst({ select: { id: true } });
+    check("3 — a person exists to stand as reviewer", reviewer != null);
+    await prisma.certificationTest.update({
+      where: { id: a.id },
+      data: { status: "PUBLISHED", reviewed_by: reviewer?.id ?? null, reviewed_at: new Date() },
+    });
     const whenPublished = await certificationTestForSkill(skill.id);
     check(
       "3 — ⚠⚠⚠ publishing it flips the answer — the resolver now finds it, by name",
@@ -210,13 +229,13 @@ async function live() {
   } finally {
     /* ⚠⚠ DELETE EXACTLY WHAT WAS CREATED, BY ID, INNERMOST FIRST. */
     if (joinId) await prisma.learningPathSkill.deleteMany({ where: { id: joinId } });
-    if (assessmentId) await prisma.learnAssessment.deleteMany({ where: { id: assessmentId } });
+    if (assessmentId) await prisma.certificationTest.deleteMany({ where: { id: assessmentId } });
     if (pathId) await prisma.learningPath.deleteMany({ where: { id: pathId } });
   }
 
   const after = {
     paths: await prisma.learningPath.count(),
-    assessments: await prisma.learnAssessment.count(),
+    assessments: await prisma.certificationTest.count(),
     joins: await prisma.learningPathSkill.count(),
     certs: await prisma.certification.count(),
   };
@@ -228,7 +247,7 @@ async function live() {
   );
   /* ⚠⚠⚠ AND THE SIX REAL DRAFTS ARE STILL DRAFT. This gate must never leave a
      model-written test publishable. */
-  const drafts = await prisma.learnAssessment.count({ where: { status: "DRAFT" } });
+  const drafts = await prisma.certificationTest.count({ where: { status: "DRAFT" } });
   check("3 — ⚠⚠⚠ the real DRAFT assessments are untouched — still 6", drafts === 6, `${drafts} DRAFT`);
   check(
     "3 — ⚠ and the join is still EMPTY, because nothing was seeded",

@@ -603,7 +603,7 @@ export class AssessmentNotReady extends Error {
 }
 
 export async function getPublishedAssessment(learningPathId: string) {
-  const row = await prisma.learnAssessment.findUnique({
+  const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
   });
   if (!row) {
@@ -632,7 +632,7 @@ export async function getPublishedAssessment(learningPathId: string) {
  * path is a pure read through `getPublishedAssessment`.
  */
 export async function getOrCreateAssessment(learningPathId: string) {
-  const existing = await prisma.learnAssessment.findUnique({
+  const existing = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
   });
   if (existing) return existing;
@@ -640,7 +640,7 @@ export async function getOrCreateAssessment(learningPathId: string) {
   const outcome = await generateAssessment(learningPathId);
   if (!outcome.ok) throw new Error(outcome.message);
 
-  return prisma.learnAssessment.create({
+  return prisma.certificationTest.create({
     data: {
       learning_path_id: learningPathId,
       questions: outcome.questions,
@@ -700,7 +700,7 @@ export async function dropQuestions(
   learningPathId: string,
   dropIds: string[]
 ): Promise<ReviewOutcome> {
-  const row = await prisma.learnAssessment.findUnique({
+  const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
   });
   if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
@@ -715,7 +715,7 @@ export async function dropQuestions(
     };
   }
 
-  const saved = await prisma.learnAssessment.update({
+  const saved = await prisma.certificationTest.update({
     where: { learning_path_id: learningPathId },
     data: { questions: kept },
   });
@@ -740,7 +740,7 @@ export async function publishAssessment(
   learningPathId: string,
   userId: string
 ): Promise<ReviewOutcome> {
-  const row = await prisma.learnAssessment.findUnique({
+  const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
   });
   if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
@@ -767,7 +767,7 @@ export async function publishAssessment(
     };
   }
 
-  const saved = await prisma.learnAssessment.update({
+  const saved = await prisma.certificationTest.update({
     where: { learning_path_id: learningPathId },
     data: { status: "PUBLISHED", reviewed_by: person.id, reviewed_at: new Date() },
   });
@@ -790,12 +790,12 @@ export async function publishAssessment(
  * them would rewrite history to say nobody ever looked.
  */
 export async function unpublishAssessment(learningPathId: string): Promise<ReviewOutcome> {
-  const row = await prisma.learnAssessment.findUnique({
+  const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
   });
   if (!row) return { ok: false, message: "No question set for this path.", code: "MISSING" };
 
-  const saved = await prisma.learnAssessment.update({
+  const saved = await prisma.certificationTest.update({
     where: { learning_path_id: learningPathId },
     data: { status: "DRAFT" },
   });
@@ -852,13 +852,13 @@ export async function gradeAttempt(
   const assessment = await getPublishedAssessment(learningPathId);
   const questions = readQuestions(assessment);
   if (questions.length === 0) {
-    throw new Error("This assessment has no usable questions.");
+    throw new Error("This certification test has no usable questions.");
   }
 
-  const priorAttempts = await prisma.learnTestAttempt.count({
+  const priorAttempts = await prisma.certificationAttempt.count({
     where: { user_id: userId, learning_path_id: learningPathId },
   });
-  const alreadyPassed = await prisma.learnTestAttempt.findFirst({
+  const alreadyPassed = await prisma.certificationAttempt.findFirst({
     where: { user_id: userId, learning_path_id: learningPathId, passed: true },
     select: { id: true },
   });
@@ -889,9 +889,9 @@ export async function gradeAttempt(
   const score = Math.round((correct / questions.length) * 100);
   const passed = score >= assessment.pass_threshold;
 
-  await prisma.learnTestAttempt.create({
+  await prisma.certificationAttempt.create({
     data: {
-      assessment_id: assessment.id,
+      certification_test_id: assessment.id,
       user_id: userId,
       learning_path_id: learningPathId,
       score,
@@ -1008,9 +1008,9 @@ export async function issueCredential(
 /** What the learner is allowed to know before sitting the test. */
 export async function getTestState(userId: string | null, learningPathId: string) {
   const [assessment, attempts, path] = await Promise.all([
-    prisma.learnAssessment.findUnique({ where: { learning_path_id: learningPathId } }),
+    prisma.certificationTest.findUnique({ where: { learning_path_id: learningPathId } }),
     userId
-      ? prisma.learnTestAttempt.findMany({
+      ? prisma.certificationAttempt.findMany({
           where: { user_id: userId, learning_path_id: learningPathId },
           orderBy: { created_at: "desc" },
           select: { id: true, score: true, passed: true, created_at: true },

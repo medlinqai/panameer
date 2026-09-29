@@ -295,14 +295,14 @@ export type AttemptRecord = { id: string; score: number; passed: boolean; create
 export function copyResultFromAttempt(
   draft: { score?: number | null; passed?: boolean | null },
   attempt: AttemptRecord
-): { learn_test_attempt_id: string; score: number; passed: boolean; completed_at: Date } {
+): { certification_attempt_id: string; score: number; passed: boolean; completed_at: Date } {
   if (draft.score != null || draft.passed != null)
     throw new SourcingError(
       "A test result is copied from the attempt, never supplied — a typed score is a second source of truth",
       "TEST_RESULT_SUPPLIED"
     );
   return {
-    learn_test_attempt_id: attempt.id,
+    certification_attempt_id: attempt.id,
     score: attempt.score,
     passed: attempt.passed,
     completed_at: attempt.created_at,
