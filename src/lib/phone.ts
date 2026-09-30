@@ -308,20 +308,39 @@ export function validatePhone(
   const digits = digitsOf(raw);
   const rule = ruleFor(country);
 
-  if (rule) {
-    // A number typed with its country code — "1 212 559 9999" — is the same
-    // number, so it is accepted rather than counted as too long.
-    const national = digits.startsWith(rule.countryCode)
-      ? digits.slice(rule.countryCode.length)
-      : digits;
-    if (national.length < rule.nationalDigits) {
-      return { ok: false, reason: `That's too short — ${rule.example} is the shape we expect.` };
-    }
-    if (national.length > rule.nationalDigits) {
-      return { ok: false, reason: `That's too long — ${rule.example} is the shape we expect.` };
-    }
-    return { ok: true };
-  }
+  /*
+    ── ⚠⚠⚠ THE LIBRARY JUDGES EVERY COUNTRY NOW (`P2-A1.1-E728` WS-B, ruling 3) ───────────
+
+    ⚠ **SCOTT: *"Phone validation uses libphonenumber-js for every country, not just the
+    curated US rule."***
+
+    ⚠⚠⚠ **THE CURATED BRANCH USED TO RETURN A VERDICT, AND IT ONLY EVER COUNTED DIGITS.**
+    Ten digits was a pass — so `5551234567` was accepted as a US number, and
+    `isValidPhoneNumber` rejects it (555 is the reserved fictional range). **MEASURED BEFORE
+    THIS CHANGE: 61 of 61 stored phones "passed", including 53 seeded `555` numbers.**
+    ⚠⚠ **SO THE OLD PASS RATE WAS NOT A MEASUREMENT OF ANYTHING** — it was a digit count
+    wearing a verdict's clothes, and it is exactly the shape ruling 11 warns about: an
+    assertion its own subject cannot fail.
+
+    ⚠⚠⚠ **THE RULE IS NOT DELETED — IT IS DEMOTED FROM JUDGE TO PHRASEBOOK.** `rule.example`
+    is the only thing a curated entry is genuinely better at: *"(212) 555-0199 is the shape we
+    expect"* is a more useful sentence than *"that's too short for a United States number"*.
+    **The verdict comes from the library; the wording still comes from the curated example
+    where there is one.**
+    ⚠ **ITS OTHER TWO JOBS ARE UNTOUCHED:** `formatPhone` still uses `rule.format` for live
+    as-you-type formatting, and `phoneExpectation` still prefers `rule.example` for the hint.
+    This change is about the VERDICT only.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the branch that returned early:
+    //   if (rule) {
+    //     // A number typed with its country code - "1 212 559 9999" - is the same
+    //     // number, so it is accepted rather than counted as too long.
+    //     const national = digits.startsWith(rule.countryCode)
+    //       ? digits.slice(rule.countryCode.length) : digits;
+    //     if (national.length < rule.nationalDigits) return { ok: false, reason: … };
+    //     if (national.length > rule.nationalDigits) return { ok: false, reason: … };
+    //     return { ok: true };
+    //   }
+  */
 
   /*
     ── ⚠⚠ EVERY OTHER COUNTRY, JUDGED BY ITS OWN RULES (`P1-ALL-E417`) ────────
@@ -344,11 +363,14 @@ export function validatePhone(
   const iso = isoFor(country);
   if (iso) {
     const lengthProblem = validatePhoneNumberLength(digits, iso);
+    /* ⚠⚠ THE CURATED EXAMPLE STILL SHAPES THE WORDS WHERE THERE IS ONE (`E728` WS-B) — that
+       is the phrasebook job the rule keeps. Everywhere else the country is named instead. */
+    const shape = rule ? `${rule.example} is the shape we expect.` : `for a ${country} number.`;
     if (lengthProblem === "TOO_SHORT") {
-      return { ok: false, reason: `That's too short for a ${country} number.` };
+      return { ok: false, reason: rule ? `That's too short — ${shape}` : `That's too short ${shape}` };
     }
     if (lengthProblem === "TOO_LONG") {
-      return { ok: false, reason: `That's too long for a ${country} number.` };
+      return { ok: false, reason: rule ? `That's too long — ${shape}` : `That's too long ${shape}` };
     }
     /*
       ⚠ A NUMBER CAN BE THE RIGHT LENGTH AND STILL NOT EXIST — a Saudi number

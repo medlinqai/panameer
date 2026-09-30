@@ -200,6 +200,34 @@ export const NOTIFICATION_EVENTS = {
     the row they were given is a reasonable default, not a defect awaiting repair.
     ⚠ The `href` points at the one-section editor so *"change it"* is one click, not a hunt.
   */
+  /*
+    ── ⚠⚠⚠ `profile.country_unknown` (`P2-A1.1-E728` WS-B, ruling 2) ────────────────────
+
+    ⚠ **SCOTT: *"'Other' stays legal: those 7 rows keep it, with a null code, and get the
+    next-sign-in prompt."***
+    ⚠⚠ **THE DATA IS NOT TOUCHED.** `"Other"` remains in the name column and the code column
+    stays `null` — the null IS the flag. This event is how the person is asked to replace it.
+    ⚠⚠⚠ **"NEXT SIGN-IN" IS SERVED BY THE NOTIFICATION SURFACE, NOT BY A NEW INTERSTITIAL,
+    AND THAT IS A JUDGEMENT I AM FLAGGING.** There is no sign-in-time prompt mechanism in this
+    codebase; building one would put a new gate in the auth path **every member passes
+    through**, to serve seven rows. The bell is on every page, so they meet it the next time
+    they sign in. ⚠ If Scott wants a blocking interstitial, that is its own brief.
+    ⚠ **IT CANNOT SEND EMAIL:** `NOTIFICATION_EMAIL_EVENTS` holds only `account.finish_later`.
+    ⚠ `requiresAction: true` — unlike the language default, this one IS a gap: nothing can
+    resolve a country the standard cannot express except the person who lives there.
+  */
+  "profile.country_unknown": {
+    event: "profile.country_unknown",
+    recipient: "the member",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "Which country are you in?",
+    body: () =>
+      "Your address says \"Other\". Pick your country so buyers can find you and we can check your phone number.",
+    href: () => "/settings/contact",
+  },
   "profile.language_defaulted": {
     event: "profile.language_defaulted",
     recipient: "the provider",

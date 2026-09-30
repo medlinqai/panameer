@@ -320,6 +320,19 @@ model Company {
   /// ⚠ NULLABLE: 3 companies predate this column and cannot be back-filled
   /// without asking somebody. It is not a gate on anything today.
   country                      String?
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  country_code                 String? @db.VarChar(2)
   logo_url                     String?
 
   /// TENANT THEME (E204) — a brand HUE and a recipe id, never a set of hexes.
@@ -420,6 +433,19 @@ model Address {
   state       String?
   postal_code String?
   country     String?
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  country_code String? @db.VarChar(2)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -1522,6 +1548,19 @@ model Employer {
   state               String?
   /// From the shared `COUNTRIES` list — a validated value, not free text.
   country             String?
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  country_code        String? @db.VarChar(2)
   start_date          DateTime?
   end_date            DateTime?
   /// True while this is the provider's current employer.
@@ -3069,6 +3108,19 @@ model WorkRequest {
   currency            String               @default("USD")
   worksite            WorksiteType?
   location_country    String?
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  location_country_code String? @db.VarChar(2)
   duration            WorkRequestDuration?
   /// When the work runs. `duration` (the coarse enum) stays: a requester who
   /// knows "3-6 months" but not the dates can still answer.
@@ -3969,6 +4021,19 @@ model PayoutMethod {
   last4      String?
   /// Where the money lands — drives which tax form is required.
   country    String
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  country_code String? @db.VarChar(2)
   is_default Boolean          @default(false)
   created_at DateTime         @default(now())
   updated_at DateTime         @updatedAt
@@ -3996,6 +4061,19 @@ model TaxProfile {
   form        TaxForm
   legal_name  String
   country     String
+  /// ── ⚠⚠⚠ THE ISO-2 CODE, BESIDE THE NAME (`P2-A1.1-E728` WS-B) ────────────────────────
+  ///
+  /// ⚠ **SCOTT'S RULING, 2026-09-30: *"Additive: a new ISO-2 code column beside each existing
+  /// country column; the old columns are untouched."***
+  /// ⚠⚠ **SO THE NAME COLUMN IS STILL THE SOURCE OF TRUTH UNTIL THE LAST READER MOVES.**
+  /// Nothing breaks on the day this lands: every existing reader keeps reading the name it
+  /// always read, and readers switch to resolving from the code ONE BY ONE.
+  /// ⚠⚠⚠ **NULLABLE, AND `"Other"` IS EXACTLY WHY.** Seven rows store `"Other"`, which is not
+  /// a country and has no code. Scott ruled they keep it — so a null code means *"the name
+  /// column holds something this standard cannot express"*, and it is the flag the
+  /// next-sign-in prompt reads. **A non-null default would have erased that distinction.**
+  /// ⚠ Two characters, upper case, ISO 3166-1 alpha-2, matching `libphonenumber-js`.
+  country_code String? @db.VarChar(2)
   /// Display only. The TIN itself is not stored: we have no lawful need to hold
   /// it before there is a payment processor that requires it.
   tin_last4   String?

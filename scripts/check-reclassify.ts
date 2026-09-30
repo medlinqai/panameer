@@ -82,6 +82,17 @@ const EMPLOYER_DISPOSITION: Record<string, string> = {
   city: "folded into Project.location when location is empty",
   state: "folded into Project.location when location is empty",
   country: "folded into Project.location when location is empty",
+  /*
+    ⚠⚠⚠ NOT CARRIED, AND THE GATE IS RIGHT TO HAVE ASKED (`P2-A1.1-E728` WS-B).
+    ⚠ `Project` HAS NO COUNTRY COLUMN — the employer's country is FOLDED into
+    `Project.location` as text, and a two-letter code has nowhere to go in a string
+    that reads "Houston, TX, United States". ⚠⚠ Carrying it would mean adding a column to
+    `Project` to hold a fact the location string already states.
+    ⚠⚠⚠ **THIS IS EXACTLY WHY THE GATE EXISTS:** a new column on `Employer` is a decision
+    about reclassification whether or not anybody makes it, and an unanswered one would have
+    silently dropped the code on every employer-to-project move.
+  */
+  country_code: "not carried — Project has no country column; the name is folded into Project.location and a code cannot be",
   start_date: "-> Project.start_date",
   end_date: "-> Project.end_date",
   is_current: "-> Project.is_current",

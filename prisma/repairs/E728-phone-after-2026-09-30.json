@@ -1,0 +1,497 @@
+{
+  "label": "AFTER",
+  "total": 61,
+  "pass": 6,
+  "fail": 55,
+  "rows": [
+    {
+      "id": "046ceaa3-f5dd-4683-9d1f-3d2b746dc5a4",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "049e1014-029a-44f9-a672-5b9481df179e",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "088d4c4c-05c1-488f-85c0-9680cd4bd859",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "10ae516f-09d8-4778-8d75-7994c50e3e9c",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "14053e33-7639-46af-9d7e-f0bfe2e95c67",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "189d516e-df20-45ab-a9c3-685d7c607739",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a United States number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "1ab0da5b-7daa-4533-98cd-0929116d55fa",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "2377c793-cbc0-401e-8539-dd5b5c733c91",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "25e57700-4c13-473a-8c5a-e3488e9c441c",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "2b351e9d-a826-411f-bc15-4d5cb51292b8",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "2d8f2128-6930-4aa9-b75a-264820d8072e",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "33ee8a5f-a883-45bf-a895-03cb433e0d19",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "3a080a98-11b4-4ef7-9a6f-1c0d1c3a3e27",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "4052d02b-1ce3-40bd-a416-1cd8169e44c5",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "42ad2a1b-51c3-4b0e-bb8f-8cd5fa1224d7",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "446a818d-cc7c-4b7f-bbaf-c8a661db7c53",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "44eb98a6-2ab0-4f77-99ad-e15494d1e4d1",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "45cd0a35-26d6-442d-b7fe-ded379318784",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "47f36a03-8857-4acc-9444-2aa24aae03fc",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "484f1a62-30a5-46ea-8c97-cab357c191e0",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "4ac814a2-49cc-4aa6-984a-2b9b35e97e85",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "4b229caf-03d7-43f1-93e5-be435ad6cb6b",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "4e2522eb-000c-4f9c-8504-cc7ed77b438e",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "622c9a12-3828-484a-9881-e9bac3c32beb",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "652289e9-f21b-4645-b27c-e17031095693",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "693fd5c3-47b6-4380-add3-d8b37c02fa23",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "6bd5b05b-db08-4d26-a893-044e5d9d9498",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "72028bbf-fab8-4db6-8865-924b8e169b67",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "733c81a1-0923-41b8-91f9-134447fb8b5a",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "767fa7cc-c247-4ba4-894c-f20dc35bb083",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "7860cd2d-cc19-493f-99ea-9f14f589d642",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "8061433c-c3ce-4bc4-bc47-c787515beb12",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "808d6fe6-5164-4016-8af2-6d83231acef1",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "893d9a2b-68af-4652-8706-a951ae50720f",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "93735262-c45d-43f8-86fb-d3196d13b0e8",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "93ce3af0-c6e0-42e3-9883-aac7a39795a3",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "9a423ae1-1a7a-4dbe-a949-af48b83a5697",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a United States number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "9c0cef8a-8ece-4989-ba97-1b36fe03294e",
+      "country": "Other",
+      "curated": false,
+      "iso": null,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "9ce142bd-8f34-436b-b141-4ce281a2a0a1",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "a1366082-82f9-4efa-85c0-c218f24a9eb6",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "a20564f6-da0f-4063-873e-2604832e9976",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "a38f6fd6-d1a5-4e40-bf62-bb93597a5018",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "b17da465-b7bf-455f-861b-4aa90a3a5ada",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "b595df80-b8ee-4a7f-acba-8045f479b9c0",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "b6e44920-29ea-46cf-80b4-0543a0f65712",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "bbe27e67-3e99-45dd-99f8-36ed52aad9ae",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "c9753f15-b8ad-4d36-bca9-aea7b60f95c9",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "cd0ae642-5449-4cf4-9d1c-493d29954d44",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "cedfe879-049b-45c8-ab03-9969617e34bf",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "cee20da1-e654-4b45-871f-576370b7bec6",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "dbdedd10-463b-4deb-bdc1-5c1cd88b3213",
+      "country": "United States",
+      "curated": true,
+      "iso": "US",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "ddbb448c-06ec-4faf-a3cb-9f0dbe6909f2",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "ddec57c4-a827-4f99-868f-ed84fb1a4cac",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "de57813c-f68b-4725-9f6f-d26b582c260b",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "dffc092d-9db9-49a5-a21b-85713b63aeb8",
+      "country": "Mexico",
+      "curated": false,
+      "iso": "MX",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "e6a07b04-b301-4271-bbb0-f69ab37e7a85",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "ee2e0f0a-2129-4c36-b8da-245d09c375f3",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "f099856a-9b3f-49d2-af4c-e5e720c14ade",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "f71361a6-cf00-4dee-8fdc-818ecbbb8fab",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "fc06f0dc-c1d4-4c0b-85d6-43c7fc4fe745",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    },
+    {
+      "id": "fd5867c4-fc46-4431-80b8-583fe896ab33",
+      "country": "US",
+      "curated": true,
+      "iso": "US",
+      "ok": false,
+      "reason": "That doesn't look like a US number. If you're somewhere else, change the country."
+    }
+  ],
+  "note": "AFTER the ruling-3 change: libphonenumber-js judges every country. BEFORE, with the curated US rule returning the verdict, the same 61 rows measured 61 pass / 0 fail \u2014 because that rule only counted digits and accepted the reserved 555 range. All 55 failures here are 555 numbers and none belongs to a non-seed address."
+}

@@ -114,7 +114,36 @@ eq("complete US passes", validatePhone("(212) 559-9999", "United States").ok, tr
 eq("US with country code passes", validatePhone("1 212 559 9999", "United States").ok, true);
 eq("eleven digits without a 1 is too long", validatePhone("2125599999 7", "United States").ok, false);
 eq("trailing separator still validates on its digits", validatePhone("(212) 559-9999-", "United States").ok, true);
-eq("UK complete passes", validatePhone("7700 900123", "United Kingdom").ok, true);
+/*
+  ── ⚠⚠⚠ THE FIXTURE WAS A DRAMA NUMBER (`P2-A1.1-E728` WS-B) ──────────────────────────
+
+  ⚠ **`7700 900123` IS IN OFCOM'S RESERVED DRAMA RANGE** (07700 900000–900999), set aside so
+  television can dial it. `libphonenumber-js` refuses it, correctly.
+  ⚠⚠ **IT PASSED BEFORE ONLY BECAUSE THE CURATED UK RULE COUNTED DIGITS AND NOTHING ELSE** —
+  the same reason 53 seeded `+1 555 …` numbers passed. ⚠⚠⚠ **SO THIS ASSERTION WAS MEASURING
+  THE DIGIT COUNT, NOT VALIDITY**, and ruling 3 is what exposed it.
+  ⚠ **THIS IS `check:rollup`'s CASE — THE RULING CHANGED — NOT `check:cert-skills`' (the code
+  drifted).** The fixture moves to a real number and the drama range becomes its own
+  assertion, so the behaviour that was accidental is now deliberate and tested.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   eq("UK complete passes", validatePhone("7700 900123", "United Kingdom").ok, true);
+*/
+eq("UK complete passes", validatePhone("7911 123456", "United Kingdom").ok, true);
+eq(
+  "a UK drama-range number is refused",
+  validatePhone("7700 900123", "United Kingdom").ok,
+  false
+);
+eq(
+  "a US number with the non-existent 555 area code is refused",
+  validatePhone("555 010 4477", "United States").ok,
+  false
+);
+eq(
+  "a real US number still passes",
+  validatePhone("212 555 0199", "United States").ok,
+  true
+);
 eq("UK short fails", validatePhone("7700 9001", "United Kingdom").ok, false);
 /*
   ── ⚠⚠ "UNKNOWN COUNTRY" NOW MEANS `"Other"`, NOT "not one of three" ────────

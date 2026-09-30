@@ -1,5 +1,7 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE RESOLVER (`E728` WS-B). */
+import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
 /* ⚠ `hasCapability` LEFT THIS FILE WITH THE RATE RULE (`P2-A2-E618`) — the
    condition moved to `lib/rate-visibility.ts` so `/explore` could call the SAME
@@ -90,7 +92,9 @@ export async function getProviderProfileView(
           site: {
             select: {
               addresses: {
-                select: { city: true, state: true, country: true },
+                /* ⚠ `country_code` JOINS THE SELECT (`E728` WS-B ruling 1) — the reader
+                   below resolves the NAME from it and falls back to the stored name. */
+                select: { city: true, state: true, country: true, country_code: true },
                 take: 1,
               },
             },
@@ -242,7 +246,9 @@ export async function getProviderProfileView(
   /*
     ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E412` WS-4):
         const location =
-          [addr?.city, addr?.state, addr?.country].filter(Boolean).join(", ") || null;
+          [addr?.city, addr?.state, countryName(addr?.country_code, addr?.country)]
+            .filter(Boolean)
+            .join(", ") || null;
 
     ⚠⚠ THE COUNTRY WAS IN THE LINE, WHICH SILENCED THE LINE BELOW IT.
     `LocationBody` prints `country` on its own second line unless the first line
@@ -275,7 +281,16 @@ export async function getProviderProfileView(
       })
     : null;
 
-  const country = addr?.country?.trim() || null;
+  /*
+    ── ⚠⚠ READER SWITCHED (`P2-A1.1-E728` WS-B, ruling 1) ────────────────────────────────
+
+    ⚠ **IT PREFERS THE CODE AND FALLS BACK TO THE STORED NAME**, so this is correct on a
+    migrated row AND on one whose code is null — which is what lets readers move one at a
+    time with no flag day. ⚠⚠ The 7 `"Other"` rows still read `"Other"`, deliberately.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const country = addr?.country?.trim() || null;
+  */
+  const country = countryName(addr?.country_code, addr?.country)?.trim() || null;
   const primaryLanguage = profile.languages[0]?.name ?? null;
 
   return {

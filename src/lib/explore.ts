@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE RESOLVER (`E728` WS-B). */
+import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
 import type { Viewer } from "@/lib/access";
 import { marketplaceVisibleWhere } from "@/lib/access";
@@ -205,7 +207,8 @@ export async function searchProvidersTeaser(
             site: {
               select: {
                 addresses: {
-                  select: { city: true, country: true },
+                  /* ⚠ `country_code` JOINS THE SELECT (`E728` WS-B ruling 1). */
+                  select: { city: true, country: true, country_code: true },
                   take: 1,
                 },
               },
@@ -243,7 +246,10 @@ export async function searchProvidersTeaser(
         university: headlineSchool(p.education.map((e) => e.institution)),
         employerCount: p._count.employers,
         projectCount: p._count.projects,
-        location: formatLocation(addr?.city, addr?.country),
+        /* ⚠⚠ READER SWITCHED (`E728` WS-B) — the name comes from the code where there is
+           one, and from the stored name where there is not. ⚠ SUPERSEDED (`E164`):
+           //   location: formatLocation(addr?.city, addr?.country), */
+        location: formatLocation(addr?.city, countryName(addr?.country_code, addr?.country)),
         skills: p.skills.map((s) => s.skill.name),
         /* ⚠ ALL FIVE FIELDS THE GATE ACCEPTS (`E028` WS-4) — `rateLabel` read
            three, so anyone priced onsite- or remote-only rendered blank and
