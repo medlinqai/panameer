@@ -108,7 +108,7 @@ export function CleanSection({
           ⚠⚠ `pr-24` reserves the lane the absolutely-positioned action sits in, so a long
           title cannot run underneath it.
         */
-        className="flex cursor-pointer list-none items-center justify-between gap-4 py-[22px] pr-24 [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-4 py-[22px] pr-24 [&::-webkit-details-marker]:hidden"
       >
         <h2 className="text-[19px] font-semibold tracking-[-0.01em]">{title}</h2>
         {/*
@@ -120,10 +120,25 @@ export function CleanSection({
           exist **emits no CSS and fails silently** (the `HERO_SCRIM` trap). The working
           precedent is `step-disclosures.css:96`, and this follows it.
         */}
+        {/*
+          ── ⚠⚠⚠ THE CHEVRON IS PINNED TO THE RIGHT EDGE, AND THE ACTION SITS TO ITS LEFT
+              (`P2-A2-E715` row 7) ──────────────────────────────────────────────────────
+
+          ⚠ **SCOTT'S MOCKUP READS `Edit ⌄`. `E713` SHIPPED `⌄ Edit`** — the action was
+          absolute at `right-[34px]` while the chevron was a `justify-between` flex child
+          sitting at the content edge, 96px in behind `pr-24`, **so the chevron landed to the
+          LEFT of the action and the pair was inverted.**
+          ⚠⚠ MEASURED AT THE `before` GATE, not assumed: chevron at x≈1143, `Edit` at x≈1200.
+          ⚠⚠⚠ **FIXING IT BY MOVING THE ACTION FURTHER RIGHT WOULD PUSH IT OFF THE RULE** —
+          the chevron is what marks the section's right edge, so the chevron is what gets
+          pinned and the action is placed relative to it.
+          ⚠ It stays INSIDE `<summary>` so a click on it still toggles the section; it is
+          `aria-hidden` decoration either way (`StepDisclosures` decision 3).
+        */}
         <svg
           aria-hidden
           viewBox="0 0 24 24"
-          className="pm-clean-chev h-4 w-4 shrink-0 stroke-ink-2"
+          className="pm-clean-chev absolute right-0 top-[24px] h-4 w-4 shrink-0 stroke-ink-2"
           fill="none"
           strokeWidth="2"
         >
@@ -134,8 +149,10 @@ export function CleanSection({
         ⚠⚠⚠ A SIBLING OF `<summary>`, NOT A CHILD — see the docblock. This is what keeps
         `Edit` from eating the Enter that opens the panel (`E097`).
       */}
+      {/* ⚠ `right-[34px]` is the chevron's 16px plus the mockup's 18px gap, so the action
+          lands immediately to its left, exactly where `.summary .r` draws it. */}
       {(action || note) && (
-        <div className="absolute right-[34px] top-[22px] flex items-center gap-[18px]">
+        <div className="absolute right-[34px] top-[23px] flex items-center gap-[18px]">
           {note && <span className="text-[13px] text-ink-2">{note}</span>}
           {action}
         </div>

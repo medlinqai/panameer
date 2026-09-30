@@ -71,6 +71,16 @@ export async function getProviderProfileView(
           photo_url: true,
           phone: true,
           phone_verified_at: true,
+          /*
+            ⚠⚠ `Member since` ON THE META LINE (`P2-A2-E715` row 2). ⚠ It is a REAL COLUMN
+            WITH A REAL WRITER — `Person.created_at`, `@default(now())` at `schema.prisma:464`
+            — which is the counting rule's test (a figure is countable when the state it
+            counts has a writer). ⚠⚠⚠ **NOTHING IS INVENTED HERE:** the mockup draws
+            *"Member since August 2026"* and this is the only column that can say it.
+            ⚠ It is a NARROW `select`, so the field has to be named or it does not arrive —
+            adding it to the mapping alone would not compile.
+          */
+          created_at: true,
           // WS6 — the required-set gate reads these. Loaded explicitly so a
           // missing relation is a compile error rather than a provider quietly
           // hidden from the marketplace.
@@ -400,6 +410,12 @@ export async function getProviderProfileView(
       lastName: showSurname ? profile.person.last_name : "",
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
+      /*
+        ⚠ ISO, NOT A FORMATTED STRING — the view model states the FACT and the component
+        decides how to say it. A pre-formatted *"August 2026"* here would put a locale and a
+        wording decision in the data layer, where no surface can override it.
+      */
+      memberSince: profile.person.created_at.toISOString(),
       /*
         ⚠ THE OWNER'S USER ID (`P1-ALL-E374`). A `MENTOR` or `COLLEAGUE` row is
         written against `to_user_id`, so the Connect control on this profile

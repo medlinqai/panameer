@@ -64,6 +64,9 @@ test-results/
 playwright-report/
 e2e/.artifacts/
 e2e-shell/.artifacts/
+# E715 — paired screenshot gate: the harness is tracked, its output is not.
+e2e-e715/.artifacts/
+e2e-e715/shots/
 
 # ⚠ P1-ALL-E371 WS-A2 — captured mail. NOTHING captured goes in the repo.
 .mail-capture/

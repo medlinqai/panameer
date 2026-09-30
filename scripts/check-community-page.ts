@@ -397,9 +397,27 @@ check(
   ⚠⚠ `id="rates"` IS GONE WITH THE CARD — `CleanSide` takes no anchor id, because nothing
   scrolls to Rates; the What's-Missing links target main-column sections.
 */
+/*
+  ── ⚠⚠⚠ FIFTH SHAPE, SAME RULE — AND THE PATTERN STOPS PINNING THE ELEMENT (`E715`) ──
+
+  ⚠ **`E715` row 10 REORDERS THE RAIL, and the phone order keys on a CLASS** (`pm-rail-rates`)
+  rather than on `:nth-child`, so Rates gained a wrapper `<div>` between the guard and the
+  `CleanSide`. ⚠⚠ **THE RULE IS UNTOUCHED: the WHOLE block — wrapper included — is inside
+  `{p.rates && (…)}`.** Only the markup moved, for the fifth time.
+  ⚠⚠⚠ **SO THE NEEDLE NOW ALLOWS INTERVENING OPENING TAGS INSTEAD OF NAMING THE EXACT ONE.**
+  This assertion has gone stale on correct code in `E593`, `E598`, `E600`, `E713` and now
+  `E715` — **five briefs, five green-to-red flips, none of them a real defect.** ⚠ Ruling 10:
+  *"a gate that fails on correct code is a gate someone switches off,"* and the cost is not
+  the false red — it is that people stop believing the green.
+  ⚠ **IT IS STILL A REAL ASSERTION, NOT A LOOSENED ONE:** it requires `title="Rates"` to sit
+  inside the `p.rates` guard. Moving the title out from under that guard — the actual defect,
+  a `Rates` heading over a withheld rate — still fails it. Mutation-proved at this gate.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`), the fourth shape:
+  //   /\{p\.rates && \(\s*(?:\/\*[\s\S]*?\*\/\s*)?<CleanSide\s*\n\s*title="Rates"/
+*/
 check(
   "9 — ⚠ the Rates BLOCK is gated, not only its rows",
-  /\{p\.rates && \(\s*(?:\/\*[\s\S]*?\*\/\s*)?<CleanSide\s*\n\s*title="Rates"/.test(
+  /\{p\.rates && \(\s*(?:\/\*[\s\S]*?\*\/\s*)?(?:<\w+[^>]*>\s*)*<CleanSide\s*\n\s*title="Rates"/.test(
     CARDS_PROFILE
   )
 );

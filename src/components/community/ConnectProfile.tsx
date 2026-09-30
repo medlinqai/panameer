@@ -31,12 +31,20 @@ import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCar
 */
 import { editHref } from "@/lib/profile-sections";
 import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
-import { completionHook } from "@/lib/completion-hook";
 import { GROWTH_WEIGHTS } from "@/lib/growth-score";
 import { lineCounts } from "@/lib/completeness";
-import {
-  CompletionRing,
-} from "@/components/community/CompletionRing";
+/*
+  ⚠⚠ `completionHook` AND `CompletionRing` ARE NO LONGER IMPORTED HERE (`P2-A2-E715` row 9).
+  ⚠ The rail's score block is now the mockup's thin ink ring with `of 100` and one items-left
+  line, so neither the segmented ring nor the hook sentence is drawn on this page.
+  ⚠⚠⚠ **BOTH MODULES ARE UNTOUCHED AND STILL LIVE** — `/community/score` renders
+  `CompletionRing` and `ProfileScoreView` uses the hook. This is an import leaving one
+  consumer, not a feature being removed. ⚠ Left as an unused import it is a lint warning
+  against a baseline that must read 0 new.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   import { completionHook } from "@/lib/completion-hook";
+  //   import { CompletionRing } from "@/components/community/CompletionRing";
+*/
 import type { ProviderProfileView } from "@/lib/provider-profile-view";
 import type { TaughtPath, TakenPath } from "@/lib/learn-home";
 /* ⚠ `UsageStats` IS NO LONGER IMPORTED (`P2-A2-E600` WS-B) — the comb and the
@@ -338,13 +346,33 @@ export function ConnectProfile({
   const remainingLines = openLines.length;
   /* ⚠⚠ TWO, BECAUSE THE BRIEF SAYS TWO: *"the ring, the two next items with
      minutes, and 'See all N →'"*. The card is a prompt, not the list. */
-  const nextLines = openLines.slice(0, 2).map((l) => ({
-    key: l.key,
-    /* ⚠ THE ACTION, NOT THE FIELD NAME — *"Add your education"* reads as a next
-       step; *"Education"* reads as a heading. Same copy table as the page. */
-    label: SCORE_LINE_COPY[l.key].action,
-    minutes: SCORE_LINE_COPY[l.key].minutes,
-  }));
+  /*
+    ⚠⚠ THE MINUTES ON THE SEARCH SCORE BLOCK (`E715` row 9), SUMMED FROM THE SAME
+    `SCORE_LINE_COPY` TABLE the two "next" lines below read. ⚠⚠⚠ **IT IS EVERY OUTSTANDING
+    LINE, NOT THE TWO THAT ARE SHOWN** — the block says *"N items left · about M min"*, so
+    the minutes must describe the same N the sentence names. Summing only the visible two
+    would understate the work while naming the full count, which is a figure disagreeing with
+    its own label on the surface a member is asked to act on.
+  */
+  const minutesLeft = openLines.reduce(
+    (sum, l) => sum + (SCORE_LINE_COPY[l.key]?.minutes ?? 0),
+    0
+  );
+  /*
+    ⚠⚠ `nextLines` IS GONE WITH THE CARD THAT LISTED IT (`P2-A2-E715` row 9). The mockup's
+    block states the COUNT and the total minutes; the per-line detail is one click away on
+    `/community/score`, which is the same page the block links to.
+    ⚠ `minutesLeft` above replaces it and reads the SAME `SCORE_LINE_COPY` table, so the copy
+    source is unchanged — only how much of it this page renders.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const nextLines = openLines.slice(0, 2).map((l) => ({
+    //     key: l.key,
+    //     (comment: the ACTION, not the field name - "Add your education" reads as a next
+    //      step; "Education" reads as a heading. Same copy table as the page.)
+    //     label: SCORE_LINE_COPY[l.key].action,
+    //     minutes: SCORE_LINE_COPY[l.key].minutes,
+    //   }));
+  */
   /*
     ⚠⚠ `All good` IS EVERY ACCOUNT-HEALTH FLAG, not a score. The full card that
     listed these four rows is gone (WS-C item 3) and `/account-health` remains
@@ -531,7 +559,9 @@ export function ConnectProfile({
           ⚠⚠ **`/join/provider` IS UNAFFECTED: this markup is local to `ConnectProfile`**, not
           `ProfileCard`, so nothing shared changed to achieve it.
         */}
-        <section>
+        {/* ⚠ `pm-rail-identity` IS LOAD-BEARING AT PHONE WIDTH — the one-column order keys on
+            it (see `connect-profile.css`), so this block stays above the record. */}
+        <section className="pm-rail-identity">
           <div>
             {/*
               ── ⚠⚠⚠ EACH EDIT CONTROL MOVES BESIDE WHAT IT EDITS (WS-B) ────────
@@ -544,71 +574,99 @@ export function ConnectProfile({
               ⚠⚠⚠ **THIS IS THE COUNTING RULES' THIRD LINE APPLIED TO CONTROLS:**
               *a control says what it governs AT THE POINT IT GOVERNS IT.*
             */}
-            {/* ⚠ `-mt-[34px]` REMOVED WITH THE BANNER IT OVERLAPPED. ⚠⚠ Left in place it would
-                pull the avatar up into the tab row. ⚠ SUPERSEDED (`E164`):
-                //   <span className="-mt-[34px] flex items-end gap-2"> */}
-            <span className="flex items-end gap-2">
-              <span className="inline-block overflow-hidden rounded-full ring-[3px] ring-white">
-                <Avatar
-                  firstName={p.person.firstName ?? ""}
-                  lastName={p.person.lastName ?? ""}
-                  photoUrl={p.person.photoUrl}
-                  size={72}
-                />
-              </span>
-              {owner && <CleanEdit href={editHref("photo")} title="Photo" />}
-            </span>
-            <div className="mt-2 flex items-center gap-1.5">
-              {/* ⚠ The OWNER's `<h1>` is the tab row's (`E600` WS-A); a visitor
-                  has no row, so the name is the page's title there. */}
-              {owner ? (
-                <h2 className="font-display text-[20px] font-bold">{fullName}</h2>
+            {/*
+              ── ⚠⚠⚠ ROW 1 — THE PHOTO IS THE COLUMN ───────────────────────────────
+
+              ⚠ **THE MOCKUP: a LARGE SQUARE photo the full width of the rail (260px), 4px
+              corners, with `Edit photo` sitting on it at the bottom right.** ⚠⚠ `E713`
+              shipped a 72px round avatar, which is why Scott read the page as *"not the
+              same"* even though every PROPERTY matched.
+              ⚠⚠⚠ **`<Avatar>` IS NOT REUSED HERE AND THAT IS DELIBERATE: IT IS ROUND BY
+              CONSTRUCTION AND IT IS SHARED.** It renders a `rounded-full` box at a `size`,
+              and it is used across the member rows, the community cards and the band — so
+              making it square, or adding a `shape` prop and defaulting it wrong, reaches
+              every one of those. **The square photo is local markup, exactly as `E713` kept
+              the boxless section local rather than editing `CARD`.**
+              ⚠ The initials fallback keeps `Avatar`'s own rule (`E591`): a missing photo is
+              a face with initials, never a broken image.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <span className="flex items-end gap-2">
+              //     <span className="inline-block overflow-hidden rounded-full ring-[3px] ring-white">
+              //       <Avatar firstName={…} lastName={…} photoUrl={…} size={72} />
+              //     </span>
+              //     {owner && <CleanEdit href={editHref("photo")} title="Photo" />}
+              //   </span>
+              ⚠⚠ **AND THE LAYER BEFORE IT, CARRIED FORWARD RATHER THAN DROPPED (`E713`):** the
+              span once had a negative top margin so the avatar overlapped a gradient banner,
+              and `E713` removed both together — *"left in place it would pull the avatar up
+              into the tab row."* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <span className="-mt-[34px] flex items-end gap-2">
+              ⚠⚠⚠ **THAT QUOTE WAS ABOUT TO BE LOST.** It is a quote OF a quote — `E713`
+              preserving `E600`'s markup — and replacing this block wholesale dropped it. **A
+              supersession chain breaks at whichever link nobody re-copies**, which is exactly
+              how the history stops reading.
+            */}
+            <div className="pm-photo" data-e715-photo>
+              {p.person.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.person.photoUrl} alt="" />
               ) : (
-                <h1 className="font-display text-[20px] font-bold">{fullName}</h1>
-              )}
-              {p.validated && (
-                <span title="Validated by Panameer" className="text-magenta">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
-                    <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
-                    <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
-                  </svg>
+                <span className="pm-photo-initials">
+                  {`${p.person.firstName?.[0] ?? ""}${p.person.lastName?.[0] ?? ""}`.toUpperCase() ||
+                    "?"}
                 </span>
+              )}
+              {owner && (
+                <Link
+                  href={editHref("photo")}
+                  aria-label="Edit Photo"
+                  className="pm-photo-edit text-magenta-dark hover:underline"
+                >
+                  Edit photo
+                </Link>
               )}
             </div>
             {/*
-              ⚠⚠ THE TITLE'S EDIT SITS WITH THE TITLE. ⚠ `p.headline` IS the
-              title — the thing `/profile/edit/title` writes — so the control
-              belongs on this line and nowhere else.
-              ⚠⚠⚠ **RULING 31c: `"+AI Enabled…"` IS AN EXAMPLE OF A TITLE, SAMPLE
-              TEXT, NOT A FEATURE. NOTHING IS BUILT TOWARD IT** — no placeholder
-              carrying it, no hint suggesting it, no default.
-              ⚠ The owner gets the control and a visitor gets the line alone, so
-              a title with no owner still renders.
+              ── ⚠⚠⚠ ROWS 2 AND 13 — THE NAME, TITLE, LOCATION AND `How You Work` HAVE LEFT
+                  THE RAIL FOR THE RECORD (`P2-A2-E715`) ────────────────────────────────
+
+              ⚠ **THE MOCKUP PUTS THEM AT THE TOP OF THE MAIN COLUMN**, at 30px/700 with a
+              meta line under them — not as small text beside the photo. They are rendered
+              by `IdentityHead` below, ONCE, and this is the only place they used to be.
+              ⚠⚠ **THE `<h1>`/`<h2>` RULE MOVED WITH THEM AND IS NOT LOST** (`E600` WS-A):
+              the owner's `<h1>` is the tab row's, so the owner gets `<h2>` and a visitor —
+              who has no tab row — gets the `<h1>`. Rendering both here and there would give
+              the page two `<h1>` candidates, which is the `E598` defect.
+              ⚠⚠⚠ **`Edit` CONTROLS TRAVELLED WITH THEIR SUBJECTS**, which is WS-B's whole
+              rule — *a control says what it governs at the point it governs it.* Title keeps
+              its `Edit`, Languages keeps its own, and `How You Work` is now a link in the
+              meta line rather than a stray control under the location (row 13).
+              ⚠ SUPERSEDED, quoted not deleted (`E164`) — what stood here:
+              //   <div className="mt-2 flex items-center gap-1.5">
+              //     {owner ? <h2 className="font-display text-[20px] font-bold">{fullName}</h2>
+              //            : <h1 className="font-display text-[20px] font-bold">{fullName}</h1>}
+              //     {p.validated && <span title="Validated by Panameer" …>…</span>}
+              //   </div>
+              //   {(p.headline || owner) && (
+              //     <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug text-ink-2">
+              //       {p.headline}
+              //       {owner && <CleanEdit href={editHref("title")} title="Title" />}
+              //     </p>
+              //   )}
+              //   {(() => {
+              //     const lines = locationLines(p.location, p.country);
+              //     return lines ? (
+              //       <p className="mt-1 text-[12.5px] text-ink-3">
+              //         {lines.primary}{lines.secondary ? ` · ${lines.secondary}` : ""}
+              //       </p>
+              //     ) : null;
+              //   })()}
+              ⚠ **RULING 31c IS UNCHANGED AND TRAVELS WITH THE TITLE:** `"+AI Enabled…"` is
+              an EXAMPLE of a title, sample text, not a feature — no placeholder, no hint, no
+              default is built toward it.
+              ⚠ **AND `locationLines` IS STILL THE ONE RULE** the Location card uses, so the
+              two cannot disagree (`E585`); only where it renders has changed.
             */}
-            {(p.headline || owner) && (
-              <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug text-ink-2">
-                {p.headline}
-                {owner && <CleanEdit href={editHref("title")} title="Title" />}
-              </p>
-            )}
-            {/*
-              ⚠⚠ THE LOCATION LINE IS DERIVED FROM THE ADDRESS and is not edited
-              here — see the block below for why its control has not moved yet.
-            */}
-            {/* ⚠⚠ COUNTRY IS RENDERED HERE NOW (`P2-A2-E671`) — WS-B's *"ADD
-                COUNTRY — Panameer is global"*. The value was already on the view
-                model and reached this component unused; only the render was
-                missing. ⚠ It reads `locationLines`, the same rule the Location
-                card uses, so the two cannot disagree (`E585`). */}
-            {(() => {
-              const lines = locationLines(p.location, p.country);
-              return lines ? (
-                <p className="mt-1 text-[12.5px] text-ink-3">
-                  {lines.primary}
-                  {lines.secondary ? ` · ${lines.secondary}` : ""}
-                </p>
-              ) : null;
-            })()}
             {/*
               ── ⚠⚠⚠ THE IDENTITY CARD GROWS ITS EDIT CONTROLS (`E600` WS-F) ──
 
@@ -670,10 +728,17 @@ export function ConnectProfile({
               what the next reader would have implemented.** Found by reading
               during `E670`'s verification pass — no gate asserts it.
 
-              ⚠ **`How You Work` STAYS BECAUSE THIS CARD DOES NOT RENDER IT.**
-              There is no work-method line here to sit beside, so moving the
-              control would mean **moving it to nothing.** Reported rather than
-              relocated to an arbitrary spot.
+              ⚠⚠⚠ **`How You Work` HAS NOW MOVED (`P2-A2-E715` row 13) AND THE
+              SENTENCE BELOW IS SUPERSEDED.** ⚠ SUPERSEDED, quoted not deleted
+              (`E164`):
+              //   **`How You Work` STAYS BECAUSE THIS CARD DOES NOT RENDER IT.**
+              //   There is no work-method line here to sit beside, so moving the
+              //   control would mean **moving it to nothing.**
+              ⚠⚠ **ITS CONDITION WAS MET BY THIS BRIEF, NOT BY A CHANGE OF MIND:**
+              the meta line now renders location, member-since and languages, so
+              there IS somewhere for it to sit. ⚠ Standing rule 6 — the code moved
+              and the stated rule had to move with it, or the next reader restores
+              a control to a card that no longer holds its subject.
             */}
             {/*
               ⚠⚠⚠ **THEY NAME WHAT THEY EDIT WHILE THEY ARE STILL A ROW.**
@@ -690,9 +755,17 @@ export function ConnectProfile({
               state until then, rather than three anonymous controls left as-is
               because the real fix is queued.
             */}
-            {owner && (
-              <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                {/*
+            {/*
+              ── ⚠⚠ THE EDIT ROW IS EMPTY AND SO IT IS GONE (`P2-A2-E715` row 13) ────────
+
+              ⚠ It held three controls, then two, then one. `How You Work` was the last and it
+              has moved into the meta line, so the wrapper had nothing left to lay out.
+              ⚠⚠ **AN `{owner && <div …>}` CONTAINING ONLY COMMENTS STILL RENDERS A DIV WITH A
+              MARGIN** — an invisible 10px of dead space on every owner's page, and the kind of
+              residue that survives three briefs because nothing points at it.
+              ⚠ The three reasons below are KEPT, because each records why a control left and
+              where it went — that history is the point of `E164`.
+
                   ── ⚠⚠⚠ `Contact` HAS LEFT FOR SETTINGS (brief 10 WS-B) ───────
 
                   ⚠ SCOTT: *"Edit Address → lives in Settings."*
@@ -721,14 +794,34 @@ export function ConnectProfile({
                     the moment that commit landed, and is corrected there.
                     ⚠ SUPERSEDED, quoted not deleted (`E164`):
                     //   <EditLink href={editHref("languages")} title="Languages" label="Languages" /> */}
-                <CleanEdit href={editHref("work-method")} title="How You Work" label="How You Work" />
-              </div>
-            )}
+                {/* ⚠⚠⚠ `How You Work` MOVED INTO THE META LINE (`E715` row 13), where it sits
+                    as a plain link beside location, member-since and languages.
+                    ⚠ **IT IS NOT DROPPED — rule 5: it may be the only entrance** to
+                    `/profile/edit/work-method`, and MEASURED, it is: nothing else on this page
+                    links there. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   <CleanEdit href={editHref("work-method")} title="How You Work" label="How You Work" /> */}
             {owner && (
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-4 flex flex-col">
+                {/*
+                  ── ⚠⚠⚠ ROW 4 — SQUARE, FULL WIDTH, INK. NOT A MAGENTA PILL ─────────────
+
+                  ⚠ **SCOTT: *"I like your black buttons and angles better."*** ⚠⚠ 4px corners
+                  and solid ink with white text; the secondary is white with a 1px ink border.
+                  ⚠⚠⚠ **THIS DOES NOT REOPEN RULING `31e`.** That ruling keeps the CHIPS
+                  magenta and reserves magenta for the affordance that says *"this is a
+                  link"* (`E433`). These two are the page's primary controls, they are the
+                  only things the mockup draws in ink, and every other magenta affordance on
+                  the page is untouched.
+                  ⚠ The classes live in `connect-profile.css` as `.pm-btn` — the geometry is
+                  declared in one place, the same rule this file's grid already follows.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   className="rounded-full bg-magenta px-3.5 py-2 text-center text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  //   className="rounded-full border border-line px-3.5 py-2 text-center text-[13px] font-bold transition-colors hover:border-magenta/50"
+                */}
                 <Link
                   href="/community/score"
-                  className="rounded-full bg-magenta px-3.5 py-2 text-center text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  data-e715-btn
+                  className="pm-btn pm-btn-primary transition-colors"
                 >
                   {/*
                     ⚠ SCOTT, WS-B: rename to **"What's Missing or Incomplete?"**
@@ -745,7 +838,8 @@ export function ConnectProfile({
                 </Link>
                 <Link
                   href={`/providers/${p.id}`}
-                  className="rounded-full border border-line px-3.5 py-2 text-center text-[13px] font-bold transition-colors hover:border-magenta/50"
+                  data-e715-btn
+                  className="pm-btn transition-colors"
                 >
                   {/*
                     ⚠ SCOTT, WS-B: rename to **"How Others See My Profile"**.
@@ -766,19 +860,64 @@ export function ConnectProfile({
         </section>
 
         {/*
-          ── ⚠⚠⚠ VISIBILITY ARRIVES FROM SETTINGS (ruling 78) ───────────────
+          ── ⚠⚠⚠ ROW 10 — THE RAIL'S ORDER IS THE MOCKUP'S ─────────────────────────────
 
-          ⚠ The Profile Visibility SECTION is deleted and this one control moves
-          here, **in the same commit** (`E598`'s leave-and-arrive). ⚠⚠ It is the
-          only lever that touches the marketplace gate, so a window where it has
-          no home is a window where a provider **cannot take themselves out of
-          the market**.
-          ⚠⚠⚠ OWNER ONLY, and that is not cosmetic: `p.paused` and
-          `p.completeness` are the owner's own figures, and a visitor must not
-          be told whether somebody has paused themselves.
+          ⚠ **Photo · buttons · SEARCH SCORE · Rates · Visibility · Rank Higher**, each block
+          separated by a thin line and headed by a small-caps grey label.
+          ⚠⚠ It was identity · Visibility · Rates · score · Rank Higher, so **Visibility — a
+          switch — sat above the two blocks a member actually reads.**
+          ⚠⚠⚠ **THE PHONE ORDER IS NOW KEYED ON THE CLASSES `pm-rail-identity` AND
+          `pm-rail-rates`, NOT ON `:nth-child`.** Reordering these blocks under the old
+          positional rules would have lifted Search Score above the record and dropped Rates
+          below it — reversing Scott's own phone ruling silently. See `connect-profile.css`.
         */}
-        {owner && (
-          <ProfileVisibilityCard paused={p.paused} completeness={p.completeness} />
+
+        {/*
+          ── ⚠⚠ ROW 9 — SEARCH SCORE, AND THE FIGURE IS NOT A NEW ONE ────────────────
+
+          ⚠⚠⚠ **`score.total` IS THE VALUE `/community/score` RENDERS.** Both come from
+          `computeProfileScore(buildCompletenessInput(profileId))` — measured at
+          `community/score/page.tsx:101` against `profile/page.tsx`'s `ownerScore()`. **One
+          definition (`E585`); nothing is recomputed here and no second rule is written.**
+          ⚠⚠ `CompletionRing` IS DELIBERATELY NOT REUSED: it is the SEGMENTED, hover-targeted
+          ring the score PAGE draws, and the mockup asks for a thin ink ring with the number
+          in it. ⚠ **The ring is presentation; the number is the definition.** Reusing the
+          figure and drawing it differently is the correct split — the opposite would be
+          computing a second figure to feed the same picture.
+          ⚠ The minutes are summed from the SAME `SCORE_LINE_COPY` table the two "next" lines
+          below already use, so the block cannot quote work the score page does not.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the score block used to sit BELOW Rates
+          and Visibility, as a bare `<Link className="group mt-7 block border-t …">` with
+          `<CompletionRing score={score} />` and a `Complete Profiles Sell Services` caption.
+        */}
+        {owner && score && (
+          <CleanSide title="Search Score">
+            <Link href="/community/score" className="group flex items-center gap-4">
+              <span
+                className="pm-score-ring"
+                style={{
+                  background: `conic-gradient(var(--color-ink) 0 ${score.total}%, var(--color-line) ${score.total}% 100%)`,
+                }}
+              >
+                <span className="tabular-nums">{score.total}</span>
+              </span>
+              <span className="min-w-0 text-[13px] leading-snug text-ink-2">
+                of 100
+                <br />
+                {/* ⚠⚠ A REAL ZERO AND A FINISHED PROFILE MUST NOT READ THE SAME (counting
+                    rule 2). At zero outstanding lines this says so in words rather than
+                    printing "0 items left". */}
+                {remainingLines > 0 ? (
+                  <span className="group-hover:underline">
+                    {remainingLines} item{remainingLines === 1 ? "" : "s"} left
+                    {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
+                  </span>
+                ) : (
+                  <span className="group-hover:underline">Nothing outstanding</span>
+                )}
+              </span>
+            </Link>
+          </CleanSide>
         )}
 
         {/*
@@ -791,6 +930,9 @@ export function ConnectProfile({
           hasCapability(viewer, "canHireTalent")` — and `p.rates` is already
           `null` for anyone who may not see it.
           ⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY.
+          ⚠⚠ **THE LABELS AND AMOUNTS ARE UNTOUCHED — brief *Keep*, ruling 64c:** nothing is
+          relabelled until the three-rate migration. `RateRows` is not edited; only the column
+          around it moved.
         */}
         {p.rates && (
           /*
@@ -803,54 +945,92 @@ export function ConnectProfile({
             list would be a control with nothing to reveal.
             ⚠ The `owner`/visitor rule is untouched: `p.rates` is already `null` for anyone
             who may not see it, which is the VIEW MODEL's decision and not this component's.
+            ⚠⚠ THE WRAPPER CARRIES `pm-rail-rates` because the PHONE ORDER KEYS ON IT — see
+            the row 10 note above. Without the class Rates would fall below the record.
           */
-          <CleanSide
-            title="Rates"
-            action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
-          >
-            <RateRows p={p} />
-          </CleanSide>
+          <div className="pm-rail-rates">
+            <CleanSide
+              title="Rates"
+              action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
+            >
+              <RateRows p={p} />
+            </CleanSide>
+          </div>
+        )}
+
+        {/*
+          ── ⚠⚠⚠ VISIBILITY ARRIVES FROM SETTINGS (ruling 78) ───────────────
+
+          ⚠ The Profile Visibility SECTION is deleted and this one control moves
+          here, **in the same commit** (`E598`'s leave-and-arrive). ⚠⚠ It is the
+          only lever that touches the marketplace gate, so a window where it has
+          no home is a window where a provider **cannot take themselves out of
+          the market**.
+          ⚠⚠⚠ OWNER ONLY, and that is not cosmetic: `p.paused` and
+          `p.completeness` are the owner's own figures, and a visitor must not
+          be told whether somebody has paused themselves.
+          ⚠ IT MOVED BELOW RATES (`E715` row 10) — a switch does not lead a column.
+        */}
+        {owner && (
+          <ProfileVisibilityCard paused={p.paused} completeness={p.completeness} />
         )}
 
         {owner ? (
           <>
-            {score && (
-              <Link
-                href="/community/score"
-                className="group mt-7 block border-t border-line pt-5"
-              >
-                <CompletionRing score={score} />
-                <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
-                  Complete Profiles Sell Services
-                </p>
-                {/* ⚠⚠ COMPUTED, NOT HARD-CODED, and it says something else at
-                    100% rather than printing "0 lines left". */}
-                <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
-                  {completionHook(score)}
-                </p>
-                {nextLines.length > 0 && (
-                  <ul className="mt-3 border-t border-line pt-2.5">
-                    {nextLines.map((l) => (
-                      <li
-                        key={l.key}
-                        className="flex items-center justify-between gap-2 py-1 text-[12.5px]"
-                      >
-                        <span className="min-w-0 truncate text-ink-2">{l.label}</span>
-                        {/* ⚠ `E433` — a figure is INK, never magenta. */}
-                        <span className="flex-none font-semibold tabular-nums text-ink-3">
-                          {l.minutes} min
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {/* ⚠ `E433` — the one magenta thing in the card is the
-                    affordance that says it is a link. */}
-                <p className="mt-2 text-center text-[12.5px] font-bold text-magenta group-hover:underline">
-                  {remainingLines > 0 ? `See all ${remainingLines} \u2192` : "See your score"}
-                </p>
-              </Link>
-            )}
+            {/*
+              ── ⚠⚠⚠ THE OLD SCORE CARD IS GONE; ROW 9's BLOCK REPLACED IT ABOVE ─────────
+
+              ⚠ It sat FOURTH in the rail, below Visibility, and carried a segmented
+              `CompletionRing`, a `Complete Profiles Sell Services` caption, a hook line, the
+              two next items with minutes, and a `See all N` link. ⚠⚠ **THE MOCKUP'S BLOCK IS
+              A THIN INK RING, `of 100` AND ONE ITEMS-LEFT LINE**, SECOND in the column.
+              ⚠⚠⚠ **NOTHING COUNTED IS LOST — IT IS RELOCATED OR NAMED:** the score is the
+              ring, `remainingLines` is the items-left line, and the minutes are now SUMMED
+              across every outstanding line rather than only the two that were listed. The
+              whole block is still one link to `/community/score`, where the per-line detail
+              lives, so **no entrance is removed** (rule 5).
+              ⚠⚠ `completionHook` AND `CompletionRing` ARE NOT DELETED — `/community/score`
+              still renders the ring exactly as before; only this page stopped drawing it.
+              ⚠ **QUOTED WITH `//`, INNER COMMENTS PARAPHRASED — load-bearing rule 12.** The
+              block carried two inner comment terminators, so wrapping it in a block comment
+              would have closed this one early and cascaded.
+              ⚠⚠⚠ **AND IT CAUGHT ME WRITING THIS VERY NOTE:** the sentence above originally
+              spelled the terminator out, which closed this comment at that word and produced
+              four parse errors. **The rule applies to prose ABOUT the rule** — name the
+              character, never type it.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {score && (
+              //     <Link href="/community/score" className="group mt-7 block border-t border-line pt-5">
+              //       <CompletionRing score={score} />
+              //       <p className="mt-2 text-center text-[12.5px] font-bold text-ink-2">
+              //         Complete Profiles Sell Services
+              //       </p>
+              //       (comment: computed, not hard-coded; says something else at 100%
+              //        rather than printing "0 lines left")
+              //       <p className="mt-1.5 text-center text-[12px] leading-snug text-ink-3">
+              //         {completionHook(score)}
+              //       </p>
+              //       {nextLines.length > 0 && (
+              //         <ul className="mt-3 border-t border-line pt-2.5">
+              //           {nextLines.map((l) => (
+              //             <li key={l.key} className="flex items-center justify-between gap-2 py-1 text-[12.5px]">
+              //               <span className="min-w-0 truncate text-ink-2">{l.label}</span>
+              //               (comment: E433 - a figure is INK, never magenta)
+              //               <span className="flex-none font-semibold tabular-nums text-ink-3">
+              //                 {l.minutes} min
+              //               </span>
+              //             </li>
+              //           ))}
+              //         </ul>
+              //       )}
+              //       (comment: E433 - the one magenta thing in the card is the affordance
+              //        that says it is a link)
+              //       <p className="mt-2 text-center ... text-magenta group-hover:underline">
+              //         {remainingLines > 0 ? `See all ${remainingLines} ->` : "See your score"}
+              //       </p>
+              //     </Link>
+              //   )}
+            */}
 
             <section className="mt-7 border-t border-line pt-5">
                             {/*
@@ -879,7 +1059,17 @@ export function ConnectProfile({
                   once Shop and Work search exist, and both must use growth the
                   same way — after relevance.
                 */}
-                <h2 className="mb-2 font-display text-[15px] font-bold">
+                {/*
+                  ⚠ **THE WORDS ARE UNCHANGED, ONLY THE WEIGHT** (`E715` row 10): every rail
+                  block is *"headed by a small-caps grey label"*, and this was the one heading
+                  still set as a 15px bold title.
+                  ⚠⚠ **RENAMING IT WOULD REOPEN A RULING.** `Rank Higher in Search Results`
+                  was withheld until `E600` WS-E made it true, on Scott's condition; the
+                  mockup's shorter `Rank Higher` is a LAYOUT sketch, not a re-ruling of copy.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   <h2 className="mb-2 font-display text-[15px] font-bold">
+                */}
+                <h2 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   Rank Higher in Search Results
                 </h2>
                             <div className="flex flex-col">
@@ -1166,19 +1356,145 @@ export function ConnectProfile({
       </aside>
 
       <main className="pm-cp3-main">
-        {/* ⚠ `About` IS `Bio` AGAIN (WS-B 5). Anchor and editor unchanged. */}
-        <CleanSection
-          id="bio"
-          title="Bio"
-          isEmpty={!p.overview}
-          showWhenEmpty={owner}
-          action={owner ? <CleanEdit href={editHref("bio")} title="Bio" /> : undefined}
-        >
-          <OverviewBody
-            overview={p.overview}
-            empty="Nothing here yet. A short bio is the first thing a buyer reads."
-          />
-        </CleanSection>
+        {/*
+          ── ⚠⚠⚠ ROWS 2, 3 AND 13 — THE RECORD OPENS WITH WHO THIS IS ────────────────────
+
+          ⚠ **THE MOCKUP: the name large and bold at the TOP OF THE MAIN COLUMN, then the
+          title with `Edit`, then a meta line — location · member since · languages — then
+          the bio as PLAIN TEXT with `Edit` at the end.** ⚠⚠ All of it was small text beside
+          the photo, and the bio was a folding section.
+          ⚠⚠⚠ **THE `<h1>` RULE IS PRESERVED EXACTLY (`E600` WS-A):** the owner's `<h1>` is
+          the tab row's, so the owner gets `<h2>` here and a visitor — who has no tab row —
+          gets the `<h1>`. Two `<h1>` candidates on one page is the `E598` defect.
+        */}
+        <header>
+          <div className="flex items-center gap-2">
+            {owner ? (
+              <h2 className="text-[30px] font-bold leading-[1.2] tracking-[-0.01em]">
+                {fullName}
+              </h2>
+            ) : (
+              <h1 className="text-[30px] font-bold leading-[1.2] tracking-[-0.01em]">
+                {fullName}
+              </h1>
+            )}
+            {p.validated && (
+              <span title="Validated by Panameer" className="text-magenta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-label="Validated by Panameer" role="img">
+                  <path d="M12 2l2.4 1.8 3-.3 1 2.8 2.6 1.5-.9 2.9.9 2.9-2.6 1.5-1 2.8-3-.3L12 22l-2.4-1.8-3 .3-1-2.8L3 16.2l.9-2.9L3 10.4l2.6-1.5 1-2.8 3 .3z" />
+                  <path d="M10.6 15.2l-2.8-2.8 1.1-1.1 1.7 1.7 4-4 1.1 1.1z" fill="#fff" />
+                </svg>
+              </span>
+            )}
+          </div>
+
+          {/* ⚠ RULING 31c travels with the title: `"+AI Enabled…"` is an EXAMPLE of a title,
+              sample text, not a feature — no placeholder, no hint, no default. */}
+          {(p.headline || owner) && (
+            <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 text-[16px] text-ink-2">
+              {p.headline}
+              {owner && <CleanEdit href={editHref("title")} title="Title" />}
+            </p>
+          )}
+
+          {/*
+            ── ⚠⚠ THE META LINE. EVERY ITEM IS A FACT THAT EXISTS ─────────────────────────
+
+            ⚠⚠⚠ **`Available for new work` IS NOT HERE, AND THAT IS THE BRIEF'S OWN
+            INSTRUCTION.** There is **no availability field in the schema** — measured
+            2026-09-30, only `available_for_messages` and `available_from` — so the mockup's
+            green `Available` dot would be a fact about a person nobody stated. It is SIT 3.3
+            and gets its own brief.
+            ⚠ **Each item renders only when its value exists** — a missing location is absent,
+            never an empty bullet, and the separators come from the flex gap rather than from
+            punctuation that would strand a `·` beside nothing.
+            ⚠ `locationLines` is the SAME rule the Location card uses (`E585`).
+          */}
+          <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[14px] text-ink-2">
+            {(() => {
+              const lines = locationLines(p.location, p.country);
+              return lines ? (
+                <span>
+                  {lines.primary}
+                  {lines.secondary ? ` · ${lines.secondary}` : ""}
+                </span>
+              ) : null;
+            })()}
+            {/* ⚠ `Person.created_at`, a real column with a real writer (`schema.prisma:464`).
+                Month and year only: the DAY somebody joined is not a fact anyone needs. */}
+            {p.person.memberSince && (
+              <span>
+                Member since{" "}
+                {new Date(p.person.memberSince).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+            {p.languages.length > 0 && (
+              <span className="flex items-center gap-2">
+                {p.languages.map((l) => l.name).join(" · ")}
+                {owner && <CleanEdit href={editHref("languages")} title="Languages" />}
+              </span>
+            )}
+            {/* ⚠⚠⚠ ROW 13 — `How You Work` LANDS HERE, AS A PLAIN LINK. It was a stray
+                control under the location with nothing to sit beside.
+                ⚠ **IT IS NOT DROPPED: rule 5, it may be the only entrance** — and MEASURED,
+                it is the only link to `/profile/edit/work-method` on this page. */}
+            {owner && (
+              <Link
+                href={editHref("work-method")}
+                className="font-semibold text-magenta-dark hover:underline"
+              >
+                How You Work
+              </Link>
+            )}
+          </div>
+
+          {/*
+            ── ⚠⚠⚠ ROW 3 — THE BIO IS PLAIN TEXT, NOT A FOLDING SECTION ────────────────
+
+            ⚠ **THE MOCKUP PUTS IT UNDER THE META LINE WITH `Edit` AT THE END.** ⚠⚠ A
+            disclosure on the first thing a buyer reads is a click in front of the sentence
+            the whole page exists to deliver.
+            ⚠⚠⚠ **`id="bio"` IS KEPT ON THE WRAPPER AND THAT IS LOAD-BEARING:** the
+            What's-Missing links on `/community/score` scroll to `#bio`, and `scroll-mt-24`
+            keeps the target out from under the pinned band. Dropping the id would leave those
+            links pointing at nothing — a dead end with no error (`E579`).
+            ⚠ **THE EMPTY RULE IS UNCHANGED:** a visitor sees nothing when there is no bio; the
+            owner sees the prompt. That was `CleanSection`'s `isEmpty`/`showWhenEmpty`, and it
+            is spelled out here because this block no longer goes through it.
+          */}
+          {(p.overview || owner) && (
+            <div id="bio" className="mt-5 scroll-mt-24 text-[15px] leading-relaxed">
+              <OverviewBody
+                overview={p.overview}
+                empty="Nothing here yet. A short bio is the first thing a buyer reads."
+              />
+              {/*
+                ⚠⚠ **THE MOCKUP TRAILS `Edit` AFTER THE BIO'S LAST WORD; THIS SITS IT ON THE
+                NEXT LINE, LEFT-ALIGNED — REPORTED RATHER THAN FORCED.** `OverviewBody`
+                renders `RichText`, which is BLOCK-LEVEL, MULTI-PARAGRAPH and CLAMPED at 8
+                lines. ⚠⚠⚠ A trailing inline link would sit after the clamp's ellipsis on any
+                long bio — i.e. **`Edit` would disappear for exactly the providers with the
+                most to edit.** ⚠ The mockup's bio is one short `<p>`; a real one is not.
+              */}
+              {owner && (
+                <div className="mt-1">
+                  <CleanEdit href={editHref("bio")} title="Bio" />
+                </div>
+              )}
+            </div>
+          )}
+        </header>
+        {/*
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the Bio was a folding section:
+          //   <CleanSection id="bio" title="Bio" isEmpty={!p.overview} showWhenEmpty={owner}
+          //     action={owner ? <CleanEdit href={editHref("bio")} title="Bio" /> : undefined}>
+          //     <OverviewBody overview={p.overview} empty="Nothing here yet. A short bio is
+          //       the first thing a buyer reads." />
+          //   </CleanSection>
+        */}
 
         {/* ⚠ THE VISITOR'S BUYING SURFACE, HIGH UP — a buyer is here to buy. */}
         {!owner && serviceProducts}
@@ -1409,6 +1725,14 @@ export function ConnectProfile({
             isOwner={owner}
             /* ⚠ THE CLEAN PROFILE IS THE ONLY CALLER THAT ASKS FOR THE TIMELINE (WS-A item 7). */
             timeline
+            /*
+              ⚠⚠⚠ ROW 12 — THE ROLE LEADS, THE COMPANY SITS UNDER IT IN GREY. ⚠ Opt-in for
+              the same reason `timeline` is: `WorkHistoryBody` is the ONE SHARED component
+              (`E084`) and `/join/provider` renders it at `:2525` and `:3907`. **Swapping the
+              default would restyle the onboarding review — the one page this brief may not
+              touch.**
+            */
+            roleFirst
             empty="No work history yet."
           />
         </CleanSection>

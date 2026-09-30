@@ -339,12 +339,26 @@
    usable ~600px main needs ~900 of content → ~964 viewport, rounded to 980 so
    the step lands just before the main gets tight rather than just after.
 */
+/*
+  ── ⚠⚠⚠ THE MOCKUP'S OWN GRID (`P2-A2-E715` rows 1 and 10) ────────────────────
+
+  ⚠ **MEASURED OFF `profile_clean_2026-09-26.html` AT 1280, NOT COPIED FROM ITS SOURCE:** the
+  photo runs x=104→364 (**260px**), the record starts at x=420 (**56px gap**), and the content
+  ends at 1176 — 1072 + 2×24 of padding = **1120 max-width**.
+  ⚠⚠ THE OLD FIGURES WERE `300px / 16px / 1280`, which is why `E713` matched the mockup's
+  PROPERTIES and not its LAYOUT: a 16px gutter reads as two columns of one block, and the
+  mockup's 56px is what makes the rail a separate thing from the record.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   grid-template-columns: 300px minmax(0, 1fr);
+  //   gap: 16px;
+  //   max-width: 1280px;
+*/
 .pm-cp3 {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 56px;
   align-items: start;
-  max-width: 1280px;
+  max-width: 1120px;
   margin: 0 auto;
 }
 .pm-cp3-rail,
@@ -391,11 +405,31 @@
   .pm-cp3-main {
     display: contents;
   }
-  /* ⚠ identity (1st) and Rates (2nd) stay above the record; everything else in
-     the rail — the score ring and the growth card — falls below it. */
-  .pm-cp3-rail > :nth-child(1) { order: -3; }
-  .pm-cp3-rail > :nth-child(2) { order: -2; }
-  .pm-cp3-rail > :nth-child(n + 3) { order: 1; }
+  /*
+    ── ⚠⚠⚠ ORDERED BY NAME, NOT BY POSITION (`P2-A2-E715`) ──────────────────────
+
+    ⚠ **THESE WERE `:nth-child(1)`, `:nth-child(2)` AND `:nth-child(n + 3)`, AND `E715`
+    REORDERS THE RAIL** — photo · buttons · Search Score · Rates · Visibility · Rank Higher.
+    ⚠⚠⚠ **A POSITIONAL RULE SURVIVES A REORDER BY SILENTLY POINTING AT A DIFFERENT BLOCK:**
+    after the move, `:nth-child(2)` would have lifted **Search Score** above the record and
+    dropped **Rates** below it — reversing Scott's own phone ruling with no error anywhere and
+    nothing to grep for.
+    ⚠⚠ So each rail block now carries a class that says what it is, and the phone order names
+    those classes. Reordering the markup again cannot move the wrong thing.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   .pm-cp3-rail > :nth-child(1) { order: -3; }
+    //   .pm-cp3-rail > :nth-child(2) { order: -2; }
+    //   .pm-cp3-rail > :nth-child(n + 3) { order: 1; }
+
+    ⚠ **SCOTT'S PHONE ORDER IS UNCHANGED** (*"name card → Rates → the right-hand content →
+    Profile Completion → Rank Higher"*) — the identity block and Rates stay above the record,
+    the rest falls below it. ⚠⚠ The identity block is now photo-and-buttons rather than
+    photo-and-name, because `E715` moves the name into the record; it is still the block a
+    member meets first.
+  */
+  .pm-cp3-rail > * { order: 1; }
+  .pm-cp3-rail > .pm-rail-identity { order: -3; }
+  .pm-cp3-rail > .pm-rail-rates { order: -2; }
   .pm-cp3-main > * { order: 0; }
 }
 
@@ -464,4 +498,239 @@
   height: 8px;
   border-radius: 50%;
   background: var(--color-magenta);
+}
+
+/*
+  ══ ⚠⚠⚠ `E715` — BUILT TO THE MOCKUP'S LAYOUT, NOT ONLY ITS PROPERTIES ════════
+
+  ⚠ **SCOTT, WALKING `E713`: *"the two profile pages are not the same. Menus look great, page
+  is not the same… I like everything about your page better."*** ⚠⚠ `E713` matched the
+  mockup's PROPERTIES — no border, no shadow, a chevron, a dashed line. **This file is the
+  LAYOUT.**
+*/
+
+/*
+  ── ⚠⚠⚠ ROW 11 — PURE WHITE BELOW THE TAB ROW, AND WHERE THE GREY ACTUALLY CAME FROM ──
+
+  ⚠⚠ **THE GREY IS NOT ON THIS PAGE. IT IS `AppShell.tsx`'s `bg-canvas`, and
+  `--color-canvas` is `#fafafa`** — measured by walking every ancestor, which is what the
+  brief asked for (*"not just the page"*).
+  ⚠⚠⚠ **SO THE FIX MUST NOT TOUCH THE TOKEN.** `bg-canvas` paints EVERY authenticated page
+  and `check:theme` asserts contrast ratios against it; repainting `--color-canvas` to white
+  would restyle the whole console and redden a gate, to fix one page.
+  ⚠ `.account-surface` is rendered by exactly two files — `/profile` and `/providers/[id]` —
+  and **no gate asserts it**, so it is the precise scope. Both are this brief's subject.
+
+  ⚠⚠ **IT BLEEDS TO THE SHELL'S EDGES RATHER THAN PAINTING A WHITE BOX ON GREY.** `<main>`
+  carries `px-5 py-6 sm:px-8`, so a plain background would leave a grey gutter down both
+  sides and read as a wide card — the boxes problem this whole direction removes. The
+  negative margin cancels exactly that padding and the padding puts the content back.
+  ⚠ The figures track Tailwind's own scale (`px-5` = 20px, `sm:px-8` = 32px at 640px), so
+  they cannot drift from the shell unless the shell's padding itself changes.
+*/
+.account-surface {
+  background: #fff;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 40px;
+  margin-bottom: -24px;
+}
+@media (min-width: 640px) {
+  .account-surface {
+    margin-left: -32px;
+    margin-right: -32px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/*
+  ── ⚠⚠⚠ THE MOCKUP'S GREY, SCOPED — AND A REAL DEFECT REPORTED RATHER THAN SWEPT ──
+
+  ⚠⚠⚠ **`--color-ink-3` IS NOT DECLARED ANYWHERE.** `globals.css` defines `--color-ink` and
+  `--color-ink-2` and stops. ⚠⚠ **Tailwind v4 generates NO utility for a token that does not
+  exist, and emits nothing — silently** (the `HERO_SCRIM` trap, `E338`). ⚠ **MEASURED: 56
+  `text-ink-3` uses across 13 files are dead**, inheriting their parent's colour instead of
+  going grey.
+  ⚠⚠⚠ **DECLARING THE TOKEN WOULD REPAINT ALL 56 IN ONE COMMIT** — an app-wide visual change
+  nobody asked for, inside a brief about one page, against contrast figures `check:theme`
+  asserts. **So it is REPORTED, not fixed here**, and the grey is restored only on the two
+  surfaces this brief owns.
+  ⚠ The selector matches the class ATTRIBUTE, which works whether or not Tailwind ever
+  emitted a utility of that name.
+*/
+.account-surface .text-ink-3 {
+  color: #8a869a;
+}
+
+/*
+  ── ⚠ ROW 1 — THE PHOTO IS THE COLUMN ─────────────────────────────────────────
+  ⚠ Square, the full width of the rail, 4px corners, with `Edit photo` on it at the bottom
+  right. ⚠⚠ `aspect-ratio` rather than a fixed height, so it stays square when the rail
+  narrows instead of letterboxing the face.
+*/
+.pm-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #3a3350, #6b5f86);
+}
+.pm-photo > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* ⚠ The initials stand in when there is no photo — the same rule `Face` owns (`E591`):
+   a missing photo is never a broken image. */
+.pm-photo-initials {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.pm-photo-edit {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: #fff;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+/*
+  ⚠⚠⚠ THE PHOTO IS CAPPED ON A PHONE — THE MOCKUP'S OWN RULE, AND IT MATTERS MORE HERE THAN
+  IT DOES THERE. ⚠ `width: 100%` with `aspect-ratio: 1` in a 260px rail is a 260px square; in
+  a one-column phone layout it is **the full content width**, which measured **350px tall at
+  390** and pushed the name below the fold.
+  ⚠⚠ **FOUND IN THE 390 SCREENSHOT, NOT IN THE NUMBERS** — every computed value was correct
+  and the photo was still wrong, which is the whole reason this brief's gate is a screenshot.
+  ⚠ The mockup says `max-width: 200px` at its own breakpoint; the app's one-column step is
+  980 (the rail stops being a rail there), so the cap is applied at the app's breakpoint
+  rather than at the mockup's — its numbers are its own (see the top of this file).
+*/
+@media (max-width: 980px) {
+  .pm-photo {
+    max-width: 200px;
+  }
+}
+
+/*
+  ── ⚠⚠ ROW 4 — SQUARE BUTTONS, FULL WIDTH, INK AND WHITE ──────────────────────
+  ⚠ **SCOTT: *"I like your black buttons and angles better."*** ⚠⚠ 4px, not a pill, and the
+  primary is solid ink with white text rather than magenta. ⚠⚠⚠ **THIS DOES NOT REOPEN
+  RULING `31e`** — the chips stay magenta and the magenta affordances elsewhere are untouched;
+  it is these two controls only, which is what the mockup draws.
+*/
+.pm-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--color-ink);
+  color: var(--color-ink);
+  background: #fff;
+}
+.pm-btn + .pm-btn {
+  margin-top: 10px;
+}
+.pm-btn-primary {
+  background: var(--color-ink);
+  color: #fff;
+}
+.pm-btn-primary:hover {
+  background: #3b3550;
+}
+.pm-btn:not(.pm-btn-primary):hover {
+  background: #f6f5f9;
+}
+
+/*
+  ── ⚠ ROW 8 — THE VISIBILITY SWITCH IS INK ────────────────────────────────────
+  ⚠ The mockup's `.sw`: a 34×20 ink track with a white 14px knob. ⚠⚠ `E433` reserves magenta
+  for the affordance that says *"this is a link"*; a state switch is not that.
+*/
+.pm-switch {
+  width: 34px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--color-ink);
+  position: relative;
+  flex: none;
+  transition: background 0.15s;
+}
+.pm-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: all 0.15s;
+}
+/* ⚠ OFF is a light track with the knob on the LEFT — the two states must not differ only by
+   a colour a reader has to remember. */
+.pm-switch[data-on="false"] {
+  background: #d7d3e0;
+}
+.pm-switch[data-on="false"]::after {
+  right: 17px;
+}
+
+/*
+  ── ⚠⚠ ROW 9 — THE SEARCH SCORE RING ──────────────────────────────────────────
+  ⚠ A thin ink ring, 64px, drawn with a conic gradient and a white centre — the mockup's
+  `.ring`/`.ring i`.
+  ⚠⚠⚠ **THE FIGURE IS NOT COMPUTED HERE AND NOT RECOMPUTED ANYWHERE.** It is `score.total`,
+  the value `/community/score` renders from the SAME `computeProfileScore(buildCompletenessInput())`
+  — one definition (`E585`). This file draws it and nothing more.
+  ⚠ `CompletionRing` is left exactly as it is: it is the segmented, hover-targeted ring the
+  score PAGE uses, and replacing it would change a surface this brief does not own.
+*/
+.pm-score-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.pm-score-ring > span {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/*
+  ── ⚠ ROW 6 — ONE COLUMN. EVERY SECTION IS FULL WIDTH ─────────────────────────
+  ⚠ `pm-cp-pair` put Certifications and Education side by side. ⚠⚠ The mockup stacks
+  everything, and a half-width section under a full-width one is the ragged edge Scott is
+  reading as *"not the same"*.
+  ⚠⚠⚠ **THE CLASS IS NEUTRALISED HERE RATHER THAN DELETED FROM THE MARKUP**, so the rule and
+  its reason sit together; `pm-cp-pair` is still used by nothing else on this page.
+*/
+.account-surface .pm-cp-pair {
+  display: block;
 }

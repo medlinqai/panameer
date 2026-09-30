@@ -66,11 +66,25 @@ export function WorkHistoryEntry({
   artifactsSlot,
   contactSlot,
   condensed = false,
+  /*
+    ── ⚠⚠⚠ THE ROLE LEADS, OPT-IN (`P2-A2-E715` row 12) ────────────────────────
+
+    ⚠ **SCOTT'S MOCKUP: *"the role title in bold, then the company under it in grey."***
+    ⚠⚠ **IT IS A PROP AND IT DEFAULTS OFF FOR THE REASON THIS FILE ALREADY RECORDS AT `E084`:
+    THIS IS THE ONE SHARED COMPONENT, so the wizard review, the profile editor and the public
+    profile cannot drift apart.** ⚠⚠⚠ `/join/provider` renders it through `WorkHistoryBody`
+    at `:2525` and `:3907` and **must look exactly as it does now** — swapping the default
+    would restyle the onboarding review, which is the one page this brief may not touch.
+    ⚠ Same shape as `timeline` (`E713`): opt in at the call site, never edit the default.
+  */
+  roleFirst = false,
 }: {
   employer: EmployerItem;
   /** This employer's projects, already filtered by the caller. */
   projects: ProjectItem[];
   isOwner?: boolean;
+  /** Role title bold on top, company grey beneath — `/profile` only. */
+  roleFirst?: boolean;
   /** WS4 — rendered inside the Artifacts disclosure when present. */
   artifactsSlot?: React.ReactNode;
   /** WS5 — rendered inside the Contact disclosure when present. */
@@ -168,11 +182,31 @@ export function WorkHistoryEntry({
         <div className="min-w-0">
           {/* ⚠ VIA THE ONE HELPER (`P1-J1.4-E373`) — a contractor's line names no
               company, and `null` reads as `Independent` rather than as a gap. */}
-          <p className="font-bold">{employerDisplayName(employer.name)}</p>
-          {displayRole(employer.roleTitle) && (
-            <p className="mt-0.5 text-[14px] text-ink-2">
-              {displayRole(employer.roleTitle)}
-            </p>
+          {/*
+            ⚠⚠ `roleFirst` SWAPS WHICH FACT IS BOLD, NOT WHICH FACTS ARE SHOWN. Both lines
+            render in both modes, so nothing is lost either way.
+            ⚠⚠⚠ **AND IT FALLS BACK WHEN THERE IS NO ROLE TITLE:** `displayRole` is null for
+            plenty of entries, and a naive swap would render the company in small grey with
+            **nothing bold above it** — an entry that reads as a caption with its heading
+            missing. So with no role, the company keeps the bold line and the grey line is
+            simply absent, which is exactly what today's order already does.
+          */}
+          {roleFirst && displayRole(employer.roleTitle) ? (
+            <>
+              <p className="text-[16px] font-semibold">{displayRole(employer.roleTitle)}</p>
+              <p className="mt-0.5 text-[14px] text-ink-2">
+                {employerDisplayName(employer.name)}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-bold">{employerDisplayName(employer.name)}</p>
+              {displayRole(employer.roleTitle) && (
+                <p className="mt-0.5 text-[14px] text-ink-2">
+                  {displayRole(employer.roleTitle)}
+                </p>
+              )}
+            </>
           )}
         </div>
         {range && <p className="text-[13.5px] text-ink-2">{range}</p>}

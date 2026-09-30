@@ -138,7 +138,13 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     for (const needle of [
       "Grow Your Income Faster",
       "Account Health",
-      "Profile Completion",
+      /* ⚠ RENAMED BY `E715` ROW 9 — the owner's score block is `Search Score` now, and it is
+         still OWNER-ONLY (`{owner && score && …}`), which is what this asserts.
+         ⚠⚠ THE PAIR MOVES TOGETHER: the owner-side needle below was renamed in the same
+         commit, so neither half can quietly stop testing anything (rule 11).
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   "Profile Completion", */
+      "Search Score",
       "My Stats",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" leaked to the visitor view`).toBe(false);
@@ -300,7 +306,25 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     */
     for (const needle of [
       "Rates",
-      "Profile Completion",
+      /*
+        ── ⚠⚠⚠ RENAMED BY `P2-A2-E715` ROW 9, NOT REMOVED ──────────────────────────
+
+        ⚠ **THE RULING CHANGED; THE CODE DID NOT DRIFT.** Scott's mockup names the block
+        `SEARCH SCORE`, and the brief spells it out: *"`SEARCH SCORE` block under the
+        buttons: a thin ink ring with the number, `of 100`, and the items-left line."*
+        ⚠⚠ **THIS IS `check:rollup`'s CASE, NOT `check:cert-skills`'s** — the distinction
+        Scott enforces. The gate encoded the OLD name of a surface that is still there, so
+        the needle is taught the new truth rather than deleted.
+        ⚠⚠⚠ **IT CAUGHT A REAL REMOVAL HONESTLY AND THAT IS WHY IT STAYS.** The block it
+        guards is the owner's score surface; this assertion is what stopped `E598` WS-C
+        losing `Invite a Colleague`, and it fired here for exactly the right reason.
+        ⚠ **THE VISITOR-SIDE NEEDLE MOVED WITH IT** (see the absence list above) — leaving
+        that one reading `Profile Completion` would assert the absence of a string that no
+        longer exists anywhere, which is an assertion its own mutation cannot fail (rule 11).
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   "Profile Completion",
+      */
+      "Search Score",
       "Learning Paths",
       /* ⚠ THE `Grow` CARD is the new home of Invite, Recommendation and Mentor
          — three separate cards became three rows, and all three destinations
@@ -309,12 +333,31 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       "Invite a Colleague",
       "Request a Recommendation",
       "Request a Mentor",
-      /* ⚠⚠ AND THE HERO'S TWO ACTIONS. `See What Buyers See` is the owner's
-         preview of their own `/providers/[id]` page. */
+      /* ⚠⚠ AND THE HERO'S TWO ACTIONS. The second is the owner's preview of their own
+         `/providers/[id]` page. */
       /* ⚠ RENAMED AT THE WS-C GATE (`E598`). ⚠ SUPERSEDED, quoted (`E164`):
          //   "Edit Profile", */
-      "Complete Your Profile",
-      "See What Buyers See",
+      /*
+        ── ⚠⚠⚠ THESE TWO NEEDLES HAVE BEEN RED ON TRUNK SINCE `E598` WS-B ──────────────
+
+        ⚠⚠ **FOUND BY `E715`, NOT CAUSED BY IT, AND PROVED STATICALLY:** trunk's
+        `ConnectProfile` renders `What's Missing or Incomplete?` at `:744` and `How Others
+        See My Profile` at `:761`. **`Complete Your Profile` and `See What Buyers See` are
+        `E164` QUOTES IN ITS COMMENTS and appear on no screen.** The gate was asserting the
+        presence of two labels Scott had already renamed.
+        ⚠⚠⚠ **IT WAS INVISIBLE BECAUSE THE LOOP THROWS ON THE FIRST MISS.** `Profile
+        Completion` sat earlier in this list and passed, so the run stopped before reaching
+        these — the moment `E715` renamed that one, this pair surfaced. **One red masked
+        another red in the same loop, for four briefs.**
+        ⚠ **THE RULE IS UNCHANGED AND STILL ASSERTED:** both owner actions must render. Only
+        the words they render as have moved, so the needles are taught rather than dropped —
+        removing them would stop the gate failing AND stop it saying anything.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   "Complete Your Profile",
+        //   "See What Buyers See",
+      */
+      "What’s Missing or Incomplete?",
+      "How Others See My Profile",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" vanished from the OWNER's page`).toBe(true);
     }

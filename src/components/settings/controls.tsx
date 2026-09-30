@@ -58,6 +58,21 @@ export function ToggleRow({
   disabled,
   disabledReason,
   onChange,
+  /*
+    ── ⚠⚠⚠ THE TRACK COLOUR, OPT-IN (`P2-A2-E715` row 8) ───────────────────────
+
+    ⚠ **SCOTT'S MOCKUP DRAWS THE VISIBILITY SWITCH IN INK, NOT MAGENTA**, and `E433` agrees
+    on the principle: magenta is reserved for the affordance that says *"this is a link"*, and
+    a state switch is not that.
+    ⚠⚠ **IT IS A PROP WITH THE OLD VALUE AS ITS DEFAULT BECAUSE THIS CONTROL IS SHARED** —
+    `ProfileSettingsForm` renders it too, and repainting every settings toggle from inside a
+    profile-layout brief is the `CARD` mistake `E713` was written to avoid.
+    ⚠⚠⚠ **THE BEHAVIOUR IS NOT DUPLICATED TO GET THE COLOUR.** The optimistic flip, the busy
+    state and the revert-on-failure stay in this one component (`E585`); only the track class
+    varies. Building a second switch in the profile would have been a second copy of the one
+    behaviour that must not drift.
+  */
+  tone = "magenta",
 }: {
   label: string;
   hint?: string;
@@ -65,6 +80,8 @@ export function ToggleRow({
   disabled?: boolean;
   disabledReason?: string;
   onChange: (next: boolean) => Promise<boolean>;
+  /** `ink` is `/profile`'s; everything else keeps the magenta track. */
+  tone?: "magenta" | "ink";
 }) {
   const [value, setValue] = useState(checked);
   const [busy, setBusy] = useState(false);
@@ -101,7 +118,7 @@ export function ToggleRow({
         onClick={flip}
         className={
           "relative mt-0.5 h-[22px] w-10 shrink-0 rounded-full transition-colors disabled:opacity-40 " +
-          (value ? "bg-magenta" : "bg-line")
+          (value ? (tone === "ink" ? "bg-ink" : "bg-magenta") : "bg-line")
         }
       >
         <span

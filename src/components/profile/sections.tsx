@@ -1341,9 +1341,17 @@ export function WorkHistoryBody({
     to read out as an empty item.
   */
   timeline = false,
+  /*
+    ⚠⚠ THE SAME OPT-IN AS `timeline`, AND FOR THE SAME REASON (`E715` row 12): the role leads
+    on `/profile` only. ⚠⚠⚠ `/join/provider` renders this body at `:2525` and `:3907` and must
+    be untouched, so the default is today's order.
+  */
+  roleFirst = false,
 }: {
   employers: EmployerItem[];
   empty: string;
+  /** Role title bold, company grey beneath — passed only by `/profile`. */
+  roleFirst?: boolean;
   /** All projects; each entry is given the ones belonging to it. */
   projects?: ProjectItem[];
   isOwner?: boolean;
@@ -1396,6 +1404,7 @@ export function WorkHistoryBody({
               artifactsSlot={artifactsFor?.(e.id)}
               contactSlot={contactFor?.(e.id)}
               condensed={condensed}
+              roleFirst={roleFirst}
             />
           </li>
         );
