@@ -46,6 +46,37 @@
   --color-ink: #272334;
   --color-ink-2: #4a4658;
   /*
+    ── ⚠⚠⚠ `--color-ink-3` IS DECLARED (`P2-A2-E723` item 6) ─────────────────
+
+    ⚠ **SCOTT: *"`--color-ink-3` is never declared. Declare it; this is also why the location
+    pin and calendar icons are invisible (`MetaIcon` uses `stroke-ink-3`)."***
+    ⚠⚠ Reported unfixed since `E713`: **56 `ink-3` uses across ~15 files emitted NO CSS**,
+    because Tailwind v4 generates nothing for a token that does not exist and says nothing
+    about it (the `HERO_SCRIM`/`E338` trap).
+    ⚠⚠⚠ **AND THE SCOPED PATCH THAT HID IT ONLY EVER FIXED HALF THE PROBLEM.**
+    `.account-surface .text-ink-3` sets `color`, so text looked right on the two profile
+    pages — **but `MetaIcon` uses `stroke-ink-3`, and no `color` rule can paint an SVG
+    stroke.** The icon had `fill="none"` and no stroke at all, so it drew nothing. That is
+    exactly why Scott could read the text and not see the pin.
+    ⚠ **THE VALUE IS THE ONE THE CODEBASE ALREADY INTENDED** — `#8a869a`, lifted from that
+    patch rather than chosen afresh, so nothing that already looked right moves.
+    ⚠⚠ **CONTRAST, MEASURED AND REPORTED RATHER THAN QUIETLY ACCEPTED: 3.53:1 on white.**
+    That is below AA for body text. It is the value ~15 files were already written against,
+    and re-picking it is a design decision, not a bug fix — so it ships as-is and is reported.
+  */
+  --color-ink-3: #8a869a;
+  /*
+    ⚠⚠ THE CARD / PAGE SURFACE, AS A TOKEN (`P2-A2-E723` item 1). ⚠ `#171128` was hard-coded
+    in the dark `.bg-white` rule while `.account-surface` hard-coded `#fff` with no dark value
+    at all — two halves of one idea, neither able to follow the theme.
+  */
+  --color-surface: #fff;
+  /* ⚠⚠ THE TWO HOVER GROUNDS, ALSO TOKENS (`E723` item 1). ⚠ `.pm-btn`'s hovers were
+     `#3b3550` and `#f6f5f9`, hard-coded — a dark hover on a light button and a light hover
+     on a dark one, the moment the theme flips. */
+  --color-ink-hover: #3b3550;
+  --color-surface-hover: #f6f5f9;
+  /*
     ── ⚠⚠ ONE NEUTRAL FAMILY (`P1-A1.5-E432`, 2026-09-12) ─────────────────────
 
     **SCOTT:** *"i like the grey in the medlinq pages better…softer."* → *"change
@@ -271,12 +302,26 @@
 
   --color-ink: #f2f0f7;
   --color-ink-2: #b3adc4;
+  /*
+    ⚠⚠ ONE STEP FURTHER TOWARD THE GROUND, the same way the light value sits below its
+    `ink-2`. ⚠ **Measured against the dark background `#0f0b1c`: 5.48:1 — clears AA.**
+    ⚠⚠⚠ The LIGHT value is 3.53:1 and is deliberately NOT changed here; see the note in
+    `@theme`.
+  */
+  --color-ink-3: #8b84a1;
   --color-line: #2b2440;
   --color-canvas: #0b0817;
+  /* ⚠ The value the dark `.bg-white` rule below already hard-coded, now named once. */
+  --color-surface: #171128;
+  --color-ink-hover: #ddd9e8;
+  --color-surface-hover: #221a3a;
 }
 
 :root[data-theme="dark"] .bg-white {
-  background-color: #171128;
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   background-color: #171128;
+     ⚠⚠ BYTE-IDENTICAL RESULT — `--color-surface` IS `#171128` in dark. Naming it is what
+     stops `.account-surface` and every `.bg-white` card drifting apart. */
+  background-color: var(--color-surface);
 }
 
 body {
@@ -495,6 +540,13 @@ body {
   */
   --color-ink: #272334;
   --color-ink-2: #4a4658;
+  /* ⚠⚠ MIRRORED, BECAUSE THIS BLOCK MUST NOT DRIFT FROM `@theme` (`E432`) — and
+     `check:theme`'s mirror list is extended to cover both new tokens, so a future edit to
+     one and not the other goes red instead of going unnoticed. */
+  --color-ink-3: #8a869a;
+  --color-surface: #fff;
+  --color-ink-hover: #3b3550;
+  --color-surface-hover: #f6f5f9;
   --color-line: #e5e7eb;
   --color-bg-soft: #f9fafb;
   --color-canvas: #fafafa;

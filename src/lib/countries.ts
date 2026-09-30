@@ -29,6 +29,9 @@
  * ordering "United States · Canada" and "Germany · France · Netherlands" use.
  * ⚠ "Other" MUST STAY LAST — it is the escape hatch, not a country.
  */
+/* ⚠ THE ONE LANGUAGE LIST (`E723`, `E585`). */
+import { WORLD_LANGUAGES } from "@/lib/languages";
+
 export const COUNTRIES = [
   "United States",
   "Canada",
@@ -83,15 +86,35 @@ export const US_STATES = [
  * matching. Ordered by how often they turn up in this marketplace rather than
  * alphabetically — English is row zero and always present, so it is not here.
  */
-export const LANGUAGES = [
-  "Spanish", "French", "German", "Portuguese", "Italian", "Dutch", "Polish",
-  "Romanian", "Russian", "Ukrainian", "Arabic", "Hebrew", "Turkish",
-  "Hindi", "Urdu", "Punjabi", "Bengali", "Tamil", "Telugu", "Marathi",
-  "Gujarati", "Malayalam", "Kannada", "Mandarin", "Cantonese", "Japanese",
-  "Korean", "Vietnamese", "Thai", "Tagalog", "Indonesian", "Malay",
-  "Swedish", "Norwegian", "Danish", "Finnish", "Greek", "Czech", "Hungarian",
-  "Afrikaans", "Zulu", "Swahili", "Other",
-] as const;
+/*
+  ── ⚠⚠⚠ SUPERSEDED — THE LANGUAGE LIST MOVED TO `lib/languages.ts` (`P2-A2-E723`) ────────
+
+  ⚠ **SCOTT: *"Language: a searchable list of world languages (ISO 639-1 names), one
+  definition."*** ⚠⚠ This list was **43 languages plus `"Other"`**, and it lived in the
+  COUNTRIES file — so the sign-up step read languages from a module about countries while the
+  profile editor read free text from nowhere at all.
+  ⚠⚠⚠ **`"Other"` IS GONE AND THAT IS DELIBERATE: it is the value that produces the rows this
+  brief exists to stop.** A picklist whose escape hatch is `Other` records nothing a buyer can
+  match on.
+  ⚠ **RE-EXPORTED, NOT DELETED**, so the sign-up step's import keeps working and there is
+  exactly one list (`E585`).
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   export const LANGUAGES = [
+  //     "Spanish", "French", "German", "Portuguese", "Italian", "Dutch", "Polish",
+  //     "Romanian", "Russian", "Ukrainian", "Arabic", "Hebrew", "Turkish",
+  //     "Hindi", "Urdu", "Punjabi", "Bengali", "Tamil", "Telugu", "Marathi",
+  //     "Gujarati", "Malayalam", "Kannada", "Mandarin", "Cantonese", "Japanese",
+  //     "Korean", "Vietnamese", "Thai", "Tagalog", "Indonesian", "Malay",
+  //     "Swedish", "Norwegian", "Danish", "Finnish", "Greek", "Czech", "Hungarian",
+  //     "Afrikaans", "Zulu", "Swahili", "Other",
+  //   ] as const;
+  ⚠⚠ **TWO NAMES THE OLD LIST HAD THAT ISO 639-1 DOES NOT: `Mandarin` and `Cantonese`.**
+  639-1 has `zh` = **Chinese** only; the two are 639-3 (`cmn`, `yue`). **REPORTED, NOT
+  SILENTLY MAPPED** — nobody has either stored today (the live names are English ×3, German,
+  and three malformed rows), so nothing is lost, but a provider who wants to say Cantonese
+  now cannot. That is Scott's call, not mine to invent a 639-3 exception for.
+*/
+export const LANGUAGES = WORLD_LANGUAGES.map((l) => l.name);
 
 /**
  * Subdivisions per country, for the dependent State/Region dropdown

@@ -94,20 +94,21 @@ export function OwnerResumeRebuild() {
   */
   if (!info.available) {
     return (
-      <div className="mt-3">
-        <span
-          aria-disabled="true"
-          className="cursor-not-allowed text-[13px] font-bold text-ink-3"
-        >
+      <>
+        {/* ⚠⚠ THE DISABLED TWIN (`E723` item 8) — the same `.pm-btn` box, visibly dead.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <div className="mt-3"><span aria-disabled="true"
+            //     className="cursor-not-allowed text-[13px] font-bold text-ink-3"> */}
+        <span aria-disabled="true" className="pm-btn">
           Rebuild From New Résumé
         </span>
-        <p className="mt-1 text-[12px] leading-relaxed text-ink-2">
+        <p className="mt-2 text-[12px] leading-relaxed text-ink-2">
           {/* ⚠⚠ THE REASON, NOT AN APOLOGY, AND NO ROADMAP (ruling 18). ⚠⚠⚠ IT NAMES NO
               ENVIRONMENT VARIABLE: this string is read by members, and the availability
               endpoint deliberately returns a BOOLEAN so no key or detail can leak to it. */}
           Résumé reading is unavailable here right now.
         </p>
-      </div>
+      </>
     );
   }
 
@@ -215,21 +216,39 @@ export function OwnerResumeRebuild() {
   }
 
   return (
-    <div className="mt-3">
-      {/* ⚠⚠ A MAGENTA TEXT LINK, WHICH IS SCOTT'S WORD FOR IT — and `E433`'s rule working as
-          intended: magenta is the link affordance, and the ink button above it is the
-          page's primary. A second solid button here would claim a second primary. */}
+    <>
+      {/*
+        ── ⚠⚠⚠ A BUTTON NOW, NOT A TEXT LINK (`P2-A2-E723` item 8) ──────────────────────
+
+        ⚠ **SCOTT'S SKETCH: *"Rebuild From New Résumé becomes a button under it: same width,
+        height, radius and text size; white, 1px ink border, 8px gap."***
+        ⚠⚠ **`E720` SHIPPED IT AS A MAGENTA TEXT LINK ON SCOTT'S OWN INSTRUCTION** — *"a
+        magenta text link under How Others See My Profile"* — and the sketch of 2026-09-30
+        supersedes that (rule 13). ⚠⚠⚠ **IT REUSES `.pm-btn` RATHER THAN RESTATING FOUR
+        FIGURES**, so "same width, height, radius and text size" holds by construction and
+        keeps holding if the primary above it ever changes.
+        ⚠ `E433` IS NOT BROKEN BY THIS: the ink button above is still the one solid fill and
+        still the only primary; this is the outlined secondary, the same face `Message` and
+        `Connect as a Colleague` wear on the visitor rail.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   <div className="mt-3">
+        //   {/* A MAGENTA TEXT LINK, WHICH IS SCOTT'S WORD FOR IT - and E433's rule working
+        //       as intended: magenta is the link affordance, and the ink button above it is
+        //       the page's primary. A second solid button here would claim a second primary.
+        //   <button type="button" data-e720-rebuild onClick={() => setStage("choose")}
+        //     className="text-[13px] font-bold text-magenta transition-colors hover:text-magenta-dark">
+      */}
       <button
         type="button"
         data-e720-rebuild
         onClick={() => setStage("choose")}
-        className="text-[13px] font-bold text-magenta transition-colors hover:text-magenta-dark"
+        className="pm-btn transition-colors"
       >
         Rebuild From New Résumé
       </button>
       {receipt && (
-        <p className="mt-1 text-[12px] font-semibold text-emerald-700">✓ {receipt}</p>
+        <p className="mt-2 text-[12px] font-semibold text-emerald-700">✓ {receipt}</p>
       )}
-    </div>
+    </>
   );
 }

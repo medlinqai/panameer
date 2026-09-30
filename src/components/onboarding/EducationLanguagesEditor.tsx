@@ -1,6 +1,8 @@
 "use client";
 
 import { Field, TextInput } from "@/components/onboarding/controls";
+/* ⚠ THE ONE DEFINITION both this step and `/profile/edit/languages` read (`E723`, `E585`). */
+import { WORLD_LANGUAGES, LANGUAGE_NAMES, PROFICIENCY_OPTIONS } from "@/lib/languages";
 
 /*
   E164 — THIS EDITOR COULD NOT EXPRESS HALF THE RECORD.
@@ -151,39 +153,105 @@ export function EducationLanguagesEditor({
       <section>
         <h3 className="mb-3 font-bold">Languages</h3>
         <div className="space-y-3">
+          {/*
+            ── ⚠⚠⚠ TWO PICKLISTS, AND THE PROFICIENCY WRITES `level` (`P2-A2-E723`) ────────
+
+            ⚠ **SCOTT: *"Languages: two picklists, not free text… Proficiency: exactly Native ·
+            Fluent · Professional · Conversational · Beginner, required per language."***
+            ⚠⚠⚠ **AND THE BUG HE FOUND: *"the proficiency box discards typing today.
+            `EducationLanguagesEditor` writes `proficiency`, but `SectionEditorClient.tsx:384`
+            saves `level ?? proficiency`, and `level` is `""` for existing rows, so the empty
+            string wins."*** ⚠⚠ **`??` ONLY FALLS BACK ON `null`/`undefined`, NOT ON `""`** —
+            so an empty `level` beat whatever was typed, every time. **The picklist now writes
+            `level` directly and `proficiency` is gone from this editor's data**, which removes
+            the two-field choice rather than fixing the operator.
+            ⚠ **WHY FREE TEXT HAD TO GO, MEASURED:** live names include `"Spanish Native"`,
+            `"English Advanced intermediate"` and `"German Basic"` — **the proficiency was
+            being typed into the NAME box**, because nothing stopped it.
+          */}
           {languages.map((l, i) => (
             <div key={i} className="flex items-end gap-3">
               <div className="flex-1">
                 <Field label="Language">
-                  <TextInput
+                  <select
                     value={l.name}
                     onChange={(ev) => updLang(i, { name: ev.target.value })}
-                  />
+                    className="w-full rounded-[10px] border border-line bg-white px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
+                  >
+                    {/* ⚠ An unchosen row shows a prompt, not the first language in the world. */}
+                    <option value="">Choose a language…</option>
+                    {/* ⚠⚠ A ROW WHOSE STORED NAME IS NOT IN THE LIST KEEPS ITS OWN OPTION.
+                        Without this, opening the editor on `"Spanish Native"` would silently
+                        reset the select to blank and a save would erase a real row. **Nothing
+                        is rewritten behind the member's back; they are shown what is stored
+                        and can pick a clean value.** */}
+                    {l.name && !LANGUAGE_NAMES.has(l.name) && (
+                      <option value={l.name}>{l.name} (not a standard name)</option>
+                    )}
+                    {WORLD_LANGUAGES.map((w) => (
+                      <option key={w.code} value={w.name}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
               </div>
               <div className="flex-1">
                 <Field label="Proficiency">
-                  <TextInput
-                    value={l.proficiency ?? ""}
-                    onChange={(ev) => updLang(i, { proficiency: ev.target.value })}
-                    placeholder="e.g. Native, Fluent"
-                  />
+                  <select
+                    value={l.level ?? ""}
+                    onChange={(ev) => updLang(i, { level: ev.target.value })}
+                    className="w-full rounded-[10px] border border-line bg-white px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
+                  >
+                    <option value="">Choose…</option>
+                    {/* ⚠⚠ SCOTT'S DISPLAY ORDER, NOT THE ENUM'S — see `lib/languages.ts`. */}
+                    {PROFICIENCY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
               </div>
-              <button
-                type="button"
-                onClick={() => onLanguages(languages.filter((_, idx) => idx !== i))}
-                className="pb-3 text-[13px] font-bold text-red-600 hover:underline"
-              >
-                Remove
-              </button>
+              {/*
+                ── ⚠⚠⚠ THE LAST LANGUAGE CANNOT BE REMOVED (`E723` item 12) ────────────────
+
+                ⚠ **SCOTT: *"the last language can't be removed; its Remove is disabled, with
+                the line 'You need at least one language.'"***
+                ⚠⚠ **THE BUTTON IS DISABLED, NOT HIDDEN.** A control that vanishes leaves the
+                member wondering where it went; one that is visibly dead with a reason beside
+                it answers the question (`E579` — a door onto a wall, inverted).
+                ⚠ **THE SERVER REFUSES THIS TOO** — a disabled button is not a rule.
+              */}
+              <div className="pb-3">
+                <button
+                  type="button"
+                  disabled={languages.length <= 1}
+                  onClick={() => onLanguages(languages.filter((_, idx) => idx !== i))}
+                  className={
+                    languages.length <= 1
+                      ? "cursor-not-allowed text-[13px] font-bold text-ink-3"
+                      : "text-[13px] font-bold text-red-600 hover:underline"
+                  }
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))}
+          {languages.length <= 1 && (
+            <p className="text-[12.5px] leading-relaxed text-ink-2">
+              You need at least one language.
+            </p>
+          )}
         </div>
         <button
           type="button"
           onClick={() =>
-            onLanguages([...languages, { name: "", proficiency: "" }])
+            /* ⚠ `proficiency` IS GONE FROM THIS EDITOR'S DATA (`E723`) — the picklist writes
+               `level`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   onLanguages([...languages, { name: "", proficiency: "" }]) */
+            onLanguages([...languages, { name: "", proficiency: null, level: "" }])
           }
           className="mt-3 text-[14px] font-bold text-magenta hover:text-magenta-dark"
         >

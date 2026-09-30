@@ -621,6 +621,16 @@ export function ConnectProfile({
     rendered moved, which is what kept this a layout change rather than a rewrite.
   */
   const scoreBlock = owner && score ? (
+        /*
+          ── ⚠⚠⚠ SCOPED SO ONLY *THIS* BLOCK GROWS (`P2-A2-E723` item 8) ────────────
+
+          ⚠ **SCOTT'S SKETCH ENLARGES THE SEARCH SCORE LABEL, THE RING, THE NUMBER, *"out of
+          100"* AND THE ITEMS-LEFT LINE — one step each, with more air between them.**
+          ⚠⚠ **`CleanSide` ALSO DRAWS `Rates`, `Visibility` AND `Rank Higher`**, so enlarging
+          its own 12px eyebrow would have grown all four blocks from inside an item about one.
+          ⚠⚠⚠ **THE WRAPPER IS THE SCOPE.** Same component, same markup, one extra class.
+        */
+        <div className="pm-score-block">
         <CleanSide title="Search Score" titleHref="/community/score">
           <div className="flex items-center gap-4">
             <span
@@ -664,6 +674,7 @@ export function ConnectProfile({
             </span>
           </div>
         </CleanSide>
+        </div>
   ) : null;
 
   return (
@@ -1527,77 +1538,18 @@ export function ConnectProfile({
               </section>
             )}
 
-            {connect && (
-              <section className="mt-7 border-t border-line pt-5">
-                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-                  Connect as a Colleague
-                </h3>
-                {connect}
-                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
-                  Colleagues can message each other.
-                </p>
-              </section>
-            )}
-
             {/*
-              ── ⚠⚠⚠ THE REAL CONTROL, NOT A DOOR TO A DIRECTORY (`P2-A2-E720` item 10) ─────
+              ── ⚠⚠⚠ THE ORDER IS SCOTT'S (`P2-A3-E723` item 4) ──────────────────────────────
 
-              ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a
-              Colleague (white, ink border), reusing ConnectControls. It shows state once
-              followed."***
-              ⚠⚠ **WHAT WAS HERE WAS AN `ActionCard` LINKING TO `/community/mentors`** — a link
-              to the mentors DIRECTORY, which is a different page about different people. It
-              could not follow anybody and it could not show state, so *"Request Mentoring"*
-              named an action the control did not perform. `ConnectControls` performs it.
-              ⚠ **IT SITS AFTER `Connect as a Colleague` AND BEFORE `Message`**, which is the
-              order Scott named.
-
-              ── ⚠⚠⚠ THE CONSENT GATE IS KEPT, AND IT MAKES THIS INVISIBLE TODAY ───────────
-
-              ⚠ **`p.openForMentoring` IS `ProviderProfile.open_for_mentoring`
-              (`schema.prisma:1102`)** — a real column whose own 23-line docblock says **THE
-              CHECKBOX IS THE CONSENT** and *"EXPLICIT OPT-IN, NEVER A DEFAULT"*, and which is
-              why `ConnectionKind.MENTOR` needs no PENDING state. ⚠⚠ **SO THE SCHEMA CAN ANSWER
-              SCOTT'S QUESTION AND NO FIELD WAS ADDED.**
-              ⚠⚠⚠ **MEASURED, AND REPORTED RATHER THAN QUIETLY WORKED AROUND: 0 OF 63 PROFILES
-              HAVE THE FLAG SET, AND THERE ARE 0 `MENTOR` ROWS — SO THIS SECTION RENDERS FOR
-              NOBODY UNTIL A PROVIDER TICKS THE BOX.** ⚠ Dropping the gate would have made it
-              appear immediately and would have offered to attach mentees to 63 providers who
-              never opted in — **overturning a documented consent ruling inside a styling
-              item**, which rule 13 says is a decision to RAISE, not to make quietly.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   {p.openForMentoring && (<ActionCard title="Request Mentoring"
-              //     label="Request Mentoring" href="/community/mentors" note="Open to mentoring." />)}
+              ⚠ **`Hire` · `Message` · `Connect as a Colleague` · `Request to Mentor`.**
+              ⚠⚠ `Message` MOVED FROM LAST TO SECOND. It was written last because `E719` added
+              `Hire` above an existing pair; the rail then read Hire · Connect · Mentor ·
+              Message, which buries the one action a buyer already has permission to take
+              under two that ask the provider for something.
+              ⚠⚠⚠ **NOTHING ABOUT THE CONTROLS CHANGED — ONLY THEIR ORDER.** Each section keeps
+              its own heading, guard and copy, so the `canMessage` verdict, the capability
+              gate on `Hire` and the `open_for_mentoring` consent gate are untouched.
             */}
-            {mentor && p.openForMentoring && (
-              <section className="mt-7 border-t border-line pt-5">
-                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-                  {/*
-                    ── ⚠⚠⚠ BACK TO `Request to Mentor` (`P2-A3-E721` item 3) ─────────────
-
-                    ⚠ **SCOTT CONFIRMED `Request to Mentor`, 2026-09-30**, which is the label
-                    he ruled on 2026-09-25 and which the BUTTON inside this section has said
-                    all along. ⚠⚠ `E720` took *"Request as Mentor"* from the wording of the
-                    brief and **shipped a heading that disagreed with the control underneath
-                    it** — two names for one action, six lines apart.
-                    ⚠⚠⚠ **`E720` RAISED IT RATHER THAN PICKING A SIDE, AND THIS IS THE ANSWER
-                    COMING BACK** — rule 13 working in the direction it is meant to: the
-                    question went to Scott and his ruling is now the code.
-                    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   Request as Mentor
-                  */}
-                  Request to Mentor
-                </h3>
-                {mentor}
-                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
-                  {/* ⚠⚠ IT SAYS WHAT THE BUTTON DOES. A `MENTOR` row is created `ACCEPTED`
-                      unilaterally — the connection model's one-way exception — so nobody
-                      approves this and the copy must not imply a wait. */}
-                  This provider is open to mentoring. Following them does not need their
-                  approval, and it does not let either of you message the other.
-                </p>
-              </section>
-            )}
-
             {/*
               ── ⚠⚠⚠ `Message` READS THE RULE, IT DOES NOT RESTATE IT ─────────
               ⚠ The verdict comes from `canMessage`, which is BYTE-UNCHANGED by
@@ -1682,6 +1634,78 @@ export function ConnectProfile({
                 </>
               )}
             </section>
+
+            {connect && (
+              <section className="mt-7 border-t border-line pt-5">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Connect as a Colleague
+                </h3>
+                {connect}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  Colleagues can message each other.
+                </p>
+              </section>
+            )}
+
+            {/*
+              ── ⚠⚠⚠ THE REAL CONTROL, NOT A DOOR TO A DIRECTORY (`P2-A2-E720` item 10) ─────
+
+              ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a
+              Colleague (white, ink border), reusing ConnectControls. It shows state once
+              followed."***
+              ⚠⚠ **WHAT WAS HERE WAS AN `ActionCard` LINKING TO `/community/mentors`** — a link
+              to the mentors DIRECTORY, which is a different page about different people. It
+              could not follow anybody and it could not show state, so *"Request Mentoring"*
+              named an action the control did not perform. `ConnectControls` performs it.
+              ⚠ **IT SITS AFTER `Connect as a Colleague` AND BEFORE `Message`**, which is the
+              order Scott named.
+
+              ── ⚠⚠⚠ THE CONSENT GATE IS KEPT, AND IT MAKES THIS INVISIBLE TODAY ───────────
+
+              ⚠ **`p.openForMentoring` IS `ProviderProfile.open_for_mentoring`
+              (`schema.prisma:1102`)** — a real column whose own 23-line docblock says **THE
+              CHECKBOX IS THE CONSENT** and *"EXPLICIT OPT-IN, NEVER A DEFAULT"*, and which is
+              why `ConnectionKind.MENTOR` needs no PENDING state. ⚠⚠ **SO THE SCHEMA CAN ANSWER
+              SCOTT'S QUESTION AND NO FIELD WAS ADDED.**
+              ⚠⚠⚠ **MEASURED, AND REPORTED RATHER THAN QUIETLY WORKED AROUND: 0 OF 63 PROFILES
+              HAVE THE FLAG SET, AND THERE ARE 0 `MENTOR` ROWS — SO THIS SECTION RENDERS FOR
+              NOBODY UNTIL A PROVIDER TICKS THE BOX.** ⚠ Dropping the gate would have made it
+              appear immediately and would have offered to attach mentees to 63 providers who
+              never opted in — **overturning a documented consent ruling inside a styling
+              item**, which rule 13 says is a decision to RAISE, not to make quietly.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {p.openForMentoring && (<ActionCard title="Request Mentoring"
+              //     label="Request Mentoring" href="/community/mentors" note="Open to mentoring." />)}
+            */}
+            {mentor && p.openForMentoring && (
+              <section className="mt-7 border-t border-line pt-5">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  {/*
+                    ── ⚠⚠⚠ BACK TO `Request to Mentor` (`P2-A3-E721` item 3) ─────────────
+
+                    ⚠ **SCOTT CONFIRMED `Request to Mentor`, 2026-09-30**, which is the label
+                    he ruled on 2026-09-25 and which the BUTTON inside this section has said
+                    all along. ⚠⚠ `E720` took *"Request as Mentor"* from the wording of the
+                    brief and **shipped a heading that disagreed with the control underneath
+                    it** — two names for one action, six lines apart.
+                    ⚠⚠⚠ **`E720` RAISED IT RATHER THAN PICKING A SIDE, AND THIS IS THE ANSWER
+                    COMING BACK** — rule 13 working in the direction it is meant to: the
+                    question went to Scott and his ruling is now the code.
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   Request as Mentor
+                  */}
+                  Request to Mentor
+                </h3>
+                {mentor}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  {/* ⚠⚠ IT SAYS WHAT THE BUTTON DOES. A `MENTOR` row is created `ACCEPTED`
+                      unilaterally — the connection model's one-way exception — so nobody
+                      approves this and the copy must not imply a wait. */}
+                  This provider is open to mentoring. Following them does not need their
+                  approval, and it does not let either of you message the other.
+                </p>
+              </section>
+            )}
+
           </>
         )}
         {/*

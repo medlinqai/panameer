@@ -1,6 +1,8 @@
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
+import { PROFICIENCY_OPTIONS, PROFICIENCY_LABEL, type ProficiencyValue } from "@/lib/languages";
 import { notify } from "@/lib/notifications";
 import {
   recomputeProviderRollup,
@@ -487,12 +489,20 @@ const WORK_METHODS = ["SERVICES", "HOURLY", "PACKAGES", "RECRUITER"] as const;
 // "LINKEDIN" is retained ONLY so rows imported before PJv2 WS13 still read; no
 // code path writes it any more (E069).
 const PROFILE_METHODS = ["LINKEDIN", "RESUME", "MANUAL"] as const;
-const LANGUAGE_LEVELS = [
-  "BASIC",
-  "CONVERSATIONAL",
-  "FLUENT",
-  "NATIVE_OR_BILINGUAL",
-] as const;
+/*
+  ── ⚠⚠⚠ THE ALLOWLIST READS THE ONE DEFINITION (`P2-A2-E723` item 10) ────────────────────
+
+  ⚠⚠ **THIS ARRAY WAS A HAND-KEPT COPY AND IT WOULD HAVE SILENTLY EATEN `PROFESSIONAL`.**
+  The save path is `LANGUAGE_LEVELS.includes(l.level) ? l.level : null` — **a value missing
+  from this list is not rejected, it is turned into `null`** — so a member could pick
+  Professional, save, and get a language with no proficiency and no error.
+  ⚠⚠⚠ **THAT IS WHY `E585` IS THE INSTRUCTION AND NOT A TIDINESS PREFERENCE:** five places
+  defined these five values (here, the signup step's picklist, two label tables and the new
+  module), and the two allowlists were the ones that fail SILENTLY.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const LANGUAGE_LEVELS = ["BASIC", "CONVERSATIONAL", "FLUENT", "NATIVE_OR_BILINGUAL"] as const;
+*/
+const LANGUAGE_LEVELS: readonly ProficiencyValue[] = PROFICIENCY_OPTIONS.map((o) => o.value);
 
 /*
   E202 — THERE IS NO SKILL CEILING ANY MORE.
@@ -2382,7 +2392,13 @@ export async function applyProviderSection(
       const clean = list
         .map((l) => ({
           name: (l.name ?? "").trim(),
-          level: LANGUAGE_LEVELS.includes(l.level) ? l.level : null,
+          /* ⚠⚠ THE CAST IS THE NARROWING, AND IT IS SAFE BECAUSE `includes` IS THE GUARD:
+             `l.level` arrives as unknown step data, and only a value that IS one of the five
+             survives the test. ⚠⚠⚠ `ProficiencyValue` IS DERIVED FROM THE SAME ARRAY, so the
+             type and the runtime check cannot disagree (`E585`). */
+          level: LANGUAGE_LEVELS.includes(l.level as ProficiencyValue)
+            ? (l.level as ProficiencyValue)
+            : null,
         }))
         .filter((l) => l.name);
       if (clean.length === 0) {
@@ -2771,12 +2787,14 @@ const SECTIONS_AFFECTING_ROLLUP = new Set<string>([
 // ---------------------------------------------------------------------------
 
 /** Display labels for the E016 proficiency levels. */
-export const LANGUAGE_LEVEL_LABELS: Record<string, string> = {
-  BASIC: "Basic",
-  CONVERSATIONAL: "Conversational",
-  FLUENT: "Fluent",
-  NATIVE_OR_BILINGUAL: "Native or Bilingual",
-};
+/* ⚠⚠ THE SECOND LABEL TABLE, RETIRED (`E723` item 10). ⚠ It is `PROFICIENCY_LABEL` now, and
+   the words changed with it on Scott's instruction: `BASIC` reads **Beginner** and
+   `NATIVE_OR_BILINGUAL` reads **Native**.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   export const LANGUAGE_LEVEL_LABELS: Record<string, string> = {
+   //     BASIC: "Basic", CONVERSATIONAL: "Conversational", FLUENT: "Fluent",
+   //     NATIVE_OR_BILINGUAL: "Native or Bilingual" }; */
+export const LANGUAGE_LEVEL_LABELS = PROFICIENCY_LABEL;
 
 /** Coerce a year-ish value to a plausible 4-digit year, or null. */
 function toYear(v: unknown): number | null {

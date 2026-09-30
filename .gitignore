@@ -105,3 +105,7 @@ e2e-e721/shots/
 # E722 — the section counts: harness tracked, shots are run artifacts.
 e2e-e722/.artifacts/
 e2e-e722/shots/
+# E723 — dark mode, the ink-3 token, the Search Score sketch and languages:
+# harness tracked, shots are run artifacts.
+e2e-e723/.artifacts/
+e2e-e723/shots/

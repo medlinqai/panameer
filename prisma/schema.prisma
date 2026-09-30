@@ -1322,6 +1322,17 @@ enum ProfileImportStatus {
 enum LanguageProficiency {
   BASIC
   CONVERSATIONAL
+  /// ── ⚠⚠⚠ ADDED BY `P2-A2-E723`, ON SCOTT'S EXPLICIT APPROVAL (2026-09-30) ────────────
+  ///
+  /// ⚠ He asked for exactly five levels — Native · Fluent · Professional · Conversational ·
+  /// Beginner — and four existed. ⚠⚠ `ALTER TYPE … ADD VALUE` ADDS AND REMOVES NOTHING, so
+  /// it is within ruling 38's additive-only rule; the column's type is not converted and no
+  /// row is rewritten. ⚠⚠⚠ **ALL 7 LIVE ROWS ALREADY FIT THE FOUR THAT EXISTED** (3 FLUENT,
+  /// 1 NATIVE_OR_BILINGUAL, 3 null), **so nothing needed remapping.**
+  /// ⚠ THE DISPLAY ORDER IS NOT THIS ORDER. Scott: *"keep the order Native · Fluent ·
+  /// Professional · Conversational · Beginner in the picklist, whatever order the values are
+  /// stored in."* That order lives in `lib/languages.ts`, which is what the picklist reads.
+  PROFESSIONAL
   FLUENT
   NATIVE_OR_BILINGUAL
 }

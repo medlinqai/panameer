@@ -526,11 +526,26 @@
      day a second control returns to this slot. The wrapper's gap is the block's gap. */
   margin-top: 24px;
 }
+/*
+  ══ ⚠⚠⚠ FULL COLUMN WIDTH — SCOTT'S SKETCH SUPERSEDES `E718` ITEM 2 ══════════════════════
+
+  ⚠⚠ **`E718` RULED THIS BUTTON *"sized to its text (not full width)"* ON 2026-09-30, AND THE
+  SKETCH OF THE SAME DAY DRAWS IT FULL WIDTH AND TALLER.** ⚠⚠⚠ **RULE 13: THE NEWEST DATED
+  STATEMENT FROM SCOTT IS THE LIVE ONE**, and a sketch he drew as the target is as dated a
+  statement as a sentence. ⚠ The earlier reasoning was sound for a lone ink slab under a bio;
+  it is a rail button with a twin beneath it now, and a pair of different widths would read
+  as two unrelated controls.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E718`'s rule and `E720`'s padding:
+  //   display: inline-block;  width: auto;  padding: 12px 20px;  align-self: flex-start;
+  //   (and before that, E718: height: 40px; line-height: 38px; padding: 0 18px;)
+*/
 .pm-rail-button .pm-btn {
-  display: inline-block;
-  width: auto;
+  display: block;
+  width: 100%;
   line-height: 1;
-  padding: 12px 20px;
+  /* ⚠ TALLER AND LARGER, per the sketch. */
+  font-size: 14.5px;
+  padding: 15px 20px;
   /*
     ⚠⚠⚠ `align-self` IS THE LINE THAT ACTUALLY SHRINKS IT, AND `width: auto` ALONE DID NOT.
     ⚠ The button sits in a `flex flex-col` wrapper, whose default `align-items: stretch`
@@ -539,9 +554,36 @@
     ⚠⚠ **MEASURED, NOT REASONED: the gate read `w: 260, railW: 260` and failed.** A CSS rule
     can be applied, specific enough, and still lose to the layout its parent imposes — the
     same shape as `E718`'s avatar ring, where the fill was right and the geometry hid it.
-    ⚠ It is also what makes it LEFT-ALIGNED, which is the other half of Scott's instruction.
+    ⚠⚠⚠ SUPERSEDED BY THE SKETCH (`E723` item 8): the button is FULL WIDTH now, so the
+    stretch this fought against is exactly what is wanted. ⚠ The note is kept because the
+    MEASUREMENT behind it is still true and still instructive — a rule can be applied,
+    specific enough, and still lose to the layout its parent imposes.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   align-self: flex-start;
   */
-  align-self: flex-start;
+  align-self: stretch;
+}
+
+/*
+  ══ ⚠⚠ `Rebuild From New Résumé` IS A BUTTON NOW (`P2-A2-E723` item 8) ═══════════════════
+
+  ⚠ **SCOTT: *"same width, height, radius and text size; white, 1px ink border, 8px gap;
+  greyed with a one-line reason if AI is unavailable."***
+  ⚠⚠ **IT REUSES `.pm-btn`, SO "SAME WIDTH, HEIGHT, RADIUS AND TEXT SIZE" IS TRUE BY
+  CONSTRUCTION RATHER THAN BY FOUR MATCHING FIGURES** — `.pm-btn`'s default face is already
+  white with a 1px ink border, which is exactly what was asked for, so the twin needs no
+  face of its own. ⚠⚠⚠ **IF THE PRIMARY'S SIZE EVER CHANGES, THIS FOLLOWS IT** — that is the
+  point of not restating any of the four.
+  ⚠ The 8px gap replaces `.pm-btn + .pm-btn`'s 10px for this pair only.
+*/
+.pm-rail-button .pm-btn + .pm-btn,
+.pm-rail-button > * + * .pm-btn {
+  margin-top: 8px;
+}
+/* ⚠ THE DISABLED FACE: visibly dead, not a door onto a wall (`E579`). */
+.pm-rail-button .pm-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  border-color: var(--color-line);
+  color: var(--color-ink-3);
 }
 
 /*
@@ -639,8 +681,25 @@
   ⚠ The figures track Tailwind's own scale (`px-5` = 20px, `sm:px-8` = 32px at 640px), so
   they cannot drift from the shell unless the shell's padding itself changes.
 */
+/*
+  ── ⚠⚠⚠ IT FOLLOWS THE THEME NOW (`P2-A2-E723` item 1) ───────────────────────
+
+  ⚠ **SCOTT: *"Dark mode breaks `/profile` and `/providers/[id]`. `.account-surface`
+  hard-codes `background: #fff` while dark mode repoints ink/ink-2/line to light values."***
+  ⚠⚠⚠ **THAT IS WHITE TEXT ON A WHITE PAGE.** `:root[data-theme="dark"]` moves
+  `--color-ink` to `#f2f0f7` — near-white — and this rule pinned the ground at `#fff`
+  regardless, so the two met. **It is `E017` exactly, in the other direction**: that defect
+  was light ink pinned on a dark card, this one is dark-mode ink on a pinned light card.
+  ⚠ **THE FIX FOLLOWS `.marketing-surface`'s SHAPE, NOT ITS DIRECTION.** That surface PINS
+  the light palette on purpose, because the public pages are light in both themes. **An
+  account page is not a marketing page — it is app chrome and it themes.** So instead of
+  pinning ink to match a fixed ground, the ground moves to match the ink.
+  ⚠⚠ ONE TOKEN, SHARED WITH EVERY `.bg-white` CARD, so a profile page and the cards inside
+  it cannot end up two different colours in dark mode.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   background: #fff;
+*/
 .account-surface {
-  background: #fff;
+  background: var(--color-surface);
   margin-left: -20px;
   margin-right: -20px;
   padding-left: 20px;
@@ -658,23 +717,36 @@
 }
 
 /*
-  ── ⚠⚠⚠ THE MOCKUP'S GREY, SCOPED — AND A REAL DEFECT REPORTED RATHER THAN SWEPT ──
+  ── ⚠⚠⚠ SUPERSEDED BY `E723` item 6 — THE TOKEN IS DECLARED NOW ────────────────────────
 
-  ⚠⚠⚠ **`--color-ink-3` IS NOT DECLARED ANYWHERE.** `globals.css` defines `--color-ink` and
-  `--color-ink-2` and stops. ⚠⚠ **Tailwind v4 generates NO utility for a token that does not
-  exist, and emits nothing — silently** (the `HERO_SCRIM` trap, `E338`). ⚠ **MEASURED: 56
-  `text-ink-3` uses across 13 files are dead**, inheriting their parent's colour instead of
-  going grey.
-  ⚠⚠⚠ **DECLARING THE TOKEN WOULD REPAINT ALL 56 IN ONE COMMIT** — an app-wide visual change
-  nobody asked for, inside a brief about one page, against contrast figures `check:theme`
-  asserts. **So it is REPORTED, not fixed here**, and the grey is restored only on the two
-  surfaces this brief owns.
-  ⚠ The selector matches the class ATTRIBUTE, which works whether or not Tailwind ever
-  emitted a utility of that name.
+  ⚠ **SCOTT ASKED FOR IT ON 2026-09-30**, so the app-wide repaint this block refused to make
+  on its own authority is now authorised and done. ⚠⚠ **EVERYTHING BELOW WAS TRUE WHEN
+  WRITTEN AND IS KEPT AS THE RECORD (`E164`)** — including the reason it was right to stop:
+  a design-wide change should not ride along inside a brief about one page.
+  ⚠⚠⚠ **AND ITS ONE BLIND SPOT, WHICH IS WHAT ACTUALLY COST SCOTT THE ICONS: the scoped
+  selector below sets `color`, and `MetaIcon` uses `stroke-ink-3`. No `color` rule paints an
+  SVG stroke.** So the text went grey, the pin and the calendar drew nothing at all, and the
+  note said the surfaces this brief owns were covered. **They were not.**
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the original block follows verbatim:
+  //   THE MOCKUP'S GREY, SCOPED - AND A REAL DEFECT REPORTED RATHER THAN SWEPT
+  //   `--color-ink-3` IS NOT DECLARED ANYWHERE. `globals.css` defines `--color-ink` and
+  //   `--color-ink-2` and stops. ⚠⚠ **Tailwind v4 generates NO utility for a token that does not
+  exist, and emits nothing - silently (the HERO_SCRIM trap, E338). MEASURED: 56
+  //   `text-ink-3` uses across 13 files are dead, inheriting their parent's colour.
+  //   DECLARING THE TOKEN WOULD REPAINT ALL 56 IN ONE COMMIT - an app-wide visual change
+  //   nobody asked for, inside a brief about one page. So it is REPORTED, not fixed here.
+  //   The selector matches the class ATTRIBUTE, which works whether or not Tailwind ever
+  //   emitted a utility of that name.
 */
-.account-surface .text-ink-3 {
-  color: #8a869a;
-}
+/*
+  ⚠⚠⚠ THE SCOPED PATCH IS RETIRED (`P2-A2-E723` item 6). `--color-ink-3` IS NOW A REAL
+  TOKEN in `globals.css`, declared in all three blocks with a dark value, so `text-ink-3`
+  resolves everywhere instead of only inside this wrapper — **and `stroke-ink-3` resolves at
+  all, which a `color` rule could never do.** ⚠ Keeping this would be a second definition of
+  one colour (`E585`) and would out-specify the dark value on exactly these two pages.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   .account-surface .text-ink-3 { color: #8a869a; }
+*/
 
 /*
   ── ⚠ ROW 1 — THE PHOTO IS THE COLUMN ─────────────────────────────────────────
@@ -753,20 +825,31 @@
   font-weight: 600;
   border: 1px solid var(--color-ink);
   color: var(--color-ink);
-  background: #fff;
+  /* ⚠⚠⚠ THEMED (`E723` item 1). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   background: #fff;
+     In dark this button kept a white ground while its border and text went near-white —
+     invisible text on an invisible box. */
+  background: var(--color-surface);
 }
 .pm-btn + .pm-btn {
   margin-top: 10px;
 }
 .pm-btn-primary {
   background: var(--color-ink);
-  color: #fff;
+  /* ⚠⚠⚠ THE TEXT INVERTS WITH THE GROUND (`E723` item 1). ⚠ SUPERSEDED (`E164`):
+     //   color: #fff;
+     MEASURED IN DARK BEFORE THE FIX: background `rgb(242,240,247)` with `color: #fff` —
+     near-white on near-white, contrast 1.05. The primary button had no readable label. */
+  color: var(--color-surface);
 }
 .pm-btn-primary:hover {
-  background: #3b3550;
+  /* ⚠ SUPERSEDED (`E164`):  //   background: #3b3550;  — a DARKER ink for a light theme,
+     which in dark mode dimmed a light button toward the page instead of away from it. */
+  background: var(--color-ink-hover);
 }
 .pm-btn:not(.pm-btn-primary):hover {
-  background: #f6f5f9;
+  /* ⚠ SUPERSEDED (`E164`):  //   background: #f6f5f9; */
+  background: var(--color-surface-hover);
 }
 
 /*
@@ -813,9 +896,13 @@
   ⚠ `CompletionRing` is left exactly as it is: it is the segmented, hover-targeted ring the
   score PAGE uses, and replacing it would change a surface this brief does not own.
 */
+/*
+  ⚠⚠ ONE STEP LARGER, TO SCOTT'S SKETCH (`P2-A2-E723` item 8). ⚠ SUPERSEDED, quoted not
+  deleted (`E164`):  //   width: 64px; height: 64px;  (inner 56px, font-size 18px)
+*/
 .pm-score-ring {
-  width: 64px;
-  height: 64px;
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -823,15 +910,41 @@
   flex: none;
 }
 .pm-score-ring > span {
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: #fff;
+  /* ⚠⚠⚠ THEME-SAFE (`E723` item 1). This hard-coded `#fff` was a THIRD dark-mode break on
+     these pages, alongside `.account-surface` — a white disc punched out of a dark rail,
+     with the score number painted in near-white ink on top of it.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   background: #fff; */
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 18px;
+  /* ⚠ The number, one step up with the ring. ⚠ SUPERSEDED (`E164`):  //   font-size: 18px; */
+  font-size: 23px;
+}
+
+/*
+  ══ ⚠⚠⚠ THE SEARCH SCORE BLOCK, MATCHED TO SCOTT'S SKETCH (`P2-A2-E723` item 8) ══════════
+
+  ⚠ **TARGET: `2. Claude Sub-Files/mockups/search_score_sketch_2026-09-30.png`**, against
+  `search_score_live_2026-09-30.png` as it was. ⚠⚠ Every figure below is one step on the
+  scale the file already uses, not a new scale.
+*/
+.pm-score-block h4 {
+  /* ⚠ The `SEARCH SCORE` eyebrow, larger — the sketch's most obvious change. */
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+/* ⚠⚠ MORE AIR BETWEEN THE RING AND THE FIGURES, and between the two lines of figures. */
+.pm-score-block .pm-score-ring + span {
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.pm-score-block > div > div {
+  gap: 20px;
 }
 
 /*

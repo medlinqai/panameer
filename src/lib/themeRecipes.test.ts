@@ -138,7 +138,10 @@ ok("rejects null", !isValidHex(null));
   const marketing = css.slice(css.indexOf(".marketing-surface {"));
   const pick = (block: string, token: string) =>
     block.match(new RegExp(`--color-${token}:\\s*(#[0-9a-fA-F]{6});`))?.[1].toLowerCase() ?? null;
-  for (const token of ["canvas", "bg-soft", "line", "ink", "ink-2"]) {
+  /* ⚠⚠ `ink-3` AND `surface` JOIN THE MIRROR LIST (`P2-A2-E723`). ⚠ They were declared in
+     all three blocks by that brief, and a token that is mirrored by hand but not asserted is
+     the drift this check exists to catch — the list IS the guard. */
+  for (const token of ["canvas", "bg-soft", "line", "ink", "ink-2", "ink-3", "surface", "ink-hover", "surface-hover"]) {
     ok(
       `E432 · @theme and .marketing-surface agree on --color-${token}`,
       pick(themeBlock, token) === pick(marketing, token),

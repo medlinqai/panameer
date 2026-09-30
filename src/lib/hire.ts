@@ -91,9 +91,39 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
     orderBy: { line_number: "asc" },
   });
 
-  const names = await namesFor(
-    lines.map((l) => l.provider_person_id).filter((x): x is string => !!x)
-  );
+  /*
+    ── ⚠⚠⚠ THE SHORTLIST IS READ TOO (`P2-A3-E723` item 3) ───────────────────
+
+    ⚠ **SCOTT: *"Blank provider name on `/hire` for sole-sourced drafts: the list reads
+    `WorkRequestLine`, not the shortlist. Read the shortlist too."***
+    ⚠⚠ **`E719` PREDICTED THIS EXACT ROW AND SAID SO AT THE TIME:** *"a provider can be
+    attached to a request TWO ways — `ShortlistLine.provider_person_id` and
+    `WorkRequestLine.provider_person_id` — and `/hire`'s list reads the LINES, so a draft
+    created here shows the provider on the request but not yet in that list's name column."*
+    **It was reported so the empty column would not be read as a bug; it is now fixed.**
+    ⚠⚠⚠ **TWO READS, BECAUSE THERE IS NO PRISMA RELATION BETWEEN `WorkRequest` AND
+    `Shortlist`** — `work_request_id` is a bare scalar, so it cannot be a nested `where`.
+    That is a query shape, not a missing fact, and it is the same two-step
+    `lib/sole-source.ts` already makes. **No schema change (ruling 38).**
+    ⚠ **THE NAMES ARE STILL RESOLVED ONCE, FOR BOTH SOURCES**, so a provider attached both
+    ways costs one lookup and appears once — `providerNames` de-duplicates below.
+  */
+  const shortlists = await prisma.shortlist.findMany({
+    where: { work_request_id: { in: requests.map((r) => r.id) } },
+    select: { work_request_id: true, lines: { select: { provider_person_id: true } } },
+  });
+  /** ⚠ `work_request_id → the provider ids its shortlists name`, in shortlist-line order. */
+  const shortlisted = new Map<string, string[]>();
+  for (const sl of shortlists) {
+    const list = shortlisted.get(sl.work_request_id) ?? [];
+    for (const l of sl.lines) if (!list.includes(l.provider_person_id)) list.push(l.provider_person_id);
+    shortlisted.set(sl.work_request_id, list);
+  }
+
+  const names = await namesFor([
+    ...lines.map((l) => l.provider_person_id).filter((x): x is string => !!x),
+    ...[...shortlisted.values()].flat(),
+  ]);
 
   const byRequest = new Map<string, typeof lines>();
   for (const l of lines) {
@@ -108,6 +138,14 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
     for (const l of mine) {
       if (!l.provider_person_id) continue;
       const name = names.get(l.provider_person_id);
+      if (name && !providerNames.includes(name)) providerNames.push(name);
+    }
+    /* ⚠⚠ THEN THE SHORTLIST (`E723` item 3). ⚠ LINES FIRST, DELIBERATELY: a line is the
+       stronger statement — it is on the request itself — so where both exist the order is
+       unchanged for every request that already had names. ⚠⚠⚠ The `includes` guard is what
+       makes a provider attached BOTH ways appear once, not twice. */
+    for (const personId of shortlisted.get(r.id) ?? []) {
+      const name = names.get(personId);
       if (name && !providerNames.includes(name)) providerNames.push(name);
     }
     return {

@@ -369,9 +369,12 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
             the way out. ⚠ Unifying the two types is a real tidy-up with its own
             blast radius and is not this brief.
           */
+          /* ⚠⚠ `proficiency` IS NO LONGER SYNTHESISED FROM `level` (`E723` item 11). The
+             editor's picklist reads and writes `level` alone. ⚠ SUPERSEDED (`E164`):
+             //   proficiency: l.level ?? null, */
           languages={draft.languages.map((l) => ({
             name: l.name,
-            proficiency: l.level ?? null,
+            proficiency: null,
             level: l.level,
           }))}
           /* ⚠ THE EDUCATION HALF IS HIDDEN — this section saves languages only,
@@ -380,15 +383,37 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           onEducation={() => {}}
           onLanguages={(next) =>
             patch({
+              /*
+                ── ⚠⚠⚠ THE BUG SCOTT FOUND, AT ITS SOURCE (`P2-A2-E723` item 11) ──────────
+
+                ⚠ **`level ?? proficiency` LOOKS LIKE A FALLBACK AND IS NOT ONE.** `??` only
+                falls back on `null`/`undefined`; **`level` was `""` for every existing row,
+                and `""` is neither** — so the empty string won and whatever was typed into
+                the proficiency box was thrown away on save.
+                ⚠⚠⚠ **THE FIX IS NOT A BETTER OPERATOR, IT IS ONE FIELD.** The picklist writes
+                `level`, `proficiency` is gone from this editor's data, and there is no longer
+                a second value for a fallback to choose between. **`||` would have papered
+                over the same two-field ambiguity.**
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   level: l.level ?? l.proficiency ?? null,
+              */
               languages: next.map((l) => ({
                 name: l.name,
-                level: l.level ?? l.proficiency ?? null,
+                level: l.level && l.level !== "" ? l.level : null,
               })),
             })
           }
         />
       );
-      canSave = draft.languages.some((l) => l.name.trim() !== "");
+      /* ⚠⚠⚠ BOTH FIELDS, AND AT LEAST ONE ROW (`E723` items 10 + 12). ⚠ Scott: proficiency is
+         *"required per language"*, and *"every profile has at least one language"*. ⚠⚠ A row
+         with a name and no level would otherwise save as a language with no proficiency —
+         the state the picklist exists to make unreachable.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   canSave = draft.languages.some((l) => l.name.trim() !== ""); */
+      canSave =
+        draft.languages.length > 0 &&
+        draft.languages.every((l) => l.name.trim() !== "" && !!l.level && l.level !== "");
       break;
     case "role":
       /*

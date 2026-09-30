@@ -17,6 +17,8 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
    shows it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels"; */
 import { isSkillShown } from "@/lib/shown-skills";
+/* ⚠ THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
+import { PROFICIENCY_OPTIONS } from "@/lib/languages";
 
 import {
   OptionCard,
@@ -245,12 +247,11 @@ const GOAL_OPTIONS = [
    `/profile/edit/work-method` asks the SAME question with the SAME options.
    ⚠ SUPERSEDED, quoted not deleted (`E164`): the array lived here. */
 
-const LANGUAGE_LEVELS = [
-  { value: "BASIC", label: "Basic" },
-  { value: "CONVERSATIONAL", label: "Conversational" },
-  { value: "FLUENT", label: "Fluent" },
-  { value: "NATIVE_OR_BILINGUAL", label: "Native or Bilingual" },
-];
+/* ⚠⚠⚠ THE SIGN-UP STEP'S PICKLIST READS THE ONE DEFINITION (`E723` item 10, `E585`).
+   ⚠ Without this it would have offered four levels while the profile editor offered five.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const LANGUAGE_LEVELS = [{ value: "BASIC", label: "Basic" }, … ]; */
+const LANGUAGE_LEVELS = PROFICIENCY_OPTIONS;
 
 /**
  * Stepper heading + forward-button label per step — the exact strings from

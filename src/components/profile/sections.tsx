@@ -13,6 +13,7 @@ import { CredentialProvenance } from "@/components/profile/CredentialProvenance"
 /* ⚠ THE ONE TAG STYLE (`E720` item 5). ⚠⚠ `CleanSection.tsx` imports only `Link` and
    `ReactNode`, so this direction cannot cycle. */
 import { CLEAN_CHIP } from "@/components/profile/CleanSection";
+import { PROFICIENCY_LABEL } from "@/lib/languages";
 
 /**
  * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
@@ -106,12 +107,13 @@ const CHIP_SPEC = CHIP_TAG;
  * view-model satisfy them without either side converting to the other's shape.
  */
 
-export const LEVEL_LABELS: Record<string, string> = {
-  BASIC: "Basic",
-  CONVERSATIONAL: "Conversational",
-  FLUENT: "Fluent",
-  NATIVE_OR_BILINGUAL: "Native or Bilingual",
-};
+/* ⚠⚠ THE THIRD LABEL TABLE, RETIRED (`E723` item 10, `E585`). ⚠ Re-exported rather than
+   deleted so the ~4 files importing `LEVEL_LABELS` keep working; there is one table now.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   export const LEVEL_LABELS: Record<string, string> = {
+   //     BASIC: "Basic", CONVERSATIONAL: "Conversational", FLUENT: "Fluent",
+   //     NATIVE_OR_BILINGUAL: "Native or Bilingual" }; */
+export const LEVEL_LABELS: Record<string, string> = PROFICIENCY_LABEL;
 
 // ---------------------------------------------------------------------------
 // Frame
