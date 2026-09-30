@@ -64,6 +64,21 @@ type Props = {
    * burying it produces silent ignores, which teach the platform nothing.
    */
   showDecline?: boolean;
+  /**
+   * ── ⚠⚠⚠ `outline` — WHITE WITH AN INK BORDER (`P2-A8-E719`) ───────────────
+   *
+   * ⚠ **SCOTT: on a provider's profile, `Connect as a Colleague` becomes white with an ink
+   * border**, because `Hire` is the primary action on that rail now and two solid fills would
+   * claim two primaries.
+   * ⚠⚠ **IT IS A PROP WITH THE OLD LOOK AS ITS DEFAULT BECAUSE THIS COMPONENT IS RENDERED BY
+   * TEN FILES** — the community cards, the mentors page, `CommunityWeb`, `ConnectHome`,
+   * `ColleagueCards` and more. ⚠⚠⚠ **CHANGING `PRIMARY` ITSELF WOULD RESTYLE EVERY ONE OF
+   * THEM FROM INSIDE A BRIEF ABOUT ONE RAIL** — the `CARD` mistake `E713` was written to
+   * avoid, and the third time this shape has come up (`WorkHistoryBody`, `ToggleRow`).
+   * ⚠ Only the PRIMARY affordance changes tone; `GHOST` and `QUIET` are already outlined and
+   * quiet, so they are untouched in both modes.
+   */
+  tone?: "magenta" | "outline";
 };
 
 const BTN =
@@ -71,6 +86,9 @@ const BTN =
 const PRIMARY = `${BTN} bg-magenta text-white hover:bg-magenta/90 disabled:bg-ink-2/15 disabled:text-ink-2`;
 const GHOST = `${BTN} border border-line text-ink-2 hover:border-magenta/50 hover:text-magenta`;
 const QUIET = `${BTN} text-ink-2`;
+/* ⚠ The opt-in face: white, 1px ink border, ink text — the same family as `pm-btn` on the
+   profile rail, so `Hire`, `Message` and this read as one set rather than three treatments. */
+const OUTLINE = `${BTN} border border-ink text-ink hover:bg-black/[0.04] disabled:border-line disabled:text-ink-2`;
 
 export function ConnectControls({
   toUserId,
@@ -79,7 +97,11 @@ export function ConnectControls({
   isMentor = false,
   isSelf = false,
   showDecline = false,
+  tone = "magenta",
 }: Props) {
+  /* ⚠ Resolved once, so every primary affordance in this component moves together — a second
+     `tone === …` at a call site below is how one of the four buttons would get left behind. */
+  const PRIMARY_TONE = tone === "outline" ? OUTLINE : PRIMARY;
   const router = useRouter();
   const [rel, setRel] = useState<Relation>(relation);
   const [mentor, setMentor] = useState(isMentor);
@@ -157,20 +179,20 @@ export function ConnectControls({
   let colleagueControl: React.ReactNode = null;
   if (rel === null) {
     colleagueControl = (
-      <button type="button" className={PRIMARY} disabled={busy} onClick={connectColleague}>
+      <button type="button" className={PRIMARY_TONE} disabled={busy} onClick={connectColleague}>
         Connect as Colleague
       </button>
     );
   } else if (rel === "PENDING" && incomingConnectionId) {
     colleagueControl = (
-      <button type="button" className={PRIMARY} disabled={busy} onClick={accept}>
+      <button type="button" className={PRIMARY_TONE} disabled={busy} onClick={accept}>
         Accept
       </button>
     );
   } else if (rel === "PENDING") {
     /* ⚠ DISABLED, NOT HIDDEN — you asked, and you should be able to see that. */
     colleagueControl = (
-      <button type="button" className={PRIMARY} disabled>
+      <button type="button" className={PRIMARY_TONE} disabled>
         Requested
       </button>
     );
@@ -191,7 +213,7 @@ export function ConnectControls({
       optimistic-then-revert path.
     */
     colleagueControl = (
-      <Link href={`/messages?with=${toUserId}`} className={PRIMARY}>
+      <Link href={`/messages?with=${toUserId}`} className={PRIMARY_TONE}>
         Message
       </Link>
     );

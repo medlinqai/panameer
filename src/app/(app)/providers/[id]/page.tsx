@@ -34,6 +34,7 @@ import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
 import { ConnectControls } from "@/components/community/ConnectControls";
+import { hasCapability } from "@/lib/access";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
@@ -114,6 +115,10 @@ async function connectSlot(
         relation={colleague?.rel ?? null}
         incomingConnectionId={incomingId ?? null}
         isMentor={mine.following.some((f) => f.person?.userId === ownerUserId)}
+        /* ⚠ `outline` ONLY HERE (`E719`). Nine other files render this component and keep the
+           magenta primary; on this rail `Hire` is the primary and two solid fills would claim
+           two. Opt-in, so nothing else moves. */
+        tone="outline"
       />
     ),
   };
@@ -426,6 +431,22 @@ export default async function PublicProviderPage({
           community={await getCommunitySignalForProfile(profile.id)}
           youBothKnow={youBothKnow}
           messagePermission={messagePermission}
+          /*
+            ── ⚠⚠⚠ WHO SEES `Hire` (`P2-A8-E719`) ──────────────────────────────────────────
+
+            ⚠ **A SIGNED-IN MEMBER WHO CAN BUY AND IS NOT THE OWNER.** `hasCapability(viewer,
+            "canHireTalent")` is the same capability the API route guards on and the same
+            column `resolveBuyer` reads — `access.ts:110`, literally `is_service_buyer`.
+            ⚠⚠ **`!profile.isOwner` IS SEPARATE AND IS SCOTT'S RULE:** *"Owner preview: no
+            Hire."* An owner who is also a buyer would otherwise be offered a button that
+            sole-sources themselves — which the server refuses anyway (`OWN_PROFILE`), but a
+            control that always errors is worse than no control.
+            ⚠⚠⚠ **IT COVERS THE `?as=provider` PREVIEW TOO**, because that path keeps
+            `profile.isOwner` true on the view model by design (`E598`) — so the one condition
+            answers both previews without a second flag.
+            ⚠ A signed-out visitor never reaches here: the page redirects before this.
+          */
+          canHire={!!viewer && !profile.isOwner && hasCapability(viewer, "canHireTalent")}
           {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}
           /* ⚠⚠⚠ THE BUYER'S VIEW, ALWAYS. `isOwner` stays true on the view
              model — the bar above needs it and `recordProfileView` still must

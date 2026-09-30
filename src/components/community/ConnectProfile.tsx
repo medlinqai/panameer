@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
+import { HireButton } from "@/components/community/HireButton";
 /* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
    row asks it rather than deciding the fallback a second time. */
 /* ⚠⚠ THE FACES ROW IS GONE (`P2-A2-E598` WS-C item 3) — Scott: *"The colleague
@@ -170,6 +171,7 @@ export function ConnectProfile({
      (`P2-A3-E599` WS-C 4). `null` for a visitor and for a member with none. */
   growth = null,
   youBothKnow = null,
+  canHire = false,
   messagePermission = null,
   connect,
   previewAsBuyer = false,
@@ -250,6 +252,18 @@ export function ConnectProfile({
    * ⚠⚠ THE MESSAGE VERDICT, READ FROM `canMessage` — THE BUTTON READS THE RULE
    * AND DOES NOT RESTATE IT. ⚠ `canMessage` is BYTE-UNCHANGED by this brief.
    */
+  /**
+   * ── ⚠⚠⚠ MAY THIS VIEWER BUY? (`P2-A8-E719`) ──────────────────────────────
+   *
+   * ⚠ **COMPUTED BY THE PAGE FROM `hasCapability(viewer, "canHireTalent")`**, and deliberately
+   * NOT derived here — the same rule `active` follows on the account menu (ruling 72): this
+   * component renders what it is told about permission and decides nothing about it.
+   * ⚠⚠ **THE OWNER'S PREVIEW PASSES `false`** even though the owner is often a buyer, because
+   * Scott's rule is *"Owner preview: no Hire"* — you do not sole-source yourself.
+   * ⚠⚠⚠ **AND IT IS NOT THE PERMISSION.** `/api/work-requests/sole-source` guards on the same
+   * capability and `resolveBuyer` checks the column again; this only decides what is drawn.
+   */
+  canHire?: boolean;
   messagePermission?: MessagePermission | null;
   /** ⚠ `ConnectControls`, resolved by the page that knows it is showing
    *  somebody else. Carried over unchanged from `/providers/[id]`. */
@@ -1381,6 +1395,36 @@ export function ConnectProfile({
               </section>
             )}
 
+            {/*
+              ── ⚠⚠⚠ `Hire` IS FIRST, AND THE OTHER TWO STEP BACK (`P2-A8-E719`) ─────────────
+
+              ⚠ **SCOTT: solid ink, first of the actions, above `Message` and `Connect as a
+              Colleague`, which become white with an ink border.**
+              ⚠⚠ **THE RAIL HAD THREE CONTROLS OF EQUAL WEIGHT AND NO PRIMARY** — a buyer who
+              wanted to hire had to find the action among two social ones.
+              ⚠⚠⚠ **IT RENDERS ONLY FOR A SIGNED-IN MEMBER WHO CAN BUY AND IS NOT THE OWNER.**
+              `canHire` is the page's answer; the route checks the same capability again, and
+              `resolveBuyer` checks the column a third time. **The button is what is drawn,
+              never who may act.**
+              ⚠ `p.person.personId` is the PROVIDER's person id — the same id
+              `ShortlistLine.provider_person_id` holds — so nothing is looked up twice.
+            */}
+            {canHire && p.person.personId && (
+              <section className="mt-7 border-t border-line pt-5">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Hire
+                </h3>
+                <HireButton providerPersonId={p.person.personId} />
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  {/* ⚠ It says what the click DOES, because it creates a row. A control that
+                      writes something and does not say so is the surprise this sentence
+                      exists to remove. */}
+                  Starts a work request for this provider only. You can complete the
+                  details before anyone is contacted.
+                </p>
+              </section>
+            )}
+
             {connect && (
               <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
@@ -1423,7 +1467,12 @@ export function ConnectProfile({
               {messagePermission?.ok ? (
                 <Link
                   href={`/messages?with=${p.person.userId ?? ""}`}
-                  className="block w-full rounded-full bg-magenta px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-white transition-colors hover:bg-magenta-dark"
+                  /* ⚠ WHITE WITH AN INK BORDER (`E719`) — `Hire` is the primary on this rail
+                     now, and two solid fills would say there are two primaries. `pm-btn` is
+                     the same shape the profile's own button uses, so the three controls read
+                     as one family. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                     //   className="block w-full rounded-full bg-magenta px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-white transition-colors hover:bg-magenta-dark" */
+                  className="pm-btn transition-colors"
                 >
                   Message
                 </Link>
@@ -1432,7 +1481,14 @@ export function ConnectProfile({
                   <button
                     type="button"
                     disabled
-                    className="block w-full cursor-not-allowed rounded-full bg-line px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-ink-3"
+                    /* ⚠ THE DISABLED FACE KEEPS THE FAMILY'S SHAPE BUT NOT ITS BORDER
+                       (`E719`). Scott asked for Message to become white with an ink border;
+                       **that is the ENABLED face.** A disabled control drawn like an enabled
+                       one is the defect `E579` names — a door onto a wall — so this stays
+                       visibly dead and only stops being a pill among 4px neighbours.
+                       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                       //   className="block w-full cursor-not-allowed rounded-full bg-line px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-ink-3" */
+                    className="pm-btn cursor-not-allowed border-line bg-line text-ink-3"
                   >
                     Message
                   </button>

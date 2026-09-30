@@ -200,7 +200,24 @@ export async function getWorkRequest(viewer: Viewer, id: string) {
 export async function createDraft(
   viewer: Viewer,
   section?: WorkRequestSection,
-  data?: SectionData
+  data?: SectionData,
+  /*
+    ── ⚠⚠⚠ SOLE-SOURCING IS A CREATION FACT, SET HERE (`P2-A8-E719`) ────────────
+
+    ⚠ **THE HIRE BUTTON ON A PROVIDER'S PROFILE CREATES A REQUEST THAT ALREADY NAMES ITS
+    PROVIDER**, so `sole_sourced` is true from the first row rather than patched afterwards.
+    ⚠⚠ **IT IS AN ARGUMENT TO THE ONE CREATOR, NOT A SECOND CREATOR.** `E585`, and the brief
+    says it outright: *"using the existing writers, no second WR creator."* A `hire.ts` that
+    called `prisma.workRequest.create` itself would be the second place that knows a draft
+    starts `INVITE_ONLY`, and the two would drift the first time that default changed.
+    ⚠ **DEFAULTS TO `false`, WHICH IS THE COLUMN'S OWN DEFAULT AND EVERY EXISTING CALLER'S
+    BEHAVIOUR** — the wizard at `/create-work` is untouched.
+    ⚠⚠⚠ **AND IT IS STATED RATHER THAN INFERRED**, which is the whole reason the column
+    exists: its docblock records that before it, sole-sourcing was *"only inferable from a
+    status that got skipped"*, and ruling `90b` — a false value in a true column is worse than
+    a null — is why there is no backfill.
+  */
+  opts?: { soleSourced?: boolean }
 ) {
   const { personId, pAccountId } = await resolveBuyer(viewer);
   const draft = await prisma.workRequest.create({
@@ -208,6 +225,7 @@ export async function createDraft(
       buyer_person_id: personId,
       p_account_id: pAccountId,
       status: "DRAFT",
+      sole_sourced: opts?.soleSourced ?? false,
       /*
         ── ⚠⚠⚠ WHO MAY PROPOSE — RULING 14 (`P2-A8-E621` WS-A) ──────────────
         ⚠ Scott: **"The buyer picks, per request."** They pick when they POST;
