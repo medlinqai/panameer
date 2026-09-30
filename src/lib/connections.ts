@@ -47,7 +47,20 @@ export const CONNECTION_KINDS: ConnectionKindValue[] = ["COLLEAGUE", "MENTOR"];
 export class ConnectionError extends Error {
   constructor(
     message: string,
-    public code: "SELF" | "NOT_FOUND" | "ALREADY" | "NOT_A_MEMBER" | "WRONG_KIND"
+    public code:
+      | "SELF"
+      | "NOT_FOUND"
+      | "ALREADY"
+      | "NOT_A_MEMBER"
+      | "WRONG_KIND"
+      /**
+       * ⚠⚠ THE TARGET HAS NOT OPENED THEMSELVES TO MENTORING (`P2-A3-E721` item 3).
+       * ⚠⚠⚠ **IT IS ITS OWN CODE AND NOT `NOT_FOUND`, BECAUSE THE ROUTE ANSWERS IT WITH A
+       * 403 RATHER THAN A 400:** unlike `SELF`, this is a request that a *state change*
+       * would legitimately allow — the provider ticking their own box — so it is a denial,
+       * not a malformed call.
+       */
+      | "NOT_OPEN"
   ) {
     super(message);
     this.name = "ConnectionError";
@@ -200,8 +213,47 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
   const from = await ownUserId(viewer);
   refuseSelf(from, toUserId);
 
-  const target = await prisma.user.findUnique({ where: { id: toUserId }, select: { id: true } });
+  /*
+    ── ⚠⚠⚠ THE CONSENT IS ENFORCED HERE NOW, NOT ONLY DRAWN (`P2-A3-E721` item 3) ─────────
+
+    ⚠ **SCOTT: *"followMentor must enforce `open_for_mentoring`. The UI respects it; the route
+    doesn't."*** ⚠⚠ **MEASURED AT `E720` AND REPORTED THEN: this function read NOTHING about
+    the target except that a `User` row existed**, so a hand-rolled POST could attach a mentee
+    to any of the 63 providers, none of whom have ticked the box.
+    ⚠⚠⚠ **`ProviderProfile.open_for_mentoring` (`schema.prisma:1102`) IS THE CONSENT** — its
+    own docblock says *"THE CHECKBOX IS THE CONSENT"* and that it is WHY `ConnectionKind.MENTOR`
+    needs no `PENDING` state. **A one-way row created `ACCEPTED` on the spot is only defensible
+    if the target said yes in advance**; without this check, *"following requires no
+    permission"* meant nobody's permission at all.
+    ⚠ **THE SAME COLUMN THE UI READS, NOT A SECOND RULE (`E585`)** — `ConnectProfile` gates its
+    section on `p.openForMentoring`, and `listMentors({ openOnly: true })` gates the directory,
+    both on this field.
+
+    ⚠⚠ **A TARGET WITH NO `ProviderProfile` IS REFUSED, AND THAT IS CORRECT RATHER THAN A GAP:**
+    the flag lives on the provider profile, so a buyer has nowhere to express willingness and
+    has therefore never expressed it. ⚠⚠⚠ **`getMentoringHome` ALREADY READS THAT CASE AS
+    `null`, NEVER AS "OPEN"** (`mentoring-home.ts:95`), so refusing is the reading the rest of
+    the codebase already takes.
+    ⚠ **THE RELATION IS `person.providerProfile` (`@relation("ProfileOwner")`), CHECKED IN THE
+    SCHEMA AND NOT GUESSED** — `Person` also carries `repProviderProfiles`
+    (`"CoordinatorProviders"`), a LIST of profiles this person represents, and reading that one
+    would have asked whether somebody's CLIENT accepts mentees.
+  */
+  const target = await prisma.user.findUnique({
+    where: { id: toUserId },
+    select: {
+      id: true,
+      person: { select: { providerProfile: { select: { open_for_mentoring: true } } } },
+    },
+  });
   if (!target) throw new ConnectionError("That person isn't on Panameer", "NOT_A_MEMBER");
+  if (!target.person?.providerProfile?.open_for_mentoring) {
+    /* ⚠⚠ ONE SENTENCE, DESCRIBING THE OTHER PERSON'S SETTING RATHER THAN BLAMING THE ASKER.
+       ⚠⚠⚠ IT DELIBERATELY DOES NOT DISTINGUISH *"has no provider profile"* FROM *"has not
+       ticked the box"*: both mean the same thing to the reader, and naming which would leak
+       whether a member is a provider at all to anybody who can POST. */
+    throw new ConnectionError("This member isn’t accepting mentees right now.", "NOT_OPEN");
+  }
 
   const existing = await prisma.connection.findUnique({
     where: {

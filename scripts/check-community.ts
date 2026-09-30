@@ -809,14 +809,58 @@ check(
   ) || /PHASE 4 IS CANCELLED/.test(readFileSync(join("src", "lib", "mentors.ts"), "utf8")),
   "the old plan may be QUOTED, but the cancellation has to be stated"
 );
-/* ⚠ NO MENTOR OPT-IN WAS BUILT. Scott: everyone CAN be; demand confers it. */
+/*
+  ── ⚠⚠⚠ AN OPT-IN *WAS* BUILT, AND THIS COMMENT SAID OTHERWISE (`P2-A3-E721` item 3) ──────
+
+  ⚠ **SCOTT: *"Fix `check:community:810`, whose comment says no mentor opt-in was built."***
+  ⚠⚠ **`ProviderProfile.open_for_mentoring` EXISTS (`schema.prisma:1102`)** and its own docblock
+  is emphatic — *"THE CHECKBOX IS THE CONSENT"*, *"EXPLICIT OPT-IN, NEVER A DEFAULT"*, and that
+  it is why `ConnectionKind.MENTOR` needs no `PENDING` state.
+  ⚠⚠⚠ **THE ASSERTION PASSED ANYWAY BECAUSE `open_for_mentoring` IS NOT ONE OF THE FOUR NAMES
+  IT FORBIDS** — so a true statement about four identifiers sat under a false statement about
+  the product, and the gate confirmed the false one every time it went green.
+  ⚠ **STANDING RULE 6: THE STATED RULE THAT CONTRADICTS CORRECT BEHAVIOUR IS THE MORE DANGEROUS
+  HALF — THE NEXT PERSON IMPLEMENTS THE COMMENT.** Somebody reading this would have deleted the
+  column to make the code match the note.
+
+  ⚠⚠ **THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`'S: THE RULING CHANGED, THE CODE
+  DID NOT DRIFT.** So the assertion is rewritten to encode the rule that is now true, rather
+  than loosened to stop failing.
+  ⚠ **WHAT IS STILL FORBIDDEN AND WHY:** `MentorProfile`, a mentor RATE and the three
+  alternative flag spellings. **PHASE 4 — the storefront and the booking — is still cancelled**,
+  and a second spelling of the same flag is `E585` waiting to happen. ⚠⚠ Scott's *"everyone CAN
+  be; demand confers it"* governed the STOREFRONT question and is untouched by a consent
+  checkbox.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   ⚠ NO MENTOR OPT-IN WAS BUILT. Scott: everyone CAN be; demand confers it.
+  //   check("E374/2 — no mentor opt-in flag was added to ProviderProfile",
+  //     !/\b(is_mentor|mentor_opt_in|accepts_mentoring|mentor_rate_cents)\b/.test(schemaNoComments));
+*/
 check(
   "E374/2 — no MentorProfile model was added to the schema",
   !/model\s+MentorProfile\b/.test(schemaNoComments)
 );
 check(
-  "E374/2 — no mentor opt-in flag was added to ProviderProfile",
+  "E374/2 — the mentor opt-in is ONE flag, spelled open_for_mentoring",
+  /\bopen_for_mentoring\s+Boolean\b/.test(schemaNoComments),
+  "ProviderProfile.open_for_mentoring is the consent the UI and followMentor both read"
+);
+check(
+  "E374/2 — no SECOND spelling of the opt-in, and no mentor rate, was added",
   !/\b(is_mentor|mentor_opt_in|accepts_mentoring|mentor_rate_cents)\b/.test(schemaNoComments)
+);
+/*
+  ⚠⚠⚠ AND THE FLAG IS ENFORCED, NOT MERELY PRESENT (`E721` item 3). ⚠ A consent column that
+  only the UI consults is a consent column a POST walks straight past — which is exactly what
+  `E720` measured and reported. **The rule belongs in the lib, which is where this gate can
+  see it**, so the assertion is that `followMentor` itself reads the column.
+*/
+check(
+  "E721 — followMentor refuses a target who has not opened themselves to mentoring",
+  /export async function followMentor\b[\s\S]*?open_for_mentoring[\s\S]*?NOT_OPEN/.test(
+    connections
+  ),
+  "followMentor must read open_for_mentoring and throw NOT_OPEN — the UI gate is not a rule"
 );
 
 /* ── 3 · A RENDERED RATE IS THE PROVIDER'S OWN, AND NEVER A ZERO ────────────

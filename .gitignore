@@ -95,3 +95,10 @@ prisma/seed-data/connection-graph-manifest.json
 # E720 — the profile leftovers: harness tracked, shots are run artifacts.
 e2e-e720/.artifacts/
 e2e-e720/shots/
+# E721 — colleagues search, the store-only upload and the mentor gate: harness
+# tracked, shots and the recorded fingerprints are run artifacts. ⚠ The
+# fingerprints are a BEFORE/AFTER measurement of one machine's model reads; a
+# committed one would be read as an expected value, and the reader is not
+# deterministic (E410).
+e2e-e721/.artifacts/
+e2e-e721/shots/

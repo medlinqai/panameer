@@ -30,25 +30,25 @@ import {
  * invisible to 94% of providers for as long as it has existed** — which is exactly why Scott's
  * instruction starts with an upload rather than with the stored file.
  *
- * ── ⚠⚠⚠ THE ONE PLACE THIS DIVERGES FROM THE BRIEF, AND IT IS REPORTED NOT PAPERED OVER ───
+ * ── ⚠⚠⚠ THE DIVERGENCE `E720` REPORTED IS CLOSED (`P2-A3-E721` item 2) ───────────
  *
- * ⚠⚠⚠ **THE BRIEF'S SEQUENCE IS *"upload → preview → ticked diff → save"*. THE UPLOAD ROUTE
- * DOES NOT WORK THAT WAY: `POST /api/onboarding/provider/import` PARSES **AND APPLIES** IN ONE
- * CALL** — `importProfileDocument` has no store-only mode, and the route's own comment
- * describes its tail as *"applying every employer and project, both recomputes"*. Its
- * `ImportOutcome.applied` counts are written rows, not a proposal.
- * ⚠⚠ **SO ON THE UPLOAD BRANCH THE FIRST PASS IS APPLIED BEFORE ANY TICK, AND THE COPY BELOW
- * SAYS SO IN PLAIN WORDS RATHER THAN IMPLYING AN APPROVAL THAT DID NOT HAPPEN.** `E561` WS-B
- * is the precedent: a promise the code does not keep must not ship as copy.
- * ⚠ **WHAT MAKES IT SAFE ANYWAY, AND IT IS THE EXISTING RULE, NOT A NEW ONE:** the writer is
- * ADDITIVE — `headline` and `overview` are fill-only-when-empty, and skills use
- * `skipDuplicates`, so a hand-edited field is never overwritten. **The upload adds; it does not
- * replace.**
- * ⚠⚠⚠ **CLOSING THE GAP PROPERLY NEEDS A `store-only` MODE ON THAT SHARED ROUTE, WHICH IS THE
- * WIZARD'S CRITICAL PATH — SCOTT'S CALL, NOT A CHANGE TO MAKE INSIDE A CLEANUP ITEM.** Until
- * then the **`Use the one on file`** branch is the one that honours the full
- * propose-then-approve flow, and after an upload that branch becomes available for a second
- * pass — which is why the panel is offered immediately afterwards.
+ * ⚠ **SCOTT AUTHORISED THE STORE-ONLY MODE, AND BOTH BRANCHES NOW BEHAVE THE SAME WAY:**
+ * upload → preview → ticked diff → save, and *"Use the one on file"* → the same.
+ * ⚠⚠ **THE UPLOAD NOW WRITES NOTHING TO THE PROFILE.** It stores the document and parses it;
+ * `apply: false` skips `applyParsedResume`, `recomputeCompleteness` and — the one that
+ * matters — `recomputeProviderRollup`, which `E553` measured as capable of **deleting 297
+ * `DERIVED` skill rows across 51 profiles, 139 of them unrecoverable.**
+ * ⚠⚠⚠ **SO THE RECEIPT NO LONGER SAYS THE PROFILE WAS UPDATED, BECAUSE IT WAS NOT.**
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`) — what this said while the gap was open:
+ * //   THE BRIEF'S SEQUENCE IS "upload -> preview -> ticked diff -> save". THE UPLOAD ROUTE
+ * //   DOES NOT WORK THAT WAY: POST /api/onboarding/provider/import PARSES AND APPLIES IN ONE
+ * //   CALL - importProfileDocument has no store-only mode. So on the upload branch the first
+ * //   pass is applied before any tick, and the copy below says so in plain words rather than
+ * //   implying an approval that did not happen. Closing the gap properly needs a store-only
+ * //   mode on that shared route, which is the WIZARD'S CRITICAL PATH - Scott's call.
+ * ⚠⚠ **THE WIZARD IS UNTOUCHED AND THAT IS PROVED, NOT ASSERTED:** `mode` defaults to
+ * `"apply"`, the wizard's three call sites pass none, and a default upload puts no extra form
+ * field on the wire at all.
  */
 
 type Info = {
@@ -141,14 +141,16 @@ export function OwnerResumeRebuild() {
             Upload a New Résumé
           </button>
           {/*
-            ⚠⚠⚠ SAID BEFORE THE CLICK, NOT AFTER. The upload route applies its first pass as it
-            reads (see this file's header), so the member is told that here rather than
-            discovering it in a receipt. ⚠ "adds" and never "replaces" — that is the writer's
-            actual behaviour, not a reassurance.
+            ⚠⚠⚠ THE SENTENCE CHANGED BECAUSE THE BEHAVIOUR DID (`E721` item 2). The upload no
+            longer writes anything, so promising a preview is now a promise the code keeps —
+            which is the only condition on which `E561` WS-B allows this kind of copy to ship.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) — true while the upload applied:
+            //   Reading a new file adds what it finds to your profile. It never replaces
+            //   anything you typed yourself.
           */}
           <p className="text-[12px] leading-relaxed text-ink-2">
-            Reading a new file adds what it finds to your profile. It never replaces
-            anything you typed yourself.
+            We read the file and show you what changed. Nothing is saved until you
+            tick it.
           </p>
           {info.hasDocument && (
             <>
@@ -179,6 +181,9 @@ export function OwnerResumeRebuild() {
         <ResumeUploadModal
           open={uploadOpen}
           onClose={() => setUploadOpen(false)}
+          /* ⚠⚠⚠ THE OPT-IN (`E721` item 2). ⚠ Without it this branch would apply on upload,
+             which is the whole defect. ⚠⚠ The wizard passes no `mode` and is unaffected. */
+          mode="store-only"
           onImported={(outcome: ImportOutcome) => {
             setUploadOpen(false);
             if (outcome.status === "FAILED") {
@@ -190,13 +195,19 @@ export function OwnerResumeRebuild() {
               );
               return;
             }
-            /* ⚠ THE DOCUMENT IS NOW ON FILE, so the propose-then-approve panel can run
-               against it for a second pass — which is the closest this can get to the
-               brief's sequence without changing the shared import route. */
+            /*
+              ⚠⚠⚠ THE DOCUMENT IS ON FILE AND **NOTHING HAS BEEN WRITTEN TO THE PROFILE**
+              (`E721` item 2), so the panel below is the real approval step rather than a
+              second pass over an already-applied import.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`) — it was TRUE when the upload applied,
+              and would now be a plain falsehood:
+              //   setReceipt("Read. Your profile has been updated.");
+              ⚠⚠ NO `router.refresh()` EITHER: there is nothing new on the server to re-read,
+              and refreshing would suggest something had landed.
+            */
             setError(null);
-            setReceipt("Read. Your profile has been updated.");
+            setReceipt(null);
             setStage("panel");
-            router.refresh();
           }}
         />
       </div>

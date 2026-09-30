@@ -1571,7 +1571,20 @@ export function ConnectProfile({
             {mentor && p.openForMentoring && (
               <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-                  Request as Mentor
+                  {/*
+                    ── ⚠⚠⚠ BACK TO `Request to Mentor` (`P2-A3-E721` item 3) ─────────────
+
+                    ⚠ **SCOTT CONFIRMED `Request to Mentor`, 2026-09-30**, which is the label
+                    he ruled on 2026-09-25 and which the BUTTON inside this section has said
+                    all along. ⚠⚠ `E720` took *"Request as Mentor"* from the wording of the
+                    brief and **shipped a heading that disagreed with the control underneath
+                    it** — two names for one action, six lines apart.
+                    ⚠⚠⚠ **`E720` RAISED IT RATHER THAN PICKING A SIDE, AND THIS IS THE ANSWER
+                    COMING BACK** — rule 13 working in the direction it is meant to: the
+                    question went to Scott and his ruling is now the code.
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   Request as Mentor
+                  */}
+                  Request to Mentor
                 </h3>
                 {mentor}
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">

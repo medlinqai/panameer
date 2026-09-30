@@ -71,10 +71,25 @@ export async function POST(request: Request) {
 
   let file: File | null = null;
   const source = "RESUME" as const;
+  /*
+    ── ⚠⚠⚠ `mode=store-only` — STORE AND PARSE, WRITE NOTHING (`P2-A3-E721` item 2) ────
+
+    ⚠ **SCOTT: *"Résumé upload must preview before it applies."*** ⚠⚠ The upload branch of
+    `Rebuild From New Résumé` could not honour `E720`'s stated flow because this route applied
+    as it read; now it can ask not to.
+    ⚠⚠⚠ **ABSENT OR ANY OTHER VALUE MEANS APPLY, WHICH IS WHY THE WIZARD IS UNCHANGED.** The
+    wizard's three call sites send only `file`, so they land on the default and every write,
+    counter and `state` they depend on is identical. **The new behaviour needs an explicit
+    opt-in string; nothing acquires it by accident.**
+    ⚠ It is a FORM FIELD, not a query parameter, because the body is already `multipart/form-data`
+    and a mode that travels with the file cannot be separated from it by a proxy or a retry.
+  */
+  let storeOnly = false;
   try {
     const form = await request.formData();
     const entry = form.get("file");
     if (entry instanceof File) file = entry;
+    storeOnly = form.get("mode") === "store-only";
   } catch {
     return NextResponse.json({ error: "Could not read the upload" }, { status: 400 });
   }
@@ -97,6 +112,9 @@ export async function POST(request: Request) {
       mimeType: file.type,
       bytes: Buffer.from(await file.arrayBuffer()),
       startedAt,
+      /* ⚠ `apply` DEFAULTS TO TRUE IN THE LIB, so this line is the only thing that can turn
+         the writes off, and only when the caller asked. */
+      apply: !storeOnly,
     });
 
     // A FAILED extraction is a real, reportable outcome (bad/scanned file) —

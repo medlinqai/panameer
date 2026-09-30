@@ -62,11 +62,27 @@ export function ResumeUploadModal({
   open,
   onClose,
   onImported,
+  mode = "apply",
 }: {
   open: boolean;
   onClose: () => void;
 
   onImported: (outcome: ImportOutcome) => void;
+  /**
+   * ── ⚠⚠⚠ WHETHER THE UPLOAD APPLIES (`P2-A3-E721` item 2) ───────────────────
+   *
+   * ⚠ `"apply"` (the default) is today's behaviour: the route parses the document AND writes
+   * it to the profile in one call. ⚠⚠ `"store-only"` stores and parses and **writes nothing**,
+   * leaving the caller to run the preview → ticked diff → save flow.
+   * ⚠⚠⚠ **THE DEFAULT IS WHAT KEEPS THE ONBOARDING WIZARD BYTE-IDENTICAL.** Its three call
+   * sites — the dropzone and two modals in `join/provider/page.tsx` — pass no `mode`, so they
+   * land on `"apply"` and depend on exactly the same response they always have: `state` for
+   * `hydrate`, and `applied` for the "here is what we captured" line.
+   * ⚠ **A PRESENTATIONAL-LOOKING PROP THAT IS NOT PRESENTATIONAL**, so it is named for what
+   * the server does rather than for which screen is asking — this component still does not
+   * know which surface it is on, the same rule `showContext` follows in `ResumeImportAction`.
+   */
+  mode?: "apply" | "store-only";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -103,6 +119,10 @@ export function ResumeUploadModal({
     const form = new FormData();
     form.append("file", file);
     form.append("source", "RESUME");
+    /* ⚠ SENT ONLY WHEN IT IS THE NON-DEFAULT (`E721` item 2). ⚠⚠ An `apply` upload puts
+       nothing new on the wire at all, so the wizard's request is unchanged down to the form
+       fields — which is what makes "the wizard is unaffected" checkable rather than asserted. */
+    if (mode === "store-only") form.append("mode", "store-only");
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/onboarding/provider/import");

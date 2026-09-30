@@ -168,6 +168,7 @@ export async function importProfileDocument({
   mimeType,
   bytes,
   startedAt = null,
+  apply = true,
 }: {
   profileId: string;
   source: "RESUME";
@@ -184,6 +185,41 @@ export async function importProfileDocument({
     them and correctly keep the per-call ceiling as their only limit.
   */
   startedAt?: number | null;
+  /**
+   * ── ⚠⚠⚠ STORE AND PARSE, WRITE NOTHING (`P2-A3-E721` item 2) ──────────────
+   *
+   * ⚠ **SCOTT: *"Résumé upload must preview before it applies… Add a store-and-parse-only
+   * mode (no writes), so the upload branch runs upload → preview → ticked diff → save like
+   * the on-file branch."***
+   *
+   * ⚠⚠⚠ **IT DEFAULTS TO `true`, AND THAT DEFAULT IS THE PROOF THE WIZARD IS UNCHANGED.**
+   * The onboarding wizard calls this route through `ResumeUploadModal` and `ResumeDropzone`
+   * and passes NOTHING new, so it takes this branch exactly as before — byte for byte, same
+   * writes, same `applied` counts, same `state`. **The new behaviour is reachable only by a
+   * caller that asks for it in as many words.**
+   *
+   * ⚠⚠ **WHAT `false` SKIPS, AND WHY EACH ONE:**
+   * · **`applyParsedResume`** — every profile write there is (employers, projects, education,
+   *   certifications, skills, specializations, languages, the headline and the overview).
+   * · **`recomputeCompleteness`** — it writes `ProviderProfile`, and nothing changed to
+   *   recompute from.
+   * · ⚠⚠⚠ **`recomputeProviderRollup`, AND THIS ONE IS NOT A TIDY-UP — IT IS THE WHOLE
+   *   SAFETY ARGUMENT.** `E553` measured that a rollup run **deletes every `source: DERIVED`
+   *   row for the profile and recreates only those a dated, skill-linked job can rebuild**,
+   *   and that **297 rows across 51 profiles have no such job** — 139 of them unrecoverable.
+   *   **A "preview" that fired the rollup would destroy data before showing anybody a diff**,
+   *   which is the exact opposite of what this mode exists for.
+   *
+   * ⚠⚠ **WHAT `false` STILL DOES, DELIBERATELY:** it stores the document in the bucket and
+   * writes the `ProfileImport` row with `raw_text` and `parsed`. **Those are not profile data
+   * — they are the document — and the preview flow reads both back** (`resume-ai` finds the
+   * newest row with `raw_text`; `resume-ai/apply` requires `parsed` non-null). ⚠⚠⚠ **A
+   * store-only run that skipped them would produce a preview of nothing.**
+   * ⚠ `purgeSupersededResumes` also still runs: it is document RETENTION — one live document
+   * per profile — not a profile write, and leaving two live `raw_text` rows would make "the
+   * newest document" ambiguous for the very preview this mode feeds.
+   */
+  apply?: boolean;
 }): Promise<ImportResult> {
   // 1. Text out of the document.
   let text: string;
@@ -218,7 +254,17 @@ export async function importProfileDocument({
   const parsed = read.parsed;
 
   // 3. Structure → profile, non-destructively.
-  const applied = await applyParsedResume(profileId, parsed, source);
+  /*
+    ⚠⚠⚠ THE ONE BRANCH THAT DECIDES WHETHER ANYTHING IS WRITTEN (`P2-A3-E721` item 2).
+    ⚠ `emptyApplied()` IS THE HONEST ANSWER IN STORE-ONLY MODE, not a placeholder: every
+    counter in `applied` is incremented by a write inside `applyParsedResume`, and no write
+    happened, so every one of them is genuinely zero.
+    ⚠⚠ `applyParsedResume`'s SIGNATURE IS UNTOUCHED — `check:rerun` asserts it byte-exact,
+    and three other callers pass it positionally.
+  */
+  const applied = apply
+    ? await applyParsedResume(profileId, parsed, source)
+    : emptyApplied();
 
   const gaps = [...parsed.gaps];
   /*
@@ -276,8 +322,20 @@ export async function importProfileDocument({
     nothing is the failure mode this whole track exists to end. Phrased as what
     happened, not as something they must fix.
   */
-  const discarded =
-    applied.skillsUnmatched.length - applied.skillSuggestions.length;
+  /*
+    ── ⚠⚠⚠ THESE TWO SENTENCES DESCRIBE WRITES, SO THEY ARE SILENT WHEN THERE WERE NONE ──
+
+    ⚠ Both are derived from `applied`, which is all zeros in store-only mode (`E721` item 2).
+    ⚠⚠⚠ **WITHOUT THIS GUARD THE SECOND ONE WOULD FIRE ON *EVERY* STORE-ONLY RUN** —
+    `applied.experiences === 0 && applied.education === 0` is true by construction — and the
+    provider would be told *"No work history or education could be imported from this file"*
+    about a file that read perfectly and is sitting in front of them in a diff.
+    ⚠⚠ **A GAP SENTENCE IS A STATEMENT ABOUT WHAT HAPPENED. In this mode nothing happened
+    yet, so the honest number of such sentences is zero.**
+  */
+  const discarded = apply
+    ? applied.skillsUnmatched.length - applied.skillSuggestions.length
+    : 0;
   if (discarded > 0) {
     gaps.push(
       `${discarded} line${discarded === 1 ? "" : "s"} from your skills section didn't look like skills, so ${
@@ -285,7 +343,7 @@ export async function importProfileDocument({
       } left out.`,
     );
   }
-  if (applied.experiences === 0 && applied.education === 0) {
+  if (apply && applied.experiences === 0 && applied.education === 0) {
     gaps.push(
       "No work history or education could be imported from this file — please add them manually.",
     );
@@ -399,6 +457,18 @@ export async function importProfileDocument({
   */
   await purgeSupersededResumes(profileId, row.id);
 
+  /*
+    ⚠⚠⚠ BOTH RECOMPUTES ARE SKIPPED IN STORE-ONLY MODE (`P2-A3-E721` item 2), AND THE
+    ROLLUP IS THE LOAD-BEARING ONE. ⚠ `E553`: a rollup run DELETES every `source: DERIVED`
+    row for the profile and recreates only those a dated, skill-linked job can rebuild —
+    **297 rows across 51 profiles have no such job, and 139 of those are unrecoverable.**
+    ⚠⚠ **A PREVIEW THAT DESTROYED SKILLS BEFORE SHOWING A DIFF WOULD BE WORSE THAN THE
+    APPLY-ON-UPLOAD BEHAVIOUR IT REPLACES.**
+    ⚠ Completeness is skipped for the plainer reason that nothing was written to recompute
+    from; running it would be a `ProviderProfile` update with no cause.
+    ⚠ `purgeSupersededResumes` ABOVE IS NOT SKIPPED — see the `apply` docblock.
+  */
+  if (apply) {
   await recomputeCompleteness(profileId);
   /*
     The import just created every job and its skills, so the weighted rollup is
@@ -406,6 +476,7 @@ export async function importProfileDocument({
     matches nothing at all — the jobs are there, the derived index is not.
   */
   await recomputeProviderRollup(profileId);
+  }
 
   /*
     WS0/WS4 — score the parse and LOG WHICH READER FIRED.

@@ -96,7 +96,18 @@ export async function POST(req: Request) {
     if (e instanceof ConnectionError) {
       /* ⚠ SELF IS A 400, NOT A 403. It is a malformed request, not a denied
          one — there is no permission that would let it through. */
-      return NextResponse.json({ error: e.message, code: e.code }, { status: 400 });
+      /*
+        ── ⚠⚠⚠ `NOT_OPEN` IS THE ONE THAT IS A 403 (`P2-A3-E721` item 3) ──────────────────
+
+        ⚠ **IT IS A DENIAL, NOT A MALFORMED CALL**, and the distinction is the sentence
+        directly above: `SELF` is 400 *"because there is no permission that would let it
+        through"* — ⚠⚠ **and for `NOT_OPEN` there IS one. The provider ticking their own
+        `open_for_mentoring` box makes the identical request succeed**, so the correct answer
+        is *"you may not, as things stand"* rather than *"this request is nonsense"*.
+        ⚠ Every other code keeps its 400, byte for byte.
+      */
+      const status = e.code === "NOT_OPEN" ? 403 : 400;
+      return NextResponse.json({ error: e.message, code: e.code }, { status });
     }
     throw e;
   }

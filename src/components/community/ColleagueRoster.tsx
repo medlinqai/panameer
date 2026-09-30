@@ -1,19 +1,48 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { ColleagueRowActions } from "@/components/community/ColleagueRowActions";
+import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 import "./member-row.css";
+
+/** ⚠ What `GET /api/community/members/search` returns per row — `PersonCard` plus the
+ *  relation the SERVER computed. ⚠⚠ Declared structurally rather than imported so this client
+ *  component does not drag `lib/connections.ts` (and its prisma import) into the bundle — the
+ *  same reason `ResumeUploadModal` mirrors its own outcome type. */
+type MemberHit = {
+  userId: string;
+  personId: string;
+  name: string;
+  title: string | null;
+  company: string | null;
+  photoUrl: string | null;
+  relation: Relation;
+};
 
 /**
  * ── ⚠⚠ THE ROSTER (`P2-J3-E558` WS-A) ─────────────────────────────────────
  *
- * ⚠⚠⚠ THE SEARCH IS AN IN-MEMORY FILTER OVER THE VIEWER'S OWN COLLEAGUES.
- * There is NO fetch in this component and no endpoint behind the box. ⚠ The
- * member-wide search that used to live on this page is the route 145 providers
- * take to reach 13 buyers; scoping it to the roster is the whole point of the
- * redesign, and doing the filter client-side over a server-scoped list means no
- * later edit can widen it by accident.
+ * ⚠⚠⚠ **THE ROSTER SEARCH IS STILL AN IN-MEMORY FILTER OVER THE VIEWER'S OWN COLLEAGUES**, and
+ * that has not changed: the list above the fold is filtered from props and never widened.
+ *
+ * ── ⚠⚠⚠ BUT THERE IS A FETCH IN THIS FILE NOW, AND THE OLD SENTENCE SAID THERE WAS NOT ──
+ *
+ * ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
+ * //   THE SEARCH IS AN IN-MEMORY FILTER OVER THE VIEWER'S OWN COLLEAGUES.
+ * //   There is NO fetch in this component and no endpoint behind the box.
+ * ⚠⚠ **`E721` item 1b ADDED `OtherMembers`, WHICH DOES FETCH** — from
+ * `/api/community/members/search`, transport over the SAME `searchMembers` `/community` uses.
+ * ⚠⚠⚠ **CORRECTING THIS SENTENCE IS HALF THE CHANGE (standing rule 6): a stated rule that
+ * contradicts the code is the half the next person implements**, and someone reading *"there
+ * is no fetch here"* would have deleted the one that now exists.
+ *
+ * ⚠ **THE ORIGINAL CONCERN SURVIVES INTACT AND IS WORTH RESTATING:** the member-wide search
+ * that used to live on this page is *"the route 145 providers take to reach 13 buyers"*, and
+ * scoping the ROSTER to the roster is the point of the redesign. ⚠⚠ **THE NEW LIST DOES NOT
+ * UNDO THAT — it is a clearly separate section, headed as such, BELOW the roster, and it only
+ * appears once somebody has typed something the roster could not answer.** The default view of
+ * this page is unchanged.
  *
  * ⚠ `USER_CLASS` IS NOT STORED, so a class-throttled member search cannot be
  * built yet. This UI does not change when it can.
@@ -52,19 +81,45 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [asking, setAsking] = useState<RosterRowView | null>(null);
 
+  /*
+    ── ⚠⚠⚠ THE SEARCH APPLIES BEFORE THE COUNTS (`P2-A3-E721` item 1a) ────────────────────
+
+    ⚠ **SCOTT: *"the chip counts are computed before the search, so 'tom' shows All (1) and no
+    result."*** ⚠⚠ **EXACTLY THAT: `counts` depended on `rows` alone and never on `q`**, so
+    every chip reported the whole roster while the list below it reported the search — one
+    surface stating two different truths about the same query.
+    ⚠⚠⚠ **THE ORDER IS THE FIX, AND IT IS NOT ARBITRARY: THE NEEDLE IS APPLIED FIRST, THE
+    CHIP FILTER SECOND.** The chips ARE the `reasonKind` filter, so counting AFTER it would
+    make every chip read its own selected total and the other three read zero — a chip row
+    that only ever describes the chip you already pressed.
+    ⚠ So `matching` is "the roster, searched, before any chip" — which is what each chip is a
+    breakdown OF.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const counts = useMemo(() => ({ all: rows.length,
+    //     skills: rows.filter((r) => r.reasonKind === "skills").length, … }), [rows]);
+  */
+  const matching = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return rows;
+    return rows.filter((r) =>
+      [r.name, r.title, r.company, ...r.skillNames].some((f) =>
+        f?.toLowerCase().includes(needle)
+      )
+    );
+  }, [rows, q]);
+
   const counts = useMemo(
     () => ({
-      all: rows.length,
-      skills: rows.filter((r) => r.reasonKind === "skills").length,
-      learn: rows.filter((r) => r.reasonKind === "learn").length,
-      worked: rows.filter((r) => r.reasonKind === "worked").length,
+      all: matching.length,
+      skills: matching.filter((r) => r.reasonKind === "skills").length,
+      learn: matching.filter((r) => r.reasonKind === "learn").length,
+      worked: matching.filter((r) => r.reasonKind === "worked").length,
     }),
-    [rows]
+    [matching]
   );
 
   const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return rows
+    return matching
       .filter((r) => (filter === "all" ? true : r.reasonKind === filter))
       /*
         ── ⚠⚠ NAME · TITLE · COMPANY · SKILL (`P2-A3-E596` WS-E item 3) ──────
@@ -82,14 +137,16 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         server. A skill the colleague's own profile will not display must not
         be a way to find them, or a buyer reaches a page that cannot confirm it.
       */
-      .filter((r) =>
-        !needle
-          ? true
-          : [r.name, r.title, r.company, ...r.skillNames].some((f) =>
-              f?.toLowerCase().includes(needle)
-            )
-      );
-  }, [rows, q, filter]);
+      /* ⚠ THE NEEDLE HAS ALREADY BEEN APPLIED, IN `matching` ABOVE (`E721` item 1a), so this
+         memo is now the chip filter alone. ⚠⚠ The field list and the reasoning for it moved
+         with the code; the `E164` note above is what it said.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   .filter((r) => !needle ? true
+         //     : [r.name, r.title, r.company, ...r.skillNames].some((f) =>
+         //         f?.toLowerCase().includes(needle)));
+      */
+      ;
+  }, [matching, filter]);
 
   return (
     <div className="space-y-4">
@@ -191,8 +248,153 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         </div>
       )}
 
+      {/*
+        ── ⚠⚠⚠ AND THE PEOPLE WHO ARE *NOT* YET COLLEAGUES (`P2-A3-E721` item 1b) ──────────
+
+        ⚠ **SCOTT: *"Under the roster, 'Other members matching &lt;query&gt;', from the existing
+        member/provider search (don't write a second search, `E585`)."***
+        ⚠⚠ **THIS WAS THE HALF THAT MADE THE DEFECT FEEL LIKE A DEAD END.** Typing a real
+        member's name into a box headed *"Search your colleagues"* returned nothing and
+        offered nothing — correct, and useless, because **the one thing a member wants at
+        that moment is to connect to the person they just failed to find.**
+      */}
+      <OtherMembers query={q} excludeUserIds={rows.map((r) => r.userId)} />
+
       {asking && <AskForRecommendation row={asking} onClose={() => setAsking(null)} />}
     </div>
+  );
+}
+
+/**
+ * ── ⚠⚠⚠ `Other members matching "…"` (`P2-A3-E721` item 1b) ──────────────────────────────
+ *
+ * ⚠⚠⚠ **IT IMPLEMENTS NO SEARCH.** It calls `GET /api/community/members/search`, which is
+ * transport over `searchMembers` (`lib/connections.ts:412`) — **the same function
+ * `/community`'s own search box uses.** ⚠ Scott named `E585` in the brief, and the roster
+ * file's own comment had already flagged the risk two briefs ago: *"`searchMembers` is a
+ * DIFFERENT search over the WHOLE member directory, and it was left alone."* It is still
+ * left alone; it is now also CALLED.
+ *
+ * ⚠⚠ **"OTHER" IS A PRESENTATION RULE AND IS DECIDED HERE, NOT IN THE QUERY.** The server
+ * search is the member directory and must stay general; excluding the viewer's own roster is
+ * this page's business, because this page is the one already showing them above. ⚠ Without
+ * it a colleague appears twice on one screen, once with `Message` and once in a list headed
+ * *"other members"*.
+ *
+ * ⚠⚠ **DEBOUNCED AT 300ms, THE SAME FIGURE `MemberSearchBox` USES**, and for the same reason:
+ * one Postgres search per keystroke. ⚠⚠⚠ **AND IT NEVER RACES ITSELF** — every response
+ * checks that its own query is still the live one before it renders, so a slow request for
+ * `"to"` cannot land after `"tom"` and repaint the older answer. That is the failure mode a
+ * plain `fetch().then(setState)` has and it only shows up on a slow connection.
+ */
+function OtherMembers({
+  query,
+  excludeUserIds,
+}: {
+  query: string;
+  excludeUserIds: string[];
+}) {
+  /*
+    ── ⚠⚠⚠ THE ANSWER IS STORED *WITH THE QUESTION IT ANSWERS* ───────────────────
+
+    ⚠ One piece of state, `{ q, rows }`, rather than a `results` list beside a `loading` flag.
+    ⚠⚠ **IT IS THE STALENESS GUARD, AND IT IS STRONGER THAN A `live` BOOLEAN:** render compares
+    the stored `q` against the live needle, so a slow response for `"to"` cannot repaint the
+    answer for `"tom"` even if it arrives after it. A cancel flag only covers the unmount case;
+    this covers the overtake case too.
+    ⚠⚠⚠ **AND IT IS WHAT KEEPS THIS EFFECT FREE OF SYNCHRONOUS `setState`.** The first version
+    cleared state in the effect body on a short query and tripped
+    `react-hooks/set-state-in-effect` — **a NEW lint ERROR against a baseline of 11**, which the
+    house rule counts as a regression. `loading` is now DERIVED from whether the stored answer
+    matches the current question, so there is nothing to clear.
+  */
+  const [hits, setHits] = useState<{ q: string; rows: MemberHit[] } | null>(null);
+  const needle = query.trim();
+
+  useEffect(() => {
+    /* ⚠ THE SAME TWO-CHARACTER FLOOR `searchMembers` ENFORCES. ⚠⚠ It is repeated here ONLY to
+       avoid a round trip that is guaranteed to return `[]`; the server still owns the rule,
+       and a change there is honoured whatever this line says. */
+    if (needle.length < 2) return;
+    let live = true;
+    const t = setTimeout(() => {
+      fetch(`/api/community/members/search?q=${encodeURIComponent(needle)}`)
+        .then((r) => (r.ok ? r.json() : { members: [] }))
+        .then((d) => live && setHits({ q: needle, rows: (d.members ?? []) as MemberHit[] }))
+        /* ⚠⚠ A THROWN FETCH MUST NOT PRODUCE SILENCE (`E516`). An empty list is recorded for
+           THIS query rather than a spinner that never resolves. */
+        .catch(() => live && setHits({ q: needle, rows: [] }));
+    }, 300);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [needle]);
+
+  if (needle.length < 2) return null;
+
+  /* ⚠ `null` MEANS "no answer for THIS question yet" — which is exactly what loading is. */
+  const rows_ = hits && hits.q === needle ? hits.rows : null;
+  const loading = rows_ === null;
+  const exclude = new Set(excludeUserIds);
+  const others = (rows_ ?? []).filter((m) => !exclude.has(m.userId));
+
+  return (
+    <section className="border-t border-line pt-4" data-e721-others>
+      <h2 className="text-[13px] font-bold uppercase tracking-[0.06em] text-ink-2">
+        Other members matching “{needle}”
+      </h2>
+      {loading ? (
+        <p className="mt-2 text-[13.5px] text-ink-2">Searching…</p>
+      ) : others.length === 0 ? (
+        /* ⚠⚠ A REAL ZERO, SAID PLAINLY (counting rule 2) — and it is the honest end of the
+           road rather than an empty space the member has to interpret. */
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">
+          Nobody else on Panameer matches that.
+        </p>
+      ) : (
+        <div className="mt-2 space-y-2">
+          {others.map((m) => (
+            <div
+              key={m.userId}
+              className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+            >
+              <Avatar
+                firstName={m.name.split(" ")[0] ?? ""}
+                lastName={m.name.split(" ").slice(1).join(" ")}
+                photoUrl={m.photoUrl}
+                size={44}
+              />
+              <div className="min-w-[180px] flex-1">
+                <p className="text-[15px] font-bold">{m.name}</p>
+                {[m.title, m.company].filter(Boolean).length > 0 && (
+                  <p className="text-[13px] text-ink-2">
+                    {[m.title, m.company].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+              <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
+                {/*
+                  ⚠⚠ `ConnectControls` PICKS ITS OWN BUTTON FROM THE RELATION THE SERVER
+                  COMPUTED — `Connect as Colleague`, `Requested`, `Accept` or `Message`. ⚠⚠⚠
+                  **NO SECOND CONNECT BUTTON WAS WRITTEN HERE AND THIS SURFACE DECIDES
+                  NOTHING**, which is the same rule `InviteColleagueClient` follows for the
+                  already-a-member card.
+                  ⚠ `part="colleague"` (`E720`): this list is about becoming colleagues, and
+                  a mentor control here would offer a second, unrelated relationship on a row
+                  the member has not even connected to yet.
+                */}
+                <ConnectControls
+                  toUserId={m.userId}
+                  relation={m.relation ?? null}
+                  part="colleague"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
