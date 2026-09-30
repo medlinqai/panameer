@@ -1,0 +1,26 @@
+{
+  "wroteAt": "2026-09-30T20:43:52.855Z",
+  "brief": "P2-A2-E725 item 2",
+  "note": "Restore each row's `name` to `from` and set level/proficiency back to null.",
+  "rows": [
+    {
+      "id": "9991bc6a-3a03-4155-a729-5cb6e97d1138",
+      "from": "German Basic",
+      "language": "German",
+      "level": "BASIC"
+    },
+    {
+      "id": "af27a623-f1c8-4500-9945-eb259cbfba94",
+      "from": "Spanish Native",
+      "language": "Spanish",
+      "level": "NATIVE_OR_BILINGUAL"
+    }
+  ],
+  "leftAlone": [
+    {
+      "id": "60cb130b-bcfa-42c1-807d-c077cf8da9f2",
+      "name": "English Advanced intermediate",
+      "why": "no trailing word maps to one of the five proficiencies, or the remainder is not an ISO 639-1 language"
+    }
+  ]
+}
