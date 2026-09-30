@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+import { countryColumns } from "@/lib/country";
 /* ⚠ `P1-ALL-E282` — the register lookup, called SERVER-SIDE from defineCompany.
    The client never posts a match; that would be a forgeable trust claim. */
 import { validateEntity } from "@/lib/company-validation";
@@ -32,7 +34,12 @@ export type DefineInput = {
      business type; `api/settings/tax` collects `classification` at the payment
      gate instead. ⚠ SUPERSEDED, quoted: `taxType: TaxType;` */
   taxType?: TaxType | null;
-  /** Jurisdiction (`E260`) — a full country name from `COUNTRIES`, not an ISO code. */
+  /* ⚠⚠ Jurisdiction (`E260`). **THE FORM NOW SUBMITS AN ISO-2 CODE** (`E729` WS-C) and
+     `countryColumns` splits it: the resolved NAME lands in `Company.country`, the code in
+     `Company.country_code`. ⚠ The type stays `string` because a not-yet-migrated value or a
+     legacy `"Other"` still arrives here and must not be rejected.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   Jurisdiction (E260) - a full country name from COUNTRIES, not an ISO code. */
   country?: string | null;
   /** `E282` — the US state the company was filed in. Full name, not a code. */
   stateOfFiling?: string | null;
@@ -275,7 +282,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       /* ⚠ NULL UNTIL THE PAYMENT GATE (`E408`). The column is already nullable. */
       tax_type: input.taxType ?? null,
       /* `E260` — jurisdiction, stored as the full country name. */
-      country: input.country?.trim() || null,
+      /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+      ...countryColumns(input.country),
       /* `E282` — nullable and back-fills nothing; existing companies predate it. */
       state_of_filing: input.stateOfFiling?.trim() || null,
       /*
@@ -377,7 +385,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       city: reg.city?.trim() || null,
       state: reg.state?.trim() || null,
       postal_code: reg.postalCode?.trim() || null,
-      country: reg.country?.trim() || null,
+      /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+      ...countryColumns(reg.country),
     };
     const site =
       (await prisma.site.findFirst({
@@ -595,7 +604,8 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
       ...(name ? { name } : {}),
       ...(input.legalName !== undefined ? { legal_name: blank(input.legalName) } : {}),
       ...(input.taxType !== undefined ? { tax_type: blank(input.taxType) as never } : {}),
-      ...(input.country !== undefined ? { country: blank(input.country) } : {}),
+      /* ⚠ BOTH COLUMNS (`E729` WS-C), still only when the caller sent the field. */
+      ...(input.country !== undefined ? countryColumns(blank(input.country)) : {}),
       ...(input.stateOfFiling !== undefined
         ? { state_of_filing: blank(input.stateOfFiling) }
         : {}),

@@ -1,4 +1,6 @@
 import Link from "next/link";
+/* ⚠ THE ONE RESOLVER (`E729` WS-C, ruling 4). */
+import { countryName } from "@/lib/country";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
@@ -554,8 +556,13 @@ export function ProfileHero({
               <p className="mt-1 text-[15.5px] leading-snug text-ink-2">
                 {headline || "Add a professional title"}
               </p>
+              {/* ⚠⚠ RESOLVED (`E729` WS-C ruling 4). This is fed from the WIZARD DRAFT, whose
+                  country is a CODE since the picker switched — without this it printed "US".
+                  ⚠ SUPERSEDED (`E164`):  //   <p …>{country}</p> */}
               {country && (
-                <p className="mt-1 text-[13.5px] text-ink-2">{country}</p>
+                <p className="mt-1 text-[13.5px] text-ink-2">
+                  {countryName(country, country)}
+                </p>
               )}
             </div>
           </div>
@@ -1603,11 +1610,25 @@ export function locationLines(
   location?: string | null,
   country?: string | null
 ): { primary: string; secondary: string | null } | null {
-  const primary = location || country;
+  /*
+    ── ⚠⚠⚠ RESOLVED HERE, ONCE, SO EVERY CALLER IS COVERED (`E729` WS-C ruling 4) ─────────
+
+    ⚠⚠ **`locationLines` IS THE ONE RULE** the profile's meta line, the Location card AND the
+    Google-Maps `?query=` all read. ⚠⚠⚠ **RESOLVING AT EACH CALLER WOULD HAVE BEEN THREE
+    CHANCES TO MISS ONE — and the one missed would have been the Maps URL**, where `…query=
+    Saint Augustine, FL, US` is a materially worse search than the country name.
+    ⚠ It takes a code OR a name and returns the name, so a caller that already resolved (the
+    provider view model, since WS-B) is unaffected.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const primary = location || country;
+    //   secondary: location && country && !location.includes(country) ? country : null,
+  */
+  const label = countryName(country, country);
+  const primary = location || label;
   if (!primary) return null;
   return {
     primary,
-    secondary: location && country && !location.includes(country) ? country : null,
+    secondary: location && label && !location.includes(label) ? label : null,
   };
 }
 

@@ -1,4 +1,5 @@
 import { validatePhone } from "@/lib/phone";
+import { isUnitedStatesCountry } from "@/lib/country";
 
 /**
  * ONE PLACE WHERE FIELD FORMATS LIVE (`P1-J1.4-E299`).
@@ -51,17 +52,31 @@ export type FormatCheck = {
 const OK: FormatCheck = { ok: true };
 
 /**
- * ⚠ THE COUNTRY TEST, IN ONE PLACE.
+ * ⚠ THE COUNTRY TEST, IN ONE PLACE — AND THE PLACE IS NOW `lib/country.ts`.
  *
- * `COUNTRIES` stores full names, not ISO codes (`company.ts:29` — *"a full
- * country name from `COUNTRIES`, not an ISO code"*), so `"United States"` is the
- * value that actually arrives. The variants are accepted because form data and
- * imported data both exist and neither is worth a migration.
+ * ⚠⚠⚠ **THERE WERE TWO `isUnitedStates` FUNCTIONS, AND THIS WAS THE SECOND ONE.**
+ * `lib/tax.ts`'s decides W-9 vs W-8; this one decides whether a US postcode and
+ * state rule applies at all. ⚠ **BOTH NOW DELEGATE TO `isUnitedStatesCountry`**
+ * (`E729` WS-C), which resolves a code, a name or an alias, case-insensitively.
+ *
+ * ⚠⚠ **THE OLD SET WAS CORRECT ONLY BY COINCIDENCE, AND THE COINCIDENCE IS WORTH
+ * NAMING:** it matched the ISO-2 code `US` because the string `"us"` happened to
+ * be in a set of *names* — so the day the picker started submitting codes, this
+ * function kept working for the United States and would have kept working for
+ * no other country. ⚠ **A rule that is right for one value out of 245 is not a
+ * rule, it is luck** (`E585` — one concept in one place).
+ *
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   COUNTRIES stores full names, not ISO codes (company.ts:29), so
+ * //   "United States" is the value that actually arrives. The variants are
+ * //   accepted because form data and imported data both exist.
+ * //   const US_NAMES = new Set(["united states", "usa", "us", "united states of america"]);
+ * //   export function isUnitedStates(country: string | null | undefined): boolean {
+ * //     return US_NAMES.has((country ?? "").trim().toLowerCase());
+ * //   }
  */
-const US_NAMES = new Set(["united states", "usa", "us", "united states of america"]);
-
 export function isUnitedStates(country: string | null | undefined): boolean {
-  return US_NAMES.has((country ?? "").trim().toLowerCase());
+  return isUnitedStatesCountry(country);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

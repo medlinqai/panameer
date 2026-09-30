@@ -5,6 +5,8 @@
    import would be an unused-import lint error against a 0-new baseline. */
 import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
+/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C, ruling 1). */
+import { ALL_COUNTRIES } from "@/lib/country";
 import { PasswordReveal } from "@/components/PasswordReveal";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
@@ -23,26 +25,26 @@ import { SocialSignIn } from "@/components/auth/SocialSignIn";
  * the counter-bearing wizard chrome.
  */
 
-const COUNTRIES = [
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Ireland",
-  "Australia",
-  "New Zealand",
-  "India",
-  "Germany",
-  "France",
-  "Netherlands",
-  "Spain",
-  "Poland",
-  "Brazil",
-  "Mexico",
-  "Singapore",
-  "United Arab Emirates",
-  "South Africa",
-  "Other",
-];
+/*
+  ── ⚠⚠⚠ ITS PRIVATE COUNTRY LIST IS DELETED (`P2-A1.1-E729` WS-C, ruling 1) ──────────────
+
+  ⚠ **SCOTT: *"Sign-up uses the one shared country list; delete `SignUpForm.tsx:26`'s copy
+  (it's missing the 5 Gulf states)."***
+  ⚠⚠⚠ **IT WAS 17 ENTRIES AND NOBODY KNEW.** `E728`'s reader inventory found it: a second
+  hand-kept list, not imported from anywhere, **missing Saudi Arabia, Qatar, Kuwait, Oman and
+  Bahrain — the five states `E417` added to the shared list for their phone rules.** So a
+  member could not pick at sign-up a country whose phone format the app had gone to the
+  trouble of learning.
+  ⚠⚠ **THAT IS `E585` AT ITS MOST EXPENSIVE: the divergence was invisible from either side.**
+  Neither list knew the other existed, and no gate compared them.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — all 17, so the loss is auditable:
+  //   const COUNTRIES = [
+  //     "United States", "Canada", "United Kingdom", "Ireland", "Australia",
+  //     "New Zealand", "India", "Germany", "France", "Netherlands", "Spain",
+  //     "Poland", "Brazil", "Mexico", "Singapore", "United Arab Emirates",
+  //     "South Africa", "Other",
+  //   ];
+*/
 
 export type SignUpValues = {
   firstName: string;
@@ -288,9 +290,13 @@ export function SignUpForm({
             onChange={(e) => onChange({ country: e.target.value })}
             className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
           >
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {/* ⚠⚠ ALL 245, BY CODE, SHOWING THE NAME (`E729` WS-C) — the same picker
+                contract `LocationFields` uses, so the two doors into the product cannot
+                offer different countries again. */}
+            <option value="">Choose a country…</option>
+            {ALL_COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
               </option>
             ))}
           </select>

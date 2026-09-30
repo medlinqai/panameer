@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 import { formatPhone, isoFor, phoneExpectation, validatePhone } from "@/lib/phone";
-import { COUNTRIES } from "@/lib/countries";
+/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
+import { ALL_COUNTRIES } from "@/lib/country";
 import { getCountryCallingCode } from "libphonenumber-js";
 
 /**
@@ -78,7 +79,10 @@ export function PhoneField({
     it is the escape hatch on the ADDRESS list, and a phone cannot be dialled in
     "Other". Somebody there keeps the generic digit band.
   */
-  const options = COUNTRIES.filter((c) => c !== "Other").map((c) => {
+  /* ⚠⚠ ALL 245, BY CODE (`E729` WS-C). ⚠ `"Other"` was filtered out because it has no dial
+     code; the new list never contains it, so the filter is gone with it.
+     ⚠ SUPERSEDED (`E164`):  //   COUNTRIES.filter((c) => c !== "Other").map((c) => { */
+  const options = ALL_COUNTRIES.map((c) => c.code).map((c) => {
     const iso = isoFor(c);
     let dial = "";
     try {

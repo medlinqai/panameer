@@ -125,21 +125,35 @@ export const LANGUAGES = WORLD_LANGUAGES.map((l) => l.name);
  * or invented list of another country's regions is worse than an open box,
  * because the provider then can't enter the truth at all.
  */
+/*
+  ── ⚠⚠⚠ KEYED BY ISO-2 CODE NOW (`P2-A1.1-E729` WS-C, ruling 2) ──────────────────────────
+
+  ⚠ **SCOTT: *"`COUNTRY_REGIONS` / `regionsFor` / `regionLabel` are keyed by code, and the US
+  state picker still works."***
+  ⚠⚠⚠ **THIS WAS THE WORST OF THE `"US"` BREAKS AND IT WAS SILENT.** `E728`'s inventory found
+  it: the map was keyed on full names, so `regionsFor("US")` returned `null` and the US state
+  DROPDOWN QUIETLY BECAME A FREE-TEXT BOX. ⚠ The seeds already write `"US"`, so that defect
+  was live on seeded rows before any migration — the code column did not cause it, it exposed
+  it.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the ten keys were the display names:
+  //   "United States" · Canada · Australia · "United Kingdom" · Ireland
+  //   India · Germany · Mexico · Brazil · "South Africa"
+*/
 export const COUNTRY_REGIONS: Record<string, readonly string[]> = {
-  "United States": US_STATES,
-  Canada: [
+  US: US_STATES,
+  CA: [
     "Alberta", "British Columbia", "Manitoba", "New Brunswick",
     "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia",
     "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan",
     "Yukon",
   ],
-  Australia: [
+  AU: [
     "Australian Capital Territory", "New South Wales", "Northern Territory",
     "Queensland", "South Australia", "Tasmania", "Victoria",
     "Western Australia",
   ],
-  "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
-  Ireland: [
+  GB: ["England", "Scotland", "Wales", "Northern Ireland"],
+  IE: [
     "Carlow", "Cavan", "Clare", "Cork", "Donegal", "Dublin", "Galway", "Kerry",
     "Kildare", "Kilkenny", "Laois", "Leitrim", "Limerick", "Longford", "Louth",
     "Mayo", "Meath", "Monaghan", "Offaly", "Roscommon", "Sligo", "Tipperary",
@@ -190,7 +204,7 @@ export const COUNTRY_REGIONS: Record<string, readonly string[]> = {
     returns "State" for India — see the note there; changing the LABEL is a
     copy decision, reported and not taken here.
   */
-  India: [
+  IN: [
     "Andaman and Nicobar Islands", // UT
     "Andhra Pradesh",
     "Arunachal Pradesh",
@@ -228,13 +242,13 @@ export const COUNTRY_REGIONS: Record<string, readonly string[]> = {
     "Uttarakhand",
     "West Bengal",
   ],
-  Germany: [
+  DE: [
     "Baden-Württemberg", "Bavaria", "Berlin", "Brandenburg", "Bremen",
     "Hamburg", "Hesse", "Lower Saxony", "Mecklenburg-Vorpommern",
     "North Rhine-Westphalia", "Rhineland-Palatinate", "Saarland", "Saxony",
     "Saxony-Anhalt", "Schleswig-Holstein", "Thuringia",
   ],
-  Mexico: [
+  MX: [
     "Aguascalientes", "Baja California", "Baja California Sur", "Campeche",
     "Chiapas", "Chihuahua", "Coahuila", "Colima", "Durango", "Guanajuato",
     "Guerrero", "Hidalgo", "Jalisco", "México", "Mexico City", "Michoacán",
@@ -242,23 +256,25 @@ export const COUNTRY_REGIONS: Record<string, readonly string[]> = {
     "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco",
     "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas",
   ],
-  Brazil: [
+  BR: [
     "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
     "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
     "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí",
     "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia",
     "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins",
   ],
-  "South Africa": [
+  ZA: [
     "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
     "Mpumalanga", "North West", "Northern Cape", "Western Cape",
   ],
 };
 
 /** Does this country have a settled subdivision list to pick from? */
-export function regionsFor(country: string | null | undefined): readonly string[] | null {
-  if (!country) return null;
-  return COUNTRY_REGIONS[country] ?? null;
+export function regionsFor(code: string | null | undefined): readonly string[] | null {
+  if (!code) return null;
+  /* ⚠⚠ UPPER-CASED, BECAUSE A STORED CODE IS NOT GUARANTEED TO BE. `isUnitedStates` was
+     case-SENSITIVE before `E729` and `"us"` slipped past it; the same trap, avoided here. */
+  return COUNTRY_REGIONS[code.trim().toUpperCase()] ?? null;
 }
 
 /**
@@ -280,21 +296,24 @@ export function regionsFor(country: string | null | undefined): readonly string[
  * address block and the work-location step, so the wording turns up in three
  * places at once. Scott's call.
  */
-export function regionLabel(country: string | null | undefined): string {
-  switch (country) {
-    case "United States":
-    case "Brazil":
-    case "Mexico":
-    case "India":
+export function regionLabel(code: string | null | undefined): string {
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — it switched on the display name, so a stored
+     code fell to the default and every US address read "State / Region":
+     //   switch (country) { case "United States": case "Brazil": … } */
+  switch (code?.trim().toUpperCase()) {
+    case "US":
+    case "BR":
+    case "MX":
+    case "IN":
       return "State";
-    case "Canada":
+    case "CA":
       return "Province";
-    case "Australia":
-    case "South Africa":
+    case "AU":
+    case "ZA":
       return "State / Province";
-    case "United Kingdom":
+    case "GB":
       return "Nation";
-    case "Ireland":
+    case "IE":
       return "County";
     default:
       return "State / Region";

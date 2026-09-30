@@ -2,6 +2,8 @@
 
 /* ⚠ `useRef` LEFT WITH THE COMPANY STEP (`E418`) — it held `companySubmit`. */
 import { useCallback, useEffect, useState } from "react";
+/* ⚠ THE ONE RESOLVER (`E729` WS-C). */
+import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { LocationFields, type LocationValue } from "@/components/onboarding/LocationFields";
@@ -779,7 +781,11 @@ export default function RequesterStepsPage() {
 
   // ---- 3/3 — Review ------------------------------------------------------
   const addr = (a: LocationValue) =>
-    [a.line1, a.city, a.state, a.postalCode, a.country].filter(Boolean).join(", ") ||
+    /* ⚠⚠ RESOLVED (`E729` WS-C ruling 4) — `a.country` is the form draft, which holds a CODE
+       since the picker switched, so the review card printed "US" without this. */
+    [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)]
+      .filter(Boolean)
+      .join(", ") ||
     "—";
   /*
     ── ⚠⚠ THE LABELS SAY WHAT THE FIELD IS (`P2-J1.1-E005`, `E006`, `E007`,

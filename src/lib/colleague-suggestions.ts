@@ -100,7 +100,11 @@ export async function getColleagueSuggestions(
           specializations: { select: { specialization_id: true } },
         },
       },
-      site: { select: { addresses: { select: { state: true, country: true }, take: 1 } } },
+      /* ⚠⚠ `country` DROPPED — IT WAS NEVER READ (`E729` WS-C, ruling 5). `E728`'s inventory
+         found it selected here and used nowhere; only `state` is consulted. ⚠ A dead select
+         is a column this file appears to depend on and does not, which is exactly what makes
+         a migration look bigger than it is. */
+      site: { select: { addresses: { select: { state: true }, take: 1 } } },
     },
   });
   if (!me?.providerProfile) return [];

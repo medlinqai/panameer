@@ -1,4 +1,6 @@
 import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
+/* ⚠ FOR ITS ALIAS MAP ONLY — `"USA"`, `"UK"` and friends (`E729` WS-C). */
+import { isoFor } from "@/lib/phone";
 
 /**
  * ── ⚠⚠⚠ THE CANONICAL COUNTRY LIST (`P2-A1.1-E728` WS-B) ────────────────────────────────
@@ -16,8 +18,16 @@ import { getCountries, getCountryCallingCode, type CountryCode } from "libphonen
  * ⚠ **AND IT IS THE SAME SOURCE THE PHONE VALIDATOR USES**, so a country the picker offers is
  * by construction a country the validator knows (`E585`).
  *
- * ⚠⚠ **THIS FILE REPLACES NOTHING YET.** `lib/countries.ts`'s 23-entry `COUNTRIES` is still
- * what the address form renders; readers move one at a time, which is Scott's ruling 1.
+ * ── ⚠⚠ THIS FILE IS NOW THE LIST AND THE BOUNDARY (`E729` WS-C) ─────────────────────────
+ *
+ * ⚠ **EVERY PICKER RENDERS `ALL_COUNTRIES` AND EVERY WRITER GOES THROUGH `countryColumns`.**
+ * The address form, sign-up, the company step and the phone field all read from here; the ten
+ * write sites resolve here. ⚠⚠ **`lib/countries.ts`'s 23-entry `COUNTRIES` SURVIVES FOR ONE
+ * REASON ONLY — `check:phone`'s coverage assertion walks it** (every entry must resolve to a
+ * code); nothing renders it. ⚠ **`COUNTRY_REGIONS` in that file is live and is keyed by CODE.**
+ * ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
+ * //   THIS FILE REPLACES NOTHING YET. lib/countries.ts's 23-entry COUNTRIES is still
+ * //   what the address form renders; readers move one at a time, which is Scott's ruling 1.
  */
 
 /** ⚠ Built once. `Intl.DisplayNames` is not free and this list never changes at runtime. */
@@ -75,4 +85,67 @@ export function codeForName(name: string | null | undefined): CountryCode | null
   if (exact) return exact.code;
   const lower = t.toLowerCase();
   return ALL_COUNTRIES.find((c) => c.name.toLowerCase() === lower)?.code ?? null;
+}
+
+/**
+ * ── ⚠⚠⚠ THE ONE WRITE BOUNDARY (`P2-A1.1-E729` WS-C) ────────────────────────────────────
+ *
+ * ⚠ **THE PICKER NOW STORES A CODE, AND EVERY WRITER GOES THROUGH HERE.**
+ *
+ * ⚠⚠⚠ **IT WRITES BOTH COLUMNS, AND THAT IS THE WHOLE DESIGN.** `WS-B` put a code column
+ * beside each name column and left the names untouched so readers could move one at a time.
+ * **If the picker started writing codes into `country`, that column would hold names for old
+ * rows and codes for new ones** — and every reader not yet switched would print `US` to a
+ * member. ⚠⚠ So the code goes to `country_code`, the RESOLVED NAME goes to `country`, and the
+ * name column stays exactly what it has always been: a country name.
+ * ⚠ **THAT ALSO MEANS THE MIGRATION NEVER HAS TO FINISH IN A HURRY.** A reader switched in
+ * three briefs' time is correct either way, and one never switched is correct too.
+ *
+ * ⚠⚠ **IT ACCEPTS A NAME AS WELL AS A CODE**, because not every caller is a picker: the AI
+ * job-import writes whatever the posting said, and the sign-up API is a bare `z.string()`.
+ * **A value it cannot resolve is passed through to `country` with a null code** — the same
+ * shape `"Other"` takes, and the reason the code column is nullable.
+ */
+export function countryColumns(
+  input: string | null | undefined
+): { country: string | null; country_code: string | null } {
+  const raw = input?.trim();
+  if (!raw) return { country: null, country_code: null };
+  /* ⚠ A code first — the picker is the common caller and sends two characters. */
+  const asCode = BY_CODE.get(raw.toUpperCase());
+  if (asCode) return { country: asCode.name, country_code: asCode.code };
+  /* ⚠⚠ THEN A NAME, so an older client or an API caller still resolves. */
+  const asName = codeForName(raw);
+  if (asName) return { country: BY_CODE.get(asName)!.name, country_code: asName };
+  /*
+    ── ⚠⚠⚠ THEN THE ALIASES, AND THIS ONE WAS CAUGHT BY A GATE ─────────────────────────
+
+    ⚠ `Intl.DisplayNames` knows `"United States"`. **IT DOES NOT KNOW `"USA"` OR `"United
+    States of America"`** — and `lib/tax.ts`'s old `US_COUNTRIES` Set did, which is why
+    `check:country` caught `formFor("USA")` returning **W8BEN**: a US taxpayer handed a form
+    for foreign persons.
+    ⚠⚠ **`isoFor` ALREADY HOLDS THOSE ALIASES** (`USA`, `UK`, and the rest of its hand map),
+    so this defers to it rather than starting a second alias table (`E585`). **The knowledge
+    was already in the repo; it just was not being asked.**
+  */
+  const viaAlias = isoFor(raw);
+  if (viaAlias) {
+    const hit = BY_CODE.get(viaAlias);
+    if (hit) return { country: hit.name, country_code: hit.code };
+  }
+  /* ⚠⚠⚠ AND `"Other"` — OR ANYTHING ELSE — SURVIVES VERBATIM WITH NO CODE. Ruling 2 of WS-B:
+     the null IS the flag, and refusing the value would lock somebody out of their own form. */
+  return { country: raw, country_code: null };
+}
+
+/**
+ * ⚠⚠ Is this the United States? **READS THE CODE AND IGNORES CASE** (`E729` ruling 3).
+ *
+ * ⚠⚠⚠ **IT DECIDES W-9 vs W-8, so it is the highest-consequence country read in the app.**
+ * `lib/tax.ts`'s version was a case-SENSITIVE `Set` of four spellings — `"US"` passed, `"us"`
+ * did not, and a lower-cased code would have handed a US taxpayer a W-8. ⚠ This resolves the
+ * value first, so a name, a code, and any casing of either all reach the same answer.
+ */
+export function isUnitedStatesCountry(value: string | null | undefined): boolean {
+  return countryColumns(value).country_code === "US";
 }

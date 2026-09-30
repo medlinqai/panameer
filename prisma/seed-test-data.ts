@@ -185,7 +185,15 @@ async function completePerson(opts: {
         city: m ? m[1] : "Jacksonville",
         state: m ? m[2].toUpperCase() : "FL",
         postal_code: m ? null : "32256",
-        country: "US",
+        /* ⚠⚠⚠ THE SEED WRITES BOTH COLUMNS NOW (`P2-A1.1-E729` WS-C, ruling 6) ─────────────
+                       ⚠ **SCOTT: *"Seeds write codes, not 'US'/'United States' strings."***
+                       ⚠⚠ **IT WROTE THE BARE STRING `"US"` INTO THE NAME COLUMN**, which is
+                       why 32 rows disagreed with the 158 that said `"United States"` — and
+                       why `regionsFor` returned null and the US state picker silently became
+                       a free-text box ON SEEDED ROWS, before any migration existed.
+                       ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   country: "US", */
+        country: "United States",
+        country_code: "US",
       },
     });
   }

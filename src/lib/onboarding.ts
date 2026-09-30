@@ -1,6 +1,8 @@
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+import { countryColumns } from "@/lib/country";
 /* ⚠ THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
 import { PROFICIENCY_OPTIONS, PROFICIENCY_LABEL, type ProficiencyValue } from "@/lib/languages";
 import { notify } from "@/lib/notifications";
@@ -659,7 +661,8 @@ export async function createProviderAccount(
         data: { company_id: company.id, name: "Primary" },
       });
       await tx.address.create({
-        data: { site_id: site.id, line1: "", country: input.country.trim() },
+        /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+        data: { site_id: site.id, line1: "", ...countryColumns(input.country) },
       });
       await tx.person.update({
         where: { id: person.id },
@@ -755,7 +758,8 @@ export async function ensureProviderBackbone(
           data: { company_id: company.id, name: "Primary" },
         });
         await tx.address.create({
-          data: { site_id: site.id, line1: "", country: opts.country.trim() },
+          /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+          data: { site_id: site.id, line1: "", ...countryColumns(opts.country) },
         });
         siteId = site.id;
       }
@@ -2834,7 +2838,8 @@ export async function saveProviderAddress(personId: string, addr: StepData): Pro
     city: addr.city?.trim() || null,
     state: addr.state?.trim() || null,
     postal_code: addr.postalCode?.trim() || null,
-    country: addr.country?.trim() || null,
+    /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+    ...countryColumns(addr.country),
   };
 
   let siteId = person.site_id;

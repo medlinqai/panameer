@@ -227,7 +227,28 @@ const live = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 eq("the field carries its own country picker", /aria-label="Phone country"/.test(live(FIELD)), true);
-eq("the picker is a select over COUNTRIES", /COUNTRIES\.filter/.test(live(FIELD)), true);
+/*
+  ── ⚠⚠ RE-ANCHORED BY SHAPE, NOT LOOSENED (`P2-A1.1-E729` WS-C) ────────────────────────
+
+  ⚠ **THE RULE IS *"the picker is a select over the ONE shared country list"*, and it still
+  holds.** What changed is the list: `COUNTRIES.filter(c => c !== "Other")` became
+  `ALL_COUNTRIES`, which never contains `"Other"` — so the filter went with it.
+  ⚠⚠ **THIS IS `check:rollup`'s CASE — THE MECHANISM CHANGED — NOT `check:cert-skills`' (the
+  code drifted).** The assertion is re-anchored to the new shape rather than deleted, which
+  is the distinction Scott enforces.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   eq("the picker is a select over COUNTRIES", /COUNTRIES\.filter/.test(live(FIELD)), true);
+*/
+eq(
+  "the picker is a select over the one shared country list",
+  /ALL_COUNTRIES\.map/.test(live(FIELD)),
+  true
+);
+eq(
+  "and it does not keep a country list of its own",
+  /const\s+COUNTRIES\s*=/.test(live(FIELD)),
+  false
+);
 eq("changing country re-masks the number", /onChange\(formatPhone\(value, next\)\)/.test(live(FIELD)), true);
 eq(
   "with no country selected the field says so rather than guessing",

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+import { countryColumns } from "@/lib/country";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { hashPassword } from "@/lib/password";
 import { normalizeEmail } from "@/lib/normalizeEmail";
@@ -168,7 +170,8 @@ export async function createRequesterAccount(
         data: { company_id: company.id, name: "Primary" },
       });
       await tx.address.create({
-        data: { site_id: site.id, line1: "", country: input.country.trim() },
+        /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+        data: { site_id: site.id, line1: "", ...countryColumns(input.country) },
       });
       await tx.person.update({ where: { id: person.id }, data: { site_id: site.id } });
     }
@@ -384,7 +387,8 @@ async function upsertSiteAddress(
     city: addr.city?.trim() || null,
     state: addr.state?.trim() || null,
     postal_code: addr.postalCode?.trim() || null,
-    country: addr.country?.trim() || null,
+    /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+    ...countryColumns(addr.country),
   };
 
   if (siteId) {

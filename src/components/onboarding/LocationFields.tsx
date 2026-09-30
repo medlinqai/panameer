@@ -1,7 +1,10 @@
 "use client";
 
 import { Field, TextInput } from "@/components/onboarding/controls";
-import { COUNTRIES, regionsFor, regionLabel } from "@/lib/countries";
+/* ⚠ THE ONE CANONICAL LIST AND THE ONE RESOLVER (`E729` WS-C). `COUNTRIES` is no longer
+   read here — the picker offers all 245 by code. */
+import { regionsFor, regionLabel } from "@/lib/countries";
+import { ALL_COUNTRIES, countryName } from "@/lib/country";
 
 /**
  * Country-first location fields (Walk6b WS2 / E123 · E126).
@@ -68,10 +71,27 @@ export function LocationFields({
           }}
           className={SELECT}
         >
+          {/*
+            ── ⚠⚠⚠ THE VALUE IS THE CODE; THE LABEL IS THE NAME (`P2-A1.1-E729` WS-C) ──────
+
+            ⚠ **SCOTT: *"The picker (LocationFields) stores and reads the code, showing the
+            name."*** ⚠⚠ **AND IT IS NOW ALL 245 COUNTRIES, NOT 23** — `ALL_COUNTRIES` is the
+            one canonical list, alphabetical by the name a member reads.
+            ⚠⚠⚠ **`"Other"` IS NOT AN OPTION ANY MORE AND THE SEVEN ROWS THAT HOLD IT ARE NOT
+            BROKEN:** the guard below keeps a stored value that is not in the list as its own
+            option, so those members see what is stored and can replace it. **A picker that
+            silently blanked their country would look like data loss.**
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <option value="">Choose a country…</option>
+            //   {COUNTRIES.map((c) => (<option key={c} value={c}>{c}</option>))}
+          */}
           <option value="">Choose a country…</option>
-          {COUNTRIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {country && !ALL_COUNTRIES.some((c) => c.code === country) && (
+            <option value={country}>{countryName(country, country)}</option>
+          )}
+          {ALL_COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
             </option>
           ))}
         </select>
@@ -91,7 +111,9 @@ export function LocationFields({
           <TextInput
             value={value.city ?? ""}
             onChange={(e) => onChange({ city: e.target.value })}
-            placeholder={country === "United States" ? "Chicago" : "City"}
+            /* ⚠ THE CODE, NOT THE NAME (`E729`). ⚠ SUPERSEDED (`E164`):
+               //   placeholder={country === "United States" ? "Chicago" : "City"} */
+            placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"}
           />
         </Field>
 

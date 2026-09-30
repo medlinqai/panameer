@@ -137,7 +137,9 @@ export default async function AdminUserPage({
           name: true,
           tax_type: true,
           tin: true,
-          country: true,
+          /* ⚠⚠ `Company.country` DROPPED — NEVER RENDERED (`E729` WS-C, ruling 5). Only
+             name / tax_type / tin reach the page. ⚠ The Registered-address select below is a
+             different read and is switched, not dropped. */
           sites: {
             where: { name: REGISTERED_SITE_NAME },
             select: {

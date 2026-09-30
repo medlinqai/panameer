@@ -46,6 +46,7 @@
     "check:host": "npx esbuild src/lib/host.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/host.cjs --log-level=error && node .harness/host.cjs",
     "legal:build": "npx esbuild scripts/build-legal.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/legal.cjs --log-level=error && node .harness/legal.cjs",
     "check:phone": "npx esbuild src/lib/phone.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/phone.cjs --log-level=error && node .harness/phone.cjs",
+    "check:country": "npx esbuild scripts/check-country.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/country.cjs --log-level=error && node .harness/country.cjs",
     "check:theme": "npx esbuild src/lib/themeRecipes.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/theme.cjs --log-level=error && node .harness/theme.cjs",
     "check:jobskills": "npx esbuild src/lib/resume/job-skills.test.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/jobskills.cjs --log-level=error && node .harness/jobskills.cjs",
     "check:derived-source": "npx esbuild scripts/check-derived-source.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/derived-source.cjs --log-level=error && node .harness/derived-source.cjs",

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+import { countryColumns } from "@/lib/country";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { NOTIFICATION_CATEGORIES, findCategory } from "@/lib/notification-categories";
 import { w9Signature } from "@/lib/w9";
@@ -440,7 +442,10 @@ export async function saveTaxProfile(
   const data = {
     form,
     legal_name: input.legalName.trim().slice(0, 160),
-    country: input.country.trim().slice(0, 80),
+    /* ⚠⚠ BOTH COLUMNS (`E729` WS-C) — `country` is NOT NULL here too, and it is what
+       `formFor()` below derives the W-9/W-8 answer from. */
+    country: countryColumns(input.country).country ?? input.country.trim().slice(0, 80),
+    country_code: countryColumns(input.country).country_code,
     /* ⚠ LAST FOUR ONLY. The full TIN is not stored — see the schema note. */
     tin_last4: digits(input.tinLast4, 4),
     tin_kind: input.tinKind ?? null,
@@ -490,7 +495,14 @@ export async function addPayoutMethod(
       kind: input.kind,
       label: input.label.trim().slice(0, 80),
       last4: digits(input.last4, 4),
-      country: input.country.trim().slice(0, 80),
+      /*
+        ⚠⚠ BOTH COLUMNS (`E729` WS-C) — AND `country` IS NOT NULL ON THIS MODEL, so the raw
+        value is the floor. ⚠ `countryColumns` only ever returns `country: null` for an EMPTY
+        input, and the route's validator is `min(2)`, so the fallback is unreachable in
+        practice and present so the type is honest rather than asserted away.
+      */
+      country: countryColumns(input.country).country ?? input.country.trim().slice(0, 80),
+      country_code: countryColumns(input.country).country_code,
       is_default: count === 0,
     },
   });

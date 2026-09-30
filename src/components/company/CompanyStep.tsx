@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
-import { COUNTRIES } from "@/lib/countries";
+/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
+import { ALL_COUNTRIES } from "@/lib/country";
 /* ⚠ IMPORTS KEPT FOR THE COMMENTED FIELD BLOCKS BELOW (`E408` / `E164`). */
 // import {
 //   LocationFields,
@@ -188,7 +189,12 @@ export function CompanyStep({
     `WORK_REQUEST_BAR` gates posting on it. ⚠ DEFAULTED, so nobody is blocked by
     doing nothing — the same reasoning `E260a` gave for the field it replaces.
   */
-  const [country, setCountry] = useState<string>(COUNTRIES[0]);
+  /* ⚠ SUPERSEDED (`E164`):  //   useState<string>(COUNTRIES[0]);
+     ⚠⚠ IT DEFAULTED TO THE FIRST ENTRY, WHICH WAS "United States". The new list is
+     alphabetical by name, so the first entry is AFGHANISTAN — defaulting to it would be a
+     silent wrong answer. An empty default makes the member choose, which is what the
+     `!!country` Continue gate already expects. */
+  const [country, setCountry] = useState<string>("");
   /*
     ── ⚠⚠ THE CONTRACTING SET (`P1-J1.1-E273` + `E280`, Scott 2026-08-30) ──────
 
@@ -1126,9 +1132,12 @@ export function CompanyStep({
               onChange={(e) => setCountry(e.target.value)}
               className={SELECT}
             >
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {/* ⚠⚠ ALL 245, BY CODE, SHOWING THE NAME (`E729` WS-C). `check:company-step`
+                  asserts EXACTLY ONE `.map` renders this select — still true. */}
+              <option value="">Choose a country…</option>
+              {ALL_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
                 </option>
               ))}
             </select>
