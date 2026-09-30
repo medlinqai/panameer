@@ -1,0 +1,483 @@
+{
+  "wroteAt": "2026-09-30T20:39:56.570Z",
+  "brief": "P2-A1.4-E724 item 1b",
+  "note": "RECONSTRUCTED after a second --apply run clobbered the original. Rebuilt from the 59 profile.language_defaulted notifications, which name every profile the repair touched. To reverse: delete the languageRowIds below and the notifications for these people.",
+  "beforeZeroLanguage": 59,
+  "afterZeroLanguage": 0,
+  "profiles": [
+    {
+      "providerProfileId": "03bf0a5c-c44f-4c78-9f77-280f956760c6",
+      "personId": "3a080a98-11b4-4ef7-9a6f-1c0d1c3a3e27"
+    },
+    {
+      "providerProfileId": "06660094-7bf4-49d5-bd8e-9d392e0e47c6",
+      "personId": "046ceaa3-f5dd-4683-9d1f-3d2b746dc5a4"
+    },
+    {
+      "providerProfileId": "0b583834-56fd-483f-8af5-ec430b2938ea",
+      "personId": "8052128f-c0d9-4b41-8c9e-622017ad5d01"
+    },
+    {
+      "providerProfileId": "0bbde149-081b-4abc-adf5-d0cdaf1337b8",
+      "personId": "2d8f2128-6930-4aa9-b75a-264820d8072e"
+    },
+    {
+      "providerProfileId": "0d4eb39b-b9a2-43cc-9990-dda9833f53e1",
+      "personId": "14053e33-7639-46af-9d7e-f0bfe2e95c67"
+    },
+    {
+      "providerProfileId": "0dcd3174-450c-4119-bf20-d553b4bfddf7",
+      "personId": "808d6fe6-5164-4016-8af2-6d83231acef1"
+    },
+    {
+      "providerProfileId": "0eaea365-12fa-4f71-b9a0-1a6cc03a373a",
+      "personId": "6bd5b05b-db08-4d26-a893-044e5d9d9498"
+    },
+    {
+      "providerProfileId": "12ebb3b1-f5ac-4609-af45-aae0307f7a3e",
+      "personId": "4e2522eb-000c-4f9c-8504-cc7ed77b438e"
+    },
+    {
+      "providerProfileId": "165a677e-9173-490b-99cc-88bfab759828",
+      "personId": "72028bbf-fab8-4db6-8865-924b8e169b67"
+    },
+    {
+      "providerProfileId": "1d2a9610-9ebd-4879-9bd7-d89b54a2c0a6",
+      "personId": "cedfe879-049b-45c8-ab03-9969617e34bf"
+    },
+    {
+      "providerProfileId": "21c769b9-545c-4e8f-b648-770fc261598a",
+      "personId": "693fd5c3-47b6-4380-add3-d8b37c02fa23"
+    },
+    {
+      "providerProfileId": "23dd645c-f52e-4ddd-b78e-4e9e7fa1256e",
+      "personId": "9ce142bd-8f34-436b-b141-4ce281a2a0a1"
+    },
+    {
+      "providerProfileId": "26106436-2cab-4ed5-8e3b-f78903d338ae",
+      "personId": "7860cd2d-cc19-493f-99ea-9f14f589d642"
+    },
+    {
+      "providerProfileId": "2873c3bc-e024-4683-bc25-3f11e72f7be6",
+      "personId": "088d4c4c-05c1-488f-85c0-9680cd4bd859"
+    },
+    {
+      "providerProfileId": "28877a27-e031-46bc-8bc0-5cfb05bf2c49",
+      "personId": "a38f6fd6-d1a5-4e40-bf62-bb93597a5018"
+    },
+    {
+      "providerProfileId": "29bd0348-885f-4e68-ad19-1921695d5597",
+      "personId": "767fa7cc-c247-4ba4-894c-f20dc35bb083"
+    },
+    {
+      "providerProfileId": "2d4de99c-5909-4d40-b28b-31b69fbe302e",
+      "personId": "47f36a03-8857-4acc-9444-2aa24aae03fc"
+    },
+    {
+      "providerProfileId": "2defaea9-6f5e-44bd-9c4b-895955bfeca3",
+      "personId": "44eb98a6-2ab0-4f77-99ad-e15494d1e4d1"
+    },
+    {
+      "providerProfileId": "34360594-ee56-4df7-a5d4-64e480cce85e",
+      "personId": "446a818d-cc7c-4b7f-bbaf-c8a661db7c53"
+    },
+    {
+      "providerProfileId": "3f5c05ce-bd7d-49b1-bdde-7fcbbefb2aaf",
+      "personId": "25e57700-4c13-473a-8c5a-e3488e9c441c"
+    },
+    {
+      "providerProfileId": "44f1c996-a6b2-49ec-b485-6fda6f04e4b5",
+      "personId": "893d9a2b-68af-4652-8706-a951ae50720f"
+    },
+    {
+      "providerProfileId": "453f79e4-890c-45e3-a998-86038cad5395",
+      "personId": "fd5867c4-fc46-4431-80b8-583fe896ab33"
+    },
+    {
+      "providerProfileId": "47219aca-be81-45cc-ad8e-a9e4827bfcbc",
+      "personId": "2377c793-cbc0-401e-8539-dd5b5c733c91"
+    },
+    {
+      "providerProfileId": "477d0eba-4933-4a3a-9fa7-0d8fe0c4a265",
+      "personId": "8061433c-c3ce-4bc4-bc47-c787515beb12"
+    },
+    {
+      "providerProfileId": "47a7a5cc-6438-479a-819a-1ea00b108c16",
+      "personId": "e6a07b04-b301-4271-bbb0-f69ab37e7a85"
+    },
+    {
+      "providerProfileId": "4ce6ebde-7ad8-49f9-aa35-e730331ea908",
+      "personId": "1ab0da5b-7daa-4533-98cd-0929116d55fa"
+    },
+    {
+      "providerProfileId": "4e96b114-c135-4b76-aaab-5a73c7da3d2e",
+      "personId": "bbe27e67-3e99-45dd-99f8-36ed52aad9ae"
+    },
+    {
+      "providerProfileId": "4fbddcb0-1db3-411d-a94f-6103b692ea25",
+      "personId": "c862117f-5239-4bf5-a694-bc046a44382f"
+    },
+    {
+      "providerProfileId": "5297ce4d-36e4-4e33-9004-0ff69f779530",
+      "personId": "2b351e9d-a826-411f-bc15-4d5cb51292b8"
+    },
+    {
+      "providerProfileId": "52fddc27-f874-42a1-b58a-f5f73b30990d",
+      "personId": "ee2e0f0a-2129-4c36-b8da-245d09c375f3"
+    },
+    {
+      "providerProfileId": "5445adb9-0168-44e3-9498-e4861fb963a8",
+      "personId": "4052d02b-1ce3-40bd-a416-1cd8169e44c5"
+    },
+    {
+      "providerProfileId": "5d7a0d6d-d584-4009-8258-d3d0ce91d4cc",
+      "personId": "049e1014-029a-44f9-a672-5b9481df179e"
+    },
+    {
+      "providerProfileId": "5e44787f-ffaf-4d58-bed7-78b4d912e73b",
+      "personId": "fc06f0dc-c1d4-4c0b-85d6-43c7fc4fe745"
+    },
+    {
+      "providerProfileId": "64d9f7a0-ea39-4b54-b281-4408bcc8a0fd",
+      "personId": "33ee8a5f-a883-45bf-a895-03cb433e0d19"
+    },
+    {
+      "providerProfileId": "74c0df8a-c74f-45fd-a84a-8d1e43f34924",
+      "personId": "dbdedd10-463b-4deb-bdc1-5c1cd88b3213"
+    },
+    {
+      "providerProfileId": "76f70f97-eb51-4611-810b-2675625c259d",
+      "personId": "4ac814a2-49cc-4aa6-984a-2b9b35e97e85"
+    },
+    {
+      "providerProfileId": "7804a864-8b4b-4368-8eba-d36e85bf7019",
+      "personId": "9c0cef8a-8ece-4989-ba97-1b36fe03294e"
+    },
+    {
+      "providerProfileId": "79bf8791-b6ec-41bc-ba35-12159f5e6e02",
+      "personId": "f099856a-9b3f-49d2-af4c-e5e720c14ade"
+    },
+    {
+      "providerProfileId": "7e7ac478-a69a-45d9-9123-152cd6689263",
+      "personId": "b6e44920-29ea-46cf-80b4-0543a0f65712"
+    },
+    {
+      "providerProfileId": "80a8ff03-0bb1-4171-b858-1d94fa8a56a9",
+      "personId": "a1366082-82f9-4efa-85c0-c218f24a9eb6"
+    },
+    {
+      "providerProfileId": "80d9ab7d-c1f6-4af0-8bb5-297b17440fd8",
+      "personId": "c9753f15-b8ad-4d36-bca9-aea7b60f95c9"
+    },
+    {
+      "providerProfileId": "854aeec7-b1a9-4f90-b500-114140219730",
+      "personId": "42ad2a1b-51c3-4b0e-bb8f-8cd5fa1224d7"
+    },
+    {
+      "providerProfileId": "9cd7ed75-a6df-450c-9289-796cc24520c3",
+      "personId": "652289e9-f21b-4645-b27c-e17031095693"
+    },
+    {
+      "providerProfileId": "9f116c3a-6444-405d-b403-3140acb220b2",
+      "personId": "a20564f6-da0f-4063-873e-2604832e9976"
+    },
+    {
+      "providerProfileId": "9fe40bc2-0e3d-47f1-8f24-3994497fd6dc",
+      "personId": "189d516e-df20-45ab-a9c3-685d7c607739"
+    },
+    {
+      "providerProfileId": "a0d5a26c-76b2-4b74-8e8e-5b4da167b74e",
+      "personId": "de57813c-f68b-4725-9f6f-d26b582c260b"
+    },
+    {
+      "providerProfileId": "abdc1dd9-8583-4151-bd65-2a7c033aab8c",
+      "personId": "93ce3af0-c6e0-42e3-9883-aac7a39795a3"
+    },
+    {
+      "providerProfileId": "b19031b0-3914-468b-a8c4-39e713076140",
+      "personId": "45cd0a35-26d6-442d-b7fe-ded379318784"
+    },
+    {
+      "providerProfileId": "c0dc8095-d339-4fce-a8d5-b51880dbfa92",
+      "personId": "484f1a62-30a5-46ea-8c97-cab357c191e0"
+    },
+    {
+      "providerProfileId": "c59194aa-e389-4b25-b158-eb978df31fb5",
+      "personId": "ddec57c4-a827-4f99-868f-ed84fb1a4cac"
+    },
+    {
+      "providerProfileId": "c8f66545-f5b6-4703-aee1-10aac84618a5",
+      "personId": "cd0ae642-5449-4cf4-9d1c-493d29954d44"
+    },
+    {
+      "providerProfileId": "cc5ec649-fcb6-4215-9681-e397e9a64ab6",
+      "personId": "ddbb448c-06ec-4faf-a3cb-9f0dbe6909f2"
+    },
+    {
+      "providerProfileId": "cf93504b-539a-4125-86bf-cdf06e96c235",
+      "personId": "b17da465-b7bf-455f-861b-4aa90a3a5ada"
+    },
+    {
+      "providerProfileId": "d44027d0-0a9d-4f74-beaf-5524b18c1707",
+      "personId": "9a423ae1-1a7a-4dbe-a949-af48b83a5697"
+    },
+    {
+      "providerProfileId": "dbf62bda-8511-4d0d-91d3-0e8f4e4cd99f",
+      "personId": "93735262-c45d-43f8-86fb-d3196d13b0e8"
+    },
+    {
+      "providerProfileId": "dff274aa-b97b-47f2-ad22-37db55139e0b",
+      "personId": "4b229caf-03d7-43f1-93e5-be435ad6cb6b"
+    },
+    {
+      "providerProfileId": "e3d253f3-11e9-4eb0-ac18-91c444202ff5",
+      "personId": "733c81a1-0923-41b8-91f9-134447fb8b5a"
+    },
+    {
+      "providerProfileId": "e792dcfd-d878-41b1-b4e7-dba345fd289c",
+      "personId": "10ae516f-09d8-4778-8d75-7994c50e3e9c"
+    },
+    {
+      "providerProfileId": "ef9bb4d0-9304-44f6-b2c8-546a70e72730",
+      "personId": "f71361a6-cf00-4dee-8fdc-818ecbbb8fab"
+    }
+  ],
+  "languageRowIds": [
+    {
+      "id": "2fc5e418-f962-43d2-8730-06f4ece65fe8",
+      "providerProfileId": "03bf0a5c-c44f-4c78-9f77-280f956760c6"
+    },
+    {
+      "id": "92bfbdf6-f153-4f9f-9a4f-48bcb62e5c12",
+      "providerProfileId": "06660094-7bf4-49d5-bd8e-9d392e0e47c6"
+    },
+    {
+      "id": "87de772d-5f22-494d-a2f9-260b73e49d64",
+      "providerProfileId": "0b583834-56fd-483f-8af5-ec430b2938ea"
+    },
+    {
+      "id": "9acb7044-3362-408c-9864-ab52bdcb8015",
+      "providerProfileId": "0bbde149-081b-4abc-adf5-d0cdaf1337b8"
+    },
+    {
+      "id": "5f6fba90-0861-4a6a-bd54-61ad16898d17",
+      "providerProfileId": "0d4eb39b-b9a2-43cc-9990-dda9833f53e1"
+    },
+    {
+      "id": "0f14d4c5-6ab6-4775-9e8a-5611fb5abb25",
+      "providerProfileId": "0dcd3174-450c-4119-bf20-d553b4bfddf7"
+    },
+    {
+      "id": "0f190d1a-535c-4dea-ad9c-000cae782c34",
+      "providerProfileId": "0eaea365-12fa-4f71-b9a0-1a6cc03a373a"
+    },
+    {
+      "id": "fe9e17b9-a2ce-4ad2-b6f9-8d541bcfb0c3",
+      "providerProfileId": "12ebb3b1-f5ac-4609-af45-aae0307f7a3e"
+    },
+    {
+      "id": "2b0ff644-5e03-4a6b-9311-78caa154cc10",
+      "providerProfileId": "165a677e-9173-490b-99cc-88bfab759828"
+    },
+    {
+      "id": "c884ffea-9781-4863-a564-aa10bc570186",
+      "providerProfileId": "1d2a9610-9ebd-4879-9bd7-d89b54a2c0a6"
+    },
+    {
+      "id": "0ee492a4-2325-412a-875d-597693162cb2",
+      "providerProfileId": "21c769b9-545c-4e8f-b648-770fc261598a"
+    },
+    {
+      "id": "46457dcd-14bc-4b0f-81a9-abae5822777b",
+      "providerProfileId": "23dd645c-f52e-4ddd-b78e-4e9e7fa1256e"
+    },
+    {
+      "id": "e7beb8ec-243a-44bf-9493-888a76a08434",
+      "providerProfileId": "26106436-2cab-4ed5-8e3b-f78903d338ae"
+    },
+    {
+      "id": "dc41152d-2faa-4563-a633-7dbcf5d5a006",
+      "providerProfileId": "2873c3bc-e024-4683-bc25-3f11e72f7be6"
+    },
+    {
+      "id": "14d8e72e-b7ba-4da8-b142-176c212c5cbb",
+      "providerProfileId": "28877a27-e031-46bc-8bc0-5cfb05bf2c49"
+    },
+    {
+      "id": "a8d3419e-4941-4144-9039-eade2a25f424",
+      "providerProfileId": "29bd0348-885f-4e68-ad19-1921695d5597"
+    },
+    {
+      "id": "3f3a4900-6dc5-42dd-a156-018d8e419fe4",
+      "providerProfileId": "2d4de99c-5909-4d40-b28b-31b69fbe302e"
+    },
+    {
+      "id": "fd387bad-6e20-4b62-8832-73a49363084d",
+      "providerProfileId": "2defaea9-6f5e-44bd-9c4b-895955bfeca3"
+    },
+    {
+      "id": "3a2cfc01-1702-416f-b40a-0906711f592a",
+      "providerProfileId": "34360594-ee56-4df7-a5d4-64e480cce85e"
+    },
+    {
+      "id": "d5380157-3eec-452a-8692-e5560e27deef",
+      "providerProfileId": "3f5c05ce-bd7d-49b1-bdde-7fcbbefb2aaf"
+    },
+    {
+      "id": "d83dc152-146c-469c-82fc-585c2092e9f1",
+      "providerProfileId": "44f1c996-a6b2-49ec-b485-6fda6f04e4b5"
+    },
+    {
+      "id": "86b1dbad-debd-4048-ae0f-5452df637c80",
+      "providerProfileId": "453f79e4-890c-45e3-a998-86038cad5395"
+    },
+    {
+      "id": "06de497b-5b33-4d8f-b044-51db4d2d741e",
+      "providerProfileId": "47219aca-be81-45cc-ad8e-a9e4827bfcbc"
+    },
+    {
+      "id": "bd2eeac2-9d6e-447e-953d-aa54c5baf8b1",
+      "providerProfileId": "477d0eba-4933-4a3a-9fa7-0d8fe0c4a265"
+    },
+    {
+      "id": "7fdfd037-0d51-4d89-bd6b-3b6f2f269b79",
+      "providerProfileId": "47a7a5cc-6438-479a-819a-1ea00b108c16"
+    },
+    {
+      "id": "ea177582-41bb-4fb6-b245-78daa0e5f3b4",
+      "providerProfileId": "4ce6ebde-7ad8-49f9-aa35-e730331ea908"
+    },
+    {
+      "id": "6b959b98-1021-42a1-b2e8-02c2a110252b",
+      "providerProfileId": "4e96b114-c135-4b76-aaab-5a73c7da3d2e"
+    },
+    {
+      "id": "5329c2bc-59c7-4501-8a9d-2ae8a74482e0",
+      "providerProfileId": "4fbddcb0-1db3-411d-a94f-6103b692ea25"
+    },
+    {
+      "id": "33bf5410-0eff-40a8-8d9d-a4c6043e6afa",
+      "providerProfileId": "5297ce4d-36e4-4e33-9004-0ff69f779530"
+    },
+    {
+      "id": "103e3618-afc7-4b6d-b2f2-b5523090b986",
+      "providerProfileId": "52fddc27-f874-42a1-b58a-f5f73b30990d"
+    },
+    {
+      "id": "881ae4e3-0064-41ae-9586-ab4fc889271d",
+      "providerProfileId": "5445adb9-0168-44e3-9498-e4861fb963a8"
+    },
+    {
+      "id": "bebc0b26-dcd8-4ac8-ac7e-7193601f32b6",
+      "providerProfileId": "5d7a0d6d-d584-4009-8258-d3d0ce91d4cc"
+    },
+    {
+      "id": "98c3ef0d-9b41-4b9f-beb6-65bed5eef880",
+      "providerProfileId": "5e44787f-ffaf-4d58-bed7-78b4d912e73b"
+    },
+    {
+      "id": "43590453-bf9f-4480-838a-49e3550b6de1",
+      "providerProfileId": "64d9f7a0-ea39-4b54-b281-4408bcc8a0fd"
+    },
+    {
+      "id": "1dd3f8ec-4c44-4392-aef4-f05d15dad5c5",
+      "providerProfileId": "74c0df8a-c74f-45fd-a84a-8d1e43f34924"
+    },
+    {
+      "id": "8d4a4a03-fa0a-4433-9e90-f5fdd471529b",
+      "providerProfileId": "76f70f97-eb51-4611-810b-2675625c259d"
+    },
+    {
+      "id": "6678ad08-cdc8-441c-b756-e7d34d5a47e2",
+      "providerProfileId": "7804a864-8b4b-4368-8eba-d36e85bf7019"
+    },
+    {
+      "id": "7d235a2f-f187-40b9-9ac1-74de9cc4dd2a",
+      "providerProfileId": "79bf8791-b6ec-41bc-ba35-12159f5e6e02"
+    },
+    {
+      "id": "3d025a7e-5507-4ef7-ad9d-7049eb4b3815",
+      "providerProfileId": "7e7ac478-a69a-45d9-9123-152cd6689263"
+    },
+    {
+      "id": "17eb2208-f722-45aa-ae2b-31f1a37c69f7",
+      "providerProfileId": "80a8ff03-0bb1-4171-b858-1d94fa8a56a9"
+    },
+    {
+      "id": "8ffcad40-e274-4833-9641-251518a7d510",
+      "providerProfileId": "80d9ab7d-c1f6-4af0-8bb5-297b17440fd8"
+    },
+    {
+      "id": "c0d70478-b9a6-4f80-a303-f5cfe5edd92a",
+      "providerProfileId": "854aeec7-b1a9-4f90-b500-114140219730"
+    },
+    {
+      "id": "779fa943-73f6-4f43-8292-36caceae01a8",
+      "providerProfileId": "9cd7ed75-a6df-450c-9289-796cc24520c3"
+    },
+    {
+      "id": "7113bbab-b2d2-4eed-8638-305e19f0982f",
+      "providerProfileId": "9f116c3a-6444-405d-b403-3140acb220b2"
+    },
+    {
+      "id": "80aee8e9-0c6a-400e-909e-f1851bbee314",
+      "providerProfileId": "9fe40bc2-0e3d-47f1-8f24-3994497fd6dc"
+    },
+    {
+      "id": "e235c7d6-4904-469e-8069-5904aa2880db",
+      "providerProfileId": "a0d5a26c-76b2-4b74-8e8e-5b4da167b74e"
+    },
+    {
+      "id": "a77a0a58-6cde-42d4-956a-a59c35eef2d9",
+      "providerProfileId": "abdc1dd9-8583-4151-bd65-2a7c033aab8c"
+    },
+    {
+      "id": "81720880-b731-4df0-8da5-0f420d92bc7d",
+      "providerProfileId": "b19031b0-3914-468b-a8c4-39e713076140"
+    },
+    {
+      "id": "91e32c67-5ffb-4dc9-ba05-961d7ffcbe1b",
+      "providerProfileId": "c0dc8095-d339-4fce-a8d5-b51880dbfa92"
+    },
+    {
+      "id": "d77844ac-4ca4-406d-a2d3-cdb9efda7ed2",
+      "providerProfileId": "c59194aa-e389-4b25-b158-eb978df31fb5"
+    },
+    {
+      "id": "0a4ce51c-56a2-4464-a67f-ba13d503284d",
+      "providerProfileId": "c8f66545-f5b6-4703-aee1-10aac84618a5"
+    },
+    {
+      "id": "36717ddc-9178-402e-b24d-1483da241cc8",
+      "providerProfileId": "cc5ec649-fcb6-4215-9681-e397e9a64ab6"
+    },
+    {
+      "id": "02196f2f-7688-47b0-b78a-1bfbddb1ba68",
+      "providerProfileId": "cf93504b-539a-4125-86bf-cdf06e96c235"
+    },
+    {
+      "id": "a2520ea0-6a9e-4155-8a82-b44a7de91409",
+      "providerProfileId": "d44027d0-0a9d-4f74-beaf-5524b18c1707"
+    },
+    {
+      "id": "41893c41-1376-46ae-9363-62c45c7e41f6",
+      "providerProfileId": "dbf62bda-8511-4d0d-91d3-0e8f4e4cd99f"
+    },
+    {
+      "id": "bedf7a69-262e-4882-a9d7-579b8abf3e06",
+      "providerProfileId": "dff274aa-b97b-47f2-ad22-37db55139e0b"
+    },
+    {
+      "id": "e4ad57d7-a9fc-4cfe-88db-ecb66a324fb8",
+      "providerProfileId": "e3d253f3-11e9-4eb0-ac18-91c444202ff5"
+    },
+    {
+      "id": "3327796c-717e-4c31-a5aa-26fc1103e920",
+      "providerProfileId": "e792dcfd-d878-41b1-b4e7-dba345fd289c"
+    },
+    {
+      "id": "f41b3574-8bf1-4340-9d27-4c7de95f3af0",
+      "providerProfileId": "ef9bb4d0-9304-44f6-b2c8-546a70e72730"
+    }
+  ]
+}

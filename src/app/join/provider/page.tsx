@@ -2947,10 +2947,24 @@ setScreen(target);
 
     // ---- 9/12 — Languages (E016/E034, both fields required) -----------
     case "languages": {
+      /*
+        ── ⚠⚠⚠ ENGLISH · FLUENT, PRE-FILLED (`P2-A1.4-E724` item 1a) ──────────────────────
+
+        ⚠ **SCOTT, 2026-09-30: *"New sign-ups: the languages step starts with English · Fluent
+        already filled in, editable and removable if another language is added."***
+        ⚠⚠ **THE ROW WAS ALREADY SEEDED — WITH NO LEVEL** — so the step opened on a language
+        with an empty required field, and `E034`'s server rule then refused the save until the
+        member noticed. **A default that cannot be submitted is not a default.**
+        ⚠⚠⚠ **IT IS A CLIENT-SIDE PREFILL, NOT A WRITE.** Nothing is stored until the member
+        continues, so a provider who replaces English with Portuguese stores Portuguese and
+        only Portuguese — the default never leaves a trace of itself.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   : [{ name: "English", level: null }];
+      */
       const langs =
         profile.languages.length > 0
           ? profile.languages
-          : [{ name: "English", level: null }];
+          : [{ name: "English", level: "FLUENT" }];
 
       const update = (i: number, patch: Partial<LanguageDraft>) =>
         setProfile((p) => ({
@@ -3033,7 +3047,18 @@ setScreen(target);
                     </select>
                   </Field>
                 </div>
-                {i > 0 && (
+                {/*
+                  ── ⚠⚠ REMOVABLE ONCE A SECOND LANGUAGE EXISTS (`E724` item 1a) ────────────
+
+                  ⚠ **SCOTT: *"editable and removable if another language is added."***
+                  ⚠⚠ **IT WAS `i > 0`, WHICH PINNED ROW ONE FOREVER** — a member who added
+                  Portuguese still could not remove the English they never chose. ⚠⚠⚠ The rule
+                  is about HOW MANY rows exist, not WHICH row this is, and it is now the same
+                  rule the profile editor uses (`E723` item 12): **the last one cannot go, any
+                  other can.**
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   {i > 0 && (
+                */}
+                {langs.length > 1 && (
                   <button
                     type="button"
                     onClick={() =>

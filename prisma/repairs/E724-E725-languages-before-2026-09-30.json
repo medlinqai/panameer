@@ -1,0 +1,64 @@
+{
+  "takenAt": "2026-09-30T20:35:56.329Z",
+  "providerProfiles": 63,
+  "withZeroLanguages": 59,
+  "languageRows": 7,
+  "rows": [
+    {
+      "id": "4939d75b-7053-4680-b750-a8a8a612ff31",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "name": "English",
+      "proficiency": "Fluent",
+      "level": "FLUENT",
+      "created_at": "2026-07-31T13:34:34.690Z"
+    },
+    {
+      "id": "cd0e5c1e-77e3-4d2d-b0e4-5803b42ffe6a",
+      "provider_profile_id": "3c350aff-a53f-4a75-8c55-27848b9b2b0d",
+      "name": "German",
+      "proficiency": "Native or Bilingual",
+      "level": "NATIVE_OR_BILINGUAL",
+      "created_at": "2026-07-31T13:34:34.690Z"
+    },
+    {
+      "id": "4841ff43-f147-4f23-af29-a9b9d349cf41",
+      "provider_profile_id": "4110728e-7bc6-483a-b27f-cf0ee123d770",
+      "name": "English",
+      "proficiency": "Fluent",
+      "level": "FLUENT",
+      "created_at": "2026-07-31T15:15:21.542Z"
+    },
+    {
+      "id": "09b84278-d7d5-4f45-9500-26fe6b2dc8f0",
+      "provider_profile_id": "35c6a82b-cdda-4f49-b76e-19ad6c945820",
+      "name": "English",
+      "proficiency": "Fluent",
+      "level": "FLUENT",
+      "created_at": "2026-07-31T18:40:28.202Z"
+    },
+    {
+      "id": "af27a623-f1c8-4500-9945-eb259cbfba94",
+      "provider_profile_id": "839ebeec-b4cc-4e69-8bf6-01f6cca7a740",
+      "name": "Spanish Native",
+      "proficiency": null,
+      "level": null,
+      "created_at": "2026-09-25T21:49:44.137Z"
+    },
+    {
+      "id": "60cb130b-bcfa-42c1-807d-c077cf8da9f2",
+      "provider_profile_id": "839ebeec-b4cc-4e69-8bf6-01f6cca7a740",
+      "name": "English Advanced intermediate",
+      "proficiency": null,
+      "level": null,
+      "created_at": "2026-09-25T21:49:44.145Z"
+    },
+    {
+      "id": "9991bc6a-3a03-4155-a729-5cb6e97d1138",
+      "provider_profile_id": "839ebeec-b4cc-4e69-8bf6-01f6cca7a740",
+      "name": "German Basic",
+      "proficiency": null,
+      "level": null,
+      "created_at": "2026-09-25T21:49:44.150Z"
+    }
+  ]
+}

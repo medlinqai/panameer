@@ -186,6 +186,32 @@ export const NOTIFICATION_EVENTS = {
         : "A few fields are still keeping you out of search results.",
     href: () => "/settings/profile",
   },
+  /*
+    ── ⚠⚠⚠ `profile.language_defaulted` (`P2-A1.4-E724` item 1b) ─────────────────────────
+
+    ⚠ **SCOTT: the 59 zero-language profiles get one row and an in-app notification —
+    *"We added English (Fluent) to your profile. Change it if that's not right."***
+    ⚠⚠⚠ **IT CANNOT SEND EMAIL, AND THAT IS CHECKED RATHER THAN ASSUMED.**
+    `NOTIFICATION_EMAIL_EVENTS` holds exactly one key — `account.finish_later` — and this is
+    not it, so `notify()` writes a row and stops. **Adding a key to that allowlist is a
+    product decision; this brief does not touch it.**
+    ⚠⚠ **`DO_IT` IS THE HONEST `aiMode`: the system acted on the member's behalf and is
+    telling them so.** ⚠ `requiresAction: false` — nothing is broken if they never open it;
+    the row they were given is a reasonable default, not a defect awaiting repair.
+    ⚠ The `href` points at the one-section editor so *"change it"* is one click, not a hunt.
+  */
+  "profile.language_defaulted": {
+    event: "profile.language_defaulted",
+    recipient: "the provider",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: () => "We added a language to your profile",
+    body: () =>
+      "We added English (Fluent) to your profile. Change it if that's not right.",
+    href: () => "/profile/edit/languages",
+  },
   "profile.ready": {
     event: "profile.ready",
     recipient: "the new user",
