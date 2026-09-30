@@ -48,7 +48,9 @@ import {
   PERSONA_NAV,
   PROVIDER_NAV,
   REQUESTER_NAV,
+  bandActiveHref,
   bandPrefixesFor,
+  ACCOUNT_BAND_HREF,
   type NavItem,
 } from "@/lib/nav";
 import { SETTINGS_NAV } from "@/lib/settings-nav";
@@ -211,16 +213,37 @@ const BAND_ITEMS: NavItem[] = [
   ...flatten(PROVIDER_NAV),
   ...flatten(ADMIN_NAV.flatMap((g) => g.items)),
 ];
-/** ⚠ `AppBand`'s own rule, reproduced: EXACT for the landing routes, prefixes
- *  otherwise. The prefixes themselves come from `bandPrefixesFor`, so this
- *  cannot drift from the component — it asks the same function. */
-const BAND_EXACT = new Set(["/dashboard", "/admin"]);
+/*
+  ── ⚠⚠⚠ THE BAND'S RULE, CALLED — NOT REPRODUCED (`P2-A2-E717`) ──────────────
+
+  ⚠ **THIS COMMENT USED TO SAY *"`AppBand`'s own rule, REPRODUCED"* AND THAT WAS THE PROBLEM.**
+  It shared `bandPrefixesFor`, so the prefix TABLE could not drift — ⚠⚠ **but the wrapper
+  around it was written out again here, including its own copy of `BAND_EXACT`.** The table
+  was safe and the DECISION was not.
+  ⚠⚠⚠ **AND THIS IS THE GATE.** A divergence between the band's rule and this one would have
+  been invisible to the very check built to catch navigation layers disagreeing — it would
+  have asserted its own copy and passed.
+  ⚠ **THE ACCOUNT MENU IS A CANDIDATE HERE TOO**, or the resolution differs from the
+  component's: on `/community/score` the account key outbids `Connect`, and a candidate list
+  without it would still return `Connect` and hide the fix.
+  ⚠⚠ It still returns `NavItem[]` — the account key is not a band ITEM, so a route the avatar
+  owns correctly yields **zero band applications**, which is what `BAND_KNOWN_OPEN` records.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   const BAND_EXACT = new Set(["/dashboard", "/admin"]);
+  //   function bandLights(pathname: string): NavItem[] {
+  //     return BAND_ITEMS.filter((i) =>
+  //       BAND_EXACT.has(i.href)
+  //         ? pathname === i.href
+  //         : bandPrefixesFor(i.href).some((pre) => pathname.startsWith(pre))
+  //     );
+  //   }
+*/
 function bandLights(pathname: string): NavItem[] {
-  return BAND_ITEMS.filter((i) =>
-    BAND_EXACT.has(i.href)
-      ? pathname === i.href
-      : bandPrefixesFor(i.href).some((pre) => pathname.startsWith(pre))
-  );
+  const owner = bandActiveHref(pathname, [
+    ...BAND_ITEMS.map((i) => i.href),
+    ACCOUNT_BAND_HREF,
+  ]);
+  return BAND_ITEMS.filter((i) => i.href === owner);
 }
 
 /* ⚠ Every route a tab row can put you on: the PAGE_TABS keys and their tab
@@ -260,12 +283,23 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     Work, Sell, Orders or Get Paid. The brief says so: *"Account-menu routes
     light no band app (E596 rule). Extend the named list to any new route
     here."*
-    ⚠⚠⚠ `/community/score` IS DELIBERATELY **NOT** LISTED. Measured: it lights
-    `Connect`, because it lives under `/community` and `bandPrefixesFor`
-    resolves that through Connect. An entry for it would START PASSING and
-    therefore FAIL — the first of this mechanism's two safeguards, working.
     ⚠ Each carries its own date and prints its age every run, the second
     safeguard: *"a visible age is what stops this becoming a parking lot."*
+
+    ── ⚠⚠⚠ `/community/score` IS NOW LISTED, AND THE REASON IT WAS NOT IS THE FIX (`E717`) ──
+
+    ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
+    //   ⚠⚠⚠ `/community/score` IS DELIBERATELY **NOT** LISTED. Measured: it lights
+    //   `Connect`, because it lives under `/community` and `bandPrefixesFor`
+    //   resolves that through Connect. An entry for it would START PASSING and
+    //   therefore FAIL — the first of this mechanism's two safeguards, working.
+    ⚠⚠ **SCOTT, 2026-09-30, RULED THAT LIGHTING `Connect` THERE IS THE DEFECT:** *"It is the
+    Account Information Score tab… On that page, the avatar is lit and Connect is not."*
+    ⚠⚠⚠ **SO THE SENTENCE ABOVE WAS ACCURATE AND ITS CONCLUSION IS OVERTURNED.** The entry
+    was refused because the route lit a band application; `E717` stops it doing so, which is
+    exactly the condition that makes the entry legal. **Safeguard 1 is not being worked
+    around — it is being satisfied**: this entry would have failed yesterday and passes only
+    because the band now agrees with the tab row.
   */
   "/profile": {
     since: "2026-09-22",
@@ -278,6 +312,10 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
   "/account-health": {
     since: "2026-09-22",
     why: "Account standing is between a member and Panameer, not an application in the band.",
+  },
+  "/community/score": {
+    since: "2026-09-30",
+    why: "The Score tab is an ACCOUNT-menu destination that kept a /community URL (P2-A2-E600 WS-A ruled the route does not move). E717 makes the band agree with its tab row: the avatar lights and Connect does not, so it lights no band application by design.",
   },
   /* ⚠⚠⚠ `/company` AND `/settings` ARE NO LONGER TAB DESTINATIONS AT ALL
      (`P2-ALL-E687` WS-B, rulings 89a/89b), SO THEIR KNOWN-OPEN ENTRIES DESCRIBE
@@ -591,6 +629,53 @@ check(
 check(
   "4 — an exact landing route gains no extra prefixes",
   bandPrefixesFor("/dashboard").length === 1
+);
+
+/*
+  ── ⚠⚠⚠ 4b · THE COLLISION UNDER `/community`, BOTH SIDES (`P2-A2-E717`) ──────
+
+  ⚠ **TWO ITEMS CLAIM `/community/score`:** `Connect` through `/community`, and the account
+  menu through `/community/score` itself. ⚠⚠ **THE PREFIX TABLE ALONE CANNOT SAY WHICH WINS**
+  — the assertions above prove Connect still OWNS `/community`, and would pass just as well
+  if the band lit Connect on the score page, which is the defect.
+  ⚠⚠⚠ **SO THE RESOLUTION IS ASSERTED, NOT THE TABLE.** And both directions are asserted
+  (ruling 90): the score page resolves to the AVATAR, **and the sibling routes still resolve
+  to Connect** — a fix that took Connect's light off `/community/colleagues` would satisfy
+  the first check alone.
+*/
+const BAND_CANDIDATES = [...BAND_ITEMS.map((i) => i.href), ACCOUNT_BAND_HREF];
+check(
+  "4b — /community/score resolves to the ACCOUNT menu, not Connect",
+  bandActiveHref("/community/score", BAND_CANDIDATES) === ACCOUNT_BAND_HREF,
+  String(bandActiveHref("/community/score", BAND_CANDIDATES))
+);
+for (const sibling of [
+  "/community",
+  "/community/colleagues",
+  "/community/groups",
+  "/community/grow",
+  "/community/mentors",
+  "/community/teams",
+]) {
+  check(
+    `4b — ${sibling} still resolves to Connect`,
+    bandActiveHref(sibling, BAND_CANDIDATES) === "/connect",
+    String(bandActiveHref(sibling, BAND_CANDIDATES))
+  );
+}
+/* ⚠ And the mechanism that decides it: the longer claim wins. Without this, swapping the
+   comparison to `<` would still pass every case above by accident of list order. */
+check(
+  "4b — the MORE SPECIFIC prefix wins, which is what decides the collision",
+  bandActiveHref("/community/score", ["/connect", ACCOUNT_BAND_HREF]) === ACCOUNT_BAND_HREF &&
+    bandActiveHref("/community/score", [ACCOUNT_BAND_HREF, "/connect"]) === ACCOUNT_BAND_HREF
+);
+/* ⚠⚠ `E586` — the account key must really own that prefix, or every check above passes on a
+   candidate that claims nothing. */
+check(
+  "4b — the account menu actually owns /community/score",
+  bandPrefixesFor(ACCOUNT_BAND_HREF).includes("/community/score"),
+  bandPrefixesFor(ACCOUNT_BAND_HREF).join(", ")
 );
 
 if (failures.length > 0) {

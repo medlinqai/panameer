@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RailIcon } from "@/components/casing/RailIcon";
-import { bandPrefixesFor, type NavItem } from "@/lib/nav";
+import { bandActiveHref, ACCOUNT_BAND_HREF, type NavItem } from "@/lib/nav";
 import "./bottom-nav.css";
 
 /**
@@ -44,13 +44,29 @@ export const BOTTOM_NAV_MAX = 5;
 export function BottomNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
-  /* ⚠ THE SAME ACTIVE RULE THE BAND USES, from the same function — a second
-     rule here would drift and light a different pill than the band does at the
-     breakpoint boundary (`E585`). */
-  const isActive = (href: string) =>
-    href === "/dashboard" || href === "/admin"
-      ? pathname === href
-      : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
+  /*
+    ⚠ THE SAME ACTIVE RULE THE BAND USES, from the same function — a second rule here would
+    drift and light a different pill than the band does at the breakpoint boundary (`E585`).
+    ⚠⚠ **IT WAS ONLY *ALMOST* THE SAME RULE (`E717`):** this file shared `bandPrefixesFor` but
+    re-implemented the EXACT-or-prefix wrapper around it, inlining `/dashboard` and `/admin`
+    by hand. **The table could not drift; the decision could.** Now both read
+    `bandActiveHref`.
+    ⚠⚠⚠ **THE ACCOUNT MENU IS PASSED AS A CANDIDATE EVEN THOUGH THIS BAR NEVER RENDERS IT.**
+    It has to be: on `/community/score` the account menu OUTBIDS `Connect`, and if this bar
+    did not know that, it would light `Connect` while the band above lit the avatar — the two
+    layers disagreeing, which is the defect `E717` exists to remove. **Nothing lights here
+    instead**, which is already what these routes do on `/profile` today.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const isActive = (href: string) =>
+    //     href === "/dashboard" || href === "/admin"
+    //       ? pathname === href
+    //       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
+  */
+  const activeHref = bandActiveHref(pathname, [
+    ...items.map((i) => i.href),
+    ACCOUNT_BAND_HREF,
+  ]);
+  const isActive = (href: string) => href === activeHref;
 
   const shown = items.slice(0, BOTTOM_NAV_MAX);
   const overflow = items.slice(BOTTOM_NAV_MAX);

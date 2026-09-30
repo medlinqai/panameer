@@ -424,12 +424,35 @@ export function AccountMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label="Account menu"
-          /* ⚠⚠ THE SAME FILL THE PILLS TAKE (`bg-rail-active`), not a ring and
-             not a third treatment — `E217`'s rule that active is a SOLID fill
-             and the translucent wash is hover. */
+          /*
+            ── ⚠⚠⚠ THE FILL WAS ALREADY RIGHT. THE GEOMETRY HID IT (`P2-A2-E717`) ─────────
+
+            ⚠ **SCOTT, 2026-09-30:** *"On `/community` the Connect item gets the full magenta
+            backlight; on `/profile` the avatar gets only a faint ring."*
+            ⚠⚠ **AND `bg-rail-active` WAS ALREADY BEING APPLIED — MEASURED ON TRUNK:** the
+            button computed to **36×36 with `padding: 2px`** and
+            `background: rgb(176, 42, 174)`. ⚠⚠⚠ **2px OF FILL AROUND A 32px CIRCLE IS A
+            RING, WHATEVER THE CLASS IS CALLED.** The comment below it claimed *"not a ring"*
+            and the padding made one — **the stated rule was right and the layout overruled
+            it**, which no class-name check could ever have caught.
+            ⚠ **MEASURED SO THE TWO TREATMENTS CAN BE COMPARED:** a band pill is **73×46,
+            `padding: 6px 12px`**. So the avatar gets `p-[7px]` — 32 + 14 = **46px, the
+            pill's own height** — and the lit disc reads at the same weight as a lit pill
+            instead of as an outline.
+            ⚠⚠ **THE PADDING IS CONSTANT IN BOTH STATES, DELIBERATELY.** Growing the button
+            only when active would move the band's right-hand cluster on every navigation —
+            a layout shift keyed on which page you are on.
+            ⚠ `E217`'s rule is unchanged and is what this restores: active is a SOLID fill,
+            the translucent wash is hover and nothing else.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   ⚠⚠ THE SAME FILL THE PILLS TAKE (`bg-rail-active`), not a ring and
+            //      not a third treatment — `E217`'s rule that active is a SOLID fill
+            //      and the translucent wash is hover.
+            //   className={"flex items-center gap-1.5 rounded-full p-0.5 transition-colors " + …}
+          */
           aria-current={active ? "page" : undefined}
           className={
-            "flex items-center gap-1.5 rounded-full p-0.5 transition-colors " +
+            "flex items-center gap-1.5 rounded-full p-[7px] transition-colors " +
             (active
               ? "bg-rail-active"
               : onDark

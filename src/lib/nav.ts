@@ -251,8 +251,87 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     "/stats",
     "/account-health",
     "/settings",
+    /*
+      ── ⚠⚠⚠ `/community/score` IS AN ACCOUNT ROUTE WEARING A `/community` URL (`E717`) ──
+
+      ⚠ **SCOTT, 2026-09-30:** *"It is the Account Information Score tab, but its URL starts
+      with `/community`, so the band matches it to Connect. On that page, the avatar is lit
+      and Connect is not."*
+      ⚠⚠ **IT IS THE `Score` TAB OF THE PROFILE ROW** — `profileTabs` names it and
+      `community/score/page.tsx` renders `eyebrow={ACCOUNT_MENU_NAME}` — so the band was
+      contradicting the tab row on that page, which is the exact defect `E596` fixed in the
+      other direction.
+      ⚠⚠⚠ **LISTING IT HERE IS NOT ENOUGH ON ITS OWN: `Connect` STILL MATCHES IT VIA
+      `/community`.** Two items matching one path is `E433`'s violation, and the old
+      predicate lit every match. **`bandActiveHref` below resolves it by the LONGEST matched
+      prefix** — `/community/score` (16) beats `/community` (10) — so the specific owner wins
+      and Connect keeps every other page under that prefix.
+      ⚠ **THE ROUTE STILL DOES NOT MOVE.** `E600` WS-A decided that deliberately, and it
+      stands: this changes which item the band lights, not where the page lives.
+    */
+    "/community/score",
   ],
 };
+
+/*
+  ── ⚠⚠⚠ THE LANDING ROUTES MATCH EXACTLY (`E475`) ────────────────────────────
+
+  ⚠ `/admin` is a prefix of every admin page, and a `startsWith` test on it once **lit fifteen
+  pills at once.** ⚠⚠ It lived as a local `const` in THREE files — `AppBand`, `BottomNav` and
+  `check-nav-reachable` — each re-declaring the same two routes beside its own copy of the
+  predicate. **Now it is declared once, beside the prefixes it guards.**
+*/
+const BAND_EXACT: ReadonlySet<string> = new Set(["/dashboard", "/admin"]);
+
+/**
+ * How specifically `href` claims `pathname`, or `-1` for no claim.
+ *
+ * ⚠ The length of the LONGEST prefix that matches, which is what lets a more specific owner
+ * beat a more general one.
+ */
+function bandMatchLength(href: string, pathname: string): number {
+  if (BAND_EXACT.has(href)) return pathname === href ? href.length : -1;
+  let best = -1;
+  for (const p of bandPrefixesFor(href)) {
+    if (pathname.startsWith(p) && p.length > best) best = p.length;
+  }
+  return best;
+}
+
+/**
+ * ── ⚠⚠⚠ WHICH BAND ITEM IS LIT. ONE RULE, THREE CONSUMERS (`P2-A2-E717`) ─────
+ *
+ * ⚠ **SCOTT: *"Use the band's own 'which item is lit' logic, not a second copy of it."***
+ * ⚠⚠ **IT WAS WRITTEN OUT THREE TIMES** — `AppBand.tsx`, `BottomNav.tsx` and
+ * `check-nav-reachable.ts` each re-implemented the EXACT-or-prefix wrapper around
+ * `bandPrefixesFor`. ⚠⚠⚠ **THEY SHARED THE PREFIX TABLE AND NOT THE DECISION**, so the table
+ * could not drift but the rule around it could — and the GATE carried its own copy, which
+ * means a divergence would have been invisible to the thing built to catch divergence.
+ *
+ * ⚠⚠ **IT RETURNS ONE OWNER, NOT A LIST, AND THAT IS THE SECOND FIX.** The old predicate
+ * answered *"does this item match?"* per item, so two items could both say yes and **both
+ * light** — `E433` requires exactly one. Asking *"who owns this path?"* makes that
+ * impossible to express.
+ *
+ * ⚠ **MOST SPECIFIC WINS**, the same rule `route-access.ts` uses for longest-prefix access.
+ * It changes no existing outcome where only one item matched; it decides the case where two
+ * do, which before `E717` the band resolved by lighting both.
+ */
+export function bandActiveHref(
+  pathname: string,
+  hrefs: readonly string[]
+): string | null {
+  let bestHref: string | null = null;
+  let bestLen = -1;
+  for (const href of hrefs) {
+    const len = bandMatchLength(href, pathname);
+    if (len > bestLen) {
+      bestLen = len;
+      bestHref = href;
+    }
+  }
+  return bestLen >= 0 ? bestHref : null;
+}
 
 /**
  * Every path prefix a band item owns — its own `href` first, then any extras.

@@ -25,7 +25,7 @@ import {
   ADMIN_NAV,
   ADMIN_HOME,
   NOTIFICATIONS_NAV,
-  bandPrefixesFor,
+  bandActiveHref,
 } from "@/lib/nav";
 import "./app-band.css";
 
@@ -191,10 +191,13 @@ export function AppBand() {
   */
   const items = navForRoles(me);
 
-  /* ⚠ EXACT MATCH for the two landing routes. `/admin` is a prefix of every
-     admin page and a startsWith test lit fifteen pills at once — the rail
-     learned that the hard way (`E475`). */
-  const EXACT = new Set(["/dashboard", "/admin"]);
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `EXACT` moved into `nav.ts` beside the
+     prefixes it guards, because this file, `BottomNav` and `check-nav-reachable` each held
+     their own copy of it (`E717`):
+     //   ⚠ EXACT MATCH for the two landing routes. `/admin` is a prefix of every
+     //      admin page and a startsWith test lit fifteen pills at once — the rail
+     //      learned that the hard way (`E475`).
+     //   const EXACT = new Set(["/dashboard", "/admin"]); */
   /*
     ── ⚠⚠ AN ITEM MAY OWN MORE THAN ONE PREFIX (`P2-A3-E596` WS-A) ──────────
 
@@ -212,10 +215,26 @@ export function AppBand() {
     ⚠ `EXACT` still wins for `/dashboard` and `/admin`: they own no extras, and
     an exact landing route must not become a prefix.
   */
-  const isActive = (href: string) =>
-    EXACT.has(href)
-      ? pathname === href
-      : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
+  /*
+    ── ⚠⚠⚠ ONE OWNER PER PATH, RESOLVED ONCE (`P2-A2-E717`) ────────────────────
+
+    ⚠⚠ **THE AVATAR IS A CANDIDATE ALONGSIDE THE PILLS, NOT A SEPARATE QUESTION.** That is
+    what makes `/community/score` resolvable at all: `Connect` claims it through `/community`
+    and the account menu claims it through `/community/score`, and **the more specific claim
+    wins** — a decision that cannot be made by asking each item about itself in turn.
+    ⚠⚠⚠ **AND IT IS WHY EXACTLY ONE THING CAN BE LIT.** The old predicate answered per item,
+    so two matches lit two items; this asks who owns the path and compares.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const isActive = (href: string) =>
+    //     EXACT.has(href)
+    //       ? pathname === href
+    //       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
+  */
+  const activeHref = bandActiveHref(pathname, [
+    ...items.map((i) => i.href),
+    ACCOUNT_BAND_HREF,
+  ]);
+  const isActive = (href: string) => href === activeHref;
 
   return (
     <>
