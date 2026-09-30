@@ -818,28 +818,49 @@ export function ConnectProfile({
                   //   className="rounded-full bg-magenta px-3.5 py-2 text-center text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                   //   className="rounded-full border border-line px-3.5 py-2 text-center text-[13px] font-bold transition-colors hover:border-magenta/50"
                 */}
-                <Link
-                  href="/community/score"
-                  data-e715-btn
-                  className="pm-btn pm-btn-primary transition-colors"
-                >
-                  {/*
-                    ⚠ SCOTT, WS-B: rename to **"What's Missing or Incomplete?"**
-                    — *"(page is correct)"*, so the DESTINATION is untouched and
-                    only the label changes.
-                    ⚠⚠ THE OLD LABEL PROMISED AN ACTION THE PAGE DOES NOT
-                    PERFORM: *"Complete Your Profile"* reads as a button that
-                    completes it, while `/community/score` **shows you what is
-                    missing.** The new label names what is actually behind it.
-                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                    //   Complete Your Profile
-                  */}
-                  What&rsquo;s Missing or Incomplete?
-                </Link>
+                {/*
+                  ── ⚠⚠⚠ `What's Missing or Incomplete?` IS REMOVED (`P2-A2-E716`) ──────────
+
+                  ⚠ **SCOTT, 2026-09-30.** The button went to `/community/score`; **the
+                  Search Score block directly below it is about that page and now carries the
+                  door itself** — its small-caps label and its items-left line both link there.
+                  ⚠⚠⚠ **RULE 5 IS THE RISK AND IT IS MEASURED, NOT ASSERTED:** removing a
+                  control can remove a capability's only entrance. `e2e-e716/door.spec.ts`
+                  RECORDS this button's `href` from the running page BEFORE the change, then
+                  asserts the new links carry **the same href**, then **clicks one and asserts
+                  where it lands.** ⚠ A comparison against a string typed into a spec would
+                  pass even if this button had always pointed somewhere else.
+                  ⚠⚠ **THE OTHER ENTRANCE IS THE `Score` TAB** in the profile's own row, which
+                  is untouched — so the page was never reachable from here alone.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the button, its label history
+                  and the reasoning for that label:
+                  //   <Link href="/community/score" data-e715-btn className="pm-btn pm-btn-primary transition-colors">
+                  //     (comment: Scott, WS-B, renamed it to "What's Missing or Incomplete?" —
+                  //      "(page is correct)", so the DESTINATION was untouched and only the
+                  //      label changed. The older label promised an action the page does not
+                  //      perform: "Complete Your Profile" reads as a button that completes it,
+                  //      while /community/score SHOWS you what is missing.)
+                  //     (comment: superseded before that — "Complete Your Profile")
+                  //     What&rsquo;s Missing or Incomplete?
+                  //   </Link>
+                */}
+                {/*
+                  ── ⚠⚠ AND THIS ONE TAKES THE INK (`E716`) ────────────────────────────────
+
+                  ⚠ **SCOTT: `How Others See My Profile` becomes the solid ink button — the
+                  style the removed one had.** ⚠⚠ With the primary gone, a lone outlined
+                  button reads as a secondary action with no primary above it; the column's
+                  one remaining control is now its principal one and is drawn that way.
+                  ⚠ **PROVED BY COMPARISON, NOT BY EYE:** the spec reads the REMOVED button's
+                  computed `backgroundColor` and `color` from the before-run and asserts this
+                  button now matches them.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                  //   className="pm-btn transition-colors"
+                */}
                 <Link
                   href={`/providers/${p.id}`}
                   data-e715-btn
-                  className="pm-btn transition-colors"
+                  className="pm-btn pm-btn-primary transition-colors"
                 >
                   {/*
                     ⚠ SCOTT, WS-B: rename to **"How Others See My Profile"**.
@@ -890,9 +911,35 @@ export function ConnectProfile({
           and Visibility, as a bare `<Link className="group mt-7 block border-t …">` with
           `<CompletionRing score={score} />` and a `Complete Profiles Sell Services` caption.
         */}
+        {/*
+          ── ⚠⚠⚠ TWO NAMED DOORS, NOT ONE BLOCK-WIDE LINK (`P2-A2-E716`) ──────────────
+
+          ⚠ **SCOTT: the label links to the Score tab, and the items-left line links to the
+          destination the removed button had.** Both are `/community/score`.
+          ⚠⚠ **THE WHOLE BLOCK USED TO BE ONE `<Link>`, AND THAT WAS WORSE THAN IT LOOKED:**
+          a screen reader announced the ring, the number, `of 100` and the items line as a
+          SINGLE link whose accessible name was all of that text run together. ⚠⚠⚠ **TWO
+          links that say what they are beat one link that swallows the block** — the same
+          reasoning as `E600` WS-B's six identical `Edit` controls, where the label was
+          carried only by `aria-label`.
+          ⚠ **THE RING AND `of 100` ARE NOW PLAIN, AND THAT IS DELIBERATE:** a figure is not
+          a control (`E433`). The two things a member can act on are the two things that
+          look like links.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <CleanSide title="Search Score">
+          //     <Link href="/community/score" className="group flex items-center gap-4">
+          //       <span className="pm-score-ring" style={…}><span>{score.total}</span></span>
+          //       <span className="min-w-0 text-[13px] leading-snug text-ink-2">
+          //         of 100<br />
+          //         {remainingLines > 0 ? (<span className="group-hover:underline">…</span>)
+          //                             : (<span className="group-hover:underline">Nothing outstanding</span>)}
+          //       </span>
+          //     </Link>
+          //   </CleanSide>
+        */}
         {owner && score && (
-          <CleanSide title="Search Score">
-            <Link href="/community/score" className="group flex items-center gap-4">
+          <CleanSide title="Search Score" titleHref="/community/score">
+            <div className="flex items-center gap-4">
               <span
                 className="pm-score-ring"
                 style={{
@@ -906,17 +953,27 @@ export function ConnectProfile({
                 <br />
                 {/* ⚠⚠ A REAL ZERO AND A FINISHED PROFILE MUST NOT READ THE SAME (counting
                     rule 2). At zero outstanding lines this says so in words rather than
-                    printing "0 items left". */}
-                {remainingLines > 0 ? (
-                  <span className="group-hover:underline">
-                    {remainingLines} item{remainingLines === 1 ? "" : "s"} left
-                    {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
-                  </span>
-                ) : (
-                  <span className="group-hover:underline">Nothing outstanding</span>
-                )}
+                    printing "0 items left".
+                    ⚠⚠⚠ **BOTH STATES ARE THE LINK, NOT JUST THE ONE WITH A COUNT IN IT.** A
+                    provider at zero outstanding still has a score page worth reading, and a
+                    door that disappears at 100% is a door that vanishes exactly when the
+                    member has earned the right to look. */}
+                <Link
+                  href="/community/score"
+                  data-e716-items
+                  className="font-semibold text-magenta-dark hover:underline"
+                >
+                  {remainingLines > 0 ? (
+                    <>
+                      {remainingLines} item{remainingLines === 1 ? "" : "s"} left
+                      {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
+                    </>
+                  ) : (
+                    "Nothing outstanding"
+                  )}
+                </Link>
               </span>
-            </Link>
+            </div>
           </CleanSide>
         )}
 
@@ -1512,6 +1569,16 @@ export function ConnectProfile({
         */}
         <CleanSection
           id="skills"
+          /*
+            ── ⚠⚠⚠ CLOSED AT LOAD (`P2-A2-E716`, Scott 2026-09-30) ─────────────────────
+            ⚠ **Skills, Specializations, Certifications, Education and Languages load CLOSED;
+            Work History and everything below it load OPEN.** ⚠⚠ **THE SAME FOR THE OWNER AND
+            THE VISITOR** — this is one call site serving both personas, so there is no branch
+            here and no way for the two views to drift apart.
+            ⚠ The chevron still opens it: `open` is the INITIAL state of a real `<details>`,
+            not a lock, so nothing about the disclosure changes.
+          */
+          open={false}
           title="Skills"
           isEmpty={p.skills.length === 0}
           showWhenEmpty={owner}
@@ -1564,6 +1631,16 @@ export function ConnectProfile({
         */}
         <CleanSection
           id="specializations"
+          /*
+            ── ⚠⚠⚠ CLOSED AT LOAD (`P2-A2-E716`, Scott 2026-09-30) ─────────────────────
+            ⚠ **Skills, Specializations, Certifications, Education and Languages load CLOSED;
+            Work History and everything below it load OPEN.** ⚠⚠ **THE SAME FOR THE OWNER AND
+            THE VISITOR** — this is one call site serving both personas, so there is no branch
+            here and no way for the two views to drift apart.
+            ⚠ The chevron still opens it: `open` is the INITIAL state of a real `<details>`,
+            not a lock, so nothing about the disclosure changes.
+          */
+          open={false}
           title="Specializations"
           isEmpty={p.specializations.length === 0}
           showWhenEmpty={owner}
@@ -1575,6 +1652,16 @@ export function ConnectProfile({
         <div className="pm-cp-pair">
           <CleanSection
             id="certifications"
+          /*
+            ── ⚠⚠⚠ CLOSED AT LOAD (`P2-A2-E716`, Scott 2026-09-30) ─────────────────────
+            ⚠ **Skills, Specializations, Certifications, Education and Languages load CLOSED;
+            Work History and everything below it load OPEN.** ⚠⚠ **THE SAME FOR THE OWNER AND
+            THE VISITOR** — this is one call site serving both personas, so there is no branch
+            here and no way for the two views to drift apart.
+            ⚠ The chevron still opens it: `open` is the INITIAL state of a real `<details>`,
+            not a lock, so nothing about the disclosure changes.
+          */
+          open={false}
             title="Certifications"
           isEmpty={p.certifications.length === 0}
           showWhenEmpty={owner}
@@ -1621,6 +1708,16 @@ export function ConnectProfile({
           </CleanSection>
           <CleanSection
             id="education"
+          /*
+            ── ⚠⚠⚠ CLOSED AT LOAD (`P2-A2-E716`, Scott 2026-09-30) ─────────────────────
+            ⚠ **Skills, Specializations, Certifications, Education and Languages load CLOSED;
+            Work History and everything below it load OPEN.** ⚠⚠ **THE SAME FOR THE OWNER AND
+            THE VISITOR** — this is one call site serving both personas, so there is no branch
+            here and no way for the two views to drift apart.
+            ⚠ The chevron still opens it: `open` is the INITIAL state of a real `<details>`,
+            not a lock, so nothing about the disclosure changes.
+          */
+          open={false}
             title="Education"
           isEmpty={p.education.length === 0}
           showWhenEmpty={owner}
@@ -1668,6 +1765,16 @@ export function ConnectProfile({
           */}
           <CleanSection
             id="languages"
+          /*
+            ── ⚠⚠⚠ CLOSED AT LOAD (`P2-A2-E716`, Scott 2026-09-30) ─────────────────────
+            ⚠ **Skills, Specializations, Certifications, Education and Languages load CLOSED;
+            Work History and everything below it load OPEN.** ⚠⚠ **THE SAME FOR THE OWNER AND
+            THE VISITOR** — this is one call site serving both personas, so there is no branch
+            here and no way for the two views to drift apart.
+            ⚠ The chevron still opens it: `open` is the INITIAL state of a real `<details>`,
+            not a lock, so nothing about the disclosure changes.
+          */
+          open={false}
             title="Languages"
             isEmpty={p.languages.length === 0}
             showWhenEmpty={owner}

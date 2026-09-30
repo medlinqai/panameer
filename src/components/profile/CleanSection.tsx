@@ -224,19 +224,42 @@ export function CleanChip({ children }: { children: ReactNode }) {
  */
 export function CleanSide({
   title,
+  titleHref,
   action,
   children,
 }: {
   title: string;
+  /**
+   * ── ⚠⚠ AN OPTIONAL DOOR ON THE LABEL (`P2-A2-E716`) ──────────────────────────
+   *
+   * ⚠ **SCOTT: the `SEARCH SCORE` label becomes a link to the Score tab.** ⚠⚠ **THE
+   * SMALL-CAPS TREATMENT IS KEPT AND THAT IS EXPLICIT IN THE INSTRUCTION** — it stays a
+   * 12px uppercase eyebrow and becomes magenta-ink, the colour `CleanEdit` already uses, so
+   * every link in this column says *"link"* the same way (`E433`).
+   * ⚠⚠⚠ **OPTIONAL, SO `Rates` IS UNTOUCHED.** `CleanSide` renders the Rates block too, and
+   * its label is not a door — it has an `Edit` control instead. A required href would have
+   * forced a destination on a block that does not want one.
+   */
+  titleHref?: string;
   action?: ReactNode;
   children: ReactNode;
 }) {
+  const label = "text-[12px] font-semibold uppercase tracking-[0.08em]";
   return (
     <div className="mt-7 border-t border-line pt-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h4 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-2">
-          {title}
-        </h4>
+        {titleHref ? (
+          /* ⚠ `<h4>` WRAPS THE LINK RATHER THAN THE LINK WRAPPING THE HEADING: the block still
+             has a heading in the outline when the link is ignored, and a screen reader
+             announces a link inside a heading rather than a heading that happens to be one. */
+          <h4 className={label}>
+            <Link href={titleHref} className="text-magenta-dark hover:underline">
+              {title}
+            </Link>
+          </h4>
+        ) : (
+          <h4 className={`${label} text-ink-2`}>{title}</h4>
+        )}
         {action}
       </div>
       {children}

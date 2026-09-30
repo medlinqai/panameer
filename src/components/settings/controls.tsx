@@ -73,6 +73,21 @@ export function ToggleRow({
     behaviour that must not drift.
   */
   tone = "magenta",
+  /*
+    ── ⚠⚠⚠ THE LIVE POSITION, FOR COPY THAT DESCRIBES THE SWITCH (`P2-A2-E716`) ──
+
+    ⚠ **`/profile`'s Visibility help line says something DIFFERENT when the switch is off**,
+    so it has to know where the switch actually is — not where it was when the page rendered.
+    ⚠⚠ **THE PARENT CANNOT DERIVE THIS.** `value` is this component's own state and the flip
+    is optimistic, so a parent reading its `paused` prop would describe the PREVIOUS position
+    until the page was reloaded — **a sentence contradicting the control directly beside it.**
+    ⚠⚠⚠ **AND IT FIRES ON THE REVERT TOO.** `onChange` returning false puts the switch back;
+    if the copy did not come back with it, a failed save would leave the page *claiming* to be
+    hidden while the switch says visible — worse than either state on its own.
+    ⚠ Optional, so `ProfileSettingsForm` is untouched. The behaviour still lives here and only
+    here (`E585`); this reports it rather than duplicating it.
+  */
+  onValueChange,
 }: {
   label: string;
   hint?: string;
@@ -82,6 +97,8 @@ export function ToggleRow({
   onChange: (next: boolean) => Promise<boolean>;
   /** `ink` is `/profile`'s; everything else keeps the magenta track. */
   tone?: "magenta" | "ink";
+  /** Called with the switch's new position, including when a failed save reverts it. */
+  onValueChange?: (value: boolean) => void;
 }) {
   const [value, setValue] = useState(checked);
   const [busy, setBusy] = useState(false);
@@ -90,9 +107,15 @@ export function ToggleRow({
     if (disabled || busy) return;
     const next = !value;
     setValue(next);
+    /* ⚠ Announced at BOTH sites — the optimistic flip and the revert — so copy that describes
+       the switch can never be left describing a position the switch is not in. */
+    onValueChange?.(next);
     setBusy(true);
     const ok = await onChange(next);
-    if (!ok) setValue(!next);
+    if (!ok) {
+      setValue(!next);
+      onValueChange?.(!next);
+    }
     setBusy(false);
   };
 

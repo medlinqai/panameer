@@ -356,7 +356,25 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
         //   "Complete Your Profile",
         //   "See What Buyers See",
       */
-      "What’s Missing or Incomplete?",
+      /*
+        ── ⚠⚠⚠ `What's Missing or Incomplete?` WAS REMOVED BY SCOTT (`P2-A2-E716`) ────────
+
+        ⚠ **THE RULING CHANGED AGAIN, AND THE NEEDLE IS NOT SIMPLY DROPPED.** `E715` taught
+        this list that label two commits ago; `E716` removes the button, because **the Search
+        Score block below it is about that page and now carries the door itself** — its
+        small-caps label and its items-left line both link to `/community/score`.
+        ⚠⚠⚠ **REMOVING A NEEDLE WOULD STOP THE GATE FAILING AND STOP IT SAYING ANYTHING**, so
+        what replaced it is asserted instead — **as a DOOR, not as a word**, which is the
+        shape this file already uses for `/account-health` and `/stats` a few lines below and
+        for the same reason. ⚠ `toBeGreaterThan(0)`: the defect is ZERO doors, and counting
+        them exactly fails whenever the page legitimately gains one.
+        ⚠⚠ **IT IS NOT REPLACED BY ANOTHER TEXT NEEDLE HERE:** `Search Score` is already in
+        this list (added by `E715`), so repeating it would add a second copy of an assertion
+        that already passes rather than covering what was lost. **The door assertion is below,
+        with the other doors.**
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   "What’s Missing or Incomplete?",
+      */
       "How Others See My Profile",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" vanished from the OWNER's page`).toBe(true);
@@ -390,6 +408,28 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
     expect(
       await page.locator('a[href="/stats"]').count(),
       "the owner lost their door to /stats"
+    ).toBeGreaterThan(0);
+    /*
+      ── ⚠⚠⚠ AND THE DOOR THE REMOVED BUTTON USED TO BE (`P2-A2-E716`) ───────────────────
+
+      ⚠ **`What's Missing or Incomplete?` WENT TO `/community/score` AND SCOTT REMOVED IT.**
+      The Search Score block carries that door now — the small-caps label and the items-left
+      line both link there. ⚠⚠ **THIS IS THE ASSERTION THAT WOULD CATCH THE REAL DEFECT:** a
+      later edit restyling that block, or dropping the link from the items line at 100%
+      complete, would leave the owner with no entrance from their own profile.
+      ⚠⚠⚠ **IT IS SCOPED TO THE RAIL, AND THAT IS THE WHOLE ASSERTION.** The first version of
+      this check counted `a[href="/community/score"]` across the PAGE — and **`nav.ts:875`
+      puts a `Score` tab in the profile's own tab row pointing at exactly that href.** ⚠⚠ So a
+      page-wide count is satisfied by the tab row **forever, whatever happens to the rail**:
+      an assertion its own mutation cannot fail (rule 11), written while trying to prove a
+      door had survived. ⚠ Caught by asking what would have to break for it to go red.
+      ⚠ `> 0` rather than an exact count: there are two doors in the rail today (the label and
+      the items line) and an assertion that counts them fails the moment one is legitimately
+      added or merged — the mistake this file already records making for `/account-health`.
+    */
+    expect(
+      await page.locator('.pm-cp3-rail a[href="/community/score"]').count(),
+      "the owner lost their door to /community/score — the removed button's destination"
     ).toBeGreaterThan(0);
     /*
       ⚠ AND THE OWNER STILL HAS THEIR OWN RATES CARD — the rule is *"not the

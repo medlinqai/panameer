@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ToggleRow, postSetting } from "@/components/settings/controls";
 
 /**
@@ -39,6 +40,20 @@ export function ProfileVisibilityCard({
   paused: boolean;
   completeness: number;
 }) {
+  /*
+    ── ⚠⚠⚠ THE HELP LINE FOLLOWS THE SWITCH, NOT THE PROP (`P2-A2-E716`) ─────────
+
+    ⚠ **SCOTT: when the switch is off the line reads something different.** ⚠⚠ `paused` is the
+    SERVER's answer at render time; the switch flips optimistically, so reading the prop would
+    leave the sentence describing the position the switch was in **before** the member touched
+    it — a line contradicting the control it sits under.
+    ⚠⚠⚠ **SO THE SWITCH REPORTS ITS OWN POSITION** (`ToggleRow`'s `onValueChange`) and this
+    mirrors it. ⚠ `paused` remains the INITIAL value, which is correct: it is what the server
+    said, and it is what the page should show before anybody clicks anything.
+    ⚠ **A FAILED SAVE PUTS BOTH BACK** — `ToggleRow` fires the callback on its revert too, so
+    the copy cannot be left claiming a state the save never reached.
+  */
+  const [visible, setVisible] = useState(!paused);
   /*
     ⚠⚠ THE BOX IS GONE (`P2-A2-E713` WS-A item 9). Scott: Visibility "loses its box too",
     separated by a thin line instead. ⚠ This component is rendered ONLY by `ConnectProfile`
@@ -81,13 +96,42 @@ export function ProfileVisibilityCard({
         label="Visible to buyers"
         checked={!paused}
         tone="ink"
+        onValueChange={setVisible}
         onChange={async (next) =>
           (await postSetting("/api/settings/profile", { paused: !next })) === null
         }
       />
+      {/*
+        ── ⚠⚠⚠ TWO STATES, NAMED BY SCOTT 2026-09-30 (`P2-A2-E716`) ────────────────────
+
+        ⚠ **THE WORD `Pausing` IS GONE FROM THIS LINE.** *"Turning visibility off"* names the
+        control the member is looking at; *"pausing"* named an internal concept — the column
+        is `paused_at` and the route is `/api/settings/pause` — that appears **nowhere on this
+        screen.** ⚠⚠ A member cannot act on a verb the interface never shows them.
+        ⚠⚠⚠ **THE OFF LINE SAYS WHAT IS TRUE, WHAT TO DO, AND WHAT WAS NOT LOST, IN THAT
+        ORDER** — and it keeps *"Nothing has been deleted"*, which is the single question a
+        provider actually has when their profile stops being findable.
+        ⚠ **THE COMPLETENESS FIGURE IS DROPPED FROM THE OFF STATE ON PURPOSE:** *"you are 67%
+        complete"* beside *"buyers can't find you"* reads as the REASON they cannot, and it is
+        not — this switch is. It stays on the ON line, where it explains what still limits
+        reach once the switch is no longer the thing doing it.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   Buyers can find you in the marketplace. Pausing hides your profile
+        //   without deleting anything. You are {completeness}% complete.
+      */}
       <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">
-        Buyers can find you in the marketplace. Pausing hides your profile
-        without deleting anything. You are {completeness}% complete.
+        {visible ? (
+          <>
+            Buyers can find you in the marketplace. Turning visibility off hides
+            your profile without deleting anything. You are {completeness}%
+            complete.
+          </>
+        ) : (
+          <>
+            Buyers can&rsquo;t find you right now. Turn visibility on to show
+            your profile again. Nothing has been deleted.
+          </>
+        )}
       </p>
     </section>
   );

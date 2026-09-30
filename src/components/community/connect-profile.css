@@ -734,3 +734,29 @@
 .account-surface .pm-cp-pair {
   display: block;
 }
+
+/*
+  ── ⚠⚠⚠ THE FOCUS RING (`P2-A2-E716`) ────────────────────────────────────────
+
+  ⚠ **SCOTT, on his screenshot of Languages: a clicked section title draws a heavy blue box.**
+  ⚠⚠ **THAT IS THE BROWSER'S DEFAULT `outline` ON `<summary>`, NOT SOMETHING THIS APP DRAWS** —
+  a `<summary>` is a focusable control, and clicking one focuses it, so the ring a keyboard
+  user needs was being shown to every mouse user as well.
+  ⚠⚠⚠ **`:focus-visible` IS THE WHOLE FIX AND IT IS NOT THE SAME AS DELETING THE OUTLINE.**
+  The browser shows `:focus-visible` for keyboard focus and withholds it for a mouse click, so
+  the keyboard user KEEPS a ring and the mouse user stops seeing one.
+  ⚠ **A BARE `outline: none` WOULD HAVE BEEN THE WRONG FIX AND A REAL ACCESSIBILITY
+  REGRESSION** — it would remove the only indication of where the keyboard is, on a page whose
+  sections are all reached by Tab. The `:focus` reset below exists ONLY to suppress the
+  mouse-click case and is immediately re-granted for keyboards on the next rule.
+  ⚠⚠ Thin ink, matching the page's own rules rather than the platform blue, with an offset so
+  it frames the title instead of crowding it.
+*/
+.pm-clean-sec > summary:focus {
+  outline: none;
+}
+.pm-clean-sec > summary:focus-visible {
+  outline: 1px solid var(--color-ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}

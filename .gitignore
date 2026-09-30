@@ -67,6 +67,12 @@ e2e-shell/.artifacts/
 # E715 — paired screenshot gate: the harness is tracked, its output is not.
 e2e-e715/.artifacts/
 e2e-e715/shots/
+# E716 — the door proof: the harness is tracked; its shots and the recorded
+# before-href are run artifacts. A committed before-href would let a later
+# `after` run compare against a stale measurement.
+e2e-e716/.artifacts/
+e2e-e716/shots/
+e2e-e716/before-href.json
 
 # ⚠ P1-ALL-E371 WS-A2 — captured mail. NOTHING captured goes in the repo.
 .mail-capture/
