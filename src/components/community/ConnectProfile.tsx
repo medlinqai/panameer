@@ -533,7 +533,7 @@ export function ConnectProfile({
           */
           title={owner ? "My Service Products" : "Service Products"}
           /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Services" */
-          isEmpty={p.packages.length === 0}
+          count={p.packages.length}
           showWhenEmpty={owner}
         >
       {p.packages.length === 0 ? (
@@ -563,6 +563,7 @@ export function ConnectProfile({
           <div className="flex flex-col">
             {p.packages.map((pk) => (
               <div
+                data-row
                 key={pk.id}
                 className={
                   "flex items-center justify-between gap-3.5 py-3" +
@@ -1923,7 +1924,7 @@ export function ConnectProfile({
           */
           open={false}
           title="Skills"
-          isEmpty={p.skills.length === 0}
+          count={p.skills.length}
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("skills")} title="Skills" /> : undefined}
         >
@@ -1985,7 +1986,7 @@ export function ConnectProfile({
           */
           open={false}
           title="Specializations"
-          isEmpty={p.specializations.length === 0}
+          count={p.specializations.length}
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("specializations")} title="Specializations" /> : undefined}
         >
@@ -2006,7 +2007,7 @@ export function ConnectProfile({
           */
           open={false}
             title="Certifications"
-          isEmpty={p.certifications.length === 0}
+          count={p.certifications.length}
           showWhenEmpty={owner}
             action={owner ? <CleanEdit href={editHref("certifications")} title="Certifications" /> : undefined}
           >
@@ -2062,7 +2063,7 @@ export function ConnectProfile({
           */
           open={false}
             title="Education"
-          isEmpty={p.education.length === 0}
+          count={p.education.length}
           showWhenEmpty={owner}
             action={owner ? <CleanEdit href={editHref("education")} title="Education" /> : undefined}
           >
@@ -2119,7 +2120,7 @@ export function ConnectProfile({
           */
           open={false}
             title="Languages"
-            isEmpty={p.languages.length === 0}
+            count={p.languages.length}
             showWhenEmpty={owner}
             action={owner ? <CleanEdit href={editHref("languages")} title="Languages" /> : undefined}
           >
@@ -2133,7 +2134,7 @@ export function ConnectProfile({
         <CleanSection
           id="work-history"
           title="Work History"
-          isEmpty={p.employers.length === 0}
+          count={p.employers.length}
           showWhenEmpty={owner}
           /*
             ── ⚠⚠⚠ THE RÉSUMÉ RE-RUN, MOUNTED (`P2-A2-E602` WS-E 2) ────────────
@@ -2203,7 +2204,7 @@ export function ConnectProfile({
         <CleanSection
           id="solo-projects"
           title="Solo Projects"
-          isEmpty={soloProjects.length === 0}
+          count={soloProjects.length}
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("solo-projects")} title="Solo Projects" /> : undefined}
         >
@@ -2242,7 +2243,7 @@ export function ConnectProfile({
           title={owner ? "My Courses" : "Courses"}
           /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Teaching" — and before it,
              `title="Learning Paths"`. See the naming note on the Service Products section. */
-          isEmpty={taughtPaths.length === 0}
+          count={taughtPaths.length}
           showWhenEmpty={owner}
         >
           {taughtPaths.length === 0 ? (
@@ -2277,7 +2278,7 @@ export function ConnectProfile({
             */
             <ul className="pm-course-rows">
               {taughtPaths.map((t) => (
-                <li key={t.slug}>
+                <li data-row key={t.slug}>
                   <Link href={`/learn/${t.slug}`} className="pm-course-row">
                     <span className="pm-course-name">{t.title}</span>
                     <span className="pm-course-meta">{lessonCount(t.lessons)}</span>
@@ -2308,7 +2309,7 @@ export function ConnectProfile({
           /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Learning". ⚠⚠ The visitor
              name carries no "In-Process" because `visibleTaken` gives them only completed
              paths — the title and the data say the same thing. */
-          isEmpty={visibleTaken.length === 0}
+          count={visibleTaken.length}
           showWhenEmpty={owner}
         >
           {visibleTaken.length === 0 ? (
@@ -2338,7 +2339,7 @@ export function ConnectProfile({
             */
             <ul className="pm-course-rows">
               {visibleTaken.map((t) => (
-                <li key={t.slug}>
+                <li data-row key={t.slug}>
                   <Link href={`/learn/${t.slug}`} className="pm-course-row">
                     <span className="pm-course-name">{t.title}</span>
                     <span className="pm-course-meta">
@@ -2363,7 +2364,7 @@ export function ConnectProfile({
 
         <CleanSection
           title="Recommendations"
-          isEmpty={testimonials.length === 0}
+          count={testimonials.length}
           showWhenEmpty={owner}
         >
           {testimonials.length === 0 ? (
@@ -2388,6 +2389,7 @@ export function ConnectProfile({
             <div className="flex flex-col">
               {testimonials.map((t) => (
                 <div
+                  data-row
                   key={t.id}
                   className={
                     "flex items-start gap-3 py-3" +

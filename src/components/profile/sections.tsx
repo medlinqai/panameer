@@ -810,7 +810,7 @@ export function LanguagesBody({ languages }: { languages: LanguageItem[] }) {
   return (
     <ul className="space-y-1 text-[14px]">
       {languages.map((l, i) => (
-        <li key={l.id ?? `${l.name}-${i}`}>
+        <li data-row key={l.id ?? `${l.name}-${i}`}>
           <b>{l.name}</b>
           {(l.level || l.proficiency) && (
             <span className="text-ink-2">
@@ -878,7 +878,7 @@ export function EducationBody({
       {education.map((e, i) => {
         const years = [e.startYear, e.endYear].filter(Boolean).join(" – ");
         return (
-          <li key={e.id ?? `${e.institution}-${i}`}>
+          <li data-row key={e.id ?? `${e.institution}-${i}`}>
             {/*
               ⚠⚠ AN EMPTY INSTITUTION RENDERS NOTHING, NOT AN EMPTY BOLD LINE.
               ⚠ `institution` is a required `String`, so a row the importer
@@ -981,6 +981,7 @@ function SpecChips({
       {items.map((s) => (
         <span
           key={s.id}
+          data-row
           className={chipClass ?? CHIP_SPEC}
         >
           {s.name}
@@ -1041,6 +1042,7 @@ export function SkillsBody({
           {skills.map((s) => (
             <span
               key={s.id}
+              data-row
               className={chipClass ?? CHIP_SKILL}
             >
               {s.name}
@@ -1136,6 +1138,13 @@ export function ProjectCard({
 
   return (
     <article
+      /*
+        ⚠ `data-row` — ONE COUNTED ROW (`P2-A2-E722`). ⚠⚠ A `ProjectCard` is a row of
+        SOLO PROJECTS, and it is ALSO rendered NESTED inside a Work History employer. So the
+        gate counts only TOP-LEVEL `[data-row]` elements — those with no `[data-row]` ancestor
+        — or Work History's employer count would be inflated by the projects hanging off it.
+      */
+      data-row
       // Anchor target for the Work-History cross-links (brief §4).
       // `scroll-mt-24` keeps the card clear of the top of the viewport after a
       // jump, instead of flush against it.
@@ -1413,7 +1422,7 @@ export function WorkHistoryBody({
           ? projects.filter((p) => nested.some((n) => n.id === p.id))
           : projects.filter((p) => p.employer === e.name);
         return (
-          <li key={e.id} className={timeline ? "pm-tl-job" : undefined}>
+          <li data-row key={e.id} className={timeline ? "pm-tl-job" : undefined}>
             <WorkHistoryEntry
               employer={e}
               projects={mine}
@@ -1707,7 +1716,7 @@ export function CertificationsBody({
         */
         const earned = c.issuedOn ? c.issuedOn.slice(0, 4) : c.year ? String(c.year) : null;
         return (
-          <li key={c.id ?? `${c.name}-${i}`} className="text-[14px]">
+          <li data-row key={c.id ?? `${c.name}-${i}`} className="text-[14px]">
             <b className="block">{c.name}</b>
             {/*
               ── ⚠⚠⚠ WHERE IT CAME FROM, ON ITS OWN LINE (`P2-A4-E710`) ──────────

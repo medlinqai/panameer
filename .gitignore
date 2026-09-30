@@ -102,3 +102,6 @@ e2e-e720/shots/
 # deterministic (E410).
 e2e-e721/.artifacts/
 e2e-e721/shots/
+# E722 — the section counts: harness tracked, shots are run artifacts.
+e2e-e722/.artifacts/
+e2e-e722/shots/

@@ -71,6 +71,7 @@ export function CleanSection({
    */
   isEmpty = false,
   showWhenEmpty = false,
+  count,
   children,
 }: {
   title: string;
@@ -80,6 +81,19 @@ export function CleanSection({
   note?: string;
   isEmpty?: boolean;
   showWhenEmpty?: boolean;
+  /**
+   * ── ⚠⚠⚠ HOW MANY ROWS THE SECTION IS ABOUT (`P2-A2-E722`) ─────────────────
+   *
+   * ⚠ **IT IS THE LENGTH OF THE LIST THE CALLER PASSES TO ITS BODY, AND NOTHING ELSE.**
+   * Work History counts EMPLOYERS, the two course sections count COURSES, Solo Projects
+   * counts PROJECTS — each is `<that list>.length`, taken from the same expression the body
+   * receives.
+   * ⚠⚠⚠ **WHEN IT IS GIVEN IT ALSO DECIDES EMPTINESS**, which is what makes the printed
+   * number un-falsifiable: a section cannot both say `(3)` and believe it is empty, because
+   * one number answers both questions.
+   * ⚠ Omitted by `Bio`, which has no list to count.
+   */
+  count?: number;
   children: ReactNode;
 }) {
   /*
@@ -87,7 +101,15 @@ export function CleanSection({
     buyer-facing profile is the defect `E562` spent a whole brief removing — a page that
     states its absences instead of its strengths.
   */
-  if (isEmpty && !showWhenEmpty) return null;
+  /*
+    ⚠⚠⚠ ONE NUMBER ANSWERS BOTH QUESTIONS (`P2-A2-E722`). ⚠ When `count` is supplied,
+    emptiness IS `count === 0` — the call site no longer states it separately, so the heading
+    and the empty-state rule cannot drift apart. ⚠⚠ `isEmpty` survives for `Bio`, whose
+    emptiness is a string test, not a length.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   if (isEmpty && !showWhenEmpty) return null;
+  */
+  const empty = count !== undefined ? count === 0 : isEmpty;
+  if (empty && !showWhenEmpty) return null;
   return (
     /*
       ── ⚠⚠⚠ THE ACTION MOVES OUTSIDE `<details>` (`P2-A2-E718` item 4) ──────────────────
@@ -134,7 +156,43 @@ export function CleanSection({
         */
         className="flex cursor-pointer list-none items-center gap-4 py-[22px] pr-24 [&::-webkit-details-marker]:hidden"
       >
-        <h2 className="text-[19px] font-semibold tracking-[-0.01em]">{title}</h2>
+        <h2 className="text-[19px] font-semibold tracking-[-0.01em]">
+          {title}
+          {/*
+            ── ⚠⚠⚠ THE COUNT, FROM THE LIST THE SECTION RENDERS (`P2-A2-E722`) ────────────
+
+            ⚠ **SCOTT: *"The number must come from the same list the section renders (`E585`),
+            not a separate count, so it can't disagree with what's inside."***
+            ⚠⚠⚠ **SO `count` DOES NOT SIT BESIDE `isEmpty` — IT REPLACES IT.** Every call site
+            already passed `isEmpty={<list>.length === 0}`; it now passes `count={<list>.length}`
+            and emptiness is derived from that one number. **This brief REMOVED a duplicated
+            reference to the list rather than adding a second one** — there is no longer any
+            pair of expressions that could disagree, because there is no pair.
+            ⚠ `Bio` passes no `count` and keeps `isEmpty`, because it counts nothing: its
+            emptiness is `!p.overview`, a string, not a list.
+
+            ⚠⚠ **`(0)` IS PRINTED, NOT SUPPRESSED** — Scott: *"Owner sees (0)."* A visitor never
+            sees it, because a section with no rows and no `showWhenEmpty` does not render at
+            all. **A real zero is a measured fact and reads as one** (counting rule 2); it is
+            the owner's cue that the section exists and is empty.
+
+            ⚠ **`text-ink-2`, NOT `text-ink-3`, AND THAT IS DELIBERATE.** `--color-ink-3` is
+            declared NOWHERE app-wide — 56 uses across 13 files emit no CSS — and is rescued
+            only by `.account-surface .text-ink-3`, a scoped patch **with no dark-mode value**.
+            `--color-ink-2` is a real token with a dark-mode variant (`globals.css:273`), so
+            the count stays grey in both themes instead of inheriting the title's ink in one.
+            ⚠ `font-normal` is needed: the `<h2>` is `font-semibold` and the number would
+            otherwise inherit the title's weight and stop reading as a quiet aside.
+          */}
+          {count !== undefined && (
+            <>
+              {" "}
+              <span data-count className="text-[15px] font-normal text-ink-2">
+                ({count})
+              </span>
+            </>
+          )}
+        </h2>
         {/*
           ⚠⚠ THE CHEVRON IS DECORATION AND IS `aria-hidden` — `StepDisclosures` decision 3:
           *"the summary already announces its own expanded state; a second announcement from
