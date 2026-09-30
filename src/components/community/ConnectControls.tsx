@@ -79,6 +79,24 @@ type Props = {
    * quiet, so they are untouched in both modes.
    */
   tone?: "magenta" | "outline";
+  /**
+   * ── ⚠⚠⚠ WHICH HALF TO RENDER (`P2-A2-E720` item 10) ──────────────────────────────────
+   *
+   * ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a Colleague
+   * (white, ink border), reusing ConnectControls."***
+   * ⚠⚠ **THE TWO CONTROLS WERE ONE FLEX ROW**, so the mentor button could only ever sit
+   * BESIDE the colleague button, never in its own section further down the rail. Splitting
+   * them is what lets the profile place each one where Scott wants it.
+   * ⚠⚠⚠ **`"all"` IS THE DEFAULT SO THE TEN OTHER CONSUMERS ARE BYTE-UNAFFECTED** — the
+   * community cards, `ConnectHome`, `CommunityWeb`, `ColleagueCards`, `FindAMentor`,
+   * `MentoringPanels` and the console invite screen all keep one row with both controls. This
+   * is the same opt-in shape `E719` used for `tone`, and for the same reason: a component with
+   * eleven callers cannot be re-shaped for the eleventh.
+   * ⚠ **EACH PART KEEPS ITS OWN STATE, AND THAT IS CORRECT RATHER THAN A COMPROMISE:** the
+   * colleague relation and the mentor follow are two different rows in `connections` with two
+   * different lifecycles, and neither control reads the other's state today.
+   */
+  part?: "all" | "colleague" | "mentor";
 };
 
 const BTN =
@@ -98,6 +116,7 @@ export function ConnectControls({
   isSelf = false,
   showDecline = false,
   tone = "magenta",
+  part = "all",
 }: Props) {
   /* ⚠ Resolved once, so every primary affordance in this component moves together — a second
      `tone === …` at a call site below is how one of the four buttons would get left behind. */
@@ -222,11 +241,15 @@ export function ConnectControls({
      the row so the same request cannot be re-sent forever. Rendering an error
      would tell the sender they were declined, which is nobody's business. */
 
+  /* ⚠ WHICH HALVES THIS INSTANCE DRAWS (`E720` item 10). ⚠⚠ `all` keeps today's single row. */
+  const showColleague = part === "all" || part === "colleague";
+  const showMentor = part === "all" || part === "mentor";
+
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="flex flex-wrap items-center gap-2">
-        {colleagueControl}
-        {showDecline && incomingConnectionId && rel === "PENDING" && (
+        {showColleague && colleagueControl}
+        {showColleague && showDecline && incomingConnectionId && rel === "PENDING" && (
           <button type="button" className={GHOST} disabled={busy} onClick={decline}>
             Decline
           </button>
@@ -243,9 +266,26 @@ export function ConnectControls({
           ⚠ SUPERSEDED, quoted not deleted (`E164`):
           //   {mentor ? "Disconnect" : "Connect as Mentor"}
         */}
-        <button type="button" className={mentor ? QUIET : GHOST} disabled={busy} onClick={toggleMentor}>
-          {mentor ? "Disconnect" : "Request to Mentor"}
-        </button>
+        {/*
+          ⚠⚠ WHITE WITH AN INK BORDER ON THE PROFILE RAIL (`E720` item 10) — Scott's words for
+          this control. ⚠⚠⚠ **IT RESOLVES OFF `tone`, NOT OFF `part`, AND IT IS NOT
+          `PRIMARY_TONE`:** using `PRIMARY_TONE` would have made this button SOLID MAGENTA on
+          the ten magenta-tone consumers, repainting every community card from inside an item
+          about one rail. ⚠ So `outline` callers get `OUTLINE` and everybody else keeps `GHOST`,
+          byte for byte.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <button type="button" className={mentor ? QUIET : GHOST} …>
+        */}
+        {showMentor && (
+          <button
+            type="button"
+            className={mentor ? QUIET : tone === "outline" ? OUTLINE : GHOST}
+            disabled={busy}
+            onClick={toggleMentor}
+          >
+            {mentor ? "Disconnect" : "Request to Mentor"}
+          </button>
+        )}
       </div>
       {/*
         ⚠⚠ `P1-A3-E531` PART E — THIS IS A STATUS, NOT A CONTROL. It was
@@ -258,7 +298,10 @@ export function ConnectControls({
         ⚠⚠ IT IS NOT REMOVED. It is the only thing on the card that says the
         mentor relation exists.
       */}
-      {mentor && !busy && (
+      {/* ⚠ THE STATE, SHOWN ONCE FOLLOWED (`E720` item 10 — Scott's *"It shows state once
+          followed"*). ⚠⚠ It rides with the mentor half, so a colleague-only instance does not
+          print a mentor badge it has no control for. */}
+      {showMentor && mentor && !busy && (
         <span className="rounded-full bg-magenta/[0.08] px-2 py-0.5 text-[12px] font-semibold text-ink-2">
           Mentor
         </span>

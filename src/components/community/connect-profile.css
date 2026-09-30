@@ -500,12 +500,37 @@
   ⚠ `height` plus `line-height` rather than vertical padding: the height is the figure Scott
   named, and padding would make it depend on the font metrics.
 */
+/*
+  ── ⚠⚠⚠ ITEM 12 — THE PADDING SCOTT NAMED, AND 24px OF AIR ABOVE (`P2-A2-E720`) ──────────
+
+  ⚠ **SCOTT: *"How Others See My Profile padding 12/20, 24px above"*** — and he hedged it
+  *"(if not already in E718)"*. ⚠⚠ **IT WAS NOT.** `E718` set `height: 40px` with
+  `line-height: 38px` and `padding: 0 18px`, which is a different mechanism reaching a similar
+  size: the height was the figure and the padding was incidental.
+  ⚠⚠⚠ **THE FIXED HEIGHT IS REMOVED, BECAUSE PADDING AND A FIXED HEIGHT FIGHT.** With
+  `padding: 12px 20px` AND `height: 40px`, the box stays 40px and the vertical padding does
+  nothing visible — the declaration would be applied, specific enough, and overruled, which is
+  the exact shape of `E718`'s avatar ring and `E718`'s `width: auto`. ⚠ So the height is now
+  the CONSEQUENCE of the padding, and the run reports what it measured rather than what it
+  intended.
+  ⚠ `line-height: 1` keeps the text box predictable so the 12px reads as 12px top and bottom
+  instead of inheriting the rail's leading.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   height: 40px;
+  //   line-height: 38px;
+  //   padding: 0 18px;
+*/
+.pm-rail-button {
+  /* ⚠⚠ ON THE WRAPPER, NOT THE BUTTON. `.pm-btn + .pm-btn { margin-top: 10px }` already owns
+     button-to-button spacing; putting 24px on the button itself would add to that rule the
+     day a second control returns to this slot. The wrapper's gap is the block's gap. */
+  margin-top: 24px;
+}
 .pm-rail-button .pm-btn {
   display: inline-block;
   width: auto;
-  height: 40px;
-  line-height: 38px;
-  padding: 0 18px;
+  line-height: 1;
+  padding: 12px 20px;
   /*
     ⚠⚠⚠ `align-self` IS THE LINE THAT ACTUALLY SHRINKS IT, AND `width: auto` ALONE DID NOT.
     ⚠ The button sits in a `flex flex-col` wrapper, whose default `align-items: stretch`
@@ -845,4 +870,63 @@
   outline: 1px solid var(--color-ink);
   outline-offset: 3px;
   border-radius: 2px;
+}
+
+/*
+  ══ ⚠⚠⚠ COURSE ROWS, NOT CHIPS (`P2-A2-E720` item 8) ═══════════════════════════════════
+
+  ⚠ **SCOTT: *"My Courses / Courses Taken are rows, not chips: name, lesson count, link."***
+  ⚠⚠ **A CHIP HOLDS ONE FACT.** A course has two — its name and how many lessons it holds —
+  and a wrapped row of pills gives the second one nowhere to sit and no column to line up in.
+  ⚠⚠⚠ **THE WHOLE ROW IS THE LINK**, not a word inside it: the name and the count are one
+  target, which is a bigger tap area on a phone than a pill and removes the question of which
+  part is clickable.
+  ⚠ **INK, NOT MAGENTA, AND THAT IS `E433` CARRIED FORWARD** — the chips these replace were
+  deliberately ink on the `Courses Taken` side because *a path somebody is TAKING is not an
+  offer*. Both lists are now ink for that reason, and the magenta is spent on the hover
+  underline, which is the affordance rather than the fact.
+*/
+.pm-course-rows {
+  display: flex;
+  flex-direction: column;
+}
+/* ⚠ A RULE BETWEEN ROWS, NOT AROUND THEM — the same language as `.pm-clean-sec`, which uses
+   `border-t` only so two adjacent edges never double to 2px. */
+.pm-course-rows > li + li {
+  border-top: 1px solid var(--color-line);
+}
+.pm-course-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  color: var(--color-ink);
+  font-size: 13.5px;
+}
+.pm-course-row:hover .pm-course-name {
+  text-decoration: underline;
+  text-decoration-color: var(--color-magenta);
+  text-underline-offset: 3px;
+}
+.pm-course-name {
+  font-weight: 700;
+  min-width: 0;
+}
+/*
+  ⚠⚠ THE COUNT IS A QUIET RIGHT-HAND FACT, the same treatment `CleanSection`'s `note` gets.
+  ⚠⚠⚠ `white-space: nowrap` IS LOAD-BEARING: without it "12 lessons · Completed" wraps between
+  the number and its unit on a 390px phone, which reads as two figures instead of one.
+*/
+.pm-course-meta {
+  flex: none;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--color-ink-2);
+}
+/* ⚠ `Completed` is a FACT and takes ink, not the grey the count sits in (`E433`). */
+.pm-course-done {
+  margin-left: 6px;
+  font-weight: 600;
+  color: var(--color-ink);
 }

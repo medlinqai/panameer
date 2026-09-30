@@ -380,35 +380,60 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       expect(body.includes(needle.toLowerCase()), `"${needle}" vanished from the OWNER's page`).toBe(true);
     }
     /*
-      ⚠⚠ ACCOUNT HEALTH IS A ONE-LINER NOW, NOT A CARD — *"one line each with a
-      link, because each already has its own page."* ⚠⚠⚠ THE DOOR IS WHAT
-      MATTERS AND IT IS ASSERTED AS A LINK, not as a word: the card's four
-      ticked rows went, `/account-health` remains the authority, and a reader
-      must still be able to reach it.
-    */
-    /*
-      ── ⚠⚠⚠ THE RULE IS REACHABILITY, NOT EXACTLY-ONE (`P2-A2-E600` WS-A) ────
+      ── ⚠⚠⚠ THESE TWO ASSERTED THE TAB ROW ALL ALONG (`P2-A2-E720` item 4) ──────────────
 
-      ⚠ These asserted `toHaveCount(1)` and FAILED when `E600` gave the profile
-      a tab row — the page now has the row's `Account Health` tab AND the
-      one-liner's `Manage →`. ⚠⚠ THAT IS A SECOND DOOR, NOT A LOST ONE, and the
-      message said the opposite: *"the owner lost their door to
-      /account-health"*.
-      ⚠⚠⚠ AN ASSERTION THAT COUNTS DOORS FAILS WHENEVER A PAGE GAINS ONE, which
-      is the wrong direction to be strict in — the defect it exists to catch is
-      ZERO. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   .toHaveCount(1);
+      ⚠ **SCOTT: *"check:visitor-profile /stats and /account-health assertions: assert the
+      tabs, fix their comments."***
+      ⚠⚠ **THEY WERE PAGE-WIDE `> 0`, AND THE PROFILE'S OWN TAB ROW CARRIES BOTH HREFS** — so
+      each was satisfied forever by a tab, whatever happened to the one-liner they claimed to
+      be about. ⚠⚠⚠ **MEASURED AT `E718`'s CLOSE: page-wide 1, inside the rail 0 — THERE IS NO
+      ONE-LINER DOOR ON THIS PAGE AT ALL.** The comments described a `Manage →` link that
+      `E600` WS-B had already removed, so the assertions were reading as proof of something
+      that does not exist.
+      ⚠⚠ **AND THAT IS WHY THE COMMENT MATTERED AS MUCH AS THE CODE (standing rule 6): the
+      next person to delete the tab row would have believed these guarded the rail.**
+      ⚠ **SO THEY NOW SAY WHAT THEY CHECK: the TAB exists, exactly once, in the tab row.**
+      `[data-testid="page-tabs"]` is `PageTabs`' own hook, kept deliberately for this purpose.
+      ⚠⚠ `toBe(1)` IS RIGHT HERE AND `> 0` WAS RIGHT BEFORE: scoped to the row, a second copy
+      of one tab is itself a defect, so exactly-one is the honest assertion. **The earlier
+      looseness existed only because the count was page-wide.**
+      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the assertions and the reasoning that had
+      gone stale. ⚠⚠ Its `E600` note was TRUE WHEN WRITTEN: the page then had both the tab and
+      the one-liner's `Manage →`, and counting doors did fail when the row arrived.
+      //   ACCOUNT HEALTH IS A ONE-LINER NOW, NOT A CARD - "one line each with a link,
+      //   because each already has its own page." THE DOOR IS WHAT MATTERS AND IT IS
+      //   ASSERTED AS A LINK, not as a word.
+      //   THE RULE IS REACHABILITY, NOT EXACTLY-ONE (P2-A2-E600 WS-A): these asserted
+      //   toHaveCount(1) and FAILED when E600 gave the profile a tab row - the page now has
+      //   the row's Account Health tab AND the one-liner's Manage arrow. AN ASSERTION THAT
+      //   COUNTS DOORS FAILS WHENEVER A PAGE GAINS ONE, which is the wrong direction to be
+      //   strict in - the defect it exists to catch is ZERO.
+      //   expect(await page.locator('a[href="/account-health"]').count(),
+      //     "the owner lost their door to /account-health").toBeGreaterThan(0);
+      //   expect(await page.locator('a[href="/stats"]').count(),
+      //     "the owner lost their door to /stats").toBeGreaterThan(0);
     */
+    const TABS = '[data-testid="page-tabs"]';
     expect(
-      await page.locator('a[href="/account-health"]').count(),
-      "the owner lost their door to /account-health"
-    ).toBeGreaterThan(0);
-    /* ⚠ AND THE USAGE ONE-LINER'S DOOR TO `/stats`. The comb is gone (WS-C item
-       3); the page it summarised is not. */
+      await page.locator(`${TABS} a[href="/account-health"]`).count(),
+      "the profile's tab row lost its Account Health tab"
+    ).toBe(1);
     expect(
-      await page.locator('a[href="/stats"]').count(),
-      "the owner lost their door to /stats"
-    ).toBeGreaterThan(0);
+      await page.locator(`${TABS} a[href="/stats"]`).count(),
+      "the profile's tab row lost its Usage tab"
+    ).toBe(1);
+    /*
+      ⚠⚠⚠ AND THE FACT THE OLD COMMENTS ASSERTED IS NOW RECORDED AS A MEASUREMENT RATHER THAN
+      IMPLIED BY A PASSING COUNT: there is NO door to either page outside the tab row. ⚠ If a
+      one-liner ever comes back, this number changes and somebody reads this block — which is
+      strictly better than an assertion that would have stayed green either way.
+    */
+    const railHealth = await page.locator(`.pm-cp3-rail a[href="/account-health"]`).count();
+    const railStats = await page.locator(`.pm-cp3-rail a[href="/stats"]`).count();
+    console.log(
+      `E720  doors OUTSIDE the tab row — rail /account-health: ${railHealth} · rail /stats: ${railStats}` +
+        ` (both 0 today; the tab row is the only door)`
+    );
     /*
       ── ⚠⚠⚠ AND THE DOOR THE REMOVED BUTTON USED TO BE (`P2-A2-E716`) ───────────────────
 

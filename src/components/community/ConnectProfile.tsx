@@ -31,9 +31,33 @@ import { HireButton } from "@/components/community/HireButton";
   link and the route that answers it.
 */
 import { editHref } from "@/lib/profile-sections";
-import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
 import { GROWTH_WEIGHTS } from "@/lib/growth-score";
-import { lineCounts } from "@/lib/completeness";
+/*
+  ── ⚠⚠ THE SHARED OUTSTANDING-LINES RULE (`P2-A2-E720` item 2) ─────────────────────────
+
+  ⚠⚠ **`SCORE_LINE_COPY` AND `lineCounts` ARE NO LONGER IMPORTED HERE, AND THAT IS THE POINT
+  OF THE ITEM:** this file no longer knows how "outstanding" or "minutes" are defined, so it
+  cannot answer either question differently from `/community/score`. ⚠ Both names still appear
+  below inside `E164` quotes; neither is live code.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   import { SCORE_LINE_COPY } from "@/lib/profile-score-copy";
+  //   import { lineCounts } from "@/lib/completeness";
+*/
+import { openScoreLines, openScoreMinutes } from "@/lib/score-open";
+
+/**
+ * ── ⚠⚠ THE LESSON COUNT ON A COURSE ROW (`P2-A2-E720` item 8) ──────────────────────────
+ *
+ * ⚠⚠⚠ **A REAL ZERO AND AN EMPTY COURSE MUST NOT READ AS `0 lessons`** (counting rule 2). ⚠ It
+ * is not hypothetical: **4 of 24 paths carry no courses at all**, so a bare `0` would appear on
+ * a live profile and read as a broken figure rather than as a fact about the course.
+ * ⚠ Singular at 1, because *"1 lessons"* is the kind of detail that makes a page look
+ * unfinished.
+ */
+function lessonCount(n: number): string {
+  if (n <= 0) return "No lessons yet";
+  return `${n} lesson${n === 1 ? "" : "s"}`;
+}
 /*
   ⚠⚠ `completionHook` AND `CompletionRing` ARE NO LONGER IMPORTED HERE (`P2-A2-E715` row 9).
   ⚠ The rail's score block is now the mockup's thin ink ring with `of 100` and one items-left
@@ -57,7 +81,14 @@ import type { Testimonial } from "@/lib/recommendations";
 import type { CommunitySignal } from "@/lib/community-signal";
 import type { ProfileScore } from "@/lib/completeness";
 import type { MessagePermission } from "@/lib/messages";
-import { OwnerResumeRerun } from "@/components/profile/OwnerAiPass";
+/* ⚠ `OwnerResumeRerun` IS NO LONGER IMPORTED (`E720` item 9) — the rail renders
+   `OwnerResumeRebuild`, which offers an UPLOAD first because 59 of 63 profiles have no stored
+   document for the re-run to read. ⚠⚠ `OwnerResumeRerun` STAYS ON DISK in `OwnerAiPass.tsx`
+   (`E164` — never delete a file), beside `OwnerAiPass` and `OwnerResumeImport`, which the
+   wizard still uses.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { OwnerResumeRerun } from "@/components/profile/OwnerAiPass"; */
+import { OwnerResumeRebuild } from "@/components/profile/OwnerResumeRebuild";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
   CertificationsBody,
@@ -74,7 +105,10 @@ import {
   SoloProjectsBody,
   SpecializationsBody,
   WorkHistoryBody,
-  CHIP_TAG,
+  /* ⚠ `CHIP_TAG` IS NO LONGER IMPORTED (`E720` item 5) — the Groups chips read `CLEAN_CHIP`,
+     the Skills chip, which is the one definition Scott named. `CHIP_TAG` still exists and is
+     still read by `/join/provider`; this surface simply no longer has a second chip.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   CHIP_TAG, */
   locationLines,
 } from "@/components/profile/sections";
 import "./connect-profile.css";
@@ -174,6 +208,7 @@ export function ConnectProfile({
   canHire = false,
   messagePermission = null,
   connect,
+  mentor,
   previewAsBuyer = false,
 }: {
   p: ProviderProfileView;
@@ -266,8 +301,18 @@ export function ConnectProfile({
   canHire?: boolean;
   messagePermission?: MessagePermission | null;
   /** ⚠ `ConnectControls`, resolved by the page that knows it is showing
-   *  somebody else. Carried over unchanged from `/providers/[id]`. */
+   *  somebody else. Carried over unchanged from `/providers/[id]`.
+   *  ⚠⚠ SINCE `E720` item 10 THIS IS THE COLLEAGUE HALF ONLY (`part="colleague"`). */
   connect?: ReactNode;
+  /**
+   * ── ⚠⚠ THE MENTOR HALF OF `ConnectControls` (`P2-A2-E720` item 10) ─────────────────────
+   *
+   * ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a Colleague
+   * (white, ink border), reusing ConnectControls. It shows state once followed."***
+   * ⚠⚠ **IT IS A SLOT, LIKE `connect`, FOR THE SAME REASON:** only the page knows the viewer's
+   * relation to this provider, and the component must not learn to query it.
+   */
+  mentor?: ReactNode;
   /**
    * ── ⚠⚠⚠ THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING (`E602` WS-D) ──
    *
@@ -352,11 +397,26 @@ export function ConnectProfile({
   */
   /* ⚠ `unanswered` IS THE OPEN SET, and `lineCounts` is the one rule for it:
      a line answered *"I have none"* COUNTS and is not outstanding (`E590`). */
-  const openLines = (score?.lines ?? [])
-    .filter((l) => !lineCounts(l.state))
-    /* ⚠ BIGGEST FIRST — the step worth most points is the one worth doing
-       first, the same ordering the score page uses. */
-    .sort((a, b) => b.points - a.points);
+  /*
+    ── ⚠⚠⚠ IT READS THE SCORE PAGE'S OWN LIST NOW (`P2-A2-E720` item 2) ──────────────────
+
+    ⚠ **SCOTT: *"`ConnectProfile.tsx:341` `openLines` is a second definition, `E585`."*** He is
+    right that it was a second definition; ⚠⚠ **it was in fact the second of THREE** — this,
+    `ProfileScoreView`'s `open`, and `completionHook`'s. All three are now
+    `openScoreLines`.
+    ⚠⚠⚠ **AND THE HONEST FINDING IS THAT THEY AGREED: measured on two personas before any edit
+    — Scott Walls 2 open / 4 min, Priya Nair 7 open / 16 min, IDENTICAL on both surfaces.** So
+    no number on this page was wrong. **What was wrong is that nothing stopped one from
+    becoming wrong**, and the copies had already begun to diverge in a smaller way: this one
+    guarded the minutes lookup with `?? 0` and the score page's did not.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`). ⚠⚠ THE INNER COMMENT IS PARAPHRASED RATHER THAN
+    COPIED (load-bearing rule 12 — it held a comment terminator, which would close THIS comment
+    early): the sort was BIGGEST FIRST, the same ordering the score page uses.
+    //   const openLines = (score?.lines ?? [])
+    //     .filter((l) => !lineCounts(l.state))
+    //     .sort((a, b) => b.points - a.points);
+  */
+  const openLines = openScoreLines(score);
   const remainingLines = openLines.length;
   /* ⚠⚠ TWO, BECAUSE THE BRIEF SAYS TWO: *"the ring, the two next items with
      minutes, and 'See all N →'"*. The card is a prompt, not the list. */
@@ -368,10 +428,10 @@ export function ConnectProfile({
     would understate the work while naming the full count, which is a figure disagreeing with
     its own label on the surface a member is asked to act on.
   */
-  const minutesLeft = openLines.reduce(
-    (sum, l) => sum + (SCORE_LINE_COPY[l.key]?.minutes ?? 0),
-    0
-  );
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the sum now lives beside the list it sums:
+     //   const minutesLeft = openLines.reduce(
+     //     (sum, l) => sum + (SCORE_LINE_COPY[l.key]?.minutes ?? 0), 0); */
+  const minutesLeft = openScoreMinutes(openLines);
   /*
     ⚠⚠ `nextLines` IS GONE WITH THE CARD THAT LISTED IT (`P2-A2-E715` row 9). The mockup's
     block states the COUNT and the total minutes; the per-line detail is one click away on
@@ -571,7 +631,9 @@ export function ConnectProfile({
               <span className="tabular-nums">{score.total}</span>
             </span>
             <span className="min-w-0 text-[13px] leading-snug text-ink-2">
-              of 100
+              {/* ⚠ SCOTT (`E720` item 12): the figure's unit reads **"out of 100"**.
+                  ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   of 100 */}
+              out of 100
               <br />
               {/* ⚠⚠ A REAL ZERO AND A FINISHED PROFILE MUST NOT READ THE SAME (counting
                   rule 2). At zero outstanding lines this says so in words rather than
@@ -587,8 +649,12 @@ export function ConnectProfile({
               >
                 {remainingLines > 0 ? (
                   <>
+                    {/* ⚠ SCOTT (`E720` item 12): **"N items left – about M mins"** — an en
+                        dash, not the middot, and `mins` not `min`.
+                        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                        //   {remainingLines} item{…} left{minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""} */}
                     {remainingLines} item{remainingLines === 1 ? "" : "s"} left
-                    {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
+                    {minutesLeft > 0 ? ` – about ${minutesLeft} mins` : ""}
                   </>
                 ) : (
                   "Nothing outstanding"
@@ -998,6 +1064,23 @@ export function ConnectProfile({
                   */}
                   How Others See My Profile
                 </Link>
+                {/*
+                  ── ⚠⚠⚠ `Rebuild From New Résumé` LIVES HERE NOW (`P2-A2-E720` item 9) ──────
+
+                  ⚠ **SCOTT: *"a magenta text link under How Others See My Profile"*** — and
+                  *"Remove it from the Work History slot."*
+                  ⚠⚠ **WHY THE WORK HISTORY SLOT WAS THE WRONG HOME:** the control rewrites
+                  skills, specializations, education, certifications, languages, the headline
+                  and the overview — **nine categories, of which work history is one** — so
+                  hanging it off that one section's header understated it and buried it under a
+                  heading that could itself be collapsed.
+                  ⚠⚠⚠ **AND IT WAS INVISIBLE THERE ANYWAY, FOR A REASON THAT HAD NOTHING TO DO
+                  WITH PLACEMENT: `ResumeImportAction` RETURNS `null` WITHOUT A STORED
+                  DOCUMENT, AND 59 OF 63 PROFILES HAVE NONE.** Moving it would not have fixed
+                  that, which is why the new component offers an UPLOAD rather than assuming a
+                  file is already there. See its header for the full measurement.
+                */}
+                <OwnerResumeRebuild />
               </div>
             )}
         </div>
@@ -1372,11 +1455,29 @@ export function ConnectProfile({
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {visitorGroups.slice(0, 6).map((g) => (
-                    /* ⚠ A TAG CHIP, SO MAGENTA (ruling 31e, `P2-A2-E670`) — and
-                       it reads the ONE definition rather than hand-rolling a
-                       second magenta string, which is how the skill/spec split
-                       arose in the first place (`E585`). */
-                    <span key={g} className={CHIP_TAG}>
+                    /*
+                      ── ⚠⚠⚠ THE SKILLS CHIP, NOT A SECOND MAGENTA (`P2-A2-E720` item 5) ────
+
+                      ⚠ **SCOTT: *"every chip on /profile and /providers/[id] (Groups,
+                      Teaching, all of them) uses the Skills chip. One definition."***
+                      ⚠⚠ `CHIP_TAG` WAS ALREADY *"the one definition"* — of a DIFFERENT chip.
+                      It and `CLEAN_CHIP` were both magenta tags and differed in five
+                      utilities at once: a real `border` (which adds 2px to the box) against
+                      an inset shadow, a `bg-magenta/[0.06]` wash against none, `13px` against
+                      `12px`, `font-semibold` against `font-medium`.
+                      ⚠⚠⚠ **SO THE COMMENT BELOW WAS TRUE AND STILL LEFT TWO CHIPS ON ONE
+                      PAGE** — it is the exact failure `E585` describes, one step up: each
+                      family had one definition, and nothing said the families were one thing.
+                      ⚠ **`CHIP_TAG` ITSELF IS NOT EDITED, DELIBERATELY:** it is also read by
+                      `/join/provider`'s review step in three places, and repainting a surface
+                      this brief never looked at is not in scope. The CALL SITE moves instead.
+                      ⚠ SUPERSEDED, quoted not deleted (`E164`) — its reasoning was sound:
+                      //   A TAG CHIP, SO MAGENTA (ruling 31e, P2-A2-E670) - and it reads the
+                      //   ONE definition rather than hand-rolling a second magenta string,
+                      //   which is how the skill/spec split arose in the first place (E585).
+                      //   <span key={g} className={CHIP_TAG}>
+                    */
+                    <span key={g} className={CLEAN_CHIP}>
                       {g}
                     </span>
                   ))}
@@ -1437,15 +1538,50 @@ export function ConnectProfile({
               </section>
             )}
 
-            {/* ⚠ ONLY WHEN THE PROVIDER SAID SO. `open_for_mentoring` is the
-                provider's own statement; absent it, the card does not render. */}
-            {p.openForMentoring && (
-              <ActionCard
-                title="Request Mentoring"
-                label="Request Mentoring"
-                href="/community/mentors"
-                note="Open to mentoring."
-              />
+            {/*
+              ── ⚠⚠⚠ THE REAL CONTROL, NOT A DOOR TO A DIRECTORY (`P2-A2-E720` item 10) ─────
+
+              ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a
+              Colleague (white, ink border), reusing ConnectControls. It shows state once
+              followed."***
+              ⚠⚠ **WHAT WAS HERE WAS AN `ActionCard` LINKING TO `/community/mentors`** — a link
+              to the mentors DIRECTORY, which is a different page about different people. It
+              could not follow anybody and it could not show state, so *"Request Mentoring"*
+              named an action the control did not perform. `ConnectControls` performs it.
+              ⚠ **IT SITS AFTER `Connect as a Colleague` AND BEFORE `Message`**, which is the
+              order Scott named.
+
+              ── ⚠⚠⚠ THE CONSENT GATE IS KEPT, AND IT MAKES THIS INVISIBLE TODAY ───────────
+
+              ⚠ **`p.openForMentoring` IS `ProviderProfile.open_for_mentoring`
+              (`schema.prisma:1102`)** — a real column whose own 23-line docblock says **THE
+              CHECKBOX IS THE CONSENT** and *"EXPLICIT OPT-IN, NEVER A DEFAULT"*, and which is
+              why `ConnectionKind.MENTOR` needs no PENDING state. ⚠⚠ **SO THE SCHEMA CAN ANSWER
+              SCOTT'S QUESTION AND NO FIELD WAS ADDED.**
+              ⚠⚠⚠ **MEASURED, AND REPORTED RATHER THAN QUIETLY WORKED AROUND: 0 OF 63 PROFILES
+              HAVE THE FLAG SET, AND THERE ARE 0 `MENTOR` ROWS — SO THIS SECTION RENDERS FOR
+              NOBODY UNTIL A PROVIDER TICKS THE BOX.** ⚠ Dropping the gate would have made it
+              appear immediately and would have offered to attach mentees to 63 providers who
+              never opted in — **overturning a documented consent ruling inside a styling
+              item**, which rule 13 says is a decision to RAISE, not to make quietly.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {p.openForMentoring && (<ActionCard title="Request Mentoring"
+              //     label="Request Mentoring" href="/community/mentors" note="Open to mentoring." />)}
+            */}
+            {mentor && p.openForMentoring && (
+              <section className="mt-7 border-t border-line pt-5">
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
+                  Request as Mentor
+                </h3>
+                {mentor}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  {/* ⚠⚠ IT SAYS WHAT THE BUTTON DOES. A `MENTOR` row is created `ACCEPTED`
+                      unilaterally — the connection model's one-way exception — so nobody
+                      approves this and the copy must not imply a wait. */}
+                  This provider is open to mentoring. Following them does not need their
+                  approval, and it does not let either of you message the other.
+                </p>
+              </section>
             )}
 
             {/*
@@ -2011,13 +2147,26 @@ export function ConnectProfile({
             READS *"a title (yours is empty)"* AND NEVER *"will replace"* — the
             component says what it will do, and what it will do is add.
           */
+          /*
+            ── ⚠⚠⚠ THE RÉSUMÉ RE-RUN IS GONE FROM THIS SLOT (`P2-A2-E720` item 9) ───────────
+
+            ⚠ **SCOTT: *"Remove it from the Work History slot."*** It now sits under
+            `How Others See My Profile` in the rail, as `OwnerResumeRebuild`.
+            ⚠⚠ **THE `E602` WS-E 2 REASONING ABOVE IS NOT WRONG AND IS NOT DELETED — IT IS
+            SUPERSEDED ON PLACEMENT ONLY.** Its finding still stands: the component already
+            existed, already implemented confirm → preview → ticked diff → save, and nothing
+            imported it. ⚠⚠⚠ **WHAT THAT BRIEF COULD NOT SEE IS THAT MOUNTING IT HERE STILL
+            SHOWED NOTHING, because `ResumeImportAction` returns `null` without a stored
+            document and 59 of 63 profiles have none.** A control with an entry point and no
+            renderable state is the same invisibility in a new place.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   action={owner ? (<span className="flex items-center gap-3">
+            //     <OwnerResumeRerun />
+            //     <CleanEdit href={editHref("work-history")} title="Work History" />
+            //   </span>) : undefined}
+          */
           action={
-            owner ? (
-              <span className="flex items-center gap-3">
-                <OwnerResumeRerun />
-                <CleanEdit href={editHref("work-history")} title="Work History" />
-              </span>
-            ) : undefined
+            owner ? <CleanEdit href={editHref("work-history")} title="Work History" /> : undefined
           }
         >
           <WorkHistoryBody
@@ -2048,7 +2197,11 @@ export function ConnectProfile({
           <SoloProjectsBody
             projects={soloProjects}
             isOwner={owner}
-            empty="Employee projects sit under their employer in Work History. No solo projects yet."
+            /* ⚠ THE EXPLANATION IS `SoloProjectsBody`'s OWN LINE AND IS ALREADY ON SCREEN
+               (`E720` item 7) — this string is the count, nothing else.
+               ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   empty="Employee projects sit under their employer in Work History. No solo projects yet." */
+            empty="No solo projects yet."
           />
         </CleanSection>
 
@@ -2086,26 +2239,39 @@ export function ConnectProfile({
                 : "Not teaching any learning paths yet."}
             </p>
           ) : (
-            <div className="flex flex-col gap-3.5">
-              {taughtPaths.length > 0 && (
-                <div>
-                  <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
-                    {owner ? "You Teach" : "Teaches"}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {taughtPaths.map((t) => (
-                      <Link
-                        key={t.slug}
-                        href={`/learn/${t.slug}`}
-                        className="rounded-full border border-magenta/25 bg-magenta/[0.06] px-3.5 py-1.5 text-[13px] font-bold text-magenta-dark hover:underline"
-                      >
-                        {t.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            /*
+              ── ⚠⚠⚠ ROWS, NOT CHIPS (`P2-A2-E720` item 8) ────────────────────────────────
+
+              ⚠ **SCOTT: *"My Courses / Courses Taken are rows, not chips: name, lesson count,
+              link."***
+              ⚠⚠ **A CHIP CARRIES ONE FACT AND A COURSE HAS TWO.** The pill could only hold
+              the title, so the lesson count — the figure that says how much course there
+              actually is — had nowhere to go, and a wrapped row of pills gave no column for
+              it to line up in.
+              ⚠⚠⚠ **THE COUNT IS `t.lessons`, WHICH `TaughtPath` HAS ALWAYS CARRIED** and this
+              surface never rendered. Nothing is computed here and no query changed.
+              ⚠ **THE `You Teach` / `Teaches` EYEBROW IS GONE WITH THE CHIPS, AND ITS JOB IS
+              DONE BY THE SECTION TITLE** — `My Courses` for the owner, `Courses` for a
+              visitor. A sub-heading over a single group restated the heading above it.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <div className="flex flex-col gap-3.5">{taughtPaths.length > 0 && (<div>
+              //     <p className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+              //       {owner ? "You Teach" : "Teaches"}</p>
+              //     <div className="flex flex-wrap gap-2">{taughtPaths.map((t) => (
+              //       <Link key={t.slug} href={`/learn/${t.slug}`}
+              //         className="rounded-full border border-magenta/25 bg-magenta/[0.06] px-3.5 py-1.5 text-[13px] font-bold text-magenta-dark hover:underline">
+              //         {t.title}</Link>))}</div></div>)}</div>
+            */
+            <ul className="pm-course-rows">
+              {taughtPaths.map((t) => (
+                <li key={t.slug}>
+                  <Link href={`/learn/${t.slug}`} className="pm-course-row">
+                    <span className="pm-course-name">{t.title}</span>
+                    <span className="pm-course-meta">{lessonCount(t.lessons)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
         </CleanSection>
 
@@ -2141,30 +2307,44 @@ export function ConnectProfile({
               </Link>
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            /*
+              ⚠ ROWS, NOT CHIPS (`E720` item 8) — see the note on `My Courses` above.
+              ⚠⚠ `t.lessons` IS NEW ON `TakenPath` and costs no query: it is the same total
+              `completed` is already decided against (`learn-home.ts`).
+              ⚠ SUPERSEDED, quoted not deleted (`E164`) — the chip row this replaces. ⚠⚠ ITS
+              OWN INNER COMMENT IS PARAPHRASED RATHER THAN COPIED, per load-bearing rule 12:
+              it carried a comment terminator, and quoting that character closes THIS comment
+              early. The paraphrase: the chip was deliberately INK and not magenta (`E433`),
+              because a path somebody is TAKING is not an offer and must not read as one.
+              //   <div className="flex flex-wrap gap-2">{visibleTaken.map((t) => (
+              //     <Link key={t.slug} href={`/learn/${t.slug}`}
+              //       className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline">
+              //       {t.title}
+              ⚠⚠⚠ THE `E433` REASONING SURVIVES THE CHANGE AND IS NOW IN THE STYLESHEET:
+              `.pm-course-row` is ink for both lists, and neither reads as an offer.
+            */
+            <ul className="pm-course-rows">
               {visibleTaken.map((t) => (
-                <Link
-                  key={t.slug}
-                  href={`/learn/${t.slug}`}
-                  /* ⚠⚠ INK, NOT MAGENTA (`E433`) — carried over from the block this
-                     replaces. A path somebody is TAKING is not an offer and must not read
-                     as one. */
-                  className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold text-ink-2 hover:underline"
-                >
-                  {t.title}
-                  {/*
-                    ⚠⚠⚠ THE WORD IS ONLY PRINTED WHEN IT IS TRUE. `Completed` on a
-                    half-finished path would be a false claim on the page Panameer sells on.
-                    ⚠ And the OWNER is the only reader who ever sees an unfinished one, so
-                    the absence of the word is never ambiguous to a visitor — everything
-                    they can see is complete.
-                  */}
-                  {t.completed && (
-                    <span className="ml-1.5 font-semibold text-ink">· Completed</span>
-                  )}
-                </Link>
+                <li key={t.slug}>
+                  <Link href={`/learn/${t.slug}`} className="pm-course-row">
+                    <span className="pm-course-name">{t.title}</span>
+                    <span className="pm-course-meta">
+                      {lessonCount(t.lessons)}
+                      {/*
+                        ⚠⚠⚠ THE WORD IS ONLY PRINTED WHEN IT IS TRUE. `Completed` on a
+                        half-finished path would be a false claim on the page Panameer sells
+                        on. ⚠ And the OWNER is the only reader who ever sees an unfinished
+                        one, so the absence of the word is never ambiguous to a visitor —
+                        everything they can see is complete.
+                      */}
+                      {t.completed && (
+                        <span className="pm-course-done">· Completed</span>
+                      )}
+                    </span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </CleanSection>
 
@@ -2417,37 +2597,41 @@ function RateRows({ p }: { p: ProviderProfileView }) {
   );
 }
 
-function ActionCard({
-  title,
-  label,
-  href,
-  note,
-}: {
-  title: string;
-  label: string;
-  href: string;
-  /** ⚠ One line under the button saying why it is offered. Optional. */
-  note?: string;
-}) {
-  return (
-    <section className="mt-7 border-t border-line pt-5 text-center">
-      <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-        {title}
-      </h3>
-      {/* ⚠ MAGENTA, and that is the rule working as intended (`E433`): the ring
-          above is a figure and is ink; these are the interactive things. */}
-      <Link
-        href={href}
-        className="block w-full rounded-full bg-magenta px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-white transition-colors hover:bg-magenta-dark"
-      >
-        {label}
-      </Link>
-      {note && (
-        <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">{note}</p>
-      )}
-    </section>
-  );
-}
+/*
+  ── ⚠⚠⚠ `ActionCard` IS REMOVED — ITS LAST CALLER WENT (`P2-A2-E720` item 10) ────────────
+
+  ⚠ Its only remaining use was the `Request Mentoring` card, which item 10 replaced with the
+  real `ConnectControls` mentor control. ⚠⚠ **IT IS QUOTED AND NOT LEFT IN PLACE BECAUSE A
+  DEAD FUNCTION IS A NEW LINT WARNING AGAINST A ZERO-NEW BASELINE** — the same call `AppBand`
+  records for the `HOME_NAV` import it stopped rendering.
+  ⚠ **CHECKED FIRST, PER THE STANDING RULE: NO GATE ASSERTS A LIVE RULE AGAINST IT.** Grepped
+  `scripts/` and every end-to-end spec directory — zero hits — so removing it cannot take an
+  assertion with it.
+  ⚠⚠⚠ **AND THE SENTENCE ABOVE ORIGINALLY NAMED THOSE DIRECTORIES WITH A GLOB, WHICH BROKE THE
+  BUILD.** The pattern for them ends in a star followed by a slash — **a comment terminator** —
+  so it closed this block early and produced 20 parse errors. ⚠ **LOAD-BEARING RULE 12 IS NOT
+  ONLY ABOUT QUOTED CODE: ANY comment terminator in PROSE does it, including a file glob**,
+  and that is a new instance of the trap worth recording.
+  ⚠⚠ ITS TWO INNER COMMENTS ARE PARAPHRASED, NOT COPIED (load-bearing rule 12 — they carry
+  comment terminators): the `note` prop was *one line under the button saying why it is
+  offered, optional*, and the link was deliberately MAGENTA because `E433` makes the ring above
+  a figure in ink while these are the interactive things.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   function ActionCard({ title, label, href, note }: {
+  //     title: string; label: string; href: string; note?: string;
+  //   }) {
+  //     return (
+  //       <section className="mt-7 border-t border-line pt-5 text-center">
+  //         <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">{title}</h3>
+  //         <Link href={href}
+  //           className="block w-full rounded-full bg-magenta px-3.5 py-2.5 text-[13.5px] font-bold leading-tight text-white transition-colors hover:bg-magenta-dark">
+  //           {label}
+  //         </Link>
+  //         {note && (<p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">{note}</p>)}
+  //       </section>
+  //     );
+  //   }
+*/
 
 /**
  * ── ⚠⚠ THE META LINE'S ICONS (`P2-A2-E718` item 11) ─────────────────────────

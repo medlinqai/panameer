@@ -9,6 +9,8 @@
 */
 import Link from "next/link";
 import type { CommunitySignal } from "@/lib/community-signal";
+/* ⚠ THE ONE TAG STYLE (`E720` item 5). */
+import { CLEAN_CHIP } from "@/components/profile/CleanSection";
 
 /**
  * The Community block on a profile (brief_community_signal WS2).
@@ -86,11 +88,18 @@ export function CommunitySignalBlock({
       {boards.length > 0 && (
         <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-ink-2">
           <span className="font-semibold">Active in:</span>
+          {/*
+            ── ⚠⚠ ONE TAG STYLE (`P2-A2-E720` item 5) ──────────────────────────────────
+
+            ⚠ **SCOTT: *"every chip … uses the Skills chip. One definition."*** ⚠⚠ These
+            group names were a grey outline on `bg-bg-soft` — a fourth chip language on a
+            page that also carried the magenta skill chip, the magenta `CHIP_TAG` and the
+            ink-wash project chips. ⚠ One consumer, so nothing outside this page moves.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   className="rounded-full border border-line bg-bg-soft px-2.5 py-1 text-[12.5px]"
+          */}
           {boards.map((b) => (
-            <span
-              key={b}
-              className="rounded-full border border-line bg-bg-soft px-2.5 py-1 text-[12.5px]"
-            >
+            <span key={b} className={CLEAN_CHIP}>
               {b}
             </span>
           ))}

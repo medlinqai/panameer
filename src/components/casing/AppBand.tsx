@@ -14,6 +14,8 @@ import { BottomNav } from "@/components/casing/BottomNav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { ACCOUNT_BAND_HREF } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
+/* ⚠ ONE DEFINITION OF THE LIT LOOK, SHARED WITH `AccountMenu`'s avatar (`E720` item 1). */
+import { BAND_LIT, BAND_IDLE, BAND_TILE } from "@/components/casing/band-lit";
 import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
 /* ⚠ `HOME_NAV` LEFT THIS IMPORT with the Home icon (`E602` WS-E 3). It is
    still exported and still a member of `UTILITY_NAV`; this file just no longer
@@ -304,14 +306,18 @@ export function AppBand() {
                 aria-current={active ? "page" : undefined}
                 title={item.label}
                 className={
-                  "pm-band-item flex flex-col items-center gap-0.5 rounded-[8px] px-3 py-1.5 " +
+                  `pm-band-item flex flex-col items-center gap-0.5 ${BAND_TILE} px-3 py-1.5 ` +
                   "text-[11.5px] font-medium leading-[14px] whitespace-nowrap transition-colors " +
                   /* ⚠ `E217` — ONE RULE: active is a SOLID fill, the translucent
                      wash is hover and nothing else. Carried over from the rail so
-                     the band does not invent a second selection language. */
-                  (active
-                    ? "bg-rail-active text-white"
-                    : "text-white/75 hover:bg-white/10 hover:text-white")
+                     the band does not invent a second selection language.
+                     ⚠⚠ THIS IS THE CLASS THE AVATAR NOW REUSES (`E720` item 1) — it is the
+                     band item's own lit look, and there is one copy of it.
+                     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                     //   "… rounded-[8px] px-3 py-1.5 " +
+                     //   (active ? "bg-rail-active text-white"
+                     //           : "text-white/75 hover:bg-white/10 hover:text-white") */
+                  (active ? BAND_LIT : BAND_IDLE)
                 }
               >
                 <RailIcon name={item.icon} />
@@ -478,10 +484,14 @@ export function AppBand() {
           aria-haspopup="dialog"
           aria-expanded={messagesOpen}
           className={
+            /* ⚠ THE SHARED LIT CLASS (`E720` item 1). ⚠⚠ The ROUNDING IS LEFT ALONE HERE
+               ON PURPOSE: this is a 36px icon button, not one of the band's lit tiles, and
+               Scott's item names the AVATAR. Changing it would be a look nobody asked for.
+               ⚠ SUPERSEDED, quoted not deleted (`E164`):
+               //   (messagesOpen ? "bg-rail-active text-white"
+               //                 : "text-white/75 hover:bg-white/10 hover:text-white") */
             "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
-            (messagesOpen
-              ? "bg-rail-active text-white"
-              : "text-white/75 hover:bg-white/10 hover:text-white")
+            (messagesOpen ? BAND_LIT : BAND_IDLE)
           }
         >
           <MessagesIcon />
@@ -577,10 +587,13 @@ function BandIcon({
       title={label}
       aria-current={active ? "page" : undefined}
       className={
+        /* ⚠ THE SHARED LIT CLASS (`E720` item 1); rounding unchanged — see the note on the
+           messages button above.
+           ⚠ SUPERSEDED, quoted not deleted (`E164`):
+           //   (active ? "bg-rail-active text-white"
+           //           : "text-white/75 hover:bg-white/10 hover:text-white") */
         "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
-        (active
-          ? "bg-rail-active text-white"
-          : "text-white/75 hover:bg-white/10 hover:text-white")
+        (active ? BAND_LIT : BAND_IDLE)
       }
     >
       {children}

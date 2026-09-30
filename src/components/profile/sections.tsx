@@ -10,6 +10,9 @@ import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
 /* ⚠ ONE component owns how a credential states its provenance (`P2-A4-E710`, `E585`). */
 import { CredentialProvenance } from "@/components/profile/CredentialProvenance";
+/* ⚠ THE ONE TAG STYLE (`E720` item 5). ⚠⚠ `CleanSection.tsx` imports only `Link` and
+   `ReactNode`, so this direction cannot cycle. */
+import { CLEAN_CHIP } from "@/components/profile/CleanSection";
 
 /**
  * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
@@ -1241,17 +1244,27 @@ export function ProjectCard({
       )}
 
       {(p.roleType || tools.length > 0) && (
+        /*
+          ── ⚠⚠⚠ ONE TAG STYLE (`P2-A2-E720` item 5) ────────────────────────────────────
+
+          ⚠ **SCOTT: *"every chip on /profile and /providers/[id] (Groups, Teaching, all of
+          them) uses the Skills chip. One definition."***
+          ⚠⚠ THE ROLE TYPE WAS AN INK WASH AND THE TOOLS WERE A GREY OUTLINE — **two more
+          chip languages on a card that already sits beside magenta skill chips**, so a
+          project row showed three different tag treatments at once.
+          ⚠⚠⚠ **THIS REPAINTS `/join/provider`'s REVIEW STEP TOO, AND THAT IS CORRECT RATHER
+          THAN COLLATERAL.** `ProjectCard` is shared with the wizard review, and `E056`'s
+          invariant is **AGREEMENT, NOT STILLNESS** — the review exists to show the member
+          what their profile looks like, so a chip that changes on the profile and not in the
+          review is the defect, not the change. `E562` WS-C made the same call for the hero.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   <span className="rounded-full bg-ink/[0.06] px-2.5 py-0.5 text-[12px] font-bold text-ink">
+          //   <span key={t.id} className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2">
+        */
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {p.roleType && (
-            <span className="rounded-full bg-ink/[0.06] px-2.5 py-0.5 text-[12px] font-bold text-ink">
-              {p.roleType.name}
-            </span>
-          )}
+          {p.roleType && <span className={CLEAN_CHIP}>{p.roleType.name}</span>}
           {tools.slice(0, 4).map((t) => (
-            <span
-              key={t.id}
-              className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2"
-            >
+            <span key={t.id} className={CLEAN_CHIP}>
               {t.name}
             </span>
           ))}
@@ -1436,6 +1449,24 @@ export function SoloProjectsBody({
 }) {
   return (
     <>
+      {/*
+        ── ⚠⚠⚠ THE SENTENCE IS SAID ONCE (`P2-A2-E720` item 7) ──────────────────────────
+
+        ⚠ **SCOTT: *"Solo Projects repeats its sentence: show it once."***
+        ⚠⚠ **IT WAS PRINTED TWICE, IN TWO WORDINGS, FROM TWO FILES.** This `<p>` renders
+        unconditionally, and the caller's `empty` prop was
+        *"Employee projects sit under their employer in Work History. No solo projects yet."*
+        — so an owner with no solo projects read the same fact in consecutive paragraphs,
+        phrased differently each time.
+        ⚠⚠⚠ **THE FIX IS ON THE CALLER, NOT HERE, AND THAT IS THE POINT:** this paragraph is
+        the explanation and it is true in BOTH states — an owner who HAS solo projects still
+        needs to know where the employee ones went. **Deleting this line instead would have
+        removed the explanation from the only state that shows any projects.** The `empty`
+        string is now the count alone.
+        ⚠ Two wordings of one fact is `E585` in prose: the copies had already drifted
+        (*"are under their Employer"* vs *"sit under their employer"*) before anyone noticed
+        there were two.
+      */}
       <p className="mb-4 text-[13px] text-ink-2">
         Employee projects are under their Employer in Work History.
       </p>

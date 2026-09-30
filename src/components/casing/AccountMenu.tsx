@@ -5,6 +5,8 @@ import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStor
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
+/* ⚠ THE BAND ITEM'S OWN LIT LOOK, NOT A COPY OF IT (`E720` item 1). */
+import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
 import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
 import {
@@ -452,9 +454,30 @@ export function AccountMenu({
           */
           aria-current={active ? "page" : undefined}
           className={
-            "flex items-center gap-1.5 rounded-full p-[7px] transition-colors " +
+            /*
+              ── ⚠⚠⚠ A SQUARE TILE, NOT A DISC (`P2-A2-E720` item 1) ──────────────────────
+
+              ⚠ **SCOTT: *"lit state = square tile. Same magenta rounded-square as a lit band
+              item, photo inside as a normal circle, no ring."***
+              ⚠⚠ **`E717` GOT THE FILL RIGHT AND THE SILHOUETTE WRONG.** It measured the pill
+              at 73×46 and sized this button to 46×46 so the fill read at the same weight —
+              correct, and still a **magenta CIRCLE in a row of magenta ROUNDED-SQUARES**.
+              ⚠⚠⚠ **`BAND_TILE` IS THE BAND ITEM'S OWN `rounded-[8px]`, IMPORTED, NOT RETYPED**
+              — which is the *"reuse the band item's lit class"* half of the instruction.
+              ⚠ **`p-[7px]` IS KEPT AND IS NOT A RING:** 32 + 7 + 7 = **46px**, the pill's own
+              height, so the tile is a square the same size as a lit item rather than an
+              outline around a photo. ⚠⚠ The padding is constant in both states, deliberately —
+              growing it only when active would shift the band's right-hand cluster on every
+              navigation.
+              ⚠ **THE PHOTO STAYS A CIRCLE** because `Avatar` draws its own; nothing here
+              clips it, so *"photo inside as a normal circle"* needed no change.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   "flex items-center gap-1.5 rounded-full p-[7px] transition-colors " +
+              //   (active ? "bg-rail-active" : onDark ? … )
+            */
+            `flex items-center gap-1.5 ${BAND_TILE} p-[7px] transition-colors ` +
             (active
-              ? "bg-rail-active"
+              ? BAND_LIT
               : onDark
                 ? "hover:bg-white/10"
                 : "hover:bg-black/[0.04]")

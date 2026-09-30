@@ -11,6 +11,8 @@ import {
   type ScoreLine,
 } from "@/lib/completeness";
 import { SCORE_LINE_COPY, DECLARED_NONE_RIDER } from "@/lib/profile-score-copy";
+/* ⚠ ONE DEFINITION OF "OUTSTANDING", SHARED WITH THE PROFILE CARD (`E720` item 2). */
+import { openScoreLines, openScoreMinutes } from "@/lib/score-open";
 import { editHref } from "@/lib/profile-sections";
 import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
 import "./profile-score.css";
@@ -52,15 +54,23 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const open = useMemo(
-    () =>
-      score.lines
-        .filter((l) => !lineCounts(l.state))
-        /* ⚠ BIGGEST FIRST — the step worth most points is the one worth doing
-           first, and the numbering should say so. */
-        .sort((a, b) => b.points - a.points),
-    [score.lines]
-  );
+  /*
+    ── ⚠⚠⚠ THE OUTSTANDING SET COMES FROM ONE MODULE NOW (`P2-A2-E720` item 2) ───────────
+
+    ⚠ **SCOTT: the profile's items-left line *"must read the Score page's own list"*.** ⚠⚠ It
+    already computed the same answer — **measured, 2/4 and 7/16 on two personas, identical on
+    both surfaces** — and the way to keep it that way is for there to be one list rather than
+    two that happen to match. ⚠⚠⚠ **THIS PAGE IS STILL THE AUTHORITY; what moved is where the
+    rule is written, not which surface owns it.**
+    ⚠ SUPERSEDED, quoted not deleted (`E164`). ⚠⚠ ITS INNER COMMENT IS PARAPHRASED, NOT
+    COPIED, per load-bearing rule 12: the quoted body carried a comment terminator, and typing
+    that character here closes THIS comment early. The paraphrase: the sort was BIGGEST FIRST,
+    because the step worth the most points is the one worth doing first and the numbering
+    should say so. ⚠ That reasoning now lives beside the definition in `score-open.ts`.
+    //   const open = useMemo(() => score.lines.filter((l) => !lineCounts(l.state))
+    //     .sort((a, b) => b.points - a.points), [score.lines]);
+  */
+  const open = useMemo(() => openScoreLines(score), [score]);
   const missingPoints = open.reduce((a, l) => a + l.points, 0);
   /* ⚠ `done` IS THE COMPLEMENT OF `open`, BY THE SAME RULE — `lineCounts`,
      which is what makes *"I have none"* count (`E590`). Two independent
@@ -83,7 +93,9 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
       href: copy.editorSlug ? editHref(copy.editorSlug) : copy.href,
     };
   }, [open]);
-  const minutes = open.reduce((a, l) => a + SCORE_LINE_COPY[l.key].minutes, 0);
+  /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const minutes = open.reduce((a, l) => a + SCORE_LINE_COPY[l.key].minutes, 0); */
+  const minutes = openScoreMinutes(open);
 
   /* ── the dial ─────────────────────────────────────────────────────────── */
   const R = 118;

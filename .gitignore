@@ -92,3 +92,6 @@ e2e-e719/shots/
 # state, not source. `npm run wipe:connection-graph` rebuilds the same target set
 # from `prisma/connection-graph-spec.ts` when it is absent.
 prisma/seed-data/connection-graph-manifest.json
+# E720 — the profile leftovers: harness tracked, shots are run artifacts.
+e2e-e720/.artifacts/
+e2e-e720/shots/

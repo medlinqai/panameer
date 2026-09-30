@@ -742,6 +742,17 @@ export type TakenPath = {
     section's own rule ("a visitor does not see it at all") already covers that.
   */
   completed: boolean;
+  /**
+   * How many lessons the path holds.
+   *
+   * ⚠⚠ **IT IS THE SAME NUMBER `completed` IS DECIDED AGAINST** — see the return below. ⚠ It
+   * is added for `E720` item 8, where Scott asked the courses rows to carry a lesson count;
+   * the value was already being computed and discarded.
+   * ⚠⚠⚠ **A `0` HERE IS REAL AND MEASURED, NOT A PLACEHOLDER: 4 of 24 paths carry no courses
+   * at all**, so the row must be able to say *"no lessons yet"* rather than print a bare `0`
+   * that reads as a bug (counting rule 2).
+   */
+  lessons: number;
 };
 
 export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[]> {
@@ -817,6 +828,14 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
       slug: r.learningPath.slug,
       group: r.learningPath.group,
       coverImage: r.learningPath.cover_image,
+      /*
+        ⚠⚠ `lessons` IS EXPOSED, NOT COMPUTED (`P2-A2-E720` item 8). ⚠⚠⚠ **`t` IS THE FIGURE
+        THIS FUNCTION ALREADY HAD** — it is the denominator `completed` is decided against —
+        and it was being thrown away at the return. ⚠ So the profile's *"N lessons"* costs
+        **no extra query**, and it cannot disagree with the `Completed` word beside it,
+        because both read the same `t`.
+      */
+      lessons: t,
       completed,
     };
   });

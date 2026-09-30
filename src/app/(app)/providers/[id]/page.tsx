@@ -96,7 +96,7 @@ async function connectSlot(
   viewer: Awaited<ReturnType<typeof getSessionViewer>>,
   ownerUserId: string | null,
   isOwner: boolean
-): Promise<{ connect?: React.ReactNode }> {
+): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode }> {
   /* ⚠ A control you cannot press is noise — own profile renders none. */
   if (!viewer || !ownerUserId || isOwner) return {};
 
@@ -108,19 +108,29 @@ async function connectSlot(
   ].find((x) => x.p?.userId === ownerUserId);
   const incomingId = mine.incoming.find((c) => c.person?.userId === ownerUserId)?.connectionId;
 
+  const following = mine.following.some((f) => f.person?.userId === ownerUserId);
+  /*
+    ── ⚠⚠⚠ TWO PARTS, TWO PLACES ON THE RAIL (`P2-A2-E720` item 10) ─────────────────────
+
+    ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a Colleague."***
+    ⚠⚠ **SO THE SAME COMPONENT IS RENDERED TWICE, EACH DRAWING ONE HALF** — `part="colleague"`
+    and `part="mentor"` — rather than a second component that would own a second copy of the
+    follow rule. ⚠ That is *"reusing ConnectControls"* literally: one implementation of the
+    POST, the optimistic update and the revert, placed in two slots.
+  */
+  const common = {
+    toUserId: ownerUserId,
+    relation: colleague?.rel ?? null,
+    incomingConnectionId: incomingId ?? null,
+    isMentor: following,
+    /* ⚠ `outline` ONLY HERE (`E719`). Nine other files render this component and keep the
+       magenta primary; on this rail `Hire` is the primary and two solid fills would claim
+       two. Opt-in, so nothing else moves. */
+    tone: "outline" as const,
+  };
   return {
-    connect: (
-      <ConnectControls
-        toUserId={ownerUserId}
-        relation={colleague?.rel ?? null}
-        incomingConnectionId={incomingId ?? null}
-        isMentor={mine.following.some((f) => f.person?.userId === ownerUserId)}
-        /* ⚠ `outline` ONLY HERE (`E719`). Nine other files render this component and keep the
-           magenta primary; on this rail `Hire` is the primary and two solid fills would claim
-           two. Opt-in, so nothing else moves. */
-        tone="outline"
-      />
-    ),
+    connect: <ConnectControls {...common} part="colleague" />,
+    mentor: <ConnectControls {...common} part="mentor" />,
   };
 }
 
