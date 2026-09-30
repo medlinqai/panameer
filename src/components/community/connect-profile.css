@@ -421,16 +421,102 @@
     //   .pm-cp3-rail > :nth-child(2) { order: -2; }
     //   .pm-cp3-rail > :nth-child(n + 3) { order: 1; }
 
-    ⚠ **SCOTT'S PHONE ORDER IS UNCHANGED** (*"name card → Rates → the right-hand content →
-    Profile Completion → Rank Higher"*) — the identity block and Rates stay above the record,
-    the rest falls below it. ⚠⚠ The identity block is now photo-and-buttons rather than
-    photo-and-name, because `E715` moves the name into the record; it is still the block a
-    member meets first.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E715`'s phone order and its reasoning:
+    //   ⚠ **SCOTT'S PHONE ORDER IS UNCHANGED** ("name card → Rates → the right-hand content →
+    //     Profile Completion → Rank Higher") — the identity block and Rates stay above the
+    //     record, the rest falls below it.
+    //   .pm-cp3-rail > .pm-rail-identity { order: -3; }
+    //   .pm-cp3-rail > .pm-rail-rates { order: -2; }
+
+    ── ⚠⚠⚠ SCOTT'S MOBILE WALK REPLACES IT (`P2-A2-E718` items 1–3, 2026-09-30) ──────────
+
+    ⚠ **THE NEW PHONE ORDER:** `[photo | Search Score]` side by side → name · title · meta ·
+    bio → the button → the sections → **Rates** → Visibility → Rank Higher.
+    ⚠⚠ **THIS SUPERSEDES `E600`'s PHONE ORDER, AND SCOTT SAID SO IN THE BRIEF** — it is a
+    ruling replacing a ruling (rule 13), not drift. ⚠⚠⚠ **RATES MOVES FROM SECOND TO NEARLY
+    LAST:** *"so the work is seen before the cost."* It was the second thing a member met on a
+    phone, directly under their photo.
+    ⚠ **THE ORDER STILL KEYS ON NAMES, NEVER `:nth-child`** — `E717` records what positional
+    rules do when the DOM is reordered, and this brief reorders it again.
   */
   .pm-cp3-rail > * { order: 1; }
-  .pm-cp3-rail > .pm-rail-identity { order: -3; }
-  .pm-cp3-rail > .pm-rail-rates { order: -2; }
+  /*
+    ⚠⚠⚠ THE TOP ROW. `pm-rail-top` is a plain BLOCK on desktop — the photo and the score stack
+    inside it, which is already the order Scott asked for — and becomes a FLEX ROW here, which
+    is what puts them side by side without a second copy of either markup.
+    ⚠ **NO DESKTOP RULE IS NEEDED AND NONE IS WRITTEN.** An earlier draft of this comment said
+    `display: contents` on desktop; that rule never existed, the stacking was already correct
+    without it, and **a comment describing CSS that is not there is a trap for whoever greps
+    for it next.** Measured at 1280: photo 260×260 at y=195, score 260×115 at y=483.
+    ⚠ `align-items: flex-start` so a tall score block does not stretch the photo out of square.
+  */
+  .pm-cp3-rail > .pm-rail-top {
+    order: -6;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  /* ⚠ 120px, Scott's figure. `.pm-photo`'s own 200px cap is for the one-column case where the
+     photo stands alone; inside this row the width is the row's to decide. */
+  .pm-rail-top > .pm-rail-photo {
+    width: 120px;
+    flex: none;
+  }
+  .pm-rail-top > .pm-rail-photo .pm-photo {
+    max-width: none;
+  }
+  /*
+    ⚠⚠ THE SCORE BLOCK LOSES ITS DIVIDER IN THIS ROW, AND THAT IS NOT COSMETIC. `pm-side`
+    draws a thin top rule and 28px of margin because in a COLUMN it follows something; here it
+    sits BESIDE the photo, where a rule above it would underline nothing.
+  */
+  .pm-rail-top > .pm-side {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
+  }
+  /* ⚠ The record's head — name · title · meta · bio — sits directly under the top row. The
+     selector is `.pm-cp3-main > .pm-main-head` so it outranks `.pm-cp3-main > *` below. */
+  .pm-cp3-main > .pm-main-head { order: -4; }
+  .pm-cp3-rail > .pm-rail-button { order: -3; }
   .pm-cp3-main > * { order: 0; }
+  /* ⚠ Then the record, then the cost — Rates first of the three trailing blocks. */
+  .pm-cp3-rail > .pm-rail-rates { order: 1; }
+  .pm-cp3-rail > .pm-rail-visibility { order: 2; }
+  .pm-cp3-rail > .pm-rail-rank { order: 3; }
+}
+
+/*
+  ── ⚠⚠⚠ ITEM 2 — THE BUTTON IS SIZED TO ITS TEXT, NOT TO ITS COLUMN ──────────────────────
+
+  ⚠ **SCOTT: *"sized to its text (not full width), about 40px tall, left-aligned"*, on the
+  phone AND on desktop — *"same style"*.**
+  ⚠⚠ `.pm-btn` is `display: block; width: 100%` because the rail was two stacked full-width
+  controls when `E715` drew it. ⚠⚠⚠ **WITH ONE CONTROL LEFT (`E716` REMOVED THE OTHER), A
+  FULL-WIDTH INK SLAB UNDER THE BIO READS AS A BANNER RATHER THAN A BUTTON** — and at 390 it
+  is the widest thing on the page.
+  ⚠ `height` plus `line-height` rather than vertical padding: the height is the figure Scott
+  named, and padding would make it depend on the font metrics.
+*/
+.pm-rail-button .pm-btn {
+  display: inline-block;
+  width: auto;
+  height: 40px;
+  line-height: 38px;
+  padding: 0 18px;
+  /*
+    ⚠⚠⚠ `align-self` IS THE LINE THAT ACTUALLY SHRINKS IT, AND `width: auto` ALONE DID NOT.
+    ⚠ The button sits in a `flex flex-col` wrapper, whose default `align-items: stretch`
+    stretches every child to the cross-axis — so the measured width stayed **260px, exactly
+    the rail's width**, with `width: auto` applied and winning.
+    ⚠⚠ **MEASURED, NOT REASONED: the gate read `w: 260, railW: 260` and failed.** A CSS rule
+    can be applied, specific enough, and still lose to the layout its parent imposes — the
+    same shape as `E718`'s avatar ring, where the fill was right and the geometry hid it.
+    ⚠ It is also what makes it LEFT-ALIGNED, which is the other half of Scott's instruction.
+  */
+  align-self: flex-start;
 }
 
 /*

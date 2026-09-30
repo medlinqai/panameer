@@ -441,7 +441,24 @@ export function ConnectProfile({
   */
   const serviceProducts = (
     <CleanSection
-          title="Services"
+          /*
+            ── ⚠⚠⚠ THE OWNER AND THE VISITOR READ DIFFERENT NAMES (`P2-A2-E718` item 6) ──
+
+            ⚠ **SCOTT, 2026-09-30.** Owner: `My Service Products · My Courses · Courses Taken
+            / In-Process`. Visitor: `Service Products · Courses · Courses Taken`.
+            ⚠⚠ **THIS SUPERSEDES `E713`'s `Services` / `Teaching` / `Learning`**, quoted not
+            deleted (`E164`) at each call site below.
+            ⚠⚠⚠ **THE POSSESSIVE IS THE WHOLE POINT: the owner is looking at THEIR record and
+            the visitor is looking at SOMEBODY'S.** `My Courses` on a stranger's profile would
+            claim the reader teaches them.
+            ⚠ **`/ In-Process` IS OWNER-ONLY BECAUSE THE DATA IS:** `visibleTaken` already
+            filters a visitor to completed paths (`owner ? takenPaths : takenPaths.filter(t =>
+            t.completed)`, shipped at `E713`), so a visitor's list genuinely holds only
+            finished courses and naming in-progress ones would describe rows that are not
+            there. **The rule Scott states was already built; only the titles change.**
+          */
+          title={owner ? "My Service Products" : "Service Products"}
+          /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Services" */
           isEmpty={p.packages.length === 0}
           showWhenEmpty={owner}
         >
@@ -521,6 +538,53 @@ export function ConnectProfile({
     </CleanSection>
   );
 
+  /*
+    ── ⚠⚠ THE SCORE BLOCK IS EXTRACTED SO THE PHONE ROW CAN HOLD IT (`E718` item 1) ─────
+
+    ⚠ It is rendered inside `pm-rail-top`, beside the photo. ⚠⚠ **NOTHING ABOUT IT CHANGED**
+    — same `CleanSide`, same `titleHref`, same two doors, same figure. Only WHERE it is
+    rendered moved, which is what kept this a layout change rather than a rewrite.
+  */
+  const scoreBlock = owner && score ? (
+        <CleanSide title="Search Score" titleHref="/community/score">
+          <div className="flex items-center gap-4">
+            <span
+              className="pm-score-ring"
+              style={{
+                background: `conic-gradient(var(--color-ink) 0 ${score.total}%, var(--color-line) ${score.total}% 100%)`,
+              }}
+            >
+              <span className="tabular-nums">{score.total}</span>
+            </span>
+            <span className="min-w-0 text-[13px] leading-snug text-ink-2">
+              of 100
+              <br />
+              {/* ⚠⚠ A REAL ZERO AND A FINISHED PROFILE MUST NOT READ THE SAME (counting
+                  rule 2). At zero outstanding lines this says so in words rather than
+                  printing "0 items left".
+                  ⚠⚠⚠ **BOTH STATES ARE THE LINK, NOT JUST THE ONE WITH A COUNT IN IT.** A
+                  provider at zero outstanding still has a score page worth reading, and a
+                  door that disappears at 100% is a door that vanishes exactly when the
+                  member has earned the right to look. */}
+              <Link
+                href="/community/score"
+                data-e716-items
+                className="font-semibold text-magenta-dark hover:underline"
+              >
+                {remainingLines > 0 ? (
+                  <>
+                    {remainingLines} item{remainingLines === 1 ? "" : "s"} left
+                    {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
+                  </>
+                ) : (
+                  "Nothing outstanding"
+                )}
+              </Link>
+            </span>
+          </div>
+        </CleanSide>
+  ) : null;
+
   return (
     <div className="pm-cp3">
       {/*
@@ -559,9 +623,35 @@ export function ConnectProfile({
           ⚠⚠ **`/join/provider` IS UNAFFECTED: this markup is local to `ConnectProfile`**, not
           `ProfileCard`, so nothing shared changed to achieve it.
         */}
-        {/* ⚠ `pm-rail-identity` IS LOAD-BEARING AT PHONE WIDTH — the one-column order keys on
-            it (see `connect-profile.css`), so this block stays above the record. */}
-        <section className="pm-rail-identity">
+        {/*
+          ── ⚠⚠⚠ THE RAIL IS SIX NAMED BLOCKS NOW (`P2-A2-E718` items 1–3) ─────────────────
+
+          ⚠ **DESKTOP ORDER (= DOM ORDER): photo → Search Score → button → Visibility → Rank
+          Higher → Rates.** ⚠⚠ **PHONE ORDER: [photo | Search Score] side by side → name ·
+          title · meta · bio → button → sections → Rates → Visibility → Rank Higher.**
+          ⚠⚠⚠ **THE IDENTITY BLOCK IS SPLIT** — the photo and the button were one `<section>`,
+          and they now sit at opposite ends of the phone layout (the photo first, the button
+          under the bio), so they cannot remain one element.
+          ⚠ **EVERY BLOCK CARRIES A NAME AND THE PHONE ORDER KEYS ON THOSE NAMES**, never on
+          `:nth-child` — `E717` records what positional rules do when the DOM is reordered:
+          they silently re-target a different block.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   ⚠ `pm-rail-identity` IS LOAD-BEARING AT PHONE WIDTH — the one-column order keys
+          //     on it (see `connect-profile.css`), so this block stays above the record.
+          //   <section className="pm-rail-identity">
+        */}
+        {/* ⚠⚠ `pm-rail-top` IS A PLAIN BLOCK ON DESKTOP — the photo and the score simply stack
+            inside it, which is the order Scott asked for — and becomes a FLEX ROW at phone
+            width, putting them side by side. One wrapper, two layouts, no duplicated markup.
+            ⚠ **MEASURED AT 1280: photo 260×260 at y=195, score 260×115 at y=483** — stacked,
+            with `CleanSide`'s own 28px margin doing the spacing, so no extra rule is needed.
+            ⚠⚠⚠ **THIS COMMENT FIRST CLAIMED `display: contents` ON DESKTOP AND THAT RULE WAS
+            NEVER WRITTEN.** The layout was right anyway, so nothing looked wrong — **a comment
+            describing CSS that does not exist is the half of the defect that survives**, and
+            the next reader would have gone looking for it. Corrected against the measurement
+            rather than against the intention. */}
+        <div className="pm-rail-top">
+        <section className="pm-rail-photo">
           <div>
             {/*
               ── ⚠⚠⚠ EACH EDIT CONTROL MOVES BESIDE WHAT IT EDITS (WS-B) ────────
@@ -626,6 +716,25 @@ export function ConnectProfile({
                 </Link>
               )}
             </div>
+          </div>
+        </section>
+        {/* ⚠ THE SCORE BLOCK IS RENDERED HERE, INSIDE `pm-rail-top`, so the phone row can put
+            it beside the photo. On desktop the wrapper dissolves and it is simply the second
+            block in the column — the order Scott asked for in both layouts. */}
+        {scoreBlock}
+        </div>
+
+        {/*
+          ── ⚠⚠ ITEM 2 — THE BUTTON IS ITS OWN BLOCK ────────────────────────────────────
+
+          ⚠ **SCOTT: on the phone it is sized to its text, about 40px tall, left-aligned, and
+          sits UNDER THE BIO; on desktop it keeps the same style, under the photo and Search
+          Score.** ⚠⚠ Those are two different places in two different layouts, which is why it
+          can no longer live inside the photo's section.
+          ⚠⚠⚠ **IT IS NO LONGER FULL-WIDTH ON THE PHONE** — `pm-btn` stretches to its column,
+          and a 390px-wide ink slab under the bio reads as a banner rather than a control.
+        */}
+        <div className="pm-rail-button">
             {/*
               ── ⚠⚠⚠ ROWS 2 AND 13 — THE NAME, TITLE, LOCATION AND `How You Work` HAVE LEFT
                   THE RAIL FOR THE RECORD (`P2-A2-E715`) ────────────────────────────────
@@ -877,8 +986,7 @@ export function ConnectProfile({
                 </Link>
               </div>
             )}
-          </div>
-        </section>
+        </div>
 
         {/*
           ── ⚠⚠⚠ ROW 10 — THE RAIL'S ORDER IS THE MOCKUP'S ─────────────────────────────
@@ -937,83 +1045,23 @@ export function ConnectProfile({
           //     </Link>
           //   </CleanSide>
         */}
-        {owner && score && (
-          <CleanSide title="Search Score" titleHref="/community/score">
-            <div className="flex items-center gap-4">
-              <span
-                className="pm-score-ring"
-                style={{
-                  background: `conic-gradient(var(--color-ink) 0 ${score.total}%, var(--color-line) ${score.total}% 100%)`,
-                }}
-              >
-                <span className="tabular-nums">{score.total}</span>
-              </span>
-              <span className="min-w-0 text-[13px] leading-snug text-ink-2">
-                of 100
-                <br />
-                {/* ⚠⚠ A REAL ZERO AND A FINISHED PROFILE MUST NOT READ THE SAME (counting
-                    rule 2). At zero outstanding lines this says so in words rather than
-                    printing "0 items left".
-                    ⚠⚠⚠ **BOTH STATES ARE THE LINK, NOT JUST THE ONE WITH A COUNT IN IT.** A
-                    provider at zero outstanding still has a score page worth reading, and a
-                    door that disappears at 100% is a door that vanishes exactly when the
-                    member has earned the right to look. */}
-                <Link
-                  href="/community/score"
-                  data-e716-items
-                  className="font-semibold text-magenta-dark hover:underline"
-                >
-                  {remainingLines > 0 ? (
-                    <>
-                      {remainingLines} item{remainingLines === 1 ? "" : "s"} left
-                      {minutesLeft > 0 ? ` · about ${minutesLeft} min` : ""}
-                    </>
-                  ) : (
-                    "Nothing outstanding"
-                  )}
-                </Link>
-              </span>
-            </div>
-          </CleanSide>
-        )}
+        {/* ⚠ SUPERSEDED POSITION, quoted not deleted (`E164`): the Search Score block used
+            to be rendered here, second in the rail. It is now `scoreBlock`, rendered inside
+            `pm-rail-top` so the phone can place it beside the photo. */}
 
         {/*
-          ── ⚠⚠ RATES, ITS OWN SIDE CARD AGAIN (`E014`) ────────────────────
+          ── ⚠ SUPERSEDED POSITION (`P2-A2-E718` item 3) ──────────────────────────────
 
-          ⚠⚠⚠ RENDERED FOR BOTH PERSONAS, AND THIS IS THE ONE THING NOT TO GET
-          WRONG. `/providers/[id]` renders this component in visitor mode, so
-          putting it inside the `owner` branch would SILENTLY REMOVE RATES FROM
-          THE BUYER'S PAGE. The rule is the VIEW MODEL's — `isOwner ||
-          hasCapability(viewer, "canHireTalent")` — and `p.rates` is already
-          `null` for anyone who may not see it.
-          ⚠ THE WHOLE CARD IS GATED, NOT JUST ITS BODY.
-          ⚠⚠ **THE LABELS AND AMOUNTS ARE UNTOUCHED — brief *Keep*, ruling 64c:** nothing is
-          relabelled until the three-rate migration. `RateRows` is not edited; only the column
-          around it moved.
+          ⚠ **RATES WAS RENDERED HERE, THIRD IN THE RAIL. IT IS NOW LAST**, immediately above
+          `</aside>` — *"so the work is seen before the cost."*
+          ⚠⚠ The reasoning that lived here travelled WITH the block and is unchanged at its
+          new position: it is rendered for BOTH personas and must never be moved inside the
+          `owner` branch, because `/providers/[id]` renders this component in visitor mode and
+          that would silently remove Rates from the buyer's page. `p.rates` is already `null`
+          for anyone who may not see it — the view model's decision, not this component's.
+          ⚠ **THE LABELS AND AMOUNTS ARE UNTOUCHED** (ruling 64c): nothing is relabelled until
+          the three-rate migration. `RateRows` is not edited; only where the column renders.
         */}
-        {p.rates && (
-          /*
-            ── ⚠⚠⚠ RATES IS A SIDE BLOCK, NOT A SECTION (`P2-A2-E713` WS-A item 9) ──
-
-            ⚠ **SCOTT: Rates, Search Score, Visibility and Rank Higher *"lose their boxes
-            too, and are separated by thin lines."*** ⚠⚠ `CleanSide` is that treatment — a
-            12px uppercase eyebrow over a thin top rule — and it is deliberately NOT
-            `CleanSection`: **the left column does not fold.** A chevron on a three-row rate
-            list would be a control with nothing to reveal.
-            ⚠ The `owner`/visitor rule is untouched: `p.rates` is already `null` for anyone
-            who may not see it, which is the VIEW MODEL's decision and not this component's.
-            ⚠⚠ THE WRAPPER CARRIES `pm-rail-rates` because the PHONE ORDER KEYS ON IT — see
-            the row 10 note above. Without the class Rates would fall below the record.
-          */
-          <div className="pm-rail-rates">
-            <CleanSide
-              title="Rates"
-              action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
-            >
-              <RateRows p={p} />
-            </CleanSide>
-          </div>
-        )}
 
         {/*
           ── ⚠⚠⚠ VISIBILITY ARRIVES FROM SETTINGS (ruling 78) ───────────────
@@ -1029,7 +1077,7 @@ export function ConnectProfile({
           ⚠ IT MOVED BELOW RATES (`E715` row 10) — a switch does not lead a column.
         */}
         {owner && (
-          <ProfileVisibilityCard paused={p.paused} completeness={p.completeness} />
+          <ProfileVisibilityCard paused={p.paused} />
         )}
 
         {owner ? (
@@ -1089,7 +1137,7 @@ export function ConnectProfile({
               //   )}
             */}
 
-            <section className="mt-7 border-t border-line pt-5">
+            <section className="pm-rail-rank mt-7 border-t border-line pt-5">
                             {/*
                               ⚠⚠ THE TITLE STAYS `Grow` FOR NOW (Scott, 2026-09-22, at the
                               `E599` WS-B gate): *"keep its title 'Grow' for now. The
@@ -1213,6 +1261,26 @@ export function ConnectProfile({
               absent, never `$0`; a missing language is absent, never "English"
               as a default — that would be a fact about a person nobody stated.
             */}
+            {/*
+              ── ⚠⚠⚠ THE RATE LINE IS GONE; THE `RATES` BLOCK KEEPS IT (`E718` item 9) ──────
+
+              ⚠ **SCOTT: *"Rates shown twice in the visitor view… the `About this provider ·
+              Rate $145.00` line repeats what the RATES block shows below it."*** ⚠⚠ Both were
+              reading the same view-model field, so a buyer met the same number twice on one
+              screen — `E585` in its plainest form.
+              ⚠⚠⚠ **RULING 9 IS UNCHANGED AND NOTHING IS WITHHELD: BUYERS SEE RATES.** What is
+              removed is the DUPLICATE, not the fact. The `RATES` block still renders for both
+              personas, from `p.rates`, which the view model already nulls for anyone who may
+              not see it — **and `E718` item 3 put it near the bottom for the visitor too**, so
+              the two views now agree on where the cost is stated.
+              ⚠ **THE WHOLE SECTION IS NOW CONDITIONAL.** With the Rate row gone, an
+              unvalidated provider with no `experience` would have rendered a lone
+              `About this provider` heading over nothing — Scott: *"If `About this provider` is
+              left empty, remove the heading too."*
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <TrustRow label="Rate" value={rateRange(p)} />
+            */}
+            {(p.validated || p.experience) && (
             <section className="mt-7 border-t border-line pt-5">
               {p.validated ? (
                 <>
@@ -1241,7 +1309,6 @@ export function ConnectProfile({
               )}
 
               <TrustRow label="Experience" value={p.experience} />
-              <TrustRow label="Rate" value={rateRange(p)} />
               {/*
                 ⚠⚠⚠ THE LANGUAGES ROW LEFT THIS STRIP FOR ITS OWN CARD (WS-B).
                 ⚠ It flattened every language to a name and dropped the ability
@@ -1256,6 +1323,7 @@ export function ConnectProfile({
                 //   />
               */}
             </section>
+            )}
 
             {/*
               ⚠ `Connect as a Colleague` IS `ConnectControls`, PASSED IN. It
@@ -1410,6 +1478,43 @@ export function ConnectProfile({
             </section>
           </>
         )}
+        {/*
+          ── ⚠⚠⚠ ITEM 3 — RATES MOVES TO THE BOTTOM OF THE RAIL (`P2-A2-E718`) ────────────
+
+          ⚠ **SCOTT: *"Rates move near the bottom, so the work is seen before the cost."***
+          ⚠⚠ It was SECOND in the column, directly under the photo, so the first thing a
+          buyer read about a provider was their price.
+          ⚠⚠⚠ **IT MOVES IN THE DOM, NOT BY A CSS `order`** — so the keyboard and a screen
+          reader meet it last too, which is the same claim the page makes visually. A CSS-only
+          reorder would have moved the picture and left the reading order saying the opposite.
+          ⚠ **THE SAME IN THE VISITOR VIEW**, which is Scott's instruction and is automatic
+          here: this block sits OUTSIDE the owner/visitor branch, so both personas get one
+          position. ⚠⚠ `p.rates` is already `null` for anyone who may not see it — the view
+          model's decision, untouched.
+        */}
+        {p.rates && (
+          /*
+            ── ⚠⚠⚠ RATES IS A SIDE BLOCK, NOT A SECTION (`P2-A2-E713` WS-A item 9) ──
+
+            ⚠ **SCOTT: Rates, Search Score, Visibility and Rank Higher *"lose their boxes
+            too, and are separated by thin lines."*** ⚠⚠ `CleanSide` is that treatment — a
+            12px uppercase eyebrow over a thin top rule — and it is deliberately NOT
+            `CleanSection`: **the left column does not fold.** A chevron on a three-row rate
+            list would be a control with nothing to reveal.
+            ⚠ The `owner`/visitor rule is untouched: `p.rates` is already `null` for anyone
+            who may not see it, which is the VIEW MODEL's decision and not this component's.
+            ⚠⚠ THE WRAPPER CARRIES `pm-rail-rates` because the PHONE ORDER KEYS ON IT — see
+            the row 10 note above. Without the class Rates would fall below the record.
+          */
+          <div className="pm-rail-rates">
+            <CleanSide
+              title="Rates"
+              action={owner ? <CleanEdit href={editHref("rates")} title="Rates" /> : undefined}
+            >
+              <RateRows p={p} />
+            </CleanSide>
+          </div>
+        )}
       </aside>
 
       <main className="pm-cp3-main">
@@ -1424,7 +1529,7 @@ export function ConnectProfile({
           the tab row's, so the owner gets `<h2>` here and a visitor — who has no tab row —
           gets the `<h1>`. Two `<h1>` candidates on one page is the `E598` defect.
         */}
-        <header>
+        <header className="pm-main-head">
           <div className="flex items-center gap-2">
             {owner ? (
               <h2 className="text-[30px] font-bold leading-[1.2] tracking-[-0.01em]">
@@ -1468,19 +1573,52 @@ export function ConnectProfile({
             ⚠ `locationLines` is the SAME rule the Location card uses (`E585`).
           */}
           <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[14px] text-ink-2">
+            {/*
+              ── ⚠⚠⚠ ITEM 11 — THE MAP LINK, AND WHAT IS NOT IN IT ────────────────────────
+
+              ⚠ **SCOTT: *"City, state and country only. The street address is never put in
+              the URL."*** ⚠⚠ **THAT HOLDS BY CONSTRUCTION, NOT BY FILTERING HERE:**
+              `provider-profile-view.ts:263` builds this value as
+              `formatLocality({ city: addr?.city, state: addr?.state })` — **only those two
+              fields are passed in**, so the street never reaches the component that would
+              have to strip it, and neither does the postal code `formatLocality` would
+              otherwise append.
+              ⚠⚠⚠ **THE SAFEST PLACE TO REMOVE A FIELD IS BEFORE IT IS LOADED.** A regex here
+              that stripped a street would be a guard that has to stay right forever; a view
+              model that never carries one cannot leak it.
+              ⚠ `locationLines` is still the one rule (`E585`) — the link wraps its output
+              rather than re-deriving the text.
+              ⚠ **NO LINK WHEN THERE IS NO LOCATION** — `lines` is null and the whole span
+              does not render, so nothing links to a search for the empty string.
+            */}
             {(() => {
               const lines = locationLines(p.location, p.country);
-              return lines ? (
-                <span>
-                  {lines.primary}
-                  {lines.secondary ? ` · ${lines.secondary}` : ""}
+              if (!lines) return null;
+              const query = [lines.primary, lines.secondary].filter(Boolean).join(", ");
+              const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+              return (
+                <span className="flex items-center gap-1.5">
+                  <MetaIcon kind="pin" />
+                  {/* ⚠ A new tab, and `noreferrer` with it: the profile's URL is not Google's
+                      business. `noopener` is implied by `noreferrer` but both are named so a
+                      later edit cannot drop the wrong one. */}
+                  <a
+                    href={map}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="hover:underline"
+                  >
+                    {lines.primary}
+                    {lines.secondary ? ` · ${lines.secondary}` : ""}
+                  </a>
                 </span>
-              ) : null;
+              );
             })()}
             {/* ⚠ `Person.created_at`, a real column with a real writer (`schema.prisma:464`).
                 Month and year only: the DAY somebody joined is not a fact anyone needs. */}
             {p.person.memberSince && (
-              <span>
+              <span className="flex items-center gap-1.5">
+                <MetaIcon kind="calendar" />
                 Member since{" "}
                 {new Date(p.person.memberSince).toLocaleDateString("en-US", {
                   month: "long",
@@ -1879,7 +2017,9 @@ export function ConnectProfile({
             ⚠ SUPERSEDED, quoted not deleted (`E164`):
             //   <CleanSection title="Learning Paths"> */}
         <CleanSection
-          title="Teaching"
+          title={owner ? "My Courses" : "Courses"}
+          /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Teaching" — and before it,
+             `title="Learning Paths"`. See the naming note on the Service Products section. */
           isEmpty={taughtPaths.length === 0}
           showWhenEmpty={owner}
         >
@@ -1929,7 +2069,10 @@ export function ConnectProfile({
           //   {takenPaths.length > 0 && ( <div> "You're Taking" … ink chips … </div> )}
         */}
         <CleanSection
-          title="Learning"
+          title={owner ? "Courses Taken / In-Process" : "Courses Taken"}
+          /* ⚠ SUPERSEDED, quoted not deleted (`E164`): title="Learning". ⚠⚠ The visitor
+             name carries no "In-Process" because `visibleTaken` gives them only completed
+             paths — the title and the data say the same thing. */
           isEmpty={visibleTaken.length === 0}
           showWhenEmpty={owner}
         >
@@ -2251,6 +2394,46 @@ function ActionCard({
 }
 
 /**
+ * ── ⚠⚠ THE META LINE'S ICONS (`P2-A2-E718` item 11) ─────────────────────────
+ *
+ * ⚠ **THE MOCKUP'S OWN GLYPHS AND ITS OWN RULE:** `.meta svg { width:15px; height:15px;
+ * stroke: var(--ink3); fill: none; stroke-width: 1.6 }` — outlined, grey, 15px. The paths are
+ * copied from `profile_clean_2026-09-26.html` rather than redrawn.
+ * ⚠⚠ **INLINE SVG, NOT AN ICON FONT OR A NETWORK REQUEST** — two shapes on the page a member
+ * lands on should not cost a fetch, and `RailIcon`'s set is the band's, not this.
+ * ⚠⚠⚠ **`aria-hidden` AND `flex-none`:** they decorate text that already says what they mean,
+ * so a screen reader announcing "pin" before the location would be noise (the same rule the
+ * section chevron follows), and without `flex-none` a long location squeezes them out of
+ * square.
+ * ⚠ `stroke-ink-3` resolves to the mockup's `#8a869a` inside `.account-surface` — see the
+ * scoped rule in `connect-profile.css`. **`--color-ink-3` is still undeclared app-wide**,
+ * which is `E715`'s open finding; on this surface the colour is real.
+ */
+function MetaIcon({ kind }: { kind: "pin" | "calendar" }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      className="h-[15px] w-[15px] flex-none stroke-ink-3"
+      fill="none"
+      strokeWidth="1.6"
+    >
+      {kind === "pin" ? (
+        <>
+          <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </>
+      ) : (
+        <>
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M3 10h18M8 3v4M16 3v4" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
  * ⚠ ONE FACT PER ROW, AND A ROW WITH NO VALUE DOES NOT RENDER. An empty row on
  * a trust card is worse than a missing one — it reads as a fact we checked and
  * could not confirm.
@@ -2266,22 +2449,30 @@ function TrustRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-/**
- * ⚠ THE ADVERTISED RANGE, exactly as `E078c` stores it. Returns null when no
- * rate is set — the row then does not render, rather than printing `$0`.
- */
-function rateRange(p: ProviderProfileView): string | null {
-  /* ⚠ `null` for a non-owner (`E593` WS-C 13) — the `TrustRow` that calls this
-     renders nothing on a null, so the Rate row simply is not there. */
-  if (!p.rates) return null;
-  const { minCents, maxCents, currency } = p.rates;
-  if (minCents == null && maxCents == null) return null;
-  const lo = minCents ?? maxCents!;
-  const hi = maxCents ?? minCents!;
-  return lo === hi
-    ? money(lo, currency)
-    : `${money(lo, currency)} – ${money(hi, currency)}`;
-}
+/*
+  ── ⚠⚠ `rateRange` IS RETIRED WITH THE ROW IT FED (`P2-A2-E718` item 9) ────────────────
+
+  ⚠ Its ONLY caller was the visitor trust card's `Rate` line, which duplicated the `RATES`
+  block below it. ⚠⚠ **LEFT IN PLACE IT IS A NEW LINT WARNING AGAINST A ZERO-NEW BASELINE**,
+  and a helper with no callers invites the next person to find a use for it — which here would
+  mean printing the rate twice again.
+  ⚠⚠⚠ **NOTHING ABOUT WHAT BUYERS SEE CHANGED (ruling 9).** `RateRows` renders the rates from
+  the same `p.rates`, and the view model still nulls that field for anyone who may not see it.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — including the reasoning it carried:
+  //   (comment: THE ADVERTISED RANGE, exactly as E078c stores it. Returns null when no rate
+  //    is set — the row then does not render, rather than printing $0.)
+  //   function rateRange(p: ProviderProfileView): string | null {
+  //     (comment: null for a non-owner (E593 WS-C 13) — the TrustRow that calls this renders
+  //      nothing on a null, so the Rate row simply is not there.)
+  //     if (!p.rates) return null;
+  //     const { minCents, maxCents, currency } = p.rates;
+  //     if (minCents == null && maxCents == null) return null;
+  //     const lo = minCents ?? maxCents!;
+  //     const hi = maxCents ?? minCents!;
+  //     return lo === hi ? money(lo, currency)
+  //                      : `${money(lo, currency)} – ${money(hi, currency)}`;
+  //   }
+*/
 
 /** ⚠ Integer cents, like every other money value in the app. */
 function money(cents: number, currency: string): string {

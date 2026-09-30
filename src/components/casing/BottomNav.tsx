@@ -41,7 +41,15 @@ import "./bottom-nav.css";
 /** ⚠ Ruling 88's number, in one place, so a gate can mutate it. */
 export const BOTTOM_NAV_MAX = 5;
 
-export function BottomNav({ items }: { items: NavItem[] }) {
+export function BottomNav({
+  items,
+  /* ⚠ Passed down rather than re-derived: this bar has no `useMe()`, and a second read of the
+     same fact is a second chance for the two layers to disagree (`E585`, `E718` item 10). */
+  ownProviderPath = null,
+}: {
+  items: NavItem[];
+  ownProviderPath?: string | null;
+}) {
   const pathname = usePathname();
 
   /*
@@ -62,10 +70,11 @@ export function BottomNav({ items }: { items: NavItem[] }) {
     //       ? pathname === href
     //       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
   */
-  const activeHref = bandActiveHref(pathname, [
-    ...items.map((i) => i.href),
-    ACCOUNT_BAND_HREF,
-  ]);
+  const activeHref = bandActiveHref(
+    pathname,
+    [...items.map((i) => i.href), ACCOUNT_BAND_HREF],
+    { ownProviderPath }
+  );
   const isActive = (href: string) => href === activeHref;
 
   const shown = items.slice(0, BOTTOM_NAV_MAX);

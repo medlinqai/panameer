@@ -230,10 +230,21 @@ export function AppBand() {
     //       ? pathname === href
     //       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
   */
-  const activeHref = bandActiveHref(pathname, [
-    ...items.map((i) => i.href),
-    ACCOUNT_BAND_HREF,
-  ]);
+  /*
+    ⚠⚠⚠ THE OWNER'S OWN PUBLIC PAGE (`E718` item 10). `/providers/[id]` is the same URL for
+    everybody, so WHO IS LOOKING is the only thing that separates the preview from a visit —
+    and that is not in the pathname. ⚠ The fact is read here, where `me` already is; the
+    DECISION stays in `bandActiveHref`, which is Scott's instruction and what stops this
+    becoming a second lit-rule keyed on the avatar.
+  */
+  const ownProviderPath = me?.providerProfile?.id
+    ? `/providers/${me.providerProfile.id}`
+    : null;
+  const activeHref = bandActiveHref(
+    pathname,
+    [...items.map((i) => i.href), ACCOUNT_BAND_HREF],
+    { ownProviderPath }
+  );
   const isActive = (href: string) => href === activeHref;
 
   return (
@@ -543,7 +554,7 @@ export function AppBand() {
         ⚠ It is `md:hidden` itself, and `.pm-band-menu` is hidden below `md` in
         `app-band.css` — **one row is visible at any width, never both.**
       */}
-      <BottomNav items={items} />
+      <BottomNav items={items} ownProviderPath={ownProviderPath} />
     </>
   );
 }

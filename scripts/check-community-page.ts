@@ -421,9 +421,47 @@ check(
     CARDS_PROFILE
   )
 );
+/*
+  ── ⚠⚠⚠ IT COUNTED CONSUMERS; NOW IT CHECKS EVERY CONSUMER (`P2-A2-E718` item 9) ────────
+
+  ⚠ **IT ASSERTED `=== 2`, AND `E718` REMOVED ONE OF THE TWO ON PURPOSE.** The visitor's
+  `About this provider · Rate` line duplicated the `RATES` block below it, so `rateRange` — one
+  of the two `if (!p.rates) return null;` guards — was retired with the row it fed.
+  ⚠⚠ **THE RULE IS *"EVERY RATE CONSUMER HANDLES THE NULL"*, AND THE COUNT WAS THE MECHANISM,
+  NOT THE RULE.** A fixed number fails whenever a consumer is legitimately added or removed,
+  which is the same mistake `check:role-prune`'s assertion 6 was rewritten to stop making —
+  it asserted a ROW COUNT where the rule was a round trip.
+  ⚠⚠⚠ **SO IT NOW FINDS THE CONSUMERS AND CHECKS EACH ONE**, and still fails on the real
+  defect: a function that reads `p.rates` without guarding the null would print `$0` to
+  somebody who may not see a rate at all.
+  ⚠ `E586` — it also asserts there is at least one consumer, so deleting them all cannot
+  satisfy "every consumer handles it" by vacuity.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   (CARDS_PROFILE.match(/if \(!p\.rates\) return null;/g) ?? []).length === 2
+*/
+/*
+  ⚠⚠ **A FIRST REWRITE TRIED TO FIND THE CONSUMERS BY PARSING FUNCTIONS AND WAS WRONG:** the
+  regex matched `ConnectProfile` itself — which mentions `p.rates` in its own body — and
+  reported the component as an unguarded consumer. ⚠ **A CLEVER DETECTOR THAT MISIDENTIFIES
+  ITS SUBJECT IS WORSE THAN A NAMED ONE**, so the surviving consumer is named.
+  ⚠⚠⚠ **`RateRows` IS NOW THE ONLY FUNCTION THAT TURNS `p.rates` INTO TEXT** — `rateRange`
+  was retired with the duplicate row it fed (`E718` item 9). Naming it keeps the assertion
+  true and legible; a second consumer added later gets added here, which is a one-line diff in
+  review rather than a silent count drifting.
+*/
+const rateRows = /function RateRows\([\s\S]*?\n\}/.exec(CARDS_PROFILE)?.[0] ?? "";
 check(
-  "9 — ⚠ both rate consumers handle the null",
-  (CARDS_PROFILE.match(/if \(!p\.rates\) return null;/g) ?? []).length === 2
+  "9 — ⚠ `RateRows` exists (E586 — no inputs must fail)",
+  rateRows.length > 0 && /\bp\.rates\b/.test(rateRows)
+);
+check(
+  "9 — ⚠ the rate consumer handles the null",
+  /if \(!p\.rates\) return null;/.test(rateRows)
+);
+/* ⚠ And the retired one has not crept back in under its old name. */
+check(
+  "9 — ⚠ `rateRange` stays retired (its row duplicated the RATES block)",
+  !/^function rateRange/m.test(CARDS_PROFILE)
 );
 
 /* ── 10 · ⚠⚠ THE RAIL'S COMB, AND WHAT IT REPLACED (`E593`) ─────────────── */

@@ -89,6 +89,30 @@ export function CleanSection({
   */
   if (isEmpty && !showWhenEmpty) return null;
   return (
+    /*
+      ── ⚠⚠⚠ THE ACTION MOVES OUTSIDE `<details>` (`P2-A2-E718` item 4) ──────────────────
+
+      ⚠ **SCOTT, ON HIS PHONE: Languages was closed and showed NO `Edit`.**
+      ⚠⚠⚠ **A CLOSED `<details>` RENDERS ONLY ITS `<summary>`.** The action was a SIBLING of
+      the summary *inside* `<details>` — correct for `E097`, and invisible the moment the
+      section was closed. ⚠ Absolute positioning did not save it: the element is still a
+      child of a collapsed disclosure, and the browser never lays it out at all.
+      ⚠⚠ **THIS IS A REGRESSION `E716` INTRODUCED AND I OWN IT.** Before that brief every
+      section loaded OPEN, so the action was always rendered; `E716` closed five of them at
+      Scott's instruction and took their `Edit` controls with them — **on exactly the five
+      sections an owner is most likely to want to edit.**
+      ⚠⚠⚠ **NO GATE CAUGHT IT, AND THE REASON IS WORTH WRITING DOWN:** `check:profile-edit`
+      asserts every `Edit` control's DESTINATION renders, and the section-state gate asserts
+      which sections are open. **Neither asks whether the control is VISIBLE in the state the
+      page loads in** — two green gates, one invisible control.
+      ⚠ **THE FIX IS A WRAPPER, NOT A MOVE INTO `<summary>`:** putting the action inside the
+      summary is `E097` (no interactive descendant of a summary) and `check:ui` §12 forbids
+      it. The wrapper is the positioning context instead, so the action is a sibling of
+      `<details>` and renders in both states.
+      ⚠ `relative` stays on `<details>` too — the chevron positions against it, and both boxes
+      are the same rectangle, so neither moves.
+    */
+    <div className="relative">
     <details
       id={id}
       open={open}
@@ -145,20 +169,22 @@ export function CleanSection({
           <path d="M6 9l6 6 6-6" />
         </svg>
       </summary>
+      <div className="pb-7">{children}</div>
+    </details>
       {/*
-        ⚠⚠⚠ A SIBLING OF `<summary>`, NOT A CHILD — see the docblock. This is what keeps
-        `Edit` from eating the Enter that opens the panel (`E097`).
+        ⚠⚠⚠ OUTSIDE `<details>`, NOT INSIDE IT — see the block at the top of this return.
+        ⚠ Still not a descendant of `<summary>`, which is what keeps `Edit` from eating the
+        Enter that opens the panel (`E097`, `check:ui` §12).
+        ⚠ `right-[34px]` is the chevron's 16px plus the mockup's 18px gap, so the action lands
+        immediately to its left; `top-[23px]` matches the summary's own `py-[22px]`.
       */}
-      {/* ⚠ `right-[34px]` is the chevron's 16px plus the mockup's 18px gap, so the action
-          lands immediately to its left, exactly where `.summary .r` draws it. */}
       {(action || note) && (
         <div className="absolute right-[34px] top-[23px] flex items-center gap-[18px]">
           {note && <span className="text-[13px] text-ink-2">{note}</span>}
           {action}
         </div>
       )}
-      <div className="pb-7">{children}</div>
-    </details>
+    </div>
   );
 }
 
@@ -246,7 +272,10 @@ export function CleanSide({
 }) {
   const label = "text-[12px] font-semibold uppercase tracking-[0.08em]";
   return (
-    <div className="mt-7 border-t border-line pt-5">
+    /* ⚠ `pm-side` is the stable hook the phone layout needs: inside `pm-rail-top` the
+       top rule and the 28px margin are suppressed, because there the block sits BESIDE
+       the photo rather than under a divider (`E718` item 1). */
+    <div className="pm-side mt-7 border-t border-line pt-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         {titleHref ? (
           /* ⚠ `<h4>` WRAPS THE LINK RATHER THAN THE LINK WRAPPING THE HEADING: the block still

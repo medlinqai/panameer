@@ -78,6 +78,9 @@ e2e-e716/before-href.json
 e2e-e717/.artifacts/
 e2e-e717/shots/
 e2e-e717/census-before.json
+# E718 — the mobile walk: harness tracked, shots are run artifacts.
+e2e-e718/.artifacts/
+e2e-e718/shots/
 
 # ⚠ P1-ALL-E371 WS-A2 — captured mail. NOTHING captured goes in the repo.
 .mail-capture/

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ToggleRow, postSetting } from "@/components/settings/controls";
+import { visibilityHelp } from "@/lib/visibility-copy";
 
 /**
  * ── ⚠⚠⚠ VISIBILITY, MOVED TO MY PROFILE (ruling 78) ─────────────────────
@@ -33,13 +34,17 @@ import { ToggleRow, postSetting } from "@/components/settings/controls";
  * ⚠ The description and the hint are the strings that were on the card,
  * carried across verbatim rather than rewritten.
  */
-export function ProfileVisibilityCard({
-  paused,
-  completeness,
-}: {
-  paused: boolean;
-  completeness: number;
-}) {
+/*
+  ⚠⚠ `completeness` IS NO LONGER A PROP (`E718` item 8). Its only reader was the sentence
+  *"You are N% complete"*, which Scott removed because the **Search Score block directly above
+  already states that figure** — `E585` applied to a number. ⚠ The prop is dropped rather than
+  left unused: an unused parameter is a lint problem against a zero-new baseline, and a prop
+  nobody reads invites the next person to render it again.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   export function ProfileVisibilityCard({ paused, completeness }:
+  //     { paused: boolean; completeness: number }) {
+*/
+export function ProfileVisibilityCard({ paused }: { paused: boolean }) {
   /*
     ── ⚠⚠⚠ THE HELP LINE FOLLOWS THE SWITCH, NOT THE PROP (`P2-A2-E716`) ─────────
 
@@ -88,7 +93,7 @@ export function ProfileVisibilityCard({
     //     earns visibility; this switch is how you turn it off deliberately.`} … />
   */
   return (
-    <section className="mt-7 border-t border-line pt-5">
+    <section className="pm-rail-visibility pm-side mt-7 border-t border-line pt-5">
       <h4 className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-3">
         Visibility
       </h4>
@@ -120,18 +125,7 @@ export function ProfileVisibilityCard({
         //   without deleting anything. You are {completeness}% complete.
       */}
       <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">
-        {visible ? (
-          <>
-            Buyers can find you in the marketplace. Turning visibility off hides
-            your profile without deleting anything. You are {completeness}%
-            complete.
-          </>
-        ) : (
-          <>
-            Buyers can&rsquo;t find you right now. Turn visibility on to show
-            your profile again. Nothing has been deleted.
-          </>
-        )}
+        {visibilityHelp(visible)}
       </p>
     </section>
   );

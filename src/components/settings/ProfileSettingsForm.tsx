@@ -10,6 +10,7 @@ import {
   ToggleRow,
   postSetting,
 } from "@/components/settings/controls";
+import { visibilityHelp } from "@/lib/visibility-copy";
 
 /**
  * Profile Settings (J2.4 WS-H / E015).
@@ -53,11 +54,29 @@ export function ProfileSettingsForm({
     <div className="space-y-4">
       <Card
         title="Visibility"
-        description="Whether buyers can find you in the marketplace. Pausing hides your profile without deleting anything — your work history, service products and skills are exactly where you left them."
+        /*
+          ── ⚠⚠⚠ THE SAME SENTENCE AS `/profile`, FROM THE SAME MODULE (`E718` item 8) ──────
+
+          ⚠ **SCOTT: *"Apply the same wording to `/settings`, so both places say the same
+          thing."*** ⚠⚠ `E716` shipped the new wording on the profile and left this line
+          reading *"Pausing hides your profile…"*, and **reported the divergence rather than
+          fixing it**, because that brief's instruction was report-only. This closes it.
+          ⚠⚠⚠ **IT IMPORTS THE STRING INSTEAD OF REPEATING IT.** Typing the new sentence here
+          would rebuild the exact defect being fixed — one control described two ways on two
+          screens (`E585`).
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   description="Whether buyers can find you in the marketplace. Pausing hides your
+          //     profile without deleting anything — your work history, service products and
+          //     skills are exactly where you left them."
+        */
+        description={visibilityHelp(!settings.paused)}
       >
         <ToggleRow
           label="Visible to buyers"
-          hint={`Your profile is ${settings.completeness}% complete. Completeness is what earns visibility; this switch is how you turn it off deliberately.`}
+          /* ⚠ THE COMPLETENESS HINT IS GONE with the same line on `/profile` — Scott removed
+             the figure because the Search Score block states it. ⚠ SUPERSEDED (`E164`):
+             //   hint={`Your profile is ${settings.completeness}% complete. Completeness is
+             //     what earns visibility; this switch is how you turn it off deliberately.`} */
           checked={!settings.paused}
           onChange={async (next) =>
             (await postSetting("/api/settings/profile", { paused: !next })) === null

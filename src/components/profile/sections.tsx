@@ -860,11 +860,15 @@ export function EducationBody({
     word is the major**, and the reader had to infer it from position. ⚠ A row
     renders only when its value exists, so nothing prints an empty label.
   */
-  const Row = ({ label, value }: { label: string; value: string }) => (
-    <p className="text-[13px] text-ink-2">
-      <span className="font-semibold text-ink-3">{label}</span> {value}
-    </p>
-  );
+  /*
+    ⚠⚠ THE LOCAL `Row` IS GONE — it was byte-identical to `CertRow`, and both are now
+    `LabelValue` (`E718` item 5). ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const Row = ({ label, value }: { label: string; value: string }) => (
+    //     <p className="text-[13px] text-ink-2">
+    //       <span className="font-semibold text-ink-3">{label}</span> {value}
+    //     </p>
+    //   );
+  */
 
   return (
     <ul className="space-y-3 text-[14px]">
@@ -884,9 +888,9 @@ export function EducationBody({
             {e.institution.trim() && (
               <p className="font-semibold">{e.institution}</p>
             )}
-            {e.degree && <Row label="Degree" value={e.degree} />}
-            {e.field && <Row label="Major" value={e.field} />}
-            {years && <Row label="Years" value={years} />}
+            {e.degree && <LabelValue label="Degree" value={e.degree} />}
+            {e.field && <LabelValue label="Major" value={e.field} />}
+            {years && <LabelValue label="Years" value={years} />}
           </li>
         );
       })}
@@ -1597,10 +1601,36 @@ export function LocationBody({
  * said twice, which is the duplication `E588` WS-A ruled against.
  */
 /** ⚠ One labelled row, so the cert card and the education card read alike. */
-function CertRow({ label, value }: { label: string; value: string }) {
+/**
+ * ── ⚠⚠⚠ `Label: value`, ONE RENDERER (`P2-A2-E718` item 5) ───────────────────
+ *
+ * ⚠ **SCOTT: *"Label : value pairs are unclear… label in grey regular with a colon, value in
+ * ink. `Degree: Bachelor of Science (BS)`, not `Degree Bachelor of Science (BS)`."***
+ * ⚠⚠ **THE OLD SHAPE MADE THE LABEL THE LOUDEST THING ON THE LINE AND THEN DROPPED THE
+ * PUNCTUATION THAT SEPARATES IT:** the label was `font-semibold` and the value was plain, so
+ * `Degree Bachelor of Science (BS)` read as one run of words with an emphasised first word.
+ * ⚠⚠⚠ **THE WEIGHTS ARE NOW THE RIGHT WAY ROUND — the VALUE is the information.** Label grey
+ * and regular, colon, value in ink.
+ *
+ * ── ⚠⚠ IT WAS WRITTEN TWICE, BYTE FOR BYTE ──────────────────────────────────
+ *
+ * ⚠⚠⚠ **`CertRow` HERE AND A LOCAL `Row` INSIDE `EducationBody` WERE IDENTICAL** — same
+ * markup, same classes, same absent colon. `E585`: one concept, two places, kept in step by
+ * hand. ⚠ Fixing the copy Scott named and leaving the other would have left Certifications
+ * reading one way and Education the other, on the same page, which is the defect in a new
+ * shape. **One component now, used by both.**
+ * ⚠ **BLAST RADIUS, MEASURED AND REPORTED:** `EducationBody` is also rendered by
+ * `/join/provider` (`:4020`), so the onboarding review inherits the clearer pairs. That is a
+ * legibility fix to the same unclear label, not a layout change — reported rather than
+ * hidden, because earlier briefs froze that page's appearance.
+ */
+export function LabelValue({ label, value }: { label: string; value: string }) {
   return (
-    <p className="text-[13px] text-ink-2">
-      <span className="font-semibold text-ink-3">{label}</span> {value}
+    <p className="text-[13px]">
+      {/* ⚠ `text-ink-3` is the page's grey; inside `.account-surface` it resolves to the
+          mockup's #8a869a (see `connect-profile.css`). */}
+      <span className="font-normal text-ink-3">{label}:</span>{" "}
+      <span className="text-ink">{value}</span>
     </p>
   );
 }
@@ -1662,9 +1692,9 @@ export function CertificationsBody({
               credentialId={c.credentialId ?? null}
               className="mt-0.5 block"
             />
-            {c.issuer && <CertRow label="Agency" value={c.issuer} />}
-            {earned && <CertRow label="Earned" value={earned} />}
-            {c.expiresOn && <CertRow label="Expires" value={c.expiresOn.slice(0, 4)} />}
+            {c.issuer && <LabelValue label="Agency" value={c.issuer} />}
+            {earned && <LabelValue label="Earned" value={earned} />}
+            {c.expiresOn && <LabelValue label="Expires" value={c.expiresOn.slice(0, 4)} />}
             {c.url && (
               <a
                 href={c.url}

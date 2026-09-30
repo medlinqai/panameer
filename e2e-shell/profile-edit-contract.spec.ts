@@ -92,6 +92,56 @@ test.describe("⚠⚠⚠ E597 WS-D — every Edit control on the owner's profile
     ).toBeGreaterThan(0);
   });
 
+  /*
+    ── ⚠⚠⚠ A CLOSED SECTION STILL SHOWS ITS `Edit` (`P2-A2-E718` item 4) ──────────────────
+
+    ⚠ **SCOTT, ON HIS PHONE: Languages was closed and showed no `Edit`.** ⚠⚠ A closed
+    `<details>` renders ONLY its `<summary>`, and the action was a sibling of the summary
+    *inside* it — so `E716`, which closed five sections at Scott's instruction, took their
+    edit controls with them.
+    ⚠⚠⚠ **THIS SUITE WAS GREEN THROUGH THE WHOLE THING, AND SO WAS THE SECTION-STATE GATE.**
+    Every other test here asks where a control GOES; the state gate asks which sections are
+    OPEN. **Nothing asked whether the control is visible in the state the page loads in** —
+    two green gates and an invisible control between them.
+    ⚠ So this asserts the one thing neither did, and it is written against the STATE THE PAGE
+    LOADS IN rather than against a section it opens first: opening a section before looking
+    would reproduce the blind spot exactly.
+  */
+  test("⚠⚠⚠ a section that loads CLOSED still shows its Edit", async ({ page }) => {
+    await signIn(page);
+    await page.goto("/profile", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const rows = await page.evaluate(() =>
+      [...document.querySelectorAll("details.pm-clean-sec")].map((d) => {
+        const edit = d.parentElement?.querySelector(":scope > div > a");
+        const r = edit?.getBoundingClientRect();
+        return {
+          title: (d.querySelector("summary h2")?.textContent ?? "").trim(),
+          open: (d as HTMLDetailsElement).open,
+          hasEdit: !!edit,
+          laidOut: !!r && r.width > 0 && r.height > 0,
+        };
+      })
+    );
+    const closed = rows.filter((r) => !r.open);
+    console.log(
+      `E718  closed sections: ${closed.map((c) => `${c.title}=${c.laidOut ? "Edit" : "NONE"}`).join(" · ") || "(none closed)"}`
+    );
+    /* ⚠⚠ `E586` — if no section loads closed, this test proves nothing and must say so
+       rather than pass. */
+    expect(
+      closed.length,
+      "no section loads closed, so this assertion has nothing to check (E586)"
+    ).toBeGreaterThan(0);
+    for (const c of closed) {
+      expect(c.hasEdit, `"${c.title}" loads closed and renders no Edit control`).toBe(true);
+      expect(
+        c.laidOut,
+        `"${c.title}" loads closed and its Edit has no box — it is inside the collapsed <details>`
+      ).toBe(true);
+    }
+  });
+
   test("⚠⚠⚠ no Edit control resolves under /join", async ({ page }) => {
     await signIn(page);
     const controls = await collectEditControls(page);

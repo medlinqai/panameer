@@ -175,7 +175,23 @@ export const ACCOUNT_BAND_HREF = "__account-menu__";
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   /* ⚠ Connect's pages live under `/community` — Community, Colleagues, Forums,
      Mentors, Teams and Score, eight routes. This is the one Scott caught. */
-  "/connect": ["/community"],
+  /*
+    ── ⚠⚠⚠ CONNECT ALSO OWNS `/providers` (`P2-A2-E718` item 10) ──────────────────────
+
+    ⚠ **SCOTT: `/providers/[id]` lit NOTHING.** Measured before the change: both the owner's
+    own preview and another member's view of a profile left the whole band dark — *"two
+    navigation layers on one page, disagreeing about which application he is in"*, which is
+    the same defect `E596` and `E717` each fixed on a different route.
+    ⚠⚠ **A PROFILE YOU ARE LOOKING AT IS A CONNECT PAGE** — it is reached from the community,
+    the colleague cards and search, all of which are Connect's.
+    ⚠⚠⚠ **AND IT DOES NOT OVER-MATCH: `/providers/[id]` IS THE ONLY ROUTE UNDER THIS PREFIX**
+    (verified on disk). `/admin/providers` does NOT start with `/providers`, so the admin
+    surface is untouched — the `E475` trap (one loose prefix lighting fifteen pills) does not
+    apply here, and it was checked rather than assumed.
+    ⚠ The owner's OWN profile page outbids this through `bandActiveHref`'s
+    `ownProviderPath` — a longer prefix, not a special case.
+  */
+  "/connect": ["/community", "/providers"],
   /*
     ⚠⚠ FOUND BY THE NEW GATE, NOT BY THE BRIEF. Enumerating `PAGE_TABS` turned
     up two more dark-band routes of exactly the same shape, both tab
@@ -289,10 +305,14 @@ const BAND_EXACT: ReadonlySet<string> = new Set(["/dashboard", "/admin"]);
  * ⚠ The length of the LONGEST prefix that matches, which is what lets a more specific owner
  * beat a more general one.
  */
-function bandMatchLength(href: string, pathname: string): number {
+function bandMatchLength(
+  href: string,
+  pathname: string,
+  extras: readonly string[] = []
+): number {
   if (BAND_EXACT.has(href)) return pathname === href ? href.length : -1;
   let best = -1;
-  for (const p of bandPrefixesFor(href)) {
+  for (const p of [...bandPrefixesFor(href), ...extras]) {
     if (pathname.startsWith(p) && p.length > best) best = p.length;
   }
   return best;
@@ -319,12 +339,34 @@ function bandMatchLength(href: string, pathname: string): number {
  */
 export function bandActiveHref(
   pathname: string,
-  hrefs: readonly string[]
+  hrefs: readonly string[],
+  /*
+    ── ⚠⚠⚠ THE ONE ROUTE WHOSE OWNER CANNOT BE READ OFF THE PATH (`P2-A2-E718` item 10) ──
+
+    ⚠ **SCOTT: on `/providers/[id]`, the AVATAR lights when the viewer is the owner (the
+    *"How Others See My Profile"* preview), and CONNECT lights for anyone else. Exactly one,
+    both times.**
+    ⚠⚠ **THE PATHNAME IS IDENTICAL IN BOTH CASES**, so no prefix table can separate them —
+    the difference is WHO IS LOOKING, which is not in the URL. ⚠⚠⚠ **THAT IS WHY IT ARRIVES
+    AS AN ARGUMENT AND NOT AS A SECOND RULE:** Scott's instruction is *"decide it in
+    `bandActiveHref`"*, so the caller supplies the FACT and this function still makes the
+    DECISION — the alternative, an `if` in `AppBand` that lights the avatar directly, is the
+    second copy of the lit-rule that `E717` spent a commit removing.
+    ⚠ It is a PREFIX the account key owns for this viewer only. Connect owns `/providers`
+    generally, so the longest-match rule already resolves the pair: `/providers/<own-id>` is
+    longer than `/providers`, and the owner's preview wins without a special case.
+  */
+  opts?: { readonly ownProviderPath?: string | null }
 ): string | null {
+  const accountExtras = opts?.ownProviderPath ? [opts.ownProviderPath] : [];
   let bestHref: string | null = null;
   let bestLen = -1;
   for (const href of hrefs) {
-    const len = bandMatchLength(href, pathname);
+    const len = bandMatchLength(
+      href,
+      pathname,
+      href === ACCOUNT_BAND_HREF ? accountExtras : []
+    );
     if (len > bestLen) {
       bestLen = len;
       bestHref = href;
