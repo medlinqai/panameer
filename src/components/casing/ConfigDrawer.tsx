@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavGroup } from "@/lib/nav";
+import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
 /* ⚠ THE SAME STYLESHEET THE MESSAGES DRAWER IMPORTS — one drawer language, two
    consumers. It is component-imported there, so it must be here too. */
 import "./messages-drawer.css";
@@ -44,10 +45,18 @@ import "./messages-drawer.css";
  */
 export function ConfigDrawer({
   groups,
+  active = false,
   label = "Configuration",
 }: {
   /** ⚠ Passed IN, never imported here — this component knows no admin route. */
   groups: NavGroup[];
+  /**
+   * ⚠⚠ `E735` — whether the current route is one the gear owns (`/admin`). ⚠⚠⚠ THE GEAR
+   * HAD NO LIT STATE AT ALL, which is why all 33 admin routes lit nothing. ⚠ It arrives as
+   * a prop so the decision stays in `bandActiveHref` — this component still knows no admin
+   * route, which is its own stated contract one line above.
+   */
+  active?: boolean;
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -96,7 +105,11 @@ export function ConfigDrawer({
         /* ⚠ 44px, because there is no hover on touch and a 32px gear is a miss
            (88a). The band's other icons are sized by `BandIcon`; this matches
            the touch standard rather than the visual one. */
-        className="grid h-11 w-11 place-items-center rounded-full text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+        className={
+          /* ⚠ The SHARED lit class (`E720` item 1), imported rather than re-typed. */
+          "grid h-11 w-11 place-items-center rounded-full transition-colors " +
+          (active || open ? BAND_LIT : BAND_IDLE)
+        }
       >
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />

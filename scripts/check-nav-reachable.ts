@@ -37,7 +37,7 @@
  * `requires` omitted means *"everyone signed in sees it"* (nav.ts), so an
  * omitted `requires` against a capability-gated route is the defect itself.
  */
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { ROUTE_ACCESS, type RouteRequirement } from "@/lib/route-access";
 import {
@@ -52,6 +52,7 @@ import {
   bandPrefixesFor,
   ACCOUNT_BAND_HREF,
   type NavItem,
+  BAND_CONTROL_HREFS,
 } from "@/lib/nav";
 import { SETTINGS_NAV } from "@/lib/settings-nav";
 /* ⚠ `P2-ALL-E698` WS-D — the ONE map from an app route to the public page it took
@@ -682,6 +683,101 @@ check(
   "4b — the account menu actually owns /community/score",
   bandPrefixesFor(ACCOUNT_BAND_HREF).includes("/community/score"),
   bandPrefixesFor(ACCOUNT_BAND_HREF).join(", ")
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚠⚠⚠ EVERY SIGNED-IN ROUTE LIGHTS EXACTLY ONE THING (`P2-A1.1-E735`)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⚠ **SCOTT, 2026-10-01: *"every page should backlight something."***
+
+   ⚠⚠⚠ **THE RULE ABOVE WAS ALREADY RIGHT; ITS POPULATION WAS TOO NARROW.** The sweep that
+   precedes this one walks `TAB_ROUTES` — the `PAGE_TABS` keys and their destinations —
+   which is **a few dozen routes out of 117.** ⚠⚠ **MEASURED 2026-10-01: 50 SIGNED-IN
+   ROUTES LIT NOTHING, AND THIS GATE WAS GREEN THROUGHOUT**, including `/dashboard`, the
+   landing page of the whole app. ⚠ *"A gate that cannot see the file the defect is in is
+   not guarding it"* — `E603`'s lesson 9, and this is it on a route list.
+
+   ⚠⚠ **SO THE POPULATION IS NOW THE FILESYSTEM**, derived at run time rather than listed:
+   every `page.tsx` under the signed-in trees. ⚠ Nothing here knows which routes exist —
+   adding a page adds it to this gate automatically, which is the only way the count stays
+   honest.
+   ⚠⚠⚠ **AND IT CHECKS BOTH FAILURES: NONE *AND* TWO.** `bandActiveHref` returns one
+   winner by construction, so "two" cannot happen through it — but the assertion is written
+   anyway, because the predicate is not the only thing that can light a control (the
+   messages button lit itself from its own drawer state until this brief).
+*/
+function routesUnder(dir: string, base: string, out: string[] = []): string[] {
+  if (!existsSync(dir)) return out;
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (!e.isDirectory()) {
+      /* ⚠ A route exists where a `page.tsx` does. `layout.tsx` is not a route. */
+      if (e.name === "page.tsx") out.push(base || "/");
+      continue;
+    }
+    /* ⚠ `_private` folders and `@slots` are not routes; `(groups)` do not appear in the URL. */
+    if (e.name.startsWith("_") || e.name.startsWith("@")) continue;
+    const seg = e.name.startsWith("(") && e.name.endsWith(")") ? "" : `/${e.name}`;
+    routesUnder(join(dir, e.name), base + seg, out);
+  }
+  return out;
+}
+
+/* ⚠ A dynamic segment is matched by its PREFIX, so `[id]` is replaced by a literal that
+   cannot collide with a real segment — the band matches on `startsWith` either way. */
+const SIGNED_IN_ROUTES = [
+  ...routesUnder(join(process.cwd(), "src/app/(app)"), ""),
+  ...routesUnder(join(process.cwd(), "src/app/learn"), "/learn"),
+  ...routesUnder(join(process.cwd(), "src/app/admin"), "/admin"),
+]
+  .map((r) => r.replace(/\[[^\]]+\]/g, "x"))
+  .filter((r) => r !== "/");
+
+/*
+  ⚠⚠ THE CANDIDATE LIST IS THE ONE THE BAND ACTUALLY HANDS IT. ⚠⚠⚠ `E717`'s note records
+  that the *"which item is lit"* predicate had been written out three times and **the gate
+  carried its own fourth copy** — so this calls `bandLights`, which calls `bandActiveHref`,
+  and adds only the four non-menu controls the band now passes.
+*/
+function litCount(route: string): number {
+  const owner = bandActiveHref(route, [
+    ...BAND_ITEMS.map((i) => i.href),
+    ...BAND_CONTROL_HREFS,
+  ]);
+  return owner ? 1 : 0;
+}
+
+/*
+  ⚠⚠ ROUTES THAT ARE DARK ON PURPOSE, EACH WITH A REASON AND A DATE. ⚠⚠⚠ THE SAME TWO
+  SAFEGUARDS AS `BAND_KNOWN_OPEN` ABOVE: an entry that starts PASSING fails the gate, so it
+  cannot rot, and the age is printed every run so this does not become a parking lot.
+*/
+const DARK_KNOWN_OPEN: Record<string, { since: string; why: string }> = {
+  /* ⚠ Role-gated doors. A provider cannot reach `/hire` (`guardPage("canHireTalent")`), so
+     a dark band there is unreachable rather than wrong — and inventing an owner would put a
+     Hire light in a seller's band. */
+};
+
+let dark = 0;
+let doubled = 0;
+for (const route of SIGNED_IN_ROUTES) {
+  const n = litCount(route);
+  const open = DARK_KNOWN_OPEN[route];
+  if (open) {
+    const days = Math.floor((Date.now() - Date.parse(open.since)) / 86_400_000);
+    check(
+      `E735 — KNOWN DARK still dark: ${route} (${days}d) — ${open.why}`,
+      n === 0,
+      "a known-dark entry that started lighting must be removed from the list"
+    );
+    continue;
+  }
+  if (n === 0) dark++;
+  if (n > 1) doubled++;
+  check(`E735 — ${route} lights exactly one band item`, n === 1, `lights ${n}`);
+}
+console.log(
+  `check:nav-reachable — E735 route sweep: ${SIGNED_IN_ROUTES.length} signed-in routes · ${dark} dark · ${doubled} lighting two`
 );
 
 if (failures.length > 0) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
 import { useRouter } from "next/navigation";
 
 /**
@@ -34,10 +35,19 @@ type Row = {
 
 export function NotificationBell({
   unreadCount,
+  active = false,
   children,
   label,
 }: {
   unreadCount: number;
+  /**
+   * ⚠⚠ `E735` — WHETHER THIS PAGE IS ONE THE BELL OWNS (`/notifications`, `/worklist`).
+   * ⚠⚠⚠ THE BELL HAD NO LIT BRANCH AT ALL: its `className` was a plain string literal and
+   * the component never read the route, so it was incapable of backlighting whatever the
+   * predicate said. ⚠ The decision stays in `bandActiveHref` and arrives as a prop —
+   * reading `usePathname()` here would be a SECOND lit rule, which is `E433`'s defect.
+   */
+  active?: boolean;
   children: React.ReactNode;
   label: string;
 }) {
@@ -118,7 +128,11 @@ export function NotificationBell({
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
-        className="grid h-9 w-9 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+        className={
+          /* ⚠ The SHARED lit class, imported — never a fifth hand-typed copy (`E720`). */
+          "grid h-9 w-9 place-items-center rounded-full transition-colors " +
+          (active || open ? BAND_LIT : BAND_IDLE)
+        }
       >
         <span className="relative inline-flex">
           {children}

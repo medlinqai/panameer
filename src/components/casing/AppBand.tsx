@@ -12,7 +12,14 @@ import { useMe } from "@/components/MeProvider";
 import { ConfigDrawer } from "@/components/casing/ConfigDrawer";
 import { BottomNav } from "@/components/casing/BottomNav";
 import { AccountMenu } from "@/components/casing/AccountMenu";
-import { ACCOUNT_BAND_HREF } from "@/lib/nav";
+import {
+  ACCOUNT_BAND_HREF,
+  BAND_CONTROL_HREFS,
+  MESSAGES_BAND_HREF,
+  BELL_BAND_HREF,
+  CONFIG_BAND_HREF,
+  HOME_BAND_HREF,
+} from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
 /* ⚠ ONE DEFINITION OF THE LIT LOOK, SHARED WITH `AccountMenu`'s avatar (`E720` item 1). */
 import { BAND_LIT, BAND_IDLE, BAND_TILE } from "@/components/casing/band-lit";
@@ -242,9 +249,15 @@ export function AppBand() {
   const ownProviderPath = me?.providerProfile?.id
     ? `/providers/${me.providerProfile.id}`
     : null;
+  /*
+    ⚠⚠ `E735` — THE CANDIDATE LIST GAINS THE FOUR CONTROLS. ⚠ `bandActiveHref` can only
+    pick a winner from what it is handed, so an icon that owns a prefix and is not in this
+    array still lights nothing. ⚠⚠⚠ **THAT WAS HALF THE 50-DARK-ROUTE DEFECT** — the other
+    half was that three of the controls had no lit branch to switch on.
+  */
   const activeHref = bandActiveHref(
     pathname,
-    [...items.map((i) => i.href), ACCOUNT_BAND_HREF],
+    [...items.map((i) => i.href), ...BAND_CONTROL_HREFS],
     { ownProviderPath }
   );
   const isActive = (href: string) => href === activeHref;
@@ -253,10 +266,22 @@ export function AppBand() {
     <>
     <header className="pm-band border-b border-white/10 bg-rail px-5 py-2.5 sm:px-6">
       {/* ── LEFT: the brand, always left-justified while visible ──────────── */}
+      {/*
+        ⚠⚠ `E735` — THE LOGO LIGHTS ON `/dashboard` (Scott: *"`/dashboard` lights the
+        logo"*). ⚠ It is a wordmark on a dark band, not a pill, so the lit state is a
+        subtle ground behind it rather than `BAND_LIT`'s solid magenta — a magenta block
+        behind the brand would read as a selected tile, not as "you are home".
+        ⚠⚠⚠ IT IS STILL ONE LIT THING: `activeHref` picks a single winner, so when the
+        logo is lit no pill and no icon is.
+      */}
       <Link
         href={isAdmin ? ADMIN_HOME.href : "/dashboard"}
         aria-label="Panameer home"
-        className="pm-band-brand block"
+        aria-current={isActive(HOME_BAND_HREF) ? "page" : undefined}
+        className={
+          "pm-band-brand block rounded-[6px] px-2 py-1 transition-colors " +
+          (isActive(HOME_BAND_HREF) ? "bg-white/15" : "")
+        }
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -413,7 +438,13 @@ export function AppBand() {
           ⚠⚠ Admin-only, because `ADMIN_NAV` is admin-only. A gear rendered to a
           member would open an empty panel, which is a door onto a wall (`E579`).
         */}
-        {isAdmin && <ConfigDrawer groups={ADMIN_NAV} label="Configuration" />}
+        {isAdmin && (
+          <ConfigDrawer
+            groups={ADMIN_NAV}
+            label="Configuration"
+            active={isActive(CONFIG_BAND_HREF)}
+          />
+        )}
 
         {/*
           ── ⚠⚠⚠ THE BUG ICON HIDES AT PHONE WIDTH (`P2-ALL-E694` WS-A) ──────
@@ -429,6 +460,10 @@ export function AppBand() {
           ⚠ Above `md` nothing changes: same icon, same place, same markup.
         */}
         <span className="hidden md:contents">
+          {/* ⚠ `E735` — `BandIcon` already took an `active` prop and this was the one
+              caller that never passed it. `/support` is owned by the Account menu, so the
+              bug page lights the avatar, not this icon — passing `false` explicitly would
+              be a lie about intent, so it is simply left to the default. */}
           <BandIcon href="/support/bug" label="Report a bug">
             <BugIcon />
           </BandIcon>
@@ -490,8 +525,14 @@ export function AppBand() {
                ⚠ SUPERSEDED, quoted not deleted (`E164`):
                //   (messagesOpen ? "bg-rail-active text-white"
                //                 : "text-white/75 hover:bg-white/10 hover:text-white") */
+            /* ⚠⚠ `E735` — LIT BY THE ROUTE **OR** BY ITS OWN DRAWER. ⚠ Before this the
+               button lit only while its drawer was open, so `/messages` itself was one of
+               the 50 dark routes — and an open drawer lit it *in addition to* whatever
+               `activeHref` had already lit, which is two lit things on one page.
+               ⚠⚠⚠ ON THE ROUTE THE TWO AGREE: `activeHref` is `MESSAGES_BAND_HREF`, so no
+               pill is lit and this is the only one. */
             "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
-            (messagesOpen ? BAND_LIT : BAND_IDLE)
+            (messagesOpen || isActive(MESSAGES_BAND_HREF) ? BAND_LIT : BAND_IDLE)
           }
         >
           <MessagesIcon />
@@ -523,7 +564,11 @@ export function AppBand() {
           ⚠ `See All` inside the panel is the page's door; the bell itself no
           longer navigates, which is what lets it open instead.
         */}
-        <NotificationBell unreadCount={unreadCount} label={NOTIFICATIONS_NAV.label}>
+        <NotificationBell
+          unreadCount={unreadCount}
+          label={NOTIFICATIONS_NAV.label}
+          active={isActive(BELL_BAND_HREF)}
+        >
           <BellIcon />
         </NotificationBell>
 

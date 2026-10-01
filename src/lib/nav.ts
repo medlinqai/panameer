@@ -172,6 +172,40 @@ export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
  */
 export const ACCOUNT_BAND_HREF = "__account-menu__";
 
+/**
+ * ── ⚠⚠⚠ THE FOUR CONTROLS THAT ARE NOT MENU ITEMS (`P2-A1.1-E735`) ─────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-01: *"every page should backlight something"*, and the owners include
+ * the right-hand icons: speech bubble → `/messages`, bell → notifications, gear →
+ * settings/configuration, avatar → Account Information.** `/dashboard` lights the logo.
+ *
+ * ⚠⚠ **MEASURED BEFORE BUILDING: 50 OF 117 SIGNED-IN ROUTES LIT NOTHING**, including
+ * `/dashboard` — the landing page of the whole app — and **the bell, the gear and the
+ * speech bubble had no lit state in their markup at all.** They could not light, whatever
+ * the predicate said.
+ *
+ * ⚠⚠⚠ **THESE ARE KEYS, NOT LINKS, EXACTLY LIKE `ACCOUNT_BAND_HREF`.** The bell and the
+ * gear open a panel rather than navigating, so they own prefixes without owning an href —
+ * and the messages button stopped navigating at `E559`. ⚠ Giving them a real route as a key
+ * would make `bandActiveHref` claim a path the control does not go to.
+ * ⚠ **THE LOGO DOES navigate** (`/dashboard`), but it needs its own key for the same reason
+ * the others do: it is not in `navForRoles`, so it is not in the candidate list unless it is
+ * put there deliberately.
+ */
+export const MESSAGES_BAND_HREF = "__messages__";
+export const BELL_BAND_HREF = "__bell__";
+export const CONFIG_BAND_HREF = "__config__";
+export const HOME_BAND_HREF = "__home__";
+
+/** ⚠ Every non-menu key, for the candidate list and for the gate. One array, two readers. */
+export const BAND_CONTROL_HREFS = [
+  ACCOUNT_BAND_HREF,
+  MESSAGES_BAND_HREF,
+  BELL_BAND_HREF,
+  CONFIG_BAND_HREF,
+  HOME_BAND_HREF,
+] as const;
+
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   /* ⚠ Connect's pages live under `/community` — Community, Colleagues, Forums,
      Mentors, Teams and Score, eight routes. This is the one Scott caught. */
@@ -191,7 +225,11 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     ⚠ The owner's OWN profile page outbids this through `bandActiveHref`'s
     `ownProviderPath` — a longer prefix, not a special case.
   */
-  "/connect": ["/community", "/providers"],
+  /* ⚠ `E735` — inviting a colleague IS Connect; the page is a door into it. */
+  /* ⚠⚠ `/coordinator` is *"Invite a Provider"* plus a *"My Providers"* roster — the same
+     shape as `/invite-colleague`: bringing people in and keeping a list of them. ⚠ It is
+     gated on `canCoordinate`, so only a coordinator ever sees it lit. */
+  "/connect": ["/community", "/providers", "/invite-colleague", "/coordinator"],
   /*
     ⚠⚠ FOUND BY THE NEW GATE, NOT BY THE BRIEF. Enumerating `PAGE_TABS` turned
     up two more dark-band routes of exactly the same shape, both tab
@@ -218,7 +256,13 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
      word at `P2-ALL-E698`:
      //   "/packages": ["/my-services", "/services"], */
   "/shop": ["/my-services", "/services"],
-  "/hire": ["/create-work"],
+  /* ⚠ `E735` — a buyer's own work requests belong to Hire, the journey that
+     created them. ⚠⚠ `/work-requests/[id]/invite` and `/share` are under the same
+     prefix and move with it. */
+  /* ⚠ `/consultations` is *"Book a consultation"* from the requester home — a buyer
+     engaging talent, which is what Hire is. (A `ComingSoon` stub today; the owner arrives
+     with the route rather than after it.) */
+  "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   /*
     ── ⚠⚠⚠ MONEY BELONGS TO ORDERS NOW, AND THE BAND HAS TO SAY SO
        (`P2-ALL-E688` WS-B, ruling `89e`) ──────────────────────────────────
@@ -245,7 +289,10 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
     `"/payments".startsWith("/pay")` being true is a coincidence of spelling that
     already produced one false positive in `check:notification-email`.
   */
-  "/orders": ["/payments", "/pay", "/finances"],
+  /* ⚠ `E735` — `/manage-money` joins the money prefixes: `E688` put money under
+     Orders and removed the `Get Paid` item, so this is where it already lives. */
+  /* ⚠ `/deliver-work` is delivering against a work ORDER, which is where orders live. */
+  "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
   /*
     ── ⚠⚠⚠ THE ACCOUNT MENU IS A BAND DESTINATION TOO (ruling 72) ──────────
 
@@ -286,7 +333,28 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
       stands: this changes which item the band lights, not where the page lives.
     */
     "/community/score",
+    /* ── ⚠⚠ `E735` — THREE MORE THAT ARE THE MEMBER'S OWN ─────────────────────────────
+       ⚠ `/recommendations` is the member's own recommendations, `/support` their own
+       tickets, and `/reports` their own exports. ⚠⚠ All three sat DARK, and all three
+       answer *"what is mine"* rather than naming an application — which is exactly what
+       the Account menu is for (the 2026-09-23 vocabulary ruling). */
+    "/recommendations",
+    "/support",
+    "/reports",
   ],
+  /* ── ⚠⚠⚠ THE FOUR CONTROLS (`E735`) ──────────────────────────────────────────────── */
+  /* ⚠ The speech bubble. One route, and it is the one the drawer shows. */
+  [MESSAGES_BAND_HREF]: ["/messages"],
+  /* ⚠⚠ The bell owns BOTH views of the one table (ruling 86): the triage list and the
+     worklist. ⚠ `/worklist` does not exist yet — it is lane 2 — and listing it here is
+     deliberate: the owner arrives with the route rather than a commit later. */
+  [BELL_BAND_HREF]: ["/notifications", "/worklist"],
+  /* ⚠⚠⚠ The gear opens `ADMIN_NAV`, so it owns the admin tree — all 33 routes, every one
+     of which lit nothing. ⚠ It is admin-only in the band, and a member never reaches
+     `/admin`, so no member sees a lit gear. */
+  [CONFIG_BAND_HREF]: ["/admin"],
+  /* ⚠ The logo is home. ⚠⚠ Scott: *"`/dashboard` lights the logo."* */
+  [HOME_BAND_HREF]: ["/dashboard"],
 };
 
 /*
