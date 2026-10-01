@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FreeLine } from "@/components/marketing/FreeLine";
 import { redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -76,6 +77,15 @@ export default async function Page() {
           <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
             Work Requests
           </h1>
+          {/*
+            ⚠⚠ NARROWED TO WHAT IS PROVEN. ⚠⚠⚠ The brief's line ended *"You pay only for
+            work you buy"* — and that describes a mechanism that **does not exist**: the
+            commission rate is written onto an order and never computed, deducted or
+            settled, and `check:work-chain` §6 FAILS THE BUILD on that arithmetic anywhere
+            in `src/`. ⚠ *"every provider"* also went, because the matcher caps at 100.
+            ⚠ Posting and searching ARE free — that half is measured and is what ships.
+          */}
+          <FreeLine claim="Post work and search providers, free." />
           <p className="mt-1.5 text-[15px] text-ink-2">
             {requests.length === 0
               ? "You haven't created a work request yet."

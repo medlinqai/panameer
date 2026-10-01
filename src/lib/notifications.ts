@@ -329,11 +329,19 @@ async function emailFor(a: {
   if (!emailConfigured()) return;
 
   /*
-    ⚠⚠⚠ THE ALLOWLIST. **EMPTY ON THIS COMMIT, SO NOTHING IS SENT AT ALL** — the
-    sender exists and is wired, and which event goes first is Scott's
-    (`notification-email.ts` carries the whole reasoning). ⚠ An event that is not
-    on it **records intent and does not send, exactly as before this commit**,
-    which is today's behaviour preserved rather than a new suppression.
+    ⚠⚠⚠ THE ALLOWLIST. **IT IS NOT EMPTY AND HAS NOT BEEN SINCE `E689` WS-C.**
+    ⚠ CORRECTED BY `P2-A1.1-E737`: it holds **`account.finish_later`** and now
+    **`colleague.invite_received`**, so mail DOES go from this function.
+    ⚠⚠ **THE STALE VERSION OF THIS COMMENT WAS A SAFETY DEFECT, NOT A TYPO** — Scott,
+    2026-09-29, on the same class of error one file over: *"A reader would add a category at
+    `email:on` believing it is mail-free."* A reader who trusted the sentence below would
+    have believed this function could not send, while it was already sending.
+    ⚠ An event that is NOT on the list still records intent and does not send.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   THE ALLOWLIST. **EMPTY ON THIS COMMIT, SO NOTHING IS SENT AT ALL** - the
+    //   sender exists and is wired, and which event goes first is Scott's. An event
+    //   that is not on it records intent and does not send, exactly as before this
+    //   commit, which is today's behaviour preserved rather than a new suppression.
   */
   if (!notificationEmailAllowed(a.event)) return;
 

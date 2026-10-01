@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
+import { FreeLine } from "@/components/marketing/FreeLine";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import StreakTile from "@/components/learn/app/StreakTile";
 import { StatTile } from "@/components/learn/app/StatTile";
@@ -240,6 +241,19 @@ export function MyLearning({ data }: { data: MyLearningData }) {
             </>
           }
           primary={{ label: "Browse Learning Paths", href: "/learn/paths" }}
+        />
+
+        {/*
+          ⚠⚠ THE LEARN LEAD LINE (`E737`). ⚠ **MEASURED AS TRUE:** no price field exists on
+          any Learn model and `lib/learn.ts` has no payment or plan check — `pathIsOpenTo`
+          is the only predicate and it reads playability and enrolment.
+          ⚠⚠⚠ IT SAYS *"free"*, NOT *"open to everyone"* — enrolling needs a photo, a title
+          and one skill (`learnGaps`), so a claim about ACCESS would have been false while
+          the claim about PRICE is exactly true.
+        */}
+        <FreeLine
+          claim="Every course, free."
+          compare="Other networks bundle learning into a monthly subscription."
         />
 
         <div className="grid items-start gap-5 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">

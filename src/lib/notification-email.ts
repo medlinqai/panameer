@@ -59,6 +59,30 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
     event would be a NEW email to somebody.
   */
   "account.finish_later",
+  /*
+    ── ⚠⚠⚠ THE SECOND KEY (`P2-A1.1-E737`) ────────────────────────────────────
+
+    ⚠ **SCOTT, 2026-10-01: *"Email on for `colleague.invite_received` only."***
+
+    ⚠⚠ **IT IS A NEW EMAIL TO A REAL MEMBER, AND THAT IS THE POINT RATHER THAN A SIDE
+    EFFECT.** The note above says every event after `account.finish_later` would be one —
+    this is the first, chosen deliberately: an invitation nobody sees is an invitation that
+    never happened, and the bell only reaches somebody already in the product.
+
+    ⚠⚠⚠ **IT MAILS FROM THE ONE SHARED DATABASE.** `MAIL_CAPTURE` is set on this machine
+    and is **NOT IN VERCEL AT ALL**, so this sends for real from production and preview the
+    moment it deploys. ⚠ Scott asked for exactly this one key and no other.
+
+    ⚠ **`colleague.invite_accepted` IS DELIBERATELY NOT HERE.** He named one event. The
+    accepted case already reaches the inviter through the bell, and adding it would double
+    today's colleague mail without being asked for.
+
+    ⚠⚠ **NO DOUBLE-SEND:** `colleague-invite` (the transactional sender) mails the invited
+    ADDRESS — somebody who may have no account. This mails the `Person` who received an
+    in-app row, which only exists for a member. ⚠ The two never fire for the same recipient
+    on the same act, which is the ruling-86c test.
+  */
+  "colleague.invite_received",
 ];
 
 /**

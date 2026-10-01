@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
+import { FreeLine } from "@/components/marketing/FreeLine";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
@@ -172,6 +173,17 @@ export default async function MyProfilePage() {
         tabs={profileTabs(viewer)}
         current="/profile"
       />
+      {/*
+        ⚠⚠ THE PROFILE LEAD LINE (`E737`). ⚠⚠⚠ IT IS ON `/profile` AND NOT INSIDE
+        `ConnectProfile` — that component is shared with `/providers/[id]`, so a line placed
+        there would also appear on somebody else's profile, telling a visitor that THEIR
+        résumé build is free while they look at a stranger.
+        ⚠ Both halves are measured: the résumé rebuild is reachable (`OwnerResumeRebuild` on
+        this page's own `ConnectProfile`), and the Search Score is on the `Score` tab above.
+      */}
+      <div className="mx-auto max-w-5xl px-4 pt-3 sm:px-6">
+        <FreeLine claim="Build your profile from your résumé and see your full Search Score, free." />
+      </div>
       {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
           `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
           is only legal in CHILDREN position, never between attributes, which

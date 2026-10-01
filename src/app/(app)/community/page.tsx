@@ -4,6 +4,7 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
+import { FreeLine } from "@/components/marketing/FreeLine";
 import Link from "next/link";
 /* ⚠ `ConnectHome` IS NO LONGER RENDERED BY THIS PAGE (`E591` WS-C) and is
    NOT deleted (`E164`). It is still the body nothing else imports; see the
@@ -103,6 +104,17 @@ export default async function CommunityPage() {
           <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">
             Everyone you&rsquo;re connected to, and everyone you could be.
           </p>
+          {/*
+            ⚠⚠ THE CONNECT LEAD LINE IS HERE, NOT ON `/connect` (Scott, 2026-10-01).
+            ⚠⚠⚠ `/connect` IS A PURE `redirect("/community")` — a line added there would
+            never render for anybody. ⚠ The claim is narrowed to what is TRUE: messaging is
+            accepted-colleague-only, so *"Message people across Panameer"* would have been
+            an overclaim and did not ship. Measured in `canMessage`.
+          */}
+          <FreeLine
+            claim="Message your colleagues, free."
+            compare="Other professional networks charge per message."
+          />
         </header>
         {viewer && <CommunityBody viewer={viewer} />}
       </div>
