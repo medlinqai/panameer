@@ -646,9 +646,31 @@ export function recallReport(input: {
       loss. ⚠⚠ "look like" IS DELIBERATE HEDGING: the pipeline does not actually
       classify them, and claiming it did would be the opposite lie.
     */
+    /*
+      ── ⚠⚠⚠ "imported" WAS A LIE IN PREVIEW MODE (`P2-A1.1-E733`) ────────────
+
+      ⚠ **SCOTT, 2026-09-30: *"fix the preview's 'imported' copy."***
+      ⚠⚠ **MEASURED ON HIS OWN RUN:** the stored row said *"We found 29 company names
+      in your document and **imported 4** as employers"* — and **nothing had been
+      imported.** `E721` item 2 made the profile's rebuild a PREVIEW
+      (`apply: false`), so the upload parses, stores the document, and writes **no
+      profile rows at all** until the member ticks a diff and saves.
+      ⚠⚠⚠ **THE SENTENCE TOLD HIM WORK HAD BEEN DONE THAT HAD NOT BEEN DONE**, which
+      is why he read 2 employers on his profile and could not reconcile it with "4".
+
+      ⚠ **`read` IS THE HONEST VERB FOR BOTH MODES.** The pass genuinely DID read
+      them; whether they are then written is the caller's decision and not something
+      this sentence can know — `recallReport` runs inside the reader and has no
+      access to `apply`. ⚠⚠ **SO THE FIX IS A WORD THAT IS TRUE IN BOTH MODES RATHER
+      THAN A FLAG THREADED THROUGH THE READER** to make one sentence conditional.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   `We found ${input.headings} company names in your document and imported `
+      //   `${input.employers} as employers — the other ${others} look like project `
+      //   `clients rather than jobs. Check your work history.`
+    */
     const others = input.headings - input.employers;
     warnings.push(
-      `We found ${input.headings} company names in your document and imported ` +
+      `We found ${input.headings} company names in your document and read ` +
         `${input.employers} as employers — the other ${others} look like project ` +
         `clients rather than jobs. Check your work history.`
     );
@@ -663,7 +685,9 @@ export function recallReport(input: {
   const total = input.headingsTotal ?? 0;
   if (total > 0 && imported < total) {
     warnings.push(
-      `We found ${total} roles and projects in your document and imported ${imported} — check your work history.`
+      /* ⚠ `E733` — same word, same reason as the warning above: in preview mode nothing
+         is imported. ⚠ SUPERSEDED, quoted (`E164`): "…and imported ${imported}…" */
+      `We found ${total} roles and projects in your document and read ${imported} — check your work history.`
     );
   }
   if (input.dateRanges > imported + 2) {
@@ -905,38 +929,119 @@ export async function aiExtractResumeMultiPass(
     click. An engagement listed under StratERP in the document is not proof that
     it belongs to StratERP.
   */
-  const aligned = emp.ok && emp.value.length === inv.value.length;
+  /*
+    ── ⚠⚠⚠ THE DETERMINISTIC RULE (`P2-A1.1-E733`) ────────────────────────────
+
+    ⚠ **SCOTT, 2026-09-30: *"Build the deterministic employer-vs-project rule after
+    both passes."***
+
+    ⚠⚠ **MEASURED, FIVE READS OF ONE CV ON THE OLD CODE AND FIVE ON THIS ONE.** The
+    failure it fixes was caught in the act on run 3 of the AFTER side, which logged
+    `29 entries for 31 sections`. ⚠⚠⚠ **ON THE OLD CODE THAT RUN PRODUCES 29
+    EMPLOYERS; ON THIS ONE IT PRODUCES 4 EMPLOYERS AND 25 PROJECTS.**
+
+    ⚠⚠⚠ **THE FALLBACK WAS THE DEFECT, NOT THE MODEL.** The classification is
+    already right — pass 1 types every heading `employer` or `engagement` — and a
+    **two-row** count mismatch threw ALL of it away and promoted every section to an
+    employer. ⚠ An off-by-N in the count should cost N rows' certainty, not the
+    whole split.
+
+    ── ⚠⚠ SO THE SPLIT HAS THREE ROUTES, IN ORDER ─────────────────────────────
+
+    1. ⚠ **INDEX**, when the counts match — the pass's own contract is *"exactly N
+       entries, one per listed heading, in order"*. **Byte-for-byte the previous
+       behaviour**, which is why the common case is untouched.
+    2. ⚠⚠ **NAME**, when they do not. Pass 1's heading and the employers pass's
+       `name` describe the same section, so the heading is matched to the row by
+       normalised name — ⚠⚠⚠ **ORDER- AND COUNT-INDEPENDENT, which is the whole
+       point: a dropped row no longer re-types the rows around it.**
+       ⚠ A heading often reads `Client — Role (dates)`, so a PREFIX match counts.
+       **A bare substring match is NOT used** — `Oracle` would match `Oracle
+       Corporation` and half a dozen client names.
+    3. ⚠ **EMPLOYER**, for anything still unmatched — the same safe default as
+       before, now reached only by rows the inventory genuinely never listed.
+       ⚠⚠ **A mis-split files real jobs as projects, which is worse than a row being
+       the wrong type in a way the radio can fix.**
+
+    ⚠ **NO REGEX OVER HEADING TEXT, STILL.** `(via Elire)` and an em-dash are
+    conventions of one CV. The only thing read here is pass 1's own `kind`.
+    ⚠⚠ **THIS DOES NOT FIX `E410`.** The model still returns 4, 5 or 6 employers for
+    the same document on consecutive reads; what it fixes is the 29.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const aligned = emp.ok && emp.value.length === inv.value.length;
+    //   const sectionEmployers = aligned ? empRows.filter(...) : empRows;
+    //   const sectionProjects  = aligned ? empRows.map(...).filter(...) : [];
+  */
   const empRows = emp.ok ? emp.value : [];
-  const sectionEmployers = aligned
-    ? empRows.filter((_, i) => inv.value[i].kind !== "engagement")
-    : empRows;
-  const sectionProjects = aligned
-    ? empRows
-        .map((e, i) => ({ e, item: inv.value[i] }))
-        .filter(({ item }) => item.kind === "engagement")
-        .map(({ e }) => ({
-          /* ⚠ THE ENGAGEMENT IS THE ROLE HALF OF THE HEADING and the client is
-             the company half — `Ceres Insurance — Oracle Cloud Quick Install`
-             parses as name="Ceres Insurance", roleTitle="…Quick Install". */
-          name: e.roleTitle || e.name || "Untitled project",
-          client: e.name ?? null,
-          roleType: null,
-          software: [] as string[],
-          skills: [] as string[],
-          description: e.description ?? null,
-          startDate: e.startDate ?? null,
-          endDate: e.endDate ?? null,
-          /* ⚠ `E549` — the employers pass read this section, so its current flag
-             travels with it when the section is filed as a project. */
-          isCurrent: e.isCurrent ?? null,
-          employer: null,
-        }))
-    : [];
+  const aligned = emp.ok && empRows.length === inv.value.length;
+
+  /** ⚠ Letters and digits only — punctuation and spacing differ between a heading
+   *  and the name the employers pass echoes back. */
+  const normName = (x: string | null | undefined) =>
+    (x ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  const byName = new Map<string, "employer" | "engagement">();
+  for (const item of inv.value) {
+    const k = normName(item.heading);
+    if (k) byName.set(k, item.kind === "engagement" ? "engagement" : "employer");
+  }
+
+  /** ⚠⚠ The route each row took, counted, so the log says WHY rather than only what. */
+  const routed = { name: 0, fallback: 0 };
+
+  const kindOf = (row: { name?: string | null }, i: number): "employer" | "engagement" => {
+    if (aligned) return inv.value[i].kind === "engagement" ? "engagement" : "employer";
+    const n = normName(row.name);
+    if (n) {
+      const exact = byName.get(n);
+      if (exact) {
+        routed.name++;
+        return exact;
+      }
+      /* ⚠ `Ceres Insurance — Oracle Cloud Quick Install (4 Months)` starts with
+         `Ceres Insurance`. ⚠⚠ PREFIX ONLY, never a bare `includes`. */
+      for (const [heading, kind] of byName) {
+        if (heading.startsWith(n + " ")) {
+          routed.name++;
+          return kind;
+        }
+      }
+    }
+    routed.fallback++;
+    return "employer";
+  };
+
+  const kinds = empRows.map((row, i) => kindOf(row, i));
+  const sectionEmployers = empRows.filter((_, i) => kinds[i] !== "engagement");
+  const sectionProjects = empRows
+    .map((e, i) => ({ e, kind: kinds[i] }))
+    .filter(({ kind }) => kind === "engagement")
+    .map(({ e }) => ({
+      /* ⚠ THE ENGAGEMENT IS THE ROLE HALF OF THE HEADING and the client is
+         the company half — `Ceres Insurance — Oracle Cloud Quick Install`
+         parses as name="Ceres Insurance", roleTitle="…Quick Install". */
+      name: e.roleTitle || e.name || "Untitled project",
+      client: e.name ?? null,
+      roleType: null,
+      software: [] as string[],
+      skills: [] as string[],
+      description: e.description ?? null,
+      startDate: e.startDate ?? null,
+      endDate: e.endDate ?? null,
+      /* ⚠ `E549` — the employers pass read this section, so its current flag
+         travels with it when the section is filed as a project. */
+      isCurrent: e.isCurrent ?? null,
+      employer: null,
+    }));
+
   if (emp.ok && !aligned) {
     console.error(
-      `[resume] the employers pass returned ${emp.value.length} entries for ${inv.value.length} sections — index alignment abandoned, every entry kept as an employer`
+      `[resume] the employers pass returned ${empRows.length} entries for ${inv.value.length} sections — ` +
+        `matched by NAME instead of index: ${routed.name} matched, ${routed.fallback} unmatched (kept as employers), ` +
+        `-> ${sectionEmployers.length} employers / ${sectionProjects.length} projects`
     );
   }
+
   /* ⚠ DEDUPED BY NAME. `projectsPass` still runs and still finds sub-projects the
      inventory never listed; a section must not arrive twice because two passes
      both described it. Section rows win — they are the ones `kind` typed. */
