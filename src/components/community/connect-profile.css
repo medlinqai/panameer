@@ -469,10 +469,32 @@
     ⚠⚠ THE SCORE BLOCK LOSES ITS DIVIDER IN THIS ROW, AND THAT IS NOT COSMETIC. `pm-side`
     draws a thin top rule and 28px of margin because in a COLUMN it follows something; here it
     sits BESIDE the photo, where a rule above it would underline nothing.
+
+    ── ⚠⚠⚠ THE CHILD COMBINATOR NEVER MATCHED, AND THE RULE HAD NO EFFECT (`E739`) ────────
+
+    ⚠ **SCOTT, 2026-10-01, at 390: *"Remove the rule above SEARCH SCORE on phone. Top-align
+    the photo and the score block."*** Both were ONE defect with ONE cause.
+    ⚠⚠ **MEASURED: `.pm-rail-top`'s children are `.pm-rail-photo` and `.pm-score-block`.
+    `.pm-side` IS NESTED INSIDE `.pm-score-block`, NOT A DIRECT CHILD** — so
+    `.pm-rail-top > .pm-side` selected nothing and the block kept `border-top: 1px` and
+    `margin-top: 28px`. ⚠⚠⚠ **THAT 28px MARGIN IS ALSO WHY THE PHOTO AND THE SCORE WERE NOT
+    TOP-ALIGNED: photo at y=275.6, score at y=303.6, exactly 28 apart.** The rule above the
+    label and the misalignment were the same unmatched selector.
+    ⚠ **THE COMMENT ABOVE WAS RIGHT ABOUT THE INTENT AND THE CSS DID NOT DO IT** — the
+    `E718` family of defect, where a comment describes a rule that is not in force.
+    ⚠⚠ The flex sizing moves to `.pm-score-block`, which IS the flex item; the divider reset
+    stays with `.pm-side`, which is the element that draws it. ⚠ Two selectors because they
+    are two different elements — collapsing them is what produced the bug.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   .pm-rail-top > .pm-side {
+    //     flex: 1; min-width: 0; margin-top: 0; border-top: 0; padding-top: 0;
+    //   }
   */
-  .pm-rail-top > .pm-side {
+  .pm-rail-top > .pm-score-block {
     flex: 1;
     min-width: 0;
+  }
+  .pm-rail-top .pm-side {
     margin-top: 0;
     border-top: 0;
     padding-top: 0;
