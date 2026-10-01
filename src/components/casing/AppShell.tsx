@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
   import list is fine today, but the moment a quoted body contains `*／` it
   closes the comment early — the trap that has bitten twice.
 */
+import { HiddenProfileBanner } from "@/components/casing/HiddenProfileBanner";
 import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -91,6 +92,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
     >
       <div className="flex min-w-0 flex-1 flex-col">
         <AppBand />
+
+        {/*
+          ⚠⚠ THE HIDDEN-PROFILE BANNER SITS IN THE SHELL, BELOW THE BAND (Scott: *"Put it in
+          the app shell below the band, not on the profile page only"*). ⚠ It renders
+          nothing for a buyer, for an unfinished provider, and for a visible one — so this
+          is a mount, not a reserved strip.
+        */}
+        <HiddenProfileBanner />
 
         <main className="flex-1 px-5 py-6 sm:px-8">{children}</main>
 

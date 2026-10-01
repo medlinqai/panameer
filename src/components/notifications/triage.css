@@ -524,3 +524,43 @@ a.pm-triage-title:hover {
     flex: none;
   }
 }
+
+/*
+  ── ⚠⚠ THE HIDDEN-PROFILE BANNER (`P2-A1.1-E737`, A3) ────────────────────
+
+  ⚠ A THIN strip, not a card: it sits between the band and every page, so it
+  spends the page's vertical space on every route a member visits. ⚠⚠ It is
+  persistent and undismissable, which is exactly why it must be CHEAP to look at.
+
+  ⚠⚠⚠ IT IS NOT RED. A hidden profile is a STATE the member can change, not an
+  error they made — and this strip appears on every page, so an alarm colour
+  would shout continuously. ⚠ The ink ground is the same one the selection bar
+  uses, and the call to action carries the only accent.
+*/
+.pm-hidden-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  padding: 9px 20px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.pm-hidden-banner-why {
+  opacity: 0.8;
+}
+
+.pm-hidden-banner-act {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.pm-hidden-banner-act:hover {
+  opacity: 0.85;
+}

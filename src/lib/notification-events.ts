@@ -589,7 +589,22 @@ export const NOTIFICATION_EVENTS = {
     recipient: "the profile's owner",
     category: "profile.visibility",
     aiMode: "DO_IT",
-    visibility: "DIGEST",
+    /*
+      ── ⚠⚠⚠ `FEED`, NOT `DIGEST` (`P2-A1.1-E737`, Scott's answer 8) ──────────────
+
+      ⚠ **SCOTT, 2026-10-01: *"`profile.viewed` → bell."***
+      ⚠⚠ **MEASURED: IT WAS `DIGEST`, SO `notify()` STAMPED `suppressed_reason: "digest"`
+      AND LEFT `delivered_in_app_at` NULL — AND THE BELL READS
+      `delivered_in_app_at: { not: null }`.** ⚠⚠⚠ **SO TWELVE OF THESE ROWS EXISTED AND NOT
+      ONE HAD EVER REACHED ANYBODY'S BELL**, including Scott's own.
+      ⚠ **AND THE DIGEST THEY WERE WAITING FOR DOES NOT EXIST** — there is no cron, no
+      scheduler and nothing that fires a digest event, which `CLAUDE.md` records as still
+      unbuilt. **A row routed to a surface nobody built is a row that is never delivered.**
+      ⚠⚠ That is why this is a correction rather than a preference: `DIGEST` named a
+      destination, and the destination was never there.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`): `visibility: "DIGEST",`
+    */
+    visibility: "FEED",
     requiresAction: false,
     title: (v) => `${str(v, "viewerName", "Someone")} looked at your profile`,
     body: () => null,
