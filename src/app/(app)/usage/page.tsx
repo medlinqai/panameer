@@ -3,7 +3,19 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
-import { isCounted } from "@/lib/figure";
+/* ⚠ `E730` WS-B/WS-C — the areas are defined once, in `lib/usage-areas.ts`, and this
+   page renders them twice (comb + gauges). */
+import { usageAreas, usageHoneyCells, usageSummary } from "@/lib/usage-areas";
+import { UsageGauges } from "@/components/console/UsageGauges";
+import { Honeycomb } from "@/components/console/Honeycomb";
+import { computeProfileScore } from "@/lib/completeness";
+import { buildCompletenessInput } from "@/lib/onboarding";
+import {
+  accountAccessLines,
+  accountStandingLines,
+  accountCheckCounts,
+} from "@/lib/account-standing";
+import { isCounted, type Figure } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
@@ -133,6 +145,11 @@ export default async function MyStatsPage({
       onsite_rate_cents: true,
       remote_rate_cents: true,
       skills: { select: { id: true } },
+      /* ⚠⚠ WIDENED BY `E730` WS-B — the two fields the Account Health gauge's checks
+         read. ⚠⚠⚠ ADDED TO THE EXISTING SELECT RATHER THAN QUERIED SEPARATELY: the
+         gauge needs two booleans, and a second round trip for two booleans the page
+         is already fetching a row for is a query nobody needs. */
+      available_for_messages: true,
       person: {
         select: {
           phone: true,
@@ -140,6 +157,8 @@ export default async function MyStatsPage({
           title: true,
           photo_url: true,
           site: { select: { addresses: { select: { id: true } } } },
+          /* ⚠ `E730` WS-B — `accountStandingLines` reads email verification. */
+          user: { select: { email_verified: true } },
         },
       },
       _count: {
@@ -367,14 +386,132 @@ export default async function MyStatsPage({
     //       }),
     //     ]);
   */
-  const [publishedProducts, draftProducts] = await Promise.all([
-    prisma.serviceProduct.count({
-      where: { provider_profile_id: profile.id, status: "PUBLISHED" },
-    }),
-    prisma.serviceProduct.count({
-      where: { provider_profile_id: profile.id, status: "DRAFT" },
+  /*
+    ── ⚠⚠ THE GAUGES' OWN THREE COUNTS (`P2-A1.1-E730` WS-C) ──────────────────
+
+    ⚠ The other twenty-odd figures come from `getStatistics`, which has already run.
+    ⚠⚠ THESE THREE ARE NOT IN IT, so they are counted here, in the SAME
+    `Promise.all` as the product counts rather than in a second round trip.
+    ⚠⚠⚠ EACH WAS CHECKED FOR A WRITER, NOT FOR A COLUMN (counting rule 1):
+      · `ServiceProductOffer` — written by `createServiceProductOffer`
+        (`service-product-offers.ts`). Countable.
+      · `SettlementRequest{SUBMITTED}` — written by `requestSettlement`
+        (`settlements.ts`). Countable; it is the one money-adjacent figure on this
+        page that HAS a writer, which is why it is a number and earnings is a dash.
+      · ⚠⚠ `WorkOrder{CLOSED}` IS **NOT** COUNTED AND IS NOT QUERIED. Measured:
+        nothing in the tree writes `CLOSED` or `ACTIVE` — the writers stop at
+        `RELEASED` — so a `count` would return a true 0 that MEANS "unknown". ⚠⚠⚠ A
+        QUERY WHOSE ZERO CANNOT BE DISTINGUISHED FROM AN UNMEASURED STATE IS WORSE
+        THAN NO QUERY, because the zero looks like a result. It is passed as
+        `{ uncounted }` below instead.
+  */
+  const [publishedProducts, draftProducts, offersReceived, awaitingApproval] =
+    await Promise.all([
+      prisma.serviceProduct.count({
+        where: { provider_profile_id: profile.id, status: "PUBLISHED" },
+      }),
+      prisma.serviceProduct.count({
+        where: { provider_profile_id: profile.id, status: "DRAFT" },
+      }),
+      /* ⚠ `provider_person_id` IS ON THE OFFER ITSELF and is indexed with `status`
+         (`@@index([provider_person_id, status])`), so this needs no join. ⚠⚠ Read off
+         the schema rather than guessed — an offer is scoped to the PERSON, like the
+         settlement below, not to the profile like the products above. */
+      prisma.serviceProductOffer.count({
+        where: { provider_person_id: profile.person_id },
+      }),
+      prisma.settlementRequest.count({
+        where: { provider_person_id: profile.person_id, status: "SUBMITTED" },
+      }),
+    ]);
+
+  /*
+    ── ⚠⚠ THE ACCOUNT HEALTH FIGURES, FROM `/account-health`'s OWN ROWS ───────
+
+    ⚠ `accountAccessLines` + `accountStandingLines` + `accountCheckCounts` are the
+    SHARED helpers in `lib/account-standing.ts`. ⚠⚠⚠ THEY WERE A LOCAL LITERAL ON
+    THE HEALTH PAGE AND WERE **MOVED** THERE IN THIS COMMIT, NOT COPIED — a second
+    copy would be `E585` on a figure two tabs of one row both print, and the
+    Account Health gauge would have disagreed with the Account Health page.
+    ⚠ The gauge's SCALE is `passing + failing`, a real total rather than a goal.
+  */
+  const healthChecks = accountCheckCounts([
+    accountAccessLines({ availableForMessages: profile.available_for_messages }),
+    accountStandingLines({
+      status: profile.status,
+      emailVerified: !!profile.person.user?.email_verified,
     }),
   ]);
+
+  /*
+    ── ⚠⚠⚠ THE SEARCH SCORE, FROM THE ONE DEFINITION (`E730` WS-B/WS-C) ───────
+
+    ⚠ `computeProfileScore` over `buildCompletenessInput` is EXACTLY what
+    `/community/score` renders, so the figure on this page and the figure on that
+    page are the same number by construction. ⚠⚠ RE-DERIVING IT HERE FROM
+    `criteria` WOULD BE `E585` ON A SCORE THE MEMBER CAN SEE ON TWO TABS OF ONE
+    ROW — they would disagree the first time a weight changed.
+    ⚠⚠⚠ IT IS A SUPPORTING FIGURE, NOT A GAUGE NEEDLE (Scott, 2026-09-30): the
+    Profile gauge measures PROFILE VIEWS. ⚠ That keeps `E603`'s ruling intact —
+    *"Completion belongs to the score page; Statistics measures what the
+    application DID with the profile"* — because the needle is what the
+    application did, and the score is reported beside it rather than over it.
+  */
+  /* ⚠⚠ IT RETURNS `null` IF THE PROFILE VANISHED BETWEEN THE TWO READS, which is
+     a race this page cannot otherwise observe. ⚠⚠⚠ THE FALLBACK IS `{ uncounted }`,
+     NOT `0` — a score of zero is a RESULT and would read as "your profile earns
+     nothing", which is the fabricated-figure defect on the one number a member is
+     most likely to act on. */
+  const scoreInput = await buildCompletenessInput(profile.id);
+  const searchScore: Figure = scoreInput
+    ? computeProfileScore(scoreInput).total
+    : { uncounted: "The profile could not be read" };
+
+  /*
+    ── ⚠⚠⚠ THE AREAS, ONCE (`E730` WS-B/WS-C) ────────────────────────────────
+
+    ⚠ ONE ARRAY FEEDS BOTH THE COMB AND THE GAUGES. ⚠⚠ Two lists would disagree
+    the first time one changed, and they would disagree **side by side on one
+    screen** — see `lib/usage-areas.ts`'s own docblock.
+
+    ⚠⚠⚠ THE FOUR `{ uncounted }` FIGURES ARE PASSED AS SUCH, NOT AS ZERO, and each
+    reason names WHERE THE CHAIN STOPS rather than apologising:
+      · `coursesCompleted` — `LearnEnrollment` records no completion at all; only
+        per-lesson progress exists.
+      · `shownInSearch` — `getStatistics` already says so; its reason is reused
+        rather than re-worded.
+      · `ordersCompleted` — nothing writes `CLOSED`; the writers stop at `RELEASED`.
+      · `earnings`, `payoutsPending`, `invoicesOpen` — settlement reaches `APPROVED`
+        and nothing writes `PAID`; there is no `Payment` row and no `Invoice` model
+        in the schema at all.
+    ⚠⚠ `stats.work.earnings` IS ALREADY `{ uncounted }` AND IS REUSED — this page
+    does not form a second opinion about whether earnings can be counted.
+  */
+  const areas = usageAreas({
+    views: stats.profile.views,
+    searchScore,
+    shownInSearch: stats.profile.shownInSearch,
+    lessonsDone: stats.learning.lessonsCompleted,
+    coursesCompleted: { uncounted: "A course completion is not recorded" },
+    learnersInPaths: stats.teaching.learners,
+    colleagues: stats.network.colleagues,
+    invitesSent: stats.network.invitesSent,
+    joinedFromInvites: stats.network.joined,
+    workRequests: stats.work.requestsReceived,
+    proposalsSent: stats.work.proposalsSent,
+    interviews: stats.work.interviews,
+    serviceProducts: publishedProducts,
+    offersReceived,
+    drafts: draftProducts,
+    activeOrders: stats.work.workOrders,
+    ordersCompleted: { uncounted: "Nothing closes a work order yet" },
+    awaitingApproval,
+    earnings: stats.work.earnings,
+    payoutsPending: { uncounted: "No payout is ever created" },
+    invoicesOpen: { uncounted: "There is no invoice record" },
+    checksPassing: healthChecks.passing,
+    checksFailing: healthChecks.failing,
+  });
 
   /*
     ⚠⚠ `meetsRequired` IS NOW REQUIRED (`P2-J3-E590` WS-A0). This call site was
@@ -628,9 +765,34 @@ export default async function MyStatsPage({
       */}
       <div className="mb-5">
         <PatternHeader
-          eyebrow={profileTabLabel("/usage")}
-          headline="How your profile is performing"
+          /* ⚠ `USAGE` — the tab row's own word, looked up rather than typed. */
+          eyebrow={profileTabLabel("/usage").toUpperCase()}
+          /*
+            ⚠ SCOTT, 2026-09-30, verbatim. ⚠⚠ IT IS ABOUT THE MEMBER'S SURROUNDINGS
+            RATHER THAN A VERDICT ON THEM — the old headline, *"How your profile is
+            performing"*, graded the member; this one reports activity, which is what
+            a Usage page measures.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   headline="How your profile is performing"
+          */
+          headline="What's Happening Around You"
           lede="Anything marked “—” isn’t being counted yet — those tiles fill in once transactions go live on Panameer."
+          /*
+            ⚠⚠ THE HONEYCOMB IS THE PICTURE (`E730` WS-B), nine cells, tessellated.
+            ⚠⚠⚠ `chrome={false}` STRIPS ITS OWN SECTION, BORDER, HEADING AND LEDE —
+            without that, a bordered card with an `<h2>` nests inside this bordered
+            panel and the page reads as two cards and two headings for one thing.
+            ⚠ It is REUSED, not rebuilt: `E603`'s component, with a layout prop.
+            ⚠⚠ AND IT IS NO LONGER MOUNTED INSIDE `StatisticsCards` — it moved here
+            rather than being drawn twice.
+          */
+          picture={
+            <Honeycomb
+              layout="flower"
+              chrome={false}
+              cells={usageHoneyCells(areas, searchScore)}
+            />
+          }
           figures={[
             { label: "Profile Views", value: stats.profile.views },
             { label: "Colleagues", value: stats.network.colleagues },
@@ -645,13 +807,50 @@ export default async function MyStatsPage({
             ⚠ When nothing is outstanding it says so rather than inventing a
             next move — ruling 53c's instinct applied to a sentence.
           */
-          move={
+          /*
+            ── ⚠⚠⚠ THE SUMMARY SENTENCE, DERIVED (`E730` WS-B) ─────────────────
+
+            ⚠ SCOTT: *"The summary sentence says 'Your busiest area is …'"* and
+            *"The summary names the busiest and quietest areas from the real
+            figures, not fixed text."*
+            ⚠⚠ `usageSummary` READS THE SAME `areas` ARRAY THE COMB AND THE GAUGES
+            DRAW, so it cannot name an area the page is not showing.
+            ⚠⚠⚠ ONLY COUNTED FIGURES VOTE — an uncountable area is not a quiet one,
+            it is an unmeasured one, and calling Earnings "quietest" would report a
+            result where nothing was measured. That is `BusiestLine`'s rule, applied
+            to the header's sentence instead of restated.
+            ⚠ THE OLD `move` IS NOT LOST — what was still needed on the profile now
+            rides on the `Finish My Profile` button's own condition below.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   move={ gaps.length > 0
+            //     ? `Still needed on your profile: ${gaps.join(" · ")}.`
+            //     : visible ? "Your profile is live in the marketplace." : null }
+          */
+          move={usageSummary(areas)}
+          /*
+            ── ⚠⚠⚠ TWO BUTTONS, AND THEY COLLIDE WITH RULING 45(4) ────────────
+
+            ⚠ SCOTT, 2026-09-30: *"two buttons: **Finish My Profile** (solid ink)
+            and **Invite a Colleague** (white, ink border), square, as in the
+            mockup."*
+            ⚠⚠⚠ RULING 45(4) SAYS THE ACTION SLOT IS *"never a repeat of a link
+            already on the page"*, AND THIS PAGE ALREADY HAS A `Finish Your Profile`
+            CARD. ⚠⚠ **RAISED WITH SCOTT RATHER THAN DECIDED EITHER WAY** (rule 13:
+            the newest dated statement is the live one, and a silent overwrite of an
+            older ruling is the same failure as silently obeying it).
+            ⚠ WHAT IS BUILT, AND WHY IT IS THE NARROWER READING: the button carries
+            the SAME CONDITION as the card — it renders only when something is
+            genuinely outstanding — so a complete provider sees neither, and the
+            duplication exists only in the state where the action is real.
+            ⚠⚠ `Invite a Colleague` IS NOT A REPEAT: measured, there is no invite
+            door anywhere on this page.
+          */
+          primary={
             gaps.length > 0
-              ? `Still needed on your profile: ${gaps.join(" · ")}.`
-              : visible
-                ? "Your profile is live in the marketplace."
-                : null
+              ? { label: "Finish My Profile", href: "/profile" }
+              : undefined
           }
+          secondary={{ label: "Invite a Colleague", href: "/community" }}
           /*
             ── ⚠⚠⚠ NO BUTTON, AND I WROTE ONE FIRST ────────────────────────
 
@@ -674,6 +873,19 @@ export default async function MyStatsPage({
           */
         />
       </div>
+
+      {/*
+        ── ⚠⚠⚠ THE GAUGES (`P2-A1.1-E730` WS-C) ──────────────────────────────
+
+        ⚠ EIGHT CARDS — the seven areas plus Account Health, so the grid is 4 + 4
+        with no empty slot. ⚠⚠ ONE `Gauge` COMPONENT, USED EIGHT TIMES (`E585`):
+        eight hand-drawn dials would drift in their ARC MATHS, and two cards showing
+        the same fraction would point their needles at different angles.
+        ⚠⚠⚠ THEY READ THE SAME `areas` ARRAY THE COMB IN THE HEADER DRAWS, so a cell
+        and its gauge cannot disagree about the same member in the same render —
+        not because they are kept in step, but because there is only one of them.
+      */}
+      <UsageGauges areas={areas} />
 
       {/*
         ── ⚠⚠ THE TWO ACTIONS, AT THE TOP (`P2-J2-E563` WS-B) ────────────────

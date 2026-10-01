@@ -1,0 +1,197 @@
+/*
+  ── ⚠⚠⚠ THE GAUGE CARDS (`P2-A1.1-E730` WS-C) ────────────────────────────
+
+  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
+  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
+  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
+  still see the name, but nobody ever finds out the token was wrong.
+  ⚠⚠ `--color-ink-3` **IS** A TOKEN NOW — `E723` item 6 declared it, on Scott's
+  instruction (*"`--color-ink-3` is never declared. Declare it"*), and it is
+  repointed under `data-theme="dark"`. ⚠ `--color-line-2` is still NOT one.
+
+  ⚠⚠⚠ THERE IS NO `background: #fff` ANYWHERE IN THIS FILE, AND THAT IS THE
+  `E723` LESSON APPLIED RATHER THAN RESTATED: the card paints `--color-surface`,
+  so dark mode needs no second rule here. A hard-coded white card is exactly what
+  broke `/profile` and `/providers/[id]` in dark mode.
+*/
+
+.pm-gauges {
+  display: grid;
+  /* ⚠ TWO AT PHONE — Scott's grid. Four hexagonal dials across a 390px screen
+     would be 90px wide each and the needle would be unreadable. */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 900px) {
+  .pm-gauges {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+}
+
+.pm-gauge {
+  position: relative;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+  background: var(--color-surface);
+  transition: border-color 0.15s;
+}
+
+.pm-gauge:hover {
+  border-color: var(--color-magenta);
+}
+
+/* ⚠ The area's MENU label. Magenta because it names the destination the
+   `Go to …` link below leads to — `E433`: magenta means interactive. */
+.pm-gauge-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-magenta);
+}
+
+.pm-gauge-label {
+  margin-top: 2px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  opacity: 0.75;
+}
+
+.pm-gauge-dial {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 8px 0 2px;
+}
+
+.pm-gauge-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: -4px;
+  padding: 0 2px;
+  font-size: 11px;
+}
+
+/*
+  ⚠⚠ THE FIGURE IS INK (`E433`) — magenta means interactive, and a statistic is
+  not a link even when the card around it carries one.
+  ⚠ `tabular-nums` so eight cards in a grid line their digits up.
+*/
+.pm-gauge-value {
+  margin-top: 2px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  ⚠⚠⚠ THE UNCOUNTED FIGURE IS FAINT BUT STILL LEGIBLE. ⚠ At 0.45 the em-dash all
+  but vanished in `E603`'s honeycomb screenshot and the glyph cue was gone — the
+  rule is *"a dash carries its reason"*, and a dash nobody can see carries nothing.
+*/
+.pm-gauge[data-counted="no"] .pm-gauge-value {
+  color: var(--color-ink);
+  opacity: 0.6;
+  font-size: 22px;
+}
+
+/* ⚠ The reason, under the dash, in words. Never optional. */
+.pm-gauge-why {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+  opacity: 0.9;
+}
+
+.pm-gauge-subs {
+  margin-top: 10px;
+  border-top: 1px solid var(--color-line);
+  padding-top: 6px;
+}
+
+.pm-gauge-sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+
+.pm-gauge-sub b {
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  ── ⚠⚠⚠ `NOT COUNTED` IS A BADGE, AND IT IS QUIET RATHER THAN RED ──────────
+  ⚠ Red would read as an ERROR. An uncounted figure is not a failure — it is a
+  measurement nobody can make yet, which is information.
+
+  ⚠⚠⚠ THE MOCKUP USED AN AMBER PAIR AND THIS DOES NOT, FOR A MEASURED REASON:
+  `--color-warm` AND `--color-warm-wash` DO NOT EXIST. The declared palette is
+  ink / ink-2 / ink-3 / line / surface / bg-soft / canvas / magenta* / rail* /
+  learn-*, and nothing else. ⚠⚠ ADDING TWO PALETTE ENTRIES IS A DESIGN DECISION,
+  NOT A CSS CONVENIENCE — Scott ruled against promoting tokens at `E601` WS-D —
+  and a `var(--color-warm)` that resolves to nothing would paint the badge
+  TRANSPARENT ON TRANSPARENT: invisible text, with the gate still able to see the
+  name. That is exactly the failure the no-fallback rule exists to surface.
+  ⚠ SO IT IS BUILT FROM DECLARED TOKENS AND THE COLOUR IS THE FOURTH CUE, NOT THE
+  ONLY ONE: the words `NOT COUNTED`, the hatched dial and the em-dash all carry it
+  too, so the distinction survives with the colour removed.
+  ⚠⚠ REPORTED TO SCOTT: if he wants the amber, it is two token declarations in
+  `globals.css` (light and dark) plus this rule, and it is his call.
+*/
+.pm-gauge-nc {
+  display: inline-block;
+  background: var(--color-bg-soft);
+  color: var(--color-ink-2);
+  border: 1px solid var(--color-line);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pm-gauge-go {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-magenta);
+}
+
+.pm-gauge-go:hover {
+  text-decoration: underline;
+}
+
+/*
+  ⚠⚠ THE HOVER LINE IS ALWAYS IN THE DOM, under a top rule, rather than being a
+  popover this card has to own. ⚠⚠⚠ A TOOLTIP THAT ONLY EXISTS ON HOVER IS
+  UNREACHABLE BY TOUCH AND BY KEYBOARD — and this page's whole audience on a
+  phone is touch. ⚠ It is quiet, not hidden.
+*/
+.pm-gauge-tip {
+  margin-top: 10px;
+  border-top: 1px solid var(--color-line);
+  padding-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--color-ink);
+  opacity: 0.7;
+}

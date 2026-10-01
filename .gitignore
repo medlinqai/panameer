@@ -109,3 +109,8 @@ e2e-e722/shots/
 # harness tracked, shots are run artifacts.
 e2e-e723/.artifacts/
 e2e-e723/shots/
+
+# E730 — the Usage page: the harness is tracked, its shots and artefacts are run
+# output. Same rule as E715-E723 above.
+e2e-e730/shots/
+e2e-e730/.artifacts/
