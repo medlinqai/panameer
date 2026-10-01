@@ -1,4 +1,32 @@
 /*
+  ── ⚠⚠⚠ THE HEADER'S HEADLINE IN MONTSERRAT (`P2-A1.1-E731`) ──────────────
+
+  ⚠ **SCOTT: *"Wrap `/usage` in `.account-surface`, so headings are Montserrat
+  like Profile."*** ⚠⚠ **THE WRAPPER ALONE DOES NOT DO IT, AND THE REASON IS
+  CASCADE LAYERS, NOT SPECIFICITY.** `globals.css` scopes
+  `.account-surface :is(h1, h2, h3, h4) { font-family: var(--font-body) }` inside
+  `@layer base`; `PatternHeader`'s `<h2>` carries Tailwind's `font-display`
+  UTILITY, which lives in `@layer utilities`. ⚠⚠⚠ **A LATER LAYER BEATS AN
+  EARLIER ONE NO MATTER HOW SPECIFIC THE EARLIER SELECTOR IS** — so the scoped
+  rule, which is (0,1,1) against the utility's (0,1,0), still loses.
+  ⚠ **MEASURED, NOT ASSUMED:** the headline rendered in Comfortaa in the 1280
+  screenshot with the wrapper already in place.
+
+  ⚠⚠ **THIS RULE IS UNLAYERED, WHICH IS WHY IT WINS** — unlayered declarations
+  outrank every layer. ⚠ It is SCOPED to this PAGE (`.pm-usage`) rather than
+  applied globally, because making the `globals.css` rule unlayered would flip
+  every `font-display` heading on `/profile` and `/providers/[id]` too, and that
+  is a change to two other pages this brief does not name.
+  ⚠⚠⚠ **THE UNDERLYING DEFECT IS REPORTED RATHER THAN SWEPT: `.account-surface`
+  does not do what its own comment says wherever a `font-display` utility is
+  present.** Fixing that properly is a decision about every Account Information
+  page.
+*/
+.pm-usage :is(h1, h2, h3, h4) {
+  font-family: var(--font-body);
+}
+
+/*
   ── ⚠⚠⚠ THE GAUGE CARDS (`P2-A1.1-E730` WS-C) ────────────────────────────
 
   ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
@@ -68,6 +96,24 @@
   width: 100%;
   height: auto;
   margin: 8px 0 2px;
+}
+
+/*
+  ── ⚠⚠ THE LEVEL WORD, BESIDE `Goal: N` (`P2-A1.1-E731`) ──────────────────
+  ⚠ It is the WORD, not a second colour scale: the comb carries the hue, this
+  carries the name. ⚠⚠ Together they are the key — a reader who cannot tell two
+  mid-tones apart reads `Medium` here instead.
+*/
+.pm-gauge-level {
+  margin-left: 6px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.pm-gauge-level[data-level="none"] {
+  /* ⚠ A measured zero is still a RESULT, so the word is quiet rather than absent —
+     absent would read as "no data", which is the other state entirely. */
+  color: var(--color-ink-3);
 }
 
 .pm-gauge-scale {

@@ -78,13 +78,40 @@ export type PatternHeaderProps = {
   secondary?: HeaderAction;
   /** ⚠ The picture — the web, a ring, a chart. Optional. */
   picture?: ReactNode;
+  /**
+   * ⚠⚠ THE MOCKUP'S FIGURE ORDER — big number, label underneath (`E731`).
+   * ⚠ Opt-in, so `/learn`, `/community` and `/account-health` are byte-unchanged. ⚠⚠⚠ IT IS
+   * A PROP RATHER THAN A GLOBAL FLIP BECAUSE CHANGING EVERY HEADER AT ONCE IS A DECISION
+   * ABOUT FOUR PAGES AND THIS BRIEF NAMES ONE.
+   */
+  figureLead?: boolean;
+  /**
+   * ⚠⚠ SQUARE ACTIONS — 4px radius, solid INK rather than magenta (`E731`).
+   * ⚠ **SCOTT: *"Buttons: square, 4px radius: Finish My Profile (solid ink, when
+   * incomplete) and Invite a Colleague (white, ink border)."*** ⚠⚠⚠ ALSO OPT-IN, and for
+   * the same reason: the pill-and-magenta pair is what the other three headers ship today.
+   */
+  squareActions?: boolean;
 };
 
 /** ⚠ The figure's own rendering, so the dash rule lives in ONE place. */
-function Figure({ figure }: { figure: HeaderFigure }) {
+function Figure({ figure, figureLead }: { figure: HeaderFigure; figureLead?: boolean }) {
   const uncounted = typeof figure.value === "object";
   return (
-    <div>
+    /*
+      ── ⚠⚠⚠ `figureLead` FLIPS THE ORDER IN CSS, NOT IN THE MARKUP (`E731`) ────────
+
+      ⚠ **SCOTT, 2026-10-01: *"Figures as in the mockup: big number, label underneath."***
+      ⚠⚠ **THE `<dt>` STILL COMES BEFORE ITS `<dd>` IN THE DOM**, because that is what a
+      description list MEANS and a screen reader reads the term before the definition.
+      ⚠⚠⚠ **`column-reverse` MOVES THE PAINT, NOT THE READING ORDER** — so the mockup's
+      look costs nothing in the accessibility tree. Swapping the tags would have given a
+      definition with no term in front of it.
+      ⚠ `min-h` ON THE LABEL IS DROPPED IN THIS MODE: it exists to keep three numbers on
+      one baseline when the LABEL is on top and wraps. With the number on top the numbers
+      already share a baseline, and the reserved line would open a gap under the row.
+    */
+    <div className={figureLead ? "flex flex-col-reverse" : undefined}>
       {/*
         ⚠⚠ THE LABEL RESERVES TWO LINES, AND THAT IS AN ALIGNMENT FIX, NOT
         PADDING. ⚠ MEASURED AT 390px ON `/learn`: `CERTIFICATES` fits one line
@@ -95,7 +122,11 @@ function Figure({ figure }: { figure: HeaderFigure }) {
         a baseline is harder to compare, which is the one thing a figure row is
         for.**
       */}
-      <dt className="min-h-[2.4em] text-[12.5px] font-semibold uppercase leading-[1.2] tracking-[0.07em] text-ink-2">
+      <dt
+        className={`text-[12.5px] font-semibold uppercase leading-[1.2] tracking-[0.07em] text-ink-2${
+          figureLead ? " mt-1" : " min-h-[2.4em]"
+        }`}
+      >
         {figure.label}
       </dt>
       {uncounted ? (
@@ -130,6 +161,8 @@ export function PatternHeader({
   move,
   primary,
   secondary,
+  figureLead,
+  squareActions,
   picture,
 }: PatternHeaderProps) {
   /*
@@ -179,7 +212,7 @@ export function PatternHeader({
           {shown.length > 0 ? (
             <dl className={`mt-4 grid gap-4 ${cols}`}>
               {shown.map((f) => (
-                <Figure key={f.label} figure={f} />
+                <Figure key={f.label} figure={f} figureLead={figureLead} />
               ))}
             </dl>
           ) : null}
@@ -195,7 +228,11 @@ export function PatternHeader({
               {primary ? (
                 <Link
                   href={primary.href}
-                  className="inline-flex min-h-[44px] items-center rounded-full bg-magenta px-5 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
+                  className={
+                    squareActions
+                      ? "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-white transition-colors hover:bg-ink-hover"
+                      : "inline-flex min-h-[44px] items-center rounded-full bg-magenta px-5 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
+                  }
                 >
                   {primary.label}
                 </Link>
@@ -209,7 +246,11 @@ export function PatternHeader({
               {secondary ? (
                 <Link
                   href={secondary.href}
-                  className="inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-line px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
+                  className={
+                    squareActions
+                      ? "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
+                      : "inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-line px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
+                  }
                 >
                   {secondary.label}
                 </Link>

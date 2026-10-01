@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { isCounted } from "@/lib/figure";
 import { Gauge, formatFigure } from "@/components/console/Gauge";
-import type { UsageArea, UsageSub } from "@/lib/usage-areas";
+import { levelFor, USAGE_LEVEL_LABEL, type UsageArea, type UsageSub } from "@/lib/usage-areas";
 import "@/components/console/gauges.css";
 
 /**
@@ -76,6 +76,10 @@ function Card({ area: a }: { area: UsageArea }) {
   /* ⚠ Same const-alias narrowing as `Sub` above. */
   const fig = a.figure;
   const counted = isCounted(fig);
+  /* ⚠⚠ THE SAME FUNCTION THE COMB CALLS (`E585`). ⚠⚠⚠ A hexagon tinted from one rule and a
+     word printed from another would disagree on one screen — the cell saying `Strong` by
+     colour while the card beside it said `Medium` in words. */
+  const level = levelFor(fig, a.goal);
 
   return (
     <div
@@ -100,7 +104,17 @@ function Card({ area: a }: { area: UsageArea }) {
       <div className="pm-gauge-scale">
         <span>0</span>
         {a.goal != null ? (
-          <span data-goal>Goal: {formatFigure(a.goal, a.money)}</span>
+          <span data-goal>
+            Goal: {formatFigure(a.goal, a.money)}
+            {/* ⚠ SCOTT: *"each gauge card shows the level as a word beside `Goal: N`."*
+                ⚠⚠ ABSENT WHEN THERE IS NO LEVEL — an uncounted figure gets no word, the
+                same way it gets no needle and no tint. */}
+            {level && (
+              <span className="pm-gauge-level" data-level={level}>
+                {USAGE_LEVEL_LABEL[level]}
+              </span>
+            )}
+          </span>
         ) : (
           <span />
         )}

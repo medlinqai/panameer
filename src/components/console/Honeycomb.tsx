@@ -47,6 +47,18 @@ export type HoneyCell = {
   /** ⚠ What the figure counts, e.g. `"colleagues"`. Used in the derived line. */
   counts: string;
   href: string;
+  /**
+   * ── ⚠⚠⚠ THE LEVEL, DECIDED ELSEWHERE (`P2-A1.1-E731`) ───────────────────────────
+   *
+   * ⚠ **THIS COMPONENT NEVER COMPUTES IT.** `levelFor()` in `lib/usage-areas.ts` is the one
+   * function, and the gauge card beside this comb calls the same one (`E585`).
+   * ⚠⚠ **`null` IS NOT `"none"`.** `none` means a MEASURED ZERO and tints pale-with-an-edge;
+   * `null` means no level applies — an uncounted figure, or one with no goal — and keeps the
+   * hatched treatment it already had. ⚠⚠⚠ **COLLAPSING THE TWO WOULD UNDO THE ONE RULE THIS
+   * COMB ALREADY ENFORCES** (counting rule 2).
+   * ⚠ Optional, so the `grid` layout's existing callers are unchanged.
+   */
+  level?: "none" | "low" | "medium" | "strong" | null;
 };
 
 /** ⚠ Rotation by `cycle`, so cycle 0 is the order the server rendered. */
@@ -101,7 +113,29 @@ export function Honeycomb({
     is no countdown — a countdown beside a picture that never redraws is a
     promise the page does not keep.
   */
-  const shown = still ? cells : rotate(cells, cycle);
+  /*
+    ── ⚠⚠⚠ THE FLOWER ROTATES ITS PETALS AROUND A FIXED CENTRE (`P2-A1.1-E731`) ──────
+
+    ⚠ **SCOTT: *"the flower with Profile in the centre, as in the mockup."*** ⚠⚠ A plain
+    rotation carries the centre cell out of the middle fifteen seconds after load, so
+    *"Profile in the centre"* was true of the first render and of nothing after it.
+    ⚠⚠⚠ **THE CENTRE IS HELD AND THE SIX AROUND IT ROTATE**, which keeps `E603`'s rule —
+    *"the rebuild rearranges cells and never changes a number"* — completely intact while
+    making the centre a fact rather than a coincidence of timing. ⚠ It is also what a
+    flower does.
+    ⚠ Index 3 of seven is the middle of 2-3-2. ⚠⚠ The `grid` layout is untouched and still
+    rotates everything, because it has no centre to hold.
+  */
+  const CENTRE = 3;
+  const shown = still
+    ? cells
+    : layout === "flower" && cells.length === 7
+      ? (() => {
+          const petals = cells.filter((_, i) => i !== CENTRE);
+          const spun = rotate(petals, cycle);
+          return [...spun.slice(0, CENTRE), cells[CENTRE], ...spun.slice(CENTRE)];
+        })()
+      : rotate(cells, cycle);
 
   const grid = (
     <>
@@ -133,6 +167,10 @@ export function Honeycomb({
               className="pm-hive-cell"
               data-cell={c.key}
               data-counted={counted ? "yes" : "no"}
+              /* ⚠ Absent rather than `"null"` when there is no level — a missing attribute
+                 cannot be matched by `[data-level="..."]`, so the hatched treatment stands
+                 with no extra rule. */
+              data-level={c.level ?? undefined}
               /* ⚠⚠ THE ACCESSIBLE NAME CARRIES THE REASON TOO. A screen reader
                  cannot see a dashed outline, so for an uncountable cell the
                  distinction the CSS makes visually must be in the WORDS. */
@@ -169,6 +207,10 @@ export function Honeycomb({
     return (
       <div className="pm-hive-picture">
         {grid}
+        {/* ⚠⚠ THE KEY ONLY APPEARS WHERE LEVELS DO. ⚠ A legend for a scale the cells are
+            not using would be a caption about nothing — the `grid` layout passes no
+            `level`, so it gets none. */}
+        {cells.some((c) => c.level) && <LevelKey />}
         <RebuildBadge secondsLeft={secondsLeft} />
       </div>
     );
@@ -184,6 +226,36 @@ export function Honeycomb({
       <BusiestLine cells={cells} />
       <RebuildBadge secondsLeft={secondsLeft} />
     </section>
+  );
+}
+
+/**
+ * ── ⚠⚠ THE KEY (`P2-A1.1-E731`) ──────────────────────────────────────────
+ *
+ * ⚠ **SCOTT: *"a small key under the honeycomb."*** ⚠⚠ **A TINTED CELL MEANS NOTHING
+ * WITHOUT ONE.** Four shades of one hue carry an ordering a reader can see but cannot
+ * NAME, and an unnamed ordering invites the wrong reading — darker could as easily mean
+ * *"needs attention"* as *"doing well"*.
+ * ⚠⚠⚠ **THE SWATCHES ARE THE REAL CELLS, NOT A SECOND SET OF COLOURS.** They carry the
+ * same `data-level` attribute the hexagons do, so the key is painted by the same CSS rules
+ * — it cannot drift from what it explains (`E585`).
+ */
+function LevelKey() {
+  const LEVELS = [
+    ["none", "None"],
+    ["low", "Low"],
+    ["medium", "Medium"],
+    ["strong", "Strong"],
+  ] as const;
+  return (
+    <ul className="pm-hive-key" aria-label="What the shading means">
+      {LEVELS.map(([key, label]) => (
+        <li key={key}>
+          <span className="pm-hive-key-swatch" data-level={key} aria-hidden />
+          {label}
+        </li>
+      ))}
+    </ul>
   );
 }
 

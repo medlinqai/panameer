@@ -734,6 +734,18 @@ export default async function MyStatsPage({
         tabs={profileTabs(viewer)}
         current="/usage"
       />
+    {/*
+      ── ⚠⚠⚠ `.account-surface` (`P2-A1.1-E731`) ───────────────────────────────
+
+      ⚠ **SCOTT: *"Wrap `/usage` in `.account-surface`, so headings are Montserrat like
+      Profile."*** ⚠⚠ The headline rendered in the DISPLAY face (Comfortaa) because
+      `PatternHeader`'s `<h2>` carries `font-display` and nothing overrode it here.
+      ⚠⚠⚠ `globals.css` SCOPES `:is(h1, h2, h3, h4)` TO THIS CLASS AND WINS ON
+      SPECIFICITY, NOT ON ORDER — so the wrapper is the whole fix and no component
+      changes. ⚠ `/profile` and `/providers/[id]` already use it; this makes the third
+      Account Information page agree with them.
+    */}
+    <div className="account-surface pm-usage">
     <div className="mx-auto max-w-5xl">
       {/*
         ── ⚠⚠⚠ THE PATTERN HEADER (ruling 23) ─────────────────────────────────
@@ -776,7 +788,14 @@ export default async function MyStatsPage({
             //   headline="How your profile is performing"
           */
           headline="What's Happening Around You"
-          lede="Anything marked “—” isn’t being counted yet — those tiles fill in once transactions go live on Panameer."
+          /* ⚠ THE LEDE IS GONE (Scott, 2026-10-01). ⚠⚠ It explained the dash convention in
+             the abstract, above figures that then explain themselves: every uncounted
+             figure on this page carries its OWN reason, in words, where it sits. ⚠⚠⚠ A
+             general note about dashes is a caption for a rule the page already states
+             seven times, and the mockup goes straight from headline to figures.
+             ⚠ SUPERSEDED, quoted not deleted (`E164`):
+             //   lede="Anything marked “—” isn’t being counted yet — those tiles fill in
+             //   once transactions go live on Panameer." */
           /*
             ⚠⚠ THE HONEYCOMB IS THE PICTURE (`E730` WS-B), nine cells, tessellated.
             ⚠⚠⚠ `chrome={false}` STRIPS ITS OWN SECTION, BORDER, HEADING AND LEDE —
@@ -790,7 +809,7 @@ export default async function MyStatsPage({
             <Honeycomb
               layout="flower"
               chrome={false}
-              cells={usageHoneyCells(areas, searchScore)}
+              cells={usageHoneyCells(areas)}
             />
           }
           figures={[
@@ -827,6 +846,10 @@ export default async function MyStatsPage({
             //     : visible ? "Your profile is live in the marketplace." : null }
           */
           move={usageSummary(areas)}
+          /* ⚠ The mockup's figure order and its square actions (`E731`). Both are opt-in
+             props, so the other three `PatternHeader` pages are byte-unchanged. */
+          figureLead
+          squareActions
           /*
             ── ⚠⚠⚠ TWO BUTTONS, AND THEY COLLIDE WITH RULING 45(4) ────────────
 
@@ -1355,6 +1378,8 @@ export default async function MyStatsPage({
         </Link>
         .
       </p>
+    </div>
+    {/* ⚠ closes `.account-surface` */}
     </div>
     </>
   );

@@ -606,7 +606,18 @@ check(
  */
 check(
   "22 — ⚠⚠⚠ reduced motion freezes the order itself",
-  /still \? cells : rotate\(/.test(src.hive),
+  /*
+    ⚠⚠ RE-ANCHORED BY SHAPE (`P2-A1.1-E731`). ⚠ The old needle was the LITERAL
+    `still ? cells : rotate(`, which stopped matching when `E731` gave the flower a
+    fixed centre — the branch is now `still ? cells : <flower ? pinned : rotate>`.
+    ⚠⚠⚠ THE RULE IS UNCHANGED AND STILL ENFORCED: a reader who asked for no motion gets
+    `cells` UNROTATED. **This is `check:rollup`'s case (the mechanism changed), not
+    `check:cert-skills`' (the code drifted)** — the distinction Scott enforces.
+    ⚠ BOTH HALVES ARE ASSERTED SO IT CANNOT PASS VACUOUSLY: the still branch returns the
+    array as given, AND the rotation still exists for everyone else. ⚠⚠ Deleting the
+    rebuild entirely would satisfy the first half alone.
+  */
+  /still\s*\?\s*cells\s*:/.test(src.hive) && /rotate\(/.test(src.hive),
   "a still picture, not a silent swap"
 );
 check(

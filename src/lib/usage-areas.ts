@@ -62,6 +62,50 @@ export const USAGE_GOALS = {
   earnings: 10_000,
 } as const;
 
+/**
+ * ── ⚠⚠⚠ THE LEVEL — ONE FUNCTION, BOTH SURFACES (`P2-A1.1-E731`) ────────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-01: *"each area's level comes from its value against its goal in the
+ * one goals config. None (0) · Low (under 1/3 of goal) · Medium (1/3 to 2/3) · Strong (2/3
+ * or more). One function decides the level for both (`E585`)."***
+ *
+ * ⚠⚠ **THE COMB AND THE GAUGE CARD BOTH CALL THIS.** A hexagon tinted from one rule and a
+ * word printed from another would disagree the first time a boundary moved — and they would
+ * disagree **on one screen**, with the cell saying `Strong` by colour while the card beside
+ * it said `Medium` in words.
+ *
+ * ⚠⚠⚠ **`null` IS NOT A LEVEL, AND THAT IS THE COUNTING RULE AGAIN.** An uncounted figure
+ * has no level and gets none — ⚠ **IT IS NOT `"none"`**. *"None"* means **measured zero**; a
+ * dash means **nobody can measure it**, and collapsing the two is exactly what counting
+ * rule 2 forbids. ⚠ A figure with **no goal** also returns `null`: a level is a position on
+ * a scale, so without a scale there is no position.
+ */
+export type UsageLevel = "none" | "low" | "medium" | "strong";
+
+export const USAGE_LEVEL_LABEL: Record<UsageLevel, string> = {
+  none: "None",
+  low: "Low",
+  medium: "Medium",
+  strong: "Strong",
+};
+
+/** ⚠ The order the key under the comb reads, pale to solid. */
+export const USAGE_LEVELS: UsageLevel[] = ["none", "low", "medium", "strong"];
+
+export function levelFor(figure: Figure, goal: number | null): UsageLevel | null {
+  if (!isNum(figure)) return null;
+  if (goal == null || goal <= 0) return null;
+  if (figure <= 0) return "none";
+  const share = figure / goal;
+  /* ⚠ `>=` ON BOTH BOUNDARIES, so a value exactly on a third is `medium` and exactly on
+     two thirds is `strong`. Scott's words are *"1/3 to 2/3"* for medium and *"2/3 or
+     more"* for strong, which fixes the upper edge; the lower one is set the same way so a
+     boundary never falls between two bands. */
+  if (share >= 2 / 3) return "strong";
+  if (share >= 1 / 3) return "medium";
+  return "low";
+}
+
 export type UsageSub = { label: string; figure: Figure };
 
 export type UsageArea = {
@@ -315,27 +359,37 @@ export function usageAreas(u: UsageInput): UsageArea[] {
 }
 
 /**
- * ── ⚠⚠⚠ THE NINE HONEYCOMB CELLS, FROM THE SAME ARRAY ───────────────────────────────────
+ * ── ⚠⚠⚠ THE FLOWER — SEVEN CELLS, 2-3-2, PROFILE IN THE CENTRE ──────────────────────────
  *
- * ⚠ **SCOTT: nine cells, *"the 7 areas (Profile in the centre) plus Views and Health."***
+ * ⚠ **SCOTT, 2026-10-01: *"the flower with Profile in the centre, as in the mockup."***
  *
- * ⚠⚠⚠ **THE NINTH CELL IS `Search Score`, NOT `Views`, AND THAT IS A CONSEQUENCE OF HIS
- * OWN ANSWER 5 RATHER THAN A NEW DECISION.** He ruled the Profile gauge's needle is
- * **Profile Views** with Search Score demoted to a supporting figure. ⚠ So `Views` is
- * already the Profile area's headline figure — a separate `Views` cell would print the same
- * number twice on one screen, which is the duplication this whole file exists to prevent.
- * ⚠⚠ **THE SET IS IDENTICAL EITHER WAY — nine cells, the same nine figures.** Only which of
- * the two profile figures sits in the `Profile` cell changes, and this way the cell and the
- * gauge agree about what `Profile` means.
- * ⚠ **REPORTED TO SCOTT RATHER THAN DECIDED QUIETLY** (rule 13): the mockup draws the
- * `Profile` cell as the score, `93`.
+ * ⚠⚠⚠ **THE MOCKUP'S FLOWER IS SEVEN CELLS IN 2-3-2, AND SEVEN IS NOT A CHOICE — IT IS
+ * GEOMETRY.** A hexagonal flower has a centre plus a ring, which is 1 + 6; the next one up
+ * is 1 + 6 + 12 = 19. ⚠⚠ **NINE CANNOT MAKE THAT SILHOUETTE.** Nine hexagons tile as a
+ * 3×3 rhombus — which is what shipped at `E730` WS-B, and which reads as a block rather
+ * than a flower in the 390px screenshot.
  *
- * ⚠⚠ **PROFILE IS INDEX 4 — the centre of a three-by-three comb.** ⚠⚠⚠ THE REBUILD THEN
- * MOVES IT, and that is `E603`'s approved behaviour, not a regression: *"The rebuild
- * rearranges cells and never changes a number."* Profile is centre on the SERVER render and
- * on cycle 0; a reader who asked for reduced motion keeps it there permanently.
+ * ⚠⚠ **SO THE SEVEN ARE THE SEVEN AREAS, AND `Search Score` AND `Health` LEAVE THE COMB.**
+ * ⚠⚠⚠ **BOTH REMOVALS PAY FOR THEMSELVES RATHER THAN MERELY FITTING:**
+ *   · ⚠ `Search Score` **WAS PRINTING TWICE** — as its own cell AND as the Profile gauge's
+ *     supporting figure. That was reported at `E730` as a consequence of answers 3 and 5
+ *     together, and taking it out of the comb is what resolves it.
+ *   · ⚠ `Health` **IS A STATUS, NOT AN ACTIVITY.** It already does not vote for busiest, for
+ *     that exact reason; a comb of areas is the other place it does not belong. It keeps its
+ *     gauge.
+ * ⚠ **EVERY FIGURE IS STILL ON THE PAGE** — the comb lost two cells, not two numbers.
+ * ⚠⚠ **SUPERSEDED, quoted not deleted (`E164`):** *"nine cells, the 7 areas (Profile in the
+ * centre) plus Views and Health"* (Scott, 2026-09-30). **Rule 13 — the newest dated
+ * statement is the live one, and *"as in the mockup"* is specific about the shape.**
+ * ⚠ **FLAGGED TO SCOTT, NOT DECIDED QUIETLY: going back to nine is one line here.**
+ *
+ * ⚠⚠⚠ **PROFILE IS INDEX 3 OF SEVEN — the middle of the middle row — AND IT IS PINNED
+ * THERE.** `E603`'s rebuild rotates the cells, which would have carried Profile out of the
+ * centre fifteen seconds after load. ⚠ **THE SIX PETALS NOW ROTATE AROUND A FIXED CENTRE**,
+ * which keeps *"the cells move; the figures do not"* true while making *"Profile in the
+ * centre"* a fact rather than a fact-on-first-render.
  */
-export function usageHoneyCells(areas: UsageArea[], searchScore: Figure) {
+export function usageHoneyCells(areas: UsageArea[]) {
   const by = (k: string) => areas.find((a) => a.key === k)!;
   const cell = (a: UsageArea) => ({
     key: a.key,
@@ -343,26 +397,23 @@ export function usageHoneyCells(areas: UsageArea[], searchScore: Figure) {
     figure: a.figure,
     counts: a.counts,
     href: a.href,
+    level: levelFor(a.figure, a.goal),
   });
 
-  /* ⚠ Row 1 · Row 2 (Profile centre) · Row 3 — the comb's own layout offsets the odd rows,
-     so index 4 of nine is the middle cell of the middle row. */
+  /*
+    ⚠⚠⚠ ROW 1 (2) · ROW 2 (3, PROFILE IN THE MIDDLE) · ROW 3 (2) — the mockup's own shape.
+    ⚠ Index 2 of seven is the centre cell, and `Honeycomb`'s flower layout PINS it there.
+  */
   return [
     cell(by("learn")),
     cell(by("connect")),
-    {
-      key: "score",
-      label: "Search Score",
-      figure: searchScore,
-      counts: "of 100",
-      href: "/community/score",
-    },
+
     cell(by("earnings")),
     cell(by("profile")),
     cell(by("work")),
+
     cell(by("orders")),
     cell(by("shop")),
-    cell(by("health")),
   ];
 }
 
@@ -385,51 +436,62 @@ export function usageHoneyCells(areas: UsageArea[], searchScore: Figure) {
  * first two reports "nobody has done anything" about figures nobody can measure.
  */
 export function usageSummary(areas: UsageArea[]): string {
-  /*
-    ⚠⚠⚠ ACCOUNT HEALTH DOES NOT VOTE, AND THE SCREENSHOT IS WHY. ⚠ With it in, the
-    sentence read *"Your busiest area is Health, with 4 checks passing"* — which is
-    true, comparable and MEANINGLESS: ⚠⚠ **HEALTH IS A STATUS, NOT AN ACTIVITY.** Its
-    figure counts checks Panameer runs ON the member, not anything the member did, so
-    it wins "busiest" on a brand-new account that has done nothing at all.
-    ⚠⚠⚠ IT IS THE SAME CLASS OF RULE AS *"only counted figures vote"* — an area whose
-    figure does not answer the question being asked is excluded from the comparison
-    rather than allowed to win it. ⚠ It keeps its gauge and its cell; it is only the
-    SENTENCE it stays out of.
-    ⚠ FOUND IN THE RENDER, NOT IN REVIEW — every gate was green and the line was still
-    wrong, which is `E603`'s own lesson about the busiest/quietest sentence repeating
-    itself one brief later.
-  */
   const activity = areas.filter((a) => a.key !== "health");
   const counted = activity.filter(
     (a): a is UsageArea & { figure: number } => isNum(a.figure)
   );
-  const un = activity.length - counted.length;
-  const tail =
-    un > 0
-      ? ` ${un} area${un === 1 ? "" : "s"} could not be counted at all.`
-      : "";
 
   if (counted.length === 0) {
     return "No area on this page can be counted yet, so there is nothing to compare.";
   }
 
-  if (counted.every((a) => a.figure === 0)) {
-    return `Nothing counted in any area yet.${tail}`;
-  }
-
   const sorted = [...counted].sort((a, b) => b.figure - a.figure);
   const top = sorted[0];
-  const bottom = sorted[sorted.length - 1];
+  /* ⚠ EVERY measured zero, not just the lowest one — the mockup names three. */
+  const quiet = counted.filter((a) => a.figure === 0);
 
-  const quiet =
-    sorted.length > 1 && bottom.key !== top.key
-      ? ` The quietest is ${bottom.eyebrow}, with ${plural(bottom.figure, bottom.counts.replace(/s$/, ""), bottom.counts)}.`
-      : "";
+  /*
+    ── ⚠⚠⚠ THE ONE PLAIN NEXT STEP ───────────────────────────────────────────────────────
+    ⚠ **SCOTT, 2026-10-01: *"busiest area, quiet areas, and one plain next step."***
+    ⚠⚠ **IT IS CHOSEN FROM THE QUIET AREAS THEMSELVES, NEVER CANNED.** The mockup's
+    sentence — *"No work requests have reached you yet; a complete profile and a colleague
+    who can vouch for you are the fastest way to change that"* — is what the page should say
+    when `work` is the quiet one, so the step is keyed on WHICH area is quiet.
+    ⚠⚠⚠ **NO PROMISES AND NO ABSOLUTES.** *"the fastest way"* is a claim about outcomes
+    nobody has measured, so each line below says what to DO, not what it will achieve.
+  */
+  const STEP: Record<string, string> = {
+    work: "A complete profile and a colleague who can vouch for you are what buyers look at first.",
+    connect: "Inviting a colleague is the quickest way to start a network here.",
+    learn: "A lesson or two is the fastest way to show what you know.",
+    shop: "Listing one service product gives buyers something to buy.",
+    orders: "Orders follow work requests, so that is the thread to pull first.",
+    profile: "Profile views come from being findable — the Score tab says what is missing.",
+  };
+
+  const names = (xs: UsageArea[]) =>
+    xs.length === 1
+      ? xs[0].eyebrow
+      : `${xs.slice(0, -1).map((a) => a.eyebrow).join(", ")} and ${xs[xs.length - 1].eyebrow}`;
+
+  /* ⚠⚠ EVERY COUNTED AREA AT ZERO — no busiest to name, so it says so and goes straight to
+     the step. ⚠ A "busiest" among a set of zeros would name an arbitrary winner. */
+  if (top.figure === 0) {
+    const step = STEP[quiet[0]?.key ?? ""] ?? "";
+    return `Nothing has been counted in any area yet.${step ? ` ${step}` : ""}`;
+  }
+
+  const quietPart = quiet.length
+    ? ` The quiet ${quiet.length === 1 ? "one is" : "ones are"} ${names(quiet)}.`
+    : "";
+  /* ⚠ The step speaks to the FIRST quiet area, in the page's own order, so it is stable
+     between renders rather than depending on a tie-break. */
+  const step = quiet.length ? STEP[quiet[0].key] ?? "" : "";
 
   return (
     `Your busiest area is ${top.eyebrow}, with ` +
     `${plural(top.figure, top.counts.replace(/s$/, ""), top.counts)}.` +
-    quiet +
-    ` Compared by count only — each area counts a different thing.${tail}`
+    quietPart +
+    (step ? ` ${step}` : "")
   );
 }

@@ -66,68 +66,180 @@
 .pm-hive-flower {
   --pm-hex-gap: 6px;
   --pm-hex-overlap: 24%;
-  grid-template-columns: repeat(3, 1fr);
+  /*
+    ⚠⚠⚠ SIX COLUMNS FOR A 2-3-2 FLOWER, AND THE HALF-COLUMN IS THE WHOLE TRICK.
+    ⚠ A hexagonal flower's short rows sit HALF A CELL in from the long one, and a
+    grid cannot place anything on a half column — so the track is **half-width**
+    and every cell spans TWO of them. ⚠⚠ A short row then starts on column 2
+    instead of column 1, which is exactly half a cell.
+    ⚠ `grid-column` below does the placing; nothing is positioned absolutely, so
+    the comb still reflows and still has a real height.
+  */
+  grid-template-columns: repeat(6, 1fr);
   gap: 0 var(--pm-hex-gap);
-  /* ⚠ The comb is a PICTURE and must not stretch to the panel's full width — at
-     1280 the header's left column is wide and three hexagons stretched across it
-     stop looking like hexagons. */
-  max-width: 318px;
+  max-width: 300px;
   margin-inline: auto;
 }
 
-/* ⚠ Phone first: the 640px rule above already gives three columns, and the
-   flower wants three at EVERY width — two columns cannot offset into a comb. */
 @media (max-width: 639px) {
   .pm-hive-flower {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 270px;
+    grid-template-columns: repeat(6, 1fr);
+    max-width: 264px;
   }
 }
 
 /*
-  ⚠⚠⚠ THE SETTLE ANIMATION CLOBBERS THIS OFFSET, AND IT TOOK A MEASUREMENT TO
-  FIND — `check:usage` read `shiftTop: 0` on markup whose CSS was correct.
-
-  ⚠ `pm-hive-settle` (below) ends on `to { transform: none }` and is applied with
-  `both`, so its FILLED value persists after the run. ⚠⚠ ANIMATED VALUES WIN OVER
-  NORMAL DECLARATIONS IN THE CASCADE — so `transform: none` from the finished
-  animation beat `transform: translateX(...)` here, permanently, and the nine
-  hexagons rendered as a plain 3×3 block.
-  ⚠⚠⚠ NOTHING ABOUT THE CSS *LOOKED* WRONG. The selector matched, the `calc` was
-  valid, the class was on the element. **Only a geometry assertion could see it** —
-  a test that checked the class name would have passed on the broken layout, which
-  is `E603`'s lesson 11 exactly (a gate can assert the right rule about the wrong
-  thing).
-
-  ⚠ THE FIX IS TO TAKE THE TRANSFORM OUT OF THE ANIMATION FOR THIS LAYOUT, NOT TO
-  FIGHT IT WITH `!important`. The component's own comment already says the
-  animation is DECORATION — *"the rearrange is the order change itself, which
-  happens in the markup whether or not this runs"* — so the flower keeps the FADE
-  and drops the lift. ⚠⚠ The grid layout is byte-unchanged and keeps both.
+  ⚠⚠ ROW 1 IS CELLS 1-2 · ROW 2 IS 3-5 (PROFILE IS 4, THE MIDDLE) · ROW 3 IS 6-7.
+  ⚠ Written as explicit placements rather than a formula because the row lengths
+  ALTERNATE — 2, 3, 2 — and that pattern is the layout, not an implementation
+  detail of it.
 */
-/* ⚠⚠ nth-child over NINE cells: 1–3 is row 1, 4–6 row 2, 7–9 row 3. ⚠ Written as
-   explicit ranges rather than a formula because the offset alternates by ROW and
-   CSS has no row selector in a grid — the ranges ARE the row definition. */
-.pm-hive-flower > :nth-child(-n + 3) {
-  transform: translateX(calc(50% + var(--pm-hex-gap) / 2));
-}
-.pm-hive-flower > :nth-child(n + 4):nth-child(-n + 6) {
+.pm-hive-flower > :nth-child(1) { grid-column: 2 / span 2; grid-row: 1; }
+.pm-hive-flower > :nth-child(2) { grid-column: 4 / span 2; grid-row: 1; }
+
+.pm-hive-flower > :nth-child(3) { grid-column: 1 / span 2; grid-row: 2; }
+.pm-hive-flower > :nth-child(4) { grid-column: 3 / span 2; grid-row: 2; }
+.pm-hive-flower > :nth-child(5) { grid-column: 5 / span 2; grid-row: 2; }
+
+.pm-hive-flower > :nth-child(6) { grid-column: 2 / span 2; grid-row: 3; }
+.pm-hive-flower > :nth-child(7) { grid-column: 4 / span 2; grid-row: 3; }
+
+/* ⚠ The vertical interlock — rows 2 and 3 are pulled up into the shoulders of
+   the row above. ⚠⚠ `margin-top` and NOT `transform`: see the cascade note
+   further down, where the settle animation's filled `transform: none` wins. */
+.pm-hive-flower > :nth-child(n + 3) {
   margin-top: calc(-1 * var(--pm-hex-overlap));
-}
-.pm-hive-flower > :nth-child(n + 7) {
-  margin-top: calc(-1 * var(--pm-hex-overlap));
-  transform: translateX(calc(50% + var(--pm-hex-gap) / 2));
 }
 
 /*
-  ⚠⚠⚠ THE OFFSET ROWS OVERHANG THE GRID BY HALF A CELL, so the picture needs that
-  space or the right-hand column is clipped by the panel. ⚠ `padding-right` rather
-  than a wider `max-width`: the hexagons keep their size and the slack goes to the
-  edge, which is what keeps the comb centred under its own container.
+  ── ⚠⚠⚠ THE LEVEL — ONE HUE, FOUR STEPS, PALE TO SOLID (`P2-A1.1-E731`) ───
+
+  ⚠ **SCOTT: *"one hue, light to dark (None = pale with dashed edge; Strong =
+  solid ink, white text)."***
+
+  ⚠⚠⚠ THE HUE IS `--color-ink` AND THE STEPS ARE `color-mix` AGAINST
+  `--color-surface`, WHICH IS WHY DARK MODE NEEDS NO SECOND RULE: both ends are
+  tokens that already flip, so the ramp re-derives itself on the dark palette
+  instead of being re-typed for it (`E723`'s lesson, applied rather than
+  restated). ⚠ Four hard-coded greys would have been four more things to flip.
+
+  ⚠⚠ `none` KEEPS A DASHED EDGE because a measured zero and an uncountable
+  figure must still differ — the zero is PALE-WITH-AN-EDGE and prints `0`; the
+  uncountable one is HATCHED and prints an em-dash with its reason. ⚠⚠⚠ THEY ARE
+  NEITHER THE SAME COLOUR NOR THE SAME GLYPH, which is the rule holding.
+*/
+/*
+  ⚠⚠⚠ `none` IS **PALE**, NOT WHITE, AND THAT WAS A MEASURED DEFECT. ⚠ Painted
+  `--color-surface` the hexagons DISAPPEARED: white on white, with the dashed
+  border clipped away on all four diagonals by `clip-path` — exactly the failure
+  this file already documents a few rules down, reproduced by me in the first
+  render. **The 1280 screenshot showed two faint vertical ticks per cell and no
+  hexagon at all.**
+  ⚠⚠ SO THE FILL CARRIES THE SHAPE (`--color-bg-soft`, the comb's own pale
+  ground) AND THE DASHED EDGE IS THE SECOND CUE WHERE CLIPPING LETS IT SHOW —
+  the same compromise the uncounted cell already makes, for the same reason.
+  ⚠ It is still clearly the lightest step of the ramp, which is what `none` has
+  to be.
+*/
+.pm-hive-cell[data-level="none"]::before {
+  background: var(--color-bg-soft);
+  border-style: dashed;
+}
+.pm-hive-cell[data-level="low"]::before {
+  background: color-mix(in srgb, var(--color-ink) 16%, var(--color-surface));
+}
+.pm-hive-cell[data-level="medium"]::before {
+  background: color-mix(in srgb, var(--color-ink) 45%, var(--color-surface));
+}
+.pm-hive-cell[data-level="strong"]::before {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+/* ⚠⚠ THE TEXT HAS TO FOLLOW THE FILL OR IT DISAPPEARS INTO IT. ⚠ At `medium` the
+   ground is already dark enough that ink-on-ink loses contrast, so the figure
+   goes white there as well as at `strong` — measured against the ramp, not
+   guessed from the name. */
+.pm-hive-cell[data-level="medium"] .pm-hive-figure,
+.pm-hive-cell[data-level="medium"] .pm-hive-label,
+.pm-hive-cell[data-level="strong"] .pm-hive-figure,
+.pm-hive-cell[data-level="strong"] .pm-hive-label {
+  color: var(--color-surface);
+}
+
+/*
+  ── ⚠⚠ THE KEY ───────────────────────────────────────────────────────────
+  ⚠ The swatches carry the SAME `data-level` attribute the cells do, so the rules
+  above paint them. ⚠⚠ A separate set of colours here would be the drift the key
+  exists to prevent.
+*/
+.pm-hive-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  margin-top: 14px;
+  list-style: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+}
+
+.pm-hive-key li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pm-hive-key-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg-soft);
+}
+
+.pm-hive-key-swatch[data-level="none"] {
+  background: var(--color-bg-soft);
+  border-style: dashed;
+}
+.pm-hive-key-swatch[data-level="low"] {
+  background: color-mix(in srgb, var(--color-ink) 16%, var(--color-surface));
+}
+.pm-hive-key-swatch[data-level="medium"] {
+  background: color-mix(in srgb, var(--color-ink) 45%, var(--color-surface));
+}
+.pm-hive-key-swatch[data-level="strong"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+/*
+  ── ⚠⚠ THE PICTURE GROUND ────────────────────────────────────────────────
+  ⚠ The mockup sets the comb on a soft radial wash rather than flat white, which
+  is what stops the hexagons floating in an empty half-panel.
+  ⚠⚠ IT IS BUILT FROM `--color-magenta` AT LOW ALPHA AND FADES TO `transparent`,
+  NOT TO WHITE — ⚠⚠⚠ A HARD-CODED WHITE STOP WOULD PAINT A PALE DISC ON THE DARK
+  THEME, which is the `E723` defect in a gradient. Fading to transparent lets the
+  panel's own ground show through on both themes.
+
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the overhang padding the 3×3
+  rhombus needed. The flower places cells by `grid-column` and overhangs nothing,
+  and the leftover padding pushed the whole comb off-centre in its panel:
+  //   .pm-hive-picture { position: relative; padding-right: calc(33.333% / 2); }
 */
 .pm-hive-picture {
   position: relative;
-  padding-right: calc(33.333% / 2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 300px;
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in srgb, var(--color-magenta) 7%, transparent),
+    transparent 70%
+  );
 }
 
 /*
