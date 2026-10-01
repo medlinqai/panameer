@@ -153,6 +153,8 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/usage", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/recommendations", requires: "authenticated" },
+  /* ⚠ `E736` — the worklist is the ACT view of a member's own notifications. */
+  { prefix: "/worklist", requires: "authenticated" },
   /* ⚠ `E493` — the Account menu's next item down, and `authenticated` for the
      same reason as the line above it: anyone with an account has colleagues, and
      `canProvideServices` would turn a visible menu item into a bounce for every

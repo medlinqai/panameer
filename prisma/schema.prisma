@@ -4312,6 +4312,24 @@ model Notification {
 
   read_at     DateTime?
   resolved_at DateTime?
+
+  /// ── ⚠⚠⚠ HIDDEN FROM THE TRIAGE LIST, NOT DELETED (`P2-A1.1-E736`) ────────────
+  ///
+  /// ⚠ **SCOTT, 2026-10-01: *"Dismiss hides a row from this list. It doesn't delete it,
+  /// and it doesn't resolve an action row."*** He approved this column after the premise
+  /// reported there was none.
+  ///
+  /// ⚠⚠ **IT IS A THIRD STATE, NOT A SYNONYM FOR EITHER OF THE OTHER TWO.** `read_at`
+  /// says they saw it; `resolved_at` says the thing it asked for is done; this says
+  /// **"stop showing me this"**. ⚠⚠⚠ A DISMISSED ROW THAT STILL REQUIRES ACTION STAYS ON
+  /// THE WORKLIST — hiding a request is not answering it, and collapsing the two would let
+  /// somebody clear their obligations by tidying their inbox.
+  ///
+  /// ⚠⚠ ADDITIVE, NULLABLE, NO `@default` (ruling 38 — ONE database serves localhost,
+  /// every preview and production). A default would have written a claim about history
+  /// onto all 102 existing rows.
+  dismissed_at DateTime?
+
   created_at  DateTime  @default(now())
 
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)

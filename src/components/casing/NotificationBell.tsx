@@ -53,7 +53,19 @@ export function NotificationBell({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
   const [rows, setRows] = useState<Row[] | null>(null);
+  /*
+    ⚠⚠ DERIVED FROM THE ROWS THE PANEL ALREADY FETCHED, not a second request. ⚠ The
+    `recent` route already returns `needsAction` per row (it calls the same rule the
+    worklist does), so the figure is a filter over data in hand.
+    ⚠⚠⚠ IT IS THEREFORE A COUNT OF THE SIX ROWS SHOWN, NOT OF EVERYTHING OPEN — and the
+    label says *"need action"* rather than a total, which is true of both readings. ⚠ The
+    true total is on `/notifications`, where `countWorklist` is called; putting a second
+    query behind a dropdown to refine a number the link already earns is a round trip
+    nobody asked for.
+  */
+  const needActionCount = (rows ?? []).filter((r) => r.needsAction).length;
   const [failed, setFailed] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
@@ -173,15 +185,33 @@ export function NotificationBell({
           aria-label="Notifications"
           className="fixed inset-x-2 top-14 z-50 max-h-[70vh] overflow-y-auto rounded-brand border border-line bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-[360px]"
         >
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <p className="text-[14px] font-bold">Notifications</p>
-            <Link
-              href="/notifications"
-              onClick={() => setOpen(false)}
-              className="text-[13px] font-bold text-magenta hover:underline"
-            >
-              See All
-            </Link>
+            {/*
+              ⚠⚠ TWO DOORS, NOT ONE (`E736`). ⚠ Scott: *"The bell's dropdown links See All →
+              `/notifications`, and shows 'N need action' → `/worklist`."*
+              ⚠⚠⚠ THE SECOND ONE RENDERS ONLY ABOVE ZERO, and that is the counting rule, not
+              tidiness: *"0 need action"* is a sentence about an obligation nobody has, and a
+              link offering to show it is a door onto an empty room (`E579`).
+            */}
+            <span className="flex items-center gap-3">
+              {needActionCount > 0 && (
+                <Link
+                  href="/worklist"
+                  onClick={() => setOpen(false)}
+                  className="text-[13px] font-bold text-magenta hover:underline"
+                >
+                  {needActionCount} need action
+                </Link>
+              )}
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="text-[13px] font-bold text-magenta hover:underline"
+              >
+                See All
+              </Link>
+            </span>
           </div>
 
           {failed ? (

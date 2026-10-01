@@ -114,3 +114,7 @@ e2e-e723/shots/
 # output. Same rule as E715-E723 above.
 e2e-e730/shots/
 e2e-e730/.artifacts/
+
+# E736 — notifications + worklist: harness tracked, shots are run artifacts.
+e2e-e736/shots/
+e2e-e736/.artifacts/

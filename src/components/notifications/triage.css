@@ -1,0 +1,526 @@
+/*
+  ── ⚠⚠⚠ THE TRIAGE LIST AND THE WORKLIST (`P2-A1.1-E736`) ────────────────
+
+  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
+  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
+  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
+  still see the name, but nobody ever finds out the token was wrong.
+
+  ⚠⚠ THERE IS NO `background: #fff` IN THIS FILE. Surfaces paint
+  `--color-surface`, which flips with the theme — the `E723` lesson applied
+  rather than restated. A hard-coded white card is exactly what broke `/profile`
+  and `/community` in dark mode.
+
+  ⚠ SQUARE BUTTONS, 4px, one accent (the style pass). Magenta is used for links
+  and the unread dot ONLY — `E433`: magenta means interactive, and a row is not.
+*/
+
+.pm-triage {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+/* ── TOP ────────────────────────────────────────────────────────────────── */
+
+.pm-triage-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pm-triage-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pm-triage-btn {
+  display: inline-flex;
+  align-items: center;
+  /* ⚠ 36px, not 44px: these sit in a toolbar, not under a thumb on a form. The
+     ROW controls below are the touch targets and they are 44. */
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid var(--color-ink);
+  transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.pm-triage-btn-p {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+.pm-triage-btn-p:hover {
+  background: var(--color-ink-hover);
+}
+
+.pm-triage-btn-s {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.pm-triage-btn-s:hover {
+  background: var(--color-surface-hover);
+}
+
+.pm-triage-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── CONFIRM ───────────────────────────────────────────────────────────── */
+
+.pm-triage-confirm {
+  border: 1px solid var(--color-ink);
+  border-radius: 4px;
+  background: var(--color-bg-soft);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.pm-triage-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ── CHIPS ─────────────────────────────────────────────────────────────── */
+
+.pm-triage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.pm-triage-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-line);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+  background: var(--color-surface);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pm-triage-chip:hover {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+
+/* ⚠ The SELECTED chip is ink-on-surface-inverted, not magenta: magenta is the
+   link colour and every chip is a link, so magenta could not distinguish them. */
+.pm-triage-chip[data-on="yes"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.pm-triage-chip-n {
+  /* ⚠ The gap is CSS, not a leading space in JSX — JSX trims leading whitespace in a text
+     node, which rendered "All(3)" instead of "All (3)". Seen in the 1280 screenshot. */
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* ── SELECTION BAR ─────────────────────────────────────────────────────── */
+
+/*
+  ⚠⚠ STICKY, SO IT IS REACHABLE AFTER SELECTING A ROW NEAR THE BOTTOM. ⚠ A bulk
+  bar that scrolls away is a bulk bar you select against and then have to hunt
+  for — which is the "not usable at scale" complaint in miniature.
+*/
+.pm-triage-bar {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: 13.5px;
+}
+
+.pm-triage-bar-act {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pm-triage-bar-act:disabled {
+  opacity: 0.55;
+}
+
+.pm-triage-bar-x {
+  margin-left: auto;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ── ROWS ──────────────────────────────────────────────────────────────── */
+
+.pm-triage-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  font-size: 12px;
+  color: var(--color-ink-3);
+}
+
+.pm-triage-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  ⚠⚠⚠ THIN LINES, NOT A CARD PER ROW (Scott's item 1). ⚠ A card carries padding,
+  a border and a radius on all four sides; twenty-five of them is a column of
+  boxes you scroll past rather than a list you scan. The separator is one line.
+*/
+.pm-triage-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 4px;
+  border-top: 1px solid var(--color-line);
+}
+
+.pm-triage-row:last-child {
+  border-bottom: 1px solid var(--color-line);
+}
+
+.pm-triage-row:hover {
+  background: var(--color-bg-soft);
+}
+
+.pm-triage-main {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.pm-triage-t {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.pm-triage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-magenta);
+  flex: none;
+}
+
+.pm-triage-title {
+  font-size: 14.5px;
+  color: var(--color-ink);
+  line-height: 1.35;
+}
+
+/* ⚠ BOLD WHEN UNREAD (Scott's item 1) — weight, not colour, so it survives a
+   greyscale screenshot and a colour-blind reader. */
+.pm-triage-row[data-unread="yes"] .pm-triage-title {
+  font-weight: 700;
+}
+
+.pm-triage-row[data-unread="no"] .pm-triage-title {
+  font-weight: 500;
+  color: var(--color-ink-2);
+}
+
+a.pm-triage-title:hover {
+  text-decoration: underline;
+}
+
+/* ⚠ WORDS, NOT A COLOUR. The same choice the bell panel made: a reader who
+   cannot see the accent still reads "Needs You". */
+.pm-triage-needs {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-magenta);
+}
+
+/* ⚠ ONE LINE OF BODY (Scott's item 1). It is a list, not the message. */
+.pm-triage-body {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-triage-at {
+  font-size: 12px;
+  color: var(--color-ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+/*
+  ⚠⚠⚠ THE ROW ACTIONS ARE HIDDEN UNTIL HOVER ON A POINTER, AND ALWAYS VISIBLE
+  WITHOUT ONE. ⚠ Scott asked for hover actions; a touch device has no hover, so
+  hiding them there would remove the control entirely. ⚠⚠ `@media (hover: hover)`
+  is the test for a real pointer — not a width breakpoint, which gets a laptop
+  with a touchscreen wrong in both directions.
+  ⚠ They are also revealed on keyboard focus, or they would be unreachable by tab.
+*/
+.pm-triage-row-acts {
+  display: flex;
+  gap: 2px;
+}
+
+.pm-triage-row-acts button {
+  display: grid;
+  place-items: center;
+  /* ⚠ 44px — these ARE the touch targets. */
+  width: 44px;
+  height: 44px;
+  margin-top: -6px;
+  border-radius: 4px;
+  color: var(--color-ink-2);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pm-triage-row-acts button:hover {
+  background: var(--color-line);
+  color: var(--color-ink);
+}
+
+@media (hover: hover) {
+  .pm-triage-row-acts {
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .pm-triage-row:hover .pm-triage-row-acts,
+  .pm-triage-row:focus-within .pm-triage-row-acts {
+    opacity: 1;
+  }
+}
+
+.pm-triage-empty,
+.pm-triage-more {
+  padding: 28px 4px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--color-ink-2);
+}
+
+/* ── PHONE ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  /* ⚠ The time moves under the title so the body keeps its width; a 390px row
+     cannot hold a checkbox, a title, a time and two buttons on one line. */
+  .pm-triage-row {
+    grid-template-columns: auto 1fr auto;
+  }
+  .pm-triage-at {
+    grid-column: 2;
+    grid-row: 2;
+    padding-top: 4px;
+  }
+  .pm-triage-row-acts {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-items: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE WORKLIST (WS-B)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pm-wl {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 20px;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.pm-wl-rail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-right: 1px solid var(--color-line);
+  padding-right: 14px;
+}
+
+.pm-wl-rail li + li {
+  margin-top: 2px;
+}
+
+.pm-wl-view {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+}
+
+.pm-wl-view:hover {
+  background: var(--color-bg-soft);
+  color: var(--color-ink);
+}
+
+.pm-wl-view[data-on="yes"] {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.pm-wl-view-n {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.pm-wl-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pm-wl-tools input,
+.pm-wl-tools select {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.pm-wl-tools input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.pm-wl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.pm-wl-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-line);
+  white-space: nowrap;
+}
+
+.pm-wl-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--color-line);
+  vertical-align: top;
+}
+
+.pm-wl-status {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg-soft);
+  color: var(--color-ink-2);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pm-wl-empty {
+  padding: 40px 10px;
+  text-align: center;
+  color: var(--color-ink-2);
+}
+
+/* ── PHONE: the rail becomes a dropdown, the table becomes stacked rows ──── */
+
+@media (max-width: 760px) {
+  .pm-wl {
+    grid-template-columns: 1fr;
+  }
+  .pm-wl-rail {
+    border-right: 0;
+    padding-right: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pm-wl-rail li + li {
+    margin-top: 0;
+  }
+  .pm-wl-view {
+    border: 1px solid var(--color-line);
+  }
+  /* ⚠⚠ A TABLE CANNOT REFLOW, so the header is hidden and each cell carries its
+     own label from `data-label`. ⚠ The markup stays a real `<table>`, so a
+     screen reader still gets rows and columns. */
+  .pm-wl-table thead {
+    display: none;
+  }
+  .pm-wl-table,
+  .pm-wl-table tbody,
+  .pm-wl-table tr,
+  .pm-wl-table td {
+    display: block;
+    width: 100%;
+  }
+  .pm-wl-table tr {
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 6px 2px;
+  }
+  .pm-wl-table td {
+    border: 0;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .pm-wl-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+    flex: none;
+  }
+}
