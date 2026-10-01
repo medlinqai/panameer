@@ -69,6 +69,12 @@ export default async function ColleaguesPage() {
               reason: r.reason,
               reasonKind: r.reasonKind,
               buySide: r.buySide,
+              /* ⚠ `P2-A1.1-E742` (B2) — Scott: *"What if there are two (or ten)
+                 Deepak Kumars?"* Location, colleagues in common, and the link
+                 the name and photo now carry. */
+              location: r.location,
+              mutualCount: r.mutualCount,
+              profileHref: r.profileHref,
             }))}
           />
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { ColleagueRowActions } from "@/components/community/ColleagueRowActions";
@@ -62,6 +63,12 @@ export type RosterRowView = {
    *  a name, a title and ONE reason, and chips per row would make it the
    *  directory this page is deliberately not. */
   skillNames: string[];
+  /* ── ⚠⚠ `P2-A1.1-E742` (B2) — what tells two people with one name apart ──
+     ⚠ SCOTT: *"What if there are two (or ten) Deepak Kumars?"* */
+  location: string | null;
+  mutualCount: number;
+  /** ⚠ Null for a buy-side colleague with no provider page — see the lib. */
+  profileHref: string | null;
 };
 
 type Filter = "all" | "skills" | "learn" | "worked";
@@ -118,6 +125,31 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
     [matching]
   );
 
+  /*
+    ── ⚠⚠ FIRST 10, THEN "SHOW MORE" (`P2-A1.1-E742`, B2) ───────────────────
+    ⚠ The brief's figure. ⚠⚠ **IT RESETS WHENEVER THE LIST CHANGES** — typing a
+    search or pressing a chip while expanded would otherwise show 40 rows of a
+    brand-new list, which reads as a control that stopped working.
+  */
+  const PAGE = 10;
+  const [limit, setLimit] = useState(PAGE);
+  /*
+    ⚠⚠⚠ ADJUSTED DURING RENDER, NOT IN AN EFFECT, AND THAT IS NOT A STYLE
+    CHOICE. ⚠ `useEffect(() => setLimit(PAGE), [q, filter])` is the obvious
+    version and it trips `react-hooks/set-state-in-effect` — **a lint ERROR
+    against a zero-new baseline**, and the rule is right: an effect renders the
+    stale limit once, then re-renders, so a search can flash 40 rows of the old
+    list before snapping back.
+    ⚠⚠ This is React's own "adjusting state when props change" pattern: compare,
+    set, and let the render that is already happening use the new value.
+  */
+  const key = `${q}|${filter}`;
+  const [lastKey, setLastKey] = useState(key);
+  if (key !== lastKey) {
+    setLastKey(key);
+    setLimit(PAGE);
+  }
+
   const shown = useMemo(() => {
     return matching
       .filter((r) => (filter === "all" ? true : r.reasonKind === filter))
@@ -147,6 +179,10 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
       */
       ;
   }, [matching, filter]);
+
+  /* ⚠ The page actually rendered, and whether another one exists. */
+  const visible = shown.slice(0, limit);
+  const more = shown.length - visible.length;
 
   return (
     <div className="space-y-4">
@@ -198,20 +234,42 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         </p>
       ) : (
         <div className="space-y-2">
-          {shown.map((r) => (
+          {visible.map((r) => (
             <div
               key={r.connectionId}
               className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
             >
-              <Avatar
-                firstName={r.name.split(" ")[0] ?? ""}
-                lastName={r.name.split(" ").slice(1).join(" ")}
-                photoUrl={r.photoUrl}
-                size={44}
-              />
+              {/* ⚠⚠ THE PHOTO LINKS TOO (`E742`, B2: *"Name and photo link to the
+                  profile"*). ⚠ A 44px avatar is a small target, so it and the
+                  name are two links to one place rather than one of them being
+                  decoration. ⚠⚠⚠ NOT A LINK AT ALL when there is no profile —
+                  see `profileHref`. */}
+              {r.profileHref ? (
+                <Link href={r.profileHref} aria-label={`${r.name} — view profile`}>
+                  <Avatar
+                    firstName={r.name.split(" ")[0] ?? ""}
+                    lastName={r.name.split(" ").slice(1).join(" ")}
+                    photoUrl={r.photoUrl}
+                    size={44}
+                  />
+                </Link>
+              ) : (
+                <Avatar
+                  firstName={r.name.split(" ")[0] ?? ""}
+                  lastName={r.name.split(" ").slice(1).join(" ")}
+                  photoUrl={r.photoUrl}
+                  size={44}
+                />
+              )}
               <div className="min-w-[180px] flex-1">
                 <p className="text-[15px] font-bold">
-                  {r.name}
+                  {r.profileHref ? (
+                    <Link href={r.profileHref} className="hover:text-magenta hover:underline">
+                      {r.name}
+                    </Link>
+                  ) : (
+                    r.name
+                  )}
                   {/* ⚠⚠ THE BUY-SIDE MARKER IS QUIET AND IT IS NOT A WARNING.
                       Under the class rule these are not peer connections — but
                       they are real, they are not hidden and they are not
@@ -226,6 +284,24 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                 {[r.title, r.company].filter(Boolean).length > 0 && (
                   <p className="text-[13px] text-ink-2">
                     {[r.title, r.company].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {/* ⚠⚠ THE DISAMBIGUATING LINE (`E742`, B2). ⚠⚠⚠ THE MUTUAL
+                    COUNT IS SHOWN **ONLY ABOVE ZERO**, per the brief — a `0`
+                    beside every name is noise, and on a roster where most pairs
+                    share nobody it would be noise on most rows. ⚠ The whole
+                    line is absent when neither fact exists, rather than
+                    rendering an empty paragraph. */}
+                {(r.location || r.mutualCount > 0) && (
+                  <p className="text-[12.5px] text-ink-2">
+                    {[
+                      r.location,
+                      r.mutualCount > 0
+                        ? `${r.mutualCount} colleague${r.mutualCount === 1 ? "" : "s"} in common`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 )}
                 {/* ⚠⚠ NEVER BLANK. The lib guarantees a reason — a shared
@@ -245,6 +321,18 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
               </div>
             </div>
           ))}
+          {/* ⚠⚠ THE REMAINDER IS A REAL COUNT, not "Show more" with nothing
+              behind it. ⚠ It is a plain button, not a link: nothing is fetched,
+              the rows are already here. */}
+          {more > 0 && (
+            <button
+              type="button"
+              onClick={() => setLimit((n) => n + PAGE)}
+              className="w-full rounded-brand border border-line bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:border-magenta hover:text-magenta"
+            >
+              Show More ({more} more)
+            </button>
+          )}
         </div>
       )}
 

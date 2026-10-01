@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
 import { ProfileVisibilityCard } from "@/components/profile/ProfileVisibilityCard";
 import { HireButton } from "@/components/community/HireButton";
+import { ShareBar, HowToWorkWith } from "@/components/community/ProfileFooter";
 /* ⚠ `Face` OWNS THE "no photo -> grey silhouette" RULE (`E591`), so the faces
    row asks it rather than deciding the fallback a second time. */
 /* ⚠⚠ THE FACES ROW IS GONE (`P2-A2-E598` WS-C item 3) — Scott: *"The colleague
@@ -2461,6 +2462,42 @@ export function ConnectProfile({
           firstName={p.person.firstName ?? ""}
           isOwner={owner}
         />
+
+        {/*
+          ── ⚠⚠ THE PROFILE FOOTER — `P2-A1.1-E743` (super run 2 B3, lane 5) ──
+
+          ⚠⚠⚠ **THE TWO HALVES ARE MUTUALLY EXCLUSIVE AND BOTH ARE GATED.** The
+          owner gets the share bar; a signed-in buyer who is NOT the owner gets
+          the two paths. ⚠ `canHire` is the page's answer from
+          `hasCapability(viewer, "canHireTalent")` — the same capability the
+          Hire button above and the API route both read, never a second rule.
+          ⚠⚠ **A VISITOR WHO IS NEITHER SEES NEITHER**, which is correct: a
+          provider looking at a peer has nothing to hire and nothing to share.
+
+          ⚠ `publicUrl` is null everywhere except the owner's own `/profile`
+          (`E738`), so the share bar cannot render on `/providers/[id]`.
+        */}
+        {owner ? (
+          <ShareBar
+            url={p.publicUrl ?? null}
+            name={`${p.person.firstName ?? ""} ${p.person.lastName ?? ""}`.trim()}
+          />
+        ) : (
+          canHire && (
+            <HowToWorkWith
+              firstName={p.person.firstName ?? ""}
+              /* ⚠ The SAME control the Hire block above uses — `/hire` is the
+                 buyer's work-request list, and the sole-source row is created
+                 by `HireButton`'s POST. ⚠⚠ A second button that POSTs again
+                 would create two work requests for one intention, so this one
+                 links to the list the first one lands in. */
+              hireHref="/hire"
+              /* ⚠ `/create-work` is the open work request, measured from
+                 `hire/page.tsx`'s own `Create a Work Request` button. */
+              describeHref="/create-work"
+            />
+          )
+        )}
       </main>
     </div>
   );

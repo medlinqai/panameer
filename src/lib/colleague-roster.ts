@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+/* ⚠ THE ONE RESOLVER (`E728` WS-B) and the one place formatter. */
+import { countryName } from "@/lib/country";
+import { formatPlace } from "@/lib/location";
 import type { Viewer } from "@/lib/access";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 
@@ -54,6 +57,40 @@ export type RosterRow = {
    * buyer then cannot verify.
    */
   skillNames: string[];
+  /**
+   * ── ⚠⚠ `P2-A1.1-E742` (B2) — THE THREE FACTS SCOTT ASKED FOR ──────────────
+   *
+   * ⚠ SCOTT: *"What if there are two (or ten) Deepak Kumars?"* ⚠⚠ **A ROSTER
+   * OF NAMES WITH NOTHING TO TELL THEM APART IS NOT A ROSTER.** Location and a
+   * mutual-colleague count are the two cheapest facts that disambiguate two
+   * people with one name.
+   *
+   * ⚠ `"Austin, United States"`, or null when no address row has a city. ⚠⚠ The
+   * country comes from `countryName` — **the one resolver** (`E728` WS-B) — so
+   * this list cannot print a country differently from every other surface.
+   */
+  location: string | null;
+  /**
+   * ⚠⚠ COLLEAGUES IN COMMON. ⚠⚠⚠ **COMPUTED IN ONE QUERY FOR THE WHOLE LIST,
+   * NOT PER ROW.** `mutualColleagueCount()` exists and runs two queries per
+   * person — fine for one profile page, and **2N queries for a roster**. This
+   * file's own rule is *"ONE READ PER SOURCE, not one per colleague"*, and the
+   * intersection is done in memory against sets built from rows already loaded.
+   * ⚠ Shown only when above zero (the brief) — a `0` here is noise, not a fact
+   * worth a line.
+   */
+  mutualCount: number;
+  /** ⚠ The shared-skill count the reason line already computes, exposed for the
+   *  ordering below rather than re-derived from `skillNames`. */
+  sharedSkillCount: number;
+  /**
+   * ⚠⚠ `/providers/<profileId>`, or null for a colleague with no provider
+   * profile (a buyer). ⚠⚠⚠ **NULL IS WHY THE NAME IS NOT ALWAYS A LINK** — a
+   * buy-side colleague has no public page, and linking their name at a 404 is
+   * worse than leaving it as text. ⚠ Resolved here, in the ONE query that
+   * already loads the person, rather than by the component.
+   */
+  profileHref: string | null;
   connectedAt: Date;
 };
 
@@ -97,9 +134,21 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       is_service_buyer: true,
       is_service_provider: true,
       company: { select: { name: true } },
+      /* ⚠ `P2-A1.1-E742` (B2) — the city and country for the row's second line.
+         ⚠⚠ ONE address, the same `take: 1` every other surface uses. */
+      site: {
+        select: {
+          addresses: {
+            select: { city: true, country: true, country_code: true },
+            take: 1,
+          },
+        },
+      },
       user: { select: { id: true } },
       providerProfile: {
         select: {
+          /* ⚠ `P2-A1.1-E742` (B2) — the id the row's profile link needs. */
+          id: true,
           /* ⚠ `skill_id` FEEDS THE SHARED-SKILL COUNT; the NAME and the role
              feed WS-E's search. ⚠⚠ `role_type_id` IS REQUIRED HERE — `E517`'s
              `shownSkills` needs it to decide what this person actually offers. */
@@ -147,6 +196,41 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
   }
 
   const byUser = new Map(people.filter((p) => p.user).map((p) => [p.user!.id, p]));
+
+  /*
+    ── ⚠⚠⚠ COLLEAGUES IN COMMON, IN **ONE** QUERY (`P2-A1.1-E742`, B2) ───────
+
+    ⚠ Every accepted COLLEAGUE edge touching anybody on this roster, read once.
+    ⚠⚠ `mutualColleagueCount()` answers the same question for ONE person and
+    costs two queries doing it; calling it per row would be **2N queries** on a
+    page that already states its rule: *"ONE READ PER SOURCE, not one per
+    colleague."*
+    ⚠⚠⚠ A `COLLEAGUE` ROW IS UNDIRECTED, so both columns are read and both ends
+    are recorded — reading one column would halve every count, silently.
+  */
+  const theirEdges = await prisma.connection.findMany({
+    where: {
+      kind: "COLLEAGUE",
+      status: "ACCEPTED",
+      OR: [{ from_user_id: { in: otherIds } }, { to_user_id: { in: otherIds } }],
+    },
+    select: { from_user_id: true, to_user_id: true },
+  });
+  const colleaguesOf = new Map<string, Set<string>>();
+  for (const e of theirEdges) {
+    for (const [a, b] of [
+      [e.from_user_id, e.to_user_id],
+      [e.to_user_id, e.from_user_id],
+    ]) {
+      if (!otherIds.includes(a)) continue;
+      if (!colleaguesOf.has(a)) colleaguesOf.set(a, new Set());
+      colleaguesOf.get(a)!.add(b);
+    }
+  }
+  /* ⚠ The viewer's own colleague set — `otherIds` IS that set, by construction
+     a few lines above. ⚠⚠ The viewer and the person themselves are excluded
+     from every intersection: *"you have yourself in common"* is not a fact. */
+  const myColleagues = new Set(otherIds);
 
   const rows: RosterRow[] = [];
   for (const c of connections) {
@@ -206,9 +290,48 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       reason,
       reasonKind,
       buySide: p.is_service_buyer && !p.is_service_provider,
+      /* ⚠ `P2-A1.1-E742` (B2). `formatPlace` drops an empty part rather than
+         rendering ", United States", and `countryName` is the one resolver. */
+      location: (() => {
+        const a = p.site?.addresses[0];
+        return formatPlace(a?.city, countryName(a?.country_code, a?.country));
+      })(),
+      mutualCount: (() => {
+        const theirs = colleaguesOf.get(otherId);
+        if (!theirs) return 0;
+        let n = 0;
+        for (const x of theirs) {
+          /* ⚠ Neither the viewer nor this colleague counts as "in common". */
+          if (x === me || x === otherId) continue;
+          if (myColleagues.has(x)) n += 1;
+        }
+        return n;
+      })(),
+      sharedSkillCount: sharedSkills,
+      profileHref: p.providerProfile ? `/providers/${p.providerProfile.id}` : null,
       connectedAt: c.created_at,
     });
   }
+
+  /*
+    ── ⚠⚠⚠ THE ORDER SCOTT SPECIFIED (`P2-A1.1-E742`, B2) ────────────────────
+
+    ⚠ *"colleagues in common first, then shared skills, then name, reusing
+    existing signals (no second ranker)."*
+    ⚠⚠ **BOTH SIGNALS ARE ALREADY ON THE ROW** — `mutualCount` from the single
+    query above, `sharedSkillCount` from the reason line that was already being
+    computed. ⚠⚠⚠ **NOTHING NEW IS SCORED, WEIGHTED OR TUNED**, which is what
+    *"no second ranker"* forbids: a weighted blend of the two would be a new
+    ranking model nobody asked for and nobody could explain to a member.
+    ⚠ The name is the final tie-break, so the order is TOTAL and stable — a list
+    that reshuffles between loads looks broken even when it is not.
+  */
+  rows.sort(
+    (a, b) =>
+      b.mutualCount - a.mutualCount ||
+      b.sharedSkillCount - a.sharedSkillCount ||
+      a.name.localeCompare(b.name)
+  );
   return rows;
 }
 
