@@ -558,13 +558,54 @@ export async function updateProject(
   const profileId = await ownedProfileId(viewer);
   const owned = await prisma.project.findFirst({
     where: { id: projectId, provider_profile_id: profileId },
-    select: { id: true },
+    /* ⚠ The four facts a validation was ABOUT — see the drop rule below. */
+    select: {
+      id: true,
+      validation_status: true,
+      start_date: true,
+      end_date: true,
+      role_title: true,
+      client_name: true,
+    },
   });
   if (!owned) throw new OnboardingError("Project not found", "INVALID");
 
+  /*
+    ── ⚠⚠⚠ EDITING WHAT WAS VALIDATED DROPS THE BADGE (`P2-A1.1-E746`, WS-A) ──
+
+    ⚠ **SCOTT'S QUESTION 2: *"If a provider edits a validated project's dates or
+    role, does the badge drop until it is validated again? (Claude's pick: yes.)"***
+    ⚠⚠ **YES, AND ONLY FOR THE FACTS THE CLIENT WAS ACTUALLY ASKED ABOUT.**
+
+    ⚠⚠⚠ **THE VALIDATION EMAIL ASKS ONE QUESTION — *"Did &lt;first name&gt; do this
+    work?"* — ALONGSIDE THE PROJECT'S TITLE, CLIENT, DATES AND ROLE.** So a
+    confirmation is a statement about THOSE facts. Change them and the statement
+    no longer describes what is on the page; keeping the tick would be showing a
+    buyer somebody else's confirmation of different work.
+    ⚠ **A DESCRIPTION OR HIGHLIGHT EDIT DOES NOT DROP IT.** Tightening the prose
+    of work that was confirmed is not a new claim, and dropping a hard-won badge
+    over a typo would teach providers not to edit.
+
+    ⚠⚠ **IT DOES NOT DELETE THE `ProjectValidation` ROW.** The client's answer is
+    history and stays — only the project's own badge returns to `NONE`, so the
+    provider can ask again. ⚠ Same reasoning as `EXPIRED` over `delete` above.
+  */
+  const next = projectData(input);
+  const sameDay = (a: Date | null, b: Date | null | undefined) =>
+    (a?.getTime() ?? null) === (b?.getTime() ?? null);
+  const materiallyChanged =
+    !sameDay(owned.start_date, next.start_date as Date | null | undefined) ||
+    !sameDay(owned.end_date, next.end_date as Date | null | undefined) ||
+    (owned.role_title ?? null) !== ((next.role_title as string | null) ?? null) ||
+    (owned.client_name ?? null) !== ((next.client_name as string | null) ?? null);
+  const dropBadge = owned.validation_status === "VALIDATED" && materiallyChanged;
+
   await prisma.project.update({
     where: { id: owned.id },
-    data: projectData(input),
+    data: {
+      ...next,
+      ...(dropBadge ? { validation_status: "NONE" as const } : {}),
+    },
   });
   await writeProjectChildren(owned.id, input);
   await afterJobChange(profileId);
