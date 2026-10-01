@@ -1368,7 +1368,7 @@ export default async function MyStatsPage({
         existing subject and are untouched.
       */}
       <div className="mt-6 space-y-4">
-        <StatisticsCards s={stats} period={trendOf(sp)} />
+        <StatisticsCards s={stats} period={trendOf(sp)} cards="teaching-only" />
       </div>
 
       <p className="mt-6 text-[13px] text-ink-2">

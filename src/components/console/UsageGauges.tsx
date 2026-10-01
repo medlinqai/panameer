@@ -56,17 +56,25 @@ function Sub({ sub }: { sub: UsageSub }) {
   return (
     <div className="pm-gauge-sub">
       <span>{sub.label}</span>
+      {/*
+        ⚠⚠ `<strong>`, NOT `<b>`. ⚠⚠⚠ MEASURED: the sub-figures were INVISIBLE to anything
+        walking the DOM for numbers — `check:stats-live`'s sweep reads
+        `p, span, strong, div, td`, and `<b>` is in none of those. ⚠ So two of every card's
+        three figures could not be checked by any live gate, and `Invites Sent` could not
+        be found at all. ⚠ `<strong>` is also the honest tag: these carry IMPORTANCE, not
+        a typographic flourish.
+      */}
       {counted ? (
-        <b>{fig.toLocaleString("en-US")}</b>
+        <strong>{fig.toLocaleString("en-US")}</strong>
       ) : (
         /* ⚠⚠⚠ THE BADGE CARRIES THE WORDS, AND THE REASON IS ON THE TITLE. ⚠ A bare `—`
             beside a label is the thing counting rule 2 forbids: a reader cannot tell
             "nothing here" from "we cannot count this". */
-        <b>
+        <strong>
           <span className="pm-gauge-nc" title={fig.uncounted}>
             NOT COUNTED
           </span>
-        </b>
+        </strong>
       )}
     </div>
   );
@@ -87,10 +95,19 @@ function Card({ area: a }: { area: UsageArea }) {
       data-gauge={a.key}
       data-counted={counted ? "yes" : "no"}
     >
-      <div className="pm-gauge-eyebrow" data-gauge-eyebrow>
+      {/*
+        ⚠⚠ `<p>`, NOT `<div>`, AND THAT IS NOT COSMETIC. ⚠⚠⚠ A card's eyebrow and label are
+        the only TEXT that says what its numbers mean, and as anonymous `<div>`s nothing
+        walking the DOM could find them — `check:stats-live`'s label resolution looks at
+        `p, span, strong, dt, h2, h3`, so every figure on this card inherited the wrong
+        label (measured: the Earnings card's figures were labelled *"Not counted yet"*,
+        which is the REASON text, because that was the first `<span>` in the card).
+        ⚠ A screen reader walking the same tree has the same problem.
+      */}
+      <p className="pm-gauge-eyebrow" data-gauge-eyebrow>
         {a.eyebrow}
-      </div>
-      <div className="pm-gauge-label">{a.label}</div>
+      </p>
+      <p className="pm-gauge-label">{a.label}</p>
 
       <Gauge figure={fig} goal={a.goal} money={a.money} label={a.label} />
 
@@ -101,8 +118,17 @@ function Card({ area: a }: { area: UsageArea }) {
         ⚠⚠ AND IT IS ABSENT WHEN THERE IS NO SCALE, rather than printing `Goal: 0` —
         see `Gauge.tsx`'s three states.
       */}
+      {/*
+        ⚠⚠⚠ THE BARE `0` AT THE LEFT END IS GONE. ⚠ The mockup printed `0` and the raw
+        maximum as axis ends; once the right end became `Goal: N` (Scott's decision 3) the
+        lone `0` labelled nothing — the dial's own left stop already shows where zero is.
+        ⚠⚠ IT WAS ALSO ACTIVELY HARMFUL: a scale endpoint is not a FIGURE, but it reads as
+        one to anything sweeping the page for numbers, so on the Earnings card the axis `0`
+        and the value `—` appeared as one label rendering as both a number and a dash —
+        exactly the state `check:stats-live` §1 forbids. ⚠⚠⚠ **THE GATE WAS RIGHT AND THE
+        CARD WAS WRONG.**
+      */}
       <div className="pm-gauge-scale">
-        <span>0</span>
         {a.goal != null ? (
           <span data-goal>
             Goal: {formatFigure(a.goal, a.money)}
@@ -120,17 +146,37 @@ function Card({ area: a }: { area: UsageArea }) {
         )}
       </div>
 
+      {/*
+        ⚠⚠⚠ THE VALUE ELEMENT HOLDS **ONLY** THE FIGURE, AND THE REASON IS ITS SIBLING.
+        ⚠ They were nested, and `check:stats-live` §1 went red: its sweep walks up four
+        parents to find a figure's LABEL, so *"Not counted yet"* became the label of the
+        dash AND of the sub-figures beside it — one label reading as both a number and a
+        dash, which is precisely the state that gate exists to forbid.
+        ⚠⚠ **THE MARKUP WAS THE DEFECT, NOT THE GATE.** A figure and its explanation are
+        two things and nesting them made the page unreadable to anything walking the DOM —
+        including, in principle, a screen reader announcing the value.
+      */}
       <div className="pm-gauge-value">
         {counted ? (
           formatFigure(fig, a.money)
         ) : (
-          <>
-            {/* ⚠ The dash, then the reason. Never the dash alone. */}
-            <span aria-hidden>&mdash;</span>
-            <span className="pm-gauge-why">Not counted — {fig.uncounted}</span>
-          </>
+          <span aria-hidden>&mdash;</span>
         )}
       </div>
+      {!counted && (
+        <>
+            {/*
+              ⚠⚠⚠ THE REASON, ALONE — NO `Not counted —` PREFIX. ⚠ It printed
+              **"Not counted — Not counted yet"** on the Earnings card, because
+              `statistics.ts` already phrases that reason as a full sentence
+              ("Not counted yet"). ⚠⚠ FOUND BY `check:stats-live` §1, whose rule is
+              that no figure renders as both a number and a dash — it reads the
+              page's text and the doubled phrase tripped it.
+              ⚠ **THE DASH ABOVE ALREADY SAYS "not counted"; this says WHY.**
+            */}
+          <span className="pm-gauge-why">{fig.uncounted}</span>
+        </>
+      )}
 
       <div className="pm-gauge-subs">
         <Sub sub={a.subs[0]} />

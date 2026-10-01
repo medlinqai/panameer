@@ -118,7 +118,9 @@
 
 .pm-gauge-scale {
   display: flex;
-  justify-content: space-between;
+  /* ⚠ The left-hand axis zero is gone (see UsageGauges.tsx), so the row holds one item
+     and right-aligns it under the dial's goal end. */
+  justify-content: flex-end;
   gap: 4px;
   margin-top: -4px;
   padding: 0 2px;
@@ -176,7 +178,7 @@
   font-size: 12.5px;
 }
 
-.pm-gauge-sub b {
+.pm-gauge-sub strong {
   font-weight: 700;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;

@@ -80,11 +80,36 @@ const trendHref = (card: string) => (p: TrendPeriod) => `/usage?trend=${card}&pe
 export function StatisticsCards({
   s,
   period,
+  cards = "all",
 }: {
   s: Statistics;
   /** ⚠ Which trend period the back faces show. Front faces have none. */
   period: TrendPeriod;
+  /**
+   * ── ⚠⚠⚠ WHICH CARDS RENDER (`P2-A1.1-E732`) ──────────────────────────────────────
+   *
+   * ⚠ **SCOTT, 2026-10-01: *"Remove the old stat tiles from `/usage` (Your Profile ·
+   * Your Learning · Your Work · Your Network). The gauges replace them, per the
+   * mockup."***
+   * ⚠⚠ **`"teaching"` IS NOT IN HIS LIST AND IS NOT REMOVED.** Two of its four figures —
+   * `Questions in Your Groups` and `Questions Waiting on You` — appear on **no gauge**,
+   * and the second is the only ACTIONABLE figure on the page. ⚠⚠⚠ **DROPPING IT WOULD
+   * DELETE A FIGURE RATHER THAN RELOCATE ONE**, which is not what "the gauges replace
+   * them" says.
+   *
+   * ⚠⚠ **THE FOUR CARDS ARE NOT DELETED, THEY ARE NOT RENDERED.** `E164` — superseded
+   * code is quoted, never deleted — and more practically: **`check:statistics` asserts
+   * live rules against their bodies** (the flip variants, `allZero`, the credit lines,
+   * the uncounted-figure treatment). ⚠ Before deleting dead code, check whether a gate
+   * asserts a live rule against it (`E603`'s lesson 14). **Deleting them would have taken
+   * roughly 30 assertions with them.**
+   * ⚠ **THE BUYER BRANCH IS UNTOUCHED** — `BuyerStatistics` is a different component, and
+   * the buyer half of `/usage` has **no gauges**, so removing its cards would leave it
+   * blank.
+   */
+  cards?: "all" | "teaching-only";
 }) {
+  const onlyTeaching = cards === "teaching-only";
   /*
     ⚠⚠⚠ THE DATA PICKS THE VARIANT AND WHICH FACE IS UP (Scott).
     ⚠ `allZero` counts only COUNTED figures — a dash is not a zero and must not
@@ -136,6 +161,9 @@ export function StatisticsCards({
         //   <Honeycomb cells={honeyCells(s)} />
       */}
 
+      {/* ⚠ The four cards Scott named. Hidden on `/usage` since `E732`; still rendered
+          wherever `cards` is left at its default. */}
+      {!onlyTeaching && (
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {/*
           ⚠⚠ YOUR PROFILE — USAGE ONLY, NO COMPLETION (correction 2).
@@ -342,6 +370,7 @@ export function StatisticsCards({
           />
         </Shell>
       </div>
+      )}
 
       {/*
         ⚠⚠⚠ TEACHING RENDERS ONLY FOR SOMEBODY WHO TEACHES — the ONE card that

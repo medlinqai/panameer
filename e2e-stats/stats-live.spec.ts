@@ -65,14 +65,25 @@ const SWEEP = `(() => {
     }
     out.push({
       value: t, label: label.slice(0, 44),
-      where: el.closest(".pm-hive") ? "hive" : el.closest(".pm-flip") ? "card" : "old",
+      where: el.closest(".pm-hive") ? "hive" : el.closest("[data-gauge]") ? "gauge" : el.closest(".pm-flip") ? "card" : "old",
       cell: el.closest(".pm-hive-cell")?.dataset.cell ?? null,
+      /* ⚠ \`E732\` — the gauge grid replaced the cards, so the sweep has to see it. */
+      /* ⚠ E732 — the gauge grid replaced the cards, so the sweep has to see it.
+         ⚠⚠⚠ ONLY THE **HEADLINE** FIGURE CARRIES THE KEY. A gauge card holds four numbers
+         — the scale's 0, the value, and two sub-figures — and find() takes the FIRST in
+         document order, which is the SCALE. ⚠ That made §2 compare the comb's real figure
+         against a literal 0 on every card, and it only surfaced because one persona had a
+         non-zero count. ⚠⚠ TWO ZEROS AGREE (ruling 11), so on an empty persona it would
+         have passed while comparing nothing. */
+      gauge: el.closest(".pm-gauge-value")
+        ? el.closest("[data-gauge]")?.dataset.gauge ?? null
+        : null,
     });
   }
   return out;
 })()`;
 
-type Row = { value: string; label: string; where: string; cell: string | null };
+type Row = { value: string; label: string; where: string; cell: string | null; gauge: string | null };
 
 test.beforeAll(async () => {
   const person = await prisma.person.findFirst({
@@ -150,44 +161,94 @@ test("§1 no figure renders as both a number and a dash", async ({ page }) => {
   expect(both, `these render as BOTH a number and a dash: ${both.join(" · ")}`).toEqual([]);
 });
 
-test("§2 the cell and the card read one value", async ({ page }) => {
+/*
+  ── ⚠⚠⚠ RE-POINTED FROM THE CARDS TO THE GAUGES (`P2-A1.1-E732`) ──────────────────────
+
+  ⚠ **THE RULE IS UNCHANGED AND IS THE WHOLE REASON `lib/usage-areas.ts` EXISTS: the comb
+  and the thing beside it read ONE value.** ⚠⚠ What changed is WHICH thing sits beside it —
+  `E732` removed the four stat cards from `/usage` and the gauges are what the comb now has
+  to agree with. ⚠⚠⚠ **`check:rollup`'s CASE (THE MECHANISM CHANGED), NOT
+  `check:cert-skills`' (THE CODE DRIFTED)** — the distinction Scott enforces.
+
+  ⚠ **IT IS STRONGER THAN IT WAS**, because it now pairs by KEY rather than by a
+  hand-written label map: every comb cell is matched to the gauge with the same
+  `data-gauge`, so a renamed label cannot silently drop a pair out of the comparison.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old label pairs:
+  //   ["profile", "Profile Views"], ["network", "Colleagues"],
+  //   ["learning", "Lessons Completed"], ["work", "Work Orders"],
+*/
+test("§2 the cell and its gauge read one value", async ({ page }) => {
   await signIn(page, PERSONA);
   await page.goto("/usage", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   const rows: Row[] = await page.evaluate(SWEEP);
 
-  const pairs: [string, string][] = [
-    ["profile", "Profile Views"],
-    ["network", "Colleagues"],
-    ["learning", "Lessons Completed"],
-    ["work", "Work Orders"],
-  ];
-  let compared = 0;
-  for (const [cell, cardLabel] of pairs) {
-    const cellRow = rows.find((r) => r.cell === cell);
-    /* ⚠⚠ MATCHED ANYWHERE OUTSIDE THE HIVE, not by `where === "card"` —
-       `Your Profile` and `Teaching` pass `back={null}`, so `FlipCard` returns
-       the bare front with no `.pm-flip` wrapper (`E579`: no back, no control)
-       and their figures are not "in a flip card" at all. */
-    const cardRow = rows.find((r) => r.where !== "hive" && r.label === cardLabel);
-    if (!cellRow || !cardRow) continue;
-    compared++;
-    expect(cellRow.value, `cell "${cell}" vs card "${cardLabel}"`).toBe(cardRow.value);
-  }
-  expect(compared, "every honeycomb cell was actually compared (E586)").toBe(pairs.length);
+  const cellKeys = [...new Set(rows.filter((r) => r.cell).map((r) => r.cell!))];
+  expect(cellKeys.length, "the sweep found comb cells to check (E586)").toBeGreaterThan(3);
 
-  /* ⚠⚠⚠ AND THE COMPARISON MUST BITE. Pointing a cell at a different field
-     passed this gate twice — first because every figure was 0, then because the
-     fixture made both compared figures 1. */
-  const colleagues = rows.find((r) => r.where !== "hive" && r.label === "Colleagues");
-  const invites = rows.find((r) => r.where !== "hive" && r.label === "Invites Sent");
+  let compared = 0;
+  for (const key of cellKeys) {
+    const cellRow = rows.find((r) => r.cell === key);
+    /* ⚠⚠ THE GAUGE'S **HEADLINE** FIGURE, NOT ITS SUB-FIGURES. ⚠ A gauge card carries
+       three numbers; only the first is the one the comb mirrors, and matching on "any
+       number in this card" would pass on the wrong one. */
+    const gaugeRow = rows.find((r) => r.gauge === key);
+    if (!cellRow || !gaugeRow) continue;
+    compared++;
+    expect(cellRow.value, `cell "${key}" vs gauge "${key}"`).toBe(gaugeRow.value);
+  }
+  /* ⚠⚠⚠ EVERY CELL WAS ACTUALLY COMPARED. Without this the loop could compare nothing
+     and pass — `E586`'s family, and the reason this line has always been here. */
+  expect(compared, "every honeycomb cell was compared to its gauge (E586)").toBe(cellKeys.length);
+
+  /* ⚠⚠⚠ AND THE COMPARISON MUST BITE. Pointing a cell at a different field passed this
+     gate twice — first because every figure was 0, then because the fixture made both
+     compared figures 1. ⚠ `Invites Sent` is a SUB-figure of the Connect gauge, so it is a
+     real second value on the same card. */
+  /* ⚠ The Connect gauge's HEADLINE (colleagues) against one of its own SUB-figures
+     (invites sent). ⚠⚠ `gauge` is set only on the headline now, so the headline is found
+     by key and the sub by its own label — two real values on one card. */
+  const colleagues = rows.find((r) => r.gauge === "connect");
+  const invites = rows.find((r) => r.where === "gauge" && r.label === "Invites Sent");
+  expect(
+    colleagues && invites,
+    "the bite check found both figures to compare (E586)"
+  ).toBeTruthy();
   expect(
     colleagues?.value,
     `the fixture must distinguish Colleagues from Invites Sent — got ${colleagues?.value} and ${invites?.value}`
   ).not.toBe(invites?.value);
 });
 
-test("§3 the credited-front branch is RENDERED, not asserted", async ({ page }) => {
+/*
+  ── ⚠⚠⚠ §3 AND §4 HAVE LOST THEIR SUBJECT (`P2-A1.1-E732`) ────────────────────────────
+
+  ⚠ Both assert behaviour of the **`Your Network` CARD** — its credited front face and its
+  trend back. ⚠⚠ **`E732` REMOVED THE FOUR STAT CARDS FROM `/usage` ON SCOTT'S
+  INSTRUCTION**, and `StatisticsCards` renders on no other page, so **that card now renders
+  nowhere.**
+
+  ⚠⚠⚠ **THEY ARE SKIPPED, NOT DELETED AND NOT QUIETLY RE-POINTED.**
+  · **Not deleted**, because the rules are real and the component is still on disk: a
+    credited front must actually RENDER rather than merely be asserted, and a period
+    control must reach the QUERY rather than only the pill. If the card comes back, these
+    come back with it.
+  · **Not re-pointed at the gauges**, because the gauges have **no flip, no back face and
+    no credit line** — pointing these at them would be an assertion about a mechanism that
+    does not exist there, which is the opposite of what §3 exists to prevent.
+  · **Not left running**, because they would be RED on correct code, and ⚠ *"a gate that
+    fails on correct code is a gate somebody switches off"* (ruling 10).
+
+  ⚠⚠ **A SKIP IS VISIBLE AND A DELETION IS NOT.** Playwright reports these as `skipped`,
+  so the count says plainly that two assertions are parked — rather than the suite
+  shrinking by two and nobody noticing (`E586`'s family: a gate must never report success
+  with no inputs).
+  ⚠⚠⚠ **RECORDED FOR SCOTT: the `?trend=` and `?period=` links are now INERT on `/usage`.**
+  `StatisticsCards`' trend links went with the cards, so the query string the WS-A redirect
+  carefully preserves currently reaches nothing on this page. **That is a consequence of
+  removing the cards, not a defect introduced by it — reported, not fixed.**
+*/
+test.skip("§3 the credited-front branch is RENDERED, not asserted — SUBJECT REMOVED by E732", async ({ page }) => {
   await signIn(page, PERSONA);
   await page.goto("/usage?period=90d", { waitUntil: "networkidle" });
   await page.waitForTimeout(500);
@@ -206,7 +267,7 @@ test("§3 the credited-front branch is RENDERED, not asserted", async ({ page })
   );
 });
 
-test("§4 period windowing, on a seeded dated row", async ({ page }) => {
+test.skip("§4 period windowing, on a seeded dated row — SUBJECT REMOVED by E732", async ({ page }) => {
   await signIn(page, PERSONA);
   const readBack = async (period: string) => {
     await page.goto(`/usage?trend=network&period=${period}`, { waitUntil: "networkidle" });
