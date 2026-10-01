@@ -52,6 +52,8 @@ export function ResumeImportAction({
    */
   onApplied: (body: {
     added?: { skills: number; specializations: number };
+    /* ⚠ `P2-A1.1-E740` A2 — counted from the DELETE's own result, server-side. */
+    removed?: { employers: number; projects: number };
     applied?: Record<string, unknown>;
   }) => void;
   label?: string;
@@ -72,6 +74,12 @@ export function ResumeImportAction({
     "idle" | "confirm" | "reading" | "review" | "saving"
   >("idle");
   const [diff, setDiff] = useState<RerunDiff | null>(null);
+  /* ⚠⚠ THE REMOVAL TICKS (`P2-A1.1-E740`, A2). ⚠⚠⚠ TWO EMPTY SETS, AND THAT IS
+     THE DEFAULT THE BRIEF REQUIRES: *"Each row is unticked by default; only
+     ticked rows are removed on save."* ⚠ A member who never opens that section
+     loses nothing. */
+  const [dropEmployers, setDropEmployers] = useState<Set<string>>(new Set());
+  const [dropProjects, setDropProjects] = useState<Set<string>>(new Set());
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [tickedSpecs, setTickedSpecs] = useState<Set<string>>(new Set());
   /* ⚠⚠ THE OTHER SEVEN, AS ONE TICK, PRE-TICKED. Pre-ticked because today's
@@ -134,6 +142,10 @@ export function ResumeImportAction({
           skillIds: [...ticked],
           specializationIds: [...tickedSpecs],
           rest: tickedRest,
+          /* ⚠ `P2-A1.1-E740` A2 — the server re-derives the diff and filters
+             these against what the preview actually offered. */
+          removeEmployerIds: [...dropEmployers],
+          removeProjectIds: [...dropProjects],
         }),
       });
       const body = await r.json().catch(() => ({}));
@@ -169,7 +181,24 @@ export function ResumeImportAction({
       if (n("languages") > 0) parts.push(`${n("languages")} languages`);
       if (ap.headline === true) parts.push("a title");
       if (ap.overview === true) parts.push("an overview");
-      setResult(parts.length > 0 ? `Added ${parts.join(" · ")}.` : "Nothing added.");
+      /*
+        ── ⚠⚠⚠ REMOVALS ARE REPORTED SEPARATELY, NEVER FOLDED INTO "ADDED" ───
+        ⚠ `P2-A1.1-E740` A2. ⚠⚠ **A RECEIPT THAT SAYS *"Added 3 skills"* AFTER
+        DELETING TWO JOBS IS A TRUE SENTENCE THAT LEAVES OUT THE ONLY PART THE
+        MEMBER MIGHT WANT BACK.** The destructive half gets its own clause and
+        its own verb. ⚠ Counted from the server's measured delete, not the tick.
+      */
+      const rm = body.removed ?? { employers: 0, projects: 0 };
+      const removedParts: string[] = [];
+      if (rm.employers > 0)
+        removedParts.push(`${rm.employers} job${rm.employers === 1 ? "" : "s"}`);
+      if (rm.projects > 0)
+        removedParts.push(`${rm.projects} project${rm.projects === 1 ? "" : "s"}`);
+      const sentences = [
+        parts.length > 0 ? `Added ${parts.join(" · ")}.` : null,
+        removedParts.length > 0 ? `Removed ${removedParts.join(" · ")}.` : null,
+      ].filter(Boolean);
+      setResult(sentences.length > 0 ? sentences.join(" ") : "Nothing changed.");
       setStage("idle");
       onApplied(body);
     } catch {
@@ -284,6 +313,107 @@ export function ResumeImportAction({
             <p className="mt-1.5 text-ink-2">
               {d.skills.noLongerMentioned.map((s) => s.name).join(" · ")}
             </p>
+          </div>
+        )}
+
+        {/*
+          ── ⚠⚠⚠ "ON YOUR PROFILE BUT NOT IN THIS RÉSUMÉ" (`P2-A1.1-E740`, A2) ──
+
+          ⚠ SCOTT, super run 2026-09-30 item 6: *"Each row is unticked by
+          default; only ticked rows are removed on save."*
+
+          ⚠⚠ **IT IS THE ONLY DESTRUCTIVE CONTROL IN THIS PANEL**, so it says
+          what each tick costs ON THE ROW rather than in a footnote. ⚠⚠⚠ A
+          checkbox beside a job, with the consequences a scroll away, is how
+          somebody deletes work history they meant to keep.
+          ⚠ **THE HEADING DOES NOT SAY "MISSING" OR "OUTDATED".** A résumé that
+          stops mentioning a job is not evidence the job did not happen — the
+          same rule `noLongerMentioned` states for skills.
+        */}
+        {(d.onProfileNotInResume.employers.length > 0 ||
+          d.onProfileNotInResume.projects.length > 0) && (
+          <div className="mt-3 border-t border-line pt-3">
+            <p className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
+              On your profile but not in this résumé
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
+              Nothing here is removed unless you tick it. Leaving a row alone
+              keeps it exactly as it is.
+            </p>
+
+            {d.onProfileNotInResume.employers.map((e) => (
+              <label key={e.id} className="mt-2.5 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={dropEmployers.has(e.id)}
+                  onChange={() =>
+                    setDropEmployers((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(e.id)) next.delete(e.id);
+                      else next.add(e.id);
+                      return next;
+                    })
+                  }
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="text-[13px] font-semibold text-ink">
+                    {[e.name, e.roleTitle].filter(Boolean).join(" — ") || "Untitled job"}
+                  </span>
+                  {/* ⚠⚠ THE CONSEQUENCES, FROM THE SCHEMA, NOT FROM A GUESS:
+                      `Project.employer_id` is `SetNull` (orphaned, kept) and
+                      `JobSkill.employer_id` is `Cascade` (deleted). ⚠⚠⚠ THE
+                      ORPHAN WARNING IS THE LOAD-BEARING HALF — `E307` measured
+                      that an orphaned project stays in the database but becomes
+                      INVISIBLE, because `listEmployers` only reaches projects
+                      through their employer. */}
+                  {(e.projectCount > 0 || e.jobSkillCount > 0) && (
+                    <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-3">
+                      {[
+                        e.projectCount > 0 &&
+                          `${e.projectCount} project${e.projectCount === 1 ? "" : "s"} under it would be kept but no longer shown anywhere`,
+                        e.jobSkillCount > 0 &&
+                          `${e.jobSkillCount} skill link${e.jobSkillCount === 1 ? "" : "s"} would be removed (you keep the skills, not the years from this job)`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
+
+            {d.onProfileNotInResume.projects.map((pr) => (
+              <label key={pr.id} className="mt-2.5 flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={dropProjects.has(pr.id)}
+                  onChange={() =>
+                    setDropProjects((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(pr.id)) next.delete(pr.id);
+                      else next.add(pr.id);
+                      return next;
+                    })
+                  }
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="text-[13px] font-semibold text-ink">{pr.name}</span>
+                  <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-3">
+                    {[
+                      pr.clientName ? `Client: ${pr.clientName}` : null,
+                      "This project would be deleted",
+                      pr.jobSkillCount > 0
+                        ? `${pr.jobSkillCount} skill link${pr.jobSkillCount === 1 ? "" : "s"} would go with it`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+              </label>
+            ))}
           </div>
         )}
 

@@ -1,4 +1,5 @@
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
+import { jobKey } from "@/lib/resume/job-key";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { prisma } from "@/lib/prisma";
@@ -811,10 +812,12 @@ export async function applyParsedResume(
   // brief_U / E042: Employer is the single work-history model, so the import
   // populates it directly instead of the retired flat WorkExperience table.
   // The "Your Employers" step then shows these as cards to confirm and enrich.
+  /* ⚠⚠ THE SHARED KEY (`E740` A2) — `rerun-diff.ts` built a DIFFERENT one
+     (space-joined), so the writer and the preview could disagree about whether
+     a job was already held. ⚠ Behaviour here is unchanged: `jobKey` is this
+     expression, extracted. */
   const haveRole = new Set(
-    profile.employers.map((w) =>
-      `${w.name}|${w.role_title ?? ""}`.toLowerCase(),
-    ),
+    profile.employers.map((w) => jobKey(w.name, w.role_title)),
   );
 
   /*
@@ -879,7 +882,7 @@ export async function applyParsedResume(
   const employerIdByName = new Map<string, string>();
 
   for (const [i, e] of parsed.experiences.entries()) {
-    const key = `${e.employer}|${e.roleTitle}`.toLowerCase();
+    const key = jobKey(e.employer, e.roleTitle);
     if (haveRole.has(key)) continue;
     haveRole.add(key);
 

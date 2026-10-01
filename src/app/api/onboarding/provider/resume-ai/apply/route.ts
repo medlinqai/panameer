@@ -80,6 +80,14 @@ const Body = z.object({
    * says so.
    */
   rest: z.boolean().default(false),
+  /*
+    ── ⚠⚠⚠ THE REMOVAL LIST (`P2-A1.1-E740`, A2) ───────────────────────────
+    ⚠ The ids the member TICKED on *"On your profile but not in this résumé"*.
+    ⚠⚠ **DEFAULT EMPTY, AND EVERY ROW IS UNTICKED ON SCREEN**, so a member who
+    presses Save without reading that list removes nothing.
+  */
+  removeEmployerIds: z.array(z.string().uuid()).max(200).default([]),
+  removeProjectIds: z.array(z.string().uuid()).max(200).default([]),
 });
 
 export async function POST(req: Request) {
@@ -96,15 +104,26 @@ export async function POST(req: Request) {
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
-  const { skillIds, specializationIds, rest } = parsedBody.data;
+  const { skillIds, specializationIds, rest, removeEmployerIds, removeProjectIds } =
+    parsedBody.data;
 
   /*
     ⚠⚠ NOTHING TICKED, NOTHING WRITTEN — and it says so rather than pretending
     something happened. A receipt reading "Added 0" for a click that did nothing
     is the fabricated-count defect in miniature.
   */
-  if (skillIds.length === 0 && specializationIds.length === 0 && !rest) {
-    return NextResponse.json({ ok: true, added: { skills: 0, specializations: 0 } });
+  if (
+    skillIds.length === 0 &&
+    specializationIds.length === 0 &&
+    !rest &&
+    removeEmployerIds.length === 0 &&
+    removeProjectIds.length === 0
+  ) {
+    return NextResponse.json({
+      ok: true,
+      added: { skills: 0, specializations: 0 },
+      removed: { employers: 0, projects: 0 },
+    });
   }
 
   /*
@@ -197,9 +216,69 @@ export async function POST(req: Request) {
      ⚠⚠ `applied` CARRIES ALL NINE FIELDS and the caller's contract now admits
      them — `E561` WS-B widened `onApplied`, which is what let the receipt reach
      the data at all. */
+  /*
+    ── ⚠⚠⚠ THE REMOVALS — `P2-A1.1-E740` (A2) ───────────────────────────────
+
+    ⚠⚠⚠ **IT MUST NOT CALL `deleteEmployer`, AND THAT IS THE WHOLE POINT OF
+    DOING IT HERE.** `lib/employers.ts:286`'s `deleteEmployer` ends in
+    `afterJobChange`, which calls `recomputeProviderRollup` — and `E553`
+    measured that rebuild as capable of **deleting 297 `DERIVED` skill rows
+    across 51 profiles, 139 of them unrecoverable**, on profiles whose rows no
+    dated, skill-linked job can rebuild. ⚠ Scott, 2026-10-01: the removal list
+    *"never fires the rollup."*
+    ⚠⚠ **SO THE DELETE IS DIRECT AND OWNER-SCOPED, AND NOTHING IS RECOMPUTED
+    HERE.** `completeness` is a cache that the member's next profile save
+    refreshes; a stale cache is survivable, and 139 destroyed skill rows are not.
+
+    ── ⚠⚠ WHAT HAPPENS TO WHAT HANGS OFF A REMOVED EMPLOYER — FROM THE SCHEMA ─
+
+    ⚠ **PROJECTS: `Project.employer_id` IS `onDelete: SetNull`** — they are
+    **ORPHANED, NOT DELETED** (`schema.prisma:1844`). ⚠⚠ The row survives with
+    its client, dates and highlights intact. ⚠⚠⚠ **AND `listEmployers` ONLY
+    REACHES PROJECTS THROUGH THEIR EMPLOYER, SO AN ORPHAN IS INVISIBLE WHILE
+    REMAINING IN THE DATABASE** — `E307` records that exact trap. The copy on
+    screen says so; a member must not learn it by losing sight of five years of
+    engagements.
+    ⚠ **JOB SKILLS: `JobSkill.employer_id` IS `onDelete: Cascade`** — the links
+    on that employer **ARE DELETED** (`schema.prisma:1714`). ⚠⚠ The
+    `ProviderSkill` rows are untouched: only the job→skill link goes, so the
+    provider keeps the skill and loses the months that job contributed.
+    ⚠⚠⚠ **THAT IS WHY NOT RECOMPUTING MATTERS TWICE OVER:** the cascade already
+    changes what a rollup would compute, so running one here would rewrite the
+    member's skill months from a job they only meant to tidy off a list.
+
+    ⚠⚠ **THE ALLOWLIST IS THE DIFF, NOT THE PAYLOAD** — the same rule the skill
+    ticks obey above. A crafted request naming any employer id is filtered down
+    to what the preview actually offered, so this endpoint cannot be used to
+    delete arbitrary rows.
+  */
+  const offeredEmployers = new Set(diff.onProfileNotInResume.employers.map((e) => e.id));
+  const offeredProjects = new Set(diff.onProfileNotInResume.projects.map((p) => p.id));
+  const employerIds = removeEmployerIds.filter((id) => offeredEmployers.has(id));
+  const projectIds = removeProjectIds.filter((id) => offeredProjects.has(id));
+
+  let removedEmployers = 0;
+  let removedProjects = 0;
+  if (employerIds.length > 0) {
+    /* ⚠ `provider_profile_id` IN THE WHERE — ownership comes from the session's
+       profile, never from the body (`access.ts`'s rule, applied to a delete). */
+    const res = await prisma.employer.deleteMany({
+      where: { id: { in: employerIds }, provider_profile_id: profile.id },
+    });
+    removedEmployers = res.count;
+  }
+  if (projectIds.length > 0) {
+    const res = await prisma.project.deleteMany({
+      where: { id: { in: projectIds }, provider_profile_id: profile.id },
+    });
+    removedProjects = res.count;
+  }
+
   return NextResponse.json({
     ok: true,
     added: { skills: skills.length, specializations: specializations.length },
+    /* ⚠ MEASURED FROM THE DELETE'S OWN COUNT, never from the request. */
+    removed: { employers: removedEmployers, projects: removedProjects },
     applied,
     skipped: {
       skills: skillIds.length - skills.length,

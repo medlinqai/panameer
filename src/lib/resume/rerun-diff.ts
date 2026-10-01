@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { matchSkills } from "@/lib/resume/match";
+import { jobKey } from "@/lib/resume/job-key";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import type { ParsedResume } from "@/lib/resume/parse";
 
@@ -66,6 +67,43 @@ export type RerunDiff = {
   };
   specializations: { added: { id: string; name: string }[] };
   /**
+   * ── ⚠⚠⚠ "ON YOUR PROFILE BUT NOT IN THIS RÉSUMÉ" (`P2-A1.1-E740`, A2) ──────
+   *
+   * ⚠ SCOTT, super run 2026-09-30 item 6: *"a rebuild shows 'On your profile but
+   * not in this résumé' for employers and projects with no match (use the
+   * import's own `haveRole` matching; no second matcher). Each row is unticked
+   * by default; only ticked rows are removed on save."*
+   *
+   * ⚠⚠ **IT IS THE ONLY REMOVAL SURFACE IN THE DIFF, AND IT IS OPT-IN.** Every
+   * other list here ADDS. ⚠⚠⚠ **A RÉSUMÉ THAT STOPS MENTIONING A JOB IS NOT
+   * EVIDENCE THE JOB DID NOT HAPPEN** — the same rule `noLongerMentioned`
+   * already states for skills, and `E549` settled for a missing end date:
+   * *"absence is not a negative statement."* ⚠ So nothing here is ever
+   * pre-ticked, and a member who ticks nothing loses nothing.
+   *
+   * ⚠⚠ **EACH ROW CARRIES WHAT REMOVING IT COSTS, MEASURED FROM THE SCHEMA** —
+   * see `removalConsequence` below. A tick box next to a job, with no statement
+   * of what else goes, is how somebody deletes work history they meant to keep.
+   */
+  onProfileNotInResume: {
+    employers: {
+      id: string;
+      name: string | null;
+      roleTitle: string | null;
+      /** ⚠ Projects hanging off this employer. They are ORPHANED, not deleted. */
+      projectCount: number;
+      /** ⚠ `JobSkill` rows on this employer. They CASCADE — they are deleted. */
+      jobSkillCount: number;
+    }[];
+    projects: {
+      id: string;
+      name: string;
+      /** ⚠ Shown so the member can tell two similarly-named projects apart. */
+      clientName: string | null;
+      jobSkillCount: number;
+    }[];
+  };
+  /**
    * ⚠ The seven categories outside the brief's first scope, reported so the
    * provider is not surprised. ⚠⚠ `headline` and `overview` are written ONLY
    * when the profile's own value is EMPTY (`import.ts:703`), so they can only
@@ -96,7 +134,25 @@ export async function computeRerunDiff(
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     include: {
-      employers: { select: { name: true, role_title: true } },
+      /* ⚠ `id` AND THE TWO COUNTS JOIN THE SELECT (`E740` A2) — the removal
+         list needs to name a row and state what removing it costs. */
+      employers: {
+        select: {
+          id: true,
+          name: true,
+          role_title: true,
+          _count: { select: { projects: true, skills: true } },
+        },
+      },
+      projects: {
+        select: {
+          id: true,
+          name: true,
+          client_name: true,
+          employer_id: true,
+          _count: { select: { skills: true } },
+        },
+      },
       /* The TITLE lives on the person since E595 WS-B — the diff asks whether
          an import would FILL it, so it has to read where it now is. */
       person: { select: { title: true } },
@@ -111,6 +167,7 @@ export async function computeRerunDiff(
     return {
       skills: { added: [], already: [], noLongerMentioned: [] },
       specializations: { added: [] },
+      onProfileNotInResume: { employers: [], projects: [] },
       other: {
         headlineWillFill: false,
         overviewWillFill: false,
@@ -198,15 +255,69 @@ export async function computeRerunDiff(
     .map((v) => ({ id: v.id, name: v.name }));
 
   /* ── The other seven, so nothing lands unannounced ──────────────────────── */
+  /* ⚠⚠ THE SHARED KEY (`E740` A2). ⚠⚠⚠ THIS LINE USED TO JOIN WITH A SPACE
+     WHILE `import.ts` JOINED WITH A PIPE — two matchers for one question, and the
+     removal list below is built on that question. See `job-key.ts`. */
   const haveEmployers = new Set(
-    profile.employers.map((e) => `${e.name} ${e.role_title ?? ""}`.toLowerCase())
+    profile.employers.map((e) => jobKey(e.name, e.role_title))
   );
   const haveEdu = new Set(profile.education.map((e) => e.institution.toLowerCase()));
   const haveCerts = new Set(profile.certifications.map((c) => c.name.toLowerCase()));
   const haveLangs = new Set(profile.languages.map((l) => l.name.toLowerCase()));
 
+  /*
+    ── ⚠⚠⚠ "ON YOUR PROFILE BUT NOT IN THIS RÉSUMÉ" (`E740` A2) ──────────────
+
+    ⚠ The SAME `jobKey` the writer uses, so a job the importer would skip as
+    already-held is exactly a job that does NOT appear here. ⚠⚠ Built by
+    SUBTRACTION from the parse, never by a second matcher.
+
+    ⚠⚠⚠ **A PROJECT IS MATCHED ON ITS OWN NAME, NOT ON `jobKey`** — a project
+    has no role title, and `jobKey` would collapse every one of them onto
+    `"name|"`. ⚠ Stated because reaching for the shared helper here would LOOK
+    like consistency and would quietly match nothing.
+  */
+  const parsedJobKeys = new Set(
+    (parsed.experiences ?? []).map((e) => jobKey(e.employer, e.roleTitle))
+  );
+  const parsedProjectNames = new Set(
+    (parsed.projects ?? [])
+      .map((pr) => String((pr as { name?: string }).name ?? "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  const unmatchedEmployers = profile.employers
+    .filter((e) => !parsedJobKeys.has(jobKey(e.name, e.role_title)))
+    .map((e) => ({
+      id: e.id,
+      name: e.name,
+      roleTitle: e.role_title,
+      /* ⚠ `SetNull` — these are ORPHANED, not deleted. */
+      projectCount: e._count.projects,
+      /* ⚠ `Cascade` — these ARE deleted. */
+      jobSkillCount: e._count.skills,
+    }));
+
+  /* ⚠⚠ SOLO PROJECTS ONLY. A project hanging off an employer is already
+     represented by that employer's row, and offering it separately would let a
+     member remove a project and keep a job that no longer has it — two ticks
+     for one decision, with nothing on screen saying they are related. */
+  const unmatchedProjects = profile.projects
+    .filter((pr) => pr.employer_id == null)
+    .filter((pr) => !parsedProjectNames.has(pr.name.trim().toLowerCase()))
+    .map((pr) => ({
+      id: pr.id,
+      name: pr.name,
+      clientName: pr.client_name,
+      jobSkillCount: pr._count.skills,
+    }));
+
   return {
     skills: { added, already, noLongerMentioned },
+    onProfileNotInResume: {
+      employers: unmatchedEmployers,
+      projects: unmatchedProjects,
+    },
     specializations: { added: specAdded },
     other: {
       /* ⚠ FILL, NEVER REPLACE — the writer guards both on the profile's value
@@ -218,7 +329,7 @@ export async function computeRerunDiff(
       employers: (parsed.experiences ?? []).filter(
         (e) =>
           !haveEmployers.has(
-            `${String((e as { employer?: string }).employer ?? "")} ${String(
+            `${String((e as { employer?: string }).employer ?? "")} ${String(
               (e as { title?: string }).title ?? ""
             )}`.toLowerCase()
           )
