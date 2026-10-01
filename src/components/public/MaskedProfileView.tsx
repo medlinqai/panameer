@@ -1,0 +1,330 @@
+import Link from "next/link";
+import {
+  EMPLOYER_LOCK_COPY,
+  RATE_LOCKED_COPY,
+  type MaskedProfile,
+} from "@/lib/masked-profile";
+import {
+  Chip,
+  LockLine,
+  MaskedAvatarLarge,
+  PublicPrimary,
+  PublicSecondary,
+} from "@/components/public/masked-ui";
+
+/**
+ * ── ⚠⚠⚠ THE MASKED PROFILE — WHAT A SHARE LINK OPENS (`P2-A1.1-E738`) ─────
+ *
+ * ⚠⚠ **EVERY FIELD THIS COMPONENT CAN RENDER IS ALREADY SAFE**, because
+ * `MaskedProfile` has no field for a name, a photo, an employer, a client, a
+ * school or a rate. ⚠⚠⚠ **THERE IS NO CONDITIONAL MASKING IN HERE AND THERE
+ * MUST NEVER BE ONE** — the moment this component takes a `showName` prop it
+ * becomes the thing that decides, and a render-time decision is the shape of
+ * defect `E114` records (a confidential client name that *"travelled in the
+ * payload, so it was one View-Source away"*).
+ *
+ * ⚠ THE NAMED VARIANT (`/in/<slug>` with the member opted in) IS A **DIFFERENT
+ * READ**, not a flag on this one. See `NamedProfileView`'s note in the route.
+ *
+ * ⚠⚠ `joinHref` AND `signInHref` ARE PASSED IN rather than built here, because
+ * the caller is the only thing that knows which page the visitor should come
+ * back to. The brief: *"After Join Free / Sign In, return the visitor to the
+ * **same** profile, now unmasked."*
+ */
+export function MaskedProfileView({
+  p,
+  joinHref,
+  signInHref,
+}: {
+  p: MaskedProfile;
+  joinHref: string;
+  signInHref: string;
+}) {
+  /* ⚠⚠ A SECTION WITH NO ROWS IS NOT RENDERED. The signed-in provider profile
+     learned this at `E562`: a page that states its absences reads as an
+     inventory of what is missing, and on a buyer-facing page that is actively
+     harmful. ⚠ Nothing here says "No certifications yet". */
+  const sections: { label: string; count: number; body: React.ReactNode; open?: boolean }[] = [];
+
+  if (p.skills.length > 0) {
+    sections.push({
+      label: "Skills",
+      count: p.skillCount,
+      open: true,
+      body: (
+        <div className="flex flex-wrap gap-1.5 pb-5">
+          {p.skills.slice(0, 12).map((s) => (
+            <Chip key={s}>{s}</Chip>
+          ))}
+          {p.skillCount > 12 && <Chip>+{p.skillCount - 12} more</Chip>}
+        </div>
+      ),
+    });
+  }
+
+  if (p.certifications.length > 0) {
+    sections.push({
+      label: "Certifications",
+      count: p.certifications.length,
+      body: (
+        <div className="flex flex-wrap gap-1.5 pb-5">
+          {p.certifications.map((c, i) => (
+            <Chip key={`${c}-${i}`}>{c}</Chip>
+          ))}
+        </div>
+      ),
+    });
+  }
+
+  if (p.employers.length > 0) {
+    sections.push({
+      label: "Work History",
+      count: p.employers.length,
+      open: true,
+      body: (
+        <div className="pb-5">
+          {p.employers.map((e, i) => (
+            <div
+              key={e.id}
+              className="relative pb-[22px] pl-7 before:absolute before:left-[3px] before:top-2.5 before:bottom-[-6px] before:border-l before:border-dashed before:border-magenta after:absolute after:left-0 after:top-[7px] after:h-2 after:w-2 after:rounded-full after:bg-magenta last:pb-0 last:before:hidden"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+                {/* ⚠ A role title is what the member DID, not who they are. */}
+                <h3 className="text-[15px] font-semibold">
+                  {e.roleTitle ?? "Consulting engagement"}
+                </h3>
+                {e.dates && <span className="text-[13.5px] text-ink-2">{e.dates}</span>}
+              </div>
+              {/* ⚠⚠ SCOTT'S ANSWER 6 — role + dates + the lock line, and **NO
+                  INVENTED INDUSTRY**. `Employer` has no industry column, so
+                  there is nothing honest to put here but the lock. */}
+              <div className="mt-1 text-[13.5px] text-ink-2">
+                <LockLine>{EMPLOYER_LOCK_COPY}</LockLine>
+              </div>
+              {e.lines.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {e.lines.map((l) => (
+                    <li key={l.id} className="text-[13.5px] text-ink-2">
+                      {l.roleTitle ?? "Project"}
+                      {l.dates ? ` · ${l.dates}` : ""}
+                      {/* ⚠ Industry ONLY where the column is populated — 3 of
+                          21 projects today. Never a fallback label. */}
+                      {l.industry ? ` · ${l.industry}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {i === p.employers.length - 1 && null}
+            </div>
+          ))}
+        </div>
+      ),
+    });
+  }
+
+  if (p.education.length > 0) {
+    sections.push({
+      label: "Education",
+      count: p.education.length,
+      body: (
+        <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
+          {/* ⚠⚠ DEGREE AND FIELD. The school name is not in the payload. */}
+          {p.education.map((e, i) => (
+            <li key={`${e}-${i}`}>{e}</li>
+          ))}
+        </ul>
+      ),
+    });
+  }
+
+  if (p.packages.length > 0) {
+    sections.push({
+      label: "Services",
+      count: p.packages.length,
+      body: (
+        /* ⚠ SCOTT'S ANSWER 10: *"Packages: titles only, no price or cover."* */
+        <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
+          {p.packages.map((t, i) => (
+            <li key={`${t}-${i}`}>{t}</li>
+          ))}
+        </ul>
+      ),
+    });
+  }
+
+  if (p.learnPaths.length > 0) {
+    sections.push({
+      label: "Teaches on Panameer",
+      count: p.learnPaths.length,
+      body: (
+        <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
+          {p.learnPaths.map((t, i) => (
+            <li key={`${t}-${i}`}>{t}</li>
+          ))}
+        </ul>
+      ),
+    });
+  }
+
+  if (p.languages.length > 0) {
+    sections.push({
+      label: "Languages",
+      count: p.languages.length,
+      body: (
+        <div className="flex flex-wrap gap-1.5 pb-5">
+          {p.languages.map((l) => (
+            <Chip key={l}>{l}</Chip>
+          ))}
+        </div>
+      ),
+    });
+  }
+
+  const meta = [
+    p.location,
+    p.experience ? `${p.experience} experience` : null,
+    p.memberSince ? `Member since ${p.memberSince}` : null,
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="grid gap-8 md:grid-cols-[260px_1fr] md:gap-12">
+      <aside>
+        <MaskedAvatarLarge />
+
+        {/* ⚠⚠ SCOTT'S ANSWER 5: the Search Score SHOWS on the masked page.
+            ⚠ `visitor-profile.spec.ts`'s "Search Score" needle asserts the
+            OWNER-ONLY block is absent from the SIGNED-IN visitor view; that
+            test signs in, so it never reaches this page and the two rules do
+            not actually collide. Stated because the answer anticipated one. */}
+        <div className="mt-6 border-t border-line pt-4 dark:border-white/15">
+          <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
+            SEARCH SCORE
+          </h4>
+          <div className="flex items-baseline justify-between py-[3px] text-[14px]">
+            <span className="text-ink-2">Score</span>
+            <b className="font-bold">{p.score} / 100</b>
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
+          <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
+            RATES
+          </h4>
+          {/*
+            ⚠⚠⚠ THERE IS NO BLURRED FIGURE HERE, AND THE MOCKUP'S BLUR IS WHY
+            THIS NOTE EXISTS. The mockup draws `$145.00` under a CSS blur as a
+            placeholder graphic. ⚠ A blur over real text is not masking — the
+            number is in the DOM and `filter: blur()` is one dev-tools toggle
+            away. ⚠⚠ The rate is simply NOT IN THE PAYLOAD (`MaskedProfile` has
+            no rate field), so there is nothing to blur and nothing to leak.
+          */}
+          <LockLine>{RATE_LOCKED_COPY}</LockLine>
+        </div>
+
+        <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
+          <PublicPrimary href={joinHref} className="w-full">
+            Register Free to Contact
+          </PublicPrimary>
+        </div>
+      </aside>
+
+      <main>
+        {/* ⚠⚠⚠ THE `<h1>` IS THE **TITLE**, NEVER THE NAME — and the page's
+            `<title>` and Open Graph tags follow the same rule (see the route).
+            ⚠ `E602` records what happens when a page has no `<h1>` at all; this
+            one has exactly one. */}
+        <h1 className="text-[26px] font-bold leading-tight sm:text-[28px]">{p.title}</h1>
+
+        {meta.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[14px] text-ink-2">
+            {meta.map((m) => (
+              <span key={m}>{m}</span>
+            ))}
+          </div>
+        )}
+
+        {/* ⚠⚠ SCRUBBED SERVER-SIDE, OR ABSENT. `scrub()` returns null rather
+            than a string with holes in it — see its note. */}
+        {p.summary && (
+          <p className="mt-4 max-w-[680px] text-[14.5px] leading-relaxed text-ink-2">
+            {p.summary}
+          </p>
+        )}
+
+        {p.industries.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {p.industries.map((i) => (
+              <Chip key={i}>{i}</Chip>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-6">
+          {sections.map((s) => (
+            /* ⚠ NATIVE `<details>`: this page is reached signed out and the
+               folding must work before any JavaScript arrives. */
+            <details
+              key={s.label}
+              open={s.open}
+              className="border-t border-line last:border-b dark:border-white/15"
+            >
+              <summary className="flex cursor-pointer items-center justify-between py-4 text-[17px] font-semibold [&::-webkit-details-marker]:hidden">
+                <span>
+                  {s.label}{" "}
+                  <small className="ml-1 text-[13px] font-medium text-ink-3">
+                    ({s.count})
+                  </small>
+                </span>
+                <span aria-hidden className="text-ink-3">
+                  ⌄
+                </span>
+              </summary>
+              {s.body}
+            </details>
+          ))}
+        </div>
+
+        {/* ⚠⚠ THE END CARD — the brief's wording, verbatim. */}
+        <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-ink p-[22px] dark:border-white/40">
+          <div>
+            <h2 className="text-[18px] font-bold">See who this is</h2>
+            <p className="mt-1 max-w-[460px] text-[13.5px] text-ink-2">
+              Register free to see their name, photo, employers and rates, and to
+              message or hire them.
+            </p>
+          </div>
+          <PublicPrimary href={joinHref}>Join Free</PublicPrimary>
+        </div>
+
+        <p className="mt-5 text-[13.5px] text-ink-2">
+          Already a member?{" "}
+          <Link href={signInHref} className="font-semibold text-magenta-dark hover:underline dark:text-magenta">
+            Sign In
+          </Link>
+        </p>
+      </main>
+    </div>
+  );
+}
+
+/**
+ * ⚠⚠ THE STICKY BAR. The brief: *"A thin sticky bar: 'Showing a masked
+ * preview.' **Join Free to See Full Profiles** · **Sign In**."*
+ * ⚠ `sticky bottom-0`, not `fixed`: a fixed bar covers the end card on a phone
+ * and there is no way to scroll past it.
+ */
+export function MaskedPreviewBar({
+  joinHref,
+  signInHref,
+}: {
+  joinHref: string;
+  signInHref: string;
+}) {
+  return (
+    <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-center gap-3 border-t border-line bg-white px-4 py-3 text-[14px] sm:px-6 dark:border-white/15 dark:bg-ink">
+      <span className="text-ink-2">Showing a masked preview.</span>
+      <PublicPrimary href={joinHref}>Join Free to See Full Profiles</PublicPrimary>
+      <PublicSecondary href={signInHref}>Sign In</PublicSecondary>
+    </div>
+  );
+}

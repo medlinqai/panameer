@@ -7,6 +7,7 @@ import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
+import { ensureSlug } from "@/lib/public-slug";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 /* ⚠ `getUsageStats` AND `countProfileViews` ARE NO LONGER CALLED HERE
    (`P2-A2-E600` WS-B) — the page rule keeps usage and statistics off My
@@ -112,6 +113,29 @@ export default async function MyProfilePage() {
     growthBoard("month"),
   ]);
 
+  /*
+    ── ⚠⚠⚠ THE MEMBER'S OWN PUBLIC LINK (`P2-A1.1-E738`, the lane 4 addition) ─
+
+    ⚠ SCOTT, 2026-10-01: *"Owner sees 'Your public link' + Copy under Visibility
+    and in the profile share bar."*
+
+    ⚠⚠ **`ensureSlug` MINTS ON FIRST READ, AND THIS IS THE ONE PLACE IT IS
+    CALLED FROM.** This page is owner-only (`getOwnProviderProfileView` resolves
+    the profile FROM THE SESSION), so a slug is only ever created for the person
+    asking. ⚠⚠⚠ **MINTING ON READ IS SAFE BECAUSE THE SLUG ALONE GRANTS
+    NOTHING:** `/in/<slug>` serves the MASKED preview unless `public_name_at` is
+    set, and that is a separate, explicit opt-in.
+    ⚠ `null` when the member has no usable name yet — the card then shows no
+    link row rather than a broken one.
+    ⚠⚠ ABSOLUTE, BUILT SERVER-SIDE from `NEXT_PUBLIC_APP_URL`: the member pastes
+    this into an email signature, so a relative path would be useless and a URL
+    assembled in the browser would be wrong during SSR.
+  */
+  const slug = await ensureSlug(profile.id);
+  const publicUrl = slug
+    ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/in/${slug}`
+    : null;
+
   return (
     <>
       {/*
@@ -181,9 +205,6 @@ export default async function MyProfilePage() {
         ⚠ Both halves are measured: the résumé rebuild is reachable (`OwnerResumeRebuild` on
         this page's own `ConnectProfile`), and the Search Score is on the `Score` tab above.
       */}
-      <div className="mx-auto max-w-5xl px-4 pt-3 sm:px-6">
-        <FreeLine claim="Build your profile from your résumé and see your full Search Score, free." />
-      </div>
       {/* ⚠ `takenPaths` IS KEYED ON THE **USER**, not the person —
           `LearnEnrollment.user_id` (`E593` WS-B item 17). ⚠⚠ A JSX comment
           is only legal in CHILDREN position, never between attributes, which
@@ -229,8 +250,45 @@ export default async function MyProfilePage() {
         which is a visual regression with no error attached to it.
       */}
       <div className="account-surface">
+      {/*
+        ── ⚠⚠⚠ THE LEAD LINE LIVES **INSIDE** THE WHITE SURFACE (`P2-A1.1-E739`) ──
+
+        ⚠ **SCOTT, 2026-10-01, walking `/profile` at 390: *"the new free lead line sits
+        in its own strip, indented past the page gutter, and the photo butts against
+        it… Put the lead line inside the page's normal gutter, with no separate
+        background and one standard gap below it."***
+
+        ⚠⚠ **THREE MEASURED CAUSES, NOT ONE**, and each half of his sentence was a
+        different defect:
+          1. ⚠ **INDENTED** — the wrapper carried `px-4` inside an ancestor that
+             already supplies the page gutter, so the `<p>` sat at **x=36** while
+             `.pm-cp3`, the photo and every section below sat at **x=20**. ⚠⚠ It also
+             used `max-w-5xl` (1024px) against the profile column's **1120px**, so it
+             was narrower than its own content at desktop width.
+          2. ⚠⚠ **ITS OWN STRIP** — it rendered ABOVE `.account-surface`, i.e. on
+             `bg-canvas` (**rgb(250,250,250)**, probed) while the content it introduces
+             is on **white**. ⚠⚠⚠ **A LINE THAT INTRODUCES A CARD MUST SIT ON THE
+             CARD**, or it reads as chrome belonging to the tab row above it.
+          3. ⚠ **THE PHOTO BUTTING AGAINST IT** — no gap of its own; `mb-4` is now the
+             one standard gap below, and nothing above (the surface supplies that).
+
+        ⚠⚠ **IT IS STILL ON THE PAGE AND NOT INSIDE `ConnectProfile`, WHICH IS
+        `E737`'s LOAD-BEARING REASON AND IS UNCHANGED:** that component is shared with
+        `/providers/[id]`, so a line placed there would tell a visitor that THEIR résumé
+        build is free while they are looking at a stranger's profile.
+        ⚠ Both halves of the claim remain measured: the résumé rebuild is reachable
+        (`OwnerResumeRebuild` below) and the Search Score is on the `Score` tab above.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — both earlier wrappers:
+        //   <div className="mx-auto max-w-5xl px-4 pt-3 sm:px-6">   (E737, on canvas)
+        //   <div className="mx-auto mb-4 max-w-[1120px]">           (E739 first pass)
+      */}
+      <div className="mx-auto mb-4 max-w-[1120px]">
+        <FreeLine claim="Build your profile from your résumé and see your full Search Score, free." />
+      </div>
       <ConnectProfile
-        p={profile}
+        /* ⚠ `publicUrl` is resolved HERE and nowhere else — see `ensureSlug`
+           above. The view model carries `null` for every other surface. */
+        p={{ ...profile, publicUrl }}
         /* ⚠⚠ `Viewing Me`, WITH DATA BEHIND IT AT LAST (`P0-E595` A2). One row
            per viewer per day, counted all time — the `Counters` decision, not a
            window nobody ruled on. ⚠ This is the OWNER's own page, which is the

@@ -261,6 +261,18 @@ export async function updateProfileSettings(
     paused?: boolean;
     projectPreference?: "ANY" | "SHORT_TERM" | "LONG_TERM" | "CONTRACT_TO_HIRE" | null;
     earningsPrivate?: boolean;
+    /*
+      ── ⚠⚠ THE TWO PUBLIC-PREVIEW SWITCHES (`P2-A1.1-E738`) ────────────────
+      ⚠ Both are TIMESTAMP columns for the same reason `paused_at` is: *"since
+      when"* is the useful question. ⚠⚠ Note the opposite polarities, which is
+      deliberate and is the member's own default in each case:
+        · `previewHidden` — the preview is ON by default, so a timestamp = off.
+        · `publicName`    — naming is OFF by default, so a timestamp = on.
+      ⚠⚠⚠ NEITHER TOUCHES THE MARKETPLACE GATE. `paused_at` is still the one
+      lever for that, and the masked reads apply these ON TOP of it.
+    */
+    previewHidden?: boolean;
+    publicName?: boolean;
     /* ⚠ REMOVED (78c) — see the writer below. */
     linkedGithub?: string | null;
     linkedStackoverflow?: string | null;
@@ -284,6 +296,13 @@ export async function updateProfileSettings(
         : {}),
       ...(patch.earningsPrivate !== undefined
         ? { earnings_private: patch.earningsPrivate }
+        : {}),
+      /* ⚠⚠ `P2-A1.1-E738` — see the patch type above for the polarities. */
+      ...(patch.previewHidden !== undefined
+        ? { preview_hidden_at: patch.previewHidden ? new Date() : null }
+        : {}),
+      ...(patch.publicName !== undefined
+        ? { public_name_at: patch.publicName ? new Date() : null }
         : {}),
       /* ⚠⚠⚠ `ai_training_opt_in` IS NO LONGER WRITTEN (ruling 78c). The card is
          deleted and the route no longer accepts the key, so leaving a writer

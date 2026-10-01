@@ -284,6 +284,35 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   */
   { route: "/assess", category: 5 },
   { route: "/explore", category: 5 },
+  /*
+    ── ⚠⚠⚠ TWO ROUTES ADDED **DELIBERATELY** — `P2-A1.1-E738` ────────────────
+
+    ⚠ SCOTT, 2026-10-01, answer 9: *"Confirmed: add `/providers/[id]` and
+    `/in/[slug]` to the public allowlist deliberately."* ⚠⚠ The word
+    *"deliberately"* is his, and it is here because **`/providers/[id]` WAS
+    GATED ON PURPOSE BY `E049`** and anyone reading that history alone would
+    treat this entry as a regression.
+
+    ⚠⚠⚠ **WHAT CHANGED IS WHERE THE MASK LIVES, NOT WHETHER THERE IS ONE.**
+    `E049` gated the route because the page rendered a full profile — surname,
+    contact, employers — to anyone with the URL. ⚠ Signed out, the route now
+    renders `MaskedProfileView` from `lib/masked-profile.ts`, whose type **has no
+    field for a name, a photo, an employer, a client, a school or a rate**, so
+    the masked values are never selected and never serialised.
+    ⚠⚠ **SIGNED IN, THE PAGE IS BYTE-FOR-BYTE WHAT IT WAS.** The visitor arm is
+    an early return above every signed-in read.
+
+    ⚠ `/in/[slug]` is the member's own personal public URL (*"like LinkedIn, for
+    Scott's email signature"*). ⚠⚠ It serves the SAME masked preview by default;
+    only a member who switched **"Public profile with my name"** on is named
+    there, and that column defaults to off.
+
+    ⚠⚠⚠ **THE LEAK TEST IS THE GATE, NOT THIS COMMENT** —
+    `e2e-e738/leak.spec.ts` loads both routes signed out and fails if any masked
+    value appears anywhere in the response.
+  */
+  { route: "/providers/[id]", category: 5 },
+  { route: "/in/[slug]", category: 5 },
   { route: "/why-panameer", category: 5 },
   { route: "/work-marketplace", category: 5, status: "OPEN" },
 

@@ -1091,6 +1091,39 @@ model ProviderProfile {
   /// currently at their desk; conflating the two would hide a profile because
   /// its owner went to lunch.
   available_for_messages  Boolean            @default(true)
+
+  /// ---- P2-A1.1-E738 — WHAT A SIGNED-OUT VISITOR MAY SEE -------------------
+  ///
+  /// Three columns, all nullable, all additive (ruling 38). They govern the
+  /// PUBLIC surfaces only; `paused_at` remains the one marketplace-visibility
+  /// switch and none of these widens it.
+  ///
+  /// ⚠⚠ `preview_hidden_at` — "Show my masked profile to visitors", ON BY
+  /// DEFAULT, so NULL means shown. A timestamp means the member turned it off,
+  /// and "since when" is the fact worth keeping (the same reasoning as
+  /// `paused_at`). Off removes them from Browse Talent AND makes a share link
+  /// return the "not available" page.
+  ///
+  /// ⚠⚠⚠ IT CANNOT MAKE A HIDDEN PROFILE VISIBLE. The masked reads apply this
+  /// ON TOP OF `marketplaceVisibleWhere()`; a member who paused is absent
+  /// whatever this column says. ⚠ Absence of the column is the permissive
+  /// state, which is why the default could not be a boolean `true` with a
+  /// NOT NULL — a row written before this column existed has to mean "shown".
+  preview_hidden_at       DateTime?
+  /// ⚠⚠ `public_name_at` — "Public profile with my name", OFF BY DEFAULT, so
+  /// NULL means off and the masked preview is what `/in/<slug>` serves. A
+  /// timestamp means the member opted IN to being named publicly: name, photo
+  /// and employers render to anyone with no sign-in, the page may be indexed,
+  /// and rates and contact still need a free sign-up.
+  ///
+  /// ⚠⚠⚠ OFF IS THE DEFAULT BECAUSE THE DEFAULT IS THE ONE NOBODY CHOOSES.
+  /// Publishing a member's real name without them asking is not a setting, it
+  /// is a disclosure. ⚠ `client_visibility` still governs client names on this
+  /// page — opting in to your own name is not opting in on a client's behalf.
+  public_name_at          DateTime?
+  /// ⚠⚠ THE PERSONAL PUBLIC URL IS **NOT A COLUMN HERE** — it lives in
+  /// `ProviderProfileSlug`, one row per slug, the live one flagged
+  /// `is_current`. See that model for why.
   /// ---- J2.4 WS-H Profile Settings (E015) ----------------------------------
   /// What KIND of work this provider wants. A preference shown to buyers and
   /// used for matching later; not a filter on what they may bid for.
@@ -1210,12 +1243,56 @@ model ProviderProfile {
   /// `P2-J2-E563` WS-B — the 3-year experience attestation, one row per
   /// category the provider claims. See `ProviderExperienceAttestation`.
   experienceAttestations ProviderExperienceAttestation[]
+  /// `P2-A1.1-E738` — superseded personal public URLs. See the model below.
+  oldSlugs               ProviderProfileSlug[]
 
   @@index([region_id])
   @@index([coordinator_person_id])
   @@index([pillar_id])
   @@index([role_type_id])
   @@map("provider_profiles")
+}
+
+/// ── ⚠⚠ THE PERSONAL PUBLIC URL — `/in/<slug>` (`P2-A1.1-E738`) ────────────
+///
+/// ⚠ SCOTT, 2026-10-01: *"`/in/<first>-<last>`, `-2`, `-3` on collisions.
+/// Stored once; stable when the name changes unless the member edits it; old
+/// slugs redirect."*
+///
+/// ⚠⚠⚠ EVERY SLUG A MEMBER HAS EVER HELD IS A ROW HERE — the live one carries
+/// `is_current`, the retired ones do not. ⚠⚠ **THAT IS THE WHOLE REASON THE
+/// LIVE SLUG IS NOT A COLUMN ON `ProviderProfile`:** live and retired slugs
+/// have to share ONE unique namespace, or a slug somebody retired could be
+/// minted for a different member and an old email-signature link would resolve
+/// to a stranger's profile. ⚠ A `@unique` column on one table plus a `@unique`
+/// column on another cannot express that; one `@unique` over both can.
+///
+/// ⚠ Minting is ONE helper (`lib/public-slug.ts`), and it is deliberately NOT
+/// re-derived from the name on every read: a URL in somebody's email signature
+/// that changes when they fix a typo in their surname is a broken link they put
+/// there themselves.
+///
+/// ⚠⚠ `is_current` IS NOT UNIQUE PER PROFILE AT THE DATABASE, AND THE HELPER IS
+/// WHAT KEEPS IT TO ONE — Postgres cannot express "at most one true per
+/// profile" without a partial index, which Prisma's schema language does not
+/// carry. ⚠ `check:public-profile` asserts the invariant instead, so a second
+/// live slug fails a gate rather than going unnoticed.
+model ProviderProfileSlug {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// The slug itself, e.g. `scott-walls` or `scott-walls-2`. ⚠ Unique across
+  /// live AND retired rows — see the note above.
+  slug       String   @unique
+  profile_id String   @db.Uuid
+  /// ⚠ True on exactly one row per profile; the rest are forwarding addresses
+  /// read only to issue a 308.
+  is_current Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  profile ProviderProfile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([profile_id, is_current])
+  @@map("provider_profile_slugs")
 }
 
 /// ⚠⚠ THE FOUR SERVICE-PRODUCT CATEGORIES. THE LIST IS CLOSED AND IT IS

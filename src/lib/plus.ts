@@ -109,17 +109,39 @@ export function clientNameVisibility({
   isOwner,
   isPlus,
   isAdmin,
+  isVisitor = false,
   clientName,
 }: {
   visibility: string;
   isOwner: boolean;
   isPlus: boolean;
   isAdmin: boolean;
+  /**
+   * ── ⚠⚠⚠ THE VISITOR ARM — `P2-A1.1-E738`, SCOTT'S ANSWER 8 ───────────────
+   *
+   * ⚠ *"add a visitor arm to `clientNameVisibility`."*
+   *
+   * ⚠⚠ **A SIGNED-OUT VISITOR IS NOT "THE PUBLIC" IN THE SENSE `PUBLIC` MEANS
+   * HERE.** `ClientVisibility.PUBLIC` was set by a provider deciding what
+   * **members** of a marketplace may see on their profile; it was never a
+   * decision to publish a client relationship to the open internet, to
+   * crawlers, or to that client's competitors.
+   * ⚠⚠⚠ **SO `PUBLIC` + SIGNED OUT WITHHOLDS.** The masked preview already
+   * withholds employer names unconditionally, and a `PUBLIC` client name is the
+   * same fact arriving by a different column — leaving it through would mean the
+   * one page built to hide who a provider works for named their clients.
+   *
+   * ⚠ It cannot widen anything: it is only ever tested as a reason to WITHHOLD,
+   * after owner and admin, and a visitor is by definition neither.
+   */
+  isVisitor?: boolean;
   clientName: string | null | undefined;
 }): { clientName: string | null; clientLocked: boolean } {
   const name = clientName?.trim() || null;
   if (!name) return { clientName: null, clientLocked: false };
   if (isOwner || isAdmin) return { clientName: name, clientLocked: false };
+  /* ⚠⚠ BEFORE the `PUBLIC` arm, which is the whole point — see `isVisitor`. */
+  if (isVisitor) return { clientName: null, clientLocked: true };
   if (visibility === "PUBLIC") return { clientName: name, clientLocked: false };
   if (visibility === "PLUS_ONLY" && isPlus) {
     return { clientName: name, clientLocked: false };

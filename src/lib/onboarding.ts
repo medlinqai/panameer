@@ -2974,10 +2974,18 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
   return { roleTypeIds, pillarId, evidence: rows.length };
 }
 
-export async function buildCompletenessInput(profileId: string) {
-  const profile = await prisma.providerProfile.findUnique({
-    where: { id: profileId },
-    include: {
+/**
+ * ── ⚠⚠⚠ THE SCORER'S `include`, AS ONE CONSTANT (`P2-A1.1-E738`) ───────────
+ *
+ * ⚠⚠ **EXTRACTED SO A BATCH LOADER CANNOT LOAD LESS THAN THE MAPPER READS.**
+ * `completenessInputFrom` below is a pure function over this exact shape; if the
+ * shape and the mapper could drift apart, a batch caller would silently score a
+ * profile as if it had no languages, no certifications and no projects — i.e. it
+ * would return a REAL-LOOKING NUMBER THAT IS TOO LOW, which is the worst kind of
+ * wrong figure because nothing about it looks broken.
+ * ⚠ `satisfies` keeps it a literal type for Prisma while still type-checking it.
+ */
+export const COMPLETENESS_INCLUDE = {
       skills: { include: { skill: { select: { role_type_id: true } } } },
       /* ⚠ `E517` — the selection the filter reads. */
       roles: { select: { role_type_id: true } },
@@ -3018,13 +3026,21 @@ export async function buildCompletenessInput(profileId: string) {
           */
         },
       },
-    },
-  });
-  if (!profile) return null;
-  /* ⚠ `E489` — the shape is built ONCE and handed to both readers. The
-     checklist mirrors this scorer predicate for predicate, so assembling the
-     input twice is how the number and its breakdown would start disagreeing. */
-  const input = {
+} as const;
+
+/**
+ * ⚠⚠⚠ THE INPUT SHAPE, AS A PURE FUNCTION. No database, no session, no clock.
+ *
+ * ⚠ `E489`'s rule unchanged — *"the shape is built ONCE and handed to both
+ * readers"* — now with a third reader (the public Browse Talent grid, which
+ * loads many profiles in one query and maps each through here).
+ * ⚠⚠ THE CHECKLIST MIRRORS THIS PREDICATE FOR PREDICATE, so assembling the
+ * input twice is how the number and its breakdown would start disagreeing.
+ */
+export function completenessInputFrom(
+  profile: NonNullable<Awaited<ReturnType<typeof loadForCompleteness>>>
+) {
+  return {
     /* ⚠ `completeness.ts`'s input keeps the key `headline`; its SOURCE is now
        `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
        //   headline: profile.headline, */
@@ -3083,7 +3099,46 @@ export async function buildCompletenessInput(profileId: string) {
     declaredNoCertificationsAt: profile.declared_no_certifications_at,
     declaredNoSoloProjectsAt: profile.declared_no_solo_projects_at,
   };
-  return input;
+}
+
+/** ⚠ The one-profile load, in the shared shape. */
+async function loadForCompleteness(profileId: string) {
+  return prisma.providerProfile.findUnique({
+    where: { id: profileId },
+    include: COMPLETENESS_INCLUDE,
+  });
+}
+
+/**
+ * ⚠ Unchanged contract: the input for ONE profile, or null if it does not exist.
+ */
+export async function buildCompletenessInput(profileId: string) {
+  const profile = await loadForCompleteness(profileId);
+  if (!profile) return null;
+  return completenessInputFrom(profile);
+}
+
+/**
+ * ── ⚠⚠ THE SAME INPUT FOR MANY PROFILES, IN **ONE** QUERY (`P2-A1.1-E738`) ──
+ *
+ * ⚠⚠⚠ **WHY IT EXISTS: THE PUBLIC GRID SHOWS 12 SEARCH SCORES AND THE STORED
+ * `completeness` COLUMN IS STALE FOR 52 OF 59 ELIGIBLE PROFILES** (measured
+ * 2026-10-01), so the figures have to be computed. ⚠ Twelve calls to
+ * `buildCompletenessInput` measured **4.4 s** through the pooler — unacceptable
+ * on a page a stranger loads. One query is ~0.3 s.
+ * ⚠⚠ IT IS THE SAME `include` AND THE SAME MAPPER, so the batch cannot produce
+ * a different number from the single read. ⚠ Returned as a Map keyed on profile
+ * id; a missing id is simply absent, never a zero.
+ */
+export async function buildCompletenessInputs(
+  profileIds: string[]
+): Promise<Map<string, ReturnType<typeof completenessInputFrom>>> {
+  if (profileIds.length === 0) return new Map();
+  const rows = await prisma.providerProfile.findMany({
+    where: { id: { in: profileIds } },
+    include: COMPLETENESS_INCLUDE,
+  });
+  return new Map(rows.map((r) => [r.id, completenessInputFrom(r)]));
 }
 
 /**

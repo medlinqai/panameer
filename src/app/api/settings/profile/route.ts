@@ -11,6 +11,18 @@ const Body = z.object({
     .optional(),
   earningsPrivate: z.boolean().optional(),
   /*
+    ── ⚠⚠ `P2-A1.1-E738` — THE TWO PUBLIC-PREVIEW SWITCHES ────────────────────
+    ⚠ Added to the EXISTING visibility endpoint rather than given their own
+    route: they are visibility, they are owner-scoped by the same
+    `settingsWrite` + `ownIds` path, and a second endpoint would be a second
+    place the ownership could be got wrong.
+    ⚠⚠ `settingsWrite` resolves the target profile FROM THE SESSION
+    (`ownIds(viewer)`), never from the body — so neither switch can be flipped
+    on somebody else's profile.
+  */
+  previewHidden: z.boolean().optional(),
+  publicName: z.boolean().optional(),
+  /*
     ── ⚠⚠⚠ `aiTrainingOptIn` NO LONGER ACCEPTED (ruling 78c) ───────────────
 
     ⚠ Ruling 78 deleted the AI Data Training card. ⚠⚠ **THE COLUMN STAYS**

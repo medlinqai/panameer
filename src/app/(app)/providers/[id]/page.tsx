@@ -2,7 +2,12 @@ import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
-import { notFound, redirect } from "next/navigation";
+/* ⚠⚠ `redirect` LEFT WITH THE LOGIN WALL (`P2-A1.1-E738` WS-A) — a signed-out
+   visitor now gets the masked preview instead of a bounce to `/login`. ⚠ The
+   call itself is quoted in the visitor block below (`E164`).
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { notFound, redirect } from "next/navigation"; */
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 /*
   ⚠⚠ THE TWO PROFILE COMPONENTS CONVERGE HERE (`P2-J3-E588` WS-B). This page
@@ -41,6 +46,9 @@ import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { canMessage } from "@/lib/messages";
 import { recordProfileView } from "@/lib/profile-views";
+import { MaskedProviderPage } from "@/components/public/MaskedProviderPage";
+import { getMaskedProfile } from "@/lib/masked-profile";
+import type { Metadata } from "next";
 
 /**
  * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
@@ -151,6 +159,49 @@ async function providerColleagueCount(userId: string | null): Promise<number> {
   });
 }
 
+/**
+ * ── ⚠⚠⚠ THE PAGE TITLE AND SHARE PREVIEW USE THE **TITLE**, NEVER THE NAME ──
+ *                                                      (`P2-A1.1-E738` WS-A)
+ *
+ * ⚠⚠ THE BRIEF IS EXPLICIT: *"Page title and share preview (Open Graph) use the
+ * **title**, never the name."* ⚠⚠⚠ **METADATA IS A MASK LEAK NOBODY LOOKS AT.**
+ * A `<title>` reading *"Scott Walls — Panameer"* on a page built to hide the
+ * name is the full leak: it is in the browser tab, in the history, in the
+ * bookmark, and in every link preview the URL is pasted into.
+ *
+ * ⚠ IT READS THE **MASKED** LOADER FOR EVERYBODY, signed in or out, and that is
+ * deliberate: the metadata is what gets SHARED, so it is written to the weakest
+ * audience the URL can reach. ⚠⚠ `getMaskedProfile` returns null for a profile
+ * that is not publicly previewable, and the fallback names nobody.
+ *
+ * ⚠⚠ `robots: noindex` IS SCOTT'S ANSWER 4, 2026-10-01: *"Masked pages
+ * `noindex`."* ⚠ The one page that MAY be indexed is `/in/<slug>` with the
+ * member's "Public profile with my name" option on — a different route, with its
+ * own metadata, because the indexing rule differs there.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const p = await getMaskedProfile(id);
+  const title = p?.title?.trim()
+    ? `${p.title} — Panameer`
+    : "Provider Profile — Panameer";
+  const description = p
+    ? [p.location, p.experience ? `${p.experience} experience` : null]
+        .filter(Boolean)
+        .join(" · ") || "An Oracle expert on Panameer."
+    : "An Oracle expert on Panameer.";
+  return {
+    title,
+    description,
+    robots: { index: false, follow: true },
+    openGraph: { title, description },
+  };
+}
+
 export default async function PublicProviderPage({
   params,
   searchParams,
@@ -197,8 +248,38 @@ export default async function PublicProviderPage({
     A callback so signing in lands back on the profile they were trying to open
     — the gate is meant to cost an account, not the click.
   */
+  /*
+    ── ⚠⚠⚠ SIGNED OUT NOW GETS A **MASKED PREVIEW**, NOT A LOGIN WALL ────────
+                                                        (`P2-A1.1-E738` WS-A)
+
+    ⚠ SCOTT, 2026-10-01, approving the mockup: *"that is awesome. do it."* The
+    brief: *"Signed out, `/providers/[id]` shows the masked profile per the
+    mockup, not a redirect to sign-in. Signed in, it shows the full profile
+    exactly as today."*
+
+    ⚠⚠ **THE OLD REDIRECT IS WHAT MADE A SHARE LINK WORTHLESS.** `E049` gated
+    this route so nobody could walk from an `/explore` teaser to a surname — the
+    right call, and the masking it protected is now enforced a layer deeper, in
+    `lib/masked-profile.ts`, where the name is **not in the payload at all.**
+    ⚠⚠⚠ **SO THE GATE IS NOT BEING WEAKENED; IT IS BEING MOVED FROM THE ROUTE TO
+    THE TYPE.** A route gate protects one URL. A type that has no `lastName`
+    field protects every surface that ever reads it.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the redirect, and `E049`'s
+    reasoning for it, which is preserved in the page's header comment:
+    //   if (!viewer) {
+    //     redirect(`/login?callbackUrl=${encodeURIComponent(`/providers/${id}`)}`);
+    //   }
+
+    ⚠⚠ **NOTHING BELOW THIS BLOCK RUNS FOR A VISITOR**, which is what keeps the
+    rest of the page — `getProviderProfileView`, `recordProfileView`,
+    `getMyCommunity`, `canMessage` — untouched and signed-in-only. ⚠ In
+    particular **NO PROFILE-VIEW ROW IS WRITTEN FOR A SIGNED-OUT VISITOR**
+    (Scott, 2026-10-01: *"no profile-view write for signed-out visitors"*), and
+    it is guaranteed by the early return rather than by a flag.
+  */
   if (!viewer) {
-    redirect(`/login?callbackUrl=${encodeURIComponent(`/providers/${id}`)}`);
+    return <MaskedProviderPage id={id} />;
   }
 
   /*

@@ -1185,8 +1185,17 @@ export function ConnectProfile({
           be told whether somebody has paused themselves.
           ⚠ IT MOVED BELOW RATES (`E715` row 10) — a switch does not lead a column.
         */}
+        {/* ⚠⚠ `P2-A1.1-E738` — the two public-preview switches and the member's
+            own `/in/<slug>` link join this card. ⚠ `publicUrl` is resolved by
+            the OWNER'S PAGE and is null on every other surface, so a visitor
+            render cannot mint a slug. */}
         {owner && (
-          <ProfileVisibilityCard paused={p.paused} />
+          <ProfileVisibilityCard
+            paused={p.paused}
+            previewHidden={p.previewHidden}
+            publicName={p.publicName}
+            publicUrl={p.publicUrl}
+          />
         )}
 
         {owner ? (

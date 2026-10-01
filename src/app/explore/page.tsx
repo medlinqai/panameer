@@ -1,16 +1,24 @@
 import Link from "next/link";
-import { getSessionViewer } from "@/lib/session";
-import { ProviderCard } from "@/components/marketplace/ProviderCard";
+/* ⚠⚠ TWO IMPORTS LEFT WITH THE TEASER (`P2-A1.1-E738` WS-B). ⚠ `ProviderCard`
+   renders a first name and a photo URL and is replaced by `TalentCard`, which
+   cannot; `getSessionViewer` was read only for `canSeeRate` on that card and
+   `MaskedCard` has no rate. ⚠ BOTH FILES ARE UNTOUCHED ON DISK (`E164`) and
+   `ProviderCard` is still rendered by the signed-in surfaces.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   import { getSessionViewer } from "@/lib/session";
+   //   import { ProviderCard } from "@/components/marketplace/ProviderCard"; */
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { Btn } from "@/components/marketing/brand";
-import {
-  searchProvidersTeaser,
-  searchWorkTeaser,
-  type TeaserProvider,
-  type TeaserWork,
-} from "@/lib/explore";
+/* ⚠⚠ `searchProvidersTeaser` AND `TeaserProvider` ARE NO LONGER IMPORTED — the
+   hire arm is the masked grid now (`P2-A1.1-E738` WS-B). ⚠ `lib/explore.ts` is
+   untouched on disk and still exports them; the WORK arm below still uses
+   `searchWorkTeaser`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   searchProvidersTeaser,
+   //   type TeaserProvider, */
+import { searchWorkTeaser, type TeaserWork } from "@/lib/explore";
+import { BrowseTalentGrid } from "@/components/public/BrowseTalentGrid";
 
 /**
  * WHERE THE HERO SEARCH LANDS — a teaser, not a placeholder (E032–E037).
@@ -46,7 +54,13 @@ export const metadata: Metadata = {
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; mode?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    mode?: string;
+    country?: string;
+    years?: string;
+    take?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const query = (sp.q ?? "").trim();
@@ -55,29 +69,68 @@ export default async function ExplorePage({
   const hiring = sp.mode !== "work";
 
   /*
-    ⚠⚠⚠ THE VIEWER IS READ, AND THE PAGE IS STILL PUBLIC (`P2-A2-E618`,
-    ruling 29). ⚠ `getSessionViewer()` returns `null` for a signed-out visitor
-    and the page renders exactly as before — every card, the whole browse.
-    ⚠⚠ **NOTHING ABOUT THE ROUTE'S REACHABILITY CHANGES.** Scott's note in
-    `lib/public-routes.ts` — *"PUBLIC PROFILE BROWSE, AND IT WORKS… DO NOT
-    TIDY IT. DO NOT GATE IT."* — is honoured. ⚠ **One FIELD acquires the rule
-    it already had everywhere else:** the rate.
-  */
-  const viewer = await getSessionViewer();
+    ── ⚠⚠⚠ THE HIRE ARM IS **BROWSE TALENT** NOW (`P2-A1.1-E738` WS-B) ───────
 
-  const { cards, total } = hiring
-    ? await searchProvidersTeaser(query, undefined, viewer)
-    : await searchWorkTeaser(query);
+    ⚠ SCOTT, 2026-10-01, answer 8: *"Browse Talent replaces the existing
+    `/explore` link (no 7th nav item). `/explore` becomes the masked grid; real
+    first names and photo URLs removed."*
+
+    ⚠⚠ **THE WORK ARM (`?mode=work`) IS DELIBERATELY LEFT EXACTLY AS IT WAS.**
+    It is linked by name from `WorkHero`, `IntegrateHero`, `ShopHero` and
+    `lib/integrate-hero.ts`, and its honest zero — *"No Work Requests are open
+    yet"* — is a measured truth those pages quote. ⚠⚠⚠ **REPLACING THE WHOLE
+    PAGE WOULD HAVE DELETED THAT ZERO AND BROKEN FOUR MARKETING PAGES' PROMISES
+    INSIDE A BRIEF ABOUT TALENT MASKING.** Scott's answer names the GRID, not
+    the route's other half.
+
+    ⚠ **NO SEVENTH NAV ITEM WAS ADDED**, per the same answer. `MARKETING_NAV`
+    is byte-unchanged; the words *"Browse Talent"* appear as this page's own
+    eyebrow and as the back-link on a masked profile.
+
+    ⚠⚠ `getSessionViewer()` IS GONE FROM THIS PAGE and that is a narrowing, not
+    an oversight: it was read for ONE reason — `canSeeRate` on a teaser card
+    (`E618`, ruling 29) — and **`MaskedCard` CARRIES NO RATE AT ALL**, so there
+    is nothing left for a viewer to unlock here. ⚠ The route stays public and
+    stays exactly as Scott protected it (*"DO NOT GATE IT"*).
+    ⚠⚠⚠ **A SIGNED-IN MEMBER THEREFORE SEES THE MASKED GRID TOO.** Reported as a
+    consequence, not hidden: the signed-in surface for browsing people is
+    `/talent` and `/community`, and this page is the public funnel. ⚠ SUPERSEDED,
+    quoted not deleted (`E164`):
+    //   const viewer = await getSessionViewer();
+    //   const { cards, total } = hiring
+    //     ? await searchProvidersTeaser(query, undefined, viewer)
+    //     : await searchWorkTeaser(query);
+  */
+  if (hiring) {
+    return (
+      <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink dark:bg-ink dark:text-white">
+        <MarketingHeader />
+        <main className="flex-1">
+          <div className="mx-auto max-w-[1120px] px-6 py-9 sm:py-12">
+            <BrowseTalentGrid
+              q={query || undefined}
+              country={sp.country || undefined}
+              minYears={sp.years ? Number(sp.years) || undefined : undefined}
+              take={sp.take ? Number(sp.take) || undefined : undefined}
+            />
+          </div>
+        </main>
+        <MarketingFooter />
+      </div>
+    );
+  }
+
+  const { cards, total } = await searchWorkTeaser(query);
 
   // Back to exactly this search after signing in — the gate must not cost
   // anyone the query they typed.
   const backHere = `/explore?${new URLSearchParams({
-    mode: hiring ? "hire" : "work",
+    mode: "work",
     ...(query ? { q: query } : {}),
   })}`;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(backHere)}`;
 
-  const noun = hiring ? "Expert" : "Work Request";
+  const noun = "Work Request";
   const remaining = Math.max(0, total - cards.length);
 
   return (
@@ -85,33 +138,21 @@ export default async function ExplorePage({
       <MarketingHeader />
 
       <main className="flex-1">
-        {/*
-          E036/E035 — 1180px, matching every other section on the marketing
-          site. The column was 860px, which is a reading measure for prose and
-          far too narrow for a results grid: it was what forced the heading and
-          the body to wrap two words early, so widening is the wrap fix rather
-          than a separate change. No max-w on the heading itself, and the body
-          keeps a real prose measure because a 1180px paragraph is unreadable.
-        */}
         <div className="mx-auto max-w-[1180px] px-6 py-12 sm:py-16">
           {/* E034 — the eyebrow follows the toggle the visitor came in on. */}
           <p className="mb-2.5 text-[13px] font-extrabold uppercase tracking-[0.06em] text-magenta">
-            {hiring ? "Finding experts" : "Finding work"}
+            Finding work
           </p>
 
           <h1 className="text-balance text-[30px] font-extrabold leading-[1.1] tracking-[-0.9px] sm:text-[40px]">
             {cards.length > 0
-              ? hiring
-                ? "These experts match what you need"
-                : "This work matches what you do"
-              : hiring
-                ? "No experts match that yet"
-                : "No open work matches that yet"}
+              ? "This work matches what you do"
+              : "No open work matches that yet"}
           </h1>
 
           {query && (
             <p className="mt-3 text-[16px] text-ink-2">
-              Showing matches for <span className="font-bold text-ink">“{query}”</span>
+              Showing matches for <span className="font-bold text-ink">&ldquo;{query}&rdquo;</span>
               {total > 0 && (
                 <>
                   {" "}
@@ -125,34 +166,14 @@ export default async function ExplorePage({
           {cards.length > 0 ? (
             <>
               <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {hiring
-                  ? (cards as TeaserProvider[]).map((p) => (
-                      <ProviderCard
-                        key={p.id}
-                        p={p}
-                        loginHref={loginHref}
-                        /*
-                          WS-2 — the name goes to the PROFILE, through the gate.
-                          /providers/[id] is authed now (307 -> /login), so
-                          linking a logged-out visitor straight at it would
-                          bounce them and lose the destination. Naming it as the
-                          callback means the gate costs a sign-in, not the click.
-                        */
-                        profileHref={`/login?callbackUrl=${encodeURIComponent(
-                          `/providers/${p.id}`
-                        )}`}
-                      />
-                    ))
-                  : (cards as TeaserWork[]).map((w) => (
-                      <WorkCard key={w.id} w={w} loginHref={loginHref} />
-                    ))}
+                {(cards as TeaserWork[]).map((w) => (
+                  <WorkCard key={w.id} w={w} loginHref={loginHref} />
+                ))}
               </div>
 
               {/*
                 E032 — THE GATE. The cards are the bait; identity, contact and
-                the rest of the roster are the purchase. Only rendered when
-                there IS more — promising "all 3" when three are on screen is
-                the kind of empty gate that teaches people to ignore gates.
+                the rest of the roster are the purchase.
               */}
               <div className="mt-9 rounded-brand border border-magenta/25 bg-magenta/6 p-6">
                 <p className="text-[17px] font-bold">
@@ -161,30 +182,18 @@ export default async function ExplorePage({
                     : `See full profiles with a free account.`}
                 </p>
                 <p className="mt-1.5 max-w-[680px] text-[15px] leading-relaxed text-ink-2">
-                  {hiring
-                    ? "Cards show first names only. An account unlocks full profiles, work history and the ability to message or book a consultation."
-                    : "An account unlocks the full request, the requester, and the ability to propose."}
+                  An account unlocks the full request, the requester, and the
+                  ability to propose.
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-3">
-                  {/* E037 — the gate IS the primary action now. */}
                   <Btn href={loginHref}>
                     {remaining > 0
                       ? `Create a free account to see all ${total}`
                       : "Create a free account"}
                   </Btn>
-                  {/*
-                    ⚠ `/join` FLAT (`P1-J1.1-E234`, 2026-08-30). This read
-                    `hiring ? "/join?type=buyer" : "/join?type=seller"`, which
-                    pre-answered step 1 from the SEARCH MODE the visitor happened
-                    to be in — a browsing choice, not a declaration of which side
-                    of the marketplace they are on. The ternary collapsed because
-                    both arms became the same string.
-                    ⚠ THE LABEL STILL NAMES A SIDE and was NOT changed — `E234`
-                    is href-only, explicitly. Reported: this button can read
-                    "Create your provider profile" and land on the chooser.
-                  */}
+                  {/* ⚠ `/join` FLAT (`P1-J1.1-E234`, 2026-08-30). */}
                   <Btn href="/join" variant="ghost">
-                    {hiring ? "Post a Work Request" : "Create your provider profile"}
+                    Create your provider profile
                   </Btn>
                 </div>
               </div>
@@ -192,20 +201,17 @@ export default async function ExplorePage({
           ) : (
             /*
               THE HONEST ZERO. Work mode reaches this for every query today —
-              there are no posted Work Requests at all — and hire mode reaches
-              it on a term nothing matches. Neither case invents a card.
+              there are no posted Work Requests at all — and it invents nothing.
             */
             <div className="mt-6 max-w-[680px]">
               <p className="text-[17px] leading-relaxed text-ink-2">
-                {hiring
-                  ? "Nothing in the catalog matches that yet. Try a broader term — a domain like Procurement or Financials, or a system name — or post a Work Request and let providers come to you."
-                  : "No Work Requests are open yet — Panameer is pre-launch, and requesters are still arriving. Build your profile now and you'll be in the pool the day the first one posts."}
+                No Work Requests are open yet — Panameer is pre-launch, and
+                requesters are still arriving. Build your profile now and
+                you&apos;ll be in the pool the day the first one posts.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 {/* ⚠ `/join` flat — same reasoning as the CTA above (`E234`). */}
-                <Btn href="/join">
-                  {hiring ? "Post a Work Request" : "Create your provider profile"}
-                </Btn>
+                <Btn href="/join">Create your provider profile</Btn>
                 <Btn href="/" variant="ghost">
                   Back to the home page
                 </Btn>

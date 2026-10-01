@@ -391,6 +391,19 @@ export async function getProviderProfileView(
       specializations: profile.specializations.length,
     }),
     paused: profile.paused_at != null,
+    /*
+      ── ⚠⚠ THE TWO PUBLIC-PREVIEW SWITCHES, FOR THE OWNER'S CARD (`E738`) ───
+      ⚠ Read straight off the row the `include` already loaded, so they cost no
+      query. ⚠⚠ They are OWNER-FACING STATE ONLY — the Visibility card renders
+      them and nothing else does. ⚠⚠⚠ THEY DO NOT GATE ANYTHING HERE: the masked
+      reads in `lib/masked-profile.ts` apply them in their own `where`, so a
+      visitor's access never depends on this view model.
+    */
+    previewHidden: profile.preview_hidden_at != null,
+    publicName: profile.public_name_at != null,
+    /* ⚠ Filled by the owner's own page (it owns the slug read); null elsewhere,
+       which is correct — a visitor has no business seeing a mint happen. */
+    publicUrl: null as string | null,
     published: profile.onboarding_completed_at != null,
     /*
       J2.4 WS-C (E009) — how long since this profile changed, for the owner's
