@@ -7,6 +7,7 @@
   ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //   Path Forum · Open the Forum · The room is for people taking this path.
 */
+import { FREE_AS_OF_LINE } from "@/lib/free-as-of";
 import Link from "next/link";
 /* ⚠ `Lock` LEFT WITH THE GATE (ruling 26a). An unused import is a lint warning,
    i.e. one NEW problem against a baseline whose rule is zero.
@@ -482,7 +483,17 @@ export function AppPath({
                   {path.title} — {path.certificate.earned ? "Certified" : "Certificate"}
                 </b>
                 <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">
-                  Lands on your profile with a public verify link. Free, like everything here.
+                  {/*
+                    ⚠⚠⚠ `Free, like everything here.` IS AN UNQUALIFIED BLANKET CLAIM OVER
+                    THE WHOLE PRODUCT, AND IT IS ALREADY FALSE (`E734`): `lib/plans.ts`
+                    prices Plus at $19.99. ⚠ It also carried no "as of" date.
+                    ⚠⚠ THE REPLACEMENT CLAIMS ONLY WHAT THIS SENTENCE IS ABOUT — the
+                    certificate — which is the rule: *"only claim what the app does today."*
+                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                    //   Lands on your profile with a public verify link. Free, like
+                    //   everything here.
+                  */}
+                  Lands on your profile with a public verify link. {FREE_AS_OF_LINE}
                 </p>
               </div>
               {/*

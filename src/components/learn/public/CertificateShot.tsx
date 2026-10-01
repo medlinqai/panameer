@@ -1,3 +1,4 @@
+import { FREE_AS_OF } from "@/lib/free-as-of";
 import { Check } from "@/components/learn/public/shared";
 
 /**
@@ -26,7 +27,15 @@ export function CertificateShot() {
         </span>
         <p className="mt-5">
           <span className="rounded-full bg-[#eaf7f1] px-3 py-[5px] font-display text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#137a51]">
-            Free — always
+            {/*
+              ⚠⚠⚠ `Free — always` BROKE TWO OF SCOTT'S OWN RULES AT ONCE (`E734`):
+              **"always" is an absolute**, and the line carried **no "as of" date** — and
+              it is the one claim on this page a reader would hold us to. ⚠ Scott,
+              2026-09-30: *"we can make generic claims AND use as of because we might HAVE
+              to charge at some point."*
+              ⚠ SUPERSEDED, quoted not deleted (`E164`): `Free — always`
+            */}
+            Free as of {FREE_AS_OF}
           </span>
         </p>
       </div>
