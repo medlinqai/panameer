@@ -38,12 +38,64 @@ async function read(page: import("@playwright/test").Page, q = "") {
   });
   await page.waitForTimeout(1200);
   const body = await page.locator("body").innerText();
-  /* ⚠ The sign-in link on each card — the count proves the browse still renders. */
-  const cards = await page.locator('a[href^="/login?callbackUrl"]').count();
+  /*
+    ── ⚠⚠⚠ THE COUNTER WAS RE-ANCHORED WITH THE CARDS (`P2-A1.1-E738`) ───────
+
+    ⚠ It counted `a[href^="/login?callbackUrl"]` — the sign-in link the OLD
+    teaser put on every card, because clicking one had to cost an account.
+    ⚠⚠ **`E738`'s MASKED CARD LINKS STRAIGHT TO `/providers/<id>`**, which is the
+    whole point of WS-A: the destination is now safe to open signed out, so the
+    login round trip is gone. ⚠⚠⚠ **LEFT ALONE, THIS COUNTED 0 FOR EVERY VIEWER
+    AND THE GATE WOULD HAVE READ AS "THE PAGE IS EMPTY"** — which is exactly the
+    failure the count exists to catch, pointed at the wrong selector.
+    ⚠ It counts the same FACT — a card rendered — by the link that is now on one.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   (comment: The sign-in link on each card - the count proves the browse
+    //    still renders.)
+    //   const cards = await page.locator('a[href^="/login?callbackUrl"]').count();
+  */
+  const cards = await page.locator('a[href^="/providers/"]').count();
   return { rate: MONEY.test(body), cards, body };
 }
 
-test("⚠⚠⚠ ruling 29 — the rate obeys the viewer rule, and the page stays public", async ({
+/*
+  ── ⚠⚠⚠ RE-ANCHORED BY SHAPE, NOT DELETED — `P2-A1.1-E738` ─────────────────
+
+  ⚠ `/explore` BECAME THE MASKED **BROWSE TALENT** GRID on 2026-10-01 (Scott's
+  answer 8: *"`/explore` becomes the masked grid; real first names and photo URLs
+  removed"*). ⚠⚠ **`MaskedCard` HAS NO RATE FIELD AT ALL**, so no viewer — buyer,
+  provider, owner or stranger — can see a rate here any more.
+
+  ⚠⚠⚠ **RULING 29 IS STILL LIVE. ITS SUBJECT MOVED.** *"The rate obeys the viewer
+  rule"* is proved on `/providers/[id]` by `check:visitor-profile`, which reads an
+  actual figure three ways (*"rate figure 210.00 — owner true · buyer true ·
+  provider false"*). ⚠ What `/explore` can still prove is the STRONGER half: the
+  figure is not on the page **for anybody**, and the page is still public.
+
+  ⚠⚠ **THIS IS THE `orderSeries` LESSON (2026-09-23 decisions, item 14):**
+  *"BEFORE DELETING DEAD CODE, CHECK WHETHER A GATE ASSERTS A LIVE RULE AGAINST
+  IT… it was RE-ANCHORED BY SHAPE instead."* ⚠⚠⚠ **DELETING THIS FILE WOULD HAVE
+  TAKEN THE "DO NOT GATE IT" ASSERTION WITH IT** — the half Scott explicitly
+  protected — and nothing else asserts that `/explore` renders to a stranger.
+
+  ⚠ **SUPERSEDED BY SCOTT, NOT BY DRIFT (rule 13):** ruling 29 (2026-09-24) had the
+  OWNER seeing their own rate on their own card here; answer 8 (2026-10-01) makes
+  this surface masked for everyone. ⚠⚠ **THE NEWER STATEMENT IS THE LIVE ONE, AND
+  IT IS FLAGGED RATHER THAN APPLIED QUIETLY.**
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — both tests as they stood:
+  //   test("ruling 29 - the rate obeys the viewer rule, and the page stays public")
+  //     expect(buyer.rate, "a buyer must see a rate - it is what they filter on").toBe(true);
+  //     expect(prov.rate, "a provider must not see another provider's rate").toBe(false);
+  //     expect(out.rate, "a signed-out visitor must not see a rate").toBe(false);
+  //     expect(buyer.rate === prov.rate, "buyer and provider must DIFFER").toBe(false);
+  //   test("ruling 29 - the owner sees their OWN rate while the cards beside it stay blank")
+  //     (one result set, one viewer, TWO answers: the owner's own card carries a
+  //      rate and every other card in the same list does not; isOwner per card)
+  //     expect(ownHasRate, "the owner always sees their own rate").toBe(true);
+  //     expect(othersWithRate, "a provider must not see another provider's rate,
+  //       even beside their own").toBe(0);
+*/
+test("⚠⚠⚠ `/explore` shows NO rate to ANY viewer, and the page stays public", async ({
   browser,
 }) => {
   const ctxOut = await browser.newContext();
@@ -59,76 +111,48 @@ test("⚠⚠⚠ ruling 29 — the rate obeys the viewer rule, and the page stays
   await signInAsSeeded(provPage, PROVIDER);
   const prov = await read(provPage);
 
+  /* ⚠ The owner of a published rate, searching one of their own skills, so
+     their own card is in the result set — the hardest case for "no rate". */
+  const ctxOwner = await browser.newContext();
+  const ownerPage = await ctxOwner.newPage();
+  await signInAsSeeded(ownerPage, RATED_OWNER);
+  const owner = await read(ownerPage, OWNER_SKILL);
+
   console.log(
-    `E618/ruling29  signed-out rate=${out.rate} · buyer rate=${buyer.rate} · provider rate=${prov.rate}`
+    `E738  rate on /explore — signed-out=${out.rate} · buyer=${buyer.rate} · provider=${prov.rate} · rate-owner=${owner.rate}`
   );
   console.log(
-    `E618/ruling29  cards rendered — signed-out ${out.cards} · buyer ${buyer.cards} · provider ${prov.cards}`
+    `E738  cards rendered — signed-out ${out.cards} · buyer ${buyer.cards} · provider ${prov.cards} · owner ${owner.cards}`
   );
 
-  /* ⚠⚠ THE FIXTURE DISTINGUISHES WHAT IT COMPARES. Two hidden rates agree, so
-     the buyer case is what makes the other two mean anything. */
-  expect(buyer.rate, "a buyer must see a rate — it is what they filter on").toBe(true);
-  expect(prov.rate, "a provider must not see another provider's rate (ruling 9)").toBe(false);
+  /* ⚠⚠ FOUR VIEWERS, ONE ANSWER. The masked grid carries no rate field, so this
+     is structural rather than conditional — there is nothing to hide. */
   expect(out.rate, "a signed-out visitor must not see a rate").toBe(false);
-  expect(buyer.rate === prov.rate, "buyer and provider must DIFFER, or nothing is proved").toBe(
-    false
-  );
+  expect(buyer.rate, "the masked grid shows no rate, not even to a buyer").toBe(false);
+  expect(prov.rate, "a provider must not see another provider's rate").toBe(false);
+  expect(owner.rate, "the masked grid shows no rate, not even the owner's own").toBe(false);
 
-  /* ⚠⚠⚠ AND THE PAGE IS NOT GATED — Scott: "DO NOT GATE IT." */
+  /*
+    ⚠⚠⚠ AND THE PAGE IS NOT GATED — Scott: *"DO NOT GATE IT."*
+    ⚠ **THIS IS THE HALF THAT STOPS THE TEST PASSING VACUOUSLY.** Four `false`
+    rate answers would also be produced by a page that 500'd or rendered nothing,
+    so the card count is asserted in every state — the same reasoning the file
+    carried before this surface changed.
+  */
   expect(out.cards, "signed-out browse must still render cards").toBeGreaterThan(0);
   expect(buyer.cards, "a buyer sees the same browse").toBeGreaterThan(0);
   expect(prov.cards, "a provider sees the same browse").toBeGreaterThan(0);
+  expect(owner.cards, "the owner's own search returns cards").toBeGreaterThan(0);
+
+  /* ⚠⚠ AND THE MASK ITSELF, on the surface this file already loads: the lock
+     line is what a masked card promises, and its absence would mean the grid
+     silently reverted to the old teaser. */
+  expect(out.body, "the masked grid's lock line is missing").toContain(
+    "shown after you join"
+  );
 
   await ctxOut.close();
   await ctxBuyer.close();
   await ctxProv.close();
-});
-
-test("⚠⚠ ruling 29 — the owner sees their OWN rate while the cards beside it stay blank", async ({
-  browser,
-}) => {
-  /*
-    ⚠⚠⚠ THE SHARPEST FORM OF "THE FIXTURE DISTINGUISHES WHAT IT COMPARES":
-    one result set, one viewer, and TWO ANSWERS — the owner's own card carries a
-    rate and every other card in the same list does not. ⚠ Two hidden rates
-    agree; a hidden rate beside a shown one cannot.
-
-    ⚠ `isOwner` is computed PER CARD, which is what makes that possible. Without
-    it the rule would read as *"providers see no rates"*, and that is not what
-    ruling 9 says — a provider always sees their own.
-
-    ⚠ The search term is one of the owner's own SKILLS, so their card is in the
-    result set. The default browse returns a short teaser list they are not
-    always in, and a test that depends on being in it is a flake.
-  */
-  const ctx = await browser.newContext();
-  const page = await ctx.newPage();
-  await signInAsSeeded(page, RATED_OWNER);
-  await page.goto(`/explore?q=${encodeURIComponent(OWNER_SKILL)}`, {
-    waitUntil: "domcontentloaded",
-  });
-  await page.waitForTimeout(1200);
-
-  const cards = await page.locator("article, li, a").evaluateAll((nodes) =>
-    nodes
-      .map((n) => (n.textContent ?? "").replace(/\s+/g, " ").trim())
-      .filter((t) => t.length > 0 && t.length < 400)
-  );
-  const own = cards.filter((t) => t.includes(OWNER_FIRST_NAME));
-  const others = cards.filter((t) => !t.includes(OWNER_FIRST_NAME));
-
-  const ownHasRate = own.some((t) => MONEY.test(t));
-  const othersWithRate = others.filter((t) => MONEY.test(t)).length;
-  console.log(
-    `E618/ruling29  owner card rate=${ownHasRate} · other cards showing a rate=${othersWithRate}`
-  );
-
-  expect(own.length, "the owner's own card must be in the results").toBeGreaterThan(0);
-  expect(ownHasRate, "the owner always sees their own rate").toBe(true);
-  expect(
-    othersWithRate,
-    "a provider must not see another provider's rate, even beside their own"
-  ).toBe(0);
-  await ctx.close();
+  await ctxOwner.close();
 });
