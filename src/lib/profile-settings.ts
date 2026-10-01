@@ -59,6 +59,35 @@ const SETTINGS_SECTIONS: ProfileSection[] = [
   "certifications",
 ];
 
+
+/*
+  ── ⚠⚠⚠ ONE NOTIFICATION PER SAVE — `P2-A1.1-E741` (A3 row 1) ───────────────
+
+  ⚠ SCOTT, 2026-09-30, and ruling 31d: *"Get Notified of Profile Updates… you
+  don't need twenty rows."* ⚠⚠ **ONE EVENT PER SAVE, NAMING THE SECTION IN ITS
+  TEXT — NOT ONE PER FIELD.** A save that changes five skills is ONE row.
+
+  ⚠⚠⚠ **THE MAP LIVES HERE, BESIDE THE SECTION KEYS, BECAUSE THIS IS THE FILE
+  THAT KNOWS THEM.** Putting it in the event's `title()` would make sixteen
+  title functions each responsible for a vocabulary they cannot see.
+  ⚠ A section with no entry falls back to *"profile"*, so a new section added to
+  `SETTINGS_SECTIONS` cannot crash a save — it just gets a generic word, which
+  is a missing label rather than a missing notification.
+*/
+const SECTION_LABEL: Partial<Record<ProfileSection, { noun: string; plural: boolean }>> = {
+  work_type: { noun: "Work Type", plural: false },
+  work_method: { noun: "How You Work", plural: false },
+  skills: { noun: "Skills", plural: true },
+  title: { noun: "Title", plural: false },
+  experience: { noun: "Work History", plural: false },
+  education_languages: { noun: "Education and Languages", plural: true },
+  bio: { noun: "Overview", plural: false },
+  rate: { noun: "Rates", plural: true },
+  region: { noun: "Location", plural: false },
+  photo: { noun: "Photo", plural: false },
+  certifications: { noun: "Certifications", plural: true },
+};
+
 /** Resolve the viewer's OWN provider profile (id + personId). Fails closed. */
 async function loadOwned(viewer: Viewer) {
   const profile = await prisma.providerProfile.findFirst({
@@ -207,6 +236,35 @@ export async function saveProviderSection(
   }
   const owned = await loadOwned(viewer); // owner check (fail closed)
   await applyProviderSection(owned.id, owned.person_id, section, data);
+  /*
+    ⚠⚠ **AFTER THE WRITE SUCCEEDS, NEVER BEFORE** (the brief's own words). A
+    throw in `applyProviderSection` skips this, so a failed save never tells the
+    member it saved.
+    ⚠⚠⚠ **AND IT NEVER FAILS THE SAVE.** `notify()` is awaited inside a catch:
+    the profile row is already written, and turning a notification outage into a
+    save outage is the `E522` receipt lesson — *"a receipt can never fail a
+    send."*
+    ⚠ **NO `sendEmail()` HERE** — ruling 86: `notify()` is the one place, and a
+    profile writer calling the transport directly is the two-pipe problem.
+    ⚠ The dedupe key collapses a double-submit of the SAME section within the
+    same minute into one row, which is what a member means by "I saved once".
+  */
+  try {
+    const { notify } = await import("@/lib/notifications");
+    await notify({
+      event: "profile.section_saved",
+      personId: owned.person_id,
+      dedupeKey: `profile.section_saved:${section}:${Math.floor(Date.now() / 60_000)}`,
+      /* ⚠ The verb travels with the noun — see the note on the event. A section
+         with no entry falls back to "profile" / "was", which reads correctly. */
+      vars: {
+        section: SECTION_LABEL[section]?.noun ?? "profile",
+        verb: SECTION_LABEL[section]?.plural ? "were" : "was",
+      },
+    });
+  } catch (e) {
+    console.error("[profile] could not record a profile-update notification:", e);
+  }
   return getProviderSettings(viewer);
 }
 
@@ -221,6 +279,22 @@ export async function setPaused(viewer: Viewer, paused: boolean) {
     where: { id: owned.id },
     data: { paused_at: paused ? new Date() : null },
   });
+  /*
+    ── ⚠⚠ ROWS 3 AND 4 — TWO EVENTS, NOT ONE WITH A FLAG (`E741`) ───────────
+    ⚠ Scott's table gives OFF an email default of **on** and ON **off**, and one
+    event cannot carry two defaults. ⚠⚠ Same placement rule as above: after the
+    write, inside a catch, and `notify()` only.
+  */
+  try {
+    const { notify } = await import("@/lib/notifications");
+    await notify({
+      event: paused ? "profile.visibility_off" : "profile.visibility_on",
+      personId: owned.person_id,
+      dedupeKey: `profile.visibility:${paused ? "off" : "on"}:${Math.floor(Date.now() / 60_000)}`,
+    });
+  } catch (e) {
+    console.error("[profile] could not record a visibility notification:", e);
+  }
   return getProviderSettings(viewer);
 }
 

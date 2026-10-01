@@ -121,6 +121,121 @@ export const NOTIFICATION_EVENTS = {
     body: () => "You saved your registration for later. Pick up where you left off.",
     href: () => "/join/requester/steps",
   },
+  /*
+    ── ⚠⚠⚠ THE PROFILE EVENTS — `P2-A1.1-E741` (A3 rows 1, 3, 4, 5) ──────────
+
+    ⚠ SCOTT, 2026-09-30: *"We need to send a notification (in-app) for all
+    profile tasks… show the user when they are logged on and their profile is
+    invisible."* He approved the channel table as written.
+
+    ⚠⚠ **RULING 86 GOVERNS: `notify()` IS THE ONE PLACE A NOTIFICATION IS SENT
+    FROM, AND NO PROFILE WRITER MAY CALL `sendEmail()` DIRECTLY.** That is the
+    two-pipe problem the ruling exists to close.
+
+    ⚠⚠⚠ **ROW 2 (EMAIL / PHONE / PASSWORD CHANGED) IS REGISTERED HERE BUT ITS
+    EMAIL IS NOT SWITCHED ON. READ THE NOTE ON `account.credential_changed`.**
+  */
+  "profile.section_saved": {
+    event: "profile.section_saved",
+    recipient: "the profile owner",
+    category: "profile.updates",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    /* ⚠⚠ THE SECTION IS NAMED IN THE TEXT (ruling 31d), not in a second event.
+       ⚠ `section` arrives already humanised from the caller — the mapping from
+       a `ProfileSection` key to a member-facing word belongs with the caller
+       that knows the key, not in sixteen title functions.
+       ⚠⚠⚠ `verb` COMES WITH IT, AND THAT IS NOT PEDANTRY: the first version read
+       **"Your Skills was updated"**, because a single template cannot agree with
+       both *"Skills"* and *"Photo"*. ⚠ Scott's own example in the brief is
+       *"Your Skills were updated"*, so the agreement is part of the spec, not a
+       polish item. ⚠⚠ The caller owns it because the caller owns the noun. */
+    title: (v) => `Your ${v.section ?? "profile"} ${v.verb ?? "was"} updated`,
+    body: () => null,
+    href: () => "/profile",
+  },
+  /*
+    ⚠⚠ TWO EVENTS, NOT ONE WITH A FLAG, AND THE REASON IS THE CHANNEL: Scott's
+    table gives visibility-OFF an email default of **on** and visibility-ON
+    **off**. ⚠⚠⚠ ONE EVENT CANNOT CARRY TWO DEFAULTS, and a `vars`-driven
+    branch inside the sender would put the channel decision somewhere the
+    settings screen cannot show.
+  */
+  "profile.visibility_off": {
+    event: "profile.visibility_off",
+    recipient: "the profile owner",
+    category: "profile.visibility",
+    aiMode: "REVIEW_IT",
+    visibility: "FEED",
+    /* ⚠ It is actionable: buyers cannot find them until they turn it back on. */
+    requiresAction: true,
+    title: () => "Your profile is hidden from buyers",
+    body: () =>
+      "You turned visibility off. Nothing has been deleted — turn it back on whenever you're ready.",
+    href: () => "/profile",
+  },
+  "profile.visibility_on": {
+    event: "profile.visibility_on",
+    recipient: "the profile owner",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: () => "Your profile is visible to buyers again",
+    body: () => null,
+    href: () => "/profile",
+  },
+  "profile.resume_rebuilt": {
+    event: "profile.resume_rebuilt",
+    recipient: "the profile owner",
+    category: "profile.updates",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: () => "Your résumé rebuild finished",
+    body: (v) =>
+      v.summary ? String(v.summary) : "Your profile was updated from your résumé.",
+    href: () => "/profile",
+  },
+  /*
+    ── ⚠⚠⚠ ROW 2 — AND ITS EMAIL IS **DELIBERATELY NOT SWITCHED ON** ─────────
+
+    ⚠ Scott's table: *"Email, phone or password changed — on, always (security,
+    a rule not a setting)."* ⚠⚠ **MEASURED 2026-10-01 FOR THE DOUBLE-SEND THE
+    BRIEF'S PREMISE 3 ASKS ABOUT: `changePassword` (`security-settings.ts:61`)
+    SENDS NO EMAIL TODAY.** So this would be a NEW send, not a second one.
+
+    ⚠⚠⚠ **IT IS STILL NOT TURNED ON HERE, AND THAT IS A DELIBERATE STOP.**
+    `CLAUDE.md`, 2026-09-29: *"ADDING A KEY TO `NOTIFICATION_EMAIL_EVENTS` IS A
+    PRODUCT DECISION, NOT A REFACTOR. It is the one-line diff that turns real
+    email on to real members."* ⚠ `MAIL_CAPTURE` **is not set in Vercel at all**,
+    so the moment this key is added, production and preview mail real people.
+    ⚠⚠ **THE IN-APP ENTRY SHIPS NOW** — ruling 86 makes that unconditional, and
+    it is the half that carries no send risk.
+
+    ⚠ **TO TURN THE EMAIL ON, SCOTT ADDS ONE KEY:**
+    `"account.credential_changed"` to `NOTIFICATION_EMAIL_EVENTS` in
+    `lib/notification-email.ts`. Nothing else changes.
+    ⚠⚠ **ITS "ALWAYS" HALF IS ALSO NOT BUILT:** `notify()` reads the member's
+    per-category preference, and *"a rule not a setting"* needs a bypass that
+    does not exist. ⚠⚠⚠ **REPORTED RATHER THAN INVENTED** — a bypass is the same
+    shape as the `PASSWORD_RESET` suppression carve-out, which Scott ruled must
+    be ONE named, auditable exemption with a check that fails if any other
+    sender claims it.
+  */
+  "account.credential_changed": {
+    event: "account.credential_changed",
+    recipient: "the account holder",
+    category: "profile.visibility",
+    aiMode: "REVIEW_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `Your ${v.credential ?? "sign-in details"} changed`,
+    body: () =>
+      "If this wasn't you, change your password and contact support straight away.",
+    href: () => "/settings/security",
+  },
   "account.verified": {
     event: "account.verified",
     recipient: "the new user",

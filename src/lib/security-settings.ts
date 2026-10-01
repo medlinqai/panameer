@@ -82,6 +82,48 @@ export async function changePassword(
     where: { id: user.id },
     data: { password_hash: await hashPassword(input.next) },
   });
+  /*
+    ── ⚠⚠⚠ ROW 2 — THE IN-APP HALF SHIPS; THE EMAIL IS SCOTT'S ONE-LINE CALL ──
+                                                      (`P2-A1.1-E741`, A3)
+
+    ⚠ Scott's table: *"Email, phone or password changed — on, always (security,
+    a rule not a setting)."*
+    ⚠⚠ **MEASURED FOR THE DOUBLE-SEND THE BRIEF ASKS ABOUT: NOTHING HERE SENT
+    EMAIL BEFORE THIS CHANGE**, so there is no second send to collide with.
+    ⚠⚠⚠ **THE EMAIL IS STILL OFF, DELIBERATELY.** `CLAUDE.md`: adding a key to
+    `NOTIFICATION_EMAIL_EVENTS` is *"a PRODUCT DECISION, NOT A REFACTOR… the
+    one-line diff that turns real email on to real members"*, and `MAIL_CAPTURE`
+    is **not set in Vercel at all**. ⚠ The bell entry carries no send risk and
+    ships now — ruling 86 makes it unconditional anyway.
+    ⚠ **TO TURN IT ON:** add `"account.credential_changed"` to that allowlist.
+    ⚠⚠ The *"always"* half needs a preference bypass that does not exist; it is
+    reported on the event, not invented here.
+
+    ⚠ It never fails the password change: the new hash is already written, and a
+    notification outage must not look like a failed password change.
+  */
+  try {
+    /* ⚠ The notification layer keys on the PERSON, and `ownUser` selects a USER.
+       ⚠⚠ Resolved here rather than widening `ownUser`'s select, which four other
+       callers share and none of them needs this.
+       ⚠⚠⚠ **A USER WITH NO PERSON GETS NO ROW RATHER THAN A ROW KEYED ON `""`** —
+       an empty foreign key would either throw or mint an unreachable row, and
+       both are worse than the silence. */
+    const person = await prisma.person.findFirst({
+      where: { user_id: user.id },
+      select: { id: true },
+    });
+    if (person) {
+      const { notify } = await import("@/lib/notifications");
+      await notify({
+        event: "account.credential_changed",
+        personId: person.id,
+        vars: { credential: "password" },
+      });
+    }
+  } catch (e) {
+    console.error("[security] could not record a credential-change notification:", e);
+  }
 }
 
 /**

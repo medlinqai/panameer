@@ -96,7 +96,10 @@ export async function POST(req: Request) {
 
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
-    select: { id: true },
+    /* ⚠ `person_id` JOINS THE SELECT (`E741`, A3 row 5) — the notification layer
+       keys on the PERSON, and a narrow select means the field has to be named or
+       it does not arrive. */
+    select: { id: true, person_id: true },
   });
   if (!profile) return NextResponse.json({ error: "No provider profile" }, { status: 403 });
 
@@ -272,6 +275,33 @@ export async function POST(req: Request) {
       where: { id: { in: projectIds }, provider_profile_id: profile.id },
     });
     removedProjects = res.count;
+  }
+
+  /*
+    ── ⚠⚠ ROW 5 — THE RÉSUMÉ REBUILD FINISHED (`P2-A1.1-E741`, A3) ───────────
+
+    ⚠ Scott's table: in-app on, email off. ⚠⚠ **IT FIRES ONCE, AT THE END, FOR
+    THE WHOLE SAVE** — not per skill and not per section, because the thing that
+    happened is one rebuild. ⚠ Its body carries the same counts the on-screen
+    receipt does, so the bell entry and the screen cannot tell different stories.
+    ⚠⚠⚠ **IT NEVER FAILS THE APPLY.** Everything above is already written.
+  */
+  try {
+    const summaryParts = [
+      skills.length > 0 && `${skills.length} skills`,
+      removedEmployers > 0 && `${removedEmployers} jobs removed`,
+      removedProjects > 0 && `${removedProjects} projects removed`,
+    ].filter(Boolean) as string[];
+    const { notify } = await import("@/lib/notifications");
+    await notify({
+      event: "profile.resume_rebuilt",
+      personId: profile.person_id,
+      vars: {
+        summary: summaryParts.length > 0 ? `Updated: ${summaryParts.join(" · ")}.` : null,
+      },
+    });
+  } catch (e) {
+    console.error("[resume] could not record a rebuild notification:", e);
   }
 
   return NextResponse.json({

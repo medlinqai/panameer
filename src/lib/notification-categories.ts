@@ -450,6 +450,58 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "You saved your registration part-way and can pick it up again.",
     defaults: { inApp: true, email: true, sms: false },
   },
+  /*
+    ── ⚠⚠⚠ ONE CATEGORY FOR EVERY PROFILE EDIT (`P2-A1.1-E741`, A3 row 1) ────
+
+    ⚠ **SCOTT NAMED IT**, and ruling 31d is the reason there is only one:
+    *"Get Notified of Profile Updates… you don't need twenty rows."*
+    ⚠⚠ **SO IT IS ONE EVENT AND ONE SETTING FOR ALL TWELVE SECTIONS** — title,
+    bio, photo, skills, specializations, rates, work history, projects,
+    certifications, education, languages, company. ⚠⚠⚠ **NOT ONE PER FIELD, AND
+    NOT ONE PER SECTION:** a save that changes five skills is ONE notification,
+    and a member who edits three sections gets three — because they performed
+    three saves, which is the thing being reported.
+
+    ── ⚠⚠⚠ THE EMAIL DEFAULT: SCOTT'S A3 TABLE SAYS **OFF**, RULING 34b SAYS
+          **ON**, AND BOTH ARE SATISFIED BY `true` ───────────────────────────
+
+    ⚠ Scott's A3 table (2026-09-30) gives row 1 an email default of **off**.
+    ⚠⚠ Ruling 34b (and `check:notify-prefs` assertion 1) says **every category
+    ships in-app AND email ON** — Scott, in his own words: *"All on, exactly as
+    ruled."*
+    ⚠⚠⚠ **THEY DO NOT ACTUALLY CONFLICT, BECAUSE A CATEGORY DEFAULT IS NOT WHAT
+    DECIDES WHETHER MAIL GOES.** `NOTIFICATION_EMAIL_EVENTS` is, and it holds
+    exactly one key — `account.finish_later`. ⚠ `profile.section_saved` and
+    `profile.resume_rebuilt` are NOT on it, so **no email is sent for a profile
+    update**, which is the behaviour Scott's table asks for.
+    ⚠ The sibling category above says the same thing in its own words:
+    *"What a member actually receives is still governed by the allowlist, not by
+    this default."*
+    ⚠⚠ **SO `true` HERE MEANS "this member has not opted OUT", NOT "we mail
+    them"** — and shipping `false` would instead have written an opt-OUT into
+    every member's row on day one, which is the recorded intent 34b protects.
+    ⚠⚠⚠ **FLAGGED FOR SCOTT RATHER THAN DECIDED QUIETLY** (rule 13): if he wants
+    the member's settings screen to show this switch OFF to begin with, that is a
+    change to ruling 34b, not to this line.
+
+    ⚠⚠ The in-app entry is NOT optional either way — ruling 86: *"Every
+    notification makes an in-app (bell) entry. Settings only ADD channels."*
+  */
+  {
+    key: "profile.updates",
+    lane: "community",
+    /* ⚠ `seller`: the sections this covers belong to a provider profile. A buyer
+       has no provider profile and would see a row for something they cannot do
+       — the `E689(q)` defect that cost `account.registration` its own home. */
+    audience: "seller",
+    group: "email",
+    label: "Get Notified of Profile Updates",
+    blurb:
+      "A section of your profile was saved, or a résumé rebuild finished.",
+    /* ⚠ See the long note above: `email: true` is "not opted out", and the
+       allowlist is what decides whether anything is actually sent. */
+    defaults: { inApp: true, email: true, sms: false },
+  },
   {
     key: "profile.visibility",
     lane: "community",
