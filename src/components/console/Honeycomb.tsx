@@ -56,7 +56,41 @@ function rotate<T>(xs: T[], by: number): T[] {
   return [...xs.slice(n), ...xs.slice(0, n)];
 }
 
-export function Honeycomb({ cells }: { cells: HoneyCell[] }) {
+/**
+ * ── ⚠⚠ TWO LAYOUTS, AND THE SECOND ONE IS WHY THIS PROP EXISTS (`E730` WS-B) ──────
+ *
+ * ⚠ `grid` is what `E603` shipped: a plain rectangular grid, 2 columns then 3.
+ * ⚠⚠ `flower` is the TESSELLATED comb Scott approved for the Usage header — odd rows
+ * offset by half a cell and pulled up so the hexagons interlock. ⚠⚠⚠ **A 3×3 RECTANGULAR
+ * GRID OF HEXAGONS DOES NOT TESSELLATE AND HAS NO CENTRE CELL**, which is the measured
+ * reason this could not simply be "pass nine cells to the existing layout".
+ */
+export type HoneyLayout = "grid" | "flower";
+
+/**
+ * ── ⚠⚠⚠ `chrome` — THE COMB CAN BE A CARD, OR JUST THE PICTURE ────────────────────
+ *
+ * ⚠ With `chrome` (the default) it is what it has always been: a bordered `<section>`
+ * carrying its own heading, lede, derived line and rebuild badge.
+ * ⚠⚠ **WITHOUT IT, THE SECTION, THE BORDER, THE HEADING AND THE LEDE ALL GO** — because
+ * `PatternHeader` mounts this in its `picture` slot, and ⚠⚠⚠ **A BORDERED CARD WITH AN
+ * `<h2>` NESTED INSIDE A BORDERED PANEL READS AS TWO CARDS AND TWO HEADINGS FOR ONE
+ * THING.** ⚠ The derived busiest/quietest line goes too, because the header renders that
+ * sentence itself from the same figures — two copies of one sentence on one screen is
+ * `E585` in prose.
+ * ⚠ **THE REBUILD BADGE SURVIVES**, because it is the only thing that explains why the
+ * cells are moving. A comb that rearranges with nothing saying it will is motion with no
+ * account of itself.
+ */
+export function Honeycomb({
+  cells,
+  layout = "grid",
+  chrome = true,
+}: {
+  cells: HoneyCell[];
+  layout?: HoneyLayout;
+  chrome?: boolean;
+}) {
   const { cycle, secondsLeft, still } = useRebuild();
 
   /*
@@ -69,13 +103,8 @@ export function Honeycomb({ cells }: { cells: HoneyCell[] }) {
   */
   const shown = still ? cells : rotate(cells, cycle);
 
-  return (
-    <section className="rounded-[14px] border border-line bg-white p-4 sm:p-5">
-      <h2 className="font-display text-[16px] font-bold">Your Areas</h2>
-      <p className="mt-0.5 text-[12.5px] text-ink-3">
-        One cell per area. The cells move; the figures do not.
-      </p>
-
+  const grid = (
+    <>
       {/*
         ⚠ `key={still ? "still" : cycle}` REPLAYS THE SETTLE ANIMATION each
         cycle. ⚠⚠ THE KEY IS ON THE GRID, NOT ON A CELL: keying each cell by
@@ -83,9 +112,10 @@ export function Honeycomb({ cells }: { cells: HoneyCell[] }) {
         focus if somebody is tabbing through them.
       */}
       <div
-        className="pm-hive mt-4"
+        className={`pm-hive${layout === "flower" ? " pm-hive-flower" : ""}${chrome ? " mt-4" : ""}`}
         data-still={still ? "yes" : "no"}
         data-cycle={cycle}
+        data-layout={layout}
         key={still ? "still" : cycle}
       >
         {shown.map((c) => {
@@ -130,7 +160,27 @@ export function Honeycomb({ cells }: { cells: HoneyCell[] }) {
           );
         })}
       </div>
+    </>
+  );
 
+  /* ⚠⚠ THE PICTURE FORM — no section, no border, no heading, no derived line. ⚠ The badge
+     stays: it is what accounts for the movement. */
+  if (!chrome) {
+    return (
+      <div className="pm-hive-picture">
+        {grid}
+        <RebuildBadge secondsLeft={secondsLeft} />
+      </div>
+    );
+  }
+
+  return (
+    <section className="rounded-[14px] border border-line bg-white p-4 sm:p-5">
+      <h2 className="font-display text-[16px] font-bold">Your Areas</h2>
+      <p className="mt-0.5 text-[12.5px] text-ink-3">
+        One cell per area. The cells move; the figures do not.
+      </p>
+      {grid}
       <BusiestLine cells={cells} />
       <RebuildBadge secondsLeft={secondsLeft} />
     </section>

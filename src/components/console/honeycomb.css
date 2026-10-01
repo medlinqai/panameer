@@ -7,9 +7,16 @@
   CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
   VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
   still see the name, but nobody ever finds out the token was wrong.
-  ⚠⚠ `--color-ink-3` AND `--color-line-2` ARE **NOT** TOKENS (Scott ruled
-  against promoting them at `E601` WS-D). They exist as Tailwind utilities
-  only, so they are used as CLASSES in the TSX and never as `var()` here.
+  ⚠⚠ CORRECTED BY `E730` WS-B — `--color-ink-3` **IS** A TOKEN NOW. `E723` item 6
+  declared it on Scott's instruction (*"`--color-ink-3` is never declared.
+  Declare it"*) and repointed it under `data-theme="dark"`. ⚠ A stated rule that
+  contradicts the code is the more dangerous half (standing rule 6) — the next
+  person reads this and works around a restriction that is gone.
+  ⚠ `--color-line-2` IS STILL NOT A TOKEN and is still a class only.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   --color-ink-3 AND --color-line-2 ARE NOT TOKENS (Scott ruled against
+  //   promoting them at E601 WS-D). They exist as Tailwind utilities only, so
+  //   they are used as CLASSES in the TSX and never as var() here.
 */
 
 .pm-hive {
@@ -23,6 +30,113 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/*
+  ── ⚠⚠⚠ THE FLOWER (`P2-A1.1-E730` WS-B) ─────────────────────────────────
+
+  ⚠ SCOTT, 2026-09-30, on the mockup: *"I like the graphic."* ⚠⚠ THE GRAPHIC IS
+  THE TESSELLATION — hexagons that interlock rather than sit in a rectangle with
+  gaps between them.
+
+  ⚠⚠⚠ MEASURED REASON THIS IS A SEPARATE LAYOUT AND NOT A CELL COUNT: the `grid`
+  rules above put nine hexagons in a 3×3 rectangle with NO row offset and NO
+  vertical overlap, so the diagonals leave six triangular gaps and there is no
+  middle cell to call the centre. ⚠ Passing nine cells to the old layout renders
+  a block, not a comb.
+
+  ── ⚠⚠ HOW IT TESSELLATES, AND WHY THESE TWO NUMBERS ──────────────────────
+
+  ⚠ The cell is a POINTY-TOP hexagon (`clip-path` above: flat left and right
+  edges, points at top and bottom). Such a comb interlocks by shifting alternate
+  rows HALF A COLUMN sideways and pulling them up by a QUARTER of the cell's
+  height — the clip's own geometry, where the sloped shoulders occupy the top and
+  bottom 25%.
+  ⚠⚠ `--pm-hex-overlap: 24%` IS THE PULL-UP and sits just inside that quarter, so
+  the shoulders nest without the points colliding at a fractional pixel.
+  ⚠⚠⚠ THE OFFSET IS `50%` OF A COLUMN PLUS HALF THE GAP, which is why it is
+  written as a `calc` over the SAME gap variable the grid uses rather than as a
+  typed pixel figure — a hand-typed `45px` is correct at exactly one cell width
+  and wrong at every other (the mockup's own number, and it only held because the
+  mockup fixed the cell at 84px).
+
+  ⚠ ROWS 1 AND 3 ARE THE OFFSET ONES, so the shape is symmetric top to bottom and
+  index 4 of nine is the middle cell of the middle row — which is what makes
+  "Profile in the centre" a fact about the layout rather than a hope.
+*/
+.pm-hive-flower {
+  --pm-hex-gap: 6px;
+  --pm-hex-overlap: 24%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 var(--pm-hex-gap);
+  /* ⚠ The comb is a PICTURE and must not stretch to the panel's full width — at
+     1280 the header's left column is wide and three hexagons stretched across it
+     stop looking like hexagons. */
+  max-width: 318px;
+  margin-inline: auto;
+}
+
+/* ⚠ Phone first: the 640px rule above already gives three columns, and the
+   flower wants three at EVERY width — two columns cannot offset into a comb. */
+@media (max-width: 639px) {
+  .pm-hive-flower {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 270px;
+  }
+}
+
+/*
+  ⚠⚠⚠ THE SETTLE ANIMATION CLOBBERS THIS OFFSET, AND IT TOOK A MEASUREMENT TO
+  FIND — `check:usage` read `shiftTop: 0` on markup whose CSS was correct.
+
+  ⚠ `pm-hive-settle` (below) ends on `to { transform: none }` and is applied with
+  `both`, so its FILLED value persists after the run. ⚠⚠ ANIMATED VALUES WIN OVER
+  NORMAL DECLARATIONS IN THE CASCADE — so `transform: none` from the finished
+  animation beat `transform: translateX(...)` here, permanently, and the nine
+  hexagons rendered as a plain 3×3 block.
+  ⚠⚠⚠ NOTHING ABOUT THE CSS *LOOKED* WRONG. The selector matched, the `calc` was
+  valid, the class was on the element. **Only a geometry assertion could see it** —
+  a test that checked the class name would have passed on the broken layout, which
+  is `E603`'s lesson 11 exactly (a gate can assert the right rule about the wrong
+  thing).
+
+  ⚠ THE FIX IS TO TAKE THE TRANSFORM OUT OF THE ANIMATION FOR THIS LAYOUT, NOT TO
+  FIGHT IT WITH `!important`. The component's own comment already says the
+  animation is DECORATION — *"the rearrange is the order change itself, which
+  happens in the markup whether or not this runs"* — so the flower keeps the FADE
+  and drops the lift. ⚠⚠ The grid layout is byte-unchanged and keeps both.
+*/
+/* ⚠⚠ nth-child over NINE cells: 1–3 is row 1, 4–6 row 2, 7–9 row 3. ⚠ Written as
+   explicit ranges rather than a formula because the offset alternates by ROW and
+   CSS has no row selector in a grid — the ranges ARE the row definition. */
+.pm-hive-flower > :nth-child(-n + 3) {
+  transform: translateX(calc(50% + var(--pm-hex-gap) / 2));
+}
+.pm-hive-flower > :nth-child(n + 4):nth-child(-n + 6) {
+  margin-top: calc(-1 * var(--pm-hex-overlap));
+}
+.pm-hive-flower > :nth-child(n + 7) {
+  margin-top: calc(-1 * var(--pm-hex-overlap));
+  transform: translateX(calc(50% + var(--pm-hex-gap) / 2));
+}
+
+/*
+  ⚠⚠⚠ THE OFFSET ROWS OVERHANG THE GRID BY HALF A CELL, so the picture needs that
+  space or the right-hand column is clipped by the panel. ⚠ `padding-right` rather
+  than a wider `max-width`: the hexagons keep their size and the slack goes to the
+  edge, which is what keeps the comb centred under its own container.
+*/
+.pm-hive-picture {
+  position: relative;
+  padding-right: calc(33.333% / 2);
+}
+
+/*
+  ⚠⚠ THE PICTURE FORM OWNS NO COLOURS — it inherits. ⚠⚠⚠ DARK MODE IS THEREFORE
+  NOT A SEPARATE RULE HERE, AND THAT IS DELIBERATE (the `E723` lesson): the cell's
+  fill is `--color-bg-soft` and its text `--color-ink*`, all tokens that already
+  flip. A hard-coded `background: #fff` on this wrapper is exactly what broke dark
+  mode on `/profile`, so there is not one.
+*/
 
 /*
   ── ⚠⚠ THE CELL ──────────────────────────────────────────────────────────
@@ -171,6 +285,38 @@ a.pm-hive-cell:focus-visible {
 
 .pm-hive[data-still="no"] .pm-hive-cell {
   animation: pm-hive-settle 420ms ease-out both;
+}
+
+/*
+  ⚠⚠⚠ AND IT MUST COME **AFTER** THE RULE ABOVE. ⚠ Both selectors carry the same
+  specificity — three compound parts each — so ⚠⚠ THE LATER ONE WINS, AND ORDER IS
+  THE ONLY THING DECIDING IT. ⚠⚠⚠ MEASURED: with this block placed EARLIER in the
+  file the computed `animation-name` stayed `pm-hive-settle`, the filled
+  `transform: none` kept beating the offset, and the comb rendered as a 3×3 block
+  with the overlap applied but no shift — `margin-top: -24.47px` and
+  `transform: matrix(1, 0, 0, 1, 0, 0)` side by side in the probe.
+  ⚠ THAT IS WHY THE FIX IS POSITION RATHER THAN `!important`: the cascade is doing
+  exactly what it should, and the rule simply has to be downstream of the one it
+  narrows.
+*/
+.pm-hive-flower[data-still="no"] .pm-hive-cell {
+  animation-name: pm-hive-settle-flat;
+}
+
+/*
+  ⚠ FADE ONLY — no lift. ⚠⚠ The component's own comment is the licence for this:
+  the animation is DECORATION and *"the rearrange is the order change itself, which
+  happens in the markup whether or not this runs."* ⚠⚠⚠ THE LIFT CANNOT COEXIST
+  WITH A STATIC `transform` ON THE SAME ELEMENT, so the flower keeps the half of
+  the decoration that does not collide. The grid layout is byte-unchanged.
+*/
+@keyframes pm-hive-settle-flat {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /*

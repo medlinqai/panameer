@@ -12,7 +12,12 @@ import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { EnforcementHistory } from "@/components/console/EnforcementHistory";
 import { POLICIES } from "@/lib/policies";
-import { accountStandingLines, accountStandingSummary } from "@/lib/account-standing";
+import {
+  accountStandingLines,
+  accountStandingSummary,
+  accountAccessLines,
+  accountCheckCounts,
+} from "@/lib/account-standing";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import { profileTabLabel } from "@/lib/profile-tabs";
 
@@ -113,20 +118,26 @@ export default async function AccountHealthPage() {
     *"can buyers find me"*; THIS PAGE answers *"what is my account"*.
     ⚠ WHAT STAYS BELOW IS WHAT IS GENUINELY ACCOUNT. DO NOT EMPTY THIS PAGE.
   */
-  const access = [
-    {
-      label: "Sign in and manage your profile",
-      ok: true,
-      note: "Available on every account.",
-    },
-    {
-      label: "Receive messages from buyers",
-      ok: profile.available_for_messages,
-      note: profile.available_for_messages
-        ? "You're marked online for messages."
-        : "You've switched off 'Online for messages' in the account menu.",
-    },
-  ];
+  /*
+    ⚠⚠ MOVED TO `lib/account-standing.ts` (`P2-A1.1-E730` WS-B), beside
+    `accountStandingLines`, for that function's own reason: the Usage page's Account
+    Health gauge counts these same checks, and a second copy would be `E585` on a
+    figure two pages print. ⚠⚠⚠ THE LINES, THEIR ORDER AND THEIR NOTES ARE UNCHANGED —
+    this page renders exactly what it rendered.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const access = [
+    //     { label: "Sign in and manage your profile", ok: true,
+    //       note: "Available on every account." },
+    //     { label: "Receive messages from buyers",
+    //       ok: profile.available_for_messages,
+    //       note: profile.available_for_messages
+    //         ? "You're marked online for messages."
+    //         : "You've switched off 'Online for messages' in the account menu." },
+    //   ];
+  */
+  const access = accountAccessLines({
+    availableForMessages: profile.available_for_messages,
+  });
 
   /*
     ACCOUNT STANDING — the record. Deliberately three lines and no score: a
@@ -157,9 +168,15 @@ export default async function AccountHealthPage() {
     ⚠ `summary` is the SHIPPED definition (`accountStandingSummary`), not a
     third computation — see the header's own block for why that matters.
   */
-  const allChecks = [...access.map((a) => a.ok), ...standing.map((s) => s.ok)];
-  const checksPassing = allChecks.filter(Boolean).length;
-  const checksFailing = allChecks.length - checksPassing;
+  /* ⚠ `E730` WS-B — the same two figures, from the shared counter, so the gauge on
+     `/usage` and this page cannot disagree. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const allChecks = [...access.map((a) => a.ok), ...standing.map((s) => s.ok)];
+     //   const checksPassing = allChecks.filter(Boolean).length;
+     //   const checksFailing = allChecks.length - checksPassing; */
+  const { passing: checksPassing, failing: checksFailing } = accountCheckCounts([
+    access,
+    standing,
+  ]);
   const summary = accountStandingSummary(standing);
 
   return (

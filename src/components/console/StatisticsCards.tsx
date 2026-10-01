@@ -2,7 +2,9 @@ import Link from "next/link";
 import { StatFigureRow } from "@/components/console/StatFigureRow";
 import { FlipCard } from "@/components/motion/FlipCard";
 import { ActionBack, BreakdownBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
-import { Honeycomb, type HoneyCell } from "@/components/console/Honeycomb";
+/* ⚠ `E730` WS-B — the COMPONENT import is gone because the comb is mounted in the
+   header now; the TYPE stays, because `honeyCells` still returns it. */
+import { type HoneyCell } from "@/components/console/Honeycomb";
 import type { Figure, Statistics } from "@/lib/statistics";
 import "@/components/motion/flip-card.css";
 
@@ -115,11 +117,24 @@ export function StatisticsCards({
 
   return (
     <>
-      {/* ⚠⚠ THE HONEYCOMB LEADS (WS-B) — one cell per area, on `E600` WS-D's
-          shared 15-second rebuild. ⚠⚠⚠ ITS CELLS ARE DERIVED FROM THE SAME `s`
-          THE CARDS BELOW DRAW, so a cell and its card cannot disagree about the
-          same member in the same render. */}
-      <Honeycomb cells={honeyCells(s)} />
+      {/*
+        ── ⚠⚠⚠ THE HONEYCOMB MOVED INTO THE HEADER (`P2-A1.1-E730` WS-B) ──────
+
+        ⚠ It is now `PatternHeader`'s `picture` on `/usage`, tessellated, with nine
+        cells. ⚠⚠ **IT IS MOUNTED THERE INSTEAD OF HERE, NOT AS WELL AS** — two combs
+        on one page would be two pictures of one thing, and the second would be the
+        one nobody scrolled to.
+        ⚠⚠⚠ `honeyCells(s)` IS **NOT** DELETED and is still exported: `check:statistics`
+        §25 asserts the cells are derived from the cards' own figures, and that rule is
+        unchanged — it is simply no longer this component that renders them. ⚠ Before
+        deleting dead code, check whether a gate asserts a live rule against it
+        (`E603`'s lesson 14).
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   THE HONEYCOMB LEADS (WS-B) - one cell per area, on E600 WS-D's shared
+        //   15-second rebuild. ITS CELLS ARE DERIVED FROM THE SAME `s` THE CARDS
+        //   BELOW DRAW, so a cell and its card cannot disagree.
+        //   <Honeycomb cells={honeyCells(s)} />
+      */}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {/*
