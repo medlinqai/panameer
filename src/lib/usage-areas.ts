@@ -51,6 +51,30 @@ import { profileTabLabel } from "@/lib/profile-tabs";
  * which is a real total rather than an aspiration, so inventing a goal for it would be the
  * fabricated-maximum defect this block exists to prevent.
  */
+/*
+  ── ⚠⚠⚠ TWO SUB-LABELS SHORTENED SO THEY DO NOT WRAP (`P2-A1.1-E745`, item 4) ─
+
+  ⚠ **SCOTT, 2026-10-02: *"No label wraps mid-phrase at 1280 or 390; shorten in
+  `getUsageStats()`, don't shrink the font."***
+
+  ⚠⚠ **THE BRIEF NAMES THE WRONG FILE AND IT IS WORTH SAYING SO:** `usage-stats.ts`
+  computes the FIGURES; the LABELS are here, in `usage-areas.ts`. Shortening them
+  in `getUsageStats()` would have been impossible.
+
+  ⚠⚠⚠ **MEASURED AFTER THE LAYOUT CHANGE, NOT BEFORE — AND THE LIST GOT SHORTER.**
+  At 390 the column is now full width, so `Shown in Search` and `Invoices Open`
+  stopped wrapping on their own. Only **two** still wrapped at 1280, where four
+  columns leave a sub-label about 14 characters:
+    · `Courses Completed` (17) → `Courses Done` — and it now matches the LEARN
+      gauge's own headline, `Lessons Done`.
+    · `Payouts Pending` (15) → `Payouts` — ⚠⚠ **THE STATE WORD IS DROPPED, NOT
+      REPLACED.** `Payouts Due` and `Payouts Owed` both read as an obligation
+      Panameer has not incurred, and this figure is `NOT COUNTED` anyway: nothing
+      creates a `Payment` row. **A shorter label must not become a money claim.**
+  ⚠ The caption sentences under each gauge ("0 profile views", "4 of 4 checks
+  passing") still wrap and are LEFT ALONE — they are sentences, not labels, and
+  Scott's rule is about a phrase breaking in the middle.
+*/
 export const USAGE_GOALS = {
   profile: 50,
   learn: 20,
@@ -234,7 +258,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       figure: u.lessonsDone,
       goal: USAGE_GOALS.learn,
       subs: [
-        { label: "Courses Completed", figure: u.coursesCompleted },
+        { label: "Courses Done", figure: u.coursesCompleted },
         { label: "Learners in Your Paths", figure: u.learnersInPaths },
       ],
       href: "/learn",
@@ -326,7 +350,7 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       goal: null,
       money: true,
       subs: [
-        { label: "Payouts Pending", figure: u.payoutsPending },
+        { label: "Payouts", figure: u.payoutsPending },
         { label: "Invoices Open", figure: u.invoicesOpen },
       ],
       href: "/orders",

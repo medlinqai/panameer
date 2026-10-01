@@ -607,7 +607,26 @@ export default async function MyStatsPage({
       changes. ⚠ `/profile` and `/providers/[id]` already use it; this makes the third
       Account Information page agree with them.
     */}
-    <div className="account-surface pm-usage">
+    {/*
+      ── ⚠⚠⚠ THE PAGE PAINTS ITSELF WHITE (`P2-A1.1-E745`, lane 2 item 1) ──────
+
+      ⚠ **SCOTT, 2026-10-02: *"No boxes, no grey page. White throughout, like
+      `/profile`."***
+      ⚠⚠ **MEASURED: THE GREY IS THE APP SHELL'S `bg-canvas`**, not this page's —
+      `rgb(250,250,250)` light, `rgb(11,8,23)` dark — and `/profile` sits on the
+      same canvas. ⚠⚠⚠ **SO "LIKE /profile" CANNOT BE COPIED FROM /profile:** what
+      reads as white there is `.account-surface`, the white CONTENT panel over the
+      canvas. This page does the same thing, one level out, so the whole column is
+      one surface with thin lines in it.
+      ⚠ `bg-surface`, never `bg-white` — Scott named the theme token himself, and
+      a hard-coded white is the `E723` dark-mode defect.
+      ⚠⚠ **THE SHELL IS UNTOUCHED.** Changing `bg-canvas` would restyle every
+      signed-in page, and the brief is explicit: *"This page only. Other pages
+      change as Scott walks them."*
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   <div className="account-surface pm-usage">
+    */}
+    <div className="account-surface pm-usage -mx-4 bg-surface px-4 pb-10 sm:-mx-6 sm:px-6">
     <div className="mx-auto max-w-5xl">
       {/*
         ── ⚠⚠⚠ THE PATTERN HEADER (ruling 23) ─────────────────────────────────
@@ -637,8 +656,16 @@ export default async function MyStatsPage({
 
         ⚠ The lede is the page's OWN sentence, moved rather than rewritten.
       */}
-      <div className="mb-5">
+      <div className="mb-6">
         <PatternHeader
+          /*
+            ⚠⚠ `open` — NO BOX (`P2-A1.1-E745`, lane 2 item 2). Scott: *"the
+            honeycomb on the left and the summary on the right, open on the page,
+            one line underneath. No box."*
+            ⚠⚠⚠ **OPT-IN, SO THE FIVE OTHER `PatternHeader` CALLERS DO NOT MOVE** —
+            the brief's *"This page only"*.
+          */
+          open
           /* ⚠ `USAGE` — the tab row's own word, looked up rather than typed. */
           eyebrow={profileTabLabel("/usage").toUpperCase()}
           /*

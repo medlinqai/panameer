@@ -173,7 +173,20 @@ test("E730 WS-B/WS-C — the comb tessellates, the gauges render, nothing is pri
      narrowing: ruling 45(4) says the action slot is never a repeat of a link already on
      the page, and this one IS a repeat. **Reported to Scott; built because he named the
      two buttons.** */
-  const header = page.locator("section.rounded-brand").first();
+  /*
+    ⚠⚠⚠ RE-ANCHORED (`P2-A1.1-E745`). ⚠ This read `section.rounded-brand`, and
+    lane 2's `open` header has no `rounded-brand` — so the locator matched
+    NOTHING and this test **hung on `invite.evaluate`** instead of failing, which
+    looked like a broken harness rather than a moved anchor.
+    ⚠⚠ **THE RULE IS UNCHANGED AND STILL LIVE:** the header's `Invite a
+    Colleague` is 4px, not a pill. ⚠ Only the handle moved, to a `data-testid`
+    the component now owns — a styling class is free to change and must never be
+    a test contract.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const header = page.locator("section.rounded-brand").first();
+  */
+  const header = page.getByTestId("pattern-header").first();
+  await expect(header, "the pattern header is missing from /usage").toHaveCount(1);
   const invite = header.getByRole("link", { name: "Invite a Colleague" });
   const radius = await invite.evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
   expect(radius, "4px radius, not rounded-full").toBe("4px");

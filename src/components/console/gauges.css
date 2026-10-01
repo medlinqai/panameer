@@ -43,33 +43,108 @@
   broke `/profile` and `/providers/[id]` in dark mode.
 */
 
+/*
+  ── ⚠⚠⚠ OPEN COLUMNS, NOT CARDS (`P2-A1.1-E745`, lane 2) ────────────────────
+
+  ⚠ **SCOTT, 2026-10-02: *"four open columns divided by thin vertical lines (two
+  columns at tablet width, stacked at phone width with a line between each)."***
+  ⚠⚠ **THIS ALSO SETTLES THE CONNECT CARD BORDER** he asked about — there are no
+  card borders left to settle.
+
+  ⚠⚠⚠ **"FOUR COLUMNS" IS THE GRID, NOT THE NUMBER OF GAUGES.** There are
+  **eight** (seven areas + Account Health) and the mockup draws four because a
+  mockup is an illustration — *"a mockup is a layout, not a data source"* (the
+  2026-09-23 rules, 7). ⚠ Dropping four gauges would delete four measured
+  figures, so eight render in a four-wide grid: two rows.
+
+  ⚠ **PHONE STACKS TO ONE**, which is a change: it was two. Scott's line says
+  *"stacked at phone width"*, and at 390 a two-up dial was ~170px with its label
+  wrapping underneath.
+*/
 .pm-gauges {
   display: grid;
-  /* ⚠ TWO AT PHONE — Scott's grid. Four hexagonal dials across a 390px screen
-     would be 90px wide each and the needle would be unreadable. */
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  /* ⚠ ONE AT PHONE, stacked, with a rule between each — Scott's line. */
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
-@media (min-width: 900px) {
+/* ⚠ The divider is a BORDER on the item, never a `gap` with a background
+   showing through: the page is one surface now, so there is nothing behind the
+   grid to see. */
+.pm-gauge {
+  position: relative;
+  padding: 20px 0 22px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* ⚠ TABLET — two columns. The vertical rule falls between the pair. */
+@media (min-width: 640px) {
   .pm-gauges {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pm-gauge {
+    padding: 20px 20px 22px;
+  }
+  /* ⚠⚠ `nth-child(2n)` IS THE RIGHT-HAND COLUMN — it gets no right rule, so the
+     grid does not draw a line down its own outer edge. */
+  .pm-gauge:not(:nth-child(2n)) {
+    border-right: 1px solid var(--color-line);
+  }
+  .pm-gauge:nth-child(2n) {
+    padding-right: 0;
+  }
+  .pm-gauge:nth-child(2n + 1) {
+    padding-left: 0;
   }
 }
 
-.pm-gauge {
-  position: relative;
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
-  padding: 16px 16px 14px;
-  background: var(--color-surface);
-  transition: border-color 0.15s;
+/* ⚠ DESKTOP — four columns. */
+@media (min-width: 900px) {
+  .pm-gauges {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  /* ⚠ Reset the tablet rules before re-stating them for a four-wide row, or a
+     card can carry both a 2-up and a 4-up edge. */
+  .pm-gauge,
+  .pm-gauge:nth-child(2n),
+  .pm-gauge:nth-child(2n + 1) {
+    padding: 22px 22px 24px;
+    border-right: 1px solid var(--color-line);
+  }
+  .pm-gauge:nth-child(4n) {
+    border-right: 0;
+    padding-right: 0;
+  }
+  .pm-gauge:nth-child(4n + 1) {
+    padding-left: 0;
+  }
+  /* ⚠⚠ THE LAST ROW KEEPS NO BOTTOM RULE — with eight gauges that is the
+     second row, and a trailing line under the final row would read as the start
+     of a section that is not there. */
+  .pm-gauge:nth-last-child(-n + 4) {
+    border-bottom: 0;
+  }
 }
 
-.pm-gauge:hover {
-  border-color: var(--color-magenta);
-}
+/* ⚠⚠ NO HOVER BORDER ANY MORE — there is no border to colour. The `Go to …`
+   link inside each column is the affordance, and `E433` says magenta means
+   interactive, so the column itself does not need to light up.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   .pm-gauge {
+   //     position: relative;
+   //     border: 1px solid var(--color-line);
+   //     border-radius: 12px;
+   //     padding: 16px 16px 14px;
+   //     background: var(--color-surface);
+   //     transition: border-color 0.15s;
+   //   }
+   //   .pm-gauge:hover { border-color: var(--color-magenta); }
+   ⚠ And the old grid, which was two-up at phone and gapped:
+   //   .pm-gauges { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+   //   @media (min-width: 900px) {
+   //     .pm-gauges { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+   //   }
+*/
 
 /* ⚠ The area's MENU label. Magenta because it names the destination the
    `Go to …` link below leads to — `E433`: magenta means interactive. */

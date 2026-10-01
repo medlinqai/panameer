@@ -189,7 +189,33 @@ export function PageTabs({
       <div
         data-testid="page-tabs"
         className={
-          "-mx-1 mb-4 flex items-center gap-0.5 border-b border-line px-1 " +
+          /*
+            ── ⚠⚠⚠ THE STRIP PAINTS ITS OWN SURFACE (`P2-A1.1-E745`, lane 2 item 7)
+
+            ⚠ **SCOTT, 2026-10-02: *"The Account Information tab strip … still has
+            a light grey background. Make it white, with the thin line under it
+            kept."*** ⚠⚠ **MEASURED FIRST, AND THE GREY WAS NOT THIS ELEMENT'S:**
+            the strip was transparent and the grey came from the app shell's
+            `bg-canvas` — `rgb(250,250,250)` light, `rgb(11,8,23)` dark. So the
+            fix is to PAINT the strip, not to hunt for a background to delete.
+
+            ⚠⚠⚠ **`bg-surface`, NEVER `bg-white`.** Scott's own instruction:
+            *"Dark mode uses the theme surface token."* A hard-coded white here is
+            the `E723` defect that broke `/profile` and `/providers/[id]` in dark
+            mode, and `gauges.css` carries the same warning.
+
+            ⚠⚠ **IT IS SHARED BY TWENTY CALLERS, NOT FOUR — SAY SO.** Scott
+            approved the change on the understanding it hits *"all four tabs at
+            once"* (Profile · Score · Usage · Health). It is in fact rendered by 20
+            files, including `/community`, `/messages`, `/payments`, `/company`,
+            `/my-services` and Settings. ⚠ **A PROP WOULD HAVE BEEN WORSE:** two
+            tab-strip treatments drifting apart is `E585`, and the strip is chrome
+            — one row, one look. ⚠ **REPORTED so it can be reverted in one line if
+            he dislikes it on a page he has not walked.**
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   "-mx-1 mb-4 flex items-center gap-0.5 border-b border-line px-1 " +
+          */
+          "-mx-1 mb-4 flex items-center gap-0.5 border-b border-line bg-surface px-1 " +
           /* ⚠ `flex-wrap` AND NO `overflow-x-auto` — leaving the scroller on a
              wrapping row gives a container that can both wrap and scroll, which
              is neither. `items-center` becomes `items-end` so wrapped rows sit

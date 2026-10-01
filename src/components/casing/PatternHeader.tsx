@@ -92,6 +92,24 @@ export type PatternHeaderProps = {
    * the same reason: the pill-and-magenta pair is what the other three headers ship today.
    */
   squareActions?: boolean;
+  /**
+   * ── ⚠⚠⚠ `open` — NO BOX, NO SURFACE, THIN LINES ONLY (`P2-A1.1-E745`) ──────
+   *
+   * ⚠ **SCOTT, 2026-10-02: *"this needs to be the new format… No boxes, no grey
+   * page. White throughout, like `/profile`. Thin lines separate sections; no
+   * card borders, no card shadows."***
+   *
+   * ⚠⚠ **OPT-IN, LIKE `figureLead` AND `squareActions` ABOVE, AND FOR THE SAME
+   * REASON.** This component is rendered by **six** callers — `/usage`,
+   * `/account-health`, `/learn/courses`, `LearnHome`, `MyLearning` and
+   * `CommunityHero`. ⚠⚠⚠ **THE BRIEF SAYS "THIS PAGE ONLY": *"Other pages change
+   * as Scott walks them."*** Making the box unconditional would restyle five
+   * pages he has not walked yet.
+   *
+   * ⚠ It removes the border, the radius and the `bg-white`, and turns the inner
+   * column rule into the one thin divider the mockup draws.
+   */
+  open?: boolean;
 };
 
 /** ⚠ The figure's own rendering, so the dash rule lives in ONE place. */
@@ -163,6 +181,7 @@ export function PatternHeader({
   secondary,
   figureLead,
   squareActions,
+  open,
   picture,
 }: PatternHeaderProps) {
   /*
@@ -192,12 +211,53 @@ export function PatternHeader({
     shown.length >= 3 ? "grid-cols-3" : shown.length === 2 ? "grid-cols-2" : "grid-cols-1";
 
   return (
-    <section className="rounded-brand border border-line bg-white">
-      <div className="grid gap-0 md:grid-cols-[1.1fr_1fr]">
+    /*
+      ⚠⚠ `open` DROPS THE BOX (`P2-A1.1-E745`). ⚠⚠⚠ **IT ALSO DROPS
+      `bg-white`, WHICH WAS A DARK-MODE DEFECT WAITING ITS TURN** — `E723`'s
+      lesson, and `gauges.css` already states it: *"a hard-coded white card is
+      exactly what broke `/profile` and `/providers/[id]` in dark mode."* ⚠ The
+      boxed variant keeps it byte-for-byte so the five other callers do not move.
+    */
+    <section
+      /*
+        ── ⚠⚠ A STABLE HANDLE, BECAUSE THE CLASS STOPPED BEING ONE (`E745`) ────
+
+        ⚠⚠⚠ `check:usage` ANCHORED ON `section.rounded-brand` AND `open` TOOK THE
+        CLASS AWAY — so the locator matched nothing and the gate **hung** rather
+        than failing, which reads as a broken harness instead of a moved anchor.
+        ⚠ This file already carries the lesson for the tab row: *"walking up from
+        a link to a guessed container is the approach `E560` already recorded as
+        failing."* A styling class is the same guess in a different coat — it is
+        free to change, and a gate must not depend on it.
+        ⚠⚠ `data-testid` IS THE CONTRACT: it survives any restyle, and `PageTabs`
+        already uses exactly this (`data-testid="page-tabs"`).
+      */
+      data-testid="pattern-header"
+      className={
+        open
+          ? "border-b border-line pb-7"
+          : "rounded-brand border border-line bg-white"
+      }
+    >
+      <div
+        className={
+          open
+            ? "grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center"
+            : "grid gap-0 md:grid-cols-[1.1fr_1fr]"
+        }
+      >
         {picture ? (
-          <div className="border-b border-line p-5 md:border-b-0 md:border-r">{picture}</div>
+          <div
+            className={
+              open
+                ? ""
+                : "border-b border-line p-5 md:border-b-0 md:border-r"
+            }
+          >
+            {picture}
+          </div>
         ) : null}
-        <div className="p-5">
+        <div className={open ? "" : "p-5"}>
           {/* ⚠ REQUIRED. The one thing that says which page this is. */}
           <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
             {eyebrow}
