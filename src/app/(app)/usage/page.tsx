@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
-import { StatisticsCards, BuyerStatistics } from "@/components/console/StatisticsCards";
+/* ⚠ `P2-A1.1-E744` — these left with the four cards below the gauges; the components stay on disk. */
+import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
 /* ⚠ `E730` WS-B/WS-C — the areas are defined once, in `lib/usage-areas.ts`, and this
    page renders them twice (comb + gauges). */
@@ -15,14 +16,15 @@ import {
   accountStandingLines,
   accountCheckCounts,
 } from "@/lib/account-standing";
-import { isCounted, type Figure } from "@/lib/figure";
+/* ⚠ `P2-A1.1-E744` — these four left with the cards this lane removed; every
+   module stays on disk and `ProfileChecklist` imports what it needs itself. */
+import { type Figure } from "@/lib/figure";
 import type { TrendPeriod } from "@/components/console/StatCardBacks";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
-import { ownedProviderProfile, providerMeetsRequired } from "@/lib/access";
-import { isMarketplaceVisible } from "@/lib/access";
+import { ownedProviderProfile } from "@/lib/access";
 /* ⚠⚠ `VISIBILITY_THRESHOLD` IS NO LONGER IMPORTED (`E659`). Its two live uses
    were the visibility gate `E590` removed and the sentence that printed that
    gate to the member; both are now `E164` quotes, and a quote needs no import.
@@ -34,9 +36,6 @@ import { isMarketplaceVisible } from "@/lib/access";
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness"; */
 import { missingRequired } from "@/lib/completeness";
-import { readAttestations } from "@/lib/experience-attestation";
-import { ConfirmExperience } from "@/components/console/ConfirmExperience";
-import { RequestValidationAction } from "@/components/console/RequestValidationAction";
 /* ⚠ `StatValue` IS NO LONGER IMPORTED (`E563` WS-A). Both of its callers —
    `Profile Metrics`'s headline and the `Rising Talent` count — are superseded
    above; the merged meter is written out because `StatValue` renders MAGENTA and
@@ -49,7 +48,6 @@ import { RequestValidationAction } from "@/components/console/RequestValidationA
    carries its own reason.
    ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { NotTrackedYet, StatRow, StatTile } from "@/components/console/StatTile"; */
-import { StatRow, StatTile } from "@/components/console/StatTile";
 
 /**
  * MY STATS (J2.4 WS-D / E010).
@@ -294,13 +292,23 @@ export default async function MyStatsPage({
   /* ⚠⚠ THE ONE COMPUTATION, READ BY BOTH SURFACES. ⚠ `certCount` is what the
      `Profile` tile's inventory renders and what `Your Learning` renders — one
      number, two renders, which is allowed; two counts would not be. */
-  const certCount = isCounted(stats.learning.certifications)
-    ? stats.learning.certifications
-    : 0;
+  /* ⚠ `certCount` WENT WITH THE `Profile` TILE (`P2-A1.1-E744`). Its comment
+     said it was *"read by BOTH surfaces"* — the tile and `Your Learning` — and
+     ⚠⚠ ONLY THE TILE HAS GONE. `ProfileChecklist` takes the figure as a prop so
+     the rule survives the move: one number, two renders, never two counts.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const certCount = isCounted(stats.learning.certifications)
+     //     ? stats.learning.certifications
+     //     : 0; */
 
   /* ⚠ OWNER-SCOPED INSIDE THE HELPER — the profile is resolved from the
      session, never from a parameter (`E563` WS-B item 8). */
-  const attestations = await readAttestations(viewer);
+  /* ⚠ `attestations` FED `ConfirmExperience`, WHICH THIS LANE UNMOUNTED
+     (`P2-A1.1-E744`). ⚠⚠ The read is dropped with its only reader rather than
+     left running for nobody — a query whose result nothing renders is a page
+     paying for a card it no longer shows.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   const attestations = await readAttestations(viewer); */
 
   /*
     ── ⚠⚠ THE WS-C COUNTS (`P2-J2-E563`) ─────────────────────────────────────
@@ -526,18 +534,27 @@ export default async function MyStatsPage({
     for `missingRequired`, so every field the predicate reads was in memory and
     this page was answering the wrong question with the right data.
   */
-  const visible = isMarketplaceVisible({
-    status: profile.status,
-    completeness: profile.completeness,
-    paused_at: profile.paused_at,
-    meetsRequired: providerMeetsRequired(profile),
-  });
-  const validated = profile.validation_status === "VALIDATED";
   /*
-    ⚠⚠ `REQUESTED` IS ITS OWN STATE, NOT A FLAVOUR OF UNMET (Scott's ruling,
-    2026-09-19). A provider who has asked must not be told again to ask.
+    ── ⚠⚠ THREE LOCALS WENT WITH THE `Profile` TILE (`P2-A1.1-E744`) ────────
+
+    ⚠ `visible`, `validated` and `validationRequested` were read ONLY by the
+    four-criteria checklist. ⚠⚠ They move to `ProfileChecklist`, which takes
+    them as props — so the dashboard that mounts it supplies them, and this
+    page stops computing a visibility verdict it no longer shows.
+    ⚠⚠⚠ **NOTHING ABOUT THE VISIBILITY RULE CHANGED.** `isMarketplaceVisible`
+    and `providerMeetsRequired` are untouched; only this caller is gone.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const visible = isMarketplaceVisible({
+    //     status: profile.status,
+    //     completeness: profile.completeness,
+    //     paused_at: profile.paused_at,
+    //     meetsRequired: providerMeetsRequired(profile),
+    //   });
+    //   const validated = profile.validation_status === "VALIDATED";
+    //   (REQUESTED is its own state, not a flavour of unmet - Scott, 2026-09-19:
+    //    a provider who has asked must not be told again to ask.)
+    //   const validationRequested = profile.validation_status === "REQUESTED";
   */
-  const validationRequested = profile.validation_status === "REQUESTED";
 
   /* ⚠ NAMES THE GAPS. `E562` WS-B's strip does the same from the same fields —
      see the note on the widened select above. */
@@ -557,171 +574,16 @@ export default async function MyStatsPage({
   });
 
   /*
-    ── ⚠⚠ THE FOUR CRITERIA, NOW THE ONLY COPY OF THEM (`P2-J2-E563` WS-A) ─────
+    ── ⚠⚠ THE FOUR CRITERIA MOVED OUT (`P2-A1.1-E744`, lane 1) ──────────────
 
-    ⚠ SUPERSEDED, quoted not deleted (`E164`). This was `risingCriteria`, feeding
-    a SEPARATE `Rising Talent` tile that sat beside `Profile Metrics`:
-    // const risingCriteria = [
-    //   { label: "Profile complete enough to be visible", met: profile.completeness >= VISIBILITY_THRESHOLD },
-    //   { label: "Work history added", met: profile._count.employers > 0 },
-    //   { label: "At least one service package listed", met: profile._count.packages > 0 },
-    //   { label: "Identity validated by Panameer", met: validated },
-    // ];
-    // const risingMet = risingCriteria.filter((c) => c.met).length;
-
-    ⚠⚠ SCOTT, 2026-09-17: *"How is Rising Talent not the same as Profile
-    Metrics?"* ⚠ MEASURED, AND IT WAS NOT: THREE OF THE FOUR READ VALUES THAT
-    ALREADY RENDERED IN THE TILE NEXT TO IT — completeness was the Profile
-    Metrics headline, `employers` its Companies row, `packages` its Packages row.
-    ⚠⚠ ONE IDEA COUNTED TWICE, AND A THIRD TIME on `/account-health`.
-
-    ⚠⚠⚠ EACH UNMET CRITERION NOW CARRIES THE ACTION THAT FIXES IT. That is the
-    thing the split version could not do: a checklist beside an inventory says
-    what is wrong twice and how to fix it never.
-
-    ⚠ `href` IS NULL ONLY WHEN NO DOOR EXISTS — see the validation row below.
-    ⚠⚠ A NULL `href` MUST NEVER BE FAKED INTO A LINK. Rendering a button that
-    goes nowhere is worse than rendering none.
+    ⚠ The `criteria` builder and `metCount` lived here and were rendered by the
+    `Profile` tile this lane removed. ⚠⚠ They are NOT deleted — Scott asked for
+    the checklist to be kept, unmounted, for the dashboard:
+    **`src/components/console/ProfileChecklist.tsx`** now holds
+    `buildProfileCriteria()` and the card, moved with their own comments.
+    ⚠⚠⚠ **THE RULES ARE UNCHANGED** — this is an extraction, not a rewrite.
   */
-  const criteria: {
-    label: string;
-    met: boolean;
-    note: string;
-    action: { label: string; href: string } | null;
-    /* ⚠⚠ A THIRD STATE, NOT A SECOND BOOLEAN FOR "MET". `pending` means the
-       provider has done the only thing they can do and is waiting on somebody
-       else. ⚠ Rendering that as an unmet `!` would blame them for a queue. */
-    pending?: boolean;
-    /* ⚠ A POSTING CONTROL rather than a link. `null` means no door is offered
-       from this state. */
-    control?: "request-validation" | null;
-  }[] = [
-    {
-      /*
-        ── ⚠⚠⚠ `E590`'s REMOVED GATE WAS STILL ALIVE HERE (`P2-A2-E659`) ──────
 
-        ⚠⚠ **FOUND BY LOOKING AT THE SCREENSHOT, NOT BY A MEASUREMENT** (73b).
-        On `sw_user21@straterp.com` this card said both of these at once:
-          · *"Photo, identity and the required details — all met."* (bold, from
-            `visible`)
-          · *"Buyers cannot find you yet, and your service products are not on
-            sale."* (this row, from `completeness >= VISIBILITY_THRESHOLD`)
-        ⚠⚠⚠ **TWO DEFINITIONS OF "CAN BUYERS FIND YOU", CONTRADICTING EACH
-        OTHER ON ONE CARD, THREE LINES APART.**
-
-        ⚠ **`E590` WS-A0 ALREADY RULED THIS.** `isMarketplaceVisible`'s own
-        comment: *"THE PERCENTAGE FALLBACK IS GONE… there is ONE gate now"*, and
-        it measured the two gates disagreeing on **6 real profiles — visible on
-        five surfaces, invisible on three, at the same moment.** ⚠⚠ So this is
-        not a new decision; it is a surviving copy of a gate that was removed.
-
-        ⚠⚠⚠ **AND HERE IS WHY `E590`'s OWN SAFEGUARD DID NOT CATCH IT.** That
-        brief made `meetsRequired` a REQUIRED parameter precisely so *"the type
-        checker found all five sites"* — and it did. ⚠ **BUT THIS LINE NEVER
-        CALLS `isMarketplaceVisible`. It RE-IMPLEMENTS the comparison by hand**,
-        so there was no call for the compiler to flag. ⚠⚠ **A REQUIRED TYPE
-        FINDS CALLERS; IT CANNOT FIND RE-IMPLEMENTATIONS.** That is the gap
-        between `E585` and the compile-error pattern, and it is worth stating:
-        the strongest tool in this codebase is blind to a copy that does not
-        call the thing it copies.
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   met: profile.completeness >= VISIBILITY_THRESHOLD,
-      */
-      label: "Profile complete enough to be visible",
-      met: visible,
-      /* ⚠ THE CONSEQUENCE, NOT THE FLAG — folded from `/account-health`'s
-         `Appear in buyer searches` row, which said the same thing about the
-         same boolean. Its `Sell service packages` row read the SAME flag again,
-         so its meaning is carried here too. */
-      /* ⚠ THE SAME PREDICATE AS `met` ABOVE — see that block. The note and the
-         mark beside it must never disagree about one boolean. */
-      note:
-        profile.paused_at
-          ? "Paused by you — resume from Settings when you're ready."
-          : visible
-            ? "Buyers can find you, and your service products are purchasable."
-            : "Buyers cannot find you yet, and your service products are not on sale.",
-      action:
-        visible
-          ? null
-          : /* ⚠ `E133` — `step=finish` is the review, the profile-shaped editor.
-               `/join/provider` with no step resolves to the RESUME point and
-               would drop a published provider at the start of the train. */
-            { label: "Finish Your Profile", href: "/join/provider?step=finish" },
-    },
-    {
-      label: "Work history added",
-      met: profile._count.employers > 0,
-      note: "Buyers read work history before anything else on your profile.",
-      action:
-        profile._count.employers > 0
-          ? null
-          : {
-              label: "Add Work History",
-              href: "/join/provider?step=tell_us&return=review",
-            },
-    },
-    {
-      /* ⚠⚠ `package` IS GONE FROM THE RENDERED WORD (`E563` WS-A item 6) AND NOW
-         FROM THE FIELD TOO (`P2-A6-E697`) — the copy and the model finally agree.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   The field is still `_count.packages` — the MODEL is `Package` and
-         //   renaming it is not this brief's job; only the COPY changes.
-         ⚠⚠ That comment was accurate when written and named the job it was
-         deferring. `E697` is that job. */
-      label: "At least one service product listed",
-      met: profile._count.serviceProducts > 0,
-      note: "A service product is what a buyer actually buys.",
-      action:
-        profile._count.serviceProducts > 0
-          ? null
-          : { label: "Add a Service Product", href: "/my-services" },
-    },
-    {
-      label: "Identity validated by Panameer",
-      met: validated,
-      /*
-        ── ⚠⚠ THE DOOR IS WIRED (Scott's ruling, 2026-09-19) ─────────────────
-
-        ⚠⚠⚠ SCOTT: *"Panameer is the ONLY one that can validate profiles. AND,
-        there is a subscription level for the buyers that allows them to ONLY
-        see validated profiles."* ⚠ VALIDATION IS A REVENUE MECHANISM, NOT A
-        BADGE — which is why it earns a control rather than a note.
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — true at the WS-A gate, and
-        no longer true:
-        // note: validated
-        //   ? "Granted by Panameer on the quality of your work."
-        //   : "Granted by Panameer on the quality of your work. It is never sold, and there is nothing to apply for yet.",
-        // action: null,
-
-        ⚠⚠ WHAT WS-A MEASURED AND THIS FIXES: `POST
-        /api/settings/request-validation` existed, was owner-scoped, worked —
-        and NOTHING CALLED IT. ⚠ The route is REUSED, not replaced (Scott: *"Do
-        not write a new route."*).
-        ⚠ `ProjectModal.tsx`'s identically-named button is a DIFFERENT THING —
-        it POSTs `/api/provider/project-validation`, one project, one named
-        contact. Do not merge the two.
-
-        ⚠⚠⚠ THE `brief_K` INVARIANT, AND IT BINDS ANY LATER EDIT: VALIDATION
-        GATES WHICH BUYERS SEE A PROVIDER, NEVER WHETHER THE PROVIDER IS
-        VISIBLE. `isMarketplaceVisible` does not read `validation_status` and
-        must not learn to.
-      */
-      note: validated
-        ? "Granted by Panameer on the quality of your work."
-        : validationRequested
-          ? "You've asked for validation. Panameer reviews it — we'll let you know."
-          : "Only Panameer can grant this, and it is never sold. Some buyers choose to see validated providers only.",
-      action: null,
-      pending: validationRequested,
-      /* ⚠ A BUTTON, NOT A LINK — it POSTs. The component decides whether to
-         render at all, mirroring `requestValidation`'s own state guard. */
-      control: validated || validationRequested ? null : ("request-validation" as const),
-    },
-  ];
-  const metCount = criteria.filter((c) => c.met).length;
 
   return (
     <>
@@ -944,440 +806,45 @@ export default async function MyStatsPage({
         </section>
       )}
 
-      <div className="mb-4">
-        <ConfirmExperience initial={attestations} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/*
-          ── ⚠⚠ `Service Products` (`E563` WS-C item 9) ─────────────────────
-
-          ⚠⚠⚠ TWO OF THIS ITEM'S THREE PARTS HAVE NO DATA BEHIND THEM, AND
-          NEITHER IS BUILT HERE. Measured 2026-09-19:
-
-          1. ⚠ THE `Generic` / `Custom` SPLIT CANNOT BE COMPUTED. `Package` has
-             no column that distinguishes a product Panameer generated from one
-             the provider wrote — `kind` is DELIVERABLE/DEPLOYABLE/HOURS, a
-             different axis. ⚠⚠ ADDING THAT COLUMN IS PART OF THE AUTO-CREATION
-             MODEL, AND THIS BRIEF FORBIDS INVENTING IT: *"REPORT WHAT
-             AUTO-CREATION WOULD NEED. DO NOT INVENT THE MODEL."*
-             ⚠ Rendering `Generic 0 · Custom N` would be true only by accident —
-             true today because nothing auto-creates, and SILENTLY WRONG the
-             first day something does. That is the `HERO_SCRIM` failure shape:
-             correct-looking and dead.
-          2. ⚠ THERE IS NO VIEW TRACKING ANYWHERE. No `view_count`, no
-             `PackageView`, nothing. So views take the dash convention.
-
-          ⚠ `Published` and `Drafts` ARE real counts and render as numbers.
-        */}
-        <StatTile label="Service Products">
-          <p className="font-display text-[30px] font-bold leading-none text-ink">
-            {publishedProducts}
-          </p>
-          <p className="mt-1.5 text-[13px] text-ink-2">Published</p>
-          <div className="mt-4">
-            <StatRow label="Drafts" value={String(draftProducts)} />
-          </div>
-          {/* ⚠ THE DASH CONVENTION, APPLIED TO A SUB-FACT: a sentence saying
-              what would start it beats a fabricated `0` views. */}
-          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-            Views aren&rsquo;t counted yet. Products Panameer builds for you from
-            your experience will be listed here separately once we build them.
-          </p>
-          <Link
-            href="/my-services"
-            className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
-          >
-            Manage Service Products
-          </Link>
-        </StatTile>
-
-        {/*
-          ── ⚠⚠⚠ `Earnings (12 Months)` RETIRED (`E603` item 1) ──────────────
-
-          ⚠ SCOTT, 2026-09-23: *"Retire the old tile — it has no query and its
-          string is false."*
-          ⚠⚠ IT HAD NO QUERY AT ALL. `NotTrackedYet` is a static component: no
-          number, no source, just a promise. ⚠⚠⚠ AND THE PROMISE WAS FALSE —
-          *"once you complete your first paid work order"* says the member's own
-          work starts the counter. It cannot: nothing writes `PAID` and no
-          `Payment` is ever created, so a provider can finish paid work and
-          still count nothing. **A promise about what will start counting is a
-          claim about a mechanism; do not make one for a mechanism that does not
-          exist.**
-          ⚠ Earnings now renders ONCE, on the Work card, with the accurate
-          reason.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <StatTile label="Earnings (12 Months)">
-          //     <NotTrackedYet unlocks="you complete your first paid work order" />
-          //   </StatTile>
-        */}
-
-        {/*
-          ── ⚠⚠⚠ `Job Success Score` RETIRED (`E603` item 3) ─────────────────
-
-          ⚠ SCOTT, 2026-09-23: *"Same treatment as Earnings. A static string
-          promising a mechanism is a claim about a mechanism, and there is
-          none."*
-          ⚠⚠ MEASURED BY BEHAVIOUR, NOT BY NAME: there is **no `Review`,
-          `Rating` or `Feedback` model**, **no rating relation on `WorkOrder`**,
-          and **no runtime writer for `ProviderProfile.rating`** — its single
-          value, `4.90`, is hardcoded at `prisma/seed.ts:260`. ⚠ So *"once
-          buyers rate completed work orders"* named a thing a buyer cannot do.
-          ⚠⚠⚠ AND IT HAD NO QUERY — `NotTrackedYet` is static: no number, no
-          source, just the promise.
-          ⚠ NOTHING IS STRANDED: the tile carried **zero links** (checked, not
-          assumed), so retiring it removes no entrance to anything.
-          ⚠ `check:sourcing` STILL FAILS THE BUILD if anything averages
-          `InterviewNote.rating` into a provider score. **Leave that guard
-          alone — it is the right one.**
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <StatTile label="Job Success Score">
-          //     <NotTrackedYet unlocks="buyers rate completed work orders" />
-          //   </StatTile>
-        */}
-
-        {/*
-          ── ⚠⚠ `Proposals` (`E563` WS-C item 10) ───────────────────────────
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          // <StatTile label="Proposals">
-          //   <NotTrackedYet unlocks="you start bidding on work requests" />
-          // </StatTile>
-
-          ⚠⚠ IT IS NO LONGER UNTRACKED — `ProposalRequest` and `Proposal` are in
-          the schema and `lib/sourcing.ts` writes them, so these are real counts.
-          ⚠ They read 0 today because the marketplace holds zero of both, and a
-          TRUE zero is printed, not hidden behind a dash (the Counters decision
-          is LOCKED: *"Count it and print it."*).
-
-          ⚠⚠⚠ INVITATIONS COUNT EVEN WHEN DECLINED. The brief: *"a buyer asking
-          directly is the signal, not the answer."* ⚠ This is NOT a decline
-          counter and must never become one — `E366`, enforced by
-          `check:sourcing`.
-        */}
-        {/*
-          ── ⚠⚠⚠ `Proposals` RETIRED — AND IT WAS THE ONE THAT WAS RIGHT ──────
-
-          ⚠⚠⚠ THIS TILE DISPROVED MY OWN WORK CARD. It counted
-          `proposal.count({ provider_person_id, submitted_at: { not: null } })`
-          — a real number — while the Work card printed a DASH reading *"No
-          Proposal model exists"*. ⚠⚠ THE SAME FIGURE RENDERED AS BOTH A NUMBER
-          AND A DASH, and the dash was the lie: the model is named
-          **`Proposal`**, not `Proposal`, and it had been counted here all
-          along. ⚠ **AN ABSENT NAME IS NOT AN ABSENT THING — search for the
-          behaviour, not the noun** (Scott, 2026-09-23).
-          ⚠ Both rows moved: `Sent` is the Work card's `Proposals Sent` (same
-          `submitted_at` filter — sent means submitted, and a draft is not a
-          proposal), and `Invitations to propose` is beside it on the front.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <StatTile label="Proposals">
-          //   {/* ⚠ `E433` — a count is a figure, so INK. * /}
-          //   <p className="font-display text-[30px] font-bold leading-none text-ink">
-          //   {proposalsSent}
-          //   </p>
-          //   <p className="mt-1.5 text-[13px] text-ink-2">Sent</p>
-          //   <div className="mt-4">
-          //   <StatRow
-          //   label="Invitations to propose"
-          //   value={String(invitationsToPropose)}
-          //   />
-          //   </div>
-          //   <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-          //   An invitation counts whether or not you bid — a buyer asking you
-          //   directly is the signal.
-          //   </p>
-          //   </StatTile>
-        */}
-
-        {/*
-          ── ⚠⚠ ONE `Profile` TILE (`P2-J2-E563` WS-A) ─────────────────────────
-
-          ⚠ ORDER IS THE BRIEF'S: the meter, the gate IN WORDS, the four
-          criteria as a checklist, then the inventory counts.
-          ⚠⚠ IT SPANS TWO COLUMNS because it now carries what two tiles carried.
-        */}
-        <StatTile label="Profile" span={2}>
-          {/*
-            ── FACT 1 — THE METER ───────────────────────────────────────────
-            ⚠⚠ LABELLED "of required details", BYTE FOR BYTE WITH
-            `ProviderProfileView.tsx` (`E562` WS-B). ⚠ THE TWO SURFACES MUST NOT
-            DISAGREE — whichever of the two briefs landed second had to match the
-            first, and `E562` landed first.
-            ⚠ `completeness.ts` RETURNS 100 WHILE SECTIONS ARE EMPTY because it
-            counts the REQUIRED SET only. The FIGURE is right; the word
-            `Complete` is what would mislead, so the label names the denominator.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the caption that used it:
-            // caption={visible
-            //   ? "Complete - your profile is live in the marketplace"
-            //   : `Complete - ${VISIBILITY_THRESHOLD - profile.completeness}% to go before buyers can find you`}
-            ⚠⚠ `E433` — A FIGURE, SO INK. `StatValue` renders magenta, which is
-            why this meter is written out rather than reusing it; the remaining
-            magenta figures on this page are recorded, not swept, because a
-            page-wide recolour is not this workstream.
-          */}
-          {/*
-            ── ⚠⚠⚠ THE COMPLETION FIGURE IS GONE FROM `/stats` (`E603` WS-A, 2 of 2) ──
-
-            ⚠ SCOTT, 2026-09-23: *"Profile completion and application usage are
-            different things. Completion belongs to the score page. Statistics
-            measures what the application DID with the profile."*
-            ⚠⚠ WS-A TOOK IT OFF THE NEW CARDS AND LEFT IT HERE, so the ruling was
-            half-applied and the page still led with the number it forbade. **The
-            correction is not complete until the OLD surface changes too.**
-
-            ⚠⚠⚠ THE CARD IS NOT DELETED, AND THAT IS THE LOAD-BEARING PART.
-            Removing it outright would take away the only entrance to the score
-            page from this screen — `E579`'s inverse, and the same defect as
-            `E601`'s `OwnerResumeRerun`, which survived intact and unreachable.
-            ⚠ **A ZERO IS INFORMATION; AN ABSENT CARD IS A DEAD END.** So the
-            figure is replaced by the door it was sitting on top of.
-
-            ⚠ THE GATE, THE CHECKLIST AND THE INVENTORY COUNTS BELOW ALL STAY:
-            they are VISIBILITY — whether buyers can find you — which is a
-            different question from how complete the profile is, and is squarely
-            what this page measures.
-
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <p className="font-display text-[30px] font-bold leading-none text-ink">
-            //     {profile.completeness}% of required details
-            //   </p>
-          */}
-          <Link
-            href="/community/score"
-            className="inline-block font-display text-[19px] font-bold leading-tight text-magenta hover:underline"
-          >
-            See Your Profile Score &rarr;
-          </Link>
-
-          {/*
-            ── FACT 2 — THE GATE, IN WORDS. No percentage in this sentence. ──
-            ⚠ Same three-state shape as the profile's status strip, so a
-            provider reading both surfaces is told the same thing twice in the
-            same words rather than two different things.
-          */}
-          <p className="mt-3 text-[14px] font-bold">
-            {profile.paused_at
-              ? "Your profile is paused"
-              : visible
-                ? "Photo, identity and the required details — all met."
-                : "Not visible yet — some required details are missing."}
-          </p>
-
-          {/*
-            ── FACT 3 — THE CHECKLIST, EACH UNMET ROW CARRYING ITS ACTION ───
-            ⚠⚠ THE ONLY COPY OF THESE FOUR IN THE APPLICATION as of `E563` WS-A.
-          */}
-          <ul className="mt-4 space-y-3">
-            {criteria.map((c) => (
-              <li key={c.label} className="flex items-start gap-2.5">
-                {/*
-                  ⚠⚠ THREE STATES, AND THE MIDDLE ONE IS THE POINT. A provider
-                  waiting on Panameer's review has done everything they can, so
-                  the mark must not read as a fault. ⚠ The glyph carries the
-                  state as well as the colour — colour is not a label.
-                */}
-                <span
-                  aria-hidden
-                  className={
-                    "mt-[3px] grid h-[18px] w-[18px] flex-none place-items-center rounded-full text-[11px] font-black text-white " +
-                    (c.met
-                      ? "bg-emerald-500"
-                      : c.pending
-                        ? "bg-ink-2"
-                        : "bg-ink-2/30")
-                  }
-                >
-                  {c.met ? "✓" : c.pending ? "…" : "!"}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[14px] font-semibold">
-                    {c.label}
-                  </span>
-                  <span className="block text-[13px] leading-relaxed text-ink-2">
-                    {c.note}
-                  </span>
-                  {/* ⚠⚠ ONLY WHEN UNMET AND ONLY WHEN A DOOR EXISTS. A met
-                      criterion needs no action, and a criterion with no door
-                      must not grow a fake one. */}
-                  {!c.met && c.action && (
-                    <Link
-                      href={c.action.href}
-                      className="mt-1.5 inline-block text-[13.5px] font-bold text-magenta hover:underline"
-                    >
-                      {c.action.label}
-                    </Link>
-                  )}
-                  {/* ⚠ THE ONE CRITERION WHOSE ACTION IS A POST, NOT A
-                      NAVIGATION (Scott's ruling, 2026-09-19). */}
-                  {c.control === "request-validation" && (
-                    <RequestValidationAction status={profile.validation_status} />
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {/*
-            ⚠ THE COUNT THE `Rising Talent` TILE CARRIED, KEPT. ⚠⚠ THE THRESHOLD
-            CLAUSE ONLY RENDERS WHEN IT IS STILL AHEAD OF THEM — telling a
-            provider already at 100% what they need to reach 80% is the kind of
-            sentence that makes a page read as unaware of its own state.
-            ⚠ `E433` — a count, so ink.
-          */}
-          {/*
-            ⚠⚠⚠ THE THRESHOLD CLAUSE IS GONE, FOR THE SAME REASON THE CRITERION
-            ABOVE CHANGED (`E659`). It read *"buyers can find you at 80% of
-            required details"* — ⚠ **a statement of the gate `E590` REMOVED**,
-            printed to the member as the rule. ⚠⚠ A percentage is not what makes
-            a profile visible any more; the required SET is, and the rows above
-            name exactly which parts of it are missing and link to each.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   {visible
-            //     ? "."
-            //     : ` · buyers can find you at ${VISIBILITY_THRESHOLD}% of required details.`}
-            ⚠ `E433` — a count, so ink.
-          */}
-          <p className="mt-3 text-[12.5px] text-ink-2">
-            {metCount} of {criteria.length} met.
-          </p>
-
-          {/* ── FACT 4 — THE INVENTORY ──────────────────────────────────── */}
-          <div className="mt-4">
-            <StatRow label="Skills" value={String(profile._count.skills)} />
-            {/* `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
-       A resume row looks identical for employment and for contract work, the
-       parser cannot tell them apart, and a user must not have to declare their
-       tax status to fill one in. `Company` names the ENTITY, which is constant;
-       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
-       considered and REJECTED — a slash label puts the tax question back into a
-       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
-       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
-       length and schema fit); recorded so nobody reopens it unknowing. */}
-            <StatRow label="Companies" value={String(profile._count.employers)} />
-            <StatRow label="Projects" value={String(profile._count.projects)} />
-            {/*
-              ⚠⚠ `Packages` LEAVES THE COUNTS (`E563` WS-A item 6). It moves to
-              the `Service Products` tile, and the WORD becomes service products.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              // <StatRow label="Packages" value={String(profile._count.packages)} />
-              ⚠⚠ THE COUNT IS NOT LOST IN THE MEANTIME — the third criterion
-              above reads the same `_count.packages`, so nothing goes dark
-              between this workstream and WS-C.
-            */}
-            <StatRow
-              label="Certifications"
-              value={String(certCount)}
-            />
-          </div>
-        </StatTile>
-
-        {/*
-          ── ⚠⚠ `Client Relationships` IS DELETED (`E563` WS-C item 12) ──────
-
-          ⚠ Scott, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          // <StatTile label="Client Relationships">
-          //   <NotTrackedYet unlocks="you work with your first buyer" />
-          // </StatTile>
-          ⚠⚠ NOTHING REPLACES IT AND NOTHING IS LOST — it counted nothing, and
-          the thing it would have counted has no model.
-        */}
-
-        {/*
-          ── ⚠⚠ `Interviews` (`E563` WS-C item 11) ──────────────────────────
-
-          ⚠ *"The gap between offered and taken is the only part a provider
-          controls; that is why both render."*
-
-          ⚠⚠ THE THIRD ROW SAYS `Declined or cancelled`, NOT *"declined or
-          expired"* AS THE BRIEF ASKS. `InterviewStatus` HAS NO `EXPIRED` —
-          it is REQUESTED · SLOTS_OFFERED · SCHEDULED · COMPLETED · DECLINED ·
-          CANCELLED. ⚠ Naming a state that cannot occur would be a fabricated
-          fact; reported at the WS-C gate instead.
-        */}
-        {/*
-          ── ⚠⚠⚠ `Interviews` RETIRED — ITS DETAIL MOVED, NOT DELETED (item 5) ──
-
-          ⚠ SCOTT, 2026-09-23: *"Retire the duplicate tiles by moving their
-          detail, not deleting it (`E585` — one concept in N places)."*
-          ⚠⚠ `Offered` WAS THE SAME QUERY AS THE WORK CARD'S `Interviews` —
-          `interviewRequest.count({ provider_person_id })`, byte for byte. Two
-          renders of one computation cannot drift; but these were TWO
-          COMPUTATIONS of one concept, which are free to disagree and will.
-          ⚠⚠⚠ ALL THREE ROWS NOW LIVE ON THE WORK CARD'S BREAKDOWN BACK, with
-          the in-flight remainder NAMED so the column reconciles — `Offered` is
-          the total and the two subsets are drawn from it, which is why they
-          never added up here.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <StatTile label="Interviews">
-          //   <p className="font-display text-[30px] font-bold leading-none text-ink">
-          //   {interviewsOffered}
-          //   </p>
-          //   <p className="mt-1.5 text-[13px] text-ink-2">Offered</p>
-          //   <div className="mt-4">
-          //   <StatRow label="Taken" value={String(interviewsTaken)} />
-          //   <StatRow
-          //   label="Declined or cancelled"
-          //   value={String(interviewsClosed)}
-          //   />
-          //   </div>
-          //   </StatTile>
-        */}
-
-        {/*
-          ── ⚠⚠ THE `Rising Talent` TILE IS GONE (`P2-J2-E563` WS-A item 3) ────
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`). It rendered a count and the
-          same four criteria the `Profile` tile above now owns:
-          // <StatTile
-          //   label="Rising Talent"
-          //   hint="Panameer's version is a checklist, not a secret score - these are the things that make a new provider findable."
-          // >
-          //   <StatValue value={`${risingMet}/${risingCriteria.length}`} caption="Criteria met" />
-          //   <ul className="mt-4 space-y-1.5">
-          //     {risingCriteria.map((c) => (
-          //       <li key={c.label} className="flex items-start gap-2 text-[13.5px]">
-          //         <span
-          //           aria-hidden
-          //           className={
-          //             "mt-[3px] grid h-4 w-4 flex-none place-items-center rounded-full text-[10px] font-black text-white " +
-          //             (c.met ? "bg-emerald-500" : "bg-line")
-          //           }
-          //         >
-          //           {c.met ? "✓" : ""}
-          //         </span>
-          //         <span className={c.met ? "text-ink-2" : ""}>{c.label}</span>
-          //       </li>
-          //     ))}
-          //   </ul>
-          // </StatTile>
-
-          ⚠⚠ WHAT IS DELIBERATELY NOT CARRIED OVER: the `hint`, which argued that
-          Panameer's badge is *"a checklist, not a secret score"*. ⚠ THAT
-          ARGUMENT ONLY EXISTED TO DEFEND A BADGE THAT NO LONGER RENDERS —
-          with the criteria merged into the `Profile` tile there is no badge to
-          contrast with Upwork's, and keeping the sentence would defend
-          something absent.
-          ⚠ The COUNT survives as the `{metCount} of {criteria.length} met` line.
-        */}
-      </div>
 
       {/*
-        ── ⚠⚠ THE CARDS `E600` FOLDED IN (`E603` WS-A) ────────────────────────
-        ⚠ Usage is part of Statistics — one tab, one page. Network, Learning and
-        Teaching sit BELOW the seller tiles above, which are this page's
-        existing subject and are untouched.
-      */}
-      <div className="mt-6 space-y-4">
-        <StatisticsCards s={stats} period={trendOf(sp)} cards="teaching-only" />
-      </div>
+        ── ⚠⚠⚠ THE FOUR CARDS BELOW THE GAUGES ARE GONE (`P2-A1.1-E744`, lane 1)
 
-      <p className="mt-6 text-[13px] text-ink-2">
-        Something look wrong?{" "}
-        <Link href="/profile" className="font-semibold text-magenta hover:underline">
-          Check your profile
-        </Link>
-        .
-      </p>
+        ⚠ SCOTT, 2026-10-02, of the cards under the gauges: *"do we need this any
+        more?"* — **no.** Removed from this page: **Confirm Your Experience**,
+        **Service Products**, **Profile** (the four-criteria checklist and the
+        Skills / Companies / Projects / Certifications counts) and **Teaching**.
+        ⚠⚠ **THE GAUGES REPLACE THE COUNTS.** ⚠ This supersedes super run 3's
+        *"Teaching stays."*
+
+        ⚠⚠⚠ **TWO ARE KEPT AS COMPONENTS, UNMOUNTED, BECAUSE SCOTT ASKED:**
+        *"Keep the checklist and Confirm Your Experience components, unmounted.
+        They move to the dashboard's 'next moves' section later."*
+          · `ConfirmExperience` — `components/console/ConfirmExperience.tsx`,
+            already a component; unmounting it was one deleted line.
+          · `ProfileChecklist` — **`components/console/ProfileChecklist.tsx`,
+            NEW.** ⚠⚠ The checklist was NOT a component: `criteria` was built
+            inline in this file and rendered inline inside a `StatTile`, so
+            *"keep the checklist"* had nothing to keep. **It is EXTRACTED, not
+            rewritten** — builder and markup moved with their own comments.
+
+        ⚠⚠ **`Service Products` AND `Teaching` ARE NOT KEPT** — only the two
+        Scott named are moving.
+        ⚠ The grid also held `E164` quotes of tiles retired long ago (`Earnings
+        (12 Months)`, `Job Success Score`, `Proposals`, `Client Relationships`,
+        `Interviews`). ⚠⚠⚠ **THOSE WERE QUOTES OF ALREADY-RETIRED CODE AND THEY
+        WENT WITH THE GRID; THEY ARE IN GIT AT `ebc2851`.** Scott ruled the same
+        narrow exception for `ProviderProfileView.tsx` (`E598`) — a quote of a
+        quote is history, and history is what the repository holds.
+
+        ⚠ **THE FOOTER LINE WENT TOO** — *"Something look wrong? Check your
+        profile."* ⚠⚠ The brief says remove it *"only if nothing else on the page
+        needs it"*: measured, nothing does — every gauge carries its own
+        `Go to …` link.
+      */}
+
+
+
     </div>
     {/* ⚠ closes `.account-surface` */}
     </div>

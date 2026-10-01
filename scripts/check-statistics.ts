@@ -42,6 +42,8 @@ import { trendBuckets, type Figure } from "../src/lib/statistics";
 import { allZero } from "../src/components/console/StatCardBacks";
 import { creditLine, workCreditLine } from "../src/components/console/StatisticsCards";
 import type { Statistics } from "../src/lib/statistics";
+/* ⚠ `P2-A1.1-E744` — assertion 19 reads the tab table itself (ruling 58). */
+import { PAGE_TABS } from "../src/lib/nav";
 
 let pass = 0;
 const failures: string[] = [];
@@ -561,10 +563,39 @@ check(
   !/\{profile\.completeness\}%/.test(src.page),
   "the figure is gone"
 );
+/*
+  ── ⚠⚠⚠ RE-ANCHORED BY SHAPE, NOT RELAXED (`P2-A1.1-E744`, lane 1) ──────────
+
+  ⚠ THE RULE IS UNCHANGED AND IT IS LIVE: *"removing a card can remove a
+  capability's only entrance"* (the 2026-09-23 rules, 5). ⚠⚠ What moved is WHERE
+  the entrance comes from. The `Profile` tile that carried
+  `href="/community/score"` was removed from `/usage` by lane 1, and this
+  assertion went red — **correctly**, because it was looking at the one place
+  the door used to be.
+
+  ⚠⚠⚠ **THE DOOR DID NOT GO.** `/usage` renders `PageTabs` with `profileTabs()`,
+  and `PAGE_TABS["/profile"]` carries `{ label: "Score", href: "/community/score" }`.
+  ⚠ **MEASURED LIVE, NOT ASSUMED** (`e2e-e744/door.spec.ts`): one
+  `a[href="/community/score"]` on the rendered page, and it is inside
+  `[data-testid="page-tabs"]`.
+
+  ⚠⚠ **IT IMPORTS THE TAB TABLE RATHER THAN GREPPING FOR A STRING** — ruling 58:
+  *"a gate that reimplements the rule it tests asserts itself."* ⚠ So this now
+  fails if the Score tab is removed from the model, which is the thing that would
+  actually close the door, and it cannot be satisfied by any stray link.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   check(
+  //     "19 - ...and the score page is still reachable from here",
+  //     /href="\/community\/score"/.test(src.page),
+  //     "the door survived the figure"
+  //   );
+*/
 check(
-  "19 — ⚠⚠ …and the score page is still reachable from here",
-  /href="\/community\/score"/.test(src.page),
-  "the door survived the figure"
+  "19 — ⚠⚠ …and the score page is still reachable from /usage (via the tab row)",
+  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/community/score") &&
+    /<PageTabs/.test(src.page) &&
+    /profileTabs\(/.test(src.page),
+  "the door survived the figure — it is the Score tab now"
 );
 
 
