@@ -68,7 +68,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const trendHref = (card: string) => (p: TrendPeriod) => `/stats?trend=${card}&period=${p}`;
+/* ⚠ `E730` WS-A — `/stats` became `/usage`. The old path 308s, so a stale link would
+   still arrive; it is repointed anyway because a redirect on every trend click is a
+   round trip nobody needs.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   (p: TrendPeriod) => `/stats?trend=${card}&period=${p}` */
+const trendHref = (card: string) => (p: TrendPeriod) => `/usage?trend=${card}&period=${p}`;
 
 export function StatisticsCards({
   s,

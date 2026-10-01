@@ -531,8 +531,11 @@ check(
   !/<b className="font-bold">Usage<\/b>/.test(RAIL_L) && !/<UsageComb/.test(RAIL_L)
 );
 check(
-  "10 — ⚠⚠⚠ and `/stats` is still reachable — as a TAB in the profile row",
-  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/stats"),
+  /* ⚠ `E730` WS-A — `/stats` became `/usage`. The assertion is about the TAB EXISTING,
+     not about its spelling, so it is re-anchored rather than dropped.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`): the needle was `t.href === "/stats"`. */
+  "10 — ⚠⚠⚠ and `/usage` is still reachable — as a TAB in the profile row",
+  (PAGE_TABS["/profile"] ?? []).some((t) => t.href === "/usage"),
   (PAGE_TABS["/profile"] ?? []).map((t) => t.href).join(" · ")
 );
 /*
@@ -588,7 +591,7 @@ check(
 const NAV = code("src", "lib", "nav.ts");
 const RAIL_C = code("src", "components", "community", "CommunityRail.tsx");
 for (const [href, where, body] of [
-  ["/stats", "the comb's own link", RAIL_L + NAV],
+  ["/usage", "the comb's own link", RAIL_L + NAV],
   ["/account-health", "the Account Health card", RAIL_L + NAV],
   ["/community/teams", "the Community rail", RAIL_C],
   ["/settings", "the Connect tab row", NAV],

@@ -264,7 +264,7 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
   [ACCOUNT_BAND_HREF]: [
     "/profile",
     "/company",
-    "/stats",
+    "/usage",
     "/account-health",
     "/settings",
     /*
@@ -915,11 +915,16 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
 
     ⚠⚠⚠ ALL SIX ROUTES EXIST — MEASURED, because the brief says *"a tab whose
     page doesn't exist yet: leave it out and report it. Never a tab that 404s."*
-    `/profile`, `/community/score`, `/stats`, `/account-health`, `/company` and
+    `/profile`, `/community/score`, `/usage`, `/account-health`, `/company` and
     `/settings` all have a `page.tsx`. **Nothing was left out.**
+    ⚠ `E730` WS-A RENAMED THE THIRD ONE. SUPERSEDED, quoted not deleted (`E164`):
+    //   /profile, /community/score, /stats, /account-health, /company and /settings
 
     ⚠ `Usage` IS FOLDED INTO `Statistics` (Scott): one tab, one menu item, one
-    route — `/stats`.
+    route — **`/usage` since `E730` WS-A**. ⚠⚠ THE WORD WON IN THE END: the label has
+    read `Usage` since `E603`, and the route and the browser title now say it too —
+    three names for one page was `E533`'s rule failing on the noun.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`): the route read `/stats`.
     ⚠⚠ THE KEY IS `/profile` because that is the row's home, and
     `bandPrefixesFor` is NOT extended to cover the others: these are
     ACCOUNT-MENU destinations and must light no band application (`E596`), which
@@ -942,7 +947,8 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     verbatim from the sheet's row 35.** ⚠⚠ **RULE 13: THE NEWEST DATED STATEMENT
     FROM SCOTT IS THE LIVE ONE**, so the label takes the newer wording. ⚠ The
     older note's SUBSTANCE still holds and is not contradicted — **one tab, one
-    menu item, one route (`/stats`)** — only the words on it changed.
+    menu item, one route (**`/usage`** since `E730` WS-A; it read `/stats` when this was
+    written, `E164`)** — only the words on it changed.
 
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   { label: "My Profile", href: "/profile" },
@@ -994,7 +1000,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   "/profile": [
     { label: "Profile", href: "/profile" },
     { label: "Score", href: "/community/score" },
-    { label: "Usage", href: "/stats" },
+    { label: "Usage", href: "/usage" },
     { label: "Health", href: "/account-health" },
   ],
   "/connect": [

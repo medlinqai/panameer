@@ -31,9 +31,9 @@ const COMMUNITY_ROUTES = [
   "/community/score",
   "/community/teams",
 ];
-const ACCOUNT_ROUTES = ["/profile", "/stats", "/account-health", "/settings", "/company"];
+const ACCOUNT_ROUTES = ["/profile", "/usage", "/account-health", "/settings", "/company"];
 /** ⚠ The five the brief asks to see the band on. */
-const SHOT_ROUTES = ["/profile", "/community/score", "/stats", "/account-health", "/community"];
+const SHOT_ROUTES = ["/profile", "/community/score", "/usage", "/account-health", "/community"];
 
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
 

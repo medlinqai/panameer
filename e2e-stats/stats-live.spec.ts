@@ -134,7 +134,7 @@ test.afterAll(async () => {
 
 test("§1 no figure renders as both a number and a dash", async ({ page }) => {
   await signIn(page, PERSONA);
-  await page.goto("/stats", { waitUntil: "networkidle" });
+  await page.goto("/usage", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   const rows: Row[] = await page.evaluate(SWEEP);
   expect(rows.length, "the sweep found figures to check (E586)").toBeGreaterThan(5);
@@ -152,7 +152,7 @@ test("§1 no figure renders as both a number and a dash", async ({ page }) => {
 
 test("§2 the cell and the card read one value", async ({ page }) => {
   await signIn(page, PERSONA);
-  await page.goto("/stats", { waitUntil: "networkidle" });
+  await page.goto("/usage", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   const rows: Row[] = await page.evaluate(SWEEP);
 
@@ -189,7 +189,7 @@ test("§2 the cell and the card read one value", async ({ page }) => {
 
 test("§3 the credited-front branch is RENDERED, not asserted", async ({ page }) => {
   await signIn(page, PERSONA);
-  await page.goto("/stats?period=90d", { waitUntil: "networkidle" });
+  await page.goto("/usage?period=90d", { waitUntil: "networkidle" });
   await page.waitForTimeout(500);
   const credit = await page.evaluate(() => {
     const f = [...document.querySelectorAll(".pm-flip")].find((x) =>
@@ -209,7 +209,7 @@ test("§3 the credited-front branch is RENDERED, not asserted", async ({ page })
 test("§4 period windowing, on a seeded dated row", async ({ page }) => {
   await signIn(page, PERSONA);
   const readBack = async (period: string) => {
-    await page.goto(`/stats?trend=network&period=${period}`, { waitUntil: "networkidle" });
+    await page.goto(`/usage?trend=network&period=${period}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(400);
     /* ⚠⚠ CLICK, THEN WAIT, THEN READ — reading inside the same `evaluate` as
        the click reads the DOM React has not re-rendered yet. */

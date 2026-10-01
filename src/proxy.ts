@@ -107,7 +107,7 @@ export const config = {
     "/my-services/:path*",
     "/settings/:path*",
     "/profile/:path*",
-    "/stats/:path*",
+    "/usage/:path*",
     "/account-health/:path*",
     "/recommendations/:path*",
     /* ⚠ `P2-J3-E493`. Paired with `route-access.ts`'s entry — the spec parses

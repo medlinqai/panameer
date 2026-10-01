@@ -28,7 +28,8 @@ import { hasCapability, type Viewer } from "@/lib/access";
  *
  * ⚠⚠⚠ **IT IS A CONSTANT BECAUSE IT WAS WRITTEN OUT EIGHT TIMES.** Measured
  * 2026-09-25: the literal `eyebrow="MY PROFILE"` appeared by hand at **eight
- * mount sites across six files** — `/profile`, `/company` (×2), `/stats` (×2),
+ * mount sites across six files** — `/profile`, `/company` (×2), `/usage` (×2, and it
+ * was `/stats` when this was measured — renamed by `E730` WS-A, `E164`),
  * `/account-health`, `/community/score`, and `/providers/[id]` behind its
  * `isOwner` branch. ⚠⚠ **ONE CONCEPT IN EIGHT PLACES, KEPT IN STEP BY HAND**
  * (`E585`) — and the failure mode is specific and ugly: **renaming the menu

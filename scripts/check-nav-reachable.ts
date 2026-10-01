@@ -146,7 +146,7 @@ check(
   settingsNeed === "authenticated",
   `/settings/security resolves to ${settingsNeed}`
 );
-for (const href of ["/stats", "/account-health", "/recommendations"]) {
+for (const href of ["/usage", "/account-health", "/recommendations"]) {
   const need = requirementFor(href);
   check(
     `2 — E040/E044: ${href} is reachable by a buyer`,
@@ -305,9 +305,15 @@ const BAND_KNOWN_OPEN: Readonly<Record<string, { since: string; why: string }>> 
     since: "2026-09-22",
     why: "The owner's profile is an ACCOUNT-menu destination since P2-A2-E598 WS-B — it left Connect's tab row and lights no band application by design.",
   },
-  "/stats": {
+  /* ⚠ `E730` WS-A — the route is `/usage` now. The ENTRY stays, because the RULE it
+     records is unchanged (an Account-menu destination lights no band application);
+     only the path moved. ⚠⚠ This registry has its own safeguard that fails if an
+     entry names a route that is no longer a tab, so leaving `/stats` here would have
+     reddened the gate rather than passed quietly.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`): the key read `"/stats"`. */
+  "/usage": {
     since: "2026-09-22",
-    why: "Statistics is an ACCOUNT-menu destination. Its own header and page are Scott's to design; this brief only gives it a tab.",
+    why: "Usage is an ACCOUNT-menu destination. Its own header and page are Scott's to design; this brief only gives it a tab.",
   },
   "/account-health": {
     since: "2026-09-22",

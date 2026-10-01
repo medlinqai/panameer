@@ -145,6 +145,13 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
          ⚠ SUPERSEDED, quoted not deleted (`E164`):
          //   "Profile Completion", */
       "Search Score",
+      /* ⚠⚠⚠ `E730` WS-A RENAMED THE PAGE, AND THIS NEEDLE HAD TO MOVE OR STOP TESTING
+         ANYTHING. The owner-only title was `My Stats`; it is `Usage` now, and a needle for
+         a string that exists nowhere in the app passes forever (ruling 11 — an assertion its
+         own mutation cannot fail is not an assertion).
+         ⚠ `My Stats` IS KEPT ALONGSIDE, because the old string must not come back either.
+         ⚠ SUPERSEDED, quoted not deleted (`E164`): this list held only `"My Stats"`. */
+      "Usage",
       "My Stats",
     ]) {
       expect(body.includes(needle.toLowerCase()), `"${needle}" leaked to the visitor view`).toBe(false);
@@ -419,7 +426,7 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       "the profile's tab row lost its Account Health tab"
     ).toBe(1);
     expect(
-      await page.locator(`${TABS} a[href="/stats"]`).count(),
+      await page.locator(`${TABS} a[href="/usage"]`).count(),
       "the profile's tab row lost its Usage tab"
     ).toBe(1);
     /*
@@ -429,9 +436,9 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       strictly better than an assertion that would have stayed green either way.
     */
     const railHealth = await page.locator(`.pm-cp3-rail a[href="/account-health"]`).count();
-    const railStats = await page.locator(`.pm-cp3-rail a[href="/stats"]`).count();
+    const railStats = await page.locator(`.pm-cp3-rail a[href="/usage"]`).count();
     console.log(
-      `E720  doors OUTSIDE the tab row — rail /account-health: ${railHealth} · rail /stats: ${railStats}` +
+      `E720  doors OUTSIDE the tab row — rail /account-health: ${railHealth} · rail /usage: ${railStats}` +
         ` (both 0 today; the tab row is the only door)`
     );
     /*

@@ -57,7 +57,11 @@ import { StatRow, StatTile } from "@/components/console/StatTile";
  * Server component. Every number here comes from one query on the viewer's own
  * profile, resolved through `ownedProviderProfile` — no id crosses the wire.
  */
-export const metadata = { title: "My Stats · Panameer" };
+/* ⚠ `E730` WS-A — the tab label has read `Usage` since `E603`; the TITLE still said
+   `My Stats`, so the browser tab and the tab row disagreed about the name of the same
+   page. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   export const metadata = { title: "My Stats · Panameer" }; */
+export const metadata = { title: "Usage · Panameer" };
 
 /* ⚠⚠ ONE READING OF THE PARAM, AND ANYTHING UNRECOGNISED IS THE DEFAULT. A URL
    is user input: `?period=banana` must not throw and must not silently widen a
@@ -197,7 +201,7 @@ export default async function MyStatsPage({
           eyebrow={ACCOUNT_MENU_NAME}
           sequence={tabSequenceFor("/profile")}
           tabs={profileTabs(viewer)}
-          current="/stats"
+          current="/usage"
         />
         <div className="mx-auto max-w-5xl space-y-4">
           {/*
@@ -215,7 +219,7 @@ export default async function MyStatsPage({
             three). These three are real; none is padding.
           */}
           <PatternHeader
-            eyebrow={profileTabLabel("/stats")}
+            eyebrow={profileTabLabel("/usage")}
             headline="How your account is doing"
             /* ⚠ THE PAGE'S OWN SENTENCE, MOVED NOT REWRITTEN — it already said
                the dash rule in the member's words. */
@@ -591,7 +595,7 @@ export default async function MyStatsPage({
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
-        current="/stats"
+        current="/usage"
       />
     <div className="mx-auto max-w-5xl">
       {/*
@@ -624,7 +628,7 @@ export default async function MyStatsPage({
       */}
       <div className="mb-5">
         <PatternHeader
-          eyebrow={profileTabLabel("/stats")}
+          eyebrow={profileTabLabel("/usage")}
           headline="How your profile is performing"
           lede="Anything marked “—” isn’t being counted yet — those tiles fill in once transactions go live on Panameer."
           figures={[

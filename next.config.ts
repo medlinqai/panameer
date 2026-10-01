@@ -119,6 +119,31 @@ const nextConfig: NextConfig = {
         destination: "/community/groups/:path*",
         permanent: true,
       },
+      /*
+        ── ⚠⚠⚠ `/stats` → `/usage` (`P2-A1.1-E730` WS-A) ──────────────────────
+
+        ⚠ SCOTT, 2026-09-30: the page is called **Usage**. ⚠⚠ THE TAB ROW HAS SAID
+        `Usage` SINCE `E603` AND THE ROUTE AND THE BROWSER TITLE STILL SAID `Stats` —
+        three names for one page, which is `E533`'s rule (a verb in the menu, a noun
+        in the URL) failing on the noun.
+
+        ⚠⚠ IT IS A WILDCARD AND THAT IS SAFE HERE, FOR THE REASON THE `/services` NOTE
+        ABOVE GIVES: `src/app/(app)/stats/` held **exactly one file**, `page.tsx`, and
+        it moved. ⚠ There is no `/stats/<anything>` route left behind for `:path*` to
+        swallow, and nothing authenticated sits under the name.
+        ⚠ The QUERY STRING survives a 308 on its own — `/stats?trend=network&period=90d`
+        lands on `/usage?trend=network&period=90d`, which matters because
+        `StatisticsCards`' trend links carry both params.
+
+        ⚠⚠ `permanent: true` (308), the house pattern for a moved route, and **CACHED** —
+        so this is effectively irreversible for anyone who follows it once. Correct for
+        a rename Scott has ruled.
+        ⚠ `route-access.ts` and `proxy.ts`'s matcher MOVED WITH IT, in this same commit.
+        The proxy spec parses that literal and fails if the two disagree in either
+        direction, so they cannot be split.
+      */
+      { source: "/stats/:path*", destination: "/usage/:path*", permanent: true },
+      { source: "/stats", destination: "/usage", permanent: true },
     ];
   },
 };

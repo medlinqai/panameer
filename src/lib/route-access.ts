@@ -150,7 +150,7 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
     plain sentence `account-health` already used when there is no provider
     profile behind the page.
   */
-  { prefix: "/stats", requires: "authenticated" },
+  { prefix: "/usage", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/recommendations", requires: "authenticated" },
   /* ⚠ `E493` — the Account menu's next item down, and `authenticated` for the

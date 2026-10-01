@@ -78,7 +78,15 @@ const BACKS = "src/components/console/StatCardBacks.tsx";
 const FLIP = "src/components/motion/FlipCard.tsx";
 const FLIPCSS = "src/components/motion/flip-card.css";
 const LIB = "src/lib/statistics.ts";
-const PAGE = "src/app/(app)/stats/page.tsx";
+/* ⚠ `E730` WS-A — the file moved with the route. ⚠⚠ THIS IS A FILE PATH, NOT A URL,
+   and it is this gate's whole population for every page assertion.
+   ⚠ MEASURED RATHER THAN ASSUMED: `read` (below) is `readFileSync`, which THROWS on a
+   missing path, so a stale value here crashes the gate loudly. ⚠⚠ That is the good
+   failure mode and it is worth stating, because the `E586` family — a gate that reports
+   success with no inputs — is what it would be if this returned `""` instead.
+   ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   //   const PAGE = "src/app/(app)/stats/page.tsx"; */
+const PAGE = "src/app/(app)/usage/page.tsx";
 const HIVE = "src/components/console/Honeycomb.tsx";
 const HIVECSS = "src/components/console/honeycomb.css";
 
