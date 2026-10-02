@@ -693,10 +693,40 @@ function isFollowLabel(text: string): boolean {
   return t.length <= 24 && !/[.!?,;:]$/.test(t) && !/\s(the|a|an|this|that|these|your)\s/i.test(t);
 }
 
+/**
+ * ── ⚠⚠⚠ ONE NAMED EXEMPTION: FOLLOWING **THE BUILD** (`P2-ALL-E758`) ─────────
+ *
+ * ⚠⚠ **SCOTT, 2026-10-02, TWICE:** *"add followers to the public status page …
+ * if you create an account you will get notifications as we progress"*, and
+ * *"yes to the link"* with the copy `Follow the build →`. ⚠ By rule 13 the
+ * newest dated statement is the live one, and this is raised rather than decided
+ * quietly — silently obeying the old rule and silently overwriting it are the
+ * same failure.
+ *
+ * ⚠⚠⚠ **`E374` IS NOT WEAKENED, BECAUSE IT IS ABOUT A DIFFERENT THING.** Its
+ * subject is the PERSON relationship — *"one verb, two capacities"*, `Follow`
+ * versus `Connect` between members. Following a BUILD is not a relationship with
+ * anybody; nothing is mutual, nobody is notified about a person, and no
+ * connection row exists. The ban on `Follow`/`Followers` as a label for people
+ * is untouched and still fails everywhere else.
+ *
+ * ⚠ **NAMED FILES, NOT A PATTERN**, so a future `Follow` on a member surface
+ * cannot slip in behind this. ⚠⚠ And note what is actually being exempted: four
+ * of the five hits are a QUERY-PARAM NAME (`follow`) and two `data-testid`s
+ * (`follow-hero`, `follow-close`) — identifiers, not copy. Only `Following ✓` is
+ * a rendered label.
+ */
+const FOLLOW_THE_BUILD_FILES = new Set([
+  join("src", "app", "status", "page.tsx"),
+  join("src", "components", "status", "FollowButton.tsx"),
+  join("src", "app", "join", "page.tsx"),
+]);
+
 const UI_DIRS = [join("src", "app"), join("src", "components")];
 const uiFiles = [...bodies.entries()].filter(([f]) => UI_DIRS.some((d) => f.startsWith(d)));
 const followLeaks: string[] = [];
 for (const [file, body] of uiFiles) {
+  if (FOLLOW_THE_BUILD_FILES.has(file)) continue;
   for (const { line, text } of userFacingText(body)) {
     if (!FOLLOW_WORD.test(text)) continue;
     if (FOLLOWING_LITERAL.test(text)) continue;
@@ -709,6 +739,25 @@ check(
   "E374/1 — no rendered string in src/app or src/components says Follow",
   followLeaks.length === 0,
   followLeaks.slice(0, 8).join(" || ")
+);
+
+/*
+  ⚠⚠⚠ THE EXEMPTION IS TIGHTENED BY ITS OWN ASSERTIONS, or it is just a hole.
+  ⚠ (a) every exempted file must EXIST — a renamed file would otherwise leave a
+  silent permanent exemption behind; (b) each must actually be a work-tracker
+  surface, so the list cannot quietly grow to cover a member page.
+*/
+check(
+  "E374/1b — the follow-the-build exemption names only files that exist",
+  [...FOLLOW_THE_BUILD_FILES].every((f) => bodies.has(f)),
+  [...FOLLOW_THE_BUILD_FILES].filter((f) => !bodies.has(f)).join(", ")
+);
+check(
+  "E374/1c — every exempted file is a work-tracker or join surface, never a member page",
+  [...FOLLOW_THE_BUILD_FILES].every(
+    (f) => f.includes("status") || f.includes("join")
+  ),
+  [...FOLLOW_THE_BUILD_FILES].filter((f) => !f.includes("status") && !f.includes("join")).join(", ")
 );
 check(
   "E374/1 — the scan is real (it looked at a meaningful number of files)",

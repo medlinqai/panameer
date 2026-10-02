@@ -40,6 +40,9 @@ export type TrackerSnapshot = {
   dates: { phase: string; start_date: Date | null; end_date: Date | null }[];
   milestones: { id: string; title: string; date: Date; status: string; sort: number; published: boolean; description: string | null }[];
   shippedIds: string[];
+  /** ⚠ Followers are tracker state too — a test that follows and fails leaves a
+   *  person subscribed to notifications they never asked for. */
+  followerPersonIds: string[];
 };
 
 export async function snapshotTracker(): Promise<TrackerSnapshot> {
@@ -62,7 +65,15 @@ export async function snapshotTracker(): Promise<TrackerSnapshot> {
     select: { id: true, title: true, date: true, status: true, sort: true, published: true, description: true },
   });
   const shipped = await prisma.workTrackerShipped.findMany({ select: { id: true } });
-  return { tasks, gates, dates, milestones, shippedIds: shipped.map((s) => s.id) };
+  const followers = await prisma.workTrackerFollower.findMany({ select: { person_id: true } });
+  return {
+    tasks,
+    gates,
+    dates,
+    milestones,
+    shippedIds: shipped.map((s) => s.id),
+    followerPersonIds: followers.map((f) => f.person_id),
+  };
 }
 
 /**
@@ -89,6 +100,18 @@ export async function restoreTracker(before: TrackerSnapshot): Promise<void> {
      was not there before rather than rewriting what was. */
   await prisma.workTrackerShipped.deleteMany({ where: { id: { notIn: before.shippedIds } } });
 
+  /* ⚠ Followers: delete anyone the test added, restore anyone it removed. */
+  await prisma.workTrackerFollower.deleteMany({
+    where: { person_id: { notIn: before.followerPersonIds } },
+  });
+  for (const pid of before.followerPersonIds) {
+    await prisma.workTrackerFollower.upsert({
+      where: { person_id: pid },
+      update: {},
+      create: { person_id: pid },
+    });
+  }
+
   const keepTasks = new Set(before.tasks.map((t) => t.task_id));
   await prisma.workTrackerTaskState.deleteMany({ where: { task_id: { notIn: [...keepTasks] } } });
   for (const t of before.tasks) {
@@ -108,6 +131,7 @@ export async function restoreTracker(before: TrackerSnapshot): Promise<void> {
       dates: [...s.dates].sort((a, b) => a.phase.localeCompare(b.phase)),
       milestones: [...s.milestones].sort((a, b) => a.id.localeCompare(b.id)),
       shippedIds: [...s.shippedIds].sort(),
+      followerPersonIds: [...s.followerPersonIds].sort(),
     });
   if (norm(after) !== norm(before)) {
     throw new Error(

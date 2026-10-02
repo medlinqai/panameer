@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { BuildLine } from "@/components/status/BuildLine";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
+import { getSessionViewer } from "@/lib/session";
+import {
+  FOLLOWER_COUNT_FLOOR,
+  follow as applyFollow,
+  followerCount,
+  isFollowing,
+} from "@/lib/work-tracker/followers";
+import { FollowButton } from "@/components/status/FollowButton";
 
 /**
  * `/status` — the public Panameer Work Tracker (`P2-ALL-E753` route, `E757` UI).
@@ -40,8 +49,42 @@ const STAGE_WORD: Record<string, string> = {
 /** ⚠ The four segments. A `null` stage fills none — an honest "not started". */
 const STAGE_INDEX: Record<string, number> = { design: 1, build: 2, test: 3, live: 4 };
 
-export default async function StatusPage() {
+export default async function StatusPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ follow?: string }>;
+}) {
   const t = await getPublicTracker();
+  /* ⚠⚠ THE PAGE STAYS PUBLIC — reading the session is what lets the button know
+     which of its two jobs it has, and a signed-out visitor simply gets the
+     sign-up path. Nothing below is gated on it. */
+  const viewer = await getSessionViewer();
+
+  /*
+    ⚠⚠⚠ `?follow=1` IS WHAT ACTUALLY APPLIES THE SIGN-UP INTENT (`E758`).
+    ⚠ The signed-out button sends the person to `/join?next=/status&follow=1`;
+    whichever route they take back here, arriving with `follow=1` while signed in
+    completes what they asked for. ⚠⚠ It is IDEMPOTENT (`person_id` is unique), so
+    a reload, a back button or a replayed link all land on one row — which is the
+    property that makes a side effect on a GET acceptable here.
+    ⚠ A signed-OUT arrival with `follow=1` does nothing and shows the button, so
+    the link cannot be used to make anybody follow anything.
+  */
+  const { follow: followIntent } = await searchParams;
+  if (viewer && followIntent === "1") {
+    await applyFollow(viewer);
+    /*
+      ⚠⚠⚠ AND THEN DROP THE PARAM, WHICH IS NOT TIDINESS — IT IS A BUG FIX.
+      ⚠ Measured: with `?follow=1` still in the URL, the Unfollow button's
+      `router.refresh()` re-rendered this page, the intent fired again, and the
+      person was RE-FOLLOWED. Unfollowing was impossible while the param was
+      there. ⚠⚠ A redirect to the clean URL also stops `/status?follow=1` being
+      pasted into a chat where every signed-in reader quietly follows.
+    */
+    redirect("/status");
+  }
+
+  const [following, followers] = await Promise.all([isFollowing(viewer), followerCount()]);
   const current = t.phases.find((p) => p.current) ?? null;
   const currentIndex = t.phases.findIndex((p) => p.current) + 1;
   const moving = t.currentPhaseStages.filter((s) => s.status === "In Progress").length;
@@ -83,6 +126,17 @@ export default async function StatusPage() {
           </div>
           <p className="mt-2 text-[14px] text-surface/75">
             {t.doneCount} done · {moving} moving · {gatesPassed} of {t.gates.length} gates
+          </p>
+
+          <p className="mt-7 flex flex-wrap items-center gap-4">
+            <FollowButton signedIn={viewer !== null} initiallyFollowing={following} testId="follow-hero" />
+            {/* ⚠⚠ THE COUNT IS HIDDEN BELOW 25 (the brief), not shown small. "3
+                people following" makes a young page look emptier than silence. */}
+            {followers >= FOLLOWER_COUNT_FLOOR && (
+              <span className="text-[14px] text-surface/75">
+                {followers} people following the build
+              </span>
+            )}
           </p>
         </div>
       </section>
@@ -229,7 +283,8 @@ export default async function StatusPage() {
             Package the reports, integrations, dashboards and agents you have already built, and offer them
             to new Oracle clients as service products. Showcased free during the beta.
           </p>
-          <p className="mt-6">
+          <p className="mt-6 flex flex-wrap gap-3">
+            <FollowButton signedIn={viewer !== null} initiallyFollowing={following} testId="follow-close" />
             <Link
               href="/join"
               className="inline-flex min-h-[48px] items-center rounded-[4px] bg-surface px-6 text-[15px] font-bold text-ink transition-opacity hover:opacity-85"

@@ -17,6 +17,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
+import { notifyFollowers } from "./followers";
 import {
   GATES,
   PHASE_NAMES,
@@ -156,7 +157,13 @@ export async function updateMilestone(viewer: Viewer, id: string, input: Milesto
   if (input.status !== undefined && !isMilestoneStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
   }
-  return prisma.workTrackerMilestone.update({
+  /* ⚠ A milestone announces when its STATE moves while it is public — not when
+     its wording is corrected, and not while it is still a draft. */
+  const stateMoved =
+    input.status !== undefined && input.status !== existing.status && existing.published;
+  const becomingPublic = input.published === true && existing.published === false;
+
+  const updated = await prisma.workTrackerMilestone.update({
     where: { id },
     data: {
       ...(title ? { title } : {}),
@@ -168,6 +175,19 @@ export async function updateMilestone(viewer: Viewer, id: string, input: Milesto
       updated_by: viewer.userId,
     },
   });
+
+  if (stateMoved || becomingPublic) {
+    try {
+      await notifyFollowers(
+        "work_tracker.milestone",
+        { title: updated.title, description: updated.description },
+        `work_tracker.milestone:${updated.id}:${updated.status}`
+      );
+    } catch (e) {
+      console.error("[work-tracker] follower fan-out failed:", e);
+    }
+  }
+  return updated;
 }
 
 export async function deleteMilestone(id: string) {
@@ -273,11 +293,32 @@ export async function setGateCriterion(
   if (!isGateValue(value)) {
     throw new WorkTrackerError(`"${String(value)}" is not a gate value`, "INVALID");
   }
-  return prisma.workTrackerGateState.upsert({
+  const row = await prisma.workTrackerGateState.upsert({
     where: { gate_id_criterion_index: { gate_id: gateId, criterion_index: criterionIndex } },
     update: { value, updated_by: viewer.userId },
     create: { gate_id: gateId, criterion_index: criterionIndex, value, updated_by: viewer.userId },
   });
+
+  /* ⚠⚠ A GATE PASSES WHEN EVERY CRITERION IS ANSWERED AND NONE IS `No` — the
+     SAME definition the public page uses, so the notice and the page cannot
+     disagree (`E585`). ⚠ Re-asserting a Yes on an already-passed gate dedupes on
+     the gate id, so it announces once. */
+  const answers = await prisma.workTrackerGateState.findMany({ where: { gate_id: gateId } });
+  const passed =
+    answers.length === gate.criteria.length &&
+    answers.every((a) => a.value === "Yes" || a.value === "N/A");
+  if (passed) {
+    try {
+      await notifyFollowers(
+        "work_tracker.gate_passed",
+        { gate: gate.id, gateTitle: gate.title },
+        `work_tracker.gate_passed:${gate.id}`
+      );
+    } catch (e) {
+      console.error("[work-tracker] follower fan-out failed:", e);
+    }
+  }
+  return row;
 }
 
 export async function setPhaseDates(
@@ -345,7 +386,13 @@ export async function updateShipped(viewer: Viewer, id: string, input: ShippedIn
      so these are non-null HERE — but `trimToNull`/`toDateOrNull` return nullable
      types and the columns are not nullable. Narrowing at the call rather than
      loosening the helpers keeps the refusal in one place. */
-  return prisma.workTrackerShipped.update({
+  /* ⚠⚠⚠ NOTIFY ON THE TRANSITION TO PUBLISHED, NOT ON EVERY SAVE. An admin
+     fixing a typo on an already-published entry must not re-announce it, and an
+     unpublish must not announce anything at all. ⚠ `dedupeKey` is the row id, so
+     even a publish → unpublish → publish lands one notification. */
+  const becomingPublic = input.published === true && existing.published === false;
+
+  const updated = await prisma.workTrackerShipped.update({
     where: { id },
     data: {
       ...(date ? { date } : {}),
@@ -356,6 +403,21 @@ export async function updateShipped(viewer: Viewer, id: string, input: ShippedIn
       updated_by: viewer.userId,
     },
   });
+
+  if (becomingPublic) {
+    /* ⚠ Failure to notify must not fail the publish — the entry is live and a
+       notification outage is not an editing outage. Logged, not rethrown. */
+    try {
+      await notifyFollowers(
+        "work_tracker.shipped",
+        { title: updated.title, body: updated.body },
+        `work_tracker.shipped:${updated.id}`
+      );
+    } catch (e) {
+      console.error("[work-tracker] follower fan-out failed:", e);
+    }
+  }
+  return updated;
 }
 
 export async function deleteShipped(id: string) {

@@ -7596,3 +7596,26 @@ model WorkTrackerShipped {
   @@index([published, date])
   @@map("work_tracker_shipped")
 }
+
+/// ⚠⚠⚠ FOLLOWERS OF THE BUILD (`P2-ALL-E758`, Scott 2026-10-02: *"add followers
+/// to the public status page … if you create an account you will get
+/// notifications as we progress."*)
+///
+/// ⚠ One row per person, scalar id, no FK, single-drop — the same property as
+/// every other tracker table. ⚠⚠ `person_id` is UNIQUE, so following twice is
+/// the same as following once and the button is idempotent by the schema rather
+/// than by the handler remembering to check.
+///
+/// ⚠⚠⚠ **UNFOLLOW DELETES THE ROW RATHER THAN SETTING A FLAG.** A person who
+/// unfollows has withdrawn consent to be notified, and the honest record of that
+/// is no record. There is nothing here worth keeping for analytics.
+model WorkTrackerFollower {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ Scalar, no FK. Resolved from the SESSION, never from the client.
+  person_id String @unique @db.Uuid
+
+  created_at DateTime @default(now())
+
+  @@map("work_tracker_followers")
+}

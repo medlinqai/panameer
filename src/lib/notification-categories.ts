@@ -517,6 +517,33 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     defaults: { inApp: true, email: true, sms: false },
   },
   {
+    /*
+      ── ⚠⚠ FOLLOWING THE BUILD (`P2-ALL-E758`, Scott 2026-10-02) ──────────────
+
+      ⚠ ONE category for all three work-tracker events. ⚠⚠ A person follows "the
+      build", not "shipped entries" — three toggles for one decision is three
+      ways to be half-subscribed, and the registry's own rule is that a category
+      must be something a member would actually choose between.
+
+      ⚠ `lane: "community"` + `group: "email"` is the established pairing for
+      account-level notices (`account.registration`, `profile.updates`), and the
+      settings page renders every entry in this array, so it appears there
+      automatically — which is Scott's condition for shipping this.
+
+      ⚠⚠⚠ **`email: true` IS THE HOUSE DEFAULT (ruling 34b) AND IT STILL SENDS
+      NOTHING.** The real control is `NOTIFICATION_EMAIL_EVENTS`, and these three
+      events are DELIBERATELY NOT ON IT — see `notification-events.ts`. A member
+      who turns email off here is pre-declining mail that does not exist yet.
+    */
+    key: "work_tracker.updates",
+    lane: "community",
+    audience: "both",
+    group: "email",
+    label: "Panameer build updates",
+    blurb: "What shipped, gates passed, and milestones reached on the public Work Tracker.",
+    defaults: { inApp: true, email: true, sms: false },
+  },
+  {
     key: "recommendation.received",
     lane: "community",
     audience: "seller",
