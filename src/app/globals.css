@@ -255,6 +255,29 @@
    * where it was measured.
    */
   --color-rail-active: #b02aae;
+
+  /*
+    ── ⚠⚠⚠ THE PHONE BOTTOM NAV'S ACTIVE FILL (`P2-ALL-E760`) ─────────────────
+
+    ⚠⚠ **THIS TOKEN EXISTS TO MAKE A COLOUR THAT WAS ALREADY ON SCREEN
+    ADDRESSABLE — IT IS NOT A NEW COLOUR.** `bottom-nav.css` read
+    `var(--rail-active, #3a3150)`, and **nothing has ever defined `--rail-active`**
+    (no `--color-` prefix), so every phone has been rendering the hard-coded
+    fallback `#3a3150`. ⚠ `check:css-vars` was red on exactly that.
+
+    ⚠⚠⚠ **POINTING IT AT `--color-rail-active` WOULD HAVE BEEN A REAL, VISIBLE
+    CHANGE, NOT A NO-OP:** `#3a3150` → `#b02aae` is a **219-point** RGB-channel
+    move — grey-purple to magenta. ⚠ The brief for `E760` says *"no visual change
+    at 390 light/dark"*, and that sentence is only true of the rail BACKGROUND
+    (`#211c2e` → `#272334`, a 19-point move nobody can see).
+
+    ⚠⚠ **SO THE ACTIVE PILL IS PARKED ON SCOTT'S WORD AND NOTHING MOVES TODAY.**
+    This token is `#3a3150` — the colour that is live — so the gate goes green
+    without anybody deciding a design question by accident. ⚠ **If Scott says
+    magenta, the flip is ONE LINE: change the value here to `#b02aae`, or point
+    `bottom-nav.css` at `--color-rail-active`.**
+  */
+  --color-bottomnav-active: #3a3150;
   /* ⚠ `E432` — the third of the three neutrals; see the block above for the
      measurements and Scott's decision. ⚠ SUPERSEDED: `#f7f7f5` (warm). */
   --color-canvas: #fafafa;
