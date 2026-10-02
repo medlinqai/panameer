@@ -5545,6 +5545,51 @@ model TicketMessage {
   @@map("ticket_messages")
 }
 
+/// ⚠⚠⚠ THE TICKET'S HISTORY (`P2-ALL-E761`, Scott 2026-10-02).
+///
+/// Scott, working `PAN-CTXFTX`: *"I assigned it to me and asked a question. Want
+/// to see that history on the ticket."*
+///
+/// ⚠⚠ **BEFORE THIS, A TICKET REMEMBERED ONLY ITS CURRENT STATE.** `updateTicket`
+/// overwrote `assignee_person_id`, `status` and `priority` with no record at all,
+/// so "who picked this up, and when" was unanswerable the moment it changed.
+///
+/// ⚠ Scalar ids, no FK, single-drop — the same property as `SupportTicket` and
+/// `TicketMessage` above, and for the same reason: these three drop together with
+/// no dependency order to get right.
+///
+/// ⚠⚠ **`from_value` AND `to_value` ARE STRINGS, NOT IDS, AND THAT IS DELIBERATE
+/// FOR STATUS AND PRIORITY** (`Open`, `High`) — but for `assigned` they hold a
+/// PERSON ID, because a name stored at write time would freeze a person's old
+/// name into the record. ⚠ Names are resolved at RENDER.
+model TicketEvent {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Scalar, no FK (see the block above).
+  ticket_id String @db.Uuid
+
+  /// ⚠ Scalar, no FK. Who did it, resolved from the SESSION at write time.
+  /// ⚠⚠ NULLABLE because a `filed` event backfilled for an existing ticket has no
+  /// trustworthy actor — see `E761`'s backfill note. A null actor renders as the
+  /// ticket's reporter for `filed` and as "Panameer" otherwise, never as a guess.
+  actor_person_id String? @db.Uuid
+
+  /// ⚠ `filed` | `assigned` | `unassigned` | `status` | `priority` | `message`.
+  /// A string, not an enum — an enum is a schema object that outlives its tables
+  /// and has to be dropped separately, which breaks single-drop.
+  kind String
+
+  /// ⚠ Null on `filed` and `message`; null on `assigned` when nobody held it.
+  from_value String?
+  to_value   String?
+
+  created_at DateTime @default(now())
+
+  /// ⚠ The timeline reads one ticket in time order; this is the index for it.
+  @@index([ticket_id, created_at])
+  @@map("ticket_events")
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // THE TRANSACTION SPINE (`P1-J4-E388`) — WS-1: the catalog identifier and the
 // requisition line.

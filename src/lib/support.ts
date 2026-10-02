@@ -152,7 +152,12 @@ export async function createTicket(viewer: Viewer, input: CreateTicketInput) {
 
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      return await prisma.supportTicket.create({
+      /* ⚠⚠ `filed` IS WRITTEN WITH THE TICKET, IN ONE TRANSACTION (`E761`). A
+         timeline whose first line can be missing is a timeline that starts at an
+         arbitrary point. ⚠ The retry loop below re-runs the WHOLE transaction on a
+         `ticket_code` clash, so a retried attempt cannot leave an orphan event. */
+      return await prisma.$transaction(async (tx) => {
+        const created = await tx.supportTicket.create({
         data: {
           ticket_code: newTicketCode(),
           p_account_id: person.company?.p_account_id ?? null,
@@ -169,6 +174,11 @@ export async function createTicket(viewer: Viewer, input: CreateTicketInput) {
           last_message_at: new Date(),
         },
         select: { id: true, ticket_code: true },
+        });
+        await tx.ticketEvent.create({
+          data: { ticket_id: created.id, actor_person_id: person.id, kind: "filed" },
+        });
+        return created;
       });
     } catch (e) {
       const code = (e as { code?: string }).code;
@@ -228,8 +238,144 @@ export async function postMessage(
       where: { id: ticketId },
       data: { last_message_at: new Date() },
     }),
+    /* ⚠⚠ THE MESSAGE GETS AN EVENT TOO (`E761`), in the SAME transaction that was
+       already here. ⚠ The timeline interleaves events and messages, so a message
+       without an event would appear in the thread and vanish from the history —
+       two views of one ticket that disagree. ⚠⚠ The body is NOT copied into the
+       event: one definition lives in `TicketMessage`, and the timeline joins. */
+    prisma.ticketEvent.create({
+      data: { ticket_id: ticketId, actor_person_id: person.id, kind: "message" },
+    }),
   ]);
   return message;
+}
+
+/**
+ * ── ⚠⚠⚠ THE TIMELINE (`P2-ALL-E761`) ────────────────────────────────────────
+ *
+ * One list, oldest first, interleaving events and messages — because that is how
+ * a person reads a ticket: *"filed … assigned … asked a question … resolved."*
+ *
+ * ⚠⚠ **THE REPORTER SEES LESS, AND IT IS ENFORCED HERE RATHER THAN IN THE
+ * TEMPLATE.** `forReporter` filters at the QUERY, so a future page that forgets
+ * to check cannot leak an assignee's name or a priority the reporter was never
+ * shown. ⚠ Scott's rule: the reporter gets **status changes and messages only**.
+ *
+ * ⚠ **ACTOR NAMES ARE RESOLVED AT RENDER, FROM IDS.** A name stored at write time
+ * would freeze somebody's old name into the record — and the same person's name
+ * would then differ between two rows of one timeline.
+ */
+export type TimelineEntry = {
+  id: string;
+  at: Date;
+  kind: string;
+  actorPersonId: string | null;
+  actorName: string;
+  fromValue: string | null;
+  toValue: string | null;
+  /** ⚠ Present only for `message` rows; the body lives in `TicketMessage`. */
+  body: string | null;
+  authorSide: string | null;
+};
+
+/** ⚠ What the REPORTER may see. `assigned`/`unassigned`/`priority` are absent. */
+const REPORTER_KINDS = ["filed", "status", "message"];
+
+export async function ticketTimeline(
+  ticketId: string,
+  opts: { forReporter?: boolean } = {}
+): Promise<TimelineEntry[]> {
+  const where = opts.forReporter
+    ? { ticket_id: ticketId, kind: { in: REPORTER_KINDS } }
+    : { ticket_id: ticketId };
+
+  const [events, messages] = await Promise.all([
+    prisma.ticketEvent.findMany({ where, orderBy: { created_at: "asc" } }),
+    prisma.ticketMessage.findMany({
+      where: { ticket_id: ticketId },
+      orderBy: { created_at: "asc" },
+      select: { id: true, author_person_id: true, author_side: true, body: true, created_at: true },
+    }),
+  ]);
+
+  /* ⚠⚠ A `message` EVENT CARRIES NO BODY — it is joined to its message by TIME
+     AND AUTHOR, because the two rows are written in one transaction and share an
+     instant. ⚠ Messages that predate `E761` have no event; they are rendered from
+     the message list directly so nothing from before the change disappears. */
+  const used = new Set<string>();
+  const rows: TimelineEntry[] = [];
+
+  for (const e of events) {
+    if (e.kind === "message") {
+      const m = messages.find(
+        (x) =>
+          !used.has(x.id) &&
+          x.author_person_id === e.actor_person_id &&
+          Math.abs(x.created_at.getTime() - e.created_at.getTime()) < 5000
+      );
+      if (m) used.add(m.id);
+      rows.push({
+        id: e.id,
+        at: e.created_at,
+        kind: "message",
+        actorPersonId: e.actor_person_id,
+        actorName: "",
+        fromValue: null,
+        toValue: null,
+        body: m?.body ?? null,
+        authorSide: m?.author_side ?? null,
+      });
+      continue;
+    }
+    rows.push({
+      id: e.id,
+      at: e.created_at,
+      kind: e.kind,
+      actorPersonId: e.actor_person_id,
+      actorName: "",
+      fromValue: e.from_value,
+      toValue: e.to_value,
+      body: null,
+      authorSide: null,
+    });
+  }
+
+  /* ⚠⚠⚠ MESSAGES WITH NO EVENT — everything posted BEFORE `E761` — still show.
+     ⚠ Scott's rule: *"no backfill can be honest"*, and that cuts both ways. We do
+     not invent events for the past, and we do not hide what we already have. */
+  for (const m of messages) {
+    if (used.has(m.id)) continue;
+    rows.push({
+      id: m.id,
+      at: m.created_at,
+      kind: "message",
+      actorPersonId: m.author_person_id,
+      actorName: "",
+      fromValue: null,
+      toValue: null,
+      body: m.body,
+      authorSide: m.author_side,
+    });
+  }
+
+  rows.sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  /* ⚠ ONE QUERY FOR EVERY ACTOR, resolved at render as promised above. */
+  const ids = [...new Set(rows.map((r) => r.actorPersonId).filter((x): x is string => !!x))];
+  const people = ids.length
+    ? await prisma.person.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, first_name: true, last_name: true },
+      })
+    : [];
+  const nameById = new Map(
+    people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
+  );
+  for (const r of rows) {
+    /* ⚠ A missing actor renders as `Panameer`, never as a guess at a person. */
+    r.actorName = (r.actorPersonId && nameById.get(r.actorPersonId)) || "Panameer";
+  }
+  return rows;
 }
 
 /** The reporter's own tickets, newest activity first. */
@@ -339,6 +485,12 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
       status: true,
       reporter_person_id: true,
       title: true,
+      /* ⚠ `P2-ALL-E761` — the PRIOR assignee and priority, read for `from_value`
+         on the history events below. ⚠⚠ The status was already here for ruling
+         82a's notification, and that comparison is REUSED rather than duplicated:
+         one "did it actually move" test, not two that can disagree (`E585`). */
+      assignee_person_id: true,
+      priority: true,
     },
   });
   if (!existing) throw new SupportError("That ticket no longer exists", "NOT_FOUND");
@@ -355,19 +507,69 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     input.status as (typeof TICKETS_TERMINAL_STATUSES)[number],
   );
 
-  const updated = await prisma.supportTicket.update({
-    where: { id: ticketId },
-    data: {
-      ...(input.status ? { status: input.status } : {}),
-      ...(input.priority ? { priority: input.priority } : {}),
-      ...(input.assignToSelf ? { assignee_person_id: person.id } : {}),
-      ...(input.unassign ? { assignee_person_id: null } : {}),
-      ...(input.resolution !== undefined ? { resolution_description: input.resolution || null } : {}),
-      ...(input.status
-        ? { date_solved: closing ? existing.date_solved ?? new Date() : null }
-        : {}),
-    },
-    select: { id: true },
+  /*
+    ── ⚠⚠⚠ THE CHANGE AND ITS HISTORY LAND TOGETHER (`P2-ALL-E761`) ───────────
+
+    ⚠ Scott, working `PAN-CTXFTX`: *"I assigned it to me and asked a question.
+    Want to see that history on the ticket."*
+
+    ⚠⚠ **IT IS A TRANSACTION, AND THAT IS A DELIBERATE CHANGE TO A LIVE WRITE
+    PATH.** This was a bare `prisma.supportTicket.update`. A history written
+    outside the transaction can disagree with the row it describes — an event
+    saying *"Open → In Progress"* beside a ticket still reading `Open` is worse
+    than no history, because it is a record that lies.
+
+    ⚠⚠⚠ **AN EVENT IS WRITTEN ONLY WHEN THE VALUE ACTUALLY MOVED.** A save that
+    re-submits the same status is not a status change, and a timeline full of
+    *"Open → Open"* is the echo ruling 82a already rejected for notifications.
+    ⚠ The status comparison is the SAME ONE 82a uses, read from `existing` — one
+    definition, not two that can drift (`E585`).
+  */
+  const events: {
+    kind: string;
+    from_value: string | null;
+    to_value: string | null;
+  }[] = [];
+
+  if (input.status && input.status !== existing.status) {
+    events.push({ kind: "status", from_value: existing.status, to_value: input.status });
+  }
+  if (input.priority && input.priority !== existing.priority) {
+    events.push({ kind: "priority", from_value: existing.priority, to_value: input.priority });
+  }
+  /* ⚠ Assigning to yourself when you already hold it is not an assignment. */
+  if (input.assignToSelf && existing.assignee_person_id !== person.id) {
+    events.push({
+      kind: "assigned",
+      from_value: existing.assignee_person_id,
+      to_value: person.id,
+    });
+  }
+  if (input.unassign && existing.assignee_person_id) {
+    events.push({ kind: "unassigned", from_value: existing.assignee_person_id, to_value: null });
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.supportTicket.update({
+      where: { id: ticketId },
+      data: {
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.priority ? { priority: input.priority } : {}),
+        ...(input.assignToSelf ? { assignee_person_id: person.id } : {}),
+        ...(input.unassign ? { assignee_person_id: null } : {}),
+        ...(input.resolution !== undefined ? { resolution_description: input.resolution || null } : {}),
+        ...(input.status
+          ? { date_solved: closing ? existing.date_solved ?? new Date() : null }
+          : {}),
+      },
+      select: { id: true },
+    });
+    for (const e of events) {
+      await tx.ticketEvent.create({
+        data: { ticket_id: ticketId, actor_person_id: person.id, ...e },
+      });
+    }
+    return row;
   });
 
   /*

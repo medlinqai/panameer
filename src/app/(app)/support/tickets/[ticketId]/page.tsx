@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
-import { getTicket } from "@/lib/support";
+import { getTicket, ticketTimeline } from "@/lib/support";
+import { TicketTimeline } from "@/components/support/TicketTimeline";
 import { supportApplicationLabel } from "@/lib/support-applications";
 import { TicketThread } from "@/components/support/TicketThread";
 import { TicketReplyBox } from "@/components/support/TicketReplyBox";
@@ -28,9 +29,21 @@ export default async function MyTicketPage({
   const viewer = await guardPage("authenticated");
   const { ticketId } = await params;
 
+
   const found = await getTicket(viewer, ticketId);
   if (!found) notFound();
   const { ticket, messages } = found;
+
+  /*
+    ── ⚠⚠⚠ THE REPORTER SEES LESS, AND THE QUERY ENFORCES IT (`P2-ALL-E761`) ──
+
+    ⚠ Scott's rule: the reporter gets **status changes and messages only** — not
+    assignee names and not priority. ⚠⚠ `forReporter` filters in the WHERE clause
+    of `ticketTimeline`, so this page cannot leak by forgetting a check, and a
+    future edit here cannot widen it. Same shape as the masked profile: the
+    boundary is the query, never the template.
+  */
+  const timeline = await ticketTimeline(ticket.id, { forReporter: true });
 
   const closed = ticket.status === "Resolved" || ticket.status === "Closed";
 
@@ -58,6 +71,13 @@ export default async function MyTicketPage({
           <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed">{ticket.resolution_description}</p>
         </section>
       )}
+
+      {/* ⚠ The same component the admin page uses — it renders whatever it is
+          given, and what it is given was decided above. */}
+      <section className="mt-5">
+        <h2 className="text-[16px] font-bold">History</h2>
+        <TicketTimeline entries={timeline} names={{}} />
+      </section>
 
       <TicketThread messages={messages} reporterName="You" />
 
