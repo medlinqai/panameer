@@ -372,8 +372,26 @@ export default async function PublicProviderPage({
         explanation reads as missing data, and the reader's next thought is
         that the record is incomplete rather than that it is protected.
       */}
+      {/*
+        ── ⚠⚠⚠ `bg-canvas`, NOT `bg-bg-soft` (`P2-A1.1-E762`, ticket PAN-CTXFTX) ──
+
+        ⚠ **DANIEL DAMASCENO REPORTED THIS BAR AS WHITE IN DARK MODE, AND IT WAS
+        WORSE THAN WHITE.** `--color-bg-soft` is `#f9fafb`, defined TWICE and both
+        times in a LIGHT-ONLY scope, with **no dark override** — the mirror block
+        even says *"light surfaces only"* in its own comment. ⚠⚠ So the bar kept
+        its near-white fill in dark mode while `text-ink-2` correctly flipped to a
+        light grey: **measured 2.07:1 against a 4.5:1 AA floor.** It was a
+        LEGIBILITY failure, not a styling one.
+
+        ⚠ `bg-canvas` is themed in BOTH schemes (`#fafafa` / `#0b0817`), so the bar
+        stays a recessed tone against the page instead of inverting.
+        ⚠⚠ **MEASURED AFTER: 9.13:1 in dark, and LIGHT MOVES BY TWO CHANNEL POINTS**
+        (`#f9fafb` → `#fafafa`) — which is why this is safe to land on a page
+        testers are using today.
+        ⚠ `E723`'s rule, restated: never a light-only colour on a themed page.
+      */}
       {profile.identityMasked && (
-        <div className="border-b border-line bg-bg-soft px-4 py-2.5 text-center text-[13.5px] text-ink-2 sm:px-6">
+        <div className="border-b border-line bg-canvas px-4 py-2.5 text-center text-[13.5px] text-ink-2 sm:px-6">
           Showing <span className="font-semibold text-ink">first name only</span>.
           Full name and contact details are shared once you engage this provider.
         </div>
@@ -441,8 +459,26 @@ export default async function PublicProviderPage({
         />
       )}
 
+      {/*
+        ── ⚠⚠⚠ `bg-canvas`, NOT `bg-bg-soft` (`P2-A1.1-E762`, ticket PAN-CTXFTX) ──
+
+        ⚠ **DANIEL DAMASCENO REPORTED THIS BAR AS WHITE IN DARK MODE, AND IT WAS
+        WORSE THAN WHITE.** `--color-bg-soft` is `#f9fafb`, defined TWICE and both
+        times in a LIGHT-ONLY scope, with **no dark override** — the mirror block
+        even says *"light surfaces only"* in its own comment. ⚠⚠ So the bar kept
+        its near-white fill in dark mode while `text-ink-2` correctly flipped to a
+        light grey: **measured 2.07:1 against a 4.5:1 AA floor.** It was a
+        LEGIBILITY failure, not a styling one.
+
+        ⚠ `bg-canvas` is themed in BOTH schemes (`#fafafa` / `#0b0817`), so the bar
+        stays a recessed tone against the page instead of inverting.
+        ⚠⚠ **MEASURED AFTER: 9.13:1 in dark, and LIGHT MOVES BY TWO CHANNEL POINTS**
+        (`#f9fafb` → `#fafafa`) — which is why this is safe to land on a page
+        testers are using today.
+        ⚠ `E723`'s rule, restated: never a light-only colour on a themed page.
+      */}
       {profile.isOwner && (
-        <div className="border-b border-line bg-bg-soft px-4 py-2.5 text-[13.5px] text-ink-2 sm:px-6">
+        <div className="border-b border-line bg-canvas px-4 py-2.5 text-[13.5px] text-ink-2 sm:px-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
             {/* ⚠⚠ THE BAR NAMES WHICH VIEW THIS IS (`P2-A2-E616`). With two
                 previews on one route, *"This Is How Buyers See You"* would be
