@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 /**
  * The Work Tracker Builder (`P2-ALL-E752`).
@@ -77,6 +77,110 @@ const BTN =
 const BTN_2 =
   "inline-flex min-h-[36px] items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 
+/**
+ * ── ⚠⚠⚠ SAVING YOU CAN SEE (`P2-ALL-E768`) ─────────────────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-02, using this page for the first time:** *"There was no
+ * save button."*
+ *
+ * ⚠⚠ **THE ANSWER IS NOT A SAVE BUTTON — IT IS TELLING HIM IT SAVED.** Every
+ * field here writes on blur or on change and always has; what was missing was
+ * any evidence of it. ⚠⚠⚠ **MEASURED BEFORE THIS LANDED: the rendered page
+ * contained ZERO occurrences of `Saving` or `Saved`.** The only feedback that
+ * existed was a page-level error line, so a save that WORKED looked exactly like
+ * a save that never fired.
+ *
+ * ⚠ A save button would have been the wrong fix twice over: it would make the
+ * 212 task rows need one, and it would invent a "dirty" state the writes do not
+ * have.
+ */
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+/** ⚠ What a field needs to retry: the exact payload that failed, and why. */
+type SaveEntry = { state: SaveState; message?: string; payload?: Record<string, unknown> };
+
+/**
+ * ⚠⚠ ONE INDICATOR, USED EVERYWHERE, SO THE PAGE CANNOT GROW A SECOND DIALECT
+ * (`E585`). ⚠ It renders nothing at `idle` — a row that has never been touched
+ * says nothing rather than claiming it is saved.
+ */
+function SaveMark({ entry, onRetry }: { entry?: SaveEntry; onRetry?: () => void }) {
+  if (!entry || entry.state === "idle") return null;
+  if (entry.state === "saving") return <span className="text-[12px] text-ink-2">Saving…</span>;
+  if (entry.state === "saved")
+    return (
+      /* ⚠ `aria-live` is OFF here deliberately: 212 rows announcing "Saved" would
+         make a screen reader unusable. The PAGE-LEVEL line is the live region. */
+      <span className="text-[12px] text-ink-2">Saved ✓</span>
+    );
+  return (
+    <span className="flex items-center gap-1.5 text-[12px] text-magenta">
+      {/* ⚠⚠ THE VALUE IS KEPT, AND THAT IS A PROPERTY OF THE FAILURE PATH, NOT A
+          FEATURE: a failed `post` does NOT `router.refresh()`, so the input holds
+          what was typed. A refresh here would silently discard it. */}
+      {entry.message ?? "Couldn\u2019t save"} — <button type="button" onClick={onRetry} className="underline">retry</button>
+    </span>
+  );
+}
+
+/**
+ * ⚠⚠ A SECTION THAT SAYS WHAT IS IN IT AND HOW TO ADD TO IT (`P2-ALL-E768`).
+ *
+ * ⚠ **SCOTT:** *"I could see sections with no way to expand and add data."*
+ * ⚠⚠⚠ **OPEN BY DEFAULT WHEN EMPTY.** A collapsed empty section is the defect
+ * he reported, twice over: nothing to see AND nothing to click. A section with
+ * rows starts collapsed because the page is long; a section with none starts
+ * open, with its one available action in front of him.
+ */
+function Section({
+  title,
+  count,
+  children,
+  action,
+  defaultOpen,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  /** ⚠⚠ `Phases` PASSES THIS. It is the page's primary content — 212 tasks and
+   *  every date — and landing on five collapsed rows would answer Scott's
+   *  complaint by hiding the thing he came to edit. ⚠ The rest collapse so the
+   *  sections below Phases are reachable without scrolling past all of them. */
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen ?? count === 0);
+  return (
+    <section className="mt-9">
+      <div className="flex flex-wrap items-center gap-3 border-b border-line pb-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2 hover:text-ink"
+        >
+          {/* ⚠ A rotated caret, not two icons — one element cannot disagree with
+              itself about which way it points.
+              ⚠⚠ THE BOX IS SQUARE (`h-3 w-3 leading-3`) AND THAT IS LOAD-BEARING,
+              NOT TIDYING. `rotate-90` turns the element about its CENTRE, so its
+              bounding box becomes **height × width** — an inline `›` measured 18–26px
+              tall, which after the turn put it **6–10px past the left edge of the
+              page frame** on every collapsed row.
+              ⚠⚠⚠ A WIDTH ALONE DID NOT FIX IT, AND THAT IS THE LESSON: with `w-3`
+              the box still measured 18px wide after rotating, because the HEIGHT
+              was what became the width. Only a square turns into itself. */}
+          <span aria-hidden className={"inline-block h-3 w-3 shrink-0 origin-center text-center text-[12px] leading-3 transition-transform " + (open ? "rotate-90" : "")}>
+            ›
+          </span>
+          {title} ({count})
+        </button>
+        {action && <span className="ml-auto">{action}</span>}
+      </div>
+      {open && children}
+    </section>
+  );
+}
+
 export function WorkTrackerEditor({
   phases,
   gates,
@@ -94,24 +198,115 @@ export function WorkTrackerEditor({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [openPhase, setOpenPhase] = useState<string>(phases[0]?.name ?? "");
+  const [openStage, setOpenStage] = useState<string>("");
+  /** ⚠ Which Add form is revealed. ⚠⚠ A section with NO rows reveals its form
+   *  from the start — the only thing to do there is add one, and making that
+   *  take two clicks is the complaint Scott made, moved one level down. */
+  const [add, setAdd] = useState({
+    release: releases.length === 0,
+    custom: customTasks.length === 0,
+    shipped: shipped.length === 0,
+  });
+  const [marks, setMarks] = useState<Record<string, SaveEntry>>({});
+  /** ⚠ How many writes are in the air RIGHT NOW. The page line and the leave
+   *  banner both read it, so they cannot disagree. */
+  const [inFlight, setInFlight] = useState(0);
+  /** ⚠ Set when a save is in flight and an in-app link is clicked. */
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  /**
+   * ⚠⚠ A REF BESIDE THE STATE, AND IT IS NOT REDUNDANT: the document-level click
+   * listener below is registered once and would close over the FIRST render's
+   * `inFlight`. A ref is the value at the moment of the click.
+   */
+  const inFlightRef = useRef(0);
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  async function post(payload: Record<string, unknown>) {
-    setError(null);
-    const res = await fetch("/api/admin/work-tracker", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      /* ⚠ The route's message names the field or id it refused; showing a generic
-         "could not save" would make an admin retype a whole form to find out. */
-      const j = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(j.error ?? "Could not save");
-      return false;
+  /* ⚠ Clear every pending fade on unmount — a timer that fires into an unmounted
+     tree is a React warning and, worse, a leak on a page an admin leaves open. */
+  useEffect(() => {
+    const t = timers.current;
+    return () => Object.values(t).forEach(clearTimeout);
+  }, []);
+
+  const post = useCallback(
+    async function post(payload: Record<string, unknown>, key?: string): Promise<boolean> {
+      setError(null);
+      if (key) setMarks((m) => ({ ...m, [key]: { state: "saving" } }));
+      setInFlight((n) => n + 1);
+      inFlightRef.current += 1;
+      try {
+        const res = await fetch("/api/admin/work-tracker", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          /* ⚠ The route's message names the field or id it refused; showing a
+             generic "could not save" would make an admin retype a whole form to
+             find out. */
+          const j = (await res.json().catch(() => ({}))) as { error?: string };
+          const message = j.error ?? "Couldn\u2019t save";
+          setError(message);
+          /* ⚠⚠ THE PAYLOAD IS KEPT SO `retry` RE-SENDS THE SAME WRITE, not a
+             re-read of an input that may since have been refreshed away. */
+          if (key) setMarks((m) => ({ ...m, [key]: { state: "error", message, payload } }));
+          return false;
+        }
+        if (key) {
+          setMarks((m) => ({ ...m, [key]: { state: "saved" } }));
+          clearTimeout(timers.current[key]);
+          /* ⚠ The tick FADES (~2s). A permanent "Saved" on 212 rows stops meaning
+             "just now" and becomes wallpaper. */
+          timers.current[key] = setTimeout(
+            () => setMarks((m) => ({ ...m, [key]: { state: "idle" } })),
+            2000,
+          );
+        }
+        start(() => router.refresh());
+        return true;
+      } finally {
+        setInFlight((n) => n - 1);
+        inFlightRef.current -= 1;
+      }
+    },
+    [router],
+  );
+
+  /**
+   * ── ⚠⚠⚠ LEAVING WITH A SAVE IN FLIGHT (`P2-ALL-E768`) ─────────────────────
+   *
+   * ⚠ **SCOTT RULED OUT A BROWSER DIALOG**, so this is an in-page banner and it
+   * covers IN-APP navigation only.
+   * ⚠⚠⚠ **THE LIMIT IS STATED RATHER THAN HIDDEN: closing the tab, hitting Back,
+   * or typing a URL CANNOT be warned about without `beforeunload`, which IS the
+   * browser dialog.** This does not pretend otherwise — which is why the page
+   * also carries a persistent `Saving…` line, visible without clicking anything.
+   * ⚠ Capture phase, so it runs before the router's own handler.
+   */
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (inFlightRef.current === 0) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const a = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute("href") ?? "";
+      /* ⚠ Only same-page in-app links. A `target=_blank`, a hash or an external
+         host leaves this page alone and needs no warning. */
+      if (!href.startsWith("/") || a.target === "_blank") return;
+      e.preventDefault();
+      setLeaveTo(href);
     }
-    start(() => router.refresh());
-    return true;
-  }
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
+  const retry = useCallback(
+    (key: string) => {
+      const payload = marks[key]?.payload;
+      if (payload) void post(payload, key);
+    },
+    [marks, post],
+  );
 
   const allTasks = phases.flatMap((p) => p.stages.flatMap((s) => s.tasks));
   const overall = pct(allTasks);
@@ -146,6 +341,68 @@ export function WorkTrackerEditor({
         </p>
       </header>
 
+      {/*
+        ── ⚠⚠ HOW THIS WORKS, IN ONE LINE (`P2-ALL-E768`) ────────────────────
+        ⚠ Scott asked for it because nothing on the page said that statuses save
+        themselves, that a release's % comes from what is assigned to it, or that
+        task text never reaches the public page. ⚠⚠ All three were TRUE already
+        and none of them were VISIBLE, which is the same defect as the missing
+        save tick: correct behaviour nobody could see.
+      */}
+      <p className="mt-4 border-l-2 border-line pl-3 text-[13px] leading-relaxed text-ink-2">
+        Statuses save as you go — there is no save button. Assign tasks to a release to set its %. Only
+        counts and percentages are public; task text, owners and notes stay on this page.
+      </p>
+
+      {/*
+        ⚠⚠⚠ THE PAGE-LEVEL LINE IS THE LIVE REGION, AND THE ROW TICKS ARE NOT.
+        ⚠ 212 rows each announcing "Saved" would make this page unusable with a
+        screen reader; one line that changes between two states is what a person
+        actually needs to hear.
+      */}
+      <p
+        aria-live="polite"
+        className={
+          "mt-3 text-[13px] " + (inFlight > 0 ? "text-ink" : error ? "text-magenta" : "text-ink-2")
+        }
+      >
+        {inFlight > 0
+          ? "Saving…"
+          : error
+            ? "Some changes didn\u2019t save"
+            : "All changes saved"}
+      </p>
+
+      {/*
+        ⚠⚠ THE LEAVE BANNER — IN-PAGE, NEVER A BROWSER DIALOG (Scott, 2026-10-02).
+        ⚠ It only fires on an in-app link clicked while a write is in the air, and
+        it offers both ways out: wait, or go anyway. ⚠⚠⚠ A warning with no way
+        past it is a trap, not a warning.
+      */}
+      {leaveTo && (
+        <div
+          role="alertdialog"
+          aria-label="A change is still saving"
+          className="mt-3 flex flex-wrap items-center gap-3 border-l-2 border-magenta bg-bg-soft px-3 py-2.5 text-[13px] text-ink"
+        >
+          <span>A change is still saving. Leave now and it may not be written.</span>
+          <button type="button" className={BTN_2} onClick={() => setLeaveTo(null)}>
+            Stay
+          </button>
+          <button
+            type="button"
+            className={BTN}
+            onClick={() => {
+              const to = leaveTo;
+              setLeaveTo(null);
+              router.push(to);
+            }}
+          >
+            Leave Anyway
+          </button>
+        </div>
+      )}
+
       {error && (
         <p role="alert" className="mt-4 border-l-2 border-magenta pl-3 text-[13px] text-ink">
           {error}
@@ -153,9 +410,7 @@ export function WorkTrackerEditor({
       )}
 
       {/* ── PHASES → STAGES → TASKS ─────────────────────────────────────── */}
-      <section className="mt-7">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Phases</h2>
-
+      <Section title="Phases" count={phases.length} defaultOpen>
         <div className="mt-3 border-t border-line">
           {phases.map((p) => {
             const tasks = p.stages.flatMap((s) => s.tasks);
@@ -168,8 +423,11 @@ export function WorkTrackerEditor({
                     type="button"
                     onClick={() => setOpenPhase(isOpen ? "" : p.name)}
                     aria-expanded={isOpen}
-                    className="text-left font-display text-[17px] font-bold text-ink"
+                    className="flex items-center gap-2 text-left font-display text-[17px] font-bold text-ink"
                   >
+                    <span aria-hidden className={"inline-block h-3 w-3 shrink-0 origin-center text-center text-[12px] leading-3 transition-transform " + (isOpen ? "rotate-90" : "")}>
+                      ›
+                    </span>
                     {p.name}
                   </button>
                   <span className="text-[13px] text-ink-2">
@@ -191,35 +449,66 @@ export function WorkTrackerEditor({
                       name="current-phase"
                       checked={p.isCurrent}
                       disabled={pending}
-                      onChange={() => post({ action: "current-phase", phase: p.name })}
+                      onChange={() => post({ action: "current-phase", phase: p.name }, `${p.name}:current`)}
                     />
                     Current
                   </label>
+                  {/* ⚠ The brief's per-phase `Set dates` action. It is a LABEL on
+                      controls that already existed rather than a button that opens
+                      them — the two inputs are the whole of the action, and hiding
+                      them behind a click would be a step backwards. */}
+                  <span className="text-[12px] font-bold text-ink-2">Set dates</span>
                   <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
                     Start
                     <input
                       type="date"
                       defaultValue={p.start}
-                      onBlur={(e) => post({ action: "phase-dates", phase: p.name, start: e.target.value })}
+                      onBlur={(e) =>
+                        post({ action: "phase-dates", phase: p.name, start: e.target.value }, `${p.name}:start`)
+                      }
                       className="border border-line bg-surface px-1.5 py-1 text-[12px] text-ink"
                     />
                   </label>
+                  <SaveMark entry={marks[`${p.name}:start`]} onRetry={() => retry(`${p.name}:start`)} />
                   <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
                     End
                     <input
                       type="date"
                       defaultValue={p.end}
-                      onBlur={(e) => post({ action: "phase-dates", phase: p.name, end: e.target.value })}
+                      onBlur={(e) =>
+                        post({ action: "phase-dates", phase: p.name, end: e.target.value }, `${p.name}:end`)
+                      }
                       className="border border-line bg-surface px-1.5 py-1 text-[12px] text-ink"
                     />
                   </label>
+                  <SaveMark entry={marks[`${p.name}:end`]} onRetry={() => retry(`${p.name}:end`)} />
                 </div>
 
                 {isOpen &&
-                  p.stages.map((s) => (
+                  p.stages.map((s) => {
+                    /* ⚠⚠ STAGES EXPAND TOO (Scott: *"sections with no way to
+                       expand"*). ⚠⚠⚠ WITH 212 CATALOG TASKS, AN OPEN PHASE USED TO
+                       PRINT EVERY ROW IT HAD — the page was long enough that the
+                       sections below it were not reachable without scrolling past
+                       all of them. ⚠ The key is `phase/stage` because stage names
+                       repeat across phases; keying on the name alone would open
+                       two. */
+                    const stageKey = `${p.name}/${s.name}`;
+                    const stageOpen = openStage === stageKey;
+                    return (
                     <div key={s.name} className="border-t border-line py-3 pl-3">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                        <h3 className="text-[14px] font-bold text-ink">{s.name}</h3>
+                        <button
+                          type="button"
+                          onClick={() => setOpenStage(stageOpen ? "" : stageKey)}
+                          aria-expanded={stageOpen}
+                          className="flex items-center gap-2 text-[14px] font-bold text-ink"
+                        >
+                          <span aria-hidden className={"inline-block h-3 w-3 shrink-0 origin-center text-center text-[12px] leading-3 transition-transform " + (stageOpen ? "rotate-90" : "")}>
+                            ›
+                          </span>
+                          {s.name}
+                        </button>
                         <span className="text-[12px] text-ink-2">
                           {pct(s.tasks) === null ? "— not countable" : `${pct(s.tasks)}%`} · {s.tasks.length}
                         </span>
@@ -281,11 +570,12 @@ export function WorkTrackerEditor({
                         </label>
                       </div>
 
+                      {stageOpen && (
                       <ul className="mt-2">
                         {s.tasks.map((t) => (
                           <li
                             key={t.id}
-                            className="grid grid-cols-1 gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_110px_1fr_110px_110px]"
+                            className="grid grid-cols-1 items-center gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_110px_1fr_110px_110px_84px]"
                           >
                             <span className="font-mono text-[12px] text-ink-2">{t.id}</span>
                             <span className="text-[13px] text-ink">
@@ -295,7 +585,7 @@ export function WorkTrackerEditor({
                             <select
                               defaultValue={t.status}
                               disabled={pending}
-                              onChange={(e) => post({ action: "task", taskId: t.id, status: e.target.value })}
+                              onChange={(e) => post({ action: "task", taskId: t.id, status: e.target.value }, t.id)}
                               className={FIELD}
                             >
                               {TASK_STATUSES.map((st) => (
@@ -307,13 +597,13 @@ export function WorkTrackerEditor({
                             <input
                               defaultValue={t.owner}
                               placeholder="Owner"
-                              onBlur={(e) => post({ action: "task", taskId: t.id, owner: e.target.value })}
+                              onBlur={(e) => post({ action: "task", taskId: t.id, owner: e.target.value }, t.id)}
                               className={FIELD}
                             />
                             <input
                               defaultValue={t.note}
                               placeholder="Note"
-                              onBlur={(e) => post({ action: "task", taskId: t.id, note: e.target.value })}
+                              onBlur={(e) => post({ action: "task", taskId: t.id, note: e.target.value }, t.id)}
                               className={FIELD}
                             />
                             {/* ⚠⚠ THE STAGE PICKER IS ONLY ON THE TEN JOURNEY ROWS
@@ -329,7 +619,7 @@ export function WorkTrackerEditor({
                               defaultValue={t.releaseId}
                               disabled={pending}
                               onChange={(e) =>
-                                post({ action: "task-release", taskId: t.id, releaseId: e.target.value })
+                                post({ action: "task-release", taskId: t.id, releaseId: e.target.value }, t.id)
                               }
                               className={FIELD}
                               aria-label={`${t.id} release`}
@@ -341,11 +631,12 @@ export function WorkTrackerEditor({
                                 </option>
                               ))}
                             </select>
+                            {!t.isJourney && <span aria-hidden />}
                             {t.isJourney && (
                               <select
                                 defaultValue={t.stage}
                                 disabled={pending}
-                                onChange={(e) => post({ action: "task", taskId: t.id, stage: e.target.value })}
+                                onChange={(e) => post({ action: "task", taskId: t.id, stage: e.target.value }, t.id)}
                                 className={FIELD}
                                 aria-label={`${t.id} journey stage`}
                               >
@@ -360,20 +651,28 @@ export function WorkTrackerEditor({
                                 ))}
                               </select>
                             )}
+                            {/* ⚠⚠ ONE MARK PER ROW, NOT PER FIELD, AND IT IS KEYED
+                                ON THE TASK ID. ⚠ Five controls on this row write
+                                the same record; five independent ticks would say
+                                the row saved five times and race each other on the
+                                fade. ⚠⚠⚠ The mark reports what actually happened —
+                                THE ROW WAS WRITTEN. */}
+                            <SaveMark entry={marks[t.id]} onRetry={() => retry(t.id)} />
                           </li>
                         ))}
                       </ul>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
               </div>
             );
           })}
         </div>
-      </section>
+      </Section>
 
       {/* ── GATES ───────────────────────────────────────────────────────── */}
-      <section className="mt-9">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Gates</h2>
+      <Section title="Gates" count={gates.length}>
         <div className="mt-3 border-t border-line">
           {gates.map((g) => {
             const answered = g.criteria.filter((c) => c.value !== "").length;
@@ -399,17 +698,23 @@ export function WorkTrackerEditor({
                       key={c.index}
                       className="grid grid-cols-1 items-center gap-2 border-t border-line py-2 sm:grid-cols-[1fr_120px]"
                     >
-                      <span className="text-[13px] text-ink">{c.text}</span>
+                      <span className="text-[13px] text-ink">
+                        {c.text}
+                        <SaveMark entry={marks[`${g.id}#${c.index}`]} onRetry={() => retry(`${g.id}#${c.index}`)} />
+                      </span>
                       <select
                         defaultValue={c.value}
                         disabled={pending}
                         onChange={(e) =>
-                          post({
-                            action: "gate",
-                            gateId: g.id,
-                            criterionIndex: c.index,
-                            value: e.target.value,
-                          })
+                          post(
+                            {
+                              action: "gate",
+                              gateId: g.id,
+                              criterionIndex: c.index,
+                              value: e.target.value,
+                            },
+                            `${g.id}#${c.index}`,
+                          )
                         }
                         className={FIELD}
                       >
@@ -435,11 +740,18 @@ export function WorkTrackerEditor({
             );
           })}
         </div>
-      </section>
+      </Section>
 
-      {/* ── MILESTONES ──────────────────────────────────────────────────── */}
-      <section className="mt-9">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Releases</h2>
+      {/* ── RELEASES ────────────────────────────────────────────────────── */}
+      <Section
+        title="Releases"
+        count={releases.length}
+        action={
+          <button type="button" className={BTN} onClick={() => setAdd((a) => ({ ...a, release: !a.release }))}>
+            Add Release
+          </button>
+        }
+      >
         {/* ⚠⚠ THEIR OWN LIST, NOT JOURNEYS (Scott, 2026-10-02). The Build Line's
             flags and the public Milestones section both read from this table —
             `PNM-011`/`PNM-012` stay catalog tasks and leave the Journeys grid. */}
@@ -447,7 +759,7 @@ export function WorkTrackerEditor({
           Releases carry scope: assign tasks to one and the page shows its own percentage. A new release is a draft until you publish it.
         </p>
 
-        <ReleaseForm onCreate={post} pending={pending} />
+        {add.release && <ReleaseForm onCreate={post} pending={pending} />}
 
         <div className="mt-5 border-t border-line">
           {releases.length === 0 ? (
@@ -462,35 +774,35 @@ export function WorkTrackerEditor({
                 <input
                   defaultValue={m.code}
                   placeholder="R1"
-                  onBlur={(e) => post({ action: "release-update", id: m.id, code: e.target.value })}
+                  onBlur={(e) => post({ action: "release-update", id: m.id, code: e.target.value }, m.id)}
                   className={FIELD}
                   aria-label="Release code"
                 />
                 <input
                   type="date"
                   defaultValue={m.date}
-                  onBlur={(e) => post({ action: "release-update", id: m.id, date: e.target.value })}
+                  onBlur={(e) => post({ action: "release-update", id: m.id, date: e.target.value }, m.id)}
                   className={FIELD}
                   aria-label="Target date"
                 />
                 <span className="grid gap-1">
                   <input
                     defaultValue={m.title}
-                    onBlur={(e) => post({ action: "release-update", id: m.id, title: e.target.value })}
+                    onBlur={(e) => post({ action: "release-update", id: m.id, title: e.target.value }, m.id)}
                     className={FIELD}
                   />
                   {/* ⚠ `summary` is the PUBLIC line; the admin note stays private. */}
                   <input
                     defaultValue={m.summary}
                     placeholder="One public line"
-                    onBlur={(e) => post({ action: "release-update", id: m.id, summary: e.target.value })}
+                    onBlur={(e) => post({ action: "release-update", id: m.id, summary: e.target.value }, m.id)}
                     className={FIELD}
                   />
                 </span>
                 <select
                   defaultValue={m.status}
                   disabled={pending}
-                  onChange={(e) => post({ action: "release-update", id: m.id, status: e.target.value })}
+                  onChange={(e) => post({ action: "release-update", id: m.id, status: e.target.value }, m.id)}
                   className={FIELD}
                   aria-label={`${m.title} status`}
                 >
@@ -504,7 +816,7 @@ export function WorkTrackerEditor({
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => post({ action: "release-update", id: m.id, published: !m.published })}
+                    onClick={() => post({ action: "release-update", id: m.id, published: !m.published }, m.id)}
                     className={m.published ? BTN_2 : BTN}
                   >
                     {m.published ? "Unpublish" : "Publish"}
@@ -517,16 +829,24 @@ export function WorkTrackerEditor({
                   >
                     Delete
                   </button>
+                  <SaveMark entry={marks[m.id]} onRetry={() => retry(m.id)} />
                 </span>
               </div>
             ))
           )}
         </div>
-      </section>
+      </Section>
 
       {/* ── ADMIN-ADDED TASKS ───────────────────────────────────────────── */}
-      <section className="mt-9">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Your own tasks</h2>
+      <Section
+        title="Your own tasks"
+        count={customTasks.length}
+        action={
+          <button type="button" className={BTN} onClick={() => setAdd((a) => ({ ...a, custom: !a.custom }))}>
+            Add Task
+          </button>
+        }
+      >
         {/*
           ⚠⚠⚠ WORK THE AIM CATALOG DOES NOT HAVE (`P2-ALL-E765`). The catalog is a
           STATIC FILE and deliberately so — it is the published method — so adding
@@ -539,7 +859,9 @@ export function WorkTrackerEditor({
           These count toward a release like catalog tasks. Their titles never leave this page.
         </p>
 
-        <CustomTaskForm onCreate={post} pending={pending} phases={phases.map((p) => p.name)} releases={releases} />
+        {add.custom && (
+          <CustomTaskForm onCreate={post} pending={pending} phases={phases.map((p) => p.name)} releases={releases} />
+        )}
 
         <div className="mt-5 border-t border-line">
           {customTasks.length === 0 ? (
@@ -552,14 +874,14 @@ export function WorkTrackerEditor({
               >
                 <input
                   defaultValue={c.title}
-                  onBlur={(e) => post({ action: "custom-update", id: c.id, title: e.target.value })}
+                  onBlur={(e) => post({ action: "custom-update", id: c.id, title: e.target.value }, c.id)}
                   className={FIELD}
                 />
                 <span className="text-[13px] text-ink-2">{c.phase}</span>
                 <select
                   defaultValue={c.status}
                   disabled={pending}
-                  onChange={(e) => post({ action: "custom-update", id: c.id, status: e.target.value })}
+                  onChange={(e) => post({ action: "custom-update", id: c.id, status: e.target.value }, c.id)}
                   className={FIELD}
                   aria-label={`${c.title} status`}
                 >
@@ -572,7 +894,7 @@ export function WorkTrackerEditor({
                 <select
                   defaultValue={c.releaseId}
                   disabled={pending}
-                  onChange={(e) => post({ action: "custom-update", id: c.id, releaseId: e.target.value })}
+                  onChange={(e) => post({ action: "custom-update", id: c.id, releaseId: e.target.value }, c.id)}
                   className={FIELD}
                   aria-label={`${c.title} release`}
                 >
@@ -591,20 +913,28 @@ export function WorkTrackerEditor({
                 >
                   Delete
                 </button>
+                  <SaveMark entry={marks[c.id]} onRetry={() => retry(c.id)} />
               </div>
             ))
           )}
         </div>
-      </section>
+      </Section>
 
       {/* ── SHIPPED ─────────────────────────────────────────────────────── */}
-      <section className="mt-9 pb-10">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Shipped</h2>
+      <Section
+        title="Shipped"
+        count={shipped.length}
+        action={
+          <button type="button" className={BTN} onClick={() => setAdd((a) => ({ ...a, shipped: !a.shipped }))}>
+            Add Shipped Entry
+          </button>
+        }
+      >
         <p className="mt-1 text-[13px] text-ink-2">
           New entries are drafts. Nothing reaches the public page until you publish it.
         </p>
 
-        <ShippedForm onCreate={post} pending={pending} />
+        {add.shipped && <ShippedForm onCreate={post} pending={pending} />}
 
         <div className="mt-5 border-t border-line">
           {shipped.length === 0 ? (
@@ -625,7 +955,7 @@ export function WorkTrackerEditor({
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => post({ action: "shipped-update", id: s.id, published: !s.published })}
+                    onClick={() => post({ action: "shipped-update", id: s.id, published: !s.published }, s.id)}
                     className={s.published ? BTN_2 : BTN}
                   >
                     {s.published ? "Unpublish" : "Publish"}
@@ -638,12 +968,13 @@ export function WorkTrackerEditor({
                   >
                     Delete
                   </button>
+                  <SaveMark entry={marks[s.id]} onRetry={() => retry(s.id)} />
                 </span>
               </div>
             ))
           )}
         </div>
-      </section>
+      </Section>
     </div>
   );
 }
@@ -702,7 +1033,7 @@ function CustomTaskForm({
         ))}
       </select>
       <button type="submit" disabled={pending || title.trim() === ""} className={BTN}>
-        Add Task
+        Create Task
       </button>
     </form>
   );
@@ -758,11 +1089,18 @@ function ReleaseForm({
           className={FIELD}
         />
       </span>
-      {/* ⚠ `Add Release`, not `Add Draft` — the Shipped form already owns that
+      {/* ⚠⚠ `Create …` ON THE FORM, `Add …` ON THE SECTION, AND THEY MUST DIFFER.
+          Both read as the same action to a person and as the SAME ACCESSIBLE NAME
+          to a locator: with the form revealed there were two `Add Task` buttons on
+          the page, which is a strict-mode violation and an ambiguity for anyone
+          using the keyboard. ⚠ Scott's words stay on the primary action — the one
+          in the section header — and the submit says what it does to the form.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   `Add Release`, not `Add Draft` - the Shipped form already owns that
           label and two identical buttons on one page is ambiguous to a person and
           to a locator (it broke the gate as a strict-mode violation). */}
       <button type="submit" disabled={pending || title.trim() === "" || date === ""} className={BTN}>
-        Add Release
+        Create Release
       </button>
     </form>
   );
@@ -819,7 +1157,7 @@ function ShippedForm({
         />
       </span>
       <button type="submit" disabled={pending || title.trim() === ""} className={BTN}>
-        Add Draft
+        Create Draft
       </button>
     </form>
   );
