@@ -507,7 +507,23 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
       expect(onBody, "the named page is missing its rate lock").toContain(
         "Register free to see rates"
       );
-      console.log(`E738/WS-C  /pro/${slug} — off: no name + noindex · on: named + indexable`);
+      /*
+        ── ⚠⚠ ONE HEADER HERE TOO (`P2-A1.1-E770`, Scott 2026-10-02) ──────────
+        ⚠ `E770` fixed the DOUBLED header on the masked preview, where the `(app)`
+        layout wrapped a public page in the app shell. ⚠⚠⚠ **THIS BRANCH — THE
+        NAMED PAGE — WAS NEVER EXERCISED BY ANY TEST**, because no named profile
+        is reachable from `/explore`, so "it is outside `(app)`, therefore it is
+        fine" was an inference and not a measurement. ⚠ Scott asked for it to be
+        walked; this is where it already gets turned on and restored.
+      */
+      const namedHeaders = (onBody.match(/<header[\s>]/g) ?? []).length;
+      const maskedHeaders = (landedBody.match(/<header[\s>]/g) ?? []).length;
+      expect(namedHeaders, "the named page has more than one header").toBe(1);
+      expect(maskedHeaders, "the masked preview has more than one header").toBe(1);
+      console.log(
+        `E738/WS-C  /pro/${slug} — off: no name + noindex · on: named + indexable · ` +
+          `headers: named ${namedHeaders}, masked ${maskedHeaders}`
+      );
     } finally {
       /* ⚠⚠ ALWAYS PUT IT BACK. A failed assertion must not leave a real
          member's name published. */
