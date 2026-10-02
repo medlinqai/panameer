@@ -166,15 +166,26 @@ function JoinRouter() {
      `/api/me` fetch on every render instead of only when the URL changes. */
   const blockedParam = params.get("blocked");
   const fromParam = params.get("from");
+  /* ⚠⚠ `next` AND `follow` RIDE ALONG (`P2-ALL-E758`). The Work Tracker's
+     signed-out Follow button sends the person here with `?next=/status&follow=1`,
+     and the intent has to survive whichever join sub-journey they pick.
+     ⚠⚠⚠ **THIS IS THE CONVENIENCE, NOT THE GUARANTEE.** What actually applies the
+     follow is `/status?follow=1` itself, which is idempotent and works however
+     the person gets back there — including by clicking the banner link again. */
+  const nextParam = params.get("next");
+  const followParam = params.get("follow");
+
   const withCtx = useCallback(
     (path: string) => {
-      if (!blockedParam && !fromParam) return path;
+      if (!blockedParam && !fromParam && !nextParam && !followParam) return path;
       const q = new URLSearchParams(path.includes("?") ? path.slice(path.indexOf("?") + 1) : "");
       if (blockedParam) q.set("blocked", blockedParam);
       if (fromParam) q.set("from", fromParam);
+      if (nextParam) q.set("next", nextParam);
+      if (followParam) q.set("follow", followParam);
       return `${path.split("?")[0]}?${q}`;
     },
-    [blockedParam, fromParam]
+    [blockedParam, fromParam, nextParam, followParam]
   );
 
   // Clear the selection when the step changes, so stepping back and forward

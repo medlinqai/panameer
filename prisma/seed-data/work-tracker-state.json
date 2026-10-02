@@ -1,0 +1,161 @@
+{
+ "aim": "2.0",
+ "project": "panameer",
+ "publishedAt": "2026-10-02T00:00:00Z",
+ "tasks": {
+  "DEF-001": {
+   "status": "Done"
+  },
+  "DEF-002": {
+   "status": "Done"
+  },
+  "DSN-004": {
+   "status": "Done"
+  },
+  "DSN-005": {
+   "status": "Done"
+  },
+  "DSN-006": {
+   "status": "Done"
+  },
+  "DSN-010": {
+   "status": "Done"
+  },
+  "DSN-011": {
+   "status": "Done"
+  },
+  "DSN-012": {
+   "status": "Done"
+  },
+  "DSN-029": {
+   "status": "Done"
+  },
+  "DSN-032": {
+   "status": "Done"
+  },
+  "BLD-001": {
+   "status": "Done"
+  },
+  "BLD-010": {
+   "status": "Done"
+  },
+  "BLD-011": {
+   "status": "Done"
+  },
+  "BLD-016": {
+   "status": "Done"
+  },
+  "BLD-020": {
+   "status": "Done"
+  },
+  "BLD-024": {
+   "status": "Done"
+  },
+  "BLD-028": {
+   "status": "Done"
+  },
+  "BLD-029": {
+   "status": "Done"
+  },
+  "BLD-034": {
+   "status": "Done"
+  },
+  "BLD-035": {
+   "status": "Done"
+  },
+  "BLD-036": {
+   "status": "Done"
+  },
+  "BLD-037": {
+   "status": "Done"
+  },
+  "BLD-038": {
+   "status": "Done"
+  },
+  "BLD-077": {
+   "status": "Done"
+  },
+  "DSN-009": {
+   "status": "In Progress"
+  },
+  "DSN-017": {
+   "status": "In Progress"
+  },
+  "DSN-036": {
+   "status": "In Progress"
+  },
+  "BLD-030": {
+   "status": "In Progress"
+  },
+  "BLD-039": {
+   "status": "In Progress"
+  },
+  "BLD-040": {
+   "status": "In Progress"
+  },
+  "BLD-042": {
+   "status": "In Progress"
+  },
+  "BLD-045": {
+   "status": "In Progress"
+  },
+  "BLD-046": {
+   "status": "In Progress"
+  },
+  "BLD-047": {
+   "status": "In Progress"
+  },
+  "BLD-064": {
+   "status": "In Progress"
+  },
+  "BLD-074": {
+   "status": "In Progress"
+  },
+  "BLD-075": {
+   "status": "In Progress"
+  },
+  "PRV-014": {
+   "status": "In Progress"
+  },
+  "PRV-016": {
+   "status": "In Progress"
+  },
+  "LCH-008": {
+   "status": "In Progress"
+  },
+  "PNM-001": {
+   "status": "In Progress"
+  },
+  "PNM-002": {
+   "status": "In Progress"
+  },
+  "PNM-003": {
+   "status": "In Progress"
+  },
+  "PNM-004": {
+   "status": "In Progress"
+  },
+  "PNM-005": {
+   "status": "In Progress"
+  },
+  "PNM-006": {
+   "status": "In Progress"
+  },
+  "PNM-007": {
+   "status": "In Progress"
+  },
+  "PNM-008": {
+   "status": "In Progress"
+  },
+  "PNM-009": {
+   "status": "In Progress"
+  },
+  "PNM-010": {
+   "status": "In Progress"
+  },
+  "PNM-011": {
+   "status": "In Progress"
+  }
+ },
+ "gates": {}
+}

@@ -5545,6 +5545,51 @@ model TicketMessage {
   @@map("ticket_messages")
 }
 
+/// ⚠⚠⚠ THE TICKET'S HISTORY (`P2-ALL-E761`, Scott 2026-10-02).
+///
+/// Scott, working `PAN-CTXFTX`: *"I assigned it to me and asked a question. Want
+/// to see that history on the ticket."*
+///
+/// ⚠⚠ **BEFORE THIS, A TICKET REMEMBERED ONLY ITS CURRENT STATE.** `updateTicket`
+/// overwrote `assignee_person_id`, `status` and `priority` with no record at all,
+/// so "who picked this up, and when" was unanswerable the moment it changed.
+///
+/// ⚠ Scalar ids, no FK, single-drop — the same property as `SupportTicket` and
+/// `TicketMessage` above, and for the same reason: these three drop together with
+/// no dependency order to get right.
+///
+/// ⚠⚠ **`from_value` AND `to_value` ARE STRINGS, NOT IDS, AND THAT IS DELIBERATE
+/// FOR STATUS AND PRIORITY** (`Open`, `High`) — but for `assigned` they hold a
+/// PERSON ID, because a name stored at write time would freeze a person's old
+/// name into the record. ⚠ Names are resolved at RENDER.
+model TicketEvent {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Scalar, no FK (see the block above).
+  ticket_id String @db.Uuid
+
+  /// ⚠ Scalar, no FK. Who did it, resolved from the SESSION at write time.
+  /// ⚠⚠ NULLABLE because a `filed` event backfilled for an existing ticket has no
+  /// trustworthy actor — see `E761`'s backfill note. A null actor renders as the
+  /// ticket's reporter for `filed` and as "Panameer" otherwise, never as a guess.
+  actor_person_id String? @db.Uuid
+
+  /// ⚠ `filed` | `assigned` | `unassigned` | `status` | `priority` | `message`.
+  /// A string, not an enum — an enum is a schema object that outlives its tables
+  /// and has to be dropped separately, which breaks single-drop.
+  kind String
+
+  /// ⚠ Null on `filed` and `message`; null on `assigned` when nobody held it.
+  from_value String?
+  to_value   String?
+
+  created_at DateTime @default(now())
+
+  /// ⚠ The timeline reads one ticket in time order; this is the index for it.
+  @@index([ticket_id, created_at])
+  @@map("ticket_events")
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // THE TRANSACTION SPINE (`P1-J4-E388`) — WS-1: the catalog identifier and the
 // requisition line.
@@ -7422,4 +7467,296 @@ model OnboardingRequest {
   @@index([buyer_person_id])
   @@index([status])
   @@map("onboarding_requests")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠⚠⚠ THE WORK TRACKER (`P2-ALL-E752`) — status.panameer.com runs on Panameer's
+// own build. Four tables, and they hold STATE ONLY.
+//
+// ⚠⚠ **THE CATALOG IS NOT IN HERE AND MUST NOT BE.** The 212 AIM tasks, the 6
+// phases and the 4 gates with their criteria live in a STATIC FILE in the repo —
+// `src/lib/work-tracker/aim-catalog.json`. These tables carry only what an admin
+// CHANGES about them. ⚠ That is why every key below is a catalog id (`task_id`,
+// `gate_id`, `phase`) and not a foreign key: there is no row to point at.
+//
+// ⚠⚠ **SCALAR IDS, NO FKs — THE `SupportTicket` PATTERN, DELIBERATELY.** These
+// four are single-drop: nothing else joins to them, no cascade reaches them, and
+// removing the feature is four `DROP TABLE`s with no dependency order to get
+// right. ⚠ Statuses are STRINGS rather than enums for the same reason — an enum
+// is a schema object that outlives its tables and has to be dropped separately.
+//
+// ⚠⚠⚠ **PURELY ADDITIVE, WHICH IS WHAT MAKES `db:push` LEGAL OFF TRUNK.** Nothing
+// above is touched. ⚠⚠ **BUT ONE DATABASE SERVES EVERY BRANCH, AND `db push` IS
+// DECLARATIVE: A `db:push` RUN FROM TRUNK WHILE THESE TABLES ARE STILL EMPTY
+// WILL DROP THEM SILENTLY** — the data-loss prompt only fires on non-empty
+// tables. That is a known hazard of this repo, not of this feature.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// One row per catalog task an admin has touched. ⚠ ABSENT MEANS "Not Started":
+/// seeding 212 rows to say nothing would make the table lie about what has been
+/// decided. The reader defaults; the writer upserts.
+model WorkTrackerTaskState {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ The catalog id — `DEF-001`, `PNM-007`. Scalar, no FK: the task it names
+  /// lives in `aim-catalog.json`, not in this database.
+  task_id String @unique
+
+  /// ⚠ `Not Started` | `In Progress` | `Blocked` | `Done` | `N/A`. A string, not
+  /// an enum — see the block above. Validated in `work-tracker/admin.ts`, which
+  /// is the one writer.
+  status String @default("Not Started")
+
+  owner String?
+  note  String?
+
+  /// ⚠⚠ THE JOURNEY'S FOUR-SEGMENT STAGE (`P2-ALL-E757`, Scott 2026-10-02).
+  /// `design` | `build` | `test` | `live`. ⚠⚠⚠ **NULLABLE, AND NULL RENDERS NO
+  /// SEGMENTS RATHER THAN A GUESS** — Scott's words. A default of `design` would
+  /// claim every one of the ten journeys had started, which is a figure nobody
+  /// measured. ⚠ Only the `PNM-*` journey rows use it; an ordinary AIM task
+  /// leaves it null forever and that is correct, not missing data.
+  stage String?
+
+  /// ⚠⚠ WHICH RELEASE THIS TASK BELONGS TO (`P2-ALL-E765`). Scalar, no FK, like
+  /// every id in these tables. ⚠⚠⚠ **NULLABLE AND THAT IS LOAD-BEARING: a task
+  /// with no release is NOT in R1.** The per-release percentage counts only tasks
+  /// actually assigned, so an unassigned task cannot silently inflate or deflate
+  /// a release's number — it is simply out of scope until somebody says otherwise.
+  release_id String? @db.Uuid
+
+  updated_at DateTime @updatedAt
+  /// ⚠ The `User` id of the admin who last changed it, resolved from the SESSION
+  /// and never accepted from the client. Scalar, no FK — `User.id`, not `Person.id`
+  /// (`Viewer` carries `userId`), and nothing joins back through it.
+  updated_by String?  @db.Uuid
+
+  @@index([status])
+  @@map("work_tracker_task_states")
+}
+
+/// One row per gate CRITERION an admin has answered. ⚠ The criterion is
+/// identified by its INDEX in the catalog's `criteria` array, so re-ordering
+/// that array re-points existing answers — the catalog file is append-only by
+/// convention for exactly this reason.
+model WorkTrackerGateState {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ `GATE 1` … `GATE 4`, as the catalog spells them.
+  gate_id         String
+  criterion_index Int
+
+  /// ⚠ `No` | `Yes` | `N/A`. Absent means unanswered, which is NOT the same as
+  /// `No` — an unanswered gate is uncountable, and the public view says so
+  /// rather than printing a reassuring zero.
+  value String @default("No")
+
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@unique([gate_id, criterion_index])
+  @@map("work_tracker_gate_states")
+}
+
+/// When a phase ran. ⚠ Both dates are optional: a phase that has started and not
+/// finished has a start and no end, and that is a fact, not a gap.
+model WorkTrackerPhaseDate {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ The catalog phase NAME — `Define` … `Operate`.
+  phase String @unique
+
+  start_date DateTime? @db.Date
+  end_date   DateTime? @db.Date
+
+  /// ⚠⚠⚠ THE ADMIN'S OWN ANSWER TO "WHICH PHASE ARE WE IN" (`P2-ALL-E757`,
+  /// Scott 2026-10-02). ⚠ It is the FIRST of three sources, and the other two are
+  /// fallbacks, not equals: admin-set → the dates → the first phase that is not
+  /// 100% Done. ⚠⚠ **NEVER SIMPLY THE FIRST PHASE** — the old code returned the
+  /// first phase under 100%, which is `Define` and has been wrong since August.
+  ///
+  /// ⚠ AT MOST ONE ROW MAY HOLD IT. `setCurrentPhase` clears the others in the
+  /// same transaction, and `check:work-tracker` asserts the invariant — a flag
+  /// that can be true twice is a flag that will be.
+  is_current Boolean @default(false)
+
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@map("work_tracker_phase_dates")
+}
+
+/// ⚠⚠⚠ RELEASES (`P2-ALL-E765`, Scott 2026-10-02). Was `WorkTrackerMilestone`.
+///
+/// ⚠ Scott: *"I like the percent complete (but that should differ based on MVP R1
+/// and R2 … those have not really been defined). I need to be able to cfg the
+/// time and tasks per R."* ⚠⚠ A milestone is a date; a RELEASE is a date **with
+/// scope** — which is what makes a per-release percentage possible at all.
+///
+/// ⚠⚠⚠ **THE MODEL IS RENAMED; THE TABLE IS NOT, AND THAT WAS MEASURED.** Prisma
+/// has no rename: changing `@@map` to `work_tracker_releases` makes it emit
+/// **`DROP TABLE work_tracker_milestones` + `CREATE TABLE`**, which destroys the
+/// R1 row. ⚠ Keeping the map is a pure CODE rename with zero database cost.
+/// **The table name is historical — read it as "releases".**
+///
+/// ⚠⚠ **AND THE RENAME EARNS ITS KEEP: `milestone` WAS ALREADY TAKEN.**
+/// `service-products.ts` has PAYMENT milestones with a must-sum-to-100 rule. One
+/// word doing two jobs is how a brief gets misread — the same argument that kept
+/// `ACCOUNT MENU` from being called "the Settings menu".
+/// ⚠ SUPERSEDED, quoted not deleted (`E164`):
+/// //   MILESTONES — THEIR OWN LIST (`P2-ALL-E757`).
+///
+/// ⚠⚠ **THEY ARE NOT JOURNEYS AND THEY ARE NOT CATALOG TASKS.** `PNM-011` and
+/// `PNM-012` stay in `aim-catalog.json` as tasks — they are real work with a
+/// status — but they LEAVE the Journeys list, which is the ten `PNM-*` rows that
+/// are actually parts of the platform. ⚠ Scott: *"their own list."*
+///
+/// ⚠⚠⚠ **THIS TABLE EXISTS BECAUSE THERE WAS NOWHERE TO PUT A MILESTONE DATE.**
+/// `WorkTrackerPhaseDate` is keyed per PHASE and `WorkTrackerTaskState` carries
+/// no date at all, so "R1 — Public beta, 2026-11-01" had no home. ⚠ The public
+/// page's Milestones section and the Build Line's flags both read from here, and
+/// R2, R3… are rows Scott adds later rather than code anybody writes.
+///
+/// ⚠ Scalar id, no FK, single-drop — the same property as the four tables above.
+model WorkTrackerRelease {
+  id String @id @default(uuid()) @db.Uuid
+
+  title       String
+  /// One line. ⚠ Optional: a milestone with a date and a name is already useful.
+  description String?
+
+  /// ⚠ The date it is planned for or happened on. Required — a milestone with no
+  /// date cannot be placed on the Build Line, which is the whole reason it exists.
+  date DateTime @db.Date
+
+  /// ⚠ `Planned` | `In progress` | `Done`. A string, not an enum, for the
+  /// single-drop reason the block above the first table gives.
+  status String @default("Planned")
+
+  /// ⚠ Hand-ordered, because chronological is not always the reading order when
+  /// two releases share a date.
+  sort Int @default(0)
+
+  /// ⚠⚠ `R1`, `R2`, … — the name Scott uses when he talks about scope. Nullable
+  /// because the one existing row predates it and is migrated by the seed, not by
+  /// a destructive default.
+  code String?
+
+  /// ⚠ When work on it began. Optional: a release that is planned and not started
+  /// has a target and no start, and that is a fact rather than a gap.
+  start_date DateTime? @db.Date
+
+  /// ⚠⚠ **THE DATE IT IS DUE.** ⚠ `date` above is kept and is the LEGACY column —
+  /// it held R1's 2026-11-01 before this change. The reader prefers
+  /// `target_date` and falls back to `date`, so the existing row keeps working
+  /// without a destructive rename (see the block above for why there is none).
+  target_date DateTime? @db.Date
+
+  /// ⚠ One public line. `description` above is the admin's own note; this is what
+  /// a stranger reads.
+  summary String?
+
+  /// ⚠⚠ **DRAFTS DEFAULT UNPUBLISHED, like `WorkTrackerShipped`.** The public
+  /// reader filters on `published: true` IN THE WHERE CLAUSE, never with an `if`.
+  published Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([published, date])
+  @@map("work_tracker_milestones")
+}
+
+/// The daily "Shipped" log — the reason anyone comes back to the page.
+model WorkTrackerShipped {
+  id String @id @default(uuid()) @db.Uuid
+
+  date DateTime @db.Date
+
+  /// ⚠ A free label — `Profile`, `Connect`, `Platform`. Not a nav slug: the rail's
+  /// words change (`E533`) and an entry written today must still read after a
+  /// rename.
+  journey_tag String?
+
+  title String
+  body  String?
+
+  /// ⚠⚠⚠ **DRAFTS DEFAULT UNPUBLISHED, AND THAT IS THE WHOLE POINT OF THE
+  /// COLUMN.** Scott approves each entry before it shows. The public reader
+  /// filters on `published: true` IN THE WHERE CLAUSE, never with an `if` after
+  /// the query — the same shape `E738`'s masking uses, so a forgotten branch
+  /// cannot leak a draft.
+  published Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([published, date])
+  @@map("work_tracker_shipped")
+}
+
+/// ⚠⚠⚠ FOLLOWERS OF THE BUILD (`P2-ALL-E758`, Scott 2026-10-02: *"add followers
+/// to the public status page … if you create an account you will get
+/// notifications as we progress."*)
+///
+/// ⚠ One row per person, scalar id, no FK, single-drop — the same property as
+/// every other tracker table. ⚠⚠ `person_id` is UNIQUE, so following twice is
+/// the same as following once and the button is idempotent by the schema rather
+/// than by the handler remembering to check.
+///
+/// ⚠⚠⚠ **UNFOLLOW DELETES THE ROW RATHER THAN SETTING A FLAG.** A person who
+/// unfollows has withdrawn consent to be notified, and the honest record of that
+/// is no record. There is nothing here worth keeping for analytics.
+model WorkTrackerFollower {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ Scalar, no FK. Resolved from the SESSION, never from the client.
+  person_id String @unique @db.Uuid
+
+  created_at DateTime @default(now())
+
+  @@map("work_tracker_followers")
+}
+
+/// ⚠⚠⚠ TASKS THE AIM CATALOG DOES NOT HAVE (`P2-ALL-E765`, Scott 2026-10-02).
+///
+/// ⚠ The catalog is a STATIC FILE and deliberately so — it is the published
+/// method. ⚠⚠ But Scott needs to track work the method never named, and editing
+/// `aim-catalog.json` to add it would make the published method a scratchpad.
+/// These rows behave like catalog tasks everywhere they are COUNTED.
+///
+/// ⚠⚠⚠ **THE TITLE IS ADMIN-ONLY AND THE LEAK TEST ENFORCES IT.** A custom task
+/// is exactly the "how to recreate Panameer" detail Scott excluded from the
+/// public page — more so than a catalog task, because he wrote it himself about
+/// this build. **The public payload carries counts and percentages, never a
+/// title.**
+///
+/// ⚠ Scalar ids, no FK, single-drop — the same property as every table above.
+model WorkTrackerCustomTask {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠⚠ ADMIN-ONLY. Never in the public payload.
+  title String
+
+  /// ⚠ The catalog PHASE name it sits under, so it rolls up with everything else.
+  phase String
+  /// ⚠ Optional, and only meaningful for journey-shaped work.
+  stage String?
+
+  release_id String? @db.Uuid
+
+  status String  @default("Not Started")
+  owner  String?
+  /// ⚠⚠ ADMIN-ONLY, like the title.
+  note   String?
+  sort   Int     @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([release_id])
+  @@map("work_tracker_custom_tasks")
 }

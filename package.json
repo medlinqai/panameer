@@ -179,7 +179,11 @@
     "check:provider-search": "npx esbuild scripts/check-provider-search.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/provider-search.cjs --log-level=error && node .harness/provider-search.cjs",
     "check:credential-provenance": "npx esbuild scripts/check-credential-provenance.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/credential-provenance.cjs --log-level=error && node .harness/credential-provenance.cjs",
     "check:learn-identity": "npx esbuild scripts/check-learn-identity.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/learn-identity.cjs --log-level=error && node -r dotenv/config .harness/learn-identity.cjs dotenv_config_path=.env.local",
-    "check:externally-sourced": "npx esbuild scripts/check-externally-sourced.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/externally-sourced.cjs --log-level=error && node -r dotenv/config .harness/externally-sourced.cjs dotenv_config_path=.env.local"
+    "check:externally-sourced": "npx esbuild scripts/check-externally-sourced.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/externally-sourced.cjs --log-level=error && node -r dotenv/config .harness/externally-sourced.cjs dotenv_config_path=.env.local",
+    "seed:work-tracker": "npx esbuild scripts/seed-work-tracker.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-work-tracker.cjs --log-level=error && node -r dotenv/config .harness/seed-work-tracker.cjs dotenv_config_path=.env.local",
+    "check:work-tracker": "playwright test --config=playwright.tracker.config.ts",
+    "backfill:ticket-events": "npx esbuild scripts/backfill-ticket-events.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-ticket-events.cjs --log-level=error && node .harness/backfill-ticket-events.cjs",
+    "check:ticket-history": "playwright test --config=playwright.support.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -199,6 +203,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.18.0",
+    "sharp": "^0.34.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -4,9 +4,11 @@ import {
   RATE_LOCKED_COPY,
   type MaskedProfile,
 } from "@/lib/masked-profile";
+import { PLACEHOLDER } from "@/lib/masked-photo";
 import { ValidatedBadge } from "@/components/profile/ValidatedBadge";
 import {
   Chip,
+  BlurredField,
   LockLine,
   MaskedAvatarLarge,
   PublicPrimary,
@@ -109,6 +111,15 @@ export function MaskedProfileView({
               {/* ⚠⚠ SCOTT'S ANSWER 6 — role + dates + the lock line, and **NO
                   INVENTED INDUSTRY**. `Employer` has no industry column, so
                   there is nothing honest to put here but the lock. */}
+              {/* ⚠⚠ THE EMPLOYER NAME RENDERS IN PLACE, BLURRED (`E767`) — the row
+                  used to show only a lock line, so a reader could not tell whether
+                  an employer existed at all. ⚠ The lock line stays beneath it and
+                  says what to do about it. */}
+              <div className="mt-1 text-[13.5px] text-ink-2">
+                <BlurredField label="Employer hidden — join free to see it">
+                  {PLACEHOLDER.employer}
+                </BlurredField>
+              </div>
               <div className="mt-1 text-[13.5px] text-ink-2">
                 <LockLine>{EMPLOYER_LOCK_COPY}</LockLine>
               </div>
@@ -117,6 +128,12 @@ export function MaskedProfileView({
                   {e.lines.map((l) => (
                     <li key={l.id} className="text-[13.5px] text-ink-2">
                       {l.roleTitle ?? "Project"}
+                      {" · "}
+                      {/* ⚠ The CLIENT, blurred and constant — `MaskedEmployerRow`
+                          has never carried a client name and still does not. */}
+                      <BlurredField label="Client hidden — join free to see it">
+                        {PLACEHOLDER.client}
+                      </BlurredField>
                       {l.dates ? ` · ${l.dates}` : ""}
                       {l.validated && <ValidatedBadge validatedAt={null} validatedBy={null} />}
                       {/* ⚠ Industry ONLY where the column is populated — 3 of
@@ -201,7 +218,7 @@ export function MaskedProfileView({
   return (
     <div className="grid gap-8 md:grid-cols-[260px_1fr] md:gap-12">
       <aside>
-        <MaskedAvatarLarge />
+        <MaskedAvatarLarge blur={p.photoBlur} />
 
         {/* ⚠⚠ SCOTT'S ANSWER 5: the Search Score SHOWS on the masked page.
             ⚠ `visitor-profile.spec.ts`'s "Search Score" needle asserts the
@@ -230,7 +247,29 @@ export function MaskedProfileView({
             away. ⚠⚠ The rate is simply NOT IN THE PAYLOAD (`MaskedProfile` has
             no rate field), so there is nothing to blur and nothing to leak.
           */}
+          {/* ⚠⚠ A BLURRED FIGURE AT LAST — AND READ THE NOTE ABOVE BEFORE
+              CHANGING IT. The mockup's blur was over a REAL rate and that is why
+              it was refused. This one is `$000 / hr`, a constant, and the real
+              rate is STILL not in the payload. ⚠⚠⚠ The difference is not the
+              blur, it is what is underneath it. */}
+          <div className="mb-1 text-[18px] font-bold">
+            <BlurredField label="Rate hidden — register free to see it">
+              {PLACEHOLDER.rate}
+            </BlurredField>
+          </div>
           <LockLine>{RATE_LOCKED_COPY}</LockLine>
+        </div>
+
+        {/* ⚠ CONTACT — it did not render at all before, so the page did not show
+            that there was one to withhold. */}
+        <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
+          <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">CONTACT</h4>
+          <div className="mb-1 text-[14px]">
+            <BlurredField label="Contact details hidden — register free to see them">
+              {PLACEHOLDER.contact}
+            </BlurredField>
+          </div>
+          <LockLine>Join free to see who this is</LockLine>
         </div>
 
         <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
@@ -245,7 +284,18 @@ export function MaskedProfileView({
             `<title>` and Open Graph tags follow the same rule (see the route).
             ⚠ `E602` records what happens when a page has no `<h1>` at all; this
             one has exactly one. */}
-        <h1 className="text-[26px] font-bold leading-tight sm:text-[28px]">{p.title}</h1>
+        {/*
+          ⚠⚠⚠ THE NAME IS **SHOWN AS A BLURRED PLACEHOLDER**, NOT WITHHELD (`E767`).
+          ⚠ Scott: *"maybe all that info, but blurry."* The shape of a profile —
+          that there IS a name here — is part of what a visitor is being shown;
+          an empty space says less and sells less.
+          ⚠⚠ **WHAT IS BLURRED IS A CONSTANT.** `MaskedProfile` still has no name
+          field, so there is nothing real on this page to un-blur.
+        */}
+        <BlurredField label="Name hidden — join free to see it" className="text-[20px] font-bold">
+          {PLACEHOLDER.name}
+        </BlurredField>
+        <h1 className="mt-1 text-[26px] font-bold leading-tight sm:text-[28px]">{p.title}</h1>
 
         {meta.length > 0 && (
           <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[14px] text-ink-2">

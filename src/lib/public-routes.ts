@@ -104,6 +104,32 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/optimize", category: 1 },
   { route: "/talent", category: 1 },
   { route: "/work", category: 1 },
+  /*
+    ── ⚠⚠ THE PUBLIC WORK TRACKER (`P2-ALL-E753`) ──────────────────────────────
+
+    ⚠ `status.panameer.com/` REWRITES here (`src/proxy.ts`), and the path is also
+    reachable directly on every host — which is what makes it walkable locally
+    without a hosts-file entry. ⚠⚠ **BOTH DOORS NEED THIS ENTRY: the default is
+    DENY** (load-bearing rule 5), and a rewrite is not an exemption.
+
+    ⚠⚠⚠ **`/api/status` IS DELIBERATELY *NOT* LISTED, AND THE GATE IS WHAT TAUGHT
+    ME THAT.** I added it; `check:app-shell`'s allowlist test went red with
+    *"allowlisted route /api/status has no page.tsx"* — correctly, because this
+    list is a list of PAGES. ⚠ Measured after the red: the proxy's matcher has
+    **zero `/api` entries**, so the proxy never runs for an API route and this
+    list cannot govern one; and **no other `/api/*` route is listed here**, in a
+    codebase with many public ones. ⚠⚠ An API route is public by having no
+    `guardApi` call, which is exactly what `/api/status` does — adding it here
+    governed nothing and broke a correct assertion.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`), the line that sat below:
+    //   route "/api/status", category 1
+
+    ⚠⚠⚠ **WHAT KEEPS THESE TWO SAFE IS NOT THIS LIST — IT IS THE SHAPE OF
+    `getPublicTracker`'s RETURN TYPE**, which has nowhere to put task text, task
+    ids, criterion text, notes or owners. The leak test proves it against the
+    real response.
+  */
+  { route: "/status", category: 1 },
   { route: "/marketplace", category: 1 },
   { route: "/integrate", category: 1 },
   /*
@@ -321,6 +347,19 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     value appears anywhere in the response.
   */
   { route: "/providers/[id]", category: 5 },
+  /*
+    ⚠⚠ **`/pro/[slug]` IS THE MEMBER'S PUBLIC URL; `/in/[slug]` IS ITS 308**
+    (`P2-A1.1-E756`, Scott 2026-10-02). ⚠ BOTH stay public: a redirect that
+    needed a session would 302 a stranger to `/login` and the old link would be
+    just as broken as a 404.
+    ⚠⚠⚠ **`/pro` CANNOT CATCH `/profile`, `/providers`, `/projects` OR
+    `/proposals`, AND THAT WAS MEASURED, NOT REASONED:** a non-`subtree` entry
+    here matches by EXACT EQUALITY (`isPublicRoute`, below), and the gated-prefix
+    matcher uses `route === p || route.startsWith(p + "/")` — so `/pro/x` matches
+    no gated prefix while `/profile` and `/providers/abc` do. ⚠ `/projects` and
+    `/proposals` are not routes at all. `check:public-profile` holds this.
+  */
+  { route: "/pro/[slug]", category: 5 },
   { route: "/in/[slug]", category: 5 },
   { route: "/why-panameer", category: 5 },
   { route: "/work-marketplace", category: 5, status: "OPEN" },

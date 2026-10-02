@@ -6,6 +6,7 @@ import { experienceLabel, experienceYears, type Span } from "@/lib/experience";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { buildCompletenessInput, buildCompletenessInputs } from "@/lib/onboarding";
 import { computeProviderCompleteness } from "@/lib/completeness";
+import { blurredPhotoDataUri } from "@/lib/masked-photo";
 
 /**
  * ── ⚠⚠⚠ THE PUBLIC TALENT PREVIEW — WHAT A SIGNED-OUT VISITOR MAY SEE ──────
@@ -219,6 +220,25 @@ export type MaskedCard = {
   certificationCount: number;
   /** ⚠ Industry names from PROJECTS that have one. Never invented. */
   industries: string[];
+  /**
+   * ── ⚠⚠⚠ THE ONE DELIBERATE EXCEPTION TO "THE MASK IS THE SELECT" (`E767`) ──
+   *
+   * ⚠ **IT IS NOT A PHOTO URL AND IT NEVER BECOMES ONE.** `photo_url` is now read
+   * by the query — the only field on this type that comes from one — and is spent
+   * entirely inside `blurredPhotoDataUri()`. What arrives here is **a 16px-wide
+   * JPEG, inline, as bytes**. The URL is not returned, not logged and not
+   * reachable from the page.
+   *
+   * ⚠⚠ **SO THE RULE IS NARROWED, NOT BROKEN:** every other identifying field is
+   * still absent from the type, and this one is present only in a form from which
+   * the original cannot be recovered — roughly 250 pixels of colour for a whole
+   * face, discarded by the downscale before the bytes exist.
+   *
+   * ⚠ `null` when there is no photo, or when it could not be read. The caller
+   * falls back to the placeholder icon, which is a worse picture and an equally
+   * safe one.
+   */
+  photoBlur: string | null;
 };
 
 export type MaskedEmployerRow = {
@@ -459,10 +479,15 @@ export async function browseTalent(
     select: {
       id: true,
       /* ⚠⚠ NOTE WHAT IS ABSENT: no `person.first_name`, no `last_name`, no
-         `photo_url`, no `phone`, no rate column. ⚠ The mask is the select. */
+         `phone`, no rate column. ⚠ The mask is the select.
+         ⚠⚠⚠ **`photo_url` IS THE ONE EXCEPTION AND IT IS SPENT, NOT RETURNED**
+         (`E767`): it is handed to `blurredPhotoDataUri()` and what reaches the
+         card is a 16px JPEG's bytes. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+         //   no `person.first_name`, no `last_name`, no `photo_url`, no `phone` */
       person: {
         select: {
           title: true,
+          photo_url: true,
           site: {
             select: {
               addresses: {
@@ -499,6 +524,20 @@ export async function browseTalent(
      scores `0` — impossible here (the ids came from the row set a moment ago)
      and the safe answer if it ever happens. */
   const inputs = await buildCompletenessInputs(page.map((r) => r.id));
+
+  /*
+    ⚠⚠ THE BLURS ARE MADE ONCE, IN PARALLEL, BEFORE THE MAP (`E767`). The mapper
+    is synchronous and must stay that way; making it async would turn one page
+    render into twelve awaited round trips in series. ⚠ `blurredPhotoDataUri`
+    caches on the source URL, so a second render of the same grid costs nothing.
+  */
+  const blurs = new Map<string, string | null>(
+    await Promise.all(
+      page.map(
+        async (r) => [r.id, await blurredPhotoDataUri(r.person.photo_url)] as [string, string | null],
+      ),
+    ),
+  );
 
   const cards: MaskedCard[] = page.map((p) => {
     const addr = p.person.site?.addresses[0];
@@ -541,6 +580,7 @@ export async function browseTalent(
             .filter((n): n is string => Boolean(n))
         ),
       ],
+      photoBlur: blurs.get(p.id) ?? null,
     };
   });
 
@@ -590,6 +630,9 @@ export async function getMaskedProfile(
         select: {
           first_name: true,
           last_name: true,
+          /* ⚠⚠⚠ SPENT, NOT RETURNED (`E767`) — see `MaskedCard.photoBlur`. The
+             URL goes into `blurredPhotoDataUri()` and 16px of JPEG comes out. */
+          photo_url: true,
           title: true,
           created_at: true,
           site: {
@@ -686,8 +729,12 @@ export async function getMaskedProfile(
   const attached = new Set(p.employers.flatMap((e) => e.projects.map((pr) => pr.id)));
   const solo = p.projects.filter((pr) => !attached.has(pr.id));
 
+  /* ⚠ One photo, one blur. Awaited here because this mapper already is. */
+  const photoBlur = await blurredPhotoDataUri(p.person.photo_url);
+
   return {
     id: p.id,
+    photoBlur,
     title: capTitle(p.person.title ?? ""),
     location: formatPlace(addr?.state, country),
     country,

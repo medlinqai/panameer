@@ -8,6 +8,7 @@
  * failure, this is what says so.
  */
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   RECIPES,
   themeFromHue,
@@ -219,22 +220,43 @@ ok("rejects null", !isValidHex(null));
     lineCanvasAfter > 1.1);
 
   /*
-    ── NOTE, NOT AN ASSERTION — `--color-bg-soft` IN DARK MODE (`E432` WS-2) ──
+    ── ⚠⚠⚠ FIXED, AND NOW ASSERTED — `--color-bg-soft` IN DARK MODE (`P2-ALL-E763`)
 
-    The dark block overrides ink/ink-2/line/canvas and NOT bg-soft, so bg-soft
-    falls through to the LIGHT value in dark mode. MEASURED IN THE BROWSER with
-    `data-theme="dark"` active: the console table head (`bg-bg-soft text-ink-2`)
-    computes `rgb(240,247,248)` with `rgb(179,173,196)` text — a near-white band
-    with light-grey text on a near-black page. It is broken TODAY and is NOT
-    masked; `E432` changes the shade and not the defect.
-    ⚠ DELIBERATELY NOT ASSERTED: pinning the broken state would make the eventual
-    fix go red. It is a NEW error id for Scott to number — reported, not fixed.
+    ⚠ **THIS WAS A NOTE AND IS NOW AN ASSERTION, WHICH IS WHAT ITS AUTHOR ASKED
+    FOR.** The original block said: *"DELIBERATELY NOT ASSERTED: pinning the broken
+    state would make the eventual fix go red. It is a NEW error id for Scott to
+    number — reported, not fixed."* ⚠⚠ That id is `E763`, and the fix landed on
+    2026-10-02, so the honest move is to pin the FIXED state instead.
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the note that stood here:
+    //   The dark block overrides ink/ink-2/line/canvas and NOT bg-soft, so
+    //   bg-soft falls through to the LIGHT value in dark mode. MEASURED IN THE
+    //   BROWSER with data-theme="dark" active: the console table head
+    //   (bg-bg-soft text-ink-2) computes rgb(240,247,248) with rgb(179,173,196)
+    //   text - a near-white band with light-grey text on a near-black page.
+
+    ⚠⚠ **IT READS `globals.css` RATHER THAN A CONSTANT**, so deleting the dark
+    value — or moving it into the light-only `.marketing-surface` mirror, where it
+    must not go — fails here rather than going quietly unnoticed.
   */
-  console.log(
-    `  E432 NOTE · dark-mode bg-soft falls through to the light value; ` +
-      `ink-2 #b3adc4 on it is ${r(contrast("#b3adc4", NEW.bgSoft))}:1 (was ` +
-      `${r(contrast("#b3adc4", OLD.bgSoft))}:1) — reported, not fixed.\n`
+  const cssForDark = readFileSync(join(process.cwd(), "src", "app", "globals.css"), "utf8");
+  const darkBlock = cssForDark.slice(css.indexOf(':root[data-theme="dark"] {'));
+  const darkBgSoft = /--color-bg-soft:\s*(#[0-9a-f]{3,8})/i.exec(
+    darkBlock.slice(0, darkBlock.indexOf("\n}"))
+  )?.[1];
+  ok(
+    "E763 · --color-bg-soft has a value in the dark scope",
+    Boolean(darkBgSoft),
+    "the dark block defines ink/ink-2/line/canvas; without bg-soft it falls through to the LIGHT value"
   );
+  if (darkBgSoft) {
+    const c = contrast("#b3adc4", darkBgSoft);
+    ok(
+      `E763 · ink-2 on the dark bg-soft clears AA (${r(c)}:1 on ${darkBgSoft})`,
+      c >= 4.5,
+      "a light-only panel colour behind themed text is the E723 defect"
+    );
+  }
 }
 
 if (failures.length) {

@@ -255,6 +255,18 @@
    * where it was measured.
    */
   --color-rail-active: #b02aae;
+
+  /*
+    ── ⚠ THE PARKING TOKEN IS GONE (`P2-ALL-E760`, closed 2026-10-02) ──────────
+
+    ⚠⚠ `--color-bottomnav-active` existed for ONE reason: to hold the phone bottom
+    nav's active pill at the colour already on screen (`#3a3150`) while Scott
+    decided whether it should become magenta. ⚠ **He ruled magenta**, so
+    `bottom-nav.css` reads `--color-rail-active` directly and a second token for
+    one state would be two definitions of one thing (`E585`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   --color-bottomnav-active: #3a3150;
+  */
   /* ⚠ `E432` — the third of the three neutrals; see the block above for the
      measurements and Scott's decision. ⚠ SUPERSEDED: `#f7f7f5` (warm). */
   --color-canvas: #fafafa;
@@ -313,6 +325,38 @@
   --color-canvas: #0b0817;
   /* ⚠ The value the dark `.bg-white` rule below already hard-coded, now named once. */
   --color-surface: #171128;
+
+  /*
+    ── ⚠⚠⚠ `--color-bg-soft` GETS A DARK VALUE (`P2-ALL-E763`, Scott's option A) ─
+
+    ⚠⚠ **IT HAD NONE, AND THAT IS WHY A BAR WENT WHITE IN DARK MODE** (`E762`,
+    ticket PAN-CTXFTX). ⚠ Measured before this line existed: the bar held
+    `#f9fafb` in dark while `text-ink-2` correctly flipped to a light grey —
+    **2.07:1, against a 4.5:1 AA floor.** A light-only token on a themed page is
+    `E723`, and `bg-soft` was the last one without a dark half.
+
+    ⚠⚠⚠ **99 OF THE 112 `bg-bg-soft` SITES ARE STATIC BACKGROUNDS** (13 are
+    `hover:`), across 70 files — so this is not one bar, it is every panel, empty
+    state, modal and wizard step that uses the token. ⚠ They are mostly
+    conditionally rendered, which is why the defect surfaced on a ticket rather
+    than in a walk.
+
+    ⚠⚠ **THE VALUE PRESERVES THE RELATIONSHIP RATHER THAN INVENTING ONE.** In
+    light, `bg-soft` (`#f9fafb`) is a hair DARKER than `surface` (`#fff`) — a
+    recessed panel. `#0b0817` is a hair darker than the dark `surface`
+    (`#171128`), so a panel still reads as recessed instead of inverting into a
+    raised white slab. ⚠ It is `canvas`'s dark value, exactly as `bg-soft` already
+    sits on `canvas`'s light value (`#fafafa` vs `#f9fafb`).
+
+    ⚠ **CONTRAST ON IT, MEASURED:** `ink` 17.51:1 · `ink-2` 9.13:1 · `ink-3`
+    5.57:1 — all clear AA.
+
+    ⚠⚠⚠ **LIGHT MODE IS BYTE-IDENTICAL AND THAT IS THE POINT OF PUTTING IT HERE.**
+    This is the `[data-theme="dark"]` scope only. ⚠ It is deliberately NOT added
+    to the `.marketing-surface` mirror below — Scott: that block is light-only by
+    design, and a dark value there would theme a surface that is meant not to be.
+  */
+  --color-bg-soft: #0b0817;
   --color-ink-hover: #ddd9e8;
   --color-surface-hover: #221a3a;
 }
@@ -520,6 +564,36 @@ body {
     headings in a different face for no reason anybody could see.
   */
   .account-surface :is(h1, h2, h3, h4) {
+    font-family: var(--font-body);
+  }
+
+  /*
+    ── ⚠⚠⚠ THE MASKED SURFACES, SAME MECHANISM (`P2-A1.1-E771`) —————————
+
+    ⚠ **SCOTT, 2026-10-02:** the masked preview's headline renders in Comfortaa;
+    Montserrat, like `/status`.
+
+    ⚠⚠ **MEASURED BY COMPUTED STYLE, NOT BY GREP, AND THE NUMBER WAS BIGGER THAN
+    THE REPORT:** `/providers/[id]` rendered **10** Comfortaa elements and
+    `/explore` **16** — not one headline. ⚠ The split matters:
+    **6 of the 10 and 3 of the 16 are `MarketingFooter`'s video headings**, which
+    `AppShell` also renders, i.e. nearly every page in the app.
+    ⚠⚠⚠ **SO THIS RULE DELIBERATELY DOES NOT REACH THEM.** Scott's ruling:
+    page headings only — the 4 on the profile, the 13 on the grid. The footer is
+    logged as `E772` and is NOT fixed here, because fixing it is an app-wide
+    typographic change and the `@layer base` fence directly above exists to stop
+    exactly that happening by accident.
+
+    ⚠⚠ **IT IS A SEPARATE CLASS, NOT AN ADDITION TO `.marketing-surface`.** Both
+    masked pages carry `.marketing-surface` already, and putting the rule there
+    would re-case every public page in one commit about talent masking.
+    ⚠ Specificity is what makes it win, not order: `(0,1,1)` against the global
+    rule's `(0,0,1)`, both inside `@layer base`.
+    ⚠ `h4` is included for the same reason `.account-surface` includes it — the
+    `SEARCH SCORE` / `RATES` / `CONTACT` eyebrows are `h4` and leaving them out
+    would strand one row of headings in a different face for no visible reason.
+  */
+  .masked-surface :is(h1, h2, h3, h4) {
     font-family: var(--font-body);
   }
 }

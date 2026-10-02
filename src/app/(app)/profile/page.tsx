@@ -133,7 +133,10 @@ export default async function MyProfilePage() {
   */
   const slug = await ensureSlug(profile.id);
   const publicUrl = slug
-    ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/in/${slug}`
+    /* ⚠ `/pro/`, renamed from `/in/` (`P2-A1.1-E756`). The old path still 308s,
+       so links already pasted into signatures keep working — but what we HAND
+       OUT from today is the new one. */
+    ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/pro/${slug}`
     : null;
 
   return (

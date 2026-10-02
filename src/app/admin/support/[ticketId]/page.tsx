@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
-import { getTicket, TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support";
+import { getTicket, ticketTimeline, TICKET_STATUSES, TICKET_PRIORITIES } from "@/lib/support";
+import { prisma } from "@/lib/prisma";
+import { TicketTimeline } from "@/components/support/TicketTimeline";
 import { supportApplicationLabel } from "@/lib/support-applications";
 import { signedSupportScreenshotUrl } from "@/lib/storage";
 import { TicketAdminPanel } from "@/components/admin/TicketAdminPanel";
@@ -30,6 +32,38 @@ export default async function AdminTicketPage({
   if (!found) notFound();
   const { ticket, messages } = found;
 
+  /*
+    ── ⚠⚠ THE HISTORY (`P2-ALL-E761`) ──────────────────────────────────────────
+    ⚠ The ADMIN view: every kind, including assignee and priority. The reporter's
+    page calls the same function with `forReporter` and gets less — the filter is
+    in the QUERY, so this page cannot leak by forgetting to check.
+  */
+  const timeline = await ticketTimeline(ticket.id);
+
+  /* ⚠ Assignee ids live inside `to_value` and on the card; ONE query resolves
+     every name the page needs. Names are never stored on an event, so a person
+     who changes their name is not frozen into the record (see `TicketEvent`). */
+  const personIds = [
+    ...new Set(
+      [
+        ticket.assignee_person_id,
+        ...timeline.map((e) => e.toValue),
+        ...timeline.map((e) => e.fromValue),
+      ].filter((x): x is string => !!x && /^[0-9a-f-]{36}$/i.test(x)),
+    ),
+  ];
+  const people = personIds.length
+    ? await prisma.person.findMany({
+        where: { id: { in: personIds } },
+        select: { id: true, first_name: true, last_name: true },
+      })
+    : [];
+  const names: Record<string, string> = {};
+  for (const p of people) {
+    names[p.id] = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
+  }
+  const assigneeName = ticket.assignee_person_id ? (names[ticket.assignee_person_id] ?? null) : null;
+
   const shot = ticket.screenshot_path
     ? await signedSupportScreenshotUrl(ticket.screenshot_path)
     : null;
@@ -48,6 +82,12 @@ export default async function AdminTicketPage({
         <div><dt className="text-ink-2">Priority</dt><dd className="font-semibold">{ticket.priority}</dd></div>
         <div><dt className="text-ink-2">Filed</dt><dd className="font-semibold">{ticket.created_at.toISOString().slice(0, 16).replace("T", " ")}</dd></div>
         <div><dt className="text-ink-2">Solved</dt><dd className="font-semibold">{ticket.date_solved ? ticket.date_solved.toISOString().slice(0, 10) : "—"}</dd></div>
+        {/* ⚠⚠ ASSIGNEE (`P2-ALL-E761` item 4). The page already HAD the id — it
+            passed `assigned={!!ticket.assignee_person_id}` as a BOOLEAN — so an
+            admin could see THAT it was assigned and never to whom.
+            ⚠ `Unassigned` in ink, not a dash: nobody holding it is a real state,
+            not an uncountable one. */}
+        <div><dt className="text-ink-2">Assignee</dt><dd className="font-semibold">{assigneeName ?? "Unassigned"}</dd></div>
       </dl>
 
       <section className="mt-5 rounded-brand border border-line bg-white p-5">
@@ -67,6 +107,13 @@ export default async function AdminTicketPage({
             <p className="mt-1 text-[12.5px] text-ink-2">Private — this link expires.</p>
           </>
         )}
+      </section>
+
+      {/* ⚠⚠ THE TIMELINE SITS ABOVE THE REPLY BOX — it is the ticket's story, and
+          the box is what you do next. */}
+      <section className="mt-5">
+        <h2 className="text-[16px] font-bold">History</h2>
+        <TicketTimeline entries={timeline} names={names} />
       </section>
 
       <TicketThread messages={messages} reporterName={ticket.reporter_name} />

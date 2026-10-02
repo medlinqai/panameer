@@ -32,6 +32,24 @@ const MARKETING_HOSTS = new Set(["panameer.com", "www.panameer.com"]);
 const DEV_MARKETING_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 /**
+ * ⚠⚠⚠ THE STATUS HOST (`P2-ALL-E753`) — `status.panameer.com` serves the public
+ * Work Tracker at `/status`.
+ *
+ * ⚠⚠ **ITS OWN SET, NOT ADDED TO `MARKETING_HOSTS`, FOR THE SAME REASON THE DEV
+ * SET IS SEPARATE:** the marketing allowlist stays EXACTLY TWO ENTRIES, and a
+ * host that serves the tracker must never also serve the marketing root — one
+ * set doing two jobs is how a brief gets misread, and here it would decide what
+ * a stranger sees at `/`.
+ *
+ * ⚠ Locally it is `status.localhost` (any port). ⚠⚠ **THE DEV SPELLING IS
+ * ALLOWED IN DEV BUILDS ONLY**, guarded by `NODE_ENV !== "production"` exactly
+ * as the marketing dev set is — Next inlines `NODE_ENV` at build time, so the
+ * branch is COMPILED OUT of a production build rather than merely switched off.
+ */
+const STATUS_HOSTS = new Set(["status.panameer.com"]);
+const DEV_STATUS_HOSTS = new Set(["status.localhost", "status.127.0.0.1"]);
+
+/**
  * Normalise a Host header value to a bare, comparable hostname: lowercased,
  * port removed, trailing FQDN dot removed. IPv6 literals keep their brackets,
  * which is fine — they are never marketing hosts.
@@ -69,4 +87,18 @@ export function isMarketingHost(value: string | null | undefined): boolean {
   const host = normalizeHost(value);
   if (MARKETING_HOSTS.has(host)) return true;
   return process.env.NODE_ENV !== "production" && DEV_MARKETING_HOSTS.has(host);
+}
+
+/**
+ * True when this host should serve the public Work Tracker at `/` (`E753`).
+ *
+ * ⚠⚠ **A STATUS HOST IS NOT A MARKETING HOST.** `isMarketingHost` returns FALSE
+ * for `status.panameer.com`, which is what the proxy relies on: the status
+ * branch is tested FIRST, and if it ever stopped being, the status host would
+ * fall through to the app arm and redirect a public visitor to `/login`.
+ */
+export function isStatusHost(value: string | null | undefined): boolean {
+  const host = normalizeHost(value);
+  if (STATUS_HOSTS.has(host)) return true;
+  return process.env.NODE_ENV !== "production" && DEV_STATUS_HOSTS.has(host);
 }

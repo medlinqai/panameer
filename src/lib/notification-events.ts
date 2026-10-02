@@ -1084,4 +1084,63 @@ export const NOTIFICATION_EVENTS = {
     */
     href: () => null,
   },
+
+  /*
+    ── ⚠⚠⚠ THE WORK TRACKER'S THREE EVENTS (`P2-ALL-E758`, Scott 2026-10-02) ───
+
+    ⚠⚠ **BELL ONLY IN THIS RUN. NONE OF THESE IS ON `NOTIFICATION_EMAIL_EVENTS`,
+    AND THAT IS THE DECISION, NOT AN OVERSIGHT.** Scott: no scheduler exists, so
+    no weekly digest ships here; and adding a key to that allowlist is the
+    one-line diff that mails real members from a database that also serves
+    production (ruling 38). The templates are built and inert.
+
+    ⚠ ONE CATEGORY, `work_tracker.updates`, for all three — a person follows "the
+    build", not "shipped entries", and three toggles for one decision is three
+    ways to be half-subscribed.
+  */
+  "work_tracker.shipped": {
+    event: "work_tracker.shipped",
+    recipient: "everyone following the build",
+    category: "work_tracker.updates",
+    /* ⚠⚠ `SEND_FOR_APPROVAL`, AND THE ENUM'S OWN COMMENT CHOSE IT: *"AI drafts, a
+       human approves. Used where a row names one person to another, or
+       BROADCASTS TO MANY — neither is a thing an AI should send unreviewed."*
+       These three go to every follower. ⚠ `aiMode` is STORED, never executed. */
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v: Vars) => `Shipped: ${String(v.title ?? "an update")}`,
+    body: (v: Vars) => String(v.body ?? "A new entry is on the Work Tracker."),
+    href: () => "/status",
+  },
+  "work_tracker.gate_passed": {
+    event: "work_tracker.gate_passed",
+    recipient: "everyone following the build",
+    category: "work_tracker.updates",
+    /* ⚠⚠ `SEND_FOR_APPROVAL`, AND THE ENUM'S OWN COMMENT CHOSE IT: *"AI drafts, a
+       human approves. Used where a row names one person to another, or
+       BROADCASTS TO MANY — neither is a thing an AI should send unreviewed."*
+       These three go to every follower. ⚠ `aiMode` is STORED, never executed. */
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v: Vars) => `${String(v.gate ?? "A gate")} passed`,
+    body: (v: Vars) => String(v.gateTitle ?? "Another stage of the build is signed off."),
+    href: () => "/status",
+  },
+  "work_tracker.milestone": {
+    event: "work_tracker.milestone",
+    recipient: "everyone following the build",
+    category: "work_tracker.updates",
+    /* ⚠⚠ `SEND_FOR_APPROVAL`, AND THE ENUM'S OWN COMMENT CHOSE IT: *"AI drafts, a
+       human approves. Used where a row names one person to another, or
+       BROADCASTS TO MANY — neither is a thing an AI should send unreviewed."*
+       These three go to every follower. ⚠ `aiMode` is STORED, never executed. */
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v: Vars) => `Milestone: ${String(v.title ?? "an update")}`,
+    body: (v: Vars) => String(v.description ?? "A milestone on the Work Tracker changed state."),
+    href: () => "/status",
+  },
 } as const satisfies Record<string, NotificationEvent>;
