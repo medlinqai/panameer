@@ -1,0 +1,1853 @@
+{
+ "version": "2.0",
+ "tasks": [
+  {
+   "id": "DEF-001",
+   "phase": "Define",
+   "stage": "AI Setup",
+   "segment": "Claude.ai",
+   "task": "License Claudia (choose cheapest plan for now)",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-002",
+   "phase": "Define",
+   "stage": "AI Setup",
+   "segment": "Claude.ai",
+   "task": "Install Claudia application",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-003",
+   "phase": "Define",
+   "stage": "AI Setup",
+   "segment": "Claude.ai",
+   "task": "Create a Claudia Project for the venture and name it after the methodology",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-004",
+   "phase": "Define",
+   "stage": "AI Setup",
+   "segment": "Claude.ai",
+   "task": "Load AIM into the Project so Claudia works to the method, not around it",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-005",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "Problem to Solve",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-006",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "10,000 Feet - good, service, etc.",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-007",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "Describe its value",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-008",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "Describe its competition",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-009",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "Value Statement",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-010",
+   "phase": "Define",
+   "stage": "Ideate",
+   "segment": "Describe Your Idea",
+   "task": "Describe using the 5Ws",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-011",
+   "phase": "Define",
+   "stage": "Competitive Analysis",
+   "segment": "Positioning",
+   "task": "How does your idea stack up against the competition",
+   "origin": "S"
+  },
+  {
+   "id": "DEF-012",
+   "phase": "Define",
+   "stage": "Competitive Analysis",
+   "segment": "Positioning",
+   "task": "Identify the three closest competitors and their price points",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-013",
+   "phase": "Define",
+   "stage": "Competitive Analysis",
+   "segment": "Positioning",
+   "task": "Name the one thing you do that they cannot copy quickly",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-014",
+   "phase": "Define",
+   "stage": "Make or Buy",
+   "segment": "Decision",
+   "task": "Inventory what already exists off the shelf (SaaS, open source, marketplace)",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-015",
+   "phase": "Define",
+   "stage": "Make or Buy",
+   "segment": "Decision",
+   "task": "Decide build / buy / assemble for each major capability",
+   "origin": "P"
+  },
+  {
+   "id": "DEF-016",
+   "phase": "Define",
+   "stage": "Make or Buy",
+   "segment": "Decision",
+   "task": "Record the decision and the reason — you will be asked later",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-001",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Name (or temp)",
+   "task": "Register names (there will likely be several, this process can take weeks)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-002",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Name (or temp)",
+   "task": "Check domain and social handle availability before committing",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-003",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Name (or temp)",
+   "task": "Run a trademark search",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-004",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Pick your colors (major, minor, grey)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-005",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Pick your font(s)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-006",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Create your logo",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-007",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Create your favicon",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-008",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Create your templates (these will be used moving forward)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-009",
+   "phase": "Design",
+   "stage": "Company",
+   "segment": "Branding",
+   "task": "Write the one-line description you will use everywhere",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-010",
+   "phase": "Design",
+   "stage": "AI Architect",
+   "segment": "Claudia",
+   "task": "Open Claude.ai (Claudia)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-011",
+   "phase": "Design",
+   "stage": "AI Architect",
+   "segment": "Claudia",
+   "task": "Download application & Open",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-012",
+   "phase": "Design",
+   "stage": "AI Architect",
+   "segment": "Claudia",
+   "task": "Create Claude Project",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-013",
+   "phase": "Design",
+   "stage": "AI Architect",
+   "segment": "Claudia",
+   "task": "Open Claudia Chat > Link to Project > SmartName based on Methodology",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-014",
+   "phase": "Design",
+   "stage": "AI Architect",
+   "segment": "Claudia",
+   "task": "Constantly ask Claudia her opinion & for help designing (e.g. she could build your templates)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-015",
+   "phase": "Design",
+   "stage": "Application Processing",
+   "segment": "WHAT (Transactions)",
+   "task": "What transactions does your application create?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-016",
+   "phase": "Design",
+   "stage": "Application Processing",
+   "segment": "WHEN (Data Flow)",
+   "task": "What is the sequence of creating those transactions (data flow diagram)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-017",
+   "phase": "Design",
+   "stage": "Application Processing",
+   "segment": "WHO (Process Flow or Journey)",
+   "task": "Create swimlane flows — how each USER_TYPE gets onboarded; how each transaction gets created; how others see it; how it gets updated and managed",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-018",
+   "phase": "Design",
+   "stage": "Application Processing",
+   "segment": "HOW (Steps Per Journey)",
+   "task": "Write the detailed steps to create each transaction — PARTY1 does ACTION to PARTY2 (including when the application itself has to act), i.e. \"MEDLINQ send EMAIL to PROVIDER\"",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-019",
+   "phase": "Design",
+   "stage": "Application Processing",
+   "segment": "WHY (Domain Model)",
+   "task": "Create a model of how your transactions relate to each other and to the roles",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-020",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Identify a website whose theme and style look like what you want",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-021",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Identify an email style you like or feel is appropriate",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-022",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Styles per users - data intensive pages vs external users, mobile friendly",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-023",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Will you need an app (notifications, data, etc.)?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-024",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Will you list socials (yours/your clients)?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-025",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Will you have email templates (yours, clients)?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-026",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Will your emails be HTML or text?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-027",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Where will your customer find your application (to launch it)?",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-028",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Overall",
+   "task": "Define the accessibility floor — contrast, keyboard, screen reader",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-029",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your main menu",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-030",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your sub-menus",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-031",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design report access (menus? Task panel?)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-032",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your global HEADER (constant page layout - home, profile, search, favorites, notifications, etc.)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-033",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your global footer",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-034",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your email templates",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-035",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Design your launch-point (website, button on website, app store application only?)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-036",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Create a mock-up for EVERY page",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-037",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Create a mock-up for WorkCenter",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-038",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Pages",
+   "task": "Define the empty state and the error state for every page",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-039",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Menus",
+   "task": "Create MENU.XLS — a row for each tool in your casing; a \"Manage\" page for each transaction; a dashboard for each role to manage their workload",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-040",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Menus",
+   "task": "Create a mock-up for the main menu",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-041",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Menus",
+   "task": "Create a mock-up for the sub-menu",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-042",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Tables",
+   "task": "Create TABLES.XLS — a main sheet listing each table; a tab listing the fields/attributes on each table (note which make a record unique)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-043",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Tables",
+   "task": "Mark which fields are PII / PHI and how each is protected",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-044",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Reports",
+   "task": "Create a report theme",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-045",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Reports",
+   "task": "Create a report mock-up for every report (if needed)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-046",
+   "phase": "Design",
+   "stage": "Application Objects",
+   "segment": "Reports",
+   "task": "List the reports stakeholders will ask for on day one",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-047",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "User Classes (sets portal and access points, application usage)",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-048",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "User Profiles - value to set page access and WF roles",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-049",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "Core User Data - values to set organizational access",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-050",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "Business Data Access - values to determine WHO can do WHAT to WHICH data",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-051",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "Transactional Access - who can create which transactions…and which can they view",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-052",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "Decide auth method (password, magic link, SSO) and MFA policy",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-053",
+   "phase": "Design",
+   "stage": "Application Security",
+   "segment": "Elements",
+   "task": "Define the audit trail — who did what to which record, when",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-054",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Theme",
+   "task": "Find the company website you like",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-055",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Theme",
+   "task": "Design your theme",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-056",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Base Pages",
+   "task": "Design Landing",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-057",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Base Pages",
+   "task": "Design About",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-058",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Base Pages",
+   "task": "Design Contact",
+   "origin": "S"
+  },
+  {
+   "id": "DSN-059",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Base Pages",
+   "task": "Design Privacy Policy and Terms",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-060",
+   "phase": "Design",
+   "stage": "Company Website",
+   "segment": "Base Pages",
+   "task": "Design Pricing (or \"Request Access\")",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-061",
+   "phase": "Design",
+   "stage": "Compliance & Legal",
+   "segment": "Regulatory Footprint",
+   "task": "Determine which regimes apply (HIPAA, SOC 2, state privacy)",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-062",
+   "phase": "Design",
+   "stage": "Compliance & Legal",
+   "segment": "Regulatory Footprint",
+   "task": "Decide what data you will deliberately NOT store",
+   "origin": "P"
+  },
+  {
+   "id": "DSN-063",
+   "phase": "Design",
+   "stage": "Compliance & Legal",
+   "segment": "Regulatory Footprint",
+   "task": "Identify the BAA / DPA templates you will need",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-001",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Incorporate",
+   "task": "Register your corporate name",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-002",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Hardware",
+   "task": "License VPS",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-003",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Hardware",
+   "task": "Computer(s), monitors, printer, etc.",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-004",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Banking",
+   "task": "Create bank account",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-005",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Banking",
+   "task": "Get debit and credit cards",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-006",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Register Productivity (G-suite or MSFT) - healthcare matters…privacy",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-007",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Create ACCOUNTS.XLS",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-008",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Create Email Aliases for testing (test_user1…)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-009",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Create SharePoint / OneDrive Folders",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-010",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Upgrade Claude plan (or wait until you get throttled)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-011",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Install Claude Code",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-012",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Upgrade Claudia license to $100 per month",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-013",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Link CC to Claudia license",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-014",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Paid Apps",
+   "task": "Enable 2FA on every account and store the recovery codes somewhere you will find them",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-015",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Download VS Code",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-016",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register Github",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-017",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register X",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-018",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register Instagram",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-019",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register Facebook",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-020",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register LinkedIn",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-021",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Register Free Apps",
+   "task": "Register TikTok",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-022",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Insurance & Contracts",
+   "task": "Get an E&O / cyber liability quote",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-023",
+   "phase": "Build",
+   "stage": "Company",
+   "segment": "Insurance & Contracts",
+   "task": "Draft the standard customer agreement",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-024",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define MVP/Delivery Schedule",
+   "task": "Who is your test audience?",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-025",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define MVP/Delivery Schedule",
+   "task": "When are you releasing the MVP to them?",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-026",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define MVP/Delivery Schedule",
+   "task": "Define MVP RTM",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-027",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define MVP/Delivery Schedule",
+   "task": "Define R2 \"Fast Follow\"",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-028",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P0 = building the basic tool set to start building the application",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-029",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P1 = building the wireframes with stubs for integrations or functions beyond the MVP",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-030",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P2 = build and test units w stubs",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-031",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P3 = test E2E functionality with reports",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-032",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P4 = connect to stubs and test E2E",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-033",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Define Prototypes",
+   "task": "P5 = build PRD, TEST, DEV environments with migration strategy",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-034",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 0",
+   "task": "Stack Decisions — front-end + API routes; application connecting front-end to database; authentication application; workflow automation; back-end database",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-035",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 0",
+   "task": "Stack Build — scaffold Next.js; push to Github; set up DB (Postgres); build the data model (Prisma); set up authentication",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-036",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use menu mock-up to build main menu",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-037",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use menu mock-up to build sub-menu",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-038",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use HEADER mock-up to build the global header",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-039",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use FOOTER mock-up to build the global footer",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-040",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use mock-ups to build all pages, linking to main menu as they get built",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-041",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Add related pages to sub-menu as built",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-042",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Use email mock-up to build email templates",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-043",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Stub all reports (no data yet)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-044",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Stub all integrations",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-045",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Perform basic review of all pages (labels, fields, grammar/colors, consistency, back buttons, etc.)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-046",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Present P1 walkthru to all related parties, note all changes/errors",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-047",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Update pages",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-048",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 1",
+   "task": "Perform final walkthru of updated pages",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-049",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Add steps-per-journey data to each page - detailing ROLE access",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-050",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Check basic data rules (formatting, 4 digit phone numbers, alpha SSNs, etc.)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-051",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Ensure the right fields are in \"Manage\" columns",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-052",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Ensure Elastic Search is working across all data elements",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-053",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Sign in as different users - ensure RBSA is working; menus show only needed pages; pages show correct fields and allow correct updates",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-054",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "NOTE - many structures will exist across more than one user (app admin vs client setup vs client transactions)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-055",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 2",
+   "task": "Build and test each page in isolation",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-056",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 3",
+   "task": "Wire real data to every page — retire the stubs",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-057",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 3",
+   "task": "Build each transaction end to end, one journey at a time",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-058",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 3",
+   "task": "Turn on reports against real data",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-059",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 3",
+   "task": "Run each swimlane flow start to finish as the actual role",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-060",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 3",
+   "task": "Fix the data model wherever reality disagreed with the design",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-061",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Core Application CFG",
+   "task": "ID basic static data like states, area codes, etc.",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-062",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Core Application CFG",
+   "task": "Core application configuration - what is needed before the first customer can onboard",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-063",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Core Application CFG",
+   "task": "Billing",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-064",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Core Application CFG",
+   "task": "Support",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-065",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is creating It",
+   "task": "Onboarding PARTY1 - persona creating transaction(s)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-066",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is creating It",
+   "task": "Email request for party1 to onboard",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-067",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is creating It",
+   "task": "Tiles to manage the onboarding process with a \"Manage\" party1 page",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-068",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is the counterparty",
+   "task": "Onboarding PARTY2 - persona counterpartying transaction(s)",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-069",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is the counterparty",
+   "task": "Email request for party2 to onboard",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-070",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Who is the counterparty",
+   "task": "Tiles to manage the onboarding process with a \"Manage\" party2 page",
+   "origin": "S"
+  },
+  {
+   "id": "BLD-071",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 4",
+   "task": "Replace each stub with the live integration",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-072",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 4",
+   "task": "Handle the failure case for every integration — retry, queue, alert",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-073",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 4",
+   "task": "Test end to end against third-party sandboxes",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-074",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 4",
+   "task": "Confirm emails send, render correctly, and land in the inbox rather than spam",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-075",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 5",
+   "task": "Stand up DEV, TEST and PRD",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-076",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 5",
+   "task": "Build the migration path (schema + data) and run it twice",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-077",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 5",
+   "task": "Automate deploy from Github",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-078",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 5",
+   "task": "Backups on a schedule — and a restore that has been tested, not assumed",
+   "origin": "P"
+  },
+  {
+   "id": "BLD-079",
+   "phase": "Build",
+   "stage": "Application",
+   "segment": "Prototype 5",
+   "task": "Monitoring and error alerting routed somewhere you actually look",
+   "origin": "P"
+  },
+  {
+   "id": "PNM-001",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Public",
+   "task": "Public site: Home, Learn, Talent, Work, Shop, Optimize, Integrate",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-002",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Register",
+   "task": "Account creation for requesters, buyers, recruiters and providers",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-003",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Profile",
+   "task": "Profile, Search Score, usage, settings and experience validation",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-004",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Connect",
+   "task": "Colleagues, messages, forums, mentoring and teams",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-005",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Learn",
+   "task": "Courses and certification",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-006",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Hire",
+   "task": "Work requests, proposals, interviews and work orders",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-007",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Shop",
+   "task": "Service products: catalog, offers and purchase",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-008",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Pay",
+   "task": "Settlement, payment, payout and fee",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-009",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Optimize",
+   "task": "AI maturity assessment and roadmap",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-010",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Platform",
+   "task": "Support tickets, notifications and worklist",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-011",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Milestones",
+   "task": "Team testing on app.panameer.com",
+   "origin": "S"
+  },
+  {
+   "id": "PNM-012",
+   "phase": "Build",
+   "stage": "Panameer Build",
+   "segment": "Milestones",
+   "task": "Public beta opens",
+   "origin": "S"
+  },
+  {
+   "id": "PRV-001",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Functional",
+   "task": "Re-run every journey from the HOW steps and mark pass / fail",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-002",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Functional",
+   "task": "Test each role against the security matrix — try to see what you should not",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-003",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Functional",
+   "task": "Test on the devices your users actually use",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-004",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Functional",
+   "task": "Break it on purpose — bad data, double clicks, back button, expired session",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-005",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Performance",
+   "task": "Load the largest realistic data set and time the slow pages",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-006",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Performance",
+   "task": "Set a page-load target and hold to it",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-007",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Security",
+   "task": "Run a dependency and secrets scan",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-008",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Security",
+   "task": "Penetration test, or at minimum a structured self-audit",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-009",
+   "phase": "Prove",
+   "stage": "Quality",
+   "segment": "Security",
+   "task": "Confirm PII / PHI is encrypted at rest and in transit",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-010",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Documentation",
+   "task": "Write the help content for each user type",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-011",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Documentation",
+   "task": "Record a short walkthrough video per journey",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-012",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Support",
+   "task": "Decide how a user reaches you, and who answers",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-013",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Support",
+   "task": "Build the intake and escalation path",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-014",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Pilot",
+   "task": "Onboard the test audience from your MVP plan",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-015",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Pilot",
+   "task": "Sit with them and watch where they hesitate",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-016",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Pilot",
+   "task": "Log every issue; triage into fix-now / fast-follow / later",
+   "origin": "P"
+  },
+  {
+   "id": "PRV-017",
+   "phase": "Prove",
+   "stage": "Readiness",
+   "segment": "Pilot",
+   "task": "Close the fix-now list and re-test",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-001",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Cutover",
+   "task": "Freeze scope; publish the fast-follow list so it stops being an argument",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-002",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Cutover",
+   "task": "Migrate or seed production data and verify the counts",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-003",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Cutover",
+   "task": "DNS, SSL, and email domain authentication (SPF / DKIM / DMARC)",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-004",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Cutover",
+   "task": "Run the go-live checklist with a named owner per line",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-005",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Cutover",
+   "task": "Write the rollback plan before you need it",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-006",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Commercial",
+   "task": "Turn on billing; test a real charge and a real refund",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-007",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Commercial",
+   "task": "Publish pricing and terms",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-008",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Market",
+   "task": "Website live with the base pages",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-009",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Market",
+   "task": "Socials posted and pointing at the launch point",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-010",
+   "phase": "Launch",
+   "stage": "Go Live",
+   "segment": "Market",
+   "task": "Announce to the pilot group first — they are your references",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-011",
+   "phase": "Launch",
+   "stage": "First Customers",
+   "segment": "Onboarding",
+   "task": "Onboard customer #1 personally, start to finish",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-012",
+   "phase": "Launch",
+   "stage": "First Customers",
+   "segment": "Onboarding",
+   "task": "Time it — that number is your onboarding cost",
+   "origin": "P"
+  },
+  {
+   "id": "LCH-013",
+   "phase": "Launch",
+   "stage": "First Customers",
+   "segment": "Onboarding",
+   "task": "Fix whatever made it slow before customer #5",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-001",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Rhythm",
+   "task": "Weekly: errors, signups, active users, support queue",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-002",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Rhythm",
+   "task": "Monthly: revenue, churn, cost per customer, AI spend",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-003",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Rhythm",
+   "task": "Keep a single roadmap — everything else is a note",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-004",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Reliability",
+   "task": "Watch uptime and response time; set an alert threshold",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-005",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Reliability",
+   "task": "Patch dependencies on a schedule, not on a scare",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-006",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Reliability",
+   "task": "Test the restore, quarterly",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-007",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Cost",
+   "task": "Review VPS, licenses and model spend against usage",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-008",
+   "phase": "Operate",
+   "stage": "Run",
+   "segment": "Cost",
+   "task": "Kill what you are not using",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-009",
+   "phase": "Operate",
+   "stage": "Grow",
+   "segment": "Learn",
+   "task": "Instrument what people actually use, not what you hoped they would",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-010",
+   "phase": "Operate",
+   "stage": "Grow",
+   "segment": "Learn",
+   "task": "Talk to three customers a month, unscripted",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-011",
+   "phase": "Operate",
+   "stage": "Grow",
+   "segment": "Improve",
+   "task": "Feed learnings back to Define — AIM is a loop, not a line",
+   "origin": "P"
+  },
+  {
+   "id": "OPS-012",
+   "phase": "Operate",
+   "stage": "Grow",
+   "segment": "Improve",
+   "task": "Re-run the gates for any material new capability",
+   "origin": "P"
+  }
+ ],
+ "gates": [
+  {
+   "id": "GATE 1",
+   "after": "Define",
+   "origin": "S",
+   "title": "Is the idea worth building?",
+   "criteria": [
+    [
+     "You can explain the idea, its value, and its buyer in two minutes",
+     "P"
+    ],
+    [
+     "Value statement written and defensible",
+     "P"
+    ],
+    [
+     "Competition understood — you know what you do that they cannot copy quickly",
+     "P"
+    ],
+    [
+     "Make-or-buy decided and the reason recorded",
+     "P"
+    ],
+    [
+     "You are willing to spend real money on this",
+     "P"
+    ]
+   ]
+  },
+  {
+   "id": "GATE 2",
+   "after": "Design",
+   "origin": "S",
+   "title": "Is the design complete enough to build against?",
+   "criteria": [
+    [
+     "Every transaction, flow, journey and domain relationship is documented",
+     "P"
+    ],
+    [
+     "Every page has a mock-up — no page enters Build undesigned",
+     "P"
+    ],
+    [
+     "MENU.XLS and TABLES.XLS exist and agree with each other",
+     "P"
+    ],
+    [
+     "Security matrix answers who can do what to which data",
+     "P"
+    ],
+    [
+     "Brand, templates and website theme are settled",
+     "P"
+    ]
+   ]
+  },
+  {
+   "id": "GATE 3",
+   "after": "Build",
+   "origin": "P",
+   "title": "Does it actually work end to end?",
+   "criteria": [
+    [
+     "P0 through P5 complete, each signed off against its own finish line",
+     "P"
+    ],
+    [
+     "Every journey runs start to finish with real data",
+     "P"
+    ],
+    [
+     "Integrations live, with a defined behaviour on failure",
+     "P"
+    ],
+    [
+     "DEV / TEST / PRD exist and the migration path has been run twice",
+     "P"
+    ],
+    [
+     "Backups scheduled and a restore has actually been tested",
+     "P"
+    ]
+   ]
+  },
+  {
+   "id": "GATE 4",
+   "after": "Prove",
+   "origin": "P",
+   "title": "Are we safe to put this in front of paying customers?",
+   "criteria": [
+    [
+     "Functional, performance and security passes complete",
+     "P"
+    ],
+    [
+     "Role-based access tested by trying to see what you should not",
+     "P"
+    ],
+    [
+     "Pilot users onboarded and their fix-now list closed",
+     "P"
+    ],
+    [
+     "Help content and support path exist and have been used once",
+     "P"
+    ],
+    [
+     "Scope frozen; the fast-follow list is published",
+     "P"
+    ]
+   ]
+  }
+ ],
+ "phases": [
+  {
+   "name": "Define",
+   "origin": "S",
+   "purpose": "Decide what you are building and whether it is worth building.",
+   "outcome": "A value statement you can defend, a competitor read, and a build-or-buy decision."
+  },
+  {
+   "name": "Design",
+   "origin": "S",
+   "purpose": "Describe the whole application on paper before writing a line of code.",
+   "outcome": "Transactions, flows, journeys, domain model, every page mocked up, security matrix, and a brand."
+  },
+  {
+   "name": "Build",
+   "origin": "S",
+   "purpose": "Stand the company up and construct the application in ordered prototypes.",
+   "outcome": "A legally real company, a working stack, and P0 through P5 delivered in sequence."
+  },
+  {
+   "name": "Prove",
+   "origin": "P",
+   "purpose": "Attack the application until you trust it, then put it in front of real users.",
+   "outcome": "Tested journeys, a security pass, documentation, a support path, and a completed pilot."
+  },
+  {
+   "name": "Launch",
+   "origin": "P",
+   "purpose": "Go live deliberately, with a rollback plan and named owners.",
+   "outcome": "Production cutover, billing that works, a live website, and customer #1 onboarded personally."
+  },
+  {
+   "name": "Operate",
+   "origin": "P",
+   "purpose": "Run it, watch it, and feed what you learn back into Define.",
+   "outcome": "An operating rhythm, cost control, and a loop back to the top of the method."
+  }
+ ]
+}

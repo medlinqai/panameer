@@ -1,0 +1,270 @@
+/**
+ * ⚠⚠⚠ THE WORK TRACKER'S ONE WRITER (`P2-ALL-E752`).
+ *
+ * Every write to the four `WorkTracker*` tables goes through this module, and
+ * every one of them validates against the CATALOG before it touches the
+ * database: a `task_id` that is not in `aim-catalog.json` is refused, and so is
+ * a status outside `TASK_STATUSES`. ⚠ The tables carry no foreign keys by
+ * design, so this module **is** the referential integrity — there is nothing
+ * underneath it to catch a bad id.
+ *
+ * ⚠⚠ **`updated_by` IS RESOLVED FROM THE SESSION, NEVER FROM THE CLIENT.** The
+ * route passes a `Viewer` it got from `guardApi("canAdminister")`; no caller
+ * supplies an id. That is load-bearing rule 5 applied here.
+ *
+ * ⚠ This module is ADMIN-ONLY and may read catalog text freely. The PUBLIC view
+ * model lives in `public-view.ts` and shares none of these functions.
+ */
+import { prisma } from "@/lib/prisma";
+import type { Viewer } from "@/lib/access";
+import {
+  GATES,
+  PHASE_NAMES,
+  TASKS,
+  isGateValue,
+  isTaskStatus,
+  taskById,
+  type GateValue,
+  type TaskStatus,
+} from "./catalog";
+
+export class WorkTrackerError extends Error {
+  constructor(message: string, public code: "INVALID" | "NOT_FOUND") {
+    super(message);
+    this.name = "WorkTrackerError";
+  }
+}
+
+/* ── reads ──────────────────────────────────────────────────────────────── */
+
+/**
+ * ⚠⚠ ABSENT IS A VALUE, AND THE MAP IS WHERE THAT IS DECIDED ONCE.
+ * A task with no row is `Not Started`. ⚠ Resolving that here means no caller
+ * has to remember it, and the admin page and the public view cannot disagree
+ * about what an untouched task means (`E585`).
+ */
+export type TaskState = { status: TaskStatus; owner: string | null; note: string | null };
+
+export async function taskStates(): Promise<Map<string, TaskState>> {
+  const rows = await prisma.workTrackerTaskState.findMany();
+  const byId = new Map<string, TaskState>();
+  for (const r of rows) {
+    /* ⚠ A row whose stored status is not one of the five is treated as
+       `Not Started` rather than trusted — the column is a string, so nothing at
+       the database level stops a bad value, and a loader is the wrong place to
+       throw. */
+    byId.set(r.task_id, {
+      status: isTaskStatus(r.status) ? r.status : "Not Started",
+      owner: r.owner,
+      note: r.note,
+    });
+  }
+  return byId;
+}
+
+export function statusOf(states: Map<string, TaskState>, taskId: string): TaskStatus {
+  return states.get(taskId)?.status ?? "Not Started";
+}
+
+/** ⚠ Keyed `"<gate_id>#<index>"`. ABSENT means UNANSWERED, which is not `No`. */
+export async function gateStates(): Promise<Map<string, GateValue>> {
+  const rows = await prisma.workTrackerGateState.findMany();
+  const out = new Map<string, GateValue>();
+  for (const r of rows) {
+    if (isGateValue(r.value)) out.set(`${r.gate_id}#${r.criterion_index}`, r.value);
+  }
+  return out;
+}
+
+export async function phaseDates() {
+  const rows = await prisma.workTrackerPhaseDate.findMany();
+  return new Map(rows.map((r) => [r.phase, { start: r.start_date, end: r.end_date }]));
+}
+
+/** ⚠ ADMIN read — returns drafts too. The public reader filters in the WHERE. */
+export async function shippedEntries() {
+  return prisma.workTrackerShipped.findMany({ orderBy: [{ date: "desc" }, { created_at: "desc" }] });
+}
+
+/* ── writes ─────────────────────────────────────────────────────────────── */
+
+export async function setTaskState(
+  viewer: Viewer,
+  taskId: string,
+  input: { status?: unknown; owner?: unknown; note?: unknown }
+) {
+  if (!taskById(taskId)) {
+    throw new WorkTrackerError(`No catalog task "${taskId}"`, "NOT_FOUND");
+  }
+  if (input.status !== undefined && !isTaskStatus(input.status)) {
+    throw new WorkTrackerError(`"${String(input.status)}" is not a task status`, "INVALID");
+  }
+  const owner = trimToNull(input.owner);
+  const note = trimToNull(input.note);
+  const data = {
+    ...(input.status !== undefined ? { status: input.status as TaskStatus } : {}),
+    ...(input.owner !== undefined ? { owner } : {}),
+    ...(input.note !== undefined ? { note } : {}),
+    updated_by: viewer.userId,
+  };
+  return prisma.workTrackerTaskState.upsert({
+    where: { task_id: taskId },
+    update: data,
+    create: { task_id: taskId, status: "Not Started", ...data },
+  });
+}
+
+/**
+ * ⚠⚠ BULK SET BY STAGE — the brief's one bulk affordance.
+ * ⚠ It writes only the tasks the CATALOG puts in that stage, so a stage name
+ * that does not exist changes nothing rather than matching everything.
+ */
+export async function setStageStatus(
+  viewer: Viewer,
+  phase: string,
+  stage: string,
+  status: unknown
+): Promise<number> {
+  if (!isTaskStatus(status)) {
+    throw new WorkTrackerError(`"${String(status)}" is not a task status`, "INVALID");
+  }
+  const ids = TASKS.filter((t) => t.phase === phase && t.stage === stage).map((t) => t.id);
+  if (ids.length === 0) {
+    throw new WorkTrackerError(`No catalog tasks in ${phase} / ${stage}`, "NOT_FOUND");
+  }
+  for (const id of ids) {
+    await prisma.workTrackerTaskState.upsert({
+      where: { task_id: id },
+      update: { status, updated_by: viewer.userId },
+      create: { task_id: id, status, updated_by: viewer.userId },
+    });
+  }
+  return ids.length;
+}
+
+export async function setGateCriterion(
+  viewer: Viewer,
+  gateId: string,
+  criterionIndex: number,
+  value: unknown
+) {
+  const gate = GATES.find((g) => g.id === gateId);
+  if (!gate) throw new WorkTrackerError(`No catalog gate "${gateId}"`, "NOT_FOUND");
+  if (!Number.isInteger(criterionIndex) || criterionIndex < 0 || criterionIndex >= gate.criteria.length) {
+    throw new WorkTrackerError(`Criterion ${criterionIndex} is not in ${gateId}`, "NOT_FOUND");
+  }
+  if (!isGateValue(value)) {
+    throw new WorkTrackerError(`"${String(value)}" is not a gate value`, "INVALID");
+  }
+  return prisma.workTrackerGateState.upsert({
+    where: { gate_id_criterion_index: { gate_id: gateId, criterion_index: criterionIndex } },
+    update: { value, updated_by: viewer.userId },
+    create: { gate_id: gateId, criterion_index: criterionIndex, value, updated_by: viewer.userId },
+  });
+}
+
+export async function setPhaseDates(
+  viewer: Viewer,
+  phase: string,
+  input: { start?: unknown; end?: unknown }
+) {
+  if (!PHASE_NAMES.includes(phase)) {
+    throw new WorkTrackerError(`No catalog phase "${phase}"`, "NOT_FOUND");
+  }
+  const start = toDateOrNull(input.start, "start_date");
+  const end = toDateOrNull(input.end, "end_date");
+  const data = {
+    ...(input.start !== undefined ? { start_date: start } : {}),
+    ...(input.end !== undefined ? { end_date: end } : {}),
+    updated_by: viewer.userId,
+  };
+  return prisma.workTrackerPhaseDate.upsert({
+    where: { phase },
+    update: data,
+    create: { phase, ...data },
+  });
+}
+
+export type ShippedInput = {
+  date?: unknown;
+  journeyTag?: unknown;
+  title?: unknown;
+  body?: unknown;
+  published?: unknown;
+};
+
+export async function createShipped(viewer: Viewer, input: ShippedInput) {
+  const title = trimToNull(input.title);
+  if (!title) throw new WorkTrackerError("A Shipped entry needs a title", "INVALID");
+  const date = toDateOrNull(input.date, "date");
+  if (!date) throw new WorkTrackerError("A Shipped entry needs a date", "INVALID");
+  return prisma.workTrackerShipped.create({
+    data: {
+      date,
+      journey_tag: trimToNull(input.journeyTag),
+      title,
+      body: trimToNull(input.body),
+      /* ⚠⚠⚠ A NEW ENTRY IS A DRAFT, FULL STOP. `published` is ignored on create
+         on purpose: Scott approves each entry, and an API that could create one
+         already published would make that approval optional. */
+      published: false,
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function updateShipped(viewer: Viewer, id: string, input: ShippedInput) {
+  const existing = await prisma.workTrackerShipped.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such Shipped entry", "NOT_FOUND");
+  const title = input.title === undefined ? undefined : trimToNull(input.title);
+  if (input.title !== undefined && !title) {
+    throw new WorkTrackerError("A Shipped entry needs a title", "INVALID");
+  }
+  const date = input.date === undefined ? undefined : toDateOrNull(input.date, "date");
+  if (input.date !== undefined && !date) {
+    throw new WorkTrackerError("A Shipped entry needs a date", "INVALID");
+  }
+  /* ⚠ The two guards above already refused a blank title and an unreadable date,
+     so these are non-null HERE — but `trimToNull`/`toDateOrNull` return nullable
+     types and the columns are not nullable. Narrowing at the call rather than
+     loosening the helpers keeps the refusal in one place. */
+  return prisma.workTrackerShipped.update({
+    where: { id },
+    data: {
+      ...(date ? { date } : {}),
+      ...(input.journeyTag !== undefined ? { journey_tag: trimToNull(input.journeyTag) } : {}),
+      ...(title ? { title } : {}),
+      ...(input.body !== undefined ? { body: trimToNull(input.body) } : {}),
+      ...(input.published !== undefined ? { published: input.published === true } : {}),
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function deleteShipped(id: string) {
+  const existing = await prisma.workTrackerShipped.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such Shipped entry", "NOT_FOUND");
+  return prisma.workTrackerShipped.delete({ where: { id } });
+}
+
+/* ── helpers ────────────────────────────────────────────────────────────── */
+
+function trimToNull(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length === 0 ? null : t;
+}
+
+/**
+ * ⚠⚠ A DATE WE COULD NOT READ IS REFUSED, NEVER SILENTLY TREATED AS TODAY.
+ * ⚠ That is `E549`'s ruling applied here: *"a parse failure must never silently
+ * extend a job to today"* — the same mistake on a phase date would print a
+ * start that nobody chose.
+ */
+function toDateOrNull(v: unknown, field: string): Date | null {
+  if (v === null || v === undefined || v === "") return null;
+  if (typeof v !== "string") throw new WorkTrackerError(`${field} must be a date string`, "INVALID");
+  const d = new Date(`${v}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) throw new WorkTrackerError(`${field} "${v}" is not a date`, "INVALID");
+  return d;
+}

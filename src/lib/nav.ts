@@ -2110,6 +2110,20 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Payments", href: "/admin/payments", icon: "CreditCard" },
       { label: "Messages", href: "/admin/messages", icon: "MessageSquare" },
       { label: "Community", href: "/admin/community", icon: "Users" },
+      /*
+        ── ⚠⚠ THE WORK TRACKER LIVES IN **Transaction Data** (`P2-ALL-E752`) ────
+
+        ⚠ It is a stream of what happened — task statuses, gate decisions, a
+        dated Shipped log — not a directory of what exists, which is the line
+        the two groups are drawn on (see the Buyers/Sellers note below).
+
+        ⚠⚠ **IT IS UNDER `/admin`, NOT `/panameer`, AND THAT IS DELIBERATE:**
+        `/admin/*` inherits `canAdminister` from the admin layout's `guardPage`,
+        while an unlisted path is PUBLIC by default (`E032`, load-bearing rule 5).
+        ⚠ The gear already claims the whole `/admin` subtree in `BAND_PREFIXES`,
+        so this route lights exactly one band item with no change there (`E735`).
+      */
+      { label: "Work Tracker", href: "/admin/work-tracker", icon: "ListChecks" },
     ],
   },
   {

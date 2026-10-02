@@ -7423,3 +7423,123 @@ model OnboardingRequest {
   @@index([status])
   @@map("onboarding_requests")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠⚠⚠ THE WORK TRACKER (`P2-ALL-E752`) — status.panameer.com runs on Panameer's
+// own build. Four tables, and they hold STATE ONLY.
+//
+// ⚠⚠ **THE CATALOG IS NOT IN HERE AND MUST NOT BE.** The 212 AIM tasks, the 6
+// phases and the 4 gates with their criteria live in a STATIC FILE in the repo —
+// `src/lib/work-tracker/aim-catalog.json`. These tables carry only what an admin
+// CHANGES about them. ⚠ That is why every key below is a catalog id (`task_id`,
+// `gate_id`, `phase`) and not a foreign key: there is no row to point at.
+//
+// ⚠⚠ **SCALAR IDS, NO FKs — THE `SupportTicket` PATTERN, DELIBERATELY.** These
+// four are single-drop: nothing else joins to them, no cascade reaches them, and
+// removing the feature is four `DROP TABLE`s with no dependency order to get
+// right. ⚠ Statuses are STRINGS rather than enums for the same reason — an enum
+// is a schema object that outlives its tables and has to be dropped separately.
+//
+// ⚠⚠⚠ **PURELY ADDITIVE, WHICH IS WHAT MAKES `db:push` LEGAL OFF TRUNK.** Nothing
+// above is touched. ⚠⚠ **BUT ONE DATABASE SERVES EVERY BRANCH, AND `db push` IS
+// DECLARATIVE: A `db:push` RUN FROM TRUNK WHILE THESE TABLES ARE STILL EMPTY
+// WILL DROP THEM SILENTLY** — the data-loss prompt only fires on non-empty
+// tables. That is a known hazard of this repo, not of this feature.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// One row per catalog task an admin has touched. ⚠ ABSENT MEANS "Not Started":
+/// seeding 212 rows to say nothing would make the table lie about what has been
+/// decided. The reader defaults; the writer upserts.
+model WorkTrackerTaskState {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ The catalog id — `DEF-001`, `PNM-007`. Scalar, no FK: the task it names
+  /// lives in `aim-catalog.json`, not in this database.
+  task_id String @unique
+
+  /// ⚠ `Not Started` | `In Progress` | `Blocked` | `Done` | `N/A`. A string, not
+  /// an enum — see the block above. Validated in `work-tracker/admin.ts`, which
+  /// is the one writer.
+  status String @default("Not Started")
+
+  owner String?
+  note  String?
+
+  updated_at DateTime @updatedAt
+  /// ⚠ The `User` id of the admin who last changed it, resolved from the SESSION
+  /// and never accepted from the client. Scalar, no FK — `User.id`, not `Person.id`
+  /// (`Viewer` carries `userId`), and nothing joins back through it.
+  updated_by String?  @db.Uuid
+
+  @@index([status])
+  @@map("work_tracker_task_states")
+}
+
+/// One row per gate CRITERION an admin has answered. ⚠ The criterion is
+/// identified by its INDEX in the catalog's `criteria` array, so re-ordering
+/// that array re-points existing answers — the catalog file is append-only by
+/// convention for exactly this reason.
+model WorkTrackerGateState {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ `GATE 1` … `GATE 4`, as the catalog spells them.
+  gate_id         String
+  criterion_index Int
+
+  /// ⚠ `No` | `Yes` | `N/A`. Absent means unanswered, which is NOT the same as
+  /// `No` — an unanswered gate is uncountable, and the public view says so
+  /// rather than printing a reassuring zero.
+  value String @default("No")
+
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@unique([gate_id, criterion_index])
+  @@map("work_tracker_gate_states")
+}
+
+/// When a phase ran. ⚠ Both dates are optional: a phase that has started and not
+/// finished has a start and no end, and that is a fact, not a gap.
+model WorkTrackerPhaseDate {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ The catalog phase NAME — `Define` … `Operate`.
+  phase String @unique
+
+  start_date DateTime? @db.Date
+  end_date   DateTime? @db.Date
+
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@map("work_tracker_phase_dates")
+}
+
+/// The daily "Shipped" log — the reason anyone comes back to the page.
+model WorkTrackerShipped {
+  id String @id @default(uuid()) @db.Uuid
+
+  date DateTime @db.Date
+
+  /// ⚠ A free label — `Profile`, `Connect`, `Platform`. Not a nav slug: the rail's
+  /// words change (`E533`) and an entry written today must still read after a
+  /// rename.
+  journey_tag String?
+
+  title String
+  body  String?
+
+  /// ⚠⚠⚠ **DRAFTS DEFAULT UNPUBLISHED, AND THAT IS THE WHOLE POINT OF THE
+  /// COLUMN.** Scott approves each entry before it shows. The public reader
+  /// filters on `published: true` IN THE WHERE CLAUSE, never with an `if` after
+  /// the query — the same shape `E738`'s masking uses, so a forgotten branch
+  /// cannot leak a draft.
+  published Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([published, date])
+  @@map("work_tracker_shipped")
+}

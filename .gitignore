@@ -66,6 +66,7 @@ e2e/.artifacts/
 e2e-shell/.artifacts/
 # E715 — paired screenshot gate: the harness is tracked, its output is not.
 e2e-e715/.artifacts/
+e2e-tracker/.artifacts/
 e2e-e715/shots/
 # E716 — the door proof: the harness is tracked; its shots and the recorded
 # before-href are run artifacts. A committed before-href would let a later

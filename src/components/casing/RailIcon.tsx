@@ -5,7 +5,7 @@ import {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
-  Tag, Search, Bell, Percent,
+  Tag, Search, Bell, Percent, ListChecks,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,7 +24,11 @@ const ICONS: Record<string, LucideIcon> = {
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
-  Tag, Search, Bell, Percent,
+  /* ⚠ `ListChecks` — ADMIN_NAV's Work Tracker (`P2-ALL-E752`). An icon named in
+     nav.ts but absent from this map renders NOTHING, silently: `RailIcon`
+     returns null on an unknown name. Adding the name without adding it here is
+     the whole failure mode this comment exists to stop. */
+  Tag, Search, Bell, Percent, ListChecks,
 };
 
 export function RailIcon({ name, className = "h-[18px] w-[18px]" }: { name?: string; className?: string }) {
