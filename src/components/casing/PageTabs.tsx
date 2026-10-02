@@ -174,8 +174,64 @@ export function PageTabs({
   const numbered = sequence === "process" || sequence === "suggested";
 
   return (
-    /* ⚠ `relative` carries the fade; the scroller keeps the hairline. */
-    <div className={"relative " + className}>
+    /* ⚠ `relative` carries the fade; the scroller keeps the hairline.
+       ⚠⚠ `isolate` MAKES THIS A STACKING CONTEXT, AND IT IS REQUIRED BY THE BAND
+       BELOW (`P2-A1.1-E751`). The band is `-z-10` so it paints behind the tabs;
+       without a stacking context here that negative index escapes this subtree and
+       the band disappears behind an ancestor's background instead. */
+    <div className={"relative isolate " + className}>
+      {/*
+          ── ⚠⚠⚠ THE BAND, NOT JUST THE STRIP (`P2-A1.1-E751`)
+
+          ⚠ **SCOTT, 2026-10-02, looking at `/profile`: *"tabs row still grey."***
+          `E745` painted the STRIP `bg-surface`, which left a white rectangle
+          floating in grey: the row read as an island, not a band.
+
+          ⚠⚠ **MEASURED BEFORE THE FIX, THREE POINTS × THREE PAGES × TWO SCHEMES.**
+          The strip's own background was already right (`rgb(255,255,255)` light /
+          `rgb(23,17,40)` dark). The grey came from the SHELL showing through,
+          because this wrapper is transparent and so is everything between it and
+          `AppShell`'s root: above the strip = `main`'s `py-6`, beside it =
+          `main`'s `px-5 sm:px-8`. Both read `rgb(250,250,250)` / `rgb(11,8,23)`.
+
+          ⚠⚠⚠ **WHY IT IS A VIEWPORT BLEED AND NOT A NEGATIVE MARGIN, AND THIS IS
+          THE LOAD-BEARING PART:** `-mx-8` would have cancelled `main`'s padding on
+          the EIGHT callers where this wrapper is `main`'s first child — and been
+          **wrong on `/payments`, which nests it one level deeper** (measured:
+          `x=64 w=1152` against everyone else's `x=32 w=1216`). A bleed sized to an
+          ancestor is a second definition of the layout, kept in step by hand
+          (`E585`). ⚠ Sized to the VIEWPORT it is correct at every nesting depth.
+
+          ⚠⚠ **THE COST OF THAT CHOICE IS PAID IN `AppShell.tsx` — `main` CARRIES
+          `overflow-x-clip`.** `100vw` includes the scrollbar, so on a platform with
+          classic (non-overlay) scrollbars this layer would be ~15px wider than the
+          page and put a horizontal scrollbar on every logged-in screen. ⚠ `clip`
+          and NOT `hidden`: `clip` does not create a scroll container, so the sticky
+          asides `P2-ALL-E587` guards keep resolving to the viewport.
+          ⚠ **If that class is ever removed from `main`, this layer overflows.**
+
+          ⚠ `-top-6` cancels `main`'s `py-6`, so the band starts at the top of the
+          content box; `bottom-0` ends it on the strip's own hairline, which is the
+          strip's `border-b` and is NOT painted over. ⚠ Measured: every one of the
+          nine tab-rendering pages puts this row at `y = main.top + 24`.
+
+          ⚠ `aria-hidden` + `pointer-events-none`: it is paint, never a target.
+          ⚠ `bg-surface`, never `bg-white` (`E723`) — it has to follow dark mode.
+
+          ⚠⚠⚠ **`-z-10` IS NOT DECORATION — WITHOUT IT THIS LAYER COVERS THE TABS.**
+          A positioned element paints AFTER all static in-flow content in the same
+          stacking context, so the first version of this band — identical but for
+          the z-index — painted over every tab label and over the strip's own
+          hairline. ⚠ **MEASURED, which is the only reason it was caught:** the
+          border row under the strip read `rgb(229,231,235)` on trunk and
+          `rgb(255,255,255)` with the band, and the screenshot showed an empty
+          white row where the tabs had been. ⚠ `isolate` on the wrapper above is
+          what keeps `-z-10` inside this subtree.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-6 bottom-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-surface"
+      />
       {/*
           ⚠⚠ `data-testid` IS DELIBERATE, NOT DEBRIS (`P2-J3-E591` WS-A item 9).
           ⚠ `connect-walk.spec.ts` asserted the tab row with
@@ -289,10 +345,17 @@ export function PageTabs({
         {children && <div className="ml-auto shrink-0 pb-1 pl-3">{children}</div>}
       </div>
       {/* ⚠ THE RIGHT-EDGE FADE. `pointer-events-none` so it never swallows a tap
-          on the tab beneath it. Sits above the hairline, not over it. */}
+          on the tab beneath it. Sits above the hairline, not over it.
+          ⚠⚠ **`from-surface`, NOT `from-canvas` (`P2-A1.1-E751`).** It fades the
+          scroller out against WHAT IS BEHIND IT, and since `E745` that is the
+          strip's own surface. Fading to canvas painted a grey block over the last
+          32px of a white strip — the most visible half of *"tabs row still grey."*
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   ... w-8 bg-gradient-to-l from-canvas to-transparent
+      */}
       <div
         aria-hidden
-        className="pointer-events-none absolute bottom-[calc(1rem+1px)] right-0 top-0 w-8 bg-gradient-to-l from-canvas to-transparent"
+        className="pointer-events-none absolute bottom-[calc(1rem+1px)] right-0 top-0 w-8 bg-gradient-to-l from-surface to-transparent"
       />
     </div>
   );

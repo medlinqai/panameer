@@ -101,7 +101,26 @@ export async function AppShell({ children }: { children: ReactNode }) {
         */}
         <HiddenProfileBanner />
 
-        <main className="flex-1 px-5 py-6 sm:px-8">{children}</main>
+        {/*
+          ⚠⚠⚠ `overflow-x-clip` IS LOAD-BEARING, NOT TIDYING (`P2-A1.1-E751`).
+
+          ⚠ `PageTabs` paints its band as a `w-screen` layer centred on the viewport,
+          because the one caller that nests the row (`/payments`, measured at `x=64`
+          against everyone else's `x=32`) makes an ancestor-sized negative margin a
+          second definition of the layout (`E585`). ⚠⚠ **`100vw` INCLUDES THE
+          SCROLLBAR**, so on a platform with classic rather than overlay scrollbars
+          that layer is ~15px wider than the page and would put a horizontal
+          scrollbar on EVERY logged-in screen. ⚠ This clips it to the page.
+
+          ⚠⚠ **`clip`, NEVER `hidden`.** `overflow: clip` does not create a scroll
+          container, so `position: sticky` descendants keep resolving against the
+          viewport — which is exactly what `P2-ALL-E587` guards (the band must never
+          cover a sticky aside). ⚠ `hidden` would have made them sticky to a box
+          that does not scroll, i.e. silently fixed.
+          ⚠ Only the X axis is named, so vertical overflow (menus, popovers) is
+          untouched.
+        */}
+        <main className="flex-1 overflow-x-clip px-5 py-6 sm:px-8">{children}</main>
 
         {/*
           ── ⚠⚠ THE SHELL'S FOOTER IS THE REAL ONE NOW (`P1-J1.1-E246` §7) ────────
