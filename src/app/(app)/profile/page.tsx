@@ -283,7 +283,16 @@ export default async function MyProfilePage() {
         //   <div className="mx-auto mb-4 max-w-[1120px]">           (E739 first pass)
       */}
       <div className="mx-auto mb-4 max-w-[1120px]">
-        <FreeLine claim="Build your profile from your résumé and see your full Search Score, free." />
+        {/* ⚠⚠ "UPDATE", NOT "BUILD" (`P2-A1.1-E750`). Scott, 2026-10-02:
+            *"Build makes no sense when I already have a profile."* Ruling:
+            *"Update sounds better."* ⚠ This is the OWNER's own page — everyone
+            reading this line already has a profile, so "Build" described a state
+            none of them is in. ⚠ "latest" is what carries the repeatability: the
+            résumé rebuild can be run again, which is the thing being offered.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   claim="Build your profile from your résumé and see your full Search Score, free."
+        */}
+        <FreeLine claim="Update your profile from your latest résumé and see your full Search Score, free." />
       </div>
       <ConnectProfile
         /* ⚠ `publicUrl` is resolved HERE and nowhere else — see `ensureSlug`
