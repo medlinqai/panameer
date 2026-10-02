@@ -347,6 +347,19 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     value appears anywhere in the response.
   */
   { route: "/providers/[id]", category: 5 },
+  /*
+    ⚠⚠ **`/pro/[slug]` IS THE MEMBER'S PUBLIC URL; `/in/[slug]` IS ITS 308**
+    (`P2-A1.1-E756`, Scott 2026-10-02). ⚠ BOTH stay public: a redirect that
+    needed a session would 302 a stranger to `/login` and the old link would be
+    just as broken as a 404.
+    ⚠⚠⚠ **`/pro` CANNOT CATCH `/profile`, `/providers`, `/projects` OR
+    `/proposals`, AND THAT WAS MEASURED, NOT REASONED:** a non-`subtree` entry
+    here matches by EXACT EQUALITY (`isPublicRoute`, below), and the gated-prefix
+    matcher uses `route === p || route.startsWith(p + "/")` — so `/pro/x` matches
+    no gated prefix while `/profile` and `/providers/abc` do. ⚠ `/projects` and
+    `/proposals` are not routes at all. `check:public-profile` holds this.
+  */
+  { route: "/pro/[slug]", category: 5 },
   { route: "/in/[slug]", category: 5 },
   { route: "/why-panameer", category: 5 },
   { route: "/work-marketplace", category: 5, status: "OPEN" },

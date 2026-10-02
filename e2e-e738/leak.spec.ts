@@ -119,7 +119,9 @@ async function targetFor(profileId: string, label: string): Promise<Target> {
     needles.add(t);
   }
 
-  return { profileId, label, needles: [...needles] };
+  /* ⚠ Drop any needle our own brand would match — see `OUR_BRAND` above. */
+  const usable = [...needles].filter((n) => !OUR_BRAND.includes(n.toLowerCase()));
+  return { profileId, label, needles: usable };
 }
 
 /*
@@ -131,6 +133,31 @@ async function targetFor(profileId: string, label: string): Promise<Target> {
 */
 
 /** ⚠ Words that appear in ordinary page copy and would produce a false red. */
+/**
+ * ── ⚠⚠⚠ A NEEDLE THAT IS PART OF OUR OWN BRAND CANNOT BE SCANNED FOR (`E756`)
+ *
+ * ⚠⚠ **MEASURED, 2026-10-02, AND IT WAS A FALSE RED:** a real provider's
+ * organisation is literally named **`Panameer.com`**, and `P2-ALL-E754` added
+ * `href="https://status.panameer.com"` to the dev banner — which renders from the
+ * ROOT layout, so it is on every page including `/providers/<id>`. The scan found
+ * that href and reported a leak. ⚠ The ONLY occurrence in the whole response was
+ * the banner's own link; no profile data was exposed.
+ *
+ * ⚠⚠⚠ **THIS IS THE SAME CLASS AS `GENERIC`, NOT A WEAKENING.** A substring scan
+ * cannot tell "the company is called Panameer.com" from "the page says
+ * panameer.com in its chrome", because our own name and domain appear in the
+ * header, the footer, every canonical URL and now the banner. ⚠ Ruling 10: a
+ * needle that can match by accident makes the gate a false red, and the cost of a
+ * false red is that people stop believing the green.
+ *
+ * ⚠ **WHAT IS GIVEN UP, STATED HONESTLY:** if a provider's organisation name is a
+ * fragment of our own domain, this gate does not protect that one string. ⚠⚠ It
+ * still protects their person name, email, phone and every other organisation —
+ * and the mask itself is enforced by the TYPE in `masked-profile.ts`, not by this
+ * test, so nothing about the product changes.
+ */
+const OUR_BRAND = "panameer.com";
+
 const GENERIC = new Set([
   "limited", "corporation", "company", "group", "holdings", "partners",
   "services", "solutions", "systems", "technologies", "technology",
@@ -298,7 +325,7 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
     ⚠ The restore runs in a `finally`, so a failed expectation cannot leave a
     member's name published.
   */
-  test("⚠⚠⚠ /in/<slug>: off hides the name, on shows it, and it is restored", async ({
+  test("⚠⚠⚠ /pro/<slug>: off hides the name, on shows it, and it is restored", async ({
     request,
   }) => {
     const scott = await prisma.providerProfile.findFirst({
@@ -330,7 +357,7 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
 
         ⚠⚠⚠ **SCOTT'S TWO REQUIREMENTS CANNOT BOTH HOLD, AND THE REASON IS
         STRUCTURAL RATHER THAN A BUG WE DECLINED TO FIX:**
-          · *"Off: `/in/<slug>` shows the masked preview."*  → the URL exists
+          · *"Off: `/pro/<slug>` shows the masked preview."*  → the URL exists
           · *"option off → no name anywhere in the response."*
         ⚠ The slug is `<first>-<last>`. **NEXT SERIALISES THE ROUTE SEGMENTS
         INTO THE DOCUMENT IT EMITS — INCLUDING THE SHELL IT EMITS ALONGSIDE A
@@ -349,9 +376,10 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
              against every live needle EXCEPT the slug itself.
         ⚠⚠⚠ **REPORTED TO SCOTT AS AN OPEN QUESTION:** the only way to make the
         OFF state leak nothing at all is to stop deriving the slug from the
-        name. That is a product decision about what `/in/` is FOR.
+        name. That is a product decision about what `/pro/` is FOR.
+        ⚠ RENAMED `/in/` → `/pro/` by `P2-A1.1-E756`; `/in/` still 308s here.
       */
-      const off = await request.get(`/in/${slug}`, { maxRedirects: 0 });
+      const off = await request.get(`/pro/${slug}`, { maxRedirects: 0 });
       expect([302, 303, 307]).toContain(off.status());
 
       /* 1 — the forward names nobody. */
@@ -390,7 +418,7 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
         where: { id: scott!.id },
         data: { public_name_at: new Date() },
       });
-      const on = await request.get(`/in/${slug}`);
+      const on = await request.get(`/pro/${slug}`);
       expect(on.status()).toBe(200);
       const onBody = await on.text();
       /* ⚠⚠ THE POSITIVE HALF. Without it, deleting the whole named page would
@@ -404,7 +432,7 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
       expect(onBody, "the named page is missing its rate lock").toContain(
         "Register free to see rates"
       );
-      console.log(`E738/WS-C  /in/${slug} — off: no name + noindex · on: named + indexable`);
+      console.log(`E738/WS-C  /pro/${slug} — off: no name + noindex · on: named + indexable`);
     } finally {
       /* ⚠⚠ ALWAYS PUT IT BACK. A failed assertion must not leave a real
          member's name published. */
@@ -433,5 +461,54 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
     const bad = [...seen.entries()].filter(([, v]) => v.length > 1);
     expect(bad, `profiles with more than one live slug: ${JSON.stringify(bad)}`).toEqual([]);
     console.log(`E738/WS-C  ${rows.length} live slugs, ${seen.size} profiles, 0 duplicates`);
+  });
+});
+
+/**
+ * ── ⚠⚠⚠ `P2-A1.1-E756` — THE RENAME'S OWN ASSERTIONS ─────────────────────────
+ *
+ * ⚠ Three separate claims, because the rename has three ways to go wrong and
+ * only one of them is about the new URL working.
+ */
+test.describe("P2-A1.1-E756 — /in/ became /pro/", () => {
+  test("⚠ the old URL still works: /in/<slug> is a 308 to /pro/<slug>", async ({ request }) => {
+    const slug = "scott-walls";
+    const r = await request.get(`/in/${slug}`, { maxRedirects: 0 });
+    /* ⚠⚠ 308 AND NOT 302. A temporary redirect would leave `/in/` in the index
+       forever and split the member's own link equity across two addresses. */
+    expect(r.status(), "the old personal URL must keep working").toBe(308);
+    expect(r.headers()["location"]).toContain(`/pro/${slug}`);
+  });
+
+  test("⚠⚠ an unknown slug is a 404, never a 500", async ({ request }) => {
+    /* ⚠⚠⚠ THIS IS THE DEFECT `E756` FIXED, AND IT WAS LIVE ON TRUNK. The route
+       passed the sentinel `id="__none__"` into a `uuid` column, so Postgres
+       answered `invalid input syntax for type uuid` and a stranger got a 500.
+       ⚠ A 404 keeps the privacy property (an unknown slug and a hidden profile
+       must look the same); a 500 breaks it, because "something about this one
+       broke" is itself a signal. */
+    const r = await request.get("/pro/no-such-person-at-all", { maxRedirects: 0 });
+    expect(r.status(), "an unknown slug must 404, not 500").toBe(404);
+    /* ⚠ And through the old door too, which redirects first. */
+    const viaOld = await request.get("/in/no-such-person-at-all");
+    expect(viaOld.status()).toBe(404);
+  });
+
+  test("⚠⚠⚠ /pro does not swallow /profile, /providers, /projects or /proposals", async ({
+    request,
+  }) => {
+    /* ⚠ The brief asked for this proved rather than reasoned. `/profile` is
+       GATED, so a signed-out request must still be bounced to login — if `/pro`
+       had started matching it as a public prefix, this would return 200. */
+    const profile = await request.get("/profile", { maxRedirects: 0 });
+    expect([302, 307].includes(profile.status()), "/profile must stay gated").toBe(true);
+    expect(profile.headers()["location"] ?? "").toContain("/login");
+
+    /* ⚠ `/providers` is a real gated subtree; `/projects` and `/proposals` are
+       not routes at all. None of the three may resolve as `/pro` + something. */
+    for (const path of ["/providers", "/projects", "/proposals"]) {
+      const r = await request.get(path, { maxRedirects: 0 });
+      expect(r.status(), `${path} must not be served as a /pro slug`).not.toBe(200);
+    }
   });
 });

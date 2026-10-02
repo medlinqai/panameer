@@ -58,7 +58,8 @@ export async function NamedProfilePage({
   }
 
   const who = `${p.named.firstName} ${p.named.lastName}`.trim();
-  const dest = `/in/${slug}`;
+  /* ⚠ `/pro/`, renamed from `/in/` (`P2-A1.1-E756`). */
+  const dest = `/pro/${slug}`;
   const joinHref = `/join?callbackUrl=${encodeURIComponent(dest)}`;
   const signInHref = `/login?callbackUrl=${encodeURIComponent(dest)}`;
 
