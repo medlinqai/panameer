@@ -30,6 +30,7 @@ import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite"
 import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
 import { projectValidatedTemplate } from "@/lib/email/templates/project-validated";
 import { projectValidationTemplate } from "@/lib/email/templates/project-validation";
+import { employerValidationTemplate } from "@/lib/email/templates/employer-validation";
 import { recommendationRequestTemplate } from "@/lib/email/templates/recommendation-request";
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
@@ -239,6 +240,18 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
      hole that let the invitation's copy drift is closed. */
   { name: "project-validation", inSuite: false,
     out: projectValidationTemplate({ providerName: "scott", projectName: "Cloud Rollout", clientName: "Acme", confirmUrl: "https://panameer.com/c/x" }) },
+  /*
+    ⚠⚠ `P2-A1.1-E747` WS-B — the 17th template, asserted from the day it ships.
+    ⚠⚠⚠ **IT IS IN THE SUITE AND IT IS EXPECTED TO PASS**, unlike its project
+    twin above: that one is `KNOWN_OPEN` because its copy says *"project"* where
+    Scott ruled the word must not appear, and this one says *"role"* and *"work
+    here"*. ⚠ Both the full case and the bare one are rendered, because a row
+    with no title and no dates is the ordinary imported shape.
+  */
+  { name: "employer-validation", inSuite: false,
+    out: employerValidationTemplate({ providerName: "scott", employerName: "Ceres Insurance", roleTitle: "Procurement Lead", dates: "2019 – 2022", confirmUrl: "https://panameer.com/c/x" }) },
+  { name: "employer-validation (no title, no dates)", inSuite: false,
+    out: employerValidationTemplate({ providerName: "ann", employerName: "Acme", roleTitle: null, dates: null, confirmUrl: "https://panameer.com/c/y" }) },
   { name: "recommendation-request", inSuite: false,
     out: recommendationRequestTemplate({ providerName: "scott", contactName: "dana", message: "Would you vouch?", respondUrl: "https://panameer.com/r/x", invite: false }) },
   // Refactored onto the shell by WS-A — same shell rules apply.

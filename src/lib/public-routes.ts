@@ -239,6 +239,15 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
      /login and the email is a dead end. */
   { route: "/invite/colleague/[token]", category: 4 },
   { route: "/validate/[token]", category: 4 },
+  /*
+    ⚠⚠ `P2-A1.1-E747` WS-B — the employer twin of the line above, and public for
+    exactly the same reason: ⚠ **the TOKEN is the access control** — single-use,
+    30 days, SHA-256-hashed in the database, mailed to one named address.
+    ⚠⚠⚠ A former manager or HR contact is not a Panameer user and must not be
+    made one to answer a yes/no question. ⚠ Without this line it 302s to /login
+    and the email is a dead end — **the default is DENY.**
+  */
+  { route: "/validate/employer/[token]", category: 4 },
   { route: "/recommend/[token]", category: 4 },
   { route: "/verify-email", category: 4 },
   /*

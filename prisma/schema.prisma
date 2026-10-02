@@ -1676,15 +1676,83 @@ model Employer {
   /// provider may override it, and an override has to survive.
   job_role_type_id String?        @db.Uuid
 
+  /// ── ⚠⚠ EMPLOYER VALIDATION (`P2-A1.1-E747`, WS-B) ────────────────────────
+  ///
+  /// ⚠ SCOTT, 2026-10-01: *"where are we allowing the provider to validate his
+  /// work experience? Then there should also be a badge at the employer/project
+  /// levels."* ⚠⚠ Projects had this; employers had **nothing** — no field, no
+  /// model. Additive only (ruling 38).
+  ///
+  /// ⚠⚠⚠ **AN EMPLOYER VALIDATES ON ITS OWN.** It does not validate the projects
+  /// under it, and validating every project does not validate the employer — the
+  /// brief is explicit, and they are different claims: *"he worked here"* is not
+  /// *"he did this piece of work"*.
+  ///
+  /// ⚠ The mirror of `Project.validation_status`, reusing the SAME enum rather
+  /// than declaring a second one with the same three members (`E585`).
+  validation_status ProjectValidationStatus @default(NONE)
+  /// ⚠⚠ `contact_email` ALREADY EXISTS ON THIS MODEL and is reused — it is who
+  /// at this employer can confirm. ⚠⚠⚠ **MEASURED, NOT ASSUMED: ADDING IT AGAIN
+  /// WAS MY FIRST DRAFT AND `prisma validate` REFUSED IT** (*"Field
+  /// `contact_email` is already defined on model `Employer`"*). A second column
+  /// for one fact is `E585` in schema form, and the validator caught it.
+  /// ⚠⚠ The employer's own internet domain, the thing that makes the badge mean
+  /// something: a request may only go to an address AT this domain, so a
+  /// provider cannot confirm their own employment from a personal inbox. ⚠ Same
+  /// rule and same guard as `Project.client_domain`.
+  contact_domain    String?
+
   providerProfile ProviderProfile @relation(fields: [provider_profile_id], references: [id], onDelete: Cascade)
   jobRoleType     RoleType?       @relation("EmployerJobRole", fields: [job_role_type_id], references: [id], onDelete: SetNull)
   projects        Project[]
   artifacts       Artifact[]
   skills          JobSkill[]
+  validations     EmployerValidation[]
 
   @@index([provider_profile_id])
   @@index([job_role_type_id])
   @@map("employers")
+}
+
+/// ── ⚠⚠⚠ ONE REQUEST TO CONFIRM AN EMPLOYMENT (`P2-A1.1-E747`, WS-B) ────────
+///
+/// ⚠ The mirror of `ProjectValidation`, one level up: *"Did &lt;first name&gt; work
+/// at &lt;employer&gt; as &lt;title&gt;, &lt;start&gt;–&lt;end&gt;?"*
+///
+/// ⚠⚠ **IT IS A SEPARATE MODEL, NOT A NULLABLE `employer_id` ON
+/// `ProjectValidation`.** ⚠⚠⚠ That shape would make every existing query on that
+/// table ambiguous — `where: { project_id }` would silently also match employer
+/// rows the day somebody forgot a clause — and the public `/validate/[token]`
+/// page would have to branch on which of two things it was looking at. ⚠ Two
+/// questions, two tables; the TOKEN tells them apart at the route.
+///
+/// ⚠ `token_hash` is unique ACROSS this table only. The responder route resolves
+/// a token against both tables and refuses if it is in neither.
+model EmployerValidation {
+  id            String                         @id @default(uuid()) @db.Uuid
+  employer_id   String                         @db.Uuid
+  /// ⚠ Captured at send time — `Employer.contact_email` can be edited after, and
+  /// this must record who was actually asked.
+  contact_email String
+  token_hash    String                         @unique
+  status        ProjectValidationRequestStatus @default(SENT)
+  expires_at    DateTime
+  sent_at       DateTime                       @default(now())
+  responded_at  DateTime?
+  /// ⚠ Light provenance. Never shown to the provider — it exists so a disputed
+  /// confirmation can be investigated.
+  responder_ip  String?
+  responder_ua  String?
+  /// ⚠⚠ **THE ON-PLATFORM ROUTE (the brief's "second route").** Set when a
+  /// Panameer colleague confirmed it from their worklist instead of a stranger
+  /// answering an email. ⚠ The badge then reads *"by a Panameer colleague"* and
+  /// still names nobody.
+  confirmed_by_person_id String? @db.Uuid
+
+  employer Employer @relation(fields: [employer_id], references: [id], onDelete: Cascade)
+
+  @@index([employer_id])
+  @@map("employer_validations")
 }
 
 /// A SKILL USED ON ONE JOB — the source of truth for everything downstream
