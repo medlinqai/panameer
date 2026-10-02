@@ -22,9 +22,11 @@ import {
   PHASE_NAMES,
   TASKS,
   isGateValue,
+  isJourneyStage,
   isTaskStatus,
   taskById,
   type GateValue,
+  type JourneyStage,
   type TaskStatus,
 } from "./catalog";
 
@@ -43,7 +45,13 @@ export class WorkTrackerError extends Error {
  * has to remember it, and the admin page and the public view cannot disagree
  * about what an untouched task means (`E585`).
  */
-export type TaskState = { status: TaskStatus; owner: string | null; note: string | null };
+export type TaskState = {
+  status: TaskStatus;
+  owner: string | null;
+  note: string | null;
+  /** ⚠ `null` = no segments shown, never a guessed `design` (`E757`). */
+  stage: JourneyStage | null;
+};
 
 export async function taskStates(): Promise<Map<string, TaskState>> {
   const rows = await prisma.workTrackerTaskState.findMany();
@@ -57,6 +65,9 @@ export async function taskStates(): Promise<Map<string, TaskState>> {
       status: isTaskStatus(r.status) ? r.status : "Not Started",
       owner: r.owner,
       note: r.note,
+      /* ⚠ An unrecognised stored stage reads as null — no segments — rather than
+         being trusted. The column is a string; nothing at the DB level guards it. */
+      stage: isJourneyStage(r.stage) ? r.stage : null,
     });
   }
   return byId;
@@ -81,6 +92,90 @@ export async function phaseDates() {
   return new Map(rows.map((r) => [r.phase, { start: r.start_date, end: r.end_date }]));
 }
 
+/**
+ * ⚠⚠ MILESTONES (`P2-ALL-E757`). ADMIN read — returns drafts too.
+ * ⚠ Ordered by `sort` then `date`, because two milestones can share a date and
+ * chronological is not always the reading order.
+ */
+export async function milestones() {
+  return prisma.workTrackerMilestone.findMany({ orderBy: [{ sort: "asc" }, { date: "asc" }] });
+}
+
+export const MILESTONE_STATUSES = ["Planned", "In progress", "Done"] as const;
+export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
+
+function isMilestoneStatus(v: unknown): v is MilestoneStatus {
+  return typeof v === "string" && (MILESTONE_STATUSES as readonly string[]).includes(v);
+}
+
+export type MilestoneInput = {
+  title?: unknown;
+  description?: unknown;
+  date?: unknown;
+  status?: unknown;
+  sort?: unknown;
+  published?: unknown;
+};
+
+export async function createMilestone(viewer: Viewer, input: MilestoneInput) {
+  const title = trimToNull(input.title);
+  if (!title) throw new WorkTrackerError("A milestone needs a title", "INVALID");
+  const date = toDateOrNull(input.date, "date");
+  /* ⚠⚠ THE DATE IS REQUIRED AND THAT IS THE POINT OF THE TABLE — a milestone
+     with no date cannot be placed on the Build Line, which is why it exists. */
+  if (!date) throw new WorkTrackerError("A milestone needs a date", "INVALID");
+  if (input.status !== undefined && !isMilestoneStatus(input.status)) {
+    throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
+  }
+  return prisma.workTrackerMilestone.create({
+    data: {
+      title,
+      description: trimToNull(input.description),
+      date,
+      status: isMilestoneStatus(input.status) ? input.status : "Planned",
+      sort: Number.isInteger(Number(input.sort)) ? Number(input.sort) : 0,
+      /* ⚠ A new milestone is a DRAFT, for the same reason a Shipped entry is:
+         Scott approves what the public sees. `published` is ignored on create. */
+      published: false,
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function updateMilestone(viewer: Viewer, id: string, input: MilestoneInput) {
+  const existing = await prisma.workTrackerMilestone.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such milestone", "NOT_FOUND");
+  const title = input.title === undefined ? undefined : trimToNull(input.title);
+  if (input.title !== undefined && !title) {
+    throw new WorkTrackerError("A milestone needs a title", "INVALID");
+  }
+  const date = input.date === undefined ? undefined : toDateOrNull(input.date, "date");
+  if (input.date !== undefined && !date) {
+    throw new WorkTrackerError("A milestone needs a date", "INVALID");
+  }
+  if (input.status !== undefined && !isMilestoneStatus(input.status)) {
+    throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
+  }
+  return prisma.workTrackerMilestone.update({
+    where: { id },
+    data: {
+      ...(title ? { title } : {}),
+      ...(input.description !== undefined ? { description: trimToNull(input.description) } : {}),
+      ...(date ? { date } : {}),
+      ...(input.status !== undefined ? { status: input.status as MilestoneStatus } : {}),
+      ...(input.sort !== undefined && Number.isInteger(Number(input.sort)) ? { sort: Number(input.sort) } : {}),
+      ...(input.published !== undefined ? { published: input.published === true } : {}),
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function deleteMilestone(id: string) {
+  const existing = await prisma.workTrackerMilestone.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such milestone", "NOT_FOUND");
+  return prisma.workTrackerMilestone.delete({ where: { id } });
+}
+
 /** ⚠ ADMIN read — returns drafts too. The public reader filters in the WHERE. */
 export async function shippedEntries() {
   return prisma.workTrackerShipped.findMany({ orderBy: [{ date: "desc" }, { created_at: "desc" }] });
@@ -91,7 +186,7 @@ export async function shippedEntries() {
 export async function setTaskState(
   viewer: Viewer,
   taskId: string,
-  input: { status?: unknown; owner?: unknown; note?: unknown }
+  input: { status?: unknown; owner?: unknown; note?: unknown; stage?: unknown }
 ) {
   if (!taskById(taskId)) {
     throw new WorkTrackerError(`No catalog task "${taskId}"`, "NOT_FOUND");
@@ -99,12 +194,20 @@ export async function setTaskState(
   if (input.status !== undefined && !isTaskStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a task status`, "INVALID");
   }
+  /* ⚠⚠ `stage` ACCEPTS `null` DELIBERATELY — clearing it back to "no segments"
+     must be possible, or a mis-click is permanent. Empty string and null both
+     clear; anything else must be one of the four. */
+  if (input.stage !== undefined && input.stage !== null && input.stage !== "" && !isJourneyStage(input.stage)) {
+    throw new WorkTrackerError(`"${String(input.stage)}" is not a journey stage`, "INVALID");
+  }
+  const stage = input.stage === undefined ? undefined : isJourneyStage(input.stage) ? input.stage : null;
   const owner = trimToNull(input.owner);
   const note = trimToNull(input.note);
   const data = {
     ...(input.status !== undefined ? { status: input.status as TaskStatus } : {}),
     ...(input.owner !== undefined ? { owner } : {}),
     ...(input.note !== undefined ? { note } : {}),
+    ...(stage !== undefined ? { stage } : {}),
     updated_by: viewer.userId,
   };
   return prisma.workTrackerTaskState.upsert({
@@ -152,6 +255,20 @@ export async function setGateCriterion(
   if (!gate) throw new WorkTrackerError(`No catalog gate "${gateId}"`, "NOT_FOUND");
   if (!Number.isInteger(criterionIndex) || criterionIndex < 0 || criterionIndex >= gate.criteria.length) {
     throw new WorkTrackerError(`Criterion ${criterionIndex} is not in ${gateId}`, "NOT_FOUND");
+  }
+  /*
+    ⚠⚠⚠ AN ADMIN CAN CLEAR AN ANSWER (Scott, 2026-10-02: *"yes, an admin can
+    clear one"*). ⚠ `""` or `null` DELETES the row, which is what returns the
+    criterion to UNANSWERED — and unanswered is a different fact from `No`, which
+    is why it cannot be represented by writing a value.
+    ⚠ `deleteMany` rather than `delete`: clearing something already clear must
+    not throw. The admin pressed the button; the end state is what they asked for.
+  */
+  if (value === "" || value === null) {
+    await prisma.workTrackerGateState.deleteMany({
+      where: { gate_id: gateId, criterion_index: criterionIndex },
+    });
+    return null;
   }
   if (!isGateValue(value)) {
     throw new WorkTrackerError(`"${String(value)}" is not a gate value`, "INVALID");

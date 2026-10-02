@@ -1,134 +1,270 @@
+import Link from "next/link";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { BuildLine } from "@/components/status/BuildLine";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 
 /**
- * `/status` — the public Work Tracker (`P2-ALL-E753`).
+ * `/status` — the public Panameer Work Tracker (`P2-ALL-E753` route, `E757` UI).
  *
- * ⚠⚠ **THIS IS A PLACEHOLDER ON PURPOSE.** Lane D builds the approved mockup
- * (`mockups/tracker_page_2026-10-02.html`) with the real `MarketingHeader`; it
- * waits on Scott's separate go. ⚠ What is here renders the SAME view model lane
- * D will, so the data contract is already proved by the leak test.
+ * ⚠⚠ **BUILT TO MOCKUP v5, "the Build Line".** Copy is the mockup's, verbatim,
+ * except where data replaces example figures — which is the brief's instruction
+ * and the reason none of the numbers below are written in the markup.
+ *
+ * ⚠⚠⚠ **EVERY FIGURE COMES FROM `getPublicTracker()` AND NOTHING ELSE.** That
+ * module's types have nowhere to put task text, task ids, criterion text, notes
+ * or owners, which is what keeps Scott's *"no cookbook for the competition"*
+ * rule enforced by the TYPE rather than by this template. The leak test asserts
+ * it against this page's rendered HTML, not just the API.
  *
  * ⚠ Reached two ways: by path on any host, and by a rewrite from
- * `status.panameer.com/` (`src/proxy.ts`). The path is what makes it walkable
- * locally without a hosts-file entry.
+ * `status.panameer.com/` (`src/proxy.ts`). ⚠⚠ `revalidate = 60` — the tracker
+ * changes a few times a day and strangers reload it daily.
  *
- * ⚠⚠ `revalidate = 60` — the same minute the API uses. The tracker changes a few
- * times a day and the page is meant to be reloaded daily by strangers.
+ * ⚠ **A DELIBERATE LIGHT DESIGN WITH INK BANDS.** Tokens throughout so dark mode
+ * reads; `bg-surface`, never `bg-white` (`E723`).
  */
 export const revalidate = 60;
 
 export const metadata = {
   title: "Panameer Work Tracker",
-  description: "Panameer, being built in the open.",
+  description: "Watch your platform get built — Panameer, in the open.",
 };
+
+const STAGE_WORD: Record<string, string> = {
+  design: "Designing",
+  build: "Building",
+  test: "Testing now",
+  live: "Live",
+};
+
+/** ⚠ The four segments. A `null` stage fills none — an honest "not started". */
+const STAGE_INDEX: Record<string, number> = { design: 1, build: 2, test: 3, live: 4 };
 
 export default async function StatusPage() {
   const t = await getPublicTracker();
+  const current = t.phases.find((p) => p.current) ?? null;
+  const currentIndex = t.phases.findIndex((p) => p.current) + 1;
+  const moving = t.currentPhaseStages.filter((s) => s.status === "In Progress").length;
+  const gatesPassed = t.gates.filter((g) => g.passed).length;
+  const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
-    <main className="mx-auto max-w-[900px] px-5 py-10 sm:px-8">
-      <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-magenta">Panameer Work Tracker</p>
-      <h1 className="mt-1 font-display text-[30px] font-bold tracking-[-0.4px] text-ink">
-        Panameer, being built in the open
-      </h1>
+    <div className="bg-surface">
+      <MarketingHeader />
 
-      <p className="mt-3 text-[15px] text-ink-2">
-        {/* ⚠ A real zero renders as 0; an uncountable figure renders as a dash WITH
-            its reason. The two must not look the same. */}
-        {t.overallPercent === null ? (
-          <>— overall · nothing countable yet</>
-        ) : (
-          <>
-            <span className="font-bold text-ink">{t.overallPercent}%</span> overall · {t.doneCount} of{" "}
-            {t.taskCount} done
-          </>
+      {/* ── HERO (ink band) ─────────────────────────────────────────────── */}
+      <section className="bg-ink px-5 py-12 text-surface sm:px-8">
+        <div className="mx-auto max-w-[1040px]">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-surface/70">
+            {/* ⚠⚠⚠ "Day N" IS DROPPED UNTIL DEFINE HAS A START DATE (Scott,
+                2026-10-02: *"no NaN, no invented date"*). The clause disappears;
+                nothing stands in for it. */}
+            Work Tracker · Building in the open
+            {t.dayNumber !== null && <> · Day {t.dayNumber}</>}
+          </p>
+          <h1 className="mt-2 font-display text-[34px] font-bold leading-[1.1] tracking-[-0.6px] sm:text-[44px]">
+            Watch your platform <em className="not-italic text-magenta">get built.</em>
+          </h1>
+          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-surface/80">
+            This is the Panameer Work Tracker, the same tracker buyers and providers will use on their own
+            projects. Here it follows ours, every day, from first idea to public beta.
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <span className="font-display text-[52px] font-bold leading-none">
+              {/* ⚠ A real zero renders as 0; an uncountable figure renders a dash
+                  WITH its reason. The two must not look the same. */}
+              {t.overallPercent === null ? "—" : `${t.overallPercent}%`}
+            </span>
+            <span className="text-[14px] text-surface/75">
+              {t.overallPercent === null ? "nothing countable yet" : "of the plan complete"} · updated{" "}
+              {updated}
+            </span>
+          </div>
+          <p className="mt-2 text-[14px] text-surface/75">
+            {t.doneCount} done · {moving} moving · {gatesPassed} of {t.gates.length} gates
+          </p>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-[1040px] px-5 sm:px-8">
+        <BuildLine phases={t.phases} milestones={t.milestones} now={Date.parse(t.generatedAt)} />
+
+        {/* ── CURRENT PHASE ───────────────────────────────────────────── */}
+        {current && (
+          <section className="mt-12 border-t border-line pt-6">
+            <p className="font-mono text-[13px] text-ink-2">
+              {String(currentIndex).padStart(2, "0")}/{String(t.phases.length).padStart(2, "0")}
+            </p>
+            <h2 className="mt-1 font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+              {current.name}
+            </h2>
+            <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">{current.purpose}</p>
+
+            <ul className="mt-5 border-t border-line">
+              {t.currentPhaseStages.map((s) => (
+                <li
+                  key={s.name}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-3"
+                >
+                  <span className="text-[15px] text-ink">{s.name}</span>
+                  <Segments filled={s.percent === null ? 0 : Math.round((s.percent / 100) * 4)} />
+                  <span className="ml-auto text-[13px] text-ink-2">
+                    {s.percent === null ? "— not countable" : `${s.percent}%`} · {s.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-        {t.currentPhase && <> · now in {t.currentPhase}</>}
-      </p>
 
-      <section className="mt-8">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Phases</h2>
-        <ul className="mt-2 border-t border-line">
-          {t.phases.map((p) => (
-            <li key={p.name} className="flex flex-wrap items-baseline gap-x-3 border-b border-line py-2.5">
-              <span className="font-display text-[16px] font-bold text-ink">{p.name}</span>
-              <span className="text-[13px] text-ink-2">
-                {p.percent === null ? "— not countable" : `${p.percent}%`}
-                {p.start && ` · from ${p.start}`}
-                {p.end && ` to ${p.end}`}
-              </span>
-              {p.current && <span className="text-[12px] font-bold text-magenta">current</span>}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Gates</h2>
-        <ul className="mt-2 border-t border-line">
-          {t.gates.map((g) => (
-            <li key={g.id} className="flex flex-wrap items-baseline gap-x-3 border-b border-line py-2.5">
-              <span className="font-bold text-ink">{g.id}</span>
-              <span className="text-[14px] text-ink">{g.title}</span>
-              <span className="ml-auto text-[13px] text-ink-2">
-                {g.answered} of {g.criteriaCount} answered · {g.passed ? "passed" : "open"}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {t.currentPhase && (
-        <section className="mt-8">
-          <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
-            {t.currentPhase} — stages
+        {/* ── JOURNEYS ────────────────────────────────────────────────── */}
+        <section className="mt-12 border-t border-line pt-6">
+          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+            Ten parts of one platform.
           </h2>
-          <ul className="mt-2 border-t border-line">
-            {t.currentPhaseStages.map((s) => (
-              <li key={s.name} className="flex flex-wrap items-baseline gap-x-3 border-b border-line py-2.5">
-                <span className="text-[14px] text-ink">{s.name}</span>
-                <span className="ml-auto text-[13px] text-ink-2">
-                  {s.percent === null ? "— not countable" : `${s.percent}%`} · {s.status}
+          <ul className="mt-5 border-t border-line">
+            {t.journeys.map((j, i) => (
+              <li key={j.name} className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[34px_1fr_auto]">
+                <span className="font-mono text-[12px] text-ink-3">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <span className="text-[15px] font-bold text-ink">{j.name}</span>
+                  <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-2">{j.description}</span>
+                </span>
+                <span className="flex items-center gap-3">
+                  {/* ⚠⚠ A `null` STAGE FILLS NO SEGMENTS AND NAMES NO WORD — not a
+                      guessed "Designing". Scott: null renders no segments. */}
+                  <Segments filled={j.stage ? STAGE_INDEX[j.stage] : 0} testing={j.stage === "test"} />
+                  <span className="min-w-[88px] text-right text-[13px] text-ink-2">
+                    {j.stage ? STAGE_WORD[j.stage] : "—"}
+                  </span>
                 </span>
               </li>
             ))}
           </ul>
         </section>
-      )}
 
-      <section className="mt-8">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Shipped</h2>
-        {t.shipped.length === 0 ? (
-          <p className="mt-2 text-[14px] text-ink-2">Nothing published yet.</p>
-        ) : (
-          <ul className="mt-2 border-t border-line">
-            {t.shipped.map((s, i) => (
-              <li key={`${s.date}-${i}`} className="border-b border-line py-2.5">
-                <span className="text-[13px] text-ink-2">{s.date}</span>
-                <span className="ml-3 text-[14px] font-bold text-ink">{s.title}</span>
-                {s.body && <span className="mt-0.5 block text-[14px] text-ink-2">{s.body}</span>}
-              </li>
-            ))}
-          </ul>
+        {/* ── MILESTONES ──────────────────────────────────────────────── */}
+        {t.milestones.length > 0 && (
+          <section className="mt-12 border-t border-line pt-6">
+            <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">Milestones</h2>
+            <ul className="mt-5 border-t border-line">
+              {t.milestones.map((m) => (
+                <li key={`${m.title}-${m.date}`} className="flex flex-wrap items-baseline gap-x-4 border-b border-line py-3">
+                  <span className="font-mono text-[13px] text-ink-2">{m.date}</span>
+                  <span className="text-[15px] font-bold text-ink">{m.title}</span>
+                  {m.description && <span className="text-[13.5px] text-ink-2">{m.description}</span>}
+                  <span className="ml-auto text-[13px] text-ink-2">{m.status}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-      </section>
 
-      <section className="mt-8 pb-10">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Support</h2>
-        {/* ⚠ All three are MEASURED counts and render in ink, including 0. */}
-        <p className="mt-2 text-[14px] text-ink-2">
-          <span className="font-bold text-ink">{t.support.open}</span> open ·{" "}
-          <span className="font-bold text-ink">{t.support.resolved}</span> resolved ·{" "}
-          <span className="font-bold text-ink">{t.support.resolvedThisWeek}</span> resolved in the last 7
-          days
-        </p>
-        {/* ⚠⚠ THE DASH CARRIES ITS REASON, and only this one figure needs it.
-            A figure that cannot be counted must not look like a measured zero
-            (`decisions_2026-09-23.md` §1 rule 2). */}
-        <p className="mt-1 text-[13px] text-ink-2">
-          Median first reply: — {t.support.medianFirstReplyReason.toLowerCase()}.
-        </p>
+        {/* ── SHIPPED ─────────────────────────────────────────────────── */}
+        <section className="mt-12 border-t border-line pt-6">
+          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+            What changed, day by day.
+          </h2>
+          <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
+            Every entry is live on app.panameer.com. Written in plain language from the day&apos;s work.
+          </p>
+          {t.shipped.length === 0 ? (
+            <p className="mt-5 text-[14px] text-ink-2">Nothing published yet.</p>
+          ) : (
+            <ul className="mt-5 border-l-2 border-magenta pl-4">
+              {t.shipped.map((s, i) => (
+                <li key={`${s.date}-${i}`} className="pb-4">
+                  <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">{s.date}</span>
+                  <span className="mt-0.5 block text-[15px] font-bold text-ink">{s.title}</span>
+                  {s.body && <span className="mt-0.5 block text-[14px] leading-relaxed text-ink-2">{s.body}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ── SUPPORT ─────────────────────────────────────────────────── */}
+        <section className="mt-12 border-t border-line pt-6">
+          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+            Found a problem? Tell us.
+          </h2>
+          <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
+            Issues from testers and users, and how fast they close. What you write in a ticket stays
+            private.
+          </p>
+          {/* ⚠⚠⚠ TWO NUMBERS ONLY (Scott, final): Open and Resolved this week.
+              Median first reply is DROPPED — nothing records a first reply, and a
+              dash with a reason is still a row on a page meant to be scanned in
+              seconds. Both of these are measured counts and render in ink. */}
+          <p className="mt-4 text-[15px] text-ink-2">
+            <span className="font-display text-[30px] font-bold text-ink">{t.support.open}</span> open
+            <span className="mx-3 text-ink-3">·</span>
+            <span className="font-display text-[30px] font-bold text-ink">
+              {t.support.resolvedThisWeek}
+            </span>{" "}
+            resolved this week
+          </p>
+          <p className="mt-4 flex flex-wrap gap-3">
+            <Link href="/support" className={SQUARE_DARK}>
+              Report an Issue
+            </Link>
+            <Link href="/support/tickets" className={SQUARE_LIGHT}>
+              See Your Tickets
+            </Link>
+          </p>
+        </section>
+      </div>
+
+      {/* ── CLOSE (ink band) ────────────────────────────────────────────── */}
+      <section className="mt-14 bg-ink px-5 py-12 text-surface sm:px-8">
+        <div className="mx-auto max-w-[1040px]">
+          <h2 className="font-display text-[30px] font-bold leading-[1.15] tracking-[-0.4px] sm:text-[38px]">
+            Build it once…
+            <span className="block italic text-magenta">sell it for years.</span>
+          </h2>
+          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-surface/80">
+            Package the reports, integrations, dashboards and agents you have already built, and offer them
+            to new Oracle clients as service products. Showcased free during the beta.
+          </p>
+          <p className="mt-6">
+            <Link
+              href="/join"
+              className="inline-flex min-h-[48px] items-center rounded-[4px] bg-surface px-6 text-[15px] font-bold text-ink transition-opacity hover:opacity-85"
+            >
+              Join the Beta
+            </Link>
+          </p>
+        </div>
       </section>
-    </main>
+    </div>
+  );
+}
+
+const SQUARE_DARK =
+  "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-surface transition-opacity hover:opacity-85";
+const SQUARE_LIGHT =
+  "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5";
+
+/**
+ * ⚠ FOUR SEGMENTS. `filled` is how many are ink; the one after them is magenta
+ * when work is moving. ⚠⚠ `filled = 0` draws four empty segments, which is what
+ * a `null` journey stage must look like — present, and honestly empty.
+ */
+function Segments({ filled, testing = false }: { filled: number; testing?: boolean }) {
+  return (
+    <span aria-hidden className="flex shrink-0 gap-1">
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className={
+            "h-1.5 w-7 rounded-full " +
+            (i < filled ? "bg-ink" : i === filled && testing ? "bg-magenta motion-safe:animate-pulse" : "bg-line")
+          }
+        />
+      ))}
+    </span>
   );
 }

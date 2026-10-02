@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import {
   WorkTrackerError,
+  createMilestone,
   createShipped,
+  deleteMilestone,
   deleteShipped,
   setGateCriterion,
   setPhaseDates,
   setStageStatus,
   setTaskState,
+  updateMilestone,
   updateShipped,
 } from "@/lib/work-tracker/admin";
 
@@ -42,6 +45,7 @@ export async function POST(request: Request) {
           status: body.status,
           owner: body.owner,
           note: body.note,
+          stage: body.stage,
         });
         return NextResponse.json({ ok: true });
 
@@ -69,6 +73,19 @@ export async function POST(request: Request) {
 
       case "shipped-delete":
         await deleteShipped(String(body.id ?? ""));
+        return NextResponse.json({ ok: true });
+
+      case "milestone-create": {
+        const row = await createMilestone(gate, body);
+        return NextResponse.json({ ok: true, id: row.id });
+      }
+
+      case "milestone-update":
+        await updateMilestone(gate, String(body.id ?? ""), body);
+        return NextResponse.json({ ok: true });
+
+      case "milestone-delete":
+        await deleteMilestone(String(body.id ?? ""));
         return NextResponse.json({ ok: true });
 
       default:

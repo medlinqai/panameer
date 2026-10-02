@@ -85,6 +85,33 @@ export function isTaskStatus(v: unknown): v is TaskStatus {
   return typeof v === "string" && (TASK_STATUSES as readonly string[]).includes(v);
 }
 
+/**
+ * ⚠⚠⚠ THE JOURNEY STAGE — FOUR SEGMENTS (`P2-ALL-E757`, Scott 2026-10-02).
+ * ⚠ `null` IS A FIRST-CLASS VALUE AND RENDERS NO SEGMENTS, NOT A GUESS. A
+ * default of `design` would claim all ten journeys had started, which is a
+ * figure nobody measured.
+ */
+export const JOURNEY_STAGES = ["design", "build", "test", "live"] as const;
+export type JourneyStage = (typeof JOURNEY_STAGES)[number];
+
+export function isJourneyStage(v: unknown): v is JourneyStage {
+  return typeof v === "string" && (JOURNEY_STAGES as readonly string[]).includes(v);
+}
+
+/**
+ * ⚠⚠ MILESTONES LEAVE THE JOURNEYS LIST (Scott, 2026-10-02: *"their own list"*).
+ * ⚠ `PNM-011`/`PNM-012` stay catalog TASKS — they are real work with a status —
+ * but the Journeys grid is the ten `PNM-*` rows that are parts of the platform.
+ * ⚠⚠ Keyed on the catalog's own `segment`, so adding `PNM-013` under
+ * `Milestones` needs no code change. **ONE DEFINITION** (`E585`): both the admin
+ * editor and the public view call this, never their own filter.
+ */
+export const MILESTONE_SEGMENT = "Milestones";
+
+export function journeyTasks(): CatalogTask[] {
+  return TASKS.filter((t) => t.id.startsWith("PNM-") && t.segment !== MILESTONE_SEGMENT);
+}
+
 export function isGateValue(v: unknown): v is GateValue {
   return typeof v === "string" && (GATE_VALUES as readonly string[]).includes(v);
 }

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { adminAccount, signInAs } from "./_admin";
+import { disconnectTracker, restoreTracker, snapshotTracker, type TrackerSnapshot } from "./_state";
 
 /**
  * `P2-ALL-E752` lane A acceptance — the admin can change a task status, a gate
@@ -8,6 +9,20 @@ import { adminAccount, signInAs } from "./_admin";
  * ⚠⚠ Every assertion re-loads the page before checking, so what is proved is
  * what the DATABASE holds — not what the component put in its own state.
  */
+
+
+/* ⚠⚠⚠ THESE TESTS WRITE TO THE ONE SHARED DATABASE, AND `/status` IS PUBLIC.
+   Snapshot before, restore after, and ASSERT the restore — `afterAll` runs even
+   when a test fails, which is exactly when the data is dirtiest. See `_state.ts`
+   for why this exists (my own spec published an invented date). */
+let BEFORE: TrackerSnapshot;
+test.beforeAll(async () => {
+  BEFORE = await snapshotTracker();
+});
+test.afterAll(async () => {
+  await restoreTracker(BEFORE);
+  await disconnectTracker();
+});
 
 test("E752 — a non-admin cannot reach the Builder", async ({ page }) => {
   await page.goto("/admin/work-tracker");

@@ -1,5 +1,5 @@
-import { gateStates, phaseDates, shippedEntries, taskStates } from "@/lib/work-tracker/admin";
-import { GATES, PHASES, TASKS, stagesForPhase } from "@/lib/work-tracker/catalog";
+import { gateStates, milestones, phaseDates, shippedEntries, taskStates } from "@/lib/work-tracker/admin";
+import { GATES, MILESTONE_SEGMENT, PHASES, TASKS, stagesForPhase } from "@/lib/work-tracker/catalog";
 import { WorkTrackerEditor } from "@/components/admin/work-tracker/WorkTrackerEditor";
 
 /**
@@ -21,11 +21,12 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Work Tracker" };
 
 export default async function AdminWorkTrackerPage() {
-  const [states, gates, dates, shipped] = await Promise.all([
+  const [states, gates, dates, shipped, mstones] = await Promise.all([
     taskStates(),
     gateStates(),
     phaseDates(),
     shippedEntries(),
+    milestones(),
   ]);
 
   /* ⚠ The whole catalog is flattened ONCE, here on the server, into the shape the
@@ -46,6 +47,10 @@ export default async function AdminWorkTrackerPage() {
         status: states.get(t.id)?.status ?? "Not Started",
         owner: states.get(t.id)?.owner ?? "",
         note: states.get(t.id)?.note ?? "",
+        /* ⚠ Only the ten journey rows get a stage picker; an ordinary AIM task
+           leaves it null forever and that is correct, not missing data. */
+        stage: states.get(t.id)?.stage ?? "",
+        isJourney: t.id.startsWith("PNM-") && t.segment !== MILESTONE_SEGMENT,
       })),
     })),
   }));
@@ -67,6 +72,15 @@ export default async function AdminWorkTrackerPage() {
     <WorkTrackerEditor
       phases={phases}
       gates={gateRows}
+      milestones={mstones.map((m) => ({
+        id: m.id,
+        title: m.title,
+        description: m.description ?? "",
+        date: m.date.toISOString().slice(0, 10),
+        status: m.status,
+        sort: m.sort,
+        published: m.published,
+      }))}
       shipped={shipped.map((s) => ({
         id: s.id,
         date: s.date.toISOString().slice(0, 10),

@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { adminAccount, signInAs } from "./_admin";
+import { JOURNEY_COPY } from "../src/lib/work-tracker/journey-copy";
+import { disconnectTracker, restoreTracker, snapshotTracker, type TrackerSnapshot } from "./_state";
 
 /**
  * `P2-ALL-E753` lane B — the public route, and the LEAK TEST.
@@ -28,11 +30,25 @@ function catalog(): Catalog {
   ) as Catalog;
 }
 
+
+/* ⚠⚠⚠ THESE TESTS WRITE TO THE ONE SHARED DATABASE, AND `/status` IS PUBLIC.
+   Snapshot before, restore after, and ASSERT the restore — `afterAll` runs even
+   when a test fails, which is exactly when the data is dirtiest. See `_state.ts`
+   for why this exists (my own spec published an invented date). */
+let BEFORE: TrackerSnapshot;
+test.beforeAll(async () => {
+  BEFORE = await snapshotTracker();
+});
+test.afterAll(async () => {
+  await restoreTracker(BEFORE);
+  await disconnectTracker();
+});
+
 test("E753 — /status is public: a signed-out visitor gets the page, not /login", async ({ page }) => {
   const res = await page.goto("/status");
   expect(res?.status()).toBe(200);
   await expect(page).toHaveURL(/\/status$/);
-  await expect(page.getByRole("heading", { name: "Panameer, being built in the open" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Watch your platform/ })).toBeVisible();
 });
 
 test("E753 — /api/status is public and carries the view model", async ({ request }) => {
@@ -66,10 +82,21 @@ test("E753 — LEAK TEST: no task text, task id or criterion text in the public 
 
     /* ⚠ Long task strings only: a short one like "Pick a name" could appear by
        coincidence, and a needle that can match by accident makes the gate a
-       false red that people switch off (`decisions_2026-09-23.md` §8 rule 10). */
+       false red that people switch off (`decisions_2026-09-23.md` §8 rule 10).
+
+       ⚠⚠⚠ **AND THE TEN JOURNEY ONE-LINERS ARE PUBLISHED ON PURPOSE** (mockup v5,
+       the approved design), so they are excluded — BY IMPORTING THE EXACT SET THE
+       PAGE PUBLISHES, never by a hand-written list that would drift. ⚠ Two of
+       them (`Courses and certification`, `AI maturity assessment and roadmap`)
+       happen to be word-identical to their catalog task text; that is a
+       coincidence of short wording, not exposure, and rewording public copy to
+       satisfy a test would be the dishonest fix.
+       ⚠⚠ **EVERYTHING ELSE STILL FAILS THIS TEST**, including all 200 AIM tasks,
+       every task id and every gate criterion. */
+    const published = new Set(Object.values(JOURNEY_COPY));
     const leakedTasks = c.tasks
       .map((t) => t.task)
-      .filter((txt) => txt.length >= 25 && haystack.includes(txt));
+      .filter((txt) => txt.length >= 25 && !published.has(txt) && haystack.includes(txt));
     expect(leakedTasks, `${label} leaks task text: ${leakedTasks.slice(0, 3).join(" | ")}`).toEqual([]);
 
     const leakedCriteria = c.gates
@@ -78,6 +105,15 @@ test("E753 — LEAK TEST: no task text, task id or criterion text in the public 
     expect(leakedCriteria, `${label} leaks criterion text: ${leakedCriteria.slice(0, 3).join(" | ")}`).toEqual(
       []
     );
+  }
+
+  /* ⚠⚠⚠ THE EXCLUSION IS PAIRED WITH A POSITIVE ASSERTION, or it could hide a
+     page that stopped rendering journeys at all. Exactly ten, and every one
+     present. */
+  const api2 = await (await request.get("/api/status")).text();
+  expect(Object.keys(JOURNEY_COPY).length, "ten journeys, no more").toBe(10);
+  for (const line of Object.values(JOURNEY_COPY)) {
+    expect(api2.includes(line), `the published journey line "${line}" is missing`).toBe(true);
   }
 
   console.log(

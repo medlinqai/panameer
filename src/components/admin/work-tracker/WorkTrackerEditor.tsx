@@ -17,14 +17,36 @@ import { useState, useTransition } from "react";
  * whose screen disagrees with its own table is the defect it exists to prevent.
  */
 
-type Task = { id: string; segment: string; task: string; status: string; owner: string; note: string };
+type Task = {
+  id: string;
+  segment: string;
+  task: string;
+  status: string;
+  owner: string;
+  note: string;
+  /** ⚠ "" = no stage set; renders no segments on the public page, not a guess. */
+  stage: string;
+  isJourney: boolean;
+};
 type Stage = { name: string; tasks: Task[] };
 type Phase = { name: string; purpose: string; outcome: string; start: string; end: string; stages: Stage[] };
 type Gate = { id: string; after: string; title: string; criteria: { index: number; text: string; value: string }[] };
 type Shipped = { id: string; date: string; journeyTag: string; title: string; body: string; published: boolean };
+type Milestone = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  status: string;
+  sort: number;
+  published: boolean;
+};
 
 const TASK_STATUSES = ["Not Started", "In Progress", "Blocked", "Done", "N/A"];
 const GATE_VALUES = ["No", "Yes", "N/A"];
+/** ⚠⚠ THE FOUR JOURNEY STAGES. "" clears it back to no segments (`E757`). */
+const JOURNEY_STAGES = ["design", "build", "test", "live"];
+const MILESTONE_STATUSES = ["Planned", "In progress", "Done"];
 
 /** ⚠ `N/A` leaves the denominator — see `percentDone` in `catalog.ts`, which is
  *  the server-side half of this same rule. Two copies would drift (`E585`), so
@@ -48,10 +70,12 @@ const BTN_2 =
 export function WorkTrackerEditor({
   phases,
   gates,
+  milestones,
   shipped,
 }: {
   phases: Phase[];
   gates: Gate[];
+  milestones: Milestone[];
   shipped: Shipped[];
 }) {
   const router = useRouter();
@@ -200,7 +224,7 @@ export function WorkTrackerEditor({
                         {s.tasks.map((t) => (
                           <li
                             key={t.id}
-                            className="grid grid-cols-1 gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_120px_1fr]"
+                            className="grid grid-cols-1 gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_120px_1fr_120px]"
                           >
                             <span className="font-mono text-[12px] text-ink-2">{t.id}</span>
                             <span className="text-[13px] text-ink">
@@ -231,6 +255,29 @@ export function WorkTrackerEditor({
                               onBlur={(e) => post({ action: "task", taskId: t.id, note: e.target.value })}
                               className={FIELD}
                             />
+                            {/* ⚠⚠ THE STAGE PICKER IS ONLY ON THE TEN JOURNEY ROWS
+                                (`E757`). An ordinary AIM task has no four-segment
+                                bar on the public page, so offering it one here
+                                would invite data that nothing renders. */}
+                            {t.isJourney && (
+                              <select
+                                defaultValue={t.stage}
+                                disabled={pending}
+                                onChange={(e) => post({ action: "task", taskId: t.id, stage: e.target.value })}
+                                className={FIELD}
+                                aria-label={`${t.id} journey stage`}
+                              >
+                                {/* ⚠ "No stage" is selectable, because clearing must
+                                    be possible — null renders no segments, which is
+                                    an honest "not started", not a guess. */}
+                                <option value="">No stage</option>
+                                {JOURNEY_STAGES.map((j) => (
+                                  <option key={j} value={j}>
+                                    {j}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -284,10 +331,15 @@ export function WorkTrackerEditor({
                         }
                         className={FIELD}
                       >
-                        {/* ⚠ "Unanswered" is not a stored value — picking it is not
-                            offered, because un-deciding is not a decision. It shows
-                            only while nothing has been chosen. */}
-                        {c.value === "" && <option value="">Unanswered</option>}
+                        {/* ⚠⚠⚠ "Not answered" IS SELECTABLE (Scott, 2026-10-02:
+                            *"yes, an admin can clear one"*). Picking it DELETES the
+                            row, which is the only way back to unanswered — and
+                            unanswered is a different fact from `No`, so it cannot be
+                            represented by writing a value.
+                            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                            //   "Unanswered" is not a stored value - picking it is
+                            //   not offered, because un-deciding is not a decision. */}
+                        <option value="">Not answered</option>
                         {GATE_VALUES.map((v) => (
                           <option key={v} value={v}>
                             {v}
@@ -300,6 +352,85 @@ export function WorkTrackerEditor({
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ── MILESTONES ──────────────────────────────────────────────────── */}
+      <section className="mt-9">
+        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Milestones</h2>
+        {/* ⚠⚠ THEIR OWN LIST, NOT JOURNEYS (Scott, 2026-10-02). The Build Line's
+            flags and the public Milestones section both read from this table —
+            `PNM-011`/`PNM-012` stay catalog tasks and leave the Journeys grid. */}
+        <p className="mt-1 text-[13px] text-ink-2">
+          These place the flags on the Build Line. A new milestone is a draft until you publish it.
+        </p>
+
+        <MilestoneForm onCreate={post} pending={pending} />
+
+        <div className="mt-5 border-t border-line">
+          {milestones.length === 0 ? (
+            <p className="py-4 text-[13px] text-ink-2">No milestones yet.</p>
+          ) : (
+            milestones.map((m) => (
+              <div
+                key={m.id}
+                className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[104px_1fr_132px_auto]"
+              >
+                <input
+                  type="date"
+                  defaultValue={m.date}
+                  onBlur={(e) => post({ action: "milestone-update", id: m.id, date: e.target.value })}
+                  className={FIELD}
+                />
+                <span className="grid gap-1">
+                  <input
+                    defaultValue={m.title}
+                    onBlur={(e) => post({ action: "milestone-update", id: m.id, title: e.target.value })}
+                    className={FIELD}
+                  />
+                  <input
+                    defaultValue={m.description}
+                    placeholder="One line"
+                    onBlur={(e) =>
+                      post({ action: "milestone-update", id: m.id, description: e.target.value })
+                    }
+                    className={FIELD}
+                  />
+                </span>
+                <select
+                  defaultValue={m.status}
+                  disabled={pending}
+                  onChange={(e) => post({ action: "milestone-update", id: m.id, status: e.target.value })}
+                  className={FIELD}
+                  aria-label={`${m.title} status`}
+                >
+                  {MILESTONE_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+                <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => post({ action: "milestone-update", id: m.id, published: !m.published })}
+                    className={m.published ? BTN_2 : BTN}
+                  >
+                    {m.published ? "Unpublish" : "Publish"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => post({ action: "milestone-delete", id: m.id })}
+                    className={BTN_2}
+                  >
+                    Delete
+                  </button>
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -351,6 +482,57 @@ export function WorkTrackerEditor({
         </div>
       </section>
     </div>
+  );
+}
+
+function MilestoneForm({
+  onCreate,
+  pending,
+}: {
+  onCreate: (p: Record<string, unknown>) => Promise<boolean>;
+  pending: boolean;
+}) {
+  const [date, setDate] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  return (
+    <form
+      className="mt-3 grid grid-cols-1 gap-2 border-t border-line pt-3 sm:grid-cols-[132px_1fr_auto]"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const ok = await onCreate({ action: "milestone-create", date, title, description });
+        /* ⚠ Clears only on SUCCESS — a failed save must not throw away what the
+           admin typed and tell them nothing. */
+        if (ok) {
+          setTitle("");
+          setDescription("");
+        }
+      }}
+    >
+      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className={FIELD} />
+      <span className="grid gap-2">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Milestone"
+          required
+          className={FIELD}
+        />
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="One line, optional"
+          className={FIELD}
+        />
+      </span>
+      {/* ⚠ `Add Milestone`, not `Add Draft` — the Shipped form already owns that
+          label and two identical buttons on one page is ambiguous to a person and
+          to a locator (it broke the gate as a strict-mode violation). */}
+      <button type="submit" disabled={pending || title.trim() === "" || date === ""} className={BTN}>
+        Add Milestone
+      </button>
+    </form>
   );
 }
 

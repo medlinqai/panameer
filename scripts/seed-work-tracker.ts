@@ -125,6 +125,43 @@ async function main() {
     }
   }
 
+  /*
+    ── ⚠⚠⚠ ONE MILESTONE, SEEDED BY TITLE (`P2-ALL-E757`, Scott 2026-10-02) ────
+
+    ⚠ **`R1 — Public beta`, 2026-11-01, In progress, PUBLISHED.** It is the one
+    date Scott has actually set, and it is the Build Line's flag.
+    ⚠⚠ **MATCHED ON TITLE, NOT ON AN ID**, so a re-run finds the row an admin may
+    have edited instead of creating a second one. ⚠ Like the task seed, it FILLS A
+    GAP and never overwrites: if the row exists, its date, status and text are the
+    admin's and are left alone. `--force` re-asserts the seed's values.
+    ⚠ **THE OTHER PHASE DATES ARE NOT SEEDED** — Scott's drafts (Define Jul 1–15 …)
+    are explicitly "do not seed"; until he enters them the Build Line says
+    `Dates coming soon` and the hero drops its `Day N` clause.
+  */
+  const MILESTONE = {
+    title: "R1 — Public beta",
+    description: "Panameer opens to the public.",
+    date: new Date("2026-11-01T00:00:00Z"),
+    status: "In progress",
+    sort: 0,
+    published: true,
+  };
+  const existingMilestone = await prisma.workTrackerMilestone.findFirst({
+    where: { title: MILESTONE.title },
+  });
+  let milestoneNote: string;
+  if (!existingMilestone) {
+    if (!dry) await prisma.workTrackerMilestone.create({ data: MILESTONE });
+    milestoneNote = "created";
+  } else if (force) {
+    if (!dry) {
+      await prisma.workTrackerMilestone.update({ where: { id: existingMilestone.id }, data: MILESTONE });
+    }
+    milestoneNote = "overwritten";
+  } else {
+    milestoneNote = "left as the admin set it";
+  }
+
   const total = await prisma.workTrackerTaskState.count();
   console.log(
     [
@@ -135,6 +172,7 @@ async function main() {
       `  tasks       : ${created} created · ${updated} overwritten · ${kept} left as the admin set them`,
       `  gates       : ${gCreated} created · ${gUpdated} overwritten · ${gKept} left as the admin set them`,
       `  task rows now: ${total}`,
+      `  milestone    : "${MILESTONE.title}" ${milestoneNote}`,
       unknown.length
         ? `  ⚠ ${unknown.length} seed entries NOT in the catalog, skipped: ${unknown.slice(0, 8).join(", ")}${unknown.length > 8 ? " …" : ""}`
         : "  ✓ every seed entry resolved to a catalog id",

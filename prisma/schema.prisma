@@ -7465,6 +7465,14 @@ model WorkTrackerTaskState {
   owner String?
   note  String?
 
+  /// ⚠⚠ THE JOURNEY'S FOUR-SEGMENT STAGE (`P2-ALL-E757`, Scott 2026-10-02).
+  /// `design` | `build` | `test` | `live`. ⚠⚠⚠ **NULLABLE, AND NULL RENDERS NO
+  /// SEGMENTS RATHER THAN A GUESS** — Scott's words. A default of `design` would
+  /// claim every one of the ten journeys had started, which is a figure nobody
+  /// measured. ⚠ Only the `PNM-*` journey rows use it; an ordinary AIM task
+  /// leaves it null forever and that is correct, not missing data.
+  stage String?
+
   updated_at DateTime @updatedAt
   /// ⚠ The `User` id of the admin who last changed it, resolved from the SESSION
   /// and never accepted from the client. Scalar, no FK — `User.id`, not `Person.id`
@@ -7513,6 +7521,51 @@ model WorkTrackerPhaseDate {
   updated_by String?  @db.Uuid
 
   @@map("work_tracker_phase_dates")
+}
+
+/// ⚠⚠⚠ MILESTONES — THEIR OWN LIST (`P2-ALL-E757`, Scott 2026-10-02).
+///
+/// ⚠⚠ **THEY ARE NOT JOURNEYS AND THEY ARE NOT CATALOG TASKS.** `PNM-011` and
+/// `PNM-012` stay in `aim-catalog.json` as tasks — they are real work with a
+/// status — but they LEAVE the Journeys list, which is the ten `PNM-*` rows that
+/// are actually parts of the platform. ⚠ Scott: *"their own list."*
+///
+/// ⚠⚠⚠ **THIS TABLE EXISTS BECAUSE THERE WAS NOWHERE TO PUT A MILESTONE DATE.**
+/// `WorkTrackerPhaseDate` is keyed per PHASE and `WorkTrackerTaskState` carries
+/// no date at all, so "R1 — Public beta, 2026-11-01" had no home. ⚠ The public
+/// page's Milestones section and the Build Line's flags both read from here, and
+/// R2, R3… are rows Scott adds later rather than code anybody writes.
+///
+/// ⚠ Scalar id, no FK, single-drop — the same property as the four tables above.
+model WorkTrackerMilestone {
+  id String @id @default(uuid()) @db.Uuid
+
+  title       String
+  /// One line. ⚠ Optional: a milestone with a date and a name is already useful.
+  description String?
+
+  /// ⚠ The date it is planned for or happened on. Required — a milestone with no
+  /// date cannot be placed on the Build Line, which is the whole reason it exists.
+  date DateTime @db.Date
+
+  /// ⚠ `Planned` | `In progress` | `Done`. A string, not an enum, for the
+  /// single-drop reason the block above the first table gives.
+  status String @default("Planned")
+
+  /// ⚠ Hand-ordered, because chronological is not always the reading order when
+  /// two milestones share a date.
+  sort Int @default(0)
+
+  /// ⚠⚠ **DRAFTS DEFAULT UNPUBLISHED, like `WorkTrackerShipped`.** The public
+  /// reader filters on `published: true` IN THE WHERE CLAUSE, never with an `if`.
+  published Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([published, date])
+  @@map("work_tracker_milestones")
 }
 
 /// The daily "Shipped" log — the reason anyone comes back to the page.

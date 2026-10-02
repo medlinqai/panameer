@@ -1,13 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { JOURNEY_COPY } from "./journey-copy";
 import { TICKETS_TERMINAL_STATUSES } from "@/lib/support";
 import {
   GATES,
   PHASES,
   TASKS,
+  isJourneyStage,
+  journeyTasks,
   isTaskStatus,
   percentDone,
   rollupStatus,
   stagesForPhase,
+  type JourneyStage,
   type TaskStatus,
 } from "./catalog";
 
@@ -62,7 +66,20 @@ export type PublicPhase = {
 
 export type PublicJourney = {
   name: string;
+  /** ⚠⚠ The PUBLIC one-liner from mockup v5 — **never** the catalog's task text.
+   *  `""` when no copy exists, which renders nothing rather than leaking. */
+  description: string;
   status: TaskStatus | "Not Started";
+  /** ⚠⚠ `null` RENDERS NO SEGMENTS, NEVER A GUESSED `design`. */
+  stage: JourneyStage | null;
+};
+
+/** ⚠⚠ MILESTONES COME FROM THEIR OWN TABLE, not from `PNM-011`/`PNM-012`. */
+export type PublicMilestone = {
+  title: string;
+  description: string | null;
+  date: string;
+  status: string;
 };
 
 export type PublicShipped = {
@@ -102,8 +119,6 @@ export type PublicSupport = {
   open: number;
   resolved: number;
   resolvedThisWeek: number;
-  medianFirstReplyHours: null;
-  medianFirstReplyReason: string;
 };
 
 export type PublicTracker = {
@@ -116,12 +131,13 @@ export type PublicTracker = {
   currentPhase: string | null;
   currentPhaseStages: PublicStage[];
   journeys: PublicJourney[];
+  milestones: PublicMilestone[];
   shipped: PublicShipped[];
+  /** ⚠⚠ `null` UNTIL DEFINE HAS A START DATE (Scott, 2026-10-02: hide "Day N"
+   *  rather than print a NaN or invent a date). */
+  dayNumber: number | null;
   support: PublicSupport;
 };
-
-/** ⚠ `PNM-*` are the Panameer build items — the journeys the public page names. */
-const JOURNEY_PREFIX = "PNM-";
 
 export async function getPublicTracker(): Promise<PublicTracker> {
   const [
@@ -129,12 +145,13 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     gateRows,
     dateRows,
     shippedRows,
+    milestoneRows,
     openTickets,
     resolvedTickets,
     resolvedThisWeek,
   ] = await Promise.all([
     prisma.workTrackerTaskState.findMany({
-      select: { task_id: true, status: true },
+      select: { task_id: true, status: true, stage: true },
     }),
     prisma.workTrackerGateState.findMany({
       select: { gate_id: true, value: true },
@@ -155,6 +172,13 @@ export async function getPublicTracker(): Promise<PublicTracker> {
        found on the surface a stranger sees. `TICKETS_TERMINAL_STATUSES` is
        derived from `TICKET_OWNER`, so a new status lands on the right side of
        this count by itself. */
+    /* ⚠⚠ `published: true` IN THE WHERE CLAUSE, like Shipped — a draft milestone
+       must be unreachable, not merely unrendered. */
+    prisma.workTrackerMilestone.findMany({
+      where: { published: true },
+      orderBy: [{ sort: "asc" }, { date: "asc" }],
+      select: { title: true, description: true, date: true, status: true },
+    }),
     prisma.supportTicket.count({
       where: { status: { notIn: TICKETS_TERMINAL_STATUSES } },
     }),
@@ -175,9 +199,15 @@ export async function getPublicTracker(): Promise<PublicTracker> {
   ]);
 
   const status = new Map<string, TaskStatus>();
-  for (const r of taskRows)
+  const stages = new Map<string, string | null>();
+  for (const r of taskRows) {
     if (isTaskStatus(r.status)) status.set(r.task_id, r.status);
+    stages.set(r.task_id, r.stage);
+  }
   const statusOf = (id: string): TaskStatus => status.get(id) ?? "Not Started";
+  /* ⚠ An unrecognised stored stage reads as null — no segments — rather than
+     being trusted. The column is a string; nothing at the DB level guards it. */
+  const stageOf = (id: string): string | null => stages.get(id) ?? null;
 
   const dates = new Map(dateRows.map((d) => [d.phase, d]));
 
@@ -221,13 +251,19 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       })
     : [];
 
-  /* ⚠ A journey is named by its SEGMENT, not by its task text. `PNM-001`'s text
-     lists the public site's pages — that is build detail and stays private. */
-  const journeys: PublicJourney[] = TASKS.filter((t) =>
-    t.id.startsWith(JOURNEY_PREFIX),
-  ).map((t) => ({
+  /*
+    ⚠⚠⚠ TEN JOURNEYS, NOT TWELVE (Scott, 2026-10-02). `PNM-011`/`PNM-012` are
+    segment `Milestones` and have their OWN table and section — my first version
+    returned all twelve, which rendered two rows both named "Milestones".
+    ⚠ The filter lives in `journeyTasks()` so the admin editor and this reader
+    cannot disagree about what a journey is (`E585`).
+  */
+  const journeys: PublicJourney[] = journeyTasks().map((t) => ({
     name: t.segment,
+    /* ⚠⚠ PUBLIC COPY, NEVER `t.task` — see `JOURNEY_COPY` above. */
+    description: JOURNEY_COPY[t.segment] ?? "",
     status: statusOf(t.id),
+    stage: isJourneyStage(stageOf(t.id)) ? (stageOf(t.id) as JourneyStage) : null,
   }));
 
   const answeredByGate = new Map<string, { answered: number; yes: number }>();
@@ -254,6 +290,20 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     };
   });
 
+  /*
+    ⚠⚠⚠ "DAY N" IS HIDDEN UNTIL DEFINE HAS A START DATE (Scott, 2026-10-02:
+    *"no NaN, no invented date"*). ⚠ `null` here is what makes the eyebrow drop
+    the "· Day N" clause entirely rather than printing `Day NaN` — and the reason
+    this matters is that a test once left an invented `2026-05-01` in that very
+    column and the public page printed it as fact.
+    ⚠ Day 1 is the start date itself, not day 0 — a person reading "Day 1" on the
+    day work began is right.
+  */
+  const defineStart = dates.get(PHASES[0]?.name ?? "")?.start_date ?? null;
+  const dayNumber = defineStart
+    ? Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
+    : null;
+
   const allStatuses = TASKS.map((t) => statusOf(t.id));
 
   return {
@@ -266,18 +316,19 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     currentPhase: current?.name ?? null,
     currentPhaseStages,
     journeys,
+    milestones: milestoneRows.map((m) => ({
+      title: m.title,
+      description: m.description,
+      date: m.date.toISOString().slice(0, 10),
+      status: m.status,
+    })),
+    dayNumber,
     shipped: shippedRows.map((s) => ({
       date: s.date.toISOString().slice(0, 10),
       tag: s.journey_tag,
       title: s.title,
       body: s.body,
     })),
-    support: {
-      open: openTickets,
-      resolved: resolvedTickets,
-      resolvedThisWeek,
-      medianFirstReplyHours: null,
-      medianFirstReplyReason: "Nothing records a first reply",
-    },
+    support: { open: openTickets, resolved: resolvedTickets, resolvedThisWeek },
   };
 }
