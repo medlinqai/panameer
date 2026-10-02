@@ -96,9 +96,27 @@ export default async function StatusPage({
       <MarketingHeader />
 
       {/* ── HERO (ink band) ─────────────────────────────────────────────── */}
-      <section className="bg-ink px-5 py-12 text-surface sm:px-8">
+      {/*
+        ── ⚠⚠⚠ THE BANDS ARE PINNED DARK IN BOTH SCHEMES (Scott, 2026-10-02) ────
+
+        ⚠ **MEASURED AND REPORTED FIRST:** with `bg-ink text-surface` the bands
+        INVERTED in dark mode — the hero became the LIGHT part of the page and the
+        body the dark part. It read, but it was the opposite of the design intent,
+        and Scott ruled them pinned.
+
+        ⚠⚠ **`bg-rail` IS THE PINNED TOKEN AND THE SWITCH IS FREE IN LIGHT.**
+        `--color-rail` is `#272334`, defined ONCE outside the dark block, so it
+        does not invert — and the LIGHT `--color-ink` is `#272334` too, so this is
+        byte-identical in light mode and changes only dark.
+        ⚠ `text-white` likewise: only `.bg-white` carries a dark override in
+        `globals.css`, never `.text-white`.
+        ⚠⚠ Contrast on the pinned band: white **15.26:1**; the magenta accent
+        **3.79:1**, which is used only on the two large headings (3:1 floor).
+        ⚠ SUPERSEDED, quoted not deleted (`E164`): `bg-ink … text-surface`.
+      */}
+      <section className="bg-rail px-5 py-12 text-white sm:px-8">
         <div className="mx-auto max-w-[1040px]">
-          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-surface/70">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-white/70">
             {/* ⚠⚠⚠ "Day N" IS DROPPED UNTIL DEFINE HAS A START DATE (Scott,
                 2026-10-02: *"no NaN, no invented date"*). The clause disappears;
                 nothing stands in for it. */}
@@ -108,7 +126,7 @@ export default async function StatusPage({
           <h1 className="mt-2 font-display text-[34px] font-bold leading-[1.1] tracking-[-0.6px] sm:text-[44px]">
             Watch your platform <em className="not-italic text-magenta">get built.</em>
           </h1>
-          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-surface/80">
+          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
             This is the Panameer Work Tracker, the same tracker buyers and providers will use on their own
             projects. Here it follows ours, every day, from first idea to public beta.
           </p>
@@ -119,12 +137,12 @@ export default async function StatusPage({
                   WITH its reason. The two must not look the same. */}
               {t.overallPercent === null ? "—" : `${t.overallPercent}%`}
             </span>
-            <span className="text-[14px] text-surface/75">
+            <span className="text-[14px] text-white/75">
               {t.overallPercent === null ? "nothing countable yet" : "of the plan complete"} · updated{" "}
               {updated}
             </span>
           </div>
-          <p className="mt-2 text-[14px] text-surface/75">
+          <p className="mt-2 text-[14px] text-white/75">
             {t.doneCount} done · {moving} moving · {gatesPassed} of {t.gates.length} gates
           </p>
 
@@ -133,7 +151,7 @@ export default async function StatusPage({
             {/* ⚠⚠ THE COUNT IS HIDDEN BELOW 25 (the brief), not shown small. "3
                 people following" makes a young page look emptier than silence. */}
             {followers >= FOLLOWER_COUNT_FLOOR && (
-              <span className="text-[14px] text-surface/75">
+              <span className="text-[14px] text-white/75">
                 {followers} people following the build
               </span>
             )}
@@ -273,13 +291,31 @@ export default async function StatusPage({
       </div>
 
       {/* ── CLOSE (ink band) ────────────────────────────────────────────── */}
-      <section className="mt-14 bg-ink px-5 py-12 text-surface sm:px-8">
+      {/*
+        ── ⚠⚠⚠ THE BANDS ARE PINNED DARK IN BOTH SCHEMES (Scott, 2026-10-02) ────
+
+        ⚠ **MEASURED AND REPORTED FIRST:** with `bg-ink text-surface` the bands
+        INVERTED in dark mode — the hero became the LIGHT part of the page and the
+        body the dark part. It read, but it was the opposite of the design intent,
+        and Scott ruled them pinned.
+
+        ⚠⚠ **`bg-rail` IS THE PINNED TOKEN AND THE SWITCH IS FREE IN LIGHT.**
+        `--color-rail` is `#272334`, defined ONCE outside the dark block, so it
+        does not invert — and the LIGHT `--color-ink` is `#272334` too, so this is
+        byte-identical in light mode and changes only dark.
+        ⚠ `text-white` likewise: only `.bg-white` carries a dark override in
+        `globals.css`, never `.text-white`.
+        ⚠⚠ Contrast on the pinned band: white **15.26:1**; the magenta accent
+        **3.79:1**, which is used only on the two large headings (3:1 floor).
+        ⚠ SUPERSEDED, quoted not deleted (`E164`): `bg-ink … text-surface`.
+      */}
+      <section className="mt-14 bg-rail px-5 py-12 text-white sm:px-8">
         <div className="mx-auto max-w-[1040px]">
           <h2 className="font-display text-[30px] font-bold leading-[1.15] tracking-[-0.4px] sm:text-[38px]">
             Build it once…
             <span className="block italic text-magenta">sell it for years.</span>
           </h2>
-          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-surface/80">
+          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
             Package the reports, integrations, dashboards and agents you have already built, and offer them
             to new Oracle clients as service products. Showcased free during the beta.
           </p>
@@ -287,7 +323,13 @@ export default async function StatusPage({
             <FollowButton signedIn={viewer !== null} initiallyFollowing={following} testId="follow-close" />
             <Link
               href="/join"
-              className="inline-flex min-h-[48px] items-center rounded-[4px] bg-surface px-6 text-[15px] font-bold text-ink transition-opacity hover:opacity-85"
+              /* ⚠⚠ PINNED, BECAUSE THE BAND IS. `bg-surface`/`text-ink` both invert,
+                 which on a band that no longer inverts would put a near-black
+                 button on a near-black band. ⚠⚠⚠ `bg-white` is NOT usable here —
+                 `globals.css` carries a `:root[data-theme="dark"] .bg-white`
+                 override, so it would invert too; the arbitrary value does not
+                 match that selector. ⚠ `text-rail` is the pinned token. */
+              className="inline-flex min-h-[48px] items-center rounded-[4px] bg-[#fff] px-6 text-[15px] font-bold text-rail transition-opacity hover:opacity-85"
             >
               Join the Beta
             </Link>

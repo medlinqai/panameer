@@ -87,11 +87,16 @@
 /* ⚠ `E217`'s ONE RULE, carried over rather than re-invented: active is a solid
    fill; the translucent wash is hover and nothing else. */
 .pm-bottomnav-link.is-active {
-  /* ⚠⚠⚠ `--color-bottomnav-active`, WHICH IS `#3a3150` — THE COLOUR ALREADY ON
-     SCREEN. ⚠ Pointing this at `--color-rail-active` (`#b02aae`) is a 219-point
-     move, grey-purple to MAGENTA, and that is a design decision parked on Scott.
-     See the token's own block in `globals.css`. */
-  background: var(--color-bottomnav-active, #3a3150);
+  /* ⚠⚠ `--color-rail-active` — MAGENTA, RULED BY SCOTT 2026-10-02. The pill was
+     parked on `#3a3150` while the decision was open; it now matches the band's
+     active fill, which is the same state on the same navigation.
+     ⚠ The token is PINNED (defined once, outside the dark block), so the pill is
+     the same colour in both schemes — which is right for an accent.
+     ⚠ White on it measures 5.54:1 — clears AA.
+     ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     //   background: var(--color-bottomnav-active, #3a3150);   (E760, parked)
+     //   background: var(--rail-active, #3a3150);              (the original bug) */
+  background: var(--color-rail-active, #b02aae);
   color: #fff;
 }
 

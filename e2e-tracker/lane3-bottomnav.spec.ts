@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { signIn } from "../e2e-shell/_auth";
 
 /** `P2-ALL-E760` — the phone bottom nav must look IDENTICAL after the fix. */
-test("E760 — the bottom nav's colours are unchanged at 390", async ({ page }) => {
+test("E760 — the bottom nav uses the pinned rail tokens at 390", async ({ page }) => {
   await signIn(page);
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
@@ -21,14 +21,18 @@ test("E760 — the bottom nav's colours are unchanged at 390", async ({ page }) 
     await expect(active, "a bottom-nav link must be active here").toHaveCount(1);
     const activeBg = await active.evaluate((el) => getComputedStyle(el).backgroundColor);
 
-    /* ⚠⚠ THE EXACT COLOURS THAT WERE LIVE BEFORE THE FIX, asserted as numbers.
-       `#272334` = rgb(39,35,52) is the rail token; the old hard-coded fallback
-       was `#211c2e` = rgb(33,28,46), a 19-point move nobody can see — but it IS
-       a move, so it is stated rather than called "no change".
-       ⚠⚠⚠ The ACTIVE pill must still be `#3a3150` = rgb(58,49,80): pointing it at
-       `--color-rail-active` would make it MAGENTA, which is parked on Scott. */
+    /* ⚠ `#272334` = rgb(39,35,52) is the rail token. The old hard-coded fallback
+       was `#211c2e` = rgb(33,28,46), a 19-point move nobody can see — but it IS a
+       move, so it is stated rather than called "no change".
+
+       ⚠⚠⚠ **THE PILL IS MAGENTA NOW — SCOTT RULED IT 2026-10-02.** It is
+       `--color-rail-active` = `#b02aae` = rgb(176,42,174), the same fill the band
+       uses for the same state. ⚠ Both tokens are PINNED (defined once, outside
+       the dark block), which is why one value is asserted for both schemes.
+       ⚠ SUPERSEDED, quoted not deleted (`E164`):
+       //   expect(activeBg, "must NOT have become magenta").toBe("rgb(58, 49, 80)"); */
     expect(bg, `bottom nav background, ${scheme}`).toBe("rgb(39, 35, 52)");
-    expect(activeBg, `active pill must NOT have become magenta, ${scheme}`).toBe("rgb(58, 49, 80)");
+    expect(activeBg, `the active pill is the rail's magenta, ${scheme}`).toBe("rgb(176, 42, 174)");
     await page.screenshot({
       path: `e2e-tracker/shots/bottomnav-390-${scheme}.png`,
       clip: { x: 0, y: 744, width: 390, height: 100 },

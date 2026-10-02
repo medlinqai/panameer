@@ -34,7 +34,12 @@ export function FollowButton({
   const cls =
     "inline-flex min-h-[48px] items-center rounded-[4px] px-6 text-[15px] font-bold transition-opacity disabled:opacity-50 " +
     (variant === "onInk"
-      ? "bg-surface text-ink hover:opacity-85"
+      /* ⚠⚠ PINNED (Scott, 2026-10-02): the `onInk` variant sits on `/status`'s two
+         bands, which no longer invert. `bg-surface`/`text-ink` would put a
+         near-black button on a near-black band in dark mode. ⚠ `bg-white` is not
+         usable — `globals.css` overrides `.bg-white` in dark — so the arbitrary
+         value is deliberate, and `text-rail` is the pinned token. */
+      ? "bg-[#fff] text-rail hover:opacity-85"
       : "border border-ink bg-surface text-ink hover:bg-ink/5");
 
   return (
