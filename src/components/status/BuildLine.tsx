@@ -6,9 +6,21 @@ import type { PublicPhase, PublicRelease } from "@/lib/work-tracker/public-view"
  * A rail with a magenta fill to today, six phase labels at their start dates,
  * gate diamonds at the phase boundaries, a pulsing TODAY dot and a flag per release.
  *
- * ⚠⚠⚠ **IF ANY PHASE DATE IS MISSING, THE LINE RENDERS WITHOUT POSITIONS AND
- * SAYS `Dates coming soon` — NEVER INVENTED DATES.** That is the brief's rule and
- * it is not decoration: a test once left an invented `2026-05-01` in Define's
+ * ⚠⚠⚠ **IT DRAWS WITH THE DATES IT HAS (`P2-ALL-E769`).** A phase with a start is
+ * placed on the axis; a phase without one is NAMED AFTER THE LINE as `dates to
+ * come`. ⚠ Only when NO phase has a start at all does the whole line degrade to
+ * `Dates coming soon`.
+ *
+ * ⚠⚠ **SUPERSEDED, quoted not deleted (`E164`) — the rule this replaced:**
+ * //   IF ANY PHASE DATE IS MISSING, THE LINE RENDERS WITHOUT POSITIONS AND SAYS
+ * //   `Dates coming soon` - NEVER INVENTED DATES.
+ * ⚠⚠⚠ **IT WAS ALL-OR-NOTHING, AND THAT IS WHY SCOTT SAW NO LINE: four of six
+ * phases were dated, a release target was set, and the page still printed
+ * `Dates coming soon`.** ⚠ One missing date hid four real ones.
+ *
+ * ⚠⚠⚠ **THE HALF THAT DOES NOT CHANGE: NEVER AN INVENTED DATE.** An undated phase
+ * is not placed, not estimated and not given the end of the line — it is listed,
+ * by name, as having none. A test once left an invented `2026-05-01` in Define's
  * start column and this page printed it to the public as fact.
  *
  * ⚠ Positions are a pure function of the dates, computed server-side, so there is
@@ -33,13 +45,20 @@ export function BuildLine({
    */
   now: number;
 }) {
-  /* ⚠ Every phase needs a start for the axis to mean anything. One missing date
-     makes every position a guess, so the whole line degrades rather than placing
-     five labels correctly and one wherever. */
-  const starts = phases.map((p) => (p.start ? Date.parse(p.start) : null));
-  const complete = starts.every((s): s is number => s !== null);
+  /*
+    ⚠⚠ A PHASE IS PLACED IF IT HAS A START, AND LISTED IF IT DOES NOT (`E769`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the all-or-nothing test:
+    //   const starts = phases.map((p) => (p.start ? Date.parse(p.start) : null));
+    //   const complete = starts.every((s): s is number => s !== null);
+    ⚠⚠⚠ Nothing is ESTIMATED for the undated ones. They keep their names and say
+    they have no dates, which is a fact; a position would be a guess.
+  */
+  const dated = phases
+    .map((p) => ({ p, t: p.start ? Date.parse(p.start) : NaN }))
+    .filter((x) => Number.isFinite(x.t));
+  const undated = phases.filter((p) => !p.start);
 
-  if (!complete) {
+  if (dated.length === 0) {
     return (
       <section aria-label="Build line" className="mt-7 border-t border-line pt-5">
         <div className="h-[3px] w-full rounded-full bg-line" />
@@ -48,14 +67,46 @@ export function BuildLine({
     );
   }
 
+  const starts = dated.map((x) => x.t);
   const first = Math.min(...starts);
-  const lastRelease = releases.length
-    ? Math.max(...releases.filter((r) => r.date).map((r) => Date.parse(r.date!)))
-    : first;
-  const last = Math.max(...starts, lastRelease, now);
+  /*
+    ⚠⚠ THE AXIS ENDS AT THE LATEST THING THE DATA ACTUALLY NAMES — the last phase
+    END, the last phase START (phases that have begun and not finished have no
+    end, and today every one of them is in that state), the latest RELEASE target,
+    or today.
+    ⚠⚠⚠ `now` IS IN THE MAX DELIBERATELY: without it, a build that has run past
+    its last named date would pin the TODAY dot to the end of the line and read as
+    "finished" — the one thing this page must not imply.
+  */
+  const endTimes = dated.map((x) => (x.p.end ? Date.parse(x.p.end) : NaN)).filter(Number.isFinite);
+  const releaseTimes = releases
+    .filter((r) => r.date)
+    .map((r) => Date.parse(r.date!))
+    .filter(Number.isFinite);
+  const last = Math.max(...starts, ...endTimes, ...releaseTimes, now);
   const span = Math.max(1, last - first);
   const pct = (t: number) => Math.min(100, Math.max(0, ((t - first) / span) * 100));
   const todayPct = pct(now);
+
+  /*
+    ── ⚠⚠ PHASES THAT START ON THE SAME DAY SHARE ONE LABEL (`P2-ALL-E769`) ────
+
+    ⚠⚠⚠ MEASURED: `Define` and `Design` both start `2026-08-15`, so two labels
+    were printed at the SAME x and overlapped into an unreadable smudge. ⚠ Two
+    names on one marker is the truth — they did start together — and it is the
+    only arrangement that does not move one of them to a date it does not have.
+  */
+  const marks = Array.from(
+    dated.reduce((acc, { p, t }) => {
+      const key = p.start as string;
+      const row = acc.get(key) ?? { date: key, at: pct(t), names: [] as string[], current: false };
+      row.names.push(p.name);
+      /* ⚠ Bold if ANY phase on this marker is the current one. */
+      row.current = row.current || p.current;
+      acc.set(key, row);
+      return acc;
+    }, new Map<string, { date: string; at: number; names: string[]; current: boolean }>()),
+  ).map(([, v]) => v);
 
   return (
     <section aria-label="Build line" className="mt-7 border-t border-line pt-6">
@@ -87,21 +138,70 @@ export function BuildLine({
           ))}
       </div>
 
-      <div className="relative mt-3 h-10">
-        {phases.map((p, i) => (
+      {/*
+        ── ⚠⚠⚠ THE AXIS CARRIES LABELS ONLY WHERE THERE IS ROOM (`P2-ALL-E769`) ──
+
+        ⚠⚠ MEASURED AT 390: `Define · Design` and `Build` sit 0% and 26% apart —
+        which is **91px** of a 350px axis — and the labels are wider than that, so
+        they printed over each other as `Define ·BuildIn` / `2026-08Q026-09-01`.
+        ⚠⚠⚠ **NOTHING SHRINKS OR TRUNCATES: A DATE THAT HAS TO BE GUESSED AT IS
+        WORSE THAN A DATE ON ITS OWN LINE.** Below `sm` the same marks render as a
+        LIST and the rail above keeps the shape — the fill to today, the today dot
+        and the release flags are all still there and all still positioned.
+      */}
+      <div className="relative mt-3 hidden h-10 sm:block">
+        {marks.map((m) => (
           <span
-            key={p.name}
+            key={m.date}
             className={
-              "absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] " +
-              (p.current ? "font-bold text-ink" : "text-ink-2")
+              "absolute top-0 whitespace-nowrap text-[11px] " +
+              /*
+                ⚠⚠ A LABEL AT EITHER END IS ALIGNED, NOT CENTRED, AND THIS WAS A
+                MEASURED DEFECT: centring puts half of it outside the page.
+                ⚠⚠⚠ The first label sits at 0% and the last at 100%, so
+                `-translate-x-1/2` printed `n` for `Design` and `Prove` ran off the
+                right edge — both clipped, on the live page.
+              */
+              (m.at <= 2 ? "" : m.at >= 98 ? "-translate-x-full" : "-translate-x-1/2") +
+              " " +
+              (m.current ? "font-bold text-ink" : "text-ink-2")
             }
-            style={{ left: `${pct(starts[i])}%` }}
+            style={{ left: `${m.at}%` }}
           >
-            {p.name}
-            <span className="block text-[10px] text-ink-3">{p.start}</span>
+            {m.names.join(" · ")}
+            <span className="block text-[10px] text-ink-3">{m.date}</span>
           </span>
         ))}
       </div>
+
+      {/* ⚠ The same marks, stacked, for phone. One source, two arrangements. */}
+      <ul className="mt-3 sm:hidden">
+        {marks.map((m) => (
+          <li
+            key={m.date}
+            className={
+              "flex items-baseline justify-between gap-3 py-0.5 text-[12px] " +
+              (m.current ? "font-bold text-ink" : "text-ink-2")
+            }
+          >
+            <span>{m.names.join(" · ")}</span>
+            <span className="text-[11px] text-ink-3">{m.date}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/*
+        ⚠⚠ THE UNDATED PHASES, AFTER THE LINE AND IN ORDER (`E769`). ⚠⚠⚠ THEY ARE
+        NAMED RATHER THAN OMITTED: a reader who knows the method counts six phases,
+        and silently dropping two would read as "there are four" — a quieter lie
+        than a wrong date. ⚠ `dates to come` is the whole claim; nothing is implied
+        about when.
+      */}
+      {undated.length > 0 && (
+        <p className="mt-1 text-[12px] text-ink-3">
+          {undated.map((p) => p.name).join(" · ")} — dates to come
+        </p>
+      )}
 
       {releases.length > 0 && (
         <p className="mt-1 text-[12px] text-ink-2">

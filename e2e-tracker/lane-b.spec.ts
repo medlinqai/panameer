@@ -5,6 +5,7 @@ import { adminAccount, signInAs } from "./_admin";
 import { db } from "../e2e-shell/_db";
 import { JOURNEY_COPY } from "../src/lib/work-tracker/journey-copy";
 import { disconnectTracker, restoreTracker, snapshotTracker, type TrackerSnapshot } from "./_state";
+import { openSection } from "./_open";
 
 /**
  * `P2-ALL-E753` lane B — the public route, and the LEAK TEST.
@@ -182,12 +183,16 @@ test("E753 — a DRAFT Shipped entry never reaches the public payload", async ({
 
   await signInAs(page, email, password);
   await page.goto("/admin/work-tracker");
+  /* ⚠ `E768` made Shipped an expander and renamed the form submit to
+     `Create Draft`. The assertion below is unchanged; only the path is. */
+  await openSection(page, "Shipped");
   await page.getByPlaceholder("What shipped").fill(marker);
-  await page.getByRole("button", { name: "Add Draft" }).click();
+  await page.getByRole("button", { name: "Create Draft" }).click();
   await page.waitForTimeout(1800);
 
   /* ⚠ The draft exists in the admin view … */
   await page.reload();
+  await openSection(page, "Shipped");
   await expect(page.getByText(marker, { exact: true })).toBeVisible();
 
   /* ⚠⚠ … and must be absent from the public payload. `published: true` is in the
@@ -205,6 +210,7 @@ test("E753 — a DRAFT Shipped entry never reaches the public payload", async ({
 
   /* clean up — this is the one shared database */
   await page.reload();
+  await openSection(page, "Shipped");
   await page
     .locator("div", { has: page.getByText(marker, { exact: true }) })
     .last()
