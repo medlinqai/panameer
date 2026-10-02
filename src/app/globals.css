@@ -566,6 +566,36 @@ body {
   .account-surface :is(h1, h2, h3, h4) {
     font-family: var(--font-body);
   }
+
+  /*
+    ── ⚠⚠⚠ THE MASKED SURFACES, SAME MECHANISM (`P2-A1.1-E771`) —————————
+
+    ⚠ **SCOTT, 2026-10-02:** the masked preview's headline renders in Comfortaa;
+    Montserrat, like `/status`.
+
+    ⚠⚠ **MEASURED BY COMPUTED STYLE, NOT BY GREP, AND THE NUMBER WAS BIGGER THAN
+    THE REPORT:** `/providers/[id]` rendered **10** Comfortaa elements and
+    `/explore` **16** — not one headline. ⚠ The split matters:
+    **6 of the 10 and 3 of the 16 are `MarketingFooter`'s video headings**, which
+    `AppShell` also renders, i.e. nearly every page in the app.
+    ⚠⚠⚠ **SO THIS RULE DELIBERATELY DOES NOT REACH THEM.** Scott's ruling:
+    page headings only — the 4 on the profile, the 13 on the grid. The footer is
+    logged as `E772` and is NOT fixed here, because fixing it is an app-wide
+    typographic change and the `@layer base` fence directly above exists to stop
+    exactly that happening by accident.
+
+    ⚠⚠ **IT IS A SEPARATE CLASS, NOT AN ADDITION TO `.marketing-surface`.** Both
+    masked pages carry `.marketing-surface` already, and putting the rule there
+    would re-case every public page in one commit about talent masking.
+    ⚠ Specificity is what makes it win, not order: `(0,1,1)` against the global
+    rule's `(0,0,1)`, both inside `@layer base`.
+    ⚠ `h4` is included for the same reason `.account-surface` includes it — the
+    `SEARCH SCORE` / `RATES` / `CONTACT` eyebrows are `h4` and leaving them out
+    would strand one row of headings in a different face for no visible reason.
+  */
+  .masked-surface :is(h1, h2, h3, h4) {
+    font-family: var(--font-body);
+  }
 }
 
 .marketing-surface {

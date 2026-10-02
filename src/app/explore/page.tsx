@@ -103,7 +103,7 @@ export default async function ExplorePage({
   */
   if (hiring) {
     return (
-      <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink dark:bg-ink dark:text-white">
+      <div className="marketing-surface masked-surface flex min-h-screen flex-col bg-white font-body text-ink dark:bg-ink dark:text-white">
         <MarketingHeader />
         <main className="flex-1">
           <div className="mx-auto max-w-[1120px] px-6 py-9 sm:py-12">
@@ -134,7 +134,7 @@ export default async function ExplorePage({
   const remaining = Math.max(0, total - cards.length);
 
   return (
-    <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">
+    <div className="marketing-surface masked-surface flex min-h-screen flex-col bg-white font-body text-ink">
       <MarketingHeader />
 
       <main className="flex-1">
