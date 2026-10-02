@@ -34,9 +34,17 @@ import { FollowButton } from "@/components/status/FollowButton";
  */
 export const revalidate = 60;
 
+/*
+  ⚠⚠ THE SHARE PREVIEW IS COPY TOO (`P2-ALL-E764`). Scott: *"This page does not
+  sell … it just provides status for Panameer (no 'your app', etc.)."* ⚠ The
+  description is what a link preview and a search result show, so leaving the
+  sales voice here would have survived every change on the page itself.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   description: "Watch your platform get built — Panameer, in the open.",
+*/
 export const metadata = {
   title: "Panameer Work Tracker",
-  description: "Watch your platform get built — Panameer, in the open.",
+  description: "Daily progress on the Panameer build, from first idea to public beta.",
 };
 
 /**
@@ -144,12 +152,28 @@ export default async function StatusPage({
             Work Tracker · Building in the open
             {t.dayNumber !== null && <> · Day {t.dayNumber}</>}
           </p>
+          {/*
+            ⚠⚠⚠ "PANAMEER", NOT "YOUR PLATFORM" (`P2-ALL-E764`, Scott 2026-10-02).
+            ⚠ The page reports on ONE build — ours. *"Your platform"* addressed a
+            buyer who is not the reader here, and it is the whole reason the close
+            band went too. ⚠ The exclamation mark is his.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   Watch your platform <em>get built.</em>
+          */}
           <h1 className={`mt-2 text-[34px] leading-[1.02] sm:text-[52px] ${HEAD}`}>
-            Watch your platform <em className="not-italic text-magenta">get built.</em>
+            Watch Panameer <em className="not-italic text-magenta">get built!</em>
           </h1>
+          {/*
+            ⚠ REPLACED WHOLESALE (`E764`). The old lede sold the tracker as a
+            product buyers and providers would use on *their* projects — two
+            sentences of pitch on a page whose job is to report.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   This is the Panameer Work Tracker, the same tracker buyers and
+            //   providers will use on their own projects. Here it follows ours,
+            //   every day, from first idea to public beta.
+          */}
           <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
-            This is the Panameer Work Tracker, the same tracker buyers and providers will use on their own
-            projects. Here it follows ours, every day, from first idea to public beta.
+            Daily progress on the Panameer build, from first idea to public beta.
           </p>
 
           <p className="mt-7 flex flex-wrap items-center gap-4">
@@ -355,52 +379,46 @@ export default async function StatusPage({
         </section>
       </div>
 
-      {/* ── CLOSE (ink band) ────────────────────────────────────────────── */}
       {/*
-        ── ⚠⚠⚠ THE BANDS ARE PINNED DARK IN BOTH SCHEMES (Scott, 2026-10-02) ────
+        ── ⚠⚠⚠ THE CLOSE BAND IS GONE, AND A PLAIN FOOTER TAKES ITS PLACE (`E764`)
 
-        ⚠ **MEASURED AND REPORTED FIRST:** with `bg-ink text-surface` the bands
-        INVERTED in dark mode — the hero became the LIGHT part of the page and the
-        body the dark part. It read, but it was the opposite of the design intent,
-        and Scott ruled them pinned.
+        ⚠ **SCOTT, 2026-10-02:** *"This page does not sell … it just provides
+        status for Panameer (no 'your app', etc.) — so [the 'Build it once' band]
+        makes no sense."*
+        ⚠⚠ **IT IS REMOVED, NOT HIDDEN.** The band carried a pitch, a lede about
+        packaging service products, and a `Join the beta` button — a sales close on
+        a page whose job is to report. ⚠ `Follow the Build` stays, in the hero
+        only, because following a build is not a purchase.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — what stood here:
+        //   <section className="mt-14 bg-rail px-5 py-12 text-white sm:px-8">
+        //     <h2>Build it once… / sell it for years.</h2>
+        //     <p>Package the reports, integrations, dashboards and agents you
+        //        have already built, and offer them to new Oracle clients as
+        //        service products. Showcased free during the beta.</p>
+        //     <Link href="/join">Join the Beta</Link>
+        //     <FollowButton … testId="follow-close" />
+        //   </section>
 
-        ⚠⚠ **`bg-rail` IS THE PINNED TOKEN AND THE SWITCH IS FREE IN LIGHT.**
-        `--color-rail` is `#272334`, defined ONCE outside the dark block, so it
-        does not invert — and the LIGHT `--color-ink` is `#272334` too, so this is
-        byte-identical in light mode and changes only dark.
-        ⚠ `text-white` likewise: only `.bg-white` carries a dark override in
-        `globals.css`, never `.text-white`.
-        ⚠⚠ Contrast on the pinned band: white **15.26:1**; the magenta accent
-        **3.79:1**, which is used only on the two large headings (3:1 floor).
-        ⚠ SUPERSEDED, quoted not deleted (`E164`): `bg-ink … text-surface`.
+        ⚠⚠ **A MINIMAL FOOTER, NOT `MarketingFooter`** (Scott's option (a)): that
+        component carries a sales CTA, which is the thing this change removes.
+        ⚠ `Report an issue` is a LINK to the existing support form, not a button —
+        it is the one thing a reader of a status page may actually need to do.
       */}
-      <section className="mt-14 bg-rail px-5 py-12 text-white sm:px-8">
-        <div className="mx-auto max-w-[1040px]">
-          <h2 className={`text-[30px] leading-[1.08] sm:text-[40px] ${HEAD}`}>
-            Build it once…
-            <span className="block italic text-magenta">sell it for years.</span>
-          </h2>
-          <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
-            Package the reports, integrations, dashboards and agents you have already built, and offer them
-            to new Oracle clients as service products. Showcased free during the beta.
-          </p>
-          <p className="mt-6 flex flex-wrap gap-3">
-            <FollowButton signedIn={viewer !== null} initiallyFollowing={following} testId="follow-close" />
-            <Link
-              href="/join"
-              /* ⚠⚠ PINNED, BECAUSE THE BAND IS. `bg-surface`/`text-ink` both invert,
-                 which on a band that no longer inverts would put a near-black
-                 button on a near-black band. ⚠⚠⚠ `bg-white` is NOT usable here —
-                 `globals.css` carries a `:root[data-theme="dark"] .bg-white`
-                 override, so it would invert too; the arbitrary value does not
-                 match that selector. ⚠ `text-rail` is the pinned token. */
-              className="inline-flex min-h-[48px] items-center rounded-[4px] bg-[#fff] px-6 text-[15px] font-bold text-rail transition-opacity hover:opacity-85"
-            >
-              Join the Beta
-            </Link>
-          </p>
-        </div>
-      </section>
+      <footer className="mt-16 border-t border-line px-5 py-7 sm:px-8">
+        <p className="mx-auto flex max-w-[1040px] flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-2">
+          <span>© {new Date(t.generatedAt).getFullYear()} Panameer Inc</span>
+          <span aria-hidden className="text-ink-3">·</span>
+          {/* ⚠ The marketing root, not `app.` — a public page points at the public
+              front door. */}
+          <a href="https://panameer.com" className="text-ink-2 underline underline-offset-4 hover:text-magenta">
+            panameer.com
+          </a>
+          <span aria-hidden className="text-ink-3">·</span>
+          <Link href="/support" className="text-ink-2 underline underline-offset-4 hover:text-magenta">
+            Report an issue
+          </Link>
+        </p>
+      </footer>
     </div>
   );
 }
