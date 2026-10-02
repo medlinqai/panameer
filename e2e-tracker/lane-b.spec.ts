@@ -1,0 +1,145 @@
+import { test, expect } from "@playwright/test";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { adminAccount, signInAs } from "./_admin";
+
+/**
+ * `P2-ALL-E753` lane B — the public route, and the LEAK TEST.
+ *
+ * ⚠⚠ **SCOTT'S RULE IS WHAT THIS GUARDS:** *"I do not want to give a 'how to
+ * recreate Panameer' cookbook to the competition."* The public payload carries
+ * phases, gates, stages, journeys, Shipped and support counts — and no task
+ * text, no task id, no criterion text, no note and no owner.
+ *
+ * ⚠⚠⚠ **THE NEEDLES COME FROM THE CATALOG FILE, NOT FROM A HAND-WRITTEN LIST.**
+ * A hand-written list goes stale the first time a task is reworded and then
+ * passes forever while leaking. Reading the real catalog means a new task is
+ * covered the day it is added.
+ */
+
+type Catalog = {
+  tasks: { id: string; task: string; segment: string }[];
+  gates: { id: string; criteria: [string, string][] }[];
+};
+
+function catalog(): Catalog {
+  return JSON.parse(
+    readFileSync(join(process.cwd(), "src/lib/work-tracker/aim-catalog.json"), "utf8")
+  ) as Catalog;
+}
+
+test("E753 — /status is public: a signed-out visitor gets the page, not /login", async ({ page }) => {
+  const res = await page.goto("/status");
+  expect(res?.status()).toBe(200);
+  await expect(page).toHaveURL(/\/status$/);
+  await expect(page.getByRole("heading", { name: "Panameer, being built in the open" })).toBeVisible();
+});
+
+test("E753 — /api/status is public and carries the view model", async ({ request }) => {
+  const res = await request.get("/api/status");
+  expect(res.status()).toBe(200);
+  const body = (await res.json()) as Record<string, unknown>;
+  for (const key of ["phases", "gates", "currentPhaseStages", "journeys", "shipped", "support"]) {
+    expect(body, `payload carries ${key}`).toHaveProperty(key);
+  }
+  console.log(
+    `\n  payload: ${(body.phases as unknown[]).length} phases · ${(body.gates as unknown[]).length} gates · ` +
+      `${(body.currentPhaseStages as unknown[]).length} stages · ${(body.journeys as unknown[]).length} journeys · ` +
+      `overall ${String(body.overallPercent)}% · current ${String(body.currentPhase)}`
+  );
+});
+
+test("E753 — LEAK TEST: no task text, task id or criterion text in the public payload", async ({
+  request,
+  page,
+}) => {
+  const c = catalog();
+  const api = await (await request.get("/api/status")).text();
+  await page.goto("/status");
+  const html = await page.content();
+
+  /* ⚠ Both surfaces, because the page is server-rendered: the payload could be
+     clean while the HTML embeds the same data in a flight chunk. */
+  for (const [label, haystack] of [["/api/status", api], ["/status HTML", html]] as const) {
+    const leakedIds = c.tasks.map((t) => t.id).filter((id) => haystack.includes(id));
+    expect(leakedIds, `${label} leaks task ids: ${leakedIds.slice(0, 5).join(", ")}`).toEqual([]);
+
+    /* ⚠ Long task strings only: a short one like "Pick a name" could appear by
+       coincidence, and a needle that can match by accident makes the gate a
+       false red that people switch off (`decisions_2026-09-23.md` §8 rule 10). */
+    const leakedTasks = c.tasks
+      .map((t) => t.task)
+      .filter((txt) => txt.length >= 25 && haystack.includes(txt));
+    expect(leakedTasks, `${label} leaks task text: ${leakedTasks.slice(0, 3).join(" | ")}`).toEqual([]);
+
+    const leakedCriteria = c.gates
+      .flatMap((g) => g.criteria.map(([txt]) => txt))
+      .filter((txt) => haystack.includes(txt));
+    expect(leakedCriteria, `${label} leaks criterion text: ${leakedCriteria.slice(0, 3).join(" | ")}`).toEqual(
+      []
+    );
+  }
+
+  console.log(
+    `\n  leak test clean against ${c.tasks.length} task ids, ` +
+      `${c.tasks.filter((t) => t.task.length >= 25).length} task strings and ` +
+      `${c.gates.reduce((n, g) => n + g.criteria.length, 0)} criteria, on BOTH surfaces`
+  );
+});
+
+/**
+ * ⚠⚠⚠ THE TEST THAT PROVES THE LEAK TEST CAN FAIL.
+ *
+ * ⚠ An assertion its own mutation cannot fail is not an assertion
+ * (`decisions_2026-09-23.md` §8 rule 12). This asserts that the catalog the
+ * needles come from really does contain the strings being searched for — if the
+ * file were empty or the shape changed, the leak test above would pass
+ * vacuously and nobody would know.
+ */
+test("E753 — the leak test's own needles are real", () => {
+  const c = catalog();
+  expect(c.tasks.length).toBeGreaterThan(200);
+  expect(c.gates.length).toBe(4);
+  expect(c.tasks.filter((t) => t.task.length >= 25).length).toBeGreaterThan(150);
+  expect(c.gates.reduce((n, g) => n + g.criteria.length, 0)).toBeGreaterThan(15);
+});
+
+test("E753 — a DRAFT Shipped entry never reaches the public payload", async ({ page, request }) => {
+  const { email, password } = adminAccount();
+  const marker = `E753 draft probe ${Date.now()}`;
+
+  await signInAs(page, email, password);
+  await page.goto("/admin/work-tracker");
+  await page.getByPlaceholder("What shipped").fill(marker);
+  await page.getByRole("button", { name: "Add Draft" }).click();
+  await page.waitForTimeout(1800);
+
+  /* ⚠ The draft exists in the admin view … */
+  await page.reload();
+  await expect(page.getByText(marker, { exact: true })).toBeVisible();
+
+  /* ⚠⚠ … and must be absent from the public payload. `published: true` is in the
+     WHERE clause, so there is no branch that could forget. */
+  const api = await (await request.get("/api/status")).text();
+  expect(api.includes(marker), "a DRAFT reached the public payload").toBe(false);
+
+  /* ⚠ Now publish it and prove the test can see the difference — otherwise the
+     assertion above would pass against a payload that never shows anything. */
+  const row = page.locator("div", { has: page.getByText(marker, { exact: true }) }).last();
+  await row.getByRole("button", { name: "Publish" }).click();
+  await page.waitForTimeout(1800);
+  const api2 = await (await request.get("/api/status")).text();
+  expect(api2.includes(marker), "a PUBLISHED entry did not reach the public payload").toBe(true);
+
+  /* clean up — this is the one shared database */
+  await page.reload();
+  await page
+    .locator("div", { has: page.getByText(marker, { exact: true }) })
+    .last()
+    .getByRole("button", { name: "Delete" })
+    .click();
+  await page.waitForTimeout(1800);
+  const api3 = await (await request.get("/api/status")).text();
+  expect(api3.includes(marker)).toBe(false);
+  console.log(`\n  draft hidden → published visible → deleted: the filter is real, not vacuous`);
+});

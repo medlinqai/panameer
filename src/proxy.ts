@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { isMarketingHost } from "@/lib/host";
+import { isMarketingHost, isStatusHost } from "@/lib/host";
 import { requirementForPath, meetsRequirement } from "@/lib/route-access";
 
 /**
@@ -25,6 +25,26 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/") {
     const host =
       request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    /*
+      ⚠⚠⚠ THE STATUS HOST IS TESTED FIRST (`P2-ALL-E753`).
+
+      ⚠ `status.panameer.com` serves the public Work Tracker. It is NOT a
+      marketing host, so without this branch it falls through to the app arm
+      below and redirects a public visitor to `/login` — which is exactly what
+      it did before this line existed.
+
+      ⚠⚠ **A REWRITE, NOT A REDIRECT.** The visitor stays on
+      `status.panameer.com` and never sees `/status` in the address bar; a
+      redirect would send them to `app.panameer.com/status` and leak the app's
+      hostname onto a page whose whole job is to be the public face of the build.
+
+      ⚠ `/status` is ALSO reachable by path on any host — it is in
+      `public-routes.ts`, so it is walkable locally without a hosts-file entry.
+      The host is a convenience, not the gate.
+    */
+    if (isStatusHost(host)) {
+      return NextResponse.rewrite(new URL("/status", request.url));
+    }
     return isMarketingHost(host)
       ? NextResponse.next()
       : NextResponse.redirect(new URL("/login", request.url));
