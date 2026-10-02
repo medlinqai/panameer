@@ -38,7 +38,10 @@ function pct(tasks: Task[]): number | null {
 const FIELD =
   "w-full border border-line bg-surface px-2 py-1.5 text-[13px] text-ink focus:border-ink focus:outline-none";
 const BTN =
-  "inline-flex min-h-[36px] items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-white transition-opacity hover:opacity-85 disabled:opacity-40";
+  /* ⚠ `text-surface`, not `text-white` — `--color-ink` inverts in dark mode and
+   `white` does not, which renders a near-white label on a near-white fill
+   (measured on the share bar, `E755`). */
+  "inline-flex min-h-[36px] items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
 const BTN_2 =
   "inline-flex min-h-[36px] items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 
