@@ -234,9 +234,43 @@ if (NON_PRODUCTION_ALLOWLIST.length > 0) {
     return out;
   };
   const THE_SENDER = join("src", "lib", "notifications.ts");
+
+  /*
+    ── ⚠⚠⚠ THREE NAMED EXEMPTIONS, EACH MEASURED (`P2-A1.1-E749`, lane 3 WS-D) ─
+
+    ⚠ **THE RULE THIS GUARD PROTECTS IS *"ONE ACT, TWO EMAILS TO ONE PERSON"*,
+    AND THE FILE-LEVEL TEST IS AN APPROXIMATION OF IT.** These three send to one
+    person and notify a DIFFERENT one, so the approximation misfires.
+    ⚠⚠ **EXEMPTED BY NAME, NEVER BY PATTERN** — the shape this file's own comment
+    asks for, and `check:derived-source`'s. A pattern would quietly cover the
+    next file too.
+
+    ⚠⚠⚠ **AND THE NET GETS TIGHTER, NOT LOOSER: ASSERTION 8b BELOW MAKES IT A
+    HARD ERROR FOR ANY EXEMPTED FILE TO FIRE AN ALLOWLISTED EVENT.** That is the
+    actual double-send, and it is now impossible in exactly the files where the
+    broad heuristic has been switched off.
+
+    ⚠ MEASURED 2026-10-02, recipient by recipient:
+      · `recommendations.ts` — emails the RECOMMENDER (asking for one),
+        notifies the PROVIDER (that one arrived). Two people.
+      · `employer-validation.ts` — emails the CONTACT at the company,
+        notifies the PROVIDER. Two people.
+      · `project-validation.ts` — ⚠⚠ emails the CONTACT **and** the PROVIDER
+        (`project-validated` on a confirm), and notifies the PROVIDER. **This is
+        the one that could become a real double-send**, and 8b is what stops it:
+        the day `validation.confirmed` is allowlisted without the direct send
+        being removed, this gate goes red.
+  */
+  const DOUBLE_SEND_EXEMPT = [
+    join("src", "lib", "recommendations.ts"),
+    join("src", "lib", "project-validation.ts"),
+    join("src", "lib", "employer-validation.ts"),
+  ];
+
   const files = walk("src").filter((f) => f !== THE_SENDER);
   let both = 0;
   for (const f of files) {
+    if (DOUBLE_SEND_EXEMPT.includes(f)) continue;
     const code = stripComments(readFileSync(f, "utf8"));
     if (/\bsendEmail\s*\(/.test(code) && /\bnotify\s*\(\s*\{/.test(code)) {
       both += 1;
@@ -244,6 +278,35 @@ if (NON_PRODUCTION_ALLOWLIST.length > 0) {
     }
   }
   check("8 — ⚠⚠⚠ zero files both send and notify (the double-send guard)", both === 0, `${both} file(s)`);
+
+  /*
+    ⚠⚠⚠ 8b — **THE EXEMPTION CANNOT BECOME A HOLE.** An exempted file may send
+    AND notify, but it may NEVER fire an event that is on the email allowlist —
+    that is precisely the one-person-two-emails case the guard exists for.
+    ⚠ It also fails if an exemption stops being needed, so the list can only
+    shrink (`UNCLASSIFIED_PENDING_DECISION`'s rule, applied to a gate).
+  */
+  for (const f of DOUBLE_SEND_EXEMPT) {
+    const code = stripComments(readFileSync(f, "utf8"));
+    const sendsAndNotifies =
+      /\bsendEmail\s*\(/.test(code) && /\bnotify\s*\(\s*\{/.test(code);
+    check(
+      `8b — ${f} is still both a sender and a notifier (or drop its exemption)`,
+      sendsAndNotifies,
+      "an exemption nobody needs is a hole waiting for a new caller"
+    );
+    const fired = [...code.matchAll(/event:\s*"([a-z0-9_.]+)"/g)].map((m) => m[1]);
+    const alsoBranching = [...code.matchAll(/\?\s*"([a-z0-9_.]+)"\s*:\s*"([a-z0-9_.]+)"/g)]
+      .flatMap((m) => [m[1], m[2]]);
+    const onAllowlist = [...fired, ...alsoBranching].filter((e) =>
+      (NOTIFICATION_EMAIL_EVENTS as readonly string[]).includes(e)
+    );
+    check(
+      `8b — ${f} fires NO allowlisted event (the real double-send)`,
+      onAllowlist.length === 0,
+      onAllowlist.join(", ")
+    );
+  }
   /* ⚠ `E586` — the sweep must have actually swept. */
   check("8 — the sweep enumerated src/", files.length > 200, `${files.length} file(s)`);
   /* ⚠⚠ AND THE ONE EXEMPTION MUST STILL BE THE SENDER, or the rule above is

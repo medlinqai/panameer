@@ -389,7 +389,17 @@ export async function submitRecommendation(
 ): Promise<void> {
   const row = await prisma.recommendationRequest.findUnique({
     where: { token_hash: hashToken(raw) },
-    select: { id: true, status: true, expires_at: true },
+    select: {
+      id: true,
+      status: true,
+      expires_at: true,
+      /* ⚠ `P2-A1.1-E749` WS-D — who to tell, and who to say it was from.
+         ⚠⚠ The recommender's name is `contact_name`; there is no
+         `recommender_name` column (measured — `tsc` refused my first draft).
+         ⚠ `provider_profile_id` is a scalar, so the person is resolved below. */
+      contact_name: true,
+      provider_profile_id: true,
+    },
   });
   if (!row) throw new RecommendationError("That link isn't valid.", "INVALID");
   if (row.status !== "SENT") {
@@ -415,6 +425,42 @@ export async function submitRecommendation(
       responder_ua: input.ua?.slice(0, 400) ?? null,
     },
   });
+
+  /*
+    ── ⚠⚠⚠ `recommendation.received` HAD NO CALLER (`P2-A1.1-E749`, WS-D) ─────
+
+    ⚠ Super run 4 lane 4 found **15 registry events nothing fires**, and this is
+    one of the two the brief assigns to lane 3: *"`recommendation.received` is
+    owed to the Usage gauges."*
+    ⚠⚠ **IT IS THE OBVIOUS PLACE AND IT WAS SIMPLY NEVER WIRED** — the event, its
+    category and its copy all existed; the one line that fires it did not.
+    ⚠ MEASURED: `RecommendationRequest` holds **0 rows**, so nothing has been
+    missed yet — this is a gap closed before it cost anything, not a repair.
+
+    ⚠⚠ **AFTER THE WRITE, INSIDE A CATCH.** The recommendation is committed; a
+    notification outage must never discard somebody's written recommendation.
+    ⚠ `notify()` only — no `sendEmail()` from a writer (ruling 86).
+  */
+  try {
+    const owner = await prisma.providerProfile.findUnique({
+      where: { id: row.provider_profile_id },
+      select: { person_id: true },
+    });
+    if (!owner) return;
+    const { notify } = await import("@/lib/notifications");
+    await notify({
+      event: "recommendation.received",
+      personId: owner.person_id,
+      /* ⚠ The recommender PUT THEIR NAME TO THIS — it is a public testimonial,
+         not an anonymous validation, so naming them is the point rather than a
+         leak. ⚠⚠ That is exactly the opposite of the validation badge, and the
+         difference is consent. */
+      vars: { fromName: row.contact_name || "Someone" },
+      dedupeKey: `recommendation:${row.id}`,
+    });
+  } catch (e) {
+    console.error("[recommendations] could not record a notification:", e);
+  }
 }
 
 /** Decline, recorded rather than ignored — a non-answer is an answer. */

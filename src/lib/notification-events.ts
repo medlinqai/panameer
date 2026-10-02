@@ -224,6 +224,44 @@ export const NOTIFICATION_EVENTS = {
     be ONE named, auditable exemption with a check that fails if any other
     sender claims it.
   */
+  /*
+    ── ⚠⚠ THE TWO VALIDATION ANSWERS (`P2-A1.1-E749`, lane 3 WS-D) ───────────
+
+    ⚠ SCOTT'S BRIEF: *"the provider gets a bell notice on Yes and on No."*
+    ⚠⚠ **TWO EVENTS, NOT ONE WITH A FLAG.** A `Yes` is news worth celebrating and
+    a `No` is a quiet fact the provider has to absorb — one event with a `vars`
+    branch would put that difference inside a template where the settings screen
+    cannot see it, and a member could not switch one on without the other.
+    ⚠⚠⚠ **THE DECLINE NOTICE NEVER CARRIES THE CONTACT'S WORDING OR NAME.** The
+    brief: *"the provider is told kindly, without the contact's wording."* It
+    says what happened and what they can do; it does not relay a judgement.
+  */
+  "validation.confirmed": {
+    event: "validation.confirmed",
+    recipient: "the provider",
+    category: "recommendation.received",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${v.subject ?? "Your work"} was validated`,
+    body: () => "Someone confirmed it. The badge is on your profile now.",
+    href: () => "/profile",
+  },
+  "validation.declined": {
+    event: "validation.declined",
+    recipient: "the provider",
+    category: "recommendation.received",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    /* ⚠ Not `requiresAction`: there is nothing they must do, and marking it as a
+       task would turn somebody else's "no" into a chore on their worklist. */
+    requiresAction: false,
+    title: (v) => `${v.subject ?? "Your work"} wasn't confirmed`,
+    /* ⚠⚠ NO BLAME, NO WORDING, NO NAME. Just the state and the way forward. */
+    body: () =>
+      "The contact didn't confirm it. Nothing is shown as validated, and you can ask someone else.",
+    href: () => "/profile",
+  },
   "account.credential_changed": {
     event: "account.credential_changed",
     recipient: "the account holder",

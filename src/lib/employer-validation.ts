@@ -300,7 +300,19 @@ export async function respondToEmployerValidation(
 ): Promise<{ ok: boolean }> {
   const record = await prisma.employerValidation.findUnique({
     where: { token_hash: hashToken(rawToken) },
-    select: { id: true, employer_id: true, status: true, expires_at: true },
+    select: {
+      id: true,
+      employer_id: true,
+      status: true,
+      expires_at: true,
+      /* ⚠ `P2-A1.1-E749` WS-D — who to tell, and what to call the thing. */
+      employer: {
+        select: {
+          name: true,
+          providerProfile: { select: { person_id: true } },
+        },
+      },
+    },
   });
   if (!record) return { ok: false };
   if (record.status !== "SENT") return { ok: false };
@@ -324,5 +336,26 @@ export async function respondToEmployerValidation(
       data: { validation_status: answer === "yes" ? "VALIDATED" : "NONE" },
     }),
   ]);
+
+  /*
+    ── ⚠⚠ TELL THE PROVIDER (`P2-A1.1-E749`, WS-D) ──────────────────────────
+    ⚠ Scott: *"the provider gets a bell notice on Yes and on No."*
+    ⚠⚠ **AFTER THE WRITE, INSIDE A CATCH, AND IT CAN NEVER FAIL THE ANSWER.**
+    The contact has already clicked and the row is committed — turning a
+    notification outage into a failed confirmation would lose the one thing this
+    whole flow exists to capture. ⚠ Same rule the receipt follows (`E522`).
+    ⚠⚠⚠ **`notify()` ONLY — no `sendEmail()` from here** (ruling 86).
+  */
+  try {
+    const { notify } = await import("@/lib/notifications");
+    await notify({
+      event: answer === "yes" ? "validation.confirmed" : "validation.declined",
+      personId: record.employer.providerProfile.person_id,
+      vars: { subject: record.employer.name ?? "Your job" },
+      dedupeKey: `validation:${record.id}`,
+    });
+  } catch (e) {
+    console.error("[employer-validation] could not record a notification:", e);
+  }
   return { ok: true };
 }

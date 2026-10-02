@@ -376,12 +376,54 @@ export async function respondToValidation(
     }),
   ]);
 
-  // One event, no noise (brief §6): tell the provider only on a CONFIRM. A
-  // decline is a conversation to have offline, not a push notification.
+  /*
+    ── ⚠⚠⚠ A BELL ENTRY ON **BOTH** ANSWERS (`P2-A1.1-E749`, lane 3 WS-D) ─────
+
+    ⚠ **SCOTT, 2026-10-01: *"the provider gets a bell notice on Yes and on No."***
+    ⚠⚠ **THIS SUPERSEDES THE RULE THIS BLOCK USED TO STATE** (rule 13 — the
+    newest dated statement from Scott is the live one). ⚠ SUPERSEDED, quoted not
+    deleted (`E164`):
+    //   One event, no noise (brief §6): tell the provider only on a CONFIRM. A
+    //   decline is a conversation to have offline, not a push notification.
+    ⚠⚠⚠ **THE DECLINE NOTICE CARRIES NO WORDING AND NO NAME** — the brief: *"the
+    provider is told kindly, without the contact's wording."* So the old concern
+    is answered rather than overruled: what it feared was relaying a judgement,
+    and the event does not.
+
+    ── ⚠⚠ THIS IS NOT A DOUBLE-SEND, AND THE CHECK IS WORTH RECORDING ─────────
+
+    ⚠ `notifyProviderValidated` below sends the `project-validated` EMAIL
+    directly, which is ruling 86c's shape. ⚠⚠ **IT IS NOT DUPLICATED HERE:
+    `validation.confirmed` IS NOT ON `NOTIFICATION_EMAIL_EVENTS`**, so `notify()`
+    writes a bell row and sends nothing. ⚠⚠⚠ One email, one bell entry — which
+    is exactly ruling 86's division: the transaction owns the mail, the
+    notification layer owns the entry.
+    ⚠ **DO NOT ADD `validation.confirmed` TO THE ALLOWLIST WITHOUT REMOVING THE
+    DIRECT SEND**, or the provider gets the same news twice.
+  */
   if (decision === "confirm") {
     void notifyProviderValidated(record.project_id).catch((e) =>
       console.error("[project-validation] provider notify failed (non-fatal):", e)
     );
+  }
+  try {
+    const owner = await prisma.project.findUnique({
+      where: { id: record.project_id },
+      select: { providerProfile: { select: { person_id: true } } },
+    });
+    if (owner) {
+      const { notify } = await import("@/lib/notifications");
+      await notify({
+        event: decision === "confirm" ? "validation.confirmed" : "validation.declined",
+        personId: owner.providerProfile.person_id,
+        vars: { subject: record.project.name },
+        dedupeKey: `validation:${record.id}`,
+      });
+    }
+  } catch (e) {
+    /* ⚠⚠ IT CAN NEVER FAIL THE ANSWER. The contact has clicked and the row is
+       committed; a notification outage must not lose the confirmation. */
+    console.error("[project-validation] could not record a notification:", e);
   }
 
   return { ok: true, decision, projectName: record.project.name };
