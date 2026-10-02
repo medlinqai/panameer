@@ -7562,6 +7562,17 @@ model WorkTrackerPhaseDate {
   start_date DateTime? @db.Date
   end_date   DateTime? @db.Date
 
+  /// ⚠⚠⚠ THE ADMIN'S OWN ANSWER TO "WHICH PHASE ARE WE IN" (`P2-ALL-E757`,
+  /// Scott 2026-10-02). ⚠ It is the FIRST of three sources, and the other two are
+  /// fallbacks, not equals: admin-set → the dates → the first phase that is not
+  /// 100% Done. ⚠⚠ **NEVER SIMPLY THE FIRST PHASE** — the old code returned the
+  /// first phase under 100%, which is `Define` and has been wrong since August.
+  ///
+  /// ⚠ AT MOST ONE ROW MAY HOLD IT. `setCurrentPhase` clears the others in the
+  /// same transaction, and `check:work-tracker` asserts the invariant — a flag
+  /// that can be true twice is a flag that will be.
+  is_current Boolean @default(false)
+
   updated_at DateTime @updatedAt
   updated_by String?  @db.Uuid
 

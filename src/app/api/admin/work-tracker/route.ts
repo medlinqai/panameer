@@ -7,6 +7,7 @@ import {
   deleteMilestone,
   deleteShipped,
   setGateCriterion,
+  setCurrentPhase,
   setPhaseDates,
   setStageStatus,
   setTaskState,
@@ -56,6 +57,10 @@ export async function POST(request: Request) {
 
       case "gate":
         await setGateCriterion(gate, String(body.gateId ?? ""), Number(body.criterionIndex), body.value);
+        return NextResponse.json({ ok: true });
+
+      case "current-phase":
+        await setCurrentPhase(gate, body.phase === null || body.phase === "" ? null : String(body.phase));
         return NextResponse.json({ ok: true });
 
       case "phase-dates":

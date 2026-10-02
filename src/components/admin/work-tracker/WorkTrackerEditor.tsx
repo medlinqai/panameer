@@ -29,7 +29,15 @@ type Task = {
   isJourney: boolean;
 };
 type Stage = { name: string; tasks: Task[] };
-type Phase = { name: string; purpose: string; outcome: string; start: string; end: string; stages: Stage[] };
+type Phase = {
+  name: string;
+  purpose: string;
+  outcome: string;
+  isCurrent: boolean;
+  start: string;
+  end: string;
+  stages: Stage[];
+};
 type Gate = { id: string; after: string; title: string; criteria: { index: number; text: string; value: string }[] };
 type Shipped = { id: string; date: string; journeyTag: string; title: string; body: string; published: boolean };
 type Milestone = {
@@ -164,7 +172,26 @@ export function WorkTrackerEditor({
                     {phasePct === null ? "— not countable" : `${phasePct}%`} · {tasks.length} tasks ·{" "}
                     {p.stages.length} stages
                   </span>
+                  {/*
+                    ⚠⚠⚠ THE ADMIN NAMES THE CURRENT PHASE (Scott, 2026-10-02).
+                    ⚠ It is the FIRST of three sources — admin, then the dates,
+                    then the first phase under 100%. ⚠⚠ The old page had only the
+                    third, which returns `Define` the moment one Define task is
+                    open, and it had been saying `Define` while the work was in
+                    `Build`. ⚠ A radio, not a checkbox: exactly one phase is
+                    current, and the writer clears the others in one transaction.
+                  */}
                   <label className="ml-auto flex items-center gap-1.5 text-[12px] text-ink-2">
+                    <input
+                      type="radio"
+                      name="current-phase"
+                      checked={p.isCurrent}
+                      disabled={pending}
+                      onChange={() => post({ action: "current-phase", phase: p.name })}
+                    />
+                    Current
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
                     Start
                     <input
                       type="date"

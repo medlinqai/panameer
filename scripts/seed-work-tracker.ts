@@ -162,6 +162,66 @@ async function main() {
     milestoneNote = "left as the admin set it";
   }
 
+  /*
+    ── ⚠⚠⚠ JOURNEY STAGES AND THE CURRENT PHASE (Scott, 2026-10-02) ───────────
+
+    ⚠ **`Register` and `Profile` = `test` · `Pay` = `design` · everything else =
+    `build`.** His words, and they are the state of the build today.
+    ⚠⚠ Keyed on the catalog's SEGMENT, not on a task id, so the seed still reads
+    correctly if the ids move. ⚠ Fill-gaps-only like the rest: a stage an admin
+    has already set is left alone unless `--force`.
+
+    ⚠⚠⚠ **AND THE PHASE IS `Build`.** It is the admin-set answer — the first of
+    the three sources — and it exists precisely because the inference said
+    `Define` while the work was in `Build`.
+  */
+  const STAGE_BY_SEGMENT: Record<string, string> = {
+    Register: "test",
+    Profile: "test",
+    Pay: "design",
+  };
+  const DEFAULT_STAGE = "build";
+  const MILESTONE_SEGMENT = "Milestones";
+
+  let stagesSet = 0;
+  let stagesKept = 0;
+  for (const t of catalog.tasks as { id: string; segment?: string }[]) {
+    if (!t.id.startsWith("PNM-") || t.segment === MILESTONE_SEGMENT) continue;
+    const want = STAGE_BY_SEGMENT[t.segment ?? ""] ?? DEFAULT_STAGE;
+    const row = await prisma.workTrackerTaskState.findUnique({ where: { task_id: t.id } });
+    if (row?.stage && !force) {
+      stagesKept++;
+      continue;
+    }
+    if (!dry) {
+      await prisma.workTrackerTaskState.upsert({
+        where: { task_id: t.id },
+        update: { stage: want },
+        create: { task_id: t.id, status: "Not Started", stage: want },
+      });
+    }
+    stagesSet++;
+  }
+
+  const CURRENT_PHASE = "Build";
+  const already = await prisma.workTrackerPhaseDate.findFirst({ where: { is_current: true } });
+  let phaseNote: string;
+  if (already && !force) {
+    phaseNote = `left as the admin set it (${already.phase})`;
+  } else {
+    if (!dry) {
+      await prisma.$transaction(async (tx) => {
+        await tx.workTrackerPhaseDate.updateMany({ where: { is_current: true }, data: { is_current: false } });
+        await tx.workTrackerPhaseDate.upsert({
+          where: { phase: CURRENT_PHASE },
+          update: { is_current: true },
+          create: { phase: CURRENT_PHASE, is_current: true },
+        });
+      });
+    }
+    phaseNote = `set to ${CURRENT_PHASE}`;
+  }
+
   const total = await prisma.workTrackerTaskState.count();
   console.log(
     [
@@ -173,6 +233,8 @@ async function main() {
       `  gates       : ${gCreated} created · ${gUpdated} overwritten · ${gKept} left as the admin set them`,
       `  task rows now: ${total}`,
       `  milestone    : "${MILESTONE.title}" ${milestoneNote}`,
+      `  journey stages: ${stagesSet} set · ${stagesKept} left as the admin set them`,
+      `  current phase : ${phaseNote}`,
       unknown.length
         ? `  ⚠ ${unknown.length} seed entries NOT in the catalog, skipped: ${unknown.slice(0, 8).join(", ")}${unknown.length > 8 ? " …" : ""}`
         : "  ✓ every seed entry resolved to a catalog id",

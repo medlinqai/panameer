@@ -36,6 +36,7 @@ export default async function AdminWorkTrackerPage() {
     name: p.name,
     purpose: p.purpose,
     outcome: p.outcome,
+    isCurrent: dates.get(p.name)?.isCurrent === true,
     start: dates.get(p.name)?.start?.toISOString().slice(0, 10) ?? "",
     end: dates.get(p.name)?.end?.toISOString().slice(0, 10) ?? "",
     stages: stagesForPhase(p.name).map((stage) => ({

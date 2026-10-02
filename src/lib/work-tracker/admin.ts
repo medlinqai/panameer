@@ -90,7 +90,9 @@ export async function gateStates(): Promise<Map<string, GateValue>> {
 
 export async function phaseDates() {
   const rows = await prisma.workTrackerPhaseDate.findMany();
-  return new Map(rows.map((r) => [r.phase, { start: r.start_date, end: r.end_date }]));
+  return new Map(
+    rows.map((r) => [r.phase, { start: r.start_date, end: r.end_date, isCurrent: r.is_current }]),
+  );
 }
 
 /**
@@ -319,6 +321,36 @@ export async function setGateCriterion(
     }
   }
   return row;
+}
+
+/**
+ * ⚠⚠⚠ THE ADMIN NAMES THE CURRENT PHASE (`P2-ALL-E757`, Scott 2026-10-02).
+ *
+ * ⚠ **AT MOST ONE PHASE MAY HOLD IT**, and that is enforced here rather than
+ * hoped for: the clear and the set are one transaction, so there is no instant
+ * where two phases are current and no way for a failed write to leave two.
+ * ⚠⚠ Passing `null` clears the choice and hands the question back to the
+ * fallbacks — which is a real action, not an absence.
+ */
+export async function setCurrentPhase(viewer: Viewer, phase: string | null) {
+  if (phase !== null && !PHASE_NAMES.includes(phase)) {
+    throw new WorkTrackerError(`No catalog phase "${phase}"`, "NOT_FOUND");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.workTrackerPhaseDate.updateMany({
+      where: { is_current: true },
+      data: { is_current: false },
+    });
+    if (phase) {
+      /* ⚠ Upsert, because a phase can be named current before anybody has given
+         it dates — the two facts are independent. */
+      await tx.workTrackerPhaseDate.upsert({
+        where: { phase },
+        update: { is_current: true, updated_by: viewer.userId },
+        create: { phase, is_current: true, updated_by: viewer.userId },
+      });
+    }
+  });
 }
 
 export async function setPhaseDates(

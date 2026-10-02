@@ -39,6 +39,20 @@ export const metadata = {
   description: "Watch your platform get built — Panameer, in the open.",
 };
 
+/**
+ * ⚠⚠⚠ THE TYPEFACE ON `/status` IS MONTSERRAT 800, NOT COMFORTAA (Scott,
+ * walking the page 2026-10-02: *"headings and numerals in Montserrat 800, tight
+ * tracking, as in the mockup. No Comfortaa anywhere on /status."*).
+ *
+ * ⚠⚠ **`font-display` IS COMFORTAA AND CAPS AT 700** (`globals.css` loads
+ * 500/600/700), and `@layer base` puts it on every `h1`–`h3` — so a heading here
+ * inherited it without asking. ⚠ `font-body` is Montserrat, which IS loaded at
+ * 800, and a utility beats `@layer base`.
+ * ⚠ `HEAD` is the one definition of that pairing; every heading and every numeral
+ * on this page uses it, so they cannot drift apart (`E585`).
+ */
+const HEAD = "font-body font-extrabold tracking-[-0.03em]";
+
 const STAGE_WORD: Record<string, string> = {
   design: "Designing",
   build: "Building",
@@ -87,7 +101,6 @@ export default async function StatusPage({
   const [following, followers] = await Promise.all([isFollowing(viewer), followerCount()]);
   const current = t.phases.find((p) => p.current) ?? null;
   const currentIndex = t.phases.findIndex((p) => p.current) + 1;
-  const moving = t.currentPhaseStages.filter((s) => s.status === "In Progress").length;
   const gatesPassed = t.gates.filter((g) => g.passed).length;
   const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -115,7 +128,15 @@ export default async function StatusPage({
         ⚠ SUPERSEDED, quoted not deleted (`E164`): `bg-ink … text-surface`.
       */}
       <section className="bg-rail px-5 py-12 text-white sm:px-8">
-        <div className="mx-auto max-w-[1040px]">
+      {/*
+        ── ⚠⚠ TWO COLUMNS AT ≥900px (Scott, walking the page 2026-10-02) ────────
+        ⚠ Copy left, the overall figure right-aligned at the mockup's scale.
+        ⚠⚠ `min-[900px]:` and not `lg:` — he named 900, and Tailwind's `lg` is
+        1024, so the named breakpoint is written literally rather than rounded to
+        the nearest token. ⚠ Below it the two stack, copy first.
+      */}
+      <div className="mx-auto grid max-w-[1040px] gap-x-10 gap-y-8 min-[900px]:grid-cols-[1fr_auto] min-[900px]:items-end">
+        <div>
           <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-white/70">
             {/* ⚠⚠⚠ "Day N" IS DROPPED UNTIL DEFINE HAS A START DATE (Scott,
                 2026-10-02: *"no NaN, no invented date"*). The clause disappears;
@@ -123,27 +144,12 @@ export default async function StatusPage({
             Work Tracker · Building in the open
             {t.dayNumber !== null && <> · Day {t.dayNumber}</>}
           </p>
-          <h1 className="mt-2 font-display text-[34px] font-bold leading-[1.1] tracking-[-0.6px] sm:text-[44px]">
+          <h1 className={`mt-2 text-[34px] leading-[1.02] sm:text-[52px] ${HEAD}`}>
             Watch your platform <em className="not-italic text-magenta">get built.</em>
           </h1>
           <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
             This is the Panameer Work Tracker, the same tracker buyers and providers will use on their own
             projects. Here it follows ours, every day, from first idea to public beta.
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <span className="font-display text-[52px] font-bold leading-none">
-              {/* ⚠ A real zero renders as 0; an uncountable figure renders a dash
-                  WITH its reason. The two must not look the same. */}
-              {t.overallPercent === null ? "—" : `${t.overallPercent}%`}
-            </span>
-            <span className="text-[14px] text-white/75">
-              {t.overallPercent === null ? "nothing countable yet" : "of the plan complete"} · updated{" "}
-              {updated}
-            </span>
-          </div>
-          <p className="mt-2 text-[14px] text-white/75">
-            {t.doneCount} done · {moving} moving · {gatesPassed} of {t.gates.length} gates
           </p>
 
           <p className="mt-7 flex flex-wrap items-center gap-4">
@@ -157,6 +163,42 @@ export default async function StatusPage({
             )}
           </p>
         </div>
+
+        {/*
+          ── ⚠⚠⚠ THE FIGURE, AT THE MOCKUP'S SCALE ───────────────────────────
+          ⚠ ~184px, right-aligned, with the `%` as a MAGENTA SUPERSCRIPT — it is
+          the one number this page exists to show, and at body scale it read as a
+          statistic rather than the headline.
+          ⚠⚠ `tabular-nums` so 9% and 11% occupy the same width and the column
+          does not shift as the build progresses.
+        */}
+        <div className="min-[900px]:text-right">
+          <p className={`flex items-start justify-start leading-[0.82] min-[900px]:justify-end ${HEAD}`}>
+            <span className="text-[112px] tabular-nums sm:text-[184px]">
+              {/* ⚠ A real zero renders as 0; an uncountable figure renders a dash
+                  WITH its reason. The two must not look the same. */}
+              {t.overallPercent === null ? "—" : t.overallPercent}
+            </span>
+            {t.overallPercent !== null && (
+              <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
+            )}
+          </p>
+          <p className="mt-1 text-[14px] text-white/75">
+            {t.overallPercent === null ? "nothing countable yet" : "of the plan complete"} · updated{" "}
+            {updated}
+          </p>
+          {/*
+            ⚠⚠⚠ `moving` IS EVERY TASK IN PROGRESS, NOT THE CURRENT PHASE'S STAGES.
+            ⚠ Scott: *"it shows 1; it must be every task with status In Progress
+            (27 today)."* The old expression counted ROLLUPS. The query now lives
+            in `public-view.ts` beside `doneCount`, which has always counted tasks
+            — the two were not even counting the same kind of thing.
+          */}
+          <p className="mt-1 text-[14px] text-white/75">
+            {t.doneCount} done · {t.movingCount} moving · {gatesPassed} of {t.gates.length} gates
+          </p>
+        </div>
+      </div>
       </section>
 
       <div className="mx-auto max-w-[1040px] px-5 sm:px-8">
@@ -168,7 +210,7 @@ export default async function StatusPage({
             <p className="font-mono text-[13px] text-ink-2">
               {String(currentIndex).padStart(2, "0")}/{String(t.phases.length).padStart(2, "0")}
             </p>
-            <h2 className="mt-1 font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+            <h2 className={`mt-1 text-[24px] text-ink ${HEAD}`}>
               {current.name}
             </h2>
             <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">{current.purpose}</p>
@@ -192,26 +234,49 @@ export default async function StatusPage({
 
         {/* ── JOURNEYS ────────────────────────────────────────────────── */}
         <section className="mt-12 border-t border-line pt-6">
-          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+          <h2 className={`text-[24px] text-ink ${HEAD}`}>
             Ten parts of one platform.
           </h2>
-          <ul className="mt-5 border-t border-line">
+
+          {/*
+            ── ⚠⚠⚠ THE MOCKUP'S GRID: 5 ACROSS, 2 ON PHONE (Scott, 2026-10-02) ──
+            ⚠ It was a stacked list of ten rows, which is not what v5 shows.
+            ⚠⚠ **COLUMNS, NOT CARDS** (`phase_3_ui.md` rule 4): the cells divide
+            with `border-t` and a thin `border-r` on all but the last in a row, so
+            nothing grows a box. ⚠ The 2-up rules are reset before the 5-up ones
+            are stated, or a cell carries both a 2-up and a 5-up edge.
+          */}
+          <ul className="mt-5 grid grid-cols-2 border-t border-line min-[1000px]:grid-cols-5">
             {t.journeys.map((j, i) => (
-              <li key={j.name} className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[34px_1fr_auto]">
-                <span className="font-mono text-[12px] text-ink-3">
+              <li
+                key={j.name}
+                className="border-b border-line px-3 py-4 [&:nth-child(2n)]:border-r-0 [&:not(:nth-child(2n))]:border-r [&:not(:nth-child(2n))]:border-line min-[1000px]:border-r min-[1000px]:[&:not(:nth-child(2n))]:border-r min-[1000px]:[&:nth-child(2n)]:border-r min-[1000px]:[&:nth-child(5n)]:border-r-0"
+              >
+                <span className="font-mono text-[11px] text-ink-3">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span>
-                  <span className="text-[15px] font-bold text-ink">{j.name}</span>
-                  <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-2">{j.description}</span>
+                <span className={`mt-1 block text-[16px] text-ink ${HEAD}`}>{j.name}</span>
+                <span className="mt-1 block min-h-[2.6em] text-[13px] leading-snug text-ink-2">
+                  {j.description}
                 </span>
-                <span className="flex items-center gap-3">
-                  {/* ⚠⚠ A `null` STAGE FILLS NO SEGMENTS AND NAMES NO WORD — not a
-                      guessed "Designing". Scott: null renders no segments. */}
+
+                <span className="mt-3 block">
                   <Segments filled={j.stage ? STAGE_INDEX[j.stage] : 0} testing={j.stage === "test"} />
-                  <span className="min-w-[88px] text-right text-[13px] text-ink-2">
-                    {j.stage ? STAGE_WORD[j.stage] : "—"}
-                  </span>
+                </span>
+
+                <span className="mt-2 flex items-center gap-1.5 text-[12.5px] text-ink-2">
+                  {/*
+                    ⚠⚠ THE BLINKING DOT IS ONLY ON `test` — the mockup's "Testing
+                    now". ⚠ `motion-safe:` only, so reduced motion gets the dot
+                    without the blink rather than losing the signal entirely.
+                  */}
+                  {j.stage === "test" && (
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta motion-safe:animate-pulse"
+                    />
+                  )}
+                  {j.stage ? STAGE_WORD[j.stage] : "—"}
                 </span>
               </li>
             ))}
@@ -221,7 +286,7 @@ export default async function StatusPage({
         {/* ── MILESTONES ──────────────────────────────────────────────── */}
         {t.milestones.length > 0 && (
           <section className="mt-12 border-t border-line pt-6">
-            <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">Milestones</h2>
+            <h2 className={`text-[24px] text-ink ${HEAD}`}>Milestones</h2>
             <ul className="mt-5 border-t border-line">
               {t.milestones.map((m) => (
                 <li key={`${m.title}-${m.date}`} className="flex flex-wrap items-baseline gap-x-4 border-b border-line py-3">
@@ -237,7 +302,7 @@ export default async function StatusPage({
 
         {/* ── SHIPPED ─────────────────────────────────────────────────── */}
         <section className="mt-12 border-t border-line pt-6">
-          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+          <h2 className={`text-[24px] text-ink ${HEAD}`}>
             What changed, day by day.
           </h2>
           <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
@@ -260,7 +325,7 @@ export default async function StatusPage({
 
         {/* ── SUPPORT ─────────────────────────────────────────────────── */}
         <section className="mt-12 border-t border-line pt-6">
-          <h2 className="font-display text-[24px] font-bold tracking-[-0.3px] text-ink">
+          <h2 className={`text-[24px] text-ink ${HEAD}`}>
             Found a problem? Tell us.
           </h2>
           <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
@@ -272,9 +337,9 @@ export default async function StatusPage({
               dash with a reason is still a row on a page meant to be scanned in
               seconds. Both of these are measured counts and render in ink. */}
           <p className="mt-4 text-[15px] text-ink-2">
-            <span className="font-display text-[30px] font-bold text-ink">{t.support.open}</span> open
+            <span className={`text-[30px] text-ink ${HEAD}`}>{t.support.open}</span> open
             <span className="mx-3 text-ink-3">·</span>
-            <span className="font-display text-[30px] font-bold text-ink">
+            <span className={`text-[30px] text-ink ${HEAD}`}>
               {t.support.resolvedThisWeek}
             </span>{" "}
             resolved this week
@@ -311,7 +376,7 @@ export default async function StatusPage({
       */}
       <section className="mt-14 bg-rail px-5 py-12 text-white sm:px-8">
         <div className="mx-auto max-w-[1040px]">
-          <h2 className="font-display text-[30px] font-bold leading-[1.15] tracking-[-0.4px] sm:text-[38px]">
+          <h2 className={`text-[30px] leading-[1.08] sm:text-[40px] ${HEAD}`}>
             Build it once…
             <span className="block italic text-magenta">sell it for years.</span>
           </h2>

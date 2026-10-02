@@ -126,6 +126,9 @@ export type PublicTracker = {
   overallPercent: number | null;
   taskCount: number;
   doneCount: number;
+  /** ⚠⚠ EVERY task whose status is `In Progress` — not the current phase's
+   *  stages. See `getPublicTracker` for the measurement that corrected it. */
+  movingCount: number;
   phases: PublicPhase[];
   gates: PublicGate[];
   currentPhase: string | null;
@@ -209,7 +212,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
      being trusted. The column is a string; nothing at the DB level guards it. */
   const stageOf = (id: string): string | null => stages.get(id) ?? null;
 
-  const dates = new Map(dateRows.map((d) => [d.phase, d]));
+  const dates = new Map(dateRows.map((d) => [d.phase, { ...d, isCurrent: d.is_current }]));
 
   const phases: PublicPhase[] = PHASES.map((p) => {
     const ids = TASKS.filter((t) => t.phase === p.name).map((t) => t.id);
@@ -226,14 +229,43 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     };
   });
 
-  /* ⚠⚠ THE CURRENT PHASE IS THE FIRST ONE NOT FINISHED, IN METHOD ORDER — never
-     "the one with the most recent date", which would jump backwards the moment
-     an admin corrected an old phase's end date. ⚠ All phases complete → the last
-     phase is current, because `Operate` does not end. */
-  const firstUnfinished = phases.find(
-    (p) => p.percent === null || p.percent < 100,
-  );
-  const current = firstUnfinished ?? phases[phases.length - 1] ?? null;
+  /*
+    ── ⚠⚠⚠ THREE SOURCES, IN ORDER, AND THEY ARE NOT EQUALS (Scott, 2026-10-02) ─
+
+    ⚠ **1. THE ADMIN'S OWN ANSWER** (`WorkTrackerPhaseDate.is_current`). A person
+    who knows where the build is beats any inference, and this is the only source
+    that can say "Build" while `Define` still has unticked tasks — which is the
+    true state and is exactly what the old code got wrong.
+    ⚠ **2. THE DATES** — the phase whose start has passed and whose end has not.
+    ⚠ **3. THE FIRST PHASE THAT IS NOT 100% DONE**, as a last resort.
+
+    ⚠⚠⚠ **"NEVER SIMPLY THE FIRST PHASE" IS THE RULE THIS REPLACES.** The old code
+    was `phases.find(p => p.percent < 100)`, which returns `Define` the moment one
+    Define task is open — and it had been saying `Define` while the work was in
+    `Build`. ⚠ A page that reports the wrong phase is worse than one that reports
+    none: a stranger reads it as fact.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const firstUnfinished = phases.find((p) => p.percent === null || p.percent < 100);
+    //   const current = firstUnfinished ?? phases[phases.length - 1] ?? null;
+
+    ⚠ All phases complete → the LAST phase, because `Operate` does not end.
+  */
+  const adminNamed = phases.find((p) => dates.get(p.name)?.isCurrent === true) ?? null;
+
+  const today = Date.now();
+  const byDate =
+    phases.find((p) => {
+      const d = dates.get(p.name);
+      if (!d?.start_date) return false;
+      if (d.start_date.getTime() > today) return false;
+      /* ⚠ No end date means "still running", which is a fact and not a gap. */
+      return !d.end_date || d.end_date.getTime() >= today;
+    }) ?? null;
+
+  const firstUnfinished =
+    phases.find((p) => p.percent === null || p.percent < 100) ?? null;
+
+  const current = adminNamed ?? byDate ?? firstUnfinished ?? phases[phases.length - 1] ?? null;
   if (current) current.current = true;
 
   const currentPhaseStages: PublicStage[] = current
@@ -311,6 +343,20 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     overallPercent: percentDone(allStatuses),
     taskCount: allStatuses.filter((s) => s !== "N/A").length,
     doneCount: allStatuses.filter((s) => s === "Done").length,
+    /*
+      ⚠⚠⚠ "MOVING" IS EVERY TASK IN PROGRESS, ACROSS THE WHOLE PLAN.
+
+      ⚠ Scott, walking `/status` 2026-10-02: *"'moving' count is wrong: it shows
+      1; it must be every task with status In Progress (27 today)."*
+      ⚠⚠ **IT WAS COUNTING STAGES OF THE CURRENT PHASE**, not tasks — the page did
+      `currentPhaseStages.filter(s => s.status === "In Progress").length`, which is
+      a count of ROLLUPS and returns 1 while 27 tasks are actually moving.
+      ⚠ The figure sits beside `doneCount`, which has always counted tasks, so the
+      two were not even counting the same kind of thing.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   const moving = t.currentPhaseStages.filter((s) => s.status === "In Progress").length;
+    */
+    movingCount: allStatuses.filter((s) => s === "In Progress").length,
     phases,
     gates,
     currentPhase: current?.name ?? null,
