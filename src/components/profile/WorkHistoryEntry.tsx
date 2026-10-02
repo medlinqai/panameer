@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { employerDisplayName } from "@/lib/employer-display";
 import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/components/profile/sections";
+import { ValidatedBadge, ValidationPending } from "@/components/profile/ValidatedBadge";
 
 /**
  * One Work-History entry — PJv2 WS3, matching "Profile Review Mock up" pg1.
@@ -191,16 +192,45 @@ export function WorkHistoryEntry({
             missing. So with no role, the company keeps the bold line and the grey line is
             simply absent, which is exactly what today's order already does.
           */}
+          {/*
+            ── ⚠⚠ THE BADGE SITS BESIDE THE COMPANY, NOT THE ROLE (`E748` WS-C) ──
+            ⚠ The validation is a statement about the EMPLOYMENT, and the company
+            line is what names it. ⚠⚠ In `roleFirst` order the company is the
+            second line, so the badge moves with it rather than staying put.
+            ⚠⚠⚠ **PENDING IS OWNER-ONLY** — a visitor seeing *"validation
+            requested"* learns somebody was asked and has not answered, which
+            reads as a doubt about the member.
+          */}
           {roleFirst && displayRole(employer.roleTitle) ? (
             <>
               <p className="text-[16px] font-semibold">{displayRole(employer.roleTitle)}</p>
               <p className="mt-0.5 text-[14px] text-ink-2">
                 {employerDisplayName(employer.name)}
+                {employer.validated && (
+                  <ValidatedBadge
+                    validatedAt={employer.validatedAt ?? null}
+                    validatedBy={employer.validatedBy ?? null}
+                  />
+                )}
+                {!employer.validated && isOwner && employer.validationPending && (
+                  <ValidationPending />
+                )}
               </p>
             </>
           ) : (
             <>
-              <p className="font-bold">{employerDisplayName(employer.name)}</p>
+              <p className="font-bold">
+                {employerDisplayName(employer.name)}
+                {employer.validated && (
+                  <ValidatedBadge
+                    validatedAt={employer.validatedAt ?? null}
+                    validatedBy={employer.validatedBy ?? null}
+                  />
+                )}
+                {!employer.validated && isOwner && employer.validationPending && (
+                  <ValidationPending />
+                )}
+              </p>
               {displayRole(employer.roleTitle) && (
                 <p className="mt-0.5 text-[14px] text-ink-2">
                   {displayRole(employer.roleTitle)}

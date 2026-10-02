@@ -131,6 +131,23 @@ export async function getProviderProfileView(
         include: {
           artifacts: { orderBy: [{ sort_order: "asc" }] },
           projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
+          /*
+            ⚠⚠ THE CONFIRMED ANSWER ONLY, NEWEST FIRST (`P2-A1.1-E748`, WS-C).
+            ⚠ `take: 1` because the badge states ONE fact — somebody confirmed
+            it, on a date, from a domain. ⚠⚠⚠ Filtering to `CONFIRMED` here is
+            what stops a DECLINED row ever reaching the view model and being
+            rendered as evidence by a later edit.
+          */
+          validations: {
+            where: { status: "CONFIRMED" },
+            orderBy: { responded_at: "desc" },
+            take: 1,
+            select: {
+              responded_at: true,
+              contact_email: true,
+              confirmed_by_person_id: true,
+            },
+          },
         },
       },
       projects: {
@@ -735,6 +752,28 @@ export async function getProviderProfileView(
       id: e.id,
       name: e.name,
       roleTitle: e.role_title,
+      /*
+        ── ⚠⚠ THE VALIDATION BADGE (`P2-A1.1-E748`, WS-C) ────────────────────
+
+        ⚠ `validated` is the fact a BUYER may see. ⚠⚠ `validationPending` is
+        OWNER-ONLY and the component gates it — the brief: *"Pending shows only
+        to the owner."* A visitor seeing *"validation requested"* learns that
+        somebody has been asked and has not answered, which is nobody's business
+        and reads as a doubt.
+        ⚠⚠⚠ **WHO VALIDATED IS NEVER EXPOSED — ONLY THAT SOMEBODY DID, AND THE
+        DOMAIN.** The brief: *"Validated by a contact at <domain> on <date>. No
+        names."* The contact answered a favour, not a public statement.
+      */
+      validated: e.validation_status === "VALIDATED",
+      validationPending: e.validation_status === "PENDING",
+      validatedAt: e.validations?.[0]?.responded_at?.toISOString() ?? null,
+      /* ⚠ The DOMAIN, derived from the address we actually mailed — never the
+         local part, never the person. */
+      validatedBy: e.validations?.[0]
+        ? e.validations[0].confirmed_by_person_id
+          ? ("colleague" as const)
+          : ((e.validations[0].contact_email.split("@").pop() ?? null) as string | null)
+        : null,
       location: e.location,
       logoUrl: e.logo_url,
       isCurrent: e.is_current,

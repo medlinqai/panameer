@@ -4,6 +4,7 @@ import {
   RATE_LOCKED_COPY,
   type MaskedProfile,
 } from "@/lib/masked-profile";
+import { ValidatedBadge } from "@/components/profile/ValidatedBadge";
 import {
   Chip,
   LockLine,
@@ -92,6 +93,16 @@ export function MaskedProfileView({
                 {/* ⚠ A role title is what the member DID, not who they are. */}
                 <h3 className="text-[15px] font-semibold">
                   {e.roleTitle ?? "Consulting engagement"}
+                  {/*
+                    ⚠⚠ THE BADGE SHOWS ON THE MASKED PREVIEW TOO (`E748` WS-C) —
+                    Scott: *"the owner view, the visitor view, and the masked
+                    public preview (the badge shows; who validated doesn't)."*
+                    ⚠⚠⚠ **NO DATE AND NO DOMAIN ARE PASSED, BECAUSE NEITHER IS
+                    IN THE PAYLOAD.** `MaskedEmployerRow.validated` is a boolean;
+                    a domain would be an employer hint on the one surface built
+                    to withhold exactly that.
+                  */}
+                  {e.validated && <ValidatedBadge validatedAt={null} validatedBy={null} />}
                 </h3>
                 {e.dates && <span className="text-[13.5px] text-ink-2">{e.dates}</span>}
               </div>
@@ -107,6 +118,7 @@ export function MaskedProfileView({
                     <li key={l.id} className="text-[13.5px] text-ink-2">
                       {l.roleTitle ?? "Project"}
                       {l.dates ? ` · ${l.dates}` : ""}
+                      {l.validated && <ValidatedBadge validatedAt={null} validatedBy={null} />}
                       {/* ⚠ Industry ONLY where the column is populated — 3 of
                           21 projects today. Never a fallback label. */}
                       {l.industry ? ` · ${l.industry}` : ""}

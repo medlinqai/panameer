@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { formatCents, displayFullName } from "@/lib/display";
 import { RichText } from "@/components/profile/RichText";
 import { WorkHistoryEntry } from "@/components/profile/WorkHistoryEntry";
+import { ValidatedBadge, ValidationPending } from "@/components/profile/ValidatedBadge";
 import { CappedList } from "@/components/profile/CappedList";
 import type { MentorState } from "@/lib/community-signal";
 import { dateRangeLabel } from "@/lib/date-range-label";
@@ -299,6 +300,14 @@ export type EmployerItem = {
   contactEmail?: string | null;
   hasContact?: boolean;
   locked?: boolean;
+  /* ── ⚠⚠ THE VALIDATION BADGE (`P2-A1.1-E748`, WS-C) ──────────────────────
+     ⚠ `validated` is what a BUYER may see; `validationPending` is OWNER-ONLY and
+     the renderer gates it. ⚠⚠ `validatedBy` is a DOMAIN or the literal
+     `"colleague"` — ⚠⚠⚠ **NEVER A PERSON'S NAME.** */
+  validated?: boolean;
+  validationPending?: boolean;
+  validatedAt?: string | null;
+  validatedBy?: string | null;
 };
 export type ProjectItem = {
   id: string;
@@ -1210,19 +1219,40 @@ export function ProjectCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-[15px] leading-snug">{p.name}</h3>
-            {/* The trust signal (brief_project_validation §5). VALIDATED is
-                public — that is the whole point. PENDING is OWNER-ONLY: a buyer
-                seeing "awaiting reply" would learn that a provider asked and
-                hasn't been answered, which is worse than silence and is not
-                theirs to know. Anything else simply shows no badge. */}
+            {/*
+              ── ⚠⚠⚠ ONE BADGE FOR BOTH LEVELS (`P2-A1.1-E748`, WS-C) ──────────
+
+              ⚠ The RULE is unchanged and is the one this comment always carried:
+              **VALIDATED is public — that is the whole point. PENDING is
+              OWNER-ONLY**, because a buyer seeing *"awaiting reply"* learns that
+              a provider asked and has not been answered, which is worse than
+              silence and is not theirs to know.
+
+              ⚠⚠ **WHAT CHANGED IS THE LOOK, AND SCOTT NAMED IT:** *"Square,
+              quiet, ink with the accent tick; no pill, no colour block."* This
+              was an emerald pill and an amber pill.
+              ⚠⚠⚠ **AND IT IS NOW THE SAME COMPONENT THE EMPLOYER ROW USES**
+              (`E585`): two hand-rolled badges for one concept would drift the
+              first time either level's wording changed — and WS-C adds the
+              second level, so that day was today.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   <span className="flex-none rounded-full bg-emerald-50 px-2 py-0.5
+              //     text-[11px] font-extrabold text-emerald-700">✓ Validated</span>
+              //   <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5
+              //     text-[11px] font-extrabold text-amber-700">Validation requested</span>
+            */}
             {p.validationStatus === "VALIDATED" ? (
-              <span className="flex-none rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
-                ✓ Validated
-              </span>
+              <ValidatedBadge
+                validatedAt={p.validatedAt ?? null}
+                /* ⚠ The project flow does not record the responder's domain
+                   today, so the tooltip says "Validated on <date>" and names
+                   nobody — which is the rule anyway. ⚠⚠ REPORTED: the employer
+                   flow does record it; wiring the project one is a one-field
+                   change in `respondToValidation`. */
+                validatedBy={null}
+              />
             ) : isOwner && p.validationStatus === "PENDING" ? (
-              <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-700">
-                Validation requested
-              </span>
+              <ValidationPending />
             ) : null}
           </div>
           {title && (
@@ -1233,15 +1263,13 @@ export function ProjectCard({
             <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{title}</p>
           )}
           {range && <p className="text-[12.5px] text-ink-2">{range}</p>}
-          {p.validationStatus === "VALIDATED" && p.validatedAt && (
-            <p className="text-[12px] text-emerald-700">
-              Confirmed{" "}
-              {new Date(p.validatedAt).toLocaleDateString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-          )}
+          {/* ⚠⚠ THE SEPARATE "Confirmed <date>" LINE IS GONE (`E748` WS-C). The
+              badge's own tooltip carries the date now, and an emerald sentence
+              under a quiet ink badge was the colour block Scott removed, one
+              line down. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {p.validationStatus === "VALIDATED" && p.validatedAt && (
+              //     <p className="text-[12px] text-emerald-700">Confirmed {…}</p>
+              //   )} */}
         </div>
       </div>
 

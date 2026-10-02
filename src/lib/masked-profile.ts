@@ -226,8 +226,26 @@ export type MaskedEmployerRow = {
   /** ⚠ The role the member played. A title is not an identity. */
   roleTitle: string | null;
   dates: string | null;
-  /** ⚠ Projects under this employer, scrubbed; industry only where populated. */
-  lines: { id: string; roleTitle: string | null; dates: string | null; industry: string | null }[];
+  /**
+   * ── ⚠⚠ THE BADGE SHOWS HERE TOO (`P2-A1.1-E748`, WS-C) ──────────────────
+   * ⚠ SCOTT: the badge appears on *"the owner view, the visitor view, and the
+   * masked public preview (the badge shows; who validated doesn't)."*
+   * ⚠⚠⚠ **THERE IS NO `validatedBy` AND NO `validatedAt` ON THIS TYPE, AND THAT
+   * IS THE MASK DOING ITS JOB.** A domain is an employer hint, and this surface
+   * exists to withhold exactly that — so the masked badge is a BOOLEAN and the
+   * tooltip says nothing. ⚠ It is the strongest form of *"who validated
+   * doesn't"*: the source is not in the payload at all.
+   */
+  validated: boolean;
+  /** ⚠ Projects under this employer, scrubbed; industry only where populated.
+   *  ⚠⚠ `validated` is a BOOLEAN here too — same reason as above. */
+  lines: {
+    id: string;
+    roleTitle: string | null;
+    dates: string | null;
+    industry: string | null;
+    validated: boolean;
+  }[];
 };
 
 export type MaskedProfile = MaskedCard & {
@@ -601,6 +619,8 @@ export async function getMaskedProfile(
           start_date: true,
           end_date: true,
           is_current: true,
+          /* ⚠ `E748` WS-C — the badge, as a boolean. No date, no domain. */
+          validation_status: true,
           projects: {
             select: {
               id: true,
@@ -610,6 +630,7 @@ export async function getMaskedProfile(
               start_date: true,
               end_date: true,
               is_current: true,
+              validation_status: true,
               industry: { select: { name: true } },
             },
           },
@@ -625,6 +646,7 @@ export async function getMaskedProfile(
           start_date: true,
           end_date: true,
           is_current: true,
+          validation_status: true,
           industry: { select: { name: true } },
         },
       },
@@ -697,11 +719,13 @@ export async function getMaskedProfile(
          it goes through the scrubber like any other free text. */
       roleTitle: scrub(e.role_title, needles),
       dates: yearRange(e.start_date, e.end_date, e.is_current),
+      validated: e.validation_status === "VALIDATED",
       lines: e.projects.map((pr) => ({
         id: pr.id,
         roleTitle: scrub(pr.role_title ?? pr.name, needles),
         dates: yearRange(pr.start_date, pr.end_date, pr.is_current),
         industry: pr.industry?.name ?? null,
+        validated: pr.validation_status === "VALIDATED",
       })),
     })).concat(soloProjectRows(solo, needles)),
     packages: p.serviceProducts.map((s) => s.title),
@@ -725,6 +749,7 @@ export function soloProjectRows(
     start_date: Date | null;
     end_date: Date | null;
     is_current: boolean;
+    validation_status: string;
     industry: { name: string } | null;
   }[],
   needles: string[]
@@ -733,6 +758,7 @@ export function soloProjectRows(
     id: pr.id,
     roleTitle: scrub(pr.role_title ?? pr.name, needles),
     dates: yearRange(pr.start_date, pr.end_date, pr.is_current),
+    validated: pr.validation_status === "VALIDATED",
     lines: [],
   }));
 }
