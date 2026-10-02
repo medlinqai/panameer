@@ -6,10 +6,12 @@ import {
   previewCountries,
   type MaskedCard,
 } from "@/lib/masked-profile";
+import { PLACEHOLDER } from "@/lib/masked-photo";
 import { browseAllowed } from "@/lib/public-browse-limit";
 import {
   Chip,
   LockLine,
+  BlurredField,
   MaskedAvatar,
   PublicSecondary,
 } from "@/components/public/masked-ui";
@@ -185,8 +187,14 @@ function TalentCard({ c }: { c: MaskedCard }) {
   return (
     <article className="flex flex-col gap-2.5 rounded-[10px] border border-line p-[18px] transition-colors hover:border-magenta dark:border-white/15">
       <div className="flex items-center gap-3">
-        <MaskedAvatar />
+        {/* ⚠⚠ THE BLURRED PHOTO (`E767`) — bytes, not a URL. See `MaskedCard.photoBlur`. */}
+        <MaskedAvatar blur={c.photoBlur} />
         <div className="min-w-0">
+          {/* ⚠ The NAME, blurred and constant — the card had no name line at all,
+              so it did not show that there was one to see after joining. */}
+          <BlurredField label="Name hidden — join free to see it" className="text-[13px] font-semibold">
+            {PLACEHOLDER.name}
+          </BlurredField>
           <h2 className="text-[15px] font-semibold leading-tight" title={c.title}>
             {c.title}
           </h2>

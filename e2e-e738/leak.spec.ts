@@ -256,6 +256,66 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
     );
   });
 
+  /**
+   * ── ⚠⚠⚠ THE BLURRED PREVIEW LEAKS NOTHING EITHER (`P2-A1.1-E767`) ─────────
+   *
+   * ⚠ Scott, 2026-10-02: *"maybe all that info, but blurry"* — and the whole risk
+   * of that instruction is a CSS blur over a real value, which hides nothing.
+   * ⚠⚠⚠ **SO THIS ASSERTS BOTH HALVES, AND THE SECOND IS WHAT MAKES THE FIRST
+   * MEAN ANYTHING:** the original photo URL is absent, AND a `data:image/jpeg`
+   * blur is actually present. ⚠ Without the second, a page that rendered no photo
+   * at all would pass every absence check while proving nothing (ruling 12).
+   */
+  test("⚠⚠⚠ the blurred preview carries bytes, never a photo URL", async ({ request }) => {
+    const rows = await prisma.providerProfile.findMany({
+      where: { status: "ACTIVE", paused_at: null, preview_hidden_at: null },
+      select: { id: true, person: { select: { photo_url: true } } },
+      orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
+      take: 6,
+    });
+    const withPhoto = rows.filter((r) => r.person.photo_url);
+    expect(
+      withPhoto.length,
+      "no sampled profile has a photo — this gate would prove nothing"
+    ).toBeGreaterThan(0);
+
+    let blurred = 0;
+    for (const r of withPhoto) {
+      const res = await request.get(`/providers/${r.id}`);
+      expect(res.status()).toBe(200);
+      const body = await res.text();
+      const url = r.person.photo_url as string;
+
+      /* ⚠⚠ THE URL ITSELF, AND ITS FILENAME. A stored path like
+         `/seed-avatars/test7-1jziy1.svg` would also leak as its last segment if
+         something rebuilt a URL from parts, so both are needles. */
+      expect(body.includes(url), `the photo URL leaked on /providers/${r.id}`).toBe(false);
+      const file = url.split("/").pop();
+      if (file && file.length >= MIN) {
+        expect(body.includes(file), `the photo FILENAME leaked on /providers/${r.id}`).toBe(false);
+      }
+      if (body.includes("data:image/jpeg")) blurred += 1;
+    }
+    /* ⚠⚠⚠ AND THE BLUR IS REALLY THERE. */
+    expect(blurred, "no blurred photo rendered — the absence checks above are vacuous").toBe(
+      withPhoto.length
+    );
+
+    /* ⚠⚠ THE GRID TOO, AND THE SIZE IS PART OF THE CLAIM: a `data:` URI big
+       enough to carry a recognisable face would defeat the whole mechanism.
+       16px at quality 40 lands around 300-700 bytes; 4000 is a generous ceiling
+       that still fails loudly if someone raises the resize. */
+    const grid = await (await request.get("/explore")).text();
+    const uris = [...grid.matchAll(/data:image\/jpeg;base64,([A-Za-z0-9+/=]+)/g)].map((m) => m[1]);
+    expect(uris.length, "the grid rendered no blurred photos").toBeGreaterThan(0);
+    const biggest = Math.max(...uris.map((u) => u.length));
+    expect(biggest, "a blur is far larger than a 16px JPEG should be").toBeLessThan(4000);
+    console.log(
+      `E767  blur — ${blurred}/${withPhoto.length} profiles blurred, ${uris.length} on the grid, ` +
+        `largest ${biggest} base64 chars, 0 photo URLs`
+    );
+  });
+
   test("⚠⚠ the Browse Talent grid leaks no name or photo URL", async ({ request }) => {
     const res = await request.get("/explore");
     expect(res.status()).toBe(200);
@@ -265,6 +325,11 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
       where: { status: "ACTIVE", paused_at: null, preview_hidden_at: null },
       select: {
         person: { select: { first_name: true, last_name: true, photo_url: true } },
+        /* ⚠⚠ WIDENED BY `E767`: the cards now render blurred EMPLOYER and CLIENT
+           placeholders, so the real ones have to be proven absent here too — the
+           grid test only ever checked names and photo URLs. */
+        employers: { select: { name: true } },
+        projects: { select: { client_name: true } },
       },
       orderBy: [{ completeness: "desc" }, { updated_at: "desc" }],
       take: 20,
@@ -276,9 +341,19 @@ test.describe("E738 WS-C — the masked set does not leak", () => {
         r.person.first_name,
         r.person.last_name,
         r.person.photo_url,
+        ...r.employers.map((e) => e.name),
+        ...r.projects.map((pr) => pr.client_name),
       ]) {
         const t = v?.trim();
         if (!t || t.length < MIN || GENERIC.has(t.toLowerCase())) continue;
+        /* ⚠⚠⚠ THE SAME `OUR_BRAND` EXCLUSION THE PROFILE TEST ALREADY CARRIES,
+           AND WIDENING THIS TEST IS WHAT EXPOSED THAT IT DID NOT. A real
+           provider's organisation is named `Panameer.com`, and the dev banner
+           renders `href="https://status.panameer.com"` — so the needle matched
+           our own brand, not a leak. ⚠ `includes`, not equality: the profile
+           test's list is lower-cased names, and an organisation whose name
+           CONTAINS our domain has the same problem. */
+        if (t.toLowerCase().includes(OUR_BRAND)) continue;
         expect(leaks(body, t), `"${t}" leaked on /explore`).toBe(false);
         n += 1;
       }

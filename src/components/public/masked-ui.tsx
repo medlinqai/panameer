@@ -107,7 +107,35 @@ export function LockLine({ children }: { children: ReactNode }) {
  * masked name through an accessibility attribute, which is the exact mistake
  * `lib/explore.ts` documents having avoided on the teaser cards.
  */
-export function MaskedAvatar({ size = 48 }: { size?: number }) {
+export function MaskedAvatar({ size = 48, blur }: { size?: number; blur?: string | null }) {
+  if (blur) {
+    return (
+      /*
+        ⚠⚠⚠ THE BLUR IS NOT WHAT HIDES THE FACE — THE DOWNSCALE IS (`E767`).
+        `blur` is a 16px-wide JPEG inlined as a `data:` URI; the detail was thrown
+        away on the server before these bytes existed. ⚠ The CSS `blur()` here is
+        **cosmetic smoothing of the upscale**, not a mask, and removing it would
+        reveal nothing but a blockier version of the same 250 pixels.
+        ⚠⚠ That ordering is the whole difference from the thing this must never
+        be: a real photo under `filter: blur()`, which is one dev-tools toggle and
+        one network-tab entry from being undone.
+      */
+      <span
+        className="block shrink-0 overflow-hidden rounded-full border border-line dark:border-white/15"
+        style={{ width: size, height: size }}
+        aria-hidden
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={blur}
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full scale-110 object-cover blur-[3px]"
+        />
+      </span>
+    );
+  }
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full border border-line bg-bg-soft dark:border-white/15 dark:bg-white/5"
@@ -130,7 +158,18 @@ export function MaskedAvatar({ size = 48 }: { size?: number }) {
 }
 
 /** The square hero placeholder on the profile preview. */
-export function MaskedAvatarLarge() {
+export function MaskedAvatarLarge({ blur }: { blur?: string | null } = {}) {
+  if (blur) {
+    return (
+      <div
+        className="aspect-square w-full max-w-[160px] overflow-hidden rounded-[4px] border border-line sm:max-w-none dark:border-white/15"
+        aria-hidden
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={blur} alt="" className="h-full w-full scale-110 object-cover blur-[10px]" />
+      </div>
+    );
+  }
   return (
     <div
       className="flex aspect-square w-full max-w-[160px] items-center justify-center rounded-[4px] border border-line bg-bg-soft sm:max-w-none dark:border-white/15 dark:bg-white/5"
@@ -141,5 +180,46 @@ export function MaskedAvatarLarge() {
         <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
       </svg>
     </div>
+  );
+}
+
+
+/**
+ * ── ⚠⚠⚠ A FIELD THAT IS THERE, AND BLURRED (`P2-A1.1-E767`) ────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-02:** *"maybe all that info, but blurry."*
+ *
+ * ⚠⚠⚠ **WHAT IS BLURRED HERE IS A CONSTANT, NEVER THE PERSON'S VALUE.** The
+ * strings come from `PLACEHOLDER` in `lib/masked-photo.ts` — fixed length, fixed
+ * alphabet, identical for every member. ⚠⚠ **A SAME-LENGTH SCRAMBLE WAS
+ * CONSIDERED AND RULED OUT BY SCOTT**, because the character count of a name is
+ * itself a narrowing: over a grid, a length plus a job title is often one person.
+ * ⚠ Shuffling the real letters would be worse again — it preserves the multiset,
+ * which is nearly an anagram.
+ *
+ * ⚠⚠ **SO THE DOM IS SAFE TO READ.** Select-all, view-source and dev tools all
+ * return the same invented string for everybody, which is the property a
+ * CSS-blurred real value can never have.
+ *
+ * ⚠ `aria-hidden` with a stated reason beside it: a screen reader announcing
+ * `Anskeld Marrowen` would be inventing a person. The `label` is what it hears.
+ */
+export function BlurredField({
+  children,
+  label,
+  className = "",
+}: {
+  children: ReactNode;
+  /** ⚠ What a screen reader hears instead — the TRUTH, not the placeholder. */
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex items-baseline ${className}`}>
+      <span className="sr-only">{label}</span>
+      <span aria-hidden className="select-none blur-[4px]">
+        {children}
+      </span>
+    </span>
   );
 }
