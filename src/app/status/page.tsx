@@ -115,15 +115,18 @@ export default async function StatusPage() {
 
       <section className="mt-8 pb-10">
         <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Support</h2>
+        {/* ⚠ All three are MEASURED counts and render in ink, including 0. */}
         <p className="mt-2 text-[14px] text-ink-2">
           <span className="font-bold text-ink">{t.support.open}</span> open ·{" "}
-          <span className="font-bold text-ink">{t.support.resolved}</span> resolved
+          <span className="font-bold text-ink">{t.support.resolved}</span> resolved ·{" "}
+          <span className="font-bold text-ink">{t.support.resolvedThisWeek}</span> resolved in the last 7
+          days
         </p>
-        {/* ⚠⚠ THE DASH CARRIES ITS REASON. A figure that cannot be counted must not
-            look like a measured zero (`decisions_2026-09-23.md` §1 rule 2). */}
+        {/* ⚠⚠ THE DASH CARRIES ITS REASON, and only this one figure needs it.
+            A figure that cannot be counted must not look like a measured zero
+            (`decisions_2026-09-23.md` §1 rule 2). */}
         <p className="mt-1 text-[13px] text-ink-2">
-          Resolved this week: — {t.support.resolvedThisWeekReason.toLowerCase()}. Median first reply: —{" "}
-          {t.support.medianFirstReplyReason.toLowerCase()}.
+          Median first reply: — {t.support.medianFirstReplyReason.toLowerCase()}.
         </p>
       </section>
     </main>

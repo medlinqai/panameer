@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { TICKETS_TERMINAL_STATUSES } from "@/lib/support";
 import {
   GATES,
   PHASES,
@@ -59,37 +60,48 @@ export type PublicPhase = {
   current: boolean;
 };
 
-export type PublicJourney = { name: string; status: TaskStatus | "Not Started" };
+export type PublicJourney = {
+  name: string;
+  status: TaskStatus | "Not Started";
+};
 
-export type PublicShipped = { date: string; tag: string | null; title: string; body: string | null };
+export type PublicShipped = {
+  date: string;
+  tag: string | null;
+  title: string;
+  body: string | null;
+};
 
 /**
- * ⚠⚠ SUPPORT COUNTS — AND TWO OF THE THREE THE BRIEF ASKED FOR CANNOT BE
- * COUNTED, WHICH IS REPORTED RATHER THAN APPROXIMATED.
+ * ⚠⚠ SUPPORT COUNTS — THREE ARE REAL, ONE IS A REASONED DASH.
  *
- * ⚠⚠⚠ **`SupportTicket` HAS NO `resolved_at` AND NO FIRST-REPLY COLUMN.** The
- * writer test (`decisions_2026-09-23.md` §1) says a figure is countable when the
- * state it counts has a writer — not when something upstream of it does:
- *   · *"resolved this week"* — `status` has a writer, but WHEN it was resolved
- *     does not. `updated_at` moves on any write, so a re-opened or edited ticket
- *     would land in the wrong week. **UNCOUNTABLE.**
- *   · *"median first reply"* — nothing records a first reply, and the table
- *     holds one message in total. **UNCOUNTABLE.**
+ * ⚠⚠⚠ **CORRECTED BY SCOTT, 2026-10-02. I REPORTED *"resolved this week"* AS
+ * UNCOUNTABLE AND I WAS WRONG.** `SupportTicket.date_solved` exists and has a
+ * writer: `support.ts`'s `updateTicket` sets it the first time a ticket reaches
+ * a terminal status and CLEARS it on reopen, so the column and the status cannot
+ * disagree, and the admin ticket page already renders it.
+ * ⚠⚠ **THE MISTAKE WAS SEARCHING FOR THE NOUN, NOT THE BEHAVIOUR** — I grepped
+ * `resolved_at`, found nothing, and stopped. That is exactly the failure
+ * `decisions_2026-09-23.md` §15 names: *"an absent name is not an absent thing."*
+ * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+ * //   "resolved this week" - status has a writer, but WHEN it was resolved does
+ * //   not. updated_at moves on any write, so a re-opened or edited ticket would
+ * //   land in the wrong week. UNCOUNTABLE.
  *
- * ⚠ So each carries its REASON, and the reason comes from the TYPE: a `null`
- * figure cannot be printed without the string beside it. ⚠⚠ **A real zero and an
- * uncountable figure must not look the same.** `open` and `resolved` are real
- * counts and render as numbers, including 0.
+ * ⚠ **`medianFirstReplyHours` STAYS A DASH, and that one is still right.**
+ * Nothing records a first reply — there is no column and no writer — and the
+ * table holds one message in total. ⚠⚠ The reason comes from the TYPE, so the
+ * dash cannot be printed without it. **A real zero and an uncountable figure
+ * must not look the same.**
  *
- * ⚠ **THIS IS A RECORDED LIMIT, NOT A DECISION TO LEAVE IT THERE.** Adding
- * `resolved_at` and `first_reply_at` is additive and cheap; what it is NOT is
- * something to infer from a column that means something else.
+ * ⚠ `open`, `resolved` and `resolvedThisWeek` are real counts and render as
+ * numbers, including 0. ⚠⚠ **NO NEW COLUMNS WERE ADDED** (Scott's instruction):
+ * the figure comes from a column that was already there and already written.
  */
 export type PublicSupport = {
   open: number;
   resolved: number;
-  resolvedThisWeek: null;
-  resolvedThisWeekReason: string;
+  resolvedThisWeek: number;
   medianFirstReplyHours: null;
   medianFirstReplyReason: string;
 };
@@ -112,9 +124,21 @@ export type PublicTracker = {
 const JOURNEY_PREFIX = "PNM-";
 
 export async function getPublicTracker(): Promise<PublicTracker> {
-  const [taskRows, gateRows, dateRows, shippedRows, openTickets, resolvedTickets] = await Promise.all([
-    prisma.workTrackerTaskState.findMany({ select: { task_id: true, status: true } }),
-    prisma.workTrackerGateState.findMany({ select: { gate_id: true, value: true } }),
+  const [
+    taskRows,
+    gateRows,
+    dateRows,
+    shippedRows,
+    openTickets,
+    resolvedTickets,
+    resolvedThisWeek,
+  ] = await Promise.all([
+    prisma.workTrackerTaskState.findMany({
+      select: { task_id: true, status: true },
+    }),
+    prisma.workTrackerGateState.findMany({
+      select: { gate_id: true, value: true },
+    }),
     prisma.workTrackerPhaseDate.findMany(),
     /* ⚠⚠⚠ `published: true` IS IN THE WHERE CLAUSE, NOT IN AN `if` AFTERWARDS.
        A draft must be unreachable, not merely unrendered — the same shape the
@@ -125,12 +149,34 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       take: 50,
       select: { date: true, journey_tag: true, title: true, body: true },
     }),
-    prisma.supportTicket.count({ where: { status: { in: ["Open", "In Progress", "Waiting on Reporter"] } } }),
-    prisma.supportTicket.count({ where: { status: { in: ["Resolved", "Closed"] } } }),
+    /* ⚠⚠ THE STATUS SETS COME FROM `support.ts`, NOT FROM A LIST RETYPED HERE.
+       My first version hard-coded both, which is a second definition of one
+       thing kept in step by hand (`E585`) — and the one that drifts is always
+       found on the surface a stranger sees. `TICKETS_TERMINAL_STATUSES` is
+       derived from `TICKET_OWNER`, so a new status lands on the right side of
+       this count by itself. */
+    prisma.supportTicket.count({
+      where: { status: { notIn: TICKETS_TERMINAL_STATUSES } },
+    }),
+    prisma.supportTicket.count({
+      where: { status: { in: TICKETS_TERMINAL_STATUSES } },
+    }),
+    /* ⚠⚠⚠ `date_solved`, NOT `updated_at` — the column is DERIVED FROM THE
+       STATUS and cleared on reopen, so a re-opened ticket leaves this window
+       instead of sitting in the wrong week. ⚠ Seven days back from now, which is
+       a rolling window and not a calendar week: the page is read daily by people
+       in unknown timezones, and "this week" would mean a different thing to each
+       of them. */
+    prisma.supportTicket.count({
+      where: {
+        date_solved: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+    }),
   ]);
 
   const status = new Map<string, TaskStatus>();
-  for (const r of taskRows) if (isTaskStatus(r.status)) status.set(r.task_id, r.status);
+  for (const r of taskRows)
+    if (isTaskStatus(r.status)) status.set(r.task_id, r.status);
   const statusOf = (id: string): TaskStatus => status.get(id) ?? "Not Started";
 
   const dates = new Map(dateRows.map((d) => [d.phase, d]));
@@ -154,21 +200,32 @@ export async function getPublicTracker(): Promise<PublicTracker> {
      "the one with the most recent date", which would jump backwards the moment
      an admin corrected an old phase's end date. ⚠ All phases complete → the last
      phase is current, because `Operate` does not end. */
-  const firstUnfinished = phases.find((p) => p.percent === null || p.percent < 100);
+  const firstUnfinished = phases.find(
+    (p) => p.percent === null || p.percent < 100,
+  );
   const current = firstUnfinished ?? phases[phases.length - 1] ?? null;
   if (current) current.current = true;
 
   const currentPhaseStages: PublicStage[] = current
     ? stagesForPhase(current.name).map((stage) => {
-        const ids = TASKS.filter((t) => t.phase === current.name && t.stage === stage).map((t) => t.id);
+        const ids = TASKS.filter(
+          (t) => t.phase === current.name && t.stage === stage,
+        ).map((t) => t.id);
         const ss = ids.map(statusOf);
-        return { name: stage, status: rollupStatus(ss), percent: percentDone(ss), taskCount: ids.length };
+        return {
+          name: stage,
+          status: rollupStatus(ss),
+          percent: percentDone(ss),
+          taskCount: ids.length,
+        };
       })
     : [];
 
   /* ⚠ A journey is named by its SEGMENT, not by its task text. `PNM-001`'s text
      lists the public site's pages — that is build detail and stays private. */
-  const journeys: PublicJourney[] = TASKS.filter((t) => t.id.startsWith(JOURNEY_PREFIX)).map((t) => ({
+  const journeys: PublicJourney[] = TASKS.filter((t) =>
+    t.id.startsWith(JOURNEY_PREFIX),
+  ).map((t) => ({
     name: t.segment,
     status: statusOf(t.id),
   }));
@@ -218,8 +275,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     support: {
       open: openTickets,
       resolved: resolvedTickets,
-      resolvedThisWeek: null,
-      resolvedThisWeekReason: "Nothing records when a ticket was resolved",
+      resolvedThisWeek,
       medianFirstReplyHours: null,
       medianFirstReplyReason: "Nothing records a first reply",
     },
