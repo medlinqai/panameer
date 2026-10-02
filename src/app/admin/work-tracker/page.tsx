@@ -1,4 +1,11 @@
-import { gateStates, milestones, phaseDates, shippedEntries, taskStates } from "@/lib/work-tracker/admin";
+import {
+  customTasks,
+  gateStates,
+  phaseDates,
+  releases as releaseList,
+  shippedEntries,
+  taskStates,
+} from "@/lib/work-tracker/admin";
 import { GATES, MILESTONE_SEGMENT, PHASES, TASKS, stagesForPhase } from "@/lib/work-tracker/catalog";
 import { WorkTrackerEditor } from "@/components/admin/work-tracker/WorkTrackerEditor";
 
@@ -21,12 +28,13 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Work Tracker" };
 
 export default async function AdminWorkTrackerPage() {
-  const [states, gates, dates, shipped, mstones] = await Promise.all([
+  const [states, gates, dates, shipped, rels, customs] = await Promise.all([
     taskStates(),
     gateStates(),
     phaseDates(),
     shippedEntries(),
-    milestones(),
+    releaseList(),
+    customTasks(),
   ]);
 
   /* ⚠ The whole catalog is flattened ONCE, here on the server, into the shape the
@@ -51,6 +59,7 @@ export default async function AdminWorkTrackerPage() {
         /* ⚠ Only the ten journey rows get a stage picker; an ordinary AIM task
            leaves it null forever and that is correct, not missing data. */
         stage: states.get(t.id)?.stage ?? "",
+        releaseId: states.get(t.id)?.releaseId ?? "",
         isJourney: t.id.startsWith("PNM-") && t.segment !== MILESTONE_SEGMENT,
       })),
     })),
@@ -73,14 +82,21 @@ export default async function AdminWorkTrackerPage() {
     <WorkTrackerEditor
       phases={phases}
       gates={gateRows}
-      milestones={mstones.map((m) => ({
+      releases={rels.map((m) => ({
         id: m.id,
+        code: m.code ?? "",
         title: m.title,
-        description: m.description ?? "",
-        date: m.date.toISOString().slice(0, 10),
+        summary: m.summary ?? m.description ?? "",
+        date: (m.target_date ?? m.date).toISOString().slice(0, 10),
         status: m.status,
-        sort: m.sort,
         published: m.published,
+      }))}
+      customTasks={customs.map((c) => ({
+        id: c.id,
+        title: c.title,
+        phase: c.phase,
+        status: c.status,
+        releaseId: c.release_id ?? "",
       }))}
       shipped={shipped.map((s) => ({
         id: s.id,

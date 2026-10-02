@@ -139,23 +139,28 @@ async function main() {
     `Dates coming soon` and the hero drops its `Day N` clause.
   */
   const MILESTONE = {
+    code: "R1",
+    summary: "The first public release.",
     title: "R1 — Public beta",
     description: "Panameer opens to the public.",
     date: new Date("2026-11-01T00:00:00Z"),
+    /* ⚠ `target_date` is the field the reader prefers; `date` is kept in step so
+       the legacy column never goes stale while both exist. */
+    target_date: new Date("2026-11-01T00:00:00Z"),
     status: "In progress",
     sort: 0,
     published: true,
   };
-  const existingMilestone = await prisma.workTrackerMilestone.findFirst({
+  const existingMilestone = await prisma.workTrackerRelease.findFirst({
     where: { title: MILESTONE.title },
   });
   let milestoneNote: string;
   if (!existingMilestone) {
-    if (!dry) await prisma.workTrackerMilestone.create({ data: MILESTONE });
+    if (!dry) await prisma.workTrackerRelease.create({ data: MILESTONE });
     milestoneNote = "created";
   } else if (force) {
     if (!dry) {
-      await prisma.workTrackerMilestone.update({ where: { id: existingMilestone.id }, data: MILESTONE });
+      await prisma.workTrackerRelease.update({ where: { id: existingMilestone.id }, data: MILESTONE });
     }
     milestoneNote = "overwritten";
   } else {
@@ -222,6 +227,52 @@ async function main() {
     phaseNote = `set to ${CURRENT_PHASE}`;
   }
 
+  /*
+    ── ⚠⚠ MIGRATE THE EXISTING R1 ROW, AND GIVE IT SCOPE (`P2-ALL-E765`) ───────
+
+    ⚠ The row predates `code`, `summary` and `target_date`, so a fill-gaps seed
+    would leave it nameless. ⚠⚠ These three are backfilled WHERE THEY ARE NULL
+    only — an admin's own edit is never overwritten.
+
+    ⚠⚠⚠ **R1 = Register · Profile · Connect** (Scott's direction). ⚠ Only those
+    three journeys are assigned; everything else stays unassigned, and unassigned
+    is NOT "in R1" — it is out of scope until somebody says otherwise, which is why
+    the column is nullable and why R1's percentage counts only what it holds.
+  */
+  const r1 = await prisma.workTrackerRelease.findFirst({ where: { title: MILESTONE.title } });
+  if (r1 && !dry) {
+    await prisma.workTrackerRelease.update({
+      where: { id: r1.id },
+      data: {
+        ...(r1.code ? {} : { code: MILESTONE.code }),
+        ...(r1.summary ? {} : { summary: MILESTONE.summary }),
+        ...(r1.target_date ? {} : { target_date: MILESTONE.target_date }),
+      },
+    });
+  }
+
+  const R1_SEGMENTS = ["Register", "Profile", "Connect"];
+  let assigned = 0;
+  let assignKept = 0;
+  if (r1) {
+    for (const t of catalog.tasks as { id: string; segment?: string }[]) {
+      if (!t.id.startsWith("PNM-") || !R1_SEGMENTS.includes(t.segment ?? "")) continue;
+      const row = await prisma.workTrackerTaskState.findUnique({ where: { task_id: t.id } });
+      if (row?.release_id && !force) {
+        assignKept++;
+        continue;
+      }
+      if (!dry) {
+        await prisma.workTrackerTaskState.upsert({
+          where: { task_id: t.id },
+          update: { release_id: r1.id },
+          create: { task_id: t.id, status: "Not Started", release_id: r1.id },
+        });
+      }
+      assigned++;
+    }
+  }
+
   const total = await prisma.workTrackerTaskState.count();
   console.log(
     [
@@ -235,6 +286,7 @@ async function main() {
       `  milestone    : "${MILESTONE.title}" ${milestoneNote}`,
       `  journey stages: ${stagesSet} set · ${stagesKept} left as the admin set them`,
       `  current phase : ${phaseNote}`,
+      `  R1 journeys   : ${assigned} assigned · ${assignKept} left as the admin set them`,
       unknown.length
         ? `  ⚠ ${unknown.length} seed entries NOT in the catalog, skipped: ${unknown.slice(0, 8).join(", ")}${unknown.length > 8 ? " …" : ""}`
         : "  ✓ every seed entry resolved to a catalog id",

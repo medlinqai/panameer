@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { adminAccount, signInAs } from "./_admin";
+import { db } from "../e2e-shell/_db";
 import { JOURNEY_COPY } from "../src/lib/work-tracker/journey-copy";
 import { disconnectTracker, restoreTracker, snapshotTracker, type TrackerSnapshot } from "./_state";
 
@@ -48,7 +49,7 @@ test("E753 — /status is public: a signed-out visitor gets the page, not /login
   const res = await page.goto("/status");
   expect(res?.status()).toBe(200);
   await expect(page).toHaveURL(/\/status$/);
-  await expect(page.getByRole("heading", { name: /Watch your platform/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Watch Panameer get built!" })).toBeVisible();
 });
 
 test("E753 — /api/status is public and carries the view model", async ({ request }) => {
@@ -138,6 +139,41 @@ test("E753 — the leak test's own needles are real", () => {
   expect(c.gates.length).toBe(4);
   expect(c.tasks.filter((t) => t.task.length >= 25).length).toBeGreaterThan(150);
   expect(c.gates.reduce((n, g) => n + g.criteria.length, 0)).toBeGreaterThan(15);
+});
+
+test("E765 — an admin-added task's TITLE never reaches the public payload", async ({ request }) => {
+  /*
+    ⚠⚠⚠ NOT A VACUOUS CHECK. With zero custom tasks this would pass against an
+    empty table and prove nothing, so it CREATES one with a unique title, asserts
+    the title is absent from both surfaces while its COUNT is present, and then
+    deletes it.
+
+    ⚠ A custom task is the sharpest form of the rule Scott set: it is work HE
+    wrote about THIS build, so its title is exactly the "how to recreate
+    Panameer" detail the public page must never carry.
+  */
+  const prisma = db();
+  const marker = `E765 secret task ${Date.now()}`;
+  const release = await prisma.workTrackerRelease.findFirst({ select: { id: true } });
+
+  const created = await prisma.workTrackerCustomTask.create({
+    data: { title: marker, phase: "Build", status: "In Progress", release_id: release?.id ?? null },
+  });
+  try {
+    const api = await (await request.get("/api/status")).text();
+    const page = await (await request.get("/status")).text();
+    expect(api.includes(marker), "a custom task title reached /api/status").toBe(false);
+    expect(page.includes(marker), "a custom task title reached /status").toBe(false);
+
+    /* ⚠⚠ THE PAIRED POSITIVE: it must be COUNTED even though it is not named,
+       or the test would pass against a page that ignores custom tasks entirely. */
+    if (release) {
+      const body = JSON.parse(api) as { currentRelease: { taskCount: number } | null };
+      expect(body.currentRelease?.taskCount ?? 0, "the custom task is counted").toBeGreaterThan(0);
+    }
+  } finally {
+    await prisma.workTrackerCustomTask.delete({ where: { id: created.id } });
+  }
 });
 
 test("E753 — a DRAFT Shipped entry never reaches the public payload", async ({ page, request }) => {

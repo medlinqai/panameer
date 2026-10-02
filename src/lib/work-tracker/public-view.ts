@@ -74,12 +74,29 @@ export type PublicJourney = {
   stage: JourneyStage | null;
 };
 
-/** ⚠⚠ MILESTONES COME FROM THEIR OWN TABLE, not from `PNM-011`/`PNM-012`. */
-export type PublicMilestone = {
-  title: string;
-  description: string | null;
-  date: string;
+/**
+ * ⚠⚠⚠ A RELEASE IS A DATE **WITH SCOPE** (`P2-ALL-E765`). That is the whole
+ * difference from the milestone it replaces, and it is what makes a per-release
+ * percentage possible at all.
+ *
+ * ⚠⚠ **`percent` IS `null` WHEN NOTHING IS ASSIGNED YET, AND THE PAGE SAYS
+ * `Scope being set` — NEVER `0%`.** Scott's rule, and it is the counting rule
+ * restated: a release with no tasks is not a release where nothing is done, and
+ * the two must not look the same (`decisions_2026-09-23.md` §1 rule 2).
+ */
+export type PublicRelease = {
+  code: string | null;
+  name: string;
+  summary: string | null;
+  /** ⚠ `target_date`, falling back to the legacy `date` column — see the schema. */
+  date: string | null;
   status: string;
+  /** ⚠ `null` = no tasks assigned yet. A measured 0 renders as 0. */
+  percent: number | null;
+  taskCount: number;
+  doneCount: number;
+  /** ⚠ The journey NAMES in this release — segments, never task text. */
+  journeys: string[];
 };
 
 export type PublicShipped = {
@@ -134,7 +151,10 @@ export type PublicTracker = {
   currentPhase: string | null;
   currentPhaseStages: PublicStage[];
   journeys: PublicJourney[];
-  milestones: PublicMilestone[];
+  releases: PublicRelease[];
+  /** ⚠ The release the hero's big figure is about — the first unreleased one in
+   *  `sort` order, or the last if everything has shipped. `null` if none exist. */
+  currentRelease: PublicRelease | null;
   shipped: PublicShipped[];
   /** ⚠⚠ `null` UNTIL DEFINE HAS A START DATE (Scott, 2026-10-02: hide "Day N"
    *  rather than print a NaN or invent a date). */
@@ -142,19 +162,47 @@ export type PublicTracker = {
   support: PublicSupport;
 };
 
+/**
+ * ⚠⚠⚠ THE CODE IS NOT PRINTED TWICE (`P2-ALL-E765`).
+ *
+ * ⚠ The one existing release is titled **"R1 — Public beta"**, because it was
+ * created before `code` was a field. Prefixing the code produced
+ * **"R1 — R1 — Public beta"** on the live page — measured, not theorised.
+ *
+ * ⚠⚠ **FIXED IN THE RENDERER, NOT BY REWRITING THE ROW.** An admin may type a
+ * title that repeats the code at any time, so stripping it once in a migration
+ * would fix today and not tomorrow. ⚠ It also means nothing destroys a value a
+ * person typed.
+ */
+export function releaseName(code: string | null, title: string): string {
+  if (!code) return title;
+  /* ⚠ The standard escape idiom. A code is admin-typed, so it can hold a regex
+     metacharacter; escaping it is what keeps `R1.0` from matching `R1x0`. */
+  const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const prefix = new RegExp(`^\\s*${escaped}\\s*[—–-]\\s*`, "i");
+  return title.replace(prefix, "").trim() || title;
+}
+
 export async function getPublicTracker(): Promise<PublicTracker> {
   const [
     taskRows,
+    customRows,
     gateRows,
     dateRows,
     shippedRows,
-    milestoneRows,
+    releaseRows,
     openTickets,
     resolvedTickets,
     resolvedThisWeek,
   ] = await Promise.all([
     prisma.workTrackerTaskState.findMany({
-      select: { task_id: true, status: true, stage: true },
+      select: { task_id: true, status: true, stage: true, release_id: true },
+    }),
+    /* ⚠⚠ CUSTOM TASKS COUNT EVERYWHERE CATALOG TASKS COUNT — but only their
+       STATUS and RELEASE are read here. ⚠⚠⚠ The title and note are ADMIN-ONLY and
+       are not even selected, so they cannot reach the payload by accident. */
+    prisma.workTrackerCustomTask.findMany({
+      select: { status: true, release_id: true, phase: true },
     }),
     prisma.workTrackerGateState.findMany({
       select: { gate_id: true, value: true },
@@ -177,10 +225,13 @@ export async function getPublicTracker(): Promise<PublicTracker> {
        this count by itself. */
     /* ⚠⚠ `published: true` IN THE WHERE CLAUSE, like Shipped — a draft milestone
        must be unreachable, not merely unrendered. */
-    prisma.workTrackerMilestone.findMany({
+    prisma.workTrackerRelease.findMany({
       where: { published: true },
       orderBy: [{ sort: "asc" }, { date: "asc" }],
-      select: { title: true, description: true, date: true, status: true },
+      select: {
+        id: true, code: true, title: true, summary: true, description: true,
+        date: true, target_date: true, status: true,
+      },
     }),
     prisma.supportTicket.count({
       where: { status: { notIn: TICKETS_TERMINAL_STATUSES } },
@@ -336,6 +387,61 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     ? Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
     : null;
 
+  /*
+    ── ⚠⚠⚠ THE RELEASES, AND THEIR PERCENTAGES (`P2-ALL-E765`) ─────────────────
+
+    ⚠ Scott: *"I need to be able to cfg the time and tasks per R that have
+    been/need to be done."* ⚠⚠ A release's figure counts **only the tasks actually
+    assigned to it** — catalog tasks and admin-added custom tasks alike, because
+    both are real work.
+
+    ⚠⚠⚠ **`N/A` LEAVES THE DENOMINATOR AND AN EMPTY RELEASE IS `null`, NOT `0`.**
+    A release nobody has scoped yet has not achieved nothing — it has not been
+    measured, and the page says `Scope being set`. Printing `0%` there would be
+    the dash-and-a-real-zero confusion the counting rule exists to prevent.
+  */
+  const releaseOfTask = new Map<string, string | null>();
+  for (const r of taskRows) releaseOfTask.set(r.task_id, r.release_id);
+
+  const releases: PublicRelease[] = releaseRows.map((r) => {
+    /* ⚠ Catalog tasks assigned to this release … */
+    const catalogStatuses = TASKS.filter((t) => releaseOfTask.get(t.id) === r.id).map((t) =>
+      statusOf(t.id),
+    );
+    /* ⚠ … and the admin's own, which count identically. */
+    const customStatuses = customRows
+      .filter((c) => c.release_id === r.id)
+      .map((c) => (isTaskStatus(c.status) ? c.status : "Not Started"));
+    const all = [...catalogStatuses, ...customStatuses];
+    const live = all.filter((x) => x !== "N/A");
+
+    /* ⚠⚠ THE JOURNEYS IN THIS RELEASE — segment NAMES, never task text. */
+    const journeyNames = journeyTasks()
+      .filter((t) => releaseOfTask.get(t.id) === r.id)
+      .map((t) => t.segment);
+
+    return {
+      code: r.code,
+      name: releaseName(r.code, r.title),
+      summary: r.summary ?? r.description,
+      /* ⚠ `target_date` first, falling back to the legacy `date` column — the one
+         existing row predates the rename and must keep working. */
+      date: (r.target_date ?? r.date)?.toISOString().slice(0, 10) ?? null,
+      status: r.status,
+      percent: live.length === 0 ? null : Math.round((live.filter((x) => x === "Done").length / live.length) * 100),
+      taskCount: live.length,
+      doneCount: live.filter((x) => x === "Done").length,
+      journeys: journeyNames,
+    };
+  });
+
+  /* ⚠⚠ THE CURRENT RELEASE IS THE FIRST ONE NOT YET RELEASED, in the admin's own
+     `sort` order — not the nearest date, which would jump backwards the moment a
+     target slipped. ⚠ All released → the last, because the page still has to say
+     which one it is reporting. */
+  const currentRelease =
+    releases.find((r) => r.status !== "Released") ?? releases[releases.length - 1] ?? null;
+
   const allStatuses = TASKS.map((t) => statusOf(t.id));
 
   return {
@@ -362,12 +468,8 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     currentPhase: current?.name ?? null,
     currentPhaseStages,
     journeys,
-    milestones: milestoneRows.map((m) => ({
-      title: m.title,
-      description: m.description,
-      date: m.date.toISOString().slice(0, 10),
-      status: m.status,
-    })),
+    releases,
+    currentRelease,
     dayNumber,
     shipped: shippedRows.map((s) => ({
       date: s.date.toISOString().slice(0, 10),

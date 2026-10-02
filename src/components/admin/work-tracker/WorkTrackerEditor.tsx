@@ -27,6 +27,7 @@ type Task = {
   /** ⚠ "" = no stage set; renders no segments on the public page, not a guess. */
   stage: string;
   isJourney: boolean;
+  releaseId: string;
 };
 type Stage = { name: string; tasks: Task[] };
 type Phase = {
@@ -40,21 +41,22 @@ type Phase = {
 };
 type Gate = { id: string; after: string; title: string; criteria: { index: number; text: string; value: string }[] };
 type Shipped = { id: string; date: string; journeyTag: string; title: string; body: string; published: boolean };
-type Milestone = {
+type Release = {
   id: string;
+  code: string;
   title: string;
-  description: string;
+  summary: string;
   date: string;
   status: string;
-  sort: number;
   published: boolean;
 };
+type CustomTask = { id: string; title: string; phase: string; status: string; releaseId: string };
 
 const TASK_STATUSES = ["Not Started", "In Progress", "Blocked", "Done", "N/A"];
 const GATE_VALUES = ["No", "Yes", "N/A"];
 /** ⚠⚠ THE FOUR JOURNEY STAGES. "" clears it back to no segments (`E757`). */
 const JOURNEY_STAGES = ["design", "build", "test", "live"];
-const MILESTONE_STATUSES = ["Planned", "In progress", "Done"];
+const RELEASE_STATUSES = ["Planned", "In progress", "Done"];
 
 /** ⚠ `N/A` leaves the denominator — see `percentDone` in `catalog.ts`, which is
  *  the server-side half of this same rule. Two copies would drift (`E585`), so
@@ -78,12 +80,14 @@ const BTN_2 =
 export function WorkTrackerEditor({
   phases,
   gates,
-  milestones,
+  releases,
+  customTasks,
   shipped,
 }: {
   phases: Phase[];
   gates: Gate[];
-  milestones: Milestone[];
+  releases: Release[];
+  customTasks: CustomTask[];
   shipped: Shipped[];
 }) {
   const router = useRouter();
@@ -221,7 +225,37 @@ export function WorkTrackerEditor({
                         </span>
                         {/* ⚠ BULK SET BY STAGE — the brief's one bulk affordance. It
                             writes only the tasks the CATALOG puts in this stage. */}
+                        {/* ⚠⚠ BULK ASSIGN BY STAGE — Scott's example was *"all of
+                            Prototype 2 → R1."* ⚠ It writes only the tasks the
+                            CATALOG puts in this stage, in ONE transaction: a bulk
+                            write that half-lands leaves a release's percentage
+                            wrong and nobody knows which half. */}
                         <label className="ml-auto flex items-center gap-1.5 text-[12px] text-ink-2">
+                          → release
+                          <select
+                            value=""
+                            disabled={pending}
+                            onChange={(e) => {
+                              if (!e.target.value) return;
+                              void post({
+                                action: "bulk-release",
+                                phase: p.name,
+                                stage: s.name,
+                                releaseId: e.target.value === "none" ? null : e.target.value,
+                              });
+                            }}
+                            className="border border-line bg-surface px-1.5 py-1 text-[12px] text-ink"
+                          >
+                            <option value="">…</option>
+                            <option value="none">No release</option>
+                            {releases.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.code || r.title}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
                           Set all
                           <select
                             value=""
@@ -251,7 +285,7 @@ export function WorkTrackerEditor({
                         {s.tasks.map((t) => (
                           <li
                             key={t.id}
-                            className="grid grid-cols-1 gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_120px_1fr_120px]"
+                            className="grid grid-cols-1 gap-2 border-t border-line py-2 sm:grid-cols-[88px_1fr_132px_110px_1fr_110px_110px]"
                           >
                             <span className="font-mono text-[12px] text-ink-2">{t.id}</span>
                             <span className="text-[13px] text-ink">
@@ -286,6 +320,27 @@ export function WorkTrackerEditor({
                                 (`E757`). An ordinary AIM task has no four-segment
                                 bar on the public page, so offering it one here
                                 would invite data that nothing renders. */}
+                            {/* ⚠⚠ THE RELEASE PICKER IS ON EVERY TASK, not only
+                                journeys — Scott assigns ordinary catalog work to
+                                R1 too. ⚠ "No release" is selectable because
+                                unassigning is a real action: the task stops
+                                counting toward that release's percentage. */}
+                            <select
+                              defaultValue={t.releaseId}
+                              disabled={pending}
+                              onChange={(e) =>
+                                post({ action: "task-release", taskId: t.id, releaseId: e.target.value })
+                              }
+                              className={FIELD}
+                              aria-label={`${t.id} release`}
+                            >
+                              <option value="">No release</option>
+                              {releases.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.code || r.title}
+                                </option>
+                              ))}
+                            </select>
                             {t.isJourney && (
                               <select
                                 defaultValue={t.stage}
@@ -384,54 +439,62 @@ export function WorkTrackerEditor({
 
       {/* ── MILESTONES ──────────────────────────────────────────────────── */}
       <section className="mt-9">
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Milestones</h2>
+        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Releases</h2>
         {/* ⚠⚠ THEIR OWN LIST, NOT JOURNEYS (Scott, 2026-10-02). The Build Line's
             flags and the public Milestones section both read from this table —
             `PNM-011`/`PNM-012` stay catalog tasks and leave the Journeys grid. */}
         <p className="mt-1 text-[13px] text-ink-2">
-          These place the flags on the Build Line. A new milestone is a draft until you publish it.
+          Releases carry scope: assign tasks to one and the page shows its own percentage. A new release is a draft until you publish it.
         </p>
 
-        <MilestoneForm onCreate={post} pending={pending} />
+        <ReleaseForm onCreate={post} pending={pending} />
 
         <div className="mt-5 border-t border-line">
-          {milestones.length === 0 ? (
-            <p className="py-4 text-[13px] text-ink-2">No milestones yet.</p>
+          {releases.length === 0 ? (
+            <p className="py-4 text-[13px] text-ink-2">No releases yet.</p>
           ) : (
-            milestones.map((m) => (
+            releases.map((m) => (
               <div
                 key={m.id}
-                className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[104px_1fr_132px_auto]"
+                className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[72px_104px_1fr_132px_auto]"
               >
+                {/* ⚠ `code` is what Scott says out loud — R1, R2. */}
+                <input
+                  defaultValue={m.code}
+                  placeholder="R1"
+                  onBlur={(e) => post({ action: "release-update", id: m.id, code: e.target.value })}
+                  className={FIELD}
+                  aria-label="Release code"
+                />
                 <input
                   type="date"
                   defaultValue={m.date}
-                  onBlur={(e) => post({ action: "milestone-update", id: m.id, date: e.target.value })}
+                  onBlur={(e) => post({ action: "release-update", id: m.id, date: e.target.value })}
                   className={FIELD}
+                  aria-label="Target date"
                 />
                 <span className="grid gap-1">
                   <input
                     defaultValue={m.title}
-                    onBlur={(e) => post({ action: "milestone-update", id: m.id, title: e.target.value })}
+                    onBlur={(e) => post({ action: "release-update", id: m.id, title: e.target.value })}
                     className={FIELD}
                   />
+                  {/* ⚠ `summary` is the PUBLIC line; the admin note stays private. */}
                   <input
-                    defaultValue={m.description}
-                    placeholder="One line"
-                    onBlur={(e) =>
-                      post({ action: "milestone-update", id: m.id, description: e.target.value })
-                    }
+                    defaultValue={m.summary}
+                    placeholder="One public line"
+                    onBlur={(e) => post({ action: "release-update", id: m.id, summary: e.target.value })}
                     className={FIELD}
                   />
                 </span>
                 <select
                   defaultValue={m.status}
                   disabled={pending}
-                  onChange={(e) => post({ action: "milestone-update", id: m.id, status: e.target.value })}
+                  onChange={(e) => post({ action: "release-update", id: m.id, status: e.target.value })}
                   className={FIELD}
                   aria-label={`${m.title} status`}
                 >
-                  {MILESTONE_STATUSES.map((st) => (
+                  {RELEASE_STATUSES.map((st) => (
                     <option key={st} value={st}>
                       {st}
                     </option>
@@ -441,7 +504,7 @@ export function WorkTrackerEditor({
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => post({ action: "milestone-update", id: m.id, published: !m.published })}
+                    onClick={() => post({ action: "release-update", id: m.id, published: !m.published })}
                     className={m.published ? BTN_2 : BTN}
                   >
                     {m.published ? "Unpublish" : "Publish"}
@@ -449,12 +512,85 @@ export function WorkTrackerEditor({
                   <button
                     type="button"
                     disabled={pending}
-                    onClick={() => post({ action: "milestone-delete", id: m.id })}
+                    onClick={() => post({ action: "release-delete", id: m.id })}
                     className={BTN_2}
                   >
                     Delete
                   </button>
                 </span>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* ── ADMIN-ADDED TASKS ───────────────────────────────────────────── */}
+      <section className="mt-9">
+        <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Your own tasks</h2>
+        {/*
+          ⚠⚠⚠ WORK THE AIM CATALOG DOES NOT HAVE (`P2-ALL-E765`). The catalog is a
+          STATIC FILE and deliberately so — it is the published method — so adding
+          Panameer's own work to it would turn the method into a scratchpad.
+          ⚠⚠ **THE TITLE IS ADMIN-ONLY.** These count toward a release's percentage
+          exactly like catalog tasks, and the public page shows the COUNT and never
+          the title. The leak test asserts it.
+        */}
+        <p className="mt-1 text-[13px] text-ink-2">
+          These count toward a release like catalog tasks. Their titles never leave this page.
+        </p>
+
+        <CustomTaskForm onCreate={post} pending={pending} phases={phases.map((p) => p.name)} releases={releases} />
+
+        <div className="mt-5 border-t border-line">
+          {customTasks.length === 0 ? (
+            <p className="py-4 text-[13px] text-ink-2">None yet.</p>
+          ) : (
+            customTasks.map((c) => (
+              <div
+                key={c.id}
+                className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[1fr_120px_132px_110px_auto]"
+              >
+                <input
+                  defaultValue={c.title}
+                  onBlur={(e) => post({ action: "custom-update", id: c.id, title: e.target.value })}
+                  className={FIELD}
+                />
+                <span className="text-[13px] text-ink-2">{c.phase}</span>
+                <select
+                  defaultValue={c.status}
+                  disabled={pending}
+                  onChange={(e) => post({ action: "custom-update", id: c.id, status: e.target.value })}
+                  className={FIELD}
+                  aria-label={`${c.title} status`}
+                >
+                  {TASK_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  defaultValue={c.releaseId}
+                  disabled={pending}
+                  onChange={(e) => post({ action: "custom-update", id: c.id, releaseId: e.target.value })}
+                  className={FIELD}
+                  aria-label={`${c.title} release`}
+                >
+                  <option value="">No release</option>
+                  {releases.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.code || r.title}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => post({ action: "custom-delete", id: c.id })}
+                  className={BTN_2}
+                >
+                  Delete
+                </button>
               </div>
             ))
           )}
@@ -512,37 +648,106 @@ export function WorkTrackerEditor({
   );
 }
 
-function MilestoneForm({
+function CustomTaskForm({
+  onCreate,
+  pending,
+  phases,
+  releases,
+}: {
+  onCreate: (p: Record<string, unknown>) => Promise<boolean>;
+  pending: boolean;
+  phases: string[];
+  releases: Release[];
+}) {
+  const [title, setTitle] = useState("");
+  const [phase, setPhase] = useState(phases[0] ?? "");
+  const [releaseId, setReleaseId] = useState("");
+
+  return (
+    <form
+      className="mt-3 grid grid-cols-1 gap-2 border-t border-line pt-3 sm:grid-cols-[1fr_140px_140px_auto]"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const ok = await onCreate({ action: "custom-create", title, phase, releaseId });
+        /* ⚠ Clears only on SUCCESS — a failed save must not throw away what was
+           typed and say nothing. */
+        if (ok) setTitle("");
+      }}
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="A task the catalog does not have"
+        required
+        className={FIELD}
+      />
+      <select value={phase} onChange={(e) => setPhase(e.target.value)} className={FIELD} aria-label="Phase">
+        {phases.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
+      <select
+        value={releaseId}
+        onChange={(e) => setReleaseId(e.target.value)}
+        className={FIELD}
+        aria-label="Release"
+      >
+        <option value="">No release</option>
+        {releases.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.code || r.title}
+          </option>
+        ))}
+      </select>
+      <button type="submit" disabled={pending || title.trim() === ""} className={BTN}>
+        Add Task
+      </button>
+    </form>
+  );
+}
+
+function ReleaseForm({
   onCreate,
   pending,
 }: {
   onCreate: (p: Record<string, unknown>) => Promise<boolean>;
   pending: boolean;
 }) {
+  const [code, setCode] = useState("");
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   return (
     <form
-      className="mt-3 grid grid-cols-1 gap-2 border-t border-line pt-3 sm:grid-cols-[132px_1fr_auto]"
+      className="mt-3 grid grid-cols-1 gap-2 border-t border-line pt-3 sm:grid-cols-[72px_132px_1fr_auto]"
       onSubmit={async (e) => {
         e.preventDefault();
-        const ok = await onCreate({ action: "milestone-create", date, title, description });
+        const ok = await onCreate({ action: "release-create", code, date, title, summary: description });
         /* ⚠ Clears only on SUCCESS — a failed save must not throw away what the
            admin typed and tell them nothing. */
         if (ok) {
+          setCode("");
           setTitle("");
           setDescription("");
         }
       }}
     >
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        placeholder="R2"
+        className={FIELD}
+        aria-label="Release code"
+      />
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className={FIELD} />
       <span className="grid gap-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Milestone"
+          placeholder="Name, e.g. Public beta"
           required
           className={FIELD}
         />
@@ -553,11 +758,11 @@ function MilestoneForm({
           className={FIELD}
         />
       </span>
-      {/* ⚠ `Add Milestone`, not `Add Draft` — the Shipped form already owns that
+      {/* ⚠ `Add Release`, not `Add Draft` — the Shipped form already owns that
           label and two identical buttons on one page is ambiguous to a person and
           to a locator (it broke the gate as a strict-mode violation). */}
       <button type="submit" disabled={pending || title.trim() === "" || date === ""} className={BTN}>
-        Add Milestone
+        Add Release
       </button>
     </form>
   );

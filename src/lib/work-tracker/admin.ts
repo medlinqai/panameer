@@ -52,6 +52,8 @@ export type TaskState = {
   note: string | null;
   /** ⚠ `null` = no segments shown, never a guessed `design` (`E757`). */
   stage: JourneyStage | null;
+  /** ⚠ `null` = not in any release, which is NOT the same as "in R1" (`E765`). */
+  releaseId: string | null;
 };
 
 export async function taskStates(): Promise<Map<string, TaskState>> {
@@ -69,6 +71,7 @@ export async function taskStates(): Promise<Map<string, TaskState>> {
       /* ⚠ An unrecognised stored stage reads as null — no segments — rather than
          being trusted. The column is a string; nothing at the DB level guards it. */
       stage: isJourneyStage(r.stage) ? r.stage : null,
+      releaseId: r.release_id,
     });
   }
   return byId;
@@ -100,18 +103,21 @@ export async function phaseDates() {
  * ⚠ Ordered by `sort` then `date`, because two milestones can share a date and
  * chronological is not always the reading order.
  */
-export async function milestones() {
-  return prisma.workTrackerMilestone.findMany({ orderBy: [{ sort: "asc" }, { date: "asc" }] });
+export async function releases() {
+  return prisma.workTrackerRelease.findMany({ orderBy: [{ sort: "asc" }, { date: "asc" }] });
 }
 
-export const MILESTONE_STATUSES = ["Planned", "In progress", "Done"] as const;
-export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
+export const RELEASE_STATUSES = ["Planned", "In progress", "Released"] as const;
+export type ReleaseStatus = (typeof RELEASE_STATUSES)[number];
 
-function isMilestoneStatus(v: unknown): v is MilestoneStatus {
-  return typeof v === "string" && (MILESTONE_STATUSES as readonly string[]).includes(v);
+function isReleaseStatus(v: unknown): v is ReleaseStatus {
+  return typeof v === "string" && (RELEASE_STATUSES as readonly string[]).includes(v);
 }
 
-export type MilestoneInput = {
+export type ReleaseInput = {
+  code?: unknown;
+  summary?: unknown;
+  start?: unknown;
   title?: unknown;
   description?: unknown;
   date?: unknown;
@@ -120,22 +126,28 @@ export type MilestoneInput = {
   published?: unknown;
 };
 
-export async function createMilestone(viewer: Viewer, input: MilestoneInput) {
+export async function createRelease(viewer: Viewer, input: ReleaseInput) {
   const title = trimToNull(input.title);
   if (!title) throw new WorkTrackerError("A milestone needs a title", "INVALID");
   const date = toDateOrNull(input.date, "date");
   /* ⚠⚠ THE DATE IS REQUIRED AND THAT IS THE POINT OF THE TABLE — a milestone
      with no date cannot be placed on the Build Line, which is why it exists. */
   if (!date) throw new WorkTrackerError("A milestone needs a date", "INVALID");
-  if (input.status !== undefined && !isMilestoneStatus(input.status)) {
+  if (input.status !== undefined && !isReleaseStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
   }
-  return prisma.workTrackerMilestone.create({
+  return prisma.workTrackerRelease.create({
     data: {
       title,
       description: trimToNull(input.description),
       date,
-      status: isMilestoneStatus(input.status) ? input.status : "Planned",
+      status: isReleaseStatus(input.status) ? input.status : "Planned",
+      code: trimToNull(input.code),
+      summary: trimToNull(input.summary),
+      start_date: toDateOrNull(input.start, "start_date"),
+      /* ⚠ `target_date` is the new field; `date` is kept in step so the legacy
+         column never goes stale while both exist (see the schema). */
+      target_date: date,
       sort: Number.isInteger(Number(input.sort)) ? Number(input.sort) : 0,
       /* ⚠ A new milestone is a DRAFT, for the same reason a Shipped entry is:
          Scott approves what the public sees. `published` is ignored on create. */
@@ -145,8 +157,8 @@ export async function createMilestone(viewer: Viewer, input: MilestoneInput) {
   });
 }
 
-export async function updateMilestone(viewer: Viewer, id: string, input: MilestoneInput) {
-  const existing = await prisma.workTrackerMilestone.findUnique({ where: { id } });
+export async function updateRelease(viewer: Viewer, id: string, input: ReleaseInput) {
+  const existing = await prisma.workTrackerRelease.findUnique({ where: { id } });
   if (!existing) throw new WorkTrackerError("No such milestone", "NOT_FOUND");
   const title = input.title === undefined ? undefined : trimToNull(input.title);
   if (input.title !== undefined && !title) {
@@ -156,7 +168,7 @@ export async function updateMilestone(viewer: Viewer, id: string, input: Milesto
   if (input.date !== undefined && !date) {
     throw new WorkTrackerError("A milestone needs a date", "INVALID");
   }
-  if (input.status !== undefined && !isMilestoneStatus(input.status)) {
+  if (input.status !== undefined && !isReleaseStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
   }
   /* ⚠ A milestone announces when its STATE moves while it is public — not when
@@ -165,15 +177,19 @@ export async function updateMilestone(viewer: Viewer, id: string, input: Milesto
     input.status !== undefined && input.status !== existing.status && existing.published;
   const becomingPublic = input.published === true && existing.published === false;
 
-  const updated = await prisma.workTrackerMilestone.update({
+  const updated = await prisma.workTrackerRelease.update({
     where: { id },
     data: {
       ...(title ? { title } : {}),
       ...(input.description !== undefined ? { description: trimToNull(input.description) } : {}),
       ...(date ? { date } : {}),
-      ...(input.status !== undefined ? { status: input.status as MilestoneStatus } : {}),
+      ...(input.status !== undefined ? { status: input.status as ReleaseStatus } : {}),
       ...(input.sort !== undefined && Number.isInteger(Number(input.sort)) ? { sort: Number(input.sort) } : {}),
       ...(input.published !== undefined ? { published: input.published === true } : {}),
+      ...(input.code !== undefined ? { code: trimToNull(input.code) } : {}),
+      ...(input.summary !== undefined ? { summary: trimToNull(input.summary) } : {}),
+      ...(input.start !== undefined ? { start_date: toDateOrNull(input.start, "start_date") } : {}),
+      ...(date ? { target_date: date } : {}),
       updated_by: viewer.userId,
     },
   });
@@ -192,10 +208,10 @@ export async function updateMilestone(viewer: Viewer, id: string, input: Milesto
   return updated;
 }
 
-export async function deleteMilestone(id: string) {
-  const existing = await prisma.workTrackerMilestone.findUnique({ where: { id } });
+export async function deleteRelease(id: string) {
+  const existing = await prisma.workTrackerRelease.findUnique({ where: { id } });
   if (!existing) throw new WorkTrackerError("No such milestone", "NOT_FOUND");
-  return prisma.workTrackerMilestone.delete({ where: { id } });
+  return prisma.workTrackerRelease.delete({ where: { id } });
 }
 
 /** ⚠ ADMIN read — returns drafts too. The public reader filters in the WHERE. */
@@ -351,6 +367,124 @@ export async function setCurrentPhase(viewer: Viewer, phase: string | null) {
       });
     }
   });
+}
+
+/**
+ * ⚠⚠⚠ ASSIGN WORK TO A RELEASE (`P2-ALL-E765`).
+ *
+ * ⚠ `releaseId` of `null` UNASSIGNS, which is a real action: a task that leaves a
+ * release stops counting toward it, and the percentage moves. ⚠⚠ That is why the
+ * column is nullable and why unassigned is not the same as "in R1".
+ */
+export async function setTaskRelease(viewer: Viewer, taskId: string, releaseId: string | null) {
+  if (!taskById(taskId)) throw new WorkTrackerError(`No catalog task "${taskId}"`, "NOT_FOUND");
+  await assertReleaseExists(releaseId);
+  return prisma.workTrackerTaskState.upsert({
+    where: { task_id: taskId },
+    update: { release_id: releaseId, updated_by: viewer.userId },
+    create: { task_id: taskId, status: "Not Started", release_id: releaseId, updated_by: viewer.userId },
+  });
+}
+
+/**
+ * ⚠⚠ BULK ASSIGN BY STAGE OR SEGMENT — Scott's example: *"all of Prototype 2 →
+ * R1."* ⚠ It writes only the tasks the CATALOG puts in that group, so a name that
+ * matches nothing changes nothing rather than matching everything.
+ */
+export async function bulkAssignRelease(
+  viewer: Viewer,
+  by: { phase?: string; stage?: string; segment?: string },
+  releaseId: string | null,
+): Promise<number> {
+  await assertReleaseExists(releaseId);
+  const ids = TASKS.filter(
+    (t) =>
+      (by.phase ? t.phase === by.phase : true) &&
+      (by.stage ? t.stage === by.stage : true) &&
+      (by.segment ? t.segment === by.segment : true),
+  ).map((t) => t.id);
+  if (ids.length === 0) throw new WorkTrackerError("That group has no catalog tasks", "NOT_FOUND");
+  /* ⚠ A bulk write that half-lands leaves a release's percentage wrong and
+     nobody knows which half, so it is one transaction. */
+  await prisma.$transaction(async (tx) => {
+    for (const id of ids) {
+      await tx.workTrackerTaskState.upsert({
+        where: { task_id: id },
+        update: { release_id: releaseId, updated_by: viewer.userId },
+        create: { task_id: id, status: "Not Started", release_id: releaseId, updated_by: viewer.userId },
+      });
+    }
+  });
+  return ids.length;
+}
+
+async function assertReleaseExists(releaseId: string | null) {
+  if (releaseId === null) return;
+  const hit = await prisma.workTrackerRelease.findUnique({ where: { id: releaseId } });
+  /* ⚠⚠ THE TABLES HAVE NO FOREIGN KEYS, SO THIS IS THE REFERENTIAL INTEGRITY. A
+     bad id would otherwise sit there forever pointing at nothing, and the admin
+     page — which iterates real releases — would never show it. */
+  if (!hit) throw new WorkTrackerError("No such release", "NOT_FOUND");
+}
+
+/** ⚠ Admin-added work. The TITLE is admin-only and never reaches the public. */
+export async function createCustomTask(
+  viewer: Viewer,
+  input: { title?: unknown; phase?: unknown; stage?: unknown; releaseId?: unknown },
+) {
+  const title = trimToNull(input.title);
+  if (!title) throw new WorkTrackerError("A task needs a title", "INVALID");
+  const phase = String(input.phase ?? "");
+  if (!PHASE_NAMES.includes(phase)) throw new WorkTrackerError(`No catalog phase "${phase}"`, "NOT_FOUND");
+  const releaseId = input.releaseId ? String(input.releaseId) : null;
+  await assertReleaseExists(releaseId);
+  return prisma.workTrackerCustomTask.create({
+    data: {
+      title,
+      phase,
+      stage: isJourneyStage(input.stage) ? input.stage : null,
+      release_id: releaseId,
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function updateCustomTask(
+  viewer: Viewer,
+  id: string,
+  input: { status?: unknown; owner?: unknown; note?: unknown; releaseId?: unknown; title?: unknown },
+) {
+  const existing = await prisma.workTrackerCustomTask.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such task", "NOT_FOUND");
+  if (input.status !== undefined && !isTaskStatus(input.status)) {
+    throw new WorkTrackerError(`"${String(input.status)}" is not a task status`, "INVALID");
+  }
+  if (input.releaseId !== undefined) {
+    await assertReleaseExists(input.releaseId ? String(input.releaseId) : null);
+  }
+  return prisma.workTrackerCustomTask.update({
+    where: { id },
+    data: {
+      ...(input.status !== undefined ? { status: input.status as TaskStatus } : {}),
+      ...(input.owner !== undefined ? { owner: trimToNull(input.owner) } : {}),
+      ...(input.note !== undefined ? { note: trimToNull(input.note) } : {}),
+      ...(input.title !== undefined && trimToNull(input.title) ? { title: trimToNull(input.title)! } : {}),
+      ...(input.releaseId !== undefined
+        ? { release_id: input.releaseId ? String(input.releaseId) : null }
+        : {}),
+      updated_by: viewer.userId,
+    },
+  });
+}
+
+export async function deleteCustomTask(id: string) {
+  const existing = await prisma.workTrackerCustomTask.findUnique({ where: { id } });
+  if (!existing) throw new WorkTrackerError("No such task", "NOT_FOUND");
+  return prisma.workTrackerCustomTask.delete({ where: { id } });
+}
+
+export async function customTasks() {
+  return prisma.workTrackerCustomTask.findMany({ orderBy: [{ sort: "asc" }, { created_at: "asc" }] });
 }
 
 export async function setPhaseDates(

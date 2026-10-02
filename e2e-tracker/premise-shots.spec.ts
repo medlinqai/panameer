@@ -12,7 +12,7 @@ test("premise — /admin/work-tracker and /status after E750/E751", async ({ pag
     const o1 = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
     await page.screenshot({ path: `e2e-tracker/shots/admin-${w}.png`, clip: { x: 0, y: 0, width: w, height: Math.min(h, 700) } });
     await page.goto("/status");
-    await expect(page.getByRole("heading", { name: /Watch your platform/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Watch Panameer get built!" })).toBeVisible();
     const o2 = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
     await page.screenshot({ path: `e2e-tracker/shots/status-${w}.png`, clip: { x: 0, y: 0, width: w, height: Math.min(h, 700) } });
     console.log(`\n  ${w}px — admin scrollW/clientW ${o1.s}/${o1.c}${o1.s > o1.c ? " ⚠ H-OVERFLOW" : " ✓"} · status ${o2.s}/${o2.c}${o2.s > o2.c ? " ⚠ H-OVERFLOW" : " ✓"}`);

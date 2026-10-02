@@ -1,10 +1,10 @@
-import type { PublicMilestone, PublicPhase } from "@/lib/work-tracker/public-view";
+import type { PublicPhase, PublicRelease } from "@/lib/work-tracker/public-view";
 
 /**
  * ── ⚠⚠⚠ THE BUILD LINE (`P2-ALL-E757`, mockup v5) ────────────────────────────
  *
  * A rail with a magenta fill to today, six phase labels at their start dates,
- * gate diamonds at the phase boundaries, a pulsing TODAY dot and milestone flags.
+ * gate diamonds at the phase boundaries, a pulsing TODAY dot and a flag per release.
  *
  * ⚠⚠⚠ **IF ANY PHASE DATE IS MISSING, THE LINE RENDERS WITHOUT POSITIONS AND
  * SAYS `Dates coming soon` — NEVER INVENTED DATES.** That is the brief's rule and
@@ -16,11 +16,12 @@ import type { PublicMilestone, PublicPhase } from "@/lib/work-tracker/public-vie
  */
 export function BuildLine({
   phases,
-  milestones,
+  releases,
   now,
 }: {
   phases: PublicPhase[];
-  milestones: PublicMilestone[];
+  /** ⚠ A flag per RELEASE at its target date (`E765`), replacing milestones. */
+  releases: PublicRelease[];
   /**
    * ⚠⚠⚠ `now` IS PASSED IN, NOT READ HERE, AND THAT IS NOT STYLE.
    * `Date.now()` during render is an impure call — lint says so — and on a page
@@ -48,10 +49,10 @@ export function BuildLine({
   }
 
   const first = Math.min(...starts);
-  const lastMilestone = milestones.length
-    ? Math.max(...milestones.map((m) => Date.parse(m.date)))
+  const lastRelease = releases.length
+    ? Math.max(...releases.filter((r) => r.date).map((r) => Date.parse(r.date!)))
     : first;
-  const last = Math.max(...starts, lastMilestone, now);
+  const last = Math.max(...starts, lastRelease, now);
   const span = Math.max(1, last - first);
   const pct = (t: number) => Math.min(100, Math.max(0, ((t - first) / span) * 100));
   const todayPct = pct(now);
@@ -72,14 +73,18 @@ export function BuildLine({
           className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-magenta motion-safe:animate-pulse"
           style={{ left: `${todayPct}%` }}
         />
-        {milestones.map((m) => (
-          <span
-            key={`${m.title}-${m.date}`}
-            title={`${m.title} — ${m.date}`}
-            className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-ink bg-surface"
-            style={{ left: `${pct(Date.parse(m.date))}%` }}
-          />
-        ))}
+        {/* ⚠ A release with no target date cannot be placed, so it is simply not
+            flagged — never pinned to "today" or to the end of the line. */}
+        {releases
+          .filter((r) => r.date)
+          .map((r) => (
+            <span
+              key={`${r.code ?? r.name}-${r.date}`}
+              title={`${r.code ? `${r.code} — ` : ""}${r.name} — ${r.date}`}
+              className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-ink bg-surface"
+              style={{ left: `${pct(Date.parse(r.date!))}%` }}
+            />
+          ))}
       </div>
 
       <div className="relative mt-3 h-10">
@@ -98,9 +103,12 @@ export function BuildLine({
         ))}
       </div>
 
-      {milestones.length > 0 && (
+      {releases.length > 0 && (
         <p className="mt-1 text-[12px] text-ink-2">
-          {milestones.map((m) => `${m.title} · ${m.date}`).join("  ·  ")}
+          {releases
+            .filter((r) => r.date)
+            .map((r) => `${r.code ? `${r.code} ` : ""}${r.name} · ${r.date}`)
+            .join("  ·  ")}
         </p>
       )}
     </section>

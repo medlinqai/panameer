@@ -7518,6 +7518,13 @@ model WorkTrackerTaskState {
   /// leaves it null forever and that is correct, not missing data.
   stage String?
 
+  /// ⚠⚠ WHICH RELEASE THIS TASK BELONGS TO (`P2-ALL-E765`). Scalar, no FK, like
+  /// every id in these tables. ⚠⚠⚠ **NULLABLE AND THAT IS LOAD-BEARING: a task
+  /// with no release is NOT in R1.** The per-release percentage counts only tasks
+  /// actually assigned, so an unassigned task cannot silently inflate or deflate
+  /// a release's number — it is simply out of scope until somebody says otherwise.
+  release_id String? @db.Uuid
+
   updated_at DateTime @updatedAt
   /// ⚠ The `User` id of the admin who last changed it, resolved from the SESSION
   /// and never accepted from the client. Scalar, no FK — `User.id`, not `Person.id`
@@ -7579,7 +7586,25 @@ model WorkTrackerPhaseDate {
   @@map("work_tracker_phase_dates")
 }
 
-/// ⚠⚠⚠ MILESTONES — THEIR OWN LIST (`P2-ALL-E757`, Scott 2026-10-02).
+/// ⚠⚠⚠ RELEASES (`P2-ALL-E765`, Scott 2026-10-02). Was `WorkTrackerMilestone`.
+///
+/// ⚠ Scott: *"I like the percent complete (but that should differ based on MVP R1
+/// and R2 … those have not really been defined). I need to be able to cfg the
+/// time and tasks per R."* ⚠⚠ A milestone is a date; a RELEASE is a date **with
+/// scope** — which is what makes a per-release percentage possible at all.
+///
+/// ⚠⚠⚠ **THE MODEL IS RENAMED; THE TABLE IS NOT, AND THAT WAS MEASURED.** Prisma
+/// has no rename: changing `@@map` to `work_tracker_releases` makes it emit
+/// **`DROP TABLE work_tracker_milestones` + `CREATE TABLE`**, which destroys the
+/// R1 row. ⚠ Keeping the map is a pure CODE rename with zero database cost.
+/// **The table name is historical — read it as "releases".**
+///
+/// ⚠⚠ **AND THE RENAME EARNS ITS KEEP: `milestone` WAS ALREADY TAKEN.**
+/// `service-products.ts` has PAYMENT milestones with a must-sum-to-100 rule. One
+/// word doing two jobs is how a brief gets misread — the same argument that kept
+/// `ACCOUNT MENU` from being called "the Settings menu".
+/// ⚠ SUPERSEDED, quoted not deleted (`E164`):
+/// //   MILESTONES — THEIR OWN LIST (`P2-ALL-E757`).
 ///
 /// ⚠⚠ **THEY ARE NOT JOURNEYS AND THEY ARE NOT CATALOG TASKS.** `PNM-011` and
 /// `PNM-012` stay in `aim-catalog.json` as tasks — they are real work with a
@@ -7593,7 +7618,7 @@ model WorkTrackerPhaseDate {
 /// R2, R3… are rows Scott adds later rather than code anybody writes.
 ///
 /// ⚠ Scalar id, no FK, single-drop — the same property as the four tables above.
-model WorkTrackerMilestone {
+model WorkTrackerRelease {
   id String @id @default(uuid()) @db.Uuid
 
   title       String
@@ -7609,8 +7634,27 @@ model WorkTrackerMilestone {
   status String @default("Planned")
 
   /// ⚠ Hand-ordered, because chronological is not always the reading order when
-  /// two milestones share a date.
+  /// two releases share a date.
   sort Int @default(0)
+
+  /// ⚠⚠ `R1`, `R2`, … — the name Scott uses when he talks about scope. Nullable
+  /// because the one existing row predates it and is migrated by the seed, not by
+  /// a destructive default.
+  code String?
+
+  /// ⚠ When work on it began. Optional: a release that is planned and not started
+  /// has a target and no start, and that is a fact rather than a gap.
+  start_date DateTime? @db.Date
+
+  /// ⚠⚠ **THE DATE IT IS DUE.** ⚠ `date` above is kept and is the LEGACY column —
+  /// it held R1's 2026-11-01 before this change. The reader prefers
+  /// `target_date` and falls back to `date`, so the existing row keeps working
+  /// without a destructive rename (see the block above for why there is none).
+  target_date DateTime? @db.Date
+
+  /// ⚠ One public line. `description` above is the admin's own note; this is what
+  /// a stranger reads.
+  summary String?
 
   /// ⚠⚠ **DRAFTS DEFAULT UNPUBLISHED, like `WorkTrackerShipped`.** The public
   /// reader filters on `published: true` IN THE WHERE CLAUSE, never with an `if`.
@@ -7674,4 +7718,45 @@ model WorkTrackerFollower {
   created_at DateTime @default(now())
 
   @@map("work_tracker_followers")
+}
+
+/// ⚠⚠⚠ TASKS THE AIM CATALOG DOES NOT HAVE (`P2-ALL-E765`, Scott 2026-10-02).
+///
+/// ⚠ The catalog is a STATIC FILE and deliberately so — it is the published
+/// method. ⚠⚠ But Scott needs to track work the method never named, and editing
+/// `aim-catalog.json` to add it would make the published method a scratchpad.
+/// These rows behave like catalog tasks everywhere they are COUNTED.
+///
+/// ⚠⚠⚠ **THE TITLE IS ADMIN-ONLY AND THE LEAK TEST ENFORCES IT.** A custom task
+/// is exactly the "how to recreate Panameer" detail Scott excluded from the
+/// public page — more so than a catalog task, because he wrote it himself about
+/// this build. **The public payload carries counts and percentages, never a
+/// title.**
+///
+/// ⚠ Scalar ids, no FK, single-drop — the same property as every table above.
+model WorkTrackerCustomTask {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠⚠ ADMIN-ONLY. Never in the public payload.
+  title String
+
+  /// ⚠ The catalog PHASE name it sits under, so it rolls up with everything else.
+  phase String
+  /// ⚠ Optional, and only meaningful for journey-shaped work.
+  stage String?
+
+  release_id String? @db.Uuid
+
+  status String  @default("Not Started")
+  owner  String?
+  /// ⚠⚠ ADMIN-ONLY, like the title.
+  note   String?
+  sort   Int     @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  @@index([release_id])
+  @@map("work_tracker_custom_tasks")
 }

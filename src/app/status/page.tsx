@@ -110,6 +110,17 @@ export default async function StatusPage({
   const current = t.phases.find((p) => p.current) ?? null;
   const currentIndex = t.phases.findIndex((p) => p.current) + 1;
   const gatesPassed = t.gates.filter((g) => g.passed).length;
+  const rel = t.currentRelease;
+  /* ⚠ The hero shows the RELEASE's percentage when there is one, and falls back
+     to the plan only when no release exists at all. */
+  const heroPercent = rel ? rel.percent : t.overallPercent;
+  const dueLabel = rel?.date
+    ? new Date(`${rel.date}T00:00:00Z`).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : null;
   const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
@@ -197,20 +208,49 @@ export default async function StatusPage({
           does not shift as the build progresses.
         */}
         <div className="min-[900px]:text-right">
-          <p className={`flex items-start justify-start leading-[0.82] min-[900px]:justify-end ${HEAD}`}>
-            <span className="text-[112px] tabular-nums sm:text-[184px]">
-              {/* ⚠ A real zero renders as 0; an uncountable figure renders a dash
-                  WITH its reason. The two must not look the same. */}
-              {t.overallPercent === null ? "—" : t.overallPercent}
-            </span>
-            {t.overallPercent !== null && (
-              <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
-            )}
-          </p>
+          {/*
+            ── ⚠⚠⚠ THE BIG FIGURE IS THE CURRENT RELEASE, NOT THE WHOLE PLAN ─────
+            ⚠ Scott: *"I like the percent complete (but that should differ based on
+            MVP R1 and R2."* The plan percentage becomes the small secondary line.
+            ⚠⚠ **`Scope being set` WHEN NO TASKS ARE ASSIGNED — NEVER `0%`.** A
+            release nobody has scoped has not achieved nothing; it has not been
+            measured, and the two must not look the same.
+          */}
+          {rel && rel.percent === null ? (
+            <p className={`text-[34px] leading-tight text-white/90 sm:text-[44px] ${HEAD}`}>
+              Scope being set
+            </p>
+          ) : (
+            <p className={`flex items-start justify-start leading-[0.82] min-[900px]:justify-end ${HEAD}`}>
+              <span className="text-[112px] tabular-nums sm:text-[184px]">
+                {heroPercent === null ? "—" : heroPercent}
+              </span>
+              {heroPercent !== null && (
+                <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
+              )}
+            </p>
+          )}
           <p className="mt-1 text-[14px] text-white/75">
-            {t.overallPercent === null ? "nothing countable yet" : "of the plan complete"} · updated{" "}
-            {updated}
+            {rel ? (
+              <>
+                {rel.code ? `${rel.code} — ` : ""}
+                {rel.name}
+                {rel.date && <> · due {dueLabel}</>}
+              </>
+            ) : t.overallPercent === null ? (
+              "nothing countable yet"
+            ) : (
+              "of the plan complete"
+            )}{" "}
+            · updated {updated}
           </p>
+          {/* ⚠ The plan figure survives as the SECONDARY number — it is still
+              true, it is just no longer the headline. */}
+          {rel && t.overallPercent !== null && (
+            <p className="mt-1 text-[13px] text-white/60">
+              {t.overallPercent}% of the whole plan
+            </p>
+          )}
           {/*
             ⚠⚠⚠ `moving` IS EVERY TASK IN PROGRESS, NOT THE CURRENT PHASE'S STAGES.
             ⚠ Scott: *"it shows 1; it must be every task with status In Progress
@@ -226,7 +266,7 @@ export default async function StatusPage({
       </section>
 
       <div className="mx-auto max-w-[1040px] px-5 sm:px-8">
-        <BuildLine phases={t.phases} milestones={t.milestones} now={Date.parse(t.generatedAt)} />
+        <BuildLine phases={t.phases} releases={t.releases} now={Date.parse(t.generatedAt)} />
 
         {/* ── CURRENT PHASE ───────────────────────────────────────────── */}
         {current && (
@@ -280,7 +320,14 @@ export default async function StatusPage({
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className={`mt-1 block text-[16px] text-ink ${HEAD}`}>{j.name}</span>
-                <span className="mt-1 block min-h-[2.6em] text-[13px] leading-snug text-ink-2">
+                {/* ⚠ `data-journey-desc` is a STABLE HOOK, not debris. The gate
+                    that asserts every journey has public copy was anchored on
+                    `span > span` position and broke the moment `E766` rebuilt this
+                    as a grid — a positional selector guessing at structure. */}
+                <span
+                  data-journey-desc
+                  className="mt-1 block min-h-[2.6em] text-[13px] leading-snug text-ink-2"
+                >
                   {j.description}
                 </span>
 
@@ -307,17 +354,50 @@ export default async function StatusPage({
           </ul>
         </section>
 
-        {/* ── MILESTONES ──────────────────────────────────────────────── */}
-        {t.milestones.length > 0 && (
+        {/* ── RELEASES ────────────────────────────────────────────────── */}
+        {t.releases.length > 0 && (
           <section className="mt-12 border-t border-line pt-6">
-            <h2 className={`text-[24px] text-ink ${HEAD}`}>Milestones</h2>
+            {/*
+              ⚠⚠⚠ RELEASES REPLACE MILESTONES (`P2-ALL-E765`). A milestone was a
+              date; a release is a date WITH SCOPE, which is what lets each row
+              carry its own percentage and its own journeys.
+              ⚠ SUPERSEDED, quoted not deleted (`E164`): a `Milestones` section
+              listing date · title · description · status, with no figure.
+            */}
+            <h2 className={`text-[24px] text-ink ${HEAD}`}>Releases</h2>
             <ul className="mt-5 border-t border-line">
-              {t.milestones.map((m) => (
-                <li key={`${m.title}-${m.date}`} className="flex flex-wrap items-baseline gap-x-4 border-b border-line py-3">
-                  <span className="font-mono text-[13px] text-ink-2">{m.date}</span>
-                  <span className="text-[15px] font-bold text-ink">{m.title}</span>
-                  {m.description && <span className="text-[13.5px] text-ink-2">{m.description}</span>}
-                  <span className="ml-auto text-[13px] text-ink-2">{m.status}</span>
+              {t.releases.map((r) => (
+                <li
+                  key={`${r.code ?? r.name}-${r.date ?? "nodate"}`}
+                  className="grid grid-cols-1 gap-x-4 gap-y-1 border-b border-line py-3.5 sm:grid-cols-[72px_1fr_auto]"
+                >
+                  <span className={`text-[15px] text-ink ${HEAD}`}>{r.code ?? "—"}</span>
+                  <span>
+                    <span className="text-[15px] font-bold text-ink">{r.name}</span>
+                    {r.summary && (
+                      <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-2">{r.summary}</span>
+                    )}
+                    {/* ⚠ Journey NAMES — segments, never task text. */}
+                    {r.journeys.length > 0 && (
+                      <span className="mt-1 block text-[12.5px] text-ink-3">
+                        {r.journeys.join(" · ")}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[13px] text-ink-2 sm:text-right">
+                    {/* ⚠⚠ `Scope being set`, NEVER `0%` — a release nobody has
+                        scoped has not achieved nothing. */}
+                    <span className={`block text-[17px] text-ink ${HEAD}`}>
+                      {r.percent === null ? "Scope being set" : `${r.percent}%`}
+                    </span>
+                    {r.date && <span className="block">due {r.date}</span>}
+                    <span className="block">{r.status}</span>
+                    {r.percent !== null && (
+                      <span className="block text-ink-3">
+                        {r.doneCount} of {r.taskCount} done
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

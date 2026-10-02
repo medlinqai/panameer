@@ -2,16 +2,21 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import {
   WorkTrackerError,
-  createMilestone,
+  createRelease,
   createShipped,
-  deleteMilestone,
+  deleteRelease,
   deleteShipped,
   setGateCriterion,
+  bulkAssignRelease,
+  createCustomTask,
+  deleteCustomTask,
   setCurrentPhase,
+  setTaskRelease,
+  updateCustomTask,
   setPhaseDates,
   setStageStatus,
   setTaskState,
-  updateMilestone,
+  updateRelease,
   updateShipped,
 } from "@/lib/work-tracker/admin";
 
@@ -63,6 +68,40 @@ export async function POST(request: Request) {
         await setCurrentPhase(gate, body.phase === null || body.phase === "" ? null : String(body.phase));
         return NextResponse.json({ ok: true });
 
+      case "task-release":
+        await setTaskRelease(
+          gate,
+          String(body.taskId ?? ""),
+          body.releaseId ? String(body.releaseId) : null,
+        );
+        return NextResponse.json({ ok: true });
+
+      case "bulk-release": {
+        const n = await bulkAssignRelease(
+          gate,
+          {
+            phase: body.phase ? String(body.phase) : undefined,
+            stage: body.stage ? String(body.stage) : undefined,
+            segment: body.segment ? String(body.segment) : undefined,
+          },
+          body.releaseId ? String(body.releaseId) : null,
+        );
+        return NextResponse.json({ ok: true, changed: n });
+      }
+
+      case "custom-create": {
+        const row = await createCustomTask(gate, body);
+        return NextResponse.json({ ok: true, id: row.id });
+      }
+
+      case "custom-update":
+        await updateCustomTask(gate, String(body.id ?? ""), body);
+        return NextResponse.json({ ok: true });
+
+      case "custom-delete":
+        await deleteCustomTask(String(body.id ?? ""));
+        return NextResponse.json({ ok: true });
+
       case "phase-dates":
         await setPhaseDates(gate, String(body.phase ?? ""), { start: body.start, end: body.end });
         return NextResponse.json({ ok: true });
@@ -80,17 +119,17 @@ export async function POST(request: Request) {
         await deleteShipped(String(body.id ?? ""));
         return NextResponse.json({ ok: true });
 
-      case "milestone-create": {
-        const row = await createMilestone(gate, body);
+      case "release-create": {
+        const row = await createRelease(gate, body);
         return NextResponse.json({ ok: true, id: row.id });
       }
 
-      case "milestone-update":
-        await updateMilestone(gate, String(body.id ?? ""), body);
+      case "release-update":
+        await updateRelease(gate, String(body.id ?? ""), body);
         return NextResponse.json({ ok: true });
 
-      case "milestone-delete":
-        await deleteMilestone(String(body.id ?? ""));
+      case "release-delete":
+        await deleteRelease(String(body.id ?? ""));
         return NextResponse.json({ ok: true });
 
       default:
