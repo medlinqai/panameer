@@ -74,6 +74,38 @@ export function DevBanner() {
             {" "}
             — you&apos;re early, so expect rough edges.
           </span>
+          {/*
+            ── ⚠⚠ FOLLOW THE BUILD (`P2-ALL-E754`) ──────────────────────────────
+
+            ⚠ Scott, 2026-10-02: *"yes to the link."* It points at
+            `status.panameer.com`, the public Work Tracker — the page whose whole
+            job is to give a tester somewhere to come back to daily.
+
+            ⚠⚠ **THE COPY IS EXACTLY `Follow the build →` AND THE ARROW IS PART OF
+            IT.** Not a separate glyph, not an icon: one string, so it cannot
+            drift apart from its own punctuation across a wrap.
+
+            ⚠ **MAGENTA AND UNDERLINED** — the one place magenta is correct is a
+            LINK (`E433`), which is what this is. ⚠ It is NOT a button, so Title
+            Case does not apply (load-bearing rule 11 governs button labels; link
+            text has its own casing).
+
+            ⚠⚠ **AN ABSOLUTE URL, NOT A ROUTE.** `/status` would keep the visitor
+            on whichever host they are already on; the point is to send them to
+            the status domain. ⚠ `target="_blank"` with `rel="noreferrer"` so the
+            tester does not lose the page they were testing.
+
+            ⚠ `DevBanner` renders from the ROOT layout, so this one edit covers the
+            public site and the app, as the brief requires. Dismiss is unchanged.
+          */}
+          <a
+            href="https://status.panameer.com"
+            target="_blank"
+            rel="noreferrer"
+            className="ml-2 whitespace-nowrap font-semibold text-magenta underline underline-offset-4"
+          >
+            Follow the build →
+          </a>
         </p>
         <button
           type="button"
