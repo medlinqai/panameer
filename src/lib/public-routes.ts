@@ -82,6 +82,14 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   */
   { route: "/", category: 1 },
   /*
+    ⚠⚠ `/home` IS THE MARKETING HOME'S OWN ADDRESS (`P2-ALL-E787`), needed
+    because `panameer.com/` 307s to the tracker until R1. ⚠⚠⚠ **THE DEFAULT IS
+    DENY** (load-bearing rule 5), so without this line the full marketing site
+    would sit behind a login wall — which is the opposite of what it is for.
+    ⚠ Same category as `/`: it renders the same component.
+  */
+  { route: "/home", category: 1 },
+  /*
     ⚠⚠⚠ `/training` (`P2-ALL-E698` WS-C) — LEARN'S PUBLIC FRONT DOOR AT ITS OWN
     ADDRESS, so `/learn` can be the member's dashboard and nothing else.
     ⚠⚠ `/learn`'s OWN ROW IS STILL BELOW AND IS REMOVED IN THE NEXT COMMIT, NOT THIS

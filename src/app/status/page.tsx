@@ -1,10 +1,23 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { isStatusHost } from "@/lib/host";
-import { formatInstant, formatStoredDate } from "@/lib/work-tracker/public-time";
+import { formatInstant, formatStoredDate, todayInSiteZone } from "@/lib/work-tracker/public-time";
 import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
-import { BuildLine } from "@/components/status/BuildLine";
+/*
+  ⚠⚠ `BuildLine`'s IMPORT IS GONE, THE COMPONENT IS NOT (`P2-ALL-E785`).
+  ⚠ `src/components/status/BuildLine.tsx` is untouched on disk and still exports
+  everything it did, including `assignRows`/`MIN_GAP_PCT`, which `check:sr7`
+  still exercises directly. ⚠⚠ Dropping an unused IMPORT is not deleting code —
+  `E164` protects the code, and leaving the import would add a lint warning
+  against a 0-new rule.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`):
+  //   import { BuildLine } from "@/components/status/BuildLine";
+*/
+import { PlanView } from "@/components/plan/PlanView";
+import { prisma } from "@/lib/prisma";
+import { getPanameerPlan } from "@/lib/plan/store";
+import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -64,15 +77,26 @@ export const metadata = {
  */
 const HEAD = "font-body font-extrabold tracking-[-0.03em]";
 
-const STAGE_WORD: Record<string, string> = {
-  design: "Designing",
-  build: "Building",
-  test: "Testing now",
-  live: "Live",
-};
-
-/** ⚠ The four segments. A `null` stage fills none — an honest "not started". */
-const STAGE_INDEX: Record<string, number> = { design: 1, build: 2, test: 3, live: 4 };
+/*
+  ⚠⚠ THE JOURNEY-STAGE VOCABULARY, SUPERSEDED BY THE PLAN (`P2-ALL-E785`).
+  ⚠ The ten journey cells and their four-segment stage bars left this page when
+  the plan replaced them. A plan row has a STATUS, not a stage, so neither of
+  these is read any more.
+  ⚠⚠ Quoted and not deleted (`E164`), as LINE comments rather than a nested
+  block, so a close-comment sequence in the quoted body cannot end this comment
+  early (load-bearing rule 12).
+  ⚠⚠⚠ AND THE RULE BIT THE SENTENCE THAT EXPLAINS IT: this paragraph originally
+  spelled that sequence out literally, which closed the comment here and broke
+  the parse. Paraphrase it — never type it.
+  //   const STAGE_WORD: Record<string, string> = {
+  //     design: "Designing",
+  //     build: "Building",
+  //     test: "Testing now",
+  //     live: "Live",
+  //   };
+  //   // The four segments. A `null` stage fills none - an honest "not started".
+  //   const STAGE_INDEX: Record<string, number> = { design: 1, build: 2, test: 3, live: 4 };
+*/
 
 export default async function StatusPage({
   searchParams,
@@ -125,13 +149,58 @@ export default async function StatusPage({
   }
 
   const [following, followers] = await Promise.all([isFollowing(viewer), followerCount()]);
-  const current = t.phases.find((p) => p.current) ?? null;
-  const currentIndex = t.phases.findIndex((p) => p.current) + 1;
+
+  /*
+    ── ⚠⚠ THE PLAN, AND THE DATE EVERYTHING IS MEASURED AGAINST (`P2-ALL-E785`) ──
+
+    ⚠⚠⚠ **`today` IS RESOLVED ONCE, IN THE SITE'S ZONE, AND PASSED DOWN.** The
+    Today line on the timeline, every `Past due` mark and the day a bar is
+    compared against all come from this one value. ⚠ A component reaching for
+    `new Date()` itself would put the Today line on one day and the overdue
+    badges on another — on Vercel, which runs UTC, that is a real four-hour
+    window every evening (`E775`).
+  */
+  const todayIso = todayInSiteZone();
+  /** ⚠ id↔code only. The uuid is used to join plan rows to a release and is
+   *  NEVER sent to the browser — `PublicRelease` carries `code`, not `id`. */
+  const [plan, releaseIds] = await Promise.all([
+    getPanameerPlan(),
+    prisma.workTrackerRelease.findMany({ select: { id: true, code: true } }),
+  ]);
+  const planRows = plan?.rows ?? [];
+  const pv = publicPlan(
+    { title: plan?.plan.title ?? "Panameer build" },
+    planRows,
+    new Date(`${todayIso}T12:00:00Z`),
+  );
+  /*
+    ⚠⚠ RELEASE PERCENTAGES NOW COME FROM THE PLAN, KEYED BY CODE. A release's
+    scope is the plan rows tagged to it, so this is the one definition of the
+    figure (`E585`); `public-view.ts` still counts a release's AIM tasks and that
+    number is **no longer rendered anywhere**.
+  */
+  const planReleasePercent = releaseProgressByCode(planRows, releaseIds);
+  /*
+    ⚠ The CURRENT PHASE section it fed left this page with `E785`; the plan's own
+    in-progress phase is the accordion that opens by default instead.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const current = t.phases.find((p) => p.current) ?? null;
+    //   const currentIndex = t.phases.findIndex((p) => p.current) + 1;
+  */
   const gatesPassed = t.gates.filter((g) => g.passed).length;
   const rel = t.currentRelease;
-  /* ⚠ The hero shows the RELEASE's percentage when there is one, and falls back
-     to the plan only when no release exists at all. */
-  const heroPercent = rel ? rel.percent : t.overallPercent;
+  /*
+    ⚠ The hero shows the RELEASE's percentage when there is one, and the whole
+    plan's otherwise — Scott: *"I like the percent complete (but that should
+    differ based on MVP R1 and R2."*
+    ⚠⚠ BOTH HALVES NOW COME FROM THE PLAN. ⚠ SUPERSEDED, quoted not deleted
+    (`E164`) — it was counted from AIM task states:
+    //   const heroPercent = rel ? rel.percent : t.overallPercent;
+  */
+  const heroPercent =
+    rel?.code && planReleasePercent[rel.code]
+      ? planReleasePercent[rel.code].percent
+      : pv.progress.percent;
   /*
     ⚠⚠⚠ TWO KINDS OF VALUE, TWO RULES (`P2-ALL-E775`) — see `public-time.ts`.
     ⚠ **A RELEASE TARGET IS A PURE DATE** and is printed as itself. Shifting
@@ -238,8 +307,17 @@ export default async function StatusPage({
             //   providers will use on their own projects. Here it follows ours,
             //   every day, from first idea to public beta.
           */}
+          {/*
+            ⚠⚠ THE SUBLINE SAYS WHY THIS PAGE IS PUBLIC AT ALL (`P2-ALL-E787`,
+            Scott 2026-10-03). ⚠ From this lane the tracker is the front door, so
+            the first thing a stranger reads has to explain the choice: the tool
+            on screen is the tool they will get.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   Daily progress on the Panameer build, from first idea to public beta.
+          */}
           <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
-            Daily progress on the Panameer build, from first idea to public beta.
+            We&apos;re eating our own cooking — this is the project tracker you&apos;ll use on your
+            Panameer work orders, and we&apos;re using it to build Panameer.
           </p>
 
           <p className="mt-7 flex flex-wrap items-center gap-4">
@@ -271,18 +349,37 @@ export default async function StatusPage({
             release nobody has scoped has not achieved nothing; it has not been
             measured, and the two must not look the same.
           */}
-          {rel && rel.percent === null ? (
+          {/*
+            ── ⚠⚠⚠ THE TEST AND THE FIGURE MUST BE THE SAME NUMBER (`P2-ALL-E785`) ──
+
+            ⚠ This branch used to ask `rel.percent === null` — the AIM-derived
+            release percentage from `public-view.ts` — while the figure printed
+            below it came from the PLAN. ⚠⚠ **Two definitions of one number, and
+            they disagreed the moment the plan replaced the catalog:** with R1
+            carrying AIM task states, `rel.percent` was a number, so this took the
+            else branch and printed a bare `—` for an empty plan.
+            ⚠⚠⚠ **A DASH WITH NO REASON IS EXACTLY WHAT THE COUNTING RULE FORBIDS**
+            (`decisions_2026-09-23.md` §1), and this is the public page.
+            ⚠ So it now tests `heroPercent`, the number it is about. When that is
+            uncountable the page says WHY instead of printing a dash, and the else
+            branch is guaranteed a real figure — including a measured `0`, in ink.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   {rel && rel.percent === null ? (
+          */}
+          {heroPercent === null ? (
             <p className={`text-[34px] leading-tight text-white/90 sm:text-[44px] ${HEAD}`}>
               Scope being set
             </p>
           ) : (
             <p className={`flex items-start justify-start leading-[0.82] min-[900px]:justify-end ${HEAD}`}>
-              <span className="text-[112px] tabular-nums sm:text-[184px]">
-                {heroPercent === null ? "—" : heroPercent}
+              {/* ⚠ A stable hook so a gate can assert the FIGURE rather than
+                  searching the hero for a dash — the hero legitimately contains
+                  "R1 — Public beta", and a text search for an em-dash matches
+                  that. */}
+              <span data-hero-figure className="text-[112px] tabular-nums sm:text-[184px]">
+                {heroPercent}
               </span>
-              {heroPercent !== null && (
-                <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
-              )}
+              <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
             </p>
           )}
           <p className="mt-1 text-[14px] text-white/75">
@@ -321,93 +418,29 @@ export default async function StatusPage({
       </section>
 
       <div className="mx-auto max-w-[1040px] px-5 sm:px-8">
-        <BuildLine phases={t.phases} releases={t.releases} now={Date.parse(t.generatedAt)} />
+        {/*
+          ── ⚠⚠⚠ THE PLAN REPLACES THE AIM PHASES, STAGES AND JOURNEYS (`P2-ALL-E785`) ──
 
-        {/* ── CURRENT PHASE ───────────────────────────────────────────── */}
-        {current && (
-          <section className="mt-12 border-t border-line pt-6">
-            <p className="font-mono text-[13px] text-ink-2">
-              {String(currentIndex).padStart(2, "0")}/{String(t.phases.length).padStart(2, "0")}
-            </p>
-            <h2 className={`mt-1 text-[24px] text-ink ${HEAD}`}>
-              {current.name}
-            </h2>
-            <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">{current.purpose}</p>
+          ⚠ **SCOTT, 2026-10-03:** the AIM tracker *"is good for me, but even for
+          me too complicated."* ⚠⚠ So this page stops rendering a fixed catalog —
+          four phases, their stages, the ten journey cells and the figure counted
+          from 212 task states — and renders **the rows Scott typed in Build
+          Plan**: a timeline, then an accordion per phase.
 
-            <ul className="mt-5 border-t border-line">
-              {t.currentPhaseStages.map((s) => (
-                <li
-                  key={s.name}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-3"
-                >
-                  <span className="text-[15px] text-ink">{s.name}</span>
-                  <Segments filled={s.percent === null ? 0 : Math.round((s.percent / 100) * 4)} />
-                  <span className="ml-auto text-[13px] text-ink-2">
-                    {s.percent === null ? "— not countable" : `${s.percent}%`} · {s.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+          ⚠⚠ **THE AIM DATA IS NOT DELETED AND THE AIM ADMIN STAYS REACHABLE**
+          (renamed *AIM checklist*). `work_tracker_*` keeps every row it had;
+          what changed is which of them this page reads.
 
-        {/* ── JOURNEYS ────────────────────────────────────────────────── */}
-        <section className="mt-12 border-t border-line pt-6">
-          <h2 className={`text-[24px] text-ink ${HEAD}`}>
-            Ten parts of one platform.
-          </h2>
-
-          {/*
-            ── ⚠⚠⚠ THE MOCKUP'S GRID: 5 ACROSS, 2 ON PHONE (Scott, 2026-10-02) ──
-            ⚠ It was a stacked list of ten rows, which is not what v5 shows.
-            ⚠⚠ **COLUMNS, NOT CARDS** (`phase_3_ui.md` rule 4): the cells divide
-            with `border-t` and a thin `border-r` on all but the last in a row, so
-            nothing grows a box. ⚠ The 2-up rules are reset before the 5-up ones
-            are stated, or a cell carries both a 2-up and a 5-up edge.
-          */}
-          <ul className="mt-5 grid grid-cols-2 border-t border-line min-[1000px]:grid-cols-5">
-            {t.journeys.map((j, i) => (
-              <li
-                key={j.name}
-                className="border-b border-line px-3 py-4 [&:nth-child(2n)]:border-r-0 [&:not(:nth-child(2n))]:border-r [&:not(:nth-child(2n))]:border-line min-[1000px]:border-r min-[1000px]:[&:not(:nth-child(2n))]:border-r min-[1000px]:[&:nth-child(2n)]:border-r min-[1000px]:[&:nth-child(5n)]:border-r-0"
-              >
-                <span className="font-mono text-[11px] text-ink-3">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className={`mt-1 block text-[16px] text-ink ${HEAD}`}>{j.name}</span>
-                {/* ⚠ `data-journey-desc` is a STABLE HOOK, not debris. The gate
-                    that asserts every journey has public copy was anchored on
-                    `span > span` position and broke the moment `E766` rebuilt this
-                    as a grid — a positional selector guessing at structure. */}
-                <span
-                  data-journey-desc
-                  className="mt-1 block min-h-[2.6em] text-[13px] leading-snug text-ink-2"
-                >
-                  {j.description}
-                </span>
-
-                <span className="mt-3 block">
-                  <Segments filled={j.stage ? STAGE_INDEX[j.stage] : 0} testing={j.stage === "test"} />
-                </span>
-
-                <span className="mt-2 flex items-center gap-1.5 text-[12.5px] text-ink-2">
-                  {/*
-                    ⚠⚠ THE BLINKING DOT IS ONLY ON `test` — the mockup's "Testing
-                    now". ⚠ `motion-safe:` only, so reduced motion gets the dot
-                    without the blink rather than losing the signal entirely.
-                  */}
-                  {j.stage === "test" && (
-                    <span
-                      aria-hidden
-                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta motion-safe:animate-pulse"
-                    />
-                  )}
-                  {j.stage ? STAGE_WORD[j.stage] : "—"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the three blocks that stood
+          here, in order, are kept in full in the brief and in git history:
+          //   <BuildLine phases={t.phases} releases={t.releases} now={Date.parse(t.generatedAt)} />
+          //   {current && ( ... CURRENT PHASE: NN/NN, name, purpose, currentPhaseStages ... )}
+          //   <section> ... JOURNEYS: "Ten parts of one platform." + the 5-across grid ... </section>
+          ⚠⚠ `BuildLine`, `Segments` and `t.currentPhaseStages` are **still on
+          disk and still exported** — nothing is deleted (`E164`) — they simply
+          render on no page now.
+        */}
+        <PlanView plan={pv} today={todayIso} />
 
         {/* ── RELEASES ────────────────────────────────────────────────── */}
         {t.releases.length > 0 && (
@@ -568,18 +601,26 @@ const SQUARE_LIGHT =
  * when work is moving. ⚠⚠ `filled = 0` draws four empty segments, which is what
  * a `null` journey stage must look like — present, and honestly empty.
  */
-function Segments({ filled, testing = false }: { filled: number; testing?: boolean }) {
-  return (
-    <span aria-hidden className="flex shrink-0 gap-1">
-      {[0, 1, 2, 3].map((i) => (
-        <span
-          key={i}
-          className={
-            "h-1.5 w-7 rounded-full " +
-            (i < filled ? "bg-ink" : i === filled && testing ? "bg-magenta motion-safe:animate-pulse" : "bg-line")
-          }
-        />
-      ))}
-    </span>
-  );
-}
+/*
+  ⚠⚠ `Segments` — SUPERSEDED BY THE PLAN (`P2-ALL-E785`), QUOTED NOT DELETED.
+  ⚠ It drew the four-segment stage bar for a journey cell and for the current
+  phase’s stage list. Both sections are gone; a plan row shows a status, not a
+  stage, and its bar is drawn by `PlanView` from real dates.
+  ⚠ Line comments, not a nested block, so nothing in the quoted body can end
+  this comment early (load-bearing rule 12).
+  //   function Segments({ filled, testing = false }: { filled: number; testing?: boolean }) {
+  //     return (
+  //       <span aria-hidden className="flex shrink-0 gap-1">
+  //         {[0, 1, 2, 3].map((i) => (
+  //           <span
+  //             key={i}
+  //             className={
+  //               "h-1.5 w-7 rounded-full " +
+  //               (i < filled ? "bg-ink" : i === filled && testing ? "bg-magenta motion-safe:animate-pulse" : "bg-line")
+  //             }
+  //           />
+  //         ))}
+  //       </span>
+  //     );
+  //   }
+*/

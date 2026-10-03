@@ -30,44 +30,64 @@ test.describe("P2-ALL-E777 — Build Line labels", () => {
     expect(assignRows([0, MIN_GAP_PCT - 0.1])).toEqual([0, 1]);
   });
 
-  /** ⚠⚠ And on the real page: no two labels on the same row may overlap. */
-  for (const w of [1440, 1280, 1024]) {
-    test(`⚠⚠ nothing overlaps at ${w}`, async ({ page }) => {
-      await page.setViewportSize({ width: w, height: 1000 });
-      await page.goto("/status", { waitUntil: "domcontentloaded" });
-      const r = await page.evaluate(() => {
-        const sec = document.querySelector('section[aria-label="Build line"]')!;
-        const axis = [...sec.querySelectorAll(":scope > div.relative")].find((d) =>
-          d.className.includes("mt-3"),
-        );
-        if (!axis) return null;
-        const spans = [...axis.querySelectorAll(":scope > span")].map((s) => {
-          const b = s.getBoundingClientRect();
-          return { t: (s.textContent || "").trim().slice(0, 20), l: b.left, r: b.right, y: Math.round(b.top) };
-        });
-        const over: string[] = [];
-        for (let i = 0; i < spans.length; i++)
-          for (let j = i + 1; j < spans.length; j++)
-            if (Math.abs(spans[i].y - spans[j].y) < 6 && spans[i].l < spans[j].r && spans[j].l < spans[i].r)
-              over.push(`${spans[i].t} ↔ ${spans[j].t}`);
-        return { over, rows: new Set(spans.map((s) => s.y)).size, n: spans.length };
-      });
-      expect(r, "the label row exists").not.toBeNull();
-      console.log(`  ${w}px — ${r!.n} labels on ${r!.rows} row(s), ${r!.over.length} overlaps`);
-      expect(r!.over, `labels overlap at ${w}`).toEqual([]);
-    });
-  }
 
-  /** ⚠ Phone keeps the stacked list (Scott's ruling), not the axis. */
-  test("⚠ phone keeps the stacked list", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 900 });
-    await page.goto("/status", { waitUntil: "domcontentloaded" });
-    const li = await page.locator('section[aria-label="Build line"] li').count();
-    expect(li, "the phone list renders one row per marker").toBeGreaterThan(0);
-    const axisVisible = await page
-      .locator('section[aria-label="Build line"] div.relative.mt-3')
-      .isVisible()
-      .catch(() => false);
-    expect(axisVisible, "the positioned axis is hidden on phone").toBe(false);
-  });
+  /*
+    ── ⚠⚠ THE DOM TESTS ARE RETIRED BY `P2-ALL-E785` (`E164`) ────────────────
+
+    ⚠ They measured the Build Line's phase labels on `/status`. `E785` replaced
+    that section with the plan's own timeline, so `BuildLine` renders on no page
+    — the component and its exports are untouched on disk.
+    ⚠⚠ **THE UNIT TEST ABOVE IS DELIBERATELY KEPT AND STILL PASSES.** It is pure
+    (`assignRows` over numbers), it encodes the actual RULE, and ruling 14 says
+    that when the code a rule names goes away, the rule may not.
+    ⚠⚠⚠ **AND THE RULE IS GUARDED ON THE NEW SURFACE TOO** — the plan timeline
+    thins its week ticks, and `e2e-plan/status.spec.ts` asserts those labels do
+    not overlap. Same rule, new geometry.
+
+    ⚠⚠⚠ **THE QUOTED BODY'S OWN INNER COMMENT DELIMITERS ARE PARAPHRASED, NOT
+    COPIED** — `/**` reads `NOTE:` and the closing pair is dropped. ⚠ Copying
+    them verbatim ended this comment early and broke the parse, which is the
+    trap load-bearing rule 12 names and the reason it says to paraphrase an
+    inner comment rather than quote it.
+    //     NOTE: ⚠⚠ And on the real page: no two labels on the same row may overlap. 
+    //     for (const w of [1440, 1280, 1024]) {
+    //       test(`⚠⚠ nothing overlaps at ${w}`, async ({ page }) => {
+    //         await page.setViewportSize({ width: w, height: 1000 });
+    //         await page.goto("/status", { waitUntil: "domcontentloaded" });
+    //         const r = await page.evaluate(() => {
+    //           const sec = document.querySelector('section[aria-label="Build line"]')!;
+    //           const axis = [...sec.querySelectorAll(":scope > div.relative")].find((d) =>
+    //             d.className.includes("mt-3"),
+    //           );
+    //           if (!axis) return null;
+    //           const spans = [...axis.querySelectorAll(":scope > span")].map((s) => {
+    //             const b = s.getBoundingClientRect();
+    //             return { t: (s.textContent || "").trim().slice(0, 20), l: b.left, r: b.right, y: Math.round(b.top) };
+    //           });
+    //           const over: string[] = [];
+    //           for (let i = 0; i < spans.length; i++)
+    //             for (let j = i + 1; j < spans.length; j++)
+    //               if (Math.abs(spans[i].y - spans[j].y) < 6 && spans[i].l < spans[j].r && spans[j].l < spans[i].r)
+    //                 over.push(`${spans[i].t} ↔ ${spans[j].t}`);
+    //           return { over, rows: new Set(spans.map((s) => s.y)).size, n: spans.length };
+    //         });
+    //         expect(r, "the label row exists").not.toBeNull();
+    //         console.log(`  ${w}px — ${r!.n} labels on ${r!.rows} row(s), ${r!.over.length} overlaps`);
+    //         expect(r!.over, `labels overlap at ${w}`).toEqual([]);
+    //       });
+    //     }
+    //   
+    //     NOTE: ⚠ Phone keeps the stacked list (Scott's ruling), not the axis. 
+    //     test("⚠ phone keeps the stacked list", async ({ page }) => {
+    //       await page.setViewportSize({ width: 390, height: 900 });
+    //       await page.goto("/status", { waitUntil: "domcontentloaded" });
+    //       const li = await page.locator('section[aria-label="Build line"] li').count();
+    //       expect(li, "the phone list renders one row per marker").toBeGreaterThan(0);
+    //       const axisVisible = await page
+    //         .locator('section[aria-label="Build line"] div.relative.mt-3')
+    //         .isVisible()
+    //         .catch(() => false);
+    //       expect(axisVisible, "the positioned axis is hidden on phone").toBe(false);
+    //     });
+  */
 });

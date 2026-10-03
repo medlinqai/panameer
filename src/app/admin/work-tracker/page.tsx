@@ -25,7 +25,7 @@ import { WorkTrackerEditor } from "@/components/admin/work-tracker/WorkTrackerEd
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Work Tracker" };
+export const metadata = { title: "AIM Checklist" };
 
 export default async function AdminWorkTrackerPage() {
   const [states, gates, dates, shipped, rels, customs] = await Promise.all([

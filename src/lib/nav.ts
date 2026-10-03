@@ -2123,12 +2123,48 @@ export const ADMIN_NAV: NavGroup[] = [
         ⚠ The gear already claims the whole `/admin` subtree in `BAND_PREFIXES`,
         so this route lights exactly one band item with no change there (`E735`).
       */
-      { label: "Work Tracker", href: "/admin/work-tracker", icon: "ListChecks" },
+      /*
+        ── ⚠⚠ RENAMED `AIM Checklist` (`P2-ALL-E785`) ─────────────────────────
+
+        ⚠ **SCOTT, 2026-10-03:** the AIM tracker *"is good for me, but even for
+        me too complicated."* ⚠⚠ So `/status` stops reading this catalog and
+        reads **Build Plan** instead — but **this page and all of its data stay
+        exactly as they were.** Nothing in `work_tracker_*` was dropped.
+        ⚠⚠⚠ THE RENAME IS THE WHOLE POINT OF KEEPING IT: with two plan-shaped
+        pages in one menu, `Work Tracker` and `Build Plan` would be
+        indistinguishable from the nav — the `E459` defect, where a `Reports`
+        panel sat beside `Reports` copy and *"neither was obvious."*
+        ⚠ Scott wrote it *"AIM checklist"*; it is Title Case here to match every
+        other item in this section, which is the nav's own convention — the
+        one-letter difference is noted rather than silently chosen.
+        ⚠ `pageTitleFor` reads this label, so this one line renames the nav item,
+        the page name top-left and the browser tab.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`):
+        //   { label: "Work Tracker", href: "/admin/work-tracker", icon: "ListChecks" },
+      */
+      { label: "AIM Checklist", href: "/admin/work-tracker", icon: "ListChecks" },
     ],
   },
   {
     title: "Configuration Data",
     items: [
+      /*
+        ── ⚠⚠ BUILD PLAN (`P2-ALL-E784`) ──────────────────────────────────────
+
+        **SCOTT, 2026-10-03:** the AIM tracker *"is good for me, but even for me
+        too complicated."* ⚠ So the plan Scott actually keeps is here: rows he
+        types himself, which is what `status.panameer.com` renders.
+
+        ⚠⚠ IT SITS FIRST IN THIS SECTION ON PURPOSE — it is the page he opens
+        daily while the build runs, and the catalog pages below it are set up
+        once and rarely touched.
+        ⚠ `/admin/*` inherits `canAdminister` from the admin layout's
+        `guardPage`, and `route-access.ts` claims the `/admin` prefix, so this
+        route needs no entry of its own (load-bearing rule 5).
+        ⚠ `pageTitleFor` reads this label, so this one line names the nav item,
+        the page name top-left and the browser tab.
+      */
+      { label: "Build Plan", href: "/admin/build-plan", icon: "ListChecks" },
       /*
         ── ⚠⚠ THE LABEL IS "Users"; THE ROUTE STAYS (`P1-A1.5-E454`) ───────────
 

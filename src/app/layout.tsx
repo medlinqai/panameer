@@ -165,17 +165,38 @@ export default function RootLayout({
       {/* `min-h-dvh` so a `flex-1` frame fills what is left under DevBanner (E020). */}
       <body className="min-h-dvh flex flex-col">
         {/*
-          ABOVE THE PROVIDERS, AND ABOVE BOTH SHELLS.
+          FIRST IN <body>, AND ABOVE BOTH SHELLS.
 
           The root layout is the only mount point that covers pre-auth AND
           authenticated pages, which is what "sitewide" has to mean here — the
           marketing surface and the console have separate chrome and no other
-          common ancestor. Outside <Providers> because the banner needs neither
-          a session nor a theme context, and a component that renders before
-          them cannot be broken by them.
+          common ancestor.
+
+          ── ⚠⚠⚠ IT MOVED INSIDE <Providers> (`P2-ALL-E787`, Scott 2026-10-03) ──
+
+          ⚠ **ITS OLD REASON FOR BEING OUTSIDE IS NOW FALSE, SO THE COMMENT
+          CHANGED WITH THE CODE** (`decisions_2026-09-23.md` §6). It read:
+          *"Outside <Providers> because the banner needs neither a session nor a
+          theme context, and a component that renders before them cannot be
+          broken by them."*
+          ⚠⚠ **THE BANNER NOW NEEDS A SESSION:** Scott ruled that `Join free` is
+          never shown to a signed-in member, and the signal for that is
+          `useSession()` — the same one `MarketingHeader` uses. Outside the
+          provider it was `undefined` and the prerender threw
+          *"Cannot destructure property 'status'"*.
+          ⚠⚠⚠ **DOM ORDER IS UNCHANGED.** `Providers` renders its children
+          directly with no wrapper element, so the banner is still the first node
+          in `<body>` and still PUSHES both shells down rather than overlaying
+          either — which is what `E020`'s `min-h-dvh` depends on.
+          ⚠ The trade is real and small: a failure in `SessionProvider` can now
+          affect the banner, where before it could not. ⚠⚠ The session read is
+          confined to the tracker variant, so **no page that did not already read
+          the session starts doing so** — see `DevBanner`'s `TrackerLinks`.
         */}
-        <DevBanner />
-        <Providers>{children}</Providers>
+        <Providers>
+          <DevBanner />
+          {children}
+        </Providers>
       </body>
     </html>
   );
