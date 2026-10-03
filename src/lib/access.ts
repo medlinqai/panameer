@@ -499,7 +499,27 @@ export function providerMeetsRequired(p: {
  * wrong on its own, because it looks like a broken page rather than a hidden
  * profile. Every clause below is one item of the required set.
  */
-export function marketplaceVisibleWhere() {
+/**
+ * ── ⚠⚠⚠ TEST ACCOUNTS ARE HIDDEN FROM REAL MEMBERS HERE (`P2-ALL-E793`) ─────
+ *
+ * ⚠ **SCOTT, 2026-10-03:** test accounts are *"hidden from real members (search,
+ * Explore, suggestions, public counts) but visible to each other."*
+ * ⚠⚠ **IT GOES IN THIS PREDICATE BECAUSE THIS IS THE ONE PREDICATE** — ten
+ * callers share it (search, Explore, masked profiles, instructors, mentors, the
+ * requester home), so a new marketplace surface inherits the rule instead of
+ * having to remember it (`E585`).
+ *
+ * ⚠⚠ **THE DEFAULT HIDES THEM, AND THE DEFAULT IS THE SAFE DIRECTION.** A caller
+ * that forgets to pass the viewer's flag shows a real member a clean
+ * marketplace; the cost is that a TEST viewer may not see other test profiles on
+ * a surface that has not been updated yet, which is a visible inconvenience to a
+ * tester rather than a leak to a buyer.
+ * ⚠ `person.user.is_test` — `ProviderProfile.person_id` → `Person.user_id` →
+ * `User.is_test`; `Person.user` is optional, so a profile with no user at all is
+ * NOT excluded by this clause (it was already excluded by the visibility rules
+ * above it).
+ */
+export function marketplaceVisibleWhere(viewerIsTest = false) {
   return {
     status: "ACTIVE" as const,
     paused_at: null,
@@ -530,6 +550,28 @@ export function marketplaceVisibleWhere() {
        and a listing that hides every provider is not a stricter gate, it is an
        empty marketplace. */
     person: {
+      /**
+       * ── ⚠⚠⚠ TEST ACCOUNTS ARE HIDDEN FROM REAL MEMBERS (`P2-ALL-E793`) ────
+       *
+       * ⚠ **SCOTT, 2026-10-03:** test accounts are *"hidden from real members
+       * (search, Explore, suggestions, public counts) but visible to each
+       * other."* ⚠⚠ It lives in THIS predicate because this is the ONE
+       * predicate — ten callers share it, so a new marketplace surface
+       * inherits the rule rather than remembering it (`E585`).
+       *
+       * ⚠⚠⚠ **IT IS MERGED INTO THIS `person` CLAUSE, NOT SPREAD ABOVE IT, AND
+       * THE GATE IS WHY.** My first version added a second `person` key higher
+       * up; object literals take the LAST key, so this clause silently
+       * overwrote it and the filter did nothing. ⚠ `check:test-accounts`
+       * asserts the returned OBJECT rather than grepping the source, which is
+       * the only reason that was caught.
+       *
+       * ⚠ The default hides them: a caller that forgets the viewer's flag shows
+       * a real member a clean marketplace. The cost is a tester possibly not
+       * seeing other test profiles on a surface not yet updated — an
+       * inconvenience to a tester rather than a leak to a buyer.
+       */
+      ...(viewerIsTest ? {} : { user: { is_test: false } }),
       /* ⚠⚠ THE TITLE MOVED INTO THIS BLOCK (`P0-E595` WS-B), not beside it: a
          second `person` key in the same object literal is a duplicate property,
          and the later one silently wins. ⚠ It would have dropped the photo,

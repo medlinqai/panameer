@@ -1,0 +1,238 @@
+/**
+ * ── TEST ACCOUNTS (`P2-ALL-E793`) ───────────────────────────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-03:** his `test2*` search found nothing — the users had
+ * been deleted by the 2026-09-20 reset and **nothing in the app showed that.**
+ * This module makes a test account nameable, findable and removable from the
+ * app instead of from a script.
+ *
+ * ⚠⚠⚠ **THE REMOVE PATH IS THE DANGEROUS PART OF THIS WHOLE RUN, AND IT IS
+ * WRITTEN TO BE BORING:** every query filters on `is_test: true`, there is no
+ * code path that deletes a user without that filter, the caller must pass a
+ * typed confirmation that matches the counted rows, and `check:test-accounts`
+ * mutation-proves that removing the filter fails the gate.
+ * ⚠ The database is shared with LIVE members and real followers
+ * (`status.panameer.com` has real third parties on it), so "only test rows" is
+ * a guarantee, not an intention.
+ */
+import { prisma } from "@/lib/prisma";
+import type { Viewer } from "@/lib/access";
+import { writeAudit } from "./audit";
+
+export class TestAccountError extends Error {
+  constructor(message: string, public code: "INVALID" | "CONFIG" | "CONFIRM") {
+    super(message);
+    this.name = "TestAccountError";
+  }
+}
+
+/**
+ * ⚠⚠ THE ONE PLACE THAT NAMES THE SET. Scott's brief says `test21`–`test29`;
+ * the roles come from his list (requesters, buyers, a recruiter, providers).
+ * ⚠ `@panameer.com`, which `UNDELIVERABLE_DOMAINS` does NOT refuse — so these
+ * addresses can receive a real verification mail if a path ever sends one. They
+ * are created `email_verified` precisely so no path needs to.
+ */
+export const TEST_SET = [
+  { email: "test21@panameer.com", first: "Tess", last: "Requester", kind: "requester" },
+  { email: "test22@panameer.com", first: "Theo", last: "Requester", kind: "requester" },
+  { email: "test23@panameer.com", first: "Tara", last: "Buyer", kind: "buyer" },
+  { email: "test24@panameer.com", first: "Tom", last: "Buyer", kind: "buyer" },
+  { email: "test25@panameer.com", first: "Rita", last: "Recruiter", kind: "recruiter" },
+  { email: "test26@panameer.com", first: "Pria", last: "Provider", kind: "provider" },
+  { email: "test27@panameer.com", first: "Paul", last: "Provider", kind: "provider" },
+  { email: "test28@panameer.com", first: "Pam", last: "Provider", kind: "provider" },
+  { email: "test29@panameer.com", first: "Pete", last: "Provider", kind: "provider" },
+] as const;
+
+/**
+ * ── ⚠⚠⚠ WHAT A REAL MEMBER MAY SEE ─────────────────────────────────────────
+ *
+ * ⚠ **A TEST ACCOUNT IS HIDDEN FROM REAL MEMBERS AND VISIBLE TO OTHER TEST
+ * ACCOUNTS** (Scott). The VIEWER's own flag decides, so a tester still sees the
+ * cast they are testing with.
+ * ⚠⚠ **ONE PREDICATE, ONE PLACE** (`E585`): every member-facing read imports
+ * this rather than spelling out `is_test: false`, so a new surface cannot forget
+ * and the gate has a single thing to assert.
+ * ⚠ It returns a fragment for a `User` relation filter; `forUserTable` is the
+ * same rule where the query is on `User` directly.
+ */
+export function hideTestFromMembers(viewerIsTest: boolean): { is_test?: false } {
+  /** ⚠ A test viewer gets NO filter — they see everyone, which is the point. */
+  return viewerIsTest ? {} : { is_test: false };
+}
+
+/** True when this viewer is itself a test account. ⚠ Resolved from the DB, not
+ *  from the session, because the flag can be set after the token was minted. */
+export async function viewerIsTest(viewer: Viewer | null): Promise<boolean> {
+  if (!viewer) return false;
+  const u = await prisma.user.findUnique({ where: { id: viewer.userId }, select: { is_test: true } });
+  return u?.is_test === true;
+}
+
+/* ── create ─────────────────────────────────────────────────────────────── */
+
+export type CreateResult = { created: string[]; skipped: string[] };
+
+/**
+ * ⚠⚠ IDEMPOTENT, AS THE BRIEF REQUIRES: an address that already exists is
+ * SKIPPED and reported, never overwritten. ⚠⚠⚠ **AND IT NEVER TOUCHES AN
+ * EXISTING ROW** — not even to set `is_test` — because an address that happens
+ * to collide with a real account must not be quietly relabelled as test data
+ * and swept into the remove path.
+ */
+export async function createTestSet(viewer: Viewer): Promise<CreateResult> {
+  const password = process.env.TEST_ACCOUNT_PASSWORD;
+  /** ⚠ No invented default. A password baked into source is a credential in git,
+   *  and a guessable one on a shared database is worse. */
+  if (!password || password.length < 10) {
+    throw new TestAccountError(
+      "Set TEST_ACCOUNT_PASSWORD (10+ characters) in the environment before creating test accounts.",
+      "CONFIG",
+    );
+  }
+  const bcrypt = await import("bcryptjs");
+  const hash = await bcrypt.hash(password, 10);
+
+  const emails = TEST_SET.map((t) => t.email);
+  const existing = new Set(
+    (await prisma.user.findMany({ where: { email: { in: emails } }, select: { email: true } })).map((u) =>
+      u.email.toLowerCase(),
+    ),
+  );
+
+  const created: string[] = [];
+  const skipped: string[] = [];
+  for (const t of TEST_SET) {
+    if (existing.has(t.email.toLowerCase())) {
+      skipped.push(t.email);
+      continue;
+    }
+    await prisma.user.create({
+      data: {
+        email: t.email,
+        password_hash: hash,
+        first_name: t.first,
+        last_name: t.last,
+        /** ⚠ Verified at creation so no verification mail is ever sent to them. */
+        email_verified: new Date(),
+        is_test: true,
+        is_active: true,
+        tos_accepted_at: new Date(),
+        tos_version: "test-set",
+      },
+    });
+    created.push(t.email);
+  }
+
+  await writeAudit(viewer, {
+    action: "test_set.create",
+    targetTable: "users",
+    detail: { created, skipped, set: "test21-test29" },
+    rowCount: created.length,
+  });
+  return { created, skipped };
+}
+
+/* ── remove ─────────────────────────────────────────────────────────────── */
+
+export type RemovablePreview = { id: string; email: string; createdAt: string }[];
+
+/**
+ * What `Remove test accounts` would delete. ⚠⚠ **A DRY RUN IS PART OF THE
+ * FEATURE, NOT A CONVENIENCE** — the brief says "lists exactly what will go",
+ * and the typed confirmation below is counted against this list.
+ */
+export async function previewRemovable(): Promise<RemovablePreview> {
+  const rows = await prisma.user.findMany({
+    /** ⚠⚠⚠ THE FILTER. Every query in this module carries it. */
+    where: { is_test: true },
+    select: { id: true, email: true, created_at: true },
+    orderBy: { email: "asc" },
+  });
+  return rows.map((r) => ({ id: r.id, email: r.email, createdAt: r.created_at.toISOString() }));
+}
+
+/**
+ * ⚠⚠⚠ **THE CONFIRMATION IS COUNTED, NOT JUST TYPED.** `REMOVE 9` only works
+ * when nine rows are actually removable — so a stale screen (someone added a
+ * test account since the list was drawn) is refused rather than acted on.
+ */
+export function expectedConfirmation(count: number): string {
+  return `REMOVE ${count}`;
+}
+
+export async function removeTestAccounts(
+  viewer: Viewer,
+  confirmation: string,
+): Promise<{ removed: number; emails: string[] }> {
+  const removable = await previewRemovable();
+  if (removable.length === 0) throw new TestAccountError("There are no test accounts to remove.", "INVALID");
+
+  const expected = expectedConfirmation(removable.length);
+  if (confirmation.trim() !== expected) {
+    throw new TestAccountError(`Type ${expected} to confirm.`, "CONFIRM");
+  }
+
+  const ids = removable.map((r) => r.id);
+  const emails = removable.map((r) => r.email);
+
+  /**
+   * ⚠⚠ THE AUDIT ROW IS WRITTEN BEFORE THE DELETE, and that order is the point:
+   * if the delete fails the log says it was attempted, and if the log fails the
+   * delete still happens — but the console carries it. A row written afterwards
+   * would be lost exactly when the delete half-succeeded.
+   */
+  await writeAudit(viewer, {
+    action: "test_accounts.remove",
+    targetTable: "users",
+    detail: { emails, confirmation: expected },
+    rowCount: ids.length,
+  });
+
+  /**
+   * ⚠⚠⚠ `deleteMany` WITH BOTH THE IDS **AND** `is_test: true`. The ids alone
+   * would be enough; the flag is repeated so that **no single edit can turn this
+   * into an unfiltered delete** — the gate mutates each half away and both must
+   * fail it.
+   */
+  const { count } = await prisma.user.deleteMany({ where: { id: { in: ids }, is_test: true } });
+  return { removed: count, emails };
+}
+
+/* ── the flag itself ────────────────────────────────────────────────────── */
+
+/**
+ * ⚠⚠⚠ **MARKING A REAL ACCOUNT AS TEST IS THE ONE WAY A REAL MEMBER COULD BE
+ * SWEPT INTO THE REMOVE PATH**, so it needs the caller to say so explicitly.
+ * The UI asks first; this refuses silently-destructive use by requiring the
+ * acknowledgement rather than trusting the screen.
+ */
+export async function setTestFlag(
+  viewer: Viewer,
+  userId: string,
+  isTest: boolean,
+  acknowledgedRealAccount = false,
+): Promise<void> {
+  const before = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, is_test: true },
+  });
+  if (!before) throw new TestAccountError("That account is gone.", "INVALID");
+  if (before.is_test === isTest) return;
+
+  if (isTest && !acknowledgedRealAccount) {
+    throw new TestAccountError(
+      `${before.email} is a real account. Marking it TEST puts it in the remove path — confirm first.`,
+      "CONFIRM",
+    );
+  }
+
+  await prisma.user.update({ where: { id: userId }, data: { is_test: isTest } });
+  await writeAudit(viewer, {
+    action: "user.set_test",
+    targetTable: "users",
+    targetId: userId,
+    detail: { field: "is_test", before: before.is_test, after: isTest, email: before.email },
+  });
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { TestAccountControls } from "@/components/admin/TestAccountControls";
 import {
   TileRow,
   Listing,
@@ -92,7 +93,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string }>;
+  searchParams: Promise<{ stage?: string; test?: string }>;
 }) {
   const sp = await searchParams;
   /*
@@ -141,6 +142,9 @@ export default async function Page({
         select: {
           email: true,
           email_verified: true,
+          /** ⚠ `E793` — the TEST flag, so the chip and the filter read the same
+           *  column `Remove test accounts` acts on. */
+          is_test: true,
           /* ⚠ `E456` — the Administrators tile's flag. A DIFFERENT AXIS from
              the four marketplace jobs: an access flag, not a job, so somebody
              can be an Administrator AND a Provider. */
@@ -260,13 +264,32 @@ export default async function Page({
     LEVEL_TILES.find((t) => t.level === sp.stage) ?? null;
   const isDrillIn = !!stageTile;
 
-  const visible = stageTile
+  const staged = stageTile
     ? stageTile.level === "TOTAL"
       ? people
       : people.filter((p) =>
           hasReached(levelByPerson.get(p.id)!, stageTile.level as UserLevel)
         )
     : people;
+
+  /*
+    ── ⚠⚠ ALL / REAL / TEST (`P2-ALL-E793`) ──────────────────────────────────
+
+    ⚠ **SCOTT'S TRIGGER FOR THIS LANE:** his `test2*` search found nothing and
+    the app had no way to say why. Being able to look at only the real accounts —
+    or only the disposable ones — is the smallest version of that.
+    ⚠⚠ **IT FILTERS THE LIST, NEVER THE TILE COUNTS**, deliberately: the tiles
+    are the lifecycle figures and a tile reading 176 must still open 176
+    (`E430`'s rule, quoted just above). A count and its list disagreeing is the
+    defect that rule exists to stop, and a second filter on the counts is how it
+    starts.
+    ⚠ `all` is the default, so nothing changes until somebody asks.
+  */
+  const testFilter = sp.test === "real" || sp.test === "test" ? sp.test : "all";
+  const visible =
+    testFilter === "all"
+      ? staged
+      : staged.filter((p) => (p.user?.is_test === true) === (testFilter === "test"));
 
   /*
     ── ⚠⚠ THE FIVE JOBS (`P1-A1.5-E456`) ─────────────────────────────────────
@@ -320,6 +343,7 @@ export default async function Page({
   const rows = visible.map((p) => {
     const u = p.user;
     const name = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "(unnamed)";
+    const isTest = p.user?.is_test === true;
     const subject = levelByPerson.get(p.id)!;
     const level = levelFor(subject);
     const blocking = blockingFor(subject);
@@ -415,13 +439,27 @@ export default async function Page({
           for INTERACTIVE things, and this is the one genuinely interactive cell
           in the row.
         */
-        <Link
-          key="name"
-          href={profileHref}
-          className="font-semibold text-magenta-ink underline decoration-magenta-ink/30 underline-offset-2 hover:text-magenta-ink-hover hover:decoration-magenta-ink"
-        >
-          {name}
-        </Link>
+        <span key="name" className="inline-flex items-center gap-2">
+          <Link
+            href={profileHref}
+            className="font-semibold text-magenta-ink underline decoration-magenta-ink/30 underline-offset-2 hover:text-magenta-ink-hover hover:decoration-magenta-ink"
+          >
+            {name}
+          </Link>
+          {/*
+            ⚠⚠ THE `TEST` CHIP (`P2-ALL-E793`). ⚠ Scott's trigger for this whole
+            lane was that his `test2*` accounts had been deleted and **nothing in
+            the app showed that**. A chip is the smallest honest answer: which of
+            these rows is disposable, visible without opening anything.
+            ⚠ Outlined, not filled — it is a label, not a status to celebrate,
+            and `E433` reserves magenta fills for interactive things.
+          */}
+          {isTest && (
+            <span className="rounded-full border border-ink-3 px-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-2">
+              Test
+            </span>
+          )}
+        </span>
       ),
       roles,
       /*
@@ -491,6 +529,16 @@ export default async function Page({
   return (
     <div className="mx-auto w-full max-w-6xl">
       <BoardRefresh readAt={readAt} />
+
+      {/*
+        ── ⚠⚠ THE TEST-ACCOUNT PANEL SITS IN THE MAIN BODY (`P2-ALL-E793`) ─────
+        ⚠⚠⚠ **NOT INSIDE `{stageTile && …}`.** My first placement went into the
+        DRILL-IN header, which renders only when a lifecycle tile is selected —
+        so the panel was invisible on the page everyone actually opens, and
+        `check:admin-ui` caught it. ⚠ A control that exists only behind a filter
+        is a hidden door (the 2026-09-23 card rule).
+      */}
+      <TestAccountControls filter={testFilter} />
 
       {/*
         ⚠ THE SUB-PAGE HEADER (`E455`), the Medlinq pattern Scott pointed at.
