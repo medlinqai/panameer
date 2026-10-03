@@ -119,14 +119,28 @@ async function main() {
   ];
   const tree = buildTree(outline);
   const numbers = tree.map((n) => n.number);
+  /*
+    SUPERSEDED BY SCOTT (`E809`, the 2026-10-03 mockup): the plan uses OUTLINE
+    NUMBERS and every row takes a position, milestones included — `1.5 Deploy`
+    is a milestone and still holds 1.5. `number` is the position; `mark` is what
+    a number column prints.
+    Quoted, not deleted:
+    //   "1a - a milestone consumes no number"
+    //   numbers.join(",") === `1,2,3,4,${MILESTONE_MARK},5,6`
+  */
   check(
-    "1a — a milestone consumes no number",
-    numbers.join(",") === `1,2,3,4,${MILESTONE_MARK},5,6`,
-    `got ${numbers.join(",")} — Launch must be 5, not 6`,
+    "1a — every row takes an outline position, milestones included",
+    numbers.join(",") === "1,2,3,4,5,6,7",
+    `got ${numbers.join(",")} — the milestone holds 5 and Launch is 6`,
   );
   check(
-    "1b — the numbering fixture actually contains a milestone",
-    outline.some((r) => r.type === "milestone") && numbers.includes(MILESTONE_MARK),
+    "1b — and a milestone PRINTS the mark rather than its number",
+    tree.map((n) => n.mark).join(",") === `1,2,3,4,${MILESTONE_MARK},6,7`,
+    `got ${tree.map((n) => n.mark).join(",")} — position 5 must print ${MILESTONE_MARK}`,
+  );
+  check(
+    "1b2 — the numbering fixture actually contains a milestone",
+    outline.some((r) => r.type === "milestone") && tree.some((n) => n.mark === MILESTONE_MARK),
     "the §1a fixture has no milestone, so it cannot fail — ruling 11",
   );
 
@@ -142,15 +156,34 @@ async function main() {
     kidNumbers[0] === "1.1" && kidNumbers[9] === "1.10",
     `got ${kidNumbers.join(",")}`,
   );
-  check(
-    "1d — a child milestone shows the mark, not a number",
-    buildTree([
+  /*
+    SUPERSEDED BY SCOTT (`E809`). Quoted, not deleted:
+    //   "1d - a child milestone shows the mark, not a number"
+    //   children numbers === `1.1,${MILESTONE_MARK},1.2`
+  */
+  {
+    const kids = buildTree([
       row({ id: "p", type: "phase", sort: 0 }),
       row({ id: "a", parent_id: "p", sort: 0 }),
       row({ id: "m", parent_id: "p", sort: 1, type: "milestone" }),
       row({ id: "b", parent_id: "p", sort: 2 }),
-    ])[0].children.map((c) => c.number).join(",") === `1.1,${MILESTONE_MARK},1.2`,
-    "a milestone under a phase must not take 1.2",
+    ])[0].children;
+    check(
+      "1d — a child milestone holds its position and prints the mark",
+      kids.map((c) => c.number).join(",") === "1.1,1.2,1.3" &&
+        kids.map((c) => c.mark).join(",") === `1.1,${MILESTONE_MARK},1.3`,
+      `numbers ${kids.map((c) => c.number).join(",")} / marks ${kids.map((c) => c.mark).join(",")}`,
+    );
+  }
+  check(
+    "1e — a THIRD level numbers from its stage",
+    buildTree([
+      row({ id: "rel", type: "release", sort: 0 }),
+      row({ id: "st", parent_id: "rel", type: "phase", sort: 2 }),
+      row({ id: "t1", parent_id: "st", sort: 0 }),
+      row({ id: "t2", parent_id: "st", sort: 1 }),
+    ])[0].children[0].children.map((c) => c.number).join(",") === "1.1.1,1.1.2",
+    "the mockup's 1.3.1 … shape",
   );
   check(
     "1e — `sort` orders, not insertion order",
@@ -883,10 +916,17 @@ async function main() {
       tTree.length === 7 && applied.rows === 17,
       `got ${tTree.length} top-level, ${applied.rows} rows total`,
     );
+    /*
+      SUPERSEDED BY SCOTT (`E809`): outline numbers, so the milestone before
+      Launch holds position 5 and Launch is 6.
+      Quoted, not deleted:
+      //   "12b - Launch is numbered 5 in the stored template"
+    */
     check(
-      "12b — Launch is numbered 5 in the stored template",
-      tTree.find((n) => n.title === "Launch")?.number === "5",
-      `got ${tTree.find((n) => n.title === "Launch")?.number} — the milestone must not take a number`,
+      "12b — Launch is 6 in the stored template, after the milestone's 5",
+      tTree.find((n) => n.title === "Launch")?.number === "6" &&
+        tTree.find((n) => n.type === "milestone")?.mark === MILESTONE_MARK,
+      `got ${tTree.find((n) => n.title === "Launch")?.number}`,
     );
     check(
       "12c — the ten journeys sit under Build",

@@ -86,8 +86,10 @@ export type PlanRowLike = {
 };
 
 export type PlanNode<T extends PlanRowLike = PlanRowLike> = T & {
-  /** `"1"`, `"1.1"`, `"◆"` for a milestone, or `""` for a release heading. */
+  /** The outline position: `"1"`, `"1.3"`, `"1.3.2"` — every level, every row. */
   number: string;
+  /** What a number column prints: the outline number, or `◆` for a milestone. */
+  mark: string;
   depth: 0 | 1 | 2;
   children: PlanNode<T>[];
 };
@@ -114,48 +116,40 @@ export function buildTree<T extends PlanRowLike>(rows: readonly T[]): PlanNode<T
     if (list) list.push(r);
     else byParent.set(key, [r]);
   }
-  /** ⚠ `sort` orders within a parent; `id` only breaks a genuine tie, so the
-   *  order is total and a render is never arbitrary between two equal sorts. */
+  /** `sort` orders within a parent; `id` only breaks a genuine tie, so the order
+   *  is total and a render is never arbitrary between two equal sorts. */
   const ordered = (key: string | null) =>
     (byParent.get(key) ?? []).slice().sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
 
   /**
-   * THREE LEVELS: release → phase → task (`P2-ALL-E807`).
+   * OUTLINE NUMBERS, EVERY LEVEL (`P2-ALL-E809`, the 2026-10-03 mockup):
    *
-   * A RELEASE TAKES NO NUMBER — it is a heading, and numbering it would make
-   * "1.1 Define" of a phase Scott calls "1 Define".
+   *     1 MVP R1 · 1.1 Define · 1.2 Design · 1.3 Develop · 1.3.1 … · 1.5 Deploy
    *
-   * THE PHASE COUNTER IS GLOBAL, not per release. Scott's own outline numbers
-   * R1's phases 1 Define · 2 Design · 3 Build · 4 Prove; a per-release counter
-   * would then start R2 at "1" again and the plan would hold two rows called 1.
-   * One sequence across the plan keeps every number unique, which is what makes
-   * them usable in conversation.
+   * EVERY ROW TAKES A POSITION, MILESTONES INCLUDED. `1.5 Deploy` is a
+   * milestone and still holds 1.5 — the mockup's own data does — so `number`
+   * carries the outline position and `mark` carries the ◆ a surface prints.
    *
-   * A MILESTONE STILL CONSUMES NO NUMBER, at any level.
+   * SUPERSEDED, quoted not deleted — the two earlier rules this replaces:
+   * //   A MILESTONE DOES NOT CONSUME A NUMBER  (so Launch was 5, not 6)
+   * //   A RELEASE TAKES NO NUMBER, and the phase counter is global
+   * Both were right for the shapes they were written for; Scott's outline
+   * numbers every level, which is what makes "1.3.2" sayable out loud.
    */
-  let phaseCounter = 0;
+  const walk = (parentId: string | null, prefix: string, depth: 0 | 1 | 2): PlanNode<T>[] =>
+    ordered(parentId).map((row, i) => {
+      const number = prefix ? `${prefix}.${i + 1}` : String(i + 1);
+      return {
+        ...row,
+        number,
+        /** What a surface prints in a number column: ◆ for a milestone. */
+        mark: row.type === "milestone" ? MILESTONE_MARK : number,
+        depth,
+        children: depth < 2 ? walk(row.id, number, (depth + 1) as 1 | 2) : [],
+      };
+    });
 
-  const phaseNode = (row: T, depth: 1 | 0): PlanNode<T> => {
-    const number = row.type === "milestone" ? MILESTONE_MARK : String(++phaseCounter);
-    let taskCounter = 0;
-    const children = ordered(row.id).map((child) => ({
-      ...child,
-      number: child.type === "milestone" ? MILESTONE_MARK : `${number}.${++taskCounter}`,
-      depth: (depth + 1) as 1 | 2,
-      /** Three levels are enough (Scott). `indentRow` refuses a fourth rather
-       *  than trusting this. */
-      children: [] as PlanNode<T>[],
-    }));
-    return { ...row, number, depth, children };
-  };
-
-  return ordered(null).map((row) => {
-    if (row.type !== "release") return phaseNode(row, 0);
-    /* A release heading: its children are phases, numbered in the same global
-       sequence as the top-level ones. */
-    const children = ordered(row.id).map((child) => phaseNode(child, 1));
-    return { ...row, number: "", depth: 0 as const, children };
-  });
+  return walk(null, "", 0);
 }
 
 /** Depth-first, parents before their children — the order the page renders in. */

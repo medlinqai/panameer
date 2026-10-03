@@ -11,7 +11,6 @@
 import { useRef, useState } from "react";
 import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
 
-const HEAD_BAND = "font-display font-bold tracking-[-0.2px]";
 
 const STATUS_BAR: Record<string, string> = {
   Done: "bg-ink",
@@ -60,6 +59,8 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
   const [scrub, setScrub] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
+  /** Folded releases. Collapsed state is per visit; nothing persists. */
+  const [shut, setShut] = useState<ReadonlySet<string>>(new Set());
 
   const span = plan.span;
   if (!span) {
@@ -94,18 +95,15 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
   };
 
   /**
-   * RELEASES AS THE TOP BAND, PHASES UNDER THEM (Scott, 2026-10-03, `E807`).
-   * Tasks stay out of the chart — they are the grid's job — so this is two
-   * levels: each release, then its phases, then any top-level phase that sits
-   * outside a release (Operate).
+   * RELEASES, AND THE STAGES UNDER THEM WHEN OPEN (`E809`, the mockup).
+   * Tasks never appear here — they are the grid's job — so this is two levels,
+   * with a ▸ on each release.
    */
-  const rows: { row: PublicPlanRow; band: boolean }[] = [];
+  const lines: { row: PublicPlanRow; band: boolean }[] = [];
   for (const top of plan.rows) {
-    if (top.type === "release") {
-      rows.push({ row: top, band: true });
-      for (const phase of top.children) rows.push({ row: phase, band: false });
-    } else {
-      rows.push({ row: top, band: false });
+    lines.push({ row: top, band: top.type === "release" });
+    if (top.type === "release" && !shut.has(top.id)) {
+      for (const stage of top.children) lines.push({ row: stage, band: false });
     }
   }
 
@@ -118,7 +116,7 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
       */}
       <div
         data-plan-scrubarea
-        className="relative touch-none [--plan-label:7rem] sm:[--plan-label:12rem]"
+        className="relative touch-none [--plan-label:150px] sm:[--plan-label:260px]"
         onPointerMove={(e) => move(e.clientX)}
         onPointerDown={(e) => {
           setDragging(true);
@@ -137,7 +135,10 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
           className="relative h-5 border-b border-line"
           style={{ marginLeft: "var(--plan-label)" }}
         >
-          {ticks.map((t, i) => (
+          {/* A tick within a few percent of the right edge has its centred
+              label clipped by the container, so it is dropped rather than
+              printed half-visible. */}
+          {ticks.filter((t) => clamp(pct(t.iso)) <= 96).map((t, i) => (
             <span
               key={t.iso}
               data-plan-tick={t.iso}
@@ -197,38 +198,56 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
             </li>
           )}
 
-          {rows.map(({ row, band }) => (
-            <li
-              key={row.id}
-              data-plan-row={row.number || row.title}
-              data-plan-band={band ? "release" : undefined}
-              className={"flex items-center " + (band ? "h-9" : "h-8")}
-            >
-              <span
-                style={{ width: "var(--plan-label)" }}
-                className={
-                  "flex shrink-0 items-baseline gap-1.5 overflow-hidden pr-2 " +
-                  (band ? "text-ink" : "pl-2 text-ink-2")
-                }
+          {lines.map(({ row, band }) => {
+            const kids = row.children.length;
+            const isOpen = !shut.has(row.id);
+            return (
+              <li
+                key={row.id}
+                data-plan-row={row.mark}
+                data-plan-band={band ? "release" : undefined}
+                className="flex h-[34px] items-center border-b border-line/40"
               >
-                {!band && <span className="shrink-0 tabular-nums text-[10px]">{row.number}</span>}
                 <span
+                  style={{ width: "var(--plan-label)" }}
                   className={
-                    "truncate " + (band ? `text-[12px] ${HEAD_BAND}` : "text-[11px] font-semibold")
+                    "flex shrink-0 items-center gap-2 overflow-hidden pr-2 text-[13px] " +
+                    (band ? "text-ink" : "text-ink-2")
                   }
                 >
-                  {row.title || "Untitled"}
+                  {band && kids > 0 ? (
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-label={`${isOpen ? "Collapse" : "Expand"} ${row.title}`}
+                      onClick={() =>
+                        setShut((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(row.id)) next.delete(row.id);
+                          else next.add(row.id);
+                          return next;
+                        })
+                      }
+                      className="h-[18px] w-[18px] shrink-0 text-[12px] text-ink-2"
+                    >
+                      {isOpen ? "▾" : "▸"}
+                    </button>
+                  ) : (
+                    <span aria-hidden className="w-[18px] shrink-0" />
+                  )}
+                  <span className="w-[34px] shrink-0 tabular-nums text-[12px] text-ink-3">
+                    {row.mark}
+                  </span>
+                  <span className={"truncate " + (band ? "font-bold" : "font-medium")}>
+                    {row.title || "Untitled"}
+                  </span>
                 </span>
-              </span>
-              <span className="relative h-full flex-1">
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 rounded-full bg-line"
-                />
-                <Bar row={row} pct={pct} clamp={clamp} onHover={setHover} band={band} />
-              </span>
-            </li>
-          ))}
+                <span className="relative h-full flex-1">
+                  <Bar row={row} pct={pct} clamp={clamp} onHover={setHover} band={band} />
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         {/* The hovered bar's own text. A native `title` stays on each bar for
@@ -350,9 +369,11 @@ function Bar({
 
 /** Week ticks across the span, thinned to ~12 so labels never collide. */
 function weekTicks(from: number, to: number): { iso: string; label: string }[] {
+  /* The mockup steps the axis every 14 days; a long plan still thins so the
+     labels cannot collide (`E777`'s rule). */
   const week = 7 * DAY;
   const weeks = Math.max(1, Math.round((to - from) / week));
-  const every = Math.max(1, Math.ceil(weeks / 12));
+  const every = Math.max(2, Math.ceil(weeks / 10));
   const out: { iso: string; label: string }[] = [];
   for (let i = 0; i <= weeks; i += every) {
     const iso = new Date(from + i * week).toISOString().slice(0, 10);
