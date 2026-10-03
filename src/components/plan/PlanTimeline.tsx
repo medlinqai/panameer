@@ -11,6 +11,8 @@
 import { useRef, useState } from "react";
 import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
 
+const HEAD_BAND = "font-display font-bold tracking-[-0.2px]";
+
 const STATUS_BAR: Record<string, string> = {
   Done: "bg-ink",
   "In progress": "bg-magenta/60",
@@ -91,8 +93,21 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
     setScrub(p < 0 || p > 100 ? null : p);
   };
 
-  /** Top-level rows only. Children are the grid's job. */
-  const rows = plan.rows;
+  /**
+   * RELEASES AS THE TOP BAND, PHASES UNDER THEM (Scott, 2026-10-03, `E807`).
+   * Tasks stay out of the chart — they are the grid's job — so this is two
+   * levels: each release, then its phases, then any top-level phase that sits
+   * outside a release (Operate).
+   */
+  const rows: { row: PublicPlanRow; band: boolean }[] = [];
+  for (const top of plan.rows) {
+    if (top.type === "release") {
+      rows.push({ row: top, band: true });
+      for (const phase of top.children) rows.push({ row: phase, band: false });
+    } else {
+      rows.push({ row: top, band: false });
+    }
+  }
 
   return (
     <section className="mt-10" aria-label="Plan timeline">
@@ -182,21 +197,35 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
             </li>
           )}
 
-          {rows.map((row) => (
-            <li key={row.id} data-plan-row={row.number} className="flex h-8 items-center">
+          {rows.map(({ row, band }) => (
+            <li
+              key={row.id}
+              data-plan-row={row.number || row.title}
+              data-plan-band={band ? "release" : undefined}
+              className={"flex items-center " + (band ? "h-9" : "h-8")}
+            >
               <span
                 style={{ width: "var(--plan-label)" }}
-                className="flex shrink-0 items-baseline gap-1.5 overflow-hidden pr-2 text-ink-2"
+                className={
+                  "flex shrink-0 items-baseline gap-1.5 overflow-hidden pr-2 " +
+                  (band ? "text-ink" : "pl-2 text-ink-2")
+                }
               >
-                <span className="shrink-0 font-mono text-[10px]">{row.number}</span>
-                <span className="truncate text-[11px] font-semibold">{row.title || "Untitled"}</span>
+                {!band && <span className="shrink-0 tabular-nums text-[10px]">{row.number}</span>}
+                <span
+                  className={
+                    "truncate " + (band ? `text-[12px] ${HEAD_BAND}` : "text-[11px] font-semibold")
+                  }
+                >
+                  {row.title || "Untitled"}
+                </span>
               </span>
-              <span className="relative h-8 flex-1">
+              <span className="relative h-full flex-1">
                 <span
                   aria-hidden
                   className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 rounded-full bg-line"
                 />
-                <Bar row={row} pct={pct} clamp={clamp} onHover={setHover} />
+                <Bar row={row} pct={pct} clamp={clamp} onHover={setHover} band={band} />
               </span>
             </li>
           ))}
@@ -229,11 +258,15 @@ function Bar({
   pct,
   clamp,
   onHover,
+  band = false,
 }: {
   row: PublicPlanRow;
   pct: (iso: string) => number;
   clamp: (n: number) => number;
   onHover: (v: string | null) => void;
+  /** A release band: taller and hollow, so it reads as the span containing the
+   *  phases below it rather than as another bar beside them. */
+  band?: boolean;
 }) {
   const label = barLabel(row);
   /* Declared hooks. The tooltip is PRESENTATION — it formats "Dec 1" — so a
@@ -305,7 +338,11 @@ function Bar({
       title={label}
       {...hoverProps}
       {...dates}
-      className={`absolute top-1/2 block h-1.5 -translate-y-1/2 rounded-full ${STATUS_BAR[row.status] ?? STATUS_BAR.Planned}`}
+      className={
+        band
+          ? "absolute top-1/2 block h-3.5 -translate-y-1/2 rounded-[3px] border border-ink/35 bg-ink/[0.04]"
+          : `absolute top-1/2 block h-1.5 -translate-y-1/2 rounded-full ${STATUS_BAR[row.status] ?? STATUS_BAR.Planned}`
+      }
       style={{ left: `${left}%`, width: `${w}%` }}
     />
   );

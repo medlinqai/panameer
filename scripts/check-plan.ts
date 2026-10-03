@@ -388,13 +388,28 @@ async function main() {
     /* The page reads BOTH from the plan — the figure and the list — or the two
        halves of this section could still disagree. */
     const pageSrc = readFileSync("src/app/status/page.tsx", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const gridSrc = readFileSync("src/components/plan/PlanGrid.tsx", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    /*
+      SUPERSEDED BY SCOTT (`E807`): the separate Releases section is gone, so
+      the page no longer renders a per-release row at all. The figure moved to
+      the release HEADING in the grid, from the row's own subtree.
+      Quoted, not deleted:
+      //   /planReleaseScope\[r\.code/.test(pageSrc) && /planReleasePercent\[r\.code\]/.test(pageSrc)
+    */
     check(
-      "3.6d — the page takes the release figure and the journeys from the plan",
-      /planReleaseScope\[r\.code/.test(pageSrc) &&
-        /planReleasePercent\[r\.code\]/.test(pageSrc) &&
-        !/r\.journeys/.test(pageSrc) &&
-        !/r\.doneCount/.test(pageSrc),
-      "`r.journeys`/`r.doneCount` are the AIM tracker's fields and must not render here",
+      "3.6d — no AIM release field renders on the page",
+      !/r\.journeys/.test(pageSrc) && !/r\.doneCount/.test(pageSrc) && !/r\.taskCount/.test(pageSrc),
+      "`r.journeys`/`r.doneCount`/`r.taskCount` are the AIM tracker's fields and must not render here",
+    );
+    check(
+      "3.6e — the release heading carries its own percentage, from the plan",
+      /row\.progress/.test(gridSrc) && /data-plan-release-pct/.test(gridSrc),
+      "each release heading shows its own % (Scott, 2026-10-03)",
+    );
+    check(
+      "3.6f — and the hero reads that same release row",
+      /releaseRow\?\.progress\?\.percent/.test(pageSrc),
+      "the hero and the R1 heading must be the same number, not two computations",
     );
   }
 
@@ -658,10 +673,27 @@ async function main() {
     /* §7 indent / outdent */
     const indented = await indentRow(mid.id, viewer);
     check("7a — indent goes under the row above", indented.parent_id === a.id, "Mid must become a child of A");
+    /*
+      SUPERSEDED BY SCOTT (`E807`): the plan is THREE levels now — release →
+      phase → task — so a row at depth 1 CAN indent once more. What must still
+      be refused is a fourth level.
+      Quoted, not deleted:
+      //   "7b - a row already at depth 1 cannot indent further, and says so"
+      //   refusesBecause(() => indentRow(mid.id, viewer), "two levels deep")
+    */
     check(
-      "7b — a row already at depth 1 cannot indent further, and says so",
-      await refusesBecause(() => indentRow(mid.id, viewer), "two levels deep"),
-      "the message must name the two-level rule, not `no row above`, which is false for a child row",
+      "7b — a row at depth 1 may indent once more, and a row at depth 2 may not",
+      await (async () => {
+        /* `mid` is at depth 1 under `a`. Give it a sibling above it to go under,
+           then prove the third level is reached and the fourth refused. */
+        const inner = await addRow({ planId: plan.id, parentId: a.id, title: "Inner" }, viewer);
+        const deep = await indentRow(inner.id, viewer);
+        const atTwo = deep.parent_id === mid.id;
+        const refused = await refusesBecause(() => indentRow(inner.id, viewer), "three levels deep");
+        await deleteRow(inner.id, viewer);
+        return atTwo && refused;
+      })(),
+      "depth 2 must be reachable and depth 3 refused, naming the three-level rule",
     );
     const first = await addRow({ planId: plan.id, type: "phase", title: "First", afterId: null }, viewer);
     await moveRow(first.id, { index: 0 }, viewer);
@@ -678,22 +710,37 @@ async function main() {
       "a milestone marks a date",
     );
     const out = await outdentRow(mid.id, viewer);
-    check("7e — outdent returns to the top level", out.parent_id === null, "parent must be null");
+    /* One level out (`E807`): from depth 1 that is still the top level. */
+    check("7e — outdent from depth 1 returns to the top level", out.parent_id === null, "parent must be null");
     const topOrder = (await topRows()).map((x) => x.title);
     check(
       "7f — outdent lands directly after its old parent",
       topOrder[topOrder.indexOf("A") + 1] === "Mid",
       `got ${topOrder.join(",")} — Mid must sit immediately after A`,
     );
+    /*
+      SUPERSEDED BY SCOTT (`E807`). A top-level phase WITH tasks may now indent
+      — that is exactly the move his restructure needs: Build, with its
+      journeys, goes under a release. What is refused is a move that would push
+      the tasks to a fourth level.
+      Quoted, not deleted:
+      //   "7g - a parent with children cannot be indented"
+      //   refusesBecause(() => indentRow(b.id, viewer), "two levels deep")
+    */
     check(
-      "7g — a parent with children cannot be indented",
+      "7g — a phase WITH tasks can indent, but not when its tasks would land too deep",
       await (async () => {
         const kid = await addRow({ planId: plan.id, parentId: b.id, title: "kid" }, viewer);
-        const refused = await refusesBecause(() => indentRow(b.id, viewer), "two levels deep");
+        /* b is at depth 0 with a child: indenting puts b at 1 and kid at 2 — fine. */
+        const moved = await indentRow(b.id, viewer);
+        const allowed = moved.parent_id !== null;
+        /* Now b is at depth 1 and kid at 2, so another indent would put kid at 3. */
+        const refused = await refusesBecause(() => indentRow(b.id, viewer), "three levels deep");
+        await outdentRow(b.id, viewer);
         await deleteRow(kid.id, viewer);
-        return refused;
+        return allowed && refused;
       })(),
-      "indenting a phase that has tasks would make three levels",
+      "the subtree has to fit inside three levels, not just the row being moved",
     );
 
     /* §8 move */

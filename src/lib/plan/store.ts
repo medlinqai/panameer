@@ -212,6 +212,40 @@ export async function updateRow(rowId: string, patch: RowPatch, viewer: Viewer):
   return prisma.planRow.update({ where: { id: rowId }, data, select: ROW_SELECT });
 }
 
+/**
+ * How deep a row sits: 0 top level, 1 under a release or a phase, 2 a task under
+ * a phase that is itself under a release (`P2-ALL-E807`).
+ *
+ * Walked from the row rather than inferred from `type`, because the tree is what
+ * decides depth — a `phase` row is depth 0 at the top and depth 1 inside a
+ * release, and both are legitimate.
+ */
+export const MAX_DEPTH = 2;
+
+async function depthOf(row: { parent_id: string | null }): Promise<number> {
+  let depth = 0;
+  let parentId = row.parent_id;
+  while (parentId && depth <= MAX_DEPTH + 1) {
+    const parent = await prisma.planRow.findUnique({
+      where: { id: parentId },
+      select: { parent_id: true },
+    });
+    if (!parent) break;
+    depth += 1;
+    parentId = parent.parent_id;
+  }
+  return depth;
+}
+
+/** The deepest descendant below a row, relative to it (0 when it has none). */
+async function subtreeHeight(rowId: string): Promise<number> {
+  const kids = await prisma.planRow.findMany({ where: { parent_id: rowId }, select: { id: true } });
+  if (kids.length === 0) return 0;
+  let max = 0;
+  for (const k of kids) max = Math.max(max, 1 + (await subtreeHeight(k.id)));
+  return max;
+}
+
 /* ── structure ──────────────────────────────────────────────────────────── */
 
 /**
@@ -222,11 +256,16 @@ export async function updateRow(rowId: string, patch: RowPatch, viewer: Viewer):
  */
 export async function indentRow(rowId: string, viewer: Viewer): Promise<StoredRow> {
   const row = await requireRow(rowId);
-  if (row.parent_id) throw new PlanError("A plan is two levels deep, so this row is already as far in as it goes.", "INVALID");
-  if ((await childCount(row.id)) > 0) {
-    throw new PlanError("A plan is two levels deep — move the rows underneath out first.", "INVALID");
+  const depth = await depthOf(row);
+  /* THREE LEVELS (`E807`): release → phase → task. The row ends one deeper, and
+     everything under it comes along, so both have to fit. */
+  if (depth >= MAX_DEPTH) {
+    throw new PlanError("A plan is three levels deep, so this row is already as far in as it goes.", "INVALID");
   }
-  const siblings = await siblingsOf(prisma, row.plan_id, null);
+  if (depth + 1 + (await subtreeHeight(row.id)) > MAX_DEPTH) {
+    throw new PlanError("A plan is three levels deep — move the rows underneath out first.", "INVALID");
+  }
+  const siblings = await siblingsOf(prisma, row.plan_id, row.parent_id);
   const index = siblings.findIndex((s) => s.id === row.id);
   const previous = index > 0 ? siblings[index - 1] : null;
   if (!previous) throw new PlanError("There is no row above this one to go under.", "INVALID");
@@ -253,11 +292,20 @@ export async function outdentRow(rowId: string, viewer: Viewer): Promise<StoredR
   if (!row.parent_id) throw new PlanError("This row is already at the top level.", "INVALID");
   const parentId = row.parent_id;
 
+  /* ONE LEVEL OUT, NOT ALL THE WAY TO THE TOP (`E807`). A task under a phase
+     under a release becomes a sibling of that phase; before three levels existed
+     the two were the same thing, and `parent_id: null` was correct. */
+  const parent = await prisma.planRow.findUnique({
+    where: { id: parentId },
+    select: { parent_id: true },
+  });
+  const newParentId = parent?.parent_id ?? null;
+
   return prisma.$transaction(async (tx) => {
-    const top = await siblingsOf(tx, row.plan_id, null);
+    const top = await siblingsOf(tx, row.plan_id, newParentId);
     const moved = await tx.planRow.update({
       where: { id: row.id },
-      data: { parent_id: null, updated_by: viewer.userId },
+      data: { parent_id: newParentId, updated_by: viewer.userId },
       select: ROW_SELECT,
     });
     /** ⚠⚠ THE ORDER IS BUILT FROM THE LIST AS IT WAS *BEFORE* THE ROW JOINED
@@ -421,7 +469,10 @@ async function assertCanParent(parentId: string, planId: string) {
   /** ⚠⚠ A ROW NEVER MOVES BETWEEN PLANS. Without this, a stale id from one
    *  plan's editor would graft a row onto another plan's tree. */
   if (parent.plan_id !== planId) throw new PlanError("That row belongs to another plan.", "INVALID");
-  if (parent.parent_id) throw new PlanError("A plan is two levels deep.", "INVALID");
+  /* A parent may sit at depth 0 or 1 — three levels (`E807`). */
+  if ((await depthOf(parent)) >= MAX_DEPTH) {
+    throw new PlanError("A plan is three levels deep.", "INVALID");
+  }
   if (parent.type === "milestone") {
     throw new PlanError("A milestone marks a date, so nothing goes under it.", "INVALID");
   }

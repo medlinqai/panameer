@@ -183,14 +183,22 @@ test("the refusal reaches the screen rather than failing silently", async ({ pag
   await second.click();
   await second.press("Tab");
   await expect.poll(() => numbers(page), { timeout: 20_000 }).toEqual(["1", "1.1"]);
-  /** ⚠⚠ A SECOND Tab CANNOT INDENT FURTHER, AND THE PERSON MUST BE TOLD WHY.
-   *  Tab doing nothing with no explanation is the defect `E539` was about, and
-   *  the message has to name the two-level rule — not claim there is no row
-   *  above, which is false for a child. */
+  /*
+    A REFUSED Tab MUST REACH THE SCREEN. Tab doing nothing with no explanation
+    is the defect `E539` was about.
+
+    `E807` CHANGED WHICH refusal this is, and the new one is the honest answer.
+    The plan is three levels now, so a lone child at depth 1 is no longer at the
+    limit — but it has no sibling above it to become a child OF, so indenting it
+    has nowhere to go. The depth cap itself is proven by `check:plan` §7b, which
+    builds the sibling it needs.
+    Superseded, quoted not deleted:
+    //   await expect(page.getByText(/two levels deep/i)).toBeVisible()
+  */
   const child = page.locator("[data-plan-title]").nth(1);
   await child.click();
   await child.press("Tab");
-  await expect(page.getByText(/two levels deep/i)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/no row above this one/i)).toBeVisible({ timeout: 20_000 });
 });
 
 test("the template builds Scott's outline, and Launch is 5", async ({ page }) => {

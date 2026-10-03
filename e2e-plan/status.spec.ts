@@ -74,7 +74,7 @@ test("a signed-out visitor sees the plan: timeline, caption and accordions", asy
   await expect(page.getByRole("region", { name: "Plan timeline" })).toBeVisible();
   /** ⚠ Scott's caption, verbatim — it is the reason the plan is public. */
   await expect(page.getByText("The same plan tool you'll use on your work orders.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "The plan, phase by phase" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The plan", exact: true })).toBeVisible();
   /*
     `E803` replaced the `<details>` accordions with the grid. Scoped to the
     grid's own rows: "Build" also appears in the Build Line and the chart above,
