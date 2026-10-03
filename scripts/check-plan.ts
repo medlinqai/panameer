@@ -25,6 +25,7 @@ import {
   MILESTONE_MARK,
   buildTree,
   countableRows,
+  firstReleasedAt,
   flattenTree,
   isLate,
   planSpan,
@@ -443,6 +444,53 @@ async function main() {
       "3.6f — and the hero reads that same release row",
       /releaseRow\?\.progress\?\.percent/.test(pageSrc),
       "the hero and the R1 heading must be the same number, not two computations",
+    );
+  }
+
+  /* ── §3.7 RELEASED WORK GATES THE SUPPORT BLOCK (`P2-ALL-E810`) ──────── */
+  /*
+    Scott, 2026-10-03: "until a phase's Deploy ◆ is marked Done, hide the
+    section entirely." A plan with no Done milestone must answer `null`, which
+    is a different answer from a date and must not collapse into one.
+  */
+  {
+    const planned = [
+      row({ id: "r", type: "release", sort: 0 }),
+      row({ id: "d", parent_id: "r", type: "milestone", sort: 0, status: "Planned" }),
+    ];
+    check(
+      "3.7a — nothing released yet answers null, not a date",
+      firstReleasedAt(planned) === null,
+      "a Planned Deploy has not shipped, and `null` is what hides the block",
+    );
+    const shipped = [
+      row({ id: "r1", type: "release", sort: 0 }),
+      row({
+        id: "d1", parent_id: "r1", type: "milestone", sort: 0, status: "Done",
+        start_date: new Date("2026-11-15T00:00:00Z"), end_date: new Date("2026-11-15T00:00:00Z"),
+      }),
+      row({
+        id: "d2", parent_id: "r1", type: "milestone", sort: 1, status: "Done",
+        start_date: new Date("2026-12-15T00:00:00Z"), end_date: new Date("2026-12-15T00:00:00Z"),
+      }),
+      /* A Done PHASE is not a release — only a milestone is. */
+      row({ id: "p", parent_id: "r1", type: "phase", sort: 2, status: "Done", start_date: new Date("2026-01-01T00:00:00Z"), end_date: new Date("2026-01-02T00:00:00Z") }),
+    ];
+    const at = firstReleasedAt(shipped);
+    check(
+      "3.7b — the EARLIEST Done milestone is the release date",
+      at?.toISOString().slice(0, 10) === "2026-11-15",
+      `got ${at?.toISOString().slice(0, 10)} — two Done Deploys, the first one wins`,
+    );
+    check(
+      "3.7c — and a Done PHASE does not count as a release",
+      at?.toISOString().slice(0, 10) !== "2026-01-01",
+      "the January phase is Done and must not be read as a shipped release",
+    );
+    check(
+      "3.7d — a Done milestone with no date is ignored rather than guessed",
+      firstReleasedAt([row({ id: "m", type: "milestone", status: "Done" })]) === null,
+      "a release with no date cannot date the tickets that follow it",
     );
   }
 
