@@ -160,7 +160,11 @@ export default async function StatusPage({
         the nearest token. ⚠ Below it the two stack, copy first.
       */}
       <div className="mx-auto grid max-w-[1040px] gap-x-10 gap-y-8 min-[900px]:grid-cols-[1fr_auto] min-[900px]:items-end">
-        <div>
+        {/*
+          ⚠⚠ THE COPY COLUMN IS THE SIZING CONTAINER (`P2-ALL-E776`). See the
+          headline below — it is sized against THIS box, not against the viewport.
+        */}
+        <div className="@container">
           <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-white/70">
             {/* ⚠⚠⚠ "Day N" IS DROPPED UNTIL DEFINE HAS A START DATE (Scott,
                 2026-10-02: *"no NaN, no invented date"*). The clause disappears;
@@ -176,7 +180,36 @@ export default async function StatusPage({
             ⚠ SUPERSEDED, quoted not deleted (`E164`):
             //   Watch your platform <em>get built.</em>
           */}
-          <h1 className={`mt-2 text-[34px] leading-[1.02] sm:text-[52px] ${HEAD}`}>
+          {/*
+            ── ⚠⚠⚠ THE HEADLINE HOLDS ONE LINE (`P2-ALL-E776`) ─────────────
+
+            ⚠ **SCOTT:** it wraps as *"get / built!"* beside the big %.
+
+            ⚠⚠⚠ **IT IS SIZED AGAINST THE COLUMN, NOT THE VIEWPORT, AND THAT IS THE
+            WHOLE FINDING.** Measured: the copy column is **686px at 1280, at 1440
+            AND at 1600** — it does not grow, because this grid is capped at
+            `max-w-[1040px]` (all three containers on the page are, so the hero
+            lines up with the body). ⚠⚠ **A VIEWPORT-BASED `clamp()` WOULD HAVE
+            CHANGED NOTHING ABOVE ~1080px**, which is where the brief expected the
+            room to come from.
+
+            ⚠ **THE NUMBERS:** one line needs **709px** at 52px. The column is
+            **686px** with a two-digit figure (23px short — which is why it wraps
+            today) and **558px** with a three-digit one.
+            ⚠⚠ So `cqw` sizes the type to whatever the column actually is: **52px
+            whenever it fits, stepping down only as far as the figure squeezes it**,
+            and one line in every case. `7.2cqw` of 558px is 40.2px, which needs
+            548px — inside 558 with room to spare.
+
+            ⚠ **BELOW `@container` SUPPORT OR BELOW the two-column breakpoint the
+            `34px` floor applies and it wraps**, which is the graceful case Scott
+            asked for.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   className={`mt-2 text-[34px] leading-[1.02] sm:text-[52px] ${HEAD}`}
+          */}
+          <h1
+            className={`mt-2 leading-[1.02] text-[clamp(34px,7.2cqw,52px)] ${HEAD}`}
+          >
             Watch Panameer <em className="not-italic text-magenta">get built!</em>
           </h1>
           {/*
