@@ -44,9 +44,16 @@ const LINE = "w-full border-0 border-b border-line bg-transparent px-0 py-1.5 te
  * and the fields wrap underneath.
  */
 const GRID =
-  "grid grid-cols-[22px_22px_44px_1fr_84px] gap-1.5 sm:grid-cols-[22px_22px_64px_minmax(220px,1fr)_128px_128px_130px_110px_102px]";
+  "grid grid-cols-[22px_22px_44px_1fr_108px] gap-1.5 sm:grid-cols-[22px_22px_64px_minmax(200px,1fr)_124px_124px_124px_100px_126px]";
 /** What a row IS, by level — the mockup's cue beside each name. */
 const KIND: Record<number, string> = { 1: "PHASE", 2: "STAGE", 3: "TASK" };
+
+/** The depth of the deepest descendant below `id`, relative to it. */
+function subtreeHeightOf(rows: readonly { id: string; parent_id: string | null }[], id: string): number {
+  const kids = rows.filter((r) => r.parent_id === id);
+  if (kids.length === 0) return 0;
+  return 1 + Math.max(...kids.map((k) => subtreeHeightOf(rows, k.id)));
+}
 const GRIP = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded-[3px] text-[13px] text-ink-2 transition-colors hover:bg-ink/5 disabled:opacity-25";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -73,6 +80,13 @@ export function PlanOutlineEditor({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   /** The selected row. The Add buttons work relative to it, as the mockup does. */
   const [sel, setSel] = useState<string | null>(null);
+  /**
+   * What the pointer is over while dragging: which row, and whether the drop
+   * would go INTO it (last child) or BETWEEN rows at that point. The row
+   * highlights for `into` and shows a line for `before`/`after`, so the target
+   * is visible before the mouse is released.
+   */
+  const [dropAt, setDropAt] = useState<{ id: string; where: "into" | "before" | "after" } | null>(null);
   const [inFlight, setInFlight] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<SaveState>("idle");
@@ -310,6 +324,140 @@ export function PlanOutlineEditor({
     return depth;
   }, [sel, rows]);
 
+  /** Levels are 1-based; a row's level is how many parents it has, plus one. */
+  const levelOf = useCallback(
+    (id: string) => {
+      let depth = 1;
+      let cursor: string | null = rows.find((r) => r.id === id)?.parent_id ?? null;
+      while (cursor) {
+        depth += 1;
+        cursor = rows.find((r) => r.id === cursor)?.parent_id ?? null;
+      }
+      return depth;
+    },
+    [rows],
+  );
+
+  /** Every row under `id`, so a drag cannot drop a row inside itself. */
+  const descendantsOf = useCallback(
+    (id: string) => {
+      const out = new Set<string>();
+      const walk = (parentId: string) => {
+        for (const r of rows) {
+          if (r.parent_id !== parentId || out.has(r.id)) continue;
+          out.add(r.id);
+          walk(r.id);
+        }
+      };
+      walk(id);
+      return out;
+    },
+    [rows],
+  );
+
+
+  /**
+   * WHERE THIS ROW COULD GO — the "Move to…" list (`P2-ALL-E813`).
+   *
+   * Drag is a mouse gesture; this is the same move for a keyboard, and the
+   * precise one when two stages look alike on screen. It offers the top level
+   * and every phase or stage that can legally hold the row — its own subtree,
+   * its current parent and anything too deep are left out, so every option in
+   * the list works.
+   */
+  const destinationsFor = useCallback(
+    (id: string) => {
+      const mine = descendantsOf(id);
+      const height = subtreeHeightOf(rows, id);
+      const current = rows.find((r) => r.id === id)?.parent_id ?? null;
+      const out: { id: string | null; label: string }[] = [];
+      if (current !== null && 1 + height <= 3) out.push({ id: null, label: "Top level" });
+      for (const node of ordered) {
+        if (node.id === id || mine.has(node.id)) continue;
+        const r = byId.get(node.id);
+        if (!r || r.type === "milestone") continue;
+        const lvl = node.depth + 1;
+        if (lvl >= 3) continue;
+        if (lvl + 1 + height > 3) continue;
+        if (node.id === current) continue;
+        out.push({ id: node.id, label: `${node.mark} ${r.title || "Untitled"}` });
+      }
+      return out;
+    },
+    [rows, ordered, byId, descendantsOf],
+  );
+
+  /**
+   * WHERE A DROP WOULD LAND (`P2-ALL-E813`).
+   *
+   * The top and bottom quarters of a row mean BETWEEN — insert at that point in
+   * that row's own list, whichever parent that is. The middle half means INTO —
+   * become that row's last child. That is the pattern every outline editor
+   * uses, and it is what lets one gesture do both of the things Scott asked
+   * for without a modifier key.
+   *
+   * Returns null when the drop is not allowed, which is also what stops
+   * `preventDefault` firing, so the cursor shows "no".
+   */
+  const dropZone = useCallback(
+    (e: React.DragEvent, targetId: string): "into" | "before" | "after" | null => {
+      if (!dragId || dragId === targetId) return null;
+      /* Into itself or its own subtree would detach the branch. */
+      if (descendantsOf(dragId).has(targetId)) return null;
+
+      const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const offset = (e.clientY - box.top) / Math.max(box.height, 1);
+      const targetLevel = levelOf(targetId);
+      const dragHeight = subtreeHeightOf(rows, dragId);
+
+      if (offset > 0.25 && offset < 0.75) {
+        /* INTO: the target becomes the parent. A milestone holds nothing, and
+           the dragged row's subtree still has to fit. */
+        const target = byId.get(targetId);
+        if (!target || target.type === "milestone") return null;
+        if (targetLevel + 1 + dragHeight > 3) return null;
+        return "into";
+      }
+      /* BETWEEN: the row joins the TARGET's list, so it ends up at the target's
+         level and must fit there. */
+      if (targetLevel + dragHeight > 3) return null;
+      return offset <= 0.25 ? "before" : "after";
+    },
+    [dragId, byId, descendantsOf, levelOf, rows],
+  );
+
+  /** Apply a drop. The server does the same checks; this one is what keeps the
+   *  gesture honest while the mouse is still down. */
+  const drop = useCallback(
+    async (targetId: string, where: "into" | "before" | "after") => {
+      const moving = dragId;
+      setDragId(null);
+      if (!moving) return;
+      const target = byId.get(targetId);
+      if (!target) return;
+
+      if (where === "into") {
+        /* Last child, as asked. */
+        const kids = rows.filter((r) => r.parent_id === targetId);
+        await structural("move", moving, { parentId: targetId, index: kids.length });
+        setCollapsed((prev) => {
+          const next = new Set(prev);
+          next.delete(targetId);
+          return next;
+        });
+        return;
+      }
+
+      const siblings = rows
+        .filter((r) => r.parent_id === target.parent_id && r.id !== moving)
+        .sort((a, b) => a.sort - b.sort);
+      const at = siblings.findIndex((r) => r.id === targetId);
+      const index = where === "before" ? Math.max(at, 0) : at + 1;
+      await structural("move", moving, { parentId: target.parent_id, index });
+    },
+    [dragId, byId, rows, structural],
+  );
+
   /**
    * Add a row AT a level, relative to the selection. Level 1 is top-level;
    * deeper rows walk UP from the selection to the parent that can hold them, so
@@ -475,28 +623,49 @@ export function PlanOutlineEditor({
                 data-plan-depth={node.depth}
                 onClick={() => setSel(row.id)}
                 className={
-                  `${GRID} min-h-11 items-center border-b border-line/60 ` +
+                  `${GRID} relative min-h-11 items-center border-b border-line/60 ` +
                   (level === 1 ? "bg-black/[0.02] " : "") +
-                  (selected ? "bg-magenta/[0.06] " : "")
+                  (selected ? "bg-magenta/[0.06] " : "") +
+                  /* The drop target, while dragging: a ring means "inside this
+                     row", a line means "at this point in its list". */
+                  (dropAt?.id === row.id && dropAt.where === "into"
+                    ? "outline outline-2 -outline-offset-2 outline-magenta "
+                    : "")
                 }
                 draggable
                 onDragStart={() => setDragId(row.id)}
-                onDragEnd={() => setDragId(null)}
-                onDragOver={(e) => {
-                  if (dragId && dragId !== row.id && byId.get(dragId)?.parent_id === row.parent_id) e.preventDefault();
+                onDragEnd={() => {
+                  setDragId(null);
+                  setDropAt(null);
                 }}
+                onDragOver={(e) => {
+                  const where = dropZone(e, row.id);
+                  if (!where) return;
+                  /* `preventDefault` is what marks a valid drop target; without
+                     it the browser refuses the drop and the cursor says so. */
+                  e.preventDefault();
+                  setDropAt({ id: row.id, where });
+                }}
+                onDragLeave={() => setDropAt((d) => (d?.id === row.id ? null : d))}
                 onDrop={(e) => {
                   e.preventDefault();
-                  if (!dragId || dragId === row.id) return;
-                  const siblings = rows.filter((r) => r.parent_id === row.parent_id).sort((a, b) => a.sort - b.sort);
-                  const index = siblings.findIndex((sx) => sx.id === row.id);
-                  setDragId(null);
-                  if (index >= 0) void structural("move", dragId, { index });
+                  const where = dropZone(e, row.id);
+                  setDropAt(null);
+                  if (where) void drop(row.id, where);
                 }}
               >
                 {/* A BUTTON, not the mockup's plain span: reordering has to be
                     reachable from the keyboard, and the arrow keys here are the
                     only way to do it without a mouse. */}
+                {dropAt?.id === row.id && dropAt.where !== "into" && (
+                  <span
+                    aria-hidden
+                    className={
+                      "pointer-events-none absolute inset-x-0 z-10 h-0.5 bg-magenta " +
+                      (dropAt.where === "before" ? "top-0" : "bottom-0")
+                    }
+                  />
+                )}
                 <button
                   type="button"
                   title="Drag to reorder — or use the up and down arrows"
@@ -636,6 +805,33 @@ export function PlanOutlineEditor({
                   >
                     →
                   </button>
+                  {/*
+                    MOVE TO… — the same move without a mouse, and the precise
+                    one when two stages look alike. It is a `select` so it is
+                    reachable by keyboard and announces its options; every
+                    option in it is a destination the row can legally take.
+                  */}
+                  <select
+                    aria-label={`Move ${row.title || "row"} to…`}
+                    title="Move to…"
+                    value=""
+                    className={GRIP + " appearance-none text-center"}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      e.currentTarget.value = "";
+                      if (!value) return;
+                      const parentId = value === "__top__" ? null : value;
+                      const kids = rows.filter((r) => r.parent_id === parentId);
+                      void structural("move", row.id, { parentId, index: kids.length });
+                    }}
+                  >
+                    <option value="">⇥</option>
+                    {destinationsFor(row.id).map((d) => (
+                      <option key={d.id ?? "__top__"} value={d.id ?? "__top__"}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     type="button"
                     className={GRIP + " hover:text-magenta"}

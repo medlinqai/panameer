@@ -981,6 +981,104 @@ async function main() {
       tTree.find((n) => n.title === "Build")?.children.length === 10,
       "3.1 … 3.10",
     );
+    /* ── §13 MOVING ACROSS PARENTS (`P2-ALL-E813`) ────────────────────── */
+    /*
+      Scott, 2026-10-03: a drop between rows of another stage moves the row into
+      that stage at that spot; a drop onto a stage or phase makes it that row's
+      last child; levels are kept.
+    */
+    {
+      const mv = await ensurePlan("check-plan-move", "move scratch", viewer);
+      await prisma.planRow.deleteMany({ where: { plan_id: mv.id } });
+      const mk = (title: string, parentId: string | null, sort: number, type = "phase") =>
+        prisma.planRow.create({
+          data: { plan_id: mv.id, parent_id: parentId, sort, type, title },
+          select: { id: true },
+        });
+      const P1 = await mk("P1", null, 0, "release");
+      const S1 = await mk("S1", P1.id, 0);
+      const S2 = await mk("S2", P1.id, 1);
+      const T1 = await mk("T1", S1.id, 0, "task");
+      const T2 = await mk("T2", S1.id, 1, "task");
+      const T3 = await mk("T3", S2.id, 0, "task");
+      const kidsOf = async (id: string | null) =>
+        (
+          await prisma.planRow.findMany({
+            where: { plan_id: mv.id, parent_id: id },
+            orderBy: { sort: "asc" },
+            select: { title: true, type: true },
+          })
+        );
+
+      await moveRow(T1.id, { parentId: S2.id, index: 99 }, viewer);
+      const intoS2 = await kidsOf(S2.id);
+      check(
+        "13a — dropped ONTO a stage, a task becomes its LAST child",
+        intoS2.map((k) => k.title).join(",") === "T3,T1",
+        `S2 holds ${intoS2.map((k) => k.title).join(",")}`,
+      );
+      check(
+        "13b — and it is still a task: the level is kept, not rewritten",
+        intoS2.every((k) => k.type === "task"),
+        `types ${intoS2.map((k) => k.type).join(",")}`,
+      );
+      check(
+        "13c — its old list closed the gap behind it",
+        (await kidsOf(S1.id)).map((k) => k.title).join(",") === "T2",
+        "T2 must be sort 0 now, not sort 1 with a hole in front of it",
+      );
+
+      await moveRow(T3.id, { parentId: S1.id, index: 0 }, viewer);
+      check(
+        "13d — dropped BETWEEN rows of another stage, it lands at that spot",
+        (await kidsOf(S1.id)).map((k) => k.title).join(",") === "T3,T2",
+        "index 0 means above T2, not appended",
+      );
+
+      await moveRow(S2.id, { parentId: null, index: 1 }, viewer);
+      check(
+        "13e — a stage can move to the top level and takes its tasks with it",
+        (await kidsOf(null)).map((k) => k.title).join(",") === "P1,S2" &&
+          (await kidsOf(S2.id)).map((k) => k.title).join(",") === "T1",
+        "the subtree travels with the row",
+      );
+
+      /*
+        THE TWO REFUSALS, and the first is the one that would corrupt the tree:
+        a row inside its own subtree leaves that branch attached to nothing and
+        rendered nowhere, while the rows still exist.
+      */
+      check(
+        "13f — a row cannot move inside its own subtree",
+        await refusesBecause(() => moveRow(P1.id, { parentId: S1.id, index: 0 }, viewer), "inside itself"),
+        "dropping a phase onto its own stage would detach the branch",
+      );
+      check(
+        "13g — and a move that would make a fourth level is refused",
+        await refusesBecause(
+          () => moveRow(S2.id, { parentId: S1.id, index: 0 }, viewer),
+          "three levels deep",
+        ),
+        "S2 carries T1, so landing at depth 2 would put T1 at depth 3",
+      );
+      /*
+        THE COUNTER-CASE. Six refusals prove nothing without a move that LANDS —
+        and an off-by-one in the depth check refused every legal cross-parent
+        move until this caught it.
+      */
+      check(
+        "13h — a legal cross-parent move still lands",
+        await (async () => {
+          await moveRow(T2.id, { parentId: S2.id, index: 0 }, viewer);
+          return (await kidsOf(S2.id)).map((k) => k.title).join(",") === "T2,T1";
+        })(),
+        "depthOf({parent_id}) already counts the child, so the check must not add one again",
+      );
+
+      await prisma.planRow.deleteMany({ where: { plan_id: mv.id } });
+      await prisma.plan.delete({ where: { id: mv.id } });
+    }
+
     const journeys = tTree.find((n) => n.title === "Build")!.children;
     check(
       "12d — Learn and Optimize are not tagged to R1",
