@@ -7760,3 +7760,109 @@ model WorkTrackerCustomTask {
   @@index([release_id])
   @@map("work_tracker_custom_tasks")
 }
+
+/// ── ⚠⚠⚠ THE PLAN TOOL (`P2-ALL-E783`, Scott 2026-10-03) ──────────────────────
+///
+/// ⚠ **SCOTT:** the AIM tracker *"is good for me, but even for me too
+/// complicated."* ⚠⚠ So a plan is no longer a fixed catalog of 212 tasks with
+/// fixed phases and four fixed steps — **it is rows the owner types themselves**,
+/// set up in 5–15 minutes.
+///
+/// ⚠⚠⚠ **IT IS GENERIC FROM THE FIRST COMMIT BECAUSE IT HAS A SECOND USER ALREADY
+/// NAMED:** the Panameer build plan today, a WORK ORDER in R2. ⚠ That is why this
+/// is `Plan`/`PlanRow` and not `BuildPlan` — renaming a shipped table later costs
+/// a `DROP`/`CREATE` under Prisma, which is the `E765` lesson.
+///
+/// ⚠⚠ **NOTHING IN `work_tracker_*` CHANGES.** Those tables keep their live data
+/// (102 task states, 1 release, 4 phase dates) and the AIM admin stays reachable.
+model Plan {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ── ⚠⚠⚠ ONE COLUMN, ONE CONSTRAINT, AND THAT IS DELIBERATE ────────────────
+  ///
+  /// ⚠ `"panameer-build"` for the build plan; `"work-order:<uuid>"` in R2.
+  /// ⚠⚠ **THE OBVIOUS SHAPE — `owner_type` + nullable `owner_id` WITH A COMPOSITE
+  /// UNIQUE — DOES NOT CONSTRAIN THE ONE CASE THAT MATTERS.** Postgres treats
+  /// NULLs as distinct in a unique index, so `(PANAMEER_BUILD, null)` could be
+  /// inserted twice and the database would not object. ⚠⚠⚠ A single `@unique`
+  /// key makes "there is exactly one build plan" a **fact the database enforces**
+  /// rather than a rule a `findFirst` remembers.
+  /// ⚠ Three columns for one concept would also be `E585`'s shape: one thing in
+  /// several places, kept in step by hand.
+  owner_key String @unique
+
+  title String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  /// ⚠ `User.id`, resolved from the SESSION and never accepted from the client.
+  updated_by String?  @db.Uuid
+
+  rows PlanRow[]
+
+  @@map("plans")
+}
+
+/// One row of a plan: a phase, a task under a phase, or a milestone at either
+/// level. ⚠ Two levels are enough (Scott) — `parent_id` is null for a top-level
+/// row and set for its children; nothing enforces a third level because nothing
+/// should create one.
+model PlanRow {
+  id String @id @default(uuid()) @db.Uuid
+
+  plan_id   String  @db.Uuid
+  /// ⚠ Self-relation. `onDelete: Cascade` so deleting a phase takes its tasks
+  /// with it — the outline editor's `×` on a phase means exactly that, and an
+  /// orphaned task with a dangling parent would render nowhere and still count.
+  parent_id String? @db.Uuid
+
+  /// ⚠⚠ ORDER WITHIN A PARENT, NOT WITHIN THE PLAN. The drag handle rewrites
+  /// these; numbering (`1`, `1.1`, `◆`) is DERIVED from position and is never
+  /// stored — a stored number is a second copy of the order that drifts the first
+  /// time a row moves (`E585`).
+  sort Int @default(0)
+
+  /// ⚠ `phase` | `task` | `milestone`. A string, not an enum, matching the
+  /// `work_tracker_*` house style: validated in one writer, so adding a kind does
+  /// not need a migration.
+  type String
+
+  title String
+
+  /// ⚠⚠ BOTH NULLABLE AND THAT IS THE POINT. A row with no dates is "not
+  /// scheduled" and renders as such — **never a bar, never a guessed date**
+  /// (`E769`'s rule, carried over).
+  start_date DateTime? @db.Date
+  end_date   DateTime? @db.Date
+
+  /// ⚠ `Planned` | `In progress` | `Done` | `Blocked`. ⚠⚠ **`Late` IS NOT STORED**
+  /// — it is computed from `end_date` being past while the status is not `Done`,
+  /// so it can never disagree with the dates a reader can see.
+  status String @default("Planned")
+
+  owner String?
+  hours Int?
+
+  /// ⚠ Scalar, no FK — the same choice `WorkTrackerTaskState.release_id` makes,
+  /// so a release can be deleted without taking plan rows with it.
+  release_id String? @db.Uuid
+
+  /// ⚠⚠⚠ TWO NOTES, AND THE SPLIT IS A SAFETY PROPERTY, NOT A CONVENIENCE.
+  /// `public_note` may reach `/status`; **`admin_note` MUST NOT** — the leak gate
+  /// asserts it, the way it already asserts admin-only task text. ⚠ Keeping them
+  /// in one column with a flag would make the leak one forgotten boolean away.
+  public_note String?
+  admin_note  String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.Uuid
+
+  plan     Plan      @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  parent   PlanRow?  @relation("PlanRowChildren", fields: [parent_id], references: [id], onDelete: Cascade)
+  children PlanRow[] @relation("PlanRowChildren")
+
+  @@index([plan_id, parent_id, sort])
+  @@index([release_id])
+  @@map("plan_rows")
+}
