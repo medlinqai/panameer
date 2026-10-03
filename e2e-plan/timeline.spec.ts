@@ -179,3 +179,129 @@ test.describe("E797 — a start with no end is an open bar", () => {
     await expect(page.locator('[data-plan-row="3"]')).toContainText("not scheduled");
   });
 });
+
+/**
+ * ── ⚠⚠⚠ THE AXIS AND THE BARS SHARE ONE COORDINATE SPACE (`P2-ALL-E798`) ────
+ *
+ * ⚠ **SCOTT, MINUTES AFTER `E797` DEPLOYED:** the date axis was laid out across
+ * the full width — label column included — while the bars and the Today line
+ * used only the track to the right of the labels. ⚠⚠ Every bar therefore read
+ * about **four weeks late**: `Define`, which ran Aug 15–22, sat under *"Sep 12"*.
+ *
+ * ⚠⚠⚠ **IT DERIVES THE SCALE FROM THE AXIS'S OWN TICKS AND THEN ASKS WHERE EACH
+ * BAR LANDS.** It does not recompute the component's maths — that would agree
+ * with itself whatever the layout did, which is exactly how this shipped.
+ */
+test.describe("E798 — a bar's left edge lines up with its start date", () => {
+  for (const width of [390, 1280] as const) {
+    test(`the axis and the bars agree at ${width}px`, async ({ page }) => {
+      test.skip(planId === null, "no plan to render");
+      await page.setViewportSize({ width, height: 1200 });
+      await page.goto("/status", { waitUntil: "domcontentloaded" });
+      /** ⚠ Expanded, so CHILD bars are measured too — they sit in the same
+       *  track and a per-row offset bug would show up there first. */
+      await page.locator('[data-plan-row="1"] button').click();
+
+      const m = await page.evaluate(() => {
+        const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+        /**
+         * ⚠⚠ CLAMPED TICKS ARE DISCARDED. `weekTicks` rounds up, so the last
+         * label can sit past the span's end and be pinned at 100% — deriving the
+         * scale from a pinned tick would bake the error into the expectation.
+         */
+        const ticks = [...document.querySelectorAll("[data-plan-tick]")]
+          .map((e) => {
+            const pctStr = parseFloat((e as HTMLElement).style.left);
+            const r = e.getBoundingClientRect();
+            return {
+              iso: e.getAttribute("data-plan-tick") ?? "",
+              x: r.left + r.width / 2,
+              pct: pctStr,
+              shown: r.width > 0,
+            };
+          })
+          /**
+           * ⚠⚠⚠ VISIBLE TICKS ONLY, AND THIS COST A RED RUN. `E798` thins the
+           * axis to every third label below `sm`; a `display: none` element
+           * reports a ZERO rect at the origin, so a hidden tick contributed
+           * `x = 0` and the derived scale came out at **0.00 px/day** — every
+           * bar then "expected" x = 0 and the whole test failed at 390px.
+           * ⚠ A gate that reads a hidden element is measuring the wrong page.
+           */
+          .filter((t) => t.iso && t.shown && t.pct > 0.01 && t.pct < 99.99);
+        if (ticks.length < 2) return { error: "fewer than two usable ticks", ticks: ticks.length };
+
+        const a = ticks[0];
+        const b = ticks[ticks.length - 1];
+        const scale = (b.x - a.x) / (ms(b.iso) - ms(a.iso));
+        const xFor = (iso: string) => a.x + (ms(iso) - ms(a.iso)) * scale;
+
+        const bars = [...document.querySelectorAll("[data-plan-row]")]
+          .map((li) => {
+            const bar = li.querySelector("[data-plan-bar]");
+            if (!bar) return null;
+            const kind = bar.getAttribute("data-plan-bar") ?? "";
+            if (kind === "none") return null;
+            const title = bar.getAttribute("title") ?? "";
+            const start = title.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+            if (!start) return null;
+            const r = bar.getBoundingClientRect();
+            /** ⚠ A milestone is a rotated square CENTRED on its date; a bar
+             *  BEGINS on its date. Measuring both from `left` would fail the
+             *  diamond by half its own width — a false red (ruling 10). */
+            const at = kind === "milestone" ? r.left + r.width / 2 : r.left;
+            return {
+              number: li.getAttribute("data-plan-row") ?? "",
+              kind,
+              start,
+              at: Math.round(at * 10) / 10,
+              expected: Math.round(xFor(start) * 10) / 10,
+              off: Math.round((at - xFor(start)) * 10) / 10,
+            };
+          })
+          .filter(Boolean);
+        return { bars, span: { from: a.iso, to: b.iso }, pxPerDay: scale * 86_400_000 };
+      });
+
+      expect(m.error, `${m.error} — the axis must carry usable ticks`).toBeUndefined();
+      const bars = (m.bars ?? []) as { number: string; off: number; start: string; kind: string }[];
+      expect(bars.length, "no dated bars to measure").toBeGreaterThan(3);
+
+      /**
+       * ⚠⚠ 2px, NOT A PERCENTAGE. Sub-pixel rounding and the border on a dashed
+       * `Planned` bar are each worth under a pixel. ⚠⚠⚠ THE BUG THIS CATCHES WAS
+       * ~28 DAYS WIDE — at this fixture's scale that is well over 100px, so the
+       * tolerance is nowhere near the failure.
+       */
+      const off = bars.filter((b) => Math.abs(b.off) > 2);
+      expect(
+        off,
+        `these bars do not start on their own date: ${JSON.stringify(off)} (${m.pxPerDay?.toFixed(2)} px/day)`,
+      ).toEqual([]);
+    });
+  }
+
+  test("the Today line sits in the track, not over the labels", async ({ page }) => {
+    test.skip(planId === null, "no plan to render");
+    await page.setViewportSize({ width: 1280, height: 1200 });
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+    /**
+     * ⚠⚠ THE SAME DEFECT WOULD HAVE MOVED THE TODAY LINE TOO, and it is the one
+     * mark a reader trusts without checking. ⚠ Today is 2026-10-03 against a
+     * fixture running Oct 1 → Dec 1, so it belongs just inside the LEFT end of
+     * the track — and the old full-width layout would have drawn it left of the
+     * track entirely, over the row labels.
+     */
+    const geom = await page.evaluate(() => {
+      const line = document.querySelector('[aria-label="Plan timeline"] .bg-magenta');
+      const track = document.querySelector('[data-plan-row="1"] [data-plan-bar]')?.parentElement;
+      if (!line || !track) return null;
+      const l = line.getBoundingClientRect();
+      const t = track.getBoundingClientRect();
+      return { intoTrack: l.left - t.left, trackWidth: t.width };
+    });
+    expect(geom, "no Today line or no track to measure").not.toBeNull();
+    expect(geom!.intoTrack, "the Today line must start at or after the track's left edge").toBeGreaterThanOrEqual(-1);
+    expect(geom!.intoTrack, "and inside it, not off the right end").toBeLessThan(geom!.trackWidth);
+  });
+});
