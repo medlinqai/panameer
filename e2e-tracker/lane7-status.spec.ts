@@ -27,7 +27,21 @@ test("E757 — /status renders the mockup's sections and screenshots", async ({ 
     /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — "Ten parts of one platform."
        was the AIM journey grid's heading and that section is gone:
        //   for (const h of ["Ten parts of one platform.", "What changed, day by day.", "Found a problem? Tell us.", "Releases"]) { */
-    for (const h of ["The plan, phase by phase", "What changed, day by day.", "Found a problem? Tell us.", "Releases"]) {
+    /*
+      ── ⚠⚠⚠ THE PLAN HEADING IS NOT UNCONDITIONAL, AND THAT IS WHY THIS SPEC
+             WENT RED BEFORE THE MERGE ─────────────────────────────────────────
+
+      ⚠ `The plan, phase by phase` renders only when the plan HAS ROWS. With an
+      empty plan — which is the live state until Scott builds his — `/status`
+      says *"The plan is being set up"* instead, and the hero reads
+      *"Scope being set"*.
+      ⚠⚠ **SO THE SPEC ASSERTS WHICHEVER STATE THE PAGE IS IN, AND ASSERTS THE
+      OTHER ONE IS ABSENT.** A spec that only passed on a filled plan would go
+      red on a clean database and on production before the plan is typed, which
+      is the false-red that teaches people to ignore a gate (ruling 10).
+      ⚠ The three headings below are unconditional and stay in the loop.
+    */
+    for (const h of ["What changed, day by day.", "Found a problem? Tell us.", "Releases"]) {
       await expect(page.getByRole("heading", { name: h })).toBeVisible();
     }
     /* ⚠⚠ `Join the Beta` WAS REMOVED BY RULING (`P2-ALL-E764`) — the close band
@@ -50,10 +64,25 @@ test("E757 — /status renders the mockup's sections and screenshots", async ({ 
       //   });
       //   await expect(journeySection.locator("li")).toHaveCount(10);
     */
-    const planSection = page.locator("section", {
-      has: page.getByRole("heading", { name: "The plan, phase by phase" }),
-    });
-    await expect(planSection.locator("details")).not.toHaveCount(0);
+    /** ⚠ Read once, then branch — the page is in exactly one of two states. */
+    const planHeading = page.getByRole("heading", { name: "The plan, phase by phase" });
+    const filled = (await planHeading.count()) > 0;
+    const planSection = page.locator("section", { has: planHeading });
+
+    if (filled) {
+      await expect(planSection.locator("details")).not.toHaveCount(0);
+      /** ⚠⚠ And the empty-state copy must NOT also be on the page — two
+       *  descriptions of one plan is the contradiction to catch. */
+      await expect(page.getByText("The plan is being set up", { exact: false })).toHaveCount(0);
+    } else {
+      /** ⚠⚠⚠ THE EMPTY STATE IS A REAL STATE WITH REAL COPY, not an absence.
+       *  ⚠ It says what is true and names no figure — `Scope being set` in the
+       *  hero rather than a bare dash (the counting rule). */
+      await expect(page.getByText("The plan is being set up", { exact: false })).toBeVisible();
+      await expect(page.getByText("Scope being set")).toBeVisible();
+      /** ⚠ And no timeline is drawn from no dates (`E769`). */
+      await expect(page.getByRole("region", { name: "Plan timeline" })).toHaveCount(0);
+    }
 
     /* ⚠ "Day N" must be absent while Define has no start date — no NaN. */
     const eyebrow = await page.locator("text=Building in the open").first().innerText();
@@ -76,14 +105,21 @@ test("E757 — /status renders the mockup's sections and screenshots", async ({ 
       //     .evaluateAll((els) => els.filter((el) => (el.textContent ?? "").trim() === "").length);
       //   expect(blanks, "every journey needs a one-line description").toBe(0);
     */
-    const rowCount = await planSection.locator("details summary").count();
-    expect(rowCount, "the blank-title guard needs rows to look at").toBeGreaterThan(0);
-    const blanks = await planSection
-      .locator("details summary")
-      .evaluateAll((els) => els.filter((el) => (el.textContent ?? "").trim() === "").length);
-    expect(blanks, "every plan row needs a visible title").toBe(0);
+    if (filled) {
+      const rowCount = await planSection.locator("details summary").count();
+      /** ⚠ Count > 0 (`E586`): a blank-title scan over no rows proves nothing —
+       *  which is exactly why it is inside the `filled` branch rather than
+       *  loosened to pass at zero. */
+      expect(rowCount, "the blank-title guard needs rows to look at").toBeGreaterThan(0);
+      const blanks = await planSection
+        .locator("details summary")
+        .evaluateAll((els) => els.filter((el) => (el.textContent ?? "").trim() === "").length);
+      expect(blanks, "every plan row needs a visible title").toBe(0);
+    }
 
     await page.screenshot({ path: `e2e-tracker/shots/status-v5-${w}-${scheme}.png`, fullPage: false });
-    console.log(`  ${w}px ${scheme}: eyebrow "${eyebrow.trim()}" · scrollW ${o.s}/${o.c}`);
+    console.log(
+      `  ${w}px ${scheme}: plan ${filled ? "filled" : "EMPTY"} · eyebrow "${eyebrow.trim()}" · scrollW ${o.s}/${o.c}`,
+    );
   }
 });

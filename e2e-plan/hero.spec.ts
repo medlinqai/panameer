@@ -159,3 +159,60 @@ test.describe("E776 (re-homed) — the hero headline holds one line", () => {
     expect(two.fontSize, "52px is the ceiling, never exceeded").toBeLessThanOrEqual(52);
   });
 });
+
+/**
+ * ── ⚠⚠⚠ EVERY FIGURE IN THE HERO COMES FROM THE PLAN (`P2-ALL-E790`) ────────
+ *
+ * ⚠⚠ **THIS GUARD EXISTS BECAUSE THE LIVE PAGE CONTRADICTED ITSELF MINUTES AFTER
+ * `E785` DEPLOYED:** the hero read **0%** (R1's readiness, from the plan) while
+ * the lines beneath read **"31% of the whole plan"** and **"66 done · 36
+ * moving"** — counted from the AIM task states. ⚠ Two definitions of progress,
+ * side by side, both labelled as the plan (`E585`), on the page a stranger lands
+ * on.
+ * ⚠⚠⚠ **IT ASSERTS THE NUMBERS AGAINST THE DATABASE**, not against each other:
+ * agreement between two wrong numbers is what let this ship.
+ */
+test.describe("E790 — the hero's figures are the plan's", () => {
+  let r1: string | null = null;
+
+  test.beforeAll(async () => {
+    const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
+    if (!plan) return;
+    const rel = await planDb.workTrackerRelease.findFirst({ where: { code: "R1" }, select: { id: true } });
+    r1 = rel?.id ?? null;
+    await planDb.planRow.deleteMany({ where: { plan_id: plan.id } });
+    /**
+     * ⚠ A fixture whose numbers DIFFER from each other, deliberately: R1 is
+     * 1 of 2 = 50%, the whole plan is 1 of 3 = 33%, and 1 row is moving. ⚠⚠ If
+     * the three agreed, a page that printed any one of them everywhere would
+     * pass (ruling 11 — two zeros agree, two ones agree).
+     */
+    await planDb.planRow.createMany({
+      data: [
+        { plan_id: plan.id, parent_id: null, sort: 0, type: "phase", title: "Done one", status: "Done", release_id: r1 },
+        { plan_id: plan.id, parent_id: null, sort: 1, type: "phase", title: "Moving one", status: "In progress", release_id: r1 },
+        { plan_id: plan.id, parent_id: null, sort: 2, type: "phase", title: "Untagged", status: "Planned", release_id: null },
+      ],
+    });
+  });
+
+  test("the hero shows R1's percentage, the whole plan's, and the row counts", async ({ page }) => {
+    test.skip(r1 === null, "no R1 release to tag rows to");
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+    const hero = page.locator("section").first();
+
+    /** R1: 1 Done of 2 tagged = 50%. */
+    await expect(page.locator("[data-hero-figure]")).toHaveText("50");
+    /** The whole plan: 1 Done of 3 countable = 33%. ⚠ A DIFFERENT number, which
+     *  is what makes the previous assertion meaningful. */
+    await expect(hero).toContainText("33% of the whole plan");
+    /** And the counts, from the same `countableRows` rule as the percentages. */
+    await expect(hero).toContainText("1 done · 1 moving · 3 rows");
+
+    /** ⚠⚠ THE AIM FIGURES MUST NOT APPEAR. `t.doneCount` is in the sixties and
+     *  `t.overallPercent` in the thirties on real data — asserting their ABSENCE
+     *  by shape is what catches a reversion to the old source. */
+    const text = await hero.innerText();
+    expect(text, "a gates clause belongs to the AIM catalog, not a plan").not.toMatch(/of \d+ gates/);
+  });
+});
