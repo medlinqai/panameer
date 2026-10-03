@@ -48,7 +48,51 @@ const nextConfig: NextConfig = {
     `/find-work#learn`. Verified in a browser, not assumed.
   */
   async redirects() {
+    /*
+      ── ⚠⚠⚠ THE HOME PAGE IS THE TRACKER UNTIL R1 (`P2-ALL-E787`) ───────────
+
+      ⚠ **SCOTT, 2026-10-03:** the status page becomes the front door until the
+      public beta. ⚠⚠ **IT IS BEHIND AN ENVIRONMENT SWITCH** so it can be turned
+      off without a code change — `HOME_SHOWS_STATUS=1` in Vercel Production,
+      then a **REDEPLOY**, because `redirects()` is evaluated when the server
+      starts and not per request.
+
+      ⚠⚠ **THE SWITCH IS READ HERE, INSIDE `redirects()`, AND THAT IS DELIBERATE
+      AND TESTABLE.** A node harness calls this function twice with the variable
+      toggled and asserts the rule appears and disappears — no second server, no
+      second port. ⚠ Read at module scope it would be baked before any test could
+      change it.
+
+      ⚠ **307, NOT 308.** `permanent: false` — this is "until R1", and a browser
+      that cached a permanent redirect would keep sending people to the tracker
+      after the marketplace opened. ⚠⚠ That is not a detail: a 308 is a promise
+      you cannot take back from a cache you do not control.
+
+      ⚠⚠⚠ **`app.panameer.com` IS NOT IN THE HOST CONDITION.** `E780` included it
+      for `/status`, and including it here would redirect the APP's root — the
+      signed-in dashboard door — to a public marketing page. ⚠ Nor does it match
+      localhost or a Vercel preview, so a developer's `/` and every preview build
+      are untouched.
+
+      ⚠⚠ **THE ALTERNATION IS GROUPED, AND `E780` IS WHY.** Next compiles
+      `has.value` as `new RegExp("^" + value + "$")`
+      (`prepare-destination.js:45`), and alternation binds loosest — so an
+      UNGROUPED `www\.panameer\.com|panameer\.com` anchors only one end and
+      matches `panameer.com.evil.net`. The non-capturing group fixes both ends to
+      the whole alternation.
+    */
+    const homeShowsStatus = process.env.HOME_SHOWS_STATUS === "1";
     return [
+      ...(homeShowsStatus
+        ? [
+            {
+              source: "/",
+              has: [{ type: "host" as const, value: "(?:www\\.)?panameer\\.com" }],
+              destination: "https://status.panameer.com/",
+              permanent: false,
+            },
+          ]
+        : []),
       { source: "/for-buyers", destination: "/", permanent: true },
       /*
         ⚠⚠ REPOINTED BY THE ROUTE SWAP (`P1-ALL-E017`). This said `/find-work`, which

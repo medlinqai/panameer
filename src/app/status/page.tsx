@@ -307,8 +307,17 @@ export default async function StatusPage({
             //   providers will use on their own projects. Here it follows ours,
             //   every day, from first idea to public beta.
           */}
+          {/*
+            ⚠⚠ THE SUBLINE SAYS WHY THIS PAGE IS PUBLIC AT ALL (`P2-ALL-E787`,
+            Scott 2026-10-03). ⚠ From this lane the tracker is the front door, so
+            the first thing a stranger reads has to explain the choice: the tool
+            on screen is the tool they will get.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   Daily progress on the Panameer build, from first idea to public beta.
+          */}
           <p className="mt-3 max-w-[68ch] text-[15px] leading-relaxed text-white/80">
-            Daily progress on the Panameer build, from first idea to public beta.
+            We&apos;re eating our own cooking — this is the project tracker you&apos;ll use on your
+            Panameer work orders, and we&apos;re using it to build Panameer.
           </p>
 
           <p className="mt-7 flex flex-wrap items-center gap-4">
