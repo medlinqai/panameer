@@ -7936,3 +7936,24 @@ model AdminAudit {
   @@index([target_table, created_at])
   @@map("admin_audit")
 }
+
+/// A daily count of key tables, so the Data health page can show "since
+/// yesterday" (`P2-ALL-E814`). One row per table per day — additive only, and
+/// nothing reads it for correctness, so a missing day is a gap in a trend
+/// rather than a broken page.
+model DataSnapshot {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// `YYYY-MM-DD` in UTC — a pure date, so a snapshot means the same thing
+  /// whichever timezone reads it.
+  day        String
+  table_name String
+  total      Int
+  /// Split out where the table carries `is_test`; null where it does not.
+  real_count Int?
+  test_count Int?
+  created_at DateTime @default(now())
+
+  @@unique([day, table_name])
+  @@index([table_name, day])
+  @@map("data_snapshots")
+}

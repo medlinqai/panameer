@@ -2301,6 +2301,11 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Support Center", href: "/admin/support", icon: "LifeBuoy" },
       { label: "Platform Admins", href: "/admin/admins", icon: "ShieldCheck" },
+      /* `E814` — the two pages that answer "what is in the data, and who
+         changed it". The trigger was a reset that removed 203 users with
+         nothing in the app to show it. */
+      { label: "Data Health", href: "/admin/data-health", icon: "Activity" },
+      { label: "Audit Log", href: "/admin/audit-log", icon: "History" },
     ],
   },
 ].map((g) => ({

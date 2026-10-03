@@ -16,6 +16,7 @@
  * ⚠ The cost is stated rather than hidden: a failed write means a missing row,
  * which is why the action name is also printed to the server log.
  */
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 
@@ -59,4 +60,38 @@ export async function writeAudit(viewer: Viewer | null, entry: AuditEntry): Prom
 /** The before/after shape for a field edit, so every caller records it the same. */
 export function fieldChange(field: string, before: unknown, after: unknown) {
   return { field, before: before ?? null, after: after ?? null };
+}
+
+/**
+ * A DELETION A SCRIPT MADE (`P2-ALL-E814`).
+ *
+ * Scott: "any script that deletes data must write to the audit log from now on
+ * — a deletion the app can't show is the failure this lane exists to end."
+ *
+ * No `Viewer`, because a script has none: the actor is recorded as the script's
+ * own name so the log says what ran rather than inventing a person.
+ */
+export async function reportDeletion(entry: {
+  script: string;
+  table: string;
+  rowCount: number;
+  detail?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await prisma.adminAudit.create({
+      data: {
+        actor_id: null,
+        actor_email: `script:${entry.script}`,
+        action: "script.delete",
+        target_table: entry.table,
+        target_id: null,
+        row_count: entry.rowCount,
+        detail: (entry.detail ?? {}) as Prisma.InputJsonValue,
+      },
+    });
+  } catch {
+    /* A log failure must never turn a cleanup into an error — the deletion has
+       already happened, and losing the record is bad but losing the script run
+       on top of it is worse. */
+  }
 }
