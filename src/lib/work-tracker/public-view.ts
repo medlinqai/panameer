@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { dayNumber as dayNumberInSiteZone } from "@/lib/work-tracker/public-time";
 import { JOURNEY_COPY } from "./journey-copy";
 import { TICKETS_TERMINAL_STATUSES } from "@/lib/support";
 import {
@@ -407,9 +408,18 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     ⚠ Day 1 is the start date itself, not day 0 — a person reading "Day 1" on the
     day work began is right.
   */
+  /*
+    ⚠⚠⚠ AND IT COUNTS IN THE SITE'S ZONE, NOT THE SERVER'S (`P2-ALL-E775`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
+    ⚠⚠ **THAT DIVIDED MILLISECONDS FROM A MIDNIGHT-UTC DATE, SO IT ROLLED OVER AT
+    UTC MIDNIGHT** — measured at 8:36 PM ET on 2 Oct, the page already said
+    **DAY 50** while ET was still on day 49. ⚠ `dayNumber()` counts CALENDAR days
+    between two `YYYY-MM-DD` strings, so there is no instant left to round.
+  */
   const defineStart = dates.get(PHASES[0]?.name ?? "")?.start_date ?? null;
   const dayNumber = defineStart
-    ? Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
+    ? dayNumberInSiteZone(defineStart.toISOString().slice(0, 10))
     : null;
 
   /*

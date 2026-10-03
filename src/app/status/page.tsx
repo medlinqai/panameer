@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatInstant, formatStoredDate } from "@/lib/work-tracker/public-time";
 import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { BuildLine } from "@/components/status/BuildLine";
@@ -114,14 +115,18 @@ export default async function StatusPage({
   /* ⚠ The hero shows the RELEASE's percentage when there is one, and falls back
      to the plan only when no release exists at all. */
   const heroPercent = rel ? rel.percent : t.overallPercent;
-  const dueLabel = rel?.date
-    ? new Date(`${rel.date}T00:00:00Z`).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        timeZone: "UTC",
-      })
-    : null;
-  const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  /*
+    ⚠⚠⚠ TWO KINDS OF VALUE, TWO RULES (`P2-ALL-E775`) — see `public-time.ts`.
+    ⚠ **A RELEASE TARGET IS A PURE DATE** and is printed as itself. Shifting
+    `2026-11-01T00:00:00Z` into `America/New_York` would print **Oct 31**.
+    ⚠⚠ **`updated` IS A TIMESTAMP** and belongs in the reader's day. It named NO
+    zone before, so it used the SERVER's — ET on a mac, **UTC on Vercel** — which
+    is why it read *"updated Oct 3"* in production on the evening of Oct 2.
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  */
+  const dueLabel = rel?.date ? formatStoredDate(rel.date) : null;
+  const updated = formatInstant(t.generatedAt);
 
   return (
     <div className="bg-surface">
