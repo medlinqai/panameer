@@ -194,17 +194,28 @@ test("the timeline's week labels never overlap — E777's rule, new geometry", a
    * thinning is what this proves.
    * ⚠ Ruling 14 — when the code a rule names goes away, the rule may not.
    */
+  const visible: Record<number, number> = {};
   for (const width of [390, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/status", { waitUntil: "domcontentloaded" });
+    /**
+     * ⚠⚠⚠ VISIBLE TICKS ONLY (`E798`). `E798` thins the axis to every third
+     * label below `sm`, and a `display: none` element reports a ZERO-SIZED rect
+     * at the origin — so including the hidden ones made the comparison pass
+     * trivially on them while saying nothing about what a reader sees.
+     * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     * //   els.map((el) => el.getBoundingClientRect()).map(...)  — every tick
+     */
     const boxes = await page.locator("[data-plan-tick]").evaluateAll((els) =>
       els
         .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width > 0)
         .map((r) => ({ left: r.left, right: r.right }))
         .sort((a, b) => a.left - b.left),
     );
     /** ⚠ Count > 0 (`E586`): a no-overlap check over no labels proves nothing. */
     expect(boxes.length, `no week ticks rendered at ${width}`).toBeGreaterThan(1);
+    visible[width] = boxes.length;
     for (let i = 1; i < boxes.length; i++) {
       expect(
         boxes[i].left,
@@ -212,4 +223,13 @@ test("the timeline's week labels never overlap — E777's rule, new geometry", a
       ).toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5);
     }
   }
+  /**
+   * ⚠⚠ AND THE THINNING ITSELF IS ASSERTED, not only its consequence. A
+   * component that rendered ONE label would satisfy every overlap check above —
+   * the no-collision rule passes most easily by showing nothing (ruling 12).
+   */
+  expect(visible[390], `phone must show fewer labels than desktop: ${JSON.stringify(visible)}`).toBeLessThan(
+    visible[1440],
+  );
+  expect(visible[390], "but still more than a couple").toBeGreaterThan(2);
 });

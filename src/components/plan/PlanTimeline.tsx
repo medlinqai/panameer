@@ -69,13 +69,49 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
 
   return (
     <section className="mt-10" aria-label="Plan timeline">
-      <div className="relative">
-        <div className="relative h-5 border-b border-line">
-          {ticks.map((t) => (
+      {/*
+        ── ⚠⚠⚠ ONE COLUMN WIDTH, DEFINED ONCE (`P2-ALL-E798`) ─────────────────
+        ⚠ **SCOTT, 2026-10-03, MINUTES AFTER `E797` DEPLOYED:** the date axis was
+        laid out across the FULL width while the bars and the Today line used
+        only the track to the right of the labels — so every bar read about four
+        weeks late, and `Define`, which ran Aug 15–22, sat under *"Sep 12"*.
+        ⚠⚠⚠ **A CHART WHOSE AXIS AND BARS USE DIFFERENT COORDINATE SPACES IS
+        WORSE THAN NO CHART**: it is confidently wrong, and the only clue was
+        knowing the real dates.
+        ⚠⚠ **`--plan-label` IS THE ONE DEFINITION.** The label box takes its
+        WIDTH from it and the axis and the Today line take their LEFT OFFSET from
+        it, so the three cannot drift apart (`E585`). ⚠ The rows carry NO gap for
+        the same reason — a gap would be a second, invisible offset that only the
+        bars felt.
+      */}
+      <div className="relative [--plan-label:8rem] sm:[--plan-label:12rem]">
+        <div
+          className="relative h-5 border-b border-line"
+          style={{ marginLeft: "var(--plan-label)" }}
+        >
+          {ticks.map((t, i) => (
             <span
               key={t.iso}
-              data-plan-tick
-              className="absolute top-0 -translate-x-1/2 font-mono text-[10px] text-ink-3"
+              /** ⚠ The tick carries its DATE, so a test can derive the axis's
+               *  own scale from it rather than recomputing the component's. */
+              data-plan-tick={t.iso}
+              className={
+                "absolute top-0 -translate-x-1/2 font-mono text-[10px] text-ink-3 " +
+                /*
+                  ── ⚠⚠⚠ EVERY THIRD LABEL ON A PHONE (`E798`) ────────────────
+                  ⚠ `weekTicks` thins to ~12 labels by SPAN, which knew nothing
+                  about the width — and moving the axis out of the label column
+                  took ~128px off it at 390px, so the labels collided. ⚠⚠ That is
+                  `E777`'s rule, broken by a layout change rather than by a copy
+                  change.
+                  ⚠⚠ **IT IS DONE IN CSS, NOT BY MEASURING.** A client component
+                  that sized its own axis would render one count on the server and
+                  another after hydration; a breakpoint renders once and is right
+                  in both.
+                  ⚠ Four labels across ~230px of phone track, twelve across ~1000px.
+                */
+                (i % 3 === 0 ? "" : "hidden sm:inline")
+              }
               style={{ left: `${clamp(pct(t.iso))}%` }}
             >
               {t.label}
@@ -85,20 +121,34 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
 
         <ul className="relative mt-2">
           {todayInRange && (
+            /** ⚠⚠ TWO BOXES, NOT ONE: the outer `<li>` IS the track — inset from
+             *  the left by the label column and flush to the right edge — and the
+             *  line inside it is a percentage OF THAT BOX. ⚠ Positioning the line
+             *  directly against the `<ul>` is what put it four weeks out. */
             <li
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 z-10 w-px bg-magenta"
-              style={{ left: `${clamp(nowPct)}%` }}
-            />
+              className="pointer-events-none absolute inset-y-0 right-0 z-10"
+              style={{ left: "var(--plan-label)" }}
+            >
+              <span
+                className="absolute inset-y-0 w-px bg-magenta"
+                style={{ left: `${clamp(nowPct)}%` }}
+              />
+            </li>
           )}
           {lines.map(({ row, isChild, kids }) => {
             const expandable = kids > 0;
             const isOpen = open.has(row.id);
             return (
-              <li key={row.id} data-plan-row={row.number} className="flex h-8 items-center gap-2">
+              <li key={row.id} data-plan-row={row.number} className="flex h-8 items-center">
                 <span
+                  /** ⚠ `pr-2` RATHER THAN A FLEX GAP: the padding is INSIDE the
+                   *  label box, so the box's width still equals the axis offset
+                   *  exactly. A gap would sit between them and belong to
+                   *  neither. */
+                  style={{ width: "var(--plan-label)" }}
                   className={
-                    "flex w-32 shrink-0 items-baseline gap-1.5 overflow-hidden sm:w-48 " +
+                    "flex shrink-0 items-baseline gap-1.5 overflow-hidden pr-2 " +
                     (isChild ? "text-ink-3" : "text-ink-2")
                   }
                 >

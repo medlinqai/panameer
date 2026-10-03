@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { freshness } from "./prisma-freshness";
 
 /**
  * PrismaClient singleton using the pg driver adapter (matches Medlinq).
@@ -18,4 +19,46 @@ export const prisma = global.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
+  warnIfStale();
+}
+
+/**
+ * ── ⚠⚠⚠ SAY SO WHEN THIS PROCESS'S CLIENT IS OUT OF DATE (`P2-ALL-E799`) ────
+ *
+ * ⚠ **DEVELOPMENT ONLY, LOGGED ONCE, AND IT NEVER THROWS.** A stale client fails
+ * later anyway; the point of this is that it fails with the RIGHT SENTENCE.
+ * ⚠⚠ Scott, 2026-10-03, saw *"Encountered a script tag while rendering React
+ * component"* on `/admin/buyers-sellers`. The real fault was a dev server
+ * fourteen hours older than the generated client, and the message named a
+ * `<script>` in the root layout that had nothing to do with it.
+ * ⚠⚠⚠ **THE RULE ITSELF IS IN `prisma-freshness.ts` AND IS PURE**, so it is
+ * tested by `check:prisma-freshness` rather than by restarting servers.
+ */
+function warnIfStale() {
+  try {
+    /* eslint-disable @typescript-eslint/no-require-imports */
+    const { statSync } = require("fs") as typeof import("fs");
+    const { join } = require("path") as typeof import("path");
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    const mtime = (...parts: string[]) => {
+      try {
+        return statSync(join(process.cwd(), ...parts)).mtimeMs;
+      } catch {
+        return null;
+      }
+    };
+    const { problem, message } = freshness({
+      schemaMs: mtime("prisma", "schema.prisma"),
+      /** ⚠ `prisma generate` writes a COPY of the schema beside the client; its
+       *  mtime is when the client itself was built. */
+      clientMs: mtime("node_modules", ".prisma", "client", "schema.prisma"),
+      processStartMs: Date.now() - process.uptime() * 1000,
+    });
+    if (problem) {
+      console.error(`\n⚠ PRISMA CLIENT [${problem}] — ${message}\n`);
+    }
+  } catch {
+    /** ⚠⚠ A CHECK THAT CANNOT RUN MUST BE SILENT. It is a convenience, and an
+     *  error from it would be indistinguishable from the error it describes. */
+  }
 }
