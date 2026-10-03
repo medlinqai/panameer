@@ -156,7 +156,34 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-[10px] backdrop-saturate-150">
+    /*
+      ── ⚠⚠⚠ THE HEADER PINS THE LIGHT PALETTE ON ITSELF (`P2-ALL-E773`) ———
+
+      ⚠ **SCOTT, 2026-10-02, walking the LIVE site in dark mode:** the header is a
+      washed-out light grey bar with faint menu links.
+
+      ⚠⚠⚠ **MEASURED FROM RENDERED PIXELS, NOT FROM TOKENS:** in dark mode the bar
+      rendered `rgb(232,231,235)` and the links `rgb(179,173,196)` — **1.76:1 on
+      `/status` and 1.75:1 on the home page, against an AA floor of 4.5.** In light
+      mode the same component measured **9.04:1**.
+
+      ⚠⚠ **AND A THIRD PAGE ALREADY HAD IT RIGHT, WHICH IS WHERE THE FIX CAME
+      FROM: `/explore` measured 9.04:1 IN DARK**, because it wraps this header in
+      `.marketing-surface`. `bg-white/90` stays white; it was `--color-ink-2`
+      INVERTING to a light grey that produced the washout.
+
+      ⚠ **SO THE CLASS GOES ON THE HEADER ITSELF, NOT ON THE PAGE.** Wrapping
+      `/status` would pin the WHOLE page light and undo the dark mode Scott had just
+      walked and approved. Scott's ruling: *"pinned-light scope on the header only."*
+
+      ⚠⚠ **IT IS THE SAME CLASS, NOT A NEW ONE, AND THAT IS DELIBERATE.** A
+      header-only copy of those nine tokens would be a second definition to keep in
+      step by hand (`E585`), and `check:theme` (`E432`) asserts `@theme` and
+      `.marketing-surface` agree — a third block would sit outside that guard.
+      ⚠ On pages already inside a `.marketing-surface` wrapper this nests with
+      identical values and changes nothing.
+    */
+    <header className="marketing-surface sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-[10px] backdrop-saturate-150">
       <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-8 px-6">
         {/*
           Through <Logo>, not a second copy of the asset path — this header was
