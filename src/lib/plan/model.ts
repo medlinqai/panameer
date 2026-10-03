@@ -146,18 +146,53 @@ function startOfUtcDay(d: Date): Date {
  * ⚠⚠ `total` IS RETURNED BESIDE `percent` SO A SURFACE CAN PRINT "12 of 34"
  * AND NEVER HAVE TO RE-DERIVE IT. One definition, one place.
  */
-export type Readiness = { done: number; total: number; percent: number | null };
+export type Readiness = {
+  done: number;
+  /** ⚠ `In progress` rows, returned so a surface never recounts them (`E585`). */
+  moving: number;
+  total: number;
+  percent: number | null;
+};
 
+/**
+ * ── ⚠⚠⚠ HALF CREDIT FOR WORK IN PROGRESS — SCOTT, 2026-10-03 (`E797`) ───────
+ *
+ * ⚠ **THE RULE: `(Done + ½ × In progress) ÷ countable rows`.** `Blocked` and
+ * `Planned` count **0**.
+ * ⚠⚠ **SUPERSEDED, quoted not deleted (`E164`):**
+ * //   const done = counted.filter((r) => r.status === "Done").length;
+ * //   percent = Math.round((done / counted.length) * 100)
+ *
+ * ⚠⚠ **WHY IT IS NOT A SOFTENING OF THE NUMBER:** on a plan where most rows are
+ * open, Done-only readiness sits near zero for weeks while real work moves, so
+ * the figure stops tracking the thing it names. ⚠ Half is the honest weight for
+ * a row that has started and not finished — it is not a claim about how far
+ * through that row is, and no row may ever be weighted by a guess at its own
+ * progress.
+ * ⚠⚠⚠ **`done` AND `moving` ARE STILL RETURNED AS WHOLE COUNTS.** The halving
+ * lives in the PERCENTAGE only, so *"66 done · 36 moving"* keeps meaning
+ * exactly what it says — a reader must always be able to get back to the rows
+ * behind the figure.
+ */
 export function readiness<T extends PlanRowLike>(rows: readonly T[]): Readiness {
   const counted = countableRows(rows);
   const done = counted.filter((r) => r.status === "Done").length;
+  const moving = counted.filter((r) => r.status === "In progress").length;
+  /** ⚠ `Blocked` and `Planned` are absent from this sum ON PURPOSE, not by
+   *  oversight: neither has produced anything yet. */
+  const credit = done + moving / 2;
   /**
    * ⚠⚠⚠ AN EMPTY PLAN RETURNS `percent: null`, NOT `0`. A plan with no rows is
    * UNCOUNTABLE, not 0% complete, and the two must not look the same — the
    * 2026-09-23 counting rule, applied here at its source rather than left to
    * each card to remember.
    */
-  return { done, total: counted.length, percent: counted.length === 0 ? null : Math.round((done / counted.length) * 100) };
+  return {
+    done,
+    moving,
+    total: counted.length,
+    percent: counted.length === 0 ? null : Math.round((credit / counted.length) * 100),
+  };
 }
 
 /** The same rule, for one release's rows. ⚠ A release nobody has tagged is

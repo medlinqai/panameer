@@ -38,6 +38,15 @@ test("the Build Line is drawn from the plan, not the AIM phase dates", async ({ 
 test("the Gantt is lighter: 4px task bars, 6px top-level, rounded", async ({ page }) => {
   await page.goto("/status", { waitUntil: "domcontentloaded" });
   await page.setViewportSize({ width: 1280, height: 1000 });
+  /**
+   * ⚠⚠⚠ A PHASE IS EXPANDED FIRST, OR THIS TEST STOPS SEEING TASK BARS AT ALL.
+   * Since `E797` made phases collapse by default, a first load draws only
+   * top-level bars — so the 4px half of the assertion would have gone vacuous
+   * while staying green (`E776`'s failure, and ruling 9: a gate whose population
+   * changed is a gate that moved).
+   */
+  const toggle = page.locator('[aria-label="Plan timeline"] [data-plan-row] button').first();
+  if (await toggle.count()) await toggle.click();
   /** ⚠ `[data-plan-bar]` — a declared hook. Selecting `span[title]` matched the
    *  row label once it gained a tooltip, which is the same class of mistake as
    *  `E776`'s `.tabular-nums`. */
@@ -54,8 +63,11 @@ test("the Gantt is lighter: 4px task bars, 6px top-level, rounded", async ({ pag
   expect(bars.length, "no bars to measure").toBeGreaterThan(3);
   /** ⚠ 4px or 6px for a bar; the milestone diamond is 10px and is excluded by
    *  its own rotation class, so it is allowed through here. */
+  /** ⚠ `E797` added the open-ended kinds `task-open` / `top-open`, which are the
+   *  same two heights — the suffix says the END is unknown, not that the bar is
+   *  a different weight. */
   const bad = bars.filter((b) =>
-    b.kind === "milestone" ? b.h !== 10 : b.kind === "task" ? b.h !== 4 : b.h !== 6,
+    b.kind === "milestone" ? b.h !== 10 : b.kind.startsWith("task") ? b.h !== 4 : b.h !== 6,
   );
   expect(bad, `task bars 4px · top-level 6px · diamonds 10px: ${JSON.stringify(bad)}`).toEqual([]);
   /** ⚠⚠ THE DIAMOND IS EXCLUDED, AND THAT IS NOT A LOOSENING. A milestone mark
@@ -64,7 +76,7 @@ test("the Gantt is lighter: 4px task bars, 6px top-level, rounded", async ({ pag
    *  BARS are asserted rounded. */
   /** ⚠ By KIND now, not by height — a diamond is excluded because it IS a
    *  diamond, not because it happens to be 10px. */
-  const barsOnly = bars.filter((b) => b.kind !== "milestone");
+  const barsOnly = bars.filter((b) => b.kind !== "milestone" && b.kind !== "none");
   expect(barsOnly.length, "no 4/6px bars to check for rounding").toBeGreaterThan(2);
   expect(
     barsOnly.every((b) => b.r !== "0px"),

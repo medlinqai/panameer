@@ -241,6 +241,63 @@ async function main() {
     "a release with no rows must not read 0%",
   );
 
+  /* ── §3 (cont.) HALF CREDIT FOR IN PROGRESS — `E797` ───────────────────── */
+  /*
+    ⚠⚠⚠ THE §3a FIXTURE HAS NO `In progress` ROW, SO IT CANNOT TEST THIS RULE
+    AT ALL — it passed before the change and after it, unaltered. ⚠ That is
+    ruling 12 in miniature: an assertion the mutation cannot fail. These checks
+    exist because the rule needed a fixture that can tell the versions apart.
+  */
+  const weighted = [
+    row({ id: "w-d1", sort: 0, status: "Done" }),
+    row({ id: "w-d2", sort: 1, status: "Done" }),
+    row({ id: "w-i1", sort: 2, status: "In progress" }),
+    row({ id: "w-b1", sort: 3, status: "Blocked" }),
+    row({ id: "w-pl", sort: 4, status: "Planned" }),
+  ];
+  const w = readiness(weighted);
+  check(
+    "3i — (Done + half of In progress) over countable rows",
+    w.done === 2 && w.moving === 1 && w.total === 5 && w.percent === 50,
+    `got done ${w.done} moving ${w.moving} of ${w.total} = ${w.percent}% — expected 2, 1, 5, 50%`,
+  );
+  /*
+    ⚠⚠ EVERY FIXTURE VALUE IS DIFFERENT — 2, 1, 5, 50 — so no two of them can
+    agree by accident (ruling 11, the two-zeros case).
+    ⚠⚠⚠ AND THE NUMBER DISCRIMINATES BETWEEN ALL THREE CANDIDATE RULES: full
+    credit for In progress would read 60%, no credit 40%, half credit 50%.
+  */
+  check(
+    "3j — Blocked and Planned earn nothing, and In progress earns half",
+    readiness([row({ id: "x", status: "In progress" })]).percent === 50 &&
+      readiness([row({ id: "x", status: "Blocked" })]).percent === 0 &&
+      readiness([row({ id: "x", status: "Planned" })]).percent === 0,
+    "one row of each status, alone: 50 / 0 / 0",
+  );
+  check(
+    "3k — the COUNTS stay whole, and only the percentage is halved",
+    Number.isInteger(w.done) && Number.isInteger(w.moving),
+    `"${w.done} done · ${w.moving} moving" must stay countable back to rows`,
+  );
+  check(
+    "3l — a half rounds like any other figure",
+    readiness([
+      row({ id: "r1", sort: 0, status: "In progress" }),
+      row({ id: "r2", sort: 1, status: "Planned" }),
+      row({ id: "r3", sort: 2, status: "Planned" }),
+    ]).percent === 17,
+    "0.5 of 3 is 16.67, printed as 17",
+  );
+  const movingRel = [
+    row({ id: "mr-a", release_id: rel, status: "Done" }),
+    row({ id: "mr-b", release_id: rel, status: "In progress" }),
+  ];
+  check(
+    "3m — a release's readiness uses the same rule",
+    releaseReadiness(movingRel, rel).percent === 75,
+    "1 done + half of 1 moving, over 2 rows",
+  );
+
   /* ── §4 span ──────────────────────────────────────────────────────────── */
 
   check("4a — no dates means nothing to draw", planSpan([row({ id: "x" })]) === null, "must be null, not epoch→now");
