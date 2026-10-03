@@ -31,11 +31,14 @@ export type ReleaseOption = { id: string; label: string };
  * ⚠ 44px, not the 36px the rest of admin uses. The brief asks for it on the row
  * controls and `E789` asks for it everywhere; a 36px × on a phone is a miss.
  */
-const TAP = "inline-flex h-11 w-11 items-center justify-center rounded-[4px] text-[15px] text-ink-2 transition-colors hover:bg-ink/5 disabled:opacity-30";
+/* `TAP` left with the stacked field cards (`E808`); `GRIP` replaced it. */
 const BTN = "inline-flex min-h-11 items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
 const BTN_2 = "inline-flex min-h-11 items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 /** ⚠ A thin underline, not a box: twenty boxed inputs read as a form. */
 const LINE = "w-full border-0 border-b border-line bg-transparent px-0 py-1.5 text-[14px] text-ink outline-none focus:border-magenta";
+/* A compact glyph button. The ROW is the 44px target; eight 44px buttons on one
+   line would not fit, so these are 28px inside a 44px-tall row. */
+const GRIP = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded-[3px] text-[13px] text-ink-2 transition-colors hover:bg-ink/5 disabled:opacity-25";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -43,16 +46,22 @@ export function PlanOutlineEditor({
   rows: initialRows,
   ownerKey,
   endpoint = "/api/admin/plan",
-  releases = [],
   today = new Date(),
 }: {
   rows: EditorRow[];
   ownerKey: string;
   endpoint?: string;
+  /**
+   * SUPERSEDED (`E808`): a row's release is the release it SITS UNDER now that
+   * releases are top-level rows, so the per-row dropdown is gone. The prop is
+   * still DECLARED — the admin page passes it — and deliberately unread.
+   */
   releases?: ReleaseOption[];
   today?: Date;
 }) {
   const [rows, setRows] = useState<EditorRow[]>(initialRows);
+  /** Folded parents, while editing. Nothing persists — a reload opens it all. */
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [inFlight, setInFlight] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<SaveState>("idle");
@@ -197,7 +206,7 @@ export function PlanOutlineEditor({
   }, [post]);
 
   const addRow = useCallback(
-    async (opts: { type?: RowType; parentId?: string | null; afterId?: string | null }) => {
+    async (opts: { type?: RowType; parentId?: string | null; afterId?: string | null; top?: boolean }) => {
       const json = await post({ action: "add", type: opts.type ?? "task", parentId: opts.parentId ?? null, afterId: opts.afterId ?? null });
       const row = json?.row as PlanRowLike | undefined;
       if (row) focusRef.current = row.id;
@@ -270,6 +279,29 @@ export function PlanOutlineEditor({
   const tree = useMemo(() => buildTree(rows.map(toModelRow)), [rows]);
   const ordered = useMemo(() => flattenTree(tree), [tree]);
   const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
+
+  const childCount = useCallback(
+    (id: string) => rows.filter((r) => r.parent_id === id).length,
+    [rows],
+  );
+
+  /**
+   * The rows on screen: everything whose ancestors are all expanded. Walked up
+   * the chain rather than tracked as a flag, so collapsing a release hides its
+   * tasks too without a second bookkeeping path.
+   */
+  const visible = useMemo(() => {
+    if (collapsed.size === 0) return ordered;
+    const hidden = (id: string | null): boolean => {
+      let parentId = id;
+      while (parentId) {
+        if (collapsed.has(parentId)) return true;
+        parentId = byId.get(parentId)?.parent_id ?? null;
+      }
+      return false;
+    };
+    return ordered.filter((n) => !hidden(byId.get(n.id)?.parent_id ?? null));
+  }, [ordered, collapsed, byId]);
 
   /**
    * ── ⚠⚠ KEYBOARD — AND THE ONE TRADE-OFF, STATED ───────────────────────────
@@ -356,20 +388,23 @@ export function PlanOutlineEditor({
           No rows yet. Start with a phase, or start from the template above.
         </p>
       ) : (
-        <ol className="mt-5 space-y-0">
-          {ordered.map((node) => {
+        <ol className="mt-5">
+          {visible.map((node) => {
             const row = byId.get(node.id)!;
             const late = isLate(toModelRow(row), today);
             const isMilestone = row.type === "milestone";
+            const isRelease = row.type === "release";
+            const kids = childCount(row.id);
+            const shut = collapsed.has(row.id);
             return (
               <li
                 key={row.id}
-                /* ⚠ The indent is the ONLY thing that shows depth on a phone,
-                   so it is on the row, not on a wrapper that could be dropped
-                   by a narrow breakpoint. */
-                className={
-                  "border-b border-line/60 py-2.5 " + (node.depth === 1 ? "pl-4 sm:pl-8" : "")
-                }
+                data-plan-editor-row={node.number || row.title}
+                data-plan-depth={node.depth}
+                /* 28px per level, on the ROW rather than a wrapper, so a narrow
+                   breakpoint cannot drop the only thing that shows depth. */
+                style={{ paddingLeft: node.depth * 28 }}
+                className="relative border-b border-line/60"
                 draggable
                 onDragStart={() => setDragId(row.id)}
                 onDragEnd={() => setDragId(null)}
@@ -385,114 +420,132 @@ export function PlanOutlineEditor({
                   if (index >= 0) void structural("move", dragId, { index });
                 }}
               >
-                <div className="flex items-start gap-2">
+                {/* A thin guide per ancestor level, so a child reads as
+                    belonging to the row above it rather than merely sitting
+                    further right. */}
+                {Array.from({ length: node.depth }, (_, i) => (
+                  <span
+                    key={i}
+                    aria-hidden
+                    className="absolute inset-y-0 w-px bg-line"
+                    style={{ left: i * 28 + 13 }}
+                  />
+                ))}
+
+                <div
+                  /* `min-h-11` — the ROW is the 44px target; the glyph buttons
+                     inside it are 28px because eight 44px buttons would not fit
+                     on one line. Measured 43px at `py-1`. */
+                  className="flex min-h-11 flex-wrap items-center gap-x-1.5 gap-y-1 py-1 sm:flex-nowrap"
+                >
                   <button
                     type="button"
                     aria-label={`Reorder ${row.title || "row"} — use the up and down arrows`}
-                    className={TAP + " cursor-grab"}
+                    className={GRIP + " cursor-grab"}
                     onKeyDown={(e) => onHandleKey(e, row)}
                   >
                     ⠿
                   </button>
+
+                  {/* ▸/▾ while editing — a parent can be folded away so a long
+                      plan stays navigable. Leaves get a spacer, or the numbers
+                      would not line up. */}
+                  {kids > 0 ? (
+                    <button
+                      type="button"
+                      aria-label={`${shut ? "Expand" : "Collapse"} ${row.title || "row"}`}
+                      aria-expanded={!shut}
+                      className={GRIP}
+                      onClick={() =>
+                        setCollapsed((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(row.id)) next.delete(row.id);
+                          else next.add(row.id);
+                          return next;
+                        })
+                      }
+                    >
+                      {shut ? "▸" : "▾"}
+                    </button>
+                  ) : (
+                    <span aria-hidden className="inline-block w-6 shrink-0" />
+                  )}
+
                   <span
-                    /* ⚠ A stable test hook, not debris — the same reason
-                       `data-journey-desc` exists on `/status`. A class-based
-                       selector would break the moment the styling changes. */
                     data-plan-number
-                    className={
-                      "mt-2.5 min-w-[2.5rem] shrink-0 text-[13px] font-bold tabular-nums " +
-                      (isMilestone ? "text-magenta" : "text-ink-2")
-                    }
+                    className="w-10 shrink-0 tabular-nums text-[11px] text-ink-3"
                   >
                     {node.number}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <input
-                      data-plan-title={row.id}
-                      value={row.title}
-                      onChange={(e) => patch(row.id, "title", e.target.value, "title")}
-                      onKeyDown={(e) => onTitleKey(e, row)}
-                      onBlur={flush}
-                      placeholder={isMilestone ? "Milestone" : node.depth === 0 ? "Phase" : "Task"}
-                      aria-label={`${node.number} title`}
-                      className={LINE + " font-bold"}
-                    />
-                    {/* ⚠ Phone-first: the fields stack under the title and
-                        become one row from `sm` up. */}
-                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-[repeat(4,minmax(0,1fr))]">
-                      <label className="block">
-                        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-2">Start</span>
-                        <input
-                          type="date"
-                          value={row.start_date}
-                          onChange={(e) => patch(row.id, "start_date", e.target.value, "startDate")}
-                          onBlur={flush}
-                          className={LINE}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-2">End</span>
-                        <input
-                          type="date"
-                          value={row.end_date}
-                          onChange={(e) => patch(row.id, "end_date", e.target.value, "endDate")}
-                          onBlur={flush}
-                          className={LINE}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-2">Status</span>
-                        <select
-                          value={row.status}
-                          onChange={(e) => patch(row.id, "status", e.target.value as RowStatus, "status")}
-                          className={LINE}
-                        >
-                          {ROW_STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="block">
-                        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-2">Owner</span>
-                        <input
-                          value={row.owner}
-                          onChange={(e) => patch(row.id, "owner", e.target.value, "owner")}
-                          onBlur={flush}
-                          className={LINE}
-                        />
-                      </label>
-                    </div>
-                    {releases.length > 0 && (
-                      <label className="mt-2 block max-w-[22rem]">
-                        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-2">Release</span>
-                        <select
-                          value={row.release_id ?? ""}
-                          onChange={(e) => patch(row.id, "release_id", e.target.value || null, "releaseId")}
-                          className={LINE}
-                        >
-                          <option value="">Not in a release</option>
-                          {releases.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                    {late && (
-                      /** ⚠⚠ `Late` IS DERIVED AND SAYS SO — it is not a status
-                       *  anybody picked, and the status dropdown above still
-                       *  reads what Scott set. */
-                      <p className="mt-1.5 text-[12px] font-bold text-magenta">Past its end date</p>
-                    )}
-                  </div>
-                  <div data-plan-controls={row.id} className="flex shrink-0 items-center">
+
+                  <input
+                    data-plan-title={row.id}
+                    value={row.title}
+                    onChange={(e) => patch(row.id, "title", e.target.value, "title")}
+                    onKeyDown={(e) => onTitleKey(e, row)}
+                    onBlur={flush}
+                    placeholder={
+                      isRelease ? "Release" : isMilestone ? "Milestone" : node.depth === 0 ? "Phase" : "Task"
+                    }
+                    aria-label={`${node.number || row.title} title`}
+                    /* Weight by level: a release or top phase bold, a phase
+                       inside a release semibold, a task regular. */
+                    className={
+                      LINE +
+                      " min-w-0 flex-1 basis-full sm:basis-auto " +
+                      (node.depth === 0 ? "font-bold" : node.depth === 1 ? "font-semibold" : "font-normal")
+                    }
+                  />
+
+                  <input
+                    type="date"
+                    value={row.start_date}
+                    onChange={(e) => patch(row.id, "start_date", e.target.value, "startDate")}
+                    onBlur={flush}
+                    aria-label={`${node.number || row.title} start`}
+                    className={LINE + " w-[8.5rem] shrink-0 tabular-nums"}
+                  />
+                  <input
+                    type="date"
+                    value={row.end_date}
+                    onChange={(e) => patch(row.id, "end_date", e.target.value, "endDate")}
+                    onBlur={flush}
+                    aria-label={`${node.number || row.title} end`}
+                    className={LINE + " w-[8.5rem] shrink-0 tabular-nums"}
+                  />
+                  <select
+                    value={row.status}
+                    onChange={(e) => patch(row.id, "status", e.target.value as RowStatus, "status")}
+                    aria-label={`${node.number || row.title} status`}
+                    className={LINE + " w-[7.5rem] shrink-0"}
+                  >
+                    {ROW_STATUSES.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={row.owner}
+                    onChange={(e) => patch(row.id, "owner", e.target.value, "owner")}
+                    onBlur={flush}
+                    placeholder="Owner"
+                    aria-label={`${node.number || row.title} owner`}
+                    className={LINE + " w-[7rem] shrink-0"}
+                  />
+                  {late && (
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-magenta">
+                      Past due
+                    </span>
+                  )}
+
+                  <span data-plan-controls={row.id} className="flex shrink-0 items-center">
                     <button
                       type="button"
-                      className={TAP}
+                      className={GRIP}
                       aria-label={`Outdent ${row.title || "row"}`}
+                      /* Any nested row can come out one level — milestones
+                         included (Scott, 2026-10-03). */
                       disabled={!row.parent_id}
                       onClick={() => void structural("outdent", row.id)}
                     >
@@ -500,22 +553,25 @@ export function PlanOutlineEditor({
                     </button>
                     <button
                       type="button"
-                      className={TAP}
+                      className={GRIP}
                       aria-label={`Indent ${row.title || "row"}`}
-                      disabled={!!row.parent_id}
+                      /* Up to the third level, at any depth below the cap. It
+                         was `!!row.parent_id`, which refused every nested row
+                         and every milestone under a phase. */
+                      disabled={node.depth >= 2}
                       onClick={() => void structural("indent", row.id)}
                     >
                       →
                     </button>
                     <button
                       type="button"
-                      className={TAP + " hover:text-magenta"}
+                      className={GRIP + " hover:text-magenta"}
                       aria-label={`Delete ${row.title || "row"}`}
                       onClick={() => void removeRow(row)}
                     >
                       ×
                     </button>
-                  </div>
+                  </span>
                 </div>
               </li>
             );
@@ -532,6 +588,11 @@ export function PlanOutlineEditor({
         </button>
         <button type="button" className={BTN_2} onClick={() => void addRow({ type: "milestone" })}>
           + Add Milestone {MILESTONE_MARK}
+        </button>
+        {/* A release is always top-level — it is the container the phases sit
+            in, so it cannot be created inside one (Scott, 2026-10-03). */}
+        <button type="button" className={BTN_2} onClick={() => void addRow({ type: "release", top: true })}>
+          + Add Release
         </button>
       </div>
     </div>
