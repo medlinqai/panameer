@@ -314,7 +314,10 @@ export function WorkTrackerEditor({
   return (
     <div className="bg-surface">
       <header className="border-b border-line pb-5">
-        <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-magenta">Work Tracker</p>
+        {/* ⚠ Renamed with `E785` so this page and `Build Plan` are tellable apart;
+            the data behind it is unchanged. ⚠ SUPERSEDED, quoted (`E164`):
+            //   <p className="...">Work Tracker</p> */}
+        <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-magenta">AIM Checklist</p>
         <h1 className="mt-1 font-display text-[26px] font-bold tracking-[-0.3px] text-ink">
           The build, as it stands
         </h1>
