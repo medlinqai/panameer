@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RerunDiff } from "@/lib/resume/rerun-diff";
 
 /**
@@ -37,6 +37,9 @@ export function ResumeImportAction({
   onApplied,
   label = "Import from résumé",
   showContext = false,
+  autoStart = false,
+  reuseStored = false,
+  emptyFallback,
 }: {
   /**
    * ── ⚠⚠ THE CONTRACT IS THE FULL RECEIPT NOW (`E561` WS-B) ────────────────
@@ -63,6 +66,35 @@ export function ResumeImportAction({
    * which surface it is on, and it must not become that.
    */
   showContext?: boolean;
+  /**
+   * ── ⚠⚠⚠ START READING IMMEDIATELY (`P2-ALL-E782`) ──────────────────
+   *
+   * ⚠ **SCOTT, after uploading an 11k-character CV:** the Upload *"appears to do
+   * nothing."* ⚠⚠ It had worked — his row banked 10,985 characters and a full
+   * parse — but the panel that replaced the uploader offered only
+   * *"↻ Read it again"*, so the next thing he saw after a **68-second** upload was
+   * a button proposing to do the thing he had just done.
+   *
+   * ⚠ With this on, the component goes straight to the preview. ⚠⚠ **OFF BY
+   * DEFAULT, so the wizard's Work History header is unchanged.**
+   */
+  autoStart?: boolean;
+  /**
+   * ⚠⚠ Reuse the parse the UPLOAD already banked instead of asking the model
+   * again. ⚠ Only the just-uploaded path sets this — *"Read it again"* must
+   * really re-read.
+   */
+  reuseStored?: boolean;
+  /**
+   * ── ⚠⚠⚠ NEVER AN EMPTY PANEL (`P2-ALL-E782`) ────────────────────
+   *
+   * ⚠ This component returns `null` when there is no readable document, which is
+   * RIGHT in the wizard — offering a button that can only 404 is worse than
+   * offering none. ⚠⚠⚠ **IT IS WRONG WHERE SOMETHING WAS JUST REPLACED BY IT:**
+   * the caller renders a panel, the panel renders nothing, and the page looks
+   * broken. ⚠ A caller that puts something here gets it instead of the silence.
+   */
+  emptyFallback?: React.ReactNode;
 }) {
   const [info, setInfo] = useState<{
     available: boolean;
@@ -88,6 +120,8 @@ export function ResumeImportAction({
   const [tickedRest, setTickedRest] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** ⚠ One-shot guard for `autoStart` — see the effect below. */
+  const startedRef = useRef(false);
 
   useEffect(() => {
     let live = true;
@@ -100,8 +134,13 @@ export function ResumeImportAction({
     };
   }, []);
 
-  if (!info?.available || !info.hasDocument) return null;
-
+  /*
+    ⚠⚠ `preview` IS DECLARED ABOVE THE EFFECT THAT CALLS IT, AND THAT ORDER IS
+    FORCED: `react-hooks` fails the build with *"Cannot access variable before it
+    is declared"* otherwise, and the hook cannot move below the early return that
+    used to separate them. ⚠ It is a plain function, not a hook, so hoisting it
+    changes nothing about when it runs.
+  */
   const preview = async () => {
     setStage("reading");
     setError(null);
@@ -109,7 +148,9 @@ export function ResumeImportAction({
       const r = await fetch("/api/onboarding/provider/resume-ai", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode: "preview" }),
+        /* ⚠ `reuseStored` skips a second 25–70 s model call when the upload has
+           already banked the parse (`E782`). */
+        body: JSON.stringify({ mode: "preview", reuseStored: Boolean(reuseStored) }),
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -131,6 +172,46 @@ export function ResumeImportAction({
       setStage("idle");
     }
   };
+
+  /*
+    ── ⚠⚠⚠ GO STRAIGHT TO "WHAT WE FOUND" (`P2-ALL-E782`) ──────────────────────
+
+    ⚠ It waits for the availability probe, because starting before it answers
+    would fire against a component that is about to render its empty fallback.
+    ⚠⚠ `startedRef` and not a state flag: this must fire EXACTLY ONCE. `preview()`
+    sets state, which re-runs effects, and a second call would be the second
+    60-second read this whole change exists to remove.
+  */
+  useEffect(() => {
+    if (!autoStart || startedRef.current) return;
+    if (!info?.available || !info.hasDocument) return;
+    startedRef.current = true;
+    /*
+      ⚠⚠ DEFERRED OFF THE EFFECT BODY, NOT STYLE. `preview()` calls
+      `setStage("reading")`, and `react-hooks` fails the build on *"Calling
+      setState synchronously within an effect"* — this repo carries 11 of those
+      errors already and the standing rule is **0 NEW**. ⚠ A microtask runs after
+      the effect returns, so the first paint is the panel and the second is the
+      reading line; nothing else about the timing changes.
+    */
+    queueMicrotask(() => void preview());
+    /* ⚠ `preview` is stable enough for this one-shot and is deliberately not a
+       dependency — adding it would re-run this on every render it closes over. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, info]);
+
+  /*
+    ⚠⚠ STILL `null` BY DEFAULT — the wizard depends on it. ⚠⚠ But a caller that
+    supplied `emptyFallback` has already drawn a container for this, so silence
+    there is the empty panel `E782` is about. ⚠ `info === null` means the probe
+    has not answered yet and is NOT "no document": that case keeps rendering
+    nothing, because a fallback flashed for 200ms would be its own lie.
+  */
+  if (info && (!info.available || !info.hasDocument)) {
+    return emptyFallback ? <>{emptyFallback}</> : null;
+  }
+  if (!info?.available || !info.hasDocument) return null;
+
 
   const apply = async () => {
     setStage("saving");
@@ -506,9 +587,27 @@ export function ResumeImportAction({
   if (stage === "confirm" || stage === "reading") {
     return (
       <span className="flex flex-wrap items-center gap-2 text-[13px]">
+        {/*
+          ── ⚠⚠⚠ NO SILENT WAIT (`P2-ALL-E782`, Scott) ──────────────────────────
+          ⚠ **MEASURED: a whole read of this CV took 64.5 s.** A spinner labelled
+          *"Reading…"* beside an unchanged sentence is not enough at that length —
+          it is the same silence the upload had.
+          ⚠⚠ **THE MINUTE IS NAMED**, so a wait that long reads as expected rather
+          than as broken. ⚠ It says "about a minute" and not a countdown: the
+          measured range is 25–70 s and a precise number we cannot keep would be
+          worse than an honest approximation.
+        */}
         <span className="text-ink-2">
-          Read <b className="text-ink">{info.documentName}</b> again? We&apos;ll show
-          you what changed before anything is saved.
+          {stage === "reading" ? (
+            <>
+              Reading your résumé… <b className="text-ink">this takes about a minute.</b>
+            </>
+          ) : (
+            <>
+              Read <b className="text-ink">{info.documentName}</b> again? We&apos;ll
+              show you what changed before anything is saved.
+            </>
+          )}
         </span>
         <button
           type="button"

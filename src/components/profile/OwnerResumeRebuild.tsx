@@ -62,6 +62,8 @@ export function OwnerResumeRebuild() {
   const [info, setInfo] = useState<Info | null>(null);
   /** `link` → the text link · `choose` → the two sources · `panel` → preview/diff/save. */
   const [stage, setStage] = useState<"link" | "choose" | "panel">("link");
+  /** ⚠ True only on the upload branch — see the panel stage (`E782`). */
+  const [justUploaded, setJustUploaded] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [receipt, setReceipt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -118,11 +120,51 @@ export function OwnerResumeRebuild() {
         {/* ⚠ THE EXISTING FLOW, UNCHANGED: confirm → PREVIEW (writes nothing) → a ticked diff
             → apply only what was ticked → a receipt of what was written. ⚠⚠ NOT
             RE-IMPLEMENTED HERE — `E585`, and `E561` WS-B paid for that flow once already. */}
+        {/*
+          ── ⚠⚠⚠ AFTER AN UPLOAD THIS GOES STRAIGHT TO "What we found" (`E782`) ──
+
+          ⚠ **SCOTT:** the Upload *"appears to do nothing."* ⚠⚠ It had worked — his
+          row banked 10,985 characters and a full parse — but this panel offered only
+          *"↻ Read it again"*, so after a **68-second** upload the next thing he saw
+          was a button proposing to do what he had just done. Two more clicks stood
+          between him and the result.
+          ⚠⚠⚠ **`justUploaded` IS THE WHOLE DIFFERENCE.** Reached from *"Use the one on
+          file"* the panel still ASKS first — that document may be months old and the
+          member has not just waited for anything.
+          ⚠ `reuseStored` goes with it: the upload's parse is seconds old, so asking
+          the model again would be a second 25–70 s call for the same answer.
+        */}
         <ResumeImportAction
           label="Read it again"
           showContext
+          autoStart={justUploaded}
+          reuseStored={justUploaded}
           onApplied={() => router.refresh()}
+          /*
+            ── ⚠⚠⚠ NEVER AN EMPTY PANEL (`E782`) ─────────────────────────────────
+            ⚠ `ResumeImportAction` renders NOTHING when there is no readable
+            document. ⚠⚠ That is right in the wizard and wrong here: this component
+            has just replaced the uploader with a container, and an empty container
+            is indistinguishable from a broken page — which is exactly what the bug
+            report said.
+          */
+          emptyFallback={
+            <p className="text-[13px] text-ink-2">
+              We saved the file, but there is no readable text in it yet, so there is
+              nothing to show. Try uploading it again, or a PDF or Word version.
+            </p>
+          }
         />
+        {/*
+          ⚠⚠⚠ AND THE ERROR IS RENDERED HERE TOO. It was only ever shown in the
+          `choose` stage, which is gone by the time this one mounts — so an upload
+          that reported a problem on its way into this panel said nothing at all.
+        */}
+        {error && (
+          <p role="alert" className="mt-2 text-[12px] text-red-600">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -159,7 +201,12 @@ export function OwnerResumeRebuild() {
                   actually exists — otherwise it is a button that can only return nothing. */}
               <button
                 type="button"
-                onClick={() => setStage("panel")}
+                onClick={() => {
+                  /* ⚠ Not an upload: this document may be months old, so the panel
+                     asks before spending a read (`E782`). */
+                  setJustUploaded(false);
+                  setStage("panel");
+                }}
                 className="text-[13px] font-bold text-magenta transition-colors hover:text-magenta-dark"
               >
                 Use the one on file
@@ -208,6 +255,9 @@ export function OwnerResumeRebuild() {
             */
             setError(null);
             setReceipt(null);
+            /* ⚠ `justUploaded` is what tells the panel to go straight to the
+               preview rather than offering to re-read (`E782`). */
+            setJustUploaded(true);
             setStage("panel");
           }}
         />

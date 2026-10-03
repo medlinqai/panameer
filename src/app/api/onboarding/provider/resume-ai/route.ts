@@ -5,6 +5,7 @@ import { getSessionViewer } from "@/lib/session";
 import { ownedProviderProfile } from "@/lib/access";
 import { aiExtractResume, aiToParsedResume, aiExtractionAvailable, PROMPT_VERSION } from "@/lib/resume/ai-extract";
 import { applyParsedResume } from "@/lib/resume/import";
+import type { ParsedResume } from "@/lib/resume/parse";
 import { computeRerunDiff } from "@/lib/resume/rerun-diff";
 import { getOnboardingState } from "@/lib/onboarding";
 import { assessParse } from "@/lib/resume/confidence";
@@ -92,13 +93,60 @@ export async function POST(req: Request) {
   const row = await prisma.profileImport.findFirst({
     where: { provider_profile_id: profile.id },
     orderBy: { created_at: "desc" },
-    select: { id: true, raw_text: true },
+    select: { id: true, raw_text: true, parsed: true },
   });
   if (!row?.raw_text) {
     return NextResponse.json(
       { error: "There's no uploaded document to re-read." },
       { status: 404 }
     );
+  }
+
+  /*
+    ── ⚠⚠⚠ THE BODY IS READ **BEFORE** THE PARSE NOW (`P2-ALL-E782`) ───────
+
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the reasoning that put it after:
+    //   THE MODE IS READ AFTER THE PARSE, DELIBERATELY. The parse is the
+    //   expensive half and BOTH modes need it; branching earlier would
+    //   duplicate it.
+    ⚠⚠ **THAT WAS TRUE OF `preview` vs `apply` AND IS STILL TRUE OF THEM.** It is
+    not true of `reuseStored`, whose entire purpose is to SKIP the parse — so the
+    one branch that must be decided before the expensive half now is.
+  */
+  const body = (await req.json().catch(() => null)) as
+    | { mode?: string; reuseStored?: boolean }
+    | null;
+  const preview = body?.mode === "preview";
+
+  /*
+    ── ⚠⚠⚠ DO NOT READ THE SAME DOCUMENT TWICE (`P2-ALL-E782`, Scott) ─────
+
+    ⚠ **SCOTT:** *"Don't read the résumé twice. The upload already parsed it."*
+
+    ⚠⚠ **MEASURED ON HIS OWN ROW:** the upload banked a complete parse — 11 keys,
+    4 experiences, 78 skills, `ai_model=gpt-5-nano`, `prompt=2026-09-17.a` — and
+    cost **64.5 s**. Asking the model again would have cost another 25–70 s and
+    $0.004–$0.008 to produce the same answer (load-bearing rule 9: a paid call
+    nobody needs is not a convenience an implementation reaches for).
+    ⚠ `computeRerunDiff` is pure, so the diff off a banked parse is the same diff.
+
+    ⚠⚠ **IT IS OPT-IN, AND *"Read it again"* STILL MEANS IT.** Only the
+    just-uploaded path asks to reuse; the re-read offer exists for a document
+    parsed months ago under an older prompt, and silently serving it a cached
+    answer would break the one thing it promises.
+    ⚠ **IF THERE IS NO BANKED PARSE IT FALLS THROUGH AND READS** — that is a FIRST
+    read, not a second, and the caller shows the reading status while it happens.
+  */
+  const stored = preview && body?.reuseStored === true ? row.parsed : null;
+  if (stored) {
+    const diff = await computeRerunDiff(
+      profile.id,
+      /* ⚠ The column holds exactly what `aiToParsedResume` produced; it is JSON on
+         the way out, so the shape is re-asserted here and nowhere else. */
+      stored as unknown as ParsedResume,
+    );
+    console.info(`[resume] path=preview-reused import=${row.id}`);
+    return NextResponse.json({ ok: true, preview: true, reused: true, diff });
   }
 
   const outcome = await aiExtractResume(row.raw_text);
@@ -147,9 +195,6 @@ export async function POST(req: Request) {
     half and BOTH modes need it; branching earlier would duplicate it.
     ⚠⚠ A malformed or absent body means APPLY — the historical behaviour.
   */
-  const body = await req.json().catch(() => null);
-  const preview = (body as { mode?: string } | null)?.mode === "preview";
-
   if (preview) {
     /* ⚠ Bank the parse so a later apply reuses it without a second model call. */
     await prisma.profileImport.update({
@@ -160,7 +205,7 @@ export async function POST(req: Request) {
     /* ⚠⚠ NO `applied`, NO `state` — nothing changed, and returning an `applied`
        shape here would invite a caller to render a receipt for a write that
        never happened. */
-    return NextResponse.json({ ok: true, preview: true, diff });
+    return NextResponse.json({ ok: true, preview: true, reused: false, diff });
   }
 
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
