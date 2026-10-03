@@ -18,6 +18,7 @@ import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
 import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
+import { countableRows } from "@/lib/plan/model";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -181,13 +182,33 @@ export default async function StatusPage({
   */
   const planReleasePercent = releaseProgressByCode(planRows, releaseIds);
   /*
+    ── ⚠⚠⚠ THE SECONDARY FIGURES COME FROM THE PLAN TOO (`P2-ALL-E790`) ───────
+
+    ⚠⚠ **FOUND ON THE LIVE PAGE MINUTES AFTER `E785` DEPLOYED, AND IT IS THE
+    EXACT FAILURE `E785` EXISTED TO END:** the hero read **0%** (R1's readiness,
+    counted from the plan) while the lines beneath it read **"31% of the whole
+    plan"** and **"66 done · 36 moving"** — those three came from the AIM task
+    states. ⚠⚠⚠ **TWO DEFINITIONS OF PROGRESS, SIDE BY SIDE, AND BOTH LABELLED
+    AS THE PLAN** (`E585`, on the page a stranger lands on).
+    ⚠ `countableRows` is the same rule `readiness()` uses, so "done", "moving"
+    and the total cannot disagree with the percentage above them.
+  */
+  const planCountable = countableRows(planRows);
+  const planMoving = planCountable.filter((r) => r.status === "In progress").length;
+  /*
     ⚠ The CURRENT PHASE section it fed left this page with `E785`; the plan's own
     in-progress phase is the accordion that opens by default instead.
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   const current = t.phases.find((p) => p.current) ?? null;
     //   const currentIndex = t.phases.findIndex((p) => p.current) + 1;
   */
-  const gatesPassed = t.gates.filter((g) => g.passed).length;
+  /*
+    ⚠ `gatesPassed` HAS NO RENDER SINCE `E790` took the gates clause off the
+    hero. ⚠⚠ Quoted rather than deleted (`E164`), and `t.gates` itself is
+    untouched in `public-view.ts` and still served by `/api/status` — the AIM
+    checklist's data was never discarded, only unrendered here.
+    //   const gatesPassed = t.gates.filter((g) => g.passed).length;
+  */
   const rel = t.currentRelease;
   /*
     ⚠ The hero shows the RELEASE's percentage when there is one, and the whole
@@ -389,29 +410,44 @@ export default async function StatusPage({
                 {rel.name}
                 {rel.date && <> · due {dueLabel}</>}
               </>
-            ) : t.overallPercent === null ? (
+            ) : pv.progress.percent === null ? (
+              /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — it tested the AIM
+                 figure while describing the plan:
+                 //   ) : t.overallPercent === null ? ( "nothing countable yet"
+                 //   ) : ( "of the plan complete" ) */
               "nothing countable yet"
             ) : (
               "of the plan complete"
             )}{" "}
             · updated {updated}
           </p>
-          {/* ⚠ The plan figure survives as the SECONDARY number — it is still
-              true, it is just no longer the headline. */}
-          {rel && t.overallPercent !== null && (
+          {/* ⚠ The WHOLE plan's figure, secondary to the release's. ⚠⚠ It is
+              the PLAN's now, not the AIM catalog's (`E790`).
+              ⚠ SUPERSEDED, quoted not deleted (`E164`):
+              //   {rel && t.overallPercent !== null && (
+              //     <p …>{t.overallPercent}% of the whole plan</p>
+              //   )} */}
+          {rel && pv.progress.percent !== null && (
             <p className="mt-1 text-[13px] text-white/60">
-              {t.overallPercent}% of the whole plan
+              {pv.progress.percent}% of the whole plan
             </p>
           )}
           {/*
-            ⚠⚠⚠ `moving` IS EVERY TASK IN PROGRESS, NOT THE CURRENT PHASE'S STAGES.
-            ⚠ Scott: *"it shows 1; it must be every task with status In Progress
-            (27 today)."* The old expression counted ROLLUPS. The query now lives
-            in `public-view.ts` beside `doneCount`, which has always counted tasks
-            — the two were not even counting the same kind of thing.
+            ⚠⚠⚠ `moving` IS EVERY ROW IN PROGRESS, AND SCOTT'S RULE SURVIVES THE
+            CHANGE OF SOURCE: *"it must be every task with status In Progress"* —
+            it is now every countable PLAN ROW with that status, counted by the
+            same `countableRows` rule as the percentage above.
+            ⚠⚠ **THE GATES CLAUSE IS GONE.** Gates are an AIM-catalog concept with
+            no equivalent in a plan, and `E785` took the gate section off this
+            page — leaving "0 of 4 gates" under a plan figure described something
+            the page no longer shows.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   {t.doneCount} done · {t.movingCount} moving · {gatesPassed} of {t.gates.length} gates
+            ⚠ `gatesPassed` and `t.gates` are untouched in `public-view.ts` and
+            still served by `/api/status`; only this render went.
           */}
           <p className="mt-1 text-[14px] text-white/75">
-            {t.doneCount} done · {t.movingCount} moving · {gatesPassed} of {t.gates.length} gates
+            {pv.progress.done} done · {planMoving} moving · {pv.progress.total} rows
           </p>
         </div>
       </div>
