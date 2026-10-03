@@ -194,7 +194,8 @@
     "check:followhop": "playwright test --config=playwright.followhop.config.ts",
     "check:resume-rebuild": "playwright test --config=playwright.e782.config.ts",
     "check:prisma-freshness": "npx esbuild scripts/check-prisma-freshness.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-prisma-freshness.cjs --log-level=error && node .harness/check-prisma-freshness.cjs",
-    "check:task-panel": "npx esbuild scripts/check-task-panel.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-task-panel.cjs --log-level=error && node .harness/check-task-panel.cjs"
+    "check:task-panel": "npx esbuild scripts/check-task-panel.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-task-panel.cjs --log-level=error && node .harness/check-task-panel.cjs",
+    "check:user-edit": "npx esbuild scripts/check-user-edit.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-user-edit.cjs --log-level=error && node -r dotenv/config .harness/check-user-edit.cjs dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

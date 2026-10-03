@@ -143,3 +143,92 @@ test.describe("E800 — the right-side console panel", () => {
     await expect(page.getByRole("link", { name: "Build Plan", exact: true })).toBeVisible();
   });
 });
+
+/**
+ * ── ⚠⚠ EDIT & FIX ON A USER'S PAGE (`P2-ALL-E796`) ──────────────────────────
+ *
+ * ⚠ **SCOTT:** *"I really need to be able to use the app to … manage the data."*
+ * Name, email, roles, verify, lock, deactivate, password reset.
+ *
+ * ⚠⚠⚠ **THIS TEST WRITES NOTHING.** `check:user-edit` owns the refusals and the
+ * writes, against a disposable `is_test` row it creates itself; this asks only
+ * whether the panel is on the page and whether the question appears BEFORE the
+ * action. ⚠ A browser test that locked a real person to prove a button works
+ * would be the defect, not the proof.
+ */
+test.describe("E796 — the user edit panel", () => {
+  test.beforeEach(async ({ page }) => {
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+  });
+
+  test("it renders beside Identity, and Lock asks before it acts", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1200 });
+    await page.goto("/admin/buyers-sellers", { waitUntil: "domcontentloaded" });
+
+    /** ⚠ The first row's own link — the grid is the only door to a user page. */
+    const firstUser = page.locator('a[href^="/admin/users/"]').first();
+    await expect(firstUser).toBeVisible();
+    await firstUser.click();
+    await expect(page).toHaveURL(/\/admin\/users\//);
+
+    const panel = page.getByRole("heading", { name: "Edit & fix" });
+    await expect(panel).toBeVisible();
+    /** ⚠⚠ IT SITS BESIDE Identity, not at the foot of the page — the rows above
+     *  are the record and this is how it changes. */
+    const headings = await page
+      .getByRole("heading")
+      .evaluateAll((els) => els.map((e) => (e.textContent ?? "").trim()));
+    expect(headings.indexOf("Edit & fix")).toBe(headings.indexOf("Identity") + 1);
+
+    /**
+     * ⚠⚠⚠ THE QUESTION COMES FIRST, AND IT NAMES THE CONSEQUENCE. The server
+     * refuses an unconfirmed call as well (`check:user-edit` §5a) — this is the
+     * second of the two gates, and the only one a person sees.
+     */
+    const lock = page.getByRole("button", { name: "Lock", exact: true });
+    if (await lock.count()) {
+      await lock.click();
+      await expect(page.getByText("Locking signs this person out", { exact: false })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Yes, Lock It" })).toBeVisible();
+      /** ⚠ And Cancel leaves without acting — this test must end having written
+       *  nothing at all. */
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await expect(page.getByRole("button", { name: "Yes, Lock It" })).toHaveCount(0);
+    }
+
+    /*
+      ── ⚠⚠ 44px IS ABOUT WHAT A FINGER HITS (Scott, D2) ────────────────────
+      ⚠⚠⚠ **A BARE `<input type="checkbox">` IS 13px AND ALWAYS WILL BE** — the
+      browser draws the box and CSS height does not change it. Its TAP TARGET is
+      the `<label>` wrapped around it, which carries `min-h-11`, and that is what
+      is measured here.
+      ⚠ My first version measured the raw inputs and failed on three correct
+      checkboxes. ⚠⚠ A false red is worse than no check (ruling 10), and
+      "fixing" the UI to satisfy it would have meant styling a checkbox to 44px
+      — making the box itself enormous to satisfy a test about reachability.
+    */
+    const scope = 'section:has(h2:text-is("Edit & fix")) ';
+    /** ⚠ Measured only once a control has laid out: an early read returns
+     *  pre-layout heights and reds the whole list. */
+    await expect(page.locator(`${scope}button`).first()).toBeVisible();
+    const short = await page
+      .locator(`${scope}button, ${scope}input:not([type="checkbox"]), ${scope}label:has(input[type="checkbox"])`)
+      .evaluateAll((els) =>
+        els
+          .map((e) => ({
+            t: ((e.textContent ?? "").trim() || (e as HTMLInputElement).type || e.tagName).slice(0, 24),
+            h: Math.round(e.getBoundingClientRect().height),
+          }))
+          .filter((x) => x.h > 0 && x.h < 44),
+      );
+    expect(short, `controls under 44px: ${JSON.stringify(short)}`).toEqual([]);
+    /** ⚠⚠ AND THE POPULATION IS ASSERTED. An empty list passes the check above;
+     *  the three buttons, the three fields and the three role labels are nine
+     *  controls, and a selector that matched none would read as clean (`E586`). */
+    const counted = await page
+      .locator(`${scope}button, ${scope}input:not([type="checkbox"]), ${scope}label:has(input[type="checkbox"])`)
+      .count();
+    expect(counted, "nothing measured means nothing proven").toBeGreaterThanOrEqual(9);
+  });
+});
