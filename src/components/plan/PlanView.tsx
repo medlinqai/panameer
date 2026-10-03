@@ -16,10 +16,20 @@ const HEAD = "font-display font-bold tracking-[-0.3px]";
 
 /** How a status paints. ⚠ One map, so the timeline bar and the accordion badge
  *  cannot drift apart (`E585`). */
+/**
+ * ── ⚠⚠ LIGHTER, AND MATCHED TO THE BUILD LINE (`P2-ALL-E792`) ───────────────
+ *
+ * ⚠ **SCOTT, 2026-10-03:** the Gantt is *"a little heavy"*, and *"I like how
+ * streamlined and clean the timeline is"* — so this borrows the Build Line's
+ * language: `rounded-full` bars on a `bg-line` track, magenta for live work,
+ * ink for done, and small dates in `ink-3`.
+ * ⚠⚠ **In progress is magenta at 60%**, not full: at full strength four or five
+ * live rows made the chart read as a solid magenta block.
+ */
 const STATUS_BAR: Record<string, string> = {
   Done: "bg-ink",
-  "In progress": "bg-magenta",
-  Blocked: "bg-magenta/40",
+  "In progress": "bg-magenta/60",
+  Blocked: "bg-magenta/25",
   /** ⚠⚠ A DASHED OUTLINE, NOT A FILL. Planned work has not happened, and a
    *  solid bar for it reads as progress. */
   Planned: "border border-dashed border-ink-3",
@@ -121,18 +131,30 @@ function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string }) {
             return (
               <li
                 key={row.id}
+                /** ⚠ ~32px a row (`h-8`), which is what takes the weight out
+                 *  without shrinking the type. */
                 className={
-                  "flex items-center gap-2 py-1 " +
-                  (isChild ? "hidden sm:flex" : "")
+                  "flex h-8 items-center gap-2 " + (isChild ? "hidden sm:flex" : "")
                 }
               >
-                <span className="w-9 shrink-0 text-right font-mono text-[10px] text-ink-3">
+                <span
+                  className={
+                    "w-9 shrink-0 text-right font-mono text-[10px] " +
+                    /** ⚠⚠ SMALL PLAIN NUMBERS IN GREY — no filled badge here.
+                     *  Only the ACCORDION keeps a badge, and only at top level. */
+                    (isChild ? "font-normal text-ink-3" : "text-ink-2")
+                  }
+                >
                   {row.number}
                 </span>
-                <span className="relative h-3 flex-1">
-                  {/* the dotted guide the bar sits over */}
-                  <span aria-hidden className="absolute inset-x-0 top-1/2 border-t border-dotted border-line" />
-                  <Bar row={row} pct={pct} clamp={clamp} />
+                <span className="relative h-8 flex-1">
+                  {/* ⚠ The guide is a hairline track, not a dotted rule — the
+                      Build Line's `bg-line` bar at 1px. */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 rounded-full bg-line"
+                  />
+                  <Bar row={row} pct={pct} clamp={clamp} isChild={isChild} />
                 </span>
               </li>
             );
@@ -155,10 +177,12 @@ function Bar({
   row,
   pct,
   clamp,
+  isChild = false,
 }: {
   row: PublicPlanRow;
   pct: (iso: string) => number;
   clamp: (n: number) => number;
+  isChild?: boolean;
 }) {
   if (row.type === "milestone") {
     /** ⚠ A milestone is a point, so it is a diamond, not a bar. An undated one
@@ -168,7 +192,9 @@ function Bar({
     return (
       <span
         title={`${row.title} — ${row.start ?? row.end}`}
-        className="absolute top-1/2 block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-magenta"
+        /** ⚠ An OUTLINED diamond, which is exactly `BuildLine`'s flag — a solid
+         *  magenta lozenge was the heaviest mark on the chart. */
+        className="absolute top-1/2 block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-ink bg-surface"
         style={{ left: `${at}%` }}
       />
     );
@@ -192,7 +218,12 @@ function Bar({
   return (
     <span
       title={`${row.title} — ${row.start} to ${row.end} · ${row.status}`}
-      className={`absolute top-1/2 block h-2 -translate-y-1/2 ${STATUS_BAR[row.status] ?? STATUS_BAR.Planned}`}
+      /** ⚠ 4px for a task, 6px for a top-level row, both `rounded-full` — the
+       *  Build Line's weight and its rounded ends, one line per row. */
+      className={
+        `absolute top-1/2 block -translate-y-1/2 rounded-full ${isChild ? "h-1" : "h-1.5"} ` +
+        (STATUS_BAR[row.status] ?? STATUS_BAR.Planned)
+      }
       style={{ left: `${left}%`, width: `${w}%` }}
     />
   );
@@ -229,8 +260,13 @@ function PhaseAccordion({ row }: { row: PublicPlanRow }) {
       <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-3">
         <span
           className={
-            "inline-flex h-6 min-w-6 items-center justify-center px-1 font-mono text-[11px] " +
-            (row.type === "milestone" ? "text-magenta" : "bg-ink/5 text-ink-2")
+            /** ⚠⚠ NO FILLED BADGE. A top-level row keeps a 20px OUTLINED badge;
+             *  a milestone is the magenta mark; anything else is a plain grey
+             *  number (`E792`, Scott: the chart is "a little heavy"). */
+            "inline-flex h-5 min-w-5 items-center justify-center px-1 font-mono text-[11px] " +
+            (row.type === "milestone"
+              ? "text-magenta"
+              : "rounded-full border border-line text-ink-2")
           }
         >
           {row.number}
@@ -251,7 +287,7 @@ function PhaseAccordion({ row }: { row: PublicPlanRow }) {
             {row.children.map((child) => (
               <li key={child.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 border-t border-line/60 py-2">
                 <span className="w-10 shrink-0 font-mono text-[11px] text-ink-3">{child.number}</span>
-                <span className="text-[14px] text-ink">{child.title || "Untitled"}</span>
+                <span className="text-[14px] font-normal text-ink-2">{child.title || "Untitled"}</span>
                 {child.owner && <span className="text-[12px] text-ink-3">{child.owner}</span>}
                 <DateRange row={child} />
                 <StatusMark row={child} />
