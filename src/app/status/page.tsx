@@ -27,6 +27,8 @@ import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
 import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
+import { firstReleasedAt } from "@/lib/plan/model";
+import { releasedSupportCounts } from "@/lib/support-released";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -206,6 +208,10 @@ export default async function StatusPage({
   */
   /** ⚠ The Build Line's two inputs, from the plan's top-level rows. */
   const line = planBuildLine(planRows);
+  /* Released work: the plan's own Deploy ◆ marked Done (`E810`). `null` until
+     one is, which hides the support block rather than showing a zero. */
+  const releasedAt = firstReleasedAt(planRows);
+  const releasedSupport = releasedAt ? await releasedSupportCounts(releasedAt) : null;
   /*
     ⚠⚠ THE MOVING COUNT COMES FROM `readiness()` NOW (`E797`), not from a second
     pass over the rows here. ⚠ It was always the same rule; since half-credit
@@ -533,33 +539,45 @@ export default async function StatusPage({
           `t.releases` is untouched in `public-view.ts` and still served by
           `/api/status`; only this rendering is removed.
         */}
-        {/* ── SHIPPED ─────────────────────────────────────────────────── */}
+        {/*
+          ── TAKE A LOOK (`P2-ALL-E810`) ─────────────────────────────────────
+          Replaces "What changed, day by day", which had nothing to show and so
+          said "Nothing published yet" to every visitor. One line and one door.
+          `t.shipped` is untouched in `public-view.ts` and still served by
+          `/api/status`; only this rendering is removed.
+        */}
         <section className="mt-12 border-t border-line pt-6">
-          <h2 className={`text-[24px] text-ink ${HEAD}`}>
-            What changed, day by day.
-          </h2>
+          <h2 className={`text-[24px] text-ink ${HEAD}`}>Take a Look</h2>
           <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
-            Every entry is live on app.panameer.com. Written in plain language from the day&apos;s work.
+            Everything above is being built in the open. Come and use what is live today.
           </p>
-          {t.shipped.length === 0 ? (
-            <p className="mt-5 text-[14px] text-ink-2">Nothing published yet.</p>
-          ) : (
-            <ul className="mt-5 border-l-2 border-magenta pl-4">
-              {t.shipped.map((s, i) => (
-                <li key={`${s.date}-${i}`} className="pb-4">
-                  <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-3">{s.date}</span>
-                  <span className="mt-0.5 block text-[15px] font-bold text-ink">{s.title}</span>
-                  {s.body && <span className="mt-0.5 block text-[14px] leading-relaxed text-ink-2">{s.body}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
+          <p className="mt-4">
+            {/* The door changes with the visitor: a member already has an
+                account, so "Register Free" would be a dead end for them. */}
+            {viewer ? (
+              <Link href="/dashboard" className={SQUARE_DARK}>
+                Go to the App
+              </Link>
+            ) : (
+              <Link href="/join" className={SQUARE_DARK}>
+                Register Free
+              </Link>
+            )}
+          </p>
         </section>
 
-        {/* ── SUPPORT ─────────────────────────────────────────────────── */}
+        {/*
+          ── SUPPORT, ONLY FOR RELEASED WORK (`P2-ALL-E810`) ─────────────────
+          Scott, 2026-10-03: "until a phase's Deploy ◆ is marked Done, hide the
+          section entirely." Asking for bug reports on something nobody can use
+          yet invites tickets about work in progress.
+          `releasedAt` comes from the plan's own Done milestones, so nothing has
+          to be remembered separately.
+        */}
+        {releasedAt && releasedSupport && (
         <section className="mt-12 border-t border-line pt-6">
           <h2 className={`text-[24px] text-ink ${HEAD}`}>
-            Found a problem? Tell us.
+            Found a problem in a released feature? Tell us.
           </h2>
           <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
             Issues from testers and users, and how fast they close. What you write in a ticket stays
@@ -570,10 +588,12 @@ export default async function StatusPage({
               dash with a reason is still a row on a page meant to be scanned in
               seconds. Both of these are measured counts and render in ink. */}
           <p className="mt-4 text-[15px] text-ink-2">
-            <span className={`text-[30px] text-ink ${HEAD}`}>{t.support.open}</span> open
+            {/* Released work only — see `support-released.ts` for the rule and
+                for what it cannot yet do. */}
+            <span className={`text-[30px] text-ink ${HEAD}`}>{releasedSupport.open}</span> open
             <span className="mx-3 text-ink-3">·</span>
             <span className={`text-[30px] text-ink ${HEAD}`}>
-              {t.support.resolvedThisWeek}
+              {releasedSupport.resolvedThisWeek}
             </span>{" "}
             resolved this week
           </p>
@@ -586,6 +606,7 @@ export default async function StatusPage({
             </Link>
           </p>
         </section>
+        )}
       </div>
 
       {/*

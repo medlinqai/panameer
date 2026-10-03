@@ -292,6 +292,28 @@ export function countableRows<T extends PlanRowLike>(rows: readonly T[]): T[] {
 }
 
 /**
+ * WHEN THE FIRST WORK WAS RELEASED, from the plan (`P2-ALL-E810`).
+ *
+ * Scott, 2026-10-03: the support section on `/status` shows only for RELEASED
+ * work — "until a phase's Deploy ◆ is marked Done, hide the section entirely."
+ *
+ * A Deploy milestone marked `Done` is the plan's own statement that a release
+ * went out, so this reads that rather than a separate flag somebody has to
+ * remember to set. `null` means nothing has shipped yet, which is a different
+ * answer from "no tickets" and the caller must treat it as such.
+ */
+export function firstReleasedAt(rows: readonly PlanRowLike[]): Date | null {
+  const dates = rows
+    .filter((r) => r.type === "milestone" && r.status === "Done")
+    /* Its own date: a milestone's start and end are the same day, and either
+       may be the one that was filled in. */
+    .map((r) => r.start_date ?? r.end_date)
+    .filter((d): d is Date => d !== null);
+  if (dates.length === 0) return null;
+  return new Date(Math.min(...dates.map((d) => d.getTime())));
+}
+
+/**
  * The window the timeline draws. ⚠ Returns null when no row carries a date —
  * **a timeline with no dates is not a timeline from 1970 to today**, it is
  * nothing to draw, and the caller shows the accordions alone.
