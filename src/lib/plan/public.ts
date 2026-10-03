@@ -24,6 +24,7 @@ import {
   isLate,
   planSpan,
   readiness,
+  countableRows,
   releaseReadiness,
   type PlanRowLike,
   type Readiness,
@@ -134,6 +135,33 @@ export function releaseProgressByCode(
   for (const p of pairs) {
     if (!p.code) continue;
     out[p.code] = releaseReadiness(rows, p.id);
+  }
+  return out;
+}
+
+/**
+ * The plan rows tagged to each release, by code — their TITLES, in plan order
+ * (`P2-ALL-E806`).
+ *
+ * Scott, 2026-10-03: the Releases section must "list R1's tagged journeys" and
+ * use the same percentage as the hero. Both now come from the plan, so the
+ * section cannot disagree with the figure above it (`E585`).
+ *
+ * Countable rows only — the same rule `readiness()` uses — so a phase that
+ * merely contains tagged children is not itself listed as a journey.
+ */
+export function releaseScopeByCode(
+  rows: readonly (PlanRowLike & { title: string })[],
+  pairs: readonly { id: string; code: string | null }[],
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  const countable = countableRows(rows);
+  for (const p of pairs) {
+    if (!p.code) continue;
+    out[p.code] = countable
+      .filter((r) => r.release_id === p.id)
+      .map((r) => r.title.trim())
+      .filter((t) => t.length > 0);
   }
   return out;
 }

@@ -46,6 +46,7 @@ import {
   restoreRows,
   updateRow,
 } from "@/lib/plan/store";
+import { releaseProgressByCode, releaseScopeByCode } from "@/lib/plan/public";
 import { TEMPLATE_JOURNEYS, applyPanameerTemplate } from "@/lib/plan/template";
 import { IMPORT_COLUMNS, parseCsv, readDate, readGrid } from "@/lib/plan/import";
 
@@ -344,6 +345,56 @@ async function main() {
       "3.5e — the plan suite runs its own server with PLAN_OWNER_KEY",
       /PLAN_OWNER_KEY/.test(cfg) && /reuseExistingServer:\s*false/.test(cfg),
       "reusing a shared server would hand these tests the live plan",
+    );
+  }
+
+  /* ── §3.6 THE RELEASES SECTION IS THE PLAN'S (`P2-ALL-E806`) ─────────── */
+  /*
+    Scott, 2026-10-03: the Releases section still printed the AIM figures —
+    "84% · 16 of 19 done · Register · Profile · Connect" — beside a hero counted
+    from the plan. Two definitions of one release's progress, side by side
+    (`E585`), which is the defect `E790` already fixed one row higher up.
+  */
+  {
+    const rel = "rel-R1";
+    const tagged = [
+      row({ id: "s-done", release_id: rel, status: "Done", title: "Register" }),
+      row({ id: "s-move", release_id: rel, status: "In progress", title: "Profile" }),
+      row({ id: "s-plan", release_id: rel, status: "Planned", title: "Connect" }),
+      row({ id: "s-other", release_id: null, status: "Done", title: "Not in R1" }),
+      /* A phase whose children are tagged is NOT itself a journey. */
+      row({ id: "s-parent", type: "phase", release_id: rel, title: "Build", sort: 9 }),
+      row({ id: "s-kid", parent_id: "s-parent", release_id: rel, status: "Done", title: "Shop" }),
+    ];
+    const pairs = [{ id: rel, code: "R1" }];
+    const scope = releaseScopeByCode(tagged, pairs);
+    check(
+      "3.6a — the journeys listed are the plan rows tagged to that release",
+      JSON.stringify(scope.R1) === JSON.stringify(["Register", "Profile", "Connect", "Shop"]),
+      `got ${JSON.stringify(scope.R1)} — a container must not be listed, and an untagged row must not appear`,
+    );
+    const pr = releaseProgressByCode(tagged, pairs).R1;
+    check(
+      "3.6b — and its percentage is the half-credit one, over the same rows",
+      pr.total === 4 && pr.done === 2 && pr.moving === 1 && pr.percent === 63,
+      `got done ${pr.done} moving ${pr.moving} of ${pr.total} = ${pr.percent}% — expected 2, 1, 4, 63%`,
+    );
+    check(
+      "3.6c — a release with no tagged rows is uncountable, not 0%",
+      releaseProgressByCode(tagged, [{ id: "rel-R2", code: "R2" }]).R2.percent === null &&
+        (releaseScopeByCode(tagged, [{ id: "rel-R2", code: "R2" }]).R2 ?? []).length === 0,
+      "`Scope being set` is the copy for that, and `0%` would be a lie",
+    );
+    /* The page reads BOTH from the plan — the figure and the list — or the two
+       halves of this section could still disagree. */
+    const pageSrc = readFileSync("src/app/status/page.tsx", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    check(
+      "3.6d — the page takes the release figure and the journeys from the plan",
+      /planReleaseScope\[r\.code/.test(pageSrc) &&
+        /planReleasePercent\[r\.code\]/.test(pageSrc) &&
+        !/r\.journeys/.test(pageSrc) &&
+        !/r\.doneCount/.test(pageSrc),
+      "`r.journeys`/`r.doneCount` are the AIM tracker's fields and must not render here",
     );
   }
 
