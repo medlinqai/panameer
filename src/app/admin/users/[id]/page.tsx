@@ -9,6 +9,7 @@ import { jobsFor } from "@/lib/user-jobs";
 import { blockingFor, levelFor, type LevelSubject } from "@/lib/user-levels";
 import { REGISTERED_SITE_NAME } from "@/lib/company";
 import { LockControl } from "@/components/admin/LockControl";
+import { UserEditPanel } from "@/components/admin/UserEditPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,10 @@ export default async function AdminUserPage({
           failed_login_attempts: true,
           last_login: true,
           is_system_admin: true,
+          /** ⚠ `is_active` IS READ FOR THE EDIT PANEL (`E796`). Deactivate is the
+           *  soft half of removal — it signs them out and hides them from
+           *  members — so the control has to know the current state. */
+          is_active: true,
         },
       },
       company: {
@@ -325,22 +330,26 @@ export default async function AdminUserPage({
             ⚠ `Headline` also still has its own row under Seller detail; this
             does not replace it.
           */}
+          {/*
+            ⚠⚠⚠ THE HEADLINE FALLBACK WAS UNREACHABLE AND IS NOW GONE (`E796`).
+            `E595` WS-B DROPPED THE `headline` COLUMN — the comment above says so
+            itself, two paragraphs up — but the fallback was left behind as
+            `person.title ? person.title : person.title ? <badge> : <none>`, a
+            second test of the same value that can never be true.
+            ⚠ So the badge it describes has never rendered for anybody, and the
+            long note above it reads as though a merge rule were live.
+            ⚠⚠ THE CODE IS WHAT WAS WRONG HERE, NOT THE COMMENT — the stated
+            intent (title first, say so when it falls through) is right; there is
+            simply nothing left to fall through TO.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`) - the dead middle branch:
+            //   : person.title ? (
+            //       <span>{person.title}</span>
+            //       <span>from Headline · no title on file</span>
+            //     )
+          */}
           <Row
             label="Title"
-            value={
-              person.title ? (
-                person.title
-              ) : person.title ? (
-                <span className="inline-flex flex-wrap items-baseline gap-2">
-                  <span>{person.title}</span>
-                  <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11.5px] font-semibold text-ink-2">
-                    from Headline · no title on file
-                  </span>
-                </span>
-              ) : (
-                <span className="text-ink-2">No title on file</span>
-              )
-            }
+            value={person.title || <span className="text-ink-2">No title on file</span>}
           />
           <Row
             label="Email"
@@ -374,6 +383,51 @@ export default async function AdminUserPage({
             }
           />
         </Section>
+
+        {/* 1b · EDIT & FIX (`P2-ALL-E796`) */}
+        {u ? (
+          <Section
+            title="Edit & fix"
+            note="Changes the record above. Lock and deactivate ask before they act, and a password reset emails the member."
+          >
+            {/*
+              ⚠⚠ IT SITS BESIDE IDENTITY ON PURPOSE. The rows above are the
+              RECORD and this is how it changes; a panel at the foot of the page
+              would have an admin scrolling between the value and the field that
+              sets it.
+              ⚠⚠⚠ THE READ-ONLY ROWS ARE NOT REMOVED. They are every account
+              fact in one list, including the ones nothing here can edit
+              (terms, last login), and replacing them with inputs would make the
+              page an editor rather than a record.
+            */}
+            <UserEditPanel
+              state={{
+                personId: person.id,
+                hasAccount: true,
+                first: person.first_name ?? "",
+                last: person.last_name ?? "",
+                email: u.email ?? "",
+                verified: Boolean(u.email_verified),
+                locked: u.locked,
+                active: u.is_active,
+                buyer: person.is_service_buyer,
+                provider: person.is_service_provider,
+                coordinator: person.is_service_coordinator,
+              }}
+            />
+          </Section>
+        ) : (
+          <Section title="Edit & fix" note="Nothing here can act without a login to act on.">
+            {/* ⚠ THE SECTION STILL RENDERS. An absent section is
+                indistinguishable from one that failed to load — the rule stated
+                at the top of this file. */}
+            <Empty>
+              This person has no `User` record, so there is no email, no password
+              and no lock to change. A person without a login is a profile
+              somebody else created.
+            </Empty>
+          </Section>
+        )}
 
         {/* 2 · JOBS */}
         <Section

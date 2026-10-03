@@ -571,7 +571,21 @@ export function marketplaceVisibleWhere(viewerIsTest = false) {
        * seeing other test profiles on a surface not yet updated — an
        * inconvenience to a tester rather than a leak to a buyer.
        */
-      ...(viewerIsTest ? {} : { user: { is_test: false } }),
+      /**
+       * ── ⚠⚠⚠ DEACTIVATED ACCOUNTS LEAVE THE MARKETPLACE TOO (`P2-ALL-E796`) ──
+       *
+       * ⚠ **SCOTT:** deactivate is soft — it *"signs them out, hides them from
+       * members, keeps all data."* ⚠⚠ **`is_active` ALREADY BLOCKED SIGN-IN AND
+       * DID NOT HIDE ANYBODY** — measured 2026-10-03: its only readers were
+       * `auth.ts`, `oauth.ts` and `verification.ts`, so a deactivated provider
+       * still appeared in search, Explore and every suggestion. The second half
+       * of the promise was simply missing.
+       * ⚠ It goes beside the test filter for the same reason: ten callers share
+       * this predicate, so a new marketplace surface inherits both rules.
+       * ⚠⚠ `is_active: true` and NOT `{ not: false }` — the column is
+       * non-nullable with a default, so the positive form is the exact question.
+       */
+      user: { is_active: true, ...(viewerIsTest ? {} : { is_test: false }) },
       /* ⚠⚠ THE TITLE MOVED INTO THIS BLOCK (`P0-E595` WS-B), not beside it: a
          second `person` key in the same object literal is a duplicate property,
          and the later one silently wins. ⚠ It would have dropped the photo,

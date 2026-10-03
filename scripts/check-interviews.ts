@@ -508,16 +508,38 @@ async function main() {
           where: { work_request_id: { in: requestIds } },
           select: { id: true },
         });
-        /* ⚠⚠ NOTIFICATIONS HAVE NO FOREIGN KEY, so a cascade cannot reach
-           them. Swept by the dedupe keys their writers built, while the ids
-           still resolve — the lesson `E620` cost 13 leaked rows to learn. */
+        const tests = await prisma.testRequest.findMany({
+          where: { work_request_id: { in: requestIds } },
+          select: { id: true },
+        });
+        /*
+          ── ⚠⚠⚠ SWEPT BY `entity_id`, NOT BY HAND-TYPED DEDUPE KEYS (`E802`) ──
+
+          ⚠⚠ **THE LIST OF KEYS HERE WAS MISSING `work.test_requested` AND HAD
+          BEEN SINCE THIS TEARDOWN WAS WRITTEN.** Measured 2026-10-03, after
+          Scott reported *"A buyer sent you a skills test"* five times on his
+          dashboard: **18 orphaned `work.test_requested` notifications**, nine
+          pairs across 09-27 → 09-29, one pair per run of this gate. Their
+          `TestRequest` and `WorkRequest` rows were all gone — zero test
+          requests existed in the whole database — so **those worklist rows could
+          never be cleared by any action a member can take**, because the thing
+          they point at does not exist.
+          ⚠⚠⚠ **A HAND-MAINTAINED LIST OF EVENT KEYS IS `E585` WEARING A
+          TEARDOWN'S CLOTHES**, and it failed in the only way it can: silently,
+          for the one event nobody remembered to add. ⚠ `notify()` writes
+          `entityId` for every one of these, so the ids this probe already holds
+          are the honest key — a new event on these entities is swept without
+          anybody editing this line.
+          ⚠ NOTIFICATIONS STILL HAVE NO FOREIGN KEY, so this explicit sweep is
+          still required; only the way it identifies rows has changed.
+          ⚠ SUPERSEDED, quoted not deleted (`E164`):
+          //   dedupe_key: { in: [ ...proposalIds.map(id => "work.proposal_received:" + id),
+          //                       ...ivs.map(iv => "work.interview_requested:" + iv.id) ] }
+        */
         await prisma.notification.deleteMany({
           where: {
-            dedupe_key: {
-              in: [
-                ...proposalIds.map((id) => `work.proposal_received:${id}`),
-                ...ivs.map((iv) => `work.interview_requested:${iv.id}`),
-              ],
+            entity_id: {
+              in: [...proposalIds, ...ivs.map((iv) => iv.id), ...tests.map((t) => t.id)],
             },
           },
         });
@@ -584,6 +606,13 @@ async function main() {
         });
       }
       if (strandedTr.length > 0) {
+        /* ⚠⚠⚠ ITS NOTIFICATIONS GO TOO (`E802`). The interview branch above has
+           always done this; THIS branch deleted the rows and left the
+           notifications pointing at them — which is how 18 unclearable *"A
+           buyer sent you a skills test"* lines reached Scott's dashboard. */
+        await prisma.notification.deleteMany({
+          where: { entity_id: { in: strandedTr.map((r) => r.id) } },
+        });
         await prisma.testRequest.deleteMany({
           where: { id: { in: strandedTr.map((r) => r.id) } },
         });
@@ -593,7 +622,17 @@ async function main() {
          reason `check:proposals`' sweep is: nothing in the application deletes
          a bid or an interview — both RECORD — so a notification whose entity
          is gone is by definition probe residue. */
-      for (const entityType of ["proposal", "interview_request"] as const) {
+      /*
+        ⚠⚠⚠ `test_request` ADDED (`P2-ALL-E802`). It was missing from this list
+        AND from the dedupe-key sweep above AND from the stranded-row branch —
+        the same omission in three places, which is what a hand-maintained list
+        of event names produces. ⚠ Measured: 18 orphans, nine pairs, one pair
+        per run of this gate since 2026-09-27.
+        ⚠⚠ Safe for the stated reason: nothing in `src/` deletes a work request,
+        a bid or an interview, so a notification whose entity is gone is probe
+        residue by construction.
+      */
+      for (const entityType of ["proposal", "interview_request", "test_request"] as const) {
         const notifs = await prisma.notification.findMany({
           where: { entity_type: entityType },
           select: { id: true, entity_id: true },
@@ -601,9 +640,13 @@ async function main() {
         if (notifs.length === 0) continue;
         const ids = notifs.map((n) => n.entity_id!).filter(Boolean);
         const live = new Set(
-          entityType === "proposal"
-            ? (await prisma.proposal.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id)
-            : (await prisma.interviewRequest.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id)
+          (
+            await (entityType === "proposal"
+              ? prisma.proposal.findMany({ where: { id: { in: ids } }, select: { id: true } })
+              : entityType === "interview_request"
+                ? prisma.interviewRequest.findMany({ where: { id: { in: ids } }, select: { id: true } })
+                : prisma.testRequest.findMany({ where: { id: { in: ids } }, select: { id: true } }))
+          ).map((r) => r.id)
         );
         const orphans = notifs.filter((n) => !n.entity_id || !live.has(n.entity_id));
         if (orphans.length > 0) {
@@ -634,6 +677,31 @@ async function main() {
       attemptIds.length === 0
         ? 0
         : await prisma.certificationAttempt.count({ where: { id: { in: attemptIds } } });
+    /*
+      ── ⚠⚠⚠ THE ASSERTION THAT WAS MISSING (`P2-ALL-E802`) ──────────────────
+      ⚠ This gate counted leftover INTERVIEW and TEST rows and never counted
+      leftover NOTIFICATIONS — so a sweep that missed an event key passed, every
+      run, for a week. ⚠⚠ The rows it forgot were the ones a member sees.
+      ⚠⚠⚠ AN ORPHAN IS DEFINED BY ITS ENTITY BEING GONE, not by its event name,
+      so this assertion cannot be defeated by adding a new event.
+    */
+    const orphanNotifs = await prisma.notification.findMany({
+      where: { entity_type: { in: ["proposal", "interview_request", "test_request"] } },
+      select: { entity_type: true, entity_id: true },
+    });
+    const liveIds = new Set<string>([
+      ...(await prisma.proposal.findMany({ select: { id: true } })).map((r) => r.id),
+      ...(await prisma.interviewRequest.findMany({ select: { id: true } })).map((r) => r.id),
+      ...(await prisma.testRequest.findMany({ select: { id: true } })).map((r) => r.id),
+    ]);
+    const stillOrphaned = orphanNotifs.filter((n) => !n.entity_id || !liveIds.has(n.entity_id));
+    check(
+      "5 — ⚠⚠⚠ no notification points at an entity that is gone",
+      stillOrphaned.length === 0,
+      `${stillOrphaned.length} orphaned: ${JSON.stringify(
+        stillOrphaned.slice(0, 4).map((n) => n.entity_type),
+      )} — a worklist row whose entity does not exist can never be cleared by anybody`,
+    );
     check("5 — ⚠⚠⚠ no probe attempt was left in a member's attempt history",
       leakedAttempts === 0,
       `${leakedAttempts} — a leak here spends a real provider's attempts`);

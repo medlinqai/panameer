@@ -32,7 +32,9 @@ export async function WorklistPanel({ userId }: { userId: string }) {
 
   /* ⚠ Five, not twenty. This is the home page's summary; the full list is one
      tap away and says so. */
-  const items = (await getWorklist(person.id, 6)).slice(0, 5);
+  /* ⚠ Five ITEMS, not five rows (`E802`) — `getWorklist` groups identical
+     titles and `take` now bounds the items it returns, so the slice is gone. */
+  const items = await getWorklist(person.id, 5);
   if (items.length === 0) return null;
 
   return (
@@ -52,7 +54,26 @@ export async function WorklistPanel({ userId }: { userId: string }) {
         {items.map((n) => {
           const body = (
             <>
-              <span className="block text-[14px] font-semibold text-ink">{n.title}</span>
+              <span className="flex flex-wrap items-baseline gap-2">
+                <span className="text-[14px] font-semibold text-ink">{n.title}</span>
+                {/*
+                  ── ⚠⚠⚠ THE COUNT IS PRINTED, NOT HIDDEN (`P2-ALL-E802`) ─────
+                  ⚠ **SCOTT:** *"shows 'A buyer sent you a skills test' 5 times
+                  — show each pending test once."* ⚠⚠ Collapsing them SILENTLY
+                  would under-report what he owes, which is the worse half of
+                  the same defect: one line reading as one task when it is five.
+                  ⚠⚠⚠ So the sentence appears once and the number appears
+                  beside it — a real count, from a `groupBy`, in ink.
+                */}
+                {n.count > 1 && (
+                  <span
+                    data-worklist-count={n.count}
+                    className="rounded-full bg-magenta/10 px-2 py-0.5 text-[11.5px] font-bold text-magenta"
+                  >
+                    {n.count} waiting
+                  </span>
+                )}
+              </span>
               {n.body && (
                 <span className="mt-0.5 block text-[13px] text-ink-2">{n.body}</span>
               )}

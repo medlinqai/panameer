@@ -267,21 +267,40 @@ export function AppBand() {
     <header className="pm-band border-b border-white/10 bg-rail px-5 py-2.5 sm:px-6">
       {/* ── LEFT: the brand, always left-justified while visible ──────────── */}
       {/*
-        ⚠⚠ `E735` — THE LOGO LIGHTS ON `/dashboard` (Scott: *"`/dashboard` lights the
-        logo"*). ⚠ It is a wordmark on a dark band, not a pill, so the lit state is a
-        subtle ground behind it rather than `BAND_LIT`'s solid magenta — a magenta block
-        behind the brand would read as a selected tile, not as "you are home".
-        ⚠⚠⚠ IT IS STILL ONE LIT THING: `activeHref` picks a single winner, so when the
-        logo is lit no pill and no icon is.
+        ── ⚠⚠⚠ THE LOGO CARRIES NO GROUND, IN ANY STATE (`P2-ALL-E801`) ───────
+
+        ⚠ **SCOTT, 2026-10-03:** the logo *"shows a grey box behind it — remove
+        the background on the logo link in every state (normal, hover, focus);
+        keep a visible focus outline only for keyboard focus."*
+        ⚠⚠ That grey box was `E735`'s LIT STATE: `bg-white/15` whenever the
+        current route is home. On the admin console, home is where he spends the
+        day, so the box was on almost permanently.
+
+        ⚠⚠⚠ **`aria-current` STAYS AND SO DOES `activeHref`.** Only the PAINT is
+        removed. The lit-state bookkeeping is what `check:nav-reachable`'s `E735`
+        sweep reads — it counts dark routes from the data, not from CSS — so the
+        route still knows it is home, and the sweep still sees exactly one winner.
+        ⚠ Dropping `activeHref` to remove a background would have turned a
+        cosmetic note into a nav regression.
+
+        ⚠⚠ **SUPERSEDED BY SCOTT, quoted not deleted (`E164`, rule 13):**
+        //   E735 - THE LOGO LIGHTS ON /dashboard (Scott: "/dashboard lights the
+        //   logo"). It is a wordmark on a dark band, not a pill, so the lit
+        //   state is a subtle ground behind it rather than BAND_LIT's solid
+        //   magenta.
+        //   className: (isActive(HOME_BAND_HREF) ? "bg-white/15" : "")
+        ⚠ This is `SUPERSEDED-BY-SCOTT`, not `SUPERSEDED-IN-FACT`: the code did
+        exactly what it was asked to, and the decision moved.
+
+        ⚠ `focus-visible` ONLY — a mouse click on a link leaves focus on it, so a
+        plain `:focus` ring would paint the very box he asked to remove the
+        moment anybody clicks home.
       */}
       <Link
         href={isAdmin ? ADMIN_HOME.href : "/dashboard"}
         aria-label="Panameer home"
         aria-current={isActive(HOME_BAND_HREF) ? "page" : undefined}
-        className={
-          "pm-band-brand block rounded-[6px] px-2 py-1 transition-colors " +
-          (isActive(HOME_BAND_HREF) ? "bg-white/15" : "")
-        }
+        className="pm-band-brand block rounded-[6px] px-2 py-1 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
