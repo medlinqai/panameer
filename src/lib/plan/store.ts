@@ -22,7 +22,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { Viewer } from "@/lib/access";
 import {
-  PLAN_OWNER_PANAMEER,
+  planOwnerKey,
   isRowStatus,
   isRowType,
   type RowStatus,
@@ -72,7 +72,9 @@ export async function getPlan(ownerKey: string) {
   return { plan, rows };
 }
 
-export const getPanameerPlan = () => getPlan(PLAN_OWNER_PANAMEER);
+/** The plan `/status` renders. ⚠ `planOwnerKey()`, not the constant — see
+ *  `model.ts` (`E804`): the plan suite points its own server elsewhere. */
+export const getPanameerPlan = () => getPlan(planOwnerKey());
 
 /* ── the plan itself ────────────────────────────────────────────────────── */
 
@@ -93,8 +95,10 @@ export async function ensurePlan(ownerKey: string, title: string, viewer?: Viewe
   });
 }
 
+/** ⚠ `planOwnerKey()` (`E804`): under test this ensures the THROWAWAY plan, so
+ *  the editor suite never creates or touches the live one. */
 export const ensurePanameerPlan = (viewer?: Viewer) =>
-  ensurePlan(PLAN_OWNER_PANAMEER, "Panameer build", viewer);
+  ensurePlan(planOwnerKey(), "Panameer build", viewer);
 
 export async function renamePlan(planId: string, title: string, viewer: Viewer) {
   const clean = title.trim();

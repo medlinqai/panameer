@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapshot } from "./_plan-state";
+import { createTestPlan, dropTestPlan, liveRowCount, planDb } from "./_plan-state";
 
 /**
  * ── `E785` — THE PLAN ON `/status`, SIGNED OUT ──────────────────────────────
@@ -13,22 +13,17 @@ import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapsho
  * is absent proves nothing; this checks the VALUE cannot be found.
  */
 
-const OWNER = "panameer-build";
 /** ⚠ Distinctive enough that a match cannot be a coincidence. */
 const SECRET = "ADMIN-ONLY-E785-do-not-publish-7Q4";
-let before: PlanSnapshot;
+/** The live plan is never read for its CONTENT — only counted, to prove a
+ *  run left it alone (`E804`). */
+let liveBefore = 0;
 let planId: string;
 
 test.beforeAll(async () => {
-  before = await snapshotPlan(OWNER);
-  const plan = await planDb.plan.upsert({
-    where: { owner_key: OWNER },
-    create: { owner_key: OWNER, title: "Panameer build" },
-    update: {},
-    select: { id: true },
-  });
-  planId = plan.id;
-  await planDb.planRow.deleteMany({ where: { plan_id: planId } });
+  liveBefore = await liveRowCount();
+  /* Its OWN plan, created empty (`E804`). Never the live one. */
+  planId = await createTestPlan();
 
   const build = await planDb.planRow.create({
     data: {
@@ -65,8 +60,13 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  await restorePlan(before);
-  await assertPlanRestored(before);
+  await dropTestPlan();
+  /* The one thing still asserted about the live plan: that this run did
+     not change its row count. A count, never its contents. */
+  const after = await liveRowCount();
+  if (after !== liveBefore) {
+    throw new Error(`the live plan changed during this run: ${liveBefore} rows -> ${after}`);
+  }
 });
 
 test("a signed-out visitor sees the plan: timeline, caption and accordions", async ({ page }) => {
@@ -75,15 +75,14 @@ test("a signed-out visitor sees the plan: timeline, caption and accordions", asy
   /** ⚠ Scott's caption, verbatim — it is the reason the plan is public. */
   await expect(page.getByText("The same plan tool you'll use on your work orders.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "The plan, phase by phase" })).toBeVisible();
-  /**
-   * ⚠⚠ SCOPED TO THE ACCORDIONS. `E792` added a Build Line above the timeline,
-   * so "Build" now matches spans in three places — including ones hidden at this
-   * width — and an unscoped `.first()` picked a hidden one. ⚠ The milestone
-   * likewise appears in the accordion AND in the Releases section below it.
-   */
-  const accordions = page.locator("details");
-  await expect(accordions.filter({ hasText: "Build" }).first()).toBeVisible();
-  await expect(accordions.filter({ hasText: "R1 — Public beta" }).first()).toBeVisible();
+  /*
+    `E803` replaced the `<details>` accordions with the grid. Scoped to the
+    grid's own rows: "Build" also appears in the Build Line and the chart above,
+    and the milestone appears again in the Releases section below.
+  */
+  const grid = page.locator("[data-plan-grid-row]");
+  await expect(grid.filter({ hasText: "Build" }).first()).toBeVisible();
+  await expect(grid.filter({ hasText: "R1 — Public beta" }).first()).toBeVisible();
 });
 
 test("the AIM journey grid and stage list are gone from the page", async ({ page }) => {
@@ -100,12 +99,15 @@ test("the AIM journey grid and stage list are gone from the page", async ({ page
 
 test("the in-progress phase is open by default and its children are visible", async ({ page }) => {
   await page.goto("/status", { waitUntil: "domcontentloaded" });
-  const open = page.locator("details[open]");
-  await expect(open).toHaveCount(1);
-  await expect(open).toContainText("Build");
-  /** ⚠ Its tasks are therefore readable without a click. */
-  await expect(open).toContainText("Public");
-  await expect(open).toContainText("Register");
+  /* `E803`: the grid, not `<details>`. Build is the In progress phase, so it is
+     the one row expanded on load — derived from the data, not a hard-coded
+     title. */
+  const expanded = page.locator('button[aria-expanded="true"]');
+  await expect(expanded).toHaveCount(1);
+  await expect(expanded).toContainText("Build");
+  /* Its tasks are therefore readable without a click. */
+  await expect(page.locator('[data-plan-grid-row="1.1"]')).toContainText("Public");
+  await expect(page.locator('[data-plan-grid-row="1.2"]')).toContainText("Register");
 });
 
 test("an unscheduled row says so, and a past-due row is marked", async ({ page }) => {

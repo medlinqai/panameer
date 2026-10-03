@@ -1,7 +1,7 @@
 import { PlanOutlineEditor } from "@/components/plan/PlanOutlineEditor";
 import { toEditorRow } from "@/lib/plan/editor-row";
 import { PlanStartFrom } from "@/components/plan/PlanStartFrom";
-import { PLAN_OWNER_PANAMEER, readiness } from "@/lib/plan/model";
+import { planOwnerKey, readiness } from "@/lib/plan/model";
 import { ensurePanameerPlan, getPanameerPlan } from "@/lib/plan/store";
 import { prisma } from "@/lib/prisma";
 
@@ -83,12 +83,12 @@ export default async function AdminBuildPlanPage() {
       </header>
 
       <div className="mt-5">
-        <PlanStartFrom ownerKey={PLAN_OWNER_PANAMEER} hasRows={rows.length > 0} />
+        <PlanStartFrom ownerKey={planOwnerKey()} hasRows={rows.length > 0} />
       </div>
 
       <div className="mt-6">
         <PlanOutlineEditor
-          ownerKey={PLAN_OWNER_PANAMEER}
+          ownerKey={planOwnerKey()}
           rows={rows.map(toEditorRow)}
           releases={releases.map((r) => ({ id: r.id, label: r.code ? `${r.code} — ${r.title}` : r.title }))}
         />

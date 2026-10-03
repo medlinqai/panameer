@@ -1,93 +1,81 @@
 import { db } from "../e2e-shell/_db";
 
 /**
- * ── ⚠⚠⚠ THE PLAN TESTS PUT THE PLAN BACK (`P2-ALL-E784`) ────────────────────
+ * ── THE PLAN TESTS OWN A THROWAWAY PLAN (`P2-ALL-E804`) ─────────────────────
  *
- * ⚠⚠ **THIS IS SCOTT'S LIVE DATA.** `panameer-build` is the plan
- * `status.panameer.com` renders from lane 3 onward, and there is one database
- * behind localhost, every preview and production. ⚠ A test row left behind is
- * published, which is precisely what `E765` cost on `/status` twice.
+ * Scott, 2026-10-03: **"no test may read or write the panameer-build plan, ever
+ * again."**
  *
- * ⚠⚠⚠ **EVERY COLUMN IS SNAPSHOTTED, NOT THE ONES THE TESTS HAPPEN TO TOUCH.**
- * The tracker teardown omitted `is_current` and the restore silently moved the
- * current phase while the row COUNTS matched — so the check that was supposed to
- * catch it passed. A snapshot is of the row, or it is not a snapshot.
+ * The old version snapshotted the live plan, overwrote it with a fixture and
+ * restored it afterwards. That is one crash, one killed run or one missed column
+ * away from losing the plan `status.panameer.com` publishes — and it ran dozens
+ * of times a day.
+ *
+ * So every plan test now CREATES ITS OWN plan under `TEST_OWNER` and deletes it
+ * again. `playwright.plan.config.ts` starts a server with
+ * `PLAN_OWNER_KEY=<TEST_OWNER>`, so `/status` renders the throwaway plan and the
+ * live one is never read either.
+ *
+ * `refuseLive()` is the backstop: every helper here calls it, so a test that
+ * names the live key throws instead of writing.
  */
 const prisma = db();
 
-export type PlanSnapshot = {
-  planIds: string[];
-  rows: Record<string, unknown>[];
-};
+/** The live plan's key. Named ONCE, here, so the guard can refuse it. */
+const LIVE_OWNER = "panameer-build";
 
-const ROW_COLUMNS = {
-  id: true,
-  plan_id: true,
-  parent_id: true,
-  sort: true,
-  type: true,
-  title: true,
-  start_date: true,
-  end_date: true,
-  status: true,
-  owner: true,
-  hours: true,
-  release_id: true,
-  public_note: true,
-  admin_note: true,
-  created_at: true,
-  updated_at: true,
-  updated_by: true,
-} as const;
+/** The plan every e2e-plan test uses. Must match `PLAN_OWNER_KEY` in the config. */
+export const TEST_OWNER = "e2e-plan-throwaway";
 
-export async function snapshotPlan(ownerKey: string): Promise<PlanSnapshot> {
-  const plans = await prisma.plan.findMany({ where: { owner_key: ownerKey }, select: { id: true } });
-  const ids = plans.map((p) => p.id);
-  const rows = ids.length
-    ? await prisma.planRow.findMany({ where: { plan_id: { in: ids } }, select: ROW_COLUMNS })
-    : [];
-  return { planIds: ids, rows: rows as unknown as Record<string, unknown>[] };
-}
-
-/**
- * ⚠ Parents before children, because `parent_id` has a real foreign key — a
- * flat replay would fail on the first child whose phase has not been written.
- */
-export async function restorePlan(before: PlanSnapshot): Promise<void> {
-  if (before.planIds.length === 0) return;
-  await prisma.planRow.deleteMany({ where: { plan_id: { in: before.planIds } } });
-  const ordered = [...before.rows].sort(
-    (a, b) => Number(!!a.parent_id) - Number(!!b.parent_id),
-  );
-  for (const r of ordered) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await prisma.planRow.create({ data: r as any });
-  }
-}
-
-/**
- * ⚠⚠ THE ASSERTION IS THE POINT. A teardown that runs but is never checked is a
- * promise, not a guarantee. ⚠ It compares the ROWS, field by field — not the
- * count, which is what let the tracker's missing column through.
- */
-export async function assertPlanRestored(before: PlanSnapshot): Promise<void> {
-  const after = await snapshotPlan(
-    (await prisma.plan.findFirst({ where: { id: { in: before.planIds } }, select: { owner_key: true } }))
-      ?.owner_key ?? "",
-  );
-  const norm = (rows: Record<string, unknown>[]) =>
-    JSON.stringify(
-      [...rows]
-        .map((r) => Object.fromEntries(Object.entries(r).filter(([k]) => k !== "updated_at")))
-        .sort((a, b) => String(a.id).localeCompare(String(b.id))),
-    );
-  const a = norm(before.rows);
-  const b = norm(after.rows);
-  if (a !== b) {
+export function refuseLive(ownerKey: string): void {
+  if (ownerKey === LIVE_OWNER) {
     throw new Error(
-      `plan rows were not restored: ${before.rows.length} before, ${after.rows.length} after — the plan is PUBLIC from lane 3`,
+      `A test tried to touch the live plan (owner_key="${LIVE_OWNER}"). ` +
+        `Tests must use TEST_OWNER ("${TEST_OWNER}") — see e2e-plan/_plan-state.ts.`,
     );
   }
+}
+
+/**
+ * A fresh, empty plan under `TEST_OWNER`. Any previous run's rows go first, so a
+ * killed run cannot leave a fixture behind that the next one adds to.
+ */
+export async function createTestPlan(): Promise<string> {
+  refuseLive(TEST_OWNER);
+  const plan = await prisma.plan.upsert({
+    where: { owner_key: TEST_OWNER },
+    create: { owner_key: TEST_OWNER, title: "E2E throwaway plan" },
+    update: {},
+    select: { id: true },
+  });
+  await prisma.planRow.deleteMany({ where: { plan_id: plan.id } });
+  return plan.id;
+}
+
+/** Remove the throwaway plan and its rows. Safe to call more than once. */
+export async function dropTestPlan(): Promise<void> {
+  refuseLive(TEST_OWNER);
+  const plan = await prisma.plan.findUnique({
+    where: { owner_key: TEST_OWNER },
+    select: { id: true },
+  });
+  if (!plan) return;
+  await prisma.planRow.deleteMany({ where: { plan_id: plan.id } });
+  await prisma.plan.delete({ where: { id: plan.id } });
+}
+
+/**
+ * The live plan's row count, for the one assertion worth keeping: that a run
+ * left it alone. It reads a COUNT and nothing else — no titles, no dates, no
+ * rows — and it never writes.
+ */
+export async function liveRowCount(): Promise<number> {
+  const plan = await prisma.plan.findUnique({
+    where: { owner_key: LIVE_OWNER },
+    select: { id: true },
+  });
+  if (!plan) return 0;
+  return prisma.planRow.count({ where: { plan_id: plan.id } });
 }
 
 export { prisma as planDb };

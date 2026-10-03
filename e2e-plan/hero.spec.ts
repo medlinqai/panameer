@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapshot } from "./_plan-state";
+import { TEST_OWNER, createTestPlan, dropTestPlan, liveRowCount, planDb } from "./_plan-state";
 
 /**
  * ── `E785` — THE HERO FIGURE COMES FROM THE PLAN ────────────────────────────
@@ -14,20 +14,25 @@ import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapsho
  * ⚠ It runs with the plan EMPTY, which is the live state until Scott builds his.
  */
 
-const OWNER = "panameer-build";
-let before: PlanSnapshot;
+/** The live plan is never read for its CONTENT — only counted, to prove a
+ *  run left it alone (`E804`). */
+let liveBefore = 0;
 let planId: string | null = null;
 
 test.beforeAll(async () => {
-  before = await snapshotPlan(OWNER);
-  const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
-  planId = plan?.id ?? null;
-  if (planId) await planDb.planRow.deleteMany({ where: { plan_id: planId } });
+  liveBefore = await liveRowCount();
+  /* Its OWN plan, created empty (`E804`). Never the live one. */
+  planId = await createTestPlan();
 });
 
 test.afterAll(async () => {
-  await restorePlan(before);
-  await assertPlanRestored(before);
+  await dropTestPlan();
+  /* The one thing still asserted about the live plan: that this run did
+     not change its row count. A count, never its contents. */
+  const after = await liveRowCount();
+  if (after !== liveBefore) {
+    throw new Error(`the live plan changed during this run: ${liveBefore} rows -> ${after}`);
+  }
 });
 
 test("an empty plan says why rather than printing a dash", async ({ page }) => {
@@ -100,7 +105,7 @@ test("a measured zero renders as 0%, in ink — not as a dash", async ({ page })
 test.describe("E776 (re-homed) — the hero headline holds one line", () => {
   test.beforeAll(async () => {
     const r1 = await planDb.workTrackerRelease.findFirst({ where: { code: "R1" }, select: { id: true } });
-    const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
+    const plan = await planDb.plan.findUnique({ where: { owner_key: TEST_OWNER }, select: { id: true } });
     if (!plan) return;
     await planDb.planRow.deleteMany({ where: { plan_id: plan.id } });
     /** ⚠ Tagged to R1 and Done, so the hero shows a real, countable figure. */
@@ -176,7 +181,7 @@ test.describe("E790 — the hero's figures are the plan's", () => {
   let r1: string | null = null;
 
   test.beforeAll(async () => {
-    const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
+    const plan = await planDb.plan.findUnique({ where: { owner_key: TEST_OWNER }, select: { id: true } });
     if (!plan) return;
     const rel = await planDb.workTrackerRelease.findFirst({ where: { code: "R1" }, select: { id: true } });
     r1 = rel?.id ?? null;

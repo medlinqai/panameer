@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { PlanError, ensurePlan, writeImportedRows, type ImportMode } from "@/lib/plan/store";
-import { PLAN_OWNER_PANAMEER } from "@/lib/plan/model";
+import { planOwnerKey } from "@/lib/plan/model";
 import { parsePlanFile } from "@/lib/plan/import";
 
 /**
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   }
   const mode = rawMode as ImportMode;
 
-  const ownerKey = String(form.get("ownerKey") ?? "") || PLAN_OWNER_PANAMEER;
+  const ownerKey = String(form.get("ownerKey") ?? "") || planOwnerKey();
 
   try {
     const parsed = await parsePlanFile(file.name, await file.arrayBuffer());
