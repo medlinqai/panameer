@@ -4,8 +4,17 @@ import { isStatusHost } from "@/lib/host";
 import { formatInstant, formatStoredDate, todayInSiteZone } from "@/lib/work-tracker/public-time";
 import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { BuildLine } from "@/components/status/BuildLine";
+import { planBuildLine } from "@/lib/plan/build-line";
 /*
-  ⚠⚠ `BuildLine`'s IMPORT IS GONE, THE COMPONENT IS NOT (`P2-ALL-E785`).
+  ── ⚠⚠ THE IMPORT IS BACK, AND IT READS THE PLAN NOW (`P2-ALL-E792`) ────────
+  ⚠ **SCOTT, 2026-10-03:** keep the thin Build Line — *"it is cleaner."*
+  ⚠⚠ It is fed by `planBuildLine(planRows)`, NOT by `t.phases`/`t.releases`:
+  the plan is what Scott maintains, and a line drawn from AIM phase dates beside
+  a timeline drawn from plan rows would be two sources describing one build —
+  `E790`'s mistake, one screen later.
+  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the note that recorded its removal:
+  //   ⚠⚠ `BuildLine`'s IMPORT IS GONE, THE COMPONENT IS NOT (`P2-ALL-E785`).
   ⚠ `src/components/status/BuildLine.tsx` is untouched on disk and still exports
   everything it did, including `assignRows`/`MIN_GAP_PCT`, which `check:sr7`
   still exercises directly. ⚠⚠ Dropping an unused IMPORT is not deleting code —
@@ -193,6 +202,8 @@ export default async function StatusPage({
     ⚠ `countableRows` is the same rule `readiness()` uses, so "done", "moving"
     and the total cannot disagree with the percentage above them.
   */
+  /** ⚠ The Build Line's two inputs, from the plan's top-level rows. */
+  const line = planBuildLine(planRows);
   const planCountable = countableRows(planRows);
   const planMoving = planCountable.filter((r) => r.status === "In progress").length;
   /*
@@ -476,6 +487,17 @@ export default async function StatusPage({
           disk and still exported** — nothing is deleted (`E164`) — they simply
           render on no page now.
         */}
+        {/*
+          ⚠⚠ ORDER, AS SCOTT ASKED: **Build Line on top → the plan's timeline
+          under it → the accordions.** ⚠ The line is the one-glance answer and
+          the Gantt is the detail, so the cheap read comes first.
+          ⚠ It renders only when the plan has a dated row — `planBuildLine`
+          returns empty arrays otherwise, and a line with nothing on it is worse
+          than no line (`E769`).
+        */}
+        {line.phases.length > 0 && (
+          <BuildLine phases={line.phases} releases={line.releases} now={Date.parse(`${todayIso}T12:00:00Z`)} />
+        )}
         <PlanView plan={pv} today={todayIso} />
 
         {/* ── RELEASES ────────────────────────────────────────────────── */}

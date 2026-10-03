@@ -74,6 +74,8 @@
     "seed:cd-keys": "npx esbuild prisma/seed-cd-keys.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/seed-cd-keys.cjs --log-level=error && node .harness/seed-cd-keys.cjs",
     "check:plan-ui": "npx playwright test --config=playwright.plan.config.ts",
     "check:home-switch": "npx esbuild scripts/check-home-switch.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-home-switch.cjs --log-level=error && node .harness/check-home-switch.cjs",
+    "check:test-accounts": "npx esbuild scripts/check-test-accounts.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-test-accounts.cjs --log-level=error && node -r dotenv/config .harness/check-test-accounts.cjs dotenv_config_path=.env.local",
+    "check:admin-ui": "npx playwright test --config=playwright.admin.config.ts",
     "check:plan": "npx esbuild scripts/check-plan.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-plan.cjs --log-level=error && node -r dotenv/config .harness/check-plan.cjs dotenv_config_path=.env.local",
     "check:cd-keys": "npx esbuild prisma/check-cd-keys.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-cd-keys.cjs --log-level=error && node .harness/check-cd-keys.cjs",
     "check:explore-rates": "playwright test --config=playwright.explore-rates.config.ts",

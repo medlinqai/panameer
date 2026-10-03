@@ -75,10 +75,15 @@ test("a signed-out visitor sees the plan: timeline, caption and accordions", asy
   /** ⚠ Scott's caption, verbatim — it is the reason the plan is public. */
   await expect(page.getByText("The same plan tool you'll use on your work orders.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "The plan, phase by phase" })).toBeVisible();
-  await expect(page.getByText("Build", { exact: true }).first()).toBeVisible();
-  /** ⚠ `.first()` — the milestone appears in the accordion AND in the Releases
-   *  section below it, so an unqualified match is a strict-mode violation. */
-  await expect(page.getByText("R1 — Public beta").first()).toBeVisible();
+  /**
+   * ⚠⚠ SCOPED TO THE ACCORDIONS. `E792` added a Build Line above the timeline,
+   * so "Build" now matches spans in three places — including ones hidden at this
+   * width — and an unscoped `.first()` picked a hidden one. ⚠ The milestone
+   * likewise appears in the accordion AND in the Releases section below it.
+   */
+  const accordions = page.locator("details");
+  await expect(accordions.filter({ hasText: "Build" }).first()).toBeVisible();
+  await expect(accordions.filter({ hasText: "R1 — Public beta" }).first()).toBeVisible();
 });
 
 test("the AIM journey grid and stage list are gone from the page", async ({ page }) => {

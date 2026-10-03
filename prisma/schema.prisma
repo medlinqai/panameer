@@ -43,6 +43,27 @@ model User {
   oauth_providers       String[]  @default([])
   role                  Role      @default(MEMBER)
   is_active             Boolean   @default(true)
+
+  /// ── ⚠⚠⚠ A TEST ACCOUNT (`P2-ALL-E793`, Scott 2026-10-03) ──────────────────
+  ///
+  /// ⚠ **SCOTT:** *"I really need to be able to use the app to get all these
+  /// values and manage the data."* His `test2*` search found nothing because the
+  /// 2026-09-20 reset had deleted those users and **nothing in the app showed
+  /// that**. This flag is what makes a test account nameable, findable, and
+  /// removable without a script.
+  ///
+  /// ⚠⚠ **IT IS THE ONLY THING `Remove test accounts` MAY ACT ON**, and that is
+  /// a data-loss guarantee rather than a convenience: the remove path filters on
+  /// `is_test: true` and a gate mutation-proves that a `false` row survives it.
+  /// ⚠⚠⚠ **DEFAULT `false`, SO EVERY EXISTING ROW — INCLUDING REAL MEMBERS AND
+  /// THE REAL FOLLOWERS ON `status.panameer.com` — IS OUTSIDE THE REMOVE PATH
+  /// THE MOMENT THIS COLUMN EXISTS.** A default of `true` would have been one
+  /// migration away from deleting the live database.
+  ///
+  /// ⚠ Test accounts are hidden from REAL members (search, Explore,
+  /// suggestions, public counts) and visible to each other — the viewer's own
+  /// flag decides, so a tester can still see the cast they are testing with.
+  is_test               Boolean   @default(false)
   is_system_admin       Boolean   @default(false)
   locked                Boolean   @default(false)
   failed_login_attempts Int       @default(0)
@@ -7865,4 +7886,53 @@ model PlanRow {
   @@index([plan_id, parent_id, sort])
   @@index([release_id])
   @@map("plan_rows")
+}
+
+/// ── ⚠⚠⚠ THE ADMIN AUDIT LOG (`P2-ALL-E793`) ─────────────────────────────────
+///
+/// ⚠ **SCOTT, 2026-10-03:** *"a deletion the app can't show is the failure this
+/// lane exists to end."* His test users vanished in a reset and the app had
+/// nothing to say about it.
+///
+/// ⚠⚠ **IT IS WRITTEN BY `E793`'s TEST-ACCOUNT ACTIONS AND READ BY `E796`'s
+/// PAGE.** The table arrives with the first thing that needs it rather than
+/// waiting for the page, because a log that starts recording later cannot
+/// explain anything that happened in between.
+///
+/// ⚠⚠⚠ **IT IS APPEND-ONLY BY CONVENTION AND THERE IS NO WRITER THAT UPDATES OR
+/// DELETES A ROW.** An audit log you can edit is a log nobody can rely on.
+model AdminAudit {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// ⚠ `User.id` of the admin who acted, resolved from the SESSION and never
+  /// accepted from a client (load-bearing rule 5). Nullable only so a SYSTEM
+  /// action — a script, a scheduled job — can be recorded with no actor rather
+  /// than being left out of the log entirely.
+  actor_id    String? @db.Uuid
+  /// ⚠ Denormalised on purpose: the actor's email AT THE TIME. A join would
+  /// show today's address, and an audit row has to mean what it meant then.
+  actor_email String?
+
+  /// `test_set.create` · `test_accounts.remove` · `user.update` · `user.lock` …
+  action String
+  /// What it acted on — `users`, `people`, `plan_rows`. Free text, because a
+  /// script's target is not always a Prisma model.
+  target_table String
+  /// ⚠ The row's id when there is exactly one, null for a bulk action whose
+  /// scope is in `detail` instead.
+  target_id String?
+  /// ⚠⚠ A human-readable summary AND the before/after when a field changed.
+  /// Scott asked for "who, when, field, before → after"; `detail` carries the
+  /// pair so the log reads without another query.
+  detail Json?
+  /// ⚠ How many rows the action touched. `1` for a field edit, `n` for a bulk
+  /// remove — the number that makes a deletion legible at a glance.
+  row_count Int @default(1)
+
+  created_at DateTime @default(now())
+
+  @@index([created_at])
+  @@index([actor_id])
+  @@index([target_table, created_at])
+  @@map("admin_audit")
 }
