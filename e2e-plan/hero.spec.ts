@@ -183,9 +183,15 @@ test.describe("E790 — the hero's figures are the plan's", () => {
     await planDb.planRow.deleteMany({ where: { plan_id: plan.id } });
     /**
      * ⚠ A fixture whose numbers DIFFER from each other, deliberately: R1 is
-     * 1 of 2 = 50%, the whole plan is 1 of 3 = 33%, and 1 row is moving. ⚠⚠ If
-     * the three agreed, a page that printed any one of them everywhere would
-     * pass (ruling 11 — two zeros agree, two ones agree).
+     * (1 Done + ½ × 1 moving) of 2 = **75%**, the whole plan is 1.5 of 3 =
+     * **50%**, and 1 row is moving. ⚠⚠ If the three agreed, a page that printed
+     * any one of them everywhere would pass (ruling 11 — two zeros agree, two
+     * ones agree).
+     * ⚠⚠⚠ **AND THE PAIR ALSO DISCRIMINATES THE RULE (`E797`):** under the old
+     * Done-only maths this same fixture reads **50% / 33%**, so these two
+     * numbers fail if the half-credit weighting is ever removed.
+     * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+     * //   R1 is 1 of 2 = 50%, the whole plan is 1 of 3 = 33%
      */
     await planDb.planRow.createMany({
       data: [
@@ -201,11 +207,11 @@ test.describe("E790 — the hero's figures are the plan's", () => {
     await page.goto("/status", { waitUntil: "domcontentloaded" });
     const hero = page.locator("section").first();
 
-    /** R1: 1 Done of 2 tagged = 50%. */
-    await expect(page.locator("[data-hero-figure]")).toHaveText("50");
-    /** The whole plan: 1 Done of 3 countable = 33%. ⚠ A DIFFERENT number, which
-     *  is what makes the previous assertion meaningful. */
-    await expect(hero).toContainText("33% of the whole plan");
+    /** R1: (1 Done + ½ × 1 In progress) of 2 tagged = 75% (`E797`). */
+    await expect(page.locator("[data-hero-figure]")).toHaveText("75");
+    /** The whole plan: 1.5 of 3 countable = 50%. ⚠ A DIFFERENT number, which is
+     *  what makes the previous assertion meaningful. */
+    await expect(hero).toContainText("50% of the whole plan");
     /** And the counts, from the same `countableRows` rule as the percentages. */
     await expect(hero).toContainText("1 done · 1 moving · 3 rows");
 

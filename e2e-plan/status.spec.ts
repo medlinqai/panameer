@@ -119,14 +119,24 @@ test("an unscheduled row says so, and a past-due row is marked", async ({ page }
 test("the overall figure is the plan's, counted from leaf rows", async ({ request }) => {
   const res = await request.get("/api/status");
   expect(res.ok()).toBeTruthy();
-  const body = (await res.json()) as { plan: { progress: { done: number; total: number; percent: number } } };
-  /** ⚠⚠ Three leaves (Public, Register, Profile) plus Operate, which is an empty
-   *  phase and therefore work. `Build` is a container and the milestone is a
-   *  date, so neither counts. One is Done → 1 of 4 = 25%. */
+  const body = (await res.json()) as {
+    plan: { progress: { done: number; moving: number; total: number; percent: number } };
+  };
+  /**
+   * ⚠⚠ Three leaves (Public, Register, Profile) plus Operate, which is an empty
+   * phase and therefore work. `Build` is a container and the milestone is a
+   * date, so neither counts.
+   * ⚠⚠⚠ **ONE Done AND ONE In progress → (1 + ½) of 4 = 38%** (`E797`, half
+   * credit). ⚠ The old Done-only rule read **25%** on this same fixture, so this
+   * number fails if the weighting is removed.
+   * ⚠ SUPERSEDED, quoted not deleted (`E164`):
+   * //   One is Done -> 1 of 4 = 25%.
+   */
   expect(body.plan.progress, JSON.stringify(body.plan.progress)).toMatchObject({
     done: 1,
+    moving: 1,
     total: 4,
-    percent: 25,
+    percent: 38,
   });
 });
 

@@ -27,7 +27,6 @@ import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
 import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
-import { countableRows } from "@/lib/plan/model";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -204,8 +203,15 @@ export default async function StatusPage({
   */
   /** ⚠ The Build Line's two inputs, from the plan's top-level rows. */
   const line = planBuildLine(planRows);
-  const planCountable = countableRows(planRows);
-  const planMoving = planCountable.filter((r) => r.status === "In progress").length;
+  /*
+    ⚠⚠ THE MOVING COUNT COMES FROM `readiness()` NOW (`E797`), not from a second
+    pass over the rows here. ⚠ It was always the same rule; since half-credit
+    made `moving` part of the PERCENTAGE, a local recount could have drifted from
+    the figure it sits under (`E585`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`) - the two lines that stood here:
+    //   planCountable := countableRows over planRows
+    //   planMoving    := those whose status is "In progress"
+  */
   /*
     ⚠ The CURRENT PHASE section it fed left this page with `E785`; the plan's own
     in-progress phase is the accordion that opens by default instead.
@@ -458,7 +464,7 @@ export default async function StatusPage({
             still served by `/api/status`; only this render went.
           */}
           <p className="mt-1 text-[14px] text-white/75">
-            {pv.progress.done} done · {planMoving} moving · {pv.progress.total} rows
+            {pv.progress.done} done · {pv.progress.moving} moving · {pv.progress.total} rows
           </p>
         </div>
       </div>

@@ -63,7 +63,15 @@ export default async function AdminBuildPlanPage() {
           ) : (
             <>
               <span className="font-bold text-ink">{progress.percent}%</span> complete ·{" "}
-              {progress.done} of {progress.total} rows done
+              {/*
+                ⚠⚠ THE COUNTS NAME THE RULE BEHIND THE PERCENTAGE (`E797`). Since
+                an in-progress row earns HALF, a bare "n of total done" beside a
+                percentage they cannot produce invites the reader to conclude the
+                figure is wrong. ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   progress.done of progress.total rows done
+              */}
+              {progress.done} done · {progress.moving} in progress (half credit) ·{" "}
+              {progress.total} rows
             </>
           )}
         </p>
