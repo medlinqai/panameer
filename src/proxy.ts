@@ -43,7 +43,24 @@ export async function proxy(request: NextRequest) {
       The host is a convenience, not the gate.
     */
     if (isStatusHost(host)) {
-      return NextResponse.rewrite(new URL("/status", request.url));
+      /*
+        ⚠⚠⚠ THE SEARCH IS CARRIED THROUGH (`P2-ALL-E781`).
+
+        ⚠ **MEASURED, NOT ASSUMED:** `new URL("/status", request.url)` builds the
+        path from the FIRST argument and takes only the ORIGIN from the second, so
+        the query is **dropped** — `new URL("/status",
+        "https://status.panameer.com/?follow=1")` yields `search: ""`.
+        ⚠⚠ **THAT SILENTLY BROKE THE FOLLOW ROUND TRIP ACROSS THE HOSTS.** The
+        signed-out button sends people to `/join?next=/status&follow=1`; after
+        sign-up they land on `<app host>/status?follow=1`, which `E780` now 307s to
+        `status.panameer.com/?follow=1` **with the query intact** — and this rewrite
+        was throwing that intent away on the last hop.
+        ⚠ Appending `request.nextUrl.search` is the whole fix; it is `""` when there
+        is no query, so the no-query case is byte-identical to before.
+      */
+      return NextResponse.rewrite(
+        new URL(`/status${request.nextUrl.search}`, request.url),
+      );
     }
     return isMarketingHost(host)
       ? NextResponse.next()

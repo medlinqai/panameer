@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { isStatusHost } from "@/lib/host";
 import { formatInstant, formatStoredDate } from "@/lib/work-tracker/public-time";
 import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
@@ -104,7 +106,22 @@ export default async function StatusPage({
       there. ⚠⚠ A redirect to the clean URL also stops `/status?follow=1` being
       pasted into a chat where every signed-in reader quietly follows.
     */
-    redirect("/status");
+    /*
+      ⚠⚠⚠ AND IT LANDS ON THE CLEAN URL **FOR THE HOST IT IS ON** (`P2-ALL-E781`).
+
+      ⚠ On `status.panameer.com` the tracker IS the root: the proxy rewrites `/`
+      to `/status`, so a visitor never sees `/status` in the address bar. ⚠⚠
+      Redirecting to `/status` there would end the follow round trip on
+      `status.panameer.com/status` — a URL that works but that the site otherwise
+      never shows, and which `E780` deliberately does NOT redirect because the
+      host is excluded.
+      ⚠ Everywhere else `/status` IS the page's own address and stays correct.
+      ⚠ SUPERSEDED, quoted not deleted (`E164`):
+      //   redirect("/status");
+    */
+    const host =
+      (await headers()).get("x-forwarded-host") ?? (await headers()).get("host");
+    redirect(isStatusHost(host) ? "/" : "/status");
   }
 
   const [following, followers] = await Promise.all([isFollowing(viewer), followerCount()]);
