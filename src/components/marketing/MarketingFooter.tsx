@@ -109,7 +109,28 @@ export function MarketingFooter() {
         <div className="grid grid-cols-1 gap-x-14 gap-y-10 min-[640px]:grid-cols-2 min-[901px]:grid-cols-3">
           {FOOTER_VIDEO_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h2 className="mb-3.5 font-display text-[17px] font-bold leading-[1.3] text-white">
+              {/*
+                ── ⚠⚠⚠ MONTSERRAT, AND ONLY HERE (`P2-ALL-E772`) ─────────────
+
+                ⚠ **SCOTT'S DIRECTION:** Montserrat. ⚠⚠ **MEASURED: these three were
+                the LAST Comfortaa on the masked surfaces** — 6 of the 10 Comfortaa
+                elements on a masked profile and 3 of the 16 on `/explore` were
+                these, because `AppShell` and `MarketingShell` both render this
+                footer. It reaches nearly every page in the app.
+
+                ⚠⚠⚠ **AND IT IS ONE CLASS, NOT A CSS RULE, WHICH IS WHY IT IS SAFE.**
+                When `E772` was first logged I assumed these headings INHERITED the
+                global `h1–h3 → --font-display` rule and that changing them meant
+                touching that rule — the `@layer base` fence. **They do not: the
+                class is right here on the element.** So the fence is untouched and
+                nothing outside this footer can move.
+                ⚠ `font-body` IS already Montserrat (`globals.css`), so no new face
+                is loaded — this is a heading giving up Comfortaa for what the page
+                around it already uses.
+                ⚠ SUPERSEDED, quoted not deleted (`E164`):
+                //   className="mb-3.5 font-display text-[17px] font-bold leading-[1.3] text-white"
+              */}
+              <h2 className="mb-3.5 font-body text-[17px] font-bold leading-[1.3] text-white">
                 {col.title}
               </h2>
               {/*
