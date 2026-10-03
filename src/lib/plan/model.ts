@@ -13,6 +13,34 @@
 
 export const PLAN_OWNER_PANAMEER = "panameer-build";
 
+/**
+ * WHICH PLAN THE PUBLIC PAGE RENDERS (`P2-ALL-E804`).
+ *
+ * Scott, 2026-10-03: "no test may read or write the panameer-build plan, ever
+ * again." A browser test cannot assert chart contents without controlling the
+ * data, so the owner key is a server-side setting and the plan suite points its
+ * own server at a throwaway plan.
+ *
+ * Server-side env only — never a query parameter, a header or a cookie, so no
+ * visitor can aim the page at another plan. Refused outright in production: the
+ * live site renders the live plan and nothing else.
+ */
+export function planOwnerKey(): string {
+  const override = process.env.PLAN_OWNER_KEY?.trim();
+  if (!override) return PLAN_OWNER_PANAMEER;
+  if (process.env.VERCEL_ENV === "production") {
+    throw new Error(
+      "PLAN_OWNER_KEY must not be set in production — /status renders the live plan.",
+    );
+  }
+  if (override === PLAN_OWNER_PANAMEER) {
+    /* Setting it to the live key is pointless and reads as an attempt to test
+       against live data. Fail loudly rather than quietly allowing it. */
+    throw new Error("PLAN_OWNER_KEY must not be the live plan's key.");
+  }
+  return override;
+}
+
 export const ROW_TYPES = ["phase", "task", "milestone"] as const;
 export type RowType = (typeof ROW_TYPES)[number];
 

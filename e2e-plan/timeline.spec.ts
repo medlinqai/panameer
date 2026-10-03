@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapshot } from "./_plan-state";
+import { createTestPlan, dropTestPlan, liveRowCount, planDb } from "./_plan-state";
 
 /**
  * ── ⚠⚠ THE TIMELINE'S FOUR WALK FIXES (`P2-ALL-E797`) ───────────────────────
@@ -14,17 +14,17 @@ import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapsho
  * localhost, every preview and production.
  */
 
-const OWNER = "panameer-build";
-let before: PlanSnapshot;
+/** The live plan is never read for its CONTENT — only counted, to prove a
+ *  run left it alone (`E804`). */
+let liveBefore = 0;
 let planId: string | null = null;
 
 const d = (iso: string) => new Date(`${iso}T00:00:00Z`);
 
 test.beforeAll(async () => {
-  before = await snapshotPlan(OWNER);
-  const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
-  planId = plan?.id ?? null;
-  if (!planId) return;
+  liveBefore = await liveRowCount();
+  /* Its OWN plan, created empty (`E804`). Never the live one. */
+  planId = await createTestPlan();
   await planDb.planRow.deleteMany({ where: { plan_id: planId } });
   /**
    * ⚠⚠⚠ THE FIXTURE REPRODUCES THE THREE SHAPES AND NOTHING ELSE. Every title
@@ -47,13 +47,23 @@ test.beforeAll(async () => {
       { plan_id: planId, parent_id: null, sort: 1, type: "phase", title: "Operate", status: "Planned", start_date: d("2026-12-01"), end_date: null },
       /** ⚠ Neither date: the only row that may still say "not scheduled". */
       { plan_id: planId, parent_id: null, sort: 2, type: "phase", title: "Launch", status: "Planned", start_date: null, end_date: null },
+      /* A third dated top-level row and a dated milestone, so the axis test has
+         a population worth measuring — children are not drawn in the chart any
+         more (`E803`), and two bars is too few to call an alignment check. */
+      { plan_id: planId, parent_id: null, sort: 3, type: "phase", title: "Prove", status: "Planned", start_date: d("2026-11-10"), end_date: d("2026-11-14") },
+      { plan_id: planId, parent_id: null, sort: 4, type: "milestone", title: "R1 — Public beta", status: "Planned", start_date: d("2026-11-15"), end_date: d("2026-11-15") },
     ],
   });
 });
 
 test.afterAll(async () => {
-  await restorePlan(before);
-  await assertPlanRestored(before);
+  await dropTestPlan();
+  /* The one thing still asserted about the live plan: that this run did
+     not change its row count. A count, never its contents. */
+  const after = await liveRowCount();
+  if (after !== liveBefore) {
+    throw new Error(`the live plan changed during this run: ${liveBefore} rows -> ${after}`);
+  }
 });
 
 /** The rows the chart has actually drawn, in DOM order. */
@@ -68,51 +78,62 @@ async function drawn(page: import("@playwright/test").Page) {
   );
 }
 
-test.describe("E797 — collapsible phases", () => {
-  test("a phase with children starts collapsed and says how many it holds", async ({ page }) => {
+test.describe("E803 — the chart shows top-level rows only", () => {
+  test("no child rows in the timeline, and no expander in it", async ({ page }) => {
     test.skip(planId === null, "no plan to render");
     await page.goto("/status", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("region", { name: "Plan timeline" })).toBeVisible();
 
     const rows = await drawn(page);
-    expect(rows.map((r) => r.number), "only the three top-level rows are drawn").toEqual(["1", "2", "3"]);
-    /** ⚠⚠ THE COUNT IS THE POINT: one bar with nothing beside it hides that
-     *  there are three rows underneath. */
-    expect(rows[0].label).toContain("3 journeys");
-    /** ⚠ And collapsed is ANNOUNCED, not only drawn. */
-    await expect(page.locator('[data-plan-row="1"] button')).toHaveAttribute("aria-expanded", "false");
-    /** ⚠⚠ A ROW WITH NO CHILDREN HAS NO CONTROL AND NO COUNT — a `▸` on a leaf
-     *  would promise rows that do not exist. */
-    await expect(page.locator('[data-plan-row="2"] button')).toHaveCount(0);
-    expect(rows[1].label, "a leaf must not claim journeys").not.toContain("journeys");
+    /* Scott, 2026-10-03: the child rows live in the grid below, not the chart. */
+    expect(rows.map((r) => r.number)).toEqual(["1", "2", "3", "4", "◆"]);
+    expect(
+      rows.filter((r) => r.number.includes(".")),
+      "a numbered child row means children leaked back into the chart",
+    ).toEqual([]);
+    await expect(
+      page.locator('[aria-label="Plan timeline"] button'),
+      "the chart has no expander now — the grid owns that",
+    ).toHaveCount(0);
   });
 
-  test("clicking expands its children in place, and a reload forgets", async ({ page }) => {
+  test("the scrubber draws a line and a date, and a bar names itself", async ({ page }) => {
     test.skip(planId === null, "no plan to render");
+    await page.setViewportSize({ width: 1280, height: 1000 });
     await page.goto("/status", { waitUntil: "domcontentloaded" });
-    await page.locator('[data-plan-row="1"] button').click();
 
-    const open = await drawn(page);
-    /** ⚠⚠ IN PLACE — between the phase and the next top-level row, in order.
-     *  Asserting only that `1.2` exists would pass with the children appended at
-     *  the bottom of the chart. */
-    expect(open.map((r) => r.number)).toEqual(["1", "1.1", "1.2", "1.3", "2", "3"]);
-    await expect(page.locator('[data-plan-row="1"] button')).toHaveAttribute("aria-expanded", "true");
+    const area = page.locator("[data-plan-scrubarea]");
+    const box = await area.boundingBox();
+    expect(box, "no scrub area").not.toBeNull();
 
-    /** ⚠ Clicking again closes it. */
-    await page.locator('[data-plan-row="1"] button').click();
-    expect((await drawn(page)).map((r) => r.number)).toEqual(["1", "2", "3"]);
+    /* Nothing before the pointer arrives — the scrubber is an interaction, not
+       a permanent mark (the Today line is the permanent one). */
+    await expect(page.locator("[data-plan-scrub]")).toHaveCount(0);
+    await expect(page.locator("[data-plan-today]")).toHaveCount(1);
 
-    /**
-     * ⚠⚠⚠ IT REMEMBERS NOTHING, BY INSTRUCTION — Scott: *"Remember nothing —
-     * collapsed on every load."* ⚠ So a reload after expanding comes back
-     * collapsed, and this asserts that rather than trusting that no storage was
-     * written.
-     */
-    await page.locator('[data-plan-row="1"] button').click();
-    expect((await drawn(page)).length, "expanded before the reload").toBe(6);
-    await page.reload({ waitUntil: "domcontentloaded" });
-    expect((await drawn(page)).map((r) => r.number)).toEqual(["1", "2", "3"]);
+    await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height / 2);
+    const scrub = page.locator("[data-plan-scrub]");
+    await expect(scrub).toHaveCount(1);
+    /* The date it reports is the date at that position, mid-span. */
+    const at = await scrub.getAttribute("data-plan-scrub");
+    expect(at, `mid-track date: ${at}`).toMatch(/^2026-(10|11)-\d{2}$/);
+    await expect(page.locator("[data-plan-scrub-date]")).toBeVisible();
+
+    /* Moving right advances the date, which is what makes it a scrubber. */
+    await page.mouse.move(box!.x + box!.width * 0.9, box!.y + box!.height / 2);
+    const later = await page.locator("[data-plan-scrub]").getAttribute("data-plan-scrub");
+    expect(Date.parse(later!) > Date.parse(at!), `${at} → ${later}`).toBe(true);
+
+    /* And the bar's own tooltip, in Scott's format. */
+    const bar = page.locator('[data-plan-row="1"]');
+    const title = await page
+      .locator('[data-plan-bar="top"]')
+      .first()
+      .getAttribute("title");
+    expect(title, `bar tooltip: ${title}`).toMatch(
+      /^1 Build · \w{3} \d{1,2} – \w{3} \d{1,2} · In progress$/,
+    );
+    expect(await bar.count()).toBe(1);
   });
 });
 
@@ -120,10 +141,9 @@ test.describe("E797 — the tooltip belongs to its own row", () => {
   test("every bar's tooltip names the row it sits in, children included", async ({ page }) => {
     test.skip(planId === null, "no plan to render");
     await page.goto("/status", { waitUntil: "domcontentloaded" });
-    await page.locator('[data-plan-row="1"] button').click();
 
     const rows = await drawn(page);
-    expect(rows.length, "nothing drawn to check").toBeGreaterThan(4);
+    expect(rows.length, "nothing drawn to check").toBeGreaterThan(2);
     /**
      * ⚠⚠⚠ THE DEFECT SCOTT SAW: hovering `3.3 Profile` showed *"3.2 Register"*.
      * ⚠ This asserts the ALIGNMENT — each bar's tooltip starts with the number of
@@ -134,10 +154,11 @@ test.describe("E797 — the tooltip belongs to its own row", () => {
       .filter((r) => r.barTitle !== null)
       .filter((r) => !r.barTitle!.startsWith(`${r.number} `));
     expect(misaligned, `a bar's tooltip names another row: ${JSON.stringify(misaligned)}`).toEqual([]);
-    /** ⚠ And the exact pair from the walk, named, so the regression is readable. */
-    const profile = rows.find((r) => r.number === "1.2");
-    expect(profile?.barTitle).toContain("Profile");
-    expect(profile?.barTitle, "Register is the row above").not.toContain("Register");
+    /* The pair from the walk now lives in the grid; here the top-level rows
+       must each name themselves. */
+    const build = rows.find((r) => r.number === "1");
+    expect(build?.barTitle).toContain("Build");
+    expect(build?.barTitle, "Operate is the row below").not.toContain("Operate");
   });
 });
 
@@ -150,7 +171,9 @@ test.describe("E797 — a start with no end is an open bar", () => {
     await expect(open).toHaveAttribute("data-plan-bar", "top-open");
     /** ⚠⚠ THE ONE DATE IT HAS IS NAMED, and the absence of the other is stated —
      *  a bar running to the edge must not read as "ends on the last day". */
-    await expect(open).toHaveAttribute("title", /from 2026-12-01, no end date/);
+    await expect(open).toHaveAttribute("title", /from Dec 1, no end date/);
+    await expect(open).toHaveAttribute("data-plan-start", "2026-12-01");
+    await expect(open).toHaveAttribute("data-plan-end", "");
     const row2 = page.locator('[data-plan-row="2"]');
     await expect(row2, "the row that HAS a date must not say it is unscheduled").not.toContainText(
       "not scheduled",
@@ -198,10 +221,6 @@ test.describe("E798 — a bar's left edge lines up with its start date", () => {
       test.skip(planId === null, "no plan to render");
       await page.setViewportSize({ width, height: 1200 });
       await page.goto("/status", { waitUntil: "domcontentloaded" });
-      /** ⚠ Expanded, so CHILD bars are measured too — they sit in the same
-       *  track and a per-row offset bug would show up there first. */
-      await page.locator('[data-plan-row="1"] button').click();
-
       const m = await page.evaluate(() => {
         const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
         /**
@@ -242,8 +261,9 @@ test.describe("E798 — a bar's left edge lines up with its start date", () => {
             if (!bar) return null;
             const kind = bar.getAttribute("data-plan-bar") ?? "";
             if (kind === "none") return null;
-            const title = bar.getAttribute("title") ?? "";
-            const start = title.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+            /* The declared hook, not the tooltip: the tooltip formats dates
+               for a reader and parsing it tied this test to a copy decision. */
+            const start = bar.getAttribute("data-plan-start") || null;
             if (!start) return null;
             const r = bar.getBoundingClientRect();
             /** ⚠ A milestone is a rotated square CENTRED on its date; a bar
@@ -265,7 +285,7 @@ test.describe("E798 — a bar's left edge lines up with its start date", () => {
 
       expect(m.error, `${m.error} — the axis must carry usable ticks`).toBeUndefined();
       const bars = (m.bars ?? []) as { number: string; off: number; start: string; kind: string }[];
-      expect(bars.length, "no dated bars to measure").toBeGreaterThan(3);
+      expect(bars.length, "no dated bars to measure").toBeGreaterThan(2);
 
       /**
        * ⚠⚠ 2px, NOT A PERCENTAGE. Sub-pixel rounding and the border on a dashed
@@ -303,5 +323,71 @@ test.describe("E798 — a bar's left edge lines up with its start date", () => {
     expect(geom, "no Today line or no track to measure").not.toBeNull();
     expect(geom!.intoTrack, "the Today line must start at or after the track's left edge").toBeGreaterThanOrEqual(-1);
     expect(geom!.intoTrack, "and inside it, not off the right end").toBeLessThan(geom!.trackWidth);
+  });
+});
+
+/**
+ * ── THE PLAN GRID (`P2-ALL-E803`) ───────────────────────────────────────────
+ *
+ * Scott, 2026-10-03: columns # · Name · Owner · Start · End · Status, each phase
+ * expanding to its child rows, Build open by default, working at 390.
+ */
+test.describe("E803 — the collapsible grid", () => {
+  test("six columns, Build open by default, others collapsed", async ({ page }) => {
+    test.skip(planId === null, "no plan to render");
+    await page.setViewportSize({ width: 1280, height: 1200 });
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+
+    const grid = page.locator("section", { has: page.getByText("The plan, phase by phase") });
+    await expect(grid).toBeVisible();
+    for (const col of ["#", "Name", "Owner", "Start", "End", "Status"]) {
+      await expect(grid.getByText(col, { exact: true }).first()).toBeVisible();
+    }
+
+    /* Build is the In progress row in the fixture, so it opens on load and its
+       children are already on screen; the others are shut. */
+    const numbers = await grid
+      .locator("[data-plan-grid-row]")
+      .evaluateAll((els) => els.map((e) => e.getAttribute("data-plan-grid-row")));
+    expect(numbers).toEqual(["1", "1.1", "1.2", "1.3", "2", "3", "4", "◆"]);
+    await expect(page.locator('button[aria-expanded="true"]')).toHaveCount(1);
+
+    /* Collapsing it removes exactly its children. */
+    await grid.locator("button").first().click();
+    const shut = await grid
+      .locator("[data-plan-grid-row]")
+      .evaluateAll((els) => els.map((e) => e.getAttribute("data-plan-grid-row")));
+    expect(shut).toEqual(["1", "2", "3", "4", "◆"]);
+
+    /* A leaf has no expander — an arrow promising rows that do not exist. */
+    await expect(grid.locator("button")).toHaveCount(1);
+  });
+
+  test("the dates and owner are readable at 390, not dropped", async ({ page }) => {
+    test.skip(planId === null, "no plan to render");
+    await page.setViewportSize({ width: 390, height: 1400 });
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+
+    const grid = page.locator("section", { has: page.getByText("The plan, phase by phase") });
+    /* The six-column header drops to three at phone width and the data moves
+       under the name — dropping it entirely would hide it. */
+    const row = grid.locator('[data-plan-grid-row="1"]');
+    await expect(row).toContainText("Build");
+    await expect(row, "the dates must still be on screen").toContainText("–");
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, "no sideways scroll at 390").toBeLessThanOrEqual(1);
+
+    /* 44px rows, the shell's touch standard. */
+    const short = await grid
+      .locator("[data-plan-grid-row]")
+      .evaluateAll((els) =>
+        els
+          .map((e) => ({ n: e.getAttribute("data-plan-grid-row"), h: Math.round(e.getBoundingClientRect().height) }))
+          .filter((x) => x.h < 44),
+      );
+    expect(short, `rows under 44px: ${JSON.stringify(short)}`).toEqual([]);
   });
 });

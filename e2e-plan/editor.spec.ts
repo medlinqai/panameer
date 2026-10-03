@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { adminAccount, signInAs } from "../e2e-tracker/_admin";
-import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapshot } from "./_plan-state";
+import { TEST_OWNER, createTestPlan, dropTestPlan, liveRowCount } from "./_plan-state";
 
 /**
  * ── `E784` — THE OUTLINE EDITOR, AS A PERSON USES IT ────────────────────────
@@ -11,26 +11,32 @@ import { assertPlanRestored, planDb, restorePlan, snapshotPlan, type PlanSnapsho
  * those rules**, which is the part Scott will actually touch.
  */
 
-const OWNER = "panameer-build";
-let before: PlanSnapshot;
+const OWNER = TEST_OWNER;
+/** The live plan is never read for its CONTENT — only counted, to prove a
+ *  run left it alone (`E804`). */
+let liveBefore = 0;
 
 test.beforeAll(async () => {
-  before = await snapshotPlan(OWNER);
+  liveBefore = await liveRowCount();
 });
 
 test.afterAll(async () => {
-  await restorePlan(before);
-  await assertPlanRestored(before);
+  await dropTestPlan();
+  /* The one thing still asserted about the live plan: that this run did
+     not change its row count. A count, never its contents. */
+  const after = await liveRowCount();
+  if (after !== liveBefore) {
+    throw new Error(`the live plan changed during this run: ${liveBefore} rows -> ${after}`);
+  }
 });
 
 test.beforeEach(async ({ page }) => {
   const { email, password } = adminAccount();
   await signInAs(page, email, password);
-  /** ⚠ Each test starts from an empty plan so the numbering assertions are
-   *  about the rows the test made, not about whatever came before. The
-   *  afterAll restore puts Scott's rows back. */
-  const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
-  if (plan) await planDb.planRow.deleteMany({ where: { plan_id: plan.id } });
+  /* Its OWN plan, emptied before each test (`E804`) — `createTestPlan` is
+     idempotent and wipes the rows, so numbering assertions are about the rows
+     this test made. */
+  await createTestPlan();
   await page.goto("/admin/build-plan", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });

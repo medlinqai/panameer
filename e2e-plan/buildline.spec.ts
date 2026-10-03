@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createTestPlan, dropTestPlan, liveRowCount, planDb } from "./_plan-state";
 
 /**
  * ── `E792` — THE BUILD LINE IS BACK, ABOVE THE PLAN'S TIMELINE ──────────────
@@ -7,6 +8,44 @@ import { expect, test } from "@playwright/test";
  * lighter. ⚠⚠ The ORDER is the assertion that matters: line → timeline →
  * accordions, because the line is the one-glance answer.
  */
+/**
+ * ITS OWN PLAN (`P2-ALL-E804`). Scott: "no test may read or write the
+ * panameer-build plan, ever again." These phase names are the ones the Build
+ * Line asserts, so they are created here rather than borrowed from live data.
+ */
+let planId: string | null = null;
+let liveBefore = 0;
+const d = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+test.beforeAll(async () => {
+  liveBefore = await liveRowCount();
+  planId = await createTestPlan();
+  const build = await planDb.planRow.create({
+    data: {
+      plan_id: planId, parent_id: null, sort: 2, type: "phase", title: "Build",
+      status: "In progress", start_date: d("2026-09-20"), end_date: d("2026-11-09"),
+    },
+    select: { id: true },
+  });
+  await planDb.planRow.createMany({
+    data: [
+      { plan_id: planId, parent_id: null, sort: 0, type: "phase", title: "Define", status: "Done", start_date: d("2026-08-15"), end_date: d("2026-08-22") },
+      { plan_id: planId, parent_id: null, sort: 1, type: "phase", title: "Design", status: "Done", start_date: d("2026-08-22"), end_date: d("2026-09-20") },
+      { plan_id: planId, parent_id: build.id, sort: 0, type: "task", title: "Register", status: "In progress", start_date: d("2026-09-20"), end_date: d("2026-10-24") },
+      { plan_id: planId, parent_id: null, sort: 3, type: "phase", title: "Prove", status: "Planned", start_date: d("2026-11-10"), end_date: d("2026-11-14") },
+      { plan_id: planId, parent_id: null, sort: 4, type: "milestone", title: "R1 — Public beta", status: "Planned", start_date: d("2026-11-15"), end_date: d("2026-11-15") },
+    ],
+  });
+});
+
+test.afterAll(async () => {
+  await dropTestPlan();
+  const after = await liveRowCount();
+  if (after !== liveBefore) {
+    throw new Error(`the live plan changed during this run: ${liveBefore} rows -> ${after}`);
+  }
+});
+
 test("the order is Build Line → plan timeline → accordions", async ({ page }) => {
   await page.goto("/status", { waitUntil: "domcontentloaded" });
 
@@ -45,8 +84,9 @@ test("the Gantt is lighter: 4px task bars, 6px top-level, rounded", async ({ pag
    * while staying green (`E776`'s failure, and ruling 9: a gate whose population
    * changed is a gate that moved).
    */
-  const toggle = page.locator('[aria-label="Plan timeline"] [data-plan-row] button').first();
-  if (await toggle.count()) await toggle.click();
+  /* `E803`: the chart shows top-level rows only, so there is nothing to expand
+     and no `task` bar to measure here — the heights asserted below are the
+     top-level ones and the milestone. */
   /** ⚠ `[data-plan-bar]` — a declared hook. Selecting `span[title]` matched the
    *  row label once it gained a tooltip, which is the same class of mistake as
    *  `E776`'s `.tabular-nums`. */

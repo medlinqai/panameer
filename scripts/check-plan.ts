@@ -18,6 +18,7 @@
  * skipped a column is exactly how `check:work-tracker` moved `/status`'s
  * current phase twice (`E765`).
  */
+import { readFileSync, readdirSync } from "fs";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
@@ -297,6 +298,54 @@ async function main() {
     releaseReadiness(movingRel, rel).percent === 75,
     "1 done + half of 1 moving, over 2 rows",
   );
+
+  /* ── §3.5 THE LIVE PLAN IS OFF LIMITS TO TESTS (`P2-ALL-E804`) ───────── */
+  /*
+    Scott, 2026-10-03: "no test may read or write the panameer-build plan, ever
+    again." The enforcement is structural — the specs use their own throwaway
+    plan and the suite's server points at it — and this is the tripwire that
+    fails if the literal comes back.
+  */
+  {
+    const LIVE = ["panameer", "build"].join("-");
+    const strip = (src: string) =>
+      src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+    const files = readdirSync("e2e-plan").filter((f) => f.endsWith(".spec.ts"));
+    check(
+      "3.5a — there are plan specs to check",
+      files.length >= 5,
+      `found ${files.length} spec files in e2e-plan/`,
+    );
+    const offenders = files.filter((f) =>
+      strip(readFileSync(`e2e-plan/${f}`, "utf8")).includes(LIVE),
+    );
+    check(
+      "3.5b — no plan spec names the live plan",
+      offenders.length === 0,
+      `${JSON.stringify(offenders)} reference the live owner_key — tests must use TEST_OWNER`,
+    );
+    /* The guard file is allowed to name it, because refusing it is its job. */
+    check(
+      "3.5c — and the guard that refuses it still exists",
+      strip(readFileSync("e2e-plan/_plan-state.ts", "utf8")).includes(LIVE) &&
+        /export function refuseLive/.test(readFileSync("e2e-plan/_plan-state.ts", "utf8")),
+      "refuseLive() is the backstop; deleting it would make 3.5b pass vacuously",
+    );
+    /* This gate's own DB sections use scratch keys, and that must stay true. */
+    check(
+      "3.5d — this gate uses scratch keys, not the live one",
+      SCRATCH !== LIVE && SCRATCH_COPY !== LIVE && !SCRATCH.includes(LIVE),
+      `SCRATCH=${SCRATCH} SCRATCH_COPY=${SCRATCH_COPY}`,
+    );
+    /* And the suite's server must point somewhere else, or the specs would read
+       the live plan through the page even with their own rows elsewhere. */
+    const cfg = readFileSync("playwright.plan.config.ts", "utf8");
+    check(
+      "3.5e — the plan suite runs its own server with PLAN_OWNER_KEY",
+      /PLAN_OWNER_KEY/.test(cfg) && /reuseExistingServer:\s*false/.test(cfg),
+      "reusing a shared server would hand these tests the live plan",
+    );
+  }
 
   /* ── §4 span ──────────────────────────────────────────────────────────── */
 

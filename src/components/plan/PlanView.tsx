@@ -21,6 +21,7 @@ import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
  * and the accordions are still `<details>`/`<summary>` with nothing hydrated.
  */
 import { PlanTimeline } from "./PlanTimeline";
+import { PlanGrid } from "./PlanGrid";
 
 const HEAD = "font-display font-bold tracking-[-0.3px]";
 
@@ -41,20 +42,22 @@ export function PlanView({ plan, today }: { plan: PublicPlan; today: string }) {
   return (
     <>
       <PlanTimeline plan={plan} today={today} />
-      <section className="mt-12 border-t border-line pt-6">
-        <h2 className={`text-[24px] text-ink ${HEAD}`}>The plan, phase by phase</h2>
-        <div className="mt-5 border-t border-line">
-          {plan.rows.map((row) => (
-            <PhaseAccordion key={row.id} row={row} />
-          ))}
-        </div>
-      </section>
+      {/*
+        The grid replaces the `<details>` accordions (`E803`, Scott 2026-10-03):
+        columns # · Name · Owner · Start · End · Status, each phase expanding to
+        its child rows. `PhaseAccordion` and its helpers stay below, unrendered,
+        rather than deleted.
+      */}
+      <PlanGrid plan={plan} />
     </>
   );
 }
 
 /* ── the accordions ─────────────────────────────────────────────────────── */
 
+/* Kept on disk, unrendered, after `E803` replaced it with `PlanGrid` — the
+   named disable rather than a deletion. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PhaseAccordion({ row }: { row: PublicPlanRow }) {
   /** ⚠⚠ THE IN-PROGRESS PHASE IS OPEN BY DEFAULT (the design). Everything else
    *  starts closed so the page can be scanned in seconds. */

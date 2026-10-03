@@ -16,7 +16,7 @@ import {
   type RowPatch,
   type StoredRow,
 } from "@/lib/plan/store";
-import { PLAN_OWNER_PANAMEER, isRowStatus, isRowType } from "@/lib/plan/model";
+import { planOwnerKey, isRowStatus, isRowType } from "@/lib/plan/model";
 import { applyPanameerTemplate } from "@/lib/plan/template";
 import { prisma } from "@/lib/prisma";
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const action = typeof body.action === "string" ? body.action : "";
   /** ⚠ Today the only owner is the build plan. A work order's key arrives the
    *  same way in R2, which is why this is a parameter and not a constant. */
-  const ownerKey = typeof body.ownerKey === "string" && body.ownerKey ? body.ownerKey : PLAN_OWNER_PANAMEER;
+  const ownerKey = typeof body.ownerKey === "string" && body.ownerKey ? body.ownerKey : planOwnerKey();
 
   try {
     const plan = await ensurePlan(ownerKey, "Panameer build", gate);
