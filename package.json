@@ -192,7 +192,8 @@
     "check:sr7": "playwright test --config=playwright.sr7.config.ts",
     "check:redirects": "playwright test --config=playwright.redirects.config.ts",
     "check:followhop": "playwright test --config=playwright.followhop.config.ts",
-    "check:resume-rebuild": "playwright test --config=playwright.e782.config.ts"
+    "check:resume-rebuild": "playwright test --config=playwright.e782.config.ts",
+    "check:prisma-freshness": "npx esbuild scripts/check-prisma-freshness.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/check-prisma-freshness.cjs --log-level=error && node .harness/check-prisma-freshness.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
