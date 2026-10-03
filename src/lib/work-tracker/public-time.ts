@@ -72,3 +72,17 @@ export function dayNumber(startYmd: string, now: Date = new Date()): number {
   const b = Date.parse(`${today}T00:00:00Z`);
   return Math.max(1, Math.round((b - a) / 86_400_000) + 1);
 }
+
+/**
+ * Today's calendar date in the site's zone, as `YYYY-MM-DD`.
+ *
+ * ⚠⚠ **IT EXISTS SO ONE VALUE FEEDS EVERY "IS THIS LATE / IS THIS NOW" ANSWER
+ * ON A PAGE** (`P2-ALL-E785`). The plan's Today line, its `Past due` marks and
+ * `Day N` must agree, and the only way they can is if the page resolves the day
+ * once and passes it down. ⚠ A component calling `new Date()` for itself lands
+ * on the server's zone — ET on this mac, **UTC on Vercel** — which is the exact
+ * defect `E775` fixed for the `updated` line.
+ */
+export function todayInSiteZone(now: Date = new Date()): string {
+  return ymdIn(now, SITE_TZ);
+}

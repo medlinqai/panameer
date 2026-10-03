@@ -11,6 +11,25 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e-sr7",
+  /*
+    ⚠⚠ `e774-stage.spec.ts` IS RETIRED BY `E785` AND KEPT ON DISK (`E164`) — its
+    subject, the public current-phase stage list, left `/status`. It is now
+    comment-only, so it is ignored here rather than collected as a file with no
+    tests. ⚠ The rule it asserted is still guarded: `PUBLIC_HIDDEN_STAGES` is
+    byte-unchanged and `e2e-tracker/lane-b.spec.ts` still asserts the payload.
+  */
+  /*
+    ⚠⚠ TWO RETIRED SPECS, BOTH KEPT ON DISK (`E164`), both ignored here because
+    they are now comment-only:
+    · `e774-stage.spec.ts` — the public current-phase stage list left `/status`.
+    · `e776-hero.spec.ts` — every test measured a rendered FIGURE, which an
+      empty plan does not render. ⚠⚠⚠ Four of its five were already passing
+      VACUOUSLY; the rule moved to `e2e-plan/hero.spec.ts`, which can seed the
+      plan row that makes a figure exist.
+    ⚠ `e777-buildline.spec.ts` is NOT ignored — its pure `assignRows` unit test
+    is kept and still runs; only its DOM half is retired in place.
+  */
+  testIgnore: ["e774-stage.spec.ts", "e776-hero.spec.ts"],
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   use: { baseURL: "http://localhost:3100", screenshot: "only-on-failure" },
   outputDir: "./e2e-sr7/.artifacts",
