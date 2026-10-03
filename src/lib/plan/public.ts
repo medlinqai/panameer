@@ -34,6 +34,8 @@ import {
 export type PublicPlanRow = {
   id: string;
   number: string;
+  /** What a number column prints: the outline number, or `◆` (`E809`). */
+  mark: string;
   title: string;
   type: string;
   status: string;
@@ -94,12 +96,13 @@ export function publicReleaseProgress(rows: readonly PlanRowLike[], releaseId: s
   return releaseReadiness(rows, releaseId);
 }
 
-type Node = PlanRowLike & { number: string; children: Node[] };
+type Node = PlanRowLike & { number: string; mark: string; children: Node[] };
 
 function shape(node: Node, today: Date, allRows: readonly PlanRowLike[]): PublicPlanRow {
   return {
     id: node.id,
     number: node.number,
+    mark: node.mark,
     title: node.title,
     type: node.type,
     status: node.status,
