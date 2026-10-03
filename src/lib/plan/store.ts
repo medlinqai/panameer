@@ -467,3 +467,78 @@ function emptyToNull(v: string | null) {
   const clean = v.trim();
   return clean === "" ? null : clean;
 }
+
+/* ── import ─────────────────────────────────────────────────────────────── */
+
+export type ImportMode = "replace" | "append";
+
+/**
+ * Write imported rows into a plan.
+ *
+ * ⚠⚠⚠ **`replace` AND `append` ARE BOTH DESTRUCTIVE-ADJACENT AND THE PERSON
+ * CHOOSES ON SCREEN** (Scott: ask on screen). `replace` deletes every existing
+ * row first; `append` adds after what is there. ⚠ Neither is the default in the
+ * UI — there is no pre-selected option, because a mis-click on a 200-row plan
+ * is not recoverable from the editor's one-row undo.
+ *
+ * ⚠⚠ **IT IS ONE TRANSACTION.** A half-written plan — some rows in, the parent
+ * links missing — is worse than a refused import, because it looks like a
+ * successful one.
+ */
+export async function writeImportedRows(
+  planId: string,
+  imported: readonly { level: 1 | 2; title: string; type: string; start: string | null; end: string | null; status: string; owner: string | null; hours: number | null }[],
+  mode: ImportMode,
+  viewer: Viewer,
+): Promise<{ written: number; replaced: number }> {
+  if (imported.length === 0) throw new PlanError("Nothing in that file could be imported.", "INVALID");
+
+  return prisma.$transaction(async (tx) => {
+    let replaced = 0;
+    if (mode === "replace") {
+      const { count } = await tx.planRow.deleteMany({ where: { plan_id: planId } });
+      replaced = count;
+    }
+    /** ⚠ Appended rows start after the existing top-level rows, so an append
+     *  does not interleave with what is already there. */
+    const base = mode === "append"
+      ? await tx.planRow.count({ where: { plan_id: planId, parent_id: null } })
+      : 0;
+
+    let topSort = base;
+    let childSort = 0;
+    let parentId: string | null = null;
+    let written = 0;
+
+    for (const r of imported) {
+      const date = (v: string | null) => (v ? new Date(`${v}T00:00:00.000Z`) : null);
+      const data = {
+        plan_id: planId,
+        type: r.type,
+        title: r.title,
+        start_date: date(r.start),
+        end_date: date(r.end),
+        status: r.status,
+        owner: r.owner,
+        hours: r.hours,
+        updated_by: viewer.userId,
+      };
+      if (r.level === 1) {
+        const made = await tx.planRow.create({
+          data: { ...data, parent_id: null, sort: topSort++ },
+          select: { id: true, type: true },
+        });
+        /** ⚠⚠ A MILESTONE IS NEVER A PARENT, so a level-2 row after one has no
+         *  parent to take — `readGrid` has already promoted it and said so. */
+        parentId = made.type === "milestone" ? null : made.id;
+        childSort = 0;
+      } else {
+        await tx.planRow.create({ data: { ...data, parent_id: parentId, sort: childSort++ } });
+      }
+      written++;
+    }
+
+    await tx.plan.update({ where: { id: planId }, data: { updated_by: viewer.userId } });
+    return { written, replaced };
+  });
+}

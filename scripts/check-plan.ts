@@ -46,6 +46,7 @@ import {
   updateRow,
 } from "@/lib/plan/store";
 import { TEMPLATE_JOURNEYS, applyPanameerTemplate } from "@/lib/plan/template";
+import { IMPORT_COLUMNS, parseCsv, readDate, readGrid } from "@/lib/plan/import";
 
 const failures: string[] = [];
 let pass = 0;
@@ -275,6 +276,168 @@ async function main() {
     "5d — a row already in the list is moved, not duplicated",
     insertAfter(sibs, { id: "c" }, "a").map((s) => s.id).join(",") === "a,c,b",
     "re-placing must not duplicate",
+  );
+
+  /* ── §14 the import reader — PURE, fixtures only ───────────────────────── */
+
+  /**
+   * ⚠⚠ The parser is the half of the import that can be tested without a
+   * server, a file picker or Postgres, and it is the half that carries every
+   * per-row message a person will read. ⚠ `exceljs` is exercised by the browser
+   * gate; the GRID reader is exercised here, and both go through `readGrid`.
+   */
+
+  /* CSV mechanics */
+  check(
+    "14a — a quoted field keeps its comma",
+    parseCsv('a,"b,c",d')[0].join("|") === "a|b,c|d",
+    JSON.stringify(parseCsv('a,"b,c",d')),
+  );
+  check(
+    "14b — a quoted field keeps its newline",
+    parseCsv('a,"two\nlines",c')[0][1] === "two\nlines",
+    JSON.stringify(parseCsv('a,"two\nlines",c')),
+  );
+  check(
+    "14c — a doubled quote is one quote",
+    parseCsv('a,"say ""hi""",c')[0][1] === 'say "hi"',
+    JSON.stringify(parseCsv('a,"say ""hi""",c')),
+  );
+  check(
+    "14d — CRLF ends a row and leaves no stray carriage return",
+    parseCsv("a,b\r\nc,d").length === 2 && parseCsv("a,b\r\nc,d")[0][1] === "b",
+    JSON.stringify(parseCsv("a,b\r\nc,d")),
+  );
+  check(
+    "14e — a trailing newline does not invent an empty row",
+    parseCsv("a,b\nc,d\n").length === 2,
+    `${parseCsv("a,b\nc,d\n").length} rows`,
+  );
+  check(
+    "14f — a BOM does not corrupt the first heading",
+    parseCsv("\uFEFFLevel,Title")[0][0] === "Level",
+    JSON.stringify(parseCsv("\uFEFFLevel,Title")[0][0]),
+  );
+
+  /* dates */
+  check("14g — ISO reads", readDate("2026-11-15") === "2026-11-15", String(readDate("2026-11-15")));
+  check("14h — M/D/YYYY reads", readDate("11/15/2026") === "2026-11-15", String(readDate("11/15/2026")));
+  check("14i — blank is null, not an error", readDate("") === null, String(readDate("")));
+  check(
+    "14j — 31 February is refused, not rolled over",
+    readDate("2026-02-31") === false,
+    String(readDate("2026-02-31")),
+  );
+  check(
+    "14k — a two-digit year is refused rather than guessed",
+    readDate("11/15/26") === false,
+    `got ${String(readDate("11/15/26"))} — "26" could be 1926, and unreadable text is not evidence of a date (E549)`,
+  );
+  check("14l — prose is refused", readDate("next spring") === false, String(readDate("next spring")));
+
+  /* the grid reader */
+  const header = IMPORT_COLUMNS.join(",");
+  const good = readGrid(parseCsv(`${header}\n1,Build,phase,2026-09-20,2026-11-01,In progress,Scott,\n2,Public,task,2026-09-20,2026-09-30,Done,Scott,40`));
+  check(
+    "14m — a clean file imports with no problems",
+    good.rows.length === 2 && good.problems.length === 0,
+    `${good.rows.length} rows, ${good.problems.length} problems: ${JSON.stringify(good.problems)}`,
+  );
+  check(
+    "14n — levels and dates survive",
+    good.rows[1].level === 2 && good.rows[0].start === "2026-09-20" && good.rows[1].hours === 40,
+    JSON.stringify(good.rows),
+  );
+
+  const noTitle = readGrid(parseCsv("Level,Type\n1,phase"));
+  check(
+    "14o — a file with no Title column is refused at file level",
+    noTitle.rows.length === 0 && /Title/.test(noTitle.problems[0]?.message ?? ""),
+    JSON.stringify(noTitle.problems),
+  );
+
+  /**
+   * ⚠⚠⚠ THE ONE THAT MATTERS MOST: a file with SOME bad rows imports the good
+   * ones and says why the others did not. An all-or-nothing import of somebody's
+   * real plan is what makes people stop using the feature.
+   */
+  const mixedFile = readGrid(
+    parseCsv(
+      `${header}\n` +
+        `1,Build,phase,2026-09-20,2026-11-01,In progress,,\n` +
+        `2,Public,task,,,done,,\n` +
+        `2,Bad type,widget,,,,,\n` +
+        `1,,phase,,,,,\n` +
+        `2,Bad date,task,not-a-date,,,,\n` +
+        `2,Bad hours,task,,,,,-5\n` +
+        `2,Bad status,task,,,Nearly,,\n` +
+        `1,Backwards,phase,2026-12-01,2026-01-01,,,`,
+    ),
+  );
+  check(
+    "14p — the good rows import and the bad ones are reported",
+    /** ⚠ Six rows in, six reasons out: bad type · no title · bad date · bad
+     *  hours · bad status · end-before-start. ⚠⚠ The counts are SPELLED OUT
+     *  because my first version said five and the parser was right. */
+    mixedFile.rows.length === 6 && mixedFile.problems.length === 6,
+    `${mixedFile.rows.length} rows, ${mixedFile.problems.length} problems: ${JSON.stringify(mixedFile.problems)}`,
+  );
+  check(
+    "14q — the fixture has BOTH good and bad rows, so §14p cannot pass vacuously",
+    mixedFile.rows.length > 0 && mixedFile.problems.length > 0,
+    "ruling 11: an all-good or all-bad fixture would make the split meaningless",
+  );
+  check(
+    "14r — each problem names its spreadsheet line",
+    mixedFile.problems.every((p) => p.line >= 2) && new Set(mixedFile.problems.map((p) => p.line)).size > 1,
+    JSON.stringify(mixedFile.problems.map((p) => p.line)),
+  );
+  check(
+    "14s — `done` is accepted as Done, so case is not a reason to lose a row",
+    mixedFile.rows[1]?.status === "Done",
+    `got ${mixedFile.rows[1]?.status}`,
+  );
+  check(
+    "14t — an unreadable date leaves the row in, with the date blank",
+    mixedFile.rows.some((r) => r.title === "Bad date" && r.start === null),
+    JSON.stringify(mixedFile.rows.find((r) => r.title === "Bad date")),
+  );
+  check(
+    "14u — an end before a start is reported and BOTH dates are kept",
+    (() => {
+      const row = mixedFile.rows.find((r) => r.title === "Backwards");
+      return !!row && row.start === "2026-12-01" && row.end === "2026-01-01";
+    })(),
+    "discarding one of two dates the person typed is worse than reporting the pair",
+  );
+  check(
+    "14v — a bad TYPE drops the row (there is nothing to import it AS)",
+    !mixedFile.rows.some((r) => r.title === "Bad type"),
+    "unlike a bad date, a bad type has no safe default",
+  );
+
+  const orphan = readGrid(parseCsv(`${header}\n2,Orphan,task,,,,,`));
+  check(
+    "14w — a level-2 row with nothing above it is promoted, and said",
+    orphan.rows.length === 1 &&
+      orphan.rows[0].level === 1 &&
+      /top level/i.test(orphan.problems[0]?.message ?? ""),
+    JSON.stringify(orphan),
+  );
+
+  const underStone = readGrid(
+    parseCsv(`${header}\n1,R1,milestone,2026-11-15,2026-11-15,,,\n2,Under,task,,,,,`),
+  );
+  check(
+    "14x — nothing sits under a milestone, so the next row is promoted",
+    underStone.rows[1]?.level === 1,
+    JSON.stringify(underStone.rows),
+  );
+
+  check(
+    "14y — an empty file says so rather than importing nothing silently",
+    readGrid([]).problems.length === 1,
+    JSON.stringify(readGrid([]).problems),
   );
 
   /* ── §6–§12 the database half ─────────────────────────────────────────── */
