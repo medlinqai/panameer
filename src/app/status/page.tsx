@@ -26,7 +26,7 @@ import { planBuildLine } from "@/lib/plan/build-line";
 import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
-import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
+import { publicPlan, releaseProgressByCode, releaseScopeByCode } from "@/lib/plan/public";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -189,6 +189,8 @@ export default async function StatusPage({
     number is **no longer rendered anywhere**.
   */
   const planReleasePercent = releaseProgressByCode(planRows, releaseIds);
+  /* The journeys tagged to each release, from the plan (`E806`). */
+  const planReleaseScope = releaseScopeByCode(planRows, releaseIds);
   /*
     ── ⚠⚠⚠ THE SECONDARY FIGURES COME FROM THE PLAN TOO (`P2-ALL-E790`) ───────
 
@@ -529,26 +531,50 @@ export default async function StatusPage({
                     {r.summary && (
                       <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-2">{r.summary}</span>
                     )}
-                    {/* ⚠ Journey NAMES — segments, never task text. */}
-                    {r.journeys.length > 0 && (
+                    {/*
+                      THE TAGGED PLAN ROWS, not AIM journeys (`P2-ALL-E806`).
+                      Scott, 2026-10-03: this section still showed the AIM
+                      figures — "84% · 16 of 19 done · Register · Profile ·
+                      Connect" — beside a hero counted from the plan. Two
+                      definitions of one release's progress, on the page a
+                      stranger lands on (`E585`).
+                      Row TITLES, which are segment names; never task text.
+                    */}
+                    {(planReleaseScope[r.code ?? ""] ?? []).length > 0 && (
                       <span className="mt-1 block text-[12.5px] text-ink-3">
-                        {r.journeys.join(" · ")}
+                        {(planReleaseScope[r.code ?? ""] ?? []).join(" · ")}
                       </span>
                     )}
                   </span>
                   <span className="text-[13px] text-ink-2 sm:text-right">
-                    {/* ⚠⚠ `Scope being set`, NEVER `0%` — a release nobody has
-                        scoped has not achieved nothing. */}
-                    <span className={`block text-[17px] text-ink ${HEAD}`}>
-                      {r.percent === null ? "Scope being set" : `${r.percent}%`}
-                    </span>
-                    {r.date && <span className="block">due {r.date}</span>}
-                    <span className="block">{r.status}</span>
-                    {r.percent !== null && (
-                      <span className="block text-ink-3">
-                        {r.doneCount} of {r.taskCount} done
-                      </span>
-                    )}
+                    {/*
+                      THE PLAN'S FIGURE, so it is the SAME NUMBER as the hero
+                      (`E806`) — the hero reads `planReleasePercent` for the
+                      current release and so does this.
+                      `Scope being set`, NEVER `0%`: a release with no tagged
+                      plan rows has not achieved nothing, it is uncountable.
+                    */}
+                    {(() => {
+                      const p = r.code ? planReleasePercent[r.code] : undefined;
+                      const pct = p?.percent ?? null;
+                      return (
+                        <>
+                          <span className={`block text-[17px] text-ink ${HEAD}`}>
+                            {pct === null ? "Scope being set" : `${pct}%`}
+                          </span>
+                          {r.date && <span className="block">due {r.date}</span>}
+                          <span className="block">{r.status}</span>
+                          {p && pct !== null && (
+                            /* The counts name the rule behind the percentage:
+                               an in-progress row earns half (`E797`), so a bare
+                               "n of total done" could not produce this figure. */
+                            <span className="block text-ink-3">
+                              {p.done} done · {p.moving} in progress · of {p.total}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </span>
                 </li>
               ))}
