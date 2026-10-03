@@ -88,7 +88,9 @@ export async function sendTest(
 
   const wr = await prisma.workRequest.findUnique({
     where: { id: input.workRequestId },
-    select: { id: true, buyer_person_id: true, status: true },
+    /** ⚠ `title` IS READ FOR THE NOTIFICATION (`E802`) — see the `notify` call
+     *  below for why it is the request and not the buyer. */
+    select: { id: true, buyer_person_id: true, status: true, title: true },
   });
   if (!wr) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
   if (wr.buyer_person_id !== me.id) {
@@ -190,7 +192,28 @@ export async function sendTest(
     entityType: "test_request",
     entityId: created.id,
     dedupeKey: `work.test_requested:${created.id}`,
-    vars: { requestId: wr.id },
+    /*
+      ── ⚠⚠⚠ THE REQUEST IS NAMED; THE BUYER STILL IS NOT (`P2-ALL-E802`) ────
+
+      ⚠ **SCOTT, 2026-10-03:** *"show each pending test once (name the
+      buyer/skill if known)."*
+      ⚠⚠⚠ **THE BUYER CANNOT BE NAMED HERE AND THAT IS DELIBERATE, NOT AN
+      OMISSION** — `buildBuyerIdentity` is the one redaction deciding what a
+      provider may see of `company_visibility` / `company_code_name`, a
+      notification is outside the page that applies it, and passing the name
+      would bypass the rule `check:work-request-identity` guards. The paragraph
+      above this call says so.
+      ⚠⚠ **AND THERE IS NO SKILL TO NAME: `TestRequest` RECORDS NONE** (measured
+      — the model carries no skill column or relation).
+      ⚠ **SO THE REQUEST'S OWN TITLE IS WHAT IS KNOWN AND SAFE.** The provider is
+      already looking at that request on `/find-work/<id>`, and
+      `work.order_offered` has always put `requestTitle` in its body — so this
+      follows a precedent rather than opening a question.
+      ⚠⚠ It goes in the BODY, not the title: the title is what `getWorklist`
+      groups on, and a per-request title would make five tests five rows again —
+      which is the repetition Scott asked to remove.
+    */
+    vars: { requestId: wr.id, requestTitle: wr.title },
   });
 
   return { id: created.id, created: true };

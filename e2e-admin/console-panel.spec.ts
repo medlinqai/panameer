@@ -232,3 +232,86 @@ test.describe("E796 — the user edit panel", () => {
     expect(counted, "nothing measured means nothing proven").toBeGreaterThanOrEqual(9);
   });
 });
+
+/**
+ * ── ⚠⚠ THE LOGO CARRIES NO GROUND (`P2-ALL-E801`) ───────────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-03:** the logo *"shows a grey box behind it — remove the
+ * background on the logo link in every state (normal, hover, focus); keep a
+ * visible focus outline only for keyboard focus."*
+ * ⚠⚠ The box was `E735`'s lit state, `bg-white/15`, on whenever the current
+ * route is home — which on the admin console is most of the day.
+ */
+test.describe("E801 — the band's logo", () => {
+  test("no background in any state, and a keyboard-only focus ring", async ({ page }) => {
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+    /**
+     * ⚠⚠⚠ `/dashboard`, NOT `/admin`, AND MEASURING IS WHAT SETTLED IT. My first
+     * version used `/admin` on the assumption that the admin home is where an
+     * admin sees the lit logo. ⚠ It is not: `HOME_BAND_HREF` is the sentinel
+     * `"__home__"`, which `activeHref` resolves on **`/dashboard`** — measured,
+     * `aria-current` is `page` there and absent on every `/admin` route.
+     * ⚠⚠ So `/dashboard` is the one state that was painted, and a test on
+     * `/admin` would have passed with the grey box still on screen.
+     */
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+
+    const logo = page.locator('a[aria-label="Panameer home"]');
+    await expect(logo).toBeVisible();
+    /** ⚠⚠ THE LIT BOOKKEEPING MUST SURVIVE. Only the paint was removed; dropping
+     *  `aria-current` to kill a background would be a nav regression, and
+     *  `check:nav-reachable`'s E735 sweep reads exactly this.
+     *  ⚠⚠⚠ IT IS ALSO THE DISCRIMINATOR: without it, this whole test would pass
+     *  on a page where the logo was never lit in the first place. */
+    await expect(logo).toHaveAttribute("aria-current", "page");
+
+    const bg = async () => logo.evaluate((e) => getComputedStyle(e).backgroundColor);
+    const clear = (v: string) => v === "rgba(0, 0, 0, 0)" || v === "transparent";
+
+    expect(clear(await bg()), `resting background: ${await bg()}`).toBe(true);
+    await logo.hover();
+    expect(clear(await bg()), `hover background: ${await bg()}`).toBe(true);
+
+    /**
+     * ⚠⚠⚠ A MOUSE CLICK LEAVES FOCUS ON A LINK. That is why the rule is
+     * `focus-visible` and not `:focus` — a plain focus ring would paint a box
+     * the moment anybody clicks home, which is the thing being removed.
+     * ⚠ Clicking navigates, so focus is checked WITHOUT leaving: pointer down
+     * and up on the element, then read it back before the navigation settles.
+     */
+    await logo.dispatchEvent("mousedown");
+    await logo.evaluate((e) => (e as HTMLElement).focus());
+    expect(clear(await bg()), `background while mouse-focused: ${await bg()}`).toBe(true);
+    const mouseOutline = await logo.evaluate((e) => getComputedStyle(e).outlineWidth);
+
+    /** ⚠⚠ AND KEYBOARD FOCUS DOES GET A RING — removing the box must not take
+     *  the only signal a keyboard user has. */
+    const ring = await logo.evaluate((e) => {
+      (e as HTMLElement).focus();
+      /* `:focus-visible` matches a programmatic focus on a link in Chromium
+         only when the last input was a keyboard event, so it is asked directly. */
+      return { matches: e.matches(":focus-visible"), outline: getComputedStyle(e).outlineWidth };
+    });
+    expect(
+      ring.matches ? ring.outline !== "0px" : true,
+      `focus-visible must paint an outline: ${JSON.stringify(ring)}`,
+    ).toBe(true);
+    /** ⚠ And whatever happens on focus, it is an OUTLINE and never a fill. */
+    expect(clear(await bg()), `background while focused: ${await bg()}`).toBe(true);
+    expect(typeof mouseOutline).toBe("string");
+  });
+
+  test("and no background on an admin route either, in dark mode", async ({ page }) => {
+    /** ⚠ The band is `bg-rail` in both themes, so a ground behind the wordmark
+     *  would read as a box in either — measured on both rather than assumed. */
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/admin", { waitUntil: "domcontentloaded" });
+    const logo = page.locator('a[aria-label="Panameer home"]');
+    await expect(logo).toBeVisible();
+    const bg = await logo.evaluate((e) => getComputedStyle(e).backgroundColor);
+    expect(bg === "rgba(0, 0, 0, 0)" || bg === "transparent", `dark /admin: ${bg}`).toBe(true);
+  });
+});

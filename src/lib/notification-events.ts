@@ -882,7 +882,13 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: true,
     title: (v) => `${str(v, "buyerName", "A buyer")} sent you a skills test`,
-    body: () => "Sit it or decline to clear this.",
+    /** ⚠⚠ THE REQUEST IS NAMED IN THE BODY (`E802`), never the buyer — see the
+     *  note above and the `notify` call in `work-tests.ts`. ⚠ In the body and
+     *  not the title because the worklist GROUPS on the title. */
+    body: (v) => {
+      const t = str(v, "requestTitle", "");
+      return t ? `${t} · Sit it or decline to clear this.` : "Sit it or decline to clear this.";
+    },
     /* ⚠ The provider's own route, for the reason recorded on the interview
        event directly above — and checked here rather than copied. */
     href: (v) => `/find-work/${str(v, "requestId", "")}`,
