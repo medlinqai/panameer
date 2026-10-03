@@ -87,6 +87,14 @@ export async function POST(request: Request) {
           {
             delta: typeof body.delta === "number" ? body.delta : undefined,
             index: typeof body.index === "number" ? body.index : undefined,
+            /* `undefined` means "same parent"; an explicit `null` means the top
+               level, so the key's PRESENCE is what distinguishes them. */
+            parentId:
+              "parentId" in body
+                ? typeof body.parentId === "string" && body.parentId
+                  ? body.parentId
+                  : null
+                : undefined,
           },
           gate,
         );

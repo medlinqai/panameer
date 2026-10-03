@@ -325,24 +325,80 @@ export async function outdentRow(rowId: string, viewer: Viewer): Promise<StoredR
  */
 export async function moveRow(
   rowId: string,
-  to: { delta?: number; index?: number },
+  to: { delta?: number; index?: number; parentId?: string | null },
   viewer: Viewer,
 ): Promise<StoredRow> {
   const row = await requireRow(rowId);
-  const siblings = await siblingsOf(prisma, row.plan_id, row.parent_id);
+  /**
+   * MOVING ACROSS PARENTS (`P2-ALL-E813`). `parentId` undefined means "stay
+   * where you are and reorder" — the original behaviour — while `null` means
+   * "go to the top level". The two are different answers and the API tells them
+   * apart by whether the key was sent at all.
+   */
+  const changingParent = to.parentId !== undefined && to.parentId !== row.parent_id;
+  const newParentId = changingParent ? (to.parentId ?? null) : row.parent_id;
+
+  if (changingParent && newParentId) {
+    /**
+     * A ROW CANNOT BECOME ITS OWN DESCENDANT'S CHILD. Without this, dropping a
+     * phase onto one of its own stages would detach that whole branch from the
+     * tree — the rows would still exist and nothing would render them.
+     */
+    let cursor: string | null = newParentId;
+    while (cursor) {
+      if (cursor === row.id) {
+        throw new PlanError("A row cannot move inside itself.", "INVALID");
+      }
+      const up: { parent_id: string | null } | null = await prisma.planRow.findUnique({
+        where: { id: cursor },
+        select: { parent_id: true },
+      });
+      cursor = up?.parent_id ?? null;
+    }
+    await assertCanParent(newParentId, row.plan_id);
+    /* The whole subtree has to fit inside three levels, not just this row.
+       `depthOf({ parent_id })` already answers "how deep would a CHILD of this
+       be", so the +1 is in there — adding another was an off-by-one that
+       refused every legal cross-parent move. */
+    const landingDepth = await depthOf({ parent_id: newParentId });
+    if (landingDepth + (await subtreeHeight(row.id)) > MAX_DEPTH) {
+      throw new PlanError(
+        "A plan is three levels deep — the rows underneath this one would not fit there.",
+        "INVALID",
+      );
+    }
+  }
+
+  const siblings = await siblingsOf(prisma, row.plan_id, newParentId);
+  /* When the parent changes the row is not in that list yet, so "from" is -1
+     and the target index is simply where it is being inserted. */
   const from = siblings.findIndex((s) => s.id === row.id);
   const raw = to.index !== undefined ? to.index : from + (to.delta ?? 0);
+  const ceiling = changingParent ? siblings.length : siblings.length - 1;
   /** ⚠ Clamped, not refused: dragging past the end means "last", and Up on the
    *  first row is a no-op the editor should not have to special-case. */
-  const target = Math.max(0, Math.min(siblings.length - 1, raw));
-  if (target === from) return row;
+  const target = Math.max(0, Math.min(ceiling, raw));
+  if (!changingParent && target === from) return row;
 
   const reordered = siblings.filter((s) => s.id !== row.id);
   reordered.splice(target, 0, row);
 
+  /* The row's old siblings close the gap it leaves behind. */
+  const oldSiblings = changingParent
+    ? (await siblingsOf(prisma, row.plan_id, row.parent_id)).filter((s) => s.id !== row.id)
+    : [];
+
   return prisma.$transaction(async (tx) => {
+    if (changingParent) {
+      await tx.planRow.update({ where: { id: row.id }, data: { parent_id: newParentId } });
+      for (const [i, s] of oldSiblings.entries()) {
+        if (s.sort !== i) await tx.planRow.update({ where: { id: s.id }, data: { sort: i } });
+      }
+    }
     for (const [i, s] of reordered.entries()) {
-      if (s.sort !== i) await tx.planRow.update({ where: { id: s.id }, data: { sort: i } });
+      if (s.sort !== i || s.id === row.id) {
+        await tx.planRow.update({ where: { id: s.id }, data: { sort: i } });
+      }
     }
     await tx.planRow.update({ where: { id: row.id }, data: { updated_by: viewer.userId } });
     return (await tx.planRow.findUnique({ where: { id: row.id }, select: ROW_SELECT }))!;
