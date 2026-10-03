@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, ClipboardList, History, X } from "lucide-react";
+import { BarChart3, ClipboardList, History, Receipt, SlidersHorizontal, X } from "lucide-react";
+import { drawerGroups } from "@/lib/admin-drawers";
+import { RailIcon } from "@/components/casing/RailIcon";
 import { reportsFor, type Report } from "@/lib/admin-reports";
 import { recordRecent, readRecentForDisplay, type Recent } from "@/lib/admin-recent";
 
@@ -54,13 +56,52 @@ import { recordRecent, readRecentForDisplay, type Recent } from "@/lib/admin-rec
   is contained.
   ⚠ THE ICONS ARE UNTOUCHED: clipboard, history, bar chart, in that order.
 */
-type TabKey = "tasks" | "activity" | "reports";
+/*
+  ── ⚠⚠⚠ FIVE TABS — SCOTT'S FINAL D2 CALL, 2026-10-03 (`P2-ALL-E800`) ───────
+
+  **Tasks · Transactions · Configuration · Activity · Reports.**
+
+  ⚠⚠ **THE TWO NEW ONES ARE THE ADMIN MENU, MOVED OUT OF THE GEAR AND INTO THE
+  PANEL ON DESKTOP.** `Transactions` opens the Transaction Data links;
+  `Configuration` opens Configuration Data **and** Support Data together, which
+  is how Scott named them.
+  ⚠⚠⚠ **THEY READ `ADMIN_NAV` — THEY DO NOT RE-TYPE IT.** The same array feeds
+  the gear's drawer, so a renamed or added destination appears in both without
+  anybody remembering (`E585`). ⚠ A hand-copied list here would have been the
+  third place those fifteen hrefs live.
+  ⚠ The per-item icons come from `RailIcon`, the same mapper the rail uses, so an
+  item cannot wear one icon here and another there.
+*/
+type TabKey = "tasks" | "transactions" | "configuration" | "activity" | "reports";
 
 const TABS: { key: TabKey; label: string; Icon: typeof BarChart3 }[] = [
   { key: "tasks", label: "Tasks", Icon: ClipboardList },
+  { key: "transactions", label: "Transact", Icon: Receipt },
+  { key: "configuration", label: "Config", Icon: SlidersHorizontal },
   { key: "activity", label: "Activity", Icon: History },
   { key: "reports", label: "Reports", Icon: BarChart3 },
 ];
+
+/*
+  ⚠⚠ THE STRIP LABEL IS ABBREVIATED; THE DRAWER HEADING IS NOT. The strip is
+  54px wide and `Transactions` does not fit on one line at 10px — it wrapped and
+  pushed the icons out of alignment. ⚠ The full word is the drawer's own title,
+  the `title` tooltip and the `aria-label`, so nothing a reader or a screen
+  reader receives is abbreviated.
+*/
+const FULL_LABEL: Partial<Record<TabKey, string>> = {
+  transactions: "Transactions",
+  configuration: "Configuration",
+};
+
+/**
+ * ⚠⚠ THE MAPPING LIVES IN `lib/admin-drawers.ts`, NOT HERE — this is a
+ * `"use client"` file and a check script cannot import one without pulling React
+ * in. ⚠ `check:task-panel` reads that module and proves every `ADMIN_NAV` group
+ * is reachable from exactly one drawer.
+ */
+const groupsFor = (key: TabKey) =>
+  key === "transactions" || key === "configuration" ? drawerGroups(key) : [];
 
 export function TaskPanel() {
   const pathname = usePathname() ?? "";
@@ -100,7 +141,8 @@ export function TaskPanel() {
       key={key}
       href={href}
       onClick={() => setActive(null)}
-      className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium transition-colors hover:bg-magenta/[0.07]"
+      /* ⚠ 44px, same standard as the drawers below (Scott, D2). */
+      className="flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-left text-[14px] font-medium transition-colors hover:bg-magenta/[0.07]"
     >
       <Icon className="h-[17px] w-[17px] shrink-0 text-magenta" strokeWidth={1.9} />
       <span className="truncate">{label}</span>
@@ -121,11 +163,23 @@ export function TaskPanel() {
       className="fixed right-2 top-1/2 z-40 hidden -translate-y-1/2 items-stretch gap-2 lg:flex"
     >
       {def && (
-        <div className="flex max-h-[80vh] w-80 flex-col overflow-hidden rounded-[16px] border border-line bg-white shadow-xl">
+        /*
+          ── ⚠⚠⚠ NOTHING COVERS AN OPEN DRAWER'S LINKS (Scott, D2) ───────────
+          ⚠ `z-50` puts it ABOVE the app band, which is `z-index: 40` in
+          `app-band.css` — a tall Transactions drawer (ten rows at 44px) would
+          otherwise run underneath it.
+          ⚠⚠ And the height is capped against the BAND'S OWN VARIABLE rather
+          than a guessed `80vh`, so the cap tracks the band if it ever changes
+          height. ⚠ Past the cap it scrolls; it never clips.
+        */
+        <div
+          style={{ maxHeight: "calc(100dvh - var(--pm-band-h, 56px) - 2.5rem)" }}
+          className="z-50 flex w-80 flex-col overflow-hidden rounded-[16px] border border-line bg-white shadow-xl"
+        >
           <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-3">
             <span className="flex items-center gap-2">
               <def.Icon className="h-[17px] w-[17px] text-magenta" strokeWidth={1.9} />
-              <span className="text-[14px] font-bold">{def.label}</span>
+              <span className="text-[14px] font-bold">{FULL_LABEL[def.key] ?? def.label}</span>
             </span>
             <button
               type="button"
@@ -146,6 +200,45 @@ export function TaskPanel() {
                     "Reports follow this page's Volume-Over-Time metrics — this page hasn't defined any."
                   )
                 : reports.map((r) => row(r.href, r.label, r.href, ClipboardList)))}
+
+            {(active === "transactions" || active === "configuration") &&
+              groupsFor(active).map((group) => (
+                <section key={group.title ?? group.items[0]?.href}>
+                  {/* ⚠ The group heading is kept — `Support Data` sitting
+                      unlabelled under `Configuration Data` would read as one
+                      list, and they are two. */}
+                  {group.title && (
+                    <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-2/60">
+                      {group.title}
+                    </p>
+                  )}
+                  <nav aria-label={group.title ?? FULL_LABEL[active]} className="flex flex-col pb-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={
+                          pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined
+                        }
+                        /* ⚠ Closed ON THE CLICK, not in an effect keyed on
+                           `pathname` — `set-state-in-effect` is the error this
+                           repo carries eleven of and the rule is 0 NEW. */
+                        onClick={() => setActive(null)}
+                        /* ⚠⚠ 44px ROWS (Scott, D2). `py-2.5` measured 40px. */
+                        className={
+                          "flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-left text-[14px] transition-colors hover:bg-magenta/[0.07] " +
+                          (pathname === item.href || pathname.startsWith(`${item.href}/`)
+                            ? "bg-black/[0.05] font-semibold text-ink"
+                            : "font-medium text-ink")
+                        }
+                      >
+                        <RailIcon name={item.icon} className="h-[17px] w-[17px] text-magenta" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    ))}
+                  </nav>
+                </section>
+              ))}
 
             {active === "activity" &&
               (recent.length === 0
@@ -182,11 +275,14 @@ export function TaskPanel() {
               key={t.key}
               type="button"
               onClick={() => setActive((a) => (a === t.key ? null : t.key))}
-              title={t.label}
-              aria-label={t.label}
+              title={FULL_LABEL[t.key] ?? t.label}
+              aria-label={FULL_LABEL[t.key] ?? t.label}
               aria-pressed={on}
+              /* ⚠⚠ `min-h-11` = 44px (Scott, D2). The icon-plus-label stack
+                 measured ~38px, under the touch standard the rest of the shell
+                 already meets. */
               className={
-                "flex w-[54px] flex-col items-center gap-0.5 rounded-[10px] px-1 py-1.5 transition-colors " +
+                "flex min-h-11 w-[54px] flex-col items-center justify-center gap-0.5 rounded-[10px] px-1 py-1.5 transition-colors " +
                 (on
                   ? "bg-magenta text-white"
                   : "text-ink-2 hover:bg-magenta/[0.08] hover:text-magenta")

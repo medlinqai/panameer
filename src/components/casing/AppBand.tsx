@@ -438,12 +438,33 @@ export function AppBand() {
           ⚠⚠ Admin-only, because `ADMIN_NAV` is admin-only. A gear rendered to a
           member would open an empty panel, which is a door onto a wall (`E579`).
         */}
+        {/*
+          ── ⚠⚠⚠ THE GEAR IS A PHONE-AND-TABLET DOOR NOW (`P2-ALL-E800`) ──────
+
+          ⚠ **SCOTT, 2026-10-03, ruling D2:** *"Remove the gear from the top band
+          on desktop for admins; keep the gear (full menu) in the band on mobile,
+          where the panel isn't shown."*
+          ⚠⚠ **THE BREAKPOINT IS `lg` BECAUSE THAT IS THE PANEL'S OWN
+          BREAKPOINT.** `TaskPanel` is `hidden … lg:flex`, so `lg:hidden` here
+          makes the two EXACTLY COMPLEMENTARY — there is no width at which both
+          show, and none at which neither does.
+          ⚠⚠⚠ **THAT COMPLEMENT IS THE WHOLE SAFETY ARGUMENT (rule 5): these
+          fifteen destinations keep an unconditional door at every width**, which
+          is the same reasoning that put the gear here in `E692` and that `E579`
+          and `E694` WS-A both turned on. ⚠ `check:task-panel` asserts the pair,
+          because the two breakpoints live in two files and nothing but a check
+          keeps them opposite.
+          ⚠ `display: contents` on the wrapper so the band's grid still sees the
+          button itself, not a wrapper, exactly as the bug icon does above.
+        */}
         {isAdmin && (
-          <ConfigDrawer
-            groups={ADMIN_NAV}
-            label="Configuration"
-            active={isActive(CONFIG_BAND_HREF)}
-          />
+          <span className="contents lg:hidden">
+            <ConfigDrawer
+              groups={ADMIN_NAV}
+              label="Configuration"
+              active={isActive(CONFIG_BAND_HREF)}
+            />
+          </span>
         )}
 
         {/*
