@@ -38,22 +38,33 @@ test("the Build Line is drawn from the plan, not the AIM phase dates", async ({ 
 test("the Gantt is lighter: 4px task bars, 6px top-level, rounded", async ({ page }) => {
   await page.goto("/status", { waitUntil: "domcontentloaded" });
   await page.setViewportSize({ width: 1280, height: 1000 });
-  const bars = await page.locator('[aria-label="Plan timeline"] li span[title]').evaluateAll((els) =>
+  /** ⚠ `[data-plan-bar]` — a declared hook. Selecting `span[title]` matched the
+   *  row label once it gained a tooltip, which is the same class of mistake as
+   *  `E776`'s `.tabular-nums`. */
+  const bars = await page.locator('[aria-label="Plan timeline"] [data-plan-bar]').evaluateAll((els) =>
     els.map((e) => {
       const cs = getComputedStyle(e);
-      return { h: Math.round(parseFloat(cs.height)), r: cs.borderRadius, t: (e.getAttribute("title") ?? "").slice(0, 18) };
+      return {
+        h: Math.round(parseFloat(cs.height)),
+        r: cs.borderRadius,
+        kind: e.getAttribute("data-plan-bar") ?? "",
+      };
     }),
   );
   expect(bars.length, "no bars to measure").toBeGreaterThan(3);
   /** ⚠ 4px or 6px for a bar; the milestone diamond is 10px and is excluded by
    *  its own rotation class, so it is allowed through here. */
-  const bad = bars.filter((b) => ![4, 6, 10].includes(b.h));
-  expect(bad, `bars must be 4px, 6px (or a 10px diamond): ${JSON.stringify(bad)}`).toEqual([]);
+  const bad = bars.filter((b) =>
+    b.kind === "milestone" ? b.h !== 10 : b.kind === "task" ? b.h !== 4 : b.h !== 6,
+  );
+  expect(bad, `task bars 4px · top-level 6px · diamonds 10px: ${JSON.stringify(bad)}`).toEqual([]);
   /** ⚠⚠ THE DIAMOND IS EXCLUDED, AND THAT IS NOT A LOOSENING. A milestone mark
    *  is a ROTATED SQUARE — `BuildLine`'s own flag is the same shape — so square
    *  corners are correct there and rounding it would make it a dot. ⚠ Only the
    *  BARS are asserted rounded. */
-  const barsOnly = bars.filter((b) => b.h !== 10);
+  /** ⚠ By KIND now, not by height — a diamond is excluded because it IS a
+   *  diamond, not because it happens to be 10px. */
+  const barsOnly = bars.filter((b) => b.kind !== "milestone");
   expect(barsOnly.length, "no 4/6px bars to check for rounding").toBeGreaterThan(2);
   expect(
     barsOnly.every((b) => b.r !== "0px"),

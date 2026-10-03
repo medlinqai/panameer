@@ -66,7 +66,15 @@ export async function POST(request: Request) {
     const result = await writeImportedRows(plan.id, parsed.rows, mode, gate);
     /** ⚠ A PARTIAL success is reported as a success WITH its problems — 39 of 40
      *  rows imported is a result, not a failure. */
-    return NextResponse.json({ ok: true, ...result, problems: parsed.problems });
+    const problems = [...parsed.problems];
+    /** ⚠⚠⚠ AN UNRECOGNISED RELEASE CODE IS SAID OUT LOUD. The rows still import;
+     *  they simply arrive untagged, and the person is told which code we did not
+     *  know — because silently dropping the release is what cost the live plan
+     *  its R1 scope. */
+    for (const code of result.unknownReleases) {
+      problems.push({ line: 1, message: `Release "${code}" isn't one we know — those rows came in with no release.` });
+    }
+    return NextResponse.json({ ok: true, ...result, problems });
   } catch (e) {
     if (e instanceof PlanError) return NextResponse.json({ error: e.message }, { status: 400 });
     console.error("[plan:import] failed", e);

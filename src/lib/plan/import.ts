@@ -28,6 +28,19 @@ export const IMPORT_COLUMNS = [
   "Status",
   "Owner",
   "Hours",
+  /**
+   * ── ⚠⚠⚠ `Release` EXISTS BECAUSE ITS ABSENCE COST THE LIVE PLAN'S SCOPE ────
+   *
+   * ⚠ **SCOTT, 2026-10-03:** *"Add a Release column to the plan import +
+   * template so this doesn't recur."* ⚠⚠ Measured the same day: the live build
+   * plan had **every R1 tag gone** and two rows renamed `… (later release)` —
+   * the shape of an edit-in-Excel-and-replace-import round trip through a
+   * template that could not carry the release. The import silently dropped the
+   * one field it had no column for.
+   * ⚠⚠⚠ **A ROUND TRIP THAT LOSES A FIELD IS WORSE THAN AN IMPORT THAT REFUSES
+   * IT**, because it looks like it worked.
+   */
+  "Release",
 ] as const;
 
 export type ImportedRow = {
@@ -39,6 +52,12 @@ export type ImportedRow = {
   status: RowStatus;
   owner: string | null;
   hours: number | null;
+  /**
+   * ⚠⚠ THE RELEASE **CODE** (`R1`), NOT AN ID. The parser is pure and has no
+   * database; `writeImportedRows` resolves the code when it writes. ⚠ A
+   * spreadsheet full of uuids is also not something anybody can edit by hand.
+   */
+  release: string | null;
 };
 
 export type RowProblem = {
@@ -244,6 +263,10 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
       status,
       owner: cell(r, "Owner") || null,
       hours,
+      /** ⚠ Upper-cased and trimmed, so `r1`, ` R1 ` and `R1` are one answer.
+       *  ⚠⚠ An UNKNOWN code is reported per row by the writer, not dropped
+       *  here — the parser does not know which releases exist. */
+      release: cell(r, "Release").toUpperCase() || null,
     });
   }
 

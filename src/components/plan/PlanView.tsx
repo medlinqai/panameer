@@ -137,15 +137,31 @@ function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string }) {
                   "flex h-8 items-center gap-2 " + (isChild ? "hidden sm:flex" : "")
                 }
               >
+                {/*
+                  ── ⚠⚠ THE LABEL CARRIES THE TITLE (Scott, 2026-10-03) ────────
+                  ⚠ *"Show the row title next to the number"* — `3.2 Register`.
+                  A column of bare `3.2`s makes the reader count rows against the
+                  accordions below to find out what a bar IS.
+                  ⚠⚠ The number stays `font-mono` so the column aligns, and the
+                  title is `truncate` in a fixed gutter so a long row name cannot
+                  push the chart sideways — the no-h-scroll rule is asserted at
+                  390 and 1100.
+                */}
                 <span
                   className={
-                    "w-9 shrink-0 text-right font-mono text-[10px] " +
-                    /** ⚠⚠ SMALL PLAIN NUMBERS IN GREY — no filled badge here.
-                     *  Only the ACCORDION keeps a badge, and only at top level. */
-                    (isChild ? "font-normal text-ink-3" : "text-ink-2")
+                    "flex w-28 shrink-0 items-baseline gap-1.5 overflow-hidden sm:w-40 " +
+                    (isChild ? "text-ink-3" : "text-ink-2")
                   }
+                  title={`${row.number} ${row.title}`}
                 >
-                  {row.number}
+                  <span className="shrink-0 font-mono text-[10px]">{row.number}</span>
+                  <span
+                    className={
+                      "truncate text-[11px] " + (isChild ? "font-normal" : "font-semibold")
+                    }
+                  >
+                    {row.title || "Untitled"}
+                  </span>
                 </span>
                 <span className="relative h-8 flex-1">
                   {/* ⚠ The guide is a hairline track, not a dotted rule — the
@@ -191,6 +207,10 @@ function Bar({
     const at = clamp(pct((row.start ?? row.end)!));
     return (
       <span
+        /** ⚠ A declared hook. The gate used to select `span[title]`, which began
+         *  matching the row LABEL once that gained a tooltip — a selector on a
+         *  styling-adjacent attribute, which is the mistake `E776` recorded. */
+        data-plan-bar="milestone"
         title={`${row.title} — ${row.start ?? row.end}`}
         /** ⚠ An OUTLINED diamond, which is exactly `BuildLine`'s flag — a solid
          *  magenta lozenge was the heaviest mark on the chart. */
@@ -217,6 +237,7 @@ function Bar({
   const w = Math.max(right - left, 0.8);
   return (
     <span
+      data-plan-bar={isChild ? "task" : "top"}
       title={`${row.title} — ${row.start} to ${row.end} · ${row.status}`}
       /** ⚠ 4px for a task, 6px for a top-level row, both `rounded-full` — the
        *  Build Line's weight and its rounded ends, one line per row. */

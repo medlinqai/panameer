@@ -416,6 +416,42 @@ async function main() {
     "unlike a bad date, a bad type has no safe default",
   );
 
+  /* ── the Release column (`E795`) ──────────────────────────────────────── */
+
+  /**
+   * ⚠⚠⚠ THE COLUMN EXISTS BECAUSE ITS ABSENCE COST THE LIVE PLAN ITS R1 SCOPE
+   * on 2026-10-03 — an edit-in-Excel-and-replace round trip through a template
+   * that could not carry the release, so the import silently dropped it.
+   */
+  check(
+    "14z — Release is one of the template's columns",
+    (IMPORT_COLUMNS as readonly string[]).includes("Release"),
+    IMPORT_COLUMNS.join(","),
+  );
+  const withRel = readGrid(parseCsv(`${header}\n1,Build,phase,,,,,,R1\n2,Learn,task,,,,,,`));
+  check(
+    "14aa — a release code is read, and a blank one is null",
+    withRel.rows[0]?.release === "R1" && withRel.rows[1]?.release === null,
+    JSON.stringify(withRel.rows.map((r) => ({ t: r.title, rel: r.release }))),
+  );
+  check(
+    "14ab — the code is upper-cased, so `r1` and `R1` are one answer",
+    readGrid(parseCsv(`${header}\n1,A,phase,,,,,, r1 `)).rows[0]?.release === "R1",
+    JSON.stringify(readGrid(parseCsv(`${header}\n1,A,phase,,,,,, r1 `)).rows[0]),
+  );
+  /**
+   * ⚠⚠ A FILE WITHOUT THE COLUMN STILL IMPORTS — the column is additive, and an
+   * older spreadsheet must not start failing. ⚠ Its rows arrive untagged, which
+   * is honest: the file does not say.
+   */
+  const oldHeader = IMPORT_COLUMNS.filter((c) => c !== "Release").join(",");
+  const noRelCol = readGrid(parseCsv(`${oldHeader}\n1,Build,phase,,,,,`));
+  check(
+    "14ac — a file with no Release column still imports, untagged",
+    noRelCol.rows.length === 1 && noRelCol.rows[0].release === null && noRelCol.problems.length === 0,
+    JSON.stringify(noRelCol),
+  );
+
   const orphan = readGrid(parseCsv(`${header}\n2,Orphan,task,,,,,`));
   check(
     "14w — a level-2 row with nothing above it is promoted, and said",

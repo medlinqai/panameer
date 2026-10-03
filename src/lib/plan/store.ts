@@ -487,11 +487,32 @@ export type ImportMode = "replace" | "append";
  */
 export async function writeImportedRows(
   planId: string,
-  imported: readonly { level: 1 | 2; title: string; type: string; start: string | null; end: string | null; status: string; owner: string | null; hours: number | null }[],
+  imported: readonly {
+    level: 1 | 2; title: string; type: string; start: string | null; end: string | null;
+    status: string; owner: string | null; hours: number | null; release?: string | null;
+  }[],
   mode: ImportMode,
   viewer: Viewer,
-): Promise<{ written: number; replaced: number }> {
+): Promise<{ written: number; replaced: number; unknownReleases: string[] }> {
   if (imported.length === 0) throw new PlanError("Nothing in that file could be imported.", "INVALID");
+
+  /**
+   * ── ⚠⚠⚠ THE RELEASE CODE IS RESOLVED HERE (`P2-ALL-E795`) ─────────────────
+   *
+   * ⚠ The spreadsheet carries `R1`; the row stores an id. ⚠⚠ **A CODE WE DO NOT
+   * RECOGNISE IS REPORTED, NEVER GUESSED AND NEVER SILENTLY DROPPED** — silently
+   * dropping the release is precisely what cost the live plan its whole R1 scope
+   * on 2026-10-03.
+   */
+  const releases = await prisma.workTrackerRelease.findMany({ select: { id: true, code: true } });
+  const byCode = new Map(releases.filter((r) => r.code).map((r) => [r.code!.toUpperCase(), r.id]));
+  const unknownReleases = [
+    ...new Set(
+      imported
+        .map((r) => (r.release ?? "").trim().toUpperCase())
+        .filter((c) => c && !byCode.has(c)),
+    ),
+  ];
 
   return prisma.$transaction(async (tx) => {
     let replaced = 0;
@@ -521,6 +542,9 @@ export async function writeImportedRows(
         status: r.status,
         owner: r.owner,
         hours: r.hours,
+        /** ⚠⚠ THE RELEASE SURVIVES THE ROUND TRIP (`E795`). An unrecognised code
+         *  lands `null` and is reported in `unknownReleases` — never guessed. */
+        release_id: r.release ? byCode.get(r.release.trim().toUpperCase()) ?? null : null,
         updated_by: viewer.userId,
       };
       if (r.level === 1) {
@@ -539,6 +563,6 @@ export async function writeImportedRows(
     }
 
     await tx.plan.update({ where: { id: planId }, data: { updated_by: viewer.userId } });
-    return { written, replaced };
+    return { written, replaced, unknownReleases };
   });
 }
