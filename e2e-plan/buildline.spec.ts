@@ -51,7 +51,7 @@ test("the order is Build Line → plan timeline → accordions", async ({ page }
 
   const line = page.locator('[aria-label="Build line"]');
   const gantt = page.locator('[aria-label="Plan timeline"]');
-  const acc = page.getByRole("heading", { name: "The plan, phase by phase" });
+  const acc = page.getByRole("heading", { name: "The plan", exact: true });
   for (const [name, loc] of [["Build line", line], ["Plan timeline", gantt], ["accordions", acc]] as const) {
     await expect(loc, `${name} missing`).toBeVisible();
   }

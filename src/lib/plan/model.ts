@@ -41,7 +41,15 @@ export function planOwnerKey(): string {
   return override;
 }
 
-export const ROW_TYPES = ["phase", "task", "milestone"] as const;
+/**
+ * A `release` is the third level, added 2026-10-03 (`P2-ALL-E807`): Scott's plan
+ * is release → phase → task. It renders as a HEADING with its own percentage and
+ * due date rather than as a numbered row, because a release is a container for
+ * phases, not a phase itself.
+ *
+ * Additive only — `PlanRow.type` is a plain String column, so no migration.
+ */
+export const ROW_TYPES = ["release", "phase", "task", "milestone"] as const;
 export type RowType = (typeof ROW_TYPES)[number];
 
 /**
@@ -78,9 +86,9 @@ export type PlanRowLike = {
 };
 
 export type PlanNode<T extends PlanRowLike = PlanRowLike> = T & {
-  /** `"1"`, `"1.1"`, or `"◆"` for a milestone at either level. */
+  /** `"1"`, `"1.1"`, `"◆"` for a milestone, or `""` for a release heading. */
   number: string;
-  depth: 0 | 1;
+  depth: 0 | 1 | 2;
   children: PlanNode<T>[];
 };
 
@@ -111,31 +119,57 @@ export function buildTree<T extends PlanRowLike>(rows: readonly T[]): PlanNode<T
   const ordered = (key: string | null) =>
     (byParent.get(key) ?? []).slice().sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
 
-  let counter = 0;
-  return ordered(null).map((row) => {
-    const isMilestone = row.type === "milestone";
-    const number = isMilestone ? MILESTONE_MARK : String(++counter);
-    let childCounter = 0;
+  /**
+   * THREE LEVELS: release → phase → task (`P2-ALL-E807`).
+   *
+   * A RELEASE TAKES NO NUMBER — it is a heading, and numbering it would make
+   * "1.1 Define" of a phase Scott calls "1 Define".
+   *
+   * THE PHASE COUNTER IS GLOBAL, not per release. Scott's own outline numbers
+   * R1's phases 1 Define · 2 Design · 3 Build · 4 Prove; a per-release counter
+   * would then start R2 at "1" again and the plan would hold two rows called 1.
+   * One sequence across the plan keeps every number unique, which is what makes
+   * them usable in conversation.
+   *
+   * A MILESTONE STILL CONSUMES NO NUMBER, at any level.
+   */
+  let phaseCounter = 0;
+
+  const phaseNode = (row: T, depth: 1 | 0): PlanNode<T> => {
+    const number = row.type === "milestone" ? MILESTONE_MARK : String(++phaseCounter);
+    let taskCounter = 0;
     const children = ordered(row.id).map((child) => ({
       ...child,
-      number:
-        child.type === "milestone" ? MILESTONE_MARK : `${number}.${++childCounter}`,
-      depth: 1 as const,
-      /** ⚠ Two levels are enough (Scott). Nothing reads a third, and nothing
-       *  writes one — `indentRow` refuses it rather than trusting this. */
+      number: child.type === "milestone" ? MILESTONE_MARK : `${number}.${++taskCounter}`,
+      depth: (depth + 1) as 1 | 2,
+      /** Three levels are enough (Scott). `indentRow` refuses a fourth rather
+       *  than trusting this. */
       children: [] as PlanNode<T>[],
     }));
-    return { ...row, number, depth: 0 as const, children };
+    return { ...row, number, depth, children };
+  };
+
+  return ordered(null).map((row) => {
+    if (row.type !== "release") return phaseNode(row, 0);
+    /* A release heading: its children are phases, numbered in the same global
+       sequence as the top-level ones. */
+    const children = ordered(row.id).map((child) => phaseNode(child, 1));
+    return { ...row, number: "", depth: 0 as const, children };
   });
 }
 
 /** Depth-first, parents before their children — the order the page renders in. */
 export function flattenTree<T extends PlanRowLike>(tree: readonly PlanNode<T>[]): PlanNode<T>[] {
   const out: PlanNode<T>[] = [];
-  for (const node of tree) {
-    out.push(node);
-    for (const child of node.children) out.push(child);
-  }
+  const walk = (nodes: readonly PlanNode<T>[]) => {
+    for (const node of nodes) {
+      out.push(node);
+      /* Recursive since `E807`: a two-level loop silently dropped every task
+         under a release's phases. */
+      walk(node.children);
+    }
+  };
+  walk(tree);
   return out;
 }
 
@@ -223,6 +257,30 @@ export function readiness<T extends PlanRowLike>(rows: readonly T[]): Readiness 
   };
 }
 
+/**
+ * Readiness over ONE SUBTREE — a release heading or a phase (`P2-ALL-E807`).
+ *
+ * Scott, 2026-10-03: "Each release heading shows its own % (Done + ½ In
+ * progress)". It is the same rule as `readiness()`, applied to the rows beneath
+ * one node, so a release's figure and the plan's cannot be computed two
+ * different ways (`E585`).
+ */
+export function subtreeReadiness<T extends PlanRowLike>(
+  node: { id: string; children?: readonly unknown[] },
+  all: readonly T[],
+): Readiness {
+  const descendants: T[] = [];
+  const walk = (parentId: string) => {
+    for (const r of all) {
+      if (r.parent_id !== parentId) continue;
+      descendants.push(r);
+      walk(r.id);
+    }
+  };
+  walk(node.id);
+  return readiness(descendants);
+}
+
 /** The same rule, for one release's rows. ⚠ A release nobody has tagged is
  *  uncountable, which is why this returns the same nullable shape. */
 export function releaseReadiness<T extends PlanRowLike>(rows: readonly T[], releaseId: string): Readiness {
@@ -231,7 +289,12 @@ export function releaseReadiness<T extends PlanRowLike>(rows: readonly T[], rele
 
 export function countableRows<T extends PlanRowLike>(rows: readonly T[]): T[] {
   const hasChildren = new Set(rows.map((r) => r.parent_id).filter((v): v is string => !!v));
-  return rows.filter((r) => r.type !== "milestone" && !hasChildren.has(r.id));
+  /* A RELEASE IS NEVER COUNTED (`E807`), even with no phases under it yet: it is
+     a heading, and counting it would add a unit of "work" nobody does. A
+     container is already excluded by `hasChildren`; this covers the empty one. */
+  return rows.filter(
+    (r) => r.type !== "milestone" && r.type !== "release" && !hasChildren.has(r.id),
+  );
 }
 
 /**

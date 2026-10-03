@@ -25,6 +25,7 @@ import {
   planSpan,
   readiness,
   countableRows,
+  subtreeReadiness,
   releaseReadiness,
   type PlanRowLike,
   type Readiness,
@@ -56,6 +57,13 @@ export type PublicPlanRow = {
    */
   owner: string | null;
   releaseId: string | null;
+  /**
+   * This row's own readiness when it CONTAINS work — a release heading or a
+   * phase with tasks (`E807`). `null` for a leaf and for a milestone, so a
+   * surface cannot print a percentage for a single row (a figure needs rows to
+   * count).
+   */
+  progress: Readiness | null;
   children: PublicPlanRow[];
 };
 
@@ -75,7 +83,7 @@ export function publicPlan(
   const span = planSpan(rows);
   return {
     title: plan.title,
-    rows: buildTree(rows).map((node) => shape(node, today)),
+    rows: buildTree(rows).map((node) => shape(node, today, rows)),
     progress: readiness(rows),
     span: span ? { start: day(span.start), end: day(span.end) } : null,
   };
@@ -88,7 +96,7 @@ export function publicReleaseProgress(rows: readonly PlanRowLike[], releaseId: s
 
 type Node = PlanRowLike & { number: string; children: Node[] };
 
-function shape(node: Node, today: Date): PublicPlanRow {
+function shape(node: Node, today: Date, allRows: readonly PlanRowLike[]): PublicPlanRow {
   return {
     id: node.id,
     number: node.number,
@@ -103,7 +111,9 @@ function shape(node: Node, today: Date): PublicPlanRow {
     note: node.public_note ?? null,
     owner: node.owner ?? null,
     releaseId: node.release_id ?? null,
-    children: (node.children ?? []).map((c) => shape(c, today)),
+    progress:
+      (node.children ?? []).length > 0 ? subtreeReadiness(node, allRows) : null,
+    children: (node.children ?? []).map((c) => shape(c, today, allRows)),
   };
 }
 

@@ -338,7 +338,7 @@ test.describe("E803 — the collapsible grid", () => {
     await page.setViewportSize({ width: 1280, height: 1200 });
     await page.goto("/status", { waitUntil: "domcontentloaded" });
 
-    const grid = page.locator("section", { has: page.getByText("The plan, phase by phase") });
+    const grid = page.locator("section", { has: page.getByRole("heading", { name: "The plan", exact: true }) });
     await expect(grid).toBeVisible();
     for (const col of ["#", "Name", "Owner", "Start", "End", "Status"]) {
       await expect(grid.getByText(col, { exact: true }).first()).toBeVisible();
@@ -368,7 +368,7 @@ test.describe("E803 — the collapsible grid", () => {
     await page.setViewportSize({ width: 390, height: 1400 });
     await page.goto("/status", { waitUntil: "domcontentloaded" });
 
-    const grid = page.locator("section", { has: page.getByText("The plan, phase by phase") });
+    const grid = page.locator("section", { has: page.getByRole("heading", { name: "The plan", exact: true }) });
     /* The six-column header drops to three at phone width and the data moves
        under the name — dropping it entirely would hide it. */
     const row = grid.locator('[data-plan-grid-row="1"]');
@@ -389,5 +389,104 @@ test.describe("E803 — the collapsible grid", () => {
           .filter((x) => x.h < 44),
       );
     expect(short, `rows under 44px: ${JSON.stringify(short)}`).toEqual([]);
+  });
+});
+
+/**
+ * ── THREE LEVELS: release → phase → task (`P2-ALL-E807`) ────────────────────
+ *
+ * Scott, 2026-10-03: a new top-level release containing phases, each release
+ * heading showing its own % and due date, the grid expanding release → phase →
+ * task, and the chart showing releases as the top band.
+ */
+test.describe("E807 — releases are the third level", () => {
+  let relPlan: string | null = null;
+
+  test.beforeAll(async () => {
+    relPlan = await createTestPlan();
+    const rel = await planDb.planRow.create({
+      data: {
+        plan_id: relPlan, parent_id: null, sort: 0, type: "release", title: "R9 — Test beta",
+        status: "In progress", start_date: d("2026-10-01"), end_date: d("2026-11-15"),
+      },
+      select: { id: true },
+    });
+    const phase = await planDb.planRow.create({
+      data: {
+        plan_id: relPlan, parent_id: rel.id, sort: 0, type: "phase", title: "Build",
+        status: "In progress", start_date: d("2026-10-01"), end_date: d("2026-11-09"),
+      },
+      select: { id: true },
+    });
+    await planDb.planRow.createMany({
+      data: [
+        /* Two Done, one In progress, one Planned → (2 + ½) / 4 = 63%. Every
+           fixture value differs so no two can agree by accident. */
+        { plan_id: relPlan, parent_id: phase.id, sort: 0, type: "task", title: "Alpha", status: "Done", start_date: d("2026-10-01"), end_date: d("2026-10-10") },
+        { plan_id: relPlan, parent_id: phase.id, sort: 1, type: "task", title: "Beta", status: "Done", start_date: d("2026-10-11"), end_date: d("2026-10-20") },
+        { plan_id: relPlan, parent_id: phase.id, sort: 2, type: "task", title: "Gamma", status: "In progress", start_date: d("2026-10-21"), end_date: d("2026-10-31") },
+        { plan_id: relPlan, parent_id: phase.id, sort: 3, type: "task", title: "Delta", status: "Planned", start_date: d("2026-11-01"), end_date: d("2026-11-09") },
+        { plan_id: relPlan, parent_id: rel.id, sort: 1, type: "milestone", title: "Launch", status: "Planned", start_date: d("2026-11-15"), end_date: d("2026-11-15") },
+        { plan_id: relPlan, parent_id: null, sort: 1, type: "phase", title: "Operate", status: "Planned", start_date: d("2026-12-01"), end_date: null },
+      ],
+    });
+  });
+
+  test("the grid nests three deep, with the release open on arrival", async ({ page }) => {
+    test.skip(relPlan === null, "no plan");
+    await page.setViewportSize({ width: 1280, height: 1400 });
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+
+    const rows = await page
+      .locator("[data-plan-grid-row]")
+      .evaluateAll((els) =>
+        els.map((e) => ({
+          n: e.getAttribute("data-plan-grid-row"),
+          d: Number(e.getAttribute("data-plan-grid-depth")),
+        })),
+      );
+    /* The release and its In-progress phase are both open by default, so all
+       three levels are on screen: release → 1 Build → 1.1..1.4. */
+    expect(rows.map((r) => r.n)).toEqual([
+      "R9 — Test beta", "1", "1.1", "1.2", "1.3", "1.4", "◆", "2",
+    ]);
+    expect(rows.map((r) => r.d)).toEqual([0, 1, 2, 2, 2, 2, 1, 0]);
+
+    /* A PHASE INSIDE A RELEASE IS STILL NUMBERED 1, not 1.1 — the release takes
+       no number, which is what makes Scott's outline read as he wrote it. */
+    expect(rows.find((r) => r.n === "R9 — Test beta")?.d).toBe(0);
+
+    /* The release heading carries its own percentage: (2 Done + ½ × 1) of 4. */
+    await expect(page.locator("[data-plan-release-pct]")).toHaveAttribute("data-plan-release-pct", "63");
+    /* And the hero is the SAME number, not a second computation. */
+    await expect(page.locator("[data-hero-figure]")).toHaveText("63");
+
+    /* Collapsing the release hides everything under it, Operate excepted. */
+    await page.locator('[data-plan-grid-row="R9 — Test beta"]').locator("xpath=ancestor::button").click();
+    const shut = await page
+      .locator("[data-plan-grid-row]")
+      .evaluateAll((els) => els.map((e) => e.getAttribute("data-plan-grid-row")));
+    expect(shut).toEqual(["R9 — Test beta", "2"]);
+  });
+
+  test("the chart draws releases as the top band, phases under, no tasks", async ({ page }) => {
+    test.skip(relPlan === null, "no plan");
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await page.goto("/status", { waitUntil: "domcontentloaded" });
+
+    const chart = await page
+      .locator('[aria-label="Plan timeline"] [data-plan-row]')
+      .evaluateAll((els) =>
+        els.map((e) => ({ n: e.getAttribute("data-plan-row"), band: e.getAttribute("data-plan-band") })),
+      );
+    expect(chart.map((c) => c.n)).toEqual(["R9 — Test beta", "1", "◆", "2"]);
+    expect(chart[0].band, "the release is the band").toBe("release");
+    expect(chart[1].band, "a phase is not").toBeNull();
+    /* Tasks stay out of the chart — they are the grid's job. */
+    expect(chart.filter((c) => (c.n ?? "").includes(".")), "no task rows in the chart").toEqual([]);
+  });
+
+  test.afterAll(async () => {
+    await dropTestPlan();
   });
 });

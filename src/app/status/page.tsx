@@ -26,7 +26,7 @@ import { planBuildLine } from "@/lib/plan/build-line";
 import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
-import { publicPlan, releaseProgressByCode, releaseScopeByCode } from "@/lib/plan/public";
+import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
 import { getSessionViewer } from "@/lib/session";
 import {
@@ -189,8 +189,9 @@ export default async function StatusPage({
     number is **no longer rendered anywhere**.
   */
   const planReleasePercent = releaseProgressByCode(planRows, releaseIds);
-  /* The journeys tagged to each release, from the plan (`E806`). */
-  const planReleaseScope = releaseScopeByCode(planRows, releaseIds);
+  /* `E806`'s journey list left with the Releases section (`E807`); the helper
+     stays in `public.ts`, gated by check:plan, for the release heading to use
+     if Scott wants the list back. */
   /*
     ── ⚠⚠⚠ THE SECONDARY FIGURES COME FROM THE PLAN TOO (`P2-ALL-E790`) ───────
 
@@ -237,10 +238,25 @@ export default async function StatusPage({
     (`E164`) — it was counted from AIM task states:
     //   const heroPercent = rel ? rel.percent : t.overallPercent;
   */
+  /*
+    THE HERO IS THE R1 RELEASE ROW'S OWN PERCENTAGE (`P2-ALL-E807`).
+    Since the plan has release rows, the release's figure is the subtree beneath
+    it — the same half-credit rule, computed once in the view model — so the
+    heading in the grid and the hero are literally the same number.
+    Falls back to the release_id tags, then to the whole plan, for a plan that
+    has no release rows yet.
+    SUPERSEDED, quoted not deleted:
+    //   rel?.code && planReleasePercent[rel.code] ? planReleasePercent[rel.code].percent : pv.progress.percent
+  */
+  const releaseRow =
+    pv.rows.find((r) => r.type === "release" && r.status === "In progress") ??
+    pv.rows.find((r) => r.type === "release") ??
+    null;
   const heroPercent =
-    rel?.code && planReleasePercent[rel.code]
+    releaseRow?.progress?.percent ??
+    (rel?.code && planReleasePercent[rel.code]
       ? planReleasePercent[rel.code].percent
-      : pv.progress.percent;
+      : pv.progress.percent);
   /*
     ⚠⚠⚠ TWO KINDS OF VALUE, TWO RULES (`P2-ALL-E775`) — see `public-time.ts`.
     ⚠ **A RELEASE TARGET IS A PURE DATE** and is printed as itself. Shifting
@@ -508,80 +524,15 @@ export default async function StatusPage({
         )}
         <PlanView plan={pv} today={todayIso} />
 
-        {/* ── RELEASES ────────────────────────────────────────────────── */}
-        {t.releases.length > 0 && (
-          <section className="mt-12 border-t border-line pt-6">
-            {/*
-              ⚠⚠⚠ RELEASES REPLACE MILESTONES (`P2-ALL-E765`). A milestone was a
-              date; a release is a date WITH SCOPE, which is what lets each row
-              carry its own percentage and its own journeys.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`): a `Milestones` section
-              listing date · title · description · status, with no figure.
-            */}
-            <h2 className={`text-[24px] text-ink ${HEAD}`}>Releases</h2>
-            <ul className="mt-5 border-t border-line">
-              {t.releases.map((r) => (
-                <li
-                  key={`${r.code ?? r.name}-${r.date ?? "nodate"}`}
-                  className="grid grid-cols-1 gap-x-4 gap-y-1 border-b border-line py-3.5 sm:grid-cols-[72px_1fr_auto]"
-                >
-                  <span className={`text-[15px] text-ink ${HEAD}`}>{r.code ?? "—"}</span>
-                  <span>
-                    <span className="text-[15px] font-bold text-ink">{r.name}</span>
-                    {r.summary && (
-                      <span className="mt-0.5 block text-[13.5px] leading-snug text-ink-2">{r.summary}</span>
-                    )}
-                    {/*
-                      THE TAGGED PLAN ROWS, not AIM journeys (`P2-ALL-E806`).
-                      Scott, 2026-10-03: this section still showed the AIM
-                      figures — "84% · 16 of 19 done · Register · Profile ·
-                      Connect" — beside a hero counted from the plan. Two
-                      definitions of one release's progress, on the page a
-                      stranger lands on (`E585`).
-                      Row TITLES, which are segment names; never task text.
-                    */}
-                    {(planReleaseScope[r.code ?? ""] ?? []).length > 0 && (
-                      <span className="mt-1 block text-[12.5px] text-ink-3">
-                        {(planReleaseScope[r.code ?? ""] ?? []).join(" · ")}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[13px] text-ink-2 sm:text-right">
-                    {/*
-                      THE PLAN'S FIGURE, so it is the SAME NUMBER as the hero
-                      (`E806`) — the hero reads `planReleasePercent` for the
-                      current release and so does this.
-                      `Scope being set`, NEVER `0%`: a release with no tagged
-                      plan rows has not achieved nothing, it is uncountable.
-                    */}
-                    {(() => {
-                      const p = r.code ? planReleasePercent[r.code] : undefined;
-                      const pct = p?.percent ?? null;
-                      return (
-                        <>
-                          <span className={`block text-[17px] text-ink ${HEAD}`}>
-                            {pct === null ? "Scope being set" : `${pct}%`}
-                          </span>
-                          {r.date && <span className="block">due {r.date}</span>}
-                          <span className="block">{r.status}</span>
-                          {p && pct !== null && (
-                            /* The counts name the rule behind the percentage:
-                               an in-progress row earns half (`E797`), so a bare
-                               "n of total done" could not produce this figure. */
-                            <span className="block text-ink-3">
-                              {p.done} done · {p.moving} in progress · of {p.total}
-                            </span>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
+        {/*
+          THE SEPARATE RELEASES SECTION IS GONE (Scott, 2026-10-03, `E807`).
+          Each release is now a row in the plan with its own heading, its own
+          percentage and its own due date, so a second list of the same releases
+          was the same figure in two places (`E585`) — the defect `E806` had just
+          finished fixing in the other direction.
+          `t.releases` is untouched in `public-view.ts` and still served by
+          `/api/status`; only this rendering is removed.
+        */}
         {/* ── SHIPPED ─────────────────────────────────────────────────── */}
         <section className="mt-12 border-t border-line pt-6">
           <h2 className={`text-[24px] text-ink ${HEAD}`}>
