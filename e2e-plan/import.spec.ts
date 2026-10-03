@@ -164,8 +164,25 @@ test("the template is a round trip — it imports cleanly into a plan", async ({
   });
   await page.getByRole("radio", { name: /Add these rows/ }).check();
   await page.getByRole("button", { name: "Import the Plan" }).click();
-  await expect(page.getByText(/Imported 4 rows/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Imported 5 rows/)).toBeVisible({ timeout: 60_000 });
   /** ⚠ And with no problems — the template must not warn about itself. */
   await expect(page.getByText(/need(s)? a look/)).toHaveCount(0);
-  await numbersEventually(page, ["1", "1.1", "1.2", "◆"]);
+  await numbersEventually(page, ["1", "1.1", "1.2", "1.3", "◆"]);
+
+  /**
+   * ⚠⚠⚠ THE RELEASE SURVIVES THE ROUND TRIP (`E795`). This is the assertion the
+   * live plan needed and did not have: on 2026-10-03 an edit-and-replace import
+   * silently dropped every R1 tag, because the template had no Release column.
+   * ⚠ Four of the template's five rows carry `R1`; the `Learn` example carries
+   * none, so the pair proves the column is read rather than defaulted.
+   */
+  const plan = await planDb.plan.findUnique({ where: { owner_key: OWNER }, select: { id: true } });
+  const rows = await planDb.planRow.findMany({
+    where: { plan_id: plan!.id },
+    select: { title: true, release_id: true },
+  });
+  const tagged = rows.filter((r) => r.release_id !== null).map((r) => r.title).sort();
+  const untagged = rows.filter((r) => r.release_id === null).map((r) => r.title).sort();
+  expect(tagged, `tagged: ${JSON.stringify(tagged)}`).toHaveLength(4);
+  expect(untagged, "the Learn example must arrive untagged").toEqual(["Learn"]);
 });

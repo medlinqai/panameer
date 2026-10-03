@@ -21,10 +21,14 @@ export async function GET() {
   sheet.getRow(1).font = { bold: true };
   /** ⚠⚠ THE EXAMPLE ROWS ARE THE DOCUMENTATION. Level 1/2 and the three types
    *  are hard to explain in a heading and obvious in two lines of example. */
-  sheet.addRow([1, "Build", "phase", "2026-09-20", "2026-11-01", "In progress", "Scott", ""]);
-  sheet.addRow([2, "Public", "task", "2026-09-20", "2026-09-30", "Done", "Scott", 40]);
-  sheet.addRow([2, "Register", "task", "", "", "Planned", "", ""]);
-  sheet.addRow([1, "R1 — Public beta", "milestone", "2026-11-15", "2026-11-15", "Planned", "", ""]);
+  /** ⚠⚠ THE EXAMPLES NOW CARRY `R1` IN THE RELEASE COLUMN. The template is the
+   *  documentation, and a blank column teaches people to leave it blank — which
+   *  is how the live plan lost its whole R1 scope on 2026-10-03. */
+  sheet.addRow([1, "Build", "phase", "2026-09-20", "2026-11-01", "In progress", "Scott", "", "R1"]);
+  sheet.addRow([2, "Public", "task", "2026-09-20", "2026-09-30", "Done", "Scott", 40, "R1"]);
+  sheet.addRow([2, "Register", "task", "", "", "Planned", "", "", "R1"]);
+  sheet.addRow([2, "Learn", "task", "", "", "Planned", "", "", ""]);
+  sheet.addRow([1, "R1 — Public beta", "milestone", "2026-11-15", "2026-11-15", "Planned", "", "", "R1"]);
   sheet.columns.forEach((c) => {
     c.width = 18;
   });
