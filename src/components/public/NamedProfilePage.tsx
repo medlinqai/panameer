@@ -1,12 +1,13 @@
 import Link from "next/link";
-import Image from "next/image";
 import { EMPLOYER_LOCK_COPY, RATE_LOCKED_COPY } from "@/lib/masked-profile";
+import { PLACEHOLDER } from "@/lib/masked-photo";
 import type { NamedProfile } from "@/lib/named-profile";
 import { browseAllowed } from "@/lib/public-browse-limit";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import {
   Chip,
+  BlurredField,
   LockLine,
   MaskedAvatarLarge,
   PublicPrimary,
@@ -76,8 +77,26 @@ export async function NamedProfilePage({
           {/* ⚠⚠ THE REAL PHOTO, BECAUSE THE MEMBER ASKED FOR IT. ⚠ `alt` names
               them, which is correct here and is exactly what `MaskedAvatar`
               refuses to do on the masked page. */}
+          {/*
+            ⚠⚠⚠ A PLAIN `<img>`, NOT `next/image`, AND THIS WAS A LIVE 500
+            (`P2-A1.1-E779`). ⚠ `next/image` refuses a remote host that is not in
+            `next.config.ts` — **and this project has NO `images` config at all** —
+            so every provider whose photo is a Supabase upload (**6 of the 60**)
+            made this page throw *"hostname … is not configured"*.
+            ⚠⚠ **IT WAS PRE-EXISTING AND INVISIBLE BECAUSE NOBODY HAS THE FLAG ON:
+            ZERO profiles have `public_name_at` set**, so the named page has never
+            been rendered in anger. It was found by turning the flag on to verify
+            this lane, and attributed by re-running the same test against `HEAD`.
+            ⚠ **THE REST OF THE APP ALREADY DOES IT THIS WAY** — `Avatar.tsx`,
+            `InstructorBadge.tsx` and `LessonPlayer.tsx` all render a remote photo
+            with a plain `<img>` and this same eslint exemption. Matching them
+            needs no config change and no new remote host allowlist.
+            ⚠ SUPERSEDED, quoted not deleted (`E164`):
+            //   <Image src={p.named.photoUrl} alt={who} width={260} height={260} ... />
+          */}
           {p.named.photoUrl ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={p.named.photoUrl}
               alt={who}
               width={260}
@@ -98,12 +117,48 @@ export async function NamedProfilePage({
             </div>
           </div>
 
+          {/*
+            ── ⚠⚠⚠ RATES AND CONTACT ARE SHOWN, BLURRED (`P2-A1.1-E779`) ──────────
+
+            ⚠ **SCOTT, 2026-10-02:** the named page shows name, photo and work —
+            *"but blur rates and contact"*, with `Join free to see rates and
+            contact`.
+
+            ⚠⚠⚠ **THIS IS PRESENTATION ONLY, AND THE MEASUREMENT SAYS SO.** The
+            page ALREADY withheld both: `NamedProfile` is `MaskedProfile` plus a
+            name object, and **`MaskedProfile` HAS NO RATE FIELD AND NO CONTACT
+            FIELD** — there has never been a figure here to hide. What changed is
+            that a bare lock line did not show there was anything to come back for.
+
+            ⚠⚠ **SO WHAT IS BLURRED IS A CONSTANT**, from `PLACEHOLDER` — fixed
+            length, fixed alphabet, identical for every member (`E767`). A reader
+            who selects, views source or opens dev tools gets the same invented
+            string for everybody, which is the property a CSS-blurred real value
+            could never have.
+          */}
           <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
             <h2 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
               RATES
             </h2>
-            {/* ⚠ Still locked — see the block comment. */}
+            <div className="mb-1 text-[18px] font-bold">
+              <BlurredField label="Rate hidden — join free to see it">
+                {PLACEHOLDER.rate}
+              </BlurredField>
+            </div>
             <LockLine>{RATE_LOCKED_COPY}</LockLine>
+          </div>
+
+          <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
+            <h2 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
+              CONTACT
+            </h2>
+            <div className="mb-1 text-[14px]">
+              <BlurredField label="Contact details hidden — join free to see them">
+                {PLACEHOLDER.contact}
+              </BlurredField>
+            </div>
+            {/* ⚠ Scott's wording for this surface, verbatim. */}
+            <LockLine>Join free to see rates and contact</LockLine>
           </div>
 
           <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
