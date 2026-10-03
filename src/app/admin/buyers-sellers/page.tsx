@@ -93,7 +93,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string; test?: string }>;
+  searchParams: Promise<{ stage?: string; test?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   /*
@@ -107,6 +107,8 @@ export default async function Page({
     orderBy: { created_at: "desc" },
     select: {
       id: true,
+      /** ⚠ `E794` — the USER id is searchable too; Scott pastes either one. */
+      user_id: true,
       first_name: true,
       last_name: true,
       created_at: true,
@@ -286,10 +288,47 @@ export default async function Page({
     ⚠ `all` is the default, so nothing changes until somebody asks.
   */
   const testFilter = sp.test === "real" || sp.test === "test" ? sp.test : "all";
-  const visible =
+  const byTest =
     testFilter === "all"
       ? staged
       : staged.filter((p) => (p.user?.is_test === true) === (testFilter === "test"));
+
+  /*
+    ── ⚠⚠⚠ SEARCH MATCHES EVERY FIELD (`P2-ALL-E794`, Scott 2026-10-03) ───────
+
+    ⚠ **THE TRIGGER:** his `test2*` search found nothing. The accounts were gone,
+    but the search also only looked at part of the row — so "nothing found" could
+    not be told apart from "not searched for".
+    ⚠⚠ **EVERY FIELD THE BRIEF NAMES IS IN HERE: name · email · company · job ·
+    user id · person id · phone · title · the TEST flag.** A field that is not
+    searched is a field somebody will conclude is empty.
+    ⚠ `test` / `real` are accepted as words too, so `test` finds the flagged
+    accounts without reaching for the filter.
+    ⚠⚠ It filters the LIST, never the tile counts — same rule as the test filter
+    above, and for the same reason (`E430`).
+  */
+  const q = (sp.q ?? "").trim().toLowerCase();
+  const visible = !q
+    ? byTest
+    : byTest.filter((p) => {
+        const isTest = p.user?.is_test === true;
+        const haystack = [
+          p.first_name,
+          p.last_name,
+          `${p.first_name ?? ""} ${p.last_name ?? ""}`,
+          p.user?.email,
+          p.company?.name,
+          p.title,
+          p.phone,
+          p.id,
+          /** ⚠ The USER id as well as the PERSON id — Scott pastes either, and a
+           *  search that silently knows only one of them is the defect above. */
+          p.user_id ?? "",
+          jobLabel(p),
+          isTest ? "test" : "real",
+        ];
+        return haystack.some((v) => (v ?? "").toString().toLowerCase().includes(q));
+      });
 
   /*
     ── ⚠⚠ THE FIVE JOBS (`P1-A1.5-E456`) ─────────────────────────────────────
@@ -538,6 +577,63 @@ export default async function Page({
         `check:admin-ui` caught it. ⚠ A control that exists only behind a filter
         is a hidden door (the 2026-09-23 card rule).
       */}
+      {/*
+        ── ⚠⚠ SEARCH + EXPORT (`P2-ALL-E794`) ─────────────────────────────────
+
+        ⚠ A plain `GET` form, server-rendered: no client JavaScript, the query
+        stays in the URL so a search is linkable and the browser's back button
+        works. ⚠⚠ The Export link carries the SAME `q` and `test`, so the file
+        matches the list on screen rather than silently exporting everything.
+      */}
+      <form method="get" className="mt-4 flex flex-wrap items-end gap-2">
+        <label className="flex-1 min-w-[240px]">
+          <span className="block text-[11px] font-bold uppercase tracking-[0.1em] text-ink-2">
+            Search every field
+          </span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="name · email · company · job · phone · id · test"
+            className="mt-1 min-h-11 w-full border border-line bg-surface px-2 text-[14px] text-ink"
+          />
+        </label>
+        {/* ⚠ The current filter rides along, or searching would silently drop it. */}
+        {testFilter !== "all" && <input type="hidden" name="test" value={testFilter} />}
+        <button
+          type="submit"
+          className="inline-flex min-h-11 items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface"
+        >
+          Search
+        </button>
+        {q && (
+          <a
+            href={testFilter === "all" ? "?" : `?test=${testFilter}`}
+            className="inline-flex min-h-11 items-center text-[13px] font-semibold text-ink-2 underline"
+          >
+            Clear
+          </a>
+        )}
+        <a
+          href={`/api/admin/export?list=users${q ? `&q=${encodeURIComponent(q)}` : ""}${
+            testFilter !== "all" ? `&test=${testFilter}` : ""
+          }`}
+          className="inline-flex min-h-11 items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink"
+        >
+          Export to Excel
+        </a>
+      </form>
+      {q && (
+        <p className="mt-2 text-[13px] text-ink-2">
+          {/* ⚠⚠ A REAL ZERO SAYS SO, AND SAYS WHAT WAS SEARCHED. Scott's `test2*`
+              search returning a blank screen is what started this lane — "0 of
+              78" with the term echoed back cannot be mistaken for "not run". */}
+          {visible.length === 0
+            ? `No one matches “${q}”. Searched name, email, company, title, job, phone and both ids across ${people.length} people.`
+            : `${visible.length} of ${people.length} match “${q}”.`}
+        </p>
+      )}
+
       <TestAccountControls filter={testFilter} />
 
       {/*

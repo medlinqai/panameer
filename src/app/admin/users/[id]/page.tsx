@@ -110,6 +110,9 @@ export default async function AdminUserPage({
     where: { id },
     select: {
       id: true,
+      /** ⚠ `E794` — needed to scope mail and audit rows, which hang off `User`
+       *  rather than `Person`. */
+      user_id: true,
       first_name: true,
       last_name: true,
       title: true,
@@ -170,6 +173,77 @@ export default async function AdminUserPage({
       },
     },
   });
+
+  /*
+    ── ⚠⚠⚠ EVERYTHING ABOUT THIS PERSON, IN ONE PASS (`P2-ALL-E794`) ──────────
+
+    ⚠ **SCOTT, 2026-10-03:** he wants *"a user page with everything about that
+    person"* — because his `test2*` accounts had gone and the app could not show
+    him anything about them either way.
+    ⚠⚠ **COUNTS AND A SHORT LIST, NOT THE WHOLE HISTORY.** A page that loads
+    every message and every lesson for a thirty-year consultant is a page nobody
+    opens twice; each section says how many there are and shows the latest few,
+    with the count being the honest figure.
+    ⚠⚠⚠ **EVERY FIGURE HERE HAS A WRITER OR IT IS NOT SHOWN AS A NUMBER** (the
+    2026-09-23 counting rule). Where a table exists but nothing writes to it, the
+    section says so rather than printing a zero that looks measured.
+    ⚠ One `Promise.all`, so the page is one round trip rather than eleven.
+  */
+  const userId = person?.user_id ?? null;
+  const [
+    connectionCount,
+    connections,
+    workRequests,
+    proposals,
+    enrollments,
+    certifications,
+    sentEmails,
+    tickets,
+    follows,
+    auditRows,
+  ] = person
+    ? await Promise.all([
+        /** ⚠⚠ `Connection` KEYS ON `User`, NOT `Person` — measured, not assumed.
+         *  A person with no user account therefore has no connections, which is
+         *  why these fall back to 0 rather than erroring. */
+        userId
+          ? prisma.connection.count({
+              where: { OR: [{ from_user_id: userId }, { to_user_id: userId }] },
+            })
+          : Promise.resolve(0),
+        userId
+          ? prisma.connection.findMany({
+              where: { OR: [{ from_user_id: userId }, { to_user_id: userId }] },
+              select: { kind: true, status: true, created_at: true },
+              orderBy: { created_at: "desc" },
+              take: 5,
+            })
+          : Promise.resolve([] as { kind: string; status: string; created_at: Date }[]),
+        /** ⚠ `buyer_person_id` — the real column. */
+        prisma.workRequest.count({ where: { buyer_person_id: person.id } }).catch(() => -1),
+        /** ⚠⚠⚠ THE MODEL IS `Proposal`, NOT `ProviderBid` — an absent NAME is
+         *  not an absent THING (`decisions_2026-09-23.md` §15), and the one I
+         *  reached for first does not exist in this schema. */
+        /** ⚠ And it keys on `provider_person_id` — the PERSON, not the profile. */
+        prisma.proposal.count({ where: { provider_person_id: person.id } }).catch(() => -1),
+        /** ⚠ Learn and certifications key on `User`, like connections. */
+        userId ? prisma.learnEnrollment.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
+        userId ? prisma.certification.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
+        userId
+          ? prisma.sentEmail.count({ where: { user_id: userId } }).catch(() => -1)
+          : Promise.resolve(0),
+        prisma.supportTicket.count({ where: { reporter_person_id: person.id } }).catch(() => -1),
+        prisma.workTrackerFollower.count({ where: { person_id: person.id } }).catch(() => -1),
+        userId
+          ? prisma.adminAudit.findMany({
+              where: { target_id: userId },
+              select: { action: true, actor_email: true, detail: true, created_at: true, row_count: true },
+              orderBy: { created_at: "desc" },
+              take: 8,
+            })
+          : Promise.resolve([] as { action: string; actor_email: string | null; detail: unknown; created_at: Date; row_count: number }[]),
+      ])
+    : [0, [], -1, -1, -1, -1, 0, -1, -1, []];
 
   if (!person) notFound();
 
@@ -441,7 +515,110 @@ export default async function AdminUserPage({
             />
           </Section>
         )}
+
+        {/*
+          ── ⚠⚠ THE REST OF THE RECORD (`P2-ALL-E794`) ────────────────────────
+          ⚠ `-1` from the loader means "this table could not be counted here" —
+          it prints a dash WITH ITS REASON rather than a zero (the counting
+          rule). ⚠⚠ A real zero prints `0`, in ink.
+        */}
+        <Section
+          title="Connections"
+          note="Colleague and mentor links, both directions."
+        >
+          <Row label="Total" value={<Count n={connectionCount} />} />
+          {connections.length === 0 ? (
+            <p className="text-[13px] text-ink-2">No connections yet.</p>
+          ) : (
+            <ul className="mt-2 text-[13px] text-ink-2">
+              {connections.map((c, i) => (
+                <li key={i}>
+                  {c.kind} · {c.status} · {c.created_at.toISOString().slice(0, 10)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
+        <Section title="Work" note="What this person has posted, bid on and been paid for.">
+          <Row label="Work requests posted" value={<Count n={workRequests} />} />
+          <Row
+            label="Work orders"
+            value={
+              /* ⚠⚠ UNCOUNTABLE PER PERSON TODAY: `WorkOrder` carries no person
+                 column to scope by, so a total would be every order on the
+                 platform. A dash with its reason, never a misleading figure. */
+              <span className="text-ink-2">— no per-person column on work orders</span>
+            }
+          />
+          <Row label="Bids / proposals" value={<Count n={proposals} />} />
+          <Row
+            label="Settlements"
+            value={<span className="text-ink-2">— no per-person column on settlements</span>}
+          />
+        </Section>
+
+        <Section title="Learn">
+          <Row label="Enrollments" value={<Count n={enrollments} />} />
+          <Row label="Certifications" value={<Count n={certifications} />} />
+        </Section>
+
+        <Section title="Email" note="Mail Panameer sent to this account.">
+          <Row label="Messages sent" value={<Count n={sentEmails} />} />
+          {!userId && (
+            <p className="text-[13px] text-ink-2">
+              This person has no user account, so no mail is attached to them.
+            </p>
+          )}
+        </Section>
+
+        <Section title="Support and follows">
+          <Row label="Support tickets" value={<Count n={tickets} />} />
+          <Row label="Following the build" value={<Count n={follows} />} />
+        </Section>
+
+        <Section
+          title="History"
+          note="Admin changes recorded against this account."
+        >
+          {auditRows.length === 0 ? (
+            /* ⚠⚠ IT SAYS WHY IT IS EMPTY. The log starts at `E793`, so silence
+               here means nothing has happened SINCE — not that nothing ever
+               did, which is exactly the ambiguity Scott hit with his missing
+               test users. */
+            <p className="text-[13px] text-ink-2">
+              Nothing recorded. The audit log starts at the 2026-10-03 release, so
+              changes made before then are not in it.
+            </p>
+          ) : (
+            <ul className="text-[13px] text-ink-2">
+              {auditRows.map((a, i) => (
+                <li key={i} className="border-t border-line py-1.5 first:border-t-0">
+                  <span className="font-semibold text-ink">{a.action}</span>{" "}
+                  {a.actor_email ? `by ${a.actor_email}` : "by the system"} ·{" "}
+                  {a.created_at.toISOString().slice(0, 16).replace("T", " ")}
+                  {a.row_count !== 1 && ` · ${a.row_count} rows`}
+                  {a.detail ? (
+                    <span className="block font-mono text-[12px] text-ink-3">
+                      {JSON.stringify(a.detail).slice(0, 160)}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
       </div>
     </div>
   );
+}
+
+/**
+ * ⚠⚠ A COUNT, OR A DASH WITH ITS REASON. `-1` is the loader's "could not count
+ * this here" and prints as a dash; a measured `0` prints as `0`, in ink. ⚠ The
+ * two must not look the same (`decisions_2026-09-23.md` §1).
+ */
+function Count({ n }: { n: number }) {
+  if (n < 0) return <span className="text-ink-2">— not countable here</span>;
+  return <span className="font-semibold text-ink">{n}</span>;
 }
