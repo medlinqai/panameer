@@ -184,7 +184,8 @@
     "check:work-tracker": "playwright test --config=playwright.tracker.config.ts",
     "backfill:ticket-events": "npx esbuild scripts/backfill-ticket-events.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/backfill-ticket-events.cjs --log-level=error && node .harness/backfill-ticket-events.cjs",
     "check:ticket-history": "playwright test --config=playwright.support.config.ts",
-    "check:sr7": "playwright test --config=playwright.sr7.config.ts"
+    "check:sr7": "playwright test --config=playwright.sr7.config.ts",
+    "check:redirects": "playwright test --config=playwright.redirects.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

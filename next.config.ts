@@ -144,6 +144,66 @@ const nextConfig: NextConfig = {
       */
       { source: "/stats/:path*", destination: "/usage/:path*", permanent: true },
       { source: "/stats", destination: "/usage", permanent: true },
+
+      /*
+        ── ⚠⚠⚠ ONE PLACE TO GO: `/status` LIVES ON THE STATUS HOST (`P2-ALL-E780`) ──
+
+        ⚠ **SCOTT:** *"one place to go."* `panameer.com/status`,
+        `www.panameer.com/status` and `app.panameer.com/status` all send the
+        visitor to `https://status.panameer.com/`.
+
+        ⚠⚠ **IT IS HERE AND NOT IN `src/proxy.ts`, DELIBERATELY.** `/status` is not
+        in the proxy's `matcher` (measured: zero entries contain it), so the edge
+        never runs on it. Adding it would mean editing that **static literal** —
+        which `e2e-shell/app-shell.spec.ts` ("THE PUBLIC ALLOWLIST") parses out of
+        the source and cross-checks against `ROUTE_ACCESS` in both directions.
+        A `next.config` redirect leaves the matcher and that assertion untouched.
+
+        ⚠⚠⚠ **IT CANNOT LOOP WITH THE STATUS-HOST REWRITE, FOR TWO INDEPENDENT
+        REASONS.** `next.config` redirects run BEFORE the proxy and are evaluated
+        on the INCOMING url, so the proxy's internal
+        `rewrite(new URL("/status" + search, request.url))` never re-enters them —
+        **and** the host condition below excludes `status.panameer.com` anyway.
+        ⚠ Either one alone would be enough; both are true.
+
+        ── ⚠⚠⚠ THE PATTERN IS GROUPED, AND THE UNGROUPED FORM WAS WRONG ──────────
+
+        ⚠⚠ **NEXT COMPILES THIS AS `new RegExp(`^${value}$`)`** — read out of
+        `next/dist/shared/lib/router/utils/prepare-destination.js`, not assumed.
+        ⚠⚠⚠ **ALTERNATION BINDS LOOSEST, SO AN UNGROUPED VALUE ANCHORS ONLY ONE
+        END OF EACH BRANCH.** The brief proposed
+        `(www\\.)?panameer\\.com|app\\.panameer\\.com`, which compiles to
+        `^(www\.)?panameer\.com` OR `app\.panameer\.com$` — i.e. *"starts with
+        panameer.com"* or *"ends with app.panameer.com"*.
+        ⚠ **MEASURED: that form matches `panameer.com.evil.net` AND
+        `evil-app.panameer.com`.** The grouped form below matches neither, and both
+        forms correctly exclude `status.panameer.com`, `localhost`,
+        `status.localhost` and `*.vercel.app`.
+        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the brief's value:
+        //   value: "(www\\.)?panameer\\.com|app\\.panameer\\.com"
+
+        ⚠ **Next strips the port before matching** (`host.split(":", 1)[0]`), so a
+        dev host with a port is compared as the bare hostname and still excluded.
+
+        ⚠⚠ **TEMPORARY (307), NOT 308** (Scott): every other redirect in this file
+        is permanent, and a browser caches a 308 hard. This one may still change.
+        ⚠ **`/api/status` IS UNAFFECTED** — `source` is an exact path match:
+        `/status` ✓, `/api/status` ✗, `/status/x` ✗, `/statuses` ✗.
+        ⚠ **The query is carried through by Next automatically** — measured on the
+        existing `/stats` rule: `/stats?follow=1&x=2` → `/usage?follow=1&x=2`.
+        That is what keeps `?follow=1` alive across the hop.
+      */
+      {
+        source: "/status",
+        has: [
+          {
+            type: "host",
+            value: "(?:(?:www\\.)?panameer\\.com|app\\.panameer\\.com)",
+          },
+        ],
+        destination: "https://status.panameer.com/",
+        permanent: false,
+      },
     ];
   },
 };
