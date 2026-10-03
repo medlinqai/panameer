@@ -69,7 +69,7 @@ export function PlanGrid({ plan }: { plan: PublicPlan }) {
 
   return (
     <section className="mt-12 border-t border-line pt-6">
-      <h2 className={`text-[24px] text-ink ${HEAD}`}>The Plan</h2>
+      <h2 className={`text-[24px] text-ink ${HEAD}`}>See the Details</h2>
       <p className="mt-1 text-[13px] text-ink-2">
         Release, stage and task. Click a row to open it.
       </p>
