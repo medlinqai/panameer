@@ -83,13 +83,55 @@ async function readSource(url: string): Promise<Buffer | null> {
  * usable photo — and `null` is a real answer, not a failure: the caller falls
  * back to the placeholder icon that masked surfaces already draw.
  */
+/**
+ * ── ⚠⚠⚠ THE PROVIDER WITH NO PHOTO (`P2-A1.1-E778`) ────────────────────────
+ *
+ * ⚠ **SCOTT, 2026-10-02:** the no-photo providers show the plain silhouette while
+ * everyone else is blurred, so the grid reads as two different products.
+ *
+ * ⚠⚠ **MEASURED: 3 OF 63 ELIGIBLE PROVIDERS (5%) HAVE NO `photo_url`.** Small,
+ * and visible precisely because it is small — three odd cards in a wall of sixty.
+ *
+ * ⚠⚠⚠ **IT IS ONE SHARED IMAGE, GENERATED ONCE, AND IT CARRIES NOTHING ABOUT
+ * ANYBODY.** A per-person placeholder would be inventing a face; a shared one
+ * says only *"a photo goes here"*. ⚠ It is built through the SAME pipeline as a
+ * real photo — same 16px raster, same encoder, same size — so a reader cannot
+ * tell from the treatment whether a photo exists, which is the point.
+ *
+ * ⚠ Deliberately NOT a file on disk: generating it keeps one code path, and a
+ * committed binary would have to be kept in step with `WIDTH` by hand.
+ */
+let genericBlur: string | null | undefined;
+
+export async function genericBlurredPhoto(): Promise<string | null> {
+  if (genericBlur !== undefined) return genericBlur;
+  try {
+    /* ⚠ A flat neutral at the same dimensions as a real blur. The colour sits
+       between the light and dark surfaces so it reads as a placeholder in both
+       schemes rather than as a bright or black square. */
+    const out = await sharp({
+      create: { width: WIDTH, height: WIDTH, channels: 3, background: { r: 150, g: 145, b: 160 } },
+    })
+      .jpeg({ quality: 40 })
+      .toBuffer();
+    genericBlur = `data:image/jpeg;base64,${out.toString("base64")}`;
+  } catch {
+    genericBlur = null;
+  }
+  return genericBlur;
+}
+
 export async function blurredPhotoDataUri(photoUrl: string | null | undefined): Promise<string | null> {
   const url = photoUrl?.trim();
-  if (!url) return null;
+  /* ⚠⚠ NO PHOTO IS NOT NOTHING (`E778`) — it is the shared placeholder, so every
+     masked card gets the same treatment. ⚠ A failed READ still falls back to it
+     too, below: the reader should never be able to tell a missing photo from an
+     unreachable one. */
+  if (!url) return genericBlurredPhoto();
   if (cache.has(url)) return cache.get(url) ?? null;
 
   const input = await readSource(url);
-  if (!input) return remember(url, null);
+  if (!input) return remember(url, await genericBlurredPhoto());
 
   try {
     const out = await sharp(input, {
@@ -102,7 +144,7 @@ export async function blurredPhotoDataUri(photoUrl: string | null | undefined): 
       .toBuffer();
     return remember(url, `data:image/jpeg;base64,${out.toString("base64")}`);
   } catch {
-    return remember(url, null);
+    return remember(url, await genericBlurredPhoto());
   }
 }
 

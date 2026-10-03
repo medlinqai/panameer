@@ -26,6 +26,31 @@ import type { PublicPhase, PublicRelease } from "@/lib/work-tracker/public-view"
  * ⚠ Positions are a pure function of the dates, computed server-side, so there is
  * no layout that depends on JavaScript having run.
  */
+/**
+ * ⚠⚠ THE ROW RULE, EXPORTED AND PURE (`P2-ALL-E777`) — see the note at its call
+ * site. ⚠⚠⚠ **IT IS SEPARATE SO IT CAN BE PROVEN ON INPUTS THE LIVE DATA DOES NOT
+ * CONTAIN.** With today's dates nothing crowds, so a test that only looked at the
+ * rendered page would assert "one row" forever and never exercise the mechanism
+ * at all — green, and guarding nothing (ruling 12).
+ *
+ * ⚠ `MIN_GAP_PCT` is a deliberate OVER-estimate of label width: 12% of the axis
+ * is ~117px at 976px, against a widest measured label of 75px. **Over-estimating
+ * costs a stagger nobody needed; under-estimating costs an overlap, which is the
+ * thing that must never happen.**
+ */
+export const MIN_GAP_PCT = 12;
+
+export function assignRows(ats: number[], minGapPct = MIN_GAP_PCT): number[] {
+  const lastOn = [-Infinity, -Infinity];
+  return ats.map((at) => {
+    /* ⚠ Greedy and order-preserving: a mark drops to the second row only if it
+       would crowd the last mark placed on the first. */
+    const row = at - lastOn[0] >= minGapPct ? 0 : at - lastOn[1] >= minGapPct ? 1 : 0;
+    lastOn[row] = at;
+    return row;
+  });
+}
+
 export function BuildLine({
   phases,
   releases,
@@ -108,6 +133,33 @@ export function BuildLine({
     }, new Map<string, { date: string; at: number; names: string[]; current: boolean }>()),
   ).map(([, v]) => v);
 
+  /*
+    ── ⚠⚠⚠ CLOSE MARKERS GO ON A SECOND ROW (`P2-ALL-E777`) ───────────────────
+
+    ⚠ **SCOTT:** the labels bunch at the left (`Define · Design`, then `Build`).
+
+    ⚠⚠ **MEASURED AT 1440 BEFORE THE FIX: the three markers occupied 232–307,
+    393–452 and 1158–1208 — gaps of 86px and 706px, and ZERO overlaps.** `E769`'s
+    shared marker had already removed the collision, so this is CROWDING, not
+    overlap: three labels inside the leftmost 220px of a 976px axis while 706px
+    sits empty. ⚠ Saying that precisely matters, because "they overlap" would have
+    sent the next person looking for a bug that is not there.
+
+    ⚠⚠⚠ **THE ROW IS CHOSEN FROM POSITION ALONE, SERVER-SIDE, BECAUSE NOTHING
+    HERE CAN MEASURE TEXT.** A label's real width depends on the font, which has
+    not loaded when this renders. ⚠ `MIN_GAP_PCT` is therefore a deliberate
+    over-estimate: ~12% of the axis is ~117px at 976px, comfortably wider than the
+    widest label measured (75px). **Over-estimating costs a stagger nobody needed;
+    under-estimating costs an overlap, which is the thing that must never happen.**
+    ⚠ Greedy and order-preserving: a mark drops to row 2 only if it would crowd the
+    last mark placed on row 1, and the next one is compared against whichever row
+    it lands on.
+  */
+  const rows = assignRows(marks.map((m) => m.at));
+  /* ⚠ If nothing is crowded the second row is never used, and the block keeps its
+     original height — the common case pays nothing for this. */
+  const twoRows = rows.some((r) => r === 1);
+
   return (
     <section aria-label="Build line" className="mt-7 border-t border-line pt-6">
       <div className="relative h-[3px] w-full rounded-full bg-line">
@@ -149,12 +201,18 @@ export function BuildLine({
         LIST and the rail above keeps the shape — the fill to today, the today dot
         and the release flags are all still there and all still positioned.
       */}
-      <div className="relative mt-3 hidden h-10 sm:block">
-        {marks.map((m) => (
+      <div className={"relative mt-3 hidden sm:block " + (twoRows ? "h-[72px]" : "h-10")}>
+        {marks.map((m, i) => (
           <span
             key={m.date}
             className={
-              "absolute top-0 whitespace-nowrap text-[11px] " +
+              "absolute whitespace-nowrap text-[11px] " +
+              /* ⚠ The second row sits below the first, with a leader line drawn by
+                 `before:` back up to the rail so a reader can tell which marker a
+                 dropped label belongs to. */
+              (rows[i] === 1
+                ? "top-[34px] before:absolute before:-top-[30px] before:left-1/2 before:h-[26px] before:w-px before:bg-line "
+                : "top-0 ") +
               /*
                 ⚠⚠ A LABEL AT EITHER END IS ALIGNED, NOT CENTRED, AND THIS WAS A
                 MEASURED DEFECT: centring puts half of it outside the page.

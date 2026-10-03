@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { dayNumber as dayNumberInSiteZone } from "@/lib/work-tracker/public-time";
 import { JOURNEY_COPY } from "./journey-copy";
 import { TICKETS_TERMINAL_STATUSES } from "@/lib/support";
 import {
@@ -319,8 +320,33 @@ export async function getPublicTracker(): Promise<PublicTracker> {
   const current = adminNamed ?? byDate ?? firstUnfinished ?? phases[phases.length - 1] ?? null;
   if (current) current.current = true;
 
+  /*
+    ── ⚠⚠⚠ ONE STAGE IS HIDDEN FROM THE PUBLIC LIST (`P2-ALL-E774`) ——————
+
+    ⚠ **SCOTT, 2026-10-02, walking the live page:** `Panameer Build` reads
+    *"0% · In Progress"* and is the one row that says nothing.
+
+    ⚠⚠⚠ **IT IS HIDDEN BECAUSE EVERYTHING IN IT IS ALREADY ON THE PAGE, NOT
+    BECAUSE 0% LOOKS BAD.** Measured: the stage holds exactly **12 tasks, all
+    `PNM-*`** — the **ten journeys**, which have their own grid, and
+    `PNM-011`/`PNM-012`, which are the Milestones pair with their own section.
+    ⚠ So the row duplicates two sections and contributes a percentage nobody can
+    act on.
+
+    ⚠⚠ **THE ADMIN KEEPS IT** (Scott). `stagesForPhase()` is shared with the
+    Builder, so the filter lives HERE, at the public read, and not in that helper
+    — hiding it from both would take away the only place those twelve rows can be
+    edited.
+    ⚠ **A HIDDEN STAGE STILL COUNTS.** It is removed from the LIST only; its
+    tasks remain in `taskCount`, `doneCount`, `movingCount` and every percentage,
+    because they are real work and the figures are the whole plan.
+  */
+  const PUBLIC_HIDDEN_STAGES = new Set(["Panameer Build"]);
+
   const currentPhaseStages: PublicStage[] = current
-    ? stagesForPhase(current.name).map((stage) => {
+    ? stagesForPhase(current.name)
+        .filter((stage) => !PUBLIC_HIDDEN_STAGES.has(stage))
+        .map((stage) => {
         const ids = TASKS.filter(
           (t) => t.phase === current.name && t.stage === stage,
         ).map((t) => t.id);
@@ -331,7 +357,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
           percent: percentDone(ss),
           taskCount: ids.length,
         };
-      })
+        })
     : [];
 
   /*
@@ -382,9 +408,18 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     ⚠ Day 1 is the start date itself, not day 0 — a person reading "Day 1" on the
     day work began is right.
   */
+  /*
+    ⚠⚠⚠ AND IT COUNTS IN THE SITE'S ZONE, NOT THE SERVER'S (`P2-ALL-E775`).
+    ⚠ SUPERSEDED, quoted not deleted (`E164`):
+    //   Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
+    ⚠⚠ **THAT DIVIDED MILLISECONDS FROM A MIDNIGHT-UTC DATE, SO IT ROLLED OVER AT
+    UTC MIDNIGHT** — measured at 8:36 PM ET on 2 Oct, the page already said
+    **DAY 50** while ET was still on day 49. ⚠ `dayNumber()` counts CALENDAR days
+    between two `YYYY-MM-DD` strings, so there is no instant left to round.
+  */
   const defineStart = dates.get(PHASES[0]?.name ?? "")?.start_date ?? null;
   const dayNumber = defineStart
-    ? Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
+    ? dayNumberInSiteZone(defineStart.toISOString().slice(0, 10))
     : null;
 
   /*
