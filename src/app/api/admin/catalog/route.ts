@@ -28,9 +28,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("skill.add"), name: Name, roleTypeId: Id, pillarId: Id }),
   z.object({ action: z.literal("skill.rename"), id: Id, name: Name }),
   z.object({ action: z.literal("skill.move"), id: Id, roleTypeId: Id, pillarId: Id }),
-  z.object({ action: z.literal("domain.rename"), id: Id, name: Name }),
   z.object({ action: z.literal("skill.visible"), id: Id, visible: z.boolean() }),
-  z.object({ action: z.literal("role.rename"), id: Id, name: Name }),
   z.object({
     action: z.literal("status"),
     table: z.enum(["skill", "specialization"]),

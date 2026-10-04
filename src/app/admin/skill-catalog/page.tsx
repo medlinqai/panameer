@@ -1,9 +1,9 @@
 import { Layers, FolderTree, Wrench } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
-const ADMIN_ROLE_LABELS: Record<string, string> = {
-  APPLICATION_SPECIFIC: "Application-Specific Roles (Functional Consultant)",
-  TECHNOLOGY_SPECIFIC: "Technology-Specific Roles (Technical Consultant)",
+const ADMIN_ROLE_PAREN: Record<string, string> = {
+  APPLICATION_SPECIFIC: "Functional Consultant",
+  TECHNOLOGY_SPECIFIC: "Technical Consultant",
 };
 import {
   getProviderFieldTree,
@@ -13,8 +13,11 @@ import {
   providersCell,
 } from "@/lib/catalog";
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
-import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree";
-import { CatalogCard } from "@/components/console/CatalogCard";
+import {
+  SkillCatalogTree,
+  type CatalogRole,
+  type CatalogSkill,
+} from "@/components/console/SkillCatalogTree";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -50,112 +53,37 @@ export default async function Page({
     }))
   );
 
-  const nodes: CatalogNode[] = await Promise.all(
-    roles.map(async (r) => ({
-      id: r.id,
-      /* ADMIN PAGE ONLY (`E820`). Registration, profile and search still show
-         the short label; changing those is Scott's call, listed in the report. */
-      label: ADMIN_ROLE_LABELS[r.code] ?? (r.display || r.name),
-      meta: `${r.domains.length} domains`,
-      /* ⚠ `E465` — one 34px square on every row so the left column stays
-         straight. Unmapped falls back to the muted generic, never a blank. */
-      mark: RDS_ROLE_MARKS[r.code] ?? null,
-      /*
-        NO "+ Add domain" (`E820`, the brief's revision). Scott locked ROLES AND
-        DOMAINS: only skills can be added, and every new skill must belong to an
-        existing role › domain pair. `E817` shipped a domain-add button a few
-        hours earlier; this removes it.
-      */
-      children: r.domains.map((d) => ({
-        id: `${r.id}-${d.id}`,
-        label: d.name,
-        meta: `${d.skillCount} skills`,
-        /* ⚠ Keyed on `Pillar.code`: vendor monogram for the 5 suites, chip for
-           the 9 Operations domains, muted icon for Project/AI/Cross-Vendor. */
-        mark: RDS_DOMAIN_MARKS[d.code] ?? null,
-        action: {
-          label: "+ Add skill",
-          kind: "skill.add" as const,
-          roleTypeId: r.id,
-          pillarId: d.id,
-        },
-        // Skills load with the page: the whole catalog is a few hundred rows,
-        // and a fetch-on-expand would add a spinner to every click for no gain.
-        children: [] as CatalogNode[],
-      })),
-    }))
-  );
-
-  /*
-    THE UNASSIGNED GROUP (`P2-A1.5-E817`). 18 skills carry no domain — orphans
-    from the loose add bar, which never asked. They were invisible in a tree
-    grouped by role › domain, so they could not be fixed. Each row has the move
-    control the tree already provides.
-  */
-  const orphanCount = await prisma.skill.count({ where: { pillar_id: null } });
-  if (orphanCount > 0) {
-    nodes.push({
-      id: "unassigned",
-      label: "Unassigned",
-      meta: `${orphanCount} skills with no domain`,
-      mark: null,
-      children: [],
-    });
-  }
-
-  // Fill the leaf level in one query rather than per-domain.
   const skills = await prisma.skill.findMany({
-    /* ⚠ `E481` — the admin tree shows retired skills, marked. */
     orderBy: { name: "asc" },
     select: {
-      id: true, name: true, role_type_id: true, pillar_id: true, is_custom: true,
-      status: true, origin: true,
-      /* ⚠ `E465` — the parser's controlled vocabulary, and Panameer's exact
-         equivalent of the CDT codes Medlinq shows on its child rows. Measured:
-         515 of 710 skills carry at least one. */
-      aliases: true,
+      id: true, name: true, role_type_id: true, pillar_id: true,
+      status: true, origin: true, aliases: true, visible_to_members: true,
     },
   });
-  for (const role of nodes) {
-    for (const domain of role.children ?? []) {
-      const [roleId, pillarId] = domain.id.split("-").length > 1
-        ? [role.id, domain.id.slice(role.id.length + 1)]
-        : [role.id, ""];
-      domain.children = skills
-        .filter((s) => s.role_type_id === roleId && s.pillar_id === pillarId)
-        .map((s) => ({
-          id: s.id,
-          label: s.name,
-          /* ⚠ `N providers` (S-3) — DISTINCT people, never link rows. Zero
-             renders as an em-dash: nobody has claimed it, which is honest. */
-          meta: providersCell(skillProviders.get(s.id)),
-          /* ⚠ `E481` — marked here, filtered out of every picker elsewhere. */
-          retired: s.status === "RETIRED",
-          edit: {
-            table: "skill" as const,
-            id: s.id,
-            name: s.name,
-            status: s.status,
-            origin: s.origin,
-          },
-          /* ⚠ MOVE IS AN UPDATE — the id never changes, so a provider who
-             picked this skill keeps it wherever it lands. */
-          moveTo: flatPairs,
-          /* ⚠⚠ NO `mark` ON A SKILL, AND THAT IS THE WHOLE POINT (`E465`).
-             `Skill.image_url` exists and is the trap: 710 rows, nobody sources
-             710 images, and a few percent filled renders a ragged mix of
-             pictures and blanks — worse than none. ⚠ `mark` is left UNDEFINED
-             rather than null, which is what tells `CatalogTree` to render no
-             box at all here instead of a fallback one. */
-          /* ⚠ THE ALIASES CARRY INSTEAD — real content, already in the DB, and
-             the single most useful thing an admin can see: aliases are what the
-             résumé parser matches on. ⚠ Operations/Project/AI skills carry none
-             deliberately, so this is simply absent there and is NOT flagged. */
-          sub: s.aliases.length ? s.aliases.join(" · ") : undefined,
-          custom: s.is_custom,
-        }));
-    }
-  }
+  const toSkill = (s: (typeof skills)[number]): CatalogSkill => ({
+    id: s.id,
+    name: s.name,
+    hidden: !s.visible_to_members,
+    retired: s.status === "RETIRED",
+    added: s.origin === "ADMIN",
+    members: skillProviders.get(s.id) ?? 0,
+    aliases: s.aliases.length ? s.aliases.join(" · ") : undefined,
+  });
+
+  // Paren labels are admin-page only (E820); registration/profile/search keep the short label.
+  const treeRoles: CatalogRole[] = roles.map((r) => ({
+    id: r.id,
+    label: r.display || r.name,
+    paren: ADMIN_ROLE_PAREN[r.code],
+    mark: RDS_ROLE_MARKS[r.code] ?? null,
+    domains: r.domains.map((d) => ({
+      id: d.id,
+      name: d.name,
+      mark: RDS_DOMAIN_MARKS[d.code] ?? null,
+      skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id).map(toSkill),
+    })),
+  }));
+  const unassigned = skills.filter((s) => s.pillar_id === null).map(toSkill);
 
   /*
     ── ⚠ EVERY TILE OPENS A LISTING (`P1-A1.5-E463`) ──────────────────────────
@@ -398,18 +326,7 @@ export default async function Page({
       )}
 
       {!view && !claimedRole && (
-        <CatalogCard title={`Roles > Domains > Skills (${skillCount})`}>
-          <CatalogTree
-            nodes={nodes}
-            emptyLabel="The service catalog is empty."
-            toolbar
-            /* ⚠ THE REAL COUNT FROM THE SAME QUERY THE TILE USES — not a
-               hard-coded 710, which goes stale the next time a skill lands. */
-            searchPlaceholder={`Search ${skillCount} skills across every role and domain`}
-            leafLabel="skills"
-            groupLabel="domains"
-          />
-        </CatalogCard>
+        <SkillCatalogTree roles={treeRoles} unassigned={unassigned} destinations={flatPairs} />
       )}
       {/* ⚠ `E481` — the bar returns, live. See the note on the Specializations page. */}
       {/*
