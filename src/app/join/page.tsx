@@ -237,7 +237,7 @@ function JoinRouter() {
             <button
               type="button"
               onClick={() => router.push("/join")}
-              className="rounded-full border-[1.5px] border-line px-7 py-3 font-bold transition-colors hover:border-magenta hover:text-magenta"
+              className="border border-ink bg-surface px-7 py-3 font-semibold transition-colors hover:bg-surface-hover text-ink"
             >
               Back
             </button>
@@ -245,7 +245,7 @@ function JoinRouter() {
           <button
             onClick={go}
             disabled={!choice}
-            className="ml-auto rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="ml-auto bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             Continue
           </button>

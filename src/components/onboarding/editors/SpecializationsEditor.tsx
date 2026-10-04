@@ -257,7 +257,7 @@ export function SpecializationsEditor({
                   type="button"
                   onClick={addCustomSpec}
                   disabled={!query.trim()}
-                  className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                  className="mb-[2px] border border-ink bg-surface px-5 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
                 >
                   + Add
                 </button>

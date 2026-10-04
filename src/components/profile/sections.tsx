@@ -11,7 +11,7 @@ import type { MentorState } from "@/lib/community-signal";
 import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
 import { CredentialProvenance } from "@/components/profile/CredentialProvenance";
-import { CLEAN_CHIP } from "@/components/profile/CleanSection";
+import { CLEAN_CHIP, CleanSection } from "@/components/profile/CleanSection";
 import { PROFICIENCY_LABEL } from "@/lib/languages";
 
 const CHIP_BASE =
@@ -83,14 +83,11 @@ export function ProfileCard({
   id?: string;
   children: ReactNode;
 }) {
+  // R-E006: the Register review uses My Profile's thin-line section.
   return (
-    <section id={id} className={`scroll-mt-24 ${CARD}`}>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-[18px]">{title}</h2>
-        {edit}
-      </div>
+    <CleanSection title={title} id={id} action={edit} showWhenEmpty>
       {children}
-    </section>
+    </CleanSection>
   );
 }
 
@@ -99,8 +96,7 @@ export function Empty({ children }: { children: ReactNode }) {
 }
 
 /** The pencil affordance, so both surfaces render an identical control. */
-const EDIT_CLASS =
-  "text-[14px] font-bold text-magenta transition-colors hover:text-magenta-dark";
+const EDIT_CLASS = "text-[12px] font-semibold text-magenta-dark hover:underline";
 
 export function EditButton({
   title,
@@ -121,7 +117,8 @@ export function EditButton({
       aria-label={`Edit ${title}`}
       className={EDIT_CLASS}
     >
-      {icon} {label}
+      {icon === "+" && !label.startsWith("+") ? "+ " : ""}
+      {label}
     </button>
   );
 }
@@ -464,7 +461,7 @@ export function ProfileHero({
   const moreSkills = Math.max(0, skills.length - shownSkills.length);
 
   return (
-    <header className={CARD}>
+    <header className="lg:sticky lg:top-24 lg:self-start">
       {/*
         ── ⚠⚠ TWO COLUMNS (`P2-J2-E562` WS-C item 7) ────────────────────────
 
@@ -495,9 +492,9 @@ export function ProfileHero({
         it renders nothing and the flex row collapses to the left column alone —
         ordinary responsive behaviour, no special case.
       */}
-      <div className="flex flex-col gap-8 sm:flex-row">
+      <div className="flex flex-col gap-6">
         {/* ── LEFT — IDENTITY ────────────────────────────────────────────── */}
-        <div className="w-full flex-none sm:w-[300px]">
+        <div className="w-full">
           <div className="flex items-start gap-4">
             <Avatar
               firstName={firstName}
@@ -637,7 +634,7 @@ export function ProfileHero({
                 {shownSkills.map((sk) => (
                   <span
                     key={sk.id}
-                    className={CHIP_SKILL}
+                    className={CLEAN_CHIP}
                   >
                     {sk.name}
                   </span>

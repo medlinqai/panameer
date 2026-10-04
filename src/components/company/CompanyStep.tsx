@@ -694,7 +694,7 @@ export function CompanyStep({
                   setMode("define");
                   setName(q.trim());
                 }}
-                className="mt-4 rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                className="mt-4 bg-ink px-6 py-2.5 text-[14.5px] font-semibold text-surface transition-colors hover:bg-ink-hover"
               >
                 Add &ldquo;{q.trim()}&rdquo; as my company
               </button>
@@ -865,7 +865,7 @@ export function CompanyStep({
                 type="button"
                 onClick={() => void runLookup()}
                 disabled={checking || !stateOfFiling || q.trim().length < 2}
-                className="mt-3 rounded-full border-[1.5px] border-magenta px-5 py-2 text-[14px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white disabled:opacity-40"
+                className="mt-3 border border-ink bg-surface px-5 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
               >
                 {checking ? "Checking the register…" : "Look up this company"}
               </button>
@@ -1180,7 +1180,7 @@ export function CompanyStep({
                   type="button"
                   disabled={logoBusy}
                   onClick={() => logoInput.current?.click()}
-                  className="rounded-full border-[1.5px] border-line px-5 py-2 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                  className="border border-ink bg-surface px-5 py-2 text-[14px] font-semibold transition-colors hover:bg-surface-hover disabled:opacity-50 text-ink"
                 >
                   {logoBusy ? "Uploading…" : logoUrl ? "Change logo" : "Upload a logo"}
                 </button>

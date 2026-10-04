@@ -183,7 +183,7 @@ export function ArtifactsModal({
                   </button>
                 </div>
               ) : (
-                <label className="inline-flex cursor-pointer items-center rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta">
+                <label className="inline-flex cursor-pointer items-center border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover">
                   {uploading ? "Uploading…" : "Choose A File"}
                   <input
                     type="file"
@@ -231,7 +231,7 @@ export function ArtifactsModal({
           type="button"
           onClick={add}
           disabled={!canAdd || busy}
-          className="mt-4 rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="mt-4 bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
         >
           {busy ? "Adding…" : "Add Artifact"}
         </button>
@@ -241,7 +241,7 @@ export function ArtifactsModal({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
+          className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink hover:bg-surface-hover"
         >
           Done
         </button>

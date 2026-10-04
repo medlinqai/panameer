@@ -424,7 +424,7 @@ export function ResumeImportAction({
             onClick={apply}
             disabled={stage === "saving"}
             aria-busy={stage === "saving"}
-            className="rounded-full bg-magenta px-4 py-1.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
+            className="bg-ink px-4 py-1.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-60"
           >
             {stage === "saving" ? "Saving…" : "Add Ticked"}
           </button>
@@ -485,7 +485,7 @@ export function ResumeImportAction({
           onClick={preview}
           disabled={stage === "reading"}
           aria-busy={stage === "reading"}
-          className="inline-flex items-center gap-2 rounded-full bg-magenta px-4 py-1.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
+          className="inline-flex items-center gap-2 bg-ink px-4 py-1.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-60"
         >
           {stage === "reading" && (
             <span

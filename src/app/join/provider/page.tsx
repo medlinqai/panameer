@@ -1540,14 +1540,14 @@ setScreen(target);
             <button
               onClick={() => router.push("/join")}
               disabled={busy}
-              className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+              className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
             >
               Back
             </button>
             <button
               onClick={createAccount}
               disabled={!canSignUp(acct) || busy}
-              className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+              className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
             >
               {busy ? "Creating…" : "Create My Account"}
             </button>
@@ -2602,7 +2602,7 @@ setScreen(target);
                           suggestBusy ||
                           !profile.roleTypeIds.length
                         }
-                        className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+                        className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-40"
                       >
                         {suggestBusy
                           ? "Adding…"
@@ -3083,7 +3083,7 @@ setScreen(target);
                 languages: [...langs, { name: "", level: null }],
               }))
             }
-            className="mt-4 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+            className="mt-4 border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
           >
             + Add a Language
           </button>
@@ -3245,7 +3245,7 @@ setScreen(target);
                 <button
                   type="button"
                   onClick={() => setPhotoModal(true)}
-                  className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className="bg-ink px-6 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
                 >
                   {profile.photoUrl ? "Change Photo" : "Upload A Photo"}
                 </button>
@@ -3677,7 +3677,7 @@ setScreen(target);
 
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
-          <div className="mt-6 rounded-brand bg-bg-soft p-4 sm:p-5">
+          <div className="mt-6 grid gap-x-12 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)]">
             <ProfileHero
               // The wizard title is the page h1; keep heading ranks sane.
               headingAs="h2"
@@ -3754,6 +3754,7 @@ setScreen(target);
                 </div>
               }
             />
+            <div className="min-w-0">
 
             {/*
               ---- Bio, EDITED IN PLACE (WS5) -------------------------------
@@ -3769,7 +3770,7 @@ setScreen(target);
               a form, and a section that silently keeps your edit is the pattern
               every other section here already uses.
             */}
-            <div className="mt-5">
+            <div>
               <ProfileCard
                 title="Overview"
                 edit={
@@ -3832,7 +3833,7 @@ setScreen(target);
             </div>
 
             {/* ---- pg1: Work History, full width ------------------------ */}
-            <div className="mt-5">
+            <div>
               <ProfileCard
                 title="Work History"
                 edit={
@@ -3966,7 +3967,7 @@ setScreen(target);
               ⚠ SAME WEIGHT, SAME WIDTH: it sits with Work History now, because
               after `E410` it carries the same kind of content.
             */}
-            <div className="mt-5">
+            <div>
               <ProfileCard
                 title="Solo Projects"
                 /* ⚠ THE SAME EDITOR AS WORK HISTORY, and that is `E411`'s finding
@@ -3998,7 +3999,7 @@ setScreen(target);
               not to restructure the page around it, and removing one cell from
               a six-cell grid needed no restructuring at all.
             */}
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+            <div>
               {/*
                 ⚠⚠ THE REVIEW CARD SHOWS WHAT THE PROFILE SHOWS (`P2-J1.4-E517`).
                 ⚠ SUPERSEDED, quoted not deleted (`E164`):
@@ -4179,7 +4180,7 @@ setScreen(target);
               now the wrapup. What stays here is the read-only status: "is my
               email verified" belongs on the page you publish from.
             */}
-            <div className="mt-5">
+            <div>
               <ProfileCard title="Verify Identity">
                 <VerificationsBody
                   emailVerified
@@ -4211,6 +4212,7 @@ setScreen(target);
                   — they stay private.
                 </p>
               </ProfileCard>
+            </div>
             </div>
           </div>
 
@@ -4343,7 +4345,7 @@ setScreen(target);
               <button
                 type="button"
                 onClick={() => setEditSection(null)}
-                className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                className="border border-ink bg-surface px-5 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:bg-surface-hover"
               >
                 {editSection === "work" ? "Done" : "Cancel"}
               </button>
@@ -4352,7 +4354,7 @@ setScreen(target);
                   type="button"
                   disabled={busy || !sectionEditorCanSave}
                   onClick={saveEditSection}
-                  className="rounded-full bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-ink px-5 py-2.5 text-[14px] font-semibold text-surface transition-colors hover:bg-ink-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {busy ? "Saving…" : "Save"}
                 </button>

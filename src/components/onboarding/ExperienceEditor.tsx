@@ -152,7 +152,7 @@ export function ExperienceEditor({
       <button
         type="button"
         onClick={() => onChange([...value, emptyExperience()])}
-        className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+        className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
       >
         + Add Company
       </button>

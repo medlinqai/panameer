@@ -34,7 +34,7 @@ export default async function GetStartedPage() {
           {}
           <Link
             href="/join/provider"
-            className="ml-auto inline-flex justify-center rounded-full bg-magenta px-8 py-3.5 text-[17px] font-bold text-white shadow-brand transition-colors hover:bg-magenta-dark"
+            className="ml-auto inline-flex justify-center bg-ink px-8 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-ink-hover"
           >
             Get Started Now!
           </Link>

@@ -623,7 +623,7 @@ export function ProjectModal({
                 type="button"
                 onClick={addCustomApp}
                 disabled={!appQuery.trim()}
-                className="mb-[2px] rounded-full border-[1.5px] border-line px-5 py-3 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+                className="mb-[2px] border border-ink bg-surface px-5 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
               >
                 + Add
               </button>
@@ -805,7 +805,7 @@ export function ProjectModal({
                     // Disabled until the contact actually belongs to the client
                     // (brief §5). The server enforces the same rule regardless.
                     disabled={vBusy || !domainVerdict.ok}
-                    className="mt-2.5 rounded-full border-[1.5px] border-magenta px-5 py-2 text-[14px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white disabled:opacity-40"
+                    className="mt-2.5 border border-ink bg-surface px-5 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
                   >
                     {vBusy
                       ? "Sending…"
@@ -893,7 +893,7 @@ export function ProjectModal({
                 </button>
               </div>
             ) : (
-              <label className="inline-flex cursor-pointer items-center rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta">
+              <label className="inline-flex cursor-pointer items-center border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover">
                 {uploading ? "Uploading…" : "Attach PDF, Doc or Image"}
                 <input
                   type="file"
@@ -941,7 +941,7 @@ export function ProjectModal({
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2] disabled:opacity-50"
+            className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink hover:bg-surface-hover disabled:opacity-50"
           >
             Cancel
           </button>
@@ -949,7 +949,7 @@ export function ProjectModal({
             type="button"
             onClick={onSave}
             disabled={busy || !canSave}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save Project"}
           </button>

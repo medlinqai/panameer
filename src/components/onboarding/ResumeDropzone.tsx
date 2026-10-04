@@ -160,7 +160,7 @@ export function ResumeDropzone({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="mt-4 rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="mt-4 bg-ink px-6 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
             >
               Choose File
             </button>
