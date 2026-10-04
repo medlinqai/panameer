@@ -152,9 +152,9 @@ test("a milestone shows ◆ and still holds its outline position", async ({ page
   /** ⚠⚠ THE WHOLE POINT: Prove is 1, the milestone is ◆, and the next phase is
    *  **2** — not 3. Scott's outline reads that way, and renumbering every row
    *  after an inserted milestone is what this prevents. */
-  await expect.poll(() => numbers(page), { timeout: 20_000 })/* `E809` outline numbering: the milestone holds position 2 and prints ◆,
-     so the row after it is 3. */
-    .toEqual(["1", "◆", "3"]);
+  // + Milestone nests under the selected phase (1.1 → ◆), so the new top-level phase is 2.
+  await expect.poll(() => numbers(page), { timeout: 20_000 }).toEqual(["1", "◆", "2"]);
+  await expect(page.locator('[data-plan-editor-row="◆"]')).toHaveAttribute("data-plan-depth", "1");
 });
 
 test("Backspace on an empty row deletes it", async ({ page }) => {
@@ -211,7 +211,7 @@ test("the template builds Scott's outline, and Launch is 6", async ({ page }) =>
    * in an input's VALUE PROPERTY — see `addPhase`'s note. `data-plan-number` is
    * the stable hook for the badge.
    */
-  const pairs = await page.locator("li:has([data-plan-title])").evaluateAll((els) =>
+  const pairs = await page.locator("[data-plan-editor-row]").evaluateAll((els) =>
     els.map((el) => ({
       number: el.querySelector("[data-plan-number]")?.textContent?.trim() ?? "",
       title: (el.querySelector("[data-plan-title]") as HTMLInputElement | null)?.value ?? "",
