@@ -7,6 +7,9 @@ import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
 import { BackLink } from "@/components/console/BackLink";
+import { OrderTabs } from "@/components/orders/OrderTabs";
+import { TimeDollars } from "@/components/orders/TimeDollars";
+import { loadWoMoney } from "@/lib/wo-money";
 import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { CloseOrder } from "@/components/orders/CloseOrder";
@@ -15,8 +18,10 @@ export const metadata = { title: "Work Order · Panameer" };
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
@@ -29,6 +34,21 @@ export default async function Page({
   } catch (e) {
     if (e instanceof OrderError && e.code === "NOT_FOUND") notFound();
     throw e;
+  }
+
+  const { tab } = await searchParams;
+  if (tab === "plan") {
+    const money = await loadWoMoney(o.id);
+    return (
+      <div className="pm-white-page mx-auto w-full max-w-5xl">
+        <BackLink href="/orders" label="Work Orders" />
+        <p className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">WORK ORDER {o.orderNumber}</p>
+        <h1 className="mt-1 text-[28px] font-bold">{o.lines[0]?.description ?? o.orderNumber}</h1>
+        <p className="mt-1 text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
+        <OrderTabs id={o.id} current="plan" />
+        {money && <TimeDollars m={money} currency={o.currency} />}
+      </div>
+    );
   }
 
   return (
@@ -49,6 +69,8 @@ export default async function Page({
         </div>
         <StatusPill status={o.status} />
       </div>
+
+      <OrderTabs id={o.id} current="overview" />
 
       {}
       <div className="mt-6">
