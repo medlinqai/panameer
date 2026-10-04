@@ -392,6 +392,12 @@ export type OrderDetail = {
   netCents: number;
   /** One rate when every line shares it, else null ("by line"). */
   lineFeeBps: number | null;
+  /** R1 money position: hours ordered/claimed, approved and buyer-paid dollars, and what is left under the cap. */
+  hoursOrdered: number;
+  hoursClaimed: number;
+  approvedCents: number;
+  paidCents: number;
+  remainingCents: number;
   actions: OrderAction[];
   activationMessage: string;
   /** ⚠ True when ANY line's terms moved against what was asked. */
@@ -521,6 +527,18 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     feeCents += feeSplit(v.drawdown.orderedCents, v.feeBps).fee_cents;
   }
   const rates = [...new Set(views.map((v) => v.feeBps))];
+  const hourLines = lines.filter((l) => pricedByQuantity(l.transaction_type) && (l.uom ?? "HOUR").toUpperCase().startsWith("HOUR"));
+  const hoursOrdered = hourLines.reduce((n, l) => n + Number(l.quantity ?? 0), 0);
+  const hoursClaimed = hourLines.reduce((n, l) => n + Number(l.drawn_quantity ?? 0), 0);
+  const decided = await prisma.settlementRequest.findMany({
+    where: { work_order_id: o.id, status: { in: ["APPROVED", "PAID"] } },
+    select: { id: true, lines: { select: { basis: true, quantity: true, unit_price_cents: true, amount_cents: true } } },
+  });
+  const approvedCents = decided.reduce(
+    (n, s) => n + s.lines.reduce((m, l) => m + (l.basis === "RATE" ? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0)) : l.amount_cents ?? 0), 0),
+    0
+  );
+  const paidAgg = await prisma.paymentLine.aggregate({ where: { settlement_request_id: { in: decided.map((s) => s.id) } }, _sum: { amount_cents: true } });
 
   return {
     id: o.id,
@@ -550,6 +568,11 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     feeCents,
     netCents: valueCents - feeCents,
     lineFeeBps: rates.length === 1 ? rates[0] : null,
+    hoursOrdered,
+    hoursClaimed,
+    approvedCents,
+    paidCents: paidAgg._sum.amount_cents ?? 0,
+    remainingCents: Math.max(0, (o.not_to_exceed_cents ?? valueCents) - approvedCents),
     /* ⚠⚠ THE ACTIONS COME FROM THE ONE FUNCTION, SERVER-SIDE, AND THE PAGE
        RENDERS NOTHING THAT IS NOT IN THIS ARRAY. */
     actions: availableActions(o, party),
