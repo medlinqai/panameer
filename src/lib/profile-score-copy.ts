@@ -34,7 +34,7 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   },
   rate: {
     why: "A profile with no rate is filtered out before it is read",
-    action: "Set Your Rate",
+    action: "Set Your Rates",
     href: "/join/provider?step=finish",
     minutes: 1,
     editorSlug: "rates",

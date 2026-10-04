@@ -22,8 +22,14 @@ function Row({
   );
 }
 
-export function rateCanSave(hourlyRateCents: number | null): boolean {
-  return Boolean(hourlyRateCents);
+// R-E002b: two rates only. Saveable when at least one is above $0.
+export function rateCanSave(onsiteCents: number | null | undefined, remoteCents: number | null | undefined): boolean {
+  return Boolean(onsiteCents) || Boolean(remoteCents);
+}
+
+/** The single hourly figure older readers still use: onsite first, else offsite. */
+export function syncedHourly(onsiteCents: number | null | undefined, remoteCents: number | null | undefined): number | null {
+  return onsiteCents || remoteCents || null;
 }
 
 function MoneyField({
@@ -65,80 +71,67 @@ function MoneyField({
 }
 
 export function RateEditor({
-  hourlyRateCents,
   onsiteRateCents,
   remoteRateCents,
-  onChange,
   onOnsiteChange,
   onRemoteChange,
   serviceFeeBps,
-  breakdown,
 }: {
-  hourlyRateCents: number | null;
-  onsiteRateCents?: number | null;
-  remoteRateCents?: number | null;
-  onChange: (next: number | null) => void;
-  onOnsiteChange?: (next: number | null) => void;
-  onRemoteChange?: (next: number | null) => void;
+  onsiteRateCents: number | null;
+  remoteRateCents: number | null;
+  onOnsiteChange: (next: number | null) => void;
+  onRemoteChange: (next: number | null) => void;
   serviceFeeBps: number;
-  breakdown: { rate: number | null; fee: number | null; youGet: number | null };
 }) {
-  const { rate, fee, youGet } = breakdown;
   return (
-    <div className="max-w-md space-y-5">
-      <MoneyField
-        label="Hourly Rate"
-        hint="Total amount the client will see."
-        cents={hourlyRateCents}
-        onChange={onChange}
-        placeholder="125.00"
+    <div className="max-w-md space-y-6">
+      <RateBlock
+        label="Onsite rate"
+        hint="What you charge when the work is at the client's site."
+        cents={onsiteRateCents}
+        onChange={onOnsiteChange}
+        placeholder="150.00"
+        serviceFeeBps={serviceFeeBps}
       />
-      {}
-      {onOnsiteChange && (
-        <MoneyField
-          label="Onsite rate"
-          hint="Optional. What you charge when the work is at the client's site."
-          cents={onsiteRateCents ?? null}
-          onChange={onOnsiteChange}
-          placeholder="150.00"
-        />
-      )}
-      {onRemoteChange && (
-        <MoneyField
-          label="Offsite rate"
-          hint="Optional. What you charge when the work is away from the client's site."
-          cents={remoteRateCents ?? null}
-          onChange={onRemoteChange}
-          placeholder="110.00"
-        />
-      )}
+      <RateBlock
+        label="Offsite rate"
+        hint="What you charge when the work is away from the client's site."
+        cents={remoteRateCents}
+        onChange={onRemoteChange}
+        placeholder="125.00"
+        serviceFeeBps={serviceFeeBps}
+      />
+      <p className="text-[13px] leading-relaxed text-ink-2">
+        Set one or both. The service fee ({bpsToPercentLabel(serviceFeeBps)}) helps us run the platform and provide
+        payment protection and support; fees are shown before contract acceptance.
+      </p>
+    </div>
+  );
+}
 
-      <div className="rounded-brand border border-line p-5">
-        <Row
-          label={`Service fee (${bpsToPercentLabel(serviceFeeBps)})`}
-          value={fee != null ? `−${formatCents(fee)}` : "—"}
-        />
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
-          This helps us run the platform and provide services like payment
-          protection and customer support. Fees vary and are shown before
-          contract acceptance.{" "}
-          <span className="font-semibold text-magenta">Learn More</span>
-        </p>
-        <div className="mt-4 border-t border-line pt-4">
-          <Row
-            label="You'll Get"
-            value={youGet != null ? `${formatCents(youGet)}/hr` : "—"}
-            strong
-          />
-          <p className="mt-1 text-[13px] text-ink-2">
-            The estimated amount you&apos;ll receive after service fees.
-          </p>
-        </div>
-        {rate != null && (
-          <p className="mt-3 text-[13px] text-ink-2">
-            Clients see {formatCents(rate)}/hr.
-          </p>
-        )}
+function RateBlock({
+  label,
+  hint,
+  cents,
+  onChange,
+  placeholder,
+  serviceFeeBps,
+}: {
+  label: string;
+  hint: string;
+  cents: number | null;
+  onChange: (next: number | null) => void;
+  placeholder: string;
+  serviceFeeBps: number;
+}) {
+  const fee = cents != null ? Math.round((cents * serviceFeeBps) / 10_000) : null;
+  const youGet = cents != null && fee != null ? cents - fee : null;
+  return (
+    <div className="border-t border-line pt-4">
+      <MoneyField label={label} hint={hint} cents={cents} onChange={onChange} placeholder={placeholder} />
+      <div className="mt-2 space-y-1 text-[14px]">
+        <Row label={`Service fee (${bpsToPercentLabel(serviceFeeBps)})`} value={fee != null ? `−${formatCents(fee)}` : "—"} />
+        <Row label="You'll Get" value={youGet != null ? `${formatCents(youGet)}/hr` : "—"} strong />
       </div>
     </div>
   );

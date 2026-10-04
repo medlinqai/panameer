@@ -109,3 +109,26 @@ test("score + health: counts reconcile", async ({ page }) => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
   }
 });
+
+// R-E002b: Register asks for exactly two rates and saves both, hourly kept in sync.
+test("register rate step: Onsite + Offsite only, both saved", async ({ page }) => {
+  await persona();
+  const prisma = db();
+  const u = await prisma.user.findUnique({ where: { email: EMAIL }, select: { person: { select: { id: true } } } });
+  await prisma.providerProfile.updateMany({ where: { person_id: u!.person!.id }, data: { onsite_rate_cents: null, remote_rate_cents: null, hourly_rate_cents: null } });
+  await signIn(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/join/provider?step=rate", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Onsite rate", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Offsite rate", { exact: true })).toBeVisible();
+  await expect(page.getByText("Hourly Rate", { exact: true })).toHaveCount(0);
+  const inputs = page.locator('input[type="number"]');
+  await inputs.nth(0).fill("150");
+  await inputs.nth(1).fill("120");
+  await expect(page.getByText("You'll Get")).toHaveCount(2);
+  await page.screenshot({ path: "e2e-run10/.artifacts/register-rate-390.png", fullPage: true });
+  await page.getByRole("button", { name: /^(Continue|Next)/ }).first().click();
+  await expect
+    .poll(async () => (await prisma.providerProfile.findFirst({ where: { person_id: u!.person!.id }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } })), { timeout: 20_000 })
+    .toEqual({ onsite_rate_cents: 15000, remote_rate_cents: 12000, hourly_rate_cents: 15000 });
+});

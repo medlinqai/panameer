@@ -254,7 +254,7 @@ export function computeProfileScore(p: CompletenessInput): ProfileScore {
     // longer asked, so requiring the pair would score zero for a completed step.
     L("field", "Field", W.field, "find", state(!!p.role_type_id)),
     L("skills", "Skills", W.skills, "find", state(has(p.skills))),
-    L("rate", "Hourly Rate", W.rate, "find", state(hasAnyRate(p))),
+    L("rate", "Rates", W.rate, "find", state(hasAnyRate(p))),
     L("photo", "Photo", W.photo, "find", state(!!p.photoUrl)),
     // ⚠ IDENTITY IS ADDRESS + PHONE (`WS7`). Date of birth left the wizard
     // entirely; if legal capacity is ever needed it rides the payout gate.

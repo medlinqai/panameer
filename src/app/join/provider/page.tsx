@@ -130,7 +130,7 @@ import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/Title
    shared; what moved out is the wiring between them. */
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
 /* ⚠ EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
-import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
+import { RateEditor, rateCanSave, syncedHourly } from "@/components/onboarding/editors/RateEditor";
 /* ⚠ EDITOR 4 OF 5 (`P2-A2-E597` WS-B). `CascadeTier` moved with it; every
    piece of state stayed here. */
 import { SpecializationsEditor } from "@/components/onboarding/editors/SpecializationsEditor";
@@ -2065,18 +2065,26 @@ setScreen(target);
     //   };
   */
   const rateEditing = () => ({
-    canSave: rateCanSave(profile.hourlyRateCents),
-    save: () =>
-      saveAnd("rate", {
-        hourlyDollars:
-          profile.hourlyRateCents != null ? profile.hourlyRateCents / 100 : "",
-      }),
+    canSave: rateCanSave(profile.onsiteRateCents, profile.remoteRateCents),
+    save: () => {
+      const dollars = (c: number | null | undefined) => (c != null ? c / 100 : "");
+      return saveAnd("rate", {
+        hourlyDollars: dollars(syncedHourly(profile.onsiteRateCents, profile.remoteRateCents)),
+        onsiteDollars: dollars(profile.onsiteRateCents),
+        remoteDollars: dollars(profile.remoteRateCents),
+      });
+    },
     body: (
       <RateEditor
-        hourlyRateCents={profile.hourlyRateCents}
-        onChange={(hourlyRateCents) => setProfile((p) => ({ ...p, hourlyRateCents }))}
+        onsiteRateCents={profile.onsiteRateCents ?? null}
+        remoteRateCents={profile.remoteRateCents ?? null}
+        onOnsiteChange={(onsiteRateCents) =>
+          setProfile((p) => ({ ...p, onsiteRateCents, hourlyRateCents: syncedHourly(onsiteRateCents, p.remoteRateCents) }))
+        }
+        onRemoteChange={(remoteRateCents) =>
+          setProfile((p) => ({ ...p, remoteRateCents, hourlyRateCents: syncedHourly(p.onsiteRateCents, remoteRateCents) }))
+        }
         serviceFeeBps={profile.serviceFeeBps}
-        breakdown={rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps)}
       />
     ),
   });
