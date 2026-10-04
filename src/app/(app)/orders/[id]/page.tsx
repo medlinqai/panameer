@@ -7,6 +7,7 @@ import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
 import { BackLink } from "@/components/console/BackLink";
+import { CloseOrder } from "@/components/orders/CloseOrder";
 
 export const metadata = { title: "Work Order · Panameer" };
 
@@ -179,6 +180,7 @@ export default async function Page({
         {o.party === "PROVIDER" && o.status === "RELEASED" && (
           <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
         )}
+        {o.party === "BUYER" && (o.status === "RELEASED" || o.status === "ACTIVE") && <CloseOrder orderId={o.id} />}
         {o.workRequestId && (
           <Button href={`/work-requests/${o.workRequestId}`} variant="ghost">
             Open the work request

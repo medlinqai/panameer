@@ -786,3 +786,30 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
   //     return getOrderDetail(viewer, id);
   //   }
 */
+
+/** The buyer closes a released order: no more payment requests can be raised against it. */
+export async function closeOrder(viewer: Viewer, id: string): Promise<OrderDetail> {
+  const { order, party } = await loadParty(viewer, id);
+  if (party !== "BUYER") throw new OrderError("Only the buyer can close this work order", "FORBIDDEN");
+  if (order.status !== "RELEASED" && order.status !== "ACTIVE")
+    throw new OrderError("Only a released work order can be closed", "INVALID");
+  const waiting = await prisma.settlementRequest.count({ where: { work_order_id: id, status: "SUBMITTED" } });
+  if (waiting > 0)
+    throw new OrderError(`Decide the ${waiting} payment request${waiting === 1 ? "" : "s"} waiting on you first`, "INVALID");
+  await prisma.workOrder.updateMany({ where: { id, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
+  return getOrderDetail(viewer, id);
+}
+
+/** Closes an order once the buyer has paid everything it can be billed for (cap, or value when uncapped). */
+export async function closeIfFullyPaid(orderId: string): Promise<boolean> {
+  const o = await prisma.workOrder.findUnique({ where: { id: orderId }, include: { lines: true } });
+  if (!o || (o.status !== "RELEASED" && o.status !== "ACTIVE")) return false;
+  const value = o.lines.reduce((n, l) => n + (l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0))), 0);
+  const cap = o.not_to_exceed_cents ?? value;
+  const requests = await prisma.settlementRequest.findMany({ where: { work_order_id: orderId }, select: { id: true, status: true } });
+  if (requests.some((r) => r.status === "SUBMITTED" || r.status === "APPROVED")) return false;
+  const paid = await prisma.paymentLine.aggregate({ where: { settlement_request_id: { in: requests.map((r) => r.id) } }, _sum: { amount_cents: true } });
+  if ((paid._sum.amount_cents ?? 0) < cap || cap <= 0) return false;
+  const done = await prisma.workOrder.updateMany({ where: { id: orderId, status: { in: ["RELEASED", "ACTIVE"] } }, data: { status: "CLOSED" } });
+  return done.count === 1;
+}

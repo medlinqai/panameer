@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { assertAllocation, feeSplit, paymentStatusFor, SpineError } from "@/lib/transaction-spine";
 import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
+import { closeIfFullyPaid } from "@/lib/orders";
 
 // R1 money, admin side: buyers pay Panameer offline; admin records it here and allocates it to payment requests.
 export class MoneyError extends Error {
@@ -145,6 +146,8 @@ export async function recordPayment(input: RecordPaymentInput): Promise<{ id: st
     }
     return p;
   });
+  const orders = await prisma.settlementRequest.findMany({ where: { id: { in: paid } }, select: { work_order_id: true } });
+  for (const id of new Set(orders.map((o) => o.work_order_id))) await closeIfFullyPaid(id);
   return { id: created.id, paymentNumber, paid };
 }
 
