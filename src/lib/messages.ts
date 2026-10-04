@@ -93,24 +93,7 @@ export async function sendMessage(viewer: Viewer, toUserId: string, body: string
     select: { id: true, created_at: true },
   });
 
-  /*
-    ⚠⚠ IN-APP ONLY, AND NO EMAIL CHANNEL IS DECLARED HERE.
-
-    `notify()` is the ONE write path and it derives channels from the category's
-    own preferences — this call adds none. ⚠ REPORTED RATHER THAN SILENTLY
-    CHANGED: the shipped `message.received` CATEGORY defaults to `email: true`,
-    so `notify` will stamp `suppressed_reason: "email_not_configured"` on the
-    row while still delivering in-app. That is already honest — the delivery
-    layer records every channel that could not fire — and re-pointing a shipped
-    category default is a decision nobody has made.
-
-    ⚠ IT NEVER THROWS INTO THIS PATH. `notify` catches its own failures by
-    contract: a notification is a side effect of the message, never a condition
-    of it. A failed notification must not lose somebody's message.
-
-    ⚠ NO `dedupeKey`. Two messages from the same person are two events; deduping
-    them would silently swallow the second.
-  */
+  // In-app always; email per the Messages category (on by default), batched in notifications.ts (R-E018).
   const recipient = await prisma.person.findFirst({
     where: { user_id: toUserId },
     select: { id: true },
