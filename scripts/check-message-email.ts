@@ -42,6 +42,15 @@ const TAG = `e2e-msgmail-${Date.now()}`;
       select: { email_sent_at: true, suppressed_reason: true },
     });
     check("6 — the next two are held inside the window", rest.length === 2 && rest.every((r) => r.email_sent_at == null && r.suppressed_reason === "email_batched"), JSON.stringify(rest));
+
+    // Run 13: any other action event bursts are held too — one email per person per event per 15 min.
+    await notify({ event: "work.order_offered", personId: b.personId, entityType: "order", entityId: null, vars: { orderId: "x" } });
+    const o1 = await prisma.notification.findFirst({ where: { person_id: b.personId, event_key: "work.order_offered" }, select: { id: true } });
+    await prisma.notification.update({ where: { id: o1!.id }, data: { email_sent_at: new Date(), suppressed_reason: null } });
+    await notify({ event: "work.order_offered", personId: b.personId, entityType: "order", entityId: null, vars: { orderId: "y" } });
+    const o2 = await prisma.notification.findFirst({ where: { person_id: b.personId, event_key: "work.order_offered", id: { not: o1!.id } }, select: { email_sent_at: true, suppressed_reason: true } });
+    check("7 — a second action email of the same kind inside 15 minutes is held", o2?.email_sent_at == null && o2?.suppressed_reason === "email_batched", JSON.stringify(o2));
+    check("8 — work.order_offered is on the email allowlist", NOTIFICATION_EMAIL_EVENTS.includes("work.order_offered"));
   } finally {
     await prisma.notification.deleteMany({ where: { person_id: { in: [a.personId, b.personId] } } });
     await prisma.message.deleteMany({ where: { from_user_id: a.userId } });

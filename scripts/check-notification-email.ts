@@ -140,6 +140,15 @@ const hrefOf = (k: (typeof NOTIFICATION_EMAIL_EVENTS)[number]) =>
   (NOTIFICATION_EVENTS[k] as { href?: (v: never) => string } | undefined)?.href;
 const gateFor = (path: string) =>
   gated.find((g) => path === g.prefix || path.startsWith(`${g.prefix}/`));
+// Events that only ever go to a member holding this capability, so a gated link still opens for them.
+const RECIPIENT_HOLDS: Record<string, string> = {
+  "profile.details_needed": "canProvideServices",
+  "work.proposal_received": "canHireTalent",
+  "work.invited_to_propose": "canProvideServices",
+  "work.interview_requested": "canProvideServices",
+  "work.test_requested": "canProvideServices",
+  "shop.offer_received": "canProvideServices",
+};
 let hrefChecked = 0;
 for (const key of NOTIFICATION_EMAIL_EVENTS) {
   const spec = NOTIFICATION_EVENTS[key] as object | undefined;
@@ -156,7 +165,7 @@ for (const key of NOTIFICATION_EMAIL_EVENTS) {
   const hit = gateFor(path);
   check(
     `6 — "${key}" links to a page its recipient can open`,
-    !hit,
+    !hit || RECIPIENT_HOLDS[key] === hit.requires,
     hit ? `${path} requires ${hit.requires}` : ""
   );
   hrefChecked += 1;
