@@ -155,6 +155,15 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
   });
 
   const pillars = await prisma.pillar.findMany({
+    /*
+      A DOMAIN HIDDEN FROM MEMBERS IS NOT OFFERED (`P2-A1.5-E817`). A new domain
+      starts hidden so adding one in admin cannot quietly change registration or
+      search; switching it on is a deliberate second click.
+      This is an OFFER-side read, so the filter belongs here — the same rule
+      `E517` settled: filter what is OFFERED, never what is HELD. A profile that
+      already claims a skill in a hidden domain keeps it.
+    */
+    where: { visible_to_members: true },
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true },
   });

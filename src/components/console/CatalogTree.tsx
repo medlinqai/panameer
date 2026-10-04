@@ -59,6 +59,12 @@ export type CatalogNode = {
    */
   sub?: string;
   /**
+   * AN ACTION ON THE HEADER ROW ITSELF (`P2-A1.5-E817`). Scott: "there should be
+   * an add button at the domain and skill for sure" — visible WITHOUT expanding,
+   * which is why it hangs off the node rather than living inside the children.
+   */
+  action?: { label: string; kind: "domain.add" | "skill.add"; roleTypeId?: string; pillarId?: string };
+  /**
    * ⚠ `E481` — a RETIRED row still renders in the ADMIN tree, MARKED, so an
    * admin can bring it back. It is filtered out of every provider-facing picker
    * by `lib/catalog.ts`'s ACTIVE default, not by hiding it here.
@@ -281,6 +287,7 @@ function Group({
           </span>
         )}
         {node.meta && <span className="shrink-0 text-[12.5px] text-ink-2">{node.meta}</span>}
+        {node.action && <CatalogAddButton action={node.action} />}
         {node.edit && (
           <button
             type="button"
@@ -388,5 +395,110 @@ export function CatalogEditBar({ sticky = false }: { sticky?: boolean }) {
         </button>
       </span>
     </div>
+  );
+}
+
+/**
+ * + ADD DOMAIN / + ADD SKILL, on the header row (`P2-A1.5-E817`).
+ *
+ * Scott, 2026-10-03: "there is no add." The loose "Add a skill…" bar did not ask
+ * which role or domain a skill belonged to, so a new skill landed unattached —
+ * which is where the orphans in the Unassigned group came from. This button
+ * knows both, because it sits on the header that names them.
+ *
+ * Roles stay locked: there is no + Add role here, and adding one is a brief.
+ */
+function CatalogAddButton({
+  action,
+}: {
+  action: NonNullable<CatalogNode["action"]>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const save = async () => {
+    const clean = name.trim();
+    if (!clean) return;
+    setBusy(true);
+    setNote(null);
+    const res = await fetch("/api/admin/catalog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        action.kind === "domain.add"
+          ? { action: "domain.add", name: clean, roleTypeId: action.roleTypeId }
+          : { action: "skill.add", name: clean, roleTypeId: action.roleTypeId, pillarId: action.pillarId },
+      ),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
+    setBusy(false);
+    if (json.ok) {
+      setName("");
+      setOpen(false);
+      setNote(null);
+      /* A full reload rather than a refetch: the tree is built on the server
+         and the new row has to arrive with its counts already right. */
+      window.location.reload();
+    } else {
+      setNote(json.error ?? "That didn't save.");
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        /* ≥44px, square, ink-bordered — the brand button, and the size the
+           header row needs to stay tappable. */
+        className="ml-2 inline-flex min-h-11 shrink-0 items-center border border-ink bg-surface px-2.5 text-[12px] font-bold text-ink transition-colors hover:bg-ink/5"
+        onClick={(e) => {
+          /* The header row is a toggle; adding must not also collapse it. */
+          e.stopPropagation();
+          e.preventDefault();
+          setOpen(true);
+        }}
+      >
+        {action.label}
+      </button>
+    );
+  }
+
+  return (
+    <span
+      className="ml-2 inline-flex shrink-0 items-center gap-1.5"
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+    >
+      <input
+        autoFocus
+        value={name}
+        disabled={busy}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void save();
+          if (e.key === "Escape") {
+            setOpen(false);
+            setName("");
+            setNote(null);
+          }
+        }}
+        placeholder={action.kind === "domain.add" ? "New domain" : "New skill"}
+        aria-label={action.label}
+        className="min-h-11 w-44 border border-line bg-surface px-2 text-[13px]"
+      />
+      <button
+        type="button"
+        disabled={busy || !name.trim()}
+        onClick={() => void save()}
+        className="inline-flex min-h-11 items-center bg-ink px-2.5 text-[12px] font-bold text-surface disabled:opacity-40"
+      >
+        Save
+      </button>
+      {note && <span className="text-[12px] font-semibold text-magenta">{note}</span>}
+    </span>
   );
 }
