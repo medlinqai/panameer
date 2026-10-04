@@ -688,7 +688,7 @@ export function EmployersStep({
                 className={
                   "rounded-brand border p-4 transition-shadow hover:shadow-brand " +
                   (bulk.active && bulk.picked.has(e.id)
-                    ? "border-magenta bg-magenta/[0.04]"
+                    ? "border-ink bg-surface"
                     : "border-line")
                 }
               >
@@ -706,7 +706,7 @@ export function EmployersStep({
                     type="button"
                     onClick={() => openEditEmployer(e)}
                     aria-label={`Edit ${employerDisplayName(e.name)}`}
-                    className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
+                    className="grid h-9 w-9 place-items-center border border-ink text-ink transition-colors hover:bg-surface-hover"
                   >
                     ✏️
                   </button>
@@ -834,7 +834,7 @@ export function EmployersStep({
                       }
                     }}
                     aria-label={`Delete ${employerDisplayName(e.name)}`}
-                    className="grid h-9 w-9 place-items-center rounded-full border-[1.5px] border-magenta text-magenta transition-colors hover:bg-magenta hover:text-white"
+                    className="grid h-9 w-9 place-items-center border border-ink text-ink transition-colors hover:bg-surface-hover"
                   >
                     🗑
                   </button>
@@ -908,7 +908,7 @@ export function EmployersStep({
                           (`E373`) — and a monogram of it would put `I` on a tile
                           as if the person had typed it. ⚠⚠ No name, no letter.
                         */
-                        className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-ink"
+                        className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-ink/5 text-ink"
                       >
                         <span className="text-[14px] font-bold tracking-[0.02em]">
                           {projectMonogram(e.name)}
@@ -1369,7 +1369,7 @@ export function EmployersStep({
                   key={v}
                   className={
                     "flex cursor-pointer items-start gap-3 rounded-[10px] border p-3 " +
-                    (reclassifyAs === v ? "border-magenta bg-magenta/[0.04]" : "border-line")
+                    (reclassifyAs === v ? "border-ink bg-surface" : "border-line")
                   }
                 >
                   <input

@@ -78,7 +78,7 @@ function PersonIcon() {
   return (
     <span
       aria-hidden
-      className="mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-full bg-magenta/10 text-magenta"
+      className="mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-full bg-ink/5 text-ink"
     >
       <svg
         viewBox="0 0 24 24"

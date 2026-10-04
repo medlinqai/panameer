@@ -118,7 +118,7 @@ export function ArtifactsModal({
       className={
         "rounded-full px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
         (mode === m
-          ? "bg-magenta text-white"
+          ? "bg-ink text-surface"
           : "border border-line text-ink-2 hover:border-magenta hover:text-magenta")
       }
     >

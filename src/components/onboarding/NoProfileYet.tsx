@@ -42,7 +42,7 @@ export function NoProfileYet({
         <div className="mt-6 flex flex-col items-center gap-3">
           <Link
             href={companyHref}
-            className="rounded-[12px] bg-magenta px-7 py-3 font-display text-[15px] font-bold text-white"
+            className="bg-ink px-7 py-3 text-[15px] font-semibold text-surface hover:bg-ink-hover"
           >
             Set up your company →
           </Link>

@@ -22,10 +22,10 @@ export function OptionCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "w-full rounded-brand border-2 p-5 text-left transition-all " +
+        "w-full border p-5 text-left transition-colors " +
         (selected
-          ? "border-magenta bg-magenta/[0.04] shadow-brand"
-          : "border-line hover:border-[#d9d4e2]") +
+          ? "border-ink bg-surface"
+          : "border-line hover:bg-surface-hover") +
         " " +
         className
       }
@@ -35,7 +35,7 @@ export function OptionCard({
           aria-hidden
           className={
             "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 text-[11px] font-black text-white " +
-            (selected ? "border-magenta bg-magenta" : "border-line bg-transparent")
+            (selected ? "border-ink bg-ink text-surface" : "border-line bg-transparent")
           }
         >
           {selected ? "✓" : ""}
@@ -69,10 +69,10 @@ export function Chip({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[14.5px] font-semibold transition-colors " +
+        "inline-flex items-center gap-2 border px-4 py-2 text-[14.5px] font-semibold transition-colors " +
         (selected
-          ? "border-magenta bg-magenta text-white"
-          : "border-line text-ink-2 hover:border-[#d9d4e2] hover:text-ink")
+          ? "border-ink bg-ink text-surface"
+          : "border-line text-ink-2 hover:border-ink hover:text-ink")
       }
     >
       {children}

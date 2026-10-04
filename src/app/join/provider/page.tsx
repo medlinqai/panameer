@@ -2433,10 +2433,10 @@ setScreen(target);
             once there is data to review.
           */}
           {!hasProfileData && (
-          <section className="mb-4 rounded-brand border-2 border-magenta bg-magenta/[0.04] p-6 shadow-brand">
+          <section className="mb-4 border-t-2 border-ink pb-2 pt-6">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-[17px]">Upload Your Resume</h2>
-              <span className="rounded-full bg-magenta px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+              <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">
                 Fastest
               </span>
             </div>
@@ -4489,7 +4489,7 @@ function ReviewChecklist({
           the app talking to you"; red is reserved for genuinely destructive
           states — deleting a record, an action that loses data. */}
       {errors.length > 0 && (
-        <div className="rounded-brand border border-magenta/30 bg-magenta/[0.05] p-4">
+        <div className="border-l-2 border-ink py-2 pl-4">
           <p className="text-[15px] font-bold text-magenta-dark">
             {errors.length === 1
               ? "Just 1 thing left before you can publish."
@@ -4572,14 +4572,14 @@ function MethodCard({
       type="button"
       onClick={onClick}
       className={
-        "w-full rounded-brand border-2 p-5 text-left transition-all hover:border-magenta hover:shadow-brand " +
-        (primary ? "border-magenta bg-magenta/[0.04] shadow-brand" : "border-line")
+        "w-full border p-5 text-left transition-colors hover:bg-surface-hover " +
+        (primary ? "border-ink" : "border-line")
       }
     >
       <span className="flex items-center gap-2">
         <span className="font-bold">{title}</span>
         {badge && (
-          <span className="rounded-full bg-magenta px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+          <span className="border border-ink px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-ink">
             {badge}
           </span>
         )}

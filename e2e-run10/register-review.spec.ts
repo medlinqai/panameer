@@ -156,14 +156,20 @@ test("usage honeycomb: active cells are dark ink", async ({ page }) => {
     }
   }
   // A fresh account has no activity, so mark one cell active to read the active paint.
-  const active = await cells.first().evaluate((e) => {
-    e.setAttribute("data-level", "low");
-    return {
-      bg: getComputedStyle(e, "::before").backgroundColor,
-      fig: getComputedStyle(e.querySelector(".pm-hive-figure")!).color,
-    };
-  });
-  expect(active).toEqual({ bg: "rgb(39, 35, 52)", fig: "rgb(255, 255, 255)" });
+  // The hive re-renders on its rebuild timer, so mark and read in one pass, retrying.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const e = document.querySelector(".pm-hive-cell[data-level]");
+        if (!e) return null;
+        e.setAttribute("data-level", "low");
+        return {
+          bg: getComputedStyle(e, "::before").backgroundColor,
+          fig: getComputedStyle(e.querySelector(".pm-hive-figure")!).color,
+        };
+      }),
+    )
+    .toEqual({ bg: "rgb(39, 35, 52)", fig: "rgb(255, 255, 255)" });
   await page.waitForTimeout(2500);
   await page.screenshot({ path: "e2e-run10/.artifacts/usage-hive-1280.png" });
 });

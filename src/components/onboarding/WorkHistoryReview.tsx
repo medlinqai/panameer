@@ -98,7 +98,7 @@ export function WorkHistoryReview({
           report on the provider's own CV; "we couldn't tell on 3 jobs" is the
           truth and puts the uncertainty where it belongs — on the reader.
         */
-        <p className="rounded-[10px] bg-magenta/8 px-4 py-2.5 text-[14px] text-ink">
+        <p className="border-l-2 border-ink px-4 py-2.5 text-[14px] text-ink">
           We couldn&apos;t tell which system{" "}
           <b>{unanchored === 1 ? "one job" : `${unanchored} jobs`}</b> ran on.
           They&apos;re marked below.
@@ -144,7 +144,7 @@ export function WorkHistoryReview({
                 className={
                   "rounded-full border px-3 py-1.5 text-[13.5px] font-bold " +
                   (job.suite
-                    ? "border-magenta/30 bg-magenta/10 text-ink"
+                    ? "border-ink bg-ink/5 text-ink"
                     : "border-amber-400 bg-amber-50 text-amber-900")
                 }
               >
