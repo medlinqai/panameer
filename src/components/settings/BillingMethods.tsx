@@ -4,28 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, Input, Select, postSetting } from "@/components/settings/controls";
 
-/**
- * Billing methods (J2.4 WS-H / E016) — how the provider pays Panameer.
- *
- * CAPTURE, NOT CHARGING. The payment processor is out of scope, so what this
- * stores is a label and the last four digits: enough for a person to recognise
- * which card they meant, and nothing that would need a PCI-compliant vault. The
- * form says so rather than presenting a card field that looks like a checkout.
- *
- * NO CONNECTS. This is where "buy Connects" lived on the surface being
- * replaced; it does not return as a tile, a balance or a bullet.
- */
 type Method = {
   id: string;
   kind: "CARD" | "PAYPAL" | "BANK_DEBIT";
   label: string;
   last4: string | null;
-  /* ⚠ `expMonth` / `expYear` REMOVED FROM THE TYPE (`P2-A2-E677`) — the page no
-     longer selects them and nothing can write them (`E672`). Keeping optional
-     fields for a value that cannot exist is how the display quietly returns.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   expMonth: number | null;
-     //   expYear: number | null; */
   isDefault: boolean;
 };
 
@@ -69,23 +52,7 @@ export function BillingMethods({ methods }: { methods: Method[] }) {
     <div className="space-y-4">
       <Card
         title="Billing Methods"
-        description=/*
-          ── ⚠⚠⚠ IT NAMES THE MECHANISM, NOT THE MEMBER (`P2-A2-E609`) ──────────
-
-          ⚠ SCOTT, 2026-09-23: *"never 'you have no billing set up' when the
-          truth is billing isn't switched on yet."*
-          ⚠⚠ MEASURED: **nothing creates a `Payment` and `PAID` is never
-          written** — there is no charging mechanism at all, not merely no plan
-          to move to. The old line said *"nothing is charged until you move to a
-          paid plan"*, which is true today and quietly promises that moving to
-          one would charge. It cannot.
-          ⚠ A stored method is kept, because storing one is a real thing this
-          page can do and removing it would strand the methods already saved —
-          but the copy no longer implies it can be charged.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   "What Panameer charges for your membership. Provider Basic is
-          //    free, so nothing is charged until you move to a paid plan."
-        */
+        description=
         "Provider Basic is free. Panameer cannot charge a card yet — there is no payment mechanism switched on — so anything saved here is stored for later and nothing is billed."
       >
         {methods.length === 0 ? (

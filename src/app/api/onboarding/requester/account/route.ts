@@ -14,26 +14,9 @@ const schema = z.object({
   tosAccepted: z.literal(true, {
     message: "You must accept the Terms of Service to continue",
   }),
-  /*
-    ── ⚠ WHICH JOB REGISTERED (`P1-A1.2-E421`) ────────────────────────────────
-
-    ⚠ OPTIONAL AND DEFAULTED, so the requester path posts exactly the body it
-    always posted and behaves exactly as it always did. ⚠ A `USER_CLASS`/
-    `USER_JOB` enum does not exist yet (`brief_user_class_job_model`); until it
-    does, the JOB is carried the way `requester-onboarding.ts:107` already
-    describes — by WHICH PROFILE THE PERSON OWNS.
-  */
   job: z.enum(["requester", "buyer"]).optional().default("requester"),
 });
 
-/**
- * POST /api/onboarding/requester/account — "Create My Account" on the requester
- * path. Creates the buyer-side backbone + a draft RequesterProfile in one
- * transaction, then sends the shared verification email (buyer audience copy).
- *
- * A send failure must not orphan the account — the verify gate has a Resend —
- * so the mail is best-effort and the request still succeeds.
- */
 export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

@@ -4,17 +4,6 @@ import { AREA_META, rowsFor, type MetricDef } from "@/lib/usage-metrics";
 import type { Figures } from "@/lib/usage-figures";
 import type { Figure } from "@/lib/figure";
 
-/**
- * USAGE v2 — ONE ROW PER AREA, FOUR GAUGES EACH (`P2-A1.1-E815`).
- *
- * Scott's sheet, in its own order: Profile · Learn · Connect · Work · Shop ·
- * Pay. Each row is a magenta eyebrow and a "Go to …" link, then its four gauges
- * in open columns with thin dividers — no boxes.
- *
- * It uses the ONE `Gauge` component (`E585`): twenty-four hand-drawn dials would
- * drift in their arc maths and two gauges showing the same fraction would point
- * at different angles.
- */
 export function UsageRows({
   figures,
   isProvider,
@@ -40,8 +29,7 @@ export function UsageRows({
               </Link>
             </div>
 
-            {/* Four across, two at tablet, one on a phone. Thin dividers, no
-                boxes — the open-column style the page already uses. */}
+            {}
             <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-line">
               {metrics.map((m) => (
                 <Cell key={`${area}-${m.label}`} metric={m} figures={figures} />

@@ -1,51 +1,4 @@
-/**
- * PANAMEER VALIDATES THE ENTITY (`P1-J1.1-E282`).
- *
- * **SCOTT, 2026-08-31:** *"Every state has a Secretary of State website. They
- * list their corporations under a corporate search."* The user gives a company
- * name and the state it was filed in; Panameer looks up the rest.
- *
- * ── ⚠⚠ WHAT THE WS-1 SPIKE PROVED, AND WHAT IT DISPROVED ─────────────────────
- *
- * Measured 2026-09-02 with real network calls, not recalled:
- *
- *   TEXAS      ✅ tier (a) — data.texas.gov Socrata `9cir-efmm`, ~150-400ms, $0
- *   COLORADO   ✅ tier (a) — data.colorado.gov Socrata `4ykn-tg5h`, ~330-430ms, $0
- *   NEW YORK   ✅ tier (a) — data.ny.gov Socrata `n9v6-gdp6`, ~300ms, $0
- *   DELAWARE   ❌ NOT REACHABLE. No open dataset exists on data.delaware.gov, and
- *              `icis.corp.delaware.gov` needs a POST and possibly a CAPTCHA — a
- *              search-capable model call (tier b) spent 26s and $0.40 and came
- *              back with nothing, correctly refusing to answer from memory.
- *
- * ⚠⚠ SO DELAWARE — WHERE A LARGE SHARE OF US COMPANIES ARE ACTUALLY FILED —
- * RETURNS `unavailable`, AND THAT IS THE HONEST ANSWER. It is never guessed.
- * The brief predicted this shape exactly: *"a per-state adapter behind ONE
- * interface, with the API states built first and the gated ones left explicitly
- * unsupported rather than faked."*
- *
- * ── ⚠⚠ THERE IS NO EIN HERE, AND THERE NEVER WILL BE ─────────────────────────
- *
- * A state corporate register does not publish EINs — the EIN is federal. ⚠ AND
- * TEXAS'S `taxpayer_number` IS AN ELEVEN-DIGIT COMPTROLLER NUMBER, NOT THE
- * NINE-DIGIT FEDERAL EIN (`32106582219`, measured). Texas's own documentation
- * says the state number is *"based on"* the EIN but does not publish the
- * construction, so ONE CANNOT BE DERIVED FROM THE OTHER. ⚠ IT IS DELIBERATELY
- * NOT MAPPED INTO THIS RESULT AT ALL, so it cannot reach `Company.tin`, which is
- * the field the hire gate reads. `Company.tin` stays typed (`E273`).
- *
- * ── ⚠ EVERY FIELD CARRIES THE URL IT CAME FROM ───────────────────────────────
- *
- * Not one URL per lookup — one per field, because a caller that shows a value has
- * to be able to say where it came from. That is also what stops a future
- * "improvement" mixing a sourced field with an unsourced one.
- *
- * ── ⚠ THIS MODULE NEVER WRITES ───────────────────────────────────────────────
- *
- * `defineCompany()` remains the only writer. Keeping the read and the write apart
- * is what lets the user correct a bad lookup before anything is persisted.
- */
 
-/** ⚠ Reusing `ai-provider.ts`'s failure shape — never throws to the caller. */
 export type ValidationOutcome =
   | "validated"
   | "not_found"
@@ -54,19 +7,12 @@ export type ValidationOutcome =
 
 export type SourcedField = {
   value: string;
-  /** ⚠ THE EXACT URL THIS VALUE CAME FROM. */
   sourceUrl: string;
 };
 
 export type EntityMatch = {
   legalName: SourcedField;
   entityNumber?: SourcedField;
-  /**
-   * ⚠ ABSENT WHEN THE REGISTER DOES NOT PUBLISH ONE. New York's dataset is
-   * "Active Corporations" — presence implies active but there is NO status
-   * column, so this stays undefined for NY and the UI must not claim good
-   * standing it did not read.
-   */
   status?: SourcedField;
   formationDate?: SourcedField;
   entityType?: SourcedField;
@@ -74,7 +20,6 @@ export type EntityMatch = {
   registeredAgent?: SourcedField;
   addressLine1?: SourcedField;
   city?: SourcedField;
-  /** ⚠ The register's own two-letter code, as published. */
   stateCode?: SourcedField;
   postalCode?: SourcedField;
 };
@@ -85,7 +30,6 @@ export type ValidationResult =
       status: ValidationOutcome;
       /** The register's own name, for the UI to attribute to. */
       registerName: string;
-      /** ⚠ MORE THAN ONE IS NORMAL and the UI has to handle it. */
       matches: EntityMatch[];
       /** How many the register returned before this was capped. */
       totalMatches: number;
@@ -98,40 +42,14 @@ export type ValidationResult =
       message: string;
     };
 
-/* ────────────────────────────────────────────────────────────────────────────
-   THE ADAPTERS — one per state, behind one interface
-   ──────────────────────────────────────────────────────────────────────────── */
-
-/**
- * ── ⚠⚠ AN ADAPTER IS NOT "A STATE" UNTIL IT OWNS ITS OWN SEARCH (`E387` WS-1) ──
- *
- * ⚠ SUPERSEDED, QUOTED NOT DELETED — this type used to be Socrata-shaped, with
- * `host` / `dataset` / `nameColumn` read directly by `validateEntity`, which
- * built ONE hardcoded Socrata URL. **So "adapter" meant "a Socrata dataset", and
- * a register that publishes any other way could not be expressed in the type at
- * all.** Adding rows would not have added states.
- *
- * ⚠ NOW THE ADAPTER OWNS `search` — *"given a name and a signal, return rows and
- * the URL they came from."* `socrataAdapter()` below is ONE implementation of
- * that, and it is the only one today. A future register that answers a different
- * way supplies its own `search` and nothing in `validateEntity` changes.
- *
- * ⚠⚠ ZERO BEHAVIOUR CHANGE FOR THE THREE THAT ALREADY WORKED. `host`, `dataset`
- * and `nameColumn` are KEPT on the adapter — not because `validateEntity` still
- * reads them (it does not), but so `check:trust-claims` can rebuild the exact URL
- * each state produced before this refactor and assert it byte-for-byte.
- */
 type SearchResult = { rows: Record<string, string>[]; sourceUrl: string; status: number };
 
 type Adapter = {
   registerName: string;
-  /** ⚠ Socrata coordinates. Retained for the URL-identity assertion; see above. */
   host: string;
   dataset: string;
   nameColumn: string;
-  /** ⚠⚠ THE SEARCH RESPONSIBILITY. The adapter builds its own request. */
   search: ((needle: string, signal: AbortSignal) => Promise<SearchResult>) & {
-    /** ⚠ Present on Socrata adapters so `check:trust-claims` can prove the URL. */
     url?: (needle: string) => string;
   };
   /** Does this register publish a status/good-standing field at all? */
@@ -141,14 +59,6 @@ type Adapter = {
   goodStanding?: (row: Record<string, string>) => boolean;
 };
 
-/**
- * The Socrata implementation of `search` — ⚠ THE URL IS BYTE-IDENTICAL to the one
- * `validateEntity` used to build inline. `check:trust-claims` asserts that for
- * every Socrata adapter, so the refactor cannot have moved a query.
- *
- * ⚠ SoQL string literals are single-quoted; a quote in the name would break the
- * predicate, so the caller doubles it the way SQL requires before calling here.
- */
 export function socrataAdapter(cfg: { host: string; dataset: string; nameColumn: string }) {
   const search = async (needle: string, signal: AbortSignal): Promise<SearchResult> => {
     const sourceUrl = socrataUrl(cfg, needle);
@@ -156,24 +66,10 @@ export function socrataAdapter(cfg: { host: string; dataset: string; nameColumn:
     if (!r.ok) return { rows: [], sourceUrl, status: r.status };
     return { rows: (await r.json()) as Record<string, string>[], sourceUrl, status: r.status };
   };
-  /*
-    ⚠⚠ THE URL THIS SEARCH WILL ACTUALLY BUILD, EXPOSED SO IT CAN BE ASSERTED
-    WITHOUT A NETWORK CALL.
-
-    ⚠ FOUND BY MUTATION-TESTING THE ASSERTION, NOT BY REVIEW: the first version of
-    `E387/1` rebuilt the URL from the adapter's own `host`/`dataset`/`nameColumn`
-    and compared it to a formula built from THE SAME FIELDS — so it agreed with
-    itself and could not see a divergence. Editing the dataset id INSIDE this call
-    while leaving `dataset:` on the adapter unchanged passed the gate.
-    **That is precisely the drift that matters: an adapter that says one dataset
-    and queries another.** Now the assertion compares the declared coordinates
-    against what the closure actually captured.
-  */
   search.url = (needle: string) => socrataUrl(cfg, needle);
   return search;
 }
 
-/** ⚠ THE URL BUILDER, EXPORTED SO THE ASSERTION CAN CALL IT. */
 export function socrataUrl(
   cfg: { host: string; dataset: string; nameColumn: string },
   needle: string

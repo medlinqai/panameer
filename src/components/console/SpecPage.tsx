@@ -2,9 +2,6 @@ import { TileRow, Listing, VolumeFooter, StubEmpty } from "@/components/console/
 import { ADMIN_PAGES } from "@/lib/admin-pages";
 import { linkVolume } from "@/lib/admin-reports";
 
-/**
- * Renders one admin page from its spec (WS2). Fourteen slides, one renderer.
- */
 export function SpecPage({ slug }: { slug: keyof typeof ADMIN_PAGES }) {
   const s = ADMIN_PAGES[slug];
   return (

@@ -1,32 +1,6 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   deleting the path would take the forum and every question in it with it
-*/
 import { prisma } from "@/lib/prisma";
-/* ⚠ `P1-J3-E383` — one idempotent board helper, shared with the seed and the
-   backfill so the three cannot drift. */
 import { ensurePathBoard } from "@/lib/forums";
 import { PLAYABLE_STATUSES, isPlayable, urlMissing as urlMissingRow } from "@/lib/learn";
-
-/**
- * Learn authoring queries + mutations (brief_learn_admin_authoring).
- *
- * ADMIN-ONLY by construction: nothing here takes a Viewer, because every caller
- * is behind `guardApi("canAdminister")` and there is no per-row ownership to
- * scope to — the Learn catalog belongs to the platform, not to a tenant. That
- * makes the guard the ONLY thing standing between these writes and the public
- * curriculum, which is why it lives at the route boundary and every route has it.
- *
- * Separate from `learn.ts` on purpose. That file is the public read path and
- * filters to `status: PUBLISHED` everywhere; this one must see DRAFT rows or the
- * admin could never work on anything unpublished. Keeping them apart means the
- * public filter can never be accidentally dropped by an admin-driven change.
- */
 
 export class LearnAdminError extends Error {
   constructor(
@@ -38,11 +12,6 @@ export class LearnAdminError extends Error {
   }
 }
 
-/**
- * Title → URL slug. Deliberately conservative: strip accents, keep [a-z0-9-],
- * collapse runs. The admin can override it, so this only has to be a good
- * starting point, not a perfect one.
- */
 export function slugify(input: string): string {
   return input
     .normalize("NFKD")
@@ -53,12 +22,6 @@ export function slugify(input: string): string {
     .slice(0, 80);
 }
 
-/**
- * A slug that isn't taken yet, by appending -2, -3, … as needed.
- *
- * `exceptId` lets an edit keep its own slug: without it, saving a path without
- * changing its title would collide with itself and silently become "foo-2".
- */
 export async function uniquePathSlug(
   base: string,
   exceptId?: string
@@ -414,19 +377,6 @@ export async function deletePath(id: string) {
     );
   }
 
-  /*
-    ⚠⚠ ONE MORE COUNT, IN THE EXISTING VOICE — NOT A SECOND GUARD (`P1-J3-E383`).
-
-    The two checks above already stop almost everything: a path anyone enrolled
-    in cannot be deleted, and posting requires enrolment. ⚠ BUT AN INSTRUCTOR CAN
-    POST WITHOUT ENROLLING — `canAccessPathForum` grants access by enrolment OR
-    teaching — so a path with an instructor's welcome thread and ZERO enrolments
-    passes both checks, and the board's `onDelete: Cascade` takes that thread
-    with it.
-
-    ⚠ THE FK WAS NOT SWITCHED TO `Restrict`, and the two messages above were not
-    touched. A guard can say WHY; a database error cannot.
-  */
   const threads = path.forumBoards.reduce((n, b) => n + b._count.threads, 0);
   if (threads > 0) {
     throw new LearnAdminError(
@@ -443,15 +393,6 @@ export async function deletePath(id: string) {
 // WS2 — the nested structure (Course → Section → Lesson)
 // ---------------------------------------------------------------------------
 
-/**
- * One path with its whole outline.
- *
- * Loaded in ONE query rather than lazily per branch. The largest path in the
- * catalog is 105 lessons across 6 courses — small enough that a single read is
- * cheaper than the round-trips, and it means expanding a course is instant
- * rather than a spinner. The COLLAPSING is a rendering decision (see the
- * editor), not a loading one.
- */
 export async function getPathTree(id: string) {
   const path = await prisma.learningPath.findUnique({
     where: { id },

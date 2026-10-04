@@ -1,10 +1,3 @@
-/**
- * ── ⚠⚠⚠ `check:country` — THE COUNTRY SWITCH HOLDS (`P2-A1.1-E729` WS-C) ────────────────
- *
- * ⚠ **IT IS A UNIT GATE, NOT A BROWSER ONE**, because the rules it guards are pure functions
- * and the two that matter — W-9 vs W-8, and whether the US state picker survives — are
- * decided before any pixel is drawn.
- */
 import { regionsFor, regionLabel, COUNTRY_REGIONS } from "@/lib/countries";
 import { ALL_COUNTRIES, countryName, countryColumns, isUnitedStatesCountry, dialFor } from "@/lib/country";
 import { formFor, isUnitedStates } from "@/lib/tax";

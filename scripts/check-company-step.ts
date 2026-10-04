@@ -1,21 +1,3 @@
-/**
- * `check:company-step` — the stripped company form (`P1-A1.4-E408` WS-5).
- * `npm run check:company-step`.
- *
- * ── ⚠⚠ TWO SCANS, AND MIXING THEM UP IS THE TRAP ──────────────────────────
- *
- * §1–§3 read the **stripped** source (comments removed) and ask *what does this
- * form still render?* — a field that survives only inside a superseded comment
- * must NOT count as present.
- *
- * §4 reads the **raw** source and asks the opposite: *is the removed code still
- * there?* `E164` says comment out, never delete, and the only way to assert that
- * is to look at the text a stripping scan throws away.
- *
- * ⚠ §0 proves the strip before either is trusted.
- *
- * ⚠ NO DATABASE, NO BROWSER, NO MODEL — nothing here costs anything to run.
- */
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -25,18 +7,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   if (ok) pass += 1;
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
-/*
-  ⚠⚠ THE JSX RULE MATCHES `*​/}` EXACTLY, NOT `*​/` THEN A BRACE.
-
-  ⚠ MY FIRST VERSION USED `\*\/\s*\}` AND ATE LIVE CODE — it stopped at the
-  first `*​/` anywhere inside the block. `E408` had to neutralise the inner
-  `*​/` sequences of the code it commented out (a raw one would terminate the JSX
-  comment early and break the build), which leaves those blocks containing
-  unmatched `/​*` openers. A lazy matcher walked straight past the real
-  terminator and swallowed the Legal Company Name field and the whole submit
-  payload — the scan reported fields missing that are plainly on the screen.
-  ⚠ REQUIRING THE BRACE TO TOUCH THE STAR-SLASH pins the actual delimiter.
-*/
 const strip = (s: string) =>
   s
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ") // JSX comment blocks: `{/* … */}`
@@ -50,8 +20,6 @@ const CODE = strip(RAW);
 /* ═══ 0 · PROVE THE STRIP ═════════════════════════════════════════════════ */
 {
   check("0 — a JSX comment block is stripped", !/ghostField/.test(strip('{/* <Field label="ghostField" /> */}')));
-  /* ⚠ THE REGRESSION THAT COST ME A ROUND: a neutralised `* /` inside the block
-     must NOT end it early and leak the live field that follows. */
   check(
     "0 — ⚠ a neutralised star-slash inside a JSX comment does not end it",
     /keepMe/.test(strip('{/* dead * / more dead */}\n<Field label="keepMe" />')) &&
@@ -60,7 +28,6 @@ const CODE = strip(RAW);
   check("0 — a block comment is stripped", !/ghostField/.test(strip("/* ghostField */ real")));
   check("0 — a line comment is stripped", !/ghostField/.test(strip("// ghostField\nreal")));
   check("0 — live code survives", /realField/.test(strip('{/* ghostField */}\n<Field label="realField" />')));
-  /* ⚠ AND THE RAW SCAN MUST SEE WHAT THE STRIPPED ONE DOES NOT — §4 depends on it. */
   check("0 — the raw source still contains commented markers", /Business Type/.test(RAW));
   check("0 — and the stripped source does not", !/Business Type/.test(CODE));
 }
@@ -72,9 +39,6 @@ const CODE = strip(RAW);
   check("1 — ⚠ Country is required and present", labels.includes("Country *"), labels.join(" | "));
   check("1 — Website is present and NOT marked required", labels.includes("Website"), labels.join(" | "));
   check("1 — ABSENCE: Website carries no asterisk", !labels.some((l) => /^Website \*/.test(l)));
-  /* ⚠ THE COUNT IS PINNED. A fourth field returning is the regression this brief
-     exists to prevent; `Company Name` on the JOIN tab is the search box, so the
-     define-mode set is what is counted here. */
   const defineFields = labels.filter((l) =>
     ["Legal Company Name *", "Country *", "Website"].includes(l)
   );
@@ -88,7 +52,6 @@ const CODE = strip(RAW);
     /Optional[^"]*leave it blank/i.test(CODE),
     "Scott: most small contractors will not have a website"
   );
-  /* ⚠ AND `valid` MUST NOT DEPEND ON IT. */
   const valid = CODE.match(/const valid =[\s\S]*?;\n/)?.[0] ?? "";
   check("2 — the guard can see `valid`", valid.length > 0);
   check("2 — ⚠ website does not gate Continue", !/website/i.test(valid), valid.replace(/\s+/g, " ").slice(0, 160));
@@ -97,7 +60,6 @@ const CODE = strip(RAW);
   check("2 — the company ToS still gates Continue", /companyTos/.test(valid));
 }
 
-/* ═══ 3 · ⚠ NO US-SPECIFIC CONTROL SURVIVES — THE INTERNATIONAL FIX ══════ */
 {
   for (const [what, re] of [
     ["a business-type select", /TAX_TYPES\.map/],

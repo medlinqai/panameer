@@ -16,38 +16,16 @@ import {
   type TaskStatus,
 } from "./catalog";
 
-/**
- * ⚠⚠⚠ THE PUBLIC WORK TRACKER VIEW MODEL (`P2-ALL-E753`).
- *
- * ⚠⚠ **SCOTT'S RULE, AND IT IS THE REASON THIS MODULE EXISTS SEPARATELY:**
- * *"I do not want to give a 'how to recreate Panameer' cookbook to the
- * competition."* The public page shows **two levels only** — phases, gates
- * (titles and passed/open), the current phase's stages, journeys, milestones,
- * a published Shipped log and support counts.
- *
- * ⚠⚠⚠ **TASK TEXT, TASK IDS, GATE CRITERION TEXT, NOTES AND OWNERS NEVER APPEAR
- * IN THE RETURN VALUE.** That is enforced by the TYPES below, not by a template:
- * `PublicPhase` and `PublicStage` have no field that could carry them, so a
- * future caller cannot spread a catalog object into one by accident. ⚠ This is
- * `E738`'s masking shape — the type is the gate, the template is not.
- *
- * ⚠ **NOTHING HERE SPREADS.** Every object is built field by field. A `...task`
- * anywhere in this file would defeat the whole module.
- */
-
 export type PublicGate = {
   id: string;
   title: string;
   after: string;
-  /* ⚠⚠ A COUNT AND A VERDICT, NEVER THE CRITERIA. `answered` lets the page say
-     "3 of 5 answered" without naming one. */
   criteriaCount: number;
   answered: number;
   passed: boolean;
 };
 
 export type PublicStage = {
-  /** ⚠ The stage NAME is a heading in the method, not build detail. */
   name: string;
   status: TaskStatus | "Not Started";
   percent: number | null;
@@ -67,36 +45,20 @@ export type PublicPhase = {
 
 export type PublicJourney = {
   name: string;
-  /** ⚠⚠ The PUBLIC one-liner from mockup v5 — **never** the catalog's task text.
-   *  `""` when no copy exists, which renders nothing rather than leaking. */
   description: string;
   status: TaskStatus | "Not Started";
-  /** ⚠⚠ `null` RENDERS NO SEGMENTS, NEVER A GUESSED `design`. */
   stage: JourneyStage | null;
 };
 
-/**
- * ⚠⚠⚠ A RELEASE IS A DATE **WITH SCOPE** (`P2-ALL-E765`). That is the whole
- * difference from the milestone it replaces, and it is what makes a per-release
- * percentage possible at all.
- *
- * ⚠⚠ **`percent` IS `null` WHEN NOTHING IS ASSIGNED YET, AND THE PAGE SAYS
- * `Scope being set` — NEVER `0%`.** Scott's rule, and it is the counting rule
- * restated: a release with no tasks is not a release where nothing is done, and
- * the two must not look the same (`decisions_2026-09-23.md` §1 rule 2).
- */
 export type PublicRelease = {
   code: string | null;
   name: string;
   summary: string | null;
-  /** ⚠ `target_date`, falling back to the legacy `date` column — see the schema. */
   date: string | null;
   status: string;
-  /** ⚠ `null` = no tasks assigned yet. A measured 0 renders as 0. */
   percent: number | null;
   taskCount: number;
   doneCount: number;
-  /** ⚠ The journey NAMES in this release — segments, never task text. */
   journeys: string[];
 };
 
@@ -107,32 +69,6 @@ export type PublicShipped = {
   body: string | null;
 };
 
-/**
- * ⚠⚠ SUPPORT COUNTS — THREE ARE REAL, ONE IS A REASONED DASH.
- *
- * ⚠⚠⚠ **CORRECTED BY SCOTT, 2026-10-02. I REPORTED *"resolved this week"* AS
- * UNCOUNTABLE AND I WAS WRONG.** `SupportTicket.date_solved` exists and has a
- * writer: `support.ts`'s `updateTicket` sets it the first time a ticket reaches
- * a terminal status and CLEARS it on reopen, so the column and the status cannot
- * disagree, and the admin ticket page already renders it.
- * ⚠⚠ **THE MISTAKE WAS SEARCHING FOR THE NOUN, NOT THE BEHAVIOUR** — I grepped
- * `resolved_at`, found nothing, and stopped. That is exactly the failure
- * `decisions_2026-09-23.md` §15 names: *"an absent name is not an absent thing."*
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   "resolved this week" - status has a writer, but WHEN it was resolved does
- * //   not. updated_at moves on any write, so a re-opened or edited ticket would
- * //   land in the wrong week. UNCOUNTABLE.
- *
- * ⚠ **`medianFirstReplyHours` STAYS A DASH, and that one is still right.**
- * Nothing records a first reply — there is no column and no writer — and the
- * table holds one message in total. ⚠⚠ The reason comes from the TYPE, so the
- * dash cannot be printed without it. **A real zero and an uncountable figure
- * must not look the same.**
- *
- * ⚠ `open`, `resolved` and `resolvedThisWeek` are real counts and render as
- * numbers, including 0. ⚠⚠ **NO NEW COLUMNS WERE ADDED** (Scott's instruction):
- * the figure comes from a column that was already there and already written.
- */
 export type PublicSupport = {
   open: number;
   resolved: number;
@@ -144,8 +80,6 @@ export type PublicTracker = {
   overallPercent: number | null;
   taskCount: number;
   doneCount: number;
-  /** ⚠⚠ EVERY task whose status is `In Progress` — not the current phase's
-   *  stages. See `getPublicTracker` for the measurement that corrected it. */
   movingCount: number;
   phases: PublicPhase[];
   gates: PublicGate[];
@@ -153,32 +87,14 @@ export type PublicTracker = {
   currentPhaseStages: PublicStage[];
   journeys: PublicJourney[];
   releases: PublicRelease[];
-  /** ⚠ The release the hero's big figure is about — the first unreleased one in
-   *  `sort` order, or the last if everything has shipped. `null` if none exist. */
   currentRelease: PublicRelease | null;
   shipped: PublicShipped[];
-  /** ⚠⚠ `null` UNTIL DEFINE HAS A START DATE (Scott, 2026-10-02: hide "Day N"
-   *  rather than print a NaN or invent a date). */
   dayNumber: number | null;
   support: PublicSupport;
 };
 
-/**
- * ⚠⚠⚠ THE CODE IS NOT PRINTED TWICE (`P2-ALL-E765`).
- *
- * ⚠ The one existing release is titled **"R1 — Public beta"**, because it was
- * created before `code` was a field. Prefixing the code produced
- * **"R1 — R1 — Public beta"** on the live page — measured, not theorised.
- *
- * ⚠⚠ **FIXED IN THE RENDERER, NOT BY REWRITING THE ROW.** An admin may type a
- * title that repeats the code at any time, so stripping it once in a migration
- * would fix today and not tomorrow. ⚠ It also means nothing destroys a value a
- * person typed.
- */
 export function releaseName(code: string | null, title: string): string {
   if (!code) return title;
-  /* ⚠ The standard escape idiom. A code is admin-typed, so it can hold a regex
-     metacharacter; escaping it is what keeps `R1.0` from matching `R1x0`. */
   const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const prefix = new RegExp(`^\\s*${escaped}\\s*[—–-]\\s*`, "i");
   return title.replace(prefix, "").trim() || title;

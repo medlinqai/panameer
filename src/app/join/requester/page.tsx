@@ -13,22 +13,6 @@ import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import { Notice } from "@/components/onboarding/controls";
 import { NoProfileYet, readBlockedParams } from "@/components/onboarding/NoProfileYet";
 
-/**
- * REQUESTER onboarding — journey P1-J1.2 (brief_requester_onboarding).
- *
- * A DELTA off the provider shell, not a second wizard. Same shape end to end —
- * role select → sign up → verify email → intro → step wizard → review → a
- * "ready" state — reusing `OnboardingShell`, `SignUpForm` and `VerifyGate`
- * unchanged. Only the middle steps and the copy differ, which is the whole
- * point of the "one flow + role deltas" decision: a second wizard is a second
- * thing to keep in sync, and the provider one already drifted from its own
- * pages four times (E049 → E064 → E080 → E082).
- *
- * THIS FILE IS THE PRE-VERIFY HALF: sign up, then check-your-email. The signed-
- * in half (the five steps and the review) lives at /join/requester/start and
- * /join/requester/steps, so the wizard doesn't have to carry a sign-up form it
- * only shows once.
- */
 export default function JoinRequesterPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -41,21 +25,6 @@ export default function JoinRequesterPage() {
     blocked: null,
     from: null,
   });
-  /*
-    ── ⚠⚠ THE ONLY THING THAT DIFFERS BETWEEN THE TWO (`P1-A1.2-E421`) ────────
-
-    SCOTT: *"We get the same information just a different type of user."*
-
-    ⚠ `?job=buyer` FROM `/join`, AND NOTHING ELSE. Every screen, field, step and
-    string below is the same code for both — this value is not read by any of
-    them. It travels to `createRequesterAccount` and stops there.
-
-    ⚠ READ THE SAME WAY `blocked`/`from` ARE READ (`readBlockedParams`), off
-    `window.location` in an effect, rather than with `useSearchParams` — that
-    hook forces a Suspense boundary on this page and the file does not have one.
-    ⚠ ANYTHING BUT `"buyer"` IS A REQUESTER, so a typo, a stale bookmark or a
-    hand-edited URL degrades to the existing journey rather than to an error.
-  */
   const [job, setJob] = useState<"buyer" | "requester">("requester");
   const [email, setEmail] = useState("");
   const [devLink, setDevLink] = useState<string | null>(null);
@@ -114,8 +83,6 @@ export default function JoinRequesterPage() {
           country: acct.country,
           marketingOptIn: acct.marketingOptIn,
           tosAccepted: acct.tosAccepted,
-          /* ⚠ `E421` — the one field that differs. Omitted for a requester by
-             the default above, so that path posts exactly what it always did. */
           job,
         }),
       });
@@ -151,12 +118,6 @@ export default function JoinRequesterPage() {
     );
   }
 
-  /*
-    ⚠ THE 404 MEANS "NO REQUESTER PROFILE", NOT "WRONG ACCOUNT TYPE" —
-    `P1-J1.2-E009`. `getRequesterState` throws whenever `requesterProfile` is
-    missing, and a requester has no type flag at all, so this route cannot tell
-    "not started" from "provider account" even in principle. See NoProfileYet.
-  */
   if (notRequester) {
     return (
       <NoProfileYet path="requester" blocked={blockedParams.blocked} from={blockedParams.from} />
@@ -168,19 +129,6 @@ export default function JoinRequesterPage() {
       <OnboardingShell
         compact
         contentWidth="max-w-2xl"
-        /*
-          ── ⚠⚠ THIS SCREEN NEEDED THE BAND TOO (`P1-J1.1-E246` §5) ───────────────
-
-          ⚠ THE BRIEF SAYS `/join/provider`'s SIGN-UP IS *"the one page that opts out
-          of the band"*. IT IS NOT. THIS PAGE RENDERS THE SAME `SignUpForm` AND ALSO
-          PASSED NO `footer`, so §5's move — taking the button row out of the form so
-          the rule runs full-bleed — would have left THIS screen with NO Back and NO
-          Create My Account at all. Reported at `E246` and fixed here rather than
-          shipped broken; the alternative was a sign-up page with no way to sign up.
-          ⚠ SAME TREATMENT, SAME HANDLERS as the provider side, and `canSignUp` is
-          IMPORTED rather than reimplemented — one definition of the gate,
-          `tosAccepted` included (`P1-J4-E024`).
-        */
         footer={
           <>
             <button
@@ -204,11 +152,6 @@ export default function JoinRequesterPage() {
           values={acct}
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
           error={error}
-          /* WS3 — buyer copy. The seller form says "Find Work"; this side is
-             the one doing the hiring. */
-          /* ⚠ SCOTT'S WORDS, VERBATIM (`E289`). ⚠ SUPERSEDED: "Sign Up to Find Talent".
-             Both buyer-side strings collapse to this one — `Find Talent` and
-             `Hire Talent` were two names for one page. */
           title="Sign Up to Buy Services and/or Service Products"
           callbackUrl="/join/requester"
           altPrompt={{

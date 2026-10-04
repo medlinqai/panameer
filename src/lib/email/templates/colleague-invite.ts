@@ -7,29 +7,6 @@ import {
   primaryButton,
 } from "@/lib/email/shell";
 
-/**
- * "Come and look at this" — a colleague invitation (`P2-J3-E493`).
- *
- * ⚠⚠ THIS IS NOT `invite-provider.ts` AND IT IS NOT `recommendation-request.ts`,
- * and the names are close enough to reach for the wrong one:
- *
- *   `invite-provider`        a COORDINATOR asks a provider onto their ROSTER.
- *   `recommendation-request` asks somebody to VOUCH FOR the sender.
- *   ⚠ THIS ONE                asks somebody to JOIN PANAMEER. Nothing more.
- *
- * ⚠ A VOUCH REQUEST AND AN INVITATION ARE DIFFERENT ASKS AND READ DIFFERENTLY.
- * The brief is explicit: do not reuse the recommendation copy with words
- * swapped. A recommendation asks a favour of somebody who knows you; this offers
- * something to somebody who may not have heard of us, and the honest version of
- * that says what Panameer IS before it asks anything.
- *
- * ⚠⚠ IT PROMISES NOTHING ABOUT A REWARD. `/legal/referral-program-terms` is a
- * legal document, not a live programme, and copy that implied one would be a
- * commitment nobody has made.
- *
- * ⚠ THE INVITER'S OWN WORDS CARRY IT, quoted as a block and ESCAPED, never
- * rendered as HTML — it is user-supplied and it is going into an email body.
- */
 export function colleagueInviteTemplate({
   inviterName,
   inviteeName,
@@ -132,8 +109,7 @@ export function colleagueInviteTemplate({
     }
     ${primaryButton(joinUrl, `See What ${who} Sees`)}
     <p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:${EMAIL_COLORS.muted};">
-      ${/* ⚠ THE DISCLAIMER, KEPT — one line, small type, at the bottom. An
-            invitation that does not disclaim a relationship reads as one. */ ""}
+      ${ ""}
       No account has been created for you, and ${escapeHtml(who)} can&rsquo;t see
       anything about you unless you join and connect.
     </p>

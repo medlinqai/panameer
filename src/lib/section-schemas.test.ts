@@ -1,14 +1,3 @@
-/**
- * Guard for E121 — `npm run check:sections`.
- *
- * The regression this exists to catch is specific and it really happened: during
- * Walk6 a POST to `/api/settings/profile/section` carrying `employers` (instead
- * of `experiences`) deleted all four of the demo provider's employers and
- * returned 200. Nothing was rejected and nothing said anything had gone.
- *
- * Pure — it exercises `parseSectionBody`, the boundary the route now runs every
- * request through, so it needs no database and can run anywhere.
- */
 import { parseSectionBody } from "./section-schemas";
 
 let pass = 0;

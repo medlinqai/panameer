@@ -1,24 +1,6 @@
 import { ADMIN_PAGES } from "@/lib/admin-pages";
 import type { Tile } from "@/components/console/ConsolePage";
 
-/**
- * REPORTS (WS3) — one definition, two entry points.
- *
- * The brief asks for the Medlinq behaviour: "each page's tiles link to a
- * report; the same reports are reachable from the [task] panel." Two lists that
- * must agree is exactly the drift nav.ts exists to prevent, so the reports are
- * DERIVED from each page's Volume-Over-Time strip — that strip already IS the
- * list of metrics this page tracks over time, which is what a report plots.
- *
- * TBD tiles get no report. A slot nobody has defined a metric for cannot have a
- * report about it, and linking one would promise a page that can never be built
- * from that label.
- *
- * The reports themselves are stubs ("we will fill up the options as we go") —
- * shells with an honest empty state, so the navigation is real even though the
- * data isn't.
- */
-
 /** URL-safe id for a metric label. "Work Requests" → "work-requests". */
 export function reportSlug(label: string): string {
   return label
@@ -30,10 +12,6 @@ export function reportSlug(label: string): string {
 
 export type Report = { label: string; href: string; metric: string; scope: string };
 
-/**
- * Pages whose volume strip lives in their own file rather than in ADMIN_PAGES
- * (the dashboard and Learn read real counts, so they aren't spec-table pages).
- */
 const EXTRA_VOLUME: Record<string, string[]> = {
   "/admin": [
     "Work Requests",
@@ -67,10 +45,6 @@ export function scopeName(pathname: string): string {
   return ADMIN_PAGES[slug]?.listingTitle ?? slug.replace(/-/g, " ");
 }
 
-/**
- * The reports reachable from `pathname` — used by the task panel AND by the
- * volume tiles, so the two can't disagree.
- */
 export function reportsFor(pathname: string): Report[] {
   // On a report page, keep offering its siblings rather than an empty panel.
   const base = pathname.startsWith("/admin/reports")

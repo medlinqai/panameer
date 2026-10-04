@@ -23,7 +23,6 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // No default here — where "home" is depends on WHO signed in, and that isn't
-  // known until the credentials round-trip finishes (WS2/E003).
   const callbackUrl = searchParams.get("callbackUrl");
   const oauthError = searchParams.get("error");
 
@@ -48,11 +47,6 @@ function LoginForm() {
       setError("Invalid email or password.");
       return;
     }
-    /*
-      An explicit callbackUrl always wins — someone who was bounced off a page
-      should land back on it. Otherwise ask the server where this viewer's home
-      is: a Panameer Admin goes to the console, not to a provider's job board.
-    */
     if (callbackUrl) {
       router.push(callbackUrl);
     } else {
@@ -65,32 +59,6 @@ function LoginForm() {
   }
 
   return (
-    /*
-      ── ⚠⚠ THE CASING, ADDED DIRECTLY (`P1-J1.1-E246`) ────────────────────────
-
-      Scott, 2026-08-29: **"ALL Pages must use a casing."** `/login` was one of the
-      six he walked.
-
-      ⚠⚠ §1'S MECHANISM DOES NOT REACH THIS PAGE, AND THE BRIEF'S §0 IS WRONG ABOUT
-      IT. §0 lists `/login` under *"every page that renders `OnboardingFrame` —
-      directly or through `OnboardingShell` / `WizardShell`"*. THIS PAGE RENDERS NONE
-      OF THEM — it has always been its own full-viewport card over `LoginBackdrop`.
-      So putting the casing on the frame changed every sibling page and left this one
-      exactly as it was. It is added here by hand instead, and the discrepancy is
-      REPORTED at `E246` rather than papered over.
-
-      ⚠ `flex-1`, NOT `min-h-screen` — the same correction `E020` made on
-      `OnboardingFrame`. With a header above and a footer below, a child demanding a
-      full viewport makes the page three screens tall and pushes the sign-in card
-      below the fold. `body` carries `flex flex-col min-h-dvh`, so growing to fill
-      gets the centred card without the overflow.
-      ⚠ `overflow-hidden` STAYS — it clips `LoginBackdrop`'s `absolute inset-0` video
-      to this element, which is what keeps the video behind the card and OUT of the
-      header and footer.
-      ⚠ NEITHER IS INSIDE A `.pm-home` WRAPPER and none was added (`P1-ALL-E020`).
-      ⚠⚠ THE HEADER'S `Log In` NOW POINTS AT THIS PAGE. Known, deliberate, reported —
-      §2 forbids suppressing it. Scott decides.
-    */
     <>
       <MarketingHeader />
       <main className="relative flex flex-1 items-center justify-center overflow-hidden p-6 font-body">
@@ -127,14 +95,8 @@ function LoginForm() {
             />
           </label>
 
-          {/* ⚠⚠ `E528` — THE REVEAL BELONGS HERE MOST OF ALL. This is the field
-              that locked Scott out of his own app: masked, it cannot tell him
-              whether the password is wrong or whether he mistyped it, and those
-              need completely different responses. The control is
-              `SignUpForm`'s, extracted to `PasswordReveal` so there is one. */}
-          {/* ⚠ THE LABEL STILL WRAPS THE FIELD, exactly as Email above does.
-              Splitting it would hand the form's `space-y` a gap between the word
-              and the box, and the two fields would stop matching. */}
+          {}
+          {}
           <label className="block text-sm font-medium">
             Password
             <PasswordReveal id="login-password">

@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { getSessionViewer } from "@/lib/session";
 import { getBuyerState, OnboardingError } from "@/lib/onboarding";
 
-/**
- * GET /api/onboarding/buyer/status — the buyer wizard's gate/resume state
- * (email verified? current tier?). Drives the verify gate + tier step.
- */
 export async function GET() {
   const viewer = await getSessionViewer();
   if (!viewer) {

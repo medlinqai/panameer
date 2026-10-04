@@ -8,14 +8,6 @@ import {
 } from "@/lib/phone-verification";
 import { getOnboardingState } from "@/lib/onboarding";
 
-/**
- * Phone SMS verification (brief_P / E019).
- *
- *   POST /api/onboarding/provider/phone  { action: "send",   phone }
- *   POST /api/onboarding/provider/phone  { action: "verify", code  }
- *
- * OWNER-SCOPED: the Person is resolved from the session, never client input.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

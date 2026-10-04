@@ -3,17 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
-/**
- * Support ticketing (`P2-J1.1-E032`).
- *
- * Ported from Medlinq, adapted to Panameer's backbone. The models are
- * scalar-UUID / no-FK / single-drop reversible — see the block above
- * `model SupportTicket` for why that property is kept.
- *
- * ⚠ EVERY WRITE HERE IS OWNER-SCOPED FROM THE SESSION. No route accepts a
- * reporter id, an author id or a person id from the client.
- */
-
 export class SupportError extends Error {
   constructor(message: string, public code: "INVALID" | "NOT_FOUND" | "FORBIDDEN") {
     super(message);
@@ -21,55 +10,17 @@ export class SupportError extends Error {
   }
 }
 
-/** ⚠ Panameer's two sides, where Medlinq's were `'company' | 'medlinq'`. */
 export type AuthorSide = "user" | "panameer";
 
 export const TICKET_STATUSES = ["Open", "In Progress", "Waiting on Reporter", "Resolved", "Closed"] as const;
 export const TICKET_PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
 
-/**
- * ── ⚠⚠⚠ WHICH TICKETS ARE PANAMEER'S WORK (ruling 80b) ────────────────────
- *
- * ⚠⚠ **RULING 80b, VERBATIM:** *"a list nobody opens is no better than a
- * notification everybody muted… The fix is not a notification. It is a COUNT,
- * somewhere an admin already is."* ⚠ The count needs a definition of what it
- * counts, and **this is that definition, in one place** (`E585`).
- *
- * ⚠⚠⚠ **THE FIVE STATUSES SPLIT THREE WAYS, NOT TWO, AND THE MIDDLE BUCKET IS
- * THE WHOLE POINT:** `Waiting on Reporter` is an OPEN ticket that is **not
- * Panameer's move**. ⚠ Counting it would inflate the figure with work an admin
- * cannot do, which is the opposite of a queue — the number would stop falling
- * when they worked it, so they would stop reading it.
- *
- * ⚠⚠ **SO THE TILE IS NOT LABELLED "Open Tickets", AND THAT IS DELIBERATE:**
- * `Open` is also one of the five STATUS VALUES, rendered as a pill on
- * `/admin/support`. ⚠⚠⚠ **A tile reading "Open Tickets: 2" beside a list
- * showing one pill that says `Open` is one word doing two jobs** — the same
- * collision that kept the Account menu from being called "the Settings menu".
- * The label names the ROLE's work instead.
- *
- * ── ⚠⚠⚠ EXHAUSTIVE BY THE TYPE, NOT BY A GATE ─────────────────────────────
- *
- * ⚠⚠ **`TICKET_OWNER` IS A `Record` KEYED BY EVERY STATUS, SO A SIXTH STATUS IS
- * A COMPILE ERROR UNTIL SOMEBODY SAYS WHOSE MOVE IT IS.** ⚠ Both sets are
- * DERIVED from it, so the buckets cannot drift apart or overlap.
- * ⚠⚠⚠ **THIS IS THE PATTERN SCOTT ASKED FOR REPEATED** — *"a forgetful sender
- * being a compile error rather than a silent gap is worth more than any check we
- * could write after the fact"* — and it is why there is no `check:support-count`.
- * ⚠ **I had written that gate's name into this docblock before building it.**
- * A stated rule that nothing enforces is the half the next person implements
- * (2026-09-23 rule 6), so the claim became a type rather than a promise.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the claim as written:
- * //   ⚠ EXHAUSTIVE BY CONSTRUCTION: AWAITING_PANAMEER + TICKETS_TERMINAL +
- * //   "Waiting on Reporter" is all five, and check:support-count asserts it.
- */
 const TICKET_OWNER: Record<
   (typeof TICKET_STATUSES)[number],
   "panameer" | "reporter" | "done"
 > = {
   Open: "panameer",
   "In Progress": "panameer",
-  /* ⚠ OPEN, BUT NOT OURS — the ticket is live and the ball is with the member. */
   "Waiting on Reporter": "reporter",
   Resolved: "done",
   Closed: "done",
@@ -83,21 +34,8 @@ function statusesOwnedBy(owner: "panameer" | "reporter" | "done") {
 
 export const AWAITING_PANAMEER_STATUSES = statusesOwnedBy("panameer");
 
-/**
- * ⚠ **CLOSED IS STATED ONCE NOW.** `updateTicket` read the pair inline —
- * `input.status === "Resolved" || input.status === "Closed"` — while its own
- * docblock stated the same rule in prose. ⚠⚠ One concept in three places
- * (`E585`); `date_solved` and a future status could have disagreed.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   const closing = input.status === "Resolved" || input.status === "Closed";
- */
 export const TICKETS_TERMINAL_STATUSES = statusesOwnedBy("done");
 
-/**
- * ⚠ WHAT A PERSON QUOTES BACK. Crockford-ish alphabet with the characters that
- * get misread aloud removed (`I`, `O`, `0`, `1`), because the entire point of a
- * short code is that somebody can read it down a phone or paste it from a note.
- */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function newTicketCode(): string {
@@ -408,10 +346,7 @@ export async function getTicket(viewer: Viewer, ticketId: string, asAdmin = fals
 /**
  * ── THE ADMIN SIDE ──────────────────────────────────────────────────────────
  * Every function below is called only from surfaces already behind
- * `canAdminister` — `/admin/*` via route-access, the admin layout's `guardPage`,
- * and `guardApi("canAdminister")` on the routes. Three layers, per the lesson
- * `E046` paid for.
- */
+ * `canAdminister` — `/admin
 
 /** The triage list. Ordered by recency of ACTIVITY, which is why the column exists. */
 export async function listAllTickets() {
@@ -425,27 +360,6 @@ export async function listAllTickets() {
   });
 }
 
-/**
- * ── ⚠⚠⚠ THE FIGURE AN ADMIN PASSES ANYWAY (ruling 80b) ────────────────────
- *
- * ⚠ **THE LIST ALREADY EXISTED AND THAT WAS THE PROBLEM.** `/admin/support` and
- * its `[ticketId]` detail route are built, and `ADMIN_NAV` carries `Support
- * Center`, so ruling 80's admin half was **69a — something else is already doing
- * it.** ⚠⚠ What was missing is the half 80b added: *"if the admin surface has no
- * figure row, a list there is a door nobody knows to open — rule 5's cousin."*
- * ⚠ Measured before building: `/admin`'s `TileRow` held four tiles and **no
- * ticket figure anywhere on the page**, nor in its `VolumeFooter`.
- *
- * ⚠⚠ **IT PASSES THE WRITER TEST CLEANLY (counting rule 1)** — `createTicket`
- * writes `status: "Open"` and `updateTicket` moves it, so both ends of the chain
- * have a writer. ⚠⚠⚠ **AND IT IS NOT A ZERO STATE: measured 2026-09-25 —
- * 2 `Open`, 0 `In Progress`, 1 `Resolved`.** ⚠ **A measured figure renders as a
- * number in ink, never a dash** (ruling 53c), so this returns a `number` and not
- * `number | null`: there is no uncountable case to represent.
- *
- * ⚠ **NOTHING TO MUTE.** No recipient, no `person_id`, no preference row — which
- * is the whole reason 80b chose a count over a notification.
- */
 export async function countTicketsAwaitingPanameer(): Promise<number> {
   return prisma.supportTicket.count({
     where: { status: { in: [...AWAITING_PANAMEER_STATUSES] } },
@@ -460,35 +374,16 @@ export type TicketUpdate = {
   resolution?: string | null;
 };
 
-/**
- * Triage a ticket.
- *
- * ⚠ `assignToSelf` RATHER THAN AN ASSIGNEE ID, and that is not laziness: there
- * is exactly one Panameer admin today — the same fact that made Scott defer
- * `TicketHelper` — so an id parameter would be an unused surface accepting a
- * person id from the client. When there is a second admin this grows a picker.
- * ⚠ `date_solved` IS DERIVED FROM THE STATUS, never sent: it is set the first
- * time a ticket reaches Resolved/Closed and cleared if it reopens, so the column
- * and the status cannot disagree.
- */
 export async function updateTicket(viewer: Viewer, ticketId: string, input: TicketUpdate) {
   const person = await actingPerson(viewer);
   const existing = await prisma.supportTicket.findUnique({
     where: { id: ticketId },
-    /* ⚠ `status`, `reporter_person_id` and `title` are read for the ruling-82a
-       notification below — the PRIOR status is the only way to know whether the
-       status actually moved, and a notification that fires on an unchanged
-       status is the echo 82a rejects. */
     select: {
       id: true,
       date_solved: true,
       status: true,
       reporter_person_id: true,
       title: true,
-      /* ⚠ `P2-ALL-E761` — the PRIOR assignee and priority, read for `from_value`
-         on the history events below. ⚠⚠ The status was already here for ruling
-         82a's notification, and that comparison is REUSED rather than duplicated:
-         one "did it actually move" test, not two that can disagree (`E585`). */
       assignee_person_id: true,
       priority: true,
     },
@@ -502,29 +397,10 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     throw new SupportError("Unknown priority", "INVALID");
   }
 
-  /* ⚠ ONE DEFINITION — see `TICKETS_TERMINAL_STATUSES` for what this replaced. */
   const closing = TICKETS_TERMINAL_STATUSES.includes(
     input.status as (typeof TICKETS_TERMINAL_STATUSES)[number],
   );
 
-  /*
-    ── ⚠⚠⚠ THE CHANGE AND ITS HISTORY LAND TOGETHER (`P2-ALL-E761`) ───────────
-
-    ⚠ Scott, working `PAN-CTXFTX`: *"I assigned it to me and asked a question.
-    Want to see that history on the ticket."*
-
-    ⚠⚠ **IT IS A TRANSACTION, AND THAT IS A DELIBERATE CHANGE TO A LIVE WRITE
-    PATH.** This was a bare `prisma.supportTicket.update`. A history written
-    outside the transaction can disagree with the row it describes — an event
-    saying *"Open → In Progress"* beside a ticket still reading `Open` is worse
-    than no history, because it is a record that lies.
-
-    ⚠⚠⚠ **AN EVENT IS WRITTEN ONLY WHEN THE VALUE ACTUALLY MOVED.** A save that
-    re-submits the same status is not a status change, and a timeline full of
-    *"Open → Open"* is the echo ruling 82a already rejected for notifications.
-    ⚠ The status comparison is the SAME ONE 82a uses, read from `existing` — one
-    definition, not two that can drift (`E585`).
-  */
   const events: {
     kind: string;
     from_value: string | null;
@@ -537,7 +413,6 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
   if (input.priority && input.priority !== existing.priority) {
     events.push({ kind: "priority", from_value: existing.priority, to_value: input.priority });
   }
-  /* ⚠ Assigning to yourself when you already hold it is not an assignment. */
   if (input.assignToSelf && existing.assignee_person_id !== person.id) {
     events.push({
       kind: "assigned",
@@ -572,45 +447,6 @@ export async function updateTicket(viewer: Viewer, ticketId: string, input: Tick
     return row;
   });
 
-  /*
-    ── ⚠⚠⚠ RULING 82a — THE EVENT IS THE ANSWER, NOT THE CREATION ───────────
-
-    ⚠ Scott, 2026-09-25: *"Notifying the creator that they created something
-    tells them what they just pressed."* ⚠⚠ So the notification is here, on the
-    STATUS CHANGE, and not in `createTicket`: filing a ticket ends on a
-    confirmation the member is already looking at, while **the answer arrives on
-    Panameer's side, days later, when they are somewhere else.**
-
-    ⚠⚠ THREE GUARDS, AND EACH ONE REFUSES A DIFFERENT ECHO:
-     1. ⚠ **ONLY WHEN THE STATUS ACTUALLY MOVED.** A priority edit, an
-        assignment or a resolution-note save changes the row without changing
-        anything the reporter is waiting on. ⚠⚠ Comparing against `existing`
-        also covers **re-saving the same status**, which is why the prior value
-        is read rather than assumed from `input.status` being present.
-     2. ⚠⚠⚠ **NEVER TO THE PERSON WHO PRESSED THE BUTTON.** An admin who files a
-        ticket and then triages it is the exact case ruling 82a names — and it
-        is real here, not hypothetical: one of the three live tickets was
-        reported by an account that can also administer.
-     3. ⚠ **DEDUPED PER TICKET PER STATUS**, so a double-submit or a bounce
-        between two statuses and back cannot fan out.
-
-    ⚠⚠ `notify()` NEVER THROWS INTO THIS CALLER — it catches, logs and
-    continues, by its own contract: *"a failed notification must not roll back"*
-    the thing that happened. ⚠ It is awaited so the write is ordered, not so the
-    triage depends on it.
-    ⚠⚠⚠ **THIS SENDS NO EMAIL, AND MY EARLIER WARNING THAT IT DID WAS WRONG.**
-    The category ships `email: true` under ruling 34b (I chose `false` and
-    `check:notify-prefs` was right to fail the build) — ⚠⚠ **but `notify()`
-    RECORDS INTENT AND DOES NOT SEND.** It imports no sender, and no path turns
-    a `Notification` row into an email. **This writes an in-app row. That is
-    all it does.**
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — my false warning:
-    //   THIS SENDS REAL EMAIL … the next status move mails a real reporter at
-    //   a real address.
-    ⚠⚠ **THE PRODUCT-WIDE GAP IS THE INVERSE AND IS FILED AS `E658`:** the
-    settings screen shows Email as live for all 17 categories and nothing
-    delivers. See `notification-categories.ts`.
-  */
   const statusMoved = Boolean(input.status) && input.status !== existing.status;
   const isOwnTicket = existing.reporter_person_id === person.id;
   if (statusMoved && !isOwnTicket && existing.reporter_person_id) {

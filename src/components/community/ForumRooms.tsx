@@ -1,33 +1,9 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   You are not in any forums yet. Enrol in a learning path and its forum opens with it.
-*/
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import "./member-row.css";
 
-/**
- * ── ⚠⚠ `YOUR FORUMS` — THE RAIL (`P2-J3-E558` WS-B) ───────────────────────
- *
- * ⚠ ACTIVE ROOMS ARE LISTED; QUIET ROOMS COLLAPSE BEHIND ONE LINK. The viewer
- * is in many rooms and most have nothing in them — listing all of them is the
- * wall of empty rooms the redesign exists to remove.
- *
- * ⚠⚠ THE WORD IS `quiet`, NEVER A `0`. A zero beside a room name reads as a
- * failure; "quiet" is the same fact without the accusation. ⚠ `E433` — it is a
- * state, not an interactive thing, so it is ink.
- *
- * ⚠ `Teach` vs enrolled IS MARKED. The forum is gated on enrolment OR teaching
- * and they are DIFFERENT RELATIONSHIPS — the mark is what explains why the
- * instructor panel applies to some of these rooms and not others.
- */
 export type RoomView = {
   slug: string;
   title: string;

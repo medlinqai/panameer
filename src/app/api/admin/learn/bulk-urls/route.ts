@@ -12,12 +12,6 @@ const BODY = z.object({
 /** A CSV big enough to be a mistake rather than a catalog. */
 const MAX_CSV_BYTES = 2 * 1024 * 1024;
 
-/**
- * POST /api/admin/learn/bulk-urls — plan or apply a batch of lesson video URLs.
- *
- * The SAME endpoint does both, with `apply` deciding, so the preview an admin
- * approved and the write that follows can never be computed by different code.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;

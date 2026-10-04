@@ -11,29 +11,6 @@ import {
   unmarkHelpful,
 } from "@/lib/forums";
 
-/**
- * POST /api/community/forums — start a thread or reply to one (WS2-C).
- *
- * ⚠ `guardApi("authenticated")` IS STILL THE ONLY CAPABILITY, AND DELIBERATELY SO
- * (`P1-ALL-E033`). Requiring name, photo and job title before writing is a
- * PROFILE-COMPLETENESS check, not a role; modelling it as a capability would put
- * a mutable data question into the permission system. The check lives in
- * `lib/forums.ts`, which is the boundary for all four actions.
- * ⚠ AND IT GATES WRITING ONLY. `helpful`/`unhelpful` pass through ungated —
- * marking an answer helpful is a reader's act and it is the signal the board
- * runs on.
- *
- * One route, four actions. AUTHORSHIP IS NEVER IN THE BODY: the lib resolves the
- * poster from the session, so there is no shape of request that posts as
- * somebody else.
- *
- * ⚠ `helpful` / `unhelpful` CARRY NO ACTOR EITHER (brief_community_signal WS1).
- * Only the thread's author may mark a reply helpful, and never their own — both
- * checked in `lib/forums.ts` against the SESSION on every call. The thread page
- * hides the button for everyone else, and that hiding is cosmetic: a hidden
- * control is not a permission, so the refusal has to live server-side and be
- * testable by calling this route directly.
- */
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("thread"),
@@ -46,21 +23,8 @@ const Body = z.discriminatedUnion("action", [
     threadId: z.string().uuid(),
     body: z.string().trim().min(2, "Say something first.").max(8000),
   }),
-  /*
-    ⚠ NO `personId`, DELIBERATELY. The only thing a caller may name is WHICH
-    REPLY; who is marking it is the session's business.
-  */
   z.object({ action: z.literal("helpful"), postId: z.string().uuid() }),
   z.object({ action: z.literal("unhelpful"), postId: z.string().uuid() }),
-  /*
-    ⚠⚠ `confirm` IS A DIFFERENT SIGNAL FROM `helpful`, NOT A SYNONYM
-    (`P2-J3-E558` WS-B). `helpful` is the ASKER saying *this answered me*;
-    `confirm` is the PATH'S INSTRUCTOR saying *this is correct*. They can
-    disagree in both directions and they write different columns.
-    ⚠ SAME RULE AS ABOVE: no actor in the body. Who is confirming is the
-    session's business, and the authority is DERIVED from the board's path in
-    `lib/forums.ts` — never asserted by the caller.
-  */
   z.object({ action: z.literal("confirm"), postId: z.string().uuid() }),
   z.object({ action: z.literal("unconfirm"), postId: z.string().uuid() }),
 ]);
@@ -102,13 +66,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, id: result.id });
   } catch (e) {
     if (e instanceof ForumError) {
-      /*
-        ⚠ `fields` TRAVELS WITH THE REFUSAL (`P1-ALL-E033`). Without it the
-        composer can only say "complete your profile", which is the exact
-        non-answer the brief forbids — the named field, its reason and its link
-        all come from the server so the UI cannot paraphrase them into something
-        vaguer.
-      */
       return NextResponse.json(
         { error: e.message, code: e.code, ...(e.fields ? { fields: e.fields } : {}) },
         { status: 400 }

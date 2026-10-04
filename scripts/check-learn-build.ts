@@ -4,17 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { shownRunTime, MEASURED_DURATION_SOURCE } from "@/lib/lesson-duration";
 import { setPathInterest } from "@/lib/path-interest";
 
-/**
- * ── ⚠⚠⚠ `check:learn-build` (`P2-A4-E611`) ───────────────────────────────
- *
- * The gate for the Learn restyle and the production-signal work. Every
- * assertion below is one of Scott's 2026-09-23 rulings made unbreakable.
- *
- * ⚠⚠ IT IS DB-BACKED ON PURPOSE for the catalogue-protection half: the whole
- * point of §1 is that 23 paths and 522 hand-written lessons come out the other
- * side untouched, and only a row count can say that.
- */
-
 let pass = 0;
 const fails: string[] = [];
 function check(name: string, ok: boolean, why = "") {
@@ -22,7 +11,6 @@ function check(name: string, ok: boolean, why = "") {
   else fails.push(`${name}${why ? ` — ${why}` : ""}`);
 }
 
-/** ⚠ Rule 12 / `E164`: superseded code is QUOTED, and a quote is not live code. */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -41,9 +29,6 @@ const LEARN_UI = SRC.filter(
 );
 
 async function main() {
-  /* ── 1 · ⚠⚠⚠ THE CATALOGUE IS UNTOUCHED ────────────────────────────────
-     ⚠ 23 paths and 522 lessons Scott wrote by hand. ⚠⚠ COUNT > 0 (`E586`):
-     a zero here means the scan, not the catalogue, is what changed. */
   const [paths, lessons] = await Promise.all([
     prisma.learningPath.count(),
     prisma.lesson.count(),

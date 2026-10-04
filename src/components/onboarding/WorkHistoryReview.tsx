@@ -4,37 +4,6 @@ import { useMemo, useState } from "react";
 import type { SoftwareSuite } from "@prisma/client";
 import { SUITES, SUITE_ORDER, suiteLabel } from "@/lib/suite";
 
-/**
- * THE WORK-HISTORY REVIEW (brief_per_job_skill_model WS-4).
- *
- * Replaces the standalone Role and Skills steps. The résumé arrives already
- * broken into jobs, each pre-tagged with the suite it ran on, the role that
- * implies and the modules used — and the provider's job here is to SCAN AND
- * CORRECT, not to fill in a form.
- *
- * ── WHY THIS REPLACES TWO STEPS ──────────────────────────────────────────────
- *
- * The old flow asked "what is your role?" and then "which skills do you have?",
- * both at profile level, both in the abstract. A provider answering those is
- * being asked to summarise their own career into a checklist — and the answer
- * is unattributable: a profile-level "General Ledger" belongs to no system, so
- * nobody can tell Oracle's from PeopleSoft's. Here every answer is attached to
- * the engagement that evidences it, which is what makes it checkable.
- *
- * ── CORRECTION IS SURGICAL ───────────────────────────────────────────────────
- *
- * Each card edits only its own job. A provider who sees one mis-tagged
- * engagement fixes that engagement; nothing else in their history moves. The
- * correction affordance lives exactly where the data does, which is the whole
- * argument for the per-job model.
- *
- * ── THE PROMPT IS RARE BY CONSTRUCTION ───────────────────────────────────────
- *
- * "Which system was this?" renders only on jobs the parser flagged
- * `needsSuite` — modules found, no anchor. Most jobs never show it. A prompt on
- * every card would be a form again, and the provider would click through it.
- */
-
 export type ReviewSkill = { id: string; name: string };
 
 export type ReviewJob = {

@@ -18,18 +18,6 @@ import {
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * `/work-requests/[id]` — THE DETAIL PAGE (`P1-J4-E392` WS-2).
- *
- * ⚠⚠ THIS PAGE DID NOT EXIST. A requester could create a work request and then
- * had nowhere to look at it — the wizard resumed the latest DRAFT and `/share`
- * listed matching providers, but the request itself was unviewable. That is the
- * hole, and lines are the reason it had to be filled: `E388` gave a work request
- * LINES, and lines need somewhere to live that is not a nine-step wizard.
- *
- * ⚠ THE WIZARD IS UNTOUCHED. It produces LINE 1; this page manages 2..n. See
- * `lib/work-request-lines.ts` for why that split rather than a rewrite.
- */
 export const metadata = { title: "Work Request · Panameer" };
 
 export default async function Page({
@@ -49,12 +37,6 @@ export default async function Page({
     );
   }
 
-  /*
-    ⚠ A REQUEST THE VIEWER DOES NOT OWN IS A 404, NOT A 403. `loadOwned` is
-    P-Account scoped, so "not yours" and "does not exist" are the same answer —
-    and they should be: telling a stranger that an id EXISTS but belongs to
-    someone else is itself a leak.
-  */
   let detail;
   try {
     detail = await getWorkRequestDetail(viewer, id);
@@ -67,21 +49,9 @@ export default async function Page({
   const [{ providers }, invited, proposals] = await Promise.all([
     matchProvidersFor(viewer, id),
     invitedOn(viewer, id),
-    /* ⚠ `E682` WS-D. Owner-scoped inside `proposalsOn` as well as here — see
-       that function on why it does not trust this page's earlier check. */
     proposalsOn(viewer, id),
   ]);
 
-  /*
-    ── ⚠⚠ THE TESTS A BUYER MAY SEND (`E683a` WS-E) ───────────────────────
-    ⚠⚠⚠ **A QUERY, NEVER A LITERAL.** 2 published and 6 draft today, and the
-    Learn brief's whole constraint is that the catalog is temporary — a list of
-    test names in code would have to be found and edited by somebody who does
-    not know it exists.
-    ⚠ PUBLISHED only, which is the same rule `sendTest` enforces through
-    `assertTestRequestLine`: this picker is a convenience and the writer is the
-    boundary. ⚠⚠ Read once for the page rather than per proposal.
-  */
   const sendableTests = (
     await prisma.certificationTest.findMany({
       where: { status: "PUBLISHED" },
@@ -90,12 +60,6 @@ export default async function Page({
     })
   ).map((t) => ({ id: t.id, title: t.learningPath?.title ?? "Path test" }));
 
-  /*
-    ⚠ THE PICKER NEEDS PERSON IDS AND `matchProvidersFor` RETURNS PROFILE IDS.
-    Resolved in ONE query here rather than by changing that shared lib, which
-    `/share` also reads — a signature change there to serve this page would be a
-    change to a working surface for the convenience of a new one.
-  */
   const profiles = await prisma.providerProfile.findMany({
     where: { id: { in: providers.map((p) => p.profileId) } },
     select: { id: true, person_id: true },
@@ -109,9 +73,6 @@ export default async function Page({
     }))
     .filter((p) => p.personId);
 
-  /* ⚠ `posted` STAYS — it gates the draft-only wizard door and the invite
-     controls below, which are genuinely about "is it out for sourcing", not
-     about what word the pill shows. Only the COPY moved (`P2-A8-E679`). */
   const posted = detail.status === "POSTED";
 
   return (
@@ -125,13 +86,7 @@ export default async function Page({
           </h1>
           <p className="mt-1.5 text-[14px] text-ink-2">
             {detail.roleName && <>{detail.roleName} · </>}
-            {/* ⚠ THE DATE RIDES ON `POSTED` ONLY, and that is correct: a
-                request is posted ONCE, so `postedAt` is that moment. A
-                `Provider Selected` request keeps its posted date but the
-                subtitle now names where it IS, not where it has been
-                (`P2-A8-E679`).
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   {posted ? `Posted ${detail.postedAt?.slice(0,10)}` : "Draft"} */}
+            {}
             {posted && detail.postedAt
               ? `Posted ${detail.postedAt.slice(0, 10)}`
               : WORK_REQUEST_STATUS_LABEL[detail.status]}

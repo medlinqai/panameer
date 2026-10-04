@@ -1,36 +1,3 @@
-/**
- * `check:section-endpoint` — every section name the client sends survives the
- * WHOLE path (`P1-A1.4-E405` WS-1/WS-4). `npm run check:section-endpoint`.
- *
- * ── ⚠⚠ THE BUG THIS EXISTS FOR, AND WHY EVERY OTHER TEST WAS GREEN ─────────
- *
- * `POST /api/settings/profile/section` has **TWO** allow-lists on the way in:
- * the Zod schema in `section-schemas.ts`, and `SETTINGS_SECTIONS` in
- * `profile-settings.ts`. `P1-A1.3-E401` added `work_method` to the schema, added
- * the `applyProviderSection` case, pointed the client at the endpoint — and
- * never added it to `SETTINGS_SECTIONS`. Every layer tested green in isolation;
- * the screen returned 400 and Scott could not go forward or back.
- *
- * ⚠ `section-schemas.test.ts` tests the SCHEMA. Nothing tested
- * `SETTINGS_SECTIONS`, and **no test crossed the two** — so nothing asked the
- * only question that matters: *does every name the client sends survive all
- * three layers?* Satisfying two of three is precisely what shipped.
- *
- * ── ⚠⚠ IT MUST NOT AGREE WITH ITSELF (`P1-J1-E387`) ───────────────────────
- *
- * The trap this repo keeps falling into is a check that rebuilds the list it is
- * checking from the same source. ⚠ SO THE FOUR FACTS COME FROM FOUR DIFFERENT
- * PLACES: the names from `src/app` source, the schemas from the real exported
- * `SECTION_SCHEMAS` object, `SETTINGS_SECTIONS` parsed from
- * `profile-settings.ts`, and the cases parsed from `applyProviderSection`'s own
- * body. No two are derived from each other.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE EVERY SCAN, and §0 PROVES the strip works by
- * feeding it a section literal inside a comment — this repo has been burned
- * three times by a scanner reading its own prose.
- *
- * ⚠ NO DATABASE AND NO BROWSER.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { SECTION_SCHEMAS } from "@/lib/section-schemas";
@@ -42,11 +9,9 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** ⚠ Block comments AND line comments, `://` in a URL left alone. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
-/* ═══ 0 · ⚠⚠ PROVE THE COMMENT STRIP BEFORE TRUSTING ANY SCAN ═════════════ */
 {
   const SECTION_LITERAL = /section:\s*"([a-z_]+)"/g;
   const names = (src: string) => [...strip(src).matchAll(SECTION_LITERAL)].map((m) => m[1]);

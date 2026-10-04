@@ -1,36 +1,6 @@
 import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
-/* ⚠ FOR ITS ALIAS MAP ONLY — `"USA"`, `"UK"` and friends (`E729` WS-C). */
 import { isoFor } from "@/lib/phone";
 
-/**
- * ── ⚠⚠⚠ THE CANONICAL COUNTRY LIST (`P2-A1.1-E728` WS-B) ────────────────────────────────
- *
- * ⚠ **SCOTT'S RULING: *"One canonical list, stored as the ISO-2 code with the name displayed,
- * dial codes derived from libphonenumber-js (not typed)."***
- *
- * ── ⚠⚠⚠ NOTHING HERE IS TYPED OUT, AND THAT IS THE POINT ────────────────────────────────
- *
- * ⚠ **THE CODES COME FROM `libphonenumber-js` (245 of them)** and **THE NAMES COME FROM
- * `Intl.DisplayNames`**, which is in the platform. ⚠⚠ **SO A WRONG DIAL CODE OR A MISSPELLED
- * COUNTRY IS NOT A THING THIS REPO CAN CONTAIN** — there is no hand-maintained table to drift.
- * ⚠⚠⚠ **MEASURED BEFORE RELYING ON IT: of the 245 codes, ZERO have no English name.** A list
- * that silently rendered a bare code for some countries would be worse than a typed one.
- * ⚠ **AND IT IS THE SAME SOURCE THE PHONE VALIDATOR USES**, so a country the picker offers is
- * by construction a country the validator knows (`E585`).
- *
- * ── ⚠⚠ THIS FILE IS NOW THE LIST AND THE BOUNDARY (`E729` WS-C) ─────────────────────────
- *
- * ⚠ **EVERY PICKER RENDERS `ALL_COUNTRIES` AND EVERY WRITER GOES THROUGH `countryColumns`.**
- * The address form, sign-up, the company step and the phone field all read from here; the ten
- * write sites resolve here. ⚠⚠ **`lib/countries.ts`'s 23-entry `COUNTRIES` SURVIVES FOR ONE
- * REASON ONLY — `check:phone`'s coverage assertion walks it** (every entry must resolve to a
- * code); nothing renders it. ⚠ **`COUNTRY_REGIONS` in that file is live and is keyed by CODE.**
- * ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
- * //   THIS FILE REPLACES NOTHING YET. lib/countries.ts's 23-entry COUNTRIES is still
- * //   what the address form renders; readers move one at a time, which is Scott's ruling 1.
- */
-
-/** ⚠ Built once. `Intl.DisplayNames` is not free and this list never changes at runtime. */
 const DISPLAY = new Intl.DisplayNames(["en"], { type: "region" });
 
 export type Country = { code: CountryCode; name: string; dial: string };
@@ -40,7 +10,6 @@ export const ALL_COUNTRIES: readonly Country[] = getCountries()
   .map((code) => ({
     code,
     name: DISPLAY.of(code) ?? code,
-    /* ⚠ DERIVED, NEVER TYPED — Scott's words. */
     dial: `+${getCountryCallingCode(code)}`,
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
@@ -133,19 +102,9 @@ export function countryColumns(
     const hit = BY_CODE.get(viaAlias);
     if (hit) return { country: hit.name, country_code: hit.code };
   }
-  /* ⚠⚠⚠ AND `"Other"` — OR ANYTHING ELSE — SURVIVES VERBATIM WITH NO CODE. Ruling 2 of WS-B:
-     the null IS the flag, and refusing the value would lock somebody out of their own form. */
   return { country: raw, country_code: null };
 }
 
-/**
- * ⚠⚠ Is this the United States? **READS THE CODE AND IGNORES CASE** (`E729` ruling 3).
- *
- * ⚠⚠⚠ **IT DECIDES W-9 vs W-8, so it is the highest-consequence country read in the app.**
- * `lib/tax.ts`'s version was a case-SENSITIVE `Set` of four spellings — `"US"` passed, `"us"`
- * did not, and a lower-cased code would have handed a US taxpayer a W-8. ⚠ This resolves the
- * value first, so a name, a code, and any casing of either all reach the same answer.
- */
 export function isUnitedStatesCountry(value: string | null | undefined): boolean {
   return countryColumns(value).country_code === "US";
 }

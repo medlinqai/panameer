@@ -5,17 +5,6 @@ import { Field, TextInput } from "@/components/admin/learn/primitives";
 
 type Expert = { id: string; name: string; email: string | null; photoUrl: string | null };
 
-/**
- * Person picker for the `expert_person_id` on a path or a lesson.
- *
- * Search-as-you-type rather than a `<select>` of everyone: the Person table is
- * every registered user, not a short staff list, so a select would be unusable
- * and would also load the whole roster into a page that only ever needs one row.
- *
- * Shows the ALREADY-SELECTED name up front without a search, because an admin
- * opening an existing path needs to see who is on it before deciding whether to
- * change it — a picker that starts empty looks like the field was never set.
- */
 export function ExpertPicker({
   value,
   initialName,

@@ -17,18 +17,8 @@ export default async function ThreadPage({
 }) {
   const gate = await guardPage("authenticated");
   const { id } = await params;
-  /*
-    The viewer's own Person id decides whether the "this answered my question"
-    button is rendered per reply. ⚠ RENDERING ONLY — `markHelpful` re-checks both
-    rules from the session, so the button's absence is a courtesy and not the
-    boundary.
-  */
-  /* ⚠ THE VIEWER IS PASSED AS OF `P1-J3-E383` — a thread inside a PATH board is
-     as closed as the board, and a deep link by thread id must not be a way
-     round the door. `getThread` returns null, which this page 404s. */
   const thread = await getThread(id, await viewerPersonId(gate), gate);
 
-  /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`). Reading the thread is untouched. */
   const identityGaps = await communityIdentityGaps(gate.userId);
   if (!thread) notFound();
 
@@ -41,7 +31,6 @@ export default async function ThreadPage({
       opening: true,
       markedHelpfulAt: null as string | null,
       canMarkHelpful: false,
-      /* ⚠ The opening post is the QUESTION — there is nothing to confirm. */
       instructorConfirmedAt: null as string | null,
       instructorConfirmedBy: null as string | null,
       canConfirm: false,

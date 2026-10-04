@@ -3,11 +3,6 @@ import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { canLeaveGroup, groupOffer, GROUP_OFFER_COPY } from "@/lib/group-membership";
 
-/**
- * ── ⚠⚠⚠ `check:groups` (`P2-A3-E612` WS-C) ──────────────────────────────
- *
- * Every assertion is one of Scott's 2026-09-23 rulings made unbreakable.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -15,7 +10,6 @@ const check = (name: string, ok: boolean, why = "") => {
   else fails.push(`${name}${why ? ` — ${why}` : ""}`);
 };
 
-/** ⚠ Rule 12 / `E164`: a quote is not live code. */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -30,9 +24,6 @@ function walk(dir: string, out: string[] = []): string[] {
 const SRC = walk("src");
 
 async function main() {
-  /* ── 1 · ⚠⚠⚠ EXACTLY ONE ACCESS RULE — DERIVED, NOT LISTED (E587) ──────
-     ⚠ Any function reaching for BOTH halves of the path-forum rule IS a second
-     copy of it. ⚠⚠ Count > 0 (`E586`). */
   const forumsRaw = readFileSync(join("src", "lib", "forums.ts"), "utf8");
   const fns = [...forumsRaw.matchAll(/^(?:export )?(?:async )?function (\w+)[\s\S]*?^}/gm)].map(
     (m) => ({ name: m[1], body: strip(m[0]) })

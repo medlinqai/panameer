@@ -1,20 +1,5 @@
 import type { Tile } from "@/components/console/ConsolePage";
 
-/**
- * THE ADMIN PAGE SPEC, one table, straight off the 2.5 deck (WS2).
- *
- * Every console page is the same shape — 4 KPI tiles → listing → Volume Last 90
- * Days — so the pages are DATA here and one renderer draws them. Fourteen
- * hand-written page files would be fourteen chances for a column list to drift
- * from the slide it came from.
- *
- * NUMBERS ARE ABSENT ON PURPOSE. The deck fills its tiles with "9" and its
- * volume strip with "99"; those are visual filler, and Scott's instruction is
- * no fabricated numbers. So a metric that is DEFINED but unmeasurable renders
- * "—", and a slot the deck marks TBD renders a labelled TBD placeholder. The
- * two are different questions and look different.
- */
-
 const TBD4: Tile[] = [{ tbd: true }, { tbd: true }, { tbd: true }, { tbd: true }].map(
   (t) => ({ ...t, label: "TBD" })
 );
@@ -28,20 +13,6 @@ const WORK_TILES: Tile[] = [
   { label: "Work Orders in Last 30 Days" },
 ];
 
-/*
-  ── ⚠⚠⚠ CORRECTED 2026-09-25 — THIS SENTENCE HAD BECOME FALSE ────────────
-
-  ⚠⚠ It told an admin *"there is no Work Request, Order, Contract or Payment model
-  to read from."* ⚠⚠⚠ **THREE OF THOSE FOUR MODELS EXIST:** `WorkRequest` and
-  `WorkOrder` since `E388`, `Payment` too — and since `E621` both `WorkRequest` and
-  `WorkOrder` have live writers. Only `Contract` genuinely does not exist, and
-  deliberately: the ToS is the MSA and the work order is the SOW, so there is no
-  third contract by design.
-  ⚠ Ruling 18 also applies — *"this page is the shape they will land in"* is a
-  roadmap promise, and those do not go in the product.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   "The transaction layer isn't built — there is no Work Request, Order, Contract or Payment model to read from. This page is the shape they will land in.";
-*/
 const WHY_TRANSACTION = "Not counted yet";
 
 export type AdminPageSpec = {
@@ -106,12 +77,6 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
     why: WHY_TRANSACTION,
     volume: TBD5,
   },
-  /*
-    Settlements follows the BRIEF, not slide 7. The slide carries Work Packages'
-    body verbatim — ERP-pillar volume tiles and a "Package" column — which
-    Scott confirmed is a copy-paste artifact (2026-08-02). TBD tiles, Title
-    column, TBD volume.
-  */
   settlements: {
     tiles: TBD4,
     listingTitle: "Settlements",
@@ -135,11 +100,6 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
     what: "specialization records",
     volume: TBD5,
   },
-  /*
-    Industries follows the BRIEF, not slide 14. That slide reuses slide 13's
-    body — its listing still reads "Specializations" and its footer says
-    "Volume Over Time" with "?" — confirmed a copy-paste artifact.
-  */
   industries: {
     tiles: TBD4,
     listingTitle: "Industries",

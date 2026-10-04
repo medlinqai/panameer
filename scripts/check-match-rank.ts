@@ -1,23 +1,3 @@
-/**
- * `check:match-rank` — growth breaks the tie, and match still comes first
- * (`P2-A2-E600` WS-E). `npm run check:match-rank`.
- *
- * ── ⚠⚠⚠ GATED BY SHAPE, ON THE REAL SORT ─────────────────────────────────
- *
- * ⚠ Scott: *"two providers with equal match weight and equal overlap,
- * different growth scores — the higher one ranks first. Count > 0. Tear down
- * scoped to the rows you create."*
- * ⚠⚠ IT ASSERTS THE COMPARATOR `matchProvidersFor` ACTUALLY USES, not a copy of
- * it — the ordering rule is imported, so a change to the sort changes this test
- * rather than leaving it agreeing with a stale duplicate.
- * ⚠⚠⚠ AND IT ASSERTS THE **PRECEDENCE**, WHICH IS THE HALF THAT MATTERS MOST:
- * a better-matched provider must NEVER be pushed below a worse one by growth.
- * Scott's rule is that growth replaces the NAME tie-break and nothing else.
- *
- * ⚠ NO DATABASE. The comparator is pure, so the fixture is three plain objects
- * — which is also what lets it assert the counter-case (a worse match with a
- * huge growth score still loses) without seeding a work request.
- */
 import { rankMatchedProviders } from "@/lib/work-request-match";
 
 let pass = 0;
@@ -31,11 +11,7 @@ type Row = { personId: string; name: string; matchWeight: number; relevantSkills
 const rank = (rows: Row[], growth: Record<string, number>) =>
   rankMatchedProviders(rows, new Map(Object.entries(growth))).map((r) => r.personId);
 
-/* ═══ 1 · ⚠⚠ EQUAL MATCH, EQUAL OVERLAP, DIFFERENT GROWTH ═════════════════ */
 {
-  /* ⚠ `aaa` SORTS FIRST BY NAME AND HAS THE LOWER GROWTH. If growth were
-     ignored, or applied below the name, `aaa` would lead — so this fixture
-     fails loudly rather than passing by luck. */
   const rows: Row[] = [
     { personId: "p-low", name: "aaa", matchWeight: 50, relevantSkills: 3 },
     { personId: "p-high", name: "zzz", matchWeight: 50, relevantSkills: 3 },

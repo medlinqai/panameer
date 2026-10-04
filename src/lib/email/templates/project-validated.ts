@@ -1,13 +1,6 @@
 import { capitalizeName } from "@/lib/display";
 import { logoBlock } from "@/lib/email/shell";
 
-/**
- * "Your project was validated" — the ONE event this brief notifies the provider
- * about (brief_project_validation §6).
- *
- * Only fires on a CONFIRM. A decline is a conversation to have with the client
- * directly, not something to push at the provider the moment it happens.
- */
 export function projectValidatedTemplate({
   firstName,
   projectName,

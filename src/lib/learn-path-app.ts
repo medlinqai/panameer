@@ -13,39 +13,11 @@ import {
 import { lessonFace, withoutPlaceholders } from "@/lib/learn-faces";
 import type { Instructor } from "@/lib/learn-instructor-format";
 
-/**
- * THE LEARNING PATH (LEVEL 1) — one path, its whole spine, and this learner's
- * ticks against it (brief_learn_app_shell WS3).
- *
- * Separate from `getLearnPath` in `learn-home.ts`, which the course and lesson
- * pages still use, because this one answers three things that one doesn't and
- * shouldn't be made to: the per-lesson FACE (through the inheritance chain), the
- * path's REAL test rules, and the leaderboard's enrollment floor.
- *
- * ── ⚠ THE FOUR LEVELS, AND WHY `Section` IS NOT ONE ──────────────────────────
- *
- * Scott's levels are path (1) → course (2) → lesson (3), with "sections inside
- * the video" as a fourth thing. The SCHEMA has LearningPath → Course → Section →
- * Lesson, and `Section` is real and populated: 170 rows, 1–6 per course, with
- * titles, and lessons hang off them.
- *
- * The reconciliation: a path has a test and a certificate, a course is a unit of
- * study, a lesson is what you complete. `Section` carries none of those. So it
- * renders as a SUBHEADING that groups lessons, is never called a level, is never
- * tracked, and never gets a progress bar of its own.
- *
- * ⚠ Scott's "sections inside the video" are a DIFFERENT concept with no model —
- * chapter markers within one lesson. Not built here, and when they are built they
- * must be called CHAPTERS. The word "section" is taken by a populated table.
- */
-
 export type AppLessonRow = {
   id: string;
   title: string;
-  /** ⚠ VERBATIM AS STORED, never parsed. Null → the column is omitted. */
   runTime: string | null;
   playable: boolean;
-  /** ⚠ `P2-A4-E613` — what this lesson honestly is. Never "Soon". */
   stateLabel: string;
   completed: boolean;
   current: boolean;
@@ -85,72 +57,26 @@ export type AppPathView = {
   courses: AppCourse[];
   /** Where to send Resume; null when everything is watched. */
   nextLesson: { id: string; title: string; position: number; playable: boolean } | null;
-  /** ⚠ `false` = PUBLISHED but nothing in it plays. The page says so; it does
-   *  not 404, because links to these slugs already exist. */
   ready: boolean;
-  /**
-   * ⚠⚠ THE PATH'S ROOM (`P2-A4-E611`, Q8). Counts only — never a thread title.
-   * ⚠ It travels on the SIGNED-IN view model because that is the branch a
-   * member actually reaches; the signed-out page computed a teaser that
-   * `canAccessPathForum` refuses by definition, so the link rendered to nobody.
-   */
   forum: PathForumTeaser | null;
-  /**
-   * ⚠⚠ `P2-A4-E611` WS-C — the demand signal for THIS path. ⚠ It travels on
-   * every path, not only unready ones: wanting more of a path you have started
-   * is a real signal too, and hiding the control on ready paths would make the
-   * queue a measurement of unready paths only.
-   */
   interest: { count: number; mine: boolean };
   test: {
-    /** ⚠ READ FROM THE ROW, never printed as 70 / 3. Null when none exists. */
     passThreshold: number | null;
     maxAttempts: number | null;
     exists: boolean;
-    /**
-     * ⚠ A ROW EXISTING IS NOT THE TEST BEING OPEN
-     * (brief_learn_assessments_generate WS4).
-     *
-     * Generated sets land as DRAFT and a human publishes them. `exists` was the
-     * only signal here, so a DRAFT would have printed its pass mark and attempt
-     * limit beside a test nobody can sit — a page confidently quoting the rules
-     * of a closed door.
-     */
     ready: boolean;
     attemptsUsed: number;
     passed: boolean;
   };
   certificate: { earned: boolean; verifyUrl: string | null };
-  /**
-   * ⚠ ENROLLMENT AND THE LEADERBOARD SHARE ONE FLOOR. Both are only shown when
-   * the path has at least this many enrolled learners — see the note in
-   * `getAppPath`. Null means "below the floor, render neither".
-   */
   enrolledCount: number | null;
   leaderboard: LeaderRow[];
   /** Derived from the course titles. See `certificateClaims`. */
   claims: string[];
 };
 
-/**
- * ⚠ THE FLOOR. Publishing a ranking of three named people to a fourth is a
- * different act from publishing a ranking of a thousand, and an "enrolled: 1"
- * figure on a path header is worse than no figure. Measured on the live DB
- * 2026-08-19: 2 enrollment rows across 2 paths, max 1 per path — so NOTHING
- * renders a leaderboard or an enrollment count today, which is the correct
- * outcome and not a bug.
- */
 export const AUDIENCE_FLOOR = 10;
 
-/**
- * "What this certificate says you can do", derived rather than written.
- *
- * The mockup lists four bespoke sentences ("Run a negotiation from plan to
- * award"). Nothing in the schema supplies those, and hand-writing them for 23
- * paths would be 23 claims about competence that nobody maintains. The COURSE
- * TITLES already say it — the catalog names them "How to Use the Negotiations
- * Application" — so this turns them into claims and stays true by construction.
- */
 export function certificateClaims(courseTitles: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -174,7 +100,6 @@ export function certificateClaims(courseTitles: string[]): string[] {
   return out.slice(0, 6);
 }
 
-/** "Marelise Steenkamp" → "M. Steenkamp". ⚠ NEVER an email address. */
 export function leaderLabel(first: string | null, last: string | null): string {
   const f = (first ?? "").trim();
   const l = (last ?? "").trim();

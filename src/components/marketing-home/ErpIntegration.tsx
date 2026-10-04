@@ -8,65 +8,8 @@ import { FulfillmentScene } from "@/components/marketing-home/scenes/Fulfillment
 import { SettlementScene } from "@/components/marketing-home/scenes/SettlementScene";
 import { ASSESSMENT_PRODUCT } from "@/lib/brand";
 
-/**
- * "Integrate Seamlessly — with the Click of a Button" (brief_home_erp_integration).
- *
- * Ported from 2. Claude Sub-Files/mockups/erp_integration_section.html, which
- * Scott approved and which is the spec for layout, copy and content. Styles
- * live in home.css under `.pm-home` with an `erpx-` prefix; nothing here is a
- * <style> block.
- *
- * ── ⚠ THIS COMPONENT SERVES TWO SURFACES — KEEP IT PLACEMENT-AGNOSTIC ────────
- *
- * It renders on `/` today and becomes the mainstay of the Enterprise page next
- * (Scott, 2026-08-15). So it assumes NOTHING about what sits above or below it:
- * no `id`, no scroll anchor, no margins tuned to its neighbours, and no
- * background or vertical padding of its own. Section chrome is the PARENT'S
- * job, passed in as `className`.
- *
- * To drop it on a second page the parent must supply exactly three things:
- *   1. an ancestor carrying `pm-home` — every rule in home.css is scoped to it;
- *   2. an import of `home.css`;
- *   3. a chrome class via `className` (on `/` that is `erpx-band`).
- * That is the whole adoption. Do not add a fourth by baking anything in here.
- *
- * ── ⚠ THERE IS ANOTHER ERP SECTION AND IT IS NOT THIS ONE ────────────────────
- *
- * `src/components/marketing/sections/ErpPunchout.tsx` renders "Punch Out for
- * Talent — Not Just Parts" at `/hire-talent#punchout`, and the header's
- * Enterprise nav item resolves to that anchor. Per this brief it is untouched —
- * not deleted, not edited, not repointed. Which of the two survives is settled
- * by the Enterprise-page brief, not here.
- *
- * ── ⚠ NO ORACLE LOGO. EVER, UNTIL COUNSEL SAYS OTHERWISE ─────────────────────
- *
- * Scott's source deck uses the red ORACLE wordmark. Putting another company's
- * trademark on Panameer's marketing page is a cleared-or-not question, and it
- * has not been cleared. "Oracle Cloud ERP" renders as TEXT. Same gate as the
- * tax claims: if anyone wants the mark, counsel first.
- *
- * ── STILL PRESENTATIONAL ─────────────────────────────────────────────────────
- *
- * This describes a Phase 2 capability. There is deliberately no "Connect your
- * ERP" button and no "● Live" badge — nothing here can be clicked into
- * existence today, and a CTA would say otherwise.
- */
-
 /* ── the overview diagram ─────────────────────────────────────────────────── */
 
-/*
-  ⚠ NO STAT ROW BETWEEN THE LEAD AND THE DIAGRAM. A 0 / 6 / 1 figure strip lived
-  here; Scott cut it on 2026-08-15 and cut it again when it shipped anyway.
-  Nothing replaces it — the lead runs straight into the diagram. Do not
-  reinstate it, and do not put a different set of figures in its place.
-*/
-
-/**
- * Left column — the six documents that move automatically, in the order the ERP
- * produces them. This IS the claim the section makes about scope: six documents,
- * both directions, no re-keying. It is made by showing them, not by counting
- * them in a headline figure.
- */
 const ERP_DOCS: readonly string[] = [
   "Purchase Agreement",
   "Purchase Requisition",
@@ -76,33 +19,7 @@ const ERP_DOCS: readonly string[] = [
   "Payment",
 ];
 
-/**
- * Right column — WHAT PANAMEER HOLDS. The true counterpart to Oracle's six
- * documents on the left (E114).
- *
- * ⚠ THESE ARE OBJECTS, NOT VERBS, AND THAT IS THE WHOLE POINT. This column used
- * to list eight actions — "Create Work Request", "Providers Propose Rate" — in
- * three groups meaning "bid, then work order, then release". Two problems. It
- * answered a different question from the column opposite it: the left side is
- * nouns and the right side was a process. And the Fulfillment scene below
- * already narrates those exact verbs, row by row, better.
- *
- * ⚠ FLAT, AND NO GROUP GAPS. The old comment here argued that "a flat list of
- * nine would read as a queue". That was true of verbs and is false of nouns —
- * a list of things you hold has no order to imply, and grouping them would
- * invent a sequence that does not exist. Deleted rather than softened.
- *
- * ⚠ NOT RENAMED TO `..._STEPS` EVER AGAIN. A constant called STEPS holding
- * objects is how the grouping gets quietly re-added.
- *
- * `qualifier` renders on a second line at a smaller size. It exists for exactly
- * one entry: "Settlement (Hours/Amount/Milestone)" does not fit the column on
- * one line (measured — see the note in home.css), and it is a real object name,
- * so it wraps rather than being abbreviated.
- */
 const PANAMEER_OBJECTS: readonly { name: string; qualifier?: string }[] = [
-  /* ⚠ ONE SOURCE — `ASSESSMENT_PRODUCT` in `lib/brand.ts` (E274, superseding
-     E162). This was one of the four literals that made E162 possible. */
   { name: ASSESSMENT_PRODUCT },
   { name: "Project Timeline Tracker" },
   { name: "Work Request" },
@@ -114,17 +31,6 @@ const PANAMEER_OBJECTS: readonly { name: string; qualifier?: string }[] = [
   { name: "Payment" },
 ];
 
-/**
- * ⚠ THE RAIL NAMES ARE THE WHOLE POINT OF THIS SECTION.
- *
- * POSR, Return Cart, POOM, cXML, EFT — a procurement reader recognises every
- * one of them and knows within a second whether we are serious or generating
- * marketing words. Do not soften them into plain English; the plain English is
- * the caption underneath, which is there for everyone else.
- *
- * `out` means ERP → Panameer. Three out, two back: the arrow direction is a
- * factual claim about which system initiates, not decoration.
- */
 const RAILS: readonly { name: string; out: boolean; caption: string }[] = [
   { name: "POSR", out: true, caption: "Requisition punches out to Panameer" },
   { name: "Return Cart", out: false, caption: "Accepted rate returns as a req line" },
@@ -140,30 +46,6 @@ type Door = {
   desc: string;
   /** Dialog accessible name. */
   label: string;
-  /**
-   * ⚠ TRANSLATE ONLY — NO `scale()`, AND THAT IS THE RULE NOT A PREFERENCE.
-   *
-   * The crop is a WINDOW ONTO THE SCENE AT TRUE SCALE: the pixels in the card
-   * are the same pixels the dialog shows. `brief_home_tiles_and_lightboxes`
-   * settled it — a shrunk screenshot of the whole thing is unreadable mush.
-   * `check:ui` §14 asserts no `scale()` survives here.
-   *
-   * ⚠ RE-CHOSEN FOR v2, NOT CARRIED OVER. The geometry underneath moved when the
-   * actors became full-height columns and every document slid to its partner's
-   * height, so the old `-190/-80` and `-190/-190` framed something else entirely.
-   *
-   * ⚠ THE OFFSET IS NOT IN SVG COORDINATES. It translates the whole SCENE, and
-   * the scene puts its heading and sub-line above the drawing: the SVG's origin
-   * sits at (26, 82) inside it. So framing SVG point (X, Y) means translating by
-   * -(X+26), -(Y+82). Measured in the browser, not derived from the stylesheet —
-   * the first pass at these offsets was 82px out vertically for exactly this
-   * reason, and the card looked plausible while framing the wrong thing.
-   *
-   * Both share x = -286, which is SVG x=260: the point where the Oracle chip's
-   * text and the step chip's text both fit inside the 559px card. The card has
-   * to say "two systems talking" before anyone clicks, and it cannot say that
-   * with half a label showing.
-   */
   tf: string;
   scene: React.ReactNode;
 };
@@ -171,19 +53,8 @@ type Door = {
 const DOORS: readonly Door[] = [
   {
     name: "Fulfillment",
-    /*
-      "Eight hand-offs" went with the swimlanes — it counted lanes, and there are
-      no lanes any more. The four-column diagram is about WHO holds the document,
-      so the description names the four parties instead.
-    */
     desc: "Requisition to released work order — every hand-off between the requester, Oracle, Panameer and the provider.",
     label: "Service procurement fulfillment flow",
-    /*
-      SVG x 260..819, y 84..252 — the Purchase Requisition / Req Line chip, the
-      magenta POSR crossing at y=110, and Create Work Request. A document, an
-      arrow, and the step it lands in. Opens just below the ORACLE CLOUD ERP pill
-      (which ends at y=82) so the card starts on content, not on chrome.
-    */
     tf: "translate(-286px,-166px)",
     scene: <FulfillmentScene />,
   },
@@ -191,12 +62,6 @@ const DOORS: readonly Door[] = [
     name: "Settlement",
     desc: "From work delivered to money moved — approved settlement writes the receipt, the ERS invoice and the payment.",
     label: "Service procurement settlement flow",
-    /*
-      SVG x 260..819, y 180..348 — the Purchase Receipt chip, the magenta
-      crossing at y=245 from Settlement Approval, and the navy step down into ERS
-      Invoice. Two documents, two steps, two arrows: the densest honest window
-      this scene has.
-    */
     tf: "translate(-286px,-262px)",
     scene: <SettlementScene />,
   },
@@ -204,14 +69,6 @@ const DOORS: readonly Door[] = [
 
 /* ── what it costs ────────────────────────────────────────────────────────── */
 
-/**
- * ⚠ SCOTT'S PRICING MODEL, STATED EXACTLY. DO NOT PARAPHRASE.
- *
- * And ⚠ NO PER-TRANSACTION FIGURE APPEARS ANYWHERE. The model is described;
- * the price is not set. "$0.01" was discussed and is explicitly NOT approved
- * for the page. If a number ever lands here it arrives with Scott's sign-off,
- * not with a designer filling a gap.
- */
 const COSTS: readonly { row: string; body: React.ReactNode }[] = [
   {
     row: "Connecting",

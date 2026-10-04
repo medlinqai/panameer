@@ -8,18 +8,6 @@ import {
   setSecurityQuestion,
 } from "@/lib/security-settings";
 
-/**
- * POST /api/settings/security — password, TOTP and the security question
- * (J2.4 WS-H / E018).
- *
- * ONE ROUTE, discriminated by `action`. Five endpoints for five credential
- * operations would be five copies of the capability gate, and the gate is the
- * part that must not be got wrong once.
- *
- * `begin` is the only action that RETURNS anything sensitive — the fresh TOTP
- * secret, which the authenticator needs and which is useless to an attacker who
- * cannot also confirm it from this session.
- */
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("password"),

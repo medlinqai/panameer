@@ -7,29 +7,11 @@ import {
 } from "@/lib/marketing-scenes";
 import { useDecorativeScene } from "@/components/marketing-home/scenes/decorative";
 
-/**
- * SCENE 1 — the Spend Overview dashboard.
- *
- * ⚠ LIVE MARKUP, NOT AN IMAGE. The tooltips and the Table view have to keep
- * working inside the lightbox, which a screenshot cannot do — and the card crop
- * is this same markup at true scale behind a clip, so a bitmap would have to be
- * rendered twice at two sizes anyway.
- *
- * TOOLTIPS ARE POSITIONED IN LOCAL COORDINATES, not `position:fixed` like the
- * mockup. Inside a scrolling lightbox a fixed tooltip detaches from its bar the
- * moment the box scrolls.
- */
 type Tip = { x: number; y: number; label: string; rows: [string, string, string][] } | null;
 
 export function SpendOverviewScene() {
   const [tip, setTip] = useState<Tip>(null);
   const [tables, setTables] = useState(false);
-  /*
-    ⚠ THE CARD CROP IS DECORATIVE — see `./decorative`. This is the only control
-    in any of the four scenes, and inside the card it must not be a <button>:
-    HTML forbids a button descending from a button, React refuses to hydrate it,
-    and the nested control would swallow the Enter/Space that opens the card.
-  */
   const decorative = useDecorativeScene();
 
   return (
@@ -52,8 +34,7 @@ export function SpendOverviewScene() {
           <span className="sv-chip">2026/01 – 2026/08</span>
           <span className="sv-chip">USD</span>
           <span className="sv-spacer" />
-          {/* Same class and same box either way, so the crop shows exactly what
-              opening the card reveals — only one of them is a control. */}
+          {}
           {decorative ? (
             <span className="sv-viewbtn">Table view</span>
           ) : (
@@ -95,8 +76,7 @@ export function SpendOverviewScene() {
 
         {tables && (
           <div className="sv-tables" aria-live="polite">
-            {/* IDENTITY NEVER BY COLOUR ALONE — the table is the same numbers,
-                readable without seeing a single swatch. */}
+            {}
             <Table title="Spend by category ($M)" cols={["Category", "On contract", "Off contract"]} rows={SPEND_BY_CATEGORY} />
             <Table title="Spend by buyer ($M)" cols={["Buying team", "On contract", "Off contract"]} rows={SPEND_BY_BUYER} />
             <Table title="Spend by supplier ($M)" cols={["Supplier", "On contract", "Off contract"]} rows={SPEND_BY_SUPPLIER} />

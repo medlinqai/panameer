@@ -8,24 +8,6 @@ import {
   StubEmpty,
 } from "@/components/console/ConsolePage";
 import { BoardRefresh } from "@/components/admin/BoardRefresh";
-/*
-  ── ⚠⚠ THE PER-SIDE ONBOARDING IMPORTS WENT WITH THE PARAGRAPH (`E457`) ──────
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    import { ONBOARDING_STATUSES, buyerStatus, sellerStatus, sidesFor,
-             type OnboardingStatus } from "@/lib/onboarding-status";
-
-  ⚠⚠ THIS IS WHAT MADE `E457` NOT A ONE-LINE DELETE, and it is bigger than the
-  brief expected. The deleted paragraph was the ONLY reader of `sideTotal`, and
-  `sideTotal` was the only reason the per-side counting loop ran at all — the
-  `counts` Map it filled was read nowhere else on this page (its one other
-  mention is inside a SUPERSEDED comment). So the sentence, the loop and these
-  five imports all die together; leaving any of them would be a new lint warning
-  and the rule is 0 new.
-  ⚠ `lib/onboarding-status.ts` ITSELF IS UNTOUCHED and still has 86 references
-  across the app, including the `?status=` trend view. Only THIS page stopped
-  importing it.
-*/
 import {
   LEVEL_TILES,
   USER_LEVELS,
@@ -48,66 +30,16 @@ import { REGISTERED_SITE_NAME } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Admin → Buyers/Sellers (`E013`, rebuilt by `P1-J1.1-E253` · `E255` · `E256` ·
- * `E269` · `E271`).
- *
- * ⚠ IT WAS A ROSTER: name, email, derived role, joined, and a `Status` column
- * that printed a literal em-dash for every row. It is now an onboarding board —
- * where each person actually is, and what is blocking them.
- *
- * ⚠⚠ `Requester` NO LONGER REPORTS AS `unknown`, AND THAT WAS THE HEADER'S OWN
- * COMPLAINT. ⚠ SUPERSEDED, quoted not deleted: *"'Requester' has no flag of its
- * own yet (that distinction is the separate USER_TYPE x JOB brief), so it reports
- * as unknown rather than being folded into Buyers, which would silently overstate
- * one and erase the other."*
- * `USER_CLASS` / `USER_JOB` are STILL not in the schema — that has not changed.
- * What changed is that this page stopped waiting for them and now derives
- * Requester from OWNING A `RequesterProfile`, which is the same expression
- * `lib/me.ts` already uses for `roles.isRequester`. One definition, two readers.
- *
- * ⚠ STATUS IS DERIVED IN `lib/onboarding-status.ts` — no new column. See that
- * file for Scott's four statuses and why the buyer-side `Validated` has no
- * mechanism behind it.
- *
- * ── ⚠ THE TREND SHIPPED (`E257`), ONE BRIEF LATE AND FOR GOOD REASON ───────
- *
- * ⚠ SUPERSEDED, quoted not deleted, because the stop was CORRECT BEHAVIOUR and
- * the record of why matters more than the fact it is now gone. This header used
- * to read: *"`E257` asked for the progression tiles to be CLICKABLE... IT IS NOT
- * BUILT, and it stopped on two independent conditions the brief itself set as
- * stop conditions: 1. `.claude/skills/dataviz` DOES NOT EXIST... 2. THE
- * BUYER-SIDE `Validated` HAS NO TIMESTAMP TO TREND ON."*
- *
- * Both are resolved, and differently:
- *   1. THE SKILL REQUIREMENT WAS WITHDRAWN, not satisfied — *"THAT PATH DOES NOT
- *      EXIST AND NEVER DID — chat's error, not a real gate."* The chart rules
- *      were inlined in the brief instead and are followed in
- *      `components/admin/StatusTrendChart.tsx`.
- *   2. THE MISSING COLUMN WAS ADDED on Scott's instruction (`E269b`):
- *      *"timestamp the validated, create the trending report."* Refusing to
- *      invent it was right; being TOLD to add it is a different thing.
- *
- * Tiles now link to `/admin/buyers-sellers/trend`.
- */
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ stage?: string; test?: string; q?: string }>;
 }) {
   const sp = await searchParams;
-  /*
-    ONE READ, ALL PEOPLE. 123 users today, so counting in JS from a single query
-    is cheaper than four round-trips per status per side to Supabase — and it
-    guarantees the tiles and the table are computed from the SAME snapshot. Two
-    queries could disagree by whatever landed between them, which on a live board
-    reads as a bug.
-  */
   const people = await prisma.person.findMany({
     orderBy: { created_at: "desc" },
     select: {
       id: true,
-      /** ⚠ `E794` — the USER id is searchable too; Scott pastes either one. */
       user_id: true,
       first_name: true,
       last_name: true,
@@ -116,13 +48,6 @@ export default async function Page({
       is_service_provider: true,
       is_service_coordinator: true,
       is_support: true,
-      /*
-        ⚠ THE COLUMNS THE LIFECYCLE LEVELS NEED (`P1-A1.5-E430` WS-4), loaded in
-        the SAME single read as everything else — `lib/user-levels.ts` takes a
-        total shape on purpose, so a caller cannot forget one and have a level
-        silently fail. ⚠ `Company.name` IS NOT A LEVEL SIGNAL: every account is
-        given a placeholder company named after the person (`E418`).
-      */
       phone: true,
       title: true,
       photo_url: true,
@@ -131,7 +56,6 @@ export default async function Page({
           name: true,
           tax_type: true,
           tin: true,
-          /* The `Registered` site's address is Level 2's address (`E280`). */
           sites: {
             where: { name: REGISTERED_SITE_NAME },
             select: { addresses: { select: { id: true }, take: 1 } },
@@ -144,12 +68,7 @@ export default async function Page({
         select: {
           email: true,
           email_verified: true,
-          /** ⚠ `E793` — the TEST flag, so the chip and the filter read the same
-           *  column `Remove test accounts` acts on. */
           is_test: true,
-          /* ⚠ `E456` — the Administrators tile's flag. A DIFFERENT AXIS from
-             the four marketplace jobs: an access flag, not a job, so somebody
-             can be an Administrator AND a Provider. */
           is_system_admin: true,
           tos_accepted_at: true,
           locked: true,
@@ -165,16 +84,9 @@ export default async function Page({
           validation_status: true,
         },
       },
-      /*
-        ⚠⚠ THE RECORD THAT SEPARATES A BUYER FROM A REQUESTER (`P1-A1.5-E444`).
-        `E421` gave a buyer BOTH profiles, so `requesterProfile` alone stopped
-        answering "which job is this?". `requester-onboarding.ts` writes this one
-        ONLY when the person answered "buyer" at the fork.
-      */
       buyerProfile: { select: { id: true } },
       providerProfile: {
         select: {
-          /* ⚠ `E430` — the id is what `/providers/[id]` links to. */
           id: true,
           status: true,
           validation_status: true,
@@ -185,45 +97,6 @@ export default async function Page({
     },
   });
 
-  /*
-    ⚠⚠ SUPERSEDED, QUOTED NOT DELETED (`E164` / `E457`) — the per-side counting
-    loop, which existed only to feed the sentence `E457` removed:
-
-      THE PROGRESSION COUNTS (`E256`).
-      ⚠ COUNTED PER SIDE, NOT PER PERSON. A dual-role account holds a status on
-      each side, so the tiles total more than the headcount...
-      const counts = new Map<OnboardingStatus, number>(
-        ONBOARDING_STATUSES.map((s) => [s, 0]));
-      let sideTotal = 0;
-      for (const p of people) {
-        for (const side of sidesFor(p)) {
-          const st = side === "BUYER" ? buyerStatus(p.requesterProfile)
-                                      : sellerStatus(p.providerProfile);
-          counts.set(st, (counts.get(st) ?? 0) + 1);
-          sideTotal++; } }
-
-    ⚠ THE PER-SIDE MODEL IS NOT DEAD — it still drives `/trend?status=` and the
-    per-side statuses in `onboarding-status.ts`. It simply has no reader on THIS
-    page any more, and an unread loop over 199 people is work nobody asked for.
-  */
-
-  /*
-    ── ⚠⚠ THE LIFECYCLE FUNNEL, CUMULATIVE (`P1-A1.5-E430` WS-4 / WS-5b) ──────
-
-    **SCOTT, 2026-09-12:** *"replace the four wizard-status tiles with FIVE
-    lifecycle tiles (verified -> user -> company -> payee, plus total). Counts
-    cumulative so the drop-off between stages is visible."*
-
-    ⚠⚠ COUNTED PER **PERSON**, WHERE THE OLD TILES COUNTED PER **SIDE**, and the
-    caption under the strip had to change with them. A level is a capability the
-    PERSON holds; a wizard status belongs to a side. Counting levels per side
-    would double every dual-role account and make the funnel wider than the
-    headcount.
-
-    ⚠ NEITHER MODEL IS RENAMED, on Scott's instruction. `ONBOARDING_STATUSES`
-    still exists, still means what it meant, and still drives the trend
-    sub-page and the Validation column.
-  */
   const subjects: LevelSubject[] = people.map((p) => ({
     firstName: p.first_name,
     lastName: p.last_name,
@@ -241,27 +114,6 @@ export default async function Page({
   /** Per-person level, by row, so the grid and the tiles cannot disagree. */
   const levelByPerson = new Map(people.map((p, i) => [p.id, subjects[i]]));
 
-  /*
-    ── ⚠⚠ EVERY HEADER TILE OPENS A LISTING (`P1-A1.5-E455`) ──────────────────
-
-    > **SCOTT:** *"can you make it so every tile clicks into a report listing all
-    > of the users for that status?"* → *"Like medlinq — notice that the sub page
-    > has a header in the upper left that allows the user to go back."*
-
-    ⚠ SAME ROUTE + A QUERY PARAM, which is the whole reason search, sort and the
-    pager keep working without being rebuilt. `/admin/buyers-sellers?stage=User`.
-
-    ⚠⚠ `?stage=` IS A NEW PARAMETER AND IT DOES NOT TOUCH `?status=`. They are
-    different models: `?status=` on `/trend` reads `ONBOARDING_STATUSES` (a
-    per-SIDE wizard state) while `?stage=` reads `USER_LEVELS` (a per-PERSON
-    capability). Part A left the tiles unlinked precisely because pointing a
-    Level 2 tile at `?status=` would have asked for a status that does not exist
-    and silently rendered the wrong series. Two axes, two parameters, no overlap.
-
-    ⚠ CUMULATIVE, MATCHING THE TILES. `hasReached` is the SAME expression
-    `levelCounts` uses for the tile numbers, so a tile reading 176 opens a list
-    of 176 — a second filter here is how a count and its list start disagreeing.
-  */
   const stageTile =
     LEVEL_TILES.find((t) => t.level === sp.stage) ?? null;
   const isDrillIn = !!stageTile;
@@ -274,39 +126,12 @@ export default async function Page({
         )
     : people;
 
-  /*
-    ── ⚠⚠ ALL / REAL / TEST (`P2-ALL-E793`) ──────────────────────────────────
-
-    ⚠ **SCOTT'S TRIGGER FOR THIS LANE:** his `test2*` search found nothing and
-    the app had no way to say why. Being able to look at only the real accounts —
-    or only the disposable ones — is the smallest version of that.
-    ⚠⚠ **IT FILTERS THE LIST, NEVER THE TILE COUNTS**, deliberately: the tiles
-    are the lifecycle figures and a tile reading 176 must still open 176
-    (`E430`'s rule, quoted just above). A count and its list disagreeing is the
-    defect that rule exists to stop, and a second filter on the counts is how it
-    starts.
-    ⚠ `all` is the default, so nothing changes until somebody asks.
-  */
   const testFilter = sp.test === "real" || sp.test === "test" ? sp.test : "all";
   const byTest =
     testFilter === "all"
       ? staged
       : staged.filter((p) => (p.user?.is_test === true) === (testFilter === "test"));
 
-  /*
-    ── ⚠⚠⚠ SEARCH MATCHES EVERY FIELD (`P2-ALL-E794`, Scott 2026-10-03) ───────
-
-    ⚠ **THE TRIGGER:** his `test2*` search found nothing. The accounts were gone,
-    but the search also only looked at part of the row — so "nothing found" could
-    not be told apart from "not searched for".
-    ⚠⚠ **EVERY FIELD THE BRIEF NAMES IS IN HERE: name · email · company · job ·
-    user id · person id · phone · title · the TEST flag.** A field that is not
-    searched is a field somebody will conclude is empty.
-    ⚠ `test` / `real` are accepted as words too, so `test` finds the flagged
-    accounts without reaching for the filter.
-    ⚠⚠ It filters the LIST, never the tile counts — same rule as the test filter
-    above, and for the same reason (`E430`).
-  */
   const q = (sp.q ?? "").trim().toLowerCase();
   const visible = !q
     ? byTest
@@ -625,9 +450,7 @@ export default async function Page({
       </form>
       {q && (
         <p className="mt-2 text-[13px] text-ink-2">
-          {/* ⚠⚠ A REAL ZERO SAYS SO, AND SAYS WHAT WAS SEARCHED. Scott's `test2*`
-              search returning a blank screen is what started this lane — "0 of
-              78" with the term echoed back cannot be mistaken for "not run". */}
+          {}
           {visible.length === 0
             ? `No one matches “${q}”. Searched name, email, company, title, job, phone and both ids across ${people.length} people.`
             : `${visible.length} of ${people.length} match “${q}”.`}

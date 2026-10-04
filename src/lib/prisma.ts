@@ -2,10 +2,6 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { freshness } from "./prisma-freshness";
 
-/**
- * PrismaClient singleton using the pg driver adapter (matches Medlinq).
- * Reused across hot reloads in development so connections aren't exhausted.
- */
 declare global {
   var prisma: PrismaClient | undefined;
 }
@@ -22,18 +18,6 @@ if (process.env.NODE_ENV !== "production") {
   warnIfStale();
 }
 
-/**
- * ── ⚠⚠⚠ SAY SO WHEN THIS PROCESS'S CLIENT IS OUT OF DATE (`P2-ALL-E799`) ────
- *
- * ⚠ **DEVELOPMENT ONLY, LOGGED ONCE, AND IT NEVER THROWS.** A stale client fails
- * later anyway; the point of this is that it fails with the RIGHT SENTENCE.
- * ⚠⚠ Scott, 2026-10-03, saw *"Encountered a script tag while rendering React
- * component"* on `/admin/buyers-sellers`. The real fault was a dev server
- * fourteen hours older than the generated client, and the message named a
- * `<script>` in the root layout that had nothing to do with it.
- * ⚠⚠⚠ **THE RULE ITSELF IS IN `prisma-freshness.ts` AND IS PURE**, so it is
- * tested by `check:prisma-freshness` rather than by restarting servers.
- */
 function warnIfStale() {
   try {
     /* eslint-disable @typescript-eslint/no-require-imports */
@@ -49,8 +33,6 @@ function warnIfStale() {
     };
     const { problem, message } = freshness({
       schemaMs: mtime("prisma", "schema.prisma"),
-      /** ⚠ `prisma generate` writes a COPY of the schema beside the client; its
-       *  mtime is when the client itself was built. */
       clientMs: mtime("node_modules", ".prisma", "client", "schema.prisma"),
       processStartMs: Date.now() - process.uptime() * 1000,
     });

@@ -6,11 +6,6 @@ import { AttentionStrip } from "@/components/home/AttentionStrip";
 import { WorklistPanel } from "@/components/home/WorklistPanel";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getAttentionCards } from "@/lib/attention";
-/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
-   *"just comment it out... it is just too much rn. we NEED to move faster. that
-   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
-   scheduling, and a standing Friday commitment nobody wants. Decision and the
-   full call-site list: `src/lib/credits.ts`. */
 // import { getCreditsSummary } from "@/lib/credits";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 import { Card } from "@/components/Card";
@@ -19,24 +14,6 @@ import { displayFirstName } from "@/lib/display";
 import { RequesterHome } from "@/components/home/RequesterHome";
 import { listMentors } from "@/lib/mentors";
 
-/**
- * HOME — the PROVIDER dashboard (brief_sp_dashboard; supersedes MASTER WS12).
- *
- * This page used to render the provider's entire profile view, which is why the
- * post-publish landing was "mixing two pages" (E146): Home and my-profile were
- * the same endless scroll. They are now separate concerns —
- *
- *   Home     = what needs you, then go find work          (here)
- *   Profile  = what buyers see, and Edit Profile          (/profile, /providers/[id])
- *
- * THE WORK FEED IS THE BODY and the attention strip sits above it. That order is
- * the brief's central claim: work is what brings a provider back, so it gets the
- * page, and the cross-cutting things that would otherwise hide in submenus get
- * one compact line above it.
- *
- * A buyer, or an account with no provider profile, keeps the lightweight
- * surface below — Home for them is a different job and out of this brief.
- */
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -69,20 +46,6 @@ export default async function DashboardPage({
       : "best";
     const query = (sp.q ?? "").trim();
 
-    /*
-      COUNT BEFORE STAMPING. "New Matches" means "since your last visit", so the
-      read has to happen against the OLD `dashboard_seen_at`; stamping first
-      would zero the card on the very render that is supposed to show it. The
-      stamp is deliberately after the await for that reason and not by accident
-      of ordering.
-    */
-    /* ⚠⚠ THE CREDITS FETCH IS PARKED (`P1-ALL-E375`) — one fewer round trip on
-       every dashboard load, since nothing renders the result.
-       ⚠⚠ THE DESTRUCTURE WAS RE-INDEXED, NOT JUST BLANKED. `Promise.all` returns
-       positionally, so leaving `[attention, credits, cards]` over a two-element
-       array would have silently bound `cards` to `undefined` and the work feed
-       would have rendered empty with no error. Both the array entry and the name
-       came out together. */
     const [attention, cards] = await Promise.all([
       getAttentionCards({
         personId: providerProfile.person_id,
@@ -100,16 +63,13 @@ export default async function DashboardPage({
 
     return (
       <div className="mx-auto w-full max-w-6xl">
-        {/* ⚠ WHAT'S WAITING ON YOU (`P2-A3-E620` WS-C 3) — the brief puts the
-            worklist on the band's home as well as on `/notifications`.
-            ⚠⚠ It renders NOTHING at zero: a permanent "nothing is waiting"
-            panel on the page a member opens daily is furniture. */}
+        {}
         <WorklistPanel userId={viewer.userId} />
         <Suspense fallback={null}>
           <PublishedDialog />
         </Suspense>
 
-        {/* ⚠ `credits` prop parked with the tile — `P1-ALL-E375`. */}
+        {}
         <AttentionStrip
           cards={attention.cards}
           completeness={providerProfile.completeness}
@@ -120,37 +80,13 @@ export default async function DashboardPage({
     );
   }
 
-  /*
-    THE REQUESTER LANDS ON THEIR OWN HOME (brief_requester_home_v1 WS-C).
-
-    Mirrors the provider pattern: /dashboard branches by who you are rather than
-    each role owning a different URL, so "go to my dashboard" means one thing
-    everywhere in the product — at the end of onboarding, from the rail's Home,
-    and after every login.
-
-    Checked BEFORE the generic buyer surface below, because a requester carries
-    `is_service_buyer` too and would otherwise fall through to a card that
-    offers them one link.
-  */
   const requester = await prisma.requesterProfile.findFirst({
     where: { person: { user_id: viewer.userId }, completed_at: { not: null } },
     select: { id: true, person: { select: { first_name: true } } },
   });
 
   if (requester) {
-    /*
-      A REAL COUNT, and today it is genuinely zero for everyone: WorkRequest
-      exists and nobody has posted one. That is why the empty state is honest
-      rather than fabricated — it is a measurement, not a placeholder.
-    */
     const [openWorkCount, experts] = await Promise.all([
-      /*
-        `buyer` is the Person directly, and POSTED is the only live status the
-        enum has — there is no IN_PROGRESS, because nothing can progress yet.
-        Counting a status that does not exist would have been a silent zero
-        rather than an error, which is exactly the kind of "empty state" that
-        looks correct and isn't.
-      */
       prisma.workRequest.count({
         where: { buyer: { user_id: viewer.userId }, status: "POSTED" },
       }),
@@ -158,9 +94,6 @@ export default async function DashboardPage({
     ]);
 
     return (
-      /* ⚠ The requester's home is a COMPONENT, so the worklist sits beside it
-         in a fragment rather than being threaded through as a prop — the panel
-         fetches its own rows and cannot be handed the wrong ones. */
       <>
         <WorklistPanel userId={viewer.userId} />
         <RequesterHome

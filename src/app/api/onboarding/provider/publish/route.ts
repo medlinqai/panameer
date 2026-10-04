@@ -2,13 +2,6 @@ import { NextResponse } from "next/server";
 import { getSessionViewer } from "@/lib/session";
 import { publishProfile, OnboardingError } from "@/lib/onboarding";
 
-/**
- * POST /api/onboarding/provider/publish — "Publish Profile" (brief_P / E019).
- *
- * Marks onboarding complete after checking the finish page's required fields.
- * NOT a visibility switch: marketplace visibility stays derived from
- * completeness (brief_K).
- */
 export async function POST() {
   const viewer = await getSessionViewer();
   if (!viewer) {

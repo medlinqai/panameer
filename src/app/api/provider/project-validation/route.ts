@@ -3,14 +3,6 @@ import { guardApi } from "@/lib/guard";
 import { requestProjectValidation } from "@/lib/project-validation";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * POST /api/provider/project-validation — ask a project's client contact to
- * validate it (brief_project_validation).
- *
- * Body: { projectId }. OWNER-SCOPED in the lib: the project is re-checked
- * against the session's own profile, so this can never be used to email a
- * stranger's client contact.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

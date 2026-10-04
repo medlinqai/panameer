@@ -3,11 +3,6 @@ import { guardApi } from "@/lib/guard";
 import { requestValidation } from "@/lib/profile-settings";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * POST /api/settings/request-validation — request the merit-based Validation
- * (brief_K). Sets validation_status = REQUESTED + timestamp. Admin grants later
- * (brief_M). Does not change base visibility.
- */
 export async function POST() {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

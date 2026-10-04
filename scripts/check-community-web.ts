@@ -4,21 +4,6 @@ import { stripComments } from "./lib/strip-comments";
 import { layoutWeb, minClearance, RING_GAP_OK, VIEW } from "../src/lib/community-web-layout";
 import { WEB_CAPS } from "../src/lib/community-web";
 
-/**
- * ── ⚠⚠ `check:community-web` — THE WEB CANNOT DRAW TWO NODES ON ONE SPOT ───
- *
- * `P2-J3-E591` WS-B. ⚠ Scott, 2026-09-20: *"a radial fan put two nodes on top
- * of each other in the mockup."*
- *
- * ⚠⚠ THE LAYOUT IS A PURE FUNCTION OF (counts, cycle), WHICH IS WHY THIS GATE
- * CAN EXIST AT ALL. A layout that reached for `Math.random()` could only ever
- * be spot-checked; this one is swept exhaustively — every node count up to the
- * caps, across hundreds of cycles — in under a second and with no browser.
- *
- * ⚠ IT ALSO GUARDS THE TWO RULES THAT ARE NOT GEOMETRY: no rate may be read on
- * this path, and the rebuild may not be driven by a timer alone.
- */
-
 let failed = 0;
 let passed = 0;
 function check(name: string, ok: boolean, detail = "") {

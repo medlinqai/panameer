@@ -1,30 +1,5 @@
 import { PROFILE_VIZ_COPY } from "@/lib/brand";
 
-/**
- * "Bring your résumé alive" — the weighted-skills profile visual (WS-3).
- *
- * This is where a provider sees what their profile BECOMES. The pitch on this
- * page is "go direct, be your own brand"; the obvious next question is what
- * that brand looks like when a buyer sees it, and until now the page never
- * answered it.
- *
- * ── WHAT IT IS SHOWING ───────────────────────────────────────────────────────
- *
- * The real model: each job in a résumé is read for the system it ran on and the
- * modules used on it, and the profile is the weighted rollup — cumulative time
- * per skill, decayed by how recently it was used, plus a centre of gravity
- * across suites. So a bar is not "how good you say you are", it is how long you
- * actually did it and how recently. That is worth showing precisely because it
- * is the opposite of a self-scored checklist.
- *
- * ⚠ EXAMPLE FIGURES. The parser and the weighting are built; the numbers below
- * are an illustrative profile, not anybody's. The caption says so, in the same
- * place the numbers are, for the same reason the maturity dashboard does.
- *
- * Static markup — the bars are divs with a width, no chart library and no
- * client JS, so /find-work stays prerendered.
- */
-
 /** An example rollup, in the shape the real one produces. */
 const EXAMPLE_SKILLS = [
   { name: "General Ledger", suite: "Oracle Cloud", years: "8 yrs", recent: "current", pct: 100 },

@@ -1,28 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
-/* ⚠ `P1-ALL-E384` — the ToS is the MSA (`E380`); every account-creating path
-   records acceptance in the same transaction. */
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { capitalizeName } from "@/lib/display";
-
-/**
- * OAuth account creation + linking (brief_Q).
- *
- * Panameer runs NextAuth with JWT sessions and NO Prisma adapter (locked in
- * brief_E), so there is no `Account` table doing the linking for us. Identity is
- * keyed on the NORMALIZED EMAIL (brief_O), which is exactly what the brief asks
- * for: one click creates the User, or LINKS to the existing one — never a
- * duplicate row for the same address.
- *
- * SECURITY — why the `emailVerified` check below is not optional:
- * linking a provider identity to a pre-existing password account purely because
- * the email strings match is the classic "pre-hijack / automatic account
- * linking" hole. It is only safe when the PROVIDER asserts the address is
- * verified. Google returns that claim; Apple returns
- * `email_verified` too (as a string or boolean). If a provider ever hands us an
- * unverified address we refuse the sign-in rather than take the risk.
- */
 
 export type OAuthProfileInput = {
   provider: string;
@@ -53,14 +33,6 @@ function splitName(name: string | null | undefined): {
   return { first: parts[0], last: parts.slice(1).join(" ") };
 }
 
-/**
- * Create or link the User behind an OAuth sign-in.
- *
- * Deliberately does NOT create the Person/ProviderProfile backbone: signing in
- * with Google says nothing about whether someone is a buyer or a provider. The
- * join flow, which knows that intent, creates the backbone afterwards (see
- * `ensureProviderBackbone`). OAuth fills identity only.
- */
 export async function linkOAuthUser(
   input: OAuthProfileInput
 ): Promise<OAuthLinkResult> {
@@ -123,46 +95,11 @@ export async function linkOAuthUser(
       email_verified: new Date(),
       last_login: new Date(),
       oauth_providers: [input.provider],
-      /*
-        ── ⚠⚠ ACCEPTANCE, IN THE SAME CREATE (`P1-ALL-E384` WS-1b) ────────────
-
-        SCOTT, 2026-09-04: *"yes, everyone needs to accept ToS...fix."*
-
-        ⚠ THIS HOLE IS LATENT, NOT LIVE — it has produced 0 rows only because
-        OAuth is wired and OFF until keys are added. That is exactly why it is
-        worth fixing now: the day the keys land, every Google and Apple sign-in
-        would have created a member with no master agreement, and nobody would
-        have noticed because there is no form to be missing a checkbox from.
-
-        ⚠⚠ SAME TRANSACTION AS THE USER, for the same reason as the claim path:
-        an OAuth account without an acceptance must not be a state the database
-        can reach.
-
-        ⚠ AND THE SAME COPY OBLIGATION APPLIES — see `CLAIM_TERMS_NOTICE`. THE
-        SIGN-IN BUTTON MUST CARRY IT before the click. ⚠ REPORTED AT `E384` AND
-        NOT DONE HERE: the OAuth buttons are on the login and signup surfaces,
-        those buttons are not rendered while the providers are disabled, and
-        putting copy under a button nobody can see is not a fix. It has to land
-        with the keys, and `check:tos` names this file so the write cannot
-        disappear in the meantime.
-      */
       tos_accepted_at: new Date(),
       tos_version: USER_TOS_VERSION,
     },
   });
 
-
-  /*
-    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
-
-    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
-    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
-    `Joined` was structurally 0 for every member.
-    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
-    row must not be able to roll back a new member. It cannot throw, cannot fail
-    a signup, and returns `null` when there is nothing to credit, which is the
-    ordinary case.
-  */
   await creditInviteForNewUser(created.id, email);
   return { ok: true, userId: created.id, created: true };
 }
@@ -171,13 +108,6 @@ export async function linkOAuthUser(
 // Provider configuration guards.
 // ---------------------------------------------------------------------------
 
-/**
- * A provider is only offered when its credentials are actually present.
- *
- * Same discipline as the Resend / Twilio clients (pitfalls.md): read env
- * LAZILY inside a function, never at module load, so a missing key disables a
- * button instead of breaking `next build`'s page-data collection.
- */
 export const oauthConfig = {
   google: () =>
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),

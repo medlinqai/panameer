@@ -1,43 +1,11 @@
 import type { ScoreLine } from "@/lib/completeness";
 import type { SectionSlug } from "@/lib/profile-sections";
 
-/**
- * ── ⚠⚠ THE SCORE PAGE'S PER-LINE COPY, IN ONE PLACE (`P2-J3-E590` WS-B) ────
- *
- * ⚠ `why` is the one line under a step saying why the line matters. `action` is
- * the label on the link that fixes it, and `href` is where that link goes.
- * ⚠⚠ SEPARATE FROM `completeness.ts` ON PURPOSE: that module is the ARITHMETIC
- * and is imported by the scorer, the admin board and two gates. Copy and routes
- * do not belong in a file those three depend on.
- *
- * ── ⚠ `minutes` IS AN ESTIMATE AND IS LABELLED AS ONE ──────────────────────
- *
- * ⚠⚠ IT IS NOT MEASURED AND MUST NOT BE PRESENTED AS MEASURED. The page always
- * says *"about N minutes"*. ⚠ These are deliberately small and round; the point
- * is to say *"this is short"*, not to predict anybody's afternoon.
- *
- * ── ⚠ `To` STAYS LOWERCASE IN SENTENCE COPY (walk item, 2026-09-20) ────────
- */
 export type LineCopy = {
   why: string;
   action: string;
   href: string;
   minutes: number;
-  /**
-   * ⚠⚠⚠ THE `E597` ONE-SECTION EDITOR FOR THIS LINE, WHERE ONE EXISTS.
-   *
-   * ⚠ MEASURED 2026-09-22: **every `href` in this table still points into
-   * `/join/provider`** — the registration wizard — which is the exact complaint
-   * `E597` was written to fix: *"I clicked the edit hyperlink and it takes me
-   * back to the registration walk. This is wrong."*
-   * ⚠⚠ `E597` WS-C BUILT EIGHT ONE-SECTION EDITORS at `/profile/edit/<slug>`,
-   * and this maps each score line onto one WHERE THERE IS ONE.
-   * ⚠⚠⚠ THE LINES WITH NO EDITOR KEEP THEIR `href`: `headline`, `field`,
-   * `photo`, `identity`, `location`, `languages` and `work_method`. The profile
-   * renders no Edit control for any of them — `E597` WS-C measured that there
-   * is no `Edit Title` link — so there is nothing to point at, and inventing an
-   * editor is not this brief. ⚠ **Reported at the WS-C gate.**
-   */
   editorSlug?: SectionSlug;
 };
 
@@ -81,10 +49,6 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   identity: {
     why: "Your address and phone — how work reaches you",
     action: "Add Your Contact Details",
-    /* ⚠⚠⚠ SETTINGS, NOT THE PROFILE EDITOR (brief 10 WS-B). ⚠ `editorSlug` is
-       DROPPED so `ProfileScoreView`'s existing fallback uses this `href` — no
-       new mechanism. ⚠⚠ It moves in the SAME COMMIT the profile's own Contact
-       link is removed, or this line becomes a dead end. */
     href: "/settings/contact",
     minutes: 2,
   },
@@ -100,8 +64,6 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   location: {
     why: "Buyers filter by where you are, even for remote work",
     action: "Say Where You're Based",
-    /* ⚠ THE SECOND OF THE TWO LINES ONE ADDRESS SERVES — same move, same
-       reason. One address, one editor, one save. */
     href: "/settings/contact",
     minutes: 1,
   },
@@ -165,5 +127,4 @@ export const SCORE_LINE_COPY: Record<ScoreLine["key"], LineCopy> = {
   },
 };
 
-/** ⚠ The rider under a line the provider answered with "I have none". */
 export const DECLARED_NONE_RIDER = "you told us you have none";

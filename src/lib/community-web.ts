@@ -1,39 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠ THE COMMUNITY WEB'S DATA (`P2-J3-E591` WS-B) ───────────────────────
- *
- * ⚠ Three node kinds, and they are DATA, NOT DECORATION — each one is a
- * different fact about a different row:
- *
- *   `joined`    an ACCEPTED COLLEAGUE connection. They have a Person, so they
- *               have a name and may have a photo.
- *   `invited`   a PENDING `ColleagueInvite` the viewer sent. ⚠⚠ AN INVITE HOLDS
- *               NAME AND EMAIL ONLY — there is no Person, no title, no photo,
- *               and the shape below CANNOT carry one.
- *   `reachable` a colleague OF a colleague, not yet asked. ⚠ It names the
- *               colleague it is reached THROUGH, because the drawing hangs it
- *               off that node rather than off the centre.
- *
- * ── ⚠⚠⚠ NO RATE. NOT ONE FIELD, NOT ANYWHERE ──────────────────────────────
- *
- * ⚠ Scott, 2026-09-20: *"I do nto think providers should see other provider's
- * rates."* ⚠⚠ THIS PAYLOAD CROSSES TO THE BROWSER, so omitting a rate from the
- * render would not be enough — a rate in the JSON is disclosed whether or not
- * anything draws it. ⚠ It is omitted from the QUERY, which is the only version
- * of this rule that holds.
- *
- * ⚠⚠ RECORDED, NOT FIXED HERE — `ConnectHome.tsx` CALLS `ratesByPersonId`
- * THREE TIMES ON THIS PAGE (its lines 68-70) and uses only `.profileId` off the
- * result. No rate string reaches the DOM today, but the rate columns ARE read
- * on `/community`. ⚠ That is `WS-C` item 7's job, and it is a one-line swap to
- * a `providerProfile.findMany` selecting `{ id, person_id }`. **Not done here**
- * — WS-B is the web, and a change to what Connect Home queries belongs with the
- * page rewrite that owns those rows.
- */
-
-/** ⚠ A face the drawing can paint. `invited` can never have one. */
 export type WebPerson = {
   id: string;
   name: string;
@@ -41,45 +8,13 @@ export type WebPerson = {
 };
 
 export type CommunityWeb = {
-  /** ⚠ The viewer, drawn at the centre. `null` when they have no Person row. */
   me: WebPerson | null;
   joined: WebPerson[];
-  /**
-   * ⚠⚠ NAME IS WHAT THE INVITE HOLDS, AND IT MAY BE JUST AN EMAIL. `null` name
-   * is a real state — `invitee_first_name` is optional on the model — and the
-   * drawing must not invent one.
-   */
   invited: { id: string; name: string | null; email: string }[];
-  /** ⚠ `viaId` is a `joined` id. The drawing links the two. */
   reachable: { id: string; name: string; photoUrl: string | null; viaId: string }[];
-  /** ⚠ How many were dropped by the caps below, so the page can say so. */
   overflow: { joined: number; invited: number; reachable: number };
 };
 
-/**
- * ── ⚠⚠⚠ THE MEMBER'S THREE FIGURES — DRAWN **PLUS** OVERFLOW ────────────
- *
- * ⚠⚠ **THIS EXISTS BECAUSE THE INLINE VERSION COULD NOT BE ASSERTED.** The
- * Community header first showed `web.joined.length` — **what fitted on the ring,
- * not how many colleagues the member has** — and it would have UNDER-REPORTED
- * exactly the people whose network is biggest, who are the people the whole
- * ladder exists to reward.
- *
- * ⚠⚠⚠ **AND THE FIX'S OWN ASSERTION COULD NOT FAIL, WHICH IS NOT AN ASSERTION**
- * (`E607`). I reported *"today's overflow is zero, so both readings agree"* — ⚠
- * **that is the `two zeros agree` trap one level up: the wrong code and the
- * right code produce identical output against live data, so a gate reading the
- * live page proves nothing either way.**
- *
- * ⚠ So the arithmetic moved OUT of the JSX and into a pure function that a
- * fixture can drive past zero. **A rule that cannot be exercised is a rule that
- * is not held.**
- *
- * ⚠⚠ `overflow` IS WHAT THE CAPS DROPPED, so `drawn + overflow` is the total the
- * member actually has — and it is the same arithmetic the picture's own legend
- * used for its aria-label (`nJ = drawnJ + overflow.joined`), which is where the
- * defect was spotted. **One definition, one place** (`E585`).
- */
 export type WebFigures = { joined: number; invited: number; reachable: number };
 
 export function webFigures(web: {
@@ -95,16 +30,8 @@ export function webFigures(web: {
   };
 }
 
-/**
- * ⚠⚠ CAPS EXIST BECAUSE A RING HAS A CIRCUMFERENCE. Beyond these the nodes
- * touch, and two nodes on top of each other is the exact defect Scott named in
- * the mockup. ⚠ The layout asserts its own spacing (`community-web-layout.ts`);
- * these numbers are what that assertion is satisfied at.
- * ⚠ A capped web says *"+N more"* — it never silently shows a smaller network.
- */
 export const WEB_CAPS = { inner: 16, outer: 20 } as const;
 
-/** ⚠ Both halves of an undirected COLLEAGUE edge, as user ids. */
 async function colleagueUserIds(userId: string): Promise<string[]> {
   const rows = await prisma.connection.findMany({
     where: {
@@ -113,25 +40,8 @@ async function colleagueUserIds(userId: string): Promise<string[]> {
       OR: [{ from_user_id: userId }, { to_user_id: userId }],
     },
     select: { from_user_id: true, to_user_id: true },
-    /*
-      ── ⚠⚠⚠ NEWEST FIRST, AND IT WAS UNORDERED (`P2-A3-E596` WS-C item 3) ──
-
-      ⚠ SCOTT asked the web to say what it is showing: *"12 of 25,431 shown"*,
-      selection **most recent**. ⚠⚠ A LABEL THAT NAMES A SELECTION THE CODE DOES
-      NOT MAKE IS WORSE THAN NO LABEL — so the selection is made here.
-
-      ⚠⚠⚠ MEASURED BEFORE WRITING THE LABEL: there was NO `orderBy` on this
-      query or on the `person.findMany` that follows it, so Postgres returned
-      whatever the planner picked and `slice(0, 16)` took an ARBITRARY sixteen —
-      an arbitrary set that could differ between two renders of the same page.
-      ⚠ That is the same defect `seed-test-data.ts` records against its own
-      `findFirst`, where the undefined order was MEASURED to have drifted.
-    */
     orderBy: { created_at: "desc" },
   });
-  /* ⚠⚠ A COLLEAGUE EDGE IS UNDIRECTED AND IS STORED ONCE, with whoever asked as
-     `from`. Reading one column would return half the graph — and would return a
-     DIFFERENT half depending on who did the asking. */
   return rows.map((r) => (r.from_user_id === userId ? r.to_user_id : r.from_user_id));
 }
 

@@ -1,28 +1,3 @@
-/**
- * `check:playable` — a learner only sees what a learner can watch
- * (`P1-J3-E362`).
- *
- * **SCOTT, 2026-09-02:** *"If there is no video...no sense adding the
- * course/lesson."*
- *
- *   1  ONE DEFINITION OF PLAYABILITY. `learn.ts` owns it. `StructureEditor.tsx`
- *      carries an admitted mirror because `learn.ts` imports prisma and that file
- *      is `"use client"` — so the mirror is asserted to AGREE rather than
- *      removed, and no THIRD copy may appear.
- *   2  THE LEARNER SURFACES FILTER AND THE TEACHER SURFACES DO NOT. ⚠⚠ THIS IS
- *      THE ONE THAT MATTERS: Marelise teaches lessons in paths with zero playable
- *      lessons, and a blunt global filter deletes her own work in front of her.
- *   3  THE SUGGESTION NEVER NAMES AN UNPLAYABLE PATH — the worst version of this
- *      bug, because it is the one card that says "begin here".
- *   4  ⚠⚠ NOTHING DELETES. Hide, never delete: a path with no video today must
- *      come back on its own the day one is added.
- *   5  TOTALS ARE DERIVED — no literal 23/54/522/306/305/12 in a component.
- *      `check:learn` GUARD 3 says this too; re-asserted because THIS brief is
- *      exactly when somebody would paste one in.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()` — every file here documents the patterns it must not contain.
- */
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";

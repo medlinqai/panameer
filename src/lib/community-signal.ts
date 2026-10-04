@@ -1,37 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-/**
- * COMMUNITY INVOLVEMENT, AS A PROFILE SIGNAL (brief_community_signal WS2).
- *
- * Scott, 2026-08-19: *"We should also find a way to denote community
- * posts...messages. this gives us a real feel for the community involvement."*
- *
- * ── ⚠ POSTS SHIP, MESSAGES DO NOT ────────────────────────────────────────────
- *
- * There is NO messaging model in this codebase — no Conversation, no Thread, no
- * Message, no `/api/messages`; `/messages` is an honest scaffold whose own header
- * says so and whose composer is visibly disabled. So this counts FORUM activity
- * and calls it that. ⚠ Nothing here may be labelled "messages", and
- * `check:community` fails the build if any surface does — a post count under the
- * word "messages" would be a made-up number for a feature that does not exist.
- *
- * ── ⚠ HELPFUL ANSWERS LEAD, BECAUSE VOLUME IS THE WRONG SIGNAL ───────────────
- *
- * Twenty-five one-line replies out-rank three answers that solved someone's
- * problem, and the first person to notice their reply count is public will
- * optimise for it. `marked_helpful_at` — set by the person who ASKED — is the
- * only number here that means anything, so it is first and the raw counts are
- * context beside it.
- *
- * ── ⚠ AND IT RETURNS null RATHER THAN ZEROES ─────────────────────────────────
- *
- * A profile with no forum activity renders NO block at all. A row of zeroes on a
- * public profile is a claim about a person and it is the wrong one. Measured on
- * the live DB 2026-08-19: 4 seeded boards, 0 threads, 0 posts, and ZERO distinct
- * people who have ever posted — so today this returns null for every profile on
- * the platform, and the correct rendering is nothing.
- */
-
 export type CommunitySignal = {
   /** The number that means something. Leads the block. */
   helpfulAnswers: number;
@@ -39,11 +7,6 @@ export type CommunitySignal = {
   threads: number;
   /** Board titles they are active in, most-active first, capped at three. */
   boards: string[];
-  /**
-   * ⚠ A MONTH, NEVER AN EXACT DATE. "Active this month" is the useful fact; a
-   * precise timestamp on a public profile is surveillance of a person's working
-   * hours, and it is not information a buyer needs.
-   */
   lastActive: string | null;
 };
 
@@ -63,7 +26,6 @@ export async function getCommunitySignal(personId: string): Promise<CommunitySig
     }),
   ]);
 
-  /* ⚠ NOTHING TO SHOW → NOTHING SHOWN. Not a zeroed block. */
   if (threads.length === 0 && posts.length === 0) return null;
 
   const boardCounts = new Map<string, number>();
@@ -90,13 +52,6 @@ export async function getCommunitySignal(personId: string): Promise<CommunitySig
   };
 }
 
-/**
- * "Active this month" · "Active in July 2026". Month granularity only.
- *
- * ⚠ `new Date()` IS THE SERVER'S CLOCK AND THAT IS FINE HERE, unlike the Learn
- * streak: the question is which calendar MONTH, and a month boundary is only
- * ambiguous for a few hours a year rather than every evening.
- */
 function monthLabel(at: Date, now = new Date()): string {
   if (at.getUTCFullYear() === now.getUTCFullYear() && at.getUTCMonth() === now.getUTCMonth()) {
     return "Active this month";

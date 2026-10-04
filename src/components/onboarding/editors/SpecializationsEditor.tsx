@@ -2,33 +2,6 @@
 
 import { Chip, Field, Notice, TextInput } from "@/components/onboarding/controls";
 
-/**
- * ── ⚠⚠ THE SPECIALIZATIONS EDITOR, EXTRACTED (`P2-A2-E597` WS-B, 4 of 5) ──
- *
- * ⚠ 335 lines — the second largest, and the first one where the local helper it
- * needed (`CascadeTier`, 70 lines) had to come with it.
- *
- * ── ⚠⚠⚠ EVERY PIECE OF STATE STAYS WITH THE CALLER, AND THAT IS THE POINT ──
- *
- * ⚠ `query` and `openTier` are the wizard's `specQuery` and `openSpecTier`,
- * passed IN rather than owned here. ⚠⚠ MOVING THEM INSIDE WOULD HAVE BEEN A
- * BEHAVIOUR CHANGE DISGUISED AS A REFACTOR: the modal unmounts on close, so
- * component-owned state would reset the search and the open tier every time it
- * reopened. That is arguably nicer, and it is NOT what this brief is for —
- * `E597` moves editors, it does not redesign them.
- * ⚠ Same for the selection: `onChange` hands a PARTIAL back and the caller owns
- * `profile`, so there is still exactly one `setProfile`.
- *
- * ⚠ PRESENTATION AND DERIVATION ONLY. No `postStep`, no navigation. The save
- * stays in `specializationsEditing()` — two save paths for one field is how the
- * two titles happened (`E595`).
- */
-
-/**
- * ⚠⚠ MOVED WITH THE EDITOR (`P2-A2-E597` WS-B). It was `page.tsx`'s local
- * `CascadeTier` and the specializations picker is its only caller — measured.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — it lived at `page.tsx:5336`.
- */
 function CascadeTier({
   index,
   label,
@@ -41,15 +14,9 @@ function CascadeTier({
   label: string;
   chosen: string | null;
   onChange?: () => void;
-  /**
-   * The reopen affordance. "Change" is right for a single-pick tier that already
-   * has an answer; a MULTI-pick tier that is empty needs "Add", because there is
-   * nothing there to change (PJv2 WS9).
-   */
   changeLabel?: string;
   children: React.ReactNode;
 }) {
-  // brief_Y / E053 — a COLLAPSED tier is genuinely one line now. It used to be
   // a three-line box (heading row, then the value on its own line) that spent
   // ~100px to recap a single word; two of those ate a quarter of the viewport
   // before the step's actual work began, which is most of why the footer sat
@@ -106,7 +73,6 @@ export type SpecGroup = {
   items: { id: string; name: string }[];
 };
 
-/** ⚠ The caller's own caps, passed in so the numbers keep one home. */
 export function SpecializationsEditor({
   groups0,
   selectedIds,
@@ -132,7 +98,6 @@ export function SpecializationsEditor({
   onQueryChange: (next: string) => void;
   openTier: string | null;
   onOpenTierChange: (next: string | null) => void;
-  /** ⚠ A PARTIAL of the profile's specialization fields. The caller merges it. */
   onChange: (patch: {
     specializationIds?: string[];
     specializationNames?: { id: string; name: string }[];
@@ -142,9 +107,6 @@ export function SpecializationsEditor({
   error?: string | null;
   maxPerGroup: number;
   pickedRegionClass: string;
-  /* ⚠ THE CAPS AND THE SCROLL BOX COME FROM THE CALLER. They are the wizard's
-     measured numbers (`E053`/`E054`) and keeping them there means one home for
-     each, not a second copy that drifts. */
   maxPerTier: number;
   scrollRegionClass: string;
 }) {
@@ -176,17 +138,6 @@ export function SpecializationsEditor({
           .filter((id) => kindById.get(id) === kind)
           .map((id) => specById.get(id) ?? "Specialization");
 
-      /**
-       * E054 — search results stay capped PER GROUP and inside ONE bounded
-       * region. A single overall cap would spend its whole budget on the first
-       * group and hide the later ones; three separate regions would let the page
-       * (and so the Continue button) grow as you type, which is the thing E053
-       * was filed about.
-       *
-       * Chosen items are excluded because they are already chips above — the same
-       * rule the Skills tier uses, so the suggestion area only ever holds things
-       * you can still act on.
-       */
       const groups = groups0
         .map((g) => {
           const matches = g.items.filter(
@@ -205,13 +156,6 @@ export function SpecializationsEditor({
       const totalSpecs =
         selectedIds.length + customs.length;
 
-      /**
-       * The open tier: the provider's last pick if they have one, else the first
-       * tier still empty, so the step opens on work to be done rather than on a
-       * tier that is already answered. All three collapse once all three have
-       * something — the step is optional, and a wall of open pickers is what WS9
-       * was filed to remove.
-       */
       const openSpecKind =
         openTier ??
         groups0.find((g) => pickedNames(g.kind).length === 0)?.kind ??
@@ -265,9 +209,7 @@ export function SpecializationsEditor({
             <p className="text-ink-2">Loading specializations…</p>
           ) : (
             <div>
-              {/* Picked, always visible and always removable — it sits OUTSIDE
-                  the scroll region so a selection can never be scrolled or
-                  filtered out of reach. */}
+              {}
               {totalSpecs > 0 && (
                 <div className="mb-4">
                   <p className="mb-2 text-[13px] font-bold">

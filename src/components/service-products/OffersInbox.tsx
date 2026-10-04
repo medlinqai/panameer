@@ -5,19 +5,6 @@ import { useRouter } from "next/navigation";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { formatCents } from "@/lib/display";
 
-/**
- * ── ⚠⚠⚠ THE SELLER'S ROOM. TWO BUTTONS, NOT THREE. (`P2-A6-E705`) ───────────
- *
- * ⚠⚠ **SCOTT, 2026-09-28:** *"either it is an accept or deny. if the provider denies it,
- * the requester either buys it at list or removes it from their cart."*
- * ⚠⚠⚠ **THERE IS NO COUNTER BUTTON, NO "SUGGEST A PRICE" FIELD AND NO THIRD PATH.** The
- * deny form's minimum is **guidance for the buyer's next offer**, not a price the seller
- * is bound to — and an offer at that minimum is **still deniable** (ruling 94a).
- *
- * ⚠ **THE LIST PRICE IS SHOWN BESIDE THE OFFER, BECAUSE THE DECISION IS A COMPARISON.**
- * Without it the seller has to remember what they were asking.
- */
-
 export type OpenOffer = {
   id: string;
   offerNumber: string;
@@ -34,7 +21,6 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
-  /** Which offer's deny form is open. ⚠ One at a time — a deny is a considered act. */
   const [denying, setDenying] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [floor, setFloor] = useState("");
@@ -63,11 +49,6 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
     }
   }
 
-  /*
-    ⚠⚠ A REAL ZERO, IN INK, WITH ITS REASON — never a dash and never a fabricated row
-    (the 2026-09-23 counting rules). ⚠ And it names the first move rather than reporting
-    emptiness: an offer arrives because a buyer found a published product.
-  */
   if (offers.length === 0) {
     return (
       <p className="mt-6 text-[15px] leading-relaxed text-ink-2">
@@ -80,8 +61,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
   return (
     <div className="mt-6 space-y-4">
       {error && <Notice tone="error">{error}</Notice>}
-      {/* ⚠ `Notice` offers `info` and `error` only; inventing a success tone here would be
-          a second visual language for the same idea (`E696`'s finding). */}
+      {}
       {done && <Notice tone="info">{done}</Notice>}
 
       {offers.map((o) => {
@@ -102,7 +82,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                 <>
                   {" "}
                   against a list price of {formatCents(o.listPriceCents, o.currency)}
-                  {/* ⚠ THE GAP IN INK, because "how far below" is the decision. */}
+                  {}
                   {under != null && (
                     <> — {formatCents(under, o.currency)} below</>
                   )}
@@ -110,9 +90,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
               )}
               .
             </p>
-            {/* ⚠⚠ IF THIS OFFER HAD TO CLEAR A FLOOR, SAY SO: it is the seller's own
-                earlier guidance coming back, and it explains why the number is what it
-                is. */}
+            {}
             {o.clearedFloorCents != null && (
               <p className="mt-1 text-[13.5px] text-ink-2">
                 This cleared the {formatCents(o.clearedFloorCents, o.currency)} minimum you
@@ -161,13 +139,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                     />
                   </Field>
                 </div>
-                {/*
-                  ── ⚠⚠⚠ THE SENTENCE THAT KEEPS THIS FROM BECOMING A NEGOTIATION ────
-                  ⚠ Scott refused a counter chain. A minimum here is **guidance for their
-                  next offer**, and it binds the seller to nothing. ⚠⚠ Saying so at the
-                  point of entry is what stops a seller believing they have quoted a price
-                  — which is the misunderstanding a counter-offer field would create.
-                */}
+                {}
                 <p className="mt-2 text-[13.5px] text-ink-2">
                   ⚠ A minimum is <strong className="text-ink">guidance, not a quote</strong>.
                   The buyer&apos;s next offer must clear it, and you can still decline that
@@ -185,8 +157,6 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                         setError("A minimum must be an amount above zero.");
                         return;
                       }
-                      /* ⚠ Dollars in, cents stored, rounded — the same boundary every
-                         money field in this app uses (9.99 × 100 is 998.999… in IEEE 754). */
                       floorCents = Math.round(n * 100);
                     }
                     send(

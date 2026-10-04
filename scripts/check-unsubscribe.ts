@@ -2,14 +2,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { verifyUnsubscribeToken, unsubscribeToken, maskEmail } from "@/lib/unsubscribe";
 
-/**
- * check:unsubscribe — the five invariants (`P1-ALL-E386`).
- *
- * ⚠⚠ THIS IS LIVE. `E371` turned the key on, so a broken unsubscribe is no
- * longer a dead link in a drawer — it is a dead unsubscribe in DELIVERED mail,
- * which is how a sending domain gets blocked. `mail.panameer.com` has no
- * reputation yet to spend.
- */
 let pass = 0;
 const failures: string[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
@@ -40,27 +32,18 @@ const routeAccess = bodies.get(join("src", "lib", "route-access.ts")) ?? "";
 const proxy = bodies.get(join("src", "proxy.ts")) ?? "";
 const schema = strip(readFileSync(join("prisma", "schema.prisma"), "utf8")).replace(/\/\/\/[^\n]*/g, " ");
 
-/* ── 1 · ⚠⚠ THE TRANSPORT CONSULTS SUPPRESSION ────────────────────────────── */
 check("1 — lib/unsubscribe.ts is on disk", lib.length > 0);
 check(
   "1 — sendEmail consults the suppression list",
   /isSuppressed\(/.test(transport),
   "in the TRANSPORT, so a new sender cannot forget"
 );
-/* ⚠ AND IT RUNS BEFORE BOTH EARLY RETURNS — a suppressed address must not even
-   be written to a capture file, and getResend() throws without a key. */
-/* ⚠ COMPARED AGAINST THE CALL SITES, NOT THE DEFINITIONS — and that was a real
-   bug in this assertion: `mailCaptureEnabled` and `getResend` are both DEFINED
-   above `sendEmail`, so `indexOf` on the bare name found the definition and the
-   ordering read backwards. */
 check(
   "1 — the check precedes the capture branch and the Resend client",
   transport.indexOf("await isSuppressed(") < transport.indexOf("if (mailCaptureEnabled())") &&
     transport.indexOf("await isSuppressed(") < transport.indexOf("await getResend()"),
   "a suppressed address must not even be written to a capture file"
 );
-/* ⚠⚠ SILENT SKIP RETURNING SUCCESS, NEVER A THROW. A caller's flow must not
-   break because somebody opted out. */
 check(
   "1 — a fully-suppressed send returns success rather than throwing",
   /allowed\.length === 0[\s\S]{0,200}?return \{ id: "suppressed" \}/.test(transport),
@@ -71,9 +54,6 @@ check(
   ![...bodies.entries()]
     .filter(
       ([f]) =>
-        /* ⚠ THE TRANSPORT OWNS IT; the unsubscribe surfaces legitimately READ it
-           to show "already done"; and `lib/unsubscribe.ts` DEFINES it. Anything
-           else calling it is a sender doing the transport's job. */
         f !== join("src", "lib", "resend.ts") &&
         f !== join("src", "lib", "unsubscribe.ts") &&
         f !== join("src", "app", "api", "unsubscribe", "route.ts") &&
@@ -83,7 +63,6 @@ check(
   "seven senders are seven places to forget; there is one transport"
 );
 
-/* ── 2 · ⚠⚠ NOTHING EVER DELETES A SUPPRESSION ROW ───────────────────────── */
 const deleters = [...bodies.entries()]
   .filter(([, b]) => /emailSuppression\.delete(Many)?\(/.test(b))
   .map(([f]) => f);

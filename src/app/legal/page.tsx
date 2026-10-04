@@ -7,21 +7,6 @@ import { LegalDocNav } from "@/components/legal/LegalDocNav";
 
 export const metadata = { title: "Legal — Panameer" };
 
-/**
- * The legal index (brief_legal_supplements WS-A/D).
- *
- * ONE PAGE THAT LISTS EVERY DOCUMENT. Before this, the corpus was reachable
- * only through whichever link happened to mention a given document, and three
- * of the four core agreements cited supplements that had no page at all. This
- * is what the footer points at.
- *
- * The core agreements are listed FIRST and separately, because they are the
- * ones a person actually accepts. Everything else is a supplement to them.
- *
- * Grouped rather than alphabetical: nineteen legal titles in one list is a wall,
- * and the groups answer the question people arrive with — "where are the
- * payment terms", "what do you do with my data".
- */
 const CORE = [
   {
     href: "/terms",

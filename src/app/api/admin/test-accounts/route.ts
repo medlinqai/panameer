@@ -9,15 +9,6 @@ import {
   setTestFlag,
 } from "@/lib/admin/test-accounts";
 
-/**
- * POST /api/admin/test-accounts — the test-account actions (`P2-ALL-E793`).
- *
- * ⚠⚠ **ONE ROUTE, ONE GUARD, BEFORE THE BODY IS READ.** `guardApi("canAdminister")`
- * runs first, so a new action cannot ship without the gate.
- * ⚠⚠⚠ **THE DESTRUCTIVE ACTION TAKES A TYPED CONFIRMATION AND THE ROUTE DOES NOT
- * INVENT ONE.** `preview` is a separate action precisely so the screen can show
- * exactly what will go before anything is typed.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;
@@ -48,8 +39,6 @@ export async function POST(request: Request) {
           gate,
           String(body.userId ?? ""),
           body.isTest === true,
-          /** ⚠ The screen's acknowledgement, passed through — the library
-           *  refuses without it when the target is a real account. */
           body.acknowledgedRealAccount === true,
         );
         return NextResponse.json({ ok: true });

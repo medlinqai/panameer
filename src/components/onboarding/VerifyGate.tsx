@@ -3,13 +3,6 @@
 import { useEffect, useState } from "react";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 
-/**
- * The email-verification gate body, shared by the provider and buyer wizards
- * (brief_E machinery, reused by brief_G). Polls `statusUrl` until the email is
- * verified, then calls `onVerified(status)` so the parent decides the next
- * screen. Resend + correct-a-mistyped-email hit the generic onboarding
- * endpoints. Render this inside a WizardShell (title + progress, hideFooter).
- */
 export function VerifyGate({
   email,
   onEmailChange,
@@ -82,7 +75,6 @@ export function VerifyGate({
     setResendMsg("Verification sent to your new address.");
   };
 
-  // E091 — caps and centres its OWN column. This renders inside two different
   // shells (the provider check-email screen and the buyer verify step), and now
   // that both are on the wide shared frame, an uncapped prompt would stretch a
   // one-sentence instruction across the full width in whichever of the two

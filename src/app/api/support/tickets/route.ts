@@ -8,21 +8,6 @@ import {
   uploadSupportScreenshot,
 } from "@/lib/storage";
 
-/**
- * POST /api/support/tickets — file a bug report (`P2-J1.1-E032` WS-1/WS-3).
- *
- * ⚠⚠ THIS ROUTE DID NOT EXIST. `src/app/api/support/` was absent from disk while
- * `BugReportForm`'s own comment said *"Wiring `POST /api/support/bug` is the only
- * change needed when the backend lands."* Everything typed into that box was
- * discarded.
- *
- * ⚠ `multipart/form-data`, NOT JSON, because the screenshot rides along —
- * following `api/company/logo/route.ts`'s shape rather than inventing a second
- * upload pattern. Nine upload routes already do it this way.
- *
- * OWNER-SCOPED: the reporter, their name, their email and their P-Account are all
- * resolved from the SESSION in `createTicket`. The body carries no identity.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
@@ -39,12 +24,6 @@ export async function POST(request: Request) {
   };
 
   const application = str("application");
-  /* ⚠ VALIDATED AGAINST THE DERIVED SET, not a hand-written list — the same
-     module the form renders from, so the two cannot disagree about what a legal
-     value is. Both rails plus `onboarding`/`other` are accepted regardless of
-     the caller's own role: a provider may legitimately report an onboarding bug,
-     and refusing the other rail's value would only teach people to pick
-     `Other`. */
   if (!allSupportApplicationValues().includes(application)) {
     return NextResponse.json({ error: "Pick where it happened" }, { status: 400 });
   }
@@ -66,15 +45,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not file that ticket" }, { status: 500 });
   }
 
-  /*
-    ── ⚠⚠ THE SCREENSHOT IS OPTIONAL, AND ITS FAILURE MUST NOT LOSE THE TICKET ──
-
-    The ticket is already written by the time we get here, deliberately: the
-    object path is foldered by ticket id, and — more importantly — a storage
-    outage must never turn a filed bug report back into a discarded one. That is
-    the exact defect this whole feature exists to end. A failed upload is
-    reported alongside a SUCCESSFUL filing, never instead of it.
-  */
   const entry = form.get("screenshot");
   let screenshotError: string | null = null;
   if (entry instanceof File && entry.size > 0) {

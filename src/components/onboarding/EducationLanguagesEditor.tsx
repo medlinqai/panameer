@@ -1,23 +1,8 @@
 "use client";
 
 import { Field, TextInput } from "@/components/onboarding/controls";
-/* ⚠ THE ONE DEFINITION both this step and `/profile/edit/languages` read (`E723`, `E585`). */
 import { WORLD_LANGUAGES, LANGUAGE_NAMES, PROFICIENCY_OPTIONS } from "@/lib/languages";
 
-/*
-  E164 — THIS EDITOR COULD NOT EXPRESS HALF THE RECORD.
-
-  The wizard collects Dates Attended (from/to) and a description; this settings
-  editor offered a single legacy "Year" and nothing else. Because the section
-  save replaces the whole list, editing anything here rewrote every row without
-  the fields it cannot see — so dates entered in the wizard vanished the first
-  time a provider touched Education in settings, and the review then showed a
-  row with no dates. That is the "edits don't show on Review" report, from the
-  other end: the edit saved, and the fields it couldn't carry were dropped.
-
-  It now carries the same shape the wizard does. `year` stays for rows written
-  before start/end existed.
-*/
 export type EducationDraft = {
   institution: string;
   degree: string | null;
@@ -30,7 +15,6 @@ export type EducationDraft = {
 export type LanguageDraft = {
   name: string;
   proficiency: string | null;
-  /** Canonical since E016; `proficiency` is the pre-brief_P free text. */
   level?: string | null;
 };
 
@@ -46,16 +30,6 @@ export function EducationLanguagesEditor({
   languages: LanguageDraft[];
   onEducation: (next: EducationDraft[]) => void;
   onLanguages: (next: LanguageDraft[]) => void;
-  /**
-   * ⚠⚠⚠ THE EDUCATION HALF CAN BE HIDDEN (`P2-A2-E600` WS-F).
-   *
-   * ⚠ `/profile/edit/languages` edits languages ONLY — its step posts
-   * `{ languages }` and its `onEducation` is a no-op. ⚠⚠ MEASURED: it rendered
-   * an `+ Add Education` button that added a row nothing would ever save,
-   * which is a control that lies about what it does.
-   * ⚠ Defaults to `true`, so the wizard — which genuinely edits both on one
-   * screen — is byte-unchanged.
-   */
   showEducation?: boolean;
 }) {
   const updEdu = (i: number, patch: Partial<EducationDraft>) =>
@@ -153,22 +127,7 @@ export function EducationLanguagesEditor({
       <section>
         <h3 className="mb-3 font-bold">Languages</h3>
         <div className="space-y-3">
-          {/*
-            ── ⚠⚠⚠ TWO PICKLISTS, AND THE PROFICIENCY WRITES `level` (`P2-A2-E723`) ────────
-
-            ⚠ **SCOTT: *"Languages: two picklists, not free text… Proficiency: exactly Native ·
-            Fluent · Professional · Conversational · Beginner, required per language."***
-            ⚠⚠⚠ **AND THE BUG HE FOUND: *"the proficiency box discards typing today.
-            `EducationLanguagesEditor` writes `proficiency`, but `SectionEditorClient.tsx:384`
-            saves `level ?? proficiency`, and `level` is `""` for existing rows, so the empty
-            string wins."*** ⚠⚠ **`??` ONLY FALLS BACK ON `null`/`undefined`, NOT ON `""`** —
-            so an empty `level` beat whatever was typed, every time. **The picklist now writes
-            `level` directly and `proficiency` is gone from this editor's data**, which removes
-            the two-field choice rather than fixing the operator.
-            ⚠ **WHY FREE TEXT HAD TO GO, MEASURED:** live names include `"Spanish Native"`,
-            `"English Advanced intermediate"` and `"German Basic"` — **the proficiency was
-            being typed into the NAME box**, because nothing stopped it.
-          */}
+          {}
           {languages.map((l, i) => (
             <div key={i} className="flex items-end gap-3">
               <div className="flex-1">
@@ -178,13 +137,9 @@ export function EducationLanguagesEditor({
                     onChange={(ev) => updLang(i, { name: ev.target.value })}
                     className="w-full rounded-[10px] border border-line bg-white px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
                   >
-                    {/* ⚠ An unchosen row shows a prompt, not the first language in the world. */}
+                    {}
                     <option value="">Choose a language…</option>
-                    {/* ⚠⚠ A ROW WHOSE STORED NAME IS NOT IN THE LIST KEEPS ITS OWN OPTION.
-                        Without this, opening the editor on `"Spanish Native"` would silently
-                        reset the select to blank and a save would erase a real row. **Nothing
-                        is rewritten behind the member's back; they are shown what is stored
-                        and can pick a clean value.** */}
+                    {}
                     {l.name && !LANGUAGE_NAMES.has(l.name) && (
                       <option value={l.name}>{l.name} (not a standard name)</option>
                     )}
@@ -204,7 +159,7 @@ export function EducationLanguagesEditor({
                     className="w-full rounded-[10px] border border-line bg-white px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
                   >
                     <option value="">Choose…</option>
-                    {/* ⚠⚠ SCOTT'S DISPLAY ORDER, NOT THE ENUM'S — see `lib/languages.ts`. */}
+                    {}
                     {PROFICIENCY_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
@@ -213,16 +168,7 @@ export function EducationLanguagesEditor({
                   </select>
                 </Field>
               </div>
-              {/*
-                ── ⚠⚠⚠ THE LAST LANGUAGE CANNOT BE REMOVED (`E723` item 12) ────────────────
-
-                ⚠ **SCOTT: *"the last language can't be removed; its Remove is disabled, with
-                the line 'You need at least one language.'"***
-                ⚠⚠ **THE BUTTON IS DISABLED, NOT HIDDEN.** A control that vanishes leaves the
-                member wondering where it went; one that is visibly dead with a reason beside
-                it answers the question (`E579` — a door onto a wall, inverted).
-                ⚠ **THE SERVER REFUSES THIS TOO** — a disabled button is not a rule.
-              */}
+              {}
               <div className="pb-3">
                 <button
                   type="button"
@@ -248,9 +194,6 @@ export function EducationLanguagesEditor({
         <button
           type="button"
           onClick={() =>
-            /* ⚠ `proficiency` IS GONE FROM THIS EDITOR'S DATA (`E723`) — the picklist writes
-               `level`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-               //   onLanguages([...languages, { name: "", proficiency: "" }]) */
             onLanguages([...languages, { name: "", proficiency: null, level: "" }])
           }
           className="mt-3 text-[14px] font-bold text-magenta hover:text-magenta-dark"

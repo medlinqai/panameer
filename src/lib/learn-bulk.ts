@@ -1,21 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { normalizeVimeoRef } from "@/lib/learn-admin";
 
-/**
- * Bulk video-URL load from CSV (brief_learn_admin_authoring WS5).
- *
- * THE GOVERNING RULE, inherited from the Archive-Scott join that was killed
- * during the catalog import: NEVER GUESS-ATTACH. A row that matches one lesson
- * confidently is filled; a row that matches several, or none, is REPORTED and
- * left alone. Attaching the wrong video to a lesson is worse than leaving it
- * empty, because "coming soon" is visibly incomplete and a wrong video looks
- * finished — nobody goes looking for it.
- *
- * Matching accepts either a lesson id or a title path, because the two callers
- * are different people: an export from this console has ids, and a hand-built
- * spreadsheet has the titles someone can actually read.
- */
-
 export type BulkRow = {
   line: number;
   identifier: string;
@@ -44,11 +29,6 @@ export type BulkPlan = {
   matches: BulkMatch[];
 };
 
-/**
- * A minimal RFC-4180 reader: quoted fields, doubled quotes, embedded commas and
- * newlines. Written rather than pulled in because the format we accept is two
- * columns wide and a dependency for that is more surface than it saves.
- */
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];

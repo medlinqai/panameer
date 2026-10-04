@@ -3,20 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
-/**
- * The Work Tracker Builder (`P2-ALL-E752`).
- *
- * ⚠⚠ **THE OPEN PAGE PATTERN** (`phase_3_ui.md`, `P2-A1.1-E745`): no boxes, thin
- * `border-line` rules, the page paints `bg-surface` — ⚠⚠⚠ **never `bg-white`
- * (`E723`)** — square 4px actions in solid ink, and **magenta for links and
- * eyebrows only** (`E433`).
- *
- * ⚠ Every write posts to one route and then `router.refresh()`s, so the server
- * component re-reads and the screen shows what the DATABASE holds, not what this
- * component hoped it wrote. ⚠⚠ No optimistic local state for statuses: a tracker
- * whose screen disagrees with its own table is the defect it exists to prevent.
- */
-
 type Task = {
   id: string;
   segment: string;
@@ -24,7 +10,6 @@ type Task = {
   status: string;
   owner: string;
   note: string;
-  /** ⚠ "" = no stage set; renders no segments on the public page, not a guess. */
   stage: string;
   isJourney: boolean;
   releaseId: string;
@@ -54,13 +39,9 @@ type CustomTask = { id: string; title: string; phase: string; status: string; re
 
 const TASK_STATUSES = ["Not Started", "In Progress", "Blocked", "Done", "N/A"];
 const GATE_VALUES = ["No", "Yes", "N/A"];
-/** ⚠⚠ THE FOUR JOURNEY STAGES. "" clears it back to no segments (`E757`). */
 const JOURNEY_STAGES = ["design", "build", "test", "live"];
 const RELEASE_STATUSES = ["Planned", "In progress", "Done"];
 
-/** ⚠ `N/A` leaves the denominator — see `percentDone` in `catalog.ts`, which is
- *  the server-side half of this same rule. Two copies would drift (`E585`), so
- *  this one does nothing the other does not. */
 function pct(tasks: Task[]): number | null {
   const counted = tasks.filter((t) => t.status !== "N/A");
   if (counted.length === 0) return null;
@@ -70,68 +51,29 @@ function pct(tasks: Task[]): number | null {
 const FIELD =
   "w-full border border-line bg-surface px-2 py-1.5 text-[13px] text-ink focus:border-ink focus:outline-none";
 const BTN =
-  /* ⚠ `text-surface`, not `text-white` — `--color-ink` inverts in dark mode and
-   `white` does not, which renders a near-white label on a near-white fill
-   (measured on the share bar, `E755`). */
   "inline-flex min-h-[36px] items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
 const BTN_2 =
   "inline-flex min-h-[36px] items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 
-/**
- * ── ⚠⚠⚠ SAVING YOU CAN SEE (`P2-ALL-E768`) ─────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-02, using this page for the first time:** *"There was no
- * save button."*
- *
- * ⚠⚠ **THE ANSWER IS NOT A SAVE BUTTON — IT IS TELLING HIM IT SAVED.** Every
- * field here writes on blur or on change and always has; what was missing was
- * any evidence of it. ⚠⚠⚠ **MEASURED BEFORE THIS LANDED: the rendered page
- * contained ZERO occurrences of `Saving` or `Saved`.** The only feedback that
- * existed was a page-level error line, so a save that WORKED looked exactly like
- * a save that never fired.
- *
- * ⚠ A save button would have been the wrong fix twice over: it would make the
- * 212 task rows need one, and it would invent a "dirty" state the writes do not
- * have.
- */
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-/** ⚠ What a field needs to retry: the exact payload that failed, and why. */
 type SaveEntry = { state: SaveState; message?: string; payload?: Record<string, unknown> };
 
-/**
- * ⚠⚠ ONE INDICATOR, USED EVERYWHERE, SO THE PAGE CANNOT GROW A SECOND DIALECT
- * (`E585`). ⚠ It renders nothing at `idle` — a row that has never been touched
- * says nothing rather than claiming it is saved.
- */
 function SaveMark({ entry, onRetry }: { entry?: SaveEntry; onRetry?: () => void }) {
   if (!entry || entry.state === "idle") return null;
   if (entry.state === "saving") return <span className="text-[12px] text-ink-2">Saving…</span>;
   if (entry.state === "saved")
     return (
-      /* ⚠ `aria-live` is OFF here deliberately: 212 rows announcing "Saved" would
-         make a screen reader unusable. The PAGE-LEVEL line is the live region. */
       <span className="text-[12px] text-ink-2">Saved ✓</span>
     );
   return (
     <span className="flex items-center gap-1.5 text-[12px] text-magenta">
-      {/* ⚠⚠ THE VALUE IS KEPT, AND THAT IS A PROPERTY OF THE FAILURE PATH, NOT A
-          FEATURE: a failed `post` does NOT `router.refresh()`, so the input holds
-          what was typed. A refresh here would silently discard it. */}
+      {}
       {entry.message ?? "Couldn\u2019t save"} — <button type="button" onClick={onRetry} className="underline">retry</button>
     </span>
   );
 }
 
-/**
- * ⚠⚠ A SECTION THAT SAYS WHAT IS IN IT AND HOW TO ADD TO IT (`P2-ALL-E768`).
- *
- * ⚠ **SCOTT:** *"I could see sections with no way to expand and add data."*
- * ⚠⚠⚠ **OPEN BY DEFAULT WHEN EMPTY.** A collapsed empty section is the defect
- * he reported, twice over: nothing to see AND nothing to click. A section with
- * rows starts collapsed because the page is long; a section with none starts
- * open, with its one available action in front of him.
- */
 function Section({
   title,
   count,
@@ -143,10 +85,6 @@ function Section({
   count: number;
   children: React.ReactNode;
   action?: React.ReactNode;
-  /** ⚠⚠ `Phases` PASSES THIS. It is the page's primary content — 212 tasks and
-   *  every date — and landing on five collapsed rows would answer Scott's
-   *  complaint by hiding the thing he came to edit. ⚠ The rest collapse so the
-   *  sections below Phases are reachable without scrolling past all of them. */
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? count === 0);
@@ -159,16 +97,7 @@ function Section({
           aria-expanded={open}
           className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2 hover:text-ink"
         >
-          {/* ⚠ A rotated caret, not two icons — one element cannot disagree with
-              itself about which way it points.
-              ⚠⚠ THE BOX IS SQUARE (`h-3 w-3 leading-3`) AND THAT IS LOAD-BEARING,
-              NOT TIDYING. `rotate-90` turns the element about its CENTRE, so its
-              bounding box becomes **height × width** — an inline `›` measured 18–26px
-              tall, which after the turn put it **6–10px past the left edge of the
-              page frame** on every collapsed row.
-              ⚠⚠⚠ A WIDTH ALONE DID NOT FIX IT, AND THAT IS THE LESSON: with `w-3`
-              the box still measured 18px wide after rotating, because the HEIGHT
-              was what became the width. Only a square turns into itself. */}
+          {}
           <span aria-hidden className={"inline-block h-3 w-3 shrink-0 origin-center text-center text-[12px] leading-3 transition-transform " + (open ? "rotate-90" : "")}>
             ›
           </span>
@@ -199,30 +128,17 @@ export function WorkTrackerEditor({
   const [error, setError] = useState<string | null>(null);
   const [openPhase, setOpenPhase] = useState<string>(phases[0]?.name ?? "");
   const [openStage, setOpenStage] = useState<string>("");
-  /** ⚠ Which Add form is revealed. ⚠⚠ A section with NO rows reveals its form
-   *  from the start — the only thing to do there is add one, and making that
-   *  take two clicks is the complaint Scott made, moved one level down. */
   const [add, setAdd] = useState({
     release: releases.length === 0,
     custom: customTasks.length === 0,
     shipped: shipped.length === 0,
   });
   const [marks, setMarks] = useState<Record<string, SaveEntry>>({});
-  /** ⚠ How many writes are in the air RIGHT NOW. The page line and the leave
-   *  banner both read it, so they cannot disagree. */
   const [inFlight, setInFlight] = useState(0);
-  /** ⚠ Set when a save is in flight and an in-app link is clicked. */
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
-  /**
-   * ⚠⚠ A REF BESIDE THE STATE, AND IT IS NOT REDUNDANT: the document-level click
-   * listener below is registered once and would close over the FIRST render's
-   * `inFlight`. A ref is the value at the moment of the click.
-   */
   const inFlightRef = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  /* ⚠ Clear every pending fade on unmount — a timer that fires into an unmounted
-     tree is a React warning and, worse, a leak on a page an admin leaves open. */
   useEffect(() => {
     const t = timers.current;
     return () => Object.values(t).forEach(clearTimeout);
@@ -241,22 +157,15 @@ export function WorkTrackerEditor({
           body: JSON.stringify(payload),
         });
         if (!res.ok) {
-          /* ⚠ The route's message names the field or id it refused; showing a
-             generic "could not save" would make an admin retype a whole form to
-             find out. */
           const j = (await res.json().catch(() => ({}))) as { error?: string };
           const message = j.error ?? "Couldn\u2019t save";
           setError(message);
-          /* ⚠⚠ THE PAYLOAD IS KEPT SO `retry` RE-SENDS THE SAME WRITE, not a
-             re-read of an input that may since have been refreshed away. */
           if (key) setMarks((m) => ({ ...m, [key]: { state: "error", message, payload } }));
           return false;
         }
         if (key) {
           setMarks((m) => ({ ...m, [key]: { state: "saved" } }));
           clearTimeout(timers.current[key]);
-          /* ⚠ The tick FADES (~2s). A permanent "Saved" on 212 rows stops meaning
-             "just now" and becomes wallpaper. */
           timers.current[key] = setTimeout(
             () => setMarks((m) => ({ ...m, [key]: { state: "idle" } })),
             2000,
@@ -272,17 +181,6 @@ export function WorkTrackerEditor({
     [router],
   );
 
-  /**
-   * ── ⚠⚠⚠ LEAVING WITH A SAVE IN FLIGHT (`P2-ALL-E768`) ─────────────────────
-   *
-   * ⚠ **SCOTT RULED OUT A BROWSER DIALOG**, so this is an in-page banner and it
-   * covers IN-APP navigation only.
-   * ⚠⚠⚠ **THE LIMIT IS STATED RATHER THAN HIDDEN: closing the tab, hitting Back,
-   * or typing a URL CANNOT be warned about without `beforeunload`, which IS the
-   * browser dialog.** This does not pretend otherwise — which is why the page
-   * also carries a persistent `Saving…` line, visible without clicking anything.
-   * ⚠ Capture phase, so it runs before the router's own handler.
-   */
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (inFlightRef.current === 0) return;
@@ -290,8 +188,6 @@ export function WorkTrackerEditor({
       const a = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
       if (!a) return;
       const href = a.getAttribute("href") ?? "";
-      /* ⚠ Only same-page in-app links. A `target=_blank`, a hash or an external
-         host leaves this page alone and needs no warning. */
       if (!href.startsWith("/") || a.target === "_blank") return;
       e.preventDefault();
       setLeaveTo(href);
@@ -314,9 +210,7 @@ export function WorkTrackerEditor({
   return (
     <div className="bg-surface">
       <header className="border-b border-line pb-5">
-        {/* ⚠ Renamed with `E785` so this page and `Build Plan` are tellable apart;
-            the data behind it is unchanged. ⚠ SUPERSEDED, quoted (`E164`):
-            //   <p className="...">Work Tracker</p> */}
+        {}
         <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-magenta">AIM Checklist</p>
         <h1 className="mt-1 font-display text-[26px] font-bold tracking-[-0.3px] text-ink">
           The build, as it stands
@@ -326,9 +220,7 @@ export function WorkTrackerEditor({
           never leave this page — the public view carries phases, gates and stages only.
         </p>
         <p className="mt-3 text-[13px] text-ink-2">
-          {/* ⚠⚠ A REAL ZERO AND AN UNCOUNTABLE FIGURE MUST NOT LOOK THE SAME
-              (`decisions_2026-09-23.md` §1). `null` here means every task is
-              `N/A`, so the dash carries its reason rather than reading as 0%. */}
+          {}
           {overall === null ? (
             <>
               <span className="font-bold text-ink">—</span> overall · nothing countable yet (every task is
@@ -344,25 +236,13 @@ export function WorkTrackerEditor({
         </p>
       </header>
 
-      {/*
-        ── ⚠⚠ HOW THIS WORKS, IN ONE LINE (`P2-ALL-E768`) ────────────────────
-        ⚠ Scott asked for it because nothing on the page said that statuses save
-        themselves, that a release's % comes from what is assigned to it, or that
-        task text never reaches the public page. ⚠⚠ All three were TRUE already
-        and none of them were VISIBLE, which is the same defect as the missing
-        save tick: correct behaviour nobody could see.
-      */}
+      {}
       <p className="mt-4 border-l-2 border-line pl-3 text-[13px] leading-relaxed text-ink-2">
         Statuses save as you go — there is no save button. Assign tasks to a release to set its %. Only
         counts and percentages are public; task text, owners and notes stay on this page.
       </p>
 
-      {/*
-        ⚠⚠⚠ THE PAGE-LEVEL LINE IS THE LIVE REGION, AND THE ROW TICKS ARE NOT.
-        ⚠ 212 rows each announcing "Saved" would make this page unusable with a
-        screen reader; one line that changes between two states is what a person
-        actually needs to hear.
-      */}
+      {}
       <p
         aria-live="polite"
         className={
@@ -376,12 +256,7 @@ export function WorkTrackerEditor({
             : "All changes saved"}
       </p>
 
-      {/*
-        ⚠⚠ THE LEAVE BANNER — IN-PAGE, NEVER A BROWSER DIALOG (Scott, 2026-10-02).
-        ⚠ It only fires on an in-app link clicked while a write is in the air, and
-        it offers both ways out: wait, or go anyway. ⚠⚠⚠ A warning with no way
-        past it is a trap, not a warning.
-      */}
+      {}
       {leaveTo && (
         <div
           role="alertdialog"

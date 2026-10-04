@@ -6,19 +6,6 @@ import { RaiseSettlement } from "@/components/settle/RaiseSettlement";
 import { settleFormFor, SettlementError } from "@/lib/settlements";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * `/orders/[id]/settle` — RAISE A PAYMENT REQUEST (`P1-J4-E394` WS-1 + WS-2).
- *
- * ⚠⚠ IT LIVES INSIDE THE ORDER BECAUSE `nav.ts` SAYS SO: *"Timesheet and
- * fixed-firm-price billing both surface as Payment Requests generated from a Work
- * Order… A rail item for a thing that is a tab inside another thing taught the
- * wrong model of how work gets billed."* There is deliberately no top-level
- * "raise a settlement" route.
- *
- * ⚠ AND THE REFUSALS ARE EXPLAINED, NOT 404'd. A buyer who follows this URL, or a
- * provider whose order is not released, gets a sentence saying which — an empty
- * form would be the `E034` shape, and the brief forbids it by name.
- */
 export const metadata = { title: "Raise a Payment Request · Panameer" };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -33,12 +20,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   } catch (e) {
     if (e instanceof SettlementError && e.code === "NOT_FOUND") notFound();
     if (e instanceof SettlementError) {
-      /*
-        ⚠ THE TWO LEGITIMATE REFUSALS, EACH SAYING WHICH IT IS. "Only the provider
-        can raise one" and "this order is not released yet" are different problems
-        with different next steps, and a shared "you can't do that" would hide
-        both.
-      */
       return (
         <div className="mx-auto w-full max-w-3xl">
           <BackLink href={`/orders/${id}`} label="the Work Order" />

@@ -3,36 +3,11 @@ import { getWithdrawals, logTaxFormAccess } from "@/lib/settings";
 import { FORM_LABEL } from "@/lib/tax";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * THE HARD COPY (`P1-ALL-E404` WS-3).
- *
- * ── ⚠ THE IRS CONDITION THIS SATISFIES ────────────────────────────────────
- *
- * A payer accepting an electronic substitute Form W-9 must be able to *"supply
- * a hard copy of the electronic form if the IRS requests it."* This is that
- * copy: the captured record laid out as the paper form's fields, printable from
- * the browser.
- *
- * ⚠⚠ IT RENDERS THE STORED CERTIFICATION TEXT, NOT TODAY'S. `certification_text`
- * is copied onto the row at signing time precisely so this page can show what
- * THIS signer saw. Rendering the current constant instead would produce a hard
- * copy that quietly disagrees with the signature it is evidence for — which is
- * the whole failure the stored text prevents.
- *
- * ⚠ NO TIN. The record holds only the last four digits, so that is all this can
- * show. See the report: a 1099 will eventually need the whole number, and that
- * is a regulated-storage decision, not a rendering one.
- *
- * ⚠ OWNER-ONLY. `getWithdrawals` resolves the person from the session, so there
- * is no id in the URL to tamper with — this page cannot be pointed at somebody
- * else's form.
- */
 export const metadata = { title: "Substitute Form W-9 · Panameer" };
 
 export default async function W9HardCopyPage() {
   const viewer = await guardPage("canProvideServices");
   const { tax } = await getWithdrawals(viewer);
-  /* ⚠ VIEWING THE HARD COPY IS AN OCCASION OF ACCESS TOO. */
   await logTaxFormAccess(viewer, tax?.form ?? "W9", "VIEW");
 
   if (!tax || tax.form !== "W9") {

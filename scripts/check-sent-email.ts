@@ -1,17 +1,3 @@
-/**
- * ── ⚠⚠ THE RECEIPT IS WRITTEN IN THE TRANSPORT (`P2-J3-E522` PART A) ────────
- *
- * ⚠ `E386` put suppression in `sendEmail` so a new sender could not forget it.
- * ⚠⚠ THE RECEIPT CANNOT BE ENFORCED THE SAME WAY — the transport is handed
- * rendered html and CANNOT KNOW which template produced it, or what the mail is
- * about. So enforcement is split:
- *   · `template` is REQUIRED IN THE TYPE, which makes a forgetful sender a
- *     COMPILE ERROR rather than a silent gap;
- *   · this gate holds the parts TypeScript cannot see — that the write lives in
- *     the transport and nowhere else, that it can never fail a send, and that
- *     the senders allowed to omit a subject are NAMED here rather than deciding
- *     for themselves.
- */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -333,8 +319,6 @@ const NOTIFICATION_SENDER = "src/lib/notifications.ts";
   );
   ok(
     "10 — ⚠ no OTHER module filters recipients by domain",
-    /* ⚠ The transport CALLS it and the list module DEFINES it; a third file
-       would be a second copy of the rail. */
     FILES.filter((f) => f !== "src/lib/resend.ts" && f !== LIST)
       .filter((f) => /undeliverableRule\(/.test(strip(readFileSync(f, "utf8"))))
       .length === 0,
@@ -342,7 +326,6 @@ const NOTIFICATION_SENDER = "src/lib/notifications.ts";
   );
 }
 
-/* ═══ 11 · EVERY RECEIPT SAYS WHERE IT CAME FROM (slice of `E548`) ═══════ */
 {
   const model = /model SentEmail \{[\s\S]*?\n\}/.exec(
     readFileSync("prisma/schema.prisma", "utf8")
@@ -356,11 +339,6 @@ const NOTIFICATION_SENDER = "src/lib/notifications.ts";
   );
 }
 
-/* ═══ 12 · THE RUNTIME TRIPWIRE ═════════════════════════════════════════
-   ⚠⚠ A STATIC CHECK CANNOT SEE AN ENVIRONMENT IT DOES NOT RUN IN — that is why
-   check:email stayed green while localhost sent real mail for six days and
-   Vercel for two months. ⚠ So THIS gate only asserts the surface EXISTS and is
-   honest; the answer itself is produced at runtime, where it can be true.     */
 {
   const ST = strip(readFileSync("src/lib/email/sending-state.ts", "utf8"));
   const CARD = strip(readFileSync("src/components/console/MailHealth.tsx", "utf8"));
@@ -368,9 +346,6 @@ const NOTIFICATION_SENDER = "src/lib/notifications.ts";
   const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
 
   ok("12 — the sending-state module exists", ST.length > 0);
-  /* ⚠ THE RULE IS ABOUT THE VALUE, NOT THE WORD. The card may NAME `EMAIL_FROM`
-     in its explanation; what it must never do is IMPORT it, because then the
-     full value — display name and local part — is one interpolation away. */
   const importsValue = (src: string) =>
     /import\s*\{[^}]*\bEMAIL_FROM\b[^}]*\}\s*from/.test(src);
   ok(

@@ -3,19 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { POLICIES, findPolicy } from "@/lib/policies";
 
-/**
- * A policy document, before the policy exists (J2.4 WS-E / E011).
- *
- * Deliberately NOT a "Coming soon" card. A provider following a Trust & Safety
- * link is asking a real question, and the honest answer today is "here is what
- * this document will cover, here is the person to ask in the meantime" — which
- * is more use than a shrug and does not pretend a legal document exists when it
- * does not.
- *
- * Public, and outside the app shell: policies are the kind of page people link
- * to from an email or read before signing up, and gating them behind a session
- * would make them unreachable to exactly those readers.
- */
 export function generateStaticParams() {
   return POLICIES.map((p) => ({ slug: p.slug }));
 }
@@ -31,8 +18,7 @@ export default async function PolicyPage({
 
   return (
     <>
-      {/* Public content -> the public nav (WS-B). This route rendered no
-          chrome at all, so a policy opened from a footer link was a dead end. */}
+      {}
       <MarketingHeader />
     <main className="min-h-screen bg-white px-6 py-12 font-body text-ink">
       <div className="mx-auto max-w-2xl">

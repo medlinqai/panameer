@@ -4,10 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Notice } from "@/components/onboarding/controls";
 
-/**
- * Existing-provider accept: the logged-in invitee links to the coordinator.
- * The server (acceptInviteForUser) enforces the email match + provider profile.
- */
 export function AcceptButton({ token }: { token: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

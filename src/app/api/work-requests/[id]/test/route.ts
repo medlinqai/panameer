@@ -4,34 +4,10 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { sendTest } from "@/lib/work-tests";
 
-/**
- * ── ⚠⚠⚠ POST /api/work-requests/[id]/test (`P2-A8-E683a` WS-E) ────────────
- *
- * ⚠⚠⚠ **`work-tests.ts` IS 345 LINES WITH FOUR EXPORTED FUNCTIONS AND HAD ZERO
- * IMPORTERS IN `src/`** — measured at WS-E's premise check, the same shape as
- * the interview writer beside it.
- *
- * ⚠⚠ **A TEST IS A `LearnAssessment`, WHICH IS WHY THE BODY NAMES ONE.** The
- * buyer picks a published path test; `sendTest` refuses a missing or
- * unpublished one through `assertTestRequestLine`, so this route validates the
- * SHAPE and the writer validates the RULE. ⚠ Measured today: **2 published
- * assessments, 6 draft** — the picker offers the two, and that number is a
- * query, never a literal.
- *
- * ⚠⚠⚠ **SENDING A TEST GRANTS NO ATTEMPTS AND CONSUMES NONE**, and an existing
- * pass is REUSED rather than re-sat — `work-tests.ts` records why in as many
- * words: *"or the test becomes a toll gate rather than a credential."* This
- * route adds nothing to that and must not.
- *
- * ⚠ **OPTIONAL, AND NOT A PRECONDITION OF WS-F** — `selection.ts` reads no
- * `TestRequest`, and `check:work-chain` fails if it ever does.
- */
 const bodySchema = z
   .object({
     providerPersonId: z.string().uuid(),
-    /** ⚠ Which test. `sendTest` refuses one that is missing or unpublished. */
     learnAssessmentId: z.string().uuid(),
-    /** ⚠ An ISO date; the writer turns it into a `Date`. Optional by design. */
     respondsBy: z.string().max(40).nullish(),
     message: z.string().max(2000).nullish(),
   })

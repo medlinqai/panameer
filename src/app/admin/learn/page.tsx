@@ -8,19 +8,6 @@ import { productionQueue } from "@/lib/path-interest";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Admin → LEARN, the dense console page (WS2, deck slide 2).
- *
- * This route used to BE the authoring tool. The role-density model says
- * /admin/learn is the dense read of the same data the rich /learn shows, and
- * authoring is a different job — so the CRUD moved to
- * /admin/setup/learn-authoring rather than being deleted, and this page is the
- * overview the deck draws.
- *
- * The four tiles are the deck's review queues. Two are REAL — drafts and the
- * URL gap are readable from the catalog — and two need a review-queue model
- * that doesn't exist, so they say so rather than showing a number.
- */
 export default async function Page() {
   const [paths, published, courses, lessons, urlMissing] = await Promise.all([
     prisma.learningPath.count(),
@@ -35,7 +22,6 @@ export default async function Page() {
     }),
   ]);
 
-  /* ⚠ `P2-A4-E611` WS-C — the queue Scott reads. */
   const prodQueue = await productionQueue();
 
   const rows = await prisma.learningPath.findMany({
@@ -48,19 +34,6 @@ export default async function Page() {
     },
   });
 
-  /*
-    ── ⚠ THE CERTIFICATION REVIEW QUEUE (P1-J3-E020) ───────────────────────────
-
-    Every path, its test state, and the ONE NUMBER that decides whether its test is
-    worth reading: how many of its lessons carry a description. `P1-J3-E006` — with
-    no description the model writes from the lesson TITLE and produces plausible,
-    confidently-wrong questions — so a queue that showed only "DRAFT / 20q" would be
-    a queue that invites publishing the bad ones first.
-
-    ⚠ ALL OF THEM, NOT `take: 12` LIKE THE LISTING ABOVE. This is the queue Scott
-    works through; a page that silently showed 12 of 23 would look finished when it
-    was not.
-  */
   const queue = await prisma.learningPath.findMany({
     orderBy: { title: "asc" },
     select: {
@@ -75,13 +48,6 @@ export default async function Page() {
     .map((p) => {
       const ls = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
       const described = ls.filter((l) => l.description && l.description.trim().length > 0).length;
-      /*
-        ⚠ `readQuestions`, NOT `questions.length`. They disagree, and the
-        disagreement is information: `1. Background` holds SIX raw entries and
-        ZERO that survive `ASSESSMENT_SCHEMA`, so a raw count showed a served
-        path where the review screen shows an empty set. The queue has to show
-        what a reviewer will actually see, or the one broken row hides.
-      */
       const qs = p.assessment ? readQuestions(p.assessment).length : 0;
       return { id: p.id, title: p.title, lessons: ls.length, described, qs,
         status: p.assessment?.status ?? null, reviewed: Boolean(p.assessment?.reviewed_at) };

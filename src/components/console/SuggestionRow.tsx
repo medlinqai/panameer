@@ -3,15 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * ONE ROW OF THE MODERATION QUEUE (`P1-A1.5-E482`).
- *
- * ⚠ THE ADMIN CHOOSES THE KIND HERE AND NOWHERE ELSE. A suggestion has none —
- * `onboarding.ts` no longer hard-codes `PRODUCT`, and the stored column value is
- * not a claim about what the row is. ⚠⚠ SO THE SELECT HAS NO SENSIBLE DEFAULT
- * AND DOES NOT PRETEND TO: Promote stays disabled until a kind is picked, which
- * is what makes this a judgement call rather than a rubber stamp.
- */
 export function SuggestionRow({
   id,
   name,

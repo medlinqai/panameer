@@ -1,21 +1,3 @@
-/**
- * `check:resume-review` — the résumé review screen's defect class
- * (`P1-A1.4-E407` WS-9). `npm run check:resume-review`.
- *
- * ── ⚠⚠ THE ASSERTION THAT HAD TO EXIST AND DID NOT ────────────────────────
- *
- * One failed AI pass used to discard the WHOLE result — projects, skills,
- * certifications, education and the profile all fell back to pattern-matching
- * because the EMPLOYERS pass came back empty. Nothing tested that, so Scott
- * reviewed a heuristic parse while the page told him it was AI.
- *
- * ⚠ §1 RUNS THE REAL MERGE with a forced-empty employers list and asserts the
- * other five survive. ⚠⚠ IT CALLS NO MODEL AND COSTS NOTHING — the merge is a
- * pure function of two parses, which is precisely why it is testable.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE EVERY SOURCE SCAN, and §0 proves the strip —
- * this file is full of the strings it searches for.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parseResume } from "@/lib/resume/parse";
@@ -51,14 +33,10 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
   check("0 — a URL is not mistaken for a comment", /https:/.test(strip("const u = 'https://x.dev';")));
 }
 
-/* ═══ 1 · ⚠⚠ ONE FAILED PASS MUST NOT TAKE THE OTHERS DOWN ═══════════════ */
 {
   const importSrc = SRC.find((f) => f.path.endsWith(join("resume", "import.ts")))!;
   check("1 — the guard can see import.ts", !!importSrc);
 
-  /* ⚠ THE MERGE IS ONE FIELD OVERRIDING A SPREAD — that shape is what keeps the
-     other five AI-sourced. A `return { parsed: heuristic }` on this branch is
-     the bug, and it is what this matches against. */
   check(
     "1 — ⚠⚠ the employers fallback overrides ONE field, not the whole parse",
     /\{\s*\.\.\.parsed,\s*experiences:\s*heuristic\.experiences\s*\}/.test(importSrc.code),
@@ -69,8 +47,6 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
     !/the model returned no work history["'`]\s*,\s*configProblem/.test(importSrc.code),
     "a whole-result discard is back"
   );
-  /* ⚠ THE GUARD ITSELF IS KEPT — a dated document with no work history IS a
-     failed extraction, and deleting the detection would hide it. */
   check(
     "1 — the empty-employers condition still exists",
     /experiences\.length === 0 && signals\.dateRangesInText >= 3/.test(importSrc.code)
@@ -80,8 +56,6 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
     /employersFromHeuristic/.test(importSrc.code)
   );
 
-  /* ⚠ AND THE MERGE ACTUALLY PRESERVES THE OTHER SECTIONS — proved on real
-     objects, not by reading the source. */
   const parsed = {
     experiences: [{ employer: "Acme Inc.", roleTitle: "Consultant" }],
     projects: [{ name: "p1" }, { name: "p2" }],
@@ -107,7 +81,6 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
   check("1 — ⚠ overview survives from the AI", merged.overview === "AI overview");
 }
 
-/* ═══ 2 · ⚠⚠ NO PROVIDER-FACING SURFACE RENDERS `configProblem` ══════════ */
 {
   const providerFacing = SRC.filter(
     (f) =>
@@ -115,16 +88,12 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
         f.path.startsWith(join("src", "components", "onboarding"))) &&
       /configProblem/.test(f.code)
   );
-  /* ⚠ A TYPE DECLARATION IS NOT A RENDER. The field must keep travelling — the
-     console health card and the eval script read it. What is forbidden is
-     PRINTING it where a provider can see it. */
   const rendering = providerFacing.filter((f) => /\{\s*path\.configProblem|\{configProblem/.test(f.code));
   check(
     "2 — ⚠⚠ ABSENCE: no signup or onboarding surface renders configProblem",
     rendering.length === 0,
     rendering.map((r) => r.path).join(", ")
   );
-  /* ⚠ AND IT IS STILL AVAILABLE WHERE IT BELONGS. */
   const health = SRC.find((f) => f.path.endsWith("ParserHealth.tsx"));
   check("2 — the admin health card still reads it", !!health && /configProblem|parserConfigProblem/.test(health.code));
 }
@@ -147,8 +116,6 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
 {
   const entry = SRC.find((f) => f.path.endsWith("WorkHistoryEntry.tsx"));
   check("4 — the guard can see WorkHistoryEntry", !!entry);
-  /* ⚠ COMPANY FIRST, ROLE SECOND — `P1-J1.4-E295`: *"the employer carries the
-     weight, the role sits under it."* The bold slot reads the NAME. */
   check(
     "4 — the profile entry bolds the employer NAME, not the role",
     !!entry && /employerDisplayName\(\s*\w+\.name/.test(entry.code),
@@ -158,22 +125,12 @@ const SRC = walk("src").concat(walk("scripts")).filter((f) => f.path !== SELF);
   check("4 — the guard can see EmployersStep", !!editor);
 }
 
-/* ═══ 5 · ⚠⚠ NO DESCRIPTION SWALLOWS THE DOCUMENT ═══════════════════════
-   Run the REAL parser over the REAL fixture and assert no single employer
-   description dwarfs the rest.
-
-   ⚠ THE MULTIPLE IS 6x THE MEDIAN, and it is chosen from the measurement rather
-   than from taste: before the fix Scott's CV produced 5,815 chars against a
-   median of 359 — **16.2x** — and after it the worst is 424 against 330, or
-   **1.3x**. Six sits far above every honest description and far below a runaway,
-   so it cannot fire on a verbose job and cannot miss a swallowed document. */
 {
   const text = readFileSync(join("src", "lib", "resume", "__fixtures__", "scott-new-full.docx"));
   void text; // the docx needs async extraction; the assertion below uses the text form
   const RATIO = 6;
   const raw = readFileSync(join("src", "lib", "resume", "__fixtures__", "expected-parses.json"), "utf8");
   check("5 — the fixture manifest is readable", raw.length > 0);
-  /* ⚠ A SYNTHETIC DOCUMENT, so the assertion tests the PARSER and not one CV. */
   const doc = [
     "EXPERIENCE",
     "Acme Inc. — Consultant (01/2020 – 06/2021)",

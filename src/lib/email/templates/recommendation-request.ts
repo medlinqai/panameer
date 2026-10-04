@@ -1,24 +1,6 @@
 import { capitalizeName } from "@/lib/display";
 import { logoBlock } from "@/lib/email/shell";
 
-/**
- * "Would you recommend me?" — sent to a CONTACT, not to a user (J2.4 WS-F).
- *
- * Modelled on the project-validation email, which is the other message in this
- * product that lands in a stranger's inbox: brand mark, one clear ask, Title-Case
- * buttons, and no commercial detail. Nobody is being sold anything here; a
- * person is being asked a favour on someone else's behalf, and an email that
- * reads as marketing gets that favour refused.
- *
- * THE PROVIDER'S OWN WORDS CARRY IT. `message` is quoted as a block rather than
- * paraphrased — the recipient knows this person and the covering note is the
- * reason they will answer. Rendered as escaped text, never as HTML: it is
- * user-supplied and it is going into an email body.
- *
- * The `invite` footer only appears for a contact with no Panameer account. An
- * existing member being recruited reads as a product that doesn't know its own
- * users.
- */
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

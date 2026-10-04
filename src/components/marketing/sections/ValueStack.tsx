@@ -1,19 +1,6 @@
 import { VALUE_STACK } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
 
-/**
- * "What Procurement Gets" (buyer §5) — the six-cell value stack, on ink.
- *
- * THE TWO MONEY CELLS COME FIRST AND ARE THE ONLY ONES IN MAGENTA. Direct
- * pricing and zero-risk-to-connect are the two facts that decide whether a
- * procurement lead keeps reading; the other four are the reassurance that makes
- * it survivable. Ordering and colour do that argument, so neither is decorative
- * — the numbering starting at 01 on the third cell is deliberate for the same
- * reason: the money cells are not steps in a list, they are the headline.
- *
- * `#value` is what the header's "Pricing" link resolves to. There is no pricing
- * PAGE, and this is the section that honestly answers the question.
- */
 export function ValueStack() {
   return (
     <section id="value" className="bg-ink py-16 text-white">

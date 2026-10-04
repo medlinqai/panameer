@@ -10,38 +10,7 @@ import { checkContactDomain, registrableDomain } from "@/lib/email-domain";
 import { yearRange } from "@/lib/masked-profile";
 import { VALIDATION_LIMIT_PER_DAY } from "@/lib/project-validation";
 
-/**
- * ── ⚠⚠⚠ EMPLOYER VALIDATION — `P2-A1.1-E747` (lane 3, WS-B) ────────────────
- *
- * ⚠ SCOTT, 2026-10-01: *"there should also be a badge at the employer/project
- * levels."* ⚠⚠ Projects had a flow; **employers had nothing — no field, no
- * model, no screen.**
- *
- * ⚠⚠⚠ **AN EMPLOYER VALIDATES ON ITS OWN.** It does not validate the projects
- * under it, and validating every project does not validate the employer. They
- * are different claims: *"he worked here"* is not *"he did this piece of work"*,
- * and a buyer reading a tick needs to know which one they are being told.
- *
- * ── ⚠⚠ WHAT IS DELIBERATELY SHARED WITH THE PROJECT FLOW, AND WHAT IS NOT ───
- *
- * ⚠ **SHARED: the rules.** `checkContactDomain`, the own-domain refusal, the
- * seven-day resend window and `VALIDATION_LIMIT_PER_DAY` are imported or
- * mirrored exactly — ⚠⚠ a second, laxer set of guards on a second surface is how
- * the badge would quietly become decorative on one of them.
- * ⚠⚠⚠ **THE DAILY CAP IS IMPORTED, NOT RE-DECLARED, AND IT COUNTS BOTH KINDS
- * TOGETHER.** Ten requests a day means ten emails to strangers, whichever
- * surface sent them; two separate caps of ten would be a cap of twenty.
- *
- * ⚠ **NOT SHARED: the table and the template.** Two questions, two tables — a
- * nullable `employer_id` on `ProjectValidation` would make every existing
- * `where: { project_id }` ambiguous the day somebody forgot a clause. And
- * `SentEmail.template` is how a bounce says WHICH request failed (`E522`), so one
- * template name for two questions makes that receipt useless.
- */
-
-/** ⚠ 30 days, matching the project flow. One place would be better; see below. */
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-/** ⚠ Seven days — `E746` WS-A's window, for the same reason: their inbox. */
 const RESEND_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function ownedProfileId(viewer: Viewer): Promise<string> {
@@ -53,12 +22,6 @@ async function ownedProfileId(viewer: Viewer): Promise<string> {
   return p.id;
 }
 
-/**
- * ⚠⚠ Ask somebody at this employer to confirm the employment.
- *
- * ⚠ OWNER-SCOPED: the employer is re-checked against the session's own profile,
- * so the id arriving from the client cannot reach anybody else's row.
- */
 export async function requestEmployerValidation(
   viewer: Viewer,
   employerId: string,
@@ -91,7 +54,6 @@ export async function requestEmployerValidation(
     throw new OnboardingError("This job is already validated", "INVALID");
   }
 
-  /* ⚠ The caller may supply the contact on the spot; otherwise the stored one. */
   const contactEmail = (opts.contactEmail ?? employer.contact_email ?? "").trim();
   if (!contactEmail) {
     throw new OnboardingError(
@@ -100,19 +62,6 @@ export async function requestEmployerValidation(
     );
   }
 
-  /*
-    ⚠⚠⚠ THE SAME GUARD, NOT A SECOND ONE (`E746` WS-A's rule). The domain the
-    contact must be at is the EMPLOYER's own domain. ⚠ Without it a provider
-    names any address and confirms their own employment, and the badge is
-    decorative — the one thing it must never be.
-  */
-  /*
-    ⚠⚠ THE MISSING-DOMAIN CASE GETS ITS OWN WORDS. ⚠⚠⚠ `checkContactDomain`'s
-    refusal reads *"Add the client's website domain to this PROJECT"* — measured
-    — and showing that to somebody validating a JOB is the `E459` defect in copy:
-    a message that names the wrong thing. ⚠ The RULE is shared; only the sentence
-    is this surface's.
-  */
   if (!employer.contact_domain?.trim()) {
     throw new OnboardingError(
       "Add this company's website domain first — we can only ask someone with an address there.",
@@ -121,17 +70,9 @@ export async function requestEmployerValidation(
   }
   const domainCheck = checkContactDomain(contactEmail, employer.contact_domain);
   if (!domainCheck.ok) {
-    /* ⚠ The remaining refusals (free email, mismatch) name a DOMAIN, not a
-       project, so they read correctly on this surface and are passed through. */
     throw new OnboardingError(domainCheck.message, "INVALID");
   }
 
-  /*
-    ⚠⚠ THE SELF-VALIDATION REFUSAL, MIRRORED FROM `E746`. ⚠⚠⚠ IT MATTERS MORE
-    HERE: a provider whose own company is their "employer" is the ordinary case
-    for an independent consultant, so without this the employer badge would be
-    self-granted by default.
-  */
   const self = await prisma.user.findFirst({
     where: { person: { providerProfile: { id: profileId } } },
     select: { email: true },
@@ -144,10 +85,6 @@ export async function requestEmployerValidation(
     );
   }
 
-  /*
-    ⚠⚠⚠ ONE CAP ACROSS BOTH KINDS. Ten requests a day means ten emails to
-    strangers, whichever surface sent them — two caps of ten would be twenty.
-  */
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [projToday, empToday] = await Promise.all([
     prisma.projectValidation.count({

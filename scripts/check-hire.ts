@@ -1,38 +1,3 @@
-/**
- * `check:hire` — the rules the Hire surfaces cannot be allowed to lose
- * (`P1-J4-E392`). `npm run check:hire`.
- *
- * ── ⚠⚠ THE THREE THINGS THIS BRIEF SAID TWICE ───────────────────────────────
- *
- *   1. **ONE FUNCTION for the COMPLETE gate**, read by the page AND the API, so
- *      a disabled button can never disagree with the refusal behind it.
- *   2. **THE WIZARD IS NOT REBUILT.** Its `STEPS` array is nine steps in one
- *      order, and this asserts them BY NAME — *"if you find yourself editing the
- *      STEPS array or restructuring the wizard, STOP AND REPORT."*
- *   3. **THE WS-3 FENCE: CREATE THE INVITE, NOTHING MORE.** No bid list, no
- *      comparison, no scoring, no shortlist. *"If you find yourself rendering
- *      Proposal rows, STOP AND REPORT."*
- *
- * ⚠ ALL THREE ARE THINGS A LATER CHANGE WOULD BREAK WHILE LOOKING LIKE AN
- * IMPROVEMENT. Adding a tenth wizard step is an obvious feature; showing whether
- * an invited provider replied is one `include` away and is the beginning of the
- * bid screen. They are wrong for reasons that live in the brief and nowhere in
- * the code, which is why the absence has to be a test — a comment cannot fail a
- * build.
- *
- * ⚠ NO DATABASE AND NO BROWSER. Source is read as text; rules are exercised as
- * functions.
- */
-/*
-  ── ⚠⚠ MOVED OFF `basis` ONTO `transaction_type` (`P2-A8-E621`, ruling 37b) ─
-  ⚠ Scott's `WR_LINE` field set names THREE types where `LineBasis` had two, and
-  the requisition line now carries `TransactionType`. ⚠⚠ THE RULE THESE FIXTURES
-  ASSERT IS UNCHANGED — every line assigned and priced — only the field it reads
-  moved. ⚠ `RATE` became `SERVICE_BY_QTY` and `AMOUNT` became `SERVICE_BY_AMT`:
-  these fixtures are all SERVICES, and `PRODUCT_BY_QTY` is not reachable from a
-  buyer's budget type (see `transactionTypeForPricingType`).
-  ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: "RATE"` / `basis: "AMOUNT"`.
-*/
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { workRequestIsComplete } from "@/lib/transaction-spine";
@@ -69,12 +34,6 @@ function walk(dir: string, out: SourceFile[] = []): SourceFile[] {
 const SRC = walk("src");
 const fileAt = (p: string) => SRC.find((f) => f.path === join(...p.split("/")));
 
-/* ═══ 1 · THE COMPLETE GATE IS ONE FUNCTION, AND IT AGREES WITH THE SPINE ═══
-   ⚠⚠ `E388`'s `workRequestIsComplete` stays the authority on WHAT complete
-   means. `completenessFor` adds the REASONS and nothing else. If the two ever
-   drift, the page greys a button the API would have accepted — or worse, offers
-   one the API refuses. */
-
 const L = (o: Partial<LineForCompleteness>): LineForCompleteness => ({
   line_number: 1,
   description: "a line",
@@ -93,9 +52,6 @@ const TRUTH_TABLE: { name: string; lines: LineForCompleteness[] }[] = [
   { name: "AMOUNT, assigned, no price", lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p" })] },
   { name: "AMOUNT, priced, no provider", lines: [L({ transaction_type: "SERVICE_BY_AMT", amount_cents: 24000 })] },
   {
-    /* ⚠ THE CROSS-COLUMN TRAP: an AMOUNT line carrying a unit price is NOT
-       priced, and a RATE line carrying an amount is NOT priced. Reading one
-       column for both bases is how half the lines render as free. */
     name: "AMOUNT line carrying a unit price is NOT priced",
     lines: [L({ transaction_type: "SERVICE_BY_AMT", provider_person_id: "p", unit_price_cents: 15000 })],
   },
@@ -503,12 +459,6 @@ const SHORTLIST_LIB = join("src", "lib", "shortlists.ts");
       "it may read the viewer's own by unique key; a list is the bid screen"
     );
   }
-  /*
-    ⚠⚠⚠ THE TWO WS-B EXEMPTIONS, FENCED THE SAME WAY AND MORE TIGHTLY: each may
-    look ONE proposal up BY KEY and must not enumerate or read a price.
-    ⚠ `findMany` is what turns a permission check into a bid list; `cover_note`
-    and the line models are what turn it into a comparison.
-  */
   for (const [label, path] of [
     ["the interview writer", INTERVIEW_WRITER],
     ["the test writer", TEST_WRITER],

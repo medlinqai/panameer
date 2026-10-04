@@ -9,70 +9,14 @@ import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getOwnProviderProfileView } from "@/lib/provider-profile-view";
 import { ensureSlug } from "@/lib/public-slug";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
-/* ⚠ `getUsageStats` AND `countProfileViews` ARE NO LONGER CALLED HERE
-   (`P2-A2-E600` WS-B) — the page rule keeps usage and statistics off My
-   Profile. ⚠ Both functions are untouched and still serve their own pages.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { getUsageStats } from "@/lib/usage-stats";
-   //   import { countProfileViews } from "@/lib/profile-views"; */
 import { publicTestimonials } from "@/lib/recommendations";
 import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import { computeProfileScore } from "@/lib/completeness";
-/* ⚠ `P2-A3-E599` WS-C 4 — the `Grow` card's one-liner shows the owner's own
-   score and rank. Computed HERE, on the owner's page, and never passed to
-   `/providers/[id]` — the same rule the usage comb followed. */
 import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
 
-/**
- * ── ⚠⚠⚠ `/profile` IS THE OWNER'S PROFILE (`P2-A2-E598` WS-B) ─────────────
- *
- * ⚠ SCOTT, 2026-09-21, on the option-B mockup: *"Yeah...that is much better. It
- * belongs back there."* Earlier the same day: *"way too much on this page… I may
- * just go back to putting my profile under the avatar in the upper right (with
- * the picture)."*
- *
- * ⚠⚠ THE PROFILE IS NOW AN ACCOUNT-MENU DESTINATION, LIKE LINKEDIN'S "ME" — not
- * a Connect tab. So this page renders **without the Connect tab row**, and a
- * small `My Profile` crumb sits where that row was.
- *
- * ── ⚠⚠ THE SWAP, AND WHY THIS DIRECTION ─────────────────────────────────
- *
- * ⚠ `/connect` USED TO RENDER THIS and `/profile` was a redirect INTO it. That
- * is reversed: the body below moved here verbatim, and `/connect` now lands on
- * `/community`.
- * ⚠⚠⚠ `/profile` WAS ALREADY THE STABLE ROUTE (`E591`) — every user-facing link,
- * the account menu, `/stats`, onboarding and `E597`'s eight one-section editors
- * all point here. ⚠ MEASURED AT THE WS-B GATE: **31 live `/connect` references
- * across 17 files**, and not one of them is a link a member follows to their own
- * profile. Moving the RENDER to the route everything already names is what makes
- * this a swap rather than a migration.
- *
- * ── ⚠ SUPERSEDED, quoted not deleted (`E164`) ───────────────────────────
- *
- * ⚠ This whole page was one line:
- * //   redirect("/connect");
- * ⚠ and before that:
- * //   redirect("/community");
- * ⚠⚠ THE REASONING BEHIND THOSE REDIRECTS IS NOT SUPERSEDED, only their
- * destination: *"`/profile` is linked from the band's account menu, from
- * `/stats`, from onboarding and from older briefs; deleting the route would 404
- * every one of them."* ⚠⚠⚠ THAT IS NOW AN ARGUMENT FOR RENDERING HERE rather
- * than for redirecting away.
- *
- * ── ⚠⚠ THE TWO NON-PROVIDER CASES ARE DIFFERENT AND BOTH ARE KEPT ────────
- *
- * ⚠ A Panameer employee gets `EmployeeProfile` — unchanged, and it was always
- * this page's branch. ⚠⚠ A MEMBER WITH NO PROVIDER PROFILE goes to
- * `/community`, which is the behaviour `/connect` carried; it moved with the
- * render so nobody meets an empty profile.
- */
 export default async function MyProfilePage() {
   const viewer = await getSessionViewer();
-  /* ⚠ ACCESS: `route-access.ts` line 131, `{ prefix: "/profile", requires:
-     "authenticated" }` — applied at the edge by `proxy.ts`, and it covers
-     `/profile/edit/*` by longest-prefix match too (`E597` WS-C). This redirect
-     is the belt to that braces. */
   if (!viewer) redirect("/login?callbackUrl=%2Fprofile");
 
   // A Panameer employee gets the employee profile even if a seeded provider row
@@ -80,62 +24,20 @@ export default async function MyProfilePage() {
   if (viewer.isSystemAdmin) return <EmployeeProfile userId={viewer.userId} />;
 
   const profile = await getOwnProviderProfileView(viewer.userId, viewer);
-  /*
-    ⚠⚠ A MEMBER WITH NO PROVIDER PROFILE GETS THE COMMUNITY PAGE, NOT AN EMPTY
-    PROFILE. ⚠ `redirect` throws, so nothing below it runs and no profile query
-    is attempted against a profile that does not exist.
-  */
   if (!profile) redirect("/community");
 
-  /* ⚠ Fetched once and reused: the comb needs the same colleague count and the
-     same path lists the cards render, and asking twice for one answer is two
-     round trips for nothing. */
-  /* ⚠ `mine` IS NO LONGER DESTRUCTURED (`P2-A2-E600` WS-B) — its only reader
-     was the colleague count, which Layout A does not render. ⚠ `getMyCommunity`
-     is NOT called any more on this page; `growthBoard` does its own reads.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const [taughtPathsList, takenPaths, mine] = await Promise.all([
-     //     …, getMyCommunity(viewer),
-     //   ]); */
   const [taughtPathsList, takenPaths] = await Promise.all([
     getPathsTaughtByProfile(profile.id),
     getPathsTakenBy(viewer.userId),
   ]);
-  /* ⚠ `colleagues` IS NO LONGER RENDERED (`P2-A2-E600` WS-B). `getMyCommunity`
-     still runs — `growthBoard` and the community signal need it — but the count
-     has no surface on Layout A. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const colleagues = mine.colleagues.length; */
 
-  /* ⚠⚠ ONE SCORE, ONE BOARD — the same two calls `/community/grow` makes, so
-     the card and the page cannot quote different figures (`E585`). */
   const [growthMe, growthRows] = await Promise.all([
     growthScore(profile.person.personId, "month"),
     growthBoard("month"),
   ]);
 
-  /*
-    ── ⚠⚠⚠ THE MEMBER'S OWN PUBLIC LINK (`P2-A1.1-E738`, the lane 4 addition) ─
-
-    ⚠ SCOTT, 2026-10-01: *"Owner sees 'Your public link' + Copy under Visibility
-    and in the profile share bar."*
-
-    ⚠⚠ **`ensureSlug` MINTS ON FIRST READ, AND THIS IS THE ONE PLACE IT IS
-    CALLED FROM.** This page is owner-only (`getOwnProviderProfileView` resolves
-    the profile FROM THE SESSION), so a slug is only ever created for the person
-    asking. ⚠⚠⚠ **MINTING ON READ IS SAFE BECAUSE THE SLUG ALONE GRANTS
-    NOTHING:** `/in/<slug>` serves the MASKED preview unless `public_name_at` is
-    set, and that is a separate, explicit opt-in.
-    ⚠ `null` when the member has no usable name yet — the card then shows no
-    link row rather than a broken one.
-    ⚠⚠ ABSOLUTE, BUILT SERVER-SIDE from `NEXT_PUBLIC_APP_URL`: the member pastes
-    this into an email signature, so a relative path would be useless and a URL
-    assembled in the browser would be wrong during SSR.
-  */
   const slug = await ensureSlug(profile.id);
   const publicUrl = slug
-    /* ⚠ `/pro/`, renamed from `/in/` (`P2-A1.1-E756`). The old path still 308s,
-       so links already pasted into signatures keep working — but what we HAND
-       OUT from today is the new one. */
     ? `${(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "")}/pro/${slug}`
     : null;
 

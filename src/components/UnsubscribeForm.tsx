@@ -2,20 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * THE UNSUBSCRIBE BUTTON (`P1-ALL-E386`).
- *
- * ⚠⚠ ONE CLICK. NO CONFIRMATION. The click IS the instruction — a confirm step
- * is a reason to mark the mail as spam instead, which costs the sending domain
- * far more than the unsubscribe would have.
- *
- * ⚠ "EVERYTHING" IS OFFERED ONLY AFTER THE PRIMARY ACTION HAS ALREADY WORKED.
- * Leading with it would turn one unwanted category into total silence by
- * default — nobody clicking "stop these" is asking to be cut off entirely.
- *
- * ⚠ IT DECIDES NOTHING. The token is re-verified server-side on every call; a
- * page that renders a button is not an authorisation.
- */
 export function UnsubscribeForm({
   email,
   category,

@@ -1,6 +1,3 @@
-/* ⚠ `Prisma` IS A VALUE IMPORT, not a type-only one — `Prisma.DbNull` below is a
-   runtime sentinel. A `Json?` column cannot be set to a bare `null`: Prisma reads
-   that as "leave it alone", and `DbNull` is how you say SQL NULL. */
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -11,50 +8,8 @@ import {
   type DomainFieldAnswers,
 } from "@/lib/assessment/domain-fields";
 
-/**
- * THE PER-DOMAIN RESULT — writing it, and reading it back
- * (brief_assessment_instance_model WS1 + WS2).
- *
- * One place, because the same three rules have to hold in three callers: the
- * public submit route, the backfill script, and `/assess/claim`. Two of them are
- * things `check:assessment-instance` fails the build over.
- */
-
-/**
- * A transaction handle or the client itself.
- *
- * ⚠ THE CALLERS THAT WRITE ARE REQUIRED TO PASS A `tx`. The type allows the bare
- * client because `resolveCapabilityDomainIds` reads, and the read is fine outside
- * a transaction — but `check:assessment-instance` asserts that every
- * `assessmentDomainResult` write in the repo is on a `tx` handle, so this type
- * being permissive does not make the rule optional.
- */
 export type Db = PrismaClient | Prisma.TransactionClient;
 
-/**
- * WHICH COMPANY, IF ANY, THIS USER'S ASSESSMENT BELONGS TO.
- *
- * ── ⚠ `getCompanyBinding`, NEVER `Person.company_id` ─────────────────────────
- *
- * `Person.company_id` is the signup placeholder — every new Person gets one
- * whether or not that org is real to them — and treating it as a company binding
- * is `P1-J1.2-E003` exactly. `check:assessment-instance` fails the build if this
- * file, the submit route or the claim page reads it.
- *
- * ── ⚠ APPROVED ONLY, AND THAT IS A NARROWING OF THE BRIEF ────────────────────
- *
- * `getCompanyBinding` returns the best membership it can find and will happily
- * hand back a PENDING or a REJECTED one — it exists to drive the *company* page,
- * where "your request was rejected" is a thing that needs saying. Attribution is
- * a different question. Writing `company_id` from a REJECTED membership would
- * file an assessment under a company that explicitly refused this person, and
- * from a PENDING one would file it under a company that has not yet agreed.
- * Both are wrong in the direction that matters, so only APPROVED counts and
- * anything else leaves the column null. Flagged in the report.
- *
- * Returns null freely. ⚠ A CLAIMER WITH NO BINDING STILL CLAIMS — this must
- * never be the reason a claim fails.
- */
 export async function resolveAssessmentCompanyId(userId: string): Promise<string | null> {
   try {
     const binding = await getCompanyBinding({ userId });
@@ -62,12 +17,6 @@ export async function resolveAssessmentCompanyId(userId: string): Promise<string
     if (binding.status !== "APPROVED") return null;
     return binding.company.id;
   } catch (e) {
-    /*
-      ⚠ SWALLOWED ON PURPOSE, AND ONLY HERE. This runs inside the submit route
-      and inside the claim page. Attribution is a nice-to-have; the submission
-      and the account are not. A failure to resolve a company must never cost
-      somebody their assessment or their sign-in.
-    */
     console.error("[assessment] company binding lookup failed; leaving company_id null", e);
     return null;
   }
@@ -89,74 +38,25 @@ export async function resolveCapabilityDomainIds(
 
 export type DomainRowInput = Omit<Prisma.AssessmentDomainResultCreateManyInput, "assessment_id">;
 
-/**
- * The `Scored` object → the rows to store. Pure; no recomputation anywhere.
- *
- * ⚠ TAKES WHAT `scoreAssessment()` ALREADY RETURNED. The brief is explicit: the
- * rows are written from the same `Scored` the submission was scored with, in the
- * same transaction. Calling `scoreAssessment` a second time here would be a
- * second chance to disagree with the number that was stored.
- */
 export function domainRowsFor(
   scored: Scored,
   cdIds: Map<string, string>,
   backfilled = false,
-  /**
-   * The deck's per-domain extra fields as the wizard sent them, or undefined.
-   *
-   * ⚠ UNDEFINED IS "NOT ASKED" AND MUST STAY DISTINGUISHABLE FROM ZERO. The 13
-   * assessments taken before this existed have no `domainFields` key, the backfill
-   * script has nothing to read, and both must write `fields: null` — never `[]` and
-   * never a row of zeroes. `check:assessment-volume` fails the build over it.
-   */
   domainFields?: DomainFieldAnswers
 ): DomainRowInput[] {
   return scored.domains.map((d) => ({
     domain_key: d.key,
     capability_domain_id: cdIds.get(d.key) ?? null,
     rung: d.rung,
-    /*
-      ⚠ BOTH ENDS. Every dollar figure on the report is a range because every
-      input is a band; storing one end would force the report to recompute the
-      other, which is the exact thing this table exists to prevent.
-    */
     opportunity_low_cents: BigInt(d.opportunity[0]),
     opportunity_high_cents: BigInt(d.opportunity[1]),
     rank: d.rank,
-    /*
-      The weight IN FORCE AT SUBMIT, in basis points. 0 for the two enabler
-      domains — `data_ai_governance` and `change_ai_adoption` are assessed and
-      recover $0 by design, and `DOLLAR_WEIGHTS` has no entry for either. That is
-      a declared hole (UNWEIGHTED_DOMAINS), not a missing weight to invent.
-    */
     weight_bps: Math.round((DOLLAR_WEIGHTS[d.key] ?? 0) * 10_000),
-    /*
-      ⚠ RESOLVED AT WRITE TIME, exactly as `weight_bps` and `score_pct` are. The
-      label, the type and the recorded MEANING are stored beside the value, so a
-      later edit to `domain-fields.ts` cannot silently restate a report somebody has
-      already been shown. That principle is already in this table and this column
-      does not weaken it.
-
-      `null` when the domain was not asked; `[]` when it was asked and the deck slide
-      genuinely carries no fields (slides 10 and 11).
-    */
     fields: storedFieldsFor(d.key, domainFields) ?? Prisma.DbNull,
     backfilled,
   }));
 }
 
-/**
- * Write the domain rows for one assessment.
- *
- * ⚠ `tx` IS NOT OPTIONAL IN PRACTICE. The submission and its ten domain rows are
- * one fact: a half-scored assessment — a report with three of ten domains — is
- * worse than a submission the visitor retries. `check:assessment-instance`
- * asserts every call site passes a transaction handle.
- *
- * `createMany` rather than ten creates: one round trip, and the unique
- * constraint on (assessment_id, domain_key) means a duplicate is a real error
- * rather than something to skip.
- */
 export async function writeDomainResults(
   tx: Db,
   assessmentId: string,
@@ -184,12 +84,10 @@ export type StoredDomainRow = {
   opportunity_high_cents: bigint | null;
   rank: number | null;
   weight_bps: number | null;
-  /** ⚠ `null` = NOT ASKED. `[]` = asked, slide has no fields. Never zero. */
   fields: unknown;
   backfilled: boolean;
 };
 
-/** Every assessment this company has, newest first — Scott's actual requirement. */
 export async function getCompanyAssessments(companyId: string) {
   return prisma.assessment.findMany({
     where: { company_id: companyId },

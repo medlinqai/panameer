@@ -2,15 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 
-/**
- * A provider's PUBLIC marketplace profile by profile id. Public surface — no
- * PAccount scope — but gated on VISIBILITY (brief_K): only an ACTIVE, ≥80%-
- * complete, un-paused profile is returned, so a hidden profile never leaks.
- * The OWNER bypasses the gate (they always see their own profile) — pass their
- * user id as `viewerUserId`. Returns null when not found or not visible.
- *
- * Sets the profile-read pattern for the marketplace browse/detail endpoints.
- */
 export async function getPublicProviderProfile(
   id: string,
   opts: { viewerUserId?: string } = {}
@@ -29,9 +20,6 @@ export async function getPublicProviderProfile(
           // missing relation is a compile error rather than a provider quietly
           // hidden from the marketplace.
           phone: true,
-          /* ⚠ `companyMemberships: { select: { status: true } }` REMOVED
-             (`P1-A1.4-E418`) — `providerMeetsRequired` no longer has a company
-             clause, so this was a read with no reader. */
           site: { select: { addresses: { select: { id: true } } } },
         },
       },
@@ -39,7 +27,6 @@ export async function getPublicProviderProfile(
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
       },
-      /* ⚠ `E517` — the role selection this card's skill list is filtered by. */
       roles: { select: { role_type_id: true } },
       skills: {
         include: {
@@ -66,22 +53,10 @@ export async function getPublicProviderProfile(
 
   if (!profile) return null;
 
-  /* ⚠ THE USER'S CREDENTIALS, NOT THE PROFILE'S — see the note in
-     `provider-profile-view.ts`. A `LEARN` credential earned before the learner
-     became a seller has no `provider_profile_id` and would otherwise be invisible
-     on the profile of the very person who earned it. */
   const certifications = profile.person?.user_id
     ? await prisma.certification.findMany({
         where: { user_id: profile.person.user_id },
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
-        /*
-          ⚠⚠ `issued_from` AND `credential_id` ADDED AT `P2-A4-E710`. ⚠⚠⚠ **UNLIKE THE
-          PROFILE VIEW, THIS ONE OMITTED THEM FROM THE QUERY** — so the card could not
-          have shown provenance even if it wanted to. Two readers, two different
-          omissions, one defect.
-          ⚠ `credential_id` rides along because it is what turns *"Verified by
-          Panameer"* into a link a stranger can actually open.
-        */
         select: {
           id: true,
           name: true,
@@ -92,7 +67,6 @@ export async function getPublicProviderProfile(
         },
       })
     : [];
-
 
   // Visibility gate — owner always bypasses; everyone else needs the profile to
   // be marketplace-visible.
@@ -113,8 +87,6 @@ export async function getPublicProviderProfile(
     // Validated is a public badge (brief_K) — visible to everyone; does NOT
     // affect base visibility.
     validated: profile.validation_status === "VALIDATED",
-    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
     headline: profile.person.title ?? "",
     overview: profile.overview,
     workTypes: profile.work_types,
@@ -134,8 +106,6 @@ export async function getPublicProviderProfile(
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
     },
-    /* ⚠⚠ `P2-J1.4-E517` — A PROVIDER CARD IS AN OFFER SURFACE. Out-of-role
-       skills are kept in the database and simply not presented here. */
     skills: shownSkills(
       selectedRoleIds(profile),
       profile.skills,
@@ -165,8 +135,6 @@ export async function getPublicProviderProfile(
       name: c.name,
       issuer: c.issuer,
       year: c.year,
-      /* ⚠⚠ `P2-A4-E710` — the card said WHAT the credential is and never WHERE it came
-         from. One component renders both these fields; see `CredentialProvenance`. */
       issuedFrom: c.issued_from,
       credentialId: c.credential_id,
     })),

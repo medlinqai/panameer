@@ -5,7 +5,6 @@ import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStor
 import { signOut } from "next-auth/react";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
-/* ⚠ THE BAND ITEM'S OWN LIT LOOK, NOT A COPY OF IT (`E720` item 1). */
 import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
 import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
@@ -23,36 +22,6 @@ import {
   type ThemeChoice,
 } from "@/lib/theme";
 
-/**
- * THE PERSONA MENU (J2.4 WS-B / E008, E021).
- *
- * Extracted out of AppHeader, which had grown a two-item dropdown inline. It is
- * six destinations, a submenu, an availability toggle and a role-dependent
- * shape now — enough logic that leaving it inside the header would have made
- * the header a component about menus rather than about the header.
- *
- * THE SECTION BARS ARE GONE (WS1-C). J2.4 grouped the list under "You" and
- * "Preferences" bars; the deck interleaves Theme INTO the list — My Profile ·
- * My Stats · Account Health Checklist · Theme › · Request Recommendations ·
- * Settings — so a bar would have had to sit mid-sentence. The
- * identity header still separates who-you-are from what-you-can-do, which was
- * the distinction the bars were carrying.
- *
- * E212/E214 — A FLOATING POPOVER, ANCHORED BOTTOM-LEFT. It used to be an
- * absolutely-positioned panel inside the rail, which put it inside the rail's
- * scrolling column: it could be clipped exactly like the submenu flyouts were,
- * and it pushed against the rail's own edge. It is a portalled popover now, the
- * same primitive the flyouts use, opening UPWARDS from the identity block at
- * the bottom of the rail — the third of the three zones (org top-left, work in
- * the middle, you at the bottom).
- *
- * THE ADMIN SEES A SHORTER MENU. My Stats, Account Health and Request
- * Recommendations are all marketplace-provider surfaces: a Panameer employee
- * has no job success score, no account standing as a seller, and nobody to ask
- * for a recommendation. They are omitted rather than shown empty, because an
- * empty page you can never fill is worse than an absent one.
- */
-
 export function AccountMenu({
   isAdmin,
   variant = "header",
@@ -60,35 +29,8 @@ export function AccountMenu({
   active = false,
 }: {
   isAdmin: boolean;
-  /**
-   * ── ⚠⚠⚠ THE BAND'S VERDICT, PASSED IN (ruling 72) ─────────────────────
-   *
-   * ⚠⚠ **COMPUTED BY `AppBand` FROM THE SAME `isActive` EVERY PILL USES**, and
-   * deliberately NOT derived here. ⚠ This component does not read `pathname`
-   * for it and must not start: **a second rule keyed on the avatar is exactly
-   * how the band and the avatar would come to disagree about which application
-   * you are in.** ⚠⚠⚠ `E433`: one meaning, one treatment.
-   * ⚠ Defaults to `false` so the `header` variant and any other caller are
-   * unchanged — **the band is the only surface that knows about band state.**
-   */
   active?: boolean;
-  /**
-   * ⚠ STYLING ONLY (`P2-ALL-E559`) — the `header` trigger's hover is
-   * `bg-black/[0.04]`, which is invisible on the dark app band. This swaps that
-   * ONE class for a light wash. ⚠⚠ IT CHANGES NO MENU CONTENT: the item list,
-   * the ordering and `My Company`'s admin popover are untouched, so this is not
-   * a WS-D edit wearing a styling hat.
-   */
   onDark?: boolean;
-  /**
-   * WHERE THE TRIGGER LIVES (WS1-A).
-   *
-   * `header` is the original round avatar in the top-right cluster. `rail` is
-   * the deck's identity block: avatar + name + membership badge + a chevron,
-   * sitting in the dark rail under the utility row. Same menu, same code —
-   * only the button that opens it and which way the panel drops differ, so the
-   * two positions cannot drift into two different account menus.
-   */
   variant?: "header" | "rail";
 }) {
   const { me, refresh } = useMe();
@@ -97,49 +39,16 @@ export function AccountMenu({
   const [companyOpen, setCompanyOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  /*
-    The theme choice is read from localStorage through `useSyncExternalStore`
-    rather than copied into state on mount. The boot script has already applied
-    it to <html>; this only catches the menu's checkmark up with what the page
-    is already showing, and the server snapshot ("auto") is what the markup was
-    built against, so hydration stays clean.
-  */
   const theme = useSyncExternalStore(
     subscribeThemeChoice,
     themeChoiceSnapshot,
     themeChoiceServerSnapshot
   );
 
-  /*
-    OPTIMISM AS AN OVERRIDE, not as a copy of the server value. Holding
-    availability in state and syncing it from `me` in an effect meant two
-    sources of truth and a render where they disagreed; this derives from `me`
-    and only diverges while a write is in flight.
-  */
   const [pending, setPending] = useState<boolean | null>(null);
   const serverAvailable = me?.providerProfile?.availableForMessages ?? null;
   const available = pending ?? serverAvailable;
 
-  /*
-    ── ⚠⚠⚠ THE TWO LIVE VALUES, FETCHED ON OPEN (`P2-A2-E598` WS-A) ─────────
-
-    ⚠ SCOTT, 2026-09-21: *"Load the two values only when the menu is opened, not
-    on every page. The menu renders on every page, but only someone who clicks
-    their avatar needs '78%' and 'All good'. Show the labels immediately and
-    fill the values in when the fetch returns."*
-
-    ⚠⚠ THIS COMPONENT MOUNTS IN `AppBand`, `AppHeader` AND `MarketingHeader`, so
-    it is on essentially every signed-in render. A profile-score computation
-    here would have put a completeness read on the path of every page.
-    ⚠⚠⚠ EVERY ROW WORKS BEFORE THE FETCH RETURNS — the values are decoration on
-    rows that already navigate, which is what makes deferring them safe and not
-    merely cheap.
-    ⚠ A `useRef` GUARD, NOT `useState`: this repo's lint forbids setting state
-    in an effect (`react-hooks/set-state-in-effect`, 11 pre-existing errors), and
-    a `setLoaded(true)` here would have added a twelfth.
-    ⚠⚠ ONE FETCH PER MOUNT. Re-opening does not re-read; the values move slowly
-    and a menu is not a dashboard.
-  */
   const [summary, setSummary] = useState<MenuSummary | null>(null);
   const fetched = useRef(false);
   useEffect(() => {
@@ -149,12 +58,8 @@ export function AccountMenu({
     fetch("/api/me/menu-summary")
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        /* ⚠ The menu can close, or unmount, before this lands. */
         if (live && j) setSummary(j as MenuSummary);
       })
-      /* ⚠⚠ A FAILED READ LEAVES THE LABELS BARE AND SAYS NOTHING. There is no
-         error state because there is no error to act on: the rows still work,
-         and an alarm about a decoration would be noise. */
       .catch(() => {});
     return () => {
       live = false;
@@ -162,24 +67,6 @@ export function AccountMenu({
   }, [open]);
 
   const close = useCallback(() => {
-    /*
-      ── ⚠⚠⚠ FOCUS GOES BACK TO THE AVATAR (`P2-A2-E598` WS-A item 2) ────────
-
-      ⚠⚠ THIS IS A REGRESSION THE ARROW KEYS CREATED, AND IT WAS CAUGHT BY
-      MEASURING RATHER THAN BY READING. On trunk, "focus returns to the avatar"
-      passed TRIVIALLY — focus never left the trigger, because nothing could
-      move it into the menu. ⚠⚠⚠ THE MOMENT ArrowDown WORKED, Escape started
-      dropping focus onto `<body>`, which strands a keyboard user at the top of
-      the document with no idea where they are.
-      ⚠ MEASURED: `focus back on avatar` went `false` on the first keyboard walk
-      after the arrows landed.
-
-      ⚠⚠ ONLY WHEN FOCUS IS INSIDE THE PANEL. A click elsewhere on the page also
-      closes this menu, and yanking focus to the avatar then would steal it from
-      whatever the person just clicked.
-      ⚠ The panel is portalled, so `contains` is asking about the portal's
-      subtree, not about this component's position in the DOM.
-    */
     if (panelRef.current?.contains(document.activeElement)) {
       triggerRef.current?.focus();
     }
@@ -190,41 +77,13 @@ export function AccountMenu({
     setCompanyOpen(false);
   }, []);
 
-  /*
-    ⚠ `me?.person?.` — a signed-in user can have NO Person (P1-ALL-E002).
-    `/api/me` answers 200 with `person: null` for them now instead of 404, so the
-    menu renders with an initials-less avatar and no role badge rather than the
-    whole shell falling back to its error state.
-  */
   const first = me?.person?.firstName ?? "";
   const last = me?.person?.lastName ?? "";
   const badge = isAdmin ? "Panameer Admin" : membershipBadge(me);
   /* The company the rail chip used to name. See the My Company block below. */
   const company = me?.company;
-  /*
-    THE DECK'S ORDER (WS1-C): My Profile · My Stats · Account Health Checklist ·
-    Theme › · Request Recommendations · Settings · Sign Out (E225 took My
-    two halves come from nav.ts already split around the theme row, so this
-    component never has to match on a label to know where the submenu goes.
-
-    THE ADMIN KEEPS THE SHORT LIST. `ADMIN_PERSONA_NAV` is My Profile only —
-    stats, account health and recommendations are seller surfaces. Settings goes
-    too: /settings requires canProvideServices, so offering it to an employee is
-    offering them a redirect to /dashboard?noaccess=1.
-  */
-  /* ⚠⚠ ONE LIST NOW (`P2-ALL-E687` WS-A, ruling 89f). ⚠ SUPERSEDED, quoted not
-     deleted (`E164`):
-     //   const primary = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV_PRIMARY;
-     //   const secondary = isAdmin ? [] : PERSONA_NAV_SECONDARY;
-     ⚠ The admin still keeps the short list; only the split went. */
   const rows = isAdmin ? ADMIN_PERSONA_NAV : PERSONA_NAV;
 
-  /*
-    OPTIMISTIC, WITH A REVERT. The toggle is a two-state switch on a fast write;
-    waiting for the round trip makes it feel broken, and a failed write that
-    silently leaves the UI switched would tell the provider they are reachable
-    when the marketplace still thinks they are not.
-  */
   const toggleAvailable = async () => {
     if (available === null) return;
     const next = !available;
@@ -247,28 +106,6 @@ export function AccountMenu({
   const rowClass =
     "block w-full px-4 py-2.5 text-left text-[14.5px] hover:bg-black/[0.04]";
 
-  /*
-    ── ⚠⚠⚠ ARROW KEYS (`P2-A2-E598` WS-A item 2) ───────────────────────────
-
-    ⚠ MEASURED BEFORE BUILDING, and only ONE of the four requirements was
-    missing. On trunk: Enter opens ✓, Space opens ✓, Escape closes ✓ and focus
-    returns to the avatar ✓ — all four are native `<button>` behaviour plus
-    `Popover`'s Escape handler, and focus "returns" because it never left.
-    ⚠⚠ ARROW KEYS DID NOTHING: focus stayed on the trigger, so a keyboard user
-    could open the menu and not be in it. That is what this adds, and nothing
-    else was rebuilt on the assumption the brief implied it was.
-
-    ⚠ A DOCUMENT LISTENER, NOT `onKeyDown` ON THE PANEL. The panel is PORTALLED
-    to `document.body`, and until the first arrow press focus is still on the
-    trigger — outside it — so a container handler would never fire the one time
-    it is most needed.
-    ⚠⚠ `[data-menu-item]` IS THE LIST, so the order the reader tabs through is
-    the order they SEE, including the availability toggle and the two submenu
-    triggers. Querying `a,button` instead would also collect the submenu's
-    contents while collapsed.
-    ⚠⚠⚠ `preventDefault` ONLY ON THE FOUR KEYS WE HANDLE — swallowing anything
-    else would break typing in a future field and page-scroll everywhere else.
-  */
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -280,8 +117,6 @@ export function AccountMenu({
       if (!items.length) return;
       e.preventDefault();
       const at = items.indexOf(document.activeElement as HTMLElement);
-      /* ⚠ WRAPS, and an unfocused start enters at the right end: ArrowDown from
-         the trigger lands on the FIRST item, ArrowUp on the LAST. */
       const next =
         e.key === "Home"
           ? 0
@@ -300,12 +135,6 @@ export function AccountMenu({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  /*
-    ⚠ THE VALUE FOR A ROW, KEYED BY `href` AND NEVER BY LABEL. `nav.ts` records
-    why the component must not match on labels: the lists are split so this file
-    *"never has to match on a label to know where the submenu goes"*, and a
-    rename would silently drop the value.
-  */
   const valueFor = (href: string): { text: string; ok?: boolean } | null => {
     if (href === "/score" && summary?.scorePercent != null) {
       return { text: `${summary.scorePercent}%` };

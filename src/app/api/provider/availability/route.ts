@@ -4,20 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 
-/**
- * POST /api/provider/availability — the persona menu's "Online for messages"
- * toggle (J2.4 WS-B / E008).
- *
- * OWNER-SCOPED the same way every other profile write is: the target profile is
- * resolved from the session through `ownedProviderProfile`, never accepted from
- * the body. The request carries one boolean and nothing that names a record.
- *
- * DELIBERATELY NOT the visibility pause. `paused_at` decides whether a profile
- * appears in the marketplace at all and is bound to the completeness gate this
- * brief must not touch; this says whether the person is at their desk. Writing
- * one through the other would take a profile off the market because its owner
- * went to lunch.
- */
 const Body = z.object({ available: z.boolean() });
 
 export async function POST(request: Request) {

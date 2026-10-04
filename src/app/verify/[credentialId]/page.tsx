@@ -5,18 +5,6 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 
 export const dynamic = "force-dynamic";
 
-/**
- * PUBLIC credential verification (brief_learn_experience WS5).
- *
- * The page a recruiter lands on from a LinkedIn certification entry. It is
- * deliberately outside every auth gate and every shell that assumes a session:
- * a credential nobody can check without an account is not a credential.
- *
- * It shows exactly enough to verify and NOTHING MORE — holder name, what they
- * passed, when, and a link to the path. No score, no attempt count, no email.
- * The question this page answers is "is this real", and the holder shared the
- * link expecting that question answered, not their test history published.
- */
 export default async function VerifyPage({
   params,
 }: {
@@ -34,18 +22,6 @@ export default async function VerifyPage({
       issued_on: true,
       credential_id: true,
       learningPath: { select: { title: true, slug: true, status: true } },
-      /*
-        ── ⚠ THE HOLDER COMES FROM THE USER, NOT THE SELLER PROFILE (E019) ─────
-
-        This page used to read the name and photo through `providerProfile`, which
-        meant a credential earned by a learner who is not a seller had nowhere to
-        get a holder from — and, before `user_id` existed, no such credential could
-        be issued at all. Both halves are fixed here: the owner is the User, and
-        their Person carries the name and the photo whether or not they sell.
-
-        ⚠ THE PROFILE IS STILL SELECTED, for the link back to it. It is OPTIONAL
-        now, so every use of it below is guarded.
-      */
       user: {
         select: {
           person: { select: { first_name: true, last_name: true, photo_url: true } },
@@ -56,18 +32,6 @@ export default async function VerifyPage({
   });
   if (!cert) notFound();
 
-  /*
-    ⚠ `cert.user.person`, NOT `cert.user?.person` — THE `?` ON `user` WAS DEAD
-    (`P1-J3-E028`). `Certification.user_id` is NOT NULL and so is the FK; the
-    relation field was typed `User?` by mistake, so the client claimed a credential
-    might have no owner and this line handled a null the database cannot produce.
-    The relation is `User` now and this fallback is gone with it.
-
-    ⚠ `?? null` AND EVERY `person?.` BELOW STAY, AND THEY ARE A DIFFERENT NULL.
-    `User.person` is genuinely `Person?` — the schema records that *"a User need not
-    have a Person"* — so a credential can have an owner whose Person row does not
-    exist. That guard is real; do not tidy it away with the other one.
-  */
   const person = cert.user.person ?? null;
   const holder =
     `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() || "This member";

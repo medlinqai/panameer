@@ -3,20 +3,6 @@ import { getToken } from "next-auth/jwt";
 import { isMarketingHost, isStatusHost } from "@/lib/host";
 import { requirementForPath, meetsRequirement } from "@/lib/route-access";
 
-/**
- * Next.js 16 renamed "Middleware" to "Proxy". This is the EDGE layer of the
- * two-layer role-based access control (brief_J) — the fast first line:
- *
- *  1. Splits `/` by hostname (marketing vs app). See `src/lib/host.ts`.
- *  2. Requires a session token on every protected route (→ /login).
- *  3. Consumes the ONE central route→capability map (`src/lib/route-access.ts`)
- *     — no hard-coded per-route `if`s — and redirects a user who lacks the
- *     required capability to /dashboard with a friendly no-access state.
- *
- * Fail closed: a matched route with no map entry is denied. The authoritative
- * gate is server-side (`src/lib/guard.ts` in protected layouts + every API
- * route); the edge must never be the only gate.
- */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -25,39 +11,7 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/") {
     const host =
       request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-    /*
-      ⚠⚠⚠ THE STATUS HOST IS TESTED FIRST (`P2-ALL-E753`).
-
-      ⚠ `status.panameer.com` serves the public Work Tracker. It is NOT a
-      marketing host, so without this branch it falls through to the app arm
-      below and redirects a public visitor to `/login` — which is exactly what
-      it did before this line existed.
-
-      ⚠⚠ **A REWRITE, NOT A REDIRECT.** The visitor stays on
-      `status.panameer.com` and never sees `/status` in the address bar; a
-      redirect would send them to `app.panameer.com/status` and leak the app's
-      hostname onto a page whose whole job is to be the public face of the build.
-
-      ⚠ `/status` is ALSO reachable by path on any host — it is in
-      `public-routes.ts`, so it is walkable locally without a hosts-file entry.
-      The host is a convenience, not the gate.
-    */
     if (isStatusHost(host)) {
-      /*
-        ⚠⚠⚠ THE SEARCH IS CARRIED THROUGH (`P2-ALL-E781`).
-
-        ⚠ **MEASURED, NOT ASSUMED:** `new URL("/status", request.url)` builds the
-        path from the FIRST argument and takes only the ORIGIN from the second, so
-        the query is **dropped** — `new URL("/status",
-        "https://status.panameer.com/?follow=1")` yields `search: ""`.
-        ⚠⚠ **THAT SILENTLY BROKE THE FOLLOW ROUND TRIP ACROSS THE HOSTS.** The
-        signed-out button sends people to `/join?next=/status&follow=1`; after
-        sign-up they land on `<app host>/status?follow=1`, which `E780` now 307s to
-        `status.panameer.com/?follow=1` **with the query intact** — and this rewrite
-        was throwing that intent away on the last hop.
-        ⚠ Appending `request.nextUrl.search` is the whole fix; it is `""` when there
-        is no query, so the no-query case is byte-identical to before.
-      */
       return NextResponse.rewrite(
         new URL(`/status${request.nextUrl.search}`, request.url),
       );

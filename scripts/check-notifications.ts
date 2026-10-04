@@ -1,50 +1,3 @@
-/**
- * `check:notifications` — THE HARNESS THAT WAS SKIPPED.
- *
- * It was WS-5 of the notification brief, it was never reached, and it was then
- * listed as a merge gate by two later briefs that could not run it. Built now,
- * to the original specification, deliberately NOT to whatever the code happens
- * to do today.
- *
- * ⚠⚠ THIS HARNESS IS ALLOWED TO FAIL, AND ON THE DAY IT SHIPPED IT DID. A
- * harness written to agree with the code it audits is worth nothing. If an
- * assertion below is red, the answer is a decision about the code or the spec —
- * never a softer assertion.
- *
- *   1  EVERY `category` IN THE REGISTRY EXISTS IN `notification-categories.ts`.
- *      A typo writes rows against a category no settings page renders, so the
- *      recipient can neither find it nor switch it off. That must break the
- *      build, not ship quietly.
- *   2  EVERY EVENT IN `event_behavior.md`'s TABLES HAS A REGISTRY ENTRY. ⚠ THIS
- *      IS THE ONE THAT KEEPS THE SPEC AUTHORITATIVE RATHER THAN DECORATIVE.
- *      ⚠ The assertion is about the REGISTRY, not about trigger call sites: an
- *      event deliberately left unwired — `profile.published`, which is silent on
- *      purpose — is still expected to be declared. Declaring it is how "we chose
- *      not to send this" stays distinguishable from "we forgot".
- *   3  NO REGISTRY ENTRY IS MISSING `aiMode` OR `visibility`. `aiMode` is the
- *      governance record of where autonomy was granted; an entry without one is
- *      an ungoverned event.
- *   4  NO `prisma.notification.create` OUTSIDE `lib/notifications.ts`. One write
- *      path, or the dedupe and the preference lookup are bypassed on day two.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()` verbatim. Its header says why and it is worth repeating: this file
- * names the forbidden token itself, and so does `notifications.ts`'s own
- * docblock — a scanner that reads prose fails on its own documentation, and the
- * fix for that is always to weaken the scanner.
- *
- * ── ⚠⚠ THIS HARNESS READS A FILE THAT IS NOT IN THIS REPOSITORY ──────────────
- *
- * `event_behavior.md` lives in `5. Application/2. Claude Sub-Files/`, one level
- * ABOVE the git root — the workspace holds the specs, the repo holds the code.
- * So assertion 2 depends on a path outside version control, and on a checkout of
- * the repo alone the file is absent.
- * ⚠ WHEN IT IS ABSENT THIS HARNESS FAILS. It does not skip. A gate that goes
- * quiet exactly where its input went missing is a gate that reports green on the
- * one machine that could not check anything, and assertion 2 is the whole reason
- * this file exists. Moving the spec into the repo would fix the coupling and is
- * a decision for Scott, not something to route around here.
- */
 
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -58,8 +11,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* ⚠ VERBATIM FROM `scripts/check-community.ts`. Same job, same two regexes; the
-   `[^:]` guard is what stops it eating the `//` in a `https://` URL. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -99,35 +50,6 @@ for (const [key, e] of entries) {
 // 2 — every event in the SPEC has a registry entry
 // ---------------------------------------------------------------------------
 
-/*
-  ⚠ ONLY THE EVENT TABLES. `event_behavior.md` also carries two `| Key | Label as
-  shipped |` tables listing the notification CATEGORIES, which are a different
-  thing entirely; keying on the exact header row is what tells them apart, and it
-  is why a new category table cannot accidentally be read as eighteen missing
-  events.
-*/
-/*
-  ⚠⚠ MOVED INTO THE REPO 2026-09-04 (`P1-ALL-E384`). SCOTT: *"just move it."*
-
-  ⚠ SUPERSEDED, QUOTED NOT DELETED — this read:
-      `const SPEC = join("..", "2. Claude Sub-Files", "event_behavior.md");`
-  and the docblock above still describes why: the file lived in
-  `5. Application/2. Claude Sub-Files/`, ONE LEVEL ABOVE THE GIT ROOT.
-
-  ⚠⚠ SO THESE 834 ASSERTIONS WERE GREEN ON ONE MACHINE AND PROVED NOTHING TO
-  ANYONE ELSE. A clean clone had no spec to read; CI would fail or, worse, skip.
-  `E381` tried to fix it and had to STOP AND REPORT: you cannot `git add` a path
-  outside the repository, and git says so in those words.
-
-  ⚠ IT NOW LIVES IN `scripts/data/`, FOLLOWING AN ESTABLISHED PRECEDENT rather
-  than inventing a location: `scripts/data/legal/*.md` are already tracked
-  markdown specs that `check:trust-claims` reads the same way. A harness's input
-  belongs beside the harness's other inputs.
-
-  ⚠ CONSEQUENCE FOR THE DOCS, REPORTED NOT ACTED ON: `CLAUDE.md`'s topic-file
-  table still lists `event_behavior.md` under `2. Claude Sub-Files/`. That entry
-  is now stale and correcting it is chat's, not this brief's.
-*/
 const SPEC = join("scripts", "data", "event_behavior.md");
 const EVENT_HEADER = ["event", "recipient", "ai mode", "channel", "notes"];
 

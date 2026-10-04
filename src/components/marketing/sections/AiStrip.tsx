@@ -1,17 +1,5 @@
 import { AI_STRIP } from "@/lib/brand";
 
-/**
- * The slim AI-native strip, on both pages.
- *
- * ⚠ THE `soon` TAGS ARE THE HONESTY MECHANISM AND MUST STAY INERT. Price alerts
- * and the other flagged items are not built. They earn a place on the page only
- * because the tag says so — which means they can never become links, never
- * acquire a hover state that suggests a destination, and never lose the word.
- * Everything untagged here is shipped: work requests and profiles really are
- * AI-drafted, and the ERP-with-AI line is the punchout section above.
- *
- * The whole strip is text. It states a positioning; it does not offer anything.
- */
 export function AiStrip({ audience }: { audience: "buyer" | "provider" }) {
   return (
     <section className="border-y border-line bg-[#faf7ff] py-[22px]">

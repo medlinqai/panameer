@@ -1,25 +1,3 @@
-/**
- * `check:settle` — the rules the settlement surfaces cannot be allowed to lose
- * (`P1-J4-E394`). `npm run check:settle`.
- *
- * ── ⚠⚠ THE FOUR THINGS THIS BRIEF SAID IN CAPITALS ──────────────────────────
- *
- *   1. **ONE MODEL, ONE CREATE ENDPOINT, TWO RENDERINGS.** No `settlement_type`
- *      column, no second route, no branch on a request field.
- *   2. **THE RATE IS NOT EDITABLE** — copied from the order line, rendered as
- *      TEXT and not a disabled input, with the reason said out loud.
- *   3. **REJECT REQUIRES A REASON**, in the UI as well as the API.
- *   4. **THE PARTY RULE IS `E393`'s AND IT HOLDS HERE TOO** — asserted
- *      exhaustively, plus structurally over the component.
- *
- * ⚠ AND ONE THING THIS BRIEF FOUND. `assertSettlementDraw`'s rule 3 does not
- * accumulate within a batch, so the caller MUST aggregate per order line before
- * asserting. The timesheet grid is the first caller that can produce two drafts
- * against one line. That aggregation is asserted here so this path cannot
- * regress — see `createSettlement`'s docblock and the report.
- *
- * ⚠ NO DATABASE AND NO BROWSER.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { assertSettlementDraw, SpineError } from "@/lib/transaction-spine";
@@ -56,8 +34,6 @@ const SCHEMA = readFileSync(join("prisma", "schema.prisma"), "utf8")
   .replace(/^\s*\/\/\/.*$/gm, "")
   .replace(/^\s*\/\/.*$/gm, "");
 
-/* ═══ 1 · ⚠⚠ ONE MODEL, ONE CREATE ENDPOINT, TWO RENDERINGS ════════════════ */
-
 check(
   "1 — SettlementRequest is one model",
   (SCHEMA.match(/^model SettlementRequest \{/gm) ?? []).length === 1
@@ -66,22 +42,13 @@ check(
   "1 — SettlementLine is one model",
   (SCHEMA.match(/^model SettlementLine \{/gm) ?? []).length === 1
 );
-/* ⚠⚠ THE COLUMN `E388` FORBIDS. It would be a second fact saying what `basis`
-   already says, and two facts about one thing can disagree. */
 check("1 — ABSENCE: no settlement_type column", !/settlement_type/.test(SCHEMA));
 check("1 — ABSENCE: no settlement kind/type enum", !/enum Settlement(Type|Kind)/.test(SCHEMA));
-/* ⚠ AND NO TIMESHEET MODEL. The other shape this could have taken is a parallel
-   table for the RATE case, which is the same mistake with a different name. */
 check(
   "1 — ABSENCE: no separate Timesheet model",
   !/^model (Timesheet|TimeEntry|TimesheetLine|Milestone[A-Za-z]*Claim)/m.test(SCHEMA)
 );
 
-/**
- * ⚠⚠ EXACTLY ONE CREATE ENDPOINT. The way a second one arrives is somebody
- * building `/api/timesheets` because the FORM looks different — and then two
- * paths write one table with two sets of rules.
- */
 {
   const apiFiles = SRC.filter((f) => f.path.includes(join("app", "api", "settlements")));
   const creators = apiFiles.filter(
@@ -97,7 +64,6 @@ check(
     "1 — and it is POST /api/settlements",
     creators[0]?.path === join("src", "app", "api", "settlements", "route.ts")
   );
-  /* ⚠ NO OTHER ROUTE ANYWHERE CREATES A SETTLEMENT. */
   const writers = SRC.filter(
     (f) =>
       f.path.includes(join("app", "api")) &&
@@ -115,9 +81,6 @@ check(
     libWriters.map((w) => w.path).join(", ")
   );
 }
-/* ⚠⚠ THE CREATE PATH DOES NOT BRANCH ON A REQUEST FIELD — the ORDER LINE's basis
-   decides. A `body.type` or `body.kind` here would be the second model wearing a
-   disguise. */
 {
   const api = fileAt("src/app/api/settlements/route.ts");
   check(
@@ -125,13 +88,6 @@ check(
     !!api && !/body\.(type|kind|settlementType|mode)/.test(api.code)
   );
   const lib = fileAt("src/lib/settlements.ts");
-  /* ⚠⚠ RE-ANCHORED BY RULING 44 — the ORDER LINE now carries `transaction_type`
-     and its `basis` is retired, so the create path asks the shared predicate.
-     ⚠⚠⚠ THE RULE IS UNCHANGED AND IS NOT WEAKENED: *the order line decides,
-     never the request body.* Only the column it decides FROM moved.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   "1 — the create path branches on the ORDER LINE's basis",
-     //   /ol\.basis === "RATE"/ */
   check(
     "1 — the create path branches on the ORDER LINE's own kind",
     !!lib && /pricedByQuantity\(ol\.transactionType\)/.test(lib.code)
@@ -141,7 +97,6 @@ check(
     !!lib && !/type:\s*["']?(RATE|AMOUNT|TIMESHEET|MILESTONE)/.test(lib.code)
   );
 }
-/* ⚠ ONE COMPONENT RENDERS BOTH, and it posts to the one endpoint. */
 {
   const ui = fileAt("src/components/settle/RaiseSettlement.tsx");
   check("1 — one create component exists", !!ui);
@@ -153,13 +108,10 @@ check(
     "1 — both renderings post to /api/settlements",
     !!ui && (ui.code.match(/fetch\("\/api\/settlements"/g) ?? []).length === 1
   );
-  /* ⚠ SUPERSEDED (`E164`): //   /l\.basis === "RATE"/ */
   check(
     "1 — it branches on the order line's own kind",
     !!ui && /l\.transactionType === "SERVICE_BY_AMT"/.test(ui.code)
   );
-  /* ⚠⚠ AN AMOUNT LINE HAS NO NUMBER INPUT — a quantity or amount field there
-     invites a partial claim, which cannot exist. */
   const milestone = ui?.code.slice(ui.code.indexOf("function MilestoneLine")) ?? "";
   check(
     "1 — ABSENCE: the milestone rendering has no quantity or amount input",
@@ -183,9 +135,6 @@ check(
     "2 — the fixed amount says the same",
     !!ui && /the amount agreed on the work order/.test(ui.text)
   );
-  /* ⚠⚠ TEXT, NOT A DISABLED INPUT. *"A silently-ignored input is worse than a
-     disabled one"* — and a disabled input still reads as a box that could be
-     enabled, so there is no input at all. */
   check(
     "2 — ABSENCE: there is no rate input, disabled or otherwise",
     !!ui && !/unitPrice|unit_price/i.test(ui.code.replace(/unitPriceCents/g, ""))
@@ -194,8 +143,6 @@ check(
     "2 — ABSENCE: no disabled input is used to fake read-only",
     !!ui && !/<input[^>]*disabled/.test(ui.code)
   );
-  /* ⚠ AND THE PRICE IS NEVER SENT. The body carries quantity and a date; a price
-     in it would be refused by `priceSettlementLine`, but it must not be there. */
   check(
     "2 — ABSENCE: the posted body carries no price",
     !!ui && !/unitPriceCents:\s*[^,}]*[,}]/.test(ui.code.slice(ui.code.indexOf("const lines = ["), ui.code.indexOf("const r = await fetch")))
@@ -205,15 +152,6 @@ check(
     "2 — the price is copied by priceSettlementLine, the spine's own function",
     !!lib && /priceSettlementLine\(/.test(lib.code)
   );
-  /**
-   * ⚠ THE REAL PROOF IS THE INPUT TYPE, NOT A GREP FOR "price".
-   *
-   * ⚠ SUPERSEDED, quoted: this scanned for `/input\.\w*[Pp]rice|r\.unitPrice|r\.amount/`
-   * and matched `r.amount_cents` inside `settledCentsFor`, where `r` is a
-   * DATABASE ROW and not caller input. **The scan was measuring the wrong thing.**
-   * `SettleLineInput` carrying no price field at all is the actual guarantee: a
-   * price cannot be read from input that has nowhere to put one.
-   */
   const inputType = lib?.code.match(/export type SettleLineInput = \{([\s\S]*?)\};/)?.[1] ?? "";
   check("2 — SettleLineInput was found", inputType.length > 0);
   check(
@@ -224,7 +162,6 @@ check(
     "2 — it carries only the date, the quantity and a note",
     /serviceDate/.test(inputType) && /quantity/.test(inputType) && /note/.test(inputType)
   );
-  /* ⚠ REMAINING COUNTS DOWN AS THEY TYPE. */
   check("2 — remaining is shown per line", !!ui && /remaining on this line|remaining`/.test(ui.text));
 }
 

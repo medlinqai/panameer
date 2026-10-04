@@ -13,14 +13,6 @@ const ALLOWED = [
   "image/webp",
 ];
 
-/**
- * POST /api/provider/project-file — store a project's supporting document
- * (brief_project_model_v2).
- *
- * OWNER-SCOPED, exactly like the certificate uploader it mirrors: the profile
- * is resolved FROM THE SESSION, never from the request, so the object can only
- * ever land in the caller's own folder of the private `project-docs` bucket.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

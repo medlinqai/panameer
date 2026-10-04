@@ -1,18 +1,5 @@
 "use client";
 
-/**
- * ── TEST ACCOUNTS, FROM THE APP (`P2-ALL-E793`) ─────────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-03:** *"I really need to be able to use the app to get all
- * these values and manage the data."* His `test2*` accounts had been deleted by
- * a reset and nothing in the app showed it.
- *
- * ⚠⚠⚠ **THE REMOVE BUTTON NEVER DELETES ON ONE CLICK.** It asks the server what
- * would go, lists every address, and then requires the exact counted phrase
- * typed in — so a stale screen is refused rather than acted on. The library
- * refuses too; this is the second of two gates, not the only one.
- */
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -44,9 +31,6 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
       });
       const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       if (!res.ok) {
-        /** ⚠ The server's reason reaches the screen — "Set TEST_ACCOUNT_PASSWORD"
-         *  and "Type REMOVE 9 to confirm" are both unactionable as a generic
-         *  failure. */
         setError(typeof json.error === "string" ? json.error : "That didn’t work.");
         return null;
       }

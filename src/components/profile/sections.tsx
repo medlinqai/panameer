@@ -1,5 +1,4 @@
 import Link from "next/link";
-/* ⚠ THE ONE RESOLVER (`E729` WS-C, ruling 4). */
 import { countryName } from "@/lib/country";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
@@ -11,77 +10,12 @@ import { CappedList } from "@/components/profile/CappedList";
 import type { MentorState } from "@/lib/community-signal";
 import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
-/* ⚠ ONE component owns how a credential states its provenance (`P2-A4-E710`, `E585`). */
 import { CredentialProvenance } from "@/components/profile/CredentialProvenance";
-/* ⚠ THE ONE TAG STYLE (`E720` item 5). ⚠⚠ `CleanSection.tsx` imports only `Link` and
-   `ReactNode`, so this direction cannot cycle. */
 import { CLEAN_CHIP } from "@/components/profile/CleanSection";
 import { PROFICIENCY_LABEL } from "@/lib/languages";
 
-/**
- * ── ⚠⚠⚠ ONE CHIP STYLE PER KIND OF THING (`P2-A2-E602` WS-B 4) ────────────
- *
- * ⚠ SCOTT'S WALK (`E019`): *"Skills chips are outlined grey; Specializations
- * chips are magenta; one wraps to two lines and sits in a taller pill."*
- *
- * ⚠⚠ MEASURED — THREE CHIP STYLES IN THIS FILE, AND **TWO DIFFERENT PADDINGS**:
- * skills at `px-3 py-1 text-[13.5px]` (twice, identical), specializations at
- * `px-2.5 py-0.5 text-[12.5px]`. ⚠⚠⚠ THE PADDING DIFFERENCE IS THE "TALLER
- * PILL" — nothing to do with wrapping. Two hand-written copies of one style are
- * also how a third variant appears next.
- *
- * ── ⚠⚠⚠ THE COLOUR DIFFERENCE IS GONE — RULING 31e (`P2-A2-E670`) ────────
- *
- * ⚠⚠ **SCOTT, 2026-09-24, RULING 31e:** *"ALL TAG CHIPS ARE MAGENTA. Skills
- * matches Specializations."* ⚠ It is an **explicit written carve-out from
- * `E433`**, which otherwise reserves magenta for interactive things — so a tag
- * chip is now magenta **because a ruling says so**, not because it became a
- * link.
- * ⚠⚠⚠ **THE PARAGRAPH BELOW SAID THE OPPOSITE AND SAID IT AS SETTLED LAW**,
- * which is the 2026-09-23 rules item 6 exactly: *"a stated rule that
- * contradicts correct behaviour is the more dangerous half — the next person
- * implements the comment."* It survived `E670`'s own verification pass and was
- * found by reading, not by a gate.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   ⚠ THE COLOUR DIFFERENCE **STAYS AND IS THE RULE**: a skill and a
- * //   specialization are different kinds of thing, and Scott asked for one
- * //   style per kind — not one style for everything.
- *
- * ⚠⚠ **THE SCOPE IS TAG CHIPS ONLY.** 31e: *"a figure stays ink, a label stays
- * ink, a status pill keeps its own rule."* ⚠ The six live magenta FIGURES this
- * pass measured (`sections.tsx:1161`, `CommunitySignal.tsx:66`,
- * `ProfileScoreView.tsx:333`/`:480`, `WizardShell.tsx:285`,
- * `ParserHealth.tsx:55`) are **their own sweep** — Scott, 2026-09-26: a sweep
- * inside another brief is the opposite of going function by function.
- *
- * ⚠⚠ A LONG NAME **WRAPS**, AND THAT IS SCOTT'S WORD. The shape that must not
- * change is the PADDING, RADIUS, FONT AND COLOUR — all of which are now shared
- * — and a wrapped chip keeps every one of them. `max-w-full` + `break-words`
- * keep it inside its container instead of overflowing the row.
- *
- * ⚠⚠⚠ `whitespace-nowrap` + `text-ellipsis` WAS TRIED AND REVERTED, AND THE
- * MEASUREMENT IS WHY: it made every chip exactly one line (heights 29–30, no
- * 49) with no horizontal overflow — but it **TRUNCATED
- * `Technology, Media, & Telecommunications` to `…Telecommunica…`.**
- * ⚠ HIDING A SPECIALIZATION'S NAME TO KEEP A ROW TIDY IS THE WRONG TRADE, and
- * Scott asked for it to *wrap*, not to fit. ⚠⚠ THE CONSEQUENCE IS REPORTED
- * RATHER THAN HIDDEN: a two-line chip IS taller than its neighbours. That is
- * what wrapping costs, and it is the cost that was chosen.
- */
 const CHIP_BASE =
   "inline-flex max-w-full items-center rounded-full px-3 py-1 text-[13px] font-semibold break-words";
-/*
-  ── ⚠⚠⚠ ONE TAG-CHIP STYLE (ruling 31e, `P2-A2-E670`) ──────────────────────
-
-  ⚠⚠ **`CHIP_SKILL` IS NOW `CHIP_SPEC`'s STYLE, EXPRESSED AS ONE CONSTANT
-  RATHER THAN TWO THAT HAPPEN TO MATCH.** Two identical strings kept in step by
-  hand is `E585`, and this file's own docblock already records that *"two
-  hand-written copies of one style are also how a third variant appears next."*
-  ⚠ Both names are kept so the call sites still read as what they render — a
-  skill chip and a specialization chip — while resolving to one definition.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   const CHIP_SKILL = `${CHIP_BASE} border border-line text-ink-2`;
-*/
 export const CHIP_TAG = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
 /** ⚠ A SKILL — a tag chip, magenta since ruling 31e. */
 const CHIP_SKILL = CHIP_TAG;

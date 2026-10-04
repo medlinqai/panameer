@@ -1,38 +1,3 @@
-/**
- * `check:onboarding` — the onboarding request is raised when BOTH parties have accepted,
- * exactly once per work order, and **nothing is sent anywhere** (`P2-A8-E704` WS-A,
- * ruling 93h). `npm run check:onboarding`.
- *
- * ── ⚠⚠ WHAT IT ASSERTS (11) ─────────────────────────────────────────────────
- *
- *  1. ⚠⚠⚠ **RAISED WHEN BOTH ACCEPTS ARE PRESENT AND NOT BEFORE.** One accept is half a
- *     contract. Measured: `provider_accepted_at` → status `ACCEPTED`, `buyer_accepted_at`
- *     → status `RELEASED`, so **"both" is exactly `RELEASED`** and that is the only place
- *     the record may be created.
- *  2. ⚠⚠ **IN THE SAME TRANSACTION AS THE RELEASE — both or neither.** A released order
- *     with no onboarding request is a signed contract with nothing raised against it.
- *  3. ⚠⚠⚠ **EXACTLY ONE PER WORK ORDER, ENFORCED BY THE DATABASE** — proved by inserting
- *     a second and requiring Postgres to refuse. The release path may be retried.
- *  4. ⚠⚠⚠ **NOTHING IS SENT. NO OUTBOUND CALL EXISTS AND NONE MAY BE ADDED HERE** —
- *     asserted as an ABSENCE, because *"an outbound call to a system nobody has named is
- *     not a feature; it is a guess with a retry loop."*
- *  5. ⚠⚠ **THE STATUS ENUM HAS ONE VALUE, AND THE WS-B VALUES ARE ABSENT ON PURPOSE.** An
- *     enum value nothing can write reads as a state the system can reach, and it cannot.
- *  6. ⚠ Both parties are copied from the order, never re-read (`E696`'s stamping argument).
- *  7. ⚠⚠ The word cannot collide: the model is `OnboardingRequest`, and `"onboarding"`
- *     already means a provider finishing their own profile.
- *
- * ── ⚠⚠ SCOPE (91) · SUBJECT (92) · DIRECTION (90) ───────────────────────────
- *
- * ⚠ STATIC: `prisma/schema.prisma` and `src/lib/orders.ts`, comments stripped (rule 12).
- * ⚠⚠ LIVE: it inserts **its own rows against a synthetic work-order id** — possible only
- * because this family carries **no cross-model foreign keys**, so the constraint is
- * testable without building the whole order chain — and deletes them by id. Counts taken
- * before and after.
- * ⚠⚠⚠ **NO UI IS ASSERTED: THERE IS NO SCREEN. The record is raised by the release path
- * and read by nobody yet — that is a real gap and it is stated, not implied.**
- * ⚠ Inputs asserted first, so *"0 failures"* cannot mean *"nothing was tested"* (`E586`).
- */
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";

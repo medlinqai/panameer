@@ -2,21 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * Artifacts — proof of work attached to an Employer OR a Project
- * (PJv2 WS4 / E078a).
- *
- * Two shapes behind one model: an UPLOAD (a file in the private `artifacts`
- * bucket, stored as an object path) or a URL (a published case study, a repo, a
- * recorded talk).
- *
- * OWNER-SCOPED by construction, like every other provider write in this
- * codebase: the profile comes from the session, and the employer/project id in
- * the request is re-checked against THAT profile before anything is written. A
- * foreign id resolves to nothing rather than letting someone hang a file off a
- * stranger's work history.
- */
-
 export type ArtifactInput = {
   /** Exactly one of these. */
   employerId?: string | null;
@@ -53,14 +38,6 @@ async function ownedProfileId(viewer: Viewer): Promise<string> {
   return profile.id;
 }
 
-/**
- * Resolve and AUTHORIZE the owner. Returns the column pair to write.
- *
- * Exactly one owner must be supplied. The model allows both columns to be null
- * and Prisma can't express "exactly one", so this is where that invariant is
- * actually enforced — an artifact belonging to nothing would be invisible
- * forever, and one belonging to both would render twice.
- */
 async function resolveOwner(
   profileId: string,
   input: Pick<ArtifactInput, "employerId" | "projectId">

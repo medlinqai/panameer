@@ -5,15 +5,6 @@ import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea } from "@/components/onboarding/controls";
 import { useBulkSelect, BulkSelectBar, SelectTick } from "@/components/onboarding/BulkSelect";
 
-/**
- * Education step (brief_P / E015): a card list with add / edit / delete, and an
- * "Edit Education History" modal — School* · Degree · Field of Study · Dates
- * Attended (start/end year) · Description, with Delete + Save.
- *
- * The step itself is OPTIONAL and carries a Skip; this component only owns the
- * list and the modal.
- */
-
 export type EducationDraft = {
   institution: string;
   degree: string | null;
@@ -33,20 +24,9 @@ export const emptyEducation = (): EducationDraft => ({
 });
 
 const THIS_YEAR = new Date().getFullYear();
-/**
- * E033 — "Dates From" cannot be a future date, so the FROM list stops at the
- * current year. TO may run ahead for an expected graduation.
- */
 const FROM_YEARS = Array.from({ length: 60 }, (_, i) => THIS_YEAR - i);
 const TO_YEARS = Array.from({ length: 70 }, (_, i) => THIS_YEAR + 10 - i);
 
-/**
- * E033 — Degree and Field of Study are dropdowns that ALSO accept new entries
- * (an `<input list>` datalist: pick a common value or type your own). The
- * school list is an autocomplete over well-known universities, likewise
- * open — no list can be exhaustive, and refusing an unlisted school would
- * simply lose the record.
- */
 const DEGREES = [
   "Associate's Degree",
   "Bachelor of Arts (BA)",
@@ -83,32 +63,9 @@ const FIELDS_OF_STUDY = [
   "Supply Chain Management",
 ];
 
-/**
- * Autocomplete source for School. A representative list — the field accepts
- * anything typed, so an unlisted institution is never blocked.
- */
-/**
- * ── ⚠⚠⚠ THE FIELD ACCEPTS ANYTHING. NOW IT SAYS SO (`P2-A2-E602` WS-D) ────
- *
- * ⚠ SCOTT, 2026-09-22: *"When the typed value matches no option, show a plain
- * line under the field: **'No match — we'll save it as you typed it.'** The same
- * rule for Field of Study."*
- *
- * ⚠⚠ THE CONTROL WAS NEVER BROKEN — `School` is wired exactly as `Degree` is,
- * with a `datalist` of 38 universities, and it has always accepted free text.
- * ⚠⚠⚠ WHAT IT NEVER DID WAS **SAY SO**, so a `datalist` that filtered down to
- * nothing read as a REJECTION rather than as "type whatever you like". That is
- * why School looked empty while Degree's 13 common values almost always matched.
- *
- * ⚠ IT IS DELIBERATELY SILENT WHILE THE FIELD IS EMPTY — a warning on an
- * untouched field is noise, not help.
- */
 function NoMatchHint({ value, options }: { value: string; options: readonly string[] }) {
   const typed = value.trim();
   if (!typed) return null;
-  /* ⚠ Case-insensitive and substring-based, matching what the browser's own
-     `datalist` does — otherwise the hint would contradict the dropdown the
-     person is looking at. */
   const needle = typed.toLowerCase();
   if (options.some((o) => o.toLowerCase().includes(needle))) return null;
   return (

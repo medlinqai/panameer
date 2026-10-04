@@ -5,25 +5,6 @@ import { formatCents } from "@/lib/display";
 import { SettlementRowCard } from "@/components/settle/SettlementRows";
 import { listSettlements } from "@/lib/settlements";
 
-/**
- * `/pay` — THE BUYER'S APPROVAL QUEUE (`P1-J4-E394` WS-3).
- *
- * ⚠⚠ THIS REPLACES A `ComingSoon` STUB. `nav.ts` records the label decision:
- * `Payments` is *"the second plural noun, same decision"* as `Orders` — Scott's
- * draft read `Settle`, *"the one label nobody arrives already understanding, in
- * the ONE SECTION WHERE MONEY LIVES."* The href is `/pay` on the buyer's side and
- * `/finances` on the provider's — mirrored routes.
- *
- * ⚠ WHAT IS AWAITING THEM COMES FIRST, and the rest is history. A queue that
- * sorts by date puts the thing needing a decision below three that are already
- * paid.
- *
- * ⚠ NOT IN THIS BRIEF, AND FLAGGED RATHER THAN STUBBED: payment allocation,
- * payouts and the matching workbench. ⚠⚠ THE UNMATCHED-PAYMENT QUEUE IS A REAL
- * SCREEN SOMEBODY MUST OWN — `E388` built `Payment`, `PaymentLine` and
- * `paymentStatusFor` (`UNMATCHED | PARTIALLY_ALLOCATED | ALLOCATED`), and there
- * is nowhere to see an UNMATCHED one. Reported, not built.
- */
 export const metadata = { title: "Payments · Panameer" };
 
 export default async function Page() {
@@ -32,9 +13,6 @@ export default async function Page() {
   if (!viewer) redirect("/login?callbackUrl=%2Fpay");
 
   const all = await listSettlements(viewer);
-  /* ⚠ THE BUYER'S SIDE ONLY. `listSettlements` answers both scopes; this page is
-     the buyer's queue, and a buyer who also sells reads their own requests on
-     `/finances/payment-requests`. */
   const mine = all.filter((s) => s.party === "BUYER");
   const awaiting = mine.filter((s) => s.status === "SUBMITTED");
   const decided = mine.filter((s) => s.status !== "SUBMITTED");

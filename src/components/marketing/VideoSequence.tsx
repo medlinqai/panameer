@@ -1,68 +1,6 @@
 import { SEQUENCE_COPY } from "@/lib/brand";
 import { LazyAutoplayVideo } from "@/components/media/LazyAutoplayVideo";
 
-/**
- * The four-beat video sequence — Learn → Connect → Create → Settle.
- *
- * Shared by both marketing pages; only the captions differ, and those come from
- * SEQUENCE_COPY keyed by audience.
- *
- * ── REDUCED MOTION WITHOUT JAVASCRIPT ────────────────────────────────────────
- *
- * This is the part worth reading. The previous version of these cards was a
- * client component that subscribed to `prefers-reduced-motion` with
- * useSyncExternalStore and conditionally rendered the <video>. That worked and
- * it cost the page an island.
- *
- * It does not need one. The poster is painted as the card's own
- * `background-image`, the <video> sits on top, and one media query in
- * globals.css hides the video when reduced motion is asked for — revealing the
- * poster that was always underneath. CSS decides, so the component stays a
- * server component, the page stays static, and the fallback works before any
- * JavaScript has loaded rather than after.
- *
- * The posters are generated SVG gradients matching each card (there is no
- * ffmpeg here to pull a real frame), so the still and the playing card read as
- * the same object rather than as a broken image.
- *
- * The videos are decorative: `aria-hidden`, not focusable, pointer-events off.
- * Every word a reader needs is in the text layer above them.
- *
- * ── ⚠⚠ AND THEY NO LONGER DOWNLOAD AT PAGE LOAD (`P1-J1-E018`) ──────────────
- *
- * This section is BELOW THE FOLD on both pages that render it, and it was
- * costing 10.63MB before the visitor had scrolled to it — more than a hero clip
- * would. The `<video>` is now `LazyAutoplayVideo`, which withholds `src` until
- * the card is approached. See that file for why this cannot be done in CSS.
- *
- * ⚠ NOTHING ABOUT WHAT THIS PLAYS CHANGED. Same four clips, same order, same
- * captions, same posters, same reduced-motion behaviour. The only difference is
- * WHEN the bytes are fetched.
- *
- * ⚠ THIS SECTION IS THEREFORE THE PAGE'S FIRST CLIENT ISLAND — one observer per
- * card, no state above them. Both routes still prerender static (`○`); a client
- * component is prerendered too, and a route only loses `○` when it reads
- * request-time data.
- */
-
-/*
-  ── ⚠⚠ THE `-hero` CUTS, NOT THE MASTERS (`P1-J1-E018` closed, `P1-J1-E030`) ─
-
-  This array used to name `connect.mp4` (1.48MB), `consultation.mp4` (4.68MB) and
-  `get-paid.mp4` (3.07MB). With `learn.mp4` that is **10.63MB across four clips**,
-  and this section now renders on `/`, which ALREADY serves a hero clip — so moving
-  it unchanged would have made `/` the heaviest page on the site.
-
-  ⚠ THE RE-CUTS ARE THE SAME FOOTAGE at 1280x720, faststart, audio stripped:
-  0.14 + 0.26 + 0.83 MB against 1.48 + 4.68 + 3.07. **2.63MB total, down from
-  10.63MB, for identical content.**
-
-  ⚠ `learn.mp4` STAYS AT 1.40MB — there is no `-hero` cut of it and it is already
-  the smallest master. Do not invent one to make the set tidy.
-
-  ⚠ THESE CLIPS ARE STILL LAZY. `LazyAutoplayVideo` withholds `src` until the card
-  is approached; this changes WHAT is fetched, not WHEN.
-*/
 const MEDIA = [
   {
     src: "/learn.mp4",
@@ -144,12 +82,7 @@ export function VideoSequence({
                 >
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                {/*
-                  ⚠ A GLYPH, NOT A CONTROL. The mockup shows a play badge in the
-                  corner; these clips autoplay muted and have no controls, so
-                  this is decoration. Rendered as a span rather than a button so
-                  nobody can tab to it and press a thing that does nothing.
-                */}
+                {}
                 <span
                   aria-hidden
                   className="absolute right-4 top-4 grid h-[30px] w-[30px] place-items-center rounded-full bg-white/[0.18] text-[11px]"
@@ -170,11 +103,7 @@ export function VideoSequence({
             );
           })}
 
-          {/*
-            The three connective arrows, on the seams. lg only: at sm the grid
-            is 2×2 and below that a single column, where an arrow pointing right
-            points at nothing.
-          */}
+          {}
           {[25, 50, 75].map((pct) => (
             <span
               key={pct}

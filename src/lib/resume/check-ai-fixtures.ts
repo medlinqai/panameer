@@ -1,17 +1,3 @@
-/**
- * WS5 — the AI tier, proved against the real banked résumés.
- *
- *   npm run check:ai-fixtures
- *
- * SPENDS MONEY. It makes one model call per fixture, which is why it is a
- * separate script rather than part of `check:resume`: the free harness must stay
- * runnable on every change, and this one is run deliberately.
- *
- * With no `ANTHROPIC_API_KEY` it SKIPS with a note and exits 0. That is the same
- * degradation the product has — no key means no AI tier, not a broken build —
- * and a harness that failed CI for an unconfigured optional feature would be
- * wrong in the same way.
- */
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { extractText, mimeFromName } from "./extract";

@@ -11,18 +11,6 @@ const BODY = z.object({
   completed: z.boolean(),
 });
 
-/**
- * POST /api/learn/progress — mark a lesson done, or undo it (WS3).
- *
- * OWNER-SCOPED: the user id is the session's. The body says which LESSON and
- * whether it is done — never who did it.
- *
- * Marking a lesson complete ALSO enrolls the learner in its path if they weren't
- * already. Watching a lesson through is a stronger statement of intent than
- * clicking Enrol, and a progress row belonging to a path you aren't enrolled in
- * would be invisible on "My Learning Paths" — the one place the learner would
- * go looking for it.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {
@@ -53,9 +41,6 @@ export async function POST(request: Request) {
               title: true,
               learning_path_id: true,
               learningPath: { select: { slug: true } },
-              /* `P1-J3-E048` — a Course has NO instructor column; the only expert
-                 signal in the schema is `Lesson.expert_person_id`, so the course's
-                 instructor is read from its own lessons. See the completion block. */
               sections: {
                 select: { lessons: { select: { id: true, expert_person_id: true } } },
               },
@@ -78,26 +63,6 @@ export async function POST(request: Request) {
 
   const pathId = lesson.section.course.learning_path_id;
 
-  /*
-    ── ⚠⚠⚠ THE SAME TWO CHECKS THE ENROL ROUTE RUNS (`P2-A4-E610`) ───────────
-
-    ⚠⚠ SCOTT, 2026-09-23: *"Enrolment is forum membership, so marking one lesson
-    complete grants forum access the enrol route refuses. Apply the same two
-    checks. One rule, called twice — import it, do not restate it."*
-
-    ⚠ MEASURED 2026-09-23: this route ran NEITHER `learnGaps` NOR `pathIsOpenTo`
-    while `/api/learn/enroll` ran both — and the `learnEnrollment.upsert` below
-    is read directly by `canAccessPathForum`, so this was the cheaper door into
-    a path's private forum.
-
-    ⚠⚠ IT SITS AFTER THE UNDO BRANCH, ON PURPOSE. Un-marking a lesson is never
-    refused: a member must always be able to take back something they said about
-    their own progress, and a refusal there would strand whatever they marked
-    before the rule changed.
-    ⚠ IT SITS BEFORE THE TRANSACTION, so a refusal writes NOTHING — not the
-    progress row and not the enrolment. A half-applied gate that records the
-    lesson but not the membership would be a third state nobody designed.
-  */
   const refusal = await learnEnrolmentRefusal(viewer.userId, pathId);
   if (refusal) {
     const { status, ...body } = refusal;
@@ -118,39 +83,8 @@ export async function POST(request: Request) {
       update: {},
     }),
   ]);
-  /* ⚠⚠ `P2-A3-E612` — THE SECOND ENROLMENT DOOR RECORDS MEMBERSHIP TOO.
-     ⚠⚠⚠ `E610` closed this route's gap on the GATE; leaving it out here would
-     re-open the same hole one table across — a member enrolled by watching a
-     lesson would be in the path's forum with no membership row saying so, and
-     "am I in this group?" would have two answers again. */
   await ensureEnrolmentMembership(viewer.userId, pathId);
 
-  /*
-    ── ⚠⚠ FINISHING A COURSE NOTIFIES ITS INSTRUCTOR (`P1-J3-E048`, 2026-09-02) ─
-
-    Scott: *"should it happen automatically for those who create courses? I think
-    yes."* and *"When JOE completes my course, I want to know it. I might want to
-    give him an at-a-boy… just build a relationship."* AUTOMATIC, NO OPT-IN, AND
-    THE LEARNER IS NAMED — he named them himself.
-
-    ⚠ THE EVENT ALREADY EXISTS. `learn.course_completed.learner` and `.instructor`
-    are both in `notification-events.ts` from the notification run. This wires the
-    TRIGGER; it does not invent a second event.
-
-    ⚠ THE INSTRUCTOR IS RESOLVED FROM THE LESSONS, because `Course` HAS NO
-    INSTRUCTOR COLUMN — the only expert signal in the schema is
-    `Lesson.expert_person_id`. The course's instructor is the expert holding the
-    most of its lessons; a course whose lessons name nobody produces NO ROW AND NO
-    ERROR, exactly as briefed.
-
-    ⚠ NEVER WHEN THE INSTRUCTOR IS THE LEARNER. Telling somebody they finished
-    their own course is noise, and it is the first thing an instructor would
-    notice being wrong.
-
-    ⚠ `dedupeKey` ON (COURSE × LEARNER) so re-completing a lesson — an ordinary
-    thing to do — cannot re-notify. ⚠ AND `notify()` NEVER THROWS INTO THIS
-    HANDLER: a notification failure must not fail a lesson completion.
-  */
   const course = lesson.section.course;
   const courseLessonIds = course.sections.flatMap((s) => s.lessons.map((l) => l.id));
   const doneCount = await prisma.lessonProgress.count({

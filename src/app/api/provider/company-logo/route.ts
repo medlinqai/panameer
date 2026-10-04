@@ -2,18 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { suggestCompanyLogos, logoApiConfigured } from "@/lib/company-logo";
 
-/**
- * GET /api/provider/company-logo?name=Acme — logo SUGGESTIONS for a company
- * name (brief_U / E043).
- *
- * Suggestions only: the provider accepts, changes or removes one, and nothing
- * is ever auto-applied. Returns an empty list rather than an error when no
- * provider is configured or every lookup fails, so the employer form degrades
- * to plain manual entry instead of breaking.
- *
- * Gated to providers — it's an authenticated convenience, not a public
- * logo-proxy anyone can hammer.
- */
 export async function GET(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

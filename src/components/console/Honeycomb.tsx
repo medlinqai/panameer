@@ -2,98 +2,26 @@
 
 import Link from "next/link";
 import { useRebuild, RebuildBadge } from "@/components/motion/Rebuild";
-/* ⚠⚠⚠ FROM `lib/figure`, NOT `lib/statistics` — this is a CLIENT component and
-   `lib/statistics` imports prisma. Importing it here put `pg` in the browser
-   bundle and the build died on "Can't resolve 'dns'". ⚠⚠ `tsc` STAYED GREEN
-   THROUGHOUT; only `next build` can see a bundling error. See `lib/figure.ts`. */
 import { isCounted, type Figure } from "@/lib/figure";
 import "@/components/console/honeycomb.css";
 
-/**
- * ── ⚠⚠⚠ THE HONEYCOMB — ONE CELL PER AREA (`P2-A2-E603` WS-B) ────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"One cell per area on the shared 15-second rebuild.
- * The rebuild rearranges cells and never changes a number."*
- *
- * ⚠⚠ IT USES `E600` WS-D's `useRebuild` RATHER THAN A SECOND CLOCK. A page with
- * two 15-second timers has two 15-second timers — they start at different
- * moments and drift, and then one picture redraws while another counts down to
- * something that already happened.
- *
- * ── ⚠⚠⚠ THE NUMBERS NEVER CHANGE, AND THAT IS STRUCTURAL ─────────────────
- *
- * ⚠ `cells` ARRIVES AS A PROP FROM THE SERVER AND IS NEVER REFETCHED HERE.
- * ⚠⚠ THERE IS NO `fetch`, NO `router.refresh()` AND NO STATE HOLDING A FIGURE
- * IN THIS FILE — so a rebuild **cannot** change a number, rather than merely
- * happening not to. `useRebuild` returns a counter; a counter cannot carry
- * data. ⚠ That is `Rebuild.tsx`'s own rule 3, inherited rather than restated.
- *
- * ── ⚠⚠ THE ORDER IS A ROTATION, AND IT IS DETERMINISTIC ──────────────────
- *
- * ⚠ `cycle` starts at 0 and rotation by 0 is the identity, so **the server and
- * the first client render produce the same order** and there is no hydration
- * mismatch. ⚠⚠ A `Math.random()` shuffle would have rendered one order on the
- * server and another in the browser, which React reports as a hydration error
- * and a reader sees as the page flickering before it settles.
- * ⚠⚠⚠ AND A ROTATION IS WHAT MAKES THE PROOF POSSIBLE: with n > 1 cells the
- * order is DIFFERENT on every consecutive cycle, so "did it rearrange?" has a
- * yes/no answer that does not depend on luck.
- */
 export type HoneyCell = {
   key: string;
   label: string;
-  /** ⚠ The area's headline figure — counted, or a dash carrying its reason. */
   figure: Figure;
-  /** ⚠ What the figure counts, e.g. `"colleagues"`. Used in the derived line. */
   counts: string;
   href: string;
-  /**
-   * ── ⚠⚠⚠ THE LEVEL, DECIDED ELSEWHERE (`P2-A1.1-E731`) ───────────────────────────
-   *
-   * ⚠ **THIS COMPONENT NEVER COMPUTES IT.** `levelFor()` in `lib/usage-areas.ts` is the one
-   * function, and the gauge card beside this comb calls the same one (`E585`).
-   * ⚠⚠ **`null` IS NOT `"none"`.** `none` means a MEASURED ZERO and tints pale-with-an-edge;
-   * `null` means no level applies — an uncounted figure, or one with no goal — and keeps the
-   * hatched treatment it already had. ⚠⚠⚠ **COLLAPSING THE TWO WOULD UNDO THE ONE RULE THIS
-   * COMB ALREADY ENFORCES** (counting rule 2).
-   * ⚠ Optional, so the `grid` layout's existing callers are unchanged.
-   */
   level?: "none" | "low" | "medium" | "strong" | null;
 };
 
-/** ⚠ Rotation by `cycle`, so cycle 0 is the order the server rendered. */
 function rotate<T>(xs: T[], by: number): T[] {
   if (xs.length < 2) return xs;
   const n = ((by % xs.length) + xs.length) % xs.length;
   return [...xs.slice(n), ...xs.slice(0, n)];
 }
 
-/**
- * ── ⚠⚠ TWO LAYOUTS, AND THE SECOND ONE IS WHY THIS PROP EXISTS (`E730` WS-B) ──────
- *
- * ⚠ `grid` is what `E603` shipped: a plain rectangular grid, 2 columns then 3.
- * ⚠⚠ `flower` is the TESSELLATED comb Scott approved for the Usage header — odd rows
- * offset by half a cell and pulled up so the hexagons interlock. ⚠⚠⚠ **A 3×3 RECTANGULAR
- * GRID OF HEXAGONS DOES NOT TESSELLATE AND HAS NO CENTRE CELL**, which is the measured
- * reason this could not simply be "pass nine cells to the existing layout".
- */
 export type HoneyLayout = "grid" | "flower";
 
-/**
- * ── ⚠⚠⚠ `chrome` — THE COMB CAN BE A CARD, OR JUST THE PICTURE ────────────────────
- *
- * ⚠ With `chrome` (the default) it is what it has always been: a bordered `<section>`
- * carrying its own heading, lede, derived line and rebuild badge.
- * ⚠⚠ **WITHOUT IT, THE SECTION, THE BORDER, THE HEADING AND THE LEDE ALL GO** — because
- * `PatternHeader` mounts this in its `picture` slot, and ⚠⚠⚠ **A BORDERED CARD WITH AN
- * `<h2>` NESTED INSIDE A BORDERED PANEL READS AS TWO CARDS AND TWO HEADINGS FOR ONE
- * THING.** ⚠ The derived busiest/quietest line goes too, because the header renders that
- * sentence itself from the same figures — two copies of one sentence on one screen is
- * `E585` in prose.
- * ⚠ **THE REBUILD BADGE SURVIVES**, because it is the only thing that explains why the
- * cells are moving. A comb that rearranges with nothing saying it will is motion with no
- * account of itself.
- */
 export function Honeycomb({
   cells,
   layout = "grid",
@@ -105,27 +33,6 @@ export function Honeycomb({
 }) {
   const { cycle, secondsLeft, still } = useRebuild();
 
-  /*
-    ⚠⚠⚠ A READER WHO ASKED FOR NO MOTION GETS THE ORDER FROZEN, NOT JUST THE
-    FADE REMOVED. ⚠ Cells silently swapping places with no transition is the
-    WORST version of motion for that reader, not the safest: it happens with
-    nothing to explain it. ⚠⚠ `still` also makes `secondsLeft` null, so there
-    is no countdown — a countdown beside a picture that never redraws is a
-    promise the page does not keep.
-  */
-  /*
-    ── ⚠⚠⚠ THE FLOWER ROTATES ITS PETALS AROUND A FIXED CENTRE (`P2-A1.1-E731`) ──────
-
-    ⚠ **SCOTT: *"the flower with Profile in the centre, as in the mockup."*** ⚠⚠ A plain
-    rotation carries the centre cell out of the middle fifteen seconds after load, so
-    *"Profile in the centre"* was true of the first render and of nothing after it.
-    ⚠⚠⚠ **THE CENTRE IS HELD AND THE SIX AROUND IT ROTATE**, which keeps `E603`'s rule —
-    *"the rebuild rearranges cells and never changes a number"* — completely intact while
-    making the centre a fact rather than a coincidence of timing. ⚠ It is also what a
-    flower does.
-    ⚠ Index 3 of seven is the middle of 2-3-2. ⚠⚠ The `grid` layout is untouched and still
-    rotates everything, because it has no centre to hold.
-  */
   const CENTRE = 3;
   const shown = still
     ? cells
@@ -139,12 +46,7 @@ export function Honeycomb({
 
   const grid = (
     <>
-      {/*
-        ⚠ `key={still ? "still" : cycle}` REPLAYS THE SETTLE ANIMATION each
-        cycle. ⚠⚠ THE KEY IS ON THE GRID, NOT ON A CELL: keying each cell by
-        cycle would remount every cell every 15 seconds, which throws away
-        focus if somebody is tabbing through them.
-      */}
+      {}
       <div
         className={`pm-hive${layout === "flower" ? " pm-hive-flower" : ""}${chrome ? " mt-4" : ""}`}
         data-still={still ? "yes" : "no"}

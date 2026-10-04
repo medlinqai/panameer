@@ -2,52 +2,6 @@
 
 import Link from "next/link";
 
-/**
- * WHAT A SIGNED-IN VISITOR SEES WHEN `/join/buyer` OR `/join/requester` HAS
- * NOTHING FOR THEM — `P1-J1.2-E009`.
- *
- * ── ⚠ THE OLD MESSAGE WAS WRONG IN THE ONE CASE IT MOST NEEDED TO BE RIGHT ───
- *
- * It said *"You're already signed in — This account isn't a buyer account."* with
- * one link, to `/dashboard`. Read that as the person it is aimed at: somebody
- * signed in, on `/join/buyer`, TRYING TO BECOME A BUYER. The page told them they
- * are not the thing they are in the middle of becoming, and then sent them
- * somewhere else. That closed the loop `P1-J1.2-E004` had just opened:
- *
- *     /create-work → /company?blocked=… → /join → /join/buyer
- *       → "This account isn't a buyer account." → /dashboard, and nowhere else.
- *
- * ── ⚠ AND THE ROUTE CANNOT TELL YOU WHY, SO THIS DOES NOT GUESS ──────────────
- *
- * Both status routes collapse several causes into ONE 404. `loadBuyer` throws
- * `NOT_A_BUYER` when there is no `Person`, OR when `is_service_buyer` is false,
- * OR when there is no `BuyerProfile`; `getRequesterState` throws
- * `NOT_A_REQUESTER` whenever `requesterProfile` is missing, and a requester has
- * no type flag at all, so on that route the two causes are not merely conflated
- * — they are indistinguishable in principle without new logic.
- *
- * So the copy states ONLY the fact the 404 actually establishes — this account
- * has no profile of this type — and never asserts the cause. "This account isn't
- * a buyer account" was a guess, and it was the wrong guess for the person most
- * likely to be reading it. Distinguishing the causes properly means changing the
- * error codes in `lib/onboarding.ts` and `lib/requester-onboarding.ts`, which
- * other callers switch on; that is a separate brief.
- *
- * ── ⚠ THE WAY FORWARD HAS TO BE A DOOR, NOT A SIGNPOST ───────────────────────
- *
- * `/company` is the ONLY UI in the codebase that can write a `CompanyMembership`
- * outside the two wizards that refuse an account in this state, and setting up
- * the company is genuinely the first step on either path. So it is the primary
- * link, and `/dashboard` is demoted to a quiet secondary.
- *
- * ⚠ AND WHEN THE VISITOR ARRIVED FROM A `?blocked=` REDIRECT, `blocked` AND
- * `from` ARE CARRIED BACK, so `/company` re-renders the reason its door closed
- * and `CompanyStepInline` keeps the destination it should return to. Dropping
- * them would land the visitor on a bare company page with no memory of why they
- * were sent anywhere, which is the same dead end wearing a different URL.
- *
- * ⚠ NOTHING HERE CREATES A PROFILE. That is deliberately out of scope.
- */
 export function NoProfileYet({
   /** "buyer" or "requester" — the path they were trying to start. */
   path,

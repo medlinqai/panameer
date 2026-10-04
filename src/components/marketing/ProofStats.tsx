@@ -1,34 +1,3 @@
-/**
- * THE THREE-STAT PROOF STRIP — one component, two surfaces.
- *
- * Rendered on the marketing home hero and on `/assess` step 0. The brief is
- * explicit that it is ONE component, not two copies: the home and the first
- * screen of the assessment are the same promise made twice, and two copies of
- * three numbers is how they end up disagreeing.
- *
- * ⚠ EVERY FIGURE HERE IS INVENTED. 942 and 10M+ already run on panameer.com and
- * are a known pre-launch item — deliberately not "fixed" here. See
- * TAX_SAVINGS_USED for the third.
- *
- * `variant` only changes the skin. The home renders inside the ported
- * `.pm-home` stylesheet and reuses its `.stats`/`.stat` classes; the wizard
- * sits outside that scope, so it gets a Tailwind equivalent. Same numbers, same
- * order, same labels — the SOURCE is shared even though the paint is not.
- *
- * ⚠ THE "wizard" VARIANT CURRENTLY HAS NO CALLER, and that is deliberate, not
- * an oversight. It rendered as the aside on `/assess` step 1; E018 removed that
- * aside because `WizardShell` only applies its `1fr_380px` grid when an aside
- * exists, and the step needed the full width. The variant is LEFT IN PLACE —
- * deleting the prop is Scott'''s call, not a tidy-up — so if the strip returns to
- * any wizard surface it returns as the same three numbers, not a new copy.
- */
-/**
- * ⚠ PLACEHOLDER — SCOTT HAS NOT CONFIRMED THIS FIGURE.
- *
- * One named constant so swapping it is a single edit rather than a hunt across
- * two surfaces. It is the same claim family as the product shot's "TDWCA — Tax
- * Deferred Working Capital Account" finding.
- */
 export const TAX_SAVINGS_USED = "$6M+";
 
 type Stat = { value: string; label: string };
@@ -36,17 +5,6 @@ type Stat = { value: string; label: string };
 const STATS: Stat[] = [
   { value: "942", label: "Assessments Completed" },
   { value: "10M+", label: "Total Savings" },
-  /*
-    ⚠ RENDERS IN EVERY ENVIRONMENT, INCLUDING PRODUCTION — Scott, 2026-08-14.
-
-    This tile was previously behind an environment-flagged counsel gate that
-    kept it out of production, because a tax-savings claim was held to need CPA
-    and lawyer sign-off. Scott removed the gate and restored the original
-    wording on 2026-08-14, so the claim is now public on `/` and on `/assess`
-    step 0. The flag and the module that held it were DELETED rather than left
-    switched on — a flag still sitting in the tree would imply the decision is
-    open when it has been made.
-  */
   { value: TAX_SAVINGS_USED, label: "Tax Savings Used to Fund Deployment" },
 ];
 

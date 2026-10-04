@@ -16,27 +16,6 @@ import {
   PublicSecondary,
 } from "@/components/public/masked-ui";
 
-/**
- * ── ⚠⚠⚠ BROWSE TALENT — THE PUBLIC GRID (`P2-A1.1-E738` WS-B) ─────────────
- *
- * ⚠ Scott, 2026-10-01, answer 8: *"Browse Talent replaces the existing
- * `/explore` link (no 7th nav item). `/explore` becomes the masked grid; real
- * first names and photo URLs removed."*
- *
- * ⚠⚠ **WHAT "REAL FIRST NAMES AND PHOTO URLS REMOVED" MEANT IN PRACTICE:** the
- * old teaser cards rendered `firstName` and `photoUrl` from
- * `searchProvidersTeaser`. ⚠⚠⚠ **THEY ARE NOT HIDDEN HERE — `MaskedCard` HAS
- * NEITHER FIELD**, so the grid is built from a shape that cannot express them.
- * ⚠ `ProviderCard` is no longer rendered by this page for that reason; it is
- * untouched on disk and still used elsewhere (`E164` — never delete a file).
- *
- * ⚠⚠ **IT IS A PLAIN GET FORM, NO CLIENT JAVASCRIPT.** The filters submit the
- * page to itself. ⚠ That is not a shortcut: a signed-out funnel page must work
- * before hydration, the back button has to restore the previous search, and
- * every filter state needs a URL somebody can paste.
- */
-
-/** ⚠ "Show more" grows `take`; it does not offset. See the note in the body. */
 export async function BrowseTalentGrid({
   q,
   country,
@@ -48,12 +27,9 @@ export async function BrowseTalentGrid({
   minYears?: number;
   take?: number;
 }) {
-  /* ⚠⚠ THE SCRAPE BRAKE (WS-C). ⚠ Read its header before trusting it — it is
-     a best-effort, per-instance brake, and the MASK is the real protection. */
   if (!(await browseAllowed())) return <TooFast />;
 
   const size = take && take > 0 ? take : BROWSE_PAGE_SIZE;
-  /* ⚠ Both reads in one round trip — the grid and its own filter options. */
   const [{ cards, hasMore }, countries] = await Promise.all([
     browseTalent({ q, country, minYears, take: size }),
     previewCountries(),

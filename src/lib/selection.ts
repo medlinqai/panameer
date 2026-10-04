@@ -2,77 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠⚠ THE BUYER SELECTS, AND THE REQUISITION IS CREATED (`E621` WS-C) ──
- *
- * ⚠⚠⚠ **THE PREMISE CORRECTION THIS WORKSTREAM TURNS ON — THERE IS NO
- * `Requisition` TABLE TO BUILD, AND THERE MUST NOT BE ONE.**
- *
- * ⚠ The brief says *"create the requisition, per `requisition_model_2026-09-21.md`"*,
- * and that document's own mapping table answers what it is:
- *
- * | Oracle | Panameer |
- * |---|---|
- * | Requisition header | **WR_HEADER (the cart)** |
- * | Requisition line | **WR_LINE**; line type = Transaction Type |
- *
- * ⚠⚠ And its title is *"The cart **IS** the work request"*. **So WR_HEADER is
- * `WorkRequest` and WR_LINE is `WorkRequestLine`.** ⚠⚠⚠ MEASURED 2026-09-25:
- * `grep "^model Requisition"` returns **nothing** — and that is correct rather
- * than missing. A second header table would be two carts for one purchase.
- *
- * ⚠ SO THIS WORKSTREAM NEEDED **NO SCHEMA EDIT.** Every field in Scott's WR_LINE
- * list already has a column, three of them added by WS-A:
- *
- * | Scott's WR_LINE field | column |
- * |---|---|
- * | Requisition ID · Line Number | `work_request_id` · `line_number` |
- * | Line Status (Created, Sourced) | `status` — `DRAFT` … `ORDERED` |
- * | **Transaction Type** | `transaction_type` ⚠ added by WS-A |
- * | Description · Category | `description` · `unspsc_code` |
- * | Quantity · Unit Price · Line Amount | `quantity` · `unit_price_cents` · `amount_cents` |
- * | Provider ID | `provider_person_id` |
- * | **Recruiter ID** · **Work Order** | `recruiter_person_id` · `work_order_id` ⚠ added by WS-A |
- * | Item ID | `supplier_part_id` |
- * | Requested Date | `service_start` |
- *
- * ⚠⚠ **TWO WR_HEADER FIELDS HAVE NO COLUMN AND ARE REPORTED, NOT ADDED:**
- * *Entered By* (Oracle distinguishes it from *Created By* when somebody enters a
- * requisition on another person's behalf — Panameer has only `buyer_person_id`)
- * and *Requisition Comments*. ⚠ Neither has a writer and nothing in this
- * workstream needs one; a column nobody writes is the debt `basis` already is.
- *
- * ── ⚠⚠ NO MONEY MOVES HERE (item 5, ruling 25) ──────────────────────────
- * ⚠ The line STATES an amount. Nothing collects it, nothing is billed, and no
- * cut is computed. `check:selection` asserts this file cannot reach `Payment`.
- */
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE ARITHMETIC — ⚠⚠⚠ PRINTED, NEVER A HARD-CODED TOTAL (item 1)
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ⚠⚠⚠ **A NUMBER SCOTT HAS NOT SUPPLIED, NAMED SO IT CAN BE ARGUED WITH.**
- *
- * ⚠ WS-C item 1 requires *"the hours that follow from"* the buyer's dates, so a
- * derivation is unavoidable — but **how many hours a working day contains is a
- * product decision nobody has made.** ⚠⚠ It is a named constant, printed inside
- * every quotation this module produces, and **reported as owed** rather than
- * buried in a multiplication. ⚠⚠⚠ The alternative — quietly writing `× 8` in
- * the middle of the sum — is how a total nobody agreed to becomes the total
- * everybody quotes.
- */
 export const HOURS_PER_DAY = 8;
 
-/**
- * ⚠⚠ MONDAY TO FRIDAY, BOTH ENDS INCLUSIVE.
- *
- * ⚠ Inclusive because a one-day engagement starting and ending on the same
- * Tuesday is **one day of work, not zero** — an exclusive count would quote it
- * as free. ⚠⚠ **Public holidays are NOT deducted, and that is stated rather than
- * hidden:** they differ by country and `WorkRequest.location_country` is
- * nullable, so deducting them would be a guess dressed as a fact.
- */
 export function businessDaysBetween(start: Date, end: Date): number {
   if (end.getTime() < start.getTime()) return 0;
   let days = 0;
@@ -98,7 +29,6 @@ export type TalentLineMath = {
   hours: number;
   unitPriceCents: number;
   amountCents: number;
-  /** ⚠ The sum in words, for the dialog and for the gate's output. */
   formula: string;
 };
 

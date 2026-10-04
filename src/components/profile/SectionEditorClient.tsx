@@ -6,17 +6,7 @@ import { Notice, TextArea } from "@/components/onboarding/controls";
 import { EmployersStep } from "@/components/onboarding/EmployersStep";
 import { EducationCards } from "@/components/onboarding/EducationCards";
 import { CertificationCards } from "@/components/onboarding/CertificationCards";
-/* ⚠ NO TITLE SECTION HERE, AND THAT IS MEASURED NOT ASSUMED: the owner's
-   profile renders NO "Edit Title" link — counted by rendering, the eight are
-   Bio, Skills, Specializations, Certifications, Education, Work History, Solo
-   Projects and Rates. The title is edited from the wizard's review, which still
-   mounts `TitleEditor`. ⚠ Adding a slug for it here would be a door the profile
-   does not have. */
 import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
-/* ⚠⚠⚠ `E597` WS-B EXTRACTED THESE TWO AND THIS ROUTE NEVER MOUNTED THEM.
-   `SectionEditorClient` recorded why: the profile rendered no `Edit Title`
-   link, so there was nothing to open them from. ⚠ `E600` WS-F gives both a
-   section and an Edit control, which is what they were extracted for. */
 import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
 import { WORK_METHOD_OPTIONS } from "@/lib/onboarding-draft";
@@ -33,92 +23,18 @@ import {
 import { rateBreakdown } from "@/lib/display";
 import { sectionFor, type SectionSlug } from "@/lib/profile-sections";
 
-/**
- * ── ⚠⚠ ONE SECTION, IN THE PROFILE'S FRAME (`P2-A2-E597` WS-C) ───────────
- *
- * ⚠ SCOTT: *"ALL THE EDITS on this page should go to a page where the editor I
- * can just change THAT particular value."* The complaint was *"not the right
- * page, not the right menu"* — so this is a PAGE, in the app shell, with **no
- * step counter, no Next and no wizard**.
- *
- * ── ⚠⚠⚠ NO NEW EDITORS AND NO SECOND SAVE PATH ──────────────────────────
- *
- * ⚠ Every editor below is the SAME COMPONENT the wizard mounts: the five
- * extracted in WS-B, plus `EmployersStep`, `EducationCards` and
- * `CertificationCards`, which `E412` had already made shared.
- * ⚠⚠ THE SAVE IS `POST /api/onboarding/provider/step` WITH THE WIZARD'S OWN
- * STEP AND PAYLOAD, taken from `lib/profile-sections.ts`. The server `case` is
- * the save, and it has one implementation.
- * ⚠⚠⚠ THE DRAFT COMES FROM `draftFromStatus`, the same mapping the wizard
- * hydrates with — a second mapping would be `E585` in a new place.
- *
- * ── ⚠ WHY IT RETURNS TO `/profile` AND NOT `/connect` ───────────────────
- *
- * ⚠⚠ `/profile` IS THE STABLE ROUTE (`E591`). Today it REDIRECTS to `/connect`
- * for a provider; the avatar-menu brief will make it render the profile itself.
- * Returning to `/profile` is correct under both, and means none of these links
- * has to change when that lands.
- */
 export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
-  /*
-    ⚠⚠ THE SPEC IS READ HERE, NOT HANDED DOWN. `SectionSpec.payload` is a
-    FUNCTION, and a function cannot be serialised across the server→client
-    boundary — passing the whole spec 500ed every section that has one.
-    ⚠ `sectionFor` returns a row of a module-level `const` array, so this is the
-    SAME object reference on every render and the hook deps below stay stable.
-    ⚠⚠ THE REGISTRY IS STILL THE ONE DEFINITION of what a section posts; only
-    who reads it moved.
-  */
   const section = sectionFor(slug)!;
   const router = useRouter();
   const [draft, setDraft] = useState<ProviderDraft>(emptyDraft());
-  /* ⚠⚠⚠ THE ROLE PICKER NEEDS THE CATALOG, AND THE STATUS PAYLOAD IS NOT IT.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`) — the premise was WRONG:
-     //  ⚠⚠ THE ROLE PICKER NEEDS THE CATALOG'S ROLE TYPES, and they live on the
-     //  STATUS payload, not on the draft — `draftFromStatus` maps what a provider
-     //  HAS, not what they can choose from. ⚠ Kept alongside rather than widened
-     //  into `ProviderDraft`, which every other caller shares.
-     ⚠⚠ `status.profile.roleTypes` IS `pp.roles` — THE ROLES THE PROVIDER ALREADY
-     HOLDS (`onboarding.ts`, the `roleTypes:` key). Rendering the picker from it
-     offered Priya exactly ONE option, the one she was already on: a control that
-     looks like a choice and cannot change anything, which is `E579`.
-     ⚠ MEASURED AT THE WS-F GATE from the rendered page, not from the type — the
-     field name is identical either way, so nothing but a render could catch it.
-     ⚠⚠⚠ THE CATALOG COMES FROM `/api/catalog/role-types`, the same endpoint
-     `ProjectModal` already uses. The HELD roles stay where they were — they are
-     the DRAFT's pre-selection (`draft.roleTypeIds`), not the option list. */
   const [roleTypes, setRoleTypes] = useState<
     { id: string; name: string; display: string }[]
   >([]);
-  /*
-    ── ⚠⚠⚠ THE CERTIFICATIONS ADD TRIGGER (`P2-A2-E602` WS-A) ────────────────
-
-    ⚠ SCOTT'S WALK (`E016`): `/profile/edit/certifications` rendered *"No
-    certifications yet"*, Save and Cancel — **and no way to add one.**
-    ⚠⚠ MEASURED: the controls on that page were `Back · × · Attach PDF or Image ·
-    Delete · Cancel · Save · Save · Cancel`. The modal was in the DOM the whole
-    time; **nothing opened it.**
-
-    ⚠⚠⚠ THE CAUSE IS THAT THE CAPABILITY LIVES IN THE **CALLER**, NOT THE
-    COMPONENT. `CertificationCards` deliberately has NO body Add button
-    (`walk7` WS6 / `E144`): the review page wraps it in a card whose HEADER
-    carries *"+ Add Certification"*, and that button fires `openSignal`. ⚠ The
-    wizard is the only caller that passes it. ⚠⚠ `E597`'s one-section editor
-    mounted the component WITHOUT that wrapper, so the only affordance vanished.
-
-    ⚠ THE FIX KEEPS `E144` RATHER THAN REVERSING IT: this caller now supplies
-    the header button, exactly as the wizard does, instead of putting a second
-    button back in the component's body — which is the duplication `E144`
-    removed. ⚠⚠ ONE COUNTER, ONE `openSignal`, same shape as `join/provider`.
-  */
   const [certSignal, setCertSignal] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ⚠ Catalog data the pickers need. The WIZARD loads these from effects keyed
-     on its own screen state; this page has one section and loads only what that
-     section needs, on mount. */
   const [specGroups, setSpecGroups] = useState<
     { kind: string; label: string; items: { id: string; name: string }[] }[]
   >([]);
@@ -160,9 +76,6 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
     };
   }, []);
 
-  /* ⚠⚠ THE ROLE CATALOG — the list to CHOOSE FROM, not the list already held.
-     ⚠ Same endpoint `ProjectModal` uses, so there is one source of role types
-     rather than a second that can drift. */
   useEffect(() => {
     if (section.slug !== "role") return;
     fetch("/api/catalog/role-types")

@@ -1,30 +1,4 @@
 import "./face.css";
-/**
- * ── ⚠⚠ ONE PLACEHOLDER FACE, USED EVERYWHERE A FACE IS MISSING ────────────
- *
- * `P2-J3-E591` WS-C item 3. ⚠ Scott, 2026-09-20: *"makes sure to use the icons
- * you used on the mock up if there are no pictures."*
- *
- * ── ⚠⚠⚠ NEVER INITIALS, AND THAT IS THE WHOLE INSTRUCTION ─────────────────
- *
- * ⚠ `src/components/Avatar.tsx` renders INITIALS when there is no photo, and it
- * is used across the app. ⚠⚠ IT IS NOT CHANGED HERE — a global re-case of every
- * avatar in Panameer inside one page's brief is the sweep Scott has repeatedly
- * asked not to happen (`E531`, rule 11). ⚠ This is the Community surface's
- * placeholder: colleague cards, team rosters, mentor rows and the web nodes.
- *
- * ⚠⚠ IT IS DELIBERATELY GREY AND COLOURLESS so it still reads as *"no photo
- * yet"* rather than as a photo. ⚠ An INVITED person has no profile at all, and
- * a placeholder that looked like a portrait would imply one — which is the same
- * mistake as a fabricated title, in pixels.
- *
- * ⚠⚠ INLINE SVG, NOT A NETWORK REQUEST. Scott: *"a placeholder that 404s is
- * worse than the gap it fills."* ⚠ No `<img>`, no asset path, no loader — it
- * cannot fail to arrive.
- *
- * ⚠ `aria-hidden`: the name is always beside it in the card, and a decorative
- * glyph announcing itself would make every row read twice.
- */
 export function Silhouette({
   size = 44,
   className = "",

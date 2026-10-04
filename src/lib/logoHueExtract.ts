@@ -1,26 +1,6 @@
 import sharp from "sharp";
 import { hslToHex } from "./themeRecipes";
 
-/**
- * Dominant brand colours from a logo (E204, ported from Medlinq). Server-side:
- * `sharp` is a native module and never reaches the browser.
- *
- * Downsample → read raw RGBA → discard the pixels that are not brand colour →
- * bucket what's left by hue → return the strongest two or three as candidates.
- *
- * THE DISCARDS ARE THE ALGORITHM. A logo is mostly transparent padding, white
- * paper, black type and grey rules, and all four would dominate a naive
- * frequency count — you would extract "white" from every logo ever made. So:
- * transparent pixels go, near-white and near-black go, and anything under 18%
- * saturation goes, because a grey is not a brand colour however much of it
- * there is. Buckets are weighted BY saturation, so twenty vivid pixels outrank
- * two hundred washed-out ones.
- *
- * IT SUGGESTS, IT DOES NOT DECIDE. The output is candidates the tenant confirms.
- * Guessing wrong is cheap when the guess is a swatch to click and expensive when
- * it silently repaints their console.
- */
-
 function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
   r /= 255;
   g /= 255;
@@ -81,12 +61,6 @@ export async function extractLogoHues(buffer: Buffer, max = 3): Promise<string[]
   }
 
   const ranked = [...buckets.values()].sort((a, b) => b.weight - a.weight).slice(0, max);
-  /*
-    The returned candidate is CLAMPED, not the raw average: a logo's own colour
-    may be too pale or too dark to work as an accent, and this is a suggestion
-    for a UI token rather than a colour-match. The hue — the part that carries
-    the brand — is preserved exactly.
-  */
   return ranked.map((bk) => {
     const h = bk.sumH / bk.n;
     const s = Math.max(40, Math.min(85, bk.sumS / bk.n));

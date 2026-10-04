@@ -1,20 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * check:messages — the permission rule, asserted in the LIB (`P1-ALL-E379`).
- *
- * ⚠⚠ THE LOAD-BEARING ASSERTION IS THE FIRST ONE: a message requires an
- * ACCEPTED COLLEAGUE connection, and a MENTOR connection grants NOTHING.
- * `E372` writes MENTOR rows ACCEPTED instantly and unilaterally, so a mentor
- * permission would let anyone message anyone by connecting as a mentor first.
- *
- * ⚠ THESE READ THE SOURCE, NOT THE DATABASE. The rules live in
- * `lib/messages.ts`; this guards the shape of the code that enforces them,
- * which is where the rule can actually be broken. The three mutation cases the
- * brief names — a PENDING pair, a DECLINED pair, a MENTOR-only pair — are each
- * a distinct branch in `canMessage`, and each is asserted separately below.
- */
 let pass = 0;
 const failures: string[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
@@ -48,13 +34,11 @@ const schema = strip(readFileSync(join("prisma", "schema.prisma"), "utf8")).repl
 
 check("lib/messages.ts is on disk", lib.length > 0);
 
-/* ── 1 · ⚠⚠ THE PERMISSION. ACCEPTED COLLEAGUE ONLY. ──────────────────────── */
 check(
   "1 — canMessage reads the COLLEAGUE kind",
   /kind:\s*"COLLEAGUE"/.test(lib),
   "the permission is derived from the connection, not from message history"
 );
-/* ⚠⚠ THE MENTOR HOLE. `canMessage` must never look at a MENTOR row. */
 check(
   "1 — a MENTOR connection grants NO message permission",
   !/kind:\s*"MENTOR"/.test(lib) && !/"MENTOR"/.test(lib),
@@ -70,18 +54,14 @@ check(
   "1b — a DECLINED colleague pair is refused",
   /status === "DECLINED"\)\s*return deny\("DECLINED"\)/.test(lib)
 );
-/* MUTATION CASE C — no connection row at all is refused. A MENTOR-only pair
-   reaches THIS branch, because the query filters to COLLEAGUE. */
 check(
   "1c — no COLLEAGUE row means refused (this is the MENTOR-only path)",
   /if \(!rel\) return deny\("NOT_CONNECTED"\)/.test(lib)
 );
-/* ⚠ AND THE PERMISSION IS NOT INFERRED FROM MESSAGE HISTORY. */
 check(
   "1 — permission is never derived from an existing message",
   !/prisma\.message\.(findFirst|findMany|count)[\s\S]{0,300}?return \{ ok: true \}/.test(lib)
 );
-/* ⚠ EITHER DIRECTION — a colleague row belongs to both parties. */
 check(
   "1 — the colleague row is matched in either direction",
   /from_user_id: viewer\.userId, to_user_id: otherUserId/.test(lib) &&
@@ -95,13 +75,6 @@ check(
 );
 
 /* ── 3 · `read_at` IS THE RECIPIENT'S ─────────────────────────────────────── */
-/* ⚠⚠ SCOPED TO `markRead`'s OWN BODY, AND THE FIRST VERSION WAS A REAL HOLE.
-   It matched `to_user_id: viewer.userId` within 400 characters of the word
-   `markRead` — a window that ran straight past the end of the function and into
-   `unreadCount` below it, which contains that exact clause. So deleting the
-   scope from `markRead` left the harness GREEN while a sender could mark their
-   own outgoing messages read. Caught by mutation, not by reading.
-   ⚠ THE FIX IS TO CUT THE FUNCTION OUT FIRST and assert on that alone. */
 function bodyOf(src: string, name: string): string {
   const start = src.indexOf(`export async function ${name}`);
   if (start === -1) return "";

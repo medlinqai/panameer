@@ -2,19 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * Enforcement history (J2.4 WS-E / E011) — Policy violations · Submitted appeals.
- *
- * BOTH TABS ARE EMPTY, and will stay empty until there is a moderation system
- * to fill them. That is not a reason to leave the section out: a provider
- * checking their standing needs to see that the record is clear, and "no
- * violations" is a meaningful answer where a missing section is not.
- *
- * A client component only because the tabs are local state. The panel could
- * have been two stacked lists, but the appeals list is a response to the
- * violations list — showing both at once implies you might have appeals with no
- * violations, which is not a state that exists.
- */
 const TABS = [
   {
     id: "violations",

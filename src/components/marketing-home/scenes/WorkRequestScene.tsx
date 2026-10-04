@@ -1,14 +1,5 @@
 import { WR_EXPERTS, WR_SCOPE, WR_SKILLS, WR_TERMS } from "@/lib/marketing-scenes";
 
-/**
- * SCENE 4 — a work request, and the experts who can do it.
- *
- * ⚠ NOT A PUNCH-OUT FLOW. An earlier draft diagrammed an Oracle punch-out;
- * Scott redirected it here. The point being made is the one the ERP cannot
- * make: the requisition raised the need, and the moment the work request exists
- * the people who can do it are already on screen with rate, availability and
- * validation pulled from their profiles.
- */
 export function WorkRequestScene() {
   return (
     <div className="scene wr">

@@ -15,25 +15,6 @@ import {
   PublicSecondary,
 } from "@/components/public/masked-ui";
 
-/**
- * ── ⚠⚠⚠ THE MASKED PROFILE — WHAT A SHARE LINK OPENS (`P2-A1.1-E738`) ─────
- *
- * ⚠⚠ **EVERY FIELD THIS COMPONENT CAN RENDER IS ALREADY SAFE**, because
- * `MaskedProfile` has no field for a name, a photo, an employer, a client, a
- * school or a rate. ⚠⚠⚠ **THERE IS NO CONDITIONAL MASKING IN HERE AND THERE
- * MUST NEVER BE ONE** — the moment this component takes a `showName` prop it
- * becomes the thing that decides, and a render-time decision is the shape of
- * defect `E114` records (a confidential client name that *"travelled in the
- * payload, so it was one View-Source away"*).
- *
- * ⚠ THE NAMED VARIANT (`/in/<slug>` with the member opted in) IS A **DIFFERENT
- * READ**, not a flag on this one. See `NamedProfileView`'s note in the route.
- *
- * ⚠⚠ `joinHref` AND `signInHref` ARE PASSED IN rather than built here, because
- * the caller is the only thing that knows which page the visitor should come
- * back to. The brief: *"After Join Free / Sign In, return the visitor to the
- * **same** profile, now unmasked."*
- */
 export function MaskedProfileView({
   p,
   joinHref,
@@ -43,10 +24,6 @@ export function MaskedProfileView({
   joinHref: string;
   signInHref: string;
 }) {
-  /* ⚠⚠ A SECTION WITH NO ROWS IS NOT RENDERED. The signed-in provider profile
-     learned this at `E562`: a page that states its absences reads as an
-     inventory of what is missing, and on a buyer-facing page that is actively
-     harmful. ⚠ Nothing here says "No certifications yet". */
   const sections: { label: string; count: number; body: React.ReactNode; open?: boolean }[] = [];
 
   if (p.skills.length > 0) {

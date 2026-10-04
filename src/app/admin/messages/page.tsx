@@ -1,17 +1,5 @@
 import { TileRow, Listing, StubEmpty } from "@/components/console/ConsolePage";
 
-/**
- * Admin → Messages (deck slide 9 / image7): Internal Threads.
- *
- * Three tiles, not four — the slide draws Threads / Unread / Tagged Companies —
- * and NO volume footer, which is also what the slide shows. Recoloured from
- * Medlinq: its teal "All/Unread" toggle and yellow Unread tile read as a
- * different product inside Panameer's palette.
- *
- * Stubbed: there is no thread or message model. The New-thread and All/Unread
- * controls render in their designed positions, disabled, so the page shows its
- * shape without offering actions that cannot complete.
- */
 export default function Page() {
   return (
     <div className="mx-auto w-full max-w-6xl">

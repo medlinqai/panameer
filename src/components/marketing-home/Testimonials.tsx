@@ -1,15 +1,3 @@
-/**
- * Testimonials (brief §8) — built as-is.
- *
- * ⚠ THESE PEOPLE DO NOT EXIST. Dr. Michelle Carter, Dr. Sarah Reynolds, Dr.
- * James Tran and Dr. Rachel Kim are StratERP-era placeholder personas with
- * invented metrics, and the brief says to port them unchanged for now.
- *
- * That makes this the highest-risk section on the page: a fabricated customer
- * quote with a name and a number attached is not placeholder copy in the way a
- * headline is — it is a testimonial, and a reader has no way to tell. Flagged
- * in the report; must be replaced or removed before `/` is public.
- */
 export function Testimonials() {
   return (
     <>

@@ -6,14 +6,6 @@ import {
   submitRecommendation,
 } from "@/lib/recommendations";
 
-/**
- * POST /api/recommendations/respond — the CONTACT's answer (WS-F / E012).
- *
- * DELIBERATELY UNAUTHENTICATED. The recipient has no Panameer account; the
- * emailed token is the entire authorization, exactly as it is for project
- * validation. That is why the token is single-use, hashed at rest and expires:
- * the security of this endpoint is the token contract, not a session.
- */
 const Body = z.object({
   token: z.string().min(10),
   decline: z.boolean().optional(),

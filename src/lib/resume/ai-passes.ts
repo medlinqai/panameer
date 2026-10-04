@@ -8,58 +8,6 @@ import {
 } from "@/lib/resume/ai-provider";
 import { AI_RESUME_SCHEMA, type AiResume } from "@/lib/resume/ai-extract";
 
-/**
- * ENUMERATE FIRST, THEN EXTRACT (`P1-A1.4-E399` WS-2).
- *
- * ── ⚠⚠ WHY THE ONE-CALL VERSION FAILS, AND IT IS NOT A BUG ──────────────────
- *
- * `E399` measured a parse that returned **1 employer of 5, 9 projects of 14 and
- * 0 of 5 certifications** — and proved it was not truncation: `EDUCATION` is the
- * LAST section of the document and it came through. **A model that stopped early
- * cannot return the last section.** It read the whole thing and returned a
- * SUBSET.
- *
- * That is ordinary small-model behaviour. One call asking `gpt-5-nano` to hold
- * 11,000 characters in view and emit five employers, fourteen projects, five
- * certifications, forty skills, an overview and education is the hardest possible
- * framing of the task, and it fails by **sampling** — returning representative
- * items rather than all of them. The JSON is well-formed, schema-valid and
- * silently short. ⚠ THE MODEL IS NOT CHANGING (Scott: *"we use the cheaper
- * model...no one is going to pay frontier model pricing"*), so the framing has to.
- *
- * ── ⚠⚠ PASS 1 IS AN INVENTORY, NOT AN EXTRACTION ────────────────────────────
- *
- * It asks for one thing only: **every employer or engagement heading, verbatim,
- * with its date range, in document order.** No descriptions, no nesting, no
- * judgement. That is a high-recall, low-output task a cheap model is good at.
- *
- * ⚠⚠ AND ITS COUNT BECOMES THE CONTRACT. Once fourteen headings are on that
- * list, a later pass returning nine is a **DETECTED FAILURE, not a result** —
- * which is the thing that was missing entirely. See `recallReport`.
- *
- * ⚠ A FAILED PASS MUST NOT LOSE THE OTHERS. Every pass is independent and
- * reported on its own; a certifications pass that errors does not cost the
- * employers. Partial success is the normal outcome, never a discard.
- */
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE PASSES
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ⚠⚠ `kind` IS WHAT THE FIRST VERSION GOT WRONG, AND IT COST 24 FAKE EMPLOYERS.
- *
- * The inventory pass listed all 29 headings in Scott's CV correctly — that is the
- * recall it exists for. But every one was then handed to the employers pass, so a
- * document with FIVE employers and twenty-four client engagements under them
- * imported as **29 employers**. ⚠ THE INVENTORY WAS RIGHT AND THE ROUTING WAS
- * WRONG: over-counting is the same defect as under-counting wearing a different
- * face, and it is worse for the provider, who has to delete twenty-four rows.
- *
- * ⚠ SO THE CLASSIFICATION HAPPENS IN PASS 1, where the model is already looking
- * at the heading in document context, and NOT by a regex over the heading text —
- * "(via Elire)" and an em-dash are conventions of one CV, not a rule.
- */
 const inventoryItem = z.object({
   heading: z.string(),
   dateRange: z.string().nullable().optional().default(null),
@@ -101,16 +49,6 @@ const INVENTORY_SCHEMA = {
   additionalProperties: false,
 };
 
-/**
- * ⚠ THE INVENTORY PROMPT SAYS "LIST", NEVER "EXTRACT" OR "SUMMARISE".
- *
- * The failing single call used a prompt that reads as *understand this document*.
- * This one reads as *copy these lines out*, which is a transcription task rather
- * than a comprehension task — and transcription is what a cheap model does well.
- * ⚠⚠ THE WORD "EVERY" AND THE BAN ON SUMMARISING ARE BOTH LOAD-BEARING: the
- * observed failure was the model deciding on its own that a representative sample
- * was a helpful answer.
- */
 const INVENTORY_SYSTEM = `You are transcribing, not summarising.
 
 List EVERY employer, company, client or engagement heading that appears in this
@@ -139,20 +77,6 @@ export type InventoryItem = z.infer<typeof inventoryItem>;
 
 export type PassOutcome<T> =
   | { ok: true; value: T; usage: ModelUsage; ms: number; model: string; provider: ProviderName; tier: ParserTier }
-  /*
-    ⚠⚠ USAGE TRAVELS ON THE FAILURE PATH TOO (`P1-A1.4-E409` WS-1c).
-
-    A `shape` failure happens AFTER a successful model call, so `finishReason`,
-    `outputTokens` and `reasoningTokens` all exist at that moment — and were
-    being thrown away. ⚠ That is why `runPass` "collapses three different
-    failures into one `{ok:false}`": a provider error, a truncation and a schema
-    mismatch were indistinguishable from the outside, and the only way to tell
-    them apart was to guess. Nothing can be chunked responsibly until the
-    measurement says truncation is or is not the cause.
-  */
-  /* ⚠ `ms` on the failure path too (`P2-J1.4-E546`) — a call that TIMED OUT
-     spent its whole ceiling, and recording it as 0 hid exactly the number the
-     ceiling is set from. */
   | { ok: false; reason: string; message: string; usage?: ModelUsage; ms?: number };
 
 async function runPass<T>(
@@ -162,21 +86,8 @@ async function runPass<T>(
   text: string,
   parse: (v: unknown) => T | null,
   maxOutputTokens = 8_000,
-  /*
-    ── ⚠ WHEN THE CONTAINING REQUEST BEGAN (`P1-A1.4-E415` WS-2) ─────────────
-    ⚠ `null` MEANS "no route around me" — a script, a gate or the re-read
-    button, where the per-call ceiling is the only limit that applies. The
-    import route always supplies it.
-  */
   startedAt: number | null = null
 ): Promise<PassOutcome<T>> {
-  /*
-    ⚠⚠ DON'T START A CALL THERE IS NO TIME FOR. A model call granted three
-    seconds will spend them and fail, which reaches the same answer as not
-    calling — but later, and for money. ⚠ AND IT REPORTS A DIFFERENT, TRUER
-    REASON: `deadline` says the route ran out of room, where `error` would have
-    blamed the model for a decision the clock made.
-  */
   const budget = callTimeoutMs(startedAt);
   if (startedAt !== null && budget < MIN_CALL_MS) {
     return {
@@ -285,9 +196,6 @@ async function runPass<T>(
       reason: "shape",
       message: `${name}: the model's output did not match the expected shape`,
       ms: Date.now() - callStarted,
-      /* ⚠ THE CALL SUCCEEDED — only the PARSE failed, so the spend is real and
-         knowable. Reporting it is what distinguishes "the model ran out of room"
-         from "the model answered in the wrong shape". */
       usage: call.usage,
     };
   return {
@@ -301,10 +209,8 @@ async function runPass<T>(
   };
 }
 
-/** ⚠ PASS 1. The contract every later pass is measured against. */
 export function inventoryPass(
   text: string,
-  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
   startedAt: number | null = null
 ): Promise<PassOutcome<InventoryItem[]>> {
   return runPass(
@@ -316,24 +222,10 @@ export function inventoryPass(
       const r = INVENTORY.safeParse(v);
       return r.success ? r.data.items : null;
     },
-    /*
-      ⚠⚠ 12k, AND THE FIRST VALUE HERE WAS 4k AND IT FAILED — MEASURED, NOT
-      GUESSED. `[resume] truncated: completion=4000 reasoning=4000 budget=4000`:
-      the model spent the ENTIRE budget reasoning and emitted nothing.
-      `ai-provider.ts` documents exactly this — **on a reasoning model
-      `max_completion_tokens` is a budget for THINKING, not for output** — and the
-      inventory is the one pass that must never fail, because it is the contract
-      every other pass is measured against and a failure here drops the import to
-      the heuristic parse.
-    */
     12_000,
     startedAt
   );
 }
-
-/* ─── The scoped detail passes ─────────────────────────────────────────────
-   ⚠ EACH ASKS FOR ONE SECTION OF THE SCHEMA. The whole point is that no single
-   call is asked to hold the entire document's structure in view at once. */
 
 const partial = <K extends keyof AiResume>(keys: K[]) =>
   AI_RESUME_SCHEMA.pick(Object.fromEntries(keys.map((k) => [k, true])) as never);
@@ -342,15 +234,9 @@ function sub(properties: Record<string, unknown>, required: string[]) {
   return { type: "object" as const, properties, required, additionalProperties: false };
 }
 
-/**
- * ⚠⚠ THE EMPLOYER PASS IS TOLD WHAT IT MUST RETURN. The inventory is handed back
- * to the model as a checklist, so "return one of five" stops being an option it
- * can take silently — and when it does anyway, `recallReport` sees it.
- */
 export function employersPass(
   text: string,
   inventory: InventoryItem[],
-  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
   startedAt: number | null = null
 ) {
   const list = inventory.map((i, n) => `${n + 1}. ${i.heading}${i.dateRange ? ` (${i.dateRange})` : ""}`).join("\n");

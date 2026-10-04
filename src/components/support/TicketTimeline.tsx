@@ -1,18 +1,5 @@
 import type { TimelineEntry } from "@/lib/support";
 
-/**
- * ⚠⚠⚠ ONE TIMELINE (`P2-ALL-E761`), oldest at the top, newest at the bottom.
- *
- * Scott, working `PAN-CTXFTX`: *"I assigned it to me and asked a question. Want to
- * see that history on the ticket."* ⚠ Events and messages interleave, because
- * that is how a person reads a ticket — not as two lists to cross-reference.
- *
- * ⚠⚠ **WHAT IT SHOWS IS DECIDED BY THE QUERY, NOT HERE.** `ticketTimeline`
- * filters for the reporter, so this component renders whatever it is given and
- * cannot leak a kind the reporter was never meant to see.
- *
- * ⚠ The open pattern (`phase_3_ui.md`): thin lines, no boxes, tokens throughout.
- */
 function when(d: Date): string {
   return d.toLocaleString("en-US", {
     month: "short",
@@ -22,7 +9,6 @@ function when(d: Date): string {
   });
 }
 
-/** ⚠ One sentence per kind. `names` resolves an assignee id to a person. */
 function sentence(e: TimelineEntry, names: Map<string, string>): string {
   const who = (id: string | null) => (id && names.get(id)) || "someone";
   switch (e.kind) {

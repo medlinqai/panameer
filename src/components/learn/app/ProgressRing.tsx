@@ -1,30 +1,3 @@
-/**
- * ONE RING, THREE SIZES, AND A TRIPLE (brief_learn_app_shell WS1).
- *
- * `stroke-dasharray` on a rotated circle. Used at 74px (the dashboard level
- * badge), 132px (the path header arc) and 196px (the coverage chart) — and the
- * coverage chart is THIS COMPONENT COMPOSED THREE TIMES, not a fourth variant,
- * which is why `radius` and `bare` exist.
- *
- * ── WHY THE BRIEF'S FIVE PROPS AREN'T QUITE ENOUGH ───────────────────────────
- *
- * `{ value, max, size, label, sublabel }` is the whole API for the two single
- * rings. The triple needs two more things and neither is a variant:
- *
- *   `radius`  — three concentric rings are three DIFFERENT radii inside ONE
- *               196px box. Deriving it from `size` would force the caller to
- *               fake three different sizes and then position them, which is how
- *               you end up with a fourth component.
- *   `bare`    — the middle text belongs to the STACK, not to any one ring, so
- *               the outer two must be able to render no text at all.
- *
- * ── ⚠ max === 0 IS A REAL CASE, NOT A GUARD FOR TIDINESS ─────────────────────
- *
- * A brand-new learner has 0 certificates out of 0 attempted paths, and a path
- * with no lessons yet (three of them in the catalog have one) divides by its
- * own length. `0/0` renders an EMPTY ring, never a full one — a full ring on a
- * new account is the same class of lie as a hardcoded headline.
- */
 
 export function ProgressRing({
   value,
@@ -68,11 +41,6 @@ export function ProgressRing({
   const c = size / 2;
   const circumference = 2 * Math.PI * r;
 
-  /*
-    ⚠ max <= 0 → 0, NOT 1. See the note at the top: `value/max` with max 0 is
-    NaN, and a NaN dashoffset renders as a COMPLETE ring in every browser I
-    checked — the exact wrong default for an empty account.
-  */
   const frac = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
   const dashoffset = circumference * (1 - frac);
 

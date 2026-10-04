@@ -3,32 +3,6 @@
 import { useState } from "react";
 import { parseFieldValue, type DomainField } from "@/lib/assessment/domain-fields";
 
-/**
- * THE DECK'S PER-DOMAIN EXTRA FIELDS, BENEATH THE MATURITY LADDER.
- *
- * ── ⚠ IT SITS UNDER THE LADDER AND IT LOOKS SUBORDINATE ON PURPOSE ───────────
- *
- * The maturity answer is what the score is built from. A step that reads as two
- * equal questions gets half-answered, so this block is separated by a rule, sits on
- * the soft background, and carries a small label rather than a second `subtitle`.
- *
- * ⚠ AND IT DOES NOT GET ITS OWN STEP. `P1-J0-E226` puts "in under an hour of your
- * time" on the marketing home and `AssessmentWizardShot` prints "about 20 minutes";
- * ten more screens would roughly double the walk and break both strings. `ALL_STEPS`
- * does not grow, and `check:assessment-volume` fails the build if it does.
- *
- * ── ⚠ RENDERS NOTHING FOR SLIDES 10 AND 11 ───────────────────────────────────
- *
- * `fields` is `[]` for Data Analytics & AI Governance and Change Management & AI
- * Adoption. Their absence is the deck's design, not an omission — no panel, no
- * heading, no "nothing to add here" placeholder.
- *
- * ── ⚠ ERRORS APPEAR ON TOUCH, NEVER ON ARRIVAL ───────────────────────────────
- *
- * Every one of these is required, so validating on mount would paint the screen red
- * before the visitor has done anything wrong. A field shows its error once it has
- * been blurred or typed into.
- */
 export function DomainFields({
   domainKey,
   fields,
@@ -40,11 +14,6 @@ export function DomainFields({
   fields: DomainField[];
   value: (fieldId: string) => string;
   onChange: (fieldId: string, v: string) => void;
-  /**
-   * The percent group's running total, or `null` when this domain has no group or
-   * one of its boxes is not yet a clean number. ⚠ NOT ZERO — a half-typed box must
-   * not read as a contribution of nothing.
-   */
   groupTotal: number | null;
 }) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});

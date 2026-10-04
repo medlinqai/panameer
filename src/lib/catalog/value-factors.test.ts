@@ -1,16 +1,3 @@
-/**
- * ⚠ THIS TEST IS THE CONSTRAINT, NOT A CHECK ON IT.
- *
- * The brief that added `PackageValueFactor` said so plainly: "Assert the enum matches the
- * wizard. Add a test that fails if `basis` names a variable `AssessmentWizard` does not
- * collect. That test is the whole point of the constraint — without it, factors will drift
- * onto data the assessment never gathers and the estimates become unanchored."
- *
- * So this reads the WIZARD SOURCE as text rather than importing it (`AssessmentWizard.tsx`
- * is a `"use client"` module and its state variables are locals, not exports — there is
- * nothing to import). The same technique the existing schema-mirror assertion in
- * `scoring.test.ts` uses, and for the same reason: the thing that drifts is the source.
- */
 import { readFileSync } from "node:fs";
 import {
   BASIS_REQUIRES,

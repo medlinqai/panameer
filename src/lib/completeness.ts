@@ -1,59 +1,7 @@
-/**
- * Provider profile completeness (brief_K) — the SINGLE source of the stored
- * `completeness` value (0–100), recomputed on every profile save. Marketplace
- * visibility is gated on this, not on admin approval.
- *
- * Pure (no prisma import) so it can be reused from the onboarding/settings save
- * paths AND from the seed.
- *
- * ---------------------------------------------------------------------------
- * REBALANCED IN brief_R. The rule now is: **every weight must correspond to
- * something the 13-step wizard or the finish page actually collects**, and the
- * thresholds must match what those steps themselves accept. The old table
- * failed that on four counts, each of which silently capped a finished profile:
- *
- *   1. `region` (5) — no step collects it.
- *   2. `work_types` (5) — no step collects it (the wizard collects
- *      `work_method`, a different field).
- *   3. `workExperience` (15) — only ever populated by a résumé import. A
- *      provider who chose "Fill Out Manually" could reach at most 75 and was
- *      therefore PERMANENTLY INVISIBLE, below the threshold of 80.
- *   4. `overview >= 120` chars and `skills >= 3`, while the bio step accepts
- *      100 chars and the skills step accepts 1 — so a provider could satisfy a
- *      step and still score nothing for it.
- *
- * Weights deliberately sum to 105 and are capped at 100: completing every
- * required step plus a photo reaches 100 on its own, and the optional
- * enrichments (work history, education, certifications, specializations) can
- * cover for a missing photo instead of being worthless.
- * ---------------------------------------------------------------------------
- */
 
 /** Completeness at/above which a provider becomes marketplace-visible. */
-/*
-  ── ⚠⚠⚠ THIS IS NO LONGER A GATE (`P2-J3-E590` WS-A0). READ THIS BEFORE USING IT.
-
-  ⚠⚠ **MARKETPLACE VISIBILITY DOES NOT READ THIS NUMBER.** It reads
-  `providerMeetsRequired` through `isMarketplaceVisible`, whose `meetsRequired`
-  argument is REQUIRED — there is no percentage fallback any more, and
-  `onboarding.ts` no longer hand-rolls one either.
-
-  ⚠ WHAT STILL READS IT, AND ALL OF IT IS REPORTING OR COPY:
-    · `admin.ts` — the funnel counts (`live`, `registered`, `eightyComplete`).
-      ⚠⚠ THOSE ARE ADMIN STATISTICS, NOT A GATE, and `eightyComplete` is a
-      funnel STAGE NAMED AFTER THIS NUMBER. Reported at the WS-A0 gate, not
-      changed — they are Scott's board.
-    · `visibilityThreshold:` exposed to three surfaces, and the copy on
-      `/stats`. Both describe the number; neither decides anything.
-
-  ⚠⚠ **DO NOT REINTRODUCE `completeness >= VISIBILITY_THRESHOLD` AS A
-  CONDITION.** `E590` re-weights the score so that answering every line reaches
-  100; any surface gating on the figure would move underneath that change, which
-  is the bug this workstream exists to make impossible.
-*/
 export const VISIBILITY_THRESHOLD = 80;
 
-/** Minimum bio length — must match `MIN_BIO_CHARS` in onboarding.ts (E017). */
 const BIO_MIN_CHARS = 100;
 
 /** Structural input — any object (a prisma-loaded profile) with these props. */
@@ -66,70 +14,29 @@ export type CompletenessInput = {
   role_type_id: string | null;
   onsite_rate_cents: number | null;
   remote_rate_cents: number | null;
-  /** The single hourly rate collected by the wizard (brief_P / E018). */
   hourly_rate_cents?: number | null;
   /** The advertised RANGE (WS0 / E078c) — either end counts as "answered". */
   rate_min_cents?: number | null;
   rate_max_cents?: number | null;
   skills: unknown[];
   languages: unknown[];
-  /**
-   * Optional enrichments — any ONE of these satisfies the enrichment weight.
-   * `employers` replaced the retired flat WorkExperience (brief_U / E042); if
-   * this had kept reading the old table the weight would have become
-   * unreachable, which is precisely the invisible-profile bug brief_R fixed.
-   */
   employers: unknown[];
   education: unknown[];
   certifications: unknown[];
   specializations: unknown[];
   /** Person.photo_url (lives on the Person, not the profile). */
   photoUrl: string | null;
-  /*
-    ⚠⚠ `hasCompany` IS GONE (`P1-A1.4-E418`, 2026-09-11).
-
-    ⚠ SUPERSEDED, quoted not deleted: *"An APPROVED company membership
-    (brief_company_model). Part of the required set: a work order is between
-    COMPANIES, so a provider without one cannot be contracted, which makes
-    showing them to buyers a promise we can't keep."*
-
-    A provider is never asked for a company, so the weight was unreachable and
-    the requirement unsatisfiable — every new provider would have been held
-    below the bar by a question the wizard does not ask. The company is captured
-    once, at work order acceptance (`lib/orders.ts`), which is the moment the
-    superseded sentence was really describing.
-  */
-  /**
-   * ⚠ NO LONGER SCORED (WS7). Kept on the type — and nullable in the schema —
-   * because the column still exists and old rows still carry a value; nothing
-   * reads it for the meter or the gate any more.
-   */
   date_of_birth?: Date | string | null;
   hasAddress: boolean;
   /** A phone number is on file. */
   hasPhone: boolean;
-  /** Phone passed SMS verification. STUBBED by brief_S/E036 — see below. */
   phoneVerified: boolean;
 
-  /* ── ⚠⚠ ADDED BY `P2-J3-E590` WS-A — the lines the old table could not see ──
-     ⚠ Every one is OPTIONAL so a caller built before this brief still compiles.
-     ⚠⚠ BUT AN ABSENT FIELD SCORES ZERO, which is the honest reading: a caller
-     that does not supply solo projects has not told us the provider has any.
-     `buildCompletenessInput` — the ONE write path for the stored column —
-     supplies all of them. */
-
-  /** A city/state/country to show buyers. Distinct from `hasAddress`, which is
-   *  a street line and belongs to the required set. */
   hasLocation?: boolean;
   /** Projects with no employer — the profile's `Solo Projects` card. */
   soloProjects?: unknown[];
-  /** At least one employer or project carrying a start date, so a span can be
-   *  derived. ⚠ NOT a self-reported number — `E068` retired that. */
   hasExperienceYears?: boolean;
 
-  /* ── ⚠⚠⚠ THE FIVE DECLARATIONS. `null`/absent = UNANSWERED, ALWAYS. ───────
-     ⚠ A date means the provider said "I have none" and when. See the column
-     comments on `ProviderProfile` — the reasoning lives there. */
   declaredNoWorkHistoryAt?: Date | null;
   declaredNoEducationAt?: Date | null;
   declaredNoSpecializationsAt?: Date | null;
@@ -137,61 +44,11 @@ export type CompletenessInput = {
   declaredNoSoloProjectsAt?: Date | null;
 };
 
-/**
- * REBALANCED IN PJv2 WS7. `experienceLevel` (5) and `goal` (5) are gone — the
- * first is now derived from work-history spans (E068), the second was never used
- * for anything (E067). Removing 10 points would have left the table summing to
- * 95, i.e. a PERFECT profile permanently stuck at 95% and five points below its
- * own 100. Their weight is redistributed onto the fields that actually describe
- * a provider, and the table now sums to 110.
- *
- * The headroom is deliberate and load-bearing. Three invariants:
- *
- *   1. a fully-completed profile reaches 100                        (110 → cap)
- *   2. NO LANGUAGE must not cap anyone under 100                    (105 → cap)
- *   3. no photo must not cap anyone under 100                       (100 → cap)
- *
- * (2) is the one WS7 was asked to fix: the hero renders Language conditionally,
- * so a provider who never sets one must still be able to reach 100. (3) is an
- * improvement — under the old table a photo-less profile maxed out at 95.
- * Missing BOTH still caps at 95, which is the honest floor: at that point two
- * described things really are absent.
- */
-/*
-  ── ⚠⚠ REBALANCED AGAIN IN `P1-A1.4-E418` (2026-09-11) ──────────────────────
-
-  ⚠ SUPERSEDED, quoted not deleted: `company: 10, //    6  Company  (an APPROVED
-  membership)`, with the others at `headline: 12 · field: 12 · skills: 16 ·
-  rate: 12 · identity: 12`.
-
-  The company weight was removed with the company step, and REMOVING TEN POINTS
-  WITHOUT REDISTRIBUTING THEM WOULD HAVE CAPPED A PERFECT PROFILE AT 96 — the
-  precise trap the PJv2 WS7 note below records, where the table summed to 95 and
-  a flawless provider sat five points under its own 100. So the ten points go
-  back onto the fields that survive, and the table still sums to 106.
-
-  ⚠ MEASURED, not assumed — the three invariants below, before and after:
-      full profile        106 → capped 100   (unchanged)
-      NO LANGUAGE         102 → capped 100   (unchanged)
-      no photo             96                (unchanged — see the ⚠ below)
-      neither              92                (unchanged)
-
-  ⚠⚠ THE DOCBLOCK'S INVARIANT (3) IS STALE AND `E418` DID NOT SILENTLY "FIX" IT.
-  It claims a photo-less profile reaches 100. It reaches 96 and did so before
-  this change too — the `110 → cap` arithmetic it quotes belongs to a table that
-  no longer exists (the numbers sum to 106, as line 124 itself says). `E418`
-  deliberately holds that number EXACTLY where it found it rather than changing
-  behaviour nobody asked to change. ⚠ REPORTED, not resolved by choosing.
-*/
-// ── ⚠⚠⚠ THE WEIGHT TABLE (`P2-J3-E590` WS-A). SUMS TO EXACTLY 100. ────────
 //
-// ⚠⚠ SCOTT, 2026-09-20: *"Yes, I want everyone to be able to get to 100%... i
 // should eb able to go down that list and get to 100%."*
 //
-// ⚠⚠⚠ NOT 106-CAPPED-AT-100 ANY MORE, AND THE CAP WAS THE DEFECT. A capped
 // table cannot express *"answer everything and you are at 100"*: two profiles
 // reached 100 by different routes, so the checklist could not say what was
-// left without lying. ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //
 //   export const COMPLETENESS_WEIGHTS = {
 //     headline: 14,   field: 14,   skills: 18,   rate: 14,
@@ -201,19 +58,15 @@ export type CompletenessInput = {
 //     workMethod: 4,                                      // enrichment subtotal 22
 //   } as const;                                           // 106, capped at 100
 //
-// ⚠⚠ `enrichment: 6` IS SPLIT INTO FIVE REAL LINES. One weight satisfied by ANY
 // ONE of work history / education / certifications / specializations is the
 // single reason the score could not express a checklist: one employer scored
 // exactly what five scored, and zero certifications cost nothing because
 // education had already paid for the line.
 //
-// ⚠⚠⚠ RE-WEIGHTING IS ONLY SAFE BECAUSE `WS-A0` LANDED FIRST. Marketplace
 // visibility reads `providerMeetsRequired`, never this table, so moving a
-// number here cannot make anyone invisible. ⚠ **DO NOT REINTRODUCE A SCORE
 // GATE.**
 export const COMPLETENESS_WEIGHTS = {
   // ── SO BUYERS CAN FIND YOU — 50 ──────────────────────────────────────────
-  // ⚠ These six are the REQUIRED SET and carry NO "I have none" option: an
   // opt-out here would let a provider declare their way to invisible.
   headline: 8, //   Title
   field: 8, //      Field
@@ -230,7 +83,6 @@ export const COMPLETENESS_WEIGHTS = {
   workMethod: 5, //     How You Work
 
   // ── WHAT YOU'VE DONE — 26 ────────────────────────────────────────────────
-  // ⚠⚠ ALL FIVE ARE DECLARABLE. Each can be answered with "I have none" and
   // still scores — that is the whole feature.
   workHistory: 8,
   education: 5,
@@ -239,12 +91,6 @@ export const COMPLETENESS_WEIGHTS = {
   soloProjects: 3,
 } as const;
 
-/*
-  ⚠⚠⚠ THE ARITHMETIC IS VERIFIED IN CODE, NOT BY READING THE TABLE. The brief
-  says so explicitly, and a table that drifts from 100 breaks the one promise
-  this whole surface makes. ⚠ A wrong total throws at import — loudly, at boot,
-  rather than as a quietly wrong percentage on a real profile.
-*/
 export const COMPLETENESS_TOTAL = Object.values(COMPLETENESS_WEIGHTS).reduce(
   (a, b) => a + b,
   0

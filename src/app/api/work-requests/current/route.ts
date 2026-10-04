@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { getCurrentDraft, WorkRequestError } from "@/lib/work-request";
 
-/**
- * GET /api/work-requests/current — the buyer's most recent DRAFT (for resume),
- * or null. Gated canHireTalent; PAccount-scoped in the lib.
- */
 export async function GET() {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;

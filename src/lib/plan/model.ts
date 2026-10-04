@@ -1,30 +1,6 @@
-/**
- * ── THE PLAN MODEL — PURE, NO DATABASE (`P2-ALL-E783`) ──────────────────────
- *
- * ⚠⚠ EVERYTHING HERE IS A FUNCTION OF THE ROWS AND NOTHING IS STORED TWICE.
- * Numbering, lateness and readiness are DERIVED, so they cannot disagree with
- * the dates and statuses a reader can see on the same screen (`E585`).
- *
- * ⚠ Kept free of `prisma` on purpose: the gate exercises this file directly,
- * with fixtures, so the maths is proven without a database and without a
- * server. (`E586`'s lesson is the opposite one — a gate with no inputs does not
- * fail — so every function here is called with real fixtures by `check:plan`.)
- */
 
 export const PLAN_OWNER_PANAMEER = "panameer-build";
 
-/**
- * WHICH PLAN THE PUBLIC PAGE RENDERS (`P2-ALL-E804`).
- *
- * Scott, 2026-10-03: "no test may read or write the panameer-build plan, ever
- * again." A browser test cannot assert chart contents without controlling the
- * data, so the owner key is a server-side setting and the plan suite points its
- * own server at a throwaway plan.
- *
- * Server-side env only — never a query parameter, a header or a cookie, so no
- * visitor can aim the page at another plan. Refused outright in production: the
- * live site renders the live plan and nothing else.
- */
 export function planOwnerKey(): string {
   const override = process.env.PLAN_OWNER_KEY?.trim();
   if (!override) return PLAN_OWNER_PANAMEER;
@@ -34,30 +10,14 @@ export function planOwnerKey(): string {
     );
   }
   if (override === PLAN_OWNER_PANAMEER) {
-    /* Setting it to the live key is pointless and reads as an attempt to test
-       against live data. Fail loudly rather than quietly allowing it. */
     throw new Error("PLAN_OWNER_KEY must not be the live plan's key.");
   }
   return override;
 }
 
-/**
- * A `release` is the third level, added 2026-10-03 (`P2-ALL-E807`): Scott's plan
- * is release → phase → task. It renders as a HEADING with its own percentage and
- * due date rather than as a numbered row, because a release is a container for
- * phases, not a phase itself.
- *
- * Additive only — `PlanRow.type` is a plain String column, so no migration.
- */
 export const ROW_TYPES = ["release", "phase", "task", "milestone"] as const;
 export type RowType = (typeof ROW_TYPES)[number];
 
-/**
- * ⚠ `Late` IS DELIBERATELY ABSENT FROM THIS LIST. It is not a status anybody
- * types — it is what an end date in the past means while the work is not Done,
- * and `isLate()` computes it. A fifth stored value would let the badge and the
- * date contradict each other.
- */
 export const ROW_STATUSES = ["Planned", "In progress", "Done", "Blocked"] as const;
 export type RowStatus = (typeof ROW_STATUSES)[number];
 
@@ -96,18 +56,6 @@ export type PlanNode<T extends PlanRowLike = PlanRowLike> = T & {
 
 export const MILESTONE_MARK = "◆";
 
-/**
- * ── NUMBERING ──────────────────────────────────────────────────────────────
- *
- * ⚠⚠ A MILESTONE DOES NOT CONSUME A NUMBER, AND THAT IS NOT A DETAIL — it is
- * what makes Scott's own outline read the way he wrote it:
- *
- *     1 Define · 2 Design · 3 Build · 4 Prove · ◆ R1 Public beta · 5 Launch
- *
- * ⚠ `Launch` is **5**, not 6. If a milestone took a number, every row after an
- * inserted milestone would renumber, and a plan you can reorder freely would
- * punish you for adding the one row that marks a date.
- */
 export function buildTree<T extends PlanRowLike>(rows: readonly T[]): PlanNode<T>[] {
   const byParent = new Map<string | null, T[]>();
   for (const r of rows) {
@@ -116,26 +64,9 @@ export function buildTree<T extends PlanRowLike>(rows: readonly T[]): PlanNode<T
     if (list) list.push(r);
     else byParent.set(key, [r]);
   }
-  /** `sort` orders within a parent; `id` only breaks a genuine tie, so the order
-   *  is total and a render is never arbitrary between two equal sorts. */
   const ordered = (key: string | null) =>
     (byParent.get(key) ?? []).slice().sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
 
-  /**
-   * OUTLINE NUMBERS, EVERY LEVEL (`P2-ALL-E809`, the 2026-10-03 mockup):
-   *
-   *     1 MVP R1 · 1.1 Define · 1.2 Design · 1.3 Develop · 1.3.1 … · 1.5 Deploy
-   *
-   * EVERY ROW TAKES A POSITION, MILESTONES INCLUDED. `1.5 Deploy` is a
-   * milestone and still holds 1.5 — the mockup's own data does — so `number`
-   * carries the outline position and `mark` carries the ◆ a surface prints.
-   *
-   * SUPERSEDED, quoted not deleted — the two earlier rules this replaces:
-   * //   A MILESTONE DOES NOT CONSUME A NUMBER  (so Launch was 5, not 6)
-   * //   A RELEASE TAKES NO NUMBER, and the phase counter is global
-   * Both were right for the shapes they were written for; Scott's outline
-   * numbers every level, which is what makes "1.3.2" sayable out loud.
-   */
   const walk = (parentId: string | null, prefix: string, depth: 0 | 1 | 2): PlanNode<T>[] =>
     ordered(parentId).map((row, i) => {
       const number = prefix ? `${prefix}.${i + 1}` : String(i + 1);

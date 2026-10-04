@@ -7,14 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { AcceptButton } from "@/components/coordinator/AcceptButton";
 import { sameEmail } from "@/lib/normalizeEmail";
 
-/**
- * Coordinator invite accept landing (brief_I). PUBLIC (a new invitee has no
- * session). Validates the token, then routes by situation:
- *   - new email  → onboard via /join/provider (token carried through)
- *   - existing provider, logged in as the invitee → accept + link now
- *   - existing account, not logged in / wrong account → prompt to log in
- *   - expired / revoked / used / invalid → safe error, no side effects
- */
 export default async function InviteAcceptPage({
   searchParams,
 }: {

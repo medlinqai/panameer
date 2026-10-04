@@ -1,20 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
-/**
- * RFC 6238 time-based one-time passwords (J2.4 WS-H / E018).
- *
- * WRITTEN OUT RATHER THAN DEPENDED ON, because it is forty lines of HMAC and a
- * counter, and a 2FA dependency is a supply-chain surface on the one part of
- * the product whose whole job is being trustworthy.
- *
- * REAL, OR ABSENT. Half-built two-step verification is worse than none: it
- * teaches somebody they are protected when they are not, and they choose a
- * weaker password on the strength of it. So this verifies properly — 30-second
- * steps, SHA-1 per the spec (which is what every authenticator app implements),
- * a ±1 step window for clock drift, and a constant-time comparison so the
- * check itself doesn't leak the answer a digit at a time.
- */
-
 const STEP_SECONDS = 30;
 const DIGITS = 6;
 /** One step either side. Wider is a real weakening; narrower fails honest users. */
@@ -66,13 +51,6 @@ function codeAt(secret: string, counter: number): string {
   return (binary % 10 ** DIGITS).toString().padStart(DIGITS, "0");
 }
 
-/**
- * Is `code` valid for `secret` right now?
- *
- * Constant-time per candidate. Comparing with `===` would return faster on an
- * early mismatch, which over enough attempts is a side channel on a six-digit
- * secret — the exact place where that actually matters.
- */
 export function verifyTotp(secret: string, code: string): boolean {
   const trimmed = code.replace(/\D/g, "");
   if (trimmed.length !== DIGITS) return false;
@@ -92,13 +70,6 @@ export function verifyTotp(secret: string, code: string): boolean {
   return ok;
 }
 
-/**
- * The `otpauth://` URI an authenticator app scans.
- *
- * Rendered as text as well as a QR: a provider setting this up on the same
- * device they are reading it on cannot scan their own screen, and "copy this
- * string into your app" is the escape hatch every authenticator supports.
- */
 export function otpauthUri(secret: string, account: string): string {
   const issuer = encodeURIComponent("Panameer");
   const label = encodeURIComponent(account);

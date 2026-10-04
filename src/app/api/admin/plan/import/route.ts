@@ -4,19 +4,6 @@ import { PlanError, ensurePlan, writeImportedRows, type ImportMode } from "@/lib
 import { planOwnerKey } from "@/lib/plan/model";
 import { parsePlanFile } from "@/lib/plan/import";
 
-/**
- * POST /api/admin/plan/import — an Excel or CSV plan (`P2-ALL-E786`).
- *
- * ⚠⚠ **ONE GUARD, BEFORE THE FILE IS READ.** `guardApi("canAdminister")` runs
- * first, so an unauthenticated upload never reaches the parser — and a parser is
- * exactly where you do not want unauthenticated bytes.
- *
- * ⚠⚠⚠ **THE 2 MB CAP IS CHECKED BEFORE THE BYTES ARE PARSED, AND IT IS CHECKED
- * ON THE ACTUAL SIZE, NOT ON `Content-Length`** — a client controls the header.
- * ⚠ A plan is a few hundred rows of text; 2 MB is already generous, and a
- * workbook far past it is either a mistake or an attempt to make the server
- * expand it.
- */
 export const maxDuration = 60;
 
 const MAX_BYTES = 2 * 1024 * 1024;

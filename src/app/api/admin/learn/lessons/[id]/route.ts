@@ -7,14 +7,6 @@ import { LESSON_BODY } from "../route";
 
 const FULL = LESSON_BODY.omit({ sectionId: true });
 
-/**
- * The URL-only shape used by the per-section table (WS3).
- *
- * A separate schema rather than a partial edit, because the two writes mean
- * different things: this one is "paste a URL down a column and move on", and it
- * is allowed to advance the production status as a side effect. The full edit
- * is not — there the admin is looking at the status field and owns it.
- */
 const URL_ONLY = z.object({ vimeoRef: z.string().max(500).nullable() });
 
 export async function PATCH(

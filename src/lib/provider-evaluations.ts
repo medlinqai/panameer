@@ -3,24 +3,6 @@ import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
 import type { ProviderEvaluationStatus } from "@prisma/client";
 
-/**
- * ── ⚠⚠⚠ `ProviderEvaluation` — THE REQUESTER'S JUDGEMENT (`P2-A8-E695` WS-D) ──
- *
- * ⚠⚠ **SCOTT, 2026-09-28: *"The interview table IS a scheduling tool….BUT there
- * needs to be a place where the results of that interview are recorded."***
- *
- * ⚠⚠⚠ **THE PROVIDER AUTHORS THE SCHEDULING REPLY (`interviews.ts:offerSlots`).
- * THE REQUESTER AUTHORS THE EVALUATION. TWO AUTHORS, TWO DOCUMENTS** — the
- * sourcing pattern's own rule (`P1-J4-E395`).
- *
- * ⚠ **NOT SCOPED TO AN INTERVIEW, AND NEVER TO A SHORTLIST.** Scott, same day:
- * *"if the requester gets a proposal and does not interview, they will not
- * shortlist…they will add them to the WR."* ⚠⚠ **SHORTLIST IS OPTIONAL AND IS
- * NOT A STAGE** — hanging judgement off it would make the commonest path
- * impossible, and no function here reads or requires one.
- */
-
-/** ⚠ The person behind this account. Never taken from input (`access.ts` rule). */
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -30,12 +12,6 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-/**
- * ⚠⚠ THE WORK REQUEST MUST BE THE CALLER'S. ⚠⚠⚠ **OWNER-SCOPED FROM THE
- * SESSION, NOT FROM THE BODY** — without this any signed-in member could write a
- * judgement onto somebody else's sourcing event, which is the one thing an
- * evaluation must never allow.
- */
 async function assertOwnsRequest(workRequestId: string, personId: string) {
   const wr = await prisma.workRequest.findUnique({
     where: { id: workRequestId },
@@ -54,20 +30,6 @@ export type EvaluationLineInput = {
   note?: string | null;
 };
 
-/**
- * Record (or replace) the requester's evaluation of one provider on one request.
- *
- * ⚠⚠ **UPSERT ON `(work_request_id, provider_person_id, created_by_person_id)`,
- * WHICH THE SCHEMA MAKES UNIQUE.** A second judgement REPLACES rather than
- * accumulates — otherwise *"what did they think"* has no answer, only a list.
- *
- * ⚠ **THE LINES ARE REPLACED WHOLE**, for the same reason `offerSlots` replaces
- * its slots: they are the current judgement, not a log of judgements. ⚠⚠ Scoped
- * to this evaluation, which is scoped to this author's own work request.
- *
- * ⚠⚠⚠ **NO MONEY MOVES HERE AND NOTHING ABOUT AN ORDER CHANGES.** An evaluation
- * is a document the requester writes; it does not select, assign, order or pay.
- */
 export async function recordEvaluation(
   viewer: Viewer,
   input: {
@@ -84,8 +46,6 @@ export async function recordEvaluation(
   const me = await ownPerson(viewer);
   await assertOwnsRequest(input.workRequestId, me.id);
 
-  /* ⚠⚠ THE SCALE IS 1–5 AND IT IS ENFORCED, NOT DOCUMENTED. A rating outside it
-     is a number nobody can read against the others. */
   const assertRating = (n: number | null | undefined, what: string) => {
     if (n == null) return;
     if (!Number.isInteger(n) || n < 1 || n > 5) {

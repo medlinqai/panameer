@@ -7,10 +7,6 @@ import { ColleagueRowActions } from "@/components/community/ColleagueRowActions"
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 import "./member-row.css";
 
-/** ⚠ What `GET /api/community/members/search` returns per row — `PersonCard` plus the
- *  relation the SERVER computed. ⚠⚠ Declared structurally rather than imported so this client
- *  component does not drag `lib/connections.ts` (and its prisma import) into the bundle — the
- *  same reason `ResumeUploadModal` mirrors its own outcome type. */
 type MemberHit = {
   userId: string;
   personId: string;
@@ -20,34 +16,6 @@ type MemberHit = {
   photoUrl: string | null;
   relation: Relation;
 };
-
-/**
- * ── ⚠⚠ THE ROSTER (`P2-J3-E558` WS-A) ─────────────────────────────────────
- *
- * ⚠⚠⚠ **THE ROSTER SEARCH IS STILL AN IN-MEMORY FILTER OVER THE VIEWER'S OWN COLLEAGUES**, and
- * that has not changed: the list above the fold is filtered from props and never widened.
- *
- * ── ⚠⚠⚠ BUT THERE IS A FETCH IN THIS FILE NOW, AND THE OLD SENTENCE SAID THERE WAS NOT ──
- *
- * ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
- * //   THE SEARCH IS AN IN-MEMORY FILTER OVER THE VIEWER'S OWN COLLEAGUES.
- * //   There is NO fetch in this component and no endpoint behind the box.
- * ⚠⚠ **`E721` item 1b ADDED `OtherMembers`, WHICH DOES FETCH** — from
- * `/api/community/members/search`, transport over the SAME `searchMembers` `/community` uses.
- * ⚠⚠⚠ **CORRECTING THIS SENTENCE IS HALF THE CHANGE (standing rule 6): a stated rule that
- * contradicts the code is the half the next person implements**, and someone reading *"there
- * is no fetch here"* would have deleted the one that now exists.
- *
- * ⚠ **THE ORIGINAL CONCERN SURVIVES INTACT AND IS WORTH RESTATING:** the member-wide search
- * that used to live on this page is *"the route 145 providers take to reach 13 buyers"*, and
- * scoping the ROSTER to the roster is the point of the redesign. ⚠⚠ **THE NEW LIST DOES NOT
- * UNDO THAT — it is a clearly separate section, headed as such, BELOW the roster, and it only
- * appears once somebody has typed something the roster could not answer.** The default view of
- * this page is unchanged.
- *
- * ⚠ `USER_CLASS` IS NOT STORED, so a class-throttled member search cannot be
- * built yet. This UI does not change when it can.
- */
 
 export type RosterRowView = {
   connectionId: string;
@@ -59,23 +27,14 @@ export type RosterRowView = {
   reason: string;
   reasonKind: "skills" | "learn" | "employer" | "worked" | "date";
   buySide: boolean;
-  /** ⚠ SEARCH-ONLY (`P2-A3-E596` WS-E). Nothing renders these — a roster row is
-   *  a name, a title and ONE reason, and chips per row would make it the
-   *  directory this page is deliberately not. */
   skillNames: string[];
-  /* ── ⚠⚠ `P2-A1.1-E742` (B2) — what tells two people with one name apart ──
-     ⚠ SCOTT: *"What if there are two (or ten) Deepak Kumars?"* */
   location: string | null;
   mutualCount: number;
-  /** ⚠ Null for a buy-side colleague with no provider page — see the lib. */
   profileHref: string | null;
 };
 
 type Filter = "all" | "skills" | "learn" | "worked";
 
-/* ⚠ `Worked together` SHIPS READING 0 — it is the counter that fills in when
-   transactions exist. A filter that appears later teaches nobody; one that sits
-   at 0 tells the truth about what the product can prove today. */
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "skills", label: "Shared Skills" },
@@ -88,23 +47,6 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [asking, setAsking] = useState<RosterRowView | null>(null);
 
-  /*
-    ── ⚠⚠⚠ THE SEARCH APPLIES BEFORE THE COUNTS (`P2-A3-E721` item 1a) ────────────────────
-
-    ⚠ **SCOTT: *"the chip counts are computed before the search, so 'tom' shows All (1) and no
-    result."*** ⚠⚠ **EXACTLY THAT: `counts` depended on `rows` alone and never on `q`**, so
-    every chip reported the whole roster while the list below it reported the search — one
-    surface stating two different truths about the same query.
-    ⚠⚠⚠ **THE ORDER IS THE FIX, AND IT IS NOT ARBITRARY: THE NEEDLE IS APPLIED FIRST, THE
-    CHIP FILTER SECOND.** The chips ARE the `reasonKind` filter, so counting AFTER it would
-    make every chip read its own selected total and the other three read zero — a chip row
-    that only ever describes the chip you already pressed.
-    ⚠ So `matching` is "the roster, searched, before any chip" — which is what each chip is a
-    breakdown OF.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const counts = useMemo(() => ({ all: rows.length,
-    //     skills: rows.filter((r) => r.reasonKind === "skills").length, … }), [rows]);
-  */
   const matching = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return rows;
@@ -125,24 +67,8 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
     [matching]
   );
 
-  /*
-    ── ⚠⚠ FIRST 10, THEN "SHOW MORE" (`P2-A1.1-E742`, B2) ───────────────────
-    ⚠ The brief's figure. ⚠⚠ **IT RESETS WHENEVER THE LIST CHANGES** — typing a
-    search or pressing a chip while expanded would otherwise show 40 rows of a
-    brand-new list, which reads as a control that stopped working.
-  */
   const PAGE = 10;
   const [limit, setLimit] = useState(PAGE);
-  /*
-    ⚠⚠⚠ ADJUSTED DURING RENDER, NOT IN AN EFFECT, AND THAT IS NOT A STYLE
-    CHOICE. ⚠ `useEffect(() => setLimit(PAGE), [q, filter])` is the obvious
-    version and it trips `react-hooks/set-state-in-effect` — **a lint ERROR
-    against a zero-new baseline**, and the rule is right: an effect renders the
-    stale limit once, then re-renders, so a search can flash 40 rows of the old
-    list before snapping back.
-    ⚠⚠ This is React's own "adjusting state when props change" pattern: compare,
-    set, and let the render that is already happening use the new value.
-  */
   const key = `${q}|${filter}`;
   const [lastKey, setLastKey] = useState(key);
   if (key !== lastKey) {

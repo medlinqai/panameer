@@ -6,15 +6,6 @@ import {
   type Viewer,
 } from "@/lib/access";
 
-/**
- * "Who am I" — the logged-in Person plus their Company (and Site), resolved
- * from the User↔Person link. This is the reference API-first lib function:
- * all logic lives here and route handlers (web + future mobile) call it, so we
- * never rebuild it per client.
- *
- * Returns null when the User has no linked Person yet (e.g. the system admin
- * before onboarding).
- */
 export async function getMe(viewer: Viewer) {
   // Own-identity lookup, keyed by the unique user_id — not a cross-tenant
   // query, so it is deliberately NOT PAccount-scoped.
@@ -24,23 +15,9 @@ export async function getMe(viewer: Viewer) {
       company: {
         include: { pAccount: { select: { id: true, name: true, kind: true } } },
       },
-      /* ⚠ `addresses` ADDED FOR THE ONE GATE (`P2-J3-E590` WS-A0) — the
-         required set includes an address, and `providerMeetsRequired` reads it
-         through the person's site. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         // site: { select: { id: true, name: true } }, */
       site: {
         select: { id: true, name: true, addresses: { select: { id: true } } },
       },
-      /*
-        IS THIS PERSON THEIR COMPANY'S ADMIN? (E214)
-
-        The rail's company chip opens an admin-only popover, and the rail is a
-        client component — so the answer has to travel on /api/me rather than be
-        re-derived in the browser. Same predicate `getCompanyBinding` uses
-        server-side: an APPROVED membership with the ADMIN role. Selected as a
-        bounded existence check, not a full membership list, because the shell
-        only needs the boolean.
-      */
       companyMemberships: {
         where: { role: "ADMIN", status: "APPROVED" },
         select: { id: true },
@@ -55,17 +32,11 @@ export async function getMe(viewer: Viewer) {
           validation_status: true,
           completeness: true,
           paused_at: true,
-          /* ⚠⚠ THE REQUIRED SET (`P2-J3-E590` WS-A0). This block previously fell
-             back to `completeness >= 80`, so `/api/me` could tell the shell a
-             provider was visible while the marketplace disagreed. */
-          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           role_type_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
           rate_max_cents: true,
           skills: { select: { id: true } },
-          /* `E306` — the marketing header needs to know whether the nav is gated.
-             A READ of an existing column, not a new flag and not a migration. */
           onboarding_completed_at: true,
           available_for_messages: true,
           rating: true,
@@ -96,11 +67,6 @@ export async function getMe(viewer: Viewer) {
     where: scopedToPAccount(scopedViewer, {}),
   });
 
-  /*
-    ⚠ THE BELL'S NUMBER (`P1-ALL`, 2026-09-01). Unread AND delivered — a `DIGEST`
-    or `SILENT` row exists but was never sent, so counting it would put a number on
-    the bell for something the user cannot open.
-  */
   const notificationsUnread = await prisma.notification.count({
     where: { person_id: person.id, delivered_in_app_at: { not: null }, read_at: null },
   });
@@ -119,18 +85,6 @@ export async function getMe(viewer: Viewer) {
         isServiceBuyer: person.is_service_buyer,
         /** USER_JOB Requester, expressed as "owns a RequesterProfile". */
         isRequester: !!person.requesterProfile,
-        /*
-          ── ⚠⚠ USER_JOB Buyer, AND IT HAD TO BE ITS OWN FLAG (`P1-A1.5-E444`) ──
-
-          `E421` gave a BUYER both profiles — `RequesterProfile` for wizard
-          resume AND `BuyerProfile` — so "owns a RequesterProfile" stopped
-          separating the two jobs and every buyer read as a Requester.
-          ⚠ `requester-onboarding.ts` creates `BuyerProfile` ONLY when
-          `input.job === "buyer"`, so this is the persisted record of the
-          person's own answer at the fork, not an inference.
-          ⚠ THE PAYLOAD ALREADY CARRIED `buyerProfile`; only `roles` was blind
-          to it, which is exactly how the badge went wrong.
-        */
         isBuyer: !!person.buyerProfile,
         isServiceProvider: person.is_service_provider,
         isServiceCoordinator: person.is_service_coordinator,
@@ -144,7 +98,6 @@ export async function getMe(viewer: Viewer) {
       vertical: person.company.vertical,
       website: person.company.website,
       logoUrl: person.company.logo_url,
-      /** True when this person administers the company (E214). */
       isAdmin: person.companyMemberships.length > 0,
     },
     pAccount: person.company.pAccount,
@@ -155,14 +108,8 @@ export async function getMe(viewer: Viewer) {
           validationStatus: provider.validation_status,
           completeness: provider.completeness,
           paused: provider.paused_at != null,
-          /* `E306` — THE EXISTING SIGNAL. `onboarding.ts` already calls this
-             `published`; this exposes the same fact to a header that has no
-             onboarding state of its own. */
           published: provider.onboarding_completed_at != null,
           availableForMessages: provider.available_for_messages,
-          /* ⚠ THE PERSON HALF IS REASSEMBLED HERE because the required set
-             spans BOTH tables and this query is rooted at `Person`, not at the
-             profile. Same predicate, same fields, one gate. */
           visible: isMarketplaceVisible({
             ...provider,
             meetsRequired: providerMeetsRequired({

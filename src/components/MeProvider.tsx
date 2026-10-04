@@ -14,15 +14,6 @@ type MeState = {
   me: Me | null;
   loading: boolean;
   error: boolean;
-  /**
-   * Re-read /api/me (J2.4 WS-B).
-   *
-   * The shell fetched once and never again, which was fine while nothing inside
-   * it could change what the fetch returns. The persona menu's availability
-   * toggle can, and so can several Settings pages — without this, the rail chip
-   * and the header badge keep showing the state the page loaded with until a
-   * hard refresh.
-   */
   refresh: () => void;
 };
 
@@ -40,11 +31,6 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     error: false,
   });
-  /*
-    A ref rather than an effect-local, so a refresh fired from a callback reads
-    the same liveness flag the initial load does — otherwise a response arriving
-    after unmount would set state on a dead tree.
-  */
   const alive = useRef(true);
 
   const load = useCallback(() => {

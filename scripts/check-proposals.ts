@@ -5,17 +5,6 @@ import { submitProposal, withdrawProposal, proposeEligibility, proposalsOn } fro
 import { inviteIsOpen } from "@/lib/sourcing";
 import { getStatistics } from "@/lib/statistics";
 
-/**
- * ── ⚠⚠⚠ `check:proposals` (`P2-A8-E621` WS-A) ───────────────────────────
- *
- * ⚠ THE STOP GATE: *"the writer; the idempotency proof; the savings-figure
- * assertion; the dash→count list, measured."*
- *
- * ⚠⚠ IT WRITES REAL ROWS THROUGH THE REAL WRITER AND TEARS THEM DOWN. A gate
- * that only greps would pass against a `submitProposal` that never wrote
- * anything — and *"nothing creates a Proposal"* is the exact sentence this
- * brief exists to make false.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -36,12 +25,6 @@ function walk(d: string, o: string[] = []): string[] {
 const TAG = "E621 proposal probe";
 
 async function main() {
-  /* ── 1 · ⚠⚠⚠ THE SAVINGS FIGURE CANNOT TRAVEL ───────────────────────────
-     ⚠ WS-A item 4: *"The proposal carries no estimated-savings figure and never
-     sees one."* ⚠⚠ MEASURED AT THE PREMISE CHECK: no savings or roadmap field
-     exists in the schema at all, so this is a rule to PRESERVE. ⚠⚠⚠ It is
-     asserted on the SOURCE so that adding one becomes a failing build rather
-     than a leak nobody notices. */
   const SRC = walk("src");
   check("1 — the source scan has a population (E586)", SRC.length > 50, `${SRC.length}`);
   const SAVINGS = /\b(estimated_savings|estimatedSavings|savingsCents|savings_estimate)\b/;

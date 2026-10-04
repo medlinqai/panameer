@@ -5,23 +5,6 @@ import Link from "next/link";
 import { Button } from "@/components/casing/Button";
 import { Avatar } from "@/components/Avatar";
 
-/**
- * INVITE NAMED PROVIDERS TO BID ON A LINE (`P1-J4-E392` WS-3).
- *
- * ── ⚠⚠ THE FENCE ────────────────────────────────────────────────────────────
- *
- * **THIS CREATES THE INVITE AND NOTHING MORE.** No bid list, no comparison, no
- * scoring, no shortlist, no tests, no interviews. `E395` built the models those
- * screens will read; the screens are their own brief. ⚠ NOTHING HERE RENDERS A
- * `Proposal`, and `check:hire` asserts that absence — *"just show whether
- * they replied"* is one `include` away and is the beginning of the bid screen.
- *
- * ⚠ THE STUB THIS REPLACES WAS RIGHT TO BE A STUB. It said *"THERE IS NO
- * WORK-INVITATION MODEL… wiring this button to `CoordinatorInvite` would be
- * fabrication by mislabelling."* `ProposalRequest` landed on 2026-09-07 (`E395`), so
- * the invitation now has somewhere honest to write.
- */
-
 type ProviderOption = {
   personId: string;
   profileId: string;
@@ -62,13 +45,6 @@ export function InviteToPropose({
   const toggle = (id: string) =>
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
-  /*
-    ⚠ THE CLOSING DATE IS REQUIRED HERE BECAUSE IT IS REQUIRED THERE. `E395`'s
-    `assertIssuable` refuses an ITB with no `responds_by` — *"a bid with no
-    closing date never closes, and a requester cannot shortlist against an
-    open-ended set."* This mirrors that rule so the requester learns it at the
-    field rather than at the button; the API is still the boundary.
-  */
   const ready = !!lineId && picked.length > 0 && respondsBy !== "" && !busy;
 
   async function submit() {

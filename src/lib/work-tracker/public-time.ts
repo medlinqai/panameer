@@ -1,35 +1,6 @@
-/**
- * ── ⚠⚠⚠ WHAT TIME IT IS ON `/status` (`P2-ALL-E775`) ───────────────────────
- *
- * ⚠ **SCOTT, 2026-10-02:** the page said *"updated Oct 3"* while it was Oct 2
- * where he was sitting.
- *
- * ⚠⚠⚠ **THE CAUSE WAS NOT "THE PAGE FORMATS IN UTC" — IT IS THAT IT NAMED NO
- * ZONE AT ALL.** `toLocaleDateString("en-US", { month, day })` with no `timeZone`
- * uses the **server's** zone. That is ET on a developer's mac and **UTC on
- * Vercel**, so the page was right locally and wrong in production.
- * ⚠⚠ **A FIX "VERIFIED LOCALLY" WOULD HAVE PROVEN NOTHING**, which is why the
- * gate pins `TZ=UTC` and reproduces the production server before asserting.
- *
- * ── ⚠⚠⚠ AND THE TWO KINDS OF VALUE MUST NOT BE TREATED ALIKE ──────────────
- *
- * ⚠ **A TIMESTAMP** — "when was this page generated", "what day of the build is
- * it" — is a moment, and the reader wants it in THEIR day. Those go to
- * `America/New_York` (Scott's zone, and the project's working zone).
- *
- * ⚠⚠⚠ **A PURE DATE — a release target, a phase start — IS NOT A MOMENT AND MUST
- * NOT BE SHIFTED.** It is stored `@db.Date`, i.e. midnight UTC, so rendering
- * `2026-11-01T00:00:00Z` in `America/New_York` prints **Oct 31**. ⚠ Every date on
- * the page would move a day earlier, which is the bug this file exists to fix,
- * reintroduced in the opposite direction. **They stay `timeZone: "UTC"`.**
- */
 
-/** ⚠ Scott's zone, and the one the whole project works in. */
 export const SITE_TZ = "America/New_York";
 
-/**
- * ⚠⚠ A TIMESTAMP, IN THE READER'S DAY. Used for *"updated Oct 2"*.
- */
 export function formatInstant(iso: string | Date): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -38,11 +9,6 @@ export function formatInstant(iso: string | Date): string {
   });
 }
 
-/**
- * ⚠⚠⚠ A PURE DATE, PRINTED AS ITSELF. `ymd` is `YYYY-MM-DD` as stored.
- * ⚠ `timeZone: "UTC"` here is not a zone CHOICE — it is what stops a calendar
- * date being reinterpreted as a moment and moved.
- */
 export function formatStoredDate(ymd: string): string {
   return new Date(`${ymd}T00:00:00Z`).toLocaleDateString("en-US", {
     month: "short",

@@ -8,27 +8,6 @@ export type LessonTableSection = {
   lessons: LearnLessonRow[];
 };
 
-/**
- * The lessons table (WS2; design ref Learn-course-page-design.png).
- *
- * ONE table per course, with sections as sub-headers INSIDE it, because the
- * design is one table and a course averages four sections. Rendering a separate
- * table per section repeated the column headers every few rows, which turned a
- * scannable list into a stack of small tables — visibly wrong the first time it
- * was screenshotted.
- *
- * The design draws a solid-magenta header over magenta-tinted rows. The brief
- * asks for "lighter than the solid-magenta table" and it is right: at 105 rows
- * that fill is a wall, and it makes every row look like a call to action when
- * the real one is the single lesson you're up to. So the structure is the
- * design's — Lesson · Description · Time, titles as magenta links — with the
- * weight moved out of the fill and into the type.
- *
- * The design's fourth column is "Notes", filled with lorem. Lesson has no notes
- * field, and inventing one to satisfy a placeholder would be building the mock
- * rather than the product — so the column carries COMPLETION, which the brief
- * asks for by name and which a learner returning to a path actually needs.
- */
 export function LessonTable({
   pathSlug,
   sections,
@@ -91,11 +70,7 @@ function SectionRows({
                 {section.description}
               </span>
             )}
-            {/*
-              Section is the one rung of lesson→section→course→path the pages
-              weren't reporting, and it is the rung a learner works in: you
-              finish a section in a sitting, not a course.
-            */}
+            {}
             {sectionDone > 0 && (
               <span
                 className={

@@ -2,31 +2,6 @@ import { THREE_WAYS, HOME_TEASER } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
 import { SectionCta } from "@/components/marketing/SectionCta";
 
-/**
- * "Three Ways to Get the Work Done" — the honest comparison (buyer §2).
- *
- * ⚠ THE TONE RULE: NAME THE PATTERN, NEVER THE FIRM. The middle card is "Call a
- * Large Consultancy", not a logo, and its criticisms are structural — the
- * pyramid, the markup, the analyst on delivery — rather than about anybody in
- * particular. It also credits what that model genuinely gives you (risk
- * transfer, one contract), because a comparison where the alternative has no
- * upside reads as a sales sheet and gets discounted on sight.
- *
- * Presentational on Hire Talent: no links, because it is an argument and that
- * page's CTAs are the hero above it and the closing band below.
- *
- * ── TWO LENGTHS, ONE COMPONENT (brief_public_pages_ia WS-1) ──────────────────
- *
- * `condensed` is the home's teaser: the three cards without their tick lists,
- * and a closing line that hands off to Hire Talent. The full version stays on
- * Hire Talent, where a reader who has come to hire will actually read eighteen
- * comparison bullets.
- *
- * A PROP RATHER THAN A SECOND COMPONENT, because the argument has to be the
- * same argument in both places. Two hand-written versions of "here is how we
- * compare" drift, and the version nobody is looking at is the one that goes
- * stale — which is the one a prospect quotes back at you.
- */
 export function ThreeWays({ condensed = false }: { condensed?: boolean } = {}) {
   return (
     <section id="three-ways" className="bg-[#f6f4fb] py-16">
@@ -92,19 +67,7 @@ export function ThreeWays({ condensed = false }: { condensed?: boolean } = {}) {
           })}
         </div>
 
-        {/*
-          THE TEASER EXITS TO THE ASSESSMENT (WS-2), not to the experts.
-
-          It closed on "meet the experts" in the first cut, which put two
-          identical hand-offs back to back — the method section directly above
-          already ends there. Two sections in a row making the same ask is one
-          ask the reader learns to skip. This section's argument is "here is why
-          the third way is different", and the honest next step from a
-          comparison is the free thing that shows you where YOU sit.
-
-          The full version on Hire Talent carries no CTA: the reader is already
-          on the page it would send them to.
-        */}
+        {}
         {condensed && (
           <SectionCta variant="assessment" lead={HOME_TEASER.close} />
         )}

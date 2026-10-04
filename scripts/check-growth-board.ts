@@ -1,28 +1,3 @@
-/**
- * `check:growth-board` — the board's ORDER is `growthScore` sorted, and it has
- * inputs (`P2-A3-E599` WS-B 4). `npm run check:growth-board`.
- *
- * ── ⚠⚠⚠ GATED BY SHAPE, NOT BY A FIXTURE'S EXPECTED NUMBERS (`E587`) ──────
- *
- * ⚠ The brief: *"the board's order equals `growthScore` sorted, for every row,
- * and the count is > 0 (`E586`). A seeded month with known invites, joins and
- * recommendations proves the totals."*
- * ⚠⚠ SO THIS ASSERTS A RELATIONSHIP, NOT A TABLE OF ANSWERS: for every row the
- * board returns, `growthScore` is re-asked independently and must agree, and
- * the sequence must be non-increasing. ⚠⚠⚠ A HARDCODED EXPECTED BOARD WOULD
- * BREAK EVERY TIME THE SEED CHANGED and would prove nothing about the ordering
- * rule itself.
- *
- * ── ⚠⚠ IT SEEDS ITS OWN MONTH AND REMOVES EXACTLY WHAT IT MADE ───────────
- *
- * ⚠ On real data the board is EMPTY — measured: `colleague_invites` holds 7
- * rows, 1 with an inviter, 0 accepted — so an unseeded run would assert nothing
- * and pass, which is `E586` exactly.
- * ⚠⚠⚠ THE TEARDOWN IS SCOPED TO THE ROW IDS IT CREATED, never `deleteMany` by
- * inviter: a blanket delete would erase invitations somebody really sent, which
- * is *"a save deletes data it did not create"* (`E517`/`E552`/`E553`) applied to
- * a fixture. ⚠ It runs in a `finally`, so a failed assertion still cleans up.
- */
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { createHash, randomUUID } from "node:crypto";
@@ -47,7 +22,6 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
-/** ⚠ Reserved addresses only (`UNDELIVERABLE_DOMAINS`) — nothing here can mail. */
 const TAG = "e599.gate";
 
 async function main() {

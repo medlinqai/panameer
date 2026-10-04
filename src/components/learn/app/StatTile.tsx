@@ -1,11 +1,5 @@
 import type { ReactNode } from "react";
 
-/**
- * One of the four tiles that float over the hero's fade.
- *
- * Four tones rather than a colour prop, so the set stays a set — the same reason
- * the section icons are a fixed map.
- */
 const TONES = {
   flame: "bg-[linear-gradient(140deg,#ff7a2f,var(--color-learn-gold))]",
   magenta: "bg-[linear-gradient(140deg,var(--color-magenta),#8b1fa8)]",

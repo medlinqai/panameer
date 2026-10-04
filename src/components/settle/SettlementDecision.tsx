@@ -5,38 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
 import type { SettlementAction } from "@/lib/settlements";
 
-/**
- * THE BUYER'S DECISION (`P1-J4-E394` WS-3).
- *
- * ── ⚠⚠ THE SAME PROOF AS `E393`, DELIBERATELY THE SAME SHAPE ────────────────
- *
- * **It does not know who is looking, and it has no way to find out.** Its only
- * input is `actions: SettlementAction[]`, computed server-side by
- * `settlementActions(settlement, party)` — the same function the API refuses
- * with. There is no `party` prop, no `isBuyer` flag and no session read, so there
- * is no expression here that could evaluate to "show Approve to a provider".
- * This is `components/orders/OrderActivation.tsx`'s pattern, unchanged; the brief
- * said follow it and not invent a second one.
- *
- * ⚠ ABSENT, NOT DISABLED. A greyed Approve on the provider's screen still says
- * the button is theirs one day, and it is not.
- *
- * ── ⚠⚠ REJECT REQUIRES A REASON, IN THE UI AS WELL AS THE API ───────────────
- *
- * `E388`: *"a rejection with no stated reason is unanswerable."* The provider's
- * only next move would be to guess what to change. So Reject opens a box and the
- * confirm button **cannot be pressed** until there is one — and
- * `rejectSettlement` refuses without one regardless, because a required field in
- * a form is a convention and the boundary is the rule.
- *
- * ── ⚠ AND APPROVAL SAYS WHAT IT MEANS ───────────────────────────────────────
- *
- * *"ACCEPTANCE MUST BE DEFINED"* — for a deliverable there is no separate
- * acceptance step, so approving this IS accepting the work. One line of copy,
- * above the button, because it is the difference between paying an invoice and
- * accepting a deliverable.
- */
-
 const LABEL: Record<SettlementAction, string> = {
   APPROVE: "Approve",
   REJECT: "Reject",
@@ -48,7 +16,6 @@ export function SettlementDecision({
   hasTimesheet,
 }: {
   settlementId: string;
-  /** ⚠ SERVER-COMPUTED. This component never derives it. */
   actions: SettlementAction[];
   /** Only changes the wording of what approval means. */
   hasTimesheet: boolean;

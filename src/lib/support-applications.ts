@@ -1,46 +1,5 @@
 import { PROVIDER_NAV, REQUESTER_NAV, type NavItem } from "@/lib/nav";
 
-/**
- * THE `application` DROPDOWN — the reporter's OWN rail, plus two
- * (`P2-J1.1-E032` WS-2).
- *
- * SCOTT, 2026-09-06: *"Medlinq calls the main menu options applications...so we
- * have the same (Learn | Hire | Shop | Orders | Payments)."*
- *
- * ⚠⚠ THOSE FIVE ARE THE BUYER RAIL, AND THE RAIL IS ROLE-DEPENDENT. `nav.ts`:
- * a buyer sees `Learn · Hire · Shop · Orders · Payments · Connect`; a provider
- * sees `Learn · **Work** · **Sell** · Orders · Payments · Connect`. Shipping the
- * five verbatim leaves a provider who hits a bug in `Sell` with nowhere to file
- * it. So the list is built from whichever rail the reporter is looking at.
- *
- * ⚠ DERIVED FROM `nav.ts`, NEVER HAND-WRITTEN. A second copy of the rail drifts
- * the moment one is renamed — the same failure `SettingsNav` and
- * `SettingsHeading` share one definition to avoid.
- *
- * ⚠ `Connect` IS INCLUDED. It is on BOTH rails and Scott's five omit it;
- * Messages, Forums, Mentoring and Teams all live under it, so its absence reads
- * as an oversight rather than a decision. Reported rather than dropped silently.
- */
-
-/**
- * ── ⚠⚠ THE STORED VALUE IS THE JOURNEY, NOT THE LABEL ───────────────────────
- *
- * A ticket filed today must still be readable after a nav rename, so the label
- * cannot be the key. Neither can the href: `/contracts` became `/orders` inside
- * this product's own history (`P1-ALL-E380`).
- *
- * ⚠ SO THE KEY IS `heading` — the JOURNEY's name. `E378` established the model:
- * *the rail says which journey in one word, the tabs say which slice, and the
- * page heading says the journey's name.* The one-word rail label is the volatile
- * half (a VERB, which picks a side); `heading` is the stable half.
- *
- * ⚠⚠ AND IT MAKES THE MIRRORED SLOTS AGREE, WHICH IS THE POINT FOR TRIAGE. The
- * buyer's `Hire` and the provider's `Work` are ONE journey — both `Work
- * Requests` — so both file under `work-requests`. Same for `Shop`/`Sell` →
- * `service-products`. The reporter's own role is on the ticket, so nothing is
- * lost by filing them together, and the admin gets one queue per journey rather
- * than two halves of one.
- */
 function journeyKey(item: NavItem): string {
   return (item.heading ?? item.label)
     .toLowerCase()
@@ -50,48 +9,8 @@ function journeyKey(item: NavItem): string {
 
 export type SupportApplication = { value: string; label: string };
 
-/**
- * ⚠ ON NEITHER RAIL, AND THE FIRST ONE IS LOAD-BEARING.
- *
- * `onboarding` — signup and both wizards happen BEFORE the app shell exists, so
- * no rail item covers them. ⚠⚠ WITHOUT IT THE ENTIRE `P2-J1.1` WALK IS
- * UNFILEABLE: the employer-name defect, the Edit path, the verification email
- * and the review card belong to no rail item at all.
- * `other` — the escape hatch, so nobody picks a wrong answer to clear a required
- * field. A mis-filed ticket is worse than an unfiled category.
- */
 const EXTRA: SupportApplication[] = [
   { value: "onboarding", label: "Onboarding" },
-  /*
-    ── ⚠⚠⚠ `payments` — ON NEITHER RAIL SINCE ruling `89e`, AND THAT IS EXACTLY
-       WHY IT IS HERE (`P2-ALL-E688` WS-B) ──────────────────────────────────
-
-    ⚠ `Get Paid` and `Pay` left the two rails when money rolled into Orders. Both
-    carried `heading: "Payments"`, so both keyed to `payments` — ⚠⚠ **and this
-    list is built FROM the rails, so removing them would have taken the category
-    with them and NO MEMBER COULD FILE A PAYMENTS TICKET.** That is rule 5: the
-    capability must never be absent.
-
-    ⚠⚠⚠ **SCOTT RULED IT STAYS, 2026-09-27, AND THE REASONING IS THE PART WORTH
-    KEEPING:**
-
-      · *"A live ticket already sits on that value, so folding it into
-        `work-orders` leaves an existing row filed under a category that does not
-        describe it."* ⚠ Measured: `support_tickets` holds 3 rows —
-        `onboarding: 1`, **`payments: 1`**, `community: 1`.
-
-      · ⚠⚠ *"'Nothing gets paid without an Order' is a rule about HOW MONEY
-        FLOWS, not how a member describes trouble — someone whose payment hasn't
-        arrived thinks PAYMENT PROBLEM."*
-
-      · ⚠⚠⚠ ***"SUPPORT CATEGORIES MATCH THE COMPLAINT, NOT THE DATA MODEL."***
-
-    ⚠ **THAT LAST LINE GOVERNS THIS WHOLE LIST AND NOT JUST THIS ENTRY.** The menu
-    may reorganise around the model as often as the model earns it; **the words a
-    person reaches for when something has gone wrong do not move with it.** ⚠⚠ It
-    is the same argument `onboarding` is here for — the rails describe the app,
-    and a category has to describe the trouble.
-  */
   { value: "payments", label: "Payments" },
   { value: "other", label: "Other" },
 ];
@@ -105,15 +24,6 @@ export function supportApplicationsFor(isProvider: boolean): SupportApplication[
   ];
 }
 
-/**
- * Render a STORED value back for the admin list, which reads tickets from both
- * rails at once.
- *
- * ⚠ IT SEARCHES BOTH RAILS because the value is role-independent and the admin
- * is neither a buyer nor a seller. ⚠ AN UNKNOWN VALUE RETURNS ITSELF rather than
- * an empty cell — a ticket filed under a journey that has since been renamed
- * away must still show what it said, not blank.
- */
 export function supportApplicationLabel(value: string): string {
   const extra = EXTRA.find((e) => e.value === value);
   if (extra) return extra.label;

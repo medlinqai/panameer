@@ -1,54 +1,14 @@
-/**
- * Résumé → structured profile (brief_P / E012).
- *
- * Deliberately a HEURISTIC parser, not an AI one: it finds the standard résumé
- * section headings, then reads the lines under each. Real-world documents vary
- * wildly, so the contract is "extract what is confidently recognisable, and be
- * honest about the rest" — everything it cannot place becomes a GAP, which the
- * review page surfaces to the user (E019). Silent partial imports are the
- * failure mode to avoid: a user who thinks their history imported and finds it
- * missing at publish time is worse off than one told up front.
- *
- * Pure (no prisma, no I/O) so it is testable in isolation.
- */
 
 export type ParsedExperience = {
-  /* ⚠ NULLABLE (`P1-J1.4-E373`) — a contractor's line names no company.
-     Render via `employerDisplayName()`, never raw. */
   employer: string | null;
   roleTitle: string;
   description: string | null;
   startDate: string | null; // YYYY-MM-DD
   endDate: string | null;
-  /**
-   * ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). `true` ONLY when the document says the
-   * role is ongoing ("Present", "Current"…) or the model says so. ⚠ A null
-   * `endDate` is NOT evidence of a current role: Scott, 2026-09-17 — *"TEXT WE
-   * COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
-   * `import.ts` writes `is_current` from this, and the rollup counts to today
-   * only when it is set.
-   */
   isCurrent?: boolean;
-  /**
-   * ⚠ An end-date string WAS present and could not be read. The job ended; we do
-   * not know when. It contributes no months (`E549`).
-   */
   endUnreadable?: boolean;
 };
 
-/**
- * A credential lifted off the document (`P1-A1.4-E399` WS-4).
- *
- * ⚠⚠ THIS TYPE DID NOT EXIST, AND THAT IS WHY FIVE ORACLE CERTIFICATIONS VANISHED.
- * `AI_RESUME_SCHEMA` has defined `certifications` all along, the prompt asks for
- * them and Zod validates them — but `ParsedResume` had **no field to carry them**,
- * so `aiToParsedResume` dropped them on the floor and `import.ts` never saw one.
- * The model was doing its job; the mapper had nowhere to put the answer.
- *
- * ⚠ MEASURED: every other key in the AI schema maps through — headline, overview,
- * employers→experiences, projects, education, skills, languages. **Certifications
- * was the only one.**
- */
 export type ParsedCertification = {
   name: string;
   issuer: string | null;
@@ -65,90 +25,36 @@ export type ParsedEducation = {
   description: string | null;
 };
 
-/**
- * A project lifted off the document (`E294`).
- *
- * ⚠ EVERY FIELD THE MODEL RETURNED IS CARRIED. The rule this serves is
- * `decisions-01.md` § "the résumé parser's real job": THE AI'S VALUE IS
- * TRANSCRIPTION, NOT CLASSIFICATION — the text is the hour saved, the box it
- * lands in is a click. Dropping `software` or `client` to keep the type tidy
- * would be discarding exactly what the user is paying the parser for.
- */
 export type ParsedProject = {
   name: string;
   description: string | null;
   startDate: string | null;
   endDate: string | null;
-  /**
-   * ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). `true` ONLY when the document says the
-   * role is ongoing ("Present", "Current"…) or the model says so. ⚠ A null
-   * `endDate` is NOT evidence of a current role: Scott, 2026-09-17 — *"TEXT WE
-   * COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
-   * `import.ts` writes `is_current` from this, and the rollup counts to today
-   * only when it is set.
-   */
   isCurrent?: boolean;
-  /**
-   * ⚠ An end-date string WAS present and could not be read. The job ended; we do
-   * not know when. It contributes no months (`E549`).
-   */
   endUnreadable?: boolean;
   client: string | null;
   software: string[];
-  /**
-   * The employer this project resolved to, or null when it could not be placed.
-   * ⚠ NULL IS A LEGITIMATE, VISIBLE OUTCOME — not a failure and never a reason to
-   * drop the row. See `WS-3`: the user places it in one click.
-   */
   employerName: string | null;
 };
 
 export type ParsedResume = {
   headline: string | null;
   overview: string | null;
-  /** Inferred from the career span (E003); null when undeterminable. */
   experienceLevel: "BEGINNER" | "MID_CAREER" | "EXPERT" | null;
   /** Years of experience behind that inference, for the review copy. */
   experienceYears: number | null;
   experiences: ParsedExperience[];
-  /*
-    ── ⚠⚠ PROJECTS ARE A FIRST-CLASS RESULT NOW (`P1-J1.4-E294`, 2026-09-01) ───
-
-    `ParsedResume` had NO projects concept at all — `projects` appears in
-    `SECTION_PATTERNS` below only as a section to IGNORE — which is why no
-    `Project` row has ever been written from a parse on any branch, ever.
-
-    Scott's spec is one sentence: *"make the projects under the employers... IF
-    you are not sure, make them separate AND allow the user an easy way to add
-    them under an employer."* TWO OUTCOMES, NEVER A THIRD: attached, or visible
-    and movable. Never discarded.
-
-    ⚠ `employerName` IS THE MATCH RESULT, NOT THE RAW FIELD. The mapper resolves
-    the model's free-text employer against the employers it actually emitted and
-    puts the MATCHED name here, or null when it could not place it confidently.
-    The importer then only has to look the name up among the rows it just created.
-  */
   projects: ParsedProject[];
   education: ParsedEducation[];
-  /** ⚠ `P1-A1.4-E399` WS-4 — extracted since forever, carried since now. */
   certifications: ParsedCertification[];
   skills: string[];
   languages: string[];
-  /** Human-readable notes on what could NOT be imported (E019 surfaces these). */
   gaps: string[];
 };
 
 /** Section headings we recognise, mapped to a canonical bucket. */
 const SECTION_PATTERNS: { key: Section; re: RegExp }[] = [
   { key: "summary", re: /^(professional\s+)?(summary|profile|about|objective|overview)\b/i },
-  /*
-    E122 — "Career Experience" was not recognised, so Eddie Cairnie's five
-    employers never reached the experience bucket and his résumé imported three
-    education entries and zero jobs. The old pattern only allowed work /
-    professional / employment / relevant as prefixes; "career" and a bare
-    "employment history" both fell through. Headings are the load-bearing part of
-    this parser — miss one and the whole section is invisible.
-  */
   {
     key: "experience",
     re: /^(work|professional|employment|relevant|career|industry|related)?\s*(experience|history|employment|background)\b/i,
@@ -158,17 +64,6 @@ const SECTION_PATTERNS: { key: Section; re: RegExp }[] = [
   { key: "languages", re: /^languages?\b/i },
   { key: "certifications", re: /^(certifications?|licenses?|licences?|accreditations?)\b/i },
   { key: "ignore", re: /^(interests|hobbies|references|publications|awards|volunteer|projects|contact|recommendations|accomplishments)\b/i },
-  /**
-   * PJv2 WS2 (E055) — SIDEBAR headings from two-column CVs.
-   *
-   * These were the whole 28-education bug: Scott's CV carries a left rail of
-   * "PRIOR ROLE-TYPES / SPECIALIZATIONS / INDUSTRY EXP / APPLICATIONS", none of
-   * which were recognised as headings — so whatever bucket was last active kept
-   * swallowing them, and a résumé with NO education section ended up with 28
-   * education entries. Recognising them is what stops the greedy swallow; they
-   * route to `ignore` because they duplicate axes the wizard captures properly
-   * (specializations, the RDS catalog).
-   */
   { key: "ignore", re: /^(prior\s+)?role[\s-]?types?\b/i },
   { key: "ignore", re: /^specializations?\b/i },
   { key: "ignore", re: /^industr(y|ies)(\s+(exp|experience))?\b/i },
@@ -177,12 +72,6 @@ const SECTION_PATTERNS: { key: Section; re: RegExp }[] = [
   { key: "ignore", re: /^(profile\s+)?highlights?\b/i },
 ];
 
-/**
- * Sane caps (PJv2 WS2). A parser that reports 252 skills or 28 educations has
- * not found 252 skills — it has lost its place. Truncation is always REPORTED
- * in `gaps`, never silent, so "we kept the first N" is visible rather than
- * looking like a complete import.
- */
 const CAPS = {
   experiences: 20,
   education: 12,
@@ -205,23 +94,9 @@ const MONTHS: Record<string, number> = {
   jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
 };
 
-/**
- * Month names ONLY. A generic `[A-Za-z]{3,9}` prefix looks equivalent but
- * isn't: on "…Information Systems   2007 - 2011" it captures "Systems 2007",
- * which then fails to parse as a date AND gets stripped from the degree text.
- * Matching real month names keeps the surrounding words intact.
- */
 const MONTH_RE =
   "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?\\s+";
 
-/**
- * "Jan 2019", "January 2019", "01/2019", "2019" → YYYY-MM-DD (day 1).
- *
- * ⚠ EXPORTED (`P2-J1.4-E549`) — the AI mapper's `iso()` reuses it, so the model
- * path reads the same real-world date strings this parser always has.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`): the doc said `"2019/01"`; no branch
- * below ever accepted that form — `MM/YYYY` is what it reads.
- */
 export function parseMonthYear(raw: string): string | null {
   const s = raw.trim().toLowerCase();
   const withMonth = s.match(/^([a-z]{3,9})\.?\s+(\d{4})$/);
@@ -684,21 +559,12 @@ export function parseResume(text: string): ParsedResume {
         description: null,
         startDate: range.start,
         endDate: range.end,
-        /* ⚠ `E549` — the range already knew; now the row does too. */
         isCurrent: range.isCurrent,
       };
       companyHeader = null;
       continue;
     }
 
-    /*
-      An undated, unbulleted line whose NEXT line is dated MAY be a company
-      header — but only if that dated line doesn't already name its own
-      employer. Without that second condition the rule is too greedy: a résumé
-      written as "Role\nEmployer, dates" has an undated role line followed by a
-      dated line, and treating the role as a header threw the role away. Caught
-      by a fixture (fin-rajesh went 4 roles → 3) rather than by reasoning.
-    */
     if (!isBullet && !range && trimmed.length <= 140) {
       const ahead = nextMeaningful(i + 1);
       const aheadRange = ahead && !BULLET.test(ahead) ? findDateRange(ahead) : null;
@@ -709,16 +575,6 @@ export function parseResume(text: string): ParsedResume {
             .split(/\s+(?:at|@|—|–|\||,)\s+/)
             .map((x) => x.trim())
             .filter(Boolean).length > 1;
-        /*
-          …and only if the line LOOKS like a company header. These are written
-          "Company, descriptor, location" or end in a corporate suffix, so a
-          comma (or a suffix) is the tell. Without this the rule swallowed a
-          stray role fragment — fin-rajesh's PDF splits "Senior Associate
-          Financial Functional / Consultant 2023" across two lines, and the
-          first half was becoming the employer of the second. A role title in
-          the employer field is more visibly wrong to the provider than an
-          undated extra row, which the review page already prompts them to fix.
-        */
         const looksLikeCompany =
           trimmed.includes(",") ||
           /\b(llc|inc\.?|ltd\.?|llp|plc|gmbh|corp(oration)?|pty|group|technologies|solutions|consulting|systems|services)\b/i.test(
@@ -763,20 +619,6 @@ export function parseResume(text: string): ParsedResume {
       `${undated} ${undated === 1 ? "company" : "companies"} imported without dates — we couldn't read a start date. Add the dates so clients see your timeline.`
     );
   }
-  /* ⚠ THESE TWO LITERALS ARE WRITTEN IN `flush()` ABOVE and compared here. The
-     WS-3 rename changed the written one and left this one reading `Employer`,
-     which made the comparison dead: an un-named row stopped counting and this
-     gap silently stopped firing. `check:field-quality` now asserts every
-     `(… not detected)` sentinel COMPARED in this file is one this file WRITES. */
-  /* ⚠ SUPERSEDED, quoted not deleted (`E415` WS-4) — the company half compared
-     a sentinel this file no longer writes:
-
-         (e) => e.employer === "(Company not detected)" || e.roleTitle === "(Role not detected)"
-
-     ⚠⚠ COUNTING THE ABSENCE IS STRICTLY BETTER THAN COUNTING THE MARKER: it
-     cannot fall out of step with a string somewhere else, which is exactly the
-     drift the comment above records (`Employer` vs `Company`) and exactly what
-     `check:field-quality` was added to catch. */
   const unnamed = experiences.filter(
     (e) => !e.employer?.trim() || e.roleTitle === "(Role not detected)"
   ).length;

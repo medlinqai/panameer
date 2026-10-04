@@ -3,30 +3,9 @@ import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
 import { PLANS } from "@/lib/plans";
 
-/**
- * MEMBERSHIP (J2.4 WS-G / E013) — the Settings default.
- *
- * Three tier cards, the current one marked, Plus flagged popular, plus the
- * membership cycle. De-branded throughout: the copy this replaces sold a
- * "freelance career" on a competitor's price list.
- *
- * THE CURRENT TIER IS DERIVED, and that gap is stated on the page rather than
- * papered over. There is no provider tier column — `membershipBadge` has said
- * so since WS7 — so everyone reads as Basic until billing lands. Showing a
- * confident "Your plan: Basic" with no way to have chosen otherwise would be a
- * claim about a record that doesn't exist.
- *
- * MANAGE MEMBERSHIP CAPTURES INTENT, and says that is what it does. The payment
- * processor is explicitly out of scope; a checkout button that silently does
- * nothing would be worse than a button that tells the truth about where the
- * feature is.
- */
 export const metadata = { title: "Membership · Panameer" };
 
 export default async function MembershipPage() {
-  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
-     `guardPage("canProvideServices")`. One of three layers; see
-     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
   const viewer = await guardPage("authenticated");
 
   const profile = await prisma.providerProfile.findFirst({
@@ -34,12 +13,6 @@ export default async function MembershipPage() {
     select: { created_at: true, onboarding_completed_at: true },
   });
 
-  /*
-    THE CYCLE, from what the schema actually knows. There is no subscription
-    record, so the "cycle" is the anniversary of the account rather than a
-    billing period — which is true, is useful (it is the date a paid plan would
-    renew on), and is labelled as what it is.
-  */
   const since = profile?.onboarding_completed_at ?? profile?.created_at ?? null;
   const cycle = since ? cycleFrom(since) : null;
 

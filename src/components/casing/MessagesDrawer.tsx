@@ -5,76 +5,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import "./messages-drawer.css";
 
-/**
- * ── ⚠⚠ THE MESSAGES DRAWER (`P2-ALL-E560` STAGE 2) ──────────────────────────
- *
- * SCOTT, 2026-09-18: *"make it like linkedin. in notification bell...icon...and
- * it opens on the right."*
- *
- * ⚠⚠ IT OPENS OVER THE PAGE; IT DOES NOT NAVIGATE. The page behind keeps its
- * scroll position and its state, because nothing unmounts — the drawer is a
- * sibling overlay, not a route.
- *
- * ⚠ TWO SURFACES, ONE DOOR EACH: the cluster icon opens THIS; this links
- * `/messages`, which stays and is the full view.
- *
- * ── ⚠⚠ THE CONVERSATION LIST IS DERIVED, AND THAT IS A DECISION ─────────────
- *
- * ⚠ It comes from `listConversations()` via `GET /api/messages` — the SAME
- * function the `/messages` page calls, so the two surfaces cannot drift.
- * ⚠⚠ THERE IS NO `Conversation` MODEL AND THAT IS DELIBERATE — see the note on
- * `listConversations` in `lib/messages.ts` for the condition that would unblock
- * one. **Do not add a model to make this cheaper without meeting it.**
- *
- * ── ⚠⚠ EMPTY IS THE DESIGNED STATE ─────────────────────────────────────────
- *
- * ⚠ `Message` holds ZERO rows, so this ships empty and that is correct.
- * ⚠⚠ NOTHING WAS SEEDED to make it demonstrable (`E564`). The empty copy says
- * what is TRUE — no messages yet — and does not apologise or imply a fault.
- *
- * ── ⚠⚠⚠ KEYBOARD: A DRAWER A KEYBOARD USER CANNOT LEAVE IS A TRAP ──────────
- *
- * ⚠ Escape closes · click outside closes · focus is TRAPPED while open and
- * RETURNS TO THE ICON on close. ⚠⚠ Returning focus is the half that is easy to
- * skip and the half that strands somebody: focus dropped to `<body>` means the
- * next Tab starts from the top of the document, not from where they were.
- */
-
 export type DrawerConversation = {
   otherUserId: string;
   name: string;
   photoUrl: string | null;
   title: string | null;
   lastBody: string;
-  /** ⚠ AN ISO STRING, not a `Date` — it crossed the wire as JSON. */
   lastAt: string;
   unread: number;
 };
 
-/*
- * ⚠⚠ MOUNTED ONLY WHILE OPEN — `AppBand` renders this behind `messagesOpen &&`.
- * ⚠ THAT IS NOT A STYLE CHOICE, IT IS WHAT REMOVES A RESET: a component that
- * stays mounted has to clear last time's state on open, and clearing it
- * SYNCHRONOUSLY INSIDE AN EFFECT is the `react-hooks/set-state-in-effect` error
- * this repo carries eleven of and allows zero new of. ⚠⚠ A fresh mount already
- * has fresh state, so there is nothing to reset.
- * ⚠ It also means each open FETCHES AGAIN, which is right for a message list —
- * a cached list is a wrong list.
- */
 export function MessagesDrawer({
   onClose,
   returnFocusRef,
 }: {
   onClose: () => void;
-  /** ⚠ The cluster icon. Focus goes back here on close, never to `<body>`. */
   returnFocusRef: React.RefObject<HTMLElement | null>;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [rows, setRows] = useState<DrawerConversation[] | null>(null);
   const [failed, setFailed] = useState(false);
 
-  /* ⚠ FETCHED ON MOUNT, AND MOUNT ONLY HAPPENS ON OPEN — so the band does not
-     put a request on every logged-in page load for a panel nobody opened. */
   useEffect(() => {
     let alive = true;
     fetch("/api/messages")
@@ -83,8 +34,6 @@ export function MessagesDrawer({
         if (alive) setRows(d.conversations ?? []);
       })
       .catch(() => {
-        /* ⚠ A FAILED READ SAYS SO. It must not render as "no messages" — that
-           is a fabricated fact, the same defect class as a `0` badge. */
         if (alive) setFailed(true);
       });
     return () => {
@@ -94,16 +43,6 @@ export function MessagesDrawer({
 
   const close = useCallback(() => {
     onClose();
-    /*
-      ⚠⚠ FOCUS GOES BACK TO THE ICON. Deferred a frame so the drawer has
-      unmounted and cannot re-steal it.
-      ⚠⚠⚠ `preventScroll: true` IS LOAD-BEARING, NOT A FLOURISH. `.focus()`
-      SCROLLS THE ELEMENT INTO VIEW by default, and the icon lives in the band at
-      the TOP of the document — so returning focus scrolled the page back to 0.
-      ⚠ MEASURED 2026-09-19: scrollY 220 before opening, 0 after closing. The
-      brief requires *"the page behind keeps its scroll position and its state"*,
-      and without this flag the drawer silently violated it on every close.
-    */
     requestAnimationFrame(() =>
       returnFocusRef.current?.focus({ preventScroll: true })
     );
@@ -118,9 +57,6 @@ export function MessagesDrawer({
         return;
       }
       if (e.key !== "Tab") return;
-      /* ⚠ THE TRAP IS A CYCLE, NOT A BLOCK — Tab past the last focusable wraps
-         to the first and Shift+Tab wraps backwards. Blocking Tab entirely would
-         make the drawer unusable rather than merely inescapable. */
       const panel = panelRef.current;
       if (!panel) return;
       const focusables = panel.querySelectorAll<HTMLElement>(
@@ -148,12 +84,8 @@ export function MessagesDrawer({
     return () => document.removeEventListener("keydown", onKey, true);
   }, [close]);
 
-  /* ⚠ FOCUS MOVES INTO THE PANEL ON OPEN, so the first Tab is inside it. */
   useEffect(() => {
     const t = requestAnimationFrame(() => {
-      /* ⚠ `preventScroll` HERE TOO — the panel is fixed, but the browser may
-         still scroll an ancestor to "reveal" the focused node. Same reason as
-         the return-focus call above. */
       panelRef.current
         ?.querySelector<HTMLElement>("button, a[href]")
         ?.focus({ preventScroll: true });
@@ -163,13 +95,7 @@ export function MessagesDrawer({
 
   return (
     <div className="pm-drawer-root" role="presentation">
-      {/*
-        ⚠ THE SCRIM DIMS THE PAGE AND IS THE CLICK-OUTSIDE TARGET. It covers the
-        viewport, so "outside the panel" is unambiguous — no document-level
-        listener guessing whether a click landed on a detached node.
-        ⚠ `aria-hidden` because it carries no information; the dialog beside it
-        is what a screen reader reads.
-      */}
+      {}
       <div className="pm-drawer-scrim" aria-hidden onClick={close} />
 
       <div
@@ -195,20 +121,12 @@ export function MessagesDrawer({
 
         <div className="pm-drawer-body">
           {failed ? (
-            /* ⚠ SAYS IT FAILED. Never "no messages" — that would assert a fact
-               nobody checked. */
             <p className="px-4 py-6 text-[14px] leading-relaxed text-ink-2">
               We couldn&rsquo;t load your messages. Try again in a moment.
             </p>
           ) : rows === null ? (
             <p className="px-4 py-6 text-[14px] text-ink-2">Loading&hellip;</p>
           ) : rows.length === 0 ? (
-            /*
-              ⚠⚠ THE DESIGNED EMPTY STATE. `Message` holds zero rows and nothing
-              was seeded (`E564`). ⚠ It states what is true and points at the one
-              thing that makes messages possible — a colleague connection —
-              because messaging is COLLEAGUE-ONLY. It does not apologise.
-            */
             <div className="px-4 py-6">
               <p className="text-[14px] leading-relaxed text-ink-2">
                 No messages yet. You can message the colleagues you&rsquo;re

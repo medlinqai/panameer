@@ -3,24 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * ── ⚠⚠⚠ THE JOIN / LEAVE CONTROL (`P2-A3-E612` WS-B) ────────────────────
- *
- * ⚠⚠ `E579` — A PAGE MUST NOT RENDER A CONTROL THAT CANNOT WORK. Each branch
- * below either offers something that works or says a true sentence instead.
- * There is no disabled Join on an invite-only group, because there is nothing
- * to explain about a door that was never there.
- *
- * ⚠⚠⚠ A PRICED GROUP SHOWS ITS PRICE AND OFFERS NO PURCHASE. The line NAMES THE
- * MECHANISM, never the member — *"buying isn't switched on yet"*, never *"you
- * are not eligible"*. ⚠ No `Payment` row is ever created anywhere in the
- * codebase and `PAID` is never written, so a *"Join for $X"* button would
- * promise a mechanism with no writer, which is the rule that dashed Earnings at
- * `E603`.
- *
- * ⚠⚠ AND A PATH GROUP HAS NO LEAVE CONTROL. Scott, 2026-09-23: *"You cannot
- * leave a path group. You unenrol from the path. One door, not two."*
- */
 export type GroupOfferView =
   | { kind: "join" }
   | { kind: "request" }

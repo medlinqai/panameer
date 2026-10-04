@@ -3,24 +3,6 @@ import { ownedProviderProfile } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠ "I HAVE NONE" — THE WRITE PATH (`P2-J3-E590` WS-B) ─────────────────
- *
- * ⚠⚠⚠ SCOTT, 2026-09-20: *"If Panameer provided a field that says 'I do not
- * have any of these'. It is empty...but complete. Getting me closer to my
- * 100%."*
- *
- * ⚠ THE FIVE DECLARABLE LINES AND NOTHING ELSE. The six find-me lines (Title,
- * Field, Skills, Rate, Photo, Identity Verified) carry NO none option — an
- * opt-out there would let a provider declare their way to invisible, and those
- * six ARE the visibility predicate.
- *
- * ⚠⚠ A DECLARATION IS REVERSIBLE. Adding a real row supersedes it (the scorer
- * treats `filled` as the stronger state), and `undeclare` clears it outright —
- * a provider who ticked the wrong line is not stuck with it.
- */
-
-/** ⚠ The closed set. A key outside it is REFUSED, never ignored. */
 export const DECLARABLE_LINES = {
   workHistory: "declared_no_work_history_at",
   education: "declared_no_education_at",
@@ -35,11 +17,6 @@ export function isDeclarableLine(k: unknown): k is DeclarableLine {
   return typeof k === "string" && k in DECLARABLE_LINES;
 }
 
-/**
- * ⚠ Owner-scoped: the profile is resolved FROM THE SESSION, never from input
- * (load-bearing rule 5). The body carries a line key and a direction, nothing
- * that identifies a profile.
- */
 export async function setLineDeclaration(
   viewer: Viewer,
   line: unknown,

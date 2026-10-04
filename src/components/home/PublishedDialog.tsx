@@ -3,17 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/**
- * "Your Profile is Now Live!" (MASTER WS13 / E149).
- *
- * Shown once, on arrival at Home from publish. The copy is the brief's, and it
- * is only accurate because of WS10: it tells the provider to click their image
- * in the upper right, and after the casing there IS an image in the upper right
- * that opens a menu with My Profile in it.
- *
- * The flag is stripped from the URL on mount, so a refresh — or a shared link —
- * doesn't announce the news twice.
- */
 export function PublishedDialog() {
   const params = useSearchParams();
   const router = useRouter();

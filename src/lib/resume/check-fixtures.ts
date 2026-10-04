@@ -1,19 +1,3 @@
-/**
- * Résumé extraction + parse harness, run against the REAL sample documents
- * (WS-D). `npm run check:resume`.
- *
- * WHY IT IS A SCRIPT AND NOT A UNIT TEST. The fixtures are real people's CVs.
- * They are gitignored and will never be committed, so a test that fails when
- * they are absent would fail for everyone but the person who has them — CI
- * included. This reads whatever is present, SKIPS-WITH-NOTE what isn't, and
- * exits non-zero only on an assertion that actually ran. The point is to be
- * runnable by whoever holds the documents, not to gate a pipeline that can never
- * see them.
- *
- * Copy the résumés from
- *   `4. Project Documents/2. Design/6. Resume Samples for Parser/`
- * into `src/lib/resume/__fixtures__/` using the names below.
- */
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { extractText, mimeFromName, ExtractError, proseRatio } from "./extract";
@@ -32,40 +16,14 @@ type Check = {
   maxSkills?: number;
   maxEducation?: number;
   minExperiences?: number;
-  /** The E055 case: a sidebar rail must not be read as education. */
   maxFalseEducation?: number;
-  /** E122 — roles that must carry a real employer name, not the placeholder. */
   namedEmployers?: number;
-  /**
-   * E128/WS1 — strings that MUST survive extraction. For a table-structured
-   * résumé these are the table's own field labels: if extraction ever stops
-   * reading table cells, this is what catches it, and a character count would
-   * not — the document would still extract thousands of characters of the
-   * paragraphs around the tables.
-   */
   mustContain?: { text: string; atLeast: number }[];
-  /**
-   * ── ⚠⚠ THE DUPLICATION GUARD (`P2-J1.4-E508`) ─────────────────────────────
-   *
-   * > **SCOTT, 2026-09-13:** *"Duplicated the employer and the project?"*
-   *
-   * ⚠ `mustContain` PROVES A CELL SURVIVED; THIS PROVES IT SURVIVED ONCE. A
-   * merged table cell emitted once per column it spans would hand the model the
-   * same sentence twice and no prompt change could fix that — so the guard has
-   * to live at extraction, where the text is made.
-   * ⚠⚠ COUNTED IN THE EXTRACTED TEXT, NOT IN THE PARSE. This is a statement
-   * about what the model is HANDED, which is the thing that was in question.
-   */
   mustAppearAtMost?: { text: string; atMost: number }[];
   /** WS0 — the confidence gate's verdict for this fixture. */
   expectConfidence?: "high" | "low";
 };
 
-/**
- * Bounds, not exact values. A heuristic parser that has to hit an exact count is
- * a parser nobody dares improve; what matters is that the failure MODES stay
- * fixed — no blowouts, no empty extractions, no silent garbage.
- */
 const CHECKS: Check[] = [
   // --- 1. Experts -------------------------------------------------------
   {
@@ -127,25 +85,6 @@ const CHECKS: Check[] = [
     maxEducation: 12,
   },
   {
-    /*
-      ── ⚠⚠ ALSO THE `E508` REGRESSION FIXTURE ─────────────────────────────
-
-      Scott's report was *"Duplicated the employer and the project?"* on this
-      exact file — 34 paragraphs, 10 tables, and table 6 carries merged cells
-      (`gridSpan=2`) around both `Oracle Pvt. Ltd.` and `Ernst & Young LLC.,`.
-
-      ⚠⚠ MEASURED: THE DUPLICATION DOES NOT REPRODUCE, AT ANY LAYER. mammoth's
-      `extractRawText` emits each of those strings ONCE (5,897 chars), and the
-      STORED RUN OF THIS VERY FILE returned five employers with no repeats. The
-      brief's "a naive row-walk returns three cells" describes a walker this
-      codebase does not use — `docx.ts` exists but nothing in the production
-      path imports it.
-      ⚠ SO THESE ASSERTIONS LOCK IN CORRECT BEHAVIOUR RATHER THAN FIXING A
-      DEFECT. They are what would have caught the bug if it were real, and what
-      will catch it if the extractor is ever swapped.
-      ⚠ ONE ENTRY, NOT TWO — the file was already a fixture here and a second
-      entry would run the same document twice under two names.
-    */
     file: "ppm-fin-srilakshmi.docx",
     note: "TABLE résumé — WS-A's acceptance case; E508 duplication guard",
     minChars: 4000,

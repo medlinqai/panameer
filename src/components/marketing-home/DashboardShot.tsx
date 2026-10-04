@@ -1,42 +1,5 @@
 import { OPPORTUNITIES_BY_DOMAIN } from "@/lib/capability-domains";
 
-/**
- * THE PRODUCT SHOT — a Procure-to-Pay AI Maturity Assessment.
- *
- * This is the replacement the original port promised. It used to be the
- * mockup's generic savings dashboard for a dental practice, carried as-is with
- * a note that Scott would rewrite the copy later; brief_home_dashboard_shot
- * (2026-08-14) is that rewrite. The shot now shows the same ARTIFACT a real
- * prospect gets from /assess — process-scoped, not client-scoped.
- *
- * ⚠ STILL PRESENTATIONAL, AND STILL INERT BY CONSTRUCTION. Nothing here is
- * wired to data. There are no links, no buttons, no inputs and no click
- * handlers anywhere in this file — a visitor cannot click something that
- * pretends to work, and the findings panel in particular has no sort controls
- * and no hover states, because a table that looks sortable and is not is worse
- * than a table that plainly is not.
- *
- * ⚠ IT IS NOT THE REAL REPORT. `/assess/r/[token]` renders the actual
- * assessment from real answers. Aligning the two is a separate decision the
- * brief explicitly defers — do not edit one to match the other.
- *
- * The figures are Scott's, agreed 2026-08-14. See FINDINGS below for the one
- * arithmetic invariant this component has to keep.
- */
-
-/**
- * The five findings, descending by value.
- *
- * ⚠ THESE SUM TO EXACTLY $2,590,000, WHICH IS THE "Estimated Savings" KPI.
- * 980,000 + 610,000 + 520,000 + 265,000 + 215,000 = 2,590,000.
- *
- * The tile and the table are two renderings of one number, so changing a row
- * without changing the tile — or the reverse — puts a dashboard on the
- * marketing home whose total does not equal its line items. That is the exact
- * detail a CFO stops on, and it is why the total is DERIVED below rather than
- * typed a second time: the tile reads `TOTAL_SAVINGS`, which is computed from
- * this array, so the two cannot drift.
- */
 const FINDINGS = [
   { action: "TDWCA — Tax Deferred Working Capital Account", short: "TDWCA", owner: "StratERP", tf: "4 weeks", savings: 980_000 },
   { action: "P2P Rogue-Spend Alert", short: "Rogue spend", owner: "Panameer", tf: "2 weeks", savings: 610_000 },

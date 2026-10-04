@@ -2,25 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Author-entered free text, rendered the way it was written (E060).
- *
- * Two problems, one component:
- *
- *  1. RUN-ON. A bio typed as three paragraphs was collapsing into one wall of
- *     text, because HTML folds newlines. Blank lines become real paragraphs and
- *     single newlines survive inside them (`whitespace-pre-line`), so what the
- *     provider typed is what a buyer reads.
- *
- *  2. NO CEILING. A 4,000-character project description pushed everything below
- *     it off the card. Long blocks clamp to `clampLines` with a Read-more
- *     toggle.
- *
- * The toggle only appears when the text ACTUALLY overflows at the current
- * width, measured rather than guessed from a character count — the same bio is
- * four lines in the main column and nine in the sidebar, and a "Read more" that
- * expands to reveal nothing is worse than no toggle at all.
- */
 export function RichText({
   text,
   className = "",

@@ -1,96 +1,17 @@
 import { prisma } from "@/lib/prisma";
 
-/**
- * ⚠⚠ WHERE A PROVIDER IS IN A SOURCING PROCESS — DERIVED, IN EXACTLY ONE
- * FUNCTION, AND ONLY ONE (`P1-J4-E395` WS-4).
- *
- * ── WHY IT IS DERIVED AND NOT STORED ────────────────────────────────────────
- *
- * Chat proposed a `Candidacy` umbrella row carrying the stage. ⚠ **SCOTT'S
- * JOURNEY DOC DOES NOT HAVE ONE**, and it is quoted here rather than imposed. So
- * the stage is DERIVED FROM WHICH DOCUMENTS EXIST. That also means it cannot go
- * stale: a stored stage is a second fact about the same thing, and the day a bid
- * is withdrawn without the writer remembering to update it, the grid is lying at
- * the exact moment a buyer is choosing who to hire.
- *
- * ── ⚠⚠ AND WHY THERE IS ONE FUNCTION ────────────────────────────────────────
- *
- * **Two screens computing a stage independently WILL disagree, and the shortlist
- * is where a buyer decides who to hire.** This codebase already runs the pattern
- * twice and says why: `create-work/page.tsx` reads `missingIdentityForPerson` so
- * the page and the API cannot disagree, and `provider-rates.ts` calls
- * `rateDisplay` — *"one rule, one place, asserted once."* `check:sourcing`
- * asserts there is no second implementation.
- *
- * ── ⚠ THE COST, MEASURED AND REPORTED ───────────────────────────────────────
- *
- * **`sourcingStagesForWorkRequest` costs SIX QUERIES FOR THE WHOLE WORK REQUEST,
- * NOT SIX PER PROVIDER** — a fixed six whether one provider was invited or two
- * hundred, so the marginal cost per provider is ZERO queries. That is the number
- * the brief asked for, and it is the reason the umbrella row is not needed to
- * make this affordable.
- *
- * ⚠ IT IS FIXED BECAUSE EVERY QUERY IS SCOPED TO THE WORK REQUEST AND FANNED OUT
- * IN MEMORY, never called inside a loop over providers. A per-provider caller
- * (`sourcingStageForProvider`) exists for the single-row case and is DELIBERATELY
- * built on the same six — one provider is the cheap case, not a different
- * algorithm.
- */
-
-/**
- * ⚠ ORDER IS PRECEDENCE, HIGHEST FIRST. `stageRank` reads this array, so the
- * ordering is the rule rather than a comment about it.
- */
 export const SOURCING_STAGES = [
   "ASSIGNED",
   "DECLINED",
   "SHORTLISTED",
   "INTERVIEWED",
   "TESTED",
-  /* ⚠⚠ PAST PARTICIPLE, LIKE EVERY OTHER STAGE HERE — and that is why it is
-     not `PROPOSAL`. `P2-A8-E695` WS-A renamed the model `ProviderBid` →
-     `Proposal`, and naming this stage `"PROPOSAL"` collided with
-     `selection.ts`'s unrelated `route: "PROPOSAL" | "DIRECT"`, tripping
-     `check:sourcing` §8's one-derivation scan on a file that derives nothing.
-     ⚠⚠⚠ ONE WORD, TWO UNRELATED FUNCTIONS (ruling 93m) — caught by a gate
-     rather than by review.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`): `"BID"`. */
   "PROPOSED",
   "INVITED",
 ] as const;
 
 export type SourcingStage = (typeof SOURCING_STAGES)[number];
 
-/**
- * ── ⚠⚠ THE PROVIDER-FACING WORDS FOR A STAGE (`P2-A8-E664`) ───────────────
- *
- * ⚠⚠ THEY LIVE BESIDE THE ENUM BECAUSE THE ENUM IS WHERE THE VOCABULARY LIVES
- * (`E585` — one concept, one place). ⚠ A page that spelled these out itself
- * would be a second vocabulary kept in step by hand, and this file already
- * exists to stop exactly that for the DERIVATION.
- *
- * ⚠⚠⚠ `Record<SourcingStage, string>` IS THE POINT OF THE TYPE: an eighth stage
- * added to `SOURCING_STAGES` becomes a COMPILE ERROR here rather than a silently
- * missing label. **A required type before a gate** — Scott's pattern, and there
- * is no `check:sourcing` assertion about labels (checked, 2026-09-26).
- *
- * ── ⚠ THEY ARE THE PROVIDER'S SIDE OF THE SAME ROW ───────────────────────
- *
- * ⚠⚠ THE SAME STAGE READS DIFFERENTLY TO THE TWO SIDES, and these are the
- * PROVIDER's words — *"Your proposal is in"*, not *"Bid received"*. A buyer-side
- * grid wanting its own wording adds a SECOND map here, beside this one, rather
- * than re-deriving the stage.
- *
- * ⚠⚠ `DECLINED` IS DELIBERATELY NEUTRAL ABOUT WHO DECLINED. The evidence type
- * says so in its own words — *"the ITB or the bid was declined — by EITHER
- * side"* — so any label naming an actor would be an invention. It names the
- * STATE and stops.
- *
- * ⚠⚠⚠ THESE SEVEN STRINGS ARE CC'S WORDS, REPORTED FOR SCOTT TO OVERRULE —
- * the same treatment `VERIFICATION_COPY` records for its four. Nothing else
- * writes them. ⚠ None of them promises anything, carries a date, or apologises
- * (ruling 18).
- */
 export const SOURCING_STAGE_LABEL: Record<SourcingStage, string> = {
   ASSIGNED: "This work is assigned to you",
   DECLINED: "This one was declined",
@@ -101,11 +22,6 @@ export const SOURCING_STAGE_LABEL: Record<SourcingStage, string> = {
   INVITED: "You were invited to propose",
 };
 
-/**
- * The documents that exist for ONE provider on ONE work request. Booleans, not
- * rows: the stage is a question about EXISTENCE, and passing rows in would
- * tempt a caller into deriving something else from them here.
- */
 export type SourcingEvidence = {
   /** An ITB was issued to this provider. */
   invited: boolean;
@@ -119,22 +35,9 @@ export type SourcingEvidence = {
   shortlisted: boolean;
   /** A work order exists against this work request for this provider. */
   assigned: boolean;
-  /** ⚠ The ITB or the bid was declined — by EITHER side. */
   declined: boolean;
 };
 
-/**
- * ⚠⚠ THE ONE FUNCTION. Every caller reads this and nothing re-derives it.
- *
- * ⚠ THE TWO TERMINAL STAGES OUTRANK THE PROGRESS ONES, AND `ASSIGNED` OUTRANKS
- * `DECLINED`. A provider who declined an ITB and was later hired anyway — off a
- * second conversation, which is a marketplace, not a bug — is ASSIGNED. Reading
- * it the other way would show "declined" next to somebody who is currently doing
- * the work.
- *
- * ⚠ `null` MEANS "NOT IN THIS PROCESS AT ALL", which is not the same as INVITED.
- * A grid that renders an un-invited provider as INVITED has invented an invitation.
- */
 export function sourcingStage(e: SourcingEvidence): SourcingStage | null {
   if (e.assigned) return "ASSIGNED";
   if (e.declined) return "DECLINED";
@@ -161,14 +64,6 @@ const EMPTY: SourcingEvidence = {
   declined: false,
 };
 
-/**
- * Load the evidence for every provider on one work request — ⚠ SIX QUERIES,
- * FIXED, regardless of how many providers are involved.
- *
- * ⚠ EACH QUERY SELECTS ONLY `provider_person_id` AND WHAT THE PREDICATE NEEDS.
- * Nothing here loads a bid's lines or an interview's notes; this is a stage, and
- * a stage is seven booleans.
- */
 export async function sourcingEvidenceForWorkRequest(
   workRequestId: string
 ): Promise<Map<string, SourcingEvidence>> {
@@ -216,8 +111,6 @@ export async function sourcingEvidenceForWorkRequest(
   }
   for (const b of bids) {
     const e = at(b.provider_person_id);
-    /* ⚠ A DRAFT BID IS NOT A BID. The provider has not sent it, and showing the
-       buyer "PROPOSED" for a draft nobody submitted is an invented response. */
     if (b.submitted_at != null && b.status !== "DRAFT") e.proposal = true;
     if (b.status === "DECLINED") e.declined = true;
   }
@@ -229,7 +122,6 @@ export async function sourcingEvidenceForWorkRequest(
   return out;
 }
 
-/** The stage for every provider on one work request. ⚠ Six queries, total. */
 export async function sourcingStagesForWorkRequest(
   workRequestId: string
 ): Promise<Map<string, SourcingStage>> {
@@ -242,15 +134,6 @@ export async function sourcingStagesForWorkRequest(
   return out;
 }
 
-/**
- * One provider's stage.
- *
- * ⚠ BUILT ON THE SAME SIX QUERIES ON PURPOSE. It would be cheaper to write seven
- * narrow `count()`s here — and that would be a SECOND derivation, which is the
- * one thing this file exists to prevent. ⚠⚠ NEVER CALL THIS IN A LOOP OVER
- * PROVIDERS; that is the shape that turns a fixed six into six per provider. Use
- * `sourcingStagesForWorkRequest` and read the map.
- */
 export async function sourcingStageForProvider(
   workRequestId: string,
   providerPersonId: string

@@ -4,20 +4,6 @@ import { guardApi } from "@/lib/guard";
 import { SettingsError } from "@/lib/settings";
 import type { Viewer } from "@/lib/access";
 
-/**
- * The shape every Settings write shares (J2.4 WS-H).
- *
- * Seven routes doing gate → parse → act → map-errors, and the interesting part
- * of each is the middle line. Factored out because seven hand-written copies is
- * seven chances for one of them to forget the capability gate — the failure
- * mode here is silent and total, and the only reliable defence is not writing
- * it out eight times.
- *
- * The gate is `canProvideServices` for all of them: these are provider settings
- * and `/settings` is mapped to that capability at the edge and in the layout.
- * Keeping it here as well is the third of the three, and the authoritative one
- * for an API route — the edge does not reliably cover these.
- */
 export async function settingsWrite<S extends z.ZodTypeAny>(
   request: Request,
   schema: S,

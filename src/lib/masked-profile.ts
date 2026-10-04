@@ -8,144 +8,30 @@ import { buildCompletenessInput, buildCompletenessInputs } from "@/lib/onboardin
 import { computeProviderCompleteness } from "@/lib/completeness";
 import { blurredPhotoDataUri } from "@/lib/masked-photo";
 
-/**
- * ── ⚠⚠⚠ THE PUBLIC TALENT PREVIEW — WHAT A SIGNED-OUT VISITOR MAY SEE ──────
- *                                                        (`P2-A1.1-E738`)
- *
- * ⚠ SCOTT, 2026-10-01: *"What is the best way to show the quality of profiles
- * we have, but not let buyers in until they register? we will also need to make
- * sure those profile names are masked."*
- *
- * ── ⚠⚠⚠ THE ONE RULE THIS FILE EXISTS TO ENFORCE ──────────────────────────
- *
- * ⚠⚠⚠ **MASKING HAPPENS ON THE SERVER, AND IT IS ENFORCED BY THE TYPE RATHER
- * THAN BY THE TEMPLATE.** `MaskedProfile` HAS NO FIELD FOR a first name, a last
- * name, initials, a photo URL, an email, a phone, a link, a street address, an
- * employer name, a client name or a school name. ⚠ The Prisma selects below
- * never READ most of them, and the two they must read (the member's own name and
- * their employer/client names) exist **only** to be fed to `scrub()` as needles
- * and are never returned.
- *
- * ⚠⚠ **SO A FUTURE EDIT TO THE PAGE CANNOT LEAK A NAME BY ADDING ONE LINE OF
- * JSX — THE FIELD IS NOT IN THE OBJECT.** That is the same reasoning as
- * owner-scoping a write: make the wrong thing unavailable rather than
- * remembering not to do it. ⚠ It is the rule `lib/explore.ts` already states for
- * the teaser cards, applied to a whole profile.
- *
- * ⚠⚠⚠ **HIDING WITH CSS, A BLUR, OR A CLIENT-SIDE FILTER IS A FAILURE.** The
- * blurred rate figures in the approved mockup are a PLACEHOLDER GRAPHIC. The
- * real rate is not in the payload at all — see `RATE_LOCKED_COPY`.
- *
- * ── ⚠⚠ WHAT THIS FILE IS **NOT** ──────────────────────────────────────────
- *
- * ⚠⚠ IT IS NOT A SECOND VISIBILITY RULE. Eligibility is
- * `marketplaceVisibleWhere()` — the SAME predicate the authed directory,
- * `/explore` and the signed-in profile use (`E585`: one definition, one place) —
- * narrowed by `visitorPreviewWhere()` below. ⚠ It can only ever SUBTRACT from
- * that set, never add to it, and a paused profile is absent whatever any new
- * column says.
- */
-
-/* ── ⚠ THE LOCKED RATE, AS ONE CONSTANT ──────────────────────────────────── */
-
-/**
- * ⚠⚠ THE BRIEF: *"Rates (locked for now; one constant to change later)."*
- * ⚠⚠⚠ THE FIGURE IS NOT WITHHELD AT RENDER — **IT IS NEVER SELECTED.** There is
- * no rate field on `MaskedProfile`, so "unlocking" rates later is a deliberate
- * change to this file and its type, not a flag someone flips by accident.
- */
 export const RATE_LOCKED_COPY = "Register free to see rates";
 
-/** ⚠ The lock line the brief specifies for a Browse Talent card, verbatim. */
 export const CARD_LOCK_COPY = "Name, employers and rates shown after you join";
 
-/**
- * ⚠⚠ WHAT AN EMPLOYER ROW SAYS INSTEAD OF ITS NAME — SCOTT'S ANSWER 6,
- * 2026-10-01: *"Employer rows show role + dates + 'Employer shown after you
- * join'; no invented industry."*
- * ⚠⚠⚠ **THERE IS DELIBERATELY NO INDUSTRY FALLBACK LABEL.** The brief's premise
- * 2 proposed one (*"Private company"*) and Scott ruled it out: `Employer` has no
- * industry column at all, so any label would be invented. ⚠ A project's industry
- * IS a real column (`Project.industry_specialization_id`) and is shown **only
- * where populated** — measured 2026-10-01: **3 of 21 projects**.
- */
 export const EMPLOYER_LOCK_COPY = "Employer shown after you join";
 
-/* ── ⚠⚠ ELIGIBILITY ──────────────────────────────────────────────────────── */
-
-/**
- * ⚠⚠ WHO APPEARS TO A SIGNED-OUT VISITOR.
- *
- * ⚠⚠⚠ **IT IS `marketplaceVisibleWhere()` MINUS TWO THINGS, AND IT IS BUILT BY
- * SUBTRACTION SO IT CANNOT DRIFT INTO A SECOND DEFINITION** (`E585`). Spreading
- * the shared predicate means a future clause added there arrives here for free;
- * re-typing its clauses is how `/explore` and the directory would start
- * disagreeing about who is discoverable.
- *
- * ⚠ **1. THE PHOTO CLAUSE COMES OFF** — Scott, 2026-10-01: *"photo dropped from
- * Browse Talent eligibility."* It is the right call for a surface that shows a
- * **placeholder icon for everybody**: requiring a photo nobody will see would
- * exclude members for failing to supply an asset the page then masks.
- * ⚠⚠ **MEASURED BEFORE THE CHANGE, AND IT MOVES NOTHING TODAY: 59 profiles
- * qualify with the photo clause and 59 without it** — every eligible member
- * already has a photo. The rule changes; today's set does not. Stated so nobody
- * later reads a count difference into it.
- *
- * ⚠ **2. THE MEMBER'S OWN SWITCH IS ADDED** — `preview_hidden_at` must be null.
- * The brief: *"A member who turned Visibility off never appears."*
- */
 export function visitorPreviewWhere() {
   const base = marketplaceVisibleWhere();
   return {
     ...base,
-    /* ⚠⚠ THE MEMBER'S OWN OPT-OUT. Null = shown (the default). */
     preview_hidden_at: null,
     person: {
       ...base.person,
-      /* ⚠⚠⚠ `undefined` REMOVES A PRISMA CLAUSE; `null` WOULD ASSERT "has no
-         photo" AND RETURN **NOBODY**. ⚠ That inversion is a real trap: the
-         narrowing reads as a widening and the page renders empty. */
       photo_url: undefined,
     },
   };
 }
 
-/* ── ⚠⚠⚠ SCRUBBING FREE TEXT ─────────────────────────────────────────────── */
-
-/**
- * ⚠⚠ THE BRIEF: *"remove the member's own name and any employer or client name
- * the profile holds. Use the profile's own lists to match; no AI call. If a line
- * can't be scrubbed confidently, drop it."*
- *
- * ⚠⚠⚠ **IT RETURNS `null`, NOT A REDACTED STRING WITH HOLES IN IT.** A summary
- * reading *"Partners with ███ to deliver ███"* advertises exactly how much was
- * hidden and reads as a broken page; a dropped line reads as a short profile.
- * ⚠ Scott's rule for the whole surface is that an absence must not look like a
- * malfunction.
- *
- * ⚠⚠ **WORD-BOUNDARY MATCHING, AND THE BOUNDARY IS WHY THIS IS NOT A
- * `.includes()`.** A needle of `"Ceres"` must catch `Ceres.` and `(Ceres)` and
- * must NOT fire on `interference`. ⚠⚠⚠ **AND SHORT NEEDLES ARE DISCARDED:** an
- * employer called `"AI"` or a surname of two letters would match a dozen
- * ordinary words and silently delete every summary on the site.
- */
 const MIN_NEEDLE = 3;
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * ⚠ Every form of a needle worth matching: the whole phrase, and each of its
- * words that is long enough to be distinctive on its own.
- *
- * ⚠⚠ WHY THE WORDS AND NOT ONLY THE PHRASE: a résumé summary says *"redesigned
- * P2P at Ceres"* while the stored employer is `"Ceres Global Ag Corp"`. Matching
- * only the full phrase would leave the recognisable half in place — and the
- * recognisable half is the leak.
- * ⚠ Generic corporate words are dropped so `"Global Engineering Limited"` does
- * not make the word `global` a redaction trigger across every profile.
- */
 const GENERIC_COMPANY_WORDS = new Set([
   "the", "and", "for", "inc", "llc", "ltd", "limited", "corp", "corporation",
   "company", "co", "group", "holdings", "partners", "services", "solutions",
@@ -171,12 +57,6 @@ export function needlesFrom(values: (string | null | undefined)[]): string[] {
   return [...out];
 }
 
-/**
- * ⚠⚠ Scrub `text` against `needles`. Returns `null` the moment one matches.
- *
- * ⚠⚠⚠ **DROP, DO NOT REPLACE** — see the block comment above. ⚠ An empty or
- * blank input is `null` too, so a caller never has to test for both.
- */
 export function scrub(
   text: string | null | undefined,
   needles: string[]

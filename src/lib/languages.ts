@@ -1,34 +1,4 @@
-/**
- * ── ⚠⚠⚠ LANGUAGES AND PROFICIENCY — ONE DEFINITION (`P2-A2-E723` items 10–12) ────────────
- *
- * ⚠ **SCOTT: *"Languages: two picklists, not free text (`/profile/edit/languages` and the
- * onboarding languages step, one shared definition, `E585`)."***
- *
- * ⚠⚠ **BOTH SURFACES IMPORT FROM HERE AND NEITHER DECLARES A LIST OF ITS OWN.** The
- * onboarding step and the profile editor are the same component
- * (`EducationLanguagesEditor`), which is already `E585`-correct; what this file adds is that
- * the *vocabulary* is single too, so a language added here appears in both without a second
- * edit.
- *
- * ── ⚠⚠⚠ WHY A `<select>` AND NOT A FREE-TEXT BOX WITH A `<datalist>` ────────────────────
- *
- * ⚠ A `<datalist>` suggests but still accepts anything typed. ⚠⚠ **SCOTT'S WORDS ARE
- * *"picklists, not free text"*, and the live data shows exactly why:** stored names include
- * `"Spanish Native"`, `"English Advanced intermediate"` and `"German Basic"` — **the
- * proficiency got typed into the NAME field**, because both boxes were free text and nothing
- * stopped it. ⚠⚠⚠ **A `<select>` cannot record that.** Native type-ahead makes a 180-option
- * select searchable without a combobox component.
- */
 
-/**
- * ISO 639-1 language names.
- *
- * ⚠ **THE NAME IS WHAT IS STORED**, not the code: `Language.name` is a `String` and already
- * holds names (`"English"`, `"German"`), and ruling 38 is additive-only — **changing what the
- * column means would be a migration of live rows.** ⚠⚠ The codes are carried anyway because
- * they are the stable identity if that ever changes, and because they make this list
- * checkable against the standard rather than against somebody's memory.
- */
 export const WORLD_LANGUAGES: readonly { code: string; name: string }[] = [
   { code: "ab", name: "Abkhazian" }, { code: "aa", name: "Afar" }, { code: "af", name: "Afrikaans" },
   { code: "ak", name: "Akan" }, { code: "sq", name: "Albanian" }, { code: "am", name: "Amharic" },
@@ -93,22 +63,8 @@ export const WORLD_LANGUAGES: readonly { code: string; name: string }[] = [
   { code: "yo", name: "Yoruba" }, { code: "za", name: "Zhuang" }, { code: "zu", name: "Zulu" },
 ] as const;
 
-/** ⚠ For an O(1) membership test when validating a save. */
 export const LANGUAGE_NAMES: ReadonlySet<string> = new Set(WORLD_LANGUAGES.map((l) => l.name));
 
-/**
- * ── ⚠⚠⚠ THE FIVE PROFICIENCIES, IN SCOTT'S DISPLAY ORDER ────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-09-30: *"keep the order Native · Fluent · Professional · Conversational ·
- * Beginner in the picklist, whatever order the values are stored in."*** ⚠⚠ **SO THIS ARRAY
- * IS THE ORDER, AND THE ENUM'S OWN ORDER IS IRRELEVANT** — which is why the picklist reads
- * from here and never from `Object.values(LanguageProficiency)`.
- *
- * ⚠⚠⚠ **`PROFESSIONAL` WAS ADDED TO THE ENUM ON SCOTT'S EXPLICIT APPROVAL (2026-09-30).** The
- * other four already existed. `ALTER TYPE … ADD VALUE` adds and removes nothing, so it is
- * within ruling 38's additive-only rule; **all 7 live rows already fit the values that
- * existed, so nothing needed remapping.**
- */
 export const PROFICIENCY_OPTIONS = [
   { value: "NATIVE_OR_BILINGUAL", label: "Native" },
   { value: "FLUENT", label: "Fluent" },
@@ -119,7 +75,6 @@ export const PROFICIENCY_OPTIONS = [
 
 export type ProficiencyValue = (typeof PROFICIENCY_OPTIONS)[number]["value"];
 
-/** ⚠ The stored enum value → the word a member reads. One table, both directions. */
 export const PROFICIENCY_LABEL: Record<string, string> = Object.fromEntries(
   PROFICIENCY_OPTIONS.map((o) => [o.value, o.label])
 );
@@ -128,17 +83,6 @@ export function isProficiency(v: unknown): v is ProficiencyValue {
   return typeof v === "string" && PROFICIENCY_OPTIONS.some((o) => o.value === v);
 }
 
-/**
- * ── ⚠⚠ THE LEGACY FREE TEXT → THE ENUM, FOR THE OBVIOUS CASES ONLY ──────────────────────
- *
- * ⚠ **SCOTT: *"Map the obvious ones (e.g. 'fluent' → Fluent) and leave anything ambiguous
- * untouched and reported."***
- * ⚠⚠⚠ **IT RETURNS `null` RATHER THAN GUESSING, AND THAT IS THE POINT.** A wrong proficiency
- * is a claim about a person's competence on the page Panameer sells on; *"Advanced
- * intermediate"* is not obviously any of the five, so it is left alone and reported.
- * ⚠ **NOTHING CALLS THIS AS A WRITER.** It exists so a migration can be proposed with real
- * numbers; no row is rewritten by this brief.
- */
 export function mapLegacyProficiency(text: string | null | undefined): ProficiencyValue | null {
   if (!text) return null;
   const t = text.trim().toLowerCase();

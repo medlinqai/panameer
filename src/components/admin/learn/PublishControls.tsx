@@ -12,15 +12,6 @@ type Readiness = {
   urlMissing: number;
 };
 
-/**
- * Publish / unpublish + preview-as-public (WS4).
- *
- * The dialog shows blockers and warnings as two different things because they
- * ARE two different things. A path with no lessons is a dead link and publishing
- * is refused. A path whose lessons all say "coming soon" is a real page — the
- * public catalog already reports "0 ready to watch" honestly — so that's a
- * warning the admin reads and overrides, not a decision this tool makes for them.
- */
 export function PublishControls({
   pathId,
   slug,

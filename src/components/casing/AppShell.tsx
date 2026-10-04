@@ -1,53 +1,13 @@
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
-/*
-  ── ⚠⚠ THE RAIL AND THE OLD HEADER ARE NO LONGER RENDERED (`P2-ALL-E559`) ────
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  // import { AppRail } from "@/components/casing/AppRail";
-  // import { AppHeader } from "@/components/casing/AppHeader";
-
-  ⚠⚠ BOTH FILES STAY ON DISK AND ARE NOT DELETED — the brief says so explicitly
-  and `E164` says so generally. Nothing imports them now.
-  ⚠ Rule 12: the two lines above are LINE comments. A block comment around an
-  import list is fine today, but the moment a quoted body contains `*／` it
-  closes the comment early — the trap that has bitten twice.
-*/
 import { HiddenProfileBanner } from "@/components/casing/HiddenProfileBanner";
 import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { resolveTheme } from "@/lib/themeRecipes";
 
-/**
- * THE CASING — dark rail + header + footer, every authenticated page
- * (MASTER WS9, ref E151-provider-home-casing.png and Medlinq's Sidebar).
- *
- * Replaces the light SideRail. The structure is Medlinq's, rebranded onto
- * Panameer tokens rather than copied with its teal: the rail is #140c29 and the
- * active pill #d127d0, both sampled out of the mockup PNG, and the canvas is
- * #f7f7f5 rather than white so the white cards on it have an edge.
- *
- * The footer is one line of copyright and it is part of the SHELL, not of any
- * page — it was the only element in the mockup with nowhere else to live.
- */
 export async function AppShell({ children }: { children: ReactNode }) {
-  /* ⚠ `const year` WENT WITH THE ONE-LINE BAND (`E246` §7). `MarketingFooter`
-     carries its own copyright in its legal bar; an unused local would be a new lint
-     warning against a 0-new baseline. The quoted band below is a comment, not code. */
 
-  /*
-    THE TENANT THEME, APPLIED AS CSS VARIABLES (E204 WS-C).
-
-    Resolved once at the shell and written as inline custom properties, which is
-    what lets every surface below inherit it without a single component knowing
-    a company theme exists — `bg-rail` and `bg-canvas` already read these vars.
-
-    AN UNTHEMED COMPANY IS BIT-FOR-BIT UNCHANGED. `resolveTheme(null, null)`
-    returns the Panameer default, and the override is only emitted when the
-    company actually chose something — so no existing tenant's console shifts by
-    a pixel because this feature shipped.
-  */
   const viewer = await getSessionViewer();
   const company = viewer
     ? await prisma.company.findFirst({
@@ -67,25 +27,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
     : undefined;
 
   return (
-    /*
-      COLUMN below lg, ROW at lg and up.
-
-      AppRail renders two things: the desktop aside (hidden below lg) and the
-      mobile top bar (hidden at lg and up). As a plain flex row, that mobile bar
-      was a SIBLING FLEX ITEM at 375px and took 224px of the viewport, leaving
-      main 151px wide — which is why the profile and Work pages scrolled
-      sideways while the pages whose content could shrink merely looked cramped.
-      Stacking below lg puts the bar above the content where it belongs.
-    */
-    /*
-      ⚠⚠ ONE COLUMN AT EVERY WIDTH NOW (`P2-ALL-E559`). ⚠ SUPERSEDED, quoted not
-      deleted (`E164`): `flex min-h-screen flex-col bg-canvas … lg:flex-row`,
-      with `<AppRail />` as the first flex item.
-      ⚠ The `lg:flex-row` existed because the rail was a SIBLING COLUMN. With the
-      rail gone there is no second column, so the band, the main and the footer
-      simply stack — and the 240px the rail reserved returns to the page at every
-      width above `lg`.
-    */
     <div
       style={themeVars}
       className="flex min-h-screen flex-col bg-canvas font-body text-ink"
@@ -93,66 +34,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <AppBand />
 
-        {/*
-          ⚠⚠ THE HIDDEN-PROFILE BANNER SITS IN THE SHELL, BELOW THE BAND (Scott: *"Put it in
-          the app shell below the band, not on the profile page only"*). ⚠ It renders
-          nothing for a buyer, for an unfinished provider, and for a visible one — so this
-          is a mount, not a reserved strip.
-        */}
+        {}
         <HiddenProfileBanner />
 
-        {/*
-          ⚠⚠⚠ `overflow-x-clip` IS LOAD-BEARING, NOT TIDYING (`P2-A1.1-E751`).
-
-          ⚠ `PageTabs` paints its band as a `w-screen` layer centred on the viewport,
-          because the one caller that nests the row (`/payments`, measured at `x=64`
-          against everyone else's `x=32`) makes an ancestor-sized negative margin a
-          second definition of the layout (`E585`). ⚠⚠ **`100vw` INCLUDES THE
-          SCROLLBAR**, so on a platform with classic rather than overlay scrollbars
-          that layer is ~15px wider than the page and would put a horizontal
-          scrollbar on EVERY logged-in screen. ⚠ This clips it to the page.
-
-          ⚠⚠ **`clip`, NEVER `hidden`.** `overflow: clip` does not create a scroll
-          container, so `position: sticky` descendants keep resolving against the
-          viewport — which is exactly what `P2-ALL-E587` guards (the band must never
-          cover a sticky aside). ⚠ `hidden` would have made them sticky to a box
-          that does not scroll, i.e. silently fixed.
-          ⚠ Only the X axis is named, so vertical overflow (menus, popovers) is
-          untouched.
-        */}
+        {}
         <main className="flex-1 overflow-x-clip px-5 py-6 sm:px-8">{children}</main>
 
-        {/*
-          ── ⚠⚠ THE SHELL'S FOOTER IS THE REAL ONE NOW (`P1-J1.1-E246` §7) ────────
-
-          Scott, 2026-08-29: **"the footer must be in."** With **"If logged in, the
-          app shell is there (meaning on the left). If not, there is a top menu and
-          no left side menu."** So: two chromes, ONE footer. This shell keeps OWNING
-          the footer — which its own header already called the right instinct, "part
-          of the SHELL, not of any page" — and what it owns becomes the real one.
-
-          ⚠ SUPERSEDED, quoted not deleted — this was a one-line band:
-              <footer className="border-t border-line px-5 py-4 text-[13px] text-ink-2 sm:px-8">
-                Copyright – Panameer Inc {year}
-              </footer>
-          ⚠⚠ IT WAS REPLACED, NOT STACKED ABOVE THE NEW ONE. `MarketingFooter`
-          already ends in a full-width legal bar carrying the copyright, and two
-          copyright lines on one page is the defect rather than the fix.
-          ⚠ THAT REPLACEMENT IS CHAT'S CALL, NOT SCOTT'S — reported at `E246` so he
-          can overrule it on the walk.
-
-          ⚠⚠ BLAST RADIUS: this shell wraps EVERY AUTHENTICATED PAGE — /dashboard,
-          /company, /settings/*, /orders, /pay, /community, /notifications,
-          /search, the admin pages and /learn signed-in. All of them gain the
-          three-column video footer. That is what "the footer must be in" means and
-          it is intended, but it is the widest change in `E246`.
-          ⚠ `/learn`'s LAYOUT NEEDED NO EDIT. Its signed-in branch already renders
-          this shell, so the footer arrives through here — that fork was copied, not
-          reinvented.
-          ⚠ MEASURED INSIDE THE SHELL for `E246` — colour, height and the rail/footer
-          corner — because one component rendering in two colours and two heights is
-          exactly what `P1-ALL-E020` was about. Numbers are in that report.
-        */}
+        {}
         <MarketingFooter />
       </div>
     </div>

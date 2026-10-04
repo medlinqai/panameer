@@ -1,14 +1,5 @@
 import { ShotCard, Avatar } from "@/components/learn/public/shared";
 
-/**
- * SECTION 5 — the profile, which is the point: what you finish and what you teach land on the
- * same record buyers already search.
- *
- * ⚠ EVERY NUMBER HERE IS AN ILLUSTRATION AND MUST STAY ONE. `7 certificates`,
- * `1,240 learners taught` and `4.9` are drawn, not queried, and nothing on this page may ever
- * render a real count — a real count of 0 on a sales page is worse than a drawing. Same status
- * as the named people on `/`'s GetTheTalentShot.
- */
 const CHIPS = ["P2P with AI Agents", "Self-Service Procurement", "Contract Lifecycle", "+4 more"];
 const STATS = [
   ["7", "certificates"],

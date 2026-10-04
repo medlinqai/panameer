@@ -21,52 +21,6 @@ import { GROUP_OFFER_COPY } from "@/lib/group-membership";
 import "@/components/community/community-page.css";
 import "@/components/community/groups.css";
 
-/**
- * ── ⚠⚠⚠ GROUPS — THE PAGE, REBUILT (`P2-A3-E619` WS-A) ───────────────────
- *
- * ⚠ SCOTT, 2026-09-22, RULING 3: *"The Groups page is meh, zzzzzzz."* — the
- * page is **REPLACED, not restyled**, against `mockups/groups_2026-09-22.html`.
- *
- * ── ⚠⚠ WHAT THIS PAGE REPLACED, AND WHAT SURVIVED IT ────────────────────
- *
- * ⚠ The old page led with instructor thread panels and put the rooms in a rail.
- * ⚠⚠ **`getForumsHome` AND `ForumRooms` ARE NOT DELETED AND MUST NOT BE.**
- * `check:forums` calls `getForumsHome` DIRECTLY to prove the enrolment access
- * rule — a stranger sees the 4 general rooms and zero path boards while a
- * teacher sees theirs. ⚠⚠⚠ `CLAUDE.md` lesson 14: *"BEFORE DELETING DEAD CODE,
- * CHECK WHETHER A GATE ASSERTS A LIVE RULE AGAINST IT… WHEN THE CODE A RULE
- * NAMES GOES AWAY, THE RULE MAY NOT."* Both stay on disk, and the live rule
- * they carry stays proven.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the shape this page had:
- * //   const home = await getForumsHome(viewer);
- * //   <h2>In Paths You Teach</h2>   … noReplies / unweighed ThreadGroups
- * //   <h2>Recent in Your Groups</h2> … home.recent
- * //   <aside><ForumRooms rooms={home.rooms} /></aside>
- * ⚠⚠ The instructor panels' JOB survives as **Needs You**, which asks the same
- * question — *what is waiting on me* — against the groups you RUN rather than
- * the paths you teach. ⚠ Those are different sets and that is deliberate:
- * ownership is the column (`E572`), not the teaching capability.
- *
- * ── ⚠⚠⚠ EVERY FIGURE ON THIS PAGE IS COUNTED ────────────────────────────
- *
- * ⚠ `getGroupsHome` carries the measurements and the reasons. ⚠⚠ Nothing here
- * prints a dash, because nothing here lacks a writer; and nothing here prints a
- * PAID or a PENDING figure, because both of those do.
- */
-/**
- * ── ⚠⚠ THE THREE VIEWS (`P2-A3-E619` WS-B) ──────────────────────────────
- *
- * ⚠ The mockup's own three: **My Groups · Discover · Requests.**
- * ⚠⚠ ONE ROUTE, A QUERY STRING — not three routes. All three show the same
- * person the same subject through a different window, and `?view=` keeps each
- * linkable and the back button honest. ⚠ The reasoning and the shape are
- * `/community/grow`'s, which settled this for its own tabs.
- * ⚠⚠⚠ AND IT KEEPS THE ROUTE RENAME A WS-C DECISION: three routes here would
- * have to be renamed three times.
- * ⚠ AN UNKNOWN VALUE FALLS BACK TO `my` rather than 404ing — a mistyped tab is
- * not a missing page.
- */
 const VIEWS = [
   { key: "my", label: "My Groups" },
   { key: "discover", label: "Discover" },
@@ -84,12 +38,6 @@ export default async function GroupsPage({
   const sp = await searchParams;
   const view = VIEWS.some((v) => v.key === sp.view) ? sp.view! : "my";
 
-  /*
-    ⚠⚠ EACH VIEW READS ONLY WHAT IT RENDERS. Discover scans every board and
-    Requests joins two directions; running all three on every render would make
-    two of them waste on every page load. ⚠ The header pair is shared, so
-    `getGroupsHome` runs for all three — it is the one read the card needs.
-  */
   const home = viewer ? await getGroupsHome(viewer) : null;
   const discover: DiscoverTrack[] =
     viewer && view === "discover" ? await getDiscoverGroups(viewer) : [];
@@ -98,14 +46,6 @@ export default async function GroupsPage({
       ? await getGroupRequests(viewer)
       : { incoming: [], mine: [] };
 
-  /*
-    ⚠⚠ READ ON EVERY VIEW, DELIBERATELY. A request waiting on you is the one
-    thing you should not have to go looking for, so the count rides the tab
-    wherever you are. ⚠ It is a COUNT of a state with a writer — `joinGroup`
-    writes `PENDING` and `decideJoinRequest` clears it — so it is countable
-    (`decisions_2026-09-23` §1), and it renders only above zero because a `0`
-    badge on a tab is noise rather than information.
-  */
   const pendingForMe =
     viewer && home
       ? view === "requests"
@@ -113,17 +53,6 @@ export default async function GroupsPage({
         : await countPendingForOwner(viewer)
       : 0;
 
-  /*
-    ⚠ Four cards, then a link — the mockup's own shape. A page that lists
-    twenty rooms is the wall of empty rooms the old one was criticised for.
-    ⚠⚠⚠ `Show All` EXPANDS THIS PAGE, IT DOES NOT NAVIGATE TO A NEW ONE. The
-    first draft linked to `/community/groups/all`, **which does not exist** —
-    and Scott runs 13 groups, so that link would have rendered for him and
-    404'd. ⚠ `E579`: a control whose handler refuses is a door onto a wall, and
-    a link to a route nobody built is the plainest form of it. ⚠⚠ A query
-    string keeps the expanded view linkable and the back button honest — the
-    same reasoning `/community/grow` used for its own tabs.
-  */
   const showAll = sp.all === "1";
   const SHOWN = showAll ? Number.MAX_SAFE_INTEGER : 4;
   const run = home?.run ?? [];
@@ -131,10 +60,7 @@ export default async function GroupsPage({
 
   return (
     <>
-      {/* ⚠⚠ `wrap` IS THE CONNECT SET'S, unchanged from `E612` Q16 — the row
-          clipped at 390px without it. ⚠ `check:community` requires every
-          Connect page to draw this row through `connectTabs`, and this page is
-          named in that list. */}
+      {}
       <PageTabs
         wrap
         eyebrow="CONNECT"
@@ -145,49 +71,27 @@ export default async function GroupsPage({
 
       <div className="mx-auto max-w-5xl">
         <header className="mb-5">
-          {/* ⚠ `E612` Q17 — the heading is `Groups`, matching the nav. */}
+          {}
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
             Groups
           </h1>
         </header>
 
-        {/* ── 1 · THE HEADER PAIR — the same split card as Grow and Score ──
-            ⚠ Picture left, the counted figures and the actions right. */}
+        {}
         <section className="pm-hero pm-groups-hero">
           <div className="pm-hero-stage">
             <GroupCircles circles={home?.circles ?? []} />
           </div>
 
           <div className="pm-hero-side">
-            {/*
-              ── ⚠⚠ THE EYEBROW (ruling 45(3), `P2-A3-E678`) ─────────────────
-
-              ⚠ **RULING 45(3) MAKES IT REQUIRED, NOT OPTIONAL:** it is *"the
-              part that tells a member which of six near-identical pages they
-              are on"*, and the ruling's own note records that *"the mockup has
-              it; none of the three built versions does."* ⚠⚠ This is one of
-              those three, and `groups_2026-09-22.html:138` carries the string.
-              ⚠ It is NOT `PatternHeader`'s eyebrow — this hero is still
-              hand-rolled, which is a separate and larger gap against ruling
-              33d, filed and not fixed inside a clear-up pass.
-            */}
-            {/* ⚠⚠⚠ TAILWIND, NOT `pm-hero-eyebrow` — THAT CLASS HAS NO CSS
-                RULE. `groups.css` and `community-page.css` define
-                `.pm-hero-title` and no eyebrow, so a `pm-hero-eyebrow` would
-                emit nothing and render as plain body text. **That is the
-                `HERO_SCRIM` failure: a class string that produces no CSS and
-                fails silently.** Caught before shipping by grepping for the
-                rule rather than assuming the vocabulary existed.
-                ⚠ These are `PatternHeader`'s own eyebrow classes, so this hero
-                looks like every other eyebrow in the app while it waits for
-                the ruling-33d conversion. */}
+            {}
+            {}
             <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
               Your Groups
             </p>
             <h2 className="pm-hero-title">Where Your Learners Ask</h2>
 
-            {/* ⚠⚠⚠ THREE FIGURES, ALL COUNTED, ALL IN INK (`E433`). A measured
-                zero renders as `0` — it is information, not an absence. */}
+            {}
             <dl className="pm-groups-figs">
               <div>
                 <dt>Groups You Run</dt>
@@ -203,17 +107,11 @@ export default async function GroupsPage({
               </div>
             </dl>
 
-            {/* ⚠⚠ THE ONE LINE WORTH ACTING ON, AND IT IS DERIVED FROM THE
-                FIGURES RATHER THAN CANNED. ⚠ At genuine zero it NAMES THE FIRST
-                MOVE instead of reporting emptiness (`decisions_2026-09-23` §4),
-                and the credit is a COUNT, never a compliment. */}
+            {}
             <p className="pm-hero-move">{actionLine(home)}</p>
 
             <div className="pm-groups-actions">
-              {/* ⚠⚠⚠ RENDERED ONLY WHEN THERE IS SOMEWHERE TO POST. `E579` — a
-                  control whose handler refuses is a door onto a wall. Somebody
-                  who runs no group has no room to start a question in, so the
-                  button is absent rather than dead. */}
+              {}
               {home?.starterSlug && (
                 <Link
                   href={`/community/groups/${home.starterSlug}`}

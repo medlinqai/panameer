@@ -1,53 +1,6 @@
 import type { ReactNode } from "react";
 import { ShotCard, Check } from "@/components/learn/public/shared";
 
-/**
- * THE SIX CARD GRAPHICS FOR `/learn`'s TEACHING SPINE — §3 through §8.
- *
- * §2's graphic is the nested six-step diagram and lives on its own in `SixStepShot.tsx`,
- * because it is the composition `brief_learn_public_spine` WS2 is entirely about. These six
- * share one visual vocabulary — a bordered card of rows — so they share one file, the same way
- * `shared.tsx` holds the parts the original five graphics share.
- *
- * ── ⚠ WHAT IS REAL IN HERE AND WHAT IS A DRAWING ─────────────────────────────
- *
- * `shared.tsx`'s rule for the original five was "every number in them is an illustration and
- * none may ever be swapped for a real query — a real count of 0 is worse than a drawing."
- * That rule still holds for the runtime: NOTHING HERE FETCHES. But several numbers below were
- * MEASURED against the live database on 2026-08-20 and written in as literals, because the
- * mockup's invented versions of them were wrong in a way that matters:
- *
- *   · path lesson/course counts (§3) — 105·6, 52·3, 19·4 all check out exactly.
- *   · instructor names AND lesson counts (§7) — the mockup drew "Scott Walls · 85 lessons" and
- *     "Linus · 18 lessons". ⚠ THE REAL FIGURES ARE 338 AND 70. These are REAL, NAMED,
- *     IDENTIFIABLE PEOPLE, and printing a made-up teaching record next to a real person's
- *     name is a different thing from drawing a made-up progress bar. Corrected to the measured
- *     values and reported as a deviation from the mockup.
- * ⚠ AND TWO OF THE MOCKUP'S NUMBERS ARE GONE ALTOGETHER, BECAUSE A GATE SAID SO. The mockup
- * printed "23 paths in the catalog" (§3) and "466 of 522 lessons name their instructor" (§7).
- * `check:learn` GUARD 3 — "no catalog total appears as a literal in a component" — fires on
- * both, and THE GUARD IS RIGHT: this page cannot fetch, so a hardcoded total silently becomes
- * false the first time a path or a lesson is added, on the one surface a visitor can check in a
- * click. Neither the guard nor the fetch rule bent; the copy did. It now says "one certificate
- * per path" and "almost every lesson", both of which stay true as the catalog fills — the same
- * logic WS4 applies to §6.
- *
- * Still drawings, deliberately: the per-section lesson counts in §4, the 58% bar, the video
- * timings, and `panameer.com/verify/PM-8Q42-KD` (the real route is `/verify/{uuid}`, which is
- * not a thing anyone would want to look at on a marketing page).
- *
- * ⚠ `Paul Ingrao` and the three instructors are SEEDED DEMO PEOPLE, which is the same standing
- * as `Dana Whitfield` in the existing `MentorDmShot`. No new person is invented here — WS5
- * forbids it.
- *
- * ── ⚠ THREE COLOURS DIVERGE FROM THE MOCKUP, ON CONTRAST ─────────────────────
- *
- * The mockup's success green `#12a150`, muted grey `#9a93a9` and dot grey `#8b8398` all sit at
- * 2.9–3.4:1 against white at 11px. The page already ships accessible equivalents in
- * `PathProgressShot` — `#137a51`, `text-ink-2` and `#7b8496` — and those are used instead. The
- * mockup wins on layout; it does not get to lose the page 11px legibility it already had.
- */
-
 /* ── shared parts, local to the spine ─────────────────────────────────────── */
 
 /** A row in a card. `last:border-b-0` rather than a prop, so order never has to be tracked. */
@@ -89,9 +42,6 @@ function Row({
   );
 }
 
-/** ⚠ THREE GLYPHS FOR THREE STATES, not one glyph in three colours — `PathProgressShot`'s
- *  reasoning: colour alone makes "in progress" and "next" identical to anyone who cannot
- *  separate a magenta ring from a grey disc. */
 function DotDone() {
   return (
     <span
@@ -123,8 +73,6 @@ function DotNext({ label }: { label: string }) {
   );
 }
 
-/** The verify URL, drawn as code. ⚠ A PICTURE OF A URL — it is not a link and must not become
- *  one; `/verify/{credentialId}` takes a uuid and this is a legible stand-in for one. */
 function VerifyCode() {
   return (
     <code className="rounded-[6px] bg-[#f4eff8] px-[7px] py-[2px] text-[11px] text-[#6f2b8e]">
@@ -135,13 +83,6 @@ function VerifyCode() {
 
 /* ── §3 · ENROLL IN A LEARNING PATH ───────────────────────────────────────── */
 
-/**
- * ⚠ EVERY PATH NAMED HERE EXCEPT THE FIRST IS REAL, WITH ITS REAL COUNTS (measured
- * 2026-08-20): Advanced Procurement 105 lessons / 6 courses, Contract Management 52 / 3,
- * Journals 19 / 4, and 23 paths in the catalog. `Procure-to-Pay foundations` is the one
- * illustration, kept because `PathProgressShot` further down the page already uses that exact
- * name — two different stand-ins for the same idea on one page would read as a bug.
- */
 export function EnrollShot() {
   return (
     <ShotCard>
@@ -156,17 +97,6 @@ export function EnrollShot() {
 
 /* ── §4 · TAKE EACH COURSE ────────────────────────────────────────────────── */
 
-/**
- * ⚠ THE FOUR ROW TITLES ARE THE CATALOG'S OWN SECTION STEMS, VERBATIM. The live
- * `How to Use the Purchase Requisitons Application` course has exactly `1. Course Overview`,
- * `2. Create New`, `3. Find Existing`, `4. Change Existing`. That is why §5's heading can name
- * create/change/find as the catalog's structure rather than a description of it.
- *
- * ⚠ ONE TENSION, REPORTED NOT RESOLVED: WS2 records Sections as grouping subheadings "with no
- * progress of their own", and this card draws a progress state per section. It is the approved
- * mockup's composition and it is a picture of where a learner is inside one course, not a claim
- * that the app tracks sections. Flagged for Scott rather than quietly redrawn.
- */
 export function CourseStepsShot() {
   return (
     <ShotCard>
@@ -195,17 +125,6 @@ const CHAPTERS = [
   { at: "4:10", what: "Submitting for approval" },
 ] as const;
 
-/**
- * ⚠ THE PIP NAMES A REAL INSTRUCTOR. Scott Walls carries 338 of the 466 attributed lessons, so
- * the face on the most-likely lesson is his. WS5: "Do not invent an instructor for the graphic."
- *
- * ⚠ THE CHAPTER LIST IS NOT THE SCHEMA'S `Section`. These are markers inside one video. The
- * mockup annotated that in the margin; the note belongs in the code, not on the page.
- *
- * ⚠ NO `<video>` AND NO PLAY HANDLER. The play disc is a DRAWING of a control, `aria-hidden`,
- * for the same reason `MentorDmShot`'s two buttons are spans: a public page ships a link only
- * when its destination exists, and this page has exactly two live destinations, both in the hero.
- */
 export function LessonShot() {
   return (
     <div>
@@ -244,17 +163,6 @@ export function LessonShot() {
 
 /* ── §6 · GET CERTIFIED ───────────────────────────────────────────────────── */
 
-/**
- * ⚠ THIS IS A DRAWING OF SOMETHING NO PATH CAN CURRENTLY ISSUE. Measured 2026-08-20: 23
- * learning paths, 4 `LearnAssessment` rows, ALL FOUR `DRAFT`, so **zero** paths have a sittable
- * test today (`P1-J3-E004`, `E007`, `E008`, and the review gate that `status` defaults to
- * DRAFT). §6's copy is written to survive that — it says what a certificate IS, and names no
- * count, no path and no "every path". This card names ONE path so the drawing has a subject.
- *
- * ⚠ SEPARATE FROM `CertificateShot`, which belongs to the `Free & certified` sell section
- * lower down. That one is a wall certificate; this one carries the VERIFY URL, which is §6's
- * actual claim.
- */
 export function PathCertificateShot() {
   return (
     <div className="rounded-[16px] border border-line bg-[linear-gradient(135deg,#ffffff_0%,#fdf4fd_100%)] p-[22px] text-center">
@@ -275,17 +183,6 @@ export function PathCertificateShot() {
 
 /* ── §7 · WHILE YOU ARE LEARNING ──────────────────────────────────────────── */
 
-/**
- * ⚠ REAL PEOPLE, REAL COUNTS, MEASURED 2026-08-20 — and this is the deviation from the mockup
- * that matters most. `Lesson.expert_person_id` groups to: Scott Walls 338, Linus Erley 70,
- * Marelise Steenkamp 33, Eddie Cairnie 25 — 466 of 522 lessons. The mockup drew 85 and 18 and
- * put Marelise on Contract Management, which is Scott's. Corrected: the count and the subject
- * area beside a named human being are claims about that human being.
- *
- * ⚠ INITIALS, NOT PHOTOS, even though `prisma/apply-instructor-photos.ts` shipped real ones.
- * A marketing card that reaches for a storage URL is a card that renders a broken image the
- * first time a bucket path moves, and this component fetches nothing by design.
- */
 const INSTRUCTORS = [
   { initials: "SW", name: "Scott Walls", meta: "338 lessons · Advanced Procurement", grad: "#d72cd6,#7b2fd0" },
   { initials: "LE", name: "Linus Erley", meta: "70 lessons · Inventory Management", grad: "#2f7bd0,#2fb8d0" },

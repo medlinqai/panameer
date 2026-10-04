@@ -6,23 +6,6 @@ import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { BuildLine } from "@/components/status/BuildLine";
 import { planBuildLine } from "@/lib/plan/build-line";
-/*
-  ── ⚠⚠ THE IMPORT IS BACK, AND IT READS THE PLAN NOW (`P2-ALL-E792`) ────────
-  ⚠ **SCOTT, 2026-10-03:** keep the thin Build Line — *"it is cleaner."*
-  ⚠⚠ It is fed by `planBuildLine(planRows)`, NOT by `t.phases`/`t.releases`:
-  the plan is what Scott maintains, and a line drawn from AIM phase dates beside
-  a timeline drawn from plan rows would be two sources describing one build —
-  `E790`'s mistake, one screen later.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the note that recorded its removal:
-  //   ⚠⚠ `BuildLine`'s IMPORT IS GONE, THE COMPONENT IS NOT (`P2-ALL-E785`).
-  ⚠ `src/components/status/BuildLine.tsx` is untouched on disk and still exports
-  everything it did, including `assignRows`/`MIN_GAP_PCT`, which `check:sr7`
-  still exercises directly. ⚠⚠ Dropping an unused IMPORT is not deleting code —
-  `E164` protects the code, and leaving the import would add a lint warning
-  against a 0-new rule.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   import { BuildLine } from "@/components/status/BuildLine";
-*/
 import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
@@ -39,75 +22,14 @@ import {
 } from "@/lib/work-tracker/followers";
 import { FollowButton } from "@/components/status/FollowButton";
 
-/**
- * `/status` — the public Panameer Work Tracker (`P2-ALL-E753` route, `E757` UI).
- *
- * ⚠⚠ **BUILT TO MOCKUP v5, "the Build Line".** Copy is the mockup's, verbatim,
- * except where data replaces example figures — which is the brief's instruction
- * and the reason none of the numbers below are written in the markup.
- *
- * ⚠⚠⚠ **EVERY FIGURE COMES FROM `getPublicTracker()` AND NOTHING ELSE.** That
- * module's types have nowhere to put task text, task ids, criterion text, notes
- * or owners, which is what keeps Scott's *"no cookbook for the competition"*
- * rule enforced by the TYPE rather than by this template. The leak test asserts
- * it against this page's rendered HTML, not just the API.
- *
- * ⚠ Reached two ways: by path on any host, and by a rewrite from
- * `status.panameer.com/` (`src/proxy.ts`). ⚠⚠ `revalidate = 60` — the tracker
- * changes a few times a day and strangers reload it daily.
- *
- * ⚠ **A DELIBERATE LIGHT DESIGN WITH INK BANDS.** Tokens throughout so dark mode
- * reads; `bg-surface`, never `bg-white` (`E723`).
- */
 export const revalidate = 60;
 
-/*
-  ⚠⚠ THE SHARE PREVIEW IS COPY TOO (`P2-ALL-E764`). Scott: *"This page does not
-  sell … it just provides status for Panameer (no 'your app', etc.)."* ⚠ The
-  description is what a link preview and a search result show, so leaving the
-  sales voice here would have survived every change on the page itself.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   description: "Watch your platform get built — Panameer, in the open.",
-*/
 export const metadata = {
   title: "Panameer Work Tracker",
   description: "Daily progress on the Panameer build, from first idea to public beta.",
 };
 
-/**
- * ⚠⚠⚠ THE TYPEFACE ON `/status` IS MONTSERRAT 800, NOT COMFORTAA (Scott,
- * walking the page 2026-10-02: *"headings and numerals in Montserrat 800, tight
- * tracking, as in the mockup. No Comfortaa anywhere on /status."*).
- *
- * ⚠⚠ **`font-display` IS COMFORTAA AND CAPS AT 700** (`globals.css` loads
- * 500/600/700), and `@layer base` puts it on every `h1`–`h3` — so a heading here
- * inherited it without asking. ⚠ `font-body` is Montserrat, which IS loaded at
- * 800, and a utility beats `@layer base`.
- * ⚠ `HEAD` is the one definition of that pairing; every heading and every numeral
- * on this page uses it, so they cannot drift apart (`E585`).
- */
 const HEAD = "font-body font-extrabold tracking-[-0.03em]";
-
-/*
-  ⚠⚠ THE JOURNEY-STAGE VOCABULARY, SUPERSEDED BY THE PLAN (`P2-ALL-E785`).
-  ⚠ The ten journey cells and their four-segment stage bars left this page when
-  the plan replaced them. A plan row has a STATUS, not a stage, so neither of
-  these is read any more.
-  ⚠⚠ Quoted and not deleted (`E164`), as LINE comments rather than a nested
-  block, so a close-comment sequence in the quoted body cannot end this comment
-  early (load-bearing rule 12).
-  ⚠⚠⚠ AND THE RULE BIT THE SENTENCE THAT EXPLAINS IT: this paragraph originally
-  spelled that sequence out literally, which closed the comment here and broke
-  the parse. Paraphrase it — never type it.
-  //   const STAGE_WORD: Record<string, string> = {
-  //     design: "Designing",
-  //     build: "Building",
-  //     test: "Testing now",
-  //     live: "Live",
-  //   };
-  //   // The four segments. A `null` stage fills none - an honest "not started".
-  //   const STAGE_INDEX: Record<string, number> = { design: 1, build: 2, test: 3, live: 4 };
-*/
 
 export default async function StatusPage({
   searchParams,
@@ -115,45 +37,11 @@ export default async function StatusPage({
   searchParams: Promise<{ follow?: string }>;
 }) {
   const t = await getPublicTracker();
-  /* ⚠⚠ THE PAGE STAYS PUBLIC — reading the session is what lets the button know
-     which of its two jobs it has, and a signed-out visitor simply gets the
-     sign-up path. Nothing below is gated on it. */
   const viewer = await getSessionViewer();
 
-  /*
-    ⚠⚠⚠ `?follow=1` IS WHAT ACTUALLY APPLIES THE SIGN-UP INTENT (`E758`).
-    ⚠ The signed-out button sends the person to `/join?next=/status&follow=1`;
-    whichever route they take back here, arriving with `follow=1` while signed in
-    completes what they asked for. ⚠⚠ It is IDEMPOTENT (`person_id` is unique), so
-    a reload, a back button or a replayed link all land on one row — which is the
-    property that makes a side effect on a GET acceptable here.
-    ⚠ A signed-OUT arrival with `follow=1` does nothing and shows the button, so
-    the link cannot be used to make anybody follow anything.
-  */
   const { follow: followIntent } = await searchParams;
   if (viewer && followIntent === "1") {
     await applyFollow(viewer);
-    /*
-      ⚠⚠⚠ AND THEN DROP THE PARAM, WHICH IS NOT TIDINESS — IT IS A BUG FIX.
-      ⚠ Measured: with `?follow=1` still in the URL, the Unfollow button's
-      `router.refresh()` re-rendered this page, the intent fired again, and the
-      person was RE-FOLLOWED. Unfollowing was impossible while the param was
-      there. ⚠⚠ A redirect to the clean URL also stops `/status?follow=1` being
-      pasted into a chat where every signed-in reader quietly follows.
-    */
-    /*
-      ⚠⚠⚠ AND IT LANDS ON THE CLEAN URL **FOR THE HOST IT IS ON** (`P2-ALL-E781`).
-
-      ⚠ On `status.panameer.com` the tracker IS the root: the proxy rewrites `/`
-      to `/status`, so a visitor never sees `/status` in the address bar. ⚠⚠
-      Redirecting to `/status` there would end the follow round trip on
-      `status.panameer.com/status` — a URL that works but that the site otherwise
-      never shows, and which `E780` deliberately does NOT redirect because the
-      host is excluded.
-      ⚠ Everywhere else `/status` IS the page's own address and stays correct.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   redirect("/status");
-    */
     const host =
       (await headers()).get("x-forwarded-host") ?? (await headers()).get("host");
     redirect(isStatusHost(host) ? "/" : "/status");
@@ -161,19 +49,7 @@ export default async function StatusPage({
 
   const [following, followers] = await Promise.all([isFollowing(viewer), followerCount()]);
 
-  /*
-    ── ⚠⚠ THE PLAN, AND THE DATE EVERYTHING IS MEASURED AGAINST (`P2-ALL-E785`) ──
-
-    ⚠⚠⚠ **`today` IS RESOLVED ONCE, IN THE SITE'S ZONE, AND PASSED DOWN.** The
-    Today line on the timeline, every `Past due` mark and the day a bar is
-    compared against all come from this one value. ⚠ A component reaching for
-    `new Date()` itself would put the Today line on one day and the overdue
-    badges on another — on Vercel, which runs UTC, that is a real four-hour
-    window every evening (`E775`).
-  */
   const todayIso = todayInSiteZone();
-  /** ⚠ id↔code only. The uuid is used to join plan rows to a release and is
-   *  NEVER sent to the browser — `PublicRelease` carries `code`, not `id`. */
   const [plan, releaseIds] = await Promise.all([
     getPanameerPlan(),
     prisma.workTrackerRelease.findMany({ select: { id: true, code: true } }),

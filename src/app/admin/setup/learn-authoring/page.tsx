@@ -14,19 +14,6 @@ type Stats = {
   urlMissing: number;
 };
 
-/**
- * Learn console landing (brief_learn_admin_authoring WS0).
- *
- * NO NEW GATE. `/admin/learn` sits under the `/admin` prefix, which is already
- * covered three times over — the edge proxy matcher, `route-access.ts`, and
- * `guardPage("canAdminister")` in the admin layout. Adding a fourth check here
- * would be a second place to get it wrong, not a second line of defence.
- *
- * The tiles lead with the number this whole brief exists to move: lessons whose
- * production status claims a URL was added but which have no `vimeo_ref`. That
- * is the gap the spreadsheet left, and it is the difference between a catalog
- * that looks finished and one that plays.
- */
 export default function AdminLearnPage() {
   const { data, loading, error } = useAdminFetch<Stats>("/api/admin/learn/stats");
 
@@ -40,13 +27,7 @@ export default function AdminLearnPage() {
 
       {data && (
         <>
-          {/*
-            E010 — the T1–T5 row is ACTION ITEMS, not a restatement of the
-            catalog. Scott's template says these tiles should prompt work, and
-            "how many lessons exist" prompts none. What an admin can act on here
-            is the gap: paths still in draft, and lessons whose status claims a
-            URL they don't have.
-          */}
+          {}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <StatTile
               label="Drafts to Publish"

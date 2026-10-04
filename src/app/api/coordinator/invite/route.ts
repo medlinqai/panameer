@@ -10,11 +10,6 @@ const schema = z.object({
   message: z.string().trim().max(1000).optional(),
 });
 
-/**
- * POST /api/coordinator/invite — "Invite a Provider". Gated to canCoordinate.
- * Creates a PENDING invite (revoking prior pending to the same email) and sends
- * the branded Resend invite (dev fallback logs the link when no key).
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canCoordinate");
   if (gate instanceof NextResponse) return gate;

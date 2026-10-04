@@ -4,47 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
 
-/**
- * ── ⚠⚠⚠ THE PROVIDER'S PROPOSE-A-RATE FORM (`P2-A8-E681` WS-C) ────────────
- *
- * ⚠⚠⚠ **THIS COMPONENT IS THE REACHABILITY, AND THAT IS THE WHOLE POINT OF
- * WS-C.** `proposal.create` has existed since `E621` WS-A with **zero
- * importers outside three check scripts**; `/find-work/[id]` shipped with no
- * button on purpose and said so. ⚠ The writer, its rate line and its `notify()`
- * were all already built — **the only missing thing was a way in.**
- *
- * ── ⚠⚠ IT IS NEVER RENDERED WHERE THE HANDLER WOULD REFUSE (`E579`) ───────
- *
- * ⚠⚠⚠ The page asks `proposeEligibility` — **the same function the writer throws
- * from** — and renders this component only on `can: true`. ⚠ So there is no
- * state in which this form submits and comes back "you weren't invited": that
- * answer was known before it drew. ⚠⚠ The `error` state below is for what
- * changes BETWEEN the render and the submit (an invitation closing, the buyer
- * awarding), which is a real race and not a second copy of the rule.
- *
- * ── ⚠⚠⚠ MONEY IS ENTERED IN DOLLARS AND SENT IN CENTS, ONCE ───────────────
- *
- * ⚠⚠ **THE CONVERSION HAPPENS IN ONE PLACE AND ROUNDS** — `Math.round(x * 100)`.
- * `19.99 * 100` is `1998.9999999999998` in IEEE 754, and `Math.trunc` would bill
- * a provider's rate a cent light on every submission. ⚠ The API re-asserts
- * `.int()` and `writeRate` re-asserts `Number.isInteger`, so a float cannot
- * reach the column even if this component is bypassed.
- *
- * ⚠⚠⚠ **NO CARD, NO ACCOUNT NUMBER, NO INSTRUMENT OF ANY KIND IS COLLECTED
- * HERE.** A rate is what the provider charges; it is not how they get paid, and
- * nothing on this surface may ever ask how.
- */
 export function ProposeRate({
   workRequestId,
   existing,
 }: {
   workRequestId: string;
-  /**
-   * ⚠ What they already sent, if anything — the form is the same one either way.
-   * ⚠⚠ A SEPARATE "EDIT" SCREEN WOULD BE A SECOND FORM TO KEEP IN STEP (`E585`),
-   * and `submitProposal` is idempotent by construction, so one form is correct:
-   * the database refuses a duplicate rather than this component remembering.
-   */
   existing: {
     unitPriceCents: number | null;
     basis: "RATE" | "AMOUNT";
@@ -55,8 +19,6 @@ export function ProposeRate({
 }) {
   const router = useRouter();
 
-  /* ⚠ Dollars as a STRING, so a half-typed "1." is not coerced to a number and
-     the cursor does not jump. The conversion is at submit, once. */
   const [amount, setAmount] = useState(
     existing?.unitPriceCents != null ? (existing.unitPriceCents / 100).toFixed(2) : ""
   );
@@ -68,15 +30,6 @@ export function ProposeRate({
   const [done, setDone] = useState<null | { replaced: boolean }>(null);
 
   const dollars = Number(amount);
-  /*
-    ⚠⚠ THE RATE IS REQUIRED BY THIS FORM, THOUGH `ProposalDraft.rate` IS
-    OPTIONAL — and the disagreement is deliberate, not an oversight. The writer
-    allows a pitch without a price because *"a provider may pitch before
-    pricing"*; ⚠ but **selection REFUSES a proposal with no rate**, so a
-    priceless proposal sent from THIS form would be a submission that cannot
-    win. ⚠⚠⚠ The rate-less path stays reachable through the writer and is
-    reported as unreached from any surface — it is not removed.
-  */
   const ready = amount.trim() !== "" && Number.isFinite(dollars) && dollars > 0 && !busy;
 
   async function submit() {

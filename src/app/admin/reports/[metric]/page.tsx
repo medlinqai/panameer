@@ -3,22 +3,6 @@ import { notFound } from "next/navigation";
 import { REPORT_INDEX, reportsFor } from "@/lib/admin-reports";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * A REPORT SHELL (WS3).
- *
- * One route for every Volume-Over-Time metric the console offers. The brief is
- * explicit that reports are "stubbed placeholders for now — we will fill up the
- * options as we go", so this page's job is to make the navigation real: the
- * tile you clicked lands somewhere that names the metric, says what it will
- * plot, and gets you back.
- *
- * NO CHART IS DRAWN. A plausible-looking line over invented points is the exact
- * failure this console has been avoiding page by page — a chart is read as
- * measurement in a way an empty table isn't.
- *
- * Slugs come from REPORT_INDEX, which is derived from the pages' volume strips,
- * so an unknown slug is a 404 rather than a shell for a metric nobody defined.
- */
 export default async function Page({
   params,
 }: {

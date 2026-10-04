@@ -12,19 +12,6 @@ const BODY = z.object({
   enroll: z.boolean().default(true),
 });
 
-/**
- * POST /api/learn/enroll — free enrollment in a learning path.
- *
- * OWNER-SCOPED BY CONSTRUCTION: the user id comes from the session and is never
- * read from the body. The client sends which PATH to join and nothing about
- * WHO is joining, so there is no shape of request that enrolls someone else.
- *
- * Un-enrolling deletes the LearnEnrollment and deliberately leaves
- * LessonProgress alone. Those rows are a record of what someone watched, not a
- * property of the enrollment — deleting them would mean an accidental un-enroll
- * silently erased months of progress, and re-enrolling restores the picture
- * exactly.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {
@@ -40,40 +27,6 @@ export async function POST(request: Request) {
   }
   const { pathId, enroll } = parsed.data;
 
-  /*
-    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
-
-    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
-    Enrolling means the platform starts keeping your place and telling you about
-    courses — and `learn.course_published` is addressed to *"every provider whose
-    skills match the course's tags"*, so with no skill that broadcast can never
-    reach you. That is the member-interest reason, and it is why a SKILL is in
-    this set and a company is not.
-
-    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
-    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
-    funnel and gating discovery costs the audience for everything downstream.
-
-    ⚠⚠⚠ BOTH CONDITIONS NOW LIVE IN `lib/learn-enrolment-gate.ts` AND ARE
-    CALLED FROM HERE (`P2-A4-E610`). ⚠ They are not restated in this file, and
-    they must not be: `/api/learn/progress` writes a `LearnEnrollment` too, it
-    had NEITHER check, and `canAccessPathForum` reads that table directly — so
-    the copy that did not exist was handing out forum membership.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the identity half as it stood
-    here before it was extracted:
-    //   const gaps = await learnGaps(viewer.userId);
-    //   if (gaps.length > 0) {
-    //     return NextResponse.json(
-    //       { error: gapSentence(gaps), code: "IDENTITY_REQUIRED", fields: gaps },
-    //       { status: 403 }
-    //     );
-    //   }
-  */
-
-  /* ⚠ The path is still read HERE, because the notification below names it.
-     ⚠⚠ THE RULE IS NOT READ FROM IT — `learnEnrolmentRefusal` asks its own
-     question. This select carries `title` and `slug` and nothing the gate
-     needs. */
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
     select: {
@@ -90,56 +43,16 @@ export async function POST(request: Request) {
     await prisma.learnEnrollment.deleteMany({
       where: { user_id: viewer.userId, learning_path_id: pathId },
     });
-    /* ⚠⚠ `P2-A3-E612` — LEAVING THE PATH LEAVES ITS GROUP. One door, not two:
-       Scott ruled a path group cannot be left on its own, so unenrolling is the
-       only way out and it has to actually take you out. */
     await removeEnrolmentMembership(viewer.userId, pathId);
     return NextResponse.json({ ok: true, enrolled: false });
   }
 
-  /*
-    ── ⚠⚠⚠ YOU CANNOT ENROL IN A PATH YOU CANNOT START (`P2-A4-E608`) ────────
-
-    ⚠ SCOTT, 2026-09-23: *"The enrolment clause in `pathIsOpenTo` exists to
-    protect someone who enrolled BEFORE the videos went missing — not to admit
-    new members. Enrolling in a path you cannot start is a dead end, and
-    enrolment then becomes the thing that keeps it open to you."*
-
-    ⚠⚠ SO THE SECOND ARGUMENT IS `false`, DELIBERATELY. It is not a mistake and
-    it is not shorthand for "ignore that clause": it is the statement that **a
-    new enrolment does not get to count itself as the reason it is allowed.**
-    Passing `true` here would make the rule circular — enrol, therefore
-    enrollable.
-
-    ⚠ IT SITS AFTER THE UN-ENROL BRANCH. Somebody already enrolled in a path
-    whose videos vanished must still be able to LEAVE it; blocking that would
-    trap them in exactly the dead end this prevents.
-    ⚠ `pathIsOpenTo` AND `pathHasPlayableLessons` ARE BOTH IMPORTED. The
-    condition is not restated here — a hand-rolled copy agrees until the rule
-    changes, which is what cost two gates at `E603`.
-
-    ⚠ MEASURED 2026-09-23: **11 of 23 published paths are in this state**, every
-    one because not a single lesson has a `vimeo_ref`.
-
-    ⚠⚠⚠ `P2-A4-E610` MOVED BOTH CONDITIONS INTO `learnEnrolmentRefusal`, WHICH
-    IS THE ONE CALL BELOW. ⚠ The reasoning above is unchanged and still applies
-    — it now lives beside the rule it explains as well.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   if (!pathIsOpenTo(pathHasPlayableLessons(path), false)) {
-    //     return NextResponse.json(
-    //       { error: "That path has no videos yet, …", code: "PATH_NOT_READY" },
-    //       { status: 409 }
-    //     );
-    //   }
-  */
   const refusal = await learnEnrolmentRefusal(viewer.userId, pathId);
   if (refusal) {
     const { status, ...body } = refusal;
     return NextResponse.json(body, { status });
   }
 
-  /* ⚠⚠ `P2-A3-E612` — ENROLLING IS JOINING, AND NOW IT IS RECORDED AS SUCH.
-     The membership row is written AFTER the enrolment, never instead of it. */
   // Idempotent: enrolling twice is a no-op, not a unique-constraint error.
   await prisma.learnEnrollment.upsert({
     where: {
@@ -150,15 +63,6 @@ export async function POST(request: Request) {
   });
   await ensureEnrolmentMembership(viewer.userId, pathId);
 
-  /*
-    ⚠ THE DUPLICATE-SIGNUP FIX SCOTT ASKED FOR ON THE LEARN WALK — *"add the
-    prevent for duplicate sign up"*. The enrollment itself was already idempotent
-    (the upsert above); the NOTIFICATION would not have been, so `dedupeKey` makes
-    enrolling twice produce one row, not two.
-    ⚠ `notify()` NEVER THROWS INTO THIS HANDLER — a failed notification must not
-    fail an enrollment. It catches internally; no try/catch is needed here.
-    ⚠ KEYED ON THE PERSON, NOT THE USER. Notifications address a `Person`.
-  */
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
     select: { id: true },

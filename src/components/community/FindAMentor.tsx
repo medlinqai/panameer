@@ -4,25 +4,6 @@ import { ConnectControls } from "@/components/community/ConnectControls";
 import { OpenForMentoringToggle } from "@/components/community/OpenForMentoringToggle";
 import "./member-row.css";
 
-/**
- * ── ⚠⚠ FIND A MENTOR (`P2-J3-E558` WS-C2) ─────────────────────────────────
- *
- * ⚠ SCOTT, 2026-09-18: *"there needs to be a separate button on the CONNECT page
- * where someone clicks to search for a mentor. ONLY those who have checked the
- * box to be open for mentoring will appear and the user will then search by
- * skill."*
- *
- * ⚠⚠ DISTINCT FROM THE COLLEAGUES SEARCH, and they are not the same job:
- * Colleagues filters a roster the viewer already has, in memory, and can never
- * reach a stranger. THIS one queries providers the viewer does not know — which
- * is exactly why the opt-in gate carries the whole weight here.
- *
- * ⚠⚠⚠ THE ROW ACTION IS `Follow as a Mentor`. NOT Book, NOT Request, NOT
- * Message. No processor is chosen, `MICRO_SESSION_PRICE` is commented out
- * (`mentors.ts:141`), and the honest end of the flow today is *follow* → the
- * mentor sees demand.
- */
-
 export type MentorResult = {
   profileId: string;
   userId: string | null;
@@ -43,7 +24,6 @@ export function FindAMentor({
 }: {
   results: MentorResult[];
   skill: string;
-  /** ⚠ NULL when the viewer has no provider profile — no toggle is offered. */
   openForMentoring: boolean | null;
   viewerUserId: string | null;
 }) {
@@ -52,15 +32,12 @@ export function FindAMentor({
       <div>
         <h2 className="font-display text-[17px] font-bold">Find a Mentor</h2>
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-          {/* ⚠ SAYS THE GATE OUT LOUD. A search that silently omits most of the
-              directory teaches people the directory is small; saying "opted in"
-              teaches them what the list means. */}
+          {}
           Search people who have opted in to mentoring, by skill.
         </p>
       </div>
 
-      {/* ⚠ A GET FORM, so the search is a URL — shareable, back-buttonable, and
-          it needs no client state. */}
+      {}
       <form method="GET" className="flex flex-wrap items-center gap-2">
         <input
           type="search"

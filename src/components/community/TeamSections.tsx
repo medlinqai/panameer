@@ -1,37 +1,11 @@
 import { Avatar } from "@/components/Avatar";
 import "./member-row.css";
 
-/**
- * ── ⚠⚠ THE TWO SECTION SETS (`P2-J3-E558` WS-D) ───────────────────────────
- *
- * ⚠⚠⚠ THEY ARE NOT AN EITHER/OR. 10 PEOPLE HOLD BOTH A COORDINATOR AND A
- * PROVIDER JOB (measured 2026-09-18; the brief said 8). ⚠ The caller gates
- * `canProvideServices` and `canCoordinate` INDEPENDENTLY with `hasCapability()`,
- * so a dual-role person sees BOTH sets in one render.
- * ⚠⚠ NEVER `roleWord()` — that is the one-word header badge and it is
- * single-valued on purpose. Gating on it would force an either/or that the data
- * says is wrong for 10 people.
- *
- * ⚠⚠ THE HEADINGS ARE SINGULAR. There is no `Team` model: the relationship is
- * `ProviderProfile.coordinator_person_id`, a NULLABLE FK, so a provider belongs
- * to at most ONE coordinator and a coordinator has ONE roster. ⚠ SUPERSEDED,
- * quoted not deleted (`E164`): *"`Teams You're On`"* and *"`Teams You Manage`"*
- * — plural headings label something the schema forbids.
- * ⚠ RENAME WHEN THE MODEL BECOMES ONE-TO-MANY, NOT BEFORE.
- *
- * ⚠ EVERYTHING HERE RENDERS EMPTY ON EVERY ACCOUNT TODAY — `CoordinatorInvite`
- * holds 0 rows and 0 providers have a coordinator. ⚠⚠ NOTHING WAS SEEDED to
- * make it demonstrable (`E564`).
- */
-
 export type RosterRow = {
   key: string;
   name: string;
   headline: string | null;
   photoUrl: string | null;
-  /** ⚠⚠ `Accepted` or `Awaiting` — "nobody is added silently", in both
-   *  directions. The model already distinguishes the two states, so this is
-   *  enforceable rather than aspirational. */
   consent: "accepted" | "awaiting";
 };
 
@@ -44,9 +18,6 @@ export type IncomingInvite = {
 };
 
 function ConsentPill({ consent }: { consent: RosterRow["consent"] }) {
-  /* ⚠ `E433` — a consent STATE is a fact, not an interactive thing, so neither
-     value is magenta. `Awaiting` is not a warning either: nobody has done
-     anything wrong, the person simply has not answered yet. */
   return (
     <span
       className={
@@ -121,18 +92,7 @@ export function ProviderTeamSections({
           <Empty>No invitations.</Empty>
         ) : (
           <div className="space-y-2">
-            {/*
-              ⚠⚠ THE INVITATION CARRIES THE RECRUITER — NOT THE WORK.
-              ⚠ SUPERSEDED (`E164`): *"An invitation carries the work — who the
-              buyer is, the scope, the viewer's part."* `CoordinatorInvite` has
-              NO relation to `WorkRequest`, and none was added: the roster is
-              STANDING, not per-job. Accepting sets `coordinator_person_id`
-              permanently — the schema says it *"ATTACHES THE provider"* — so
-              being asked to trust the recruiter IS the transaction.
-              ⚠⚠ THE PRINCIPLE SURVIVES ON THE RIGHT OBJECT: an invitation must
-              not be blind. Who they are, how big the roster is, and what it
-              covers is what you need to judge a STANDING commitment.
-            */}
+            {}
             {invites.map((i) => (
               <div key={i.id} className="rounded-brand border border-line bg-white p-4">
                 <div className="flex flex-wrap items-center gap-3">
@@ -150,7 +110,7 @@ export function ProviderTeamSections({
                   </div>
                   <ConsentPill consent="awaiting" />
                 </div>
-                {/* ⚠ `E433` — the roster size is a figure, so ink. */}
+                {}
                 <p className="mt-3 text-[13.5px] text-ink-2">
                   Roster of{" "}
                   <span className="font-bold text-ink">{i.rosterSize}</span>{" "}
@@ -167,9 +127,7 @@ export function ProviderTeamSections({
                   )}
                 </p>
                 <p className="mt-2 text-[12.5px] leading-relaxed text-ink-2">
-                  {/* ⚠⚠ SAYS WHAT ACCEPTING DOES, because it is STANDING and
-                      permanent. A person agreeing to a lasting attachment should
-                      be told it is lasting. */}
+                  {}
                   Accepting puts you on their roster until you leave it. It is not
                   tied to one job.
                 </p>
@@ -233,12 +191,7 @@ export function RecruiterTeamSections({
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Your Team&rsquo;s Coverage</h2>
         <div className="rounded-brand border border-line bg-white p-5">
-          {/* ⚠⚠ THIS IS THE RECRUITER'S PROFILE, NOT A STATISTIC. A recruiter's
-              skills roll up from their team the way a provider's roll up from
-              their jobs — it is what they can field, stated as skills.
-              ⚠ ROLLED UP THROUGH `shown-skills.ts`, so `E517`'s offer-side
-              filter applies: this shows what the roster OFFERS, not everything
-              its people hold. ⚠ `E433` — the list is facts, so ink. */}
+          {}
           {coverage.length === 0 ? (
             <p className="text-[14px] leading-relaxed text-ink-2">
               Nothing to cover yet. Coverage is the skills your roster offers, so
@@ -255,18 +208,7 @@ export function RecruiterTeamSections({
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Open Work You Could Field</h2>
         <div className="rounded-brand border border-line bg-white p-5">
-          {/*
-            ⚠⚠⚠ THE STATED REASON IS THE ACCURATE ONE, AND THAT MATTERS BECAUSE
-            THE BRIEF'S ORIGINAL REASON WAS WRONG.
-            ⚠ SUPERSEDED (`E164`): *"`Open Work You Could Field` will be empty —
-            ZERO `WorkRequest` ROWS EXIST."* ⚠⚠ THERE ARE FOUR. `CLAUDE.md:231`
-            already carried that correction and quoted the old line as
-            superseded; the brief copied the superseded text out of the root
-            context doc.
-            ⚠ SO THE HONEST SENTENCE IS THE ONE BELOW: they exist, none is
-            posted, and nothing connects a work request to a roster anyway.
-            ⚠ NOTHING WAS SEEDED to make this demonstrable (`E564`).
-          */}
+          {}
           <p className="text-[14px] leading-relaxed text-ink-2">
             Nothing here yet. Work requests exist but none has been posted — they
             are all still drafts — and a posted request is not yet routed to a

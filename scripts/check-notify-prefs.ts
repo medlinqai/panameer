@@ -5,23 +5,6 @@ import { notify } from "@/lib/notifications";
 import { NOTIFICATION_EVENTS } from "@/lib/notification-events";
 import { NOTIFICATION_CATEGORIES } from "@/lib/notification-categories";
 
-/**
- * ── ⚠⚠⚠ `check:notify-prefs` (`P2-A3-E620`) ─────────────────────────────
- *
- * ⚠ RULING 13, THE HALF THAT SURVIVED 34d: **"A SETTING NOTHING READS IS WORSE
- * THAN NO SETTING. Every toggle is read at the point of sending, and the gate
- * MUTATION-PROVES that switching one off actually suppresses that event."**
- *
- * ⚠⚠ `check:notifications` cannot carry this — it is a static gate with no
- * database, and the claim here is about RUNTIME BEHAVIOUR: that `notify()`
- * consults the preference row before delivering. ⚠⚠⚠ `E607`'s rule is the
- * reason it is a round trip and not a grep: **a value the code knows and never
- * consults is not a safeguard**, and a regex proving `notificationPreference`
- * is mentioned would pass against code that reads it and throws it away.
- *
- * ⚠ IT WRITES, AND IT CLEANS UP AFTER ITSELF, restoring any preference the
- * person already had rather than deleting one it did not create.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -42,8 +25,6 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 async function main() {
-  /* ── 1 · ⚠⚠ EVERY CATEGORY SHIPS ON (ruling 34b) ────────────────────────
-     ⚠ Scott: *"All on, exactly as ruled."* In-app AND email, all 17. */
   check(
     "1 — there are categories to check (E586)",
     NOTIFICATION_CATEGORIES.length > 10,
@@ -288,15 +269,6 @@ async function main() {
   const stillSends = /template:\s*["'`]project-validated["'`]/.test(
     strip(readFileSync(join("src", "lib", "project-validation.ts"), "utf8"))
   );
-  /*
-    ⚠⚠⚠ THE OTHER HALF IS **PRINTED, NOT ASSERTED**, AND THE FIRST DRAFT GOT
-    THIS WRONG. I wrote it as a `check` requiring the send to exist — so
-    **removing the send, which is the LEGITIMATE resolution, failed the gate.**
-    ⚠⚠ Caught by mutating toward the correct state rather than only toward the
-    defect: a gate that reddens on the fix is a gate that blocks the fix (§10).
-    ⚠ The pair is the only thing worth asserting; either half alone is a valid
-    state of the world.
-  */
   console.log(
     `  · project-validation.ts still sends project-validated: ${stillSends}` +
       `${stillSends ? "" : " — the pair below is moot and this section can be retired"}`

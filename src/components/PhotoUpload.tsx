@@ -3,24 +3,6 @@
 import { useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 
-/**
- * Profile-photo picker (brief_O). Posts the chosen file to the owner-scoped
- * POST /api/profile/photo, which validates type + size server-side and returns
- * the stored public URL.
- *
- * ⚠ CURRENTLY UNUSED (WS-3). The docstring used to say "shared by the onboarding
- * Add a Photo step and Settings → Profile"; neither imports it. Onboarding uses
- * PhotoCropModal (it crops), the employee profile has its own inline control,
- * and Settings → Profile has no photo control at all. Kept rather than deleted
- * because the missing piece it would fill — a way for a published provider to
- * change their photo without re-entering the join wizard — is a real gap. It is
- * labelled instead of quietly left looking live, because during the photo
- * investigation this file read as a second, possibly-broken upload path.
- *
- * The photo is always OPTIONAL — with none set, `Avatar` renders the initials
- * fallback.
- */
-
 const ACCEPT = "image/png,image/jpeg,image/webp";
 const MAX_BYTES = 5 * 1024 * 1024;
 

@@ -1,17 +1,3 @@
-/**
- * ── `check:prisma-freshness` (`P2-ALL-E799`) ────────────────────────────────
- *
- * ⚠⚠ **IT TESTS THE RULE, NOT THE MACHINE.** The thing worth guarding is the
- * decision — *generate* vs *restart* vs *say nothing* — and that is a pure
- * function of three timestamps, so it can be tested without stopping a server.
- *
- * ⚠⚠⚠ **THE REAL FAILURE IT ENCODES:** Scott's dev server was fourteen hours
- * older than the generated Prisma client, every query selecting `User.is_test`
- * threw `Unknown field`, and what reached him was *"Encountered a script tag
- * while rendering React component"* from the root layout — an innocent file he
- * had already ruled on. ⚠ A message that names the wrong layer costs more than
- * no message.
- */
 import { freshness } from "@/lib/prisma-freshness";
 
 const failures: string[] = [];

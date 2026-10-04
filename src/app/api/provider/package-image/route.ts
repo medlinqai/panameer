@@ -3,15 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { uploadProfilePhoto, StorageError, MAX_PHOTO_BYTES } from "@/lib/storage";
 
-/**
- * POST /api/provider/package-image — cover image for a package (brief_V).
- *
- * Reuses the public profile-photos bucket and its validated uploader: a package
- * cover is shown on the buyer-facing catalog, so it is public by nature — the
- * same visibility as a profile photo, unlike résumés or certificates.
- *
- * OWNER-SCOPED: the folder key comes from the session's own Person.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

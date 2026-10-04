@@ -1,12 +1,5 @@
 import type { TransactDenial } from "@/lib/access";
 
-/**
- * What to TELL someone the company gate turned away (brief_company_model WS4).
- *
- * One table so the API and the page say the same thing, and so every refusal
- * names the next action. "Forbidden" against a gate the user can clear in two
- * clicks reads as a broken product.
- */
 export const TRANSACT_MESSAGE: Record<TransactDenial, string> = {
   NO_COMPANY:
     "You need to be part of a company before you can do this. Add yours, or join the one you work for.",

@@ -1,16 +1,3 @@
-/**
- * ── `check:user-edit` (`P2-ALL-E796`) ───────────────────────────────────────
- *
- * ⚠⚠⚠ **THIS IS SECURITY LOGIC ON A DATABASE SHARED WITH LIVE MEMBERS**, so it
- * is one of the three kinds of code Scott still wants mutation-tested. The two
- * assertions that matter are the ones that would let an admin lock a real person
- * out without meaning to: the CONFIRMATION and the SELF-TARGET refusal.
- *
- * ⚠⚠ **IT ACTS ONLY ON `is_test: true` ACCOUNTS** — `E793`'s test set — and it
- * snapshots and restores every column it touches. ⚠ A real member followed the
- * build mid-run earlier today; a check that writes to `users` has to prove it
- * gave everything back, and by IDENTITY rather than by count.
- */
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {

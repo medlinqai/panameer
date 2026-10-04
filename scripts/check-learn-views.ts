@@ -3,40 +3,6 @@ import { join } from "node:path";
 import { pathStages, currentStageIndex } from "@/components/learn/app/PathStages";
 import { courseTotals, type CourseGroup } from "@/lib/learn-courses";
 
-/**
- * ── ⚠⚠⚠ `check:learn-views` (brief 9 WS-E) ──────────────────────────────
- *
- * Learn's three catalogue-side views — `/learn/paths`, `/learn/<slug>` and the
- * new `/learn/courses` — plus the frame they share.
- *
- * ── ⚠⚠⚠ THE POPULATION IS PART OF THE ASSERTION (`E610`) ───────────────
- *
- * ⚠⚠ The brief names it and the reason is measured: `E610` shipped **green at
- * 85** because the defect's file sat OUTSIDE the scan. ⚠ So this gate's
- * population is asserted FIRST, by name, and a missing file is a FAILURE rather
- * than a silently empty scan:
- *   · `src/app/learn/paths/`      · `src/app/learn/[slug]/`
- *   · `src/app/learn/courses/`    · `src/components/learn/app/`
- * ⚠⚠⚠ **A GATE THAT CANNOT SEE THE FILE THE DEFECT IS IN IS NOT GUARDING IT.**
- *
- * ── ⚠⚠ IT STRIPS COMMENTS, AND THAT IS NOT OPTIONAL HERE ────────────────
- *
- * ⚠ Load-bearing rule 12: `E164` means superseded code is QUOTED, never
- * deleted — and **every file this gate scans carries quotes of the exact
- * strings it bans.** `AppPath.tsx` quotes the padlock line and both certificate
- * sentences; `courses/page.tsx` quotes the whole of the old 308. ⚠⚠ Scanning
- * raw text would flag the QUOTE and fail on correct code, which is `E610`'s
- * other lesson: **a gate that fails on correct code is a gate someone switches
- * off.**
- *
- * ── ⚠ IT ASSERTS SHAPE, NOT TALLY (`E587`) ──────────────────────────────
- *
- * ⚠⚠ No assertion here pins a course count, a path count or a lesson count.
- * Those are CONTENT and they move every time somebody publishes; a gate that
- * pins them goes red on an editorial change and teaches people to ignore it.
- * ⚠ The arithmetic is proved against FIXTURES instead, so it is exact without
- * being brittle.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -44,7 +10,6 @@ const check = (name: string, ok: boolean, why = "") => {
   else fails.push(`${name}${why ? ` — ${why}` : ""}`);
 };
 
-/** ⚠ Rule 12 / `E164`: superseded code is QUOTED, and a quote is not live code. */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -120,14 +85,8 @@ for (const [f, active] of [
     new RegExp(`active=["']${active}["']`).test(src)
   );
 }
-/* ⚠ The path view mounts it through its own component, not the route file. */
 check("§2 the path view mounts LearnTabs", /<LearnTabs\b/.test(get(PATH_PAGE) + get(APP_PATH)));
 
-/*
-  ⚠⚠ SIGNED-IN ONLY, AND IT IS A RULE NOT A HABIT (`E627`, `E579`): these routes
-  serve visitors, and *"My Learning"* is meaningless without an account. **A row
-  naming a page you cannot have is a row of doors onto walls.**
-*/
 for (const f of [PATHS_PAGE, COURSES_PAGE]) {
   check(
     `§2 ${f} gates the tab row on a viewer`,
@@ -183,52 +142,22 @@ for (const [label, re] of FORBIDDEN) {
   check(`§4 no "${label}" survives in Learn's views`, !re.test(allViews));
 }
 
-/*
-  ⚠⚠ AND THE INVERTED FORM, WHICH IS THE ONE THAT HIDES (ruling 53b): a control
-  NOT DRAWN for somebody entitled to press it. ⚠⚠⚠ `E627`'s defect was the test
-  link rendering only inside an `allDone` branch — **a dead button gets reported
-  and an absent one does not.**
-*/
 check(
   "§4 the path test link is not gated on completion (53b — E579 inverted)",
   !/allDone\s*&&[\s\S]{0,120}\/test/.test(get(APP_PATH)),
   "the test link must not render only when every lesson is done"
 );
 
-/* ── §5 THE STAGE RAIL — DRIVEN BY FIXTURES, EVERY RUNG (E607) ───────────── */
-
-/*
-  ⚠⚠⚠ LIVE DATA EXHIBITS EXACTLY ONE OF THESE STATES. The walking account is
-  enrolled in nothing, so the page can only ever show stage 1 as current —
-  **which is why the rungs are proved here and not by a screenshot.**
-  ⚠ `pathStages` is exported and PURE for this reason (`E607`: arithmetic inline
-  in a component cannot be driven by a fixture).
-*/
 const stageFixture = {
   slug: "p",
   enrolled: false,
   percent: 0,
-  /* ⚠ THE FIXTURE DEFAULT IS "this path HAS a test", so the unavailable case is
-     opted into explicitly and cannot be the accidental shape of every check. */
   testExists: true,
   testReady: false,
   testPassed: false,
   certificateEarned: false,
   certificateUrl: null as string | null,
 };
-/*
-  ── ⚠⚠⚠ IT CALLS THE REAL RULE. IT NO LONGER RE-IMPLEMENTS IT. ───────────
-
-  ⚠⚠ **THIS LINE USED TO BE A LOCAL COPY OF THE COMPONENT'S EXPRESSION, AND THE
-  MUTATION PROVED IT WORTHLESS:** breaking `currentIndex` in `PathStages.tsx`
-  left this gate GREEN AT 68, because the gate was asserting its own helper.
-  ⚠⚠⚠ **AN ASSERTION ITS OWN MUTATION CANNOT FAIL IS NOT AN ASSERTION (`E607`)**
-  — and this one was testing the test. ⚠ Found by RUNNING the mutation and
-  reading the result, not by assuming the red.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   const firstNotDone = (s: { done: boolean; unavailable?: string }[]) =>
-  //     s.findIndex((x) => !x.done && !x.unavailable);
-*/
 const firstNotDone = currentStageIndex;
 
 const notStarted = pathStages(stageFixture);

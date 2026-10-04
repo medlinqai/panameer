@@ -5,57 +5,14 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavGroup } from "@/lib/nav";
 import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
-/* ⚠ THE SAME STYLESHEET THE MESSAGES DRAWER IMPORTS — one drawer language, two
-   consumers. It is component-imported there, so it must be here too. */
 import "./messages-drawer.css";
 
-/**
- * ── ⚠⚠⚠ THE CONFIGURATION DRAWER — THE GEAR'S PANEL (`P2-ALL-E692`) ────────
- *
- * ⚠⚠ **SCOTT, 2026-09-27 (ruling `89i`):** *"The gear pops the configuration
- * menu as a drawer, so ruling 88's five-item limit does not apply to it."*
- *
- * ── ⚠⚠⚠ WHY THIS EXISTS: THE ADMIN BAND WAS FIFTEEN ITEMS, SCROLLING ───────
- *
- * ⚠ `AppBand` flattened `ADMIN_NAV` into the band — **15 items** across three
- * groups — and dropped them into `.pm-band-menu-row`, which is `overflow-x:
- * auto` with a **hidden scrollbar**. ⚠⚠ **MEASURED AT 390px: that row hides
- * 122px inside itself on every page, while the PAGE reports 0px overflow.**
- * ⚠⚠⚠ **SO EVERY `scrollWidth === innerWidth` GATE PASSED WHILE FOURTEEN
- * ADMIN DESTINATIONS SAT OFF-SCREEN BEHIND AN INVISIBLE SCROLLBAR.** That is
- * ruling 88's *"broken in plain sight"*, with a number on it.
- *
- * ── ⚠⚠ IT DOES NOT CHOOSE WHAT IS INSIDE IT ───────────────────────────────
- *
- * ⚠⚠⚠ **`ADMIN_NAV`'s CONTENT IS NOT REWRITTEN AND NOT REORDERED** — Scott:
- * *"DO NOT REWRITE `ADMIN_NAV`'s CONTENT. Build the gear and the drawer."* This
- * takes the groups as given and renders them, labels and order untouched.
- * ⚠ **The three group headings are KEPT rather than flattened**, because they
- * carry meaning a flat list discards — which is also why the band was the wrong
- * container for them.
- *
- * ── ⚠ THE SHELL IS THE MESSAGES DRAWER'S, DELIBERATELY ────────────────────
- *
- * ⚠⚠ It reuses `.pm-drawer-root` / `.pm-drawer-scrim` / `.pm-drawer-panel` /
- * `.pm-drawer-body` from `messages-drawer.css` rather than growing a second set.
- * ⚠⚠⚠ **TWO DRAWERS WITH TWO STYLESHEETS IS `E585` IN CHROME:** they would
- * drift, and a member would learn two dismissal gestures for one idea. ⚠ The
- * behaviour is the same for the same reason — Escape closes, the scrim closes,
- * focus returns to the control that opened it.
- */
 export function ConfigDrawer({
   groups,
   active = false,
   label = "Configuration",
 }: {
-  /** ⚠ Passed IN, never imported here — this component knows no admin route. */
   groups: NavGroup[];
-  /**
-   * ⚠⚠ `E735` — whether the current route is one the gear owns (`/admin`). ⚠⚠⚠ THE GEAR
-   * HAD NO LIT STATE AT ALL, which is why all 33 admin routes lit nothing. ⚠ It arrives as
-   * a prop so the decision stays in `bandActiveHref` — this component still knows no admin
-   * route, which is its own stated contract one line above.
-   */
   active?: boolean;
   label?: string;
 }) {
@@ -66,8 +23,6 @@ export function ConfigDrawer({
 
   const close = useCallback(() => {
     setOpen(false);
-    /* ⚠ FOCUS GOES BACK TO THE GEAR. A dialog that dumps focus at the top of the
-       document leaves a keyboard user to find their place again. */
     gearRef.current?.focus({ preventScroll: true });
   }, []);
 
@@ -83,7 +38,6 @@ export function ConfigDrawer({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, close]);
 
-  /* ⚠ FOCUS THE PANEL ON OPEN, so the first Tab lands inside it. */
   useEffect(() => {
     if (!open) return;
     const t = requestAnimationFrame(() => {
@@ -102,11 +56,7 @@ export function ConfigDrawer({
         aria-haspopup="dialog"
         aria-label={label}
         title={label}
-        /* ⚠ 44px, because there is no hover on touch and a 32px gear is a miss
-           (88a). The band's other icons are sized by `BandIcon`; this matches
-           the touch standard rather than the visual one. */
         className={
-          /* ⚠ The SHARED lit class (`E720` item 1), imported rather than re-typed. */
           "grid h-11 w-11 place-items-center rounded-full transition-colors " +
           (active || open ? BAND_LIT : BAND_IDLE)
         }

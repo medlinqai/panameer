@@ -1,46 +1,8 @@
 import Link from "next/link";
 import { isCounted, type Figure, type TrendPeriod } from "@/lib/statistics";
 
-/**
- * ── ⚠⚠⚠ THE TWO BACK FACES (`P2-A2-E603` WS-A correction 3) ──────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"Back face, two variants, chosen by the data. Trend back
- * — the same figures over time, for a card whose figures have dates. Action back
- * — one counted credit line, then the two or three links that move this card's
- * figures, for a card with no history yet."*
- * ⚠⚠ **THE DATA PICKS THE VARIANT AND WHICH FACE IS UP:** every figure zero and
- * no history → action back, face up. Otherwise → front up.
- *
- * ⚠⚠⚠ EVERY WORD ON A BACK IS COUNTED, NOT WRITTEN. Scott: *"no fabricated
- * encouragement, no promises, no absolutes."* The credit line below states a
- * number the member produced; it never says "great work", never predicts a
- * result, and never says "always" or "the fastest way".
- */
-
-/*
-  ⚠⚠⚠ `TrendPeriod` MOVED TO `lib/statistics.ts` AND IS RE-EXPORTED HERE.
-  ⚠ It now sits beside `trendBuckets()`, the function that decides what each
-  period MEANS — they were one layer apart, and the distance is how the period
-  control came to change the label without changing the data.
-  ⚠ The re-export is so every existing importer is unchanged; there is still
-  exactly ONE definition.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   /** Only the two periods Scott named. No others, ever. * /
-  //   export type TrendPeriod = "90d" | "ytd";
-*/
 export type { TrendPeriod };
 
-/**
- * ⚠⚠ THE SPARKLINE LIVES HERE, NOT ON THE FRONT (Scott). The front is figures;
- * history is what you turn the card over for.
- *
- * ⚠⚠⚠ A GENUINELY EMPTY SERIES SAYS SO RATHER THAN DRAWING A ZERO LINE. Scott:
- * *"If a series is genuinely empty it says so rather than drawing a zero line."*
- * ⚠ A flat line along the bottom is a CLAIM — "nothing happened, week after
- * week" — and it looks identical to a broken chart. The distinction is the same
- * one the figures make: a measured zero and an absence must not look alike.
- * ⚠ A real flat line (rows exist, all in one bucket) DOES render, unsmoothed.
- */
 export function TrendBack({
   title,
   series,
@@ -51,12 +13,6 @@ export function TrendBack({
   title: string;
   series: number[] | { uncounted: string };
   period: TrendPeriod;
-  /** ⚠⚠ THE SUBJECT ONLY — *"Invitations sent"*, NOT *"Invitations sent each
-   *  week."* ⚠⚠⚠ THE GRAIN IS APPENDED HERE, FROM THE PERIOD, because the
-   *  buckets are WEEKS under `90d` and CALENDAR MONTHS under `ytd`. A caller
-   *  writing *"each week"* by hand would state a grain the chart stopped
-   *  using the moment the member pressed `YTD` — the same lie the period
-   *  control itself was just fixed for, moved into the copy. */
   subject: string;
   hrefFor: (p: TrendPeriod) => string;
 }) {
@@ -66,8 +22,6 @@ export function TrendBack({
   ];
   const counted = Array.isArray(series);
   const total = counted ? series.reduce((a, b) => a + b, 0) : 0;
-  /* ⚠ ONE PLACE DECIDES THE WORD, and it is the same place that renders the
-     period pills — so the sentence and the highlighted period cannot disagree. */
   const caption = `${subject} each ${period === "ytd" ? "month" : "week"}.`;
   return (
     <div className="flex h-full flex-col">

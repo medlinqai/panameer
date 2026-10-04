@@ -9,21 +9,6 @@ import {
   PASSWORD_INPUT_PAD,
 } from "@/components/PasswordReveal";
 
-/**
- * Password & Security (J2.4 WS-H / E018).
- *
- * REAL TOTP. The secret is minted server-side, shown once, and two-step only
- * turns on when a live code proves the authenticator holds it — an unconfirmed
- * enrollment leaves the account exactly as it was, which is what stops a
- * mistyped scan locking somebody out.
- *
- * MOBILE-PUSH 2FA IS DEFERRED with the app that would receive it, and the page
- * says so rather than showing a greyed row that implies it is nearly here.
- *
- * LINKEDIN IS ABSENT. It was removed from the product in PJv2 WS2; a
- * "disconnected" row for something we will never offer is a promise, not a
- * status.
- */
 const QUESTIONS = [
   "What was the name of your first school?",
   "What was your first employer's name?",
@@ -55,8 +40,6 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
   const [next, setNext] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  /* ⚠ ABOVE THE `hasPassword` EARLY RETURN BELOW — hooks cannot sit after a
-     conditional return, and this component has one. */
   const currentReveal = useRevealState();
   const nextReveal = useRevealState();
 
@@ -77,10 +60,7 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
       description="Your current password is required — a change form that doesn't ask for it hands the account to whoever is sitting at an open laptop."
     >
       <div className="grid max-w-xl gap-3 sm:grid-cols-2">
-        {/* ⚠ `E528` — a change-password form is the other place a mistype is
-            invisible, and here it costs the person their CURRENT password too.
-            ⚠⚠ EACH FIELD REVEALS INDEPENDENTLY: these hold two different
-            secrets, and one toggle showing both is a worse default. */}
+        {}
         <Input
           label="Current password"
           type={currentReveal.type}
@@ -103,21 +83,7 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
           trailing={<RevealButton shown={nextReveal.shown} onToggle={nextReveal.toggle} />}
         />
       </div>
-      {/*
-        ── ⚠⚠⚠ WHAT A PASSWORD CHANGE DOES NOT DO (`P2-A2-E609`, E554) ────────
-
-        ⚠ SCOTT, 2026-09-23: *"A member reasonably expects otherwise. Do not
-        leave it silent."*
-        ⚠⚠ SESSIONS ARE JWTs AND NOTHING INVALIDATES ONE EARLY. There is no
-        token-version column, so a session opened before the change keeps
-        working until it expires — `maxAge` is now seven days, which bounds it
-        rather than ending it.
-        ⚠⚠⚠ THE SENTENCE NAMES THE MECHANISM, NOT THE MEMBER, and makes no
-        promise it cannot keep: it does not say *"sign out everywhere"*, because
-        there is no such control on this page and building one is its own brief.
-        ⚠ NO ABSOLUTES — it says what happens, and how long, without telling the
-        member they are safe.
-      */}
+      {}
       <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
         Changing your password does not sign out sessions already open on other
         devices. Those stay signed in until they expire, which is up to seven

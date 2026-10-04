@@ -8,18 +8,9 @@ import {
   type WorkRequestSection,
 } from "@/lib/work-request";
 
-/**
- * POST /api/work-requests — create a fresh DRAFT (optionally applying the first
- * section in the same call). Gated canHireTalent; PAccount-scoped in the lib.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  /*
-    The company gate, server-side (WS4). The page redirects, but the API is the
-    authoritative boundary — a work request commits a company, so the caller
-    needs an approved membership on one that has accepted the company terms.
-  */
   const transact = await checkTransact(gate);
   if (!transact.ok) {
     return NextResponse.json(

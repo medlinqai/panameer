@@ -1,20 +1,6 @@
 import Link from "next/link";
 import type { TaughtPath } from "@/lib/learn-home";
 
-/**
- * "Learn from <name>" — the courses a consultant teaches, on their profile
- * (brief_learn_experience WS7 / E137).
- *
- * This is the half of the loop that was missing. A course already linked to its
- * instructor's profile; nothing linked a profile back to their courses, so a
- * buyer evaluating a consultant had no way to see them actually teach the thing
- * they claim to know. On a platform selling "the best consultants in the
- * world", hours of them explaining their subject is the strongest evidence
- * available — stronger than a headline or a self-reported skill list.
- *
- * RENDERS NOTHING when they teach nothing. An empty "Courses" heading on most
- * profiles would read as a missing feature rather than an honest absence.
- */
 export function TaughtPaths({
   paths,
   name,
@@ -35,11 +21,7 @@ export function TaughtPaths({
     <section className="rounded-brand border border-line bg-white p-6">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="font-display text-[20px] font-bold">
-          {/* ⚠⚠ `Courses You Teach` → `Teaching` (`P2-A2-E713`, brief item 10). ⚠ The LEARN
-              lane is finished, so the amended brief makes this file editable.
-              ⚠⚠⚠ THE VISITOR STRING IS UNTOUCHED: `Learn From {name}` is not the same
-              concept — it addresses a buyer, not the owner's own capacity.
-              ⚠ SUPERSEDED (`E164`): //   isOwner ? "Courses You Teach" : … */}
+          {}
           {isOwner ? "Teaching" : `Learn From ${firstName}`}
         </h2>
         <p className="text-[13.5px] text-ink-2">

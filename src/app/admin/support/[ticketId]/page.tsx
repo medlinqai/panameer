@@ -9,15 +9,6 @@ import { TicketAdminPanel } from "@/components/admin/TicketAdminPanel";
 import { TicketThread } from "@/components/support/TicketThread";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * One ticket, its thread, and the admin's controls (`P2-J1.1-E032` WS-4).
- *
- * ⚠⚠ THE SCREENSHOT IS SIGNED HERE, ON THE SERVER, AND EXPIRES. The bucket is
- * PRIVATE, so there is no public URL to render — `signedSupportScreenshotUrl`
- * mints a short-lived link (300s) exactly the way `signedResumeUrl` does for a
- * résumé. The signing key never leaves the server, and a stale link stops
- * working rather than becoming a permanent handle on someone's screen contents.
- */
 export const metadata = { title: "Ticket · Panameer Admin" };
 
 export default async function AdminTicketPage({
@@ -32,17 +23,8 @@ export default async function AdminTicketPage({
   if (!found) notFound();
   const { ticket, messages } = found;
 
-  /*
-    ── ⚠⚠ THE HISTORY (`P2-ALL-E761`) ──────────────────────────────────────────
-    ⚠ The ADMIN view: every kind, including assignee and priority. The reporter's
-    page calls the same function with `forReporter` and gets less — the filter is
-    in the QUERY, so this page cannot leak by forgetting to check.
-  */
   const timeline = await ticketTimeline(ticket.id);
 
-  /* ⚠ Assignee ids live inside `to_value` and on the card; ONE query resolves
-     every name the page needs. Names are never stored on an event, so a person
-     who changes their name is not frozen into the record (see `TicketEvent`). */
   const personIds = [
     ...new Set(
       [
@@ -82,11 +64,7 @@ export default async function AdminTicketPage({
         <div><dt className="text-ink-2">Priority</dt><dd className="font-semibold">{ticket.priority}</dd></div>
         <div><dt className="text-ink-2">Filed</dt><dd className="font-semibold">{ticket.created_at.toISOString().slice(0, 16).replace("T", " ")}</dd></div>
         <div><dt className="text-ink-2">Solved</dt><dd className="font-semibold">{ticket.date_solved ? ticket.date_solved.toISOString().slice(0, 10) : "—"}</dd></div>
-        {/* ⚠⚠ ASSIGNEE (`P2-ALL-E761` item 4). The page already HAD the id — it
-            passed `assigned={!!ticket.assignee_person_id}` as a BOOLEAN — so an
-            admin could see THAT it was assigned and never to whom.
-            ⚠ `Unassigned` in ink, not a dash: nobody holding it is a real state,
-            not an uncountable one. */}
+        {}
         <div><dt className="text-ink-2">Assignee</dt><dd className="font-semibold">{assigneeName ?? "Unassigned"}</dd></div>
       </dl>
 
@@ -109,8 +87,7 @@ export default async function AdminTicketPage({
         )}
       </section>
 
-      {/* ⚠⚠ THE TIMELINE SITS ABOVE THE REPLY BOX — it is the ticket's story, and
-          the box is what you do next. */}
+      {}
       <section className="mt-5">
         <h2 className="text-[16px] font-bold">History</h2>
         <TicketTimeline entries={timeline} names={names} />

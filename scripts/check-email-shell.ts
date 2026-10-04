@@ -1,27 +1,3 @@
-/**
- * `check:email-shell` — the logo an email actually renders, and the address it
- * actually claims (`P1-ALL-E402`). `npm run check:email-shell`.
- *
- * ── ⚠⚠ THIS GATE IS RED ON PURPOSE TODAY. READ WS-3 BEFORE "FIXING" IT ──────
- *
- * `PANAMEER_ADDRESS` is still `"Panameer Inc · address to be confirmed"` and
- * that string is in the footer of every email Panameer sends. **The address is
- * Scott's to supply.** This gate fails until he does, and turns green on the one
- * line change. ⚠⚠ DO NOT GO GREEN BY INVENTING AN ADDRESS — a plausible wrong
- * address is a false statement in a legally-required field, which is strictly
- * worse than an obviously unfinished one. ⚠ AND DO NOT DELETE THE LINE: that
- * turns a visible gap into an invisible one.
- *
- * ── WHAT ELSE IT DEFENDS ───────────────────────────────────────────────────
- *
- * ⚠ THE HEIGHT ATTRIBUTE IS ARITHMETIC ON A MEASURED FILE. `EMAIL_LOGO_INTRINSIC`
- * claims each mark's true pixel size; §2 below OPENS EACH PNG and reads its IHDR
- * header, so the claim cannot drift from the file. That is what makes deriving
- * safe when the asset is swapped — the alternative is `height="25"` for a 524×132
- * image, which is what shipped.
- *
- * ⚠ NO DATABASE AND NO BROWSER. Renders the real templates and reads real files.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import {
@@ -58,17 +34,10 @@ function walk(dir: string, out: { path: string; text: string; code: string }[] =
 }
 const SRC = walk("src");
 
-/* ═══ 1 · WS-1 — THE FALLBACK FIRES ON UNREACHABLE, NOT ONLY ON ABSENT ══════
-   ⚠ THE RULE IS PUBLIC ROUTABILITY OF THE HOST, NOT THE SCHEME. See the
-   docblock on `isEmailFetchableUrl` for why "not localhost" and "https only"
-   were both rejected. These cases ARE that rule, written down. */
 {
   const FETCHABLE = [
     "https://panameer.com/brand/panameer-new-on-light.png",
     "https://mail.panameer.com/brand/panameer-new-on-light.png",
-    /* ⚠ PLAIN HTTP ON A PUBLIC HOST PASSES — this is the staging case, and
-       Outlook's proxy fetches it fine. Requiring TLS would hide a logo that
-       renders, in the one environment where somebody is trying to look at it. */
     "http://staging.panameer.com/brand/panameer-new-on-light.png",
     "https://panameer-git-abc.vercel.app/brand/panameer-new-on-light.png",
     /* A public IPv4 literal is routable. */
@@ -78,8 +47,6 @@ const SRC = walk("src");
     "http://localhost:3100/brand/panameer-new-on-light.png",
     "http://127.0.0.1:3100/brand/panameer-new-on-light.png",
     "http://[::1]:3100/brand/panameer-new-on-light.png",
-    /* ⚠⚠ THE CASE "not localhost" WOULD HAVE MISSED — a dev opening the app
-       from a phone on the same wifi. Same broken box, different host. */
     "http://192.168.1.14:3100/brand/panameer-new-on-light.png",
     "http://10.0.0.7:3100/brand/panameer-new-on-light.png",
     "http://172.20.1.1:3100/brand/panameer-new-on-light.png",
@@ -281,9 +248,6 @@ const SRC = walk("src");
     oldMark.length === 0,
     oldMark.map((h) => h.path).join(", ")
   );
-  /* ⚠ AND NOT THE E397 LOCKUP EITHER. It is superseded, it is a different
-     aspect (4.85 vs 5.91), and pointing email at it would be a second wrong
-     mark rather than the current one. */
   const superseded = SRC.filter((f) =>
     /logoUrl:\s*`\$\{[^`]*\}\/brand\/panameer-lockup-on-(light|dark)\.png`/.test(f.code)
   );

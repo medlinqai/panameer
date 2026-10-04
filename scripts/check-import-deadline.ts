@@ -1,20 +1,3 @@
-/**
- * `check:import-deadline` — no model call may outlive the route that contains
- * it, and a failure must say something (`P1-A1.4-E415` WS-5).
- * `npm run check:import-deadline`.
- *
- * ── ⚠⚠ THE ASSERTION THAT HAD TO EXIST AND DID NOT ─────────────────────────
- *
- * `route.ts` said `maxDuration = 60`. `ai-provider.ts` said
- * `MODEL_TIMEOUT_MS = 55_000`. Neither knew about the other, and the résumé
- * read makes **at least two calls in series** — so a single call was allowed
- * 55 of the route's 60 seconds and the floor was always `inventory + slowest`.
- * ⚠ MEASURED: Scott's CV ran the route to **71.7s**; `marelise.docx`, which is
- * SMALLER, ran the read alone to **75.0s**; a real August import recorded
- * **88.5s** in `profile_imports`.
- *
- * ⚠ NO MODEL CALL, NO DATABASE, NO BROWSER — arithmetic and text scans only.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -41,8 +24,6 @@ const PROVIDER = read("src", "lib", "resume", "ai-provider.ts");
 const PASSES = read("src", "lib", "resume", "ai-passes.ts");
 const IMPORT = read("src", "lib", "resume", "import.ts");
 const ROUTE = read("src", "app", "api", "onboarding", "provider", "import", "route.ts");
-/* ⚠ `P2-J1.4-E546` — the RE-READ route calls the model too, under the same
-   per-call ceiling, and its `maxDuration` was a hand copy nobody checked. */
 const REREAD_ROUTE = read("src", "app", "api", "onboarding", "provider", "resume-ai", "route.ts");
 const PARSE = read("src", "lib", "resume", "parse.ts");
 
@@ -57,7 +38,6 @@ const PARSE = read("src", "lib", "resume", "parse.ts");
     !/ghostTok/.test(strip("{/* was: <X a={1} * / /> ghostTok */} realTok")),
     "E408"
   );
-  /* ⚠⚠ PROTECTS §1 AND §5: both files quote the superseded literals in prose. */
   check(
     "0 — ⚠⚠ the superseded `MODEL_TIMEOUT_MS = 55_000` quote is invisible",
     !/const MODEL_TIMEOUT_MS = 55_000;/.test(PROVIDER)
@@ -68,8 +48,6 @@ const PARSE = read("src", "lib", "resume", "parse.ts");
   );
 }
 
-/* ═══ 1 · ⚠⚠ NO CALL MAY OUTLIVE ITS ROUTE ═══════════════════════════════
-   Mutate: set MODEL_TIMEOUT_MS above maxDuration → red.                    */
 {
   check(
     "1 — ⚠⚠ the per-call ceiling is BELOW the route's whole budget",

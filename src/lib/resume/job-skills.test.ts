@@ -1,16 +1,5 @@
 import { extractJobSkills, suggestedCompany, type VocabEntry } from "./job-skills";
 
-/**
- * Per-job extraction precision (brief_per_job_skill_model WS-3).
- *
- *   npm run check:jobskills
- *
- * Every guard in job-skills.ts exists because its absence produces a FALSE
- * skill — a claim attributed to a named person against a dated engagement.
- * These assertions are the guards; without them the module's comments are
- * aspirations.
- */
-
 let pass = 0;
 const failures: string[] = [];
 const ok = (label: string, cond: boolean, detail = "") => {
@@ -90,10 +79,6 @@ console.log("\njob-skills.ts\n");
   ok("lowercase acronyms never match", r.skillIds.length === 0, r.names.join(","));
 }
 {
-  /*
-    The rule that keeps an acronym from choosing the vendor: with no anchor,
-    "AP" must not resolve to any suite's Payables.
-  */
   const r = run("Owned AP and AR operations end to end.");
   ok("an acronym alone cannot anchor a suite", r.suite === null);
   ok("…and therefore attributes no module", r.skillIds.length === 0);

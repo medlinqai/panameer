@@ -2,38 +2,6 @@
 
 import { useId, useRef, useState, type ReactNode } from "react";
 
-/**
- * THE ONE CLIENT ISLAND ON THE BUYER PAGE (brief_home_rebuild_08_09 WS-D).
- *
- * Four tabs, four panels, and nothing else. Everything visible inside a panel
- * — the domain checklist, the KPI tiles, the maturity bar — is built by the
- * SERVER component that renders this and handed over as a ReactNode.
- *
- * ── HOW `/` STAYS STATIC ─────────────────────────────────────────────────────
- *
- *  1. THIS FILE IS THE ONLY CLIENT BOUNDARY on the route. `/` is a server
- *     component and nothing in it reads cookies, headers or searchParams — the
- *     three things that force a route dynamic — so Next prerenders the whole
- *     page, this island included, at build time and ships JS that hydrates it.
- *  2. ALL FOUR PANELS ARE IN THE DOM, hidden with the `hidden` attribute. Never
- *     conditionally rendered, never fetched on click. A crawler and a reader
- *     with no JS get all four process areas; switching tabs flips an attribute.
- *  3. THE PANELS ARE PROPS, NOT IMPORTS, so forty domain rows, sixteen KPI
- *     tiles and four maturity bars are server-rendered and never enter the
- *     client bundle. What ships is a state hook, a keydown handler, four
- *     buttons.
- *
- * This is the BeatTabs pattern, which worked; the retired carousel's lesson was
- * about what belonged on the page, not about how it was wired.
- *
- * ── ACCESSIBILITY ────────────────────────────────────────────────────────────
- *
- * A real tablist: role=tablist/tab/tabpanel with aria-selected, aria-controls
- * and aria-labelledby. Roving tabindex, so Tab steps PAST the group and
- * Left/Right move within it; Home/End jump to the ends; selection moves focus
- * with it. Enter and Space need no handler because these are real buttons.
- */
-
 export function AssessmentTabs({
   tabs,
   panels,

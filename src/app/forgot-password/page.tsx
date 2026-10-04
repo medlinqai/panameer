@@ -3,19 +3,6 @@
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
 
-/**
- * ── ⚠⚠ FORGOT PASSWORD — THE REQUEST PAGE (`P1-ALL-E528` Part B) ───────────
- *
- * ⚠⚠ ONE ANSWER FOR EVERY ADDRESS. *"If that address has an account, a reset
- * link is on its way."* — whether the account exists, does not exist, is
- * OAuth-only, or has just hit the rate limit. ⚠ THE FORM IS REPLACED BY THAT
- * SENTENCE ON SUBMIT, so there is nothing on screen to compare between two
- * addresses: no error, no timing tell worth reading, no second state.
- *
- * ⚠ The public surface's own rule (`public-routes.ts`): this page must be
- * reachable with no session, because the person cannot sign in — that is why
- * they are here.
- */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -24,12 +11,6 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    /*
-      ⚠⚠ THE CATCH SETS THE SAME STATE AS SUCCESS. A network failure must not
-      render a different outcome from "no account" — and `E516`'s lesson applies
-      too: a bare fetch with no catch produces silence, which here would leave
-      the button spinning forever.
-    */
     try {
       await fetch("/api/auth/forgot-password", {
         method: "POST",

@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { isSkillShown, shownSkills, selectedRoleIds } from "./shown-skills";
 
-/** `check:shown-skills` — the role filter that replaced the prune (`E517`). */
 let pass = 0;
 const failures: string[] = [];
 const ok = (label: string, cond: boolean) => {

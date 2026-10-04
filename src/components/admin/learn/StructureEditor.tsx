@@ -65,32 +65,9 @@ export type Tree = {
 
 const STYLE_LABEL = Object.fromEntries(COURSE_STYLES.map((s) => [s.value, s.label]));
 
-/**
- * A lesson plays only with BOTH halves.
- *
- * ⚠⚠ IT CALLS `learn.ts`'s `isPlayable` — IT DOES NOT MIRROR IT (`P2-A4-E610`).
- * ⚠ SCOTT, 2026-09-23: *"A hand-rolled copy agrees until the rule changes."*
- * ⚠⚠ THIS FUNCTION IS ONLY A SHAPE ADAPTER, and that is the whole reason the
- * duplicate existed: the authoring tree carries camelCase (`vimeoRef`,
- * `productionStatus`) while the database rows carry snake_case. ⚠ Renaming two
- * fields is not a reason to own a second copy of the rule.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   A lesson plays only with BOTH halves — mirrors `isPlayable` in learn.ts.
- * //   export const isPlayable = (l: TreeLesson) =>
- * //     Boolean(l.vimeoRef?.trim()) && CLAIMS_URL.includes(l.productionStatus);
- */
 export const isPlayable = (l: TreeLesson) =>
   isPlayableRow({ vimeo_ref: l.vimeoRef, production_status: l.productionStatus });
 
-/**
- * Claims a URL on the ladder but hasn't got one — the gap this brief closes.
- *
- * ⚠⚠ IT CALLS `learn.ts`'s `urlMissing` (`P2-A4-E610`). Like `isPlayable` above,
- * this is a SHAPE ADAPTER and nothing else — the tree carries camelCase.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   export const urlMissing = (l: TreeLesson) =>
- * //     CLAIMS_URL.includes(l.productionStatus) && !l.vimeoRef?.trim();
- */
 export const urlMissing = (l: TreeLesson) =>
   urlMissingRow({ vimeo_ref: l.vimeoRef, production_status: l.productionStatus });
 
@@ -103,16 +80,6 @@ export function countLessons(c: TreeCourse) {
   };
 }
 
-/**
- * The nested outline editor (WS2).
- *
- * COLLAPSED BY DEFAULT, and that is the whole design. The biggest path in the
- * catalog is 105 lessons across 6 courses and 30-odd sections; rendered flat
- * that is a wall no one can work in. Courses open one at a time, sections open
- * inside them, and every level carries its counts so an admin can decide what to
- * open WITHOUT opening it. The tree is loaded in a single query, so expanding is
- * instant — collapsing is about what a person can hold, not about bytes.
- */
 export function StructureEditor({
   tree,
   onChanged,

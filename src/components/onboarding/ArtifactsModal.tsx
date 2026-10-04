@@ -5,14 +5,6 @@ import { Modal } from "@/components/Modal";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 import type { ArtifactView } from "@/lib/artifacts";
 
-/**
- * Attach an artifact to a Work-History entry OR a Project (PJv2 WS4 / E078a).
- *
- * ONE modal for both owners — it takes whichever id it was given and posts it
- * through; the server decides whether that owner is the caller's. Two shapes:
- * UPLOAD a file (private bucket) or point at a URL. The tabs exist because those
- * are genuinely different inputs, not two styles of the same field.
- */
 export function ArtifactsModal({
   open,
   onClose,

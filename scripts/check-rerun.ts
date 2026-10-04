@@ -4,35 +4,6 @@ import { computeRerunDiff } from "@/lib/resume/rerun-diff";
 import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
 import type { ParsedResume } from "@/lib/resume/parse";
 
-/**
- * ── ⚠⚠⚠ `check:rerun` — THE COUNTER-CASE IS THE DESTRUCTION CASE ───────────
- *
- * `P2-J14-E561` WS-C. Modelled on `check:role-prune`, which does exactly this
- * for `E517`.
- *
- * ⚠⚠ `E517` DESTROYED NINE `provider_skill` ROWS WITH NO UNDO, and deleted rows
- * are unrecoverable — a re-import is the only repair. ⚠ So the case this gate
- * exists to catch is not "does the re-run work", it is **"has the re-run started
- * removing things."**
- *
- * THE COUNTER-CASE: a profile holding a HAND-ADDED skill, re-run against a
- * résumé that does not mention it. ⚠⚠⚠ ZERO ROWS MAY BE DELETED. If a future
- * change makes the re-run destructive, this fails loudly and by construction.
- *
- * ── ⚠⚠ AND IT GATES THE `E585`-SHAPED DUPLICATION ──────────────────────────
- *
- * ⚠ `rerun-diff.ts` reproduces the writer's skill match — the same `certTerms`,
- * dedup, catalog query, `matchSkills`, and `have`/`toAdd` split. ⚠⚠ THAT IS TWO
- * COMPUTATIONS OF ONE CONCEPT (`E585`), AND IT IS ACCEPTABLE ONLY BECAUSE THIS
- * GATE ASSERTS THEY AGREE. ⚠⚠⚠ A diff that disagrees with the writer shows a
- * provider one thing and does another. Do not delete this assertion.
- *
- * ⚠ NO AI, NO NETWORK: the parsed payload is constructed, exactly as
- * `check:role-prune` constructs its own.
- * ⚠ NOTHING IS SEEDED (`E564`). The probe creates a throwaway `.test` account,
- * asserts against it and deletes it in `finally` — the same shape the existing
- * gate uses, and no row survives the run.
- */
 let fail = 0;
 const assert = (c: boolean, label: string) => {
   console.log(`${c ? "ok   " : "FAIL "} ${label}`);

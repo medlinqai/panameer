@@ -11,25 +11,6 @@ import {
   unpublishAssessment,
 } from "@/lib/learn-assessment";
 
-/**
- * GET   — the current question set, WITH answers (admin review).
- * POST  — regenerate it.
- * PATCH — the REVIEW ACTIONS: `publish`, `unpublish`, `drop` (P1-J3-E020).
- *
- * Admins see correctIndex; learners never do. That asymmetry is the whole point
- * of the brief's "admin can review/tweak" — you cannot judge whether a
- * generated question is fair without seeing which answer it expects.
- *
- * ── ⚠ WHY PATCH AND NOT A SECOND POST ────────────────────────────────────────
- *
- * `POST` already means REGENERATE here, and regenerate is the one action that
- * throws the reviewer's work away. Overloading it with a body discriminator would
- * make "publish" one typo away from "replace every question". Separate verb,
- * separate blast radius.
- *
- * ⚠ THE SCREEN THIS SERVES IS NOT AN EDITOR. There is no route to add a question
- * or rewrite a stem, deliberately — see the note in `learn-assessment.ts`.
- */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -39,12 +20,6 @@ export async function GET(
   const { id } = await params;
 
   const row = await prisma.certificationTest.findUnique({ where: { learning_path_id: id } });
-  /*
-    ⚠ THE REVIEWER NEEDS THE PROVENANCE, NOT JUST THE QUESTIONS. `source_note`
-    holds which documentation URLs informed the set and `status`/`reviewed_*` say
-    whether anyone has stood behind it — all three were already stored and none of
-    them reached the client.
-  */
   const reviewer = row?.reviewed_by
     ? await prisma.person.findUnique({
         where: { id: row.reviewed_by },

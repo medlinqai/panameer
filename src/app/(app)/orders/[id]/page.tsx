@@ -8,23 +8,6 @@ import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * `/orders/[id]` — THE WORK ORDER (`P1-J4-E393` WS-2 + WS-3).
- *
- * ⚠ THE WORK ORDER **IS** THE SOW (`P1-ALL-E380`, quoted in `lib/nav.ts`): scope,
- * duration and price are ITS FIELDS — not a separate document, not an attachment,
- * not a generated PDF to be signed. This page is therefore the document itself
- * and not a summary of one held elsewhere.
- *
- * ⚠⚠ EXCEPT FOR A DIRECT ORDER, WHERE IT **REPRESENTS** A SOW MADE ELSEWHERE.
- * The page says which of the two it is looking at, in a sentence, because the
- * platform can assert the terms of an order it generated and can only record the
- * existence of one it did not. ⚠ Which document GOVERNS if they disagree is a
- * lawyer's question — `E380` flagged it, and nothing here answers it.
- *
- * ⚠ NOT-FOUND, NOT FORBIDDEN, for a non-party. Telling a stranger that an order
- * id exists but belongs to other people is itself a leak.
- */
 export const metadata = { title: "Work Order · Panameer" };
 
 export default async function Page({
@@ -64,31 +47,15 @@ export default async function Page({
         <StatusPill status={o.status} />
       </div>
 
-      {/*
-        ⚠⚠ THE TWO-SIDED ACTIVATION. The buttons come from `o.actions`, computed
-        server-side by `availableActions(order, party)`. This page passes an
-        ARRAY and no party flag — see `OrderActivation` for why that is the proof
-        rather than a convention.
-      */}
+      {}
       <div className="mt-6">
         <OrderActivation orderId={o.id} actions={o.actions} message={o.activationMessage} />
       </div>
 
-      {/*
-        ⚠⚠ A DIRECT ORDER SAYS WHAT IT IS, IN WORDS, NOT ONLY IN A BADGE. The row
-        on the list must not imply a work request; this page must not imply that
-        Panameer issued terms it merely recorded.
-      */}
+      {}
       {o.origin === "DIRECT" && (
         <div className="mt-4 rounded-brand border border-line bg-ink/[0.02] p-5">
-          {/*
-            ⚠⚠⚠ RENAMED (`P2-A8-E712` WS-D) — *"from 'direct' (borrowed from Upwork) to
-            'externally sourced'"* (Scott, 2026-09-27). ⚠ The sentence below already
-            described the thing correctly — *"agreed outside Panameer and brought in"* —
-            so only the heading carried the borrowed word.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <p className="text-[15px] font-bold">A direct work order</p>
-          */}
+          {}
           <p className="text-[15px] font-bold">An externally sourced work order</p>
           <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
             This deal was agreed outside Panameer and brought in to use settlement

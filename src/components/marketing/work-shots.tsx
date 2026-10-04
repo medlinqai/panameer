@@ -1,57 +1,5 @@
 import { ShotCard } from "@/components/learn/public/shared";
 
-/**
- * THE WORK SPINE'S GRAPHICS (`P1-J4-E015`).
- *
- * ── ⚠⚠ THE HONESTY TEST DECIDED FOUR OF THE FIVE ────────────────────────────
- *
- * A graphic of an unbuilt screen is a picture of software that does not exist, and
- * a DRAWN claim is stronger than the sentence above it — a reader takes a screenshot
- * as evidence in a way they do not take prose.
- *
- * Steps 2-5 have NO models at all: no `Proposal`, no `Offer`, no `WorkOrder`, no
- * `SettlementRequest`, no `Invoice`, no `Payment`. So:
- *
- *   1 Create Work Request      NEW (below) — the wizard and the JD paste door BOTH
- *                              exist; this is the one step that can carry a shot.
- *   2 Accept Proposal          ⚠ NONE — a "proposal accepted" card would be a
- *                              drawing of a model that does not exist.
- *   3 Release Work Order       ⚠ NONE — same, for `WorkOrder`.
- *   4 Approve Settlement Req.  ⚠ NONE — same, for `SettlementRequest`.
- *   5 Pay Panameer             ⚠ NONE — an invoice or a receipt would be the
- *                              strongest false claim on the page.
- *
- * ⚠ AN EMPTY GRAPHIC RENDERS NOTHING AND THAT IS THE ANSWER, NOT A GAP.
- * `spine-steps.ts` records the rule and `/optimize` ships two empty ones today.
- * ⚠ DO NOT FILL THESE FOUR. Fill them when the models exist.
- *
- * ⚠ THE INVENTORY WAS RUN FIRST AND NOTHING FIT. Nineteen shot components exist;
- * every one draws a Learn surface, an assessment surface, a provider profile or a
- * package list. None depicts a work request, and adapting e.g. `PathProgressShot`
- * into a fake settlement timeline would be the same lie in a reused shell.
- *
- * ⚠ `ShotCard`, NOT `AppShot`, for the reason `talent-shots.tsx` records: the Talent
- * spine ships `PathProgressShot` unchanged and that is a `ShotCard`, so the site's
- * spine graphics are `ShotCard`-shelled. One shell across the spines is the rule's
- * intent. REPORTED as a deviation from the brief's `AppShot` instruction.
- *
- * ⚠ NO REAL BUYER, PROVIDER OR COMPANY NAMES. ⚠ NO PRICES OR SAVINGS FIGURES —
- * explicitly forbidden by this brief, and the budget row below shows a RANGE with no
- * currency total attached.
- */
-
-/**
- * STEP 1 — THE JD PASTE DOOR AND WHAT IT FILLS.
- *
- * ⚠ EVERY FIELD DRAWN HERE IS ONE `/api/work-requests/import` ACTUALLY WRITES:
- * `description` + `title`, `startDate`/`endDate`, `budgetType` + `budgetMin`/`Max`,
- * and `locationCountry` + `worksite`. Verified against the route, not assumed.
- *
- * ⚠ `Skills` IS SHOWN AS **held, not saved** BECAUSE THAT IS WHAT THE CODE DOES —
- * the route returns skills and the wizard applies them on the skills step, since
- * they cannot be validated until a role and domain exist. Drawing them as saved
- * would be the one inaccuracy available in an otherwise honest shot.
- */
 export function WorkRequestDraftShot() {
   const FILLED = [
     { label: "Title", value: "Oracle Cloud Procurement rollout support" },
@@ -70,7 +18,7 @@ export function WorkRequestDraftShot() {
         </span>
       </div>
 
-      {/* ⚠ THE DOOR ITSELF, AS IT IS ON STEP 1 — first of three, badged Fastest. */}
+      {}
       <div className="mt-4 rounded-[12px] border border-dashed border-magenta/45 bg-magenta/[0.05] px-4 py-3">
         <span className="flex items-center gap-2">
           <span className="text-[12.5px] font-bold text-ink">

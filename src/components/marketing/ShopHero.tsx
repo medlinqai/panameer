@@ -17,69 +17,12 @@ import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { shopHeroStats } from "@/lib/shop-stats";
 
-/**
- * `/buy-services`'s HERO — THE TWO-COLUMN TREATMENT (`P1-J2-E001`).
- *
- * ⚠⚠ IT REPLACES A HERO WHOSE KICKER AND `<h1>` LITERALLY READ `PLACEHOLDER —
- * Shop` AND `PLACEHOLDER — headline about packaged services goes here.` on a
- * top-level nav destination. That is what came off.
- *
- * Scott, 2026-08-24: *"By mistake i confused WORK with SHOP in the main name
- * (Deploy faster...). So we can use that tagline on the SHOP page Hero."*
- *
- * ⚠ SO THE `<h1>` IS NOT NEW COPY — IT MOVED. `Deploy Faster. With Less Risk.`
- * was `/find-work`'s headline (`P1-J4-E003`) until `P1-J4-E017` replaced it there
- * with `Save Money. Go Direct.` ⚠ THE TWO BRIEFS MUST RUN IN ORDER OR THE SAME
- * HEADLINE SITS ON TWO PAGES; verified before this shipped that `/find-work` no
- * longer renders it, and verified after that exactly one page does.
- *
- * ⚠ ITS OWN FILE, NOT AN EDIT TO `MarketingHero`, for the reason `HireTalentHero`
- * and `FindWorkHero` both record: that component still serves `/enterprise` and
- * `/why-panameer`, and every change here is `/buy-services`-only. ⚠ FOURTH PAGE
- * ON `HeroTwoUp` (`5d50135`).
- *
- * ⚠ NO PILL. `P1-J4-E009` and `P1-J1-E013` removed the other two; no public hero
- * carries one, and the `PLACEHOLDER — Shop` kicker was the last. ⚠
- * `BUY_SERVICES_HERO` IS LEFT ON DISK, NOW UNIMPORTED — the `E164` resolution,
- * and the same treatment `HIRE_HERO.kicker` got.
- * ⚠ NO STAT ROW AND NO BRIDGE LINE. Scott has given neither, and nothing on this
- * page is countable: ONE published `Package`, and it is ours.
- */
 export async function ShopHero() {
   const stats = await shopHeroStats();
   return (
-    /*
-      ⚠ THE SAME `HeroBox` CARD AND GRADIENT `MarketingHero` GAVE THIS PAGE,
-      transcribed so the container change is not also a visual change. The
-      surface is byte-identical to the string that hero renders; `HeroTwoUp`
-      supplies the columns and nothing about the skin is new.
-    */
     <HeroBox cardClassName={HERO_CARD}>
       <section className="relative px-6 pb-[48px] pt-[44px] min-[901px]:pb-[72px] min-[901px]:pt-[64px]">
-        {/*
-          ── ⚠⚠ THE HERO CLIP (`P1-J2-E009`) ─────────────────────────────────
-
-          `get-paid-hero.mp4`, 0.83MB — Scott's revised mapping 2026-08-25: the page
-          whose spine ENDS IN A PAYMENT gets the get-paid footage.
-
-          ⚠ THE `-hero` CUT, NEVER `get-paid.mp4` (3.07MB). Faststart verified
-          (`moov` before `mdat`), ~4.5s to download whole on fast 3G. ⚠ IT IS THE
-          HEAVIEST OF THE THREE CLIPS IN THIS BRIEF and the only one worth watching
-          in the throttled numbers.
-
-          ⚠ THE CARD'S GRADIENT STAYS AND IS NOT DECORATION — it paints before the
-          clip arrives, it is what a `prefers-reduced-motion` visitor sees, and it is
-          what keeps the white `<h1>` legible. `isolate` keeps the video and scrim
-          stacking inside the card; `overflow-hidden` still comes from `HeroBox`,
-          which is what makes the clip respect the radius.
-
-          ⚠ `HeroVideoBackdrop` IS COMPOSED, NEVER EDITED.
-
-          ⚠ THIS PAGE IS NO LONGER `PLACEHOLDER` — `1d790be` gave it a real hero
-          (`Deploy Faster. With Less Risk.`, Scott's sub-copy, a `Start Shopping Now`
-          control) and a real five-step spine. The clip lands behind finished copy
-          here, unlike `/enterprise`.
-        */}
+        {}
         <HeroVideoBackdrop
           src="/get-paid-hero.mp4"
           poster="/posters/settle.svg"
@@ -91,103 +34,14 @@ export async function ShopHero() {
             rowClassName="grid grid-cols-1 items-center gap-10 min-[901px]:grid-cols-2 min-[901px]:gap-14"
             left={
               <>
-                {/*
-                  ⚠ VERBATIM, AND IT IS THE STRING THAT LEFT `/find-work` — both
-                  terminal periods are part of it. Scott accepted chat's edit of his
-                  own `Deploy Faster and/or with Less Risk` when it was that page's
-                  headline; `and/or` is a contract construction, not a headline.
-                */}
+                {}
                 <h1 className="font-display text-[34px] font-bold leading-[1.08] tracking-[-0.8px] min-[901px]:text-[46px] min-[901px]:tracking-[-1px]">
                   Deploy Faster. With Less Risk.
                 </h1>
 
-                {/*
-                  ── ⚠⚠ THE BUTTON SHIPS. IT HAS NOWHERE TO GO. (`P1-J2-E002`) ──
-
-                  Every candidate destination was checked live, signed out, rather
-                  than assumed:
-
-                    · `(app)/packages` (Search Service Products)  ComingSoon **and** 307 -> /login
-                    · `(app)/services/offers`             ComingSoon **and** 307 -> /login
-                    · `(app)/providers/[id]`              307 -> /login — and it is the
-                      ONLY page in the app that renders a published `Package` at all
-                      (`listPublishedPackages`, one caller)
-                    · `/explore?mode=hire`                200, but it lists PEOPLE;
-                      the one published product does not appear on it
-                    · this page's own `ErpPackages`       agent CATEGORIES, no price,
-                      no provider, nothing purchasable — its own header says so
-
-                  ⚠ SO THERE IS NO PUBLIC SURFACE ANYWHERE IN THE APP THAT LISTS
-                  SERVICE PRODUCTS, AND THE HREF IS THE ONE THING THIS WORK STREAM
-                  STOPPED ON. `P1-J0-E316` is the precedent and it is explicit: a
-                  primary CTA landing on a `ComingSoon` — or worse, on a login wall —
-                  is WORSE than no CTA, and Scott has been burned by it once already
-                  on `/learn`.
-
-                  ⚠ SHIPPED AS A DISABLED `<button>`, WHICH IS A DELIBERATE CHOICE
-                  AND A REPORTED ONE. An `<a>` with no `href` is not a control at
-                  all — not focusable, invisible to `check:app-shell`'s PUBLIC HERO
-                  guard, which requires a hero to offer something clickable. A live
-                  link to any of the five above would be the false door. A button
-                  that is visibly not yet live is the only option that is neither a
-                  lie nor a removal. ⚠ THE DESTINATION IS SCOTT'S DECISION; the
-                  moment a public catalog exists this becomes a `<Link>`.
-
-                  ⚠ NO CAPTION UNDER IT EXPLAINING WHY. That would be CC inventing
-                  copy for a hero, which is exactly what the rest of this file
-                  refuses to do.
-                */}
-                {/*
-                  ── ⚠⚠ WS6 — IT READS AS DELIBERATE NOW, NOT BROKEN ───────────
-
-                  Scott: *"Button seems to be behind the color shading? Something
-                  is off."* He was right, and the cause was the previous state: a
-                  FILLED MAGENTA PRIMARY at `opacity-60`. A dimmed primary reads as
-                  a rendering fault, which is worse than either a live button or an
-                  honest one.
-
-                  ⚠ NO REAL DESTINATION EXISTS AND I CHECKED RATHER THAN ASSUMED.
-                  `/explore` takes ONE parameter, `mode`, and `page.tsx:54` reads
-                  `sp.mode !== "work"` — so it serves EXPERTS or WORK REQUESTS and
-                  has no product mode at all. `(app)/packages` and
-                  `(app)/services/offers` are `ComingSoon` AND auth-gated;
-                  `(app)/providers/[id]` is the only page that renders a published
-                  `Package` and it 307s signed out. ⚠ NO ROUTE WAS INVENTED.
-
-                  ⚠ SO IT IS NOW AN OUTLINED, NON-INTERACTIVE STATE WITH ITS REASON
-                  ON IT: a bordered control at full opacity — no magenta fill, so it
-                  cannot be mistaken for a broken primary — carrying the word
-                  `Soon`. `aria-disabled` rather than `disabled` so it stays in the
-                  reading order for a screen reader, which is the honest thing for a
-                  label that explains itself.
-                */}
-                {/*
-                  ── ⚠⚠ THE STANDARD MAGENTA FILL, STILL NOT A LINK (`P1-ALL-E031` §5) ─
-
-                  ⚠ IT TAKES THE STANDARD TREATMENT — same magenta, same radius, same
-                  `font-display` type — because Scott asked for consistency *"even if
-                  they have not been linked yet"*. It was outlined `border-white/35`
-                  before, which made it the one control on the site that did not look
-                  like a CTA.
-
-                  ⚠⚠ AND IT IS STILL `aria-disabled` WITH NO `href`, DELIBERATELY.
-                  Scott named WHAT it opens on 2026-08-27 — *"shop destination will be
-                  the items. IF you are not logged in - a subset of them. If you are,
-                  all of them."* — but HE NAMED NO ROUTE AND NO SUCH ROUTE EXISTS. The
-                  public item list is a `P1-J2` BUILD.
-                  ⚠ NOT `href="#"`, NOT an empty `href`, NOT a dead click handler, NOT
-                  `(app)/packages` (signed-in, 307s), NOT `/explore` (that shows
-                  EXPERTS and Scott has superseded it). No catalogue, stub or
-                  "coming soon" page was built to link to.
-
-                  ⚠ THE `Soon` PILL IS WHAT KEEPS THE MAGENTA HONEST. A live-looking
-                  magenta button with no destination is the four-second disproof
-                  (`ORIENTATION §6`) and worse than the disabled state it replaces;
-                  the pill is what stops the fill from making that promise.
-                  ⚠ `aria-disabled` RATHER THAN `disabled` so it keeps its place in
-                  the reading order for a screen reader.
-                  ⚠ `P1-J2-E010` AND `P1-J2-E011` BOTH STAY OPEN against that build.
-                */}
+                {}
+                {}
+                {}
                 <button
                   type="button"
                   aria-disabled="true"

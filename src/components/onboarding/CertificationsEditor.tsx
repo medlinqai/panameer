@@ -3,10 +3,6 @@
 import { useRef, useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 
-/**
- * A certification is STANDALONE (brief_U / E044): it belongs to the certifying
- * agency that issued it, never to an employer. Final field set below.
- */
 export type CertificationDraft = {
   name: string;
   /** The certifying agency / issuing body. */
@@ -61,8 +57,7 @@ export function CertificationsEditor({
             </Field>
           </div>
 
-          {/* Credential fields (brief_T / E040) — optional; a verify link is
-              what turns a claimed certification into a checkable one. */}
+          {}
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <Field label="Credential ID">
               <TextInput
@@ -142,14 +137,6 @@ export function CertificationsEditor({
   );
 }
 
-/**
- * Upload the certificate itself (brief_U / E044). Stored in the PRIVATE
- * `certifications` bucket — a certificate carries a full name and credential
- * number — so what comes back is an object PATH, not a public URL.
- *
- * Exported so the modal editor (`CertificationCards`, brief_X / E057) uses the
- * same uploader rather than a second copy that could drift from this one.
- */
 export function CertificationAttachment({
   value,
   onChange,

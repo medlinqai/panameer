@@ -4,32 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
 
-/**
- * ── ⚠⚠⚠ THE TWO OPTIONAL STEPS ON A PROPOSAL (`P2-A8-E683a` WS-E) ────────
- *
- * ⚠⚠⚠ **BOTH WRITERS EXISTED AND NEITHER HAD A DOOR.** `interviews.ts` (322
- * lines, five exports) and `work-tests.ts` (345 lines, four exports) had **zero
- * importers in `src/`** — only `scripts/check-interviews.ts`. This component
- * and its two routes are the door, and nothing about the writers changed.
- *
- * ── ⚠⚠ OPTIONAL MEANS OPTIONAL, AND THE GATE HOLDS IT ────────────────────
- *
- * ⚠ The brief: *"each optional… **neither may be made a precondition of
- * WS-F**."* ⚠⚠ Measured: `selection.ts` reads neither `InterviewRequest` nor
- * `TestRequest`, and `check:work-chain` fails if it ever does. **A buyer may
- * select a provider having interviewed nobody and tested nobody.**
- * ⚠⚠⚠ **SO THESE CONTROLS NEVER DISABLE ANYTHING AND NEVER GATE ANYTHING.**
- * They add two things a buyer MAY do, and removing them tomorrow would remove
- * no capability from selection.
- *
- * ── ⚠⚠ IT SHOWS THE STATE, BECAUSE A BUTTON WITH NO ANSWER IS A GUESS ────
- *
- * ⚠ `null` means *not asked* — a real and common state, so it reads **"Not
- * requested"** rather than a dash (ruling 18: a dash means *we cannot count
- * this*, which would be false here).
- * ⚠⚠ Both writers are IDEMPOTENT — an open interview or test returns the
- * existing row rather than a second — so a double click cannot produce two.
- */
 export function ProposalSteps({
   workRequestId,
   providerPersonId,
@@ -43,11 +17,6 @@ export function ProposalSteps({
   providerName: string;
   interviewStatus: string | null;
   testStatus: string | null;
-  /**
-   * ⚠⚠ The PUBLISHED path tests a buyer may send. ⚠⚠⚠ **IT IS A QUERY RESULT,
-   * NEVER A LITERAL** — 2 published and 6 draft today, and the next catalog
-   * changes both numbers (the constraint the whole Learn brief turns on).
-   */
   tests: { id: string; title: string }[];
 }) {
   const router = useRouter();

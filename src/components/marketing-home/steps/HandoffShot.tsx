@@ -1,23 +1,3 @@
-/**
- * STEP 3 GRAPHIC — the handoff. An email carrying the link, dashboard behind.
- *
- * The composition IS the message: the dashboard is already built and sitting
- * there, and the email is just the key. That is why the dashboard sits behind
- * rather than after — "we build it, then we mail you" drawn as two sequential
- * cards would read as a wait.
- *
- * ── THE LINK TEXT IS THE REAL ONE ────────────────────────────────────────────
- *
- * `/assess/claim/<token>` is what `api/assessment/route.ts` actually mails to a
- * logged-out submitter, and clicking it signs them in and lands them on
- * `/assess/r/<token>` — verified end to end for §6 of this brief. The token is
- * a visibly fake uuid so nobody tries it.
- *
- * Inert by construction: the "link" is a <span>, not an <a>. It is inside a
- * decorative card, and `check:ui` §12 forbids interactive nesting anywhere on
- * this page — but more simply, a marketing graphic must not offer a click that
- * goes nowhere.
- */
 export function HandoffShot() {
   return (
     <div className="hos">

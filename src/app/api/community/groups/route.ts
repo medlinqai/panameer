@@ -9,19 +9,6 @@ const BODY = z.object({
   action: z.enum(["join", "leave"]),
 });
 
-/**
- * POST /api/community/groups — join, ask to join, or leave (`P2-A3-E612`).
- *
- * ⚠⚠ OWNER-SCOPED: the person is resolved from the session, never from the body.
- *
- * ⚠⚠⚠ IT MOVES NO MONEY AND OFFERS NO PURCHASE. A priced group is refused with
- * `NOT_PURCHASABLE` and the sentence names the MECHANISM, not the member:
- * nothing can be bought yet because no `Payment` row is ever created anywhere in
- * the codebase. ⚠ Buying happens in Shop, when Shop can sell.
- *
- * ⚠ THE TYPE RULES ARE ENFORCED IN THE LIB, NOT HERE. A page that does not
- * render a Join control is not a boundary; `joinGroup` is.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
@@ -41,8 +28,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, state: res.state });
   } catch (err) {
     if (err instanceof GroupError) {
-      /* ⚠ THE REFUSAL CARRIES ITS REASON, so the page can explain rather than
-         just failing. ⚠⚠ 409, not 403: nothing about the MEMBER is wrong. */
       return NextResponse.json({ error: err.message, code: err.code }, { status: 409 });
     }
     throw err;

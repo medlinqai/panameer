@@ -1,25 +1,3 @@
-/**
- * `check:company-binding` — the defect class is "`Person.company_id` was treated
- * as proof of a company" (brief_company_binding_trap WS4).
- *
- * It cost Scott the entire buyer side: *"I went to look at the buyer side the
- * other day and I was forced to do something with my company details and I
- * couldn't, so it kept me from doing anything."* Two pieces of code disagreed
- * about one word — `requesterGaps` read `Person.company.name` (the signup
- * placeholder, which every account has) while `getCompanyBinding` read
- * `Person.companyMemberships` (which only two functions ever write) — and the
- * only UI that could reconcile them was behind the block itself.
- *
- *   1  NO COMPLETION PATH TESTS A COMPANY BY NAME OR BY `company_id`.
- *   2  `CompanyMembership` IS WRITTEN IN EXACTLY TWO PLACES — `defineCompany`
- *      and `joinCompany`. A third is a third attestation nobody made.
- *   3  `/company`'s NO-BINDING BRANCH RENDERS THE FORM, not a link.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN. This file and the files it guards
- * both document the forbidden shapes at length; a scanner that read prose would
- * fail on its own documentation, and the fix for that is always to weaken the
- * scanner.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -44,15 +22,6 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 const SELF = join("scripts", "check-company-binding.ts");
-/*
-  ⚠ `prisma/` IS IN SCOPE, AND THE FIRST VERSION OF THIS GUARD MISSED IT.
-
-  I broke it deliberately with a membership-minting backfill dropped in
-  `prisma/` and the guard passed — because it only walked `src/` and `scripts/`.
-  A backfill is EXACTLY where this defect would arrive: the brief's instruction is
-  "do not write a backfill that mints memberships", and a backfill does not live
-  in `src/`.
-*/
 const files = [...walk("src"), ...walk("scripts"), ...walk("prisma")].filter((f) => f !== SELF);
 const bodies = new Map(files.map((f) => [f, strip(readFileSync(f, "utf8"))]));
 
@@ -150,11 +119,6 @@ check(
   /gaps\.push\("Your name"\)/.test(onboarding) &&
     /gaps\.push\("A work location"\)/.test(onboarding)
 );
-/*
-  ⚠⚠ THE LOAD-BEARING ONE. If a company test ever returns to `requesterGaps` in
-  ANY form — bound, defined, tin, a membership status — the buyer side breaks the
-  way it broke before. This is the assertion the old pair should always have been.
-*/
 {
   const fn = onboarding.match(/export function requesterGaps[\s\S]*?\n\}/)?.[0] ?? "";
   check("GUARD 1 — the guard can see requesterGaps", fn.length > 0);
@@ -163,8 +127,6 @@ check(
     fn.length > 0 && !/company/i.test(fn),
     fn.replace(/\s+/g, " ").slice(0, 200)
   );
-  /* ⚠ AND IT PUSHES NOTHING ELSE. A third gap added quietly is a third way to
-     dead-end somebody; adding one should be a deliberate edit to this line. */
   const pushes = [...fn.matchAll(/gaps\.push\(/g)].length;
   check("GUARD 1 — requesterGaps pushes exactly two gaps", pushes === 2, `${pushes}`);
 }
@@ -363,13 +325,6 @@ check(
   mintScripts.map(([n]) => n).join(", ")
 );
 
-/*
-  ⚠ AND THE FILE REFUSES TO RUN EVEN IF INVOKED DIRECTLY. A file that still
-  executes is still a hazard: `npx tsx prisma/_retired_backfill-memberships.ts`
-  does not care that the npm script is gone, and somebody will eventually type it.
-  The refusal has to come BEFORE the first query, so this asserts `process.exit`
-  appears ahead of every `prisma.` call in the file — position, not presence.
-*/
 const retired = bodies.get(KNOWN_MINT) ?? "";
 const exitAt = retired.indexOf("process.exit(1)");
 const firstQueryAt = retired.search(/prisma\.[a-zA-Z]+\.(findMany|findFirst|findUnique|create|count|update|delete)/);

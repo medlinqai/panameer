@@ -1,32 +1,3 @@
-/**
- * THE TEN PROCURE-TO-PAY CAPABILITY DOMAINS, for the home page's framework card.
- *
- * ⚠ SAMPLE DATA. Nothing here is measured and nothing is wired to the database.
- * It exists to show the SHAPE of a per-domain maturity read — the same artifact
- * `/assess` produces from real answers. Presentational, like the product shot
- * beside it.
- *
- * ── ONE ARRAY, NOT FIGURES SCATTERED THROUGH JSX ─────────────────────────────
- *
- * The card used to hardcode four KPIs in markup. Ten domains x four KPIs in
- * markup would be forty numbers no one could audit, and the brief is explicit:
- * one array, one type, consumed by the card.
- *
- * ── ⚠ THE ARITHMETIC INVARIANT ───────────────────────────────────────────────
- *
- * The ten scores MEAN TO EXACTLY 42, and 42 is not a coincidence: it is the org
- * score on the product shot's first tile ("42 vs. 73 — best-practice ERP peer
- * median", see DashboardShot.tsx). The two sections sit within a screen of each
- * other on the same page, so a visitor can average these by eye and catch a
- * mismatch.
- *
- *     33 + 26 + 37 + 72 + 49 + 60 + 49 + 39 + 30 + 25 = 420 / 10 = 42
- *
- * `P2P_OVERALL_SCORE` is DERIVED below rather than typed, and the component
- * renders that constant — so editing a domain score without touching the tile
- * cannot silently desync the two. It can still desync from DashboardShot, which
- * is why `capability-domains.test.ts` asserts the mean is 42.
- */
 
 export type Direction = "up" | "dn";
 
@@ -36,14 +7,6 @@ export type Kpi = {
   label: string;
   /** Pre-formatted movement, arrow included — "▲ +12% vs last qtr". */
   delta: string;
-  /**
-   * ⚠ `dir` IS ABOUT THE ARROW, NOT ABOUT WHETHER THE NEWS IS GOOD.
-   *
-   * Falling maverick spend is an improvement and renders `▼`. The existing
-   * `.t.up` / `.t.dn` classes are both green in home.css for exactly that
-   * reason — the direction shown is the direction the number moved, and the
-   * card does not editorialise. Keep the convention.
-   */
   dir: Direction;
 };
 
@@ -64,20 +27,6 @@ const k = (value: string, label: string, delta: string, dir: Direction): Kpi => 
   dir,
 });
 
-/*
-  ⚠ THE `id` FIELDS ARE THE ASSESSMENT BANK'S KEYS, AND THREE OF THEM WERE ALIGNED AT E004.
-  They read `receipt`, `data_ai_gov` and `change_adoption`; the bank
-  (`lib/assessment/questions-p2p.ts`) calls those `receiving`, `data_ai_governance` and
-  `change_ai_adoption`. Seven of ten already matched, so this was a three-key reconciliation
-  rather than a re-taxonomy.
-
-  The bank wins because it is what SCORES a respondent and stored answers already reference
-  it. Aligning these cost nothing — they were consumed only as React `key=` props and
-  nothing ever looked them up, which is exactly why the divergence survived unnoticed.
-
-  ⚠ THE DISPLAY NAMES ARE UNTOUCHED and stay different from the bank's on purpose. Join on
-  the key; never on the name.
-*/
 export const P2P_DOMAINS: CapabilityDomain[] = [
   {
     id: "requisitioning",
@@ -214,18 +163,10 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
 /** Pre-selected on first paint — the figures the mockup has always shown. */
 export const DEFAULT_DOMAIN_ID = "purchase_orders";
 
-/**
- * The process score, DERIVED. Must equal DashboardShot's tile-1 org score (42).
- * Asserted in capability-domains.test.ts.
- */
 export const P2P_OVERALL_SCORE = Math.round(
   P2P_DOMAINS.reduce((n, d) => n + d.score, 0) / P2P_DOMAINS.length
 );
 
-/**
- * The maturity ladder. Bands are half-open at the top except the last:
- * Initial 0–25 · Developing 26–50 · Optimized 51–80 · Leading 81–100.
- */
 export const LADDER = ["Initial", "Developing", "Optimized", "Leading"] as const;
 export type Band = (typeof LADDER)[number];
 
@@ -236,18 +177,6 @@ export function bandFor(score: number): Band {
   return "Leading";
 }
 
-/**
- * How many optimization opportunities sit in each domain — the T2 tile graphic
- * on the product shot (one column per domain, in THIS array's order).
- *
- * ⚠ TWO INVARIANTS, both asserted in capability-domains.test.ts:
- *   · the length equals P2P_DOMAINS.length, so column N is domain N;
- *   · the SUM is 23, which is the number printed on the tile.
- *
- * It lives here rather than in DashboardShot because the order is this file's
- * order — a column chart whose bars silently stop lining up with the list they
- * claim to describe is the failure worth preventing.
- */
 export const OPPORTUNITIES_BY_DOMAIN = [4, 3, 3, 1, 2, 2, 2, 3, 2, 1] as const;
 
 export const TOTAL_OPPORTUNITIES = OPPORTUNITIES_BY_DOMAIN.reduce((n, v) => n + v, 0);

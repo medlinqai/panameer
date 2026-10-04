@@ -4,42 +4,8 @@ import { SendToColleagues } from "@/components/assessment/SendToColleagues";
 import { EmailedNotice } from "@/components/assessment/EmailedNotice";
 import { MaturityDashboard } from "@/components/marketing/MaturityDashboard";
 
-/**
- * THE REPORT (WS-D) — the output surface, in the image-2 dashboard shape.
- *
- * NOT A WIZARD, and that is a rule rather than a style choice: the brief draws
- * the line explicitly, and a result rendered in step chrome reads as another
- * question. So this is a dashboard — money tiles across the top, the ranked
- * moves beneath, the progress card to the side.
- *
- * ── FOUR TILES, AND FUNDING IS NOT SAVINGS ───────────────────────────────────
- *
- * Funding Available and Opportunity on the Table are SEPARATE tiles, never
- * summed into one headline. They are different kinds of money — one is what the
- * tax treatment can cover, the other is what better process recovers — and
- * merging them would be the single most dishonest number the page could show.
- *
- * ── THE FUNDING NUMBER CARRIES NO CAVEAT LABEL ───────────────────────────────
- *
- * Locked decision: it renders as a figure, unlabelled. The honesty rail is that
- * the RATE behind it is configuration a Panameer Admin owns (default 18%, per
- * geography overridable) — not that the UI hedges the number with "estimate".
- * Scott manages this claim. Do not add a disclaimer here without him.
- *
- * ── THE DONUT IS 0% AND THAT IS THE TRUTH ────────────────────────────────────
- *
- * A fresh report has delivered nothing, so progress against the plan is zero.
- * It is drawn as a real ring at zero rather than hidden, because the empty ring
- * is the point: this is the plan, and the tracker fills it in as work lands
- * (Phase 2). Showing a seeded 12% would be the exact fake-live the rails forbid.
- */
 export function ReportDashboard({
   model,
-  /**
-   * Set only on the redirect straight off submit, and only when the API
-   * confirmed the send. Absent on every later visit and on a forwarded link —
-   * see `EmailedNotice`.
-   */
   emailedTo = null,
 }: {
   model: ReportModel;
@@ -67,11 +33,6 @@ export function ReportDashboard({
         <Tile
           label="Yr-1 Funding Available"
           value={formatRange(model.funding)}
-          /*
-            NO "est" CHIP ON THIS TILE. The other three carry one; this one is
-            deliberately bare per the locked decision. The sub-line explains
-            the mechanism without qualifying the figure.
-          */
           sub="AI R&D credit + accelerated depreciation. Your CPA firms it up."
           accent
         />
@@ -89,12 +50,6 @@ export function ReportDashboard({
         />
         <Tile
           label="Net, Year 1"
-          /*
-            The word, not a number — and it is COMPUTED, not asserted. `netLow`
-            takes funding low + opportunity low − investment HIGH, so "Positive"
-            only prints when it survives the worst end of all three ranges. If
-            it ever does not, the tile says so rather than lying.
-          */
           value={net ? "Positive" : "Needs scoping"}
           sub={
             net
@@ -152,11 +107,7 @@ export function ReportDashboard({
             )}
           </ol>
 
-          {/*
-            "NOT SURE" IS SURFACED AS A FINDING, not swallowed. The engine spec
-            says an unknown is usually an unowned process, which is exactly the
-            kind of thing the call is for.
-          */}
+          {}
           {model.unknownDomains.length > 0 && (
             <p className="mt-4 rounded-brand border border-line bg-bg-soft p-4 text-[14.5px] text-ink-2">
               You marked <span className="font-bold text-ink">{model.unknownDomains.length}</span>{" "}

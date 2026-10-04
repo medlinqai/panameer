@@ -1,26 +1,3 @@
-/**
- * `check:tin` — the tax id is regulated data, and this is the fence
- * (`P1-ALL-E404` WS-2). `npm run check:tin`.
- *
- * ── ⚠⚠ THE ASSERTION THIS FILE EXISTS FOR ──────────────────────────────────
- *
- * **A TIN MUST NEVER REACH A THIRD-PARTY MODEL.** That is not hypothetical here:
- * this product already ships whole documents to Anthropic through
- * `callExtractionModel`, and `Company.tin` is selected in `work-feed.ts` and
- * `work-request-identity.ts` and travels inside company objects. One careless
- * spread — `{ ...company }` into a prompt — is all it takes, and nothing about
- * the resulting request would look wrong.
- *
- * ⚠ THE AI FILES ARE DISCOVERED, NOT LISTED. A hand-written list of "the files
- * that talk to a model" is out of date the first time somebody adds one, and the
- * file they add is exactly the one that would leak. §3 finds them by following
- * the SDK import and the shared call site.
- *
- * ⚠ AND A FORMAT PASS IS NOT A VERIFIED TIN — §2 asserts nothing in the repo can
- * produce `match`, because Panameer is not enrolled and cannot.
- *
- * ⚠ NO DATABASE AND NO BROWSER.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { checkTin, maskTin, tinFormatMessage, IRS_EIN_PREFIXES } from "@/lib/tin";

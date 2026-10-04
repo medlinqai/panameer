@@ -1,28 +1,3 @@
-/**
- * `check:reclassify` — the field map, which is the part that silently rots
- * (`P1-J1.4-E296` / `P1-J1.4-E307`).
- *
- *   1  EVERY `Employer` SCALAR HAS A DESTINATION. ⚠ The list is ENUMERATED here
- *      AND read back out of `prisma/schema.prisma`, so adding a column to
- *      `Employer` later FAILS THIS HARNESS instead of quietly disappearing on
- *      the next conversion.
- *   2  ROUND TRIP: employer → project → employer returns every mapped field
- *      unchanged. ⚠ THIS IS THE TEST THAT PROTECTS UNDO — undo is the inverse
- *      conversion, not a snapshot, so if the map is not lossless then undo lies.
- *   3  `job_skills` / `artifacts` MOVE RATHER THAN CASCADE — asserted as a
- *      STATIC SCAN of the function body, proving the `updateMany` calls precede
- *      the `delete`. Said plainly because it is a scan and not a runtime test:
- *      the ordering is the correctness argument and a scan is what can see it
- *      without a database.
- *   4  `projectData()` IS NOT ON THE CONVERSION PATH. It requires client name,
- *      description, role type and dates; a parser-created employer has none of
- *      them guaranteed, so routing a conversion through it would reject exactly
- *      the rows this feature exists to rescue.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN, reusing `check-community.ts`'s
- * `strip()` — this file and `employers.ts` both discuss the very calls the scan
- * looks for.
- */
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";

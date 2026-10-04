@@ -4,26 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
 
-/**
- * ── ⚠⚠⚠ THE TWO TRANSITIONS (`P2-A8-E684` WS-F) ─────────────────────────
- *
- * ⚠⚠ **RULING 17 SPLITS THEM AND THIS FILE KEEPS THEM SPLIT.**
- *   · **SELECT** — `POSTED → ASSIGNED`. The provider, **their proposed rate**,
- *     the line status, the bid `AWARDED`, the losers `NOT_SELECTED`.
- *     ⚠ Reversible: `reverseSelection` exists for exactly this state.
- *   · **ORDER** — `ASSIGNED → ORDERED`. A `WorkOrder` `ISSUED` with its lines,
- *     and `not_to_exceed_cents` set. ⚠⚠⚠ **THIS IS THE IRREVERSIBLE ONE**, and
- *     that is why it is a second button and not the tail of the first.
- *
- * ⚠⚠⚠ **A BUYER WHO SELECTS IS NOT THEREBY CONTRACTED.** Collapsing the two
- * would make choosing somebody and committing to them the same click, which is
- * the one place in this chain where an accidental press costs money.
- *
- * ⚠⚠ **NO MONEY MOVES HERE.** No `Payment` row, no `PAID`, no cut computed —
- * `check:work-chain` §6 holds all four and was run before this was written and
- * again at its gate. ⚠ Acceptance (`provider_accepted_at`, `buyer_accepted_at`,
- * `RELEASED`) is **out of scope by ruling 43** and nothing here writes it.
- */
 function useHirePost(workRequestId: string) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);

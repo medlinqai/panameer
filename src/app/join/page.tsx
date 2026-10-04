@@ -5,58 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { OptionCard } from "@/components/onboarding/controls";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
-/**
- * /join — the shared entry for four of the five actors (E139, WS1).
- *
- * TWO STEPS, not one list of three. It used to offer Service Buyer / Service
- * Provider / Recruiter side by side, which flattened two different questions
- * into one: whether you BUY or SELL on Panameer, and then what your JOB is on
- * that side. The reg-steps-by-user-type diagram models it as a fork —
- * Buyer/Provider? first, then Provider/Recruiter? or Requester/Buyer? — and
- * splitting it that way is also the only shape that scales, because the buyer
- * side has two jobs the flat list never offered at all.
- *
- * Both steps are ONE component rendering the same cards. The brief asks for the
- * same card/page format on both steps, and two components would be two chances
- * for them to drift apart.
- *
- * The step lives in the URL (`?type=`), so browser Back moves between steps for
- * free and a half-made choice is resumable. There is a Back button too — a
- * chooser with no visible way out reads as a trap.
- */
-
 type UserType = "seller" | "buyer";
 type Job = "provider" | "recruiter" | "requester" | "buyer-admin";
 
-/*
-  THE TAGLINE MOVED (E182). It lived here as a constant under E160, where it was
-  rendered as this page's subtitle. It is now in the onboarding HEADER on every
-  page of the shell, so it lives in `lib/brand.ts` — `OnboardingFrame` renders
-  it, and this page renders `OnboardingFrame`, which would have made importing
-  it back out of here a cycle.
-
-  The page-1 subtitle that used to carry it is gone with it. Leaving both would
-  have printed the same sentence twice on the same screen, six lines apart.
-
-  ⚠⚠ THE SECOND HALF OF THE PARAGRAPH ABOVE IS NOW FALSE, AND `P1-J1.1-E246` §8 ON
-  THIS BRANCH IS WHAT FALSIFIED IT. It says the descriptor *"is now in the onboarding
-  HEADER on every page of the shell — `OnboardingFrame` renders it"*. ⚠ `E246` §8
-  DELETED that header, along with its `Logo`, its divider and its `BRAND_DESCRIPTOR`
-  paragraph, because `MarketingHeader` above the frame already carried the wordmark
-  and the page was rendering two casings.
-  ⚠ THE DESCRIPTOR IS STILL ON THE PAGE — `MarketingFooter` renders it twice, in its
-  brand block and its legal bar — so the reason this page does not print it a second
-  time still holds. Only WHERE it comes from changed. Quoted rather than rewritten
-  over, because the no-duplicate rule above is the part that still governs.
-*/
-
-/*
-  Page-2 options per page-1 choice.
-  ⚠ ALL FOUR DESCRIPTIONS ARE SCOTT'S, VERBATIM — seller side from earlier, buyer
-  side from `P1-J1.1-E250`. ⚠ SUPERSEDED, quoted: *"Seller copy is Scott's,
-  verbatim"*, which was true when only that half was his and now understates it.
-  ⚠ THE TWO SIDES PUNCTUATE DIFFERENTLY ON PURPOSE — see the note on `buyer` below.
-*/
 const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> = {
   seller: [
     {
@@ -70,56 +21,9 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
       description: "I sell my services to service buyers",
     },
   ],
-  /*
-    ── ⚠⚠ SCOTT'S BUYER-SIDE COPY, VERBATIM (`P1-J1.1-E250`, 2026-08-29) ────────
-
-    ⚠ SUPERSEDED, quoted not deleted: *"I need services performed"* (Requester) and
-    *"I support the buying"* (Buyer).
-
-    ⚠⚠ THESE TWO END WITH A FULL STOP AND THE ROLE-CHOOSER PAIR AT `E249` DOES NOT.
-    THAT IS HIS TYPING, NOT AN INCONSISTENCY TO FIX. Four strings on two screens of
-    one flow now punctuate two different ways, deliberately. DO NOT add a stop to the
-    `E249` pair, and DO NOT remove one from these — normalising either way is
-    rewriting copy he typed.
-
-    ⚠ THE SELLER SIDE ABOVE IS UNTOUCHED. He named only the buying side; `Recruiter`
-    and `Service Provider` keep their own strings, which are also his and also
-    stop-less.
-  */
-  /*
-    ── ⚠⚠ SCOTT'S BUYER-SIDE COPY AGAIN, REPLACED WHOLE (`P2-J1.1-E009`, `E010`,
-       2026-09-05) ─────────────────────────────────────────────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted:
-      Requester — *"I create work requests using service providers and the service
-        products they offer."*
-      Buyer     — *"I manage pricing by commodity."*
-
-    `E009` — the new Requester line names the two nav pillars a requester actually
-    uses, **Talent** and **Shop**. The old line named an internal artefact (*"work
-    requests"*) that the reader has not met yet at the moment they are choosing.
-
-    `E010` — the new Buyer line sharpens what a `Buyer` is, and matches Scott's own
-    model diagram (*"Buyer — Supports the Buy"*). ⚠ THE JOB KEEPS ITS INDUSTRY
-    TITLE. `Buyer` is the real title in a corporate procurement department, so the
-    TITLE comes from the industry and the DESCRIPTION carries the approver meaning.
-    The job is not renamed.
-
-    ⚠⚠ THE FULL-STOP NOTE DIRECTLY ABOVE IS NOW SUPERSEDED FOR THIS PAIR, AND IT IS
-    QUOTED RATHER THAN DELETED because the RULE it states still governs: the
-    punctuation is Scott's typing and is not ours to normalise. He typed both of
-    these strings WITHOUT a stop, so the buyer pair and the `E249` role-chooser pair
-    now punctuate the same way — by his hand, not by a tidy-up. ⚠ STILL DO NOT ADD A
-    STOP TO EITHER PAIR.
-  */
   buyer: [
     {
       id: "requester",
-      /*
-        ⚠⚠ `title: "Requester"` IS THE USER_JOB AND DOES NOT MOVE. `P2-J1.1-E006`
-        renamed the word `Requester` on the review CARD, where it was a field
-        label. Same word, two meanings, two files — this one is the job.
-      */
       title: "Requester",
       description: "I hire talent and shop for service products",
     },
@@ -136,7 +40,6 @@ function JoinRouter() {
   const params = useSearchParams();
   const [ready, setReady] = useState(false);
 
-  // E150 — no step counter on either page. It labelled a two-card question as
   // a process, which made a five-second fork feel like paperwork.
   const typeParam = params.get("type");
   const isType = typeParam === "seller" || typeParam === "buyer";
@@ -145,33 +48,8 @@ function JoinRouter() {
 
   const [choice, setChoice] = useState<UserType | Job | null>(null);
 
-  /**
-   * ⚠ CARRY `?blocked=` AND `?from=` THROUGH THIS FORK — `P1-J1.2-E009`.
-   *
-   * `/create-work` and `guardTransact` redirect to `/company?blocked=…&from=…`
-   * when a buyer has no company. From there a visitor reaches `/join`, and this
-   * page then sends them onward — historically to a bare path, dropping both
-   * parameters. So by the time `/join/buyer` refused them, nothing on the page
-   * knew which door had closed or where they had been trying to go, and the only
-   * link left was `/dashboard`. That is the dead end `P1-J1.2-E004` closed at
-   * `/company` and this fork quietly re-opened one hop later.
-   *
-   * ⚠ THE AUTO-RESUME `router.replace` CALLS BELOW ARE THE ONES THAT MATTER.
-   * `/join/buyer` is not reachable from the manual fork at all — `buyer-admin`
-   * still goes to the coming-soon stub (`P1-J1.2-E005`, out of scope) — so the
-   * ONLY way a signed-in buyer-side account lands on it is the resume redirect.
-   */
-  /* ⚠ `useCallback` ON THE TWO STRINGS, not on `params`. The resume effect below
-     depends on this, and a fresh closure every render would re-fire its
-     `/api/me` fetch on every render instead of only when the URL changes. */
   const blockedParam = params.get("blocked");
   const fromParam = params.get("from");
-  /* ⚠⚠ `next` AND `follow` RIDE ALONG (`P2-ALL-E758`). The Work Tracker's
-     signed-out Follow button sends the person here with `?next=/status&follow=1`,
-     and the intent has to survive whichever join sub-journey they pick.
-     ⚠⚠⚠ **THIS IS THE CONVENIENCE, NOT THE GUARANTEE.** What actually applies the
-     follow is `/status?follow=1` itself, which is idempotent and works however
-     the person gets back there — including by clicking the banner link again. */
   const nextParam = params.get("next");
   const followParam = params.get("follow");
 

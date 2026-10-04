@@ -1,25 +1,3 @@
-/**
- * `check:duration` — a lesson's numeric length, and the four ways it goes wrong
- * (`P1-J3-E361` WS-3).
- *
- *   1  ⚠⚠ NO COMPONENT SUMS `run_time`. Re-asserted HERE as well as in
- *      `check:learn` GUARD 1, because THIS BRIEF IS EXACTLY WHEN SOMEBODY WOULD
- *      BE TEMPTED — a numeric column arrives and the string column is right next
- *      to it. `run_time` is display copy and really does contain `Intro`, `NA`,
- *      `Done` and `Incomplete`.
- *   2  `duration_seconds` IS NEVER NEGATIVE AND NEVER OVER THE CEILING.
- *   3  A NUMBER ALWAYS HAS A SOURCE AND A SOURCE ALWAYS HAS A NUMBER — a
- *      duration nobody can attribute is a duration nobody can defend.
- *   4  ⚠⚠ A SUM OVER A MIXED SET IS NEVER PRESENTED AS COMPLETE. `totalDuration`
- *      must hand back the count it COULD NOT include, so no caller can render a
- *      total that silently omits untimed lessons. This is the assertion that
- *      stops the feature becoming a lie: measured live, Inventory Management has
- *      2 of 47 playable lessons timed.
- *   5  THE CONVERSION IS PURE AND PINNED TO THE MEASURED PAIRS.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()` — this file names every forbidden pattern in its own prose.
- */
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -39,7 +17,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* ⚠ VERBATIM FROM `scripts/check-community.ts`. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -53,17 +30,12 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// GUARD 1 — ⚠⚠ nothing sums run_time
 // ---------------------------------------------------------------------------
 
 const SELF = join("scripts", "check-duration.ts");
 const LIB = join("src", "lib", "lesson-duration.ts");
 const files = [...walk("src"), ...walk("scripts")].filter((f) => f !== SELF);
 
-/*
-  ⚠ THE PATTERNS THAT MEAN "SOMEBODY IS DOING ARITHMETIC ON A DISPLAY STRING".
-  `run_time` inside a reduce, a `+=`, a `parseInt`/`Number`, or a sum helper.
-*/
 const SUM_PATTERNS: { name: string; re: RegExp }[] = [
   { name: "reduce over run_time", re: /reduce\s*\([^)]*run_time/ },
   { name: "run_time inside a reduce body", re: /run_time[^\n]{0,60}\breduce\b/ },
@@ -162,20 +134,17 @@ for (const word of ["Intro", "intro", "NA", "Done", "Incomplete"]) {
   })());
 }
 check("5 — empty -> null", secOf("") === null && secOf(null) === null && secOf(undefined) === null);
-/* ⚠ THE CEILING. Measured: `22 days, 8:12:00` is 32172 s and must be rejected. */
 check("5 — the ceiling is two hours", DURATION_CEILING_SECONDS === 7200);
 check("5 — `22 days, 8:12:00` -> null (over the ceiling)", secOf("22 days, 8:12:00") === null);
 check("5 — and it says why", (() => { const p = parseRunTime("22 days, 8:12:00"); return !p.ok && p.reason === "over_ceiling"; })());
 check("5 — exactly at the ceiling is allowed", secOf("120:00:00") === 7200);
 check("5 — one second over is not", secOf("120:01:00") === null);
-/* ⚠ NON-ZERO SECONDS ARE REFUSED, not silently truncated. Measured: 3 rows. */
 check("5 — `2:12:31` -> null (SS is not 00, so the cell is not what we think)", secOf("2:12:31") === null);
 check("5 — and it says why", (() => { const p = parseRunTime("2:12:31"); return !p.ok && p.reason === "seconds_not_zero"; })());
 check("5 — a zero total is not a duration", secOf("0:00:00") === null);
 check("5 — garbage -> null", secOf("--") === null && secOf("12") === null);
 
 // ---------------------------------------------------------------------------
-// GUARD 4 — ⚠⚠ a partial total can never be presented as complete
 // ---------------------------------------------------------------------------
 
 const mixed = [{ duration_seconds: 133 }, { duration_seconds: 141 }, { duration_seconds: null }];
@@ -187,11 +156,6 @@ check("4 — ⚠ and it says it is not complete", t.complete === false);
 check("4 — a wholly timed set IS complete", totalDuration([{ duration_seconds: 60 }]).complete === true);
 check("4 — an empty set is complete and zero", (() => { const e = totalDuration([]); return e.complete && e.seconds === 0 && e.counted === 0; })());
 check("4 — a zero duration counts as missing, not as counted", totalDuration([{ duration_seconds: 0 }]).missing === 1);
-/*
-  ⚠⚠ THE RETURN TYPE IS THE GUARANTEE — there must be NO exported helper that
-  hands back a bare summed number, because that is the one shape a caller could
-  render without ever seeing `missing`.
-*/
 const libSrc = strip(readFileSync(LIB, "utf8"));
 check(
   "4 — ⚠ no exported function returns a bare total number of seconds",
@@ -213,7 +177,6 @@ check("4 — and drops them over an hour", formatDuration(6036) === "1h 40m");
 check("4 — a zero formats to nothing, not to `0m`", formatDuration(0) === "");
 
 // ---------------------------------------------------------------------------
-// GUARD 6 — the Vimeo token (`P1-J3-E363`)
 // ---------------------------------------------------------------------------
 
 const BACKFILL = join("prisma", "backfill-lesson-duration.ts");

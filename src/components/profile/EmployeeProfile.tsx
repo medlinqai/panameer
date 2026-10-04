@@ -2,17 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/components/Avatar";
 import { EmployeeProfileForm } from "@/components/profile/EmployeeProfileForm";
 
-/**
- * The PANAMEER EMPLOYEE profile (WS7, patterned after Medlinq's MEDLINQ_ADMIN).
- *
- * Deliberately short. An admin performing platform setup has no résumé, no
- * hourly rate, no skills and no work history in the marketplace sense — those
- * fields belong to someone selling services, and showing them to staff is what
- * made the Panameer Admin look like a mis-seeded provider (E004/E006).
- *
- * EDITABLE, which is the other half of E004: "My Profile" was read-only, so
- * the one person who most needs to fix their own name couldn't.
- */
 export async function EmployeeProfile({ userId }: { userId: string }) {
   const person = await prisma.person.findUnique({
     where: { user_id: userId },

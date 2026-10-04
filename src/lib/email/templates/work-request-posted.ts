@@ -10,14 +10,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * WORK REQUEST POSTED — the confirmation (WS-B).
- *
- * Copy is the deck's, verbatim. It makes one promise and it is one we can keep:
- * "we'll let you know the moment proposals start coming in". No count, no
- * timing, no "you'll hear within 24 hours" — nothing has been posted through
- * Panameer yet, so any number would be invented.
- */
 export function workRequestPostedTemplate({
   firstName,
   workRequestTitle,

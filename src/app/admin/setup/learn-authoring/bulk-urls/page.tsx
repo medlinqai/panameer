@@ -43,14 +43,6 @@ const OUTCOME_TONE: Record<Match["outcome"], string> = {
   "invalid-url": "text-red-700",
 };
 
-/**
- * Bulk URL load (WS5) — how ~296 lessons get their videos in one pass.
- *
- * Two steps that cannot be collapsed into one: upload previews, and only then
- * can you apply. The preview is computed by the same server code that does the
- * write, so what the admin approves is what runs — and only CONFIDENT matches
- * run. Ambiguous and unmatched rows are shown and skipped, never guessed at.
- */
 export default function BulkUrlsPage() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [csv, setCsv] = useState<string | null>(null);
