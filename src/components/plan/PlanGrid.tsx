@@ -111,7 +111,7 @@ export function PlanGrid({ plan }: { plan: PublicPlan }) {
                       : "text-ink-2")
                 }
               >
-                <td className="px-1.5 py-2 align-middle tabular-nums text-ink-3">{row.mark}</td>
+                <td className="h-11 px-1.5 py-2 align-middle tabular-nums text-ink-3">{row.mark}</td>
                 <td
                   className="py-2 pr-1.5 align-middle"
                   /* ONE STEP, TASKS ONLY (Scott / the mockup): stages sit at the

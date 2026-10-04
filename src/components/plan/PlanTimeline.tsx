@@ -32,13 +32,17 @@ const fmt = (iso: string) =>
 /** "3 Build · Sep 20 – Nov 9 · In progress" — Scott's format, one definition. */
 export function barLabel(row: {
   number: string;
+  mark: string;
   title: string;
   start: string | null;
   end: string | null;
   status: string;
   type: string;
 }): string {
-  const name = `${row.number} ${row.title || "Untitled"}`;
+  /* `mark`, not `number`: the row's number column prints ◆ for a milestone,
+     and a tooltip that said "5" while the row said "◆" is the off-by-one
+     Scott reported in another form (`E819`). */
+  const name = `${row.mark} ${row.title || "Untitled"}`;
   if (row.type === "milestone") {
     const at = row.start ?? row.end;
     return at ? `${name} · ${fmt(at)}` : `${name} · no date`;
@@ -147,7 +151,14 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
                 /* Every third label on a phone: the track is ~230px there and
                    twelve labels collide (`E798`). CSS, not measurement, so the
                    server and the client render the same count. */
-                (i % 3 === 0 ? "" : "hidden sm:inline")
+                /*
+                  PHONE THINNING IS ADAPTIVE (`E819`). `weekTicks` already thins
+                  by span; hiding every third on top of that left SHORT plans
+                  with one or two labels on a phone — `E777`'s rule inverted,
+                  since a label nobody can see is not a label. Only thin when
+                  there are enough to spare.
+                */
+                (ticks.length > 6 && i % 2 !== 0 ? "hidden sm:inline" : "")
               }
               style={{ left: `${clamp(pct(t.iso))}%` }}
             >

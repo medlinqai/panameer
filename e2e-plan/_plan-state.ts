@@ -42,12 +42,25 @@ export function refuseLive(ownerKey: string): void {
  */
 export async function createTestPlan(): Promise<string> {
   refuseLive(TEST_OWNER);
-  const plan = await prisma.plan.upsert({
-    where: { owner_key: TEST_OWNER },
-    create: { owner_key: TEST_OWNER, title: "E2E throwaway plan" },
-    update: {},
-    select: { id: true },
-  });
+  /* `upsert` can still lose a race on a unique column — its find and its create
+     are two statements. The fallback is a plain read, because by then the row
+     exists and that is the answer we wanted. */
+  let plan: { id: string };
+  try {
+    plan = await prisma.plan.upsert({
+      where: { owner_key: TEST_OWNER },
+      create: { owner_key: TEST_OWNER, title: "E2E throwaway plan" },
+      update: {},
+      select: { id: true },
+    });
+  } catch {
+    const found = await prisma.plan.findUnique({
+      where: { owner_key: TEST_OWNER },
+      select: { id: true },
+    });
+    if (!found) throw new Error("could not create or find the throwaway plan");
+    plan = found;
+  }
   await prisma.planRow.deleteMany({ where: { plan_id: plan.id } });
   return plan.id;
 }

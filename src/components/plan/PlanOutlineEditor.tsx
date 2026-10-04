@@ -54,7 +54,10 @@ function subtreeHeightOf(rows: readonly { id: string; parent_id: string | null }
   if (kids.length === 0) return 0;
   return 1 + Math.max(...kids.map((k) => subtreeHeightOf(rows, k.id)));
 }
-const GRIP = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded-[3px] text-[13px] text-ink-2 transition-colors hover:bg-ink/5 disabled:opacity-25";
+/* 44px TALL, narrow (`E819`). The row is 44px and the glyphs fill it, so every
+   control meets the touch standard without nine 44px-WIDE buttons, which would
+   not fit on one line. Height is what a finger misses. */
+const GRIP = "inline-flex h-11 w-6 shrink-0 items-center justify-center rounded-[3px] text-[13px] text-ink-2 transition-colors hover:bg-ink/5 disabled:opacity-25";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -670,7 +673,8 @@ export function PlanOutlineEditor({
                   type="button"
                   title="Drag to reorder — or use the up and down arrows"
                   aria-label={`Reorder ${row.title || "row"} — use the up and down arrows`}
-                  className="cursor-grab text-center text-[14px] text-ink-3/60"
+                  /* 44px tall like every other control in the row (`E819`). */
+                  className="inline-flex h-11 w-full cursor-grab items-center justify-center text-[14px] text-ink-3/60"
                   onKeyDown={(e) => onHandleKey(e, row)}
                 >
                   ⋮⋮
@@ -681,7 +685,7 @@ export function PlanOutlineEditor({
                     type="button"
                     aria-label={`${shut ? "Expand" : "Collapse"} ${row.title || "row"}`}
                     aria-expanded={!shut}
-                    className="h-[30px] w-[22px] text-[12px] text-ink-2"
+                    className="h-11 w-[22px] text-[12px] text-ink-2"
                     onClick={() =>
                       setCollapsed((prev) => {
                         const next = new Set(prev);
