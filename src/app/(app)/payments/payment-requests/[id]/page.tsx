@@ -7,6 +7,7 @@ import { SettlementStatusPill } from "@/components/settle/SettlementRows";
 import { SettlementDecision } from "@/components/settle/SettlementDecision";
 import { getSettlement, SettlementError } from "@/lib/settlements";
 import { BackLink } from "@/components/console/BackLink";
+import { remitInstructions } from "@/lib/remit";
 
 export const metadata = { title: "Payment Request · Panameer" };
 
@@ -80,6 +81,10 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       {/* ⚠ THE DECISION — renders for the buyer on a SUBMITTED request and for
           nobody else. It returns null when `actions` is empty. */}
+      {s.party === "BUYER" && s.status === "APPROVED" && (
+        <PaymentDue amountCents={s.totalCents} currency={s.currency} reference={s.settlementNumber} />
+      )}
+
       <div className="mt-5">
         <SettlementDecision settlementId={s.id} actions={s.actions} hasTimesheet={s.hasTimesheet} />
       </div>
@@ -169,4 +174,44 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 function feeLabel(bps: number[]): string {
   const u = [...new Set(bps)];
   return u.length === 1 ? bpsToPercentLabel(u[0]) : "Varies by line";
+}
+
+function PaymentDue({ amountCents, currency, reference }: { amountCents: number; currency: string; reference: string }) {
+  const r = remitInstructions();
+  const rows: [string, string | null][] = [
+    ["Pay to", r.payee],
+    ["Bank", r.bankName],
+    ["Account name", r.accountName],
+    ["Routing (ACH)", r.routingNumber],
+    ["Account number", r.accountNumber],
+    ["SWIFT (wire)", r.swift],
+    ["Bank address", r.bankAddress],
+  ];
+  return (
+    <section data-testid="payment-due" className="mt-6 border-t-2 border-ink pt-5">
+      <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PAYMENT DUE</p>
+      <p className="mt-1 text-[28px] font-bold">{formatCents(amountCents, currency)}</p>
+      <p className="mt-1 text-[14px] text-ink-2">
+        Pay {r.payee} by ACH or wire. Put reference <b className="font-mono text-ink">{reference}</b> on the payment so we
+        can match it. We pay the provider once your payment arrives.
+      </p>
+      {r.configured ? (
+        <dl className="mt-4 grid max-w-xl grid-cols-[160px_1fr] gap-y-2 text-[14px]">
+          {rows
+            .filter(([, v]) => v)
+            .map(([k, v]) => (
+              <div key={k} className="contents">
+                <dt className="text-ink-2">{k}</dt>
+                <dd className="font-mono">{v}</dd>
+              </div>
+            ))}
+        </dl>
+      ) : (
+        <p className="mt-3 text-[14px] text-ink-2">
+          Bank details to follow — email <a className="underline" href={`mailto:${r.contactEmail}`}>{r.contactEmail}</a> with
+          reference {reference} and we will send them.
+        </p>
+      )}
+    </section>
+  );
 }
