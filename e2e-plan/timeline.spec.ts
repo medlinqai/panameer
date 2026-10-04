@@ -445,7 +445,7 @@ test.describe("E807 — releases are the third level", () => {
       .evaluateAll((els) =>
         els.map((e) => ({
           n: e.getAttribute("data-plan-grid-row"),
-          d: Number(e.getAttribute("data-plan-grid-depth")),
+          d: Number(e.getAttribute("data-plan-grid-level")) - 1,
         })),
       );
     /* The release and its In-progress phase are both open by default, so all
