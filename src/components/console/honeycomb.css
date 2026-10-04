@@ -445,3 +445,30 @@ a.pm-hive-cell:focus-visible {
     animation: none;
   }
 }
+
+/* R-E016b: /usage per the approved mockup — any activity is solid ink, empty is white and dashed. */
+.pm-usage .pm-hive-cell[data-level="low"]::before,
+.pm-usage .pm-hive-cell[data-level="medium"]::before,
+.pm-usage .pm-hive-cell[data-level="strong"]::before {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+.pm-usage .pm-hive-cell[data-level="low"] .pm-hive-figure,
+.pm-usage .pm-hive-cell[data-level="medium"] .pm-hive-figure,
+.pm-usage .pm-hive-cell[data-level="strong"] .pm-hive-figure {
+  color: var(--color-surface);
+}
+.pm-usage .pm-hive-cell[data-level="low"] .pm-hive-label,
+.pm-usage .pm-hive-cell[data-level="medium"] .pm-hive-label,
+.pm-usage .pm-hive-cell[data-level="strong"] .pm-hive-label {
+  color: color-mix(in srgb, var(--color-surface) 78%, var(--color-ink));
+}
+.pm-usage .pm-hive-cell[data-level="none"]::before {
+  background: var(--color-surface);
+  border-style: dashed;
+}
+.pm-usage .pm-hive-key-swatch[data-level="low"],
+.pm-usage .pm-hive-key-swatch[data-level="medium"],
+.pm-usage .pm-hive-key-swatch[data-level="strong"] {
+  background: var(--color-ink);
+}

@@ -132,3 +132,38 @@ test("register rate step: Onsite + Offsite only, both saved", async ({ page }) =
     .poll(async () => (await prisma.providerProfile.findFirst({ where: { person_id: u!.person!.id }, select: { onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true } })), { timeout: 20_000 })
     .toEqual({ onsite_rate_cents: 15000, remote_rate_cents: 12000, hourly_rate_cents: 15000 });
 });
+
+// R-E016b: on /usage a cell with activity is solid ink with a light figure.
+test("usage honeycomb: active cells are dark ink", async ({ page }) => {
+  await persona();
+  await signIn(page);
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto("/usage", { waitUntil: "domcontentloaded" });
+  const cells = page.locator(".pm-hive-cell[data-level]");
+  await expect(cells.first()).toBeVisible({ timeout: 30_000 });
+  const styles = await cells.evaluateAll((els) =>
+    els.map((e) => ({
+      level: e.getAttribute("data-level"),
+      bg: getComputedStyle(e, "::before").backgroundColor,
+      fig: getComputedStyle(e.querySelector(".pm-hive-figure")!).color,
+    })),
+  );
+  for (const s of styles) {
+    if (s.level === "none") expect(s.bg, JSON.stringify(s)).toBe("rgb(255, 255, 255)");
+    else {
+      expect(s.bg, JSON.stringify(s)).toBe("rgb(39, 35, 52)");
+      expect(s.fig, JSON.stringify(s)).toBe("rgb(255, 255, 255)");
+    }
+  }
+  // A fresh account has no activity, so mark one cell active to read the active paint.
+  const active = await cells.first().evaluate((e) => {
+    e.setAttribute("data-level", "low");
+    return {
+      bg: getComputedStyle(e, "::before").backgroundColor,
+      fig: getComputedStyle(e.querySelector(".pm-hive-figure")!).color,
+    };
+  });
+  expect(active).toEqual({ bg: "rgb(39, 35, 52)", fig: "rgb(255, 255, 255)" });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: "e2e-run10/.artifacts/usage-hive-1280.png" });
+});
