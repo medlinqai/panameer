@@ -6184,8 +6184,12 @@ model SettlementRequest {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  /// Run 13: a request raised again after a rejection points at the one it replaces.
+  resubmits_id String? @db.Uuid
+
   lines SettlementLine[]
 
+  @@index([resubmits_id])
   @@index([work_order_id])
   @@index([provider_person_id])
   @@index([status])

@@ -211,6 +211,8 @@ export type SettleInput = {
   periodStart: string;
   periodEnd: string;
   lines: SettleLineInput[];
+  /** A REJECTED request on the same order that this one replaces. */
+  resubmitsId?: string | null;
 };
 
 /**
@@ -252,6 +254,16 @@ export async function createSettlement(
     throw new SettlementError("A payment request needs a period", "INVALID");
   const periodStart = new Date(input.periodStart);
   const periodEnd = new Date(input.periodEnd);
+
+  let resubmitsId: string | null = null;
+  if (input.resubmitsId) {
+    const prev = await prisma.settlementRequest.findUnique({ where: { id: input.resubmitsId }, select: { id: true, work_order_id: true, status: true } });
+    if (!prev || prev.work_order_id !== o.id) throw new SettlementError("That request is not on this work order", "INVALID");
+    if (prev.status !== "REJECTED") throw new SettlementError("Only a sent-back request can be resubmitted", "INVALID");
+    if (await prisma.settlementRequest.count({ where: { resubmits_id: prev.id } }))
+      throw new SettlementError("That request has already been resubmitted", "INVALID");
+    resubmitsId = prev.id;
+  }
 
   const rows = (input.lines ?? []).filter((l) => l.workOrderLineId);
   if (rows.length === 0)
@@ -377,6 +389,7 @@ export async function createSettlement(
         currency: o.currency,
         status: "SUBMITTED",
         submitted_at: new Date(),
+        resubmits_id: resubmitsId,
         lines: {
           create: rows.map((r, i) => {
             const ol = orderLineById.get(r.workOrderLineId)!;
@@ -509,6 +522,7 @@ export function settlementActions(
 
 export type SettlementLineView = {
   id: string;
+  workOrderLineId: string;
   lineNumber: number;
   basis: LineBasis;
   description: string | null;
@@ -545,6 +559,9 @@ export type SettlementDetail = {
   netCents: number;
   /** Set once Panameer has paid the provider out (offline, recorded by admin). */
   paidOut: { paidAt: string | null; netCents: number; method: string | null } | null;
+  /** Resubmission links (run 13): the rejected request this replaces, and the one that replaced it. */
+  resubmitOf: { id: string; number: string } | null;
+  resubmittedAs: { id: string; number: string } | null;
   /** ⚠ RATE if any line is a timesheet — decides which rendering the reader gets. */
   hasTimesheet: boolean;
   actions: SettlementAction[];
@@ -597,6 +614,7 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
   );
   const lines: SettlementLineView[] = s.lines.map((l) => ({
     id: l.id,
+    workOrderLineId: l.work_order_line_id,
     lineNumber: l.line_number,
     basis: l.basis,
     description: l.description,
@@ -612,6 +630,10 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
   }));
   const totalCents = lines.reduce((n, l) => n + l.valueCents, 0);
   const feeCents = lines.reduce((n, l) => n + l.feeCents, 0);
+  const [resubmitOf, resubmittedAs] = await Promise.all([
+    s.resubmits_id ? prisma.settlementRequest.findUnique({ where: { id: s.resubmits_id }, select: { id: true, settlement_number: true } }) : null,
+    prisma.settlementRequest.findFirst({ where: { resubmits_id: s.id }, select: { id: true, settlement_number: true } }),
+  ]);
   const payoutLine = await prisma.providerPayoutLine.findFirst({
     where: { settlement_line_id: { in: s.lines.map((l) => l.id) } },
     select: { providerPayout: { select: { paid_at: true, net_cents: true, method: true } } },
@@ -637,6 +659,8 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     totalCents,
     feeCents,
     netCents: totalCents - feeCents,
+    resubmitOf: resubmitOf ? { id: resubmitOf.id, number: resubmitOf.settlement_number } : null,
+    resubmittedAs: resubmittedAs ? { id: resubmittedAs.id, number: resubmittedAs.settlement_number } : null,
     paidOut: payoutLine
       ? {
           paidAt: payoutLine.providerPayout.paid_at ? payoutLine.providerPayout.paid_at.toISOString().slice(0, 10) : null,

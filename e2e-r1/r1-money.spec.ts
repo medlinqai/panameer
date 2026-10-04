@@ -288,3 +288,33 @@ test("non-R1 pages redirect to live ones", async ({ page }) => {
     await expect.poll(() => new URL(page.url()).pathname, { timeout: 20_000 }).toBe(to);
   }
 });
+
+// Run 13 lane 5: a sent-back request is resubmitted as a new one, and each links to the other.
+test("resubmit: rejected request → Resubmit (prefilled) → new request; both show the link", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    await signIn(page, g.provider.email);
+    const first = await page.evaluate(async ({ orderId, lineId }) => (await (await fetch("/api/settlements", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, periodStart: "2026-10-01", periodEnd: "2026-10-07", lines: [{ workOrderLineId: lineId, quantity: 3, serviceDate: "2026-10-02", note: "setup" }] }) })).json()) as { id: string; settlementNumber: string }, { orderId: g.orderId, lineId: g.rateLineId });
+    await signIn(page, g.buyer.email);
+    const rej = await page.evaluate(async (id) => (await fetch(`/api/settlements/${id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: "Only 2 hours were agreed" }) })).status, first.id);
+    expect(rej).toBe(200);
+
+    await signIn(page, g.provider.email);
+    await page.goto(`/payments/payment-requests/${first.id}`);
+    await page.getByRole("link", { name: "Resubmit" }).click();
+    await expect(page.getByRole("heading", { name: `Resubmit ${first.settlementNumber}` })).toBeVisible({ timeout: 30_000 });
+    const qty = page.locator('input[value="3"]').first();
+    await expect(qty).toBeVisible();
+    await qty.fill("2");
+    await page.getByRole("button", { name: /Submit|Send|Raise/i }).last().click();
+    await page.waitForURL(/\/payments\/payment-requests\/(?!.*\bfrom\b)/, { timeout: 30_000 });
+    await expect(page.getByTestId("resubmit-link")).toContainText(`Resubmission of ${first.settlementNumber}`, { timeout: 30_000 });
+    await expect(page.getByText("$200.00").first()).toBeVisible();
+    await page.goto(`/payments/payment-requests/${first.id}`);
+    await expect(page.getByTestId("resubmit-link")).toContainText("Resubmitted as");
+    await expect(page.getByRole("link", { name: "Resubmit" })).toHaveCount(0);
+  } finally {
+    await dropFixture(g);
+  }
+});

@@ -14,6 +14,7 @@ export async function POST(request: Request) {
         periodStart: body.periodStart,
         periodEnd: body.periodEnd,
         lines: Array.isArray(body.lines) ? body.lines : [],
+        resubmitsId: typeof body.resubmitsId === "string" ? body.resubmitsId : null,
       })
     );
   } catch (e) {
