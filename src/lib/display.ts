@@ -49,6 +49,9 @@ export function centsToDollarInput(cents: number | null | undefined): string {
   return cents == null ? "" : String(cents / 100);
 }
 
+/** Highest provider fee tier (service products); keep equal to BUILT_IN_COMMISSION_BPS.SERVICE_PRODUCT. */
+export const MAX_PROVIDER_FEE_BPS = 1499;
+
 export function bpsToPercentLabel(bps: number): string {
   const pct = bps / 100;
   if (Number.isInteger(pct)) return `${pct}%`;

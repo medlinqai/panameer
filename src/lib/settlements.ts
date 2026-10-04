@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
   assertSettlementDraw,
+  feeSplit,
   priceSettlementLine,
   pricedByQuantity,
   type DraftSettlementLine,
@@ -483,6 +484,8 @@ export type SettlementLineView = {
   serviceDate: string | null;
   note: string | null;
   valueCents: number;
+  feeBps: number;
+  feeCents: number;
 };
 
 export type SettlementDetail = {
@@ -503,6 +506,8 @@ export type SettlementDetail = {
   decisionNote: string | null;
   lines: SettlementLineView[];
   totalCents: number;
+  feeCents: number;
+  netCents: number;
   /** ⚠ RATE if any line is a timesheet — decides which rendering the reader gets. */
   hasTimesheet: boolean;
   actions: SettlementAction[];
@@ -545,6 +550,14 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     throw e;
   }
 
+  const orderLineFee = new Map(
+    (
+      await prisma.workOrderLine.findMany({
+        where: { id: { in: s.lines.map((l) => l.work_order_line_id) } },
+        select: { id: true, fee_bps: true },
+      })
+    ).map((l) => [l.id, l.fee_bps])
+  );
   const lines: SettlementLineView[] = s.lines.map((l) => ({
     id: l.id,
     lineNumber: l.line_number,
@@ -557,7 +570,11 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     serviceDate: l.service_date ? l.service_date.toISOString().slice(0, 10) : null,
     note: l.note,
     valueCents: lineValue(l),
+    feeBps: orderLineFee.get(l.work_order_line_id) ?? 0,
+    feeCents: feeSplit(lineValue(l), orderLineFee.get(l.work_order_line_id) ?? 0).fee_cents,
   }));
+  const totalCents = lines.reduce((n, l) => n + l.valueCents, 0);
+  const feeCents = lines.reduce((n, l) => n + l.feeCents, 0);
 
   return {
     id: s.id,
@@ -576,7 +593,9 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     decidedAt: s.decided_at ? s.decided_at.toISOString() : null,
     decisionNote: s.decision_note,
     lines,
-    totalCents: lines.reduce((n, l) => n + l.valueCents, 0),
+    totalCents,
+    feeCents,
+    netCents: totalCents - feeCents,
     hasTimesheet: lines.some((l) => l.basis === "RATE"),
     actions: settlementActions(s, order.party),
   };

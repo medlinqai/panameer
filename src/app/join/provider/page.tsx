@@ -2084,7 +2084,6 @@ setScreen(target);
         onRemoteChange={(remoteRateCents) =>
           setProfile((p) => ({ ...p, remoteRateCents, hourlyRateCents: syncedHourly(p.onsiteRateCents, remoteRateCents) }))
         }
-        serviceFeeBps={profile.serviceFeeBps}
       />
     ),
   });

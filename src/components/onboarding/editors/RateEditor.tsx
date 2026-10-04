@@ -1,7 +1,7 @@
 "use client";
 
 import { Field, TextInput } from "@/components/onboarding/controls";
-import { bpsToPercentLabel, formatCents } from "@/lib/display";
+import { MAX_PROVIDER_FEE_BPS, bpsToPercentLabel, formatCents } from "@/lib/display";
 
 function Row({
   label,
@@ -75,13 +75,11 @@ export function RateEditor({
   remoteRateCents,
   onOnsiteChange,
   onRemoteChange,
-  serviceFeeBps,
 }: {
   onsiteRateCents: number | null;
   remoteRateCents: number | null;
   onOnsiteChange: (next: number | null) => void;
   onRemoteChange: (next: number | null) => void;
-  serviceFeeBps: number;
 }) {
   return (
     <div className="max-w-md space-y-6">
@@ -91,7 +89,6 @@ export function RateEditor({
         cents={onsiteRateCents}
         onChange={onOnsiteChange}
         placeholder="150.00"
-        serviceFeeBps={serviceFeeBps}
       />
       <RateBlock
         label="Offsite rate"
@@ -99,11 +96,10 @@ export function RateEditor({
         cents={remoteRateCents}
         onChange={onRemoteChange}
         placeholder="125.00"
-        serviceFeeBps={serviceFeeBps}
       />
       <p className="text-[13px] leading-relaxed text-ink-2">
-        Set one or both. The service fee ({bpsToPercentLabel(serviceFeeBps)}) helps us run the platform and provide
-        payment protection and support; fees are shown before contract acceptance.
+        Set one or both. The service fee helps us run the platform and provide payment protection and support. Fees
+        vary and are shown before contract acceptance.
       </p>
     </div>
   );
@@ -115,23 +111,22 @@ function RateBlock({
   cents,
   onChange,
   placeholder,
-  serviceFeeBps,
 }: {
   label: string;
   hint: string;
   cents: number | null;
   onChange: (next: number | null) => void;
   placeholder: string;
-  serviceFeeBps: number;
 }) {
-  const fee = cents != null ? Math.round((cents * serviceFeeBps) / 10_000) : null;
+  // Fees are tiered by how the work was found; show the net at the top tier.
+  const fee = cents != null ? Math.round((cents * MAX_PROVIDER_FEE_BPS) / 10_000) : null;
   const youGet = cents != null && fee != null ? cents - fee : null;
   return (
     <div className="border-t border-line pt-4">
       <MoneyField label={label} hint={hint} cents={cents} onChange={onChange} placeholder={placeholder} />
       <div className="mt-2 space-y-1 text-[14px]">
-        <Row label={`Service fee (${bpsToPercentLabel(serviceFeeBps)})`} value={fee != null ? `−${formatCents(fee)}` : "—"} />
-        <Row label="You'll Get" value={youGet != null ? `${formatCents(youGet)}/hr` : "—"} strong />
+        <Row label={`Service fee (up to ${bpsToPercentLabel(MAX_PROVIDER_FEE_BPS)})`} value={fee != null ? `−${formatCents(fee)}` : "—"} />
+        <Row label="You'll Get (at least)" value={youGet != null ? `${formatCents(youGet)}/hr` : "—"} strong />
       </div>
     </div>
   );

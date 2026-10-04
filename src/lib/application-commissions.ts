@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { MAX_PROVIDER_FEE_BPS } from "@/lib/display";
 import type { SourcingKind, TransactionType } from "@prisma/client";
 
 export const BUILT_IN_COMMISSION_BPS: Record<SourcingKind, number> = {
   SOLE_SOURCED: 499,
   APP_SOURCED: 999,
-  SERVICE_PRODUCT: 1499,
+  SERVICE_PRODUCT: MAX_PROVIDER_FEE_BPS,
 };
 
 export type ResolvedCommission = {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
-import { formatCents } from "@/lib/display";
+import { formatCents, bpsToPercentLabel } from "@/lib/display";
 import { SettlementStatusPill } from "@/components/settle/SettlementRows";
 import { SettlementDecision } from "@/components/settle/SettlementDecision";
 import { getSettlement, SettlementError } from "@/lib/settlements";
@@ -54,6 +54,14 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <Fact label="Period">{s.periodStart} → {s.periodEnd}</Fact>
         <Fact label="Total">{formatCents(s.totalCents, s.currency)}</Fact>
         <Fact label="Submitted">{s.submittedAt ? s.submittedAt.slice(0, 10) : "Not yet"}</Fact>
+        {s.party === "PROVIDER" && (
+          <>
+            <Fact label="Service fee">
+              {feeLabel(s.lines.map((l) => l.feeBps))} · {formatCents(s.feeCents, s.currency)}
+            </Fact>
+            <Fact label="You'll get">{formatCents(s.netCents, s.currency)}</Fact>
+          </>
+        )}
       </dl>
 
       {/*
@@ -156,4 +164,9 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <dd className="mt-0.5 truncate text-[14.5px]">{children}</dd>
     </div>
   );
+}
+
+function feeLabel(bps: number[]): string {
+  const u = [...new Set(bps)];
+  return u.length === 1 ? bpsToPercentLabel(u[0]) : "Varies by line";
 }
