@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { emailConfigured } from "@/lib/email-status";
 import { findCategory } from "@/lib/notification-categories";
 import { sendEmail } from "@/lib/resend";
+import { messageEmailFor } from "@/lib/message-email-batch";
 import {
   notificationEmailAllowed,
   renderNotificationMail,
@@ -162,6 +163,19 @@ async function emailFor(a: {
       return;
     }
 
+    let title = a.title;
+    if (a.event === "message.received") {
+      const batch = await messageEmailFor(a.notificationId, a.personId);
+      if (batch?.hold) {
+        await prisma.notification.update({
+          where: { id: a.notificationId },
+          data: { suppressed_reason: "email_batched" },
+        });
+        return;
+      }
+      if (batch && batch.count > 1) title = `${batch.senderName ?? "Someone"} sent you ${batch.count} messages`;
+    }
+
     const claim = await prisma.notification.updateMany({
       where: { id: a.notificationId, email_sent_at: null },
       data: { email_sent_at: new Date() },
@@ -180,7 +194,7 @@ async function emailFor(a: {
 
       const mail = renderNotificationMail(a.event, {
         firstName: person.user?.first_name ?? null,
-        title: a.title,
+        title,
         body: a.body,
         link,
         logoUrl: `${base}/brand/panameer-lockup-ink.png`,

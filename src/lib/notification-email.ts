@@ -9,6 +9,7 @@ import { notificationEmail } from "@/lib/email/templates/notification";
 export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "account.finish_later",
   "colleague.invite_received",
+  "message.received",
 ];
 
 export function notificationEmailAllowed(event: NotificationEventKey): boolean {
