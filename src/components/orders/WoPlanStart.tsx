@@ -7,7 +7,7 @@ const BTN = "inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semi
 const BTN_W = "inline-flex min-h-11 items-center border border-ink bg-surface px-5 text-[14px] font-semibold text-ink hover:bg-surface-hover disabled:opacity-40";
 
 // Board 2 "Set up the plan": five ways to start, each a few minutes.
-export function WoPlanStart({ orderId, copyable }: { orderId: string; copyable: { id: string; number: string }[] }) {
+export function WoPlanStart({ orderId, copyable, withTe = true }: { orderId: string; copyable: { id: string; number: string }[]; withTe?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,9 +53,11 @@ export function WoPlanStart({ orderId, copyable }: { orderId: string; copyable: 
       <h2 className="text-[20px] font-bold">Set Up the Plan</h2>
       <p className="mt-1 text-[14px] text-ink-2">Pick a starting point — most plans take 5 to 15 minutes. You can change it any time.</p>
       <ul className="mt-3 border-b border-line">
-        <Option title="T&E only" text="One time-and-expense window, no plan. Time and dollars are still tracked above.">
-          <button type="button" className={BTN_W} disabled={!!busy} onClick={() => run("te")}>Use T&amp;E Only</button>
-        </Option>
+        {withTe && (
+          <Option title="T&E only" text="One time-and-expense window, no plan. Time and dollars are still tracked above.">
+            <button type="button" className={BTN_W} disabled={!!busy} onClick={() => run("te")}>Use T&amp;E Only</button>
+          </Option>
+        )}
         <Option title="Simple milestones" text="A delivery phase with a task for each line on this order, then an acceptance milestone.">
           <button type="button" className={BTN} disabled={!!busy} onClick={() => run("milestones")}>{busy === "milestones" ? "Building…" : "Use Milestones"}</button>
         </Option>

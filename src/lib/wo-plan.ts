@@ -110,3 +110,46 @@ export async function copyableOrders(personId: string, exceptOrderId: string) {
   const withRows = new Set(plans.filter((p) => p._count.rows > 0).map((p) => p.owner_key));
   return orders.filter((o) => withRows.has(woPlanKey(o.id))).map((o) => ({ id: o.id, number: o.order_number }));
 }
+
+/** T&E only is chosen when the latest plan start was "te" and the plan has no rows. */
+export async function chosenTe(orderId: string): Promise<boolean> {
+  const last = await prisma.workOrderEvent.findFirst({
+    where: { work_order_id: orderId, kind: "plan.start" },
+    orderBy: { created_at: "desc" },
+    select: { text: true },
+  });
+  return !!last?.text.startsWith("chose T&E only");
+}
+
+export type TimesheetWeek = { requestId: string; number: string; week: string; hours: number; amountCents: number; status: string };
+
+const mondayOf = (d: Date) => {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7));
+  return x.toISOString().slice(0, 10);
+};
+
+/** Board 3's Timesheets list: each payment request's time, by week. */
+export async function timesheetWeeks(orderId: string): Promise<TimesheetWeek[]> {
+  const reqs = await prisma.settlementRequest.findMany({
+    where: { work_order_id: orderId, status: { not: "DRAFT" } },
+    include: { lines: true },
+    orderBy: { period_start: "desc" },
+  });
+  const out: TimesheetWeek[] = [];
+  for (const r of reqs) {
+    const byWeek = new Map<string, { hours: number; cents: number }>();
+    for (const l of r.lines) {
+      const week = mondayOf(l.service_date ?? r.period_start);
+      const cur = byWeek.get(week) ?? { hours: 0, cents: 0 };
+      if (l.basis === "RATE") {
+        cur.hours += Number(l.quantity ?? 0);
+        cur.cents += Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
+      } else cur.cents += l.amount_cents ?? 0;
+      byWeek.set(week, cur);
+    }
+    for (const [week, v] of [...byWeek].sort((a, b) => b[0].localeCompare(a[0])))
+      out.push({ requestId: r.id, number: r.settlement_number, week, hours: Math.round(v.hours * 100) / 100, amountCents: v.cents, status: r.status });
+  }
+  return out;
+}

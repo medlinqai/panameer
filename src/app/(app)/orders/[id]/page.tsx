@@ -45,10 +45,17 @@ export default async function Page({
         <BackLink href="/orders" label="Work Orders" />
         <p className="mt-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">WORK ORDER {o.orderNumber}</p>
         <h1 className="mt-1 text-[28px] font-bold">{o.lines[0]?.description ?? o.orderNumber}</h1>
-        <p className="mt-1 text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
+          {o.party === "PROVIDER" && o.status === "RELEASED" && (
+            <a href={`/orders/${o.id}/settle`} className="inline-flex min-h-11 w-full items-center justify-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover sm:w-auto">
+              Submit Time
+            </a>
+          )}
+        </div>
         <OrderTabs id={o.id} current="plan" />
         {money && <TimeDollars m={money} currency={o.currency} />}
-        <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={money?.hoursAuthorized ?? null} />
+        <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={money?.hoursAuthorized ?? null} currency={o.currency} />
       </div>
     );
   }
