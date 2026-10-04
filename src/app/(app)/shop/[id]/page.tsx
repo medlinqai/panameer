@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { guardPage } from "@/lib/guard";
-import { hasCapability } from "@/lib/access";
+import { viewerCanHire } from "@/lib/rate-visibility";
 import { getShopProduct } from "@/lib/shop";
 import { formatCents } from "@/lib/display";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!p) notFound();
   const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
   const own = me?.id === p.providerPersonId;
-  const canBuy = !own && hasCapability(viewer, "canHireTalent");
+  const canBuy = !own && viewerCanHire(viewer);
 
   return (
     <div className="pm-white-page mx-auto w-full max-w-3xl">

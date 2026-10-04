@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
 import { countryColumns } from "@/lib/country";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
@@ -146,11 +147,11 @@ export async function getProfileSettings(viewer: Viewer) {
     aiTrainingOptIn: p.ai_training_opt_in,
     linkedGithub: p.linked_github,
     linkedStackoverflow: p.linked_stackoverflow,
-    roles: p.roles.map((r) => r.roleType.name),
+    roles: p.roles.map((r) => roleLong(r.roleType.name)),
     categories: p.skills.map((s) => ({
       id: s.skill.id,
       skill: s.skill.name,
-      role: s.skill.roleType?.name ?? null,
+      role: roleLong(s.skill.roleType?.name ?? null),
       domain: s.skill.pillar?.name ?? null,
     })),
   };

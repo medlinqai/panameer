@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLong } from "@/lib/role-labels";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
@@ -163,7 +164,7 @@ export function CreateWorkRequest({
   const skills = skillOpts.key === pairKey ? skillOpts.skills : [];
 
   const domains = draft?.roleTypeId ? domainsByRole[draft.roleTypeId] ?? [] : [];
-  const roleName = roles.find((r) => r.id === draft?.roleTypeId)?.display ?? "";
+  const roleName = roleLong(roles.find((r) => r.id === draft?.roleTypeId)?.display ?? "");
   const domainName = domains.find((d) => d.id === draft?.pillarId)?.name ?? "";
   // The draft carries ids; the review shows words.
   const specializationNames = (draft?.specializationIds ?? [])

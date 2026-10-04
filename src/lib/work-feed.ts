@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
 import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
 
@@ -246,7 +247,7 @@ export async function getWorkFeed(input: {
     duration: pretty(w.duration),
     location: w.location_country,
     worksite: pretty(w.worksite),
-    roleType: w.roleType?.display ?? w.roleType?.name ?? null,
+    roleType: roleLong(w.roleType?.display ?? w.roleType?.name ?? null),
     companyName: identityFor(w).companyName,
     companyLogoUrl: identityFor(w).companyLogoUrl,
     identity: identityFor(w),

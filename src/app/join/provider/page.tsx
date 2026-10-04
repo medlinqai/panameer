@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLong } from "@/lib/role-labels";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -2774,7 +2775,7 @@ setScreen(target);
                           second place for the two to disagree.
                         */
                         title={
-                          `${r.name} Roles` +
+                          roleLong(`${r.name} Roles`) +
                           (isPrimary && profile.roleTypeIds.length > 1
                             ? "  ·  primary"
                             : "")
@@ -2904,7 +2905,7 @@ setScreen(target);
           {error && <Notice>{error}</Notice>}
           <WorkHistoryReview
             jobs={reviewJobs}
-            roleOptions={fieldRoles.map((r) => ({ id: r.id, name: r.display }))}
+            roleOptions={fieldRoles.map((r) => ({ id: r.id, name: roleLong(r.display) }))}
             skillOptionsForSuite={skillOptionsForSuite}
             onChange={setJobPatches}
           />

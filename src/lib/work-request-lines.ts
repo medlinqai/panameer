@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
 import type { WorkRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -243,7 +244,7 @@ export async function getWorkRequestDetail(
     worksite: wr.worksite,
     experienceLevel: wr.experience_level,
     duration: wr.duration,
-    roleName: role?.display ?? role?.name ?? null,
+    roleName: roleLong(role?.display ?? role?.name ?? null),
     skillNames: wr.skills.map((s) => s.skill.name),
     lines,
     completeness: completenessFor(lines.map((l) => ({

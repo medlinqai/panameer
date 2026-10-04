@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLong } from "@/lib/role-labels";
 import { useMemo, useState } from "react";
 import type { SoftwareSuite } from "@prisma/client";
 import { SUITES, SUITE_ORDER, suiteLabel } from "@/lib/suite";
@@ -169,7 +170,7 @@ export function WorkHistoryReview({
                 <option value="">Role not set</option>
                 {roleOptions.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name}
+                    {roleLong(r.name)}
                   </option>
                 ))}
               </select>

@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
@@ -113,7 +114,7 @@ export async function getPublicProviderProfile(
     ).map((ps) => ({
       id: ps.skill.id,
       name: ps.skill.name,
-      roleType: ps.skill.roleType.display,
+      roleType: roleLong(ps.skill.roleType.display),
     })),
     // Cross-cutting specializations (brief_R) — systems, processes, industries.
     specializations: profile.specializations.map((s) => ({

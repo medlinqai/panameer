@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
 import { countryName } from "@/lib/country";
@@ -243,7 +244,7 @@ export async function getProviderProfileView(
     overview: profile.overview,
     field:
       profile.roleType && profile.pillar
-        ? { role: profile.roleType.name, domain: profile.pillar.name }
+        ? { role: roleLong(profile.roleType.name), domain: profile.pillar.name }
         : null,
     rates: opts.previewAsPeer || !canSeeRate({ isOwner, viewer: opts.viewer })
       ? null
