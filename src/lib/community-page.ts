@@ -1,3 +1,4 @@
+import { memberVisibleWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { getColleagueRoster } from "@/lib/colleague-roster";
 import { profileIdsByPersonId } from "@/lib/provider-rates";
@@ -83,7 +84,8 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
     profileIdsByPersonId(personIds),
     personIds.length
       ? prisma.person.findMany({
-          where: { id: { in: personIds } },
+          /* `E821` */
+          where: { id: { in: personIds }, ...memberVisibleWhere() },
           select: {
             id: true,
             site: {

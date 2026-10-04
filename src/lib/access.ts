@@ -519,6 +519,38 @@ export function providerMeetsRequired(p: {
  * NOT excluded by this clause (it was already excluded by the visibility rules
  * above it).
  */
+/**
+ * A PERSON ANOTHER MEMBER MAY SEE (`P2-J3-E821`).
+ *
+ * Scott, walking Connect 2026-10-03: a DEACTIVATED member — "Scott Walls ·
+ * Medlinq" — still appeared under Colleagues search.
+ *
+ * `E796` put `is_active` into `marketplaceVisibleWhere`, which guards PROVIDER
+ * PROFILES. Every people LIST is a different query and none of them carried the
+ * rule: colleagues search and roster, Community, the web, Mentors, messages,
+ * instructors. One predicate now, so a new member-facing list inherits it
+ * instead of having to remember.
+ *
+ * ⚠ IT IS AN AND-CLAUSE ON `Person`, meant to be spread into an existing
+ * `where`: `where: { ...memberVisibleWhere(), id: { in: ids } }`. Every caller
+ * keeps its own filter.
+ *
+ * ⚠⚠ DEACTIVATED IS SOFT. The rows stay — a connection to a deactivated member
+ * is kept, it simply stops being listed. Hiding is not deleting (`E517`).
+ */
+export function memberVisibleWhere(viewerIsTest = false) {
+  return {
+    user: {
+      is: {
+        is_active: true,
+        /* A test account is visible to other test accounts and to nobody else
+           — the same rule `E793` set for the marketplace. */
+        ...(viewerIsTest ? {} : { is_test: false }),
+      },
+    },
+  };
+}
+
 export function marketplaceVisibleWhere(viewerIsTest = false) {
   return {
     status: "ACTIVE" as const,

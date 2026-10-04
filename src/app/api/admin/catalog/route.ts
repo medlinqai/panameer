@@ -6,9 +6,7 @@ import {
   addSpecialization,
   hardDelete,
   moveSkill,
-  renamePillar,
   setSkillVisibility,
-  renameRoleType,
   renameSkill,
   renameSpecialization,
   setSpecializationKind,
@@ -100,12 +98,8 @@ export async function POST(req: Request) {
         return renameSkill(b.id, b.name);
       case "skill.move":
         return moveSkill(b.id, b.roleTypeId, b.pillarId);
-      case "domain.rename":
-        return renamePillar(b.id, b.name);
       case "skill.visible":
         return setSkillVisibility(b.id, b.visible);
-      case "role.rename":
-        return renameRoleType(b.id, b.name);
       case "spec.promote":
         return promoteSuggestion(b.id, b.kind);
       case "spec.reject":
@@ -119,6 +113,12 @@ export async function POST(req: Request) {
 
   /* ⚠ A REFUSAL IS A 409, NOT A 500. "This has 12 providers on it" is the
      endpoint working correctly, and the UI needs the count to offer Retire. */
+  /* The switch is exhaustive over the schema's union, but TypeScript cannot see
+     that after `E821` removed two members, so an unreachable default keeps the
+     return type honest. */
+  if (!result) {
+    return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
+  }
   return NextResponse.json(result, { status: result.ok ? 200 : 409 });
 }
 

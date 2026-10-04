@@ -472,7 +472,8 @@ export async function searchMembers(
 
   const rows = await prisma.person.findMany({
     where: {
-      user: { isNot: null, is: { id: { not: me } } },
+      /* `E821` — deactivated and test members are not listed. */
+      user: { isNot: null, is: { id: { not: me }, is_active: true, is_test: false } },
       OR: [
         { first_name: { contains: q, mode: "insensitive" } },
         { last_name: { contains: q, mode: "insensitive" } },
@@ -569,7 +570,8 @@ export async function getMyCommunity(viewer: Viewer) {
     ...new Set(rows.map((r) => (r.from_user_id === me ? r.to_user_id : r.from_user_id))),
   ];
   const people = await prisma.person.findMany({
-    where: { user: { is: { id: { in: otherIds } } } },
+    /* `E821` — a connection to a deactivated member is KEPT but not listed. */
+    where: { user: { is: { id: { in: otherIds }, is_active: true, is_test: false } } },
     select: personSelect,
   });
   const byUser = new Map(people.filter((p) => p.user).map((p) => [p.user!.id, toCard(p)]));

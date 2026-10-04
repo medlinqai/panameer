@@ -142,7 +142,7 @@ export function InviteColleagueClient({
   const [message, setMessage] = useState(DEFAULT_INVITE_NOTE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ devLink?: string } | null>(null);
+  const [done, setDone] = useState<{ devLink?: string; email?: string } | null>(null);
   const [member, setMember] = useState<AlreadyMember | null>(null);
   /*
     ── ⚠⚠ CONFIRM THE ADDRESS BEFORE SENDING (`P2-J3-E522` PART B) ────────────
@@ -210,7 +210,7 @@ export function InviteColleagueClient({
         return;
       }
 
-      setDone({ devLink: data.devLink });
+      setDone({ devLink: data.devLink, email: email.trim() });
       setFirstName("");
       setLastName("");
       setEmail("");
@@ -272,6 +272,20 @@ export function InviteColleagueClient({
             <p className="font-semibold text-emerald-800">
               Invitation sent. It shows below until they join.
             </p>
+            {/*
+              THE ADDRESS IS REPEATED BACK (`P2-J3-E821`, R-E010).
+              Measured read-only: the off-platform send WORKED — a SentEmail row
+              for info@staterp.com, status `sent`, from production. The address
+              was simply a letter short of the one intended ("staterp", not
+              "straterp"), and nothing on screen said where it had gone. A
+              confirmation that does not repeat the address cannot catch a typo.
+            */}
+            {done.email && (
+              <p className="mt-1 text-emerald-900">
+                Sent to <span className="font-bold">{done.email}</span> — check the address is
+                right. If it is wrong, invite again with the correct one.
+              </p>
+            )}
             {done.devLink && (
               <p className="mt-1 break-all text-ink-2">
                 No email provider configured — link:{" "}
