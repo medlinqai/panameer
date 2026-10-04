@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
+import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { matchSkills } from "@/lib/resume/match";
 import { jobKey } from "@/lib/resume/job-key";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
@@ -147,7 +147,7 @@ export async function computeRerunDiff(
   /* ── Specializations — the writer's vocabulary match, additively ────────── */
   const heldSpecs = new Set(profile.specializations.map((x) => x.specialization_id));
   const vocabulary = await prisma.specialization.findMany({
-    where: { ...OFFERABLE },
+    where: { ...OFFERABLE_BASE },
     select: { id: true, name: true },
   });
   const haystack = [
