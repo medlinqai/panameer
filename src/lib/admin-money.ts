@@ -289,3 +289,77 @@ export async function listPayouts(): Promise<PayoutHistoryRow[]> {
     externalRef: r.external_ref,
   }));
 }
+
+const orderLineValue = (l: { quantity: unknown; unit_price_cents: number | null; amount_cents: number | null }) =>
+  l.amount_cents ?? Math.round(Number(l.quantity ?? 0) * (l.unit_price_cents ?? 0));
+
+export type AdminOrderRow = {
+  id: string; orderNumber: string; status: string; buyerName: string; providerName: string; accountName: string;
+  currency: string; valueCents: number; nteCents: number | null; approvedCents: number; paidCents: number; createdAt: string;
+};
+
+/** Every work order on the platform, with the money position of each. Admin only. */
+export async function adminWorkOrders(): Promise<AdminOrderRow[]> {
+  const orders = await prisma.workOrder.findMany({ orderBy: { created_at: "desc" }, take: 1000, include: { lines: true } });
+  const settlements = await prisma.settlementRequest.findMany({
+    where: { work_order_id: { in: orders.map((o) => o.id) }, status: { in: ["APPROVED", "PAID"] } },
+    include: { lines: true },
+  });
+  const paidBy = new Map(
+    (await prisma.paymentLine.groupBy({ by: ["settlement_request_id"], where: { settlement_request_id: { in: settlements.map((s) => s.id) } }, _sum: { amount_cents: true } })).map(
+      (g) => [g.settlement_request_id, g._sum.amount_cents ?? 0]
+    )
+  );
+  const who = await names(orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id]));
+  const accounts = new Map((await prisma.pAccount.findMany({ where: { id: { in: orders.map((o) => o.p_account_id) } }, select: { id: true, name: true } })).map((a) => [a.id, a.name]));
+  return orders.map((o) => {
+    const mine = settlements.filter((s) => s.work_order_id === o.id);
+    return {
+      id: o.id,
+      orderNumber: o.order_number,
+      status: o.status,
+      buyerName: who.get(o.buyer_person_id) ?? "—",
+      providerName: who.get(o.provider_person_id) ?? "—",
+      accountName: accounts.get(o.p_account_id) ?? "—",
+      currency: o.currency,
+      valueCents: o.lines.reduce((n, l) => n + orderLineValue(l), 0),
+      nteCents: o.not_to_exceed_cents,
+      approvedCents: mine.reduce((n, s) => n + s.lines.reduce((m, l) => m + settlementValue(l), 0), 0),
+      paidCents: mine.reduce((n, s) => n + (paidBy.get(s.id) ?? 0), 0),
+      createdAt: o.created_at.toISOString().slice(0, 10),
+    };
+  });
+}
+
+export type AdminRequestRow = {
+  id: string; settlementNumber: string; orderNumber: string; status: string; providerName: string; buyerName: string;
+  currency: string; totalCents: number; submittedAt: string | null; decidedAt: string | null; paidOut: boolean;
+};
+
+/** Every payment request (settlement) on the platform. Admin only. */
+export async function adminSettlements(): Promise<AdminRequestRow[]> {
+  const rows = await prisma.settlementRequest.findMany({ orderBy: { created_at: "desc" }, take: 1000, include: { lines: true } });
+  const orders = new Map(
+    (await prisma.workOrder.findMany({ where: { id: { in: rows.map((r) => r.work_order_id) } }, select: { id: true, order_number: true, buyer_person_id: true } })).map((o) => [o.id, o])
+  );
+  const who = await names([...rows.map((r) => r.provider_person_id), ...[...orders.values()].map((o) => o.buyer_person_id)]);
+  const out = new Set(
+    (await prisma.providerPayoutLine.findMany({ where: { settlement_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } }, select: { settlement_line_id: true } })).map((l) => l.settlement_line_id)
+  );
+  return rows.map((r) => {
+    const o = orders.get(r.work_order_id);
+    return {
+      id: r.id,
+      settlementNumber: r.settlement_number,
+      orderNumber: o?.order_number ?? "—",
+      status: r.status,
+      providerName: who.get(r.provider_person_id) ?? "—",
+      buyerName: o ? who.get(o.buyer_person_id) ?? "—" : "—",
+      currency: r.currency,
+      totalCents: r.lines.reduce((n, l) => n + settlementValue(l), 0),
+      submittedAt: r.submitted_at ? r.submitted_at.toISOString().slice(0, 10) : null,
+      decidedAt: r.decided_at ? r.decided_at.toISOString().slice(0, 10) : null,
+      paidOut: r.lines.some((l) => out.has(l.id)),
+    };
+  });
+}

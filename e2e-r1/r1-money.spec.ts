@@ -146,3 +146,19 @@ test("payouts: provider sees Payout pending, admin records payout, provider sees
     await dropFixture(g);
   }
 });
+
+// Lane 5: the admin lists show the fixture's order and its request.
+test("admin lists: work orders and payment requests list real rows", async ({ page }) => {
+  const sid = await createSettlement(f!);
+  const num = (await db().settlementRequest.findUnique({ where: { id: sid }, select: { settlement_number: true } }))!.settlement_number;
+  const { email, password } = adminAccount();
+  await signInAs(page, email, password);
+  await page.goto("/admin/work-orders");
+  await page.getByPlaceholder("Search work orders").fill(f!.tag);
+  await expect(page.getByText(`WO-${f!.tag}`)).toBeVisible({ timeout: 30_000 });
+  await page.goto("/admin/settlements");
+  await page.getByPlaceholder("Search payment requests").fill(f!.tag);
+  await expect(page.getByText(num)).toBeVisible({ timeout: 30_000 });
+  await page.goto("/admin/payments");
+  await expect(page.getByRole("heading", { name: /Payments Received/ })).toBeVisible({ timeout: 30_000 });
+});
