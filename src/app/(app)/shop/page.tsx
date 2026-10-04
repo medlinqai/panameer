@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FreeLine } from "@/components/marketing/FreeLine";
 import { ComingSoon } from "@/components/ComingSoon";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { canProvideServices } from "@/lib/access";
@@ -22,6 +23,7 @@ export default async function Page() {
         </nav>
       )}
 
+      <FreeLine claim="List the services you sell, free." />
       <ComingSoon title="Search Service Products" />
     </div>
   );

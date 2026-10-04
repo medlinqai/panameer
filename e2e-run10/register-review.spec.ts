@@ -167,3 +167,16 @@ test("usage honeycomb: active cells are dark ink", async ({ page }) => {
   await page.waitForTimeout(2500);
   await page.screenshot({ path: "e2e-run10/.artifacts/usage-hive-1280.png" });
 });
+
+// Free-first lane 4: the Shop lead line.
+test("shop: the free lead line is visible", async ({ page }) => {
+  await persona();
+  await signIn(page);
+  for (const w of [1280, 390]) {
+    await page.setViewportSize({ width: w, height: 900 });
+    await page.goto("/shop", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("List the services you sell, free.")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Free as of October 2026/)).toBeVisible();
+    await page.screenshot({ path: `e2e-run10/.artifacts/shop-${w}.png` });
+  }
+});
