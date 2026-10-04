@@ -273,7 +273,7 @@ export default async function AccountHealthPage() {
            repeats a link already on the page (`E579` in a nicer coat). */
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-brand border border-line bg-white p-5">
+        <section className="border-t border-line bg-surface py-5">
           <h2 className="font-display text-[16px] font-bold">Platform Access</h2>
           <ul className="mt-3 space-y-3">
             {access.map((row) => (
@@ -299,7 +299,7 @@ export default async function AccountHealthPage() {
             // {!visible && (
             //   <Link
             //     href="/join/provider?step=finish"
-            //     className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            //     className="mt-4 inline-block min-h-11 bg-ink px-5 py-2.5 text-[14.5px] font-bold text-surface transition-colors hover:bg-magenta-dark"
             //   >
             //     Finish Your Profile
             //   </Link>
@@ -310,7 +310,7 @@ export default async function AccountHealthPage() {
           */}
         </section>
 
-        <section className="rounded-brand border border-line bg-white p-5">
+        <section className="border-t border-line bg-surface py-5">
           <h2 className="font-display text-[16px] font-bold">Account Standing</h2>
           <ul className="mt-3 space-y-3">
             {standing.map((row) => (
@@ -372,7 +372,7 @@ export default async function AccountHealthPage() {
             <Link
               key={policy.slug}
               href={`/policies/${policy.slug}`}
-              className="rounded-full bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="min-h-11 bg-ink px-5 py-2.5 text-[14px] font-bold text-surface transition-colors hover:bg-magenta-dark"
             >
               {policy.title}
             </Link>

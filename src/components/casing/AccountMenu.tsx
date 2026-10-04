@@ -307,7 +307,7 @@ export function AccountMenu({
     rename would silently drop the value.
   */
   const valueFor = (href: string): { text: string; ok?: boolean } | null => {
-    if (href === "/community/score" && summary?.scorePercent != null) {
+    if (href === "/score" && summary?.scorePercent != null) {
       return { text: `${summary.scorePercent}%` };
     }
     if (href === "/account-health" && summary?.account) {

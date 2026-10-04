@@ -632,7 +632,7 @@ export function ConnectProfile({
           ⚠⚠⚠ **THE WRAPPER IS THE SCOPE.** Same component, same markup, one extra class.
         */
         <div className="pm-score-block">
-        <CleanSide title="Search Score" titleHref="/community/score">
+        <CleanSide title="Search Score" titleHref="/score">
           <div className="flex items-center gap-4">
             <span
               className="pm-score-ring"
@@ -655,7 +655,7 @@ export function ConnectProfile({
                   door that disappears at 100% is a door that vanishes exactly when the
                   member has earned the right to look. */}
               <Link
-                href="/community/score"
+                href="/score"
                 data-e716-items
                 className="font-semibold text-magenta-dark hover:underline"
               >

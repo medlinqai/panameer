@@ -222,7 +222,14 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
         ⚠⚠ THE MOTION AND ITS COUNTDOWN ARE **WS-D**, not this workstream —
         Scott: *"a still ring is fine here."*
       */}
-      <section className="pm-score-hero mb-4 overflow-hidden rounded-brand border border-line bg-white">
+      {/*
+        THE USAGE FRAME (`P2-A2-E816`, Scott 2026-10-03: "make Score like
+        Usage"). One white surface, thin lines, no boxes — `bg-surface`, never
+        `bg-white`, which is the `E723` dark-mode defect.
+        Superseded, quoted not deleted:
+        //   <section className="pm-score-hero mb-4 overflow-hidden rounded-brand border border-line bg-white">
+      */}
+      <section className="pm-score-hero mb-4 overflow-hidden border-b border-line bg-surface">
         <div className="pm-score-hero-left p-6 text-center">
           {/*
             ── ⚠⚠⚠ THE HEADING WENT; THE GRAPHIC STAYED (brief 10 WS-C) ───────
@@ -348,7 +355,9 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
               </p>
               <Link
                 href={next.href}
-                className="mt-2.5 inline-block rounded-full bg-magenta px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                /* Square, ink — the brand button (`E816`). The magenta pill went with
+                   the boxes. */
+                className="mt-2.5 inline-flex min-h-11 items-center bg-ink px-4 text-[13px] font-bold text-surface transition-opacity hover:opacity-85"
               >
                 {next.copy.action}
               </Link>
@@ -371,13 +380,13 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
             ring on the page, not two."*
             ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card that stood
             here, whose BODY is now the header's left half unchanged:
-            //   <section className="rounded-brand border border-line bg-white p-6 text-center">
+            //   <section className="border-t border-line bg-surface py-6 text-center">
             //     <div className="pm-score-dial"> … the svg, the segments, the core … </div>
             //   </section>
           */}
 
 
-          <section className="rounded-brand border border-line bg-white p-6">
+          <section className="border-t border-line bg-surface py-6">
             {/* ⚠ `E008`: *"What's left"* → **Needing Completion or
                 Acknowledgment**. ⚠⚠ THE SECOND WORD IS THE POINT — a line
                 answered *"I have none"* is ACKNOWLEDGED, not completed, and the
@@ -506,7 +515,7 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
         </div>
 
         {/* ═══════ RIGHT — what is already done ═══════════════════════════ */}
-        <section className="rounded-brand border border-line bg-white p-6">
+        <section className="border-t border-line bg-surface py-6">
           <div className="flex items-baseline justify-between gap-3">
             {/* ⚠ `E008`: *"What you've done"* → **Components Completed**, the
                 same words the header's count uses. ⚠ SUPERSEDED, quoted not
