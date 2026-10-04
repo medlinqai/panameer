@@ -5,5 +5,10 @@ export function canSeeRate(opts: {
   viewer: Viewer | null | undefined;
 }): boolean {
   if (opts.isOwner) return true;
-  return opts.viewer != null && hasCapability(opts.viewer, "canHireTalent");
+  return viewerCanHire(opts.viewer);
+}
+
+/** The one place the hire capability is tested; rates and the Hire button both read it. */
+export function viewerCanHire(viewer: Viewer | null | undefined): boolean {
+  return viewer != null && hasCapability(viewer, "canHireTalent");
 }
