@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { db } from "../e2e-shell/_db";
+import { adminAccount, signInAs } from "../e2e-tracker/_admin";
 import { createFixture, dropFixture, signIn, createSettlement, type R1Fixture } from "./_fixture";
 
 let f: R1Fixture | null = null;
@@ -58,4 +59,46 @@ test("payment due: buyer is notified, approves, and sees amount + reference + pa
   await page.goto(`/payments/payment-requests/${sid}`);
   await expect(page.getByText("You'll get")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("payment-due")).toHaveCount(0);
+});
+
+// Lane 3: admin records one buyer payment and splits it across two work orders.
+test("admin payments: record one payment across two work orders; a request paid in full becomes PAID", async ({ page }) => {
+  const f2 = await createFixture({ feeBps: 499 });
+  try {
+    const s1 = await createSettlement(f!, "APPROVED");
+    const s2 = await createSettlement(f2, "APPROVED");
+    const prisma = db();
+    const num = async (id: string) => (await prisma.settlementRequest.findUnique({ where: { id }, select: { settlement_number: true } }))!.settlement_number;
+    const [n1, n2] = [await num(s1), await num(s2)];
+
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+    await page.goto("/admin/payments");
+    const form = page.getByTestId("record-payment");
+    await expect(form).toBeVisible({ timeout: 30_000 });
+    await form.locator("select").selectOption(f!.pAccountId);
+    await form.getByLabel("Amount received").fill("800");
+    await form.getByLabel("Bank reference").fill(`e2e ${f!.tag}`);
+    await form.getByLabel(`Apply to ${n1}`).fill("500");
+    await form.getByLabel(`Apply to ${n2}`).fill("300");
+    await form.getByRole("button", { name: "Record Payment" }).click();
+    await expect(form.getByText(/Recorded PAY-/)).toBeVisible({ timeout: 30_000 });
+
+    const st = async (id: string) => (await prisma.settlementRequest.findUnique({ where: { id }, select: { status: true } }))!.status;
+    expect(await st(s1)).toBe("PAID");
+    expect(await st(s2)).toBe("APPROVED");
+    const pay = await prisma.payment.findFirst({ where: { external_ref: `e2e ${f!.tag}` }, include: { lines: true } });
+    expect(pay?.status).toBe("ALLOCATED");
+    expect(pay?.lines.map((l) => l.amount_cents).sort()).toEqual([30000, 50000]);
+    await page.screenshot({ path: "e2e-r1/.artifacts/admin-payments-1280.png", fullPage: true });
+
+    const over = await page.evaluate(async ({ acct, sid }) => {
+      const r = await fetch("/api/admin/payments", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pAccountId: acct, amountCents: 50000, receivedAt: "2026-10-04", allocations: [{ settlementId: sid, amountCents: 30000 }] }) });
+      return r.status;
+    }, { acct: f!.pAccountId, sid: s2 });
+    expect(over, "allocating more than the request still owes is refused").toBe(409);
+  } finally {
+    await dropFixture(f2);
+  }
 });
