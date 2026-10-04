@@ -380,6 +380,7 @@ export type OrderDetail = {
      it knows when to say nothing. */
   feeBps: number | null;
   externalRef: string | null;
+  sowText: string | null;
   workRequestId: string | null;
   providerAcceptedAt: string | null;
   buyerReleasedAt: string | null;
@@ -558,6 +559,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     notToExceedCents: o.not_to_exceed_cents,
     feeBps: o.fee_bps,
     externalRef: o.external_ref,
+    sowText: o.sow_text,
     workRequestId: o.work_request_id,
     providerAcceptedAt: o.provider_accepted_at ? o.provider_accepted_at.toISOString() : null,
     buyerReleasedAt: o.buyer_released_at ? o.buyer_released_at.toISOString() : null,

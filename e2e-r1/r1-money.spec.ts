@@ -318,3 +318,28 @@ test("resubmit: rejected request → Resubmit (prefilled) → new request; both 
     await dropFixture(g);
   }
 });
+
+// Run 13 lane 6: the buyer writes a statement of work when ordering; the provider reads it on the order.
+test("SOW: buyer writes it at Create Order, provider sees it on the work order", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    const prisma = db();
+    const wr = await prisma.workRequest.create({
+      data: { buyer_person_id: g.buyer.personId, p_account_id: g.pAccountId, status: "ASSIGNED", proposal_access: "INVITE_ONLY", title: `SOW ${g.tag}`,
+        lines: { create: [{ line_number: 1, transaction_type: "SERVICE_BY_AMT", description: "Assessment", amount_cents: 80000, provider_person_id: g.provider.personId, status: "ASSIGNED" }] } },
+      select: { id: true },
+    });
+    await signIn(page, g.buyer.email);
+    await page.goto(`/work-requests/${wr.id}`);
+    await page.getByLabel("Statement of work").fill("Review the P2P setup and deliver a findings deck.");
+    await page.getByRole("button", { name: "Create the Work Order" }).click();
+    await expect.poll(async () => prisma.workOrder.count({ where: { work_request_id: wr.id } }), { timeout: 30_000 }).toBe(1);
+    const wo = await prisma.workOrder.findFirst({ where: { work_request_id: wr.id }, select: { id: true, sow_text: true } });
+    expect(wo?.sow_text).toBe("Review the P2P setup and deliver a findings deck.");
+    await signIn(page, g.provider.email);
+    await page.goto(`/orders/${wo!.id}`);
+    await expect(page.getByTestId("order-sow")).toContainText("findings deck", { timeout: 30_000 });
+  } finally {
+    await dropFixture(g);
+  }
+});

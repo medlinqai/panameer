@@ -189,6 +189,7 @@ export function AssignDirectly({
 /** ⚠⚠⚠ TRANSITION TWO. The irreversible one, and it says so before it is pressed. */
 export function CreateOrder({ workRequestId }: { workRequestId: string }) {
   const { post, busy, error } = useHirePost(workRequestId);
+  const [sow, setSow] = useState("");
   return (
     <div className="mt-4 rounded-brand border-2 border-magenta/40 bg-magenta/[0.04] p-5">
       <p className="text-[15px] font-bold">A provider is selected.</p>
@@ -203,7 +204,17 @@ export function CreateOrder({ workRequestId }: { workRequestId: string }) {
         can&apos;t be changed after that.
       </p>
       <div className="mt-3">
-        <Button disabled={busy !== null} onClick={() => post("order", {}, "order")}>
+        <label className="mb-3 block text-[13px] font-semibold text-ink-2">
+          Statement of work (optional)
+          <textarea
+            className="mt-1 block min-h-28 w-full border border-line bg-surface p-3 text-[14px] text-ink outline-none focus:border-ink"
+            value={sow}
+            onChange={(e) => setSow(e.target.value)}
+            aria-label="Statement of work"
+            placeholder="Scope, deliverables, acceptance — the provider reads this before accepting."
+          />
+        </label>
+        <Button disabled={busy !== null} onClick={() => post("order", { sowText: sow }, "order")}>
           {busy ? "Creating the work order…" : "Create the Work Order"}
         </Button>
       </div>

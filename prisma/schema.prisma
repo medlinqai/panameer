@@ -6014,6 +6014,8 @@ model WorkOrder {
   /// WORK ORDERS. A unique index here would reject the second provider on a
   /// two-provider PO and look exactly like duplicate detection working
   /// correctly. `check:transaction-spine` asserts this constraint's ABSENCE.
+  /// Run 13: the buyer's statement of work, written when ordering; the provider reads it before accepting.
+  sow_text String?
   external_ref String?
 
   created_at DateTime @default(now())

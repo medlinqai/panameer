@@ -7,6 +7,7 @@ import { hire } from "@/lib/work-orders";
 const bodySchema = z
   .object({
     externalRef: z.string().max(120).nullish(),
+    sowText: z.string().max(20000).nullish(),
   })
   .strict();
 
@@ -29,7 +30,7 @@ export async function POST(
     return NextResponse.json({ error: "That order couldn't be read.", code: "BAD_BODY" }, { status: 400 });
   }
   try {
-    return NextResponse.json(await hire(gate, { workRequestId: id }));
+    return NextResponse.json(await hire(gate, { workRequestId: id, sowText: parsed.data.sowText ?? null }));
   } catch (e) {
     if (e instanceof Error && e.name === "SourcingError") {
       const code = (e as Error & { code?: string }).code ?? "INVALID";
