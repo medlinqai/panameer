@@ -652,10 +652,12 @@ export async function outgoingRequests(viewer: Viewer): Promise<OutgoingRequest[
   });
 }
 
-/** Take back a request the member sent, while it is still pending. */
+/** Take back a request the member sent. The row is kept: deleting a connection
+ *  loses the history, and WITHDRAWN is not DECLINED. */
 export async function withdrawRequest(viewer: Viewer, connectionId: string): Promise<boolean> {
-  const res = await prisma.connection.deleteMany({
+  const res = await prisma.connection.updateMany({
     where: { id: connectionId, from_user_id: viewer.userId, kind: "COLLEAGUE", status: "PENDING" },
+    data: { status: "WITHDRAWN" },
   });
   return res.count === 1;
 }
