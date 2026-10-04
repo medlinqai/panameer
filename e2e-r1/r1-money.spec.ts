@@ -102,3 +102,47 @@ test("admin payments: record one payment across two work orders; a request paid 
     await dropFixture(f2);
   }
 });
+
+// Lane 4: once the buyer has paid, admin records the payout and the provider sees Paid.
+test("payouts: provider sees Payout pending, admin records payout, provider sees Paid + net", async ({ page }) => {
+  const g = await createFixture({ feeBps: 999 });
+  try {
+    const sid = await createSettlement(g, "APPROVED");
+    const prisma = db();
+    const number = (await prisma.settlementRequest.findUnique({ where: { id: sid }, select: { settlement_number: true } }))!.settlement_number;
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+    const rec = await page.evaluate(async ({ acct, sid }) => {
+      const r = await fetch("/api/admin/payments", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pAccountId: acct, amountCents: 50000, receivedAt: "2026-10-04", externalRef: "e2e payout", allocations: [{ settlementId: sid, amountCents: 50000 }] }) });
+      return r.status;
+    }, { acct: g.pAccountId, sid });
+    expect(rec).toBe(200);
+
+    await signIn(page, g.provider.email);
+    await page.goto(`/payments/payment-requests/${sid}`);
+    await expect(page.getByText("Payout pending")).toBeVisible({ timeout: 30_000 });
+
+    await signInAs(page, email, password);
+    await page.goto("/admin/payments");
+    const row = page.locator(`[data-payout="${number}"]`);
+    await expect(row).toBeVisible({ timeout: 30_000 });
+    await expect(row.getByText("$450.05")).toBeVisible();
+    await row.getByLabel(`Reference for ${number}`).fill("e2e-ach-1");
+    await row.getByRole("button", { name: "Record Payout" }).click();
+    await expect(page.locator(`[data-payout="${number}"]`)).toHaveCount(0, { timeout: 30_000 });
+
+    const n = await prisma.notification.findFirst({ where: { person_id: g.provider.personId, event_key: "payment.sent" }, select: { title: true } });
+    expect(n?.title).toContain("$450.05");
+
+    await signIn(page, g.provider.email);
+    await page.goto(`/payments/payment-requests/${sid}`);
+    const paid = page.getByTestId("paid-out");
+    await expect(paid).toBeVisible({ timeout: 30_000 });
+    await expect(paid.getByText("$450.05")).toBeVisible();
+    await expect(page.getByText("Payout pending")).toHaveCount(0);
+    await page.screenshot({ path: "e2e-r1/.artifacts/provider-paid-390.png" });
+  } finally {
+    await dropFixture(g);
+  }
+});

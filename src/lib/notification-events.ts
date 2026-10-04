@@ -769,8 +769,8 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `You've been paid${str(v, "amount", "") ? ` — ${str(v, "amount", "")}` : ""}`,
-    body: () => null,
-    href: () => "/payments",
+    body: () => "Panameer has sent your payout.",
+    href: (v) => (str(v, "settlementId", "") ? `/payments/payment-requests/${str(v, "settlementId", "")}` : "/payments/payment-requests"),
   },
   "recommendation.received": {
     event: "recommendation.received",

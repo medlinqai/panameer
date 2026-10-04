@@ -527,6 +527,8 @@ export type SettlementDetail = {
   totalCents: number;
   feeCents: number;
   netCents: number;
+  /** Set once Panameer has paid the provider out (offline, recorded by admin). */
+  paidOut: { paidAt: string | null; netCents: number; method: string | null } | null;
   /** ⚠ RATE if any line is a timesheet — decides which rendering the reader gets. */
   hasTimesheet: boolean;
   actions: SettlementAction[];
@@ -594,6 +596,10 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
   }));
   const totalCents = lines.reduce((n, l) => n + l.valueCents, 0);
   const feeCents = lines.reduce((n, l) => n + l.feeCents, 0);
+  const payoutLine = await prisma.providerPayoutLine.findFirst({
+    where: { settlement_line_id: { in: s.lines.map((l) => l.id) } },
+    select: { providerPayout: { select: { paid_at: true, net_cents: true, method: true } } },
+  });
 
   return {
     id: s.id,
@@ -615,6 +621,13 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
     totalCents,
     feeCents,
     netCents: totalCents - feeCents,
+    paidOut: payoutLine
+      ? {
+          paidAt: payoutLine.providerPayout.paid_at ? payoutLine.providerPayout.paid_at.toISOString().slice(0, 10) : null,
+          netCents: payoutLine.providerPayout.net_cents,
+          method: payoutLine.providerPayout.method,
+        }
+      : null,
     hasTimesheet: lines.some((l) => l.basis === "RATE"),
     actions: settlementActions(s, order.party),
   };
@@ -634,6 +647,7 @@ export type SettlementRow = {
   totalCents: number;
   lineCount: number;
   submittedAt: string | null;
+  paidOut: boolean;
 };
 
 /**
@@ -654,6 +668,14 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
     include: { lines: true },
   });
 
+  const outLines = new Set(
+    (
+      await prisma.providerPayoutLine.findMany({
+        where: { settlement_line_id: { in: rows.flatMap((r) => r.lines.map((l) => l.id)) } },
+        select: { settlement_line_id: true },
+      })
+    ).map((l) => l.settlement_line_id)
+  );
   return rows.map((s) => {
     const o = byOrder.get(s.work_order_id)!;
     return {
@@ -670,6 +692,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
       totalCents: s.lines.reduce((n, l) => n + lineValue(l), 0),
       lineCount: s.lines.length,
       submittedAt: s.submitted_at ? s.submitted_at.toISOString() : null,
+      paidOut: s.lines.some((l) => outLines.has(l.id)),
     };
   });
 }

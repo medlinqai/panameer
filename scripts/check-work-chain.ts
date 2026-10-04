@@ -173,11 +173,11 @@ async function main() {
     released?.writers.join(", ")
   );
 
-  /* ── ⚠⚠⚠ RULING 25: NOTHING WRITES `PAID` ───────────────────────────────── */
+  // R1 (Scott 2026-10-04) supersedes ruling 25: payments are recorded in-app, and PAID has ONE writer.
   const paid = rows.find((r) => r.value === "PAID");
   check(
-    "1 — ⚠⚠⚠ PAID has NO writer, literal or dynamic (ruling 25)",
-    paid != null && paid.writers.length === 0 && !paid.modelHasDynamicWrite,
+    "1 — PAID has exactly one writer, admin-money.ts (R1 offline payments)",
+    paid != null && paid.writers.length === 1 && paid.writers[0] === join("src", "lib", "admin-money.ts") && !paid.modelHasDynamicWrite,
     `${paid?.writers.join(", ")} dynamic=${paid?.modelHasDynamicWrite}`
   );
 
@@ -324,14 +324,16 @@ async function main() {
   }
 
   /* ═══ 6 · ⚠⚠⚠ NO MONEY MOVED (item 7) ═══════════════════════════════════ */
-  const payments = await prisma.payment.count();
-  check("6 — ⚠⚠ no Payment row exists anywhere", payments === 0, `${payments}`);
+  const overAllocated = (await prisma.payment.findMany({ include: { lines: true } })).filter(
+    (p) => p.lines.reduce((n, l) => n + l.amount_cents, 0) > p.amount_cents
+  );
+  check("6 — no Payment is allocated beyond what was received", overAllocated.length === 0, overAllocated.map((p) => p.payment_number).join(", "));
   const paidWriters = SRC.filter((s) => /status:\s*"PAID"/.test(s.code)).map((s) => s.f);
-  check("6 — ⚠⚠⚠ nothing anywhere writes PAID", paidWriters.length === 0, paidWriters.join(", "));
+  check("6 — only admin-money.ts writes PAID", paidWriters.length === 1 && paidWriters[0] === join("src", "lib", "admin-money.ts"), paidWriters.join(", "));
   const paymentCreators = SRC.filter((s) =>
     /\b[a-zA-Z_$]+\.payment\.(create|createMany|upsert)\b/.test(s.code)
   ).map((s) => s.f);
-  check("6 — ⚠⚠⚠ nothing creates a Payment", paymentCreators.length === 0, paymentCreators.join(", "));
+  check("6 — only admin-money.ts creates a Payment", paymentCreators.length === 1 && paymentCreators[0] === join("src", "lib", "admin-money.ts"), paymentCreators.join(", "));
   /* ⚠ AND NO CUT IS COMPUTED. `fee_bps` is a rate stated on a contract; a
      multiplication against it is a cut, and that is out of scope entirely. */
   const cutters = SRC.filter((s) => /fee_bps\s*[*/]|[*/]\s*fee_bps|feeBps\s*[*/]|[*/]\s*feeBps/.test(s.code)).map(

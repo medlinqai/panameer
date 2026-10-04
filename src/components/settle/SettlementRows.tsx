@@ -18,10 +18,12 @@ const LABEL: Record<SettlementStatus, string> = {
   PAID: "Paid",
 };
 
-export function SettlementStatusPill({ status }: { status: SettlementStatus }) {
+/** `paidOut` is passed on the provider's side only: buyer-paid but not yet paid out reads "Payout pending". */
+export function SettlementStatusPill({ status, paidOut }: { status: SettlementStatus; paidOut?: boolean }) {
+  const pending = status === "PAID" && paidOut === false;
   return (
-    <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${TONE[status]}`}>
-      {LABEL[status]}
+    <span className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${pending ? TONE.SUBMITTED : TONE[status]}`}>
+      {pending ? "Payout pending" : LABEL[status]}
     </span>
   );
 }
@@ -55,7 +57,7 @@ export function SettlementRowCard({ row }: { row: SettlementRow }) {
           </p>
         </div>
         <div className="text-right">
-          <SettlementStatusPill status={row.status} />
+          <SettlementStatusPill status={row.status} paidOut={row.party === "PROVIDER" ? row.paidOut : undefined} />
           <p className="mt-1.5 text-[15px] font-bold">
             {formatCents(row.totalCents, row.currency)}
           </p>

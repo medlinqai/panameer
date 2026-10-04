@@ -11,6 +11,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "colleague.invite_received",
   "message.received",
   "work.settlement_approval",
+  "payment.sent",
 ];
 
 export function notificationEmailAllowed(event: NotificationEventKey): boolean {
