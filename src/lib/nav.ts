@@ -332,6 +332,9 @@ const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
       ⚠ **THE ROUTE STILL DOES NOT MOVE.** `E600` WS-A decided that deliberately, and it
       stands: this changes which item the band lights, not where the page lives.
     */
+    /* `E816` — the score moved to `/score`; the old path is a 308 and is kept
+       here so a bookmarked link still lights the right item on its way through. */
+    "/score",
     "/community/score",
     /* ── ⚠⚠ `E735` — THREE MORE THAT ARE THE MEMBER'S OWN ─────────────────────────────
        ⚠ `/recommendations` is the member's own recommendations, `/support` their own
