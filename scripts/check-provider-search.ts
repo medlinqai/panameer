@@ -1,36 +1,3 @@
-/**
- * `check:provider-search` — `/search` ranks providers by RDS, and it does it with the
- * ranker that already existed (`P2-A5-E709`, ruling 94e). `npm run check:provider-search`.
- *
- * ── ⚠⚠ WHAT IT ASSERTS (ruling 11 — the RIGHT THING) ────────────────────────
- *
- * ⚠⚠⚠ **THE DEFECT THIS GUARDS IS NOT "SEARCH IS MISSING". IT IS A SECOND RANKER.**
- * Two ranking rules for "how well does this provider fit these skills" would disagree
- * between `/search` and the buyer's suggested-providers list **on the same data**, and
- * the second one is always found by accident, on the surface a stranger sees (`E585`).
- * ⚠ So the load-bearing assertions are ABSENCES: no comparator, no sort, no precedence
- * chain anywhere but `work-request-match.ts`.
- *
- * ⚠⚠ **AND ONE ABSENCE ABOUT MONEY:** the brief stops at WS-B because
- * `WorkRequestLine` has **no `sole_sourced` and no rate column**, so nothing here may
- * write a line. ⚠ A page that put a provider on a cart without the tier would leave
- * **money undecided on a real row**, which is the brief's own refusal.
- *
- * ── ⚠ AT WHAT SCOPE (ruling 91 — stated, not implied) ──────────────────────
- *
- * ⚠ STATIC, over four files as TEXT, **comments stripped** so an `E164` quote cannot
- * satisfy or break an assertion (load-bearing rule 12). ⚠⚠ The files are named and
- * asserted present FIRST, so `0 failures` can never mean `it had nothing to read`
- * (`E586`).
- * ⚠⚠⚠ **IT ASSERTS NO ROW COUNTS AND TOUCHES NO DATABASE** — what `/search` returns
- * depends on seeded providers, and a gate that asserted "N results" would fail on a
- * clean clone for a reason that is not a defect.
- *
- * ── ⚠ DIRECTION (90) ───────────────────────────────────────────────────────
- *
- * ⚠ Every scan carries its own MUTATION check, so an assertion that can no longer fail
- * says so rather than passing quietly (`E607`).
- */
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -41,13 +8,10 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** ⚠ Blanks comments while preserving line count — rule 12's requirement. */
 const strip = (s: string): string =>
   s
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .replace(/^([ \t]*)\/\/.*$/gm, (_m, i) => i);
-
-/* ═══ 0 · INPUTS FIRST (ruling 92 / 98g) ═══════════════════════════════════ */
 
 const PAGE = join("src", "app", "(app)", "search", "page.tsx");
 const MATCH = join("src", "lib", "work-request-match.ts");

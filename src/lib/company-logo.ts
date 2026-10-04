@@ -1,24 +1,3 @@
-/**
- * Company-logo suggestion (brief_U / E043).
- *
- * SERVER ONLY. Resolves a typed company name to one or more candidate logos so
- * the provider can ACCEPT, change or remove one. Never auto-applied: name →
- * company matching is fuzzy, and a confidently-wrong logo on a profile looks
- * worse than no logo at all.
- *
- * Providers, in order:
- *   1. **Logo.dev** — the post-Clearbit standard. `img.logo.dev/{domain}` needs
- *      a publishable token; a brand-search endpoint resolves name → domain when
- *      a secret key is configured.
- *   2. **Brandfetch** — alternative, same shape; used when its key is present.
- *   3. **Wikidata (P154)** — no key, no account, covers well-known brands, and
- *      is why this feature still does something useful with nothing configured.
- *
- * DEGRADES CLEANLY (the Resend/Twilio/OAuth rule): every network call is lazy,
- * guarded and individually try/caught. With no keys set you still get Wikidata
- * results, and if everything fails the caller simply gets an empty list — the
- * employer form keeps working and manual entry is unaffected.
- */
 
 export type LogoSuggestion = {
   url: string;
@@ -36,12 +15,6 @@ export function logoApiConfigured(): boolean {
   );
 }
 
-/**
- * Wikimedia's API policy REQUIRES a descriptive User-Agent and serves an error
- * page to requests without one. Node's fetch sends no useful UA by default,
- * which is why the keyless fallback silently returned nothing until this was
- * added — curl worked, `fetch` didn't.
- */
 const WIKI_UA =
   "Panameer/1.0 (https://panameer.com; provider profile logo lookup)";
 
@@ -174,10 +147,6 @@ async function fromWikidata(name: string): Promise<LogoSuggestion[]> {
   return out;
 }
 
-/**
- * Suggest logos for a company name. Returns [] rather than throwing — a failed
- * suggestion is a missing nicety, never a blocked save.
- */
 export async function suggestCompanyLogos(
   rawName: string
 ): Promise<LogoSuggestion[]> {

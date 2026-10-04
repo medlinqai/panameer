@@ -1,32 +1,9 @@
 "use client";
 
 import { Field, TextInput } from "@/components/onboarding/controls";
-/* ⚠ THE ONE CANONICAL LIST AND THE ONE RESOLVER (`E729` WS-C). `COUNTRIES` is no longer
-   read here — the picker offers all 245 by code. */
 import { regionsFor, regionLabel } from "@/lib/countries";
 import { ALL_COUNTRIES, countryName } from "@/lib/country";
 
-/**
- * Country-first location fields (Walk6b WS2 / E123 · E126).
- *
- * ONE component for the employer modal AND the Photo & Details address block,
- * because they are the same question and were drifting: the employer modal had a
- * US-only state dropdown (the E111 deviation) while Your Details had free text
- * and put Country last, so the same provider met two different location forms in
- * one sitting.
- *
- * COUNTRY LEADS, and that is the substance rather than the styling. It decides
- * what the next field even means — "State" in the US, "Province" in Canada,
- * "County" in Ireland — so asking it last means asking the other fields before
- * knowing what they are. It also gates whether a region list exists at all.
- *
- * ON CITY: still free text, deliberately, and flagged. A real city control needs
- * a validated typeahead against a cities dataset; there isn't one in the tree and
- * adding a network call to the onboarding form is a bigger decision than this
- * brief. The brief's own instruction was to flag it rather than fake a dropdown,
- * so that is what this does — an honest text field beats a `<select>` that can't
- * contain the user's city.
- */
 export type LocationValue = {
   city?: string | null;
   state?: string | null;
@@ -49,13 +26,6 @@ export function LocationFields({
   value: LocationValue;
   onChange: (patch: LocationValue) => void;
   withStreet?: boolean;
-  /*
-    WHICH HALF TO RENDER (`P2-J1.4-E825`, R-E005). Scott's order is Country →
-    Phone → Street → City → State/Province → Postal, and the phone field is not
-    part of an address. Rather than move Phone inside this component — it is not
-    a location — a caller can draw `"country"`, then its own field, then
-    `"rest"`. `"all"` is unchanged and is what every other caller gets.
-  */
   part?: "all" | "country" | "rest";
   countryHint?: string;
 }) {
@@ -79,20 +49,7 @@ export function LocationFields({
           }}
           className={SELECT}
         >
-          {/*
-            ── ⚠⚠⚠ THE VALUE IS THE CODE; THE LABEL IS THE NAME (`P2-A1.1-E729` WS-C) ──────
-
-            ⚠ **SCOTT: *"The picker (LocationFields) stores and reads the code, showing the
-            name."*** ⚠⚠ **AND IT IS NOW ALL 245 COUNTRIES, NOT 23** — `ALL_COUNTRIES` is the
-            one canonical list, alphabetical by the name a member reads.
-            ⚠⚠⚠ **`"Other"` IS NOT AN OPTION ANY MORE AND THE SEVEN ROWS THAT HOLD IT ARE NOT
-            BROKEN:** the guard below keeps a stored value that is not in the list as its own
-            option, so those members see what is stored and can replace it. **A picker that
-            silently blanked their country would look like data loss.**
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <option value="">Choose a country…</option>
-            //   {COUNTRIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-          */}
+          {}
           <option value="">Choose a country…</option>
           {country && !ALL_COUNTRIES.some((c) => c.code === country) && (
             <option value={country}>{countryName(country, country)}</option>
@@ -125,8 +82,6 @@ export function LocationFields({
           <TextInput
             value={value.city ?? ""}
             onChange={(e) => onChange({ city: e.target.value })}
-            /* ⚠ THE CODE, NOT THE NAME (`E729`). ⚠ SUPERSEDED (`E164`):
-               //   placeholder={country === "United States" ? "Chicago" : "City"} */
             placeholder={country.toUpperCase() === "US" ? "Chicago" : "City"}
           />
         </Field>

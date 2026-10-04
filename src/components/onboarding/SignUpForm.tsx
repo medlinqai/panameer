@@ -1,50 +1,11 @@
 "use client";
 
-/* ⚠ `useState` CAME OUT WITH THE REVEAL STATE (`E528`). Its only consumer here
-   was `showPassword`, which now lives inside `PasswordReveal`; leaving the
-   import would be an unused-import lint error against a 0-new baseline. */
 import Link from "next/link";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
-/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C, ruling 1). */
 import { ALL_COUNTRIES } from "@/lib/country";
 import { PasswordReveal } from "@/components/PasswordReveal";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { SocialSignIn } from "@/components/auth/SocialSignIn";
-
-/**
- * "Sign Up" — pre-verification Page 2, rebuilt to the onboarding deck
- * (brief_P / E001 CHANGE 2, E005).
- *
- * Deck shape: Apple/Google continue buttons + an "or" divider; First name, Last
- * name, Email, password + CONFIRM password (PJv2 WS8 / E065 — reversing E001's
- * single-field decision: a typo in a password you can't see costs a support
- * round-trip); Country defaulting to the United States; a marketing
- * opt-in checkbox; a REQUIRED terms checkbox; Back + "Create My Account".
- *
- * This page carries NO stepper (E001 CHANGE 1) — its parent renders it outside
- * the counter-bearing wizard chrome.
- */
-
-/*
-  ── ⚠⚠⚠ ITS PRIVATE COUNTRY LIST IS DELETED (`P2-A1.1-E729` WS-C, ruling 1) ──────────────
-
-  ⚠ **SCOTT: *"Sign-up uses the one shared country list; delete `SignUpForm.tsx:26`'s copy
-  (it's missing the 5 Gulf states)."***
-  ⚠⚠⚠ **IT WAS 17 ENTRIES AND NOBODY KNEW.** `E728`'s reader inventory found it: a second
-  hand-kept list, not imported from anywhere, **missing Saudi Arabia, Qatar, Kuwait, Oman and
-  Bahrain — the five states `E417` added to the shared list for their phone rules.** So a
-  member could not pick at sign-up a country whose phone format the app had gone to the
-  trouble of learning.
-  ⚠⚠ **THAT IS `E585` AT ITS MOST EXPENSIVE: the divergence was invisible from either side.**
-  Neither list knew the other existed, and no gate compared them.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — all 17, so the loss is auditable:
-  //   const COUNTRIES = [
-  //     "United States", "Canada", "United Kingdom", "Ireland", "Australia",
-  //     "New Zealand", "India", "Germany", "France", "Netherlands", "Spain",
-  //     "Poland", "Brazil", "Mexico", "Singapore", "United Arab Emirates",
-  //     "South Africa", "Other",
-  //   ];
-*/
 
 export type SignUpValues = {
   firstName: string;
@@ -57,16 +18,6 @@ export type SignUpValues = {
   tosAccepted: boolean;
 };
 
-/**
- * ⚠⚠ ONE DEFINITION OF THE SUBMIT GATE (`P1-J1.1-E246` §5).
- *
- * `E246` moved `Back` and `Create My Account` OUT of this component into
- * `OnboardingFrame`'s full-bleed action band, so the PAGE now needs the same
- * predicate the button used to read locally. ⚠ IT WAS EXTRACTED, NOT COPIED —
- * `P1-J4-E024` is the precedent for what two copies of one rule do to each other.
- * ⚠ `tosAccepted` IS PART OF THE GATE AND MUST STAY. The required-terms checkbox
- * gating the button is a legal control, not a UX nicety.
- */
 export function canSignUp(values: SignUpValues): boolean {
   return (
     values.firstName.trim() !== "" &&
@@ -78,49 +29,12 @@ export function canSignUp(values: SignUpValues): boolean {
   );
 }
 
-/*
-  ⚠⚠ `onSubmit`, `onBack` AND `busy` WERE REMOVED FROM THIS SIGNATURE (`E246` §5).
-  They existed ONLY to drive the button row that moved to `OnboardingFrame`'s action
-  band; once the buttons left, all three were dead parameters and each was a new lint
-  warning against a 0-new baseline. ⚠ THE CALLERS NOW PASS THOSE HANDLERS TO THE BAND
-  DIRECTLY, which is the same wiring one level up — nothing about how submit fires
-  changed, and this component never had a `<form>` or a `type="submit"` to begin with.
-  ⚠ `error` STAYS: it is still rendered in the form body.
-*/
 export function SignUpForm({
   values,
   onChange,
   error,
   emailLocked = false,
-  /*
-    ⚠⚠ NO DEFAULT ANY MORE (`P1-J1.1-E288`, 2026-08-31). ⚠ SUPERSEDED, quoted:
-    `title = "Sign Up to Find Work"`.
-
-    There are two titles in the product now, one per side of the marketplace, and
-    Scott was explicit there is no third: *"there should be two pages - one shown
-    to the service buyers and another shown to the service sellers… there is no
-    sub-division that i am aware of (nor a reason to have one) under sellers based
-    on type."*
-
-    ⚠ MAKING IT REQUIRED RATHER THAN RE-DEFAULTING IT IS THE DECISION, and it is
-    the same call `E234` made about `callbackUrl` on this very component: a
-    DEFAULT silently decides for every future call site that omits the prop, and
-    the thing being decided here is WHICH SIDE OF THE MARKETPLACE the page is for.
-    `/join/provider` inherited "Sign Up to Find Work" purely by omission. With no
-    default the compiler asks the question, and a new sign-up surface cannot ship
-    wearing the wrong side's title by accident.
-  */
   title,
-  /*
-    ⚠ `/join` (`E234`). ⚠ SUPERSEDED, quoted: `"/join/provider"`.
-    ⚠⚠ THIS DEFAULT WAS LIVE, UNLIKE `SocialSignIn`'s. `join/provider/page.tsx`
-    rendered `<SignUpForm>` WITHOUT a `callbackUrl` and relied on this value to
-    keep a provider inside the provider wizard after signup. Flipping the default
-    alone would have bounced them out to the chooser mid-funnel — a regression
-    dressed as a fix — so that call site now passes `callbackUrl="/join/provider"`
-    EXPLICITLY and its behaviour is unchanged. `/join/requester` already passed
-    its own.
-  */
   callbackUrl = "/join",
   altPrompt,
 }: {
@@ -129,17 +43,6 @@ export function SignUpForm({
   error: string | null;
   /** True when a coordinator invite fixed the email (brief_I). */
   emailLocked?: boolean;
-  /**
-   * WS3 — the three role-specific strings, parameterised rather than copied
-   * into a second form. The defaults are the provider path's existing copy, so
-   * this is additive for every caller that already had it right.
-   *
-   * A second sign-up component was the alternative and would have been a
-   * mistake: this one carries the OAuth block, the show/hide password control,
-   * the confirm-password comparison and the measured 672px width, and a copy
-   * of it would drift from all four.
-   */
-  /** ⚠ REQUIRED (`E288`) — see the note on the destructured prop above. */
   title: string;
   /** Where OAuth returns to — the seller and buyer paths differ. */
   callbackUrl?: string;
@@ -148,15 +51,9 @@ export function SignUpForm({
 }) {
   const passwordTooShort =
     values.password.length > 0 && values.password.length < 8;
-  /**
-   * Only complain once there is something to compare AND the first field is
-   * long enough — otherwise the mismatch error fires on every keystroke while
-   * they are still typing the second copy.
-   */
   const passwordsMismatch =
     values.confirmPassword.length > 0 &&
     values.password !== values.confirmPassword;
-
 
   return (
     // max-w-2xl (672px), not the max-w-md this replaced. brief_W specified
@@ -176,11 +73,7 @@ export function SignUpForm({
         </div>
       )}
 
-      {/*
-        One-click sign-in (brief_Q). Live only for providers whose credentials
-        are configured; the rest render disabled. OAuth fills identity only —
-        name, email and photo — and the profile wizard still runs afterwards.
-      */}
+      {}
       <div className="mt-5">
         <SocialSignIn callbackUrl={callbackUrl} />
       </div>
@@ -226,15 +119,7 @@ export function SignUpForm({
           />
         </Field>
 
-        {/* ⚠⚠ `E528` — THIS CONTROL DID NOT CHANGE, IT MOVED. The eye, its
-            `aria-label`/`aria-pressed`, the single flipping input and the
-            `pr-12` are the ones this form has had since `E047`; they now live in
-            `@/components/PasswordReveal` so sign-in, `/join/buyer` and Settings
-            get the same one rather than a second convention.
-            ⚠ THE ONE BEHAVIOUR CHANGE IS DELIBERATE AND IS REPORTED: Confirm
-            used to have NO button of its own and silently followed this field's
-            toggle. It now reveals independently — a person who mistypes the
-            confirmation needs to see the confirmation. */}
+        {}
         <Field label="Password">
           <PasswordReveal id="signup-password">
             {({ type, className }) => (
@@ -290,9 +175,7 @@ export function SignUpForm({
             onChange={(e) => onChange({ country: e.target.value })}
             className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
           >
-            {/* ⚠⚠ ALL 245, BY CODE, SHOWING THE NAME (`E729` WS-C) — the same picker
-                contract `LocationFields` uses, so the two doors into the product cannot
-                offer different countries again. */}
+            {}
             <option value="">Choose a country…</option>
             {ALL_COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -324,19 +207,8 @@ export function SignUpForm({
           />
           <span className="text-[14px] text-ink-2">
             Yes, I agree to the Panameer{" "}
-            {/*
-              E162 — these OPEN IN A NEW TAB. As ordinary links they navigated
-              away mid-signup and browser-back came back to an empty form, so
-              reading the terms cost you everything you had typed.
-            */}
-            {/*
-              THE NAMES NOW MATCH THE DOCUMENTS THAT EXIST (brief_user_agreement
-              WS-C). This said "Terms of Service", which is not the name of any
-              page — the document is called Terms of Use — and it pointed BOTH
-              that label and "User Agreement" at /terms, so two of the three
-              things being accepted led to the same page and the User Agreement
-              was unreadable. Three names, three routes.
-            */}
+            {}
+            {}
             <LegalLink href="/terms">Terms of Use</LegalLink>,{" "}
             <LegalLink href="/user-agreement">User Agreement</LegalLink> and{" "}
             <LegalLink href="/privacy">Privacy Policy</LegalLink>
@@ -345,26 +217,7 @@ export function SignUpForm({
         </label>
       </div>
 
-      {/*
-        ── ⚠⚠ THE BUTTON ROW MOVED TO THE FRAME'S ACTION BAND (`E246` §5) ────────
-
-        ⚠ SUPERSEDED, quoted not deleted — this was a row carrying `Back` and
-        `Create My Account` under `mt-5 flex items-center justify-between gap-4
-        border-t border-line pt-4`. Its `border-t` was drawn INSIDE the capped
-        `max-w-2xl` column, so the rule stopped at the form width instead of running
-        edge to edge. That is exactly what Scott filed on the walk; the frame's band
-        is full-bleed, so the rule now runs the viewport like every sibling page.
-
-        ⚠⚠ NO SUBMIT CONTRACT CHANGED, AND IT WAS CHECKED BEFORE ANYTHING MOVED:
-        this component renders NO `<form>`, no `type="submit"` and no form
-        `onSubmit`. Both buttons were always plain `onClick` calls to the `onSubmit`
-        / `onBack` PROPS, so moving them changes nothing about how submit fires.
-        ⚠ THE TERMS GATE TRAVELLED WITH THEM as `canSignUp(values)` above — ONE
-        definition, not a second copy.
-        ⚠ `onSubmit`, `onBack` and `busy` REMAIN PROPS here even though this no
-        longer renders the buttons: the caller passes the same handlers to the band,
-        and removing them would be a wider API change than `E246` asked for.
-      */}
+      {}
 
       {altPrompt && (
         <p className="mt-4 text-center text-[14px] text-ink-2">

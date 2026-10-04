@@ -3,22 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * ── ⚠⚠ THE INSTRUCTOR'S CONFIRM (`P2-J3-E558` WS-B) ───────────────────────
- *
- * ⚠⚠ NOT A SECOND `HelpfulButton`. `HelpfulButton` is the ASKER answering *did
- * this answer my question*; this is the PATH'S INSTRUCTOR answering *is this
- * answer correct*. They can disagree in both directions, which is why they
- * write different columns and why this is a different control.
- *
- * ⚠ THIS BUTTON IS NOT THE PERMISSION. `canConfirm` decides whether it renders,
- * and `lib/forums.ts` decides whether the write happens — a hidden control is
- * not a permission, so the refusal lives server-side and is testable by calling
- * the route directly.
- *
- * ⚠ IT IS NOT EMERALD WHEN SET, and that is deliberate: emerald is the ASKER's
- * "this answered me". Two green pills would read as one signal rendered twice.
- */
 export function ConfirmAnswerButton({
   postId,
   confirmed,
@@ -41,9 +25,6 @@ export function ConfirmAnswerButton({
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /* ⚠ The lib REFUSES rather than no-ops — "you can't confirm your own
-           reply" and "you aren't the instructor" are different answers, and
-           printing them is the whole reason it refuses. */
         setError(body.error ?? "That didn't work.");
         return;
       }

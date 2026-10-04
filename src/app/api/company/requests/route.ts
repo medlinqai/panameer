@@ -16,14 +16,6 @@ export async function GET() {
   return NextResponse.json({ requests: await getPendingRequests(gate) });
 }
 
-/**
- * POST — approve or reject one request.
- *
- * The membership id alone proves nothing (anyone could guess one), so the lib
- * reads the request's company and requires the CALLER to hold an approved ADMIN
- * membership on that same company. Deciding somebody else's queue is the attack
- * this endpoint exists to refuse.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;

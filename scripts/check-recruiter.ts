@@ -1,24 +1,3 @@
-/**
- * `check:recruiter` — the recruiter is a first-class identity, and the three
- * ways it silently becomes "provider" (`P1-A1.3-E401`). `npm run check:recruiter`.
- *
- * ── ⚠⚠ WHAT THIS FILE IS ACTUALLY DEFENDING ────────────────────────────────
- *
- * MEASURED 2026-09-09, live: **92 ProviderProfile rows — 79 with no
- * `work_method` at all, 12 HOURLY, 1 PACKAGES, and ZERO RECRUITER.** The fork
- * has never once been taken. It was not broken; it was UNREACHABLE except
- * through `/join/provider?type=recruiter`, and a query string does not survive
- * a bookmark, a reload, an email link or a retyped URL. Scott walked in without
- * it and was asked *"Tell Clients What You Charge"* on step 4/7.
- *
- * ⚠ SO THE ASSERTIONS ARE ABOUT REACHABILITY AND ABOUT ABSENCE, not about the
- * fork's internals. `RECRUITER_STEPS`, `PROVIDER_STEPS`, `stepsForProfile` and
- * `isRecruiterProfile` are correct and `E401` forbids touching them — the tests
- * below assert they are STILL there and still shaped the same, so a later change
- * that "simplifies" the fork away fails here.
- *
- * ⚠ NO DATABASE AND NO BROWSER. Text scans plus the real functions.
- */
 import { readFileSync } from "node:fs";
 import { publishedProfileCode, publishedProfileFile } from "./_profile-surface";
 import { isRecruiterProfile, stepsForProfile } from "@/lib/onboarding";
@@ -35,41 +14,18 @@ const stripComments = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 const read = (p: string) => readFileSync(p, "utf8");
-/*
-  ⚠⚠⚠ "THE WIZARD" IS NOW THE PAGE **PLUS ITS EXTRACTED EDITORS**
-  (`P2-A2-E597` WS-B). ⚠ A gate that reads one named file goes blind the day a
-  component moves — `check:review-edit`'s defect, still reading
-  `ProviderProfileView.tsx` months after `E588` stopped rendering it.
-  ⚠ The RULES below are unchanged; only where the code lives moved.
-*/
 const WIZARD = [
   "src/app/join/provider/page.tsx",
   "src/components/onboarding/editors/SkillsEditor.tsx",
   "src/components/onboarding/editors/SpecializationsEditor.tsx",
-  /* ⚠⚠ AND ITS DRAFT (`P2-A2-E597` WS-C). `ALL_STEPS`, `Step` and the shape the
-     wizard hydrates into moved to `lib/onboarding-draft.ts` so the one-section
-     editors could import them without pulling in a 4,700-line page.
-     ⚠ ASSERTION 2 WENT BLIND THE MOMENT IT MOVED — it reported *"ALL_STEPS not
-     found"*, which reads as "work_method is absent" when it means "the gate
-     cannot see the list at all". ⚠⚠⚠ AN ABSENCE TEST THAT CANNOT FIND ITS
-     HAYSTACK PASSES FOR THE WRONG REASON, and this one only failed loudly
-     because it demands the match be non-empty first. */
   "src/lib/onboarding-draft.ts",
 ]
   .map((f) => read(f))
   .join("\n");
 const WIZARD_CODE = stripComments(WIZARD);
-/* ⚠⚠ RETIRED (`P2-A2-E597` WS-D) — nothing has imported this file since `E588`.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   const VIEW_TSX = read("src/components/profile/ProviderProfileView.tsx");
-   The published profile is derived from the route that renders it. */
 const VIEW_TS = read("src/lib/provider-profile-view.ts");
 const ONBOARDING = read("src/lib/onboarding.ts");
 
-/* ═══ 1 · THE FORK ITSELF IS UNTOUCHED ═════════════════════════════════════
-   ⚠ `E401`: *"DO NOT CHANGE RECRUITER_STEPS, PROVIDER_STEPS, stepsForProfile OR
-   isRecruiterProfile — they are correct."* These pin that promise so the next
-   brief cannot quietly undo it. */
 {
   check(
     "1 — RECRUITER is the discriminator, and only that string",
@@ -81,10 +37,6 @@ const ONBOARDING = read("src/lib/onboarding.ts");
 
   const recruiterSteps = stepsForProfile({ work_method: "RECRUITER" });
   const providerSteps = stepsForProfile({ work_method: "HOURLY" });
-  /* ⚠⚠ THE ONE PROPERTY THAT MATTERS, tested as a PROPERTY rather than as a
-     literal list. Asserting the exact arrays would fail the next time a step is
-     legitimately added; asserting that a recruiter is never asked for a rate is
-     the actual rule, and it cannot be satisfied by accident. */
   check(
     "1 — a recruiter's itinerary contains no rate step",
     !recruiterSteps.includes("rate" as never),
@@ -95,10 +47,6 @@ const ONBOARDING = read("src/lib/onboarding.ts");
     providerSteps.includes("rate" as never),
     providerSteps.join(",")
   );
-  /* ⚠ AND A NULL METHOD STILL RESOLVES TO THE PROVIDER JOURNEY. That fallback is
-     what made the defect invisible, and it is deliberately NOT changed here —
-     WS-1 fixes it by ASKING before the itinerary is read, not by re-defaulting.
-     Pinned so the fix cannot be "improved" into a second silent default. */
   check(
     "1 — a null work_method still falls back to the provider journey",
     stepsForProfile({ work_method: null }).includes("rate" as never)
@@ -111,9 +59,6 @@ const ONBOARDING = read("src/lib/onboarding.ts");
     "2 — `work_method` is a SCREEN in the Screen union",
     /type Screen =[^;]*"work_method"/.test(WIZARD_CODE)
   );
-  /* ⚠⚠ AND IT IS NOT A STEP. If `work_method` ever enters `ALL_STEPS` the
-     stepper renumbers every provider's itinerary — the exact thing the brief
-     fences off. This is the assertion that the screen stayed uncounted. */
   const allSteps = WIZARD_CODE.match(/const ALL_STEPS[\s\S]*?;/)?.[0] ?? "";
   check(
     "2 — ABSENCE: `work_method` is NOT in ALL_STEPS",
@@ -124,9 +69,6 @@ const ONBOARDING = read("src/lib/onboarding.ts");
     "2 — the wizard routes to it when the method is unknown",
     /!s\.profile\?\.workMethod[\s\S]{0,900}setScreen\("work_method"\)/.test(WIZARD_CODE)
   );
-  /* ⚠⚠ THE PROPERTY THE BRIEF NAMES: *"a person changing their own mind is
-     fine, a URL changing it under them is not."* Both writers of `work_method`
-     in this file must sit behind a `!…workMethod` guard. */
   const writes = [...WIZARD_CODE.matchAll(/section:\s*"work_method"/g)];
   check(
     "2 — the wizard has exactly two work_method writers (the URL fork and the screen)",

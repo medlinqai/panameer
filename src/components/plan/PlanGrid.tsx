@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * "THE PLAN" GRID on `/status` — built to the 2026-10-03 mockup (`P2-ALL-E809`).
- *
- * Three levels, all collapsible, outline numbers in a narrow first column.
- * STAGES ARE NOT INDENTED and TASKS ARE INDENTED ONE STEP (Scott): the level is
- * carried by weight and by the number, so indenting the stages too would push
- * everything right for no extra information.
- *
- * It renders `PublicPlanRow`, which has no `admin_note` and no `hours` by shape,
- * so this file cannot leak either.
- */
-
 import { useMemo, useState } from "react";
 import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
 

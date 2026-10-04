@@ -1,17 +1,3 @@
-/**
- * Presentation for the 19 legal supplements (brief_legal_supplements WS-A/C).
- *
- * HAND-WRITTEN, beside the GENERATED `supplements.ts`. The generator owns what
- * the documents SAY; this owns what we say ABOUT them — the human title, the
- * one-line summary on the index, which group they sit in, and the notice each
- * one carries. Keeping the two apart means re-running the generator can never
- * clobber an editorial decision, and adding a document is one entry here.
- *
- * NOTICES ARE THE POINT OF THIS FILE. Several of these documents describe
- * things Panameer is still building — money movement, an escrow entity that has
- * no name yet, jurisdiction-specific obligations counsel hasn't written. Each
- * says so on its own page rather than reading as settled policy.
- */
 
 export type SupplementNotice =
   /** Money movement Panameer is building; regulated; not wired to anything. */
@@ -86,23 +72,6 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     title: "Fee and ACH Authorization Agreement",
     summary: "The fees Panameer charges and your authorization to debit them.",
     group: "Payments and escrow",
-    /*
-      ── ⚠⚠ WHAT `P1-ALL-E396` REMOVED, AND THE THREE GAPS LEFT BEHIND ────────
-
-      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }`. That
-      notice said money movement was being built. The problem turned out to be
-      the opposite — the document described fees Panameer does not charge.
-
-      REMOVED: the Marketplace Fee and the Work Order Initiation Fee (both
-      buyer-side, both per-transaction), the entire Business Plus Plan and its
-      10% / 8%-ACH transaction fee, and the Enterprise 10% Service Fee
-      carve-out. ⚠⚠ THE CARVE-OUT WAS DELETED, NOT REPRICED — Scott's answer
-      was that there is no separate enterprise rate and no tier, so a tier
-      structure that does not exist should not be described.
-
-      ⚠ THE GAPS ARE COUNSEL'S AND ARE NOT DRAFTED HERE. They are named in the
-      notice below so the page says what it does not yet say.
-    */
     notice: {
       kind: "todo",
       what:
@@ -116,21 +85,6 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     title: "Direct Work Order Escrow Instructions",
     summary: "How funds are held and released on a Direct Work Order.",
     group: "Payments and escrow",
-    /*
-      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
-      said this mechanism was being built. It is not being built; Panameer does
-      not operate it at all.
-
-      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
-      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
-      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
-      because the surviving half reads as policy.
-
-      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
-      what was there when drafting the replacement. Reported, not hidden.
-    */
     notice: {
       kind: "stub",
       body:
@@ -141,21 +95,6 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     title: "Fixed-Price Escrow Instructions",
     summary: "Milestones, approval, refunds and disputes on a fixed-price Work Order.",
     group: "Payments and escrow",
-    /*
-      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
-      said this mechanism was being built. It is not being built; Panameer does
-      not operate it at all.
-
-      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
-      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
-      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
-      because the surviving half reads as policy.
-
-      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
-      what was there when drafting the replacement. Reported, not hidden.
-    */
     notice: {
       kind: "stub",
       body:
@@ -166,21 +105,6 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     title: "Hourly, Bonus and Expense Escrow Instructions",
     summary: "Weekly billing, bonuses and expenses on an hourly Work Order.",
     group: "Payments and escrow",
-    /*
-      ── ⚠⚠ STUBBED BY `P1-ALL-E396` WS-3, NOT REWRITTEN ────────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted: `notice: { kind: "payments" }` — which
-      said this mechanism was being built. It is not being built; Panameer does
-      not operate it at all.
-
-      ⚠⚠ THE WHOLE DOCUMENT IS SUPPRESSED, NOT EDITED. `legal/[slug]/page.tsx`
-      renders `doc={[]}` for a stub, so none of the escrow prose reaches a
-      reader. That is deliberate: HALF AN ESCROW MODEL IS WORSE THAN NONE,
-      because the surviving half reads as policy.
-
-      ⚠ THE SOURCE TEXT REMAINS IN THE BUNDLE, UNRENDERED, so counsel can see
-      what was there when drafting the replacement. Reported, not hidden.
-    */
     notice: {
       kind: "stub",
       body:

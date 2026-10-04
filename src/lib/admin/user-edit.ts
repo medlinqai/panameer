@@ -1,22 +1,3 @@
-/**
- * ── EDIT & FIX, FROM THE APP (`P2-ALL-E796`) ────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-03:** *"I really need to be able to use the app to … manage
- * the data."* Name, email, roles, verify, lock, deactivate, password reset.
- *
- * ⚠⚠⚠ **EVERY ONE OF THESE WRITES AN AUDIT ENTRY WITH before → after**, which is
- * the whole reason the lane exists: his test users vanished in a reset and the
- * app could not say what had happened to them.
- *
- * ⚠⚠ **NO HARD DELETE OF A REAL ACCOUNT LIVES HERE.** Deactivation is soft — it
- * blocks sign-in, hides the person from members, and keeps every row. The only
- * delete in this codebase is `E793`'s test-account path, which cannot touch a
- * row with `is_test: false`.
- *
- * ⚠ Reset and verification REUSE the existing senders rather than adding a
- * second path: `requestPasswordReset` (`E528`) and `issueEmailVerification`.
- * A second sender is a second place to forget the suppression list (`E386`).
- */
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
@@ -49,16 +30,6 @@ async function load(personId: string) {
   return person;
 }
 
-/**
- * ── ⚠⚠⚠ AN ADMIN MAY NOT LOCK OR DEACTIVATE THEMSELVES (`P2-ALL-E796`) ──────
- *
- * ⚠ **IT IS THE ONE IRREVERSIBLE-IN-PRACTICE ACTION ON THIS PANEL.** Every other
- * edit here can be undone from the same screen; locking the account you are
- * signed in with ends the session that is the only way back to the screen, and
- * the repair is a database write nobody should need to make.
- * ⚠⚠ **IT IS CHECKED ON THE `user_id`, NOT THE PERSON** — the lock and the
- * active flag live on `User`, and that is the row the session is for.
- */
 function refuseSelf(viewer: Viewer, userId: string | null, what: string) {
   if (userId && userId === viewer.userId) {
     throw new UserEditError(`You cannot ${what} your own account from here.`, "INVALID");

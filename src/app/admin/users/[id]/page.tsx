@@ -13,52 +13,6 @@ import { UserEditPanel } from "@/components/admin/UserEditPanel";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN → USERS → ONE PERSON (`P1-A1.5-E460`).
- *
- * ── ⚠⚠ WHY THIS PAGE EXISTS, AND WHY THE OLD ANSWER WAS WRONG ───────────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E443`): *"Only providers have a page
- * (`/providers/[id]`). Requesters and buyers have none. Do not invent a route."*
- * That was true of the REPO and false of the PRODUCT.
- *
- * **SCOTT, 2026-09-12, asked why only some names were hyperlinked:**
- * ⚠ ***"Everyone has a profile...just sellers have more info on theirs, no?"***
- *
- * He is right, and registration proves it: Level 1 asks for name · email · phone
- * · title · profile · ToS, IDENTICALLY on both sides of the marketplace. A
- * requester has a profile; a buyer has a profile; a recruiter has a profile. A
- * seller's is simply LONGER. ⚠ SO THE GRID WAS NOT MISSING LINKS — THE APP WAS
- * MISSING ONE PAGE. Every one of the 199 rows links here now.
- *
- * ── ⚠ RENDER WHAT THEY HAVE; SAY SO WHERE THEY HAVE NOTHING ─────────────────
- *
- * Every section below is PRESENT for everybody and says "no data" when there is
- * none. ⚠ A SECTION MUST NOT VANISH: an admin looking for a company needs to see
- * "No company on file" — an absent section is indistinguishable from a section
- * that failed to load, and it is what makes two people's pages differ in SHAPE
- * rather than in CONTENT. The one exception is `Seller detail`, which is omitted
- * only when the underlying model does not exist for that person at all — there
- * is no honest empty rendering of a profile they were never offered.
- *
- * ── ⚠⚠ READ ONLY, WITH ONE EXCEPTION: UNLOCK (`P1-ALL-E528`) ────────────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`): *"No unlock, no edit, no delete,
- * and the lock state renders as a disabled checkbox exactly as it does on the
- * grid. An action needs its own brief, and a button that looks live but is not
- * is worse than no button."*
- *
- * ⚠⚠ THAT BRIEF ARRIVED, AND ITS ARGUMENT WAS SCOTT LOCKED OUT OF HIS OWN APP
- * WITH NO WAY BACK IN EXCEPT A DEVELOPER WITH DATABASE ACCESS. The checkbox was
- * right that a dead control is worse than none — so it is now live.
- * ⚠ EVERYTHING ELSE ON THIS PAGE IS STILL READ ONLY. Unlock is the only write,
- * it clears all three lock fields, and locking somebody is NOT offered — that is
- * a new power over a member and it is Scott's call.
- *
- * ⚠ NO ROUTE REGISTRATION WAS NEEDED: `route-access.ts` already gates the whole
- * `/admin` prefix on `canAdminister`, and `admin/layout.tsx` guards above this.
- */
-
 /** A section that is always present, so two people's pages have one shape. */
 function Section({
   title,
@@ -80,7 +34,6 @@ function Section({
   );
 }
 
-/** One labelled value. ⚠ An absent value prints an em-dash, never an empty cell. */
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line py-2 last:border-0">
@@ -90,7 +43,6 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-/** ⚠ THE HONEST EMPTY. Says what is missing, in the admin's words. */
 function Empty({ children }: { children: ReactNode }) {
   return <p className="text-[14px] text-ink-2">{children}</p>;
 }
@@ -111,8 +63,6 @@ export default async function AdminUserPage({
     where: { id },
     select: {
       id: true,
-      /** ⚠ `E794` — needed to scope mail and audit rows, which hang off `User`
-       *  rather than `Person`. */
       user_id: true,
       first_name: true,
       last_name: true,
@@ -134,9 +84,6 @@ export default async function AdminUserPage({
           failed_login_attempts: true,
           last_login: true,
           is_system_admin: true,
-          /** ⚠ `is_active` IS READ FOR THE EDIT PANEL (`E796`). Deactivate is the
-           *  soft half of removal — it signs them out and hides them from
-           *  members — so the control has to know the current state. */
           is_active: true,
         },
       },
@@ -145,9 +92,6 @@ export default async function AdminUserPage({
           name: true,
           tax_type: true,
           tin: true,
-          /* ⚠⚠ `Company.country` DROPPED — NEVER RENDERED (`E729` WS-C, ruling 5). Only
-             name / tax_type / tin reach the page. ⚠ The Registered-address select below is a
-             different read and is switched, not dropped. */
           sites: {
             where: { name: REGISTERED_SITE_NAME },
             select: {
@@ -168,7 +112,6 @@ export default async function AdminUserPage({
         select: {
           id: true,
           status: true,
-          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           work_method: true,
           validation_status: true,
           validation_requested_at: true,
@@ -179,21 +122,6 @@ export default async function AdminUserPage({
     },
   });
 
-  /*
-    ── ⚠⚠⚠ EVERYTHING ABOUT THIS PERSON, IN ONE PASS (`P2-ALL-E794`) ──────────
-
-    ⚠ **SCOTT, 2026-10-03:** he wants *"a user page with everything about that
-    person"* — because his `test2*` accounts had gone and the app could not show
-    him anything about them either way.
-    ⚠⚠ **COUNTS AND A SHORT LIST, NOT THE WHOLE HISTORY.** A page that loads
-    every message and every lesson for a thirty-year consultant is a page nobody
-    opens twice; each section says how many there are and shows the latest few,
-    with the count being the honest figure.
-    ⚠⚠⚠ **EVERY FIGURE HERE HAS A WRITER OR IT IS NOT SHOWN AS A NUMBER** (the
-    2026-09-23 counting rule). Where a table exists but nothing writes to it, the
-    section says so rather than printing a zero that looks measured.
-    ⚠ One `Promise.all`, so the page is one round trip rather than eleven.
-  */
   const userId = person?.user_id ?? null;
   const [
     connectionCount,
@@ -208,9 +136,6 @@ export default async function AdminUserPage({
     auditRows,
   ] = person
     ? await Promise.all([
-        /** ⚠⚠ `Connection` KEYS ON `User`, NOT `Person` — measured, not assumed.
-         *  A person with no user account therefore has no connections, which is
-         *  why these fall back to 0 rather than erroring. */
         userId
           ? prisma.connection.count({
               where: { OR: [{ from_user_id: userId }, { to_user_id: userId }] },
@@ -224,14 +149,8 @@ export default async function AdminUserPage({
               take: 5,
             })
           : Promise.resolve([] as { kind: string; status: string; created_at: Date }[]),
-        /** ⚠ `buyer_person_id` — the real column. */
         prisma.workRequest.count({ where: { buyer_person_id: person.id } }).catch(() => -1),
-        /** ⚠⚠⚠ THE MODEL IS `Proposal`, NOT `ProviderBid` — an absent NAME is
-         *  not an absent THING (`decisions_2026-09-23.md` §15), and the one I
-         *  reached for first does not exist in this schema. */
-        /** ⚠ And it keys on `provider_person_id` — the PERSON, not the profile. */
         prisma.proposal.count({ where: { provider_person_id: person.id } }).catch(() => -1),
-        /** ⚠ Learn and certifications key on `User`, like connections. */
         userId ? prisma.learnEnrollment.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
         userId ? prisma.certification.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
         userId
@@ -528,13 +447,13 @@ export default async function AdminUserPage({
           )}
         </Section>
 
-        {/* 6 · SELLER DETAIL — ⚠ only where the model exists at all. */}
+        {}
         {person.providerProfile && (
           <Section
             title="Seller detail"
             note="What a seller has and a buyer does not — the longer profile."
           >
-            {/* Headline -> Title (E595 WS-B): one field, one name. */}
+            {}
             <Row label="Title" value={person.title || <span className="text-ink-2">No title</span>} />
             <Row label="Status" value={person.providerProfile.status} />
             <Row

@@ -2,41 +2,9 @@ import Link from "next/link";
 import { StatFigureRow } from "@/components/console/StatFigureRow";
 import { FlipCard } from "@/components/motion/FlipCard";
 import { ActionBack, BreakdownBack, TrendBack, allZero, type TrendPeriod } from "@/components/console/StatCardBacks";
-/* ⚠ `E730` WS-B — the COMPONENT import is gone because the comb is mounted in the
-   header now; the TYPE stays, because `honeyCells` still returns it. */
 import { type HoneyCell } from "@/components/console/Honeycomb";
 import type { Figure, Statistics } from "@/lib/statistics";
 import "@/components/motion/flip-card.css";
-
-/**
- * ── ⚠⚠ THE CARDS THE STATISTICS PAGE GAINED (`P2-A2-E603` WS-A) ──────────
- *
- * ⚠ SCOTT, ruling 1 (`E600`): *"Usage is part of Statistics — one tab, one
- * page."* ⚠ MEASURED: `/usage` NEVER EXISTED AS A ROUTE, so the fold left no
- * orphan.
- * ⚠⚠⚠ THIS **EXTENDS** `/stats`; the page's seven existing cards are untouched.
- *
- * ── ⚠⚠⚠ THE FRONT-FACE PERIOD SWITCH IS GONE (correction 4) ──────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"The back face owns every time window — one card, one
- * place where time is chosen."*
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the front-face control and its
- * two-period model:
- * //   function PeriodSwitch({ window }: { window: StatWindow }) {
- * //     const tabs: { key: StatWindow; label: string }[] = [
- * //       { key: "month", label: "This Month" },
- * //       { key: "all", label: "All Time" },
- * //     ];
- * //     … <Link href={t.key === "month" ? "/stats" : `/stats?period=${t.key}`} …>
- * //   }
- * //   <Card title="Your Network" aside={<PeriodSwitch window={s.window} />} …>
- * ⚠⚠ AND THE PER-ROW FOOTNOTE WENT WITH IT (correction 5). It existed only to
- * explain that two of four rows ignored the front switch:
- * //   note="Lessons and enrolments follow the period; certifications and paths
- * //         you teach are all-time."
- * ⚠⚠⚠ NO ROW NEEDS ONE FOR ANY OTHER REASON — every front figure is now simply
- * "as it stands today", which needs no tag at all.
- */
 
 function Card({
   title,
@@ -52,7 +20,7 @@ function Card({
   return (
     <div className="h-full">
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
-        {/* ⚠ Title Case (`E568` / rule 11). */}
+        {}
         <h2 className="font-display text-[16px] font-bold">{title}</h2>
         {aside}
       </div>
@@ -62,19 +30,12 @@ function Card({
   );
 }
 
-/** ⚠ The shell is separate from the faces so BOTH faces sit inside one border
- *  and one padding box — the flip cannot change the card's shape. */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <section className="rounded-brand border border-line bg-white px-[18px] py-4">{children}</section>
   );
 }
 
-/* ⚠ `E730` WS-A — `/stats` became `/usage`. The old path 308s, so a stale link would
-   still arrive; it is repointed anyway because a redirect on every trend click is a
-   round trip nobody needs.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   (p: TrendPeriod) => `/stats?trend=${card}&period=${p}` */
 const trendHref = (card: string) => (p: TrendPeriod) => `/usage?trend=${card}&period=${p}`;
 
 export function StatisticsCards({

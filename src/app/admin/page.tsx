@@ -10,36 +10,8 @@ import { countTicketsAwaitingPanameer } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN HOME — the Panameer Dashboard (WS3, ported from Medlinq's /medlinq).
- *
- * COMPANIES FIRST: M1 is the paying clients, because that is what a platform
- * operator opens the console to look at. Medlinq's dashboard makes the same
- * choice with its Usage & Adoption table, and the reason carries over — the
- * company is the billing relationship, and everything else on the platform
- * hangs off one.
- *
- * WHAT IS REAL vs STUBBED, precisely:
- *   real     Companies, People, Learning Paths, Lessons, Providers — these have
- *            tables and are counted.
- *   stubbed  Work Requests, Orders, Packages, Contracts, Revenue — the
- *            transaction layer does not exist, so these render "—" rather than
- *            a zero. A zero is a claim that we looked and found none; a dash
- *            says we cannot look yet, which is the truth.
- */
 export default async function AdminDashboardPage() {
   const viewer = await getSessionViewer();
-  /*
-    "Last 30 days" is a real window over real tables for the two metrics that
-    have one; the other two tiles have no model to count.
-
-    react-hooks/purity flags Date.now() in a render body because on the CLIENT
-    an impure call makes a component non-idempotent across re-renders. This is a
-    server component with `dynamic = "force-dynamic"`: it runs once per request,
-    on the server, and "now" is exactly what a 30-day window should be measured
-    from. Suppressed with the reason rather than worked around, because every
-    workaround here makes the code worse to read for no behavioural gain.
-  */
   // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [companies, newPeople, newLessons, ticketsWaiting] = await Promise.all([
@@ -51,40 +23,13 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      {/*
-        Deck slide 1. The MASTER's dashboard tiles were platform totals
-        (Companies / People / Providers); the revised deck asks for NEW-IN-30-DAYS
-        counters, which is a different question — "what changed" rather than
-        "how big are we". Companies and Learning Paths are real counts; the
-        other two need a transaction layer.
-      */}
+      {}
       <TileRow
         tiles={[
           { label: "New Buyers/Sellers Last 30 Days", value: newPeople, hint: "Joined in the last 30 days" },
           { label: "New Lessons Last 30 Days", value: newLessons, hint: "Added in the last 30 days" },
           { label: "New Work Last 30 Days", hint: "Awaits work requests" },
           { label: "New Service Products Last 30 Days", hint: "Awaits service products" },
-          /*
-            ── ⚠⚠⚠ THE FIFTH TILE — RULING 80b's COUNT ──────────────────────
-
-            ⚠ **RULING 80b:** *"The fix is not a notification. It is a COUNT,
-            somewhere an admin already is."* ⚠⚠ The list at `/admin/support`
-            already existed and was already in `ADMIN_NAV`; **this page had no
-            ticket figure at all**, so the door had no signpost.
-
-            ⚠ **IT IS THE ONLY TILE HERE THAT IS NOT A 30-DAY WINDOW, AND IT
-            MUST NOT BE ONE.** The other four answer *"what changed"*; this one
-            answers *"what is waiting"* — ⚠⚠⚠ **a queue windowed to 30 days
-            would silently drop the oldest unanswered ticket, which is the exact
-            one an admin needs to see.** The label carries no window for the
-            same reason.
-            ⚠ **`href` POINTS AT THE EXISTING LIST** — the figure is that door's
-            signpost, not a second door (ruling 77: de-duplicate data and logic,
-            not doors).
-            ⚠⚠ **THE HINT NAMES THE EXCLUSION RATHER THAN FOOTNOTING IT**
-            (counting rule 3): a note saying *"some statuses are exempt"*
-            without saying which is worse than no note.
-          */
           {
             label: "Tickets Waiting on Us",
             value: ticketsWaiting,
@@ -105,20 +50,12 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      {/*
-        WS-H — the parser health gauge. It sits on the ADMIN dashboard and
-        nowhere else: /admin is already gated on canAdminister by its layout
-        (guardPage) and the edge proxy, so a non-admin cannot reach this page,
-        and the card is not rendered anywhere they can.
-      */}
+      {}
       <div className="mt-6">
         <ParserHealth />
       </div>
 
-      {/* ⚠⚠ `P2-J3-E522` — the mail tripwire. Same gating as ParserHealth: /admin
-          is covered by its layout's canAdminister guard and by the edge proxy.
-          ⚠ It answers, from INSIDE this environment, the question that cost
-          hours on 2026-09-17: does this deployment send real mail, and as whom. */}
+      {}
       <div className="mt-6">
         <MailHealth />
       </div>
@@ -133,11 +70,7 @@ export default async function AdminDashboardPage() {
         ])}
       />
 
-      {/*
-        Companies is still the operator's first question, and it is REAL data —
-        kept below the deck's strip rather than dropped, because the deck
-        replaced it with counters, not with nothing.
-      */}
+      {}
       <Listing
         title="Companies"
         columns={["Company", "Account Type", "Status", "People", "Joined"]}

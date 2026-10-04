@@ -5,44 +5,8 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { suppress } from "@/lib/unsubscribe";
 import { env } from "@/lib/env";
 
-/**
- * ── ⚠⚠ POST /api/webhooks/resend — PUBLIC, AND THE SIGNATURE IS THE AUTH ────
- *
- * `P2-J3-E522` Part A (2 of 2). The table and the transport write shipped first
- * (`9c14673`); this is what finally moves a row off `sent`.
- *
- * ⚠⚠ THE DEFECT THIS CLOSES: a send that never arrived left NO TRACE ANYWHERE.
- * An invitation's badge said "sent" forever — Scott's own `straterp.cpm` typo
- * survived three attempts and nothing in the product ever said otherwise.
- *
- * ── ⚠ WHY THERE IS NO SESSION CHECK ─────────────────────────────────────────
- *
- * The caller is Resend, not a person. ⚠ `/api/*` is NOT in `proxy.ts`'s matcher,
- * so API routes self-guard — exactly as `/api/unsubscribe` guards with its
- * signed token rather than a session. ⚠⚠ HERE THE GUARD IS THE SVIX SIGNATURE,
- * and it is checked before anything is read out of the body.
- *
- * ⚠⚠ NO SECRET = NO REQUESTS SERVED. A missing `RESEND_WEBHOOK_SECRET` returns
- * 503 rather than falling through to trust an unsigned payload. A closed door,
- * never an open one.
- *
- * ── ⚠⚠ THE RAW BODY IS LOAD-BEARING ────────────────────────────────────────
- *
- * `request.text()`, NEVER `request.json()`. The signature is computed over the
- * exact bytes Resend sent; parsing and re-serialising changes them (key order,
- * whitespace, unicode escapes) and every verification fails with a message that
- * sounds like a wrong secret.
- */
 export const runtime = "nodejs";
 
-/*
-  ⚠⚠ FOUR EVENTS, AND `delivered` IS DELIBERATELY ABSENT (Scott, 2026-09-17):
-  high volume, nothing actionable, and it would make the table grow fastest for
-  a badge nobody asked for.
-  ⚠ `suppressed` IS INCLUDED PRECISELY BECAUSE RESEND CAN DROP A SEND SILENTLY.
-  Scott: *"A send that never happened and never bounced is the exact invisible
-  failure this brief exists to kill."*
-*/
 const HANDLED = {
   "email.bounced": "bounced",
   "email.complained": "complained",
@@ -59,16 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "not configured" }, { status: 503 });
   }
 
-  /* ⚠ RAW BYTES. See the header — this is not a style choice. */
   const payload = await request.text();
 
-  /*
-    ⚠⚠ THE SDK WANTS THE THREE SVIX HEADERS BY NAME, NOT A WEB `Headers` OBJECT.
-    Its `Headers` interface is `{ id, timestamp, signature }` — a name collision
-    with the DOM type that makes `headers: request.headers` look right and fail
-    to compile. ⚠ Passing them explicitly is also what makes the missing-header
-    case a 401 here rather than a throw inside the SDK.
-  */
   const svixId = request.headers.get("svix-id");
   const svixTimestamp = request.headers.get("svix-timestamp");
   const svixSignature = request.headers.get("svix-signature");
@@ -85,20 +41,12 @@ export async function POST(request: Request) {
       webhookSecret: secret,
     });
   } catch {
-    /* ⚠ NO DETAIL IN THE RESPONSE. An unsigned caller learns nothing about why
-       it failed; the reason is logged server-side where it is useful. */
     console.error("[resend-webhook] signature verification FAILED");
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });
   }
 
   const type = event.type as string;
   if (!(type in HANDLED)) {
-    /*
-      ⚠⚠ 200, NOT 4xx, FOR AN EVENT WE DO NOT HANDLE. Resend RETRIES on a
-      non-2xx, so returning an error for `email.delivered` would have the
-      unhandled events redelivered forever — turning a deliberate omission into
-      a retry storm against our own route.
-    */
     return NextResponse.json({ ok: true, ignored: type });
   }
 

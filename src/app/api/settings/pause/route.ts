@@ -6,10 +6,6 @@ import { OnboardingError } from "@/lib/onboarding";
 
 const schema = z.object({ paused: z.boolean() });
 
-/**
- * POST /api/settings/pause — pause/unpause the owner's listing (brief_K).
- * Paused hides the profile from the marketplace regardless of completeness.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

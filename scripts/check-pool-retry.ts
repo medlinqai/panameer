@@ -1,21 +1,3 @@
-/**
- * `check:pool-retry` — the shared-pooler retry retries connections and NOTHING
- * else (`P2-A2-E597` WS-D). `npm run check:pool-retry`.
- *
- * ── ⚠⚠⚠ WHY THIS GATE HAD TO EXIST ───────────────────────────────────────
- *
- * ⚠ The retry was built for a flake measured at WS-C's gate: `check:wizard-
- * contract` failed ~4 of 12 back-to-back runs on `08006 / EAUTHTIMEOUT`
- * against the shared Supabase pooler, never on a save assertion.
- * ⚠⚠ RE-RUN 12 TIMES AFTER IT SHIPPED: **12/12 green, and the retry NEVER
- * FIRED — zero retries logged.** The pooler was simply healthy in that window.
- * ⚠⚠⚠ SO THE 12 GREEN RUNS ARE NOT EVIDENCE THE RETRY WORKS. They are evidence
- * the fault did not occur. Crediting a fix for an absent symptom is how a
- * placebo gets believed, so the mechanism is proved HERE, by injection,
- * instead of being inferred from a quiet afternoon.
- *
- * ⚠ NO DATABASE AND NO NETWORK. Injected errors only.
- */
 import { withPoolRetry, isPoolConnectionError, poolRetryLog } from "../e2e-shell/_pool-retry";
 
 let pass = 0;
@@ -25,7 +7,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** The three signatures Scott named, as they actually arrive from Prisma. */
 const POOLER_ERRORS = [
   "Database error. Code: `08006`. Message: `(EAUTHTIMEOUT) timeout while waiting for message`",
   "Error in PostgreSQL connection: Error { kind: Closed, cause: None } 08006",
@@ -33,10 +14,6 @@ const POOLER_ERRORS = [
   "EAUTHTIMEOUT",
 ];
 
-/*
-  ⚠ WRAPPED IN `main()` BECAUSE THE HARNESS EMITS CJS, and top-level await
-    is not available there. The assertions are unchanged.
-*/
 async function main() {
   /* ═══ 1 · IT RECOGNISES A POOLER FAULT ════════════════════════════════════ */
   for (const msg of POOLER_ERRORS) {

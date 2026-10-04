@@ -1,23 +1,3 @@
-/**
- * `check:brand-assets` — one icon source, and the files delivered mail must not
- * lose (`P1-ALL-E391`). `npm run check:brand-assets`.
- *
- * ── ⚠⚠ THE TWO THINGS THIS BRIEF WAS AFRAID OF ─────────────────────────────
- *
- *   1. **TWO SOURCES FOR ONE ICON.** `src/app/favicon.ico` existed AND
- *      `layout.tsx` declared `icons` explicitly. Both emitted tags, the metadata
- *      one came last, and so the file everyone edits was not the file being
- *      used. **That is why a favicon "won't update".** Measured before the fix,
- *      quoted in `layout.tsx`.
- *   2. **OVERWRITING A HOTLINKED LOGO.** Seven senders put
- *      `${appBaseUrl()}/brand/panameer-new-on-light.png` into email that is
- *      ALREADY DELIVERED. Replacing that file silently restyles mail somebody
- *      received last month. **Leaving it means old mail keeps the logo it was
- *      sent with, which is the honest outcome** — so the file must survive
- *      forever, and a test is the only thing that can say so.
- *
- * ⚠ NO DATABASE AND NO BROWSER. Files on disk, source as text.
- */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, relative } from "node:path";
@@ -30,10 +10,7 @@ const check = (name: string, ok: boolean, detail = "") => {
 };
 const md5 = (p: string) => createHash("md5").update(readFileSync(p)).digest("hex");
 
-/* ═══ 1 · ⚠⚠ EXACTLY ONE ICON SOURCE ══════════════════════════════════════ */
-
 const layout = readFileSync(join("src", "app", "layout.tsx"), "utf8");
-/** ⚠ Comments stripped: that file QUOTES the block it removed, on purpose. */
 const layoutCode = layout.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 check(
@@ -41,7 +18,6 @@ check(
   !/\bicons\s*:/.test(layoutCode),
   "an explicit icons block emits tags that override src/app/icon.png"
 );
-/* ⚠ MUTATION: the scan must fire on the exact block that was removed. */
 check(
   "1 — MUTATION: the scan catches an icons block coming back",
   /\bicons\s*:/.test('export const metadata = { icons: { icon: "/x.png" } };')
@@ -418,8 +394,6 @@ async function ratioChecks() {
     const b = await inkBoxes(f);
     check(`6 — ${f}'s ink boxes were found`, !!b);
     if (!b) continue;
-    /* ⚠⚠ 1.19 ± 0.05 — tight enough to catch a regeneration at 0.82, loose enough
-       to survive an antialiasing difference of a pixel or two. */
     check(
       `6 — ⚠⚠ ${f}: the mark is 1.19x the wordmark (measured ${b.ratio.toFixed(3)})`,
       Math.abs(b.ratio - 1.19) < 0.05,
@@ -435,9 +409,6 @@ async function ratioChecks() {
       Math.abs(b.ratio - 0.82) > 0.1
     );
   }
-  /* ⚠ MUTATION-TESTED AGAINST THE REAL SUPERSEDED FILE, which is still on disk
-     precisely because `E164` keeps it — so the scan is proven to tell the two
-     apart rather than proven only against the file it expects to pass. */
   const old = await inkBoxes("panameer-lockup-on-dark.png");
   check(
     "6 — MUTATION: the measurement scores E397's superseded lockup at ~0.82",
@@ -450,15 +421,6 @@ async function ratioChecks() {
   );
 }
 
-/* ═══ 7 · ⚠⚠ THERE IS NO NAVY ══════════════════════════════════════════════
-
-   Scott: *"I am a little concerned when you say Navy. There should not be navy."*
-   MEASURED: the rail `#272334` is hue 254 deg, the hero panel `#170f2c` is 257,
-   and the wordmark `E400` replaced was `#171c35` — hue 230, THE ONLY THING IN THE
-   SET OUTSIDE THE VIOLET FAMILY. Both the colour and the word go.
-*/
-/* ⚠ THE ASSET, NOT THE WORD. `navy` appears in a dozen comments recording two
-   earlier retirements; what must not exist is a REFERENCE to the rejected file. */
 check(
   "7 — ABSENCE: no asset named *navy* is referenced in live code",
   !SRC.some((f) => /navy[\w-]*\.(png|jpe?g|svg|webp)/i.test(f.code)),
@@ -478,9 +440,6 @@ check(
   "it is byte-identical to -ink.png under a name Scott rejected"
 );
 {
-  /* ⚠ THE HEX ITSELF, not just the word — a colour can be re-typed without a name. */
-  /* ⚠ LIVE CODE ONLY — `Logo.tsx` names the hex in its superseded note, which is
-     the record of WHY it went and must survive. */
   const blue = SRC.filter((f) => /#171c35/i.test(f.code));
   check(
     "7 — ABSENCE: #171c35 appears in no LIVE code",
@@ -491,11 +450,6 @@ check(
   check("7 — MUTATION: the hex scan catches the colour", /#171c35/i.test("color: #171C35;"));
 }
 
-/* ═══ 8 · MARKETING LOCKUPS ARE NOT IN THE APP ═════════════════════════════
-   ⚠ The magenta and tagline variants are marketing assets, and THE TAGLINE IS
-   MARKETING ONLY — it does not belong on any app surface. They were deliberately
-   never copied into `public/brand`, so this asserts both that no surface names one
-   AND that none is sitting there waiting to be named. */
 for (const f of [
   "panameer-lockup-magenta.png",
   "panameer-lockup-magenta-tagline.png",

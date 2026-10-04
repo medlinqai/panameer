@@ -10,17 +10,6 @@ import {
   type Instructor,
 } from "@/lib/learn-instructors";
 
-/**
- * The learner's view of the catalog (brief_learn_experience WS1).
- *
- * Separate from `learn.ts` (the anonymous read) and `learn-admin.ts` (the
- * authoring read) because this one is the only one that knows who is asking:
- * enrollment and progress are per-user, and every query here is scoped to a
- * session-resolved id. That id is NEVER accepted from the client — the caller
- * passes what the session resolved, so a crafted request can't read another
- * learner's progress.
- */
-
 export type LearnCard = {
   id: string;
   title: string;
@@ -29,44 +18,18 @@ export type LearnCard = {
   group: string | null;
   audience: string;
   coverImage: string | null;
-  /** ⚠ `P2-A4-E611` — can a member start this today? Decided by `pathIsOpenTo`. */
   ready: boolean;
-  /**
-   * ⚠⚠ THE PATH'S TEST IS PUBLISHED AND SITTABLE.
-   * ⚠⚠⚠ **THIS IS NOT A PERMISSION AND MUST NEVER BE READ AS ONE** (ruling 54):
-   * the test is **open to anyone at any time** — no completion gate, no padlock,
-   * no two-tier rule. ⚠ `testReady` says the QUESTION SET exists and has been
-   * reviewed, which is a fact about the test, not about the member.
-   */
   testReady: boolean;
   lessons: number;
   playable: number;
-  /**
-   * Everyone who teaches a lesson in this path, most-taught first (WS6).
-   * A path can genuinely have several — Advanced Procurement has two, and
-   * "2. Overview" has three — so this is a list, not a person.
-   */
   instructors: Instructor[];
   enrolled: boolean;
   /** 0–100, of lessons completed. Null when not enrolled. */
   progress: number | null;
   completedLessons: number;
-  /**
-   * ⚠⚠ Everything this path can be found by — its own title and summary, its
-   * group, **every course title, every lesson title** and its instructors,
-   * lowercased and joined. ⚠ Built once on the server; see the block where it
-   * is assembled for why it is one field and not three arrays.
-   */
   searchText: string;
 };
 
-/**
- * Every published path, with this learner's enrollment and progress folded in.
- *
- * One pass over the catalog rather than a query per card: 23 paths today, but
- * the counts come from lessons and a per-card round trip would be 23 queries
- * that all read the same three tables.
- */
 export async function getLearnHome(userId: string | null): Promise<LearnCard[]> {
   const [paths, enrollments, progress] = await Promise.all([
     prisma.learningPath.findMany({
@@ -82,15 +45,8 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         cover_image: true,
         // The declared lead — consulted only when no lesson names anybody.
         expert_person_id: true,
-        /* ⚠⚠ THE TEST'S READINESS, FOR THE CARD'S STANDING (brief 9 WS-B item 5).
-           ⚠ `ready` is the SAME expression `learn-path-app.ts:371` uses —
-           `status === "PUBLISHED"` — because a path whose question set is still
-           in DRAFT has a test nobody can sit. **One rule, asked in two places,
-           never two rules.** */
         assessment: { select: { status: true } },
         courses: {
-          /* ⚠ `title` ADDED BY `E683` WS-D — the search reaches COURSES and
-             LESSONS, not just paths, and this walk already existed. */
           select: {
             title: true,
             sections: {
@@ -124,11 +80,6 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       : Promise.resolve([]),
   ]);
 
-  /*
-    ONE directory lookup for the whole catalog. Instructors are derived per
-    path from its lessons, but across 23 paths that resolves to four people —
-    loading them per card would be dozens of round trips for the same rows.
-  */
   const directory = await loadInstructors(
     paths.flatMap((p) =>
       instructorIdsFor(
@@ -141,60 +92,8 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
   const enrolled = new Set(enrollments.map((e) => e.learning_path_id));
   const done = new Set(progress.map((p) => p.lesson_id));
 
-  /*
-    ── ⚠⚠ A LEARNER ONLY SEES WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ─────────
-
-    SCOTT: *"If there is no video...no sense adding the course/lesson."*
-    Measured: ELEVEN of 23 published paths have zero playable lessons.
-
-    ⚠⚠ HIDE, NEVER DELETE. This is a QUERY-TIME predicate, not a stored flag and
-    not a delete — so the day a video is uploaded the path comes back on its own
-    with no migration, no re-import and no code change.
-
-    ⚠ THE FILTER IS IN THE DATA LAYER AND NOT IN JSX, so a new component cannot
-    forget it.
-
-    ⚠⚠ AND AN ALREADY-ENROLLED LEARNER KEEPS THEIR PATH. Hiding something
-    somebody enrolled in is the same mistake as hiding a teacher's own work: the
-    filter is on DISCOVERY, not on "what I'm already in". Measured 2026-09-02: 0
-    enrollments are affected today, but the rule holds regardless of the count.
-
-    ⚠ `getPathsTaughtBy` / `getPathsTaughtByProfile` BELOW ARE DELIBERATELY NOT
-    FILTERED — that is the instructor's own work queue. See `lib/learn.ts`.
-  */
-  /*
-    ── ⚠⚠⚠ THE CATALOGUE SHOWS ALL 23 PATHS (`P2-A4-E611` · production signal)
-
-    ⚠⚠ THIS DELIBERATELY SUPERSEDES `E606`'s DECISION TO SHOW ONLY THE 12.
-    ⚠ SCOTT'S REASON, RECORDED 2026-09-23: **hiding a path means the demand
-    signal can never arrive.** *"There is no way for anyone to ask for them.
-    Absence of requests is not absence of demand when there is no request
-    button."*
-
-    ⚠⚠⚠ WHAT DOES **NOT** CHANGE, AND IT IS THE LOAD-BEARING HALF:
-      · the hero count stays **"12 paths you can start today"** —
-        `getCatalogCounts` is untouched and still counts `isPlayable`;
-      · `ready` on each card still comes from `pathIsOpenTo`, so **a path a
-        member cannot start never looks startable** — no Enrol, no progress bar;
-      · the two figures are NEVER SUMMED into 23 anywhere a member can see, and
-        `check:learn-build` §7 fails the build if one appears.
-
-    ⚠ `pathIsOpenTo` IS STILL THE RULE — it moved from deciding WHETHER a card
-    renders to deciding HOW it renders. The predicate is unchanged and is still
-    imported, never restated.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the filter that hid the 11:
-    //   const discoverable = paths.filter((p) =>
-    //     pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id))
-    //   );
-    ⚠ and before it, the hand-rolled form the predicate replaced:
-    //   const discoverable = paths.filter(
-    //     (p) => pathHasPlayableLessons(p) || enrolled.has(p.id)
-    //   );
-  */
   return paths.map((p) => {
     const lessons = p.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
-    /* ⚠ ONE DEFINITION — `lib/learn.ts`. Numerator AND denominator are playable. */
     const prog = playableProgress(lessons, done);
     const isEnrolled = enrolled.has(p.id);
 
@@ -206,10 +105,7 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
       group: p.group,
       audience: p.audience,
       coverImage: p.cover_image,
-      /* ⚠ `P2-A4-E611` — THE CARD CARRIES ITS OWN STARTABILITY. The 11 unready
-         paths are listed now, so every card has to say which kind it is. */
       ready: pathIsOpenTo(pathHasPlayableLessons(p), enrolled.has(p.id)),
-      /* ⚠ The same expression `learn-path-app.ts` uses. Not a permission. */
       testReady: p.assessment?.status === "PUBLISHED",
       lessons: lessons.length,
       playable: lessons.filter(isPlayable).length,
@@ -219,34 +115,8 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
         p.expert_person_id
       ),
       enrolled: isEnrolled,
-      /*
-        ⚠ OVER PLAYABLE LESSONS (`P1-J3-E364` WS-5). Scott: *"why do we have a
-        94%? that is silly."* ⚠ SUPERSEDED: `Math.round((completed /
-        lessons.length) * 100)` — the FULL count, which capped Inventory
-        Management at 94% for a learner who had watched all 47 watchable lessons
-        of its 50.
-      */
       progress: isEnrolled ? prog.percent : null,
       completedLessons: prog.completed,
-      /*
-        ── ⚠⚠⚠ ONE SEARCHABLE STRING, BUILT ONCE, ON THE SERVER (`E683` WS-D) ──
-
-        ⚠⚠ **SCOTT, 2026-09-26: *"really just let them search."* THIS IS THE
-        PRIMARY PATH, NOT A FEATURE** — and it has to reach **paths, courses AND
-        lessons**, which is why the course and lesson titles joined the query
-        above rather than a second read being added beside it.
-
-        ⚠⚠⚠ **IT IS ONE FIELD, NOT THREE, BECAUSE THE FILTER MUST NOT BE ABLE TO
-        DRIFT PER SURFACE** (`E585`): the signed-out hero and the signed-in
-        catalogue run the SAME predicate over the SAME string. Three arrays would
-        let one caller forget lessons and quietly search less than the other.
-        ⚠ Lowercased here so the filter never re-lowercases 23 strings per
-        keystroke, and so casing can never differ between the two callers.
-        ⚠⚠ **A MATCH ON A LESSON STILL SURFACES THE PATH CARD** — which is
-        exactly Scott's rule that *"when anything is selected, the provider is
-        shown the LP and asked to enroll"*: there is no course or lesson result
-        to click, so a course result cannot open a course.
-      */
       searchText: [
         p.title,
         p.summary ?? "",
@@ -261,48 +131,12 @@ export async function getLearnHome(userId: string | null): Promise<LearnCard[]> 
   });
 }
 
-/**
- * The domain chips on the hero, driven by the catalog's own `group` values.
- *
- * Ordered by how much is behind them, not alphabetically: the chips are a way
- * in, and a chip leading to two lessons sitting above one leading to a hundred
- * makes the catalog look thinner than it is. Empty groups never appear.
- */
 export function groupChips(cards: LearnCard[]): { group: string; paths: number; lessons: number }[] {
   const map = new Map<string, { group: string; paths: number; lessons: number }>();
   for (const c of cards) {
-    /*
-      ── ⚠⚠⚠ A NULL GROUP BUCKETS AS `Other` (`P2-A4-E611`, Q5) ──────────────
-
-      ⚠ SCOTT, 2026-09-23: *"filter on group, null → 'Other'. 11 distinct
-      values. Never invent a taxonomy."*
-      ⚠⚠ MEASURED 2026-09-23: `LearningPath.group` holds 11 distinct values and
-      **3 paths carry null**. Those three had NO chip at all, so no filter could
-      reach them and the chip counts did not add up to the catalogue.
-      ⚠⚠⚠ THE MOCKUP'S SIX FILTERS — Beginners · Procurement · Payables ·
-      HR & Payroll · Finance · Implementers — ARE NOT THIS AXIS. They mix
-      `group` with `audience`, and `audience` is a 4-value enum
-      (`BEGINNERS`/`END_USER`/`IMPLEMENTER`/`CONTENT_CREATOR`). **Building the
-      mockup's set would have meant inventing a taxonomy the data does not
-      carry.**
-      ⚠ `Other` IS A BUCKET, NOT A CATEGORY: it is where "nobody filed this
-      yet" goes, and a path leaves it by being filed.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   if (!c.group) continue;
-    */
     const key = c.group ?? OTHER_GROUP;
     const row = map.get(key) ?? { group: key, paths: 0, lessons: 0 };
     row.paths += 1;
-    /*
-      ⚠ PLAYABLE, FOR THE SAME REASON THE HEADLINE TOTAL IS (`P1-J3-E362`).
-      ⚠ SUPERSEDED: `row.lessons += c.lessons`. A chip is a way IN — its number
-      is a promise about what is behind it, and counting lessons a learner cannot
-      watch made a domain look fuller than it is. Found while fixing the headline
-      total, which had the identical bug one file over.
-      ⚠ THE CHIP ORDERING FALLS OUT OF THIS TOO, and correctly: chips are sorted
-      by how much is behind them, so they now rank by watchable weight rather
-      than by catalogued weight.
-    */
     row.lessons += c.playable;
     map.set(key, row);
   }
@@ -320,7 +154,6 @@ export type LearnLessonRow = {
   runTime: string | null;
   playable: boolean;
   completed: boolean;
-  /** ⚠ `P2-A4-E611` — the honest state, decided by `lessonState`. Never a promise. */
   stateLabel: string;
 };
 
@@ -359,24 +192,9 @@ export type LearnPathView = {
   completed: number;
   progress: number;
   courses: LearnCourseView[];
-  /**
-   * ⚠⚠⚠ THE SAME PREDICATE DISCOVERY USES (`E607`). `false` means this path is
-   * not one a member can open — it is PUBLISHED but nothing in it plays.
-   * ⚠ THE VIEW IS STILL RETURNED, NOT NULLED: links to these slugs already
-   * exist, and a 404 would punish the reader for a content gap. The page says
-   * so plainly instead.
-   */
   ready: boolean;
 };
 
-/**
- * One path, its whole outline, and this learner's ticks against it.
- *
- * DRAFT paths are invisible here regardless of who is asking. The admin console
- * has its own preview (brief_learn_admin_authoring WS4) and it goes through the
- * admin-gated read; this is the learner path and it must not become a second
- * way to see unpublished work.
- */
 export async function getLearnPath(
   slug: string,
   userId: string | null
@@ -513,11 +331,8 @@ export async function getLearnPath(
     enrolled: Boolean(enrollment),
     lessons: allLessons.length,
     completed,
-    /* ⚠ `E364` WS-5 — playable denominator, same rule as above. */
     progress: playableProgressOfRows(allLessons).percent,
     courses,
-    /* ⚠ `l.playable` IS ALREADY `isPlayable(l)` FROM LINE ~348 — the rule is
-       applied once per lesson and read here, never re-applied. */
     ready: pathIsOpenTo(allLessons.some((l) => l.playable), Boolean(enrollment)),
   };
 }
@@ -536,17 +351,11 @@ export type LearnLessonView = {
     thumbnailUrl: string | null;
     playable: boolean;
     completed: boolean;
-    /** ⚠ `P2-A4-E611` — the honest state. Never "Coming soon". */
     stateLabel: string;
   };
   path: { id: string; title: string; slug: string; enrolled: boolean };
   course: { id: string; title: string; slug: string };
   section: { id: string; title: string };
-  /**
-   * The ONE instructor for this video. A lesson has a single teacher even when
-   * its path has several — this is the level the data was always recorded at,
-   * and the level the picture-in-picture has to be right about.
-   */
   instructor: Instructor | null;
   /** Flat running order across the whole path, for prev/next and "X of N". */
   position: number;
@@ -586,26 +395,12 @@ export async function getLearnLesson(
     },
   });
 
-  /*
-    ⚠ THROUGH `lessonFace`, NOT INLINE (brief_learn_app_shell).
-
-    This block used to implement the fallback itself — own expert wins, else the
-    path's lead — which was the right RULE and a second copy of it. It had no
-    "TBD" handling at all, so a placeholder Person would have become a person on
-    the picture-in-picture, the most visible face on the page.
-
-    `check:learn` now fails the build on any file that maps a lesson to a single
-    instructor without going through that function, and this call is why the
-    guard can be enforced rather than aspired to.
-  */
   const directory = own?.expert_person_id
     ? await loadInstructors([own.expert_person_id])
     : new Map<string, Omit<Instructor, "lessons">>();
   const instructor = lessonFace(
     { expert_person_id: own?.expert_person_id ?? null },
     directory,
-    /* No course-level list is loaded here, so the path's derived instructors are
-       the inheritance step — which is exactly what the old code fell back to. */
     [],
     path.instructors
   ).instructor;
@@ -620,8 +415,6 @@ export async function getLearnLesson(
       thumbnailUrl: own?.thumbnail_url ?? null,
       playable: here.lesson.playable,
       completed: here.lesson.completed,
-      /* ⚠ `P2-A4-E611` — the row already carries the state decided by
-         `lessonState`; it is not re-derived here. */
       stateLabel: here.lesson.stateLabel,
     },
     path: { id: path.id, title: path.title, slug: path.slug, enrolled: path.enrolled },
@@ -644,7 +437,6 @@ export async function getLearnLesson(
 }
 
 // ---------------------------------------------------------------------------
-// WS7 — profile ↔ courses (E137)
 // ---------------------------------------------------------------------------
 
 export type TaughtPath = {
@@ -659,38 +451,6 @@ export type TaughtPath = {
   coverImage: string | null;
 };
 
-/**
- * The published paths a person teaches — the "Learn from <name>" section on
- * their marketplace profile (E137).
- *
- * Takes a PERSON id, not a provider-profile id, because `expert_person_id`
- * points at a Person: the schema is explicit that an instructor needn't be a
- * marketplace provider, and going through the profile would silently drop
- * anyone who teaches without selling.
- *
- * PUBLISHED ONLY. A draft path is invisible everywhere else; surfacing it on a
- * public profile would be a hole in the same gate, and the link would 404 for
- * whoever clicked it.
- */
-/**
- * ⚠⚠ DOES THIS PERSON TEACH THIS PATH — THE ONE PREDICATE, EXTRACTED
- * (`P1-J3-E383`).
- *
- * TEACHING IS PER-LESSON (WS6, corrected), so a path counts as theirs when they
- * teach ANY lesson in it — not only when they are its declared lead. The first
- * version matched on `expert_person_id` ALONE and would have shown Linus none of
- * Advanced Procurement despite his 18 lessons in it, on the one surface built to
- * prove he teaches this.
- *
- * The declared lead still qualifies, for a path whose lessons name nobody.
- *
- * ⚠⚠ EXTRACTED BY `E383` RATHER THAN COPIED, and that is the whole point: the
- * path FORUM grants access by enrolment OR teaching, and writing a second `OR`
- * with `expert_person_id` in it would have re-introduced the exact bug this
- * comment records — this time locking Marelise out of forums for the 33 lessons
- * she teaches across four paths. ⚠ ONE PREDICATE, TWO CALLERS. If a third
- * surface needs it, it calls this.
- */
 export function teachesPathWhere(personId: string) {
   return {
     OR: [
@@ -708,50 +468,13 @@ export function teachesPathWhere(personId: string) {
   };
 }
 
-/**
- * ── ⚠⚠ PATHS THIS MEMBER IS TAKING, NOT TEACHING (`P2-J3-E593` WS-B 17) ───
- *
- * ⚠ Scott, 2026-09-20: *"Distinguish learning paths CREATED from paths TAKEN."*
- * ⚠⚠ THE TWO ARE DIFFERENT TABLES, WHICH IS WHY THEY ARE DIFFERENT FUNCTIONS:
- * teaching is `teachesPathWhere` over `LearningPath` (authorship and lesson
- * contribution); taking is a row in `LearnEnrollment`, keyed on `user_id`.
- * ⚠ **A path can be BOTH** — an author may enrol in their own path — and the
- * profile card shows each in its own group rather than picking a winner.
- *
- * ⚠⚠ `PUBLISHED` ONLY, matching `getPathsTaughtBy`. A draft path is not a thing
- * to advertise on a profile, and the two lists must agree about what counts.
- * ⚠ Takes a USER id, not a person id — `LearnEnrollment` is keyed on the user.
- */
 export type TakenPath = {
   id: string;
   title: string;
   slug: string;
   group: string | null;
   coverImage: string | null;
-  /*
-    ── ⚠⚠⚠ DERIVED, NOT STORED (`P2-A2-E713` WS-A item 6 / brief item 11) ──────
-
-    ⚠⚠ **`LearnEnrollment` HAS NO COMPLETION FIELD AND THIS BRIEF ADDS NO COLUMN.**
-    `LessonProgress` exists and a row appears **only when a lesson is finished**, and
-    `Lesson` hangs off `LearningPath` directly — so *complete* is "every lesson of this
-    path has a progress row for this user", and that is computable today.
-    ⚠⚠⚠ **RULING 38 AND THE BRIEF BOTH FORBID A SCHEMA CHANGE HERE, AND NONE IS NEEDED.**
-    ⚠ **MEASURED 2026-09-29: `LearnEnrollment` 2 ROWS, `LessonProgress` 4 — SO NOTHING IS
-    COMPLETE FOR ANYBODY TODAY.** That is not a bug and not a blocker: the buyer-visible
-    half of `Learning` is **empty by construction** until somebody finishes a path, and the
-    section's own rule ("a visitor does not see it at all") already covers that.
-  */
   completed: boolean;
-  /**
-   * How many lessons the path holds.
-   *
-   * ⚠⚠ **IT IS THE SAME NUMBER `completed` IS DECIDED AGAINST** — see the return below. ⚠ It
-   * is added for `E720` item 8, where Scott asked the courses rows to carry a lesson count;
-   * the value was already being computed and discarded.
-   * ⚠⚠⚠ **A `0` HERE IS REAL AND MEASURED, NOT A PLACEHOLDER: 4 of 24 paths carry no courses
-   * at all**, so the row must be able to say *"no lessons yet"* rather than print a bare `0`
-   * that reads as a bug (counting rule 2).
-   */
   lessons: number;
 };
 
@@ -766,23 +489,7 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
       },
     },
   });
-  /* ⚠⚠ ITS OWN TYPE, NOT `TaughtPath`. That shape carries `taughtByThem`,
-     `playable` and `lessons` — three facts about AUTHORSHIP that an enrolment
-     does not have. ⚠ Reusing it would have meant inventing a `0` for each, and
-     a zero nobody measured is the `E433` fabricated-figure problem in a type. */
-  /*
-    ⚠⚠ TWO GROUPED READS, NOT ONE PER PATH. ⚠ A per-path count would be N+1 queries for a
-    figure that decides one word on a profile.
-  */
   const pathIds = rows.map((r) => r.learningPath.id);
-  /*
-    ⚠⚠⚠ THE HIERARCHY IS `LearningPath → Course → Section → Lesson`, AND I HAD IT WRONG.
-    ⚠ My first version keyed on `Lesson.learning_path_id`. **That column does not exist** —
-    a lesson belongs to a `Section`, a section to a `Course`, a course to a path — and
-    `tsc` refused it. ⚠⚠ The compiler caught a premise a grep had told me was true, which
-    is exactly why the branded-id work in `E711` reached for a type rather than a gate.
-    ⚠ Both reads therefore traverse the full path, and neither is per-path (no N+1).
-  */
   const [lessonTotals, mine] = await Promise.all([
     prisma.lesson.groupBy({
       by: ["section_id"],
@@ -797,7 +504,6 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
       select: { lesson: { select: { section: { select: { course: { select: { learning_path_id: true } } } } } } },
     }),
   ]);
-  /* ⚠ `section_id → learning_path_id`, so the totals can be summed per PATH. */
   const sections = await prisma.section.findMany({
     where: { id: { in: lessonTotals.map((t) => t.section_id) } },
     select: { id: true, course: { select: { learning_path_id: true } } },
@@ -815,12 +521,6 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
   }
   return rows.map((r) => {
     const t = total.get(r.learningPath.id) ?? 0;
-    /*
-      ⚠⚠⚠ `t > 0` IS LOAD-BEARING. A path with NO lessons would otherwise satisfy
-      "every lesson is done" vacuously and be reported COMPLETE to a buyer.
-      ⚠ That is not hypothetical here: **4 of 24 paths carry zero courses** (premise 5),
-      and an empty path certifying itself is the `E586` shape in a credential.
-    */
     const completed = t > 0 && (done.get(r.learningPath.id) ?? 0) >= t;
     return {
       id: r.learningPath.id,
@@ -828,13 +528,6 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
       slug: r.learningPath.slug,
       group: r.learningPath.group,
       coverImage: r.learningPath.cover_image,
-      /*
-        ⚠⚠ `lessons` IS EXPOSED, NOT COMPUTED (`P2-A2-E720` item 8). ⚠⚠⚠ **`t` IS THE FIGURE
-        THIS FUNCTION ALREADY HAD** — it is the denominator `completed` is decided against —
-        and it was being thrown away at the return. ⚠ So the profile's *"N lessons"* costs
-        **no extra query**, and it cannot disagree with the `Completed` word beside it,
-        because both read the same `t`.
-      */
       lessons: t,
       completed,
     };
@@ -843,8 +536,6 @@ export async function getPathsTakenBy(userId: string | null): Promise<TakenPath[
 
 export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> {
   const paths = await prisma.learningPath.findMany({
-    /* ⚠ THE PREDICATE IS `teachesPathWhere` — see its docblock for why
-       `expert_person_id` alone is the known-wrong answer. */
     where: {
       status: "PUBLISHED",
       ...teachesPathWhere(personId),
@@ -889,19 +580,10 @@ export async function getPathsTaughtBy(personId: string): Promise<TaughtPath[]> 
       taughtByThem: mine,
       playable: lessons.filter(isPlayable).length,
       coverImage: p.cover_image,
-      /* ⚠⚠ NO `ready` HERE, AND THAT IS DELIBERATE. This is the INSTRUCTOR'S own
-         work queue, not a learner's catalogue — `getPathsTaughtBy` has never
-         been filtered by playability and has no `enrolled` set to ask about.
-         ⚠ For a teacher an un-shot lesson is a TO-DO, not a closed door. */
     };
   });
 }
 
-/**
- * Same, addressed by PROVIDER PROFILE id — what the marketplace profile page
- * has in hand. Resolves the Person itself rather than making every caller do
- * the join, and returns [] rather than throwing when the profile is gone.
- */
 export async function getPathsTaughtByProfile(
   providerProfileId: string
 ): Promise<TaughtPath[]> {
@@ -917,19 +599,6 @@ export async function getPathsTaughtByProfile(
 // Provider Home — the Build Skills row (brief_provider_home_page_v2 WS1)
 // ---------------------------------------------------------------------------
 
-/**
- * Three learning paths to put in front of THIS provider.
- *
- * Personalised by DOMAIN rather than by anything cleverer: a path's `group`
- * ("Procurement", "Supply Chain Execution") is the same vocabulary the
- * provider's own skills and specializations are written in, so matching on it
- * is a real signal rather than a recommendation engine we haven't built.
- *
- * Falls back to the biggest published paths when nothing matches, because an
- * empty Build Skills row would be worse than a generic one — the section's job
- * on a hub page is to say "there is free training here", and it can do that for
- * a provider whose domain we don't yet recognise.
- */
 export async function getHomeLearningPaths(
   userId: string | null,
   limit = 3
@@ -986,11 +655,6 @@ export async function getHomeLearningPaths(
   return picked;
 }
 
-/**
- * The hero's quick-search chips, from the provider's own skills and
- * specializations (E134 shows Procurement · Procure-to-Pay · OBN · Procurement
- * Contracts — which are exactly that provider's).
- */
 export async function getHomeSearchChips(
   userId: string | null,
   limit = 4
@@ -1022,24 +686,6 @@ export async function getHomeSearchChips(
   return out;
 }
 
-/**
- * ⚠⚠ DOES THIS VIEWER TEACH ANYTHING? — the CAPABILITY behind Learn's
- * `Teaching` tab (brief 9 WS-A).
- *
- * ⚠ `MyLearning` already knows, because `learn-dashboard` hands it a `teaching`
- * LIST. ⚠⚠ The catalogue and a path do not build that list and have no reason
- * to — **so this asks the capability question directly rather than making two
- * more pages assemble a list they will only measure the length of.**
- *
- * ⚠⚠⚠ **IT IS `teachesPathWhere`, NOT A SECOND DEFINITION.** `check:forums` §3
- * exists because a hand-rolled copy of that predicate once drifted, and
- * `statistics.ts` carries the same lesson in its own header. **One predicate,
- * asked two ways.**
- *
- * ⚠ `false` for a signed-out visitor and for a user with no Person row — both
- * are "no capability", which is the honest answer and the one that hides the tab
- * rather than showing an empty one (rule 5: hide on capability, never on a zero).
- */
 export async function viewerTeaches(viewer: { userId: string } | null): Promise<boolean> {
   if (!viewer) return false;
   const person = await prisma.person.findFirst({
@@ -1051,59 +697,11 @@ export async function viewerTeaches(viewer: { userId: string } | null): Promise<
   return n > 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠⚠ THE STARTER PATH (`P2-A4-E683` WS-A) — A FLAG, NEVER A SLUG
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ⚠⚠ **WHY A VERDICT AND NOT A `LearningPath | null`.** Three answers are
- * genuinely different and a nullable return can only carry two:
- *   · `none`     — nobody has marked one yet. Correct on the day the column
- *                  lands, and NOT an error.
- *   · `one`      — the answer.
- *   · `ambiguous`— more than one is marked. ⚠⚠⚠ **REFUSED, NOT RESOLVED.**
- */
 export type StarterVerdict =
   | { kind: "none" }
   | { kind: "one"; path: LearnCard }
   | { kind: "ambiguous"; ids: string[] };
 
-/**
- * ── ⚠⚠⚠ MORE THAN ONE STARTER PATH IS REFUSED OUT LOUD ───────────────────
- *
- * ⚠⚠ **SCOTT, 2026-09-26, ACCEPTING THE RECOMMENDATION: *"REFUSE and say so —
- * do not silently take the first by `sort_order`."*** ⚠⚠⚠ The quiet resolution
- * is the dangerous one: picking the lowest `sort_order` produces a page that
- * looks completely normal while a second starter path sits marked and unseen,
- * and nobody finds out until somebody asks why their new onboarding path never
- * appeared. **A wrong answer that looks right outlives a missing one.**
- *
- * ⚠ **WHAT "SAY SO" MEANS HERE, AND WHAT IT DELIBERATELY DOES NOT.** It does
- * NOT mean telling a learner: *"two starter paths are configured"* is an
- * operator's sentence, and putting a misconfiguration on a member's screen
- * spends their attention on something they cannot act on. ⚠⚠ It means
- * (a) the card does not render, (b) `console.error` names the ids, and
- * (c) **`check:learn-entry` FAILS on the live database** — the assertion is
- * what actually reaches a person, which is the same argument `E556` settled:
- * a schema comment is where obligations go to be forgotten.
- *
- * ⚠ **IT READS THE FLAG AND NOTHING ELSE.** No slug, no title, no group — a
- * catalog swap marks a different row and this function is untouched, which is
- * the entire reason the column exists.
- * ⚠⚠ `PUBLISHED` is inherited from `getLearnHome`, so an unpublished path
- * cannot be the starter even if somebody flags it — a starter nobody can open
- * is `E579` in data rather than in code.
- */
-/**
- * ⚠⚠⚠ **THE DECISION, AS A PURE FUNCTION, AND THAT IS NOT TIDINESS.** The rule
- * worth proving is *"two marked paths are refused"* — and proving it against
- * the database would mean **flagging rows in the one database that also serves
- * production** (ruling 38). ⚠⚠ A `PUBLISHED` probe path is visible to real
- * members for as long as the probe runs, and a gate that crashes mid-run leaves
- * a real path flagged. ⚠ So the LOGIC is tested exhaustively here with no
- * writes at all, and the LIVE state is asserted read-only ("at most one is
- * flagged today"). **Neither half needs a write to a shared database.**
- */
 export type StarterDecision =
   | { kind: "none" }
   | { kind: "one"; id: string }

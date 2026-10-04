@@ -1,25 +1,3 @@
-/**
- * CURATED STATIC SOLUTIONS — one honest move per capability-domain gap.
- *
- * ⚠ THIS IS THE MAPPING THE BRIEF CALLS "curated static". There is deliberately
- * NO live AI solution search in Phase 1. The engine spec wants one eventually;
- * shipping it now would mean putting model-generated vendor claims in front of
- * a prospect with nobody having read them, which is the exact "sold by a bot"
- * failure the spec is written to avoid.
- *
- * ── WHAT A MOVE MAY AND MAY NOT SAY ──────────────────────────────────────────
- *
- * MAY: a category of solution, a timeline BAND, and a resource TYPE — the Owner
- * tag from the engine spec (Functional / Technical / PM), which is also what
- * later becomes a pre-filled Work Request.
- *
- * MAY NOT: a named vendor, a date, a price, or a headcount. Every one of those
- * is a commitment the tool cannot keep and the human on the call has to walk
- * back. The timeline is a band ("~4–8 weeks") for the same reason the money is
- * a range: the inputs were bands.
- *
- * The copy for the top three is the prototype's, verbatim.
- */
 
 export type Move = {
   /** The capability domain this move answers. */
@@ -29,18 +7,9 @@ export type Move = {
   detail: string;
   /** A BAND, never a date. */
   timeline: string;
-  /**
-   * The Owner tag → resource type. Phase 2 turns this into a "Resource this"
-   * Work Request; today it tells the buyer who they'd be hiring.
-   */
   resource: string;
 };
 
-/**
- * Keyed by capability domain. Every domain in `P2P_DOMAINS` has an entry —
- * asserted by the unit test, so a domain added to the bank without a move
- * fails the build rather than rendering a gap with nothing to do about it.
- */
 export const P2P_MOVES: Record<string, Move> = {
   invoices: {
     domain: "invoices",

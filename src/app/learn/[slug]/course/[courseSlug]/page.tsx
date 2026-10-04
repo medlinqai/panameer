@@ -8,19 +8,6 @@ import { LessonTable } from "@/components/learn/LessonTable";
 import { ProgressBar } from "@/components/learn/ProgressBar";
 import { playableProgressOfRows } from "@/lib/learn";
 
-/**
- * Course page (brief_learn_experience WS2; design ref Learn-course-page-design.png).
- *
- * The design's layout, built from real data: the purple instructor tile on the
- * left, "Instructor: <name>" as a magenta profile link, the course overview,
- * then the lessons table, with Back and Main Menu at the foot.
- *
- * The instructor is the path's — one person owns a whole Learning Path (WS6),
- * so a course inherits them rather than carrying its own. That is a data
- * decision as much as a design one: `expert_person_id` lives on LearningPath
- * and Lesson but not on Course, and the model is right, because a course is a
- * unit of curriculum and a path is a unit of teaching.
- */
 export default async function CoursePage({
   params,
 }: {
@@ -36,13 +23,6 @@ export default async function CoursePage({
 
   const index = path.courses.findIndex((c) => c.id === course.id);
   const next = path.courses[index + 1] ?? null;
-  /*
-    ⚠ `E364` WS-5 — OVER PLAYABLE LESSONS. ⚠ SUPERSEDED:
-    `Math.round((course.completed / course.lessons) * 100)` — the same 94% bug one
-    level down from the path card. `LearnCourseView`'s lesson rows already carry
-    `playable` and `completed`, so the shared rule reads them directly rather than
-    this page re-deriving a ratio from two totals.
-  */
   const percent = playableProgressOfRows(
     course.sections.flatMap((s) => s.lessons)
   ).percent;

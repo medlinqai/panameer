@@ -10,18 +10,6 @@ import {
 } from "@/lib/service-products";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * The provider's own package catalog (brief_V / E045).
- *
- *   GET                                        → all of the viewer's packages
- *   POST { action: "create", package }
- *        { action: "update", packageId, package }
- *        { action: "delete", packageId }
- *        { action: "setStatus", packageId, status: "DRAFT" | "PUBLISHED" }
- *
- * OWNER-SCOPED: the lib resolves the profile from the session and ANDs every
- * client-supplied id with it, so a foreign id resolves to nothing.
- */
 export async function GET() {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;
@@ -76,9 +64,6 @@ export async function POST(request: Request) {
 function handle(e: unknown, fallback: string) {
   if (e instanceof OnboardingError) {
     const status = e.code === "NOT_A_PROVIDER" ? 404 : e.code === "GATE_UNMET" ? 403 : 400;
-    /* ⚠ `fields` TRAVELS WITH THE REFUSAL (`P1-ALL-E034`) — the named field, its
-       member-interest reason and its link all come from the server, so the UI
-       cannot paraphrase them into "complete your profile". */
     return NextResponse.json(
       { error: e.message, code: e.code, ...(e.fields ? { fields: e.fields } : {}) },
       { status }

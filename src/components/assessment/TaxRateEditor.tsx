@@ -7,15 +7,6 @@ import { STATES } from "@/lib/assessment/bands";
 
 type Override = { geography: string; rate_bps: number; note: string | null };
 
-/**
- * Editor for the funding rate (WS-C admin half).
- *
- * PERCENTAGES IN THE UI, BASIS POINTS IN THE DATABASE. An admin types 18 or
- * 18.5; the row stores 1800 or 1850. Converting at the boundary rather than
- * storing a float is what keeps a funding figure from arriving as
- * $89,999.9999997 — and the conversion lives in `tax-rate.ts` next to the code
- * that multiplies by it, not inlined here.
- */
 export function TaxRateEditor({
   global,
   overrides,

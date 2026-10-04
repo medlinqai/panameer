@@ -64,10 +64,6 @@ export function SearchBox({
   );
 }
 
-/**
- * Admin data fetch — fails LOUD (brief_M): a read error surfaces an error state,
- * never a silent empty list. `reload` re-fetches (used after a mutation).
- */
 export function useAdminFetch<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);

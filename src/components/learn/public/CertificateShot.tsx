@@ -1,13 +1,6 @@
 import { FREE_AS_OF } from "@/lib/free-as-of";
 import { Check } from "@/components/learn/public/shared";
 
-/**
- * SECTION 2 — the certificate, on a pale magenta wash.
- *
- * ⚠ `FREE — ALWAYS` IS A PRICING COMMITMENT IN MARKETING COPY, not a decoration, and it is
- * flagged to the counsel gate along with section 2's "No tiers, no trial, no card." Both are
- * the kind of line that is expensive to walk back. Shipped as Scott approved it.
- */
 export function CertificateShot() {
   return (
     <div className="rounded-[16px] bg-magenta/10 p-6">
@@ -27,14 +20,7 @@ export function CertificateShot() {
         </span>
         <p className="mt-5">
           <span className="rounded-full bg-[#eaf7f1] px-3 py-[5px] font-display text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#137a51]">
-            {/*
-              ⚠⚠⚠ `Free — always` BROKE TWO OF SCOTT'S OWN RULES AT ONCE (`E734`):
-              **"always" is an absolute**, and the line carried **no "as of" date** — and
-              it is the one claim on this page a reader would hold us to. ⚠ Scott,
-              2026-09-30: *"we can make generic claims AND use as of because we might HAVE
-              to charge at some point."*
-              ⚠ SUPERSEDED, quoted not deleted (`E164`): `Free — always`
-            */}
+            {}
             Free as of {FREE_AS_OF}
           </span>
         </p>

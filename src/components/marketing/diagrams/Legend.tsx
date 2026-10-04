@@ -1,14 +1,5 @@
 import { LINE, INK2, LEGEND_KEYS } from "@/components/marketing/diagrams/diagram-tokens";
 
-/**
- * The four-key legend both boards carry. ⚠ IT IS PART OF THE DIAGRAM, not page
- * copy — it names what the three lane tints mean, and the board is unreadable
- * without it. Ported from the mockups' `.legend`/`.key`/`.sw` rules as Tailwind.
- *
- * ⚠ IT SITS OUTSIDE `DiagramShell`'S SCROLL BOX ON PURPOSE: the legend is short
- * enough to wrap at any width, so making it scroll with the 1110px board would
- * hide it at 390 behind a horizontal scroll it does not need.
- */
 export function DiagramLegend({ third }: { third: string }) {
   return (
     <div

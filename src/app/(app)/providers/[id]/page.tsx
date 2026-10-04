@@ -2,39 +2,8 @@ import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
-/* ⚠⚠ `redirect` LEFT WITH THE LOGIN WALL (`P2-A1.1-E738` WS-A) — a signed-out
-   visitor now gets the masked preview instead of a bounce to `/login`. ⚠ The
-   call itself is quoted in the visitor block below (`E164`).
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { notFound, redirect } from "next/navigation"; */
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-/*
-  ⚠⚠ THE TWO PROFILE COMPONENTS CONVERGE HERE (`P2-J3-E588` WS-B). This page
-  now renders the SAME `ConnectProfile` the owner sees at `/community`, in
-  visitor mode.
-
-  ── ⚠⚠⚠ `ProviderProfileView.tsx` WAS DELETED ON 2026-09-21 ────────────────
-
-  ⚠ SCOTT RULED THE DELETION (`P2-A2-E598` premise work, closing out `E597`
-  WS-D): it had **zero live imports since `E588`** — measured, not assumed —
-  and 46KB of unrendered code was still attracting assertions.
-  ⚠⚠ THIS IS A NARROW, NAMED EXCEPTION TO `E164`, NOT A NEW HABIT. Rule 13
-  applies: the newest dated statement from Scott is the live one, and he gave
-  the replacement wording himself. ⚠⚠⚠ **GIT HOLDS THE HISTORY** — the file is
-  recoverable at any commit up to `d7a9c94`.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the import, and the note that
-  used to promise the file would stay:
-  // import { ProviderProfileViewPage } from "@/components/profile/ProviderProfileView";
-  // ⚠ `ProviderProfileView.tsx` STAYS ON DISK, unimported — every removed
-  //   component does. `check:community` GUARD 3 still reads its source for the
-  //   `community?: CommunitySignal | null` prop contract.
-  ⚠⚠ THAT SECOND CLAIM IS ALSO SUPERSEDED: `E597` WS-D re-pointed GUARD 3 —
-  and `check:review-edit` and `check:recruiter` — off the dead file and onto
-  the profile the route actually renders, via `scripts/_profile-surface.ts`.
-  ⚠⚠⚠ RE-POINTING THOSE GATES IS WHAT MADE THE DELETION SAFE; doing it in the
-  other order would have taken three assertions down with the file.
-*/
 import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
@@ -50,62 +19,11 @@ import { MaskedProviderPage } from "@/components/public/MaskedProviderPage";
 import { getMaskedProfile } from "@/lib/masked-profile";
 import type { Metadata } from "next";
 
-/**
- * Provider profile — a marketplace surface, BEHIND LOGIN as of E049.
- *
- * IT USED TO BE PUBLIC, and that quietly undid the masking everywhere else.
- * /explore had just been built to show first names only, with every card CTA
- * routed through /login precisely so nobody could walk from a teaser to a
- * surname — and this page rendered the full profile, surname included, to
- * anyone with the URL. A mask that one guessable route removes is not a mask;
- * it is a convention. The route is the boundary now.
- *
- * WHAT SIGNING IN BUYS, AND WHAT IT DOES NOT. An account gets the profile —
- * headline, skills, work history, packages, testimonials, rate. It does NOT get
- * the surname or the contact details: those are transaction-tier, gated in the
- * lib by `identityVisibility`. So there are three levels now, each a real step:
- * anonymous sees the teaser, an account sees the expertise, an engagement sees
- * the person.
- *
- * Renders server-side straight from the lib (still API-first: logic lives in
- * src/lib/provider-profile-view). The lib enforces the visibility gate
- * (brief_K), so a hidden profile 404s — but the owner always sees their own.
- *
- * NOW THE BRANDED VIEW (brief_buyer_profileview). This page rendered
- * `ProfileView` — the older, plainer component — while `/profile` rendered
- * `ProviderProfileView` under E155. Two renderings of one record, and the buyer
- * got the worse one: no testimonials, none of the branded hero, none of the
- * work-history disclosures. A provider polishing their profile was looking at a
- * page no buyer would ever see.
- *
- * OWNER AFFORDANCES ARE ALREADY CONDITIONAL, which is why this is a swap rather
- * than a new read-only variant. `getProviderProfileView` sets `isOwner` from the
- * session, and the component keys the "you're live" banner, the completeness
- * meter, the freshness nudge, Edit Profile, the résumé re-read and every
- * per-section edit link off that one flag. A visitor gets the same page with
- * none of them.
- *
- * THE DATE→ISO NOTE IS GONE BECAUSE ITS REASON IS. It warned that
- * `getPublicProviderProfile` returns Date objects while `PublicProviderProfile`
- * is typed for the wire, and cast through `unknown` to reconcile the two. Both
- * sides are server-side here and share one inferred type, so there is nothing to
- * serialize and nothing to cast.
- */
-/**
- * ⚠ THE CONNECT SLOT (`P1-ALL-E374` WS-3) — resolved here because THIS is the
- * page that knows it is showing somebody else. `/profile` and `/join/provider`
- * render the same component and pass nothing.
- *
- * ⚠ IT DECIDES NOTHING. `getMyCommunity` already computed both relations in
- * `lib/connections.ts`; this reads them and hands the component a node. The
- * server re-checks every rule on the way in regardless.
- */
 async function connectSlot(
   viewer: Awaited<ReturnType<typeof getSessionViewer>>,
   ownerUserId: string | null,
   isOwner: boolean
 ): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode }> {
-  /* ⚠ A control you cannot press is noise — own profile renders none. */
   if (!viewer || !ownerUserId || isOwner) return {};
 
   const mine = await getMyCommunity(viewer);
@@ -117,23 +35,11 @@ async function connectSlot(
   const incomingId = mine.incoming.find((c) => c.person?.userId === ownerUserId)?.connectionId;
 
   const following = mine.following.some((f) => f.person?.userId === ownerUserId);
-  /*
-    ── ⚠⚠⚠ TWO PARTS, TWO PLACES ON THE RAIL (`P2-A2-E720` item 10) ─────────────────────
-
-    ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a Colleague."***
-    ⚠⚠ **SO THE SAME COMPONENT IS RENDERED TWICE, EACH DRAWING ONE HALF** — `part="colleague"`
-    and `part="mentor"` — rather than a second component that would own a second copy of the
-    follow rule. ⚠ That is *"reusing ConnectControls"* literally: one implementation of the
-    POST, the optimistic update and the revert, placed in two slots.
-  */
   const common = {
     toUserId: ownerUserId,
     relation: colleague?.rel ?? null,
     incomingConnectionId: incomingId ?? null,
     isMentor: following,
-    /* ⚠ `outline` ONLY HERE (`E719`). Nine other files render this component and keep the
-       magenta primary; on this rail `Hire` is the primary and two solid fills would claim
-       two. Opt-in, so nothing else moves. */
     tone: "outline" as const,
   };
   return {
@@ -142,12 +48,6 @@ async function connectSlot(
   };
 }
 
-/**
- * ⚠ HOW MANY ACCEPTED COLLEAGUES **THIS PROVIDER** HAS. ⚠⚠ NOT
- * `getMyCommunity`, WHICH ANSWERS FOR THE VIEWER — asking the viewer's graph
- * about somebody else's profile is how a count ends up describing the wrong
- * person. ⚠ A `COLLEAGUE` row is undirected, so both columns are read.
- */
 async function providerColleagueCount(userId: string | null): Promise<number> {
   if (!userId) return 0;
   return prisma.connection.count({
@@ -159,26 +59,6 @@ async function providerColleagueCount(userId: string | null): Promise<number> {
   });
 }
 
-/**
- * ── ⚠⚠⚠ THE PAGE TITLE AND SHARE PREVIEW USE THE **TITLE**, NEVER THE NAME ──
- *                                                      (`P2-A1.1-E738` WS-A)
- *
- * ⚠⚠ THE BRIEF IS EXPLICIT: *"Page title and share preview (Open Graph) use the
- * **title**, never the name."* ⚠⚠⚠ **METADATA IS A MASK LEAK NOBODY LOOKS AT.**
- * A `<title>` reading *"Scott Walls — Panameer"* on a page built to hide the
- * name is the full leak: it is in the browser tab, in the history, in the
- * bookmark, and in every link preview the URL is pasted into.
- *
- * ⚠ IT READS THE **MASKED** LOADER FOR EVERYBODY, signed in or out, and that is
- * deliberate: the metadata is what gets SHARED, so it is written to the weakest
- * audience the URL can reach. ⚠⚠ `getMaskedProfile` returns null for a profile
- * that is not publicly previewable, and the fallback names nobody.
- *
- * ⚠⚠ `robots: noindex` IS SCOTT'S ANSWER 4, 2026-10-01: *"Masked pages
- * `noindex`."* ⚠ The one page that MAY be indexed is `/in/<slug>` with the
- * member's "Public profile with my name" option on — a different route, with its
- * own metadata, because the indexing rule differs there.
- */
 export async function generateMetadata({
   params,
 }: {
@@ -282,65 +162,20 @@ export default async function PublicProviderPage({
     return <MaskedProviderPage id={id} />;
   }
 
-  /*
-    THE SAME GATE, IN THE SAME PLACE. The lib returns null for a profile that
-    isn't marketplace-visible unless the viewer owns it, and null is a 404 —
-    unchanged from the previous implementation, which applied the identical
-    predicate inside `getPublicProviderProfile`.
-
-    `viewer` is passed whole as well as by id because the WS5 Plus gate decides
-    at the read whether the contact address is in the payload at all.
-  */
   const profile = await getProviderProfileView(id, {
     viewerUserId: viewer?.userId,
     viewer,
-    /* ⚠ The preview only applies to the owner — see `wantsPeerPreview` above.
-       ⚠⚠ `getProviderProfileView` re-derives `isOwner` itself, so this cannot
-       be used to widen anybody else's view. */
     previewAsPeer: wantsPeerPreview,
   });
   if (!profile) notFound();
-  /* ⚠ Resolved AFTER the read, because only the read knows who owns this. */
   const previewAsPeer = profile.isOwner && wantsPeerPreview;
 
-  /*
-    ⚠ `takenPaths` IS THE PROFILE OWNER'S ENROLMENTS, NOT THE VIEWER'S
-    (`E593` WS-B item 17). ⚠⚠ `LearnEnrollment` is keyed on `user_id`, and the
-    user whose paths belong on this page is the one the page is ABOUT —
-    `p.userId`, never the session. Reading the viewer's would show a stranger
-    their own courses under somebody else's name.
-  */
   const [taughtPaths, takenPaths, testimonials] = await Promise.all([
     getPathsTaughtByProfile(profile.id),
     getPathsTakenBy(profile.person.userId ?? null),
     publicTestimonials(profile.id),
   ]);
 
-  /*
-    ── ⚠⚠ THE THREE VISITOR FACTS (`P2-J3-E588` WS-B) ────────────────────────
-
-    ⚠ `colleagueCount` is THIS PROVIDER'S accepted colleagues — the same real
-    count the owner sees of their own, asked about somebody else.
-    ⚠ `youBothKnow` is the shared set, and it is a REAL QUERY (the owner's
-    `Viewing Me` is the one with no data behind it).
-    ⚠⚠ `messagePermission` COMES FROM `canMessage`, WHICH IS BYTE-UNCHANGED.
-    The button reads the verdict; it does not re-derive the colleague rule.
-    ⚠ All three are skipped on the owner's own page, where they are meaningless
-    — and `getMyCommunity` is the viewer's own graph, so asking it about
-    themselves would answer a different question.
-  */
-  /*
-    ── ⚠⚠ RECORD THE VIEW (`P0-E595` A2) ────────────────────────────────────
-
-    ⚠ THIS IS THE ONLY WRITE PATH. It is here rather than in a client effect
-    because a view is *"a deliberate visit to a profile"*, and the server render
-    of this page IS that visit — an effect would also miss anyone with
-    JavaScript disabled and fire twice under StrictMode.
-    ⚠⚠ SAFE TO CALL DURING RENDER: `@@unique([profile_id, viewer_person_id,
-    viewed_on])` makes it idempotent, so a re-render, a refresh or a back-button
-    all collapse onto the row that already exists. ⚠ `isOwner` is passed so the
-    owner's own visit is never counted, and the helper never throws into the page.
-  */
   await recordProfileView({
     profileId: profile.id,
     viewerUserId: viewer?.userId,
@@ -348,10 +183,6 @@ export default async function PublicProviderPage({
   });
 
   const ownerUserId = profile.person.userId;
-  /* ⚠ `colleagueCount` IS NO LONGER RENDERED (`P2-A2-E600` WS-B) — Layout A's
-     name card is name, title and location. ⚠ The other two are unchanged.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const [colleagueCount, youBothKnow, messagePermission] = … */
   const [, youBothKnow, messagePermission] = profile.isOwner
     ? [(await getMyCommunity(viewer)).colleagues.length, null, null]
     : await Promise.all([
@@ -362,34 +193,9 @@ export default async function PublicProviderPage({
 
   return (
     <div className="flex min-h-full flex-col">
-      {/*
-        The public chrome stays. This page is reachable signed-out, so it keeps
-        its own thin header rather than the app shell — a buyer arriving from a
-        search result is not a signed-in user and should not meet a console.
-      */}
-      {/*
-        E049 — SAY WHY THE NAME IS SHORT. A profile showing one name with no
-        explanation reads as missing data, and the reader's next thought is
-        that the record is incomplete rather than that it is protected.
-      */}
-      {/*
-        ── ⚠⚠⚠ `bg-canvas`, NOT `bg-bg-soft` (`P2-A1.1-E762`, ticket PAN-CTXFTX) ──
-
-        ⚠ **DANIEL DAMASCENO REPORTED THIS BAR AS WHITE IN DARK MODE, AND IT WAS
-        WORSE THAN WHITE.** `--color-bg-soft` is `#f9fafb`, defined TWICE and both
-        times in a LIGHT-ONLY scope, with **no dark override** — the mirror block
-        even says *"light surfaces only"* in its own comment. ⚠⚠ So the bar kept
-        its near-white fill in dark mode while `text-ink-2` correctly flipped to a
-        light grey: **measured 2.07:1 against a 4.5:1 AA floor.** It was a
-        LEGIBILITY failure, not a styling one.
-
-        ⚠ `bg-canvas` is themed in BOTH schemes (`#fafafa` / `#0b0817`), so the bar
-        stays a recessed tone against the page instead of inverting.
-        ⚠⚠ **MEASURED AFTER: 9.13:1 in dark, and LIGHT MOVES BY TWO CHANNEL POINTS**
-        (`#f9fafb` → `#fafafa`) — which is why this is safe to land on a page
-        testers are using today.
-        ⚠ `E723`'s rule, restated: never a light-only colour on a themed page.
-      */}
+      {}
+      {}
+      {}
       {profile.identityMasked && (
         <div className="border-b border-line bg-canvas px-4 py-2.5 text-center text-[13.5px] text-ink-2 sm:px-6">
           Showing <span className="font-semibold text-ink">first name only</span>.
@@ -397,58 +203,11 @@ export default async function PublicProviderPage({
         </div>
       )}
 
-      {/*
-        THE BESPOKE HEADER IS GONE (brief_nav_casing_consistency WS-B).
+      {}
 
-        This page carried its own sticky bar — a "Panameer" wordmark linking
-        home and a "Browse Experts" link. That was a third menu: not the
-        marketing header, not the casing, just for this route. The page now
-        lives inside the (app) route group, so AppShell supplies the rail,
-        header and footer like every other authenticated page.
-
-        THE URL IS UNCHANGED. `(app)` is a route group and adds no segment, so
-        /providers/[id] still resolves here — no redirect, no broken links.
-
-        AUTHED, per Scott: it stays behind login, which is what keeps E049
-        closed. /explore masks to first names precisely so nobody can walk from
-        a teaser to a surname, and this page renders the full profile.
-      */}
-
-      {/*
-        No wrapper container: `ProviderProfileViewPage` brings its own max-w-6xl
-        frame, and nesting it inside another would leave the main column
-        narrower here than on /profile — the same record looking like two
-        different pages, which is the bug this commit closes.
-
-        `taughtPaths` is passed IN rather than rendered after it. The component
-        already places the courses strip below the sections (E137); rendering it
-        here as well would print it twice.
-      */}
-      {/*
-        ── ⚠⚠⚠ THE OWNER'S ONE WAY BACK (`P2-A2-E602` WS-D item 2) ────────────
-
-        ⚠ SCOTT: *"The owner gets one way back: 'This Is How Buyers See You —
-        Back to My Profile'."*
-        ⚠⚠ IT RENDERS **ONLY** FOR THE OWNER, and it is the ONLY thing on this
-        page that knows who is looking — every other owner affordance is
-        suppressed by `previewAsBuyer` below. ⚠⚠⚠ THAT IS THE WHOLE SHAPE OF
-        THE FIX: the page does not pretend the owner is a stranger, it stops
-        OFFERING them their own tools while calling itself the buyer's view.
-        ⚠ It replaces the *"See What Buyers See"* button that used to render
-        here — a link to the page you were already standing on (`E023`).
-      */}
-      {/*
-        ── ⚠⚠ THE PROFILE TAB ROW RENDERS HERE TOO (`E602` WS-D item 4) ──────
-        ⚠ `E600` WS-A's rule: there is never a page under the avatar with no
-        row. ⚠⚠ MEASURED: this page drew none — the same defect `E600` WS-A
-        found on `/company`.
-        ⚠⚠⚠ OWNER ONLY, AND THAT IS NOT AN EXCEPTION TO THE RULE — the row is
-        `My Profile · Score · Stats · …`, which are the OWNER's destinations. A
-        buyer looking at somebody else's profile has no business being offered
-        them, and `profileTabs(viewer)` would be answering about the wrong
-        person. ⚠ For a visitor this is not "a page with no row"; it is not one
-        of the owner's pages at all.
-      */}
+      {}
+      {}
+      {}
       {profile.isOwner && (
         <PageTabs
           wrap
@@ -459,38 +218,15 @@ export default async function PublicProviderPage({
         />
       )}
 
-      {/*
-        ── ⚠⚠⚠ `bg-canvas`, NOT `bg-bg-soft` (`P2-A1.1-E762`, ticket PAN-CTXFTX) ──
-
-        ⚠ **DANIEL DAMASCENO REPORTED THIS BAR AS WHITE IN DARK MODE, AND IT WAS
-        WORSE THAN WHITE.** `--color-bg-soft` is `#f9fafb`, defined TWICE and both
-        times in a LIGHT-ONLY scope, with **no dark override** — the mirror block
-        even says *"light surfaces only"* in its own comment. ⚠⚠ So the bar kept
-        its near-white fill in dark mode while `text-ink-2` correctly flipped to a
-        light grey: **measured 2.07:1 against a 4.5:1 AA floor.** It was a
-        LEGIBILITY failure, not a styling one.
-
-        ⚠ `bg-canvas` is themed in BOTH schemes (`#fafafa` / `#0b0817`), so the bar
-        stays a recessed tone against the page instead of inverting.
-        ⚠⚠ **MEASURED AFTER: 9.13:1 in dark, and LIGHT MOVES BY TWO CHANNEL POINTS**
-        (`#f9fafb` → `#fafafa`) — which is why this is safe to land on a page
-        testers are using today.
-        ⚠ `E723`'s rule, restated: never a light-only colour on a themed page.
-      */}
+      {}
       {profile.isOwner && (
         <div className="border-b border-line bg-canvas px-4 py-2.5 text-[13.5px] text-ink-2 sm:px-6">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
-            {/* ⚠⚠ THE BAR NAMES WHICH VIEW THIS IS (`P2-A2-E616`). With two
-                previews on one route, *"This Is How Buyers See You"* would be
-                false half the time — and a preview that misnames itself is
-                worse than no preview. */}
+            {}
             <span>
               {previewAsPeer ? "This Is How Other Providers See You" : "This Is How Buyers See You"}
             </span>
-            {/* ⚠⚠⚠ THE WAY BACK, AND THE WAY ACROSS (`E602`'s lesson: a link
-                that drops a member into a walk they cannot leave is a defect).
-                ⚠ Both render at every width — they are plain links in a
-                `flex-wrap` row, which is what makes 360px behave. */}
+            {}
             <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <Link
                 href={previewAsPeer ? `/providers/${id}` : `/providers/${id}?as=provider`}

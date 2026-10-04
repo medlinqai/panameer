@@ -4,22 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/**
- * Start a thread, or reply to one (WS2-C).
- *
- * One component for both, because the difference is a title field and a verb —
- * two composers would be two places to fix the same posting bug.
- *
- * `router.refresh()` after a successful reply rather than optimistically
- * splicing the row in: the server component owns the query, and re-running it
- * is both less code and incapable of disagreeing with the database about what
- * was actually saved.
- */
-/**
- * ⚠⚠ `identityGaps` MIRRORS THE WRITE GATE (`P1-ALL-E033`). Computed on the
- * server by the same function `lib/forums.ts` refuses with; empty means nothing
- * is missing. ⚠ IT IS NOT THE BOUNDARY — the route refuses regardless.
- */
 export function ForumComposer({
   mode,
   boardSlug,

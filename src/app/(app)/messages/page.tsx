@@ -9,9 +9,6 @@ import { Avatar } from "@/components/Avatar";
 import { Composer } from "@/components/messages/Composer";
 import {
   MAX_BODY,
-  /* ⚠ `tabsWithUnread` LEFT THIS IMPORT (`P2-J3-E593` WS-A): the Connect row
-     now goes through `connectTabs`, which applies the badge itself after
-     filtering. ⚠ The helper is untouched and still used by every other row. */
   canMessage,
   getConversation,
   listConversations,
@@ -19,40 +16,6 @@ import {
   unreadCount,
 } from "@/lib/messages";
 
-/**
- * MESSAGES (`P1-ALL-E379`) — the scaffold, made real.
- *
- * SCOTT, 2026-09-04: *"build one!"*
- *
- * ⚠ SUPERSEDED, QUOTED NOT DELETED. This page's header used to open: *"MESSAGES
- * (PHASE 2 / WS2-B) — a SCAFFOLD, not a messaging system... there is no
- * messaging infrastructure in this codebase at all. No Conversation, Thread or
- * Message model in the schema; no /api/messages route; nothing in src/lib that
- * sends or reads one."* Every clause of that was true and is now false. The
- * disabled composer it described — *"a box that accepted text and dropped it
- * would be worse than no box"* — was the right call at the time and is what this
- * brief replaces.
- *
- * ── ⚠⚠ THE SHAPE: A LIST THAT OPENS A CONVERSATION, VIA `?with=` ──────────
- *
- * REPORTED AS A CHOICE, because the brief left it open. Two panes on desktop —
- * the shape the scaffold already established and the one people expect — but
- * the OPEN CONVERSATION IS A URL, not client state. Three reasons:
- *   · It matches `/community`'s `?q=` search, shipped one brief ago. One
- *     pattern for "the page is showing a narrower thing".
- *   · A conversation survives a bookmark, a refresh and the back button, and
- *     can be linked to. Client state loses all four.
- *   · It keeps the page a SERVER COMPONENT, so `canMessage`, `getConversation`
- *     and `markRead` never cross to the browser. Only the composer is a client.
- * ⚠ ON MOBILE the conversation REPLACES the list rather than sitting under it —
- * two stacked panes on a phone makes the reply box the second screenful.
- *
- * ⚠ NO REALTIME, NO POLLING, NO SOCKET, and the page SAYS SO rather than
- * looking broken. Messages appear on navigation and refresh.
- *
- * ⚠ OPENING A CONVERSATION IS THE ONLY THING THAT MARKS IT READ. Nothing else
- * calls `markRead` — not the list, not the badge.
- */
 export const metadata = { title: "Messages · Panameer" };
 
 export default async function MessagesPage({
@@ -65,16 +28,8 @@ export default async function MessagesPage({
   const { with: withUserId } = await searchParams;
 
   const conversations = viewer ? await listConversations(viewer) : [];
-  /* ⚠ The badge counts EVERY unread, not just this conversation's — it is the
-     tab's number, and the tab is visible from all five community pages. */
   const unread = viewer ? await unreadCount(viewer) : 0;
 
-  /*
-    ⚠ THE READ HAPPENS BEFORE THE FETCH, so the conversation renders already
-    marked rather than showing its own unread pips for one frame. It is scoped
-    to the recipient's rows inside `markRead` — a sender can never mark their
-    own message read.
-  */
   if (viewer && withUserId) await markRead(viewer, withUserId);
 
   const [thread, permission, other] = viewer && withUserId

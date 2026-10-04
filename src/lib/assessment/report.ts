@@ -14,32 +14,6 @@ import { fundingFromEbitda, resolveTaxRate } from "@/lib/assessment/tax-rate";
 import { MATURITY_STAGES, type ProcessArea } from "@/lib/assessment-data";
 import { P2P_DOMAINS } from "@/lib/assessment/questions-p2p";
 
-/**
- * THE REPORT VIEW MODEL — built once, rendered by both the dashboard and the deck.
- *
- * The deck is the report's argument compressed to six slides, so the two must
- * never disagree about the number. One builder, two renderers: if the funding
- * tile says $90–140K, the slide cannot say something else, because neither of
- * them computes it.
- *
- * ── ⚠ IT READS STORED ROWS NOW, IT DOES NOT RE-SCORE ─────────────────────────
- *
- * Every per-domain rung, dollar range and rank used to be recomputed here by
- * `scoreAssessment()` on every render, which meant moving a judgement weight in
- * `DOLLAR_WEIGHTS` silently rewrote every report ever sent — the exact failure
- * `Assessment.score_pct`'s own comment was written to prevent, applied to one
- * field out of a dozen (brief_assessment_instance_model WS2).
- *
- * `AssessmentDomainResult` now holds one frozen row per domain, and
- * `scoredFromStored` below reassembles the shape the renderers already expect.
- *
- * ⚠ THE RECOMPUTE PATH IS DELIBERATELY STILL HERE, and reachable only when an
- * assessment has NO stored rows: a submission that landed between this deploy and
- * the backfill, or one whose rows were deleted. It is a fallback, not the
- * default, and `check:assessment-instance` fails the build if it becomes the
- * default again.
- */
-
 export type MoneyRange = [number, number];
 
 export type ReportModel = {
@@ -74,16 +48,6 @@ export type ReportModel = {
   /** Phase 2 fills this from the tracker. Fresh report = 0. */
   progressPct: number;
 
-  /**
-   * The real-data feed for the EXISTING `MaturityDashboard` component.
-   *
-   * That component was built for the hardcoded sample framework and its own
-   * header comment names this exact moment: "When real scoring arrives,
-   * `sample` goes false on the data and both [the Sample Read chip and the
-   * caption] disappear on their own." So it is reused rather than replaced —
-   * same component, same gauge, measured numbers, and the honesty labelling
-   * switches itself off because it was keyed to the data all along.
-   */
   maturityArea: ProcessArea;
 
   invites: { process: string; name: string; email: string }[];
@@ -101,10 +65,6 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
     where: { share_token: shareToken },
     include: {
       invites: { select: { process: true, name: true, email: true } },
-      /*
-        Ordered by `rank` so the ranked list rebuilds in exactly the order it was
-        stored in. Nulls (unranked — rung 50 or "Not sure") sort last.
-      */
       domainResults: { orderBy: [{ rank: { sort: "asc", nulls: "last" } }, { domain_key: "asc" }] },
     },
   });
@@ -118,10 +78,6 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
     state: a.state,
   };
 
-  /*
-    ⚠ STORED FIRST. `scoreAssessment` is the FALLBACK and only runs for an
-    assessment with no domain rows at all.
-  */
   const scored: Scored =
     a.domainResults.length > 0
       ? scoredFromStored(a.domainResults, a.score_pct, a.platform)
@@ -130,13 +86,6 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
   const rate = await resolveTaxRate(a.state);
   const funding = fundingFromEbitda(ebitda, rate.bps);
 
-  /*
-    NET IS COMPUTED AT THE WORST END OF EVERY RANGE — funding low, opportunity
-    low, investment HIGH. The tile claims "positive by design", and a claim
-    that only survives at the optimistic end of three ranges is not a design,
-    it is a hope. If this ever goes negative the tile says so rather than
-    printing "Positive" over a number that is not.
-  */
   const netLow = funding[0] + scored.opportunity[0] - scored.investment[1];
 
   const moves = scored.ranked
@@ -171,19 +120,8 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
       name: "Procure-to-Pay",
       glyph: "▣",
       score: scored.maturityPct,
-      /*
-        Four stages over 0-100. `Math.min` guards the top: a perfect 100 would
-        index 4 and read `undefined` as the stage name.
-      */
       stage: Math.min(MATURITY_STAGES.length - 1, Math.floor(scored.maturityPct / 25)),
       domains: P2P_DOMAINS.map((d) => d.formal),
-      /*
-        THE TILES ARE THE ANSWERS, NOT INVENTED KPIs. The sample framework's
-        tiles were figures like "87% touchless PO rate" that nothing measured;
-        these four are counted directly from what the person told us, and the
-        `delta` slot is blank because there is no prior assessment to compare
-        against. A quarter-over-quarter arrow on a first report would be fiction.
-      */
       tiles: [
         { value: `${scored.maturityPct}`, label: "Maturity score /100", delta: "" },
         {

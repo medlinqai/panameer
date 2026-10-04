@@ -5,21 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, Select, postSetting } from "@/components/settings/controls";
 
-/**
- * Identity Verification (J2.4 WS-H / E019).
- *
- * FREE, and NOT the merit badge (Confirm #3). Both corrections are on the page
- * rather than only in the code: the surface this replaces charged 35 Connects
- * for it, and it sat close enough to the "Validated" badge that the two read as
- * the same thing. They are not — identity is something anyone with a passport
- * can establish; validation is Panameer vouching for the quality of somebody's
- * work, on merit, and is never for sale.
- *
- * NO DOCUMENT IS UPLOADED HERE. The person says which document they'll present;
- * capture, the selfie and the storage belong to the KYC partner the brief
- * defers. Taking an image now would mean holding government ID with no lawful
- * basis and no deletion schedule.
- */
 type Status = "NOT_STARTED" | "SUBMITTED" | "VERIFIED" | "REJECTED" | "EXPIRED";
 
 const DOCS = ["Passport", "Driving licence", "National ID card"];

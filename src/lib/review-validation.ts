@@ -1,45 +1,5 @@
-/**
- * Review-page validation (brief_X / E056) — Scott's "changes vs errors" split.
- *
- *   ERRORS  (hard) — Panameer MUST resolve these before Publish. They disable
- *                    the Publish button and each carries a click-to-fix action.
- *   CHANGES (soft) — the provider MAY want to fix these. Never blocking; they
- *                    are the difference between a publishable profile and a
- *                    profile that actually wins work.
- *
- * ---------------------------------------------------------------------------
- * THE GATE IS NOT RE-DECIDED HERE.
- *
- * `errors` is a strict MIRROR of the server-side gate in `publishProfile`
- * (`lib/onboarding.ts`) — same conditions, same order, phrased as fixes instead
- * of as a sentence. It exists so the review page can disable Publish and point
- * at the offending field, NOT to add rules: the server stays authoritative and
- * a client that skipped this check gets exactly the same refusal.
- *
- * If `publishProfile`'s required list changes, change THIS LIST TOO — the two
- * drifting apart shows up as a Publish button that is enabled and then fails,
- * which is worse than either behaviour on its own.
- *
- * Everything else the profile could want — address, work history, education,
- * certifications, specializations, an un-dated role — is a CHANGE. Those feed
- * `completeness` (and so the 80% visibility threshold), but they have never
- * blocked publishing and this layer does not start.
- *
- * The PHOTO is the exception, promoted to an ERROR in the WS7 addendum. It is
- * still a 10-point scored field in `completeness.ts` and the weights there are
- * untouched — a profile with no photo still scores 100. The requirement lives in
- * the publish gate ALONE, which is the honest place for it: completeness answers
- * "how strong is this profile", the gate answers "may it go live at all".
- * ---------------------------------------------------------------------------
- */
 
-/** Minimum bio length — mirrors MIN_BIO_CHARS in onboarding.ts (E017). */
 export const MIN_BIO_CHARS = 100;
-/**
- * Maximum bio length — mirrors MAX_BIO_CHARS in onboarding.ts (E087) and the
- * wizard's own MAX_BIO. The server rejects anything longer, so this page has to
- * agree with it or Publish is enabled and then refused.
- */
 export const MAX_BIO_CHARS = 600;
 
 /** Where a click-to-fix sends the provider. */
@@ -54,8 +14,6 @@ export type ReviewFix =
   | { kind: "photo" };
 
 export type ReviewField =
-  /** WS5 — the bio is edited IN PLACE on the review page now; there is no
-   *  step to send anyone to. */
   | "overview"
   | "phone"
   | "line1"
@@ -92,12 +50,6 @@ export type ReviewInput = {
     postalCode: string;
   } | null;
   employers: { id: string; name: string; startDate: string | null }[];
-  /**
-   * Projects with no `role_type_id` (brief_project_model_v2). The column is
-   * nullable so an IMPORT can leave a project honestly unclassified instead of
-   * being assigned a guessed role; this is where the provider gets told about
-   * it. Soft — an unclassified project still publishes.
-   */
   unclassifiedProjects?: number;
   education: unknown[];
   certifications: unknown[];
@@ -126,18 +78,6 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       step: "title",
     });
   }
-  /*
-    THE BIO IS NO LONGER AN ERROR FOR BEING SHORT (WS6). It stopped being a
-    prompted step, so blocking publish on a missing one would refuse a provider
-    who completed every step they were shown. It is a suggestion below.
-
-    IT IS STILL AN ERROR FOR BEING TOO LONG (WS5 / E181), and this is likely the
-    only error the review page ever flashes. The AI writes the bio now and can
-    overrun the limit the column and the server both enforce; with the bio step
-    gone there is no other screen that would ever offer to trim it. So the fix
-    happens here, in place, or the save fails with a message about a field the
-    provider never typed.
-  */
   if (p.overview.trim().length > MAX_BIO_CHARS) {
     err(
       "overview",

@@ -1,28 +1,3 @@
-/**
- * `check:assessment-volume` — the deck's per-domain fields, pinned
- * (brief_per_domain_volume WS5).
- *
- * Four properties, and each one is a thing that would otherwise fail silently:
- *
- *   1  `ALL_STEPS` HAS NOT GROWN. The fields live on the existing `cd_*` steps.
- *      Ten new screens would roughly double a 16-screen walk and break two
- *      published strings — "in under an hour of your time" on the marketing home
- *      and "about 20 minutes" in `AssessmentWizardShot`.
- *   2  EVERY DOMAIN IN THE BANK HAS AN ENTRY, DERIVED FROM THE BANK. An eleventh
- *      capability domain must fail the build rather than quietly render a screen
- *      with no fields — exactly as `check:assessment` already does for weights.
- *   3  "NOT ASKED" PERSISTS AS NULL AND NEVER BECOMES 0. A zero is a real answer
- *      that reads as *this domain does nothing* and would size accordingly.
- *   4  NO SCORING OUTPUT CHANGED. A fixed input produces a byte-identical
- *      `Scored` with and without the new answers. This brief adds an INPUT.
- *
- * Plus the deck's own content: 19 fields, the labels verbatim, the type implied
- * by each label, and the two slides that carry none.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN. This file's prose names the
- * tokens it forbids, and a scanner that read comments would fail on its own
- * documentation.
- */
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -64,11 +39,6 @@ const SCHEMA = readFileSync(join("prisma", "schema.prisma"), "utf8");
 // 1 — ALL_STEPS HAS NOT GROWN
 // ---------------------------------------------------------------------------
 
-/*
-  Derived, never a literal 16: one process screen, one per domain in the bank, then
-  basics / money / process_detail / aimode / contact. An eleventh domain is allowed
-  to move this number; a new SCREEN for the volume questions is not.
-*/
 const EXPECTED_STEPS = 1 + P2P_DOMAINS.length + 5;
 check(
   "1 — ALL_STEPS is process + one per domain + five, and nothing else",

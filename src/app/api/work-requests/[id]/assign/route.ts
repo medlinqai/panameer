@@ -4,28 +4,9 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { assignProviderDirectly } from "@/lib/selection";
 
-/**
- * ── ⚠⚠⚠ POST /api/work-requests/[id]/assign — THE DIRECT ROUTE (`E684`) ────
- *
- * ⚠⚠⚠ **THIS IS THE RECONCILIATION, AND IT IS WHY THE LINE PATCH LOST
- * `providerPersonId` IN THE SAME COMMIT.** Three writers of *"who is doing this
- * work"* existed: `selectProvider` (from a proposal, with its rate),
- * `assignProviderDirectly` (direct, **with an explicit rate**) — and the line
- * PATCH, which wrote **the name and nothing else**. ⚠⚠ That third one produced
- * the half-state the other two are careful to avoid: a provider on a line with
- * no rate, no line status, no request status and no bid.
- *
- * ⚠ **THE MODEL ALREADY NAMED THE TWO LEGITIMATE ROUTES** — `writeRequisitionLine`
- * takes `route: "PROPOSAL" | "DIRECT"`. This door is `DIRECT`; it was written
- * and had no surface, like everything else in this chain.
- * ⚠⚠ **A RATE IS REQUIRED**: `assignProviderDirectly` throws `NO_RATE` without
- * one, because a line with a provider and no price cannot be ordered.
- * ⚠⚠⚠ **NO MONEY MOVES** — a rate is what will be charged, not a charge.
- */
 const bodySchema = z
   .object({
     providerPersonId: z.string().uuid(),
-    /** ⚠ Integer cents. Money is never a float in this codebase. */
     unitPriceCents: z.number().int().positive(),
     uom: z.string().max(20).nullish(),
   })

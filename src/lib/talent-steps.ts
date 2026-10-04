@@ -1,196 +1,34 @@
-/**
- * `/hire-talent`'s FIVE STEPS — THE LABELS, AND ONLY THE LABELS (`P1-J1-E012`).
- *
- * Settled with Scott across three exchanges on 2026-08-24. ⚠ THESE ARE HIS FINAL
- * LABELS AND THEY SUPERSEDE AN EARLIER DRAFT IN THE SAME WORK STREAM.
- *
- * ⚠ THE STRINGS LIVE HERE, NOT IN THE COMPONENT, for the reason `spine-steps.ts`
- * and `learn-steps.ts` both give: `check:ui` can assert the rendered summaries
- * against their SOURCE without importing React. A guard comparing the page to a
- * literal it typed itself proves only that somebody typed the same thing twice.
- *
- * ── ⚠ HE NARROWED TWO OF THEM, AND BOTH NARROWINGS POINT THE SAME WAY ───────
- *
- *   chat proposed `Connect with Experts and Buyers`  -> `and Buyers` DROPPED
- *   chat proposed `Create Service Products or Job Requests` -> `or Job Requests` DROPPED
- *
- * Both cuts remove the BUYER half, which is consistent with `/hire-talent`
- * becoming the seller-side page (`P1-J1-E013`).
- *
- * ⚠ HIS SYMMETRY ARGUMENT STILL HOLDS AS A PRODUCT FACT — *"Sellers CREATE service
- * products...Buyers create job requests. Both parties create rev adjacent
- * transactions, no?"* — it simply is not what THIS page says. ⚠ DO NOT RESTORE THE
- * BUYER HALF citing that earlier exchange.
- *
- * ── ⚠ WHY `SELL` AND NOT `SEARCH`, WHICH IS THE POINT OF THE WHOLE PAGE ─────
- *
- * Scott: *"Linkedin makes me searchable...but i cant offer ANYTHING to ANY
- * CLIENT."* Ending the spine at `Search` is the LinkedIn ending — it stops one
- * step before the thing that makes this different. ⚠ SEARCH IS HOW YOU GET FOUND,
- * INSIDE STEP 5, NOT THE DESTINATION.
- *
- * ── ⚠ `CONNECT` IS A REAL STEP, AND A CHAT ERROR NEARLY DELETED IT ──────────
- *
- * Scott: *"You join panameer...that does not make you connected to anyone...just
- * like linkedin."* ⚠ CHAT MISREAD `connection_model_decision.md` AND DELETED THE
- * `Connection` MODEL FROM `messaging_model_spec.md`. He was rejecting FOLLOWS, not
- * connections — LinkedIn has both and he deletes the follows. The model is
- * restored. What survives from that decision is the part that was right: NOBODY
- * GATES CONNECTING — no credits, no acceptance chore.
- *
- * ⚠ `INVITE` IS NOT IN ANY LABEL. His draft said *"CONNECT/INVITE your
- * colleagues"*; no invite, share or referral model exists anywhere in the schema.
- * And `with Experts` rather than `your colleagues` because colleagues you already
- * know add no marketplace value — the value is the expert who can teach you.
- */
 
 import { getCatalogCounts } from "@/lib/learn-catalog-counts";
 
-/**
- * ⚠ THE CATALOG NUMBERS ARE DERIVED, NEVER RETYPED (`chat_kickoff.md`).
- *
- * Step 2's sentence quotes three counts. They come from
- * `learn-catalog-counts.ts`, which carries `CATALOG_COUNTS_MEASURED_ON` and the
- * exact `prisma` queries and is asserted by `check:learn` GUARD 3c — so this page
- * cannot drift from `/learn`'s hero cards, and re-measuring is one edit in one
- * file.
- *
- * ⚠ IT LOOKS UP BY LABEL RATHER THAN BY INDEX. Reordering that array would
- * silently swap "54 learning paths" in here; a missing label throws at module load
- * instead, which is the failure you want.
- */
-/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `CATALOG_COUNTS` was a literal:
-   //   const count = (label: string): string => {
-   //     const hit = CATALOG_COUNTS.find((c) => c.label === label);
-   //     if (!hit) throw new Error(`talent-steps: no catalog count labelled "${label}"`);
-   //     return hit.value;
-   //   };
-   ⚠⚠ THE THROW-ON-MISSING-LABEL BEHAVIOUR IS KEPT ON PURPOSE. Its comment
-   argued for it — *"a missing label throws at module load instead, which is the
-   failure you want"* — and that is still right: a renamed label must break
-   loudly, not print the wrong number or silently drop a tile. */
 const countIn = (counts: { key: string; value: string }[], key: string): string => {
   const hit = counts.find((c) => c.key === key);
   if (!hit) throw new Error(`talent-steps: no catalog count keyed "${key}"`);
   return hit.value;
 };
 
-/**
- * ── ⚠⚠ ONE SOURCE OF TRUTH FOR THE CTA LABEL (`P1-J1-E033`) ────────────────
- *
- * `/talent`'s hero button AND its right-column sentence both print this. ⚠ THE
- * SENTENCE QUOTES THE BUTTON BY NAME, so two copies of the string would drift —
- * and there is a LIVE EXAMPLE OF EXACTLY THAT on the page this copy was modelled
- * on: `/find-work`'s button says `Create a Work Request` while its sub-copy quotes
- * `Create Work Request`. Both are Scott's, the mismatch shipped, and this constant
- * exists so it is not repeated.
- *
- * ⚠ IT LIVES HERE because this file already holds this page's strings — the brief
- * is explicit that a new `lib/` file per string is not wanted.
- *
- * ⚠ AND SPINE STEP 1 REUSES IT (`P1-J1-E034`). Its summary IS this label, by
- * design — the same words on the hero button and on the first step. Reused rather
- * than retyped because the constant is defined in this very file, so there is no
- * awkward import to weigh.
- */
-/*
-  ⚠⚠ SCOTT, 2026-08-26 (`P1-J1-E036`): DROP THE WORD `Panameer`. The visitor is
-  already on Panameer; naming it inside the button spends a word on nothing.
-
-  ⚠ FOURTH VALUE IN THREE DAYS, and the churn is exactly why this is a constant:
-      E031  `Create My Profile`
-      E033  `Join Panameer & Create My Profile`
-      E034  `Create My Panameer Profile`
-      E036  `Create My Profile`            <- here, back to E031's wording
-  ⚠ FOUR CONSUMERS FOLLOW AUTOMATICALLY and none was edited: the hero button,
-  the hero sentence that QUOTES it, `TALENT_STEPS[0].summary` below, and the
-  `check:ui` assertion. ⚠ SPINE STEP 1 RENAMING IS INTENDED, NOT A SIDE EFFECT —
-  Scott asked for both.
-  ⚠ `href="/join/provider"` DID NOT CHANGE.
-*/
 export const TALENT_CTA_LABEL = "Create My Profile";
 
 export type TalentStepLabel = {
   /** The drawn numeral, 1-based. */
   n: number;
-  /** The always-visible disclosure row label. ⚠ SCOTT'S, VERBATIM. */
   summary: string;
-  /**
-   * ⚠⚠ THE PANEL'S ONE-SENTENCE DESCRIPTION — CC's DRAFT, NOT SCOTT'S.
-   *
-   * Scott gave the five LABELS and nothing else (`P1-J1-E016`). Every string below
-   * is marked `⚠ DRAFT — CC's words, not Scott's` at its site, in the same style as
-   * the `⚠ PLACEHOLDER — chat's words` markers that used to sit in
-   * `LearnPublic.tsx`, and all five were reported verbatim so he can overwrite them
-   * in one message.
-   *
-   * ⚠ ONE SENTENCE EACH, matching `/optimize`'s panel-headline shape
-   * (`SPINE_STEPS[].title`). ⚠ NO BODY PARAGRAPH — `/learn`'s were deleted in
-   * `brief_learn_walk3` and must not come back through this door.
-   *
-   * ⚠ EVERY SENTENCE IS EITHER BACKED BY SOMETHING IN THIS REPO OR MARKED UNBACKED
-   * AT ITS SITE. No invented numbers, no savings figures, no count that is not a
-   * live DB read, and no present-tense claim for anything unbuilt.
-   */
   description: string;
 };
 
-/**
- * ⚠⚠⚠ A FUNCTION, NOT A CONST (`E606` R4). The counts are computed from the
- * database now, so this cannot be evaluated at module load.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   export const TALENT_STEPS: TalentStepLabel[] = [ … ];
- */
 export async function talentSteps(): Promise<TalentStepLabel[]> {
   const counts = await getCatalogCounts();
   const count = (label: string) => countIn(counts, label);
   return [
   {
     n: 1,
-    /* ⚠ WAS `Join Panameer` (`P1-J1-E034`). It is the hero's CTA label now, reused
-       from the constant above rather than retyped. ⚠ `description` UNCHANGED. */
     summary: TALENT_CTA_LABEL,
-    /*
-      ⚠ DRAFT — CC's words, not Scott's. He gave the label only.
-
-      ⚠ BACKED. Provider onboarding is shipped: `app/join/provider/` with `start`
-      and `preview`, plus `join/requester/` and `join/buyer/`. The résumé parser is
-      live (Anthropic API), `ProviderSkill.weight` is derived from dated jobs, and
-      `rate_min_cents`/`rate_max_cents` hold a rate RANGE. ⚠ NO PAYMENT GATE EXISTS
-      anywhere in `join/` or `settings/packages` — grepped for stripe/checkout/
-      paywall and found none — so `free` is a checkable statement, not a promise.
-
-      ⚠ IT SAYS `builds itself from your work history` BECAUSE THAT IS THE REAL
-      MECHANISM and it is the one thing a résumé upload elsewhere does not do.
-      `PROFILE_VIZ_COPY` in `brand.ts` already describes it the same way, so the
-      two surfaces agree.
-    */
     description:
       "Create a free account and your profile builds itself from your work history — the systems you ran, how deep, how recently.",
   },
   {
     n: 2,
     summary: "Learn New Skills",
-    /*
-      ⚠ DRAFT — CC's words, not Scott's.
-
-      ⚠ BACKED, AND THE THREE NUMBERS ARE A LIVE DB READ. They come from
-      `lib/learn-catalog-counts.ts`, which carries `CATALOG_COUNTS_MEASURED_ON =
-      "2026-08-24"` and the exact queries, and which `check:learn` GUARD 3c asserts.
-      ⚠ THEY ARE NOT RETYPED HERE — `TalentSpine` reads that module, so this
-      sentence cannot drift from `/learn`'s hero cards.
-
-      ⚠⚠ IT DOES NOT PROMISE CERTIFICATION. `P1-J3-E030`: 0 of 23 paths have a
-      sittable test, so `and earn a certificate` would be false for every path
-      today. The sentence stops at the training, which is entirely free and entirely
-      real. ⚠ DO NOT ADD THE CERTIFICATE CLAUSE until a path can actually be sat.
-    */
-    /* ⚠⚠ THE SENTENCE NAMES WHAT IT COUNTS (R4). *"23 learning paths"* and
-       *"12 learning paths"* were both true of the same catalogue and neither
-       said which question it answered.
-       ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   `Work through the catalog for free — ${count("Learning Paths")} learning paths,
-       //    ${count("Courses")} courses and ${count("Lessons")} lessons, taught by …` */
     description: `Work through the catalog for free — ${count("paths")} paths you can start today, ${count("courses")} courses with video and ${count("lessons")} lessons you can watch, taught by the people who implement this software.`,
   },
   {

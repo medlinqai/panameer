@@ -3,19 +3,6 @@ import type { Figure } from "@/lib/figure";
 import { isCounted } from "@/lib/figure";
 import type { Statistics } from "@/lib/statistics";
 
-/**
- * /usage — SCOTT'S 09-23 LAYOUT IN TODAY'S STYLE (`P2-A1.1-E824`, R-E016).
- *
- * Approved 2026-10-04 against
- * `mockups/usage_mockup_current_style_2026-10-04.html`: rounded bordered cards
- * in two columns, each a list of label + number rows.
- *
- * EVERY FIGURE COMES FROM AN EXISTING WRITER. Nothing here counts anything —
- * `getStatistics` does, and a figure it reports as `{ uncounted }` renders as
- * "—" with a NOT COUNTED tag AND THE REASON, never as a zero. That is the
- * 2026-09-23 counting rule, and it is why the tag carries text at all.
- */
-
 const CARD = "rounded-brand border border-line bg-surface p-5";
 const HEAD = "font-display font-bold tracking-[-0.3px]";
 

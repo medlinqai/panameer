@@ -1,43 +1,13 @@
-/**
- * THE RECLASSIFY FIELD MAP — PURE, AND IN ITS OWN MODULE FOR A REASON
- * (`P1-J1.4-E296`).
- *
- * ⚠⚠ IT LIVES HERE AND NOT IN `lib/employers.ts` BECAUSE A CLIENT COMPONENT
- * NEEDS IT. `EmployersStep.tsx` is `"use client"` and renders the loss sentence;
- * importing it from `employers.ts` dragged `prisma` — and therefore `pg`, and
- * therefore Node's `dns` — into the BROWSER bundle and broke the build with
- * *"Module not found: Can't resolve 'dns'"*. Found by `npm run build`, not by
- * reading the code, because `tsc` is perfectly happy with it.
- *
- * ⚠ SO NOTHING IN THIS FILE MAY IMPORT PRISMA, EVER. That is the whole point of
- * the split, and it is also what lets `check:reclassify` drive every branch with
- * no database.
- *
- * ⚠ THE BRIEF SANCTIONED THIS SHAPE — *"in `lib/employers.ts` (or a small
- * sibling module)"*. `employers.ts` re-exports these so the server side reads
- * unchanged; the client imports from HERE directly.
- */
 import type { SoftwareSuite } from "@prisma/client";
 
-/**
- * ⚠ `clean` MOVED HERE RATHER THAN BEING COPIED. It was `employers.ts`'s local
- * helper and that file now imports it from here — one definition, and this module
- * needs it for the two string fields it trims.
- */
 export const clean = (v?: string | null, max = 400) => {
   const s = (v ?? "").trim();
   return s ? s.slice(0, max) : null;
 };
 
-/**
- * ⚠ THE FIELD MAP, AS A PURE FUNCTION, so `check:reclassify` can assert it with
- * no database. **This is the part that silently rots** — an `Employer` column
- * added later has to be given a destination here or the harness fails.
- */
 import { NO_EMPLOYER_LABEL } from "@/lib/employer-display";
 
 export type EmployerScalars = {
-  /* ⚠ NULLABLE (`P1-J1.4-E373`) — a contractor's line names no company. */
   name: string | null;
   role_title: string | null;
   location: string | null;
@@ -69,20 +39,6 @@ export type ProjectScalars = {
   client_name: string;
 };
 
-/**
- * Employer → the scalar half of a Project.
- *
- * ⚠ `city`/`state`/`country` FOLD INTO `location` when `location` is empty.
- * `Project` has one place field and `Employer` has four; dropping three of them
- * because the fourth happened to be null would lose "Houston, TX" from a row the
- * parser filled in per-part. The fold is only a fallback — an explicit
- * `Employer.location` always wins.
- *
- * ⚠ `client_name` IS PASSED IN, NEVER DERIVED HERE. `Project.client_name` is NOT
- * NULL and the natural value is the target employer's name, but Scott's `E043`
- * rule applies: suggested in the dialog, confirmed by the user, never written
- * silently.
- */
 export function employerToProjectData(
   e: EmployerScalars,
   clientName: string
@@ -91,51 +47,6 @@ export function employerToProjectData(
     clean(e.location, 200) ??
     ([e.city, e.state, e.country].map((x) => clean(x, 200)).filter(Boolean).join(", ") || null);
   return {
-    /* ⚠⚠ A PROJECT MUST HAVE A NAME, AND AN EMPLOYER NOW MIGHT NOT
-       (`P1-J1.4-E373`). `ProjectScalars.name` stays REQUIRED on purpose — an
-       unnamed project is a row nobody can identify in a list.
-       ⚠ SO THE FALLBACK IS THE ROLE TITLE, which is the only other thing the row
-       says about the work, and then the SAME label the display helper uses — not
-       a second invented string. `Independent` comes from
-       `NO_EMPLOYER_LABEL`, so there is still exactly one word for this state. */
-    /*
-      ── ⚠⚠ THE WORK NAMES THE ROW, NOT THE COMPANY (`P1-A1.4-E413` WS-4) ──────
-
-      ⚠ SUPERSEDED, quoted not deleted:
-
-          name: e.name ?? e.role_title ?? NO_EMPLOYER_LABEL,
-
-      SCOTT, walking it: *"i changed what was a job and listed it under the
-      employer — this is GREAT, but the output is not correct."*
-
-      ⚠⚠ TWO DEFECTS IN ONE LINE, AND THEY ARE INDEPENDENT.
-
-      ⚠ ONE — THE PRECEDENCE. Converting *"Founder & Principal Consultant @
-      Panameer"* into a project under Panameer produced a project called
-      **"Panameer"**, whose `client_name` is ALSO "Panameer" (`E043` suggests the
-      target's name and the person confirms it). ⚠ THE ROW STATED THE COMPANY
-      TWICE AND THE WORK NOT ONCE. `role_title` — the only field that says what
-      was actually done — was carried across and then rendered nowhere.
-      ⚠ SO THE ROLE TITLE LEADS. A project's identity in a list is the work;
-      the company it was for is what `client_name` is. Falling back to the
-      company name keeps a bare parser-created row nameable, which is the case
-      `check:reclassify`'s `BARE` fixture pins.
-
-      ⚠ TWO — THE OPERATOR. `??` falls through on null and undefined ONLY, and
-      the parser writes **`""`** on a line that names no company. ⚠⚠
-      `employerDisplayName` treats `""` as NO NAME; this function treated `""` as
-      A NAME — two functions disagreeing about the same value, with the
-      round-trip running through both. ⚠ MEASURED ON SCOTT'S OWN DATA: an
-      employer row carrying `role_title: ""` renders its name twice (WS-3), so
-      the empty string is a live value here, not a hypothetical.
-      ⚠ `clean()` IS WHAT EVERY OTHER FIELD IN THIS MAP ALREADY USES, and it
-      collapses `""` to null — so the two functions now agree by construction
-      rather than by coincidence.
-
-      ⚠ THE INVERSE IS UNAFFECTED. `projectToEmployerData` takes the employer
-      name as an ARGUMENT (the client remembers it for Undo), so nothing here
-      feeds it — `check:reclassify` §2's round trip holds unchanged.
-    */
     name: clean(e.role_title, 200) ?? clean(e.name, 200) ?? NO_EMPLOYER_LABEL,
     description: e.description,
     role_title: e.role_title,
@@ -146,20 +57,11 @@ export function employerToProjectData(
     logo_url: e.logo_url,
     contact_email: e.contact_email,
     software_suite: e.software_suite,
-    /* ⚠ BOTH FK TO `RoleType` — `Employer.job_role_type_id` and
-       `Project.role_type_id` are the same catalog reference under two names. */
     role_type_id: e.job_role_type_id,
     client_name: clientName,
   };
 }
 
-/**
- * Project → the scalar half of an Employer. The exact inverse.
- *
- * ⚠ `city`/`state`/`country` ARE LEFT NULL AND `location` CARRIES THE WHOLE
- * STRING. Splitting "Houston, TX" back into parts would be guessing, and the
- * round-trip test only holds if this direction does not invent structure.
- */
 export function projectToEmployerData(p: ProjectScalars, name: string): EmployerScalars {
   return {
     name,
@@ -179,14 +81,6 @@ export function projectToEmployerData(p: ProjectScalars, name: string): Employer
   };
 }
 
-
-/**
- * What `convertProjectToEmployer` would throw away, counted and named.
- *
- * ⚠⚠ ENUMERATED, NEVER A GENERIC WARNING. *"Some data may be lost"* tells nobody
- * anything; *"3 outcomes, 5 tools and 4 highlights will be removed"* is a
- * decision somebody can actually make.
- */
 export type ProjectLoss = {
   outcomes: number;
   tools: number;

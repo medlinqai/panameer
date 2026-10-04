@@ -4,27 +4,9 @@ import { scopedToPAccount, withPAccount, type Viewer } from "@/lib/access";
 import { resolveBuyer } from "@/lib/work-request";
 import { completenessFor, type Completeness } from "@/lib/work-request-lines";
 
-/**
- * `/hire` — THE REQUESTER'S LIST OF WORK REQUESTS (`P1-J4-E392` WS-1).
- *
- * ⚠⚠ THE HOLE THIS FILLS: a requester could create a work request and then had
- * NOWHERE TO LOOK AT IT. `/create-work` resumed the most recent DRAFT and
- * `/work-requests/[id]/share` existed, but nothing listed what you had made.
- *
- * ⚠ `Work Requests` IS THE JOURNEY'S NAME AND `Hire` IS THE RAIL'S WORD — `E378`
- * settled that: *the rail says which journey in one word, the tabs say which
- * slice, and the page heading says the journey's name.* So the `<h1>` here reads
- * "Work Requests" even though the rail item reads "Hire".
- */
-
 export type WorkRequestRow = {
   id: string;
   title: string;
-  /* ⚠⚠ THE ENUM, NOT `string` (`P2-A8-E679`). Widening it here is how the
-     `status === "POSTED" ? … : "Draft"` ternary survived: with `string`, no
-     compiler could say the other three values were unhandled. ⚠ Narrowed so
-     `WORK_REQUEST_STATUS_LABEL[status]` is exhaustive by construction.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   status: string; */
   status: WorkRequestStatus;
   postedAt: string | null;
   updatedAt: string;
@@ -36,23 +18,10 @@ export type WorkRequestRow = {
   startDate: string | null;
   endDate: string | null;
   lineCount: number;
-  /** ⚠ Distinct names, in line order. A request with three lines on one provider
-      says that provider once, not three times. */
   providerNames: string[];
   completeness: Completeness;
 };
 
-/**
- * Every work request this buyer's P-Account owns, newest first.
- *
- * ⚠⚠ P-ACCOUNT SCOPED, NOT PERSON SCOPED, and that is deliberate: a work request
- * commits a COMPANY, so a colleague on the same approved account is looking at
- * their organisation's requests rather than only their own. `scopedToPAccount`
- * is the fence and it throws rather than running unscoped.
- *
- * ⚠ THREE QUERIES, FIXED — the requests, their lines, and the provider names —
- * never one per row. The list is the surface most likely to grow.
- */
 export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]> {
   const { pAccountId } = await resolveBuyer(viewer);
   const scoped = withPAccount(viewer, pAccountId);
@@ -91,28 +60,10 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
     orderBy: { line_number: "asc" },
   });
 
-  /*
-    ── ⚠⚠⚠ THE SHORTLIST IS READ TOO (`P2-A3-E723` item 3) ───────────────────
-
-    ⚠ **SCOTT: *"Blank provider name on `/hire` for sole-sourced drafts: the list reads
-    `WorkRequestLine`, not the shortlist. Read the shortlist too."***
-    ⚠⚠ **`E719` PREDICTED THIS EXACT ROW AND SAID SO AT THE TIME:** *"a provider can be
-    attached to a request TWO ways — `ShortlistLine.provider_person_id` and
-    `WorkRequestLine.provider_person_id` — and `/hire`'s list reads the LINES, so a draft
-    created here shows the provider on the request but not yet in that list's name column."*
-    **It was reported so the empty column would not be read as a bug; it is now fixed.**
-    ⚠⚠⚠ **TWO READS, BECAUSE THERE IS NO PRISMA RELATION BETWEEN `WorkRequest` AND
-    `Shortlist`** — `work_request_id` is a bare scalar, so it cannot be a nested `where`.
-    That is a query shape, not a missing fact, and it is the same two-step
-    `lib/sole-source.ts` already makes. **No schema change (ruling 38).**
-    ⚠ **THE NAMES ARE STILL RESOLVED ONCE, FOR BOTH SOURCES**, so a provider attached both
-    ways costs one lookup and appears once — `providerNames` de-duplicates below.
-  */
   const shortlists = await prisma.shortlist.findMany({
     where: { work_request_id: { in: requests.map((r) => r.id) } },
     select: { work_request_id: true, lines: { select: { provider_person_id: true } } },
   });
-  /** ⚠ `work_request_id → the provider ids its shortlists name`, in shortlist-line order. */
   const shortlisted = new Map<string, string[]>();
   for (const sl of shortlists) {
     const list = shortlisted.get(sl.work_request_id) ?? [];
@@ -140,10 +91,6 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
       const name = names.get(l.provider_person_id);
       if (name && !providerNames.includes(name)) providerNames.push(name);
     }
-    /* ⚠⚠ THEN THE SHORTLIST (`E723` item 3). ⚠ LINES FIRST, DELIBERATELY: a line is the
-       stronger statement — it is on the request itself — so where both exist the order is
-       unchanged for every request that already had names. ⚠⚠⚠ The `includes` guard is what
-       makes a provider attached BOTH ways appear once, not twice. */
     for (const personId of shortlisted.get(r.id) ?? []) {
       const name = names.get(personId);
       if (name && !providerNames.includes(name)) providerNames.push(name);
@@ -163,9 +110,6 @@ export async function listWorkRequests(viewer: Viewer): Promise<WorkRequestRow[]
       endDate: r.end_date ? r.end_date.toISOString().slice(0, 10) : null,
       lineCount: mine.length,
       providerNames,
-      /* ⚠ THE SAME FUNCTION THE DETAIL PAGE AND THE API READ. The list's "2 of 3
-         lines ready" and the detail page's Complete button cannot disagree,
-         because there is one rule and this is a call to it. */
       completeness: completenessFor(mine),
     };
   });

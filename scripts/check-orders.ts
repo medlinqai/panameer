@@ -1,24 +1,3 @@
-/**
- * `check:orders` — the rules the work-order surfaces cannot be allowed to lose
- * (`P1-J4-E393`). `npm run check:orders`.
- *
- * ── ⚠⚠ THE THREE THINGS THIS BRIEF SAID IN CAPITALS ─────────────────────────
- *
- *   1. **A BUYER MUST NEVER SEE "ACCEPT"; A PROVIDER MUST NEVER SEE "RELEASE."**
- *      Asserted EXHAUSTIVELY — every status × every party — and structurally, so
- *      neither string can reach the DOM by another path.
- *   2. **DO NOT RENDER A PART-DRAWN AMOUNT LINE — IT CANNOT EXIST.** Asserted at
- *      the TYPE level: the AMOUNT variant has no field that could express one.
- *   3. **`origin` DIRECT vs INDIRECT MUST BE VISIBLE**, and a direct order must
- *      not imply a work request behind it.
- *
- * ⚠ PLUS THE DOCTRINE CHECK THE BRIEF ASKED FOR. `lib/nav.ts` carries the
- * work-order doctrine and predates `E388`'s model. **They agree**, and the
- * agreement is asserted rather than assumed — if a later edit makes them
- * disagree, this goes red instead of somebody quietly choosing one.
- *
- * ⚠ NO DATABASE AND NO BROWSER.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import {
@@ -60,10 +39,6 @@ function walk(dir: string, out: SourceFile[] = []): SourceFile[] {
 const SRC = walk("src");
 const fileAt = (p: string) => SRC.find((f) => f.path === join(...p.split("/")));
 
-/* ═══ 1 · THE TWO-SIDED ACTIVATION — EXHAUSTIVE OVER STATUS × PARTY ════════
-   ⚠⚠ Not a sample. EVERY combination, so there is no state anybody has to argue
-   about. 7 statuses × 3 parties = 21 cases, each asserted three ways. */
-
 const STATUSES = [
   "DRAFT",
   "ISSUED",
@@ -78,16 +53,7 @@ const PARTIES: OrderParty[] = ["BUYER", "PROVIDER", "NONE"];
 let combos = 0;
 for (const status of STATUSES) {
   for (const party of PARTIES) {
-    /* ⚠⚠⚠ THE FIXTURE NOW CARRIES `provider_accepted_at`, BECAUSE RULING 43b's
-       ORDERING IS A FACT ABOUT THE ROW AND NOT ABOUT THE STATUS. ⚠ An `ACCEPTED`
-       order whose `provider_accepted_at` is null is a row nothing legitimate
-       produces, and the buyer must NOT be able to accept against it — so the
-       sweep below exercises BOTH, and `combos` doubles to 42. */
     for (const providerAccepted of [true, false]) {
-    /* ⚠ COUNTED HERE, INSIDE the acceptance loop, so the figure counts the cases
-       actually exercised. ⚠⚠ It sat one level out on the first pass and read 21
-       against an expected 42 — the count caught it, which is what a population
-       assertion is for (`E586`). */
     combos += 1;
     const order = {
       status,
@@ -95,24 +61,6 @@ for (const status of STATUSES) {
     };
     const actions = availableActions(order, party);
 
-    /*
-      ── ⚠⚠⚠ RE-ANCHORED BY RULING 43, AND THE REDDENING WAS CORRECT ───────
-
-      ⚠⚠ SUPERSEDED, quoted not deleted (`E164`) — the FIRST of these is now
-      INVERTED, and ruling 43 said in advance that this gate would fail and that
-      failing would be right:
-      //   ⚠⚠ THE TWO RULES THE BRIEF PUT IN CAPITALS.
-      //   check(`1 — ${party} @ ${status}: a BUYER never gets ACCEPT`,
-      //     !(party === "BUYER" && actions.includes("ACCEPT")), …);
-      //   check(`1 — ${party} @ ${status}: a PROVIDER never gets RELEASE`,
-      //     !(party === "PROVIDER" && actions.includes("RELEASE")), …);
-
-      ⚠⚠⚠ **NOT WEAKENED — REPLACED BY THE RULE THAT SURVIVED, WHICH IS
-      STRICTER:** neither party may see an action `canAcceptNow` denies them, and
-      **no party ever sees a Release control, because none exists.** ⚠ The old
-      pair could be satisfied by a function that offered nothing to anybody; this
-      one cannot, because it is an equality against the predicate.
-    */
     check(
       `1 — ${party} @ ${status} (provider accepted: ${providerAccepted}): actions match canAcceptNow EXACTLY`,
       actions.length === (canAcceptNow(order, party) ? 1 : 0) &&

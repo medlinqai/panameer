@@ -10,66 +10,21 @@ import {
   tallyExperts,
 } from "@/lib/learn-instructors";
 import { lessonFace, withoutPlaceholders } from "@/lib/learn-faces";
-/* ⚠ `levelFor` AND `LevelState` ARE GONE (`E606` R1/R2) — there are no levels.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { headlineFor, levelFor, type LevelState } from "@/lib/learn-progress"; */
 import { headlineFor } from "@/lib/learn-progress";
 import type { Instructor } from "@/lib/learn-instructor-format";
 import { getLearnerSignal, pickSuggestion, type Suggestion } from "@/lib/learn-suggestion";
 import { starterPath } from "@/lib/learn-home";
-
-/**
- * MY LEARNING — everything the signed-in `/learn` dashboard says, computed once
- * (brief_learn_app_shell WS2).
- *
- * ── ⚠ NOTHING ON THAT PAGE IS A LITERAL ──────────────────────────────────────
- *
- * The catalog is 23 paths / 54 courses / 522 lessons TODAY. Those three numbers
- * appear in the mockup, in the brief and in half the copy, and every one of them
- * is a query result here — `check:learn` fails the build if they turn up as
- * numeric literals in a component. The next XLS import changes all three.
- *
- * ── ⚠ AND NO SUMMED RUN TIMES ────────────────────────────────────────────────
- *
- * The mockup's `41.5 hrs invested` tile is REPLACED by a count of finished
- * courses. `Lesson.run_time` is display copy from a spreadsheet: measured on the
- * live DB, 290 of 522 rows are null and the non-null ones include `"3:22:00"`
- * for a three-minute lesson, `":56"`, `"Intro"`, `"NA"`, `"Done"`,
- * `"Incomplete"` and `"2 days, 1:04:00"`. There is no total to compute. Counts
- * are exact, so counts are what the page shows.
- *
- * ── ONE PASS, NOT A QUERY PER CARD ───────────────────────────────────────────
- *
- * The dashboard needs course-level and lesson-level completion for the WHOLE
- * catalog (the coverage ring is "of everything"), so it reads the whole tree
- * once — the same shape `getLearnHome` already reads — rather than 23 + 54
- * round trips for rows that all come from three tables.
- */
 
 export type DashPath = {
   id: string;
   title: string;
   slug: string;
   group: string | null;
-  /* ⚠ ADDED FOR `E043`. The suggestion's Foundations tiers resolve on the
-     BEGINNERS audience, because no path is titled "Foundations". */
   audience: string;
   coverImage: string | null;
   lessons: number;
-  /** ⚠ `E364` — the Oracle product family. Null for a path outside the mapping. */
   pillar: string | null;
-  /**
-   * ⚠⚠ THE GRAPHIC THAT PICKS THE PATH (`P1-J3-E364` WS-4). Null when the
-   * structure could not be resolved — the caller renders NO spine in that case
-   * rather than a plausible one.
-   */
   spine: Spine | null;
-  /**
-   * ⚠ HOW MANY OF THEM A LEARNER CAN ACTUALLY WATCH (`P1-J3-E362`). Carried so
-   * `pickSuggestion` — a PURE function a future caller could feed an unfiltered
-   * list — can refuse a path with nothing to watch on its own, rather than
-   * trusting that somebody upstream filtered first.
-   */
   playableLessons: number;
   completed: number;
   /** 0–100, of lessons. 0 for a path with no lessons rather than NaN. */
@@ -112,33 +67,12 @@ export type Achievement = {
   detail: string;
   earned: boolean;
   /** `streak` is resolved in the browser — see learn-progress.ts. */
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the only badge the browser
-     filled in was the streak, and a streak rewards a habit (`E606` R3). With it
-     gone every achievement is decided on the server from a count:
-     //   clientComputed?: "streak10"; */
 };
 
-/**
- * ── ⚠⚠⚠ WHEN IS THE STARTER PATH DONE? A PURE FUNCTION. ──────────────────
- *
- * ⚠⚠ **`playable > 0` IS THE LOAD-BEARING HALF AND IT IS EASY TO DROP.**
- * Without it `0 >= 0` is true, so a freshly flagged path **with nothing to
- * watch yet marks itself complete the instant it is flagged** — and the card
- * a member is supposed to always see would never appear once.
- * ⚠ Measured: four of the eleven tracks carry zero playable lessons, so a path
- * in that state is not hypothetical.
- * ⚠⚠ `>=`, not `===`, because a lesson retired after a member watched it would
- * leave `completed` above `playable` and strand them one short forever.
- */
 export function starterIsDone(playable: number, completedLessons: number): boolean {
   return playable > 0 && completedLessons >= playable;
 }
 
-/**
- * ⚠ What the starter card needs and nothing more. ⚠⚠ It carries a COUNT, not a
- * percentage: *"0 of 25 lessons"* is a fact a member can act on, and a `0%` bar
- * on a path nobody has started says the same thing less kindly.
- */
 export type StarterCard = {
   title: string;
   slug: string;
@@ -149,24 +83,10 @@ export type StarterCard = {
 
 export type MyLearning = {
   headline: string;
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — retired with the badge:
-     //   level: LevelState; */
   totals: {
     paths: number;
     courses: number;
     lessons: number;
-    /**
-     * ── ⚠⚠⚠ PATHS IN PRODUCTION (`P2-A4-E613`, Scott 2026-09-24) ─────────
-     *
-     * ⚠⚠ SCOTT: *"Show it. '11 in production' appears as its own labelled
-     * figure."* ⚠⚠⚠ **THE TWO ARE NEVER SUMMED INTO 23 ANYWHERE A MEMBER CAN
-     * SEE** — `check:learn-build` §7 fails the build on that and stays.
-     *
-     * ⚠ IT IS A SEPARATE FIGURE BECAUSE IT ANSWERS A SEPARATE QUESTION: `paths`
-     * is what you can start now, this is what is being made. Adding them would
-     * produce a number that answers neither.
-     * ⚠ COUNTED, NOT INFERRED — a published path with no playable lesson.
-     */
     inProduction: number;
   };
   mine: {
@@ -180,65 +100,14 @@ export type MyLearning = {
   paths: DashPath[];
   inProgress: DashPath[];
   continueCard: ContinueCard | null;
-  /**
-   * The right half of the empty state (`E043`). ⚠ NULL WHENEVER `continueCard`
-   * IS SET — the half only exists when there is nothing on the go, so the read
-   * behind it is skipped entirely for an active learner rather than computed
-   * and thrown away.
-   */
   suggestion: Suggestion | null;
-  /**
-   * ── ⚠⚠⚠ THE STARTER PATH (`P2-A4-E683` WS-C) ────────────────────────────
-   *
-   * ⚠⚠ **SCOTT, 2026-09-26, REPLACING THE 2-YEARS / NO-RDS / NO-MATCH RULE:**
-   * *"I would always show them the foundations… every new user should go
-   * through those courses regardless."*
-   * ⚠⚠⚠ **SO THERE IS NO CONDITION EXCEPT COMPLETION** — no RDS read, no years
-   * of experience, no *"recommended"*, and **crucially not `continueCard`**:
-   * unlike `suggestion` above, this is NOT the right half of an empty state.
-   * A member with three paths on the go still has not done the foundations.
-   * ⚠ `null` once it is complete, and `null` while no path is flagged.
-   */
   starter: StarterCard | null;
   nextCertificate: { title: string; slug: string; percent: number; remaining: number; courses: number; coursesFinished: number } | null;
-  /**
-   * ── ⚠⚠⚠ THE CERTIFICATES PANEL (`P2-A4-E615`, ruling 6) ─────────────────
-   *
-   * ⚠⚠ SCOTT, 2026-09-24: **"Build it. The Certificates panel goes on /learn
-   * per the mockup."** ⚠ It was in the mockup, nobody ruled against it, and it
-   * was simply never built — a silent drop, now a decision.
-   *
-   * ⚠⚠⚠ EVERY FIGURE HERE HAS A WRITER. `learn-assessment.ts` issues the
-   * credential on a pass and writes the attempt; both are real writers. ⚠ THE
-   * TABLE HOLDS ZERO ROWS TODAY (measured 2026-09-24), so the panel is the
-   * EMPTY STATE for now — and it says so honestly rather than not rendering,
-   * because removing a surface removes a capability's only entrance
-   * (`CLAUDE.md` rule 5).
-   */
-  /**
-   * ── ⚠⚠⚠ THE TEACHING TAB (`P2-A4-E615`, ruling 7) ───────────────────────
-   *
-   * ⚠⚠ SCOTT, 2026-09-24, on what Teaching IS: *"the teaching is for the
-   * courses i added and allows me to request adding a course."*
-   *
-   * ⚠ HALF OF THAT IS BUILT HERE AND HALF IS A STOP. Listing the paths a member
-   * authored has a real reader — `getPathsTaughtBy`, on the extracted
-   * `teachesPathWhere` predicate.
-   * ⚠⚠⚠ **"REQUEST ADDING A COURSE" HAS NO WRITER AND IS NOT BUILT.** Measured
-   * 2026-09-24: no model, no route, no function anywhere records such a
-   * request; `createPath` and `course.create` are `canAdminister` only. Ruling
-   * 7 says in terms: *"if nothing writes such a request, STOP AND REPORT rather
-   * than inventing a mechanism."* **A page may not offer a mechanism with no
-   * writer.**
-   */
   teaching: { title: string; slug: string; lessons: number; taughtByThem: number }[];
   certificates: {
-    /** ⚠ The path's title, not the credential's — a member recognises the path. */
     title: string;
     slug: string;
-    /** ⚠ When it was earned. Null is possible and renders as nothing, never a guess. */
     earnedOn: string | null;
-    /** ⚠ The passing score, where an attempt recorded one. */
     score: number | null;
   }[];
   achievements: Achievement[];
@@ -254,7 +123,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         title: true,
         slug: true,
         group: true,
-        /* ⚠ `E364` — the default slice on the pillar row. */
         pillar: true,
         audience: true,
         cover_image: true,
@@ -298,37 +166,20 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       select: { lesson_id: true, completed_at: true },
       orderBy: { completed_at: "desc" },
     }),
-    /*
-      CERTIFIED = a LEARN-issued Certification pointing at the path. Not
-      "completed every lesson": the certificate is the thing that lands on a
-      profile with a verify URL, and the ring legend says "certified".
-    */
     prisma.certification.findMany({
       where: {
         issued_from: "LEARN",
         learning_path_id: { not: null },
         providerProfile: { person: { user_id: userId } },
       },
-      /* ⚠ `P2-A4-E615`, ruling 6 — the Certificates panel names WHAT it shows
-         and WHEN it was earned, so the row carries more than an id. ⚠⚠ Still no
-         `public_credential_url` here: the panel links to the profile, which is
-         where a credential is verified. */
       select: { learning_path_id: true, name: true, issued_on: true, created_at: true },
     }),
     prisma.certificationAttempt.findMany({
       where: { user_id: userId },
-      /* ⚠ `learning_path_id` so a score can be matched to its certificate. */
       select: { score: true, passed: true, learning_path_id: true, created_at: true },
     }),
   ]);
 
-  /*
-    ⚠ `P2-A4-E615` ruling 7 — the paths this member AUTHORED.
-    ⚠⚠ `getPathsTaughtBy` is the ONE reader, on the extracted `teachesPathWhere`
-    predicate — `expert_person_id` alone is the known-wrong answer and has
-    already cost once. ⚠ A member with no `Person` teaches nothing, which is
-    correct rather than an error.
-  */
   const teacherPerson = await prisma.person.findUnique({
     where: { user_id: userId },
     select: { id: true },
@@ -338,9 +189,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     title: t.title,
     slug: t.slug,
     lessons: t.lessons,
-    /* ⚠ How many of them THIS person teaches — on a co-taught path, claiming
-       all of them would be the misrepresentation `getPathsTaughtBy` exists to
-       avoid. */
     taughtByThem: t.taughtByThem,
   }));
 
@@ -356,34 +204,12 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
   const enrolledIds = new Set(enrollments.map((e) => e.learning_path_id));
   const certifiedIds = new Set(certs.map((c) => c.learning_path_id).filter(Boolean) as string[]);
   const done = new Set(progress.map((p) => p.lesson_id));
-  /* Most recent first — `progress` is already ordered, so [0] is the last thing
-     this learner finished, which is what "pick up where you left off" means. */
   const lastDoneId = progress[0]?.lesson_id ?? null;
 
   let totalCourses = 0;
   let totalLessons = 0;
   let coursesFinished = 0;
 
-  /*
-    ── ⚠⚠ A LEARNER ONLY SEES WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ─────────
-
-    SCOTT: *"If there is no video...no sense adding the course/lesson."*
-
-    ⚠⚠ THE HEADLINE NUMBERS MOVE AND THAT IS CORRECT. This is where the
-    dashboard's totals come from, so they go 23 -> 12 paths, 54 -> 39 courses and
-    522 -> 305 lessons. `check:learn` GUARD 3 already forbids those as literals
-    because they are query results, so every surface that prints them follows on
-    its own.
-
-    ⚠ HIDE, NEVER DELETE — a query-time filter, so a path returns the day it gets
-    a video.
-    ⚠ AND AN ENROLLED LEARNER KEEPS THEIR PATH: the filter is on DISCOVERY, not
-    on "what I'm already in". Without the `enrolledIds` clause, somebody's own
-    in-progress path would vanish from their dashboard, which is the same mistake
-    as hiding a teacher's work.
-    ⚠ THE COVERAGE ROW AND THE PATH LIST BOTH READ `rows`, so filtering here
-    fixes all three at once rather than in three components.
-  */
   const visible = paths.filter(
     (p) => pathHasPlayableLessons(p) || enrolledIds.has(p.id)
   );
@@ -398,44 +224,14 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     );
 
     let lessons = 0;
-    /* ⚠ SUPERSEDED BY `pathProg.completed` (`E364` WS-5) — that one counts only
-       PLAYABLE lessons on both sides of the ratio. This accumulator survives only
-       to drive `finishedHere` per course below, which is a per-course question. */
     let finishedHere = 0;
     let nextLesson: DashPath["nextLesson"] = null;
 
     for (const c of p.courses) {
       const cl = c.sections.flatMap((s) => s.lessons);
-      /*
-        ── ⚠⚠ THE TOTALS COUNT WHAT A LEARNER CAN WATCH (`P1-J3-E362`) ────────
-
-        ⚠ SUPERSEDED: `totalCourses += 1` for every course and `totalLessons +=
-        cl.length` for every lesson. Filtering only at the PATH level moved the
-        headline to 12 paths but left courses at 43 and lessons at 446 — because
-        a visible path still counted the unplayable lessons inside it.
-
-        ⚠⚠ THE HERO SAYS *"N learning paths, N lessons, all free."* A learner told
-        446 lessons who can watch 305 has been given a number that overstates by a
-        third. Scott's rule is about the lesson too: *"If there is no video...no
-        sense adding the course/lesson."* So a course counts when it has something
-        playable in it, and a lesson counts when it plays.
-
-        ⚠ THIS IS NOT THE SAME AS HIDING THE CURRICULUM, and `lib/learn.ts`'s own
-        note stands: *"An unplayable lesson still appears in the outline with its
-        title and run time… we gate playback, not visibility."* The OUTLINE still
-        shows everything; the COUNT counts what is watchable. `DashPath.lessons`
-        below is deliberately still the full figure, so a path card can say
-        "8 lessons · 7 ready".
-      */
       if (cl.some(isPlayable)) totalCourses += 1;
       totalLessons += cl.filter(isPlayable).length;
       lessons += cl.length;
-      /*
-        ⚠ `finishedHere` IS A PER-COURSE QUESTION AND STAYS ON THE FULL COUNT.
-        "Courses Finished" means every lesson in it is watched; a course with an
-        unshot lesson is not finished, and counting it as such would be the
-        mirror of the 94% bug `E364` WS-5 just closed.
-      */
       const cd = cl.filter((l) => done.has(l.id)).length;
       if (cl.length > 0 && cd === cl.length) finishedHere += 1;
       if (!nextLesson) {
@@ -443,7 +239,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
         if (nxt) nextLesson = { id: nxt.id, title: nxt.title, playable: isPlayable(nxt) };
       }
     }
-    /* ⚠ `totalLessons` accrues per COURSE above, from playable lessons only. */
     coursesFinished += finishedHere;
     const pathProg = playableProgress(
       p.courses.flatMap((c) => c.sections.flatMap((sec) => sec.lessons)),
@@ -454,8 +249,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     return {
       id: p.id,
       pillar: p.pillar,
-      /* ⚠ QUERIED, NEVER INVENTED — `buildSpine` returns null when it cannot
-         resolve the structure, and the component renders nothing. */
       spine: buildSpine(p.courses, done),
       playableLessons,
       title: p.title,
@@ -464,12 +257,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       audience: p.audience,
       coverImage: p.cover_image,
       lessons,
-      /*
-        ⚠ `E364` WS-5 — BOTH SIDES OVER PLAYABLE. `completed` was every progress
-        row and `lessons` was every lesson, so Inventory Management capped at 94%.
-        `DashPath.lessons` above stays the FULL figure on purpose — a card says
-        "50 lessons · 47 ready" — but the ratio may only use what can be watched.
-      */
       completed: pathProg.completed,
       percent: pathProg.percent,
       enrolled: enrolledIds.has(p.id),
@@ -482,13 +269,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
   });
 
   // ── the continue card ────────────────────────────────────────────────────
-  /*
-    THE PATH THEY LAST TOUCHED, then its next unwatched lesson — not "the most
-    recently created incomplete lesson", which would jump them into a path they
-    have never opened. When nothing has been watched yet, the first enrolled
-    path's first lesson is the honest answer; when nothing is enrolled either,
-    there is NO CARD, because there is nowhere to pick up from.
-  */
   let continueCard: ContinueCard | null = null;
   const flat = paths.flatMap((p) =>
     p.courses.flatMap((c) =>
@@ -498,16 +278,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
   const hasUnwatched = (p: (typeof paths)[number]) =>
     p.courses.some((c) => c.sections.some((s) => s.lessons.some((l) => !done.has(l.id))));
 
-  /*
-    ⚠ THE LAST-TOUCHED PATH ONLY COUNTS IF THERE IS SOMETHING LEFT IN IT.
-
-    Caught in the browser, not in a harness: a fixture whose most recent
-    completion finished a path outright rendered NO continue card at all, while
-    two other paths sat half-done. "Pick up where you left off" then answered
-    "nowhere", which is false. So the last-touched path is the preference, not the
-    rule — if it is finished, the next enrolled path with something unwatched is
-    where they left off.
-  */
   const lastRow = lastDoneId ? flat.find((x) => x.l.id === lastDoneId) : null;
   const homePath =
     (lastRow?.p && hasUnwatched(lastRow.p) ? lastRow.p : null) ??
@@ -529,11 +299,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
           homePath.expert_person_id
         )
       );
-      /*
-        ⚠ THE FACE GOES THROUGH `lessonFace`, NOT THROUGH `expert_person_id`.
-        This lesson may name nobody — 56 in the catalog don't — and this is the
-        biggest face on the page.
-      */
       const face = lessonFace(hit.l, directory, courseInstructors, row.instructors);
       continueCard = {
         pathTitle: homePath.title,
@@ -571,10 +336,6 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     {
       key: "first_certificate",
       title: "First Certificate",
-      /* ⚠ COUNTED IN BOTH STATES (R3) — a locked badge says what unlocks it as a
-         number the member can check, not as an instruction.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   detail: pathsCertified > 0 ? `${pathsCertified} earned` : "Pass a path test", */
       detail: pathsCertified > 0 ? `${pathsCertified} earned` : `0 of 1 path certified`,
       earned: pathsCertified > 0,
     },

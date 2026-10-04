@@ -1,12 +1,3 @@
-/**
- * The theming safety net (E204). `npm run check:theme`.
- *
- * The whole claim of recipe-based theming is that a tenant CANNOT produce an
- * unreadable combination. That is a claim about every hue, not about the three
- * somebody tried in the picker — so this asserts it across the full colour
- * wheel, for every recipe. If a future recipe band drifts into a contrast
- * failure, this is what says so.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {

@@ -1,28 +1,9 @@
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE RESOLVER (`E728` WS-B) and the one place formatter. */
 import { countryName } from "@/lib/country";
 import { formatPlace } from "@/lib/location";
 import type { Viewer } from "@/lib/access";
 import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 
-/**
- * ── ⚠⚠ THE COLLEAGUES ROSTER (`P2-J3-E558` WS-A) ───────────────────────────
- *
- * ⚠⚠ THE PAGE IS A ROSTER, NOT A DIRECTORY. Scott, 2026-09-17: *"the search has
- * to be throttled based on class."*
- *
- * ⚠⚠⚠ THIS MODULE NEVER QUERIES ALL MEMBERS, AND THAT IS ITS WHOLE REASON TO
- * EXIST. `searchMembers` in `connections.ts` is member-wide and is the route
- * 145 providers take to reach 13 buyers. ⚠ THE SEARCH HERE FILTERS A LIST THE
- * VIEWER ALREADY HAS — accepted colleagues — so there is no query that could
- * reach a stranger even if the filter were wrong.
- *
- * ⚠ `USER_CLASS` IS NOT STORED (`class_connection_rule.md`), so class-throttled
- * search across members CANNOT be built here. Scoping to the roster is the
- * shape that opens later without changing this UI.
- */
-
-/** ⚠ Reasons are ranked; the first that computes is the one rendered. */
 export type RosterReasonKind = "skills" | "learn" | "employer" | "worked" | "date";
 
 export type RosterRow = {
@@ -33,63 +14,13 @@ export type RosterRow = {
   title: string | null;
   company: string | null;
   photoUrl: string | null;
-  /** ⚠⚠ NEVER NULL. A row with no computable reason falls back to the date. */
   reason: string;
   reasonKind: RosterReasonKind;
-  /**
-   * ⚠⚠ THE CLASS RULE'S ONLY VISIBLE TRACE TODAY. Under that rule a buy-side
-   * connection is not a peer connection at all. ⚠ NOT HIDDEN AND NOT DELETED —
-   * buy-side colleague rows already exist (Test User 5, Ronnie Requester) and
-   * they are real.
-   * ⚠ A person who is BOTH is not marked: they are still a peer on the provider
-   * axis, and marking them would say something the data does not support.
-   */
   buySide: boolean;
-  /**
-   * ⚠⚠ THE SKILL NAMES THIS COLLEAGUE OFFERS (`P2-A3-E596` WS-E item 3).
-   * ⚠ SEARCH-ONLY — nothing renders them. A roster row is a name, a title and
-   * ONE reason; a list of chips per row would make it the directory it is
-   * deliberately not.
-   * ⚠⚠⚠ IT IS THE **SHOWN** SET, NOT THE HELD SET. `E517`'s rule is that an
-   * offer surface shows only in-role skills — *"filter what is OFFERED, never
-   * what is HELD"* — and a colleague list is an offer surface. Searching a
-   * skill the person's own profile will not display would find somebody a
-   * buyer then cannot verify.
-   */
   skillNames: string[];
-  /**
-   * ── ⚠⚠ `P2-A1.1-E742` (B2) — THE THREE FACTS SCOTT ASKED FOR ──────────────
-   *
-   * ⚠ SCOTT: *"What if there are two (or ten) Deepak Kumars?"* ⚠⚠ **A ROSTER
-   * OF NAMES WITH NOTHING TO TELL THEM APART IS NOT A ROSTER.** Location and a
-   * mutual-colleague count are the two cheapest facts that disambiguate two
-   * people with one name.
-   *
-   * ⚠ `"Austin, United States"`, or null when no address row has a city. ⚠⚠ The
-   * country comes from `countryName` — **the one resolver** (`E728` WS-B) — so
-   * this list cannot print a country differently from every other surface.
-   */
   location: string | null;
-  /**
-   * ⚠⚠ COLLEAGUES IN COMMON. ⚠⚠⚠ **COMPUTED IN ONE QUERY FOR THE WHOLE LIST,
-   * NOT PER ROW.** `mutualColleagueCount()` exists and runs two queries per
-   * person — fine for one profile page, and **2N queries for a roster**. This
-   * file's own rule is *"ONE READ PER SOURCE, not one per colleague"*, and the
-   * intersection is done in memory against sets built from rows already loaded.
-   * ⚠ Shown only when above zero (the brief) — a `0` here is noise, not a fact
-   * worth a line.
-   */
   mutualCount: number;
-  /** ⚠ The shared-skill count the reason line already computes, exposed for the
-   *  ordering below rather than re-derived from `skillNames`. */
   sharedSkillCount: number;
-  /**
-   * ⚠⚠ `/providers/<profileId>`, or null for a colleague with no provider
-   * profile (a buyer). ⚠⚠⚠ **NULL IS WHY THE NAME IS NOT ALWAYS A LINK** — a
-   * buy-side colleague has no public page, and linking their name at a 404 is
-   * worse than leaving it as text. ⚠ Resolved here, in the ONE query that
-   * already loads the person, rather than by the component.
-   */
   profileHref: string | null;
   connectedAt: Date;
 };
@@ -97,12 +28,6 @@ export type RosterRow = {
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-/**
- * Every accepted colleague of the viewer, with the reason each is on the list.
- *
- * ⚠ ONE READ PER SOURCE, not one per colleague — the reason sources are
- * intersected in memory against sets built from the viewer's own rows.
- */
 export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
   const me = viewer.userId;
 
@@ -121,10 +46,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
     ...new Set(connections.map((c) => (c.from_user_id === me ? c.to_user_id : c.from_user_id))),
   ];
 
-  /* ⚠ SCOPED BY CONSTRUCTION: `id: { in: otherIds }` — the set is the viewer's
-     own connections and cannot contain a stranger. */
   const people = await prisma.person.findMany({
-    /* `E821` — deactivated and test members drop out of the roster. */
     where: { user: { is: { id: { in: otherIds }, is_active: true, is_test: false } } },
     select: {
       id: true,
@@ -135,8 +57,6 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       is_service_buyer: true,
       is_service_provider: true,
       company: { select: { name: true } },
-      /* ⚠ `P2-A1.1-E742` (B2) — the city and country for the row's second line.
-         ⚠⚠ ONE address, the same `take: 1` every other surface uses. */
       site: {
         select: {
           addresses: {
@@ -148,11 +68,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       user: { select: { id: true } },
       providerProfile: {
         select: {
-          /* ⚠ `P2-A1.1-E742` (B2) — the id the row's profile link needs. */
           id: true,
-          /* ⚠ `skill_id` FEEDS THE SHARED-SKILL COUNT; the NAME and the role
-             feed WS-E's search. ⚠⚠ `role_type_id` IS REQUIRED HERE — `E517`'s
-             `shownSkills` needs it to decide what this person actually offers. */
           skills: { select: { skill_id: true, skill: { select: { name: true, role_type_id: true } } } },
           employers: { select: { name: true } },
           role_type_id: true,
@@ -178,9 +94,6 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
     (mine?.providerProfile?.employers ?? []).map((e) => (e.name ?? "").trim().toLowerCase())
   );
 
-  /* ⚠ `From Learn` IS SHARED ENROLMENT. A path's forum is `ForumBoard`'s
-     `learning_path_id` (`P1-J3-E383`), so "a forum in common" and "a path in
-     common" are the SAME FACT for 23 of 27 boards — computed once, not twice. */
   const enrolments = await prisma.learnEnrollment.findMany({
     where: { user_id: { in: [me, ...otherIds] } },
     select: { user_id: true, learning_path_id: true },
@@ -198,17 +111,6 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
 
   const byUser = new Map(people.filter((p) => p.user).map((p) => [p.user!.id, p]));
 
-  /*
-    ── ⚠⚠⚠ COLLEAGUES IN COMMON, IN **ONE** QUERY (`P2-A1.1-E742`, B2) ───────
-
-    ⚠ Every accepted COLLEAGUE edge touching anybody on this roster, read once.
-    ⚠⚠ `mutualColleagueCount()` answers the same question for ONE person and
-    costs two queries doing it; calling it per row would be **2N queries** on a
-    page that already states its rule: *"ONE READ PER SOURCE, not one per
-    colleague."*
-    ⚠⚠⚠ A `COLLEAGUE` ROW IS UNDIRECTED, so both columns are read and both ends
-    are recorded — reading one column would halve every count, silently.
-  */
   const theirEdges = await prisma.connection.findMany({
     where: {
       kind: "COLLEAGUE",
@@ -228,9 +130,6 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       colleaguesOf.get(a)!.add(b);
     }
   }
-  /* ⚠ The viewer's own colleague set — `otherIds` IS that set, by construction
-     a few lines above. ⚠⚠ The viewer and the person themselves are excluded
-     from every intersection: *"you have yourself in common"* is not a fact. */
   const myColleagues = new Set(otherIds);
 
   const rows: RosterRow[] = [];
@@ -247,13 +146,6 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
     const sharedEmployer = [...myEmployers].find((e) => e && theirEmployers.has(e)) ?? null;
     const sharedPaths = [...(theirPaths.get(otherId) ?? [])].filter((x) => myPaths.has(x)).length;
 
-    /*
-      ⚠⚠ RANKED, AND THE RANK IS NOT ARBITRARY. A shared skill is what makes
-      somebody useful to ask; a shared employer is the strongest proof you
-      actually know each other; Learn is the weakest of the three because two
-      people can sit in a path and never meet.
-      ⚠ THE DATE ALWAYS COMPUTES, so the line is NEVER blank.
-    */
     let reason: string;
     let reasonKind: RosterReasonKind;
     if (sharedEmployer) {

@@ -12,14 +12,6 @@ import {
   setRoles,
 } from "@/lib/admin/user-edit";
 
-/**
- * POST /api/admin/user-edit — the E2 actions (`P2-ALL-E796`).
- *
- * ⚠⚠ ONE ROUTE, ONE GUARD, before the body is read.
- * ⚠⚠⚠ **THE CONFIRMATION IS PASSED THROUGH, NOT ASSUMED.** Lock and deactivate
- * lock a real person out of their own account, and the library refuses without
- * it — a disabled button is not a guarantee.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;
@@ -34,8 +26,6 @@ export async function POST(request: Request) {
   const personId = String(body.personId ?? "");
   if (!personId) return NextResponse.json({ error: "Which person?" }, { status: 400 });
 
-  /** ⚠ The origin for the links the senders build — taken from the request, not
-   *  from a constant, so a preview deploy mails its own URLs. */
   const h = await headers();
   const origin = h.get("origin") ?? (h.get("host") ? `https://${h.get("host")}` : null);
   const confirmed = body.confirmed === true;

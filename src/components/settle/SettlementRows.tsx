@@ -3,14 +3,6 @@ import { formatCents } from "@/lib/display";
 import type { SettlementRow } from "@/lib/settlements";
 import type { SettlementStatus } from "@prisma/client";
 
-/**
- * The settlement list row and its status pill, shared by the provider's list and
- * the buyer's queue (`P1-J4-E394`).
- *
- * ⚠ ONE DEFINITION so the two sides cannot describe the same payment request two
- * ways — the same reasoning `OrderChrome` and `SettingsNav` share one.
- */
-
 const TONE: Record<SettlementStatus, string> = {
   DRAFT: "bg-ink/[0.05] text-ink-2",
   SUBMITTED: "bg-amber-50 text-amber-700",

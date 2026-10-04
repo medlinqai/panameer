@@ -5,17 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { PasswordReveal } from "@/components/PasswordReveal";
 
-/**
- * ── ⚠⚠ FORGOT PASSWORD — THE RESET PAGE (`P1-ALL-E528` Part B) ────────────
- *
- * ⚠ IT CARRIES THE REVEAL TOGGLE. Part A2 put one on every field where a
- * password is typed, and the brief's rule is explicit: *"a reveal on one form and
- * not the next is worse than none."* ⚠⚠ This is the form where a typo is most
- * expensive — the person cannot get in already.
- *
- * ⚠ THE TOKEN COMES FROM THE QUERY STRING and is posted, never rendered.
- * ⚠ `useSearchParams` needs a Suspense boundary in the app router.
- */
 function ResetForm() {
   const params = useSearchParams();
   const token = params.get("token") ?? "";
@@ -28,8 +17,6 @@ function ResetForm() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    /* ⚠ Checked here so a mismatch never costs the token — the server consumes
-       it on success, and a typo in "confirm" must not burn the link. */
     if (password !== confirm) {
       setError("Those passwords don't match.");
       return;
@@ -45,7 +32,6 @@ function ResetForm() {
       if (res.ok && body?.ok) setDone(true);
       else setError(body?.error ?? "That link isn't valid. Request a new one and try again.");
     } catch {
-      /* ⚠ `E516` — a thrown fetch must say something, not fail silently. */
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

@@ -9,24 +9,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-/**
- * A floating panel anchored to a trigger, rendered into `document.body`
- * (E212, E213).
- *
- * WHY A PORTAL, AND WHY THIS EXISTS AT ALL. The rail's flyouts were positioned
- * `absolute left-full` inside `<nav class="overflow-y-auto">`, and that is the
- * whole of E213: once either axis of `overflow` is not `visible`, CSS computes
- * the other one to `auto` as well, so a panel sticking out of the right edge of
- * a vertically-scrolling column is CLIPPED. No z-index can fix that — the panel
- * was not behind the content, it had been cut off at the rail's edge. Rendering
- * into the body escapes the clip and the stacking context in one move.
- *
- * POSITION IS WRITTEN TO THE DOM, NOT HELD IN STATE. Measuring the anchor and
- * calling setState from a layout effect is exactly the cascading-render pattern
- * this repo lints as an error, and it would also paint the panel once at 0,0
- * before moving it. The panel is `position: fixed` and its `left`/`top` are
- * assigned directly to the node, so there is one paint and no render loop.
- */
 export type PopoverPlacement = "right-start" | "bottom-start" | "bottom-end" | "top-start";
 
 /** Keeps a panel off the viewport edges. */
@@ -51,14 +33,6 @@ export function Popover({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  /*
-    "Are we on the client yet?", as an external store rather than a flag set by
-    an effect. `document` does not exist while the server renders, so the portal
-    has to wait for mount — but writing that with setState-in-effect is the
-    cascading-render pattern this repo lints as an error, and it is the same
-    question the header's clock answers the same way: a server snapshot and a
-    client snapshot, no state write on mount.
-  */
   const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
 
   const position = useCallback(() => {

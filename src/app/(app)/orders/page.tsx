@@ -7,34 +7,6 @@ import { formatCents } from "@/lib/display";
 import { listOrders, type OrderRow } from "@/lib/orders";
 import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 
-/**
- * `/orders` — WORK ORDERS, BOTH SIDES, ONE PAGE (`P1-J4-E393` WS-1).
- *
- * ⚠⚠ THIS REPLACES A `ComingSoon` STUB THAT `E380` RENAMED AND DID NOT BUILD.
- * Its own docblock said so: *"AND IT IS STILL A STUB AFTER `E380`. Renaming it is
- * not implementing it."*
- *
- * ── ⚠⚠ ONE PAGE, TWO SCOPES, RESOLVED FROM THE VIEWER ───────────────────────
- *
- * A buyer sees orders they placed; a provider sees orders naming them; **and
- * somebody who is both sees both**, which is a real case on a marketplace where
- * a consultancy buys and sells. `listOrders` asks *"which orders is this PERSON
- * a party to?"* in one query and derives the side per row.
- *
- * ⚠ TWO ROUTES WOULD HAVE BEEN WORSE, NOT JUST DIFFERENT. `/orders/placed` and
- * `/orders/received` force a person to know which hat they are wearing before
- * clicking, and the rail has ONE `Orders` slot on both sides — `nav.ts` points
- * both `REQUESTER_NAV` and `PROVIDER_NAV` at this same href.
- *
- * ⚠ THE HEADING IS "Work Orders", the rail's word is "Orders" — `E378`'s rule,
- * and `nav.ts` records why the label is a plural NOUN: Scott's draft read
- * `Order | Settle`, and *"as a bare verb `Order` reads as a command (order
- * something) rather than as a place."*
- *
- * ⚠ GATED `authenticated`, WHICH IT ALREADY WAS. Both rails offer it, so a
- * capability gate on either side would refuse the other — the exact
- * offered-then-refused class `check:nav-reachable` exists for.
- */
 export const metadata = { title: "Work Orders · Panameer" };
 
 function periodOf(o: OrderRow): string {

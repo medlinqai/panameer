@@ -1,11 +1,3 @@
-/**
- * The two-sided ticket thread (`P2-J1.1-E032` WS-4).
- *
- * ⚠ ONE COMPONENT FOR BOTH SIDES so the reporter and the admin cannot end up
- * looking at differently-shaped records of the same conversation. `author_side`
- * decides which way a message leans and what it is labelled — `"panameer"` is
- * Panameer Support, anything else is the reporter.
- */
 export function TicketThread({
   messages,
   reporterName,

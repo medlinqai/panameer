@@ -6,25 +6,6 @@ import { appBaseUrl } from "@/lib/verification";
 import { sendEmail } from "@/lib/resend";
 import { assessmentInviteTemplate } from "@/lib/email/templates/assessment-ready";
 
-/**
- * SEND A COLLEAGUE THEIR ASSESSMENT (WS-E).
- *
- * ⚠ THE ROUTE PARAM IS THE SHARE TOKEN, NOT THE ASSESSMENT ID — the folder is
- * named `[id]` to match the app's convention, and the value is the secret. That
- * matters: holding the token is what proves the sender is the person who took
- * the assessment, since this endpoint is reachable without a session (the
- * report itself is). An assessment id would be equally opaque but is used
- * internally; the token is the thing designed to be carried in a URL.
- *
- * This endpoint SENDS MAIL TO A THIRD PARTY, so it is the one place in the flow
- * that could be abused. Three limits, all cheap:
- *   · one row per (assessment, process, email) — the unique index makes a
- *     re-send idempotent rather than a way to mail someone repeatedly;
- *   · the process must be one of the three the sender did NOT assess;
- *   · at most three invites per assessment, which is exactly the number of
- *     other processes that exist.
- */
-
 const Body = z.object({
   process: z.enum(["P2P", "O2C", "R2R", "H2R"]),
   name: z.string().trim().min(1).max(120),
@@ -59,10 +40,6 @@ export async function POST(
     return NextResponse.json({ error: "All three are already sent." }, { status: 400 });
   }
 
-  /* ⚠⚠ UPSERT, SO ONE ROW SERVES EVERY RESEND. The receipt still points at it,
-     but a second invitation to the same address OVERWRITES nothing here — the
-     SentEmail rows accumulate, which is exactly why the id lives on the receipt
-     and not on the invite (`P2-J3-E522` Part A). */
   const invite = await prisma.assessmentInvite.upsert({
     where: {
       assessment_id_process_email: { assessment_id: a.id, process, email },

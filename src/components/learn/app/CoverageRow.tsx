@@ -5,52 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DashPath } from "@/lib/learn-dashboard";
 
-/**
- * THE COVERAGE ROW — one row, what the width fits, an arrow to the rest
- * (`P1-J3-E045`).
- *
- * **SCOTT, 2026-09-02:** *"thought we show what space allows and then give an
- * arrow pointing to the right… and they can use it to scroll to other courses
- * we cant show in the normal space."*
- *
- * ── ⚠⚠ WHAT WAS ACTUALLY WRONG, BECAUSE IT WAS NOT WHAT IT LOOKED LIKE ───────
- *
- * Nothing was broken and there was never a missing `<img>`. The tiles are
- * coloured STATE squares, and for a new provider every one of them is the same
- * pale not-started square — so the grid read as a wall of identical blanks.
- * ⚠ THE TILE STATES ARE NOT REDESIGNED HERE. Certified fills with a check,
- * in-progress outlines with a proportional slab and its percentage, not-started
- * carries its lesson count — the same three, the same classes, moved.
- *
- * ── ⚠⚠ THE FIX FOR "THE TILES IDENTIFY NOTHING" IS A VISIBLE NAME ────────────
- *
- * The old grid identified a path ONLY through `title` and `aria-label` — a
- * tooltip you have to hover to get and a string only a screen reader speaks. A
- * mouse never touches it on a phone. So each tile now carries its path title
- * UNDER it, clamped to two lines, and KEEPS the tooltip and the aria-label it
- * already had. That is why the item is a fixed-width column rather than a
- * square: the square alone cannot hold a name.
- *
- * ── ⚠⚠ NATIVE OVERFLOW FIRST, ARROWS AS AN ADDITION ──────────────────────────
- *
- * The row is `overflow-x-auto`. Touch-drag, shift-wheel, and tabbing to a tile
- * beyond the fold all scroll it WITHOUT the arrows existing — the arrows are an
- * affordance on a container that is genuinely scrollable, not a carousel and
- * not pagination. Remove all the JavaScript on this page and the row still
- * works.
- * ⚠ `overflow-x` ON THE ROW IS ALSO WHAT KEEPS THE PAGE BODY FROM SCROLLING
- * SIDEWAYS. It only contains the overflow if every ancestor can shrink, which is
- * why `CoverageCard`'s right column is `min-w-0` and this wrapper is too.
- *
- * ⚠ BOTH ARROWS ARE HIDDEN WHEN EVERYTHING FITS — an arrow to nowhere is worse
- * than no arrow. The left one appears only once scrolled. State comes from the
- * element's own `scrollLeft` / `scrollWidth` / `clientWidth`, re-read on scroll
- * AND on resize, because "everything fits" is a function of the width and the
- * window is resizable.
- * ⚠ `useState` STARTS BOTH FALSE, so the server render and the first client
- * render agree and there is no hydration mismatch; the effect turns the right
- * arrow on a frame later if it is needed.
- */
 export function CoverageRow({ paths }: { paths: DashPath[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -59,8 +13,6 @@ export function CoverageRow({ paths }: { paths: DashPath[] }) {
   const measure = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    /* One pixel of slack: sub-pixel layout makes an exactly-fitting row report
-       a scrollWidth a hair over its clientWidth, which would light the arrow. */
     const max = el.scrollWidth - el.clientWidth;
     setCanLeft(el.scrollLeft > 1);
     setCanRight(el.scrollLeft < max - 1);

@@ -3,23 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-/**
- * ── ⚠⚠ ONE BUTTON PLUS AN OVERFLOW (`P2-J3-E558` WS-A) ────────────────────
- *
- * ⚠ SCOTT ASKED FOR THIS SHAPE, 2026-09-17, and the reason is not taste:
- * `Message` is EVERYDAY AND REPEATABLE; `Ask them to mentor me` and `Request a
- * recommendation` are ONE-TIME RELATIONSHIP ASKS. Giving them equal weight
- * spends the same pixels on an action used weekly and one used twice a year.
- * ⚠⚠ AND THREE BUTTONS ON A ROW IS EXACTLY WHAT PRODUCED THE SQUEEZE — the
- * layout bug the container queries in `member-row.css` fixed. This keeps the
- * row at ONE control at rest, so it stays inline down to 360px of card width.
- *
- * ⚠ BUY-SIDE ROWS GET THE OVERFLOW WITHOUT MENTORING. A recommendation from a
- * buyer is the strongest one there is; mentoring stays off because it is a PAID
- * ENGAGEMENT, not a peer action.
- *
- * ⚠ THE LABELS ARE PROPOSALS — the brief says so, and Scott names things.
- */
 export function ColleagueRowActions({
   toUserId,
   name,
@@ -34,8 +17,6 @@ export function ColleagueRowActions({
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
-  /* ⚠ CLOSES ON AN OUTSIDE CLICK AND ON Escape. A menu that only closes by
-     re-clicking its own trigger traps a keyboard user. */
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -54,8 +35,7 @@ export function ColleagueRowActions({
 
   return (
     <>
-      {/* ⚠ `Message` IS THE VISIBLE ONE. It is also the only action here that
-          already has a permission boundary in the product (`canMessage`). */}
+      {}
       <Link
         href={`/messages?with=${toUserId}`}
         className="rounded-full border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"

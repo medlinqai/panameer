@@ -1,27 +1,3 @@
-/**
- * `check:solution-types` — a service product's kind, its billing shape, and the
- * fields each one is allowed to hold (brief_solution_types WS5).
- *
- * FIVE PROPERTIES, and each is a thing that fails silently otherwise:
- *
- *   1  `PackageKind` is EXACTLY `DEPLOYABLE · HOURS · DELIVERABLE` — and NOT
- *      `EXPERT` (an expert is a Person with a rate, not a Package) and NOT
- *      `DEPLOYMENT` (one letter from DEPLOYABLE, opposite meaning).
- *   2  Every row that existed before the column did reads `DELIVERABLE`.
- *   3  The WS3 table holds for EVERY LIVE ROW — a DEPLOYABLE with a duration, a
- *      milestone, a deliverable or a non-RECURRING price fails.
- *   4  `billing_period` is present EXACTLY when the pricing is RECURRING.
- *   5  ⚠ NOTHING MAPS `kind` TO A PRICE, A RAIL OR A LABEL YET. This brief stores;
- *      it does not decide. The six buyer-facing labels are a display concern and
- *      the rail depends on an integration that does not exist.
- *
- * ⚠ THE ENUM CHECK READS `schema.prisma`, NOT THE GENERATED CLIENT. A generated
- * client is a build artifact of the schema; asserting against it would prove only
- * that `prisma generate` ran.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN. This file's own prose names every
- * banned token, and a scanner that read comments would fail on its own documentation.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -162,11 +138,6 @@ check(
   mapOffenders.length === 0,
   mapOffenders.join(", ")
 );
-/*
-  The rule file is exempt from the scan above because `PRICING_FOR_KIND` is keyed by
-  kind — but it may only hold PRICING SHAPES, never money, a rail or a label. Asserted
-  positively rather than by exempting the file and hoping.
-*/
 const ruleBody = bodies.get(RULE) ?? "";
 check("5 — the rule file exists", ruleBody.length > 0);
 check(
@@ -179,21 +150,6 @@ check(
   !/export (const|function) (priceFor|railFor|labelFor|kindLabel)/.test(ruleBody)
 );
 
-/*
-  ⚠ AND THE RENDER PATH MUST STAY AN EXPLICIT PROJECTION — this is what makes adding
-  a column to `Package` safe at all.
-
-  `lib/service-products.ts` is the ONLY reader of `Package` rows in the repo
-  (`listOwnPackages`, behind `/settings/packages` and `/api/provider/packages`). It
-  uses `include`, which returns EVERY scalar — so if `shape()` spread the row, `kind`
-  and `billing_period` would have appeared in every payload the moment this brief
-  pushed, and "every existing row renders exactly as before" would have been false
-  without one line of UI changing.
-
-  Measured rather than reasoned: the shaped payload for the one PUBLISHED package
-  contains neither new key, and still reads `priceCents 4000000` and
-  `durationWeeks 5`. Asserted here so a future `...p` cannot quietly undo it.
-*/
 const PKG_LIB = join("src", "lib", "service-products.ts");
 const pkgLib = bodies.get(PKG_LIB) ?? "";
 check("2 — the package read path exists where this guard expects it", pkgLib.length > 0);
@@ -264,8 +220,6 @@ check(
     /must not carry a billing_period/.test(v)
   )
 );
-/* ⚠ `expected` IS NOT ENFORCED — see the note in the rule file. A DELIVERABLE with no
-   duration and no milestones is the two rows that existed before this column did. */
 check(
   "4 — a DELIVERABLE with no duration and no milestones is ALLOWED, not a violation",
   solutionViolations(row({ kind: "DELIVERABLE" })).length === 0,

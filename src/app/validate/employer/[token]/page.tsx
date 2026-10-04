@@ -2,24 +2,6 @@ import { Logo } from "@/components/Logo";
 import { getEmployerValidationRequest } from "@/lib/employer-validation";
 import { EmployerValidateActions } from "@/components/validate/EmployerValidateActions";
 
-/**
- * ── ⚠⚠ PUBLIC EMPLOYER-VALIDATION PAGE (`P2-A1.1-E747`, WS-B) ──────────────
- *
- * ⚠ **NO AUTH, by design** — a former manager or HR contact is not a Panameer
- * user and must not be asked to become one to answer a yes/no question. The
- * single-use token in the URL is the entire authorization.
- *
- * ⚠⚠⚠ **IT ONLY READS ON GET.** The answer is a POST from a real button click,
- * because corporate mail gateways pre-fetch links in incoming email — a GET that
- * confirmed would let a security scanner validate somebody's employment on the
- * contact's behalf, which is exactly the trust signal this is trying to earn.
- * ⚠ The project page states the same rule; this is the same rule, not a second
- * one.
- *
- * ⚠ **ITS OWN ROUTE, NOT A BRANCH ON `/validate/[token]`.** Two tables, two
- * tokens; a shared route would have to try both lookups on every request and
- * guess which kind of thing it was looking at.
- */
 export default async function ValidateEmployerPage({
   params,
   searchParams,
@@ -44,10 +26,7 @@ export default async function ValidateEmployerPage({
           <EmployerValidateActions request={found} declineFirst={decline === "1"} />
         ) : (
           <div className="rounded-brand border border-line bg-white p-8 text-center">
-            {/* ⚠⚠ ONE PAGE FOR "ANSWERED", "EXPIRED" AND "NOT A LINK". ⚠ Telling
-                them apart would confirm to anyone holding a guessed token that a
-                real request exists — and none of the three leaves the contact
-                anything to do. */}
+            {}
             <p className="text-[40px] leading-none" aria-hidden>
               {found?.alreadyAnswered ? "✓" : "⏳"}
             </p>

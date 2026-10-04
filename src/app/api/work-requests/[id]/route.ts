@@ -22,11 +22,6 @@ export async function GET(
 ) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  /*
-    The company gate, server-side (WS4). The page redirects, but the API is the
-    authoritative boundary — a work request commits a company, so the caller
-    needs an approved membership on one that has accepted the company terms.
-  */
   const transact = await checkTransact(gate);
   if (!transact.ok) {
     return NextResponse.json(
@@ -46,21 +41,12 @@ export async function GET(
   }
 }
 
-/**
- * PATCH /api/work-requests/[id] — save one section of a DRAFT (save-as-you-go).
- * Gated canHireTalent; PAccount-scoped; a POSTED request is immutable.
- */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const gate = await guardApi("canHireTalent");
   if (gate instanceof NextResponse) return gate;
-  /*
-    The company gate, server-side (WS4). The page redirects, but the API is the
-    authoritative boundary — a work request commits a company, so the caller
-    needs an approved membership on one that has accepted the company terms.
-  */
   const transact = await checkTransact(gate);
   if (!transact.ok) {
     return NextResponse.json(

@@ -8,17 +8,6 @@ import { TicketThread } from "@/components/support/TicketThread";
 import { TicketReplyBox } from "@/components/support/TicketReplyBox";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * The reporter's view of one ticket, including Panameer's replies
- * (`P2-J1.1-E032` WS-4).
- *
- * ⚠⚠ SCOPED IN THE LIB, NOT HERE. `getTicket(viewer, id)` without `asAdmin`
- * returns null unless the session's person is the REPORTER, so a guessed ticket
- * id gets a 404 rather than someone else's bug report — which could contain
- * their email, their screen, and a screenshot.
- * ⚠ NO SCREENSHOT IS RENDERED ON THIS PAGE. The reporter took it, and re-serving
- * a private object costs a signed URL for no new information.
- */
 export const metadata = { title: "Support Ticket · Panameer" };
 
 export default async function MyTicketPage({
@@ -29,20 +18,10 @@ export default async function MyTicketPage({
   const viewer = await guardPage("authenticated");
   const { ticketId } = await params;
 
-
   const found = await getTicket(viewer, ticketId);
   if (!found) notFound();
   const { ticket, messages } = found;
 
-  /*
-    ── ⚠⚠⚠ THE REPORTER SEES LESS, AND THE QUERY ENFORCES IT (`P2-ALL-E761`) ──
-
-    ⚠ Scott's rule: the reporter gets **status changes and messages only** — not
-    assignee names and not priority. ⚠⚠ `forReporter` filters in the WHERE clause
-    of `ticketTimeline`, so this page cannot leak by forgetting a check, and a
-    future edit here cannot widen it. Same shape as the masked profile: the
-    boundary is the query, never the template.
-  */
   const timeline = await ticketTimeline(ticket.id, { forReporter: true });
 
   const closed = ticket.status === "Resolved" || ticket.status === "Closed";
@@ -72,8 +51,7 @@ export default async function MyTicketPage({
         </section>
       )}
 
-      {/* ⚠ The same component the admin page uses — it renders whatever it is
-          given, and what it is given was decided above. */}
+      {}
       <section className="mt-5">
         <h2 className="text-[16px] font-bold">History</h2>
         <TicketTimeline entries={timeline} names={{}} />
@@ -81,9 +59,7 @@ export default async function MyTicketPage({
 
       <TicketThread messages={messages} reporterName="You" />
 
-      {/* ⚠ A CLOSED TICKET STILL SHOWS ITS THREAD — the record is the point — but
-          the reply box comes off, so nobody types into a ticket nobody is
-          watching. Filing a new one is the honest path. */}
+      {}
       {closed ? (
         <p className="mt-4 text-[14px] text-ink-2">
           This ticket is {ticket.status.toLowerCase()}.{" "}

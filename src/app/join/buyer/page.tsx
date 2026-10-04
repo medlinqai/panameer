@@ -143,11 +143,6 @@ export default function JoinBuyerPage() {
     );
   }
 
-  /*
-    ⚠ THE 404 MEANS "NO BUYER PROFILE", NOT "WRONG ACCOUNT TYPE" — `P1-J1.2-E009`.
-    `loadBuyer` throws one code for three different causes, so this screen states
-    only what the 404 establishes and offers a door that exists. See NoProfileYet.
-  */
   if (notBuyer) {
     return (
       <NoProfileYet path="buyer" blocked={blockedParams.blocked} from={blockedParams.from} />
@@ -158,9 +153,6 @@ export default function JoinBuyerPage() {
     return (
       <WizardShell
         progress={progress}
-        /* ⚠ SCOTT'S WORDS, VERBATIM (`E289`). ⚠ SUPERSEDED: "Sign Up to Hire Talent".
-             This is a `WizardShell` title, not `SignUpForm` — the third of the
-             three sign-up titles the brief names, and the second to collapse. */
           title="Sign Up to Buy Services and/or Service Products"
         subtitle="Create your account to post work and hire experts."
         canBack={false}
@@ -202,9 +194,7 @@ export default function JoinBuyerPage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* ⚠ `E528` — the same reveal `SignUpForm` has had since `E047`.
-                ⚠⚠ BOTH FIELDS GET THEIR OWN, because a person who mistypes the
-                confirmation needs to see the confirmation. */}
+            {}
             <Field label="Password" hint="At least 8 characters">
               <PasswordReveal id="join-buyer-password">
                 {({ type, className }) => (
@@ -243,13 +233,7 @@ export default function JoinBuyerPage() {
               className="mt-1 h-4 w-4 accent-magenta"
             />
             <span className="text-[14.5px] text-ink-2">
-              {/*
-                WS-C — these were BOLD TEXT, not links: the buyer was asked to
-                agree to three documents with no way to open any of them. They
-                are links now, they open in a new tab so a half-filled signup
-                survives the click (E162), and "Terms of Service" is "Terms of
-                Use" — the name the document actually carries.
-              */}
+              {}
               Yes, I understand and agree to the Panameer{" "}
               <LegalLink href="/terms">Terms of Use</LegalLink>, including the{" "}
               <LegalLink href="/user-agreement">User Agreement</LegalLink> and{" "}
@@ -309,9 +293,7 @@ export default function JoinBuyerPage() {
           }
         >
           <h3 className="text-[20px] font-bold">Business Plus</h3>
-          {/* E004 — the "top 1% of talent" claim is off-brand and is gone;
-              see the note in the marketing Pricing card. The tier itself is
-              E013 and untouched. */}
+          {}
           <p className="mt-1 text-[14.5px] text-ink-2">
             ERP integration and priority matching. Start a free trial — no card
             required.

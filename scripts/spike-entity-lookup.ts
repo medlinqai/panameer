@@ -1,26 +1,3 @@
-/**
- * `spike-entity-lookup` — ⚠⚠ A SPIKE. THROWAWAY. NOT A FEATURE (`P1-J1.1-E282` WS-1).
- *
- * The brief's condition, verbatim: *"IF WS-1 DOES NOT PROVE IT — no reachable
- * registry, or the only way to answer is the model's own memory — STOP. REPORT.
- * BUILD NOTHING. A validation that cannot be sourced is worse than no validation:
- * it puts a confident tick beside data nobody checked."*
- *
- * So this script exists to answer five questions with REAL network calls and
- * REAL measurements, per state, in the brief's tier order:
- *   (a) an official state API      ← preferred, and not scraping
- *   (b) a search-capable model call
- *   (c) nothing → `unavailable`, NEVER a guess
- *
- * ⚠ IT NEVER PRODUCES AN EIN. A state register does not publish one, and Texas's
- * 11-digit taxpayer number is NOT the federal EIN — it must never reach
- * `Company.tin`.
- *
- * Run:  npx esbuild scripts/spike-entity-lookup.ts --bundle --platform=node \
- *         --format=cjs --packages=external --alias:@=./src \
- *         --outfile=.harness/spike.cjs && node -r dotenv/config .harness/spike.cjs \
- *         dotenv_config_path=.env.local
- */
 import Anthropic from "@anthropic-ai/sdk";
 
 type Tier = "a-official-api" | "b-model-search" | "c-none";

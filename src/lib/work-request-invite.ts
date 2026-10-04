@@ -5,27 +5,6 @@ import type { Viewer } from "@/lib/access";
 import { assertIssuable } from "@/lib/sourcing";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
 
-/**
- * INVITE NAMED PROVIDERS TO BID ON A LINE (`P1-J4-E392` WS-3).
- *
- * ── ⚠⚠ THE FENCE, AND IT IS THE WHOLE SHAPE OF THIS FILE ────────────────────
- *
- * **THIS CREATES THE INVITE AND NOTHING MORE.** No bid list, no comparison
- * screen, no scoring, no shortlist, no tests, no interviews — every one of those
- * is its own brief, and `E395` built the models they will write to.
- *
- * ⚠ SO NOTHING IN THIS FILE READS `Proposal`. It writes `ProposalRequest` +
- * `ProposalRequestLine` and it counts invitations. `check:hire` asserts the absence,
- * because "just show whether they replied" is one `include` away and is the
- * beginning of the bid screen.
- *
- * ⚠ WS-3 IS IN SCOPE ONLY BECAUSE `E395` LANDED. The brief made it conditional —
- * *"do not invent an invite flow with nowhere to write"* — and `ProposalRequest` is on
- * main at `54d272b`, so it has somewhere to write.
- */
-
-/** ⚠ Same alphabet as the support ticket code, and for the same reason: a person
-    reads this number back. `I`, `O`, `0` and `1` are absent. */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function newRequestNumber(): string {

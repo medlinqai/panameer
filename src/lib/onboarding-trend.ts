@@ -4,29 +4,6 @@ import {
   type OnboardingStatus,
 } from "@/lib/onboarding-status";
 
-/**
- * WHEN PEOPLE ENTERED EACH ONBOARDING STATUS (`P1-J1.1-E257`).
- *
- * ⚠⚠ THESE ARE STATE TIMESTAMPS, NOT EVENTS, AND THE DIFFERENCE IS VISIBLE IN
- * THE OUTPUT. There is no event log in this schema and `E257` is explicit that
- * one must not be added here. Every series below is built from a column that
- * records WHEN A THING BECAME TRUE and is then overwritten or left alone —
- * so three things are true of every chart this produces:
- *
- *   1. A USER WHO MOVED BACKWARDS IS NOT CAPTURED. If somebody reached
- *      Complete and was later reset, only the current state exists; the trend
- *      shows their most recent stamp and nothing about the round trip.
- *   2. IT IS "ENTERED AND IS STILL AT OR PAST", NOT "ENTERED". Somebody who is
- *      Validated today also has a `created_at`, so they appear in the Created
- *      series too. The four series are cumulative-by-nature, not exclusive
- *      buckets — which is the honest reading of state columns and is stated on
- *      the page.
- *   3. ONE STAMP PER PERSON PER STATUS. A column cannot hold a history.
- *
- * ⚠ THE ALTERNATIVE WAS AN EVENTS TABLE AND IT IS EXPLICITLY OUT OF SCOPE.
- * Reported rather than built.
- */
-
 export type Period = "day" | "week" | "month";
 export const PERIODS: Period[] = ["day", "week", "month"];
 

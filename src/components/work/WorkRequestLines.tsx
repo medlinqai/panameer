@@ -8,42 +8,13 @@ import type { SerializedLine, WorkRequestDetail } from "@/lib/work-request-lines
 import type { TransactionType } from "@prisma/client";
 import { pricedByQuantity } from "@/lib/transaction-spine";
 
-/* ⚠ ONE LABEL PER TYPE, so no branch invents its own wording. */
 const TYPE_LABEL: Record<TransactionType, string> = {
   PRODUCT_BY_QTY: "Product by quantity",
   SERVICE_BY_QTY: "Rate",
   SERVICE_BY_AMT: "Fixed amount",
 };
 
-/**
- * THE LINES TABLE AND ITS ACTIONS (`P1-J4-E392` WS-2).
- *
- * ── ⚠⚠ WHY THIS EXISTS AND THE WIZARD WAS NOT TOUCHED ───────────────────────
- *
- * **The nine-step wizard is a GUIDED FIRST REQUEST and it works.** It produces
- * LINE 1. This produces lines 2..n. Rebuilding `CreateWorkRequest.tsx` into a
- * line editor would have been a 1,000-line rewrite of something that is not
- * broken, and it would have made the common case — one role, one provider —
- * strictly worse. ⚠ ITS `STEPS` ARRAY IS UNCHANGED BY THIS BRIEF.
- *
- * ── ⚠⚠ THE DISABLED BUTTON SAYS WHY ─────────────────────────────────────────
- *
- * **A disabled button with no reason is a defect this codebase already fixed
- * once** — the identity-gaps mirror on `/create-work`. So Complete is greyed out
- * of `completeness`, which arrives from the server, and the sentence beside it
- * NAMES THE LINES and says whether each wants a provider, a price or both. ⚠ The
- * API refuses with the same sentence, from the same function, so the two cannot
- * disagree even about the words.
- */
-
-/* ⚠ RETIRED WITH THE WRITING SELECT (`P2-A8-E684` WS-F) — it typed this
-   component's `providers` prop and nothing else. ⚠ SUPERSEDED, quoted not
-   deleted (`E164`):
-   //   type ProviderOption = { personId: string; name: string; headline: string }; */
-
 const EMPTY_DRAFT = {
-  /* ⚠⚠ SCOTT'S THREE-VALUE TRANSACTION TYPE (`E621`, ruling 37b). ⚠ SUPERSEDED,
-     quoted not deleted (`E164`): `basis: "RATE" as "RATE" | "AMOUNT",` */
   transaction_type: "SERVICE_BY_QTY" as TransactionType,
   description: "",
   uom: "HOUR",
@@ -85,16 +56,6 @@ function draftFrom(l: SerializedLine): Draft {
   };
 }
 
-/* ⚠ `providers` LEFT THIS COMPONENT WITH THE WRITING SELECT (`P2-A8-E684`
-   WS-F). It fed the picker's options and nothing else here reads it; the list
-   now goes to `AssignDirectly`, which is the control that still needs it.
-   ⚠ `ProviderOption` was LOCAL to this file, not exported, so it is retired
-   with the prop and quoted above — the page builds `options` itself and
-   `AssignDirectly` declares the shape it needs.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   export function WorkRequestLines({ initial, providers }: {
-   //     initial: WorkRequestDetail; providers: ProviderOption[];
-   //   }) { */
 export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
   const [detail, setDetail] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -104,13 +65,6 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Draft>(EMPTY_DRAFT);
 
-  /**
-   * ⚠ EVERY MUTATION REPLACES THE WHOLE DETAIL FROM THE SERVER'S RESPONSE. The
-   * routes return `getWorkRequestDetail`, so `completeness` is recomputed
-   * server-side on every write. Patching state locally would mean the button's
-   * enabled-ness came from a second, client-side derivation of the rule — which
-   * is precisely what "one function, read by both" forbids.
-   */
   async function send(url: string, init: RequestInit): Promise<boolean> {
     setBusy(true);
     setError(null);

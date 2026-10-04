@@ -23,15 +23,6 @@ export function emptyExperience(): ExperienceDraft {
   };
 }
 
-/**
- * Add / edit / remove employers, each with its own projects.
- *
- * ⚠⚠ `P2-J1.4-E549` — IMPORTED NOWHERE TODAY, AND ITS END-DATE HINT IS NO LONGER
- * TRUE. *"Leave blank if current"* relied on the writer treating a blank end as a
- * running job; since `E549` a role is current only when `isCurrent: true` is
- * sent. ⚠ IF THIS COMPONENT IS EVER MOUNTED AGAIN, give it a real current box
- * (as `EmployersStep` has) before it ships — a blank end now means "not current".
- */
 export function ExperienceEditor({
   value,
   onChange,
@@ -56,15 +47,7 @@ export function ExperienceEditor({
       {value.map((exp, i) => (
         <div key={i} className="rounded-brand border border-line p-5">
           <div className="mb-4 flex items-center justify-between">
-            {/* `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
-       A resume row looks identical for employment and for contract work, the
-       parser cannot tell them apart, and a user must not have to declare their
-       tax status to fill one in. `Company` names the ENTITY, which is constant;
-       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
-       considered and REJECTED — a slash label puts the tax question back into a
-       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
-       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
-       length and schema fit); recorded so nobody reopens it unknowing. */}
+            {}
             <h3 className="font-bold">Company {i + 1}</h3>
             <button
               type="button"

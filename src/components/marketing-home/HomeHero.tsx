@@ -14,62 +14,8 @@ import { ProofStats } from "@/components/marketing/ProofStats";
 import { HeroVideoBackdrop } from "@/components/media/HeroVideoBackdrop";
 import { HeroTwoUp } from "@/components/marketing/HeroTwoUp";
 
-/**
- * HERO — the dark video CARD (brief_home_hero_dark_card_2026-08-13).
- *
- * WHAT CHANGED, AND ONLY THIS. The copy, the CTA and the three stats are
- * untouched from the ported mockup. What went is the framing and the
- * background: a full-bleed light panel with a `.grid-bg` overlay — a paper grid
- * under a pink top-tint — becomes an inset dark card with real footage behind
- * it. Scott's note was "too much pink"; the tint was the pink.
- *
- * ── THE VIDEO IS THE LEARN HERO'S VIDEO ──────────────────────────────────────
- *
- * `HeroVideoBackdrop` is the Learn hero's treatment, extracted so this is the
- * same component rather than a copy of it: a real clip, a gradient under it and
- * the same ramp re-laid over it so the white text never depends on the footage.
- * The exploration mockup faked this with an animated blurred radial, which is
- * exactly what the brief says not to ship.
- *
- * `/consultation.mp4` rather than `/learn.mp4`. Both are from the same shoot
- * (`05. Home Assets`), so they carry the same grade — but learn.mp4 is spoken
- * for: it plays in the Learn hero and in the Learn beat of the video sequence,
- * and reusing it here would make the page's opening shot the "learning" shot.
- * consultation.mp4 is the advisory clip, which is what this page is selling.
- *
- * ── STILL A SERVER COMPONENT ─────────────────────────────────────────────────
- *
- * No hook, no island — reduced motion is handled by the `data-autoplay-video`
- * rule in globals.css. `/` prerendering static is a build gate (see the note in
- * `app/page.tsx`) and adding an island for a media query would have spent it
- * for nothing.
- */
 export function HomeHero({
-  /**
-   * ⚠ ONE STRING, ONE CALLER, AND `/` KEEPS ITS OWN (P1-J0-E259).
-   *
-   * `/optimize` renders this hero unchanged — same art, same headline, same stat
-   * row — and differs in exactly one word-group: its CTA reads `Start the
-   * Assessment`, because on that page the button is the page's own next step
-   * rather than a hand-off to somewhere else. `/` still reads `Take Our Free
-   * Assessment` and is byte-identical, which is what the default guarantees.
-   *
-   * ⚠ THE HREF DOES NOT MOVE. Both go to `/assess` — that is where the wizard
-   * is, and `/optimize` does not embed it. Only the label changes.
-   */
   ctaLabel = "Take Our Free Assessment",
-  /*
-    ⚠⚠ `headline` AND `description` ARE PROPS BECAUSE `/` AND `/optimize` ARE ONE
-    COMPONENT (`P1-ALL-E031` amendment §3).
-
-    `/optimize` gained Scott's approved description in this brief. Without these
-    props that string would have landed on `/` too, and Scott is explicit that `/`
-    waits: *"let's handle HOME after this brief and the other pages have been
-    finalized."*
-    ⚠ THE DEFAULTS ARE `/`'s CURRENT STRINGS, and `/` ALSO PASSES THEM EXPLICITLY —
-    belt and braces, so a future caller that forgets cannot silently retitle the
-    home page. ⚠ THE STRINGS ARE UNCHANGED BYTE FOR BYTE; see `app/page.tsx`.
-  */
   headline = "Optimize Your Business with AI",
   description = (
     <>
@@ -77,16 +23,6 @@ export function HomeHero({
       build your 12-month roadmap with an expert &mdash; all for&nbsp;free.
     </>
   ),
-  /*
-    ⚠⚠ THE SECOND CONTROL IS OPT-IN AND MUST STAY THAT WAY (`P1-J0-E352`).
-    Scott asked for it on `/optimize` only: *"put it below the Start Your Free
-    Optimization… in the /optimize hero"*. BOTH PROPS DEFAULT TO `undefined` and the
-    button renders NOTHING when either is absent, so every other caller — and `/`,
-    which shares this component — produces BYTE-IDENTICAL output. Proved in the
-    `E352` report by diffing the rendered HTML of six pages, not by reading the code.
-    ⚠ BOTH ARE REQUIRED TOGETHER. A label with no href would be a dead control and an
-    href with no label an invisible one, so the render tests for both.
-  */
   secondaryCtaLabel,
   secondaryCtaHref,
 }: {
@@ -98,45 +34,8 @@ export function HomeHero({
 } = {}) {
   return (
     <section className="hero">
-      {/*
-        Two elements where the mockup had one. `.hero-stage` holds the page
-        margin the card is inset by; `.hero-card` is the card. They cannot be
-        the same element — the card clips its own video to a 26px radius with
-        `overflow:hidden`, and an element that clips cannot also be the one
-        holding it away from the viewport edge.
-      */}
-      {/*
-        ── ⚠⚠ `HeroBox` NOW, AND THE `hero-card` CLASS RIDES ALONG ON PURPOSE ────
-
-        `P1-ALL-E031`: this was the last hero not using `HeroBox`, which was the
-        entire divergence. ⚠ `HeroBox`'s GEOMETRY IS THIS PAGE'S OWN — its comment
-        records it was measured off `/` (stage 6px/44px -> 6px/10px, radius 26 -> 20),
-        so the swap is geometry-neutral by construction.
-
-        ⚠⚠ SUPERSEDED, quoted not deleted — `HeroBox`'s own reason for `HomeHero`
-        staying out, which was true and is now overruled by Scott's consistency ask:
-          *"`HomeHero` already renders the target treatment — it is the page Scott
-           says is CORRECT — and its inset lives in `.pm-home`-scoped CSS that is
-           coupled to `.hero-card .wrap`, the video clip, the grain and the scrim.
-           There is also a measured constraint recorded in `home.css`: at 390 the H1
-           needs >=326px of measure and the current 10px + 20px gives it 330."*
-
-        ⚠⚠ THAT COUPLING IS REAL, AND IT IS WHY `hero-card` IS STILL IN THE CLASS
-        LIST. `.pm-home .hero-card .wrap{padding:0 20px}` is a DESCENDANT rule: drop
-        the class and the mobile 20px goes with it, taking the H1's measure at 390
-        from 330px to 310px — under the recorded 326px floor — and wrapping the
-        headline to four lines. The class is kept so that rule still matches.
-        ⚠ `home.css`'s `.pm-home .hero-card` NO LONGER PAINTS A BACKGROUND — its
-        `background` and `box-shadow` were removed so `HERO_CARD` is the ONLY source
-        of this card's surface. Its padding and radius stay; they are the geometry.
-        ⚠ THAT IS A DELETION FROM AN EXISTING RULE, NOT NEW GLOBAL CSS.
-
-        ⚠ THE VIDEO CLASS IS THE STANDARD ONE NOW, not `.hero-video` — the other six
-        heroes all pass `absolute inset-0 h-full w-full object-cover opacity-40`, and
-        depending on a `.pm-home` rule for it is what made this hero special.
-        ⚠ `.hero-grain` STAYS: it is decorative, it is inside `.pm-home` on both
-        pages, and it is the one part of the old treatment worth keeping.
-      */}
+      {}
+      {}
       <HeroBox cardClassName={`hero-card ${HERO_CARD}`}>
         <div className="hero-card-inner">
           <HeroVideoBackdrop

@@ -1,19 +1,4 @@
-/**
- * Display-formatting helpers (brief_P).
- *
- * Presentation only — these NEVER change what is stored. A provider's typed
- * name is their data; we re-case it for display so "scott" renders as "Scott"
- * (E006) without overwriting what they entered.
- */
 
-/**
- * Capitalize a person's name for display (E006).
- *
- * Handles the shapes real names actually take: hyphenated ("mary-jane" →
- * "Mary-Jane"), apostrophes ("o'brien" → "O'Brien"), and multiple words. An
- * ALREADY-mixed-case name is left ALONE — "McDonald" and "van der Berg" are
- * deliberate, and lowercasing them to re-capitalize would mangle them.
- */
 export function capitalizeName(raw: string | null | undefined): string {
   const s = (raw ?? "").trim();
   if (!s) return "";
@@ -31,7 +16,6 @@ export function displayFirstName(raw: string | null | undefined): string {
   return capitalizeName(raw).split(/\s+/)[0] ?? "";
 }
 
-/** "Scott Walls" from parts, each capitalized for display. */
 export function displayFullName(
   first: string | null | undefined,
   last: string | null | undefined
@@ -40,7 +24,6 @@ export function displayFullName(
 }
 
 // ---------------------------------------------------------------------------
-// Money — integer cents only (E018, conventions). No floats anywhere.
 // ---------------------------------------------------------------------------
 
 /** "$125.00" from integer cents. */
@@ -66,25 +49,6 @@ export function centsToDollarInput(cents: number | null | undefined): string {
   return cents == null ? "" : String(cents / 100);
 }
 
-/**
- * Basis points → a display percentage. 1490 bps = `"14.9%"`, 1000 bps = `"10%"`.
- *
- * ── ⚠⚠ THE TRAILING ZERO WAS A REAL BUG AND `E390` IS WHAT EXPOSED IT ───────
- *
- * ⚠ SUPERSEDED, quoted not deleted — this returned
- * `` `${Number.isInteger(pct) ? pct : pct.toFixed(2)}%` ``, which rendered
- * **1490 as `"14.90%"`**. MEASURED BEFORE ANY CHANGE, not assumed.
- *
- * ⚠ IT WAS NEVER WRONG WHILE THE FEE WAS 10%: 1000 bps is an integer percentage,
- * so the `toFixed(2)` branch was unreachable for the only value that ever
- * reached it. **The fee moving to 14.9% is what made a two-decimal fallback
- * visible**, and `"14.90%"` is not what Scott decided or what the disclosure
- * should say.
- *
- * ⚠ TRAILING ZEROS ARE TRIMMED, SIGNIFICANT DIGITS ARE NOT: 1250 → `"12.5%"`,
- * 1005 → `"10.05%"`, 10 → `"0.1%"`. `check:service-fee` asserts each of those,
- * because "strip the zeros" written carelessly also strips the 5 from 10.05.
- */
 export function bpsToPercentLabel(bps: number): string {
   const pct = bps / 100;
   if (Number.isInteger(pct)) return `${pct}%`;

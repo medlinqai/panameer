@@ -13,54 +13,6 @@ import {
   toPublicQuestions,
 } from "@/lib/learn-assessment";
 
-/**
- * ⚠⚠ `LEARN` IS THE ONLY BAR ON SITTING A TEST (`P1-ALL-E034`). There is NO
- * COMPLETION GATE and Scott wants none: *"I want to allow every panameerian to
- * take the certification without having taken the courses."* Nothing here reads
- * `LessonProgress`, and nothing may start to.
- *
- * GET  /api/learn/test/[pathId] — the question set, WITHOUT the answers.
- * POST /api/learn/test/[pathId] — submit answers, get graded, maybe get a badge.
- *
- * The answer key never leaves the server: GET strips correctIndex, POST takes
- * only the learner's choices and compares against the stored set here. Anything
- * else makes the test decorative, and this one issues a credential that goes on
- * a professional profile.
- *
- * ── ⚠ BOTH VERBS REFUSE A DRAFT (brief_learn_assessments_generate WS4) ────────
- *
- * A generated set nobody has read must not award a certificate, so GET does not
- * serve its questions and POST does not grade against it. 409, not 500: "still
- * being reviewed" is a state of the world, and a 500 would put it in the error
- * log as a fault every time a learner clicked.
- *
- * ⚠ GET ALSO NO LONGER GENERATES. It used to call `getOrCreateAssessment`, so a
- * learner clicking Take the test could trigger a model call — which under the
- * review gate would spend money to produce something the same request then
- * refuses. Generation is the admin trigger and the batch script; this is a read.
- */
-
-/**
- * ── ⚠⚠⚠ NO TEST ON MATERIAL NOBODY COULD WATCH (`P2-A4-E608`) ────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"A test on material nobody could watch is not
- * arguable."* This route issues a CREDENTIAL that goes on a professional
- * profile; awarding one for a path with no videos would make the credential
- * mean nothing at all.
- *
- * ⚠⚠ BOTH VERBS, AND THAT IS NOT BELT-AND-BRACES. `GET` looked the path up and
- * `POST` **did not look it up at all** — it went straight to grading. So a
- * gate on `GET` alone would have stopped the questions being served and still
- * graded a submission somebody had kept, or replayed, or built by hand.
- * ⚠ The route's own docblock already holds the same line about drafts:
- * *"GET does not serve its questions and POST does not grade against it."*
- *
- * ⚠ `pathIsOpenTo(…, false)` — the enrolment clause does not apply. It exists
- * to protect somebody who enrolled before the videos went missing; it is not a
- * reason to hand them a certificate for material that was never watchable.
- * ⚠ 409, matching the draft refusal beside it: *"still being reviewed"* and
- * *"no videos yet"* are both states of the world, not faults.
- */
 async function notReadyResponse(pathId: string): Promise<NextResponse | null> {
   const path = await prisma.learningPath.findFirst({
     where: { id: pathId, status: "PUBLISHED" },
@@ -74,7 +26,7 @@ async function notReadyResponse(pathId: string): Promise<NextResponse | null> {
       },
     },
   });
-  if (!path) return null; /* ⚠ 404 is the caller's job; this answers readiness only. */
+  if (!path) return null; 
   if (pathIsOpenTo(pathHasPlayableLessons(path), false)) return null;
   return NextResponse.json(
     {
@@ -105,20 +57,6 @@ export async function GET(
   const notReadyGet = await notReadyResponse(pathId);
   if (notReadyGet) return notReadyGet;
 
-  /*
-    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
-
-    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
-    Enrolling means the platform starts keeping your place and telling you about
-    courses — and `learn.course_published` is addressed to *"every provider whose
-    skills match the course's tags"*, so with no skill that broadcast can never
-    reach you. That is the member-interest reason, and it is why a SKILL is in
-    this set and a company is not.
-
-    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
-    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
-    funnel and gating discovery costs the audience for everything downstream.
-  */
   const gaps = await learnGaps(viewer.userId);
   if (gaps.length > 0) {
     return NextResponse.json(
@@ -167,24 +105,9 @@ export async function POST(
     return NextResponse.json({ error: "That isn't a valid submission." }, { status: 400 });
   }
 
-  /* ⚠⚠ POST NEVER LOOKED THE PATH UP — see `notReadyResponse`'s header. */
   const notReadyPost = await notReadyResponse(pathId);
   if (notReadyPost) return notReadyPost;
 
-  /*
-    ── ⚠⚠ THE `LEARN` GATE (`P1-ALL-E034`) ────────────────────────────────────
-
-    **A field is required by the NEXT THING THE PLATFORM MUST DO FOR YOU.**
-    Enrolling means the platform starts keeping your place and telling you about
-    courses — and `learn.course_published` is addressed to *"every provider whose
-    skills match the course's tags"*, so with no skill that broadcast can never
-    reach you. That is the member-interest reason, and it is why a SKILL is in
-    this set and a company is not.
-
-    ⚠ SERVER-SIDE, AND THIS IS THE BOUNDARY. The button mirrors it.
-    ⚠ BROWSING, READING AND WATCHING ARE UNTOUCHED — Learn is the top of the
-    funnel and gating discovery costs the audience for everything downstream.
-  */
   const gaps = await learnGaps(viewer.userId);
   if (gaps.length > 0) {
     return NextResponse.json(

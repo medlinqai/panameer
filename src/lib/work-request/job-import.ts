@@ -2,28 +2,6 @@ import { z } from "zod";
 import { callExtractionModel } from "@/lib/resume/ai-provider";
 import type { ModelUsage, ParserTier, ProviderName } from "@/lib/resume/ai-provider";
 
-/**
- * PASTE A JOB POSTING, GET A DRAFT WORK REQUEST
- * (brief_cwr_specializations_and_import WS-B).
- *
- * NO NEW PARSER. This is the résumé pipeline's `callExtractionModel` with a
- * different system prompt and a different schema — same provider resolution,
- * same tier switching, same prompt caching, same never-throws contract. The
- * brief is explicit about not building a second one, and it is right: two
- * extraction stacks means two places to configure a key and two places for the
- * economy tier to silently stop working.
- *
- * PASTE, NOT URL. Upwork, LinkedIn and Indeed all require auth to read a
- * posting, so a URL fetch would work in development against public pages and
- * fail in production against the ones people actually paste. v2 needs a real
- * integration; this needs a textarea.
- *
- * THE MODEL IS TOLD TO LEAVE THINGS OUT. Everything in the schema is nullable
- * and the prompt says so twice, because the failure that matters here is not a
- * missed field — the requester is standing in a wizard and can type it — it is
- * an invented budget or a hallucinated start date that they skim past and post.
- */
-
 export const AI_JOB_SCHEMA = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
@@ -127,40 +105,8 @@ export type JobImportOutcome =
       ms: number;
       usage: ModelUsage;
     }
-  /*
-    ⚠ `"refusal"` ARRIVES HERE ONLY BECAUSE THE TYPE IS SHARED (`P1-A1.4-E414`).
-    ⚠⚠ NOTHING ABOUT THE JOB IMPORTER CHANGED — `E414` is explicit that this path
-    is out of scope, and it still calls `callExtractionModel` WITHOUT `strict`,
-    so it keeps the default of `false`. What changed is the provider's return
-    union, which this function forwards verbatim (`if (!call.ok) return call;`).
-    ⚠ THE UNION IS WIDENED RATHER THAN THE VALUE FLATTENED: mapping a refusal to
-    `"error"` at this boundary would put back exactly the conflation WS-2 exists
-    to remove, one file over.
-  */
-  /* ⚠ `"deadline"` ARRIVES THE SAME WAY (`P2-J1.4-E546`): a per-call timeout,
-     widened here for the reason given above rather than flattened. The route's
-     copy is unchanged — a timeout still reads "We couldn't read that posting". */
   | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal" | "deadline"; message: string };
 
-/**
- * Extract a Work Request from pasted text.
- *
- * NEVER THROWS, the same contract the résumé extractor keeps: a missing key, a
- * network failure, a refusal or a malformed response all return `{ ok: false }`.
- * The fallback is the wizard the requester was already going to fill in.
- */
-/**
- * ⚠⚠ PINNED AT ITS PRE-`E546` VALUE, DELIBERATELY (`P2-J1.4-E546`).
- *
- * ⚠ This reader never had a clock of its own: it inherited `MODEL_TIMEOUT_MS`,
- * which is derived from the RÉSUMÉ route's budget. When `E546` raised that route
- * from 60 s to 180 s, this call went from 22 s to 82 s (77 s once the write reserve became 24 s) — on a route
- * (`/api/work-requests/import`) that declares NO duration and so already had
- * Vercel's 300 s. ⚠⚠ NOBODY BRIEFED THAT. Scott, 2026-09-17: *"I do not want it
- * moving by accident."* So it is held where it was.
- * ⚠ CHANGING IT IS A DECISION ABOUT THE BUYER'S POSTING READER, not a side
- * effect of the résumé budget — brief it on its own.
- */
 export const JOB_POSTING_TIMEOUT_MS = 22_000;
 
 export async function aiExtractJobPosting(text: string): Promise<JobImportOutcome> {
@@ -198,14 +144,6 @@ export async function aiExtractJobPosting(text: string): Promise<JobImportOutcom
   };
 }
 
-/**
- * Belt and braces over the prompt.
- *
- * The instructions above tell the model not to invent money or dates; this
- * enforces the parts that are checkable. A model that returns `budgetMin: 0`
- * for "competitive salary" has technically answered, and a zero budget on a
- * posted Work Request is worse than a blank one.
- */
 function sanitize(d: AiJob): AiJob {
   const money = (n: number | null) => (n !== null && n > 0 && Number.isFinite(n) ? n : null);
   const date = (s: string | null) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null);

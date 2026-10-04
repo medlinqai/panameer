@@ -1,12 +1,3 @@
-/**
- * Tests for the assessment arithmetic.
- *
- * The report shows money to a prospect, so the properties worth pinning are the
- * ones that would embarrass us on a call: that "not sure" is not scored as
- * failure, that a low-dollar domain does not outrank a high-dollar one, that
- * the funding rate is the admin's number and not a constant, and that "Net,
- * Year 1: Positive" survives the worst end of every range.
- */
 
 import {
   DOLLAR_WEIGHTS,
@@ -60,19 +51,6 @@ console.log("\n=== the weights table ===");
     Math.abs(sum - 1) < 1e-9,
     sum
   );
-  /*
-    ⚠ THESE TWO GUARDS ARE NOT WEAKENED, THEY ARE PINNED (E034). They used to
-    require EVERY domain to carry a weight and a curated move. Two domains authored
-    from the 2026-08-18 deck — Data Analytics & AI Governance and Change Management &
-    AI Adoption — are assessed but deliberately outside the dollar model, because
-    weighting them means rescaling all eight existing weights (they are asserted to
-    sum to 1.0) and therefore changing the dollars on every report. That is Scott's
-    call, reserved to him.
-
-    So the exemption is EXACTLY `UNWEIGHTED_DOMAINS` and nothing else, and the third
-    assertion below fails if that set stops matching reality. A ninth unweighted
-    domain still breaks the build, which is what the original guards protected.
-  */
   const weighted = P2P_DOMAINS.filter((d) => !UNWEIGHTED_DOMAINS.has(d.key));
   check(
     "every dollar-model capability domain has a weight",
@@ -101,11 +79,6 @@ console.log("\n=== maturity ===");
   check("all rung-10 is 0%", worst.maturityPct === 0, worst.maturityPct);
   check("all rung-50 is 100%", best.maturityPct === 100, best.maturityPct);
 
-  /*
-    THE ONE THAT MATTERS. A respondent who says "not sure" everywhere must not
-    score worse than one who says "manual" everywhere — scoring candour as
-    failure would corrupt the only number on the report that describes them.
-  */
   const unsure = scoreAssessment(ANSWERS(allRungs(null)), BASICS);
   check(
     "'not sure' everywhere does not score below all-manual",
@@ -131,11 +104,6 @@ console.log("\n=== maturity ===");
 
 console.log("\n=== ranking is by DOLLARS, not by how far behind ===");
 {
-  /*
-    supplier_risk is the LOWEST-weighted domain and sourcing the highest. Put
-    supplier_risk at the bottom rung and sourcing one rung better: ranking on
-    maturity alone would put supplier_risk first. It must not.
-  */
   const m = allRungs(50);
   m.supplier_risk = 10;
   m.sourcing = 20;

@@ -2,19 +2,6 @@ import Link from "next/link";
 import { parserHealth, parserVariants } from "@/lib/resume/audit";
 import { resolveProvider, parserConfigProblem } from "@/lib/resume/ai-provider";
 
-/**
- * PARSER HEALTH — Panameer admin only (brief_j14 WS-H).
- *
- * The headline is ACCURACY: the share of parsed fields a human kept unchanged.
- * Cost sits beneath it, because cost without accuracy is how you talk yourself
- * into a model that saves a cent and costs an hour of correcting.
- *
- * READS REAL WS-G DATA and degrades honestly when there isn't any — an empty
- * store says "no parses recorded yet", never 0% or 100%. Both are lies at n=0,
- * and 100% is the more dangerous one.
- *
- * No charts library: four numbers and a sentence don't need one.
- */
 export async function ParserHealth() {
   const h = await parserHealth();
   const variants = await parserVariants();

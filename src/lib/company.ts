@@ -1,8 +1,5 @@
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
-/* ⚠ `P1-ALL-E282` — the register lookup, called SERVER-SIDE from defineCompany.
-   The client never posts a match; that would be a forgeable trust claim. */
 import { validateEntity } from "@/lib/company-validation";
 import type { Viewer } from "@/lib/access";
 import { recomputeCompleteness } from "@/lib/onboarding";
@@ -16,36 +13,12 @@ import {
 } from "@/lib/tos";
 import type { TaxType } from "@prisma/client";
 
-/**
- * COMPANY — the identity primitive (brief_company_model).
- *
- * One building block used by BOTH onboarding tracks. Every buyer and every
- * provider is a company; a sole proprietor is a company of one, defined by the
- * person who is also its admin. There is no "individual" path — the tax type
- * carries that case, and it is what the payout gate reads later.
- *
- * Everything here is owner-scoped: the acting person is resolved from the
- * session, never from a body field.
- */
-
 export type DefineInput = {
   name: string;
-  /* ⚠ OPTIONAL SINCE `P1-A1.4-E408` — the company form no longer asks for a
-     business type; `api/settings/tax` collects `classification` at the payment
-     gate instead. ⚠ SUPERSEDED, quoted: `taxType: TaxType;` */
   taxType?: TaxType | null;
-  /* ⚠⚠ Jurisdiction (`E260`). **THE FORM NOW SUBMITS AN ISO-2 CODE** (`E729` WS-C) and
-     `countryColumns` splits it: the resolved NAME lands in `Company.country`, the code in
-     `Company.country_code`. ⚠ The type stays `string` because a not-yet-migrated value or a
-     legacy `"Other"` still arrives here and must not be rejected.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   Jurisdiction (E260) - a full country name from COUNTRIES, not an ISO code. */
   country?: string | null;
-  /** `E282` — the US state the company was filed in. Full name, not a code. */
   stateOfFiling?: string | null;
-  /** `E273` — EIN / tax registration id. Writes to the existing `Company.tin`. */
   ein?: string | null;
-  /** `E280` — the company's REGISTERED address (not the deliver-to). */
   registeredAddress?: {
     line1?: string | null;
     city?: string | null;
@@ -54,7 +27,6 @@ export type DefineInput = {
     country?: string | null;
   } | null;
   website?: string | null;
-  /** Public URL from /api/company/logo, uploaded before define (E168). */
   logoUrl?: string | null;
   /** "I'm authorized to represent this entity." Required. */
   attestation: boolean;
@@ -102,66 +74,22 @@ async function isPlaceholder(companyId: string): Promise<boolean> {
   );
 }
 
-/**
- * DEFINE a company. The definer becomes its admin with an APPROVED membership,
- * and accepts the company ToS on its behalf.
- *
- * Reuses the signup placeholder rather than creating a second company: the
- * Person FK already points at it, and leaving it behind is how the database
- * fills with one empty company per signup.
- */
-/**
- * The `Site.name` that holds a company's REGISTERED address (`E280`).
- *
- * ⚠ A NAMED CONSTANT because it is a LOOKUP KEY, not a label — a typo would
- * silently create a second site on every save instead of updating the one.
- * ⚠ DISTINCT FROM "Primary" (the requester's own address) and from the
- * requester's work site, which is referenced by id rather than by name.
- */
 export const REGISTERED_SITE_NAME = "Registered";
 
-/**
- * ⚠⚠ THE ONLY PLACE AN ENTITY VALIDATION IS WRITTEN (`P1-ALL-E282` WS-2).
- *
- * ── ⚠⚠ FOUR STORED STATES, NOT THREE ─────────────────────────────────────
- *
- * `not_found` · `in_good_standing` · `has_issues` · `standing_unknown`
- *
- * The fourth exists because NEW YORK PUBLISHES NO STANDING COLUMN — its adapter
- * is `publishesStatus: false`, *"there is no good-standing field to read"*.
- * ⚠ WITHOUT IT, NY WOULD HAVE TO BE RECORDED AS EITHER A PASS OR A PROBLEM, AND
- * BOTH WOULD BE CLAIMS NOBODY READ.
- *
- * ⚠ `not_in_good_standing` (the route's `ValidationOutcome`) IS DERIVED FROM A
- * BOOLEAN PREDICATE at `company-validation.ts:330`, which throws away WHY. The
- * reason was already in the payload the whole time: `EntityMatch.status` is a
- * `SourcedField` carrying the register's own text AND its URL. NOTHING NEEDED
- * SCRAPING — it needed storing.
- *
- * ⚠⚠ `entity_status_detail` IS ONLY EVER THE REGISTER'S STRING. Never a
- * Panameer summary, never a friendlier phrasing. `check:trust-claims` asserts it
- * appears verbatim in the match it came from.
- */
 async function persistEntityValidation(
   companyId: string,
   input: { name: string; stateOfFiling: string | null; storedLegalName: string }
 ): Promise<void> {
-  /* ⚠ NO STATE OF FILING, NO CALL. There is no register to ask. */
   const state = input.stateOfFiling?.trim();
   if (!state) return;
 
   try {
-    /* ⚠ 5s, AND THE WHOLE THING IS INSIDE A CATCH. A dead register must not
-       cost a user their company record. */
     const result = await validateEntity({
       name: input.name,
       stateOfFiling: state,
       timeoutMs: 5000,
     });
 
-    /* ⚠ `ok: false` WRITES NOTHING — an unsupported state or an unreachable
-       register is not a check, and recording one would be the E034 shape at
-       rest: a claim the build cannot support. */
     if (!result.ok) return;
 
     let status: string;
@@ -169,50 +97,31 @@ async function persistEntityValidation(
     let sourceUrl: string | null = null;
 
     if (result.status === "not_found" || result.matches.length === 0) {
-      /* ⚠ UNAMBIGUOUS AND WORTH RECORDING: we looked, and there was no such
-         company. ⚠ NO SOURCE URL EXISTS for a non-match — there is no row to
-         cite — so the status is stored WITHOUT one, which is the single
-         legitimate exception to the SourcedField-at-rest rule and is why the
-         harness scopes that assertion to statuses that name a match. */
       status = "not_found";
     } else {
-      /* ⚠⚠ ONE MATCH ONLY. Several means the UI was asking the user which
-         entity they meant; asserting a check across all of them would assert
-         something about rows they never picked. */
       if (result.matches.length !== 1) return;
       const match = result.matches[0];
 
-      /* ⚠⚠ AND THE NAME MUST STILL BE THE ONE THE REGISTER RETURNED. An edited
-         name means the stored company is not the entity that was found. */
       const same =
         match.legalName.value.trim().toLowerCase() ===
         input.storedLegalName.trim().toLowerCase();
       if (!same) return;
 
-      /* ⚠ THE URL IS THE MATCH'S OWN. NEVER SYNTHESISED. */
       sourceUrl = match.legalName.sourceUrl;
       if (!sourceUrl) return;
 
       if (!result.publishesStatus || !match.status) {
-        /* ⚠ NEW YORK LANDS HERE. Found, but the register publishes no standing. */
         status = "standing_unknown";
       } else if (result.status === "not_in_good_standing") {
         status = "has_issues";
-        /* ⚠⚠ VERBATIM, AND REQUIRED. An issue with no stated reason is an
-           accusation, so a missing detail means the write does not happen. */
         detail = match.status.value;
         if (!detail?.trim()) return;
       } else {
         status = "in_good_standing";
-        /* ⚠ THE REGISTER'S WORDS ARE KEPT EVEN ON A PASS, so the copy can
-           attribute rather than paraphrase. */
         detail = match.status.value;
       }
     }
 
-    /* ⚠ RE-RUNNING `defineCompany` SIMPLY OVERWRITES with the newer answer,
-       which is correct: the register is the authority and the latest read of it
-       is the best one we have. There is no history table by design. */
     await prisma.company.update({
       where: { id: companyId },
       data: {
@@ -223,16 +132,6 @@ async function persistEntityValidation(
       },
     });
   } catch {
-    /*
-      ⚠⚠ SWALLOWED ON PURPOSE, AND THIS IS THE LOAD-BEARING PART. The company
-      row is already saved. A register timeout, a schema change at the state's
-      end, a 500 from Socrata — none of them may surface here, because the user
-      would lose a company record over a third party's outage.
-      ⚠ THE COST IS THAT A FAILED CHECK LOOKS IDENTICAL TO NO CHECK — both leave
-      `entity_validated_at` NULL and the copy reads "not yet verified", which is
-      TRUE in both cases. That is the right trade and it is why the column is
-      nullable rather than defaulted.
-    */
   }
 }
 
@@ -279,19 +178,9 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     data: {
       name,
       legal_name: name,
-      /* ⚠ NULL UNTIL THE PAYMENT GATE (`E408`). The column is already nullable. */
       tax_type: input.taxType ?? null,
-      /* `E260` — jurisdiction, stored as the full country name. */
-      /* ⚠ BOTH COLUMNS (`E729` WS-C). */
       ...countryColumns(input.country),
-      /* `E282` — nullable and back-fills nothing; existing companies predate it. */
       state_of_filing: input.stateOfFiling?.trim() || null,
-      /*
-        `E273` — EIN. ⚠ `tin` ALREADY EXISTED and was never captured; the
-        column's own comment says it was "DEFERRED to the money gate on
-        purpose". Scott has now asked for it at company creation, so the form
-        catches up with the column. ⚠ STILL NULLABLE — see `E274`.
-      */
       ...(input.ein?.trim() ? { tin: input.ein.trim() } : {}),
       website,
       ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
@@ -305,79 +194,12 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     select: { id: true, name: true, p_account_id: true, legal_name: true },
   });
 
-  /*
-    ── ⚠⚠ THE ENTITY VALIDATION IS PERSISTED HERE (`P1-ALL-E282` WS-2) ─────────
-
-    THE DEFECT THIS CLOSES: `validateEntity()` got a real answer from a state
-    register, with a source URL, and NOTHING WROTE IT DOWN — so *"Company not
-    yet verified"* could never flip, for anybody, ever.
-
-    ── ⚠⚠ WHY HERE AND NOT IN `api/company/validate/route.ts` ────────────────
-
-    That route's zod body is `{ name, stateOfFiling }` — NO ID — so it does not
-    know WHICH company to write to. Its own docblock says *"THIS ROUTE NEVER
-    WRITES... keeping the read and the write apart is what lets a user correct a
-    bad lookup before anything is persisted"*, and the lookup re-runs on every
-    search with the USER picking among several matches. ⚠ `check:trust-claims`
-    now asserts that route still writes nothing — this brief is the most likely
-    thing ever to break that split.
-
-    ⚠⚠ AND THE CLIENT NEVER POSTS THE MATCH. `DefineInput` carries no validation
-    fields and must not: accepting a status or a source URL from the browser is a
-    FORGEABLE TRUST CLAIM. The call is made server-side, here, from the name and
-    state this function already has.
-
-    ── ⚠ IT MUST NEVER COST A USER THEIR COMPANY RECORD ──────────────────────
-
-    The company row is already written above. This runs after, with a 5s timeout,
-    inside a try/catch that swallows everything: A DEAD REGISTER MUST NOT FAIL
-    THE SAVE. Decision 5 says a failed lookup never blocks onboarding, and that
-    is still true.
-
-    ── ⚠⚠ IT WRITES ONLY ON AN UNAMBIGUOUS ANSWER ────────────────────────────
-
-    Several matches means the user was being asked which entity they meant, and
-    an edited name means the stored company is not the one the register returned.
-    Either way, asserting a check would be asserting something nobody confirmed.
-    ⚠ `not_found` IS UNAMBIGUOUS AND DOES WRITE — "we looked and there was no
-    such company" is a real, useful answer.
-  */
   await persistEntityValidation(company.id, {
     name,
     stateOfFiling: input.stateOfFiling ?? null,
     storedLegalName: company.legal_name ?? name,
   });
 
-  /*
-    ── ⚠⚠ THE REGISTERED ADDRESS GOES ON THE BACKBONE (`P1-J1.1-E280`) ─────────
-
-    ⚠ THE MODELLING CHOICE, AND WHY. Two options were on the table: a `Site` +
-    `Address` on the existing backbone, or new address columns on `Company`.
-    THIS IS THE SITE OPTION, and it wins on four counts:
-
-      · `Company` ALREADY HAS `sites`, and `Address` is ALREADY the one postal-
-        address entity in the schema. Columns on `Company` would create a SECOND
-        way to store an address, and the two would drift.
-      · The backbone is literally `P-Account → Company → Site → Address →
-        Person`. Address-on-Company routes around the model the product is
-        built on.
-      · IT NEEDED NO SCHEMA CHANGE AT ALL — not even a `db:push`. The columns
-        option would have added five or six.
-      · `Site.name` keeps registered and deliver-to APART BY CONSTRUCTION: this
-        one is "Registered", the requester's own is "Primary", and the work
-        location is its own site on `RequesterProfile.work_site_id`.
-        ⚠ SCOTT WAS EXPLICIT THAT THESE ARE NOT THE SAME ADDRESS — the ERP model
-        carries a deliver-to per transaction, so merging them would make it
-        impossible to have work delivered anywhere but head office.
-
-    ⚠ IDEMPOTENT. It looks the site up by name rather than creating one every
-    time — `defineCompany` can run again against a reused placeholder company
-    (see `isPlaceholder` above), and a second "Registered" site would be a silent
-    duplicate nothing reads.
-    ⚠ `line1` IS NON-NULLABLE ON `Address`, so an unanswered street is stored as
-    "" rather than refusing the write. `E274` allows a part-answered company; a
-    required column must not turn that into a 500.
-  */
   const reg = input.registeredAddress;
   if (reg && (reg.country || reg.line1 || reg.city)) {
     const data = {
@@ -385,7 +207,6 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       city: reg.city?.trim() || null,
       state: reg.state?.trim() || null,
       postal_code: reg.postalCode?.trim() || null,
-      /* ⚠ BOTH COLUMNS (`E729` WS-C). */
       ...countryColumns(reg.country),
     };
     const site =
@@ -436,65 +257,6 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
   return { companyId: company.id, name: company.name, status: "APPROVED" as const };
 }
 
-/**
- * ── ⚠⚠ STORE THE TYPED EMPLOYER NAME, VERIFIED OR NOT (`P2-J1.1-E025`) ────────
- *
- * SCOTT, 2026-09-06: *"I entered Seattle Gas Company, but it could not
- * verify...so the employer field is blank. I think we should put that name in
- * and store it regardless."*
- *
- * **A TYPED NAME IS A FACT THE PERSON ASSERTED. Verification decides whether it
- * is CONFIRMED, not whether it EXISTS.**
- *
- * ⚠⚠ THIS IS MECHANISM (A) — RENAME THE PLACEHOLDER — AND (B) WAS REJECTED ON
- * EVIDENCE, not on taste. (B) was "a name-only company plus a membership", and
- * `isPlaceholder` above is the reason it cannot be: it defines a placeholder as
- * `!tax_type && people <= 1 && memberships === 0`. A membership against a
- * tax_type-NULL company reproduces EXACTLY the `test2`-`test6` state that the
- * current invariant says is impossible — the pre-`a23784f` rows Scott found in
- * Supabase. (B) would have re-created the corruption this brief exists to explain.
- *
- * ⚠⚠ SO EVERY FIELD THAT WOULD FALSIFY `isPlaceholder()` IS DELIBERATELY NOT
- * WRITTEN HERE:
- *   · `tax_type`   stays NULL   → a defined company has one; this is not one yet
- *   · NO membership is created  → `memberships === 0` holds
- *   · nobody is moved           → `people <= 1` holds
- *   · NO company ToS is accepted — `defineCompany` takes that on the company's
- *     behalf, and nobody has attested anything here.
- * `isPlaceholder()` therefore still returns TRUE afterwards, which is the whole
- * point: when the person later completes the real form, `defineCompany` sees a
- * placeholder, REUSES this very row, and upgrades it in place. One company, no
- * orphan, no second row, and the name they typed survives into it.
- *
- * ⚠ `legal_name` IS NOT SET EITHER. `defineCompany` writes `name` AND
- * `legal_name` together because a DEFINED company has a legal name on its tax
- * filing. An asserted employer name is not that, and writing it would claim a
- * legal identity nobody has attested to.
- *
- * ⚠ IT ONLY EVER RENAMES A PLACEHOLDER. If the person already has a DEFINED
- * company, this returns it untouched rather than renaming a real entity out from
- * under its members — a rename there is a company-administration action, not a
- * side effect of a wizard step.
- *
- * ⚠ NOT A SECOND WRITE PATH. It lives in this module beside `defineCompany`,
- * shares `actingPerson` and `isPlaceholder`, and is reached through the SAME
- * route (`POST /api/company/define`, name-only branch). Company writes stay in
- * one file and behind one URL.
- */
-/**
- * ── ⚠⚠ ONE COPY OF "KEEP THE P-ACCOUNT NAME IN STEP" (`E585`, `P2-A2-E661`) ──
- *
- * ⚠ **THE SYNC WAS WRITTEN OUT TWICE** — in `defineCompany` and in
- * `saveCompanyName` — each with its own comment saying the same thing, and
- * `updateCompanyDetails` would have been the **third**. ⚠⚠ One concept in N
- * places kept in step by hand is the defect; **a company renamed by the new
- * editor while its P-Account kept the old name is exactly how the two drift.**
- *
- * ⚠ THE REASON, INHERITED FROM THE TWO CALL SITES RATHER THAN RE-DERIVED: the
- * P-Account is *"the placeholder's person-name otherwise, and the admin console
- * lists accounts by it"* — ⚠⚠ *"leaving it as the person's own name is how
- * 'Layne Staley (11)' ends up in a list of companies."*
- */
 async function syncPAccountName(pAccountId: string, name: string) {
   await prisma.pAccount.update({ where: { id: pAccountId }, data: { name } });
 }
@@ -507,11 +269,6 @@ export async function saveCompanyName(viewer: Viewer, rawName: string) {
     throw new OnboardingError("A company name is required", "INVALID");
   }
 
-  /*
-    Already a real company — leave it alone. Returning APPROVED rather than
-    throwing because the caller is a wizard step that must still advance; this
-    is a no-op, not a failure.
-  */
   if (!(await isPlaceholder(person.company_id))) {
     const current = await prisma.company.findUnique({
       where: { id: person.company_id },
@@ -535,40 +292,6 @@ export async function saveCompanyName(viewer: Viewer, rawName: string) {
   return { companyId: company.id, name: company.name, status: "NAME_ONLY" as const };
 }
 
-/**
- * ── ⚠⚠⚠ EDIT THE COMPANY'S OWN DETAILS (brief 10 — `P2-A2-E661`) ─────────
- *
- * ⚠ **SCOTT, walking `/company`: *"I cannot edit any of the data."*** He was
- * right — the page rendered `name`, `tax_type` and `email_domain` as text and
- * offered **no control at all**, and `/company/settings` is a placeholder whose
- * own docblock says *"only the content is pending."*
- *
- * ── ⚠⚠ WHO MAY CALL IT — OWNER-SCOPED, ADMIN-ONLY, FROM THE SESSION ──────
- *
- * ⚠⚠⚠ **THE COMPANY IS RESOLVED FROM THE SESSION VIA `getCompanyBinding`, NEVER
- * ACCEPTED FROM THE CLIENT** (load-bearing rule 5). There is no `companyId`
- * parameter on purpose: one would be an id crossing the wire on a surface that
- * can rename a company.
- * ⚠ **APPROVED *AND* ADMIN.** A `PENDING` joiner has a binding and must not be
- * able to rewrite the company they are still waiting to be let into.
- *
- * ── ⚠⚠⚠ `email_domain` IS DELIBERATELY NOT EDITABLE, AND THE CODEBASE ALREADY
- * SAYS WHY ──
- *
- * ⚠ `defineCompany`'s own comment: *"Only a WORK domain is stored. Recording
- * gmail.com here would auto-approve every Gmail user in the world into this
- * company."* ⚠⚠⚠ **IT IS AN ACCESS-CONTROL FIELD WEARING THE COSTUME OF A
- * CONTACT DETAIL** — `joinCompany` auto-approves on a domain match, so an edit
- * box here is a self-serve way to widen who joins. **Reported, not built.**
- * ⚠ `logo_url` is also absent: it has its own upload route
- * (`/api/company/logo`) and a second writer would be `E585`.
- *
- * ⚠⚠ **NOTHING IS MADE REQUIRED THAT WAS NULLABLE.** Every field below is
- * optional and an empty string clears to `null`, matching `defineCompany`'s
- * shape — `tax_type`, `country`, `state_of_filing` and `tin` are all nullable
- * columns and stay that way (ruling 38: additive only, in spirit as well as in
- * schema).
- */
 export type UpdateCompanyInput = {
   name?: string;
   legalName?: string;
@@ -585,16 +308,11 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
     throw new OnboardingError("Only a company admin can change these", "GATE_UNMET");
   }
 
-  /* ⚠ A NAME IS THE ONE FIELD THAT CANNOT BE CLEARED — the company is listed by
-     it in the admin console, and `saveCompanyName` holds the same floor. */
   const name = input.name?.trim();
   if (input.name !== undefined && (!name || name.length < 2)) {
     throw new OnboardingError("A company name is required", "INVALID");
   }
 
-  /* ⚠ `undefined` MEANS "NOT SUBMITTED" AND `""` MEANS "CLEAR IT". Collapsing
-     the two would make every save wipe the fields the form did not send —
-     `67d`'s family: never manufacture a value from absence. */
   const blank = (v: string | null | undefined) =>
     v === undefined ? undefined : v === null || v.trim() === "" ? null : v.trim();
 
@@ -604,7 +322,6 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
       ...(name ? { name } : {}),
       ...(input.legalName !== undefined ? { legal_name: blank(input.legalName) } : {}),
       ...(input.taxType !== undefined ? { tax_type: blank(input.taxType) as never } : {}),
-      /* ⚠ BOTH COLUMNS (`E729` WS-C), still only when the caller sent the field. */
       ...(input.country !== undefined ? countryColumns(blank(input.country)) : {}),
       ...(input.stateOfFiling !== undefined
         ? { state_of_filing: blank(input.stateOfFiling) }
@@ -618,14 +335,6 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
   return { companyId: company.id, name: company.name };
 }
 
-/**
- * JOIN an existing company. Auto-approved on a work-email domain match,
- * otherwise a PENDING request for that company's admin.
- *
- * A PENDING joiner is NOT moved onto the company — they stay where they are
- * until somebody approves. Moving first would give an unapproved person a
- * company binding, which is the exact hole this brief closes.
- */
 export async function joinCompany(viewer: Viewer, input: JoinInput) {
   const person = await actingPerson(viewer);
 
@@ -682,15 +391,6 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
   };
 }
 
-/**
- * Move a person onto their approved company, taking their sites with them.
- *
- * The sites carry the addresses they typed during onboarding — their own and
- * the engagement deliver-to — and they were created under the placeholder. Left
- * behind they would be deleted with it; cleared, the requester loses two
- * addresses they already entered. Re-pointing keeps both, and a requester's
- * deliver-to belongs to their company anyway.
- */
 async function moveInto(personId: string, companyId: string, fromCompanyId: string) {
   if (companyId === fromCompanyId) return;
 
@@ -750,21 +450,6 @@ export async function cleanUpPlaceholder(companyId: string) {
   }
 }
 
-/**
- * Companies a person can join. Names, domain and headcount only.
- *
- * E167 — "typing straterp returns nothing" turned out NOT to be a broken query.
- * The match was already case-insensitive `contains`; what was missing was the
- * company. Of 40 rows in the dev database, 39 were signup placeholders named
- * after a person and exactly one had ever been defined, and placeholders are
- * deliberately not joinable — joining "Robin Crosby" is not joining a company.
- * So the search was right and the empty state was the whole story; it now says
- * so, and offers the way out.
- *
- * Two real improvements while here: LEGAL NAME is searched too (a company can
- * trade as one name and file as another, and the joiner may know either), and
- * matching is on either field rather than the display name alone.
- */
 export async function searchCompanies(q: string) {
   const term = q.trim();
   if (term.length < 2) return [];
@@ -797,24 +482,6 @@ export async function searchCompanies(q: string) {
 
 export type CompanyBinding = Awaited<ReturnType<typeof getCompanyBinding>>;
 
-/**
- * The viewer's company binding — the one read every gate and page uses.
- *
- * Returns the APPROVED membership when there is one, otherwise the most recent
- * pending/rejected request, so a page can say "waiting on Acme" rather than
- * "no company".
- */
-/*
-  ⚠ TAKES `Pick<Viewer, "userId">`, NOT A WHOLE `Viewer` — widened, not changed.
-
-  The body only ever reads `viewer.userId`, and `brief_assessment_instance_model`
-  needs to call this from `/assess/claim`, where the user has just been CREATED
-  and there is no session to build a Viewer from yet. The alternatives were both
-  worse: fabricate a Viewer with invented role flags, or re-implement the
-  membership query beside this one — and a second copy of "which company is this
-  person actually in" is how `Person.company_id` gets used as a company again
-  (P1-J1.2-E003). Every existing caller passes a full Viewer and still compiles.
-*/
 export async function getCompanyBinding(viewer: Pick<Viewer, "userId">) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -835,13 +502,6 @@ export async function getCompanyBinding(viewer: Pick<Viewer, "userId">) {
               name: true,
               legal_name: true,
               tax_type: true,
-              /* ⚠⚠ WIDENED BY `P2-A2-E661` — the three columns the company
-                 editor needs for its initial values. ⚠ THEY ARE READ, NOT
-                 CARRIED: `E563`'s `rating: true` is the warning here — *"an
-                 unused field in a `select` is an invitation"* — and all three
-                 render in `CompanyDetailsForm` on `/company`.
-                 ⚠ Additive on a row this function already fetches; no new
-                 query, no new round trip. */
               country: true,
               state_of_filing: true,
               tin: true,
@@ -911,14 +571,6 @@ export async function getPendingRequests(viewer: Viewer) {
   return rows;
 }
 
-/**
- * Approve or reject a pending request.
- *
- * AUTHORISATION IS THE POINT of this function: the acting viewer must hold an
- * APPROVED ADMIN membership on the same company as the request. The membership
- * id alone is not enough — anyone could guess one — so the company is read from
- * the request and checked against the actor's own admin rows.
- */
 export async function decideRequest(
   viewer: Viewer,
   membershipId: string,
@@ -1008,15 +660,6 @@ export async function acceptCompanyTos(viewer: Viewer, companyId: string) {
   return { ok: true as const };
 }
 
-/**
- * A company binding is part of the provider REQUIRED SET (WS6), so gaining one
- * changes the completeness score — and the score is stored, not computed on
- * read. Without this the review page shows a stale number straight after the
- * company step, which reads as "I did that and nothing happened".
- *
- * Silent when the person has no provider profile: buyers and requesters go
- * through the same company code and have no score to recompute.
- */
 async function refreshProviderScore(personId: string): Promise<void> {
   try {
     const profile = await prisma.providerProfile.findFirst({

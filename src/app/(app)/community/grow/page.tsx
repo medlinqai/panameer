@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
-/* ⚠ The shared header (`E601` WS-C 1) and its data — the same component and
-   the same rebuild as `/community`. */
 import { CommunityHero } from "@/components/community/CommunityHero";
 import { getCommunityHero } from "@/lib/community-hero";
 import { levelStandingFor } from "@/lib/levels";
@@ -28,55 +26,9 @@ import {
   type GrowthWindow,
 } from "@/lib/growth-score";
 
-/**
- * ── ⚠⚠⚠ GROW THE NETWORK — `/community/grow` (`P2-A3-E599` WS-A) ──────────
- *
- * ⚠ The brief: *"One page where anyone (provider, buyer, requester) sees what
- * they've done to grow the network, invites colleagues with a pre-written note,
- * and sees where they rank this month. **It needs colleagues, not
- * credentials.**"*
- *
- * ⚠⚠ SIGNED-IN ONLY, AND EVERY CLASS OF MEMBER. There is no provider gate here
- * on purpose — a buyer or a requester can invite colleagues too, and gating on
- * `canProvideServices` would have made the avatar menu's future `Grow the
- * Network` item a door that bounces half the members (`E594`'s shape).
- * ⚠ ACCESS: `route-access.ts` line 244, `{ prefix: "/community", requires:
- * "authenticated" }` — inherited by longest-prefix match, so no new rule was
- * added. Two rules for one tree is how they drift.
- *
- * ── ⚠⚠ THIS PAGE IS WHY `E598` LEFT TWO THINGS OUT ───────────────────────
- *
- * ⚠ `E598` WS-A omitted the avatar menu's `Grow Your Network` item and WS-C
- * omitted the profile's `Network` one-liner, both because **the page did not
- * exist and Scott ruled against linking nowhere.** ⚠⚠ WIRING THEM UP IS
- * **WS-C**, not this workstream — the page has to exist and be walked first.
- */
-/**
- * ⚠⚠ THE TAB IS A QUERY STRING, NOT THREE ROUTES. All three show the same
- * person the same thing through a different window, so they are one page — and
- * `?tab=` keeps the board linkable and the back button honest.
- * ⚠ AN UNKNOWN VALUE FALLS BACK TO `month` rather than 404ing: a mistyped tab
- * is not a missing page.
- */
 const TABS: { key: string; label: string; window: GrowthWindow }[] = [
   { key: "month", label: "This Month", window: "month" },
   { key: "all", label: "All Time", window: "all" },
-  /*
-    ⚠ NOT A WINDOW — it lists invitations, not scores. Its `window` is unused
-    and set to `all` so the type stays honest.
-
-    ── ⚠⚠⚠ `People I Brought In`, NOT `My Network` (`E601` WS-D) ─────────────
-    ⚠ SCOTT, 2026-09-22: *"it says what the list is, and it keeps 'Network'
-    retired."* ⚠⚠ The same ruling that renamed the page — **one word for people,
-    and it is Community; 'Network' is not kept as a second name for the same
-    thing.** ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { key: "network", label: "My Network", window: "all" },
-
-    ⚠⚠ THE URL KEY STAYS `network`, DELIBERATELY. Scott: *"a query key isn't
-    copy people read."* ⚠⚠⚠ AND CHANGING IT WOULD BREAK EVERY `?tab=network`
-    LINK ALREADY SHARED, to rename something nobody sees — the cost is real and
-    the benefit is zero.
-  */
   { key: "network", label: "People I Brought In", window: "all" },
 ];
 
@@ -89,15 +41,6 @@ export default async function GrowPage({
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcommunity%2Fgrow");
 
-  /*
-    ⚠⚠ THE SCORE IS KEYED ON THE **PERSON**, NOT THE USER, AND `Viewer` DOES NOT
-    CARRY ONE. `ColleagueInvite.inviter_person_id` is a `Person` id; `Viewer`
-    holds `userId` and the capability flags and nothing else — measured, after
-    `viewer.personId` failed to typecheck.
-    ⚠⚠⚠ A SIGNED-IN USER CAN HAVE NO PERSON AT ALL (`P1-ALL-E002`), which is why
-    this is a lookup with a redirect rather than an assertion. That case goes to
-    `/community` rather than rendering a score card of zeroes about nobody.
-  */
   const person = await prisma.person.findFirst({
     where: { user_id: viewer.userId },
     select: { id: true },
@@ -109,79 +52,22 @@ export default async function GrowPage({
   const tab = TABS.find((t) => t.key === rawTab) ?? TABS[0];
 
   const unread = await unreadCount(viewer);
-  /* ⚠ The SCORE CARD is always THIS MONTH — it is "what you have done this
-     month", and it does not follow the board's tab. The rank line below it
-     does, because that is what the tab is about. */
   const [me, board, network, web, hero] = await Promise.all([
     growthScore(personId, "month"),
     growthBoard(tab.window),
     tab.key === "network" ? myNetwork(personId) : Promise.resolve([]),
-    /* ⚠⚠ THE HERO'S OWN DATA, fetched the same way `/community` fetches it, so
-       the two pages cannot drift: both call `getCommunityHero`, which is the
-       single place the score, the rank and the board threshold are decided. */
     getCommunityWeb(viewer),
     getCommunityHero(viewer),
   ]);
-  /* ⚠⚠ `myRank`, `move`, `BOARD_MIN_SCORERS` and `daysLeftInMonth` MOVED INTO
-     THE HERO WITH THE CARD THAT USED THEM (`E601` WS-C). ⚠ They are removed
-     here rather than left behind: an unused import is a lint warning, and the
-     baseline's rule is ZERO NEW — this is exactly how four appeared.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   ⚠⚠ RULING 6 APPLIES TO THE RANK, NOT ONLY TO THE BOARD (Scott, at the
-     //   WS-C gate). `rankFor` returns `null` while the board is hidden, so the
-     //   line below shows points without a standing earned against nobody.
-     //   const myRank = rankFor(board, personId);
-     //   const move = nextMove(board, me);
-     ⚠⚠ THE RULE ITSELF IS UNCHANGED AND STILL ENFORCED — it now lives in
-     `getCommunityHero`, which is why both pages obey it with one decision. */
-  /*
-    ⚠⚠ MOVEMENT ONLY ON `This Month`. Comparing an ALL-TIME board to last month
-    is a comparison of two different questions, and it would draw an arrow that
-    means nothing.
-  */
   const movement = tab.key === "month" ? await movementFor(board) : null;
   const hrefs = await providerHrefs(board.map((r) => r.personId));
 
-  /*
-    ⚠⚠⚠ FEWER THAN THREE SCORERS MEANS NO BOARD (ruling 6). Scott: *"If the
-    board has fewer than three people with a score, don't show a board; show
-    your own score and the invite panel."*
-    ⚠ MEASURED AT THE PREMISE CHECK AND THIS IS THE LIVE CASE TODAY:
-    `colleague_invites` holds 7 rows with **1** inviter recorded and **0**
-    accepted, so the board is empty for everybody. ⚠⚠ THE PAGE SHIPS HONEST
-    RATHER THAN SEEDED — the board appears the day three people have earned a
-    place on it.
-  */
-  /* ⚠ ONE RULE, from the lib — the page never restates the threshold. */
   const showBoard = boardIsShown(board);
 
   return (
     <>
-      {/* ⚠⚠ `P2-A3-E612` Q16 — THE SAME FIX `E609` MADE FOR SETTINGS. The
-          Connect tab row clipped at 390px: measured 2026-09-23, "Service…" was
-          cut off at the right edge. ⚠ `wrap` is opt-in per caller, so this is
-          the Connect set and nothing else — an app-wide sweep of every
-          `PageTabs` caller is its own brief. */}
-      {/*
-          ── ⚠⚠⚠ NOTHING LIGHTS, AND THAT IS THE HONEST ANSWER (`P2-A3-E678`) ──
-
-          ⚠⚠ **THIS PAGE WAS TELLING THE MEMBER THEY WERE ON `Community`.**
-          `E625`'s rule, in its own words: *"a row lighting `Community` while
-          you are on `Colleagues` says you are on Community, and you are not.
-          THAT IS WORSE THAN NO HIGHLIGHT."* ⚠ Every sibling was fixed then —
-          colleagues, mentors, teams, groups — **and Grow was not in that
-          list.** It is the last of Scott's *"the tabs lead to pages without
-          the tabs"* trio.
-
-          ⚠⚠⚠ **GROW IS NOT GETTING A SEVENTH TAB.** Scott, 2026-09-26: *"Grow
-          is a destination inside Community reached from the hero button, not a
-          section. Ruling 47 already queues two more — nine tabs is a menu, not
-          a row."* ⚠ So `current` names this route, which is deliberately **not
-          in the row**, and `PageTabs` therefore lights nothing. **A row with no
-          lit tab is honest; a row lighting the wrong tab is a lie.**
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   current="/community"
-      */}
+      {}
+      {}
       <PageTabs
         wrap
         eyebrow="CONNECT"
@@ -190,96 +76,30 @@ export default async function GrowPage({
         current="/community/grow"
       />
       <div className="mx-auto w-full max-w-3xl">
-        {/*
-          ── ⚠⚠⚠ `Grow Your Community`, NOT `Grow the Network` (`E601` WS-C) ──
-
-          ⚠ SCOTT, 2026-09-22: *"'Grow Your Community' wins. 'Network' is
-          retired, not kept as a second name for the same thing."*
-          ⚠⚠⚠ THIS IS A RULING AGAINST A RULING, NOT DRIFT (rule 13). `E599`
-          shipped this heading as `Grow the Network` deliberately, AFTER the
-          9/20 mockup had already argued the other way — the mockup's note
-          reads *"the card is Grow Your Community, not 'Network' — 'Network' is
-          retired rather than kept as a second name for the same thing."*
-          ⚠ So the code did not wander off a decision; a decision was remade,
-          and the newest dated statement from Scott is the live one.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — what `E599` shipped:
-          //   <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
-          //     Grow the Network
-          //   </h1>
-          ⚠⚠ THE HEADING NOW MATCHES THE HERO CARD BELOW IT, which is the whole
-          point: two names for one thing on one screen is what was wrong.
-        */}
+        {}
         <h1 className="mb-1 font-display text-[26px] font-bold tracking-[-0.5px]">
           Grow Your Community
         </h1>
-        {/*
-          ── ⚠⚠⚠ THE SHARED HEADER (`P2-A3-E601` WS-C item 1) ────────────────
-
-          ⚠ SCOTT: *"`/community/grow` uses the same header component and the
-          same 15-second rebuild."* ⚠⚠ `CommunityHero` IS THAT COMPONENT, and
-          the rebuild comes with it — `CommunityWeb` owns `E600` WS-D's
-          `useRebuild` + `RebuildBadge`, so neither page re-implements a clock.
-
-          ⚠⚠⚠ ADDING IT MADE FOUR THINGS DUPLICATES ON THIS PAGE, and they are
-          removed rather than left to disagree: this lede (the hero says it,
-          days-left included), the score card's HEADLINE NUMBER, the whole
-          `Your Rank This Month` card, and the score-card title.
-          ⚠ WHAT STAYED IS WHAT THE HERO DOES NOT SAY: the ARITHMETIC (each
-          count × its weight), the invite panel's explanation of the weights,
-          and the board itself.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <p className="mb-5 text-[13.5px] text-ink-2">
-          //     Every Oracle practitioner you bring in makes this a better place to buy
-          //     and sell. Resets on the 1st &middot; {daysLeftInMonth()}{" "}
-          //     {daysLeftInMonth() === 1 ? "day" : "days"} left this month.
-          //   </p>
-        */}
+        {}
         <div className="mb-5">
           <CommunityHero web={web} hero={hero} standing={await levelStandingFor(personId)} />
         </div>
 
         {/* ── your score ─────────────────────────────────────────────── */}
         <section className="rounded-brand border border-line bg-white px-[18px] py-4">
-          {/* ⚠⚠ THE TOTAL MOVED TO THE HERO (`E601` WS-C). This card is now the
-              ARITHMETIC — how the number is reached — and printing the total
-              twice on one page is how two figures start to disagree.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   <div className="flex items-baseline justify-between gap-3">
-              //     <h2 className="font-display text-[15px] font-bold">Your Score</h2>
-              //     <span className="text-[26px] font-extrabold tabular-nums">{me.points}</span>
-              //   </div> */}
+          {}
           <h2 className="font-display text-[15px] font-bold">How Your Score Adds Up</h2>
 
           <div className="mt-3 flex flex-col border-t border-line pt-1">
-            {/*
-              ⚠⚠ EACH COUNT CARRIES ITS OWN POINTS LINE, so the total is
-              legible as arithmetic rather than asserted. ⚠ The weights come
-              from `GROWTH_WEIGHTS` — the page never restates a number.
-            */}
+            {}
             <ScoreRow
               label="Invited"
               count={me.invited}
               each={GROWTH_WEIGHTS.INVITED}
             />
             <ScoreRow label="Joined" count={me.joined} each={GROWTH_WEIGHTS.JOINED} />
-            {/*
-              ── ⚠⚠⚠ `Active` SAYS WHAT IT IS, WHICH IS "NOT MEASURABLE YET" ──
-
-              ⚠ SCOTT, 2026-09-22: *"Ship Invited + Joined only, report Active
-              as unbuildable."*
-              ⚠⚠ IT IS RENDERED RATHER THAN HIDDEN because the weight is real
-              and the rule is decided — hiding the row would make the total look
-              like the whole story. ⚠⚠⚠ AND IT PRINTS A DASH, NOT A ZERO: `0`
-              would say *"you have brought in nobody who became active"*, which
-              is a claim about this member. The truth is that nothing counts it.
-              ⚠ The three proposed signals and why each fails are recorded on
-              `GROWTH_WEIGHTS.ACTIVE_BONUS`.
-            */}
-            {/* ⚠ IT STACKS, IT DOES NOT SIT BESIDE THE LABEL. Measured at 390px:
-                as a right-aligned `flex-none` sibling the note ran to the card
-                edge and clipped mid-sentence. The other two rows are a label
-                and a short figure; this one is a label and a SENTENCE, so it
-                gets its own line rather than competing for the same one. */}
+            {}
+            {}
             <div className="py-2 text-[13.5px]">
               <span className="text-ink-2">Became Active</span>
               <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-3">
@@ -288,31 +108,7 @@ export default async function GrowPage({
               </span>
             </div>
 
-            {/*
-              ── ⚠⚠⚠ THE TOTAL. A BREAKDOWN WITH NO TOTAL IS INCOMPLETE ON ITS
-              OWN TERMS (`P2-A3-E678`) ──────────────────────────────────────
-
-              ⚠⚠ **THE MEMBER COULD SEE EVERY OTHER MEMBER'S SCORE ON THE
-              LEADERBOARD BELOW AND NOT THEIR OWN.** ⚠⚠⚠ It fell between two
-              correct moves: `E601` WS-C took the total off this card *"because
-              the hero says it"*, and `E625` then replaced the hero's right
-              half with XP. **Neither noticed the other — a leave-and-arrive
-              where nothing arrived**, and `hero.score` has had no reader since.
-
-              ⚠ **SCOTT, 2026-09-26, PLACING IT HERE:** *"The card prints
-              count × weight = subtotal per row and then stops. A breakdown
-              with no total is incomplete on its own terms, regardless of the
-              leaderboard. The hero already carries XP; a second total there
-              competes with it."*
-
-              ⚠⚠ **IT IS THE SAME `me.points` THE BOARD PRINTS FOR EVERYONE
-              ELSE** (`:517`), so one computation renders twice and the two
-              cannot disagree (`E585`). ⚠ `E433` — a figure, so INK.
-              ⚠⚠ **IT IS A COUNTED TOTAL, NOT A SUM OF THE ROWS ABOVE**, and
-              that distinction is deliberate: `Became Active` contributes
-              nothing because nothing measures it, so a hand-summed figure
-              would silently disagree with the board the day it does.
-            */}
+            {}
             <div className="mt-1 flex items-baseline justify-between border-t border-line pt-2.5">
               <span className="text-[13.5px] font-bold text-ink">Your Score</span>
               <span className="font-display text-[20px] font-bold tabular-nums text-ink">
@@ -322,55 +118,7 @@ export default async function GrowPage({
           </div>
         </section>
 
-        {/*
-          ── ⚠⚠⚠ `Your Rank This Month` IS GONE — THE HERO SAYS ALL OF IT ────
-
-          ⚠ Its three rank states moved into `CommunityHero` unchanged, which is
-          what makes the hero shareable between Community and Grow rather than a
-          Community-only card: `#N of M`, *"you're not on the board yet"* and
-          *"ranking starts once N members…"* are the same three sentences, now
-          rendered once. ⚠⚠ The next move moved with them, still computed from
-          the board and never canned.
-          ⚠⚠⚠ THE DISTINCTION THIS PAGE INVENTED IS THE PART THAT HAD TO SURVIVE:
-          *no board* and *a board you are not on* are DIFFERENT, and collapsing
-          them would make one of the two sentences a lie.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card this page drew:
-          ⚠⚠ RULE 12, TENTH OCCURRENCE: the quoted body carries its own JSX
-          comments, and their `* /` terminators would CLOSE THIS COMMENT EARLY.
-          JSX children admit no `//` line comments, so every terminator below is
-          written `* /` on purpose. ⚠ It is a quote, not code.
-          //         {/* ── rank and the one move ──────────────────────────────────── * /}
-          //         <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
-          //           <h2 className="font-display text-[15px] font-bold">Your Rank This Month</h2>
-          //           {myRank != null ? (
-          //             <p className="mt-1.5 text-[13.5px]">
-          //               <span className="text-[22px] font-extrabold tabular-nums">#{myRank}</span>
-          //               <span className="ml-2 text-ink-2">
-          //                 of {board.length} {board.length === 1 ? "member" : "members"} with a
-          //                 score this month
-          //               </span>
-          //             </p>
-          //           ) : boardIsShown(board) ? (
-          //             /* ⚠ NOT RANKED IS NOT RANK ZERO. Somebody with no points has not
-          //                come last; they are not on the board at all, and saying so is
-          //                what makes the invite panel the obvious next thing. * /
-          //             <p className="mt-1.5 text-[13.5px] text-ink-2">
-          //               You&rsquo;re not on this month&rsquo;s board yet. Invite a colleague to
-          //               get on it.
-          //             </p>
-          //           ) : (
-          //             /* ⚠⚠⚠ THE BOARD IS HIDDEN, SO THERE IS NO RANK TO REPORT. Saying
-          //                *"you're not on the board"* would be wrong — there is no board —
-          //                and `#1` would be a standing earned against nobody. * /
-          //             <p className="mt-1.5 text-[13.5px] text-ink-2">
-          //               Ranking starts once {BOARD_MIN_SCORERS} members have a score this
-          //               month.
-          //             </p>
-          //           )}
-          //           {/* ⚠⚠ COMPUTED FROM THE BOARD, NEVER CANNED (WS-A 1). * /}
-          //           {move && <p className="mt-2 text-[13.5px] font-semibold">{move.text}</p>}
-          //         </section>
-        */}
+        {}
         {/* ── invite ─────────────────────────────────────────────────── */}
         <section className="mt-3.5 rounded-brand border border-line bg-white px-[18px] py-4">
           <h2 className="font-display text-[15px] font-bold">Invite Someone</h2>
@@ -378,57 +126,13 @@ export default async function GrowPage({
             A colleague who joins is worth {GROWTH_WEIGHTS.JOINED} points. Sending
             an invitation is worth {GROWTH_WEIGHTS.INVITED}.
           </p>
-          {/*
-            ⚠⚠⚠ IT LINKS TO THE EXISTING INVITE PATH. `/invite-colleague` is the
-            surface `lib/colleague-invite.ts` already serves, and the brief is
-            explicit: *"Sending uses the existing invite path from premise 1.
-            ⚠ No second invite system."*
-            ⚠ THE PRE-WRITTEN NOTE AND THE PANEL ARE **WS-C**, not this
-            workstream. This is a door to what exists, not a stub of what is
-            coming.
-          */}
-          {/*
-            ── ⚠⚠⚠ THE BUTTON IS GONE. ONE `Invite a Colleague` PER PAGE ──────
-
-            ⚠ SCOTT, 2026-09-22: *"The Invite panel keeps its explanation of the
-            weights and loses its button. One Invite a Colleague on the page, in
-            the hero."*
-            ⚠⚠ THIS PANEL EARNS ITS PLACE ON THE EXPLANATION, NOT ON THE ACTION —
-            it is the only thing that says what an invitation is WORTH, and the
-            hero's button is a few hundred pixels above it.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <Link
-            //     href="/invite-colleague"
-            //     className="mt-3 inline-block rounded-full bg-magenta px-4 py-2 …"
-            //   >
-            //     Invite a Colleague
-            //   </Link>
-          */}
+          {}
+          {}
         </section>
 
         {/* ── the board ──────────────────────────────────────────────── */}
-        {/*
-          ── ⚠⚠ THE THREE TABS (WS-B 1) ──────────────────────────────────────
-
-          ⚠ Plain links, not buttons: each is a real URL, so a board is
-          shareable, opens in a new tab on middle-click and is announced as a
-          link. ⚠⚠ THE SAME REASONING THE COMPLETION-RING CARD RECORDS — *"a div
-          with a handler does none of those and looks identical until somebody
-          needs one of them."*
-          ⚠⚠⚠ THIS IS NOT A `PageTabs` ROW. That component is the APPLICATION's
-          tab row (`CONNECT · Community · Groups · …`), already rendered above;
-          a second one would say this page is a second application.
-        */}
-        {/*
-          ── ⚠⚠ THE LABEL IS RENDERED, NOT ONLY ANNOUNCED (`P2-A3-E678`) ──────
-
-          ⚠ **RULING 65:** *"AN ACCESSIBLE LABEL THAT THE VISIBLE UI DOES NOT
-          CARRY IS A DEFECT… the fix is to render it."* ⚠⚠ `aria-label
-          ="Leaderboard"` told a screen reader what this was and told everybody
-          else nothing — the mockup's own `<h2>Leaderboard</h2>` had been
-          dropped. ⚠ The `aria-label` STAYS: it names the nav landmark, which
-          is a different job from the heading above it.
-        */}
+        {}
+        {}
         <h2 className="mt-6 font-display text-[17px] font-bold">Leaderboard</h2>
         <nav aria-label="Leaderboard" className="mt-2 flex gap-1.5 border-b border-line">
           {TABS.map((t) => (

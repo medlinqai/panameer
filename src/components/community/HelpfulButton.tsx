@@ -3,19 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/**
- * "This answered my question" — the only involvement signal on the platform
- * (brief_community_signal WS1).
- *
- * ⚠ THIS BUTTON IS NOT THE PERMISSION. `canMarkHelpful` decides whether it is
- * rendered, and `lib/forums.ts` re-derives the same two rules from the session on
- * every write: only the thread's author, never their own reply. Hiding a control
- * is a courtesy to the person who cannot use it, not a security boundary — the
- * route refuses a direct call the same way.
- *
- * ⚠ AND IT IS REVERSIBLE. A thread author who mis-clicks can undo, which is why
- * the column is a nullable timestamp rather than a boolean.
- */
 export function HelpfulButton({
   postId,
   marked,
@@ -38,8 +25,6 @@ export function HelpfulButton({
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /* The lib REFUSES rather than no-ops, so there is always something to
-           say — printing it is the whole reason it refuses. */
         setError(body.error ?? "That didn't work.");
         return;
       }

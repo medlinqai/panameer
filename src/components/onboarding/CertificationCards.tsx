@@ -1,9 +1,5 @@
 "use client";
 
-/* ⚠⚠ `"use client"` MUST BE THE FIRST STATEMENT IN THE FILE. An import placed
-   above it demotes the directive to a plain string expression — the file stops
-   being a client component and lint reports it as an unused expression, which is
-   how this was caught. */
 import Link from "next/link";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
@@ -12,24 +8,6 @@ import {
   CertificationAttachment,
   type CertificationDraft,
 } from "@/components/onboarding/CertificationsEditor";
-
-/**
- * Certifications as cards + a proper modal (brief_X / E057).
- *
- * E057: the old inline `CertificationsEditor` put an eight-field form inside
- * the review page's narrow sidebar column — labels collided, inputs were
- * unusable, and Scott's verdict was "just does not work". A certification has
- * as many fields as an education entry, so it gets the same treatment: a card
- * list, and an "Edit Certification" modal with full-width fields, mirroring
- * `EducationCards`.
- *
- * Saving is EXPLICIT and immediate. `onSave` receives the WHOLE next list —
- * not a patch and not a read of the caller's state — because the caller
- * persists by replacing the collection, and reading that list back out of React
- * state in the same tick is how a save silently writes the previous version.
- * The modal stays open when the save fails, so a failed write can't look like a
- * successful one.
- */
 
 const emptyCertification = (): CertificationDraft => ({
   name: "",
@@ -46,7 +24,6 @@ const emptyCertification = (): CertificationDraft => ({
 
 /** A representative list — the field accepts anything typed. */
 const AGENCIES = [
-  // E108 — Panameer issues its own credentials through Learn (brief_learn_v1
   // WS5), so it belongs in the list a provider picks from. First, because it is
   // the one this platform can vouch for.
   "Panameer",
@@ -70,39 +47,6 @@ const AGENCIES = [
   "Workday",
 ];
 
-/*
-  ── ⚠⚠ SHOW WHAT IS ALREADY THERE (`P1-A1.4-E412` WS-3b) ────────────────────
-
-  SCOTT: *"these guys work hard for these… let's make them look AWESOME."*
-
-  ⚠ SUPERSEDED, quoted not deleted:
-
-      function certMeta(c: CertificationDraft): string {
-        return [
-          c.issuer,
-          c.issuedOn ? `issued ${c.issuedOn.slice(0, 4)}` : c.year,
-          c.expiresOn ? `expires ${c.expiresOn.slice(0, 4)}` : null,
-        ].filter(Boolean).join(" · ");
-      }
-
-  ⚠⚠ ONE PREMISE IN THE BRIEF DOES NOT HOLD, AND IT CHANGES WHAT THE FIX IS.
-  `E412` says the card *"renders name and issuer only"* and that `issued_on` /
-  `expires_on` are *"material sitting unused"*. They were not unused — the
-  function above already joined all four. ⚠ THE REASON THE SCREENSHOT SHOWED
-  NAME AND ISSUER IS THAT THE OTHER COLUMNS ARE **NULL ON THAT ROW**: measured,
-  `certificationsPass` returns `issuedOn: null, expiresOn: null` on 5 runs out
-  of 5, because the CV states no dates at all. Rendering was never the gap.
-
-  ⚠ WHAT WAS ACTUALLY WRONG WITH IT is smaller and real: a year-only smear
-  (`issued 2021 · expires 2026`) that reads like a range nobody chose, a
-  four-digit truncation that throws away the month the editor collects, and —
-  ⚠⚠ THE ONE THAT MATTERS — **an expired credential printed identically to a
-  live one.** Of the 8 rows on this database today, THREE are already past
-  their expiry date and the card said nothing.
-*/
-
-/** `2026-06-29` → `Jun 2026`. ⚠ UTC, so a date-only string cannot slip a month
- *  backwards for anyone west of Greenwich. */
 function monthYear(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return iso.slice(0, 4);

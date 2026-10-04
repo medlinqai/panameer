@@ -1,12 +1,7 @@
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE RESOLVER (`E728` WS-B). */
 import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
-/* ⚠ `hasCapability` LEFT THIS FILE WITH THE RATE RULE (`P2-A2-E618`) — the
-   condition moved to `lib/rate-visibility.ts` so `/explore` could call the SAME
-   one. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { hasCapability, isMarketplaceVisible, providerMeetsRequired } from "@/lib/access"; */
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { aiExtractionAvailable } from "@/lib/resume/ai-extract";
 import { missingRequired, profileEnrichmentGaps, VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -22,40 +17,12 @@ import {
 import { experienceLabel } from "@/lib/experience";
 import { isRecruiterProfile } from "@/lib/onboarding";
 
-/**
- * The full provider Profile View (brief_S / E037) — the Upwork-style page that
- * REPLACES the thin dashboard as the provider's home.
- *
- * Owner-first: this is the surface a provider lands on after publishing, so the
- * OWNER always sees it regardless of the visibility gate, and gets the
- * completeness / visibility banner. Everyone else sees it only when the profile
- * is marketplace-visible (brief_K) — the gate is unchanged, just applied here
- * too so a hidden profile can never leak through the new page.
- */
 export async function getProviderProfileView(
   profileId: string,
   opts: {
     viewerUserId?: string;
     /** Full viewer, when available — needed for the WS5 Plus gate. */
     viewer?: import("@/lib/access").Viewer | null;
-    /**
-     * ── ⚠⚠⚠ PROFILE360 — THE OWNER PREVIEWING A PEER (`P2-A2-E616`) ───────
-     *
-     * ⚠⚠ SCOTT, 2026-09-23: *"where my profile page gets flipped 360 to be
-     * viewable for another provider."* ⚠ Ruling 11: **the name stays
-     * `Profile360`.**
-     *
-     * ⚠⚠⚠ IT CHANGES ONE THING AND ONE THING ONLY: the viewer's CAPABILITY for
-     * the purposes of the rate decision. It does not fork the rule, add a
-     * second rule, or take a rate-specific flag — ⚠ ruling 9 is **one rule,
-     * everywhere**, and a `hideRate` boolean here would be a second place the
-     * decision could be made differently.
-     *
-     * ⚠ THE PREVIEWER IS STILL THE OWNER EVERYWHERE ELSE. `isOwner` is
-     * untouched, so `recordProfileView` still refuses to write a row for
-     * somebody looking at themselves (`E598`) — a member checking their own
-     * peer view must not inflate their own count.
-     */
     previewAsPeer?: boolean;
   } = {}
 ) {
@@ -64,7 +31,6 @@ export async function getProviderProfileView(
     include: {
       person: {
         select: {
-          /* ⚠ The transaction models key on the PERSON id (`E593`). */
           id: true,
           user_id: true,
           first_name: true,
@@ -73,27 +39,13 @@ export async function getProviderProfileView(
           photo_url: true,
           phone: true,
           phone_verified_at: true,
-          /*
-            ⚠⚠ `Member since` ON THE META LINE (`P2-A2-E715` row 2). ⚠ It is a REAL COLUMN
-            WITH A REAL WRITER — `Person.created_at`, `@default(now())` at `schema.prisma:464`
-            — which is the counting rule's test (a figure is countable when the state it
-            counts has a writer). ⚠⚠⚠ **NOTHING IS INVENTED HERE:** the mockup draws
-            *"Member since August 2026"* and this is the only column that can say it.
-            ⚠ It is a NARROW `select`, so the field has to be named or it does not arrive —
-            adding it to the mapping alone would not compile.
-          */
           created_at: true,
           // WS6 — the required-set gate reads these. Loaded explicitly so a
           // missing relation is a compile error rather than a provider quietly
           // hidden from the marketplace.
-          /* ⚠ `companyMemberships: { select: { status: true } }` REMOVED
-             (`P1-A1.4-E418`) — the company clause left `providerMeetsRequired`
-             with the company step. */
           site: {
             select: {
               addresses: {
-                /* ⚠ `country_code` JOINS THE SELECT (`E728` WS-B ruling 1) — the reader
-                   below resolves the NAME from it and falls back to the stored name. */
                 select: { city: true, state: true, country: true, country_code: true },
                 take: 1,
               },
@@ -112,16 +64,11 @@ export async function getProviderProfileView(
               id: true,
               name: true,
               role_type_id: true,
-              /* ⚠ THE PILLAR IS THE GROUPING (`P2-A3-E596` WS-G item 1). It is
-                 the catalog's own DOMAIN level — Role → Domain → Skill — so the
-                 grouping is the taxonomy's, not one invented for the page. */
               pillar: { select: { id: true, name: true } },
             },
           },
         },
       },
-      /* ⚠ `E517` — the provider's role selection, so the view can show only
-         what they present. */
       roles: { select: { role_type_id: true } },
       specializations: {
         include: { specialization: { select: { id: true, name: true, kind: true } } },
@@ -131,13 +78,6 @@ export async function getProviderProfileView(
         include: {
           artifacts: { orderBy: [{ sort_order: "asc" }] },
           projects: { orderBy: [{ sort_order: "asc" }, { created_at: "asc" }] },
-          /*
-            ⚠⚠ THE CONFIRMED ANSWER ONLY, NEWEST FIRST (`P2-A1.1-E748`, WS-C).
-            ⚠ `take: 1` because the badge states ONE fact — somebody confirmed
-            it, on a date, from a domain. ⚠⚠⚠ Filtering to `CONFIRMED` here is
-            what stops a DECLINED row ever reaching the view model and being
-            rendered as evidence by a later edit.
-          */
           validations: {
             where: { status: "CONFIRMED" },
             orderBy: { responded_at: "desc" },
@@ -177,29 +117,12 @@ export async function getProviderProfileView(
 
   if (!profile) return null;
 
-  /*
-    ── ⚠ THE USER'S CREDENTIALS, NOT THE PROFILE'S (`P1-J3-E019`) ─────────────
-
-    A credential belongs to the PERSON now, so a profile shows the certifications
-    of the USER who owns it — which is what "a profile shows their certifications"
-    always meant. Reading the profile's own relation would hide two real cases:
-
-      · a `LEARN` credential earned BEFORE the learner became a seller, whose
-        `provider_profile_id` is null and always was;
-      · any credential whose profile link was nulled when an old profile was
-        deleted — the FK is `SetNull` precisely so that can happen.
-
-    ⚠ A SEPARATE QUERY RATHER THAN A NESTED INCLUDE, because the owner is two hops
-    away (profile -> person -> user) and nesting it would make every caller of this
-    view carry a `user` object it has no other use for.
-  */
   const certifications = profile.person?.user_id
     ? await prisma.certification.findMany({
         where: { user_id: profile.person.user_id },
         orderBy: [{ issued_on: "desc" }, { year: "desc" }, { name: "asc" }],
       })
     : [];
-
 
   const isOwner =
     opts.viewerUserId != null && profile.person.user_id === opts.viewerUserId;
@@ -218,32 +141,12 @@ export async function getProviderProfileView(
   // live. Drafts are managed at /settings/packages.
   const packages = await listPublishedServiceProducts(profile.id);
 
-  /**
-   * WS5 — the Plus gate is applied HERE, at the read, so a non-Plus viewer's
-   * payload simply does not contain the contact address. See lib/plus.ts.
-   */
   const isPlus = await viewerIsPlus(opts.viewer ?? null);
   // Staff see unredacted client names — they arbitrate validation disputes and
-  // cannot do that against a record with the client removed (E114).
   const isAdmin = Boolean(opts.viewer?.isSystemAdmin);
 
-  /*
-    E049 — THE SURNAME IS MASKED AT THE READ, not in the template.
-
-    Same reasoning as the WS5 contact gate directly above and as the /explore
-    teaser: a masked field that is still in the payload is one `{p.person
-    .lastName}` away from being on screen, and it is already in the RSC stream
-    for anyone who looks. Blanking it here means the browser never receives it.
-
-    `hasTransacted` is hard-false — there are no engagements yet. When there
-    are, this is the one line that changes.
-  */
   const { showSurname } = identityVisibility({ isOwner, isAdmin });
 
-  /**
-   * WS6 (E068) — years of experience DERIVED from the work history, as the union
-   * of employer and project spans. Replaces the self-reported level entirely.
-   */
   const experience = experienceLabel([
     ...profile.employers.map((e) => ({
       start: e.start_date,
@@ -260,36 +163,10 @@ export async function getProviderProfileView(
     contactVisibility({ isOwner, isPlus, contactEmail: email });
 
   const addr = profile.person.site?.addresses?.[0] ?? null;
-  /*
-    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E412` WS-4):
-        const location =
-          [addr?.city, addr?.state, countryName(addr?.country_code, addr?.country)]
-            .filter(Boolean)
-            .join(", ") || null;
-
-    ⚠⚠ THE COUNTRY WAS IN THE LINE, WHICH SILENCED THE LINE BELOW IT.
-    `LocationBody` prints `country` on its own second line unless the first line
-    already contains it — and this join always put it there, so the second line
-    was dead code on every profile. ⚠ THE SAME JOIN EXISTED VERBATIM ON THE
-    WIZARD'S REVIEW SCREEN; `formatLocality` is now the single copy.
-  */
-  /*
-    ⚠⚠ NO POSTAL CODE IS PASSED, AND THAT IS A DECISION, NOT AN OVERSIGHT.
-    `formatLocality` handles one because the address FORM collects one — but
-    this query does not even select `postal_code`, and putting a provider's
-    postcode on a PUBLIC profile is a privacy change, not a formatting one. The
-    wizard step calls it *"they stay private, and they're how a buyer reaches
-    you."* ⚠ THE REVIEW SCREEN OMITS IT FOR THE SAME REASON AND MUST: its own
-    promise is *"this is exactly what buyers will see."* Reported under `E412`
-    WS-4 rather than decided here.
-  */
   const location = formatLocality({ city: addr?.city, state: addr?.state });
   // The hero's meta rail (WS3, mockup pg1) shows Country on its own line, and
   // the primary LANGUAGE — the first one listed, which is the order the
   // provider entered them in.
-  /* ⚠ `P2-J14-E561` — the most recent parse WITH A DOCUMENT still on file.
-     `raw_text: { not: null }` is the same predicate `/available` uses, so the
-     server and the client cannot disagree about whether a re-run is possible. */
   const lastImport = isOwner
     ? await prisma.profileImport.findFirst({
         where: { provider_profile_id: profile.id, raw_text: { not: null } },
@@ -298,15 +175,6 @@ export async function getProviderProfileView(
       })
     : null;
 
-  /*
-    ── ⚠⚠ READER SWITCHED (`P2-A1.1-E728` WS-B, ruling 1) ────────────────────────────────
-
-    ⚠ **IT PREFERS THE CODE AND FALLS BACK TO THE STORED NAME**, so this is correct on a
-    migrated row AND on one whose code is null — which is what lets readers move one at a
-    time with no flag day. ⚠⚠ The 7 `"Other"` rows still read `"Other"`, deliberately.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const country = addr?.country?.trim() || null;
-  */
   const country = countryName(addr?.country_code, addr?.country)?.trim() || null;
   const primaryLanguage = profile.languages[0]?.name ?? null;
 
@@ -314,16 +182,6 @@ export async function getProviderProfileView(
     id: profile.id,
     isOwner,
     validated: profile.validation_status === "VALIDATED",
-    /*
-      ⚠ `P2-J3-E588` WS-B — the visitor's `Request Mentoring` card renders ONLY
-      when this is true. ⚠⚠ THE COLUMN WAS ALREADY LOADED: this query uses
-      `include`, so every scalar on `ProviderProfile` is already in memory —
-      this exposes one, it does not widen the read.
-      ⚠ Scott, 2026-09-03, on what makes someone a mentor: *"everyone CAN be.
-      the determining factor is if anyone wants you to be."* This flag is the
-      provider SAYING they are open to it, which is a different fact from
-      `lib/connections.ts`'s mentor count and must not be conflated with it.
-    */
     openForMentoring: profile.open_for_mentoring,
     visible: isMarketplaceVisible({
       ...profile,
@@ -332,51 +190,11 @@ export async function getProviderProfileView(
     viewerIsPlus: isPlus,
     completeness: profile.completeness,
     visibilityThreshold: VISIBILITY_THRESHOLD,
-    /*
-      ── ⚠⚠ WHAT THE GATE IS STILL WAITING FOR, IN WORDS (`P2-J2-E562` WS-B) ──
-
-      ⚠ THE GATE SENTENCE MAY NOT CONTAIN A PERCENTAGE. The strip used to read
-      *"You're at 62% — reach 80% to go live"*, which put TWO percentages in the
-      gate and a THIRD, different, number in the meter beside it. This is what
-      replaces them: the seven required items, named.
-
-      ⚠⚠ `visible` ABOVE REMAINS THE AUTHORITY. This list is DETAIL, never the
-      verdict — the strip reads the boolean for what it SAYS and this only for
-      what it NAMES. If the two ever disagreed the sentence would still be
-      right, which is the failure mode worth designing against.
-
-      ⚠ TWO SHAPES FOR ONE CONCEPT, AND IT IS PRE-EXISTING: `providerMeetsRequired`
-      (`access.ts`) takes the PRISMA row, `missingRequired` (`completeness.ts`)
-      takes a normalised one. Their own comment says they are *"KEPT IN
-      LOCKSTEP"*. ⚠⚠ RECORDED AS A RISK, NOT FIXED HERE — merging them is a
-      change to the visibility gate itself, which gates 91 live providers.
-
-      ⚠ Owner-agnostic data. Nothing renders it for a buyer; the strip that
-      consumes it is `p.isOwner`-gated.
-    */
-    /*
-      ── ⚠⚠ CAN THIS PROVIDER RE-READ THEIR RÉSUMÉ? (`P2-J14-E561` WS-A) ──────
-
-      ⚠ SERVER-SIDE, AND THAT IS THE POINT. `ResumeImportAction` already asks
-      `/available` for itself, but the PANEL that now hosts it is server-rendered
-      and has to decide whether to exist at all.
-      ⚠⚠ WITHOUT THIS THE OFFER WOULD VANISH FOR EXACTLY THE PROVIDER THIS BRIEF
-      IS FOR. `E562`'s gaps panel renders only when `gaps.length > 0`; a provider
-      who registered a year ago and filled every section has NO gaps — and they
-      are the textbook case for *"new skills and no way to re-run the parse."*
-      Hosting the action in a panel keyed on gaps alone would hide it from them.
-
-      ⚠ BOTH CONDITIONS, because both are what the client checks: a model must be
-      configured AND a document must be on file. Computing only one here would
-      render a panel whose button then declines to appear.
-      ⚠ Owner-agnostic data; the panel that reads it is `p.isOwner`-gated.
-    */
     resumeRerun: {
       available: aiExtractionAvailable() && Boolean(lastImport),
       lastParseAt: lastImport?.created_at?.toISOString() ?? null,
     },
     missingRequired: missingRequired({
-      /* SOURCE IS Person.title SINCE E595 WS-B. */
       headline: profile.person.title,
       role_type_id: profile.role_type_id,
       skills: profile.skills,
@@ -389,17 +207,6 @@ export async function getProviderProfileView(
       onsite_rate_cents: profile.onsite_rate_cents,
       remote_rate_cents: profile.remote_rate_cents,
     }),
-    /*
-      ⚠⚠ UNSCORED, AND NOT THE SAME QUESTION AS `completeness` (`P1-A1.4-E399`).
-
-      The meter reads 98% for a profile missing four employers and all five
-      certifications, because `enrichment: 6` is satisfied by ANY ONE of work
-      history / education / certs / specializations. That number is not wrong —
-      it answers *"are you allowed to be visible"*, and `VISIBILITY_THRESHOLD`
-      gates 91 live providers on it, so it is not being re-weighted.
-      ⚠ THIS ANSWERS THE OTHER QUESTION — *"is this everything you meant to
-      say?"* — and NOTHING GATES ON IT.
-    */
     enrichmentGaps: profileEnrichmentGaps({
       employers: profile.employers.length,
       projects: profile.projects.length,
@@ -408,147 +215,36 @@ export async function getProviderProfileView(
       specializations: profile.specializations.length,
     }),
     paused: profile.paused_at != null,
-    /*
-      ── ⚠⚠ THE TWO PUBLIC-PREVIEW SWITCHES, FOR THE OWNER'S CARD (`E738`) ───
-      ⚠ Read straight off the row the `include` already loaded, so they cost no
-      query. ⚠⚠ They are OWNER-FACING STATE ONLY — the Visibility card renders
-      them and nothing else does. ⚠⚠⚠ THEY DO NOT GATE ANYTHING HERE: the masked
-      reads in `lib/masked-profile.ts` apply them in their own `where`, so a
-      visitor's access never depends on this view model.
-    */
     previewHidden: profile.preview_hidden_at != null,
     publicName: profile.public_name_at != null,
-    /* ⚠ Filled by the owner's own page (it owns the slug read); null elsewhere,
-       which is correct — a visitor has no business seeing a mint happen. */
     publicUrl: null as string | null,
     published: profile.onboarding_completed_at != null,
-    /*
-      J2.4 WS-C (E009) — how long since this profile changed, for the owner's
-      freshness nudge.
-
-      DAYS, computed here, rather than the timestamp rendered client-side: a
-      date formatted in the browser from a server-rendered page is the
-      hydration mismatch this codebase has already been bitten by twice (the
-      header greeting, the date chip). A number of days is stable in both
-      places. Null for a visitor — a buyer has no business being told a
-      provider's profile is stale.
-    */
     daysSinceUpdate: isOwner
       ? Math.floor(
           (Date.now() - profile.updated_at.getTime()) / (1000 * 60 * 60 * 24)
         )
       : null,
 
-    /**
-     * `identityMasked` tells the UI to EXPLAIN rather than to hide — a profile
-     * showing one name with no reason given reads as missing data.
-     */
     identityMasked: !showSurname,
     person: {
       firstName: profile.person.first_name,
-      /*
-        Empty string, not null: `displayFullName` and <Avatar> both filter
-        falsy parts, so every existing consumer degrades to the first name with
-        no component change. A null would have needed a type widening in four
-        places to achieve exactly the same render.
-      */
       lastName: showSurname ? profile.person.last_name : "",
       title: profile.person.title,
       photoUrl: profile.person.photo_url,
-      /*
-        ⚠ ISO, NOT A FORMATTED STRING — the view model states the FACT and the component
-        decides how to say it. A pre-formatted *"August 2026"* here would put a locale and a
-        wording decision in the data layer, where no surface can override it.
-      */
       memberSince: profile.person.created_at.toISOString(),
-      /*
-        ⚠ THE OWNER'S USER ID (`P1-ALL-E374`). A `MENTOR` or `COLLEAGUE` row is
-        written against `to_user_id`, so the Connect control on this profile
-        cannot exist without it. ⚠ IT IS NOT NEW DATA — `profile.person.user_id`
-        was ALREADY selected (line 37) and already used to load certifications
-        and to compute `isOwner`; this only surfaces it to the view.
-        ⚠ NULLABLE: a Person without a login is not a member and cannot be
-        connected to. The view renders no control rather than a broken one.
-      */
       userId: profile.person.user_id,
-      /* ⚠ The PERSON id. ⚠⚠ THE TRANSACTION MODELS ARE KEYED ON IT, NOT ON THE
-         PROFILE — `ProposalRequest.provider_person_id`, `WorkOrder.provider_person_id`
-         — so the usage comb cannot be counted without it (`E593`). It is not
-         new data: the row is already loaded. */
       personId: profile.person.id,
     },
     location,
     country,
     primaryLanguage,
     experience,
-    /* SOURCE IS Person.title SINCE E595 WS-B. */
     headline: profile.person.title ?? "",
     overview: profile.overview,
     field:
       profile.roleType && profile.pillar
         ? { role: profile.roleType.name, domain: profile.pillar.name }
         : null,
-    /*
-      WS9 / E006(3) — THE RATE IS DATA-DRIVEN, verified rather than assumed.
-      Every figure below is read off the profile row. The $90/$125 that appeared
-      on every profile during the walk came from the SEED writing 12500 to each
-      demo record, not from a constant here: grouping the live table gives eight
-      distinct rate tuples (8500, 9900, 10000, 10500, 12000, 12500, 13000,
-      14000), which a hardcode could not produce.
-    */
-    /*
-      ── ⚠⚠⚠ NO RATE THAT IS NOT THE VIEWER'S OWN (`P2-J3-E593` WS-C 13) ────
-
-      ⚠ Scott, 2026-09-20: *"I do nto think providers should see other
-      provider's rates"*, and the brief generalises it: *"no rate that is not
-      the viewer's own… omit it from the QUERY, not just the render: a field
-      absent from the DOM but present in the payload is still disclosed."*
-
-      ⚠⚠ THIS OBJECT **IS** THE PAYLOAD BOUNDARY, WHICH IS WHY THE GATE IS
-      HERE. The Prisma row never leaves the server; the RSC flight data carries
-      THIS view model. ⚠ So `null` here is the strong version of the rule —
-      there is no rate field for a non-owner to find in devtools, in the DOM, or
-      in the serialised props.
-      ⚠ The loader uses `include`, so the COLUMNS are still read from the
-      database. That read never crosses the wire, and narrowing it to an
-      explicit select would be a rewrite of a 600-line loader for no disclosure
-      benefit. **Stated plainly rather than claimed as "omitted from the query".**
-
-      ── ⚠⚠⚠ OVERRULED AT THE WS-C GATE, 2026-09-20 — A BUYER SEES THE RATE ──
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`) — what WS-C shipped for one gate:
-      //   rates: !isOwner ? null : { … }
-      //   …raised at the gate: "a buyer also loses the rate under this reading."
-
-      ⚠⚠ SCOTT'S RULING IS PROVIDER→PROVIDER AND ALWAYS WAS: *"I do nto think
-      providers should see other provider's rates."* ⚠⚠⚠ THE BRIEF'S *"no rate
-      that is not the viewer's own"* WAS CHAT'S OVER-GENERALISATION, MADE TWICE
-      — and it is exactly the failure `CLAUDE.md` opens with: a premise nobody
-      verified, repeated until it read as settled.
-      ⚠ **A RATE IS IN THE REQUIRED SET PRECISELY SO BUYERS CAN FILTER ON IT**
-      (`E581`). Hiding it from buyers breaks what the marketplace is for.
-
-      ⚠ SO THE PREDICATE IS THE VIEWER'S CAPABILITY, NOT THEIR IDENTITY: the
-      owner always sees their own, anyone who can HIRE sees it because that is
-      what they are here to do, and a provider looking at another provider does
-      not. ⚠⚠ `canHireTalent` IS THE RIGHT TEST rather than "is not a provider":
-      a DUAL-ROLE member who both hires and provides is a buyer when they are
-      buying, and refusing them the rate would be refusing them the marketplace.
-    */
-    /* ⚠⚠⚠ `previewAsPeer` SHORT-CIRCUITS BOTH CLAUSES, AND THAT IS THE WHOLE
-       CHANGE (`P2-A2-E616`). A peer is by definition somebody who is NOT the
-       owner and CANNOT hire here, so the preview answers the existing predicate
-       as that person rather than asking a different question. ⚠ One rule. */
-    /* ⚠⚠⚠ EXTRACTED TO `lib/rate-visibility.ts` AT `P2-A2-E618`. The condition
-       used to live here and NOWHERE ELSE, which is why `/explore` shipped real
-       rates to signed-out visitors — ruling 9 said *"one rule, everywhere"* and
-       there was only ever one PLACE. ⚠ Both surfaces now call the same
-       function; neither restates it.
-       ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   rates: opts.previewAsPeer || !(
-       //     isOwner ||
-       //     (opts.viewer != null && hasCapability(opts.viewer, "canHireTalent"))
-       //   ) */
     rates: opts.previewAsPeer || !canSeeRate({ isOwner, viewer: opts.viewer })
       ? null
       : {
@@ -560,110 +256,16 @@ export async function getProviderProfileView(
       maxCents: profile.rate_max_cents ?? profile.hourly_rate_cents,
       onsiteCents: profile.onsite_rate_cents,
       remoteCents: profile.remote_rate_cents,
-      /*
-        ── ⚠⚠⚠ EVERY COLUMN THE VISIBILITY GATE COUNTS (`P2-A3-E596` WS-G 2) ──
-
-        ⚠ SCOTT: *"A rate the gate counts must be a rate the page shows."*
-        MEASURED: `providerMeetsRequired` accepts ANY of five rate columns, and
-        the Rates card rendered only `onsite` and `remote`. Priya Nair passes
-        the gate on `hourly_rate_cents` and her page said *"No rates set yet."*
-
-        ⚠⚠ THESE ARE THE **RAW** COLUMNS, WITH NO FALLBACK. `minCents` and
-        `maxCents` above fall back to `hourly_rate_cents` so an old profile
-        still shows a range — correct there, and WRONG here: it would print the
-        same number three times as "Hourly", "From" and "To".
-        ⚠ ORDERED, and the order is the reading order on the card: what you
-        charge, then the band, then the two engagement shapes.
-        ⚠⚠ THE LIST IS THE CONTRACT. The card maps it and renders each entry
-        that is set, so adding a rate column means adding one line HERE and the
-        card follows — which is what lets a gate assert by shape rather than by
-        a list it keeps in step by hand.
-      */
-      /*
-        ── ⚠⚠⚠ `From` / `To` ARE NO LONGER EMITTED (`P2-A2-E673`) ────────────
-
-        ⚠⚠ **MEASURED: `rate_min_cents` / `rate_max_cents` HAVE NO WRITER
-        ANYWHERE IN `src/`.** No `prisma.*.update` assigns them, `RateEditor`
-        has no field for them, and `profile-sections.ts`'s payload omits them —
-        the only writers are `prisma/seed-test-data.ts:556` and `:708`.
-        ⚠ **They rendered on 44 of 63 provider profiles** as two rate rows
-        nobody in the product could change.
-
-        ⚠⚠⚠ **SCOTT, 2026-09-26: *"a rate row rendering on 44 of 63 profiles
-        that no code in the repo can write is the writer test failing on an
-        EDITABLE FIELD, which is worse than a figure with no writer."*** ⚠ A
-        figure with no writer renders a dash and its reason; **a RATE ROW with
-        no writer looks like something the provider chose and cannot correct.**
-
-        ⚠ **NOTHING IS DELETED.** The columns stay (ruling 38 — additive only),
-        the seed data stays, and the two lines are quoted below. This view model
-        simply stops emitting them, which is the one place that decides what the
-        card renders — *"THE LIST IS THE CONTRACT"*, as the comment above says.
-        ⚠⚠ **THEY COME BACK WITH THE THREE-RATE MIGRATION BRIEF** (rulings
-        64/66), which is where `Hybrid` and a real range editor are owed.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   { key: "min", label: "From", cents: profile.rate_min_cents },
-        //   { key: "max", label: "To", cents: profile.rate_max_cents },
-      */
-      /*
-        TWO RATES, EVERYWHERE (`P2-J1.4-E823`, R-E002). Scott decided 2026-10-03:
-        the whole app shows ONSITE and OFFSITE and nothing else.
-
-        `hourly` leaves the list because it is the SAME NUMBER a member already
-        gave as one of the two — printing it alongside them showed one rate
-        three times, which this list's own history records. The COLUMN is
-        untouched: no rename, no migration, nobody's saved rate is rewritten.
-        "Fully Remote" becomes "Offsite rate" — the word Scott chose — and
-        "Hybrid" is gone from the vocabulary with it.
-        ⚠ SUPERSEDED, quoted not deleted:
-        //   { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
-        //   { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
-      */
       columns: [
         { key: "onsite", label: "Onsite rate", cents: profile.onsite_rate_cents },
         { key: "remote", label: "Offsite rate", cents: profile.remote_rate_cents },
       ] as { key: string; label: string; cents: number | null }[],
     },
     serviceFeeBps: profile.service_fee_bps,
-    /*
-      ── ⚠⚠ A RECRUITER DOES NOT BILL AN HOURLY RATE (`P1-A1.3-E401` WS-2) ─────
-
-      SCOTT: *"we are asking recruiters for their rate (they don't bill, they
-      present providers who bill...they make a piece)."*
-
-      ⚠ THE EXISTING TEST, NOT A SECOND ONE. `isRecruiterProfile()` is the
-      discriminator `stepsForProfile()` already uses to keep a recruiter out of
-      the `rate` STEP; the profile VIEW simply never asked it. Before this,
-      NEITHER this file NOR `ProviderProfileView.tsx` contained the string
-      `RECRUITER` or `isRecruiter` anywhere — the wizard knew and the page did
-      not.
-
-      ⚠ THE STORED FIGURES ARE LEFT ALONE. `rates` above still carries whatever
-      the row holds: this is a RENDERING rule, and a profile that is re-typed
-      back to HOURLY must show the rate it always had rather than a column
-      somebody blanked. ⚠⚠ AND NOTHING IS SUBSTITUTED IN ITS PLACE — what a
-      recruiter shows instead (a placement fee, a spread, nothing at all) is
-      Scott's product decision and he has not made it. Reported, not invented.
-    */
     isRecruiter: isRecruiterProfile(profile),
     rating: profile.rating === null ? null : Number(profile.rating),
 
-    /*
-      ── ⚠⚠ ACCOUNT HEALTH, SUMMARISED (`P2-J3-E593` WS-B item 12) ──────────
-
-      ⚠ Scott wants a card *"to let someone manage the strikes against their
-      user account"*. ⚠⚠ THE BRIEF IS EXPLICIT THAT IT IS **A CARD SUMMARY OF
-      `/account-health`, NOT A NEW SUBSYSTEM** — so these are the SAME FOUR
-      CHECKS that page runs, read from the same columns, and nothing is
-      computed here that is not computed there.
-      ⚠ NO NEW QUERY: this loader uses `include`, so every scalar on
-      `ProviderProfile` is already in memory. Exposing them costs one object.
-      ⚠⚠⚠ THE CARD LINKS TO `/account-health` AND THAT PAGE REMAINS THE
-      AUTHORITY. If the two ever disagree, the page is right and this is stale —
-      which is why the card shows no count, no score and no verdict of its own.
-    */
     accountHealth: {
-      /* ⚠ Always true by construction: they are signed in, reading this. */
       canSignIn: true,
       receivesMessages: profile.available_for_messages,
       statusActive: profile.status === "ACTIVE",
@@ -672,14 +274,11 @@ export async function getProviderProfileView(
 
     verifications: {
       emailVerified: profile.person.user?.email_verified != null,
-      // brief_S/E036 stubbed SMS; a number on file shows as "on file", not
       // "verified", so the badge never overstates what we actually checked.
       phoneOnFile: Boolean(profile.person.phone?.trim()),
       phoneVerified: profile.person.phone_verified_at != null,
     },
 
-    /* ⚠⚠ `P2-J1.4-E517` — AN OFFER SURFACE SHOWS ONLY IN-ROLE SKILLS. The rows are
-   kept (the prune is gone); the role selection decides what is PRESENTED. */
     skills: shownSkills(
       selectedRoleIds(profile),
       profile.skills,
@@ -687,9 +286,6 @@ export async function getProviderProfileView(
     ).map((s) => ({
       id: s.skill.id,
       name: s.skill.name,
-      /* ⚠ `null` IS A REAL STATE — `Skill.pillar_id` is nullable and
-         `onDelete: SetNull`. The page groups those under one honest heading
-         rather than inventing a domain for them. */
       pillar: s.skill.pillar?.name ?? null,
     })),
     specializations: profile.specializations.map((s) => ({
@@ -698,7 +294,6 @@ export async function getProviderProfileView(
       kind: s.specialization.kind,
     })),
 
-    // E045 — the offerings a buyer can buy, not past work.
     packages: packages.map((pk) => ({
       id: pk.id,
       title: pk.title,
@@ -711,7 +306,6 @@ export async function getProviderProfileView(
       milestones: pk.milestones,
     })),
 
-    // --- E037 portfolio entities ------------------------------------------
     // brief_project_model_v2 — the full card payload. `clientName` is sent as
     // stored; the REDACTION is applied at render (see `ProjectCard`), so the
     // one rule lives in one place and the future Plus tier can lift it without
@@ -726,17 +320,6 @@ export async function getProviderProfileView(
       startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
       endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
       isCurrent: p.is_current,
-      /*
-        E114 — the real client name is REDACTED HERE, at the read, not hidden at
-        render. It was emitted unconditionally: `clientLabel()` correctly showed
-        the code name for a CONFIDENTIAL project, but the real one still travelled
-        in the payload, so it was one View-Source away on a public page. A
-        confidentiality setting that survives only as long as nobody looks at the
-        network tab is not a confidentiality setting.
-
-        Same principle as the WS5 validation-contact gate: the name must not leave
-        the server for a viewer who may not see it.
-      */
       ...clientNameVisibility({
         visibility: p.client_visibility,
         isOwner,
@@ -759,29 +342,14 @@ export async function getProviderProfileView(
       artifacts: p.artifacts.map(toArtifactView),
       ...gateContact(p.contact_email),
     })),
-    // E042 — Employer is the ONE work-history model; the duplicate flat
     // WorkExperience rendering is gone.
     employers: profile.employers.map((e) => ({
       id: e.id,
       name: e.name,
       roleTitle: e.role_title,
-      /*
-        ── ⚠⚠ THE VALIDATION BADGE (`P2-A1.1-E748`, WS-C) ────────────────────
-
-        ⚠ `validated` is the fact a BUYER may see. ⚠⚠ `validationPending` is
-        OWNER-ONLY and the component gates it — the brief: *"Pending shows only
-        to the owner."* A visitor seeing *"validation requested"* learns that
-        somebody has been asked and has not answered, which is nobody's business
-        and reads as a doubt.
-        ⚠⚠⚠ **WHO VALIDATED IS NEVER EXPOSED — ONLY THAT SOMEBODY DID, AND THE
-        DOMAIN.** The brief: *"Validated by a contact at <domain> on <date>. No
-        names."* The contact answered a favour, not a public statement.
-      */
       validated: e.validation_status === "VALIDATED",
       validationPending: e.validation_status === "PENDING",
       validatedAt: e.validations?.[0]?.responded_at?.toISOString() ?? null,
-      /* ⚠ The DOMAIN, derived from the address we actually mailed — never the
-         local part, never the person. */
       validatedBy: e.validations?.[0]
         ? e.validations[0].confirmed_by_person_id
           ? ("colleague" as const)
@@ -801,23 +369,11 @@ export async function getProviderProfileView(
         description: pr.description,
       })),
     })),
-    // E044 — standalone; no employer anywhere.
     certifications: certifications.map((c) => ({
       id: c.id,
       name: c.name,
       issuer: c.issuer,
       year: c.year,
-      /*
-        ── ⚠⚠⚠ PROVENANCE, ON THE BUYER-FACING PATH (`P2-A4-E710`) ────────────
-
-        ⚠⚠ **THE QUERY ABOVE HAS NO `select`, SO `issued_from` WAS ALREADY FETCHED AND
-        THIS MAPPER SIMPLY DROPPED IT.** ⚠ That is why the defect was invisible: nothing
-        was missing from the database round trip, only from the shape the page sees.
-        ⚠⚠⚠ **AN UPLOADED PDF AND A PANAMEER-EARNED PASS RENDERED IDENTICALLY TO A
-        BUYER, AND THE VERIFICATION IS THE ENTIRE VALUE OF THE TEST.**
-        ⚠ `credentialId` was already carried below — it is what makes the earned row
-        offer its public `/verify/{id}` page.
-      */
       issuedFrom: c.issued_from,
       issuedOn: c.issued_on ? c.issued_on.toISOString().slice(0, 10) : null,
       expiresOn: c.expires_on ? c.expires_on.toISOString().slice(0, 10) : null,

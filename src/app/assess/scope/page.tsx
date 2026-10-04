@@ -1,15 +1,6 @@
 import { ComingSoon } from "@/components/ComingSoon";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 
-/**
- * "See the detailed scope assessment →" and "Book a 20-min call".
- *
- * AN HONEST STUB, per the brief. The scoped-requirements generator (Pillar →
- * Offering → Functional Area → Transaction → Task, with Owner tags) is the
- * engine spec's next chunk and does not exist; neither does a booking
- * integration. A page that pretended to either would be the fake-live the rails
- * forbid, and a dead link would be worse.
- */
 export default function ScopePage() {
   return (
     <div className="marketing-surface flex min-h-screen flex-col bg-white font-body text-ink">

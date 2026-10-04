@@ -10,18 +10,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * DRAFT REMINDER — "one step from live" (WS-E).
- *
- * The deck's subject, which puts the name at the end rather than the front:
- * "Almost there — finish your Work Request, Scott". It reads as a nudge from a
- * person instead of a mail-merge, and the brief's alternative phrasings were
- * offered as options rather than as the copy.
- *
- * ⚠ NOT WIRED — see the TODO at the call site note in `work-request.ts`. This
- * needs a scheduler (a cron sweep over DRAFTs older than N hours) and there is
- * none in the repo; nothing here fires on its own.
- */
 export function workRequestDraftReminderTemplate({
   firstName,
   workRequestTitle,

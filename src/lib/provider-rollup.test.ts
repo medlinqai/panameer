@@ -8,17 +8,6 @@ import {
 import { experienceMonths } from "./experience";
 import { dateRangeLabel } from "./date-range-label";
 
-/**
- * The weighting arithmetic (brief_per_job_skill_model WS-2).
- *
- *   npm run check:rollup
- *
- * Pure functions only — no database. The ranking behaviour the brief specifies
- * is a property of these two functions, and it is the kind of thing that
- * degrades quietly: a decay tweak that looks harmless can invert the order of
- * two providers in a search result and nothing anywhere will complain.
- */
-
 let pass = 0;
 const failures: string[] = [];
 const ok = (label: string, cond: boolean, detail = "") => {

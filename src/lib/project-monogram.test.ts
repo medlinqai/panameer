@@ -1,13 +1,5 @@
 import { projectMonogram } from "./project-monogram";
 
-/**
- * `check:monogram` — the project tile's letters (`P2-J1.4-E512`).
- *
- *   npm run check:monogram
- *
- * ⚠ Pure, so the rule is provable without a browser. The PLACEMENT is asserted
- * by `check:ui`; this asserts what the letters ARE.
- */
 let pass = 0;
 const failures: string[] = [];
 const ok = (label: string, cond: boolean, detail = "") => {
@@ -30,22 +22,18 @@ is("Supplier Enablement (REMOTE)", "SE");
 is("OBN — Supplier Onboarding", "OS");
 is("Payables/Receivables Cutover", "PR");
 
-/* ⚠⚠ NO QUESTION MARK, EVER (Scott, 2026-09-17). An unnamed tile is EMPTY. */
 is("", "");
 is("   ", "");
 is("!!!", "");
 ok("no output ever contains a question mark", !["", "  ", "???", "The", "Ω project"].some((n) => projectMonogram(n).includes("?")));
 
-/* ⚠ Never more than two letters — the tile is 40px. */
 ok(
   "never more than two letters",
   ["Oracle Cloud Procurement Transformation Programme", "A B C D E", "one two three"].every((n) => projectMonogram(n).length <= 2)
 );
 
-/* ⚠ A name of only stop-words still shows something. */
 is("The Of", "TO");
 
-/* ⚠ Non-Latin names are letters too — `\p{L}`, not A–Z. */
 ok("non-Latin first letters survive", projectMonogram("Ωmega Rollout") === "ΩR", projectMonogram("Ωmega Rollout"));
 
 if (failures.length > 0) {

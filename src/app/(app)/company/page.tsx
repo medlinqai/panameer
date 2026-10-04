@@ -18,29 +18,6 @@ import { LegalLink } from "@/components/legal/LegalLink";
 
 export const dynamic = "force-dynamic";
 
-/* ⚠⚠ MOVED TO `lib/tax-types.ts` (`P2-A2-E661`). It was a PRIVATE const here,
-   so the company editor and the PATCH route could not read it — and the six
-   values would have been written out three times (`E585`). ⚠ The shared one is
-   `Record<TaxType, string>`, so an unlabelled enum value is now a compile error.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   const TAX_LABELS: Record<string, string> = {
-   //     C_CORP: "C-Corporation", S_CORP: "S-Corporation", LLC: "LLC",
-   //     PARTNERSHIP: "Partnership",
-   //     SOLE_PROP_INDIVIDUAL: "Sole Proprietor / Individual",
-   //     NONPROFIT: "Non-profit",
-   //   }; */
-
-/**
- * THE COMPANY PAGE (brief_company_model WS3 + WS6).
- *
- * Three jobs on one page because they are one subject:
- *   · what this company IS — legal name, business type, domain, members;
- *   · the COMPANY ToS record, and re-acceptance when the version bumps;
- *   · the ADMIN's queue of pending join requests, with Approve / Reject.
- *
- * The queue lives here rather than in the Panameer admin console on purpose:
- * the approver is the COMPANY's admin — a customer — not Panameer staff.
- */
 export default async function CompanyPage({
   searchParams,
 }: {
@@ -48,47 +25,16 @@ export default async function CompanyPage({
 }) {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcompany");
-  /*
-    `?blocked=` arrives from the WS4 gate. A refusal that just dumps you on a
-    page with no explanation reads as a bug; this says which door closed and
-    what clears it — and the fix (accept the terms) is on this same page.
-  */
   const { blocked, from } = await searchParams;
   const blockedMessage = blocked
     ? TRANSACT_MESSAGE[blocked.toUpperCase() as keyof typeof TRANSACT_MESSAGE]
     : null;
 
-  /*
-    ── ⚠ THIS PAGE IS THE DOOR, NOT A SIGNPOST (P1-J1.2-E004) ──────────────────
-
-    It used to render "No company yet" with one link, to `/join`. Scott:
-    *"I went to look at the buyer side the other day and I was forced to do
-    something with my company details and I couldn't, so it kept me from doing
-    anything."* He was right, and the loop was closed:
-
-      /create-work  →  /company?blocked=NO_COMPANY  →  "No company yet"  →
-      /join  →  /join/buyer  →  "This account isn't a buyer account."  →
-      /dashboard, and nowhere else.
-
-    `CompanyStep` is the ONLY UI in the codebase that can write a
-    `CompanyMembership`, and it was rendered in exactly two files — the requester
-    wizard and the provider wizard — both of which refuse an account in this
-    state. So there was no door at all. Now there is one, here.
-
-    ⚠ NO `guardTransact` ON THIS PAGE, EVER. A page whose job is to clear the
-    transact block cannot be behind the transact block. It is inside `(app)` and
-    already requires a session; that is the correct and only gate.
-  */
   const binding = await getCompanyBinding(viewer);
   if (!binding) {
     return (
       <>
-        {/* ⚠⚠⚠ THE ROW GOES ON **BOTH** BRANCHES (`P2-A2-E600` WS-A). Measured:
-            the gate persona has no company binding, so this early return is
-            what she actually sees — and it rendered with NO TAB ROW while the
-            main branch had one. ⚠ A page that shows its siblings only once you
-            have set something up is a row that vanishes exactly when you most
-            need a way out of it. */}
+        {}
         <PageTabs
           wrap
           eyebrow={ACCOUNT_MENU_NAME}
@@ -159,8 +105,7 @@ export default async function CompanyPage({
 
   return (
     <>
-      {/* ⚠⚠ THE PROFILE TAB ROW (`P2-A2-E600` WS-A) — one row for every page
-          under the avatar, using the same words as the menu. */}
+      {}
       <PageTabs
         wrap
         eyebrow={ACCOUNT_MENU_NAME}
@@ -177,7 +122,7 @@ export default async function CompanyPage({
       )}
 
       <header className="flex flex-wrap items-center gap-4">
-        {/* E168 — the logo the definer uploaded, where the company is named. */}
+        {}
         {c.logo_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img

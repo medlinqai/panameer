@@ -2,21 +2,6 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Admin → Platform Admins (deck slide 16 / image10).
- *
- * Three cards: the current admins with Revoke, Grant-to-an-existing-user, and
- * Invite-a-new-admin.
- *
- * THE WRITES ARE DELIBERATELY NOT WIRED (Scott's call, 2026-08-02). Granting
- * and revoking the system-admin flag is a privilege-escalation surface, and
- * there is no audit log, no confirmation step and no second-approver flow yet.
- * The controls render in their designed positions, disabled, and say why —
- * shipping them live would be the one stub on this console that could cause
- * real damage.
- *
- * The LIST is real: is_system_admin is a column, so who holds it is readable.
- */
 export default async function Page() {
   const admins = await prisma.user.findMany({
     where: { is_system_admin: true },

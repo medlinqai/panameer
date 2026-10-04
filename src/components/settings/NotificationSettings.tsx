@@ -8,28 +8,6 @@ import {
   type NotificationGroup,
 } from "@/lib/notification-categories";
 
-/**
- * Notification Settings (J2.4 WS-H / E020).
- *
- * THREE TABS, AND A CHANNEL PER NOTIFICATION. The tabs are the brief's —
- * Messages, Email updates, Tax settings — and the grid inside each is the part
- * the surface being replaced didn't have: In-App, Email, SMS chosen per
- * category rather than one master switch per group. People want the milestone
- * deadline by SMS and the product news not at all, and a per-group switch
- * cannot express that.
- *
- * SMS SAYS WHAT IT IS. Twilio is stubbed, so the toggle records a preference
- * that nothing will act on yet, and the page states that rather than letting
- * someone rely on a text that never arrives. Push is deferred with the app.
- *
- * ONE LOCKED ROW. "A tax form is required before payout" can't be switched off:
- * it is the notification that unblocks getting paid, and an off switch on it is
- * a way to silently strand your own money.
- */
-/* ⚠ `isDefault` — ruling 34d. True when NO preference row exists for this
-   category, so the switches are showing the declared default rather than a
-   choice the member made. ⚠⚠ It is resolved in `getNotificationPrefs`, not
-   here: the component must never re-derive what a default is (`E585`). */
 type Pref = {
   key: string;
   inApp: boolean;
@@ -48,40 +26,10 @@ export function NotificationSettings({
   totalCategories,
 }: {
   prefs: Pref[];
-  /** ⚠ `P1-ALL` — audience filtering. See `categoriesForAudience`. */
   isSeller: boolean;
   isBuyer: boolean;
-  /**
-   * ── ⚠⚠⚠ WHETHER *THIS CATEGORY'S* EMAIL ACTUALLY SENDS (`P0-E689` WS-D) ──
-   *
-   * ⚠⚠ **SCOTT, 2026-09-27:** *"`emailConfigured()` is GLOBAL; the allowlist is
-   * PER-EVENT. With one event on, the honest screen is neither 'email works' nor
-   * 'email doesn't' — it is per-category: one sends, seventeen record intent."*
-   *
-   * ⚠ **SUPERSEDED, quoted not deleted (`E164`) — the single global boolean this
-   * replaces, and the reason it was wrong:**
-   * //   emailEnabled: boolean;
-   * //   WHETHER THIS BUILD CAN SEND AN EMAIL AT ALL (P1-ALL-E382). Passed in
-   * //   from the server page, which calls emailConfigured() - THE SAME FUNCTION
-   * //   notify() USES. WHEN E371 LANDS THIS GOES true ON ITS OWN and the column
-   * //   un-disables. No line of E382 needs deleting.
-   * ⚠⚠⚠ **`E371` DID LAND, THE FLAG DID GO `true`, THE COLUMN DID UN-DISABLE —
-   * AND NOTHING SENT**, because the notification layer had no sender at all.
-   * **The mechanism worked exactly as designed and still produced a lie**, which
-   * is why the fix is a better QUESTION rather than a better flag.
-   *
-   * ⚠ Computed on the SERVER, per category, and handed down — `process.env` is
-   * empty in the browser, so asking here would answer `false` for everybody.
-   */
   emailSendsFor: Record<string, boolean>;
-  /**
-   * ⚠ The GLOBAL fact, still exactly one function (`E382`), kept so the screen
-   * can tell the two reasons apart: **no key at all** is a different state from
-   * **a key but this category's event is not switched on**, and a member reading
-   * a greyed toggle deserves the real reason.
-   */
   emailConfigured: boolean;
-  /** ⚠ For the summary line. Derived server-side, never counted by hand. */
   sendingCount: number;
   totalCategories: number;
 }) {
@@ -91,13 +39,6 @@ export function NotificationSettings({
   );
 
   const group = NOTIFICATION_GROUPS.find((g) => g.id === tab)!;
-  /*
-    ⚠ FILTERED BY AUDIENCE (`P1-ALL`, 2026-09-01). ⚠ SUPERSEDED, quoted:
-    `const rows = categoriesFor(tab);` — unfiltered, so a buyer was shown
-    "Panameer can't pay you until a W-9 or W-8 is on file" and a seller was shown
-    "A settlement request needs your approval". A dual-role account sees both,
-    which is correct.
-  */
   const rows = categoriesForAudience(tab, { isSeller, isBuyer });
 
   const setChannel = async (
@@ -144,21 +85,6 @@ export function NotificationSettings({
               key={c}
               className={
                 "text-center text-[11.5px] font-bold uppercase tracking-wide " +
-                /* ⚠ THE HEADER IS LABELLED TOO (`P1-ALL-E382`), not just the
-                   toggles — a greyed checkbox with a live-looking header reads
-                   as a bug rather than as a state. */
-                /* ⚠⚠⚠ THE HEADER NO LONGER CARRIES A VERDICT FOR THE WHOLE
-                   COLUMN (`P0-E689` WS-D). It used to grey itself and print
-                   "not yet" from ONE global boolean — which is exactly the
-                   claim that stopped being true per row the moment a single
-                   event was switched on. ⚠ The state is per category now and
-                   lives on the rows; a column-wide label would contradict the
-                   row under it.
-                   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                   //   (c === "Email" && !emailEnabled ? "text-ink-2/50" : "text-ink-2")
-                   //   {c === "Email" && !emailEnabled && (<span>not yet</span>)}
-                   ⚠ SMS keeps its column-wide label, and correctly: it is dark
-                   for EVERY category, for one reason (`86e`). */
                 (c === "SMS" ? "text-ink-2/50" : "text-ink-2")
               }
             >
@@ -184,21 +110,7 @@ export function NotificationSettings({
                 <div className="min-w-0">
                   <p className="text-[14.5px] font-semibold">
                     {cat.label}
-                    {/*
-                      ── ⚠⚠⚠ "DEFAULT" SAYS THIS IS NOT A CHOICE YOU MADE ────
-
-                      ⚠ SCOTT, ruling 34d: the page *"shows the EFFECTIVE value
-                      and says plainly when it is the default rather than a
-                      choice."* ⚠⚠ The switches beside it are already the
-                      effective value; without this marker a member cannot tell
-                      a setting they chose from one nobody has ever touched —
-                      and those are different facts, because a default is free
-                      to change and a choice is not.
-                      ⚠⚠⚠ IT DISAPPEARS THE MOMENT THEY TOUCH ANYTHING in this
-                      category, because saving writes the row — so the marker
-                      is never stale. ⚠ It is a WORD, not a colour: a grey dot
-                      would mean nothing to anyone.
-                    */}
+                    {}
                     {pref.isDefault && (
                       <span className="ml-2 rounded-full bg-line-2 px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-[0.05em] text-ink-3">
                         Default
@@ -214,23 +126,7 @@ export function NotificationSettings({
                     <span className="text-[12.5px] font-semibold text-ink-2 sm:hidden">
                       {channel === "inApp" ? "In-App" : channel === "email" ? "Email" : "SMS"}
                     </span>
-                    {/*
-                      ⚠⚠ THE EMAIL TOGGLE IS DISABLED WHILE THE PIPE IS DOWN
-                      (`P1-ALL-E382`). A member was seeing *"Messages — Email
-                      ON"* for a channel that has never sent anything, which is
-                      the `E034` shape with a USER-VISIBLE CONTROL: a promise the
-                      build cannot keep, presented as a setting they chose.
-
-                      ⚠ THE STORED PREFERENCE IS NOT TOUCHED. `checked` still
-                      shows what they are opted into, and the category defaults
-                      still say `email: true`. Flipping those to `false` would
-                      silently rewrite every user's intent to fix a RENDERING
-                      problem — and would lose the record of what they wanted the
-                      day email starts working.
-
-                      ⚠ `cat.locked` KEEPS ITS OWN MEANING. The two reasons a
-                      toggle is disabled are different and both survive.
-                    */}
+                    {}
                     <input
                       type="checkbox"
                       aria-label={

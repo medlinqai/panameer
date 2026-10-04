@@ -1,19 +1,3 @@
-/**
- * Derived years of experience (PJv2 WS6 / E068).
- *
- * Replaces the self-reported "Beginner / Mid-Career / Expert" pick, which asked
- * a provider to grade themselves and then showed that grade to buyers as if it
- * were a fact. The work history already contains the answer.
- *
- * THE UNION, NOT THE SUM. Someone who ran two engagements across the same two
- * years has two years of experience, not four — and consultants overlap
- * constantly, so a naive sum of spans systematically inflates exactly the people
- * most likely to have several at once. Overlapping and touching intervals are
- * merged before anything is counted.
- *
- * Pure and dependency-free so it can be used from a server read, from the seed,
- * and from a test.
- */
 
 export type Span = {
   start: Date | string | null | undefined;
@@ -29,19 +13,6 @@ function toInterval(s: Span, now: number): Interval | null {
   const start = new Date(s.start).getTime();
   if (Number.isNaN(start)) return null;
 
-  /*
-    ── ⚠⚠ ONLY A CURRENT ROLE RUNS TO TODAY (`P2-J1.4-E549`) ─────────────────
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        // …anything else without one is treated as ongoing too, which is the
-        // reading most CVs intend.
-        const rawEnd = s.isCurrent || !s.end ? now : new Date(s.end).getTime();
-        const end = Number.isNaN(rawEnd) ? now : rawEnd;
-    ⚠⚠ TWO WAYS TO OVERSTATE A CAREER: a missing end ran to today, and an end
-    that could not even be PARSED ran to today. Scott, 2026-09-17: *"TEXT WE
-    COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT EVIDENCE IT IS CURRENT."*
-    This feeds the profile hero's "N years" — the number a buyer reads.
-    ⚠ Now: current → today · an end → that end · anything else → not measured.
-  */
   let end: number;
   if (s.end) {
     end = new Date(s.end).getTime();
@@ -75,14 +46,6 @@ export function mergeIntervals(intervals: Interval[]): Interval[] {
   return out;
 }
 
-/**
- * CALENDAR months between two instants.
- *
- * Not elapsed-time ÷ average-month, which is subtly and visibly wrong: two
- * consecutive two-year stints total 1460 days, and 1460 / 365.25 floors to
- * THREE — so a provider with four years of work would read as three. People
- * count experience in calendar years, so this counts the same way.
- */
 function calendarMonths(startMs: number, endMs: number): number {
   const a = new Date(startMs);
   const b = new Date(endMs);
@@ -110,10 +73,6 @@ export function experienceYears(spans: Span[], now: number = Date.now()): number
   return Math.floor(experienceMonths(spans, now) / 12);
 }
 
-/**
- * The label for the profile hero. Null when there is nothing to claim, so the
- * hero omits the line rather than asserting "0 years".
- */
 export function experienceLabel(
   spans: Span[],
   now: number = Date.now()

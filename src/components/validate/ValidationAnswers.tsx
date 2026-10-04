@@ -2,26 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * The five optional questions, shown AFTER the confirmation has committed
- * (`P1-J2.1-E024`, 2026-09-01).
- *
- * Scott: *"the email validation should push you back to a listing of 5 questions.
- * when did you work with them. what skills… or something like this."*
- *
- * ⚠⚠ EVERY FIELD IS OPTIONAL AND NOTHING HERE GATES THE VALIDATION. The badge was
- * earned by the click that rendered this component — see the block in
- * `ValidateActions`. The button says **Save**, never "Submit your validation", and
- * no copy on this page implies anything is pending.
- *
- * ⚠ WHY THIS MOMENT IS WORTH ANYTHING: the person reading it reached it through a
- * single-use link sent to their own company domain. A testimonial from here is the
- * opposite of a solicited recommendation from a friend — which is exactly why the
- * consent flags below are two, and both default off.
- *
- * ⚠ ALL COPY IS CC'S AND IS REPORTED FOR SCOTT TO REPLACE. The brief's wording is
- * a sketch, in its own words, not final copy.
- */
 export function ValidationAnswers({
   token,
   declined,
@@ -29,7 +9,6 @@ export function ValidationAnswers({
   providerName,
 }: {
   token: string;
-  /** ⚠ A declining client gets ONE optional box, not five questions. */
   declined: boolean;
   projectName: string;
   providerName: string;
@@ -70,9 +49,6 @@ export function ValidationAnswers({
         }),
       });
       if (!r.ok) {
-        /* ⚠ AND EVEN THIS FAILING CHANGES NOTHING ABOUT THE VALIDATION. The copy
-           says so, because a red message on this page must not read as "your
-           confirmation did not go through". */
         setError("We couldn't save that. Your confirmation is safe either way.");
         return;
       }

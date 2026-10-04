@@ -1,17 +1,3 @@
-/**
- * ── ⚠⚠⚠ `check:validation` — `P2-A1.1-E746` (lane 3, WS-A) ──────────────────
- *
- * ⚠ The three rules WS-A added to a flow that already existed, and one the brief
- * asked a question about.
- *
- * ⚠⚠ **IT STRIPS COMMENTS BEFORE SCANNING** (load-bearing rule 12): this file's
- * subjects carry long `E164` quotes that NAME the old one-hour window and the old
- * code, and scanning raw text would match the quote as if it were live.
- *
- * ⚠ MUTATION TEST: put `RESEND_COOLDOWN_MS` back to an hour, delete the
- * own-domain refusal, drop the daily cap, or stop clearing `validation_status`
- * on a material edit — each turns this red.
- */
 import { readFileSync as rawRead } from "node:fs";
 import { join } from "node:path";
 

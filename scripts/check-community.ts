@@ -1,31 +1,8 @@
-/**
- * `check:community` — the three ways this signal goes wrong
- * (brief_community_signal WS4).
- *
- *   1  NOTHING MAY BE LABELLED "MESSAGES". There is no messaging model in this
- *      codebase — no Conversation, no Message, no `/api/messages`. Scott asked
- *      for "community posts...messages"; posts ship and messages do not, and a
- *      post count under the word "messages" would be a made-up number for a
- *      feature that does not exist.
- *   2  `marked_helpful_at` IS WRITTEN ONLY BY `lib/forums.ts`, AND ONLY AFTER
- *      THE TWO CHECKS. Only the thread's author, never their own reply — the
- *      whole design rests on that, and a second write path would dissolve it.
- *   3  THE PROFILE BLOCK IS ABSENT, NOT ZEROED, for a person with no activity.
- *      A zero on a public profile is a claim about a person and it is the wrong
- *      one.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN. This file names every forbidden
- * token, and so do the components' own header comments; a scanner that read
- * prose would fail on its own documentation, and the fix for that is always to
- * weaken the scanner.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { publishedProfileCode } from "./_profile-surface";
 import { MENTOR_HELPFUL_THRESHOLD, mentorState } from "@/lib/community-signal";
-/* ⚠ `P2-A2-E598` WS-B — the row is asserted from the DEFINITION as well as from
-   the pages, so a tab cannot be removed from one and left in the other. */
 import { PAGE_TABS } from "@/lib/nav";
 
 let pass = 0;
@@ -53,7 +30,6 @@ const bodies = new Map(files.map((f) => [f, strip(readFileSync(f, "utf8"))]));
 
 const SIGNAL_LIB = join("src", "lib", "community-signal.ts");
 const FORUMS = join("src", "lib", "forums.ts");
-/* `P2-J3-E567` WS-C — the Teams page and the component holding its two sets. */
 const TEAMS_PAGE = join("src", "app", "(app)", "community", "teams", "page.tsx");
 const TEAM_SECTIONS = join("src", "components", "community", "TeamSections.tsx");
 const BLOCK = join("src", "components", "profile", "CommunitySignal.tsx");
@@ -144,19 +120,6 @@ check(
 // GUARD 2 — one write path, behind two checks
 // ---------------------------------------------------------------------------
 
-/*
-  ⚠ A WRITE, NOT A SELECT. `marked_helpful_at: true` inside a Prisma `select` is a
-  READ, and the counting lib legitimately does one — the first version of this
-  regex flagged it and would have been "fixed" by exempting the file, which is
-  exactly how a guard stops guarding. A write assigns something that is not a
-  select flag.
-*/
-/*
-  ⚠ THE WHITESPACE IS INSIDE THE LOOKAHEAD, and that is not a style choice.
-  `:\s*(?!true\b)` matches anyway, because `\s*` backtracks to zero and the
-  lookahead then only has to see a SPACE rather than `true`. The first two
-  versions of this line both passed `marked_helpful_at: true` off as a write.
-*/
 const WRITE = /marked_helpful_(at|by)\s*:(?!\s*(?:true|false)\b)/;
 const writers = [...bodies.entries()].filter(([, b]) => WRITE.test(b)).map(([f]) => f);
 check(
@@ -186,15 +149,6 @@ check(
   /post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
 );
 
-/* ══ GUARD 3 · THE INSTRUCTOR CORRECTNESS SIGNAL (`P2-J3-E558` WS-B) ═══════
-   ⚠⚠ A SEPARATE GUARD FROM GUARD 2, ON SCOTT'S RULING, SO A FAILURE NAMES WHICH
-   SIGNAL BROKE. ⚠ `marked_helpful_*` answers *did this answer my question*
-   (the asker); `instructor_confirmed_*` answers *is this answer correct* (the
-   path's instructor). Folding them into one guard would report a break in one
-   as a break in "the forum signals", which is the sentence nobody can act on.
-   ⚠ THE REGEX IS DELIBERATELY DISTINCT — `instructor_confirmed_` shares no
-   prefix with `marked_helpful_`, so neither guard can match the other's column.
-*/
 const CONFIRM_WRITE = /instructor_confirmed_(at|by)\s*:(?!\s*(?:true|false)\b)/;
 const confirmWriters = [...bodies.entries()]
   .filter(([, b]) => CONFIRM_WRITE.test(b))
@@ -215,21 +169,6 @@ check(
   confirmLeaks.join(", ")
 );
 
-/* ⚠ AUTHORITY IS DERIVED FROM THE BOARD'S PATH, never asserted by the caller.
-   ⚠⚠ AND IT IS `teachesPathWhere`, THE ONE DEFINITION — NOT `expert_person_id`.
-   Measured 2026-09-18: only 10 of 23 paths have a path-level expert, and the
-   narrow field would have locked Scott out of all 16 paths he teaches across 338
-   lessons. `check:forums` bans that field in `forums.ts` outright.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`) — this assertion first matched the
-   narrow shape, because the first version of the code used it:
-
-       check(
-         "GUARD 3 — the gate refuses a caller who is not the path's instructor",
-         /expertId\s*!==\s*person\.id[\s\S]{0,200}throw new ForumError/.test(forums)
-       );
-
-   ⚠ THE RULE IS UNCHANGED — refuse a caller who does not teach the path. Only
-   the expression it matches changed, because the predicate was corrected. */
 check(
   "GUARD 3 — authority is `teachesPathWhere`, the one definition",
   /teachesPathWhere\(person\.id\)[\s\S]{0,400}if \(!teaches\)/.test(forums),
@@ -239,25 +178,15 @@ check(
   "GUARD 3 — the gate refuses a caller who does not teach the path",
   /if \(!teaches\)[\s\S]{0,200}throw new ForumError/.test(forums)
 );
-/* ⚠⚠ THE FARMABLE SHAPE — an instructor answering in a path they teach. */
 check(
   "GUARD 3 — the gate refuses confirming your OWN reply",
   /loadForConfirming[\s\S]{0,2000}post\.author_id\s*===\s*person\.id[\s\S]{0,160}throw new ForumError/.test(forums)
 );
-/* ⚠ A GENERAL BOARD HAS NO PATH, so nothing there is confirmable — there is
-   nobody whose subject-matter authority the board represents.
-   ⚠ SUPERSEDED (`E164`): `/!post\.thread\.board\.learning_path_id[\s\S]{0,200}throw new ForumError/` */
 check(
   "GUARD 3 — a board with no path cannot be confirmed in",
   /if \(!pathId\)[\s\S]{0,200}throw new ForumError/.test(forums)
 );
 
-/* ══ ⚠⚠ THE SIGNALS DO NOT CROSS ══════════════════════════════════════════
-   ⚠ Scott, 2026-09-18: *"instructor_confirmed_* does NOT feed Your Mentor
-   Signal. community-signal.ts keeps counting marked_helpful_at and only that."*
-   ⚠⚠ REUSING THE COLUMN WOULD HAVE MADE THE MENTOR SIGNAL'S LABEL FALSE IN THE
-   FLATTERING DIRECTION — an instructor could inflate somebody's standing with a
-   judgement the asker never made. */
 const signalBody = bodies.get(SIGNAL_LIB) ?? "";
 check(
   "E558 — the mentor signal never reads the instructor column",
@@ -1424,11 +1353,6 @@ for (const gone of ["Get Paid", "Pay", "Track Orders"]) {
     "the door is on /orders and check:orders §6 owns it"
   );
 }
-/* ⚠⚠ AND THE POPULATION IS ASSERTED, because the bug above was ultimately an
-   EMPTY HAYSTACK passing a "needle is absent" test. ⚠⚠⚠ IT GUARDS MORE THAN MY
-   OWN LINES: the pre-existing "no RAIL label reverts to a bare noun" assertion
-   reads the same string and was vulnerable to exactly the same emptiness —
-   proven, because emptying `railsOnly` reddens BOTH. */
 check(
   "E378/4 — railsOnly actually captured both rail arrays",
   railsOnly.includes('label: "Connect"') && railsOnly.length > 500,
@@ -1549,26 +1473,6 @@ check(
   connectSet.includes('label: "Community"') && connectSet.includes('label: "Groups"'),
   `captured ${(connectSet.match(/^\s*\{ label:/gm) ?? []).length} entries — if this is not Connect's row, every assertion below is about the wrong text`
 );
-/*
-  ⚠⚠⚠ THREE — Community · Groups · Settings. ⚠ The old figure was `5` and it
-  was never Connect's row at all: it counted the WRONG BLOCK (see the note on
-  `connectSet` above). Against the real block the row held FOUR before ruling 4
-  removed `Service Products`, and holds THREE now.
-  ⚠⚠ THE COUNT IS STILL THE THING BEING HELD — an appended tab must fail rather
-  than pass quietly, which is the whole reason Scott asked for a count.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   "E593/5 — the Connect row is exactly five tabs" … === 5
-*/
-/* ⚠ SIX NOW (Scott, 2026-09-25 — the sections). ⚠⚠ THE COUNT IS STILL THE THING
-   BEING HELD: an appended seventh must fail rather than pass quietly, which is
-   the whole reason Scott asked for a count in the first place.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   "E593/5 — the Connect row is exactly three tabs" … === 3 */
-/* ⚠ FIVE NOW (`P2-ALL-E687` WS-B, ruling 89a — `Settings` moved to the avatar
-   menu). ⚠⚠ THE COUNT IS STILL THE THING BEING HELD: an appended sixth must
-   fail rather than pass quietly, which is the whole reason Scott asked for a
-   count. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   "E593/5 — the Connect row is exactly six tabs" … === 6 */
 check(
   "E593/5 — the Connect row is exactly five tabs",
   (connectSet.match(/^\s*\{ label:/gm) ?? []).length === 5,
@@ -1584,75 +1488,20 @@ for (const href of ["/community", "/community/colleagues", "/community/mentors",
     "a tab for a page that does not exist is a door onto a wall"
   );
 }
-/* ⚠⚠⚠ AND `Service Products` IS POSITIVELY ABSENT FROM THE CONNECT SET — not
-   merely missing from a list this gate happens to iterate. ⚠ Scoped to the
-   Connect block, because the label legitimately still exists elsewhere in
-   `nav.ts`: `/my-services` keeps its OWN tab row, and removing THAT one by a
-   blind first-match replace is a mistake `E619` actually made and caught. */
 check(
   "E619/WS-C — Service Products has left Connect's row",
   !connectSet.includes('label: "Service Products"'),
   "ruling 4: it belongs to Sell, and the duplicate comes out of Connect"
 );
-/* ⚠⚠ NOTHING 404s: the route keeps its own tab row AND a second entrance from
-   `ConnectProfile`'s card, so a provider can still reach it from Connect. */
 check(
   "E619/WS-C — /my-services keeps its own tab row",
   /"\/my-services": \[[\s\S]*?label: "Service Products"/.test(navLib),
   "removing the page's own tab instead of Connect's is the error this guards"
 );
-/*
-  ── ⚠⚠⚠ THE REVENUE-ADJACENCY RULE IS RETIRED (`P2-A3-E619` WS-C) ────────
-
-  ⚠ It held `E593`'s grouping — *who you are · who you know (free) · GROUPS
-  (money) · SERVICE PRODUCTS (money) · settings* — by asserting the two money
-  tabs sat together. ⚠⚠ **RULING 4 REMOVED ONE OF THE TWO**, so there is no
-  longer a PAIR to be adjacent, and the assertion could only ever fail from
-  here. ⚠⚠⚠ A GATE THAT CANNOT PASS IS NOT A GATE — it is a permanent red
-  somebody eventually switches off (`E522`'s `KNOWN_OPEN` reasoning).
-
-  ⚠⚠ THIS IS `check:rollup`'S CASE: the RULING changed, the code did not drift.
-  ⚠ AND IT WAS ALREADY RED ON TRUNK BEFORE THIS BRIEF TOUCHED IT — measured in
-  the `E618` sweep, where it and the `/hire` classification were two of the
-  three pre-existing non-zero gates. Ruling 4 is what resolves it.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   check("E593/5 — ⚠ the two revenue tabs sit next to each other",
-  //     connectSet.indexOf('label: "Service Products"') - connectSet.indexOf('label: "Groups"') > 0 &&
-  //       !connectSet.slice(connectSet.indexOf('label: "Groups"'),
-  //         connectSet.indexOf('label: "Service Products"')).includes('label: "Settings"'));
-*/
 check(
   "E378/5 — no tab repeats the journey name or says My",
   !/\{ n: \d+, label: "My /.test(navLib) && !/label: "My Community", href: "\/community" \}/.test(navLib)
 );
-/* ⚠⚠ MESSAGES IS UNNUMBERED, AND THAT IS A BUILD FACT: there is no Message
-   model, and a suggested sequence whose step 1 is a dead end teaches people the
-   numbers are decorative. */
-/* ⚠⚠ THAT DAY CAME. `E378` shipped this as *"Messages carries no step number"*
-   with the detail *"it takes 1 the day it has a model"* — quoted, not deleted.
-   `P1-ALL-E379` built the model, so the assertion is INVERTED rather than
-   dropped: the rule was never "Messages must be unnumbered", it was "a suggested
-   sequence must not open on a dead end". Messages is now step 1, which is
-   Scott's own order: *"1. Check Your Messages. 2. Search for Colleagues."* */
-/* ── ⚠⚠ NO STEP NUMBERS IN THE SET AT ALL (`P2-J3-E557` WS-A) ──────────────
-   ⚠⚠ THIS IS DELIBERATELY *NOT* AN INVERSION OF THE OLD ASSERTION. Scott,
-   2026-09-18: *"Messages leaves /community entirely under `E560`, so asserting
-   its position is asserting something with weeks to live."*
-   ⚠ So the rule asserted is the one that OUTLIVES the move: the set carries no
-   `n:` values, whatever order its members end up in. ⚠⚠ Under `none` a number
-   would never RENDER — this catches the stale DATA, which is what would
-   contradict itself the moment anybody flipped the mode back.
-
-   ── ⚠ FOOTNOTE: THE SUPERSEDED ASSERTION (`E164`) ─────────────────────────
-   ⚠ Live until `E557`, quoted not deleted:
-
-       check(
-         "E378/5 — Messages is step 1 now that it has a model",
-         /\{ n: 1, label: "Messages", href: "\/messages" \}/.test(navLib),
-         "E379 built the Message model, so the sequence no longer opens on a dead end"
-       );
-
-   ⚠ Its reasoning was right for its moment and is kept above this block. */
 check(
   "E557/2 — the /community set carries no `n:` values",
   !/\bn:\s*\d+/.test(
@@ -1660,72 +1509,19 @@ check(
   ),
   "a number under `none` is stale data waiting to contradict the order"
 );
-/* ⚠ AND IT LOST ITS `early` PILL — a readiness pill on a working feature is the
-   same lie in the other direction. */
 check(
   "E378/5 — Messages no longer carries an `early` pill",
   !/label: "Messages", href: "\/messages", state:/.test(navLib)
 );
-/* ⚠ THE `/community` MODE ASSERTION MOVED — it is `E557/1`, beside the other
-   mode check, and its superseded text is quoted there. Two assertions of one
-   fact was the thing being removed, so nothing is re-stated here. */
 check(
   "E378/5 — Find a Mentor is gone from every label and title",
   !/label: "Find a Mentor"/.test(navLib) &&
     !/title: "Find a Mentor/.test(bodies.get(join("src", "app", "(app)", "community", "mentors", "page.tsx")) ?? "")
 );
-/*
-  ⚠⚠ THE ROUTE FREEZE. THIRTEEN ROUTES, EACH ASSERTED BY EXACT STRING SO NOTHING
-  MOVES ONE BY ACCIDENT.
-
-  ⚠ IT FIRED ON 2026-09-04 AND THAT IS THE GUARD DOING ITS JOB, NOT BEING IN THE
-  WAY. `E378` shipped this list with the note *"⚠⚠ NO ROUTE MOVED. This was a
-  LABEL brief; every href is unchanged."* — which was true of `E378` and is the
-  sentence `P1-ALL-E380` deliberately broke.
-
-  ⚠⚠ SO THE VALUE IS UPDATED AND NOTHING ELSE IS: `/contracts` -> `/orders`.
-  SCOTT, 2026-09-04: *"remove contract. we will not have that."* The count is
-  still thirteen, the match is still an EXACT quoted string, and NO ENTRY WAS
-  REMOVED OR LOOSENED TO A PREFIX. A deliberate move updates one value on the
-  record; an accidental one still fails.
-
-  ⚠ `E380` MOVED EXACTLY ONE ROUTE. If a second entry in this list ever needs
-  changing in the same commit, that is a different brief.
-*/
 for (const href of [
-  /* ⚠ `/settings/packages` -> `/my-services` (`P1-ALL-E533`): the seller surface
-     left Settings so it would stop wearing the SETTINGS eyebrow and tab row.
-     ⚠⚠ `/find-work` STAYS — Scott ruled it accurate and already a verb phrase,
-     so it does NOT move to `/work` (which the public Seller page holds). */
   "/learn", "/create-work", "/find-work", "/shop", "/my-services",
-  /* ⚠ WAS `/contracts` UNTIL `P1-ALL-E380` — the ToS is the MSA and the Work
-     Order is the SOW, so there is no Contract record for a route to name. */
-  /* ⚠ `/finances` -> `/payments` (`P1-ALL-E533`). */
   "/orders", "/pay", "/payments", "/community", "/community/groups",
-  /*
-    ⚠⚠ `/community/teams` AND `/community/mentors` LEFT THIS LIST (`E593` WS-A).
-    ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/community/teams", "/community/mentors",`
-    ⚠⚠⚠ THE ROUTES DID NOT GO ANYWHERE. `E593` folded them into Community as
-    SECTIONS, so `nav.ts` is simply no longer where their survival is guaranteed
-    — exactly what `E560` did for `/messages`, two entries above.
-    ⚠ THE ASSERTION IS MOVED, NOT DROPPED: see the block directly below, which
-    checks the file that DOES guarantee them. Deleting it outright would have
-    lost the guard this loop exists to provide.
-  */
-  /* ⚠⚠ `/connect` IS ADDED, NOT SUBSTITUTED (`P2-J3-E591` WS-A). The route
-     SPLIT — the profile became `/connect` and `/community` kept the people — so
-     BOTH are live nav destinations and both are frozen. ⚠ `/community` is
-     unchanged in this list on purpose: it did not move, it stopped carrying a
-     second page. ⚠ The count is now fourteen. */
   "/connect",
-  /* ⚠⚠ `/messages` LEFT THIS LIST (`P2-ALL-E560` STAGE 1, 2026-09-18).
-     ⚠ SUPERSEDED, quoted not deleted (`E164`): `"/messages",` was the last entry.
-     ⚠⚠ THE ROUTE DID NOT GO ANYWHERE — Messages became its own surface, reached
-     from the BAND'S UTILITY CLUSTER instead of from a nav list, so `nav.ts` is
-     simply no longer where its survival is guaranteed. ⚠ THE ASSERTION IS MOVED,
-     NOT DROPPED — see the pair directly below, which checks the two files that
-     DO guarantee it. ⚠ Deleting it outright would have lost the guard that this
-     loop exists to provide. */
 ]) {
   check(`E378/5 — route ${href} still exists in the nav`, navLib.includes(`"${href}"`));
 }

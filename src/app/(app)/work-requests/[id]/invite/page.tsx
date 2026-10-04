@@ -9,26 +9,6 @@ import { matchProvidersFor } from "@/lib/work-request-match";
 import { WorkRequestError } from "@/lib/work-request";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * Invite providers to bid (`P1-J4-E392` WS-3).
- *
- * ── ⚠⚠ THE STUB THIS REPLACES, AND WHY IT WAS RIGHT ─────────────────────────
- *
- * ⚠ SUPERSEDED, quoted not deleted: *"THERE IS NO WORK-INVITATION MODEL.
- * `CoordinatorInvite` is a recruiter asking to REPRESENT a provider — a
- * different relationship — and wiring this button to it would be fabrication by
- * mislabelling, which is worse than an honest 'not yet'."*
- *
- * **THAT WAS CORRECT AND IT IS NO LONGER TRUE.** `E395` landed `ProposalRequest` and
- * `ProposalRequestLine` on 2026-09-07, so the invitation has somewhere honest to
- * write. The brief made this work stream conditional on exactly that — *"if it
- * has not landed, leave the stub and say so"* — and it had.
- *
- * ⚠ THE OLD TODO POINTED AT `workRequestInviteTemplate`. THE EMAIL IS NOT SENT
- * HERE. Notifications for the sourcing documents are explicitly out of `E395`'s
- * scope and out of this brief's; the template is still built and still unfired,
- * and saying so is more useful than half-wiring it. REPORTED.
- */
 export const metadata = { title: "Invite a Provider · Panameer" };
 
 export default async function Page({
@@ -65,8 +45,6 @@ export default async function Page({
     invitedOn(viewer, id),
   ]);
 
-  /* ⚠ Profile ids → person ids in one query. See the note on the detail page:
-     `matchProvidersFor` is shared with `/share` and is not reshaped for this. */
   const profiles = await prisma.providerProfile.findMany({
     where: { id: { in: providers.map((p) => p.profileId) } },
     select: { id: true, person_id: true },

@@ -1,18 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { missingForLearn, missingForSell, type GateGap } from "@/lib/identity-bar";
 
-/**
- * THE GATE LADDER'S DATABASE READS (`P1-ALL-E034`).
- *
- * ⚠ THE RULE IS NOT HERE. Every set, every field and every reason lives in
- * `lib/identity-bar.ts`, which is deliberately pure so both harnesses can drive
- * it with no fixture and no database. This file only fetches the columns those
- * predicates need. ⚠ IF YOU ARE ADDING A REQUIREMENT, IT GOES THERE, NOT HERE.
- *
- * ⚠ EVERY READ IS OWNER-SCOPED FROM THE SESSION. Nothing takes a person or
- * profile id from a caller.
- */
-
 /** `LEARN` — `IDENTITY` plus one skill. No company, no address, no phone. */
 export async function learnGaps(userId: string): Promise<GateGap[]> {
   const person = await prisma.person.findUnique({
@@ -25,11 +13,6 @@ export async function learnGaps(userId: string): Promise<GateGap[]> {
       providerProfile: { select: { skills: { select: { id: true }, take: 1 } } },
     },
   });
-  /*
-    ⚠ NO PERSON MEANS NO PROFILE AT ALL, so everything in the set is missing.
-    Returning an empty list here would let a row-less account through the one
-    gate that exists to stop exactly that.
-  */
   if (!person) {
     return missingForLearn({
       firstName: null, lastName: null, photoUrl: null, jobTitle: null,
@@ -42,8 +25,6 @@ export async function learnGaps(userId: string): Promise<GateGap[]> {
     lastName: person.last_name,
     photoUrl: person.photo_url,
     jobTitle: person.title,
-    /* ⚠ NOT IN `LEARN_BAR`, so these three are never consulted. Passed only
-       because `IdentitySubject` is a total shape on purpose. */
     hasApprovedCompanyMembership: false,
     companyName: null,
     companyCountry: null,
@@ -51,21 +32,10 @@ export async function learnGaps(userId: string): Promise<GateGap[]> {
   });
 }
 
-/**
- * `SELL` — `SEARCHABLE` (via `missingRequired()`) plus a payout method.
- * ⚠ NO COMPANY (`E418`): the entity is captured at work order acceptance.
- *
- * ⚠ THE COLUMN LIST IS THE ONE the provider publish gate ALREADY BUILDS in
- * `lib/onboarding.ts`, deliberately identical: publishing a profile and
- * publishing a product must not disagree about what "searchable" means.
- * ⚠ BOTH LOST THE COMPANY MEMBERSHIP IN `P1-A1.4-E418`, in one change, for that
- * same reason.
- */
 export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
   const pp = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewerUserId } },
     select: {
-      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       role_type_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
@@ -75,14 +45,9 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
       skills: { select: { id: true } },
       person: {
         select: {
-          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
           title: true,
           photo_url: true,
           phone: true,
-          /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E418`):
-               `companyMemberships: { where: { status: "APPROVED" }, … }`
-             SELL no longer asks for a company — nothing collects one before a
-             work order — so the column it fed is gone from `missingForSell`. */
           payoutMethods: { select: { id: true }, take: 1 },
           site: { select: { addresses: { select: { line1: true }, take: 1 } } },
         },
@@ -96,8 +61,6 @@ export async function sellGaps(viewerUserId: string): Promise<GateGap[]> {
     });
   }
   return missingForSell({
-    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
     headline: pp.person.title,
     role_type_id: pp.role_type_id,
     skills: pp.skills,

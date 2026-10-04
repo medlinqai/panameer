@@ -1,46 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
-/**
- * ── ⚠⚠⚠ `check:work-pages` — RULING 18, MADE ENFORCEABLE (`E621c` WS-C) ──
- *
- * ⚠ SCOTT, 2026-09-24 (ruling 18): *"None….we are in the process of building the
- * application…we just haven't gotten there."* ⚠⚠ **Net effect, in the ruling's
- * own words: the pages are QUIET about what is unbuilt, not DISHONEST about what
- * is countable. No "coming soon", no "we'll get there", and no fake zeros.**
- *
- * ⚠⚠⚠ **THIS GATE EXISTS BECAUSE THE RULING WAS MADE AND THEN VIOLATED
- * TWENTY-FIVE TIMES BY ONE COMPONENT.** `E611` removed four *"Coming soon"*
- * sites by hand; `components/ComingSoon.tsx` rendered the same sentence on
- * twenty-five more and nobody looked at it, because a hand-sweep counts SITES and
- * the shared component is one site that is twenty-five. ⚠ **A ruling with no gate
- * is a ruling that lasts until the next person writes a page.**
- *
- * ── ⚠⚠ WHAT IT DOES **NOT** POLICE, AND WHY EACH IS DELIBERATE ──────────
- *
- * ⚠⚠⚠ **A GATE THAT FAILS ON CORRECT CODE IS A GATE SOMEBODY SWITCHES OFF**, so
- * the population is narrowed on purpose rather than swept app-wide:
- * · **legal content** (`src/content/legal/**`) — *"we do not guarantee the Site
- *   will be available at any given time"* is a DISCLAIMER, and *"please check
- *   back for updates"* is standard cookie-policy language. Neither is a product
- *   promise, and rewriting counsel's words to satisfy a copy rule is worse than
- *   the rule.
- * · **admin surfaces** (`src/app/admin/**`, `components/admin/**`) — these
- *   ACCURATELY DESCRIBE what a learner sees (*"it stays 'coming soon'"*).
- *   ⚠ An admin telling a human what the member's screen says is reporting, not
- *   promising, and banning the phrase there would make the admin unable to name
- *   the thing it exists to fix.
- * · **marketing** (the two `components/marketing` folders) — ⚠⚠ note the glob is
- *   spelled out rather than written with a star-slash: a `*` followed by a `/`
- *   inside a block comment CLOSES IT EARLY, which is `CLAUDE.md` rule 12 and is
- *   the third time it has bitten. ⚠ A roadmap shown to a PROSPECT is
- *   a different speech act from a promise shown to a MEMBER who is trying to
- *   work. ⚠⚠ Ruling 18 is about the product; changing the marketing pitch is
- *   Scott's, not a gate's.
- *
- * ⚠ Everything else under `src/app/(app)`, `src/app/(auth)` and `src/components`
- * is in scope — the signed-in product.
- */
 let pass = 0;
 const fails: string[] = [];
 const notes: string[] = [];
@@ -49,7 +9,6 @@ const check = (name: string, ok: boolean, why = "") => {
   else fails.push(`${name}${why ? ` — ${why}` : ""}`);
 };
 
-/** ⚠ Comments are stripped: `E164` quotes the banned strings ON PURPOSE. */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -76,10 +35,6 @@ function main() {
   const ALL = walk("src");
   const SCOPE = ALL.filter((f) => !EXEMPT.some((e) => f.startsWith(e)));
 
-  /* ── ⚠⚠ POPULATIONS FIRST (`E586`) ─────────────────────────────────────
-     ⚠⚠⚠ A gate with no inputs must FAIL, and the exemption list is itself an
-     input: if it ever swallowed the whole tree every assertion below would pass
-     by asserting nothing. Both halves are counted. */
   check("0 — the source scan found files (E586)", ALL.length > 200, `${ALL.length}`);
   check("0 — the in-scope population is real (E586)", SCOPE.length > 150, `${SCOPE.length} of ${ALL.length}`);
   check(
@@ -179,10 +134,6 @@ function main() {
   check("3 — ⚠⚠⚠ no dash reason promises, dates or apologises", promising.length === 0, promising.join(" · "));
   notes.push(`dash reasons in use: ${reasons.map((r) => `"${r}"`).join(", ")}`);
 
-  /* ═══ 4 · ⚠⚠ NO FIGURE ON THESE PAGES IS A LITERAL ═════════════════════
-     ⚠ WS-C item 4: *"every printed figure matches a direct database count, and
-     no figure is a literal in the source."* ⚠⚠ Asserted where it is checkable —
-     a hard-coded count rendered as a member's figure. */
   const PAGES = SCOPE.filter(
     (f) =>
       f.startsWith(p("src", "app", "(app)", "orders")) ||

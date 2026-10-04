@@ -1,26 +1,3 @@
-/**
- * `check:learn-review` — a certificate is only ever issued from a set a HUMAN
- * published (brief_learn_certification_tests WS5).
- *
- * FIVE PROPERTIES:
- *
- *   1  A `DRAFT` set is not sittable; a `PUBLISHED` one is.
- *   2  Publishing ALWAYS writes `reviewed_by` and `reviewed_at`. ⚠ This is the
- *      field `P1-J2.4-E024`'s Expert badge waits on — a publish that leaves it
- *      null makes that badge unearnable all over again.
- *   3  A set that falls below the generator's own floor cannot be published,
- *      whether it got there by dropping or by regenerating.
- *   4  The learner payload NEVER contains `correctIndex`; the admin one always does.
- *   5  Unpublishing does not delete attempts.
- *
- * ⚠ THIS GUARD PUBLISHES NOTHING. Publishing is Scott's act, and a check that
- * published a row to prove publishing works would be the machine doing the one
- * thing the whole review gate exists to stop. Every assertion is a source
- * property, a pure-function property, or a READ of the live database.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN — this file names every token it
- * forbids, and a scanner that read comments would fail on its own documentation.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

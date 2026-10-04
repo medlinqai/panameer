@@ -20,22 +20,6 @@ import { planOwnerKey, isRowStatus, isRowType } from "@/lib/plan/model";
 import { applyPanameerTemplate } from "@/lib/plan/template";
 import { prisma } from "@/lib/prisma";
 
-/**
- * POST /api/admin/plan — every Plan edit (`P2-ALL-E784`).
- *
- * ⚠⚠ **ONE ROUTE, ONE GUARD.** `guardApi("canAdminister")` runs before the body
- * is even read, so a new action cannot ship without the gate — the shape
- * `/api/admin/work-tracker` uses, for the same reason.
- *
- * ⚠ **NO ACTOR ID IS ACCEPTED FROM THE BODY.** `updated_by` comes off the
- * `Viewer` that `guardApi` returned (load-bearing rule 5).
- *
- * ⚠⚠⚠ **THE PLAN ID IS NOT TAKEN FROM THE CLIENT EITHER.** The body names an
- * OWNER KEY and this route resolves it, so a stale or crafted `planId` cannot
- * reach another owner's plan. ⚠ In R2 that is what keeps one work order's
- * editor out of another's: the same resolution, with the key derived from the
- * order the viewer may see.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;
@@ -48,8 +32,6 @@ export async function POST(request: Request) {
   }
 
   const action = typeof body.action === "string" ? body.action : "";
-  /** ⚠ Today the only owner is the build plan. A work order's key arrives the
-   *  same way in R2, which is why this is a parameter and not a constant. */
   const ownerKey = typeof body.ownerKey === "string" && body.ownerKey ? body.ownerKey : planOwnerKey();
 
   try {
@@ -87,8 +69,6 @@ export async function POST(request: Request) {
           {
             delta: typeof body.delta === "number" ? body.delta : undefined,
             index: typeof body.index === "number" ? body.index : undefined,
-            /* `undefined` means "same parent"; an explicit `null` means the top
-               level, so the key's PRESENCE is what distinguishes them. */
             parentId:
               "parentId" in body
                 ? typeof body.parentId === "string" && body.parentId
@@ -102,21 +82,12 @@ export async function POST(request: Request) {
       }
 
       case "delete": {
-        /** ⚠⚠ THE REMOVED ROWS COME BACK IN THE RESPONSE, because that is what
-         *  makes "undo last delete" possible at all — the client holds them
-         *  until the next delete replaces them. ⚠ Nothing is kept server-side:
-         *  an undo buffer in a shared process would belong to whoever edited
-         *  last, which is not a thing anyone asked for. */
         const removed = await deleteRow(String(body.rowId ?? ""), gate);
         return NextResponse.json({ ok: true, removed });
       }
 
       case "restore": {
         const rows = Array.isArray(body.rows) ? (body.rows as unknown[]) : [];
-        /** ⚠⚠⚠ THE CLIENT HANDS BACK ROWS IT WAS GIVEN, SO EVERY ONE IS
-         *  RE-CHECKED AGAINST THIS PLAN BEFORE IT IS WRITTEN. A restore that
-         *  trusted the payload would be an insert-anything endpoint wearing the
-         *  word "undo". */
         const safe = rows.map((r) => sanitiseRow(r, plan.id)).filter((r): r is StoredRow => r !== null);
         if (safe.length !== rows.length) {
           return NextResponse.json({ error: "Those rows don't belong to this plan." }, { status: 400 });
@@ -137,9 +108,6 @@ export async function POST(request: Request) {
       }
 
       case "clear": {
-        /** ⚠ Deliberately explicit and separate from `template`/`copy`, which
-         *  both REFUSE a non-empty plan rather than quietly emptying it. The
-         *  person has to ask for this, and the editor asks them twice. */
         const { count } = await prisma.planRow.deleteMany({ where: { plan_id: plan.id } });
         await prisma.plan.update({ where: { id: plan.id }, data: { updated_by: gate.userId } });
         return NextResponse.json({ ok: true, cleared: count });

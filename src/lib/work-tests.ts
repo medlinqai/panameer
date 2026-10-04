@@ -9,52 +9,6 @@ import {
 } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠⚠ WORK TESTS (`P2-A8-E621` WS-B item 4) ───────────────────────────
- *
- * ⚠⚠⚠ **A CORRECTION I OWE, AND A RULING WAS RECORDED ON MY WRONG ANSWER.**
- *
- * ⚠ At the premise check I reported: *"a work test CANNOT reuse the Learn
- * engine — `learn-assessment.ts` is keyed on `learning_path_id` in EVERY query
- * and certifies against a path."* ⚠⚠ **Ruling 37 recorded that, and added
- * *"a second engine is its own brief — do not build one inside this brief."***
- *
- * ⚠⚠⚠ **THE FIRST HALF WAS WRONG, AND I MEASURED IT WRONG THE FIRST TIME.** It
- * is true that `learn-assessment.ts` GENERATES an assessment from a path's
- * lessons — but **reuse here was never code-sharing. It is a FOREIGN KEY**, and
- * the schema already says so: `TestRequestLine.learn_assessment_id` is **NOT
- * NULL**. A work test generates nothing; it POINTS AT an assessment that exists.
- *
- * ⚠ MEASURED 2026-09-24: **8 `LearnAssessment` rows, 2 of them `PUBLISHED`** —
- * so a buyer has something real to send. And every mechanism the chain needs
- * already has a writer:
- *
- * | piece | writer, measured |
- * |---|---|
- * | taking the assessment | ⚠ `learn-assessment.ts:892` — `learnTestAttempt.create`, LIVE |
- * | attempts used vs allowed | `testRequestOutcome()` in `sourcing.ts` |
- * | the published-assessment guard | `assertTestRequestLine()` in `sourcing.ts` |
- * | the result | ⚠⚠ `copyResultFromAttempt()` — and it REFUSES a supplied score |
- *
- * ⚠⚠ **SO THE RULING'S INSTRUCTION IS OBEYED, NOT OVERTURNED: NO SECOND ENGINE
- * IS BUILT HERE.** ⚠ All four helpers above are IMPORTED, never restated —
- * three of them had no caller at all until this file, which is why the premise
- * read as *"nothing reuses Learn"*: **the bridge was built and unused, not
- * absent.** ⚠ Ruling 26's recruiter-sent audit test lands on the same engine and
- * inherits this rather than needing its own.
- *
- * ── ⚠⚠ WHAT THIS FILE DELIBERATELY DOES NOT DO ──────────────────────────
- *
- * ⚠⚠⚠ **IT SENDS NO NOTIFICATION, AND THAT IS MEASURED, NOT FORGOTTEN.** Four
- * `work.*` events are registered — `proposal_received`, `interview_requested`,
- * `order_offered`, `settlement_approval` — and **none of them is about a test.**
- * ⚠ Ruling 37: *"call the event that exists; do not invent a second."* Inventing
- * `work.test_requested` here would register an event inside a brief that was not
- * asked to, so **the provider is told on the page, not by mail, and the missing
- * event is reported as owed.**
- * ⚠ It moves no money and touches no `Payment` (ruling 25).
- */
-
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -64,16 +18,6 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-/**
- * The buyer sends a test. ⚠ Created `ISSUED`, in one act.
- *
- * ⚠⚠ THE PUBLISHED CHECK IS `assertTestRequestLine`, IMPORTED. A `DRAFT`
- * assessment has not been read by a human (`LearnAssessment.status` defaults
- * `DRAFT` precisely so an unreviewed question bank cannot award anything), and
- * ⚠ MEASURED: **6 of the 8 rows are `DRAFT`** — so this is not hypothetical.
- * ⚠⚠⚠ A second copy of that rule here is exactly the `E585` shape; the guard's
- * own docblock calls a DRAFT test *"a dead end the provider cannot clear."*
- */
 export async function sendTest(
   viewer: Viewer,
   input: {
@@ -88,8 +32,6 @@ export async function sendTest(
 
   const wr = await prisma.workRequest.findUnique({
     where: { id: input.workRequestId },
-    /** ⚠ `title` IS READ FOR THE NOTIFICATION (`E802`) — see the `notify` call
-     *  below for why it is the request and not the buyer. */
     select: { id: true, buyer_person_id: true, status: true, title: true },
   });
   if (!wr) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
@@ -101,12 +43,8 @@ export async function sendTest(
     where: { id: input.learnAssessmentId },
     select: { id: true, status: true },
   });
-  /* ⚠⚠ THE IMPORTED GUARD, GIVEN THE SHAPE IT ASKS FOR. It refuses a missing
-     assessment AND an unpublished one, in one call, with the copy it owns. */
   assertTestRequestLine({ assessment });
 
-  /* ⚠ The provider must have proposed — the same rule `requestInterview` holds,
-     for the same reason: a test is a step in a conversation already started. */
   const proposal = await prisma.proposal.findUnique({
     where: {
       work_request_id_provider_person_id: {
@@ -123,10 +61,6 @@ export async function sendTest(
     );
   }
 
-  /* ⚠⚠ ONE OPEN TEST PER PROVIDER PER REQUEST, AND IT RETURNS THE EXISTING ONE
-     RATHER THAN THROWING — the idempotency shape `requestInterview` uses.
-     `COMPLETED`, `DECLINED` and `EXPIRED` are finished, so a buyer may send
-     another after any of them. */
   const open = await prisma.testRequest.findFirst({
     where: {
       work_request_id: wr.id,

@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * ── EDIT & FIX (`P2-ALL-E796`) ──────────────────────────────────────────────
- *
- * ⚠ **SCOTT:** name, email, roles, verify, lock, deactivate, password reset —
- * from the app, not from a script.
- *
- * ⚠⚠⚠ **THE TWO DESTRUCTIVE-ADJACENT ACTIONS ASK FIRST.** Lock and deactivate
- * lock a real person out of their own account, so each one turns into a
- * two-step: a question with the consequence spelled out, then the action. ⚠ The
- * server refuses an unconfirmed call as well — this is the second of two gates.
- */
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -41,8 +29,6 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** ⚠ Which question is open, if any. One at a time — two confirmations on
-   *  screen is how the wrong one gets clicked. */
   const [asking, setAsking] = useState<"lock" | "deactivate" | null>(null);
 
   async function call(action: string, extra: Record<string, unknown> = {}, note?: string) {
@@ -75,25 +61,10 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
   const disabled = busy !== null;
 
   return (
-    /*
-      ── ⚠⚠⚠ NO CARD AND NO HEADING OF ITS OWN (`P2-ALL-E796`) ───────────────
-      ⚠ **CAUGHT BY ITS OWN BROWSER TEST, which found TWO `Edit & fix` headings
-      on the page.** This component is mounted inside the page's `Section`, which
-      already draws the card and writes the heading and the note — so a heading
-      here was a duplicate in the accessibility tree and a bordered card inside a
-      bordered card.
-      ⚠⚠ **THE WRAPPER IS THE PAGE'S JOB.** Every other block on that page is a
-      `Section`, and a component that drew its own chrome would be the one that
-      looked different for no reason.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   <section className="rounded-brand border border-line bg-white p-5">
-      //     <h2 ...>Edit &amp; fix</h2>
-    */
     <div>
       {!state.hasAccount && (
         <p className="mt-2 text-[13px] text-ink-2">
-          {/* ⚠⚠ A person row with no user account cannot be locked, verified or
-              reset. Saying so beats offering controls that would refuse. */}
+          {}
           This person has no sign-in account, so only their name and roles can be
           changed here.
         </p>
@@ -132,8 +103,6 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
             type="button"
             className={BTN_2 + " self-end"}
             disabled={disabled || email.trim().toLowerCase() === state.email.toLowerCase()}
-            /** ⚠⚠⚠ THE CONSEQUENCE IS IN THE LABEL, not in a tooltip: changing
-             *  the address un-verifies it and sends a fresh verification. */
             onClick={() => void call("email", { email }, "Email changed — verification sent, and the address is now unverified.")}
           >
             Change Email

@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { validateProvider, AdminError } from "@/lib/admin";
 
-/**
- * POST /api/admin/providers/[id]/validate — grant Validation (brief_M).
- * Sets validation_status=VALIDATED + validated_at; base visibility unchanged.
- */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

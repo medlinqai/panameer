@@ -3,42 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { RailIcon } from "@/components/casing/RailIcon";
-/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott: *"just comment it out... it is just too much rn. we NEED to move
-   faster. that has no real value."* Parked DELIBERATELY, NOT ABANDONED — no
-   ledger, no scheduling, and a standing Friday commitment nobody wants.
-   Decision + every call site: `src/lib/credits.ts`.
-   ⚠ THIS FILE WAS NOT IN THE INSTRUCTION'S LIST — it was found by following the
-   imports out of `lib/credits.ts`. The DASHBOARD renders its own Credits tile in
-   calm mode, separate from the header chip. REPORTED at `E375`. */
 // import { formatCredits, type CreditsSummary } from "@/lib/credits";
 import type { AttentionCard } from "@/lib/attention";
 
-/**
- * "NEEDS YOUR ATTENTION" (brief_sp_dashboard WS-A/WS-D).
- *
- * ONE COMPACT LINE, ALWAYS, in both modes. That is the load-bearing constraint:
- * the work feed is the body of this page and a strip that wraps to a second row
- * pushes it below the fold. So the visible cards are capped and the remainder
- * collapses into "+N more" rather than reflowing.
- *
- * TWO MODES:
- *   ACTION — at least one card fired. Triggered cards only, money-first, capped.
- *   CALM   — nothing fired. NOT blank, and not a wall of zeros: a quiet
- *            "all caught up" line, then value tiles that give the space back to
- *            something worth reading.
- *
- * THE VALUE TILES ARE THE FALLBACK, NOT FURNITURE. They appear only in calm
- * mode, because action always wins the space — a Credits tile sitting beside
- * "3 work orders to accept" competes with the thing the provider should do
- * next.
- */
 const VISIBLE_CAP = 4;
 
 export function AttentionStrip({
   cards,
-  /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2) — the `credits` prop and its type
-     came out with the tile, and the DASHBOARD's fetch went with them. A prop
-     nobody renders is a fetch for nothing. */
   // credits,
   completeness,
 }: {
@@ -47,20 +18,12 @@ export function AttentionStrip({
   /** Null when the viewer has no provider profile. */
   completeness: number | null;
 }) {
-  /*
-    The celebration card is dismissible — good news you cannot dismiss becomes
-    nagging by the third day. Local state only: there is no Payment model yet,
-    so there is nothing to persist a dismissal against. When one lands, this
-    becomes a write, and the card's `tone` already marks which one it is.
-  */
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
 
   const live = cards.filter((c) => !dismissed.includes(c.id));
 
   if (live.length === 0) {
-    /* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). The `credits`
-       prop is parked; `completeness` still drives calm mode. */
     return <CalmStrip completeness={completeness} />;
   }
 
@@ -73,12 +36,7 @@ export function AttentionStrip({
         Needs Your Attention
       </h2>
 
-      {/*
-        Horizontal scroll below sm, a single row above it. `overflow-x-auto`
-        with `shrink-0` children is what makes the mobile behaviour a swipe
-        rather than a squeeze — labels never wrap and never truncate to
-        nonsense.
-      */}
+      {}
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
         {visible.map((card) => (
           <ActionCard
@@ -148,11 +106,7 @@ function ActionCard({
           <span className="truncate text-[13.5px] font-bold">{card.label}</span>
         </p>
         <p className="mt-0.5 text-[12.5px] leading-snug text-ink-2">{card.detail}</p>
-        {/*
-          THE WHOLE CARD IS THE TAP TARGET via an overlay link, so a thumb on a
-          phone hits it rather than hunting for a 40px "View" button. The
-          dismiss control sits above it in z-order so it stays clickable.
-        */}
+        {}
         <Link
           href={card.href}
           className="absolute inset-0 rounded-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-magenta"

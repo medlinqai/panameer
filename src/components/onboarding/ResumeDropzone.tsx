@@ -4,20 +4,6 @@ import { useRef, useState } from "react";
 import type { ImportOutcome } from "@/components/onboarding/ResumeUploadModal";
 import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
-/**
- * INLINE résumé/PDF upload control (brief_S / E029).
- *
- * The upload previously lived only inside a modal reached by clicking a card,
- * and Scott's Run-2 walk reported "no upload control present" on the import
- * step. Putting a real, visible drag-and-drop + Choose File control directly on
- * the step removes the indirection: the control is there on arrival, nothing to
- * discover. The modal survives for the drag-and-drop path, which needs its own
- * Save-to-PDF instructions.
- *
- * XMLHttpRequest rather than fetch: fetch still cannot report upload progress,
- * and the progress bar is part of the spec.
- */
-
 const ACCEPT =
   ".pdf,.doc,.docx,.rtf,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/rtf,text/rtf,text/plain";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -27,12 +13,6 @@ export function ResumeDropzone({
   onBusyChange,
 }: {
   onImported: (outcome: ImportOutcome) => void;
-  /**
-   * Reports upload+parse in flight, so the STEP can disable its own Continue
-   * while the model is reading (E200). Without it the page-level footer stayed
-   * live during the parse and a click threw away the answer that was about to
-   * arrive.
-   */
   onBusyChange?: (busy: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -137,13 +117,7 @@ export function ResumeDropzone({
             <p className="mt-0.5 text-[13px] text-ink-2">
               {(file.size / 1024).toFixed(0)} KB
             </p>
-            {/*
-              TWO DIFFERENT WAITS, SHOWN DIFFERENTLY (E200). The upload reports
-              real bytes, so it gets a real percentage. The model call that
-              follows reports nothing, so it gets the heartbeat — which promises
-              no duration and keeps changing what it says. Showing a percentage
-              for the second one is what made it look frozen at 100%.
-            */}
+            {}
             {busy && progress !== null && progress < 100 && (
               <>
                 <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-line">

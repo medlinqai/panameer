@@ -1,39 +1,7 @@
 import Link from "next/link";
 import { CLOSING_CTA } from "@/lib/brand";
 
-/**
- * The closing band, per audience.
- *
- * ⚠ EVERY BUTTON HERE GOES SOMEWHERE REAL, which took some deciding because the
- * mockups' labels imply flows that do not exist yet:
- *
- *   Describe What You Need →   /explore?mode=hire — the search destination the
- *                              hero already uses. It is the honest version of
- *                              "describe it": you type, it looks.
- *   Talk to Us                 ⚠ THE WEAKEST LINK ON EITHER PAGE. There is no
- *                              public contact route. /support/bug exists but
- *                              lives under (app), so it 307s an anonymous
- *                              visitor to /login — and behind that login it is
- *                              itself a stub with no ticketing backend.
- *                              Routing to sign-in is the pattern the brief
- *                              sanctions for exactly this case, and it beats a
- *                              mailto: for an address nobody monitors, but
- *                              "Talk to Us" deserves a real destination and
- *                              this is flagged rather than papered over.
- *   Build Your Profile         /join?type=seller — the real provider sign-up.
- *   See How Earning Works →    `/` is the buyer page now, so the seller's
- *                              secondary points at #sequence on its own page,
- *                              which is the section that answers it.
- *
- * The buyer band deliberately does NOT repeat the assessment CTA above it. Two
- * primary asks in the last two sections is the page arguing with itself.
- */
 const LINKS = {
-  /*
-    THE HOME'S TWO LINKS ARE THE TWO EXITS, and nothing else (WS-2). Every
-    other band on this site can close however its page needs to; the home
-    closes on the assessment, with the experts as the only alternative.
-  */
   home: {
     primary: `/login?callbackUrl=${encodeURIComponent("/#assessment")}`,
     secondary: "/talent",

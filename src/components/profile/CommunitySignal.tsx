@@ -1,41 +1,7 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   Go to the forums
-*/
 import Link from "next/link";
 import type { CommunitySignal } from "@/lib/community-signal";
-/* ⚠ THE ONE TAG STYLE (`E720` item 5). */
 import { CLEAN_CHIP } from "@/components/profile/CleanSection";
 
-/**
- * The Community block on a profile (brief_community_signal WS2).
- *
- * ── ⚠ IT RENDERS NOTHING WHEN THERE IS NOTHING ───────────────────────────────
- *
- * Same rule as `TaughtPaths`: a null signal produces no markup at all, not a row
- * of zeroes. A zero on a public profile is a claim about a person and it is the
- * wrong one — "0 replies" reads as disengaged where "no block" reads as "this
- * isn't part of how they show up here".
- *
- * ── THE ORDER IS THE ARGUMENT ────────────────────────────────────────────────
- *
- * Answers marked helpful LEADS, big. Replies and threads are context, small and
- * grey. A raw reply count promoted to the headline is a volume signal, and a
- * badge that rewards posting is a badge that produces posting.
- *
- * ⚠ NO RANK, NO PERCENTILE, NO "TOP CONTRIBUTOR". Those need a population, and
- * `P1-J3-E004` established the population is two-digit at best — measured
- * 2026-08-19 it is ZERO. A percentile of nobody is not a compliment.
- *
- * ⚠ AND NOTHING HERE SAYS "MESSAGES". There is no messaging model in the
- * schema; `check:community` fails the build if any surface labels a post count
- * that way.
- */
 export function CommunitySignalBlock({
   signal,
   firstName,

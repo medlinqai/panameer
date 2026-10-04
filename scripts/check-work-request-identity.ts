@@ -1,25 +1,3 @@
-/**
- * `check:work-request-identity` — the four ways "who is asking" goes wrong
- * (`P1-J4-E025` WS-5).
- *
- *   1  THE POST GATE IS SERVER-SIDE. The wizard mirrors it; the wizard is not
- *      it. `/api/work-requests/[id]/post` is reachable without ever loading the
- *      component, and a gate that lives only in the client is not a gate.
- *   2  ⚠⚠ A CONFIDENTIAL COMPANY NAME NEVER CROSSES THE WIRE. Not "styled as
- *      hidden", not "hidden unless you read the payload" — the same class of
- *      failure `provider-profile-view.ts` had to close for `client_domain`,
- *      where the redacted name leaked through a second identifying field.
- *   3  THE VERIFICATION LINE RENDERS IN BOTH STATES, from ONE layout. `E282` is
- *      not built, so today every request renders the negative; the affirmative
- *      copy must already exist and the component must not branch on it, or
- *      "flip it later without a redesign" turns into a rewrite.
- *   4  DRAFTS ARE NEVER GATED. Write and save freely — the gate is on POSTING.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()`. This file and the files it audits both name the forbidden tokens in
- * their own prose; a scanner that read prose would fail on its own
- * documentation, and the fix for that is always to weaken the scanner.
- */
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -33,8 +11,6 @@ import {
   POST_REQUIREMENTS,
   type PostRequirementKey,
 } from "@/lib/work-request-identity";
-/* ⚠ `E418` — asserted directly, so the harness reads the BAR and not only its
-   effect through `missingIdentityForPost`. */
 import { WORK_REQUEST_BAR } from "@/lib/identity-bar";
 
 let pass = 0;
@@ -44,7 +20,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* ⚠ VERBATIM FROM `scripts/check-community.ts`. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 

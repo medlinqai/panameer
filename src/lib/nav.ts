@@ -4,116 +4,14 @@ import type { Capability } from "@/lib/access";
 export type NavItem = {
   label: string;
   href: string;
-  /**
-   * ⚠⚠ THE JOURNEY'S FULL NAME, when the rail label is a one-word verb
-   * (`P1-ALL-E378`). Three levels, each with one job: the RAIL says which
-   * journey in one word, the TABS say which slice, and the PAGE HEADING says
-   * the journey's name. Without this field the verb IS the only name left and
-   * the journey name is simply deleted.
-   *
-   * ⚠ IT HAS NO RUNTIME EFFECT TODAY, AND THAT IS REPORTED RATHER THAN HIDDEN:
-   * `pageTitleFor` is the only reader and NOTHING CALLS `pageTitleFor` — every
-   * page renders its own `<h1>`. Verified by grepping `src`, `scripts` and
-   * `e2e`; the only other hit is a comment. So `nav.ts:358`'s claim that
-   * relabelling *"ALSO MOVES PAGE HEADINGS"* is STALE — it was true when
-   * written and is not true now. The field exists so the names survive in the
-   * data rather than only in this comment, and so the function is CORRECT if
-   * anything ever calls it again.
-   */
   heading?: string;
-  /**
-   * The capability this item requires. Omitted = everyone signed in sees it.
-   *
-   * Keyed on the SAME `Capability` union `access.ts` uses to guard the routes
-   * themselves (brief_learn_v1 WS3), so a menu entry and the page it points at
-   * cannot disagree about who is allowed there. The old nav read the raw
-   * `isServiceBuyer` / `isServiceProvider` flags — the same answer by
-   * coincidence rather than by construction, and coincidence is what drifts.
-   */
   requires?: Capability;
-  /**
-   * A lucide-react icon NAME rather than a component, so this module stays a
-   * plain data file — importing React components here would drag the icon set
-   * into every server module that reads the nav.
-   */
   icon?: string;
-  /**
-   * A flyout submenu (brief_MASTER_rails_and_community WS1-A/WS1-B).
-   *
-   * The provider rail is six destinations that each open a set of views, not
-   * six leaf links. Declaring the children HERE rather than in the rail
-   * component keeps the whole menu — labels, routes, capabilities and now
-   * structure — in the one file `pageTitleFor` also reads, so a submenu entry
-   * and the header of the page it opens cannot drift into different names.
-   */
   children?: NavItem[];
   /** Shown on hover. Used where the deck gives a label an explanatory line. */
   tooltip?: string;
 };
 
-/**
- * ONE nav definition (brief_learn_v1 WS3, design doc §6).
- *
- * Two shells render it — a public TOP nav and a signed-in LEFT rail — but the
- * items and their permissions are declared once, here. Two lists would be two
- * chances for Learn to exist in one and not the other, which is exactly the bug
- * this replaces: Learn shipped with no route into it from anywhere.
- */
-
-/**
- * Everything a signed-in person sees, whatever their role.
- *
- * Order matches E134's rail: Search, Home, Learn, then the role items, then
- * Contracts, Finances, Messages. Search sits above Home because it is the thing
- * the mockup puts first, and Contracts/Finances are universal — both sides of a
- * marketplace have agreements and money.
- */
-/**
- * HOME sits above the "Applications" group in the casing rail (E151), so it is
- * its own export rather than the first item of the list — the rail renders it
- * differently, and putting it in the group would have meant filtering it back
- * out at the render site.
- */
-/*
-  ICONS ON THE NON-ADMIN RAILS TOO (E165).
-
-  The admin rail got lucide icons; Provider, Requester and Buyer kept a column
-  of bare text, so the same product had two visual languages depending on who
-  signed in. Items that exist on both rails REUSE the admin's icon — Learn is
-  GraduationCap in both places, Contracts is FileSignature in both — because two
-  glyphs for one destination is the drift the shared nav.ts exists to prevent.
-*/
-/*
-  E206/E211 — THERE IS NO SEPARATE "PROVIDER DASHBOARD" ENTRY ANY MORE.
-
-  The rail carried both a utility "Home" and a "Provider Dashboard" button, and
-  both pointed at /dashboard — so both matched the active test and the rail lit
-  up magenta in two places at once, which the design has exactly one of. The
-  landing is "Home" in UTILITY_NAV, and it is the only entry for it.
-
-  THIS AMENDS THE PHASE-1 GROUPED-RAIL DECISION, which named the rail's landing
-  anchor "Provider Dashboard". The route is unchanged; only the label and the
-  duplication are gone.
-*/
-
-/**
- * THE UNIVERSAL CONTROLS — Search, Home, Notifications.
- *
- * Not part of the Transactions group and deliberately not capability-gated:
- * these are the three things you reach for from anywhere, whoever you are.
- *
- * ⚠ THEY LIVE IN THE TOP BAR (brief_topbar_utilities), which REVERSES
- * E207/E208/E209 — those moved them into the rail, and the call now is that the
- * rail is the six role transactions and these are not transactions.
- *
- * NAMED INDIVIDUALLY, not just as a list, because the header renders each in a
- * different shape: Search is a wide pill in the centre, the other two are icon
- * buttons on the right, and the account menu beside them is a popover. A
- * `.map()` over three items that each need bespoke markup is a loop with a
- * switch inside it. The array survives for anything that does want to iterate
- * them, and — the point of keeping this here at all — the href and label are
- * still declared exactly once.
- */
 export const SEARCH_NAV: NavItem = { label: "Search", href: "/search", icon: "Search" };
 export const HOME_NAV: NavItem = { label: "Home", href: "/dashboard", icon: "Home" };
 export const NOTIFICATIONS_NAV: NavItem = {
@@ -124,80 +22,13 @@ export const NOTIFICATIONS_NAV: NavItem = {
 
 export const UTILITY_NAV: NavItem[] = [SEARCH_NAV, HOME_NAV, NOTIFICATIONS_NAV];
 
-/**
- * ── ⚠⚠⚠ A BAND ITEM MAY OWN MORE THAN ONE PREFIX (`P2-A3-E596` WS-A) ──────
- *
- * ⚠ SCOTT'S SECOND CONNECT WALK, 2026-09-20: he opened `/community/score` and
- * **the band lit nothing.** The tab row above said `CONNECT · Profile` while
- * the band said he was nowhere — two navigation layers on one page
- * disagreeing about which application he was in.
- *
- * ── WHY IT HAPPENS ────────────────────────────────────────────────────────
- *
- * ⚠⚠ CONNECT'S BAND ENTRY IS `/connect`, BUT CONNECT'S PAGES MOSTLY LIVE UNDER
- * `/community` — Community, Colleagues, Forums, Mentors, Teams and Score, eight
- * routes on disk. `AppBand`'s test is `pathname.startsWith(href)`, ONE PREFIX
- * PER ITEM, so none of them matches `/connect` and the pill stays dark.
- *
- * ── ⚠⚠⚠ AN EXPLICIT LIST, NEVER A LOOSER MATCH ───────────────────────────
- *
- * ⚠ The obvious "fix" is to relax the test. `AppBand.tsx`'s own comment records
- * why that is wrong: `/admin` is a prefix of every admin page and a `startsWith`
- * test once **lit fifteen pills at once** (`E475`).
- * ⚠⚠ AN EXPLICIT LIST CANNOT DO THAT. It adds exactly the prefixes somebody
- * wrote down, and every addition is a one-line diff in review.
- *
- * ⚠ IT LIVES HERE, NOT ON THE `NavItem`s, BECAUSE THE SAME ITEM IS DECLARED
- * TWICE — `Connect` appears in `PROVIDER_NAV` and in `REQUESTER_NAV`, and a
- * property set on one and forgotten on the other is precisely the drift one
- * definition exists to prevent. Keyed by `href`, it covers both.
- *
- * ⚠⚠ THE SETTINGS ABSORPTION BRIEF ADDS A THIRD PREFIX HERE and is blocked on
- * this landing. Add the prefix; change nothing else.
- */
-/**
- * ⚠⚠ THE ACCOUNT MENU'S KEY IN `BAND_EXTRA_PREFIXES` (ruling 72).
- *
- * ⚠ It is deliberately NOT a route: the avatar opens a menu. Giving it a
- * sentinel key lets it share `bandPrefixesFor` and `isActive` with the real
- * band items instead of growing a parallel rule.
- *
- * ⚠⚠⚠ **`/community/score` IS DELIBERATELY ABSENT AND IT IS A REPORTED
- * CONFLICT.** The Search Score page is an **Account Information** tab
- * (`E636`), but it lives under `/community`, which `/connect` already claims —
- * so adding it here would light **two band items on one page**, which is the
- * thing `E433` forbids. ⚠ Resolving it means either moving the route (a 308
- * with its own blast radius) or narrowing Connect's prefix, and **both are
- * decisions rather than tidy-ups.** Reported, not guessed.
- */
 export const ACCOUNT_BAND_HREF = "__account-menu__";
 
-/**
- * ── ⚠⚠⚠ THE FOUR CONTROLS THAT ARE NOT MENU ITEMS (`P2-A1.1-E735`) ─────────────────────
- *
- * ⚠ **SCOTT, 2026-10-01: *"every page should backlight something"*, and the owners include
- * the right-hand icons: speech bubble → `/messages`, bell → notifications, gear →
- * settings/configuration, avatar → Account Information.** `/dashboard` lights the logo.
- *
- * ⚠⚠ **MEASURED BEFORE BUILDING: 50 OF 117 SIGNED-IN ROUTES LIT NOTHING**, including
- * `/dashboard` — the landing page of the whole app — and **the bell, the gear and the
- * speech bubble had no lit state in their markup at all.** They could not light, whatever
- * the predicate said.
- *
- * ⚠⚠⚠ **THESE ARE KEYS, NOT LINKS, EXACTLY LIKE `ACCOUNT_BAND_HREF`.** The bell and the
- * gear open a panel rather than navigating, so they own prefixes without owning an href —
- * and the messages button stopped navigating at `E559`. ⚠ Giving them a real route as a key
- * would make `bandActiveHref` claim a path the control does not go to.
- * ⚠ **THE LOGO DOES navigate** (`/dashboard`), but it needs its own key for the same reason
- * the others do: it is not in `navForRoles`, so it is not in the candidate list unless it is
- * put there deliberately.
- */
 export const MESSAGES_BAND_HREF = "__messages__";
 export const BELL_BAND_HREF = "__bell__";
 export const CONFIG_BAND_HREF = "__config__";
 export const HOME_BAND_HREF = "__home__";
 
-/** ⚠ Every non-menu key, for the candidate list and for the gate. One array, two readers. */
 export const BAND_CONTROL_HREFS = [
   ACCOUNT_BAND_HREF,
   MESSAGES_BAND_HREF,
@@ -207,175 +38,30 @@ export const BAND_CONTROL_HREFS = [
 ] as const;
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
-  /* ⚠ Connect's pages live under `/community` — Community, Colleagues, Forums,
-     Mentors, Teams and Score, eight routes. This is the one Scott caught. */
-  /*
-    ── ⚠⚠⚠ CONNECT ALSO OWNS `/providers` (`P2-A2-E718` item 10) ──────────────────────
-
-    ⚠ **SCOTT: `/providers/[id]` lit NOTHING.** Measured before the change: both the owner's
-    own preview and another member's view of a profile left the whole band dark — *"two
-    navigation layers on one page, disagreeing about which application he is in"*, which is
-    the same defect `E596` and `E717` each fixed on a different route.
-    ⚠⚠ **A PROFILE YOU ARE LOOKING AT IS A CONNECT PAGE** — it is reached from the community,
-    the colleague cards and search, all of which are Connect's.
-    ⚠⚠⚠ **AND IT DOES NOT OVER-MATCH: `/providers/[id]` IS THE ONLY ROUTE UNDER THIS PREFIX**
-    (verified on disk). `/admin/providers` does NOT start with `/providers`, so the admin
-    surface is untouched — the `E475` trap (one loose prefix lighting fifteen pills) does not
-    apply here, and it was checked rather than assumed.
-    ⚠ The owner's OWN profile page outbids this through `bandActiveHref`'s
-    `ownProviderPath` — a longer prefix, not a special case.
-  */
-  /* ⚠ `E735` — inviting a colleague IS Connect; the page is a door into it. */
-  /* ⚠⚠ `/coordinator` is *"Invite a Provider"* plus a *"My Providers"* roster — the same
-     shape as `/invite-colleague`: bringing people in and keeping a list of them. ⚠ It is
-     gated on `canCoordinate`, so only a coordinator ever sees it lit. */
   "/connect": ["/community", "/providers", "/invite-colleague", "/coordinator"],
-  /*
-    ⚠⚠ FOUND BY THE NEW GATE, NOT BY THE BRIEF. Enumerating `PAGE_TABS` turned
-    up two more dark-band routes of exactly the same shape, both tab
-    destinations that leave their own prefix:
-      · `Sell`'s second tab goes to `/services/offers` — the ONLY route under
-        `/services`, verified on disk, so the prefix cannot over-match.
-      · `Hire`'s second tab goes to `/create-work`, a single route.
-    ⚠ They are fixed here rather than reported and left, because the assertion
-    Scott asked for goes red on them and a gate that ships red is not a gate.
-  */
-  /*
-    ── ⚠⚠⚠ SELL ROLLED INTO SHOP, SO SHOP OWNS ITS PREFIXES (`P2-ALL-E693`) ──
-
-    ⚠ Ruling `89e` corrected: `Sell` left slot 4 and became a button inside Shop.
-    ⚠⚠ **SO `/my-services` AND `/services` ARE NO LONGER ANY BAND ITEM'S HREF**,
-    and their tab rows went DARK-BAND the moment the entry changed — the same
-    defect `/payments` hit in `E688` WS-B, found the same way, by the same gate.
-    ⚠ **This is the roll-up rendered:** a provider inside Service Products is in
-    the Shop section now, and the band says so.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   "/my-services": ["/services"],
-  */
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the route took the menu's own
-     word at `P2-ALL-E698`:
-     //   "/packages": ["/my-services", "/services"], */
   "/shop": ["/my-services", "/services"],
-  /* ⚠ `E735` — a buyer's own work requests belong to Hire, the journey that
-     created them. ⚠⚠ `/work-requests/[id]/invite` and `/share` are under the same
-     prefix and move with it. */
-  /* ⚠ `/consultations` is *"Book a consultation"* from the requester home — a buyer
-     engaging talent, which is what Hire is. (A `ComingSoon` stub today; the owner arrives
-     with the route rather than after it.) */
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
-  /*
-    ── ⚠⚠⚠ MONEY BELONGS TO ORDERS NOW, AND THE BAND HAS TO SAY SO
-       (`P2-ALL-E688` WS-B, ruling `89e`) ──────────────────────────────────
-
-    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
-    an Order."* ⚠⚠ **THIS IS THE ROLL-UP, RENDERED.** `Get Paid` and `Pay` left
-    the row; a member now reaches the money surface from `/orders`, so while they
-    are on it the band must light **Orders** — the section it moved into, and the
-    one they came from.
-
-    ⚠⚠⚠ **FOUND BY THE GATE, NOT BY THE BRIEF, AND IT WOULD HAVE BEEN A REAL
-    DEFECT.** Removing the two rail items made `/payments` and
-    `/payments/payment-requests` **dark-band routes with a tab row** — the exact
-    shape Scott caught on `/community/score`: *"the tab row said CONNECT ·
-    Profile while the band said he was nowhere."* ⚠ Two navigation layers on one
-    page, disagreeing about which application he is in.
-
-    ⚠⚠ **IT CANNOT OVER-MATCH AND THAT WAS CHECKED, NOT ASSUMED.** No other band
-    item's prefix matches `/payments` or `/pay` — the ten items are `/connect`,
-    `/learn`, `/find-work`, `/my-services`, `/hire`, `/packages` and `/orders`
-    across the two rails — so **exactly one pill lights**, which is what `E433`
-    requires. ⚠ `/pay` is listed in full rather than relied on as a prefix of
-    `/payments`: they are two different routes on two different sides, and
-    `"/payments".startsWith("/pay")` being true is a coincidence of spelling that
-    already produced one false positive in `check:notification-email`.
-  */
-  /* ⚠ `E735` — `/manage-money` joins the money prefixes: `E688` put money under
-     Orders and removed the `Get Paid` item, so this is where it already lives. */
-  /* ⚠ `/deliver-work` is delivering against a work ORDER, which is where orders live. */
   "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
-  /*
-    ── ⚠⚠⚠ THE ACCOUNT MENU IS A BAND DESTINATION TOO (ruling 72) ──────────
-
-    ⚠ SCOTT: the band's items take a filled pill when active; **the avatar took
-    a thin ring on `/profile` and nothing on `/settings`.** ⚠⚠ `E433`'s rule —
-    **one meaning, one treatment** — so the avatar reads the SAME predicate the
-    pills do, from this same list. **There is no second rule keyed on the
-    avatar.**
-    ⚠⚠⚠ **AN EXPLICIT LIST, NEVER A LOOSER MATCH.** The docblock on `isActive`
-    records why: a `startsWith` shortcut once **lit fifteen pills at once**
-    (`E475`). These are the Account Information tab row's own routes, written
-    down one by one.
-    ⚠ `ACCOUNT_BAND_HREF` is a KEY, not a link — the avatar opens a menu rather
-    than navigating, so it owns prefixes without owning an href.
-  */
   [ACCOUNT_BAND_HREF]: [
     "/profile",
     "/company",
     "/usage",
     "/account-health",
     "/settings",
-    /*
-      ── ⚠⚠⚠ `/community/score` IS AN ACCOUNT ROUTE WEARING A `/community` URL (`E717`) ──
-
-      ⚠ **SCOTT, 2026-09-30:** *"It is the Account Information Score tab, but its URL starts
-      with `/community`, so the band matches it to Connect. On that page, the avatar is lit
-      and Connect is not."*
-      ⚠⚠ **IT IS THE `Score` TAB OF THE PROFILE ROW** — `profileTabs` names it and
-      `community/score/page.tsx` renders `eyebrow={ACCOUNT_MENU_NAME}` — so the band was
-      contradicting the tab row on that page, which is the exact defect `E596` fixed in the
-      other direction.
-      ⚠⚠⚠ **LISTING IT HERE IS NOT ENOUGH ON ITS OWN: `Connect` STILL MATCHES IT VIA
-      `/community`.** Two items matching one path is `E433`'s violation, and the old
-      predicate lit every match. **`bandActiveHref` below resolves it by the LONGEST matched
-      prefix** — `/community/score` (16) beats `/community` (10) — so the specific owner wins
-      and Connect keeps every other page under that prefix.
-      ⚠ **THE ROUTE STILL DOES NOT MOVE.** `E600` WS-A decided that deliberately, and it
-      stands: this changes which item the band lights, not where the page lives.
-    */
-    /* `E816` — the score moved to `/score`; the old path is a 308 and is kept
-       here so a bookmarked link still lights the right item on its way through. */
     "/score",
     "/community/score",
-    /* ── ⚠⚠ `E735` — THREE MORE THAT ARE THE MEMBER'S OWN ─────────────────────────────
-       ⚠ `/recommendations` is the member's own recommendations, `/support` their own
-       tickets, and `/reports` their own exports. ⚠⚠ All three sat DARK, and all three
-       answer *"what is mine"* rather than naming an application — which is exactly what
-       the Account menu is for (the 2026-09-23 vocabulary ruling). */
     "/recommendations",
     "/support",
     "/reports",
   ],
-  /* ── ⚠⚠⚠ THE FOUR CONTROLS (`E735`) ──────────────────────────────────────────────── */
-  /* ⚠ The speech bubble. One route, and it is the one the drawer shows. */
   [MESSAGES_BAND_HREF]: ["/messages"],
-  /* ⚠⚠ The bell owns BOTH views of the one table (ruling 86): the triage list and the
-     worklist. ⚠ `/worklist` does not exist yet — it is lane 2 — and listing it here is
-     deliberate: the owner arrives with the route rather than a commit later. */
   [BELL_BAND_HREF]: ["/notifications", "/worklist"],
-  /* ⚠⚠⚠ The gear opens `ADMIN_NAV`, so it owns the admin tree — all 33 routes, every one
-     of which lit nothing. ⚠ It is admin-only in the band, and a member never reaches
-     `/admin`, so no member sees a lit gear. */
   [CONFIG_BAND_HREF]: ["/admin"],
-  /* ⚠ The logo is home. ⚠⚠ Scott: *"`/dashboard` lights the logo."* */
   [HOME_BAND_HREF]: ["/dashboard"],
 };
 
-/*
-  ── ⚠⚠⚠ THE LANDING ROUTES MATCH EXACTLY (`E475`) ────────────────────────────
-
-  ⚠ `/admin` is a prefix of every admin page, and a `startsWith` test on it once **lit fifteen
-  pills at once.** ⚠⚠ It lived as a local `const` in THREE files — `AppBand`, `BottomNav` and
-  `check-nav-reachable` — each re-declaring the same two routes beside its own copy of the
-  predicate. **Now it is declared once, beside the prefixes it guards.**
-*/
 const BAND_EXACT: ReadonlySet<string> = new Set(["/dashboard", "/admin"]);
 
-/**
- * How specifically `href` claims `pathname`, or `-1` for no claim.
- *
- * ⚠ The length of the LONGEST prefix that matches, which is what lets a more specific owner
- * beat a more general one.
- */
 function bandMatchLength(
   href: string,
   pathname: string,
@@ -389,44 +75,9 @@ function bandMatchLength(
   return best;
 }
 
-/**
- * ── ⚠⚠⚠ WHICH BAND ITEM IS LIT. ONE RULE, THREE CONSUMERS (`P2-A2-E717`) ─────
- *
- * ⚠ **SCOTT: *"Use the band's own 'which item is lit' logic, not a second copy of it."***
- * ⚠⚠ **IT WAS WRITTEN OUT THREE TIMES** — `AppBand.tsx`, `BottomNav.tsx` and
- * `check-nav-reachable.ts` each re-implemented the EXACT-or-prefix wrapper around
- * `bandPrefixesFor`. ⚠⚠⚠ **THEY SHARED THE PREFIX TABLE AND NOT THE DECISION**, so the table
- * could not drift but the rule around it could — and the GATE carried its own copy, which
- * means a divergence would have been invisible to the thing built to catch divergence.
- *
- * ⚠⚠ **IT RETURNS ONE OWNER, NOT A LIST, AND THAT IS THE SECOND FIX.** The old predicate
- * answered *"does this item match?"* per item, so two items could both say yes and **both
- * light** — `E433` requires exactly one. Asking *"who owns this path?"* makes that
- * impossible to express.
- *
- * ⚠ **MOST SPECIFIC WINS**, the same rule `route-access.ts` uses for longest-prefix access.
- * It changes no existing outcome where only one item matched; it decides the case where two
- * do, which before `E717` the band resolved by lighting both.
- */
 export function bandActiveHref(
   pathname: string,
   hrefs: readonly string[],
-  /*
-    ── ⚠⚠⚠ THE ONE ROUTE WHOSE OWNER CANNOT BE READ OFF THE PATH (`P2-A2-E718` item 10) ──
-
-    ⚠ **SCOTT: on `/providers/[id]`, the AVATAR lights when the viewer is the owner (the
-    *"How Others See My Profile"* preview), and CONNECT lights for anyone else. Exactly one,
-    both times.**
-    ⚠⚠ **THE PATHNAME IS IDENTICAL IN BOTH CASES**, so no prefix table can separate them —
-    the difference is WHO IS LOOKING, which is not in the URL. ⚠⚠⚠ **THAT IS WHY IT ARRIVES
-    AS AN ARGUMENT AND NOT AS A SECOND RULE:** Scott's instruction is *"decide it in
-    `bandActiveHref`"*, so the caller supplies the FACT and this function still makes the
-    DECISION — the alternative, an `if` in `AppBand` that lights the avatar directly, is the
-    second copy of the lit-rule that `E717` spent a commit removing.
-    ⚠ It is a PREFIX the account key owns for this viewer only. Connect owns `/providers`
-    generally, so the longest-match rule already resolves the pair: `/providers/<own-id>` is
-    longer than `/providers`, and the owner's preview wins without a special case.
-  */
   opts?: { readonly ownProviderPath?: string | null }
 ): string | null {
   const accountExtras = opts?.ownProviderPath ? [opts.ownProviderPath] : [];
@@ -446,429 +97,50 @@ export function bandActiveHref(
   return bestLen >= 0 ? bestHref : null;
 }
 
-/**
- * Every path prefix a band item owns — its own `href` first, then any extras.
- *
- * ⚠ The single source of truth for "which application is this page in", read by
- * `AppBand` and by the gate that proves the two navigation layers agree.
- */
 export function bandPrefixesFor(href: string): readonly string[] {
   return [href, ...(BAND_EXTRA_PREFIXES[href] ?? [])];
 }
 
-
-/**
- * THE REQUESTER RAIL (brief_requester_home_v1 WS-A).
- *
- * Same six-slot shape as the provider's, pointed at the buying side: you learn,
- * you create work, you shop packages, you manage what you bought, you pay for
- * it, and you talk to people. Flat from birth — E216 applies to this rail as it
- * does to the provider's, so there are no `children` here to remove later.
- *
- * `canHireTalent` is the gate. Requester and Buyer are both `is_service_buyer`
- * (they differ by owning a RequesterProfile), and the rail is the same for
- * both: the distinction decides what they can APPROVE, not where they can
- * navigate. A capability, never an inline role check.
- *
- * Start Learning and Community are shared with the provider rail by design —
- * the same free training and the same community, from the other side of the
- * marketplace. They are declared again rather than imported, because a shared
- * array would make "change it for buyers" mean "change it for everybody".
- */
-/*
-  ── ⚠⚠ LABELS CHANGED, ROUTES DID NOT (`P1-J1.1-E268`, 2026-08-30) ──────────
-
-  ⚠ SUPERSEDED, quoted not deleted, so the old names are recoverable:
-      Start Learning   -> Learning Paths
-      Create Work      -> Work Requests
-      Search Packages  -> Service Products (shipped)
-      Manage Work      -> Work Orders
-      Pay Providers    -> Payments
-      Community        -> Community (unchanged)
-
-  ⚠ SUPERSEDED IN PART BY `P1-ALL-E380`: `/contracts` BECAME `/orders` on
-  2026-09-04, so this paragraph's "byte-identical" claim no longer covers that
-  one route. Everything else in it still holds, which is why it is corrected
-  rather than deleted. ⚠ NOT ON `E380`'s REFERENCE LIST — found by grepping.
-  ⚠⚠ EVERY OTHER `href` IS BYTE-IDENTICAL TO WHAT IT WAS. `/orders` now READS
-  "Work Orders" and `/packages` now READS "Service Products" — the label is the
-  product's language, the route is the codebase's, and they are allowed to
-  disagree. Renaming a route here would 404 every existing link and is a
-  separate decision nobody has made.
-  ⚠ THE `requires: "canHireTalent"` GATES ARE UNCHANGED on all four items that
-  had them. Relabelling is not re-permissioning.
-*/
 export const REQUESTER_NAV: NavItem[] = [
-  /*
-    ── ⚠⚠⚠ `Connect` IS FIRST ON THE BUYER MENU TOO (`P2-J3-E588` WS-C) ──────
-
-    ⚠ Scott, 2026-09-19, ruled the move for BOTH menus. ⚠⚠ The buyer menu now
-    reads `Connect · Learn · Hire · Shop · Track Orders · Pay`.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it sat LAST, after `Pay`, with
-    these two notes attached:
-    // ⚠ `My Community` (`P1-ALL-E372` WS-5). Scott: "'Community' sounds like a
-    //   place you visit; 'My Community' sounds like something you have."
-    // ⚠ `Connect` REPLACES `My Community` IN THE RAIL ONLY. The journey keeps
-    //   its name on the page `<h1>`, which still reads `My Community`.
-    ⚠⚠ BOTH NOTES ARE STILL TRUE AND STILL BIND: the `heading` below is
-    `My Community`, and the page `<h1>` is unchanged by this brief.
-
-    ⚠⚠ A BUYER HAS NO PROVIDER PROFILE, so `/community` renders the Connect
-    LANDING for them, not a profile — see the fallback in
-    `(app)/community/page.tsx`. ⚠ Putting `Connect` first on the buyer side is
-    Scott's ruling and is deliberate even though the surface behind it differs.
-  */
-  /* ⚠⚠ `Connect` LANDS ON THE PROFILE NOW (`P2-J3-E591` WS-A). ⚠ Scott,
-     2026-09-19: *"connect is now 'build your profile and connect to other
-     profiles'."* ⚠⚠ AND IT FIXES A TITLE SCOTT SPOTTED: this entry headed the
-     PROFILE page *"My Community"*, because one route rendered both.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
-     ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
-     record of what the journey is called, not a rendered string. */
-  /* ⚠⚠ `heading` CORRECTED (`P2-A2-E598` WS-B): Connect's home is `/community`
-     now, so titling the application *"My Profile"* names a page it no longer
-     shows. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Connect", heading: "My Profile", href: "/connect", … },
-     ⚠⚠⚠ IT IS INERT TODAY AND IS FIXED ANYWAY. `heading` is read only by
-     `pageTitleFor`, whose only caller is `AppHeader.tsx` — and MEASURED
-     2026-09-22: nothing imports `AppHeader` (`E559` replaced it with the band).
-     ⚠ A dormant value that says the wrong thing is a trap for whoever wakes it. */
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    /* ⚠ MIRRORED SLOT. `nav.ts` already documents why: the rails point the SAME
-       WORD at DIFFERENT ROUTES. The nouns survived both sides because they were
-       nouns — A VERB PICKS A SIDE, so the buyer hires and the provider works. */
     label: "Hire",
     heading: "Work Requests",
-    /*
-      ⚠⚠ `/hire`, NOT `/create-work` (`P1-J4-E392`). SUPERSEDED, QUOTED NOT
-      DELETED: this read `href: "/create-work"`.
-
-      ⚠ THE HREF WAS THE WIZARD BECAUSE THE LANDING DID NOT EXIST. `/hire` was a
-      `ComingSoon` stub and nothing linked to it, so the rail pointed at the only
-      built thing in the journey. That made the rail's Hire mean "start a new
-      request", and a requester with three requests already had NOWHERE TO LOOK AT
-      THEM — a second request made the first unreachable.
-
-      ⚠ THE ROUTE IS NOT RENAMED AND NOTHING 404s. `/create-work` is untouched,
-      still gated the same way, still the wizard, and is the FIRST TAB in the set
-      below — one click from where the rail now lands. What changed is which of
-      two existing pages the rail opens.
-    */
     href: "/hire",
     icon: "ClipboardList",
     requires: "canHireTalent",
   },
   {
-    /* ⚠ MIRRORED SLOT — buyer shops, provider sells. */
     label: "Shop",
     heading: "Service Products",
-    /*
-      ⚠⚠⚠ THE LABEL AND THE URL AGREE NOW (`P2-ALL-E698`). Scott, 2026-09-28:
-      *"the real 'shop' page SHOULD be named shop because of the menu name."*
-      ⚠ The public `/shop` moved to `/marketplace` in the commit before this one —
-      it had to, because route groups do NOT namespace URLs and Turbopack refuses
-      to build with both present (ruling 98d).
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   href: "/packages",
-    */
     href: "/shop",
     icon: "Package",
-    /*
-      ⚠⚠⚠ NO `requires` — SLOT 4 IS UNIVERSAL (`P2-ALL-E693`, ruling `89e`
-      corrected): *"Slot 4 is Shop for everyone… Role-dependence is slot 3
-      only."* ⚠ `/packages` became `authenticated` in `86f78c7` so the entry and
-      its route agree.
-      ⚠⚠ **A CONSEQUENCE WORTH NAMING RATHER THAN DISCOVERING: an admin who
-      holds neither service capability now sees Shop.** They saw two slots before
-      and see three now. That is the ruling applied, not a slot placed — **where
-      the admin's five point is still Scott's** (`89i`).
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   requires: "canHireTalent",
-    */
   },
-  /*
-    ── ⚠⚠ THE CONTRACT DOCTRINE (`P1-ALL-E380`, 2026-09-04) ─────────────────
-
-    ⚠ THIS BLOCK IS HERE BECAUSE THIS IS WHERE THE MISTAKE WAS MADE. `/contracts`
-    was never a decision — it was a URL segment a placeholder got titled from
-    (`9ae05d7`), and the rail beside it has said `Work Orders` the whole time.
-    A word invented a record. Read this before adding one back.
-
-    SCOTT, 2026-09-04: *"the work order is the SOW...which is a contract. In
-    services, buyer and supplier have 2 contracts. Master Services Agreement
-    (MSA) is buyer supplier across all providers — generic terms, arbitration,
-    PII, confidentiality. The Statement of Work (SOW) is the per-resource
-    definition of what is to be done, how long, how much is to be paid. FOR
-    PANAMEER, the ToS must cover the MSA and the Work Order is the SOW."*
-
-    And: *"remove contract. we will not have that."*
-
-      services layer                              Panameer
-      ------------------------------------------  --------------------------
-      MSA  — across all engagements: arbitration,
-             PII, confidentiality                 THE ToS
-      SOW  — per engagement: what, how long,
-             how much                             THE WORK ORDER
-
-    ⚠⚠ THERE IS NO THIRD CONTRACT, SO THERE IS NO `Contract` MODEL, NO
-    `/contracts` ROUTE AND NO CONTRACTS SCREEN.
-
-    ⚠ THE ToS **IS** THE MSA. So there is no separate MSA record, no MSA signing
-    flow and no MSA storage. Accepting the terms IS accepting the master
-    agreement — which is why `User.tos_accepted_at` / `tos_version` and
-    `Company.company_tos_accepted_by` / `_at` / `_version` are legally
-    load-bearing rather than a formality. ⚠ `E380` VERIFIED THOSE AND REPORTED
-    ON THEM; it changed none of them.
-
-    ⚠ THE WORK ORDER **IS** THE SOW. Scope, duration and price are ITS FIELDS —
-    not a separate document, not an attachment, not a generated PDF to be
-    signed. When Work Orders are built, that is what they carry.
-
-    ⚠⚠ AND `Contract` WAS A ROUTE NAME, NEVER A PRODUCT CONCEPT. Nobody may
-    re-add it from a URL, a stale bookmark, a deck slide or an admin listing.
-
-    ── ⚠⚠ DIRECT WORK ORDERS — THE ONE QUALIFICATION ────────────────────────
-
-    SCOTT, 2026-09-04: *"It WILL be possible that a buyer can create a direct WO
-    to bring a contract created outside Panameer into the application to use its
-    functionality. They are called DIRECT WORK ORDERS."*
-
-    ⚠ SO A WORK ORDER DOES NOT ALWAYS ORIGINATE HERE. The normal path is
-    `Service Product -> Work Request -> proposal -> Work Order`. A Direct Work
-    Order has no Panameer-side origin: the deal was struck elsewhere and brought
-    in to use settlement, timesheets and the rest.
-
-    ⚠⚠ WHICH QUALIFIES "THE ToS IS THE MSA":
-
-                            originated here      DIRECT WORK ORDER
-      MSA                   the ToS              ⚠ THE PARTIES' OWN, MADE
-                                                   ELSEWHERE
-      SOW                   the Work Order       ⚠ A **RECORD OF** A SOW THAT
-                                                   EXISTS ELSEWHERE
-      platform terms        the ToS              the ToS
-
-    ⚠ THE SECOND ROW IS THE ONE THAT MATTERS: for a Direct Work Order the Work
-    Order REPRESENTS the SOW rather than BEING it. If the two ever disagree,
-    which one governs is A LAWYER'S QUESTION AND NOT A BUILD DECISION. `E380`
-    flagged it and did not answer it.
-
-    ⚠⚠ CONSEQUENCE FOR WHENEVER WORK ORDERS ARE BUILT, AND IT IS ONE FIELD: A
-    WORK ORDER MUST KNOW ITS ORIGIN, because the platform can only make claims
-    about what it can see. PANAMEER CAN ASSERT THE TERMS OF AN ORDER IT
-    GENERATED; IT CAN ONLY RECORD THE EXISTENCE OF ONE IT DID NOT.
-
-    ⚠⚠ THAT FIELD IS NOT BUILT AND MUST NOT BE ADDED HERE. Work Orders are still
-    a stub, and a column on a table nobody has is the `E034` shape — a gate that
-    cannot fire, sitting in the code looking implemented. THIS DOCTRINE SAYS THE
-    FIELD IS COMING SO IT ARRIVES WITH THE MODEL RATHER THAN BEING RETROFITTED.
-    IT DOES NOT CREATE ONE.
-
-    ⚠⚠ SPENT 2026-09-07, QUOTED NOT DELETED — THE PARAGRAPH ABOVE IS SATISFIED,
-    NOT CONTRADICTED. It was an instruction to `E380`, a NAV brief, and it asked
-    for the field to arrive WITH the model. `P1-J4-E388` added
-    `WorkOrder.origin WorkOrderOrigin (DIRECT | INDIRECT)` in the same commit
-    that created `WorkOrder`, which is exactly what was asked. `P1-J4-E393` then
-    renders it: `OriginBadge` marks DIRECT and the detail page says in words that
-    Panameer RECORDS such an order rather than issuing it.
-    ⚠ READ "MUST NOT BE ADDED HERE" AS "NOT IN THAT BRIEF." It is not a standing
-    ban, and nobody should read it as one and remove the column.
-
-    ⚠ THE REST OF THIS BLOCK IS LIVE AND `E393` OBEYS IT: the ToS is the MSA, the
-    Work Order is the SOW, a DIRECT order REPRESENTS a SOW made elsewhere, and
-    WHICH GOVERNS IF THEY DISAGREE IS STILL A LAWYER'S QUESTION THAT NO BRIEF HAS
-    ANSWERED.
-
-    ⚠ THE ToS TEXT IS OUT OF SCOPE. Whether it actually carries arbitration, PII
-    and confidentiality as BUYER-TO-SUPPLIER terms rather than only
-    user-to-platform terms is a lawyer's question. `E380` flagged it and edited
-    no legal copy.
-  */
   {
-    /* ⚠⚠ A PLURAL NOUN, NOT A VERB, AND SCOTT DECIDED IT: *"yes. i get it. that
-       works."* SUPERSEDED, QUOTED NOT DELETED — his draft read `Order | Settle`.
-       As a bare verb `Order` reads as a command (order something) rather than as
-       a place. The row loses all-verb symmetry and gains legibility. */
-    /* ⚠⚠ `P1-ALL-E533` PART C — SCOTT, 2026-09-16, APPROVED AS PROPOSED.
-       ⚠ SUPERSEDED, quoted not deleted (`E164`): `Orders` and `Payments`.
-       ⚠⚠ THE BUYER IS NOT THE SELLER. A buyer is WATCHING something arrive,
-       so `Track Orders`; a provider is working a queue, so the seller rail
-       says `Manage Orders`. ⚠ AND `Get Paid` IS WRONG ON THIS SIDE — a buyer
-       PAYS, so the verb is `Pay`.
-       ⚠ THE BUYER URLs ARE UNTOUCHED: `/pay` and `/packages` are already
-       nouns and already clean. ⚠⚠ THE `heading` VALUES ARE UNTOUCHED TOO —
-       Scott ruled them not in conflict: the rail is a VERB (what you are
-       about to do), the heading is a NOUN (what you are looking at). */
-    /*
-      ── ⚠ `Track Orders` → `Orders` (`P2-ALL-E688` WS-B, ruling `89e`) ────────
-
-      ⚠⚠ **BOTH RAILS NOW READ `Orders`.** The provider side became `Orders` at
-      `E559`; this is the buyer side catching up, and the two are no longer
-      deliberately different words. ⚠ **SUPERSEDED, quoted not deleted
-      (`E164`):** *"THE BUYER SIDE IS UNTOUCHED: it still reads `Track Orders`,
-      because a buyer WATCHES and a provider WORKS a queue."*
-      ⚠⚠ **WHAT CHANGED IS THAT THE SLOT NO LONGER MEANS "WATCH":** with money
-      rolled in, a buyer PAYS from here, which is not watching. **The distinction
-      the old word carried stopped being true**, so keeping it would have been a
-      label describing a narrower page than the one it opens.
-
-      ⚠⚠⚠ **THE `heading` IS DELIBERATELY UNCHANGED AND IT IS LOAD-BEARING:**
-      `journeyKey()` in `support-applications.ts` derives a support-ticket
-      category from `heading ?? label`, so renaming the LABEL cannot orphan a
-      filed ticket. `check:orders` §5 asserts the heading, not the label, and is
-      untouched by this rename — **checked, not assumed.**
-    */
     label: "Orders",
     heading: "Work Orders",
     href: "/orders",
     icon: "ClipboardCheck",
     requires: "canHireTalent",
   },
-  /*
-    ── ⚠⚠⚠ `Pay` IS REMOVED — THE BUYER'S HALF OF ruling `89e` ───────────────
-
-    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
-    an Order."* ⚠⚠ Five per role: `Connect · Learn · Hire · Shop · Orders`.
-
-    ⚠⚠⚠ **THE DOOR SHIPPED FIRST, IN WS-A (`8d0aaa1`):** `orders/page.tsx`
-    renders `Pay → /pay`, gated on `canHireTalent` — **required, not decoration,
-    because `/pay` is itself gated `canHireTalent` (`route-access.ts:226`) and
-    offering it to a seller would be `E579`'s door onto a wall.** ⚠ Rule 5 held
-    at every commit, proven by commit order.
-
-    ⚠⚠ **CORRECTED IN PASSING (rule 6 / §6) — THIS ENTRY'S OWN COMMENT WAS
-    FALSE.** It claimed *"the href is `/pay` on this side and `/finances` on the
-    provider's — mirrored routes"*. ⚠⚠⚠ **MEASURED FALSE: the provider's href was
-    `/payments`, and `/finances` has been a 308 redirect since `E533`.** It is 21
-    lines of `permanentRedirect("/payments")` with **zero live doors of any
-    kind** — so the sentence named a route nobody could reach as though it were
-    one of a matched pair. ⚠ **They were never mirrored; they were a live route
-    and a retired alias.**
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the entry and its false comment:
-    //   THE SECOND PLURAL NOUN, SAME DECISION. `Settle` is the one label nobody
-    //   arrives already understanding, in the ONE SECTION WHERE MONEY LIVES.
-    //   The href is `/pay` on this side and `/finances` on the provider's —
-    //   mirrored routes, unchanged by this brief.
-    //   { label: "Pay", heading: "Payments", href: "/pay", icon: "CreditCard",
-    //     requires: "canHireTalent" },
-  */
-  /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
-     and the reasoning are at the head of the array. */
 ];
 
-/**
- * THE TAB ROWS the flattened rail items' children became (E216).
- *
- * Keyed by the base route, so a page asks for its own set by the path it lives
- * at. Declared HERE, beside the rail, for the reason this file exists: these
- * used to be `children` on the nav items, `pageTitleFor` read them to title the
- * pages they point at, and moving them into six separate page components would
- * have split one list across seven files.
- *
- * DE-DUPLICATED AGAINST WHAT THE PAGE ALREADY HAD, which mattered most for Find
- * Work. Its five flyout children and the work feed's five tabs described the
- * same views under different names — "Work Requests for My Skills" IS "Best
- * Matches" (the feed ranks by skill overlap), and "All Work Requests" IS "Most
- * Recent". Folding them in added exactly one genuinely new view, My Proposals,
- * rather than stacking a second row of near-synonyms.
- */
-/**
- * ⚠ A TAB IS A NAV ITEM PLUS TWO TAB-ONLY FACTS (`P1-ALL-E378`).
- *
- * Extended rather than folded into `NavItem` so the RAIL cannot accidentally
- * acquire a step number — a numbered rail is a different product decision and
- * nobody made it.
- *
- *   `n`     — the step number in a sequenced set. ⚠ ABSENT means unnumbered
- *             ON PURPOSE and is a real state, not missing data: `/messages`
- *             sits in the `/community` sequence WITHOUT a number because it has
- *             no `Message` model behind it.
- *   `state` — ⚠⚠ WHERE THE `live` / `early` PILLS WENT. They used to ride on
- *             `communitySections()`'s duplicate cards, which `E378` removes.
- *             The pill is the one thing on those cards worth keeping, so it
- *             moves ONTO THE TAB rather than onto a second set of cards —
- *             which is exactly what the brief asked for. Values match
- *             `lib/community.ts`'s originals: forums/teams `live`,
- *             mentors/messages `early`.
- */
 export type PageTabItem = NavItem & {
   n?: number;
   state?: "live" | "early";
 };
 
 export const PAGE_TABS: Record<string, PageTabItem[]> = {
-  /*
-    LEARN IS THE EXCEPTION, and deliberately. The pill row that used to carry
-    these — a live client-side filter over one catalog, not two routes — is
-    `LearnHome`'s, and `LearnHome` now lives at `/learn/paths`: `/learn` itself
-    became the learner's dashboard (brief_learn_app_shell WS2). A `PageTabs` row
-    above that dashboard would be the exact double-row the brief forbids, so the
-    dashboard carries a quiet link row of its own instead.
-
-    ⚠ THIS ENTRY IS STILL NOT RENDERED ANYWHERE. It exists so `pageTitleFor`
-    knows these routes' names. `/learn/paths` joins it for the same reason.
-  */
-  /*
-    ── ⚠ ONE TAB REMOVED, ONE KEPT, AND ONE RENAMED (`P1-J3-E362`) ───────────
-
-    ⚠ SUPERSEDED: `{ label: "My Courses", href: "/learn/my-courses" }`. That
-    route was still a `ComingSoon` while `/learn/paths?tab=mine` already worked,
-    so it now REDIRECTS there (not deleted — the URL may be linked) and the tab
-    points straight at the real destination. ⚠ `My learning`, not `My courses`:
-    the tab lists PATHS.
-
-    ⚠⚠ `/learn/courses` STAYS, AND THAT IS A DELIBERATE DEPARTURE FROM THE BRIEF.
-    `E362` asked for it to redirect to `/learn/paths` as a duplicate. IT CANNOT:
-    `/learn/courses` is PUBLIC by `P1-J0-E316` (*"a gate there turns the public
-    hero's second CTA into a login wall"*) and `/learn/paths` is GATED by
-    `P1-J3-E036` (*"THIS ROUTE STAYS GATED"*, redirecting signed-out visitors to
-    `/login`). Redirecting the public one at the gated one would silently undo
-    `E316`. ⚠ THE DUPLICATION IS THE RESIDUE OF TWO OPPOSITE RECORDED DECISIONS,
-    and reconciling them is Scott's call, not this brief's. REPORTED at `E362`.
-  */
   "/learn": [
     { label: "All Learning Paths", href: "/learn/paths" },
     { label: "All Courses", href: "/learn/courses" },
     { label: "My Learning", href: "/learn/paths?tab=mine" },
   ],
-  /* ⚠ `P1-ALL-E533` — rekeyed with the page; `/settings/packages` is now
-     `/my-services`. This set exists to TITLE its destinations (`pageTitleFor`
-     reads `Object.values(PAGE_TABS).flat()`), which is how `/services/offers`
-     gets a page title; it is not rendered as a tab row. */
   "/my-services": [
-    /* ⚠ `requires` ADDED (`P2-J1.1-E050`). `/settings/packages` narrowed to
-       `canProvideServices`, and this tab declared nothing — which reads as
-       "everyone signed in". ⚠⚠ THE SIBLING BELOW ALREADY CARRIED IT since
-       `E046`; this one did not, because the ROUTE was still open then. Narrowing
-       the route is what made it a live fourth layer, and `check:nav-reachable`
-       caught it the same run. */
     { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
-    /* ⚠ `requires` ADDED (`P2-J1.1-E046` WS-4). `/services/offers` is gated
-       `canProvideServices`, and this entry declared nothing — which reads as
-       "everyone signed in". It was harmless only while `/settings/packages` was
-       itself provider-only; opening that tree made it a live sixth instance of
-       the offered-then-refused class. `check:nav-reachable` caught it. */
     { label: "Offers for My Services", href: "/services/offers", requires: "canProvideServices" },
   ],
-  /*
-    ⚠ THE HIRE JOURNEY'S TWO SLICES (`P1-J4-E392`). MODE `none` — no numbers.
-
-    ⚠⚠ THESE ARE SLICES, NOT STEPS, WHICH IS WHY THEY ARE UNNUMBERED. `E378`:
-    *a PUBLIC SPINE CROSSES ROLES AND PAGES; A TAB SET IS SLICES WITHIN ONE PAGE
-    FOR ONE ROLE — where they disagree the set is `none`.* Listing your requests
-    and writing a new one are not step 1 and step 2 of anything: most visits are
-    the first and only some are the second.
-
-    ⚠ BOTH DECLARE `requires`. `/hire` is gated `canHireTalent` in
-    `ROUTE_ACCESS`, so the tab must say the same or `check:nav-reachable` reads
-    it as "everyone signed in" — the sixth and seventh instances of the
-    offered-then-refused class were caught exactly this way, including a set
-    whose FIRST tab was the one missing it.
-  */
   "/hire": [
     { label: "Work Requests", href: "/hire", requires: "canHireTalent" },
     { label: "Create a Request", href: "/create-work", requires: "canHireTalent" },
@@ -877,197 +149,6 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Payments", href: "/payments" },
     { label: "Payment Requests", href: "/payments/payment-requests" },
   ],
-  /*
-    ⚠⚠ `/community` — MODE `suggested`, AND THE NUMBERS ARE A RECOMMENDED ORDER
-    OF ATTENTION, NOT A PROCESS (`P1-ALL-E378`).
-
-    SCOTT, 2026-09-04: *"with something like Connect there isn't a real process
-    sequence, but there is a logical sequence."*
-
-    ⚠ THE RAIL SAYS THE JOURNEY, SO NO TAB REPEATS IT AND NONE NEEDS `My`.
-    ⚠ SUPERSEDED, QUOTED NOT DELETED — this set read:
-      *"My Community · Messages · Forums · My Teams · Find a Mentor"*.
-    `My Community` was the active tab sitting forty pixels above an `<h1>` that
-    said `My Community` again.
-
-    ⚠⚠ `Find a Mentor` -> `Mentoring` NAMES THE TOPIC, NOT THE PEOPLE. `E374`
-    established that nobody is a mentor until asked, so a label presenting people
-    as mentors advertises a consent nobody gave.
-
-    ⚠⚠ MESSAGES IS UNNUMBERED AND LAST, AND THAT IS A BUILD FACT RATHER THAN A
-    PREFERENCE. Scott's draft order opened with *"1. Check Your Messages"* and
-    that is right for the finished product — but there is NO `Message` model in
-    the schema and `/messages` ships a disabled composer reading *"Messaging
-    isn't available yet."* A suggested sequence whose step 1 is a dead end
-    teaches people the numbers are decorative. ⚠ MESSAGES TAKES 1 THE DAY IT HAS
-    A MODEL.
-  */
-  /*
-    ⚠⚠ CONNECT IS A ROOM, NOT A PATH (`P2-J3-E557` WS-A). The numbers are gone,
-    the row is labelled `CONNECT`, and `Home` is the landing. ⚠ The superseded
-    `E378`/`E379` sequence reasoning is FOOTNOTED BELOW THIS SET, not above it.
-  */
-  /*
-    ── ⚠⚠ THE KEY IS `/connect`, AND IT MOVED WITH THE FRONT DOOR (`E591` WS-A)
-
-    ⚠⚠⚠ THE KEY NAMES THE APPLICATION, NOT A PAGE. `E591` split one route into
-    two — the PROFILE is `/connect`, the PEOPLE are `/community` — and the band
-    entry now points at `/connect`, so a row keyed `/community` would have named
-    a SECTION of Connect as the owner of Connect's own tab row.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the key and the Home tab as
-    `E557` WS-A left them, when `/community` was the landing:
-    //   "/community": [
-    //     { label: "Home", href: "/community" },
-
-    ⚠⚠ THE KEY IS A LOOKUP TOKEN, NEVER MATCHED AGAINST A URL. `PageTabs` picks
-    the active tab from its own `current` prop against `t.match ?? t.href`, and
-    `check:nav-reachable` uses the key only as a label in its output. ⚠ It is
-    spelled as a route because every other key is, and because the route it
-    names is the one the band lands on.
-    ⚠⚠⚠ `PAGE_TABS` IS A `Record<string, …>`, SO A MISSED CALL SITE RETURNS
-    `undefined` RATHER THAN FAILING TO COMPILE. All eight were changed together;
-    `check:nav-reachable` and `check:community` are what hold it.
-
-    ── ⚠ `Community` IS A NEW TAB, AND WS-A COULD NOT SHIP WITHOUT IT ─────────
-
-    ⚠⚠ `Home` FOLLOWED THE PROFILE TO `/connect`, WHICH WOULD HAVE LEFT THE
-    COMMUNITY PAGE WITH NO DOOR IN THE NAV AT ALL. ⚠ A route split is complete
-    only when both halves are reachable; the alternative was shipping a page
-    reachable solely from an empty-state link in `/messages`.
-    ⚠ ONE WORD FOR PEOPLE: `Community`. `Network` is not a second name for it
-    (`E591` WS-A item 6) — and it never was in live code: the eight surviving
-    occurrences are *"Network error"*, `Oracle Business Network` (a real Oracle
-    product) and privacy-policy text. ⚠ Nothing was retired because nothing had
-    drifted.
-    ⚠⚠ `Colleagues` IS UNCHANGED AND DELIBERATELY SO — it already pointed at
-    `/community/colleagues`.
-  */
-  /*
-    ── ⚠⚠ FIVE TABS (`P2-J3-E593` WS-A) ─────────────────────────────────────
-
-    ⚠ SCOTT, 2026-09-20: *"less tabs…simple. simple is easier to use."*
-    ⚠⚠ THE ROW'S LOGIC IS HIS: `Profile` (who you are) · `Community` (who you
-    know — FREE) · `Groups` (money) · `Service Products` (money) · `Settings`.
-    ⚠ THE TWO REVENUE TABS ARE ADJACENT, so the earning surfaces read as a pair.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the six as `E591` WS-A left them:
-    //   { label: "Home", href: "/connect" },
-    //   { label: "Community", href: "/community" },
-    //   { label: "Colleagues", href: "/community/colleagues" },
-    //   { label: "Forums", href: "/community/groups", state: "live" },
-    //   { label: "Mentoring", href: "/community/mentors", state: "early" },
-    //   { label: "Teams", href: "/community/teams", state: "live" },
-
-    ⚠⚠⚠ THREE TABS WENT AND NOT ONE PAGE DID. `/community/colleagues`,
-    `/community/mentors` and `/community/teams` all still resolve; `/community`
-    absorbed them as SECTIONS and links to each. ⚠ `check:nav-reachable` is the
-    gate, and the Community page's links are what make the folding honest —
-    ⚠⚠ two of them were MISSING and are fixed in the same commit (`CommunityRail`).
-
-    ⚠ `Groups` IS A LABEL OVER THE EXISTING FORUMS ROUTE. No redirect, no link
-    rewrite — `forums` is already a noun, so `E533` does not force the URL to
-    move. ⚠⚠ THE PAID HALF OF GROUPS DOES NOT EXIST (`/community/groups` is the
-    free forum-per-learning-path of `E383`). The tab names the surface; the
-    money in it is unbuilt, and that is the right order — name it, then build
-    into it. ⚠ DO NOT FABRICATE A PAID STATE.
-  */
-  /*
-    ── ⚠⚠⚠ THE PROFILE TAB ROW — EVERY PAGE UNDER THE AVATAR (`P2-A2-E600` WS-A)
-
-    ⚠ SCOTT, 2026-09-22: *"One tab row for every page under the avatar: My
-    Profile · Score · Statistics · Account Health · My Company · Account
-    Settings. It matches the avatar menu."*
-
-    ⚠⚠ THE ROW AND THE MENU USE THE SAME WORDS, WHICH IS THE POINT — `Score`
-    not `Profile Score`, `Statistics` not `Usage Stats`, `Account Settings` not
-    `Settings`. ⚠ `PERSONA_NAV_PRIMARY`/`SECONDARY` are renamed to match in the
-    same commit; two vocabularies for one set of pages is the `E459` defect
-    (*"a `Reports` panel beside `Reports` copy and neither was obvious"*).
-
-    ⚠⚠⚠ ALL SIX ROUTES EXIST — MEASURED, because the brief says *"a tab whose
-    page doesn't exist yet: leave it out and report it. Never a tab that 404s."*
-    `/profile`, `/community/score`, `/usage`, `/account-health`, `/company` and
-    `/settings` all have a `page.tsx`. **Nothing was left out.**
-    ⚠ `E730` WS-A RENAMED THE THIRD ONE. SUPERSEDED, quoted not deleted (`E164`):
-    //   /profile, /community/score, /stats, /account-health, /company and /settings
-
-    ⚠ `Usage` IS FOLDED INTO `Statistics` (Scott): one tab, one menu item, one
-    route — **`/usage` since `E730` WS-A**. ⚠⚠ THE WORD WON IN THE END: the label has
-    read `Usage` since `E603`, and the route and the browser title now say it too —
-    three names for one page was `E533`'s rule failing on the noun.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`): the route read `/stats`.
-    ⚠⚠ THE KEY IS `/profile` because that is the row's home, and
-    `bandPrefixesFor` is NOT extended to cover the others: these are
-    ACCOUNT-MENU destinations and must light no band application (`E596`), which
-    is what the `BAND_KNOWN_OPEN` entries below record.
-  */
-  /*
-    ── ⚠⚠⚠ RULING 31b — THE ROW IS RE-LABELLED AND RE-ORDERED (brief 10 WS-A) ──
-
-    ⚠ Scott's SIT sheet, verbatim: **`Profile · Company · Search Score · Usage
-    Statistics · Account Health · Settings`**, and the menu NAME is
-    **`Account Information`**.
-    ⚠⚠ **EVERY LABEL CHANGES EXCEPT `Account Health`, AND `Company` MOVES FROM
-    FIFTH TO SECOND.** ⚠ No route changes: all six pages already existed, so this
-    is a re-label and a re-order, **not a build.**
-
-    ⚠⚠⚠ **`Usage Statistics`, NOT `Statistics` — AND THAT OVERTURNS A NOTE A FEW
-    LINES ABOVE.** This map's own comment records an earlier decision: *"`Usage`
-    IS FOLDED INTO `Statistics` (Scott): one tab, one menu item, one route."*
-    ⚠ **Ruling 31b is 2026-09-24 and says the label is `Usage Statistics`,
-    verbatim from the sheet's row 35.** ⚠⚠ **RULE 13: THE NEWEST DATED STATEMENT
-    FROM SCOTT IS THE LIVE ONE**, so the label takes the newer wording. ⚠ The
-    older note's SUBSTANCE still holds and is not contradicted — **one tab, one
-    menu item, one route (**`/usage`** since `E730` WS-A; it read `/stats` when this was
-    written, `E164`)** — only the words on it changed.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "My Profile", href: "/profile" },
-    //   { label: "Score", href: "/community/score" },
-    //   { label: "Statistics", href: "/stats" },
-    //   { label: "Account Health", href: "/account-health" },
-    //   { label: "My Company", href: "/company" },
-    //   { label: "Account Settings", href: "/settings" },
-
-    ⚠⚠ **REPORTED, NOT FIXED — `Search Score` POINTS AT `/community/score`**, a
-    CONNECT route serving an ACCOUNT INFORMATION tab. ⚠ `E533`'s rule is *a verb
-    in the menu, a noun in the URL*; this is a page filed under the wrong section
-    entirely. **Moving it is a route change with a 308 and its own blast radius**
-    (`ProfileScoreView` is mounted from there), so it is **not folded into a
-    re-label.**
-  */
-  /*
-    ── ⚠⚠⚠ FOUR TABS, ONE WORD EACH (`P2-ALL-E687` WS-B, ruling 89c) ────────
-
-    ⚠⚠⚠ **THIS SUPERSEDES RULING 31b, WHICH SAID *"render them exactly"* OF THE
-    OLD SIX — AND 31b HAS BEEN TREATED AS BINDING ALL WEEK.** ⚠ SUPERSEDED,
-    quoted not deleted (`E164`), so the next run does not "correct" it back:
-    //   RULING 31b: "Order and labels are the sheet's, render them exactly."
-    //   "/profile": [
-    //     { label: "Profile", href: "/profile" },
-    //     { label: "Company", href: "/company" },
-    //     { label: "Search Score", href: "/community/score" },
-    //     { label: "Usage Statistics", href: "/stats" },
-    //     { label: "Account Health", href: "/account-health" },
-    //     { label: "Settings", href: "/settings" },
-    //   ],
-    ⚠⚠ **RULE 13: SCOTT'S 2026-09-27 STATEMENT IS NEWER AND WINS. THIS IS NOT
-    DRIFT.** A `LOCKED` list locks against drift, not against Scott.
-
-    ⚠ **ONE WORD EACH IS NOT A STYLE CHOICE — IT IS WHAT MAKES FIVE FIT** (88b):
-    measured at 390px, a 5-character tab is ~64px and five fit; an 8-character
-    tab is ~90px and **three** fit. `Search Score` → `Score`, `Usage Statistics`
-    → `Usage`, `Account Health` → `Health`.
-
-    ⚠⚠ **`Company` LEFT (89b): IT IS A LEGAL ENTITY, NOT A PROFILE SURFACE** —
-    `legal_name`, `tin`, `state_of_filing`, a terms acceptance. **Door:
-    `My Company` in the avatar menu** (`AccountMenu.tsx`, shipped in WS-A).
-    ⚠⚠ **`Settings` LEFT (89a), AND REMOVING IT CLOSES AN `E585` IN THE MENU:
-    ONE WORD SAT ON BOTH THIS ROW AND `/connect`'s, POINTING AT ONE
-    DESTINATION FROM TWO PLACES.** ⚠⚠⚠ **Door: `My Account Settings`, which
-    shipped in WS-A `7abd2a4` — it is now the ONLY entrance to `/settings`, and
-    it existed before this line was touched (rule 5).**
-  */
   "/profile": [
     { label: "Profile", href: "/profile" },
     { label: "Score", href: "/community/score" },
@@ -1075,242 +156,16 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
     { label: "Health", href: "/account-health" },
   ],
   "/connect": [
-    /*
-      ── ⚠⚠⚠ `Profile` LEFT THIS ROW (`P2-A2-E598` WS-B item 2) ──────────────
-
-      ⚠ SCOTT, 2026-09-21: *"The Profile tab leaves Connect's row. Connect lands
-      on Community."* The profile is an ACCOUNT-MENU destination now, reached
-      from your own picture — not a slice of an application.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E593`'s five tabs:
-      //   { label: "Profile", href: "/connect" },
-      ⚠⚠ THE KEY `/connect` STAYS, and so does the route: it is the band's
-      application href, `PAGE_TABS` is keyed on it, and `bandPrefixesFor`
-      resolves `/community` through it. ⚠⚠⚠ REMOVING THE TAB IS NOT REMOVING THE
-      ROUTE — `/connect` now redirects to `/community`, so the band still lights
-      Connect and all 31 live references still resolve.
-    */
-    /*
-      ── ⚠⚠⚠ THE ROW BECAME THE SECTIONS. SCOTT, 2026-09-25. ────────────────
-
-      ⚠ Shown the mockup beside the live page and asked which row he wanted,
-      Scott chose **the sections** — *"Colleagues · Mentors · Teams"*.
-
-      ⚠⚠⚠ **THE REASON IT IS THE RIGHT ROW IS A MEASURED DEFECT, NOT A
-      PREFERENCE.** With the old row, `/community/colleagues`, `/community/mentors`
-      and `/community/teams` all rendered the tab strip with **`Community`
-      marked `aria-current`** — the row told a member they were on Community
-      while they were on Colleagues. ⚠⚠ **THAT IS WORSE THAN NO HIGHLIGHT:** a
-      row with nothing lit says *you are somewhere else*; a row lighting the
-      parent says *you are here*, and you are not. ⚠ `PageTabs` was doing exactly
-      what it was told — `(t.match ?? t.href) === current` — so the bug was in
-      the ROW, which had no tab for three of its own pages.
-
-      ⚠⚠ **`Community` IS KEPT AS THE FIRST TAB, WHICH IS ONE MORE THAN SCOTT
-      LISTED, AND IT IS DELIBERATE:** the landing page is itself a page in this
-      family, and a row of sections with no tab for `/community` would light
-      nothing there — re-creating the same defect one page over. ⚠ Reported
-      rather than assumed: **if he wants the landing page to have no tab, that is
-      one line.**
-
-      ⚠⚠⚠ **`Settings` STAYS, AND I ALMOST REMOVED IT ON MY OWN AUTHORITY.** It
-      is the one item in this row that is not a community section, so the tidy
-      reading is that it leaves — ⚠⚠ **but the row below already carries a
-      DECISION saying otherwise**, in its own words: *"`Settings` IS NOT REMOVED.
-      Ruling 4 names Service Products and nothing else, and absorbing Settings
-      into Connect is explicitly its own brief."*
-      ⚠ Scott's 2026-09-25 answer was about WHICH SECTIONS the row names. **It was
-      not a ruling about Settings**, and overturning a recorded decision nobody
-      asked me to revisit is picking a side quietly (rule 13 forbids it in BOTH
-      directions). ⚠⚠ So the row is **six** tabs, and the width cost is measured
-      at 390px rather than assumed.
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the row before the sections:
-      //   { label: "Community", href: "/community" },
-      //   { label: "Groups", href: "/community/groups", state: "live" },
-    */
     { label: "Community", href: "/community" },
     { label: "Colleagues", href: "/community/colleagues" },
     { label: "Mentors", href: "/community/mentors" },
     { label: "Teams", href: "/community/teams" },
     { label: "Groups", href: "/community/groups", state: "live" },
-    /*
-      ── ⚠⚠⚠ `Service Products` IS PROVIDER-ONLY TODAY, AND THAT IS MEASURED ──
-
-      ⚠ Scott's reason for the tab is that *"it is where a BUYER goes"*, so the
-      buyer half is wanted. ⚠⚠ MEASURED 2026-09-20 AT THE PREMISE GATE: **no
-      buyer-facing surface LISTS a service product.** `/services` 308s to
-      `/shop`; `/shop` is the PUBLIC marketing section (`ErpPackages`) and
-      `check:ui` §65 asserts its CTA is `aria-disabled` with no href because
-      *"there is no public catalogue"*; `/search` is a rail stub (`E134`); and
-      ⚠ **`/packages` — the buyer-gated route the requester rail already names —
-      is a 17-line `ComingSoon`.**
-      ⚠⚠ SO THE BUYER HALF IS UNBUILT, EXACTLY LIKE THE PAID HALF OF GROUPS.
-      ⚠ It is pointed at the provider's management surface and carries the
-      capability that surface demands. ⚠⚠⚠ THE ONE-LINE OVERRIDE, IF SCOTT WANTS
-      THE BUYER DOOR NOW, IS A SECOND ENTRY AT `/packages` WITH
-      `requires: "canHireTalent"` — the route, its title and its gate are all
-      real already; only its content is pending.
-
-      ⚠⚠ `requires` IS LOAD-BEARING HERE, NOT DECORATION: `check:nav-reachable`
-      §1 fails if an item's declared capability does not match its route's, and
-      `connect-tabs.ts` reads this field to decide who is shown the tab at all.
-    */
-    /*
-      ── ⚠⚠⚠ `Service Products` HAS LEFT CONNECT'S ROW (`P2-A3-E619` WS-C) ────
-
-      ⚠ SCOTT, 2026-09-22, RULING 4 (his walk note `E030`): *"**Service Products
-      belongs to Sell.** It already lives at `/my-services` under the Sell band
-      item, so the duplicate tab comes out of Connect. Connect's row becomes
-      Community · Groups."*
-      ⚠⚠ IT WAS A DUPLICATE, NOT A DOOR: the SAME route is already the Sell band
-      item's destination, and it keeps its OWN tab row at `/my-services` — which
-      is a different `PAGE_TABS` set a few hundred lines up. ⚠⚠⚠ I REMOVED THE
-      WRONG ONE FIRST: the two entries are byte-identical, and a blind
-      first-match replace took the `/my-services` set's own tab, which would
-      have stripped the page's row instead of Connect's. Anchored here on
-      surrounding context, which is unique.
-
-      ⚠⚠⚠ AND `/my-services` KEEPS A SECOND ENTRANCE INSIDE CONNECT ANYWAY —
-      `ConnectProfile`'s *"Service Products I Offer"* card links to it for the
-      owner. ⚠ That card is deliberately NOT removed: *"REMOVING A CARD CAN
-      REMOVE A CAPABILITY'S ONLY ENTRANCE"* (`decisions_2026-09-23` §5).
-
-      ⚠ `Settings` IS NOT REMOVED. Ruling 4 names Service Products and nothing
-      else, and absorbing Settings into Connect is explicitly its own brief.
-      ⚠⚠ So the row is Community · Groups · Settings — three tabs, not the two
-      the brief's sentence lists. Reported, not silently resolved either way.
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   { label: "Service Products", href: "/my-services", requires: "canProvideServices" },
-    */
-    /* ⚠ `/settings` POINTS AT `/settings` FOR NOW. Scott ruled that Settings is
-       ABSORBED into Connect — it renders inside, the row persists, `/settings`
-       redirects in — but that is its own id and is far too large to ride here. */
-    /* ⚠⚠⚠ CONNECT'S `Settings` TAB IS **NOT** RENAMED, AND THAT IS MEASURED.
-       ⚠ `P2-A2-E600` WS-A renames the ACCOUNT MENU's item to `Account
-       Settings`; a blind replace hit THIS tab first and `check:community`'s
-       `E598/B` assertion caught it by name — *"Connect's row still has its four
-       tabs — Community · Groups · Service Products · Account Settings"*.
-       ⚠⚠ THEY ARE DIFFERENT ROWS WITH DIFFERENT JOBS: this one is a slice of
-       CONNECT; the profile row's `Account Settings` is a page under the avatar.
-       ⚠ Absorbing Settings into Connect is its own brief and is out of scope. */
-    /*
-      ⚠⚠⚠ `Settings` LEFT THIS ROW (`P2-ALL-E687` WS-B, ruling 89a).
-      ⚠ Scott, 2026-09-27: *"let's make settings only visible from the avatar
-      menu."* ⚠⚠ **IT SAT ON BOTH THIS ROW AND `/profile`'s — ONE WORD, TWO
-      PLACES, ONE DESTINATION.** Removing it closes that `E585` in the menu.
-      ⚠⚠⚠ **DOOR: `My Account Settings` IN THE AVATAR MENU, SHIPPED IN WS-A
-      (`7abd2a4`) BEFORE THIS LINE WAS TOUCHED — rule 5, add before you remove.**
-      ⚠ The note above about `check:community`'s `E598/B` assertion still
-      applies and is why this row is edited by hand rather than by a sweep.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   { label: "Settings", href: "/settings" },
-    */
-    /*
-      ── ⚠⚠ MESSAGES HAS LEFT THIS ROW (`P2-ALL-E560` STAGE 1, 2026-09-18) ─────
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`) — the interim `E557` left here,
-      and the promise it made:
-      // MESSAGES IS LAST, AND ONLY UNTIL `E560` (`P2-J3-E557` WS-A). It leaves
-      // this row entirely when Messages becomes its own application. The brief
-      // is explicit that it stays until then: "Do not leave the row in a state
-      // where messages are unreachable." It was step 1; it is now last and
-      // unnumbered, which is the honest interim.
-      // { label: "Messages", href: "/messages" },
-
-      ⚠⚠ THE PROMISE IS KEPT, NOT BROKEN: messages are still reachable, from the
-      BAND'S UTILITY CLUSTER beside the notification bell. ⚠ SCOTT, 2026-09-18:
-      *"make it like linkedin. in notification bell...icon...and it opens on the
-      right."*
-      ⚠ THE RULE THIS EXPRESSES: the band holds places you GO; the cluster holds
-      things you CHECK.
-
-      ⚠⚠ A STRAIGHT REMOVAL — THERE WAS NO `n:` TO UNPICK. `E557` already ruled
-      that `/community`'s set carries NO `n:` values at all, so nothing renumbers
-      and no other tab moves.
-      ⚠ `/messages` THE ROUTE IS UNTOUCHED and still resolves; `route-access.ts`
-      and `proxy.ts` are unchanged and still paired.
-    */
   ],
-  /*
-    ── ⚠⚠ THE `n` VALUES ARE GONE, NOT JUST UNRENDERED (`P2-J3-E557` WS-A) ────
-
-    ⚠ `tabSequenceFor("/community")` is now `none`, so `PageTabs` would never
-    render a number anyway. ⚠⚠ THEY ARE REMOVED BECAUSE LEAVING THEM WOULD BE
-    STALE DATA WAITING TO BE RE-ENABLED: `Messages` carried `n: 1` and now sits
-    LAST, so the number and the position would contradict each other the moment
-    anybody flipped the mode back.
-    ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — the numbered set as `E379` left it:
-
-        { n: 1, label: "Messages", href: "/messages" },
-        { n: 2, label: "Colleagues", href: "/community" },
-        { n: 3, label: "Forums", href: "/community/groups", state: "live" },
-        { n: 4, label: "Mentoring", href: "/community/mentors", state: "early" },
-        { n: 5, label: "Teams", href: "/community/teams", state: "live" },
-
-    ⚠ `Colleagues` MOVED FROM `/community` TO `/community/colleagues`, because
-    `/community` is now Home. ⚠⚠ THE `EARLY` PILL ON MENTORING STAYS — it states
-    READINESS, not order, and removing numbers is not removing honesty markers.
-
-    ── ⚠ THE FOOTNOTE: THE `E378`/`E379` SEQUENCE BLOCK, SUPERSEDED (`E164`) ───
-
-    ⚠ It sat ABOVE this set until `E557`. It is kept because it records WHY the
-    numbers were right at the time, which is the part a future reader needs
-    before proposing them again:
-
-        ⚠⚠ MESSAGES IS STEP 1 AS OF `P1-ALL-E379`, AND THIS IS THE FLIP `E378`
-        WAS WAITING FOR. SCOTT'S ORDER, 2026-09-04: *"1. Check Your Messages.
-        2. Search for Colleagues. 3. Check Out Our Forums. 4. Search for a
-        Mentor."*
-        ⚠ SUPERSEDED, QUOTED NOT DELETED — `E378` shipped this entry LAST and
-        UNNUMBERED with the note *"⚠ NO `n` — see the block above"*, because
-        there was no `Message` model and a suggested sequence whose step 1 is a
-        dead end teaches people the numbers are decorative. `E379` built the
-        model, so the dead end is gone and the number is honest.
-        ⚠ THE `early` PILL GOES WITH IT. Messaging is real now; a readiness pill
-        on a working feature is the same lie in the other direction.
-
-    ⚠⚠ WHAT CHANGED IS NOT THAT THE ORDER WAS WRONG — it is that a tab row is a
-    ROOM a member re-enters, and a numbered room teaches people they are walking
-    a path they have already finished.
-  */
-  /*
-    Manage Work had ONE child pointing at the page it already opened, so it has
-    no tab row at all — a single tab is a label wearing a control's clothes.
-  */
 };
 
-/**
- * THE COMPANY MENU (E214) — the top-left chip's popover, company-admins only.
- *
- * Declared here with the rest of the navigation rather than inside the chip,
- * for the reason this file exists at all: a destination named in one place and
- * routed in another is how a menu item outlives its page.
- *
- * Company is the built page. Teams, Branding and Company Settings are titled
- * placeholders — the menu names them, so they have to LAND somewhere, and a 404
- * out of your own menu reads as broken where an honest "coming soon" reads as
- * unfinished. Members is an anchor into the section the company page already
- * renders, not a fourth stub, because that list genuinely exists today.
- */
-/**
- * Find Work's tabs live in `work-feed.ts` with the query that backs them, so
- * only their TITLES are needed here — `pageTitleFor` has to know that
- * /work/proposals is "My Proposals" even though the tab row is built elsewhere.
- */
 export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
   { label: "Find Work", href: "/find-work" },
-  /*
-    ── ⚠⚠ SCOTT RULED THE PAIR, 2026-09-29 (`P2-ALL-E712`, ruling 95 check 1) ────
-
-    ⚠ **THE MENU MOVED, NOT THE TAB.** `E708` pointed this item at `/find-work?tab=best`,
-    whose tab reads *"Best Matches"* — so the name a member clicked and the name they
-    arrived at disagreed. ⚠⚠ **SCOTT: the menu becomes `Best Matches` — *"shorter, and
-    true now `E709` ranks"*.** ⚠⚠⚠ It was only ever a description of the same view:
-    `work-feed.ts` says so itself — *"'Work Requests for My Skills' IS Best Matches."*
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   { label: "Work Requests for My Skills", href: "/find-work/for-my-skills" },
-  */
   { label: "Best Matches", href: "/find-work/for-my-skills" },
   { label: "My Work Requests (Saved)", href: "/find-work/saved" },
   { label: "Invitations to Propose My Rate", href: "/find-work/invitations" },
@@ -1321,152 +176,13 @@ export const COMPANY_NAV: NavItem[] = [
   { label: "Company", href: "/company" },
   { label: "Teams", href: "/company/teams" },
   { label: "Branding", href: "/company/branding" },
-  /*
-    E225 — MEMBERS IS NOT A MENU ITEM. It is a section of the Company page, and
-    a menu entry that scrolls you down the page you would already be on is a
-    destination pretending to be one. The `#members` anchor stays on that page
-    for anything that wants to deep-link it.
-  */
   { label: "Company Settings", href: "/company/settings" },
 ];
 
-/*
-  THE PROVIDER RAIL — SIX FLAT ITEMS (E216; supersedes the grouped-with-submenus
-  version below).
-
-  THE CHILDREN MOVED ONTO THEIR PAGES. Each of these six carried a hover flyout,
-  and Find Work's was the tell: its five entries were the Find Work page's own
-  tab row, listed a second time in a menu. Two controls for one set of views,
-  one of which you had to hover to discover — and, until they were portalled
-  out, one that the rail's own scroll container clipped.
-
-  A tab row on the destination is visible on arrival, says where you are as well
-  as where you can go, and survives a bookmark. So the rail is six plain links
-  now, no chevrons, and `PageTabs` carries what the flyouts did. The two
-  IDENTITY menus are untouched — the company chip and the persona popover keep
-  their popovers, because those are not navigation between views of one page.
-
-  Historical note on the previous shape:
-  (brief_MASTER_rails_and_community WS1-A/WS1-B; supersedes E191's flat list,
-  which itself superseded E007).
-
-  WHAT CHANGED, and why it is a shape change rather than a rename. E191's rail
-  was eight leaf links: one click, one page. The deck's rail is six DESTINATIONS
-  that each open a set of views — "Find Work" is not a page, it is five ways of
-  looking at work requests. A flat list can only express that by promoting every
-  view to a top-level row, which is how a nine-item rail becomes a twenty-item
-  one and stops being navigable.
-
-  Declared here rather than in the rail component because `pageTitleFor` reads
-  this file: a submenu entry and the header of the page it opens are the same
-  string, and cannot drift.
-
-  THREE LOCKED DECISIONS ARE VISIBLE IN THIS LIST:
-
-    NO TIMESHEETS. E191 had "Timesheets & Milestones" pointing at /deliver-work.
-    Timesheet and fixed-firm-price billing both surface as Payment Requests
-    generated from a Work Order, under Get Paid; milestones live inside a Work
-    Order's detail. A rail item for a thing that is a tab inside another thing
-    taught the wrong model of how work gets billed.
-
-    NO FIND TALENT. It is a hiring surface and belongs to the buyer/requester
-    rail, which is a separate brief. It was capability-gated here, so a pure
-    provider never saw it — but leaving it in the PROVIDER definition made the
-    provider rail responsible for a menu it does not own.
-
-    COMMUNITY IS BACK. E191 dropped it; it is the heart of the earning story
-    (Credits, forums, mentoring) and is the sixth primary item.
-*/
-/*
-  ── ⚠⚠ THE SELLER RAIL CATCHES UP (`P1-J1.4-E303`, 2026-09-01) ────────────────
-
-  Scott: *"These are old names/titles. I thought we changed all the menus
-  (probably for the service buyers). That means we need to do the same for the
-  service providers."* He is right — `E268` renamed `REQUESTER_NAV` and left this
-  one behind, so the two sides have been speaking different languages since.
-
-  ⚠ SUPERSEDED, quoted not deleted:
-      Start Learning  -> Learning Paths
-      Find Work       -> Work Requests
-      Create Packages -> Service Products
-      Manage Work     -> Work Orders
-      Get Paid        -> Payments
-      Community       -> Community (already correct)
-
-  ⚠⚠ LABELS ONLY. NOT ONE `href` AND NOT ONE `requires` GATE CHANGED. The two
-  rails deliberately point the SAME WORD at DIFFERENT ROUTES — provider
-  `Work Requests` -> `/find-work`, buyer -> `/create-work`; provider
-  `Service Products` -> `/settings/packages`, buyer -> `/packages`. That is the
-  design: one vocabulary, two destinations. DO NOT "align" the routes.
-
-  ⚠⚠ SUPERSEDED 2026-09-04 (`P1-ALL-E381` WS-3), QUOTED NOT DELETED. THIS
-  PARAGRAPH USED TO OPEN: *"⚠ THIS ALSO MOVES PAGE HEADINGS, and that is intended
-  — `pageTitleFor` derives every heading from these definitions."*
-
-  ⚠⚠ THAT WAS TRUE WHEN WRITTEN AND IS FALSE NOW: `pageTitleFor` HAS NO CALLER.
-  Re-verified at `E381` across `src`, `scripts` and `e2e` — every page renders its
-  own `<h1>`. So relabelling the rail moves NO heading, and anyone reading the old
-  sentence would have believed a rename here changed page titles for free.
-
-  ⚠ A STALE COMMENT IS HOW THE NEXT BRIEF GETS WRITTEN ON A WRONG PREMISE, and
-  this project has the receipt: `E378`'s brief asserted the active tab was
-  signalled by *"COLOUR ALONE"* when the component had carried a 2px underline all
-  along. That premise came from exactly this failure mode.
-
-  ⚠ THE REST OF THE PARAGRAPH STILL HOLDS, so it is corrected rather than
-  removed: `pageTitleFor`'s lookup list spreads `PROVIDER_NAV` but NOT
-  `REQUESTER_NAV`, so IF IT WERE CALLED a buyer on `/learn` would read
-  "Learning Paths" from `heading` rather than the rail's one-word `Learn`. Same
-  for `/orders` -> "Work Orders".
-  ⚠ THAT ROUTE WAS `/contracts` UNTIL `P1-ALL-E380`. ⚠ NOT ON `E380`'s
-  REFERENCE LIST EITHER — found by grepping rather than trusting the brief.
-*/
 export const PROVIDER_NAV: NavItem[] = [
-  /*
-    ── ⚠⚠⚠ `Connect` IS FIRST (`P2-J3-E588` WS-C, SCOTT 2026-09-19) ──────────
-
-    ⚠⚠ IT MOVED FROM LAST TO FIRST ON BOTH MENUS. Scott, 2026-09-19: *"connect
-    is now 'build your profile and connect to other profiles'."* ⚠ Connect
-    stopped being a place you visit after the work and became the thing the
-    work hangs off — `/community` IS the provider's profile as of WS-A, so the
-    first icon in the band is now "you", and everything after it is what you do.
-
-    ⚠⚠⚠ THIS CHANGES EVERY LOGGED-IN PAGE. One `AppBand` serves `(app)/**`,
-    `/admin/**` and signed-in `/learn`, and the band reads these arrays in
-    order.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — it sat LAST, after `Get Paid`
-    on the seller side and after `Pay` on the buyer side:
-    // { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
-
-    ⚠ THE ENTRY ITSELF IS BYTE-IDENTICAL — same label, same heading, same href,
-    same icon. ONLY ITS POSITION MOVED. ⚠⚠ `railPersona()` IS UNTOUCHED
-    (`E491`): it returns `PANAMEER`/`SELLER`/`BUYER`, which are VALUES the band
-    branches on, never labels, and reordering a menu cannot reach it.
-    ⚠ The Connect TAB ROW is unchanged — `Home · Colleagues · Forums ·
-    Mentoring (early) · Teams`, with `Home` active on `/community`.
-  */
-  /* ⚠⚠ `Connect` LANDS ON THE PROFILE NOW (`P2-J3-E591` WS-A). ⚠ Scott,
-     2026-09-19: *"connect is now 'build your profile and connect to other
-     profiles'."* ⚠⚠ AND IT FIXES A TITLE SCOTT SPOTTED: this entry headed the
-     PROFILE page *"My Community"*, because one route rendered both.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Connect", heading: "My Community", href: "/community", icon: "MessagesSquare" },
-     ⚠ `heading` IS READ BY `pageTitleFor`, WHICH HAS NO CALLER — it is the
-     record of what the journey is called, not a rendered string. */
-  /* ⚠⚠ `heading` CORRECTED (`P2-A2-E598` WS-B): Connect's home is `/community`
-     now, so titling the application *"My Profile"* names a page it no longer
-     shows. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   { label: "Connect", heading: "My Profile", href: "/connect", … },
-     ⚠⚠⚠ IT IS INERT TODAY AND IS FIXED ANYWAY. `heading` is read only by
-     `pageTitleFor`, whose only caller is `AppHeader.tsx` — and MEASURED
-     2026-09-22: nothing imports `AppHeader` (`E559` replaced it with the band).
-     ⚠ A dormant value that says the wrong thing is a trap for whoever wakes it. */
   { label: "Connect", heading: "Community", href: "/connect", icon: "MessagesSquare" },
   { label: "Learn", heading: "Learning Paths", href: "/learn", icon: "GraduationCap" },
   {
-    /* ⚠ MIRRORED — the provider WORKS where the buyer HIRES. Same slot, same
-       vocabulary role, different route and different verb. */
     label: "Work",
     heading: "Work Requests",
     href: "/find-work",
@@ -1474,238 +190,27 @@ export const PROVIDER_NAV: NavItem[] = [
     requires: "canProvideServices",
   },
   {
-    /*
-      ── ⚠⚠⚠ SLOT 4 IS `Shop` FOR EVERYONE (`P2-ALL-E693`, ruling `89e`
-         CORRECTED, Scott 2026-09-27) ────────────────────────────────────
-
-      ⚠ *"Slot 4 is Shop for everyone — Sell is gone, it becomes a button inside
-      Shop. Role-dependence is slot 3 only."*
-
-      ⚠⚠ **SO THE MIRROR IS OVER.** The old entry's comment was *"MIRRORED — the
-      provider SELLS where the buyer SHOPS"*, and that symmetry is exactly what
-      was dropped: both rails now read `Shop` and point at `/packages`, and the
-      ONLY role-dependent slot is 3 — `Work` for a provider, `Hire` for a buyer.
-
-      ⚠⚠⚠ **`/my-services` IS NOT ORPHANED: ITS DOOR SHIPPED FIRST, IN
-      `86f78c7`** — a `canProvideServices`-gated `Sell Your Services` button
-      inside `/packages`. ⚠ It was measured to have had **exactly one
-      unconditional door** before that, this entry, so the order was not
-      optional. Rule 5, proven by commit order.
-
-      ⚠ **AND `/packages` HAD TO STOP REFUSING SELLERS** in that same earlier
-      commit — a universal slot pointing at a `canHireTalent` page bounces a
-      provider to `/dashboard?noaccess=1` out of their own menu.
-
-      ⚠ **NO `requires` HERE, DELIBERATELY:** slot 4 is universal now, and
-      `/packages` is `authenticated`. Declaring a capability would put
-      `check:nav-reachable` §1 in disagreement with the route it points at.
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   MIRRORED - the provider SELLS where the buyer SHOPS.
-      //   { label: "Sell", heading: "Service Products", href: "/my-services",
-      //     icon: "Tag", requires: "canProvideServices" },
-    */
     label: "Shop",
     heading: "Service Products",
-    /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — moved with the requester's
-       mirrored slot at `P2-ALL-E698`:
-       //   href: "/packages", */
     href: "/shop",
     icon: "Tag",
   },
-  /* ⚠⚠ `P1-ALL-E533` PART B — EVERY RAIL ITEM IS A VERB PHRASE. Scott,
-     2026-09-16: *"These are all verbs. Should read Manage Orders and Get
-     Paid."* ⚠ SUPERSEDED, quoted not deleted (`E164`): `Orders` and
-     `Payments`.
-     ⚠⚠ `Get Paid` IS THE POINT OF THE RULE — it names the OUTCOME a provider
-     wants, not the screen it lives on.
-     ⚠ MIXED LENGTHS ARE FINE AND DELIBERATE: the consistency asked for is
-     GRAMMATICAL, not character count. Do NOT shorten `Manage Orders` to make
-     the rail even.
-     ⚠⚠ `Learn` AND `Work` ARE NOT TOUCHED — the verb and the noun are the
-     same word and Scott ruled them exceptions.
-     ⚠ THE `heading` VALUES ARE UNCHANGED ON PURPOSE. They now disagree with
-     their labels (`Manage Orders` -> `Work Orders`, `Get Paid` -> `Payments`)
-     and that is REPORTED for Scott to name, not fixed here. */
-  /* ⚠⚠ `P2-ALL-E559` WS-A — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not
-     deleted (`E164`): `{ label: "Manage Orders", … }`.
-     ⚠ THIS NARROWS `E533` PART B ON THIS ONE ITEM ONLY. That rule was *"every
-     rail item is a verb phrase"*; the band puts a LABEL UNDER AN ICON, where a
-     two-word verb phrase is the widest thing in the row. ⚠⚠ Rule 13 — Scott's
-     newer word wins, and `E533`'s reasoning is kept because it still governs
-     every item this brief did not name. ⚠ THE BUYER SIDE IS UNTOUCHED: it still
-     reads `Track Orders`, because a buyer WATCHES and a provider WORKS a queue. */
   { label: "Orders", heading: "Work Orders", href: "/orders", icon: "ClipboardCheck" },
-  /*
-    ── ⚠⚠⚠ `Get Paid` IS REMOVED. **THE PRECONDITION ITS OWN COMMENT SET HAS NOW
-       BEEN MET** (`P2-ALL-E688` WS-B, ruling `89e`). ────────────────────────
-
-    ⚠ **Scott, 2026-09-27:** *"roll it up into orders. NOTHING gets paid without
-    an Order."* ⚠⚠ The operational menu is **five per role**, and money is not one
-    of the five: `Connect · Learn · Work · Sell · Orders`.
-
-    ⚠⚠⚠ **THIS IS THE LINE THE RETAINED-ENTRY BLOCK PROMISED, AND IT IS BEING
-    REMOVED FOR EXACTLY THE REASON IT NAMED.** That block was written 2026-09-18
-    and kept the entry because the door did not exist; it ended *"One line to
-    remove once that door exists."* ⚠ **The door shipped in WS-A (`8d0aaa1`) —
-    `orders/page.tsx` now renders `Get Paid → /payments`, gated on
-    `canProvideServices`, above the empty-state branch so it survives a non-empty
-    list.** ⚠⚠ **RULE 5 HELD AT EVERY COMMIT AND THE COMMIT ORDER PROVES IT**, not
-    a promise: the door landed first, in a commit of its own.
-
-    ⚠ **THE SCHEMA ALREADY CARRIED SCOTT'S RULE BEFORE THE MENU DID, WHICH IS WHY
-    THIS IS A CORRECTION AND NOT A PREFERENCE:** `Payment` holds **no order
-    reference at all**; `PaymentLine.settlement_request_id` does, so cash cannot
-    reach anybody without traversing a settlement request, which hangs off an
-    order. ⚠⚠ **THE MENU NOW MATCHES THE MODEL.** Whoever reads this later and
-    thinks a money tab is missing: **it is not missing, it is downstream** — and
-    restoring one would put a door on the menu that the data model says is a room
-    inside Orders.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the entry as it stood:
-    //   { label: "Get Paid", heading: "Payments", href: "/payments", icon: "Wallet" },
-    ⚠ And the reasoning that retained it, true when written and now spent:
-    //   MEASURED 2026-09-18, AND THE PRECONDITION IS NOT MET: /orders has NO
-    //   PAGE_TABS entry at all; no orders page links /payments; /payments' other
-    //   doors are attention.ts (conditional), a back-link from INSIDE payments,
-    //   and the legacy /finances 308. So removing this entry buries a provider's
-    //   money surface behind a conditional notification — KEEP THE ENTRY UNTIL
-    //   THE DOOR EXISTS.
-  */
-  /* ⚠ `Connect` MOVED TO THE TOP OF THIS LIST (`P2-J3-E588` WS-C). Its entry
-     and the reasoning are at the head of the array. */
 ];
 
-
-/**
- * THE PERSONA MENU'S DESTINATIONS (J2.4 WS-B/WS-D — E008).
- *
- * Here rather than in `AccountMenu` for the reason the rest of this file
- * exists: the header derives every page's title from the nav definitions, so a
- * menu that declared its own labels would produce pages whose heading and whose
- * menu entry disagreed — "My Stats" in the dropdown, "Stats" in the header,
- * from the same click. Declared once, read by both.
- *
- * Not capability-gated: these are the signed-in person's own surfaces, and the
- * ADMIN variant below is a different LIST rather than a filter, because an
- * admin is missing these for a reason (no seller standing, no job success
- * score, nobody to ask for a recommendation) rather than by permission.
- */
-/*
-  SPLIT AROUND THE THEME ROW (WS1-C).
-
-  The deck's order is My Profile · My Stats · Account Health Checklist ·
-  Theme › · Request Recommendations · Settings · Sign Out (E225 removed My
-  Theme is not a destination — it is an inline submenu. Rather than have the
-  component match on a label to know where to inject it, the two halves say so
-  themselves: everything in PRIMARY renders above the theme row, everything in
-  SECONDARY below it.
-*/
-/*
-  ── ⚠⚠⚠ REGROUPED FOR THE AVATAR MENU (`P2-A2-E598` WS-A, option B) ────────
-
-  ⚠ SCOTT, on the option-B mockup: *"Yeah...that is much better. It belongs back
-  there."* The profile moves under the avatar like LinkedIn's "Me", and the menu
-  becomes the door to the surfaces that describe YOU rather than a flat list.
-
-  ⚠⚠ `My Profile` LEFT THIS LIST AND BECAME THE HEADER'S `View Profile` BUTTON,
-  beside your photo, name and title — it is the menu's subject, not one of its
-  errands. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   { label: "My Profile", href: "/profile" },
-
-  ⚠⚠ THE `My ` PREFIXES ARE GONE, WHICH REVERSES PART OF `P2-ALL-E559` WS-D.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   { label: "My Stats", href: "/stats" },
-  //   { label: "My Account", href: "/account-health" },
-  //   { label: "My Settings", href: "/settings" },
-  ⚠⚠⚠ RULE 13, NOT DRIFT: `E559` renamed these on 2026-09-17/18; the option-B
-  mockup and its brief are 2026-09-21 and name them `Usage Stats`, `Account
-  Health` and `Settings`. The newest dated statement from Scott is the live one.
-  ⚠ THE ROUTES ARE UNCHANGED in every case — this is a rename, exactly as
-  `E559`'s own was.
-
-  ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE. The brief's premise
-  said Score, Network and Stats *"already have pages"*. ⚠⚠⚠ MEASURED AT THE
-  PREMISE CHECK AND THAT IS FALSE FOR NETWORK: `/grow` and `/community/grow`
-  both 404, and the string `Grow Your Network` appears NOWHERE in `src/`.
-  ⚠ Scott ruled it omitted until a page exists rather than pointed at a
-  near-miss — WS-A's own rule is that every item goes somewhere that exists.
-*/
-/**
- * ── ⚠⚠⚠ THE AVATAR MENU, ONE FLAT LIST (`P2-ALL-E687` WS-A, ruling 89f) ───
- *
- * ⚠⚠ **IT WAS TWO LISTS, `PERSONA_NAV_PRIMARY` AND `PERSONA_NAV_SECONDARY`,
- * AND AFTER 89f's REMOVALS THE SPLIT SEPARATED ONE ROW FROM THREE.**
- * ⚠ Scott, 2026-09-27: *"that is residue, not grouping. Scott's final list is
- * flat."* ⚠⚠⚠ **A DIVIDER THAT ONCE MEANT SOMETHING AND NOW SEPARATES NOTHING
- * IS WORSE THAN NO DIVIDER — it tells the reader there is a distinction and
- * then refuses to say what it is.**
- *
- * ── ⚠⚠ WHAT LEFT, AND WHY IT IS NOT A LOSS OF A DOOR (89f) ───────────────
- *
- * ⚠⚠⚠ **`Score`, `Statistics` AND `Account Health` WERE IN TWO PLACES AT ONCE.**
- * All three are `/profile` TABS under 89c (`Score · Usage · Health`), so the
- * same destinations had two menus. ⚠ **The tab row is the canonical home and
- * the tabs ARE the entrance** — rule 5 is satisfied by the move, not despite it.
- *
- * ⚠⚠⚠ **WHAT IS KNOWINGLY GIVEN UP, RECORDED HERE SO IT IS NOT REDISCOVERED AS
- * A DEFECT:** those two rows carried **figures**, not just links — `Score 93%`
- * and `Account Health All good`, looked up by `href` in `AccountMenu`'s
- * `valueFor()` from `/api/me/menu-summary`. ⚠⚠ **THE TAB ROW SHOWS LABELS ONLY,
- * SO THE AT-A-GLANCE STATUS IS GONE.** ⚠ **That is a decision, not a
- * regression:** Scott, asked about putting them on the tabs — *"let them go. no
- * space."* Consistent with 88b, which moved counts out of tabs for the reason.
- * ⚠ **The endpoint is NOT changed.** Two of its fields now have no caller;
- * Scott, 2026-09-27: *"an unused field is not a defect, and removing it is its
- * own decision."*
- *
- * ── ⚠⚠ `My Account Settings` IS LOAD-BEARING ─────────────────────────────
- *
- * ⚠⚠⚠ **ONCE WS-B RUNS IT IS THE ONLY ENTRANCE TO `/settings`.** Measured:
- * `/settings` has exactly three live doors — the `/profile` tab row
- * (`nav.ts:748`), the `/connect` tab row (`nav.ts:870`) and this row. **89a
- * removes the first two.** ⚠ It is renamed and in place in THIS commit, before
- * WS-B touches a tab row (rule 5 — add before you remove).
- *
- * ⚠ **`My Profile` IS NOT IN THIS LIST AND THAT IS CORRECT** — it is the header
- * BUTTON in `AccountMenu`, renamed from `View Profile` in this same commit.
- * ⚠ **`My Company` is rendered by `AccountMenu` directly** (it carries an admin
- * popover), and **`Theme` is a submenu**, so neither is a row here either.
- *
- * ⚠ SUPERSEDED, QUOTED NOT DELETED (`E164`) — both lists exactly as they stood,
- * including every earlier supersede they carried. ⚠⚠ THE QUOTE IS BELOW THIS
- * BLOCK AS `//` LINES, NOT INSIDE IT, AND ITS COMMENT DELIMITERS ARE
- * PARAPHRASED — rule 12: a copied `<end-comment>` closes the enclosing block and
- * breaks the parse, which is exactly what the first draft of this did.
- */
 //   export const PERSONA_NAV_PRIMARY: NavItem[] = [
-//     <begin-comment> ⚠ `/community/score` — shipped by `P2-J3-E590` WS-B. The menu shows the
 //        percentage beside it, fetched when the menu OPENS (see
 //        `/api/me/menu-summary`), never on every page render. <end-comment>
-//     <begin-comment> ⚠ RENAMED TO MATCH THE TAB ROW (`P2-A2-E600` WS-A 2). ⚠ SUPERSEDED,
-//        quoted not deleted (`E164`): `{ label: "Profile Score", href: … }` <end-comment>
 //     { label: "Score", href: "/community/score" },
-//     <begin-comment> ⚠⚠ `Usage` IS FOLDED INTO `Statistics` (Scott, 2026-09-22) — one tab, one
-//        menu item, one route. ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //        //   { label: "Usage Stats", href: "/stats" },
-//        ⚠ and before it, `E559` WS-D's `{ label: "My Stats", href: "/stats" }`. <end-comment>
 //     { label: "Statistics", href: "/stats" },
 //     <begin-comment>
-//       ── ⚠⚠⚠ `Invite a Colleague`, AND IT IS **ONE** ENTRY (`P2-A3-E599` WS-C) ──
 //   
-//       ⚠ SCOTT RULED THE LABEL AT THE WS-B GATE, 2026-09-22: *"add 'Invite a
 //       Colleague' (opens the invite panel on `/community/grow`), not 'Grow the
 //       Network'. It's one entry."*
-//       ⚠⚠ `E598` WS-A LEFT THIS SLOT EMPTY ON PURPOSE — the brief asked for `Grow
 //       Your Network` and MEASURED IT HAD NO PAGE (`/grow` and `/community/grow`
-//       both 404), so Scott ruled it omitted rather than linked nowhere.
-//       ⚠⚠⚠ `E599` WS-A BUILT THE PAGE, SO THE DOOR CAN EXIST NOW. This is that
-//       ruling being closed, not reversed.
-//       ⚠ THE LABEL NAMES THE ACTION, NOT THE SURFACE: *"Invite a Colleague"* is
 //       what a person wants to do; *"Grow the Network"* is what Panameer wants them
 //       to do, and the menu is theirs.
-//       ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-A's note:
-//       //   ⚠⚠ `Grow Your Network` IS SPECIFIED AND IS **NOT** HERE … `/grow` and
 //       //   `/community/grow` both 404 … omitted until a page exists.
 //     <end-comment>
 //     { label: "Invite a Colleague", href: "/community/grow" },
@@ -1713,68 +218,40 @@ export const PROVIDER_NAV: NavItem[] = [
 //   
 //   export const PERSONA_NAV_SECONDARY: NavItem[] = [
 //     <begin-comment>
-//       ── ⚠⚠ `Request Recommendations` STAYS (`P2-ALL-E559` WS-D, ruling 2026-09-18)
 //   
 //       The brief said to remove it alongside `Invite a Colleague` — *"these are now
-//       options within the CONNECT application"*. ⚠⚠ MEASURED AT THE PREMISE CHECK,
-//       AND IT IS NOT TRUE OF THIS ONE: `E558` gave the ACTION a home on Connect
 //       (`ColleagueRowActions.tsx` POSTs to `/api/recommendations` inline) but it
 //       NEVER LINKS THE `/recommendations` PAGE.
-//       ⚠ Every inbound link to that page, measured: THIS ENTRY, and
 //       `ProviderProfileView.tsx` — which is doubly conditional on
-//       `testimonials.length === 0` AND `p.isOwner`, so ⚠⚠ IT CLOSES ITSELF the
 //       moment a provider receives their first recommendation.
-//       ⚠⚠⚠ REMOVING THIS ENTRY WOULD ORPHAN THE PAGE FOR EVERY PROVIDER WHO ALREADY
 //       HAS A RECOMMENDATION — this brief's own named failure: *"a feature whose only
-//       door is closed is how `E493`'s invite and `E519`'s résumé re-run got buried."*
-//       ⚠ SO THE MENU HAS SEVEN ITEMS, NOT THE SIX THE BRIEF SPECIFIES. Deliberate,
 //       and reversible in ONE LINE once something on Connect links the page.
-//       ⚠ DO NOT ADD THAT LINK HERE — Connect surfaces are `E557`/`E558`.
 //     <end-comment>
 //     <begin-comment>
-//       ── ⚠⚠⚠ `Request Recommendations` LEFT THE MENU FOR THE PROFILE'S `Grow`
-//          CARD (`P2-A2-E598` WS-C) ──────────────────────────────────────────────
 //   
-//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //       //   { label: "Request Recommendations", href: "/recommendations" },
 //   
-//       ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
-//       `E598` WS-A deliberately KEPT it here — Scott: *"Keep it until WS-C rehomes
 //       it"* — so the page never had two doors to `/recommendations` and never had
 //       none. WS-C builds the `Grow` card; this line goes in that same change.
 //   
-//       ⚠⚠⚠ THE REASON IT SURVIVED `E559` WS-D IS NOW ANSWERED, NOT IGNORED. That
-//       brief tried to remove it and the premise check refused: *"`E558` gave the
 //       ACTION a home on Connect… but it NEVER LINKS THE `/recommendations` PAGE"*,
 //       and the only two inbound links were this entry and the (since deleted)
-//       `ProviderProfileView`. ⚠ The owner profile's `Grow` card is that missing
-//       link, so the condition `E559` named is finally met.
-//       ⚠ MEASURED BEFORE REMOVING, exactly as `E559` did: the `Grow` card renders
 //       it for every owner, unconditionally, in the same file that renders the
 //       profile.
 //     <end-comment>
 //     <begin-comment>
-//       ── ⚠ `Invite a Colleague` REMOVED (`P2-ALL-E559` WS-D) ─────────────────────
 //   
-//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//       // `P2-J3-E493` - DIRECTLY UNDER Request Recommendations, where Scott put it:
 //       //   "This would be under the request recommendation option on the Setting menu."
 //       // THE TWO ASKS ARE DIFFERENT AND THE ADJACENCY IS THE POINT - one asks
 //       // somebody to VOUCH for you, the other asks them to JOIN. Sitting together is
 //       // what makes the difference legible.
 //       // { label: "Invite a Colleague", href: "/invite-colleague" },
 //   
-//       ⚠⚠ THE ROUTE STAYS LIVE; ONLY THE MENU ENTRY GOES. ⚠ VERIFIED BEFORE
 //       REMOVING, which is the whole reason `Request Recommendations` above did NOT
 //       go: `/community/colleagues` carries a STANDING right-rail card linking
-//       `/invite-colleague` — ⚠ no capability gate on the page, no conditional
-//       wrapper around the card, same route. `E558` even left a comment there saying
-//       this removal is `E559` WS-D.
-//       ⚠ THE `E493` ADJACENCY ARGUMENT IS WHAT IS LOST, and it was real. The two
 //       asks now live in different places: vouching here, inviting on Connect.
 //     <end-comment>
 //     <begin-comment>
-//       E225 — "MY COMPANY" IS GONE FROM HERE. The three-zone rule is that the
 //       top-left chip owns the company and this menu owns the person; an entry that
 //       opened /company from the personal popover was the last thing crossing that
 //       line.
@@ -1784,93 +261,56 @@ export const PROVIDER_NAV: NavItem[] = [
 //       ordinary member with no way to reach their own company page. The chip is a
 //       plain link for them now — same zone, same destination, read-only.
 //     <end-comment>
-//     <begin-comment> ⚠ `P2-ALL-E559` WS-D — SCOTT, 2026-09-17. ⚠ SUPERSEDED, quoted not deleted
-//        (`E164`): `{ label: "Settings", href: "/settings" }`. ⚠⚠ A RENAME ONLY —
 //        the route is unchanged, and `settings-nav.ts` (the `/settings` SUB-NAV) is a
 //        DIFFERENT list and is not in scope.
-//        ⚠⚠⚠ RENAMED AGAIN BY `P2-A2-E600` WS-A so the MENU and the PROFILE TAB ROW
-//        use the same word. ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //        //   { label: "Settings", href: "/settings" },
-//        ⚠ It is the third name for this item (`Settings` → `My Settings` → `Settings`
 //        → `Account Settings`), and each time the ROUTE was unchanged. <end-comment>
 //     { label: "Account Settings", href: "/settings" },
-//     <begin-comment> ⚠⚠ MOVED DOWN FROM `PERSONA_NAV_PRIMARY` (`P2-A2-E598` WS-A) — option B
 //        groups it with Settings and Help, because all three are about the ACCOUNT
-//        rather than about how you are doing. ⚠ The route is unchanged. <end-comment>
 //     { label: "Account Health", href: "/account-health" },
 //     <begin-comment>
-//       ── ⚠⚠⚠ `Help` POINTS AT `/support/tickets`, AND THAT IS A RULING ─────────
 //   
-//       ⚠ MEASURED AT THE PREMISE CHECK: there is NO `/help` route and NO `/support`
 //       index — both 404. The only live pages under support are `/support/bug` and
 //       `/support/tickets`.
-//       ⚠⚠ Scott ruled it points at `/support/tickets` rather than a new page being
-//       built inside a menu brief. ⚠⚠⚠ IT IS THE NEAREST THING THAT EXISTS, NOT THE
 //       right long-run answer — a real help surface would list "Report a Bug"
 //       alongside "My Tickets", and `/support/bug` currently has no menu door at all.
 //     <end-comment>
 //     <begin-comment>
-//       ── ⚠⚠⚠ `Request a Recommendation` IS BACK, AND IT IS IN **BOTH** PLACES ──
 //   
-//       ⚠ SCOTT, 2026-09-22: *"Add back 'Request a Recommendation' (E598 moved it to
 //       the Grow card; it's now in **both**)."*
-//       ⚠⚠ THAT IS A DELIBERATE SECOND DOOR, NOT A DUPLICATE. `E598` WS-C moved it
 //       OUT of this menu in the same commit that gave it a home on the profile,
-//       precisely so the page never had two doors or none — ⚠⚠⚠ AND SCOTT HAS NOW
 //       RULED THAT TWO IS RIGHT FOR THIS ONE: it is an errand you think of from
 //       anywhere, not only while looking at your profile.
-//       ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E598` WS-C's removal note:
-//       //   ⚠⚠ IT LEAVES AND ARRIVES IN THE SAME COMMIT, WHICH IS THE WHOLE POINT.
-//       //   `E598` WS-A deliberately KEPT it here … so the page never had two doors
 //       //   to `/recommendations` and never had none.
-//       ⚠⚠ THE REASONING IS NOT WRONG, IT IS SUPERSEDED: it argued against a GAP,
 //       and this is not a gap.
 //     <end-comment>
 //     { label: "Request a Recommendation", href: "/recommendations" },
 //     <begin-comment>
-//       ── ⚠⚠ `Help` → `My Tickets` (brief 10 WS-C) ────────────────────────────
 //   
-//       ⚠ SCOTT: *"`Help` → rename `My Tickets`."*
-//       ⚠⚠ **THE ROUTE DOES NOT MOVE AND THE EARLIER RULING STILL HOLDS** — the
 //       note above records that `Help` points at `/support/tickets` because **there
-//       is no `/help` route and no `/support` index; both 404.** ⚠⚠⚠ **THE RENAME
 //       MAKES THE LABEL MATCH THE DESTINATION IT ALREADY HAD:** the page's own `<h1>`
 //       reads *"My Support Tickets"*, so the menu was promising **Help** and
 //       delivering **a ticket list.**
-//       ⚠ **IT ALSO NARROWS AN HONEST PROMISE RATHER THAN BREAKING ONE.** The note
 //       above is explicit that this is *"the NEAREST THING THAT EXISTS, NOT the
 //       right long-run answer — a real help surface would list 'Report a Bug'
 //       alongside 'My Tickets', and `/support/bug` currently has no menu door at
-//       all."* ⚠⚠ **THAT IS STILL TRUE AND STILL UNBUILT**, and calling the item
 //       `My Tickets` stops the menu claiming otherwise.
-//       ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //       //   { label: "Help", href: "/support/tickets" },
 //     <end-comment>
 //     { label: "My Tickets", href: "/support/tickets" },
 //   ];
 //   
-//   <begin-comment>* The whole persona list, for `pageTitleFor` and anything that wants it flat. <end-comment>
 //   export const PERSONA_NAV: NavItem[] = [
 //     ...PERSONA_NAV_PRIMARY,
 //     ...PERSONA_NAV_SECONDARY,
 //   ];
 export const PERSONA_NAV: NavItem[] = [
-  /* ⚠⚠ RENAMED FROM `Account Settings` (89f) — consistent with `My Profile`,
-     `My Company` and `My Tickets` beside it. ⚠⚠⚠ THE ONLY DOOR TO `/settings`
-     once WS-B lands. */
   { label: "My Account Settings", href: "/settings" },
   { label: "Invite a Colleague", href: "/community/grow" },
   { label: "Request a Recommendation", href: "/recommendations" },
-  /* ⚠ `Theme` renders immediately BEFORE this row — see `THEME_BEFORE_HREF`. */
   { label: "My Tickets", href: "/support/tickets" },
 ];
 
-/**
- * ⚠⚠ WHERE THE `Theme` SUBMENU SITS, NAMED BY HREF RATHER THAN BY INDEX.
- * ⚠ 89f's order puts it between `Request a Recommendation` and `My Tickets`.
- * ⚠⚠⚠ **A `slice(-1)` WOULD MOVE IT SILENTLY THE DAY SOMEBODY APPENDS A ROW**;
- * keyed on the href it follows the row it was ruled to precede.
- */
 export const THEME_BEFORE_HREF = "/support/tickets";
 
 /** What a Panameer employee keeps of that list. */
@@ -1878,18 +318,8 @@ export const ADMIN_PERSONA_NAV: NavItem[] = [
   { label: "My Profile", href: "/profile" },
 ];
 
-/*
-  PUBLIC_NAV is gone (WS-6b). It held the one-item nav that PublicTopNav
-  rendered on /learn and /verify; both now use the shared MarketingHeader, and
-  the public nav is MARKETING_NAV in components/marketing/brand.tsx — one list
-  for one header.
-*/
-
 /** Does this viewer hold the capability an item asks for? */
 function holds(me: Me, capability: Capability): boolean {
-  /* ⚠ NO PERSON, NO CAPABILITIES (P1-ALL-E002). Actor flags live on the Person;
-     a user without one holds nothing, and the rail filters down to empty rather
-     than offering actions the account cannot take. */
   const r = me.person?.roles;
   if (!r) return false;
   switch (capability) {
@@ -1910,41 +340,7 @@ function holds(me: Me, capability: Capability): boolean {
   }
 }
 
-/**
- * USER CLASS -> MENU. The ONE place this mapping is made.
- *
- *   Service Seller (provider) -> PROVIDER_NAV
- *   Service Buyer  (requester) -> REQUESTER_NAV
- *
- * Centralized per brief_nav_casing_consistency WS-C so no component re-derives
- * it. There is exactly one caller today (`navForRoles`), and that is the point:
- * the moment a second surface needs "which menu does this person get", it calls
- * this instead of writing the ternary again — which is how two surfaces end up
- * disagreeing about who is a seller.
- *
- * SOMEBODY WHO IS BOTH SEES THE PROVIDER MENU. They are standing in the
- * provider console, and a merged rail of twelve items across two jobs would
- * answer neither question. Switching consoles is the persona menu's job.
- *
- * ⚠ STILL ROLE-FLAG BASED, deliberately. The brief maps this to USER_CLASS, and
- * `USER_CLASS`/`USER_JOB` are not in the schema yet (see the note further up
- * this file). Until they land, `isServiceProvider` IS the class signal — and
- * when they do land, this function is the only thing that changes.
- */
-/**
- * THE ONE PREDICATE behind both the menu and its caption.
- *
- * Extracted so `menuForUserClass` and `railPersona` cannot answer "which side
- * of the marketplace is this?" differently — a rail captioned SELLER over the
- * requester menu is worse than no caption, because it is confidently wrong.
- * When `USER_CLASS` lands, this one line is what changes.
- */
 function isSellerSide(me: Me): boolean {
-  /* ⚠ AN UNPROFILED USER IS NOT A SELLER. They are not a buyer either, but the
-     buying side is the safe default: every item is filtered by `holds()` anyway,
-     which returns false for all of them, so the practical answer is an empty
-     rail — and defaulting to the SELLER menu would caption that empty rail
-     "SELLER", which is confidently wrong. */
   return me.person?.roles.isServiceProvider === true;
 }
 
@@ -1955,34 +351,6 @@ export function menuForUserClass(me: Me): NavItem[] {
 /** The rail's persona caption. Uppercase by convention, not by CSS accident. */
 export type RailPersona = "BUYER" | "SELLER" | "PANAMEER";
 
-/**
- * WHICH PERSONA THE RAIL IS CURRENTLY SHOWING (E098).
- *
- * The rail had no persona caption at all, so somebody with more than one
- * membership could not tell which side of the marketplace they were looking at.
- * This is the derivation, in one place, and it reads the SAME inputs the rail
- * already uses to decide what to render — `isSellerSide` for the menu and the
- * `isSystemAdmin` session bit for the admin branch.
- *
- * ⚠ IT LABELS THE RAIL, NOT THE PERSON. That is what decides both awkward cases:
- *
- *   · SOMEBODY WITH BOTH ACTOR FLAGS GETS `SELLER`, because `menuForUserClass`
- *     gives them PROVIDER_NAV. The caption's job is to name the menu underneath
- *     it; naming the person instead would caption a provider rail `BUYER` for
- *     anyone who happens to hold both, which is the exact confusion E098 is
- *     about. Switching side is the persona menu's job, not the caption's.
- *   · AN ADMIN WHO IS ALSO A PROVIDER GETS `PANAMEER`, for the same reason —
- *     the rail is rendering ADMIN_NAV.
- *
- * ⚠ NOT `USER_CLASS`, AND DELIBERATELY NOT. `USER_CLASS`/`USER_JOB` are not in
- * the schema (see the note above `menuForUserClass` and the one further up this
- * file). Faking the enum here to look forward-compatible would put a second,
- * lying source of truth next to the real one. This is the single call site to
- * change when they land.
- *
- * Returns null when there is no viewer — `navForRoles` returns [] in that case,
- * and captioning an empty rail would be a claim about nobody.
- */
 export function railPersona(
   me: Me | null,
   isSystemAdmin: boolean
@@ -1992,34 +360,15 @@ export function railPersona(
   return isSellerSide(me) ? "SELLER" : "BUYER";
 }
 
-/**
- * The signed-in nav: base items, then whatever the viewer's capabilities add.
- * Deduped by href — a rail listing the same route twice looks broken.
- */
 export function navForRoles(me: Me | null): NavItem[] {
   if (!me) return [];
   const items: NavItem[] = [];
   const seen = new Set<string>();
-  /*
-    WHICH RAIL. A provider gets the provider rail; anyone else who can hire gets
-    the requester rail. Someone who is BOTH sees the provider one — they are
-    standing in the provider console, and a rail that merged twelve items across
-    two jobs would answer neither. Switching consoles is the persona menu's job.
-
-    `seen` still de-dupes, because the two rails share Start Learning, Manage
-    Work and Community by design.
-  */
   const source = menuForUserClass(me);
   for (const item of source) {
     if (item.requires && !holds(me, item.requires)) continue;
     if (seen.has(item.href)) continue;
     seen.add(item.href);
-    /*
-      Children inherit the parent's gate and are filtered on their own too. A
-      submenu entry that outlives the item it hangs under is unreachable rather
-      than harmful, but it would still be a lie in the one file the header reads
-      its titles from.
-    */
     const children = item.children?.filter(
       (c) => !c.requires || holds(me, c.requires)
     );
@@ -2041,20 +390,10 @@ export function roleLabels(me: Me | null): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// The ADMIN console (brief_console_and_admin_MASTER WS4 / E009)
 // ---------------------------------------------------------------------------
 
 export type NavGroup = { title: string | null; items: NavItem[] };
 
-/**
- * The Panameer Admin's rail, grouped exactly as Scott's menu mockup has it.
- *
- * A separate structure from the app rail rather than a filtered view of it: the
- * admin console and the provider app share chrome, not navigation. Every entry
- * here is behind `canAdminister`, which the /admin prefix already enforces at
- * the proxy, in route-access.ts and in the layout — the capability on each item
- * is what keeps the MENU honest if any of those ever move.
- */
 export const ADMIN_HOME: NavItem = {
   label: "Panameer Dashboard",
   href: "/admin",
@@ -2069,37 +408,6 @@ export const ADMIN_SETUP: NavItem = {
   icon: "SlidersHorizontal",
 };
 
-/**
- * The admin rail, rebuilt to the 2.5 deck + admin_rail_icons_reference.png.
- *
- * WHAT MOVED, and why it matters more than a rename: the MASTER's rail had one
- * "Work" and one "Packages" entry. The revised model splits the transaction
- * lifecycle into its real stages — Work Requests, Work Orders, Work Packages,
- * Settlements, Payments — because those are separate records with separate
- * states, and a single "Work" page could only ever have shown one of them.
- *
- * ⚠ SUPERSEDED 2026-09-04 (`P1-ALL-E380`), QUOTED NOT DELETED: that list read
- * *"Work Requests, Work Orders, Work Packages, **Contracts**, Settlements,
- * Payments"*. THE CLAIM THAT THEY ARE SEPARATE RECORDS STAYS TRUE — only the
- * name goes, because there is no `Contract` record to be one of them. The ToS
- * is the MSA and the Work Order is the SOW; see the doctrine beside the
- * `Orders` slot above.
- *
- * ⚠⚠ AND THE `/admin/contracts` ENTRY BELOW WAS DELIBERATELY **NOT** RENAMED —
- * `E380` STOPPED AND REPORTED INSTEAD. `/admin/work-orders` ALREADY EXISTS,
- * with the label `Work Orders`, as its own nav entry and its own route
- * directory. Renaming this one to match would have shipped TWO ADMIN ENTRIES
- * WITH THE SAME LABEL pointing at different routes — a worse defect than the
- * one being fixed. ⚠ THE DOCTRINE IMPLIES THIS ENTRY SHOULD BE **REMOVED**
- * RATHER THAN RENAMED, since there is no `Contract` record for an admin screen
- * to list and `/admin/work-orders` already lists the real thing — but removing
- * an admin surface is Scott's call and he has not made it. See the `E380`
- * report.
- * ⚠ ITS `ADMIN_PAGES` KEY AND `SpecPage` SLUG ARE `"contracts"` AND MUST STAY:
- * the slug is not a URL, it keys a spec generated from the 2.5 deck slides, and
- * renaming it would blank the page rather than relabel it. Buyers/Sellers moves to Configuration Data: it is a directory of who
- * exists, not a stream of what happened.
- */
 export const ADMIN_NAV: NavGroup[] = [
   {
     title: "Transaction Data",
@@ -2113,189 +421,17 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Payments", href: "/admin/payments", icon: "CreditCard" },
       { label: "Messages", href: "/admin/messages", icon: "MessageSquare" },
       { label: "Community", href: "/admin/community", icon: "Users" },
-      /*
-        ── ⚠⚠ THE WORK TRACKER LIVES IN **Transaction Data** (`P2-ALL-E752`) ────
-
-        ⚠ It is a stream of what happened — task statuses, gate decisions, a
-        dated Shipped log — not a directory of what exists, which is the line
-        the two groups are drawn on (see the Buyers/Sellers note below).
-
-        ⚠⚠ **IT IS UNDER `/admin`, NOT `/panameer`, AND THAT IS DELIBERATE:**
-        `/admin/*` inherits `canAdminister` from the admin layout's `guardPage`,
-        while an unlisted path is PUBLIC by default (`E032`, load-bearing rule 5).
-        ⚠ The gear already claims the whole `/admin` subtree in `BAND_PREFIXES`,
-        so this route lights exactly one band item with no change there (`E735`).
-      */
-      /*
-        ── ⚠⚠ RENAMED `AIM Checklist` (`P2-ALL-E785`) ─────────────────────────
-
-        ⚠ **SCOTT, 2026-10-03:** the AIM tracker *"is good for me, but even for
-        me too complicated."* ⚠⚠ So `/status` stops reading this catalog and
-        reads **Build Plan** instead — but **this page and all of its data stay
-        exactly as they were.** Nothing in `work_tracker_*` was dropped.
-        ⚠⚠⚠ THE RENAME IS THE WHOLE POINT OF KEEPING IT: with two plan-shaped
-        pages in one menu, `Work Tracker` and `Build Plan` would be
-        indistinguishable from the nav — the `E459` defect, where a `Reports`
-        panel sat beside `Reports` copy and *"neither was obvious."*
-        ⚠ Scott wrote it *"AIM checklist"*; it is Title Case here to match every
-        other item in this section, which is the nav's own convention — the
-        one-letter difference is noted rather than silently chosen.
-        ⚠ `pageTitleFor` reads this label, so this one line renames the nav item,
-        the page name top-left and the browser tab.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   { label: "Work Tracker", href: "/admin/work-tracker", icon: "ListChecks" },
-      */
       { label: "AIM Checklist", href: "/admin/work-tracker", icon: "ListChecks" },
     ],
   },
   {
     title: "Configuration Data",
     items: [
-      /*
-        ── ⚠⚠ BUILD PLAN (`P2-ALL-E784`) ──────────────────────────────────────
-
-        **SCOTT, 2026-10-03:** the AIM tracker *"is good for me, but even for me
-        too complicated."* ⚠ So the plan Scott actually keeps is here: rows he
-        types himself, which is what `status.panameer.com` renders.
-
-        ⚠⚠ IT SITS FIRST IN THIS SECTION ON PURPOSE — it is the page he opens
-        daily while the build runs, and the catalog pages below it are set up
-        once and rarely touched.
-        ⚠ `/admin/*` inherits `canAdminister` from the admin layout's
-        `guardPage`, and `route-access.ts` claims the `/admin` prefix, so this
-        route needs no entry of its own (load-bearing rule 5).
-        ⚠ `pageTitleFor` reads this label, so this one line names the nav item,
-        the page name top-left and the browser tab.
-      */
       { label: "Build Plan", href: "/admin/build-plan", icon: "ListChecks" },
-      /*
-        ── ⚠⚠ THE LABEL IS "Users"; THE ROUTE STAYS (`P1-A1.5-E454`) ───────────
-
-        **SCOTT:** *"change Buyers/Sellers to Users."*
-
-        ⚠ THE HREF IS DELIBERATELY UNCHANGED. Renaming `/admin/buyers-sellers`
-        would touch the nav map, `route-access.ts`, the trend sub-page's links and
-        `check:nav-reachable` (73 assertions) for no visible gain — the URL is not
-        on screen. ⚠ RECORDED AS A DECISION, not an oversight.
-        ⚠ AND THIS ONE LINE RENAMES THREE THINGS, because `pageTitleFor` reads
-        this label: the rail item, the page name top-left (`E430` WS-1), and the
-        browser tab.
-      */
       { label: "Users", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
-      /*
-        ── ⚠⚠ THE INDUSTRIES PAGE FOLDS INTO SPECIALIZATIONS (`P1-A1.5-E470d`) ─
-
-        **SCOTT, 2026-09-12:** *"Now I am confused...why is there a separate page
-        for industries?"* **AND 2026-09-13:** *"On industries, that content is a
-        specialization...it should be managed on the specialization page."*
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        `{ label: "Industries", href: "/admin/industries", icon: "Building2" }`
-
-        ⚠⚠ THE OLD PAGE ANSWERED HIM IN ITS OWN COPY, ON SCREEN: *"Industries are
-        a KIND of Specialization in this schema, not a separate dimension — so
-        this reads the same table, filtered."* Same table, same ten rows;
-        `industries/page.tsx:21` was literally
-        `groups.find((g) => g.kind === "INDUSTRY")?.items ?? []`.
-        ⚠ IT WAS NOT A DESIGN DECISION THAT WAS MADE — it is a deck slide that
-        became a route, because `SpecPage` renders fourteen slides from one spec.
-
-        ⚠ THE RAIL ITEM, ITS LABEL AND ITS ICON ALL STAY. Scott uses it as a
-        shortcut and it costs nothing; what was wrong was the second PAGE, not
-        the second ENTRY.
-        ⚠ VERIFIED BEFORE REPOINTING, per the brief's hard precondition: the
-        drill-in returns 10 rows under the heading `Industries (10)`.
-        ⚠ `check:nav-reachable` strips the query string before resolving access
-        (`check-nav-reachable.ts:68`), so this resolves to `/admin/specializations`
-        — already admin-gated. No assertion was touched.
-      */
-      /*
-        ── ⚠⚠ AND NOW THE RAIL ITEM IS GONE TOO (`P1-A1.5-E476`) ──────────────
-
-        > **SCOTT, 2026-09-13, twice in one evening:** *"industries points to
-        > specializations"* · *"confused to see industries by itself"*
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — BOTH the entry and `E470d`'s
-        reasoning for keeping it:
-          { label: "Industries", href: "/admin/specializations?kind=INDUSTRY",
-            icon: "Building2" },
-          *"KEEP the rail item, its label and its icon. Scott uses it as a
-           shortcut and it costs nothing; what was wrong was the second PAGE,
-           not the second ENTRY."*
-
-        ⚠⚠ IT DID NOT COST NOTHING. Clicking Industries lit up SPECIALIZATIONS,
-        because `isActive` (`AppRail.tsx:118`) reads `pathname` and nothing else
-        — two rail items sharing one path are indistinguishable and the first
-        one wins.
-
-        ⚠⚠ `isActive` IS DELIBERATELY NOT TOUCHED. Making it query-aware would
-        put new shared logic on the one function EVERY item in BOTH nav trees
-        depends on, to preserve a shortcut that is actively confusing. ⚠ DELETING
-        THE DUPLICATE REMOVES THE BUG CLASS: with one item per path the existing
-        function is correct again and needs no change at all.
-
-        ⚠ `/admin/specializations?kind=INDUSTRY` STAYS AND STILL WORKS — it is
-        reached from the Industries TILE on the Specializations page, which is
-        the natural route. ⚠ `src/app/admin/_industries/page.tsx` stays unrouted
-        on disk (`E470d` settled that; `E164` is a house rule).
-      */
-      /*
-        THE ASSESSMENT'S FUNDING RATE (brief_assessment_p2p_phase1). Configuration
-        Data, not Support Data: it is a value the platform computes with, like the
-        catalog above it, rather than an operational tool. Additive — the four-nav
-        model and every other menu are untouched.
-      */
-      /*
-        ── ⚠⚠⚠ RELABELLED. IT WAS NAMED AFTER A THING IT IS NOT (`P2-A15-E696` WS-A)
-
-        ⚠⚠ **SCOTT, 2026-09-28: *"that is for assessments. got it. name it as
-        such."*** ⚠ Ruling `97a`.
-
-        ⚠⚠⚠ **THE CODE ALREADY KNEW AND THE LABEL DID NOT: the comment directly
-        above says "THE ASSESSMENT'S FUNDING RATE", the editor lives in
-        `components/assessment/`, and every reader of `TaxRate` is in
-        `lib/assessment/`.** ⚠ **ONLY THE WORD A HUMAN READS WAS WRONG, WHICH IS
-        THE WORST PLACE FOR IT TO BE WRONG** — a correct comment nobody opens
-        cannot stop somebody clicking the wrong menu item.
-
-        ⚠⚠ **AND IT MATTERED THE MOMENT PLATFORM COMMISSIONS ARRIVED:** ruling 97
-        introduces three funding rates that have nothing to do with this page, so
-        `Funding Rate` was about to name two unrelated things in one admin menu —
-        ruling `93m`'s failure, except already wired to the wrong page.
-
-        ⚠ **THE ROUTE, THE `TaxRate` MODEL AND THE TABLE ARE DELIBERATELY
-        UNCHANGED.** They are accurate — it *is* a tax rate, used by assessment
-        funding — and renaming an admin-only route is churn with no reader.
-        ⚠ Measured: **0 stored `Notification.href` rows point at `/admin/tax-rates`.**
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   { label: "Funding Rate", href: "/admin/tax-rates", icon: "Percent" },
-      */
-      /*
-        ⚠⚠⚠ SHORTENED BY SCOTT 2026-09-28 (ruling `100b`), AND IT IS NOT COSMETIC:
-        at 184px against a 166px budget this label was TRUNCATING in the 240px rail,
-        and because `app-shell.spec.ts` runs `describe.configure({ mode: "serial" })`
-        that one failure was SWITCHING OFF TEN ASSERTIONS AFTER IT — including both
-        `E587` band guards (ruling 99).
-        ⚠⚠ `E696` WROTE THIS LABEL AND THE GATE SAID *"the label is the thing to
-        shorten, and that is Scott's call."* He called it.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   { label: "Assessment Funding Rate", href: "/admin/tax-rates", ... },
-        //   and before it: { label: "Funding Rate", ... } — which named the wrong thing.
-      */
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },
-      /*
-        ⚠⚠ **APPLICATION COMMISSIONS SITS BESIDE THE ASSESSMENT RATE ON PURPOSE**
-        (`P2-A15-E696` WS-E, ruling 97). Same group, same shape of page, **and
-        opposite lifetime rules** — which is why each page states its own in full.
-        ⚠ Configuration Data: a value the platform computes with, like the rate
-        above it.
-      */
-      /* ⚠⚠ SHORTENED BY SCOTT 2026-09-28 (ruling `100b`) — 178px against 166px, the
-         second label truncating in the rail and the second half of ruling 99's cost.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   { label: "Application Commissions", href: "/admin/application-commissions", ... }, */
       { label: "Commission Rate", href: "/admin/application-commissions", icon: "Percent" },
     ],
   },
@@ -2304,13 +440,8 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Support Center", href: "/admin/support", icon: "LifeBuoy" },
       { label: "Platform Admins", href: "/admin/admins", icon: "ShieldCheck" },
-      /* `E814` — the two pages that answer "what is in the data, and who
-         changed it". The trigger was a reset that removed 203 users with
-         nothing in the app to show it. */
       { label: "Data Health", href: "/admin/data-health", icon: "Activity" },
       { label: "Audit Log", href: "/admin/audit-log", icon: "History" },
-      /* `E818` — the weekly Follow the Build email: the Friday draft, and the
-         Send that is the only thing that mails anybody. */
       { label: "Build Digest", href: "/admin/build-digest", icon: "Mail" },
     ],
   },
@@ -2319,12 +450,6 @@ export const ADMIN_NAV: NavGroup[] = [
   items: g.items.map((i) => ({ ...i, requires: "canAdminister" as const })),
 }));
 
-/**
- * Routes the revised rail retired. Kept as redirects rather than deleted: the
- * old paths are in browser history, in the previous walk's notes and in the
- * MASTER brief, and a 404 on a route that worked yesterday reads as a
- * regression rather than a restructure.
- */
 export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
   "/admin/work": "/admin/work-requests",
   "/admin/packages": "/admin/work-packages",
@@ -2332,214 +457,17 @@ export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
   "/admin/finances": "/admin/payments",
 };
 
-/**
- * The header title for a path (E015).
- *
- * THE RULE: home shows the greeting, every other page shows its own name. So
- * this returns null for a home route and a label otherwise, and the header
- * decides which to render.
- *
- * Derived from the nav definitions rather than declared per page. A `title`
- * prop on every page would be one more thing to forget on the next one, and it
- * would let the rail and the header disagree about what a page is called — the
- * exact drift the single nav definition exists to prevent.
- */
-/**
- * ⚠⚠ WHICH TAB SETS CARRY A SEQUENCE (`P1-ALL-E378`).
- *
- *   `process`   — numbers + connectors + done/current/upcoming. Doing 1 before
- *                 2 is REQUIRED.
- *   `suggested` — numbers + connectors, NO STATE. A recommended order of
- *                 attention; nothing blocks and nothing completes.
- *   `none`      — plain tabs. Parallel slices.
- *
- * ⚠⚠ A SET DECLARES ITS OWN MODE, AND ANYTHING UNLISTED IS `none`. Defaulting
- * to `none` is deliberate: a set acquires a sequence only when somebody decides
- * it has one.
- *
- * ── ⚠⚠ WHY ONLY ONE SET IS SEQUENCED, WHICH IS A FINDING, NOT AN OMISSION ──
- *
- * The brief expected `/learn` to ship as `process` with handles from
- * `LEARN_STEPS`. ⚠ IT DOES NOT MAP, AND THE RULE THE BRIEF STATES TWICE IS *"do
- * not invent steps to force a match"*, so it ships `none` and is reported:
- *
- *   LEARN_STEPS                        /learn tab
- *   1 Enroll in a Learning Path    ->  All Learning Paths
- *   2 Connect with the Instructor  ->  ⚠ NO TAB — this step is `/community`
- *   3 Watch the Courses and Lessons->  All Courses
- *   4 Get Certified!               ->  ~ My learning (progress, not the step)
- *   5 Get Expert Support           ->  ⚠ NO TAB — this step is `/community`
- *
- * Numbering three tabs 1·3·4 renders gaps that read as broken; renumbering them
- * 1·2·3 would contradict the public promise those numbers come from.
- *
- * ⚠ THE SAME IS TRUE OF THE OTHER TWO SETS, and for the same structural reason:
- * `/settings/packages` (2 tabs) and `/finances` (2 tabs) are SLICES OF ONE PAGE,
- * while every spine describes an END-TO-END JOURNEY ACROSS PAGES. They are
- * different granularities, not a missing mapping.
- *
- * ⚠ SO `process` SHIPS WITH NO CONSUMER TODAY. Reported rather than quietly
- * dropped — the mode is specified, built and asserted, and the first set that
- * genuinely has a required order can declare it in one line.
- */
 export const TAB_SEQUENCE: Record<string, "process" | "suggested" | "none"> = {
-  /* ⚠⚠ `none` — THE PROFILE TABS ARE SLICES OF YOU, NOT STEPS (`P2-A2-E600`).
-     ⚠ `E378`'s rule: *"a PUBLIC SPINE crosses roles and pages; a TAB SET is
-     slices within one page for one role — where they disagree the set is
-     `none`."* Nobody completes `My Company` and moves on to `Account Health`.
-     ⚠⚠⚠ IT IS DECLARED RATHER THAN LEFT TO DEFAULT: `check:community`'s
-     `E384/3` fails an unlisted set, because *"unlisted defaults to none, hiding
-     a decision nobody made."* */
   "/profile": "none",
-  /*
-    ── ⚠⚠ EVERY SET IS CLASSIFIED, AND `check:community` NOW ENFORCES THAT
-       (`P1-ALL-E384` WS-3) ──────────────────────────────────────────────────
-
-    SCOTT, 2026-09-04: *"we could define each menu sequential or parallel, then
-    number the sequential only."*
-
-    ⚠ THAT IS WHAT THIS MAP ALREADY DOES — `process` and `suggested` are
-    numbered, `none` is not. ⚠ AND `E384`'s BRIEF SAID ONLY ONE SET WAS
-    CLASSIFIED; THAT WAS WRONG. `E378` classified all four, and all four are
-    below. What was genuinely missing is that NOTHING STOPPED A FIFTH SET
-    APPEARING WITHOUT A MODE and silently defaulting to `none` — a set that is
-    unnumbered because nobody decided, wearing the same face as one that is
-    unnumbered because somebody did. `check:community` now fails the build if a
-    `PAGE_TABS` key has no entry here.
-
-    ── ⚠⚠ THE RULE THAT DECIDES SEQUENTIAL vs PARALLEL, IN SCOTT'S WORDS ─────
-
-    SCOTT, 2026-09-04: *"the sequence won't necessarily match the public pages,
-    due to steps crossing roles on the public page but being role-based
-    internally."*
-
-    ⚠ HE IS RIGHT, AND IT IS ALREADY WHY `/learn` IS `none`. A PUBLIC SPINE IS A
-    JOURNEY ACROSS ROLES AND PAGES; A TAB SET IS SLICES WITHIN ONE PAGE FOR ONE
-    ROLE. `LEARN_STEPS` 2 (`Connect with the Instructor`) and 5 (`Get Expert
-    Support`) happen in COMMUNITY, not on a `/learn` tab — so numbering the three
-    `/learn` tabs 1·3·4 renders gaps, and renumbering them 1·2·3 contradicts the
-    public promise those numbers come from.
-    ⚠⚠ SO THEY ARE NOT FORCED TO AGREE. Where a spine and a tab set disagree,
-    THE SET IS `none` AND THAT IS REPORTED — it is not a mapping waiting to be
-    finished.
-
-    ⚠ `process` IS KEPT EVEN THOUGH NOTHING USES IT. Scott said keep it. It is
-    built and asserted, and the first set that genuinely has a REQUIRED order
-    declares it in one line.
-  */
-  /*
-    ⚠⚠ `none` AS OF `P2-J3-E557` WS-A. Scott has asked for the numbers off this
-    row repeatedly. ⚠ CONNECT IS A ROOM A MEMBER RE-ENTERS, NOT A PATH THEY WALK
-    ONCE — and a numbered row tells somebody on their fortieth visit that they
-    are partway through something.
-    ⚠ THE `EARLY` PILL ON MENTORING IS UNAFFECTED and is meant to be: `state`
-    lives on the tab, not on the sequence, so readiness survives the numbers
-    going. Removing numbers is not removing honesty markers.
-  */
-  /* ⚠ RE-KEYED `/community` → `/connect` WITH `PAGE_TABS` (`E591` WS-A). ⚠ The
-     CLASSIFICATION IS UNCHANGED — Connect is still a room, not a path. ⚠
-     SUPERSEDED, quoted not deleted (`E164`):
-     //   "/community": "none", */
   "/connect": "none",
-  /*
-    ── ⚠ FOOTNOTE: THE SUPERSEDED `/community` CLASSIFICATION (`E164`) ─────────
-
-    ⚠ SUPERSEDED, QUOTED NOT DELETED — the live entry read:
-
-        "/community": "suggested",
-
-    ⚠⚠ AND IT WAS NOT WRONG WHEN IT WAS WRITTEN. `E378`/`E379` classified this
-    set `suggested` on Scott's own stated order, and `E384` then made every set
-    declare a mode so none could default silently. ⚠ THE CLASSIFICATION MACHINERY
-    IS UNTOUCHED BY `E557`; only THIS set's answer changed.
-    ⚠ `process` and `suggested` both still exist and are still asserted — see the
-    block above. `check:community` still fails the build for any `PAGE_TABS` key
-    that declares no mode at all.
-  */
-  /* ⚠ ALL THREE ARE `none` BY EVIDENCE, NOT BY DEFAULT.
-     · `/learn`             — 3 tabs against a 5-step spine, 2 of which are
-                              Community's. See the mapping above.
-     · `/settings/packages` — 2 tabs (Service Products · Offers for My Services).
-                              Parallel slices of one page: a provider reads their
-                              catalogue and their inbound offers in either order,
-                              and neither completes.
-     · `/finances`          — 2 tabs (Payments · Payment Requests). Also
-                              parallel, and deliberately NOT numbered even though
-                              SHOP_STEPS 4 and 5 look sequential: those two steps
-                              cross BOTH roles — the buyer approves and the
-                              provider is paid — which is exactly the
-                              role-crossing Scott named. */
   "/learn": "none",
   "/my-services": "none",
   "/payments": "none",
-  /*
-    ⚠⚠ `/settings` — CLASSIFIED HERE, DEFINED ELSEWHERE (`P2-J1.1-E046`).
-
-    Its tabs are `SETTINGS_NAV` in `lib/settings-nav.ts`, which is the ONE
-    definition `SettingsTabs` and `SettingsHeading` both read so that a tab and a
-    page heading cannot disagree about what a page is called. Copying that list
-    into `PAGE_TABS` would create the second definition that rule forbids, so the
-    set lives there and its MODE lives here.
-
-    ⚠ THE ENTRY IS NOT DECORATIVE. Without it `tabSequenceFor` would fall through
-    to `?? "none"` and the set would be unnumbered because nobody decided rather
-    than because somebody did — the exact ambiguity `E384`'s guard exists to
-    catch. `check:community` asserts this key is present.
-
-    ⚠ `none` BY EVIDENCE: nine parallel slices of one area. Nobody works through
-    Password & Security to reach Billing, and none of them completes.
-  */
   "/settings": "none",
 
-  /*
-    ── ⚠⚠⚠ `/hire` — `suggested`, NOT `process` (`P2-A2-E675`) ──────────────
-
-    ⚠⚠ **THIS KEY WAS MISSING AND `check:community` HAD BEEN RED ON TRUNK
-    BECAUSE OF IT** — `E384/3`, *"unclassified: /hire"*. ⚠ It had started to
-    read as background noise, which is why it earned its own id (`E674`).
-
-    ⚠ **RULING 62c SAYS `/hire` IS A SEQUENCE** — *"the order is the
-    information"* — so `none` would be wrong. ⚠⚠⚠ **BUT `process` RENDERS A
-    DONE STATE, AND NOTHING CAN WRITE "DONE" FOR A `/hire` STEP TODAY.** Scott,
-    2026-09-26: *"a done state with no writer is the writer test failing."*
-    ⚠⚠ `suggested` is still a sequence — **numbers, no state** — so 62c is
-    satisfied and no figure is claimed that nothing can produce.
-
-    ⚠ **`process` IS OWED, AND IT IS GATED ON A WRITER, NOT ON A PREFERENCE:**
-    the day a `/hire` step can report completion, this becomes `process`. Until
-    then it must not, and this comment is the record of why.
-  */
   "/hire": "suggested",
 };
 
-/**
- * ── ⚠⚠⚠ THE FALLBACK IS GONE — AN UNLISTED ROUTE FAILS LOUDLY (`P2-A2-E676`) ──
- *
- * ⚠⚠ **THE `?? "none"` WAS THE REAL DEFECT, AND `/hire` WAS ONLY THE ROUTE
- * THAT HAPPENED TO GET CAUGHT.** Scott, 2026-09-26: *"it lets any unlisted
- * route inherit a decision nobody made… `/hire` was the one that got caught;
- * the next one wouldn't be."*
- *
- * ⚠ **THE OLD COMMENT CALLED IT DESIGN** — *"Unlisted is `none` by design"* —
- * and that is precisely the ambiguity `E384`'s guard exists to catch: **a set
- * rendered unnumbered because nobody decided, indistinguishable from one
- * rendered unnumbered because somebody did.** ⚠⚠ `check:community` could only
- * ever catch an unlisted key that was ALSO a `PAGE_TABS` key; **this catches
- * every caller, including one passing a route that has no tab set at all.**
- *
- * ⚠⚠⚠ **IT THROWS RATHER THAN RETURNING A DEFAULT, AND THAT IS THE POINT.**
- * A 500 on a route nobody classified is loud, immediate and attributable; a
- * silently unnumbered tab row is none of those and survived until a gate
- * noticed. ⚠ **Safe to throw: every live caller passes a string LITERAL, and
- * every literal is a key above** — measured with comments stripped, because a
- * raw grep matches the `E164` quotes in this very file (rule 12).
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   /** The mode for a tab set. ⚠ Unlisted is `none` by design. *\/
- * //   export function tabSequenceFor(baseRoute: string) {
- * //     return TAB_SEQUENCE[baseRoute] ?? "none";
- * //   }
- */
 export function tabSequenceFor(baseRoute: string): "process" | "suggested" | "none" {
   const mode = TAB_SEQUENCE[baseRoute];
   if (!mode) {
@@ -2551,40 +479,12 @@ export function tabSequenceFor(baseRoute: string): "process" | "suggested" | "no
   return mode;
 }
 
-/**
- * ⚠⚠ THIS FUNCTION HAS NO CALLER (`P1-ALL-E381` WS-3, verified 2026-09-04).
- *
- * Grepped across `src`, `scripts` and `e2e`: nothing invokes it. Every page
- * renders its own `<h1>`. ⚠ SO IT AFFECTS NOTHING AT RUNTIME, and any comment
- * claiming a nav change "moves page headings" is describing a mechanism that is
- * not connected — see the corrected paragraph above `PROVIDER_NAV`.
- *
- * ⚠⚠ IT IS DELIBERATELY NOT DELETED, AND THE REASON IS THE `heading` FIELD.
- * `E378` turned the rail into one-word verbs and put each journey's full name on
- * `NavItem.heading`; this function is the ONLY place those names are read as
- * DATA rather than sitting in prose. Deleting it would make `heading` an unused
- * field, and the next cleanup would delete that too — and with it the record of
- * what `Learn`, `Hire`, `Shop` and `Connect` are actually called.
- *
- * ⚠ IT IS ALSO CORRECT AS IT STANDS: `best.heading ?? best.label` returns the
- * journey name over the rail verb. If a header ever wants a derived title again,
- * it works on the day it is called.
- *
- * ⚠ IF YOU ARE HERE TO DELETE DEAD CODE: check whether anything reads `heading`
- * first. If nothing does, that is a decision about the nav model, not a cleanup.
- */
 export function pageTitleFor(pathname: string): string | null {
   if (pathname === "/dashboard" || pathname === "/admin") return null;
 
   const all: NavItem[] = [
     ADMIN_SETUP,
     ...ADMIN_NAV.flatMap((g) => g.items),
-    /*
-      Rail items AND every tab destination. A tab is a real page with a real
-      header; without these, "My Proposals" would open a page titled "Proposals"
-      from the URL segment. This is what the flattened `children` used to
-      supply — same list, now read from PAGE_TABS.
-    */
     ...PROVIDER_NAV,
     ...Object.values(PAGE_TABS).flat(),
     ...WORK_FEED_EXTRA_TITLES,
@@ -2603,37 +503,12 @@ export function pageTitleFor(pathname: string): string | null {
       if (!best || item.href.length > best.href.length) best = item;
     }
   }
-  /* ⚠ THE JOURNEY NAME WINS OVER THE RAIL VERB (`P1-ALL-E378`). The rail says
-     `Connect`; the page is still `My Community`. */
   if (best) return best.heading ?? best.label;
 
-  /*
-    ── ⚠⚠ NOT A NAV DESTINATION (`P1-A1.5-E529` FINDING 2) ───────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`): this read *"title-case the last
-    meaningful segment"* and did exactly that to ANYTHING, including a uuid.
-    ⚠⚠ SCOTT SAW THE RESULT AT THE TOP OF `/admin/users/<uuid>`:
-    `88292688 82e4 4ba8 A84e C1ed59a648a9`. The de-hyphenation and the capital
-    letters were this rule's fingerprints.
-
-    ⚠ THE DEFECT WAS GENERIC, NOT THIS PAGE'S. **14 of the app's 29 dynamic
-    routes** printed a title-cased id — `/providers/[id]`, `/work-requests/[id]`,
-    `/admin/companies/[id]`, `/support/tickets/[ticketId]`, every `[token]` page,
-    and the rest. Fixing the page would have left thirteen.
-
-    ⚠⚠ THE RULE: AN OPAQUE ID IS NOT A HEADING. A segment that is not a
-    human-readable slug is dropped, and the PARENT SECTION answers instead —
-    `/admin/users/<uuid>` becomes `Users`, which is the section the reader is in
-    and the word the rail already uses. ⚠ The page's own `<h1>` still names the
-    person, so the name is not lost; it simply is not repeated in the one line
-    the shell has.
-  */
   const segs = pathname.split("/").filter(Boolean);
   while (segs.length) {
     const seg = segs[segs.length - 1];
     if (!isOpaqueSegment(seg)) return titleCaseSegment(seg);
-    /* ⚠ Drop the id and ask the NAV again for the parent — a match there is a
-       real heading (`Users`), not another guess from the URL. */
     segs.pop();
     const parent = "/" + segs.join("/");
     const inherited = segs.length ? pageTitleFor(parent) : null;
@@ -2642,23 +517,6 @@ export function pageTitleFor(pathname: string): string | null {
   return null;
 }
 
-/**
- * ⚠⚠ IS THIS SEGMENT AN OPAQUE ID RATHER THAN A WORD? (`P1-A1.5-E529`)
- *
- * ⚠ THE TEST IS POSITIVE FOR SLUGS, NOT NEGATIVE FOR IDS, because the set of id
- * FORMATS is open — uuid, cuid, nanoid, a signed token, a bare integer — and a
- * blocklist would miss the next one. A SLUG is the narrow, closed thing: lower
- * or mixed-case words joined by hyphens, each part alphabetic.
- *
- *   `terms-of-use`        -> slug, title-cased to `Terms Of Use`
- *   `payment-requests`    -> slug
- *   `88292688-82e4-4ba8…` -> parts contain digits -> OPAQUE
- *   `V1StGXR8_Z5jdHi6B`   -> contains digits -> OPAQUE
- *
- * ⚠ A slug carrying a digit (`oracle-cloud-2024`) is treated as opaque and
- * inherits the parent heading. That is the conservative direction: a correct
- * section name beats a mangled id, and the reverse is the defect being fixed.
- */
 export function isOpaqueSegment(seg: string): boolean {
   if (!seg) return true;
   return !seg.split(/[-_]/).every((part) => part.length > 0 && /^[A-Za-z]+$/.test(part));

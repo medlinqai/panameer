@@ -3,24 +3,6 @@ import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { OnboardingError } from "@/lib/onboarding";
 import { gapSentence, sellGaps } from "@/lib/gate-reads";
 
-/**
- * Packages — the provider's sellable catalog (brief_V / E045).
- *
- * A Package is a productized, a-la-carte offering a buyer can buy today:
- * scope + deliverables + timeline + a FIXED price + payment terms. Standalone
- * on the provider, deliberately NOT hung off a past Project — a Project is
- * proof of work already delivered, a Package is something on sale.
- *
- * OWNER-SCOPED throughout: the profile comes from the session via
- * `ownedProviderProfile`, and every client-supplied id is ANDed with it, so a
- * foreign id resolves to nothing rather than to someone else's package.
- *
- * Deliberately does NOT touch completeness. Packages are optional and must
- * never affect the publish gate (brief_R/U invariant) — a provider with no
- * packages is still a complete, visible profile.
- */
-
-/** Payment terms default to the shape Scott specified: 50% up front, 50% on completion. */
 export const DEFAULT_MILESTONES = [
   { label: "Upfront", percent: 50, sequence: 0 },
   { label: "On completion", percent: 50, sequence: 1 },
@@ -39,11 +21,6 @@ export type ServiceProductInput = {
   skillIds?: string[];
   coverImageUrl?: string | null;
   milestones?: MilestoneInput[];
-  /**
-   * ⚠ WHICH CAPABILITY DOMAINS THIS PRODUCT OPERATES ON — REQUIRED, see
-   * `requireDomains` below for exactly when. A product with none cannot be reached from
-   * any roadmap line, so it is invisible to the buyers it was written for.
-   */
   capabilityDomainIds?: string[];
 };
 
@@ -105,11 +82,6 @@ const shape = (p: {
   skills: (p.skills ?? []).map((s) => ({ id: s.skill.id, name: s.skill.name })),
   /* the saved selection, so re-opening the form shows what was chosen */
   capabilityDomainIds: (p.capabilityDomains ?? []).map((c) => c.capability_domain_id),
-  /*
-    The process is DERIVED from the first linked domain rather than stored on the package —
-    `CapabilityDomain.process` is the one source of truth for it, and a `process` column
-    here would be a second one that drifts. Null for a legacy package with no domains.
-  */
   process: (p.capabilityDomains ?? [])[0]?.capabilityDomain.process ?? null,
 });
 
@@ -123,14 +95,6 @@ const INCLUDE = {
   },
 } as const;
 
-/**
- * The taxonomy the form needs: ~87 domains across nine processes.
- *
- * ⚠ SENT WITH THE PACKAGE LIST RATHER THAN FROM ITS OWN ROUTE, so the editor never renders
- * a process picker before it knows what the processes are. It is small, static reference
- * data — one fetch is cheaper than two and removes a loading state that could only ever
- * flash.
- */
 export async function listCapabilityDomains() {
   return prisma.capabilityDomain.findMany({
     orderBy: [{ process: "asc" }, { sort_order: "asc" }, { name: "asc" }],
@@ -149,13 +113,6 @@ export async function listOwnServiceProducts(viewer: Viewer) {
   return rows.map(shape);
 }
 
-/**
- * Validate + normalize the payment terms.
- *
- * Percent-of-total (not amounts) so changing the price can never leave the
- * milestones disagreeing with it. They must sum to EXACTLY 100 — "90% up
- * front" with the remainder unaccounted for is a contract nobody can settle.
- */
 function normalizeMilestones(input?: MilestoneInput[]) {
   const raw = (input ?? []).filter((m) => clean(m?.label));
   const list = raw.length > 0 ? raw : DEFAULT_MILESTONES;

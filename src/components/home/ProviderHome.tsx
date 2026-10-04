@@ -3,18 +3,6 @@ import { FindWorkHero } from "@/components/home/FindWorkHero";
 import { PathCard } from "@/components/learn/PathCard";
 import type { LearnCard } from "@/lib/learn-home";
 
-/**
- * Provider HOME — the app hub (E134-provider-home-design.png).
- *
- * DISTINCT FROM THE PROFILE, which is the whole point of this brief. /dashboard
- * used to render the provider's full profile view, so "Home" and "my profile"
- * were one long page and the post-publish landing was both at once. Home is now
- * a hub — go find work, go learn something — and the profile lives behind Edit
- * Profile and the public profile route.
- *
- * Two sections, in the mockup's order: FIND WORK then BUILD SKILLS. Both
- * eyebrow labels are brand magenta, which is what the PNG samples as.
- */
 export function ProviderHome({
   chips,
   paths,

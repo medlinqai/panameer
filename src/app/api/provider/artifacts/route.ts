@@ -7,16 +7,6 @@ import {
 } from "@/lib/artifacts";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * Artifacts on the viewer's own Employers / Projects (PJv2 WS4 / E078a).
- *
- *   GET                        → every artifact on this profile
- *   POST { action: "create", artifact }
- *        { action: "delete", artifactId }
- *
- * OWNER-SCOPED in the lib: the parent id is re-checked against the session's own
- * profile, so a foreign employer/project id resolves to nothing.
- */
 export async function GET() {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

@@ -6,46 +6,6 @@ import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 
-/**
- * ── ⚠⚠⚠ `/learn/courses` — A REAL PAGE (ruling 53d, brief 9) ────────────
- *
- * ⚠ **SCOTT HAS RULED:** *"Courses gets a real page of its own, five tabs each
- * naming a different place."* ⚠⚠ Until now this route was a **308 to
- * `/learn/paths`**, so **two of Learn's five tabs pointed at one page** — click
- * `Courses` and you arrived at Learning Paths with Learning Paths lit.
- *
- * ── ⚠⚠ WHAT THIS REPLACES, AND WHY THE 308 WAS RIGHT AT THE TIME ────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole of the old route:
- * //   import { permanentRedirect } from "next/navigation";
- * //   export default function Page() { permanentRedirect("/learn/paths"); }
- *
- * ⚠⚠⚠ **THE 308 WAS NOT A SHORTCUT — IT FIXED A REAL DEFECT AND THAT DEFECT
- * MUST NOT COME BACK.** Before `E364` WS-8 this route rendered **`PathCard` —
- * learning PATHS — under the heading "All Courses"**, from the same
- * `getLearnHome()` query `/learn/paths` used. **Two URLs, one page, one of them
- * named after a thing it did not show.** ⚠ `E362` found it and correctly
- * stopped; `E364` redirected it away.
- * ⚠⚠ **SO THIS PAGE EARNS THE URL BACK BY SHOWING COURSES.** `getLearnCourses`
- * queries `Course` and never `LearningPath`-as-a-card. **The redirect is only
- * retired because the page finally has its own content** — the measurement
- * ruling 53d demanded is in `learn-courses.ts`: a path is a JOB, a course is ONE
- * ORACLE APPLICATION.
- *
- * ── ⚠⚠⚠ IT STAYS PUBLIC. THIS IS `E316` AND IT IS LOAD-BEARING. ─────────
- *
- * ⚠⚠ `P1-J0-E316`: this route **MUST stay reachable signed out** — *"a gate
- * there turns the public hero's second CTA into a login wall."* ⚠ The old file's
- * closing note said the same of the redirect: *"its `public-routes.ts` entry
- * stays — a redirect a visitor cannot reach is not a redirect."*
- * ⚠⚠⚠ **THE ENTRY STILL STAYS, AND NOW IT GUARDS A PAGE RATHER THAN A HOP.**
- * `getSessionViewer()` is read for the TAB ROW ONLY; **nothing on this page is gated on
- * it**, and the catalogue renders identically to a visitor.
- *
- * ⚠ **THE TAB ROW IS SIGNED-IN ONLY**, the same rule `E627` set for
- * `/learn/paths`: *"My Learning"* is meaningless to somebody with no account,
- * and a row naming a page you cannot have is a row of doors onto walls.
- */
 export const metadata = {
   title: "Courses · Learn · Panameer",
   description:
@@ -63,47 +23,19 @@ export default async function Page() {
       {viewer && <LearnTabs active="courses" teaches={teaches} />}
 
       <div className="mx-auto w-full max-w-5xl px-5 py-6 sm:px-8">
-        {/*
-          ⚠⚠ THE FIGURES ARE DERIVED FROM THE ROWS THIS PAGE DRAWS
-          (`courseTotals`), so the header cannot disagree with the list beneath
-          it — the defect `E585` names, avoided by construction rather than by
-          checking.
-          ⚠ THREE FIGURES, ALL MEASURED, ALL COUNTABLE. None is a dash because
-          none is uncountable: every one of them is a row count.
-          ⚠⚠⚠ THE EYEBROW IS NOT THE HEADLINE. `E628` shipped an eyebrow reading
-          `LEARNING PATHS` above a headline reading `Learning Paths` and it had
-          to be corrected; `THE CATALOGUE` is already taken by that page, so this
-          one names its own grain.
-        */}
+        {}
         <PatternHeader
           eyebrow="EVERY COURSE"
           headline="Courses"
           lede="A course covers one Oracle application. A path is the job that strings several of them together."
           figures={[
             { label: "Courses", value: totals.courses },
-            /*
-              ⚠⚠ `Across Paths`, NOT `Paths They Sit In` — MEASURED AT 390px.
-              ⚠ The longer label wrapped to THREE lines while `COURSES` took one
-              and `WITH VIDEO` took two, so the three numbers sat at three
-              different heights. `PatternHeader`'s `min-h-[2.4em]` reserves TWO
-              lines (the fix `E629` made for `/learn`); a third line overflows it
-              and the row goes ragged again.
-              ⚠⚠⚠ THE FIX BELONGS IN THE LABEL, NOT IN THE COMPONENT. Raising
-              the reserve to three lines would put a band of white space under
-              every two-word label on all six pages that use this header, to
-              serve one page's long phrase. **A row of numbers that do not share
-              a baseline is harder to compare, which is the one thing a figure
-              row is for.**
-            */
             { label: "Across Paths", value: totals.paths },
             { label: "With Video", value: totals.playable },
           ]}
           move={
             <>
-              {/*
-                ⚠⚠ AT GENUINE ZERO, NAME THE FIRST MOVE (rule 4). ⚠ And the
-                credit is a COUNT, never a compliment.
-              */}
+              {}
               {totals.courses === 0 ? (
                 <>Nothing is published yet.</>
               ) : (

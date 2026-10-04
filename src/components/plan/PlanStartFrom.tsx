@@ -1,19 +1,5 @@
 "use client";
 
-/**
- * ── START FROM — BLANK · TEMPLATE · COPY (`P2-ALL-E784`) ────────────────────
- *
- * ⚠⚠ **IT ONLY OFFERS WHAT IT CAN DO.** The template and copy actions REFUSE a
- * plan that already has rows (`store.ts`/`template.ts`), so when the plan is
- * non-empty this renders the clearing path instead of buttons that would come
- * back with an error. ⚠ A control that is certain to fail is worse than no
- * control — and a control that silently merged would be unrecoverable by hand.
- *
- * ⚠⚠ **IMPORT IS ALWAYS OFFERED, UNLIKE THE TEMPLATE** — it is the only path
- * that works on a plan that already has rows, because the person chooses
- * `replace` or `append` rather than the server guessing.
- */
-
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -32,15 +18,7 @@ export function PlanStartFrom({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** ⚠⚠ Clearing a plan is confirmed IN PAGE, in two steps. There is no undo for
-   *  it — `deleteRow`'s buffer holds one row and its children, not a whole plan
-   *  — so the second click is the only thing standing between Scott and his own
-   *  work. ⚠ Saying that plainly is part of the control. */
   const [confirmClear, setConfirmClear] = useState(false);
-  /** ⚠⚠⚠ NO DEFAULT, AND THAT IS THE DESIGN. "Add to the plan" and "delete the
-   *  plan and use this file" are not variations of one another, and a
-   *  pre-selected radio is how somebody loses two hundred rows to one click.
-   *  ⚠ The Import button stays disabled until this is answered. */
   const [mode, setMode] = useState<"replace" | "append" | null>(null);
   const [problems, setProblems] = useState<{ line: number; message: string }[]>([]);
   const [result, setResult] = useState<string | null>(null);

@@ -2,12 +2,6 @@ import { z } from "zod";
 import { settingsWrite } from "@/lib/settings-api";
 import { addPayoutMethod, removePayoutMethod } from "@/lib/settings";
 
-/**
- * POST /api/settings/withdrawals — payout methods (WS-H / E017).
- *
- * The tax gate lives in the LIB, not here. A disabled button is a courtesy; the
- * rule has to hold for a request that never saw the button.
- */
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("add"),

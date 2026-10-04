@@ -1,13 +1,3 @@
-/**
- * The one invariant this data has to keep.
- *
- * The ten domain scores mean to 42, and 42 is the org score on the product
- * shot's first tile ("42 vs. 73"). Both sections render within a screen of each
- * other, so a visitor can average the ten by eye. This test is what stops a
- * future score edit from desyncing them silently — the two files cannot import
- * from each other without coupling a marketing card to a mockup, so the
- * agreement is asserted here instead.
- */
 import {
   OPPORTUNITIES_BY_DOMAIN,
   TOTAL_OPPORTUNITIES,

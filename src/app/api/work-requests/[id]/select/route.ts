@@ -4,23 +4,6 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { selectProvider } from "@/lib/selection";
 
-/**
- * ── ⚠⚠⚠ POST /api/work-requests/[id]/select — TRANSITION ONE (`P2-A8-E684`) ─
- *
- * ⚠⚠ **`POSTED → ASSIGNED`**: the winning proposal's provider and **its rate**
- * go onto line 1, the bid becomes `AWARDED`, every other open bid becomes
- * `NOT_SELECTED`, and the buyer's proposal worklist items are resolved.
- * ⚠⚠⚠ **IT IS NOT THE ORDER.** Ruling 17 splits the two on purpose: selecting
- * moves to `ASSIGNED`, which `reverseSelection` can still undo; **ordering is
- * the second transition and is what makes it irreversible.**
- *
- * ⚠ **THE RATE COMES FROM THE PROPOSAL, AND A PROPOSAL WITHOUT ONE IS
- * REFUSED** — `selectProvider` throws `PROPOSAL_HAS_NO_RATE` rather than
- * falling back to the provider's advertised profile rate, *"which is what they
- * advertise — not what they proposed for this work."*
- * ⚠⚠ **NO MONEY MOVES.** No `Payment`, no `PAID`, no cut — this writes a
- * requisition line and four statuses.
- */
 const bodySchema = z.object({ providerPersonId: z.string().uuid() }).strict();
 
 export async function POST(

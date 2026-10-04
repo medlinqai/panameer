@@ -5,20 +5,6 @@ import { ownedProviderProfile } from "@/lib/access";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getWorkFeed, WORK_FEED_TABS, type WorkFeedTab } from "@/lib/work-feed";
 
-/**
- * FIND WORK — the page the rail's "Find Work" item lands on (E216).
- *
- * IT WAS A SEARCH STUB, and the rail's flyout listed five views that lived
- * somewhere else. Flattening the rail made that untenable: the item is a plain
- * link now, so the page it opens has to BE the thing, with the five views as
- * its tabs rather than as a hover menu.
- *
- * SAME COMPONENT AS THE DASHBOARD FEED, not a copy. The dashboard renders the
- * work feed as its body (brief_sp_dashboard) and this renders it as the page;
- * one component, one tab definition in `work-feed.ts`, so the two can never
- * disagree about what "Best Matches" means. The tab set is the de-duplicated
- * union of what each surface had.
- */
 export const metadata = { title: "Find Work · Panameer" };
 
 export default async function FindWorkPage({

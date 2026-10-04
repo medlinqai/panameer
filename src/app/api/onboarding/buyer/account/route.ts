@@ -19,11 +19,6 @@ const schema = z
     path: ["confirm"],
   });
 
-/**
- * POST /api/onboarding/buyer/account — buyer "Create My Account". Creates the
- * BUYER backbone + draft BuyerProfile in one transaction (ToS timestamped),
- * then sends the reused Resend verification email. The client signs in after.
- */
 export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

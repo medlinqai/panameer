@@ -13,15 +13,6 @@ const schema = z.object({
   inviteToken: z.string().optional(),
 });
 
-/**
- * POST /api/onboarding/provider/backbone — give a signed-in user the provider
- * backbone (brief_Q).
- *
- * The one-click OAuth path lands here: `linkOAuthUser` created the User but
- * deliberately no Person (a Google login carries no buyer/provider intent), so
- * the provider join flow calls this to build the rest. Idempotent, and scoped
- * to the SESSION user — there is no id to target someone else's account with.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {

@@ -1,40 +1,6 @@
-/**
- * `check:derived-source` — ⚠⚠ ONLY THE ROLLUP MAY WRITE `source: DERIVED`.
- *
- *   npm run check:derived-source
- *
- * ── ⚠⚠⚠ WHY THIS GATE EXISTS (`P1-A1.4-E553`) ──────────────────────────────
- *
- * `recomputeProviderRollup` DELETES every `DERIVED` row for a profile and then
- * rebuilds only those a dated, skill-linked job can support. That is correct and
- * deliberate: a recompute that left rows it can no longer justify would let a
- * skill outlive the job that proved it, and the number stops meaning anything.
- *
- * ⚠⚠ IT RESTS ON ONE ASSUMPTION — **`DERIVED` MEANS "THE ROLLUP WROTE THIS"** —
- * AND THAT ASSUMPTION WAS FALSE. `ProviderSkill.source` DEFAULTS TO `DERIVED`, so
- * every writer that omitted the field minted a row the rollup would later delete
- * and could never rebuild. ⚠ MEASURED 2026-09-17: **297 such rows across 51
- * profiles**, including two protected lesson-holders who would have lost every
- * skill they had (Marelise 16 of 16, Linus 15 of 15).
- *
- * ⚠ Scott, 2026-09-17: *"A SAVE DELETES DATA IT DID NOT CREATE."* That is the rule
- * both `E553` and `E552` break, and this gate is what keeps `E553` shut — the
- * backfill repairs history, the guard stops it refilling. ⚠⚠ **GUARD FIRST,
- * BACKFILL SECOND** (the `E535` order: stop the bleeding, then clean up).
- *
- * ⚠ MUTATION TEST: delete `source: "SELF_ADDED"` from any writer below, or write
- * `source: "DERIVED"` anywhere outside `provider-rollup.ts`, and this goes red.
- */
 import { readFileSync as rawRead, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-/*
-  ⚠⚠ COMMENTS ARE STRIPPED BEFORE SCANNING, AND THAT IS LOAD-BEARING HERE.
-  This codebase quotes superseded code in comments by house rule (`E164`) — the
-  skills step carries the exact `deleteMany` this gate forbids, as a quote of what
-  it replaced. Scanning raw text flagged the QUOTE and not the code, which is the
-  same trap `check:company-binding` documents.
-*/
 const readFileSync = (p: string): string =>
   rawRead(p, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
@@ -66,8 +32,6 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 const files = ["src", "prisma", "scripts"].flatMap((d) => walk(d));
-/* ⚠ The gate's own source quotes the literal it forbids; so does the rollup's
-   test. Neither is a writer. */
 const EXEMPT = new Set([
   relative(ROOT, join(ROOT, "scripts", "check-derived-source.ts")),
   join("scripts", "check-skills-visible.ts"),
@@ -76,9 +40,6 @@ const EXEMPT = new Set([
 
 console.log("\ncheck:derived-source — only the rollup may write DERIVED\n");
 
-/* ═══ 1 · EVERY WRITER NAMES ITS SOURCE ════════════════════════════════════
-   A `providerSkill` create/upsert that omits `source` inherits the schema
-   default — which is `DERIVED`. That is how all 297 rows were minted.        */
 {
   const offenders: string[] = [];
   for (const f of files) {

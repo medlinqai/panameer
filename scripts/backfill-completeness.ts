@@ -3,32 +3,6 @@ import { buildCompletenessInput } from "@/lib/onboarding";
 import { computeProfileScore } from "@/lib/completeness";
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 
-/**
- * ── ⚠⚠ RECOMPUTE THE STORED `completeness` UNDER THE `E590` WEIGHTS ────────
- *
- * ⚠ `P2-J3-E590` WS-A re-weighted the table. The stored column on 111 profiles
- * was computed under the OLD table and only refreshes when a profile is next
- * touched, so every surface reading it shows a stale number until then.
- *
- * ── ⚠⚠⚠ WHAT MAKES THIS SAFE ───────────────────────────────────────────────
- *
- * ⚠ **IT CANNOT CHANGE VISIBILITY.** `WS-A0` removed the score from the gate:
- * `isMarketplaceVisible` reads `providerMeetsRequired` and nothing else. This
- * script ASSERTS that — it counts visible profiles before and after and
- * **REFUSES TO COMMIT IF THE NUMBER MOVES**.
- *
- * ⚠ **IDEMPOTENT.** It writes the computed score, not a delta. Running it twice
- * produces the same rows; the second run reports zero changes.
- *
- * ⚠ **DRY RUN BY DEFAULT.** Pass `--write` to commit. Without it nothing is
- * written and the full before/after distribution is still printed.
- *
- * ⚠⚠ IT USES `buildCompletenessInput` — THE ONE WRITE PATH — rather than
- * assembling its own shape. A backfill that computed the score differently from
- * the application would be a second arithmetic, which is the defect `E590`
- * exists to remove.
- */
-
 const WRITE = process.argv.includes("--write");
 
 function bucket(n: number): string {
@@ -49,7 +23,6 @@ async function main() {
       status: true,
       paused_at: true,
       completeness: true,
-      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       role_type_id: true,
       hourly_rate_cents: true,
       rate_min_cents: true,
@@ -59,7 +32,6 @@ async function main() {
       skills: { select: { id: true } },
       person: {
         select: {
-          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
           title: true,
           photo_url: true,
           phone: true,
@@ -77,9 +49,6 @@ async function main() {
   const writes: { id: string; from: number; to: number }[] = [];
 
   for (const p of rows) {
-    /* ⚠ THE PREDICATE IS COMPUTED ONCE AND USED FOR BOTH SIDES. Visibility does
-       not depend on the score, so the same value is correct before and after —
-       and that is exactly what the assertion below is checking. */
     const met = providerMeetsRequired(p as never);
     const vis = isMarketplaceVisible({ ...p, meetsRequired: met });
 

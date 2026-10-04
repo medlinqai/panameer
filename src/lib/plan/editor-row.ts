@@ -1,21 +1,3 @@
-/**
- * ── THE EDITOR'S ROW SHAPE — A PLAIN MODULE ON PURPOSE (`P2-ALL-E784`) ──────
- *
- * ⚠⚠⚠ **IT LIVES HERE AND NOT IN `PlanOutlineEditor.tsx` BECAUSE A SERVER PAGE
- * CALLS IT.** `toEditorRow` was exported from the `"use client"` file, and the
- * admin page's `rows.map(toEditorRow)` threw at runtime:
- *
- *     Attempted to call toEditorRow() from the server but toEditorRow is on the
- *     client.
- *
- * ⚠⚠ **`npm run build` AND `tsc` BOTH PASSED.** The RSC boundary is not a type
- * error and not a compile error — it is a runtime one, and the Playwright suite
- * is what found it. ⚠ That is the argument for the browser gate in one line: a
- * green build said nothing about whether the page rendered.
- *
- * ⚠ A `"use client"` module may import from here freely; the direction that
- * does not work is the one above.
- */
 import type { PlanRowLike } from "./model";
 
 export type EditorRow = {

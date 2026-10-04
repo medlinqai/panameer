@@ -6,36 +6,6 @@ import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 import type { SettleForm, SettleLineOption } from "@/lib/settlements";
 
-/**
- * RAISE A PAYMENT REQUEST — ⚠⚠ ONE COMPONENT, TWO RENDERINGS
- * (`P1-J4-E394` WS-1 + WS-2).
- *
- * ── ⚠⚠ THE BRANCH IS ON THE ORDER LINE'S `basis` AND NOWHERE ELSE ───────────
- *
- *     RATE   → a day-by-day TIMESHEET GRID (a service date + hours per row)
- *     AMOUNT → ONE ROW: the milestone and its figure, claimed in full
- *
- * **Both post the same body to the same endpoint** (`POST /api/settlements`).
- * There is no `type` in that body, no second route, and no `settlement_type`
- * column — the difference is HOW MANY `SettlementLine` ROWS come out, and nothing
- * else. `check:settle` asserts all three.
- *
- * ── ⚠⚠ THE RULES ARE E388's. THIS MAKES THEM LEGIBLE, IT DOES NOT RE-DECIDE ──
- *
- * Every constraint below is enforced server-side by `assertSettlementDraw`. What
- * this adds is that a provider learns them BEFORE they submit rather than at a
- * refusal:
- *
- *   · ⚠⚠ THE RATE IS READ-ONLY AND SAYS WHY. *"A provider who thinks they can
- *     adjust it will try, and a silently-ignored input is worse than a disabled
- *     one."* So it is rendered as TEXT, not a disabled input — a disabled input
- *     still looks like a field that could be enabled.
- *   · remaining counts down AS THEY TYPE, from the server's number.
- *   · an AMOUNT line is a checkbox, because in-full-or-not-at-all has two states.
- *   · a line with nothing left is shown and NOT claimable — hiding it would make
- *     a provider wonder where their line went.
- */
-
 type Row = { key: string; serviceDate: string; quantity: string; note: string };
 
 let seq = 0;

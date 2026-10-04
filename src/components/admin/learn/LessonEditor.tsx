@@ -17,16 +17,6 @@ import { ExpertPicker } from "@/components/admin/learn/ExpertPicker";
 import type { TreeLesson, TreeSection } from "@/components/admin/learn/StructureEditor";
 import { urlMissing } from "@/components/admin/learn/StructureEditor";
 
-/**
- * The Lesson editor (WS3) — the core of this brief.
- *
- * Setting a valid URL is what makes a lesson playable on the public catalog,
- * and the editor says so out loud rather than leaving the admin to infer it
- * from two fields that don't obviously relate. The status ladder and the URL
- * column are separate facts (see learn.ts), and their disagreement is the exact
- * thing the catalog import left behind — so this screen names the disagreement
- * when it exists instead of showing two green-looking fields.
- */
 export function LessonEditor({
   lesson,
   section,

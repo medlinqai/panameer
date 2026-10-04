@@ -3,33 +3,7 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { resolveSlug } from "@/lib/public-slug";
 import { getMaskedProfile } from "@/lib/masked-profile";
 import { getNamedProfile } from "@/lib/named-profile";
-/* ⚠ `MaskedProviderPage`'s import is GONE because its only caller here was the
-   `__none__` sentinel the 404 above replaced. ⚠⚠ The COMPONENT stays on disk and
-   is still rendered by `/providers/[id]` — nothing is deleted (`E164`). */
 import { NamedProfilePage } from "@/components/public/NamedProfilePage";
-
-/**
- * ── ⚠⚠⚠ `/pro/<slug>` — THE MEMBER'S OWN PUBLIC URL (`E738`, renamed `E756`) ───────
- *
- * ⚠ SCOTT, 2026-10-01: *"a personal public URL (like LinkedIn), for Scott's
- * email signature."*
- *
- * ⚠⚠ **IT SERVES TWO DIFFERENT PAGES AND THE MEMBER CHOOSES WHICH:**
- *   · `public_name_at` **set**  → the NAMED page (name, photo, employers),
- *                                 indexable, rates and contact behind a free
- *                                 sign-up.
- *   · `public_name_at` **null** → the SAME masked preview `/providers/[id]`
- *                                 serves. ⚠ **THIS IS THE DEFAULT.**
- *
- * ⚠⚠⚠ **THE DEFAULT IS THE MASKED ONE BECAUSE PUBLISHING A MEMBER'S REAL NAME
- * WITHOUT THEM ASKING IS A DISCLOSURE, NOT A SETTING.** A member who has never
- * opened the Visibility card has a working `/in/<slug>` that names nobody.
- *
- * ⚠ A SIGNED-IN VISITOR GETS THE SAME PAGE HERE, deliberately: this URL is a
- * share link whose whole job is to look the same to everyone who opens it.
- * ⚠⚠ The signed-in surface for a profile is `/providers/[id]`, which is
- * byte-unchanged for members.
- */
 
 export async function generateMetadata({
   params,

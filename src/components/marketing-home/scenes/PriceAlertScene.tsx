@@ -1,17 +1,3 @@
-/**
- * SCENE 2 — the price-alert email, as a prospect would receive it.
- *
- * An EMAIL rather than an in-app screen, deliberately: the alert's whole claim
- * is that it reaches a requester before approval, wherever they are.
- *
- * ⚠ THE CLOSING "WHY YOU GOT THIS" PARAGRAPH IS NOT PADDING. It names the
- * threshold that fired the alert and says the write-back leaves the approval
- * chain unchanged — that is what makes this read as a system rather than a
- * coupon. Do not cut it for space.
- *
- * The buttons are <span>s, not <button>s: this is a picture of an email, and a
- * real button here would be a control that does nothing.
- */
 export function PriceAlertScene() {
   return (
     <div className="mail">

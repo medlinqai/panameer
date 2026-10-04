@@ -9,20 +9,6 @@ import { bpsToPercentLabel } from "@/lib/application-commissions";
 
 export const dynamic = "force-dynamic";
 
-/**
- * APPLICATION COMMISSIONS — the platform's cut, by sourcing kind (`P2-A15-E696`
- * WS-E, ruling 97).
- *
- * ⚠⚠ **THIS IS NOT THE ASSESSMENT'S FUNDING RATE.** That is `/admin/tax-rates`,
- * it multiplies EBITDA on a report, and **its changes reach reports already
- * sent.** ⚠⚠⚠ **THIS PAGE'S CHANGES REACH NEW TRANSACTIONS ONLY** — the rate is
- * stamped onto the work order line at creation and never looked up again.
- * ⚠ The two sit side by side in the admin menu, which is exactly why each says
- * its own rule in full rather than relying on the reader.
- */
-/* ⚠ FOLLOWS THE MENU LABEL, shortened by Scott 2026-09-28 (ruling `100b`).
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   title: "Application Commissions · Panameer" */
 export const metadata = { title: "Commission Rate · Panameer" };
 
 export default async function ApplicationCommissionsPage() {
@@ -45,8 +31,7 @@ export default async function ApplicationCommissionsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      {/* ⚠ Ruling 95 check 1 — the page is named, and the name matches the menu
-          label word for word. */}
+      {}
       <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
         Commission Rate
       </h1>

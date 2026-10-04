@@ -1,15 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * ── ⚠⚠⚠ `check:profile360` (`P2-A2-E616` WS-C) ──────────────────────────
- *
- * ⚠⚠ `E598`'s LESSON IS THE WHOLE POINT OF THIS FILE. `check:visitor-profile`
- * had six cases and a hole exactly where the owner's own provider page sat — a
- * union with a gap in the middle. **Adding a viewer class does not add a case,
- * it multiplies them**, so the matrix below is DERIVED and intersected rather
- * than listed (`E587`).
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -17,7 +8,6 @@ const check = (name: string, ok: boolean, why = "") => {
   else fails.push(`${name}${why ? ` — ${why}` : ""}`);
 };
 
-/** ⚠ Rule 12 / `E164`: a quote is not live code. */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -34,9 +24,6 @@ const SRC = walk("src");
 const VIEW = join("src", "lib", "provider-profile-view.ts");
 const view = strip(readFileSync(VIEW, "utf8"));
 
-/* ── 1 · ⚠⚠⚠ EVERY PROFILE SURFACE IS GATED — DERIVED FROM THE SURFACE ────
-   ⚠ The population is every route that reads a profile, found by the read, not
-   by a list. ⚠⚠ Count > 0 (`E586`). */
 const profileSurfaces = SRC.filter((f) => {
   if (!f.startsWith(join("src", "app"))) return false;
   const b = strip(readFileSync(f, "utf8"));

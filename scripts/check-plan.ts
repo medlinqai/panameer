@@ -1,23 +1,3 @@
-/**
- * ── `check:plan` — THE PLAN TOOL'S GATE (`P2-ALL-E783`) ─────────────────────
- *
- * Two halves, deliberately:
- *
- *  §1–§6  **PURE.** Numbering, lateness, readiness and placement are proven
- *         against fixtures with no database and no server. ⚠ Every assertion
- *         here is called with real inputs — `E586` is the lesson that a gate
- *         reporting success with nothing to read is worse than a red one.
- *
- *  §7–§13 **STRUCTURAL, against the real database**, because the two-level rule,
- *         the cascade and the dense `sort` invariant live in SQL and in one
- *         module, and a fixture cannot prove either.
- *
- * ⚠⚠ IT LEAVES NO DATA. Everything is created under a scratch owner key and
- * removed in a `finally`; §13 then re-counts the nine live tables and fails if
- * any of them moved. ⚠ That check exists because a teardown that silently
- * skipped a column is exactly how `check:work-tracker` moved `/status`'s
- * current phase twice (`E765`).
- */
 import { readFileSync, readdirSync } from "fs";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";

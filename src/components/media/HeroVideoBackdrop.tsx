@@ -1,36 +1,3 @@
-/**
- * The Learn hero's dark video treatment, extracted so a second hero can render
- * THE SAME THING rather than a lookalike.
- *
- * Lifted verbatim out of `LearnHome`'s hero section (E026), which now calls
- * this instead of carrying its own copy. Two heroes with two hand-written
- * <video> tags is two chances for them to drift — different opacity, one of
- * them missing `playsInline` and letting iOS open a fullscreen player over the
- * page, one of them forgetting `aria-hidden` and announcing a decorative clip
- * to a screen reader.
- *
- * ── THE TWO LAYERS ARE ONE IDEA ──────────────────────────────────────────────
- *
- * The footage never carries the contrast. A gradient is painted UNDER the video
- * (by the caller, as the card's own background) and re-laid OVER it here as the
- * scrim, so white text sits on a known dark ramp regardless of what the camera
- * saw or whether the clip has loaded yet. That is why the scrim is part of this
- * component and not left to the caller to remember.
- *
- * ── REDUCED MOTION IS DECIDED IN CSS, NOT JAVASCRIPT ─────────────────────────
- *
- * `data-autoplay-video` + the `prefers-reduced-motion` rule in globals.css —
- * the same mechanism `VideoSequence` uses. The Learn hero previously gated the
- * video with `usePrefersReducedMotion()`, which works, but it forces every
- * caller to be a client component. `/` is a static, island-free page and its
- * own header comment makes that a build gate, so the hook would have cost the
- * marketing home an island to decide something one media query already knows.
- * CSS also wins before any JavaScript loads rather than after.
- *
- * Either way the fallback is identical to Learn's: the video disappears and the
- * gradient underneath — which was always the thing guaranteeing legibility — is
- * what remains. No poster needed.
- */
 export function HeroVideoBackdrop({
   src,
   poster,
@@ -38,28 +5,6 @@ export function HeroVideoBackdrop({
   scrimClassName,
 }: {
   src: string;
-  /**
-   * ── ⚠⚠ OPTIONAL, DEFAULTED OFF (`P1-ALL-E018`) ────────────────────────────
-   *
-   * Every page that gained a hero clip lost ~2.3s of LCP, and the shape is
-   * identical everywhere: the text paints at ~1.7s and then the `<video>`
-   * SUPERSEDES it as the largest contentful paint when its first frame arrives.
-   * Measured throttled on 2026-08-25 — `/learn` 4,720ms, `/hire-talent` 4,172ms,
-   * `/find-work` 3,992ms, `/buy-services` 3,828ms, `/enterprise` 3,712ms.
-   *
-   * ⚠ IT IS NOT SIZE-DOMINATED: the 0.14MB clip scored WORSE than the 0.83MB one.
-   * The 562ms RTT dominates, so the fix has to be something that paints WITHOUT a
-   * round trip for the video.
-   *
-   * ⚠ NO `poster` MEANS NO ATTRIBUTE AND BYTE-IDENTICAL OUTPUT. Six call sites
-   * share this component; the ones that pass nothing are proven unchanged by
-   * `innerText` hash and geometry at three widths, not by inspection.
-   *
-   * ⚠ THE HEADER ABOVE SAYS "No poster needed" AND THAT WAS TRUE WHEN THE ONLY
-   * JOB WAS THE REDUCED-MOTION FALLBACK — the gradient still does that, and still
-   * does it better, because it costs zero bytes. This prop exists for LCP, which
-   * is a different problem. Both statements are true; see the note at the tag.
-   */
   poster?: string;
   /** Positioning + opacity for the clip. Caller owns it; the layers differ per hero. */
   videoClassName: string;
@@ -74,11 +19,6 @@ export function HeroVideoBackdrop({
         tabIndex={-1}
         className={videoClassName}
         src={src}
-        /*
-          ⚠ ABSENT UNLESS THE CALLER ASKS. React omits the attribute entirely for
-          `undefined`, so a caller that passes nothing renders exactly the markup it
-          rendered before this prop existed.
-        */
         poster={poster}
         autoPlay
         muted

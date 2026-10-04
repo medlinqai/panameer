@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { resetPasswordWithToken } from "@/lib/password-reset";
 
-/**
- * ── ⚠⚠ SET A NEW PASSWORD (`P1-ALL-E528` Part B) ───────────────────────────
- *
- * ⚠ Unlike the request route, THIS one answers honestly: the person is holding a
- * token, so telling them it expired or was already used is the only way they can
- * act. ⚠⚠ It still says nothing about WHOSE account it is.
- */
 export const runtime = "nodejs";
 
 const MESSAGE: Record<string, string> = {
@@ -34,8 +27,6 @@ export async function POST(request: Request) {
   }
   return NextResponse.json(
     { ok: false, error: MESSAGE[result.reason] ?? MESSAGE.invalid, code: result.reason },
-    /* ⚠ 400 for a bad password, 410 for a token that is gone — a client can tell
-       "fix your input" from "start again" without reading the copy. */
     { status: result.reason === "weak" ? 400 : 410 }
   );
 }

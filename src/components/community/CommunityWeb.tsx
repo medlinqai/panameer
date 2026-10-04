@@ -5,61 +5,13 @@ import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
 import type { CommunityWeb as WebData } from "@/lib/community-web";
 import { layoutWeb, VIEW, NODE_R, type PlacedNode } from "@/lib/community-web-layout";
 
-/**
- * ── ⚠⚠ THE LIVING WEB (`P2-J3-E591` WS-B) ─────────────────────────────────
- *
- * The viewer at the centre, their community around them. Three node states, and
- * ⚠⚠ THEY ARE DATA, NOT DECORATION — each is a different row in a different
- * table:
- *
- *   joined     photo inside a magenta halo   — they have a profile
- *   invited    hollow dashed ring, NO photo  — ⚠ an invite holds name + email
- *   reachable  faint dashed ghost, no fill   — a colleague's colleague
- *
- * ── ⚠⚠⚠ IT REBUILDS ON A DATA REFRESH, NOT ON A TIMER ─────────────────────
- *
- * ⚠ Scott asked for *"a flush and rebuild every minute"*, and the ruling that
- * shapes it is the next sentence: *"movement that means nothing is worse than
- * no movement — people stop looking at a page that fidgets."*
- *
- * ⚠⚠ SO THE INTERVAL DOES NOT REBUILD ANYTHING. It starts a FETCH. `cycle` —
- * the only input the layout takes besides the counts — is advanced in exactly
- * ONE place: after a response came back `ok` and parsed. ⚠⚠⚠ IF THE ENDPOINT
- * FAILS, NOTHING MOVES: no cycle, no re-layout, no animation, and the last good
- * picture stays on screen. ⚠ A web that kept drifting while the server was down
- * would be asserting a network it could no longer see.
- *
- * ⚠ `check:community-web` §8 holds this structurally — it fails if the cycle is
- * ever advanced straight from an interval callback.
- *
- * ── ⚠ REDUCED MOTION: THE REBUILD STILL HAPPENS ───────────────────────────
- *
- * ⚠⚠ IT SUPPRESSES THE TWEEN, NOT THE UPDATE. Somebody who asked for less
- * motion still wants current data — they just get it without the 2.6s glide.
- */
 export function CommunityWeb({ initial }: { initial: WebData }) {
   const [data, setData] = useState<WebData>(initial);
-  /*
-    ── ⚠⚠⚠ TWO CLOCKS, AND THAT IS THE POINT (`P2-A2-E600` WS-D) ────────────
-
-    ⚠ SCOTT: *"the Community/Grow network picture: from 60 seconds to 15,
-    keeping the moving dashes"* — AND rule 3, *"Only the drawing moves. The
-    numbers never change on a rebuild."*
-    ⚠⚠ THOSE TWO TOGETHER FORBID THE OBVIOUS CHANGE. The 60-second timer below
-    does not redraw — it **re-fetches `/api/community/web` and replaces the
-    counts**. ⚠⚠⚠ TURNING IT INTO A 15-SECOND TIMER WOULD HAVE QUADRUPLED A REAL
-    QUERY *AND* MOVED THE NUMBERS UNDER THE READER FOUR TIMES A MINUTE.
-    ⚠ So the REDRAW is the shared 15-second rebuild and the REFRESH stays on its
-    own 60-second clock. `drawCycle` moves the picture; `cycle` still moves when
-    real data arrives, exactly as before.
-  */
   const { cycle: drawCycle, secondsLeft } = useRebuild();
   const [cycle, setCycle] = useState(0);
   const [animate, setAnimate] = useState(false);
   const calm = useRef(false);
 
-  /* ⚠ Read once, and kept live — somebody can change the OS setting with the
-     page open, and a preference that only applies at mount is not honoured. */
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     calm.current = mq.matches;
@@ -70,35 +22,9 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  /*
-    ── ⚠⚠⚠ ACCEPTING A REQUEST MOVES THE WEB (`P2-A3-E596` WS-C item 2) ─────
-
-    ⚠ SCOTT: *"the moment a dotted ghost becomes a lit node is the most
-    satisfying thing this feature does, and right now nobody sees it."*
-
-    ⚠⚠ THE MECHANISM, MEASURED: `ConnectControls` ALREADY CALLS
-    `router.refresh()` after an accept (`ConnectControls.tsx:115`), so the
-    SERVER re-renders and hands this component a NEW `initial`. ⚠⚠⚠ AND
-    `useState(initial)` IGNORED IT — a `useState` initialiser runs once, so the
-    fresh prop was dropped on the floor and the picture waited up to 60 seconds
-    for the interval. That is why two counts on one screen disagreed: the card
-    list came from the refreshed server render and the web from a minute ago.
-
-    ⚠ SO THE FIX IS TO STOP IGNORING THE PROP, not to add a second fetch. A
-    bespoke event between the two components would be a second channel carrying
-    what React already delivers.
-    ⚠⚠ IT ADVANCES `cycle` AND ANIMATES, exactly as a successful poll does — the
-    ghost-to-node transition is the same transition, so there is one animation
-    path and not two.
-    ⚠ GUARDED BY IDENTITY: `initial` is a fresh object on every server render,
-    so this compares the DATA, not the reference. Without that guard an
-    unrelated re-render would re-animate the web for no reason.
-  */
   const lastInitial = useRef<string>("");
   useEffect(() => {
     const sig = JSON.stringify(initial);
-    /* ⚠ The first run records the server's own picture and moves nothing — it
-       is already on screen. */
     if (lastInitial.current === "") {
       lastInitial.current = sig;
       return;
@@ -113,13 +39,6 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
   useEffect(() => {
     let alive = true;
 
-    /*
-      ⚠⚠ THE ONLY PLACE `cycle` ADVANCES, AND IT IS BEHIND `res.ok` AND A PARSE.
-      ⚠ Read the guard order: a non-ok response returns BEFORE anything moves,
-      and a throw is caught and dropped on the floor deliberately — the next
-      tick will try again, and a console error every minute during an outage is
-      noise, not information.
-    */
     async function refresh() {
       try {
         const res = await fetch("/api/community/web", { cache: "no-store" });
@@ -130,7 +49,6 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         setAnimate(!calm.current);
         setCycle((c) => c + 1);
       } catch {
-        /* ⚠ Offline, aborted, or a 500. Hold the last good picture. */
       }
     }
 
@@ -145,39 +63,9 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
     joined: data.joined,
     invited: data.invited,
     reachable: data.reachable,
-    /*
-      ⚠⚠⚠ BOTH CLOCKS SEED THE LAYOUT, AND ONLY THE LAYOUT. `cycle` advances
-      when real data arrives; `drawCycle` every 15 seconds. `layoutWeb` takes
-      the seed and the THREE LISTS — the lists are untouched here, so a rebuild
-      re-arranges the same people and cannot change a count.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   cycle,
-    */
     cycle: cycle + drawCycle,
   });
 
-  /*
-    ── ⚠⚠⚠ THE LEGEND IS THE NETWORK. THE LINE BELOW IT IS THE PICTURE ───────
-
-    ⚠ SCOTT, 2026-09-22 (`P2-A3-E601` WS-A): *"The hero's three numerals become
-    the totals, and the picture's own line says how many of them it drew."*
-
-    ⚠⚠ THE DEFECT: these three numbers were the DRAWN, CAPPED subset, and they
-    were the only place the page stated a size. ⚠⚠⚠ SO THE LEGEND SILENTLY
-    UNDER-REPORTED EVERY NETWORK BIG ENOUGH TO HIT THE CAP — one number doing
-    two jobs, and losing the more important one exactly when it mattered most.
-    ⚠ IT WAS INVISIBLE BECAUSE NOBODY SEEDED IS CAPPED: for the gate persona
-    8/1/4 are both the drawn counts and the totals, so every reading agreed.
-
-    ⚠⚠ `overflow` IS THE REMAINDER PER KIND (`community-web.ts`), so the TOTAL
-    is drawn + overflow. ⚠ Computed here rather than sent as a fourth field:
-    the two facts must not be able to disagree, and a derived total cannot.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const nJ = data.joined.length;
-    //   const nI = data.invited.length;
-    //   const nR = data.reachable.length;
-  */
   const drawnJ = data.joined.length;
   const drawnI = data.invited.length;
   const drawnR = data.reachable.length;
@@ -185,11 +73,6 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
   const nI = drawnI + data.overflow.invited;
   const nR = drawnR + data.overflow.reachable;
 
-  /*
-    ⚠⚠ A PICTURE OF A NETWORK IS NOT A NETWORK TO A SCREEN READER (WS-B item 5).
-    ⚠ The counts go in the accessible name IN WORDS, so the same fact the eye
-    gets from the drawing is available without it.
-  */
   const label =
     nJ + nI + nR === 0
       ? "Your community: no colleagues yet."

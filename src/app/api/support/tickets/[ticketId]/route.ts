@@ -2,13 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { updateTicket, SupportError } from "@/lib/support";
 
-/**
- * PATCH /api/support/tickets/[ticketId] — triage (`P2-J1.1-E032` WS-4).
- *
- * ⚠ `canAdminister`, NOT `authenticated`. Status, priority, assignment and the
- * resolution are the ADMIN's half of the ticket; a reporter changes their own
- * ticket by replying to it, which is what the messages route is for.
- */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ ticketId: string }> }

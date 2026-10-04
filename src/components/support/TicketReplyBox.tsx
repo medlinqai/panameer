@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * The reporter's reply box (`P2-J1.1-E032` WS-4).
- *
- * ⚠ IT POSTS TO THE SAME ROUTE THE ADMIN USES. `author_side` is decided there by
- * CAPABILITY, never by this body — so this component cannot post as Panameer
- * even if someone edits the request.
- */
 export function TicketReplyBox({ ticketId }: { ticketId: string }) {
   const router = useRouter();
   const [body, setBody] = useState("");

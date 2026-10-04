@@ -8,21 +8,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * IDENTITY VERIFIED (WS-G).
- *
- * NOT the email-verification template. `verify-email.ts` confirms an address at
- * signup; this confirms a PERSON, after a document check. Two different things
- * at two different points in the relationship, which is why the brief insists
- * they stay separate templates.
- *
- * NO CTA. Nothing is being asked for — it is good news, delivered and done, and
- * a button here would be looking for something to sell.
- *
- * ⚠ NOT WIRED — there is an `IdentityVerification` model but no flow that
- * completes one. TODO(identity): send from wherever a verification is marked
- * approved, once that review exists.
- */
 export function identityVerifiedTemplate({
   firstName,
   logoUrl,

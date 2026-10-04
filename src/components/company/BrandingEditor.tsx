@@ -10,20 +10,6 @@ import {
   type ThemeTokens,
 } from "@/lib/themeRecipes";
 
-/**
- * The branding editor (E204 WS-B) — logo → colour → recipe → preview → save.
- *
- * THE PREVIEW IS COMPUTED BY THE SAME FUNCTION THAT RENDERS THE APP. Both this
- * component and the server resolver call `themeFromHue`, so what the admin sees
- * in the picker is not an approximation of the result — it IS the result. A
- * preview that merely resembles the outcome is how tenants end up surprised by
- * their own console.
- *
- * NOTHING HERE LETS SOMEONE BUILD A BAD THEME. There is no lightness slider and
- * no per-surface control: the recipe fixes every band, the only input is a hue,
- * and the accent's text colour is derived. The copy says so, because "you can't
- * pick anything unreadable" is a feature and reads as one only if stated.
- */
 export function BrandingEditor({
   companyName,
   logoUrl,
@@ -62,12 +48,6 @@ export function BrandingEditor({
       if (!r.ok) throw new Error(body?.error ?? "Could not read that image");
       const hues: string[] = body.hues ?? [];
       setCandidates(hues);
-      /*
-        The first candidate is SELECTED, not merely offered. The whole promise
-        is "we found your colour" — making the admin click it again to confirm
-        what the page just told them turns a result into a chore. Every other
-        candidate stays one click away, and the hex field is always editable.
-      */
       if (hues[0]) setHue(hues[0]);
       if (hues.length === 0) {
         setError(
@@ -187,12 +167,6 @@ export function BrandingEditor({
             <input
               value={hue}
               onChange={(e) => {
-                /*
-                  Accept partial input while typing — "#d1" is on the way to a
-                  valid hex, and rejecting it keystroke-by-keystroke makes the
-                  field impossible to edit. Validity is enforced on Save and
-                  again server-side; this only bounds the length.
-                */
                 setSaved(false);
                 setHue(e.target.value.slice(0, 7));
               }}

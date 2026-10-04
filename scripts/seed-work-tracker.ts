@@ -1,20 +1,3 @@
-/**
- * ⚠⚠⚠ SEED THE WORK TRACKER'S FIRST STATUSES (`P2-ALL-E752`).
- *
- *   npm run seed:work-tracker            — fill gaps only, never overwrite
- *   npm run seed:work-tracker -- --force — overwrite every seeded id
- *   npm run seed:work-tracker -- --dry   — report, write nothing
- *
- * ⚠⚠ **THE DEFAULT IS UPSERT-WHERE-ABSENT, AND THAT IS THE BRIEF'S REQUIREMENT,
- * NOT A CONVENIENCE.** Scott merges his own updates into the seed file later, so
- * a re-run must not undo what an admin changed in between. ⚠ A row that already
- * exists is LEFT ALONE and counted as `kept`, and the report says so — a seed
- * that silently reverted an edit would be `E517`'s rule broken again: a write
- * that destroys data it did not create.
- *
- * ⚠ `--force` exists so the seed file can be made authoritative deliberately,
- * once, with the decision visible in the command rather than in the code.
- */
 import { readFileSync } from "fs";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
@@ -54,10 +37,6 @@ async function main() {
   let created = 0;
   let updated = 0;
   let kept = 0;
-  /* ⚠⚠ UNKNOWN IDS ARE REPORTED, NEVER WRITTEN. The tables have no foreign keys,
-     so a typo in the seed file would otherwise sit in the database forever
-     pointing at nothing — and the admin page, which iterates the CATALOG, would
-     never show it. An orphan you cannot see is worse than a refusal. */
   const unknown: string[] = [];
 
   for (const [taskId, v] of Object.entries(seed.tasks ?? {})) {

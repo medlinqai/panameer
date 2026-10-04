@@ -17,61 +17,23 @@ import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Specializations (WS6 / E017) — REAL data.
- *
- * The brief asks to "confirm flat list vs catalog hierarchy". Confirmed as a
- * hierarchy, because the data already is one: `Specialization.kind` groups
- * every row into Products & Platforms / Processes & Methodologies / Industries,
- * and getSpecializations has returned them grouped since brief_R. A flat list
- * would throw away a distinction the schema already keeps.
- *
- * ── ⚠⚠ NINE PLACEHOLDER TILES AND AN EMPTY GRID ARE GONE (`P1-A1.5-E470`) ───
- *
- * ⚠ MEASURED, top to bottom, before this change: the live TileRow, the live
- * catalog, the dead edit bar, then **a second TileRow of four `TBD` tiles**, an
- * **empty `Listing`** reading *"No specialization records yet"*, and a
- * **`VolumeFooter` of five more `TBD`s`** — nine placeholder tiles and an empty
- * grid sitting UNDER a working catalog, on a page Scott may show buyers.
- *
- * ⚠ ALL THREE CAME FROM ONE LINE: `<SpecPage slug="specializations" />`.
- * ⚠⚠ `SpecPage.tsx` AND `admin-pages.ts` ARE UNTOUCHED. They are shared by EIGHT
- * pages — payments, work-orders, settlements, contracts, work-packages,
- * work-requests, industries, specializations — and the other six are legitimately
- * un-built stubs. ⚠ THIS PAGE STOPS CALLING IT. That is the whole change, and
- * `admin-pages.ts` keeps its `specializations` entry: it is the shape the
- * moderation queue is built to in Part 3.
- */
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{ kind?: string; claimed?: string; view?: string }>;
 }) {
-  /*
-    ⚠⚠ THE ADMIN TREE ASKS FOR RETIRED ROWS EXPLICITLY (`P1-A1.5-E481`).
-    `lib/catalog.ts` defaults every read to `status: ACTIVE`, so a picker that
-    forgets to think about status gets the SAFE answer. ⚠ THIS PAGE IS THE ONE
-    SURFACE THAT MUST SEE RETIRED ROWS — an admin cannot bring a row back if the
-    page it lives on hides it. They render MARKED, never silently.
-  */
   const sp = await searchParams;
 
   const queue = await suggestionQueue();
   const showQueue = sp.view === "suggested";
 
   const [groups, providerCounts, kindClaims] = await Promise.all([
-    /* ⚠⚠ `E541` — see `admin/skill-catalog`. The admin console keeps sight of
-       every catalog; only the OFFER-side reads are narrowed. */
     getSpecializations({ includeRetired: true, includeAllCatalogs: true }),
     getSpecializationProviderCounts(),
     getSpecializationClaims(),
   ]);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
 
-  /* ⚠ WHITELIST AGAINST THE DATA, not against a literal list — `getSpecializations`
-     already groups by kind, so an unknown `?kind=` simply finds nothing and falls
-     back to the tree rather than rendering an empty listing that looks broken.
-     ⚠⚠ THIS IS WHAT WS-10 REPOINTS THE INDUSTRIES RAIL ITEM AT. */
   const filtered = sp.kind ? groups.find((g) => g.kind === sp.kind) ?? null : null;
   const claimedKind = sp.claimed ? groups.find((g) => g.kind === sp.claimed) ?? null : null;
 
@@ -174,8 +136,6 @@ export default async function Page({
             label: "Specializations",
             value: total,
             tone: "neutral",
-            /* ⚠ TILE 1 CLEARS THE FILTER (`E469`) — no `?kind=`, so it is the
-               way back to the full tree from any drill-in. */
             href: "/admin/specializations",
             icon: <Tags className="h-[19px] w-[19px]" aria-hidden />,
           },

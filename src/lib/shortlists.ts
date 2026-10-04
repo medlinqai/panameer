@@ -2,25 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠⚠ ONE TABLE FOR SUGGESTED AND SHORTLISTED (`P2-A8-E703`, ruling 94e) ───
- *
- * ⚠⚠ **SUGGESTIONS ARE DERIVED, NOT AUTHORED.** So a `SUGGESTED` row is a snapshot and
- * may be replaced wholesale when the search re-runs. ⚠⚠⚠ **A `SHORTLISTED` OR `ADDED`
- * ROW IS THE BUYER'S AND IS NEVER OVERWRITTEN BY A RE-RUN.** That asymmetry is the only
- * reason `source` exists, and it is what this module enforces.
- *
- * ── ⚠⚠⚠ AND THE RULE THAT MUST NOT BREAK (ruling 93b) ───────────────────────
- *
- * ⚠ Scott, 2026-09-28: *"if the requester gets a proposal and does not interview, they
- * will not shortlist…they will add them to the WR."*
- * ⚠⚠ **THE SHORTLIST IS OPTIONAL. NO PATH TO A WORK ORDER MAY REQUIRE A ROW HERE, AND NO
- * GATE MAY ASSERT ONE.** ⚠⚠⚠ **NOTHING IN THIS MODULE IS ON THE ORDER PATH — it is
- * called by the search and by the buyer's own screens, never by selection or checkout.**
- * `check:shortlists` asserts that as an absence.
- */
-
-/** The buyer's own person id, from the session. ⚠ Never from input (rule 5). */
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -30,7 +11,6 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-/** ⚠⚠ The work request must be the caller's own — owner-scoped from the session. */
 async function assertOwnsRequest(workRequestId: string, personId: string) {
   const wr = await prisma.workRequest.findUnique({
     where: { id: workRequestId },
@@ -43,12 +23,6 @@ async function assertOwnsRequest(workRequestId: string, personId: string) {
   return wr;
 }
 
-/**
- * The shortlist for a request, created on first use.
- *
- * ⚠ One per work request. ⚠⚠ `work_request_line_id` stays null here: a shortlist per
- * LINE is a later refinement and the column already allows it, so nothing is invented.
- */
 async function shortlistFor(workRequestId: string, personId: string) {
   const existing = await prisma.shortlist.findFirst({
     where: { work_request_id: workRequestId },

@@ -5,12 +5,6 @@ import { acceptInviteForUser } from "@/lib/coordinator";
 
 const schema = z.object({ token: z.string().min(1) });
 
-/**
- * POST /api/invite/accept — an EXISTING logged-in provider accepts an invite.
- * Requires a session; the lib enforces that the session user's email matches
- * the invite (no reassigning someone else's provider) and that they have a
- * provider profile. New users accept via provider onboarding instead.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {

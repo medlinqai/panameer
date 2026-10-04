@@ -1,39 +1,11 @@
-/**
- * ── ⚠⚠⚠ THE VALIDATED BADGE (`P2-A1.1-E748`, lane 3 WS-C) ──────────────────
- *
- * ⚠ **SCOTT, 2026-10-01: *"a small ✓ Validated badge beside each validated
- * employer and project, on the owner view, the visitor view, and the masked
- * public preview (the badge shows; who validated doesn't)."***
- *
- * ⚠⚠ **"VALIDATED", NEVER "VERIFIED"** — locked in `decisions-01` and restated
- * at the top of the brief. The two words are different promises: Panameer
- * *verifies* an identity itself; a *validation* is somebody else's statement
- * about work, and the badge must not borrow the authority of the other one.
- *
- * ⚠⚠⚠ **IT NAMES NOBODY.** The tooltip says *"Validated by a contact at
- * <domain>"* or *"by a Panameer colleague"* — never a person. The contact
- * answered a favour in one click; publishing their name would be a cost they
- * never agreed to, and it is the thing that would stop the next one answering.
- *
- * ⚠ **SQUARE, QUIET, INK WITH THE ACCENT TICK** — the brief: *"no pill, no
- * colour block."* ⚠⚠ It is a FACT, not a link, so it is ink and not magenta
- * (`E433`), and it is not a button.
- */
 export function ValidatedBadge({
   validatedAt,
   validatedBy,
 }: {
   /** ISO date, or null when the row carries no answer date. */
   validatedAt: string | null;
-  /** A DOMAIN, the literal `"colleague"`, or null. ⚠ Never a person's name. */
   validatedBy: string | null;
 }) {
-  /*
-    ⚠⚠ THE TOOLTIP DEGRADES RATHER THAN INVENTING. A row with no date and no
-    source still gets the badge — the validation happened — and simply says less.
-    ⚠⚠⚠ A fabricated date beside a real tick would be the worse failure: it
-    would make the one trustworthy thing on the card untrustworthy.
-  */
   const who =
     validatedBy === "colleague"
       ? "by a Panameer colleague"

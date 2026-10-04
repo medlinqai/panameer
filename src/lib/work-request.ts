@@ -9,16 +9,6 @@ import {
   type PostRequirementKey,
 } from "@/lib/work-request-identity";
 
-/**
- * Work Requests (brief_L) — a Service Buyer creates, saves-as-you-go, and posts.
- *
- * Access: every DRAFT read/write is PAccount-scoped via `scopedToPAccount`, so a
- * buyer only ever touches their own org's requests. There is no by-id targeting
- * without the fence — a request id from client input is always ANDed with the
- * viewer's `p_account_id`, so a cross-org id simply resolves to nothing (fail
- * closed). POSTED is the finish line; no provider-facing read here.
- */
-
 const EXPERIENCE_LEVELS = ["BEGINNER", "MID_CAREER", "EXPERT"] as const;
 const BUDGET_TYPES = ["FIXED", "HOURLY"] as const;
 const WORKSITES = ["REMOTE", "ONSITE", "HYBRID"] as const;
@@ -29,17 +19,6 @@ const DURATIONS = [
   "GT_6_MONTHS",
 ] as const;
 
-/*
-  THE WIZARD'S SECTIONS (brief_create_work_request_v1).
-
-  Seven steps, but not seven sections: `role` and `domain` are one save each
-  because each is a single answer that narrows the next, while `dates`,
-  `location`, `budget` and `description` map one-to-one onto the deck's steps.
-  `skills` keeps its name and its guard from the first wizard.
-
-  `scope` is retained and still writes title/experience/duration — the first
-  wizard's flow and any DRAFT it left behind still resolve through it.
-*/
 export const WORK_REQUEST_SECTIONS = [
   "role",
   "domain",
@@ -70,9 +49,6 @@ export class WorkRequestError extends Error {
       | "INVALID"
       | "POSTED"
       | "INCOMPLETE"
-      /* ⚠ `P1-J4-E025`. Distinct from INCOMPLETE because the fix lives on a
-         DIFFERENT page — the profile or the company, not the wizard — and the
-         UI has to be able to tell those two refusals apart to link correctly. */
       | "IDENTITY_REQUIRED",
     /** Populated for IDENTITY_REQUIRED: the named fields, with their links. */
     public fields?: MissingIdentityField[]
@@ -83,13 +59,6 @@ export class WorkRequestError extends Error {
 }
 
 /** Resolve the viewer's buyer identity + tenancy fence. Fails closed. */
-/**
- * ⚠ EXPORTED FOR `lib/work-request-lines.ts` (`P1-J4-E392`), AND FOR NOTHING
- * ELSE. The lines domain needs the IDENTICAL owner scope this file uses — the
- * buyer's Person id and their P-Account, both resolved FROM THE SESSION and
- * never from client input. A second copy of this six-line function is how a
- * write path quietly starts scoping to the wrong owner, so there is one.
- */
 export async function resolveBuyer(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -138,18 +107,11 @@ function serialize(wr: Awaited<ReturnType<typeof loadOwned>>) {
     locationCountry: wr.location_country,
     regionId: wr.region_id,
     duration: wr.duration,
-    /* ⚠ `P1-J4-E025` — the buyer's own view of their publishing choice. This is
-       the OWNER's read, so the real name is never redacted here; the redaction
-       lives in `work-feed.ts`, which is what a provider sees. */
     companyVisibility: wr.company_visibility,
     companyCodeName: wr.company_code_name,
   };
 }
 
-/**
- * Load a request the viewer owns (PAccount-scoped). Throws NOT_FOUND if not.
- * ⚠ EXPORTED FOR `lib/work-request-lines.ts` — see `resolveBuyer` above.
- */
 export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) {
   const wr = await prisma.workRequest.findFirst({
     where: scopedToPAccount(scopedViewer(viewer, pAccountId), { id }),
@@ -161,18 +123,6 @@ export async function loadOwned(viewer: Viewer, id: string, pAccountId: string) 
   if (!wr) throw new WorkRequestError("Work request not found", "NOT_FOUND");
   return wr;
 }
-
-/*
-  TODO(scheduler): the draft reminder has no trigger.
-
-  `workRequestDraftReminderTemplate` is built and unit-tested, and the query it
-  needs is the one below with a date filter — DRAFTs whose `updated_at` is older
-  than N hours, whose buyer has an email, and which have not been reminded yet
-  (that last part needs a `reminded_at` column, which is why this is a TODO and
-  not a five-line function). What is missing is something to run it: there is no
-  cron, queue or scheduled task anywhere in this repo. Adding one is
-  infrastructure, not a template.
-*/
 
 /** The buyer's most recent DRAFT (for resume), or null. */
 export async function getCurrentDraft(viewer: Viewer) {
@@ -201,22 +151,6 @@ export async function createDraft(
   viewer: Viewer,
   section?: WorkRequestSection,
   data?: SectionData,
-  /*
-    ── ⚠⚠⚠ SOLE-SOURCING IS A CREATION FACT, SET HERE (`P2-A8-E719`) ────────────
-
-    ⚠ **THE HIRE BUTTON ON A PROVIDER'S PROFILE CREATES A REQUEST THAT ALREADY NAMES ITS
-    PROVIDER**, so `sole_sourced` is true from the first row rather than patched afterwards.
-    ⚠⚠ **IT IS AN ARGUMENT TO THE ONE CREATOR, NOT A SECOND CREATOR.** `E585`, and the brief
-    says it outright: *"using the existing writers, no second WR creator."* A `hire.ts` that
-    called `prisma.workRequest.create` itself would be the second place that knows a draft
-    starts `INVITE_ONLY`, and the two would drift the first time that default changed.
-    ⚠ **DEFAULTS TO `false`, WHICH IS THE COLUMN'S OWN DEFAULT AND EVERY EXISTING CALLER'S
-    BEHAVIOUR** — the wizard at `/create-work` is untouched.
-    ⚠⚠⚠ **AND IT IS STATED RATHER THAN INFERRED**, which is the whole reason the column
-    exists: its docblock records that before it, sole-sourcing was *"only inferable from a
-    status that got skipped"*, and ruling `90b` — a false value in a true column is worse than
-    a null — is why there is no backfill.
-  */
   opts?: { soleSourced?: boolean }
 ) {
   const { personId, pAccountId } = await resolveBuyer(viewer);
@@ -226,18 +160,6 @@ export async function createDraft(
       p_account_id: pAccountId,
       status: "DRAFT",
       sole_sourced: opts?.soleSourced ?? false,
-      /*
-        ── ⚠⚠⚠ WHO MAY PROPOSE — RULING 14 (`P2-A8-E621` WS-A) ──────────────
-        ⚠ Scott: **"The buyer picks, per request."** They pick when they POST;
-        a DRAFT is visible to nobody, so the value has no effect yet.
-        ⚠⚠ IT STARTS `INVITE_ONLY` BECAUSE THAT IS THE SAFE FAILURE: if the
-        switch is never touched, the request reaches nobody it was not sent to.
-        The opposite default would publish a half-written request to every
-        provider on the platform the moment it posted.
-        ⚠⚠⚠ THE COLUMN HAS NO `@default` ON PURPOSE — that would mean "nobody
-        decided" (`E612`'s refusal). Setting it HERE is a decision this creator
-        makes and states, which is a different thing.
-      */
       proposal_access: "INVITE_ONLY",
     },
   });
@@ -261,13 +183,6 @@ export async function saveSection(
   }
 
   switch (section) {
-    /*
-      STEP 1 — THE ROLE, and it CLEARS what it narrows. Changing the role makes
-      the previously chosen domain and skills wrong by definition (a skill
-      belongs to exactly one role), and silently keeping them is how a request
-      gets posted with a domain from the answer before last. Back preserves
-      picks; CHANGING an answer does not.
-    */
     case "role": {
       const roleTypeId: string | null = data.roleTypeId ?? null;
       if (!roleTypeId) throw new WorkRequestError("Pick a role", "INVALID");
@@ -297,24 +212,6 @@ export async function saveSection(
         throw new WorkRequestError("Pick a role first", "INVALID");
       }
 
-      /*
-        "ANY / NOT SURE" IS A REAL ANSWER on the two vendor roles (WS-5).
-
-        For an Application- or Technology-Specific request the domain IS the
-        software suite, and a buyer is frequently the wrong person to know it:
-        they want a payables specialist and their own finance team runs
-        whatever it runs. Forcing a pick there produces a made-up answer that
-        then silently FILTERS the results — the worst of both, because the buyer
-        cannot see what the wrong guess excluded.
-
-        A null pillar means "any suite". The skills step then offers capability
-        domains instead of one suite's modules, and matching resolves those to
-        modules through the Bridge. Suite becomes a booster rather than a gate.
-
-        The agnostic roles keep the requirement: Operations- and
-        Project-Specific domains are processes, not vendors, and "any process"
-        is not a coherent request.
-      */
       const isVendorRole = await prisma.roleType.findFirst({
         where: {
           id: wr.role_type_id,
@@ -335,12 +232,6 @@ export async function saveSection(
         ]);
         break;
       }
-      /*
-        VALIDATED AGAINST THE CASCADE, not merely against the Pillar table. A
-        domain that exists but holds no skills for this role is not a valid
-        answer to "what domain, given that role" — and it is exactly what a
-        stale client would post after the role changed under it.
-      */
       const inRole = await prisma.skill.findFirst({
         where: { role_type_id: wr.role_type_id, pillar_id: pillarId },
         select: { id: true },
@@ -359,14 +250,6 @@ export async function saveSection(
       break;
     }
 
-    /*
-      SPECIALIZATIONS — optional, and "none" is a real answer.
-
-      An empty list CLEARS the set rather than failing validation: the step is
-      skippable by design, and a requester who looked and decided none applied
-      has answered. Distinguishing that from "never visited" is not worth a
-      column here — the wizard's own progress does it.
-    */
     case "specializations": {
       const ids: string[] = Array.isArray(data.specializationIds)
         ? data.specializationIds
@@ -668,13 +551,9 @@ export async function missingIdentityForPerson(buyerPersonId: string): Promise<P
     select: {
       first_name: true,
       last_name: true,
-      /* ⚠ Already selected before `E595` — the buyer's identity gate has always
-         read `Person.title`. That is half of why the collapse landed here. */
       title: true,
       photo_url: true,
       company: { select: { name: true, country: true } },
-      /* ⚠ THE SAME SHAPE `lib/onboarding.ts:2360` USES FOR PROVIDER PUBLISH —
-         same status, same reason: a work order is between companies. */
       companyMemberships: {
         where: { status: "APPROVED" as const },
         select: { id: true },

@@ -1,82 +1,7 @@
-/*
-  ── ⚠⚠⚠ EVERY CATEGORY SHIPS ON — IN-APP AND EMAIL (`P2-A3-E620`, ruling 34b) ─
-
-  ⚠ SCOTT, 2026-09-24, shown that 8 of 17 categories shipped email-OFF: **"All
-  on, exactly as ruled."** ⚠⚠ Ruling 13 stands unchanged — in-app AND email,
-  every category, each independently toggleable on the settings page.
-
-  ⚠⚠⚠ I TOLD SCOTT **SEVEN** WHEN I ASKED HIM. IT IS **EIGHT**. Recorded here
-  because he ruled on my number: the eighth is `product.updates`, and it is the
-  one that matters most, because it was the ONLY category shipping with **in-app
-  off as well** — it is product news, the closest thing here to marketing, and
-  the place an unexpected "on" is least welcome. ⚠ Flipped per the ruling and
-  reported, not quietly left out to make my own count true.
-
-  ⚠⚠ RAISED AND OVERRULED: volume on a sending domain verified COLD on
-  2026-09-04. Scott's instruction stands — **warm the domain before volume and
-  report bounce and complaint rates from `SentEmail`.**
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the eight as they shipped:
-  //   buyer.proposals.received   defaults: { inApp: true,  email: false, sms: false },
-  //   buyer.provider.responded   defaults: { inApp: true,  email: false, sms: false },
-  //   buyer.work_order.status    defaults: { inApp: true,  email: false, sms: false },
-  //   buyer.settlement.approval  defaults: { inApp: true,  email: false, sms: false },
-  //   buyer.timesheet.approval   defaults: { inApp: true,  email: false, sms: false },
-  //   learn.progress             defaults: { inApp: true,  email: false, sms: false },
-  //   community.activity         defaults: { inApp: true,  email: false, sms: false },
-  //   product.updates            defaults: { inApp: false, email: false, sms: false },
-*/
-/**
- * What Panameer can tell you about (J2.4 WS-H / E020).
- *
- * MAPPED TO PANAMEER'S EVENT MODEL, not to a competitor's notification list.
- * The three tabs the brief asks for — Messages, Email updates, Tax settings —
- * are the GROUPS below; the categories inside them are things this product
- * actually does or is about to: a buyer opening a conversation, a work order
- * moving, a milestone settling, a certification issued by Learn.
- *
- * `event_behavior.md` remains the authoritative event catalog and a full
- * rewrite of it is explicitly out of scope here. This is the UI's view of it:
- * enough categories to configure meaningfully, each one traceable to something
- * real, and adding to it later is a data change rather than a migration —
- * preferences are rows keyed by category, and an absent row means the defaults
- * declared here.
- */
 export type NotificationGroup = "messages" | "email" | "tax";
 
-/**
- * ⚠⚠ WHICH SIDE OF THE MARKETPLACE A CATEGORY BELONGS TO (`P1-ALL`, 2026-09-01).
- *
- * Filed as blocking in `event_behavior.md`: the model had NO audience concept, so
- * `NotificationSettings` rendered every category to everyone. A buyer was shown
- * *"Panameer can't pay you until a W-9 or W-8 is on file"*, and a seller was shown
- * *"A settlement request needs your approval"*.
- *
- * ⚠ A TS FIELD, NOT A MIGRATION. The categories live in this file and
- * `NotificationPreference.category` is a plain string, so nothing in the database
- * changes.
- * ⚠ `both` IS NOT A COP-OUT — messages, Learn and product news genuinely reach
- * both sides. Only use it where that is true.
- */
 export type NotificationAudience = "seller" | "buyer" | "both";
 
-/**
- * ── ⚠⚠⚠ WHICH FILTER A CATEGORY ANSWERS TO (`P2-A3-E620` WS-C) ───────────
- *
- * ⚠ `/notifications` offers **All · Unread · Work · Community**, and those last
- * two are a partition of the SAME rows. ⚠⚠ EVERY CATEGORY MUST HAVE A LANE, or
- * its rows would be reachable under `All` and under nothing else — a filter set
- * with a hole in it, where the rows you cannot find are the ones nobody knows
- * are missing.
- * ⚠⚠⚠ `check:notify-prefs` ASSERTS THE PARTITION IS TOTAL, so adding a
- * seventeenth category without choosing a lane fails the build rather than
- * quietly hiding it.
- *
- * ⚠ A TS FIELD, NOT A MIGRATION — the same call `audience` made above, for the
- * same reason: `NotificationPreference.category` is a plain string and nothing
- * in the database changes.
- * ⚠⚠ THE SPLIT IS THE MARKETPLACE vs THE PEOPLE: money, orders and tax are
- * `work`; messages, the profile, Learn and the community are `community`.
- */
 export type NotificationLane = "work" | "community";
 
 export type NotificationCategory = {
@@ -150,63 +75,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "Something you owe a buyer is due, or a submitted milestone was approved.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ── ⚠⚠ THE BUYING SIDE (`P1-ALL-E032`, 2026-08-30) ──────────────────────────
-
-    Everything above this block is written from the SELLER's point of view —
-    "New message from a buyer", "A work request matches your profile", "Your
-    profile went live". There was no buyer-facing category anywhere: nothing said
-    a provider had responded to your work request, that proposals were waiting,
-    or that a settlement needed your approval. The catalog covered one side of a
-    two-sided marketplace.
-
-    ── ⚠⚠ WHERE THESE NAMES CAME FROM, BECAUSE THE BRIEF'S SOURCE DOES NOT EXIST
-
-    `E032` said to derive the events from `work_request_to_settlement_flow.md`
-    and called it *"the authoritative lifecycle"*. ⚠ THAT FILE DOES NOT EXIST
-    anywhere in the workspace. And `event_behavior.md` — which the docblock at
-    the top of THIS file calls *"the authoritative event catalog"* — is a
-    SKELETON: its own status line says so and its event table reads
-    *"none defined yet"*.
-
-    ⚠ SO THESE ARE DERIVED FROM `WORK_STEPS` in `lib/work-steps.ts`, which is the
-    only authoritative buyer lifecycle that actually exists in the codebase —
-    Scott's own five step names, asserted by `e2e §45` and governed by his
-    3-4-word rule (`P1-J0-E286`):
-
-        1 Create Work Request  2 Accept Proposal  3 Release Work Order
-        4 Approve Settlement Request              5 Pay Panameer
-
-    Steps 1-4 map to the five categories below. ⚠⚠ STEP 5 HAS NO CATEGORY AND
-    THAT IS DELIBERATE — see the note after this block.
-
-    ⚠⚠ THE LABELS ARE CC'S AND ARE AWAITING SCOTT'S APPROVAL. `E032` says *"the
-    names are Scott's to approve"*. They are wired so the settings page can be
-    walked, and renaming any of them is a one-line change in this file with no
-    migration — an absent preference row means the defaults declared here, so no
-    backfill is needed either way.
-
-    ── ⚠ `email: false` ON EVERY ONE, ON PURPOSE ───────────────────────────────
-
-    Every seller category above defaults `email: true`, and EMAIL CANNOT SEND —
-    `RESEND_API_KEY` is still commented out. The settings page is honest about
-    SMS (*"SMS is recorded but not yet sending"*) and silent about email, so the
-    existing rows quietly promise a channel that will not fire. ⚠ THE NEW ROWS DO
-    NOT REPEAT THAT: they default to in-app only, which is the only channel that
-    actually works today. The inconsistency with the seller rows above is
-    REPORTED, not silently fixed — their defaults are Scott's to change.
-
-    ── ⚠⚠ AND THESE RENDER TO EVERYONE, WHICH IS A PRE-EXISTING GAP ────────────
-
-    `NotificationCategory` HAS NO AUDIENCE FIELD and `NotificationSettings.tsx`
-    renders `categoriesFor(tab)` with no filter, so a seller will now see "A
-    settlement request needs your approval". ⚠ THAT ASYMMETRY ALREADY EXISTED IN
-    THE OTHER DIRECTION — a buyer today sees `tax.form_required` telling them
-    *"Panameer can't pay you until a W-9 or W-8 is on file"*. These rows make the
-    existing gap symmetric rather than creating it. The fix is an `audience`
-    field plus a filter, which needs the viewer's side plumbed into that
-    component. REPORTED, NOT BUILT — it is a bigger change than this brief.
-  */
   {
     key: "buyer.proposals.received",
     lane: "work",
@@ -252,47 +120,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "Hours were submitted against a work order you own.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ── ⚠⚠⚠ THE SHOP OFFER — TWO CATEGORIES, NOT ONE (`P2-A6-E707`, `105d`/`106e`)
-
-    ⚠⚠ **SCOTT RULED THE THREE EVENTS AND THEIR DEFAULTS ON 2026-09-29: BELL ALWAYS,
-    EMAIL ON.** ⚠ `106e` corrects the MECHANISM and not the content: *"`105d`'s table
-    names CATEGORIES. THE WORK NEEDS EVENTS."* So his three names are EVENT keys in
-    `notification-events.ts`, and these two rows are the categories they map to.
-
-    ── ⚠⚠⚠ WHY TWO, AND IT IS THE `audience` FIELD THAT DECIDES IT ─────────────
-
-    ⚠ The three events split **one to the SELLER** (`shop.offer_received`) and **two to
-    the BUYER** (`shop.offer_accepted`, `shop.offer_denied`). ⚠⚠ `audience` is a single
-    value per category, so **no one category can carry both without becoming `"both"`** —
-    and `"both"` would show *"Offers on your service products"* to every buyer who has
-    never published one.
-    ⚠⚠⚠ **THAT IS THE EXACT DEFECT `E689(q)` MEASURED**, and the precedent is already in
-    this file twice: `work_order.status` / `buyer.work_order.status` and
-    `profile.visibility`, which Scott REFUSED to widen to `"both"` on 2026-09-27 —
-    *"give it its OWN category."* ⚠ **A CATEGORY IS A PROMISE ABOUT WHAT IS INSIDE IT.**
-
-    ── ⚠⚠ THE KEYS ARE MINE AND ARE FLAGGED, WHICH IS THE HOUSE RULE ──────────
-
-    ⚠ **CATEGORY NAMES HAVE BEEN SCOTT'S TO APPROVE SINCE `P1-ALL-E032`** and `E382`
-    repeats it. ⚠⚠ Scott named the EVENTS; he did not name these two. Renaming either is
-    **one line here plus one `category:` value per event** — no migration, because
-    `NotificationPreference.category` is a plain string and an absent row means the
-    defaults declared here. ⚠ Same treatment `community.activity` got, for the same
-    reason. **`buyer.` prefixes the buying side, matching the five rows above.**
-
-    ── ⚠ `email: true` ON BOTH, AND IT IS NOT A CHOICE I MADE ──────────────────
-
-    ⚠⚠ **RULING 34b: EVERY CATEGORY SHIPS IN-APP AND EMAIL ON**, and
-    `check:notify-prefs` fails the build on `email: false` — it has already overruled one
-    attempt. ⚠ `E382` is not breached: these are NEW rows taking the same default every
-    other category has, so **nobody's recorded intent is rewritten.**
-    ⚠⚠⚠ **AND WHAT A MEMBER ACTUALLY RECEIVES IS GOVERNED BY THE ALLOWLIST, NOT BY THIS
-    DEFAULT** — `NOTIFICATION_EMAIL_EVENTS` holds only `account.finish_later`, so neither
-    of these sends mail today. **`lane: "work"` — an offer is the marketplace, not the
-    people;** `check:notify-prefs` asserts the partition is total, so neither could have
-    shipped laneless.
-  */
   {
     key: "service_product.offers",
     lane: "work",
@@ -311,79 +138,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "A provider accepted or declined an offer you made on a service product.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ── ⚠⚠⚠ SUPPORT — `P2-A5-E656`, ruling 82a ────────────────────────────────
-
-    ⚠⚠ **IT IS NOT `locked`, AND THAT IS RULING 13 APPLIED RATHER THAN ASSUMED.**
-    Ruling 80 and 82: ruling 13 governs a notification to a PERSON about THEIR
-    OWN AFFAIRS, so **a member muting their own ticket updates is their
-    business.** ⚠⚠⚠ The ADMIN side of the same ticket is deliberately NOT here —
-    admins get a QUEUE and the `Tickets Waiting on Us` count on `/admin`
-    (`E654`), because *"would it be a defect if the recipient turned this off?"*
-    is **yes** for the role and **no** for the reporter. One ticket, two
-    recipients, two shapes, and only one of them is a notification.
-
-    ⚠ **`group: "messages"` — CHECKED AGAINST THE BLURB, NOT ASSUMED.** That
-    group reads *"People trying to reach you about work."* ⚠⚠ The block below
-    this one is the precedent for **stopping rather than stretching a group**,
-    so this one was tested the same way: **a support reply IS a person reaching
-    out to you**, which is the part that block found missing for an invoice
-    (*"an invoice is not a person reaching out"*). ⚠ The strain is the words
-    *"about work"* — a ticket can be about anything — **and that is a narrower
-    stretch than inventing a fourth group for a single category.** Recorded, not
-    hidden.
-
-    ⚠⚠ **`lane: "community"` — the split is the MARKETPLACE vs THE PEOPLE.**
-    Money, orders and tax are `work`; this is a conversation, so it files with
-    messages and the profile. ⚠ `check:notify-prefs` asserts the partition is
-    total, so this could not have been left laneless.
-
-    ── ⚠⚠⚠ `email: true` — I SHIPPED `false` AND THE GATE WAS RIGHT ─────────
-
-    ⚠⚠ **RULING 34b ALREADY DECIDED THIS AND I DID NOT KNOW IT.** I chose
-    `email: false` on the reasoning that `MAIL_CAPTURE` is OFF and `EMAIL_FROM`
-    is a live verified sender, so a new category defaulting to email begins
-    **real outbound mail to real reporters the first time anybody triages** — on
-    the one database that also serves production. ⚠ `check:notify-prefs` failed
-    the build in three seconds: *"every category ships in-app AND email ON
-    (ruling 34b) — 8 shipped off and Scott ruled all of them on."*
-    ⚠⚠⚠ **THAT IS `check:cert-skills`' CASE, NOT `check:rollup`'s — the gate
-    holds a STANDING PRODUCT RULE and the build loses.** The ruling did not
-    move; I was simply unaware of it, and a default I picked from first
-    principles does not outrank a decision Scott already made.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   defaults: { inApp: true, email: false, sms: false },
-
-    ⚠⚠ **THE CONCERN IS REPORTED RATHER THAN ENACTED, WHICH IS THE WHOLE POINT
-    OF RULE 13:** silently obeying the ruling and silently overriding it are the
-    same failure.
-
-    ── ⚠⚠⚠ AND THEN THE CONCERN ITSELF WAS MEASURED AND WAS FALSE ───────────
-
-    ⚠⚠⚠ **`notify()` CANNOT SEND EMAIL. `email: true` SENDS NOTHING.** It
-    imports `prisma`, `emailConfigured`, `findCategory` and the registry — **no
-    sender** — and its own comment says *"EMAIL AND SMS RECORD INTENT AND DO NOT
-    SEND."* ⚠ No path turns a `Notification` row into an email: the digest is
-    unbuilt (no `vercel.json`, no scheduler, no `last_digest_sent_at`), and the
-    one route that both reads notifications and mails (`finish-later`) reads a
-    row only as a DEDUPE CHECK and sends by hand.
-    ⚠⚠ **I RAISED THE ALARM WITHOUT READING THE FUNCTION THAT WOULD HAVE TO DO
-    THE SENDING** — reasoning from `MAIL_CAPTURE` being off and `EMAIL_FROM`
-    being live straight to *"mail goes out"*. **`53e`'s lesson on a new axis:
-    search for the behaviour, not the conditions that would enable it.**
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — my false warning:
-    //   SO, SAID PLAINLY AND IN ONE PLACE: THE NEXT TIME ANYBODY MOVES A
-    //   TICKET'S STATUS, THE REPORTER GETS REAL EMAIL AT A REAL ADDRESS.
-
-    ⚠⚠⚠ **THE REAL DEFECT IS THE OPPOSITE ONE, AND IT IS PRODUCT-WIDE — `E658`.**
-    `emailConfigured()` now returns **true**, so the honest *"Email delivery
-    isn't switched on yet"* note **no longer renders**, the Email column is live
-    and toggleable for **all 17 categories**, and `notify()` no longer records
-    `suppressed_reason: "email_not_configured"`. ⚠ **Nothing sends.** The
-    tripwire disarmed itself on `RESEND_API_KEY` appearing, but `E371` built
-    transactional senders — **not a notification→email path.** ⚠⚠ **A PROMISE
-    WITH NO WRITER, shown to every member.** Filed, not fixed here.
-  */
   {
     key: "support.ticket_status",
     lane: "community",
@@ -393,54 +147,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "Panameer moved one of your support tickets to a new status.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ── ⚠⚠ STEP 5, "Pay Panameer", HAS NO CATEGORY. STOPPED AND REPORTED. ───────
-
-    A buyer-side money category — invoices raised, payment due, payment failed —
-    fits NONE of the three tabs, and `E032` was explicit: *"if it does not fit,
-    STOP AND REPORT rather than inventing a fourth tab."*
-
-      · `messages` is *"People trying to reach you about work."* An invoice is
-        not a person reaching out.
-      · `email` is *"What Panameer sends you when you're not here."* That is a
-        CHANNEL, not a topic.
-      · `tax` is *"Documents and deadlines tied to being paid."* ⚠ TIED TO BEING
-        **PAID** — it is framed entirely around the seller receiving money. A
-        buyer PAYS. Filing "your invoice is due" under it would put an outgoing
-        payment under a heading about incoming ones.
-
-    So no category is declared for it, no fourth tab was invented, and no
-    existing tab was re-blurbed to make room. ⚠ THIS IS THE ONE PART OF `E032`
-    THAT DID NOT SHIP, and it needs Scott to either name a fourth group or widen
-    `tax`'s blurb to cover money in both directions.
-  */
-  /*
-    ── ⚠⚠⚠ `account.registration` — ITS OWN CATEGORY (`P0-E690`, Scott 2026-09-27)
-
-    ⚠⚠ **THE DEFECT IT CLOSES (`E689(q)`):** `account.finish_later` fires from the
-    **requester (BUYER)** wizard, but it sat in `profile.visibility`, which is
-    `audience: "seller"`. ⚠⚠⚠ **SO THE ONE MEMBER WHO ACTUALLY RECEIVED PANAMEER'S
-    ONLY LIVE NOTIFICATION EMAIL HAD NO ROW FOR IT IN THEIR OWN SETTINGS.** The
-    mail's category-scoped unsubscribe link was their only off switch.
-
-    ⚠⚠ **SCOTT RULED THE FIX, 2026-09-27: *"give `account.finish_later` its OWN
-    category. Do not widen `profile.visibility` to 'both'."*** ⚠ Widening would
-    have been the smaller diff and the worse answer — it puts **eight
-    seller-shaped events** (profile went live, dropped below the threshold, going
-    stale) in front of buyers who have no provider profile at all. ⚠⚠⚠ **A
-    CATEGORY IS A PROMISE ABOUT WHAT IS INSIDE IT. Stretching one to cover an
-    unrelated event is how a settings screen stops meaning anything.**
-
-    ⚠ **`audience: "both"` IS CORRECT HERE AND IS NOT THE SAME DECISION:** both
-    wizards can be abandoned, the template already has a provider variant that
-    `check:email` tests, and **the event is about REGISTRATION, which every role
-    does.**
-
-    ⚠⚠ **`E382` IS NOT BREACHED — NO EXISTING DEFAULT IS TOUCHED.** This is a NEW
-    row, and it takes the same `email: true` every other category already has, so
-    nobody's recorded intent is rewritten. ⚠ What a member actually receives is
-    still governed by the allowlist, not by this default.
-  */
   {
     key: "account.registration",
     lane: "community",
@@ -450,65 +156,19 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "You saved your registration part-way and can pick it up again.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ── ⚠⚠⚠ ONE CATEGORY FOR EVERY PROFILE EDIT (`P2-A1.1-E741`, A3 row 1) ────
-
-    ⚠ **SCOTT NAMED IT**, and ruling 31d is the reason there is only one:
-    *"Get Notified of Profile Updates… you don't need twenty rows."*
-    ⚠⚠ **SO IT IS ONE EVENT AND ONE SETTING FOR ALL TWELVE SECTIONS** — title,
-    bio, photo, skills, specializations, rates, work history, projects,
-    certifications, education, languages, company. ⚠⚠⚠ **NOT ONE PER FIELD, AND
-    NOT ONE PER SECTION:** a save that changes five skills is ONE notification,
-    and a member who edits three sections gets three — because they performed
-    three saves, which is the thing being reported.
-
-    ── ⚠⚠⚠ THE EMAIL DEFAULT: SCOTT'S A3 TABLE SAYS **OFF**, RULING 34b SAYS
-          **ON**, AND BOTH ARE SATISFIED BY `true` ───────────────────────────
-
-    ⚠ Scott's A3 table (2026-09-30) gives row 1 an email default of **off**.
-    ⚠⚠ Ruling 34b (and `check:notify-prefs` assertion 1) says **every category
-    ships in-app AND email ON** — Scott, in his own words: *"All on, exactly as
-    ruled."*
-    ⚠⚠⚠ **THEY DO NOT ACTUALLY CONFLICT, BECAUSE A CATEGORY DEFAULT IS NOT WHAT
-    DECIDES WHETHER MAIL GOES.** `NOTIFICATION_EMAIL_EVENTS` is, and it holds
-    exactly one key — `account.finish_later`. ⚠ `profile.section_saved` and
-    `profile.resume_rebuilt` are NOT on it, so **no email is sent for a profile
-    update**, which is the behaviour Scott's table asks for.
-    ⚠ The sibling category above says the same thing in its own words:
-    *"What a member actually receives is still governed by the allowlist, not by
-    this default."*
-    ⚠⚠ **SO `true` HERE MEANS "this member has not opted OUT", NOT "we mail
-    them"** — and shipping `false` would instead have written an opt-OUT into
-    every member's row on day one, which is the recorded intent 34b protects.
-    ⚠⚠⚠ **FLAGGED FOR SCOTT RATHER THAN DECIDED QUIETLY** (rule 13): if he wants
-    the member's settings screen to show this switch OFF to begin with, that is a
-    change to ruling 34b, not to this line.
-
-    ⚠⚠ The in-app entry is NOT optional either way — ruling 86: *"Every
-    notification makes an in-app (bell) entry. Settings only ADD channels."*
-  */
   {
     key: "profile.updates",
     lane: "community",
-    /* ⚠ `seller`: the sections this covers belong to a provider profile. A buyer
-       has no provider profile and would see a row for something they cannot do
-       — the `E689(q)` defect that cost `account.registration` its own home. */
     audience: "seller",
     group: "email",
     label: "Get Notified of Profile Updates",
     blurb:
       "A section of your profile was saved, or a résumé rebuild finished.",
-    /* ⚠ See the long note above: `email: true` is "not opted out", and the
-       allowlist is what decides whether anything is actually sent. */
     defaults: { inApp: true, email: true, sms: false },
   },
   {
     key: "profile.visibility",
     lane: "community",
-    /*
-      ⚠ UNCHANGED, DELIBERATELY. `E689(q)` was fixed by giving the registration
-      event its own home, **not** by widening this one — see the block above.
-    */
     audience: "seller",
     group: "email",
     label: "Profile and visibility",
@@ -517,24 +177,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     defaults: { inApp: true, email: true, sms: false },
   },
   {
-    /*
-      ── ⚠⚠ FOLLOWING THE BUILD (`P2-ALL-E758`, Scott 2026-10-02) ──────────────
-
-      ⚠ ONE category for all three work-tracker events. ⚠⚠ A person follows "the
-      build", not "shipped entries" — three toggles for one decision is three
-      ways to be half-subscribed, and the registry's own rule is that a category
-      must be something a member would actually choose between.
-
-      ⚠ `lane: "community"` + `group: "email"` is the established pairing for
-      account-level notices (`account.registration`, `profile.updates`), and the
-      settings page renders every entry in this array, so it appears there
-      automatically — which is Scott's condition for shipping this.
-
-      ⚠⚠⚠ **`email: true` IS THE HOUSE DEFAULT (ruling 34b) AND IT STILL SENDS
-      NOTHING.** The real control is `NOTIFICATION_EMAIL_EVENTS`, and these three
-      events are DELIBERATELY NOT ON IT — see `notification-events.ts`. A member
-      who turns email off here is pre-declining mail that does not exist yet.
-    */
     key: "work_tracker.updates",
     lane: "community",
     audience: "both",
@@ -561,25 +203,6 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     blurb: "A certification was issued, or a path you're enrolled in was updated.",
     defaults: { inApp: true, email: true, sms: false },
   },
-  /*
-    ⚠⚠ THE ONE CATEGORY I ADDED, AND SCOTT HAS NOT NAMED IT (`P1-ALL`, 2026-09-01).
-
-    `event_behavior.md` defines `community.joined` and `community.content_added`,
-    and NO existing category covers them — the sixteen shipped rows are seller
-    lifecycle, buyer lifecycle, tax and product news. The spec's own instruction is
-    *"Map new events onto existing categories before creating any"*, and I did:
-    nothing fits.
-
-    ⚠ THE ALTERNATIVE WAS WORSE. Leaving them uncategorised would either point
-    registry rows at a category that does not exist — which `check:notifications`
-    fails the build on, correctly — or drop two events the spec defines, which the
-    same harness also fails. So the category exists and the NAME is flagged.
-    ⚠ CATEGORY NAMES HAVE BEEN SCOTT'S TO APPROVE SINCE `P1-ALL-E032`. This one is
-    CC's. Renaming it is one line here plus two `category:` values in
-    `notification-events.ts`; no migration, because preferences key on a string and
-    an absent row means these defaults.
-    ⚠ `email: false` — email cannot send. Consistent with the buyer rows.
-  */
   {
     key: "community.activity",
     lane: "community",
@@ -633,13 +256,6 @@ export function categoriesFor(group: NotificationGroup): NotificationCategory[] 
   return NOTIFICATION_CATEGORIES.filter((c) => c.group === group);
 }
 
-/**
- * The categories one person should be offered.
- *
- * ⚠ SOMEBODY WHO IS BOTH SEES BOTH SIDES, which is correct — a dual-role account
- * genuinely receives both kinds of notification. ⚠ AND SOMEBODY WHO IS NEITHER
- * still sees the `both` rows rather than an empty page.
- */
 export function categoriesForAudience(
   group: NotificationGroup,
   opts: { isSeller: boolean; isBuyer: boolean }

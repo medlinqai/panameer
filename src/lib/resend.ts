@@ -1,43 +1,17 @@
 import { Resend } from "resend";
-/* ⚠ `P1-ALL-E386` — suppression and the signed unsubscribe link both live in the
-   transport, so a new sender cannot forget either. */
 import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
-/* `P2-J3-E522` Part A — the receipt is written in the transport, for the same
-   reason suppression is checked here: a new sender cannot forget. */
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { undeliverableRule } from "@/lib/email/undeliverable-domains";
 import { allowedOutsideProduction } from "@/lib/email/non-production-allowlist";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
-/**
- * Resend email client + a small typed helper.
- * Set RESEND_API_KEY and EMAIL_FROM in your environment.
- *
- * The client is created lazily (not at module load) because the Resend
- * constructor throws when RESEND_API_KEY is unset — which would break
- * `next build`'s page-data collection for any route that imports this module.
- * Callers should only reach sendEmail() when a key is configured.
- */
 let _resend: Resend | null = null;
 function getResend(): Resend {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
   return _resend;
 }
 
-/**
- * IS MAIL CONFIGURED AT ALL? — read at CALL time, never at module load.
- *
- * A missing `RESEND_API_KEY` is a CONFIGURATION FACT, not an outage, and the
- * two must not read the same in the logs: "the key is absent" is something a
- * developer fixes in `.env.local`, while "Resend rejected the send" is
- * something operations chases. Callers branch on this so they can say which
- * one happened — see `api/assessment/route.ts`.
- *
- * ⚠ THIS IS NOT A STARTUP CHECK AND MUST NEVER BECOME ONE. It returns a
- * boolean; it does not throw. A deployment with no mail key has to keep
- * booting, because every non-mail surface in the app still works without it.
- */
 export function mailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
@@ -46,16 +20,6 @@ export function mailConfigured(): boolean {
 export const EMAIL_FROM =
   process.env.EMAIL_FROM ?? "Panameer <onboarding@resend.dev>";
 
-/**
- * ⚠⚠ WHICH ENVIRONMENT SENT THIS (`P2-J3-E522`, a narrow slice of `E548`).
- *
- * ⚠ ONE DATABASE IS SHARED by localhost, every Preview and Production, and until
- * now NO ROW ANYWHERE SAID WHICH WROTE IT. ⚠⚠ That blindness has cost a
- * measurement TWICE IN TWO DAYS: 2026-09-16, whether any AI résumé read had ever
- * run in production; 2026-09-17, whether production can send real mail.
- * ⚠ `VERCEL_ENV` is set by Vercel to `production` / `preview` / `development`;
- * off Vercel it is absent, which is a developer machine.
- */
 export function sendingEnvironment(): string {
   const v = process.env.VERCEL_ENV;
   if (v === "production" || v === "preview") return v;
@@ -65,101 +29,31 @@ export function sendingEnvironment(): string {
 
 type SendEmailArgs = {
   to: string | string[];
-  /**
-   * ⚠ THE NOTIFICATION CATEGORY THIS MAIL BELONGS TO (`P1-ALL-E386`), when it
-   * has one. Suppression is per-category, and the footer's unsubscribe link is
-   * scoped to it. ⚠ OMITTED = a transactional email with no category: it is
-   * still blocked by a suppress-everything row, and its footer offers
-   * unsubscribe-from-everything.
-   */
   category?: string | null;
-  /*
-    ⚠⚠ ONE SENDER MAY OVERRIDE SUPPRESSION, AND ONLY ONE (`P2-J3-E522` Part A).
-    ⚠ `check:sent-email` fails if any template other than `password-reset`
-    passes this. ⚠⚠ IT NEVER OVERRIDES A HARD BOUNCE — see `isSuppressed`.
-  */
   bypassSuppressionFor?: "password-reset";
   subject: string;
   html: string;
   text?: string;
   replyTo?: string;
-  /*
-    ── ⚠⚠ THE RECEIPT (`P2-J3-E522` PART A) ──────────────────────────────────
-
-    ⚠ `template` IS REQUIRED, AND THAT IS THE ENFORCEMENT. `E386` put suppression
-    in the transport so a new sender could not forget; a runtime check cannot do
-    the same job here, because the transport CANNOT KNOW which template produced
-    the html it was handed. ⚠⚠ MAKING IT REQUIRED MOVES THE FORGETTING TO COMPILE
-    TIME — a new sender does not build until it names itself.
-
-    ⚠⚠ I TOLD SCOTT "no sender changes at all" WHEN I PROPOSED THIS TABLE AND
-    THAT WAS WRONG. It was true only while `subject_type`/`subject_id` were
-    optional. He ruled them in — correctly, because without them a webhook event
-    cannot say WHICH invitation bounced — and only the sender knows what a mail
-    is about. ⚠ So all eleven senders change. The claim is corrected here rather
-    than left standing in a report.
-  */
   template: string;
-  /*
-    ⚠ WHAT THE MAIL IS ABOUT. Optional in the TYPE because a few sends genuinely
-    have no subject row (`finish-later` is a nudge about nothing), NOT because a
-    sender may skip it when one exists. ⚠⚠ `check:sent-email` names the senders
-    allowed to omit it, so the decision is auditable rather than per-caller.
-  */
   subjectType?: string | null;
   subjectId?: string | null;
   /** The recipient's account, when the mail goes to one. Drives the cascade. */
   userId?: string | null;
 };
 
-/**
- * ⚠⚠ THE CAPTURE TRANSPORT (`P1-ALL-E371` WS-A2).
- *
- * ── WHY IT EXISTS ─────────────────────────────────────────────────────────
- *
- * `EMAIL_FROM` defaults to Resend's shared sandbox, `onboarding@resend.dev`, and
- * that domain **only delivers to the address on the Resend account**. ⚠ THAT
- * CONSTRAINT IS THE SAFETY NET FOR WS-A: a stray send during testing cannot
- * reach a real member. But it also means a SECOND recipient — a colleague
- * invite, a coordinator invite — cannot be tested by sending at all.
- *
- * ⚠ SO CAPTURE WRITES THE RENDERED MAIL TO DISK INSTEAD OF SENDING. Subject, to
- * and HTML, one file per send, into a GITIGNORED directory. Nothing captured
- * goes near the repo.
- *
- * ⚠⚠ IT IS NEVER THE DEFAULT, AND `check:email` ASSERTS THAT. Absent env var =
- * send normally. A capture mode that switched itself on would be the worst
- * possible failure: every transactional email silently stops reaching anyone
- * while the code reports success. The variable must be set EXPLICITLY to `1`.
- *
- * ⚠ NO ADMIN SCREEN, DELIBERATELY. The files are plain HTML and open in a
- * browser; a screen is a surface with its own design, its own access rule and
- * its own way of leaking a captured address. Reported at `E371` as not worth it
- * yet.
- */
 export function mailCaptureEnabled(): boolean {
-  /* ⚠ EXACTLY `"1"`. Not truthiness — `MAIL_CAPTURE=0` and `MAIL_CAPTURE=false`
-     must both mean SEND, and a bare `Boolean("0")` is `true`. */
   return process.env.MAIL_CAPTURE?.trim() === "1";
 }
 
-/** Where captured mail lands. ⚠ Gitignored — see `.gitignore`. */
 export const MAIL_CAPTURE_DIR = ".mail-capture";
 
-/* ⚠ CAPTURE WRITES A FILE, NOT A RECEIPT — it needs only the envelope, so it
-   takes the subset rather than the full `SendEmailArgs`. Widening it to the
-   whole type would force every caller here to restate `template`. */
 async function captureEmail(args: Pick<SendEmailArgs, "to" | "subject" | "html" | "text" | "replyTo">) {
-  /* ⚠ IMPORTED LAZILY so `node:fs` never enters a bundle that does not use
-     capture — this module is imported by route handlers. */
   const { mkdir, writeFile } = await import("node:fs/promises");
   const { join } = await import("node:path");
   await mkdir(MAIL_CAPTURE_DIR, { recursive: true });
 
   const to = Array.isArray(args.to) ? args.to.join(", ") : args.to;
-  /* ⚠ NO `Date.now()` IN THE NAME ALONE — two sends in the same millisecond
-     would overwrite each other and the second would vanish silently, which is
-     the one thing a capture transport must never do. A counter is appended. */
   captureSeq += 1;
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const slug = args.subject.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);

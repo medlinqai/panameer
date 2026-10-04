@@ -8,73 +8,7 @@ import {
 } from "lucide-react";
 import { AppShot } from "@/components/marketing-home/AppShot";
 
-/**
- * STEP 4's GRAPHIC — the Optimization Dashboard, drawn as a browser shot.
- *
- * A COMPONENT, NOT A PNG, for the same reason `SubmitToAI` is: the figures ARE
- * the pitch and they will change. A screenshot would freeze the headline figure and the
- * five findings into a bitmap, and it would not survive a theme or a retina.
- *
- * ── ⚠ THIS IS A RENDERING OF A PRODUCT SCREEN, NOT THE PRODUCT SCREEN ────────
- *
- * It imports NOTHING from the real assessment — not `ReportDashboard`, not the
- * scoring lib, not a query. Every number below is statically authored marketing
- * art. Two reasons that separation is deliberate and not laziness:
- *
- *   1. `/` prerenders static (○). Reaching into the report path would drag a
- *      data dependency onto a page that has no session and no assessment id.
- *   2. The real dashboard will move — it is a product surface under active
- *      change. A marketing drawing that tracked it would break on every commit
- *      to it, and a marketing drawing that lagged it would be a lie either way.
- *      Drawn art is honestly a drawing.
- *
- * ── ⚠ "INDUSTRY", NEVER "PEERS" ──────────────────────────────────────────────
- *
- * The first mockup said *Your Org Versus Peers* and *best-practice ERP peer
- * median*. "Peers" asserts a surveyed comparison pool that does not exist;
- * `spine-steps.ts` step 4 already carries the same correction in its title, and
- * Scott struck the word once before it crept back. The benchmark is derived from
- * the maturity ladder — industry sits at rung 37 -> 67.5, adjusted per domain —
- * so INDUSTRY is what it is. The CSS class is `osd-mind`, not `osd-mpeer`, on
- * purpose: the word should not be able to creep back in through a selector.
- * Restoring "peers" is Scott's call and a counsel-gate item.
- *
- * ── ⚠ EVERY DOLLAR FIGURE IN HERE IS A PUBLIC PRODUCT CLAIM ──────────────────
- *
- * the headline savings band, the $18.5M addressable base, the five per-finding amounts and the
- * industry median of 73 all sit on a pre-account page. They join the counsel-gate
- * list with the tax-savings copy, the Oracle mark, the AIP and the rung-4 agent
- * names. Not a blocker for building it — a blocker for LAUNCHING it.
- *
- * ── THE SHELL LIVES IN `AppShot`, NOT HERE ───────────────────────────────────
- *
- * The browser frame, the 64px rail and the top bar were extracted at E145/E146,
- * when steps 2 and 5 needed the same three. This file owns the dashboard BODY and
- * nothing else; `railActive={0}` is all it says about the rail. The icon rationale
- * (lucide rather than the mockups' `<defs>` + `<use>`, and why never a text glyph)
- * moved there with it.
- */
-
 /* ── KPI 2's sparkline ────────────────────────────────────────────────────── */
-/**
- * Ten bars for the ten P2P capability domains, four highlighted. `n` is the
- * count printed beneath the bar and is the labelled figure; `h` is only the bar
- * height, which the mockup drew for shape rather than to scale.
- *
- * ⚠ THESE TEN MUST SUM TO THE KPI ABOVE THEM (E148). They shipped summing to 22
- * under a KPI reading 23. The tenth was raised 1 -> 2 rather than dropping the KPI
- * to 22, for two reasons:
- *
- *   - `23` is also quoted by Step 5 ("Built from 23 optimization opportunities"),
- *     so lowering the KPI would have moved the defect to a second graphic.
- *   - The tenth is Change Management & AI Adoption, which scores 25 — the LOWEST
- *     of the ten in `capability-domains.ts`. The worst-scoring domain having the
- *     fewest opportunities was backwards, so the arithmetic and the internal
- *     logic were wrong in the same place and are fixed in the same move.
- *
- * Its bar went 28% -> 46% with it, because a bar that disagrees with its own
- * printed label is the defect this was.
- */
 const SPARK: { h: number; on: boolean; n: number }[] = [
   { h: 100, on: true, n: 4 },
   { h: 78, on: true, n: 3 },
@@ -89,28 +23,9 @@ const SPARK: { h: number; on: boolean; n: number }[] = [
 ];
 
 /* ── KPI 3's stacked bar ──────────────────────────────────────────────────── */
-/**
- * The five findings as a share of their own arithmetic sum — 980/610/520/265/215
- * rounds to exactly these, which is why the segments sum to 100.
- *
- * ⚠ THE SHARES ARE STILL RIGHT EVEN THOUGH THE SUM IS NOT A TOTAL (E257). This
- * bar shows the findings' sizes RELATIVE TO EACH OTHER, and that ratio holds
- * whether or not they overlap. What the sum could not honestly be is the KPI
- * above it, which is a band now.
- *
- * ⚠ THE RETIRED FIGURE IS PARAPHRASED, NOT QUOTED, throughout this file — same
- * convention as the retired rung-4 line in `questions-p2p.ts`, so grepping for it
- * returns only real usages and stays a usable check.
- */
 const STACK = [38, 24, 20, 10, 8];
 
 /* ── the findings table ───────────────────────────────────────────────────── */
-/**
- * ⚠ THE OWNER COLUMN'S TWO-TONE IS THE POINT OF THE COLUMN. One finding is
- * somebody else's product (StratERP, amber) and four are ours (Panameer, grey).
- * A single chip colour would make the column decorative. `isPartner` drives it
- * rather than a hard-coded class per row.
- */
 const FINDINGS: {
   action: string;
   owner: string;
@@ -119,15 +34,6 @@ const FINDINGS: {
   savings: string;
 }[] = [
   {
-    /**
-     * ⚠ TDWCA IS GATED ON A LAWYER AND A CPA, AND IT IS HERE BY EXPLICIT
-     * INSTRUCTION. `brief_home_steps_spine` barred this row from the savings
-     * section for exactly that reason; `brief_step4_dashboard_graphic` puts it in
-     * the findings table by name and routes it to the counsel gate instead. Both
-     * are Scott's, the second is later and more specific, so it wins — but this
-     * is the one string in the shot that a reviewer should expect to be told to
-     * strike. Removing it means this row and the `TDWCA` legend label below.
-     */
     action: "TDWCA — Tax Deferred Working Capital Account",
     owner: "StratERP",
     isPartner: true,
@@ -166,42 +72,15 @@ const FINDINGS: {
 
 export function OptimizationDashboardShot() {
   return (
-    /*
-      ⚠ THE SHELL IS `AppShot`, NOT A COPY OF IT. Steps 2, 4 and 5 draw the same
-      browser frame, rail and top bar; this shot owns only the dashboard BODY
-      below. `railActive={0}` is the dashboard tile — the screen being shown.
-    */
-    /*
-      ⚠ THE WRAPPER EXISTS BECAUSE `.ash` IS `overflow:hidden`. The email card has
-      to hang OUTSIDE the browser frame's bottom-left corner, and anything
-      absolutely positioned inside `.ash` gets clipped by the same rule that keeps
-      the frame's 14px radius honest. So the card is a SIBLING of the frame inside a
-      positioned wrapper, not a child of it. Do not "simplify" this by moving the
-      card inside `AppShot` — it will silently vanish below the fold of the frame.
-    */
     <div className="osd-wrap">
       <AppShot railActive={0}>
-        {/*
-          ⚠ `osd-main` IS A STEP-4-ONLY MODIFIER AND IT IS LOAD-BEARING. `ash-main`
-          is shared by steps 2, 4 and 5, so the deep bottom padding that gives the
-          email card blank canvas to overlap CANNOT go there — it would put 92px of
-          dead space under the wizard and the roadmap too.
-        */}
+        {}
         <div className="ash-main osd-main">
           <div className="ash-mh">
             <div>
-              {/* ⚠ Scott's explicit heading change from "AI Maturity
-                Assessment — Procure-to-Pay". Do not restore the old wording. */}
+              {}
               <h3 className="ash-h3">Procure-to-Pay Optimization Dashboard</h3>
-              {/*
-              ⚠ NO HARDCODED ABSOLUTE DATE IN MARKETING CHROME (E149). This
-              read "Thursday, 30 September 2022" from Scott's source image —
-              four years stale on a page that elsewhere wants to read as live,
-              which makes it look like an abandoned product. An absolute date
-              only ever gets worse and nobody remembers to update it. The
-              replacement also does more work than a date did: it says what the
-              dashboard covers.
-            */}
+              {}
               <p className="ash-sub">
                 Procure-to-Pay · all ten capability domains
               </p>
@@ -211,8 +90,7 @@ export function OptimizationDashboardShot() {
                 <Calendar className="ash-sv" strokeWidth={1.7} aria-hidden />
                 {/* relative, for the same reason as the sub-line above */}
                 Last 30 days
-                {/* the mockup's ▾ (U+25BE) replaced by a drawn chevron — same
-                  failing class of glyph as the icons it banned */}
+                {}
                 <ChevronDown className="ash-cv" strokeWidth={2} aria-hidden />
               </span>
               <span className="ash-pill is-mag">
@@ -235,10 +113,7 @@ export function OptimizationDashboardShot() {
                 <span className="osd-kv">−31 pts</span>
               </div>
               <p className="osd-klab">Your Org Versus Industry</p>
-              {/* ⚠ "maturity level", NOT "option" (E035). The rung->option rename is
-                  user-visible, but "industry median for your option" is meaningless —
-                  this sentence names the visitor's POSITION on the ladder, not one of
-                  the four choices, so it needed rewording rather than substitution. */}
+              {}
               <p className="osd-knote">
                 42 vs. 73 — industry median for your maturity level
               </p>
@@ -251,8 +126,7 @@ export function OptimizationDashboardShot() {
                   <span className="osd-mfill" style={{ width: "42%" }} />
                   <span className="osd-mmark" style={{ left: "73%" }} />
                 </div>
-                {/* `osd-mind` — see the note at the top of this file on why
-                  this is not called `osd-mpeer`. */}
+                {}
                 <span className="osd-mind" style={{ left: "73%" }}>
                   Industry 73
                 </span>

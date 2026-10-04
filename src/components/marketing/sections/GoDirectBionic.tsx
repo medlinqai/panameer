@@ -1,20 +1,6 @@
 import { GO_DIRECT } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
 
-/**
- * "Stop Being the Marked-Up Resource" + the Bionic Consultant (seller §5).
- *
- * The mirror of the buyer page's three-ways: same critique of the same model,
- * from the other side of it. The buyer is told they pay 2–3× for the pyramid;
- * the seller is told they ARE the marked-up resource in it.
- *
- * ⚠ THE BIONIC PANEL SAYS "BRING YOUR AI", NOT "WE GIVE YOU AI", and that
- * distinction is the whole reason it is worded carefully. Panameer does not
- * supply the consultant with a model, an agent or a toolchain. What it offers
- * is help packaging and LABELLING services the consultant already delivers with
- * their own AI. Claiming the platform makes them bionic would be a product
- * promise nothing behind this page can keep.
- */
 export function GoDirectBionic() {
   return (
     <section id="go-direct" className="bg-ink py-16 text-white">

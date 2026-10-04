@@ -1,12 +1,5 @@
 import { ShotCard, Check } from "@/components/learn/public/shared";
 
-/**
- * SECTION 1 — a path is a sequence, so the graphic is a sequence with a state per step.
- *
- * ⚠ THE FOURTH ROW SHOWS ITS NUMBER, THE FIRST TWO SHOW A CHECK, THE THIRD A RING. Three
- * states, three glyphs — a single style with only colour varying would make "in progress" and
- * "next" indistinguishable to anyone who cannot separate a magenta ring from a grey disc.
- */
 const STEPS = [
   { title: "Procure-to-Pay foundations", meta: "6 lessons · 2h", state: "done", label: "Done" },
   { title: "Oracle Fusion Self-Service Procurement", meta: "9 lessons · 3h", state: "done", label: "Done" },

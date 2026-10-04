@@ -1,12 +1,3 @@
-/**
- * Instructor SHAPE and formatting — the client-safe half of WS6.
- *
- * Split out from `learn-instructors.ts` because that file imports prisma, and
- * the LP card is rendered from a client component: importing the type from
- * there dragged the pg driver into the browser bundle and the build failed on
- * "can't resolve dns". Types and pure string formatting have no business
- * sitting behind a database import.
- */
 
 export type Instructor = {
   id: string;
@@ -21,12 +12,6 @@ export type Instructor = {
 /** A lesson reduced to the only field the derivation needs. */
 export type LessonExpertRef = { expert_person_id: string | null };
 
-/**
- * Count distinct experts across a set of lessons, most-taught first.
- *
- * Pure, so a caller with an already-loaded tree doesn't go back to the
- * database, and so it can be unit-reasoned about without one.
- */
 export function tallyExperts(lessons: LessonExpertRef[]): { id: string; lessons: number }[] {
   const counts = new Map<string, number>();
   for (const l of lessons) {

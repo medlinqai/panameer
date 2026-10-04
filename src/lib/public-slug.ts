@@ -1,30 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-/**
- * ── ⚠⚠ THE PERSONAL PUBLIC URL — `/in/<slug>` (`P2-A1.1-E738`) ────────────
- *
- * ⚠ SCOTT, 2026-10-01: *"`/in/<first>-<last>`, `-2`, `-3` on collisions. Stored
- * once; stable when the name changes unless the member edits it; old slugs
- * redirect."* The purpose he gave: **his own email signature.**
- *
- * ⚠⚠⚠ **"STORED ONCE" IS THE LOAD-BEARING WORD.** The slug is minted on demand
- * and then left alone. ⚠ It is deliberately NOT re-derived from the name on
- * save, because a URL in somebody's email signature that changes when they fix a
- * typo in their surname is a broken link they put there themselves — and they
- * will not know it broke.
- *
- * ⚠⚠ EVERY SLUG LIVES IN `ProviderProfileSlug`, live and retired in ONE unique
- * namespace. See that model's comment for why the live one is not a column.
- */
-
-/**
- * ⚠⚠ `"Scott"`, `"Walls"` → `"scott-walls"`.
- *
- * ⚠ ASCII-folded and lower-cased: a URL somebody types from a business card has
- * to be reachable from any keyboard. ⚠⚠ `Steenkamp` and `Hernández` must not
- * produce a slug a US keyboard cannot enter, so diacritics are stripped rather
- * than percent-encoded.
- */
 export function slugifyName(first: string | null, last: string | null): string {
   const raw = `${first ?? ""} ${last ?? ""}`.trim();
   const folded = raw

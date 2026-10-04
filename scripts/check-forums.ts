@@ -3,15 +3,6 @@ import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getForumsHome } from "@/lib/forums";
 
-/**
- * check:forums — forums had NO harness at all until `P1-J3-E383`.
- *
- * ⚠⚠ IT READS BOTH THE SOURCE AND THE DATABASE, and the split is deliberate:
- * the ACCESS RULES are asserted against the LIB (that is where they live and
- * where they can be broken), and the ONE-BOARD-PER-PATH invariant is asserted
- * against the LIVE LIBRARY, because a fixture cannot tell you that the seed and
- * the backfill actually agreed.
- */
 let pass = 0;
 const failures: string[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
@@ -519,26 +510,16 @@ async function main() {
     `${founderUpdates.length} update(s) write host_person_id — reassigning an existing group's owner is the exact drift E572 forbids`
   );
 
-  /* ── 9 · ⚠⚠⚠ THE ACCESS RULE IS EXACTLY TWO CONDITIONS (`P2-J3-E572` WS-B) ──
-     `canAccessPathForum` is ALREADY the rule Scott asked for. This section does
-     not change it — it stops it drifting.
-     ⚠⚠ THE RULE: a `LearnEnrollment` for THIS viewer and path, **OR**
-     `teachesPathWhere`. NOTHING ELSE — no third OR, no role check, no
-     capability shortcut, no admin bypass.
-     ⚠ ASSERTED ON THE FUNCTION BODY WITH COMMENTS STRIPPED. Rule 12: the house
-     style quotes superseded code (`E164`), and a quote is not live code. */
   const accessFnRaw = /export async function pathForumAccess[\s\S]*?\n}/.exec(forumsRaw)?.[0] ?? "";
   check("9 — pathForumAccess was found by the scan", accessFnRaw.length > 0);
   const accessFn = strip(accessFnRaw);
 
-  /* ⚠ A signed-out viewer is refused before anything else. */
   check(
     "9 — a signed-out viewer is refused before anything else",
     /if \(!viewer\) return none;/.test(accessFn),
     "a stranger sees THAT the forum exists and never its content"
   );
 
-  /* ⚠ CONDITION 1 — enrolment, scoped to THIS viewer. */
   check(
     "9 — condition 1 is a LearnEnrollment scoped to this viewer",
     /learnEnrollment\.findMany\(\{\s*where: \{ user_id: viewer\.userId, \.\.\.pathFilter \}/.test(
@@ -547,14 +528,12 @@ async function main() {
     "an enrolment lookup that is not scoped to the viewer is not a gate"
   );
 
-  /* ⚠ CONDITION 2 — teaching, via the ONE extracted predicate. */
   check(
     "9 — condition 2 is teachesPathWhere, the one definition",
     /where: \{ \.\.\.idFilter, \.\.\.teachesPathWhere\(person\.id\) \}/.test(accessFn),
     "expert_person_id alone is the known-wrong answer and has already cost once"
   );
 
-  /* ⚠ THREE QUERIES, NO MORE: the person, the enrolments, the taught paths. */
   const queries = (accessFn.match(/prisma\./g) ?? []).length;
   check(
     "9 — the rule asks the database exactly three things",

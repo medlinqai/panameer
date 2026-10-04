@@ -3,24 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 
-/**
- * The example-provider carousel on "Get Started Now!" (E002, rebuilt by
- * brief_S / E023).
- *
- * ONE card at a time with ‹ › arrows — the previous three-across grid rendered
- * cramped and off-design. Photos are the banked headshots from the design
- * folder; they must actually render (the old version used initials).
- *
- * Mix is 2 Oracle Cloud + 1 AI per E023. NAMES MATCH THE FACES (walk7 WS2 /
- * E140): the middle card was captioned "Thomas A" over a photo of someone who
- * plainly isn't a Thomas, and the third was "Susan P" over a photo that isn't
- * Susan either. They are Deepak K and Melanie R now, and the image files were
- * renamed with them so the mismatch can't quietly return.
- *
- * These are ILLUSTRATIVE marketing cards from the onboarding deck, not real
- * provider records — a new signup has no marketplace to read from yet.
- */
-
 export type Testimonial = {
   firstName: string;
   lastName: string;
@@ -56,7 +38,6 @@ export const DECK_TESTIMONIALS: Testimonial[] = [
     remoteCents: 9_000,
   },
   {
-    // E023 recast: was "Digital Marketer" — now the 2nd Oracle Cloud example.
     firstName: "Melanie",
     lastName: "R",
     headline: "Oracle Cloud HCM / Payroll Implementation Expert",
@@ -103,15 +84,6 @@ function MailIcon() {
   );
 }
 
-/**
- * A rate as the design writes it: `125/hr`. No currency symbol, no cents.
- *
- * WS1/E080 — the build rendered `$125.00/hr` through the shared `formatCents`,
- * which is right for money the provider is agreeing to and wrong for a marketing
- * card: the extra glyphs are four characters of noise on the line most likely to
- * wrap, and wrapping is exactly how the Remote rate ended up hanging outside the
- * card (E064d / E069-4).
- */
 function rateText(cents: number): string {
   return `${Math.round(cents / 100)}/hr`;
 }

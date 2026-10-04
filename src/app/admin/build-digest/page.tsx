@@ -5,12 +5,6 @@ import { DigestSend } from "@/components/admin/DigestSend";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN → BUILD DIGEST (`P2-ALL-E818`). Read the week's draft, then send it.
- *
- * The count of who it would reach is shown BEFORE the button, because this is
- * the one screen in the app that mails real people on purpose.
- */
 export default async function BuildDigestPage() {
   const [drafts, recipients] = await Promise.all([
     prisma.buildDigest.findMany({ orderBy: { week: "desc" }, take: 10 }),
@@ -29,8 +23,7 @@ export default async function BuildDigestPage() {
         <span className="font-display text-[22px] font-bold text-ink tabular-nums">
           {recipients.length}
         </span>{" "}
-        {/* `E374` — the verb "Follow" is dead in rendered strings, and the noun
-            carries it. "people" says the same thing and is plainer. */}
+        {}
         {recipients.length === 1 ? "person has" : "people have"} asked for the weekly email.
         {recipients.length === 0 && " Sending now would reach nobody."}
       </p>

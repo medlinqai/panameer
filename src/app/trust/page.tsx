@@ -3,43 +3,6 @@ import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 
-/**
- * `/trust` — WHAT PANAMEER CHECKS, SAID OUT LOUD (`P1-ALL-E035`).
- *
- * **SCOTT, 2026-09-02:** *"this needs to be detailed in the ToS and given at a
- * high level in the site instructions."* The detail is Terms of Use section 5;
- * this is the high-level version.
- *
- * ── ⚠⚠ EVERY SENTENCE MAPS TO A ToS CLAUSE, AND THAT IS THE POINT ────────────
- *
- * A marketing page that claims more than the terms is the classic failure and it
- * is worse than saying nothing. So each paragraph below is the plain-language
- * form of one numbered clause, and `check:trust-claims` asserts the mapping by
- * token rather than trusting this comment:
- *
- *   "controls the email address"      -> ToS 5.1
- *   "registered entity" / "register"  -> ToS 5.1
- *   "did work for a client"           -> ToS 5.1
- *   "not competence or quality"       -> ToS 5.2
- *   "cannot guarantee delivery"       -> ToS 5.3
- *   "act on what we learn"            -> ToS 5.4
- *
- * ⚠⚠ NO BADGE, NO SEAL, NO SHIELD, NO "TRUSTED MARKETPLACE" MARK. A trust emblem
- * is itself a claim, and Panameer has not earned one. Words only — there is not
- * so much as an icon on this page, deliberately.
- *
- * ⚠⚠ THE COMPANY CHECK IS DESCRIBED IN THE CONDITIONAL, BECAUSE IT IS NOT BUILT.
- * `E282` — entity validation — does not exist: there is no Secretary-of-State
- * route anywhere in the codebase. So this page says WHERE the answer appears
- * (on the profile) rather than asserting the check has run, which is the same
- * shape ToS 5.1 uses. ⚠ WHEN `E282` LANDS, NOTHING HERE NEEDS REWRITING — the
- * profile starts saying so and this sentence is already true.
- *
- * ⚠ NO `.pm-home` WRAPPER AND NO `home.css`. This page renders no
- * marketing-home component — it is prose in a text column — so importing that
- * stylesheet would pull in its `*{margin:0;padding:0}` reset for nothing. The
- * `pm-solo` shading rule is about `.pm-home` pages and does not apply here.
- */
 export const metadata: Metadata = {
   title: "What we check — Panameer",
   description:
@@ -55,11 +18,7 @@ export default function TrustPage() {
           What we check, and what we don&rsquo;t
         </h1>
 
-        {/*
-          ⚠⚠ FOUR SENTENCES-WORTH, AS THE BRIEF SPECIFIES — one paragraph per ToS
-          clause. Resisting the urge to expand this is part of the work: every
-          extra sentence is another claim to keep true.
-        */}
+        {}
         <div className="mt-7 grid gap-5 text-[17px] leading-relaxed text-ink-2">
           <p>
             <b className="text-ink">We verify what we assert, and we host what we don&rsquo;t.</b>{" "}
@@ -98,11 +57,7 @@ export default function TrustPage() {
           </p>
         </div>
 
-        {/*
-          ⚠ THE POINTER TO THE DETAIL IS THE LAST THING, NOT THE FIRST. Somebody
-          who wants the full version should be able to reach it in one click; the
-          four paragraphs above should not be prefaced by a disclaimer.
-        */}
+        {}
         <p className="mt-9 border-t border-line pt-6 text-[15px] text-ink-2">
           The detailed version is section 5 of the{" "}
           <Link href="/terms" className="font-semibold text-magenta hover:underline">

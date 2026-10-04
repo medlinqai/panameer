@@ -4,15 +4,6 @@ import { generateSecret, otpauthUri, verifyTotp } from "@/lib/totp";
 import { SettingsError } from "@/lib/settings";
 import type { Viewer } from "@/lib/access";
 
-/**
- * Password & Security (J2.4 WS-H / E018).
- *
- * Separate from `settings.ts` because everything here is a CREDENTIAL. The
- * other settings modules move preferences around; these five functions change
- * what it takes to become this person, and mixing the two invites a future
- * change to treat a password write with the ceremony of a checkbox.
- */
-
 async function ownUser(viewer: Viewer) {
   const user = await prisma.user.findUnique({
     where: { id: viewer.userId },
@@ -33,11 +24,6 @@ export async function getSecurity(viewer: Viewer) {
   return {
     email: user.email,
     hasPassword: !!user.password_hash,
-    /*
-      LinkedIn is deliberately ABSENT rather than shown disconnected — it was
-      removed from the product everywhere (PJv2 WS2), and a greyed-out row for
-      something we will never offer is a promise, not a status.
-    */
     connected: {
       google: user.oauth_providers.includes("google"),
       apple: user.oauth_providers.includes("apple"),
@@ -51,13 +37,6 @@ export async function getSecurity(viewer: Viewer) {
   };
 }
 
-/**
- * Change the password.
- *
- * THE CURRENT ONE IS REQUIRED, and that is not a formality: a session left open
- * on a borrowed laptop is the threat this defends against, and a change form
- * that only needs the new value hands the account to whoever is sitting there.
- */
 export async function changePassword(
   viewer: Viewer,
   input: { current: string; next: string }
@@ -82,33 +61,7 @@ export async function changePassword(
     where: { id: user.id },
     data: { password_hash: await hashPassword(input.next) },
   });
-  /*
-    ── ⚠⚠⚠ ROW 2 — THE IN-APP HALF SHIPS; THE EMAIL IS SCOTT'S ONE-LINE CALL ──
-                                                      (`P2-A1.1-E741`, A3)
-
-    ⚠ Scott's table: *"Email, phone or password changed — on, always (security,
-    a rule not a setting)."*
-    ⚠⚠ **MEASURED FOR THE DOUBLE-SEND THE BRIEF ASKS ABOUT: NOTHING HERE SENT
-    EMAIL BEFORE THIS CHANGE**, so there is no second send to collide with.
-    ⚠⚠⚠ **THE EMAIL IS STILL OFF, DELIBERATELY.** `CLAUDE.md`: adding a key to
-    `NOTIFICATION_EMAIL_EVENTS` is *"a PRODUCT DECISION, NOT A REFACTOR… the
-    one-line diff that turns real email on to real members"*, and `MAIL_CAPTURE`
-    is **not set in Vercel at all**. ⚠ The bell entry carries no send risk and
-    ships now — ruling 86 makes it unconditional anyway.
-    ⚠ **TO TURN IT ON:** add `"account.credential_changed"` to that allowlist.
-    ⚠⚠ The *"always"* half needs a preference bypass that does not exist; it is
-    reported on the event, not invented here.
-
-    ⚠ It never fails the password change: the new hash is already written, and a
-    notification outage must not look like a failed password change.
-  */
   try {
-    /* ⚠ The notification layer keys on the PERSON, and `ownUser` selects a USER.
-       ⚠⚠ Resolved here rather than widening `ownUser`'s select, which four other
-       callers share and none of them needs this.
-       ⚠⚠⚠ **A USER WITH NO PERSON GETS NO ROW RATHER THAN A ROW KEYED ON `""`** —
-       an empty foreign key would either throw or mint an unreachable row, and
-       both are worse than the silence. */
     const person = await prisma.person.findFirst({
       where: { user_id: user.id },
       select: { id: true },
@@ -126,14 +79,6 @@ export async function changePassword(
   }
 }
 
-/**
- * Begin TOTP enrollment: mint a secret, return it and the otpauth URI.
- *
- * The secret is stored UNCONFIRMED. Until a valid code proves the authenticator
- * actually holds it, two-step stays off — otherwise a mistyped scan locks
- * somebody out of their own account, which is the classic way to turn a
- * security feature into a support queue.
- */
 export async function beginTotp(viewer: Viewer) {
   const user = await ownUser(viewer);
   if (user.twoFactor?.confirmed_at) {
@@ -165,12 +110,6 @@ export async function confirmTotp(viewer: Viewer, code: string) {
   });
 }
 
-/**
- * Turn it off — with a current code, not just a session.
- *
- * Disabling 2FA from a hijacked session would make the feature decorative. The
- * code proves the person asking still holds the second factor.
- */
 export async function disableTotp(viewer: Viewer, code: string) {
   const user = await ownUser(viewer);
   const secret = user.twoFactor?.totp_secret;
@@ -186,13 +125,6 @@ export async function disableTotp(viewer: Viewer, code: string) {
   });
 }
 
-/**
- * The security question.
- *
- * THE ANSWER IS HASHED, like a password, because that is what it is — a shared
- * secret that recovers an account. Storing it in the clear would make it a
- * worse password than the password, sitting next to it in the same table.
- */
 export async function setSecurityQuestion(
   viewer: Viewer,
   input: { question: string; answer: string }

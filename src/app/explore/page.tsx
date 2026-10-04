@@ -1,49 +1,10 @@
 import Link from "next/link";
-/* ⚠⚠ TWO IMPORTS LEFT WITH THE TEASER (`P2-A1.1-E738` WS-B). ⚠ `ProviderCard`
-   renders a first name and a photo URL and is replaced by `TalentCard`, which
-   cannot; `getSessionViewer` was read only for `canSeeRate` on that card and
-   `MaskedCard` has no rate. ⚠ BOTH FILES ARE UNTOUCHED ON DISK (`E164`) and
-   `ProviderCard` is still rendered by the signed-in surfaces.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { getSessionViewer } from "@/lib/session";
-   //   import { ProviderCard } from "@/components/marketplace/ProviderCard"; */
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { Btn } from "@/components/marketing/brand";
-/* ⚠⚠ `searchProvidersTeaser` AND `TeaserProvider` ARE NO LONGER IMPORTED — the
-   hire arm is the masked grid now (`P2-A1.1-E738` WS-B). ⚠ `lib/explore.ts` is
-   untouched on disk and still exports them; the WORK arm below still uses
-   `searchWorkTeaser`. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   searchProvidersTeaser,
-   //   type TeaserProvider, */
 import { searchWorkTeaser, type TeaserWork } from "@/lib/explore";
 import { BrowseTalentGrid } from "@/components/public/BrowseTalentGrid";
-
-/**
- * WHERE THE HERO SEARCH LANDS — a teaser, not a placeholder (E032–E037).
- *
- * IT USED TO ADMIT IT HAD NOTHING. The first version showed the query back and
- * said results were not live, which was honest and useless: a visitor searching
- * "procurement" learned that Panameer could not answer, when in fact there are
- * 26 marketplace-visible providers and several of them match. The page was
- * telling the truth about the SEARCH FEATURE while telling a lie about the
- * SUPPLY.
- *
- * So it runs a real query and shows real people — masked. The bait is that
- * experts exist and match; the account buys their identity, their contact
- * details and the rest of the roster. Nothing is invented: if the query matches
- * two providers it shows two, and if it matches none it says none.
- *
- * E221 — NO 0% STATS. Upwork's consultation cards carry Job Success and jobs
- * completed. Nothing has been delivered through Panameer, so both would read 0%
- * and 0 on every card, which is worse than absent — it makes a real expert look
- * like a failed one. Omitted until there is something to count.
- *
- * PUBLIC BY OMISSION, deliberately: `/explore` is not in the proxy matcher, so
- * it costs no token lookup and never bounces an anonymous visitor to /login —
- * the failure mode of routing the hero at `/search`, which IS matched.
- */
 
 export const metadata: Metadata = {
   title: "Explore — Panameer",
@@ -68,39 +29,6 @@ export default async function ExplorePage({
   // two, and a hand-typed URL should still land somewhere sensible.
   const hiring = sp.mode !== "work";
 
-  /*
-    ── ⚠⚠⚠ THE HIRE ARM IS **BROWSE TALENT** NOW (`P2-A1.1-E738` WS-B) ───────
-
-    ⚠ SCOTT, 2026-10-01, answer 8: *"Browse Talent replaces the existing
-    `/explore` link (no 7th nav item). `/explore` becomes the masked grid; real
-    first names and photo URLs removed."*
-
-    ⚠⚠ **THE WORK ARM (`?mode=work`) IS DELIBERATELY LEFT EXACTLY AS IT WAS.**
-    It is linked by name from `WorkHero`, `IntegrateHero`, `ShopHero` and
-    `lib/integrate-hero.ts`, and its honest zero — *"No Work Requests are open
-    yet"* — is a measured truth those pages quote. ⚠⚠⚠ **REPLACING THE WHOLE
-    PAGE WOULD HAVE DELETED THAT ZERO AND BROKEN FOUR MARKETING PAGES' PROMISES
-    INSIDE A BRIEF ABOUT TALENT MASKING.** Scott's answer names the GRID, not
-    the route's other half.
-
-    ⚠ **NO SEVENTH NAV ITEM WAS ADDED**, per the same answer. `MARKETING_NAV`
-    is byte-unchanged; the words *"Browse Talent"* appear as this page's own
-    eyebrow and as the back-link on a masked profile.
-
-    ⚠⚠ `getSessionViewer()` IS GONE FROM THIS PAGE and that is a narrowing, not
-    an oversight: it was read for ONE reason — `canSeeRate` on a teaser card
-    (`E618`, ruling 29) — and **`MaskedCard` CARRIES NO RATE AT ALL**, so there
-    is nothing left for a viewer to unlock here. ⚠ The route stays public and
-    stays exactly as Scott protected it (*"DO NOT GATE IT"*).
-    ⚠⚠⚠ **A SIGNED-IN MEMBER THEREFORE SEES THE MASKED GRID TOO.** Reported as a
-    consequence, not hidden: the signed-in surface for browsing people is
-    `/talent` and `/community`, and this page is the public funnel. ⚠ SUPERSEDED,
-    quoted not deleted (`E164`):
-    //   const viewer = await getSessionViewer();
-    //   const { cards, total } = hiring
-    //     ? await searchProvidersTeaser(query, undefined, viewer)
-    //     : await searchWorkTeaser(query);
-  */
   if (hiring) {
     return (
       <div className="marketing-surface masked-surface flex min-h-screen flex-col bg-white font-body text-ink dark:bg-ink dark:text-white">

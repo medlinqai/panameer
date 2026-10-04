@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { rejectProvider, AdminError } from "@/lib/admin";
 
-/**
- * POST /api/admin/providers/[id]/reject — reject Validation (brief_M).
- * Sets validation_status=REJECTED; base marketplace visibility unchanged.
- */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

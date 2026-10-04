@@ -1,24 +1,5 @@
-/**
- * `check:project-parent` — a project's parent is editable from both ends, and
- * the converted row is named after the work (`P1-A1.4-E413` WS-5).
- * `npm run check:project-parent`.
- *
- * ── ⚠⚠ ASSERTION 1 IS THE ONE WHOSE ABSENCE MADE A MISPLACEMENT PERMANENT ───
- *
- * `moveProject` was reachable from the "Projects not yet under a job" panel and
- * NOWHERE ELSE — and the instant it succeeded the row entered `nested`, left
- * `unplaced`, and the only control that could call it unmounted itself. A
- * one-way door that closed behind the row. ⚠ The endpoint has handled
- * re-attach and detach since `E296`; it simply never had a button.
- *
- * ⚠ NO MODEL CALL, NO DATABASE, NO BROWSER — which is exactly why `E413` also
- * required the path to be WALKED. This file cannot see a picker that renders
- * and does nothing.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-/* ⚠ STATIC IMPORTS so esbuild bundles them: §6 and §7 run the real functions
-   rather than pattern-matching the JSX and the map that produce them. */
 import { cardTitle, cardCompany } from "@/components/onboarding/EmployersStep";
 import { employerToProjectData, projectToEmployerData, type EmployerScalars } from "@/lib/reclassify";
 
@@ -29,13 +10,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/**
- * ⚠ COMMENTS OUT BEFORE ANYTHING IS MATCHED. This codebase supersedes by
- * QUOTING (`E164`), so every string these assertions look for also appears
- * inside a comment a few lines away — `{e.roleTitle || e.name}`, `value=""`,
- * `e.name ?? e.role_title`, and the whole superseded `<select>`. Matching raw
- * text would read the history as the present. §0 proves the strip.
- */
 const strip = (s: string) =>
   s
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ")
@@ -65,8 +39,6 @@ const STORAGE = read("src", "lib", "storage.ts");
     !/ghostTok/.test(strip("{/* was: <X a={1} * / /> ghostTok */} realTok")),
     "E408 — a lazy matcher walked past this and reported live code missing"
   );
-  /* ⚠ THE ONES THAT PROTECT §6 AND §1: both superseded lines are quoted verbatim
-     in the files they were removed from. */
   check(
     "0 — ⚠⚠ the superseded `{e.roleTitle || e.name}` quote is invisible",
     !/\{e\.roleTitle \|\| e\.name\}/.test(STEP),
@@ -78,14 +50,8 @@ const STORAGE = read("src", "lib", "storage.ts");
   );
 }
 
-/* ═══ 1 · ⚠⚠ A PLACED PROJECT CAN BE MOVED TO A DIFFERENT JOB ════════════
-   Mutate: gate the control on `employer_id == null` → red.                  */
 {
   check("1 — the shared picker exists", /function ParentPicker\(/.test(STEP));
-  /* ⚠⚠ IT IS RENDERED ON A PLACED ROW, with THIS card's employer as the current
-     value. `currentEmployerId={e.id}` is the whole assertion: a picker rendered
-     only in the unplaced panel is the defect, and one rendered with no current
-     value reads as "not set" and invites a blind change. */
   check(
     "1 — ⚠⚠ it renders on a PLACED project row, showing its current parent",
     /<ParentPicker[\s\S]{0,200}currentEmployerId=\{e\.id\}/.test(STEP),
@@ -96,14 +62,6 @@ const STORAGE = read("src", "lib", "storage.ts");
     /value=\{currentEmployerId\}/.test(STEP),
     "a control displaying nothing reads as 'not set'"
   );
-  /*
-    ⚠⚠ IT IS INSIDE THE PLACED-ROW BLOCK, AND UNCONDITIONAL THERE. The mutation
-    the brief names is "gate the control on `employer_id == null`", and the
-    honest form of that mutation is simply DELETING the picker from the row —
-    which is the state this brief found the product in. ⚠ SO THE ASSERTION IS
-    POSITIONAL: the picker must appear between the project row's ✕ button and
-    the `+ Add Project` that closes the list, with no conditional in front of it.
-  */
   const rowStart = STEP.indexOf("action: \"deleteProject\"");
   const rowEnd = STEP.indexOf("+ Add Project");
   const placedRow = rowStart > 0 && rowEnd > rowStart ? STEP.slice(rowStart, rowEnd) : "";
@@ -120,8 +78,6 @@ const STORAGE = read("src", "lib", "storage.ts");
   );
 }
 
-/* ═══ 2 · A PLACED PROJECT CAN BE DETACHED ═══════════════════════════════
-   Mutate: remove the detach option → red.                                   */
 {
   check("2 — the no-parent option exists", /NO_PARENT_LABEL/.test(STEP));
   check(
@@ -129,9 +85,6 @@ const STORAGE = read("src", "lib", "storage.ts");
     /export const NO_PARENT_LABEL = "Not under a job yet";/.test(STEP),
     "`unplaced` is a first-class state (E296), not something missing"
   );
-  /* ⚠⚠ THE EMPTY OPTION MUST ACTUALLY FIRE. The superseded panel had
-     `if (!employerId) return;`, which made the empty option inert — that guard
-     is what made detach unreachable even where the picker already lived. */
   check(
     "2 — ⚠⚠ choosing it posts null rather than returning early",
     /onMove\(project, ev\.target\.value \|\| null\)/.test(STEP),
@@ -141,9 +94,6 @@ const STORAGE = read("src", "lib", "storage.ts");
     "2 — ⚠ ABSENCE: the early-return guard is gone",
     !/if \(!employerId\) return;/.test(STEP)
   );
-  /* ⚠ AND A ROW DETACHED THIS SESSION MUST NOT VANISH. The endpoint returns
-     only nested projects, so without this a project created and then detached
-     in one sitting disappears from the screen. */
   check("2 — a detached row is remembered client-side", /const \[detached, setDetached\]/.test(STEP));
   check(
     "2 — ⚠ and forgotten once it finds a home",
@@ -152,32 +102,12 @@ const STORAGE = read("src", "lib", "storage.ts");
   );
 }
 
-/* ═══ 3 · ⚠⚠ `moveProject` IS STILL THE ONLY WRITER ══════════════════════
-   Mutate: add a second writer → red.                                        */
 {
   check(
     "3 — the lib still claims it",
     /the only code path that can set/.test(readFileSync(join("src", "lib", "employers.ts"), "utf8")),
     "read UNSTRIPPED — the claim lives in the doc comment"
   );
-  /*
-    ⚠⚠ THE CLAIM, CHECKED RATHER THAN TRUSTED — AND IT IS NARROWER THAN THE DOC
-    COMMENT SAYS. A first draft of this assertion counted every `employer_id:`
-    in the lib and found TWELVE, because `where:` clauses read the column too.
-    Counting only the WRITES leaves three, and they are not interchangeable:
-
-      · `createProject`            — sets it at BIRTH, on `project.create`
-      · `convertEmployerToProject` — sets it at BIRTH on the new row, and
-                                     RE-PARENTS the converted employer's own
-                                     children so they are not orphaned (`E296`)
-      · `moveProject`              — the only one that RE-PARENTS AN EXISTING,
-                                     UNRELATED PROJECT
-
-    ⚠ SO THE ASSERTION IS "no FOURTH writer, and `moveProject` is still the only
-    one reachable as a plain re-parent". ⚠ That is what makes the double
-    ownership re-check unskippable for the operation `E413` adds buttons for.
-    ⚠ MUTATE: add an `employer_id` to `updateProject`'s data → red.
-  */
   const updateWrites = [
     ...LIB.matchAll(
       /(tx|prisma)\.project\.update(Many)?\(\{[\s\S]{0,260}?data: \{[^}]*employer_id/g
@@ -206,7 +136,6 @@ const STORAGE = read("src", "lib", "storage.ts");
       /where: \{ id: employerId, provider_profile_id: profileId \}/.test(moveBody),
     "a foreign id must resolve to NOTHING, not to somebody else's row"
   );
-  /* ⚠ `updateProject` MUST NOT HAVE LEARNED IT — the brief's STOP condition. */
   const upIdx = LIB.indexOf("export async function updateProject");
   const upBody = LIB.slice(upIdx, LIB.indexOf("export async function", upIdx + 10));
   check(
@@ -214,7 +143,6 @@ const STORAGE = read("src", "lib", "storage.ts");
     !/employer_id/.test(upBody),
     "teaching it would duplicate moveProject's double ownership check"
   );
-  /* ⚠ AND THE CLIENT POSTS IT FROM EXACTLY ONE PLACE. */
   const posts = STEP.match(/action: "moveProject"/g) ?? [];
   check(
     "3 — ⚠ the component posts moveProject from ONE place (`moveTo`)",
@@ -368,8 +296,6 @@ const STORAGE = read("src", "lib", "storage.ts");
   check("7 — the map goes through `clean`", /clean\(e\.role_title, 200\) \?\? clean\(e\.name, 200\)/.test(RECLASS));
 }
 
-/* ═══ 8 · ⚠ THE ROUND TRIP STILL HOLDS AFTER WS-4 ═══════════════════════
-   Undo depends on it: it calls the opposite action with the remembered name. */
 {
   const FULL: EmployerScalars = {
     name: "Acme Energy", role_title: "Lead Consultant", location: "Houston, TX",
@@ -384,14 +310,10 @@ const STORAGE = read("src", "lib", "storage.ts");
   check("8 — the description survives", back.description === "Ran it.");
   check("8 — the dates survive", back.start_date?.getTime() === FULL.start_date?.getTime());
   check("8 — the role type survives under its other name", back.job_role_type_id === "role-1");
-  /* ⚠ THE NAME IS STILL TAKEN FROM THE CALLER, NEVER DERIVED — that is why
-     WS-4's change to the forward direction cannot break Undo. */
   check("8 — ⚠ `projectToEmployerData` takes the name as an argument", /function projectToEmployerData\(p: ProjectScalars, name: string\)/.test(RECLASS));
   check("8 — client_name is still taken from the caller", employerToProjectData(FULL, "Northwind").client_name === "Northwind");
 }
 
-/* ═══ 9 · BOTH VERBS, NOT ONE SLOT WON BY THE NEWER ONE ═════════════════
-   Mutate: drop either → red.                                                */
 {
   check("9 — the shell takes a leave verb", /leaveLabel\?: string;/.test(SHELL));
   check("9 — ⚠ and renders it", /\{leaveLabel && onLeave && \(/.test(SHELL));
@@ -406,14 +328,10 @@ const STORAGE = read("src", "lib", "storage.ts");
     /\{secondaryLabel && onSecondary && leaveLabel && onLeave && \(/.test(SHELL),
     "one verb must not gain a stray separator"
   );
-  /* ⚠ EVERY COUNTED PROVIDER STEP GETS IT, because it is in `shell()` and not
-     on each step — the failure mode `E406` fixed for the step counter. */
   check(
     "9 — ⚠⚠ `Finish later` is in the provider's shared `shell()`",
     /leaveLabel: "Finish later",\s*onLeave: \(\) => router\.push\("\/dashboard"\),/.test(WIZ)
   );
-  /* ⚠ AND `Skip for Now` STILL EXISTS ON THE STEPS THAT HAD IT. Three call
-     sites; the brief's point is that neither verb replaced the other. */
   const skips = WIZ.match(/secondaryLabel: [^,\n]*"Skip for Now"/g) ?? [];
   check(
     "9 — ⚠⚠ `Skip for Now` survives on every step that had it",

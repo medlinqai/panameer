@@ -4,21 +4,6 @@ import { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
-/**
- * "Add your resume" modal (brief_P / E012).
- *
- * Deck flow: drag-and-drop or choose a file (PDF / Word / rich text, ≤5 MB) →
- * upload progress → attached-file row with ✓ and a delete → Continue, which
- * parses the document and populates the profile.
- *
- * (The LinkedIn path this also used to serve was removed in PJv2 WS13 / E069.)
- * Historical note: LinkedIn has no public API for work history
- * profile's own "Save to PDF" export and runs it through this same pipeline.
- *
- * XMLHttpRequest rather than fetch: fetch still can't report upload progress,
- * and the deck's progress bar is part of the spec.
- */
-
 const ACCEPT =
   ".pdf,.doc,.docx,.rtf,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/rtf,text/rtf,text/plain";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -38,20 +23,13 @@ export type ImportOutcome = {
   };
   gaps: string[];
   confidence?: { score: "high" | "low"; reasons: string[] };
-  /**
-   * E184 — WHICH READER PRODUCED THIS. Mirrors `ImportPath` on the server; kept
-   * as a structural type rather than imported so this client component doesn't
-   * drag a server module (and its prisma import) into the browser bundle.
-   */
   path?: {
     reader: "ai" | "heuristic";
     tier?: "economy" | "incumbent";
     provider?: string;
     model?: string;
     reason?: string;
-    /** ⚠ ADMIN / EVAL ONLY — no provider-facing surface may render it (`E407` WS-7). */
     configProblem?: string | null;
-    /** ⚠ `reader: "ai"` with the EMPLOYERS section from the heuristic (`E407` WS-1). */
     employersFromHeuristic?: boolean;
   };
   error?: string;
@@ -68,20 +46,6 @@ export function ResumeUploadModal({
   onClose: () => void;
 
   onImported: (outcome: ImportOutcome) => void;
-  /**
-   * ── ⚠⚠⚠ WHETHER THE UPLOAD APPLIES (`P2-A3-E721` item 2) ───────────────────
-   *
-   * ⚠ `"apply"` (the default) is today's behaviour: the route parses the document AND writes
-   * it to the profile in one call. ⚠⚠ `"store-only"` stores and parses and **writes nothing**,
-   * leaving the caller to run the preview → ticked diff → save flow.
-   * ⚠⚠⚠ **THE DEFAULT IS WHAT KEEPS THE ONBOARDING WIZARD BYTE-IDENTICAL.** Its three call
-   * sites — the dropzone and two modals in `join/provider/page.tsx` — pass no `mode`, so they
-   * land on `"apply"` and depend on exactly the same response they always have: `state` for
-   * `hydrate`, and `applied` for the "here is what we captured" line.
-   * ⚠ **A PRESENTATIONAL-LOOKING PROP THAT IS NOT PRESENTATIONAL**, so it is named for what
-   * the server does rather than for which screen is asking — this component still does not
-   * know which surface it is on, the same rule `showContext` follows in `ResumeImportAction`.
-   */
   mode?: "apply" | "store-only";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +54,6 @@ export function ResumeUploadModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-
 
   const reset = () => {
     setFile(null);
@@ -119,9 +82,6 @@ export function ResumeUploadModal({
     const form = new FormData();
     form.append("file", file);
     form.append("source", "RESUME");
-    /* ⚠ SENT ONLY WHEN IT IS THE NON-DEFAULT (`E721` item 2). ⚠⚠ An `apply` upload puts
-       nothing new on the wire at all, so the wizard's request is unchanged down to the form
-       fields — which is what makes "the wizard is unaffected" checkable rather than asserted. */
     if (mode === "store-only") form.append("mode", "store-only");
 
     const xhr = new XMLHttpRequest();

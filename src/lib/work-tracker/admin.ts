@@ -1,20 +1,3 @@
-/**
- * ⚠⚠⚠ THE WORK TRACKER'S ONE WRITER (`P2-ALL-E752`).
- *
- * Every write to the four `WorkTracker*` tables goes through this module, and
- * every one of them validates against the CATALOG before it touches the
- * database: a `task_id` that is not in `aim-catalog.json` is refused, and so is
- * a status outside `TASK_STATUSES`. ⚠ The tables carry no foreign keys by
- * design, so this module **is** the referential integrity — there is nothing
- * underneath it to catch a bad id.
- *
- * ⚠⚠ **`updated_by` IS RESOLVED FROM THE SESSION, NEVER FROM THE CLIENT.** The
- * route passes a `Viewer` it got from `guardApi("canAdminister")`; no caller
- * supplies an id. That is load-bearing rule 5 applied here.
- *
- * ⚠ This module is ADMIN-ONLY and may read catalog text freely. The PUBLIC view
- * model lives in `public-view.ts` and shares none of these functions.
- */
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { notifyFollowers } from "./followers";
@@ -40,19 +23,11 @@ export class WorkTrackerError extends Error {
 
 /* ── reads ──────────────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ ABSENT IS A VALUE, AND THE MAP IS WHERE THAT IS DECIDED ONCE.
- * A task with no row is `Not Started`. ⚠ Resolving that here means no caller
- * has to remember it, and the admin page and the public view cannot disagree
- * about what an untouched task means (`E585`).
- */
 export type TaskState = {
   status: TaskStatus;
   owner: string | null;
   note: string | null;
-  /** ⚠ `null` = no segments shown, never a guessed `design` (`E757`). */
   stage: JourneyStage | null;
-  /** ⚠ `null` = not in any release, which is NOT the same as "in R1" (`E765`). */
   releaseId: string | null;
 };
 
@@ -60,16 +35,10 @@ export async function taskStates(): Promise<Map<string, TaskState>> {
   const rows = await prisma.workTrackerTaskState.findMany();
   const byId = new Map<string, TaskState>();
   for (const r of rows) {
-    /* ⚠ A row whose stored status is not one of the five is treated as
-       `Not Started` rather than trusted — the column is a string, so nothing at
-       the database level stops a bad value, and a loader is the wrong place to
-       throw. */
     byId.set(r.task_id, {
       status: isTaskStatus(r.status) ? r.status : "Not Started",
       owner: r.owner,
       note: r.note,
-      /* ⚠ An unrecognised stored stage reads as null — no segments — rather than
-         being trusted. The column is a string; nothing at the DB level guards it. */
       stage: isJourneyStage(r.stage) ? r.stage : null,
       releaseId: r.release_id,
     });
@@ -81,7 +50,6 @@ export function statusOf(states: Map<string, TaskState>, taskId: string): TaskSt
   return states.get(taskId)?.status ?? "Not Started";
 }
 
-/** ⚠ Keyed `"<gate_id>#<index>"`. ABSENT means UNANSWERED, which is not `No`. */
 export async function gateStates(): Promise<Map<string, GateValue>> {
   const rows = await prisma.workTrackerGateState.findMany();
   const out = new Map<string, GateValue>();

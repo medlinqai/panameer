@@ -3,14 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * The Company Admin's pending-join queue (brief_company_model WS3).
- *
- * Approve / Reject only. Both are one click with no confirm dialog: approving
- * is reversible in effect (the person can be removed once member management
- * exists) and rejecting leaves the requester able to ask again or pick another
- * company, so neither is the kind of destructive action a modal is for.
- */
 export function CompanyRequests({
   requests,
 }: {

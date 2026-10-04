@@ -7,23 +7,6 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
 
-/**
- * SHARE YOUR WORK REQUEST (brief_create_work_request_v1 WS-E).
- *
- * Where posting lands. The request is live at this point, so this is not a
- * wizard step — it is the first thing you can do with a posted request.
- *
- * REAL QUERY, HONEST EMPTY STATE. The providers listed genuinely claim the
- * skills this request asked for, ranked by how many. If none do, the page says
- * so; it does not pad the list with "related" providers, because a requester
- * reading a list of names assumes those names matched.
- *
- * NO JOB SUCCESS %, NO JOB COUNT. Nothing has been delivered through Panameer,
- * so every provider would read 0% and "0 jobs" — a number that reads as a
- * verdict on the person rather than on the platform's age (E221). What is
- * actually true shows instead: how many of YOUR skills they claim, whether they
- * are validated, and their published rate.
- */
 export const metadata = { title: "Share your Work Request · Panameer" };
 
 export default async function Page({

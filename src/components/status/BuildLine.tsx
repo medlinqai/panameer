@@ -1,50 +1,10 @@
 import type { PublicPhase, PublicRelease } from "@/lib/work-tracker/public-view";
 
-/**
- * ── ⚠⚠⚠ THE BUILD LINE (`P2-ALL-E757`, mockup v5) ────────────────────────────
- *
- * A rail with a magenta fill to today, six phase labels at their start dates,
- * gate diamonds at the phase boundaries, a pulsing TODAY dot and a flag per release.
- *
- * ⚠⚠⚠ **IT DRAWS WITH THE DATES IT HAS (`P2-ALL-E769`).** A phase with a start is
- * placed on the axis; a phase without one is NAMED AFTER THE LINE as `dates to
- * come`. ⚠ Only when NO phase has a start at all does the whole line degrade to
- * `Dates coming soon`.
- *
- * ⚠⚠ **SUPERSEDED, quoted not deleted (`E164`) — the rule this replaced:**
- * //   IF ANY PHASE DATE IS MISSING, THE LINE RENDERS WITHOUT POSITIONS AND SAYS
- * //   `Dates coming soon` - NEVER INVENTED DATES.
- * ⚠⚠⚠ **IT WAS ALL-OR-NOTHING, AND THAT IS WHY SCOTT SAW NO LINE: four of six
- * phases were dated, a release target was set, and the page still printed
- * `Dates coming soon`.** ⚠ One missing date hid four real ones.
- *
- * ⚠⚠⚠ **THE HALF THAT DOES NOT CHANGE: NEVER AN INVENTED DATE.** An undated phase
- * is not placed, not estimated and not given the end of the line — it is listed,
- * by name, as having none. A test once left an invented `2026-05-01` in Define's
- * start column and this page printed it to the public as fact.
- *
- * ⚠ Positions are a pure function of the dates, computed server-side, so there is
- * no layout that depends on JavaScript having run.
- */
-/**
- * ⚠⚠ THE ROW RULE, EXPORTED AND PURE (`P2-ALL-E777`) — see the note at its call
- * site. ⚠⚠⚠ **IT IS SEPARATE SO IT CAN BE PROVEN ON INPUTS THE LIVE DATA DOES NOT
- * CONTAIN.** With today's dates nothing crowds, so a test that only looked at the
- * rendered page would assert "one row" forever and never exercise the mechanism
- * at all — green, and guarding nothing (ruling 12).
- *
- * ⚠ `MIN_GAP_PCT` is a deliberate OVER-estimate of label width: 12% of the axis
- * is ~117px at 976px, against a widest measured label of 75px. **Over-estimating
- * costs a stagger nobody needed; under-estimating costs an overlap, which is the
- * thing that must never happen.**
- */
 export const MIN_GAP_PCT = 12;
 
 export function assignRows(ats: number[], minGapPct = MIN_GAP_PCT): number[] {
   const lastOn = [-Infinity, -Infinity];
   return ats.map((at) => {
-    /* ⚠ Greedy and order-preserving: a mark drops to the second row only if it
-       would crowd the last mark placed on the first. */
     const row = at - lastOn[0] >= minGapPct ? 0 : at - lastOn[1] >= minGapPct ? 1 : 0;
     lastOn[row] = at;
     return row;
@@ -57,27 +17,9 @@ export function BuildLine({
   now,
 }: {
   phases: PublicPhase[];
-  /** ⚠ A flag per RELEASE at its target date (`E765`), replacing milestones. */
   releases: PublicRelease[];
-  /**
-   * ⚠⚠⚠ `now` IS PASSED IN, NOT READ HERE, AND THAT IS NOT STYLE.
-   * `Date.now()` during render is an impure call — lint says so — and on a page
-   * with `revalidate = 60` it would also differ between the prerender and the
-   * HTML a visitor receives, so the TODAY dot could sit at a position the markup
-   * was not built for. ⚠ The page passes `generatedAt`, the same instant every
-   * other figure on the page was measured at, so the whole page agrees with
-   * itself.
-   */
   now: number;
 }) {
-  /*
-    ⚠⚠ A PHASE IS PLACED IF IT HAS A START, AND LISTED IF IT DOES NOT (`E769`).
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the all-or-nothing test:
-    //   const starts = phases.map((p) => (p.start ? Date.parse(p.start) : null));
-    //   const complete = starts.every((s): s is number => s !== null);
-    ⚠⚠⚠ Nothing is ESTIMATED for the undated ones. They keep their names and say
-    they have no dates, which is a fact; a position would be a guess.
-  */
   const dated = phases
     .map((p) => ({ p, t: p.start ? Date.parse(p.start) : NaN }))
     .filter((x) => Number.isFinite(x.t));
@@ -94,15 +36,6 @@ export function BuildLine({
 
   const starts = dated.map((x) => x.t);
   const first = Math.min(...starts);
-  /*
-    ⚠⚠ THE AXIS ENDS AT THE LATEST THING THE DATA ACTUALLY NAMES — the last phase
-    END, the last phase START (phases that have begun and not finished have no
-    end, and today every one of them is in that state), the latest RELEASE target,
-    or today.
-    ⚠⚠⚠ `now` IS IN THE MAX DELIBERATELY: without it, a build that has run past
-    its last named date would pin the TODAY dot to the end of the line and read as
-    "finished" — the one thing this page must not imply.
-  */
   const endTimes = dated.map((x) => (x.p.end ? Date.parse(x.p.end) : NaN)).filter(Number.isFinite);
   const releaseTimes = releases
     .filter((r) => r.date)
@@ -113,58 +46,24 @@ export function BuildLine({
   const pct = (t: number) => Math.min(100, Math.max(0, ((t - first) / span) * 100));
   const todayPct = pct(now);
 
-  /*
-    ── ⚠⚠ PHASES THAT START ON THE SAME DAY SHARE ONE LABEL (`P2-ALL-E769`) ────
-
-    ⚠⚠⚠ MEASURED: `Define` and `Design` both start `2026-08-15`, so two labels
-    were printed at the SAME x and overlapped into an unreadable smudge. ⚠ Two
-    names on one marker is the truth — they did start together — and it is the
-    only arrangement that does not move one of them to a date it does not have.
-  */
   const marks = Array.from(
     dated.reduce((acc, { p, t }) => {
       const key = p.start as string;
       const row = acc.get(key) ?? { date: key, at: pct(t), names: [] as string[], current: false };
       row.names.push(p.name);
-      /* ⚠ Bold if ANY phase on this marker is the current one. */
       row.current = row.current || p.current;
       acc.set(key, row);
       return acc;
     }, new Map<string, { date: string; at: number; names: string[]; current: boolean }>()),
   ).map(([, v]) => v);
 
-  /*
-    ── ⚠⚠⚠ CLOSE MARKERS GO ON A SECOND ROW (`P2-ALL-E777`) ───────────────────
-
-    ⚠ **SCOTT:** the labels bunch at the left (`Define · Design`, then `Build`).
-
-    ⚠⚠ **MEASURED AT 1440 BEFORE THE FIX: the three markers occupied 232–307,
-    393–452 and 1158–1208 — gaps of 86px and 706px, and ZERO overlaps.** `E769`'s
-    shared marker had already removed the collision, so this is CROWDING, not
-    overlap: three labels inside the leftmost 220px of a 976px axis while 706px
-    sits empty. ⚠ Saying that precisely matters, because "they overlap" would have
-    sent the next person looking for a bug that is not there.
-
-    ⚠⚠⚠ **THE ROW IS CHOSEN FROM POSITION ALONE, SERVER-SIDE, BECAUSE NOTHING
-    HERE CAN MEASURE TEXT.** A label's real width depends on the font, which has
-    not loaded when this renders. ⚠ `MIN_GAP_PCT` is therefore a deliberate
-    over-estimate: ~12% of the axis is ~117px at 976px, comfortably wider than the
-    widest label measured (75px). **Over-estimating costs a stagger nobody needed;
-    under-estimating costs an overlap, which is the thing that must never happen.**
-    ⚠ Greedy and order-preserving: a mark drops to row 2 only if it would crowd the
-    last mark placed on row 1, and the next one is compared against whichever row
-    it lands on.
-  */
   const rows = assignRows(marks.map((m) => m.at));
-  /* ⚠ If nothing is crowded the second row is never used, and the block keeps its
-     original height — the common case pays nothing for this. */
   const twoRows = rows.some((r) => r === 1);
 
   return (
     <section aria-label="Build line" className="mt-7 border-t border-line pt-6">
       <div className="relative h-[3px] w-full rounded-full bg-line">
-        {/* ⚠ The fill stops at TODAY, not at the end — it is elapsed time, not
-            progress, and conflating the two would overstate the build. */}
+        {}
         <div
           className="absolute left-0 top-0 h-[3px] rounded-full bg-magenta"
           style={{ width: `${todayPct}%` }}

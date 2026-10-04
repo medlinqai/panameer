@@ -9,35 +9,11 @@ import {
   REQUESTER_WORK_STEPS,
 } from "@/lib/requester-steps";
 
-/**
- * One line under each card name.
- *
- * ⚠ NOT SCOTT'S WORDS — he named the TILES (`REQUESTER_STEP_LABELS`), not these
- * blurbs. `company` and `work_location` are carried over verbatim from the
- * hardcoded cards they replace; `requester_info` is new, because the sentence it
- * replaced described the removed approver step. Flagged as CC's wording in the
- * `E259` report so Scott can overwrite it.
- * ⚠ TYPED TO THE STEP UNION, so a new step fails the build here rather than
- * rendering a card with no description.
- * ⚠⚠ AND A REMOVED STEP FAILS IT TOO — `P1-A1.4-E418` deleted the `company`
- * step and this map stopped compiling on the spot, which is the tripwire working
- * in the other direction. ⚠ SUPERSEDED, quoted not deleted:
- * `company: "Join the company you work for, or add it."`
- * ⚠ THE CARDS THEMSELVES ARE DERIVED from `REQUESTER_WORK_STEPS`, so the count
- * went three → two with NO hand-editing. Do not hardcode them again.
- */
 const CARD_BLURBS: Record<(typeof REQUESTER_WORK_STEPS)[number], string> = {
   requester_info: "Who you are, and how a provider reaches you.",
   work_location: "The location providers deliver to.",
 };
 
-/**
- * The requester INTRO — the mirror of /join/provider/start (E002/E008): verify
- * email → here → step 1/5. Pre-wizard, so no stepper.
- *
- * The copy is the delta. The provider's intro is about being found for work;
- * this one is about finding people, which is the whole reason WS3 exists.
- */
 export default async function RequesterStartPage() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=/join/requester/start");
@@ -90,29 +66,7 @@ export default async function RequesterStartPage() {
           </p>
         </div>
 
-        {/*
-          ⚠⚠ DERIVED FROM `REQUESTER_WORK_STEPS`, NEVER HARDCODED (`E243`/`E259`).
-
-          These three cards used to be a literal array of three while the wizard
-          ran FIVE steps, so the intro promised a shape the wizard did not
-          deliver — and when `E263` cut a step, a hardcoded list would have gone
-          wrong in the other direction. The count and the order now come from
-          the same constant the wizard iterates, so they cannot drift again.
-
-          ⚠ SUPERSEDED, quoted not deleted — the hardcoded cards read
-          *"Your company / Join the company you work for, or add it."*,
-          *"You and your approver / Who you are, who buys with you, and who
-          approves."* and *"Where the work happens / The location providers
-          deliver to."* The middle one described the step `E263` removed.
-
-          ⚠ NAMES ARE SCOTT'S (`REQUESTER_STEP_LABELS`), on his note that *"the
-          tile names are not correct based on the data being captured at each of
-          those steps."* The one-line descriptions below are NOT his — they are
-          carried over/adapted and are flagged as chat-and-CC wording in the
-          report, not approved copy.
-          ⚠ `sm:grid-cols-3` IS DERIVED TOO. A fixed `3` would have silently
-          left a hole the day the step count changed.
-        */}
+        {}
         <section
           className="mt-10 grid gap-4"
           style={{

@@ -1,28 +1,5 @@
 import { AI_MATCH_COPY } from "@/lib/brand";
 
-/**
- * THE MATCHING ENGINE, described honestly (brief_public_pages_ia WS-2).
- *
- * Lives on Hire Talent rather than the home: it answers "how will you find me
- * the right person", which is a question somebody asks once they have already
- * decided to hire. On the home it would have been an answer to a question the
- * reader had not asked yet.
- *
- * ── WHAT IS TRUE HERE ────────────────────────────────────────────────────────
- *
- * This is the one AI claim on the marketing site with real machinery behind it,
- * and the wording is chosen to claim exactly that and no more. Ranking runs
- * against each expert's dated work history — the systems they ran, how deep,
- * how recently — which is a property of the per-job skill model, not a
- * marketing flourish.
- *
- * WHAT IT DOES NOT SAY: nothing about accuracy, nothing about how many experts,
- * no "instantly", and no number anywhere. Those would all be inventions. The
- * strip describes the MECHANISM, which is the honest thing to sell before
- * there is a track record to point at.
- *
- * Presentational and server-rendered — three static steps, no island.
- */
 export function AiMatch() {
   return (
     <section id="ai-match" className="border-t border-line bg-canvas py-16">
@@ -43,11 +20,7 @@ export function AiMatch() {
             </p>
           </div>
 
-          {/*
-            The mechanism as three stacked cards rather than a diagram. A
-            flow-chart would have needed arrows, a viewBox and a mobile
-            fallback to say the same three sentences.
-          */}
+          {}
           <ol className="space-y-3">
             {AI_MATCH_COPY.steps.map((s, i) => (
               <li

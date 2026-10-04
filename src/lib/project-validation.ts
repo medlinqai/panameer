@@ -9,52 +9,11 @@ import { projectValidatedTemplate } from "@/lib/email/templates/project-validate
 import { displayFullName } from "@/lib/display";
 import { checkContactDomain, registrableDomain } from "@/lib/email-domain";
 
-/**
- * Project validation — the trust loop (brief_project_validation).
- *
- *   provider requests → contact gets a branded email → they confirm or decline
- *   → the project earns (or doesn't earn) its Validated ✓ badge.
- *
- * The contact has NO ACCOUNT, so the emailed token is the entire authorization.
- * It therefore follows the same contract as every other token in this codebase
- * (decisions-01): a 32-byte random value, stored only as a SHA-256 HASH, with
- * an expiry, consumed on first use. A leaked database gives an attacker
- * hashes, not usable links.
- */
-
 /** 30 days — a client contact will not answer within 24 hours. */
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-/**
- * ── ⚠⚠ THE RESEND WINDOW IS SEVEN DAYS (`P2-A1.1-E746`, WS-A) ───────────────
- *
- * ⚠ **SCOTT'S BRIEF: *"One open request per project; resend after 7 days."***
- * ⚠⚠ It was **one hour**, which protected against a provider hammering the
- * button but not against the thing that actually costs us: **a client contact
- * mailed again and again about the same project.** Their inbox is the asset.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   (comment: Don't let a provider re-send at a client contact more than hourly.)
- * //   const RESEND_COOLDOWN_MS = 60 * 60 * 1000;
- */
 const RESEND_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * ── ⚠⚠⚠ A DAILY CAP ACROSS THE WHOLE PROFILE (`P2-A1.1-E746`, WS-A) ─────────
- *
- * ⚠ **SCOTT'S QUESTION 3: *"Is there a limit on how many requests a provider can
- * send in a day?"*** ⚠⚠ **THERE WAS NONE.** The seven-day cooldown is PER
- * PROJECT, so a provider with 40 projects could mail 40 strangers in a minute
- * and every one of them would be a first contact — which is exactly the shape
- * `E526`'s bulk invite is blocked over.
- *
- * ⚠⚠⚠ **TEN, AND THE FIGURE IS BORROWED RATHER THAN INVENTED:**
- * `INVITE_LIMIT_PER_HOUR` is 10 and `RECOMMENDATION_LIMIT_PER_HOUR` is 5 — both
- * are *"ask a stranger for something by email"*, which is this. ⚠ Counted in the
- * DATABASE, not in process memory: an in-process counter resets every deploy and
- * is per-instance, which on serverless is no limit at all (`E528`'s record).
- * ⚠ **AWAITING SCOTT'S CONFIRMATION** — he asked the question and I picked a
- * number; it is one constant.
- */
 export const VALIDATION_LIMIT_PER_DAY = 10;
 
 export type ValidationState = {
@@ -79,16 +38,6 @@ async function ownedProfileId(viewer: Viewer): Promise<string> {
   return profile.id;
 }
 
-/**
- * Send (or re-send) a validation request for one project.
- *
- * OWNER-SCOPED: the project is re-checked against the session's own profile, so
- * a foreign project id resolves to nothing rather than emailing someone else's
- * client.
- *
- * Returns `devLink` when no Resend key is configured, so the loop stays
- * walkable locally — the same dev affordance the verify-email flow uses (E048).
- */
 export async function requestProjectValidation(
   viewer: Viewer,
   projectId: string,
@@ -116,42 +65,11 @@ export async function requestProjectValidation(
     );
   }
 
-  /**
-   * THE DOMAIN GUARD (brief_validation_domain_guard) — a HARD BLOCK, and it
-   * lives HERE rather than only in the modal because the modal is not a
-   * security boundary. Anything that can POST to this endpoint gets the same
-   * refusal.
-   *
-   * Without it the Validated ✓ badge is decorative: a provider could name their
-   * own personal address as the "client contact" and confirm their own work.
-   */
   const domainCheck = checkContactDomain(contactEmail, project.client_domain);
   if (!domainCheck.ok) {
     throw new OnboardingError(domainCheck.message, "INVALID");
   }
 
-  /*
-    ── ⚠⚠⚠ THE SELF-VALIDATION HOLE, CLOSED (`P2-A1.1-E746`, WS-A) ───────────
-
-    ⚠ **THE BRIEF ASKS: *"The contact's email must not be the provider's own
-    address or domain… what about self-employed providers like StratERP."***
-
-    ⚠⚠ **MEASURED: `checkContactDomain` DID NOT CLOSE THIS.** It requires the
-    contact's domain to EQUAL the project's `client_domain` and refuses free-email
-    hosts — which stops `me@gmail.com`, and **does not stop a provider whose own
-    company IS the client.** A StratERP consultant listing StratERP as the client
-    passes every existing check and validates their own work.
-    ⚠⚠⚠ **THAT MAKES THE BADGE DECORATIVE, WHICH IS THE ONE THING IT MUST NEVER
-    BE** — the same sentence the domain guard above was written for.
-
-    ⚠ **THE TEST IS THE PROVIDER'S OWN SIGN-IN DOMAIN**, which is the one address
-    we know belongs to them. ⚠⚠ It is deliberately NOT a block on self-employment:
-    an independent consultant validating work they did FOR SOMEBODY ELSE is
-    unaffected, because that client's domain is not theirs.
-    ⚠ **REPORTED TO SCOTT:** a provider whose client genuinely shares their domain
-    (a parent company, a rebrand) now cannot request validation at all. That is
-    the safe direction — a refusal is recoverable, a self-granted badge is not.
-  */
   const self = await prisma.user.findFirst({
     where: { person: { providerProfile: { id: profileId } } },
     select: { email: true },
@@ -164,12 +82,6 @@ export async function requestProjectValidation(
     );
   }
 
-  /*
-    ── ⚠⚠ THE DAILY CAP (`P2-A1.1-E746`, WS-A) — see `VALIDATION_LIMIT_PER_DAY` ─
-    ⚠ Counted across the PROFILE, not the project: the seven-day cooldown is
-    per-project and would let a provider with many projects mail many strangers
-    at once.
-  */
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const sentToday = await prisma.projectValidation.count({
     where: { sent_at: { gte: since }, project: { provider_profile_id: profileId } },

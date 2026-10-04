@@ -4,10 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { percentToBps } from "@/lib/assessment/tax-rate";
 
-/**
- * Write the funding rate. `canAdminister` only — this number appears on every
- * assessment report, so it is Panameer Admin's, not a company owner's.
- */
 const Body = z.object({
   /** null = the global default row. */
   geography: z.string().trim().min(2).max(2).nullable(),
@@ -26,13 +22,6 @@ export async function POST(req: Request) {
   const { geography, percent, note } = parsed.data;
   const rate_bps = percentToBps(percent);
 
-  /*
-    upsert ON `geography`, which is unique and nullable. Postgres treats NULLs
-    as distinct in a unique index, so the global row cannot be matched by an
-    upsert `where` — hence the explicit branch. Getting this wrong would insert
-    a second global row on every save and leave `resolveTaxRate` picking one at
-    random.
-  */
   if (geography === null) {
     const existing = await prisma.taxRate.findFirst({ where: { geography: null }, select: { id: true } });
     if (existing) {

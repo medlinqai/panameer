@@ -6,13 +6,6 @@ import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { isMarketplaceVisible, providerMeetsRequired, type Viewer } from "@/lib/access";
 import { normalizeEmail, sameEmail } from "@/lib/normalizeEmail";
 
-/**
- * Coordinator → provider invites (brief_I). Reuses the hash-only token pattern
- * and the Resend send infra (dev fallback) from the email-verification flow —
- * nothing is duplicated. Access is by identity: the inviter is always the
- * viewer's own coordinator Person; invite mutations are owner-scoped to it.
- */
-
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export class CoordinatorError extends Error {

@@ -12,75 +12,6 @@ import {
 } from "@/components/marketing/brand";
 import { Logo } from "@/components/Logo";
 
-/**
- * THE PUBLIC HEADER — one row on every public page (WS-6b).
- *
- * It used to be the marketing pages' header while /learn and /verify rendered
- * PublicTopNav: a bigger logo, a two-item nav, a "Get Started" button. Two
- * headers on one product, and the difference was visible the moment anyone
- * followed the nav's own "Learn" link. This is the survivor; PublicTopNav is
- * retired.
- *
- * Sticky: wordmark, nav, Log In / Sign Up, mobile menu.
- *
- * E014 — THE HEADER IS THE WORDMARK ONLY. E001 put the badge under it as part
- * of a lockup, on the reasoning that a wordmark alone says a name while the
- * badge says what the name is for. True, but it was saying it twice: the hero
- * begins with the same four beats 200px below, in 60px type, and the header
- * copy was 10.5px uppercase — the version nobody reads, competing with the
- * version everybody does.
- *
- * Removing it also removes the reason for the absolute positioning E002 needed.
- * The tagline was pinned under the wordmark so it added no height and the nav
- * could stay centred on the wordmark rather than on a two-line block. With the
- * tagline gone the row is what it looks like — one line of items, all vertically
- * centred on the same baseline, no compensation required.
- *
- * The badge still renders in the hero, from BRAND_BADGE_SHORT (D1).
- */
-/**
- * ── ⚠⚠ THE SIGNED-IN HEADER (`P1-J1.4-E306`) ─────────────────────────────────
- *
- * `MarketingHeader` was NOT auth-aware — no session reference existed in it — so
- * it rendered `Log In` / `Sign Up` unconditionally on all 19 surfaces that mount
- * it, INCLUDING every `/join/provider` step. ⚠⚠ `Sign Up` WAS THE LIVE HARM: a
- * signed-in user could start a SECOND account in one click, mid-onboarding.
- *
- * ── WHY THIS SHAPE, AND WHY NOT THE OBVIOUS ONE ──────────────────────────────
- *
- * ⚠ THE SIGNAL IS `useSession()`, NOT `useMe()`. `SessionProvider` wraps the whole
- * app (`app/providers.tsx:7`), so it is available here on every surface.
- * `MeProvider` is mounted in exactly THREE layouts — `(app)`, `admin`, `learn` —
- * and NOT on public pages or the wizard. Reaching for `useMe()` first would have
- * rendered a permanently-loading chip on all 19 pages, because `MeContext`
- * defaults to `{ me: null, loading: true }`.
- *
- * ⚠ SO THE PROVIDER IS MOUNTED HERE, AND ONLY WHEN SIGNED IN. A header-local
- * provider, never a layout one: adding `MeProvider` to a public layout would fire
- * `/api/me` for every anonymous visitor on every marketing page.
- * ⚠ IT WRAPS THE WHOLE HEADER rather than just the chip. That was originally
- * because the NAV needed `published` too; the nav gate came out on 2026-09-02
- * (`E306` reversal) and the wrapper stayed, because `AccountMenu` needs the
- * provider either way and narrowing it would be churn for no behaviour change.
- */
-/**
- * WHERE "GO TO THE APP" POINTS (`P2-J1.1-E001` D-1).
- *
- * SCOTT, 2026-09-05: *"How would i know to get back into the application from
- * here? If i click one of the options on the profile dropdown, then i get back
- * to the app...but this is not an easy or obvious choice."* And: *"yes, return
- * to the app 'Go to the App' or something similar."*
- *
- * ⚠ IT ASKS `/api/home` RATHER THAN HARDCODING `/dashboard`, because the answer
- * is role-dependent — `homeFor()`'s own rule is that *"a Panameer Admin goes to
- * the console, not to a provider's job board"*. This is the SAME call
- * `login/page.tsx:58` makes for the same reason, with the same `/dashboard`
- * fallback, so the destination cannot drift into two answers.
- *
- * ⚠ IT ONLY FIRES WHEN SIGNED IN. An anonymous visitor on a marketing page must
- * not cost a session round-trip — the same reason `MeProvider` is mounted in the
- * signed-in branch and never in a public layout.
- */
 function useAppHome(signedIn: boolean) {
   const [home, setHome] = useState("/dashboard");
   useEffect(() => {
@@ -103,14 +34,6 @@ function useAppHome(signedIn: boolean) {
 
 export function MarketingHeader() {
   const { status } = useSession();
-  /*
-    ⚠ `status` HAS THREE VALUES AND "loading" IS NOT "signed out". Treating it as
-    signed-out would flash `Log In / Sign Up` at a signed-in user on every page
-    load — briefly re-offering the exact button this row exists to remove. While
-    it resolves we render the signed-out header, which is what an anonymous
-    visitor sees anyway, and swap once. ⚠ THE ONE THING THAT MUST NOT HAPPEN IS
-    THE REVERSE: a signed-out visitor must never see a chip.
-  */
   if (status === "authenticated") {
     return (
       <MeProvider>
@@ -124,29 +47,6 @@ export function MarketingHeader() {
 function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const appHome = useAppHome(signedIn);
-  /*
-    WS-6b — THE ACTIVE NAV ITEM COMES FROM THE PATH, not from a prop.
-
-    This header now renders on every public page (home, /find-work, /learn,
-    /explore, /verify), and threading an `active` prop through five layouts is
-    five chances to pass the wrong one. usePathname is already available — this
-    component is a client component for the mobile menu — so the header answers
-    the question itself.
-
-    Prefix match, not equality, so /learn/<path>/<lesson> still lights "Learn".
-
-    ⚠ AN ANCHOR IS NEVER "THE CURRENT PAGE". Pricing and Enterprise are
-    `/hire-talent#value` and `/hire-talent#punchout` — sections of a page, not
-    pages. Stripping the hash and comparing paths marked all three of Hire
-    Talent, Pricing and Enterprise active at once, which is three answers to a
-    question that has one. Hash hrefs are excluded outright; `aria-current` is
-    a claim about the document, and a jump link inside it is not a different
-    document.
-
-    (Those two hrefs pointed at `/#…` until brief_public_pages_ia moved the
-    sections to /hire-talent. The exclusion below is what kept the bad state
-    from ALSO lighting up the home while they were stale.)
-  */
   const pathname = usePathname();
   const { me } = useMe();
   const isActive = (href: string) => {
@@ -156,193 +56,21 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
   };
 
   return (
-    /*
-      ── ⚠⚠⚠ THE HEADER PINS THE LIGHT PALETTE ON ITSELF (`P2-ALL-E773`) ———
-
-      ⚠ **SCOTT, 2026-10-02, walking the LIVE site in dark mode:** the header is a
-      washed-out light grey bar with faint menu links.
-
-      ⚠⚠⚠ **MEASURED FROM RENDERED PIXELS, NOT FROM TOKENS:** in dark mode the bar
-      rendered `rgb(232,231,235)` and the links `rgb(179,173,196)` — **1.76:1 on
-      `/status` and 1.75:1 on the home page, against an AA floor of 4.5.** In light
-      mode the same component measured **9.04:1**.
-
-      ⚠⚠ **AND A THIRD PAGE ALREADY HAD IT RIGHT, WHICH IS WHERE THE FIX CAME
-      FROM: `/explore` measured 9.04:1 IN DARK**, because it wraps this header in
-      `.marketing-surface`. `bg-white/90` stays white; it was `--color-ink-2`
-      INVERTING to a light grey that produced the washout.
-
-      ⚠ **SO THE CLASS GOES ON THE HEADER ITSELF, NOT ON THE PAGE.** Wrapping
-      `/status` would pin the WHOLE page light and undo the dark mode Scott had just
-      walked and approved. Scott's ruling: *"pinned-light scope on the header only."*
-
-      ⚠⚠ **IT IS THE SAME CLASS, NOT A NEW ONE, AND THAT IS DELIBERATE.** A
-      header-only copy of those nine tokens would be a second definition to keep in
-      step by hand (`E585`), and `check:theme` (`E432`) asserts `@theme` and
-      `.marketing-surface` agree — a third block would sit outside that guard.
-      ⚠ On pages already inside a `.marketing-surface` wrapper this nests with
-      identical values and changes nothing.
-    */
     <header className="marketing-surface sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-[10px] backdrop-saturate-150">
       <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-8 px-6">
-        {/*
-          Through <Logo>, not a second copy of the asset path — this header was
-          how the old wordmark survived the last logo change (one file still
-          pointed at the retired mark).
-
-          `flex items-center` on the wrapper rather than the old `relative`:
-          nothing is pinned to it now, and the mark centres on the row itself.
-        */}
-        {/*
-          E018 — THE WORDMARK IS OPTICALLY CENTRED, NOT BOX-CENTRED.
-
-          `items-center` already centred the logo's BOX, which is why this
-          looked like it should be right and wasn't. The artwork is the problem:
-          in the 524×132 asset the looped P spans rows 9–114, but "anameer" —
-          all lowercase, no ascenders, no descenders — sits at rows 60–109. So
-          the word the eye actually reads occupies the BOTTOM HALF of the box,
-          and centring the box hangs the word low against nav text.
-
-          Measured on the asset, converted to the 32px render:
-            alpha-weighted ink centroid   1.75px below box centre
-            x-height band ("anameer")     4.48px below box centre
-
-          The truth is between them — the P reads as a genuine ascender, so it
-          should pull the centre up somewhat, but not by its full height. 3px
-          is that middle, and it is one number to change if Scott wants more or
-          less on the walk.
-
-          On the <Image>, not the <Link>: the click target stays where the
-          layout put it.
-        */}
+        {}
+        {}
         <div className="flex shrink-0 items-center">
-          {/*
-            ⚠ h-10, RAISED FROM h-8, AND THE SIZE WAS MEASURED NOT CHOSEN.
-
-            Four nav items and two buttons were outweighing the brand: 32px of
-            mark in a 71px header, 127px wide. Measured on the real header at
-            1562 / 1200 / 390 — identical at all three, since the header height
-            does not respond:
-
-                h-8   127.0 x 32   45% of header height  (was)
-                h-9   142.9 x 36   51%
-                h-10  158.8 x 40   56%                   (shipped)
-                h-11  174.7 x 44   62%
-
-            h-10 leaves 15.5px of clearance above and below inside the 71px row;
-            h-11 leaves 13.5px and starts crowding the button line. Header height
-            and nav alignment are untouched — only the mark grows.
-
-            ⚠ THE -3px OPTICAL LIFT IS LEFT AS IT WAS. It exists because the P
-            reads as a true ascender and pulls the optical centre up; at 40px the
-            same 3px is proportionally a smaller lift than it was at 32px. Whether
-            it wants to grow with the mark is an eyeball call for the walk, not a
-            number to derive — flagged, not changed.
-          */}
-          {/*
-            ── ⚠⚠ h-8, DOWN FROM h-10, AND THE OVERFLOW IS WHY (`P1-ALL-E400`) ──
-
-            ⚠ CAUGHT BY `check:app-shell`, NOT BY EYE: *"/ @768: marketing header
-            clipped off the LEFT ... left=-8"*. The v2 lockup is a WIDER RATIO —
-            5.91 against 4.85 — so at `h-10` it renders 236px against the old
-            194px, and those 42px push the header past its own left edge at 768.
-
-            ⚠⚠ AND h-8 PRESERVES THE DECISION h-10 WAS MADE FOR. The note above
-            records that h-10 was measured, not chosen: *"four nav items and two
-            buttons were outweighing the brand"*. That was a WIDTH problem solved
-            with HEIGHT because the old art was narrow. Measured:
-                old @h-10  194.1px      new @h-8  189.0px      Δ 5.1px
-            The brand keeps the width it was given; the wider mark buys it back
-            without the height. ⚠ Reverting to h-10 re-breaks 768.
-          */}
+          {}
+          {}
           <Logo className="h-8 w-auto -translate-y-[3px]" priority />
         </div>
 
-        {/*
-          E014(iii) — ROOM TO BREATHE. Six links at a 26px gap, pushed right by
-          the tagline's old `ml-3.5`, clustered into the middle-right of the row
-          and read as one dense block. The gap opens to 34px (28px at the md
-          breakpoint, where six links still have to fit beside two buttons) and
-          the left offset goes, so the nav starts where the wordmark ends
-          instead of a step further in.
-
-          E038 — AND NOW IT IS ITS OWN ZONE. Widening the gap fixed the density
-          and left the position wrong: the nav was still the second item in a
-          left-packed row, so it sat against the wordmark with all the slack
-          dumped between it and the buttons. `flex-1 justify-center` makes the
-          middle zone take every remaining pixel and centre its contents in
-          them, which is what "equidistant from logo and actions" actually
-          requires — the two outer zones are different widths, so centring the
-          nav in the ROW would not centre it between them.
-        */}
-        {/*
-          ── ⚠⚠⚠ `md:` BECAME `min-[1100px]:` (`P2-ALL-E699`, ruling `100a`) ────────
-
-          ⚠⚠ **RULING 100 GAVE THE APPLICATION THE WORDS `Learn` AND `Shop`, so the
-          public labels are `Training` and `Marketplace` — and Scott ruled the layout
-          cost is an ENGINEERING problem:** *"MOVE THE `md:` BREAKPOINT… DO NOT SOLVE A
-          LAYOUT PROBLEM BY TAKING THE APPLICATION'S VOCABULARY."*
-
-          ⚠ **RE-MEASURED IN THE BROWSER, NOT DERIVED (load-bearing rule 4):**
-            Training 63.28   Talent 48.98   Work 41.77
-            Marketplace 96.22   Optimize 70.95   Integrate 71.09
-            ────────────────
-            labels 392.29  +  5 gaps x 34 = 562.29 nav required   (was 486.12)
-
-          ⚠ So the worst public page needs 158.78 + 562.29 + 212.20 + 64 + 48 =
-          **1045.27**, and the old `md:` (768) was short by ~277px — which is why the
-          sweep read *"clipped 31px off the LEFT"* once the ☰ stopped taking the slack.
-          ⚠⚠ **1100 LEAVES 54.73px OF MARGIN. `lg` (1024) WOULD NOT — it is 21px short
-          of the requirement, and that is the kind of gap a sweep that tests 1000 and
-          1100 but not 1024 would never show.**
-
-          ⚠⚠⚠ **THE ☰ MOVED WITH IT, AND IT HAD TO.** This file already warns about
-          exactly that: *"That is the trap in moving one breakpoint without the other."*
-          The ☰ carries the nav links AND the auth buttons, so leaving it at
-          `lg:hidden` would have left **1024–1099 with no nav links anywhere** — the
-          same defect one row down.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   className="hidden flex-1 justify-center gap-7 ... md:flex lg:gap-[34px]"
-        */}
+        {}
+        {}
         <nav className="hidden flex-1 justify-center gap-7 text-[15px] font-semibold text-ink-2 min-[1100px]:flex lg:gap-[34px]">
           {MARKETING_NAV.map((item, i) => {
             const on = isActive(item.href);
-            /*
-              ⚠ THE `item.primary` BRANCH IS GONE (E028), AND HERE IS WHY IT WAS
-              A BUG RATHER THAN A STYLE.
-
-              It rendered a promoted item with `font-bold text-magenta`
-              UNCONDITIONALLY — the same treatment `isActive` gives the current
-              page. So the one promoted item ("AI Assessment") read as active on
-              every page, and every page showed TWO items looking selected. It
-              also pointed at `/`, so on the home page it was doubly wrong: the
-              genuinely-active item and the always-magenta item were different
-              links.
-
-              ⚠ IF ANYTHING IS EVER PROMOTED AGAIN: PROMOTION USES WEIGHT,
-              ACTIVE KEEPS COLOUR. They must be different signals. Reusing
-              magenta for "important" and for "you are here" is what collided,
-              and it will collide again the moment both are true at once.
-            */
-            /*
-              ⚠⚠ THE NAV GATE IS GONE — SCOTT REVERSED IT (`E306` REVERSAL, 2026-09-02):
-              *"ok, pull it."*
-            
-              ⚠ SUPERSEDED, quoted not deleted, because THE CODE DID EXACTLY WHAT IT WAS
-              ASKED — this is a decision, not a bug fix. An unpublished provider used to get
-              every marketing link rendered as a focusable `aria-disabled` span carrying
-              *"Available once your profile is published"* on hover and focus.
-            
-              ⚠ THE RULE HE SET: GATE THE TRANSACTION, NOT THE BROWSING. A provider who
-              abandons the wizard and comes back to read about Learn should not find a dead
-              marketing site.
-              ⚠ IT ALSO DISPOSES OF A SPLIT NOBODY HAD FILED: the mobile drawer's six links
-              were never gated, so the gate's behaviour depended on window width.
-            
-              ⚠⚠ THE IDENTITY CHIP IS NOT PART OF THIS REVERSAL AND STAYS, desktop AND
-              mobile. Removing `Sign Up` for a signed-in user was the live-harm fix — a
-              second account was one click away on every wizard step.
-            */
             return (
               <Link
                 key={`${item.label}-${i}`}

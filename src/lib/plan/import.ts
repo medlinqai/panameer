@@ -1,24 +1,5 @@
-/**
- * ── IMPORTING A PLAN FROM EXCEL OR CSV (`P2-ALL-E786`) ──────────────────────
- *
- * ⚠ **SCOTT:** *"Anyone who wants a complex plan builds it in Excel or
- * Microsoft Project and uploads."* ⚠⚠ So this is the escape hatch for the plan
- * the outline editor is deliberately too simple for.
- *
- * ⚠⚠⚠ **PARSING IS PURE AND LIVES HERE; NOTHING IN THIS FILE TOUCHES THE
- * DATABASE.** The gate runs every case below against fixtures with no server
- * and no Postgres, which is the only way the per-row error messages get tested
- * at all — and they are the whole point: **a row that fails says why, and the
- * rest of the file still imports.**
- *
- * ⚠ CSV is parsed here rather than with a library: the format is eight columns
- * of plain text, and the one hard part (quoted fields containing commas,
- * newlines and doubled quotes) is ~30 lines. ⚠⚠ `exceljs` is the one new
- * dependency and it is used for `.xlsx` only.
- */
 import { isRowStatus, isRowType, type RowStatus, type RowType } from "./model";
 
-/** The template's columns, in order. ⚠ `Level` is 1 or 2 — the outline depth. */
 export const IMPORT_COLUMNS = [
   "Level",
   "Title",
@@ -28,18 +9,6 @@ export const IMPORT_COLUMNS = [
   "Status",
   "Owner",
   "Hours",
-  /**
-   * ── ⚠⚠⚠ `Release` EXISTS BECAUSE ITS ABSENCE COST THE LIVE PLAN'S SCOPE ────
-   *
-   * ⚠ **SCOTT, 2026-10-03:** *"Add a Release column to the plan import +
-   * template so this doesn't recur."* ⚠⚠ Measured the same day: the live build
-   * plan had **every R1 tag gone** and two rows renamed `… (later release)` —
-   * the shape of an edit-in-Excel-and-replace-import round trip through a
-   * template that could not carry the release. The import silently dropped the
-   * one field it had no column for.
-   * ⚠⚠⚠ **A ROUND TRIP THAT LOSES A FIELD IS WORSE THAN AN IMPORT THAT REFUSES
-   * IT**, because it looks like it worked.
-   */
   "Release",
 ] as const;
 
@@ -52,11 +21,6 @@ export type ImportedRow = {
   status: RowStatus;
   owner: string | null;
   hours: number | null;
-  /**
-   * ⚠⚠ THE RELEASE **CODE** (`R1`), NOT AN ID. The parser is pure and has no
-   * database; `writeImportedRows` resolves the code when it writes. ⚠ A
-   * spreadsheet full of uuids is also not something anybody can edit by hand.
-   */
   release: string | null;
 };
 
@@ -73,11 +37,6 @@ export type ParsedPlanFile = {
 
 /* ── CSV ────────────────────────────────────────────────────────────────── */
 
-/**
- * A complete CSV reader: quoted fields, embedded commas and newlines, doubled
- * quotes, CRLF, and a leading BOM (which Excel writes and which otherwise turns
- * the first header into `﻿Level` and silently breaks the column match).
- */
 export function parseCsv(text: string): string[][] {
   const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const rows: string[][] = [];
@@ -100,7 +59,6 @@ export function parseCsv(text: string): string[][] {
     const c = src[i];
     if (quoted) {
       if (c === '"') {
-        /** ⚠ `""` inside a quoted field is one literal quote. */
         if (src[i + 1] === '"') {
           field += '"';
           i += 2;
@@ -125,7 +83,6 @@ export function parseCsv(text: string): string[][] {
       continue;
     }
     if (c === "\r") {
-      /** ⚠ CRLF and a lone CR both end the row. */
       if (src[i + 1] === "\n") i++;
       endRow();
       i++;
@@ -139,22 +96,12 @@ export function parseCsv(text: string): string[][] {
     field += c;
     i++;
   }
-  /** ⚠⚠ A file that does not end in a newline still has a last row, and a file
-   *  that does must not gain an empty one. */
   if (field !== "" || row.length > 0) endRow();
   return rows;
 }
 
 /* ── the shared row reader ──────────────────────────────────────────────── */
 
-/**
- * Turn a grid of cells into rows and problems.
- *
- * ⚠⚠⚠ **A BAD ROW IS SKIPPED WITH A REASON — IT NEVER STOPS THE IMPORT.** A
- * spreadsheet of forty rows with one bad date should import thirty-nine and say
- * which one it could not read. An all-or-nothing import of somebody's real plan
- * is the behaviour that makes people stop using the feature.
- */
 export function readGrid(grid: string[][]): ParsedPlanFile {
   const rows: ImportedRow[] = [];
   const problems: RowProblem[] = [];
@@ -168,9 +115,6 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
     const at = header.indexOf(name.toLowerCase());
     if (at >= 0) index.set(name, at);
   }
-  /** ⚠ Only `Title` is structurally required — everything else can be blank and
-   *  the row is still a real row. A missing `Title` COLUMN means the file is
-   *  not a plan at all, which is a file-level problem, not a row-level one. */
   if (!index.has("Title")) {
     return {
       rows,

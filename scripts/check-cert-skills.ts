@@ -3,22 +3,6 @@ import { applyParsedResume } from "@/lib/resume/import";
 import { OFFERABLE } from "@/lib/catalog";
 import type { ParsedResume } from "@/lib/resume/parse";
 
-/**
- * ⚠⚠ DOES A CERTIFICATE ACTUALLY PRODUCE A SKILL? (`P2-J1.4-E509` WS-B)
- *
- * WS-B shipped with ZERO net new skills on the supplied fixture, because the one
- * certificate that matched named a skill the résumé already listed. ⚠ THAT
- * PROVED ONLY THAT NOTHING BROKE. It never proved the path WORKS.
- *
- * ⚠ THIS RUNS THE REAL `applyParsedResume` AGAINST A REAL PROFILE with a parsed
- * payload whose skills section does NOT contain the skill, and whose CERTIFICATE
- * TITLE does. If a `ProviderSkill` row appears, the path works end to end. If it
- * does not, WS-B is unproven and says so out loud.
- *
- * ⚠ IT CLEANS UP AFTER ITSELF and touches no existing profile: it creates a
- * throwaway Person + ProviderProfile and deletes both, whatever the outcome.
- * ⚠ NO AI, NO NETWORK, NO COST — the payload is constructed, not parsed.
- */
 let fail = 0;
 const assert = (cond: boolean, label: string) => {
   console.log(`${cond ? "ok   " : "FAIL "} ${label}`);

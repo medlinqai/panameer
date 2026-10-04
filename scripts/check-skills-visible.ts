@@ -1,24 +1,3 @@
-/**
- * `check:skills-visible` — imported skills survive to the step, and the
- * at-least-one rule still holds on all three layers (`P1-A1.4-E416` WS-2).
- * `npm run check:skills-visible`.
- *
- * ── ⚠⚠ WHAT WENT WRONG, SO NOBODY UNDOES IT ────────────────────────────────
- *
- * `ProviderSkill.source` defaults to `DERIVED`. The import wrote its matched
- * skills with NO `source`, then called `recomputeProviderRollup` a few lines
- * later — which deletes every `DERIVED` row and rebuilds only what a job with a
- * `software_suite` can account for. ⚠ THE IMPORT DESTROYED ITS OWN WRITE IN THE
- * SAME REQUEST. Measured: `test22@panameer.com` had five parsed imports
- * reporting 40–90 skills and ZERO rows; a provider whose résumé supplied skills
- * arrived at step 4/8 with none and could not pass the at-least-one rule.
- *
- * ⚠⚠ THE ROLLUP IS NOT THE BUG AND MUST NOT BE "FIXED". Scott, 2026-09-11:
- * *"Do NOT change the rollup — its deletion is correct and the escape hatch
- * depends on it."* §2 pins it.
- *
- * ⚠ NO MODEL CALL, NO DATABASE, NO BROWSER — text scans only.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,13 +17,6 @@ const read = (...p: string[]) => strip(readFileSync(join(...p), "utf8"));
 const IMPORT = read("src", "lib", "resume", "import.ts");
 const ROLLUP = read("src", "lib", "provider-rollup.ts");
 const ONBOARD = read("src", "lib", "onboarding.ts");
-/*
-  ⚠⚠⚠ "THE WIZARD" IS NOW THE PAGE **PLUS ITS EXTRACTED EDITORS**
-  (`P2-A2-E597` WS-B). ⚠ A gate that reads one named file goes blind the day a
-  component moves — `check:review-edit`'s defect, still reading
-  `ProviderProfileView.tsx` months after `E588` stopped rendering it.
-  ⚠ The RULES below are unchanged; only where the code lives moved.
-*/
 const WIZ = [
   read("src", "app", "join", "provider", "page.tsx"),
   read("src", "components", "onboarding", "editors", "SkillsEditor.tsx"),
@@ -61,7 +33,6 @@ const WIZ = [
     !/ghostTok/.test(strip("{/* was: <X a={1} * / /> ghostTok */} realTok")),
     "E408"
   );
-  /* ⚠⚠ PROTECTS §1: `import.ts` quotes the superseded source-less write in prose. */
   check(
     "0 — ⚠⚠ the superseded source-less write is invisible",
     !/data: toAdd\.map\(\(m\) => \(\{\s*provider_profile_id: profileId,\s*skill_id: m\.id,\s*\}\)\),/.test(IMPORT),
@@ -69,8 +40,6 @@ const WIZ = [
   );
 }
 
-/* ═══ 1 · ⚠⚠ THE IMPORT'S SKILLS SURVIVE THE ROLLUP ══════════════════════
-   Mutate: drop the `source` → red.                                         */
 {
   check(
     "1 — ⚠⚠ imported skills are written SELF_ADDED",
@@ -87,7 +56,6 @@ const WIZ = [
     "at the 0 default they are hidden by getOnboardingState's rollup filter"
   );
   check("1 — the constant is imported, not re-typed", /SELF_ADDED_WEIGHT.*from "@\/lib\/provider-rollup"/.test(IMPORT));
-  /* ⚠ THE SAME PAIR THE SKILLS STEP ALREADY WRITES — one meaning, two writers. */
   check(
     "1 — ⚠ it matches what the skills STEP writes",
     /source: "SELF_ADDED" as const,\s*weight: SELF_ADDED_WEIGHT,/.test(ONBOARD),
@@ -95,9 +63,6 @@ const WIZ = [
   );
 }
 
-/* ═══ 2 · ⚠⚠ THE ROLLUP IS UNTOUCHED ════════════════════════════════════
-   Scott: "its deletion is correct and the escape hatch depends on it."
-   Mutate: weaken the delete → red.                                         */
 {
   check(
     "2 — ⚠⚠ the rollup still clears DERIVED rows",
@@ -112,24 +77,11 @@ const WIZ = [
   check("2 — the delete is still scoped to one profile", /provider_profile_id: providerProfileId,/.test(ROLLUP));
 }
 
-/* ═══ 3 · ⚠⚠ AT LEAST ONE SKILL — ALL THREE LAYERS STAY ═════════════════
-   Mutate any one → red. `E416` is NOT a removal.                           */
 {
   check(
     "3 — ⚠⚠ SERVER: the step handler still throws on an empty payload",
     /if \(skillIds\.length === 0\) \{\s*throw new OnboardingError\("Pick at least one skill", "INVALID"\);/.test(ONBOARD)
   );
-  /*
-    ⚠⚠ THE SPELLING MOVED, THE RULE DID NOT (`P2-A2-E597` WS-B). `totalPicked`
-    was a local inside the skills closure; the closure's BODY is now
-    `SkillsEditor` and `canSave` stayed with the caller, where it is written out
-    in full. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   /canSave: totalPicked > 0,/.test(WIZ)
-    ⚠⚠⚠ AND THE NEW FORM IS STRICTLY STRONGER: the step's gate and the review's
-    now read the SAME EXPRESSION CHARACTER FOR CHARACTER, so "neither stricter
-    nor looser" is provable by comparison rather than by two regexes that happen
-    to agree.
-  */
   check(
     "3 — ⚠⚠ STEP: Continue is gated on something being picked",
     /canSave: profile\.skillIds\.length \+ profile\.customSkills\.length > 0,/.test(WIZ)
@@ -140,10 +92,6 @@ const WIZ = [
     /editSection === "skills"\s*\?\s*profile\.skillIds\.length \+ profile\.customSkills\.length > 0/.test(WIZ),
     "the step and the review must not disagree about who may continue"
   );
-  /* ⚠ THE TWO CLIENT LAYERS COUNT THE SAME TWO THINGS — asserted as an
-     IDENTITY now rather than as two separate patterns. ⚠ SUPERSEDED, quoted not
-     deleted (`E164`):
-     //   /const totalPicked = profile\.skillIds\.length \+ profile\.customSkills\.length;/ */
   check(
     "3 — ⚠ the step and the review count the same two things",
     (WIZ.match(/profile\.skillIds\.length \+ profile\.customSkills\.length > 0/g) ?? []).length >= 2,
@@ -151,35 +99,14 @@ const WIZ = [
   );
 }
 
-/* ═══ 4 · ⚠ THE CHIPS COME FROM THE ROWS, UNFILTERED ════════════════════
-   If this ever gained a filter, surviving rows would stop rendering and the
-   defect would come back wearing a different hat.                          */
 {
   check("4 — skillIds maps every row", /skillIds: pp\.skills\.map\(\(s\) => s\.skill_id\),/.test(ONBOARD));
-  /*
-    ⚠⚠ LOOSENED FOR `P2-J1.4-E517`, AND THE RULE IS UNCHANGED.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      /skillNames: pp\.skills\.map\(\(s\) => \(\{ id: s\.skill_id, name: s\.skill\.name \}\)\),/
-
-    ⚠ THIS SECTION'S RULE IS "UNFILTERED" — the heading says so. The old regex
-    also pinned the exact FIELD LIST on one line, so `E517` adding `roleTypeId`
-    (which the skills step needs to say which held skills the provider's roles
-    do not show) failed a gate about filtering for a reason that has nothing to
-    do with filtering.
-    ⚠⚠ THIS IS `check:rollup`'S CASE, NOT `check:cert-skills`': there the gate
-    was right and the code had drifted, so the code was fixed. Here the code
-    still maps EVERY row and adds no filter — the assertion was over-specified.
-    ⚠ It still pins `pp.skills.map` with no `.filter`, id and name both present,
-    and the ABSENCE check below is untouched and is the real protection.
-  */
   check(
     "4 — skillNames maps every row",
     /skillNames: pp\.skills\.map\(\(s\) => \(\{[^}]*\bid: s\.skill_id\b[^}]*\bname: s\.skill\.name\b/.test(
       ONBOARD
     )
   );
-  /* ⚠ THE `weight > 0 || SELF_ADDED` FILTER IS ON `rollup.skills` ONLY — a
-     different field, and it must stay off this path. */
   check(
     "4 — ⚠ ABSENCE: no weight/source filter on the chip path",
     !/skillIds: pp\.skills\s*\.filter/.test(ONBOARD) && !/skillNames: pp\.skills\s*\.filter/.test(ONBOARD)

@@ -1,15 +1,3 @@
-/**
- * ── `check:test-accounts` (`P2-ALL-E793`) ───────────────────────────────────
- *
- * ⚠⚠⚠ **THIS IS DATA-LOSS LOGIC ON A DATABASE SHARED WITH LIVE MEMBERS**, so it
- * is one of the three kinds of code Scott still wants mutation-tested. The
- * assertions below are written so that removing EITHER half of the remove path's
- * filter fails the gate.
- *
- * ⚠⚠ **IT CREATES ITS OWN TWO ROWS AND REMOVES EXACTLY THOSE**, then asserts the
- * live counts are unchanged. A real member followed the build mid-run earlier
- * today; a gate that touches `users` has to prove it gave everything back.
- */
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { marketplaceVisibleWhere } from "@/lib/access";

@@ -6,27 +6,6 @@ import { useRouter } from "next/navigation";
 import { shortTime } from "@/lib/short-time";
 import "@/components/notifications/triage.css";
 
-/**
- * ── ⚠⚠⚠ THE TRIAGE LIST (`P2-A1.1-E736` WS-A) ───────────────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-01, on `/notifications`: *"This is not usable at scale."*** The old
- * page was a 100-row card list in a 672px column with four hard-coded filters, no
- * selection, no bulk action, no pagination and no per-row controls.
- *
- * ⚠⚠ **THE PATTERN IS COPIED, THE CODE AND THE BRANDING ARE NOT** (his instruction). This
- * is Panameer's own markup, square buttons, one accent, and it imports nothing from
- * anywhere else.
- *
- * ── ⚠⚠⚠ WHY THE ROW IS NOT A LINK ───────────────────────────────────────────────────────
- *
- * ⚠ A row carries a checkbox and two hover buttons, and **an `<a>` may not contain a
- * `<button>`** — nesting interactive controls inside a link is invalid HTML and breaks
- * keyboard navigation in exactly the way a bulk list cannot afford. ⚠⚠ So the row is a
- * `<div>`, the TITLE is the link, and clicking elsewhere on the row calls the same handler.
- * ⚠⚠⚠ **THE TITLE BEING A REAL `<a>` IS WHAT KEEPS MIDDLE-CLICK, COPY-LINK AND "OPEN IN
- * NEW TAB" WORKING** — a `div` with an `onClick` looks identical and silently loses all
- * three.
- */
 export type Row = {
   id: string;
   title: string;
@@ -55,7 +34,6 @@ export function TriageList({
   more: boolean;
   openCount: number;
   unreadCount: number;
-  /** ⚠ ONE CLOCK for the whole list — see `short-time.ts`. */
   now: number;
 }) {
   const router = useRouter();
@@ -79,10 +57,6 @@ export function TriageList({
     });
     setSelected(new Set());
     setConfirming(false);
-    /* ⚠⚠ `router.refresh()` RE-RUNS THE SERVER COMPONENT, so the counts, the chips and the
-       rows all come back from ONE read. ⚠⚠⚠ Patching local state instead would leave the
-       chip counts stale the moment a bulk action crossed a page boundary — the figures
-       would disagree with the list under them. */
     startTransition(() => router.refresh());
   }
 
@@ -91,8 +65,6 @@ export function TriageList({
       if (r.href) router.push(r.href);
       return;
     }
-    /* ⚠ Mark read and go. The read is fire-and-forget: a logging hiccup must not keep
-       somebody on a page they asked to leave. */
     void fetch("/api/notifications/act", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -109,8 +81,7 @@ export function TriageList({
       <div className="pm-triage-top">
         <h1 className="font-display text-[22px] font-bold">Notifications</h1>
         <div className="pm-triage-top-actions">
-          {/* ⚠⚠ THE WORKLIST DOOR, WITH ITS COUNT. ⚠ Scott: *"Worklist → (to WS-B, with its
-              open count)"*. The number is the reason to go, so it travels with the link. */}
+          {}
           <Link href="/worklist" className="pm-triage-btn pm-triage-btn-s">
             Worklist {openCount > 0 ? `(${openCount})` : ""} &rarr;
           </Link>

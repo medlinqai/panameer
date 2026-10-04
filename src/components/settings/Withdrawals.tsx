@@ -13,19 +13,6 @@ import {
   W8_STUB_NOTICE,
 } from "@/lib/w9";
 
-/**
- * Withdrawals (J2.4 WS-H / E017) — the seller money-gate.
- *
- * THE ORDER ON THE PAGE IS THE RULE. Tax profile first, methods second, and the
- * second is disabled until the first exists. The lib enforces it regardless of
- * what this component renders, but a page that offered both and then rejected
- * the second would be teaching the rule by failure instead of by layout.
- *
- * WHICH FORM APPLIES IS DERIVED from the country, and shown before you fill
- * anything in. Asking someone to choose between a W-9 and a W-8 is asking a tax
- * question most people cannot answer, and the wrong answer has consequences on
- * both sides.
- */
 type Tax = {
   form: "W9" | "W8BEN" | "W8BENE";
   legalName: string;
@@ -62,44 +49,13 @@ export function Withdrawals({
     <div className="space-y-4">
       <Card
         title="Available Balance"
-        /* ⚠ *"holding for you"* implied a custody mechanism that does not exist. */
         description="What Panameer would owe you once settlement is built."
       >
-        {/*
-          A DASH, NOT "$0.00". There is no settlement engine yet, so a zero here
-          would be a measurement we have not made — the same rule My Stats
-          follows. Nobody should read "you have earned nothing" off a page that
-          simply cannot count.
-        */}
+        {}
         <p className="font-display text-[30px] font-bold leading-none text-ink-2/25">
           —
         </p>
-        {/*
-          ── ⚠⚠⚠ IT NAMES THE TRUNCATION, NOT A FUTURE EVENT (`P2-A2-E609`) ────
-
-          ⚠ *"Balances appear once work orders settle"* is the exact shape
-          `E603` retired twice — *"once you complete your first paid work
-          order"* and *"once buyers rate completed work orders"*.
-          ⚠⚠⚠ CORRECTED 2026-09-25 — **HALF OF THIS MEASUREMENT IS NOW FALSE,
-          AND THE HALF THAT MATTERS HERE IS STILL TRUE.**
-          ⚠ `P2-A8-E621` WS-D built `lib/work-orders.ts`, so **a work order CAN
-          now be built** and reaches `RELEASED` when both parties accept.
-          ⚠⚠ BUT **`PAID` IS STILL WRITTEN BY NOTHING AND NO `Payment` ROW IS
-          EVER CREATED** — `check:work-chain` asserts both, literally and
-          dynamically. ⚠⚠⚠ So the copy below stands: the chain still stops before
-          a balance can exist, and the reason it stops has simply moved one step
-          later. ⚠ The dash above is unchanged and is still right.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — true when written:
-          //   ⚠⚠ MEASURED: **there is no `workOrder.create` anywhere in `src/`**, so
-          //   no work order can be built, let alone settle; and **`PAID` is never
-          //   written** with no `Payment` ever created. A sentence beginning *"once
-          //   work orders settle"* promises a chain that stops at its first step.
-          ⚠ The dash above is unchanged and is right — a measured zero and an
-          absent mechanism must not look the same.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   Balances appear once work orders settle on Panameer. Nothing is
-          //   being held back — there is nothing to hold yet.
-        */}
+        {}
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
           Settlement isn&apos;t built yet, so there is no balance to show.
           Nothing is being held back.
@@ -147,17 +103,6 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
 
   const save = async () => {
     setBusy(true);
-    /*
-      ── ⚠⚠ THE FULL TIN IS VALIDATED AND THEN DISCARDED (`P1-ALL-E404`) ───────
-
-      `tin` holds the whole number while the form is open, because a W-9 that
-      shows four digits cannot coherently certify *"the number shown on this
-      form is my correct taxpayer identification number."* Only `tinLast4` is
-      SENT and only the last four are stored — the existing decision not to hold
-      a TIN is unchanged by this row, and no regulated value crosses the wire.
-      ⚠ SEE THE REPORT: filing a 1099 will eventually require the full number,
-      and that needs encryption at rest before it needs a form field.
-    */
     const err = await postSetting("/api/settings/tax", {
       legalName,
       country,

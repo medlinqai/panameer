@@ -2,20 +2,6 @@ import Link from "next/link";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { LegalDocNav } from "@/components/legal/LegalDocNav";
 
-/**
- * A legal document page that has no text yet (brief_company_model WS6).
- *
- * This WAS the only legal page component. `LegalPage` now renders real drafted
- * content, and the Company Terms have no drafted text — the brief loading the
- * user ToS and Privacy Policy says to leave the company agreement alone until
- * Scott provides its wording. So the honest empty state moved here rather than
- * being deleted, and the company page keeps saying exactly what it said before.
- *
- * NO INVENTED LEGAL TEXT. Terms are a commitment between Scott's company and
- * its users; drafting them is counsel's job, not this codebase's. When the real
- * document lands, drop it in and bump the version in `src/lib/tos.ts` — every
- * company is then asked to re-accept.
- */
 export function LegalPlaceholder({
   title,
   version,
@@ -30,18 +16,10 @@ export function LegalPlaceholder({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      {/*
-        THE PUBLIC HEADER, not a bare logo (brief_nav_casing_consistency WS-B).
-
-        These pages rendered a one-off strip with just the wordmark, so a reader
-        who landed on the Privacy Policy from a footer link had no way back into
-        the site — the logo went home and that was the whole nav. Legal pages
-        are public content, and the model says public means MARKETING_NAV.
-      */}
+      {}
       <MarketingHeader />
 
-      {/* Same shell as the written documents, so an unwritten one is reachable
-          from — and returns you to — the same list. */}
+      {}
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-6 py-12 lg:flex-row lg:gap-12">
         <aside className="order-2 w-full shrink-0 border-t border-line pt-8 lg:order-1 lg:w-[248px] lg:border-0 lg:pt-0">
           <LegalDocNav current={self} />

@@ -11,25 +11,6 @@ import {
   workRequestStatusPillClass,
 } from "@/lib/work-request-status";
 
-/**
- * `/hire` — THE REQUESTER'S WORK REQUESTS (`P1-J4-E392` WS-1).
- *
- * ⚠⚠ THIS REPLACES A `ComingSoon` STUB, AND THE HOLE IT FILLS IS REAL: a
- * requester could create a work request and then had NOWHERE TO LOOK AT IT.
- * `/create-work` resumed the latest DRAFT and `/work-requests/[id]/share`
- * existed, but nothing listed what you had made — so a second request made the
- * first one unreachable.
- *
- * ⚠ THE HEADING IS "Work Requests", NOT "Hire". `E378`: *the rail says which
- * journey in one word, the tabs say which slice, and the page heading says the
- * journey's name.* `Hire` is the rail's verb, chosen because a verb picks a side;
- * the journey has always been Work Requests and `REQUESTER_NAV` already says so
- * in its `heading`.
- *
- * ⚠ COUNTS ARE REAL COUNTS OF WHAT IS IN THE DATABASE (the counters decision,
- * 2026-08-27). Zero requests renders an empty state that says zero, not a
- * seeded-looking number and not a hidden section.
- */
 export const metadata = { title: "Work Requests · Panameer" };
 
 function budgetLine(r: WorkRequestRow): string | null {

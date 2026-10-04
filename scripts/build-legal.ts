@@ -1,29 +1,3 @@
-/**
- * Turn the adapted legal source text into renderable content modules
- * (brief_legal_pages_content WS-A).
- *
- * Run:  npm run legal:build          (writes src/content/legal/*.ts)
- *       npm run legal:build -- --report   (also prints what it dropped)
- *
- * WHY A GENERATOR AND NOT A RUNTIME MARKDOWN READER. Three reasons, in order of
- * how much they'd cost to get wrong:
- *
- *   1. The output is committed, so every structural decision this script makes
- *      is visible in a diff. These are legal documents; "what exactly does the
- *      page say" has to be answerable by reading the repo, not by running it.
- *   2. No new dependency. The source is not really markdown — it is PDF-extracted
- *      plain text with one `#` line — so a markdown library would parse the
- *      whole document as a single paragraph and none of its features would earn
- *      their bundle size.
- *   3. No filesystem read at request time, and no `scripts/` directory needed in
- *      the deployed image.
- *
- * THIS SCRIPT NEVER CHANGES WORDS. It only decides what is a heading, where
- * paragraphs break, and which regions did not survive extraction. Every wording
- * change (Provider/Work Order/brand) was made in the source `.md` files, so it
- * shows up in `git diff` on the text itself rather than being buried in a
- * transform.
- */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,34 +12,9 @@ const REPORT = process.argv.includes("--report");
 
 /* ---------------------------------------------------------------- helpers -- */
 
-/**
- * Options that vary between the four-document corpus and the supplement bundle.
- *
- * `titleCase` is OFF for the Terms of Use, Privacy Policy and User Agreement.
- * Those three number or capitalise their headings, and turning the title-case
- * rule on for them would promote wrapped prose. The supplements need it because
- * several — the Cookie Policy, the referral terms, the DPA annexes — have no
- * numbered sections at all and would otherwise render as one unbroken wall.
- */
 type ParseOpts = { titleCase?: boolean };
 
 const isHeading = (line: string, opts: ParseOpts = {}): 2 | 3 | 4 | null => {
-  /*
-    A NUMBERED LINE ENDING IN A FULL STOP IS USUALLY A LIST ITEM — but not
-    always, and the length settles it.
-
-    Section 5 of the Privacy Policy enumerates the rights a user can exercise
-    ("1. The categories of personal information we have collected about you.")
-    and each one was being promoted to a heading, restarting the document's
-    numbering mid-section. The API Terms go the other way: every one of its
-    section headings ends in a full stop ("3. Developer's Use of the Panameer
-    API."), so rejecting them all left that document with 92 paragraphs and no
-    structure at all.
-
-    Measured across the corpus the two sets do not overlap: the API's longest
-    heading is 41 characters, the Privacy Policy's shortest list item is 70. A
-    sentence-shaped line is a list item; a title-shaped one is a heading.
-  */
   const HEADING_MAX = 60;
   const sentenceShaped =
     /[.!?]$/.test(line) && !(/^\d+(?:\.\d+)*\.\s/.test(line) && line.length <= HEADING_MAX);
@@ -82,41 +31,10 @@ const isHeading = (line: string, opts: ParseOpts = {}): 2 | 3 | 4 | null => {
     // "TABLE OF CONTENTS" — all-caps standalone
     if (/^[A-Z][A-Z\s,'&/-]{3,60}$/.test(line.trim())) return 2;
   }
-  /*
-    "Eligibility", "What are tracking technologies?" — a short standalone line
-    in title case.
-
-    SAFE ONLY BECAUSE OF THE LENGTH TEST. Body text in these documents wraps at
-    a median of 98 characters, so a line under 60 is not a wrapped fragment; and
-    a paragraph's last line, the other thing that comes up short, ends in
-    punctuation. Measured across the whole bundle this matches 86 lines and every
-    one is a heading.
-
-    Reached even for a line ending in "?" or "!", which is why the checks above
-    sit inside a guard rather than returning early: the Cookie Policy asks its
-    questions as headings ("What are tracking technologies?"), and a blanket
-    reject-if-it-ends-in-sentence-punctuation rule silently demoted every one of
-    them to a paragraph. The trailing character class below still refuses a
-    full stop, so an actual sentence cannot get in this way.
-  */
   if (opts.titleCase && /^[A-Z][A-Za-z0-9 ,&()'’‘/?-]{3,58}[^.:;,]$/.test(line.trim())) return 3;
   return null;
 };
 
-/**
- * Is this block a shard of a shredded table rather than prose?
- *
- * The source PDFs contained multi-column tables, and pdf-to-text shredded them
- * CELL BY CELL: every cell became its own line with a blank line after it,
- * interleaved across columns, so row structure is not recoverable by any
- * parser — "Identifiers", "Name, Date of Birth, Social Media", "Directly from
- * You", "Developing," are four different columns of one row, in source order.
- *
- * A shard is short, and either doesn't finish a sentence or is far too brief to
- * be one ("Obligations." is a cell, not a paragraph). The test is deliberately
- * conservative: prose is long, so real text cannot trip it, and the RUN rule
- * below means a stray short line still has to have neighbours to be dropped.
- */
 const isShard = (lines: string[], opts: ParseOpts = {}): boolean => {
   if (lines[0].trim().startsWith("|")) return false; // a table row, not a shard
   if (lines.length > 2) return false;
@@ -126,33 +44,9 @@ const isShard = (lines: string[], opts: ParseOpts = {}): boolean => {
   return !/[.!?]$/.test(text) || text.length < 30;
 };
 
-/**
- * How many shards make a table, and how far apart they may sit.
- *
- * Four, because genuine prose never produces four one-line stubs in a stretch,
- * while a lone short line ("bankruptcy.") is a wrapped sentence tail and must
- * survive.
- *
- * The proximity allowance is what catches the SECOND table. Its rows are a
- * short label beside a long description, so the labels are shards but the
- * descriptions are not, and a strictly-consecutive rule stopped at the first
- * description and left the rest of the table rendering as prose — a run of
- * sentence halves ("Information and", "disclose Non-Identifying Information
- * (including…", "De-Identified") that read as gibberish. Shards separated by a
- * block or two are one table, and everything between them belongs to it.
- */
 const SHRED_RUN = 4;
 const SHRED_GAP = 3;
 
-/**
- * Rejoin hard-wrapped lines into paragraphs.
- *
- * The wrap width is measured from the document rather than assumed, and a line
- * that both ENDS A SENTENCE and is meaningfully shorter than that width is a
- * real paragraph end — the last line of a paragraph is the only one the wrapper
- * had no reason to fill. Sentences that merely happen to finish at the right
- * margin keep their paragraph, which is why the length test is there at all.
- */
 function reflow(lines: string[], wrapWidth: number): string[] {
   const paras: string[] = [];
   let buf: string[] = [];
@@ -177,14 +71,6 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
     // multi-line comment as body paragraphs — the note about what was adapted
     // ended up inside the Terms of Use.
     .replace(/<!--[\s\S]*?-->/g, "")
-    /*
-      HEADINGS GLUED TO THE PARAGRAPH ABOVE THEM. The extractor lost the line
-      break before two section titles in the User Agreement — "…platform prior
-      to termination.3. CONTRACTUAL RELATIONSHIP BETWEEN SERVICE BUYER AND
-      PROVIDER" is a sentence and a section heading in one line, and it renders
-      as neither. A full stop pressed straight against a section number and an
-      all-caps title is not something prose does.
-    */
     .replace(/([a-z)”"])\.(\d+(?:\.\d+)*)(\.?)\s+([A-Z][A-Z])/g, "$1.\n$2$3 $4")
     .split("\n")
     .map((l) => l.replace(/^###?\s+/, "")) // "## Table 1 — …" is a heading, not a hash
@@ -204,18 +90,6 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
   }
   if (cur.length) blocks.push(cur);
 
-  /*
-    THE SOURCE TABLE OF CONTENTS IS DROPPED. Its entries are bare heading lines,
-    so they would render as two dozen duplicate headings — or, because the ToS
-    runs its contents into the paragraph above with no blank line, as one jammed
-    paragraph. The page builds its own contents list from the headings it
-    actually has, which is the same information and cannot drift from the
-    document under it.
-
-    Dropped LINE-WISE rather than block-wise for exactly that reason: in the ToS
-    the list is not a block of its own. It starts at the "Contents" line and
-    runs while the lines keep looking like entries.
-  */
   let hasContentsList = false;
   const kept = blocks.map((block) => {
     const start = block.findIndex((l) => /^(contents|table of contents)$/i.test(l));
@@ -226,14 +100,6 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
     return [...block.slice(0, start), ...block.slice(end)];
   }).filter((b) => b.length > 0);
 
-  /**
-   * A GitHub-style pipe table.
-   *
-   * The only markdown in any of these sources, and it is here because the
-   * Privacy Policy's tables did not survive PDF extraction and had to be
-   * transcribed by hand — a pipe table is the one format that is both readable
-   * in the source file and unambiguous to parse.
-   */
   const asTable = (block: string[]): Node | null => {
     if (block.length < 3) return null;
     if (!block.every((l) => l.trim().startsWith("|"))) return null;
@@ -251,21 +117,6 @@ function parse(raw: string, label: string, opts: ParseOpts = {}): Node[] {
   let droppedLines = 0;
   const droppedSamples: string[] = [];
 
-  /**
-   * Emit one prose block, promoting every heading line inside it.
-   *
-   * HEADINGS ARE NOT ONLY THE FIRST LINE. The source puts a section heading and
-   * the section under it in the same blank-line-delimited block, so keying off
-   * `block[0]` alone found "1. INFORMATION COLLECTION" and then buried "a.
-   * Information You Provide to Us" — and every 1.x.y sub-heading — inside a
-   * paragraph. Scanning each line finds them all.
-   *
-   * HEADINGS ALSO WRAP. The extractor wrapped them at the PDF's heading column,
-   * which is much narrower than the body text, so "1.4 You can use Panameer to
-   * share your content with" / "the world" arrived as two lines and the orphan
-   * half was swallowed by the paragraph after it. A short line following a
-   * heading that doesn't end in punctuation is the rest of that heading.
-   */
   const emitBlock = (block: string[]) => {
     let body: string[] = [];
     const flushBody = () => {

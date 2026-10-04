@@ -1,7 +1,4 @@
-// ⚠ `VISIBILITY_THRESHOLD` IS NO LONGER IMPORTED (`P2-J3-E590` WS-A). ⚠
-// SUPERSEDED, quoted not deleted (`E164`):
 //   VISIBILITY_THRESHOLD,
-// ⚠⚠ THIS HARNESS NO LONGER KNOWS THE NUMBER, and that is the point: it asserts
 // VISIBILITY against `isMarketplaceVisible`, never a score against a threshold.
 import {
   computeProviderCompleteness,
@@ -10,29 +7,6 @@ import {
 } from "../src/lib/completeness";
 import { isMarketplaceVisible, hasIdentityBlock } from "../src/lib/access";
 import { meetsRequiredSet, missingRequired } from "../src/lib/completeness";
-
-/**
- * THE GATE HARNESS (brief_onboarding_slimdown WS0).
- *
- *   npm run check:gate
- *
- * WHY THIS EXISTS. `pitfalls.md` opens with the same bug three times: a step is
- * added, moved or removed, the completeness table and the visibility gate are
- * not re-derived, and a provider who answered every question they were asked
- * publishes into permanent invisibility. It is silent — the score is arithmetic,
- * so a missing or unreachable weight produces a plausible number and no error —
- * and the entry's own instruction is to "prove it by walking the journey and
- * asserting the final score; a build or typecheck will never catch this."
- *
- * This is that assertion, made cheap enough to run on every change. It builds
- * the profile a provider has after the REQUIRED-ONLY path — Title, Role(s),
- * Skill, Rate, Photo, Company, plus address and phone for contact — and demands
- * that it publishes AND comes out marketplace-visible.
- *
- * Pure functions only: no database, no network, nothing to set up. The
- * companion end-to-end walk (WS6) proves the same thing through the real
- * endpoints; this proves it in a second, so nobody skips it.
- */
 
 let pass = 0;
 let fail = 0;

@@ -3,21 +3,6 @@ import { guardApi } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { jobLabel } from "@/lib/user-jobs";
 
-/**
- * GET /api/admin/export?list=users — Export to Excel (`P2-ALL-E794`).
- *
- * ⚠ **SCOTT, 2026-10-03:** *"Every list on admin gets Export to Excel."* This is
- * the first list; the shape is deliberately generic so the next one is a case in
- * the switch rather than a second route.
- *
- * ⚠⚠ **IT EXPORTS WHAT THE SCREEN WOULD SHOW, FILTERS INCLUDED** — the same
- * `q` and `test` parameters the page reads, so a filtered export matches the
- * filtered list. An export that silently returns everything is a different
- * document from the one the person is looking at.
- *
- * ⚠⚠⚠ **IT IS ADMIN-ONLY AND IT CARRIES REAL EMAIL ADDRESSES**, so the guard
- * runs before anything is read and the file is `no-store`.
- */
 export const maxDuration = 60;
 
 export async function GET(request: Request) {
@@ -47,8 +32,6 @@ export async function GET(request: Request) {
       is_service_provider: true,
       is_service_coordinator: true,
       is_support: true,
-      /** ⚠ `jobLabel` asks only whether these exist — `UserJobInput` types them
-       *  as "any object or nothing" so each caller selects its own columns. */
       requesterProfile: { select: { id: true } },
       buyerProfile: { select: { id: true } },
       company: { select: { name: true } },
@@ -66,7 +49,6 @@ export async function GET(request: Request) {
     },
   });
 
-  /** ⚠ The same two filters the page applies, in the same order. */
   let rows = people;
   if (testFilter === "real" || testFilter === "test") {
     rows = rows.filter((p) => (p.user?.is_test === true) === (testFilter === "test"));

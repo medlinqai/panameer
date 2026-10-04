@@ -1,32 +1,6 @@
 import type { SoftwareSuite } from "@prisma/client";
 import { suiteFromPillar, suitesMentioned } from "@/lib/suite";
 
-/**
- * PER-JOB SKILL EXTRACTION (brief_per_job_skill_model WS-3).
- *
- * Reads one job block — an employer's title, description and project text — and
- * answers three questions about THAT job: which catalog skills it used, which
- * software suite it ran on, and therefore which Role it was.
- *
- * PURE. No prisma, no I/O; the caller supplies the vocabulary. Same rule as
- * `parse.ts` and `match.ts`, and it is what lets the harness run the whole
- * precision suite without a database.
- *
- * ── WHY PER-JOB AND NOT PER-PROFILE ──────────────────────────────────────────
- *
- * "General Ledger" on a profile is unanswerable — Oracle's? PeopleSoft's? The
- * same words inside a job that already carries its suite are unambiguous. So
- * the unit of extraction is the job block, and the suite is derived from the
- * block's own contents before the shared modules in it are resolved.
- *
- * ── THE PRECISION GUARDS, AND WHY EACH EXISTS ────────────────────────────────
- *
- * A false skill is far more expensive than a missed one. A missed skill is a
- * chip the provider adds back in the review step; a false one is a claim
- * attributed to a named person against a dated engagement, which is the exact
- * property the model is selling. So every rule below fails toward silence.
- */
-
 export type VocabEntry = {
   skillId: string;
   /** Canonical catalog name, in its catalog casing. */
@@ -42,10 +16,6 @@ export type JobExtraction = {
   skillIds: string[];
   /** Resolved suite, or null when the block gave no anchor. */
   suite: SoftwareSuite | null;
-  /**
-   * The block used shared modules but named no system. The WS-4 prompt asks
-   * about exactly these jobs and no others.
-   */
   needsSuite: boolean;
   /** Derived role name, or null if nothing matched. */
   role: string | null;
@@ -53,15 +23,6 @@ export type JobExtraction = {
   names: string[];
 };
 
-/**
- * Acronyms that are a CATEGORY, not a product.
- *
- * "CRM" in a résumé means the discipline; it is not evidence of Salesforce CRM
- * Analytics. These appear as aliases on real catalog rows, so they cannot just
- * be trusted — they are refused outright, in every context, because there is no
- * amount of surrounding suite evidence that makes "we ran an ERP programme"
- * into a claim about a specific module.
- */
 const AMBIGUOUS_ACRONYMS = new Set([
   "CRM", "SCM", "ERP", "AM", "HR", "HCM", "FIN", "IT", "BI", "AI", "API",
   "SQL", "UI", "UX", "QA", "PM", "BA", "SME", "P2P", "O2C", "R2R",

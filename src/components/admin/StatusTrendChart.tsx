@@ -1,45 +1,5 @@
 import type { TrendSeries } from "@/lib/onboarding-trend";
 
-/**
- * THE ONBOARDING TREND CHART (`P1-J1.1-E257`).
- *
- * ⚠ A PLAIN TIME SERIES, ON PURPOSE. One line, one area fill, entries per
- * period. No pie, no stack, no second axis — the question is "how many entered
- * this status, and when", and anything cleverer answers a question nobody asked.
- *
- * ⚠ SERVER-RENDERED SVG WITH NO CLIENT JAVASCRIPT. The board is a server
- * component and this keeps it one; a charting library would ship a bundle to an
- * admin page that renders at most a few hundred points.
- *
- * ⚠⚠ COLOURS ARE EXISTING TOKENS ONLY — `var(--color-magenta)` for the series,
- * and `currentColor` inherited from `text-ink-2` / `text-line` for axes,
- * gridlines and labels. NO NEW HEXES, and nothing that only reads on white:
- * every neutral comes from a token that already flips with the theme.
- *
- * ⚠ THE NUMBERS ARE READABLE AS TEXT, NOT ONLY AS PIXELS. The table beneath the
- * chart carries every point, and the SVG itself is `role="img"` with a summary
- * label — a chart an admin cannot read with a screen reader is a chart that
- * silently excludes people.
- *
- * ⚠ THE EMPTY STATE IS A SENTENCE, NEVER AN EMPTY FRAME. An axis with no line
- * looks like a broken chart; the words say which it is.
- */
-/**
- * ── ⚠ BARS AND A NOUN ARE OPT-IN (`P1-A1.5-E456`) ───────────────────────────
- *
- * **THE BRIEF:** *"DO NOT WRITE A NEW CHART"* — and, separately, *"a weekly BAR
- * chart"* in *"ink or a single neutral… not magenta — a bar is not interactive
- * (`E433`)"*. This component was a MAGENTA LINE, so both had to be honoured at
- * once: the axes, the tick-stride rule, the inward-anchored end labels, the
- * `role="img"` summary and the readable table are all reused as they stand, and
- * only the marks change.
- *
- * ⚠⚠ PASS NEITHER PROP AND THIS RENDERS EXACTLY WHAT IT RENDERED BEFORE — the
- * `/trend?status=` page is byte-identical, still a magenta line. Same opt-in
- * discipline as `TileRow`'s `icon` and `Listing`'s `rowMeta`.
- * ⚠ `series.status` IS WIDENED TO `string` so a JOB name can label the chart.
- * `OnboardingStatus` is a string union, so every existing caller still fits.
- */
 export function StatusTrendChart({
   series,
   variant = "line",
@@ -71,9 +31,6 @@ export function StatusTrendChart({
   const iw = W - PAD.left - PAD.right;
   const ih = H - PAD.top - PAD.bottom;
   const max = Math.max(...points.map((p) => p.count), 1);
-  /* A single bucket has no width to draw a line across — pin it mid-axis.
-     ⚠ BARS CENTRE ON THEIR SLOT, points sit on the axis: a bar's tick label
-     under a line-chart x would drift half a slot off its own bar at 13 weeks. */
   const x = (i: number) =>
     variant === "bar"
       ? PAD.left + (iw / points.length) * (i + 0.5)

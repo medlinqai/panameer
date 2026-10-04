@@ -7,22 +7,6 @@ import {
   primaryButton,
 } from "@/lib/email/shell";
 
-/**
- * Verification email template. Inline styles only (email clients ignore
- * external CSS) using the Panameer brand colors from brief_F — magenta #D72CD6,
- * navy ink #272334. Kept as a pure function so it's testable and reusable.
- *
- * brief_P / E006 fixes three things the walk caught:
- *   1. the Panameer LOGO upper-left, not the plain word "Panameer";
- *   2. the recipient's first name CAPITALIZED ("…, Scott", not "…, scott");
- *   3. every button label in Title Case ("Verify My Email").
- */
-/**
- * WHO the email is for. It changes one sentence and the subject line, and it
- * matters: a Requester who is told to "start building your provider profile"
- * has been told they signed up for the wrong thing at the first email we send
- * them (brief_requester_onboarding WS3).
- */
 export type VerifyAudience = "seller" | "buyer";
 
 export function verifyEmailTemplate({
@@ -34,68 +18,12 @@ export function verifyEmailTemplate({
   firstName: string;
   verifyUrl: string;
   audience?: VerifyAudience;
-  /**
-   * Absolute URL of the logo. Email clients cannot resolve relative paths, so
-   * the caller passes `${appBaseUrl()}/brand/panameer-lockup-ink.png`.
-   *
-   * ⚠ SUPERSEDED, quoted not deleted (`P1-ALL-E403`): this said
-   * `panameer-new-on-light.png` — the old looped-P mark. The senders were
-   * repointed to the v2 lockup and this line was not, which is exactly the kind
-   * of comment that sends the next reader looking for a caller that no longer
-   * exists.
-   *
-   * ⚠ FALLS BACK TO THE TEXT WORDMARK WHEN THE URL IS ABSENT **OR
-   * UNREACHABLE** (`P1-ALL-E402`) — a dev `localhost` URL is present and
-   * unfetchable, which is the case the old "when absent" wording missed.
-   */
   logoUrl?: string;
 }): { subject: string; html: string; text: string } {
   const buyer = audience === "buyer";
-  /*
-    ⚠ TITLE CASE, BOTH VARIANTS (`P2-J1.1-E015`). ⚠ SUPERSEDED, quoted:
-      "New Service Buyer — verify your email to continue on Panameer"
-      "New Service Provider — verify your email to continue on Panameer"
-    Scott screenshotted only the BUYER one; changing only that half would have
-    left the provider subject lowercase and the two out of step. This brings
-    subjects under the convention locked in `brief_N_title_case` — *"as a UI
-    convention (ends the sentence-case papercut)"* — which email was never
-    swept into. ⚠ ONLY THESE TWO. The other 12 templates are REPORTED, not
-    changed; Scott rules on those.
-  */
   const subject = buyer
     ? "New Service Buyer — Verify Your Email to Continue on Panameer"
     : "New Service Provider — Verify Your Email to Continue on Panameer";
-  /*
-    ⚠⚠ THE BUYER CLAUSE STOPPED PROMISING THE FINISH LINE (`P2-J1.1-E018`).
-    ⚠ SUPERSEDED, quoted: `"start finding the talent you need."`
-
-    SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
-    registration...the other is finish the registration you started."* This email
-    was carrying BOTH jobs — proving the address AND being the only thing that
-    ever brings a person back — so it over-promised. Verifying an email does not
-    find anyone talent; there is a whole wizard in between.
-
-    ⚠ THE PROVIDER VARIANT IS UNCHANGED. *"start building your provider
-    profile."* is already honest — only the buyer half lied.
-    ⚠ THE HEADING IS UNCHANGED TOO: `Confirm your email{, Name}` is this email's
-    job. `Continue your registration` belongs to the OTHER email now.
-  */
-  /*
-    ⚠⚠ THE WHOLE CLAUSE IS THE VARIANT, NOT JUST ITS TAIL — AND THAT IS A
-    CORRECTION TO THE BRIEF, REPORTED RATHER THAN MADE QUIETLY.
-
-    The brief replaced the tail after a FIXED lead-in of *"Click the button below
-    to verify your email and "*. Scott's approved sentence begins *"verify your
-    email, …"*, so slotting it there rendered:
-
-      "Click the button below to verify your email and verify your email, then
-       log in and complete your registration."
-
-    Verified by rendering it, not by reading it. Scott's words are kept EXACTLY;
-    what moved is the lead-in, which now stops at "to" for the buyer.
-    ⚠ THE PROVIDER SENTENCE IS BYTE-IDENTICAL to what it was — it keeps the
-    "verify your email and" lead-in, because its tail was written to continue one.
-  */
   const nextLine = buyer
     ? "verify your email, then log in and complete your registration."
     : "verify your email and start building your provider profile.";

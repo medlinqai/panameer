@@ -6,18 +6,6 @@ import { LEGAL_UPDATED } from "@/content/legal/meta";
 import { SUPPLEMENTS } from "@/content/legal/supplements";
 import { SUPPLEMENT_META } from "@/content/legal/supplement-meta";
 
-/**
- * One legal supplement (brief_legal_supplements WS-A).
- *
- * All 19 are prerendered — they are static text, they are linked from the
- * footer, and they are exactly the pages a search engine or a procurement
- * reviewer fetches cold.
- *
- * A STUB DOCUMENT DOES NOT RENDER ITS SOURCE TEXT. Two of the 19 have source
- * text that would be actively wrong on a Panameer page — another company's
- * logo rules, and an escrow entity that does not exist — so those pages show
- * the notice INSTEAD of the document, not above it.
- */
 export function generateStaticParams() {
   return SUPPLEMENTS.map((s) => ({ slug: s.slug }));
 }

@@ -3,18 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/**
- * What the CONTACT fills in (J2.4 WS-F / E012).
- *
- * Three fields, one of them required. A recommendation is a favour, and every
- * extra box is a reason to close the tab — title and company are asked because
- * "Programme Director, Fujitsu" is what makes the quote carry weight to a
- * buyer, but neither is enforced.
- *
- * DECLINE IS A REAL BUTTON, not an absence. The email's "No thanks" lands here
- * with `?decline=1`, and recording it means the provider sees an answer instead
- * of waiting indefinitely on someone who has already decided.
- */
 export function RecommendationForm({
   token,
   providerName,

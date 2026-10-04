@@ -1,14 +1,3 @@
-/**
- * THE WEEKLY "FOLLOW THE BUILD" EMAIL (`P2-ALL-E818`).
- *
- * Scott: a Friday 1pm ET DRAFT, then his Send.
- *
- * THE DRAFT/SEND SPLIT IS THE SAFETY BOUNDARY, not a convenience. Mail is LIVE
- * from production and real people follow the build, so a job that could send on
- * a timer is a job that can mail every follower at 1pm on a week nobody was
- * watching. Composing and sending are two different functions, and only one of
- * them is reachable from the cron route.
- */
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { publicPlan } from "@/lib/plan/public";
@@ -22,10 +11,6 @@ export function weekOf(d: Date): string {
   return copy.toISOString().slice(0, 10);
 }
 
-/**
- * Compose this week's draft from the plan. Idempotent: re-running a week
- * REFRESHES its draft and refuses to touch one that is already sent.
- */
 export async function composeDigest(now = new Date()): Promise<{ week: string; created: boolean }> {
   const week = weekOf(now);
   const existing = await prisma.buildDigest.findUnique({ where: { week }, select: { status: true } });
@@ -101,8 +86,6 @@ export async function sendDigest(week: string): Promise<{ sent: number }> {
       });
       sent += 1;
     } catch {
-      /* One bad address must not stop the rest. The transport records its own
-         refusal, so the failure is not lost by being swallowed here. */
     }
   }
   await prisma.buildDigest.update({

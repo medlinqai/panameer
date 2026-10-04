@@ -1,31 +1,6 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   This group belongs to a learning path. Enrolling in the path puts you in the room.
-*/
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 
-/**
- * ── ⚠⚠⚠ GROUP MEMBERSHIP — ONE TABLE, ONE WRITER (`P2-A3-E612`) ──────────
- *
- * ⚠⚠ SCOTT, 2026-09-23: *"one membership table. Enrolling in a path writes a
- * membership row for that path's group. Otherwise 'am I in this group?' has two
- * answers that will drift."*
- *
- * ⚠⚠⚠ WHAT THIS MODULE IS **NOT**: it is not the access rule. Reading a path
- * board is still `canAccessPathForum`, and that function is unchanged in what it
- * decides. ⚠ Membership is the RECORD of who is in the room; access is the
- * QUESTION of who may open it, and on a path-backed group the answer comes from
- * enrolment either way. **Two things, deliberately not collapsed** — see the
- * long note on `ensureEnrolmentMembership` below.
- */
-
-/** The slug convention `ensurePathBoard` writes. ⚠ One place, both callers. */
 export const pathBoardSlug = (pathSlug: string) => `path-${pathSlug}`;
 
 /**

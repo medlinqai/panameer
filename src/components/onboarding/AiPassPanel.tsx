@@ -3,28 +3,6 @@
 import { useEffect, useState } from "react";
 import { ParseHeartbeat } from "@/components/onboarding/ParseHeartbeat";
 
-/**
- * "Let AI take a pass" — ONE panel, wherever the parse fell short (E129).
- *
- * It began as inline markup on the import step, which meant the action existed
- * for exactly ninety seconds: if you didn't take it the moment you uploaded, you
- * could never reach it again. Providers whose profiles predate the parser —
- * Marelise and Eddie among them — had empty work history and no way at all to
- * ask for another read. Extracted here so the review, the import step and
- * Settings offer the same thing in the same words.
- *
- * THE DOCUMENT IS RETAINED, which is what makes this worth doing:
- * `ProfileImport.raw_text` keeps up to 100k characters and nothing deletes it,
- * so re-reading costs the provider nothing — no re-upload, no hunting for the
- * file. When there ISN'T one stored (never imported, or a profile older than the
- * import step) the panel asks for an upload instead of offering a button that
- * can only fail.
- *
- * NON-DESTRUCTIVE by construction, not by promise: the pass applies through
- * `applyParsedResume`, which fills blank fields and appends work history it
- * doesn't already hold. It contains no deletes. Bio, education and skills a
- * provider has already written are never touched.
- */
 export type AiPassAvailability = {
   available: boolean;
   hasDocument: boolean;

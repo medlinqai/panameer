@@ -3,48 +3,7 @@ import { HOME_HERO, BRAND_BADGE_SHORT } from "@/lib/brand";
 import { ASSESSMENT_AREAS } from "@/lib/assessment-data";
 import { MaturityDashboard } from "@/components/marketing/MaturityDashboard";
 
-/**
- * THE HOME HERO — the assessment front door (brief_public_pages_ia WS-1).
- *
- * ── WHAT LEFT, AND WHY ───────────────────────────────────────────────────────
- *
- * THE TALENT SEARCH IS GONE FROM HERE. It was the first thing on the page, and
- * it asked a question the home's audience cannot answer: somebody who does not
- * yet know where their operations rank has no name to type into "search
- * experts". It moved to Hire Talent, where the visitor arrives already knowing
- * they want to hire. The home's ask is smaller and earlier — find out where you
- * stand — and the search would have competed with it from the strongest slot on
- * the page.
- *
- * THE BRAND LOCKUP IS NO LONGER THE H1. "Learn. Connect. Create. Settle." was
- * the headline on every marketing page; it is a beautiful line and it says
- * nothing about the reader. It stays as the through-line lower down (see
- * `PAGE_BEATS`) and the H1 is now the value: see where your business really
- * stands. Flagged as a design call for Scott in the brief, taken this way.
- *
- * THE RIGHT HALF WAS EMPTY. The dashboard fills it with the actual output of
- * the thing being offered — the strongest argument for taking an assessment is
- * showing what it gives you.
- *
- * ── HONESTY ──────────────────────────────────────────────────────────────────
- *
- * Nothing here measures anything yet. Three things carry that, and none of them
- * is fine print: the dashboard labels itself "Sample Read" and captions its own
- * figures as illustrative (it does that on its own — see `MaturityDashboard`),
- * the CTA sub-label says "Sign in to be first in line" rather than promising a
- * score, and `HOME_HERO.frameworkNote` says in the hero that the framework is
- * what you will be scored against and the read shown is a sample.
- *
- * A server component. No state, no client JS — which is what keeps `/` static.
- */
 export function AssessmentHero() {
-  /*
-    Procure-to-Pay is the sample shown. It is the first area in the catalog and
-    the one most buyers recognise; the tabbed section further down the page is
-    where all four are browsable, so the hero does not need a switcher — and a
-    switcher here would be a client island in the one place the page cannot
-    afford one without losing static rendering.
-  */
   const sample = ASSESSMENT_AREAS[0];
 
   return (
@@ -68,11 +27,7 @@ export function AssessmentHero() {
             {HOME_HERO.subhead}
           </p>
 
-          {/*
-            The funnel entry, and the only CTA in this hero. It routes to the
-            real sign-in with a callback to the assessment section, so somebody
-            who signs in lands back on what they were reading.
-          */}
+          {}
           <Link
             href={`/login?callbackUrl=${encodeURIComponent("/#assessment")}`}
             className="mt-8 inline-block rounded-[14px] bg-magenta px-[26px] py-3.5 text-left font-display text-[16px] font-bold text-white shadow-[0_12px_28px_rgba(215,44,214,0.28)] transition-colors hover:bg-magenta-dark"

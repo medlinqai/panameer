@@ -3,23 +3,11 @@
 import { useState } from "react";
 import type { EmployerValidationView } from "@/lib/employer-validation";
 
-/**
- * ── ⚠⚠ THE CONTACT'S TWO BUTTONS (`P2-A1.1-E747`, WS-B) ────────────────────
- *
- * ⚠ The employer twin of `ValidateActions`. ⚠⚠ **IT POSTS; IT NEVER NAVIGATES
- * TO CONFIRM** — mail gateways pre-fetch links, and a GET that confirmed would
- * let a scanner validate somebody's employment for them.
- *
- * ⚠⚠⚠ **A `No` IS THANKED, NOT CHALLENGED.** The contact is doing us a favour
- * and owes no explanation; there is no "why?" box, and the provider is never
- * shown their wording.
- */
 export function EmployerValidateActions({
   request,
   declineFirst = false,
 }: {
   request: EmployerValidationView;
-  /** ⚠ Arrived via the email's "That isn't right" link. */
   declineFirst?: boolean;
 }) {
   const [busy, setBusy] = useState<"yes" | "no" | null>(null);

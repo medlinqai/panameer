@@ -3,27 +3,9 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { checkTransact, guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import type { Viewer } from "@/lib/access";
-/* ⚠ `assignProvider` IS NO LONGER IMPORTED HERE (`P2-A8-E684` WS-F) — this
-   route stopped setting the provider. ⚠⚠ THE FUNCTION STAYS ON DISK and is
-   still how `assignProviderDirectly` reaches the same field; only this caller
-   went (`E164`).
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { assignProvider, removeLine, updateLine } from "@/lib/work-request-lines"; */
 import { removeLine, updateLine } from "@/lib/work-request-lines";
 import { errStatus } from "../route";
 
-/**
- * PATCH / DELETE /api/work-requests/[id]/lines/[lineId] (`P1-J4-E392` WS-2).
- *
- * ⚠⚠ THE `lineId` IS NOT TRUSTED. Every handler below resolves ownership of the
- * REQUEST from the session and then scopes the write to
- * `{ id: lineId, work_request_id }` — so a line id belonging to another tenant
- * updates zero rows and returns NOT_FOUND rather than touching anything.
- *
- * ⚠ PATCH DOES TWO THINGS BECAUSE THEY ARE ONE RESOURCE. `{ providerPersonId }`
- * assigns or clears the provider; anything else is a line edit. A separate
- * `/assign` route would be a second place ownership has to be re-proved.
- */
 async function gated(): Promise<
   { ok: true; viewer: Viewer } | { ok: false; response: NextResponse }
 > {

@@ -10,30 +10,10 @@ import {
   type WorkFeedTab,
 } from "@/lib/work-feed";
 
-/**
- * THE WORK FEED (brief_sp_dashboard WS-B) — cards, not a table.
- *
- * This replaces the four empty KPI tiles and the Open-Work TABLE that were the
- * dashboard body. Both were the wrong shape twice over: the tiles reported
- * numbers nothing could produce, and a table is a scanning tool for people who
- * already know what they are looking for. A provider arriving at their
- * dashboard is browsing, and browsing wants cards.
- *
- * SERVER COMPONENT. Tabs and search are links carrying query params rather than
- * client state, so a filtered feed is a URL somebody can bookmark, share or
- * come back to — and the attention strip's "New Matches" card can deep-link
- * straight into it.
- */
 export function WorkFeed({
   tab,
   query,
   cards,
-  /**
-   * Which route the tabs link back to. The dashboard renders this as its body
-   * and /work renders it as the page (E216); parameterising the base is what
-   * lets one component serve both without the tabs sending a Find Work visitor
-   * to the dashboard.
-   */
   basePath = "/dashboard",
 }: {
   tab: WorkFeedTab;
@@ -49,82 +29,19 @@ export function WorkFeed({
   return (
     <section id="work-feed" className="scroll-mt-6">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-        {/*
-          ⚠⚠ THE HEADING LEVEL AND ITS WORDS BOTH DEPEND ON WHERE THIS RENDERS
-          (`P1-ALL-E380` WS-1b), AND THAT IS NOT OVER-ENGINEERING — IT IS THE
-          ONLY CORRECT ANSWER. This component serves TWO pages, and the naive
-          fix would have broken one of them.
-
-          ⚠ SUPERSEDED, QUOTED NOT DELETED: this was a single unconditional
-          `<h2 className="font-display text-[19px] font-bold">Find Work</h2>`.
-
-          · ON `/find-work` IT IS THE PAGE. The page had NO `<h1>` AT ALL, which
-            is a real accessibility defect and not just a naming one — a screen
-            reader got no page title. So here it is an `<h1>` reading `Work
-            Requests`, the JOURNEY's name, per `E378`'s rule that the rail
-            carries the one-word verb and the page carries the journey.
-
-          · ⚠⚠ ON `/dashboard` IT IS A SECTION, AND IT MUST STAY AN `<h2>`
-            SAYING `Find Work`. THE DASHBOARD ALREADY HAS ITS OWN `<h1>` —
-            *"Welcome Back, {firstName}"* — so promoting this unconditionally
-            would have given that page TWO `<h1>` ELEMENTS: a WORSE
-            accessibility defect than the one being fixed, introduced while
-            fixing it. CHECKED BEFORE CHANGING, not after.
-            ⚠ And `Work Requests` would be wrong there anyway: on the dashboard
-            this is one section among several, and `Find Work` is what that
-            section is.
-
-          ⚠ `onDashboard` IS THE EXISTING CONTEXT SIGNAL, already derived above
-          for the tab hrefs. No new prop was added — the component already knew
-          which of its two homes it was in.
-
-          ⚠ NOTHING DEPENDED ON THE OLD `<h2>`. Verified before touching it:
-          `e2e/` and `scripts/` were searched for a selector on it and there is
-          none — the only `h2` selectors in `e2e/` are `.hiw-h2` on the
-          marketing pages, a different element entirely. Reported at `E380`.
-        */}
+        {}
         {onDashboard ? (
           <h2 className="font-display text-[19px] font-bold">Find Work</h2>
         ) : (
           <h1 className="font-display text-[19px] font-bold">Work Requests</h1>
         )}
-        {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
-            out, so a live surface must not keep promising it. See `src/lib/credits.ts`. */}
-        {/*
-        <p className="text-[13px] text-ink-2">
-          Responding earns Community Credits.
-        </p>
-        */}
+        {}
+        {}
       </div>
 
       {/* ---- Tabs ---------------------------------------------------------- */}
-      {/*
-        ⚠⚠ NAMED SO IT CAN BE MEASURED (`P2-ALL-E708`, ruling 91). The row is the
-        thing that overflows, and a row with no handle can only be asserted through
-        a brittle structural selector — the `page-tabs` precedent, applied.
-        ⚠ This same component renders on `/dashboard` AND `/find-work`, so the
-        handle is what lets one row be measured on both pages.
-      */}
-      {/*
-        ── ⚠⚠⚠ IT WRAPS, IT DOES NOT SCROLL (`P2-ALL-E708`, ride-along `E694(e)`) ──
-
-        ⚠⚠ **MEASURED AT 390: THIS ROW HID 317px OF ITSELF WHILE THE PAGE REPORTED
-        0px** — on `/find-work` and `/dashboard` alike, because both render this
-        component. ⚠ Six tabs of whole labels need ~707px; the viewport has 390.
-        ⚠⚠⚠ **A HIDDEN SCROLLBAR MEANT FOUR OF THE SIX VIEWS HAD NO VISIBLE
-        ENTRANCE AT PHONE WIDTH** — including the two `E216` folded in from the
-        rail, so the fold-in quietly cost them their door on mobile.
-
-        ⚠ **`flex-wrap` AND NO `overflow-x-auto`, WHICH IS `PageTabs`' OWN RULE AND
-        NOT A NEW IDEA** (`E585` — one answer, one place): *"leaving the scroller on
-        a wrapping row gives a container that can both wrap and scroll, which is
-        neither."* ⚠⚠ `items-end` so a wrapped second line still sits on the border,
-        and `gap-y-0` so the two lines do not drift apart.
-        ⚠ The children keep `shrink-0 whitespace-nowrap`, so **no label truncates** —
-        the row gets taller instead of the words getting shorter. ⚠⚠ **SHORTENING THE
-        LABELS WAS THE OTHER FIX AND IS NOT MINE TO MAKE: these are menu names, and
-        menu names are Scott's** (`E533`, and the 2026-09-23 vocabulary ruling).
-      */}
+      {}
+      {}
       <div
         data-testid="work-feed-tabs"
         className="-mx-1 mb-3 flex flex-wrap items-end gap-x-1 gap-y-0 border-b border-line px-1"
@@ -167,12 +84,7 @@ export function WorkFeed({
         >
           Search
         </button>
-        {/*
-          FILTERS IS DISABLED, not absent. The design calls for it and the shape
-          matters, but there are no posted work requests to filter and no filter
-          model behind it — a live-looking control that opened an empty panel
-          would waste the click.
-        */}
+        {}
         <button
           type="button"
           disabled

@@ -1,64 +1,5 @@
 import { ShotCard } from "@/components/learn/public/shared";
 
-/**
- * THE TALENT SPINE'S GRAPHICS (`P1-J1-E017`).
- *
- * ── ⚠ THE INVENTORY WAS RUN FIRST. REUSE WAS THE DEFAULT ────────────────────
- *
- * Seventeen shot components exist. The mapping, and why:
- *
- *   1 JOIN     NEW (below)          nothing depicts a PROVIDER profile.
- *                                   `LearnerProfileShot` is a LEARNER's — wrong
- *                                   actor for a seller page — and it is the only
- *                                   profile shot in the tree.
- *   2 LEARN    REUSE, unchanged     `PathProgressShot` already draws a path as a
- *                                   sequence with a state per step. Exact fit, and
- *                                   Learn is the one fully-built step.
- *   3 CONNECT  ⚠ NONE               see the note in `TalentSpine`.
- *   4 CREATE   NEW (below)          `GetTheTalentShot` draws Expert / Package /
- *                                   Agent — exactly `PackageKind`'s three values —
- *                                   but from the BUYER's side ("Interview",
- *                                   "Review & hire", "Deploy"). Buyer CTAs on a
- *                                   seller's *create* step is the confusion Scott
- *                                   flagged; and adapting it would edit a component
- *                                   `/` renders. So a provider-side twin is new.
- *   5 SELL     ⚠ NONE               see the note in `TalentSpine`.
- *
- * ── ⚠ `ShotCard`, NOT `AppShot`, AND THE DEVIATION IS DELIBERATE ────────────
- *
- * The brief says build on `AppShot` *"— that is what makes every product shot on
- * the site look like one product."* ⚠ THAT PURPOSE IS BETTER SERVED BY `ShotCard`
- * HERE, and the reason is the reuse above: step 2 ships `PathProgressShot`
- * UNCHANGED, and it is a `ShotCard`. Wrapping it in `AppShot` would double-card it;
- * building the other two on `AppShot` would put browser chrome on two panels and a
- * plain card on the third. ⚠ ONE SHELL ACROSS THE THREE GRAPHICS IS THE RULE'S
- * INTENT; three panels in two shells is what it exists to prevent. REPORTED.
- *
- * `ShotCard` is generic — a white rounded card with a border and a shadow. It lives
- * under `learn/public/` by history, not by coupling.
- *
- * ── ⚠ EVERY FIGURE AND NAME BELOW IS INVENTED, AND MUST STAY THAT WAY ───────
- *
- * ⚠ NO REAL PROVIDER, BUYER OR PACKAGE NAMES — the existing shots use invented
- * people (`Paul Ingrao`, `Dana Whitfield`) and these follow. ⚠ NO COUNT HERE IS A
- * LIVE DB READ and none pretends to be: these are illustrations of a screen, not
- * claims about the catalog. The only real numbers on this page come from
- * `learn-catalog-counts.ts`, which carries its own measured-on date.
- */
-
-/**
- * STEP 1 — THE PROVIDER PROFILE, WHICH IS WHAT JOINING GETS YOU.
- *
- * ⚠ EVERYTHING DEPICTED IS REAL AND SHIPPED. The résumé parser is live (Anthropic
- * API, `check:ai-fixtures`), `ProviderSkill.weight` carries recency-decayed time
- * per skill from dated jobs, and `rate_min_cents`/`rate_max_cents` are the rate
- * RANGE the data model actually holds — which is why the card shows a range and
- * never a single figure.
- *
- * ⚠ THE WEIGHT BARS ARE THE POINT AND THEY ARE NOT DECORATION. The skill model is
- * time-weighted and recency-decayed, so "how deep and how recent" is the thing the
- * profile knows that a checklist does not. A tick-list would draw the OLD model.
- */
 export function ProviderProfileShot() {
   const SKILLS = [
     { name: "Oracle Procurement Cloud", meta: "8 yrs · current", w: 92 },
@@ -76,7 +17,7 @@ export function ProviderProfileShot() {
           PI
         </span>
         <span className="min-w-0">
-          {/* ⚠ INVENTED PERSON, the same one the existing shots use. */}
+          {}
           <span className="block text-[14px] font-semibold leading-[1.25] text-ink">
             Paul Ingrao
           </span>
@@ -84,7 +25,7 @@ export function ProviderProfileShot() {
             Procurement · Oracle Fusion Cloud
           </span>
         </span>
-        {/* ⚠ A RANGE, NEVER A POINT RATE — `rate_min_cents`/`rate_max_cents`. */}
+        {}
         <span className="ml-auto whitespace-nowrap text-[11.5px] font-semibold text-ink">
           $145–$185/hr
         </span>

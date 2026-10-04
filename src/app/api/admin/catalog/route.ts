@@ -17,25 +17,6 @@ import {
   specializationLinks,
 } from "@/lib/catalog-write";
 
-/**
- * THE CATALOG EDITOR'S ONE ENDPOINT (`P1-A1.5-E481`).
- *
- * > **SCOTT:** *"Only the ADMIN should add/update/delete."*
- *
- * ⚠ `canAdminister` ONLY, checked FIRST, on every verb. The catalog is the
- * vocabulary every provider profile, package and work request is built from —
- * it is Panameer Admin's, not a company owner's, exactly like `/admin/tax-rates`.
- *
- * ⚠ ONE ROUTE, A DISCRIMINATED UNION OF ACTIONS, rather than a dozen routes.
- * Every mutation shares the same guard, the same validation shape and the same
- * `WriteResult`, so there is one place to audit and no verb can quietly skip a
- * check by living in its own file.
- *
- * ⚠⚠ ALL THE RULES LIVE IN `lib/catalog-write.ts`, NOT HERE. This layer parses
- * and authorises; it never decides whether a delete is safe. A second copy of
- * "is it safe to delete this?" is how the two answers start disagreeing.
- */
-
 const Id = z.string().uuid();
 const Name = z.string().trim().min(2).max(120);
 const Kind = z.enum(["PRODUCT", "METHODOLOGY", "INDUSTRY"]);
@@ -48,9 +29,6 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("skill.rename"), id: Id, name: Name }),
   z.object({ action: z.literal("skill.move"), id: Id, roleTypeId: Id, pillarId: Id }),
   z.object({ action: z.literal("domain.rename"), id: Id, name: Name }),
-  /* `E820` — DOMAINS ARE LOCKED. `domain.add` was accepted for a few hours
-     under `E817`; the brief's revision locks roles AND domains, so the action
-     is gone rather than left reachable with curl. `skill.visible` replaces it. */
   z.object({ action: z.literal("skill.visible"), id: Id, visible: z.boolean() }),
   z.object({ action: z.literal("role.rename"), id: Id, name: Name }),
   z.object({
@@ -59,12 +37,6 @@ const Body = z.discriminatedUnion("action", [
     id: Id,
     status: z.enum(["ACTIVE", "RETIRED"]),
   }),
-  /* ⚠⚠ THERE IS NO `force` FIELD ON THIS ACTION AND THERE MUST NEVER BE ONE.
-     `hardDelete` refuses at a non-zero link count and the only way past it is
-     to remove the links first — a confirm dialog is not consent from the
-     provider whose profile would lose the row. */
-  /* ⚠ `E482` — promotion is where a suggestion ACQUIRES its kind, so `kind` is
-     required here. There is no default: the admin makes the judgement call. */
   z.object({ action: z.literal("spec.promote"), id: Id, kind: Kind }),
   z.object({ action: z.literal("spec.reject"), id: Id }),
   z.object({
@@ -111,21 +83,12 @@ export async function POST(req: Request) {
     }
   })();
 
-  /* ⚠ A REFUSAL IS A 409, NOT A 500. "This has 12 providers on it" is the
-     endpoint working correctly, and the UI needs the count to offer Retire. */
-  /* The switch is exhaustive over the schema's union, but TypeScript cannot see
-     that after `E821` removed two members, so an unreachable default keeps the
-     return type honest. */
   if (!result) {
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
   }
   return NextResponse.json(result, { status: result.ok ? 200 : 409 });
 }
 
-/**
- * ⚠ THE LINK COUNT, READ BEFORE THE ADMIN ACTS — never only in the error after.
- * The brief is explicit: *"Show the link count in the UI BEFORE the admin acts."*
- */
 export async function GET(req: Request) {
   const viewer = await guardApi("canAdminister");
   if (viewer instanceof NextResponse) return viewer;
