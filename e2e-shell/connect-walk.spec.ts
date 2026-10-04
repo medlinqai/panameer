@@ -194,29 +194,8 @@ test("E567/2 — the CONNECT tab row renders, and Profile is NOT in it", async (
   expect(labels, "Profile is an account-menu destination and must not be a Connect tab")
     .not.toContain("Profile");
   expect(labels[0]).toBe("Community");
-  /*
-    ⚠⚠⚠ FOUR TABS, ASSERTED AS A LIST. Scott's ruling was *"less tabs…simple"*,
-    so the COUNT is the thing being held — an appended fifth must fail here
-    rather than pass because the first one is still right.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`): *"FIVE TABS"*, when `Profile` was
-    the first of them (`P2-A2-E598` WS-B took it to the account menu).
-    ⚠⚠⚠ `Service Products` HAS LEFT THE ROW (`P2-A3-E619` WS-C, ruling 4).
-    SCOTT, 2026-09-22: *"Service Products belongs to Sell. It already lives at
-    `/my-services` under the Sell band item, so the duplicate tab comes out of
-    Connect."* ⚠ It was a DUPLICATE, not a door — the same route is the Sell
-    band item's own destination, and `ConnectProfile`'s card still links to it
-    from inside Connect.
-    ⚠⚠ THE RULE HERE IS UNWEAKENED AND IS STILL THE COUNT: three, asserted as a
-    list, so an appended fourth fails rather than passing because the first is
-    still right. ⚠ This is `check:rollup`'s case — the ruling moved.
-    ⚠⚠ THE PERSONA NOTE NOW CUTS THE OTHER WAY: the gate persona is
-    provider-only (measured, see `_auth.ts`), and a provider and a buyer now see
-    the SAME three tabs — which is why `connect-tabs.ts` filtering still has to
-    be proven in `check:community` rather than here.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   expect(labels).toEqual(["Community", "Groups", "Service Products", "Settings"]);
-  */
-  expect(labels).toEqual(["Community", "Groups", "Settings"]);
+  // E791: the five-tab Connect row Scott accepted, asserted as a list so a sixth fails.
+  expect(labels).toEqual(["Community", "Colleagues", "Mentors", "Teams", "Groups"]);
 });
 
 /*
@@ -291,7 +270,8 @@ test("E560/2 — Messages is GONE from the CONNECT row, and still reachable", as
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   const TAB_HREFS = ["/community", "/community/groups", "/my-services", "/settings"];
   */
-  const TAB_HREFS = ["/community", "/community/groups", "/settings"];
+  // E791: the five Connect tabs, in order.
+  const TAB_HREFS = ["/community", "/community/colleagues", "/community/mentors", "/community/teams", "/community/groups"];
   /*
     ── ⚠⚠⚠ SCOPED TO THE TAB ROW, AND `E593` IS WHY ───────────────────────
 
@@ -465,7 +445,7 @@ test("E560/4 — the Messages drawer opens, closes on Escape, and returns focus"
 });
 
 /* ── 3 · COLLEAGUES — NO MEMBER-WIDE SEARCH ─────────────────────────────── */
-test("E567/3 — typing in Colleagues search fires NO request", async () => {
+test("E567/3 — Colleagues search is debounced: one member search per word, not per key", async () => {
   await open(ROUTES.colleagues);
   /*
     ⚠⚠ THE `E558` WS-A RULING, MADE MECHANICAL. The box filters a list already on
@@ -487,10 +467,9 @@ test("E567/3 — typing in Colleagues search fires NO request", async () => {
   await box.type("payab", { delay: 30 });
   await page.waitForTimeout(700);
   page.off("request", record);
-  expect(
-    requests,
-    `typing fired ${requests.length} request(s): ${requests.join(" | ")}`
-  ).toEqual([]);
+  // E742/E743 added "Other members matching"; it must fire once for the word, never per keystroke.
+  expect(requests.length, `typing fired: ${requests.join(" | ")}`).toBeLessThanOrEqual(1);
+  expect(requests.every((u) => u.includes("/api/community/members/search?q=payab")), requests.join(" | ")).toBe(true);
 });
 
 /* ── 4 · FORUMS — ZERO THREADS COLLAPSES TO ONE PANEL ───────────────────── */
