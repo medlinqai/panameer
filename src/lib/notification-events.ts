@@ -677,9 +677,9 @@ export const NOTIFICATION_EVENTS = {
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
-    requiresAction: true,
+    requiresAction: false, // R2 builds scheduling/test-taking; until then nothing in-app clears this
     title: (v) => `${str(v, "buyerName", "A buyer")} asked to interview you`,
-    body: () => "Confirm a time to clear this.",
+    body: () => "Reply in Messages to agree a time.",
     /*
       ── ⚠⚠⚠ `/find-work/`, NOT `/work-requests/` (`E680(b)`, FIXED BY `E683a`) ─
 
@@ -721,14 +721,14 @@ export const NOTIFICATION_EVENTS = {
     category: "work_request.matched",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
-    requiresAction: true,
+    requiresAction: false, // R2 builds scheduling/test-taking; until then nothing in-app clears this
     title: (v) => `${str(v, "buyerName", "A buyer")} sent you a skills test`,
     /** ⚠⚠ THE REQUEST IS NAMED IN THE BODY (`E802`), never the buyer — see the
      *  note above and the `notify` call in `work-tests.ts`. ⚠ In the body and
      *  not the title because the worklist GROUPS on the title. */
     body: (v) => {
       const t = str(v, "requestTitle", "");
-      return t ? `${t} · Sit it or decline to clear this.` : "Sit it or decline to clear this.";
+      return t ? `${t} · Reply in Messages to agree the next step.` : "Reply in Messages to agree the next step.";
     },
     /* ⚠ The provider's own route, for the reason recorded on the interview
        event directly above — and checked here rather than copied. */
