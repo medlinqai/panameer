@@ -1,3 +1,5 @@
+import { formatCents } from "@/lib/display";
+import { notify } from "@/lib/notifications";
 import { randomBytes } from "node:crypto";
 import { LineBasis, SettlementStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -431,7 +433,24 @@ export async function createSettlement(
     }
   }
 
-  return getSettlement(viewer, created.id);
+  const detail = await getSettlement(viewer, created.id);
+  const buyer = await prisma.workOrder.findUnique({ where: { id: o.id }, select: { buyer_person_id: true } });
+  if (buyer)
+    await notify({
+      event: "work.settlement_approval",
+      personId: buyer.buyer_person_id,
+      entityType: "settlement",
+      entityId: created.id,
+      dedupeKey: `settlement-approval:${created.id}`,
+      vars: {
+        settlementId: created.id,
+        orderId: o.id,
+        orderNumber: o.orderNumber,
+        providerName: o.providerName,
+        amount: formatCents(detail.totalCents, detail.currency),
+      },
+    });
+  return detail;
 }
 
 async function providerPersonIdOf(orderId: string): Promise<string> {

@@ -749,9 +749,9 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: true,
-    title: () => "A settlement needs your approval",
-    body: () => null,
-    href: (v) => `/orders/${str(v, "orderId", "")}`,
+    title: (v) => `A payment request needs your approval${str(v, "amount", "") ? ` — ${str(v, "amount", "")}` : ""}`,
+    body: (v) => (str(v, "providerName", "") ? `From ${str(v, "providerName", "")} on ${str(v, "orderNumber", "")}.` : null),
+    href: (v) => `/payments/payment-requests/${str(v, "settlementId", "")}`,
   },
   /*
     ⚠⚠⚠ DEFINED AND SILENT, AND THIS ONE IS DIFFERENT FROM THE FOUR ABOVE.
