@@ -272,9 +272,8 @@ test.describe("⚠ THE COMMUNITY WEB — P2-J3-E591 WS-B", () => {
     */
     const legend = (await page.locator(".pm-web-key").innerText()).replace(/\s+/g, " ").trim();
     console.log(`E601/WS-A  legend reads: ${legend}`);
-    expect(legend, "the legend must state the TOTALS, not the drawn subset").toBe(
-      "17 joined 2 invited 20 reachable"
-    );
+    // E625 (Scott): the three totals moved to the page header; the legend is the shape key only.
+    expect(legend, "the legend is the key, with no numbers").toBe("joined invited reachable");
 
     await page.screenshot({ path: "e2e-shell/.artifacts/e591-web-populated.png" });
     await page.close();

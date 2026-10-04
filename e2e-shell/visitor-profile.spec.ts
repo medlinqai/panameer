@@ -460,7 +460,8 @@ test.describe("⚠ THE VISITOR PROFILE — P2-J3-E593 WS-C", () => {
       added or merged — the mistake this file already records making for `/account-health`.
     */
     expect(
-      await page.locator('.pm-cp3-rail a[href="/community/score"]').count(),
+      // The rail links straight to /score; the tab row uses the /community/score redirect. Either is the door.
+      await page.locator('.pm-cp3-rail a[href="/community/score"], .pm-cp3-rail a[href="/score"]').count(),
       "the owner lost their door to /community/score — the removed button's destination"
     ).toBeGreaterThan(0);
     /*
