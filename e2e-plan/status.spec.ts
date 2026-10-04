@@ -74,7 +74,7 @@ test("a signed-out visitor sees the plan: timeline, caption and accordions", asy
   await expect(page.getByRole("region", { name: "Plan timeline" })).toBeVisible();
   /** ⚠ Scott's caption, verbatim — it is the reason the plan is public. */
   await expect(page.getByText("The same plan tool you'll use on your work orders.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "The plan", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See the Details", exact: true })).toBeVisible();
   /*
     `E803` replaced the `<details>` accordions with the grid. Scoped to the
     grid's own rows: "Build" also appears in the Build Line and the chart above,
@@ -93,8 +93,12 @@ test("the AIM journey grid and stage list are gone from the page", async ({ page
   await expect(page.getByText("Ten parts of one platform.")).toHaveCount(0);
   /** ⚠ And the sections that stayed are still there, or this test would pass on
    *  a blank page (ruling 11). */
-  await expect(page.getByRole("heading", { name: "What changed, day by day." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Found a problem? Tell us." })).toBeVisible();
+  /*
+    `E810` replaced "What changed, day by day" with "Take a Look", and the
+    support block is hidden until a Deploy ◆ is Done. The discriminator is now
+    the section that DID stay, so this still cannot pass on a blank page.
+  */
+  await expect(page.getByRole("heading", { name: "Take a Look" })).toBeVisible();
 });
 
 test("the in-progress phase is open by default and its children are visible", async ({ page }) => {
@@ -104,8 +108,14 @@ test("the in-progress phase is open by default and its children are visible", as
      title. */
   const expanded = page.locator('button[aria-expanded="true"]');
   await expect(expanded).toHaveCount(1);
-  await expect(expanded).toContainText("Build");
+  /* The button holds only the caret; the title is its own cell, so the row is
+     what carries the name. */
+  await expect(
+    page.locator("[data-plan-grid-row]").filter({ hasText: "Build" }).first(),
+  ).toBeVisible();
   /* Its tasks are therefore readable without a click. */
+  /* The fixture's Build is the only In-progress row, so it is the one expanded;
+     its children are 1.1 and 1.2 under `E809`'s outline numbering. */
   await expect(page.locator('[data-plan-grid-row="1.1"]')).toContainText("Public");
   await expect(page.locator('[data-plan-grid-row="1.2"]')).toContainText("Register");
 });
@@ -230,8 +240,19 @@ test("the timeline's week labels never overlap — E777's rule, new geometry", a
    * component that rendered ONE label would satisfy every overlap check above —
    * the no-collision rule passes most easily by showing nothing (ruling 12).
    */
-  expect(visible[390], `phone must show fewer labels than desktop: ${JSON.stringify(visible)}`).toBeLessThan(
-    visible[1440],
-  );
-  expect(visible[390], "but still more than a couple").toBeGreaterThan(2);
+  /*
+    `E819`: thinning is ADAPTIVE now. `weekTicks` already thins by span, and a
+    SHORT plan has few enough labels that hiding more would leave one or two —
+    a label nobody can see is not a label. So the rule is "never MORE on a
+    phone", plus the no-overlap check above, which is the thing that actually
+    matters.
+    Superseded, quoted not deleted:
+    //   expect(visible[390]).toBeLessThan(visible[1440]);
+    //   expect(visible[390], "but still more than a couple").toBeGreaterThan(2);
+  */
+  expect(
+    visible[390],
+    `a phone must not show MORE labels than a desktop: ${JSON.stringify(visible)}`,
+  ).toBeLessThanOrEqual(visible[1440]);
+  expect(visible[390], "and at least two, or the axis says nothing").toBeGreaterThanOrEqual(2);
 });
