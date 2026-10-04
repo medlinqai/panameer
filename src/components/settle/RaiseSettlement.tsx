@@ -16,12 +16,29 @@ const newRow = (date: string): Row => ({
   note: "",
 });
 
-export function RaiseSettlement({ form }: { form: SettleForm }) {
+export type ResubmitPrefill = {
+  id: string;
+  number: string;
+  periodStart: string;
+  periodEnd: string;
+  rate: { workOrderLineId: string; serviceDate: string; quantity: number; note: string }[];
+  amountLineIds: string[];
+};
+
+export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit?: ResubmitPrefill | null }) {
   const router = useRouter();
-  const [periodStart, setPeriodStart] = useState(form.orderPeriodStart ?? "");
-  const [periodEnd, setPeriodEnd] = useState(form.orderPeriodEnd ?? "");
-  const [rowsByLine, setRowsByLine] = useState<Record<string, Row[]>>({});
-  const [claimed, setClaimed] = useState<Record<string, boolean>>({});
+  const [periodStart, setPeriodStart] = useState(resubmit?.periodStart ?? form.orderPeriodStart ?? "");
+  const [periodEnd, setPeriodEnd] = useState(resubmit?.periodEnd ?? form.orderPeriodEnd ?? "");
+  // A resubmission starts from the rejected request's lines; the provider edits what was sent back.
+  const [rowsByLine, setRowsByLine] = useState<Record<string, Row[]>>(() => {
+    const out: Record<string, Row[]> = {};
+    for (const r of resubmit?.rate ?? [])
+      (out[r.workOrderLineId] ??= []).push({ ...newRow(r.serviceDate), quantity: String(r.quantity), note: r.note });
+    return out;
+  });
+  const [claimed, setClaimed] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((resubmit?.amountLineIds ?? []).map((id) => [id, true]))
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +99,7 @@ export function RaiseSettlement({ form }: { form: SettleForm }) {
       const r = await fetch("/api/settlements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: form.orderId, periodStart, periodEnd, lines }),
+        body: JSON.stringify({ orderId: form.orderId, periodStart, periodEnd, lines, resubmitsId: resubmit?.id ?? null }),
       });
       const out = await r.json().catch(() => ({}));
       if (!r.ok) {

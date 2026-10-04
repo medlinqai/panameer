@@ -2,13 +2,19 @@ import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { Button } from "@/components/casing/Button";
-import { RaiseSettlement } from "@/components/settle/RaiseSettlement";
-import { settleFormFor, SettlementError } from "@/lib/settlements";
+import { RaiseSettlement, type ResubmitPrefill } from "@/components/settle/RaiseSettlement";
+import { getSettlement, settleFormFor, SettlementError } from "@/lib/settlements";
 import { BackLink } from "@/components/console/BackLink";
 
 export const metadata = { title: "Raise a Payment Request · Panameer" };
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
   const { id } = await params;
@@ -39,11 +45,26 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     throw e;
   }
 
+  const { from } = await searchParams;
+  let resubmit: ResubmitPrefill | null = null;
+  if (from) {
+    const prev = await getSettlement(viewer, from).catch(() => null);
+    if (prev && prev.orderId === form.orderId && prev.status === "REJECTED" && !prev.resubmittedAs)
+      resubmit = {
+        id: prev.id,
+        number: prev.settlementNumber,
+        periodStart: prev.periodStart,
+        periodEnd: prev.periodEnd,
+        rate: prev.lines.filter((l) => l.basis === "RATE").map((l) => ({ workOrderLineId: l.workOrderLineId, serviceDate: l.serviceDate ?? "", quantity: l.quantity ?? 0, note: l.note ?? "" })),
+        amountLineIds: prev.lines.filter((l) => l.basis === "AMOUNT").map((l) => l.workOrderLineId),
+      };
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl">
       <BackLink href={`/orders/${form.orderId}`} label={form.orderNumber} />
       <h1 className="mt-2 font-display text-[28px] font-bold tracking-[-0.5px]">
-        Raise a payment request
+        {resubmit ? `Resubmit ${resubmit.number}` : "Raise a payment request"}
       </h1>
       <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-ink-2">
         For {form.buyerName}, against {form.orderNumber}. Claim time on rate lines
@@ -52,7 +73,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </p>
 
       <div className="mt-7">
-        <RaiseSettlement form={form} />
+        <RaiseSettlement form={form} resubmit={resubmit} />
       </div>
     </div>
   );

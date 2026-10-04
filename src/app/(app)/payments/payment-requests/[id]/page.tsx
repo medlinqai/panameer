@@ -70,6 +70,28 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         point of requiring one — `E388`: *"a rejection with no stated reason is
         unanswerable."* Hiding it in a timeline would waste the requirement.
       */}
+      {(s.resubmitOf || s.resubmittedAs) && (
+        <p data-testid="resubmit-link" className="mt-4 text-[14px] text-ink-2">
+          {s.resubmitOf && (
+            <>Resubmission of <Link href={`/payments/payment-requests/${s.resubmitOf.id}`} className="font-mono underline">{s.resubmitOf.number}</Link>, which was sent back.</>
+          )}
+          {s.resubmittedAs && (
+            <>Resubmitted as <Link href={`/payments/payment-requests/${s.resubmittedAs.id}`} className="font-mono underline">{s.resubmittedAs.number}</Link>.</>
+          )}
+        </p>
+      )}
+
+      {s.status === "REJECTED" && s.party === "PROVIDER" && !s.resubmittedAs && (
+        <div className="mt-4">
+          <Link
+            href={`/orders/${s.orderId}/settle?from=${s.id}`}
+            className="inline-flex min-h-11 items-center bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover"
+          >
+            Resubmit
+          </Link>
+        </div>
+      )}
+
       {s.status === "REJECTED" && (
         <div className="mt-5 rounded-brand border-2 border-rose-300 bg-rose-50/60 p-5">
           <p className="text-[15px] font-bold">Sent back</p>
