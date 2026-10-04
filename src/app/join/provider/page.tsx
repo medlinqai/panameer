@@ -3704,8 +3704,9 @@ setScreen(target);
                 is now TOLD which of the two things is meant.
               */
               overviewShownElsewhere
-              rateMinCents={profile.rateMinCents ?? profile.hourlyRateCents}
-              rateMaxCents={profile.rateMaxCents ?? profile.hourlyRateCents}
+              /* `E823` (R-E002) — two rates, not a derived range. */
+              onsiteCents={profile.onsiteRateCents}
+              remoteCents={profile.remoteRateCents}
               youGetCents={youGet}
               language={profile.languages[0]?.name ?? null}
               country={addr.country?.trim() || null}

@@ -183,7 +183,7 @@ export function RateEditor({
       */}
       {onOnsiteChange && (
         <MoneyField
-          label="Onsite Rate"
+          label="Onsite rate"
           hint="Optional. What you charge when the work is at the client's site."
           cents={onsiteRateCents ?? null}
           onChange={onOnsiteChange}
@@ -192,8 +192,9 @@ export function RateEditor({
       )}
       {onRemoteChange && (
         <MoneyField
-          label="Fully Remote Rate"
-          hint="Optional. What you charge when the work is entirely remote."
+          /* `E823` — Scott's word: offsite, not "fully remote". */
+          label="Offsite rate"
+          hint="Optional. What you charge when the work is away from the client's site."
           cents={remoteRateCents ?? null}
           onChange={onRemoteChange}
           placeholder="110.00"

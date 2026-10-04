@@ -605,10 +605,23 @@ export async function getProviderProfileView(
         //   { key: "min", label: "From", cents: profile.rate_min_cents },
         //   { key: "max", label: "To", cents: profile.rate_max_cents },
       */
+      /*
+        TWO RATES, EVERYWHERE (`P2-J1.4-E823`, R-E002). Scott decided 2026-10-03:
+        the whole app shows ONSITE and OFFSITE and nothing else.
+
+        `hourly` leaves the list because it is the SAME NUMBER a member already
+        gave as one of the two — printing it alongside them showed one rate
+        three times, which this list's own history records. The COLUMN is
+        untouched: no rename, no migration, nobody's saved rate is rewritten.
+        "Fully Remote" becomes "Offsite rate" — the word Scott chose — and
+        "Hybrid" is gone from the vocabulary with it.
+        ⚠ SUPERSEDED, quoted not deleted:
+        //   { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
+        //   { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
+      */
       columns: [
-        { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
-        { key: "onsite", label: "Onsite", cents: profile.onsite_rate_cents },
-        { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
+        { key: "onsite", label: "Onsite rate", cents: profile.onsite_rate_cents },
+        { key: "remote", label: "Offsite rate", cents: profile.remote_rate_cents },
       ] as { key: string; label: string; cents: number | null }[],
     },
     serviceFeeBps: profile.service_fee_bps,
