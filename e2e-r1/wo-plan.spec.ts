@@ -82,3 +82,29 @@ test("lane 3: T&E only shows Timesheets; Add a Plan converts in place and keeps 
     await dropFixture(g);
   }
 });
+
+test("lane 4: phone — time and dollars side by side, no sideways scroll, 44px targets", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    await createSettlement(g, "APPROVED");
+    await signIn(page, g.provider.email);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/orders/${g.orderId}?tab=plan`);
+    await page.getByRole("button", { name: "Use Milestones" }).click();
+    await expect(page.getByTestId("wo-plan")).toBeVisible({ timeout: 30_000 });
+    const td = page.getByTestId("time-dollars");
+    const [a, b] = await td.locator(":scope > div").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    expect(Math.abs(a - b), "Time and Dollars sit side by side").toBeLessThan(4);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    for (const name of ["Submit Time", "Edit Plan"]) {
+      const el = name === "Submit Time" ? page.getByRole("link", { name }) : page.getByRole("button", { name });
+      const box = await el.boundingBox();
+      expect(box!.height, `${name} is at least 44px`).toBeGreaterThanOrEqual(44);
+    }
+    const submit = await page.getByRole("link", { name: "Submit Time" }).boundingBox();
+    expect(submit!.width, "Submit Time is full width on a phone").toBeGreaterThan(300);
+    await page.screenshot({ path: "e2e-r1/.artifacts/wo-plan-board4-390.png", fullPage: true });
+  } finally {
+    await dropFixture(g);
+  }
+});
