@@ -77,14 +77,19 @@ export function PlanGrid({ plan }: { plan: PublicPlan }) {
       <table className="mt-4 w-full border-collapse text-[13px]">
         <thead>
           <tr>
-            {["#", "Name", "Owner", "Start", "End", "Status"].map((h) => (
+            {/*
+              NO OWNER COLUMN ON THE PUBLIC PAGE (`P2-ALL-E822`, R-E015). Scott,
+              2026-10-04. The admin Build Plan editor keeps its Owner column and
+              `PublicPlanRow.owner` is untouched — the data stays, this surface
+              stops printing it.
+            */}
+            {["#", "Name", "Start", "End", "Status"].map((h) => (
               <th
                 key={h}
                 scope="col"
                 className={
                   "border-b border-ink px-1.5 py-2 text-left text-[11px] font-semibold tracking-[0.08em] text-ink-3 " +
                   /* Owner leaves at phone width, as the mockup does. */
-                  (h === "Owner" ? "hidden sm:table-cell " : "") +
                   (h === "#" ? "w-[60px]" : "")
                 }
               >
@@ -137,15 +142,6 @@ export function PlanGrid({ plan }: { plan: PublicPlan }) {
                       {row.note}
                     </span>
                   )}
-                  {/* Phone: the owner column is gone, so it travels here. */}
-                  {row.owner && (
-                    <span className="mt-0.5 block text-[11px] font-normal text-ink-3 sm:hidden">
-                      {row.owner}
-                    </span>
-                  )}
-                </td>
-                <td className="hidden px-1.5 py-2 align-middle font-normal text-ink-2 sm:table-cell">
-                  {row.owner || "—"}
                 </td>
                 <td className="px-1.5 py-2 align-middle font-normal tabular-nums text-ink-2">
                   {fmt(row.start)}
