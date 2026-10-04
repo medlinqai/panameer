@@ -104,7 +104,7 @@ export function InviteColleagueClient({
 
   return (
     <div className="space-y-4">
-      <form onSubmit={submit} className="rounded-brand border border-line bg-white p-5">
+      <form onSubmit={submit} className="border-t border-line py-5">
         <h2 className="font-display text-[16px] font-bold">Invite a Colleague</h2>
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
           They&apos;ll get one email explaining what Panameer is and a link to
@@ -270,7 +270,7 @@ export function InviteColleagueClient({
           <button
             type="submit"
             disabled={busy || dayRemaining <= 0}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             {busy ? "Sending…" : "Send Invitation"}
           </button>
@@ -298,7 +298,7 @@ export function InviteColleagueClient({
         </div>
       </form>
 
-      <section className="rounded-brand border border-line bg-white p-5">
+      <section className="border-t border-line py-5">
         <h2 className="font-display text-[16px] font-bold">Invitations Sent</h2>
         {sent.length === 0 ? (
           <p className="mt-3 text-[14px] leading-relaxed text-ink-2">

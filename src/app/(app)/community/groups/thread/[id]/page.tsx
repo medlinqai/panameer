@@ -52,7 +52,7 @@ export default async function ThreadPage({
           <article
             key={e.id}
             className={
-              "rounded-brand border bg-white p-5 " +
+              "border-t border-line py-5" +
               (e.opening ? "border-magenta/25" : "border-line")
             }
           >

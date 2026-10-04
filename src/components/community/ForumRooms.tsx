@@ -36,7 +36,7 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
   const quiet = rooms.filter((r) => r.threadCount === 0);
 
   return (
-    <div className="rounded-brand border border-line bg-white p-5">
+    <div className="border-t border-line py-5">
       {/* ⚠⚠ `P2-A3-E612` Q17 — `Groups`, matching the page it sits on. Leaving
           this as `Forums` under a page headed `Groups` would be the same
           two-words-for-one-thing defect Q17 exists to remove (`E459`).

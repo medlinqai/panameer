@@ -170,7 +170,7 @@ export default async function GroupsPage({
                     <Link
                       key={t.id}
                       href={`/community/groups/thread/${t.id}`}
-                      className="block rounded-brand border border-line bg-white p-4 transition-colors hover:border-magenta"
+                      className="block transition-colors hover:border-magenta border-t border-line py-5"
                     >
                       <p className="text-[15px] font-bold">{t.title}</p>
                       <p className="mt-0.5 text-[13px] text-ink-2">
@@ -180,7 +180,7 @@ export default async function GroupsPage({
                   ))}
                 </div>
               ) : (
-                <p className="rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
+                <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
                   Questions from groups you run will appear here, oldest first,
                   until you answer them. Nobody has asked anything yet.
                 </p>
@@ -209,7 +209,7 @@ export default async function GroupsPage({
 
           <aside className="space-y-4">
             {/* ── 4a · THIS MONTH — three counts, one window ─────────────── */}
-            <div className="rounded-brand border border-line bg-white p-4">
+            <div className="border-t border-line py-5">
               <h3 className="font-display text-[15px] font-bold">This Month</h3>
               <dl className="pm-groups-month">
                 <div>
@@ -228,7 +228,7 @@ export default async function GroupsPage({
             </div>
 
             {/* ── 4b · START A GROUP — the one form ──────────────────────── */}
-            <div id="start-a-group" className="rounded-brand border border-line bg-white p-4">
+            <div id="start-a-group" className="border-t border-line py-5">
               <h3 className="font-display text-[15px] font-bold">Start a Group</h3>
               <p className="mb-3 mt-1 text-[13px] leading-relaxed text-ink-2">
                 A topic, a region, an alumni group — anyone can start one, and
@@ -244,7 +244,7 @@ export default async function GroupsPage({
                 figure here would be a count of a state with no writer, and a
                 "Join for $X" would promise a mechanism that does not exist —
                 the rule that dashed Earnings at `E603`. */}
-            <div className="rounded-brand border border-line bg-white p-4">
+            <div className="border-t border-line py-5">
               <h3 className="font-display text-[15px] font-bold">Paid Groups</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
                 Not set up yet. Charging for a group needs a way to take payment,
@@ -332,7 +332,7 @@ function GroupList({
       </div>
 
       {cards.length === 0 ? (
-        <p className="rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
+        <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
           {empty}
         </p>
       ) : (
@@ -402,7 +402,7 @@ function GroupList({
 function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
   if (tracks.length === 0) {
     return (
-      <p className="mt-6 rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
+      <p className="mt-6 text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
         You&rsquo;re already in every group there is. Starting one is the way to
         make another.
       </p>
@@ -514,7 +514,7 @@ function Requests({
           People Asking to Join Your Groups
         </h2>
         {incoming.length === 0 ? (
-          <p className="rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
+          <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
             Nobody is waiting on you. When someone asks to join a group you run,
             they appear here, oldest first.
           </p>
@@ -527,7 +527,7 @@ function Requests({
                  which holds the name but NOT the buttons, and hung. */
               <div
                 key={r.id}
-                className="pm-groups-req flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+                className="pm-groups-req flex flex-wrap items-center gap-3 border-t border-line py-5"
               >
                 <div className="min-w-[180px] flex-1">
                   <p className="text-[15px] font-bold">{r.personName}</p>
@@ -545,7 +545,7 @@ function Requests({
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Your Requests</h2>
         {mine.length === 0 ? (
-          <div className="rounded-brand border border-line bg-white p-5">
+          <div className="border-t border-line py-5">
             <p className="text-[14px] leading-relaxed text-ink-2">
               You haven&rsquo;t asked to join anything. Groups that need an owner&rsquo;s
               say-so show up here while you wait.
@@ -569,7 +569,7 @@ function Requests({
             {mine.map((r) => (
               <div
                 key={r.groupSlug}
-                className="flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+                className="flex flex-wrap items-center gap-3 border-t border-line py-5"
               >
                 <div className="min-w-[180px] flex-1">
                   <Link

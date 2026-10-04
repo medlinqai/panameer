@@ -124,7 +124,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-x-[22px] border-b border-line">
         {FILTERS.map((f) => {
           const active = filter === f.key;
           return (
@@ -134,10 +134,8 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
               onClick={() => setFilter(f.key)}
               aria-pressed={active}
               className={
-                "rounded-full border-[1.5px] px-3.5 py-1.5 text-[13.5px] font-semibold transition-colors " +
-                (active
-                  ? "border-magenta bg-magenta text-white"
-                  : "border-line text-ink-2 hover:border-magenta hover:text-magenta")
+                "-mb-px border-b-2 py-2.5 text-[14px] font-semibold transition-colors " +
+                (active ? "border-magenta text-ink" : "border-transparent text-ink-2 hover:text-ink")
               }
             >
               {f.label}{" "}
@@ -163,7 +161,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
           {visible.map((r) => (
             <div
               key={r.connectionId}
-              className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+              className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5"
             >
               {/* ⚠⚠ THE PHOTO LINKS TOO (`E742`, B2: *"Name and photo link to the
                   profile"*). ⚠ A 44px avatar is a small target, so it and the
@@ -371,7 +369,7 @@ function OtherMembers({
           {others.map((m) => (
             <div
               key={m.userId}
-              className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+              className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5"
             >
               <Avatar
                 firstName={m.name.split(" ")[0] ?? ""}
@@ -463,7 +461,7 @@ function AskForRecommendation({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-brand border border-line bg-white p-5">
+      <div className="w-full max-w-lg border-t border-line py-5">
         <h2 className="font-display text-[18px] font-bold">
           Ask {row.name} for a recommendation
         </h2>
@@ -477,7 +475,7 @@ function AskForRecommendation({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full bg-magenta px-5 py-2 font-bold text-white transition-colors hover:bg-magenta-dark"
+                className="bg-ink px-5 py-2 font-semibold text-surface transition-colors hover:bg-ink-hover"
               >
                 Done
               </button>
@@ -513,7 +511,7 @@ function AskForRecommendation({
                 type="button"
                 onClick={onClose}
                 disabled={busy}
-                className="rounded-full border-[1.5px] border-line px-5 py-2 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                className="border border-ink bg-surface px-5 py-2 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
               >
                 Back
               </button>
@@ -521,7 +519,7 @@ function AskForRecommendation({
                 type="button"
                 onClick={send}
                 disabled={busy || note.trim().length < 20}
-                className="rounded-full bg-magenta px-5 py-2 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+                className="bg-ink px-5 py-2 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
               >
                 {busy ? "Sending…" : "Send Request"}
               </button>

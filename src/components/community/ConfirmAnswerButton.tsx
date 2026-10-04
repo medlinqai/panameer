@@ -42,7 +42,7 @@ export function ConfirmAnswerButton({
         disabled={busy}
         aria-pressed={confirmed}
         className={
-          "rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50 " +
+          "border px-3 py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50 " +
           (confirmed
             ? "border-line bg-bg-soft text-ink-2 hover:border-magenta hover:text-magenta"
             : "border-line text-ink-2 hover:border-magenta hover:text-magenta")

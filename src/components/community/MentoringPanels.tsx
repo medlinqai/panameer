@@ -12,7 +12,7 @@ type Row = {
 
 function PersonRow({ r, children }: { r: Row; children?: React.ReactNode }) {
   return (
-    <div className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
+    <div className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5">
       <Avatar
         firstName={r.name.split(" ")[0] ?? ""}
         lastName={r.name.split(" ").slice(1).join(" ")}
@@ -81,7 +81,7 @@ export function MentoringPanels({
       {/* ── 3 · THE SIGNAL ────────────────────────────────────────────────── */}
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Your Mentor Signal</h2>
-        <div className="rounded-brand border border-line bg-white p-5">
+        <div className="border-t border-line py-5">
           {}
           <p className="text-[15px]">
             <span className="text-[22px] font-bold text-ink">{helpfulAnswers}</span>{" "}

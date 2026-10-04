@@ -42,7 +42,7 @@ export function HelpfulButton({
         disabled={busy}
         aria-pressed={marked}
         className={
-          "rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50 " +
+          "border px-3 py-1.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50 " +
           (marked
             ? "border-emerald-600/40 bg-emerald-50 text-emerald-700 hover:border-emerald-600"
             : "border-line text-ink-2 hover:border-magenta hover:text-magenta")

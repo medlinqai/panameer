@@ -47,7 +47,7 @@ export function DecideRequest({
         onClick={() => decide("approve")}
         disabled={busy !== null}
         aria-label={`Approve ${personName}`}
-        className="rounded-full bg-magenta px-4 py-1.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+        className="bg-ink px-4 py-1.5 text-[13.5px] font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
       >
         {busy === "approve" ? "Approving…" : "Approve"}
       </button>
@@ -56,7 +56,7 @@ export function DecideRequest({
         onClick={() => decide("decline")}
         disabled={busy !== null}
         aria-label={`Decline ${personName}`}
-        className="rounded-full border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+        className="border border-ink bg-surface px-4 py-1.5 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
       >
         {busy === "decline" ? "Declining…" : "Decline"}
       </button>

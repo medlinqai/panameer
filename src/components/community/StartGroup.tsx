@@ -59,7 +59,7 @@ export function StartGroup() {
       <button
         type="submit"
         disabled={busy || title.trim().length < 3}
-        className="w-full rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full bg-ink px-4 py-2 text-[13.5px] font-semibold text-surface transition-colors hover:bg-ink-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? "Starting your group…" : "Start a Group"}
       </button>

@@ -64,3 +64,18 @@ test("register review: thin-line sections, square ink buttons", async ({ page })
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
   }
 });
+
+const CONNECT = ["/community", "/community/colleagues", "/community/mentors", "/community/teams", "/community/groups", "/invite-colleague"];
+test("connect pages: shots", async ({ page }) => {
+  await persona();
+  await signIn(page);
+  for (const path of CONNECT) {
+    for (const w of [1280, 390]) {
+      await page.setViewportSize({ width: w, height: 1000 });
+      await page.goto(path, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(1500);
+      await page.screenshot({ path: `e2e-run10/.artifacts/connect${path.replace(/\//g, "_")}-${w}.png` });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), path).toBeLessThanOrEqual(w);
+    }
+  }
+});

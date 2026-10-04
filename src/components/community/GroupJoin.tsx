@@ -57,7 +57,7 @@ export function GroupJoin({
   };
 
   const btn =
-    "inline-flex w-fit items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-bold transition-colors disabled:opacity-50";
+    "inline-flex w-fit items-center gap-2 px-5 py-2.5 text-[13.5px] font-semibold transition-colors disabled:opacity-50";
 
   return (
     <div>
@@ -76,7 +76,7 @@ export function GroupJoin({
           type="button"
           onClick={() => post("join")}
           disabled={busy}
-          className={btn + " mt-3 bg-magenta text-white hover:bg-magenta-dark"}
+          className={btn + " mt-3 bg-ink text-surface hover:bg-ink-hover"}
         >
           {busy ? "Joining…" : "Join This Group"}
         </button>
@@ -88,7 +88,7 @@ export function GroupJoin({
           onClick={() => post("join")}
           disabled={busy}
           className={
-            btn + " mt-3 border border-magenta text-magenta hover:bg-magenta hover:text-white"
+            btn + " mt-3 border border-ink bg-surface text-ink hover:bg-surface-hover"
           }
         >
           {busy ? "Sending…" : "Ask to Join"}
@@ -104,7 +104,7 @@ export function GroupJoin({
         <a
           href={`/learn/${pathSlug}`}
           className={
-            btn + " mt-3 border border-magenta text-magenta hover:bg-magenta hover:text-white"
+            btn + " mt-3 border border-ink bg-surface text-ink hover:bg-surface-hover"
           }
         >
           Go to the Path
@@ -116,7 +116,7 @@ export function GroupJoin({
           type="button"
           onClick={() => post("leave")}
           disabled={busy}
-          className={btn + " mt-3 border border-line text-ink-2 hover:border-magenta hover:text-magenta"}
+          className={btn + " mt-3 border border-ink bg-surface text-ink hover:bg-surface-hover"}
         >
           {busy ? "Leaving…" : "Leave This Group"}
         </button>

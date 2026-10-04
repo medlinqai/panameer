@@ -36,7 +36,7 @@ export function OpenForMentoringToggle({ initial }: { initial: boolean }) {
   };
 
   return (
-    <div className="rounded-brand border border-line bg-white p-5">
+    <div className="border-t border-line py-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-[200px] flex-1">
           <p className="text-[15px] font-bold">Open for mentoring</p>
@@ -53,10 +53,10 @@ export function OpenForMentoringToggle({ initial }: { initial: boolean }) {
           disabled={busy}
           aria-pressed={open}
           className={
-            "shrink-0 rounded-full border-[1.5px] px-5 py-2 text-[13.5px] font-bold transition-colors disabled:opacity-50 " +
+            "shrink-0 border px-5 py-2 text-[13.5px] font-semibold transition-colors disabled:opacity-50 " +
             (open
-              ? "border-magenta bg-magenta text-white hover:bg-magenta-dark"
-              : "border-line text-ink hover:border-magenta hover:text-magenta")
+              ? "border-ink bg-ink text-surface hover:bg-ink-hover"
+              : "border-ink bg-surface text-ink hover:bg-surface-hover")
           }
         >
           {busy ? "…" : open ? "You're open" : "Turn On"}

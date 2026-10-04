@@ -165,33 +165,28 @@
    side is two primary actions, which is none. */
 .pm-groups-ghost {
   display: inline-block;
-  border-radius: 9999px;
-  border: 1.5px solid var(--color-line, #e7e3ed);
+  border: 1px solid var(--color-ink);
+  background: var(--color-surface);
   padding: 9px 18px;
   font-size: 13.5px;
-  font-weight: 700;
-  color: var(--color-ink, #1b1226);
-  transition: border-color 140ms, color 140ms;
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .pm-groups-ghost:hover {
-  border-color: var(--color-magenta, #d72cd6);
-  color: var(--color-magenta, #d72cd6);
+  background: var(--color-surface-hover);
 }
 
 /* ── THE CARDS ─────────────────────────────────────────────────────────── */
 
 .pm-groups-card {
   display: block;
-  border-radius: 10px;
-  border: 1px solid var(--color-line, #e7e3ed);
-  background: #fff;
-  padding: 14px;
-  transition: border-color 140ms;
+  border-top: 1px solid var(--color-line);
+  padding: 14px 0;
 }
 
-.pm-groups-card:hover {
-  border-color: var(--color-magenta, #d72cd6);
+.pm-groups-card:hover .pm-groups-card-t {
+  color: var(--color-magenta-dark);
 }
 
 .pm-groups-card-t {
@@ -286,8 +281,9 @@
 .pm-groups-views {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 22px;
   margin-top: 18px;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .pm-groups-views a {
@@ -295,33 +291,25 @@
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
-  border-radius: 9999px;
-  border: 1.5px solid var(--color-line, #e7e3ed);
-  /* ⚠ 38px tall with the padding below — a real tap target on a phone. */
-  padding: 8px 16px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--color-ink-2, #6b6478);
+  padding: 10px 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink-2);
   white-space: nowrap;
-  transition: border-color 140ms, color 140ms, background-color 140ms;
 }
 
 .pm-groups-views a:hover {
-  border-color: var(--color-magenta, #d72cd6);
-  color: var(--color-magenta, #d72cd6);
+  color: var(--color-ink);
 }
 
-/* ⚠⚠ THE ACTIVE VIEW IS MARKED BY MORE THAN COLOUR — it is filled, so the
-   distinction survives a colour-blind reader and a greyscale screenshot.
-   ⚠ `aria-current="page"` carries it for a screen reader. */
+/* Active tab: ink text + magenta underline, as on Profile. */
 .pm-groups-views a.is-on {
-  background: var(--color-magenta, #d72cd6);
-  border-color: var(--color-magenta, #d72cd6);
-  color: #fff;
+  color: var(--color-ink);
+  border-bottom-color: var(--color-magenta);
 }
 
-/* ⚠ The waiting-on-you count. It renders only above zero — a `0` on a tab is
-   noise, not information. */
 .pm-groups-pill {
   display: inline-flex;
   align-items: center;

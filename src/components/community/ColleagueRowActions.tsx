@@ -38,7 +38,7 @@ export function ColleagueRowActions({
       {}
       <Link
         href={`/messages?with=${toUserId}`}
-        className="rounded-full border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+        className="border border-ink bg-surface px-4 py-1.5 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
       >
         Message
       </Link>
@@ -50,7 +50,7 @@ export function ColleagueRowActions({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={`More actions for ${name}`}
-          className="rounded-full border-[1.5px] border-line px-3 py-1.5 text-[13.5px] font-bold leading-none text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+          className="border border-ink bg-surface px-3 py-1.5 text-[13.5px] font-semibold leading-none text-ink-2 transition-colors hover:bg-surface-hover text-ink"
         >
           ···
         </button>

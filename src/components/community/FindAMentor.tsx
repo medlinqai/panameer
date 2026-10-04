@@ -49,7 +49,7 @@ export function FindAMentor({
         />
         <button
           type="submit"
-          className="rounded-full bg-magenta px-5 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-surface transition-colors hover:bg-ink-hover"
         >
           Search
         </button>
@@ -65,7 +65,7 @@ export function FindAMentor({
           {results.map((m) => (
             <div
               key={m.profileId}
-              className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4"
+              className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5"
             >
               <Avatar
                 firstName={m.name.split(" ")[0] ?? ""}
@@ -147,7 +147,7 @@ function EmptyState({
 }) {
   return (
     <div className="space-y-3">
-      <div className="rounded-brand border border-line bg-white p-5">
+      <div className="border-t border-line py-5">
         <p className="text-[15px] font-bold">
           {skill ? `Nobody open for mentoring matches “${skill}” yet.` : "Nobody has opted in yet."}
         </p>
