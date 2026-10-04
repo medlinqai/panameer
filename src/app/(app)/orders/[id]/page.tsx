@@ -7,6 +7,8 @@ import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
 import { getOrderDetail, OrderError, type OrderLineView } from "@/lib/orders";
 import { BackLink } from "@/components/console/BackLink";
+import { History } from "@/components/orders/History";
+import { orderHistory } from "@/lib/transaction-history";
 import { CloseOrder } from "@/components/orders/CloseOrder";
 
 export const metadata = { title: "Work Order · Panameer" };
@@ -170,6 +172,8 @@ export default async function Page({
           <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} />
         ))}
       </ul>
+
+      <History events={await orderHistory(o.id)} />
 
       <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         {/*
