@@ -73,6 +73,13 @@ export default async function Page({
         </div>
       )}
 
+      {o.sowText && (
+        <section data-testid="order-sow" className="mt-6 border-t border-line pt-4">
+          <h2 className="text-[18px] font-bold">Statement of Work</h2>
+          <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-relaxed">{o.sowText}</p>
+        </section>
+      )}
+
       <dl data-testid="order-money" className="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 border-y border-line py-5 sm:grid-cols-4">
         <Fact label="Hours">
           {o.hoursOrdered > 0 ? `${o.hoursClaimed} of ${o.hoursOrdered}` : "—"}

@@ -12,6 +12,8 @@ import type { Viewer } from "@/lib/access";
 export type OrderFromRequisition = {
   workRequestId: string;
   externalRef?: string | null;
+  /** The buyer's statement of work (run 13). */
+  sowText?: string | null;
 };
 
 export type BuiltOrder = {
@@ -191,6 +193,7 @@ async function buildWorkOrder(
         not_to_exceed_cents: valueCents,
         /* ⚠ Recorded, never branched on. */
         external_ref: input.externalRef?.trim() || null,
+        sow_text: input.sowText?.trim().slice(0, 20000) || null,
         lines: {
           create: lines.map((l) => ({
             line_number: l.line_number,
@@ -264,9 +267,9 @@ async function buildWorkOrder(
  */
 export async function hire(
   viewer: Viewer,
-  input: { workRequestId: string }
+  input: { workRequestId: string; sowText?: string | null }
 ): Promise<BuiltOrder> {
-  return buildWorkOrder(viewer, { workRequestId: input.workRequestId }, "INDIRECT");
+  return buildWorkOrder(viewer, { workRequestId: input.workRequestId, sowText: input.sowText }, "INDIRECT");
 }
 
 /**
