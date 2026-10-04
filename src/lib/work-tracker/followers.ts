@@ -36,15 +36,22 @@ export async function isFollowing(viewer: Viewer | null): Promise<boolean> {
   return row !== null;
 }
 
-export async function follow(viewer: Viewer): Promise<void> {
+/**
+ * `weeklyEmail` is opt-in and NEVER implied (`P2-ALL-E818`). Following is
+ * watching a page; it is not consent to be mailed, and an existing follower is
+ * untouched when the flag is absent.
+ */
+export async function follow(viewer: Viewer, weeklyEmail?: boolean): Promise<void> {
   const personId = await personIdFor(viewer);
   /* ⚠ A user with no Person cannot be notified, so there is nothing to record.
      Silently doing nothing is right: the button is an offer, not a transaction. */
   if (!personId) return;
   await prisma.workTrackerFollower.upsert({
     where: { person_id: personId },
-    update: {},
-    create: { person_id: personId },
+    /* Only written when the caller said so: `undefined` leaves an existing
+       follower's choice exactly as they set it. */
+    update: weeklyEmail === undefined ? {} : { weekly_email: weeklyEmail },
+    create: { person_id: personId, weekly_email: weeklyEmail === true },
   });
 }
 

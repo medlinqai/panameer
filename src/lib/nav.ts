@@ -2309,6 +2309,9 @@ export const ADMIN_NAV: NavGroup[] = [
          nothing in the app to show it. */
       { label: "Data Health", href: "/admin/data-health", icon: "Activity" },
       { label: "Audit Log", href: "/admin/audit-log", icon: "History" },
+      /* `E818` — the weekly Follow the Build email: the Friday draft, and the
+         Send that is the only thing that mails anybody. */
+      { label: "Build Digest", href: "/admin/build-digest", icon: "Mail" },
     ],
   },
 ].map((g) => ({
