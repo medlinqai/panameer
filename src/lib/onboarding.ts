@@ -2502,10 +2502,10 @@ export async function applyProviderSection(
       // E018 — the wizard posts a single required hourly rate. Settings
       // (brief_H) still posts the onsite/remote pair, so accept either shape.
       if (hourly == null && onsite == null && remote == null) {
-        throw new OnboardingError("Enter your hourly rate", "INVALID");
+        throw new OnboardingError("Enter an onsite or offsite rate", "INVALID");
       }
       if (hourly != null && hourly === 0) {
-        throw new OnboardingError("Your hourly rate must be more than $0", "INVALID");
+        throw new OnboardingError("Your rate must be more than $0", "INVALID");
       }
       await prisma.providerProfile.update({
         where: { id: profileId },

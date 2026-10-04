@@ -87,7 +87,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     );
   }
   if (p.hourlyRateCents == null) {
-    err("rate", "Set your hourly rate.", "Set rate", {
+    err("rate", "Set your onsite or offsite rate.", "Set rates", {
       kind: "step",
       step: "rate",
     });

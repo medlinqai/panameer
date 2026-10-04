@@ -6,7 +6,7 @@ import { Notice, TextArea } from "@/components/onboarding/controls";
 import { EmployersStep } from "@/components/onboarding/EmployersStep";
 import { EducationCards } from "@/components/onboarding/EducationCards";
 import { CertificationCards } from "@/components/onboarding/CertificationCards";
-import { RateEditor, rateCanSave } from "@/components/onboarding/editors/RateEditor";
+import { RateEditor, rateCanSave, syncedHourly } from "@/components/onboarding/editors/RateEditor";
 import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
 import { WORK_METHOD_OPTIONS } from "@/lib/onboarding-draft";
@@ -407,17 +407,18 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
     case "rates":
       body = (
         <RateEditor
-          hourlyRateCents={draft.hourlyRateCents}
-          onsiteRateCents={draft.onsiteRateCents}
-          remoteRateCents={draft.remoteRateCents}
-          onChange={(hourlyRateCents) => patch({ hourlyRateCents })}
-          onOnsiteChange={(onsiteRateCents) => patch({ onsiteRateCents })}
-          onRemoteChange={(remoteRateCents) => patch({ remoteRateCents })}
+          onsiteRateCents={draft.onsiteRateCents ?? null}
+          remoteRateCents={draft.remoteRateCents ?? null}
+          onOnsiteChange={(onsiteRateCents) =>
+            patch({ onsiteRateCents, hourlyRateCents: syncedHourly(onsiteRateCents, draft.remoteRateCents) })
+          }
+          onRemoteChange={(remoteRateCents) =>
+            patch({ remoteRateCents, hourlyRateCents: syncedHourly(draft.onsiteRateCents, remoteRateCents) })
+          }
           serviceFeeBps={draft.serviceFeeBps}
-          breakdown={rateBreakdown(draft.hourlyRateCents, draft.serviceFeeBps)}
         />
       );
-      canSave = rateCanSave(draft.hourlyRateCents);
+      canSave = rateCanSave(draft.onsiteRateCents, draft.remoteRateCents);
       break;
     case "skills":
       body = (
