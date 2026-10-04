@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { emailConfigured } from "@/lib/email-status";
 import { findCategory } from "@/lib/notification-categories";
 import { sendEmail } from "@/lib/resend";
-import { messageEmailFor } from "@/lib/message-email-batch";
+import { MESSAGE_EMAIL_WINDOW_MS, messageEmailFor } from "@/lib/message-email-batch";
 import {
   notificationEmailAllowed,
   renderNotificationMail,
@@ -164,6 +164,22 @@ async function emailFor(a: {
     }
 
     let title = a.title;
+    if (a.event !== "message.received") {
+      // Bursts: one email per person per event every 15 minutes; the rest stay in the bell.
+      const recent = await prisma.notification.findFirst({
+        where: {
+          person_id: a.personId,
+          event_key: a.event,
+          id: { not: a.notificationId },
+          email_sent_at: { gt: new Date(Date.now() - MESSAGE_EMAIL_WINDOW_MS) },
+        },
+        select: { id: true },
+      });
+      if (recent) {
+        await prisma.notification.update({ where: { id: a.notificationId }, data: { suppressed_reason: "email_batched" } });
+        return;
+      }
+    }
     if (a.event === "message.received") {
       const batch = await messageEmailFor(a.notificationId, a.personId);
       if (batch?.hold) {

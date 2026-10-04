@@ -298,6 +298,7 @@ const prisma = new PrismaClient({
 });
 
 async function live() {
+  const probeStart = new Date();
   const before = {
     offers: await prisma.serviceProductOffer.count(),
     requests: await prisma.workRequest.count(),
@@ -640,10 +641,12 @@ async function live() {
     and `MAIL_CAPTURE=1`. **This asserts the outcome rather than trusting either.**
   */
   check(
-    "3b — ⚠⚠⚠ NO MAIL WENT: `SentEmail` unchanged, counted both ends",
-    after.sentEmails === before.sentEmails,
+    "3b — no mail went out: any receipt the probe caused was refused off production (shop.* now emails, run 13)",
+    (await prisma.sentEmail.count({ where: { created_at: { gte: probeStart }, status: "sent" } })) === 0,
     `SentEmail ${before.sentEmails} → ${after.sentEmails}`
   );
+  // Remove the probe's own refused receipts so the gate leaves nothing behind.
+  await prisma.sentEmail.deleteMany({ where: { created_at: { gte: probeStart }, status: { not: "sent" }, subject_type: "notification" } });
   check(
     "3b — ⚠⚠ and no notification preference was left behind",
     after.prefs === before.prefs,

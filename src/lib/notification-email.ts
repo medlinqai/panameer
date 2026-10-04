@@ -12,6 +12,20 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "message.received",
   "work.settlement_approval",
   "payment.sent",
+  // Scott 2026-10-04: every action-needed event emails by default (members can switch each off).
+  "profile.visibility_off",
+  "profile.details_needed",
+  "profile.country_unknown",
+  "group.join_requested",
+  "group.question_asked",
+  "work.proposal_received",
+  "work.invited_to_propose",
+  "work.interview_requested",
+  "work.test_requested",
+  "work.order_offered",
+  "shop.offer_received",
+  "shop.offer_accepted",
+  "shop.offer_denied",
 ];
 
 export function notificationEmailAllowed(event: NotificationEventKey): boolean {
