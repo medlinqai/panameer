@@ -8,7 +8,7 @@ export function SparkIcon() {
   return (
     <span
       aria-hidden
-      className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta/15 text-magenta"
+      className="grid h-6 w-6 flex-none place-items-center rounded-full bg-ink/10 text-ink"
     >
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
         <path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z" />
@@ -233,7 +233,7 @@ export function SkillsEditor({
             E187, shown on ARRIVAL rather than after the first manual click.
           */}
           {cameFromResume && (
-            <div className="mb-4 rounded-brand border border-magenta/25 bg-magenta/[0.04] p-4">
+            <div className="mb-4 border-l-2 border-ink py-2 pl-4">
               <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
                 <SparkIcon />
                 AI scanned your résumé against the ERP Service Catalog

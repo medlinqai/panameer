@@ -218,7 +218,7 @@ export function EducationCards({
             className={
               "flex items-start justify-between gap-4 rounded-brand border p-4 " +
               (bulk.active && bulk.picked.has(String(i))
-                ? "border-magenta bg-magenta/[0.04]"
+                ? "border-ink bg-surface"
                 : "border-line")
             }
           >

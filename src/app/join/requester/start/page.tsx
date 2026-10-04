@@ -75,7 +75,7 @@ export default async function RequesterStartPage() {
         >
           {REQUESTER_WORK_STEPS.map((step, i) => (
             <div key={step} className="rounded-brand border border-line p-5">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-magenta/10 text-[13px] font-black text-magenta">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-black text-surface">
                 {i + 1}
               </span>
               <p className="mt-3 font-bold">{REQUESTER_STEP_LABELS[step]}</p>
@@ -95,7 +95,7 @@ function PeopleIcon() {
   return (
     <span
       aria-hidden
-      className="mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-full bg-magenta/10 text-magenta"
+      className="mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-full bg-ink/5 text-ink"
     >
       <svg
         viewBox="0 0 24 24"

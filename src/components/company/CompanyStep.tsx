@@ -613,7 +613,7 @@ export function CompanyStep({
             className={
               "rounded-full px-4 py-1.5 transition-colors " +
               (mode === m
-                ? "bg-magenta text-white"
+                ? "bg-ink text-surface"
                 : "text-ink-2 hover:text-ink")
             }
           >

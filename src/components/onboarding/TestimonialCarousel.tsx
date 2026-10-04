@@ -140,7 +140,7 @@ export function TestimonialCard({ t }: { t: Testimonial }) {
               <dd className="font-bold">{rateText(t.onsiteCents)}</dd>
             </div>
             <div className="flex gap-2">
-              <dt className="text-ink-2">Remote:</dt>
+              <dt className="text-ink-2">Offsite:</dt>
               <dd className="font-bold">{rateText(t.remoteCents)}</dd>
             </div>
           </dl>

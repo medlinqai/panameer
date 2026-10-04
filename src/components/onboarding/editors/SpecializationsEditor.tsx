@@ -26,7 +26,7 @@ function CascadeTier({
       <section className="flex items-center gap-3 rounded-brand border border-line px-4 py-2.5">
         <span
           aria-hidden
-          className="grid h-6 w-6 flex-none place-items-center rounded-full bg-magenta text-[12px] font-black text-white"
+          className="grid h-6 w-6 flex-none place-items-center rounded-full bg-ink text-[12px] font-black text-surface"
         >
           {index}
         </span>
