@@ -47,8 +47,8 @@ for (const f of profileSurfaces) {
   */
   check(
     `1 — ${f} refuses a caller with no session`,
-    /if \(!viewer\)/.test(b) && /(redirect\(|status: 401)/.test(b),
-    "a profile is not a public document — E049 decided that for the page"
+    /if \(!viewer\)/.test(b) && /(redirect\(|status: 401|return <Masked\w+)/.test(b),
+    "signed out gets a refusal or the masked preview (E738) — never the full profile"
   );
 }
 

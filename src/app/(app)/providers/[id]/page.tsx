@@ -8,7 +8,7 @@ import { ConnectProfile } from "@/components/community/ConnectProfile";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import { getMyCommunity, mutualColleagueCount } from "@/lib/connections";
 import { ConnectControls } from "@/components/community/ConnectControls";
-import { hasCapability } from "@/lib/access";
+import { viewerCanHire } from "@/lib/rate-visibility";
 import { getSessionViewer } from "@/lib/session";
 import { getPathsTaughtByProfile, getPathsTakenBy } from "@/lib/learn-home";
 import { publicTestimonials } from "@/lib/recommendations";
@@ -309,7 +309,7 @@ export default async function PublicProviderPage({
             answers both previews without a second flag.
             ⚠ A signed-out visitor never reaches here: the page redirects before this.
           */
-          canHire={!!viewer && !profile.isOwner && hasCapability(viewer, "canHireTalent")}
+          canHire={!profile.isOwner && viewerCanHire(viewer)}
           {...(await connectSlot(viewer, profile.person.userId, profile.isOwner))}
           /* ⚠⚠⚠ THE BUYER'S VIEW, ALWAYS. `isOwner` stays true on the view
              model — the bar above needs it and `recordProfileView` still must
