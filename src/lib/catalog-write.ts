@@ -191,10 +191,17 @@ export async function addSkill(
       name,
       /* ⚠⚠ See addSpecialization — this is what the seed reads. */
       origin: "ADMIN",
+      /* HIDDEN UNTIL SHOWN (`E820`). A new skill must not reach registration or
+         search before Scott has looked at it. */
+      visible_to_members: false,
     },
     select: { id: true, name: true },
   });
-  return { ok: true, id: row.id, message: `Added "${row.name}".` };
+  return {
+    ok: true,
+    id: row.id,
+    message: `Added "${row.name}". It is hidden from members until you show it.`,
+  };
 }
 
 export async function renameSkill(id: string, name: string): Promise<WriteResult> {
@@ -270,51 +277,26 @@ export async function moveSkill(
  * is deliberately out of scope: `Pillar` carries no `status` column (Part A left
  * it alone on purpose), so there is nothing to retire it into.
  */
-/**
- * ADD A DOMAIN, under the role whose header the button sits on (`P2-A1.5-E817`).
- *
- * Scott, 2026-10-03: "there should be an add button at the domain and skill for
- * sure." Roles stay locked — a role changes the registration page and is a
- * brief, not an admin click — so this adds domains and skills only.
- *
- * A NEW DOMAIN IS HIDDEN FROM MEMBERS until it is switched on, so adding one
- * cannot quietly change registration or search.
- */
-export async function addPillar(
-  name: string,
-  roleTypeId: string | null,
-): Promise<WriteResult> {
-  const clean = name.trim();
-  if (!clean) return refuse("A domain needs a name.");
-  /* `activeCatalogId()` resolves BY CODE, never findFirst — `catalog.ts` owns
-     that rule and `E483` is why. */
-  const catalogId = await activeCatalogId();
-  if (!catalogId) return refuse("No active catalog.");
-  const clash = await prisma.pillar.findFirst({
-    where: { catalog_id: catalogId, name: { equals: clean, mode: "insensitive" } },
-    select: { name: true },
-  });
-  if (clash) return refuse(`"${clash.name}" already exists.`);
-  const row = await prisma.pillar.create({
-    data: {
-      catalog_id: catalogId,
-      /* A code is required; derived from the name and kept unique enough by the
-         name clash check above. */
-      code: clean.toUpperCase().replace(/[^A-Z0-9]+/g, "_").slice(0, 40),
-      name: clean,
-      role_type_id: roleTypeId,
-      visible_to_members: false,
-    },
-    select: { id: true },
-  });
-  return { ok: true, id: row.id, message: `Added "${clean}". It is hidden from members until you show it.` };
-}
+/*
+  `addPillar` / `setPillarVisibility` REMOVED (`E820`). The brief's revision
+  locks ROLES AND DOMAINS — only skills can be added — so the functions are gone
+  rather than left callable. `Pillar.visible_to_members` stays on the model: it
+  defaults true, nothing writes it now, and dropping a column is not an additive
+  change on a shared database.
+*/
 
-/** Show or hide a domain to members. Hiding keeps every existing claim. */
-export async function setPillarVisibility(id: string, visible: boolean): Promise<WriteResult> {
-  const row = await prisma.pillar.findUnique({ where: { id }, select: { name: true } });
-  if (!row) return refuse("That domain no longer exists.");
-  await prisma.pillar.update({ where: { id }, data: { visible_to_members: visible } });
+/**
+ * SHOW OR HIDE A SKILL (`P2-A1.5-E820`).
+ *
+ * A new admin-added skill starts HIDDEN, so it cannot reach registration or
+ * search before Scott has looked at it. Hiding is not deleting: a member who
+ * already claimed the skill keeps it — `E517`'s rule, filter what is OFFERED
+ * and never what is HELD.
+ */
+export async function setSkillVisibility(id: string, visible: boolean): Promise<WriteResult> {
+  const row = await prisma.skill.findUnique({ where: { id }, select: { name: true } });
+  if (!row) return refuse("That skill no longer exists.");
+  await prisma.skill.update({ where: { id }, data: { visible_to_members: visible } });
   return {
     ok: true,
     id,

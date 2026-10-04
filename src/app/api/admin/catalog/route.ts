@@ -7,8 +7,7 @@ import {
   hardDelete,
   moveSkill,
   renamePillar,
-  addPillar,
-  setPillarVisibility,
+  setSkillVisibility,
   renameRoleType,
   renameSkill,
   renameSpecialization,
@@ -51,9 +50,10 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("skill.rename"), id: Id, name: Name }),
   z.object({ action: z.literal("skill.move"), id: Id, roleTypeId: Id, pillarId: Id }),
   z.object({ action: z.literal("domain.rename"), id: Id, name: Name }),
-  /* `E817` — add a domain under a role, and switch one on for members. */
-  z.object({ action: z.literal("domain.add"), name: Name, roleTypeId: Id.optional() }),
-  z.object({ action: z.literal("domain.visible"), id: Id, visible: z.boolean() }),
+  /* `E820` — DOMAINS ARE LOCKED. `domain.add` was accepted for a few hours
+     under `E817`; the brief's revision locks roles AND domains, so the action
+     is gone rather than left reachable with curl. `skill.visible` replaces it. */
+  z.object({ action: z.literal("skill.visible"), id: Id, visible: z.boolean() }),
   z.object({ action: z.literal("role.rename"), id: Id, name: Name }),
   z.object({
     action: z.literal("status"),
@@ -102,10 +102,8 @@ export async function POST(req: Request) {
         return moveSkill(b.id, b.roleTypeId, b.pillarId);
       case "domain.rename":
         return renamePillar(b.id, b.name);
-      case "domain.add":
-        return addPillar(b.name, b.roleTypeId ?? null);
-      case "domain.visible":
-        return setPillarVisibility(b.id, b.visible);
+      case "skill.visible":
+        return setSkillVisibility(b.id, b.visible);
       case "role.rename":
         return renameRoleType(b.id, b.name);
       case "spec.promote":
