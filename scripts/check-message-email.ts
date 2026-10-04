@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import { decideMessageEmail, MESSAGE_EMAIL_WINDOW_MS } from "@/lib/message-email-batch";
 import { NOTIFICATION_EMAIL_EVENTS } from "@/lib/notification-email";
+import { recordProfileView } from "@/lib/profile-views";
 
 // R-E018: message emails are on, and batched to one per sender per 15 minutes. Throwaway users only.
 let pass = 0;
@@ -51,6 +52,23 @@ const TAG = `e2e-msgmail-${Date.now()}`;
     const o2 = await prisma.notification.findFirst({ where: { person_id: b.personId, event_key: "work.order_offered", id: { not: o1!.id } }, select: { email_sent_at: true, suppressed_reason: true } });
     check("7 — a second action email of the same kind inside 15 minutes is held", o2?.email_sent_at == null && o2?.suppressed_reason === "email_batched", JSON.stringify(o2));
     check("8 — work.order_offered is on the email allowlist", NOTIFICATION_EMAIL_EVENTS.includes("work.order_offered"));
+
+    // Run 13 lane 3: profile views group into one bell line per day, linking to /usage.
+    const prof = await prisma.providerProfile.create({ data: { person_id: b.personId, status: "ACTIVE", currency: "USD" }, select: { id: true } });
+    const c = await mk("Viewer");
+    try {
+      await recordProfileView({ profileId: prof.id, viewerUserId: a.userId, isOwner: false });
+      await recordProfileView({ profileId: prof.id, viewerUserId: c.userId, isOwner: false });
+      await recordProfileView({ profileId: prof.id, viewerUserId: c.userId, isOwner: false });
+      const views = await prisma.notification.findMany({ where: { person_id: b.personId, event_key: "profile.viewed" }, select: { title: true, href: true } });
+      check("9 — two viewers today make ONE bell row", views.length === 1, JSON.stringify(views));
+      check("10 — it reads '2 people viewed your profile today' and opens /usage", views[0]?.title === "2 people viewed your profile today" && views[0]?.href === "/usage", JSON.stringify(views));
+    } finally {
+      await prisma.profileView.deleteMany({ where: { profile_id: prof.id } });
+      await prisma.providerProfile.delete({ where: { id: prof.id } });
+      await prisma.person.deleteMany({ where: { id: c.personId } });
+      await prisma.user.deleteMany({ where: { id: c.userId } });
+    }
   } finally {
     await prisma.notification.deleteMany({ where: { person_id: { in: [a.personId, b.personId] } } });
     await prisma.message.deleteMany({ where: { from_user_id: a.userId } });

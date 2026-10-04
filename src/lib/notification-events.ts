@@ -21,6 +21,9 @@ export type NotificationEvent = {
 /** Loose by design — each event names the handful of keys it actually reads. */
 export type Vars = Record<string, string | number | null | undefined>;
 
+/** Scott 2026-10-04: profile views group into one bell line per day. */
+export const viewedTitle = (n: number) => `${n} ${n === 1 ? "person" : "people"} viewed your profile today`;
+
 const str = (v: Vars, k: string, fallback = "") =>
   v[k] === undefined || v[k] === null ? fallback : String(v[k]);
 
@@ -597,9 +600,9 @@ export const NOTIFICATION_EVENTS = {
     */
     visibility: "FEED",
     requiresAction: false,
-    title: (v) => `${str(v, "viewerName", "Someone")} looked at your profile`,
+    title: (v) => viewedTitle(Number(str(v, "count", "1")) || 1),
     body: () => null,
-    href: () => "/profile",
+    href: () => "/usage",
   },
 
   /*

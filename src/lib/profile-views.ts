@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
+import { viewedTitle } from "@/lib/notification-events";
 
 function today(): Date {
   const now = new Date();
@@ -31,21 +32,22 @@ export async function recordProfileView(opts: {
         where: { id: opts.profileId },
         select: { person_id: true },
       });
-      const viewer = await prisma.person.findUnique({
-        where: { id: person.id },
-        select: { first_name: true, last_name: true },
-      });
       if (owner) {
+        // One bell row per profile per day; each new viewer bumps the count and makes it unread again.
+        const day = today();
+        const dedupeKey = `profile.viewed:${opts.profileId}:${day.toISOString().slice(0, 10)}`;
+        const count = await prisma.profileView.count({ where: { profile_id: opts.profileId, viewed_on: day } });
         await notify({
           event: "profile.viewed",
           personId: owner.person_id,
           entityType: "provider_profile",
           entityId: opts.profileId,
-          dedupeKey: `profile.viewed:${opts.profileId}:${person.id}:${today()}`,
-          vars: {
-            viewerName:
-              [viewer?.first_name, viewer?.last_name].filter(Boolean).join(" ") || "Someone",
-          },
+          dedupeKey,
+          vars: { count },
+        });
+        await prisma.notification.updateMany({
+          where: { person_id: owner.person_id, dedupe_key: dedupeKey },
+          data: { title: viewedTitle(count), read_at: null },
         });
       }
     }
