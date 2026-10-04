@@ -162,3 +162,27 @@ test("admin lists: work orders and payment requests list real rows", async ({ pa
   await page.goto("/admin/payments");
   await expect(page.getByRole("heading", { name: /Payments Received/ })).toBeVisible({ timeout: 30_000 });
 });
+
+// Lane 6: the order header shows hours, approved, paid and what is left under the cap.
+test("work order header: hours, approved, paid, remaining", async ({ page }) => {
+  const g = await createFixture({ feeBps: 999 });
+  try {
+    const sid = await createSettlement(g, "APPROVED");
+    await db().payment.create({
+      data: { payment_number: `PAY-${g.tag}`.slice(0, 40), p_account_id: g.pAccountId, received_at: new Date(), amount_cents: 20000, status: "PARTIALLY_ALLOCATED",
+        lines: { create: [{ line_number: 1, settlement_request_id: sid, amount_cents: 20000 }] } },
+    });
+    await signIn(page, g.buyer.email);
+    await page.goto(`/orders/${g.orderId}`);
+    const m = page.getByTestId("order-money");
+    await expect(m).toBeVisible({ timeout: 30_000 });
+    await expect(m.getByText("5 of 10")).toBeVisible();
+    await expect(m.getByText("$500.00")).toBeVisible();
+    await expect(m.getByText("$200.00")).toBeVisible();
+    await expect(m.getByText("$1,000.00")).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.screenshot({ path: "e2e-r1/.artifacts/order-money-390.png" });
+  } finally {
+    await dropFixture(g);
+  }
+});

@@ -72,6 +72,15 @@ export default async function Page({
         </div>
       )}
 
+      <dl data-testid="order-money" className="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 border-y border-line py-5 sm:grid-cols-4">
+        <Fact label="Hours">
+          {o.hoursOrdered > 0 ? `${o.hoursClaimed} of ${o.hoursOrdered}` : "—"}
+        </Fact>
+        <Fact label="Approved">{formatCents(o.approvedCents, o.currency)}</Fact>
+        <Fact label="Paid">{formatCents(o.paidCents, o.currency)}</Fact>
+        <Fact label="Remaining">{formatCents(o.remainingCents, o.currency)}</Fact>
+      </dl>
+
       <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
         <Fact label="Period">
           {o.periodStart || o.periodEnd
