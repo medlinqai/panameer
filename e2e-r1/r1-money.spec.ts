@@ -234,3 +234,48 @@ test("safety: concurrent requests cannot overdraw, close blocks new requests, fu
     await dropFixture(h);
   }
 });
+
+// Lane 8: a buyer offers on a product, the seller accepts, the buyer completes the cart and orders it.
+test("service product: offer → accept → complete → work order at the service-product fee", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    const prisma = db();
+    const profile = await prisma.providerProfile.findUnique({ where: { person_id: g.provider.personId }, select: { id: true } });
+    const product = await prisma.serviceProduct.create({
+      data: { provider_profile_id: profile!.id, title: `R1 Health Check ${g.tag}`, summary: "A fixed-price review.", pricing_type: "FIXED", price_cents: 50000, status: "PUBLISHED" },
+      select: { id: true },
+    });
+
+    await signIn(page, g.buyer.email);
+    await page.goto("/shop");
+    await expect(page.getByRole("link", { name: `R1 Health Check ${g.tag}` })).toBeVisible({ timeout: 30_000 });
+    await page.goto(`/shop/${product.id}`);
+    const offer = page.getByTestId("make-offer");
+    await offer.getByLabel("Your offer").fill("450");
+    await offer.getByRole("button", { name: "Make an Offer" }).click();
+    await expect(page.getByTestId("offer-sent")).toBeVisible({ timeout: 30_000 });
+
+    const o = await prisma.serviceProductOffer.findFirst({ where: { buyer_person_id: g.buyer.personId }, select: { id: true } });
+    await signIn(page, g.provider.email);
+    await page.goto(`/shop/${product.id}`);
+    await expect(page.getByTestId("make-offer")).toHaveCount(0, { timeout: 30_000 });
+    const acc = await page.evaluate(async (offerId) => (await fetch("/api/provider/offers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "accept", offerId }) })).status, o!.id);
+    expect(acc).toBe(200);
+
+    const wr = await prisma.workRequest.findFirst({ where: { buyer_person_id: g.buyer.personId }, select: { id: true } });
+    await signIn(page, g.buyer.email);
+    await page.goto(`/work-requests/${wr!.id}`);
+    await page.getByRole("button", { name: "Complete" }).click();
+    const create = page.getByRole("button", { name: /Create (the )?(Work )?Order/i });
+    await expect(create).toBeVisible({ timeout: 30_000 });
+    await create.click();
+    await expect.poll(async () => prisma.workOrder.count({ where: { work_request_id: wr!.id } }), { timeout: 30_000 }).toBe(1);
+    const line = await prisma.workOrderLine.findFirst({ where: { workOrder: { work_request_id: wr!.id } }, select: { fee_bps: true, amount_cents: true } });
+    expect(line?.amount_cents).toBe(45000);
+    const rows = await prisma.applicationCommission.findMany({ where: { sourcing_kind: "SERVICE_PRODUCT" }, select: { rate_bps: true, transaction_type: true } });
+    const expected = rows.find((r) => r.transaction_type === "SERVICE_BY_AMT")?.rate_bps ?? rows.find((r) => r.transaction_type == null)?.rate_bps ?? 1499;
+    expect(line?.fee_bps, "a product line bills at the service-product rate, not app-sourced").toBe(expected);
+  } finally {
+    await dropFixture(g);
+  }
+});

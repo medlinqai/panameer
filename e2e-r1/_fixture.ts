@@ -77,7 +77,11 @@ export async function dropFixture(f: R1Fixture | null): Promise<void> {
   await prisma.providerPayout.deleteMany({ where: { id: { in: payoutLines.map((p) => p.provider_payout_id) } } });
   await prisma.payment.deleteMany({ where: { id: { in: payLines.map((p) => p.payment_id) } } });
   await prisma.settlementRequest.deleteMany({ where: { id: { in: sIds } } });
-  await prisma.workOrder.deleteMany({ where: { id: f.orderId } });
+  const extraOrders = await prisma.workOrder.findMany({ where: { buyer_person_id: f.buyer.personId }, select: { id: true } });
+  await prisma.workOrder.deleteMany({ where: { id: { in: [f.orderId, ...extraOrders.map((o) => o.id)] } } });
+  await prisma.workRequest.deleteMany({ where: { buyer_person_id: f.buyer.personId } });
+  await prisma.serviceProductOffer.deleteMany({ where: { OR: [{ buyer_person_id: f.buyer.personId }, { provider_person_id: f.provider.personId }] } });
+  await prisma.serviceProduct.deleteMany({ where: { providerProfile: { person_id: f.provider.personId } } });
   await prisma.notification.deleteMany({ where: { person_id: { in: [f.buyer.personId, f.provider.personId] } } });
   await prisma.person.deleteMany({ where: { id: { in: [f.buyer.personId, f.provider.personId] } } });
   await prisma.user.deleteMany({ where: { id: { in: [f.buyer.userId, f.provider.userId] } } });

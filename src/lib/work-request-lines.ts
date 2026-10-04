@@ -578,5 +578,7 @@ export async function completeWorkRequest(viewer: Viewer, id: string) {
     where: { work_request_id: wr.id, status: { in: ["DRAFT", "SOURCING"] } },
     data: { status: "ASSIGNED" },
   });
+  // The request follows its lines, so the buyer sees Create Order (Chain C cart, R1 audit).
+  await prisma.workRequest.updateMany({ where: { id: wr.id, status: { in: ["DRAFT", "POSTED"] } }, data: { status: "ASSIGNED" } });
   return getWorkRequestDetail(viewer, id);
 }

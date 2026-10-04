@@ -281,15 +281,14 @@ check(
   "ruling 94a is a promise about behaviour; the copy is where a buyer meets it"
 );
 check(
-  "4 — ⚠⚠ the denial's `href` is null on purpose — there is no buyer surface to open",
-  /href: \(\) => null/.test(deniedEvent),
-  "E579 — a door onto a wall spends the member's trust to show them nothing"
+  "4 — the denial opens the product page, where the buyer can offer again (R1: /shop shipped)",
+  /href: \(v\) => .*\/shop\//.test(deniedEvent),
+  "E579 — the door must open onto the product, not a wall"
 );
 check(
-  "4 — ⚠ and `/shop` really is still a stub, which is what makes that null correct",
-  existsSync(join("src", "app", "(app)", "shop", "page.tsx")) &&
-    /ComingSoon/.test(readFileSync(join("src", "app", "(app)", "shop", "page.tsx"), "utf8")),
-  "if /shop has shipped, this null is now the defect and the href should point at it"
+  "4 — and the product page it opens exists",
+  existsSync(join("src", "app", "(app)", "shop", "[id]", "page.tsx")),
+  "a link to a page that does not exist is the defect E579 names"
 );
 
 /* ═══ 3 · LIVE — THE CONSTRAINT IS PROVED BY BREAKING IT ═══════════════════ */
@@ -552,9 +551,9 @@ async function live() {
         "94a — an offer at the floor remains deniable, and the buyer meets that rule here or nowhere"
       );
       check(
-        "3b — ⚠ the denial's href is null, because there is no buyer surface to open",
-        den?.href === null,
-        `href=${den?.href} — E579, a live door onto a wall`
+        "3b — the denial opens the shop (the product page when the product is known)",
+        (den?.href ?? "").startsWith("/shop"),
+        `href=${den?.href} — E579, a door must open onto something`
       );
 
       /* ── ⚠⚠⚠ THE BELL IS WRITTEN EVEN WITH EMAIL OFF — PROVED BY TURNING IT OFF ── */

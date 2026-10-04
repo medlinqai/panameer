@@ -922,7 +922,7 @@ export const NOTIFICATION_EVENTS = {
       worse than no link, because it spends the member's trust to show them nothing.
       ⚠ It becomes non-null the day the buyer's shop surface lands.
     */
-    href: () => null,
+    href: (v) => (str(v, "serviceProductId", "") ? `/shop/${str(v, "serviceProductId", "")}` : "/shop"),
   },
 
   /*

@@ -52,6 +52,8 @@ export async function makeOffer(
 ): Promise<{ id: string; offerNumber: string; clearedFloorCents: number | null }> {
   const me = await ownPerson(viewer);
   const product = await loadProduct(input.serviceProductId);
+  if (product.providerProfile.person_id === me.id)
+    throw new SourcingError("You can't make an offer on your own service product.", "OWN_PRODUCT");
 
   if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
     throw new SourcingError("An offer needs a whole amount above zero.", "BAD_AMOUNT");
@@ -218,6 +220,7 @@ export async function denyOffer(
     entityType: "ServiceProductOffer",
     entityId: row.id,
     vars: {
+      serviceProductId: offer.service_product_id,
       denyMessage: message,
       floor: floorCents != null ? formatCents(floorCents, offer.currency) : null,
     },
@@ -330,9 +333,10 @@ export async function acceptOffer(
         transaction_type,
         description: product.title,
         currency: offer.currency,
-        quantity: 1,
-        unit_price_cents: offer.amount_cents,
-        amount_cents: offer.amount_cents,
+        // One shape per kind, as the spine requires: a rate line has quantity × price, an amount line only an amount.
+        ...(transaction_type === "SERVICE_BY_QTY"
+          ? { quantity: 1, uom: "HOUR", unit_price_cents: offer.amount_cents }
+          : { amount_cents: offer.amount_cents }),
         service_product_id: product.id,
         /*
           ⚠⚠⚠ THE LINE CARRIES THE PROVIDER EVEN THOUGH THE PRODUCT IMPLIES IT.

@@ -40,8 +40,9 @@ export async function resolveCommissionBps(
 export function sourcingKindForLine(input: {
   soleSourced: boolean;
   supplierPartId: string | null;
+  serviceProductId?: string | null;
 }): SourcingKind {
-  if (input.supplierPartId) return "SERVICE_PRODUCT";
+  if (input.supplierPartId || input.serviceProductId) return "SERVICE_PRODUCT";
   return input.soleSourced ? "SOLE_SOURCED" : "APP_SOURCED";
 }
 
