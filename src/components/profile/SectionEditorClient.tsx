@@ -415,7 +415,6 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           onRemoteChange={(remoteRateCents) =>
             patch({ remoteRateCents, hourlyRateCents: syncedHourly(draft.onsiteRateCents, remoteRateCents) })
           }
-          serviceFeeBps={draft.serviceFeeBps}
         />
       );
       canSave = rateCanSave(draft.onsiteRateCents, draft.remoteRateCents);

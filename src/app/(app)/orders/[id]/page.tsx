@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
-import { formatCents } from "@/lib/display";
+import { formatCents, bpsToPercentLabel } from "@/lib/display";
 import { Button } from "@/components/casing/Button";
 import { OriginBadge, StatusPill } from "@/components/orders/OrderChrome";
 import { OrderActivation } from "@/components/orders/OrderActivation";
@@ -89,6 +89,15 @@ export default async function Page({
         <Fact label="Released">
           {o.buyerReleasedAt ? o.buyerReleasedAt.slice(0, 10) : "Not yet"}
         </Fact>
+        {o.party === "PROVIDER" && (
+          <>
+            <Fact label="Service fee">
+              {o.lineFeeBps != null ? bpsToPercentLabel(o.lineFeeBps) : "Varies by line"} ·{" "}
+              {formatCents(o.feeCents, o.currency)}
+            </Fact>
+            <Fact label="You'll get">{formatCents(o.netCents, o.currency)}</Fact>
+          </>
+        )}
       </dl>
 
       {/*
@@ -141,7 +150,7 @@ export default async function Page({
       </h2>
       <ul className="mt-4 grid gap-3">
         {o.lines.map((l) => (
-          <LineCard key={l.id} line={l} currency={o.currency} />
+          <LineCard key={l.id} line={l} currency={o.currency} showFee={o.party === "PROVIDER"} />
         ))}
       </ul>
 
@@ -182,7 +191,7 @@ export default async function Page({
  * line cannot exist, and `Drawdown`'s AMOUNT variant carries no field that could
  * express one, so this branch has nothing partial to render even by mistake.
  */
-function LineCard({ line, currency }: { line: OrderLineView; currency: string }) {
+function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: string; showFee: boolean }) {
   const d = line.drawdown;
   return (
     <li className="rounded-brand border border-line bg-white p-5">
@@ -192,6 +201,7 @@ function LineCard({ line, currency }: { line: OrderLineView; currency: string })
             Line {line.lineNumber} ·{" "}
             {line.transactionType === "SERVICE_BY_AMT" ? "Fixed amount" : "Rate"}
             {line.externalLineRef && <> · PO line {line.externalLineRef}</>}
+            {showFee && <> · fee {bpsToPercentLabel(line.feeBps)}</>}
           </p>
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
           {(line.serviceStart || line.serviceEnd) && (

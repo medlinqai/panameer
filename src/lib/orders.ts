@@ -1,6 +1,6 @@
 import { TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { pricedByQuantity } from "@/lib/transaction-spine";
+import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
 import type { Viewer } from "@/lib/access";
 
 export class OrderError extends Error {
@@ -358,6 +358,7 @@ export type OrderLineView = {
   changes: TermChange[];
   /** ⚠ Whether a comparison was POSSIBLE at all, which is not the same as "none". */
   hasOrigin: boolean;
+  feeBps: number;
 };
 
 export type OrderDetail = {
@@ -386,6 +387,11 @@ export type OrderDetail = {
   lines: OrderLineView[];
   valueCents: number;
   drawnCents: number;
+  /** Provider fee on the order value, summed from each line's own rate. */
+  feeCents: number;
+  netCents: number;
+  /** One rate when every line shares it, else null ("by line"). */
+  lineFeeBps: number | null;
   actions: OrderAction[];
   activationMessage: string;
   /** ⚠ True when ANY line's terms moved against what was asked. */
@@ -502,15 +508,19 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
           : null
       ),
       hasOrigin: !!origin,
+      feeBps: l.fee_bps,
     };
   });
 
   let valueCents = 0;
   let drawnCents = 0;
+  let feeCents = 0;
   for (const v of views) {
     valueCents += v.drawdown.orderedCents;
     drawnCents += v.drawdown.drawnCents;
+    feeCents += feeSplit(v.drawdown.orderedCents, v.feeBps).fee_cents;
   }
+  const rates = [...new Set(views.map((v) => v.feeBps))];
 
   return {
     id: o.id,
@@ -537,6 +547,9 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
     lines: views,
     valueCents,
     drawnCents,
+    feeCents,
+    netCents: valueCents - feeCents,
+    lineFeeBps: rates.length === 1 ? rates[0] : null,
     /* ⚠⚠ THE ACTIONS COME FROM THE ONE FUNCTION, SERVER-SIDE, AND THE PAGE
        RENDERS NOTHING THAT IS NOT IN THIS ARRAY. */
     actions: availableActions(o, party),
