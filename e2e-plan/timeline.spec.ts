@@ -340,7 +340,8 @@ test.describe("E803 — the collapsible grid", () => {
 
     const grid = page.locator("section", { has: page.getByRole("heading", { name: "See the Details", exact: true }) });
     await expect(grid).toBeVisible();
-    for (const col of ["#", "Name", "Owner", "Start", "End", "Status"]) {
+    /* `E822` (R-E015) — Owner left the PUBLIC grid; the admin editor keeps it. */
+    for (const col of ["#", "Name", "Start", "End", "Status"]) {
       await expect(grid.getByText(col, { exact: true }).first()).toBeVisible();
     }
 
@@ -363,7 +364,7 @@ test.describe("E803 — the collapsible grid", () => {
     await expect(grid.locator("button")).toHaveCount(1);
   });
 
-  test("the dates and owner are readable at 390, not dropped", async ({ page }) => {
+  test("the dates are readable at 390, not dropped", async ({ page }) => {
     test.skip(planId === null, "no plan to render");
     await page.setViewportSize({ width: 390, height: 1400 });
     await page.goto("/status", { waitUntil: "domcontentloaded" });

@@ -549,7 +549,8 @@ export default async function StatusPage({
         <section className="mt-12 border-t border-line pt-6">
           <h2 className={`text-[24px] text-ink ${HEAD}`}>Take a Look</h2>
           <p className="mt-1.5 max-w-[70ch] text-[15px] leading-relaxed text-ink-2">
-            Everything above is being built in the open. Come and use what is live today.
+            Everything is being built in the open. See what is being built and when above, then go
+            check it out today.
           </p>
           <p className="mt-4">
             {/* The door changes with the visitor: a member already has an
@@ -560,7 +561,7 @@ export default async function StatusPage({
               </Link>
             ) : (
               <Link href="/join" className={SQUARE_DARK}>
-                Register Free
+                Register for Free
               </Link>
             )}
           </p>
