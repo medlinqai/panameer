@@ -61,6 +61,7 @@ async function buildWorkOrder(
           unit_price_cents: true,
           amount_cents: true,
           supplier_part_id: true,
+          service_product_id: true,
           provider_person_id: true,
           service_start: true,
           service_end: true,
@@ -109,6 +110,7 @@ async function buildWorkOrder(
     const kind = sourcingKindForLine({
       soleSourced: wr.sole_sourced,
       supplierPartId: l.supplier_part_id,
+      serviceProductId: l.service_product_id,
     });
     const resolved = await resolveCommissionBps(kind, l.transaction_type);
     lineFees.set(l.id, resolved.bps);

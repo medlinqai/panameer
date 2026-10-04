@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/casing/Button";
 import { formatCents } from "@/lib/display";
@@ -57,6 +58,7 @@ function draftFrom(l: SerializedLine): Draft {
 }
 
 export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
+  const router = useRouter();
   const [detail, setDetail] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -315,7 +317,10 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
           </div>
           <Button
             disabled={!c.complete || busy}
-            onClick={() => send(`${base}/complete`, { method: "POST" })}
+            onClick={async () => {
+              // The page's Create Order panel reads the request status, so reload the server view.
+              if (await send(`${base}/complete`, { method: "POST" })) router.refresh();
+            }}
           >
             {busy ? "Working…" : "Complete"}
           </Button>

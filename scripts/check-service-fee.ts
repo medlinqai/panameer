@@ -141,7 +141,7 @@ check(
   const page = fileAt("src/components/onboarding/editors/RateEditor.tsx");
   check(
     "2 — the provider's fee disclosure is computed, not typed",
-    !!page && /label=\{`Service fee \(\$\{bpsToPercentLabel\(serviceFeeBps\)\}\)`\}/.test(page.code)
+    !!page && /label=\{`Service fee \(up to \$\{bpsToPercentLabel\(MAX_PROVIDER_FEE_BPS\)\}\)`\}/.test(page.code)
   );
   check(
     "2 — ABSENCE: no fee percentage is hardcoded into the disclosure",

@@ -590,14 +590,12 @@ export function ConnectProfile({
                       their own product, so it is visitor-only; and there is no
                       purchase flow yet, so it refuses rather than misleads. */}
                   {!owner && (
-                    <button
-                      type="button"
-                      disabled
-                      title="Buying isn't open yet"
-                      className="mt-1.5 block cursor-not-allowed rounded-full bg-line px-4 py-1.5 text-[13px] font-bold text-ink-3"
+                    <Link
+                      href={`/shop/${pk.id}`}
+                      className="mt-1.5 inline-flex min-h-9 items-center bg-ink px-4 text-[13px] font-semibold text-surface hover:bg-ink-hover"
                     >
-                      Buy
-                    </button>
+                      Make an Offer
+                    </Link>
                   )}
                 </div>
               </div>
