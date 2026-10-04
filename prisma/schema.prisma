@@ -660,6 +660,17 @@ model Pillar {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  /// Which role's header this domain was added under (`P2-A1.5-E817`). Null for
+  /// every seeded domain, which is why it is nullable: the catalog groups
+  /// domains by the roles its SKILLS carry, and a brand-new empty domain has no
+  /// skills yet to group it.
+  role_type_id String? @db.Uuid
+
+  /// A NEW DOMAIN IS HIDDEN FROM MEMBERS UNTIL SCOTT SWITCHES IT ON. Default
+  /// TRUE so every existing domain is unaffected by this column arriving —
+  /// a default of false would have hidden the whole catalog on deploy.
+  visible_to_members Boolean @default(true)
+
   /// Display order for the category picker (brief_P / E013). Lower sorts first,
   /// so ERP is pinned above AI and everything else. Ties break on name.
   sort_order Int @default(100)

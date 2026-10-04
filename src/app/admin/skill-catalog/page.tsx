@@ -10,7 +10,8 @@ import {
 import { TileRow, Listing, VolumeFooter } from "@/components/console/ConsolePage";
 import { CatalogTree, type CatalogNode } from "@/components/console/CatalogTree";
 import { CatalogCard } from "@/components/console/CatalogCard";
-import { CatalogAddBar } from "@/components/console/CatalogEditor";
+/* `CatalogAddBar` stays on disk after `E817` removed the loose bar; the
+   specialization page still uses it. */
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
 
@@ -110,6 +111,9 @@ export default async function Page({
       /* ⚠ `E465` — one 34px square on every row so the left column stays
          straight. Unmapped falls back to the muted generic, never a blank. */
       mark: RDS_ROLE_MARKS[r.code] ?? null,
+      /* `E817` — visible on the header, without expanding. Roles stay locked:
+         there is no + Add role anywhere. */
+      action: { label: "+ Add domain", kind: "domain.add" as const, roleTypeId: r.id },
       children: r.domains.map((d) => ({
         id: `${r.id}-${d.id}`,
         label: d.name,
@@ -117,12 +121,35 @@ export default async function Page({
         /* ⚠ Keyed on `Pillar.code`: vendor monogram for the 5 suites, chip for
            the 9 Operations domains, muted icon for Project/AI/Cross-Vendor. */
         mark: RDS_DOMAIN_MARKS[d.code] ?? null,
+        action: {
+          label: "+ Add skill",
+          kind: "skill.add" as const,
+          roleTypeId: r.id,
+          pillarId: d.id,
+        },
         // Skills load with the page: the whole catalog is a few hundred rows,
         // and a fetch-on-expand would add a spinner to every click for no gain.
         children: [] as CatalogNode[],
       })),
     }))
   );
+
+  /*
+    THE UNASSIGNED GROUP (`P2-A1.5-E817`). 18 skills carry no domain — orphans
+    from the loose add bar, which never asked. They were invisible in a tree
+    grouped by role › domain, so they could not be fixed. Each row has the move
+    control the tree already provides.
+  */
+  const orphanCount = await prisma.skill.count({ where: { pillar_id: null } });
+  if (orphanCount > 0) {
+    nodes.push({
+      id: "unassigned",
+      label: "Unassigned",
+      meta: `${orphanCount} skills with no domain`,
+      mark: null,
+      children: [],
+    });
+  }
 
   // Fill the leaf level in one query rather than per-domain.
   const skills = await prisma.skill.findMany({
@@ -433,7 +460,14 @@ export default async function Page({
         </CatalogCard>
       )}
       {/* ⚠ `E481` — the bar returns, live. See the note on the Specializations page. */}
-      {!isDrillIn && <CatalogAddBar table="skill" label="skill" />}
+      {/*
+        THE LOOSE "Add a skill…" BAR IS GONE (`E817`). It never asked which role
+        or domain the skill belonged to, so every skill added through it landed
+        unattached — which is exactly where the Unassigned group's orphans came
+        from. The add buttons on the headers know both.
+        Superseded, quoted not deleted:
+        //   {!isDrillIn && <CatalogAddBar table="skill" label="skill" />}
+      */}
 
       {/*
         ── ⚠ THE OLD EDIT BAR, SUPERSEDED (`P1-A1.5-E479`) ────────────────────
