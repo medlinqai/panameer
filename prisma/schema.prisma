@@ -756,6 +756,13 @@ model Skill {
   origin         CatalogOrigin @default(SEED)
   /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
   status         CatalogStatus @default(ACTIVE)
+
+  /// A NEW ADMIN-ADDED SKILL IS HIDDEN UNTIL SCOTT SHOWS IT (`P2-A1.5-E820`).
+  /// Default TRUE so every existing skill is unaffected by the column arriving.
+  /// ⚠ NOT `status: SUGGESTED` — that already means "waiting in the provider
+  /// suggestion queue", and reusing it would drop admin's own new rows into the
+  /// promote/reject list.
+  visible_to_members Boolean @default(true)
   /// THE PARSER'S CONTROLLED VOCABULARY for this skill (v5 catalog): legacy
   /// names, acronyms and product renames — "GL", "iProcurement (POR)", "Fixed
   /// Assets". A résumé says "AP", the catalog says "Payables"; this is the join.

@@ -1,5 +1,15 @@
 import { Layers, FolderTree, Wrench } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+
+/**
+ * The longer role names Scott asked for on THIS PAGE ONLY (`P2-A1.5-E820`).
+ * Everywhere a member sees a role — registration, profile, search — keeps the
+ * short one until he decides.
+ */
+const ADMIN_ROLE_LABELS: Record<string, string> = {
+  APPLICATION_SPECIFIC: "Application-Specific Roles (Functional Consultant)",
+  TECHNOLOGY_SPECIFIC: "Technology-Specific Roles (Technical Consultant)",
+};
 import {
   getProviderFieldTree,
   getSkillProviderCounts,
@@ -106,14 +116,19 @@ export default async function Page({
   const nodes: CatalogNode[] = await Promise.all(
     roles.map(async (r) => ({
       id: r.id,
-      label: r.display || r.name,
+      /* ADMIN PAGE ONLY (`E820`). Registration, profile and search still show
+         the short label; changing those is Scott's call, listed in the report. */
+      label: ADMIN_ROLE_LABELS[r.code] ?? (r.display || r.name),
       meta: `${r.domains.length} domains`,
       /* ⚠ `E465` — one 34px square on every row so the left column stays
          straight. Unmapped falls back to the muted generic, never a blank. */
       mark: RDS_ROLE_MARKS[r.code] ?? null,
-      /* `E817` — visible on the header, without expanding. Roles stay locked:
-         there is no + Add role anywhere. */
-      action: { label: "+ Add domain", kind: "domain.add" as const, roleTypeId: r.id },
+      /*
+        NO "+ Add domain" (`E820`, the brief's revision). Scott locked ROLES AND
+        DOMAINS: only skills can be added, and every new skill must belong to an
+        existing role › domain pair. `E817` shipped a domain-add button a few
+        hours earlier; this removes it.
+      */
       children: r.domains.map((d) => ({
         id: `${r.id}-${d.id}`,
         label: d.name,

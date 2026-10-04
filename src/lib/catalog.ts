@@ -22,7 +22,18 @@ import { prisma } from "@/lib/prisma";
    than a `status: "ACTIVE"` literal repeated at thirteen call sites, so the
    surface is countable.
 */
-export const OFFERABLE = { status: "ACTIVE" } as const;
+export const OFFERABLE = {
+  status: "ACTIVE",
+  /*
+    HIDDEN SKILLS ARE NOT OFFERED (`P2-A1.5-E820`). A new admin-added skill
+    starts hidden so it cannot reach registration or search before Scott has
+    looked at it. It goes HERE, in the one predicate thirteen call sites share,
+    rather than at each of them — the same reason `E541` put the catalog scope
+    here. ⚠ Offer side only: a member who already claimed a skill keeps it
+    (`E517`).
+  */
+  visible_to_members: true,
+} as const;
 
 /**
  * ── ⚠⚠ WHICH CATALOG A WRITE BELONGS TO (`P1-A1.5-E483`) ────────────────────

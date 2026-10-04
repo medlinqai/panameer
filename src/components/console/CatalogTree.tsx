@@ -63,7 +63,7 @@ export type CatalogNode = {
    * an add button at the domain and skill for sure" — visible WITHOUT expanding,
    * which is why it hangs off the node rather than living inside the children.
    */
-  action?: { label: string; kind: "domain.add" | "skill.add"; roleTypeId?: string; pillarId?: string };
+  action?: { label: string; kind: "skill.add"; roleTypeId?: string; pillarId?: string };
   /**
    * ⚠ `E481` — a RETIRED row still renders in the ADMIN tree, MARKED, so an
    * admin can bring it back. It is filtered out of every provider-facing picker
@@ -426,11 +426,13 @@ function CatalogAddButton({
     const res = await fetch("/api/admin/catalog", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        action.kind === "domain.add"
-          ? { action: "domain.add", name: clean, roleTypeId: action.roleTypeId }
-          : { action: "skill.add", name: clean, roleTypeId: action.roleTypeId, pillarId: action.pillarId },
-      ),
+      /* Skills only (`E820`): roles and domains are locked. */
+      body: JSON.stringify({
+        action: "skill.add",
+        name: clean,
+        roleTypeId: action.roleTypeId,
+        pillarId: action.pillarId,
+      }),
     });
     const json = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
     setBusy(false);
@@ -486,7 +488,7 @@ function CatalogAddButton({
             setNote(null);
           }
         }}
-        placeholder={action.kind === "domain.add" ? "New domain" : "New skill"}
+        placeholder="New skill"
         aria-label={action.label}
         className="min-h-11 w-44 border border-line bg-surface px-2 text-[13px]"
       />
