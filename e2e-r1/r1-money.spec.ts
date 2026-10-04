@@ -186,3 +186,51 @@ test("work order header: hours, approved, paid, remaining", async ({ page }) => 
     await dropFixture(g);
   }
 });
+
+// Lane 7: two requests at the same moment cannot overdraw; a closed order takes no more; paying in full closes it.
+test("safety: concurrent requests cannot overdraw, close blocks new requests, full payment auto-closes", async ({ page }) => {
+  const g = await createFixture({ feeBps: 999 });
+  const h = await createFixture({ feeBps: 999 });
+  try {
+    await signIn(page, g.provider.email);
+    const statuses = await page.evaluate(async ({ orderId, lineId }) => {
+      const send = () => fetch("/api/settlements", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, periodStart: "2026-10-01", periodEnd: "2026-10-07", lines: [{ workOrderLineId: lineId, quantity: 8, serviceDate: "2026-10-03" }] }) }).then((r) => r.status);
+      return Promise.all([send(), send()]);
+    }, { orderId: g.orderId, lineId: g.rateLineId });
+    expect(statuses.sort(), "exactly one of two 8-hour claims on a 10-hour line goes through").toEqual([200, 400]);
+    const line = await db().workOrderLine.findUnique({ where: { id: g.rateLineId }, select: { drawn_quantity: true } });
+    expect(Number(line?.drawn_quantity)).toBe(8);
+
+    await db().settlementRequest.updateMany({ where: { work_order_id: g.orderId }, data: { status: "APPROVED", decided_at: new Date() } });
+    await signIn(page, g.buyer.email);
+    await page.goto(`/orders/${g.orderId}`);
+    await page.getByRole("button", { name: "Close Work Order" }).click();
+    await page.getByRole("button", { name: "Yes, Close It" }).click();
+    await expect.poll(async () => (await db().workOrder.findUnique({ where: { id: g.orderId }, select: { status: true } }))?.status, { timeout: 30_000 }).toBe("CLOSED");
+    await signIn(page, g.provider.email);
+    const after = await page.evaluate(async ({ orderId, lineId }) => (await fetch("/api/settlements", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, periodStart: "2026-10-01", periodEnd: "2026-10-07", lines: [{ workOrderLineId: lineId, quantity: 1, serviceDate: "2026-10-04" }] }) })).status, { orderId: g.orderId, lineId: g.rateLineId });
+    expect(after, "a closed order refuses a new payment request").toBe(400);
+
+    // h: bill the whole order (10h + workshop = $1,500 = cap), buyer pays all of it → closes itself.
+    const s = await db().settlementRequest.create({
+      data: { settlement_number: `PR-${h.tag}-full`, work_order_id: h.orderId, provider_person_id: h.provider.personId, period_start: new Date("2026-10-01"), period_end: new Date("2026-10-07"),
+        status: "APPROVED", submitted_at: new Date(), decided_at: new Date(),
+        lines: { create: [
+          { line_number: 1, work_order_line_id: h.rateLineId, basis: "RATE", uom: "HOUR", quantity: 10, unit_price_cents: 10000 },
+          { line_number: 2, work_order_line_id: h.amountLineId, basis: "AMOUNT", amount_cents: 50000 },
+        ] } },
+      select: { id: true },
+    });
+    const { email, password } = adminAccount();
+    await signInAs(page, email, password);
+    const rec = await page.evaluate(async ({ acct, sid }) => (await fetch("/api/admin/payments", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pAccountId: acct, amountCents: 150000, receivedAt: "2026-10-04", allocations: [{ settlementId: sid, amountCents: 150000 }] }) })).status, { acct: h.pAccountId, sid: s.id });
+    expect(rec).toBe(200);
+    expect((await db().workOrder.findUnique({ where: { id: h.orderId }, select: { status: true } }))?.status).toBe("CLOSED");
+  } finally {
+    await dropFixture(g);
+    await dropFixture(h);
+  }
+});

@@ -1,7 +1,7 @@
 import { formatCents } from "@/lib/display";
 import { notify } from "@/lib/notifications";
 import { randomBytes } from "node:crypto";
-import { LineBasis, SettlementStatus, TransactionType } from "@prisma/client";
+import { LineBasis, Prisma, SettlementStatus, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import {
@@ -164,8 +164,8 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
 }
 
 /** Cents already settled against this order, for `E388`'s rule 4 (not-to-exceed). */
-async function settledCentsFor(orderId: string): Promise<number> {
-  const rows = await prisma.settlementLine.findMany({
+async function settledCentsFor(orderId: string, db: Prisma.TransactionClient = prisma): Promise<number> {
+  const rows = await db.settlementLine.findMany({
     where: {
       settlementRequest: {
         work_order_id: orderId,
@@ -337,101 +337,117 @@ export async function createSettlement(
   /* ⚠⚠ THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
      `ORDER_NOT_RELEASED`, the period bounds, the draw limits and the
      not-to-exceed cap all come back from here with their own codes. */
-  assertSettlementDraw({
-    order: {
-      status: o.status,
-      period_start: o.periodStart ? new Date(o.periodStart) : null,
-      period_end: o.periodEnd ? new Date(o.periodEnd) : null,
-      not_to_exceed_cents: o.notToExceedCents,
-    },
-    periodStart,
-    periodEnd,
-    lines: drafts,
-    alreadySettledCents: await settledCentsFor(orderId),
-  });
+  // Check and draw in one transaction, with the order row locked, so two requests cannot both pass the cap.
+  const created = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT id FROM work_orders WHERE id = ${o.id}::uuid FOR UPDATE`;
+    const fresh = await tx.workOrder.findUniqueOrThrow({ where: { id: o.id }, select: { status: true } });
+    const freshLines = new Map(
+      (await tx.workOrderLine.findMany({ where: { work_order_id: o.id }, select: { id: true, drawn_quantity: true, drawn_amount_cents: true } })).map((l) => [l.id, l])
+    );
+    for (const d of drafts) {
+      const fl = freshLines.get(d.orderLine.id);
+      if (fl) {
+        d.orderLine.drawn_quantity = fl.drawn_quantity == null ? 0 : Number(fl.drawn_quantity);
+        d.orderLine.drawn_amount_cents = fl.drawn_amount_cents ?? 0;
+      }
+    }
+    assertSettlementDraw({
+      order: {
+        status: fresh.status,
+        period_start: o.periodStart ? new Date(o.periodStart) : null,
+        period_end: o.periodEnd ? new Date(o.periodEnd) : null,
+        not_to_exceed_cents: o.notToExceedCents,
+      },
+      periodStart,
+      periodEnd,
+      lines: drafts,
+      alreadySettledCents: await settledCentsFor(orderId, tx),
+    });
 
-  /* ⚠ THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
-     a milestone. Priced by `priceSettlementLine`, the ONLY place a settlement
-     line's price is assigned. */
-  const created = await prisma.settlementRequest.create({
-    data: {
-      settlement_number: newSettlementNumber(),
-      work_order_id: o.id,
-      provider_person_id: await providerPersonIdOf(o.id),
-      period_start: periodStart,
-      period_end: periodEnd,
-      currency: o.currency,
-      status: "SUBMITTED",
-      submitted_at: new Date(),
-      lines: {
-        create: rows.map((r, i) => {
-          const ol = orderLineById.get(r.workOrderLineId)!;
-          /* ⚠⚠ THE SAME ONE TRANSLATION AS THE DRAFT BOUNDARY ABOVE, AND FOR THE
-             SAME REASON — the settlement side still speaks `LineBasis` (register
-             entry 3). ⚠ Computed from `transaction_type`, never read from the
-             retired `WorkOrderLine.basis`. */
-          const olByQuantity = pricedByQuantity(ol.transactionType);
-          const olBasis: LineBasis = olByQuantity ? "RATE" : "AMOUNT";
-          const priced = priceSettlementLine(
-            {
+    /* ⚠ THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
+       a milestone. Priced by `priceSettlementLine`, the ONLY place a settlement
+       line's price is assigned. */
+    const created = await tx.settlementRequest.create({
+      data: {
+        settlement_number: newSettlementNumber(),
+        work_order_id: o.id,
+        provider_person_id: await providerPersonIdOf(o.id),
+        period_start: periodStart,
+        period_end: periodEnd,
+        currency: o.currency,
+        status: "SUBMITTED",
+        submitted_at: new Date(),
+        lines: {
+          create: rows.map((r, i) => {
+            const ol = orderLineById.get(r.workOrderLineId)!;
+            /* ⚠⚠ THE SAME ONE TRANSLATION AS THE DRAFT BOUNDARY ABOVE, AND FOR THE
+               SAME REASON — the settlement side still speaks `LineBasis` (register
+               entry 3). ⚠ Computed from `transaction_type`, never read from the
+               retired `WorkOrderLine.basis`. */
+            const olByQuantity = pricedByQuantity(ol.transactionType);
+            const olBasis: LineBasis = olByQuantity ? "RATE" : "AMOUNT";
+            const priced = priceSettlementLine(
+              {
+                work_order_line_id: r.workOrderLineId,
+                basis: olBasis,
+                quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
+              },
+              {
+                id: ol.id,
+                basis: olBasis,
+                uom: ol.uom,
+                quantity: ol.quantity,
+                unit_price_cents: ol.unitPriceCents,
+                amount_cents: ol.amountCents,
+              }
+            );
+            return {
+              line_number: i + 1,
               work_order_line_id: r.workOrderLineId,
               basis: olBasis,
+              description: ol.description,
+              uom: olByQuantity ? ol.uom : null,
+              /* ⚠ THE QUANTITY IS THE PROVIDER'S CLAIM; THE PRICE IS THE ORDER'S.
+                 `priceSettlementLine` returns only the two price columns, and that
+                 is the boundary exactly where it belongs — how many hours you
+                 worked is yours to state, what an hour is worth is not. */
               quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
-            },
-            {
-              id: ol.id,
-              basis: olBasis,
-              uom: ol.uom,
-              quantity: ol.quantity,
-              unit_price_cents: ol.unitPriceCents,
-              amount_cents: ol.amountCents,
-            }
-          );
-          return {
-            line_number: i + 1,
-            work_order_line_id: r.workOrderLineId,
-            basis: olBasis,
-            description: ol.description,
-            uom: olByQuantity ? ol.uom : null,
-            /* ⚠ THE QUANTITY IS THE PROVIDER'S CLAIM; THE PRICE IS THE ORDER'S.
-               `priceSettlementLine` returns only the two price columns, and that
-               is the boundary exactly where it belongs — how many hours you
-               worked is yours to state, what an hour is worth is not. */
-            quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
-            unit_price_cents: priced.unit_price_cents ?? null,
-            amount_cents: priced.amount_cents ?? null,
-            service_date: r.serviceDate ? new Date(r.serviceDate) : null,
-            note: r.note?.trim() || null,
-          };
-        }),
-      },
-    },
-    select: { id: true },
-  });
-
-  /* ⚠⚠ THE DRAW IS TAKEN AT SUBMIT, NOT AT APPROVAL, AND THE REVERSE IS AT
-     REJECTION. `WorkOrderLine.drawn_*` is what rule 3 reads, so if it only moved
-     on approval two settlements submitted the same afternoon would each see zero
-     drawn and both pass. `rejectSettlement` gives it back — see there. */
-  for (const [workOrderLineId, agg] of byOrderLine) {
-    const ol = orderLineById.get(workOrderLineId)!;
-    /* ⚠ ASKED OF `transaction_type` (ruling 44). SUPERSEDED (`E164`):
-       //   if (ol.basis === "RATE") { */
-    if (pricedByQuantity(ol.transactionType)) {
-      await prisma.workOrderLine.update({
-        where: { id: workOrderLineId },
-        data: {
-          drawn_quantity: { increment: agg.quantity },
-          drawn_amount_cents: { increment: Math.round(agg.quantity * (ol.unitPriceCents ?? 0)) },
+              unit_price_cents: priced.unit_price_cents ?? null,
+              amount_cents: priced.amount_cents ?? null,
+              service_date: r.serviceDate ? new Date(r.serviceDate) : null,
+              note: r.note?.trim() || null,
+            };
+          }),
         },
-      });
-    } else {
-      await prisma.workOrderLine.update({
-        where: { id: workOrderLineId },
-        data: { drawn_amount_cents: ol.amountCents ?? 0, status: "DRAWN" },
-      });
+      },
+      select: { id: true },
+    });
+
+    /* ⚠⚠ THE DRAW IS TAKEN AT SUBMIT, NOT AT APPROVAL, AND THE REVERSE IS AT
+       REJECTION. `WorkOrderLine.drawn_*` is what rule 3 reads, so if it only moved
+       on approval two settlements submitted the same afternoon would each see zero
+       drawn and both pass. `rejectSettlement` gives it back — see there. */
+    for (const [workOrderLineId, agg] of byOrderLine) {
+      const ol = orderLineById.get(workOrderLineId)!;
+      /* ⚠ ASKED OF `transaction_type` (ruling 44). SUPERSEDED (`E164`):
+         //   if (ol.basis === "RATE") { */
+      if (pricedByQuantity(ol.transactionType)) {
+        await tx.workOrderLine.update({
+          where: { id: workOrderLineId },
+          data: {
+            drawn_quantity: { increment: agg.quantity },
+            drawn_amount_cents: { increment: Math.round(agg.quantity * (ol.unitPriceCents ?? 0)) },
+          },
+        });
+      } else {
+        await tx.workOrderLine.update({
+          where: { id: workOrderLineId },
+          data: { drawn_amount_cents: ol.amountCents ?? 0, status: "DRAWN" },
+        });
+      }
     }
-  }
+    return created;
+  });
 
   const detail = await getSettlement(viewer, created.id);
   const buyer = await prisma.workOrder.findUnique({ where: { id: o.id }, select: { buyer_person_id: true } });
