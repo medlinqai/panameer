@@ -174,7 +174,6 @@ export const WORK_FEED_EXTRA_TITLES: NavItem[] = [
 
 export const COMPANY_NAV: NavItem[] = [
   { label: "Company", href: "/company" },
-  { label: "Teams", href: "/company/teams" },
   { label: "Branding", href: "/company/branding" },
   { label: "Company Settings", href: "/company/settings" },
 ];

@@ -279,3 +279,12 @@ test("service product: offer → accept → complete → work order at the servi
     await dropFixture(g);
   }
 });
+
+// Lane 9: non-R1 stubs are gone from members' paths; old addresses land on live pages.
+test("non-R1 pages redirect to live ones", async ({ page }) => {
+  await signIn(page, f!.buyer.email);
+  for (const [from, to] of [["/deliver-work", "/orders"], ["/manage-money", "/payments/payment-requests"], ["/reports", "/usage"], ["/consultations", "/shop"], ["/company/teams", "/company"]]) {
+    await page.goto(from);
+    await expect.poll(() => new URL(page.url()).pathname, { timeout: 20_000 }).toBe(to);
+  }
+});
