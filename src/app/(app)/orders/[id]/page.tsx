@@ -10,6 +10,7 @@ import { BackLink } from "@/components/console/BackLink";
 import { OrderTabs } from "@/components/orders/OrderTabs";
 import { TimeDollars } from "@/components/orders/TimeDollars";
 import { loadWoMoney } from "@/lib/wo-money";
+import { WoPlanSection } from "@/components/orders/WoPlanSection";
 import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { CloseOrder } from "@/components/orders/CloseOrder";
@@ -47,6 +48,7 @@ export default async function Page({
         <p className="mt-1 text-[14px] text-ink-2">{o.buyerName} · {o.providerName}</p>
         <OrderTabs id={o.id} current="plan" />
         {money && <TimeDollars m={money} currency={o.currency} />}
+        <WoPlanSection orderId={o.id} viewer={viewer} hoursAuthorized={money?.hoursAuthorized ?? null} />
       </div>
     );
   }

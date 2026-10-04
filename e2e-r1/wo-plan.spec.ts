@@ -31,3 +31,30 @@ test("lane 1: Plan tab shows Time | Dollars from real figures; Overview unchange
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
   }
 });
+
+test("lane 2: start from milestones, see the plan, edit it; both parties; history records it; foreign rows refused", async ({ page }) => {
+  await signIn(page, f!.provider.email);
+  await page.goto(`/orders/${f!.orderId}?tab=plan`);
+  const start = page.getByTestId("wo-plan-start");
+  await expect(start).toBeVisible({ timeout: 30_000 });
+  await start.getByRole("button", { name: "Use Milestones" }).click();
+  const plan = page.getByTestId("wo-plan");
+  await expect(plan).toBeVisible({ timeout: 30_000 });
+  await expect(plan.getByText("Delivery").first()).toBeVisible();
+  await expect(plan.getByText("Acceptance").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Edit Plan" }).click();
+  await expect(page.getByTestId("wo-plan-editor")).toBeVisible();
+  const titles = await page.locator("[data-plan-title]").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  expect(titles).toEqual(["Delivery", "Consulting hours", "Workshop", "Acceptance"]);
+  const bad = await page.evaluate(async (id) => (await fetch(`/api/orders/${id}/plan`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "update", rowId: "00000000-0000-4000-8000-000000000000", title: "x" }) })).status, f!.orderId);
+  expect(bad, "a row from another plan is refused").toBe(404);
+  await page.screenshot({ path: "e2e-r1/.artifacts/wo-plan-board1-1440.png", fullPage: true });
+
+  await signIn(page, f!.buyer.email);
+  await page.goto(`/orders/${f!.orderId}?tab=plan`);
+  await expect(page.getByTestId("wo-plan").getByText("Acceptance").first()).toBeVisible({ timeout: 30_000 });
+  await page.goto(`/orders/${f!.orderId}`);
+  await expect(page.getByTestId("history").getByText("set up the plan from simple milestones")).toBeVisible({ timeout: 30_000 });
+});
