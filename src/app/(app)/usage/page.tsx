@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
-import { UsageRows } from "@/components/console/UsageRows";
-import { usageFigures } from "@/lib/usage-figures";
+import { UsageCards } from "@/components/console/UsageCards";
 /* ⚠ `P2-A1.1-E744` — these left with the four cards below the gauges; the components stay on disk. */
 import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
@@ -498,20 +497,8 @@ export default async function MyStatsPage({
     ⚠⚠ `stats.work.earnings` IS ALREADY `{ uncounted }` AND IS REUSED — this page
     does not form a second opinion about whether earnings can be counted.
   */
-  /*
-    USAGE v2's 28 FIGURES (`E815`). Read once, here, and handed to the rows —
-    the page already holds the person, user and profile ids the counts need.
-    `isProvider` picks the Work row: the provider's four questions or the
-    buyer's, which is the role-aware row Scott asked for. A member who is both
-    sees the PROVIDER row, matching `railPersona`'s existing provider-wins rule
-    so two surfaces do not disagree about which role someone is acting in.
-  */
-  const figures = await usageFigures({
-    personId: profile.person_id,
-    userId: viewer.userId,
-    profileId: profile.id,
-  });
-  const isProvider = viewer.isServiceProvider;
+  /* `E824` — the cards read `stats`, which the page already has. The v2 figure
+     reader stays in `lib/usage-figures.ts`, unused by this page. */
 
   const areas = usageAreas({
     views: stats.profile.views,
@@ -824,10 +811,18 @@ export default async function MyStatsPage({
         not because they are kept in step, but because there is only one of them.
       */}
       {/*
-        USAGE v2 (`E815`): six rows of four, from the approved sheet, replacing
-        v1's eight single gauges. `UsageGauges` stays on disk, unrendered.
+        R-E016 (`E824`) — SCOTT'S 09-23 LAYOUT IN TODAY'S STYLE, approved
+        2026-10-04 against `usage_mockup_current_style_2026-10-04.html`: rounded
+        bordered cards in two columns, each a list of label + number rows.
+
+        THE 24 DIALS ARE RETIRED FROM THIS PAGE. `Gauge.tsx` stays on disk — it
+        is used elsewhere — and so do `UsageRows` and the v2 metric config,
+        unrendered. Every figure here comes from the SAME writers; nothing was
+        recounted for the new layout.
+        ⚠ SUPERSEDED, quoted not deleted:
+        //   <UsageRows figures={figures} isProvider={isProvider} />
       */}
-      <UsageRows figures={figures} isProvider={isProvider} />
+      <UsageCards stats={stats} searchScore={searchScore} />
 
       {/*
         ── ⚠⚠ THE TWO ACTIONS, AT THE TOP (`P2-J2-E563` WS-B) ────────────────
