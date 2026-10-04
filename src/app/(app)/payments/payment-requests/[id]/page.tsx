@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
             </Link>
           </p>
         </div>
-        <SettlementStatusPill status={s.status} />
+        <SettlementStatusPill status={s.status} paidOut={s.party === "PROVIDER" ? !!s.paidOut : undefined} />
       </div>
 
       <dl className="mt-6 grid gap-x-8 gap-y-3.5 rounded-brand border border-line bg-white p-5 sm:grid-cols-3">
@@ -81,6 +81,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
       {/* ⚠ THE DECISION — renders for the buyer on a SUBMITTED request and for
           nobody else. It returns null when `actions` is empty. */}
+      {s.party === "PROVIDER" && s.paidOut && (
+        <section data-testid="paid-out" className="mt-6 border-t-2 border-ink pt-5">
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PAID</p>
+          <p className="mt-1 text-[28px] font-bold">{formatCents(s.paidOut.netCents, s.currency)}</p>
+          <p className="mt-1 text-[14px] text-ink-2">
+            Sent {s.paidOut.paidAt ?? ""}{s.paidOut.method ? ` by ${s.paidOut.method === "WIRE" ? "wire" : s.paidOut.method}` : ""}, after the{" "}
+            {formatCents(s.feeCents, s.currency)} service fee.
+          </p>
+        </section>
+      )}
+
       {s.party === "BUYER" && s.status === "APPROVED" && (
         <PaymentDue amountCents={s.totalCents} currency={s.currency} reference={s.settlementNumber} />
       )}

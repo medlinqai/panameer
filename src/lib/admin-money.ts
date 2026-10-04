@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { assertAllocation, paymentStatusFor, SpineError } from "@/lib/transaction-spine";
+import { assertAllocation, feeSplit, paymentStatusFor, SpineError } from "@/lib/transaction-spine";
+import { notify } from "@/lib/notifications";
+import { formatCents } from "@/lib/display";
 
 // R1 money, admin side: buyers pay Panameer offline; admin records it here and allocates it to payment requests.
 export class MoneyError extends Error {
@@ -177,5 +179,113 @@ export async function listPayments(): Promise<PaymentRow[]> {
     status: r.status,
     externalRef: r.external_ref,
     requests: r.lines.map((l) => num.get(l.settlement_request_id) ?? "—"),
+  }));
+}
+
+export type PayoutRow = {
+  settlementId: string;
+  settlementNumber: string;
+  orderNumber: string;
+  providerPersonId: string;
+  providerName: string;
+  currency: string;
+  grossCents: number;
+  feeCents: number;
+  netCents: number;
+};
+
+async function splitFor(settlementIds: string[]) {
+  const lines = await prisma.settlementLine.findMany({ where: { settlement_request_id: { in: settlementIds } } });
+  const fee = new Map(
+    (await prisma.workOrderLine.findMany({ where: { id: { in: lines.map((l) => l.work_order_line_id) } }, select: { id: true, fee_bps: true } })).map(
+      (l) => [l.id, l.fee_bps]
+    )
+  );
+  return lines.map((l) => ({ ...l, ...feeSplit(settlementValue(l), fee.get(l.work_order_line_id) ?? 0) }));
+}
+
+/** Requests the buyer has paid in full that have not been paid out to the provider yet. */
+export async function payoutQueue(): Promise<PayoutRow[]> {
+  const paid = await prisma.settlementRequest.findMany({ where: { status: "PAID" }, orderBy: { updated_at: "asc" }, select: { id: true, settlement_number: true, work_order_id: true, provider_person_id: true, currency: true, lines: { select: { id: true } } } });
+  const done = new Set(
+    (await prisma.providerPayoutLine.findMany({ where: { settlement_line_id: { in: paid.flatMap((p) => p.lines.map((l) => l.id)) } }, select: { settlement_line_id: true } })).map((l) => l.settlement_line_id)
+  );
+  const todo = paid.filter((p) => p.lines.length > 0 && !p.lines.some((l) => done.has(l.id)));
+  if (todo.length === 0) return [];
+  const split = await splitFor(todo.map((t) => t.id));
+  const orders = new Map((await prisma.workOrder.findMany({ where: { id: { in: todo.map((t) => t.work_order_id) } }, select: { id: true, order_number: true } })).map((o) => [o.id, o.order_number]));
+  const who = await names(todo.map((t) => t.provider_person_id));
+  return todo.map((t) => {
+    const mine = split.filter((l) => l.settlement_request_id === t.id);
+    return {
+      settlementId: t.id,
+      settlementNumber: t.settlement_number,
+      orderNumber: orders.get(t.work_order_id) ?? "—",
+      providerPersonId: t.provider_person_id,
+      providerName: who.get(t.provider_person_id) ?? "A provider",
+      currency: t.currency,
+      grossCents: mine.reduce((n, l) => n + l.gross_cents, 0),
+      feeCents: mine.reduce((n, l) => n + l.fee_cents, 0),
+      netCents: mine.reduce((n, l) => n + l.net_cents, 0),
+    };
+  });
+}
+
+/** Records the offline payout for one paid request and tells the provider. */
+export async function recordPayout(input: { settlementId: string; method: string; externalRef?: string | null; paidAt: string }): Promise<{ payoutNumber: string; netCents: number }> {
+  const row = (await payoutQueue()).find((r) => r.settlementId === input.settlementId);
+  if (!row) throw new MoneyError("That request is not paid by the buyer yet, or is already paid out", "NOT_FOUND");
+  const paidAt = new Date(input.paidAt);
+  if (Number.isNaN(paidAt.getTime())) throw new MoneyError("Enter the payout date", "INVALID");
+  if (!["ACH", "WIRE", "OTHER"].includes(input.method)) throw new MoneyError("Pick how it was paid", "INVALID");
+  const lines = await splitFor([row.settlementId]);
+  const payoutNumber = `PO-${randomBytes(3).toString("hex").toUpperCase()}`;
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT id FROM settlement_requests WHERE id = ${row.settlementId}::uuid FOR UPDATE`;
+    const already = await tx.providerPayoutLine.count({ where: { settlement_line_id: { in: lines.map((l) => l.id) } } });
+    if (already > 0) throw new MoneyError("Already paid out", "INVALID");
+    await tx.providerPayout.create({
+      data: {
+        payout_number: payoutNumber,
+        provider_person_id: row.providerPersonId,
+        currency: row.currency,
+        gross_cents: row.grossCents,
+        fee_cents: row.feeCents,
+        net_cents: row.netCents,
+        status: "PAID",
+        paid_at: paidAt,
+        method: input.method,
+        external_ref: input.externalRef?.trim() || null,
+        lines: {
+          create: lines.map((l, i) => ({ line_number: i + 1, settlement_line_id: l.id, gross_cents: l.gross_cents, fee_cents: l.fee_cents, net_cents: l.net_cents })),
+        },
+      },
+    });
+  });
+  await notify({
+    event: "payment.sent",
+    personId: row.providerPersonId,
+    entityType: "settlement",
+    entityId: row.settlementId,
+    dedupeKey: `payout:${row.settlementId}`,
+    vars: { amount: formatCents(row.netCents, row.currency), settlementId: row.settlementId },
+  });
+  return { payoutNumber, netCents: row.netCents };
+}
+
+export type PayoutHistoryRow = { payoutNumber: string; providerName: string; paidAt: string; method: string; netCents: number; feeCents: number; grossCents: number; externalRef: string | null };
+
+export async function listPayouts(): Promise<PayoutHistoryRow[]> {
+  const rows = await prisma.providerPayout.findMany({ orderBy: { paid_at: "desc" }, take: 500 });
+  const who = await names(rows.map((r) => r.provider_person_id));
+  return rows.map((r) => ({
+    payoutNumber: r.payout_number,
+    providerName: who.get(r.provider_person_id) ?? "A provider",
+    paidAt: r.paid_at ? r.paid_at.toISOString().slice(0, 10) : "—",
+    method: r.method ?? "—",
+    netCents: r.net_cents,
+    feeCents: r.fee_cents,
+    grossCents: r.gross_cents,
+    externalRef: r.external_ref,
   }));
 }
