@@ -24,35 +24,28 @@ export function EnforcementHistory() {
   const tab = TABS.find((t) => t.id === active)!;
 
   return (
-    <section className="rounded-brand border border-line bg-white">
-      <div className="border-b border-line px-5 pt-4">
-        <h2 className="font-display text-[16px] font-bold">Enforcement History</h2>
-        <div role="tablist" className="mt-3 flex gap-1">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active === t.id}
-              onClick={() => setActive(t.id)}
-              className={
-                "-mb-px border-b-2 px-3 py-2 text-[14px] font-semibold transition-colors " +
-                (active === t.id
-                  ? "border-magenta text-magenta"
-                  : "border-transparent text-ink-2 hover:text-ink")
-              }
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <section>
+      <h2 className="mb-1.5 mt-[38px] text-[22px] font-bold">Enforcement History</h2>
+      <div role="tablist" className="mt-2.5 flex gap-6 border-b border-line">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={active === t.id}
+            onClick={() => setActive(t.id)}
+            className={
+              "-mb-px border-b-2 py-2.5 text-[14px] font-medium transition-colors " +
+              (active === t.id ? "border-magenta text-magenta" : "border-transparent text-ink-2 hover:text-ink")
+            }
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-
-      <div role="tabpanel" className="px-5 py-8 text-center">
-        <p className="text-[15px] font-semibold">{tab.empty}</p>
-        <p className="mx-auto mt-1.5 max-w-md text-[13.5px] leading-relaxed text-ink-2">
-          {tab.detail}
-        </p>
+      <div role="tabpanel" className="py-[26px] text-[14px] text-ink-2">
+        <b className="mb-1 block text-ink">{tab.empty}</b>
+        {tab.detail}
       </div>
     </section>
   );

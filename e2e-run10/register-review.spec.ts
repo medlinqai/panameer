@@ -79,3 +79,33 @@ test("connect pages: shots", async ({ page }) => {
     }
   }
 });
+
+// R-C3: every figure on Score and Health matches the rows it summarises.
+test("score + health: counts reconcile", async ({ page }) => {
+  await persona();
+  await signIn(page);
+  for (const w of [1280, 390]) {
+    await page.setViewportSize({ width: w, height: 1000 });
+    await page.goto("/score", { waitUntil: "domcontentloaded" });
+    const kpis = page.getByTestId("score-kpis").locator("b");
+    await expect(kpis.first()).toBeVisible({ timeout: 30_000 });
+    const [total, completed, todo] = (await kpis.allInnerTexts()).map(Number);
+    const doneRows = page.getByTestId("score-completed").locator("[data-line]");
+    const todoRows = page.getByTestId("score-todo").locator("[data-line]");
+    expect(await doneRows.count()).toBe(completed);
+    expect(await todoRows.count()).toBe(todo);
+    const pts = (await doneRows.locator("> span:last-child").allInnerTexts()).map(Number);
+    expect(pts.reduce((a, b) => a + b, 0)).toBe(total);
+    await page.screenshot({ path: `e2e-run10/.artifacts/score-${w}.png`, fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
+
+    await page.goto("/account-health", { waitUntil: "domcontentloaded" });
+    const h = page.getByTestId("health-kpis").locator("b");
+    await expect(h.first()).toBeVisible({ timeout: 30_000 });
+    const [passing, failing] = (await h.allInnerTexts()).slice(0, 2).map(Number);
+    expect(await page.getByTestId("health-checks").locator('[data-ok="true"]').count()).toBe(passing);
+    expect(await page.getByTestId("health-checks").locator('[data-ok="false"]').count()).toBe(failing);
+    await page.screenshot({ path: `e2e-run10/.artifacts/health-${w}.png`, fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
+  }
+});
