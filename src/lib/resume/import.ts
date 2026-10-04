@@ -1,4 +1,4 @@
-import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
+import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
 import { splitCertificationName } from "@/lib/resume/certification-names";
@@ -1113,7 +1113,7 @@ export async function applyParsedResume(
          `@@unique([catalog_id, name])`, so the legacy catalog can hold a
          same-named twin; matching unscoped could attach the `ERP` one to a
          profile. ⚠ The brief measured `ERP` as holding ONE specialization. */
-      where: { ...OFFERABLE, ...inActiveCatalog },
+      where: { ...OFFERABLE_BASE, ...inActiveCatalog },
       select: { id: true, name: true },
     });
     const key = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");

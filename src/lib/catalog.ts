@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
-export const OFFERABLE = {
-  status: "ACTIVE",
-  visible_to_members: true,
-} as const;
+/* Specializations have no visible_to_members column — only Skill does. */
+export const OFFERABLE_BASE = { status: "ACTIVE" } as const;
+
+/* Skills only: adds the E820 hidden-until-shown flag. */
+export const OFFERABLE = { ...OFFERABLE_BASE, visible_to_members: true } as const;
 
 export const CATALOG_CODE = "PANAMEER_V1";
 
@@ -19,9 +20,18 @@ export async function activeCatalogId(): Promise<string | null> {
 
 export type CatalogScope = { includeRetired?: boolean; includeAllCatalogs?: boolean };
 const scope = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE);
+/* Specializations have no visible_to_members column. */
+const scopeBase = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE_BASE);
 
 async function offerScope(o?: CatalogScope) {
   const base = scope(o);
+  if (o?.includeAllCatalogs) return base;
+  const id = await activeCatalogId();
+  return id ? { ...base, catalog_id: id } : base;
+}
+
+async function offerScopeBase(o?: CatalogScope) {
+  const base = scopeBase(o);
   if (o?.includeAllCatalogs) return base;
   const id = await activeCatalogId();
   return id ? { ...base, catalog_id: id } : base;
@@ -115,7 +125,7 @@ export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) 
 
 export async function getSpecializations(opts?: CatalogScope) {
   const rows = await prisma.specialization.findMany({
-    where: await offerScope(opts),
+    where: await offerScopeBase(opts),
     orderBy: [{ is_custom: "asc" }, { sort_order: "asc" }, { name: "asc" }],
     select: { id: true, name: true, kind: true, is_custom: true, status: true, origin: true },
   });
