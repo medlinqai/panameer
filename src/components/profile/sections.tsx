@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { roleLong } from "@/lib/role-labels";
 import { countryName } from "@/lib/country";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
@@ -1256,7 +1257,7 @@ export function ProjectCard({
           //   <span key={t.id} className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2">
         */
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {p.roleType && <span className={CLEAN_CHIP}>{p.roleType.name}</span>}
+          {p.roleType && <span className={CLEAN_CHIP} title={roleLong(p.roleType.name)}>{p.roleType.name}</span>}
           {tools.slice(0, 4).map((t) => (
             <span key={t.id} className={CLEAN_CHIP}>
               {t.name}

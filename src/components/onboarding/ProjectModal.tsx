@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLong } from "@/lib/role-labels";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Chip, Notice } from "@/components/onboarding/controls";
@@ -537,7 +538,7 @@ export function ProjectModal({
                 <option value="">Choose a role…</option>
                 {roleTypes.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name}
+                    {roleLong(r.name)}
                   </option>
                 ))}
               </select>

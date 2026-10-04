@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLong } from "@/lib/role-labels";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Notice, TextArea } from "@/components/onboarding/controls";
@@ -360,7 +361,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
                     (on ? "border-magenta bg-magenta/[0.06] text-magenta-dark" : "border-line hover:border-magenta/40")
                   }
                 >
-                  {r.display || r.name}
+                  {roleLong(r.display || r.name)}
                 </button>
               );
             })

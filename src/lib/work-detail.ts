@@ -1,3 +1,4 @@
+import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
 import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
 import { pretty, workBudgetLabel } from "@/lib/work-feed";
@@ -116,7 +117,7 @@ export async function getWorkDetailForProvider(input: {
     duration: pretty(w.duration),
     worksite: pretty(w.worksite),
     location: w.location_country,
-    roleType: w.roleType?.display ?? w.roleType?.name ?? null,
+    roleType: roleLong(w.roleType?.display ?? w.roleType?.name ?? null),
     skills: w.skills.map((s) => s.skill.name),
     postedAgo: w.posted_at ? relativeDay(w.posted_at.toISOString()) : null,
     identity,
