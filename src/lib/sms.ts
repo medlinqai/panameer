@@ -1,16 +1,3 @@
-/**
- * SMS sending (brief_P / E019).
- *
- * Mirrors the Resend pattern (`src/lib/verification.ts`): when credentials are
- * configured we really send; when they are not, we LOG the message and return
- * it as a `devCode` so the whole phone-verification flow stays walkable locally
- * with no account, no spend, and no code changes.
- *
- * Provider is Twilio, called over its plain REST API with `fetch` — no SDK, so
- * nothing is added to the bundle and there is no client to construct eagerly
- * (see the lazy-client pitfall). Setting TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
- * and TWILIO_FROM_NUMBER flips this to real delivery.
- */
 
 export type SmsResult = { sent: boolean; devMessage?: string };
 
@@ -22,14 +9,6 @@ export function smsConfigured(): boolean {
   );
 }
 
-/**
- * Normalize a typed phone number to E.164 as best we can.
- * Returns null when it clearly isn't a phone number.
- *
- * A bare 10-digit number is assumed to be US/Canada (+1) — the finish page
- * defaults Country to the United States (E019). Anything else must be typed
- * with its own country code.
- */
 export function toE164(raw: string, defaultCountryCode = "1"): string | null {
   const trimmed = (raw ?? "").trim();
   if (!trimmed) return null;

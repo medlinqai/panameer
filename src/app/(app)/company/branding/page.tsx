@@ -4,15 +4,6 @@ import { getCompanyBinding } from "@/lib/company";
 import { prisma } from "@/lib/prisma";
 import { BrandingEditor } from "@/components/company/BrandingEditor";
 
-/**
- * Company Branding (E204) — replaces the ComingSoon stub the flatten brief left.
- *
- * ADMIN-ONLY, on the same predicate as the Company chip that offers the link:
- * an APPROVED membership with the ADMIN role. The chip hides the menu for
- * everyone else and this redirects them, because a page that renders for
- * someone whose save will be rejected is a worse experience than one that never
- * opens.
- */
 export const metadata = { title: "Company Branding · Panameer" };
 
 export default async function Page() {

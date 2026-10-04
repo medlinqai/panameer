@@ -21,8 +21,6 @@ import {
   LEARN_SPINE_TAGLINE,
   LEARN_STEPS,
 } from "@/lib/learn-steps";
-/* ⚠ `SixStepShot` IS NO LONGER IMPORTED (`P1-J0-E292`). The file stays on disk,
-   unimported — same rule as `E164`/`DashboardShot`. See the how-it-works block. */
 import {
   EnrollShot,
   CourseStepsShot,
@@ -30,130 +28,6 @@ import {
   InstructorsShot,
 } from "@/components/learn/public/spine-shots";
 
-/**
- * `/learn` FOR A VISITOR WHO IS NOT SIGNED IN — a sales page, not the catalog.
- *
- * ── THE RULE THIS PAGE ESTABLISHES ───────────────────────────────────────────
- *
- * Scott, 2026-08-19: "the public facing pages are sales... pretty much only. They are to get
- * you to create an account."
- *
- * `/` already worked that way — a stack of sections, one per reason to have an account.
- * `/learn` did not: signed out it served the app's own catalog UI, which is the product
- * wearing a marketing page's URL. This makes the two match, and `/find-work`, `/hire-talent`
- * and `/buy-services` are next — which is why the band is `marketing/SellSection`, not five
- * hand-rolled grids.
- *
- * ⚠ NOT A GATE. Learn is free and stays free. The catalog is one click away at
- * `/learn/courses`, which loads signed out and is NOT result-limited (that rule is for talent
- * and jobs). Nothing here hides anything; it puts the reasons in front of it.
- *
- * ⚠ THIS COMPONENT FETCHES NOTHING. `learn/page.tsx` must not call `getLearnHome()` on the
- * signed-out branch — a visitor should not cost a catalog query to be sold to, and the
- * absence of that query is asserted from the server log rather than assumed.
- *
- * ── ⚠ THE PAGE HAS EXACTLY TWO LIVE DESTINATIONS, BOTH IN THE HERO ───────────
- *
- * `Create your free account` and `Browse the catalog`. Sections 3 and 4 describe a per-course
- * room and instructor 1:1 messaging, and NEITHER EXISTS IN THE SCHEMA — `ForumThread` is the
- * community forum, not a room per course, and there is no messaging or paid-review model at
- * all. `HomeFooter`'s standing rule applies to the whole page: a link ships only when its
- * destination exists. So those two sections carry copy and a graphic and nothing to click.
- *
- * The copy is NOT softened to match the schema. Scott approved these five sections knowing
- * the catalog is thin; whether rooms and mentoring ship before or after this page goes live
- * is his call and is recorded as an open decision.
- *
- * ── ⚠ THE PAGE HAS TWO VOICES, AND THEY ARE NOW TWO DIFFERENT SHAPES ─────────
- *
- * THE SPINE TEACHES: this is what a learning path is, this is what a course is, this is where
- * the certificate comes from. `SECTIONS` (the original five) SELLS. That is the same division
- * `/` makes, and it is why the instructional voice belongs above and would have been wrong
- * inside a sell section.
- *
- * ⚠ THE SPINE IS NO LONGER `SellSection` BANDS. It is five `StepDisclosures` rows — the same
- * component `/optimize` renders (`P1-J0-E281`). `SECTIONS` still renders as bands and is
- * byte-identical to what it was.
- *
- * ⚠⚠ THEY MUST NEVER BECOME ONE ARRAY. This used to be an alternation argument: both `.map`s
- * derived `shaded` and `side` from the index, so a section inserted into `SECTIONS` at index 0
- * flipped the shade and graphic side of all five at once. THE SPINE NO LONGER HAS A SHADE OR A
- * SIDE, so that specific hazard is gone from the spine's half — but the hazard inside
- * `SECTIONS` is unchanged, and the two now differ in KIND as well as in voice. Folding a sell
- * section into the spine would make it a numbered step in a five-step sequence; folding a step
- * into `SECTIONS` would silently un-collapse it into a band and shift the alternation.
- *
- * ⚠ `One-on-one` IN `SECTIONS` NOW OVERLAPS ROW 2 (`Meet Your Instructor`) DIRECTLY, and it
- * promises messaging in the present tense where row 2 deliberately does not. REPORTED, NOT
- * FIXED — the sell sections are out of scope and Scott wants them confirmed first.
- */
-
-/* ────────────────────────────────────────────────────────────────────────────
-   THE TEACHING SPINE — NOW FIVE DISCLOSURE PANELS (`P1-J0-E281`, `E283`)
-
-   ⚠ IT USED TO BE SEVEN `SellSection` BANDS. Scott, 2026-08-21, with `/optimize`
-   open beside this page: *"Optimize looks GREAT! ... this will be the
-   model/template for all pages."* The rows are `StepDisclosures`, the SAME
-   component `/optimize` renders — one behaviour, one implementation. Learn
-   hand-rolling a second accordion would be `E242` and `E264` again.
-
-   ⚠⚠ NOT ONE STRING IN HERE WAS RE-AUTHORED BY THE MIGRATION. Every heading and
-   every body paragraph moved VERBATIM, with its comment, from the band it used
-   to live in. Nine walk errors live inside these sentences. A container change is
-   not a licence to touch their contents.
-
-   ── ⚠ WHAT MOVED WHERE, BECAUSE IT IS NOT ONE-TO-ONE ────────────────────────
-
-     row 1  <- old §3  `Enroll in a Learning Path`
-     row 2  <- old §7  `While You Are Learning`      ⚠ NOT RETIRED. See below.
-     row 3  <- old §4 AND old §5, MERGED             ⚠ two blocks, not one sentence.
-     row 4  <- old §6  `Get Certified!`
-     row 5  <- old §8  `What Do You Do After the Training`
-     old §2 `Here’s How It Works` is now the SECTION HEADING above the rows.
-
-   ⚠ `While You Are Learning` WAS NOT DROPPED. `E283` flagged it as having no
-   destination in Scott's five; it has one, and it is row 2. `InstructorTiers` is
-   the ONLY place the three access tiers appear anywhere on the site, so losing it
-   would have been a silent deletion.
-
-   ⚠ THE EYEBROWS ARE GONE FROM THE PANELS, DELIBERATELY. The eyebrow is now the
-   summary on the row above, and printing it again inside is the exact duplication
-   `E275` just fixed on `/optimize`.
-
-   ⚠ `SellSection` IS NOT DELETED and is not deprecated. It still renders the five
-   SELL sections below, and it is the shared band elsewhere. This changed what the
-   SPINE uses, not what exists.
-
-   ⚠ THE THREE PLACEHOLDERS ARE DOWN TO ONE. §2's heading and body were marked
-   `⚠ PLACEHOLDER — chat's words, not Scott's`; both are gone, replaced by his own
-   tagline in `lib/learn-steps.ts`. The tier wording in row 2 is still the
-   mockup's and is still his to replace.
-   ──────────────────────────────────────────────────────────────────────────── */
-
-/**
- * ONE BLOCK INSIDE A PANEL: a heading, a body paragraph and a graphic.
- *
- * ⚠ A PANEL IS A LIST OF THESE, NOT ONE OF THESE, AND ROW 3 IS WHY. It carries
- * two sections' content, and `E283` records the cost: merging course and lesson
- * into one row collapses a level this page was built to teach. Composing it as
- * two blocks keeps that level visible INSIDE the panel. ⚠ Do not "simplify" this
- * to a single block by writing a merged sentence — that would be re-authoring
- * Scott's strings and it would finish the collapse the two blocks exist to
- * resist.
- */
-/**
- * ⚠ THERE IS NO `body` FIELD ANY MORE, AND ITS ABSENCE IS THE FORMAT (`P1-J0-E305`).
- *
- * Scott, 2026-08-24, with `/optimize` and `/learn` side by side: *"image 1 is the
- * correct format. image 2 is a section in LEARN...that needs to be changed (they
- * all do)."* `/optimize`'s panels are eyebrow + headline + graphic. No body copy.
- * All five of Learn's grey body paragraphs were deleted to match — every sentence
- * is listed verbatim in the brief report, because several carried walk decisions.
- *
- * ⚠ DO NOT RE-ADD THE FIELD TO "JUST EXPLAIN ONE ROW". The moment one panel has a
- * paragraph the format has diverged again, and this is the second time these two
- * pages have been brought back into line.
- */
 type PanelBlock = {
   heading: string;
   graphic: ReactNode;
@@ -161,65 +35,9 @@ type PanelBlock = {
   extra?: ReactNode;
 };
 
-/**
- * ⚠ KEYED BY STEP NUMBER, AND THE LABELS ARE NOT HERE. They live in
- * `lib/learn-steps.ts` so `check:ui` can assert the rendered summaries against
- * their source WITHOUT importing React. A guard comparing the page to a literal
- * it typed itself proves only that somebody typed the same thing twice.
- */
 const PANELS: Record<number, PanelBlock[]> = {
   1: [
     {
-      /*
-        ⚠ THIS HEADING IS THREE WALK ERRORS FOLDED INTO ONE SENTENCE, and the composition is the
-        approved mockup's, not mine to re-do:
-
-          · `P1-J3-E018` gave the eyebrow and the sentence "The learning path reflects your
-            overall area of study."
-          · `P1-J3-E016` gave the MAPPING — paths correspond to FUNCTIONAL AREAS.
-          · `P1-J3-E017` gave the INSTRUCTION — "Select one or more … based on your area of
-            interest."
-
-        ⚠ PRINTING ALL THREE WOULD SAY THE SAME THING TWICE. "reflects your overall area of
-        study" and "based on your area of interest" are one idea; so the heading carries E016's
-        mapping plus E017's instruction, and E018's sentence is DEMOTED INTO THE BODY where it
-        reads as amplification instead of repetition.
-
-        ⚠ "FUNCTIONAL AREAS" IS THE CATALOG'S OWN VOCABULARY, which is the argument for it:
-        `Lesson.kind` carries `FA_OVERVIEW` = "Functional Area Overview" (`lib/learn.ts`) and the
-        live catalog holds six "2. Functional Area Overview" section rows. The catalog has always
-        organised itself this way; the page has never said so. (One collision to KNOW, not to
-        solve: `app/assess/scope/page.tsx` uses "Functional Area" as a rung of a different,
-        unbuilt hierarchy. Same words, different ladder.)
-
-        ⚠ "ONE OR MORE" IS A PRODUCT CLAIM AND IT CHECKS OUT — `learn_enrollments` is unique on
-        `[user_id, learning_path_id]`, which blocks a duplicate enrollment in ONE path and permits
-        any number of DIFFERENT concurrent paths.
-
-        ⚠ `based`, not Scott's typed `base`, and `your` for his `you` — corrected under his
-        standing instruction, recorded here so neither reads as a rewrite.
-      */
-      /*
-        ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E305`), AND IT OVERRULES HIS OWN EARLIER
-        ROW. `P1-J3-E016` gave the mapping `functional areas`; this replaces it with
-        `business processes and/or departments`. Recorded, not treated as a typo.
-
-        ⚠⚠ AND IT COLLIDES WITH ROW 3, TWENTY MINUTES LATER THE SAME DAY. Row 3's new
-        headline (`P1-J0-E308`) says courses and lessons explain `functional areas`.
-        The page now says paths map to business processes and/or departments AND that
-        courses explain functional areas. ⚠ ROW 3 IS THE ONE THAT MATCHES THE DATA —
-        `Lesson.kind` carries `FA_OVERVIEW` = "Functional Area Overview" and the live
-        catalog holds six "2. Functional Area Overview" section rows. THIS row is the
-        one the data does not back. Both are Scott's, both ship; he said *"do it as
-        written, i will refine."* ⚠ DO NOT RECONCILE THEM HERE.
-
-        ⚠ HIS HYPHEN `-`, NOT AN EM DASH. `/optimize`'s equivalent copy uses `—`;
-        shipped as typed and reported.
-
-        ⚠ THE OLD BODY IS GONE AND IT TOOK `P1-J3-E018`'s SENTENCE WITH IT — *"The path
-        reflects your overall area of study."* was deliberately DEMOTED into the body by
-        E018 so it read as amplification rather than repetition. Off the page entirely.
-      */
       heading:
         "Learning paths correspond to business processes and/or departments - select one or more based on your interests.",
       graphic: <EnrollShot />,
@@ -227,96 +45,14 @@ const PANELS: Record<number, PanelBlock[]> = {
   ],
   2: [
     {
-      /*
-        ⚠ THE SUBJECT IS THE INSTRUCTOR, NOT MESSAGING, AND THAT SPLIT IS THE WHOLE POINT OF THIS
-        PANEL (`P1-J3-E014`). It is now ROW 2, `Meet Your Instructor` — the row label carries the
-        same split the copy does, which is why `Meet` and not `Connect`.
-
-        WHAT IS BUILT: teaching is recorded PER LESSON, most lessons carry an `expert_person_id`,
-        a path's and a course's instructors are DERIVED from those, and real photos ship. So
-        naming the person who recorded the lesson is TRUE TODAY and is written in the present
-        tense.
-
-        WHAT IS NOT BUILT: the verb. There is STILL no `Conversation`, `Message` or `Thread`
-        model anywhere in the schema, and `/messages` renders a `disabled` composer whose
-        placeholder says "Messaging isn't available yet". So this panel ships with NO MESSAGING
-        COPY IN THE PRESENT TENSE and NO COMPOSER — the two tiers that need the verb are marked
-        `earned` and `soon` in the tier list below, and that reasoning is unchanged by the move.
-
-        ⚠ THE ROW LABEL BECOMES `Connect with Your Instructor` THE DAY CONNECTIONS SHIP, and it
-        is ONE string, in `lib/learn-steps.ts`. Nothing in this panel changes with it.
-
-        ⚠ THE FIVE SELL SECTIONS BELOW ALREADY PROMISE MESSAGING TWICE ("the instructor is in
-        it", "Message an instructor when the group is not enough"), and `One-on-one` now overlaps
-        this row directly. That pre-existing overselling is REPORTED, not fixed here — the sell
-        sections are explicitly out of scope and Scott wants them confirmed first.
-      */
-      /*
-        ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E307`), with ONE terminal period — he
-        typed two.
-
-        ⚠⚠ IT MAPS ONTO THE THREE TIERS BELOW IT EXACTLY, WHICH IS WHY
-        `InstructorTiers` IS NOT OPTIONAL UNDER THIS HEADLINE:
-
-            "Connect with your instructor"  -> FREE, the baseline
-            "join their community"          -> FREE, `Ask the group`
-            "book one-on-one time..."       -> PAID, `Book time one-to-one` [SOON]
-
-        ⚠ THE SENTENCE CARRIES NO PRICING SIGNAL. All three clauses read as equally
-        available and equally included. The tier list beneath is the ONLY thing on the
-        page saying the third is paid and unbuilt. ⚠ IF `InstructorTiers` IS EVER
-        REMOVED, THIS SENTENCE PROMISES PAID, UNBUILT ONE-TO-ONE TRAINING FOR FREE.
-
-        ⚠ `for direct training or support` IS A NEW PROMISE AND NOTHING BACKS IT. No
-        booking flow, no scheduling model, no `Conversation`/`Message` model
-        (`P1-J3-E014`). `[SOON]` on the tier row is the only honest marker.
-
-        ⚠ THIRD APPEARANCE OF THE CONNECT CLAIM ON ONE PAGE — the hero sub (`E290`), the
-        step 2 label (`E296`), and this headline. Each Scott's, each flagged, none built.
-
-        ⚠ THE DELETED BODY TOOK *"Every lesson carries its instructor..."* — the sentence
-        that made the INSTRUCTOR the subject rather than messaging. The tier list still
-        does that work; the prose no longer does.
-      */
       heading:
         "Connect with your instructor, join their community, and book one-on-one time for direct training or support.",
       graphic: <InstructorsShot />,
       extra: <InstructorTiers />,
     },
   ],
-  /*
-    ⚠ TWO BLOCKS, AND THE SECOND IS NOT A SUB-POINT OF THE FIRST. Row 3 is `Watch Each Course and
-    Its Lessons`: a COURSE is level 2 of the hierarchy and a LESSON is level 3. Both strings are
-    Scott's, both move verbatim, and neither was merged into a new sentence.
-  */
   3: [
     {
-      /*
-        ⚠ VERBATIM SCOTT, 2026-08-24 (`P1-J0-E308`), with ONE correction: `functional`,
-        not his typed `functionals`. Standing instruction; recorded so it does not read
-        as a rewrite.
-
-        ⚠⚠ THE PANEL WAS TWO STACKED BLOCKS AND IS NOW ONE. `E283` created that merge —
-        row 3 carried a COURSE block and a LESSON block kept visibly separate inside the
-        panel, precisely because merging them collapses a level this page was built to
-        teach. Scott has now collapsed it anyway, in one sentence naming both.
-
-        ⚠ WHAT WENT WITH THE SECOND BLOCK: its headline *"Lessons explain how to create,
-        change, and find transactions."* and `LessonShot` — the video player, the
-        `2.3 — How to Create a Requisition · 6:41` caption and the timestamp list. He
-        named that image specifically.
-
-        ⚠ `CourseStepsShot` SURVIVES — the section list with the progress bar. He named
-        image 2 only, so image 1 stays.
-
-        ⚠ THE VERB LIST IS STILL HIS AND STILL NOT ALPHABETISED — create/find/change is
-        the sequence a practitioner works in. The live section stems are `1. Course
-        Overview`, `2. Create New`, `3. Find Existing`, `4. Change Existing`.
-
-        ⚠ `functional areas` HERE CONTRADICTS ROW 1's `business processes and/or
-        departments`. This is the row that matches the catalog's own vocabulary. See
-        row 1's note; both ship, Scott reconciles.
-      */
       heading:
         "Courses and lessons explain functional areas and applications as well as how to create, find and change transactions within those applications.",
       graphic: <CourseStepsShot />,
@@ -324,177 +60,20 @@ const PANELS: Record<number, PanelBlock[]> = {
   ],
   4: [
     {
-      /*
-        ⚠ NO COUNT, NO PATH NAME, NO "EVERY PATH" — deliberately, because the catalog cannot keep
-        that promise yet. Re-measured against the LIVE database 2026-08-21: 23 learning paths, of
-        which 7 hold a publishable question set and ZERO are published, so no learner can sit a
-        test today. This copy describes what a certificate IS and what it is worth, so it stays
-        true as the catalog fills instead of needing a rewrite per path.
-
-        ⚠ THE SAME COUNT IS WHY THE TAGLINE ABOVE LOST `for most learning paths` — see
-        `lib/learn-steps.ts`. Two surfaces, one measurement.
-
-        ⚠ THE ROW LABEL SAYS `Take Certification Test`, WHICH IS AN ACTION AND NOT AN SLA. Scott's
-        tagline said the certificate arrives `within 24 hours`; `b5f3923` added a HUMAN review
-        gate with no queue, no timer and no alert behind it, so that number is not stated
-        anywhere on this page.
-      */
-      /*
-        ⚠⚠ VERBATIM SCOTT (`P1-J0-E309`), AND IT IS THE EXACT CLAIM THE COMMENT THAT
-        USED TO SIT HERE EXISTED TO PREVENT. That note read: *"NO COUNT, NO PATH NAME,
-        NO 'EVERY PATH' — deliberately, because the catalog cannot keep that promise
-        yet."* `Each Learning path has its own test` IS that promise.
-
-        Measured against the live DB 2026-08-24 (`P1-J3-E030`):
-
-            learning paths                          23
-            hold a LearnAssessment row at all        8
-            publishable                              7
-            ⚠ a learner can sit today                0
-
-        So `each` is false for 15 of 23 on its face, and false for all 23 in practice.
-
-        ⚠ SHIPPED ANYWAY — `decisions-01.md` 2026-08-24: outstanding parts gate
-        PROMOTION, not the build. ⚠ IT BELONGS ON THE PRE-LAUNCH LIST. It is the single
-        strongest unkeepable promise on this page, and `E304` puts a second one
-        (`certification in hours`) into the page's largest text the same day.
-
-        ⚠ `Learning path` IS HIS CAPITALISATION — capital `L`, lowercase `p`. Shipped as
-        typed; the rest of the page uses `learning path` or `Learning Path`.
-
-        ⚠ THE SECOND CLAUSE IS TRUE AND NEEDS NO FLAG: `issued_from = LEARN`,
-        `public_credential_url` holds `/verify/{id}`, the verify page exists, and since
-        `c68fad4` a learner with no seller profile earns a real one.
-
-        ⚠ THE DELETED BODY TOOK *"The test covers the whole path, not a single course"* —
-        the path-vs-course distinction the spine spends three rows teaching. The new
-        headline implies it; the page no longer says it.
-      */
       heading:
         "Each Learning path has its own test, and every certificate is verified, issued by Panameer, and published to your profile with a link you can put anywhere.",
-      /*
-        ⚠⚠ THE TAIL OF THIS SENTENCE IS STEP 5's OLD PANEL, FOLDED UP (`P1-J0-E322`).
-        *"...published to your profile with a link you can put anywhere"* was its own
-        step under the label `Tell Your Peers`, which is the `E296`/`E310` mismatch.
-        Issued, verified and publishes-with-a-link is ONE idea and this is its home.
-
-        ⚠ SCOTT'S TWO CLAUSES ARE UNCHANGED — `Each Learning path has its own test`
-        (his capitalisation, capital L lowercase p) and `every certificate is verified
-        and issued by Panameer`. Only the third clause is new here, and it is his own
-        words from the old step 5, not a rewrite.
-
-        ⚠ THE `each` FLAG STANDS AND GETS NO WEAKER: 23 paths, 8 with a
-        `LearnAssessment`, 7 publishable, **0 sittable today**. Still the strongest
-        unkeepable promise on the page, still for the pre-launch list.
-      */
       graphic: <PathCertificateShot />,
     },
   ],
   5: [
     {
-      /*
-        ── ⚠⚠ THIS PANEL IS NEW, AND STEP 5's OLD CONTENT MOVED UP TO STEP 4 ─────
-
-        Scott, 2026-08-24 (`P1-J0-E322`): *"The tell your peers could be swapped out
-        for 'Get Expert Support'. This is the 'keeps you working' idea. Now…we could
-        still say the same and make sure it is referenced in step 2 or we call it out
-        specifically. What do you think?"* He asked for an answer: CALL IT OUT AS ITS
-        OWN STEP, and leave step 2 alone.
-
-        ⚠ THE FOLD IS THE REAL FIX. Step 5 used to say *"Your certificate publishes to
-        your profile, with a link you can put anywhere."* — a CREDENTIAL, under a label
-        about advocacy. That is the mismatch `E296` raised and `E310` recorded as
-        DELIBERATE when Scott took neither exit. `Get Certified!` was always its
-        natural home: issued, verified, and publishes to your profile with a shareable
-        link is ONE IDEA. Splitting it across two steps was a leftover from the old
-        six-section structure, and it is why step 5 never read right.
-
-        ⚠ `Tell Your Peers` IS RETIRED. `E296` AND `E310` BOTH RECORDED IT AS SETTLED
-        — THIS SUPERSEDES BOTH. Do not restore the label citing either row.
-        ⚠ AND REMOVING IT REMOVES THE ONLY THING THAT IMPLIED A REFERRAL FEATURE. No
-        referral, share or invite model exists and none is being built; that stays true
-        and is now also unimplied.
-
-        ── ⚠⚠ DRAFT — CC's WORDS, NOT SCOTT'S ──────────────────────────────────
-
-        He gave the LABEL only. This sentence is drafted and reported verbatim so he
-        can overwrite it in one message.
-
-        ⚠ IT IS DELIBERATELY NOT STEP 2. Step 2 is MEETING the instructor — who they
-        are, that they are named on every lesson, and the three access tiers. This is
-        AFTER the course: the problem you hit at work, months later. Two moments in one
-        relationship, and the drafts do not read alike — step 2 says *"Connect with
-        your instructor, join their community, and book one-on-one time"*; this says
-        nothing about meeting anyone and everything about a question you already have.
-
-        ⚠⚠ THE HONEST COST, AND IT IS THE WORST THING IN THIS WORK STREAM: STEPS 2 AND
-        5 NOW BOTH LEAN ON MESSAGING THAT DOES NOT EXIST. No `Conversation`, `Message`
-        or `Thread` model; `/messages` ships a disabled composer (`P1-J3-E014`). Two of
-        five steps promise the same missing feature, which makes the PAID ONE-TO-ONE
-        TIER the most load-bearing unbuilt thing on the site. Reported as its own line.
-
-        ⚠ SO THE SENTENCE NAMES THE GROUP FIRST — that is `ForumThread`/`ForumPost`,
-        which exist — and the expert second, which is the paid `soon` tier in
-        `InstructorTiers`. It carries no present-tense messaging verb: no `message`,
-        `chat`, `DM` or `reply`.
-      */
       heading:
         "Months later, when the real problem lands, the group and the expert who taught you are still there.",
-      /*
-        ⚠ `InstructorsShot` IS REUSED, NOT REDRAWN. It shows the instructors named on
-        lessons, which is exactly who this step is about, and it is already on the page
-        in step 2 — the same faces in both places is the point: one relationship, two
-        moments. ⚠ A "support ticket" or "chat thread" screen would be a picture of
-        unbuilt software, the same trap `P1-J1-E017` left steps 3 and 5 empty for.
-      */
       graphic: <InstructorsShot />,
-      /*
-        ⚠ `InstructorTiers` IS **NOT** REPEATED HERE. It renders in step 2, and it is
-        the only thing on the page that says the one-to-one tier is PAID and `soon`.
-        Printing it twice would read as two different offers. ⚠ BUT THAT MEANS THIS
-        PANEL'S PROMISE IS PRICED TWO ROWS AWAY — see the note above.
-      */
     },
   ],
 };
 
-/**
- * THE PANEL RENDERER — `/optimize`'s FORMAT, TRANSCRIBED (`P1-J0-E305`).
- *
- * Scott, 2026-08-24: *"image 1 is the correct format. image 2 is a section in
- * LEARN...that needs to be changed (they all do)."*
- *
- *   `/optimize`  =  magenta uppercase eyebrow  +  large dark headline  +  graphic
- *   `/learn` was =  headline  +  grey body paragraph  +  graphic, no eyebrow
- *
- * ── ⚠ THE VALUES ARE TRANSCRIBED FROM THE LIVE PAGE, NOT EYEBALLED ──────────
- *
- * Measured on `/optimize` at 1440 with the panels open, 2026-08-24:
- *
- *   eyebrow  `home.css:1290`-family  19px / 700 / #d72cd6 / ls 2.66px / uppercase
- *            / line-height 28.5px / Montserrat  (`.pm-home .eyebrow`)
- *   headline `home.css`'s `.stepd-h2`               27px / 700 / #272334 / ls -0.4px
- *            / line-height 32.4px / max-width 1040px / Comfortaa
- *
- * ⚠ THE HEADLINE NEEDED NO WORK — `.stepd-h2` is the SHARED rule in
- * `step-disclosures.css`, so both pages already draw it from one place. Only the
- * eyebrow is new here, and it is Tailwind because `.pm-home .eyebrow` is scoped to
- * a wrapper this page is not inside. Same trap as `.sd-n`, `E290` and `E303`;
- * checked, not assumed.
- *
- * ── ⚠ THE EYEBROW IS DERIVED, NEVER TYPED ──────────────────────────────────
- *
- * `STEP {n} - {label}`, uppercased by CSS, from `LEARN_STEPS` — the same source the
- * summary above the panel renders. A hand-typed eyebrow is how a row ends up
- * labelled one thing closed and another thing open.
- *
- * ⚠ IT REPEATS THE ROW LABEL ON PURPOSE, AND THAT IS `/optimize`'s SHAPE, NOT AN
- * `E275` REGRESSION. E275 was about printing a `Step N - ` prefix INSIDE a label
- * that already had one. Here the closed row shows the label and the open panel
- * shows `STEP N - LABEL` as its eyebrow, which is exactly what `/optimize` does.
- * ⚠ `check:ui` §30 asserts a panel does not repeat its label; that assertion is
- * updated in the same commit and the reasoning is recorded there.
- */
 function Panel({
   step,
   blocks,
@@ -506,11 +85,7 @@ function Panel({
     <>
       {blocks.map((b, i) => (
         <div className="stepd-block" key={b.heading}>
-          {/*
-            ⚠ ONE EYEBROW PER PANEL, ON THE FIRST BLOCK ONLY. Every row is a single
-            block since `E308` collapsed row 3, but the guard costs nothing and a
-            second eyebrow inside one panel would read as a second step.
-          */}
+          {}
           {i === 0 && (
             <p className="mb-3 font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
               {`Step ${step.n} - ${step.summary}`}
@@ -1107,75 +682,21 @@ export function LearnPublic() {
         promoted to a headline while still carrying an inline pink span would have
         been the worst of both.
       */}
-      {/*
-        ⚠ `pb-[80px]` MATCHES `/optimize`, IT IS NOT A NEW VALUE (`P1-J0-E319`).
-        Scott: *"The HERE'S HOW IT WORKS section needs a little space between it and
-        the first step."* Measured before choosing: the tagline-to-row-1 gap is
-        **81px on `/optimize` at all three widths and 1px here** — so this was a
-        DIVERGENCE from the template (`E281`), not a missing design decision.
-        80px of bottom padding on top of the existing 1px lands on 81.
-
-        ⚠ TAILWIND, NOT A `home.css` RULE — `/learn` is not inside `.pm-home`. Fifth
-        time that scoping has mattered on this page.
-      */}
+      {}
       <section className="bg-white pb-[80px] pt-14 min-[900px]:pt-[72px]">
         <div className="mx-auto max-w-[1200px] px-8">
           <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
             {LEARN_SPINE_HEADING}
           </p>
-          {/*
-            ⚠ THE HEADLINE NOW, NOT SUB-COPY. One string, no span — see `E302`'s note
-            on the hero bridge line and the three flags in `lib/learn-steps.ts`.
-          */}
-          {/*
-            ── ⚠⚠ `[text-wrap:normal]` — THE WRAP FIX (`P1-J3-E032`) ────────────
-
-            Scott's screenshot: this headline broke as *"From courses to
-            certification in hours," / "with the support of the community forever."*
-            — two short lines in a container wide enough for more. MEASURED BEFORE
-            THE FIX at 1440: 2 lines, widest line 730px inside a 1040px box. 310px
-            of unused measure.
-
-            ⚠ THE CAUSE IS A RULE HE ALREADY OVERRULED ONCE. `globals.css`'s
-            `@layer base` sets `.marketing-surface :is(h1,h2,h3,h4){text-wrap:balance}`
-            and `/learn` is inside `.marketing-surface`, so this `<h2>` inherited
-            `balance` — which optimises for EVEN line lengths, not for filling the
-            line. `/optimize` deliberately does not have it: `home.css:1245-1248`
-            records the same complaint, Scott 2026-08-17 — *"we are wasting space by
-            wrapping text that could go across the screen"* — with the numbers, and
-            `balance` was removed from `.hiw-h2` for exactly this.
-
-            ⚠⚠ IT IS `text-wrap`, NOT THE ARBITRARY `[text-wrap:normal]` THE BRIEF
-            PRESCRIBED, AND THE DIFFERENCE IS THAT ONE OF THEM DOES NOTHING.
-            Tailwind emits a rule for the arbitrary form and the class lands on the
-            element — and the browser then DISCARDS THE DECLARATION, because `normal`
-            is not a valid `text-wrap` value. The property takes
-            `wrap | nowrap | balance | pretty | stable` only. ⚠ MEASURED: with
-            `[text-wrap:normal]` the computed value stayed `balance` at 1440/900/390
-            and the wrap did not move an inch.
-            ⚠ `text-wrap` IS TAILWIND'S OWN UTILITY AND EMITS `text-wrap:wrap` — the
-            property's INITIAL value, i.e. exactly "wrap normally". That is the one
-            that works. Computed values are in the report.
-            ⚠ THIS IS WHY THE BRIEF SAID TO VERIFY RATHER THAN ASSUME. It asserted
-            *"the utility wins and it was already proven"*; the utility it named was
-            never valid CSS.
-
-            ⚠ `max-w-[1040px]` STAYS — it is `/optimize`'s measured width and it was
-            never the problem. ⚠ NO `<br>`, and `LEARN_SPINE_TAGLINE` is untouched:
-            the string is Scott's and out of scope.
-          */}
+          {}
+          {}
           <h2 className="mt-6 max-w-[1040px] text-wrap font-display text-[28px] font-bold leading-[1.14] tracking-[-0.5px] text-[#272334] min-[900px]:text-[34px] min-[900px]:leading-[38.76px]">
             {LEARN_SPINE_TAGLINE}
           </h2>
         </div>
       </section>
 
-      {/*
-        ⚠ THE SAME COMPONENT `/optimize` RENDERS. One behaviour, one
-        implementation — `E281` exists to stop this page hand-rolling a second
-        accordion. The labels come from `lib/learn-steps.ts` and the panels from
-        `PANELS` above; nothing here retypes a string.
-      */}
+      {}
       <StepDisclosures
         steps={LEARN_STEPS.map((step) => ({
           n: step.n,
@@ -1184,44 +705,7 @@ export function LearnPublic() {
         }))}
       />
 
-      {/*
-        ── ⚠⚠ THE FIVE SELL SECTIONS ARE GONE (`P1-J0-E312`) ───────────────────
-
-        Scott, 2026-08-24, screenshotting all five: *"REMOVE these sections."*
-        `Learning paths` · `Free & certified` · `Learn together` · `One-on-one` ·
-        `Your brand`.
-
-        ⚠ THIS REVERSES A STANDING OUT-OF-SCOPE MARKER. `P1-J0-E281`, `E283` and
-        `E297` all said these were NOT in scope and to confirm before touching them.
-        He has now confirmed, by deleting them. ⚠ DO NOT RESTORE THEM CITING THOSE
-        ROWS.
-
-        ⚠ `SellSection` IS NOT DELETED and is still the shared band elsewhere — only
-        `/learn` stops calling it. `E164` rule.
-
-        ── THREE THINGS THIS CLOSES FOR FREE ─────────────────────────────────
-
-        · ⚠ `One-on-one`'s PRESENT-TENSE MESSAGING PROMISE IS GONE. It has been
-          flagged in `E296`, `E306` and `E307` as contradicting step 2. Deleting the
-          section resolves it — the contradiction is closed by removal, not by
-          softening either side.
-        · ⚠ `Learn together`'s *"Every course has a room"* IS GONE, and with it the
-          course-vs-path scoping question. ⚠ THE PRODUCT DECISION STILL STANDS AND IS
-          RECORDED HERE SO IT SURVIVES THE DELETION: a room belongs at the LEARNING
-          PATH level, not the course level. `LearningPath.expert_person_id` names ONE
-          instructor (`schema.prisma:2373`) while a course's must be DERIVED from
-          `Lesson.expert_person_id` and may be several people; `LearnEnrollment` is per
-          path; certification is per path; and 15 of 23 paths hold exactly one course,
-          so course-scoping only fragments the 8 paths deep enough for a room to work.
-        · ⚠ `Free & certified`'s *"Anyone can learn a new skill and get certified —
-          free"* IS GONE — one of the three unkeepable certification promises
-          (`P1-J3-E030`: 0 of 23 paths have a published test). ⚠ THE OTHER TWO STILL
-          SHIP: `E304`'s `certification in hours` in the block above, now the page's
-          largest text, and `E309`'s `Each Learning path has its own test`.
-
-        ⚠ `InstructorTiers` IS NOT A SELL SECTION. It lives in row 2's PANEL and
-        survives, rebuilt by `E306`.
-      */}
+      {}
     </>
   );
 }

@@ -1,49 +1,9 @@
 import { isCounted, type Figure } from "@/lib/figure";
 
-/**
- * ── ⚠⚠⚠ THE GAUGE (`P2-A1.1-E730` WS-C) ────────────────────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-09-30: *"a series of cards that look like pilot or car gauges"*** —
- * a semicircle, a magenta arc on a grey track, an ink needle.
- *
- * ── ⚠⚠⚠ ONE COMPONENT, EIGHT USES, AND NO DATA IN IT ───────────────────────────────────
- *
- * ⚠ **IT KNOWS NOTHING ABOUT AREAS, GOALS OR PRISMA.** It takes a figure and a scale and
- * draws a dial. ⚠⚠ Eight hand-drawn gauges would be `E585` eight times over, and the
- * failure mode is specific: the ARC MATHS would drift between copies and two cards showing
- * the same fraction would point their needles at different angles.
- *
- * ── ⚠⚠⚠ A FIGURE WITH NO SCALE DRAWS NO NEEDLE, AND THAT IS THE COUNTING RULE ──────────
- *
- * ⚠ **THREE STATES, NOT TWO** (counting rule 2 — *"a real zero and an uncountable figure
- * must not look the same"*, and *"the same rule applies to pictures"*):
- *   1. ⚠ **COUNTED, WITH A SCALE** — track, arc, ticks, needle, and `Goal: N`.
- *   2. ⚠⚠ **COUNTED, NO SCALE** — the figure is real but nobody has set a goal. The dial
- *      draws its track and ticks and **no arc and no needle**, because a needle with no
- *      scale is pointing at a number nobody chose. The figure still prints, in ink.
- *   3. ⚠⚠⚠ **UNCOUNTED** — the track is **hatched**, there is no needle, and **the reason
- *      prints**. ⚠ The hatch is the load-bearing cue and the dash is the second one, for
- *      the measured reason `honeycomb.css` records: a single cue fails for a colour-blind
- *      reader, at low contrast and in a screenshot.
- *
- * ⚠⚠ **A ZERO IS NEVER SOFTENED INTO A DASH.** A measured `0` takes state 1 and its needle
- * sits hard left, which is a result. Only `{ uncounted }` reaches state 3.
- *
- * ── ⚠⚠ EVERY COLOUR IS A TOKEN ──────────────────────────────────────────────────────────
- *
- * ⚠ `--color-magenta`, `--color-ink`, `--color-line`, `--color-bg-soft` — all exist, none
- * carries a `var()` fallback. ⚠⚠⚠ **A FALLBACK HIDES A DEAD VARIABLE** (Scott, 2026-09-22):
- * `var(--nope, #fff)` paints white forever and a gate can still see the name.
- * ⚠⚠ **AND THAT IS WHAT MAKES DARK MODE FREE** — the tokens flip, so there is no second
- * dark rule here and no hard-coded `#fff` to break it (`E723`'s lesson).
- */
-
-/** ⚠ Geometry, in the SVG's own units. A 180×100 box holds a radius-70 semicircle. */
 const R = 70;
 const CX = 90;
 const CY = 86;
 
-/** ⚠ `0` is hard left, `1` is hard right. The arc sweeps over π radians. */
 function pointAt(fraction: number): [number, number] {
   const a = Math.PI * (1 - fraction);
   return [CX + R * Math.cos(a), CY - R * Math.sin(a)];

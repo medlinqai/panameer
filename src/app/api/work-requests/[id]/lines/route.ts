@@ -4,13 +4,6 @@ import { checkTransact, guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { addLine } from "@/lib/work-request-lines";
 
-/**
- * POST /api/work-requests/[id]/lines — add line n+1 (`P1-J4-E392` WS-2).
- *
- * ⚠ THE SAME THREE GATES EVERY WRITE ON THIS RESOURCE RUNS: `canHireTalent`,
- * then the company gate, then P-Account ownership inside the lib. A line is part
- * of a document that commits a company, so it is held to the document's rules.
- */
 export function errStatus(code: WorkRequestError["code"]): number {
   if (code === "NOT_A_BUYER") return 403;
   if (code === "NOT_FOUND") return 404;
@@ -38,9 +31,6 @@ export async function POST(
   } catch (e) {
     if (e instanceof WorkRequestError)
       return NextResponse.json({ error: e.message, code: e.code }, { status: errStatus(e.code) });
-    /* ⚠ `SpineError` reaches here when a priced line carries both a rate and an
-       amount. Its message already names the reason, so it is passed through
-       rather than flattened into "could not add". */
     if (e instanceof Error && e.name === "SpineError")
       return NextResponse.json({ error: e.message, code: "INVALID" }, { status: 400 });
     console.error("[work-request] add line failed:", e);

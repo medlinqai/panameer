@@ -9,18 +9,6 @@ import { NOTIFICATION_CATEGORIES } from "@/lib/notification-categories";
 import { ROUTE_ACCESS } from "@/lib/route-access";
 import { NON_PRODUCTION_ALLOWLIST } from "@/lib/email/non-production-allowlist";
 
-/**
- * ── ⚠⚠⚠ `check:notification-email` — THE SENDER IN THE NOTIFICATION LAYER ───
- *
- * `P0-E689` WS-B. ⚠ Scott's rule is the spec: *"We never want to send multiple
- * emails to the same person for the same event. That is a rule."*
- *
- * ⚠⚠ **WHAT THIS GATE IS FOR:** the sender is one function and `notify()` is its
- * only caller, so the thing that can break is not the arithmetic — it is
- * somebody adding a SECOND send path, removing the allowlist, or trusting a
- * send-shaped success. Those are what is asserted.
- */
-
 let pass = 0;
 const failures: string[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
@@ -34,8 +22,6 @@ const read = (p: string) => stripComments(readFileSync(p, "utf8"));
 
 const notifications = read("src/lib/notifications.ts");
 const allowlistFile = read("src/lib/notification-email.ts");
-
-/* ═══ 1 · ONE SENDER, ONE PLACE (`E585`) ══════════════════════════════════ */
 
 check(
   "1 — notifications.ts sends through the transport, not its own client",

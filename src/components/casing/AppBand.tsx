@@ -4,8 +4,6 @@ import Link from "next/link";
 import { NotificationBell } from "@/components/casing/NotificationBell";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-// ⚠ `useSyncExternalStore` LEFT WITH THE CLOCK (`P2-ALL-E587` WS-B2).
-// ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //   import { useRef, useState, useSyncExternalStore } from "react";
 import { useRef, useState } from "react";
 import { useMe } from "@/components/MeProvider";
@@ -21,13 +19,8 @@ import {
   HOME_BAND_HREF,
 } from "@/lib/nav";
 import { RailIcon } from "@/components/casing/RailIcon";
-/* ⚠ ONE DEFINITION OF THE LIT LOOK, SHARED WITH `AccountMenu`'s avatar (`E720` item 1). */
 import { BAND_LIT, BAND_IDLE, BAND_TILE } from "@/components/casing/band-lit";
 import { MessagesDrawer } from "@/components/casing/MessagesDrawer";
-/* ⚠ `HOME_NAV` LEFT THIS IMPORT with the Home icon (`E602` WS-E 3). It is
-   still exported and still a member of `UTILITY_NAV`; this file just no longer
-   renders it, and an unused import is a NEW lint problem against a zero-new
-   baseline. ⚠ SUPERSEDED, quoted not deleted (`E164`): `HOME_NAV,` */
 import {
   navForRoles,
   railPersona,
@@ -38,96 +31,19 @@ import {
 } from "@/lib/nav";
 import "./app-band.css";
 
-/**
- * ── ⚠⚠ THE APP BAND (`P2-ALL-E559`) — ONE DARK BAND, NO LEFT RAIL ───────────
- *
- * SCOTT, 2026-09-17: the left rail becomes top icons.
- *
- * ⚠⚠ BLAST RADIUS: EVERY LOGGED-IN PAGE. One `AppShell` serves `(app)/**`,
- * `/admin/**` and logged-in `/learn`, so this replaces the chrome on all of them
- * at once.
- *
- * ⚠⚠ `casing_spec_LOCKED.md` IS INCORPORATED, NOT SUPERSEDED. Scott: *"No, it
- * incorporates it."* The header's nine elements stay; what moved is the RAIL'S
- * CONTENTS into this band. Every divergence is written back into that doc with
- * the `E164` treatment — it ends *"if any logged-in page chrome diverges from
- * this, this doc wins"*, so a divergence left unrecorded makes the doc lie.
- *
- * ⚠ `AppRail.tsx` AND `AppHeader.tsx` STAY ON DISK (`E164`). Neither is deleted
- * and neither is rendered by `AppShell` any more.
- *
- * ── WHAT IS DELIBERATELY ABSENT ──────────────────────────────────────────────
- *
- * ⚠ SEARCH — removed (WS-A 4). It was a LINK shaped like a field pointing at a
- *   Coming-Soon stub, and removing it plus the greeting is what makes room for
- *   the menu. `SEARCH_NAV` is untouched in `nav.ts`.
- * ⚠ THE GREETING (*"Good {morning}, {first}"*) — removed (WS-A 4).
- * ⚠⚠ MESSAGES — OMITTED, NOT FORGOTTEN. It is an icon in this cluster per
- *   WS-A 5, but it belongs to `E560`, and `E560` HAS NOT LANDED (verified: no
- *   commit on any branch). ⚠ The brief's instruction is explicit — *"do not
- *   render a dead one."*
- * ⚠ COMMUNITY CREDITS — out. Scott, 2026-09-18: *"community credits is out for
- *   now."* `E375` parked it commented-not-deleted and that stays true; the pill
- *   simply has no home here. Recorded in `casing_spec_LOCKED.md`, which still
- *   listed a Credits pill in the header cluster.
- * ⚠⚠ THE PERSONA CAPTION (`MAIN MENU` / `SELLER`) — dropped (ruling 3,
- *   2026-09-18). With the rail gone, `Provider Console` under the wordmark and a
- *   persona word inches away are two labels for one fact from the same
- *   predicate — `P1-J1.1-E248` in reverse, and a horizontal band has less room
- *   for it than a vertical rail did.
- *   ⚠⚠⚠ `railPersona()` IS NOT DELETED AND ITS RETURN VALUES ARE UNCHANGED.
- *   It still returns `"PANAMEER"` / `"SELLER"` / `"BUYER"` and `consoleLabel`
- *   below still branches on it. `E491` is the standing warning: change what that
- *   function RETURNS and the admin branch silently takes the wrong path with
- *   nothing failing. ONLY THE RENDERED CAPTION LEFT THE BAND.
- */
 export function AppBand() {
   const { me } = useMe();
   const pathname = usePathname();
 
-  /* ⚠ ADMIN IS A SESSION BIT, NOT AN ACTOR FLAG — the same read `AppRail` and
-     `AppHeader` both used. `Me` carries actor flags and the admin bit is
-     deliberately not one of them. */
   const { data: session } = useSession();
   const isAdmin = session?.user?.isSystemAdmin === true;
 
   const unreadCount = me?.notificationsUnread ?? 0;
 
-  /* ⚠ `P2-ALL-E560` STAGE 2 — the drawer's open state and the element focus
-     returns to when it closes. ⚠⚠ THE REF IS THE ICON ITSELF, never `<body>`. */
   const [messagesOpen, setMessagesOpen] = useState(false);
   const messagesButtonRef = useRef<HTMLButtonElement>(null);
 
-  /* ⚠⚠ UNCHANGED DERIVATION (`E491`). The caption is gone; the value is not. */
   const persona = railPersona(me, isAdmin);
-  /*
-    ── ⚠⚠⚠ NOTHING RENDERS HERE UNTIL `me` RESOLVES (`P2-ALL-E560`, 2026-09-18)
-
-    ⚠⚠ A PROVIDER WAS SEEING `Buyer Console` ON EVERY LOGGED-IN PAGE LOAD.
-    `AppBand` is a client component: before `useMe()` resolves, `me` is null,
-    `railPersona` correctly returns `null` — and the old ternary's FINAL ELSE
-    swallowed that null into `"Buyer Console"`. ⚠ So the band told a seller they
-    were a buyer, briefly, constantly, everywhere.
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    // const consoleLabel =
-    //   persona === "PANAMEER" ? "Platform Console"
-    //     : persona === "SELLER" ? "Provider Console"
-    //       : "Buyer Console";
-
-    ⚠⚠ THE HOUSE ALREADY HELD THE PRINCIPLE — `casing_spec_LOCKED.md` on the
-    bell: *"NO count/badge until the notifications feed backend exists — a '0' or
-    fake number is worse than none."* ⚠ **A WRONG CONSOLE NAME IS WORSE THAN NO
-    CONSOLE NAME.**
-
-    ⚠ `null` IS NOW ITS OWN BRANCH rather than a fall-through. `BUYER` still maps
-    to `Buyer Console`; what changed is that UNRESOLVED no longer borrows it.
-    ⚠⚠ `railPersona()`'s BUYER FALLBACK IS NOT TOUCHED — it is deliberate and
-    documented, and `E491` is why nothing here may change what that function
-    returns. ⚠ ONLY WHAT THE BAND RENDERS WHILE `me` IS NULL CHANGED.
-    ⚠ AN ADMIN NEVER FLASHES: `railPersona` short-circuits on the `isSystemAdmin`
-    SESSION bit, which resolves without `/api/me`.
-  */
   const consoleLabel =
     persona === "PANAMEER"
       ? "Platform Console"
@@ -137,9 +53,7 @@ export function AppBand() {
           ? "Buyer Console"
           : null;
 
-  // ── ⚠ THE CLOCK GOES WITH THE CHIP IT FED (`P2-ALL-E587` WS-B2) ─────────
   //
-  // ⚠ SUPERSEDED, quoted not deleted (`E164`):
   //
   //   [comment, paraphrased: the clock was an external store carried over from
   //    `AppHeader` unchanged, because the viewer's wall clock is not the
@@ -153,99 +67,11 @@ export function AppBand() {
   //       }).format(now)
   //     : null;
   //
-  // ⚠⚠ ITS ONLY READER WAS THE DATE CHIP. `AppHeader.tsx` carries its OWN copy
   // of the same clock and its own `CalendarIcon`; that file is dead code kept
-  // on disk (`E559` replaced it with the band and nothing imports it), so this
   // removal cannot reach it. MEASURED with comments stripped, not grepped.
 
-  /*
-    ⚠ THE MENU IS `nav.ts`'S, NOT A LIST HERE. That rule survived the reskin
-    deliberately and it survives this one: hard-coding the labels is exactly the
-    drift one definition exists to prevent.
-    ⚠⚠ THIS BRIEF DOES NOT CHANGE WHO SEES WHICH MENU. `navForRoles` already
-    gates on `hasCapability`-equivalent flags.
-
-    ── ⚠⚠⚠ THE ADMIN BRANCH IS GONE (`P2-ALL-E692`, ruling `89i`) ────────────
-
-    ⚠⚠ **SCOTT, 2026-09-27:** *"Admin's M1 is the same five transaction slots as
-    a member's. No separate admin bottom bar, no 'first five of `ADMIN_NAV`'.
-    The gear pops the configuration menu as a drawer, so ruling 88's five-item
-    limit does not apply to it."*
-
-    ⚠⚠⚠ **WHAT THE OLD LINE DID, MEASURED: it flattened `ADMIN_NAV` into FIFTEEN
-    band items and dropped three group headings on the way** — the comment above
-    even said so, *"flattened here because a band has no room for group
-    headers."* ⚠ **That sentence was the defect describing itself.** The room was
-    never there; the items went in anyway and `.pm-band-menu-row` hid the
-    overflow behind `overflow-x: auto` with `scrollbar-width: none`.
-    ⚠⚠ **AT 390px THAT ROW HIDES 122px ON EVERY PAGE WHILE THE PAGE REPORTS 0px
-    OVERFLOW**, so every `E609` gate passed over it.
-
-    ⚠ **`ADMIN_NAV` IS NOT REWRITTEN, NOT REORDERED AND NOT TRUNCATED** — it
-    moves, whole and grouped, into `ConfigDrawer` below, which ships in THIS
-    commit so the fifteen destinations are never unreachable (rule 5).
-
-    ⚠⚠ **AND THE ADMIN'S FIVE SLOTS ARE NOT INVENTED HERE.** Scott: *"Where the
-    admin's five slots point is data and Scott is still placing them — report the
-    mapping you would need, do not invent it."* ⚠⚠⚠ **MEASURED: the one real
-    system admin holds `is_service_provider = false` AND `is_service_buyer =
-    false`, so `navForRoles` returns TWO items for them — `Connect · Learn`.**
-    The other three slots are gated on capabilities that account does not hold.
-    **That gap is the mapping, and it is reported rather than filled.**
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   the admin branch is a different LIST, flattened here because a band has
-    //   no room for group headers.
-    //   const items = isAdmin ? ADMIN_NAV.flatMap((g) => g.items) : navForRoles(me);
-  */
   const items = navForRoles(me);
 
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — `EXACT` moved into `nav.ts` beside the
-     prefixes it guards, because this file, `BottomNav` and `check-nav-reachable` each held
-     their own copy of it (`E717`):
-     //   ⚠ EXACT MATCH for the two landing routes. `/admin` is a prefix of every
-     //      admin page and a startsWith test lit fifteen pills at once — the rail
-     //      learned that the hard way (`E475`).
-     //   const EXACT = new Set(["/dashboard", "/admin"]); */
-  /*
-    ── ⚠⚠ AN ITEM MAY OWN MORE THAN ONE PREFIX (`P2-A3-E596` WS-A) ──────────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — one prefix per item:
-    //   const isActive = (href: string) =>
-    //     EXACT.has(href) ? pathname === href : pathname.startsWith(href);
-
-    ⚠⚠ CONNECT'S PAGES LIVE UNDER `/community`, NOT UNDER `/connect` — eight
-    routes — so the old test left the pill dark on every one of them. Scott
-    caught it on `/community/score`, where the tab row said `CONNECT · Profile`
-    and the band said he was nowhere.
-    ⚠⚠⚠ THE LIST IS EXPLICIT AND LIVES IN `nav.ts`. Relaxing the match instead
-    is the `E475` trap this very comment records — fifteen pills at once. An
-    explicit list adds exactly what somebody wrote down.
-    ⚠ `EXACT` still wins for `/dashboard` and `/admin`: they own no extras, and
-    an exact landing route must not become a prefix.
-  */
-  /*
-    ── ⚠⚠⚠ ONE OWNER PER PATH, RESOLVED ONCE (`P2-A2-E717`) ────────────────────
-
-    ⚠⚠ **THE AVATAR IS A CANDIDATE ALONGSIDE THE PILLS, NOT A SEPARATE QUESTION.** That is
-    what makes `/community/score` resolvable at all: `Connect` claims it through `/community`
-    and the account menu claims it through `/community/score`, and **the more specific claim
-    wins** — a decision that cannot be made by asking each item about itself in turn.
-    ⚠⚠⚠ **AND IT IS WHY EXACTLY ONE THING CAN BE LIT.** The old predicate answered per item,
-    so two matches lit two items; this asks who owns the path and compares.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const isActive = (href: string) =>
-    //     EXACT.has(href)
-    //       ? pathname === href
-    //       : bandPrefixesFor(href).some((p) => pathname.startsWith(p));
-  */
-  /*
-    ⚠⚠⚠ THE OWNER'S OWN PUBLIC PAGE (`E718` item 10). `/providers/[id]` is the same URL for
-    everybody, so WHO IS LOOKING is the only thing that separates the preview from a visit —
-    and that is not in the pathname. ⚠ The fact is read here, where `me` already is; the
-    DECISION stays in `bandActiveHref`, which is Scott's instruction and what stops this
-    becoming a second lit-rule keyed on the avatar.
-  */
   const ownProviderPath = me?.providerProfile?.id
     ? `/providers/${me.providerProfile.id}`
     : null;
@@ -392,11 +218,9 @@ export function AppBand() {
           // per rule 12 and `check:comment-quotes`:
           //
           //   [comment, paraphrased: date and `AI on` kept the ribbon wash from
-          //    `P1-A1.5-E445b`, re-toned for a dark band, and noted `E433` still
           //    held because a surface tint on an unactionable status is not the
           //    saturated magenta that marks something clickable]
           //   {dateLabel && (
-          //     <span className="pm-band-date inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12.5px] font-semibold text-white/75">
           //       <CalendarIcon />
           //       {dateLabel}
           //     </span>
@@ -406,76 +230,18 @@ export function AppBand() {
           //    backend, nothing read it, locked spec 2026-08-13 — styled as a
           //    status so nobody would click it, and deliberately carrying no
           //    aria-live because announcing a state that never changes is noise]
-          //   <span className="pm-band-ai inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[12px] font-semibold text-white/75">
           //     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           //     AI on
           //   </span>
           //
-          // ⚠⚠ THE FREED WIDTH IS NOT REDISTRIBUTED. Scott's stated goal is
           // simplification, so the band gets QUIETER, not refilled. Measured at
           // the WS-B2 gate and reported, not spent.
         }
 
-        {/*
-          ── ⚠⚠⚠ THE HOME ICON IS GONE (`P2-A2-E602` WS-E 3) ──────────────────
+        {}
 
-          ⚠ SCOTT'S WALK (`E024`): *"Remove the Home icon from the band's
-          right-hand cluster. The logo is home."*
-          ⚠⚠ MEASURED BEFORE REMOVING, because the ruling depends on it: the
-          logo links to `isAdmin ? ADMIN_HOME.href : "/dashboard"`, and
-          `HOME_NAV.href` IS `/dashboard`. **They were the same destination**,
-          so this removes a genuine duplicate rather than a door.
-          ⚠⚠⚠ NOTHING IS STRANDED — that is the whole test for removing an
-          affordance, and it passes here only because the logo already goes
-          there. ⚠ For an admin the logo goes to the ADMIN home instead, which
-          is the more useful of the two, not a loss.
-
-          ⚠ THE FREED WIDTH IS NOT REDISTRIBUTED — the band's own standing rule,
-          recorded a few lines above: Scott's goal is simplification, so the band
-          gets QUIETER, not refilled.
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <BandIcon
-          //     href={HOME_NAV.href}
-          //     label={HOME_NAV.label}
-          //     active={pathname === HOME_NAV.href}
-          //   >
-          //     <HomeIcon />
-          //   </BandIcon>
-          ⚠⚠ `HOME_NAV` IS STILL EXPORTED AND STILL A MEMBER OF `UTILITY_NAV` —
-          only this file's IMPORT of it went, because an unused import is a NEW
-          lint problem against a zero-new baseline. ⚠ `HomeIcon` STAYS ON DISK
-          BELOW, unrendered, under `E164`, with a named disable rather than a
-          deletion. Only this ONE rendering is removed.
-        */}
-
-        {/*
-          ⚠⚠⚠ THE GEAR — THE CONFIGURATION MENU'S ONLY DOOR (`P2-ALL-E692`).
-          ⚠ It ships in the SAME COMMIT that takes `ADMIN_NAV` out of the band,
-          so those fifteen destinations are never unreachable — rule 5, proven by
-          both edits being in this one file and this one change.
-          ⚠⚠ Admin-only, because `ADMIN_NAV` is admin-only. A gear rendered to a
-          member would open an empty panel, which is a door onto a wall (`E579`).
-        */}
-        {/*
-          ── ⚠⚠⚠ THE GEAR IS A PHONE-AND-TABLET DOOR NOW (`P2-ALL-E800`) ──────
-
-          ⚠ **SCOTT, 2026-10-03, ruling D2:** *"Remove the gear from the top band
-          on desktop for admins; keep the gear (full menu) in the band on mobile,
-          where the panel isn't shown."*
-          ⚠⚠ **THE BREAKPOINT IS `lg` BECAUSE THAT IS THE PANEL'S OWN
-          BREAKPOINT.** `TaskPanel` is `hidden … lg:flex`, so `lg:hidden` here
-          makes the two EXACTLY COMPLEMENTARY — there is no width at which both
-          show, and none at which neither does.
-          ⚠⚠⚠ **THAT COMPLEMENT IS THE WHOLE SAFETY ARGUMENT (rule 5): these
-          fifteen destinations keep an unconditional door at every width**, which
-          is the same reasoning that put the gear here in `E692` and that `E579`
-          and `E694` WS-A both turned on. ⚠ `check:task-panel` asserts the pair,
-          because the two breakpoints live in two files and nothing but a check
-          keeps them opposite.
-          ⚠ `display: contents` on the wrapper so the band's grid still sees the
-          button itself, not a wrapper, exactly as the bug icon does above.
-        */}
+        {}
+        {}
         {isAdmin && (
           <span className="contents lg:hidden">
             <ConfigDrawer
@@ -486,70 +252,16 @@ export function AppBand() {
           </span>
         )}
 
-        {/*
-          ── ⚠⚠⚠ THE BUG ICON HIDES AT PHONE WIDTH (`P2-ALL-E694` WS-A) ──────
-
-          ⚠ WS-A: at phone width the band keeps *"the logo mark, and the
-          avatar"*. ⚠⚠ **IT DOES NOT DISAPPEAR — IT MOVES (rule 5).** A
-          `Report a Bug` row was added to `AccountMenu`, rendered **only below
-          `md`**, so the door appears in exactly the window where this icon
-          leaves. ⚠⚠⚠ **MEASURED FIRST: this was `/support/bug`'s ONLY
-          unconditional door in the logged-in shell** — `AppHeader.tsx:434` has
-          been dead since `E559` — so hiding it without that row would have taken
-          the last one at the width where people actually report bugs.
-          ⚠ Above `md` nothing changes: same icon, same place, same markup.
-        */}
+        {}
         <span className="hidden md:contents">
-          {/* ⚠ `E735` — `BandIcon` already took an `active` prop and this was the one
-              caller that never passed it. `/support` is owned by the Account menu, so the
-              bug page lights the avatar, not this icon — passing `false` explicitly would
-              be a lie about intent, so it is simply left to the default. */}
+          {}
           <BandIcon href="/support/bug" label="Report a bug">
             <BugIcon />
           </BandIcon>
         </span>
 
-        {/*
-          ── ⚠⚠ MESSAGES (`P2-ALL-E560` STAGE 1, 2026-09-18) ──────────────────
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E559` left this hole on
-          purpose and this is what fills it:
-          // MESSAGES BELONGS HERE AND IS OMITTED - `E560` has not landed.
-          // See the docblock. Do not render a dead icon.
-
-          ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification
-          bell...icon...and it opens on the right."* ⚠⚠ THE PANEL IS STAGE 2.
-
-          ⚠⚠⚠ THIS ICON NAVIGATES TO `/messages` TODAY. THAT IS AN INTERIM AND IT
-          IS DELIBERATE, NOT THE FINISHED DESIGN — Stage 2 replaces the
-          navigation with a right-side overlay. ⚠ Stage 1 ships first so the band
-          stops having a hole in it, and a link that WORKS is not a dead icon.
-
-          ⚠⚠ NO UNREAD DOT, AND THAT IS MEASURED RATHER THAN FORGOTTEN:
-          `Message` holds ZERO ROWS (measured 2026-09-18), so no unread can
-          exist and a dot could only ever be decoration. ⚠ Scott's ruling was
-          *"measure the Message row count first — if it is zero, ship without the
-          dot and record it as deferred."* ⚠ RECORDED AS DEFERRED.
-          ⚠⚠ WHEN IT IS BUILT IT IS A BOOLEAN EXISTENCE CHECK, NEVER A COUNT —
-          a dot is not a number, and `me.ts` already runs one count per
-          authenticated request. ⚠ THE BELL'S "no badge" RULE IS UNCHANGED and
-          is a different rule: a fake NUMBER is worse than none.
-        */}
-        {/*
-          ⚠⚠ A BUTTON, NOT A LINK (`P2-ALL-E560` STAGE 2). ⚠ SUPERSEDED, quoted
-          not deleted (`E164`) — Stage 1's stated interim:
-          // <BandIcon href="/messages" label="Messages"
-          //   active={pathname.startsWith("/messages")}>
-          //   <MessagesIcon />
-          // </BandIcon>
-
-          ⚠ THE ELEMENT HAD TO CHANGE WITH THE BEHAVIOUR. A thing that opens an
-          overlay is a BUTTON; a link that does not navigate lies to the
-          keyboard, to the middle-click and to the status bar.
-          ⚠ `aria-expanded` and `aria-haspopup` say what it does, the same way
-          `AccountMenu`'s trigger does.
-          ⚠⚠ `/messages` THE ROUTE STAYS — the drawer's footer links it.
-        */}
+        {}
+        {}
         <button
           ref={messagesButtonRef}
           type="button"
@@ -559,18 +271,6 @@ export function AppBand() {
           aria-haspopup="dialog"
           aria-expanded={messagesOpen}
           className={
-            /* ⚠ THE SHARED LIT CLASS (`E720` item 1). ⚠⚠ The ROUNDING IS LEFT ALONE HERE
-               ON PURPOSE: this is a 36px icon button, not one of the band's lit tiles, and
-               Scott's item names the AVATAR. Changing it would be a look nobody asked for.
-               ⚠ SUPERSEDED, quoted not deleted (`E164`):
-               //   (messagesOpen ? "bg-rail-active text-white"
-               //                 : "text-white/75 hover:bg-white/10 hover:text-white") */
-            /* ⚠⚠ `E735` — LIT BY THE ROUTE **OR** BY ITS OWN DRAWER. ⚠ Before this the
-               button lit only while its drawer was open, so `/messages` itself was one of
-               the 50 dark routes — and an open drawer lit it *in addition to* whatever
-               `activeHref` had already lit, which is two lit things on one page.
-               ⚠⚠⚠ ON THE ROUTE THE TWO AGREE: `activeHref` is `MESSAGES_BAND_HREF`, so no
-               pill is lit and this is the only one. */
             "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
             (messagesOpen || isActive(MESSAGES_BAND_HREF) ? BAND_LIT : BAND_IDLE)
           }
@@ -578,32 +278,7 @@ export function AppBand() {
           <MessagesIcon />
         </button>
 
-
-        {/*
-          ── ⚠⚠⚠ STAGE 2 HAS LANDED (`P2-A3-E620` WS-C item 1) ──────────────
-
-          ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification
-          bell...icon...and it opens on the right."* ⚠⚠ Recorded as **Stage 2**
-          when `E559` shipped the band, and deferred for a measured reason: the
-          notification table held ONE ROW, so a panel would have been an empty
-          box behind a badge that could never appear. ⚠⚠⚠ `E620` REGISTERED THE
-          EVENTS THAT PRODUCE ROWS, which is what made this buildable.
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — the interim, a plain link
-          to the page with the badge on it:
-          //   <BandIcon href={NOTIFICATIONS_NAV.href} label={NOTIFICATIONS_NAV.label} …>
-          //     <span className="relative inline-flex">
-          //       <BellIcon />
-          //       {unreadCount > 0 && <span …>{unreadCount > 9 ? "9+" : unreadCount}</span>}
-          //     </span>
-          //   </BandIcon>
-
-          ⚠⚠ THE BADGE IS UNCHANGED AND IS STILL `me`'s COUNT — absent at zero,
-          delivered-and-unread only. The panel fetches its own rows and never
-          feeds the number, so the two cannot drift.
-          ⚠ `See All` inside the panel is the page's door; the bell itself no
-          longer navigates, which is what lets it open instead.
-        */}
+        {}
         <NotificationBell
           unreadCount={unreadCount}
           label={NOTIFICATIONS_NAV.label}
@@ -612,24 +287,12 @@ export function AppBand() {
           <BellIcon />
         </NotificationBell>
 
-        {/* ⚠ THE ACCOUNT MENU — still the ONE home for Sign Out (locked spec),
-            and still where `My Company` lives since `E099`. */}
-        {/*
-          ── ⚠⚠⚠ THE AVATAR LIGHTS LIKE A BAND ITEM (ruling 72) ──────────────
-
-          ⚠ SCOTT: the pills take a filled magenta when active; **the avatar
-          took a thin ring on `/profile` and nothing on `/settings`.**
-          ⚠⚠ **IT IS THE SAME PREDICATE, NOT A SECOND ONE.** `isActive` is the
-          function every pill above uses, called with the Account menu's
-          sentinel key — so the avatar cannot drift from the band, and adding an
-          Account Information route means editing **one list** in `nav.ts`.
-          ⚠⚠⚠ `E433`: **one meaning, one treatment.**
-        */}
+        {}
+        {}
         <AccountMenu isAdmin={isAdmin} onDark active={isActive(ACCOUNT_BAND_HREF)} />
       </div>
 
-      {/* ⚠ RENDERED BY THE BAND, which every logged-in page already has — so the
-          drawer is reachable from all of them without any page opting in. */}
+      {}
       {messagesOpen && (
         <MessagesDrawer
           onClose={() => setMessagesOpen(false)}
@@ -638,17 +301,7 @@ export function AppBand() {
       )}
     </header>
 
-      {/*
-        ── ⚠⚠⚠ M1 MOVES TO THE BOTTOM AT PHONE WIDTH (WS-B, ruling 88) ───────
-
-        ⚠ **THE SAME `items`, READ ONCE ABOVE.** The bar does not compute its own
-        list — `navForRoles(me)` is evaluated once and handed to both surfaces,
-        so the band and the bar can never disagree about what a member's five
-        are. ⚠⚠ **That is the test the brief sets: changing which five appear is
-        a `lib/nav.ts` edit and nothing else.**
-        ⚠ It is `md:hidden` itself, and `.pm-band-menu` is hidden below `md` in
-        `app-band.css` — **one row is visible at any width, never both.**
-      */}
+      {}
       <BottomNav items={items} ownProviderPath={ownProviderPath} />
     </>
   );
@@ -672,11 +325,6 @@ function BandIcon({
       title={label}
       aria-current={active ? "page" : undefined}
       className={
-        /* ⚠ THE SHARED LIT CLASS (`E720` item 1); rounding unchanged — see the note on the
-           messages button above.
-           ⚠ SUPERSEDED, quoted not deleted (`E164`):
-           //   (active ? "bg-rail-active text-white"
-           //           : "text-white/75 hover:bg-white/10 hover:text-white") */
         "grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors " +
         (active ? BAND_LIT : BAND_IDLE)
       }
@@ -697,10 +345,7 @@ const S = {
   strokeLinejoin: "round" as const,
 };
 
-// ── ⚠ `CalendarIcon` GOES WITH THE DATE CHIP (`P2-ALL-E587` WS-B2) ────────
 //
-// ⚠ It was defined here and used exactly once — by the chip. ⚠ SUPERSEDED,
-// quoted not deleted (`E164`):
 //
 //   function CalendarIcon() {
 //     return (
@@ -711,15 +356,8 @@ const S = {
 //     );
 //   }
 //
-// ⚠⚠ `AppHeader.tsx` HAS ITS OWN `CalendarIcon` AND KEEPS IT. That file is dead
-// code on disk (`E559`), and the two were never shared — measured with comments
 // stripped before removing this one.
 
-/* ⚠⚠⚠ RETIRED BY `E602` WS-E 3 AND KEPT ON DISK (`E164`) — the band no longer
-   renders a Home icon because the logo already goes to `/dashboard`.
-   ⚠ THE DISABLE IS NAMED RATHER THAN BLANKET: `E164` says superseded code stays,
-   and the lint baseline's rule is ZERO NEW, so the two rules are reconciled here
-   explicitly instead of by deleting the component or by ignoring the file. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function HomeIcon() {
   return (
@@ -730,8 +368,6 @@ function HomeIcon() {
   );
 }
 
-/* ⚠ `P2-ALL-E560` — a speech bubble, distinct from the bell beside it at 18px.
-   Same `S` metrics as every other cluster glyph so the row keeps one weight. */
 function MessagesIcon() {
   return (
     <svg {...S}>
@@ -758,10 +394,7 @@ function BugIcon() {
   );
 }
 
-// ── ⚠ THE CLOCK'S THREE HELPERS GO WITH IT (`P2-ALL-E587` WS-B2) ──────────
 //
-// ⚠ All three existed to feed `useSyncExternalStore` for the date chip, and
-// nothing else called them. ⚠ SUPERSEDED, quoted not deleted (`E164`):
 //
 //   [comment, paraphrased: the clock was an external store carried over from
 //    `AppHeader` unchanged]
@@ -776,5 +409,4 @@ function BugIcon() {
 //   }
 //   function serverNow(): null { return null; }
 //
-// ⚠⚠ THE REFERENTIAL-STABILITY NOTE IS THE PART WORTH KEEPING IN WORDS: if a
 // clock ever returns to this band, a fresh `Date` per call re-renders forever.

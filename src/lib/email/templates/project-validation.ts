@@ -1,20 +1,6 @@
 import { capitalizeName } from "@/lib/display";
 import { logoBlock } from "@/lib/email/shell";
 
-/**
- * The project-validation request — sent to a CLIENT CONTACT, not to a user.
- *
- * This is the one email in the product that lands in an Oracle/ERP buyer's
- * inbox, so it is treated as a marketing asset rather than a system
- * notification (brief_project_validation §3): brand logo, one clear question,
- * two Title-Case buttons (E006), and a soft "What Is Panameer?" footer that
- * invites rather than sells.
- *
- * Deliberately contains NO commercial detail — no rate, no fee, no project
- * value. The recipient is being asked to confirm a fact, and anything that
- * reads as a pitch for their supplier's pricing would poison both the answer
- * and the brand impression.
- */
 export function projectValidationTemplate({
   providerName,
   projectName,

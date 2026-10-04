@@ -4,34 +4,6 @@ import {
   T, MAG, GREY, PILL, ERP, ERP_EDGE, ERP_INNER, AIP, AIP_EDGE, PRO, PRO_EDGE,
 } from "@/components/marketing/diagrams/diagram-tokens";
 
-/**
- * THE PANAMEER eHUBBING MODEL FOR GOODS PROCUREMENT — `/integrate` spine step 3
- * (`P1-J0-E335`).
- *
- * Source of truth: `2. Claude Sub-Files/mockups/ehubbing_model_2026-08-26.html`,
- * itself out of `Panameer_eHubbing_Model_SCW.pptx`.
- *
- * ⚠⚠ THE GEOMETRY IS SCOTT'S AND EVERY COORDINATE IS PORTED AS WRITTEN. Not one
- * box moved. ⚠ IT SHARES `diagram-tokens.ts` WITH `IntegrationModelDiagram` ON
- * PURPOSE — the brief: *"Both diagrams share one grid deliberately, so they read as
- * a pair. Keep it."* The ERP lane above is the SAME geometry in both, offset by
- * 14.4 units; that is not a copy-paste slip, it is the pair working.
- *
- * ⚠ MARKER IDS ARE `eh-*`, NOT the mockup's `m`/`g` — both diagrams render on one
- * page and the mockups both use the same two ids. See `IntegrationModelDiagram`.
- * ⚠ The mockup's `eyebrow`/`<h1>`/`.sub` are NOT shipped (the panel supplies its
- * own eyebrow and `<h2>`), and the `<p class="note">` is a CHAT NOTE, not page copy.
- *
- * ── ⚠⚠ NOTHING IN THIS DIAGRAM IS BUILT. NOT ONE OBJECT. ────────────────────
- *
- * No `Integration` model, no punchout endpoint, no cXML, no PO routing, no supplier
- * transmission, no `Remote Catalog`, no `Ship Goods`, no `Bill / Invoice`, no
- * `Payment`, and no supplier records of any kind. THIS IS THE GOODS SIDE AND THE
- * GOODS SIDE DOES NOT EXIST. ⚠ `decisions-01.md` records `0 of 5 built, knowingly`
- * and outstanding parts gate PROMOTION, not the build — but this is the single
- * strongest unbacked claim on the public site, and the whole object list is on the
- * pre-launch list. ⚠ DO NOT READ THIS AS A SPEC OF ANYTHING SHIPPED.
- */
 export function EHubbingDiagram() {
   return (
     <>

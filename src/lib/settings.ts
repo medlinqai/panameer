@@ -1,24 +1,11 @@
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
 import { ownedProviderProfile, type Viewer } from "@/lib/access";
 import { NOTIFICATION_CATEGORIES, findCategory } from "@/lib/notification-categories";
 import { w9Signature } from "@/lib/w9";
 import type { TaxType } from "@prisma/client";
 import { formFor } from "@/lib/tax";
-/* ⚠ THE ONE ADDRESS WRITER (brief 10 WS-B). Settings calls it; it does not
-   write its own upsert — see `updateContactInfo`. */
 import { saveProviderAddress } from "@/lib/onboarding";
-
-/**
- * Reads and writes for the Settings sub-pages (J2.4 WS-H / E014–E020).
- *
- * ONE MODULE, because every one of these pages does the same three things —
- * resolve the viewer's own records, hand a page a plain object, write a small
- * patch back — and eight copies of that would be eight chances to forget the
- * owner scope. Nothing here takes an id from a caller: the person and the
- * profile are both resolved from the session, every time.
- */
 
 export class SettingsError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "INVALID" | "GATED") {
@@ -27,39 +14,6 @@ export class SettingsError extends Error {
   }
 }
 
-/**
- * ── ⚠⚠ THE PERSON, RESOLVED AS THE PERSON (`P2-J1.1-E046`, 2026-09-06) ───────
- *
- * ⚠ SUPERSEDED, quoted not deleted — every reader below used to go through this:
- *
- *     async function ownIds(viewer: Viewer) {
- *       const profile = await prisma.providerProfile.findFirst({
- *         where: ownedProviderProfile(viewer),
- *         select: { id: true, person_id: true },
- *       });
- *       if (!profile) throw new SettingsError("No provider profile", "NOT_FOUND");
- *       return { profileId: profile.id, personId: profile.person_id };
- *     }
- *
- * IT REACHED THE PERSON THROUGH THE PROVIDER PROFILE. Thirteen of its fifteen
- * call sites want only `personId` — Contact Info, Billing, Withdrawals, Identity
- * and Notification Settings are all about the PERSON — so a buyer, who has a
- * Person and no ProviderProfile, got a 500 on five settings pages the moment
- * `E046` opened the tree. An empty state would have stopped the crash and left
- * Scott's actual complaint true: *a buyer cannot change their email, their 2FA,
- * their notification preferences or their billing.*
- *
- * ⚠⚠ THE VALUE IS IDENTICAL FOR EVERY EXISTING USER, AND THAT IS PROVABLE, NOT
- * HOPED: `ownedProviderProfile(viewer)` is `{ person: { user_id: viewer.userId } }`,
- * so the old `profile.person_id` WAS the viewer's own Person id. This resolves
- * the same row by the same key. Nothing that used to work resolves differently;
- * what used to throw now succeeds.
- *
- * ⚠⚠ OWNER-SCOPED BY CONSTRUCTION, AND NOT ONE STEP LOOSER. `user_id` comes from
- * the SESSION and never from client input — the same rule `ownedProviderProfile`
- * follows, and `Person.user_id` is `@unique`, so this can match at most one row:
- * the caller's own. No write below can be steered at another person's record.
- */
 async function ownPersonId(viewer: Viewer): Promise<string> {
   const person = await prisma.person.findFirst({
     where: { user_id: viewer.userId },
@@ -69,12 +23,6 @@ async function ownPersonId(viewer: Viewer): Promise<string> {
   return person.id;
 }
 
-/**
- * ⚠ STILL PROFILE-SCOPED, AND STILL THROWS — for the two readers that genuinely
- * need a `ProviderProfile.id` rather than a person: the provider's own profile
- * settings and its public-visibility pair. A buyer has no profile there, and
- * "no provider profile" is the correct answer to those two questions.
- */
 async function ownIds(viewer: Viewer) {
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
@@ -83,8 +31,6 @@ async function ownIds(viewer: Viewer) {
   if (!profile) throw new SettingsError("No provider profile", "NOT_FOUND");
   return { profileId: profile.id, personId: profile.person_id };
 }
-
-/* ---- Contact Info (E014) ------------------------------------------------ */
 
 export async function getContactInfo(viewer: Viewer) {
   const personId = await ownPersonId(viewer);
@@ -98,9 +44,6 @@ export async function getContactInfo(viewer: Viewer) {
       time_zone: true,
       user: { select: { id: true, email: true } },
       company: { select: { id: true, name: true } },
-      /* ⚠⚠ THE ADDRESS LIVES ON THE BACKBONE (`E019`): P-Account → Company →
-         Site → Address → Person. ⚠ Read here so Settings can EDIT it — the page
-         used to point away at the wizard instead. */
       site: {
         select: {
           addresses: {
@@ -110,22 +53,10 @@ export async function getContactInfo(viewer: Viewer) {
           },
         },
       },
-      /* ⚠ THE THREE MEMBERSHIP JOINS WENT WITH THE CARD (ruling 81) — nothing
-         reads them here any more. The RELATIONS are untouched on the model;
-         this removes three joins from one query, not a capability.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   providerProfile: { select: { id: true } },
-         //   buyerProfile: { select: { id: true } },
-         //   requesterProfile: { select: { id: true } }, */
     },
   });
 
   return {
-    /*
-      The "User ID" the page shows is the PERSON id, not the auth user id.
-      It is the identifier support will ask for, and exposing the auth row's
-      primary key on a settings page is a gift to anyone doing reconnaissance.
-    */
     userId: person.id,
     firstName: person.first_name,
     lastName: person.last_name,
@@ -133,9 +64,6 @@ export async function getContactInfo(viewer: Viewer) {
     phone: person.phone,
     timeZone: person.time_zone,
     company: person.company,
-    /* ⚠ SHAPED FOR `LocationFields`, the same block the profile editor and the
-       employer modal use — empty strings rather than nulls, because the inputs
-       are controlled. */
     address: (() => {
       const a = person.site?.addresses?.[0];
       return {
@@ -147,27 +75,9 @@ export async function getContactInfo(viewer: Viewer) {
         postalCode: a?.postal_code ?? "",
       };
     })(),
-    /* ⚠⚠ `memberships` REMOVED (ruling 81). Its ONLY reader was the deleted
-       Additional Accounts card, and the three relation joins below existed
-       solely to compute it — so they go too rather than running on every load
-       for a card that no longer exists (`76a`, `79c`).
-       ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   memberships: { provider: !!person.providerProfile,
-       //     buyer: !!person.buyerProfile, requester: !!person.requesterProfile }, */
   };
 }
 
-/**
- * ── ⚠⚠ THE ADDRESS IS WRITTEN BY `saveProviderAddress`, NOT HERE ─────────
- *
- * ⚠⚠⚠ **IT IS THE ONE WRITER AND IT OWNS THE BACKBONE STEP** — creating the
- * `Site` on first save (`E019`). ⚠ A second upsert in this file would be `E585`
- * on the record a buyer uses to reach somebody, **and only one of the two would
- * know about the Site.**
- * ⚠⚠ `address` IS OPTIONAL AND THE TEST IS `!== undefined` (ruling 67), the
- * same as every other field here: **absent means "this caller is not speaking
- * about the address", not "clear it".**
- */
 export async function updateContactInfo(
   viewer: Viewer,
   patch: {
@@ -199,8 +109,6 @@ export async function updateContactInfo(
     },
   });
 }
-
-/* ---- Profile Settings (E015) -------------------------------------------- */
 
 export async function getProfileSettings(viewer: Viewer) {
   const { profileId } = await ownIds(viewer);
@@ -239,13 +147,6 @@ export async function getProfileSettings(viewer: Viewer) {
     linkedGithub: p.linked_github,
     linkedStackoverflow: p.linked_stackoverflow,
     roles: p.roles.map((r) => r.roleType.name),
-    /*
-      CATEGORIES = PANAMEER'S OWN CATALOG (Confirm #2). Role → Domain → Skill,
-      read from what this provider actually claimed, not a competitor's
-      taxonomy. Read-only here on purpose: the catalog picker is a step in the
-      wizard with its own filtering and its own 15-skill cap, and a second
-      editor for the same data is how the two drift.
-    */
     categories: p.skills.map((s) => ({
       id: s.skill.id,
       skill: s.skill.name,
@@ -261,19 +162,8 @@ export async function updateProfileSettings(
     paused?: boolean;
     projectPreference?: "ANY" | "SHORT_TERM" | "LONG_TERM" | "CONTRACT_TO_HIRE" | null;
     earningsPrivate?: boolean;
-    /*
-      ── ⚠⚠ THE TWO PUBLIC-PREVIEW SWITCHES (`P2-A1.1-E738`) ────────────────
-      ⚠ Both are TIMESTAMP columns for the same reason `paused_at` is: *"since
-      when"* is the useful question. ⚠⚠ Note the opposite polarities, which is
-      deliberate and is the member's own default in each case:
-        · `previewHidden` — the preview is ON by default, so a timestamp = off.
-        · `publicName`    — naming is OFF by default, so a timestamp = on.
-      ⚠⚠⚠ NEITHER TOUCHES THE MARKETPLACE GATE. `paused_at` is still the one
-      lever for that, and the masked reads apply these ON TOP of it.
-    */
     previewHidden?: boolean;
     publicName?: boolean;
-    /* ⚠ REMOVED (78c) — see the writer below. */
     linkedGithub?: string | null;
     linkedStackoverflow?: string | null;
   }
@@ -282,12 +172,6 @@ export async function updateProfileSettings(
   await prisma.providerProfile.update({
     where: { id: profileId },
     data: {
-      /*
-        VISIBILITY IS THE PAUSE, and it is the only lever here that touches the
-        marketplace gate. `paused_at` is a timestamp rather than a boolean
-        because "since when" is the useful question when a provider asks why
-        they stopped getting work.
-      */
       ...(patch.paused !== undefined
         ? { paused_at: patch.paused ? new Date() : null }
         : {}),
@@ -297,20 +181,12 @@ export async function updateProfileSettings(
       ...(patch.earningsPrivate !== undefined
         ? { earnings_private: patch.earningsPrivate }
         : {}),
-      /* ⚠⚠ `P2-A1.1-E738` — see the patch type above for the polarities. */
       ...(patch.previewHidden !== undefined
         ? { preview_hidden_at: patch.previewHidden ? new Date() : null }
         : {}),
       ...(patch.publicName !== undefined
         ? { public_name_at: patch.publicName ? new Date() : null }
         : {}),
-      /* ⚠⚠⚠ `ai_training_opt_in` IS NO LONGER WRITTEN (ruling 78c). The card is
-         deleted and the route no longer accepts the key, so leaving a writer
-         here would be a way to set a CONSENT that nothing can withdraw.
-         ⚠ The COLUMN stays — dropping it is ruling 41's entry 5, on trunk.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   ...(patch.aiTrainingOptIn !== undefined
-         //     ? { ai_training_opt_in: patch.aiTrainingOptIn } : {}), */
       ...(patch.linkedGithub !== undefined
         ? { linked_github: handle(patch.linkedGithub) }
         : {}),
@@ -329,8 +205,6 @@ function handle(raw: string | null): string | null {
   return last.replace(/^@/, "").slice(0, 60) || null;
 }
 
-/* ---- Billing & Payments (E016) ------------------------------------------ */
-
 export async function listBillingMethods(viewer: Viewer) {
   const personId = await ownPersonId(viewer);
   return prisma.billingMethod.findMany({
@@ -341,12 +215,6 @@ export async function listBillingMethods(viewer: Viewer) {
 
 export async function addBillingMethod(
   viewer: Viewer,
-  /* ⚠ `expMonth` / `expYear` REMOVED FROM THE INPUT TYPE (`P2-A2-E677`). The
-     route no longer accepts them and this function no longer writes them, so
-     declaring them kept a dead parameter that a future caller could fill in
-     believing it did something.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   … last4?: string | null; expMonth?: number | null; expYear?: number | null } */
   input: { kind: "CARD" | "PAYPAL" | "BANK_DEBIT"; label: string; last4?: string | null }
 ) {
   const personId = await ownPersonId(viewer);
@@ -357,23 +225,6 @@ export async function addBillingMethod(
       kind: input.kind,
       label: input.label.trim().slice(0, 80),
       last4: digits(input.last4, 4),
-      /* ⚠⚠⚠ EXPIRY IS NOT WRITTEN (`P2-A2-E672`). WS-D: *"NO card number, CVV
-         or expiry may be … stored by Panameer code."* The route no longer
-         accepts it either — see its schema for the full reasoning and why the
-         COLUMNS stay (ruling 38 is additive-only; a DROP is not additive).
-         ⚠ `last4` is a truncated PAN, not the card number, and the page says
-         so: *"we never store a full card number."*
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   exp_month: input.expMonth ?? null,
-         //   exp_year: input.expYear ?? null,
-         ⚠⚠ THE TERMINATOR SITS ON ITS OWN LINE, AND THAT IS THE FIX, NOT A TIDY-UP
-         (`P2-ALL-E699` Lane 0.2). It used to be glued to the end of the quoted
-         `exp_year` line, so the QUOTE ITSELF appeared to contain `*` + `/` — which is
-         load-bearing rule 12's trap verbatim: copy that line anywhere and you carry a
-         stray terminator that closes its new enclosing comment early.
-         ⚠ `check:comment-quotes` exists for exactly this shape and had been RED on
-         this line since `4f8c7c0`. The quote was fixed; the gate was not touched.
-      */
       // First one in is the default; there is no meaningful alternative.
       is_default: count === 0,
     },
@@ -385,8 +236,6 @@ export async function removeBillingMethod(viewer: Viewer, id: string) {
   // Owner scope enforced in the WHERE, so a foreign id deletes nothing.
   await prisma.billingMethod.deleteMany({ where: { id, person_id: personId } });
 }
-
-/* ---- Withdrawals (E017) -------------------------------------------------- */
 
 export async function getWithdrawals(viewer: Viewer) {
   const personId = await ownPersonId(viewer);
@@ -400,17 +249,6 @@ export async function getWithdrawals(viewer: Viewer) {
   return { tax, methods };
 }
 
-/**
- * ⚠⚠ "DOCUMENT ALL OCCASIONS OF USER ACCESS" (`P1-ALL-E404` WS-3).
- *
- * One of the IRS's four conditions for an electronic substitute Form W-9, and
- * the one that is not about submitting: OPENING the form is an occasion of
- * access. ⚠ Called from the page's render as well as from the write below.
- *
- * ⚠ IT NEVER THROWS INTO THE CALLER. A failed audit write must not stop somebody
- * filing their tax form — the log is evidence, not a gate — but it must not fail
- * silently either, so it is reported without a TIN or a name in the message.
- */
 export async function logTaxFormAccess(
   viewer: Viewer,
   form: "W9" | "W8BEN" | "W8BENE",

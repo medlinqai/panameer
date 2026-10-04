@@ -1,32 +1,10 @@
 import { MATURITY_STAGES, type ProcessArea } from "@/lib/assessment-data";
 
-/**
- * THE AI MATURITY DASHBOARD — score gauge, KPI tiles, maturity stages.
- *
- * EXTRACTED, NOT REBUILT (brief_public_pages_ia WS-1). It lived inline inside
- * `Assessment`'s panel, which was fine while the assessment section was the
- * only thing that showed it. The home hero shows it now too, and the choice was
- * between one component with two callers or two copies drifting apart — a
- * second hand-built gauge whose bar rounds differently is exactly the sort of
- * thing nobody notices until the numbers disagree.
- *
- * ⚠ NOTHING HERE MEASURES ANYTHING, and the component carries that honesty
- * itself rather than relying on each caller to remember. `area.sample` drives
- * both the "Sample Read" chip and the caption underneath, so a page cannot show
- * invented figures without the label that says they are invented. When real
- * scoring arrives, `sample` goes false on the data and both disappear on their
- * own.
- */
 export function MaturityDashboard({
   area,
   compact = false,
 }: {
   area: ProcessArea;
-  /**
-   * The hero variant: fewer tiles and tighter type, because the hero shows this
-   * beside a headline rather than as the subject of its own section. Same
-   * component, same numbers — only how much of it is on screen changes.
-   */
   compact?: boolean;
 }) {
   const tiles = compact ? area.tiles.slice(0, 2) : area.tiles;
@@ -76,10 +54,7 @@ export function MaturityDashboard({
             {area.score} / 100
           </span>
         </div>
-        {/*
-          A meter, not a bar: `role="progressbar"` with the value on it, so a
-          screen reader gets the number rather than a decorative div.
-        */}
+        {}
         <div
           role="progressbar"
           aria-valuenow={area.score}

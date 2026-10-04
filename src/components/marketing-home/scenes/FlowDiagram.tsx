@@ -3,58 +3,6 @@
 import { useId, type ReactNode } from "react";
 import { isRun, type FlowConnector, type FlowSpec } from "@/lib/marketing-scenes";
 
-/**
- * THE FOUR-COLUMN FLOW DIAGRAM — one primitive, both ERP scenes.
- *
- * Geometry is `2. Claude Sub-Files/mockups/erp_flows_v2.html`, approved. This is
- * v2; it replaces the v1 geometry shipped in `1b18c51`, which was right in
- * structure and wrong in two ways that mattered.
- *
- * ── ⚠ THE ACTORS ARE COLUMNS. THIS IS THE FIX, NOT A RESTYLE (E109) ──────────
- *
- * v1 drew each actor as a circle at `r=20` and aimed four provider connectors at
- * a fixed `x=981`. Two of them arrived 28px above and 32px below the glyph and
- * terminated in blank canvas. A CIRCLE HAS NO STRAIGHT EDGE, so there is no
- * honest x to aim at — the bug was not a wrong number, it was a shape that
- * cannot be targeted, and nudging coordinates is what produced it.
- *
- * A column has an edge at every height. `x=24 w=120` and `x=936 w=120`, same
- * vertical span as the Oracle box and the Panameer panel, so a connector lands
- * wherever it arrives. The mid-air arrowhead is now structurally impossible.
- * It also makes the scene read as FOUR containers rather than two boxes with
- * icons floating beside them.
- *
- * ── ⚠ NO VERTICAL LANES IN THE GUTTERS ──────────────────────────────────────
- *
- * Every hand-off is a straight horizontal line, because each document is placed
- * at the height of the step it partners with (see `marketing-scenes.ts`). If a
- * future edit needs a lane to connect two things, the two ends have drifted out
- * of alignment — MOVE THE CHIP. Routing around it is what tangled v1.
- *
- * The single exception is `Requester Accepts Rate → Req Line`, one elbow,
- * documented at its definition.
- *
- * ── ONE PRIMITIVE, NOT TWO COPIES ────────────────────────────────────────────
- *
- * The frame — both containers, both actor columns, the gradient, the markers —
- * is identical in the two scenes and drawn once here. Everything that differs is
- * data. This file holds no content: no label, no document name, no step.
- *
- * ── ⚠ MARKER IDS ARE NAMESPACED PER INSTANCE, AND THEY HAVE TO BE ────────────
- *
- * `marker-end="url(#…)"` resolves against the WHOLE DOCUMENT and takes the first
- * match. This page renders these scenes three times at once — a crop inside each
- * of the two cards, plus the open dialog — so a fixed id would point every
- * arrowhead on the page at whichever `<defs>` parsed first, and closing that
- * dialog would delete the node the survivors reference. `useId()` gives each
- * React instance its own suffix. Asserted in `check:ui` §13.
- *
- * ── ⚠ PURE SVG, AND KEEP IT THAT WAY ─────────────────────────────────────────
- *
- * No <a>, no <foreignObject>, no control of any kind. These render inside a card
- * <button>, and an interactive descendant of a button is E097 all over again.
- */
-
 /* ── THE FRAME — identical coordinates in both scenes ──────────────────────── */
 
 const CANVAS_W = 1080;
@@ -71,13 +19,6 @@ const PANEL = { x: 560, w: 336, r: 18 };
 const DOC = { x: 226, w: 212, r: 10, cx: 332 };
 /** Step chips. Height fixed too — the panel reads as a stack, not a ladder. */
 const STEP = { x: 576, w: 304, h: 30, r: 7, cx: 728 };
-/**
- * ⚠ THE 16px THAT CAUSED E111. The panel runs 560..896 and the chips 576..880,
- * so every crossing used to travel this far INSIDE the panel before reaching a
- * card — and the gradient's bottom stop is exactly the connector magenta, so the
- * line and its arrowhead vanished. Magenta now stops at the panel edge; a plain
- * white line covers the gap.
- */
 const PANEL_EDGE = { left: PANEL.x, right: PANEL.x + PANEL.w };
 
 const NAVY = "#2f3a5c";
@@ -87,19 +28,6 @@ const CHIP_TEXT = "#1d2440";
 const COL_FILL = "#f7f9fc";
 const COL_STROKE = "#c9d1e0";
 
-/**
- * THE WHITE STUB THAT FINISHES A CROSSING — derived, never authored (E111).
- *
- * A magenta run that ENDS on a panel edge is arriving, so the stub carries on
- * inward to the chip; one that STARTS on a panel edge is leaving, so the stub
- * runs outward from the chip to meet it. Either way the y comes from the SAME
- * object as the magenta, which is the whole point: the v3 spec file hand-wrote
- * these as separate paths and immediately drifted, putting a magenta at y=205
- * against its stub at y=200.
- *
- * ⚠ NO `marker-end`, EVER. Scott: "White lines, no arrow heads." The magenta
- * already carries the arrowhead, out on the light background where it reads.
- */
 function stubFor(c: FlowConnector): { y: number; from: number; to: number } | null {
   if (isRun(c)) {
     if (c.kind !== "mag") return null;
@@ -109,11 +37,6 @@ function stubFor(c: FlowConnector): { y: number; from: number; to: number } | nu
     if (c.from === PANEL_EDGE.right) return { y: c.y, from: STEP.x + STEP.w, to: PANEL_EDGE.right };
     return null;
   }
-  /*
-    Freeform paths only ever LEAVE a panel edge here (the one elbow). Read the
-    leading absolute move — every path in this data starts with one — so the
-    elbow gets its stub from the same string that positions it.
-  */
   const m = /^M\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/.exec(c.d);
   if (!m || c.kind !== "mag") return null;
   const [x, y] = [Number(m[1]), Number(m[2])];
@@ -122,10 +45,6 @@ function stubFor(c: FlowConnector): { y: number; from: number; to: number } | nu
   return null;
 }
 
-/**
- * An actor column: the container, a head-and-shoulders glyph, and a two-line
- * uppercase label. The glyph is decorative; the label carries the meaning.
- */
 function ActorColumn({
   x,
   w,

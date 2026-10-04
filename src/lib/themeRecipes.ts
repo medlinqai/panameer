@@ -1,23 +1,3 @@
-/**
- * Tenant theming as RECIPES, not colour pickers (E204, ported from Medlinq).
- *
- * A theme here is a designed STRUCTURE. Each recipe fixes saturation and
- * lightness for every surface and leaves exactly one variable: the brand HUE,
- * taken from the tenant's logo. Same recipe + different hue = structurally
- * identical, brand-distinct.
- *
- * WHY THAT MATTERS MORE THAN IT SOUNDS. The usual version of this feature is a
- * colour picker, and a colour picker guarantees that some tenant eventually
- * ships pale yellow text on white and blames the product. Here the quality bar
- * lives in code: S and L are clamped per surface, the accent's text colour is
- * derived from luminance, and there is no input that produces an unreadable
- * combination. The tenant picks a hue and a structure; they cannot pick a
- * contrast failure.
- *
- * CLIENT-SAFE — no prisma, no node built-ins. The server resolver and the
- * gallery preview both import it, which is the point: what you see in the
- * picker is computed by the same function that renders the app.
- */
 
 export type ThemeTokens = {
   /** Sidebar / nav. */

@@ -2,13 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { NextResponse } from "next/server";
 
-/**
- * CSV of the audit log, same filters as the page (`P2-ALL-E814`).
- *
- * CSV rather than a real `.xlsx`: Excel opens it directly, it streams without a
- * dependency, and the columns here are all text and numbers. A workbook would
- * buy formatting nobody asked for.
- */
 export async function GET(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;

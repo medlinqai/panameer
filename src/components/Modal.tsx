@@ -2,21 +2,6 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 
-/**
- * A small dialog used by the onboarding modals (brief_P): photo crop (E019),
- * résumé upload (E012), and the education editor (E015).
- *
- * Built on the native <dialog> element so focus trapping, Escape-to-close and
- * inertness of the page behind come from the platform rather than hand-rolled
- * key handlers.
- *
- * E058 — `m-auto` is LOAD-BEARING, not cosmetic. The UA stylesheet centres an
- * open modal dialog with `margin: auto`, and Tailwind's preflight resets
- * `margin: 0` on every element, so every modal in the app (Education,
- * photo-crop, résumé upload, employers, certifications) rendered pinned to the
- * top-left corner. Restoring the margin here fixes all of them at once —
- * which is the whole reason they share this component.
- */
 export function Modal({
   open,
   onClose,

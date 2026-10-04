@@ -3,106 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-/* ⚠ `useEffect` AND `useState` WENT WITH THE CREDITS SEAM (`P1-ALL-E375`). The
-   parked `getCreditsSummary` effect was their ONLY consumer in this component,
-   so leaving them imported is an unused-var warning — and the lint baseline is
-   43 with 0 new allowed. ⚠ `useSyncExternalStore` IS NOT CREDITS WORK and stays.
-   ⚠ THE `"use client"` DIRECTIVE STAYS TOO: `usePathname`, `useSession`,
-   `useMe` and `useSyncExternalStore` all still need it. */
 import { useSyncExternalStore } from "react";
 import { useMe } from "@/components/MeProvider";
 import { AccountMenu } from "@/components/casing/AccountMenu";
 import { HOME_NAV, NOTIFICATIONS_NAV, SEARCH_NAV, pageTitleFor } from "@/lib/nav";
 import { greetingFor } from "@/lib/greeting";
-/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
-   *"just comment it out... it is just too much rn. we NEED to move faster. that
-   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
-   scheduling, and a standing Friday commitment nobody wants. Decision and the
-   full call-site list: `src/lib/credits.ts`. ⚠ THE IMPORTS HAD TO GO IN THE SAME
-   PASS: `lib/credits.ts` is commented out, so leaving these would break the
-   build — that is why this is one commit and not several. */
 // import { getCreditsSummary, type CreditsSummary } from "@/lib/credits";
 // import { CreditsPill } from "@/components/casing/CreditsPill";
 
-/**
- * The header — greeting, Search, and the universal controls.
- *
- *   left    greeting ("Good Morning, {first}")
- *   centre  Search
- *   right   Credits · Home · Notifications · Profile · bug report
- *
- * ⚠ THIS REVERSES E207, E208, E209 AND E214, deliberately and at Scott's
- * instruction. It is not a bug fix and it is not a regression: those four
- * decisions moved the search pill, Home, the bell and the account menu into the
- * rail on the argument that "the rail already answers where-do-I-click", and
- * the call now is that the rail is for the six role TRANSACTIONS and the four
- * universal controls belong up here. Both layouts are defensible; this is the
- * one chosen. The error log should be annotated rather than the entries deleted
- * — the reasoning in them is still sound, it just lost.
- *
- * E210 IS NOT REVERSED. The date and the "AI on" chip stay gone, and the
- * distinction matters: E207-E209 moved things that were ACTIONABLE to a
- * different home, while E210 removed two chips nobody could act on — the date
- * is on every clock the person owns, and "AI on" is a status nobody can change.
- * Restoring the four does not restore those.
- *
- * THE PAGE NAME IS STILL GONE, also unchanged. Location is shown by the rail's
- * active highlight, which is more precise than a title: it names the page and
- * the group it belongs to.
- */
 export function AppHeader() {
   const { me } = useMe();
   /* `P1-ALL` — unread AND delivered; absent at zero, never a 0 badge. */
   const unreadCount = me?.notificationsUnread ?? 0;
   const pathname = usePathname();
 
-  /*
-    ADMIN vs PROVIDER for the account menu's own item list. Read from the
-    session rather than /api/me for the same reason AppRail reads it there:
-    `Me` carries ACTOR flags and the admin bit is deliberately not one of them.
-  */
   const { data: session } = useSession();
   const isAdmin = session?.user?.isSystemAdmin === true;
 
-  /*
-    THE CLOCK IS AN EXTERNAL STORE, read through `useSyncExternalStore` rather
-    than copied into state by an effect. The greeting and the date depend on the
-    viewer's wall clock, which the server does not share — for a product with
-    providers in Sydney and buyers in Chicago the two disagree most of the day —
-    so the server snapshot is null and the client snapshot is the real time.
-    Same answer the effect gave, without setting state during mount.
-  */
   const now = useSyncExternalStore(subscribeNothing, clientNow, serverNow);
   const greeting = now ? greetingFor(now) : null;
-  /*
-    ⚠ COMPUTED FROM THE PATHNAME ON EVERY RENDER, never held in state — the same
-    rule the block above follows for the greeting and the date.
-    ⚠ `"Panameer Dashboard"` IS THE RAIL'S OWN LABEL for `/admin` (`lib/nav.ts`),
-    not a new string invented here.
-  */
   const isConsole = pathname === "/admin" || pathname.startsWith("/admin/");
   const consoleTitle = isConsole
     ? (pageTitleFor(pathname) ?? "Panameer Dashboard")
     : null;
-  /*
-    DAY/DATE, RESTORED (CASING_SPEC_LOCKED 2026-08-13). E210-revised removed it
-    as ambient decoration; Scott wants it back, in the right cluster this time
-    rather than beside the greeting. Same `Intl.DateTimeFormat` as 4b7e0ef, and
-    still derived from the same client-side clock store — the server does not
-    share the viewer's timezone, so a server-rendered date would be wrong for
-    half the users half the time.
-  */
-  /*
-    SHORT FORM ("Wed, Aug 12"), not 4b7e0ef's "Wednesday, August 12".
-
-    Measured: the long form is 195px, and the right cluster with the Credits
-    pill already runs to 855px of an 1177px header at 1440. With the long date
-    the centre Search collapsed to 62px — an icon and a sliver, which reads as
-    broken rather than as a field. The short form gives ~75px back and Search
-    gets a usable width at every size the spec cares about.
-
-    Still day AND date, which is what the spec asks for.
-  */
   const dateLabel = now
     ? new Intl.DateTimeFormat(undefined, {
         weekday: "short",
@@ -113,19 +36,6 @@ export function AppHeader() {
 
   const first = me?.person?.firstName ?? "";
 
-  /*
-    THE PILL READS ONE SEAM (`getCreditsSummary`). In PHASE 1 that returns
-    zeroes and `pending: true`; PHASE 3 puts the real ledger behind the same
-    function and nothing in this component changes. Fetched here rather than
-    passed from a server layout because the header is already a client component
-    and the shell has no other reason to become async.
-  */
-/* ⚠⚠ COMMUNITY CREDITS PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2). Scott:
-   *"just comment it out... it is just too much rn. we NEED to move faster. that
-   has no real value."* Parked DELIBERATELY, NOT ABANDONED — no ledger, no
-   scheduling, and a standing Friday commitment nobody wants. Decision and the
-   full call-site list: `src/lib/credits.ts`. ⚠ THE SEAM READ IS PARKED WITH IT,
-   not just the render — a fetch nobody displays is a request for nothing. */
   // const [credits, setCredits] = useState<CreditsSummary | null>(null);
   // useEffect(() => {
   //   let alive = true;
@@ -137,39 +47,9 @@ export function AppHeader() {
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
-      {/*
-        GREETING ONLY. No page name — see the note above; the rail's active
-        highlight carries location, and the top-right slot is Credits now.
-      */}
-      {/*
-        THE GREETING SHRINKS FIRST. It was `shrink-0`, which at 375px pushed the
-        four controls off the right edge — the row measured 482px against a
-        360px viewport and Home, Notifications and the avatar were simply not
-        reachable. It is the one thing here that is decoration rather than a
-        control, so it is the one thing allowed to truncate.
-      */}
-      {/*
-        ── ⚠⚠ THE CONSOLE SHOWS THE PAGE NAME; THE APP KEEPS THE GREETING ─────
-           (`P1-A1.5-E430` WS-1)
-
-        **SCOTT, 2026-09-12:** *"the page name is not in the upper left hand
-        corner… like medlinq."* And, asked how far it should reach, he chose
-        ADMIN ONLY — the console gets the page name, the buyer/seller app keeps
-        *"Good morning, {first}"*.
-
-        ⚠ THAT DISTINCTION IS THE WHOLE POINT OF ASKING. `AppShell` renders this
-        header for BOTH `/admin/layout.tsx` AND `(app)/layout.tsx`, so an
-        unscoped change would have retitled every logged-in buyer and seller
-        page too. Medlinq's pattern is a CONSOLE pattern.
-
-        ⚠ THE TITLE IS DERIVED, NOT PLUMBED. `pageTitleFor` already resolves a
-        pathname to its nav label (longest href wins, journey name over rail
-        verb) and its own docblock says *"If a header ever wants a derived title
-        again, it works on the day it is called."* This is that day — no page
-        passes a prop, so no admin page can forget to.
-        ⚠ IT RETURNS NULL FOR `/admin` BY DESIGN, so the dashboard falls back to
-        its own rail label rather than rendering blank.
-      */}
+      {}
+      {}
+      {}
       <p className="min-w-0 flex-1 truncate text-[16px] font-bold sm:flex-none sm:shrink">
         {isConsole
           ? consoleTitle

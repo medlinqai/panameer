@@ -3,15 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * The admin's half of a ticket: reply, status, priority, assign, resolution
- * (`P2-J1.1-E032` WS-4).
- *
- * ⚠ A CLIENT COMPONENT FOR THE ACTIONS ONLY — the ticket and its thread are read
- * on the server. ⚠ IT NEVER IMPORTS `lib/storage.ts`: that module is server-only
- * (service-role key) and its docblock forbids exactly this. The screenshot
- * arrives as an already-signed URL from the server component.
- */
 export function TicketAdminPanel({
   ticketId,
   status,

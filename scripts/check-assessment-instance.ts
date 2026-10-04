@@ -1,26 +1,3 @@
-/**
- * `check:assessment-instance` — the three defects this brief closed, pinned
- * (brief_assessment_instance_model WS4).
- *
- * All three are STRUCTURAL. None of them is a function returning a wrong value,
- * which is why `check:assessment` (43 arithmetic assertions) was green the whole
- * time these were true:
- *
- *   1  THE REPORT MUST NOT RE-SCORE. Every per-domain rung, dollar range and
- *      rank was recomputed on every render, so moving a judgement weight in
- *      `DOLLAR_WEIGHTS` silently rewrote every report ever sent.
- *   2  `company_id` MUST COME FROM `getCompanyBinding`. `Person.company_id` is
- *      the signup placeholder; reading it as a company binding is
- *      `P1-J1.2-E003`, and this is the second surface where it could happen.
- *   3  THE DOMAIN ROWS MUST BE IN THE ASSESSMENT'S TRANSACTION. A stored
- *      assessment whose report shows three of ten domains is worse than a
- *      submission the visitor retries, because nothing downstream can tell it
- *      is incomplete.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN — this file's own prose names every
- * forbidden token, and a scanner that read comments would fail on its own
- * documentation. The fix for that is always to weaken the scanner.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

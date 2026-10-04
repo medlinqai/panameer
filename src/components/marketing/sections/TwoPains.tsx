@@ -1,17 +1,6 @@
 import { TWO_PAINS } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
 
-/**
- * "The Two Hardest Parts of Going Independent — Solved" (seller §2).
- *
- * LEADS THE PAGE BECAUSE THE PAIN DOES. A consultant deciding whether to go
- * independent has exactly two fears — where the next job comes from, and the
- * ceiling on trading hours for money — and every other benefit on this page is
- * downstream of one of them. Naming both before offering anything is what earns
- * the rest of the scroll.
- *
- * Two cards, not four: the pair is the point, and a third would dilute it.
- */
 export function TwoPains() {
   return (
     <section id="pains" className="bg-[#f6f4fb] py-16">

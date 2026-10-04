@@ -1,17 +1,5 @@
 import { ADMIN_HOME, ADMIN_SETUP, ADMIN_NAV } from "@/lib/nav";
 
-/**
- * Recently-visited admin pages (WS3, the task panel's middle tab).
- *
- * localStorage, not the database: this is a per-browser convenience, it carries
- * nothing anyone else needs, and a table for it would be a write on every page
- * view for no gain. Medlinq's console does the same.
- *
- * Labels come from nav.ts rather than from the URL — the rail already names
- * every one of these pages, and re-deriving "Roles>Domains>Skills" from
- * "/admin/skill-catalog" is impossible anyway.
- */
-
 const KEY = "panameer.admin.recent";
 const MAX = 8;
 

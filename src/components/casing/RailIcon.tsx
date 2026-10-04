@@ -9,25 +9,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/**
- * Name → lucide glyph (WS1).
- *
- * An explicit map rather than a dynamic `lucide-react/icons/${name}` import:
- * the dynamic form defeats tree-shaking and pulls the whole ~1,500-icon set
- * into the bundle. Listing the ones we use keeps the cost to those.
- *
- * nav.ts stores the NAME, not the component, so that module stays plain data
- * and server code can read the nav without importing React components.
- */
 const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, SlidersHorizontal, GraduationCap, ClipboardList,
   ClipboardCheck, Package, FileSignature, Scale, CreditCard, MessageSquare,
   Users, ArrowLeftRight, FolderTree, Award, Building2, LifeBuoy, ShieldCheck,
   Home, Briefcase, BookOpen, Wallet, BarChart3, MessagesSquare, CalendarClock,
-  /* ⚠ `ListChecks` — ADMIN_NAV's Work Tracker (`P2-ALL-E752`). An icon named in
-     nav.ts but absent from this map renders NOTHING, silently: `RailIcon`
-     returns null on an unknown name. Adding the name without adding it here is
-     the whole failure mode this comment exists to stop. */
   Tag, Search, Bell, Percent, ListChecks,
 };
 

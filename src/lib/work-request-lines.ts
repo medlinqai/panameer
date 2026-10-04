@@ -2,10 +2,6 @@ import { TransactionType, WorkRequestLineStatus } from "@prisma/client";
 import type { WorkRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
-/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 deleted the bridge, and
-   the shape check now has a `TransactionType` door:
-   //   assertLineShape,
-   //   basisForTransactionType, */
 import {
   assertTransactionLineShape,
   pricedByQuantity,
@@ -14,41 +10,10 @@ import {
 } from "@/lib/transaction-spine";
 import { loadOwned, resolveBuyer, WorkRequestError } from "@/lib/work-request";
 
-/**
- * WORK-REQUEST LINES, AND THE COMPLETE GATE (`P1-J4-E392`).
- *
- * ── ⚠⚠ WHY LINES LIVE HERE AND NOT IN THE WIZARD ────────────────────────────
- *
- * **The nine-step wizard is a GUIDED FIRST REQUEST and it works.** Rebuilding it
- * into a line-oriented editor would be a 1,000-line rewrite of something that is
- * not broken, and it would make the common case — one role, one provider —
- * strictly worse: a person hiring one DBA would be asked to think in line items
- * before they have thought about the DBA.
- *
- * ⚠ SO THE WIZARD PRODUCES LINE 1 AND THIS FILE PRODUCES LINES 2..n.
- * `components/work/CreateWorkRequest.tsx` is untouched by this brief — its
- * `STEPS` array still reads role · domain · skills · specializations · dates ·
- * location · budget · description · review.
- *
- * ⚠⚠ AND LINE 1 IS MATERIALISED FROM THE HEADER, NOT TYPED AGAIN. The wizard
- * already collected the basis (`budget_type`), the price, the dates and the
- * description; asking for them a second time on the detail page would be the
- * same question twice with two possible answers. `ensureFirstLine` is idempotent
- * and the `@@unique([work_request_id, line_number])` is what makes it safe under
- * a race — the second writer loses on the constraint rather than creating a
- * duplicate line 1.
- */
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE COMPLETE GATE — ONE FUNCTION, READ BY THE PAGE **AND** THE API
-   ═════════════════════════════════════════════════════════════════════════ */
-
 export type LineForCompleteness = {
   line_number: number;
   description: string;
   provider_person_id?: string | null;
-  /** ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;` — moved to
-      Scott's three-value `TransactionType` (ruling 37b). */
   transaction_type: TransactionType;
   unit_price_cents?: number | null;
   amount_cents?: number | null;
@@ -64,43 +29,16 @@ export type LineGap = {
 export type Completeness = {
   complete: boolean;
   lineCount: number;
-  /** ⚠ ONLY the lines that are short of something, in line order. */
   gaps: LineGap[];
   /** Why it is not complete, for a UI that has room for one sentence. */
   reason: "COMPLETE" | "NO_LINES" | "LINES_INCOMPLETE";
 };
 
-/**
- * ⚠⚠ THE ONE FUNCTION. THE DETAIL PAGE AND THE API BOTH READ THIS, AND NEITHER
- * RE-DERIVES IT.
- *
- * **A disabled button with no reason is a defect this codebase already fixed
- * once.** `create-work/page.tsx` reads `missingIdentityForPerson` — the same
- * function `postWorkRequest` enforces with — precisely so the page and the route
- * cannot disagree about the rule OR about the words. This is that pattern again,
- * for a different gate.
- *
- * ⚠ SO IT RETURNS THE REASONS, NOT A BOOLEAN. A boolean can only produce a grey
- * button; `gaps` names the LINE and says whether it wants a provider, a price or
- * both, which is the difference between "Complete is disabled" and "line 2 has
- * no provider and line 3 has no price."
- *
- * ⚠⚠ AND IT AGREES WITH `E388`'s `workRequestIsComplete` BY CONSTRUCTION. That
- * function is the spine's rule and stays the authority on WHAT complete means —
- * every line assigned and priced, and never zero lines. This adds the reasons and
- * nothing else, and `check:hire` asserts the two agree across a truth table so a
- * later edit to either cannot drift them apart.
- */
 export function completenessFor(lines: LineForCompleteness[]): Completeness {
   const gaps: LineGap[] = [];
   for (const l of [...lines].sort((a, b) => a.line_number - b.line_number)) {
     const missing: ("provider" | "price")[] = [];
     if (!l.provider_person_id) missing.push("provider");
-    /* ⚠ THE PRICE A LINE NEEDS DEPENDS ON ITS BASIS — a RATE line is priced by
-       `unit_price_cents` and an AMOUNT line by `amount_cents`. Checking only one
-       column would mark every line of the other kind unpriced forever. */
-    /* ⚠⚠ THE PREDICATE IS THE SPINE'S, NOT RE-TYPED HERE. Both quantity shapes
-       carry a unit price; the amount shape carries a total (`E585`). */
     const priced = pricedByQuantity(l.transaction_type)
       ? l.unit_price_cents != null
       : l.amount_cents != null;

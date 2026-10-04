@@ -1,16 +1,3 @@
-/**
- * ── `check:task-panel` (`P2-ALL-E800`) ──────────────────────────────────────
- *
- * ⚠ **SCOTT'S D2 CALL:** the right-side panel becomes
- * `Tasks · Transactions · Configuration · Activity · Reports`, the two new tabs
- * open the admin menu's own groups, the gear leaves the band on DESKTOP and
- * stays on mobile, and every target is ≥44px.
- *
- * ⚠⚠⚠ **THE LOAD-BEARING ASSERTION IS §2: EVERY `ADMIN_NAV` GROUP IS REACHABLE
- * FROM EXACTLY ONE DRAWER.** Moving a menu out of the gear is the move that can
- * silently orphan a destination, which is load-bearing rule 5's whole subject
- * and the defect `E579` and `E694` WS-A both turned on.
- */
 import { readFileSync } from "fs";
 import { ADMIN_NAV } from "@/lib/nav";
 import { DRAWER_GROUPS, drawerGroups } from "@/lib/admin-drawers";

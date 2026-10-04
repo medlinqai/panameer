@@ -15,27 +15,6 @@ import {
 } from "@/lib/employers";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * Employers + their nested Projects (brief_U).
- *
- *   GET                                   → the viewer's employers
- *   POST { action: "createEmployer", employer }
- *        { action: "updateEmployer", employerId, employer }
- *        { action: "deleteEmployer", employerId }
- *        { action: "createProject",  employerId, project }
- *        { action: "updateProject",  projectId, project }
- *        { action: "deleteProject",  projectId }
- *
- * RECLASSIFY IN PLACE (`P1-J1.4-E296`):
- *        { action: "moveProject", projectId, employerId | null }
- *        { action: "employerToProject", employerId, targetEmployerId, clientName }
- *        { action: "projectToEmployer", projectId, name }
- *        { action: "projectLoss", projectId }   ← a READ, for the confirm dialog
- *
- * OWNER-SCOPED throughout: the lib resolves the profile from the session and
- * re-checks every client-supplied id against it, so a foreign id resolves to
- * nothing rather than to someone else's record.
- */
 export async function GET() {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;
@@ -66,21 +45,6 @@ export async function POST(request: Request) {
         await deleteEmployer(viewer, String(body.employerId));
         break;
       case "createProject": {
-        /*
-          ── ⚠⚠⚠ THREE STATES AT THE BOUNDARY, AND IT REFUSES (ruling 67/67c) ──
-
-          ⚠⚠ **`String(body.employerId)` WAS A LANDMINE:** an absent key became
-          the literal string `"undefined"`, which then failed the employer
-          lookup as *"Company not found"* — **a confusing error instead of an
-          honest refusal**, and with `employerId` now nullable it would have
-          turned `null` into `"null"` the same way.
-          ⚠ **`null` MEANS "DELIBERATELY NO COMPANY" AND `undefined` MEANS "THE
-          CALLER DID NOT SAY"** — the two must not collapse, which is exactly
-          ruling 67: *the test is presence in the payload, never the parsed
-          value.*
-          ⚠⚠⚠ **SO THE BOUNDARY REFUSES RATHER THAN RESOLVES** (`67c`, the
-          `replaceList()` shape): a throw here beats a null three layers down.
-        */
         const raw = body.employerId;
         if (raw === undefined) {
           return NextResponse.json(
@@ -106,14 +70,6 @@ export async function POST(request: Request) {
         await deleteProject(viewer, String(body.projectId));
         break;
 
-      /*
-        ── RECLASSIFY IN PLACE (`P1-J1.4-E296`) ─────────────────────────────────
-
-        ⚠ `employerId` MAY BE NULL on `moveProject` and that is meaningful, not a
-        missing argument: null DETACHES. So it is read with `?? null` rather than
-        `String(...)`, which would turn null into the string "null" and then fail
-        an ownership lookup for the wrong reason.
-      */
       case "moveProject":
         await moveProject(
           viewer,
@@ -127,8 +83,6 @@ export async function POST(request: Request) {
           targetEmployerId: String(body.targetEmployerId),
           clientName: String(body.clientName ?? ""),
         });
-        /* ⚠ THE COUNTS TRAVEL BACK so the UI can say what actually moved rather
-           than guessing. */
         return NextResponse.json({ employers: await listEmployers(viewer), ...r });
       }
 
@@ -139,8 +93,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ employers: await listEmployers(viewer), ...r });
       }
 
-      /* ⚠ A READ ON A POST, deliberately: it answers "what would I lose" for the
-         confirm dialog and must not be cacheable as a GET on a project id. */
       case "projectLoss":
         return NextResponse.json({ loss: await projectLoss(viewer, String(body.projectId)) });
       default:

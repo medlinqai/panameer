@@ -3,49 +3,9 @@
 import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 import { formatPhone, isoFor, phoneExpectation, validatePhone } from "@/lib/phone";
-/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
 import { ALL_COUNTRIES } from "@/lib/country";
 import { getCountryCallingCode } from "libphonenumber-js";
 
-/**
- * The phone input, masked and validated (E203).
- *
- * VALIDATES ON BLUR, NOT ON EVERY KEYSTROKE. "That's too short" is true of
- * every number for the first nine characters someone types, so showing it while
- * they type is scolding them for not having finished. The error appears when
- * they leave the field, and clears the moment they come back to fix it.
- *
- * The mask runs on CHANGE, though, because a format that only appears once the
- * number is complete makes the field look broken until the last keystroke.
- *
- * ── ⚠⚠ THE COUNTRY IS PART OF THE FIELD NOW (`P1-ALL-E417` WS-2a) ───────────
- *
- * **SCOTT, 2026-09-12, choosing this over a read-only label and over reordering
- * the steps:** *"Small country/dial-code select attached to the left of the
- * phone input… Pre-filled from the sign-up country; user can change it. The
- * phone value validates against the SELECTED country in that control, not the
- * sign-up country and not `draft.address.country`."*
- *
- * ⚠ THE DEFECT THIS CLOSES: on the requester journey the phone is step 1 and the
- * address is step 2, so this field used to validate against a country the screen
- * never showed and the person could not correct. A nine-digit Saudi mobile was
- * judged by the ten-digit US rule — because "United States" is the sign-up
- * form's default — and refused as *"too short"*, with nothing on screen saying
- * which country it had assumed. ⚠ THAT IS A HARD BLOCK: `Continue` reads
- * `isPhoneComplete`.
- *
- * ⚠ ONE COMPONENT, BOTH PATHWAYS, on Scott's instruction — the provider journey
- * gets the same control even though its address block sits on the same screen.
- * ⚠⚠ AND THE TWO COUNTRIES ARE INDEPENDENT: *"do not overwrite one from the
- * other."* The caller seeds this picker ONCE and never re-points it at the
- * address afterwards, because a consultant in Dubai with a British mobile is not
- * a data-entry error.
- *
- * ⚠ THE PICKER ALWAYS HOLDS A VALUE THE PERSON CAN SEE, which is what makes
- * "never validated against an unknown country" true rather than hopeful. When
- * the caller has nothing to seed it with it opens unset, and the field says so
- * instead of quietly falling through to a 7–15 digit band.
- */
 export function PhoneField({
   value,
   onChange,
@@ -56,10 +16,6 @@ export function PhoneField({
 }: {
   value: string;
   onChange: (next: string) => void;
-  /**
-   * ⚠ THE PHONE'S OWN COUNTRY — seeded by the caller from sign-up, then owned by
-   * this control. NOT the address country (`E417`).
-   */
   country: string | null | undefined;
   /** Omit to render the picker read-only — no caller does today. */
   onCountryChange?: (next: string) => void;
@@ -71,17 +27,6 @@ export function PhoneField({
   const showError = touched && !check.ok;
   const expectation = phoneExpectation(country);
 
-  /*
-    ⚠ DIAL CODES COME FROM THE LIBRARY, NOT A SECOND HAND-WRITTEN TABLE. The one
-    hand-written map in the codebase is display-name → ISO (`lib/phone.ts`);
-    every calling code is derived from that, so the two can never disagree.
-    ⚠ `"Other"` HAS NO DIAL CODE and is deliberately absent from this picker —
-    it is the escape hatch on the ADDRESS list, and a phone cannot be dialled in
-    "Other". Somebody there keeps the generic digit band.
-  */
-  /* ⚠⚠ ALL 245, BY CODE (`E729` WS-C). ⚠ `"Other"` was filtered out because it has no dial
-     code; the new list never contains it, so the filter is gone with it.
-     ⚠ SUPERSEDED (`E164`):  //   COUNTRIES.filter((c) => c !== "Other").map((c) => { */
   const options = ALL_COUNTRIES.map((c) => c.code).map((c) => {
     const iso = isoFor(c);
     let dial = "";

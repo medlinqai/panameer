@@ -35,19 +35,6 @@ type Result = {
   credential: { id: string; url: string } | null;
 };
 
-/**
- * The path test (WS5).
- *
- * One question per screen rather than a scrolling wall. The set is 5–20
- * questions and a learner has just finished a course, so the job is to keep
- * them moving; a long form invites skimming and abandonment, and the progress
- * dots make the length honest up front.
- *
- * The review after submitting is the point as much as the score. Every question
- * comes back with what they chose, what was right, and WHY — a test that only
- * returns a number teaches nothing, and this one is generated from the course
- * material, so the explanation is the last piece of teaching in the path.
- */
 export function TestRunner({
   pathId,
   pathSlug,

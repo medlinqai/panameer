@@ -5,10 +5,6 @@ import { setBuyerTier, OnboardingError } from "@/lib/onboarding";
 
 const schema = z.object({ tier: z.enum(["BASIC", "BUSINESS_PLUS"]) });
 
-/**
- * POST /api/onboarding/buyer/tier — set the subscription tier (no payment
- * collected). BUSINESS_PLUS records a trial start. Requires a verified email.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {

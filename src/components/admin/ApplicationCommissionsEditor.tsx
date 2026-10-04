@@ -14,21 +14,6 @@ export type CommissionRow = {
   note: string | null;
 };
 
-/**
- * ── ⚠⚠ EDITOR FOR THE PLATFORM'S THREE COMMISSIONS (`P2-A15-E696` WS-E) ─────
- *
- * ⚠ **MODELLED ON `TaxRateEditor` DELIBERATELY** — defaults on top, overrides
- * below, most specific wins, a note per row. The two pages sit side by side in
- * the admin menu and an admin should not have to learn two layouts.
- *
- * ⚠⚠⚠ **BUT ITS FOOTER SAYS THE OPPOSITE, AND THAT IS THE ONE THING A READER
- * MUST NOT CARRY ACROSS.** The tax page: *"a change here applies to reports that
- * have already been sent."* This page: **new transactions only.** ⚠ Same layout,
- * opposite lifetime — so the sentence is stated in full rather than assumed.
- *
- * ⚠ **PERCENTAGES IN THE UI, BASIS POINTS IN THE DATABASE**, the same boundary
- * `TaxRateEditor` documents: an admin types `9.99`, the row stores `999`.
- */
 const KIND_LABEL: Record<Kind, string> = {
   SOLE_SOURCED: "Sole-sourced",
   APP_SOURCED: "App-sourced",

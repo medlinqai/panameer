@@ -1,25 +1,5 @@
 import { sendingState } from "@/lib/email/sending-state";
 
-/**
- * ── ⚠⚠ MAIL HEALTH — PANAMEER ADMIN ONLY (`P2-J3-E522`) ────────────────────
- *
- * ⚠⚠ THE ANSWER TO A QUESTION THAT COST HOURS. On 2026-09-17 the only way to
- * learn whether production could send real mail was to read Resend's log and
- * infer the sending domain from a subject line. ⚠ Scott: *"That is the thing
- * that would have told me on 09-12 instead of 09-18."*
- *
- * ⚠ IT SITS ON /admin AND NOWHERE ELSE — the layout gates on `canAdminister`
- * and the edge proxy covers `/admin/:path*`, exactly like `ParserHealth`.
- *
- * ⚠⚠⚠ DOMAIN ONLY. NEVER the local part, never the whole `EMAIL_FROM` — it is a
- * Vercel SECRET and this is a screen people screenshot.
- *
- * ⚠ IT IS LOUD WHEN WRONG, ON PURPOSE (Scott's third ruling): RED when sending
- * is LIVE **and** the environment is PREVIEW. ⚠⚠ Previews share the ONE
- * database with production, so a preview branch can mail real members from code
- * nobody reviewed. That combination is nobody's intention and must not read as
- * a normal green line.
- */
 export function MailHealth() {
   const s = sendingState();
 
@@ -29,18 +9,6 @@ export function MailHealth() {
       ? "border-amber-300 bg-amber-50"
       : "border-line bg-bg-soft";
 
-  /* ⚠⚠⚠ THE CONTAINMENT IS THE HEADLINE WHEREVER IT APPLIES (`E607`).
-     ⚠ SCOTT: *"The card must state what the transport would do in the
-     environment it is actually running in."* An environment that refuses every
-     unnamed recipient must not read *"Real sending: LIVE"* — that sentence was
-     true of the sender and false about the reach, which is the exact confusion
-     `check:email`'s source-reading assertion created for two months.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const headline = s.captured
-     //     ? "Captured — no mail leaves this environment"
-     //     : s.sandbox
-     //       ? "Sandbox — only the Resend account owner can receive"
-     //       : `Real sending: LIVE from ${s.environment}`; */
   const headline = s.captured
     ? "Captured — no mail leaves this environment"
     : s.sandbox

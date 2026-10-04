@@ -1,30 +1,6 @@
 import { ProposalRequestStatus, LineBasis } from "@prisma/client";
 import { assertLineShape, type LineShape } from "@/lib/transaction-spine";
 
-/**
- * THE SOURCING DOCUMENTS' RULES (`P1-J4-E395`).
- *
- * invite → bid · ask for a test → sit it · ask for times → offer them · shortlist.
- *
- * ⚠⚠ THE RULES LIVE HERE, NOT IN THE ROUTES, so `check:sourcing` can test the
- * BEHAVIOUR rather than grep for a shape. Same arrangement as
- * `lib/transaction-spine.ts`, and for the same reason: every function below is
- * one of the brief's "assert" rules and each has a mutation test behind it.
- *
- * ⚠ THIS BRIEF IS MODELS, ASSERTIONS AND GATES. NO UI. Nothing here renders,
- * fetches or writes; the screens are their own brief.
- *
- * ── ⚠⚠ FLAGGED FOR THE SOURCING-SCREENS BRIEF, NOT BUILT HERE ───────────────
- *
- * When a provider bids $150 the bid screen MUST show BOTH numbers — *"you bid
- * $150, you receive $127.50"* at a 14.9% fee. **A provider who believes they
- * receive what they typed does not bid twice.** The arithmetic already exists and
- * is already asserted — `feeSplit()` in `lib/transaction-spine.ts`, which reuses
- * `rateBreakdown()` — so the screen has nothing to invent and nothing to
- * re-derive. ⚠ THE DECISION THAT IS UNSETTLED IS THE COPY AND THE PLACEMENT, not
- * the maths, and it is REPORTED rather than guessed at here.
- */
-
 export class SourcingError extends Error {
   constructor(message: string, public code: string) {
     super(message);
@@ -32,23 +8,6 @@ export class SourcingError extends Error {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-1 · THE BID
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ⚠⚠ THE PRICING SHAPE `ProposalLine` AND `WorkOrderLine` BOTH CARRY.
- *
- * **AWARDING IS A COPY, FIELD FOR FIELD.** If the two models drift, the award
- * stops being a copy and becomes a TRANSLATION — and a translation is where a
- * rate silently changes between what was bid and what was ordered. Nobody
- * reviewing the diff that adds a column to one model is thinking about the other.
- *
- * ⚠ SO THIS LIST IS THE CONTRACT, AND `check:sourcing` READS BOTH MODELS OUT OF
- * `schema.prisma` AND COMPARES THEM AGAINST IT — three-way, so adding a pricing
- * column to both models and forgetting this list also fails. The comparison is
- * mutation-tested in both directions.
- */
 export const PRICING_SHAPE_FIELDS = [
   "amount_cents",
   "basis",
@@ -64,13 +23,6 @@ export type ShapeDiff = {
   missingFromOrder: string[];
 };
 
-/**
- * Compare two field lists against the contract above.
- *
- * ⚠ SET COMPARISON, NOT ORDER — declaration order in a Prisma model is
- * cosmetic and a formatter may change it. What must not change is WHICH fields
- * are present.
- */
 export function pricingShapeDiff(proposalFields: string[], orderFields: string[]): ShapeDiff {
   const bid = new Set(proposalFields);
   const order = new Set(orderFields);

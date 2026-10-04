@@ -2,79 +2,6 @@ import type { Figure } from "@/lib/figure";
 import { PROVIDER_NAV } from "@/lib/nav";
 import { profileTabLabel } from "@/lib/profile-tabs";
 
-/**
- * ── ⚠⚠⚠ THE AREAS, DEFINED ONCE (`P2-A1.1-E730` WS-B/WS-C) ──────────────────────────────
- *
- * ⚠ **SCOTT, 2026-09-30: *"gauges by PROFILE, LEARN, CONNECT, HIRE, SHOP, ORDERS and
- * PAY"*, and the honeycomb keeps *"the fuller shape"* at nine cells.**
- *
- * ── ⚠⚠⚠ ONE ARRAY, TWO RENDERS — AND THAT IS THE WHOLE REASON THIS FILE EXISTS ──────────
- *
- * ⚠ The page draws the same areas **twice**: as hexagons in the header's picture and as
- * gauges below it. ⚠⚠ **TWO LISTS WOULD DISAGREE THE FIRST TIME ONE OF THEM CHANGED**
- * (`E585`), and they would disagree *in public, on one screen, side by side* — the worst
- * version of that defect, because a reader can see both numbers at once.
- * ⚠⚠⚠ **SO `usageAreas()` IS THE ONLY PLACE AN AREA IS NAMED, COUNTED OR GOALED**, and the
- * comb and the grid are two projections of its return value.
- *
- * ── ⚠⚠ THE EYEBROWS ARE READ FROM THE NAV, NEVER RETYPED ────────────────────────────────
- *
- * ⚠ **SCOTT: *"Read the labels from the band's own nav definition; don't retype them
- * (`E585`)."*** ⚠⚠ `navLabel()` below looks each one up by `href` in `PROVIDER_NAV`, so the
- * day a menu item is re-labelled this page follows — and a typo here cannot invent a menu
- * item that does not exist, because the fallback is reported rather than guessed.
- * ⚠⚠⚠ **`Hire` IS THE BUYER'S WORD FOR IT. Scott's *"HIRE"* is the `Work` menu item on the
- * seller side** (`nav.ts` — `label: "Work"`, `href: "/find-work"`), and that is the label
- * this page carries, because this page is the seller's.
- * ⚠ **`Earnings` LINKS TO `/orders`, NOT TO A PAY PAGE** — `E688` removed the `Get Paid`
- * menu item, so money lives under Orders and there is no `/payments` door in the band.
- *
- * ── ⚠⚠⚠ NO "JOURNEY" ON SCREEN ──────────────────────────────────────────────────────────
- *
- * ⚠ **SCOTT: *"users will not know what a journey is."*** ⚠⚠ The word is internal. Nothing
- * in this file is user-visible except `eyebrow`, `label` and the sub-labels, and none of
- * them says it.
- */
-
-/**
- * ── ⚠⚠⚠ THE GOALS. ONE FILE, SO SCOTT CAN CHANGE THEM IN ONE EDIT ───────────────────────
- *
- * ⚠ **SCOTT'S DECISION 3: *"A gauge's full scale is a stated goal, shown as `Goal: N` on
- * the card, not an unlabelled maximum."*** ⚠⚠ **AN UNLABELLED MAXIMUM IS A CLAIM NOBODY
- * MADE** — a needle at a quarter of the dial implies somebody decided what "full" means,
- * and if that number is a layout convenience then the gauge is reporting a judgement the
- * product never formed.
- * ⚠⚠⚠ **THESE STARTING VALUES ARE THE MOCKUP'S PLACEHOLDERS AND ARE LABELLED AS SUCH ON
- * SCREEN BY THE WORD `Goal`.** They are not measured, not derived from traffic, and not
- * per-member — changing one is a one-line diff here and nowhere else.
- * ⚠ **`health` HAS NO ENTRY ON PURPOSE** — its scale is the number of checks that exist,
- * which is a real total rather than an aspiration, so inventing a goal for it would be the
- * fabricated-maximum defect this block exists to prevent.
- */
-/*
-  ── ⚠⚠⚠ TWO SUB-LABELS SHORTENED SO THEY DO NOT WRAP (`P2-A1.1-E745`, item 4) ─
-
-  ⚠ **SCOTT, 2026-10-02: *"No label wraps mid-phrase at 1280 or 390; shorten in
-  `getUsageStats()`, don't shrink the font."***
-
-  ⚠⚠ **THE BRIEF NAMES THE WRONG FILE AND IT IS WORTH SAYING SO:** `usage-stats.ts`
-  computes the FIGURES; the LABELS are here, in `usage-areas.ts`. Shortening them
-  in `getUsageStats()` would have been impossible.
-
-  ⚠⚠⚠ **MEASURED AFTER THE LAYOUT CHANGE, NOT BEFORE — AND THE LIST GOT SHORTER.**
-  At 390 the column is now full width, so `Shown in Search` and `Invoices Open`
-  stopped wrapping on their own. Only **two** still wrapped at 1280, where four
-  columns leave a sub-label about 14 characters:
-    · `Courses Completed` (17) → `Courses Done` — and it now matches the LEARN
-      gauge's own headline, `Lessons Done`.
-    · `Payouts Pending` (15) → `Payouts` — ⚠⚠ **THE STATE WORD IS DROPPED, NOT
-      REPLACED.** `Payouts Due` and `Payouts Owed` both read as an obligation
-      Panameer has not incurred, and this figure is `NOT COUNTED` anyway: nothing
-      creates a `Payment` row. **A shorter label must not become a money claim.**
-  ⚠ The caption sentences under each gauge ("0 profile views", "4 of 4 checks
-  passing") still wrap and are LEFT ALONE — they are sentences, not labels, and
-  Scott's rule is about a phrase breaking in the middle.
-*/
 export const USAGE_GOALS = {
   profile: 50,
   learn: 20,
@@ -82,28 +9,9 @@ export const USAGE_GOALS = {
   work: 10,
   shop: 10,
   orders: 10,
-  /** ⚠ Dollars, not cents — it is a goal a person reads, not a stored amount. */
   earnings: 10_000,
 } as const;
 
-/**
- * ── ⚠⚠⚠ THE LEVEL — ONE FUNCTION, BOTH SURFACES (`P2-A1.1-E731`) ────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-01: *"each area's level comes from its value against its goal in the
- * one goals config. None (0) · Low (under 1/3 of goal) · Medium (1/3 to 2/3) · Strong (2/3
- * or more). One function decides the level for both (`E585`)."***
- *
- * ⚠⚠ **THE COMB AND THE GAUGE CARD BOTH CALL THIS.** A hexagon tinted from one rule and a
- * word printed from another would disagree the first time a boundary moved — and they would
- * disagree **on one screen**, with the cell saying `Strong` by colour while the card beside
- * it said `Medium` in words.
- *
- * ⚠⚠⚠ **`null` IS NOT A LEVEL, AND THAT IS THE COUNTING RULE AGAIN.** An uncounted figure
- * has no level and gets none — ⚠ **IT IS NOT `"none"`**. *"None"* means **measured zero**; a
- * dash means **nobody can measure it**, and collapsing the two is exactly what counting
- * rule 2 forbids. ⚠ A figure with **no goal** also returns `null`: a level is a position on
- * a scale, so without a scale there is no position.
- */
 export type UsageLevel = "none" | "low" | "medium" | "strong";
 
 export const USAGE_LEVEL_LABEL: Record<UsageLevel, string> = {
@@ -113,7 +21,6 @@ export const USAGE_LEVEL_LABEL: Record<UsageLevel, string> = {
   strong: "Strong",
 };
 
-/** ⚠ The order the key under the comb reads, pale to solid. */
 export const USAGE_LEVELS: UsageLevel[] = ["none", "low", "medium", "strong"];
 
 export function levelFor(figure: Figure, goal: number | null): UsageLevel | null {
@@ -121,10 +28,6 @@ export function levelFor(figure: Figure, goal: number | null): UsageLevel | null
   if (goal == null || goal <= 0) return null;
   if (figure <= 0) return "none";
   const share = figure / goal;
-  /* ⚠ `>=` ON BOTH BOUNDARIES, so a value exactly on a third is `medium` and exactly on
-     two thirds is `strong`. Scott's words are *"1/3 to 2/3"* for medium and *"2/3 or
-     more"* for strong, which fixes the upper edge; the lower one is set the same way so a
-     boundary never falls between two bands. */
   if (share >= 2 / 3) return "strong";
   if (share >= 1 / 3) return "medium";
   return "low";
@@ -134,43 +37,24 @@ export type UsageSub = { label: string; figure: Figure };
 
 export type UsageArea = {
   key: string;
-  /** ⚠ The menu label, looked up from the nav — never typed here. */
   eyebrow: string;
-  /** ⚠ What the gauge's needle measures, e.g. `"Colleagues"`. */
   label: string;
   figure: Figure;
-  /**
-   * ⚠⚠ The gauge's full scale. ⚠⚠⚠ `null` MEANS THERE IS NO HONEST SCALE, and a gauge with
-   * no scale draws no needle — see `Gauge.tsx`. It is not the same as a goal of zero.
-   */
   goal: number | null;
-  /** ⚠ `true` renders the figure as money. The ARC does not change. */
   money?: boolean;
   subs: [UsageSub, UsageSub];
   href: string;
-  /** ⚠ The word after `Go to` — the destination's own menu label. */
   go: string;
-  /** ⚠ The hover line. One sentence, derived, never canned. */
   tip: string;
-  /** ⚠ What the headline figure counts, for the derived busiest/quietest line. */
   counts: string;
 };
 
-/**
- * ⚠⚠ THE LABEL FOR A ROUTE, FROM THE NAV ITSELF.
- *
- * ⚠⚠⚠ **THE FALLBACK IS THE HREF, NOT AN INVENTED WORD** — `profileTabLabel`'s rule, and
- * for its reason: *"a wrong label is worse than an ugly one, and an href at least cannot
- * lie about which page this is."* ⚠ A missing nav item then shows as `/find-work` on screen,
- * which is visibly wrong rather than quietly wrong.
- */
 function navLabel(href: string): string {
   return PROVIDER_NAV.find((n) => n.href === href)?.label ?? href;
 }
 
 const isNum = (f: Figure): f is number => typeof f === "number";
 
-/** ⚠ `3 colleagues` / `1 colleague`. The figure is already formatted by the caller. */
 function plural(n: number, one: string, many: string): string {
   return `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
 }

@@ -3,15 +3,6 @@ import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN → DATA HEALTH (`P2-ALL-E814`).
- *
- * Scott's trigger: a reset deleted 203 users and nothing in the app showed it.
- * This is the page that would have.
- *
- * Admin-only by the `/admin` layout's `guardPage` — `route-access.ts` claims the
- * whole prefix, so this route needs no entry of its own (load-bearing rule 5).
- */
 export default async function DataHealthPage() {
   const rows = await dataHealth();
   const haveHistory = rows.some((r) => r.change !== null);
@@ -26,8 +17,6 @@ export default async function DataHealthPage() {
       </p>
 
       {!haveHistory && (
-        /* A dash needs its reason (the 2026-09-23 counting rule): no snapshot
-           has been taken yet, which is not the same as "nothing changed". */
         <p className="mt-4 rounded-brand border border-line bg-white p-3 text-[13px] text-ink-2">
           No snapshot has been taken yet, so there is nothing to compare against. The change column
           fills in from the next daily snapshot.
@@ -54,8 +43,7 @@ export default async function DataHealthPage() {
               <tr key={r.table} className="border-b border-line/60">
                 <td className="px-3 py-2 font-semibold text-ink">{r.table}</td>
                 <td className="px-3 py-2 tabular-nums text-ink">{r.total}</td>
-                {/* A table with no test flag shows a dash AND its reason in the
-                    title — not a zero, which would claim a measurement. */}
+                {}
                 <td className="px-3 py-2 tabular-nums text-ink-2">
                   {r.real === null ? <span title="This table records no test flag">—</span> : r.real}
                 </td>

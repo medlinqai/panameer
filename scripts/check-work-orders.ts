@@ -5,17 +5,6 @@ import { hire, acceptPurchaseOrder, declineWorkOrder } from "@/lib/work-orders";
 import { acceptOrder, availableActions, bothPartiesAccepted, canAcceptNow, activationMessage } from "@/lib/orders";
 import { getStatistics } from "@/lib/statistics";
 
-/**
- * ── ⚠⚠⚠ `check:work-orders` (`P2-A8-E621` WS-D) ─────────────────────────
- *
- * ⚠ THE STOP GATE: *"a work order created from each route; the accept/release
- * walk; what `orders.ts` got wrong; the dash→count list."*
- *
- * ⚠⚠ RULING 43 AND RULING 44 BOTH LAND HERE, and both are asserted against real
- * rows rather than against source text alone: **two acceptances and an
- * auto-release**, and **all three transaction kinds surviving the copy from
- * requisition to order.**
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -38,9 +27,6 @@ const TAG = "E621 work order probe";
 const V = (userId: string) => ({ userId }) as never;
 const RATE = 18_000;
 
-/* ⚠⚠⚠ ALL THREE KINDS, AND THE FIXTURE MUST DISTINGUISH THEM (ruling 44, `E587`).
-   ⚠ Each carries DIFFERENT numbers as well as a different type, so a line landing
-   in the wrong slot cannot agree with the one it displaced. */
 const KINDS = [
   {
     transaction_type: "SERVICE_BY_QTY" as const,

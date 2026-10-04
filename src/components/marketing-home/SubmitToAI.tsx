@@ -1,69 +1,6 @@
 import { P2P_DOMAINS as CAPABILITY_DOMAINS } from "@/lib/capability-domains";
 
-/**
- * STEP 3's GRAPHIC — four processes converge on the AIP, two outputs diverge.
- *
- * A COMPONENT, NOT AN IMAGE. The mockup is HTML/CSS and it stays that way: a PNG
- * would not scale, would not theme, and would freeze the four process names into
- * a bitmap when they are supposed to come from data.
- *
- * ── ⚠ THE LEFT COLUMN IS CAPABILITY DOMAINS, NOT PROCESSES (E143) ────────────
- *
- * It drew from `PROCESSES` when this shipped at 03b4db7, which contradicted the
- * funnel the spine had just walked the reader through: by Step 3 they have
- * ALREADY picked one process back in Step 1. What converges on the AIP is the
- * capability domains INSIDE that process — that is what the assessment asks about
- * and what the AIP scores.
- *
- * ⚠ THE TEN COME FROM `lib/capability-domains.ts`, NOT the question bank.
- * `P2P_DOMAINS` is exported from two files: this one has ten with `name`/`id` and
- * is the list already advertised on `/`; `lib/assessment/questions-p2p.ts` has the
- * EIGHT that are actually assessed, with different wording. This is marketing art,
- * so it takes the ten — aliased on import because the two share a name.
- *
- * Mapped, never hard-coded: an eleventh domain appears here with no edit.
- *
- * ── ⚠ THE CONNECTOR GEOMETRY IS THE HARD PART. READ THIS BEFORE CHANGING IT ──
- *
- * The mockup draws one stretched SVG across the whole funnel at a fixed
- * `viewBox="0 0 1136 300"` with `preserveAspectRatio="none"`, and its paths end
- * at x=400 / 636 / 800. Those numbers are wrong at the mockup's OWN width: with
- * `230px 1fr 240px 1fr 300px` inside 1136px each gap is 183px, so the real card
- * edges are at 413 / 653 / 836 — the curves miss by 13, 17 and 36px. At 1036px
- * (a 1100px viewport) they miss by more, because three of the five columns are
- * fixed pixels and the two flexible ones absorb every change. A single stretched
- * viewBox can only ever be correct at one width.
- *
- * So there is ONE SVG PER GAP instead, each living in its own grid cell:
- *
- *   x = 0   is exactly the left card's right edge
- *   x = 100 is exactly the right card's left edge
- *
- * because the cell IS the gap. That is exact at every width by construction,
- * with no measurement and no magic numbers, and it cannot drift when the column
- * widths change.
- *
- * y is 1:1 because the funnel's height is pinned to `FUNNEL_H` below, which is
- * computed from the same constants the CSS uses. Both axes are therefore derived
- * from one place; if you change `PROC_H`, `PROC_GAP`, `OUT_H` or `OUT_GAP`, change
- * them HERE and the curves follow.
- *
- * ⚠ ARROWHEADS ARE HTML, NOT SVG PATHS. `preserveAspectRatio="none"` stretches
- * the x axis (1.83x at 1136px, 1.33x at 1036px), which would squash a chevron
- * drawn in viewBox units into a different shape at every width. They are
- * absolutely-positioned spans sized in pixels instead, so they are identical
- * everywhere.
- */
-
 /* ── the geometry constants, shared with home.css ─────────────────────────── */
-/**
- * ⚠ EVERY ROW HEIGHT HERE IS EXPLICIT, AND THAT IS WHAT MAKES THE CURVES
- * DERIVABLE. The chip stack is rendered with an explicit `grid-template-rows`
- * built from these numbers, so a two-line domain name cannot silently make one
- * chip taller than its neighbours and push every connector off its target. If a
- * name needs more room, raise `CHIP_H` here — the rows, the stack height and all
- * ten curves move together.
- */
 const CHIP_H = 34;
 const CHIP_GAP = 7;
 /** The muted "…capability domains" label above the stack, as its own row. */
@@ -78,13 +15,6 @@ const OUTS_H = 2 * OUT_H + OUT_GAP;
 const centreOf = (i: number, n: number, h: number, gap: number, funnelH: number) =>
   (funnelH - (n * h + (n - 1) * gap)) / 2 + i * (h + gap) + h / 2;
 
-/**
- * A smooth S from one card edge to the other. Control points sit at x=50 — the
- * midpoint of the gap — so the curve leaves and arrives horizontally, which is
- * what keeps it reading as a flow line rather than a diagonal. Because x is
- * stretched, the S gets gently wider on a wide screen and tighter on a narrow
- * one; the endpoints do not move.
- */
 const s = (y1: number, y2: number) => `M0 ${y1} C50 ${y1}, 50 ${y2}, 100 ${y2}`;
 
 function Arrow({ top }: { top: number }) {

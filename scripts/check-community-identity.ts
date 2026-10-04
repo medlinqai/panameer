@@ -1,33 +1,3 @@
-/**
- * `check:community-identity` — you post as a person, not an inbox
- * (`P1-ALL-E033` WS-5).
- *
- * ⚠ A SIBLING OF `check:community`, NOT AN EXTENSION OF IT. That harness guards
- * three unrelated things (the "messages" ban, the single `marked_helpful_at`
- * write path, the absent-not-zeroed profile block) and every one of its 60-odd
- * assertions is about the SIGNAL. Folding a profile-completeness gate into it
- * would have meant editing a green file to make room, and the standing rule is
- * that an existing assertion is never touched to accommodate new work. Two
- * files, two names, two exit codes.
- *
- *   1  `createThread` AND `createPost` BOTH CALL THE PREDICATE, and neither
- *      writes before it. A static scan, because the failure is a future edit
- *      that adds a third write path and forgets.
- *   2  ⚠⚠ NO READ PATH IS GATED. This is the assertion that protects the open
- *      board. A community nobody can read is a community nobody joins, and the
- *      easiest way to break that is to "tidy" the check up into a shared helper
- *      that the list and thread reads also call.
- *   3  `markHelpful` / `unmarkHelpful` ARE NOT GATED. Marking an answer helpful
- *      is a READER's act and it is the one signal the whole board runs on.
- *   4  THE PREDICATE LIVES IN EXACTLY ONE FILE, and the work-request post path
- *      uses that same one. ⚠ THIS IS WS-0's WHOLE POINT: two copies drift, and
- *      the day they disagree nobody can say which is the rule.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()`. This file and the files it audits name the forbidden tokens in
- * their own prose; a scanner that read prose would fail on its own
- * documentation, and the fix for that is always to weaken the scanner.
- */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -36,8 +6,6 @@ import {
   WORK_REQUEST_BAR,
   missingIdentity,
   subjectFromPerson,
-  /* ⚠ `type IdentityField` LEFT WITH THE COMPANY ASSERTION (`E418`) — its only
-     use was casting the three company field names it checked for. */
 } from "@/lib/identity-bar";
 import { COMMUNITY_REQUIREMENTS } from "@/lib/community-identity";
 import { missingIdentityForPost, POST_REQUIREMENTS } from "@/lib/work-request-identity";
@@ -49,7 +17,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* ⚠ VERBATIM FROM `scripts/check-community.ts`. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
@@ -67,20 +34,6 @@ function walk(dir: string, out: string[] = []): string[] {
 const BAR = join("src", "lib", "identity-bar.ts");
 const COMM = join("src", "lib", "community-identity.ts");
 const FORUMS = join("src", "lib", "forums.ts");
-/*
-  ── ⚠⚠⚠ THIS IS THE **FORUMS** API ROUTE, AND IT DID NOT MOVE (`P2-A3-E619`) ─
-
-  ⚠ `E619` WS-C renamed the PAGE route `/community/forums` → `/community/groups`
-  and left the API tree alone. ⚠⚠ A BLIND REPLACE IN THAT RENAME REPOINTED THIS
-  LINE ANYWAY — the path array `"community", "forums",` looks identical whether
-  it names a page or an endpoint — and this gate then read
-  `api/community/groups/route.ts`, **which also exists** (it is join/leave) and
-  carries neither `e.code` nor `fields`.
-  ⚠⚠⚠ SO THE GATE WENT RED SAYING *"the route stopped forwarding that code"*,
-  WHICH WAS FALSE. The route was untouched; the gate was pointed somewhere else.
-  ⚠ Same shape as the `nav.ts` mistake in the same workstream: two
-  byte-identical strings that mean different things.
-*/
 const ROUTE = join("src", "app", "api", "community", "forums", "route.ts");
 const COMPOSER = join("src", "components", "community", "ForumComposer.tsx");
 const WRI = join("src", "lib", "work-request-identity.ts");

@@ -2,16 +2,6 @@ import { randomInt, createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendSms, toE164, maskPhone } from "@/lib/sms";
 
-/**
- * Phone verification via SMS (brief_P / E019) — replaces the stub left by
- * brief_E.
- *
- * Security shape is deliberately the same as email verification (brief_E):
- * we store only a SHA-256 HASH of the 6-digit code, issuing a new code
- * invalidates prior unconsumed ones, codes expire, and wrong guesses are
- * capped so a 6-digit space can't be brute-forced.
- */
-
 const CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
 /** Minimum gap between sends, so "Send Code" can't be used to spam a number. */
@@ -37,11 +27,6 @@ export class PhoneVerificationError extends Error {
 const hashCode = (code: string) =>
   createHash("sha256").update(code).digest("hex");
 
-/**
- * Issue a code to `rawPhone` for this person and send it.
- * Stores the phone on the Person and CLEARS any prior verification, so
- * `phone_verified_at` always describes the number currently on file.
- */
 export async function startPhoneVerification(
   personId: string,
   rawPhone: string

@@ -1,64 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠ WHAT A PICKER IS ALLOWED TO OFFER (`P1-A1.5-E481`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   ⚠ A RETIRED ROW STAYS IN THE DATABASE AND KEEPS ITS ID, so every provider who
-   already picked it keeps their selection. `RETIRED` is not a delete — that is
-   the whole reason "inactivate" is always safe and "delete" is not.
-
-   ⚠⚠ BUT IT MUST NEVER BE OFFERED AGAIN. The brief is blunt about the failure
-   mode: *"A picker you miss keeps offering a retired row, which is the whole
-   point of this brief, silently undone."*
-
-   ⚠⚠ SO ACTIVE IS THE DEFAULT AND RETIRED IS OPT-IN — the polarity matters. A
-   caller that forgets to think about `status` gets the SAFE answer; only the
-   ADMIN tree, which must show retired rows so an admin can bring them back,
-   asks for them explicitly. A default of "everything" would mean every future
-   picker is one forgotten filter away from re-offering a retired row.
-
-   ⚠ GREP `OFFERABLE` TO AUDIT THE COVERAGE — it is one exported constant rather
-   than a `status: "ACTIVE"` literal repeated at thirteen call sites, so the
-   surface is countable.
-*/
 export const OFFERABLE = {
   status: "ACTIVE",
-  /*
-    HIDDEN SKILLS ARE NOT OFFERED (`P2-A1.5-E820`). A new admin-added skill
-    starts hidden so it cannot reach registration or search before Scott has
-    looked at it. It goes HERE, in the one predicate thirteen call sites share,
-    rather than at each of them — the same reason `E541` put the catalog scope
-    here. ⚠ Offer side only: a member who already claimed a skill keeps it
-    (`E517`).
-  */
   visible_to_members: true,
 } as const;
 
-/**
- * ── ⚠⚠ WHICH CATALOG A WRITE BELONGS TO (`P1-A1.5-E483`) ────────────────────
- *
- * ⚠⚠ THERE ARE TWO `ServiceCatalog` ROWS IN THE DATABASE, and until now every
- * write path picked between them with `findFirst()` and NO `where` — which
- * returns whichever row Postgres hands back first.
- *
- *   `PANAMEER_V1`  the real seeded catalog — 27 specializations, every skill
- *   `ERP`          a legacy row holding ONE specialization
- *
- * ⚠ THE DAMAGE WAS REAL AND MEASURED, not hypothetical. A provider typed
- * `Workday` on the fly, `onboarding.ts` resolved the ERP catalog, and the row
- * landed where the seed never looks — invisible to `getSpecializations()` and
- * immune to every catalog pass. ⚠⚠ WHEN `E483` ADDED `Workday` TO THE SEED, THE
- * `catalog_id_name` UPSERT DID NOT MATCH IT (different catalog), so a SECOND
- * Workday was created and two providers' selections were stranded on the first.
- *
- * ⚠ `@@unique([catalog_id, name])` IS WHY THIS HID FOR SO LONG — two rows with
- * the same name are perfectly legal as long as they sit in different catalogs.
- *
- * ⚠ SO EVERY WRITE PATH RESOLVES THE CATALOG BY CODE NOW. `seed-taxonomy.ts`
- * upserts `where: { code: CATALOG.code }`, so this is the seed's own rule,
- * applied to the paths that were guessing.
- */
 export const CATALOG_CODE = "PANAMEER_V1";
 
 export async function activeCatalogId(): Promise<string | null> {
@@ -66,49 +12,14 @@ export async function activeCatalogId(): Promise<string | null> {
     where: { code: CATALOG_CODE },
     select: { id: true },
   });
-  /* ⚠ FALL BACK RATHER THAN THROW: a fresh database that has never been seeded
-     has no PANAMEER_V1 row, and an onboarding step must not 500 because of it. */
   if (row) return row.id;
   const any = await prisma.serviceCatalog.findFirst({ select: { id: true } });
   return any?.id ?? null;
 }
 
-/**
- * ── ⚠⚠ TWO DIFFERENT QUESTIONS, TWO DIFFERENT FLAGS (`P2-J1.4-E541`) ────────
- *
- * ⚠ `includeRetired` — "show me rows an admin retired". Admin surfaces pass it.
- * ⚠⚠ `includeAllCatalogs` — "show me rows from the LEGACY `ERP` catalog too".
- *
- * ⚠ SCOTT, 2026-09-16: *"do NOT overload `includeRetired`. 'Show retired' and
- * 'show other catalogs' are different questions."* ⚠⚠ AND THE REASON IS
- * CONCRETE: `admin/skill-catalog` and `admin/specializations` are where `E540`'s
- * re-point repair gets done, so those two pages MUST keep seeing the 23 legacy
- * skills. One flag would have tied that visibility to a status decision that has
- * nothing to do with it.
- */
 export type CatalogScope = { includeRetired?: boolean; includeAllCatalogs?: boolean };
 const scope = (o?: CatalogScope) => (o?.includeRetired ? {} : OFFERABLE);
 
-/**
- * ── ⚠⚠ WHAT AN OFFER-SIDE READ MAY SHOW (`P2-J1.4-E541`) ───────────────────
- *
- * ⚠ THE DEFECT THIS CLOSES: `scope()` is `OFFERABLE` — `{ status: "ACTIVE" }`
- * AND NOTHING ELSE. It carries NO catalog scope, so six reads in this file
- * returned rows from BOTH `PANAMEER_V1` (687 skills) and the legacy `ERP` (23).
- * ⚠⚠ `getSkillsForRoleTypes` FEEDS THE SKILLS STEP'S PICKER, so a provider could
- * be OFFERED a legacy skill and select it — measured 2026-09-16 as **16
- * `SELF_ADDED` `provider_skill` rows across 7 profiles** pointing at `ERP`.
- * ⚠ `E514` scoped the IMPORT side; this is the OFFER side, and it was the half
- * still creating rows.
- *
- * ⚠⚠ ASYNC BECAUSE THE ACTIVE CATALOG IS A LOOKUP, NOT A CONSTANT. `scope()`
- * stays synchronous and is still the status half — this COMPOSES it rather than
- * replacing it, so `OFFERABLE` remains the one greppable status surface.
- * ⚠ BY CODE, NEVER `findFirst()` — `activeCatalogId()` above, the same call
- * `E483`'s six write paths and `E514`'s three import reads use.
- * ⚠ A `null` id (a never-seeded database) DEGRADES TO THE OLD BEHAVIOUR rather
- * than matching nothing: an empty picker is a worse failure than a wide one.
- */
 async function offerScope(o?: CatalogScope) {
   const base = scope(o);
   if (o?.includeAllCatalogs) return base;
@@ -116,16 +27,6 @@ async function offerScope(o?: CatalogScope) {
   return id ? { ...base, catalog_id: id } : base;
 }
 
-/**
- * Role types (global lookup) — the "one main category" a provider picks.
- *
- * ORDERED BY `sort_order`, NOT ALPHABETICALLY. This ordered by `display` until
- * E229 gave every role the "X-Specific Roles" label, at which point alphabetical
- * put "AI-Specialist Roles" first here while `getProviderFieldTree` — which has
- * always used sort_order — put it last. Two role pickers, two different orders,
- * one catalog. Both read the seeded order now: Application-Specific first (E013,
- * ERP leads), AI-Specialist last.
- */
 export async function getRoleTypes() {
   return prisma.roleType.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
@@ -133,23 +34,6 @@ export async function getRoleTypes() {
   });
 }
 
-/**
- * The provider field picker (brief_R / E013) — the start of the service
- * catalog, driven by the AUTHORITATIVE Service Catalog.
- *
- * The catalog is three levels — **Role → Domain → Skill** — and a Skill belongs
- * to a (Role, Domain) PAIR, so the picker returns the tree rather than a flat
- * list. The same domain name appears under more than one role (Finance &
- * Accounting is both Application-Specific and Operations-Specific) with
- * completely different skills, which is exactly why the pair, not the domain
- * alone, is what a provider chooses.
- *
- * Ordering is `sort_order` then name, keeping the ERP-heavy areas prominent:
- * Application-Specific first, Finance & Accounting first within it.
- *
- * A (role, domain) pair with no skills would dead-end the next step, so only
- * pairs that actually have skills are returned.
- */
 export async function getProviderFieldTree(opts?: CatalogScope) {
   const roles = await prisma.roleType.findMany({
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
@@ -157,8 +41,6 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
   });
 
   // One grouped count instead of a query per role.
-  /* ⚠ `E481` — a domain whose only skills are RETIRED must not appear in the
-     picker at all, so the filter belongs on the COUNT, not just on the leaves. */
   const grouped = await prisma.skill.groupBy({
     by: ["role_type_id", "pillar_id"],
     where: await offerScope(opts),
@@ -166,14 +48,6 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
   });
 
   const pillars = await prisma.pillar.findMany({
-    /*
-      A DOMAIN HIDDEN FROM MEMBERS IS NOT OFFERED (`P2-A1.5-E817`). A new domain
-      starts hidden so adding one in admin cannot quietly change registration or
-      search; switching it on is a deliberate second click.
-      This is an OFFER-side read, so the filter belongs here — the same rule
-      `E517` settled: filter what is OFFERED, never what is HELD. A profile that
-      already claims a skill in a hidden domain keeps it.
-    */
     where: { visible_to_members: true },
     orderBy: [{ sort_order: "asc" }, { name: "asc" }],
     select: { id: true, code: true, name: true },
@@ -209,12 +83,6 @@ export async function getProviderFieldTree(opts?: CatalogScope) {
     .filter((r) => r.domains.length > 0);
 }
 
-/**
- * Skills within one FIELD (E014) — the (Role, Domain) pair chosen at the
- * previous step. Both keys are required: filtering on the domain alone would
- * mix Application-Specific "Payables" with Operations-Specific "Payables
- * Specialist" under the same Finance & Accounting heading.
- */
 export async function getSkillsForField(
   roleTypeId: string,
   pillarId: string,
@@ -232,8 +100,6 @@ export async function getSkillsForField(
   });
 }
 
-/** Skills across a whole domain, regardless of role. Kept for Settings, which
- *  predates the pair model and scopes by RoleType. */
 export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) {
   return prisma.skill.findMany({
     where: { pillar_id: pillarId, ...(await offerScope(opts)) },
@@ -247,29 +113,10 @@ export async function getSkillsForPillar(pillarId: string, opts?: CatalogScope) 
   });
 }
 
-/**
- * The Specialization vocabulary (brief_R) — a cross-cutting axis, grouped for
- * the picker into products, methodologies and industries.
- */
 export async function getSpecializations(opts?: CatalogScope) {
   const rows = await prisma.specialization.findMany({
     where: await offerScope(opts),
-    /*
-      ── ⚠ BASELINE FIRST, PROVIDER-TYPED ROWS AFTER (`P1-A1.5-E470b`) ────────
-
-      ⚠ SUPERSEDED, quoted not deleted: `orderBy: [{ sort_order: "asc" }, { name: "asc" }]`.
-      ⚠ `getApplications()` BELOW ALREADY DOES EXACTLY THIS — `[{ is_custom:
-      "asc" }, { name: "asc" }]` — so this is the file's own pattern applied to
-      the one function that did not use it, not a new idea.
-    */
     orderBy: [{ is_custom: "asc" }, { sort_order: "asc" }, { name: "asc" }],
-    /*
-      ⚠⚠ `is_custom` WAS MISSING FROM THIS SELECT, so the page could not render
-      it even if it wanted to. The schema's own contract for the flag is
-      *"FLAGGED FOR ADMIN REVIEW so recurring entries can be promoted to
-      baseline later"* — and the review it exists for could not happen, because
-      nothing surfaced it.
-    */
     select: { id: true, name: true, kind: true, is_custom: true, status: true, origin: true },
   });
 
@@ -284,17 +131,6 @@ export async function getSpecializations(opts?: CatalogScope) {
   return groups.filter((g) => g.items.length > 0);
 }
 
-/**
- * The tools / applications vocabulary for the project modal
- * (brief_project_model_v2).
- *
- * Flat and deduped BY NAME, unlike `getProviderFieldTree`: the same application
- * name legitimately appears under several offerings in the ERP hierarchy, and a
- * provider tagging "which tools did you use" is answering about the tool, not
- * about where it sits in the taxonomy. Baseline rows sort first; provider-added
- * customs follow, flagged so the admin catalog editor can promote recurring
- * ones to baseline later.
- */
 export async function getApplications() {
   const rows = await prisma.application.findMany({
     orderBy: [{ is_custom: "asc" }, { name: "asc" }],
@@ -325,20 +161,6 @@ export async function getRegions() {
   });
 }
 
-/**
- * Skills within a single RoleType — the choices shown after the provider picks
- * their one main category. Includes the pillar name + image where seeded.
- */
-/**
- * Skills across SEVERAL roles — the union a multi-role provider picks from
- * (brief_onboarding_slimdown WS3).
- *
- * Domain left the UI, so this is deliberately not scoped to one: a provider who
- * claims Application-Specific sees every skill under all of that role's
- * domains, searchable. The DOMAIN IS STILL CARRIED on each row — a skill's
- * identity is its (role, domain) pair, and the picker uses it to group and to
- * disambiguate the same label appearing under two domains.
- */
 export async function getSkillsForRoleTypes(roleTypeIds: string[], opts?: CatalogScope) {
   if (roleTypeIds.length === 0) return [];
   return prisma.skill.findMany({
@@ -368,13 +190,6 @@ export async function getSkillsForRoleType(roleTypeId: string, opts?: CatalogSco
   });
 }
 
-/**
- * The catalog taxonomy as a nested tree, plus the flat lookups a browse/match
- * screen needs alongside it. Reference data — global, NOT PAccount-scoped — so
- * this takes no viewer. Sets the shape for future browse/match endpoints.
- *
- * Returns null if the catalog code isn't seeded.
- */
 export async function getCatalogTree(code: string) {
   const catalog = await prisma.serviceCatalog.findUnique({
     where: { code },
@@ -441,38 +256,6 @@ export async function getCatalogTree(code: string) {
   };
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠ COUNTING PEOPLE — THE RULE BOTH CATALOG PAGES OBEY (`P1-A1.5-E465b`/`E470c`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   ⚠⚠ COUNT DISTINCT PROVIDERS, NEVER JOIN ROWS. A provider holding twelve
-   Oracle Fusion skills is ONE person in Application-Specific. Counting rows
-   instead of people inflates every number on both pages, and it is the easiest
-   mistake here to make.
-
-   ⚠ A PROVIDER WHO SPANS TWO CATEGORIES COUNTS IN BOTH. These are NOT a
-   partition and they do NOT sum to the provider total — every caller captions
-   that so nobody "fixes" it later.
-   ⚠⚠ THIS IS THE SAME TRAP AS `E444`, where a dual-role person was silently
-   resolved to whichever test fired first. Do not first-match. Count both.
-
-   ⚠ ONE QUERY PER STRIP, NEVER ONE PER ROW. Each function below issues exactly
-   ONE `findMany` and does the grouping in memory — the link tables are small
-   (hundreds of rows) and a per-row query would turn a 3-query page into a
-   30-query one.
-   ⚠ ZERO RENDERS `—`, NEVER `0`, at the call site: a category nobody has
-   claimed is honest, not broken — and it is the most actionable row on the page.
-*/
-
-/**
- * The `N providers` cell, in ONE place because both catalog pages print it.
- *
- * ⚠ `—` NEVER `0` — an unclaimed row is honest, not broken, and it is the most
- * actionable row on either page.
- * ⚠ AND `1 provider`, NOT `1 providers`. Measured on screen: Enterprise
- * Business Suite (EBS) read *"1 providers"* in the first walk.
- */
 export const providersCell = (n: number | undefined) =>
   n ? `${n} provider${n === 1 ? "" : "s"}` : "—";
 

@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * Accept (or re-accept) the Company ToS — admins only (WS6).
- *
- * A separate control from the define step because acceptance recurs: the
- * version bumps, and the company is asked again. The server re-checks that the
- * caller is an admin of this company; this button is an affordance, not a gate.
- */
 export function AcceptCompanyTos({ companyId }: { companyId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

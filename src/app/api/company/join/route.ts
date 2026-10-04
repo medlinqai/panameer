@@ -9,13 +9,6 @@ const schema = z.object({
   attestation: z.boolean(),
 });
 
-/**
- * POST /api/company/join — request to join a company.
- *
- * Auto-approves on a work-email domain match, otherwise creates a PENDING
- * request. The DECISION is made server-side from the session user's own email;
- * the client never says whether it matched.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;

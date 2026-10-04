@@ -5,25 +5,6 @@ import Link from "next/link";
 import { BAND_LIT, BAND_IDLE } from "@/components/casing/band-lit";
 import { useRouter } from "next/navigation";
 
-/**
- * ── ⚠⚠⚠ THE BELL AND ITS PANEL (`P2-A3-E620` WS-C item 1) ───────────────
- *
- * ⚠ SCOTT, 2026-09-18: *"make it like linkedin. in notification bell...icon...
- * and it opens on the right."* ⚠⚠ That was recorded as **Stage 2** when `E559`
- * shipped the band, because there was nothing to put in a panel — the table
- * held one row. `E620` registered the events, so Stage 2 is now buildable.
- *
- * ⚠⚠⚠ OPENING THE BELL DOES NOT MARK ANYTHING READ. The brief is explicit, and
- * the API is built so there is nothing to reach for: `/api/notifications/recent`
- * has no mark-all. ⚠ READING ONE marks THAT ONE — a side effect of LOOKING at a
- * list is not the same act as deliberately clearing it, and `/notifications`
- * keeps its own labelled `Mark All Read` button for the deliberate version.
- *
- * ⚠⚠ THE BADGE IS NOT RE-DERIVED HERE. It is handed down from `me` and is the
- * same number the page counts — one definition (`E585`). The panel's own rows
- * are fetched on open and never feed the count.
- */
-
 type Row = {
   id: string;
   title: string;
@@ -40,13 +21,6 @@ export function NotificationBell({
   label,
 }: {
   unreadCount: number;
-  /**
-   * ⚠⚠ `E735` — WHETHER THIS PAGE IS ONE THE BELL OWNS (`/notifications`, `/worklist`).
-   * ⚠⚠⚠ THE BELL HAD NO LIT BRANCH AT ALL: its `className` was a plain string literal and
-   * the component never read the route, so it was incapable of backlighting whatever the
-   * predicate said. ⚠ The decision stays in `bandActiveHref` and arrives as a prop —
-   * reading `usePathname()` here would be a SECOND lit rule, which is `E433`'s defect.
-   */
   active?: boolean;
   children: React.ReactNode;
   label: string;
@@ -55,29 +29,14 @@ export function NotificationBell({
   const [open, setOpen] = useState(false);
 
   const [rows, setRows] = useState<Row[] | null>(null);
-  /*
-    ⚠⚠ DERIVED FROM THE ROWS THE PANEL ALREADY FETCHED, not a second request. ⚠ The
-    `recent` route already returns `needsAction` per row (it calls the same rule the
-    worklist does), so the figure is a filter over data in hand.
-    ⚠⚠⚠ IT IS THEREFORE A COUNT OF THE SIX ROWS SHOWN, NOT OF EVERYTHING OPEN — and the
-    label says *"need action"* rather than a total, which is true of both readings. ⚠ The
-    true total is on `/notifications`, where `countWorklist` is called; putting a second
-    query behind a dropdown to refine a number the link already earns is a round trip
-    nobody asked for.
-  */
   const needActionCount = (rows ?? []).filter((r) => r.needsAction).length;
   const [failed, setFailed] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
-  /* ⚠⚠ FETCHED ON OPEN, NOT ON MOUNT. The band renders on every authenticated
-     page; loading the panel's rows on mount would be a query per page view for
-     a panel most views never open. */
   useEffect(() => {
     if (!open || rows !== null) return;
     let cancelled = false;
     (async () => {
-      /* ⚠ `catch` present and meaning it — `E516`'s finding was five blocks
-         with `try`/`finally` and no `catch`, where a thrown fetch is silence. */
       try {
         const r = await fetch("/api/notifications/recent");
         if (!r.ok) throw new Error(String(r.status));
@@ -92,9 +51,6 @@ export function NotificationBell({
     };
   }, [open, rows]);
 
-  /* ⚠⚠ CLOSE ON OUTSIDE CLICK AND ON ESCAPE. A panel that can only be closed by
-     the control that opened it is a trap on a phone, where the control may be
-     scrolled off. */
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -113,13 +69,6 @@ export function NotificationBell({
 
   async function readOne(row: Row) {
     setOpen(false);
-    /*
-      ⚠⚠⚠ MARK, THEN NAVIGATE — AND THE NAVIGATION DOES NOT WAIT ON THE MARK.
-      ⚠ If the mark fails, the member still gets where they were going; the
-      notification simply stays unread, which is recoverable and honest. The
-      opposite — blocking the link on a write — turns a logging failure into a
-      dead link, which is `E522`'s receipt rule applied to a click.
-    */
     if (row.unread) {
       void fetch("/api/notifications/recent", {
         method: "POST",
@@ -141,15 +90,13 @@ export function NotificationBell({
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
         className={
-          /* ⚠ The SHARED lit class, imported — never a fifth hand-typed copy (`E720`). */
           "grid h-9 w-9 place-items-center rounded-full transition-colors " +
           (active || open ? BAND_LIT : BAND_IDLE)
         }
       >
         <span className="relative inline-flex">
           {children}
-          {/* ⚠ ABSENT AT ZERO, NEVER A `0` BADGE — and it counts unread AND
-              DELIVERED only, so a DIGEST row nobody was sent cannot badge. */}
+          {}
           {unreadCount > 0 && (
             <span
               aria-label={`${unreadCount} unread notifications`}

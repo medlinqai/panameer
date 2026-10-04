@@ -1,19 +1,3 @@
-/**
- * ⚠⚠⚠ ONE `filed` EVENT PER EXISTING TICKET (`P2-ALL-E761`).
- *
- *   npm run backfill:ticket-events -- --dry
- *   npm run backfill:ticket-events
- *
- * ⚠⚠ **SCOTT'S RULE, VERBATIM: *"No backfill can be honest."*** Existing tickets
- * have no past events — nobody recorded who assigned `PAN-CTXFTX` or when — and
- * **nothing is invented to fill that in.** ⚠ The ONE thing we do know for certain
- * is that each ticket was filed, by its reporter, at `created_at`. That single
- * event is written so every timeline has a beginning; everything before "now"
- * stays absent, visibly.
- *
- * ⚠ **IDEMPOTENT:** a ticket that already has a `filed` event is skipped, so a
- * second run writes nothing.
- */
 import { config } from "dotenv";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -50,9 +34,6 @@ async function main() {
           ticket_id: t.id,
           actor_person_id: t.reporter_person_id,
           kind: "filed",
-          /* ⚠ The ticket's OWN created_at, not now — the event records when it
-             was filed, and a backfill stamped with today would be the invented
-             history this script exists to avoid. */
           created_at: t.created_at,
         },
       });

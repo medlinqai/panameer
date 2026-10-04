@@ -18,30 +18,15 @@ export default async function BoardPage({
 }) {
   const gate = await guardPage("authenticated");
   const { slug } = await params;
-  /* ⚠ THE VIEWER IS PASSED AS OF `P1-J3-E383` — a PATH board is closed to
-     people who are neither enrolled nor teaching, and `getBoard` returns null
-     for them, which this page already turns into a 404. The four general boards
-     ignore it. */
   const board = await getBoard(slug, gate);
   if (!board) notFound();
 
-  /* ⚠ THE COMPOSER'S MIRROR (`P1-ALL-E033`) — the same function the write path
-     refuses with, so the two cannot disagree. Reading this page is untouched. */
   const identityGaps = await communityIdentityGaps(gate.userId);
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <header>
-        {/*
-          ⚠ ONE CONDITIONAL, NOT A NEW LAYOUT (`P1-ALL-E381` WS-2).
-
-          A PATH BOARD BREADCRUMBS TO ITS PATH. `E383` kept path boards OUT of
-          `/community/groups` on purpose — twelve mostly-empty rooms beside four
-          that can fill is the fragmentation `forums.ts` warns about — so a link
-          back to that index was a dead end: the visitor arrives at a list their
-          board is not in.
-          ⚠ THE FOUR GENERAL BOARDS KEEP THEIRS EXACTLY AS IT WAS.
-        */}
+        {}
         {board.learningPath ? (
           <BackLink href={`/learn/${board.learningPath.slug}`} label={board.learningPath.title} />
         ) : (

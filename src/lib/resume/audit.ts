@@ -3,34 +3,11 @@ import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import type { ParsedResume } from "./parse";
 
-/**
- * THE CORRECTION SIGNAL (brief_j14 WS-G).
- *
- * Every review-save records what the model produced next to what the person
- * actually kept. That comparison is the only honest answer to "is the cheap
- * model good enough" — a question this codebase currently answers by opinion.
- *
- * CAPTURE ONLY. No fine-tuning, no few-shot injection, no online learning; the
- * brief is explicit that those are later, and a store that quietly started
- * feeding itself back into the prompt would be a much bigger decision than a
- * logging change.
- *
- * NEVER THROWS. A failure to write telemetry must not fail somebody's profile
- * save — the record is worth having, not worth losing work over.
- */
-
 export type FieldTally = { kept: number; changed: number };
 
 const norm = (v: unknown) =>
   typeof v === "string" ? v.toLowerCase().replace(/\s+/g, " ").trim() : v ?? null;
 
-/**
- * Compare two lists by a key field: how many entries survived unchanged?
- *
- * Deliberately generous about ORDER and strict about VALUE — a person
- * re-ordering their employers hasn't corrected the parser, but a person
- * retyping an employer's name has.
- */
 function tally<T extends Record<string, unknown>>(
   parsed: T[],
   final: T[],
@@ -64,7 +41,6 @@ export type ParseAuditInput = {
   latencyMs?: number | null;
   parsed: ParsedResume;
   final: ParsedResume;
-  /** ⚠ Read off `ProfileImport.ai_prompt_version`, captured at PARSE time. */
   promptVersion?: string | null;
 };
 
@@ -97,16 +73,6 @@ export function diffParse(parsed: ParsedResume, final: ParsedResume) {
   return { changed, accuracy: total > 0 ? kept / total : null };
 }
 
-/**
- * ── ⚠⚠ WHAT THE RUN BUILT, COUNTED FROM THE MODEL'S OWN OUTPUT (`E487`) ─────
- *
- * ⚠ NOT `kept + changed`. That looks like the same number and is not: the diff
- * compares FOUR field types, and it does not exist at all until a human
- * reviews. A run nobody has looked at still built things.
- * ⚠ ONE TAXONOMY, READ TWICE — these are the same object types the completeness
- * checklist reads on the provider's side. Two lists that drift is how "27
- * objects" and "7 of 10" start disagreeing on the same screen.
- */
 export function countBuilt(parsed: ParsedResume): Record<string, number> {
   const n = (a: unknown[] | null | undefined) => (Array.isArray(a) ? a.length : 0);
   const built: Record<string, number> = {
@@ -120,8 +86,6 @@ export function countBuilt(parsed: ParsedResume): Record<string, number> {
     certifications: n(parsed.certifications),
     skills: n(parsed.skills),
     languages: n(parsed.languages),
-    /* ⚠ SCALARS COUNT AS ONE OR ZERO — "did the model produce a headline" is a
-       real object in Scott's count and omitting it would undercount every run. */
     headline: parsed.headline ? 1 : 0,
     overview: (parsed as { overview?: string | null }).overview ? 1 : 0,
   };
@@ -132,7 +96,6 @@ export function countBuilt(parsed: ParsedResume): Record<string, number> {
 export async function recordParseAudit(input: ParseAuditInput): Promise<void> {
   try {
     const { changed, accuracy } = diffParse(input.parsed, input.final);
-    /* ⚠ COMPUTED HERE, STORED AS A COLUMN — never re-derived at read time. */
     const built = countBuilt(input.parsed);
     const builtTotal = Object.values(built).reduce((a, b) => a + b, 0);
     await prisma.resumeParseAudit.create({
@@ -151,9 +114,7 @@ export async function recordParseAudit(input: ParseAuditInput): Promise<void> {
         accuracy,
         built: built as unknown as object,
         built_total: builtTotal,
-        /* ⚠ THE DENOMINATOR — yield is meaningless without it. */
         source_chars: input.resumeText.length,
-        /* ⚠ FROM THE RUN, not from whatever the constant says at save time. */
         prompt_version: input.promptVersion ?? null,
       },
     });
@@ -195,38 +156,14 @@ export async function parserHealth() {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   YIELD AND OBJECT COUNTS, BROKEN OUT BY MODEL + PROMPT (`P1-A1.5-E488`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   > **Scott:** *"it will allow me to know if my resume AI (or any AI) starts
-   > underperforming."*
-
-   ⚠⚠ A SINGLE BLENDED LINE CANNOT SHOW THAT A CHANGE MADE THINGS WORSE, which
-   is the entire point of the card. Both series are cut by `model` +
-   `prompt_version` so a regression has a shape: one variant's line falls while
-   the others hold.
-
-   ⚠⚠ YIELD AND ACCURACY ANSWER DIFFERENT QUESTIONS AND FAIL AT DIFFERENT TIMES:
-     YIELD     objects ÷ source chars   available IMMEDIATELY   "it stopped finding things"
-     ACCURACY  kept ÷ (kept + changed)  only AFTER a review     "it finds things but gets them wrong"
-   ⚠ Accuracy only exists once a human reviews. Yield exists the moment the run
-   finishes, and it is what falls first when a model degrades.
-   ⚠⚠ AN UNREVIEWED RUN SHOWS YIELD AND NO ACCURACY. NEVER IMPUTE ONE — a null
-   accuracy is information, and filling it with an average would erase exactly
-   the rows a degrading model produces most of.
-*/
-
 export type VariantStats = {
   key: string;
   model: string;
   promptVersion: string;
   runs: number;
-  /** ⚠ Runs with a usable denominator. Yield is averaged over THESE, not `runs`. */
   yieldRuns: number;
   /** Objects per 1,000 source characters. Null when nothing has a denominator. */
   yieldPer1k: number | null;
-  /** ⚠ Runs a human has actually reviewed — the sample size behind `accuracy`. */
   reviewedRuns: number;
   accuracy: number | null;
   objects: number;
@@ -235,14 +172,6 @@ export type VariantStats = {
   lastAt: Date;
 };
 
-/**
- * Every run, grouped by (model, prompt_version).
- *
- * ⚠ ONE QUERY AND GROUPED IN MEMORY. A few hundred audit rows is nothing, and a
- * `groupBy` cannot compute yield — the numerator and denominator live in
- * different columns and a row with a null denominator must be excluded from the
- * average rather than counted as zero.
- */
 export async function parserVariants(): Promise<VariantStats[]> {
   const rows = await prisma.resumeParseAudit.findMany({
     select: {
@@ -259,9 +188,6 @@ export async function parserVariants(): Promise<VariantStats[]> {
 
   const by = new Map<string, VariantStats>();
   for (const r of rows) {
-    /* ⚠ A row written before `E487` has no prompt version and says so. It is
-       NOT folded into the newest variant — that would blame a current prompt
-       for a run it never touched. */
     const pv = r.prompt_version ?? "pre-versioning";
     const key = `${r.model} · ${pv}`;
     let v = by.get(key);

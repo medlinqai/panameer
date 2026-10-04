@@ -1,32 +1,3 @@
-/**
- * `check:shortlists` — one table for suggested and shortlisted, a re-run replaces only
- * what the search wrote, and **no path to a work order requires a row**
- * (`P2-A8-E703`, rulings 94e / 93b). `npm run check:shortlists`.
- *
- * ── ⚠⚠ WHAT IT ASSERTS (11) ─────────────────────────────────────────────────
- *
- *  1. ⚠⚠⚠ **A RE-RUN REPLACES `SUGGESTED` ROWS AND LEAVES `SHORTLISTED` AND `ADDED`
- *     UNTOUCHED** — proved live, both directions. Deleting a kept row would throw away a
- *     choice a human made (`E552`/`E553`: a save must not delete what it did not create).
- *  2. ⚠⚠⚠ **NO PATH TO A WORK ORDER REQUIRES A SHORTLIST ROW (93b).** Scott: *"they will
- *     not shortlist…they will add them to the WR."* ⚠ Asserted as an **ABSENCE over the
- *     order path**, because a gate that demanded one would break the commonest path and
- *     would be asserting the wrong thing (ruling 11).
- *  3. ⚠ One table, not two — `source` carries the distinction, and the enum has exactly
- *     three values. A fourth is a workflow and needs a ruling.
- *  4. ⚠⚠ The default is `ADDED`, which is **the safe failure**: a row whose origin nobody
- *     recorded must not become eligible for wholesale deletion.
- *  5. ⚠ `proposal_id` stays nullable — a suggestion has no proposal behind it.
- *
- * ── ⚠⚠ SCOPE (91) · SUBJECT (92) · DIRECTION (90) ───────────────────────────
- *
- * ⚠ STATIC: the schema and `src/lib/shortlists.ts`, comments stripped (rule 12).
- * ⚠⚠ LIVE: it creates **its own work request, shortlist and three lines**, one of each
- * source, re-runs the replace, and **deletes exactly what it created by id.** Row counts
- * are taken before and after. ⚠ Inputs asserted first, so *"0 failures"* cannot mean
- * *"nothing was tested"* (`E586`).
- * ⚠⚠⚠ **NO UI IS ASSERTED — the shortlist UI is explicitly out of scope in the brief.**
- */
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -136,12 +107,6 @@ async function live() {
     payments: await prisma.payment.count(),
     paymentLines: await prisma.paymentLine.count(),
   };
-  /*
-    ⚠⚠ THE BUYER MUST HAVE A `user_id`, BECAUSE THE LIBRARY IS DRIVEN THROUGH A VIEWER AND
-    A VIEWER IS AN ACCOUNT. ⚠ The first attempt picked on `is_service_buyer` alone and the
-    person it found had no account — **the gate said so by name instead of skipping the
-    live half silently**, which is the whole point of asserting the fixture (`E586`).
-  */
   const buyer = await prisma.person.findFirst({
     where: { is_service_buyer: true, NOT: { user_id: null } },
     select: { id: true, user_id: true, company: { select: { p_account_id: true } } },

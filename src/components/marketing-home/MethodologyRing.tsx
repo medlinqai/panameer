@@ -1,23 +1,3 @@
-/**
- * THE 5-STEP SEGMENTED METHODOLOGY RING (brief §5).
- *
- * The real delivery methodology — Define / Design / Develop / Decide / Deploy —
- * with each step's deliverables line and description VERBATIM from the mockup.
- *
- * ── WHY THE SVG IS INLINE AND HAND-PLACED ────────────────────────────────────
- *
- * The five wedges, their arrow tips and the segment numbers are absolute path
- * data computed for a 660x660 viewBox; the five labels are positioned as
- * percentages around it. That pairing is the design. Regenerating the geometry
- * from a loop would be a different ring, and the brief asks for this one.
- *
- * ── LABELS MUST NOT OVERLAP THE RING ─────────────────────────────────────────
- *
- * `.wnode` positions come straight from the mockup and are what keep the five
- * labels clear of the wedges at desktop. Below ~820px `home.css` stops
- * absolutely positioning them and stacks the five into a vertical list, which
- * is the mockup's own fallback — the ring cannot hold five labels on a phone.
- */
 export function MethodologyRing() {
   return (
     <>
@@ -25,19 +5,7 @@ export function MethodologyRing() {
       <section className="block" style={{ paddingTop: '52px', paddingBottom: '60px' }}>
         <div className="wrap">
           <div className="center">
-            {/*
-              ⚠ SCOTT'S STRING VERBATIM, 2026-08-28 (`P1-J0-E356`): *"Change the
-              section header 'Our Method' to 'AIM - The AI Method'."*
-              ⚠ A PLAIN HYPHEN WITH A SPACE EITHER SIDE — not an en-dash or em-dash,
-              which is what a tidy-up reaches for. Do not "fix" the punctuation.
-              ⚠ AUTHORED IN TITLE CASE. `.eyebrow` applies `text-transform:uppercase`,
-              so it RENDERS `AIM - THE AI METHOD`; hardcoding caps here would break
-              the convention every other eyebrow follows.
-              ⚠ SUPERSEDED, quoted not deleted: *"Our Method"*.
-              ⚠⚠ THIS COMPONENT RENDERS ON TWO PAGES, so this string changed BOTH:
-              `/ai-method` (new, `E356`) and `/why-panameer`. Scott named neither —
-              he named the section. Reported at `E356` rather than decided.
-            */}
+            {}
             <div className="eyebrow">AIM - The AI Method</div>
             <h2>Optimize by Methodology</h2>
             <p>One method, run continuously — because good businesses never stand still.</p>

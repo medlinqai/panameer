@@ -9,42 +9,6 @@ import "@/components/notifications/triage.css";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Worklist · Panameer" };
 
-/**
- * ── ⚠⚠⚠ THE WORKLIST (`P2-A1.1-E736` WS-B) ──────────────────────────────────────────────
- *
- * ⚠ **SCOTT: the ACT view — *"only rows that need action; complete them."*** Ruling 86's
- * second view of the one table.
- *
- * ⚠⚠ **IT IS A SERVER-RENDERED TABLE WITH URL STATE, NOT A CLIENT GRID.** Every control —
- * the saved view, the search box, the status dropdown — is a link or a `GET` form, so a
- * filtered worklist is shareable, bookmarkable and survives the back button, and the page
- * needs no JavaScript to be usable. ⚠ The same call `/community/grow` and the Groups views
- * made, and the same one the triage chips make next door.
- *
- * ── ⚠⚠⚠ "DUE SOON" IS NOT HERE, AND THAT IS MEASURED ────────────────────────────────────
- *
- * ⚠ The brief asked for a `Due Soon` saved view. ⚠⚠ **THERE IS NO DUE-DATE FIELD ON
- * `Notification` — the only temporal columns are event stamps** (`delivered_in_app_at`,
- * `email_sent_at`, `read_at`, `resolved_at`, `created_at`), none of them a future date.
- * ⚠⚠⚠ **SCOTT DROPPED THE VIEW WHEN THE PREMISE REPORTED IT.** A view sorted on a column
- * that does not exist would have had to invent one. ⚠ `milestone.due` is a CATEGORY KEY,
- * not a date — the one thing in the tree that could be mistaken for a due field.
- *
- * ⚠⚠ **`Past Day` AND `Past Week` MEAN "WAITING LONGER THAN", NOT "CREATED WITHIN".** A
- * worklist measures how long something has been owed; the other reading would make the
- * view EMPTY OUT as things got worse.
- *
- * ── ⚠⚠ COMPLETING ─────────────────────────────────────────────────────────────────────
- *
- * ⚠⚠⚠ **THERE IS NO "MARK DONE" BUTTON, AND THAT IS DELIBERATE.** `resolved_at` means *the
- * thing it asked for is done*, and only the domain that owns the thing can know that — the
- * six existing writers are all side effects of a real decision (a group request answered, a
- * proposal accepted). ⚠ **A button that marked an obligation complete without doing it
- * would be a lie the member tells themselves.** So the Action column opens the row's own
- * `href`, the member does the thing, and the row leaves Open by itself.
- * ⚠ **Dismiss is the honest alternative** and it lives on the triage list: it hides the row
- * there and leaves it standing here.
- */
 const VIEWS = [
   { key: "open", label: "All Open" },
   { key: "day", label: "Past Day" },
@@ -76,10 +40,6 @@ export default async function Page({
     getActCounts(person.id),
   ]);
 
-  /* ⚠ The age views filter the SAME list rather than re-querying: the rail's counts come
-     from the database, and the rows are already in hand. */
-  /* ⚠⚠ SERVER COMPONENT — see the note in `/notifications/page.tsx`. `Date.now()` is the
-     request time, which is the one clock the age views and every row share. */
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const rows =

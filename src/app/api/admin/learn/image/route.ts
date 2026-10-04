@@ -2,19 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { uploadProfilePhoto, StorageError, MAX_PHOTO_BYTES } from "@/lib/storage";
 
-/**
- * POST /api/admin/learn/image — one image for any level of the curriculum
- * (path cover, course/section/lesson thumbnail).
- *
- * Reuses the public profile-photos bucket and its validated uploader rather
- * than standing up a sixth bucket. Learn art is public by nature — it renders
- * on the logged-out catalog — so it wants exactly the visibility a profile
- * photo has, and it inherits the same type/size checks for free.
- *
- * The folder key is the literal "learn" rather than a person id: these images
- * belong to the platform, not to the admin who happened to upload them, and a
- * path's cover shouldn't move or vanish when a staff member leaves.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canAdminister");
   if (gate instanceof NextResponse) return gate;

@@ -3,20 +3,6 @@ import { guardApi } from "@/lib/guard";
 import { postMessage, SupportError } from "@/lib/support";
 import { canAdminister } from "@/lib/access";
 
-/**
- * POST /api/support/tickets/[ticketId]/messages — reply on a ticket
- * (`P2-J1.1-E032` WS-4).
- *
- * ⚠⚠ REPLY IS THE HALF THAT MAKES THIS A TICKETING SYSTEM RATHER THAN A
- * SUGGESTION BOX. Scott chose "report + reply thread" explicitly.
- *
- * ⚠⚠ ONE ROUTE FOR BOTH SIDES, AND `author_side` IS DECIDED BY CAPABILITY, NEVER
- * BY THE BODY. An admin's reply is always `panameer`; anyone else's is always
- * `user`, and `postMessage` additionally refuses a `user` post on somebody
- * else's ticket. If the side came from the request, the thread's record of who
- * said what would be client-controlled — which would make it evidence of
- * nothing, on the one surface whose whole job is being a record.
- */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ ticketId: string }> }

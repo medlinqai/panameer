@@ -6,22 +6,6 @@ import {
   primaryButton,
 } from "@/lib/email/shell";
 
-/**
- * "Your report is ready" — the magic-link email (WS-B, step 4 of the copy
- * prototype).
- *
- * ── THE NUMBER IS NOT IN THE EMAIL ───────────────────────────────────────────
- *
- * It teases "self-funding" and stops. That is the prototype's design and it is
- * the reason the email works: the figure lives behind the one-click account, so
- * opening the report is worth doing. Putting the funding range in the subject
- * line would spend the only currency this email has — and would also put an
- * unlabelled tax claim into an inbox, outside the surface where Scott controls
- * how it is presented.
- *
- * Warm, names the company, and says plainly that an account gets created, so
- * the click is not a surprise.
- */
 export function assessmentReadyTemplate({
   companyName,
   processName,

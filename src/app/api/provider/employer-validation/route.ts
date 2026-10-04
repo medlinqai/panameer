@@ -3,17 +3,6 @@ import { guardApi } from "@/lib/guard";
 import { requestEmployerValidation } from "@/lib/employer-validation";
 import { OnboardingError } from "@/lib/onboarding";
 
-/**
- * POST /api/provider/employer-validation — ask somebody at a job's company to
- * confirm the employment (`P2-A1.1-E747`, WS-B).
- *
- * ⚠ Body: `{ employerId, contactEmail? }`. ⚠⚠ OWNER-SCOPED IN THE LIB: the
- * employer is re-checked against the session's own profile, so an id arriving
- * from the client can never reach a stranger's row or mail their contact.
- * ⚠⚠⚠ Every guard the project route relies on — the domain check, the
- * own-domain refusal and the shared daily cap — lives in the lib, so anything
- * that can POST here gets the same refusals the modal shows.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

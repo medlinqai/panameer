@@ -3,31 +3,6 @@ import { Face } from "@/components/community/Silhouette";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import type { ColleagueCard, InvitedCard } from "@/lib/community-page";
 
-/**
- * ── ⚠⚠ THE COLLEAGUE CARDS (`P2-J3-E591` WS-C items 3, 4, 5) ──────────────
- *
- * ⚠⚠⚠ TWO SHAPES, NOT ONE SHAPE DIMMED. A joined colleague has a profile; an
- * invited person has a name, an email and a date, and nothing else exists about
- * them. ⚠ Rendering the second as a faded version of the first would imply
- * fields that have no value — which is the recruiter-shell problem in miniature.
- *
- * ⚠⚠ NO RATE REACHES THIS FILE. `ColleagueCard` cannot carry one — see
- * `lib/community-page.ts`, where it is omitted from the QUERY rather than from
- * the render.
- */
-
-/**
- * ⚠⚠ THE WHOLE CARD OPENS THEIR PROFILE (WS-C item 5) — VIA A STRETCHED LINK,
- * NOT A WRAPPING ANCHOR.
- *
- * ⚠⚠⚠ AN `<a>` INSIDE AN `<a>` IS INVALID HTML AND BREAKS KEYBOARD ORDER: the
- * browser closes the outer anchor early, the inner control lands outside it,
- * and tab order stops matching what the eye sees. ⚠ So the card is a `<div>`,
- * ONE anchor inside it is stretched across the card with `::after`, and
- * `Message` sits above it on the z-axis and stays its own control.
- * ⚠ The accessible name of the stretched link is the person's NAME, so a screen
- * reader hears *"Joe Flacco, link"* rather than *"card, link"*.
- */
 export function JoinedCard({ c }: { c: ColleagueCard }) {
   return (
     <div className="pm-cm-card">
@@ -35,8 +10,6 @@ export function JoinedCard({ c }: { c: ColleagueCard }) {
       <div className="min-w-0 flex-1">
         <p className="pm-cm-name">
           {c.profileId ? (
-            /* ⚠ Unlinked when they have no provider profile — a link to a 404
-               is worse than a name that is not a link. */
             <Link href={`/providers/${c.profileId}`} className="pm-cm-open">
               {c.name}
             </Link>

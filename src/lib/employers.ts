@@ -15,9 +15,6 @@ import {
   type ProjectLoss,
 } from "@/lib/reclassify";
 
-/* ⚠ RE-EXPORTED so every existing server-side import path keeps working. ⚠ A
-   CLIENT COMPONENT MUST IMPORT FROM `lib/reclassify` DIRECTLY — going through
-   this file drags prisma into the browser. */
 export {
   employerToProjectData,
   projectToEmployerData,
@@ -29,43 +26,6 @@ export {
 
 export { projectToCard };
 
-/**
- * Employers, and the Projects nested under them — brief_U.
- *
- * `Employer` is the single work-history model (E042). Every function here is
- * OWNER-SCOPED by construction: the profile is resolved from the session via
- * `ownedProviderProfile`, and every child id is re-checked against that profile
- * before it is touched. There is no path that accepts a target profile id from
- * the client, so cross-account writes are structurally impossible.
- *
- * Completeness is recomputed after every mutation — the work-history enrichment
- * weight reads Employer now, so a stale score would misreport visibility.
- */
-
-/*
-  ── ⚠⚠ THE `OnboardingError` MESSAGES IN THIS FILE SAY `Company`. THE
-     IDENTIFIERS SAY `Employer`. BOTH ARE CORRECT (`P2-J1.1-E012` WS-3) ────────
-
-  Eight message strings moved from `Employer` to `Company`: seven `not found` /
-  `name is required` throws, and `Give the job a company name`. They are
-  returned VERBATIM to the client — `api/provider/employers/route.ts:128` puts
-  `e.message` in a 400 body — and `EmployersStep` renders them. So they were the
-  last place a provider could be told *"Employer name is required"* under a modal
-  titled *"Add Company"*, which is the exact contradiction WS-3 exists to remove.
-
-  ⚠⚠ EVERY IDENTIFIER IN THIS FILE STAYS `Employer`: `EmployerScalars`,
-  `EmployerInput`, `employerData`, `listEmployers`, `createEmployer`,
-  `updateEmployer`, `deleteEmployer`, `convertEmployerToProject`,
-  `projectToEmployerData`. They are bound to `model Employer`, which is NOT being
-  renamed and which means the work-history relation. Renaming them would decouple
-  this file from the model it reads.
-
-  ⚠ THE TWO THINGS LIVE IN THE SAME FILE AT DIFFERENT LINES, AND CONFLATING THEM
-  COST A ROUND TRIP: WS-3 first recorded these eight as "function and type names,
-  not strings" and listed them do-not-touch. That came from a truncated grep. The
-  file says otherwise. ⚠ IF YOU GREP THIS FILE FOR `Employer`, READ THE LINE — a
-  hit here is as likely to be an identifier as a sentence.
-*/
 export type EmployerInput = {
   name: string;
   roleTitle?: string | null;
@@ -80,14 +40,6 @@ export type EmployerInput = {
   isCurrent?: boolean;
 };
 
-/**
- * The v2 project field set (brief_project_model_v2).
- *
- * `applicationIds` are existing catalog rows; `customApplications` are names
- * the provider typed that aren't in the catalog yet — those are created as
- * `Application { is_custom: true }` so the admin catalog editor can promote
- * recurring ones to baseline.
- */
 export type ProjectInput = {
   name: string;
   description?: string | null;
@@ -97,9 +49,6 @@ export type ProjectInput = {
   endDate?: string | null;
   isCurrent?: boolean;
   roleTypeId?: string | null;
-  /* ⚠ `P1-J1.4-E296` — the two fields an Employer has and a Project did not.
-     `roleTitle` is the TITLE you held; `roleTypeId` is the catalog
-     classification. They are different fields and both travel. */
   roleTitle?: string | null;
   location?: string | null;
   industrySpecializationId?: string | null;
@@ -138,10 +87,6 @@ const toDate = (v?: string | null) => {
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
 };
-
-/* ⚠ `clean` MOVED to `lib/reclassify.ts` (`E296`) — that module is prisma-free so
-   a client component can import the loss sentence without pulling `pg` into the
-   browser bundle. One definition, imported here. */
 
 /** Everything the capture step and management surfaces render. */
 export async function listEmployers(viewer: Viewer) {
@@ -201,7 +146,6 @@ function employerData(input: EmployerInput) {
   return {
     name,
     role_title: clean(input.roleTitle, 200),
-    // E111 — structured, with `location` kept in sync as the display string so
     // every existing reader (cards, the profile view, the résumé importer) keeps
     // working without being touched.
     city: clean(input.city, 120),
@@ -224,22 +168,6 @@ function employerData(input: EmployerInput) {
   };
 }
 
-/**
- * The two things that must both happen after any job write (WS-2).
- *
- * Completeness was already recomputed here, because the enrichment weight reads
- * Employer. The weighted skill rollup now has to be too, and for a stronger
- * reason: a stale completeness score misreports a percentage, while a stale
- * rollup misreports WHAT SOMEBODY CAN DO. Change a job's end date and every
- * skill on it should decay differently; change its suite and the provider's
- * whole centre of gravity moves. Neither is visible as a bug — the profile just
- * quietly describes the wrong person, and matching ranks them accordingly.
- *
- * Paired in one function so a future mutation cannot pick up one and forget the
- * other. That is not hypothetical: the six existing call sites here were each
- * written separately, and every one of them would have needed the same second
- * line added by hand.
- */
 async function afterJobChange(profileId: string): Promise<void> {
   await recomputeCompleteness(profileId);
   await recomputeProviderRollup(profileId);
@@ -285,24 +213,6 @@ export async function updateEmployer(
 
 export async function deleteEmployer(viewer: Viewer, employerId: string) {
   const profileId = await ownedProfileId(viewer);
-  /*
-    ── ⚠⚠ THIS COMMENT WAS FALSE (`P1-J1.4-E307`, 2026-09-02) ─────────────────
-
-    ⚠ SUPERSEDED, quoted verbatim because it was believed for months: *"Projects
-    cascade with the employer (schema onDelete: Cascade), so deleting a job takes
-    its projects with it — which is what the user means by removing a job."*
-
-    ⚠⚠ `prisma/schema.prisma` SAYS `onDelete: SetNull`. The projects are NOT
-    deleted. They are ORPHANED — and because `listEmployers` only reaches projects
-    through their employer, they become INVISIBLE while remaining in the database.
-    The confirm dialog in `EmployersStep.tsx` stated the same falsehood to the
-    user.
-
-    ⚠ THE SCHEMA IS RIGHT AND THE COPY WAS WRONG. Deleting a job must not destroy
-    the project history under it — that is Scott's *"not throwing things away"*
-    rule — and there is now somewhere for the orphans to go. DO NOT "fix" this by
-    changing the schema to Cascade.
-  */
   const res = await prisma.employer.deleteMany({
     where: { id: employerId, provider_profile_id: profileId },
   });
@@ -312,14 +222,6 @@ export async function deleteEmployer(viewer: Viewer, employerId: string) {
   await afterJobChange(profileId);
 }
 
-/**
- * Validate + shape the scalar half of a project write.
- *
- * The REQUIRED SET is enforced here, server-side, and not only in the modal:
- * name, start date, role, client and description, plus an end date unless the
- * project is current (brief_project_model_v2). The modal disables Save on the
- * same rules, but the modal is not a security boundary — this is.
- */
 function projectData(input: ProjectInput) {
   const name = clean(input.name, 200);
   if (!name) throw new OnboardingError("Project name is required", "INVALID");
@@ -335,9 +237,6 @@ function projectData(input: ProjectInput) {
   const roleTypeId = clean(input.roleTypeId, 64);
   if (!roleTypeId) throw new OnboardingError("Pick the role you played", "INVALID");
 
-  /* ⚠ `E296` — optional on the modal path too. A project created by hand may
-     well not state a role title or a location, and neither is in the required
-     set; they exist so a CONVERSION does not have to throw them away. */
   const roleTitle = clean(input.roleTitle, 200);
   const location = clean(input.location, 200);
 
@@ -412,15 +311,6 @@ function projectData(input: ProjectInput) {
   };
 }
 
-/**
- * Resolve the tools multi-select to Application ids, creating provider-added
- * ones as `is_custom` rows.
- *
- * Matching is case-insensitive against the WHOLE catalog before creating
- * anything, so typing "oracle fusion" when "Oracle Fusion" already exists links
- * the baseline row instead of spawning a near-duplicate custom for an admin to
- * clean up later.
- */
 async function resolveApplicationIds(input: ProjectInput): Promise<string[]> {
   const ids = new Set((input.applicationIds ?? []).filter(Boolean));
 
@@ -494,25 +384,6 @@ async function writeProjectChildren(projectId: string, input: ProjectInput) {
   ]);
 }
 
-/**
- * ── ⚠⚠⚠ `employerId: null` CREATES A SOLO PROJECT (`P1-J2-E032`) ─────────
- *
- * ⚠ SCOTT: *"no way to add a project independent of an employer/company."*
- * ⚠⚠ **THE GAP WAS NEVER IN THE SCHEMA.** `Project.employer_id` is `String?`,
- * `resume/import.ts` **already writes projects with `employer_id: null`** when
- * the model could not place them, and `moveProject` already treats
- * `employerId: null` as a legal DETACH. ⚠⚠⚠ **ONLY THE CREATE PATH DEMANDED
- * ONE** — so an unattached project was a state the importer could produce and a
- * member could reach only by creating one under a company and detaching it.
- *
- * ⚠⚠ **`null` IS "DELIBERATELY NO COMPANY", NEVER "NOT SUPPLIED"** (ruling 67).
- * The caller must say which it means; **the route refuses an absent key rather
- * than resolving it**, so this function can trust the distinction.
- * ⚠ **THE OWNERSHIP CHECK IS NOT WEAKENED** — when an id IS given it is still
- * resolved against the caller's own profile, and a foreign id still resolves to
- * nothing. The null path skips a lookup it has no id for; it does not skip a
- * check it should have made.
- */
 export async function createProject(
   viewer: Viewer,
   employerId: string | null,
@@ -529,9 +400,6 @@ export async function createProject(
     ownedEmployerId = employer.id;
   }
 
-  /* ⚠ THE ORDER IS COUNTED WITHIN THE LIST THE ROW WILL JOIN — solo projects
-     are their own list on the profile, so counting them against an employer's
-     projects would start every solo project at 0 and stack them. */
   const count = await prisma.project.count({
     where: { provider_profile_id: profileId, employer_id: ownedEmployerId },
   });
@@ -558,7 +426,6 @@ export async function updateProject(
   const profileId = await ownedProfileId(viewer);
   const owned = await prisma.project.findFirst({
     where: { id: projectId, provider_profile_id: profileId },
-    /* ⚠ The four facts a validation was ABOUT — see the drop rule below. */
     select: {
       id: true,
       validation_status: true,
@@ -570,26 +437,6 @@ export async function updateProject(
   });
   if (!owned) throw new OnboardingError("Project not found", "INVALID");
 
-  /*
-    ── ⚠⚠⚠ EDITING WHAT WAS VALIDATED DROPS THE BADGE (`P2-A1.1-E746`, WS-A) ──
-
-    ⚠ **SCOTT'S QUESTION 2: *"If a provider edits a validated project's dates or
-    role, does the badge drop until it is validated again? (Claude's pick: yes.)"***
-    ⚠⚠ **YES, AND ONLY FOR THE FACTS THE CLIENT WAS ACTUALLY ASKED ABOUT.**
-
-    ⚠⚠⚠ **THE VALIDATION EMAIL ASKS ONE QUESTION — *"Did &lt;first name&gt; do this
-    work?"* — ALONGSIDE THE PROJECT'S TITLE, CLIENT, DATES AND ROLE.** So a
-    confirmation is a statement about THOSE facts. Change them and the statement
-    no longer describes what is on the page; keeping the tick would be showing a
-    buyer somebody else's confirmation of different work.
-    ⚠ **A DESCRIPTION OR HIGHLIGHT EDIT DOES NOT DROP IT.** Tightening the prose
-    of work that was confirmed is not a new claim, and dropping a hard-won badge
-    over a typo would teach providers not to edit.
-
-    ⚠⚠ **IT DOES NOT DELETE THE `ProjectValidation` ROW.** The client's answer is
-    history and stays — only the project's own badge returns to `NONE`, so the
-    provider can ask again. ⚠ Same reasoning as `EXPIRED` over `delete` above.
-  */
   const next = projectData(input);
   const sameDay = (a: Date | null, b: Date | null | undefined) =>
     (a?.getTime() ?? null) === (b?.getTime() ?? null);
@@ -620,54 +467,6 @@ export async function deleteProject(viewer: Viewer, projectId: string) {
   await afterJobChange(profileId);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   RECLASSIFY IN PLACE — employer ⇄ project (`P1-J1.4-E296` / `P1-J1.4-E307`)
-   ══════════════════════════════════════════════════════════════════════════════
-
-   **SCOTT:** *"what really determines the value of the AI is how easy the edit
-   is… if the change of employer to project is easy, who cares. If not, they are
-   mad."* And: *"this is the edit process. I would need to delete EVERY employer
-   and then re-add them as a project."*
-
-   ⚠⚠ PERCEIVED AI QUALITY IS ERROR **COST**, NOT ERROR RATE. `E294` reduced the
-   parser's misses; it did not end them and it never will. This is what makes a
-   miss cheap.
-
-   ── ⚠⚠ AND IT CLOSES A HOLE THE IMPORT ALREADY OPENED ─────────────────────────
-
-   `resume/import.ts` writes projects with `employer_id: null` whenever the model
-   could not place them. Verified: `updateProject` never touches `employer_id` and
-   `createProject` demands an employer up front, so BEFORE THIS FILE THERE WAS NO
-   CODE PATH THAT COULD ATTACH ONE. The parser was producing rows the user could
-   not fix.
-
-   ── ⚠⚠ THE CONVERSIONS DO NOT GO THROUGH `projectData()`. READ THIS ───────────
-
-   `projectData()` REQUIRES client name, description, role type, a start date and
-   an end date unless current. A parser-created employer is guaranteed NONE of
-   those — `Employer.start_date` and `description` are both nullable and there is
-   no role type at all. Routing a conversion through it would reject exactly the
-   rows this feature exists to rescue. So the row is written DIRECTLY, and the
-   schema's own comment on `Project.role_type_id` blesses the case: *"a résumé
-   importer cannot know the role, and defaulting it would write a value the
-   provider never chose… A null is honest and queryable."*
-   ⚠ THE MODAL'S REQUIRED SET STILL GOVERNS THE MODAL. It does not govern a
-   reclassification of data that already exists.
-*/
-
-/**
- * WS-2 — attach, re-attach or DETACH a project. The cheap half.
- *
- * ⚠ THIS ALONE CLOSES THE `E294` HOLE: it is the only code path that can set
- * `Project.employer_id`.
- *
- * ⚠⚠ OWNERSHIP IS RE-CHECKED ON **BOTH** IDS against the resolved profile, the
- * same way `updateProject` does it. A foreign id must resolve to NOTHING rather
- * than to somebody else's row — the profile comes from the session and neither id
- * is trusted.
- * ⚠ `employerId: null` IS LEGAL and means detach. It is not an error and it is
- * not a no-op: an unattached project is a real state the import already produces.
- */
 export async function moveProject(
   viewer: Viewer,
   projectId: string,
@@ -700,30 +499,9 @@ export async function moveProject(
     where: { id: project.id },
     data: { employer_id: target, sort_order: count * 10 },
   });
-  /* ⚠ EVERY OTHER MUTATION IN THIS FILE DOES THIS. A stale rollup misreports
-     what somebody can do. */
   await afterJobChange(profileId);
 }
 
-/**
- * WS-3 — EMPLOYER → PROJECT.
- *
- * ⚠⚠ THE ORDER OF THE TRANSACTION IS THE WHOLE CORRECTNESS ARGUMENT. Two
- * relations would be destroyed silently if the delete came first, and a third
- * would survive as an invisible orphan.
- *
- *   1  load the employer, owner-scoped
- *   2  refuse self-parenting
- *   3  verify the target, owner-scoped — REQUIRED, see below
- *   4  create the project from the field map
- *   5  MOVE `job_skills` and `artifacts` — before the delete
- *   6  RE-PARENT the employer's own projects to the target
- *   7  delete the employer
- *
- * ⚠ `targetEmployerId` IS REQUIRED HERE. Scott's whole complaint is a project
- * sitting at employer level; converting it to an UNATTACHED project would move
- * the mess rather than clear it. Detach stays available through `moveProject`.
- */
 export async function convertEmployerToProject(
   viewer: Viewer,
   employerId: string,
@@ -731,8 +509,6 @@ export async function convertEmployerToProject(
 ): Promise<{ projectId: string; reparentedProjects: number; movedSkills: number; movedArtifacts: number }> {
   const profileId = await ownedProfileId(viewer);
 
-  /* ⚠ A ROW CANNOT BE ITS OWN PARENT. Checked before any read so the error is
-     about the request rather than about what happens to be in the database. */
   if (input.targetEmployerId === employerId) {
     throw new OnboardingError(
       "Pick a different job for this project to sit under",
@@ -769,13 +545,6 @@ export async function convertEmployerToProject(
       select: { id: true },
     });
 
-    /*
-      ⚠⚠ SKILLS AND ARTIFACTS **MOVE**. THEY ARE NOT COPIED AND NOT DROPPED.
-      Both models carry a nullable `employer_id` AND a nullable `project_id`, and
-      both relations are `onDelete: Cascade` — so a row still pointing at the
-      employer when it is deleted is DESTROYED SILENTLY. This has to happen
-      before step 7 and there is no version of this that is safe afterwards.
-    */
     const movedSkills = await tx.jobSkill.updateMany({
       where: { employer_id: employer.id },
       data: { employer_id: null, project_id: created.id },
@@ -785,14 +554,6 @@ export async function convertEmployerToProject(
       data: { employer_id: null, project_id: created.id },
     });
 
-    /*
-      ⚠⚠ THE EMPLOYER'S OWN PROJECTS ARE RE-PARENTED, NOT ORPHANED. A
-      misclassified employer often already has children, and
-      `Project.employer_id` is `onDelete: SetNull` — deleting the employer would
-      leave them ALIVE BUT INVISIBLE, because `listEmployers` only reaches
-      projects through employers. Projects cannot nest, so the target employer is
-      their only sane home.
-    */
     const reparented = await tx.project.updateMany({
       where: { employer_id: employer.id },
       data: { employer_id: target.id },
@@ -808,26 +569,10 @@ export async function convertEmployerToProject(
     };
   });
 
-  /* ⚠ OUTSIDE the transaction — the rollup reads its own tables and must see the
-     committed state. */
   await afterJobChange(profileId);
   return result;
 }
 
-/**
- * WS-4 — PROJECT → EMPLOYER. Also Undo.
- *
- * ⚠ Scott: *"IT MUST WORK BOTH WAYS"* — the parser misjudges in both directions.
- *
- * ⚠⚠ THIS DIRECTION CAN LOSE DATA AND IT SAYS SO. `Employer` has no home for
- * outcomes, tools, highlights, `client_visibility`/`code_name`/`client_domain`,
- * `video_url`, `document_path`, `url`, `image_url` or `industry`. The caller is
- * given the count and the names through `projectLoss` BEFORE it commits.
- *
- * ⚠⚠ AND IT REFUSES OUTRIGHT ON A VALIDATED PROJECT. A client confirmed that
- * work happened; silently discarding their confirmation is not an edit somebody
- * gets to make by accident. Deleting it deliberately is still available.
- */
 export async function projectLoss(viewer: Viewer, projectId: string): Promise<ProjectLoss> {
   const profileId = await ownedProfileId(viewer);
   const p = await prisma.project.findFirst({
@@ -894,20 +639,6 @@ export async function convertProjectToEmployer(
   });
   if (!project) throw new OnboardingError("Project not found", "INVALID");
 
-  /*
-    ⚠⚠ THE REFUSAL. A CONFIRMED validation is somebody else's statement about
-    this work — the provider does not get to discard it as a side effect of
-    reclassifying a row.
-  */
-  /*
-    ⚠ THE BRIEF NAMED `CONFIRMED`; THE ENUM HAS NO SUCH MEMBER.
-    `ProjectValidationStatus` is `NONE | PENDING | VALIDATED` — `CONFIRMED` is the
-    status on a `ProjectValidation` ROW, not on the project. Corrected to
-    `VALIDATED` and reported at `E296`; the intent is unchanged.
-    ⚠ AND **ANY** VALIDATION ROW BLOCKS, not only a confirmed one. A request that
-    has been sent and not yet answered is a live question with a client — dropping
-    it silently is the same fault one step earlier.
-  */
   if (project.validation_status === "VALIDATED" || project._count.validations > 0) {
     throw new OnboardingError(
       "This project has a client validation on it, so it can’t be turned into a job. " +
@@ -933,7 +664,6 @@ export async function convertProjectToEmployer(
       select: { id: true },
     });
 
-    /* ⚠ SAME RULE, SAME ORDER — before the delete, or Cascade eats them. */
     const movedSkills = await tx.jobSkill.updateMany({
       where: { project_id: project.id },
       data: { project_id: null, employer_id: created.id },

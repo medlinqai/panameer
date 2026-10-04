@@ -9,45 +9,17 @@ import { SettlementRowCard } from "@/components/settle/SettlementRows";
 import { listSettlements } from "@/lib/settlements";
 import { settleableOrdersFor } from "@/lib/settlements";
 
-/**
- * `/payments/payment-requests` — THE PROVIDER'S LIST (`P1-J4-E394`).
- *
- * ⚠ SUPERSEDED, QUOTED NOT DELETED — this page was: *"Payment Requests — a titled
- * placeholder (WS1-B). E216 — reached from its section's TAB ROW now, not a rail
- * flyout. The route, its title and its gate are real; only the content is
- * pending, which is why a titled empty state is the honest thing rather than a
- * 404 or a fake table."* The content is no longer pending. **The tab row, the
- * title and the gate are unchanged.**
- *
- * ⚠⚠ THIS IS A LIST, NOT A CREATE FLOW. `nav.ts`: payment requests are
- * *"generated from a Work Order"*, so raising one lives at `/orders/[id]/settle`
- * and this page LINKS there. A "new payment request" button here that then asked
- * which order would be the rail-item-for-a-tab mistake in another shape.
- *
- * ⚠ AND WHEN THERE IS NOTHING RELEASED, IT SAYS SO — the brief forbids rendering
- * an empty create form, and this is the honest version of the same rule: name the
- * reason there is nothing to raise.
- */
 export const metadata = { title: "Payment Requests · Panameer" };
 
 export default async function Page() {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
-  /* ⚠ CORRECTED (`P2-ALL-E688` WS-B, rule 6): this sent a signed-out member back
-     to `/finances/payment-requests`, which has been a **308 to this page** since
-     `E533`. It worked — through the redirect — and it named a retired route, so
-     the bounce was one hop longer than it needed to be and the string described
-     an address that no longer exists.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   redirect("/login?callbackUrl=%2Ffinances%2Fpayment-requests"); */
   if (!viewer) redirect("/login?callbackUrl=%2Fpayments%2Fpayment-requests");
 
   const [all, settleable] = await Promise.all([
     listSettlements(viewer),
     settleableOrdersFor(viewer),
   ]);
-  /* ⚠ THE PROVIDER'S SIDE. Somebody who also buys reads their approval queue on
-     `/pay`; this page is what they have RAISED. */
   const mine = all.filter((s) => s.party === "PROVIDER");
 
   return (

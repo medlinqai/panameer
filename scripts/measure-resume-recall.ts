@@ -1,27 +1,3 @@
-/**
- * `measure:resume-recall` — DID THE PARSER GET BETTER? (`P1-A1.4-E399` WS-6)
- *
- * Scott, 2026-09-08: *"I want to see if the parser is improving when I give it
- * the next resume."* Before this, he could not.
- *
- * ── ⚠⚠ A MEASUREMENT, NOT A GATE ────────────────────────────────────────────
- *
- * ⚠ IT SPENDS REAL MONEY on every run, so it is `measure:*` and not `check:*`,
- * and it is wired into no merge gate. The name is the safeguard — a `check:`
- * prefix is what somebody later adds to CI without thinking about the bill.
- *
- * ⚠⚠ IT RUNS THE **CONFIGURED PRODUCTION MODEL**, whatever that is.
- * `resolveProvider()` prefers the economy tier when `RESUME_PARSER_API_KEY` and
- * `RESUME_PARSER_MODEL` are both set, so this proves what actually ships. Proving
- * a model the product does not run is worse than not testing, because it reads
- * as coverage.
- *
- * ── ⚠⚠ DO NOT MOVE THE NUMBERS TO GO GREEN ──────────────────────────────────
- *
- * The expectations below are **what the document contains**, counted off Scott's
- * own colour-coded copy. A case reporting `employers 1/5` is the instrument
- * working. Lowering it to 1 would delete the finding and leave the defect.
- */
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { extractText, mimeFromName } from "@/lib/resume/extract";
@@ -31,7 +7,6 @@ import { resolveProvider } from "@/lib/resume/ai-provider";
 
 const DIR = path.join(process.cwd(), "src/lib/resume/__fixtures__");
 
-/** ⚠ THE ACCEPTANCE NUMBERS, FROM THE DOCUMENT ITSELF — not from a guess. */
 type Expect = {
   file: string;
   note: string;
@@ -45,8 +20,6 @@ type Expect = {
 const CASES: Expect[] = [
   {
     file: "scott-new-full.docx",
-    /* ⚠ BANKED IN `__fixtures__` SINCE JULY AND NEVER TESTED. The exact document
-       that fails has been sitting next to the harness the whole time. */
     note: "the E399 document — 30-year career, projects under 'Additional'",
     employers: 5,
     projects: 14,

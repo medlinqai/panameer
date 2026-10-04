@@ -1,17 +1,6 @@
-/**
- * Access control — the Viewer pattern (carried from Medlinq).
- *
- * Every access-checked query helper takes a `viewer` as its FIRST argument,
- * even when currently unused, so access decisions are centralized here and
- * never inlined into components. Grow `deriveAccessFlags` and the `can*`
- * helpers as roles are defined in `claude/architecture.md`.
- */
 
-// ⚠⚠ THE THRESHOLD IMPORT IS GONE (`P2-J3-E590` WS-A0). ⚠ SUPERSEDED, quoted
-// not deleted (`E164`):
 //   // Single source of the marketplace visibility threshold (pure, seed-safe).
 //   import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
-// ⚠ THIS FILE NO LONGER KNOWS THE NUMBER, and that is the proof the gate moved:
 // `isMarketplaceVisible` cannot fall back to a score it cannot see.
 
 export type Role = "ADMIN" | "MEMBER";
@@ -30,14 +19,6 @@ export function deriveAccessFlags(input: {
   return { isSystemAdmin: input.isSystemAdmin, isAdmin };
 }
 
-/**
- * The identity + capabilities passed as the first arg to access-checked helpers.
- *
- * `pAccountId` is the tenancy fence for PRIVATE data. It is null when the viewer
- * has no org yet (e.g. the system admin before onboarding, or a freshly signed-up
- * user). It is resolved from the viewer's linked Person, not carried in the JWT,
- * so auth stays untouched — enrich a session-built Viewer with `withPAccount`.
- */
 export type Viewer = {
   userId: string;
   role: string;
@@ -144,15 +125,10 @@ export function hasCapability(viewer: Viewer, cap: Capability): boolean {
 // to any contract, and gating them on a customer company would lock the
 // operator out of their own console.
 //
-// ── ⚠⚠ NOTHING CALLS THIS TODAY (`P1-A1.4-E418`, 2026-09-11) ────────────────
 //
-// `checkTransact` in `lib/guard.ts` passed everyone as of `E418`, because the
 // company left registration entirely: no journey asks for one, so no buyer
 // could ever have satisfied this, and it would have refused every work request
-// in the product. ⚠ THE FUNCTION, ITS FOUR DENIAL REASONS AND `TRANSACT_MESSAGE`
-// ARE KEPT DELIBERATELY (`E164`) — they are the WORK ORDER ACCEPTANCE gate
 // waiting for its event. See the TODO on `acceptOrder` in `lib/orders.ts`, the
-// single capture point. ⚠ DO NOT RE-POINT IT AT REGISTRATION.
 // ---------------------------------------------------------------------------
 
 export type TransactDenial =
@@ -165,13 +141,6 @@ export type TransactVerdict =
   | { ok: true }
   | { ok: false; reason: TransactDenial; companyName?: string };
 
-/**
- * Can this viewer enter a transaction — post a Work Request, propose on work?
- *
- * Reads memberships through the injected loader so `access.ts` stays free of a
- * Prisma import (the edge proxy imports this module's types). `lib/guard.ts`
- * supplies the real loader.
- */
 export function verifyTransactAbility(
   viewer: Viewer,
   binding: {

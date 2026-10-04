@@ -8,24 +8,6 @@ import { SettlementDecision } from "@/components/settle/SettlementDecision";
 import { getSettlement, SettlementError } from "@/lib/settlements";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * `/payments/payment-requests/[id]` — ONE PAYMENT REQUEST (`P1-J4-E394`).
- * ⚠ Moved from `/finances/...` by `P1-ALL-E533`; the old path redirects (308).
- *
- * ⚠⚠ ONE PAGE, BOTH PARTIES, TWO RENDERINGS. The provider reads what they
- * raised; the buyer reads it and decides. The lines render as a TIMESHEET or as a
- * MILESTONE ROW purely on each line's `basis` — the same branch the create screen
- * makes, from the same column, with no `settlement_type` anywhere.
- *
- * ⚠ THE DECISION BUTTONS COME FROM `settlement.actions`, computed server-side by
- * `settlementActions(settlement, party)`. This page passes an ARRAY and no party
- * flag — `E393`'s pattern, and `SettlementDecision` explains why that is the
- * proof rather than a convention.
- *
- * ⚠ ONE URL FOR BOTH SIDES ON PURPOSE. A buyer following a link from `/pay` and a
- * provider following one from their own list land on the same document; two
- * routes would mean two renderings of one record that could drift.
- */
 export const metadata = { title: "Payment Request · Panameer" };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -39,7 +21,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   try {
     s = await getSettlement(viewer, id);
   } catch (e) {
-    /* ⚠ NOT A PARTY MEANS NOT FOUND — confirming an id exists is itself a leak. */
     if (e instanceof SettlementError && e.code === "NOT_FOUND") notFound();
     throw e;
   }

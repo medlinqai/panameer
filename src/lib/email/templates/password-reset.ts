@@ -1,23 +1,6 @@
 import { capitalizeName } from "@/lib/display";
 import { emailShell, escapeHtml, footerText, primaryButton } from "@/lib/email/shell";
 
-/**
- * ── ⚠⚠ THE PASSWORD RESET EMAIL (`P1-ALL-E528` Part B) ─────────────────────
- *
- * ⚠ SHAPED ON `verify-email`, DELIBERATELY. The brief: *"COPY `verify-email`'s
- * SHAPE. It works, Scott has walked it, and a second token convention in one app
- * is a second thing to get wrong."*
- *
- * ⚠⚠ THE EXPIRY IS IN THE BODY BECAUSE IT IS A CREDENTIAL. An hour is short
- * enough that a forwarded or archived mail is usually already useless, and long
- * enough to survive delivery and somebody finding the mail. ⚠ If the constant
- * changes, this sentence changes with it — they are one fact in two places, and
- * `check:email` asserts the number appears here.
- *
- * ⚠ THE LINE THAT MATTERS MOST IS THE LAST ONE. A person who did NOT ask for
- * this must be told that ignoring it is safe and that nothing has changed yet —
- * otherwise a routine reset email reads like a break-in.
- */
 export function passwordResetTemplate({
   firstName,
   resetUrl,
@@ -29,8 +12,6 @@ export function passwordResetTemplate({
   logoUrl?: string;
   expiresInHours?: number;
 }): { subject: string; html: string; text: string } {
-  /* ⚠ TITLE CASE — the subject convention `brief_N_title_case` locked and
-     `E015` applied to this family. */
   const subject = "Reset Your Panameer Password";
   const name = capitalizeName(firstName);
   const heading = `Reset your password${name ? `, ${escapeHtml(name)}` : ""}`;

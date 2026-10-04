@@ -1,26 +1,4 @@
-/**
- * ⚠⚠ THE COMMUNITY CREDITS CHIP — PARKED 2026-09-03 (`P1-ALL-E375`, amendment A2).
- * ⚠⚠ THIS WHOLE FILE IS COMMENTED OUT. IT IS NOT DELETED AND MUST NOT BE.
- *
- * SCOTT, 2026-09-03: *"just comment it out. we can come back to it if we want,
- * but it is just too much rn. we NEED to move faster. that has no real value."*
- *
- * ⚠ PARKED DELIBERATELY, NOT ABANDONED. Three unbuilt things were stacked behind
- * this chip — no ledger, no scheduling, and a standing Friday commitment nobody
- * wants. THE FULL REASONING AND THE DECISION LIVE IN `src/lib/credits.ts`, which
- * is parked in the same commit and lists every call site that went quiet with it.
- *
- * ⚠ THE FILE STAYS ON DISK UNIMPORTED, WHICH IS THE `E164` RULE: a retired
- * component is never deleted. To bring Credits back, uncomment `lib/credits.ts`
- * first, then this file, then the render block in `AppHeader.tsx`.
- *
- * ⚠ ITS MEASURED WIDTHS ARE PRESERVED BELOW AND ARE STILL LOAD-BEARING IF IT
- * RETURNS: `AppHeader`'s breakpoint ladder was solved against this chip at 411px
- * (301px below `md`). That header comment is parked, not deleted, for the same
- * reason — re-deriving it would mean re-measuring in a browser.
- */
 
-/* ⚠⚠ COMMENTED OUT 2026-09-03 — see the block above. DO NOT DELETE. */
 
 // "use client";
 //
@@ -49,10 +27,8 @@
 //       href="/community"
 //       title={
 //         summary.pending
-//           ? "Community Credits are the earned currency for group sessions. The ledger goes live in a later phase."
 //           : "Community Credits — earn them by taking part, spend them on group sessions."
 //       }
-//       className="inline-flex shrink-0 items-center gap-2 rounded-full bg-magenta px-3.5 py-2 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
 //     >
 //       <SparkIcon />
 //       <span className="hidden sm:inline">Community Credits</span>
@@ -64,7 +40,6 @@
 //         {formatCredits(summary.earnedThisWeek)} This Week
 //       </span>
 //       {summary.pending && (
-//         <span className="hidden rounded-full bg-white/20 px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wide md:inline">
 //           Coming soon
 //         </span>
 //       )}

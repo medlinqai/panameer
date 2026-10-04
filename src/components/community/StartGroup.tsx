@@ -3,19 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * ── ⚠⚠ START A GROUP — THE FORM (`P2-A3-E619` WS-A 4) ───────────────────
- *
- * ⚠ SCOTT, RULING 2: *"Anyone can start a group."* ⚠⚠ There is exactly ONE of
- * these on the page: the hero's button is an anchor to this card, not a second
- * copy of the form. **Two forms writing one table is `E585` in the browser.**
- *
- * ⚠⚠⚠ NO TYPE PICKER AND NO PRICE FIELD, DELIBERATELY. `createGroup` refuses
- * both, and the reasons are on it: a `REQUEST` group would strand joiners in
- * `PENDING` with no approval queue to release them, and a price cannot be
- * collected because nothing in the codebase creates a `Payment`. ⚠ A field
- * whose value the writer discards is a promise the form cannot keep.
- */
 export function StartGroup() {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -27,12 +14,6 @@ export function StartGroup() {
     if (busy) return;
     setBusy(true);
     setError(null);
-    /*
-      ⚠⚠⚠ `try` / `catch` / `finally`, AND THE `catch` IS THE POINT. `E516`
-      recorded five blocks in this codebase with `try`/`finally` and NO `catch`,
-      where a thrown fetch produces silence — the member clicks, nothing
-      happens, and nothing explains why. ⚠ A network failure says so here.
-    */
     try {
       const res = await fetch("/api/community/groups/create", {
         method: "POST",
@@ -45,8 +26,6 @@ export function StartGroup() {
         return;
       }
       setTitle("");
-      /* ⚠ Straight into the room they just made — a create that leaves you on
-         the page you started from reads as though nothing happened. */
       router.push(`/community/groups/${data.slug}`);
       router.refresh();
     } catch {

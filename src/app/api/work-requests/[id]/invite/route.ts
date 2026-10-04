@@ -4,18 +4,6 @@ import { checkTransact, guardApi } from "@/lib/guard";
 import { WorkRequestError } from "@/lib/work-request";
 import { inviteProviders } from "@/lib/work-request-invite";
 
-/**
- * POST /api/work-requests/[id]/invite — issue one ITB per named provider
- * (`P1-J4-E392` WS-3).
- *
- * ⚠⚠ THE FENCE: THIS CREATES INVITATIONS AND READS NOTHING BACK. There is no GET
- * here returning bids, and `lib/work-request-invite.ts` never touches
- * `Proposal`. The bid list and the comparison screen are their own brief.
- *
- * ⚠ `SourcingError` REACHES HERE when the ITB has no closing date — `E395`'s
- * rule, thrown by `E395`'s function. Passed through with its own message, since
- * "a bid with no closing date never closes" is the actual reason.
- */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

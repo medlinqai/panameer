@@ -6,16 +6,6 @@ import {
   getSkillsForField,
 } from "@/lib/catalog";
 
-/**
- * GET /api/catalog/skills
- *   ?roleTypeId=…&pillarId=…  → skills in one (Role, Domain) FIELD
- *                               (brief_R — the provider wizard, step 8)
- *   ?pillarId=…               → skills across a domain, any role
- *   ?roleTypeId=…             → skills in one RoleType (Settings, Work Request)
- *   ?roleTypeIds=a,b          → the UNION across several roles (WS3 skills page)
- *
- * Public reference data.
- */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const pillarId = params.get("pillarId");

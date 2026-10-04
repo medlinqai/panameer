@@ -7,16 +7,6 @@ import {
   primaryButton,
 } from "@/lib/email/shell";
 
-/**
- * Coordinator → provider invite email (brief_I). On the shared shell since
- * WS-A, so it carries the same header and the same footer as the rest of the
- * suite — it had its own copy of both, plus its own logo-less wordmark.
- *
- * NOT the Work-Request invite. This one asks somebody to JOIN Panameer as a
- * provider; `work-request-invite.ts` asks an existing provider to propose on a
- * specific Work Request. The brief calls that out because the names are close
- * enough to reach for the wrong one.
- */
 export function inviteProviderTemplate({
   coordinatorName,
   inviteeFirstName,

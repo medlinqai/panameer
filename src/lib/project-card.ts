@@ -1,18 +1,5 @@
 import { toView as toArtifactView } from "@/lib/artifacts";
 
-/**
- * The ONE mapper from a prisma Project row to the shape every surface renders
- * (brief_project_model_v2 / _validation).
- *
- * Its own module on purpose: both `employers.ts` (the provider API) and
- * `onboarding.ts` (the wizard's status payload) need it, and those two already
- * import from each other. Putting the mapper in either one closes an import
- * cycle; putting it here keeps the graph acyclic.
- *
- * Every project surface goes through this. Hand-rolled projections are how the
- * wizard modal ended up opening v2 projects with blank client, role, tools and
- * contact email — and then saving those blanks back.
- */
 export function projectToCard(p: {
   id: string;
   name: string;
@@ -22,8 +9,6 @@ export function projectToCard(p: {
   start_date: Date | null;
   end_date: Date | null;
   is_current: boolean;
-  /** ⚠ `P1-J1.4-E296` — nothing renders these yet; they exist so a conversion
-      is lossless in both directions. Mapped here so every surface gets them. */
   role_title: string | null;
   location: string | null;
   client_name: string;
@@ -49,7 +34,6 @@ export function projectToCard(p: {
     status: string;
     sent_at: Date;
     responded_at: Date | null;
-    /* `P1-J2.1-E024` — the five optional answers, for the provider's own view. */
     answered_at?: Date | null;
     worked_from?: Date | null;
     worked_to?: Date | null;
@@ -72,7 +56,6 @@ export function projectToCard(p: {
     startDate: p.start_date ? p.start_date.toISOString().slice(0, 10) : null,
     endDate: p.end_date ? p.end_date.toISOString().slice(0, 10) : null,
     isCurrent: p.is_current,
-    /* ⚠ `E296`. NOT RENDERED — see the type note above. */
     roleTitle: p.role_title,
     location: p.location,
     clientName: p.client_name,
@@ -101,17 +84,6 @@ export function projectToCard(p: {
     /** A live request — drives "Requested — awaiting reply" + Resend. */
     validationRequestedAt:
       p.validations?.find((v) => v.status === "SENT")?.sent_at?.toISOString() ?? null,
-    /*
-      ── ⚠ WHAT THE CLIENT ANSWERED (`P1-J2.1-E024`, 2026-09-01) ───────────────
-
-      ⚠⚠ CONSENT GOVERNS **PUBLIC** DISPLAY ONLY. The provider may ALWAYS read
-      what their own client said about them — withholding it would be strange and
-      would make the feature feel like surveillance rather than evidence. The two
-      flags decide whether it may ever appear on a PUBLIC profile, and this brief
-      publishes nothing at all.
-      ⚠ `answeredCount` IS DERIVED, NOT STORED — a stored counter is one more
-      thing to keep in step with the columns it counts.
-    */
     clientAnswers: (() => {
       const v = p.validations?.find((x) => x.answered_at);
       if (!v) return null;
@@ -133,7 +105,6 @@ export function projectToCard(p: {
         testimonial: v.testimonial ?? null,
         responderName: v.responder_name ?? null,
         responderTitle: v.responder_title ?? null,
-        /* ⚠ CARRIED SO A FUTURE PUBLIC VIEW CANNOT FORGET TO CHECK THEM. */
         testimonialPublic: v.testimonial_public === true,
         attributionPublic: v.attribution_public === true,
       };

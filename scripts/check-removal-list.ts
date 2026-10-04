@@ -1,25 +1,3 @@
-/**
- * ── ⚠⚠⚠ `check:removal-list` — `P2-A1.1-E740` (A2) ────────────────────────
- *
- * ⚠ THE ONE RULE THIS EXISTS TO KEEP: **the résumé-rebuild removal path must
- * never fire the rollup.**
- *
- * ⚠⚠ Scott, 2026-10-01: the removal list *"never fires the rollup."* ⚠⚠⚠ The
- * obvious implementation — call `deleteEmployer` — ends in `afterJobChange`,
- * which calls `recomputeProviderRollup`, which `E553` measured as capable of
- * **deleting 297 `DERIVED` skill rows across 51 profiles, 139 of them
- * unrecoverable.** ⚠ A member tidying two jobs off a list must not lose their
- * skill history to it.
- *
- * ⚠⚠ **IT STRIPS COMMENTS BEFORE SCANNING** (load-bearing rule 12): the house
- * rule quotes superseded code, and the route's own notes NAME `deleteEmployer`
- * and `recomputeProviderRollup` in prose. Scanning raw text would match the
- * explanation and fail on correct code — ruling 10's false red.
- *
- * ⚠ MUTATION TEST: call `deleteEmployer` or `recomputeProviderRollup` from the
- * apply route, or drop the `provider_profile_id` scope from either delete, and
- * this goes red.
- */
 import { readFileSync as rawRead } from "node:fs";
 import { join } from "node:path";
 

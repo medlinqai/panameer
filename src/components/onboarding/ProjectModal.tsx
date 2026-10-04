@@ -5,21 +5,6 @@ import { Modal } from "@/components/Modal";
 import { Field, TextInput, TextArea, Chip, Notice } from "@/components/onboarding/controls";
 import { checkContactDomain } from "@/lib/email-domain";
 
-/**
- * Add / Edit Project — the v2 capture form (brief_project_model_v2).
- *
- * A project is now the reporting grain of the product, so this modal collects a
- * lot. It is grouped into labelled sections rather than one long field run —
- * Identity, Timeline, Classification, What You Did, Outcomes, Proof, Media — so
- * it reads as six short forms instead of one intimidating one, and it scrolls
- * inside the centred dialog (E058).
- *
- * CLASSIFICATION IS CATALOG-LINKED, not free text: role is a single-select over
- * `RoleType`, tools are a multi-select over `Application`. That is what makes
- * "every Technical project that used Supplier Portal" a query later. Typing a
- * tool we don't carry adds it as a custom, flagged for admin review.
- */
-
 export type ProjectDraft = {
   name: string;
   codeName: string;
@@ -75,7 +60,6 @@ type AppOpt = { id: string; name: string; isCustom: boolean };
 type IndustryOpt = { id: string; name: string };
 type LogoSuggestion = { url: string; source: string; label: string; domain?: string };
 
-/** Cap the tool suggestions, like every other picker (brief_Y / E053). */
 const MAX_APP_SUGGESTIONS = 12;
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -104,7 +88,6 @@ export function ProjectModal({
   validationRequestedAt,
   employerNames = [],
 }: {
-  /** E113 — the provider's own employers, offered as Client choices. */
   employerNames?: string[];
   open: boolean;
   draft: ProjectDraft;

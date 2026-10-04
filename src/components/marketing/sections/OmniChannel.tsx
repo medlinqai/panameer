@@ -1,19 +1,6 @@
 import { OMNI_CHANNEL } from "@/lib/brand";
 import { SectionHead } from "@/components/marketing/sections/SectionHead";
 
-/**
- * "Sell Your Expertise Every Way There Is" (seller §3).
- *
- * Five ways to monetise one profile. This is the section that answers the
- * second pain — the hourly ceiling — so it sits directly after it.
- *
- * ⚠ PRESENTATIONAL, AND DELIBERATELY NOT LINKED. Consultations, Packages and
- * Mentoring all exist as concepts in the product and none of them has a public
- * page to send a logged-out visitor to; Courses does (/learn), but linking one
- * card out of five would read as the other four being broken. The page's ask is
- * the closing CTA, and this section's job is to widen what "selling" means
- * before the reader gets there.
- */
 export function OmniChannel() {
   return (
     <section id="monetization" className="bg-white py-16">

@@ -1,30 +1,8 @@
 "use client";
 
-/* ⚠ `useMemo` went with the streak resolution (`E606` R3). ⚠ SUPERSEDED (`E164`):
-   //   import { useMemo } from "react"; */
 import { ShieldCheck, Flame, ListChecks, CircleCheckBig, GraduationCap, Trophy, Lock } from "lucide-react";
-/* ⚠ `streakFrom` went with the streak badge (`E606` R3). ⚠ SUPERSEDED (`E164`):
-   //   import { streakFrom } from "@/lib/learn-progress"; */
 import type { Achievement } from "@/lib/learn-dashboard";
 
-/**
- * ⚠ EVERY BADGE'S CONDITION IS COMPUTABLE FROM ROWS THAT ALREADY EXIST —
- * `LessonProgress`, `Certification`, `LearnTestAttempt`. Nothing here is stored,
- * awarded or backfilled; each tile is a query result rendered as a medal.
- *
- * ⚠ THE MOCKUP'S SIXTH BADGE IS CUT. `Mentor — answer 25 in a room` needs rooms
- * and an answer model; the schema has neither and this brief builds neither, so
- * it could never light up. `Course Finisher` replaces it — finish every lesson in
- * one course, which is `LessonProgress` counted against a course's lesson set.
- *
- * ⚠ CLIENT-ONLY, LIKE THE STREAK TILE, AND FOR THE SAME REASON. `10-Day Streak`
- * is the one condition that depends on the learner's timezone, and it uses the
- * same `streakFrom` the tile does, so the badge cannot claim a streak the tile
- * denies. Because that one badge moves, so does the "N of 6 unlocked" count and
- * the medal's own styling — three things a `suppressHydrationWarning` cannot
- * cover between them. It is loaded through `next/dynamic` with `ssr: false`
- * rather than server-rendered and patched.
- */
 const ICONS: Record<string, typeof Flame> = {
   first_certificate: ShieldCheck,
   streak_10: Flame,
@@ -47,34 +25,7 @@ export default function AchievementGrid({
   achievements,
 }: {
   achievements: Achievement[];
-  /* ⚠⚠ `completedAt` IS REMOVED FROM THE CONTRACT (`E606` R3), not left
-     unread. Its only reader was the streak resolution. ⚠ Leaving an unused
-     prop on the signature is how the next person re-adds a streak "because the
-     data is already here".
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   completedAt: string[]; */
 }) {
-  /*
-    ── ⚠⚠⚠ THE STREAK RESOLUTION IS RETIRED (`P2-A4-E606` R3) ───────────────
-    ⚠ The only `clientComputed` badge was `streak10`, and a streak rewards a
-    HABIT rather than an accomplishment. ⚠⚠ WITH IT GONE, **every badge is
-    computed on the server from a count**, so there is nothing left for the
-    browser to fill in and no badge whose `earned` is decided anywhere but in
-    `learn-dashboard.ts`.
-    ⚠ `completedAt` is still a prop — `MyLearning` passes it and the type still
-    carries it — but nothing here reads it now; that is reported, not silently
-    tidied, because removing a prop is a change to the component's contract.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const streak = useMemo(
-    //     () => streakFrom(completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
-    //     [completedAt]
-    //   );
-    //   const resolved = achievements.map((a) => {
-    //     if (a.clientComputed !== "streak10") return a;
-    //     return { ...a, earned: streak.best >= 10,
-    //       detail: streak.best > 0 ? `Best run: ${streak.best} days` : a.detail };
-    //   });
-  */
   const resolved = achievements;
 
   const unlocked = resolved.filter((a) => a.earned).length;
@@ -83,7 +34,7 @@ export default function AchievementGrid({
     <>
       <div className="mt-8 mb-3.5 flex items-baseline gap-3">
         <h3 className="font-display text-[17px] font-bold">Achievements</h3>
-        {/* ⚠ "N of 6", not the mockup's "4 of 12" — six is how many there are. */}
+        {}
         <p className="text-[12px] text-ink-2">
           {unlocked} of {resolved.length} unlocked
         </p>

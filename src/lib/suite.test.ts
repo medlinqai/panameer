@@ -7,17 +7,6 @@ import {
   suiteLabel,
 } from "./suite";
 
-/**
- * Suite resolution (brief_per_job_skill_model WS-1).
- *
- *   npm run check:suite
- *
- * Worth a harness because every failure here is silent. A pillar name that
- * stops resolving returns an empty module list rather than an error; a suite
- * matched inside another word tags a job with a system nobody worked on, and
- * every skill on that job is then misattributed in the rollup.
- */
-
 let pass = 0;
 const failures: string[] = [];
 const ok = (label: string, cond: boolean, detail = "") => {

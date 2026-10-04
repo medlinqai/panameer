@@ -1,16 +1,7 @@
 "use client";
 
-/**
- * THE PHASE TIMELINE on `/status` (`P2-ALL-E803`).
- *
- * Top-level rows only — phases and milestones, never child rows. Scott,
- * 2026-10-03: the child rows live in the grid below, not in the chart.
- * Client-side only because of the scrubber.
- */
-
 import { useRef, useState } from "react";
 import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
-
 
 const STATUS_BAR: Record<string, string> = {
   Done: "bg-ink",

@@ -13,26 +13,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * INVITE TO PROPOSE (WS-C).
- *
- * NOT `invite-provider.ts`. That one asks a stranger to JOIN Panameer; this
- * asks an existing provider to propose on one Work Request. The brief calls the
- * distinction out because the filenames are close enough to grab the wrong one.
- *
- * TWO ACTIONS, ONE FILL. "Submit a Proposal" is the magenta primary; "Decline"
- * is a ghost. Declining is a real and respectable answer — it should be easy to
- * find and obviously not the thing being urged.
- *
- * THE DESCRIPTION IS REQUESTER-AUTHORED AND IS ESCAPED. It is the only free
- * text in this suite that a third party wrote, and it lands in an HTML email;
- * `escapeHtml` is what stops a stray angle bracket becoming markup in someone
- * else's inbox.
- *
- * ⚠ NOT WIRED — there is no work-invitation model. The share page's Invite
- * button points at a titled placeholder, and that is the single call site this
- * template plugs into when the model lands.
- */
 export function workRequestInviteTemplate({
   inviteeFirstName,
   requesterCompany,

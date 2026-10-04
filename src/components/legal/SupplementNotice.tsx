@@ -1,22 +1,5 @@
 import type { SupplementNotice as Notice } from "@/content/legal/supplement-meta";
 
-/**
- * The per-document warning above a supplement's text (WS-C).
- *
- * WHY EACH OF THESE EXISTS. The draft banner every legal page carries says the
- * corpus is unreviewed. That is not enough for these four cases, each of which
- * is a different KIND of not-finished, and a reader who only sees "draft" will
- * assume the words below are at least describing something real:
- *
- *   payments — describes money movement Panameer is building. Regulated, and
- *              wired to nothing. Somebody must not read it as a live promise.
- *   counsel  — a jurisdiction-heavy shell. The structure is there, the
- *              jurisdiction-specific substance is not.
- *   todo     — the text is complete except for a Panameer value nobody has
- *              supplied, and the surrounding prose reads as if it had been.
- *   stub     — the source text is unusable and the page says so instead of
- *              publishing it.
- */
 export function SupplementNotice({ notice }: { notice: Notice }) {
   if (notice.kind === "stub") {
     return (

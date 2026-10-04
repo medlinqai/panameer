@@ -1,16 +1,5 @@
 import { W9_CHECKS, W9_FIELDS } from "@/lib/marketing-scenes";
 
-/**
- * SCENE 3 — W-9 validation.
- *
- * ⚠ THE AGENT DOES NOT AUTO-APPROVE, and that is the argument.
- *
- * Six checks pass, one warns, and the status band reads "6 / 7 — Needs review"
- * with "a buyer decides, the agent does not." An agent that cleared a name
- * mismatch on its own is precisely what a procurement lead will not trust, so
- * the honest version is also the more persuasive one. Do not "improve" this to
- * 7/7.
- */
 export function W9Scene() {
   const passed = W9_CHECKS.filter((c) => c.ok).length;
   return (

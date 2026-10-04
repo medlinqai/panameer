@@ -4,21 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 
-/**
- * ⚠⚠ THE IN-APP WIZARD SHELL — NO PUBLIC CHROME (`P1-J1.1-E267`, 2026-08-30).
- *
- * This page renders INSIDE `AppShell`, which already supplies the header, the
- * rail and the footer. `E246` gave `OnboardingFrame` a `MarketingHeader` and a
- * `MarketingFooter` — correct for every PUBLIC onboarding page and wrong here,
- * so `/create-work` came out with two headers and two footers around one wizard.
- * That was chat's miss in the `E246` brief, not a CC error.
- *
- * ⚠ ONE WRAPPER, NOT A PROP ON EVERY CALL. There are nine `WizardShell`s in this
- * file and one more in `ReviewWorkRequest`; threading `chrome={false}` through
- * each by hand is a list somebody adds a tenth screen to and forgets. Setting it
- * in one place means a new step in this file CANNOT reintroduce the defect.
- * ⚠ THE DEFAULT ELSEWHERE IS STILL `true`, so no public page changed.
- */
 function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
   return <WizardShell {...props} chrome={false} />;
 }
@@ -34,40 +19,10 @@ import {
   Notice,
 } from "@/components/onboarding/controls";
 
-/**
- * CREATE WORK REQUEST (brief_create_work_request_v1).
- *
- * Seven steps, then review, then post. It replaces the four-screen wizard at
- * /work/new, which asked for a category and a flat skill list; the deck's flow
- * is a CASCADE — Role narrows Domain narrows Skills — and that is the part with
- * teeth, because it is what makes a request matchable rather than a paragraph.
- *
- * WHAT NARROWS ALSO CLEARS. Changing the role in step 1 discards the domain and
- * skills chosen after it, because a skill belongs to exactly one role and
- * keeping them would post a request whose domain answers a question the
- * requester has since changed their mind about. Going BACK preserves everything;
- * only changing an answer resets what depended on it. The server enforces the
- * same rule — see `saveSection` — so a stale client cannot get around it.
- *
- * SAVE-AS-YOU-GO against a real DRAFT. Every step POSTs to /api/work-requests,
- * so a closed tab resumes from `/current` rather than starting over. Nothing
- * here holds a request that only exists in React state.
- *
- * VOCABULARY IS LOCKED: Work Request, Provider, Recruiter. Never job, job post,
- * freelancer or agency.
- */
-
 const STEPS = [
   "role",
   "domain",
   "skills",
-  /*
-    SPECIALIZATIONS SITS AFTER SKILLS because it refines the same question.
-    Skills say what the work IS; specializations say which products, processes
-    and industries it touches. Asked before skills it would be abstract; asked
-    after dates or budget it would drag the requester back into scoping after
-    they had moved on to logistics.
-  */
   "specializations",
   "dates",
   "location",
@@ -102,7 +57,6 @@ export type Draft = {
   endDate: string | null;
   worksite: string | null;
   locationCountry: string | null;
-  /** ⚠ `P1-J4-E025` — how the COMPANY NAME publishes. Never the person. */
   companyVisibility: string;
   companyCodeName: string | null;
 };
@@ -110,11 +64,6 @@ export type Draft = {
 const dollars = (cents: number | null) =>
   cents === null || cents === undefined ? "" : String(cents / 100);
 
-/**
- * ⚠ `identityGaps` IS COMPUTED ON THE SERVER (`P1-J4-E025`) and passed down. It
- * is a MIRROR of the post gate, never the gate — `postWorkRequest` refuses on
- * the same rule whatever this component does with it.
- */
 export function CreateWorkRequest({
   identityGaps = [],
 }: {
@@ -137,19 +86,6 @@ export function CreateWorkRequest({
   const [skillQuery, setSkillQuery] = useState("");
   const [specGroups, setSpecGroups] = useState<SpecGroup[]>([]);
 
-  /*
-    THE IMPORT (WS-B). Held on the wizard rather than in the panel because its
-    RESULT outlives the panel: the extracted skills cannot be saved until a role
-    and domain exist, so they wait here until the requester reaches step 3.
-  */
-  /*
-    WHICH DOOR IS OPEN, or null while the three are being offered. "manual" has
-    no panel of its own — choosing it simply dismisses the doors and leaves the
-    requester on the role step, which IS the manual path. It is a distinct state
-    rather than the same `null` so that picking it is a decision the UI records,
-    not an absence of one: the doors stay dismissed for the rest of the session
-    instead of reappearing every time step 1 re-renders.
-  */
   const [doorsOpen, setDoorsOpen] = useState<"paste" | "manual" | null>(null);
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
@@ -209,15 +145,6 @@ export function CreateWorkRequest({
     };
   }, [hydrate]);
 
-  /*
-    Skills follow the (role, domain) pair — the third rung of the cascade.
-
-    THE EMPTY CASE IS NOT A setState IN THE EFFECT BODY. Clearing the list when
-    the pair is incomplete looks like the obvious thing to do here, and this
-    repo lints it as an error because it cascades renders. The fetch keys itself
-    on the pair instead, and `skillsFor` below is what the UI reads — so a stale
-    list can never be shown for a pair it does not belong to.
-  */
   const pairKey = `${draft?.roleTypeId ?? ""}:${draft?.pillarId ?? ""}`;
   useEffect(() => {
     const [roleTypeId, pillarId] = pairKey.split(":");

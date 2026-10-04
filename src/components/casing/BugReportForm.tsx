@@ -4,32 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import type { SupportApplication } from "@/lib/support-applications";
 
-/**
- * Bug report (`P2-J1.1-E032`) — now files a real ticket.
- *
- * ── ⚠⚠ WHAT THIS REPLACED, AND ONE CORRECTION TO THE BRIEF ──────────────────
- *
- * ⚠ SUPERSEDED, quoted not deleted: *"The brief scopes the ticketing backend
- * out, so this does not pretend to file anything. It captures the report, tells
- * the truth about where it goes… Wiring `POST /api/support/bug` is the only
- * change needed when the backend lands."*
- *
- * ⚠⚠ THE OLD FORM WAS HONEST, AND THE BRIEF SAYS OTHERWISE. It called this *"the
- * worst instance of the `P1-ALL-E034` class — a submit button that swallows a
- * bug report tells the user their report was received when nothing was
- * stored."* THAT IS NOT WHAT THE CODE DID: it rendered *"Not filed — there's no
- * bug tracker yet"* and handed the text back to copy. It was the E034 REMEDY,
- * not the defect. The real problem was smaller and still real — reports went
- * nowhere and nobody could reply — and that is what this fixes. Recorded so the
- * next reader does not go looking for a lie that was never told.
- *
- * ⚠ THE FORM GREW because one textarea cannot fill a ticket: triage needs to
- * know WHERE it happened, HOW BAD it is, and how to REPRODUCE it. Kept as light
- * as that allows — `title`, `where`, `what happened` and a priority default that
- * most reporters will never touch.
- * ⚠ THE SCREENSHOT IS OPTIONAL and its failure is reported ALONGSIDE a
- * successful filing, never instead of it.
- */
 export function BugReportForm({ applications }: { applications: SupportApplication[] }) {
   const [title, setTitle] = useState("");
   const [application, setApplication] = useState("");
@@ -75,7 +49,7 @@ export function BugReportForm({ applications }: { applications: SupportApplicati
           <p className="text-[16px] font-bold">Filed — thank you.</p>
           <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">
             Your ticket is{" "}
-            {/* ⚠ THE CODE IS SHOWN BECAUSE IT IS WHAT A PERSON QUOTES BACK. */}
+            {}
             <b className="font-mono text-ink">{filed.code}</b>. You&apos;ll see any
             reply on your{" "}
             <Link href="/support/tickets" className="font-semibold text-magenta underline">
@@ -112,8 +86,7 @@ export function BugReportForm({ applications }: { applications: SupportApplicati
         className="mt-1 w-full rounded-[12px] border border-line bg-white p-3 text-[15px] outline-none focus:border-magenta"
       />
 
-      {/* ⚠ THE REPORTER'S OWN RAIL, plus Onboarding and Other — see
-          `lib/support-applications.ts` for why it is derived, not written. */}
+      {}
       <label className="mt-4 block text-[14px] font-semibold">Where did it happen? *</label>
       <select
         value={application}

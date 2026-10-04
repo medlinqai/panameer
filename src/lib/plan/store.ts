@@ -1,23 +1,3 @@
-/**
- * ⚠⚠⚠ THE PLAN TOOL'S ONE WRITER (`P2-ALL-E783`).
- *
- * Every write to `plans` / `plan_rows` goes through this module. ⚠⚠ **`updated_by`
- * IS RESOLVED FROM THE SESSION, NEVER ACCEPTED FROM THE CLIENT** — the caller
- * hands in a `Viewer` it got from `guardApi`, exactly as `work-tracker/admin.ts`
- * does (load-bearing rule 5).
- *
- * ⚠⚠ THE STRUCTURAL RULES LIVE HERE AND NOWHERE ELSE, because the database
- * cannot express them: two levels only, a milestone is never a parent, and a
- * row never moves between plans. ⚠ `parent_id` has a real FK with
- * `onDelete: Cascade`, so a deleted phase takes its tasks with it — that part
- * the database does guarantee.
- *
- * ⚠ `sort` IS RENORMALISED TO DENSE `0..n-1` WITHIN A PARENT ON EVERY
- * STRUCTURAL CHANGE. Fractional or gapped sorts drift, and after enough drags
- * two rows compare equal and the order of a plan becomes arbitrary. A plan is
- * tens of rows, so rewriting the siblings costs nothing and the invariant is
- * worth more than the writes.
- */
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { Viewer } from "@/lib/access";
@@ -57,10 +37,6 @@ export type StoredRow = Prisma.PlanRowGetPayload<{ select: typeof ROW_SELECT }>;
 
 /* ── reads ──────────────────────────────────────────────────────────────── */
 
-/**
- * ⚠ Returns null rather than creating anything. A read that silently creates a
- * plan would mint one from a public page view, and `/status` reads this.
- */
 export async function getPlan(ownerKey: string) {
   const plan = await prisma.plan.findUnique({ where: { owner_key: ownerKey } });
   if (!plan) return null;
@@ -72,31 +48,18 @@ export async function getPlan(ownerKey: string) {
   return { plan, rows };
 }
 
-/** The plan `/status` renders. ⚠ `planOwnerKey()`, not the constant — see
- *  `model.ts` (`E804`): the plan suite points its own server elsewhere. */
 export const getPanameerPlan = () => getPlan(planOwnerKey());
 
 /* ── the plan itself ────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ IDEMPOTENT, AND IT CREATES NO ROWS. "The Panameer plan record (empty)" is
- * the brief's wording and it is literal: an empty plan is the honest starting
- * state, and the template is a button Scott presses — **never a seed.** The
- * database is shared with production (ruling 38), so content created at deploy
- * time is content nobody chose.
- */
 export async function ensurePlan(ownerKey: string, title: string, viewer?: Viewer) {
   return prisma.plan.upsert({
     where: { owner_key: ownerKey },
     create: { owner_key: ownerKey, title, updated_by: viewer?.userId ?? null },
-    /** ⚠ An existing plan's title is NOT overwritten — `ensure` means "exists",
-     *  not "reset". Renaming is `renamePlan`, which somebody has to ask for. */
     update: {},
   });
 }
 
-/** ⚠ `planOwnerKey()` (`E804`): under test this ensures the THROWAWAY plan, so
- *  the editor suite never creates or touches the live one. */
 export const ensurePanameerPlan = (viewer?: Viewer) =>
   ensurePlan(planOwnerKey(), "Panameer build", viewer);
 

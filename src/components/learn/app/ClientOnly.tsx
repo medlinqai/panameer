@@ -2,59 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-/**
- * THE TWO PIECES OF `/learn` THAT CANNOT BE SERVER-RENDERED.
- *
- * Both depend on `Intl.DateTimeFormat().resolvedOptions().timeZone`, which only
- * exists in the browser, and the brief is explicit about WHY that matters: *"use
- * the learner's own timezone, not UTC — an evening lesson must not land on
- * tomorrow."* For a learner in Eastern Time an 8pm completion is stored as 00:00
- * the next day in UTC, so a server-side streak is not merely approximate, it can
- * report two days for one evening.
- *
- * ── ⚠ WHY `ssr: false` AND NOT `suppressHydrationWarning` ────────────────────
- *
- * The first attempt did the obvious thing: server-render a placeholder, compute
- * on mount, and suppress the warning on the value. It threw a real hydration
- * error, and it was caught in a BROWSER — no Node harness in this repo can see
- * it. `suppressHydrationWarning` forgives a changed TEXT NODE; it does not
- * forgive an ADDED CHILD, and the client render grows a `· best yet` clause on
- * the tile, flips a medal's gradient, and changes the "N of 6 unlocked" count.
- *
- * So these two render nothing on the server and a shaped skeleton until mount.
- * That is the honest encoding of "the server does not know this yet", and it
- * costs SSR on exactly two elements rather than papering over a mismatch.
- */
-
-/*
-  ⚠ `TILE_SKELETON` WENT WITH `StreakTile` (`E606` R3) — it was that dynamic
-  import's `loading` placeholder and had no other reader.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   const TILE_SKELETON = (
-//     <div className="flex items-center gap-3 rounded-brand border border-line bg-white p-4 shadow-[0_18px_40px_-22px_rgba(23,30,62,0.4)]">
-//       <span className="h-[38px] w-[38px] shrink-0 animate-pulse rounded-[11px] bg-bg-soft" />
-//       <div className="min-w-0 flex-1">
-//         <span className="block h-[21px] w-20 animate-pulse rounded bg-bg-soft" />
-//         <span className="mt-1 block h-[11px] w-24 animate-pulse rounded bg-bg-soft" />
-//       </div>
-//     </div>
-//   );
-*/
-
-/*
-  ⚠⚠ THE `StreakTile` EXPORT IS RETIRED (`E606` R2/R3). A streak rewards a
-  HABIT, not an accomplishment, and ruling 1 puts it out of scope. ⚠ It had
-  already left the tile row at `E364`; this removes the last thing that could
-  put it back on a page by autocomplete.
-  ⚠ `StreakTile.tsx` STAYS ON DISK (`E164` — a retired component is not
-  deleted); nothing imports it.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   export const StreakTile = dynamic(() => import("@/components/learn/app/StreakTile"), {
-//     ssr: false,
-//     loading: () => TILE_SKELETON,
-//   });
-*/
-
 export const AchievementGrid = dynamic(
   () => import("@/components/learn/app/AchievementGrid"),
   {

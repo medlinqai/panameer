@@ -9,23 +9,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * IDENTITY VERIFICATION REQUEST (WS-H).
- *
- * The ask, where WS-G is the confirmation. The deck's framing does the work
- * here: it opens with WHY ("we keep Panameer a place people can trust by
- * confirming who's who") before it asks for anything, and it is specific about
- * cost — a quick upload plus a visual check, under five minutes, confirmed
- * within 48 hours. A vague "verify your identity" reads as a phishing email;
- * naming the steps and the clock is what makes it read as ours.
- *
- * IT STATES THE CONSEQUENCE WITHOUT THREATENING. "Please start within seven
- * days; until then a few account features are limited." True, specific, and not
- * dressed up as a deadline with a penalty.
- *
- * ⚠ NOT WIRED — no Trust & Safety review flow exists to raise the flag.
- * TODO(identity): send when a T&S identity review is opened on an account.
- */
 export function identityVerificationRequestTemplate({
   firstName,
   startUrl,

@@ -1,20 +1,3 @@
-/**
- * `check:mail-containment` — outside production, mail goes nowhere unless named
- * (`P2-ALL-E607`). `npm run check:mail-containment`.
- *
- * ── ⚠⚠⚠ WHAT THIS GATE CAN AND CANNOT PROVE ──────────────────────────────
- *
- * ⚠ **A STATIC CHECK CANNOT SEE AN ENVIRONMENT IT DOES NOT RUN IN.** That is
- * the lesson that produced `email_sending_state.md`: `check:email` asserted the
- * SOURCE's fallback (`onboarding@resend.dev`) and was read for two months as a
- * claim about REACH, while production had been sending real mail since 07-23.
- *
- * ⚠⚠ SO THIS GATE DOES NOT ASSERT "PREVIEW IS CONTAINED". It cannot — it runs
- * on a developer machine. ⚠⚠⚠ **THE PROOF IS THE MAIL HEALTH CARD, READ IN THE
- * ENVIRONMENT BEING ASKED ABOUT.** What this asserts is narrower and honest:
- * that the PREDICATE behaves correctly when given each environment, and that
- * the refusal is wired the way the other refusal already is.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 

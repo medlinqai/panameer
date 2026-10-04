@@ -5,17 +5,6 @@ import { uploadCompanyLogo, StorageError, MAX_PHOTO_BYTES } from "@/lib/storage"
 
 export const runtime = "nodejs";
 
-/**
- * POST /api/company/logo — upload a company logo (E168).
- *
- * TWO CALLERS, ONE ENDPOINT, and the difference matters:
- *  · DEFINING a company — there is no company yet, so `companyId` is absent and
- *    the file is stored under the caller's PERSON id. The URL comes back and is
- *    posted with the define call.
- *  · an EXISTING company — `companyId` is present and the caller must hold an
- *    APPROVED ADMIN membership on it. Anything else is somebody re-branding a
- *    company they don't run.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;

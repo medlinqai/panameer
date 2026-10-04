@@ -11,17 +11,6 @@ import {
 import { formatCents, centsToDollarInput, dollarsToCents } from "@/lib/display";
 import { GateNotice, type GateNoticeGap } from "@/components/GateNotice";
 
-/**
- * Package management (brief_V / E045) — the provider's sellable catalog.
- *
- * Lives in Settings, NOT the onboarding wizard: packages are managed after
- * onboarding, so the wizard stays at 13 steps and a provider is never blocked
- * from publishing their profile by not having built an offering yet.
- *
- * Everything writes through the owner-scoped `/api/provider/packages`
- * endpoint, which re-checks each id against the session's own profile.
- */
-
 export type ServiceProductMilestone = { id?: string; label: string; percent: number };
 export type ServiceProductDeliverable = { id?: string; text: string };
 
@@ -51,7 +40,6 @@ export type CapabilityDomainOption = {
   key: string | null;
 };
 
-/** The default payment terms Scott specified. */
 const DEFAULT_MILESTONES: ServiceProductMilestone[] = [
   { label: "Upfront", percent: 50 },
   { label: "On completion", percent: 50 },
@@ -71,10 +59,6 @@ const emptyForm = () => ({
 });
 type Form = ReturnType<typeof emptyForm>;
 
-/**
- * ⚠ `sellGaps` IS COMPUTED ON THE SERVER (`P1-ALL-E034`) and passed down. It
- * MIRRORS the publish gate in `setPackageStatus`; the lib is the boundary.
- */
 export function ServiceProductsManager({
   sellGaps = [],
 }: {
@@ -132,11 +116,6 @@ export function ServiceProductsManager({
   const openEdit = (p: ProviderServiceProduct) => {
     setForm({
       title: p.title,
-      /*
-        ⚠ THE PROCESS IS RESTORED FROM THE SAVED DOMAINS, not from a stored column. If a
-        legacy package has none it opens blank, which is exactly right: the notice below the
-        picker then explains why it needs one.
-      */
       process: p.process ?? "",
       capabilityDomainIds: p.capabilityDomainIds ?? [],
       summary: p.summary ?? "",
@@ -156,11 +135,6 @@ export function ServiceProductsManager({
 
   /* nine processes, from the taxonomy the list endpoint sent — never a hard-coded list */
   const processes = [...new Set(domains.map((d) => d.process))].sort();
-  /*
-    ⚠ FILTERED BY THE CHOSEN PROCESS, AND THAT IS WHAT MAKES ~87 DOMAINS USABLE. A flat list
-    of every domain in every process is unreadable and invites the wrong pick; nine options
-    then ten is two easy decisions.
-  */
   const domainsForProcess = domains.filter((d) => d.process === form.process);
   const allSelected =
     domainsForProcess.length > 0 &&
@@ -226,17 +200,7 @@ export function ServiceProductsManager({
         </div>
       )}
 
-      {/*
-        ⚠⚠ SHOWN BEFORE THE BLOCK, ABOVE THE LIST (`P1-ALL-E034`). Scott's
-        argument for the early gate is that the LATE one is what causes fake
-        listings: *"you don't have details… then you add fake details and the
-        product then is deemed to be fake."* Telling a seller what publishing
-        needs while they are still BUILDING the product is the whole point —
-        discovering it at the Publish button is the version that produces
-        invented data.
-        ⚠ BUILDING AND EDITING DRAFTS IS UNAFFECTED. This notice explains why
-        Publish is disabled; nothing else on this page is.
-      */}
+      {}
       <GateNotice
         className="mb-4"
         heading="Before a buyer can see a service product"

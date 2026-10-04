@@ -11,16 +11,6 @@ export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-/**
- * Absolute base URL for links in emails. Shared.
- *
- * `origin` — the origin of the request that triggered the send — takes
- * precedence (brief_S / E022). Without it a walk on `localhost:3100` receives a
- * link pointing at whatever `NEXT_PUBLIC_APP_URL` happens to hold (the Vercel
- * URL), and clicking it lands on a DIFFERENT host with no session, which is
- * exactly the "bounced to /login" symptom Scott hit. Env values remain the
- * fallback for contexts with no request (cron, scripts).
- */
 export function appBaseUrl(origin?: string | null): string {
   if (origin) return origin.replace(/\/+$/, "");
   return (
@@ -30,25 +20,11 @@ export function appBaseUrl(origin?: string | null): string {
   );
 }
 
-/**
- * Issue a fresh email-verification token for a user and send the email.
- * Invalidates any prior unconsumed EMAIL tokens so only the newest link works.
- * `throttle` guards the resend path (one per minute); the initial send on
- * account creation passes throttle:false.
- *
- * Returns `{ sent, devLink }`. In dev without RESEND_API_KEY we skip the real
- * send and return the link so the round-trip is still testable locally.
- */
 export async function issueEmailVerification(
   userId: string,
   opts: {
     throttle?: boolean;
     origin?: string | null;
-    /**
-     * Which side of the marketplace signed up. Defaults to seller because the
-     * provider journey is every existing caller; the requester path passes
-     * "buyer" so the email doesn't greet them as a provider.
-     */
     audience?: "seller" | "buyer";
   } = {}
 ): Promise<
@@ -78,7 +54,6 @@ export async function issueEmailVerification(
   });
 
   const raw = randomBytes(32).toString("base64url");
-  /* ⚠ CAPTURED for the receipt's `subject_id` (`P2-J3-E522` Part A). */
   const token = await prisma.verificationToken.create({
     data: {
       user_id: userId,

@@ -1,29 +1,3 @@
-/**
- * `check:service-fee` — the service fee is ONE number, and the ways it can
- * quietly become several (`P1-J1.4-E390`). `npm run check:service-fee`.
- *
- * ── ⚠⚠ THE ASSERTION THIS FILE EXISTS FOR ───────────────────────────────────
- *
- * **A Prisma `@default` is not readable from TypeScript.** So the fee is written
- * twice — once in `schema.prisma`, once as `DEFAULT_SERVICE_FEE_BPS` — and no
- * import can cross that boundary. **The only thing that can stop the two
- * drifting is a test that reads the schema as TEXT and compares them**, which is
- * what this does. The drift it prevents is a provider being quoted one fee on
- * screen and charged another.
- *
- * ⚠ AND THE THIRD COPY IS THE ONE THAT COMES BACK. Two literals in
- * `join/provider/page.tsx` were removed by `E388`; this asserts they stay gone.
- *
- * ── ⚠⚠ AND THE PROHIBITION FROM WS-3, AS A TEST RATHER THAN A COMMENT ───────
- *
- * **91 provider rows hold 1000 (10%) and every new one gets 1490 (14.9%). The
- * mix is DELIBERATE.** It reads as data corruption to whoever finds it next, and
- * the obvious "fix" is an `UPDATE`. **That would raise 91 live providers' fees
- * without telling them.** So a write to that column fails the build — a comment
- * cannot.
- *
- * ⚠ NO DATABASE AND NO BROWSER.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { bpsToPercentLabel, DEFAULT_SERVICE_FEE_BPS, rateBreakdown } from "@/lib/display";
@@ -51,20 +25,6 @@ function walk(dir: string, out: SourceFile[] = []): SourceFile[] {
   }
   return out;
 }
-/**
- * ⚠⚠ THIS FILE IS EXCLUDED FROM ITS OWN TREE SCANS, AND THAT IS NOT A LOOPHOLE.
- *
- * Every absence scan below is MUTATION-TESTED by being fed the forbidden code,
- * which means this file necessarily CONTAINS `data: { service_fee_bps: 1490 }`,
- * `serviceFeeBps: 1000` and a competitor comparison — as string literals in the
- * mutation cases. Comment-stripping is not enough because they are code, not
- * prose. **A scan that has never been seen to fire is a scan whose regex might
- * match nothing at all** (`E041`), so proving they fire is worth one exclusion.
- *
- * ⚠ EXACTLY ONE FILE, NAMED, AND ASSERTED TO EXIST. Excluding a glob like
- * `scripts/check-*` would silently exempt every future harness — including one
- * that legitimately wanted to add a backfill.
- */
 const SELF = join("scripts", "check-service-fee.ts");
 const ALL_FILES = [...walk("src"), ...walk("scripts"), ...walk("prisma")];
 const SRC = ALL_FILES.filter((f) => f.path !== SELF);
@@ -74,10 +34,7 @@ check("0 — the self-exclusion names a real file", ALL_FILES.some((f) => f.path
 check("0 — and it excludes exactly one file", ALL_FILES.length - SRC.length === 1);
 
 const SCHEMA_RAW = readFileSync(join("prisma", "schema.prisma"), "utf8");
-/** ⚠ Comments stripped: this schema QUOTES the value in prose, twice. */
 const SCHEMA = SCHEMA_RAW.replace(/^\s*\/\/\/.*$/gm, "").replace(/^\s*\/\/.*$/gm, "");
-
-/* ═══ 1 · ⚠⚠ THE SCHEMA DEFAULT AND THE CONSTANT AGREE ════════════════════ */
 
 const declared = SCHEMA.match(/service_fee_bps\s+Int\s+@default\((\d+)\)/);
 check("1 — the schema declares a service_fee_bps default", !!declared, "not found in schema.prisma");

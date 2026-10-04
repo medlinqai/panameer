@@ -1,25 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
 
-/**
- * THE WORK FEED (brief_sp_dashboard WS-B) — the body of the provider dashboard.
- *
- * REAL QUERY OVER A REAL MODEL, CURRENTLY EMPTY. `WorkRequest` and
- * `WorkRequestSkill` exist and this reads them properly; no buyer has posted a
- * work request yet, so every tab returns nothing and the feed shows an honest
- * empty state. That is a data fact, not a stub — the day a buyer posts, cards
- * appear with no code change.
- *
- * TWO OF THE FIVE TABS CANNOT BE ANSWERED YET, and they say so rather than
- * quietly showing the same list as another tab:
- *   Saved Work  — nothing records a provider saving a work request.
- *   Invitations — no work-invitation model exists (CoordinatorInvite is a
- *                 recruiter asking to REPRESENT someone, a different thing).
- * A tab that silently falls back to "all work" is worse than one that admits it
- * has no list: the provider believes they have no saved work when in truth
- * nothing was ever saveable.
- */
-
 export type WorkFeedTab =
   | "best"
   | "recent"
@@ -28,18 +9,6 @@ export type WorkFeedTab =
   | "invitations"
   | "proposals";
 
-/*
-  E216 — THE RAIL'S FIND WORK CHILDREN FOLDED IN HERE, de-duplicated.
-
-  The flyout listed five children and this row already had five tabs, and they
-  were largely the same views under different names: "Work Requests for My
-  Skills" IS Best Matches (this feed ranks by skill overlap), "All Work
-  Requests" IS Most Recent, "My Work Requests (Saved)" IS Saved Work, and
-  "Invitations to Propose My Rate" IS Invitations. Stacking both would have put
-  two rows of near-synonyms on one page.
-
-  Exactly one child described a view this row did not have: My Proposals.
-*/
 export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "best", label: "Best Matches" },
   { id: "recent", label: "Most Recent" },
@@ -49,40 +18,6 @@ export const WORK_FEED_TABS: { id: WorkFeedTab; label: string }[] = [
   { id: "proposals", label: "My Proposals" },
 ];
 
-/**
- * ── ⚠⚠⚠ CORRECTED 2026-09-25 — TWO OF THESE THREE CLAIMS WERE FALSE ──────
- *
- * ⚠⚠ Brief 7's premise item 4 asks exactly this question — *"re-verify every
- * uncountable claim BY BEHAVIOUR, not by name"* — and warns that *"an absent NAME
- * is not an absent THING."* ⚠⚠⚠ **BOTH FAILURES HERE WERE THAT DEFECT, AND ONE OF
- * THEM WAS THE VERY EXAMPLE THE BRIEF CITES.**
- *
- * | tab | the claim | verified by behaviour |
- * |---|---|---|
- * | `saved` | nothing records a save | ✅ **TRUE** — no `Saved*` model, no writer |
- * | `invitations` | *"needs a work-invitation model, which doesn't exist"* | ❌ **FALSE** — the model is **`ProposalRequest`**, and `work-request-invite.ts:116` has been creating one all along |
- * | `proposals` | *"needs a Proposal model, which doesn't exist"* | ❌ **FALSE TWICE** — the model is **`Proposal`**, and `proposals.ts:222` now creates one (`E621` WS-A) |
- *
- * ⚠⚠ THE `proposals` STRING ALSO BLAMED THE MEMBER — *"You haven't sent any
- * proposals, and you can't yet"* — which ruling 18's surviving half forbids, and
- * which was **not even true**: a provider CAN now propose.
- *
- * ⚠⚠⚠ **THE WORDING IS CORRECTED HERE; THE WIRING IS BRIEF 7 WS-A's.** These two
- * tabs now have real mechanisms and therefore real (empty) data to fetch, and
- * giving them queries means touching the page — which needs the phone screenshots
- * WS-A asks for first. ⚠ So they are no longer LYING, and they are still not
- * LISTING. That is reported rather than half-built.
- *
- * ⚠ Ruling 18 governs the new strings: short, neutral, **no roadmap confession,
- * no promise, no date, no apology, and nothing that blames the member.**
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   Tabs whose data has no model yet — rendered, but honest about being empty.
- * //   saved: "Saving a work request isn't built yet — nothing records a save.",
- * //   invitations:
- * //     "Buyers can't invite you to propose yet. That needs a work-invitation model, which doesn't exist.",
- * //   proposals:
- * //     "You haven't sent any proposals, and you can't yet — proposing needs a Proposal model, which doesn't exist. Nothing is being hidden here.",
- */
 export const UNBACKED_TABS: Record<string, string> = {
   saved: "Not listed yet",
   invitations: "None to show",
@@ -103,11 +38,6 @@ export type WorkCard = {
   companyLogoUrl: string | null;
   skills: string[];
   postedAt: string | null;
-  /**
-   * ⚠ WHO IS ASKING (`P1-J4-E025`). Already redacted for this viewer — a
-   * CONFIDENTIAL company name never reaches the card, so it cannot leak through
-   * the RSC payload the way `client_domain` once could.
-   */
   identity: BuyerIdentity;
 };
 
@@ -134,41 +64,6 @@ const TITLE_CASE: Record<string, string> = {
 export const pretty = (v: string | null | undefined) =>
   v ? (TITLE_CASE[v] ?? v.replace(/_/g, " ").toLowerCase()) : null;
 
-/**
- * ── ⚠⚠⚠ THE BUDGET STRING — ONE DEFINITION (`P2-A8-E664`) ─────────────────
- *
- * ⚠ EXTRACTED BECAUSE `/find-work/[id]` NEEDS THE SAME STRING THE CARD SHOWS.
- * ⚠⚠ A detail page computing its own would be `E585` in its exact form: one
- * concept in two places, kept in step by hand, disagreeing in public on the
- * page a provider decides on.
- *
- * ── ⚠⚠⚠ IT NOW READS THE RANGE, AND THAT IS A MEASURED FIX, NOT A FLOURISH ─
- *
- * ⚠⚠ THE CARD READ `budget_amount_cents` ONLY — **and the current wizard does
- * not write that column.** `work-request.ts:430` (step 6, *"the budget, as a
- * RANGE"*) writes `budget_min_cents` / `budget_max_cents`; `budget_amount_cents`
- * is the FIRST wizard's single figure, kept for back-compat, and the schema says
- * so in its own words: *"Kept for back-compat; the range below is what the
- * current flow writes."*
- * ⚠⚠⚠ SO EVERY REQUEST THE LIVE WIZARD CREATES RENDERED ITS BUDGET AS THE BARE
- * WORD `Hourly` — the buyer's `$150–$200 / hr` never reached a provider at all.
- * ⚠ `explore.ts:338` already reads all three columns, so this is the feed
- * catching up with a rule the codebase already had, not a new one.
- * ⚠⚠ **IT CHANGES ZERO ROWS TODAY: `work_requests` holds 0** (measured
- * 2026-09-26). Reported as a deliberate deviation rather than smuggled in.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the card's inline expression:
- * //   budgetLabel:
- * //     w.budget_amount_cents != null
- * //       ? `${money(w.budget_amount_cents, w.currency)}${w.budget_type === "HOURLY" ? " / hr" : ""}`
- * //       : pretty(w.budget_type),
- *
- * ⚠⚠ PRECEDENCE IS SINGLE-FIGURE FIRST, and deliberately: a row holding BOTH
- * was written by the old wizard and then edited by the new one, and the single
- * figure is the one a requester typed as *the* number. A row holding neither
- * falls back to the TYPE — `Hourly`, `Fixed price` — which is still a fact the
- * buyer stated, and `null` when they stated nothing either.
- */
 export function workBudgetLabel(input: {
   amountCents: number | null;
   minCents: number | null;

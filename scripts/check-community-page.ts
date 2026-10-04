@@ -4,34 +4,9 @@ import { PAGE_TABS } from "@/lib/nav";
 import { webFigures } from "@/lib/community-web";
 import { stripComments } from "./lib/strip-comments";
 
-/**
- * ── ⚠⚠ `check:community-page` — THE COMMUNITY PAGE'S RULES (`E591` WS-C) ──
- *
- * ⚠⚠⚠ TWO OF THESE ARE SILENT FAILURES AND THAT IS WHY THEY ARE A GATE, not a
- * comment: a rate that reaches the payload without being rendered discloses
- * itself to anyone who opens devtools, and an initials fallback looks like a
- * design choice rather than a rule being broken.
- *
- * ⚠ EVERY SCAN STRIPS COMMENTS FIRST. This repo QUOTES superseded code
- * (`E164`), so a raw grep matches the quote and fails on history — the trap
- * rule 12 records and `scripts/lib/strip-comments.ts` now centralises.
- */
-
 const read = (...p: string[]) => readFileSync(join(...p), "utf8");
 const code = (...p: string[]) => stripComments(read(...p));
 
-/**
- * ⚠⚠ THE MODULE SPECIFIER IS NOT CODE FOR THIS PURPOSE, AND LEAVING IT IN GAVE
- * A FALSE POSITIVE THE FIRST TIME THIS GATE RAN.
- *
- * ⚠ `community-page.ts` legitimately imports `profileIdsByPersonId` from
- * `@/lib/provider-rates` — the module that used to hand out rates is the one
- * that now hands out the link instead. ⚠⚠ THE PATH CONTAINS THE WORD `rates`,
- * so a bare `/rate/i` over the file flagged the FIX as the defect.
- * ⚠⚠⚠ THE RULE IS ABOUT RATE DATA, NOT ABOUT A FILENAME. Only the quoted path
- * is removed; the imported NAMES are left in, so importing `ratesByPersonId`
- * here would still be caught — which is the assertion that actually matters.
- */
 const withoutImportPaths = (src: string) =>
   src.replace(/from\s+["'][^"']+["']/g, "from '…'");
 
@@ -66,14 +41,6 @@ function check(name: string, ok: boolean, detail = "") {
 
 console.log("check:community-page — P2-J3-E591 WS-C\n");
 
-/* ── 1 · ⚠⚠⚠ NO RATE ANYWHERE EXCEPT THE VIEWER'S OWN ──────────────────── */
-/*
-  ⚠ Scott, 2026-09-20: *"I do nto think providers should see other provider's
-  rates."* — *"Not on a colleague card, not on a team roster, not in a tooltip,
-  not in an aria-label, not in the JSON the page ships to the client."*
-  ⚠⚠ A RATE OMITTED FROM THE RENDER BUT PRESENT IN THE PAYLOAD IS STILL
-  DISCLOSED, so the test is on the whole surface, not on the JSX.
-*/
 for (const [name, src] of SURFACE) {
   check(`1 — ⚠ ${name} names no rate`, !/rate/i.test(withoutImportPaths(src)));
 }

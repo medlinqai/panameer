@@ -5,17 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 
-/**
- * The BUYER (the job, not the side) stub — and only that job now.
- *
- * The Requester used to land here too. It has a real flow as of P1-J1.2, so
- * this page stopped claiming that "the part that knows the difference between a
- * Requester and a Buyer isn't finished": half of it is, and telling a Buyer
- * otherwise sends them to sign up as something they aren't.
- *
- * A requester who reaches this URL directly is sent to their own flow rather
- * than shown a stub for a journey they don't want.
- */
 function ComingSoon() {
   const job = useSearchParams().get("job");
   const router = useRouter();

@@ -3,17 +3,6 @@ import { findByToken } from "@/lib/recommendations";
 import { displayFullName } from "@/lib/display";
 import { RecommendationForm } from "@/components/console/RecommendationForm";
 
-/**
- * The CONTACT's landing page (J2.4 WS-F / E012).
- *
- * PUBLIC BY DESIGN. The recipient has no Panameer account and is never going to
- * make one to answer a favour, so the emailed token is the whole authorization
- * — the same contract project validation already uses. Everything that makes
- * that safe lives on the token: 32 bytes, hashed at rest, single-use, expiring.
- *
- * Outside the app shell for the same reason /policies is: a person arriving
- * from an email is not a signed-in user and should not meet a console.
- */
 export default async function RecommendPage({
   params,
   searchParams,
@@ -25,11 +14,6 @@ export default async function RecommendPage({
   const { decline } = await searchParams;
   const row = await findByToken(token);
 
-  /*
-    ONE PAGE FOR EVERY DEAD TOKEN — bad, used, expired. Distinguishing them for
-    an unauthenticated visitor tells an attacker which guesses were close, and
-    tells an honest recipient nothing they can act on.
-  */
   if (!row || row.status !== "SENT" || row.expires_at < new Date()) {
     return (
       <Shell>

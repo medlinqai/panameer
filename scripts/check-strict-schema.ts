@@ -1,22 +1,3 @@
-/**
- * `check:strict-schema` — the schema is a contract, not a suggestion
- * (`P1-A1.4-E414` WS-6). `npm run check:strict-schema`.
- *
- * ── ⚠⚠ IT COSTS NOTHING AND MUST STAY THAT WAY ─────────────────────────────
- *
- * `E414`: *"Do not add a paid model call to the default gate set."* ⚠ SO
- * `globalThis.fetch` IS STUBBED and every request body is captured before it
- * would leave the machine. The stub returns a non-ok response, so each caller
- * takes its own failure path and returns normally. ⚠ THE API KEY IS A FAKE
- * SET BY THE NPM SCRIPT — `resolveProvider()` needs one to build a request at
- * all, and a real one is never read because nothing is ever sent.
- *
- * ⚠⚠ THE POINT OF CAPTURING BODIES RATHER THAN GREPPING SOURCE: §1 and §3 are
- * claims about WHAT IS SENT. A regex over `ai-passes.ts` would pass with the
- * flag set on a call site that no longer runs, and §3 in particular has to walk
- * the assembled schema — the thing the vendor will actually validate — not the
- * helper that is supposed to build it.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -55,11 +36,6 @@ const EXTRACT = read("src", "lib", "resume", "ai-extract.ts");
     !/ghostTok/.test(strip("{/* was: <X a={1} * / /> ghostTok */} realTok")),
     "E408 — a lazy matcher walked past this and reported live code missing"
   );
-  /*
-    ⚠⚠ THE ONE THAT PROTECTS §2 AND §6. Both files QUOTE the superseded
-    `strict: false` in prose. If the strip failed, §6 would read a comment as
-    the default and §2 would find `strict: false` "in" ai-passes.ts.
-  */
   check(
     "0 — ⚠⚠ the superseded `strict: false` quote is invisible",
     !/json_schema: \{ name: schemaName, strict: false, schema \}/.test(PROVIDER),
@@ -101,12 +77,6 @@ const SIX = [
   "resume_certifications", "resume_skills", "resume_profile",
 ];
 
-/**
- * Strict mode's schema contract, applied to an ASSEMBLED schema.
- * ⚠ These are the rules the vendor enforces: every object seals with
- * `additionalProperties: false`, every declared property appears in `required`,
- * and optionality is expressed as a null union rather than by omission.
- */
 function strictViolations(node: unknown, path: string, out: string[], depth = 0): void {
   if (!node || typeof node !== "object") return;
   const n = node as Record<string, unknown>;

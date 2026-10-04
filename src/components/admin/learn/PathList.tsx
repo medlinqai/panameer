@@ -27,14 +27,6 @@ type Row = {
 
 const AUDIENCE_LABEL = Object.fromEntries(AUDIENCES.map((a) => [a.value, a.label]));
 
-/**
- * The Learning Path list (WS1) — filter, search, create, edit, delete.
- *
- * "n of m ready" per row is the column that matters: it is the same
- * playable-lesson count the public catalog shows, so an admin can see at a
- * glance which paths would disappoint a learner who clicked them. A path with
- * 40 lessons and 0 ready looks complete everywhere except here.
- */
 export function PathList() {
   const { data, loading, error, reload } = useAdminFetch<{
     paths: Row[];

@@ -1,43 +1,4 @@
-/**
- * THE TAX ID — the half of validation Panameer can actually do (`P1-ALL-E404` WS-2).
- *
- * ── ⚠⚠ IRS TIN MATCHING IS NOT AVAILABLE TO PANAMEER, AND THAT IS NOT A BUG ──
- *
- * Eligibility for the IRS TIN Matching programme requires being listed in the
- * **Payer Account File**, which requires having filed Forms 1099 **within the
- * last two years**. Panameer has filed none. There is also no public API — the
- * service is interactive or bulk through e-Services, with results returned to a
- * secure mailbox. ⚠ So the authoritative half CANNOT be built today, and the
- * honest answer for it is `unchecked` — never `match`.
- *
- * ⚠⚠ A FORMAT PASS IS NOT A VERIFIED TIN. That confusion is the whole failure
- * this invites: a company whose number is well-formed and simply *not theirs*
- * looks identical to a verified one. The result type below keeps the two facts
- * in separate fields so no caller can collapse them by accident, and
- * `check:tin` fails the build if one tries.
- *
- * ── THE SHAPE, SO A REAL MATCHER DROPS IN LATER ───────────────────────────
- *
- * One entry point (`checkTin`), one result (`TinCheck`). When Panameer becomes
- * eligible, the only change is `irs.status` starting to return `match` /
- * `no-match` — no caller, no column and no screen has to move.
- */
 
-/**
- * ── ⚠ THE VALID EIN PREFIXES — FETCHED, NOT RECALLED ──────────────────────
- *
- * Source: **IRS, "How EINs are Assigned and Valid EIN Prefixes"**
- * `https://www.irs.gov/businesses/small-businesses-self-employed/how-eins-are-assigned-and-valid-ein-prefixes`
- * — retrieved 2026-09-09; the page's own marker reads *"Page Last Reviewed or
- * Updated: 09-Apr-2026"*. The 83 values below are the union of every campus row
- * on that page (Andover, Atlanta, Austin, Brookhaven, Cincinnati, Fresno, Kansas
- * City, Memphis, Ogden, Philadelphia, Internet, and SBA).
- *
- * ⚠⚠ THE FIRST TWO DIGITS ENCODE WHO ISSUED THE EIN, AND THE LIST GROWS. The IRS
- * adds prefixes as it opens issuing channels — "Internet" (20, 26, 27, …) did not
- * exist before online applications. **A STALE LIST REJECTS A REAL COMPANY**, which
- * is why an unrecognised prefix is its own outcome below and NOT a hard failure.
- */
 export const IRS_EIN_PREFIXES: ReadonlySet<string> = new Set([
   "01", "02", "03", "04", "05", "06", "10", "11", "12", "13", "14", "15", "16",
   "20", "21", "22", "23", "24", "25", "26", "27", "30", "31", "32", "33", "34",
@@ -48,14 +9,6 @@ export const IRS_EIN_PREFIXES: ReadonlySet<string> = new Set([
   "93", "94", "95", "98", "99",
 ]);
 
-/**
- * ⚠ WHICH NUMBER THE PAYEE IS GIVING US, AND THE FORM MUST ASK.
- *
- * A sole proprietor may legitimately supply an **SSN** — Form W-9 says so
- * explicitly. Validating an SSN against EIN rules rejects a real person, and
- * validating an EIN against SSN rules rejects a real company. The two have
- * different impossible values, so the kind cannot be guessed from the digits.
- */
 export type TinKind = "EIN" | "SSN";
 
 export type TinFormat =
@@ -65,34 +18,21 @@ export type TinFormat =
   | "MALFORMED"
   /** Well-formed and cannot exist — `00-0000000`, SSN area 000/666/9xx, etc. */
   | "IMPOSSIBLE"
-  /** ⚠ EIN only: nine digits, but the prefix is not on the IRS list we hold. */
   | "UNKNOWN_PREFIX";
 
-/**
- * ⚠⚠ THE AUTHORITATIVE HALF, AND IT IS ALWAYS `unchecked` TODAY. `match` means
- * the IRS confirmed this name/TIN pair. Nothing in this codebase can produce it,
- * and `check:tin` asserts that nothing claims to.
- */
 export type TinMatchStatus = "match" | "no-match" | "unchecked";
 
 export type TinCheck = {
   kind: TinKind;
   format: TinFormat;
-  /** `true` only for `VALID`. ⚠ NOT a statement that the number is the payee's. */
   formatOk: boolean;
   irs: { status: TinMatchStatus; reason: string };
-  /** ⚠ Safe to render, log or store alongside. Never the full value. */
   masked: string;
 };
 
 /** Digits only — the payee may type dashes, spaces, or neither. */
 const digitsOf = (raw: string) => raw.replace(/[\s-]/g, "");
 
-/**
- * ⚠ MASKED TO THE LAST FOUR, and this is the ONLY form of a TIN that may leave
- * this module for a screen, a log line or an error message. An empty or short
- * value masks to `••••` rather than leaking what little there is.
- */
 export function maskTin(raw: string | null | undefined): string {
   const d = digitsOf(raw ?? "").replace(/\D/g, "");
   return d.length < 4 ? "••••" : `•••••${d.slice(-4)}`;

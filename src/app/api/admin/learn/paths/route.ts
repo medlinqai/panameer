@@ -5,13 +5,6 @@ import { listPaths, listGroups, createPath, LearnAdminError } from "@/lib/learn-
 
 const AUDIENCES = ["BEGINNERS", "END_USER", "IMPLEMENTER", "CONTENT_CREATOR"] as const;
 
-/**
- * The write shape, validated before it reaches Prisma.
- *
- * `audience` is an enum in the database, so an unrecognised string would come
- * back as an opaque Prisma error the admin can do nothing with; naming the
- * allowed values here turns that into a message that says what's wrong.
- */
 export const PATH_BODY = z.object({
   title: z.string().trim().min(1, "A learning path needs a title."),
   slug: z.string().trim().optional().nullable(),

@@ -1,52 +1,10 @@
-/**
- * THE THREE VIDEO COLUMNS IN THE FOOTER (`P1-ALL-E020`).
- *
- * ⚠⚠ TWENTY OF THE TWENTY-ONE ITEMS ARE PLAIN TEXT AND STAY THAT WAY.
- * ⚠ SUPERSEDED, quoted not deleted — this header used to read: *"EVERY ITEM IS PLAIN
- * TEXT. THERE IS NO `href` FIELD ON PURPOSE — the type cannot carry one, so nobody
- * can add a destination without changing the shape."* `P1-J0-E356` is the brief that
- * changed the shape, deliberately and for exactly one item.
- * Scott: *"I will come back and fill in the links to the videos after i create
- * them...after the pages have been built."* THAT STILL HOLDS FOR THE OTHER TWENTY —
- * the videos do not exist yet and none of them gets a destination here.
- *
- * ⚠⚠ THE ITEM TYPE IS A UNION, NOT AN OBJECT. `string | { label, href }` means the
- * other twenty stay BARE STRINGS and were not touched. A migration that rewrites
- * every row into an object is a different brief and would make twenty rows noisier
- * to read for one row's benefit.
- * ⚠ ONE ITEM CARRIES AN `href`: `The AI Method (aka AIM)` -> `/ai-method`, because
- * that page now exists (`E356` §2). Scott pointed at this row in a screenshot.
- * ⚠ ITS LABEL DID NOT CHANGE — the `(aka AIM)` stays.
- *
- * ⚠ AND NO `TBD` BADGE EITHER. That marker exists for UNBUILT PAGES a reader
- * might otherwise expect to click; these are a COMING LIBRARY, which is a
- * different thing, and badging thirty-two rows would be noise.
- *
- * ── ⚠ TWO THINGS SHIPPED AS SCOTT TYPED THEM, BOTH REPORTED ────────────────
- *
- * 1. `Services Procurement Punchout` vs `Service Procurement Fulfillment` /
- *    `Service Procurement Settlement` — SINGULAR in two, PLURAL in one. ⚠ HIS
- *    TYPING, NOT NORMALISED. Three adjacent rows disagreeing on one word is
- *    visible, so it is reported rather than silently fixed.
- * 2. `Crate Optimization Dashboard` -> `Create`. ⚠ CORRECTED AS A TYPO under the
- *    standing `uase`->`use` precedent, and flagged so he can overrule.
- */
-/**
- * ⚠ A BARE STRING IS STILL A VALID ITEM and is what twenty of the twenty-one are.
- * The object form exists only for a row whose destination is BUILT (`P1-J0-E356`).
- * ⚠ DO NOT ADD AN `href` FOR A PAGE THAT DOES NOT EXIST — a footer link to nothing
- * is the defect `E119`/`E351` keep catching. If the target is not built, leave the
- * row a string.
- */
 export type FooterVideoItem = string | { label: string; href: string };
 
 export type FooterVideoColumn = {
-  /** ⚠ SENTENCE CASE, display face. Not an ALL-CAPS eyebrow. */
   title: string;
   items: FooterVideoItem[];
 };
 
-/** ⚠ ONE PLACE THAT KNOWS BOTH SHAPES, so no caller re-implements the narrowing. */
 export function footerVideoLabel(item: FooterVideoItem): string {
   return typeof item === "string" ? item : item.label;
 }
@@ -72,7 +30,6 @@ export const FOOTER_VIDEO_COLUMNS: FooterVideoColumn[] = [
     title: 'Buyer "How To" Videos',
     items: [
       "Post Free Work Requests (Jobs)",
-      /* ⚠ `Create`, not his typed `Crate`. Reported. */
       "Create Optimization Dashboard",
       "Create 1 Year AI Roadmap",
       "Buy Application Demonstrations",
@@ -86,27 +43,17 @@ export const FOOTER_VIDEO_COLUMNS: FooterVideoColumn[] = [
     title: "Panameer Solution Videos",
     items: [
       "Process-Specific AI Agents",
-      /* ⚠ `Services` here, `Service` in the next two. His typing. */
       "Services Procurement Punchout",
       "Service Procurement Fulfillment",
       "Service Procurement Settlement",
       "Dynamic Analytics (Data Driven)",
       "AI Agents Launched from the AIP",
-      /* ⚠ THE ONLY LINKED ROW IN THIS BAND (`P1-J0-E356`). Label unchanged. */
       { label: "The AI Method (aka AIM)", href: "/ai-method" },
       "The Panameer E2E Work Tracker",
     ],
   },
 ];
 
-/**
- * ⚠ INLINE SVG PATHS, NOT FILES. There is no icon set in `public/brand`, and an
- * inline `<svg>` drawn with `currentColor` recolours on hover with the rest of
- * the footer — an `<img>` cannot.
- *
- * ⚠ NO WHATSAPP. Scott listed it but gave no destination, and an icon that goes
- * nowhere is worse than an absent one. Asked for in the report.
- */
 export const FOOTER_SOCIALS: { label: string; href: string; path: string }[] = [
   {
     label: "YouTube",

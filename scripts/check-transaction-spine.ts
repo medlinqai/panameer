@@ -1,27 +1,3 @@
-/**
- * `check:transaction-spine` — the rules the spine cannot be allowed to lose
- * (`P1-J4-E388` WS-5). `npm run check:transaction-spine`.
- *
- * ── ⚠⚠ TWO KINDS OF ASSERTION, AND THE SECOND KIND IS THE POINT ─────────────
- *
- * BEHAVIOURAL — every rule that says "assert" in the brief is exercised against
- * `lib/transaction-spine.ts`, and every one is MUTATION-TESTED: the harness
- * proves the rule REFUSES the bad case, not merely that it accepts the good one.
- * A guard that only ever sees valid input passes forever while doing nothing.
- *
- * ABSENCE — five things this brief FORBIDS, asserted as absent:
- *   · no `Milestone` model            · no settlement-method enum
- *   · no buyer-facing invoice model   · no PO schedules or distributions
- *   · no UNIQUE constraint on `WorkOrder.external_ref`
- * ⚠⚠ EACH OF THE FIVE WILL LOOK LIKE AN IMPROVEMENT TO SOMEBODY LATER. A
- * milestone model is the obvious way to model milestones; a unique index on a PO
- * number is the obvious way to stop duplicates. They are wrong for reasons that
- * live in this brief and nowhere in the code, which is exactly why the ABSENCE
- * has to be a test — a comment cannot fail a build.
- *
- * ⚠ NO DATABASE AND NO BROWSER. Schema facts are read from `schema.prisma` as
- * text; rules are exercised as functions. It runs anywhere.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -47,10 +23,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/**
- * ⚠ THE MUTATION HALF. `refuses` asserts the rule THROWS, and optionally with
- * the expected code — a rule that throws for the wrong reason is not the rule.
- */
 function refuses(name: string, fn: () => unknown, code?: string) {
   try {
     fn();

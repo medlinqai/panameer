@@ -4,21 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 
-/**
- * ⚠⚠ THE IN-APP WIZARD SHELL — NO PUBLIC CHROME (`P1-J1.1-E267`, 2026-08-30).
- *
- * This page renders INSIDE `AppShell`, which already supplies the header, the
- * rail and the footer. `E246` gave `OnboardingFrame` a `MarketingHeader` and a
- * `MarketingFooter` — correct for every PUBLIC onboarding page and wrong here,
- * so `/create-work` came out with two headers and two footers around one wizard.
- * That was chat's miss in the `E246` brief, not a CC error.
- *
- * ⚠ ONE WRAPPER, NOT A PROP ON EVERY CALL. There are nine `WizardShell`s in this
- * file and one more in `ReviewWorkRequest`; threading `chrome={false}` through
- * each by hand is a list somebody adds a tenth screen to and forgets. Setting it
- * in one place means a new step in this file CANNOT reintroduce the defect.
- * ⚠ THE DEFAULT ELSEWHERE IS STILL `true`, so no public page changed.
- */
 function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
   return <WizardShell {...props} chrome={false} />;
 }
@@ -26,16 +11,6 @@ function AppWizardShell(props: React.ComponentProps<typeof WizardShell>) {
 import { Notice } from "@/components/onboarding/controls";
 import type { Draft, Step } from "@/components/work/CreateWorkRequest";
 
-/**
- * REVIEW + POST (brief_create_work_request_v1 WS-D).
- *
- * Its own file because it is a different job from the seven questions before
- * it: those collect one answer each, this shows all of them at once and lets
- * you jump back into any of them. Same reason the provider wizard's review is
- * not another `case` in its switch.
- *
- * VOCABULARY: Work Request throughout. Not "job details", not "post this job".
- */
 export function ReviewStep({
   identityGaps = [],
   onSaveVisibility,
@@ -59,13 +34,7 @@ export function ReviewStep({
   onPost: () => void;
   busy: boolean;
   error: string | null;
-  /**
-   * ⚠ THE POST GATE'S IDENTITY HALF, MIRRORED (`P1-J4-E025`). Computed on the
-   * server by the same function the API refuses with; empty means nothing is
-   * missing. ⚠ NOT THE BOUNDARY — see `create-work/page.tsx`.
-   */
   identityGaps?: { key: string; field: string; reason: string; href: string }[];
-  /** ⚠ `P1-J4-E025` — persists the COMPANY-NAME visibility on the review step. */
   onSaveVisibility?: (visibility: string, codeName: string | null) => void;
 }) {
   const [confidential, setConfidential] = useState(

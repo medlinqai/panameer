@@ -1,10 +1,3 @@
-/**
- * Phone masking + validation harness (E203). `npm run check:phone`.
- *
- * A pure module with a lot of small rules is exactly what these check scripts
- * are for: the failures worth catching here are off-by-one digit counts and a
- * mask that emits a trailing separator, and neither shows up by clicking once.
- */
 import { readFileSync } from "node:fs";
 import {
   formatPhone,

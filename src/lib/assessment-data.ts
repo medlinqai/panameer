@@ -1,21 +1,3 @@
-/**
- * THE AI-ADOPTION ASSESSMENT'S DATA (brief_home_rebuild_08_09 WS-D).
- *
- * Four process areas, each with its capability domains, four KPI tiles and a
- * maturity score. Lifted verbatim from the approved mockup's `<script>`.
- *
- * ⚠ EVERY NUMBER IN HERE IS ILLUSTRATIVE. Nothing measures anything: there is
- * no assessment engine, no customer data, and no scoring behind these figures.
- * They exist to show the SHAPE of the output a real assessment would produce,
- * which is what the marketing section is selling.
- *
- * That is also why they live in one file rather than inline in the component.
- * When the real thing is built, this module is what gets replaced — same
- * export, same types, values from the database — and the section renders it
- * without changing. A `sample: true` flag rides along so the UI has something
- * concrete to key its "illustrative" labelling off, rather than that honesty
- * depending on somebody remembering to keep a hard-coded caption.
- */
 
 export type ProcessKey = "p2p" | "o2c" | "r2r" | "h2r";
 

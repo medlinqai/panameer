@@ -1,27 +1,3 @@
-/**
- * "Needs Your Attention" — the provider dashboard's action strip
- * (brief_sp_dashboard WS-A/WS-C).
- *
- * NINE CARDS, ONE COUNT-SOURCE. Every card is declared here with the query that
- * produces its count, so a card that cannot be counted yet returns `null` and
- * simply does not render. When its model lands, one function body changes and
- * the card lights up — nothing in the strip component moves.
- *
- * ACTIONABLE CARDS, NOT STAT TILES, and the difference is the whole point. A
- * stat tile reports a number and asks nothing; these appear only when there is
- * something to DO, carry one tap to the exact filtered view, and disappear once
- * the count is zero. A dashboard of permanent zeros trains people to stop
- * looking at it.
- *
- * NULL vs 0 IS LOAD-BEARING:
- *   null → this card CANNOT be counted (no model). It never renders, in either
- *          mode, and it is not "0 items" — we do not know.
- *   0    → counted, and there is nothing to do. Card hides; contributes to the
- *          calm state.
- *   n>0  → the card renders, in the order below.
- * Collapsing those two into one number is how "you have 0 unread messages"
- * appears on a product with no messaging.
- */
 import { prisma } from "@/lib/prisma";
 
 export type AttentionCardId =
@@ -44,19 +20,9 @@ export type AttentionCard = {
   /** Lucide name, rendered by RailIcon's map. */
   icon: string;
   count: number;
-  /**
-   * The celebration card is styled and behaves differently — green rather than
-   * neutral, and dismissible, because good news you cannot dismiss becomes
-   * nagging by the third day.
-   */
   tone?: "celebrate";
 };
 
-/**
- * Why a card is not showing, for the dashboard's own diagnostics and for the
- * report this brief asks for. Never rendered to a provider — "we can't count
- * this" is our problem, not theirs.
- */
 export type AttentionGap = { id: AttentionCardId; label: string; waitingOn: string };
 
 export type AttentionResult = {
@@ -65,12 +31,6 @@ export type AttentionResult = {
   gaps: AttentionGap[];
 };
 
-/**
- * THE ORDER IS MONEY → CELEBRATION → PIPELINE → ENGAGEMENT → GROWTH, and it is
- * fixed here rather than sorted at render. It encodes a judgement about what a
- * provider should see first when several fire at once, and a component that
- * re-sorted by count would put "12 courses" above "you got paid".
- */
 export async function getAttentionCards(input: {
   personId: string | null;
   profileId: string | null;
@@ -107,7 +67,6 @@ export async function getAttentionCards(input: {
       id: "work-orders",
       label: "Work Orders to Accept",
       detail: "waiting on your acceptance",
-      /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). */
       href: "/orders",
       icon: "ClipboardCheck",
     },
@@ -128,8 +87,6 @@ export async function getAttentionCards(input: {
     "the timesheet / payment-request model"
   );
 
-  /* 4 — Offers on this provider's packages. `Package` exists; an OFFER on one
-     does not — there is no model recording a buyer's interest in a package. */
   add(
     {
       id: "offers",
@@ -214,19 +171,6 @@ function profileId(input: { profileId: string | null }) {
   return input.profileId;
 }
 
-/**
- * NEW MATCHES — posted work requests that touch this provider's skills and
- * appeared since they last looked.
- *
- * REAL QUERY, CURRENTLY ZERO. `WorkRequest` and `WorkRequestSkill` both exist
- * and this counts them properly; no buyer has posted one yet, so it returns 0
- * and the card hides. That is the correct behaviour and NOT a stub — the day a
- * buyer posts, this card appears with no code change.
- *
- * "Since your last visit" reads `dashboard_seen_at`, stamped when the dashboard
- * renders. A provider who has never visited sees everything posted as new,
- * which is right: it is all new to them.
- */
 async function countNewMatches(profileId: string): Promise<number> {
   const profile = await prisma.providerProfile.findUnique({
     where: { id: profileId },
@@ -250,14 +194,6 @@ async function countNewMatches(profileId: string): Promise<number> {
   });
 }
 
-/**
- * COURSES TO WATCH — enrolled paths with lessons still unwatched.
- *
- * REAL DATA, and the only card with any today. Counts ENROLLMENTS rather than
- * lessons: "3 courses to watch" is a resumable thing, "47 lessons" is a wall.
- * An enrollment whose every lesson is complete is finished, not pending, so it
- * drops out on its own — which is what makes the card self-clearing.
- */
 async function countCoursesToWatch(userId: string): Promise<number> {
   const enrollments = await prisma.learnEnrollment.findMany({
     where: { user_id: userId },
@@ -280,14 +216,6 @@ async function countCoursesToWatch(userId: string): Promise<number> {
     );
     if (total === 0) continue;
 
-    /*
-      A LessonProgress ROW IS A COMPLETION — `completed_at` is non-nullable, so
-      the row's existence is the fact and filtering on it being non-null was
-      both redundant and a type error. Counted per PATH rather than globally:
-      counting a user's completions across the catalog would let progress on one
-      path mark another finished, which only shows up once somebody enrolls in a
-      second course.
-    */
     const done = await prisma.lessonProgress.count({
       where: {
         user_id: userId,

@@ -11,37 +11,6 @@ export {
   type LessonExpertRef,
 } from "@/lib/learn-instructor-format";
 
-/**
- * WHO TEACHES THIS — derived from lessons, not declared on the path
- * (brief_learn_experience WS6, corrected).
- *
- * The first cut of WS6 assumed one instructor owned a whole Learning Path. The
- * data says otherwise, and says it loudly: Advanced Procurement is 85 lessons
- * by Scott and 18 by Linus, and "2. Overview" has three different people across
- * 24 lessons. `Lesson.expert_person_id` is where teaching is actually recorded —
- * 466 of the 522 lessons carry one — so that is what a path's and a course's
- * instructor list is computed from.
- *
- * `LearningPath.expert_person_id` still matters, but only as a FALLBACK for a
- * path whose lessons name nobody (Cost Accounting's 39 lessons, Talent Mgmt).
- * It is deliberately NOT merged into a non-empty derived list: doing so would
- * credit someone with teaching lessons they don't teach, which is the exact
- * misrepresentation the profile↔courses loop must not make on a marketplace.
- *
- * ORDERED BY LESSON COUNT, so "lead" means "taught the most of it" rather than
- * whoever happens to sort first. Ties break on name so the order is stable
- * between renders — a card whose faces reshuffle on refresh looks broken.
- */
-
-
-/**
- * Load the Person rows for a set of ids, with the marketplace-visibility check
- * already applied to their profile links.
- *
- * Batched on purpose: the Learn home resolves instructors for 23 paths at once,
- * and a per-path lookup would be dozens of round trips for what is, across the
- * whole catalog, four people.
- */
 export async function loadInstructors(
   ids: string[]
 ): Promise<Map<string, Omit<Instructor, "lessons">>> {
@@ -54,7 +23,6 @@ export async function loadInstructors(
       id: true,
       first_name: true,
       last_name: true,
-      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
       title: true,
       photo_url: true,
       providerProfile: { select: { id: true } },

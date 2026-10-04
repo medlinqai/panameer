@@ -6,43 +6,6 @@ import { getTestState } from "@/lib/learn-assessment";
 import { TestRunner } from "@/components/learn/TestRunner";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * The path test (brief_learn_experience WS5).
- *
- * ── ⚠⚠⚠ THERE IS NO COMPLETION GATE, AND THIS PAGE USED TO DISAGREE WITH THE
- *        API ABOUT THAT (`P2-A4-E611`, Q1) ───────────────────────────────────
- *
- * ⚠⚠ SCOTT, quoted in `api/learn/test/[pathId]/route.ts` since `P1-ALL-E034`:
- * *"I want to allow every panameerian to take the certification without having
- * taken the courses."* ⚠ That route's header says in as many words: **"There is
- * NO COMPLETION GATE and Scott wants none. Nothing here reads `LessonProgress`,
- * and nothing may start to."**
- *
- * ⚠⚠⚠ THIS PAGE BLOCKED AT `completed >= lessons` ANYWAY. Two files, opposite
- * rules, and the page's was the one a member met. ⚠ It was also UI-only and
- * bypassable by posting to the API directly, so it stopped honest people and
- * nobody else. ⚠ Scott, 2026-09-23: *"no completion gate on the path test.
- * Delete the check to match the API and Scott's quote."*
- *
- * ⚠⚠ WHAT IS **NOT** BEING RELAXED: `E607`'s refusal on an UNREADY path. A path
- * with no playable lesson still has no test, because there is nothing the test
- * could be about — `notReadyResponse` in the API is untouched. ⚠ THAT IS A
- * DIFFERENT RULE: one is about what the MEMBER has done, the other about
- * whether the MATERIAL exists.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   GATED ON FINISHING THE PATH, not on enrollment. The credential says you know
- * //   the material, so the honest precondition is having worked through it — and a
- * //   test you can sit before watching anything would make the badge worthless the
- * //   first time somebody noticed.
- * //   const finished = path.lessons > 0 && path.completed >= path.lessons;
- * //   {!finished ? (
- * //     <div className="mt-6 rounded-brand border border-line p-6">
- * //       <p className="text-[15.5px] font-bold">Finish the path first.</p>
- * //       … "You've completed {path.completed} of {path.lessons} lessons." …
- * //     </div>
- * //   ) : state.passed ? (
- */
 export default async function TestPage({
   params,
 }: {

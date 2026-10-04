@@ -2,40 +2,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { prisma } from "@/lib/prisma";
 
-/**
- * ── ⚠⚠⚠ `check:work-chain` (`P2-A8-E621` WS-E) ──────────────────────────
- *
- * ⚠ THE STOP GATE: *"the derived writer table; every mutation result; the
- * dash→count list for the whole brief."*
- *
- * ⚠⚠ EVERYTHING HERE IS **DERIVED AT RUN TIME FROM THE SCHEMA AND THE SOURCE**
- * (`E587`), never from a list typed into this file. A named list of states would
- * go stale the day somebody adds one — and the state nobody remembered to add is
- * exactly the one with no writer.
- *
- * ── ⚠⚠⚠ TWO DERIVATION BUGS WERE MEASURED AND FIXED BEFORE THIS GATE EXISTED,
- * AND BOTH ARE RECORDED BECAUSE EITHER WOULD HAVE MADE IT LIE ──────────────
- *
- * ⚠⚠ **(1) A PLAIN TEXT SEARCH ATTRIBUTES WRITES TO THE WRONG MODEL.** Grepping
- * `status: "DRAFT"` across `src/` returns SEVEN files — including
- * `learn-assessment.ts`, which writes a `LearnAssessment`. Reported as
- * *"WorkRequest.DRAFT has 7 writers"* that is a confident falsehood of the same
- * family as the gate that once asserted the right rule about the wrong file.
- * ⚠⚠⚠ **SO EVERY WRITE IS MATCHED INSIDE A `prisma.<model>.<write>(…)` CALL**,
- * whose argument list is found by COUNTING PARENTHESES rather than by a regex
- * window — a window that stops short reports a real write as absent.
- *
- * ⚠⚠ **(2) `///` DOC COMMENTS PARSE AS ENUM VALUES.** Splitting an enum body on
- * newlines yields *"/// ⚠ Out for sourcing — visible to sellers"* as a value,
- * which then reports as UNWRITTEN — **a fabricated state, reported as a gap.**
- * Values are therefore filtered to `/^[A-Z][A-Z0-9_]*$/`.
- *
- * ⚠⚠⚠ **AND A THIRD, WHICH IS WHY `UNWRITTEN` IS A QUALIFIED CLAIM HERE:** a
- * write of the form `data: { status: how }` — a VARIABLE — is invisible to a
- * literal match. `closeInterview` does exactly that for `DECLINED`/`CANCELLED`.
- * **So a model with ANY dynamic status write cannot have its values called
- * unwritten**, and this gate says so rather than guessing.
- */
 let pass = 0;
 const fails: string[] = [];
 const notes: string[] = [];
@@ -56,11 +22,6 @@ function walk(d: string, o: string[] = []): string[] {
   return o;
 }
 
-/**
- * ⚠⚠ THE CALL'S ARGUMENT LIST, BY COUNTING PARENTHESES from the opening one.
- * ⚠ A fixed character window is what makes a long `create` look like it writes
- * nothing — and "writes nothing" is the answer this whole gate turns on.
- */
 function callBody(code: string, openParen: number): string {
   let depth = 0;
   for (let i = openParen; i < code.length; i++) {
@@ -82,17 +43,11 @@ type StateRow = {
   enumName: string;
   value: string;
   writers: string[];
-  /** ⚠ True when the model has a non-literal status write somewhere. */
   modelHasDynamicWrite: boolean;
 };
 
 function buildWriterTable(): { rows: StateRow[]; models: string[]; writeCalls: number } {
   const models = [...SCHEMA.matchAll(/model (\w+) \{([\s\S]*?)\n\}/g)];
-  /*
-    ⚠⚠⚠ THE CHAIN IS DERIVED BY SHAPE, NOT NAMED: any model carrying a
-    `work_request_id` or a `work_order_id`, plus the two heads. ⚠ A hard-coded
-    list of eight models would miss the ninth the day somebody adds it.
-  */
   const chain = models
     .filter(([, , body]) => /\n\s+work_request_id\s/.test(body) || /\n\s+work_order_id\s/.test(body))
     .map(([, n]) => n);
@@ -266,9 +221,6 @@ async function main() {
   ]) {
     check(`2 — MUTATION: the sweep catches \`${spelling.slice(0, 28)}\``, SAVINGS.test(spelling));
   }
-  /* ⚠⚠ AND THE FOUR PROVIDER-FACING WRITERS CARRY NO SUCH FIELD, asserted by
-     NAME because these are the payloads the brief names — invite, proposal,
-     interview, work order. */
   for (const w of ["work-request-invite.ts", "proposals.ts", "interviews.ts", "work-orders.ts"]) {
     const f = SRC.find((s) => s.f === join(LIB, w));
     check(`2 — ⚠ ${w} names no savings figure`, f != null && !SAVINGS.test(f.code), w);

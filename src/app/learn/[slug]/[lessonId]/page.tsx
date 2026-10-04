@@ -9,54 +9,14 @@ import { LessonActions } from "@/components/learn/LessonActions";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
 import { ProgressBar } from "@/components/learn/ProgressBar";
 
-/**
- * Lesson page (brief_learn_experience WS3; design ref Learn-lesson-page-design.png).
- *
- * The design is the player, the title, and three buttons. What it doesn't show
- * — because a static mock has nowhere to put it — is WHERE YOU ARE: this is a
- * 522-lesson catalog and the largest path is 105 lessons, so "Lesson 4 of 105"
- * and the in-course list are the difference between a course and a pile of
- * videos. Both are added alongside the design rather than in place of it.
- */
 export default async function LessonPage({
   params,
 }: {
   params: Promise<{ slug: string; lessonId: string }>;
 }) {
-  /*
-    ── ⚠⚠ TAKING A LESSON REQUIRES A LOGIN (`P1-J3-E035`) ─────────────────────
-
-    SCOTT, 2026-08-26: *"NO. you HAVE to be logged into take free lessons. PERIOD."*
-
-    ⚠ THIS PAGE HAD NO GATE AT ALL. It read the session (for progress) but never
-    acted on the absence of one, so ALL 522 LESSONS PLAYED FOR A SIGNED-OUT
-    VISITOR at a bare URL. Free does not mean anonymous.
-
-    ⚠ `guardPage("authenticated")`, THE SHAPE `learn/my-courses/page.tsx` ALREADY
-    USES — not a hand-rolled `redirect()`. It is the authoritative server gate and
-    it sends a signed-out visitor to `/login?callbackUrl=…` so the click is not
-    lost.
-
-    ⚠ BEFORE THE `getLearnLesson` READ, deliberately: an anonymous request should
-    not spend a query on a lesson it will not be shown. Same ordering `E049` used
-    on `/providers/[id]`.
-
-    ⚠⚠ BROWSING STAYS PUBLIC AND THAT IS NOT AN OVERSIGHT. `/learn`,
-    `/learn/courses`, `/learn/[slug]` and `/learn/[slug]/course/[courseSlug]` are
-    all category 5 in `public-routes.ts`. Scott's rule is about TAKING a lesson,
-    not reading what is in one — and `/learn`'s hero links straight at
-    `/learn/courses` with `Browse the Catalog`, so gating that would turn the
-    public hero's second CTA into a login wall. ⚠ DO NOT "TIDY" THE PREFIX.
-  */
   await guardPage("authenticated");
 
   const { slug, lessonId } = await params;
-  /*
-    ⚠ STILL CALLED, AND STILL NEEDED. `guardPage` proves there IS a session;
-    `getSessionViewer` is what supplies the `userId` that `getLearnLesson` uses to
-    resolve progress. The `?? null` fallback is kept rather than asserted — this
-    file does not need to care how the guard is implemented.
-  */
   const viewer = await getSessionViewer();
   const view = await getLearnLesson(slug, lessonId, viewer?.userId ?? null);
   if (!view) notFound();

@@ -1,29 +1,6 @@
 import { capitalizeName } from "@/lib/display";
 import { logoBlock } from "@/lib/email/shell";
 
-/**
- * ── ⚠⚠ THE EMPLOYER-VALIDATION REQUEST (`P2-A1.1-E747`, WS-B) ──────────────
- *
- * ⚠ Sent to a MANAGER, HR PERSON OR COLLEAGUE at the employer — not to a user.
- * ⚠⚠ **IT IS ITS OWN TEMPLATE, NOT A FLAG ON `project-validation`.** The two ask
- * different questions about different things, and `SentEmail.template` is how a
- * bounce says WHICH request failed — one name for two questions would make that
- * receipt useless (`E522`'s whole point).
- * ⚠ The SCAFFOLD is the project template's, deliberately: these land in a
- * stranger's inbox and are styled as marketing assets rather than system
- * notifications. Only the question changes.
- *
- * This is the one email in the product that lands in an Oracle/ERP buyer's
- * inbox, so it is treated as a marketing asset rather than a system
- * notification (brief_project_validation §3): brand logo, one clear question,
- * two Title-Case buttons (E006), and a soft "What Is Panameer?" footer that
- * invites rather than sells.
- *
- * Deliberately contains NO commercial detail — no rate, no fee, no project
- * value. The recipient is being asked to confirm a fact, and anything that
- * reads as a pitch for their supplier's pricing would poison both the answer
- * and the brand impression.
- */
 export function employerValidationTemplate({
   providerName,
   employerName,
@@ -35,21 +12,13 @@ export function employerValidationTemplate({
 }: {
   providerName: string;
   employerName: string;
-  /** ⚠ The title the provider claims they held. Nullable rows exist. */
   roleTitle: string | null;
-  /** ⚠ "2019 – 2022", or null when the row carries no dates. */
   dates: string | null;
   confirmUrl: string;
   logoUrl?: string;
   marketingUrl?: string;
 }): { subject: string; html: string; text: string } {
   const provider = capitalizeName(providerName);
-  /*
-    ⚠⚠ ONE QUESTION, AND IT IS THE BRIEF'S: *"Did <first name> work at
-    <employer> as <title>, <start>–<end>?"* ⚠ The role and the dates are in the
-    BODY, not the subject — a subject line that recites four facts reads as a
-    form, and this has to read as a person asking a favour.
-  */
   const subject = `Can you confirm ${provider} worked at ${employerName}?`;
 
   const declineUrl = `${confirmUrl}?decline=1`;

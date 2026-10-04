@@ -4,83 +4,10 @@ import { P2P_DOMAINS as CAPABILITY_DOMAINS } from "@/lib/capability-domains";
 import { P2P_DOMAINS as ASSESSED_DOMAINS } from "@/lib/assessment/questions-p2p";
 import { assessmentProductFor } from "@/lib/brand";
 
-/**
- * STEP 2's GRAPHIC — the assessment wizard, mid-questionnaire.
- *
- * A COMPONENT, NOT A PNG, and it renders inside the shared `AppShot` shell. It
- * imports nothing from the real `AssessmentWizard`: `/` prerenders static with no
- * session, and the real wizard is a stateful client surface under active change.
- *
- * ── ⚠ THE LADDER IS DERIVED FROM THE QUESTION BANK, NOT RETYPED ───────────────
- *
- * The four options come from `lib/assessment/questions-p2p.ts` by looking up the
- * domain this screen is showing. That is the strongest available form of the
- * brief's "take it from the file, do not retype it": the marketing art cannot
- * drift from the product's real ladder, because it has no copy of it. Rung titles
- * and rung examples both come across, so the ladder shown here is the ladder the
- * assessment actually asks.
- *
- * ⚠ TWO DIFFERENT `P2P_DOMAINS` ARE IN PLAY HERE, ON PURPOSE:
- *
- *   - `lib/capability-domains.ts` — the TEN advertised on `/`, used for the
- *     progress list, same source as the Step 3 funnel after E143.
- *   - `lib/assessment/questions-p2p.ts` — the EIGHT actually assessed, used for
- *     the ladder. The two never assessed are Data, Analytics & AI Governance and
- *     Change Management & AI Adoption.
- *
- * They are joined by NAME rather than by index, so reordering either list cannot
- * silently pair a heading with someone else's ladder — which is the exact defect
- * described below.
- *
- * ── ⚠ THE MOCKUP PAIRED DOMAIN 4's HEADING WITH DOMAIN 1's LADDER ─────────────
- *
- * `mockups/step2_assessment_wizard_2026-08-17.html` shows the heading "Capability
- * domain 4 of 10 · Purchase Order Management" above these example lines:
- *
- *     rung 1  "Excel/XLS, Sharepoint, SmartSheets, Word, Email, etc."
- *     rung 2  "Enterprise Resource Planning or ERP Applications (HCM, F&A, SCM, etc.)"
- *     rung 4  "Voice-Request Agent, Price Alert Agent, Services Procurement Fulfillment, etc."
- *
- * All three are the REQUISITIONING domain's — domain 1, "How do employees request
- * goods and services?" — not Purchase Order Management's. The brief named that
- * rung-4 string explicitly and said to take it from the file; it IS in the file,
- * attached to a different domain. Deriving by name resolves it: the ladder shown
- * is `purchase_orders`', which is what the heading claims.
- *
- * The brief also expected the rung-3 line to be chat-written filler because
- * "the real INTEGRATED rung has no per-domain examples for Purchase Order
- * Management". It has one — `INTEGRATED` is a single shared RungOption used by all
- * eight domains, so the string exists, it is just not per-domain. It comes from
- * the file like the rest, and no filler ships.
- *
- * ⚠ NOTHING IN THIS SHOT IS HAND-WRITTEN COPY ANY MORE (E155). The question was the
- * last exception and is derived too now, so every string describing the assessment —
- * domain names, the counter, the question, rung titles, rung examples — has exactly
- * one source of truth. The only authored strings left are the shot's own chrome: the
- * header, the sub-line, the two buttons and the footer note.
- */
-
-/**
- * Which domain the screen is sitting on — 0-based, so 3 is "4 of 10". Everything
- * derived: the eyebrow, the ticks, the counter and the ladder all read this.
- */
 const ACTIVE_INDEX = 3;
 const ACTIVE_DOMAIN = CAPABILITY_DOMAINS[ACTIVE_INDEX];
 
-/**
- * ⚠ THROWS AT BUILD IF THE TWO LISTS STOP AGREEING, AND THAT IS THE POINT. Both
- * are static in-repo data, so a miss means someone renamed a domain in one file
- * and not the other. A silent `?? []` would ship a wizard with no options on it —
- * a prerender failure naming the domain is the cheaper outcome.
- */
 const ACTIVE_LADDER = (() => {
-  /*
-    ⚠ JOINED ON KEY SINCE E004, NOT ON NAME — and this was a latent copy of the defect that
-    brief exists to close. It read `d.name === ACTIVE_DOMAIN.name` and survived only because
-    "Purchase Order Management" happens to be phrased identically in both files; six of the
-    other nine are not, so moving `ACTIVE_INDEX` by one would have thrown. The advertised
-    list's `id` is now the bank's `key`, so there is a real identifier to join on.
-  */
   const found = ASSESSED_DOMAINS.find((d) => d.key === ACTIVE_DOMAIN.id);
   if (!found) {
     throw new Error(
@@ -103,23 +30,7 @@ export function AssessmentWizardShot() {
       <div className="ash-main">
         <div className="ash-mh">
           <div>
-            {/*
-              ⚠ THE NAME COMES FROM `ASSESSMENT_PRODUCT`, NOT FROM A LITERAL HERE
-              (`P1-J0-E274`). Scott, 2026-08-21: *"it is not an AI maturity
-              assessment...we are assessing the process. end of story."*
-
-              ⚠⚠ THIS SUPERSEDES `E162`, WHICH SETTLED THE OTHER WAY ON 2026-08-18
-              AND WHOSE NOTE USED TO LIVE HERE. It read: *"AI Maturity Assessment,
-              NOT AI Adoption Assessment (E162). The page used two names for one
-              product; this was the outlier."* That was true and the alignment was
-              right — the NAME is what changed, and it changed at its owner's
-              instruction. ⚠ DO NOT RESTORE IT FROM E162.
-
-              ⚠ THE E162 DEFECT WAS FOUR LITERALS IN FOUR FILES, so the fix for it
-              is a constant rather than a fifth literal. Not to be confused with the
-              capability domain "Change Management & AI Adoption", which is about
-              adoption as a concept and is untouched.
-            */}
+            {}
             <h3 className="ash-h3">{assessmentProductFor("Procure-to-Pay")}</h3>
             <p className="ash-sub">Ten capability domains · about 20 minutes</p>
           </div>

@@ -1,18 +1,3 @@
-/**
- * The email suite's guard rails (brief_transactional_email_suite).
- * `npm run check:email`.
- *
- * WHY THIS EXISTS RATHER THAN A VISUAL CHECK. Almost every acceptance criterion
- * on this brief is a property of a string: the vocabulary is locked, there is
- * one magenta primary per email, the charset is declared, names are
- * capitalised, the footer carries unsubscribe and privacy. None of that is
- * visible by looking at one rendered email in one client, and all of it breaks
- * silently on the next copy edit.
- *
- * The vocabulary test is the one that earns its keep. "job" and "project" are
- * ordinary English words that will feel natural to whoever writes the next
- * template, and by then nobody will remember the rule.
- */
 import { workRequestPostedTemplate } from "@/lib/email/templates/work-request-posted";
 import { workRequestInviteTemplate } from "@/lib/email/templates/work-request-invite";
 import { workRequestRemovedTemplate } from "@/lib/email/templates/work-request-removed";
@@ -22,11 +7,7 @@ import { identityVerifiedTemplate } from "@/lib/email/templates/identity-verifie
 import { identityVerificationRequestTemplate } from "@/lib/email/templates/identity-verification-request";
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
 import { passwordResetTemplate } from "@/lib/email/templates/password-reset";
-/* ⚠⚠ `P2-J3-E523` — THE INVITATION WAS NOT IN THIS SUITE AT ALL. Its copy was
-   rewritten with nothing asserting it; `check:email` passed either way. */
 import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
-/* ⚠ `P2-J3-E523` — two of the four unasserted templates added; the other two
-   FAIL and are reported, not fixed. See the block beside them below. */
 import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
 import { projectValidatedTemplate } from "@/lib/email/templates/project-validated";
 import { projectValidationTemplate } from "@/lib/email/templates/project-validation";
@@ -35,7 +16,6 @@ import { recommendationRequestTemplate } from "@/lib/email/templates/recommendat
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { inviteProviderTemplate } from "@/lib/email/templates/invite-provider";
 import { EMAIL_COLORS } from "@/lib/email/shell";
-/* ⚠ `P1-ALL-E371` WS-A2 — asserting the capture transport's default. */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { mailCaptureEnabled } from "@/lib/resend";
@@ -43,32 +23,6 @@ import { mailCaptureEnabled } from "@/lib/resend";
 let passed = 0;
 const failures: string[] = [];
 
-/*
-  ── ⚠⚠ KNOWN-OPEN: AN ASSERTION THAT RUNS, REPORTS, AND DOES NOT FAIL ───────
-
-  ⚠ SCOTT, 2026-09-17, on `project-validation`: *"LEAVE IT RED AND RECORD IT…
-  It stays in the suite, failing, as the standing evidence that the question
-  needs answering. ⚠ If a red gate is intolerable, mark it skipped WITH the
-  reason and the open question named — never delete the assertion."*
-
-  ⚠⚠ A PERMANENTLY-RED MERGE GATE IS INTOLERABLE HERE, AND THE REPO HAS THE
-  SCAR: CLAUDE.md records `check:company-binding` RED ON `main` from 2026-08-30,
-  and the cost was not the red — it was that every later run had to remember
-  which failure was "the expected one". A gate nobody can read at a glance stops
-  being a gate.
-
-  ⚠ SO THE ASSERTION STILL RUNS AND ITS RESULT IS STILL PRINTED — LOUDLY, with
-  the open question named and an id attached. What changes is only that a KNOWN
-  open question does not turn the exit code red. ⚠⚠ IT IS NOT DELETED, NOT
-  COMMENTED OUT, AND NOT NARROWED. If somebody fixes the underlying question,
-  this entry goes green and the list is what tells them to remove it.
-*/
-/*
-  ⚠⚠ `opened` IS NOT DECORATION (Scott, 2026-09-17): *"The stale check catches
-  accidental fixes; it does not catch an entry sitting there for six months. A
-  visible age is what stops this becoming a parking lot."*
-  ⚠ The age is printed with every entry, on every run.
-*/
 const KNOWN_OPEN: { label: string; id: string; opened: string; why: string }[] = [
   {
     label: 'project-validation: no "project" in visible copy',
@@ -181,21 +135,11 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
       learnMoreUrl: "https://panameer.com/legal/accessibility-statement",
     }),
   },
-  /* ⚠ `P1-ALL-E528` Part B — the reset mail is transactional and carries NO
-     category, so the suppression footer offers unsubscribe-from-everything.
-     ⚠⚠ `inSuite: false` for the same reason `verify-email` is: it is sent to an
-     address that has not opted into anything. */
   {
     name: "password-reset",
     inSuite: false,
     out: passwordResetTemplate({ firstName: "scott", resetUrl: "https://panameer.com/reset-password?token=x" }),
   },
-  /* ⚠⚠ `P2-J3-E523` — THE INVITATION WAS NOT IN THIS SUITE AT ALL. Its copy was
-     rewritten end to end with NOTHING asserting it; `check:email` passed either
-     way, and the vocabulary rule that bans "project" never saw the sentence that
-     broke it. ⚠ That is how the word reached an APPROVED draft.
-     ⚠ `inSuite: false` — an invitation goes to somebody who has opted into
-     nothing, like `verify-email` below it. */
   {
     name: "colleague-invite",
     inSuite: false,
@@ -206,48 +150,12 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
       message: "Thought of you for this.",
     }),
   },
-  /*
-    ── ⚠⚠ THE FOUR TEMPLATES NOTHING ASSERTED (`P2-J3-E523`) ──────────────────
-
-    ⚠ 16 templates on disk, 12 in this suite. The missing four were
-    `assessment-ready`, `project-validated`, `project-validation` and
-    `recommendation-request`. ⚠⚠ TWO ARE ADDED HERE. THE OTHER TWO GO RED AND
-    ARE REPORTED, NOT FIXED — Scott, 2026-09-17: *"if it surfaces more copy
-    collisions, STOP and list them rather than fixing copy on your own."*
-
-    ⚠ `project-validation` — FAILS `no "project" in visible copy`. ⚠⚠ ITS COPY
-    IS ABOUT THE `Project` MODEL, so this is the vocabulary rule meeting the
-    app's own noun head-on. ⚠ It is the SAME open question Scott parked when he
-    ruled this brief's sentence: the APP says a word the EMAILS ban. ⚠⚠ DO NOT
-    REWRITE THE COPY TO GET THE GATE GREEN — that decides the open question by
-    the back door.
-    ⚠ `project-validated` PASSES because its only "project" is the interpolated
-    `projectName` VALUE, not the literal word in the copy.
-
-    ⚠ `recommendation-request` — FAILS `declares utf-8`, and that is NOT a copy
-    problem: ⚠⚠ THE TEMPLATE EMITS NO `<meta charset="utf-8">` AT ALL. It builds
-    its own table rather than using `emailShell()`, and unlike the other
-    hand-built ones it omits the charset. ⚠ A REAL DEFECT (accented names and
-    typographic dashes can mojibake), reported for its own id — not fixed inside
-    a gate-coverage change.
-  */
   { name: "assessment-ready", inSuite: false,
     out: assessmentReadyTemplate({ companyName: "Acme", processName: "Procure-to-Pay", reportUrl: "https://panameer.com/r/x" }) },
   { name: "project-validated", inSuite: false,
     out: projectValidatedTemplate({ firstName: "scott", projectName: "Cloud Rollout", clientName: "Acme", profileUrl: "https://panameer.com/p/x" }) },
-  /* ⚠⚠ THESE TWO ARE IN THE SUITE AND THEY FAIL. That is deliberate — see
-     KNOWN_OPEN at the top. ⚠ ALL 16 TEMPLATES ARE NOW ASSERTED; the coverage
-     hole that let the invitation's copy drift is closed. */
   { name: "project-validation", inSuite: false,
     out: projectValidationTemplate({ providerName: "scott", projectName: "Cloud Rollout", clientName: "Acme", confirmUrl: "https://panameer.com/c/x" }) },
-  /*
-    ⚠⚠ `P2-A1.1-E747` WS-B — the 17th template, asserted from the day it ships.
-    ⚠⚠⚠ **IT IS IN THE SUITE AND IT IS EXPECTED TO PASS**, unlike its project
-    twin above: that one is `KNOWN_OPEN` because its copy says *"project"* where
-    Scott ruled the word must not appear, and this one says *"role"* and *"work
-    here"*. ⚠ Both the full case and the bare one are rendered, because a row
-    with no title and no dates is the ordinary imported shape.
-  */
   { name: "employer-validation", inSuite: false,
     out: employerValidationTemplate({ providerName: "scott", employerName: "Ceres Insurance", roleTitle: "Procurement Lead", dates: "2019 – 2022", confirmUrl: "https://panameer.com/c/x" }) },
   { name: "employer-validation (no title, no dates)", inSuite: false,
@@ -260,13 +168,6 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     inSuite: false,
     out: verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://panameer.com/v/x" }),
   },
-  /*
-    ⚠⚠ BOTH VARIANTS ARE IN THE SUITE, AND THAT IS THE POINT (`P2-J1.1-E034`).
-    `E015` existed because the buyer subject was fixed and the provider one was
-    not. Only the buyer half of THIS email is wired today — `Finish later` exists
-    only on the requester wizard — so the provider variant would be the exact
-    half that rots unnoticed. Asserting both is what stops that.
-  */
   {
     name: "finish-later (buyer)",
     inSuite: false,
@@ -296,10 +197,6 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
   },
 ];
 
-/* ---- `P2-J1.1-E034` — the two Finish Later subjects are DIFFERENT and TITLE CASE --
-   ⚠ The failure this guards is `E015`'s: one variant corrected, the other left
-   behind. Asserting they DIFFER is what catches a copy-paste that ships the same
-   subject twice, which no per-variant assertion would notice. */
 {
   const buyerOut = finishLaterTemplate({
     firstName: "layne",
@@ -334,8 +231,6 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     buyerOut.html.includes("continue the registration you started") &&
       buyerOut.text.includes("continue the registration you started")
   );
-  /* ⚠⚠ IT MUST LAND ON THE WIZARD, NOT `/dashboard` — a link to the dashboard
-     would make this email a worse version of the button that sent it. */
   ok(
     "finish-later: the button lands on the wizard, never /dashboard",
     buyerOut.html.includes("/join/requester/steps") &&
@@ -343,17 +238,13 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
   );
 }
 
-/* ---- `P2-J1.1-E015`/`E018` — the verification pair --------------------------- */
 {
-  /* ── ⚠⚠ `P1-ALL-E528` Part B — the reset mail's three load-bearing lines ── */
   {
     const r = passwordResetTemplate({ firstName: "scott", resetUrl: "https://x/r?token=abc" });
     ok("password-reset: subject is Title Case", r.subject === "Reset Your Panameer Password");
     ok("password-reset: the link is in both halves", r.html.includes("https://x/r?token=abc") && r.text.includes("https://x/r?token=abc"));
-    /* ⚠ THE EXPIRY IS A FACT IN TWO PLACES — the constant and this sentence. */
     ok("password-reset: says it expires in 1 hour, in both halves", r.html.includes("expires in 1 hour") && r.text.includes("expires in 1 hour"));
     ok("password-reset: says it is single use", r.html.includes("used once") && r.text.includes("used once"));
-    /* ⚠⚠ THE LINE THAT STOPS A ROUTINE EMAIL READING LIKE A BREAK-IN. */
     ok(
       "password-reset: tells an unexpecting reader nothing has changed",
       r.html.includes("your password has not changed") && r.text.includes("your password has not changed")
@@ -365,8 +256,6 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
   const s2 = verifyEmailTemplate({ firstName: "scott", verifyUrl: "https://x/v", audience: "seller" });
   ok("verify-email: buyer subject is Title Case", b.subject === "New Service Buyer — Verify Your Email to Continue on Panameer");
   ok("verify-email: provider subject is Title Case", s2.subject === "New Service Provider — Verify Your Email to Continue on Panameer");
-  /* ⚠⚠ E018 LIVED IN TWO PLACES — the HTML clause and a separately-worded plain
-     text line. Asserting only the HTML is how text/plain keeps a dropped promise. */
   ok(
     "verify-email: the buyer HTML no longer promises the finish line",
     b.html.includes("complete your registration") && !b.html.includes("start finding the talent you need")

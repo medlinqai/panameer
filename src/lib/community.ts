@@ -1,57 +1,12 @@
-/* ⚠ PARKED WITH `communitySections()` (`P1-ALL-E378` WS-4). It was imported for
-   ONE reason worth remembering: the section cards derived themselves from the
-   rail's `/community` children, so the cards and the rail could not disagree. */
 // import { PROVIDER_NAV } from "@/lib/nav";
-
-/**
- * The Community section, as data (brief_MASTER_rails_and_community PHASE 2).
- *
- * THE HUB AND THE RAIL READ ONE LIST. The four sections are already declared in
- * `nav.ts` as the Community item's `children`; re-typing them here would be the
- * exact drift the shared nav module exists to stop — a hub card and a submenu
- * entry pointing at different places, or worse, the hub silently missing a
- * section somebody added to the rail.
- *
- * What this file adds is the part a nav entry has no room for: what each
- * section is FOR, in a sentence, and whether it is real yet. The hub is a front
- * door, and a front door that only lists names is a worse front door than the
- * menu you came from.
- */
 
 export type CommunitySection = {
   label: string;
   href: string;
   blurb: string;
-  /**
-   * Honest status, shown on the card.
-   *
-   * `live` means the section does its job today. `early` means the surface is
-   * real and reads real data but the feature behind it lands later — that is
-   * true of Find a Mentor, whose cards are real providers and whose Book button
-   * waits on PHASE 4. Nothing here is allowed to look finished when it isn't.
-   */
   state: "live" | "early";
 };
 
-/* ⚠⚠ THE CARD BLURBS AND THEIR `live` / `early` STATES — PARKED 2026-09-04
-   (`P1-ALL-E378` WS-4). ⚠ COMMENTED OUT, NOT DELETED.
-
-   ⚠ THE STATES DID NOT DIE WITH THE CARDS — they were carried onto the TAB as
-   `PageTabItem.state` in `nav.ts`, value for value: forums and teams `live`,
-   mentors and messages `early`. This block is where those values came from and
-   is the record of why each destination was marked as it was.
-
-   ⚠ THE BLURBS HAVE NO NEW HOME, AND THAT IS REPORTED RATHER THAN HIDDEN. A tab
-   is a word, not a sentence, so a one-line description of each destination has
-   nowhere to go in the new shape. They are kept rather than rewritten
-   elsewhere, because inventing a place for them would be inventing copy.
-
-   ⚠ LINE COMMENTS, NOT A BLOCK WRAPPER: this block already contains an `E375`
-   note that ends with a comment delimiter, which would terminate a wrapper
-   early. Measured, not assumed.
-
-   Its original docblock: *"The blurbs, keyed by the href the rail already
-   declares."* */
 // const BLURBS: Record<string, { blurb: string; state: CommunitySection["state"] }> = {
 //   "/messages": {
 //     blurb:
@@ -60,7 +15,6 @@ export type CommunitySection = {
 //   },
 //   "/community/groups": {
 //     blurb:
-//       /* ⚠ CREDITS CLAUSE PARKED 2026-09-03 (`P1-ALL-E375`). ONE COMPLETE
 //          SENTENCE REMOVED, NOT REWRITTEN — the blurb read *"Ask questions, answer
 //          them, and be seen doing it. Posting earns Community Credits."* What is
 //          left is the original first sentence, untouched. NO NEW COPY WAS WRITTEN. */
@@ -79,33 +33,6 @@ export type CommunitySection = {
 //   },
 // };
 
-/**
- * The four sections, in the order the rail lists them.
- *
- * Falls back to a neutral blurb rather than throwing if the rail gains a fifth
- * child before this file knows about it: a hub missing a description is a small
- * problem, a hub that crashes is not.
- */
-/* ⚠⚠ THE COMMUNITY SECTION CARDS' DATA — PARKED 2026-09-04 (`P1-ALL-E378`
-   WS-4). ⚠ COMMENTED OUT, NOT DELETED, AND IT MUST NOT BE DELETED.
-
-   It fed a grid of cards on `/community` pointing at THE SAME FOUR
-   DESTINATIONS THE TAB ROW ABOVE THEM ALREADY LISTED. The page offered every
-   sub-page twice.
-
-   ⚠ THE CARDS WERE A SYMPTOM: they existed because the tab row did not read as
-   navigation. `E378` WS-2a gave the row a 2.5px underline, numbers and
-   connectors, which removes the reason they were added.
-
-   ⚠ ITS `live` / `early` STATES SURVIVED THE MOVE — they are now
-   `PageTabItem.state` in `nav.ts`, rendered on the tab itself. Forums and Teams
-   were `live`; Mentoring and Messages were `early`. Those exact values were
-   carried across rather than re-decided.
-
-   ⚠ IT READ THE RAIL'S `children`, which is worth keeping visible: it derived
-   the cards from `PROVIDER_NAV`'s `/community` entry so the cards and the rail
-   could not disagree. If these ever come back, that derivation is the part to
-   keep. */
 // export function communitySections(): CommunitySection[] {
 //   const community = PROVIDER_NAV.find((i) => i.href === "/community");
 //   return (community?.children ?? []).map((child) => ({
@@ -116,35 +43,6 @@ export type CommunitySection = {
 //   }));
 // }
 
-/**
- * How Credits are earned and what they buy, in the platform's own words.
- *
- * THE DOOR-LINE, SAID PLAINLY. The strategy is that group sessions are earned
- * rather than free — an active member accrues enough to attend, a passive one
- * does not. That only works if the rule is legible: a currency nobody
- * understands is a currency nobody chases. So the hub states the earn actions
- * and the spend, in order, before anyone has a balance to look at.
- *
- * VALUES ARE DELIBERATELY ABSENT. `CREDIT_RULES` lands in PHASE 3 and is the
- * single place the numbers will live; printing "100 Credits" here would create
- * a second source that drifts the moment Scott tunes the first. Each line says
- * WHAT earns, not how much.
- */
-/* ⚠⚠ THE CREDITS EARN/SPEND TABLES — PARKED 2026-09-03 (`P1-ALL-E375`, brief
-   amendment A2). ⚠ COMMENTED OUT, NOT DELETED.
-
-   SCOTT, 2026-09-03: *"just comment it out. we can come back to it if we want,
-   but it is just too much rn. we NEED to move faster. that has no real value."*
-
-   ⚠ PARKED DELIBERATELY, NOT ABANDONED — no ledger, no scheduling, and a
-   standing Friday commitment nobody wants. The decision and every parked call
-   site are listed in `src/lib/credits.ts`. Their only consumer was the Credits
-   card on `/community`, which is parked in the same commit.
-
-   ⚠ THE DOCBLOCK ABOVE STAYS LIVE AND STILL EARNS ITS PLACE: it records why the
-   VALUES ARE DELIBERATELY ABSENT — *"printing '100 Credits' here would create a
-   second source that drifts the moment Scott tunes the first"*. That is the rule
-   to re-read before anyone rebuilds this, so it is not buried in the comment. */
 // export const CREDIT_EARN_ACTIONS: { action: string; detail: string }[] = [
 //   {
 //     action: "Finish your profile",

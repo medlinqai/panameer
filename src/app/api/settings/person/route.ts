@@ -10,18 +10,6 @@ const BODY = z.object({
   phone: z.string().trim().max(40).optional().default(""),
 });
 
-/**
- * PATCH /api/settings/person — edit your own name, title and phone (WS7/E004).
- *
- * OWNER-SCOPED BY CONSTRUCTION: the Person is resolved from the session's
- * user_id, and the body carries no id. There is no shape of request that edits
- * somebody else — which matters more here than usual, because the people most
- * likely to call it are the ones who could reach every other record.
- *
- * Exists because "My Profile" was read-only for staff: an admin could see their
- * own name and not change it (E003/E004). The provider settings endpoints write
- * ProviderProfile fields, which a Panameer employee doesn't have.
- */
 export async function PATCH(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {

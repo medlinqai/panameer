@@ -1,30 +1,5 @@
-/**
- * `check:review-screen` — a person on the review screen never leaves it to edit
- * (`P1-A1.4-E412` WS-5). `npm run check:review-screen`.
- *
- * ── ⚠⚠ ASSERTION 1 IS THE BRIEF, EXPRESSED AS AN ABSENCE ────────────────────
- *
- * SCOTT: *"A PERSON ON THE REVIEW SCREEN NEVER LEAVES IT TO EDIT."* Seven of
- * the review's twelve cards called `goTo(step)`; the person left the page they
- * were reviewing, edited on a wizard step, and came back through
- * `returnToReview` — a return trip `E411` had to repair once already because
- * Back and Next disagreed about it.
- *
- * ⚠ AN ABSENCE-ASSERTION IS THE ONLY HONEST SHAPE FOR IT. "Edit opens a modal"
- * can be true of six cards while the seventh still navigates; "nothing in this
- * block navigates" cannot.
- *
- * ⚠ NO MODEL CALL, NO DATABASE, NO BROWSER. Text scans only — which is exactly
- * why `E412` also required the screens to be WALKED. This file cannot see that
- * a modal opened empty because a `screen`-gated fetch never ran; that defect
- * was found in a browser and is pinned here only after the fact (§8).
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-/* ⚠ STATIC IMPORTS, NOT `require`. esbuild bundles what it can SEE — a runtime
-   `require` of a `.ts` path reaches node with TypeScript still in it. §9 and
-   §10 run these two functions for real rather than asserting regexes about
-   them, which is the only way to mutation-test a rule. */
 import { splitCertificationName } from "@/lib/resume/certification-names";
 import { formatLocality } from "@/lib/locality";
 
@@ -35,14 +10,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/**
- * ⚠ COMMENTS OUT BEFORE ANYTHING IS MATCHED. This codebase supersedes by
- * QUOTING (`E164`), so every string these assertions look for also appears
- * inside a comment a few lines away — `goTo("picture")`, `overview={null}`,
- * `sectionAction(…, true)`. Matching raw text would read the history as the
- * present. §0 proves the strip, and `E408` is why: a lazy comment-close
- * matcher walked past a NEUTRALISED close sequence and reported live code missing.
- */
 const strip = (s: string) =>
   s
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ")
@@ -56,32 +23,14 @@ const CERTS = strip(readFileSync(join("src", "components", "onboarding", "Certif
 const NAMES = strip(readFileSync(join("src", "lib", "resume", "certification-names.ts"), "utf8"));
 const IMPORT = strip(readFileSync(join("src", "lib", "resume", "import.ts"), "utf8"));
 
-/**
- * ⚠⚠ THE REVIEW SCREEN, ISOLATED — and this is load-bearing for §1.
- * `page.tsx` is one 4,700-line component holding every wizard step, so a
- * repo-wide "no `goTo`" scan would fire on the steps' own legitimate
- * navigation. The `finish` case is the review screen and nothing else.
- */
 function finishCase(): string {
   const start = WIZ.indexOf('case "finish": {');
-  /* ⚠ `lastIndexOf`, NOT `indexOf`. The case contains early `return null;`
-     guards of its own, and taking the first one cut the block at 1,091 chars —
-     at which point twenty assertions went red against correct code. The
-     component's own closing `return null;` is the last one in the file. */
   const end = WIZ.lastIndexOf("return null;");
   if (start < 0 || end < 0 || end < start) return "";
   return WIZ.slice(start, end);
 }
 const REVIEW = finishCase();
 
-/**
- * ⚠⚠ THE STEP SWITCH, ISOLATED — and §6 goes red without it.
- * `saveEditSection` is ALSO a `switch` over the same names (`case "title":`,
- * `case "skills":` …), and it sits ABOVE the step switch. A whole-file
- * `indexOf('case "title":')` found THAT one, whose body contains no
- * `WizardShell`, and reported the title step gutted when it was not.
- * ⚠ THE ANCHOR-MISS CLASS AGAIN: the string was real, the occurrence was wrong.
- */
 const SWITCH = WIZ.slice(WIZ.indexOf("switch (screen) {"));
 
 /* ═══ 0 · PROVE THE STRIP ═════════════════════════════════════════════════ */
@@ -90,17 +39,11 @@ const SWITCH = WIZ.slice(WIZ.indexOf("switch (screen) {"));
   check("0 — a block comment is stripped", !/ghostTok/.test(strip("/* ghostTok */ real")));
   check("0 — a line comment is stripped", !/ghostTok/.test(strip("// ghostTok\nreal")));
   check("0 — live code survives", /realTok/.test(strip("{/* ghostTok */} realTok")));
-  /* ⚠ `E408`'s CASE: a neutralised `* /` inside a quoted block must not end it. */
   check(
     "0 — a neutralised `* /` does not close a JSX comment early",
     !/ghostTok/.test(strip("{/* was: <X a={1} * / /> ghostTok */} realTok")),
     "E408 — a lazy matcher walked past this and reported live code missing"
   );
-  /*
-    ⚠⚠ THE ONE THAT PROTECTS §1 SPECIFICALLY. The wizard QUOTES the superseded
-    `goTo("picture")` and `goTo("title")` handlers in prose. If the strip
-    failed, §1 would read the history and go red on correct code.
-  */
   check(
     "0 — ⚠⚠ the superseded `goTo` quotes are invisible to §1",
     !/onClick=\{\(\) => goTo\("title"\)\}/.test(WIZ),
@@ -198,8 +141,6 @@ const SWITCH = WIZ.slice(WIZ.indexOf("switch (screen) {"));
     check(`2 — the hero's Edit ${s} opens in place`, new RegExp(`setEditSection\\("${s}"\\)`).test(REVIEW));
   }
   check("2 — the photo still opens its modal", /setPhotoModal\(true\)/.test(REVIEW));
-  /* ⚠ AND EACH SECTION IS ACTUALLY REACHABLE FROM THE MODAL — a value in the
-     union that the dialog never renders is an Edit that opens an empty box. */
   for (const s of ["title", "rate", "location", "education", "skills", "specializations", "work"] as const) {
     check(
       `2 — the modal renders an editor for "${s}"`,

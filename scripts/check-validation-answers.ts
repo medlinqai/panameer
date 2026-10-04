@@ -1,22 +1,5 @@
 import { readFileSync } from "fs";
 
-/**
- * `check:validation-answers` — the four ways `P1-J2.1-E024` goes wrong.
- *
- *   1 ⚠⚠ THE CONFIRMATION MUST COMMIT BEFORE, AND INDEPENDENT OF, THE ANSWERS.
- *     This is the assertion that protects the whole feature. If a `status` write
- *     ever appears inside the answer path, a client who answers badly — or whose
- *     save fails — could lose a validation they already earned.
- *   2 EVERY ANSWER FIELD IS NULLABLE. One `String` without a `?` turns an optional
- *     question into a required one at the database level.
- *   3 BOTH CONSENT FLAGS DEFAULT FALSE, and nothing renders a testimonial without
- *     checking both.
- *   4 `saveValidationAnswers` NEVER WRITES `status`.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN. This file and the source it reads both
- * NAME the forbidden tokens in prose; a scanner that read comments would fail on
- * its own documentation, and the fix for that is always to weaken the scanner.
- */
 const strip = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
 

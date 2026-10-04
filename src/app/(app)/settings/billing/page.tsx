@@ -2,22 +2,9 @@ import { guardPage } from "@/lib/guard";
 import { listBillingMethods } from "@/lib/settings";
 import { BillingMethods } from "@/components/settings/BillingMethods";
 
-/**
- * BILLING & PAYMENTS (J2.4 WS-H / E016) — how the provider PAYS Panameer.
- *
- * Not to be confused with Withdrawals, which is how Panameer pays them. Two
- * pages because they are two directions of money with two different gates: this
- * one needs nothing, that one needs a tax form.
- *
- * NO CONNECTS. This is the page where "buy Connects" lived on the surface being
- * replaced, and it is not coming back in any form.
- */
 export const metadata = { title: "Billing & Payments · Panameer" };
 
 export default async function BillingPage() {
-  /* ⚠ `authenticated` (`P2-J1.1-E046`) — ⚠ SUPERSEDED, quoted:
-     `guardPage("canProvideServices")`. One of three layers; see
-     `settings/layout.tsx` and `route-access.ts`. Scott opened the tree whole. */
   const viewer = await guardPage("authenticated");
   const methods = await listBillingMethods(viewer);
   return (
@@ -27,13 +14,6 @@ export default async function BillingPage() {
         kind: m.kind,
         label: m.label,
         last4: m.last4,
-        /* ⚠⚠ THE EXPIRY SELECT IS GONE (`P2-A2-E677`). `E672` removed the
-           WRITER; this was the reader left behind, and a reader of a column
-           nothing can populate is residue (`69d`). ⚠ The COLUMNS stay — ruling
-           38 is additive-only — they are simply orphaned by construction now.
-           ⚠ SUPERSEDED, quoted not deleted (`E164`):
-           //   expMonth: m.exp_month,
-           //   expYear: m.exp_year, */
         isDefault: m.is_default,
       }))}
     />

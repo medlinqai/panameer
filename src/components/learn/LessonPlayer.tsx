@@ -2,23 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * The lesson video, with the instructor picture-in-picture (WS3; design ref
- * Learn-lesson-page-design.png).
- *
- * The PIP is the teaching format, not decoration: these lessons are a screen
- * recording of Oracle Cloud with the consultant talking over it, and the design
- * shows their face inset bottom-right. Where the recording ALREADY has the
- * instructor composited in — which is how the design's own example was shot —
- * a second floating head would be a duplicate, so the inset is dismissible and
- * remembers nothing: it costs one click and never fights the video.
- *
- * NO VIDEO IS THE COMMON CASE TODAY. Every lesson in the catalog is currently
- * without a `vimeo_ref` (296 claim one they don't have), so "coming soon" is
- * the state most learners will meet. It is built as a real state — the lesson's
- * title, description and place in the run order all still render — because the
- * brief is explicit: gate playback, don't block the page.
- */
 export function LessonPlayer({
   embedUrl,
   title,
@@ -31,24 +14,11 @@ export function LessonPlayer({
   instructor: { name: string; photoUrl: string | null } | null;
   /** Imported poster art — shown behind the unplayable state. */
   thumbnailUrl?: string | null;
-  /**
-   * ⚠⚠ `P2-A4-E611` — WHAT THIS LESSON HONESTLY IS, decided by `lessonState`
-   * on the server. ⚠ The component does not classify; it prints. ⚠⚠ A default
-   * is given so no caller can accidentally render a blank badge, and
-   * `Not published yet` is the weakest true statement of the four.
-   */
   stateLabel?: string;
 }) {
   const [pip, setPip] = useState(true);
 
   if (!embedUrl) {
-    /*
-      The lesson's own thumbnail, where the import found one, sits behind the
-      coming-soon message. This is precisely where the art earns its keep: a
-      lesson with no video is the emptiest screen in Learn, and the picture the
-      author already drew for it says what the lesson is about far better than
-      a grey box does.
-    */
     if (thumbnailUrl) {
       // With real art, the picture carries the page and the status is a badge.
       // The first build centred the full "coming soon" paragraph over the
@@ -63,19 +33,12 @@ export function LessonPlayer({
               alt={title}
               className="h-full w-full object-contain"
             />
-            {/* ⚠⚠ `P2-A4-E611` — THE STATE, NOT A PROMISE. ⚠ SUPERSEDED,
-                quoted not deleted (`E164`):
-                //   Coming soon */}
+            {}
             <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[12px] font-bold text-white backdrop-blur-sm">
               {stateLabel}
             </span>
           </div>
-          {/* ⚠⚠⚠ NO DATE, NO ETA, NO NOTIFICATION. ⚠ SUPERSEDED, quoted not
-              deleted (`E164`):
-              //   The video isn't loaded yet — it'll play here the moment it lands.
-              ⚠ *"the moment it lands"* is a promise about timing with nothing
-              behind it: the schema holds no publish date and nothing emails
-              anybody when a video is uploaded. */}
+          {}
           <p className="mt-2 text-[13.5px] text-ink-2">
             There is no video for this lesson yet. Everything else about it is below.
           </p>
@@ -85,14 +48,7 @@ export function LessonPlayer({
 
     return (
       <div className="flex aspect-video w-full flex-col items-center justify-center rounded-brand border border-line bg-bg-soft px-6 text-center">
-        {/* ⚠⚠⚠ `P2-A4-E611` — TWO PROMISES CAME OUT OF THIS BLOCK.
-            ⚠ *"scheduled"* asserts a plan nothing records, and *"the moment it
-            lands"* asserts a notification nothing sends.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <p className="font-display text-[20px] font-bold">Coming soon</p>
-            //   This lesson is written and scheduled — the video isn't loaded yet.
-            //   Everything else about it is below, and it'll play here the moment
-            //   it lands. */}
+        {}
         <p className="font-display text-[20px] font-bold">{stateLabel}</p>
         <p className="mt-2 max-w-md text-[14.5px] text-ink-2">
           There is no video for this lesson yet. Everything else about it is below.

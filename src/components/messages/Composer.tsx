@@ -3,23 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * THE COMPOSER (`P1-ALL-E379`).
- *
- * ⚠⚠ IT DECIDES NOTHING. Whether it renders at all is `canMessage`'s answer,
- * resolved on the server; when the answer is no, the PAGE renders the reason
- * where this component would be. That is the point of `canMessage` returning a
- * reason rather than a boolean — the person is told BEFORE they type, not after
- * they press send.
- *
- * ⚠ AND THE SERVER RE-CHECKS ANYWAY. `sendMessage` runs the same permission on
- * the way in, because a composer that hides itself is a courtesy, not a control.
- *
- * ⚠ NO REALTIME, AND THE PAGE SAYS SO rather than looking broken. On success
- * this calls `router.refresh()` and the server re-renders the conversation —
- * there is no socket, no poll, and no optimistic bubble that could survive a
- * failed send and leave a message on screen that does not exist.
- */
 export function Composer({ toUserId, maxLength }: { toUserId: string; maxLength: number }) {
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -39,9 +22,6 @@ export function Composer({ toUserId, maxLength }: { toUserId: string; maxLength:
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        /* ⚠ THE SERVER'S REASON IS SHOWN VERBATIM — the same string the page
-           would have rendered in place of this box, so a permission that
-           changed mid-session reads identically either way. */
         setError(data?.error ?? "That didn't send. Try again.");
         return;
       }

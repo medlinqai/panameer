@@ -9,69 +9,6 @@ import { RailIcon } from "@/components/casing/RailIcon";
 import { reportsFor, type Report } from "@/lib/admin-reports";
 import { recordRecent, readRecentForDisplay, type Recent } from "@/lib/admin-recent";
 
-/**
- * THE RIGHT-MARGIN TASK PANEL (WS3, 2.5 image 2 — ported from Medlinq's
- * `provider/TaskPanel` + `medlinq/MedlinqTaskPanel`).
- *
- * A thin icon strip fixed to the right edge and vertically centred, with three
- * tabs — Reports (ClipboardList), Recent (History), Analytics (BarChart3).
- * Clicking one floats a card to its LEFT; clicking outside or pressing Escape
- * closes it.
- *
- * WHY FIXED AND CENTRED rather than a column in the page grid: the console
- * pages are full-width tables, and a permanent third column would squeeze them
- * at 1440. Medlinq settled on the same answer for the same reason, and the
- * strip stays put as the page scrolls so it never scrolls out of reach.
- *
- * Desktop only. At 375 there is no right margin to put it in, and every report
- * it offers is reachable from the page's own volume tiles.
- */
-
-/*
-  ── ⚠⚠ TASKS · ACTIVITY · REPORTS (`P1-A1.5-E459`) ──────────────────────────
-
-  **SCOTT, 2026-09-12:** *"Oracle uses the clipboard for TASKS. I just called it
-  actions. we can use tasks. the icon is right, the name is wrong."*
-  ⚠ NOT "Actions" — he corrected himself minutes later. **Tasks.**
-
-  ⚠ SUPERSEDED, quoted not deleted:
-    { key: "reports",   label: "Reports",   Icon: ClipboardList },
-    { key: "recent",    label: "Recent",    Icon: History },
-    { key: "analytics", label: "Analytics", Icon: BarChart3 },
-
-  ⚠⚠ THIS IS A COLLISION BEING FIXED, NOT A PREFERENCE. TWO panels were about
-  reports: the clipboard one was literally called Reports, and the bar-chart
-  one's own empty state reads *"Reports follow this page's Volume-Over-Time
-  metrics."* Two panels called Reports is why neither was obvious. After the
-  rename, `Reports` means one thing.
-
-  ⚠ THE TRIO IS THE ORACLE CONVENTION AND IS SETTLED NAMING. Panameer's users
-  are Oracle practitioners; if the clipboard means Tasks for the rest of their
-  working day, calling it anything else makes them learn something for no reason.
-
-  ⚠ THE KEYS MOVED WITH THE LABELS, deliberately. Leaving `key: "reports"` on the
-  panel now called Tasks would mean `active === "tasks"` renders Tasks — the
-  exact ambiguity this rename removes, just relocated into the code. The keys are
-  used in four comparisons in this file and NOWHERE else (checked), so the rename
-  is contained.
-  ⚠ THE ICONS ARE UNTOUCHED: clipboard, history, bar chart, in that order.
-*/
-/*
-  ── ⚠⚠⚠ FIVE TABS — SCOTT'S FINAL D2 CALL, 2026-10-03 (`P2-ALL-E800`) ───────
-
-  **Tasks · Transactions · Configuration · Activity · Reports.**
-
-  ⚠⚠ **THE TWO NEW ONES ARE THE ADMIN MENU, MOVED OUT OF THE GEAR AND INTO THE
-  PANEL ON DESKTOP.** `Transactions` opens the Transaction Data links;
-  `Configuration` opens Configuration Data **and** Support Data together, which
-  is how Scott named them.
-  ⚠⚠⚠ **THEY READ `ADMIN_NAV` — THEY DO NOT RE-TYPE IT.** The same array feeds
-  the gear's drawer, so a renamed or added destination appears in both without
-  anybody remembering (`E585`). ⚠ A hand-copied list here would have been the
-  third place those fifteen hrefs live.
-  ⚠ The per-item icons come from `RailIcon`, the same mapper the rail uses, so an
-  item cannot wear one icon here and another there.
-*/
 type TabKey = "tasks" | "transactions" | "configuration" | "activity" | "reports";
 
 const TABS: { key: TabKey; label: string; Icon: typeof BarChart3 }[] = [
@@ -82,24 +19,11 @@ const TABS: { key: TabKey; label: string; Icon: typeof BarChart3 }[] = [
   { key: "reports", label: "Reports", Icon: BarChart3 },
 ];
 
-/*
-  ⚠⚠ THE STRIP LABEL IS ABBREVIATED; THE DRAWER HEADING IS NOT. The strip is
-  54px wide and `Transactions` does not fit on one line at 10px — it wrapped and
-  pushed the icons out of alignment. ⚠ The full word is the drawer's own title,
-  the `title` tooltip and the `aria-label`, so nothing a reader or a screen
-  reader receives is abbreviated.
-*/
 const FULL_LABEL: Partial<Record<TabKey, string>> = {
   transactions: "Transactions",
   configuration: "Configuration",
 };
 
-/**
- * ⚠⚠ THE MAPPING LIVES IN `lib/admin-drawers.ts`, NOT HERE — this is a
- * `"use client"` file and a check script cannot import one without pulling React
- * in. ⚠ `check:task-panel` reads that module and proves every `ADMIN_NAV` group
- * is reachable from exactly one drawer.
- */
 const groupsFor = (key: TabKey) =>
   key === "transactions" || key === "configuration" ? drawerGroups(key) : [];
 
@@ -141,7 +65,6 @@ export function TaskPanel() {
       key={key}
       href={href}
       onClick={() => setActive(null)}
-      /* ⚠ 44px, same standard as the drawers below (Scott, D2). */
       className="flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-left text-[14px] font-medium transition-colors hover:bg-magenta/[0.07]"
     >
       <Icon className="h-[17px] w-[17px] shrink-0 text-magenta" strokeWidth={1.9} />
@@ -163,15 +86,6 @@ export function TaskPanel() {
       className="fixed right-2 top-1/2 z-40 hidden -translate-y-1/2 items-stretch gap-2 lg:flex"
     >
       {def && (
-        /*
-          ── ⚠⚠⚠ NOTHING COVERS AN OPEN DRAWER'S LINKS (Scott, D2) ───────────
-          ⚠ `z-50` puts it ABOVE the app band, which is `z-index: 40` in
-          `app-band.css` — a tall Transactions drawer (ten rows at 44px) would
-          otherwise run underneath it.
-          ⚠⚠ And the height is capped against the BAND'S OWN VARIABLE rather
-          than a guessed `80vh`, so the cap tracks the band if it ever changes
-          height. ⚠ Past the cap it scrolls; it never clips.
-        */
         <div
           style={{ maxHeight: "calc(100dvh - var(--pm-band-h, 56px) - 2.5rem)" }}
           className="z-50 flex w-80 flex-col overflow-hidden rounded-[16px] border border-line bg-white shadow-xl"
@@ -204,9 +118,7 @@ export function TaskPanel() {
             {(active === "transactions" || active === "configuration") &&
               groupsFor(active).map((group) => (
                 <section key={group.title ?? group.items[0]?.href}>
-                  {/* ⚠ The group heading is kept — `Support Data` sitting
-                      unlabelled under `Configuration Data` would read as one
-                      list, and they are two. */}
+                  {}
                   {group.title && (
                     <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.1em] text-ink-2/60">
                       {group.title}

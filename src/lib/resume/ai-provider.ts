@@ -1,73 +1,8 @@
 import { MODEL_TIMEOUT_MS } from "@/lib/resume/budget";
 import { env } from "@/lib/env";
 
-/**
- * THE MODEL CALL, with the vendor factored out (brief_j14 WS-A).
- *
- * Résumé parsing is commodity extraction — read a document, fill a fixed shape —
- * and it was running on a frontier model. This module makes the provider, the
- * model, the endpoint and the PRICES configuration, so an economy tier can be
- * swapped in and A/B'd against the incumbent without touching code.
- *
- * TWO TRANSPORTS, one result shape:
- *   openai     any OpenAI-compatible /chat/completions endpoint (that includes
- *              Gemini's compatibility layer), using response_format json_schema
- *              so the shape is the model's obligation rather than our hope.
- *   anthropic  the incumbent tool-call path, kept reachable for comparison.
- *
- * COST COMES BACK WITH THE ANSWER. Every call returns real token usage and, when
- * prices are configured, the dollar cost of that call. Cost you cannot see is
- * cost you cannot cut, and the entire point of this workstream is a number.
- *
- * THE PROMPT PREFIX IS STABLE ON PURPOSE. System text and schema are identical
- * on every call and the résumé is the only thing that varies, which is the shape
- * both vendors' prompt caches reward. Anthropic gets an explicit cache_control
- * breakpoint; OpenAI-compatible endpoints cache long prefixes automatically.
- */
-
 export type ProviderName = "openai" | "anthropic";
 
-/**
- * How long any single model call may take before it is abandoned (WS-4).
- *
- * 55s, under the 60s `maxDuration` both résumé routes declare. The ordering is
- * the point: whichever limit fires first decides what the provider sees, and a
- * platform timeout produces a 504 with no body — no message for the UI, nothing
- * in the logs. Losing the race to our own deadline produces a sentence instead.
- */
-/*
-  ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E415` WS-2):
-
-      const MODEL_TIMEOUT_MS = 55_000;
-
-  ⚠⚠ FIFTY-FIVE SECONDS INSIDE A ROUTE THAT HAS SIXTY, with a mandatory serial
-  pass in front of it. That is not a tight budget, it is an impossible one — and
-  it was impossible because two literals in two files had no way to know about
-  each other. ⚠ IT IS NOW DERIVED: see `lib/resume/budget.ts`, which states the
-  relationship and the measurements behind it.
-*/
-
-/**
- * Does this model treat `max_completion_tokens` as a budget it can spend
- * THINKING, and accept `reasoning_effort` to bound that?
- *
- * A name test, because there is no capability endpoint to ask and this module
- * deliberately talks to any OpenAI-compatible vendor. Wrong-negative is safe —
- * the parameter is simply not sent, which is today's behaviour. Wrong-positive
- * is a 400 on an unknown parameter, so the patterns stay narrow and explicit
- * rather than clever.
- */
-/**
- * ⚠⚠ STRIP ANYTHING THAT LOOKS LIKE A CREDENTIAL (`P2-J1.4-E519`).
- *
- * A provider's error body can quote the key it was given — OpenAI's 401 reads
- * *"Incorrect API key provided: sk-e519-****…alid"*. ⚠ MASKED IS STILL A
- * FRAGMENT OF A SECRET, and this text goes to `ProfileImport.error` AND to the
- * provider's browser (the re-read route returns `message` verbatim). ⚠ Scott,
- * 2026-09-17: it "does not belong in a database column, whoever masked it."
- * ⚠ Deliberately broad: a false positive costs a word of diagnostics; a miss
- * costs part of a key.
- */
 export function redactSecrets(text: string): string {
   return text
     .replace(/\b(?:sk|pk|rk)-[A-Za-z0-9_\-*.…]{4,}/gi, "[key redacted]")
@@ -79,15 +14,6 @@ function isReasoningModel(model: string): boolean {
   return /^(gpt-5|o1|o3|o4)/.test(m);
 }
 
-/**
- * WHICH TIER IS RUNNING — the thing E184 is about.
- *
- * `economy` is the configured `RESUME_PARSER_*` trio; `incumbent` is the
- * Anthropic key that has always been there. The distinction was previously
- * derivable only by reading this file and the environment side by side, which is
- * how a silent fall-through to the expensive path — or to no path at all —
- * stayed invisible for a whole walk.
- */
 export type ParserTier = "economy" | "incumbent";
 
 export type ModelUsage = {
@@ -97,19 +23,6 @@ export type ModelUsage = {
   cachedInputTokens: number;
   /** USD for this call, or null when prices aren't configured. */
   costUsd: number | null;
-  /*
-    ── ⚠⚠ THE TWO FIELDS THAT SEPARATE "STOPPED" FROM "SKIPPED" (`P1-A1.4-E399`) ──
-
-    ⚠ `finishReason` IS THE DIAGNOSTIC THAT WAS MISSING. `E399` traced a parse that
-    returned one employer of five: a model that STOPPED reports `length` /
-    `max_tokens`, a model that SUMMARISED reports `stop` and looks perfect. Same
-    short result, opposite causes, opposite fixes — and until now the same evidence.
-    ⚠ Carried on the SUCCESS path deliberately: the failure paths already hard-fail
-    loudly, so the value that was never visible is the one on a call that "worked".
-
-    ⚠ `reasoningTokens` is what a thinking model spent before emitting anything.
-    Measured on `gpt-5-nano`: 6,656 on default effort, 0 on `minimal`.
-  */
   finishReason: string | null;
   reasoningTokens: number;
 };
@@ -126,18 +39,6 @@ export type ModelCall =
       usage: ModelUsage;
       ms: number;
     }
-  /*
-    ⚠ `"refusal"` IS ITS OWN REASON (`P1-A1.4-E414` WS-2). A refusal is a DECISION
-    the model made about the content it was handed; an error is a failure of the
-    machinery. Collapsing them means nobody can count how often the first
-    happens — and `import.ts` records this string on `ImportPath.reason`, so the
-    distinction survives into the row rather than living only in a log line.
-  */
-  /*
-    ⚠ `"deadline"` JOINS THEM (`P2-J1.4-E546`) — a per-call TIMEOUT. It was
-    reported as `"error"`, so the provider who hit it saw *"AI didn't read this
-    one — error"* (a crash) and never the sentence written for exactly this case.
-  */
   | { ok: false; reason: "no_key" | "truncated" | "error" | "refusal" | "deadline"; message: string };
 
 /** Which provider will actually run, given what's configured. */
@@ -170,20 +71,6 @@ export function resolveProvider(): {
     return {
       tier: "incumbent",
       provider: "anthropic",
-      /*
-        The literal fallback is not redundant. `env.ts` degrades to raw
-        process.env whenever ANY variable fails validation, and that throws away
-        every schema DEFAULT — including this model id. The symptom is a 400
-        "model: Field required" from a call that looks perfectly configured,
-        which cost a debugging round the first time it happened.
-
-        E184 — THIS MODEL ID WAS VERIFIED, not assumed. The brief's hypothesis
-        was that `claude-sonnet-5` 404s and that the 404 is why imports read as
-        "non-AI AI". It does not: probed against the live `ANTHROPIC_API_KEY`
-        with this exact request shape (cached system block, forced tool_choice,
-        16k max_tokens) it returns a `tool_use` block. The real cause was that
-        `importProfileDocument` never called this module at all — see `import.ts`.
-      */
       model: env.ANTHROPIC_RESUME_MODEL || "claude-sonnet-5",
       apiKey: env.ANTHROPIC_API_KEY,
       baseUrl: "",
@@ -193,10 +80,6 @@ export function resolveProvider(): {
   return null;
 }
 
-/**
- * A half-configured parser, described in one line — for the admin health card
- * and the eval script. Null when the configuration is coherent.
- */
 export function parserConfigProblem(): string | null {
   const key = !!env.RESUME_PARSER_API_KEY;
   const model = !!env.RESUME_PARSER_MODEL;
@@ -205,12 +88,6 @@ export function parserConfigProblem(): string | null {
   if (key && model && env.RESUME_PARSER_PRICE_IN_PER_M == null) {
     return "The parser is configured but its prices aren't — $/parse can't be computed until RESUME_PARSER_PRICE_IN_PER_M and _OUT_PER_M are set.";
   }
-  /*
-    E184 — NEITHER SET IS ALSO WORTH SAYING. It is not a misconfiguration, so
-    it was silent; but "silently running the expensive incumbent" is precisely
-    the state this whole workstream exists to make visible, and the difference
-    between it and a deliberate choice is a sentence on the admin card.
-  */
   if (!key && !model && env.ANTHROPIC_API_KEY) {
     return "No economy tier is configured — every parse runs on the incumbent model. Set RESUME_PARSER_MODEL + RESUME_PARSER_API_KEY to switch it.";
   }
@@ -220,13 +97,6 @@ export function parserConfigProblem(): string | null {
   return null;
 }
 
-/**
- * The active path in one line, for logs and for the import UI (E184).
- *
- * Deliberately names the MODEL, not just "AI". "We read your résumé with AI" is
- * the claim that was being made while no model ran; a claim carrying the model
- * id is one that can be checked at a glance during a walk.
- */
 export function describeParser(): string {
   const cfg = resolveProvider();
   if (!cfg) return "heuristic reader (no model configured)";

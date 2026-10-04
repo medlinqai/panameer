@@ -1,53 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/**
- * ── ⚠⚠⚠ THE PATTERN HEADER (brief 8 — `statistics_2026-09-23.html`) ─────
- *
- * ⚠ RULING 23: that mockup is the standard for all six Account Information
- * pages. ⚠⚠ RULING 33d widens it: **it is the application's pattern**, and it
- * governs Community, Groups, Mentors and Teams too. ⚠ RULING 36d adds `/learn`.
- *
- * ⚠⚠⚠ **BUILD IT ONCE.** The header existed THREE times before this file —
- * `ProfileScoreView` (hand-rolled, with its own `pm-score-hero` CSS vocabulary),
- * `CommunityHero` (a real shared component), and `community/groups/page.tsx`
- * (hand-rolled markup **reusing `CommunityHero`'s CSS classes without importing
- * the component**). ⚠⚠ **SHARING A STYLESHEET IS NOT SHARING A COMPONENT:** the
- * classes agreed; the markup, the figure count and the button count did not.
- * That is `E585` in its exact form.
- *
- * ── ⚠⚠⚠ ONE TO THREE FIGURES. IT MUST NOT REQUIRE THREE. ────────────────
- *
- * ⚠ RULING 45(1): *"FEWER FIGURES ON THE PAGES THAT HAVE FEWER… **`PatternHeader`
- * MUST NOT REQUIRE THREE** — a required triple is what forces an invented
- * figure."* ⚠⚠ So `figures` is a 1–3 array and the grid is sized from its
- * LENGTH. ⚠⚠⚠ **A page with two real figures shows two.** It does not pad with a
- * dash, and it does not invent a third.
- *
- * ⚠⚠ **A FIGURE MAY STILL BE UNCOUNTABLE, AND THAT IS DIFFERENT FROM ABSENT.**
- * `value` takes a number OR an `uncounted` reason — a measured zero renders `0`
- * in ink; a figure nothing writes renders a dash AND its reason. **A dash with
- * no reason cannot be expressed in this type** (the counting rules, rule 2).
- *
- * ── ⚠⚠ ONE BUTTON WHERE ONLY ONE ACTION IS REAL ────────────────────────
- *
- * ⚠ RULING 45(4): the second slot is **optional and absent**, never a repeat of
- * a link already on the page. ⚠⚠⚠ `E579` — *a control whose handler refuses is a
- * door onto a wall, and a button that repeats a nearby link is the same failure
- * in a nicer coat.*
- *
- * ── ⚠ THE EYEBROW GOES ON ALL OF THEM (ruling 45(3)) ────────────────────
- *
- * ⚠⚠ It was missing from all three built versions and nobody had ruled it out —
- * a silent drop (ruling 22's third bucket). ⚠ It is **the part that tells a
- * member which of six near-identical pages they are on**, so it is REQUIRED here
- * rather than optional.
- *
- * ⚠⚠ **NOTHING IN THIS HEADER IS A TAG CHIP** (ruling 31e). Its figures stay
- * INK; its buttons are the only magenta in it.
- */
-
-/** ⚠⚠ A number, or the reason it cannot be counted. A dash needs a reason. */
 export type HeaderFigure = {
   label: string;
   value: number | { uncounted: string };
@@ -59,87 +12,24 @@ export type HeaderAction = {
 };
 
 export type PatternHeaderProps = {
-  /** ⚠ REQUIRED (ruling 45(3)) — which of six near-identical pages this is. */
   eyebrow: string;
   headline: string;
-  /** ⚠ One sentence under the headline. Optional; never a promise. */
   lede?: string;
-  /** ⚠⚠ ONE TO THREE. The grid is sized from the length (ruling 45(1)). */
   figures: HeaderFigure[];
-  /**
-   * ⚠ The derived sentence — what is quiet, and the one next move.
-   * ⚠⚠ DERIVED BY THE CALLER FROM ITS OWN FIGURES, never canned here: this
-   * component cannot know what a page's quiet cell is.
-   */
   move?: ReactNode;
-  /** ⚠⚠ The filled action. Optional — a page with no honest action shows none. */
   primary?: HeaderAction;
-  /** ⚠⚠⚠ ABSENT unless a SECOND action is genuinely real (ruling 45(4)). */
   secondary?: HeaderAction;
-  /** ⚠ The picture — the web, a ring, a chart. Optional. */
   picture?: ReactNode;
-  /**
-   * ⚠⚠ THE MOCKUP'S FIGURE ORDER — big number, label underneath (`E731`).
-   * ⚠ Opt-in, so `/learn`, `/community` and `/account-health` are byte-unchanged. ⚠⚠⚠ IT IS
-   * A PROP RATHER THAN A GLOBAL FLIP BECAUSE CHANGING EVERY HEADER AT ONCE IS A DECISION
-   * ABOUT FOUR PAGES AND THIS BRIEF NAMES ONE.
-   */
   figureLead?: boolean;
-  /**
-   * ⚠⚠ SQUARE ACTIONS — 4px radius, solid INK rather than magenta (`E731`).
-   * ⚠ **SCOTT: *"Buttons: square, 4px radius: Finish My Profile (solid ink, when
-   * incomplete) and Invite a Colleague (white, ink border)."*** ⚠⚠⚠ ALSO OPT-IN, and for
-   * the same reason: the pill-and-magenta pair is what the other three headers ship today.
-   */
   squareActions?: boolean;
-  /**
-   * ── ⚠⚠⚠ `open` — NO BOX, NO SURFACE, THIN LINES ONLY (`P2-A1.1-E745`) ──────
-   *
-   * ⚠ **SCOTT, 2026-10-02: *"this needs to be the new format… No boxes, no grey
-   * page. White throughout, like `/profile`. Thin lines separate sections; no
-   * card borders, no card shadows."***
-   *
-   * ⚠⚠ **OPT-IN, LIKE `figureLead` AND `squareActions` ABOVE, AND FOR THE SAME
-   * REASON.** This component is rendered by **six** callers — `/usage`,
-   * `/account-health`, `/learn/courses`, `LearnHome`, `MyLearning` and
-   * `CommunityHero`. ⚠⚠⚠ **THE BRIEF SAYS "THIS PAGE ONLY": *"Other pages change
-   * as Scott walks them."*** Making the box unconditional would restyle five
-   * pages he has not walked yet.
-   *
-   * ⚠ It removes the border, the radius and the `bg-white`, and turns the inner
-   * column rule into the one thin divider the mockup draws.
-   */
   open?: boolean;
 };
 
-/** ⚠ The figure's own rendering, so the dash rule lives in ONE place. */
 function Figure({ figure, figureLead }: { figure: HeaderFigure; figureLead?: boolean }) {
   const uncounted = typeof figure.value === "object";
   return (
-    /*
-      ── ⚠⚠⚠ `figureLead` FLIPS THE ORDER IN CSS, NOT IN THE MARKUP (`E731`) ────────
-
-      ⚠ **SCOTT, 2026-10-01: *"Figures as in the mockup: big number, label underneath."***
-      ⚠⚠ **THE `<dt>` STILL COMES BEFORE ITS `<dd>` IN THE DOM**, because that is what a
-      description list MEANS and a screen reader reads the term before the definition.
-      ⚠⚠⚠ **`column-reverse` MOVES THE PAINT, NOT THE READING ORDER** — so the mockup's
-      look costs nothing in the accessibility tree. Swapping the tags would have given a
-      definition with no term in front of it.
-      ⚠ `min-h` ON THE LABEL IS DROPPED IN THIS MODE: it exists to keep three numbers on
-      one baseline when the LABEL is on top and wraps. With the number on top the numbers
-      already share a baseline, and the reserved line would open a gap under the row.
-    */
     <div className={figureLead ? "flex flex-col-reverse" : undefined}>
-      {/*
-        ⚠⚠ THE LABEL RESERVES TWO LINES, AND THAT IS AN ALIGNMENT FIX, NOT
-        PADDING. ⚠ MEASURED AT 390px ON `/learn`: `CERTIFICATES` fits one line
-        while `LESSONS DONE` and `PATHS ENROLLED` wrap to two — so the three
-        FIGURES sat at three different heights and the row read as ragged.
-        ⚠⚠⚠ Caught by looking at the screenshot; nothing overflowed, so no
-        measurement would have flagged it. **A row of numbers that do not share
-        a baseline is harder to compare, which is the one thing a figure row is
-        for.**
-      */}
+      {}
       <dt
         className={`text-[12.5px] font-semibold uppercase leading-[1.2] tracking-[0.07em] text-ink-2${
           figureLead ? " mt-1" : " min-h-[2.4em]"

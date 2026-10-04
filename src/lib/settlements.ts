@@ -11,39 +11,6 @@ import {
 } from "@/lib/transaction-spine";
 import { getOrderDetail, listOrders, OrderError, type OrderParty } from "@/lib/orders";
 
-/**
- * SETTLEMENTS — THE TIMESHEET, THE PAYMENT REQUEST, AND THE APPROVAL
- * (`P1-J4-E394`).
- *
- * ── ⚠⚠ ONE MODEL, TWO RENDERINGS. THAT IS THE WHOLE BRIEF ───────────────────
- *
- * `SettlementRequest` is ONE model (`E388`) and there is ONE create path
- * (`createSettlement`, behind ONE endpoint). The provider sees a different
- * SCREEN depending on the work-order line's `basis`, and **nothing in the data
- * model branches**:
- *
- *     RATE   → a day-by-day TIMESHEET GRID — one `SettlementLine` per service date
- *     AMOUNT → ONE ROW — the milestone and its figure, claimed in full
- *
- * ⚠⚠ THERE IS NO `settlement_type` COLUMN AND THERE MUST NEVER BE ONE. The basis
- * already says which shape a line takes; a second column saying the same thing is
- * a fact that can disagree with itself. `check:settle` asserts its absence, and
- * asserts there is exactly one create endpoint.
- *
- * ⚠ THE DIFFERENCE IS ROW COUNT, NOT SHAPE. Both renderings produce
- * `SettlementLine` rows against `work_order_line_id`; a timesheet produces five
- * of them and a milestone produces one. That is the entire branch.
- *
- * ── ⚠ WHERE THIS IS REACHED FROM ────────────────────────────────────────────
- *
- * `lib/nav.ts` records the decision and it is honoured: *"Timesheet and
- * fixed-firm-price billing both surface as Payment Requests generated from a Work
- * Order… A rail item for a thing that is a tab inside another thing taught the
- * wrong model of how work gets billed."* So the CREATE flow lives at
- * `/orders/[id]/settle` — inside the order — and `/finances/payment-requests` is
- * the provider's list of what they have raised.
- */
-
 export class SettlementError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
     super(message);
@@ -51,7 +18,6 @@ export class SettlementError extends Error {
   }
 }
 
-/** ⚠ Same alphabet as the ITB and the ticket code — a person reads this back. */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function newSettlementNumber(): string {
   const bytes = randomBytes(6);

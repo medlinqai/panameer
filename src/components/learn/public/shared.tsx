@@ -1,25 +1,5 @@
 import type { ReactNode } from "react";
 
-/**
- * SHARED PARTS FOR THE FIVE `/learn` PUBLIC GRAPHICS.
- *
- * ⚠ EVERY CLASS IN THIS FOLDER IS SCOPED WITH A `lp-` PREFIX ON PURPOSE. Descendant-selector
- * collisions have bitten this codebase four times — `.who span{display:block}` flattened an
- * avatar, `.expert span` flattened a badge, `.pm-home .hero-right p` silently beat a
- * class-only colour, and a bare `.av` squared a round avatar. These five components introduce
- * avatars, chips and message bubbles that look exactly like existing ones, which is the
- * setup for a fifth.
- *
- * These are Tailwind utilities rather than a stylesheet, so there is no descendant selector
- * to collide in the first place — but the avatars are asserted from the DOM anyway, because
- * "it should be fine" is what the previous four had in common.
- *
- * ⚠ ALL FIVE ARE STATIC ILLUSTRATIVE UI. No fetching, no props from the database. Every
- * number in them is an illustration and none may ever be swapped for a real query — a real
- * count of 0 is worse than a drawing. Same status as the named people on `/`'s
- * `GetTheTalentShot`.
- */
-
 /** The card every graphic sits in. */
 export function ShotCard({
   children,
@@ -40,11 +20,6 @@ export function ShotCard({
   );
 }
 
-/**
- * Initials avatar. ⚠ ROUND for a person, and the size is explicit so a stray global cannot
- * quietly restyle it. `leading-none` because a 13px glyph in a 34px grid cell otherwise sits
- * a pixel low and reads as misaligned.
- */
 export function Avatar({
   initials,
   tone = "ink",

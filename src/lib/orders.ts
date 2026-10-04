@@ -1,41 +1,7 @@
 import { TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pricedByQuantity } from "@/lib/transaction-spine";
-/* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 deleted the bridge, and
-   `WorkOrderLine` now carries `transaction_type` so there is nothing to
-   translate. `LineBasis` left this file's imports with it:
-   //   import { LineBasis, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
-   //   import { basisForTransactionType } from "@/lib/transaction-spine"; */
 import type { Viewer } from "@/lib/access";
-
-/**
- * WORK ORDERS — THE LIST, THE DETAIL, AND THE TWO-SIDED ACTIVATION
- * (`P1-J4-E393`).
- *
- * ── ⚠⚠ THE DOCTRINE THIS OBEYS IS OLDER THAN THE MODEL ──────────────────────
- *
- * `lib/nav.ts` carries it beside the `Orders` slot (`P1-ALL-E380`), and it was
- * written before `E388` built `WorkOrder`. **THEY AGREE, and the agreement is
- * checked rather than assumed** — `check:orders` asserts it:
- *
- *   · **THE ToS IS THE MSA; THE WORK ORDER IS THE SOW.** There is no third
- *     contract, no `Contract` model and no `/contracts` route.
- *   · **A WORK ORDER MUST KNOW ITS ORIGIN**, because *"Panameer can assert the
- *     terms of an order it generated; it can only RECORD THE EXISTENCE of one it
- *     did not."* `E388` added `origin DIRECT | INDIRECT` **with the model**,
- *     which is exactly what that doctrine asked for.
- *   · For a DIRECT order the Work Order **REPRESENTS** a SOW made elsewhere
- *     rather than **BEING** it, and the MSA is the parties' own. ⚠ WHICH GOVERNS
- *     IF THEY DISAGREE IS A LAWYER'S QUESTION AND NOT A BUILD DECISION — `E380`
- *     flagged it, `E393` does not answer it, and nothing here implies an answer.
- *
- * ⚠ ONE SENTENCE IN THAT BLOCK NOW READS AS A CONTRADICTION AND IS NOT ONE:
- * *"THAT FIELD IS NOT BUILT AND MUST NOT BE ADDED HERE."* It was an instruction
- * to `E380` — a NAV brief — not a standing ban, and the very next line says the
- * field *"IS COMING SO IT ARRIVES WITH THE MODEL RATHER THAN BEING
- * RETROFITTED."* `E388` added it with the model. REPORTED, not resolved by
- * choosing.
- */
 
 export class OrderError extends Error {
   constructor(message: string, public code: "NOT_FOUND" | "FORBIDDEN" | "INVALID") {
@@ -44,17 +10,6 @@ export class OrderError extends Error {
   }
 }
 
-/**
- * ⚠⚠ OWNER-SCOPED BY CONSTRUCTION. `user_id` comes from the SESSION and never
- * from client input, and `Person.user_id` is `@unique`, so this matches at most
- * one row: the caller's own.
- *
- * ⚠ NOT IMPORTED FROM `lib/settings.ts`. The identical resolver lives there
- * privately and throws a `SettingsError`; exporting a settings-shaped error into
- * the orders domain would make every orders route translate it back. Three lines
- * and one query, deliberately duplicated — the DUPLICATION THAT MATTERS is a
- * second definition of a RULE, and this is a lookup.
- */
 async function ownPersonId(viewer: Viewer): Promise<string> {
   const person = await prisma.person.findFirst({
     where: { user_id: viewer.userId },
@@ -64,95 +19,19 @@ async function ownPersonId(viewer: Viewer): Promise<string> {
   return person.id;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WHO IS LOOKING — ONE PAGE, TWO SCOPES
-   ═════════════════════════════════════════════════════════════════════════ */
-
 export type OrderParty = "BUYER" | "PROVIDER" | "NONE";
 
-/**
- * ⚠⚠ THE SCOPE IS DERIVED FROM THE ORDER AND THE SESSION, NEVER FROM A ROUTE.
- *
- * **One page, two scopes.** `/orders` is not two routes with two guards; it is
- * one route that asks *"which side of THIS order are you?"* — which is the only
- * question that has a correct answer, because the same human can be the buyer on
- * one order and the provider on another. Two routes would have forced a person
- * to know which of their two hats they were wearing before clicking.
- *
- * ⚠ `NONE` IS A REAL ANSWER AND IT IS THE SAFE DEFAULT. A viewer who is neither
- * party sees nothing and can do nothing; every gate below is written so that
- * `NONE` falls through to the empty case rather than to an else-branch.
- */
 export function partyFor(
   order: { buyer_person_id: string; provider_person_id: string },
   personId: string
 ): OrderParty {
-  /* ⚠ BUYER IS TESTED FIRST AND THE TWO ARE NOT EXCLUSIVE IN THE DATA. Nothing
-     stops a row naming one person as both, and if that ever happens the safe
-     reading is BUYER — the party that pays, and the one whose ACCEPTANCE comes
-     second (ruling 43b: provider first, then buyer). It is not a state this code
-     creates.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`) — release is no longer an action:
-     //   the one whose action (release) comes second. */
   if (personId && order.buyer_person_id === personId) return "BUYER";
   if (personId && order.provider_person_id === personId) return "PROVIDER";
   return "NONE";
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠ THE TWO-SIDED ACTIVATION — ONE FUNCTION, AND THE UI RENDERS NOTHING ELSE
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/*
-  ── ⚠⚠⚠ RULING 43 — RELEASE IS NOT A BUTTON. ONE ACTION, BOTH PARTIES. ───
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   export type OrderAction = "ACCEPT" | "RELEASE";
-*/
 export type OrderAction = "ACCEPT";
 
-/**
- * ⚠⚠⚠ ACTIVATION IS TWO ACCEPTANCES AND AN AUTO-RELEASE (RULING 43).
- *
- *     ISSUED   → the PROVIDER accepts terms (`provider_accepted_at`) → ACCEPTED
- *     ACCEPTED → the BUYER accepts terms    (`buyer_accepted_at`)    → RELEASED
- *     RELEASED → settlements can be raised
- *
- * ⚠ SCOTT, 2026-09-24: *"both parties are accepting the terms of the WO. Then,
- * when all parties have accepted the terms, the WO can be auto-released."*
- * ⚠⚠ **`RELEASED` NO LONGER HAS A HUMAN WRITER. It is what the LAST acceptance
- * produces.**
- *
- * ── ⚠⚠⚠ THIS FILE HAD ALREADY HALF-ARGUED ITS WAY HERE ──────────────────
- * ⚠ Line 727 below, written before the ruling existed: *"BOTH SIDES: the buyer
- * accepts on behalf of someone too."* **The file was built as accept/release and
- * then commented its way toward accept/accept.** The ruling finishes that
- * argument rather than starting a new one.
- *
- * ── ⚠⚠⚠ WHAT THE RULING INVERTED, AND THE GATE WAS RIGHT TO REDDEN ──────
- * ⚠⚠ SUPERSEDED, quoted not deleted (`E164`) — and its FIRST HALF is now WRONG:
- * //   ⚠⚠ **A BUYER MUST NEVER SEE "ACCEPT"; A PROVIDER MUST NEVER SEE "RELEASE."**
- * //   Not "is disabled for" — MUST NOT RENDER. A greyed-out Accept on the buyer's
- * //   screen still tells them the button is theirs to press one day, and it is not:
- * //   accepting is the provider agreeing to terms, and a buyer who could accept on
- * //   their behalf would be signing the provider's side of a SOW.
- *
- * ⚠⚠⚠ **THE BUYER'S ACTION IS NOW ACCEPT.** The old reasoning confused two
- * things: a buyer must not accept **the provider's side**, which remains true and
- * is what the ORDERING enforces — the buyer accepts their OWN side, afterwards,
- * and cannot reach the control until `provider_accepted_at` is set.
- * ⚠ **THE SURVIVING RULE, and it is stronger than what it replaces:** neither
- * party may see an action `canAcceptNow` denies them, and **no party ever sees a
- * Release control, because none exists.**
- *
- * ⚠ SO THE PARTY IS STILL THE FIRST TEST. Each branch returns early and the
- * function ends in `[]`; there is no path by which a party falls through into a
- * state that is not theirs. `check:orders` proves it exhaustively over every
- * status × every party.
- *
- * ⚠ AND IT IS THE SAME FUNCTION THE API REFUSES WITH — `acceptOrder` calls it
- * again server-side, because the route is reachable without loading the page.
- */
 export function availableActions(
   order: { status: WorkOrderStatus; provider_accepted_at?: Date | null },
   party: OrderParty
@@ -160,51 +39,19 @@ export function availableActions(
   return canAcceptNow(order, party) ? ["ACCEPT"] : [];
 }
 
-/**
- * ⚠⚠⚠ PREDICATE 1 OF 2 (ruling 43's *"still two, for a simpler reason"*):
- * **ELIGIBILITY.** ⚠ Release is the other, and it lives where the second
- * acceptance lands — *"eligibility and release are different questions and stay
- * in different places"* (`E585`).
- *
- * ⚠⚠ **ORDER IS FIXED: PROVIDER FIRST, THEN BUYER** (ruling 43b). Scott:
- * *"Provider first, then buyer."* ⚠ A buyer cannot accept terms the provider has
- * not accepted — and the status alone does not carry that, which is why this
- * reads `provider_accepted_at` rather than trusting `ACCEPTED` to imply it.
- */
 export function canAcceptNow(
   order: { status: WorkOrderStatus; provider_accepted_at?: Date | null },
   party: OrderParty
 ): boolean {
   if (party === "PROVIDER") {
-    /* ⚠ ONLY OUT OF ISSUED. Accepting a DRAFT would be agreeing to terms the
-       buyer has not finished writing. */
     return order.status === "ISSUED";
   }
   if (party === "BUYER") {
-    /* ⚠⚠ ONLY ONCE THE PROVIDER HAS ACCEPTED, AND ONLY ONCE. ⚠⚠⚠ Both halves
-       are checked: the status says where the order is, `provider_accepted_at`
-       says the first acceptance actually happened. Trusting the status alone
-       would let a hand-set `ACCEPTED` skip the provider entirely. */
     return order.status === "ACCEPTED" && order.provider_accepted_at != null;
   }
-  /* ⚠ `NONE` — a viewer who is neither party. No action, ever. */
   return false;
 }
 
-/**
- * ⚠⚠⚠ PREDICATE 2 OF 2: **RELEASE. BOTH TIMESTAMPS PRESENT.**
- *
- * ⚠ RULING 43d withdrew the acceptance-rows design outright — *"we are making
- * this too complicated. This is a contract. contracts are always between two
- * parties. let's keep it two acceptances and an auto-release."* ⚠⚠ So there is
- * **no acceptance table, no sequence column, no acceptor queue and no
- * manual-release flag**, and 43c's prohibition on the two-column form is VOID
- * WITH IT: *"THE ROW DESIGN NO LONGER EXISTS, SO THAT PROHIBITION IS VOID. THE
- * TWO-COLUMN FORM IS NOW THE RULING."*
- *
- * ⚠⚠ **DO NOT WRITE AN `allPartiesAccepted` THAT COUNTS ROWS. THERE ARE NO
- * ROWS.** One predicate, one place (`E585`).
- */
 export function bothPartiesAccepted(order: {
   provider_accepted_at?: Date | null;
   buyer_accepted_at?: Date | null;
@@ -212,29 +59,6 @@ export function bothPartiesAccepted(order: {
   return order.provider_accepted_at != null && order.buyer_accepted_at != null;
 }
 
-/**
- * One sentence saying what the order is waiting for, for the party looking at it.
- *
- * ⚠⚠⚠ THE STRINGS ARE RULING 43f, VERBATIM. Register throughout: **accept ·
- * terms · contract · parties.** ⚠ Never *release*; never *approve* (approval
- * happened upstream and means something else here); never *confirm*.
- *
- * ⚠⚠⚠ TWO OF THESE ARE LOAD-BEARING AND MUST NOT BE "TIGHTENED" BACK:
- * 1. **The buyer's `ACCEPTED` line says *"Review the terms and accept"*, not just
- *    *"accept"*.** ⚠ That is 43e in the copy: the work order is GENERATED from
- *    the requisition, so the document is new to the buyer. **A buyer told only to
- *    "accept" is being asked to sign something unseen.**
- * 2. ⚠⚠ **`RELEASED` no longer says *"Released —"*. NOBODY RELEASED ANYTHING.**
- *    *"Both parties have accepted"* is the honest sentence for a state with no
- *    presser, and it is what stops the old mental model reappearing in the next
- *    person's copy.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — all three described an act that no
- * longer happens:
- * //   "The provider has accepted. Release the order to allow work and settlements."
- * //   "You have accepted. Waiting for the buyer to release the order."
- * //   "Released — settlements can be raised against this order."
- */
 export function activationMessage(status: WorkOrderStatus, party: OrderParty): string {
   switch (status) {
     case "DRAFT":
@@ -257,21 +81,7 @@ export function activationMessage(status: WorkOrderStatus, party: OrderParty): s
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-3 · THE DRAWDOWN — AND A PART-DRAWN AMOUNT LINE IS UNREPRESENTABLE
-   ═════════════════════════════════════════════════════════════════════════ */
-
 export type LineForDrawdown = {
-  /* ⚠⚠⚠ `transaction_type` SINCE RULING 44, AND THIS ONE WAS FORCED RATHER THAN
-     CHOSEN. ⚠ `WorkOrderLine.basis` was NOT NULL, so a writer had to fill it —
-     and the only way to fill it from the requisition was `basisForTransactionType`,
-     **the exact bridge ruling 44 deleted.** ⚠⚠ Keeping `basis` live here would
-     have re-created the bridge inside the order writer under another name. So the
-     column is now nullable, written by nothing, and retires on trunk with
-     `WorkRequestLine.basis` — and the live question is asked of
-     `transaction_type` through `pricedByQuantity`, the ONE definition of the
-     three kinds (ruling 44's `E585` clause).
-     ⚠ SUPERSEDED, quoted not deleted (`E164`): //   basis: LineBasis; */
   transaction_type: TransactionType;
   uom?: string | null;
   quantity?: number | null;
@@ -281,24 +91,6 @@ export type LineForDrawdown = {
   drawn_amount_cents?: number | null;
 };
 
-/**
- * ⚠⚠ TWO SHAPES, BECAUSE THE TWO BASES DRAW DIFFERENTLY, AND THE TYPE IS THE
- * ENFORCEMENT.
- *
- * A `RATE` line draws down by QUANTITY, repeatedly, until the ordered quantity is
- * used up — so it has ordered / drawn / remaining and a percentage.
- *
- * ⚠⚠ AN `AMOUNT` LINE DRAWS **ONCE, IN FULL** (`E388` rule 3), so the AMOUNT
- * variant carries `drawn: boolean` AND NO QUANTITY, NO REMAINING AND NO PERCENT.
- * **A part-drawn amount line cannot exist, so it is not merely "not rendered" —
- * IT CANNOT BE EXPRESSED IN THIS TYPE.** A shared shape with a `percent` field
- * would have let a future caller draw a half-full bar for a state the spine
- * refuses to create, and nobody reviewing that caller would have known.
- */
-/* ⚠⚠ THE DISCRIMINANT IS RENAMED `pricedBy`, AND THE RENAME IS THE POINT: a
-   property called `basis` that is NOT the `basis` column is precisely the
-   comment-contradicts-code trap — the next person reads it as the column and
-   writes the column into it. ⚠ `QUANTITY` also says what `RATE` only implied. */
 export type Drawdown =
   | {
       pricedBy: "QUANTITY";
@@ -313,23 +105,13 @@ export type Drawdown =
     }
   | {
       pricedBy: "AMOUNT";
-      /** ⚠ Drawn or not. There is no third state. */
       drawn: boolean;
       orderedCents: number;
       drawnCents: number;
-      /**
-       * ⚠ THE IMPOSSIBLE STATE, SURFACED RATHER THAN DRAWN. `assertSettlementDraw`
-       * refuses a partial amount draw, so a row where `drawn_amount_cents` is
-       * neither 0 nor the full amount did not come from the settlement path. It is
-       * reported as a data fault — NOT rendered as a progress bar, which would
-       * make a corruption look like a feature.
-       */
       inconsistent: boolean;
     };
 
 export function drawdownFor(line: LineForDrawdown): Drawdown {
-  /* ⚠⚠ ASKED ONCE, THROUGH THE SHARED PREDICATE. ⚠ SUPERSEDED, quoted not
-     deleted (`E164`): //   line.basis === "RATE" */
   const byQuantity = pricedByQuantity(line.transaction_type);
   const orderedCents = byQuantity
     ? Math.round((line.quantity ?? 0) * (line.unit_price_cents ?? 0))
@@ -343,9 +125,6 @@ export function drawdownFor(line: LineForDrawdown): Drawdown {
       pricedBy: "QUANTITY",
       orderedQuantity,
       drawnQuantity,
-      /* ⚠ CLAMPED AT ZERO. The spine refuses an overdraw, so a negative remainder
-         is a data fault; showing "-8 hours remaining" would invite somebody to
-         treat it as a number rather than as a bug. */
       remainingQuantity: Math.max(0, orderedQuantity - drawnQuantity),
       orderedCents,
       drawnCents,
@@ -366,51 +145,14 @@ export function drawdownFor(line: LineForDrawdown): Drawdown {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-2 · WHAT CHANGED — THE DELTA, AND WHAT IT HONESTLY COMPARES
-   ═════════════════════════════════════════════════════════════════════════ */
-
 export type TermChange = {
   field: string;
   was: string;
   now: string;
 };
 
-/**
- * ⚠⚠ WHAT THE ORDER SAYS VERSUS WHAT THE PROVIDER WAS ASKED TO PRICE.
- *
- * **ERP approvers cut quantities and shorten dates — that is what approval IS.**
- * *"Accept these terms" without showing they moved is how a marketplace loses
- * providers*, so the accept screen names every field that differs.
- *
- * ── ⚠⚠ AND HERE IS THE PART THAT IS NOT WHAT THE BRIEF ASKED FOR ────────────
- *
- * The brief's reason for the delta is *"its terms may differ from WHAT THE
- * PROVIDER BID."* ⚠ **THAT COMPARISON CANNOT BE COMPUTED TODAY AND THIS DOES NOT
- * PRETEND TO.** `WorkOrderLine` carries `work_request_line_id` and **no link of
- * any kind to `ProposalLine`** — not on the line, not on the header. `E388`
- * built the order, `E395` built the bid, and **nothing joins the two**, because
- * awarding is `E392`/`E393` territory and no award path exists yet.
- *
- * ⚠ SO THIS COMPARES THE ORDER LINE TO THE **WORK-REQUEST LINE** — what the
- * provider was ASKED to price — and the UI says exactly that in those words. It
- * is a real and substantiated comparison; it is not the bid. **Reported rather
- * than rendered as something it is not.**
- *
- * ⚠ AND IT RETURNS `[]` WHERE THERE IS NO ORIGIN LINE. A DIRECT order has no
- * work request behind it, so there is nothing to diff and the screen says so —
- * it does not show an empty "nothing changed", which would imply a comparison
- * was made.
- */
 export function termChanges(
   orderLine: {
-    /* ⚠⚠⚠ `transaction_type` ON BOTH SIDES SINCE RULING 44 — and that is the
-       whole point of the ruling: *"NOTHING IS LOST BETWEEN APPROVAL AND THE
-       ORDER."* ⚠ Before it, the requisition line's three kinds were translated
-       down to the order line's two, so a product-by-quantity approved as a
-       service-by-quantity showed NO CHANGE on the accept screen — the one screen
-       whose entire job is to name what moved.
-       ⚠ SUPERSEDED, quoted not deleted (`E164`): //   basis: LineBasis; */
     transaction_type: TransactionType;
     uom?: string | null;
     quantity?: number | null;
@@ -420,7 +162,6 @@ export function termChanges(
     service_end?: Date | null;
   },
   requestLine: {
-    /* ⚠ SUPERSEDED, quoted not deleted (`E164`): //   basis: LineBasis; */
     transaction_type: TransactionType;
     uom?: string | null;
     quantity?: number | null;

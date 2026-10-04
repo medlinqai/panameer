@@ -46,37 +46,10 @@
  *   `/`, `/optimize`  had no card at all — `HomeHero` now uses `HeroBox`
  */
 
-/**
- * THE CARD SURFACE.
- *
- * ⚠⚠ THE PURPLE STAYS AT `0.42` AND THAT IS SCOTT'S DECISION, 2026-08-26:
- * *"i actually like the purple. i want consistency."*
- * ⚠ DO NOT LOWER IT TO `0.18`. DO NOT TUNE IT. `P1-J1-E035` (`/talent` reads too
- * purple) IS CLOSED BY THIS — the answer was consistency, not a different purple.
- * An earlier brief measured `/learn`'s lighter pair onto `/talent` and it dropped
- * the bridge line to 3.13-3.52; that route is closed twice over.
- *
- * ⚠ `isolate` IS LOAD-BEARING — it keeps the video and scrim stacking inside the
- * card instead of against the page. ⚠ `text-white` is the card's inherited colour
- * and every hero relies on it.
- */
-/**
- * ⚠⚠ THE GRADIENT ITSELF, AS A `bg-[…]` UTILITY, AND IT IS THE ONLY COPY IN `src`.
- *
- * Extracted by `P1-J0-E336` because HOME's six new section bands paint the same
- * surface as the hero but must NOT take `isolate` (they have no video to contain)
- * or `text-white` (the light bands are dark-on-lilac). Composing both from one
- * string is what keeps the count at ONE.
- * ⚠ IF YOU NEED THIS GRADIENT SOMEWHERE NEW, IMPORT THIS. Do not paste it. There is
- * exactly one card/scrim literal left in `src` outside this file
- * (`AssessmentHero.tsx:51`, orphaned and rendered nowhere) and `check:ui §64`
- * asserts the computed value on eight public pages.
- */
 // prettier-ignore
 export const HERO_GRADIENT =
   "bg-[radial-gradient(1100px_500px_at_82%_-10%,rgba(215,44,214,0.42),transparent_60%),linear-gradient(150deg,#0d1230_0%,#191a44_55%,#3a1c53_100%)]";
 
-/** ⚠ COMPOSED FROM `HERO_GRADIENT` — the card adds containment and its text colour. */
 export const HERO_CARD = `isolate ${HERO_GRADIENT} text-white`;
 
 /**

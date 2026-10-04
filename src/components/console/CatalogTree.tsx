@@ -5,70 +5,17 @@ import { CatalogMark } from "@/components/console/CatalogMark";
 import type { Mark } from "@/lib/catalog-marks";
 import { CatalogEditor, type EditTarget } from "@/components/console/CatalogEditor";
 
-/**
- * The hierarchical catalog editor (WS6, ported from Medlinq's
- * /medlinq/services UX: catalog tiles + expandable groups with inline items).
- *
- * WHY A TREE AND NOT A TABLE. Roles > Domains > Skills and Learn's Path >
- * Course > Section > Lesson are the same SHAPE — a small set of parents each
- * owning a long tail of children — and a flat table of 522 lessons or 400
- * skills is unreadable. Medlinq solved this once; the structure ports directly
- * and only the palette changes.
- *
- * READ-ONLY FOR NOW, and deliberately so. Medlinq's version has inline editing
- * with Save/Discard on each group, but the write endpoints behind Panameer's
- * catalog don't exist yet — /admin/skill-catalog has been read-only "editing is
- * a later brief" since brief_M. Shipping Save buttons that cannot save would be
- * worse than shipping none, so the affordance says what it is waiting for.
- */
-
 export type CatalogNode = {
   id: string;
   label: string;
   /** Right-aligned meta — a count, a status, a price. */
   meta?: string;
-  /**
-   * ⚠ A PROVIDER TYPED THIS ROW IN (`P1-A1.5-E470b`).
-   *
-   * `Specialization.is_custom` and `Skill.is_custom` have existed since the
-   * add-on-the-fly path shipped, and the schema's contract for them is *"FLAGGED
-   * FOR ADMIN REVIEW so recurring entries can be promoted to baseline later"* —
-   * but nothing rendered the flag, so the review it exists for could not happen.
-   */
   custom?: boolean;
   children?: CatalogNode[];
-  /**
-   * ⚠ HOW MANY CHILDREN THIS NODE HAD BEFORE THE SEARCH PRUNED IT (`E464`).
-   * Set by the filter, never by a caller — it is what turns a domain's meta
-   * from `71 skills` into `15 of 71 match` while a query is live.
-   */
   total?: number;
-  /**
-   * ⚠ THE ROW'S MARK (`E465`/`E471`) — one 34px rounded square, whatever is in
-   * it. Absent on SKILL rows by design: there are 710 of them and `image_url`
-   * is the trap. See `CatalogMark`.
-   */
   mark?: Mark | null;
-  /**
-   * ⚠ THE ALIAS LINE (`E465`) — `Skill.aliases`, the parser's controlled
-   * vocabulary, rendered muted under the name. Medlinq's child rows show CDT
-   * codes; this is Panameer's exact equivalent and it was already in the
-   * database, unrendered. ⚠ Operations/Project/AI skills carry NO aliases
-   * deliberately (`schema.prisma:639`) — a capability is not a CV word — so
-   * this is simply absent there and is NOT flagged as missing data.
-   */
   sub?: string;
-  /**
-   * AN ACTION ON THE HEADER ROW ITSELF (`P2-A1.5-E817`). Scott: "there should be
-   * an add button at the domain and skill for sure" — visible WITHOUT expanding,
-   * which is why it hangs off the node rather than living inside the children.
-   */
   action?: { label: string; kind: "skill.add"; roleTypeId?: string; pillarId?: string };
-  /**
-   * ⚠ `E481` — a RETIRED row still renders in the ADMIN tree, MARKED, so an
-   * admin can bring it back. It is filtered out of every provider-facing picker
-   * by `lib/catalog.ts`'s ACTIVE default, not by hiding it here.
-   */
   retired?: boolean;
   /** Supplying this puts an Edit affordance on the row (admin surfaces only). */
   edit?: EditTarget;
@@ -88,12 +35,6 @@ export function CatalogTree({
   emptyLabel?: string;
   /** Medlinq's catalog-detail toolbar: Search + Expand All (2.5 slide 12). */
   toolbar?: boolean;
-  /**
-   * ⚠ SAY WHAT IS SEARCHED (`E464`). **SCOTT:** *"I am not sure what the SEARCH
-   * the catalog box does."* ⚠ THE CALLER PASSES THE REAL COUNT from the same
-   * query the tile uses — never a hard-coded one, which would go stale the next
-   * time a skill is added.
-   */
   searchPlaceholder?: string;
   /** Nouns for the match summary: `47 skills in 12 domains match "pro"`. */
   leafLabel?: string;
@@ -102,13 +43,6 @@ export function CatalogTree({
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
 
-  /*
-    SEARCH FILTERS, IT DOESN'T JUST HIGHLIGHT. A match at any depth keeps the
-    whole branch above it — otherwise searching for a skill would return
-    nothing, because the skill's name isn't on the Role that contains it.
-    Matching branches auto-expand while a query is live; collapsing them again
-    would hide the very rows the search found.
-  */
   const needle = q.trim().toLowerCase();
   const filter = (n: CatalogNode): CatalogNode | null => {
     const hit = n.label.toLowerCase().includes(needle);
@@ -117,7 +51,6 @@ export function CatalogTree({
     return {
       ...n,
       children: hit && kids.length === 0 ? n.children : kids,
-      /* ⚠ CARRY THE PRE-FILTER SIZE so the row can say `15 of 71 match`. */
       total: n.children?.length,
     };
   };
@@ -127,33 +60,10 @@ export function CatalogTree({
     ns.flatMap((n) => [n.id, ...allIds(n.children ?? [])]);
   const expandedAll = open.size > 0;
 
-  /*
-    ── ⚠⚠ WHILE SEARCHING, OPEN DOWN TO THE DOMAIN LEVEL ONLY (`E464`) ─────────
-
-    **SCOTT:** *"when i type in the search, all options are forced open."*
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the line that caused it, at what
-    was `CatalogTree.tsx:109`:
-
-        open={needle ? new Set(allIds(shown)) : open}
-
-    ⚠ `allIds` walks EVERY depth, so a live query opened roles, domains AND every
-    matching skill at once — the wall in Scott's screenshot. Opening only the
-    top level shows which domains hold matches and how many, and leaves the skill
-    lists closed until clicked.
-
-    ⚠⚠ THE FILTER IS NOT TOUCHED. It already prunes non-matching branches
-    correctly; what was wrong was only what got OPENED.
-    ⚠ `Expand All` STILL EXPANDS EVERYTHING — the search set is UNIONED with the
-    user's own `open`, so the button keeps working mid-query rather than being
-    overridden by it.
-  */
   const openNow = needle
     ? new Set([...shown.map((n) => n.id), ...open])
     : open;
 
-  /* The summary counts LEAVES, not top-level groups: `5 of 5 match` counted
-     roles, which is why it read 5 of 5 on nearly any query. */
   const countLeaves = (ns: CatalogNode[]): number =>
     ns.reduce(
       (n, x) => n + ((x.children?.length ?? 0) === 0 ? 1 : countLeaves(x.children!)),
@@ -201,9 +111,6 @@ export function CatalogTree({
             {expandedAll ? "Collapse All" : "Expand All"}
           </button>
           {needle && (
-            /* ⚠ SUPERSEDED, quoted not deleted (`E164`): `{shown.length} of
-               {nodes.length} match` — that counted ROLES, which is why it read
-               `5 of 5` on nearly any query. ⚠ COUNT THE LEAVES. */
             <span className="text-[13px] text-ink-2">
               {countLeaves(shown)} {leafLabel} in {countGroupsWithLeaves(shown)}{" "}
               {groupLabel} match &ldquo;{q.trim()}&rdquo;
@@ -249,8 +156,6 @@ function Group({
   const kids = node.children ?? [];
   const isOpen = open.has(node.id);
   const isLeaf = kids.length === 0;
-  /* ⚠ `E481` — each row owns its own editor state. Threading one "which row is
-     open" through the whole tree would re-render every branch on every click. */
   const [editing, setEditing] = useState<string | null>(null);
 
   if (isLeaf) {
@@ -266,22 +171,15 @@ function Group({
             {node.label}
           </span>
           {node.sub && (
-            /* ⚠ MUTED AND SMALL, UNDER THE NAME — the most useful thing an
-               admin can see here, because aliases are what the résumé parser
-               matches on. */
             <span className="block truncate text-[11.5px] text-ink-2">{node.sub}</span>
           )}
         </span>
         {node.retired && (
-          /* ⚠ `E481` — marked, never hidden. The admin has to be able to see it
-             to reactivate it. */
           <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-semibold text-amber-800">
             Retired
           </span>
         )}
         {node.custom && (
-          /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
-             provider answers awaiting promotion to baseline, not errors. */
           <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-ink-2">
             Custom
           </span>
@@ -331,16 +229,12 @@ function Group({
           {node.label}
         </span>
         {node.custom && (
-          /* ⚠ `E470b` — a quiet marker, not an alarm. These rows are legitimate
-             provider answers awaiting promotion to baseline, not errors. */
           <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10.5px] font-semibold text-ink-2">
             Custom
           </span>
         )}
         <span className="shrink-0 text-[12.5px] text-ink-2">
-          {/* ⚠ `E464` — while a query is live a group says how much of it
-              survived the filter, so a CLOSED domain still tells you whether
-              it is worth opening. Outside search it keeps its own meta. */}
+          {}
           {searching && node.total !== undefined
             ? `${kids.length} of ${node.total} match`
             : (node.meta ?? `${kids.length}`)}

@@ -5,32 +5,6 @@ import { OnboardingError } from "@/lib/onboarding";
 import { defineCompany, saveCompanyName } from "@/lib/company";
 import { ein as einFormat, usZip } from "@/lib/field-formats";
 
-/*
-  ── ⚠⚠ THE NAME-ONLY BRANCH (`P2-J1.1-E025`) ────────────────────────────────
-
-  SCOTT, 2026-09-06: *"I entered Seattle Gas Company, but it could not
-  verify...so the employer field is blank. I think we should put that name in and
-  store it regardless."*
-
-  ⚠ IT IS A SEPARATE SCHEMA, NOT A LOOSENED ONE, AND THAT IS THE POINT. The
-  brief's guardrail is explicit: *"Do not widen `companyValid` to make the
-  existing submit fire — that would send an incomplete company through a gate
-  built to stop exactly that."* The same reasoning applies to this route's
-  schema. `taxType` stays REQUIRED for a define, the attestation and the company
-  ToS stay required, and the ZIP/EIN refinements are untouched. A name-only save
-  is a DIFFERENT, STRICTLY SMALLER operation and gets its own shape.
-
-  ⚠ IT IS THE SAME URL ON PURPOSE. The brief forbids a second company write path;
-  `api/onboarding/requester/step/route.ts` says in its own words that *"the
-  company binding is written by /api/company/* (define or join), not here"*. So
-  the name-only save goes through the route that already owns company writes,
-  into `saveCompanyName` beside `defineCompany` in the one module that writes
-  companies.
-
-  ⚠ `nameOnly` IS A LITERAL `true` DISCRIMINATOR, so the union cannot resolve by
-  accident: a full define payload that merely forgot `taxType` fails as a define
-  with the real message, rather than silently degrading into a name-only save.
-*/
 const nameOnlySchema = z.object({
   nameOnly: z.literal(true),
   name: z.string().trim().min(2).max(200),
@@ -38,27 +12,6 @@ const nameOnlySchema = z.object({
 
 const defineSchema = z.object({
   name: z.string().trim().min(2).max(200),
-  /*
-    ── ⚠⚠ OPTIONAL SINCE `P1-A1.4-E408` — THE FORM NO LONGER ASKS ────────────
-
-    ⚠ SUPERSEDED, quoted not deleted: this was a bare required `z.enum([...])`,
-    and the docblock above still explains why — *"`taxType` stays REQUIRED for a
-    define… Do not widen `companyValid` to make the existing submit fire."*
-
-    ⚠⚠ THAT REASONING WAS RIGHT WHILE THE FORM ASKED THE QUESTION. `E408`
-    removed Business Type from `CompanyStep` on Scott's instruction (*"Get rid of
-    all that extra requesting"*), so requiring it here does not enforce
-    completeness — it makes the route UNUSABLE. Measured in the browser: every
-    define returned **400** until this changed, which is the `E405` defect class
-    exactly (a client and its server allow-list disagreeing about one field).
-
-    ⚠ THE QUESTION IS NOT DROPPED, IT MOVED. `api/settings/tax/route.ts` collects
-    `classification` — the same six values — before any money moves, which is
-    Scott's *"we will validate it and get the necessary details when and if they
-    are getting paid or paying."*
-    ⚠ AND `Company.tax_type` STAYS NULLABLE, so nothing downstream changes shape;
-    see WS-2b's note on `company.defined` in `lib/requester-onboarding.ts`.
-  */
   taxType: z
     .enum([
       "C_CORP",
@@ -69,49 +22,10 @@ const defineSchema = z.object({
       "NONPROFIT",
     ])
     .nullish(),
-  /* `E260`/`E260a` — jurisdiction, derived from the registered address's country. */
   country: z.string().trim().max(80).nullish(),
-  /*
-    `E273` — EIN. Writes to the pre-existing `Company.tin` column.
-
-    ⚠⚠ THE FORMAT IS NOW CHECKED (`P1-J1.4-E299`). ⚠ SUPERSEDED, quoted: this was
-    `z.string().trim().max(40).nullish()` — FORTY CHARACTERS OF ANYTHING, which is
-    the same defect the ZIP half fixed for postcodes. A LENGTH CAP IS NOT A FORMAT.
-    ⚠ THE RULE LIVES IN `lib/field-formats.ts`, not here — see the ZIP note below
-    for why there is exactly one copy.
-    ⚠ STILL OPTIONAL, AND THAT DOES NOT CHANGE. A blank EIN is valid; a malformed
-    one is not. Scott: *"US only, never blocks."*
-    ⚠ THE COUNTRY IS RESOLVED IN `superRefine` BELOW, not here — a per-field
-    refinement cannot see its siblings, and EIN is a US-only rule.
-  */
   ein: z.string().trim().max(40).nullish(),
-  /* `E282` — the full state name, US only. ⚠ NOT format-validated against a
-     list here: the lib owns the supported-state question and an unknown state is
-     a lookup outcome, not a save error. */
   stateOfFiling: z.string().trim().max(60).nullish(),
-  /*
-    `E280` — the REGISTERED address, stored as a Site + Address on the backbone.
-    ⚠ Every part is nullish: `E274` makes the company itself optional at
-    onboarding, so a partially-answered company must still be savable. The
-    contracting requirement is enforced before HIRE, not here.
-  */
   registeredAddress: z
-    /*
-      ── ⚠⚠ US ZIP IS VALIDATED ON THE SERVER TOO (`P1-J1.4-E299`) ─────────────
-
-      `postalCode` was `z.string().trim().max(40).nullish()` — forty characters of
-      anything. A LENGTH CAP IS NOT A FORMAT, and `295265326` sailed through.
-
-      ⚠ THE CHECK IS CONDITIONAL ON `country === "United States"`, and only that.
-      Imposing the 5-or-9-digit shape on the other 17 countries in `COUNTRIES`
-      would reject perfectly good Canadian (`K1A 0B1`) and UK (`SW1A 1AA`)
-      postcodes. NON-US KEEPS THE LENGTH CAP AND NOTHING ELSE — reported, not
-      silently widened.
-
-      ⚠ VALIDATED ON BOTH SIDES BY DESIGN. `CompanyStep` shows the message on
-      blur, but a client-only check is a suggestion: this route is reachable
-      without the form.
-    */
     .object({
       line1: z.string().trim().max(200).nullish(),
       city: z.string().trim().max(120).nullish(),
@@ -122,16 +36,6 @@ const defineSchema = z.object({
     .nullish()
     .superRefine((addr, ctx) => {
       if (!addr) return;
-      /*
-        ⚠⚠ MOVED, NOT COPIED (`P1-J1.4-E299`). The regex and the message used to
-        be written out here, and the same sentence was ALSO a bare literal in
-        `CompanyStep.tsx:523`. Both now come from `lib/field-formats.ts`, so the
-        rule and the words have one home each. `check:field-quality` fails the
-        build if a second copy of either reappears.
-        ⚠ `isUnitedStates` REPLACED `country?.trim() !== "United States"`, which
-        was an exact string compare — `"USA"` slipped past it and got no check
-        at all.
-      */
       const r = usZip(addr.postalCode, addr.country);
       if (!r.ok) {
         ctx.addIssue({
@@ -146,23 +50,6 @@ const defineSchema = z.object({
   attestation: z.boolean(),
   companyTos: z.boolean(),
 })
-  /*
-    ── ⚠⚠ EIN IS VALIDATED AT THE OBJECT LEVEL, BECAUSE OF THE COUNTRY ─────────
-
-    ⚠ HOW COUNTRY IS RESOLVED, and it takes two fields: the top-level `country`
-    is the JURISDICTION (`E260`, *"derived from the registered address's
-    country"*), and it is `nullish` — `E274` lets a company be part-answered, so
-    it is genuinely absent on some payloads. The registered address carries its
-    own country too. **THE EFFECTIVE COUNTRY IS `country ?? registeredAddress
-    .country`**, jurisdiction first because that is the field that means
-    "which country's rules apply".
-    ⚠ AND WHEN BOTH ARE ABSENT, EIN IS NOT CHECKED — the rule is US-only and an
-    unknown country is not the US. Reported rather than defaulted: assuming US
-    would tell a company with no country yet that its perfectly good foreign tax
-    id is malformed.
-    ⚠ A PER-FIELD `.refine` COULD NOT DO THIS. Zod field refinements cannot see
-    sibling fields, which is why this sits on the object.
-  */
   .superRefine((val, ctx) => {
     const country = val.country ?? val.registeredAddress?.country ?? null;
     const r = einFormat(val.ein, country);
@@ -175,24 +62,12 @@ const defineSchema = z.object({
     }
   });
 
-/**
- * POST /api/company/define — create the company and become its admin.
- *
- * `authenticated`, then owner-scoped: the acting person comes from the session.
- * The attestation and the company-ToS acceptance are required by the lib rather
- * than only by the form — a checkbox is not a control.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("authenticated");
   if (gate instanceof NextResponse) return gate;
 
   const body = await request.json().catch(() => null);
 
-  /*
-    ⚠ TRIED FIRST AND ONLY ON AN EXPLICIT `nameOnly: true`. Nothing else can
-    reach it, so the define path's validation is unreachable-by-accident rather
-    than merely unlikely.
-  */
   const nameOnly = nameOnlySchema.safeParse(body);
   if (nameOnly.success) {
     try {
@@ -211,20 +86,6 @@ export async function POST(request: Request) {
 
   const parsed = defineSchema.safeParse(body);
   if (!parsed.success) {
-    /*
-      ── ⚠⚠ THE MESSAGE REACHES THE CLIENT (`P1-J1.4-E299`) ────────────────────
-
-      ⚠ SUPERSEDED, quoted: this was `{ error: "Invalid input" }`, which THREW
-      AWAY every message the schema had just produced.
-      ⚠⚠ THAT MEANT THE ZIP HALF SHIPPED HALF-BROKEN AND NOBODY SAW IT. `E299`
-      wrote *"Enter a US ZIP code — 5 digits, or ZIP+4 as 12345-6789."* into the
-      route's `superRefine` on 2026-09-02, and a caller posting `295265326` got
-      back the words *"Invalid input"*. The component only looked right because
-      it had its OWN copy of the sentence — the second copy this brief deleted.
-      Found by POSTing to the route directly rather than by reading the code.
-      ⚠ `path` TRAVELS TOO, so a client can attach the message to the field it
-      belongs to instead of guessing.
-    */
     const issue = parsed.error.issues[0];
     return NextResponse.json(
       {

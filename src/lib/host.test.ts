@@ -1,18 +1,3 @@
-/**
- * The host split, proved (brief_marketing_home_localhost).
- *
- *   npm run check:host
- *
- * WHY THIS EXISTS. The change under test widens who may be served a public
- * marketing page at `/`, and the failure mode is invisible: nothing errors, a
- * live environment just quietly starts showing a marketing front door instead
- * of the app. Nobody walks Vercel preview URLs looking for that. So the
- * production behaviour is asserted rather than reasoned about.
- *
- * `NODE_ENV` is set per-case here because the whole point is that the answer
- * DIFFERS between builds — a test that only ran in one mode would prove the
- * less interesting half.
- */
 import { isMarketingHost, isStatusHost, normalizeHost } from "./host";
 
 let pass = 0;

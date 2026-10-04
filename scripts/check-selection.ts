@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
-/* ⚠ `E684a` — the gate asserts the line is ORDERABLE using the spine's own
-   check, not a copy of its rules (`E585`). */
 import { assertTransactionLineShape } from "@/lib/transaction-spine";
 import { submitProposal } from "@/lib/proposals";
 import {
@@ -14,17 +12,6 @@ import {
   HOURS_PER_DAY,
 } from "@/lib/selection";
 
-/**
- * ── ⚠⚠⚠ `check:selection` (`P2-A8-E621` WS-C) ───────────────────────────
- *
- * ⚠ THE STOP GATE: *"a requisition from Route A and one from Route B, identical
- * in shape; the arithmetic printed; the losers' state."*
- *
- * ⚠⚠ THE SHAPE COMPARISON IS DERIVED FROM THE ROWS, NOT FROM A TYPED FIELD LIST
- * (`E587`). A hard-coded list would still agree with itself after somebody added
- * a field to one route and not the other — which is the exact drift item 3
- * exists to prevent.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -37,10 +24,6 @@ const strip = (s: string) =>
 const TAG = "E621 selection probe";
 const V = (userId: string) => ({ userId }) as never;
 
-/* ⚠⚠ DELIBERATELY DISTINCT NUMBERS. Two zeros agree; two ones agree — every
-   figure this gate compares has to be unmistakable if it lands in the wrong
-   column. A rate of $150.00/h and a 10-business-day window give 80 h and
-   $12,000.00, and none of those is any of the others. */
 const RATE_CENTS = 15_000;
 const RATE_B_CENTS = 21_500;
 
@@ -62,8 +45,6 @@ async function main() {
     }
     check("0 — a buyer and three distinct providers", providers.length === 3);
 
-    /* ⚠ A fixed ten-business-day window so the arithmetic is checkable by hand:
-       Mon 2026-10-05 → Fri 2026-10-16 inclusive. */
     const START = new Date(Date.UTC(2026, 9, 5));
     const END = new Date(Date.UTC(2026, 9, 16));
 
@@ -84,7 +65,6 @@ async function main() {
       return wr.id;
     };
 
-    /* ═══ 1 · ⚠⚠⚠ THE ARITHMETIC, PRINTED (item 1) ════════════════════════ */
     check("1 — ⚠ ten business days in the fixture window",
       businessDaysBetween(START, END) === 10, `${businessDaysBetween(START, END)}`);
     /* ⚠⚠ INCLUSIVE AT BOTH ENDS: one Tuesday is ONE day of work, not zero. */

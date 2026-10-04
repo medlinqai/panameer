@@ -2,21 +2,6 @@ import Link from "next/link";
 import { SUPPLEMENTS } from "@/content/legal/supplements";
 import { GROUPS, SUPPLEMENT_META, type SupplementGroup } from "@/content/legal/supplement-meta";
 
-/**
- * The left-hand document list (legal_center design reference).
- *
- * THE WHOLE CORPUS, ON EVERY LEGAL PAGE. Twenty-three documents that constantly
- * cite each other are close to unusable one page at a time: the Privacy Policy
- * points at the Cookie Policy, the Terms of Use at Section 7 of the User
- * Agreement, the escrow instructions at the fee agreement. Following any of
- * those used to mean losing your place. With the list always present, a
- * cross-reference is a step sideways rather than a departure.
- *
- * SERVER COMPONENT, and the current document is passed in rather than read from
- * `usePathname`. These pages are static text and prerendered; making the shell
- * a client component to highlight one row would ship the whole nav's JavaScript
- * to every reader for a visual affordance a link colour already provides.
- */
 export const CORE_DOCS = [
   { href: "/terms", slug: "terms", title: "Terms of Use" },
   { href: "/user-agreement", slug: "user-agreement", title: "User Agreement" },

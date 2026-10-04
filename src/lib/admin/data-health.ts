@@ -1,11 +1,3 @@
-/**
- * DATA HEALTH — row counts, the change since yesterday, and the real/test split
- * (`P2-ALL-E814`).
- *
- * Scott's trigger for this whole lane: his `test2*` search found nothing,
- * because a 2026-09-20 reset had deleted 203 users and NOTHING IN THE APP SHOWED
- * THAT. A count the app can show is the point.
- */
 import { prisma } from "@/lib/prisma";
 
 /** The tables worth watching, in the order the page lists them. */
@@ -34,8 +26,6 @@ export type HealthRow = {
   since: string | null;
 };
 
-/* Each table's live count, and its real/test split where it has one. `is_test`
-   lives on `users`; a person is test when their user is. */
 async function counts(): Promise<Map<string, { total: number; real: number | null; test: number | null }>> {
   const [
     users, usersTest, people, peopleTest, profiles, connections, requests, orders,
@@ -77,8 +67,6 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export async function dataHealth(): Promise<HealthRow[]> {
   const live = await counts();
-  /* The most recent snapshot BEFORE today, per table — "since yesterday" means
-     the last day we have, not necessarily the calendar day before. */
   const prior = await prisma.dataSnapshot.findMany({
     where: { day: { lt: today() } },
     orderBy: { day: "desc" },

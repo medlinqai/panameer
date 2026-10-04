@@ -2,16 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 
-/**
- * The small pieces every Settings page uses (J2.4 WS-H).
- *
- * Extracted after the third page repeated the same toggle row and the same
- * save-and-report dance. Nothing here is clever; the point is that eight pages
- * agree on what a switch looks like and on what happens when a save fails,
- * because a settings area where each page invents its own answer to that is the
- * one place users notice inconsistency immediately.
- */
-
 export function Card({
   title,
   description,
@@ -43,14 +33,6 @@ export function Card({
   );
 }
 
-/**
- * A labelled switch that saves itself.
- *
- * OPTIMISTIC WITH A REVERT, the same contract the persona menu's availability
- * toggle uses: a switch that waits for a round trip feels broken, and one that
- * stays flipped after a failed write tells the user something untrue about
- * their own account.
- */
 export function ToggleRow({
   label,
   hint,
@@ -58,35 +40,7 @@ export function ToggleRow({
   disabled,
   disabledReason,
   onChange,
-  /*
-    ── ⚠⚠⚠ THE TRACK COLOUR, OPT-IN (`P2-A2-E715` row 8) ───────────────────────
-
-    ⚠ **SCOTT'S MOCKUP DRAWS THE VISIBILITY SWITCH IN INK, NOT MAGENTA**, and `E433` agrees
-    on the principle: magenta is reserved for the affordance that says *"this is a link"*, and
-    a state switch is not that.
-    ⚠⚠ **IT IS A PROP WITH THE OLD VALUE AS ITS DEFAULT BECAUSE THIS CONTROL IS SHARED** —
-    `ProfileSettingsForm` renders it too, and repainting every settings toggle from inside a
-    profile-layout brief is the `CARD` mistake `E713` was written to avoid.
-    ⚠⚠⚠ **THE BEHAVIOUR IS NOT DUPLICATED TO GET THE COLOUR.** The optimistic flip, the busy
-    state and the revert-on-failure stay in this one component (`E585`); only the track class
-    varies. Building a second switch in the profile would have been a second copy of the one
-    behaviour that must not drift.
-  */
   tone = "magenta",
-  /*
-    ── ⚠⚠⚠ THE LIVE POSITION, FOR COPY THAT DESCRIBES THE SWITCH (`P2-A2-E716`) ──
-
-    ⚠ **`/profile`'s Visibility help line says something DIFFERENT when the switch is off**,
-    so it has to know where the switch actually is — not where it was when the page rendered.
-    ⚠⚠ **THE PARENT CANNOT DERIVE THIS.** `value` is this component's own state and the flip
-    is optimistic, so a parent reading its `paused` prop would describe the PREVIOUS position
-    until the page was reloaded — **a sentence contradicting the control directly beside it.**
-    ⚠⚠⚠ **AND IT FIRES ON THE REVERT TOO.** `onChange` returning false puts the switch back;
-    if the copy did not come back with it, a failed save would leave the page *claiming* to be
-    hidden while the switch says visible — worse than either state on its own.
-    ⚠ Optional, so `ProfileSettingsForm` is untouched. The behaviour still lives here and only
-    here (`E585`); this reports it rather than duplicating it.
-  */
   onValueChange,
 }: {
   label: string;
@@ -107,8 +61,6 @@ export function ToggleRow({
     if (disabled || busy) return;
     const next = !value;
     setValue(next);
-    /* ⚠ Announced at BOTH sites — the optimistic flip and the revert — so copy that describes
-       the switch can never be left describing a position the switch is not in. */
     onValueChange?.(next);
     setBusy(true);
     const ok = await onChange(next);
@@ -164,13 +116,6 @@ export function Input({
 }: {
   label: string;
   hint?: string;
-  /**
-   * ⚠ `P1-ALL-E528` — an absolutely-positioned control sitting inside the
-   * input's right edge, for the password reveal. ⚠⚠ THE WRAPPER IS ONLY ADDED
-   * WHEN SOMETHING IS PASSED, so every existing caller renders byte-identical
-   * markup to before. The caller adds its own right padding (`pr-12`) via
-   * `className`, because only it knows how wide its control is.
-   */
   trailing?: ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...inputProps } = rest;

@@ -3,15 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-/**
- * The editable half of the employee profile (WS7 / E003, E004).
- *
- * E004 was that My Profile is read-only. E003 was that the name can't be edited
- * and the avatar is missing. Both are the same gap: staff had a profile they
- * could look at and not change. Name, title and phone save through the existing
- * owner-scoped settings endpoint; the photo uses the same uploader every other
- * avatar does, so there is one code path for "set my picture".
- */
 export function EmployeeProfileForm({
   firstName,
   lastName,
@@ -122,8 +113,7 @@ export function EmployeeProfileForm({
         </label>
       </div>
 
-      {/* Read-only, and shown rather than hidden: an admin checking why the rail
-          says what it says needs to see both without going to the database. */}
+      {}
       <div className="mt-4 grid gap-4 text-[14px] sm:grid-cols-2">
         <p>
           <span className="block text-[13px] font-bold uppercase tracking-wide text-ink-2">

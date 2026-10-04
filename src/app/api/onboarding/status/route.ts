@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import { getSessionViewer } from "@/lib/session";
 import { getOnboardingState, OnboardingError } from "@/lib/onboarding";
 
-/**
- * GET /api/onboarding/status — the wizard's resume + prefill state for the
- * signed-in provider. Drives which step /join lands on (verify gate, resume
- * step, or review).
- */
 export async function GET() {
   const viewer = await getSessionViewer();
   if (!viewer) {

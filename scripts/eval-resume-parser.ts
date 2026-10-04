@@ -8,25 +8,6 @@ import {
 } from "../src/lib/resume/ai-extract";
 import { resolveProvider, parserConfigProblem } from "../src/lib/resume/ai-provider";
 
-/**
- * THE PARSER EVAL (brief_j14 WS-A acceptance + WS-G).
- *
- *   npm run eval:parser              measure the banked fixtures
- *   npm run eval:parser -- --save    write the current output as expected
- *
- * WHAT IT ANSWERS, in one table: per-field accuracy against a saved expectation,
- * average $/parse, and latency. Those are the three numbers that decide whether
- * a cheaper model is actually cheaper, and running them by hand across four
- * documents is how a "quality is fine" claim goes unchecked.
- *
- * IT SPENDS MONEY — one model call per fixture — so it is a script you run
- * deliberately, never part of a build.
- *
- * The fixtures are REAL RÉSUMÉS and are gitignored. The expectation file is
- * derived from them, so it is gitignored too: it contains named people's
- * employment history, and a repo is the wrong place for that.
- */
-
 const FIX_DIR = path.join(process.cwd(), "src/lib/resume/__fixtures__");
 const EXPECTED = path.join(FIX_DIR, "expected-parses.json");
 

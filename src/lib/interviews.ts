@@ -4,37 +4,6 @@ import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 import type { InterviewMode } from "@prisma/client";
 
-/**
- * ── ⚠⚠⚠ INTERVIEWS (`P2-A8-E621` WS-B) ──────────────────────────────────
- *
- * ⚠⚠ `InterviewRequest` HAS EXISTED SINCE `E388` WITH ZERO ROWS, and
- * `statistics.ts` still carries the sentence *"no `interviewRequest.create`
- * EXISTS ANYWHERE"*. ⚠⚠⚠ RULING 24: that is true **because nobody built the
- * writer**, and it is the circularity this brief exists to end.
- *
- * ── ⚠⚠ THE SIX STATES, AND WHO REACHES EACH ─────────────────────────────
- *
- * ⚠ WS-B item 1: *"build only the ones something can reach."* All six are
- * reachable once these writers exist, and each has exactly one actor:
- *
- * | state | who moves it |
- * |---|---|
- * | `REQUESTED` | the BUYER asks |
- * | `SLOTS_OFFERED` | the PROVIDER offers times |
- * | `SCHEDULED` | the BUYER confirms one of them |
- * | `COMPLETED` | the BUYER records that it happened |
- * | `DECLINED` | the PROVIDER says no |
- * | `CANCELLED` | the BUYER calls it off |
- *
- * ⚠⚠⚠ **NO CALENDAR INTEGRATION** (WS-B item 2). A time is a `DateTime` and a
- * time zone, offered by the provider and picked by the buyer. Nothing syncs,
- * nothing invites, nothing holds a slot — **scheduling is not built here.**
- *
- * ⚠⚠ AND THIS FILE NEVER TOUCHES `InterviewNote`. The notes are the BUYER's
- * private document; `check:sourcing` asserts a provider surface cannot reach
- * one, and *"a candidate reading 'weak on OTBI' is the failure mode."*
- */
-
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -44,7 +13,6 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-/** ⚠ The buyer who owns the work request this interview hangs off. */
 async function assertIsBuyer(workRequestId: string, personId: string) {
   const wr = await prisma.workRequest.findUnique({
     where: { id: workRequestId },
@@ -57,14 +25,6 @@ async function assertIsBuyer(workRequestId: string, personId: string) {
   return wr;
 }
 
-/**
- * The buyer asks a provider to interview.
- *
- * ⚠⚠ AGAINST A PROPOSAL, NOT A STRANGER — the provider must have proposed, so
- * an interview cannot be requested of somebody who never applied.
- * ⚠ IDEMPOTENT: one open interview per provider per request. Asking twice
- * returns the one already open rather than stacking two.
- */
 export async function requestInterview(
   viewer: Viewer,
   input: {
@@ -93,10 +53,6 @@ export async function requestInterview(
     );
   }
 
-  /* ⚠⚠ AN OPEN ONE ALREADY? `DECLINED` and `CANCELLED` are finished, so a
-     buyer may ask again after either — asking again after a no is a product
-     decision the states already allow, and refusing it here would be inventing
-     a rule nobody made. */
   const open = await prisma.interviewRequest.findFirst({
     where: {
       work_request_id: wr.id,

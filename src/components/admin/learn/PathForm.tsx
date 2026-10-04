@@ -51,13 +51,6 @@ function slugify(v: string) {
     .slice(0, 80);
 }
 
-/**
- * Create / edit a Learning Path (WS1).
- *
- * The slug auto-fills from the title until the admin types in it, then stops —
- * a slug is a permanent public URL, and silently rewriting one someone chose
- * would break links they had already shared.
- */
 export function PathForm({
   initial,
   groups,

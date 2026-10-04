@@ -2,40 +2,6 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
 
-/**
- * The onboarding page chrome — ONE definition for every onboarding surface
- * (Run6 WS2 / E080 · E081 · E082).
- *
- * WHY THIS EXISTS. The walk kept re-filing the same complaint under new
- * numbers — E049, then E064, then E080, then E082 — because the chrome was being
- * re-tuned page by page. Each fix made one page match the design and left the
- * others where they were, so the next page walked read as "off" again. The
- * recurrence was structural, not a series of oversights.
- *
- * Three things the design has that a per-page fix kept missing:
- *
- *  - FULL-BLEED RULES. ⚠ HALF OF THIS IS NOW FALSE — see below.
- *    ⚠ SUPERSEDED, quoted not deleted: *"The rule under the logo and the rule above
- *    the footer run edge to edge, while their CONTENTS line up with the content
- *    column. A rule that stops at the column reads as a box around the page; the
- *    design's runs past it, which is what makes the page feel wide."*
- *    ⚠ THE FOOTER HALF STILL STANDS and is still why the action band is full-bleed —
- *    `E246` §5 moved the sign-up buttons into it for exactly that reason, because
- *    their rule was being drawn inside the capped form column instead.
- *    ⚠ THE LOGO HALF DOES NOT. `E246` §8 deleted this frame's own header; there is
- *    no rule under a logo here any more because there is no logo here.
- *    `MarketingHeader` sits above the frame and owns that edge.
- *  - A FOOTER BAND. Secondary action left, primary right, in its own band pinned
- *    to the bottom — not floating under the content wherever the content happens
- *    to end.
- *  - VERTICAL BALANCE. Content sits in the middle band via `my-auto`, not jammed
- *    under the header with the lower half of the screen empty. `my-auto` rather
- *    than `justify-center` on purpose: it centres when there is room to spare and
- *    degrades to normal flow when there isn't, so a long step (Review) scrolls
- *    from its top instead of having its head clipped.
- */
-
-/** The content column. Widened from 3xl per E081 — judged against the mockups. */
 export const FRAME_WIDTH = "max-w-5xl";
 
 export function OnboardingFrame({
@@ -44,111 +10,23 @@ export function OnboardingFrame({
   className = "",
   width = FRAME_WIDTH,
   chrome = true,
-  /**
-   * Tighter vertical rhythm for the ONE pre-verify page carrying a full form
-   * (brief_W / E047): sign-up has a social block, a divider, five fields, two
-   * consent checkboxes and a footer, and at the stock rhythm "Create My Account"
-   * falls below the fold — the worst possible thing to hide on a sign-up page.
-   */
   compact = false,
-  /**
-   * E101 — DEFAULT IS TOP-JUSTIFIED now, reversing the vertical centring added
-   * in Run 6's presentation pass.
-   *
-   * Centring was meant to fix "content jammed under the header", and on a short
-   * step it looked balanced. On every other step it bought a large empty band
-   * above the content and pushed the real work down the page, which is what the
-   * walk kept hitting. Horizontal centring stays; vertical does not. Kept as an
-   * opt-in rather than deleted, for the one-line pages (a check-your-email note)
-   * where a centred card genuinely reads better.
-   */
   centered = false,
-  /**
-   * Cap the CONTENT column inside the (wider) frame — E091.
-   *
-   * The frame is one width everywhere so the header rule, the footer band and
-   * the page's overall proportions match on every onboarding page. A single
-   * column of inputs still shouldn't stretch across all of it: long input lines
-   * and long label-to-field distances read badly, which is the real reason these
-   * pages were narrow before. So the CHROME is shared and the FORM is capped,
-   * centred inside it — rather than narrowing the whole page to protect the form.
-   */
   contentWidth,
 }: {
   children: ReactNode;
   footer?: ReactNode;
-  /**
-   * ⚠⚠ RENDER THE PUBLIC HEADER AND FOOTER? (`P1-J1.1-E267`, 2026-08-30)
-   *
-   * DEFAULT `true`, WHICH IS THE WHOLE POINT — every public onboarding surface
-   * keeps `E246`'s casing with no call-site change, so `/join/*`, `/login` and
-   * `/assess` are untouched by this prop existing.
-   *
-   * ⚠ THE ONE CONSUMER THAT PASSES `false` IS `(app)/create-work`, and it is the
-   * ONLY SIGNED-IN CONSUMER OF THIS FRAME IN THE CODEBASE — verified by walking
-   * every `WizardShell` / `OnboardingFrame` / `OnboardingShell` importer, not
-   * taken from the brief. That page already sits inside `AppShell`, which brings
-   * its own header, rail and footer, so `E246` gave it a SECOND header and a
-   * SECOND footer stacked around an in-app wizard.
-   *
-   * ⚠ THE ALTERNATIVE — stripping the casing out of this frame — WAS REJECTED:
-   * it would undo `E246` across every public onboarding page to fix one signed-in
-   * one. An opt-out inverts that blast radius to exactly the page with the defect.
-   */
   chrome?: boolean;
   width?: string;
   compact?: boolean;
   centered?: boolean;
   contentWidth?: string;
-  /**
-   * Extra classes for the frame root. Used by `/assess` and `/assess/submitted`
-   * to add `marketing-surface`, which every sibling public page already has and
-   * without which dark mode paints `text-ink` on a dark card (E017).
-   */
   className?: string;
 }) {
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
-    /*
-      ── ⚠⚠ THE PUBLIC CASING (`P1-J1.1-E246`) ─────────────────────────────────
-
-      Scott, 2026-08-29, on the walk: **"ALL Pages must use a casing."** He walked
-      six onboarding pages and filed the SAME complaint on each — no menus, no
-      footer. ⚠ THIS IS ONE COMPONENT CHANGE, NOT SIX PAGE FIXES, and the reason is
-      in this file's own history: the walk re-filed it under `E049`, `E064`, `E080`
-      and `E082` because the chrome was re-tuned page by page and each fix left the
-      others behind.
-
-      ⚠⚠ `MarketingHeader` AND `MarketingFooter` ARE SIBLINGS OF THE FRAME, NOT
-      CHILDREN. The frame keeps `flex-1` so it still grows between them; `body`
-      carries `flex flex-col min-h-dvh`.
-      ⚠⚠ NEITHER IS INSIDE A `.pm-home` WRAPPER AND NONE WAS ADDED. `P1-ALL-E020`
-      measured what happens when `MarketingFooter` renders inside that scope: its
-      inherited colour repainted `#cfc7da` -> `#aeb4cf` and it stood 910px on five
-      public pages against 1008px on `/optimize`. It is Tailwind and must ESCAPE
-      the scope; `MarketingHeader` likewise, because `home.css` scoped to
-      `.pm-home *` strips its Tailwind spacing. Onboarding pages carry no
-      `.pm-home` today — DO NOT ADD ONE.
-
-      ⚠ THE ACTION BAND BELOW STAYS `sticky bottom-0` (`E024`) and the site footer
-      renders BELOW it, reached by scrolling. That is the brief's rule, not a new
-      one: on a step taller than the viewport there was no way to know you could
-      proceed without scrolling to the very end.
-
-      ⚠⚠ THE HEADER'S `Log In` / `Sign Up` NOW POINT AT THE PAGE YOU ARE ON, on
-      several of these routes. THAT IS KNOWN, DELIBERATE AND REPORTED — Scott
-      decides. DO NOT suppress, hide, relabel or conditionally render them, and do
-      not add a prop to do it. The exact behaviour per route is in the `E246` report.
-
-      ⚠ `flex-1`, NOT `min-h-screen` (E020). `min-h-screen` demanded a full
-      viewport for this box while `<DevBanner />` sits ~41px ABOVE it in the root
-      layout — so the frame was always taller than the space it had, and the
-      footer band started below the fold on every page of every wizard. `body`
-      carries `flex flex-col min-h-dvh`, so growing to fill instead of demanding
-      a viewport gets the same result and leaves room for whatever is above.
-    */
     <>
-      {/* ⚠ `chrome` — see the prop's docblock. Default true = `E246` unchanged. */}
+      {}
       {chrome && <MarketingHeader />}
       <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*

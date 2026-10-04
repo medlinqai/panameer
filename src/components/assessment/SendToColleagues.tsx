@@ -4,25 +4,6 @@ import { useState } from "react";
 import { PROCESSES } from "@/lib/assessment/questions-p2p";
 import { Field, TextInput, Notice } from "@/components/onboarding/controls";
 
-/**
- * SEND THE OTHER ASSESSMENTS TO COLLEAGUES (WS-E) — the referral engine.
- *
- * ── IT SOLVES A REAL PROBLEM, NOT JUST GROWTH ────────────────────────────────
- *
- * The splitter asks for one process because one person does not know all four.
- * That is honest, and it leaves three quarters of the company unassessed. This
- * is where those three go — to the people who actually own them, invited by a
- * colleague rather than cold-emailed by a vendor.
- *
- * ── THE ONE ALREADY DONE IS MARKED DONE, NOT HIDDEN ──────────────────────────
- *
- * Their own process shows as "Done ✓" in the same row. Removing it would lose
- * the "full picture of the company" framing that makes the other three feel
- * like gaps worth filling.
- *
- * A client island, deliberately: it takes typed input and posts. The report
- * around it stays a server component.
- */
 export function SendToColleagues({
   shareToken,
   companyName,

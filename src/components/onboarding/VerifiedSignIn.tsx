@@ -3,18 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 
-/**
- * The sign-in half of the email verification link (brief_S / E022).
- *
- * HARD REQUIREMENT: verifying must NOT drop the provider on a login screen.
- * The server page has already validated the email token and minted a
- * single-use SIGNIN token; this exchanges it for a real session and continues
- * straight into "Get Started Now!".
- *
- * Runs automatically on mount with a manual fallback button, so a browser that
- * blocks the automatic POST (or a token that expired in a long-idle tab) still
- * has a way forward rather than a dead end.
- */
 export function VerifiedSignIn({
   token,
   callbackUrl = "/join/provider/start",

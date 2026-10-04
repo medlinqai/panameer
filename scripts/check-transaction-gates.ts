@@ -1,25 +1,3 @@
-/**
- * `check:transaction-gates` — the gate ladder (`P1-ALL-E034` WS-5).
- *
- *   1  EVERY SET IS DEFINED IN ONE FILE, and `SEARCHABLE` is the EXISTING
- *      `missingRequired()` rather than a copy. If publishing a profile and being
- *      searchable become two rules, they will disagree, and the whole argument
- *      for a set over a percentage is that there is exactly one rule to state.
- *   2  ⚠⚠ EVERY FIELD IN EVERY SET HAS A REASON. **A field with no reason fails
- *      the build.** This is the assertion that keeps Scott's rule alive after
- *      everyone has forgotten the brief: *"i did struggle with not being direct
- *      about the data i wanted and why the platform wanted that data."*
- *   3  ENROLL, SIT-A-TEST AND `setPackageStatus` ALL CHECK SERVER-SIDE.
- *   4  DRAFTS ARE NOT GATED — package drafts, and Learn browsing/reading.
- *
- * ⚠ AND NO PERCENTAGE IS EVER A GATE. `VISIBILITY_THRESHOLD` still exists and is
- * still read by `isMarketplaceVisible`'s fallback; what is asserted here is that
- * nothing in the LADDER reads it.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()` — this file and the files it audits name the forbidden tokens in
- * their own prose.
- */
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -121,7 +99,6 @@ check(
 );
 
 // ---------------------------------------------------------------------------
-// GUARD 2 — ⚠⚠ EVERY FIELD IN EVERY SET HAS A REASON
 // ---------------------------------------------------------------------------
 
 const VAGUE = /complete your profile|\d+%|percent complete|progress bar|fill in your profile/i;
@@ -143,16 +120,6 @@ for (const s of SETS) {
     );
   }
 }
-/*
-  Every declared reason is reachable from some bar — an orphan is dead copy.
-
-  ⚠ THE LADDER IS FOUR RUNGS BUT THE FIELD SPACE HAS FIVE CONSUMERS.
-  `WORK_REQUEST_BAR` (`P1-J4-E025`) shares this file and this key space, and it
-  is the only thing that asks for `companyName` and `companyCountry`. Checking
-  against four of the five reported those two as dead copy when they are not —
-  so the check runs against ALL the bars, which is what "reachable" always meant.
-  ⚠ NOT LOOSENED: an unused reason still fails.
-*/
 const ALL_BARS: GateField[][] = [...SETS.map((s) => GATE_SETS[s]), WORK_REQUEST_BAR];
 for (const key of Object.keys(GATE_REASONS) as GateField[]) {
   check(
@@ -164,18 +131,6 @@ for (const key of Object.keys(GATE_REASONS) as GateField[]) {
 
 /* The rungs are ordered, and the differences are deliberate. */
 check("2 — IDENTITY is name, photo, job title", JSON.stringify(COMMUNITY_BAR) === JSON.stringify(["name", "photo", "jobTitle"]));
-/*
-  ── ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-ALL-E034` correction, 2026-09-02) ─────────
-
-  ⚠ SUPERSEDED, quoted: `check("2 — LEARN is IDENTITY plus exactly one field",
-  LEARN_BAR.length === COMMUNITY_BAR.length + 1 && LEARN_BAR.includes("skill"))`.
-
-  It asserted the OLD bar, which shipped and closed the product — 0 of 129
-  accounts could enrol. ⚠ THE REPLACEMENT IS STRICTER, NOT LOOSER: the old one
-  allowed any four-field bar containing `skill`; these pin the set EXACTLY and
-  name each forbidden field, so putting one back fails a test and gets READ
-  rather than slipping in as a quiet edit.
-*/
 check("2 — ⚠ LEARN is EXACTLY one field: a name", JSON.stringify(LEARN_BAR) === JSON.stringify(["name"]));
 for (const f of ["photo", "jobTitle", "skill"] as const) {
   check(
@@ -186,11 +141,6 @@ for (const f of ["photo", "jobTitle", "skill"] as const) {
       : "it has no learner-facing reason; putting it back needs a brief"
   );
 }
-/*
-  ⚠⚠ THE TWO SETS DIVERGED ON PURPOSE AND MUST NOT BE SILENTLY RE-MERGED.
-  Community is people talking to each other and non-anonymity is the whole point
-  there (`P1-ALL-E033`); learning is a person watching a video.
-*/
 for (const f of ["name", "photo", "jobTitle"] as const) {
   check(`2 — COMMUNITY still requires "${f}"`, COMMUNITY_BAR.includes(f));
 }
@@ -203,11 +153,6 @@ check("2 — ⚠ LEARN asks for NO company", !LEARN_BAR.some((f: string) => f ==
 check("2 — ⚠ LEARN asks for NO address and NO phone", !LEARN_BAR.includes("address") && !LEARN_BAR.includes("phone"));
 check("2 — SELL contains everything SEARCHABLE does", GATE_SETS.SEARCHABLE.every((f) => GATE_SETS.SELL.includes(f)));
 check("2 — SELL adds the payout method", GATE_SETS.SELL.includes("payoutMethod"));
-/*
-  ⚠⚠ ENTITY VALIDATION IS NOT IN ANY SET. `E282` is not built, and a gate on a
-  check that does not exist is a gate nobody can ever pass. The work-request
-  pattern applies: disclose, do not block.
-*/
 for (const s of SETS) {
   check(
     `2 — ⚠ ${s} does not require entity validation`,
@@ -325,11 +270,6 @@ for (const handler of ["export async function GET", "export async function POST"
 check("3 — setServiceProductStatus checks SELL server-side", /sellGaps\s*\(/.test(serviceProducts));
 check("3 — the publish refusal has its own code", /GATE_UNMET/.test(serviceProducts));
 
-/*
-  ⚠⚠ NO COMPLETION GATE ON TESTS. Scott: *"I want to allow every panameerian to
-  take the certification without having taken the courses."* `LEARN` is the only
-  bar, and nothing in this route may start reading progress.
-*/
 check(
   "3 — ⚠ the test route does not read lesson progress",
   !/lessonProgress|completedLessons|allDone|progressCount/.test(test),
@@ -340,11 +280,6 @@ check(
 // GUARD 4 — drafts are not gated
 // ---------------------------------------------------------------------------
 
-/*
-  ⚠ THE GATE MUST SIT INSIDE THE `status === "PUBLISHED"` BRANCH. Outside it,
-  DRAFT ⇄ DRAFT and PUBLISHED → DRAFT would both be refused — a seller could
-  neither build a product nor withdraw one.
-*/
 const spStart = serviceProducts.indexOf("export async function setServiceProductStatus");
 const spBody = serviceProducts.slice(spStart);
 const branchAt = spBody.indexOf('status === "PUBLISHED"');

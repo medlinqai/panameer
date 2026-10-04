@@ -2,24 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * Multi-select + delete for a section of imported entries (walk7 WS9b / E143).
- *
- * WHY THIS EXISTS: an AI import can add a dozen wrong entries at once, and the
- * only way to remove them was a trash icon per card, each behind its own
- * confirm() — twelve dialogs to undo one bad parse. The complaint was about
- * effort, so the fix has to be about effort: tick the wrong ones, delete them
- * in a single action, confirm once.
- *
- * SELECTION MODE IS OPT-IN. Checkboxes on every card all the time would clutter
- * the common case, which is a provider reviewing entries they mean to keep, and
- * would put a destructive control one stray tap from every row on a phone. The
- * bar only appears where there is more than one entry — with a single card the
- * per-card trash icon is already the shorter path.
- *
- * Generic on purpose: it takes ids and a delete callback, so Work History,
- * Education and any other section can adopt it without a second implementation.
- */
 export function useBulkSelect(ids: string[]) {
   const [active, setActive] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());

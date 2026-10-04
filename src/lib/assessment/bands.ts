@@ -1,16 +1,3 @@
-/**
- * THE BANDS — every money question in the assessment is a band, never a box.
- *
- * An SMB owner does not know last year's supplier spend to the dollar, and
- * asking for one is how a 90-second form becomes an abandoned form. Bands are
- * also the honest shape for the OUTPUT: the report shows ranges because the
- * inputs were ranges, and a single-point estimate built on a band is a false
- * precision the tool would then have to defend on a call.
- *
- * ⚠ EVERY VALUE IS IN CENTS and every range is [low, high]. `high: null` means
- * the top band is open-ended, and the sizing code treats it as `low` rather
- * than inventing a ceiling — the conservative direction. See `bandRange`.
- */
 
 export type Band = {
   /** Stored on the assessment. Stable — changing it invalidates stored answers. */
@@ -22,17 +9,6 @@ export type Band = {
   highCents: number | null;
 };
 
-/*
-  $100,000 in cents, as a readability unit — so a band reads `5 * M` for $500K.
-
-  ⚠ THE UNIT IS $100K, NOT $1M. The first version of the EBITDA and spend
-  tables was written as though it were $1M and every value came out TEN TIMES
-  TOO HIGH: the "$500K–$2M" profit band held $5M–$20M, and the walk's first
-  report showed funding of $900K–$3.6M where it should have read $90K–$360K.
-  Nothing caught it because the LABELS were right — the numbers were only wrong
-  where nobody reads them. `bands.test.ts` now parses each label and asserts the
-  cents agree, which is the only check that would have failed.
-*/
 const M = 100_000_00;
 
 /** Step 0 — "Last year's revenue". */
@@ -43,13 +19,6 @@ export const REVENUE_BANDS: Band[] = [
   { id: "gt25m", label: "$25M+", lowCents: 250 * M, highCents: null },
 ];
 
-/**
- * Step 0 — "Roughly, your profit (EBITDA) last year". OPTIONAL.
- *
- * The bands are absolute dollars rather than margin percentages because that is
- * what the funding math multiplies, and asking an owner for a margin percentage
- * is asking them to do arithmetic in a form.
- */
 export const EBITDA_BANDS: Band[] = [
   { id: "lt100k", label: "Under $100K", lowCents: 0, highCents: 1 * M },
   { id: "100to500k", label: "$100K–$500K", lowCents: 1 * M, highCents: 5 * M },
@@ -65,14 +34,6 @@ export const SPEND_BANDS: Band[] = [
   { id: "gt5m", label: "$5M+", lowCents: 50 * M, highCents: null },
 ];
 
-/**
- * Step 2, cost lever — LOCKED COPY EDIT (2026-08-13).
- *
- * The prototype asked Most / Some / Little-or-none. Scott replaced it with
- * percentage bands: "most" is a word two people size differently, and this
- * number is a multiplier on the savings estimate, so the vagueness landed
- * directly in the money.
- */
 export type PercentBand = { id: string; label: string; low: number; high: number };
 
 export const COST_LEVER_BANDS: PercentBand[] = [
@@ -83,14 +44,6 @@ export const COST_LEVER_BANDS: PercentBand[] = [
   { id: "gt80", label: "80%+", low: 0.8, high: 1 },
 ];
 
-/**
- * Step 2, labor — LOCKED COPY EDIT (2026-08-13).
- *
- * ONE question, not two. The prototype asked "…on purchasing? …on invoices/AP?"
- * as a single field with two answers, which is unanswerable as written and
- * double-counts the person who does both — very common at this size. Scott's
- * replacement asks for the combined headcount across the whole cycle.
- */
 export type CountBand = { id: string; label: string; low: number; high: number | null };
 
 export const HEADCOUNT_BANDS: CountBand[] = [
@@ -114,23 +67,9 @@ export const ENTITY_TYPES = [
   { id: "soleprop", label: "Sole prop" },
 ] as const;
 
-/**
- * ⚠ THE `id` SLUGS ARE PERSISTED DATA — labels change, ids never do.
- *
- * Every assessment row already captured stores one of these four strings in
- * `assessments.platform`, and `LEAPFROG_PLATFORM` keys the "faster, cheaper
- * path" message off `id`, not label. Renaming a slug would silently reclassify
- * every historical row and break that message.
- */
 export const PLATFORMS = [
   {
     id: "quickbooks",
-    /*
-      ⚠ THE SLUG IS NARROWER THAN THE CATEGORY. It is named after QuickBooks
-      but now covers NetSuite and anything else in the small-business tier —
-      do not narrow the LABEL back to match the slug, and do not rename the
-      slug to match the label (see the note above).
-    */
     label: "Small Business Software (QuickBooks, NetSuite, etc.)",
   },
   { id: "legacy", label: "Enterprise-Grade ERP — Legacy (PeopleSoft, JDE, EBS…)" },
@@ -145,14 +84,6 @@ export function findBand(bands: Band[], id: string | null | undefined): Band | n
   return bands.find((b) => b.id === id) ?? null;
 }
 
-/**
- * A band as a [low, high] cent range for arithmetic.
- *
- * The open-ended top band returns [low, low] — NOT [low, Infinity] and not
- * [low, low * 2]. Both alternatives invent a number the respondent did not
- * give; using the floor twice keeps the estimate conservative, which is the
- * standing rule for everything the report shows.
- */
 export function bandRange(band: Band | null): [number, number] {
   if (!band) return [0, 0];
   return [band.lowCents, band.highCents ?? band.lowCents];

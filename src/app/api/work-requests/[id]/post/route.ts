@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { postWorkRequest, WorkRequestError } from "@/lib/work-request";
 
-/**
- * POST /api/work-requests/[id]/post — post a DRAFT (→ POSTED + posted_at).
- * Gated canHireTalent; PAccount-scoped; enforces the required subset AND the
- * identity set (`P1-J4-E025`) — both server-side, in `lib/work-request.ts`.
- */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,12 +15,6 @@ export async function POST(
     if (e instanceof WorkRequestError) {
       const status =
         e.code === "NOT_A_BUYER" ? 403 : e.code === "NOT_FOUND" ? 404 : 400;
-      /*
-        ⚠ `fields` TRAVELS WITH THE REFUSAL (`P1-J4-E025`). Without it the client
-        can only say "complete your profile", which is the exact non-answer the
-        brief forbids — the named field, its reason and its link all come from
-        the server so the UI cannot paraphrase them into something vaguer.
-      */
       return NextResponse.json(
         { error: e.message, code: e.code, ...(e.fields ? { fields: e.fields } : {}) },
         { status }

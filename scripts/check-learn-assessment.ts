@@ -1,22 +1,3 @@
-/**
- * `check:learn-assessment` — the four ways a generated test stops being worth
- * passing (brief_learn_assessments_generate WS6).
- *
- *   1  EVERY STORED QUESTION NAMES A LESSON IN ITS OWN PATH. A question that
- *      cannot is one written from the vendor documentation or from a title.
- *   2  THE TEST ROUTE REFUSES A DRAFT. A set nobody has read must not award a
- *      certificate.
- *   3  `buildAssessmentSource` EXCLUDES ALL THREE KNOWN-BAD ROW CLASSES.
- *   4  NO COMPONENT PRINTS `70%` OR `3 attempts` AS A LITERAL — they are
- *      per-path columns, already the rule in `check:learn`.
- *
- * ⚠ `pitfalls.md` 2026-08-19: *"Without breaking it deliberately I'd have
- * shipped a green check that asserted nothing."* Every assertion below was broken
- * on purpose before it was trusted, and two of them were wrong when first written.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN. This file names every forbidden
- * shape, and so do the files it guards.
- */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

@@ -2,46 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
 
-/**
- * MY COMMUNITY — the part that connects people (`P1-ALL-E372`).
- *
- * **SCOTT, 2026-09-03:** *"how can you promote commerce without facilitating the
- * connection of people to do that trading/commerce? This section CONNECTS
- * people."* And on sequencing: *"learn needs colleagues and forums to work to get
- * it all tested."* ⚠ THAT IS WHY THIS RUNS BEFORE THE REST OF LEARN — the LEARN
- * journey notifies *"colleagues you are connected to"*, and none can be tested
- * until colleagues exist.
- *
- * ── ⚠⚠ TWO SHAPES, AND THEY BEHAVE DIFFERENTLY ON CREATION ───────────────────
- *
- *   COLLEAGUE  created `PENDING`. Mutual — the other side must accept.
- *   MENTOR     created `ACCEPTED`. One-way. ⚠ FOLLOWING REQUIRES NO PERMISSION,
- *              and asking for one would make it a different feature.
- *
- * ⚠ THEY MUST NOT COLLAPSE INTO ONE GENERIC "CONNECTION". `check:community`
- * asserts a `MENTOR` row is never `PENDING` and a `COLLEAGUE` is never
- * `ACCEPTED` without a `responded_at`.
- *
- * ── ⚠⚠ `DECLINED` IS A STATE, NOT A DELETE. NOTHING HERE DELETES A ROW ───────
- *
- * `P1-ALL-E369`'s growth strategy rests on a colleague request meaning *"I vouch
- * for this person"*. A decline is the true signal that protects that, and an
- * invite with no graceful no is how a network fills with noise. A declined row
- * also stops the same request being re-sent forever.
- *
- * ── ⚠ WHAT THIS FILE DELIBERATELY DOES NOT DO ────────────────────────────────
- *
- * No invites to non-members, no email, no thank-yous, no credit awards. Email
- * cannot send — `RESEND_API_KEY` is commented out at `.env.local:21`, there is no
- * digest sender, and nothing fires a digest event (`P1-ALL-E371`). ⚠ AND NO
- * INVITE BUTTON IS STUBBED: a dead invite makes a member think they vouched for
- * somebody who never heard.
- */
-
 export type ConnectionKindValue = "COLLEAGUE" | "MENTOR";
 export type ConnectionStatusValue = "PENDING" | "ACCEPTED" | "DECLINED";
 
-/** ⚠ EXACTLY TWO. `TEAM` is not folded in — see the schema note. */
 export const CONNECTION_KINDS: ConnectionKindValue[] = ["COLLEAGUE", "MENTOR"];
 
 export class ConnectionError extends Error {
@@ -53,13 +16,6 @@ export class ConnectionError extends Error {
       | "ALREADY"
       | "NOT_A_MEMBER"
       | "WRONG_KIND"
-      /**
-       * ⚠⚠ THE TARGET HAS NOT OPENED THEMSELVES TO MENTORING (`P2-A3-E721` item 3).
-       * ⚠⚠⚠ **IT IS ITS OWN CODE AND NOT `NOT_FOUND`, BECAUSE THE ROUTE ANSWERS IT WITH A
-       * 403 RATHER THAN A 400:** unlike `SELF`, this is a request that a *state change*
-       * would legitimately allow — the provider ticking their own box — so it is a denial,
-       * not a malformed call.
-       */
       | "NOT_OPEN"
   ) {
     super(message);
@@ -67,7 +23,6 @@ export class ConnectionError extends Error {
   }
 }
 
-/** Resolve the viewer's own user id. ⚠ Fails closed. */
 async function ownUserId(viewer: Viewer): Promise<string> {
   const u = await prisma.user.findUnique({
     where: { id: viewer.userId },
@@ -77,31 +32,16 @@ async function ownUserId(viewer: Viewer): Promise<string> {
   return u.id;
 }
 
-/**
- * ⚠⚠ NO SELF-CONNECTION, ASSERTED IN THE LIB AND NOT ONLY IN THE UI. A search
- * result that hides your own row is a courtesy; this is the rule, and the API is
- * reachable without the page.
- */
 function refuseSelf(from: string, to: string) {
   if (from === to) {
     throw new ConnectionError("You can't connect to yourself", "SELF");
   }
 }
 
-/**
- * COLLEAGUE — one click, `PENDING`, mutual.
- *
- * ⚠ IDEMPOTENT ON RE-SEND: an existing row in ANY state is returned unchanged
- * rather than reset. ⚠⚠ THAT IS WHAT MAKES `DECLINED` MEAN SOMETHING — without
- * it, a declined request could be re-sent forever and the decline would be
- * decoration.
- */
 export async function requestColleague(viewer: Viewer, toUserId: string) {
   const from = await ownUserId(viewer);
   refuseSelf(from, toUserId);
 
-  /* ⚠ THE TARGET MUST BE A REAL MEMBER. This brief connects people who are
-     already here; inviting a non-member needs the mail pipe. */
   const target = await prisma.user.findUnique({ where: { id: toUserId }, select: { id: true } });
   if (!target) throw new ConnectionError("That person isn't on Panameer", "NOT_A_MEMBER");
 
@@ -116,11 +56,6 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
   });
   if (existing) return existing;
 
-  /*
-    ⚠ AND IF THEY ALREADY ASKED YOU, ACCEPTING IS THE RIGHT ANSWER — not a second
-    row pointing the other way. Two PENDING rows between the same pair would be
-    two requests nobody can resolve.
-  */
   const reverse = await prisma.connection.findUnique({
     where: {
       from_user_id_to_user_id_kind: {
@@ -142,20 +77,6 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
     data: { from_user_id: from, to_user_id: toUserId, kind: "COLLEAGUE", status: "PENDING" },
   });
 
-  /*
-    ── ⚠⚠⚠ THE INVITE LANDS ON THEIR WORKLIST (`P2-A3-E620`, ruling 34e) ────
-
-    ⚠ IT IS A WORKLIST ITEM, NOT A NOTICE: the person invited OWES an answer,
-    and it stays until they accept or decline. ⚠⚠ Cleared in `acceptColleague`
-    and `declineColleague`, which are the two writers that end the wait — an
-    item that only a read could clear would sit there forever.
-    ⚠⚠⚠ ONLY THE **NEW** ROW NOTIFIES. Every early return above hands back an
-    EXISTING connection — an already-sent invite, a reverse invite being
-    accepted, a declined pair — and telling somebody again about a request they
-    already have is the duplicate `dedupe_key` exists to prevent. Putting this
-    after those returns is what makes it fire once.
-    ⚠ `refuseSelf` above already forbids inviting yourself (WS-B item 3).
-  */
   const inviter = await prisma.person.findFirst({
     where: { user_id: from },
     select: { first_name: true, last_name: true },

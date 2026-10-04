@@ -2,34 +2,6 @@ import { ProgressRing } from "@/components/learn/app/ProgressRing";
 import { CoverageRow } from "@/components/learn/app/CoverageRow";
 import type { MyLearning } from "@/lib/learn-dashboard";
 
-/**
- * COVERAGE — the piece Scott asked for by name: *"Seeing total learning paths vs
- * the LPs, courses, and lesson i have taken."*
- *
- * ── THE TRIPLE RING IS `ProgressRing` THREE TIMES ────────────────────────────
- *
- * Not a fourth variant. Three instances at one `size` with three `radius` values,
- * stacked absolutely, and the centre text owned by this container — which is why
- * `ProgressRing` takes `radius` and `bare`.
- *
- * ── THE TILE GRID TURNS DEAD SPACE INTO INFORMATION ──────────────────────────
- *
- * One tile per path. Certified fills; in-progress outlines with a proportional
- * fill and its percentage; NOT STARTED CARRIES ITS LESSON COUNT, so the 17 grey
- * squares a new learner sees are still telling them how big each path is.
- *
- * ⚠ 23 IS TODAY'S COUNT, NOT A CONSTANT. Nothing here knows how many paths
- * there are and nothing assumes a number of rows. `check:learn` fails the build
- * if 23, 54 or 522 turn up as a literal in a component.
- *
- * ⚠⚠ SUPERSEDED BY `P1-J3-E045`, quoted rather than deleted: the tiles were a
- * reflowing `grid grid-cols-8 min-[520px]:grid-cols-12` that wrapped onto as
- * many rows as it needed, and this note used to read *"The grid is 12 columns
- * of `minmax(0,1fr)` and reflows"*. Scott asked for ONE row showing what the
- * width fits with an arrow to the rest, so the tiles now live in
- * `CoverageRow.tsx` — a horizontally scrollable row. The tile STATES are
- * unchanged and moved verbatim.
- */
 export function CoverageCard({ data }: { data: MyLearning }) {
   const { totals, mine, paths, nextCertificate } = data;
   const pct = totals.lessons > 0 ? Math.round((mine.lessonsCompleted / totals.lessons) * 100) : 0;

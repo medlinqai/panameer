@@ -5,24 +5,6 @@ import { ownedProviderProfile } from "@/lib/access";
 import { parseResume } from "@/lib/resume/parse";
 import { matchSkills, suggestableSkills } from "@/lib/resume/match";
 
-/**
- * Dev-only raw-parse inspector (WS-C).
- *
- * The diagnostic that produced this brief was assembled by guessing backwards
- * from a summary — "40 of 52 kept" tells you a cap fired and nothing about WHY a
- * line became a skill. `raw_text` has been stored on every import since brief_Q;
- * this exposes it alongside each stage's output, so the next failure is read
- * rather than inferred.
- *
- * NOT USER-FACING, and gated three ways: the route 404s in production, the
- * viewer must be signed in, and the import is looked up through
- * `ownedProviderProfile` so one provider can never inspect another's résumé.
- * Someone's CV is the most personal document on the platform; a debug view of it
- * is not something to leave reachable by URL.
- *
- * GET /api/dev/parse-inspect            → the caller's most recent import
- * GET /api/dev/parse-inspect?id=<uuid>  → a specific one they own
- */
 export async function GET(request: Request) {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -58,8 +40,6 @@ export async function GET(request: Request) {
   // `parsed` blob: that way the inspector shows what the parser does TODAY, so a
   // fix can be checked against a real document without re-uploading it.
   const parsed = parseResume(text);
-  /* ⚠ `role_type_id` feeds `E515`'s role anchor — without it the inspector
-     would resolve the six role-spanning names differently from the real import. */
   const catalog = await prisma.skill.findMany({
     select: { id: true, name: true, role_type_id: true },
   });

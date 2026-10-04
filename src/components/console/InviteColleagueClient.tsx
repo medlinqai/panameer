@@ -6,39 +6,6 @@ import { MemberRow } from "@/components/community/MemberRow";
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 import type { PersonCard } from "@/lib/connections";
 
-/**
- * INVITE A COLLEAGUE — composer + the record of who has been asked (`P2-J3-E493`).
- *
- * ⚠ THE SHAPE IS `RecommendationsClient`'s ON PURPOSE — same card rhythm, same
- * `router.refresh()` after a send rather than local list state, so the server
- * component above stays the only thing that owns the query and the list cannot
- * disagree with the database.
- *
- * ⚠⚠ THE COPY IS NOT `RecommendationsClient`'s. That page asks somebody to
- * VOUCH FOR YOU; this one asks somebody to JOIN. Reusing the recommendation
- * sentences with words swapped would make both asks vaguer.
- *
- * ⚠ THE NAME FIELDS ARE OPTIONAL AND THE MESSAGE IS EMPTY BY DEFAULT. There is
- * no template here — `/recommendations` pre-fills one because a favour from a
- * blank page does not get written, whereas "look at this" is a sentence people
- * already know how to say, and a templated invitation reads like bulk mail.
- */
-
-/**
- * ── ⚠⚠ THE STARTING COPY (`P2-A3-E599` WS-C 1) ───────────────────────────
- *
- * ⚠ SCOTT MAY REWRITE THIS — the brief says so in terms (*"Starting copy (Scott
- * may rewrite)"*), which is why it is one exported constant and not prose
- * threaded through the form.
- * ⚠⚠ IT SAYS WHAT THE READER GETS, NOT WHAT PANAMEER WANTS. The invitation
- * arrives COLD, from a stranger's point of view, and `E526`'s measurement is
- * the reason that matters: an unexpected invitation is exactly where a bad
- * first line reads as phishing.
- * ⚠⚠⚠ THE `[Inviter]` SUBSTITUTION IS THE EMAIL TEMPLATE'S JOB, NOT THIS
- * FORM'S. `colleagueInviteTemplate` already receives `inviterName` and renders
- * it; putting a name into the editable note would let the sender edit somebody
- * else's name into it.
- */
 export const DEFAULT_INVITE_NOTE = [
   "You already built this once. Get paid for it twice.",
   "",
@@ -52,40 +19,17 @@ export type SentInvite = {
   email: string;
   name: string | null;
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-  /** ⚠ DERIVED BY THE SERVER from whether an account exists for that address —
-      see the page. Nothing writes `status: ACCEPTED`, so a stored-only read
-      would still say "Invited" the day after they joined. */
   joined: boolean;
   sentAt: string;
   expired: boolean;
-  /**
-   * ⚠⚠ `P2-J3-E522` — the receipt's word when the mail DID NOT ARRIVE
-   * (`bounced` / `failed` / `suppressed`), else null. ⚠ SERVER-DERIVED from
-   * `SentEmail`; there is no column on `ColleagueInvite` and there must not be
-   * one — it would duplicate the receipt and could disagree with it.
-   * ⚠⚠ `complained` IS DELIBERATELY NOT HERE: a complaint means the mail
-   * ARRIVED and the person pressed "spam".
-   */
   undelivered: string | null;
 };
 
-/**
- * ⚠⚠ THE ADDRESS BELONGED TO A MEMBER (`P2-J3-E525`).
- *
- * SCOTT, 2026-09-15: *"I put the email in and it exists...show the card for that
- * email and the CONNECT or MESSAGE buttons."*
- *
- * ⚠ THIS IS NOT AN ERROR SHAPE. It arrives on a 200 with no `error` key, and it
- * is rendered in the page's own voice — no red, no amber, no "couldn't". ⚠⚠ THE
- * SERVER COMPUTED EVERY FIELD; the client picks no button and knows no rule.
- */
 type AlreadyMember = PersonCard & {
   relation: Relation;
   incomingConnectionId: string | null;
   isMentor: boolean;
   isSelf: boolean;
-  /** ⚠ `null` for a member with no ProviderProfile — the name is then not a
-      link, rather than a link to a 404. `MemberRow` owns that rule. */
   profileId: string | null;
 };
 
@@ -96,21 +40,6 @@ const STATUS: Record<SentInvite["status"], { label: string; tone: string }> = {
   REVOKED: { label: "Withdrawn", tone: "bg-black/[0.06] text-ink-2" },
 };
 
-/*
-  ── ⚠⚠ THE BADGE THE WHOLE BRIEF EXISTS FOR (`P2-J3-E522`) ─────────────────
-
-  ⚠ WORDING NAMED BY SCOTT, 2026-09-17, from three: *"2 says what happened in
-  words anyone knows. 3 is our vocabulary. 1 sounds like the app is apologising
-  for itself."*
-  ⚠ SUPERSEDED, quoted not deleted (`E164`): "Couldn't deliver" · "Email bounced".
-
-  ⚠⚠ RED, NOT GREY. `Expired` and `Withdrawn` are grey because nothing is wrong
-  — a thing ran its course. ⚠ THIS ONE NEEDS ACTING ON: the address is probably
-  a typo, and grey is the colour of "no action needed".
-  ⚠ It OVERRIDES every other state except `Joined`, because a delivery failure
-  is the more useful fact than "still pending" — and if they somehow joined
-  anyway, the mail plainly reached them.
-*/
 const UNDELIVERED = { label: "Not delivered", tone: "bg-red-100 text-red-800" };
 
 export function InviteColleagueClient({
@@ -126,50 +55,15 @@ export function InviteColleagueClient({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  /*
-    ── ⚠⚠⚠ THE NOTE IS PRE-WRITTEN AND EDITABLE (`P2-A3-E599` WS-C 1) ────────
-
-    ⚠ The brief: *"the note, pre-filled and **editable**, from the inviter to
-    their contacts."* ⚠⚠ PRE-FILLED, NOT LOCKED — Scott may rewrite the copy,
-    and so may the person sending it. It is a starting point, which is why it
-    lives in `DEFAULT_INVITE_NOTE` rather than being typed into this state.
-    ⚠⚠⚠ THE FIELD IS NO LONGER "(optional)" IN PRACTICE BUT STAYS OPTIONAL IN
-    THE CONTRACT: clearing it sends an invitation with no note, exactly as
-    before. Nothing was made required.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const [message, setMessage] = useState("");
-  */
   const [message, setMessage] = useState(DEFAULT_INVITE_NOTE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ devLink?: string } | null>(null);
   const [member, setMember] = useState<AlreadyMember | null>(null);
-  /*
-    ── ⚠⚠ CONFIRM THE ADDRESS BEFORE SENDING (`P2-J3-E522` PART B) ────────────
-
-    ⚠ Validation today is `z.string().email()` at the route and
-    `email.includes("@")` in the lib. ⚠⚠ NEITHER VALIDATES THE TLD — Zod's
-    `.email()` accepts `.cpm` happily, and so does `a@b`.
-    ⚠⚠ AND THE BRIEF FORBIDS BUILDING TLD VALIDATION: *"It is a losing game and
-    it would reject legitimate new TLDs."*
-
-    ⚠ SO THE FIX IS A HUMAN ONE. Scott's own slip (`straterp.cpm`) survived
-    THREE attempts and would not have survived one confirm step — a typo is
-    obvious the moment somebody is asked to look at it.
-
-    ⚠⚠ ONE EXTRA CLICK, ON AN ACTION PEOPLE TAKE RARELY. Acceptable here and NOT
-    acceptable on a high-frequency action — DO NOT GENERALISE THIS PATTERN.
-
-    ⚠ NOTHING IS WRITTEN UNTIL THE SECOND CLICK: the first click only sets this
-    flag, so `submit`'s fetch is unreachable until the address has been read
-    back.
-  */
   const [confirming, setConfirming] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    /* ⚠⚠ THE GATE (`E522` Part B). The form's submit is the ASK, not the send;
-       only the confirm button below clears this flag. */
     if (!confirming) {
       setError(null);
       setConfirming(true);
@@ -188,23 +82,10 @@ export function InviteColleagueClient({
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /* ⚠ THE SERVER'S OWN SENTENCE IS SHOWN. "Already invited" and "slow
-           down" are different answers and collapsing them into "couldn't send"
-           would leave someone retrying forever.
-           ⚠⚠ `E525` — "already a member" IS NO LONGER ONE OF THESE. It arrives
-           on a 200 and is handled below. */
         setError(data.error ?? "We couldn't send that.");
         return;
       }
 
-      /*
-        ⚠⚠ `E525` — THEY ARE ALREADY HERE, SO THE FORM STAYS EXACTLY AS TYPED.
-        ⚠ Nothing failed, but nothing was sent either: clearing the fields after
-        a non-failure reads as a failure, and a member who meant to invite
-        SOMEBODY ELSE should not have to retype the note they just wrote.
-        ⚠⚠ AND NO `router.refresh()` — "Invitations Sent" did not change, because
-        no invitation was written.
-      */
       if (data.alreadyMember) {
         setMember(data.alreadyMember as AlreadyMember);
         return;
@@ -236,12 +117,7 @@ export function InviteColleagueClient({
             {error}
           </p>
         )}
-        {/*
-          ⚠⚠ `E525` — THE ANSWER, NOT A WARNING. No red, no amber, no tinted
-          panel at all: those are the page's vocabulary for "something went
-          wrong", and nothing did. ⚠ The line is plain body copy and the card
-          below it is the same `MemberRow` `/community` draws.
-        */}
+        {}
         {member && (
           <div className="mt-3">
             <p className="text-[13.5px] leading-relaxed text-ink-2">

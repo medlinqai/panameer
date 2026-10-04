@@ -1,53 +1,6 @@
-/**
- * THE P2P QUESTION BANK, in code.
- *
- * SOURCE OF TRUTH: `2. Claude Sub-Files/question_bank_p2p.md` for the eight
- * capability domains and their maturity ladders, and the `assessment_flow_copy`
- * prototype for the exact wording of the money questions and the AI-mode
- * question. Where the two differ, the prototype wins — it is the copy Scott
- * iterated on, and the bank is the structure underneath it.
- *
- * ── THE LADDER IS THE SAME FOUR RUNGS EVERYWHERE ─────────────────────────────
- *
- * Manual tools → purpose-built software → integrated ERP on best practices →
- * AI agents, scored 10/23/37/50, with the EXAMPLES phrased per domain so a
- * reader recognises their own desk. The consistency is not decoration: it is
- * the only reason one score can roll up across eight domains and, later, across
- * four processes.
- *
- * ── "NOT SURE" IS AN ANSWER, NOT A SKIP ──────────────────────────────────────
- *
- * Every ladder ends with it, and it scores `null` rather than 0. A domain
- * nobody can describe is a real finding — usually "no owner" — and scoring it
- * as the worst rung would put it top of the opportunity list on the strength of
- * an admission of ignorance. It is excluded from the maturity average and
- * surfaced separately. See `scoring.ts`.
- */
-/**
- * ── THE LADDER IS FOUR RUNGS, 10 / 23 / 37 / 50 ──────────────────────────────
- *
- * Manual tools → purpose-built software → integrated ERP on best practices →
- * AI agents. From Scott's deck, `4. Project Documents/AI Maturity Assessment.pptx`.
- *
- * ⚠ THE ENDPOINTS ARE 10 AND 50 AND THAT IS DELIBERATE. `maturityPercent` is
- * `((avg - 10) / 40) x 100` and `domainOpportunity` returns a zero gap at
- * `rung >= 50`. Renumbering to 10/20/30/40 would have needed a new divisor AND
- * would have left the top rung with opportunity still on the table. Keeping the
- * floor and the ceiling means the formula does not move at all — only the
- * values a step can emit, plus two new `GAP_BY_RUNG` keys.
- */
 export const MATURITY_RUNGS = [10, 23, 37, 50] as const;
 export type Rung = (typeof MATURITY_RUNGS)[number];
 
-/**
- * One rung of the ladder: the title is the same in all eight domains, the
- * examples are not.
- *
- * ⚠ THE EXAMPLES ARE THE POINT. Four abstract tiers read as a taxonomy nobody
- * can place themselves in; "Excel/XLS, Sharepoint, SmartSheets, Word, Email"
- * is a sentence a procurement manager recognises as their own desk. Every
- * string is verbatim from the deck.
- */
 export type RungOption = { title: string; examples: string };
 
 export type CapabilityDomain = {
@@ -61,45 +14,14 @@ export type CapabilityDomain = {
   question: string;
   /** Four rungs, 10 -> 50, in order. */
   rungs: RungOption[];
-  /**
-   * ⭐ in the prototype — the domain where the cost lever bites hardest, so a
-   * low score here is worth more than a low score elsewhere at equal spend.
-   * See `DOLLAR_WEIGHTS` in scoring.ts.
-   */
   costLever?: boolean;
 };
 
-/* The two upper rungs are identical in all eight domains — the deck repeats them
-   verbatim, so they are named once rather than pasted eight times. */
 const INTEGRATED: RungOption = {
   title: "Integrated ERP Applications using Best Practices",
   examples:
     "Manage by Exceptions, Self-Service, Custom Connector or APIs, Per App Rptng",
 };
-/**
- * ⚠ RUNG 4 NAMES PANAMEER'S OWN AGENTS, AND SOME DO NOT EXIST YET (E027).
- *
- * Rungs 1-3 name other people's software — Excel, Sharepoint, Coupa, Ariba,
- * Deltek. Rung 4 named nothing: one generic line about ERP/3rd-party/MCP agent
- * suites, identical in all eight domains. So the one rung describing where
- * Panameer wants the reader to GO was the one rung they could not picture, which
- * is the asymmetry this fixes.
- *
- * (The retired line is paraphrased above rather than quoted, so that grepping for
- * it returns only real usages and stays a usable guard.)
- *
- * ⚠ THESE ARE PRODUCT CLAIMS ON A PUBLIC, PRE-ACCOUNT PAGE. A few exist as
- * mockups on `/` — Price Alert Agent is the Price Alerts lightbox — and most do
- * not exist at all. Scott is doing that deliberately ("looking to sell ideas
- * while they are taking the maturity assessment"), so this is not a defect to
- * soften. It IS the same class of unverified public claim as the tax-savings
- * copy and the uncleared Oracle mark, and belongs behind the same gate.
- *
- * ⚠ DO NOT ADD, INVENT OR "IMPROVE" A NAME, and do not attach availability
- * language, a badge or "coming soon". The strings are verbatim from
- * `4. Project Documents/2. Design/01. Journeys/0.4 AI Maturity Assessment/AI
- * Maturity Assessment.pptx` (md5 589e08e3…), including Scott's trailing "etc.".
- */
 const aiNative = (examples: string): RungOption => ({
   title: "AI Native and Programmable 3rd Party Agents",
   examples,
@@ -113,19 +35,6 @@ const purposeBuilt = (examples: string): RungOption => ({
   examples,
 });
 
-/*
-  ⚠ TEN DOMAINS, AND THE 8-vs-10 GAP IS CLOSED (E034). This bank measured eight
-  while `lib/capability-domains.ts` advertised ten on `/`. Scott authored the
-  missing two in the 2026-08-18 design deck, so they are assessed now and the
-  two lists agree on COUNT.
-
-  ⚠ THEY STILL DISAGREE ON WORDING, and always did — six of the eight original
-  names differ between the two files ("Request and Demand Management" here vs
-  "Requisitioning & Demand Management" there, and so on). That is pre-existing and
-  is not resolved here. Anything joining the two lists must join on a key, not a
-  name; `AssessmentWizardShot` joins on name and gets away with it only because
-  "Purchase Order Management" happens to match in both.
-*/
 export const P2P_DOMAINS: CapabilityDomain[] = [
   {
     key: "requisitioning",
@@ -244,29 +153,8 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
       ),
     ],
   },
-  /*
-    ⚠ THE TWO DOMAINS THIS BANK NEVER ASSESSED, NOW AUTHORED BY SCOTT (E034).
-    The comment above used to forbid adding them — "Authoring them is a separate
-    brief — do not paper over the gap by inventing ladders for them here." That
-    condition is met: every string below is verbatim from slides 10 and 11 of
-    `AI Maturity Assessment DESIGN 2026-08-18.pptx`. Nothing here is invented,
-    and option 3 is the shared INTEGRATED string like the other eight.
-
-    ⚠ THEY SCORE BUT RECOVER $0, AND THAT IS UNRESOLVED. `DOLLAR_WEIGHTS` in
-    scoring.ts has eight keys and neither of these is one of them, so both feed
-    `maturityPct` and neither contributes opportunity dollars. Weighting them is
-    Scott's decision — see the note on DOLLAR_WEIGHTS. Do not invent a weight.
-  */
   {
     key: "data_ai_governance",
-    /*
-      ⚠ THE DECK'S NAME, WITHOUT THE COMMA. `capability-domains.ts` advertises
-      "Data, Analytics & AI Governance"; the deck says "Data Analytics & AI
-      Governance" on slides 9 and 10 both. The deck wins per the brief. This is
-      not a new inconsistency — the bank and the advertised list already use
-      different wording for six of the eight existing domains (e.g. "Request and
-      Demand Management" here vs "Requisitioning & Demand Management" there).
-    */
     name: "Data Analytics & AI Governance",
     formal: "Data Analytics & AI Governance",
     question: "How does your organization analyze data and control AI?",
@@ -294,26 +182,16 @@ export const P2P_DOMAINS: CapabilityDomain[] = [
         "LMS or digital-adoption platforms (WalkMe, Whatfix, etc.), static help sites"
       ),
       INTEGRATED,
-      /* ⚠ the curly quotes around “How Do I” are Scott's, verbatim from slide 11. */
       aiNative("The “How Do I” Agent, AI Roadmap, Optimization Dashboard"),
     ],
   },
 ];
-
 
 /** The rung index (0-3) → the stored score. `null` = "Not sure". */
 export function rungScore(index: number): Rung {
   return MATURITY_RUNGS[index];
 }
 
-/**
- * AI Mode — asked ONCE, not per domain.
- *
- * It is a disposition, not a capability, so asking it eight times would be
- * eight chances to give eight different answers to the same question. It does
- * not affect the maturity score; it shapes which solutions are recommended and
- * how the human frames the call.
- */
 export const AI_MODE_QUESTION =
   "When AI can handle a procurement task well, how much do you want it to run on its own?";
 

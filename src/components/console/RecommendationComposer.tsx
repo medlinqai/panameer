@@ -2,20 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * The ask (J2.4 WS-F / E012).
- *
- * THE TEMPLATE IS PRE-FILLED AND EDITABLE, which is the whole "quick send"
- * idea: a provider staring at an empty box asking a former client for a favour
- * writes nothing, and a provider handed a note they can send as-is sends it.
- * They can rewrite every word, and most will change a line or two, which is
- * exactly the point — a template's job is to remove the blank page, not to
- * speak for them.
- *
- * `devLink` is surfaced when Resend isn't configured, the same affordance the
- * verification flows use: locally the loop stays walkable instead of silently
- * doing nothing.
- */
 export function RecommendationComposer({
   defaultMessage,
   onSent,

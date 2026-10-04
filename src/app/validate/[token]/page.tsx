@@ -2,18 +2,6 @@ import { Logo } from "@/components/Logo";
 import { getValidationRequest } from "@/lib/project-validation";
 import { ValidateActions } from "@/components/validate/ValidateActions";
 
-/**
- * Public project-validation page (brief_project_validation §4).
- *
- * NO AUTH, by design — a client contact is not a Panameer user and must not be
- * asked to become one to answer a yes/no question. The single-use token in the
- * URL is the entire authorization.
- *
- * The page only READS on GET. The answer is a POST from a real button click,
- * because corporate mail gateways pre-fetch links in incoming email — a GET
- * that confirmed would let a security scanner validate projects on the
- * contact's behalf, which is exactly the trust signal we are trying to earn.
- */
 export default async function ValidateProjectPage({
   params,
   searchParams,

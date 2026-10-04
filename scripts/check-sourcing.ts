@@ -1,35 +1,3 @@
-/**
- * `check:sourcing` — the rules the sourcing documents cannot be allowed to lose
- * (`P1-J4-E395` WS-5). `npm run check:sourcing`.
- *
- * ── ⚠⚠ TWO KINDS OF ASSERTION, AND THE SECOND KIND IS THE POINT ─────────────
- *
- * BEHAVIOURAL — every rule that says "assert" in the brief is exercised against
- * `lib/sourcing.ts` and `lib/sourcing-stage.ts`, and every one is
- * MUTATION-TESTED: the harness proves the rule REFUSES the bad case, not merely
- * that it accepts the good one. A guard that only ever sees valid input passes
- * forever while doing nothing.
- *
- * ABSENCE — four things this brief FORBIDS, asserted as absent:
- *   · nothing aggregates decline counts onto a provider
- *   · `InterviewNote` never reaches a provider-facing read
- *   · no second implementation of the sourcing stage
- *   · no interview-rating average
- * ⚠⚠ ALL FOUR WILL LOOK LIKE AN IMPROVEMENT TO SOMEBODY LATER. A "responsiveness
- * score" is the obvious way to surface reliability; averaging two interview
- * ratings is the obvious way to sort a shortlist. They are wrong for reasons that
- * live in the brief and nowhere in the code, which is exactly why the ABSENCE has
- * to be a test — a comment cannot fail a build.
- *
- * ⚠ THE ABSENCE SCANS ARE THEMSELVES MUTATION-TESTED. Each one is written as a
- * detector over a string, so the harness can feed it the forbidden code and
- * assert it FIRES. A structural scan nobody has ever seen fire is a scan whose
- * regex might not match anything at all — this codebase has shipped exactly that
- * (`E041`).
- *
- * ⚠ NO DATABASE AND NO BROWSER. Schema facts are read from `schema.prisma` as
- * text, source facts from the tree as text, rules exercised as functions.
- */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import {
@@ -56,10 +24,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/**
- * ⚠ THE MUTATION HALF. `refuses` asserts the rule THROWS, and optionally with
- * the expected code — a rule that throws for the wrong reason is not the rule.
- */
 function refuses(name: string, fn: () => unknown, code?: string) {
   try {
     fn();
@@ -753,16 +717,6 @@ check(
     hits.map((h) => h.path).join(", ")
   );
 }
-/**
- * ⚠ THE COST IS A TEST, NOT A COMMENT. The brief asked how many queries deriving
- * the stage costs PER PROVIDER, and the answer — ZERO marginal, six fixed for the
- * whole work request — is only true while every query is scoped to the work
- * request and fanned out in memory. The moment one takes a provider id, the six
- * becomes six per provider and nobody notices until a busy request is slow.
- *
- * MEASURED 2026-09-07 against the live database with Prisma's query log: **6
- * queries for one work request, 12 for two.**
- */
 {
   const stageFile = SRC.find((f) => f.path === join("src", "lib", "sourcing-stage.ts"));
   const code = stageFile?.code ?? "";

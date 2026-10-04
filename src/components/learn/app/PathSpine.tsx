@@ -7,32 +7,6 @@ import { InstructorAvatar } from "@/components/learn/InstructorBadge";
 import { SectionIcon } from "@/components/learn/app/SectionIcon";
 import type { AppCourse, AppPathView } from "@/lib/learn-path-app";
 
-/**
- * THE CURRICULUM SPINE — a vertical connector with a numbered node per course
- * (brief_learn_app_shell WS3).
- *
- * Node state: green check = every lesson watched · magenta with a glow = the
- * course they are standing in · grey outline = not started.
- *
- * ── ONE COURSE OPEN AT A TIME, AND THE CURRENT ONE OPEN ON LOAD ──────────────
- *
- * A 6-course path with all six expanded is 105 rows, which is not an outline. The
- * current course is the one with the next unwatched lesson in it, resolved on the
- * server so the page arrives already open in the right place rather than jumping
- * after hydration.
- *
- * ⚠ A SINGLE-COURSE PATH IS THE COMMON CASE, NOT THE EDGE. 17 of 23 paths have
- * exactly one course, and three of those have exactly ONE LESSON
- * (`end-user-beginners`, `end-user-erp`, `end-user-implementers`). The node is
- * still numbered 1 and still opens; what it must not do is render a collapsed
- * accordion over a single row, so a one-course path opens and cannot be closed.
- *
- * ── ⚠ `Section` IS A SUBHEADING, NEVER A LEVEL ───────────────────────────────
- *
- * 170 real rows with titles, so they are shown — but with no progress bar, no
- * tracking and no number. Scott's "sections inside the video" are a different,
- * unbuilt thing and must be called CHAPTERS when they arrive.
- */
 export function PathSpine({ path }: { path: AppPathView }) {
   const single = path.courses.length === 1;
   const [openId, setOpenId] = useState<string | null>(
@@ -41,10 +15,7 @@ export function PathSpine({ path }: { path: AppPathView }) {
 
   return (
     <div className="relative">
-      {/*
-        The connector. Inset from the top of the first node and stopping short of
-        the test node, so it reads as joining the courses rather than as a border.
-      */}
+      {}
       {path.courses.length > 1 && (
         <span
           className="pointer-events-none absolute top-[26px] bottom-[64px] left-[19px] w-[2px] bg-line"

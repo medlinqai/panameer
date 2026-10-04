@@ -6,51 +6,15 @@ import { hashPassword } from "@/lib/password";
 import { sendEmail } from "@/lib/resend";
 import { passwordResetTemplate } from "@/lib/email/templates/password-reset";
 
-/**
- * ── ⚠⚠ FORGOT PASSWORD (`P1-ALL-E528` Part B) ──────────────────────────────
- *
- * ⚠ IT REUSES `VerificationToken`. No new model, no new column — one enum value
- * (`PASSWORD_RESET`). The model already stores a unique SHA-256 `token_hash`, an
- * `expires_at`, a `consumed_at` and the user, which is the whole shape the brief
- * specifies, and every query in `verification.ts` is already scoped by `type`.
- *
- * ⚠⚠ THE RAW TOKEN LIVES IN THE EMAILED LINK AND NOWHERE ELSE — the discipline
- * `ColleagueInvite`, `CoordinatorInvite` and `verify-email` all use.
- */
-
-/**
- * ⚠⚠ ONE HOUR, AND IT IS THE SHORTEST OF THE THREE TOKEN TYPES ON PURPOSE.
- * `EMAIL` is 24h and `SIGNIN` is 5 minutes. ⚠ This one is a CREDENTIAL: it can
- * take over an account. An hour survives slow delivery and a person going to
- * find the mail, and is short enough that a forwarded or archived copy is
- * usually already dead. ⚠ The email states this number; `check:email` asserts it.
- */
 export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
-/**
- * ⚠ PER ADDRESS, DURABLE (counted in the database).
- *
- * ⚠⚠ THREE, NOT TEN. `INVITE_LIMIT_PER_HOUR` is 10/hour, but an invitation is
- * sent BY a signed-in member TO someone else; this is an unauthenticated public
- * form and the mail lands on somebody who did not ask for it. Three is enough
- * for "it went to spam, try again" and not enough to be a nuisance.
- */
 export const RESET_LIMIT_PER_EMAIL_PER_HOUR = 3;
 
-/**
- * ⚠ PER IP, BEST EFFORT ONLY — and that is a REPORTED LIMITATION, not a claim.
- *
- * ⚠⚠ NOTHING IN THIS APP STORES A REQUEST IP, so a durable per-IP counter would
- * need a table, which is schema this brief does not authorise. This map lives in
- * ONE server instance's memory: it stops a burst from one client, and it does
- * not survive a redeploy or span instances. ⚠ A real per-IP limit is Scott's
- * call and needs its own model.
- */
 export const RESET_LIMIT_PER_IP_PER_HOUR = 10;
 const ipHits = new Map<string, number[]>();
 
 function ipAllowed(ip: string | null): boolean {
-  if (!ip) return true; // ⚠ no address to attribute — the per-EMAIL limit still applies
+  if (!ip) return true; 
   const now = Date.now();
   const hour = 60 * 60 * 1000;
   const hits = (ipHits.get(ip) ?? []).filter((t) => now - t < hour);
@@ -60,24 +24,10 @@ function ipAllowed(ip: string | null): boolean {
   }
   hits.push(now);
   ipHits.set(ip, hits);
-  /* ⚠ Bound the map so a long-lived instance cannot grow it without limit. */
   if (ipHits.size > 5_000) for (const k of [...ipHits.keys()].slice(0, 1_000)) ipHits.delete(k);
   return true;
 }
 
-/**
- * Mint a reset token and email it.
- *
- * ⚠⚠ THE RETURN IS THE SAME WHATEVER HAPPENS. The caller must render one
- * sentence for every outcome — *"If that address has an account, a reset link is
- * on its way."* ⚠ Different answers turn a public page into a membership
- * oracle. ⚠ `E525` opened that door for a SIGNED-IN member, rate-limited; this
- * page is public and must not.
- *
- * ⚠ `devLink` is returned ONLY outside production, and only so a walk on
- * localhost can follow the link without a mailbox. It is never rendered to a
- * user by the route.
- */
 export async function requestPasswordReset(
   rawEmail: string,
   opts: { origin?: string | null; ip?: string | null } = {}
@@ -89,15 +39,6 @@ export async function requestPasswordReset(
     where: { email },
     select: { id: true, email: true, password_hash: true, first_name: true },
   });
-  /*
-    ⚠⚠ NO ACCOUNT → NOTHING HAPPENS, SILENTLY. Not an error, not a different
-    shape, not a different timing branch worth measuring.
-    ⚠ NO `password_hash` → an OAuth-only account (`brief_Q` made the column
-    nullable). It gets the same silence: there is no password to reset, and the
-    brief reserves the "you sign in with Google" mail for Scott to rule on.
-    ⚠ NOTE: OAuth is not switched on today (no keys), so this branch is
-    theoretical — but the column is nullable and the check is one line.
-  */
   if (!user?.password_hash) return {};
 
   const since = new Date(Date.now() - 60 * 60 * 1000);
@@ -108,21 +49,6 @@ export async function requestPasswordReset(
 
   const raw = randomBytes(32).toString("base64url");
   const tx = await prisma.$transaction([
-    /*
-      ⚠⚠ SUPERSEDED TOKENS ARE CONSUMED, NOT DELETED — AND THE PROOF RUN IS WHY.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          prisma.verificationToken.deleteMany({
-            where: { user_id: user.id, type: "PASSWORD_RESET", consumed_at: null },
-          }),
-      ⚠⚠ THAT DELETE ERASED THE RATE LIMIT'S OWN EVIDENCE. The limit counts rows
-      created in the last hour; deleting the previous unconsumed row kept that
-      count at 1–2 forever, so the 4th, 5th and 6th request in a minute all still
-      issued a link. ⚠ MEASURED on the walk, not reasoned about — it looked
-      correct in review.
-      ⚠ Consuming keeps BOTH properties: only the newest link can be redeemed
-      (a consumed token is refused), and the hour's history survives to be
-      counted. `issueSignInToken` deletes because nothing counts its rows.
-    */
     prisma.verificationToken.updateMany({
       where: { user_id: user.id, type: "PASSWORD_RESET", consumed_at: null },
       data: { consumed_at: new Date() },
@@ -136,8 +62,6 @@ export async function requestPasswordReset(
       },
     }),
   ]);
-  /* ⚠ The transaction returns [updateMany, create]; the second is the new token,
-     whose id the receipt records as its subject (`P2-J3-E522` Part A). */
   const token = tx[1];
 
   const base = appBaseUrl(opts.origin);

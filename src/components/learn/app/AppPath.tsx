@@ -1,18 +1,5 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   Path Forum · Open the Forum · The room is for people taking this path.
-*/
 import { FREE_AS_OF_LINE } from "@/lib/free-as-of";
 import Link from "next/link";
-/* ⚠ `Lock` LEFT WITH THE GATE (ruling 26a). An unused import is a lint warning,
-   i.e. one NEW problem against a baseline whose rule is zero.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { Check, GraduationCap, Lock, Play, ShieldCheck, Layers } from "lucide-react"; */
 import { Check, GraduationCap, Play, ShieldCheck, Layers } from "lucide-react";
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 import { InstructorAvatar } from "@/components/learn/InstructorBadge";
@@ -25,22 +12,9 @@ import type { PathForumTeaser } from "@/lib/forums";
 import { initialsOf } from "@/lib/learn-instructor-format";
 import type { AppPathView } from "@/lib/learn-path-app";
 
-/**
- * THE LEARNING PATH, LEVEL 1 (brief_learn_app_shell WS3).
- *
- * Header → spine → test node → certificate node, with a right rail that stacks
- * under the spine below 1100px. The rail is `sticky` above that breakpoint and
- * the stickiness RELEASES when it stacks — a sticky element in a single-column
- * flow pins a card over the content below it.
- */
 export function AppPath({
   path,
   signedIn,
-  /**
-   * ⚠ THE `LEARN` GATE, MIRRORED (`P1-ALL-E034`) — computed on the server by the
-   * same function `api/learn/enroll` refuses with. Threaded rather than fetched
-   * so the hero cannot disagree with the route.
-   */
   learnGaps = [],
 }: {
   path: AppPathView;
@@ -73,8 +47,7 @@ export function AppPath({
               <Layers className="h-3 w-3" aria-hidden />
               Learning Path
               <span aria-hidden>·</span>
-              {/* ⚠ `P2-A4-E611` — "For End Users", never a bare "End Users"
-                  that reads as a difficulty. There is no level column. */}
+              {}
               {`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[path.audience] ?? path.audience}`}
               {path.group && (
                 <>

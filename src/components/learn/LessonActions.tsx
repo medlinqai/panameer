@@ -5,26 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AccountPitch } from "@/components/learn/AccountPitch";
 
-/**
- * The lesson foot: Back · Message the Instructor · Next Lesson, plus the
- * mark-complete control (WS3; design ref Learn-lesson-page-design.png).
- *
- * SIGNED-OUT LEARNERS DON'T GET A BUTTON THAT 401s (E016.7). "Mark Complete"
- * rendered for everyone and posted to /api/learn/progress, which needs a
- * session — so an anonymous learner who finished a lesson got "Couldn't save
- * that." for their trouble. That is the dead action the honest-stub rule is
- * about, and it was the only place in Learn where being signed out produced an
- * error instead of an explanation. They get the account pitch instead: nothing
- * is taken away (the video played, the outline is all there), and the one thing
- * an account actually buys them is stated where it is relevant.
- *
- * MESSAGE THE INSTRUCTOR IS STUBBED. The design gives it equal weight to Next
- * Lesson, but Messages is a Medlinq port still on the backlog — /messages
- * exists as a shell with nothing behind it. So the button renders in its
- * designed position, disabled, and SAYS why. A live-looking button that
- * silently does nothing is the worse failure: it costs the learner a click and
- * their trust, where this costs them neither and sets the expectation.
- */
 export function LessonActions({
   lessonId,
   pathSlug,

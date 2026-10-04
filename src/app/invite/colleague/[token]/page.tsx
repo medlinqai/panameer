@@ -2,27 +2,6 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { lookupColleagueInvite } from "@/lib/colleague-invite";
 
-/**
- * COLLEAGUE INVITATION LANDING (`P2-J3-E493`). PUBLIC — the whole point is that
- * the person opening it has no account.
- *
- * ⚠⚠ THIS IS A SECOND ACCEPT SURFACE AND THAT IS DELIBERATE, NOT DUPLICATION.
- * `/invite/accept` is COORDINATOR-SHAPED THROUGHOUT — its copy reads
- * *"{coordinatorName} invited you to join Panameer as a service provider"*, its
- * four error states all say *"ask your coordinator"*, and accepting it calls a
- * server action that writes `coordinator_person_id` onto the invitee's
- * ProviderProfile and REFUSES anyone who has not got one. A colleague may be a
- * buyer, a requester, or nobody yet. Bending that page to cover both would have
- * meant a mode flag through every branch of it, including the accept.
- *
- * ⚠⚠ THIS PAGE WRITES NOTHING. A GET does not mutate, and there is nothing to
- * mutate anyway: the invitation confers NO relationship. It carries a name, a
- * note and a link to `/join` — the ordinary front door, which forks buyer/seller
- * itself. Nothing is pre-created for the invitee and no roster is touched.
- *
- * ⚠ THE TOKEN IS THE ACCESS CONTROL, the same reasoning `public-routes.ts`
- * category 4 already records for `/validate/[token]` and `/recommend/[token]`.
- */
 export const metadata = { title: "You're Invited · Panameer" };
 
 export default async function ColleagueInvitePage({
@@ -44,12 +23,6 @@ export default async function ColleagueInvitePage({
   );
 }
 
-/**
- * ⚠ NOT ONE OF THESE SENTENCES MENTIONS A COORDINATOR. The invitee has no
- * coordinator; they have somebody who thought they should take a look. Every
- * dead end offers the front door instead, because an expired invitation is not
- * a reason to stop somebody joining.
- */
 function ErrorState({ reason }: { reason: "invalid" | "expired" | "revoked" | "accepted" }) {
   const copy: Record<string, { title: string; body: string }> = {
     expired: {

@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * SEND THIS WEEK'S EMAIL (`P2-ALL-E818`).
- *
- * It asks first, and the question names the number of real people it will
- * reach. Mail is live from production; a one-click Send on this screen is the
- * one button in the app that writes to strangers' inboxes.
- */
 export function DigestSend({ week, count }: { week: string; count: number }) {
   const router = useRouter();
   const [asking, setAsking] = useState(false);

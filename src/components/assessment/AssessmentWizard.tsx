@@ -45,65 +45,6 @@ import {
   type ParsedFieldValue,
 } from "@/lib/assessment/domain-fields";
 
-/**
- * THE ASSESSMENT QUESTIONNAIRE (WS-A).
- *
- * ── IT REUSES THE WIZARD. THAT IS THE HARD RULE ──────────────────────────────
- *
- * Every screen here is a `<WizardShell>` from `components/onboarding`, and the
- * options are the shared `OptionCard` / `Chip` / `Field` / `TextInput` /
- * `Notice` controls that onboarding and Create Work Request already use. There
- * is NO new question UI in this file — no bespoke radio, no local card, no
- * private stepper. The structure mirrors `CreateWorkRequest.tsx` deliberately,
- * down to the `shell()` helper that folds the stepper label, Back wiring and
- * busy state into one place, so the two wizards cannot drift apart visually.
- *
- * The reason is not tidiness. A prospect who fills this in and later signs up
- * walks straight into the onboarding wizard; if the assessment had its own
- * look, the moment of conversion would also be the moment the product changed
- * shape under them.
- *
- * ── WHAT IS *NOT* A WIZARD ───────────────────────────────────────────────────
- *
- * The report and the deck. They are output surfaces reached after submit, and
- * they render as dashboards, not as steps. Same rule from the other side: a
- * result presented in wizard chrome reads like another question.
- *
- * ── COPY ─────────────────────────────────────────────────────────────────────
- *
- * Verbatim from the `assessment_flow_copy` prototype, with the two locked
- * 2026-08-13 edits: the cost-lever question is percentage bands (was
- * Most/Some/Little) and the labor question is ONE combined headcount (was two
- * answers crammed into one field). Both live in `lib/assessment/bands.ts`.
- */
-
-/**
- * ⚠ THE STEP LIST MOVED TO `lib/assessment/steps.ts` — it is not gone.
- *
- * `/`'s step-1 graphic shows the same counter this wizard shows, and a
- * hand-typed number on a marketing page is a claim about the product that
- * drifts. It could not simply be exported from here: this is a `"use client"`
- * module, and every export of one becomes an opaque client reference when a
- * Server Component imports it, so `stepsFor` would have thrown on the server.
- *
- * Nothing about the wizard's behaviour changed — same list, same ordering, same
- * thirteen-signed-out / twelve-signed-in rule. See that file for the reasoning.
- */
-
-/**
- * The step's own name beside the counter — the pattern brief_S/E024 set.
- *
- * TITLE CASE AT THE SOURCE, not just via CSS. The stepper uppercases these, so
- * the casing is invisible there — but WS-5 reuses the SAME strings inside the
- * Continue label ("Next: Pick a Process"), where it very much shows.
- */
-/**
- * A short list, not the full IANA set (~600 names). This is the last screen before
- * the payoff and the value is already prefilled from the browser, so the list only
- * has to cover "the prefill is wrong and I want to correct it" — for which the US
- * zones plus the handful of business centres are enough. An unrecognised prefill is
- * prepended at render time rather than dropped.
- */
 const TIME_ZONES = [
   "America/New_York",
   "America/Chicago",
@@ -124,76 +65,15 @@ const TIME_ZONES = [
 ];
 
 const STEP_LABELS: Record<Step, string> = {
-  /*
-    ⚠ THE DECK'S NAMES (E040). Scott: "use the deck." These were "Company Details",
-    "Financial Details" and "Where Do We Send It?". They render in the `Next: …`
-    button on the PRECEDING screen as well as in the stepper, so this changes button
-    text too — intended, and each step's on-screen `title` was changed to match so the
-    heading and the button that promised it agree.
-
-    `aimode` keeps "One Last Question" because it has no deck slide and therefore no
-    deck name. `process` keeps "Pick a Process": nothing precedes step 1, so this label
-    never renders in a button.
-  */
   basics: "Company Information",
   money: "Financial Information",
   process_detail: "Process Information",
   process: "Pick a Process",
-  /*
-    Built from the bank so the label, the counter and the "Next: …" button all
-    read the same name. The deck titles these "Capability Domain: <Name>"; the
-    stepper shows the bare name because the counter beside it already says what
-    kind of thing it is, and "Next: Capability Domain: Contract Management"
-    reads as a stutter.
-  */
   ...Object.fromEntries(P2P_DOMAINS.map((d) => [domainStepId(d.key), d.name])),
   aimode: "One Last Question",
   contact: "My Information",
 } as Record<Step, string>;
 
-/**
- * WS-4 — the required set, in ONE place, so the client gate cannot drift from
- * the field list. It is mirrored by the `z` schema in
- * `src/app/api/assessment/route.ts`; the two are asserted against each other in
- * `check:assessment`.
- *
- * Only `industry` is optional now. State and entity type feed the per-geography
- * tax rate, and EBITDA is the multiplicand in `funding = EBITDA x TAX_RATE` —
- * skipping it produces a savings number with no funding number, which removes
- * the half of the report that makes the engagement affordable.
- */
-/*
-  ⚠ `aria-required` IS ON THE THREE REAL FORM CONTROLS ONLY — the two text
-  inputs and the state <select>. The other four required fields are groups of
-  toggle buttons, and per ARIA 1.2 `aria-required` is not supported on
-  `role="group"`; putting it there would be markup that validates as noise and
-  that assistive tech is free to ignore. Making them `role="radiogroup"` would
-  be valid but means changing the SHARED `Chip` from `aria-pressed` toggle
-  semantics to `role="radio"`, which would alter every multi-select that uses it.
-
-  So the requirement is carried the way a sighted user gets it too: only the one
-  optional field is marked "(optional)", and the gate names the missing field on
-  click and moves focus to it. Flagged in the report rather than papered over.
-*/
-/**
- * ⚠ THIS LIST IS THE CLIENT MIRROR OF THE `z` SCHEMA in
- * `src/app/api/assessment/route.ts`, and `check:assessment` asserts the two name
- * EXACTLY the same fields. It stays whole even though the fields are now spread
- * across two steps — a shorter list here would mean the client happily submits
- * something the API rejects, which is the drift the test exists to catch.
- *
- * `on` says WHICH STEP asks for the field, so each step can gate its own subset.
- * Email moved to the last step (deck slide 13, "where do we send the link?") —
- * a funnel change, not a validation change. It is still required and the API
- * contract is untouched.
- *
- * ⚠ EMAIL STAYS IN THIS LIST EVEN THOUGH A SIGNED-IN VISITOR NEVER SEES THAT
- * STEP. The list mirrors the SCHEMA, and the schema still requires an email on
- * every submit — the signed-in path satisfies it from the session rather than
- * from a field. `firstMissing("contact")` is simply never called when the
- * contact step is not in the walk. Trimming the entry would make the two
- * statements of the rule disagree and `check:assessment` would say so.
- */
 const REQUIRED_BASICS: { key: keyof Basics; label: string; on: Step }[] = [
   { key: "companyName", label: "Company name", on: "basics" },
   { key: "state", label: "State of filing", on: "basics" },
@@ -214,13 +94,6 @@ type Basics = {
   ebitdaBand: string;
   platform: string;
   email: string;
-  /*
-    ── SLIDE 15's OTHER FOUR FIELDS (E039) ──────────────────────────────────────
-    Scott: "yes, deck wins." ⚠ ONLY `email` IS REQUIRED — see the note on the
-    `contact` step. These four ride to the API inside `answers`, not as columns:
-    `Assessment.answers` is Json precisely so a new question is not a migration, and
-    adding columns would be a schema change this brief does not authorise.
-  */
   timeZone: string;
   firstName: string;
   lastName: string;
@@ -232,54 +105,15 @@ export type IndustryOption = { id: string; name: string };
 export function AssessmentWizard({
   industries = [],
 }: {
-  /**
-   * From the catalog, via the server component. NEVER a hardcoded list — an
-   * admin edit at /admin/industries has to reach this dropdown, and a local
-   * copy of the ten names is exactly how the two silently diverge.
-   */
   industries?: IndustryOption[];
 }) {
   const router = useRouter();
 
-  /*
-    ── WHY THE SESSION IS READ HERE AND NOT IN THE SERVER COMPONENT ───────────
-
-    The brief asked for `/assess/page.tsx` to read it and pass a viewer down.
-    It cannot: that page carries `export const revalidate = 3600` and is ○ in
-    the build, and ANY server-side session read is a cookie read, which bails
-    the route out of static generation and turns it ƒ. Measured — it drops the
-    build's static count from 22 to 21, which is the brief's own stop condition.
-
-    So the split is: this session read decides only what the visitor is SHOWN,
-    and `api/assessment/route.ts` independently resolves `user_id` and the
-    stored email from the session on the server. That is not a weaker
-    arrangement — it is the one CLAUDE.md rule 3 requires either way. Nothing
-    below can grant itself anything: a browser that fakes a session here still
-    submits an assessment the API stamps from its own session, or from none.
-
-    `useSession()` is available because <SessionProvider> wraps the whole app in
-    `app/providers.tsx`; no new route or fetch is added for this.
-  */
   const { data: session } = useSession();
   const signedInEmail = session?.user?.email?.trim() || null;
   const STEPS = useMemo(() => stepsFor(signedInEmail), [signedInEmail]);
 
-  /* ⚠ THE WALK OPENS ON THE PROCESS PICK (E036), not on company details — deck
-     slide 1. It was "basics" while company/financial came first. */
   const [rawStep, setRawStep] = useState<Step>("process");
-  /*
-    THE STEP LIST CAN CHANGE UNDER THE VISITOR — once, and only ever by one
-    step. `useSession()` starts undefined and resolves a moment later, so a
-    signed-in visitor is briefly walking the 13-step list. Reaching "contact"
-    before that resolves takes twelve deliberate clicks against a resolve
-    measured in milliseconds, so this never fires in practice — but if it did,
-    every `STEPS.indexOf(step)` below would return -1 and the stepper would
-    render "0 / 12" with Back disabled, which is a dead end.
-
-    Corrected DURING RENDER rather than in an effect: the fix is a pure function
-    of the two values, and an effect that calls setState to repair derived state
-    is both a cascading render and a frame of the broken UI on screen first.
-  */
   const step: Step = STEPS.includes(rawStep) ? rawStep : STEPS[STEPS.length - 1];
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -293,13 +127,6 @@ export function AssessmentWizard({
     ebitdaBand: "",
     platform: "",
     email: "",
-    /*
-      ⚠ TIME ZONE IS PREFILLED FROM THE BROWSER, which already knows it. The step
-      model's own rule: "a form field holding an answer the visitor cannot usefully
-      change is a question pretending to be a confirmation." On the last screen before
-      the payoff, the cheapest honest version of this question is one that is already
-      answered. Guarded because `resolvedOptions()` can throw on an exotic runtime.
-    */
     timeZone: (() => {
       try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
@@ -318,17 +145,6 @@ export function AssessmentWizard({
   /** domainKey → rung (10-50) or null for "Not sure". Absent = unanswered. */
   const [maturity, setMaturity] = useState<Record<string, number | null>>({});
   const [aiMode, setAiMode] = useState("");
-  /*
-    ── THE DECK'S PER-DOMAIN EXTRA FIELDS, HELD AS RAW TEXT ────────────────────
-
-    ⚠ RAW STRINGS, NOT PARSED NUMBERS. Scott decided free text with typed edits, so
-    the box has to hold exactly what was typed — including a half-finished "1,2" —
-    or every keystroke fights the parser. Canonicalising happens once, at submit,
-    through the single parser in `domain-fields.ts`.
-
-    ⚠ THE BOOLEAN RIDES IN THE SAME MAP AS `"true"` / `"false"`. One shape for one
-    concern beats a second parallel map that can fall out of step with this one.
-  */
   const [domainText, setDomainText] = useState<Record<string, Record<string, string>>>({});
 
   const set = <K extends keyof Basics>(k: K, v: Basics[K]) =>
@@ -341,10 +157,6 @@ export function AssessmentWizard({
   const setFieldText = (domainKey: string, fieldId: string, v: string) =>
     setDomainText((d) => ({ ...d, [domainKey]: { ...(d[domainKey] ?? {}), [fieldId]: v } }));
 
-  /**
-   * The three payment percentages as they stand. `null` for anything not yet a
-   * clean number, so a half-typed box does not read as a zero in the running total.
-   */
   const percentGroupTotal = (domainKey: string) => {
     const group = PERCENT_SUM_100[domainKey];
     if (!group) return null;
@@ -357,18 +169,6 @@ export function AssessmentWizard({
     return sum;
   };
 
-  /**
-   * ⚠ EVERY FIELD ON SLIDES 2–9 IS REQUIRED — Scott, 2026-08-20. Slides 10 and 11
-   * carry no fields, so `fieldsForDomain` returns `[]` and this is vacuously true:
-   * those two steps gate on nothing new, exactly as they did before this brief.
-   *
-   * ⚠ THE MATURITY LADDER IS STILL NOT GATED ANYWHERE, and that is deliberate and
-   * FLAGGED. The brief says slides 10/11 gate "on the maturity option alone, exactly
-   * as today" — but today nothing gates on it at all, and `scoring.ts` depends on an
-   * unanswered domain scoring `null` rather than as the worst rung. Changing that is
-   * a behaviour change on ten screens that this brief does not otherwise ask for, so
-   * it is reported for Scott rather than decided here.
-   */
   const domainFieldsComplete = (domainKey: string) => {
     for (const field of fieldsForDomain(domainKey)) {
       const r = parseFieldValue(field.type, fieldText(domainKey, field.id));
@@ -379,11 +179,6 @@ export function AssessmentWizard({
     return true;
   };
 
-  /**
-   * Raw text → the canonical payload. ⚠ A DOMAIN WITH NOTHING TYPED IS ABSENT FROM
-   * THE RESULT, not present with zeroes: absent is "not asked" and zero is a real
-   * answer meaning *this domain does nothing*. The two must never collapse.
-   */
   const canonicalDomainFields = (): DomainFieldAnswers => {
     const out: DomainFieldAnswers = {};
     for (const d of P2P_DOMAINS) {
@@ -417,17 +212,6 @@ export function AssessmentWizard({
     if (i > 0) goTo(STEPS[i - 1]);
   };
 
-  /**
-   * Mirrors CreateWorkRequest's `shell()` — the same folded props in the same
-   * order, so the two wizards cannot drift.
-   *
-   * ONE DELIBERATE DIFFERENCE: this passes a NUMERIC `step`, which
-   * CreateWorkRequest does not. WizardShell only renders its counter when
-   * `step` is a number — `stepLabel` alone is inert, which is why the first
-   * pass here showed a bare progress bar and no "2/5" despite setting a label.
-   * A cold visitor who has not signed up for anything needs to see how much is
-   * left far more than a logged-in requester does, so the counter is on.
-   */
   const shell = (opts: {
     title: string;
     subtitle?: string;
@@ -437,15 +221,6 @@ export function AssessmentWizard({
     wide?: boolean;
     aside?: React.ReactNode;
   }) => ({
-    /*
-      WS-5 — CONTINUE NAMES THE NEXT STEP, the way /join/provider already does
-      (page.tsx:1276). Both wizards use this shell; only that one used the
-      affordance, so /assess fell back to a bare "Continue". Derived from
-      STEP_LABELS so a renamed step renames the button with it.
-
-      The last step says "Get My Report" instead of "Next: …" — there is no
-      next step, and naming what the visitor GETS beats naming a step number.
-    */
     continueLabel:
       opts.continueLabel ??
       (STEPS.indexOf(step) === STEPS.length - 1

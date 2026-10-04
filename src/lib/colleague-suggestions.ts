@@ -2,65 +2,22 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import type { PersonCard } from "@/lib/connections";
 
-/**
- * COLLEAGUE SUGGESTIONS, FROM DATA PANAMEER ALREADY HAS (`P1-ALL-E372` WS-3).
- *
- * Scott's journey: *"Panameer Shows/Sends Colleague Suggestions."*
- *
- * ── ⚠⚠ NOT A GENERIC "PEOPLE YOU MAY KNOW" ───────────────────────────────────
- *
- * Panameer knows something LinkedIn has to guess at: **who worked where, on what,
- * when.** `Employer`, `Project` and `ProviderProfileSpecialization` are already
- * populated by the résumé importer, so every suggestion here rests on a fact.
- *
- * ⚠⚠ AND EVERY SUGGESTION CARRIES ITS REASON. *"You were both at Dell in
- * 2021–2023"* is evidence; an unexplained row is a guess. Same rule the LEARN
- * suggested path follows — *"Because Payables and Accounting Center are on your
- * profile."* ⚠ `reason` IS NOT OPTIONAL ON THE TYPE, so a suggestion cannot be
- * constructed without one and `check:community` asserts it.
- *
- * ── THE THREE RULES, STRONGEST FIRST ─────────────────────────────────────────
- *
- *   1  same `Employer`, OVERLAPPING DATES — the strongest, because you were
- *      there at the same time
- *   2  same `Project` client — you worked the same engagement
- *   3  same specialization AND same region — weakest, and last
- *
- * ⚠ ONE SUGGESTION PER PERSON, KEPT AT ITS STRONGEST REASON. Somebody who
- * matches on all three appears once, explained by the employer overlap.
- */
-
 export type SuggestionRule = "employer" | "project" | "specialization";
 
 export type ColleagueSuggestion = {
   person: PersonCard;
   rule: SuggestionRule;
-  /** ⚠ REQUIRED. Rendered verbatim under the name. */
   reason: string;
 };
 
 type JobSpan = { start: Date | null; end: Date | null; isCurrent: boolean };
 
-/**
- * ── ⚠⚠ WHERE A JOB ENDS, FOR THE PURPOSE OF A CLAIM (`P2-J1.4-E549`) ────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`): *"A null end is 'still there', so it
- * extends to now."* — `const ae = aEnd ?? now;`
- * ⚠⚠ ONLY A CURRENT JOB EXTENDS TO NOW. A null end that is not current is an
- * end nobody could read, and Scott ruled it is evidence the job ENDED. Scott:
- * *"a sentence that says 'present' about a job that isn't is the same lie in
- * smaller type."* ⚠ `null` here means "unknown" — and an unknown end supports
- * no "at the same time" claim.
- */
 function effectiveEnd(j: JobSpan, now: Date): Date | null {
   if (j.end) return j.end;
   return j.isCurrent ? now : null;
 }
 
-/** ⚠ Two spans overlap when each starts before the other ends. */
 function overlaps(a: JobSpan, b: JobSpan, now: Date): boolean {
-  /* ⚠ NO DATES MEANS NO CLAIM. The rule is "at the same time" and a row with no
-     start cannot support it — the résumé importer leaves plenty of those. */
   if (!a.start || !b.start) return false;
   const ae = effectiveEnd(a, now);
   const be = effectiveEnd(b, now);
@@ -70,12 +27,6 @@ function overlaps(a: JobSpan, b: JobSpan, now: Date): boolean {
 
 const yr = (d: Date | null) => (d ? String(d.getUTCFullYear()) : null);
 
-/**
- * `2021–2023`, or `2021–present` ONLY when BOTH jobs are still running.
- * ⚠ `E549` — SUPERSEDED, quoted (`E164`): `${s}–${yr(end) ?? "present"}`, which
- * printed "present" whenever EITHER end was missing, so "you were both at X in
- * 2018–present" could describe two people one of whom left in 2020.
- */
 function span(start: Date | null, end: Date | null, ongoing: boolean): string {
   const s = yr(start);
   if (!s) return "";

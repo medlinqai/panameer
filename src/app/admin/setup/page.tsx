@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { ADMIN_NAV } from "@/lib/nav";
 
-/**
- * Setup & Maintenance (E009) — the rail's top button.
- *
- * A hub rather than a page of its own: Scott's menu shows it as the way into
- * configuration, and every destination it would offer already exists in the
- * Configuration and Support groups. Duplicating them as a second set of screens
- * would be two places to change one thing.
- */
 export default function Page() {
   const groups = ADMIN_NAV.filter((g) => g.title !== "Transaction Data");
   // The Learn authoring tool lives under Setup now (WS2): editing the catalog

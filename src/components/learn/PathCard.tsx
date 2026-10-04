@@ -3,23 +3,6 @@ import type { LearnCard } from "@/lib/learn-home";
 import { standingFor } from "@/lib/learn-standing";
 import { InstructorStack } from "@/components/learn/InstructorBadge";
 
-/**
- * THE Learning-Path card (brief_learn_experience WS1/WS6).
- *
- * This brief owns it and `brief_provider_home_page` WS5's Build-Skills section
- * reuses it — the shared-component note exists so it isn't built twice and then
- * drifts into two cards that look almost the same.
- *
- * The face is the point: a path taught by people you can look up and hire is
- * the difference between a course library and a marketplace's course library.
- *
- * MULTI-INSTRUCTOR (WS6, corrected). A path is often taught by more than one
- * person — Advanced Procurement is 85 lessons by one and 18 by another — so the
- * hero image is the LEAD's, the person who taught the most of it, and the
- * stacked avatars underneath say how many others there are. A single face only
- * appears when there genuinely is one. Fronting a two-teacher path with one
- * portrait would be a quiet misattribution on the most-seen surface in Learn.
- */
 export function PathCard({
   card,
   href,
@@ -27,14 +10,6 @@ export function PathCard({
 }: {
   card: LearnCard;
   href?: string;
-  /**
-   * "compact" is the provider Home's Build Skills row (E134): the photo inset
-   * on the card's purple with the title centred beneath it, and nothing else.
-   * The Home mockup deliberately shows less than the Learn catalog does —
-   * lesson counts and progress belong where someone is choosing what to study,
-   * not on a hub tile whose job is to get them into Learn at all. Same
-   * component either way, per the brief's build-once note.
-   */
   variant?: "full" | "compact";
 }) {
   const lead = card.instructors[0] ?? null;
@@ -48,13 +23,6 @@ export function PathCard({
       .toUpperCase() || "P";
 
   if (variant === "compact") {
-    /*
-      THE INSTRUCTOR'S FACE, not the path cover — the opposite preference to the
-      full card. E134 shows three portraits, and the brief asks for "LP cards
-      with instructor photos" in as many words. A cover is a 16:9 card design
-      with type on it; dropped into this square inset it crops to an unreadable
-      slice, which is exactly how it first rendered.
-    */
     const face =
       card.instructors.find((i) => i.photoUrl)?.photoUrl ?? card.coverImage;
     return (

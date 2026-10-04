@@ -1,41 +1,9 @@
 "use client";
 
 import { Chip, Notice, TextInput } from "@/components/onboarding/controls";
-/* ⚠ `E515`'s DISAMBIGUATION, imported not re-implemented: two skills can share
-   a label under different domains, and the qualifier is what tells them apart. */
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
 import { titleCase } from "@/lib/title-case";
 
-/**
- * ── ⚠⚠ THE SKILLS EDITOR, EXTRACTED (`P2-A2-E597` WS-B, editor 5 of 5) ───
- *
- * ⚠ 468 lines — the largest, and last by WS-A's order for exactly that reason.
- * `SparkIcon` (13 lines) moved with it; it was local to the wizard.
- *
- * ── ⚠⚠⚠ THE THREE `useEffect`s DID NOT MOVE, AND THEY DID NOT NEED TO ────
- *
- * ⚠ The brief flagged them as the risk: *"Skills carries three useEffects keyed
- * on screen and editSection. If they can't move without changing when they
- * fire, STOP AND REPORT rather than rewriting them."*
- * ⚠⚠ MEASURED: `skillsEditing` CONTAINS NO `useEffect` AT ALL. The three are
- * the WIZARD's data loaders — `fieldRoles`, `specGroups` and `skillOpts` — and
- * two of them serve screens this editor has nothing to do with (`roles`,
- * `catalog`, and the specializations picker share the same effect body).
- * ⚠⚠⚠ MOVING THEM WOULD HAVE BEEN THE CHANGE SCOTT WARNED ABOUT: the
- * `fieldRoles` loader fires for `screen === "roles"` and `screen === "catalog"`
- * too, and a component that only mounts for skills could not fire for those.
- * ⚠ SO NOTHING MOVED AND NOTHING FIRES DIFFERENTLY. This component receives
- * `skillOpts` and `fieldRoles` as props, the same shape the specializations
- * editor receives `specGroups` in — one pattern for all five.
- *
- * ⚠ PRESENTATION AND DERIVATION ONLY. The save stays in `skillsEditing()`.
- */
-
-/**
- * ⚠ MOVED WITH THE EDITOR (`P2-A2-E597` WS-B). The AI mark used wherever the
- * product attributes work to AI (WS4/E174); the skills picker is its caller.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — it lived in `page.tsx`.
- */
 export function SparkIcon() {
   return (
     <span
@@ -89,38 +57,16 @@ export function SkillsEditor({
   selectedNames: SkillName[];
   customs: string[];
   resumeSkillIds: string[];
-  /*
-    ⚠⚠ `roleTypeId`, `roleTypeIds` AND `fieldRoles` ARE NOT PROPS, and finding
-    that out is worth recording: the component NEVER READS ANY OF THEM.
-    `roleTypeId` is the caller's, for `customSkillRoleId` in the save;
-    `roleTypeIds` and `fieldRoles` were only ever used to build `roleNames` and
-    `canSave`, both of which belong to the helper's contract and stayed there.
-    ⚠ An unused prop is a claim about what a component needs that is not true —
-    and here it would have implied the skills editor depends on the catalog's
-    role list, which is exactly the false coupling this extraction is removing.
-  */
-  /** ⚠ LOADED BY THE WIZARD'S EFFECT, passed in — see the note above. */
-  /** ⚠ THE WIZARD'S OWN `SkillOpt`. `pillar` is the DOMAIN and stays on every
-   *  row — it disambiguates two skills sharing a label (`E515`). */
   skillOpts: SkillOpt[];
-  /*
-    ⚠⚠ `E517`'s SHOWN/HELD SPLIT IS COMPUTED BY THE CALLER AND PASSED IN.
-    `isSkillShown` is the ONE rule and the wizard already applies it for three
-    surfaces; re-deriving it here would be the `E585` mistake — two computations
-    of one concept, kept in step by hand.
-  */
   shownSkillNames: SkillName[];
   heldNotShownSkillNames: SkillName[];
   maxSuggestions: number;
   query: string;
   onQueryChange: (next: string) => void;
-  /* ⚠ THE PENDING "DID YOU MEAN…?" (`E298`). Non-null means the matcher found a
-     NEAR row and nothing has been added — the member has to answer. */
   match: { typed: string; prompt: string; skill: { id: string; name: string } } | null;
   onMatchChange: (
     next: { typed: string; prompt: string; skill: { id: string; name: string } } | null
   ) => void;
-  /** ⚠ A PARTIAL. The caller owns `profile` and merges it — one `setProfile`. */
   onChange: (patch: {
     skillIds?: string[];
     skillNames?: SkillName[];
@@ -129,72 +75,25 @@ export function SkillsEditor({
   onRemoveCustom: (name: string) => void;
   scrollRegionClass: string;
   pickedRegionClass: string;
-  /** ⚠ The wizard's save error, rendered above the picker as it always was. */
   error?: string | null;
-  /*
-    ⚠⚠⚠ `E517`'s COPY, PASSED IN — NOT COPIED. Scott NAMED these two strings on
-    2026-09-17 and the brief says in terms: "DO NOT RE-OPEN IT." They keep their
-    home in the wizard, where their REJECTED ALTERNATIVES are quoted beside them
-    under `E164` — a second copy here would be a second place to edit wording
-    that is settled, and the rejected options would not travel with it.
-    ⚠ What the copy must never say is also recorded there: that the skill is
-    gone, expired, wrong or unverified. It is held, it is theirs.
-  */
   heldNotShownHeading: string;
   heldNotShownExplanation: string;
 }) {
       const chosenSkills = new Set(selectedIds);
 
-      /*
-        ── ⚠⚠ HELD, BUT NOT SHOWN (`P2-J1.4-E517`) ─────────────────────────────
-
-        ⚠⚠ THE STEP READS WHAT IS HELD. `E517` stopped the role step DELETING
-        out-of-role skills and moved the filter to the offer-side reads, which
-        means a provider can now hold a skill that appears on no surface they
-        can see. ⚠ THE ONLY PLACE TO REMOVE IT IS HERE, so this is the one list
-        that must not filter.
-
-        ⚠ Split, not hidden: every held skill appears EXACTLY ONCE — in the
-        basket if their roles show it, in the block below the picker if they do
-        not. Listing it twice would make one chip look like two skills.
-
-        ⚠⚠ COMPUTED AGAINST `roleTypeIds` — the roles IN THE WIZARD, not
-        the roles last saved — so unticking a role on the previous step moves
-        skills into this block immediately, which is the whole point: the
-        provider sees the consequence before it reaches their profile.
-
-        ⚠ `isSkillShown` is the same function the profile, the provider cards
-        and the matcher read. One rule, gated by `check:shown-skills`.
-      */
       const basketSkills = shownSkillNames;
       const heldNotShown = heldNotShownSkillNames;
-      /* ⚠ The basket counts what it lists. `canSave` still counts everything
-         HELD (`totalPicked`), so a provider whose skills are all out-of-role is
-         never trapped on this step by a number they cannot see. */
       const basketCount = basketSkills.length + customs.length;
 
       const q = query.trim().toLowerCase();
       // Already-picked skills are chips above, so they stop being suggestions —
       // filtering them out BEFORE the cap keeps a full set of usable options as
-      // picks accumulate rather than quietly thinning it (E053).
       const matchingSkills = (
         q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
       ).filter((sk) => !chosenSkills.has(sk.id));
       const shownSkills = matchingSkills.slice(0, maxSuggestions);
       const hiddenSkillCount = matchingSkills.length - shownSkills.length;
 
-      /*
-        ── ⚠⚠ WHICH LABELS ARE NOT UNIQUE HERE (`P1-A1.3-E401` WS-3) ───────────
-
-        Computed over `skillOpts` — EVERY option for this provider's roles, not
-        just the ones currently on screen. ⚠ THE SEARCH BOX WOULD OTHERWISE HIDE
-        THE COLLISION: typing "recr" narrows the list, and if ambiguity were
-        judged on `shownSkills` a name could gain and lose its qualifier as the
-        provider types. The set is a property of what they may pick, not of what
-        is visible this keystroke.
-        ⚠ AND IT DRIVES THE PICKED CHIPS BELOW TOO, so a chip reads the same
-        after it is clicked as it did before.
-      */
       const ambiguousSkills = ambiguousSkillNames(
         skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
       );
@@ -220,54 +119,9 @@ export function SkillsEditor({
       };
 
       const addCustomSkill = () => {
-        /*
-          ⚠⚠ TITLE-CASED ON SAVE (`P1-J1.4-E298`, 2026-08-31). Scott's own chip read
-          `purchase requisitons` — lower-case, and the page prints the stakes right
-          below it: *"each one is another search a buyer can find you in."*
-      
-          ⚠ `titleCase` IS THE SHARED HELPER (`lib/title-case.ts`) and this is its
-          first caller. ⚠ THE BRIEF SAID TO REUSE THE ONE FROM THE `e96cd2e` SWEEP —
-          THERE WASN'T ONE. That pass was a static rewrite of 60 literals by an
-          uncommitted scanner, so no runtime function existed. Reported; the helper
-          is created ONCE so the instruction's real intent — never two
-          implementations — holds from here.
-      
-          ⚠⚠ CAPITALISATION IS THE SMALL HALF AND IT SHIPS ALONE, DELIBERATELY.
-          `purchase requisitons` becomes `Purchase Requisitons` — still misspelled,
-          still unmatchable, now looking deliberate. The fuzzy-match-before-create
-          that would actually fix it ("Did you mean Purchase Requisitions?") is
-          CHAT'S ADDITION, not Scott's ask, and `E298` says capitalisation ships
-          alone unless he says yes. Surfaced in the report; NOT BUILT HERE.
-        */
         void addSkillMatched(titleCase(query.trim()));
       };
 
-      /*
-        ── ⚠⚠ MATCH BEFORE CREATE (`P1-J1.4-E298`) ─────────────────────────────
-
-        SCOTT: *"i added a new skill - purchase requisitions… but that is as i
-        typed it… that means we will get misspellings and non-capitalizations."*
-
-        ⚠ SUPERSEDED, quoted: `addCustomSkill` used to title-case the text and push
-        it straight into `customSkills`, and its own comment admitted the gap —
-        *"still misspelled, still unmatchable, now looking deliberate"*. It now
-        asks `api/onboarding/provider/skill-match`, which runs THE SAME
-        `matchSkill` the save path runs, against the WHOLE catalog rather than the
-        current role's `skillOpts`.
-
-        ⚠⚠ EXACT-ISH LINKS SILENTLY. NEAR ASKS. `Purchase Requisitions` typed by
-        hand now selects the catalog row; `purchase requisitons` offers *"Did you
-        mean Purchase Requisitions?"* and CHANGES NOTHING until answered. A skill
-        is a claim about what somebody can do — auto-correcting it would put words
-        in their mouth, and if the guess is wrong it is a false claim with their
-        name on it.
-
-        ⚠ THE DEDUPE WITHIN THEIR OWN LIST IS KEPT AND RUNS FIRST — it is cheap,
-        local, and stops a round trip for something already on screen.
-        ⚠ AND IF THE LOOKUP FAILS FOR ANY REASON THE OLD BEHAVIOUR STANDS: the
-        custom skill is added as typed. A network blip must not silently swallow
-        a skill somebody just asked for.
-      */
       const addSkillMatched = async (name: string) => {
         if (!name) return;
         if (

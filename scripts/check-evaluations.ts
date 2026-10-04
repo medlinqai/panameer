@@ -1,58 +1,3 @@
-/**
- * `check:evaluations` — the requester's judgement is owner-scoped, replaces rather
- * than accumulates, and never requires a shortlist (`P2-A8-E695` WS-D, gated at
- * `P2-ALL-E699` Lane 0.1). `npm run check:evaluations`.
- *
- * ── ⚠⚠⚠ WHY THIS FILE EXISTS, AND IT IS AN ADMISSION ────────────────────────
- *
- * ⚠⚠ **`E695` WS-D SHIPPED `ProviderEvaluation` AND PROVED A ROUND TRIP WITH A LIVE
- * PROBE. A PROBE IS NOT A GATE.** CC said exactly that in its own report and then
- * shipped without one. ⚠ A probe runs once, against one row, and leaves nothing
- * behind that can fail tomorrow.
- *
- * ── ⚠⚠ WHAT IT ASSERTS (ruling 11 — the right thing) ────────────────────────
- *
- * The rules that would be expensive to break, in order of how much they'd cost:
- *  1. ⚠⚠⚠ **OWNER-SCOPED FROM THE SESSION, NEVER FROM INPUT.** Without this any
- *     signed-in member could write a judgement onto somebody else's sourcing event.
- *  2. ⚠⚠ **A SECOND JUDGEMENT REPLACES RATHER THAN ACCUMULATES** — the `@@unique`
- *     triple. Otherwise *"what did they think"* has no answer, only a list.
- *  3. ⚠⚠⚠ **SHORTLIST STAYS OPTIONAL (ruling 93b).** Scott: *"if the requester gets a
- *     proposal and does not interview, they will not shortlist…they will add them to
- *     the WR."* **A gate that demanded a shortlist row would break the commonest
- *     path, so this one asserts the ABSENCE of any such requirement.**
- *  4. ⚠ The 1–5 scale is ENFORCED, not documented.
- *  5. ⚠ A submitted evaluation must say something.
- *  6. ⚠⚠ **NO MONEY MOVES HERE.** An evaluation is a document; it does not select,
- *     assign, order or pay.
- *  7. ⚠ A writer with no reader is half a feature — the reader exists and is scoped.
- *
- * ── ⚠⚠ AT WHAT SCOPE (ruling 91 — and the limit is stated, not implied) ─────
- *
- * ⚠ **THIS GATE READS TWO THINGS AND NOTHING ELSE:** `src/lib/provider-evaluations.ts`
- * and `prisma/schema.prisma`, both as TEXT, with comments stripped so an `E164`
- * quote cannot satisfy an assertion (load-bearing rule 12).
- * ⚠⚠ **IT ASSERTS NO UI, BECAUSE THERE IS NONE YET** — `E695` WS-D shipped the model
- * and the library; no page writes an evaluation. **That is a real gap and this gate
- * does not pretend to cover it:** when a surface lands, it gets its own assertions
- * here, and `evaluationsOn` having a caller is the first of them.
- * ⚠ **NO DATABASE AND NO BROWSER**, so it runs from a clean clone.
- *
- * ── ⚠ ITS SUBJECT MUST EXIST (ruling 92 / `98g` / `99c`) ────────────────────
- *
- * ⚠⚠ **EVERY INPUT IS ASSERTED PRESENT AND NON-EMPTY BEFORE ANYTHING IS MEASURED.**
- * `check:nav-reachable` crashed with `ENOENT` when a file moved and reported nothing
- * at all — a crash is the same absence as an unrun assertion, arriving by a different
- * road. And `check:solution-types`' third assertion once passed VACUOUSLY on an empty
- * file, caught only because a sibling asserted the file existed.
- *
- * ── ⚠ IN WHICH DIRECTION IT WAS PROVED (ruling 90) ─────────────────────────
- *
- * ⚠ Every assertion below was mutation-proved at `E699` Lane 0.1: the rule was
- * broken in the source, this gate went red on **that named assertion**, and the
- * source was restored byte-identical. ⚠⚠ `E607`: it is not enough that a mutation
- * lands — the assertion under test must be the thing that catches it.
- */
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -63,18 +8,10 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/**
- * ⚠⚠ COMMENTS OUT, LINE COUNT PRESERVED. The house rule quotes superseded code
- * (`E164`), so a raw-text scan would match a QUOTE as though it were live — the
- * trap `check:derived-source`, `check:community` and `check:forums` all handle the
- * same way. ⚠ `check:comment-quotes` is the sibling that guards the other half.
- */
 const stripComments = (s: string): string =>
   s
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .replace(/^([ \t]*)\/\/.*$/gm, (_m, i) => i);
-
-/* ═══ 0 · THE INPUTS, BEFORE ANYTHING IS MEASURED (ruling 92) ══════════════ */
 
 const LIB = join("src", "lib", "provider-evaluations.ts");
 const SCHEMA = join("prisma", "schema.prisma");

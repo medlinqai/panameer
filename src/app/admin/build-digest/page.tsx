@@ -5,12 +5,6 @@ import { DigestSend } from "@/components/admin/DigestSend";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN → BUILD DIGEST (`P2-ALL-E818`). Read the week's draft, then send it.
- *
- * The count of who it would reach is shown BEFORE the button, because this is
- * the one screen in the app that mails real people on purpose.
- */
 export default async function BuildDigestPage() {
   const [drafts, recipients] = await Promise.all([
     prisma.buildDigest.findMany({ orderBy: { week: "desc" }, take: 10 }),

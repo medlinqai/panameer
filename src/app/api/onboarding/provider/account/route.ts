@@ -3,12 +3,6 @@ import { z } from "zod";
 import { createProviderAccount, OnboardingError } from "@/lib/onboarding";
 import { issueEmailVerification } from "@/lib/verification";
 
-/**
- * brief_P / E001: the deck's sign-up form has ONE password field (no Confirm),
- * adds Country + a marketing opt-in, and requires the terms checkbox. Experience
- * level and goal moved out of sign-up into profile steps 1–2 (E003/E004), so
- * they are optional here.
- */
 const schema = z.object({
   firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().min(1).max(80),
@@ -22,11 +16,6 @@ const schema = z.object({
   inviteToken: z.string().optional(),
 });
 
-/**
- * POST /api/onboarding/provider/account — Step 3. Creates the account backbone
- * + draft profile in one transaction, then sends the Resend verification email.
- * The client signs in (NextAuth credentials) with the same password afterward.
- */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);

@@ -1,16 +1,5 @@
 import { ShotCard, Avatar, InstructorChip } from "@/components/learn/public/shared";
 
-/**
- * SECTION 3 — the room, as a thread.
- *
- * ⚠ THIS SECTION SHIPS WITH NO BUTTON AND NO LINK, and that is deliberate. There is no
- * per-course room in the schema: `ForumThread`/`ForumBoard` exist but they are the COMMUNITY
- * forums at `/community/groups`, not a room attached to a course. `HomeFooter`'s standing rule
- * (Scott, 2026-08-14) is that a link ships only when its destination exists — not dimmed, not
- * stubbed, omitted. So the section describes the intent and offers nothing to click.
- *
- * The copy is not softened to match the schema either; Scott approved it knowing the gap.
- */
 const REPLIES = [
   { who: "Jordan M.", initials: "JM", text: "That was it. Two BUs, one hierarchy. Fixed." },
   { who: "Sam P.", initials: "SP", text: "Same — thank you. Does this change with Redwood?" },

@@ -1,26 +1,3 @@
-/**
- * `check:field-quality` — formats have one home, and a typed skill finds the one
- * that already exists (`P1-J1.4-E299` / `P1-J1.4-E298` WS-3).
- *
- *   1  EVERY FORMAT VALIDATOR HAS ONE HOME. No ZIP `superRefine` left in the
- *      route, no second phone regex, no re-typed EIN pattern. Both halves of
- *      `E299` shipped as inline copies once already — the ZIP rule in the route
- *      AND its message again in the component — so this is the assertion that
- *      stops the third copy.
- *   2  THE SAME MESSAGE STRING IS USED CLIENT AND SERVER. One constant, imported
- *      twice, never typed twice.
- *   3  EIN ACCEPTS BLANK, accepts hyphenated and bare, rejects malformed, and is
- *      NEVER REQUIRED.
- *   4  THE CUSTOM-SKILL PATH CALLS THE MATCHER BEFORE CREATING.
- *   5  A SENTINEL WRITTEN IN ONE PLACE AND COMPARED IN ANOTHER STILL MATCHES
- *      (`P2-J1.1-E012` WS-3). Rule 2's defect class, one file down: the
- *      résumé parser's `(… not detected)` labels. The rename moved the
- *      written literal and not the compared one, and an import gap went
- *      silent for a day. Set equality, so it catches both directions.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SOURCE SCAN, reusing `check-community.ts`'s
- * `strip()`. Every file here documents the very patterns it must not contain.
- */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

@@ -15,13 +15,6 @@ const ALLOWED = [
   "image/webp",
 ];
 
-/**
- * POST /api/provider/artifact-file — store an artifact file (PJv2 WS4).
- *
- * OWNER-SCOPED: the profile is resolved FROM THE SESSION, so the object can only
- * land in the caller's own folder of the private `artifacts` bucket. Mirrors the
- * certificate and project-doc uploaders exactly.
- */
 export async function POST(request: Request) {
   const gate = await guardApi("canProvideServices");
   if (gate instanceof NextResponse) return gate;

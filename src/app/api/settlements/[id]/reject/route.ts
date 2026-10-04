@@ -2,15 +2,6 @@ import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { rejectSettlement, SettlementError } from "@/lib/settlements";
 
-/**
- * POST /api/settlements/[id]/reject — the BUYER rejects, WITH A REASON
- * (`P1-J4-E394` WS-3).
- *
- * ⚠⚠ THE REASON IS REQUIRED HERE, NOT ONLY IN THE FORM. `E388`: *"a rejection
- * with no stated reason is unanswerable"* — the provider's only next move would
- * be to guess what to change. A required attribute in a form is a convention;
- * this is the rule, and `rejectSettlement` refuses without one.
- */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

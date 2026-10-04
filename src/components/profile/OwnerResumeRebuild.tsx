@@ -8,49 +8,6 @@ import {
   type ImportOutcome,
 } from "@/components/onboarding/ResumeUploadModal";
 
-/**
- * ── ⚠⚠⚠ `Rebuild From New Résumé` (`P2-A2-E720` item 9) ──────────────────────────────────
- *
- * ⚠ **SCOTT: *"a magenta text link under How Others See My Profile, starting with an upload
- * (reuse the onboarding uploader; offer 'Use the one on file' as a second choice), then the
- * existing preview → ticked diff → save. Greyed with one line of reason if AI is
- * unavailable."***
- *
- * ── ⚠⚠⚠ WHY SCOTT COULD NOT SEE THE OLD CONTROL — MEASURED, NOT GUESSED ──────────────────
- *
- * ⚠ He asked what hides `OwnerResumeRerun`. It is **`ResumeImportAction`'s line 95**:
- * `if (!info?.available || !info.hasDocument) return null;` — two gates, and **only the second
- * one bites**.
- * ⚠⚠ **MEASURED ON HIS OWN ROW: `RESUME_PARSER_API_KEY`, `RESUME_PARSER_MODEL` AND
- * `ANTHROPIC_API_KEY` ARE ALL PRESENT, SO `available` IS TRUE** — the AI gate was never the
- * problem. **His profile `74c0df8a` has `ProfileImport` rows = 0**, so `hasDocument` is false
- * and the component returns `null` before it renders anything.
- * ⚠⚠⚠ **AND IT IS NOT PERSONAL TO HIM: 59 OF 63 PROVIDER PROFILES HAVE NO STORED DOCUMENT.**
- * Only 4 do, and those 4 are `E546`'s acceptance uploads. **So the re-run offer has been
- * invisible to 94% of providers for as long as it has existed** — which is exactly why Scott's
- * instruction starts with an upload rather than with the stored file.
- *
- * ── ⚠⚠⚠ THE DIVERGENCE `E720` REPORTED IS CLOSED (`P2-A3-E721` item 2) ───────────
- *
- * ⚠ **SCOTT AUTHORISED THE STORE-ONLY MODE, AND BOTH BRANCHES NOW BEHAVE THE SAME WAY:**
- * upload → preview → ticked diff → save, and *"Use the one on file"* → the same.
- * ⚠⚠ **THE UPLOAD NOW WRITES NOTHING TO THE PROFILE.** It stores the document and parses it;
- * `apply: false` skips `applyParsedResume`, `recomputeCompleteness` and — the one that
- * matters — `recomputeProviderRollup`, which `E553` measured as capable of **deleting 297
- * `DERIVED` skill rows across 51 profiles, 139 of them unrecoverable.**
- * ⚠⚠⚠ **SO THE RECEIPT NO LONGER SAYS THE PROFILE WAS UPDATED, BECAUSE IT WAS NOT.**
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — what this said while the gap was open:
- * //   THE BRIEF'S SEQUENCE IS "upload -> preview -> ticked diff -> save". THE UPLOAD ROUTE
- * //   DOES NOT WORK THAT WAY: POST /api/onboarding/provider/import PARSES AND APPLIES IN ONE
- * //   CALL - importProfileDocument has no store-only mode. So on the upload branch the first
- * //   pass is applied before any tick, and the copy below says so in plain words rather than
- * //   implying an approval that did not happen. Closing the gap properly needs a store-only
- * //   mode on that shared route, which is the WIZARD'S CRITICAL PATH - Scott's call.
- * ⚠⚠ **THE WIZARD IS UNTOUCHED AND THAT IS PROVED, NOT ASSERTED:** `mode` defaults to
- * `"apply"`, the wizard's three call sites pass none, and a default upload puts no extra form
- * field on the wire at all.
- */
-
 type Info = {
   available: boolean;
   hasDocument: boolean;
@@ -62,7 +19,6 @@ export function OwnerResumeRebuild() {
   const [info, setInfo] = useState<Info | null>(null);
   /** `link` → the text link · `choose` → the two sources · `panel` → preview/diff/save. */
   const [stage, setStage] = useState<"link" | "choose" | "panel">("link");
-  /** ⚠ True only on the upload branch — see the panel stage (`E782`). */
   const [justUploaded, setJustUploaded] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -73,41 +29,23 @@ export function OwnerResumeRebuild() {
     fetch("/api/onboarding/provider/resume-ai/available")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => live && setInfo(d))
-      /* ⚠⚠ A FAILED PROBE IS NOT "AVAILABLE". ⚠ Defaulting to available on a network error
-         would offer a control that can only 503, which is the defect the `available` endpoint
-         was built to avoid in the first place. */
       .catch(() => live && setInfo({ available: false, hasDocument: false, documentName: null }));
     return () => {
       live = false;
     };
   }, []);
 
-  /* ⚠ NOTHING UNTIL THE ANSWER ARRIVES — a link that greys itself a moment after painting is
-     worse than one that appears a moment late. */
   if (!info) return null;
 
-  /*
-    ── ⚠⚠ GREYED, WITH ONE LINE OF REASON (Scott's words) ────────────────────────────────
-
-    ⚠⚠⚠ **IT IS NOT HIDDEN, AND THAT IS THE WHOLE POINT OF THE ITEM.** The old component
-    returned `null`, so a provider had no way to tell "this feature is off here" from "this
-    feature does not exist" — and Scott spent a brief asking which. ⚠ A disabled control with a
-    reason answers the question the absent one could not.
-  */
   if (!info.available) {
     return (
       <>
-        {/* ⚠⚠ THE DISABLED TWIN (`E723` item 8) — the same `.pm-btn` box, visibly dead.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <div className="mt-3"><span aria-disabled="true"
-            //     className="cursor-not-allowed text-[13px] font-bold text-ink-3"> */}
+        {}
         <span aria-disabled="true" className="pm-btn">
           Rebuild From New Résumé
         </span>
         <p className="mt-2 text-[12px] leading-relaxed text-ink-2">
-          {/* ⚠⚠ THE REASON, NOT AN APOLOGY, AND NO ROADMAP (ruling 18). ⚠⚠⚠ IT NAMES NO
-              ENVIRONMENT VARIABLE: this string is read by members, and the availability
-              endpoint deliberately returns a BOOLEAN so no key or detail can leak to it. */}
+          {}
           Résumé reading is unavailable here right now.
         </p>
       </>
@@ -117,37 +55,14 @@ export function OwnerResumeRebuild() {
   if (stage === "panel") {
     return (
       <div className="mt-3">
-        {/* ⚠ THE EXISTING FLOW, UNCHANGED: confirm → PREVIEW (writes nothing) → a ticked diff
-            → apply only what was ticked → a receipt of what was written. ⚠⚠ NOT
-            RE-IMPLEMENTED HERE — `E585`, and `E561` WS-B paid for that flow once already. */}
-        {/*
-          ── ⚠⚠⚠ AFTER AN UPLOAD THIS GOES STRAIGHT TO "What we found" (`E782`) ──
-
-          ⚠ **SCOTT:** the Upload *"appears to do nothing."* ⚠⚠ It had worked — his
-          row banked 10,985 characters and a full parse — but this panel offered only
-          *"↻ Read it again"*, so after a **68-second** upload the next thing he saw
-          was a button proposing to do what he had just done. Two more clicks stood
-          between him and the result.
-          ⚠⚠⚠ **`justUploaded` IS THE WHOLE DIFFERENCE.** Reached from *"Use the one on
-          file"* the panel still ASKS first — that document may be months old and the
-          member has not just waited for anything.
-          ⚠ `reuseStored` goes with it: the upload's parse is seconds old, so asking
-          the model again would be a second 25–70 s call for the same answer.
-        */}
+        {}
+        {}
         <ResumeImportAction
           label="Read it again"
           showContext
           autoStart={justUploaded}
           reuseStored={justUploaded}
           onApplied={() => router.refresh()}
-          /*
-            ── ⚠⚠⚠ NEVER AN EMPTY PANEL (`E782`) ─────────────────────────────────
-            ⚠ `ResumeImportAction` renders NOTHING when there is no readable
-            document. ⚠⚠ That is right in the wizard and wrong here: this component
-            has just replaced the uploader with a container, and an empty container
-            is indistinguishable from a broken page — which is exactly what the bug
-            report said.
-          */
           emptyFallback={
             <p className="text-[13px] text-ink-2">
               We saved the file, but there is no readable text in it yet, so there is
@@ -155,11 +70,7 @@ export function OwnerResumeRebuild() {
             </p>
           }
         />
-        {/*
-          ⚠⚠⚠ AND THE ERROR IS RENDERED HERE TOO. It was only ever shown in the
-          `choose` stage, which is gone by the time this one mounts — so an upload
-          that reported a problem on its way into this panel said nothing at all.
-        */}
+        {}
         {error && (
           <p role="alert" className="mt-2 text-[12px] text-red-600">
             {error}
@@ -174,8 +85,7 @@ export function OwnerResumeRebuild() {
       <div className="mt-3 rounded-brand border border-line bg-white p-3.5">
         <p className="text-[13px] font-bold text-ink">Rebuild from a résumé</p>
         <div className="mt-2.5 flex flex-col items-start gap-2">
-          {/* ⚠⚠ THE UPLOAD IS FIRST BECAUSE SCOTT PUT IT FIRST, and because 59 of 63 profiles
-              have nothing on file — for them it is the only door. */}
+          {}
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
@@ -183,27 +93,17 @@ export function OwnerResumeRebuild() {
           >
             Upload a New Résumé
           </button>
-          {/*
-            ⚠⚠⚠ THE SENTENCE CHANGED BECAUSE THE BEHAVIOUR DID (`E721` item 2). The upload no
-            longer writes anything, so promising a preview is now a promise the code keeps —
-            which is the only condition on which `E561` WS-B allows this kind of copy to ship.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — true while the upload applied:
-            //   Reading a new file adds what it finds to your profile. It never replaces
-            //   anything you typed yourself.
-          */}
+          {}
           <p className="text-[12px] leading-relaxed text-ink-2">
             We read the file and show you what changed. Nothing is saved until you
             tick it.
           </p>
           {info.hasDocument && (
             <>
-              {/* ⚠ THE SECOND CHOICE, AS SCOTT ORDERED IT. ⚠⚠ Only offered when a document
-                  actually exists — otherwise it is a button that can only return nothing. */}
+              {}
               <button
                 type="button"
                 onClick={() => {
-                  /* ⚠ Not an upload: this document may be months old, so the panel
-                     asks before spending a read (`E782`). */
                   setJustUploaded(false);
                   setStage("panel");
                 }}

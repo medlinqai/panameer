@@ -1,64 +1,12 @@
 import { LineBasis, TransactionType } from "@prisma/client";
 import { rateBreakdown } from "@/lib/display";
 
-/**
- * THE TRANSACTION SPINE'S RULES (`P1-J4-E388`).
- *
- * Work Request → Work Order → Settlement Request → Payment / Payout.
- *
- * ⚠⚠ THE RULES LIVE HERE, NOT IN THE ROUTES, so `check:transaction-spine` can
- * test the BEHAVIOUR rather than grep for a shape. Every function below is one
- * of the brief's "assert" rules, and each has a mutation test behind it.
- *
- * ⚠ R1 BUILDS THE COLUMNS; R2 BUILDS THE CONNECTION. Nothing here parses or
- * generates cXML, opens a punchout session or reconciles ERS. A nullable column
- * is honest; a stub that pretends to talk to an ERP is the `E034` shape.
- *
- * ── ⚠⚠ PAYMENT IS PUSHED, NEVER PULLED. CONSIDERED AND REJECTED ────────────
- *      (`P1-ALL-E404` WS-5, Scott 2026-09-09)
- *
- * ⚠ RECORDED HERE BECAUSE SOMEBODY WILL PROPOSE IT AGAIN, and the reasoning is
- * better than the conclusion. Scott raised direct-debit style pulling and
- * reversed it himself inside a single message:
- *
- *   *"Payment pulling also has another issue...was that settlement request
- *   approved in the ERP/Panameer? So the buyer will always need to transmit
- *   payment to us."*
- *
- * ⚠⚠ THE OBJECTION IS THE BUYER'S CONTROLS, NOT PANAMEER'S PLUMBING. Under ERS
- * the buyer's ERP creates the invoice from Panameer's receipt and pays it on the
- * buyer's own AP run. A pull would BYPASS THAT APPROVAL — and no enterprise AP
- * department authorises a vendor to debit them on the vendor's say-so. **The
- * push is not a limitation of the design; it IS the design**, and the whole ERP
- * differentiator depends on transacting inside the buyer's system of record
- * rather than around it.
- *
- * ⚠ AND IT KEEPS PANAMEER FURTHER FROM MONEY TRANSMISSION. Pulling funds means
- * HOLDING them while a settlement resolves, which is the escrow-shaped activity
- * Scott has ruled out twice — *"I am NOT a money transmitter no more than a
- * staffing company gets paid, deducts its fee and pays the provider."* Rejecting
- * the pull removes a reason to hold anything.
- *
- * ⚠⚠ NO CODE, NO SCHEMA, NO SCREEN, AND NO STORED AUTHORISATION. There is
- * nothing to retain, which is why `lib/retention.ts` records the pull
- * authorisation as MOOT rather than as a rule with no value.
- *
- * ⚠ IT TOUCHES THE OPEN AGENT-VERSUS-PRINCIPAL QUESTION (`P1-ALL-E396`) and does
- * not settle it: whether the provider's contract is with the buyer or with
- * Panameer is still counsel's first question. This only records that the money
- * moves one way.
- */
-
 export class SpineError extends Error {
   constructor(message: string, public code: string) {
     super(message);
     this.name = "SpineError";
   }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-1 · THE LINE SHAPE
-   ═════════════════════════════════════════════════════════════════════════ */
 
 export type LineShape = {
   basis: LineBasis;
@@ -68,37 +16,10 @@ export type LineShape = {
   amount_cents?: number | null;
 };
 
-/**
- * ⚠⚠ RATE AND AMOUNT ARE MUTUALLY EXCLUSIVE SHAPES, AND BOTH DIRECTIONS ARE
- * CHECKED. Half of this rule is the one that gets forgotten: it is easy to
- * assert that a RATE line HAS a quantity and never notice an AMOUNT line that
- * also carries one. A line carrying both prices can be settled twice — once per
- * shape — and the second draw looks legitimate on its own.
- *
- * The carve-out is Oracle's, not Panameer's: cXML requires a quantity on every
- * line *"except for amount-based service lines."*
- */
 export function assertLineShape(line: LineShape): void {
-  /* ⚠ THE `LineBasis` DOOR. `RATE` is the by-quantity shape. */
   assertPricedShape(line.basis === "RATE", line);
 }
 
-/**
- * ── ⚠⚠⚠ ONE RULE BODY, TWO DOORS — RULING 44's `E585` CLAUSE ────────────
- *
- * ⚠⚠ Ruling 44 deleted the `LineBasis` ⇄ `TransactionType` bridge and required
- * *"ONE definition of the three kinds, shared by the requisition line and the
- * order line."* ⚠⚠⚠ **THE TEMPTING WRONG ANSWER WAS A SECOND `assert…Shape`
- * WRITTEN AGAINST `TransactionType`** — which is the same rule twice, and the
- * pair would drift the first time somebody added a field to one of them.
- *
- * ⚠ So the RULE lives here once, keyed on the only question it actually asks —
- * *is this line priced by quantity?* — and the two enums are nothing more than
- * two ways of answering it. ⚠⚠ `assertLineShape` answers it from `LineBasis`
- * (`ProposalLine` still carries one); `assertTransactionLineShape` answers it
- * from `TransactionType` (the requisition line and, since ruling 44, the order
- * line). **Neither translates into the other, which is what the ruling forbade.**
- */
 function assertPricedShape(
   byQuantity: boolean,
   line: Omit<LineShape, "basis">
@@ -126,14 +47,6 @@ function assertPricedShape(
     );
 }
 
-/**
- * ⚠⚠ THE `TransactionType` DOOR ONTO THE SAME RULE — for the requisition line
- * and, since ruling 44, the WORK ORDER line.
- *
- * ⚠⚠⚠ THE ERROR CODES ARE DELIBERATELY THE OLD ONES (`RATE_NEEDS_UOM` …). They
- * name the SHAPE, not the enum value, and `check:sourcing` and `check:hire` both
- * assert against them — re-coding them would be a rename dressed as a fix.
- */
 export function assertTransactionLineShape(line: {
   transaction_type: TransactionType;
   uom?: string | null;
@@ -144,13 +57,6 @@ export function assertTransactionLineShape(line: {
   assertPricedShape(pricedByQuantity(line.transaction_type), line);
 }
 
-/**
- * ⚠⚠ EXACTLY ONE SUBJECT — NEITHER BOTH NOR NEITHER. One table owns the
- * `SupplierPartID` namespace over two subjects, so the discriminator has to be
- * enforced in code: a prefix convention enforces nothing and is not a foreign
- * key, and a part with no subject is an identifier the ERP will store forever
- * pointing at nothing.
- */
 export function assertSupplierPartSubject(part: {
   kind: "PROVIDER" | "PACKAGE";
   provider_profile_id?: string | null;
@@ -168,114 +74,27 @@ export function assertSupplierPartSubject(part: {
     throw new SpineError("kind=SERVICE_PRODUCT but no service product", "PART_KIND_MISMATCH");
 }
 
-/**
- * `Package.pricing_type` → `LineBasis`.
- *
- * ⚠ `RECURRING` LOSES ITS `billing_period` IN THIS MAPPING, AND THAT IS REPORTED
- * RATHER THAN PAPERED OVER: a recurring package becomes an AMOUNT line that
- * draws once, so the recurrence has no carrier on the line. No carrier is
- * invented here — inventing one would be a settlement-method flag by another
- * name, which this brief forbids.
- */
 export function basisForPricingType(t: "HOURLY" | "FIXED" | "RECURRING"): LineBasis {
   return t === "HOURLY" ? "RATE" : "AMOUNT";
 }
 
-/**
- * ── ⚠⚠⚠ THE BUYER'S PRICING CHOICE → SCOTT'S TRANSACTION TYPE (`E621`) ───
- *
- * ⚠ `basisForPricingType` above maps the same input onto the OLD two-value
- * `LineBasis`. It is kept because `SupplierPart`, `WorkOrderLine`,
- * `ProposalLine` and `ProposalRequestLine` still use that enum — only the
- * REQUISITION line moved (ruling 37b).
- *
- * ⚠⚠ WHY `HOURLY` BECOMES `SERVICE_BY_QTY` AND NOT `PRODUCT_BY_QTY`: the
- * distinction is the whole reason Scott's field set has three values where
- * `LineBasis` had two — **a service by quantity is TIMESHEETED, a product by
- * quantity is RECEIVED.** Hours are a service. ⚠⚠⚠ `PRODUCT_BY_QTY` IS
- * DELIBERATELY UNREACHABLE FROM HERE: a buyer's budget type cannot express
- * "I am buying a good", and inventing a path to it would be guessing at a
- * choice the buyer never made. It becomes reachable when items do (`Shop`).
- */
 export function transactionTypeForPricingType(
   t: "HOURLY" | "FIXED" | "RECURRING"
 ): TransactionType {
   return t === "HOURLY" ? "SERVICE_BY_QTY" : "SERVICE_BY_AMT";
 }
 
-/**
- * ⚠⚠ PRICED BY QUANTITY, OR PRICED BY AMOUNT — the only question completeness
- * asks of a line's type. ⚠ Both quantity shapes carry a unit price; the amount
- * shape carries a total. ⚠⚠⚠ ONE PLACE, because the page, the API and the gate
- * all ask it and must not answer differently (`E585`).
- */
-/*
-  ── ⚠⚠⚠ THE BRIDGE IS DELETED. RULING 44, 2026-09-24. ───────────────────
-
-  ⚠⚠ RULING 41 entry 2 recorded this adapter as knowingly lossy and named its
-  retirement trigger in advance: **"`WorkOrderLine` gains `TransactionType`."**
-  ⚠⚠⚠ **WS-D IS THAT TRIGGER. IT FIRED, AND SCOTT RULED: *"Teach it the third
-  value now."*** So `WorkOrderLine` now carries `transaction_type` and there are
-  no longer two enums to translate between. **The lossiness went with it.**
-
-  ⚠ ITS ONE CALLER IS GONE TOO — `work-request-lines.ts` wrote `basis` from it,
-  and stopping that write is what finally makes ruling 41 entry 1's description
-  (*"written by nothing"*) true. ⚠⚠ **ENTRY 1 IS NOT FOLDED IN:** the `basis`
-  COLUMN stays, nullable, and retires on trunk in its own change. One cleanup,
-  one place.
-
-  ⚠⚠ WHY IT MATTERED THAT THIS HAPPENED TONIGHT RATHER THAN LATER: every feature
-  above it — receiving, timesheets, settlement, invoicing — would have inherited
-  the ambiguity and encoded it. **A lossy adapter is acceptable only while
-  nothing depends on what it loses.**
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the function and the docblock that
-  predicted its own deletion:
-  //   ── ⚠⚠⚠ THE BRIDGE BETWEEN THE TWO ENUMS, WHILE BOTH EXIST (`E621`) ─────
-  //   ⚠ The REQUISITION line carries `TransactionType` (Scott's three values); the
-  //   ORDER line still carries `LineBasis` (two). A work order is built FROM a
-  //   requisition line, and `orders.ts` compares the two to show what changed — so
-  //   something has to translate, and it must be ONE thing.
-  //   ⚠⚠⚠ IT IS LOSSY IN ONE DIRECTION AND THAT IS THE POINT OF RULING 37b: both
-  //   quantity shapes collapse to `RATE`, which is exactly the distinction
-  //   `LineBasis` cannot hold. Going the other way is therefore NOT round-trip
-  //   safe, and no inverse is offered here on purpose.
-  //   ⚠⚠ WHEN `WorkOrderLine` GAINS `TransactionType` (its own brief), this bridge
-  //   is what gets deleted, and the lossiness goes with it.
-  //
-  //   export function basisForTransactionType(t: TransactionType): LineBasis {
-  //     return pricedByQuantity(t) ? "RATE" : "AMOUNT";
-  //   }
-*/
-
-/**
- * ⚠⚠⚠ KEPT, AND IT IS **NOT** PART OF THE DELETED BRIDGE — read the signature.
- * It takes a `TransactionType` and returns a BOOLEAN; it never mentions
- * `LineBasis`. ⚠ Ruling 44's `E585` clause asks for **one definition of the
- * three kinds, shared by the requisition line and the order line**, and this is
- * that definition. Deleting it would have forced each side to re-ask the
- * question, which is the defect the ruling exists to remove.
- */
 export function pricedByQuantity(t: TransactionType): boolean {
   return t === "PRODUCT_BY_QTY" || t === "SERVICE_BY_QTY";
 }
 
 export type RequestLineForCompleteness = {
   provider_person_id?: string | null;
-  /// ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;`
   transaction_type: TransactionType;
   unit_price_cents?: number | null;
   amount_cents?: number | null;
 };
 
-/**
- * ⚠⚠ COMPLETE MEANS **EVERY** LINE IS ASSIGNED AND PRICED.
- *
- * A partially-sourced request that returns a punchout cart sends the ERP a
- * requisition it will APPROVE AS IF IT WERE WHOLE — and the unsourced line is
- * then an approved commitment against nobody. If a requester wants to proceed
- * with two of three, they split the third onto its own work request.
- */
 export function workRequestIsComplete(lines: RequestLineForCompleteness[]): boolean {
   if (lines.length === 0) return false;
   return lines.every(
@@ -285,31 +104,8 @@ export function workRequestIsComplete(lines: RequestLineForCompleteness[]): bool
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-2 · THE FAN-OUT
-   ═════════════════════════════════════════════════════════════════════════ */
-
 export type FanOutLine = { provider_person_id: string | null | undefined };
 
-/**
- * ⚠⚠ GROUP BY PROVIDER. ONE WORK ORDER PER PROVIDER.
- *
- * A work request with lines for three providers becomes THREE work orders; the
- * same provider on three lines becomes ONE order with three lines. Two providers
- * cannot share a work order — they accept separately, they are paid separately,
- * and `provider_person_id` is REQUIRED on the order.
- *
- * ⚠⚠ AND THE BUYER'S ERP SEES ONE SUPPLIER — PANAMEER — SO ONE PO FANS OUT INTO
- * N WORK ORDERS. That is why `WorkOrder.external_ref` has NO unique constraint:
- * a unique index would reject the second provider on a two-provider PO and look
- * like duplicate detection working correctly.
- *
- * ⚠⚠ ONE FUNCTION, SO BOTH PATHS CANNOT DIVERGE. The web path ("Requester clicks
- * CREATE WORK ORDER") and the inbound-PO path call THIS. If they grouped
- * differently the same work request would mean different things depending on
- * whether an ERP was involved — and nothing on either side would show it.
- * `check:transaction-spine` asserts both paths produce identical grouping.
- */
 export function fanOutByProvider<T extends FanOutLine>(lines: T[]): Map<string, T[]> {
   const groups = new Map<string, T[]>();
   for (const line of lines) {
@@ -325,26 +121,6 @@ export function fanOutByProvider<T extends FanOutLine>(lines: T[]): Map<string, 
   return groups;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-4 · THE FEE
-   ═════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ⚠⚠ COMPUTE THE FEE AND SUBTRACT. NEVER COMPUTE THE NET DIRECTLY.
- *
- * `net + fee` must equal `gross` TO THE CENT, ALWAYS. Computing both
- * independently — `net = round(gross * (10000 - bps) / 10000)` — guarantees that
- * eventually it will not: at 14.9% on $99.99, the two roundings disagree by a
- * cent and the books never balance again.
- *
- * ⚠⚠ IT REUSES `rateBreakdown()` RATHER THAN RE-IMPLEMENTING IT. That function
- * (`lib/display.ts`) already does exactly this arithmetic for the provider
- * onboarding screen — *"`fee` rounds to the nearest cent; `youGet` is the
- * remainder, so the three figures always reconcile exactly"*. A second copy
- * would be a second source of truth for the number a provider is paid, and the
- * two would drift. The fee shown at onboarding and the fee taken at payout are
- * now provably the same function.
- */
 export function feeSplit(
   grossCents: number,
   feeBps: number
@@ -353,7 +129,6 @@ export function feeSplit(
   return { gross_cents: grossCents, fee_cents: fee ?? 0, net_cents: youGet ?? grossCents };
 }
 
-/** ⚠ The invariant every payout and payout line is checked against. */
 export function feeReconciles(row: {
   gross_cents: number;
   fee_cents: number;
@@ -361,10 +136,6 @@ export function feeReconciles(row: {
 }): boolean {
   return row.net_cents + row.fee_cents === row.gross_cents;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-3 · THE FIVE SETTLEMENT RULES
-   ═════════════════════════════════════════════════════════════════════════ */
 
 export type OrderLineForDraw = {
   id: string;
@@ -388,19 +159,10 @@ export type DraftSettlementLine = {
   work_order_line_id: string;
   basis: LineBasis;
   quantity?: number | null;
-  /** ⚠ Present ONLY so rule 2 can refuse it. It is never read as a price. */
   unit_price_cents?: number | null;
   amount_cents?: number | null;
 };
 
-/**
- * ⚠⚠ RULE 2, AS CODE RATHER THAN AS A COMMENT: THE PRICE IS COPIED FROM THE
- * ORDER LINE AND THE CALLER'S PRICE IS **REFUSED**, NOT IGNORED.
- *
- * Ignoring it would be quieter and worse — a caller who believes they set a rate
- * and silently did not is how a wrong number reaches production believing itself
- * reviewed. This is the ONLY place a settlement line's price is assigned.
- */
 export function priceSettlementLine(
   draft: DraftSettlementLine,
   orderLine: OrderLineForDraw
@@ -415,17 +177,6 @@ export function priceSettlementLine(
     : { unit_price_cents: null, amount_cents: orderLine.amount_cents ?? null };
 }
 
-/**
- * The five rules, together, because they are only meaningful together — a draw
- * can satisfy four and still be wrong.
- *
- *   1  basis matches the order line
- *   2  the price is COPIED (delegated to `priceSettlementLine`)
- *   3  RATE cannot exceed ordered quantity; AMOUNT draws ONCE, IN FULL
- *   4  `not_to_exceed_cents` caps the WHOLE order
- *   5  the period sits INSIDE the order's period
- *  ⚠  and settlements only against a RELEASED order
- */
 export function assertSettlementDraw(input: {
   order: OrderForSettlement;
   periodStart: Date;
@@ -434,9 +185,6 @@ export function assertSettlementDraw(input: {
   /** Cents already settled against this ORDER, for rule 4. */
   alreadySettledCents: number;
 }): void {
-  /* ⚠ RELEASED, not ACCEPTED. Two-sided activation means the provider accepting
-     is only half — drawing against an order the buyer has not released bills for
-     work nobody authorised to start. */
   if (input.order.status !== "RELEASED")
     throw new SpineError(
       "A settlement may only be raised against a RELEASED work order",

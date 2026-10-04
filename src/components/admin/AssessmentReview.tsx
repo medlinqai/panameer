@@ -3,26 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * ── ⚠ READ · DROP · PUBLISH. NOT AN EDITOR (P1-J3-E020, WS1) ─────────────────
- *
- * Scott will not hand-build question banks, so this screen deliberately offers no
- * way to author: no rich text, no "add a question", no editing a stem or an option.
- * The only destructive act is dropping a whole question, and the remedy for a bad
- * set is REGENERATE — which lives on this screen too, and is the one button that
- * throws the reviewer's work away, so it is styled and worded as such.
- *
- * ⚠ THE DROP IS STAGED, NOT IMMEDIATE. A reviewer reads twenty questions and forms
- * a view; making each checkbox a write would mean twenty requests, twenty chances
- * to fall below the floor mid-read, and no way to change their mind. Selections
- * accumulate and one "Drop N" commits them.
- *
- * ⚠ AND THE FLOOR IS ENFORCED IN THE UI **AND** ON THE SERVER. `dropQuestions` and
- * `publishAssessment` both check it, because they are separate requests and a
- * regenerate can shrink a set between them. The UI check exists to tell the
- * reviewer BEFORE they click, which is the half a 409 cannot do.
- */
-
 type Q = {
   id: string;
   question: string;
@@ -31,7 +11,6 @@ type Q = {
   explanation: string;
   lessonTitle: string | null;
   courseTitle: string | null;
-  /** ⚠ Whether the lesson this question tests has a description at all. */
   described: boolean;
   sourceKind: string;
 };
@@ -76,8 +55,6 @@ export function AssessmentReview({
   const belowFloor = remaining < minQuestions;
   const published = status === "PUBLISHED";
 
-  /* ⚠ THE HONEST QUALITY SIGNAL, and it is the number to read first. A question
-     whose lesson has no description was written from a TITLE. */
   const titleOnly = questions.filter((q) => !q.described).length;
 
   async function act(action: "publish" | "unpublish" | "drop" | "regenerate") {

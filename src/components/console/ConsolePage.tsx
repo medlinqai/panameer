@@ -16,50 +16,8 @@ import {
   THEAD,
 } from "@/components/console/listing-shared";
 
-/**
- * THE CONSOLE PAGE PATTERN (WS1, Scott's template; Medlinq /medlinq is the
- * structural source).
- *
- *   T1–T5 action/KPI tiles  →  M1 full-width listing  →  Volume-Over-Time footer
- *
- * One component so every console page is the same shape. The alternative —
- * each page assembling its own grid — is how the Medlinq console pages drifted
- * apart, and this template is explicitly the thing Scott asked to be reused.
- *
- * EVERY NUMBER HERE IS OPTIONAL AND DEFAULTS TO UNKNOWN. The transaction layer
- * does not exist, so tiles take `value?: string | number` and render "—" when
- * it is absent, with a hint saying what they are waiting for. A tile that shows
- * a real count and one that shows a placeholder must be visibly different, or
- * the dashboard becomes a set of numbers nobody can trust.
- */
-
-/**
- * ── ⚠⚠ THE LEARN-STYLE VARIANT IS OPT-IN, BY DATA (`P1-A1.5-E454` WS-7) ─────
- *
- * **SCOTT:** *"can you update the tiles to be like LEARN with the icons and
- * thinner?"*
- *
- * ⚠ `TileRow` IS SHARED BY 17 PAGES (`E430`), so a global restyle would have
- * restyled sixteen pages that pass no icons and have nothing to put in one. A
- * tile renders the LEARN layout — icon chip left, count and label right, shorter
- * card — ONLY when it is given an `icon`. Every other page passes none and is
- * byte-identical to before. ⚠ ONE COMPONENT, NO SECOND COPY: the same rule
- * `Listing` follows for its interactive variant.
- *
- * ⚠⚠ THE COUNT STAYS INK IN BOTH LAYOUTS. That is `E433` — Scott, the same
- * morning: *"the numbers on the tiles…not good pink. it is too much. lets change
- * those to black."* ONLY THE ICON CARRIES COLOUR.
- */
 export type TileTone = "neutral" | "amber" | "emerald" | "emeraldDeep" | "emeraldSolid";
 
-/*
-  ⚠ THE TONES ARE THIS PAGE'S FUNNEL, NOT LEARN'S GRADIENTS — reported as a
-  deliberate deviation. `/learn`'s `StatTile` tones are magenta/blue/green
-  gradients, and copying them would have put MAGENTA on a non-interactive tile,
-  which `E433` reserves for interactive things. These five deepen along the
-  lifecycle instead, matching the STATUS pills already on the same page, so a
-  reader sees one progression twice rather than two palettes.
-*/
 const TILE_TONES: Record<TileTone, string> = {
   neutral: "bg-ink/[0.07] text-ink-2",
   amber: "bg-amber-100 text-amber-800",
@@ -77,13 +35,6 @@ export type Tile = {
   value?: string | number;
   hint?: string;
   href?: string;
-  /**
-   * The DECK says TBD for this slot — Scott hasn't decided the metric yet.
-   *
-   * Distinct from a missing value, and the difference is worth showing: "—"
-   * means we know what to count and cannot count it, "TBD" means nobody has
-   * said what to count. Rendering both as a dash would lose the question.
-   */
   tbd?: boolean;
 };
 
@@ -93,12 +44,6 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
       {tiles.map((t, ti) => {
         const known = t.value !== undefined && t.value !== null;
 
-        /*
-          ⚠ THE LEARN LAYOUT, STRUCTURE-FOR-STRUCTURE: `flex items-center gap-3`,
-          a 38px rounded icon chip, the value and label stacked to its right, and
-          a SHORTER card (p-3.5 against p-4 plus the stacked label's height).
-          Measured after: the row is about a third shorter than the stacked tile.
-        */
         if (t.icon && !t.tbd) {
           const tile = (
             <div className="flex items-center gap-3 rounded-brand border border-line bg-white p-3.5 transition-colors hover:border-magenta">
@@ -111,7 +56,7 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
                 {t.icon}
               </span>
               <div className="min-w-0">
-                {/* ⚠ INK, NOT MAGENTA (`E433`) — only the chip is coloured. */}
+                {}
                 <b
                   className={
                     "block font-display text-[21px] leading-tight " +

@@ -19,14 +19,6 @@ import {
 import { PublishControls } from "@/components/admin/learn/PublishControls";
 import { BackLink } from "@/components/console/BackLink";
 
-/**
- * One Learning Path — its details and its whole outline (WS2).
- *
- * Everything hangs off a single tree fetch that `reload()` re-runs after any
- * mutation. Optimistic local edits were the alternative and were rejected: an
- * ordinal rewrite touches every sibling row, so a client trying to predict the
- * result would drift from the database the first time two moves raced.
- */
 export default function AdminLearnPathPage({
   params,
 }: {

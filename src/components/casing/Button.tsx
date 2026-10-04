@@ -1,26 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/**
- * The console button standard (E217).
- *
- * ONE RULE, AND IT IS A RULE ABOUT ROWS, NOT ABOUT BUTTONS: a row of actions
- * has AT MOST ONE solid magenta. Everything else in it is a ghost outline or a
- * plain text link. Two solid primaries side by side is not emphasis, it is the
- * absence of a decision — the reader has to work out which one you meant, which
- * is the job the fill was doing.
- *
- * The failure mode this was written for is subtler than two identical buttons:
- * it is a DISABLED primary sitting next to a live one, faded to 35% and still
- * the loudest thing in the row. A control that is both unavailable and dominant
- * is worse than either. Disabled goes ghost.
- *
- * This exists so the rule has a home. It is not a migration of every button in
- * the app — most are already correct, and rewriting hundreds of working call
- * sites to prove a point is how you introduce regressions in surfaces nobody
- * asked you to touch. New action rows use this; the existing ones that violated
- * the rule were fixed where they were.
- */
 export type ButtonVariant = "primary" | "ghost" | "quiet";
 
 const BASE =

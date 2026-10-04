@@ -5,13 +5,6 @@ import { ValidationAnswers } from "@/components/validate/ValidationAnswers";
 import type { ValidationRequestView } from "@/lib/project-validation";
 import { dateRangeLabel } from "@/lib/date-range-label";
 
-/**
- * The Confirm / Decline control for the public validation page.
- *
- * Shows the contact ONLY what they need to answer: who, what project, which
- * client, and when. No rate, no bio, no other projects — the token proves they
- * were asked about this one thing, and it entitles them to nothing else.
- */
 export function ValidateActions({
   request,
   declineFirst = false,
@@ -52,30 +45,9 @@ export function ValidateActions({
     }
   };
 
-  /* ⚠ `P2-J1.4-E549` — a colleague is asked to vouch for these dates, so they
-     must not claim "Present" for a job that is not current. SUPERSEDED, quoted
-     (`E164`): `request.isCurrent ? "Present" : (request.endDate?.slice(0, 4) ?? "Present")` */
   const dates = dateRangeLabel(request.startDate, request.endDate, request.isCurrent) || null;
 
   if (done) {
-    /*
-      ── ⚠⚠ THE CONFIRMATION IS ALREADY COMMITTED BEFORE THIS RENDERS ──────────
-         (`P1-J2.1-E024`, 2026-09-01)
-
-      `respond()` above awaits `POST /api/validate`, which runs
-      `respondToValidation` — a `prisma.$transaction` that writes
-      `status: CONFIRMED`, `responded_at`, and the project's `validation_status`.
-      `setDone(decision)` only runs AFTER that request resolves, and this branch
-      only renders once `done` is set. So by the time a single question is on
-      screen the badge is earned, committed and irreversible.
-
-      ⚠⚠ NOTHING BELOW CAN UNDO IT. `saveValidationAnswers` writes no `status`,
-      and the Save button is not a submit for the validation — a client who
-      confirms and closes the tab has validated the project completely. Every
-      question is optional and there is no copy anywhere here implying otherwise.
-      ⚠ GET THIS WRONG AND THE FEATURE LOSES VALIDATIONS, which is strictly worse
-      than not shipping it.
-    */
     return (
       <div className="space-y-5">
         <div className="rounded-brand border border-line bg-white p-8 text-center">

@@ -4,21 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { decideStarter, starterPath, getLearnHome, groupChips } from "@/lib/learn-home";
 import { starterIsDone } from "@/lib/learn-dashboard";
 
-/**
- * ── ⚠⚠⚠ `check:learn-entry` (`P2-A4-E683`) ──────────────────────────────
- *
- * ⚠⚠ **THE CONSTRAINT THAT SHAPES THE WHOLE BRIEF, AND THEREFORE THIS GATE:**
- * Scott, 2026-09-26 — *"I will ultimately want to get a better training provider
- * with a much bigger selection on the platform."* ⚠⚠⚠ **SO THE 54 COURSES ARE
- * TEMPORARY AND NO COURSE TITLE, PATH SLUG OR SKILL NAME MAY BE HARDCODED.** A
- * catalog swap must not require a code change, and §1 is what makes that a
- * failing build rather than a promise.
- *
- * ⚠ **IT WRITES NOTHING.** The starter rule is proved as a PURE function and the
- * live database is only READ — flagging a row to test ambiguity would publish a
- * probe path to real members on the one database that also serves production
- * (ruling 38).
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -174,11 +159,6 @@ async function main() {
     "a hardcoded slug has to be found and edited by somebody who does not know it exists"
   );
 
-  /* ── 4 · ⚠⚠⚠ MORE THAN ONE STARTER IS REFUSED, NOT RESOLVED ──────────────
-     ⚠⚠ Scott, 2026-09-26: *"REFUSE and say so — do not silently take the first
-     by sort_order."* ⚠ Proved on the PURE function, exhaustively, with no
-     writes: flagging rows to test this would publish a probe path to real
-     members (ruling 38). */
   check("4 — none marked reads as `none`", decideStarter([]).kind === "none");
   check("4 — exactly one is the answer", decideStarter([{ id: "a" }]).kind === "one");
   const two = decideStarter([{ id: "a" }, { id: "b" }]);

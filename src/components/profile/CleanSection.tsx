@@ -1,54 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/**
- * ── ⚠⚠⚠ THE BOXLESS SECTION (`P2-A2-E713` WS-A, `brief_clean_page`) ──────────
- *
- * ⚠⚠ **SCOTT, 2026-09-26, ON THE MOCKUP HE APPROVED:** *"MUCH better."* · *"The cards are
- * not obvious, bordered."* · *"No grey background… boxes cut up the page."* · *"I definitely
- * like the section expanders."*
- * ⚠ **SO A SECTION IS: a thin top rule, a title, an optional right-hand action, a chevron,
- * and white.** No border, no background, no shadow, no radius.
- *
- * ── ⚠⚠⚠ WHY THIS IS A NEW FILE AND NOT AN EDIT TO `ProfileCard` ─────────────
- *
- * ⚠⚠ **`ProfileCard` AND ITS `CARD` CONSTANT ARE SHARED WITH `/join/provider`, WHICH MUST
- * LOOK EXACTLY AS IT DOES NOW** (premise 2, and the brief says it twice). ⚠⚠⚠ **SO THE BOX
- * LEAVES BY A NEW COMPONENT — NEVER BY EDITING `CARD`.** Editing `CARD` would silently
- * restyle the onboarding review, which is the one page this brief is forbidden to touch.
- * ⚠ `ProfileCard` is **not** deleted and **not** changed: `/join/provider` keeps it, and
- * `E585`'s rule is satisfied because the two components describe two different surfaces
- * rather than one surface twice.
- *
- * ── ⚠⚠ IT IS A REAL `<details>`, NOT A `useState` TOGGLE ────────────────────
- *
- * ⚠⚠⚠ **SO IT FOLDS WITH JAVASCRIPT OFF, IT IS KEYBOARD-OPERABLE WITHOUT A SINGLE
- * `onKeyDown`, AND A SCREEN READER ANNOUNCES ITS EXPANDED STATE WITHOUT AN `aria-expanded`
- * ANYBODY HAS TO REMEMBER TO UPDATE.** ⚠ A hand-rolled toggle would need all three and
- * would be the component that drifts.
- * ⚠ **AND IT LETS THIS FILE STAY A SERVER COMPONENT** — no `"use client"`, so the profile
- * does not ship a bundle to fold a heading.
- * ⚠⚠ `open` defaults to **true**: the brief says *"Open by default."* A section that hides
- * a member's own record until they click is the boxes problem in a new form.
- *
- * ── ⚠⚠⚠ THE ACTION IS **NOT** INSIDE THE `<summary>`, AND THE MOCKUP IS WRONG ABOUT THIS
- *
- * ⚠⚠ **THE APPROVED MOCKUP PUTS `Edit` INSIDE `<summary>`** (`<summary>…<a class="ed">`).
- * ⚠⚠⚠ **THAT BREAKS A STANDING RULING WITH A GATE BEHIND IT.** `StepDisclosures` decision 4:
- * *"NO INTERACTIVE DESCENDANT OF THE SUMMARY. A `<button>` inside a `<summary>` is `E097`
- * wearing a different tag — the summary IS the interactive element, and a control inside it
- * eats the Enter that opens the panel. `check:ui` §12 already forbids it."*
- * ⚠ **AND IT IS A REAL BUG, NOT A TECHNICALITY: clicking `Edit` would ALSO fold the section**,
- * and keyboard `Enter` on the link would fight the disclosure.
- *
- * ⚠⚠ **SO THE LOOK IS KEPT AND THE MARKUP IS NOT.** `<summary>` stays the first child of
- * `<details>` (native behaviour requires that) and holds only the title and the chevron; the
- * action is a **SIBLING**, painted onto the header row absolutely.
- * ⚠ `right-[34px]` is the chevron's 16px plus the 18px gap, so the action lands exactly where
- * the mockup draws it. ⚠⚠ `top-[22px]` matches `summary`'s own `py-[22px]`.
- * ⚠⚠⚠ **REPORTED TO SCOTT RATHER THAN SILENTLY DIVERGING** — the pixels match his mockup,
- * the DOM does not, and the reason is his own ruling.
- */
 export function CleanSection({
   title,
   action,
@@ -56,19 +8,6 @@ export function CleanSection({
   open = true,
   /** A quiet right-hand fact — a count — where there is no action. */
   note,
-  /**
-   * ── ⚠⚠⚠ THE EMPTY-SECTION RULE (`P2-A2-E713` WS-A item 5) ──────────────────
-   *
-   * ⚠ **SCOTT: *"An empty section: the owner sees one plain line with an action. A visitor
-   * does not see the section at all."***
-   * ⚠⚠ **SO EMPTINESS IS DECIDED BY THE CALLER — it knows what its own data is — AND THE
-   * CONSEQUENCE IS DECIDED HERE, ONCE.** Eleven call sites each writing their own
-   * `{!owner && empty ? null : …}` is eleven chances to get the visitor case wrong, and the
-   * one that is wrong is the one a buyer sees.
-   * ⚠⚠⚠ **IT FAILS CLOSED FOR THE VISITOR:** `isEmpty` with no `showWhenEmpty` renders
-   * NOTHING. A section only survives emptiness by someone explicitly saying the owner is
-   * looking.
-   */
   isEmpty = false,
   showWhenEmpty = false,
   count,
@@ -81,109 +20,24 @@ export function CleanSection({
   note?: string;
   isEmpty?: boolean;
   showWhenEmpty?: boolean;
-  /**
-   * ── ⚠⚠⚠ HOW MANY ROWS THE SECTION IS ABOUT (`P2-A2-E722`) ─────────────────
-   *
-   * ⚠ **IT IS THE LENGTH OF THE LIST THE CALLER PASSES TO ITS BODY, AND NOTHING ELSE.**
-   * Work History counts EMPLOYERS, the two course sections count COURSES, Solo Projects
-   * counts PROJECTS — each is `<that list>.length`, taken from the same expression the body
-   * receives.
-   * ⚠⚠⚠ **WHEN IT IS GIVEN IT ALSO DECIDES EMPTINESS**, which is what makes the printed
-   * number un-falsifiable: a section cannot both say `(3)` and believe it is empty, because
-   * one number answers both questions.
-   * ⚠ Omitted by `Bio`, which has no list to count.
-   */
   count?: number;
   children: ReactNode;
 }) {
-  /*
-    ⚠⚠ A VISITOR IS SHOWN NOTHING RATHER THAN AN EMPTY HEADING. ⚠⚠⚠ An empty section on a
-    buyer-facing profile is the defect `E562` spent a whole brief removing — a page that
-    states its absences instead of its strengths.
-  */
-  /*
-    ⚠⚠⚠ ONE NUMBER ANSWERS BOTH QUESTIONS (`P2-A2-E722`). ⚠ When `count` is supplied,
-    emptiness IS `count === 0` — the call site no longer states it separately, so the heading
-    and the empty-state rule cannot drift apart. ⚠⚠ `isEmpty` survives for `Bio`, whose
-    emptiness is a string test, not a length.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   if (isEmpty && !showWhenEmpty) return null;
-  */
   const empty = count !== undefined ? count === 0 : isEmpty;
   if (empty && !showWhenEmpty) return null;
   return (
-    /*
-      ── ⚠⚠⚠ THE ACTION MOVES OUTSIDE `<details>` (`P2-A2-E718` item 4) ──────────────────
-
-      ⚠ **SCOTT, ON HIS PHONE: Languages was closed and showed NO `Edit`.**
-      ⚠⚠⚠ **A CLOSED `<details>` RENDERS ONLY ITS `<summary>`.** The action was a SIBLING of
-      the summary *inside* `<details>` — correct for `E097`, and invisible the moment the
-      section was closed. ⚠ Absolute positioning did not save it: the element is still a
-      child of a collapsed disclosure, and the browser never lays it out at all.
-      ⚠⚠ **THIS IS A REGRESSION `E716` INTRODUCED AND I OWN IT.** Before that brief every
-      section loaded OPEN, so the action was always rendered; `E716` closed five of them at
-      Scott's instruction and took their `Edit` controls with them — **on exactly the five
-      sections an owner is most likely to want to edit.**
-      ⚠⚠⚠ **NO GATE CAUGHT IT, AND THE REASON IS WORTH WRITING DOWN:** `check:profile-edit`
-      asserts every `Edit` control's DESTINATION renders, and the section-state gate asserts
-      which sections are open. **Neither asks whether the control is VISIBLE in the state the
-      page loads in** — two green gates, one invisible control.
-      ⚠ **THE FIX IS A WRAPPER, NOT A MOVE INTO `<summary>`:** putting the action inside the
-      summary is `E097` (no interactive descendant of a summary) and `check:ui` §12 forbids
-      it. The wrapper is the positioning context instead, so the action is a sibling of
-      `<details>` and renders in both states.
-      ⚠ `relative` stays on `<details>` too — the chevron positions against it, and both boxes
-      are the same rectangle, so neither moves.
-    */
     <div className="relative">
     <details
       id={id}
       open={open}
-      /*
-        ⚠⚠ `border-t` ONLY, AND THE LAST ONE GETS A BOTTOM RULE FROM THE PARENT. A
-        `border-b` on every section would double every internal rule into 2px.
-        ⚠ `scroll-mt-24` is kept from `ProfileCard`: the What's-Missing links scroll to a
-        section by id and must not land under the pinned band.
-      */
       className="pm-clean-sec relative scroll-mt-24 border-t border-line"
     >
       <summary
-        /*
-          ⚠⚠⚠ `list-none` PLUS THE WEBKIT PSEUDO-ELEMENT. Removing only one of them leaves
-          the native triangle visible in one engine — the defect is invisible on the
-          machine you built it on, which is why both are here.
-          ⚠⚠ `pr-24` reserves the lane the absolutely-positioned action sits in, so a long
-          title cannot run underneath it.
-        */
         className="flex cursor-pointer list-none items-center gap-4 py-[22px] pr-24 [&::-webkit-details-marker]:hidden"
       >
         <h2 className="text-[19px] font-semibold tracking-[-0.01em]">
           {title}
-          {/*
-            ── ⚠⚠⚠ THE COUNT, FROM THE LIST THE SECTION RENDERS (`P2-A2-E722`) ────────────
-
-            ⚠ **SCOTT: *"The number must come from the same list the section renders (`E585`),
-            not a separate count, so it can't disagree with what's inside."***
-            ⚠⚠⚠ **SO `count` DOES NOT SIT BESIDE `isEmpty` — IT REPLACES IT.** Every call site
-            already passed `isEmpty={<list>.length === 0}`; it now passes `count={<list>.length}`
-            and emptiness is derived from that one number. **This brief REMOVED a duplicated
-            reference to the list rather than adding a second one** — there is no longer any
-            pair of expressions that could disagree, because there is no pair.
-            ⚠ `Bio` passes no `count` and keeps `isEmpty`, because it counts nothing: its
-            emptiness is `!p.overview`, a string, not a list.
-
-            ⚠⚠ **`(0)` IS PRINTED, NOT SUPPRESSED** — Scott: *"Owner sees (0)."* A visitor never
-            sees it, because a section with no rows and no `showWhenEmpty` does not render at
-            all. **A real zero is a measured fact and reads as one** (counting rule 2); it is
-            the owner's cue that the section exists and is empty.
-
-            ⚠ **`text-ink-2`, NOT `text-ink-3`, AND THAT IS DELIBERATE.** `--color-ink-3` is
-            declared NOWHERE app-wide — 56 uses across 13 files emit no CSS — and is rescued
-            only by `.account-surface .text-ink-3`, a scoped patch **with no dark-mode value**.
-            `--color-ink-2` is a real token with a dark-mode variant (`globals.css:273`), so
-            the count stays grey in both themes instead of inheriting the title's ink in one.
-            ⚠ `font-normal` is needed: the `<h2>` is `font-semibold` and the number would
-            otherwise inherit the title's weight and stop reading as a quiet aside.
-          */}
+          {}
           {count !== undefined && (
             <>
               {" "}
@@ -193,30 +47,8 @@ export function CleanSection({
             </>
           )}
         </h2>
-        {/*
-          ⚠⚠ THE CHEVRON IS DECORATION AND IS `aria-hidden` — `StepDisclosures` decision 3:
-          *"the summary already announces its own expanded state; a second announcement from
-          an icon is noise."*
-          ⚠⚠⚠ IT ROTATES IN PLAIN CSS VIA `details[open]`, NOT WITH A TAILWIND VARIANT.
-          `group-open:` is used NOWHERE in this codebase, and a Tailwind class that does not
-          exist **emits no CSS and fails silently** (the `HERO_SCRIM` trap). The working
-          precedent is `step-disclosures.css:96`, and this follows it.
-        */}
-        {/*
-          ── ⚠⚠⚠ THE CHEVRON IS PINNED TO THE RIGHT EDGE, AND THE ACTION SITS TO ITS LEFT
-              (`P2-A2-E715` row 7) ──────────────────────────────────────────────────────
-
-          ⚠ **SCOTT'S MOCKUP READS `Edit ⌄`. `E713` SHIPPED `⌄ Edit`** — the action was
-          absolute at `right-[34px]` while the chevron was a `justify-between` flex child
-          sitting at the content edge, 96px in behind `pr-24`, **so the chevron landed to the
-          LEFT of the action and the pair was inverted.**
-          ⚠⚠ MEASURED AT THE `before` GATE, not assumed: chevron at x≈1143, `Edit` at x≈1200.
-          ⚠⚠⚠ **FIXING IT BY MOVING THE ACTION FURTHER RIGHT WOULD PUSH IT OFF THE RULE** —
-          the chevron is what marks the section's right edge, so the chevron is what gets
-          pinned and the action is placed relative to it.
-          ⚠ It stays INSIDE `<summary>` so a click on it still toggles the section; it is
-          `aria-hidden` decoration either way (`StepDisclosures` decision 3).
-        */}
+        {}
+        {}
         <svg
           aria-hidden
           viewBox="0 0 24 24"
@@ -229,13 +61,7 @@ export function CleanSection({
       </summary>
       <div className="pb-7">{children}</div>
     </details>
-      {/*
-        ⚠⚠⚠ OUTSIDE `<details>`, NOT INSIDE IT — see the block at the top of this return.
-        ⚠ Still not a descendant of `<summary>`, which is what keeps `Edit` from eating the
-        Enter that opens the panel (`E097`, `check:ui` §12).
-        ⚠ `right-[34px]` is the chevron's 16px plus the mockup's 18px gap, so the action lands
-        immediately to its left; `top-[23px]` matches the summary's own `py-[22px]`.
-      */}
+      {}
       {(action || note) && (
         <div className="absolute right-[34px] top-[23px] flex items-center gap-[18px]">
           {note && <span className="text-[13px] text-ink-2">{note}</span>}
@@ -246,17 +72,6 @@ export function CleanSection({
   );
 }
 
-/**
- * ── ⚠⚠ THE PLAIN `Edit` (`P2-A2-E713` WS-A item 3) ─────────────────────────
- *
- * ⚠ **SCOTT: the ✏️ emoji goes.** ⚠⚠ A NEW component rather than `icon=""` on `EditLink`,
- * for the same reason `CleanSection` is new: `EditLink`'s default is `"✏️"` and
- * `/join/provider` depends on it. ⚠⚠⚠ Changing that default would take the pencil off a
- * page this brief may not touch.
- * ⚠ **`aria-label` NAMES THE THING BEING EDITED** — carried over from `EditLink`, because
- * a dozen identical *"Edit"* links on one page are indistinguishable to a screen reader,
- * and that reason did not change when the emoji left.
- */
 export function CleanEdit({
   href,
   title,

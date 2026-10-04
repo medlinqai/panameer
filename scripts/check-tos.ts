@@ -1,26 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * check:tos — EVERY ACCOUNT-CREATING PATH RECORDS ACCEPTANCE (`P1-ALL-E384`).
- *
- * SCOTT, 2026-09-04: *"yes, everyone needs to accept ToS...fix."*
- *
- * ⚠⚠ THIS EXISTS BECAUSE THE FORM PATHS WERE NEVER THE PROBLEM. All three
- * signup routes already wrote both fields and enforced `tosAccepted:
- * z.literal(true)` server-side. The holes were the two paths with NO FORM —
- * `/assess/claim/[token]` (4 live rows) and `lib/oauth.ts` (latent, 0 rows only
- * because OAuth is off). Nobody noticed, because there is no checkbox to be
- * missing from a flow that has no checkbox.
- *
- * ⚠ UNDER `E380` THE ToS **IS** THE MSA. An account with no acceptance is a
- * member with no master agreement, and the gate reads it as false — which is
- * indistinguishable from having DECLINED.
- *
- * ⚠⚠ SO THIS IS THE GUARD THAT STOPS A FOURTH PATH APPEARING WITHOUT ONE. It
- * discovers `prisma.user.create` / `tx.user.create` call sites BY SCANNING, not
- * from a list — a hand-maintained list is exactly what would miss the next one.
- */
 let pass = 0;
 const failures: string[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
@@ -44,12 +24,6 @@ const SELF = join("scripts", "check-tos.ts");
 const files = [...walk("src")].filter((f) => f !== SELF);
 const bodies = new Map(files.map((f) => [f, strip(readFileSync(f, "utf8"))]));
 
-/*
-  ⚠⚠ THE DISCOVERY IS A SCAN, NOT A LIST. Every `user.create` under `src/`.
-  Seeds and one-off scripts under `prisma/` are deliberately OUT of scope — a
-  seeded fixture is not a person who agreed to anything, and `E384` explicitly
-  refuses to fabricate acceptance for them.
-*/
 const CREATE_RE = /(?:prisma|tx)\.user\.create\(\s*\{[\s\S]*?\n\s{2,}\}\)/g;
 const sites: { file: string; body: string }[] = [];
 for (const [file, body] of bodies) {

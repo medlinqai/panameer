@@ -3,17 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 
-/**
- * Photo crop / zoom modal (brief_P / E019).
- *
- * Pick a file → pan and zoom inside a circular viewport → Attach. The crop is
- * applied client-side on a canvas and uploaded as a square PNG to the
- * owner-scoped endpoint from brief_O, so the server contract is unchanged.
- *
- * Canvas rather than a cropping dependency: the interaction is a pan + a zoom,
- * and the export is one `drawImage`, which isn't worth a library.
- */
-
 const VIEW = 280; // on-screen viewport (px)
 const OUT = 512; // exported image edge (px)
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;

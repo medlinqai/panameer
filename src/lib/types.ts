@@ -1,8 +1,3 @@
-/**
- * Client-facing shapes for the JSON returned by our API routes. These mirror
- * the lib return types (getMe, getPublicProviderProfile) after JSON transport
- * (Dates become ISO strings). Kept here so components share one source of truth.
- */
 
 export type Rates = {
   currency: string;
@@ -13,21 +8,6 @@ export type Rates = {
 export type Me = {
   /** `P1-ALL` — unread AND delivered. Drives the bell badge. */
   notificationsUnread: number;
-  /**
-   * ⚠ NULLABLE — A SIGNED-IN USER WITH NO `Person` IS A STATE THE APP CAN REACH
-   * (P1-ALL-E002).
-   *
-   * `/assess/claim` creates a `User` AND NOTHING ELSE, by design: "a Person needs
-   * a Company, and inventing an org record for someone who has answered eight
-   * questions would put a half-built tenant in the backbone for every curious
-   * visitor." `/api/me` used to answer 404 for exactly that person, so the shell
-   * degraded for a state its own funnel produces.
-   *
-   * It is not merely "the admin before onboarding" either: `P1-J1.2-E003` is the
-   * proof that Person-related state in this codebase DOES drift from what
-   * onboarding assumes, so "every account has a Person" is precisely the kind of
-   * invariant that should be typed rather than believed.
-   */
   person: {
     id: string;
     firstName: string;
@@ -38,18 +18,7 @@ export type Me = {
     status: string;
     roles: {
       isServiceBuyer: boolean;
-      /**
-       * USER_JOB Requester — owns a RequesterProfile. `getMe` has always sent
-       * this and the type never declared it, so every client reading `roles`
-       * was blind to the one flag that separates the person who asks for work
-       * from the one who administers the company's buying.
-       */
       isRequester: boolean;
-      /**
-       * USER_JOB Buyer — owns a `BuyerProfile` (`P1-A1.5-E444`). ⚠ DECLARED, not
-       * merely sent: `isRequester` was sent for weeks while the type omitted it,
-       * and a flag the type does not admit is a flag nobody reads.
-       */
       isBuyer: boolean;
       isServiceProvider: boolean;
       isServiceCoordinator: boolean;
@@ -64,7 +33,6 @@ export type Me = {
     vertical: string | null;
     website: string | null;
     logoUrl: string | null;
-    /** True when this person administers the company (E214). */
     isAdmin: boolean;
   } | null;
   /** Null whenever `person` is — same reason. */
@@ -75,7 +43,6 @@ export type Me = {
     validationStatus: "NOT_REQUESTED" | "REQUESTED" | "VALIDATED" | "REJECTED";
     completeness: number;
     paused: boolean;
-    /** `E306` — `onboarding_completed_at != null`. Gates the marketing nav. */
     published: boolean;
     /** J2.4 WS-B — the persona menu's "Online for messages" state. */
     availableForMessages: boolean;
@@ -95,7 +62,6 @@ export type PublicProviderProfile = {
   validated: boolean;
   headline: string;
   overview: string | null;
-  /** Null until the provider answers step 1 of the wizard (brief_P / E003). */
   /** Cross-cutting specializations (brief_R). */
   specializations: { id: string; name: string; kind: string }[];
   workTypes: string[];
@@ -112,7 +78,6 @@ export type PublicProviderProfile = {
   skills: { id: string; name: string; roleType: string }[];
   experience: {
     id: string;
-    /* ⚠ NULLABLE (`P1-J1.4-E373`). */
     employer: string | null;
     roleTitle: string;
     description: string | null;

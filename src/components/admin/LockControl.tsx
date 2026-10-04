@@ -3,31 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * THE LOCK CHECKBOX, MADE REAL (`P1-ALL-E528` PART A).
- *
- * ⚠⚠ IT USED TO BE `disabled` AND WRITE NOTHING. The page's own header said so:
- * *"No unlock, no edit, no delete… An action needs its own brief."* This is that
- * brief.
- *
- * ── ⚠⚠ THREE STATES, AND THEY ARE GENUINELY DIFFERENT ──────────────────────
- *
- *   not locked          nothing to do
- *   TIMED lock          ⚠ RELEASES ITSELF at `locked_until` (`E252a`)
- *   INDEFINITE lock     ⚠⚠ `locked: true` with a NULL `locked_until` — nothing
- *                       released it before this control existed
- *
- * ⚠ AN ADMIN WHO DOES NOT KNOW A TIMED LOCK SELF-RELEASES WILL PANIC, or will
- * unlock something that did not need unlocking. Saying which kind it is, and
- * when it ends, is the difference between the two.
- *
- * ── ⚠ ONLY UNLOCKING IS OFFERED ─────────────────────────────────────────────
- *
- * The box is only clickable when the account IS locked. Locking a member is a
- * new power over them and it is Scott's call, not chat's — the route rejects a
- * `"lock"` action today and the report says so.
- */
-
 type Props = {
   /** Person id — the route resolves the User from it. */
   personId: string;
@@ -36,15 +11,6 @@ type Props = {
   failedAttempts: number;
 };
 
-/**
- * ⚠⚠ THE THREE STRINGS. Proposed, not settled — Scott names things.
- *
- * ⚠ The time is rendered with the VIEWER's locale and timezone, not the
- * server's: an admin reading *"releases automatically at 14:52"* needs it in
- * their own clock, and this component is a client so it has one.
- * ⚠ The attempt count rides along because three failures and a lock are a
- * different situation from twenty.
- */
 export function lockStateLabel(
   locked: boolean,
   lockedUntil: Date | null,

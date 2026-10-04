@@ -1,8 +1,6 @@
 "use client";
 
-/* ⚠ `useRef` LEFT WITH THE COMPANY STEP (`E418`) — it held `companySubmit`. */
 import { useCallback, useEffect, useState } from "react";
-/* ⚠ THE ONE RESOLVER (`E729` WS-C). */
 import { countryName } from "@/lib/country";
 import { useRouter } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/WizardShell";
@@ -14,61 +12,15 @@ import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
-/**
- * The REQUESTER wizard — THREE steps on the provider's shell (P1-J1.2 WS2).
- *
- * ⚠⚠ THE COMPANY STEP IS GONE (`P1-A1.4-E418`, 2026-09-11) — the whole screen,
- * not just its requirement. Scott: *"Regarding the company… strip it all out."*
- * A company is captured ONCE, at work order acceptance (`lib/orders.ts`), so
- * that the web path and the ERP path agree on when a buyer becomes a company:
- * the PO is the first time a company name exists for an ERP client.
- *
- * ⚠ `CompanyStep` IS NOT DELETED (`E164`) — it is unimported HERE and lives on
- * for the work-order-acceptance capture. This file no longer references it, its
- * outcome type, or any company state.
- *
- * ⚠ IT WAS FOUR UNTIL `E418`, and FIVE UNTIL `P1-J1.1-E263` removed
- * `buyer_approver`.
- * The columns behind that screen are still on `RequesterProfile` and still in
- * the step route's zod schema — see `lib/requester-steps.ts` for why.
- *
- * WizardShell, OnboardingFrame and LocationFields are reused verbatim, so the
- * stepper, the footer band, the frame width and the address form are the same
- * objects the provider journey uses. Only the middle steps differ, which is
- * exactly the "one flow + role deltas" decision.
- *
- * SAVE-AS-YOU-GO, like the provider: every Continue posts its own step and the
- * server owns the resume point. There is no client-side progress to keep in
- * sync, and closing the tab on step 3 costs nothing.
- */
-
-/*
-  THE IN-WIZARD STEPPER'S LABELS — deliberately NOT the pre-flight card names.
-
-  `REQUESTER_STEP_LABELS` in `lib/requester-steps.ts` carries Scott's tile names
-  ("Requester Details" / "Location Details"). He named the TILES on the intro
-  page (`E259`), not this stepper, so the two are reported as different rather
-  than silently unified into one string. ⚠ DO NOT UNIFY THEM.
-  ⚠ SUPERSEDED, quoted: this map also held `buyer_approver: "Buyer & Approver"`
-  before `E263` removed that step, and `company: "Your Company"` before `E418`
-  removed the company step from every journey.
-*/
 const LABELS: Record<RequesterStep, string> = {
   requester_info: "Requester Information",
   work_location: "Work Location",
   review: "Review",
 };
 
-/*
-  ⚠ NO `companyId` / `companyName` (`E418`). The wizard collects no company at
-  all, so carrying either would be a field with no question behind it — and
-  `companyName` in particular was the signup placeholder, which is how a
-  requester ended up "working for a company named after themselves".
-*/
 type Draft = {
   firstName: string;
   lastName: string;
-  /* `E281` — both already columns on `Person`; the wizard just never asked. */
   photoUrl: string | null;
   title: string;
   phone: string;
@@ -107,53 +59,14 @@ export default function RequesterStepsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /*
-    ⚠ SUPERSEDED, quoted not deleted (`E418`): this wizard held five pieces of
-    company state — `companySubmit`, `companyValid`, `companyHasName`,
-    `companyBusy` and `pendingCompany` — to drive the embedded `CompanyStep` and
-    its define-or-join outcome. With no company question there is nothing to
-    submit, nothing to validate and no PENDING approval to wait on, because
-    nobody is claiming a company at registration any more.
-  */
-  /* `E281` — drives the SHARED `PhotoCropModal`, the provider wizard's own uploader. */
   const [photoModal, setPhotoModal] = useState(false);
 
-  /*
-    ── ⚠⚠ THE PHONE'S OWN COUNTRY, AND IT IS NOT THE ADDRESS'S (`P1-ALL-E417`) ─
-
-    ⚠ SUPERSEDED, quoted not deleted: `const phoneCountry = draft.address.country;`
-    with the note that *"it reads the SIGN-UP country instead… ⚠ UNDEFINED IS A
-    LEGAL ANSWER: `ruleFor(null)` returns null and `validatePhone` falls back to
-    a generic length check."*
-
-    ⚠⚠ THAT FALLBACK WAS THE DEFECT, NOT THE SAFETY NET. The sign-up form's
-    country select DEFAULTS to "United States" and step 1 never shows it, so an
-    Indian or Saudi requester who left the default was silently judged by the US
-    ten-digit rule — a nine-digit Saudi mobile came back *"too short"* and
-    `Continue` stayed dead, with nothing on screen naming the country it assumed.
-
-    SCOTT, 2026-09-12: *"The phone value validates against the SELECTED country
-    in that control, not the sign-up country and not `draft.address.country`."*
-
-    ⚠ SEEDED ONCE, THEN OWNED BY THE PICKER. `hydrate` sets it from the STORED
-    number first (E.164 carries its own country) and falls back to the sign-up
-    country; after that only the person moves it. ⚠ IT IS NEVER RE-POINTED AT
-    `draft.address.country` — Scott: *"do not overwrite one from the other."* A
-    consultant in Dubai with a British mobile is not a data-entry error.
-  */
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
 
   const hydrate = useCallback((s: {
     emailVerified: boolean;
     completed: boolean;
     resumeStep: string;
-    /*
-      ⚠ STILL ON THE PAYLOAD, NO LONGER READ HERE (`E418`). The status endpoint
-      keeps returning the binding — `/company` and the admin surfaces read it —
-      but this wizard asks no company question, so it consumes none of it.
-      ⚠ SUPERSEDED, quoted not deleted: `E274` added it so the Review row could
-      ask whether a company EXISTS rather than infer it from the resume point.
-    */
     company?: { bound?: boolean } | null;
     profile: {
       firstName: string; lastName: string; phone: string | null;
@@ -165,28 +78,6 @@ export default function RequesterStepsPage() {
     };
   }) => {
     const p = s.profile;
-    /*
-      ⚠⚠ THE WHOLE "IS THE PLACEHOLDER AN ANSWER?" PROBLEM IS GONE (`E418`).
-
-      ⚠ SUPERSEDED, quoted not deleted — two successive fixes to one defect:
-        `const companyAnswered =
-           REQUESTER_STEPS.indexOf(s.resumeStep) > REQUESTER_STEPS.indexOf("company");`
-        `const companyAnswered = !!s.company?.bound;`
-        `const companyName = companyAnswered ? (p.companyName ?? "") : "";`
-
-      Every account is still created with a company named after the person
-      (the P-Account → Company → Site → Address → Person backbone), and that
-      placeholder is still not an answer — which is why the review card showed
-      `COMPANY: Nora Requester` twice in this journey's history. `E418` removes
-      the QUESTION, so there is no field for a placeholder to leak into and no
-      "answered" to infer. The trap cannot re-open, because the screen it
-      re-opened on no longer exists.
-    */
-    /*
-      ⚠ THE STORED NUMBER IS THE FIRST SOURCE OF TRUTH (`E417`). A number saved
-      by this field is E.164, so it names its own country; only a legacy national
-      string or an empty field falls back to the sign-up country.
-    */
     const stored = parseStoredPhone(p.phone);
     setPhoneCountry(stored.country ?? p.address?.country ?? null);
 
@@ -224,39 +115,11 @@ export default function RequesterStepsPage() {
         router.replace("/join/requester");
         return;
       }
-      /*
-        ── ⚠⚠ THE UNBOUND BOUNCE IS GONE (`P1-A1.4-E418`) ──────────────────────
-
-        ⚠ SUPERSEDED, quoted not deleted (`P1-J1.2-E005`):
-          `const unbound = s.completed && !s.company?.bound;`
-          `if (s.completed && !unbound) { router.replace(".../ready"); return; }`
-          `setStep(unbound ? "company" : ((s.resumeStep as RequesterStep) ?? "company"));`
-
-        That branch existed to send a COMPLETED requester who had no
-        `CompanyMembership` back into the wizard, because `CompanyStep` was the
-        only UI in the codebase that could create one and it lived behind this
-        line. ⚠ IT NOW POINTS AT A STEP THAT DOES NOT EXIST, and keeping it would
-        strand exactly the people it was written to rescue: `indexOf` returns -1,
-        no branch matches, and the wizard renders a blank screen.
-
-        ⚠⚠ AND THE CONDITION IS NO LONGER A DEFECT TO CURE. Nobody gets a
-        membership at registration any more, so "completed with no binding" is
-        the NORMAL state of every requester — see `E418` on the transact gate,
-        which no longer reads a membership either. A completed requester belongs
-        on /ready, full stop.
-      */
       if (s.completed) {
         router.replace("/join/requester/ready");
         return;
       }
       hydrate(s);
-      /*
-        ⚠ AN UNKNOWN STORED STEP FALLS BACK TO STEP 1 rather than rendering
-        nothing. The nine rows stored on `company` were moved forward before the
-        enum changed, so this should never fire — it is here because a resume
-        point the wizard cannot match is a blank screen, and that failure mode
-        should not depend on a data migration having been perfect.
-      */
       const resume = s.resumeStep as RequesterStep;
       setStep(REQUESTER_STEPS.includes(resume) ? resume : REQUESTER_STEPS[0]);
       setReady(true);
@@ -265,34 +128,7 @@ export default function RequesterStepsPage() {
 
   const idx = REQUESTER_STEPS.indexOf(step);
 
-  /*
-    ── ⚠⚠ THIS STEP WAS ENTERED FROM REVIEW (`P2-J1.1-E504`) ─────────────────
-
-    > **SCOTT, 2026-09-13:** *"When I edited the title, it took me to the title
-    > page… AND forcing the user back thru the remaining registration steps
-    > again when this edit is done."* ⚠ ONE FIELD CHANGED, THREE SCREENS WALKED.
-
-    ⚠ ONE PIECE OF CLIENT STATE AND THREE THINGS READ IT: Continue returns to
-    Review instead of falling through to `idx + 1`, Back returns to Review
-    instead of `idx - 1`, and the button says so.
-
-    ⚠⚠ THIS IS A CLIENT NAVIGATION DEFECT ONLY — THERE IS NO DATA BUG.
-    `requester-onboarding.ts:534` already moves the resume point FORWARD ONLY,
-    in its own words: *"Stepping back to fix an answer and saving it shouldn't
-    rewind where a returning user lands."* ⚠ THE SERVER ALREADY KNEW WHAT THE
-    CLIENT DID NOT: that an edit is not a step backwards. Nothing on the server
-    is touched.
-
-    ⚠ IT IS NOT CLEARED ON ARRIVAL AT REVIEW, AND THAT IS DELIBERATE. The
-    Review step reads NONE of the three things below — it has no `nextLabel`, no
-    `back` and no `save()` — so a value left `true` there cannot mislead
-    anything, and the next `Edit` sets it again. ⚠ THE ALTERNATIVE WAS WORSE:
-    clearing it optimistically in `onContinue` would flip the button back to
-    `Next: …` on a FAILED save, while the user is still standing on the step
-    they were editing.
-  */
   const [fromReview, setFromReview] = useState(false);
-
 
   const save = async (payload: Record<string, unknown>, next?: RequesterStep) => {
     setBusy(true);
@@ -339,15 +175,6 @@ export default function RequesterStepsPage() {
     );
   }
 
-  /*
-    ⚠⚠ BACK MUST ALSO RETURN TO REVIEW — the same defect in the other direction.
-    ⚠ SUPERSEDED, quoted not deleted: `idx > 0 ? () => setStep(REQUESTER_STEPS[idx - 1])`.
-    Editing `Work Location` (idx 1) and pressing Back landed on `Requester
-    Information`. ⚠ IT IS INVISIBLE ON THE TITLE EDIT because idx 0 has no Back
-    at all, which is why Scott's screenshot does not show it.
-    ⚠ HERE THE FLAG IS CLEARED, because this navigation is synchronous and
-    cannot fail — unlike the save path above.
-  */
   const back = fromReview
     ? () => {
         setFromReview(false);
@@ -356,81 +183,14 @@ export default function RequesterStepsPage() {
     : idx > 0
       ? () => setStep(REQUESTER_STEPS[idx - 1])
       : undefined;
-  /*
-    ── ⚠⚠ `Finish later` ON EVERY STEP (`P1-J1.1-E245`, 2026-08-30) ───────────
-
-    `WizardShell` has taken `secondaryLabel` + `onSecondary` all along; this
-    wizard passed neither, so step 1's footer had an empty left slot
-    (`canBack: idx > 0`) and there was no way out of the flow at all except the
-    browser's back button.
-
-    ⚠ NOT "Cancel", DELIBERATELY. Nothing is cancelled by leaving: the account
-    exists, the ToS is accepted, the email is verified, every step already saved
-    itself, and `onboarding_step` brings them back to this exact screen. "Cancel"
-    would describe a destructive action the button does not perform.
-
-    ⚠⚠ ITS LANDING PAGE HAD TO BE FIXED FIRST. `/dashboard` for a requester with
-    `completed_at: null` showed *"Build a provider profile"* — the wrong side of
-    the marketplace. That branch is now in `(app)/dashboard/page.tsx`; without it
-    this button was an exit into a worse room than an empty one. Reported.
-
-    ⚠ ON THE REVIEW STEP TOO. Every step means every step — someone who reaches
-    the summary and wants to check a detail with their approver should not have
-    to abandon the tab to do it.
-  */
   const shell = {
-    /*
-      ── ⚠⚠ THE STEPPER LIES DURING AN EDIT (`E504`) — REPORTED, NOT DECIDED ──
-
-      ⚠ Scott's screenshot shows `REQUESTER INFORMATION · 1/3` and a one-third
-      progress bar ON A PROFILE THAT IS ALREADY COMPLETE. `1/3` tells a finished
-      user they are a third of the way through signing up — the same class of
-      defect as a row whose Edit went nowhere (`E279`): the chrome making a
-      promise the state contradicts.
-
-      ⚠ SO DURING A RETURN-TO-REVIEW EDIT THE COUNTER AND THE BAR ARE
-      SUPPRESSED. They measure a journey the user is no longer on.
-      ⚠⚠ NO COMPONENT CHANGE — `WizardShell.step` is already optional and its
-      own comment says omitting it hides the stepper. The mechanism existed.
-      ⚠⚠ THIS IS CHAT'S RECOMMENDATION, SHOWN NOT SHIPPED-BY-FIAT. Scott owns
-      the visual; the screenshot is in the report and he can say otherwise.
-      ⚠ WHAT IS NOT NEGOTIABLE EITHER WAY: `3/3` must not silently become `1/3`
-      for a completed profile.
-
-      ⚠⚠ AND THE `step !== "review"` GUARD IS LOAD-BEARING — A WALK CAUGHT IT.
-      The first cut read `fromReview ? undefined : idx + 1`, and because `shell`
-      is built for EVERY step including Review, saving an edit returned the user
-      to a Review screen with NO `3/3` at all. ⚠ That is the same defect as the
-      one being fixed, pointed the other way: the counter disappearing on the
-      one screen where it is true. ⚠ The suppression belongs to the STEP being
-      edited, never to Review itself.
-    */
     step: fromReview && step !== "review" ? undefined : idx + 1,
     totalSteps: REQUESTER_STEPS.length,
     stepLabel: LABELS[step],
     busy,
     onBack: back,
-    /* ⚠ An edit always has a way back — to Review, not to idx - 1. */
     canBack: fromReview || idx > 0,
     secondaryLabel: "Finish later",
-    /*
-      ⚠⚠ IT NOW SENDS THE WAY BACK (`P2-J1.1-E034`). ⚠ SUPERSEDED, quoted not
-      deleted: `onSecondary: () => router.push("/dashboard")` — the whole button.
-      It sent NOTHING, so "finish later" meant "hope you remember".
-
-      SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
-      registration...the other is finish the registration you started (or saved
-      for later)."* This is the click that sends the second one.
-
-      ⚠ FIRE-AND-LEAVE, DELIBERATELY. The navigation does NOT wait on the send:
-      the button's job is to get out of the wizard, and making that wait on an
-      email round-trip would make leaving feel broken when mail is slow. The
-      route is owner-scoped and idempotent, so nothing is lost by not awaiting.
-      ⚠ A failed send must not trap the person here either — the `catch` is
-      silent ON PURPOSE, and the route already logs the real reason.
-      ⚠ THE DESTINATION IS UNCHANGED. `/dashboard` is where LEAVING goes; the
-      EMAIL's button is what returns them to the wizard at their saved step.
-    */
     onSecondary: () => {
       void fetch("/api/onboarding/requester/finish-later", { method: "POST" }).catch(
         () => {}
@@ -438,13 +198,6 @@ export default function RequesterStepsPage() {
       router.push("/dashboard");
     },
   };
-  /*
-    ⚠⚠ NOT `Next: Work Location` ON AN EDIT. The button has to describe what the
-    click does, and on an edit it does not go to the next step at all.
-    ⚠ `Save & Return to Review` was chosen over `Done` / `Save`: it names BOTH
-    halves — the change is written AND you land back where you were — which is
-    exactly the promise Scott found broken.
-  */
   const nextLabel = fromReview
     ? "Save & Return to Review"
     : `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;

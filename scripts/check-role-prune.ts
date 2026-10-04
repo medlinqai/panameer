@@ -4,23 +4,6 @@ import { deriveRolesFromSkills, saveProviderStep } from "@/lib/onboarding";
 import { getProviderProfileView } from "@/lib/provider-profile-view";
 import type { ParsedResume } from "@/lib/resume/parse";
 
-/**
- * ⚠⚠ DOES THE ROLE STEP'S PRUNE EAT THE IMPORT? (`P2-J1.4-E507` / `E509` WS-A)
- *
- * ⚠ THE WALK ACCOUNT MEASURED 1 ProviderSkill ROW WHERE THE IMPORT MATCHED TEN.
- * `E416` had NOT regressed — the ten were written correctly as `SELF_ADDED` and
- * then DELETED by the role step, which prunes every skill whose role is not one
- * the provider "claimed":
- *     skill: { role_type_id: { notIn: roleTypeIds } }
- * ⚠⚠ THE PRUNE IS CORRECT. THE ROLE WAS WRONG. `Technology-Specific · Salesforce`
- * was derived by catalog size (`E509`), so ten Application-Specific skills were
- * strandable-by-definition and the only survivor was `ADFdi` — a name collision
- * that happens to live under Technology-Specific.
- *
- * ⚠ THIS ASSERTS THE ROOT FIX HOLDS: derive the role from the provider's OWN
- * skills, save it the way the role step does, and the imported skills SURVIVE.
- * ⚠ No AI, no network: the parsed payload is constructed.
- */
 let fail = 0;
 const assert = (c: boolean, label: string) => {
   console.log(`${c ? "ok   " : "FAIL "} ${label}`);
@@ -132,25 +115,6 @@ async function main() {
       console.log("skip  — no distinct second domain under this role to stale-test with");
     }
 
-    /*
-      ── ⚠⚠ THE ROUND TRIP: HIDDEN, NOT DELETED (`P2-J1.4-E517`) ───────────────
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          const afterWrong = await prisma.providerSkill.count({ … });
-          assert(
-            afterWrong < afterImport,
-            `a WRONG role prunes them (${afterImport} → ${afterWrong}) — the prune
-             is correct, the role was not`
-          );
-
-      ⚠⚠ THAT ASSERTION ENCODED THE MECHANISM, NOT THE RULE — it counted ROWS IN
-      THE DATABASE. The rule underneath is *"a skill from a role the provider
-      never claimed must not be PRESENTED as theirs"*, and Scott's ruling of
-      2026-09-17 changed how it is enforced: the rows stay and the profile filters
-      them. ⚠ This is `check:rollup`'s case, not `check:cert-skills`' — the RULING
-      changed, so the test follows it. The other five assertions here encode rules
-      and are untouched.
-    */
     const wrongRole = roles.find((r) => (r.display ?? r.name).startsWith("Technology"));
     await saveProviderStep(viewer, "roles", { roleTypeIds: [wrongRole!.id] } as never);
 

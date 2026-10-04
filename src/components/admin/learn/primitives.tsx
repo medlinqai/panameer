@@ -4,16 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { PLAYABLE_STATUSES } from "@/lib/learn";
 
-/**
- * Shared authoring controls for the Learn console.
- *
- * These exist because the brief requires the SAME three things — thumbnail,
- * text, video URL — at four levels of the hierarchy. Written per level they
- * would be four chances for the image upload or the URL validation to behave
- * differently at one level than another, which is exactly the kind of drift
- * that makes an authoring tool untrustworthy.
- */
-
 export const AUDIENCES = [
   { value: "BEGINNERS", label: "Beginners" },
   { value: "END_USER", label: "End Users" },
@@ -44,21 +34,6 @@ export const PRODUCTION_STATUSES = [
   { value: "BLOG_RELEASED", label: "Blog Released" },
 ];
 
-/**
- * Statuses that claim a video exists.
- *
- * ⚠⚠ IT IS `learn.ts`'s LIST, RE-EXPORTED — NOT A SECOND COPY OF IT
- * (`P2-A4-E610`). ⚠ It was a hand-typed duplicate of `PLAYABLE_STATUSES`,
- * byte-identical on 2026-09-23 and with nothing to keep it that way. ⚠⚠ A
- * hand-rolled copy agrees until the rule changes (`E585`), and this one had a
- * comment pointing at the original while still being a separate array — which
- * is the failure mode, not a mitigation of it.
- * ⚠ The NAME stays, because three call sites read it and `CLAIMS_URL` is the
- * right word in an authoring screen: the admin is looking at what a row
- * CLAIMS, not at what plays.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   export const CLAIMS_URL = ["URL_ADDED_TO_LESSON", "BLOG_CREATED", "BLOG_RELEASED"];
- */
 export const CLAIMS_URL: readonly string[] = PLAYABLE_STATUSES;
 
 export function Field({
@@ -92,12 +67,6 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea {...props} rows={props.rows ?? 3} className={INPUT} />;
 }
 
-/**
- * `inline` is a real variant rather than a className override: `w-full` is baked
- * into INPUT, and whether a passed-in `w-auto` beats it depends on stylesheet
- * order, not on the order of the class string. A filter row that silently
- * stacks full-width on some builds and not others is worse than a second prop.
- */
 export function Select({
   inline = false,
   ...props
@@ -158,14 +127,6 @@ export function StatusPill({ status }: { status: string }) {
   );
 }
 
-/**
- * Image picker used at every level.
- *
- * Uploads immediately and hands back a URL, rather than holding a File until
- * the parent form saves. An admin working through a 100-lesson path saves
- * constantly and in any order; deferring the upload would mean a lost image
- * every time a save failed for an unrelated reason, like a title collision.
- */
 export function ImageField({
   label,
   value,
@@ -246,11 +207,6 @@ export function ImageField({
   );
 }
 
-/**
- * Normalise a pasted Vimeo reference to an embed URL, mirroring
- * `vimeoEmbedUrl` in learn.ts so the console's preview and the learner's player
- * can never disagree about what a value means.
- */
 export function vimeoPreview(ref: string | null | undefined): string | null {
   const raw = ref?.trim();
   if (!raw) return null;
@@ -263,14 +219,6 @@ export function vimeoPreview(ref: string | null | undefined): string | null {
   return null;
 }
 
-/**
- * Video URL field with a live embed.
- *
- * The preview is the point: a URL that looks right and plays nothing is the
- * failure mode this whole brief is trying to end, and the only way to know is
- * to watch it load. An unparseable value says so immediately instead of being
- * discovered by a learner weeks later.
- */
 export function VideoField({
   label,
   value,

@@ -10,19 +10,6 @@ import {
 } from "@/components/public/MaskedProfileView";
 import { PublicPrimary, PublicSecondary } from "@/components/public/masked-ui";
 
-/**
- * ── ⚠⚠ THE SIGNED-OUT ARM OF `/providers/[id]` (`P2-A1.1-E738` WS-A) ──────
- *
- * ⚠ Its own component rather than a branch inside the route, so the signed-in
- * page's imports (`ConnectProfile`, `getMyCommunity`, `canMessage`,
- * `recordProfileView`) are not even reachable from the visitor path.
- *
- * ⚠⚠ `notAvailable` IS ONE PAGE FOR THREE DIFFERENT CAUSES — the profile does
- * not exist, it is not marketplace-visible, or its owner turned the masked
- * preview off. ⚠⚠⚠ **TELLING THEM APART WOULD CONFIRM TO A STRANGER THAT A
- * HIDDEN MEMBER EXISTS**, which is the thing the switch was turned on to
- * prevent. One page, one wording, no distinction.
- */
 export async function MaskedProviderPage({
   id,
   /** Where Join / Sign In should return to. Defaults to this profile. */
@@ -31,8 +18,6 @@ export async function MaskedProviderPage({
   id: string;
   backTo?: string;
 }) {
-  /* ⚠⚠ THE SCRAPE BRAKE (WS-C), BEFORE THE READ — a throttled caller should
-     not cost a database round trip. ⚠ Best-effort; see its header. */
   const allowed = await browseAllowed();
   const p = allowed ? await getMaskedProfile(id) : null;
   const dest = backTo ?? `/providers/${id}`;

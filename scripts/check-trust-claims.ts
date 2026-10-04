@@ -1,31 +1,3 @@
-/**
- * `check:trust-claims` — nothing claims a check Panameer has not run
- * (`P1-ALL-E035` WS-4).
- *
- * **THE POSITION, settled 2026-09-02:** Panameer verifies what it ASSERTS and
- * hosts what it does not. It asserts three things — email control (built), that
- * a company is a registered entity (⚠ `E282`, NOT BUILT), and that a person did
- * work for a client (built, and the strongest, because `ProjectValidation`'s
- * token only goes to an address at the client's own domain).
- *
- *   1  ⚠⚠ NO SHIPPED STRING CLAIMS A COMPANY IS VERIFIED, VETTED OR SCREENED
- *      WHILE `E282` IS UNBUILT. This is the assertion the whole file exists for.
- *   2  `terms.ts` IS GENERATED, NEVER HAND-EDITED — the header is asserted
- *      present, because editing the `.ts` is the one thing that guarantees a
- *      wording change is silently lost on the next `legal:build`.
- *   3  THE PUBLIC PAGE'S CLAIMS EACH HAVE A ToS COUNTERPART. ⚠ IMPLEMENTED AS A
- *      TOKEN CHECK, not a semantic one — see the note on assertion 3. A marketing
- *      page claiming more than the terms is the classic failure and it is worse
- *      than saying nothing.
- *
- * ⚠ COMMENTS ARE STRIPPED BEFORE ANY SCAN, reusing `check-community.ts`'s
- * `strip()`. This file names every forbidden token, and so does the ToS section
- * it guards — a scanner that read prose would fail on its own documentation, and
- * the fix for that is always to weaken the scanner.
- *
- * ⚠⚠ WHEN `E282` LANDS, ASSERTION 1 GETS RELAXED DELIBERATELY, BY A BRIEF, ON
- * THE RECORD. Not by editing this file because it went red.
- */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -45,7 +17,6 @@ const check = (name: string, ok: boolean, detail = "") => {
   else failures.push(`${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* ⚠ VERBATIM FROM `scripts/check-community.ts`. */
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 const read = (p: string) => (existsSync(p) ? strip(readFileSync(p, "utf8")) : "");
@@ -335,13 +306,6 @@ for (const st of ["Texas", "Colorado"]) {
 /* ⚠ EITHER APOSTROPHE. The sentence lives in a JS string literal, so it is a
    plain `'` — `&rsquo;` is only needed in JSX text, and the first draft of this
    assertion looked for the entity and went red on correct copy. */
-/* ⚠ SUPERSEDED BY `P1-A1.4-E408` — see the block above. Quoted, not deleted:
-     check(
-       "2a — and it says so plainly when the register does not",
-       /doesn(&rsquo;|')t publish a status/.test(stepSrc),
-       "New York must say we did not check, not inherit Colorado's wording"
-     );
-*/
 
 // ---------------------------------------------------------------------------
 // GUARD 2 — terms.ts is generated
@@ -359,11 +323,6 @@ check(
   "2 — the SOURCE markdown carries the draft banner too",
   /DRAFT, PENDING LEGAL REVIEW/.test(readFileSync(TOS_SRC, "utf8"))
 );
-/*
-  ⚠⚠ THE GENERATED FILE MUST MATCH ITS SOURCE. This is the assertion that catches
-  a hand-edit: if someone edits `terms.ts` directly, the section text will be in
-  the `.ts` and NOT in the `.md`, and the next `legal:build` silently reverts it.
-*/
 const tosSrc = readFileSync(TOS_SRC, "utf8");
 for (const heading of [
   "5. What we check, and what we don’t",
@@ -382,14 +341,6 @@ for (const heading of [
 // GUARD 3 — every public claim has a ToS counterpart
 // ---------------------------------------------------------------------------
 
-/*
-  ⚠⚠ IMPLEMENTED AS A TOKEN CHECK, AND SAYING SO PLAINLY IS PART OF THE JOB.
-  This does NOT prove the two say the same thing — no static check can. What it
-  proves is that for every claim the public page makes, a distinctive phrase from
-  that claim also appears in the Terms of Use. Delete the ToS clause and the page
-  goes red; add a new claim to the page with no ToS basis and it also goes red,
-  because the new claim has no anchor to add here honestly.
-*/
 const trust = read(TRUST_PAGE);
 const CLAIM_ANCHORS: { claim: string; page: RegExp; tos: RegExp }[] = [
   { claim: "5.1 email control", page: /controls the email address/i, tos: /controls this email address/i },
@@ -428,13 +379,11 @@ check("3 — and the footer links to it", FOOTER_LEGAL.some((e) => e.href === "/
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// ⚠⚠ E282 — THE VALIDATION IS PERSISTED, AND THE TRUST RULES HOLD AT REST.
 //
 // THE DEFECT THIS CLOSES: `validateEntity()` got a real answer from a state
 // register, with a source URL, and NOTHING WROTE IT DOWN — so "Company not yet
 // verified" could never flip, for anybody, ever.
 //
-// ⚠ THESE SEVEN GUARD THE THINGS THAT GO WRONG QUIETLY: a status with no
 // citation, a "verified" that secretly means "passed", a client-supplied trust
 // claim, and the read/write split that this brief is the most likely thing ever
 // to break.
@@ -449,10 +398,6 @@ const e282Route = readFileSync(
   "utf8"
 );
 
-/* ── 1 · ⚠⚠ A STORED STATUS NEVER EXISTS WITHOUT A SOURCE URL ─────────────
-   The SourcedField rule enforced AT REST, not just at render. A status with no
-   citation is exactly the unsourced trust claim this whole harness exists to
-   stop — it just survives a page reload. */
 for (const col of [
   "entity_validated_at",
   "entity_validation_status",
@@ -645,8 +590,6 @@ for (const st of ["Texas", "Colorado", "New York"]) {
     `https://${a.host}/resource/${a.dataset}.json` +
     `?$where=${encodeURIComponent(`starts_with(upper(${a.nameColumn}),'${needle}')`)}` +
     `&$limit=9`;
-  /* ⚠⚠ THE URL THE SEARCH CLOSURE ACTUALLY CAPTURED — not one rebuilt from the
-     adapter's own fields, which would agree with itself. See `socrataAdapter`. */
   check(
     `E387/1 — ⚠⚠ ${st}'s URL is byte-identical after the WS-1 refactor`,
     a.search.url?.(needle) === expected,
@@ -654,8 +597,6 @@ for (const st of ["Texas", "Colorado", "New York"]) {
   );
   check(`E387/1 — ${st}'s adapter exposes its URL builder`, typeof a.search.url === "function");
 }
-/* ⚠ AND THE INCUMBENTS' COORDINATES ARE UNCHANGED — the other way the refactor
-   could have moved a query is by editing the dataset id while wiring it up. */
 for (const [st, host, ds, col] of [
   ["Texas", "data.texas.gov", "9cir-efmm", "taxpayer_name"],
   ["Colorado", "data.colorado.gov", "4ykn-tg5h", "entityname"],
@@ -682,8 +623,6 @@ for (const st of SUPPORTED_STATES) {
   );
 }
 
-/* 2 · ⚠ NO `goodStanding` WHILE `publishesStatus` IS FALSE — that combination is
-   a claim about a register that publishes nothing to claim from. */
 for (const st of SUPPORTED_STATES) {
   const a = ADAPTERS[st];
   check(

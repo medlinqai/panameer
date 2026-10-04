@@ -3,19 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/**
- * ── ⚠⚠ THE PROFILE FOOTER — `P2-A1.1-E743` (super run 2 B3, lane 5) ───────
- *
- * ⚠ Two different things under one roof, and they never both render: the OWNER
- * gets a share bar, a VISITOR who can buy gets two ways to start work.
- *
- * ⚠⚠⚠ **IT SHIPS AFTER LANE 4 ON PURPOSE** (the super run says so): the share
- * bar hands out `/pro/<slug>`, and until `E738` that URL opened a sign-in screen.
- * ⚠ **A SHARE BAR THAT SHARES A LOGIN WALL IS WORSE THAN NO SHARE BAR** — the
- * person who clicks it learns only that they are not welcome.
- */
-
-/** ⚠ Plain share URLs, no SDKs — the brief. See `ShareBar`. */
 function shareLinks(url: string, text: string) {
   const u = encodeURIComponent(url);
   const t = encodeURIComponent(text);
@@ -159,16 +146,6 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
   );
 }
 
-/**
- * ── ⚠⚠⚠ THE VISITOR'S TWO PATHS — "How to work with <first name>" ─────────
- *
- * ⚠ **BUYERS ONLY** (`canHireTalent`), which the PAGE decides and passes in —
- * the same capability the Hire button and the API route both read.
- *
- * ⚠⚠ **NO CLAIMS ABOUT PAYMENT, TRIALS OR GUARANTEES** (the brief). Nothing
- * here says what anything costs, how fast money moves, or that anything is
- * refundable, because none of that is built.
- */
 export function HowToWorkWith({
   firstName,
   hireHref,
@@ -187,8 +164,7 @@ export function HowToWorkWith({
         <div className="rounded-brand border border-ink bg-ink p-4 text-white">
           <h3 className="text-[14.5px] font-bold">Hire {who} now</h3>
           <p className="mt-1 text-[13px] leading-relaxed text-white/80">
-            {/* ⚠ `E719`'s flow, which exists. The sentence describes the SHAPE
-                of the step, not a duration anybody guaranteed. */}
+            {}
             Request {who} directly. You can be under contract in minutes.
           </p>
           <Link
@@ -203,19 +179,7 @@ export function HowToWorkWith({
         <div className="rounded-brand border border-line bg-white p-4">
           <h3 className="text-[14.5px] font-bold">Describe what you need</h3>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
-            {/*
-              ── ⚠⚠⚠ THE WORDING IS LANE 5'S CORRECTION, AND THE REASON IS A
-                    MEASUREMENT ────────────────────────────────────────────────
-
-              ⚠ Super run 2's B3 drafted *"Post your work and see **every**
-              provider with matching skills."* ⚠⚠ **`_SUPER_RUN_2026-10-01b`
-              CORRECTS IT TO THIS LINE BECAUSE "EVERY PROVIDER" IS NOT TRUE:
-              only 3 of 60 profiles have skill weights today**, so a buyer told
-              they will see every match would meet a handful and conclude the
-              marketplace is empty.
-              ⚠⚠⚠ **"WHOSE SKILLS MATCH" PROMISES THE FILTER, NOT THE
-              COVERAGE** — which is exactly what the feature does.
-            */}
+            {}
             Post your work and see providers whose skills match.
           </p>
           <Link
@@ -226,8 +190,7 @@ export function HowToWorkWith({
           </Link>
         </div>
       </div>
-      {/* ⚠⚠ THE TWO STEPS AFTER EITHER PATH, NAMED SO THE BUYER KNOWS WHAT
-          HAPPENS NEXT. ⚠ No timing, no guarantee, no price. */}
+      {}
       <p className="mt-3 text-[12.5px] text-ink-2">
         Then: review the proposal &rarr; start the work.
       </p>

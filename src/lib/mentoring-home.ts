@@ -4,21 +4,6 @@ import { getCommunitySignal } from "@/lib/community-signal";
 import { ownedProviderProfile } from "@/lib/access";
 import type { Viewer } from "@/lib/access";
 
-/**
- * ── ⚠⚠ THE MENTORING PANELS (`P2-J3-E558` WS-C1) ──────────────────────────
- *
- * ⚠⚠ THE LABELS ARE THE RULING, NOT DECORATION. Scott, 2026-09-18:
- *   · `Members Following You as a Mentor` — ⚠ NOT *"People You Mentor"*. The old
- *     label asserts a relationship the person never agreed to. This panel is
- *     DEMAND: who has raised a hand, so the mentor can see the ask.
- *   · `Mentors You Follow` — ⚠ NOT *"People Who Mentor You"*. Same reason, other
- *     direction: FOLLOWING SOMEONE IS NOT BEING MENTORED BY THEM.
- *
- * ⚠ `ConnectionKind.MENTOR` IS A FOLLOW. `followMentor`/`unfollowMentor`,
- * `ACCEPTED` at creation because *"There was a response — it is 'none needed'."*
- * ⚠⚠ NO PENDING STATE WAS ADDED AND NONE IS WANTED. The consent lives on
- * `ProviderProfile.open_for_mentoring`, set once by the provider.
- */
 export async function getMentoringHome(viewer: Viewer) {
   const mine = await getMyCommunity(viewer);
 
@@ -32,10 +17,6 @@ export async function getMentoringHome(viewer: Viewer) {
     select: { id: true, open_for_mentoring: true },
   });
 
-  /* ⚠⚠ WHO FOLLOWS ME AS A MENTOR — the mirror of `following`. `getMyCommunity`
-     returns only a COUNT for this (`mentorConnectionCount`), because before
-     `E558` there was no surface that could act on the names. ⚠ The mentor needs
-     the NAMES now: seeing demand is the entire point of the panel. */
   const me = viewer.userId;
   const followerRows = await prisma.connection.findMany({
     where: { kind: "MENTOR", to_user_id: me },

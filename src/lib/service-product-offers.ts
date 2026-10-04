@@ -4,23 +4,6 @@ import type { Viewer } from "@/lib/access";
 import { notify } from "@/lib/notifications";
 import { formatCents } from "@/lib/display";
 
-/**
- * ── ⚠⚠⚠ THE SHOP OFFER: ACCEPT OR DENY, AND A DENY MAY CARRY A FLOOR ────────
- *
- * `P2-A6-E700`, rulings 94 and 94a. See `ServiceProductOffer` in the schema for the
- * shape and for why the open marker is a nullable uuid rather than a boolean.
- *
- * ⚠⚠ **SCOTT, 2026-09-28:** *"either it is an accept or deny. if the provider denies
- * it, the requester either buys it at list or removes it from their cart."*
- * ⚠ **AND:** *"the provider might tell them make another offer above $1000 or
- * something."*
- *
- * ⚠⚠⚠ **THERE IS NO COUNTER CHAIN AND NO FIELD FOR ONE.** A deny sets a status and
- * may carry a message and a floor; the buyer's next offer is a NEW ROW that must clear
- * that floor. **The seller never names a price they are bound to.**
- */
-
-/** The person behind this account. ⚠ Never taken from input (load-bearing rule 5). */
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
     where: { user_id: viewer.userId },
@@ -30,12 +13,6 @@ async function ownPerson(viewer: Viewer) {
   return person;
 }
 
-/**
- * The product, plus **who owns it right now**.
- *
- * ⚠⚠ The owner is resolved through `ProviderProfile.person_id`, because a service
- * product belongs to a PROFILE and an offer is answered by a PERSON.
- */
 async function loadProduct(serviceProductId: string) {
   const p = await prisma.serviceProduct.findUnique({
     where: { id: serviceProductId },
@@ -50,27 +27,12 @@ async function loadProduct(serviceProductId: string) {
     },
   });
   if (!p) throw new SourcingError("That service product doesn't exist.", "NOT_FOUND");
-  /*
-    ⚠⚠ A DRAFT PRODUCT CANNOT BE OFFERED ON. It is not on sale, and an offer against
-    something the seller has not published is a message they never asked to receive.
-  */
   if (p.status !== "PUBLISHED") {
     throw new SourcingError("That service product isn't published.", "NOT_PUBLISHED");
   }
   return p;
 }
 
-/**
- * ⚠⚠⚠ THE FLOOR THE BUYER'S NEXT OFFER MUST CLEAR, FROM THE MOST RECENT DENY.
- *
- * ⚠ Null when there was no deny, or the deny carried no floor — **both of which are
- * the common case**, and neither blocks an offer.
- *
- * ⚠⚠ **MOST RECENT, NOT LOWEST AND NOT HIGHEST.** A seller who denies at 1200 and
- * later denies at 900 has changed their mind downward, and the live guidance is the
- * last thing they said. Taking the lowest would let a buyer mine history for the
- * weakest number the seller ever gave.
- */
 async function currentFloor(buyerPersonId: string, serviceProductId: string) {
   const lastDeny = await prisma.serviceProductOffer.findFirst({
     where: {
@@ -84,13 +46,6 @@ async function currentFloor(buyerPersonId: string, serviceProductId: string) {
   return lastDeny?.deny_floor_cents ?? null;
 }
 
-/**
- * Make an offer on a published service product.
- *
- * ⚠⚠ **ONE OPEN OFFER PER (BUYER, PRODUCT) IS ENFORCED BY THE DATABASE**, not here —
- * the `@@unique([buyer_person_id, open_service_product_id])` constraint. This function
- * translates the refusal into a sentence; it does not implement the rule.
- */
 export async function makeOffer(
   viewer: Viewer,
   input: { serviceProductId: string; amountCents: number }
@@ -102,18 +57,6 @@ export async function makeOffer(
     throw new SourcingError("An offer needs a whole amount above zero.", "BAD_AMOUNT");
   }
 
-  /*
-    ── ⚠⚠⚠ THE FLOOR IS A GATE ON MAKING THE OFFER, NOT A PROMISE ABOUT IT ─────
-
-    ⚠ `>=`, NOT `>`, AND THE TENSION IS REAL AND RECORDED. Scott said *"make another
-    offer **above** $1000"*, which reads as `>`. The brief's acceptance criteria say
-    *"a re-offer **below** a given floor is refused"* and *"an offer **AT** the floor is
-    still deniable — proven"*.
-    ⚠⚠ **THE SECOND PAIR ONLY MAKES SENSE IF AN OFFER AT THE FLOOR CAN BE MADE**, so
-    `>=` is what satisfies the written criteria, and an offer exactly at the floor is
-    accepted as an OFFER and remains refusable as a DEAL.
-    ⚠ **FLAGGED FOR SCOTT: if he meant strictly above, this is one operator.**
-  */
   const floor = await currentFloor(me.id, product.id);
   if (floor != null && input.amountCents < floor) {
     throw new SourcingError(

@@ -10,22 +10,6 @@ import {
   signOff,
 } from "@/lib/email/shell";
 
-/**
- * WORK REQUEST REMOVED — Trust & Safety (WS-D).
- *
- * NO CTA BUTTON, deliberately, and it is the one email in the suite without
- * one. There is nothing to click that helps: the request is already gone, the
- * account is fine, and a magenta button under bad news reads as an upsell. The
- * only route offered is the reply address, which is where an appeal belongs.
- *
- * THE TONE IS THE DECK'S AND IT MATTERS. "Give the details another pass and
- * you're welcome to repost. If you think this was a mistake, reply and a person
- * will look." A removal notice that sounds automated and final is how a
- * good-faith requester leaves for good.
- *
- * ⚠ NOT WIRED — there is no moderation flow. Nothing in the admin console
- * removes a Work Request today, so there is no action to hang this on.
- */
 export function workRequestRemovedTemplate({
   firstName,
   workRequestTitle,

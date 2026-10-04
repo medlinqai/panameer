@@ -14,26 +14,6 @@ import {
   PublicSecondary,
 } from "@/components/public/masked-ui";
 
-/**
- * ── ⚠⚠⚠ THE NAMED PUBLIC PROFILE — `/in/<slug>`, OPT-IN (`P2-A1.1-E738`) ──
- *
- * ⚠⚠ **IT RENDERS ONLY WHAT SCOTT LISTED AS "ON":** *"name, photo, employers
- * shown to anyone, no sign-in; client names follow `clientNameVisibility`;
- * rates and contact need a free sign-up."*
- *
- * ⚠⚠⚠ **THREE THINGS ARE STILL WITHHELD HERE AND THAT IS NOT AN OVERSIGHT:**
- *   · ⚠ **THE RATE** — not in the payload at all (`NamedProfile` extends
- *     `MaskedProfile`, which has no rate field). Scott: *"rates and contact need
- *     a free sign-up."*
- *   · ⚠ **CONTACT DETAILS** — same; there is no email or phone field to render.
- *   · ⚠⚠ **CLIENT NAMES** — scrubbed from free text in `getNamedProfile`,
- *     because `clientNameVisibility`'s visitor arm withholds them even on a
- *     `PUBLIC` project. ⚠⚠⚠ **A MEMBER OPTING IN TO THEIR OWN NAME IS NOT
- *     OPTING IN ON A CLIENT'S BEHALF.**
- *
- * ⚠ This component CANNOT be used for a member who has not opted in: it takes
- * `NamedProfile`, and `getNamedProfile` returns null for everybody else.
- */
 export async function NamedProfilePage({
   p,
   slug,
@@ -41,9 +21,6 @@ export async function NamedProfilePage({
   p: NamedProfile;
   slug: string;
 }) {
-  /* ⚠ The same best-effort brake as the masked surfaces. ⚠⚠ It is applied even
-     though this page is explicitly public: the member published their NAME, not
-     a bulk feed of their work history. */
   if (!(await browseAllowed())) {
     return (
       <Shell>

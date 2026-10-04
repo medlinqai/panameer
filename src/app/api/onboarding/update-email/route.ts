@@ -6,14 +6,6 @@ import { issueEmailVerification } from "@/lib/verification";
 
 const schema = z.object({ email: z.string().trim().email().max(200) });
 
-/**
- * POST /api/onboarding/update-email — correct a mistyped email while still
- * unverified, then re-send verification to the new address.
- *
- * Note: NextAuth's JWT still carries the old email in `session.user.email`
- * until re-login, but identity is keyed on the user id (viewer.userId), so
- * verification + the wizard keep working against the updated address.
- */
 export async function POST(request: Request) {
   const viewer = await getSessionViewer();
   if (!viewer) {

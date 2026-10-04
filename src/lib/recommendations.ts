@@ -7,24 +7,6 @@ import { sendEmail } from "@/lib/resend";
 import { recommendationRequestTemplate } from "@/lib/email/templates/recommendation-request";
 import { displayFullName } from "@/lib/display";
 
-/**
- * REQUEST RECOMMENDATIONS (J2.4 WS-F / E012).
- *
- *   provider writes to a contact → contact gets a branded email → they write a
- *   recommendation (or decline) → it appears in the provider's Testimonials.
- *
- * Built on the project-validation infrastructure rather than beside it: same
- * 32-byte token stored as a SHA-256 hash, same 30-day TTL, same dev-link
- * fallback when Resend isn't configured. The two flows ask a contact different
- * questions but they ask them the same way, and a second token scheme would be
- * a second thing to get wrong.
- *
- * THE ACQUISITION HOOK IS CONDITIONAL. When the address doesn't belong to a
- * Panameer account, the email and the landing page invite the recipient to
- * create their own profile. When it does, they don't — recruiting somebody who
- * already signed up reads as a product that doesn't know its own users.
- */
-
 /** 30 days. A busy former client will not answer within 24 hours. */
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -32,9 +14,6 @@ const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export class RecommendationError extends Error {
   constructor(
     message: string,
-    /* ⚠ "RATE_LIMITED" ADDED BY `P2-J3-E558` WS-A. ⚠ SUPERSEDED, quoted not
-       deleted (`E164`):
-           public code: "NOT_A_PROVIDER" | "INVALID" | "EXPIRED" | "ALREADY_ANSWERED" */
     public code:
       | "NOT_A_PROVIDER"
       | "INVALID"
@@ -75,42 +54,6 @@ async function ownedProfile(viewer: Viewer) {
   return profile;
 }
 
-/**
- * Ask a contact for a recommendation.
- *
- * OWNER-SCOPED: the profile is resolved from the session, so the row can only
- * ever be attached to the caller's own profile — nothing in the request names a
- * record.
- */
-/**
- * ── ⚠⚠⚠ THE RATE LIMIT (`P2-J3-E558` WS-A) ────────────────────────────────
- *
- * ⚠⚠ THIS ENDPOINT WAS UNLIMITED, AND `colleague-invite.ts:41` RECORDED THE GAP
- * IN ITS OWN COMMENT: *"`/recommendations` HAS NO LIMIT AND IS NOT TOUCHED HERE
- * — that gap is…"*. ⚠ It was survivable while the ask lived behind the account
- * menu. ⚠⚠ `E558` MOVES IT ONTO A PAGE LISTING EVERY COLLEAGUE, WHICH PUTS AN
- * UNLIMITED ENDPOINT ONE CLICK FROM EVERY ROW. That is the hole this closes.
- *
- * ⚠⚠ COUNTED IN THE DATABASE, TWO WINDOWS — the same shape as
- * `INVITE_LIMIT_PER_HOUR` / `PER_DAY`. ⚠ NOT an in-process counter: that resets
- * every deploy and is per-instance, which on serverless is no limit at all.
- * (`E528B` shipped exactly that weakness and it is recorded as known-weak.)
- *
- * ⚠ THE NUMBERS, AND WHY THEY ARE HALF THE INVITATION LIMITS (10/40):
- * an invitation costs the recipient one decision; a recommendation asks them to
- * WRITE PROSE ABOUT SOMEBODY. It is a heavier ask on a rarer occasion, so it
- * gets a tighter allowance.
- * ⚠ 20/day still lets a provider work through a twenty-person roster in one
- * sitting, which is the legitimate burst when this feature first appears.
- * ⚠⚠ REPORTED FOR SCOTT TO OVERRULE — the brief asks for the chosen numbers,
- * not for a number nobody stated.
- *
- * ⚠ LinkedIn's model, for reference (measured 2026-09-17): no published cap,
- * roughly 100 invitations per rolling 7 days, and the real limiter is
- * ACCEPTANCE RATE plus pacing — a large pending pile is itself a trigger.
- * ⚠⚠ WE CANNOT COPY THAT: acceptance-rate throttling needs a history this
- * product does not have yet. A fixed two-window cap is the honest stand-in.
- */
 export const RECOMMENDATION_LIMIT_PER_HOUR = 5;
 export const RECOMMENDATION_LIMIT_PER_DAY = 20;
 
@@ -144,17 +87,6 @@ export async function requestRecommendation(
 ): Promise<{ sent: boolean; devLink?: string; offPlatform: boolean }> {
   const profile = await ownedProfile(viewer);
 
-  /*
-    ⚠⚠ THE LIMIT IS ENFORCED HERE, NOT IN THE ROUTE, for the reason `E386` put
-    suppression in the transport: there is ONE of these and there are many ways
-    to call it. A check in the route is a check a second caller can forget.
-    ⚠ IT RUNS BEFORE ANY WRITE and before the user lookup — a refused ask must
-    not leave a trace or cost a query.
-    ⚠ A RESEND TO THE SAME CONTACT REWRITES ONE ROW rather than creating one, so
-    it does NOT consume allowance. That is deliberate: nudging one person twice
-    is not the abuse this guards against, and counting it would punish the
-    careful case while leaving the broad one unchanged.
-  */
   const allowance = await recommendationAllowance(profile.id);
   if (allowance.hourRemaining <= 0 || allowance.dayRemaining <= 0) {
     throw new RecommendationError(
@@ -165,11 +97,6 @@ export async function requestRecommendation(
 
   const email = normalizeEmail(input.contactEmail);
 
-  /*
-    Is this person already on Panameer? Decided HERE and stored, not computed at
-    render time: the invite belongs to the moment of asking, and a contact who
-    signs up next week should not retroactively change what we said to them.
-  */
   const existing = await prisma.user.findFirst({
     where: { email },
     select: { id: true },
@@ -182,19 +109,6 @@ export async function requestRecommendation(
     profile.person.last_name
   );
 
-  /*
-    ONE LIVE ASK PER (PROFILE, ADDRESS). A provider nudging the same contact
-    again gets a fresh token on the SAME row rather than a second row the
-    contact could answer independently — two testimonials from one ask is not a
-    state that should be reachable.
-
-    An UNANSWERED row is rewritten; an answered one is left alone and a new ask
-    is created beside it, because a second recommendation from a contact who
-    already gave one is a legitimate thing to want and overwriting their first
-    would destroy it. Done as find-then-write rather than `upsert` because the
-    key here is a pair with no unique constraint, and inventing one purely to
-    satisfy upsert's signature would constrain the answered case too.
-  */
   const fields = {
     contact_name: input.contactName.trim().slice(0, 120),
     contact_off_platform: offPlatform,

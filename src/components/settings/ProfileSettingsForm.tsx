@@ -12,14 +12,6 @@ import {
 } from "@/components/settings/controls";
 import { visibilityHelp } from "@/lib/visibility-copy";
 
-/**
- * Profile Settings (J2.4 WS-H / E015).
- *
- * NO EXPERIENCE-LEVEL PICKER (Confirm #1) and no competitor taxonomy
- * (Confirm #2) — see the page comment. The de-branding also removes "power
- * Upwork" from the AI-preference copy, which is a sentence that would have gone
- * out under Panameer's name recommending somebody else's product.
- */
 type Settings = {
   paused: boolean;
   completeness: number;
@@ -54,29 +46,10 @@ export function ProfileSettingsForm({
     <div className="space-y-4">
       <Card
         title="Visibility"
-        /*
-          ── ⚠⚠⚠ THE SAME SENTENCE AS `/profile`, FROM THE SAME MODULE (`E718` item 8) ──────
-
-          ⚠ **SCOTT: *"Apply the same wording to `/settings`, so both places say the same
-          thing."*** ⚠⚠ `E716` shipped the new wording on the profile and left this line
-          reading *"Pausing hides your profile…"*, and **reported the divergence rather than
-          fixing it**, because that brief's instruction was report-only. This closes it.
-          ⚠⚠⚠ **IT IMPORTS THE STRING INSTEAD OF REPEATING IT.** Typing the new sentence here
-          would rebuild the exact defect being fixed — one control described two ways on two
-          screens (`E585`).
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   description="Whether buyers can find you in the marketplace. Pausing hides your
-          //     profile without deleting anything — your work history, service products and
-          //     skills are exactly where you left them."
-        */
         description={visibilityHelp(!settings.paused)}
       >
         <ToggleRow
           label="Visible to buyers"
-          /* ⚠ THE COMPLETENESS HINT IS GONE with the same line on `/profile` — Scott removed
-             the figure because the Search Score block states it. ⚠ SUPERSEDED (`E164`):
-             //   hint={`Your profile is ${settings.completeness}% complete. Completeness is
-             //     what earns visibility; this switch is how you turn it off deliberately.`} */
           checked={!settings.paused}
           onChange={async (next) =>
             (await postSetting("/api/settings/profile", { paused: !next })) === null
@@ -166,11 +139,7 @@ export function ProfileSettingsForm({
           </>
         )}
         <p className="mt-4 text-[13px] text-ink-2">
-          {/*
-            One editor for one dataset. The wizard's skills step filters by the
-            roles you claimed and enforces the cap; a second picker here would
-            have to reimplement both, and would eventually disagree.
-          */}
+          {}
           <Link
             href="/join/provider?step=skills&return=review"
             className="font-semibold text-magenta hover:underline"

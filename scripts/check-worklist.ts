@@ -1,18 +1,3 @@
-/**
- * ── `check:worklist` (`P2-ALL-E802`) ────────────────────────────────────────
- *
- * ⚠ **SCOTT, 2026-10-03:** *"Waiting on You lists 'A buyer sent you a skills
- * test' 5 times — show each pending test once."*
- *
- * ⚠⚠⚠ **THE MEASUREMENT CAME FIRST AND IT CHANGED THE FIX.** Those rows were
- * NOT duplicates: eighteen `work.test_requested` notifications, each with its
- * own `dedupe_key`, `entity_id` and href. ⚠ Every one was ORPHANED — its
- * `TestRequest` and `WorkRequest` were gone, so no action a member can take
- * could ever clear it. That half is fixed in `check-interviews.ts`, whose
- * teardown had omitted this one event in three separate places.
- * ⚠⚠ This gate holds the other half: identical titles collapse, and the count
- * beside them is the TRUE total rather than a tally of the rows fetched.
- */
 import { groupWorklist } from "@/lib/worklist";
 
 const failures: string[] = [];
@@ -108,11 +93,6 @@ check(
   groupWorklist([], new Map(), 5).length === 0,
   "nothing waiting is a legitimate state; the panel renders nothing for it",
 );
-/**
- * ⚠ A title missing from the map falls back to 1 rather than to 0 or NaN. A
- * figure of 0 beside a row that is plainly there would be the "uncountable vs
- * real zero" confusion the 2026-09-23 counting rules exist to prevent.
- */
 check(
   "9 — a title absent from the count map reads 1, never 0",
   groupWorklist([row("z", "unmapped", "2026-09-01T00:00:00Z")], new Map(), 5)[0]?.count === 1,

@@ -1,38 +1,3 @@
-/**
- * `dev:reset-resume` — clear ONE profile's résumé-sourced sections so an import
- * can be re-run (`P1-A1.4-E407` WS-8).
- *
- * ── ⚠⚠ WHY THIS IS A SCRIPT AND NOT A BUTTON ──────────────────────────────
- *
- * SCOTT: *"Can I re-run the resume creation? So I could delete this whole run,
- * you write a fix, then i re-run it?"* — and then the right order: *"oops i run
- * the brief… then re-run the resume parser."* That loop did not work, for two
- * measured reasons: `applyParsedResume` is ADDITIVE (it de-duplicates against
- * what is there and never clears), and the "read it again" panel is hidden once
- * `employers.length > 0` — the very state that makes somebody want a re-read.
- *
- * ⚠⚠ THE PREFERRED FIX IS BLOCKED, AND THIS IS THE REPORTED REASON. Replacing
- * only the rows a previous import created needs to know WHICH rows those are,
- * and **the schema does not record it**: `ProfileImport` is referenced by
- * nothing except `ProviderProfile.imports`, and no Employer, Skill, Education,
- * Language or Certification row carries an import id or an `origin`. An imported
- * row and a hand-typed one are INDISTINGUISHABLE. `E407`: *"if you cannot tell
- * them apart, STOP AND REPORT rather than guessing, because the failure mode is
- * deleting a provider's own work."* Adding provenance is a schema change and
- * needs Scott's word, so it is reported, not built.
- *
- * ⚠ SO THIS IS THE BRIEF'S OPTION 3 — a DEV-ONLY reset, run deliberately by a
- * person, against ONE named email. ⚠⚠ IT IS NOT A USER-FACING CONTROL. No route,
- * no button, no API. Shipping a destructive control to providers to solve a
- * testing problem is exactly what `E407` forbids.
- *
- * ⚠ IT REFUSES TO DELETE WITHOUT `--yes`. A dry run is the default: it prints
- * every count first, so the person sees what is about to go before it goes.
- *
- * USAGE
- *   npm run dev:reset-resume -- someone@example.com          # dry run, prints counts
- *   npm run dev:reset-resume -- someone@example.com --yes    # actually clears
- */
 import { prisma } from "@/lib/prisma";
 
 async function main() {

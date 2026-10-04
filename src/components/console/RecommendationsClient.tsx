@@ -3,14 +3,6 @@
 import { useRouter } from "next/navigation";
 import { RecommendationComposer } from "@/components/console/RecommendationComposer";
 
-/**
- * The composer plus the record of what has been asked (J2.4 WS-F / E012).
- *
- * `router.refresh()` after a send rather than local list state: the server
- * component above owns the query, and re-running it is both less code and
- * incapable of disagreeing with the database. The list is small and the refresh
- * is cheap.
- */
 export type RecommendationRow = {
   id: string;
   contact_name: string;

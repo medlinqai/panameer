@@ -1,25 +1,4 @@
-/**
- * ── THE PLAN VIEW — PUBLIC ON `/status`, A WORK ORDER IN R2 (`P2-ALL-E785`) ──
- *
- * ⚠⚠ **A SERVER COMPONENT WITH ONE CLIENT ISLAND.** The accordions are
- * `<details>`/`<summary>`, which open and close, take focus and announce
- * themselves with nothing hydrated. ⚠ `/status` is the page a stranger lands on
- * first; making its main content depend on a bundle is the wrong trade.
- * ⚠⚠⚠ **THE EXCEPTION IS `PlanTimeline` (`E797`)**, which hydrates because
- * Scott asked for collapsing phases — a `<details>` cannot drive a Gantt row's
- * siblings. ⚠ **SUPERSEDED, quoted not deleted (`E164`):**
- * //   A SERVER COMPONENT WITH NO CLIENT JAVASCRIPT.
- *
- * ⚠⚠⚠ **IT RENDERS `PublicPlan` AND NOTHING ELSE.** That type has no
- * `admin_note` and no `hours` field, so this file cannot leak either — the
- * guarantee is in the shape, not in this component remembering.
- */
 import type { PublicPlan, PublicPlanRow } from "@/lib/plan/public";
-/**
- * ⚠⚠ **THE TIMELINE IS THE ONE CLIENT ISLAND ON THIS PAGE (`E797`)** — phases
- * collapse, which needs state. ⚠ Everything else here stays server-rendered,
- * and the accordions are still `<details>`/`<summary>` with nothing hydrated.
- */
 import { PlanTimeline } from "./PlanTimeline";
 import { PlanGrid } from "./PlanGrid";
 
@@ -27,8 +6,6 @@ const HEAD = "font-display font-bold tracking-[-0.3px]";
 
 export function PlanView({ plan, today }: { plan: PublicPlan; today: string }) {
   if (plan.rows.length === 0) {
-    /** ⚠⚠ At genuine zero, say what is true rather than drawing an empty
-     *  chart. A timeline with no rows is not a timeline. */
     return (
       <section className="mt-12 border-t border-line pt-6">
         <h2 className={`text-[24px] text-ink ${HEAD}`}>The plan</h2>

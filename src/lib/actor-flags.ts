@@ -1,11 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-/**
- * The four actor-role flags, sourced from the User's linked Person. These are
- * the "roles as variables" that ride in the JWT/session (brief_J). Defaults are
- * all-false, so a user with no linked Person yet (mid-signup, system admin
- * before onboarding) simply has no actor capabilities — fail closed.
- */
 export type ActorFlags = {
   isServiceBuyer: boolean;
   isServiceProvider: boolean;

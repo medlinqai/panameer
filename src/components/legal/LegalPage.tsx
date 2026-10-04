@@ -5,27 +5,6 @@ import { linkifyLegal, type LegalDoc } from "@/components/legal/crossrefs";
 import { LegalDocNav } from "@/components/legal/LegalDocNav";
 import type { LegalHeading, LegalNode } from "@/content/legal/types";
 
-/**
- * A legal document page (brief_legal_pages_content WS-A).
- *
- * These routes used to say "this document isn't published yet", which was the
- * honest answer while there was no text. There is text now — adapted by Scott
- * from a source document — so the page renders it, with two things it must not
- * overstate:
- *
- *   1. IT IS A DRAFT. The banner says so, in the first thing you read, and the
- *      recorded acceptance is still against a version marker rather than
- *      counsel-approved terms. Nothing here may read as legally vetted.
- *   2. IT IS INCOMPLETE. Two tables in the Privacy Policy did not survive
- *      extraction from the source PDF, and the page SAYS a table is missing
- *      rather than closing the gap silently. A legal document with an invisible
- *      hole is worse than one with a labelled hole: the reader cannot tell the
- *      difference between "not collected" and "not rendered".
- *
- * The contents list is built from the document's own headings rather than the
- * source's table of contents, so it cannot come to disagree with the sections
- * underneath it.
- */
 export function LegalPage({
   title,
   version,
@@ -51,13 +30,6 @@ export function LegalPage({
   backHref?: string;
   backLabel?: string;
 }) {
-  /*
-    ANCHORS ARE ASSIGNED IN ONE PASS so the contents list and the headings
-    cannot disagree, and so a repeated section number gets a distinct anchor
-    rather than a duplicate id. The API Terms number their definitions 1, 2, 3
-    inside section 2, which collides with sections 1, 2, 3 — legitimately, in
-    the source — and an id that appears twice sends every link to the first one.
-  */
   const seen = new Map<string, number>();
   const ids = doc.map((n) => {
     if (n.t === "gap" || n.t === "p" || n.t === "table") return "";

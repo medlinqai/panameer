@@ -5,42 +5,6 @@ import { employerDisplayName } from "@/lib/employer-display";
 import { ProjectCard, dateRange, type EmployerItem, type ProjectItem } from "@/components/profile/sections";
 import { ValidatedBadge, ValidationPending } from "@/components/profile/ValidatedBadge";
 
-/**
- * One Work-History entry — PJv2 WS3, matching "Profile Review Mock up" pg1.
- *
- * Shape: the EMPLOYER as the heading with the ROLE on a sub-line beneath it,
- * and the date range on the right. ⚠ It was `Employer · Role Title` on one line
- * until `P1-J1.4-E295` (2026-09-02) — see the block at the heading.
- * right-aligned, the description beneath, then a row of four evenly-spaced
- * magenta links:
- *
- *   Read More · Projects · Artifacts · Contact
- *
- * All four are DISCLOSURES, not navigations. `Projects` expands this employer's
- * project cards in place rather than jumping to a Projects section, because
- * after E074 the only projects section on the page is **Solo Projects** — which
- * by definition holds the ones with no employer. A `#project-<id>` jump would
- * therefore land on nothing for exactly the projects this link is about. The
- * cards still carry their `#project-<id>` ids, so any external anchor into a
- * project keeps resolving.
- *
- * Artifacts (WS4) and Contact (WS5) render only when there is something behind
- * them; a link that opens an empty panel is worse than an absent one.
- */
-/*
-  A résumé SECTION HEADING is not a job title (WS4 / E145).
-
-  The heuristic parser splits on headings, and where a heading sat alone above
-  the entries it became the entry itself — the profile then rendered
-  "(Employer not detected) · ROLES", and also "· PRIOR ROLE-TYPES". Those are
-  shouted section labels, not something anyone did for a living.
-
-  Suppressed at RENDER rather than only fixed in the parser, because the bad
-  rows are already in the database: a parser fix helps the next import and does
-  nothing for a profile that was imported last week. Deliberately narrow — an
-  all-caps title of three words or fewer that is one of the known headings —
-  so a real title like "CTO" or "VP SALES" is untouched.
-*/
 const HEADING_WORDS = /^(roles?|prior role[- ]types?|role[- ]types?|experience|employment|work history|career( experience)?|positions?)$/i;
 
 function displayRole(title?: string | null): string | null {
@@ -51,7 +15,6 @@ function displayRole(title?: string | null): string | null {
   return t;
 }
 
-/** The separator between the action links (E089). */
 function Dot() {
   return (
     <span aria-hidden className="text-[13px] text-ink-2/45">
@@ -67,17 +30,6 @@ export function WorkHistoryEntry({
   artifactsSlot,
   contactSlot,
   condensed = false,
-  /*
-    ── ⚠⚠⚠ THE ROLE LEADS, OPT-IN (`P2-A2-E715` row 12) ────────────────────────
-
-    ⚠ **SCOTT'S MOCKUP: *"the role title in bold, then the company under it in grey."***
-    ⚠⚠ **IT IS A PROP AND IT DEFAULTS OFF FOR THE REASON THIS FILE ALREADY RECORDS AT `E084`:
-    THIS IS THE ONE SHARED COMPONENT, so the wizard review, the profile editor and the public
-    profile cannot drift apart.** ⚠⚠⚠ `/join/provider` renders it through `WorkHistoryBody`
-    at `:2525` and `:3907` and **must look exactly as it does now** — swapping the default
-    would restyle the onboarding review, which is the one page this brief may not touch.
-    ⚠ Same shape as `timeline` (`E713`): opt in at the call site, never edit the default.
-  */
   roleFirst = false,
 }: {
   employer: EmployerItem;
@@ -90,17 +42,6 @@ export function WorkHistoryEntry({
   artifactsSlot?: React.ReactNode;
   /** WS5 — rendered inside the Contact disclosure when present. */
   contactSlot?: React.ReactNode;
-  /**
-   * CONDENSED — one tight line per role (brief_provider_home_page_v2 WS1/E146).
-   *
-   * The "You're live" page has to fit on ONE screen so it reads as "here's your
-   * live profile" rather than an endless scroll. A provider with seven roles,
-   * each carrying two clamped lines of description, is already three screens
-   * before the sections below it. So the description is withheld entirely here
-   * and Read More becomes the way to get it — the affordance the mockup already
-   * shows, now doing real work instead of expanding text that was half-visible
-   * anyway.
-   */
   condensed?: boolean;
 }) {
   const [open, setOpen] = useState<null | "more" | "projects" | "artifacts" | "contact">(null);
@@ -120,18 +61,6 @@ export function WorkHistoryEntry({
 
   const description = employer.description ?? "";
 
-  /*
-    E119 — "Read More" was greyed out on entries that plainly had more to read.
-    The test was `description.length > 180`, a guess at what 180 characters looks
-    like — but the clamp is `line-clamp-2`, and how much fits in two lines depends
-    on the card's width and where the words break. A 150-character description in
-    a narrow column is clamped and got a dead link; a 200-character one in a wide
-    column isn't clamped and got a live link that did nothing visible.
-
-    So ask the DOM instead of guessing: the text is truncated exactly when its
-    scroll height exceeds its client height. Re-measured on resize, because the
-    same entry can be clamped at one width and not at another.
-  */
   const textRef = useRef<HTMLParagraphElement | null>(null);
   const [isLong, setIsLong] = useState(false);
   // Condensed hides the paragraph outright, so the clamp never measures and
@@ -158,49 +87,12 @@ export function WorkHistoryEntry({
 
   return (
     <div>
-      {/*
-        ── ⚠⚠ EMPLOYER IS THE HEADING, ROLE IS A SUB-LINE (`P1-J1.4-E295`) ───────
-
-        Scott, 2026-09-02, of the review page: the two shapes were indisting-
-        uishable. `StratERP Inc. · Founder & Principal Consultant` (employer ·
-        role) and `Ceres Insurance · Oracle Cloud Basic Procurement Quick Install`
-        (client · engagement) rendered as STRUCTURALLY IDENTICAL ROWS, and the `·`
-        hid which was which — ONE VISUAL FORM DOING TWO JOBS.
-
-        ⚠ SUPERSEDED, quoted: `{employer.name}{role ? ` · ${role}` : ""}` on one
-        bold line.
-
-        ⚠ THE WORDS ARE UNCHANGED. Same two strings, different arrangement — the
-        employer carries the weight, the role sits under it in secondary type, and
-        the separator is gone. An employer block can no longer be read as a
-        project because a project never renders this shape.
-        ⚠ CHANGED IN THE ONE SHARED COMPONENT (`E084`), so the wizard review, the
-        profile editor and the public profile cannot drift apart.
-        ⚠ PROJECTS ARE UNTOUCHED — they stay under their employer behind the
-        existing Projects disclosure. This is the employer block's typography only.
-      */}
+      {}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="min-w-0">
-          {/* ⚠ VIA THE ONE HELPER (`P1-J1.4-E373`) — a contractor's line names no
-              company, and `null` reads as `Independent` rather than as a gap. */}
-          {/*
-            ⚠⚠ `roleFirst` SWAPS WHICH FACT IS BOLD, NOT WHICH FACTS ARE SHOWN. Both lines
-            render in both modes, so nothing is lost either way.
-            ⚠⚠⚠ **AND IT FALLS BACK WHEN THERE IS NO ROLE TITLE:** `displayRole` is null for
-            plenty of entries, and a naive swap would render the company in small grey with
-            **nothing bold above it** — an entry that reads as a caption with its heading
-            missing. So with no role, the company keeps the bold line and the grey line is
-            simply absent, which is exactly what today's order already does.
-          */}
-          {/*
-            ── ⚠⚠ THE BADGE SITS BESIDE THE COMPANY, NOT THE ROLE (`E748` WS-C) ──
-            ⚠ The validation is a statement about the EMPLOYMENT, and the company
-            line is what names it. ⚠⚠ In `roleFirst` order the company is the
-            second line, so the badge moves with it rather than staying put.
-            ⚠⚠⚠ **PENDING IS OWNER-ONLY** — a visitor seeing *"validation
-            requested"* learns somebody was asked and has not answered, which
-            reads as a doubt about the member.
-          */}
+          {}
+          {}
+          {}
           {roleFirst && displayRole(employer.roleTitle) ? (
             <>
               <p className="text-[16px] font-semibold">{displayRole(employer.roleTitle)}</p>
@@ -254,14 +146,7 @@ export function WorkHistoryEntry({
         </p>
       )}
 
-      {/*
-        E089 — a TIGHT left-aligned cluster with middot separators, not a
-        four-column grid justified across the card. Justified, the links stranded
-        apart with dead gaps between them and read as an empty table row; grouped,
-        they read as what they are — a set of disclosures belonging to the entry
-        above them. Disabled ones stay greyed in place rather than disappearing,
-        so the row doesn't reflow between entries.
-      */}
+      {}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         <button
           type="button"
@@ -281,7 +166,6 @@ export function WorkHistoryEntry({
           disabled={projects.length === 0}
           aria-expanded={open === "projects"}
           title={
-            // E145 — "employer", never "role"; Role is the catalog tier.
             projects.length === 0
               ? "No projects recorded for this employer"
               : undefined

@@ -1,41 +1,5 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   … forum is now open to you — a private room for the people taking this path…
-*/
 import type { NotificationAiMode, NotificationVisibility } from "@prisma/client";
 
-/**
- * THE EVENT REGISTRY — one entry per (EVENT × RECIPIENT).
- *
- * ⚠⚠ THIS FILE IS DERIVED FROM `scripts/data/event_behavior.md` AND MUST
- * NOT INVENT ROWS. That document is the specification; this is the build. Every
- * ⚠⚠⚠ THE PATH ABOVE WAS STALE AND IS CORRECTED (`P2-A5-E656`). The spec MOVED
- * INTO THE REPO on 2026-09-04 (`P1-ALL-E384`, Scott: *"just move it"*) precisely
- * because a file one level above the git root made these assertions green on one
- * machine and unreproducible from a clean clone. ⚠ `check:notifications` has read
- * `scripts/data/` ever since; only this sentence still pointed at the old home.
- * ⚠⚠ A comment naming a path that does not exist sends the next person to look
- * for a file they will not find — the comment is half the code.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   THIS FILE IS DERIVED FROM `2. Claude Sub-Files/event_behavior.md`
- * event in its tables appears here and no others, and `check:notifications`
- * parses those tables and fails the build if the two drift. MedLinq's rule,
- * adopted verbatim: *"When code drifts from the spec, the spec is the authority."*
- *
- * ⚠ ONE ROW PER (EVENT × RECIPIENT), NOT PER EVENT. `learn.course_completed`
- * appears TWICE — to the learner and to the instructor — with different text and
- * different `aiMode`. A notification row is never addressed to two people, so the
- * registry cannot be keyed on the event alone either.
- *
- * ⚠ `aiMode` IS STORED, NEVER EXECUTED. Nothing reads it to decide behaviour. It
- * is the governance record: where autonomy is granted or withheld, on the record,
- * before anything acts.
- */
 export type NotificationEventKey = keyof typeof NOTIFICATION_EVENTS;
 
 export type NotificationEvent = {
@@ -74,45 +38,9 @@ export const NOTIFICATION_EVENTS = {
       "Welcome. Everything you do from here is saved as you go.",
     href: () => "/dashboard",
   },
-  /*
-    ── ⚠⚠ `account.finish_later` (`P2-J1.1-E034`) ──────────────────────────────
-
-    SCOTT, 2026-09-06: *"These should be two separate emails. One is start your
-    registration...the other is finish the registration you started."*
-
-    ⚠ CATEGORY REUSED, NOT INVENTED. `profile.visibility` is the category
-    `account.created` and `account.verified` already use — the same onboarding
-    arc, the same recipient, the same "where is my account up to" question. A NEW
-    category would have to be reachable from the notification settings page or it
-    writes rows nobody can control; `profile.visibility` already is
-    (`notification-categories.ts:220`), so nothing is stranded.
-
-    ⚠ `aiMode: DO_IT` and `visibility: FEED` match `account.created` /
-    `account.verified` for the same reason. ⚠ `aiMode` IS STORED, NEVER EXECUTED
-    — see this file's header.
-
-    ⚠ `requiresAction: false` — the worklist is `E033`'s architecture and out of
-    scope. This is a nudge the person already asked for by clicking the button.
-
-    ⚠⚠ THE DEDUPE KEY IS `account.finish_later`, AND PERSON SCOPING IS THE
-    INDEX'S JOB — `@@unique([person_id, dedupe_key])`. `Finish later` appears on
-    EVERY step by design (`E245`: *"Every step means every step"*), so without
-    this a requester who steps out three times receives three identical emails.
-  */
   "account.finish_later": {
     event: "account.finish_later",
     recipient: "the new user",
-    /*
-      ⚠⚠⚠ MOVED OUT OF `profile.visibility` (`P0-E690`, Scott 2026-09-27) ────
-
-      ⚠ It fires from the **requester (BUYER)** wizard, and `profile.visibility`
-      is `audience: "seller"` — so the recipient of **Panameer's only live
-      notification email** had no row for it in their own settings (`E689(q)`).
-      ⚠⚠ **SCOTT RULED IT GETS ITS OWN CATEGORY RATHER THAN WIDENING THAT ONE**,
-      because widening puts eight seller-shaped events in front of buyers.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   category: "profile.visibility",
-    */
     category: "account.registration",
     aiMode: "DO_IT",
     visibility: "FEED",
@@ -121,20 +49,6 @@ export const NOTIFICATION_EVENTS = {
     body: () => "You saved your registration for later. Pick up where you left off.",
     href: () => "/join/requester/steps",
   },
-  /*
-    ── ⚠⚠⚠ THE PROFILE EVENTS — `P2-A1.1-E741` (A3 rows 1, 3, 4, 5) ──────────
-
-    ⚠ SCOTT, 2026-09-30: *"We need to send a notification (in-app) for all
-    profile tasks… show the user when they are logged on and their profile is
-    invisible."* He approved the channel table as written.
-
-    ⚠⚠ **RULING 86 GOVERNS: `notify()` IS THE ONE PLACE A NOTIFICATION IS SENT
-    FROM, AND NO PROFILE WRITER MAY CALL `sendEmail()` DIRECTLY.** That is the
-    two-pipe problem the ruling exists to close.
-
-    ⚠⚠⚠ **ROW 2 (EMAIL / PHONE / PASSWORD CHANGED) IS REGISTERED HERE BUT ITS
-    EMAIL IS NOT SWITCHED ON. READ THE NOTE ON `account.credential_changed`.**
-  */
   "profile.section_saved": {
     event: "profile.section_saved",
     recipient: "the profile owner",
@@ -142,15 +56,6 @@ export const NOTIFICATION_EVENTS = {
     aiMode: "DO_IT",
     visibility: "FEED",
     requiresAction: false,
-    /* ⚠⚠ THE SECTION IS NAMED IN THE TEXT (ruling 31d), not in a second event.
-       ⚠ `section` arrives already humanised from the caller — the mapping from
-       a `ProfileSection` key to a member-facing word belongs with the caller
-       that knows the key, not in sixteen title functions.
-       ⚠⚠⚠ `verb` COMES WITH IT, AND THAT IS NOT PEDANTRY: the first version read
-       **"Your Skills was updated"**, because a single template cannot agree with
-       both *"Skills"* and *"Photo"*. ⚠ Scott's own example in the brief is
-       *"Your Skills were updated"*, so the agreement is part of the spec, not a
-       polish item. ⚠⚠ The caller owns it because the caller owns the noun. */
     title: (v) => `Your ${v.section ?? "profile"} ${v.verb ?? "was"} updated`,
     body: () => null,
     href: () => "/profile",
@@ -257,7 +162,6 @@ export const NOTIFICATION_EVENTS = {
        task would turn somebody else's "no" into a chore on their worklist. */
     requiresAction: false,
     title: (v) => `${v.subject ?? "Your work"} wasn't confirmed`,
-    /* ⚠⚠ NO BLAME, NO WORDING, NO NAME. Just the state and the way forward. */
     body: () =>
       "The contact didn't confirm it. Nothing is shown as validated, and you can ask someone else.",
     href: () => "/profile",
@@ -339,36 +243,6 @@ export const NOTIFICATION_EVENTS = {
         : "A few fields are still keeping you out of search results.",
     href: () => "/settings/profile",
   },
-  /*
-    ── ⚠⚠⚠ `profile.language_defaulted` (`P2-A1.4-E724` item 1b) ─────────────────────────
-
-    ⚠ **SCOTT: the 59 zero-language profiles get one row and an in-app notification —
-    *"We added English (Fluent) to your profile. Change it if that's not right."***
-    ⚠⚠⚠ **IT CANNOT SEND EMAIL, AND THAT IS CHECKED RATHER THAN ASSUMED.**
-    `NOTIFICATION_EMAIL_EVENTS` holds exactly one key — `account.finish_later` — and this is
-    not it, so `notify()` writes a row and stops. **Adding a key to that allowlist is a
-    product decision; this brief does not touch it.**
-    ⚠⚠ **`DO_IT` IS THE HONEST `aiMode`: the system acted on the member's behalf and is
-    telling them so.** ⚠ `requiresAction: false` — nothing is broken if they never open it;
-    the row they were given is a reasonable default, not a defect awaiting repair.
-    ⚠ The `href` points at the one-section editor so *"change it"* is one click, not a hunt.
-  */
-  /*
-    ── ⚠⚠⚠ `profile.country_unknown` (`P2-A1.1-E728` WS-B, ruling 2) ────────────────────
-
-    ⚠ **SCOTT: *"'Other' stays legal: those 7 rows keep it, with a null code, and get the
-    next-sign-in prompt."***
-    ⚠⚠ **THE DATA IS NOT TOUCHED.** `"Other"` remains in the name column and the code column
-    stays `null` — the null IS the flag. This event is how the person is asked to replace it.
-    ⚠⚠⚠ **"NEXT SIGN-IN" IS SERVED BY THE NOTIFICATION SURFACE, NOT BY A NEW INTERSTITIAL,
-    AND THAT IS A JUDGEMENT I AM FLAGGING.** There is no sign-in-time prompt mechanism in this
-    codebase; building one would put a new gate in the auth path **every member passes
-    through**, to serve seven rows. The bell is on every page, so they meet it the next time
-    they sign in. ⚠ If Scott wants a blocking interstitial, that is its own brief.
-    ⚠ **IT CANNOT SEND EMAIL:** `NOTIFICATION_EMAIL_EVENTS` holds only `account.finish_later`.
-    ⚠ `requiresAction: true` — unlike the language default, this one IS a gap: nothing can
-    resolve a country the standard cannot express except the person who lives there.
-  */
   "profile.country_unknown": {
     event: "profile.country_unknown",
     recipient: "the member",
@@ -408,8 +282,6 @@ export const NOTIFICATION_EVENTS = {
     event: "profile.validated",
     recipient: "the new user",
     category: "profile.visibility",
-    /* ⚠ NOT `DO_IT`. Validation is a claim about a person and a human grants it
-       (`E270`) — the spec is explicit. */
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
     requiresAction: false,
@@ -421,8 +293,6 @@ export const NOTIFICATION_EVENTS = {
     event: "profile.published",
     recipient: "—",
     category: "profile.visibility",
-    /* ⚠⚠ DELIBERATELY SILENT — the user is looking at the screen that says it.
-       Recorded so the decision is not re-litigated on the next walk. */
     aiMode: "NONE",
     visibility: "SILENT",
     requiresAction: false,
@@ -431,32 +301,6 @@ export const NOTIFICATION_EVENTS = {
   },
 
   // ── Learn — P1-J3 ─────────────────────────────────────────────────────────
-  /*
-    ⚠⚠ EXTENDED BY `P1-J3-E383` TO SAY THE FORUM IS OPEN. NO SECOND EVENT.
-
-    SCOTT, 2026-09-04: *"ok, as long as the learner gets an email telling them."*
-
-    ⚠ THIS IS A COPY CHANGE, NOT A FEATURE. The event already existed and already
-    fires at `api/learn/enroll/route.ts`. ⚠ ONE EVENT PER THING THAT HAPPENED —
-    enrolling is ONE action, and firing `community.joined` alongside it would put
-    two notifications in front of somebody who did one thing.
-
-    ⚠⚠ AND IT WILL NOT BE AN EMAIL YET, WHICH IS STATED HERE RATHER THAN HIDDEN.
-    `RESEND_API_KEY` is commented out, there is no digest sender, and nothing
-    fires a digest event (`P1-ALL-E371`). `notify()` will stamp
-    `suppressed_reason: "email_not_configured"` and deliver IN-APP ONLY.
-
-    ⚠⚠ NO EMAIL CHANNEL IS DECLARED HERE, DELIBERATELY. Declaring one to make
-    this look done is the `P1-ALL-E034` shape — a promise in the registry the
-    build cannot keep.
-
-    ⚠ THE GOOD NEWS, AND IT IS WHY THIS COSTS NOTHING TO GET RIGHT: THE CHANNEL
-    COMES FROM THE CATEGORY, NOT THE EVENT. `learn.progress` already carries an
-    email default. So the day `E371` lands, this becomes an email with NO further
-    work — which is why the `body` below is written to be read in an INBOX rather
-    than as a toast: it names the path, says what is now open, and stands alone
-    without the surrounding page.
-  */
   "learn.path_enrolled": {
     event: "learn.path_enrolled",
     recipient: "the learner",
@@ -685,9 +529,6 @@ export const NOTIFICATION_EVENTS = {
     visibility: "FEED",
     requiresAction: false,
     title: (v) => `Your request to join ${str(v, "groupTitle", "a group")} wasn't accepted`,
-    /* ⚠⚠⚠ IT NAMES NO REASON AND BLAMES NOBODY. The owner gave none, so
-       inventing one would be a fabrication, and *"you were rejected"* is a
-       judgement the data does not carry. */
     body: () => "The group's owner decides who joins.",
     href: () => "/community/groups?view=discover",
   },
@@ -697,9 +538,6 @@ export const NOTIFICATION_EVENTS = {
     category: "community.activity",
     aiMode: "SEND_FOR_APPROVAL",
     visibility: "FEED",
-    /* ⚠⚠ WORKLIST — cleared by answering. This is the same question
-       `countThreadsWaitingOn` already counts on the Groups page, so the figure
-       and the worklist item cannot disagree about what "waiting" means. */
     requiresAction: true,
     title: (v) => `A question in ${str(v, "groupTitle", "your group")} has no answer yet`,
     body: (v) => str(v, "threadTitle", "") || null,
@@ -934,10 +772,6 @@ export const NOTIFICATION_EVENTS = {
     body: () => null,
     href: () => "/payments",
   },
-  /* ⚠ THERE IS NO `Recommendation` MODEL — measured, the table does not exist.
-     ⚠⚠ Registered because the CATEGORY `recommendation.received` already ships
-     a toggle, and a toggle governing an event that does not exist is the
-     mirror image of the defect ruling 13 warned about. */
   "recommendation.received": {
     event: "recommendation.received",
     recipient: "the provider recommended",

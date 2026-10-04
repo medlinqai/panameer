@@ -4,98 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-/**
- * THE CONNECT CONTROLS — one verb, two capacities (`P1-ALL-E374`).
- *
- * ── ⚠⚠ THE WORD `FOLLOW` APPEARS IN NO RENDERED STRING ────────────────────
- *
- * SCOTT, 2026-09-03: *"maybe we remove the word follow and capacity defines the
- * connection....i want to connect to you as a colleague...i want to connect to
- * her as a mentor."*
- *
- * ⚠ THE INTERNAL NAMES ARE DELIBERATELY UNCHANGED: `followMentor`,
- * `unfollowMentor` and the `"FOLLOWING"` relation literal stay exactly as
- * `E372` wrote them. Renaming them would churn `check:community` for no
- * user-visible gain, and the brief says so explicitly. The wire `action` values
- * (`mentor` / `unmentor`) are this route's own vocabulary, not the lib's.
- *
- * ── ⚠⚠ SINGLE-CLICK IS THE SPECIFICATION ─────────────────────────────────
- *
- * `E374`: *"No modal, no message box, no confirmation step. Building a
- * community must cost nothing."* ⚠ NOT EVEN `Decline` GETS A CONFIRM, and that
- * was checked against the consequence rather than assumed comfortable: a
- * DECLINED row is KEPT, not deleted, so a mis-click destroys no data, and the
- * person is still reachable through search. Nothing here is irreversible enough
- * to earn a dialog.
- *
- * ⚠ OPTIMISTIC, AND IT REVERTS OUT LOUD. The label changes on click and rolls
- * back with a visible message on failure — *"a button that does nothing for
- * 400ms gets clicked twice"*. `busy` also blocks the second click outright,
- * because optimism alone would still fire two requests.
- *
- * ── ⚠ THIS COMPONENT DECIDES NOTHING ─────────────────────────────────────
- *
- * The button it shows is a SWITCH ON `relation`, which `searchMembers` and
- * `getMyCommunity` already computed server-side in `lib/connections.ts`. There
- * is no rule here — no "can I connect to this person", no self-check, no
- * duplicate-check. All of that is in the lib where the harness can see it, and
- * the server re-checks every one of them on the way in.
- */
-
 export type Relation = "PENDING" | "ACCEPTED" | "DECLINED" | "FOLLOWING" | null;
 
 type Props = {
   toUserId: string;
   /** The colleague relation as the server computed it. */
   relation: Relation;
-  /**
-   * ⚠ Set when `relation === "PENDING"` and THEY sent it — the row is then
-   * actionable by me, so the button is Accept rather than a disabled Requested.
-   */
   incomingConnectionId?: string | null;
   /** Whether I have already connected to them as a mentor. */
   isMentor?: boolean;
-  /** ⚠ Hidden entirely on your own row — the lib refuses SELF anyway. */
   isSelf?: boolean;
-  /**
-   * ⚠⚠ RENDER `Decline` BESIDE `Accept`. Set on the "Requests waiting on you"
-   * block only. `E374`: *"Decline IS A REAL BUTTON, NOT A HIDDEN MENU ITEM."*
-   * A decline is the true signal that protects what a colleague request means;
-   * burying it produces silent ignores, which teach the platform nothing.
-   */
   showDecline?: boolean;
-  /**
-   * ── ⚠⚠⚠ `outline` — WHITE WITH AN INK BORDER (`P2-A8-E719`) ───────────────
-   *
-   * ⚠ **SCOTT: on a provider's profile, `Connect as a Colleague` becomes white with an ink
-   * border**, because `Hire` is the primary action on that rail now and two solid fills would
-   * claim two primaries.
-   * ⚠⚠ **IT IS A PROP WITH THE OLD LOOK AS ITS DEFAULT BECAUSE THIS COMPONENT IS RENDERED BY
-   * TEN FILES** — the community cards, the mentors page, `CommunityWeb`, `ConnectHome`,
-   * `ColleagueCards` and more. ⚠⚠⚠ **CHANGING `PRIMARY` ITSELF WOULD RESTYLE EVERY ONE OF
-   * THEM FROM INSIDE A BRIEF ABOUT ONE RAIL** — the `CARD` mistake `E713` was written to
-   * avoid, and the third time this shape has come up (`WorkHistoryBody`, `ToggleRow`).
-   * ⚠ Only the PRIMARY affordance changes tone; `GHOST` and `QUIET` are already outlined and
-   * quiet, so they are untouched in both modes.
-   */
   tone?: "magenta" | "outline";
-  /**
-   * ── ⚠⚠⚠ WHICH HALF TO RENDER (`P2-A2-E720` item 10) ──────────────────────────────────
-   *
-   * ⚠ **SCOTT: *"Request as Mentor joins the visitor actions after Connect as a Colleague
-   * (white, ink border), reusing ConnectControls."***
-   * ⚠⚠ **THE TWO CONTROLS WERE ONE FLEX ROW**, so the mentor button could only ever sit
-   * BESIDE the colleague button, never in its own section further down the rail. Splitting
-   * them is what lets the profile place each one where Scott wants it.
-   * ⚠⚠⚠ **`"all"` IS THE DEFAULT SO THE TEN OTHER CONSUMERS ARE BYTE-UNAFFECTED** — the
-   * community cards, `ConnectHome`, `CommunityWeb`, `ColleagueCards`, `FindAMentor`,
-   * `MentoringPanels` and the console invite screen all keep one row with both controls. This
-   * is the same opt-in shape `E719` used for `tone`, and for the same reason: a component with
-   * eleven callers cannot be re-shaped for the eleventh.
-   * ⚠ **EACH PART KEEPS ITS OWN STATE, AND THAT IS CORRECT RATHER THAN A COMPROMISE:** the
-   * colleague relation and the mentor follow are two different rows in `connections` with two
-   * different lifecycles, and neither control reads the other's state today.
-   */
   part?: "all" | "colleague" | "mentor";
 };
 

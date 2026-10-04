@@ -1,10 +1,3 @@
-/**
- * THE 28 FIGURES, COUNTED (`P2-A1.1-E815`).
- *
- * One query set, read-only, keyed by the metric's label so the config in
- * `usage-metrics.ts` and the numbers here cannot drift apart: a label with no
- * figure renders NOT COUNTED, which is the honest answer rather than a zero.
- */
 import { prisma } from "@/lib/prisma";
 import { searchScoreFor } from "@/lib/masked-profile";
 
@@ -29,8 +22,6 @@ export async function usageFigures(opts: {
     profileId ? prisma.providerSkill.count({ where: { provider_profile_id: profileId } }) : 0,
     profileId ? prisma.providerProfileSpecialization.count({ where: { provider_profile_id: profileId } }) : 0,
     profileId ? prisma.certification.count({ where: { provider_profile_id: profileId } }) : 0,
-    /* The score comes from its one computing function, never a stored column —
-       `masked-profile.ts` owns that rule. */
     profileId ? searchScoreFor(profileId) : 0,
 
     prisma.learnEnrollment.count({ where: { user_id: userId } }),
@@ -59,11 +50,6 @@ export async function usageFigures(opts: {
     prisma.workOrder.count({ where: { provider_person_id: personId } }),
   ]);
 
-  /*
-    PATHS COMPLETED is derived, not stored: a path is complete when every
-    playable lesson in it has progress. `E713`'s rule, read here rather than
-    re-stated, so the two cannot disagree.
-  */
   const enrollments = await prisma.learnEnrollment.findMany({
     where: { user_id: userId },
     select: { learning_path_id: true },
@@ -83,11 +69,6 @@ export async function usageFigures(opts: {
     if (done === lessons.length) completed += 1;
   }
 
-  /*
-    TOTAL COMMUNITY, defined as the sheet asked: your colleagues plus THEIR
-    colleagues, counted as distinct people and never counting you. It is reach,
-    not a sum of edges, so the same person two hops away is one.
-  */
   const mine = await prisma.connection.findMany({
     where: { kind: "COLLEAGUE", status: "ACCEPTED", OR: [{ from_user_id: userId }, { to_user_id: userId }] },
     select: { from_user_id: true, to_user_id: true },

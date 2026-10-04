@@ -4,12 +4,6 @@ import { BackLink } from "@/components/console/BackLink";
 
 export const dynamic = "force-dynamic";
 
-/**
- * ADMIN → AUDIT LOG (`P2-ALL-E814`).
- *
- * Every admin change and every system deletion. Filterable by actor, table and
- * date; the same rows download as CSV from `/admin/audit-log/export`.
- */
 export default async function AuditLogPage({
   searchParams,
 }: {

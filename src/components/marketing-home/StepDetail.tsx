@@ -1,31 +1,5 @@
 import type { ReactNode } from "react";
 
-/**
- * ONE SECTION PER CARD (brief_home_assessment_spine §3).
- *
- * The shell only. Each of the five graphics lives in `marketing-home/steps/`
- * and is passed in, because the graphics have nothing in common with each other
- * — a question card, a score matrix, an email, a dashboard and a booking slip —
- * and a component that tried to abstract all five would be a switch statement
- * wearing a costume.
- *
- * ── THE NUMERAL IS THE LINK BACK ─────────────────────────────────────────────
- *
- * Each section carries its step numeral, large and magenta, beside the title —
- * the same numeral in the same colour as the card that linked here. That
- * repetition is the whole navigation: a visitor who clicks card 4 has to land
- * somewhere that obviously IS card 4, and an anchor that drops you at an
- * unlabelled heading leaves you checking whether the jump worked.
- *
- * `scroll-margin-top` on the section (home.css) keeps the heading clear of the
- * sticky header — without it the anchor lands with the title under the nav.
- *
- * ── ALTERNATION, NOT DECORATION ──────────────────────────────────────────────
- *
- * Five long sections in a row read as one undifferentiated slab. `shade`
- * alternates them on the same `--paper-2` the page already uses for `.fw` and
- * `.erp` (E115's rhythm rule) rather than introducing a sixth background value.
- */
 export function StepDetail({
   n,
   title,
@@ -39,10 +13,6 @@ export function StepDetail({
   lead: ReactNode;
   /** Every other section takes the shaded ground. */
   shade?: boolean;
-  /**
-   * Step 4 only. The brief gives the product shot the most room of the five, so
-   * its graphic breaks out of the 1200px measure the prose keeps.
-   */
   wide?: boolean;
   children: ReactNode;
 }) {

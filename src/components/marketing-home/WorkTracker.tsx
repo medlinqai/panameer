@@ -2,66 +2,6 @@ import { ArrowRight, Calendar } from "lucide-react";
 import { AppShot } from "@/components/marketing-home/AppShot";
 import { milestoneByKey, milestoneDetail } from "@/lib/roadmap-milestones";
 
-/**
- * "PROJECT TRACKER" — the loop closes (brief_home_assessment_spine §5).
- *
- * ── IT ONLY MAKES SENSE AS THE LAST SECTION ──────────────────────────────────
- *
- * The assessment gives you a score, the consultation names the fixes,
- * GetTheTalent hands you the people — and this is where you watch that score
- * move. That is why the copy points back at the opening number rather than
- * describing features: a tracker pitched on its own is a PSA tool nobody asked
- * for, and the argument here is precisely that you do not have to buy one.
- *
- * ── THE PROGRESS IS THE SAME 0% REPORT, PART-FILLED ──────────────────────────
- *
- * `ReportDashboard` draws a fresh report at 0% deliberately, and this section is what
- * fills it. Drawn here PART-WAY on purpose — this is the only graphic on the page
- * showing a DELIVERED state, and that contrast with step 4's empty one is the point
- * being made. It is illustrative, and marked as such by sitting inside the same inert
- * product-shot chrome as every other graphic.
- *
- * ⚠ AS OF E173 THAT PROGRESS IS SHOWN AS PHASE GROUPS, NOT A RING. Scott: "it needs
- * to show the project tracker (which we might need to beef up a little bit)" —
- * pointing at the AIM/StratERP task builder. Three quarter groups each carry their own
- * `n of m` and percentage, five KPI cards sit above them, and every row has a state
- * dot, an owner chip, a bar and a status control. The argument is unchanged; the
- * evidence for it got specific.
- *
- * ── ⚠ SHAPE FROM AIM, NOT DENSITY ────────────────────────────────────────────
- *
- * AIM shows ~200 tasks, task ids, owner inputs, a source filter and a Proposed/amber
- * treatment because it is a BUILD tool. This is the CLIENT's tracker: five milestones
- * that came off their own roadmap. None of that builder furniture is here, and adding
- * it would make this a picture of our internal tooling rather than of what they get.
- *
- * ── THE REPEATED CTA ─────────────────────────────────────────────────────────
- *
- * The brief asks for the assessment CTA again at the foot, so a visitor who
- * read the whole page does not have to scroll back up. It is the same
- * destination as the hero's, deliberately: one page, one job.
- *
- * Inert by construction: the only interactive element is the CTA link.
- */
-
-/**
- * ⚠ FIVE MILESTONES, READ FROM `lib/roadmap-milestones.ts` — THE SAME LIST STEP 5's
- * ROADMAP DRAWS. That is the whole argument of this section: this IS that roadmap,
- * executing. It was FOUR hand-typed rows before E173, and two of the names disagreed
- * with the roadmap ("Contract price renegotiation" vs "Contract renegotiation",
- * "Supplier registration validation" vs "Supplier doc validation") while
- * "Rogue-spend alert" was missing entirely — so the plan and the execution were
- * telling a reader different things about what the plan was. One list now; the names
- * cannot drift again.
- *
- * ⚠ THE APPROVED MOCKUP CARRIES THOSE TWO OLD NAMES, and the brief's own rule
- * overrides it: "Names and owners must match `AiRoadmapShot` exactly… If one changes,
- * both change." Reported rather than silently chosen.
- *
- * ⚠ STATES, NOT DATES (E149). The mockup's first draft had "closed 14 Oct" /
- * "started 4 Nov" / "loaded 2 Oct" and they were struck: a hardcoded date in
- * marketing chrome only rots. `tail` says where a milestone stands instead.
- */
 const PHASES = [
   {
     title: "Q1 · Deployed",
@@ -73,24 +13,6 @@ const PHASES = [
         pct: 100,
         status: "Done",
       },
-      /*
-        "live" rather than "2 wks · complete" — a deployable that is running is not
-        a finished project, it is a thing still working.
-
-        ⚠ THE RESOURCE WORD IS NO LONGER HARD-CODED HERE, AND THAT WAS A REAL BUG.
-        This row is the one place in either graphic that bypasses
-        `milestoneDetail`, and it carried the literal string "Agent · live". When
-        the vocabulary changed to `Deliverable · Deployable · Expert's hours`
-        (E254's brief, WS2) every other line followed the shared list and this one
-        did not — so `/` rendered `Deployable · 2 wks` on the roadmap and
-        `Agent · live` on the tracker FOR THE SAME MILESTONE, two sections apart.
-        That is exactly the drift `lib/roadmap-milestones.ts` exists to prevent,
-        and `resource` is now read from it like everything else.
-
-        ⚠ THE OVERRIDE ITSELF STAYS. It exists because this row's tail is not a
-        duration — see above — and `milestoneDetail` would have to invent a
-        "no weeks" mode to express that. It just may not re-state the noun.
-      */
       {
         key: "po_price",
         tail: null,

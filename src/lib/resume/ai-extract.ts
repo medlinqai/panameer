@@ -8,85 +8,9 @@ import {
 } from "./ai-provider";
 import { isCurrentWord, parseMonthYear, type ParsedResume } from "./parse";
 
-/**
- * LLM résumé extraction (brief_resume_parser_ai WS2 / E128).
- *
- * SERVER ONLY. The key is read through `env` and never reaches the browser.
- *
- * WHY THIS EXISTS. The heuristic parser has to guess a document's structure from
- * its punctuation, and real résumés vary faster than rules can be written for
- * them: Eddie's used an unrecognised heading and two-line jobs, Marelise's puts
- * ten projects in tables of label/value rows. Both extract to clean text and both
- * defeated the rules. A model reads the layout instead of pattern-matching it.
- *
- * IT IS NOW THE PRIMARY READER (E184), which is a reversal worth stating.
- * It used to be a second tier: the heuristic scored first and this ran only when
- * that score was low AND the provider clicked "Let AI take a pass". The result
- * was that the only caller was a button no screen in the journey rendered any
- * more, so every real upload was read by the heuristic while the UI credited the
- * work to AI. `importProfileDocument` calls this on upload now; the heuristic is
- * what catches a failed or unconfigured call, not the other way round.
- *
- * ⚠ DATA FLOW, flagged for Scott per the brief: running this sends the résumé's
- * TEXT — a named individual's employment history, education and contact details —
- * to the model provider. That is a real disclosure of personal data to a
- * third-party processor. The gate is now the UPLOAD itself rather than a second
- * click, so the dropzone says plainly that AI reads the document; the privacy
- * notice and any DPA are still a decision above this code.
- */
-
-/**
- * An OPTIONAL field: absent, null and present are all acceptable, and all
- * normalise to null.
- *
- * `.nullable()` alone was the bug. It accepts an explicit `null` but NOT a
- * missing key — and a model with nothing to say about a field omits it rather
- * than inventing a null, which is the correct behaviour. Eddie's fifth employer
- * (Morgan Stanley, from his trailing "Additional experience" line) has no
- * location stated anywhere, so the model left `location` out and a completely
- * correct extraction of seven employers was thrown away over one absent string.
- *
- * Rejecting good data because an optional field is missing is the worst trade
- * available here: the fallback is the heuristic result, which for Marelise is
- * nothing at all.
- */
 const maybe = <T extends z.ZodTypeAny>(schema: T) =>
   schema.nullable().optional().default(null);
 
-/**
- * A list of short terms — accepting the shapes a model actually returns.
- *
- * SAME LESSON AS `maybe`, one field over. The schema asks for `["Payables",
- * "Sourcing"]`; gpt-5-nano periodically answers `[{"name": "Payables"}, …]`,
- * which is a defensible reading of "list of skills" and completely unusable to
- * a `z.array(z.string())`. One such element rejected the ENTIRE extraction:
- * Scott's résumé came back with eight employers, two degrees and forty skills,
- * and the whole thing was thrown away over the shape of `skills[0]`.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-4):
- *
- *     `strict: false` is what makes this possible — the json_schema is a
- *     request, not a contract, and every OpenAI-compatible vendor honours it a
- *     little differently.
- *
- * ⚠⚠ THAT NOW DESCRIBES HALF THE WORLD, AND THIS READER IS KEPT FOR THE OTHER
- * HALF. `E414` turned on constrained decoding for the SIX MULTI-PASS schemas
- * (`ai-passes.ts` `runPass`), where `items: { type: "string" }` is now enforced
- * by the sampler — a wrapped `{"name": "Payables"}` is literally unemittable
- * there, and on that path this transform is belt-and-braces.
- *
- * ⚠ IT IS STILL LOAD-BEARING ON `record_resume`, the legacy single-call schema
- * a few lines below, which `E414` deliberately did NOT make strict: it carries
- * ten strict-mode blockers and fixing them is a separate job. On that path the
- * json_schema is still only a request, and the behaviour this was written for
- * is still live.
- *
- * ⚠ SO IT STAYS, AND THE REASONING STANDS UNCHANGED FOR THAT PATH: given a
- * choice between arguing shape with the model and reading what it sent, read
- * what it sent — an object with an obvious label field IS the skill, and
- * dropping the extraction over its wrapper serves nobody. Anything genuinely
- * unreadable is dropped from the list rather than failing the parse.
- */
 const looseStringArray = z
   .array(z.unknown())
   .optional()
@@ -109,22 +33,6 @@ const looseStringArray = z
 
 /** What we ask the model for — mirrors what the review step already consumes. */
 const aiEmployer = z.object({
-  /*
-    ⚠⚠ NULLABLE AS OF `P1-J1.4-E373`, AND THE OLD COMMENT WAS THE BUG.
-
-    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"The only genuinely required field: an
-    employer with no name is not an entry."*
-
-    ⚠⚠ THAT IS FALSE FOR A CONTRACTOR, AND IT IS WHY 36 OF 250 `Employer` ROWS
-    HOLD A JOB TITLE. Scott: *"Legally I HAVE to have a company (aka employer),
-    but it could just be a one person LLC…so no one tends to mention it."* A
-    REQUIRED field with no honest value does not stay empty — it gets filled with
-    the nearest thing to hand, and the nearest thing on a self-employed résumé
-    line is the TITLE. The model was doing its best with an impossible schema.
-
-    ⚠ NULL IS NOW A VALID ANSWER and the prompt says so explicitly. It renders as
-    `Independent` via `employerDisplayName()`.
-  */
   name: maybe(z.string()),
   roleTitle: maybe(z.string()),
   location: maybe(z.string()),
@@ -144,10 +52,6 @@ const aiProject = z.object({
   startDate: maybe(z.string()),
   endDate: maybe(z.string()),
   employer: maybe(z.string()),
-  /* ⚠ `P2-J1.4-E549` — carried INTERNALLY from the employers pass for sections
-     typed `engagement`. ⚠ NOT added to any project schema the model is shown:
-     the single-call schema never had it on projects, and only a RESTORE was
-     authorised. */
   isCurrent: maybe(z.boolean()),
 });
 
@@ -190,10 +94,6 @@ const TOOL_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          /* ⚠⚠ THE PROMPT HAS TO SAY IT TOO (`P1-J1.4-E373`). Making the Zod
-             field nullable without telling the model changes nothing: the model
-             answers the DESCRIPTION, not the schema. The instruction not to
-             substitute a title is the half that actually fixes mechanism 1. */
           name: {
             type: ["string", "null"],
             description:
@@ -260,48 +160,6 @@ const TOOL_SCHEMA = {
   required: ["employers", "projects", "education", "skills"],
 };
 
-/*
-  THE SYSTEM PROMPT IS THE CACHED PREFIX (WS-A).
-
-  It is byte-identical on every call — résumé text is the only thing that varies
-  — which is the shape both vendors' prompt caches reward.
-
-  ⚠ THE RDS TAXONOMY IS DELIBERATELY NOT IN HERE, and that is a deviation from
-  the brief worth stating plainly. The brief says to prompt-cache the
-  Role→Domain→Skill taxonomy "so only résumé text is fresh input". The taxonomy
-  was never in this prompt: skills come back as free text and are matched against
-  the seeded catalog afterwards, deterministically, by `match.ts`. Injecting
-  ~400 skill names would ADD input tokens to every call — cache reads are cheaper
-  than fresh input, not free — to replace a matcher that costs nothing and is
-  unit-tested. That trades against the goal of this workstream. Flagged rather
-  than done; if the intent was better skill recall, that is a measurable
-  experiment on its own.
-
-  THE BUCKETING RULES ARE E164. Accomplishment bullets were landing in
-  `education`, so the separation between buckets is now stated explicitly rather
-  than left to inference.
-*/
-/**
- * ── ⚠⚠ BUMP THIS WHEN YOU EDIT `SYSTEM` (`P1-A1.5-E487`) ────────────────────
- *
- * ⚠ THE AUDIT TABLE RECORDED WHICH MODEL RAN BUT NEVER WHICH PROMPT, so a drop
- * in accuracy could not distinguish a model regression from an edit made right
- * here — and those have opposite fixes. A prompt is edited far more often than a
- * model is swapped, which is why this is the field that makes the health card
- * diagnostic rather than merely interesting.
- *
- * ⚠⚠ IT IS A HAND-MAINTAINED CONSTANT, ON PURPOSE. Hashing `SYSTEM` would make
- * every whitespace fix a new "version" and fill the chart with lines that mean
- * nothing. A version is a claim that the BEHAVIOUR changed, and only a person
- * can make that claim.
- * ⚠ Rows written before this existed read `pre-versioning`, never `v1` — see
- * `ResumeParseAudit.prompt_version`.
- */
-/*
-  ⚠ `2026-09-17.a` — `P2-J1.4-E549` restored `isCurrent` to the per-call EMPLOYERS
-  schema (the single-call schema had it; the passes dropped it). ⚠ SUPERSEDED,
-  quoted not deleted (`E164`): `export const PROMPT_VERSION = "2026-09-13.a";`
-*/
 export const PROMPT_VERSION = "2026-09-17.a";
 
 const SYSTEM = `You extract structured data from résumés for a services marketplace.
@@ -321,32 +179,12 @@ The four buckets are distinct. Put each item in exactly one:
 - skills: short capability terms only — tools, modules, methods. Not sentences, not achievements.
 Descriptions: at most 2 short sentences each. Prefer omitting a description to padding one.`;
 
-/*
-  MEASURED, NOT ASSUMED (WS-A).
-
-  A harder terseness pass — ≤200-character descriptions, no skill repeated
-  inside a project, a 40-skill cap — was written and REVERTED on the evidence.
-  Across three runs of the same four résumés, average OUTPUT was 3342 / 3312 /
-  3554 tokens with and without it: the instruction changed cost by less than the
-  run-to-run noise. The output on these documents is structural (many entries ×
-  their fields), not padded prose, so squeezing prose buys nothing.
-
-  Quality moved too — role titles scored 96%, 50% and 62% across those same
-  runs — but that metric is exact-string overlap on free-text titles and swings
-  by that much between IDENTICAL prompts, so it is noise, not a verdict. The
-  revert stands on the cost measurement alone.
-
-  `npm run eval:parser -- --only=eddie,marelise-eur,scott-new-full.docx,hcm-ram`
-  reproduces it.
-*/
-
 export type AiExtractOutcome =
   | {
       ok: true;
       data: AiResume;
       model: string;
       provider: ProviderName;
-      /** economy vs incumbent — E184's whole point is that this is visible. */
       tier: ParserTier;
       inputChars: number;
       ms: number;
@@ -360,14 +198,6 @@ export function aiExtractionAvailable(): boolean {
   return resolveProvider() !== null;
 }
 
-/**
- * How many of the schema's own top-level keys the response actually declared.
- *
- * Zero means the model did not answer the question — see the EMPTY vs ABSENT
- * note at the call site. Lifted out of that check so the retry above can ask
- * the same question with the same definition; two copies of this rule drifting
- * apart is how "we read your résumé and it was blank" comes back.
- */
 function declaredKeyCount(value: unknown): number {
   if (!value || typeof value !== "object") return 0;
   const raw = value as Record<string, unknown>;
@@ -376,14 +206,6 @@ function declaredKeyCount(value: unknown): number {
   ).length;
 }
 
-/**
- * Send document text to the model and return validated, structured data.
- *
- * NEVER THROWS. A missing key, a network failure, a refusal or a malformed
- * response all come back as `{ ok: false }`, because the caller's fallback is
- * the heuristic result the provider already has. An import that dies because an
- * optional enrichment failed would be strictly worse than not offering it.
- */
 export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
   const ask = () =>
     callExtractionModel({
@@ -395,47 +217,6 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
 
   let call = await ask();
 
-  /*
-    ONE RETRY, for the answer that isn't one (WS-4).
-
-    `response_format` is sent with `strict: false`, which makes the schema a
-    request rather than a contract — so the same document, sent twice, can come
-    back parsed once and as a bare object with none of the expected keys the
-    next time. Observed directly: Scott's résumé failed the route with "didn't
-    return anything usable", and the identical text through the identical code
-    path seconds later returned 1 employer, 14 projects and 34 skills.
-
-    Retried ONLY for a response carrying no answer at all — not for a model that
-    read the document and found nothing (that is a real answer, and the branch
-    below is careful to tell the two apart), and not for a refusal or a network
-    error, which repeating would not fix. One extra call at ~12s sits well
-    inside the route; a loop would not.
-    ⚠ `P2-J1.4-E546` — SUPERSEDED, quoted not deleted (`E164`): *"sits well
-    inside the 55s deadline"*. There has been no 55 s deadline since `E415`.
-    ⚠ The re-read route is 180 s and each call is capped at `MODEL_TIMEOUT_MS`
-    (77 s), so even two FULL-LENGTH calls (154 s) fit — that is the half-the-
-    read-budget rule in `budget.ts`, and why this may retry once and never loop.
-
-    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-4):
-
-        The durable fix is `strict: true`, which would make the vendor enforce
-        the shape instead of us hoping for it. … Out of scope for a bug fix;
-        flagged in the report.
-
-    ⚠⚠ THE FLAG CAME DUE, AND IT DID NOT COME DUE HERE. `E414` enabled
-    `strict: true` on the SIX MULTI-PASS schemas only. ⚠ THIS FUNCTION IS THE
-    ONE PATH IT COULD NOT COVER: `record_resume` carries ten strict-mode
-    blockers — five objects with no `additionalProperties: false` and five
-    `required` lists omitting ~22 already-nullable properties — and under strict
-    a non-conforming schema is REJECTED outright, so flipping it here would turn
-    "sometimes the wrong shape" into "always a 400".
-
-    ⚠ SO THIS RETRY STAYS, AND IT IS NOW THE ONLY THING PROTECTING THIS PATH.
-    Everything the old note said about the failure mode is still true here and
-    only here. ⚠ Fixing the ten blockers is the follow-on ("Option B"); it lands
-    on a prompt documented as change-only-with-a-harness-run and is reported
-    rather than started.
-  */
   if (call.ok && declaredKeyCount(call.value) === 0) {
     console.warn("[resume] model returned no schema keys — retrying once");
     call = await ask();
@@ -444,27 +225,12 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
   if (!call.ok) {
     return {
       ok: false,
-      /* ⚠ SUPERSEDED, quoted (`E414` WS-2): `call.reason === "no_key" ? "no_key" : "error"`
-         — which flattened a refusal into a generic error on its way out. */
       reason:
         call.reason === "no_key" || call.reason === "refusal" ? call.reason : "error",
       message: call.message,
     };
   }
 
-  /*
-    EMPTY vs ABSENT (WS3, an E121-class bug), kept exactly as it was.
-
-    `.default([])` fills a missing key with an empty array, so a response that
-    arrived with EVERY key absent — truncated or abandoned — validated cleanly
-    and was reported as "we read your résumé and it was blank". That is
-    indistinguishable from the real thing and is the wrong answer in the one
-    case where the user most needs to be told something went wrong.
-
-    The distinction is available BEFORE defaults are applied: a model that
-    genuinely found no work history still returns the keys with empty arrays in
-    them. Omitting every key is not an answer, it is the absence of one.
-  */
   if (declaredKeyCount(call.value) === 0) {
     return {
       ok: false,
@@ -479,7 +245,6 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
   const parsed = AI_RESUME_SCHEMA.safeParse(call.value);
   if (!parsed.success) {
     // NAME THE FIELD. "expected string, received undefined" without a path is a
-    // dead end — the same lesson E121 learned about unrecognised keys.
     const issue = parsed.error.issues[0];
     const where = issue?.path?.length ? ` at "${issue.path.join(".")}"` : "";
     return {

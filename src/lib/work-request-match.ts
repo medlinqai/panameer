@@ -3,47 +3,9 @@ import { shownSkills, selectedRoleIds } from "@/lib/shown-skills";
 import { marketplaceVisibleWhere, type Viewer } from "@/lib/access";
 import { getWorkRequest } from "@/lib/work-request";
 import { suiteFromPillar } from "@/lib/suite";
-/* ⚠ `P2-A2-E600` WS-E — growth breaks the tie below the match terms. */
 import { growthScore } from "@/lib/growth-score";
 import type { SoftwareSuite } from "@prisma/client";
 
-/**
- * Providers whose skills overlap a Work Request, RANKED BY WEIGHTED DEPTH
- * (brief_create_work_request_v1 WS-E; reworked by brief_per_job_skill_model
- * WS-5).
- *
- * ── WHAT CHANGED, AND WHY IT COULD NOT BEFORE ────────────────────────────────
- *
- * This used to rank on how many of the request's skills a provider ticked, and
- * the comment here said that was the only signal that existed — no deliveries,
- * no ratings, no history to weight by. That was true of a profile-level
- * checklist. It is not true now: every skill carries the cumulative, recency-
- * decayed time behind it (`ProviderSkill.weight`), computed from dated jobs. So
- * ranking moves from "how many did they tick" to "how deep and how recent",
- * which is the difference between a filter and a match.
- *
- * Counting overlap alone actively rewarded breadth-without-depth — the exact
- * profile the per-job model is designed to expose as thin.
- *
- * ── SUITE BOOSTS, IT DOES NOT GATE ───────────────────────────────────────────
- *
- * When the request names a suite, providers whose centre of gravity is there
- * rank higher. They are not the only results. A consultant who is 15%
- * PeopleSoft but did deep, recent PeopleSoft GL is the right answer to a
- * PeopleSoft GL question, and a filter would drop them.
- *
- * ── "ANY SUITE" RESOLVES THROUGH THE BRIDGE ──────────────────────────────────
- *
- * A capability-only request ("Requisitioning & Demand Management", no system)
- * names no modules, so a naive skill-id query matches nobody. The Bridge maps
- * each capability to the module that delivers it on every suite, so the request
- * expands to all of them and matches providers who only ever listed vendor
- * modules — which is all of them.
- *
- * VISIBILITY IS `marketplaceVisibleWhere`, the same predicate the mentor
- * directory and the buyer-facing profile use — one definition of "this provider
- * is discoverable", so a provider cannot be findable here and invisible there.
- */
 export type MatchedProvider = {
   profileId: string;
   firstName: string;
@@ -58,10 +20,6 @@ export type MatchedProvider = {
   rateMinCents: number | null;
   rateMaxCents: number | null;
   currency: string;
-  /**
-   * Summed weighted depth across the request's skills — the ranking number.
-   * Exposed so the UI can say WHY somebody is first instead of asserting it.
-   */
   matchWeight: number;
   /** Longest cumulative months on any one of the request's skills. */
   depthMonths: number;
@@ -71,15 +29,6 @@ export type MatchedProvider = {
   suiteMix: { suite: SoftwareSuite; pct: number }[];
 };
 
-/**
- * Widen a request's skills through the capability Bridge (WS-5).
- *
- * A request that named a suite already points at that suite's modules and is
- * returned unchanged. A request with NO suite ("Any / not sure") has skills
- * that may be capability domains, or modules of one arbitrary suite; either
- * way, the equivalent module on every other suite should match too. The Bridge
- * is the only thing that knows those are the same capability.
- */
 async function widenThroughBridge(
   skillIds: string[],
   anySuite: boolean
@@ -95,21 +44,6 @@ async function widenThroughBridge(
   return [...widened];
 }
 
-/**
- * ── ⚠⚠ THE ORDERING RULE, EXPORTED SO A GATE CAN ASSERT **IT** ───────────
- *
- * ⚠ `check:match-rank` imports this rather than re-writing the comparator. ⚠⚠ A
- * gate holding its own copy agrees with a stale duplicate the moment the real
- * sort changes — which is the failure mode `E585` names.
- * ⚠⚠⚠ IT IS PURE AND TAKES THE GROWTH MAP AS AN ARGUMENT, so the gate can prove
- * the precedence with three plain objects and no database at all.
- *
- * ⚠ MATCH FIRST, THEN OVERLAP, THEN GROWTH, THEN NAME. Growth replaced NAME and
- * nothing else (Scott, 2026-09-22) — it can only order people the ranking
- * already calls equal, so inviting colleagues cannot buy relevance.
- * ⚠⚠ IT SORTS A COPY. `Array.prototype.sort` mutates, and a caller handing in a
- * list it still holds should not find it reordered underneath.
- */
 export function rankMatchedProviders<
   T extends { personId: string; name: string; matchWeight: number; relevantSkills: number }
 >(rows: T[], growth: Map<string, number>): T[] {
@@ -122,32 +56,6 @@ export function rankMatchedProviders<
   );
 }
 
-/**
- * ── ⚠⚠⚠ THE ONE RANKER, ADDRESSED BY SKILL SET RATHER THAN BY REQUEST ───────
- *
- * `P2-A5-E709`, WS-A of `brief_provider_search_rds`. ⚠⚠ **THIS IS AN EXTRACTION,
- * NOT A NEW MATCHER.** Every line below used to sit inside `matchProvidersFor`,
- * which now calls it; the only change is that the two inputs arrive as arguments
- * instead of being read off a `WorkRequest`.
- *
- * ⚠⚠⚠ **WHY IT MATTERS THAT THIS IS ONE FUNCTION AND NOT TWO:** the brief asked for
- * *"RDS in → ranked providers out… sharing its ranking rules — NOT a copy of
- * them"*, and warned that **two rankers that drift is `E585`.** ⚠ A second copy here
- * would disagree with the buyer's own suggested-providers list on the same data,
- * **on the surface a stranger sees first** — which is exactly `E585`'s shape.
- *
- * ── ⚠⚠ IT TAKES NO `Viewer`, AND THAT IS A FACT ABOUT THE SCOPING ──────────
- *
- * ⚠ The provider set is scoped by `marketplaceVisibleWhere()` — **marketplace
- * visibility, not the caller's identity.** ⚠⚠ `matchProvidersFor` needs a viewer
- * only to prove the caller OWNS THE REQUEST before reading it; nothing in the
- * ranking depends on who is asking. ⚠⚠⚠ **SO A CALLER THAT HAS NO REQUEST MUST
- * STILL GUARD ITS OWN PAGE** (load-bearing rule 5) — the absence of a `Viewer`
- * here is not permission to skip one there.
- * ⚠ The ids that cross the wire from a search form are **CATALOG** ids (role,
- * pillar, skill), which are public rows carrying no ownership — not the
- * profile-or-person ids rule 5 forbids accepting from a client.
- */
 export async function matchProvidersForSkills(input: {
   skillIds: string[];
   /** Null means "any suite" — the widen signal, not a missing value. */
@@ -155,11 +63,6 @@ export async function matchProvidersForSkills(input: {
 }): Promise<{ skillIds: string[]; providers: MatchedProvider[] }> {
   if (input.skillIds.length === 0) return { skillIds: input.skillIds, providers: [] };
 
-  /*
-    No pillar means the buyer chose "Any / not sure" on a vendor role. That is
-    the signal to widen: match the same capability wherever it is implemented,
-    rather than only where this request happened to name it.
-  */
   const anySuite = !input.pillarId;
   const skillIds = await widenThroughBridge(input.skillIds, anySuite);
 
@@ -180,50 +83,16 @@ export async function matchProvidersForSkills(input: {
       ...marketplaceVisibleWhere(),
       skills: { some: { skill_id: { in: skillIds } } },
     },
-    /*
-      ── ⚠⚠⚠ THE CUT IS A LIMIT, NOT A RANKING (`P2-A2-E600` WS-E addendum) ────
-
-      ⚠ SCOTT, 2026-09-22: *"give that query an `orderBy` (most recently updated
-      first, then id as the tie-break) so the same providers survive the cut on
-      every run. ⚠ Don't rank by growth or completeness at the query level — the
-      cut is a limit, not a ranking."*
-      ⚠⚠ IT HAD **NO `orderBy` AT ALL**, so Postgres returned an arbitrary 100 —
-      physical order, free to change after any write or vacuum. Two identical
-      requests could score two different sets of people and nothing would say so.
-      ⚠⚠⚠ `updated_at` THEN `id` IS DELIBERATELY NOT A QUALITY SIGNAL. Ordering
-      the cut by completeness or growth would make the LIMIT into a second,
-      hidden ranking that the real comparator below never sees — and a provider
-      would be dropped for being incomplete rather than for being a worse match.
-      ⚠ `id` is the tie-break because `updated_at` is not unique; without it the
-      determinism this exists to give would stop at the first collision.
-
-      ⚠⚠ KNOWN-OPEN, AND THIS ONLY MAKES IT HONEST RATHER THAN FIXING IT:
-      **a provider outside the take is never scored.** The real fix is to rank
-      over EVERY qualifying provider. ⚠ MEASURED 2026-09-22: **58 of them hold
-      any skill and are marketplace-visible, so the 100 does not bind today** —
-      it becomes a live defect the day it does.
-    */
     orderBy: [{ updated_at: "desc" }, { id: "asc" }],
     take: 100,
     select: {
       id: true,
-      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
       rate_min_cents: true,
       rate_max_cents: true,
       currency: true,
       validation_status: true,
-      /* title: the provider's title lives on the PERSON since E595 WS-B. */
-      /* ⚠ `person_id` IS SELECTED FOR THE GROWTH TIE-BREAK (`P2-A2-E600`
-         WS-E). `growthScore` is keyed on the PERSON — `ColleagueInvite.
-         inviter_person_id` — not on the provider profile. */
       person_id: true,
       person: { select: { first_name: true, last_name: true, title: true, photo_url: true } },
-      /*
-        Only the skills THIS request asked for. Selecting all of a provider's
-        skills and filtering in memory would work and would also pull a hundred
-        rows per provider to count three.
-      */
-      /* ⚠ `E517` — the provider's role selection, so matching can read SHOWN. */
       roles: { select: { role_type_id: true } },
       role_type_id: true,
       skills: {
@@ -242,36 +111,10 @@ export async function matchProvidersForSkills(input: {
     },
   });
 
-  /**
-   * How much naming a suite is worth.
-   *
-   * A multiplier on the provider's share of that suite, so a 100%-Oracle
-   * consultant gets the full boost and a 20%-Oracle one gets a fifth of it. It
-   * tops out at +50%: enough to lift the right specialist above an equally deep
-   * generalist, never enough for a shallow match on the named suite to beat a
-   * deep match on another. Naming a system is a preference, not a requirement —
-   * that is the difference between this and a `where` clause.
-   */
   const SUITE_BOOST = 0.5;
 
   const candidates = rows
     .map((row) => {
-      /*
-        ── ⚠⚠ MATCHING READS SHOWN, NOT HELD (`P2-J1.4-E517`) ─────────────────
-
-        ⚠⚠ SCOTT, 2026-09-17: *"Matching puts someone in front of a buyer, so it
-        is an OFFER surface. If a buyer searches Payables, matches a provider,
-        clicks through and finds no Payables on the profile, that reads as a
-        broken app — and the provider may have narrowed precisely because they no
-        longer want that work."*
-        ⚠ *"THE CONSEQUENCE IS HONEST AND I ACCEPT IT: narrowing your roles
-        removes you from those searches. That is what narrowing MEANS."*
-
-        ⚠ THIS IS A DIFFERENT AXIS FROM `E515`'s NOTE that matching reads what a
-        provider HOLDS. That was CATALOG scope and it still stands: a skill is not
-        disqualified by which catalog it came from. ROLE scope is the provider's
-        own statement about what they offer.
-      */
       const shown = shownSkills(selectedRoleIds(row), row.skills, (s) => s.skill.role_type_id);
       const p = { ...row, skills: shown };
       const base = p.skills.reduce((n, s) => n + s.weight, 0);
@@ -280,8 +123,6 @@ export async function matchProvidersForSkills(input: {
         : 0;
       return {
         profileId: p.id,
-        /* ⚠ Carried for the growth tie-break only; it is stripped below and is
-           NOT part of `MatchedProvider`. A buyer's payload gains nothing. */
         personId: p.person_id,
         firstName: p.person.first_name,
         lastName: p.person.last_name,

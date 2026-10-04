@@ -1,35 +1,3 @@
-/**
- * `check:externally-sourced` — an externally sourced request renders NO sourcing rail, and
- * "direct" is gone from what a member reads (`P2-A8-E712`, WS-B + WS-D of
- * `brief_externally_sourced`). `npm run check:externally-sourced`.
- *
- * ── ⚠⚠ WHAT IT ASSERTS (ruling 11 — the right thing) ────────────────────────
- *
- * ⚠⚠⚠ **THE DEFECT IS NOT "A PANEL IS VISIBLE". IT IS A CONTROL THAT EXISTS AND REFUSES**
- * — `E579`. ⚠ A `hidden` class would leave `Invite providers` in the DOM: reachable by
- * keyboard, readable by a screen reader, and clickable by anyone who opened the panel. So
- * the assertions are about **conditional rendering**, and one of them fails the build if a
- * CSS class is used instead.
- * ⚠⚠ **AND THE RAIL IS TWO BLOCKS, SO THEY ARE ASSERTED AS A PAIR** — guarding one and
- * forgetting the other is the plausible half-fix, and it would leave the invite button
- * behind.
- *
- * ── ⚠⚠⚠ WHAT MUST *NOT* BE GUARDED, WHICH IS THE OTHER HALF OF `E579` ───────
- *
- * ⚠ `AssignDirectly` is `assignProviderDirectly`, `route: "DIRECT"` — **the externally
- * sourced path's own destination.** ⚠⚠ Hiding it on a sole-sourced request would remove
- * the one door that kind of request exists to walk through. **The gate asserts it stays.**
- *
- * ── ⚠ AT WHAT SCOPE (91), AND WHAT IS HONESTLY NOT PROVED ───────────────────
- *
- * ⚠ STATIC over the page, the loader and three copy surfaces, **comments stripped** (rule
- * 12). ⚠⚠ Plus a LIVE half that creates one `WorkRequest`, reads it back through
- * `getWorkRequestDetail`, and deletes it — proving the column reaches the page's props.
- * ⚠⚠⚠ **NO DOM WALK IS POSSIBLE AND THAT IS STATED RATHER THAN IMPLIED: `WorkRequest`
- * HOLDS 0 ROWS, so there is no sole-sourced request to render in a browser.** The static
- * half proves the markup is conditional; the live half proves the boolean arrives. **What
- * is not proved is the rendered DOM, and the gate says so in its own output.**
- */
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -47,8 +15,6 @@ const strip = (s: string): string =>
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, (m) => m.replace(/[^\n]/g, " "))
     .replace(/^([ \t]*)\/\/.*$/gm, (_m, i) => i);
-
-/* ═══ 0 · INPUTS FIRST (92 / `E586`) ═══════════════════════════════════════ */
 
 const PAGE = join("src", "app", "(app)", "work-requests", "[id]", "page.tsx");
 const LOADER = join("src", "lib", "work-request-lines.ts");

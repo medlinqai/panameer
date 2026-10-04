@@ -21,29 +21,6 @@ import type { ParserTier, ProviderName } from "@/lib/resume/ai-provider";
 import type { PassTiming } from "@/lib/resume/ai-passes";
 import type { Prisma } from "@prisma/client";
 
-/**
- * Apply a résumé import to a provider profile (brief_P / E012; LinkedIn path
- * removed in PJv2 WS2 / E069).
- *
- * Owner scope is the CALLER's job — this takes an already-resolved profile id,
- * exactly like `applyProviderSection`. Every attempt is recorded as a
- * `ProfileImport` row (including failures) so the review page can surface what
- * didn't come through (E019) and so a parse can be re-run without re-uploading.
- *
- * Import NEVER destroys typed data: it fills empty fields and appends history
- * the user doesn't already have. A user who imports after typing a bio keeps
- * their bio.
- */
-
-/**
- * WHICH READER ACTUALLY RAN (E184).
- *
- * Returned to the client and written to the server log on every import. A
- * heuristic fallback carries the REASON it fell back: "the AI is off today" and
- * "the AI errored on this document" produce identical output and want completely
- * different responses, and telling them apart used to mean reading the server's
- * stdout — if anyone thought to look, which for a whole walk nobody did.
- */
 export type ImportPath = {
   reader: "ai" | "heuristic";
   tier?: ParserTier;
@@ -51,21 +28,7 @@ export type ImportPath = {
   model?: string;
   /** Present only on `heuristic`: why the model didn't produce this parse. */
   reason?: string;
-  /**
-   * ⚠⚠ ADMIN / EVAL ONLY — NEVER RENDERED TO A PROVIDER (`E407` WS-7).
-   *
-   * A half-set or absent RESUME_PARSER_* config, in one sentence. `ParserHealth`
-   * (the console health card) and the eval script read it. ⚠ IT NAMES
-   * ENVIRONMENT VARIABLES: a provider cannot act on it, and reading
-   * `RESUME_PARSER_PRICE_IN_PER_M` at the moment they are deciding whether to
-   * trust this app with their CV reads as a broken product.
-   */
   configProblem?: string | null;
-  /**
-   * ⚠ `reader: "ai"` WITH THE EMPLOYERS SECTION TAKEN FROM THE HEURISTIC
-   * (`E407` WS-1). The read did not fail — ONE PASS did — and the review banner
-   * needs to say which, instead of claiming the AI read nothing.
-   */
   employersFromHeuristic?: boolean;
 };
 
@@ -76,12 +39,9 @@ export type ImportResult = {
     headline: boolean;
     overview: boolean;
     experiences: number;
-    /* `E294` — projects written with an `employer_id` resolved. */
     projectsAttached: number;
-    /* `E294` — projects written with `employer_id` null, awaiting placement. */
     projectsUnattached: number;
     education: number;
-    /** ⚠ `P1-A1.4-E399` WS-4 — was never counted because it was never written. */
     certifications: number;
     /** WS4 — matched against the seeded vocabulary, not asked of the model. */
     specializations: number;
@@ -97,32 +57,11 @@ export type ImportResult = {
     needsSuite: number;
   };
   gaps: string[];
-  /**
-   * WS0/WS3 — how much to trust this parse, and why. Drives the review's
-   * "we had trouble reading this" panel. Absent on a FAILED import.
-   */
   confidence?: { score: "high" | "low"; reasons: string[] };
-  /** E184 — the reader that produced this parse, named. */
   path?: ImportPath;
   error?: string;
 };
 
-/**
- * Destroy every EARLIER résumé this profile holds — both copies.
- *
- * ⚠⚠ TWO COPIES, AND SCOTT'S RULE HAS TO REACH BOTH. `raw_text` is the
- * extracted text; `storage_path` is the ORIGINAL FILE in the private `resumes`
- * bucket. ⚠ Nulling the column and leaving the object is the appearance of
- * deletion, which is worse than none.
- *
- * ⚠ WHAT SURVIVES AND WHY is `SUPERSEDED_RESUME_PAYLOAD` in `lib/retention.ts`
- * — the row, its cost and audit columns, and `parsed`/`gaps`, which are derived
- * structure the review screen still reads rather than the document itself.
- *
- * ⚠ SCOPED BY `provider_profile_id` AND EXCLUDING THE ROW JUST WRITTEN. The
- * `id: { not: keepId }` is what stops a purge eating the import that triggered
- * it; the profile scope is what stops it reaching anybody else's.
- */
 export async function purgeSupersededResumes(
   profileId: string,
   keepId: string
@@ -141,10 +80,6 @@ export async function purgeSupersededResumes(
   let objectsFailed = 0;
   for (const row of stale) {
     if (!row.storage_path) continue;
-    /* ⚠ THE BUCKET FIRST, THE COLUMN SECOND. If the process dies between them
-       the row still points at the (now absent) object, and the next purge is a
-       no-op that reports the object gone — recoverable. The other order strands
-       a file nothing references, which nothing will ever clean up. */
     if (await deleteResumeFile(row.storage_path)) objects += 1;
     else objectsFailed += 1;
   }
@@ -675,9 +610,6 @@ async function readDocument(
     );
   }
 
-  /* ⚠ ONE FIELD SWAPPED, NOT ONE OBJECT REPLACED. Spreading `parsed` and
-     overriding a single key is what keeps the other five sections AI-sourced —
-     and is why the gate can assert it by forcing `experiences: []`. */
   const merged = employersFailed
     ? { ...parsed, experiences: heuristic.experiences }
     : parsed;
@@ -690,15 +622,11 @@ async function readDocument(
       provider: outcome.provider,
       model: outcome.model,
       configProblem,
-      /* ⚠ WHICH SECTION FELL BACK, so the review banner can say what actually
-         happened instead of "AI didn't read this one". */
       employersFromHeuristic: employersFailed,
     },
     recall: outcome.recall,
     timing: {
       readMs: Date.now() - readStarted,
-      /* ⚠ Projected: the stored record is duration only, not cost or tokens,
-         which already live in their own columns. */
       passes: outcome.passes.map((p) => ({
         name: p.name,
         ok: p.ok,
@@ -740,12 +668,6 @@ function emptyApplied(): ImportResult["applied"] {
   };
 }
 
-/**
- * Write a parsed résumé onto a profile. Exported for the AI tier (WS3), which
- * applies its result through THIS function rather than a parallel writer — one
- * place decides how a parse becomes profile rows, so the two paths cannot drift
- * in what they do to someone's data.
- */
 export async function applyParsedResume(
   profileId: string,
   parsed: ParsedResume,
@@ -760,12 +682,7 @@ export async function applyParsedResume(
       education: { select: { institution: true } },
       languages: { select: { name: true } },
       skills: { select: { skill_id: true } },
-      /* ⚠ `P1-A1.4-E399` WS-4 — needed to de-duplicate, exactly as education is. */
       certifications: { select: { name: true } },
-      /* ⚠⚠ `Certification.user_id` IS NOT NULL and is the OWNER — a credential
-         belongs to the PERSON, not to the seller profile, so a provider who stops
-         selling keeps it. Selected here because the writer below cannot invent it. */
-      /* title: the imported title lands on the PERSON now (E595 WS-B). */
       person: { select: { id: true, user_id: true, title: true } },
     },
   });
@@ -773,15 +690,7 @@ export async function applyParsedResume(
 
   // --- Headline + bio: fill only when empty (never overwrite typed text) ---
   const data: Prisma.ProviderProfileUpdateInput = {};
-  /* TWO TARGETS NOW: the profile keeps overview and method; the TITLE goes
-     to the person. Kept as a separate object so an empty one writes nothing. */
   const personData: Prisma.PersonUpdateInput = {};
-  /* THE IMPORTED TITLE GOES TO Person.title (E595 WS-B). SUPERSEDED (E164):
-     //   if (!profile.headline.trim() && parsed.headline) {
-     //     data.headline = parsed.headline.slice(0, 200);
-     //     applied.headline = true;
-     //   }
-     FILL-ONLY-WHEN-EMPTY IS UNCHANGED - an import never overwrites typed text. */
   if (!(profile.person.title ?? "").trim() && parsed.headline) {
     personData.title = parsed.headline.slice(0, 200);
     applied.headline = true;
@@ -791,7 +700,6 @@ export async function applyParsedResume(
     applied.overview = true;
   }
   if (!profile.profile_method) {
-    // PJv2 WS2 (E069) — the LinkedIn import path is gone; RESUME is the only
     // source. The enum keeps LINKEDIN for rows imported before this.
     data.profile_method = "RESUME";
   }
@@ -799,7 +707,6 @@ export async function applyParsedResume(
   // blank — the field is nullable precisely so "not asked yet" is detectable
   // (brief_P pitfall), and a user's own answer always wins.
   // WS7 — experience_level is gone; years are derived from the imported
-  // work history instead (E068).
   if (Object.keys(data).length > 0) {
     await prisma.providerProfile.update({ where: { id: profileId }, data });
   }
@@ -809,52 +716,18 @@ export async function applyParsedResume(
   }
 
   // --- Work history: append EMPLOYERS we don't already hold -----------------
-  // brief_U / E042: Employer is the single work-history model, so the import
   // populates it directly instead of the retired flat WorkExperience table.
   // The "Your Employers" step then shows these as cards to confirm and enrich.
-  /* ⚠⚠ THE SHARED KEY (`E740` A2) — `rerun-diff.ts` built a DIFFERENT one
-     (space-joined), so the writer and the preview could disagree about whether
-     a job was already held. ⚠ Behaviour here is unchanged: `jobKey` is this
-     expression, extracted. */
   const haveRole = new Set(
     profile.employers.map((w) => jobKey(w.name, w.role_title)),
   );
 
-  /*
-    PER-JOB DERIVATION (WS-3), computed HERE rather than asked of the model.
-
-    The prompt is documented as fragile — change only with a before/after
-    harness run — and it did not need changing: the model already returns each
-    employer with its title and description, and deciding which catalog rows
-    that text names is a lookup against a controlled vocabulary, not a judgement
-    call. Doing it deterministically means the same block always yields the same
-    suite, the guards in job-skills.ts are testable without a live model, and
-    the LOCKED prompt is untouched, so the parser harness measures exactly what
-    it measured before.
-
-    The vocabulary is loaded once for the whole résumé rather than per job — 566
-    vendor rows, one query.
-  */
-  /*
-    ⚠⚠ THE ACTIVE CATALOG, RESOLVED ONCE FOR THE WHOLE IMPORT (`P2-J1.4-E514`).
-    ⚠ BY CODE, NEVER `findFirst()` — `catalog.ts` says exactly this, and the six
-    `E483` sites already do it. `import.ts` was the SEVENTH such site and the
-    only one still unscoped.
-    ⚠ `null` is possible on a never-seeded database, and every use below is
-    written to degrade to the old unscoped behaviour rather than match nothing —
-    an empty vocabulary would silently import a résumé with zero skills.
-  */
   const catalogId = await activeCatalogId();
   const inActiveCatalog = catalogId ? { catalog_id: catalogId } : {};
 
   const vocabRows = await prisma.skill.findMany({
     where: {
       is_custom: false,
-      /* ⚠ `E481` — the parser's vocabulary never contains a retired row.
-         ⚠⚠ `E514` — AND IT NEVER CONTAINS A LEGACY-CATALOG ROW. These ids are
-         written as `JobSkill` rows on the employers created below, so a match
-         out of the `ERP` catalog would attach a skill to a job that no picker
-         can ever show — and it would cast a role vote in `E509`'s derivation. */
       ...OFFERABLE,
       ...inActiveCatalog,
       roleType: {
@@ -876,9 +749,6 @@ export async function applyParsedResume(
     ),
   );
 
-  /* `E294` — name -> id for the employers created just below, so a project
-     naming one can be hung off it. Keyed on the SAME string the mapper matched
-     against, so the two agree by construction, not by a second normalisation. */
   const employerIdByName = new Map<string, string>();
 
   for (const [i, e] of parsed.experiences.entries()) {
@@ -886,29 +756,17 @@ export async function applyParsedResume(
     if (haveRole.has(key)) continue;
     haveRole.add(key);
 
-    /*
-      The block is the title plus the description. The employer NAME is
-      deliberately excluded: "Oracle Corporation" as an employer says who paid,
-      not which product the work was on, and including it would anchor every
-      job at Oracle to Fusion regardless of what it actually says.
-    */
     const block = [e.roleTitle, e.description].filter(Boolean).join("\n");
     const found = extractJobSkills(block, vocab);
 
     const employer = await prisma.employer.create({
       data: {
         provider_profile_id: profileId,
-        /* ⚠ NULL SURVIVES THE WRITE (`P1-J1.4-E373`). Coercing to "" here would
-           re-create the defect the nullable column exists to fix. */
         name: e.employer ? e.employer.slice(0, 200) : null,
         role_title: e.roleTitle.slice(0, 200),
         description: e.description?.slice(0, 4000) ?? null,
         start_date: e.startDate ? new Date(e.startDate) : null,
         end_date: e.endDate ? new Date(e.endDate) : null,
-        /* ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`). SUPERSEDED, quoted (`E164`):
-           `is_current: Boolean(e.startDate) && !e.endDate,` — which made an end
-           date we could not READ into a role that is still running. Scott: *"A
-           parse failure must NEVER silently extend a job to today."* */
         is_current: Boolean(e.startDate) && e.isCurrent === true,
         sort_order: i * 10,
         software_suite: found.suite,
@@ -921,39 +779,12 @@ export async function applyParsedResume(
       },
       select: { id: true },
     });
-    /* ⚠ AN UNNAMED EMPLOYER IS NOT KEYED (`P1-J1.4-E373`). The map exists so a
-       project can find its employer BY NAME; a null has no name to find, and
-       keying it under "" would attach every unnamed line's projects to whichever
-       one was written last. */
     if (e.employer) employerIdByName.set(e.employer, employer.id);
     applied.experiences++;
     applied.jobSkills += found.skillIds.length;
     if (found.needsSuite) applied.needsSuite++;
   }
 
-  /*
-    ── ⚠⚠ PROJECTS BECOME `Project` ROWS (`P1-J1.4-E294`, 2026-09-01) ──────────
-  
-    ⚠ THIS IS THE PATH THAT HAS NEVER EXISTED. `git log --all -S employer_id --
-    src/lib/resume` returns NO COMMITS ON ANY BRANCH: no parse has ever written a
-    Project row, which is the only reason every per-employer `Projects` link on
-    the profile has been inert. The affordance was built (`E075`); the data
-    behind it never arrived.
-  
-    ⚠ TWO OUTCOMES, NEVER A THIRD. `employerName` non-null and known -> attached.
-    Anything else -> written with `employer_id` null and surfaced for the user to
-    place in one click (`E296`). NOTHING IS SKIPPED — there is deliberately no
-    `continue` in this loop.
-  
-    ⚠ `client_name` IS NON-NULLABLE ON `Project`, so an unnamed client stores ""
-    rather than refusing the row. A required column must never be the reason a
-    transcribed project is lost — that is the whole rule this brief serves.
-  
-    ⚠ SOFTWARE IS APPENDED TO THE DESCRIPTION, not dropped. `Project` has no
-    software column and this brief forbids a migration, so the text rides along
-    where the user can still read it — the same shape the old mapper used when it
-    flattened projects into experiences.
-  */
   for (const [i, pr] of parsed.projects.entries()) {
     const employerId = pr.employerName
       ? (employerIdByName.get(pr.employerName) ?? null)

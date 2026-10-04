@@ -1,25 +1,5 @@
 import { APP_SHOTS_COPY } from "@/lib/brand";
 
-/**
- * "See the tools you'd be using" — the product-screenshot band (WS-2/WS-3).
- *
- * ⚠ EVERY FRAME IS A LABELLED PLACEHOLDER. There are no real captures yet, and
- * the brief is explicit: use real screenshots or `// TODO real screenshot`
- * placeholders, don't fake UI.
- *
- * WHAT "DON'T FAKE UI" RULES OUT, specifically, because the tempting version is
- * subtle: a grey box with a fake toolbar, three fake table rows and a fake
- * chart would look like a screenshot at thumbnail size and would be a picture
- * of software that does not exist. So each frame is an empty bordered panel
- * that NAMES the screen it will hold and says "screenshot to come". A visitor
- * reads it as a placeholder, which is what it is; nobody can mistake it for
- * product.
- *
- * The band ships rather than waiting because the page's structure is what is
- * being reviewed, and a section that is simply absent cannot be reviewed at
- * all. Replacing each panel is a one-line change per frame.
- */
-
 type Shot = { title: string; caption: string };
 
 const HIRE_SHOTS: Shot[] = [
@@ -54,12 +34,7 @@ export function AppShots({ page }: { page: "hire" | "work" }) {
         <div className="mt-9 grid gap-4 md:grid-cols-3">
           {shots.map((s) => (
             <figure key={s.title}>
-              {/*
-                TODO real screenshot — replace this panel with a captured PNG of
-                the named screen. Deliberately empty: see the note at the top of
-                this file on why a mocked-up frame would be worse than a blank
-                one.
-              */}
+              {}
               <div className="grid aspect-[4/3] place-items-center rounded-[14px] border border-dashed border-line bg-canvas px-5 text-center">
                 <span className="text-[13px] text-[#6b7191]">
                   Screenshot to come
@@ -75,10 +50,7 @@ export function AppShots({ page }: { page: "hire" | "work" }) {
           ))}
         </div>
 
-        {/*
-          Said once, plainly, under the band. The dashed borders and "screenshot
-          to come" already carry it visually; this is for anyone skimming.
-        */}
+        {}
         <p className="mt-6 text-[13px] text-[#6b7191]">
           Product screenshots are being captured — these frames are placeholders,
           not the interface.

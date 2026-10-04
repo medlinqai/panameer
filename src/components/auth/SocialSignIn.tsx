@@ -3,39 +3,6 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 
-/**
- * Google / Apple sign-in buttons (brief_Q, restyled by brief_S/E020,
- * relabelled + made container-responsive by brief_W/E046).
- *
- * LinkedIn was REMOVED in PJv2 WS13 (E069): with the LinkedIn profile import
- * gone there is nothing it uniquely offers, and Scott's call is "no sense having
- * LinkedIn anywhere". Google and Apple stay.
- *
- * LABELS (E046): the full "Continue with …" wording, matching the `aria-label`
- * and the approved mockup. The short labels existed only so the buttons would
- * squeeze into a narrow column, and on the narrow `/login` card they still
- * truncated.
- *
- * LAYOUT (E046): a CONTAINER query, not a media query. This component has two
- * parents of very different widths — the `max-w-xl` sign-up column and the
- * `max-w-sm` login card — and they are viewed at the SAME viewport, so a
- * viewport breakpoint cannot tell them apart: any `sm:grid-cols-3` rule that
- * gives the sign-up page its row would also force three full labels into the
- * 320px login card and clip them. `@container` + `@md:grid-cols-3` asks the
- * question that actually matters — how much room did MY parent give me — so the
- * sign-up page gets one row and the login card stacks, with no page-specific
- * props to keep in sync.
- *
- * COLOURS (E020): Apple black, and Google as the
- * standard WHITE button with the OFFICIAL multicolour "G" — Google's brand
- * guidelines don't permit recolouring the mark, and Scott's reference sheet had
- * a solid-blue G, which is why the G below is the real four-colour path.
- *
- * A button is LIVE only when that provider's credentials exist. We read
- * NextAuth's own `/api/auth/providers`, which lists exactly what `auth.ts`
- * registered, so the client never learns anything secret.
- */
-
 type ProviderId = "google" | "apple";
 
 /** Official Google "G" — four-colour, not tinted. */
@@ -70,23 +37,6 @@ function AppleMark({ className = "h-[19px] w-[19px] shrink-0" }: { className?: s
   );
 }
 
-/*
-  ── ⚠⚠ COLOUR AND HOVER ARE SEPARATE FIELDS (`P1-J1.1-E233`, 2026-08-30) ────
-
-  Scott: *"We can do B for now, gets them looking right, can fix later."*
-
-  `className` is what the button ALWAYS looks like. `hoverClassName` is applied
-  ONLY when the provider is actually live. Before this split, both lived in one
-  string and `disabled:opacity-45` sat on the shared base — so with no OAuth
-  credentials configured (which is ALWAYS, today) Apple's black and Google's
-  white both rendered as the same dead grey, and a disabled button still
-  changed colour under the cursor.
-
-  ⚠⚠ THE COLOURS THEMSELVES ARE UNTOUCHED. Apple black and Google's untinted
-  four-colour mark on white are mandated by `E020` and by Google's own brand
-  guidelines. This row was about the DISABLED TREATMENT, never the palette.
-  ⚠ AND THE BUTTONS ARE NOT HIDDEN — Scott chose B over C explicitly.
-*/
 const BUTTONS: {
   id: ProviderId;
   label: string;
@@ -113,18 +63,7 @@ const BUTTONS: {
 ];
 
 export function SocialSignIn({
-  /*
-    ⚠ `/join` (`E234`). ⚠ SUPERSEDED, quoted: `"/join/provider"`.
-    ⚠ THIS DEFAULT IS DEAD IN PRACTICE and was still worth fixing — both call
-    sites pass one explicitly (`login/page.tsx:109`, and `SignUpForm.tsx:153`
-    which forwards its own). A default nobody reaches is exactly where a
-    side-picking value survives unnoticed.
-  */
   callbackUrl = "/join",
-  /* ⚠⚠ RULING 18 — a disabled control must not carry a schedule. ⚠ OAuth is
-     off until the keys are added, which is a FACT about configuration and not
-     a date. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   disabledHint = "Coming soon", */
   disabledHint = "Not available",
 }: {
   callbackUrl?: string;
@@ -154,14 +93,7 @@ export function SocialSignIn({
 
   return (
     <div className="@container">
-      {/* Stacked by default (the narrow login card), three across once the
-          CONTAINER — not the window — is wide enough for full labels.
-
-          The threshold is MEASURED: the longest remaining label ("Continue with
-          Google") is ~154px at this size, plus an 18px brand mark, the gap and
-          the padding — ~194px per button, so TWO need ~400px. Below that the row
-          would push the mark or the text out of the button, so it stacks
-          instead. (Was 640px when LinkedIn made it three — WS13.) */}
+      {}
       <div className="grid grid-cols-1 gap-2.5 @[400px]:grid-cols-2">
         {BUTTONS.map((b) => {
           const live = available?.has(b.id) ?? false;
@@ -170,15 +102,6 @@ export function SocialSignIn({
               key={b.id}
               type="button"
               disabled={!live || busy !== null}
-              /*
-                ⚠ `aria-disabled` ALONGSIDE `disabled`, NOT INSTEAD OF IT
-                (`E233`). The real `disabled` attribute is what makes the button
-                genuinely non-interactive — this row is a LOOK, not a behaviour,
-                and Scott's note ("can fix later") is about wiring OAuth, not
-                about letting people click a dead button. The ARIA attribute is
-                stated explicitly so the disabled state survives any future
-                refactor to a non-`<button>` element.
-              */
               aria-disabled={!live || busy !== null}
               title={live ? `Continue with ${b.label}` : disabledHint}
               aria-label={`Continue with ${b.label}`}

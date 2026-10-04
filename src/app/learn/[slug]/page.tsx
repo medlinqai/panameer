@@ -1,12 +1,3 @@
-/*
-  ── ⚠⚠ RULING 1: THE WORD IS "GROUPS" (`P2-A3-E619` WS-C) ────────────────
-  ⚠ SCOTT, 2026-09-22: *"The word is Groups everywhere. **Forum** and **Room**
-  disappear from the interface** — the menu, the page, the headings, the
-  buttons and the empty states."* ⚠⚠ DATA AND TABLE NAMES STAY (`ForumBoard`,
-  `forum_boards`, `forums.ts`); only the words people READ change.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-//   Path forum · A private forum for the people taking this path… · Open the forum →
-*/
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLearnPath, viewerTeaches } from "@/lib/learn-home";
@@ -14,7 +5,6 @@ import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { getAppPath } from "@/lib/learn-path-app";
 import { AppPath } from "@/components/learn/app/AppPath";
 import { getSessionViewer } from "@/lib/session";
-/* ⚠ `P1-J3-E383` — a count, never content. */
 import { getPathForumTeaser } from "@/lib/forums";
 import { AUDIENCE_LABEL, AUDIENCE_PREFIX, STYLE_LABEL } from "@/lib/learn";
 import { InstructorBadge } from "@/components/learn/InstructorBadge";
@@ -23,37 +13,6 @@ import { ProgressBar } from "@/components/learn/ProgressBar";
 import { LessonTable } from "@/components/learn/LessonTable";
 import { learnGaps } from "@/lib/gate-reads";
 
-/**
- * Learning-path landing (brief_learn_experience WS2).
- *
- * The full outline is public — every course, section and lesson title, whether
- * or not the video exists yet. brief_learn_v1 was explicit that PLAYBACK is
- * gated and the CURRICULUM is not: someone deciding whether a path is worth
- * their time needs to see what it covers, and a page showing only finished
- * lessons would today show almost nothing.
- */
-
-/**
- * ── ⚠⚠⚠ A PATH THAT IS NOT READY SAYS SO (`P2-ALL-E607`) ─────────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"Not a 404 — links to those slugs may already exist. A
- * path that isn't ready says so plainly, with no player and a way to the
- * catalogue."*
- *
- * ⚠⚠ ELEVEN OF 23 PUBLISHED PATHS ARE IN THIS STATE, and every one fails for
- * the same reason: **not one of their lessons has a video attached.** Measured
- * 2026-09-23 — `vimeo_ref` is non-null on 305 of 522 lessons, exactly the
- * playable count, so the production status never independently blocks a path.
- *
- * ⚠⚠⚠ THE WORDING NAMES THE CONTENT, NOT THE READER. It does not say "you do
- * not have access" — the member has done nothing wrong and there is nothing
- * for them to fix. ⚠ It makes no promise about WHEN, because nothing in the
- * schema knows: there is no publish date, no ETA and no queue position, and
- * inventing "coming soon" would be a claim about a mechanism that does not
- * exist. ⚠ The curriculum is still listed below it — somebody deciding whether
- * this path is worth waiting for needs to see what it covers (`isPlayable`'s
- * own standing rule: gate playback, not visibility).
- */
 function NotReadyNotice() {
   return (
     <div className="mb-7 rounded-brand border border-dashed border-line bg-bg-soft px-5 py-6">
@@ -82,47 +41,12 @@ export default async function LearningPathPage({
   const { slug } = await params;
   const viewer = await getSessionViewer();
 
-  /*
-    ── ⚠ SIGNED IN, THIS IS THE LEVEL-1 PATH SCREEN (brief_learn_app_shell WS3) ──
-
-    The same branch `/learn` itself uses, and for the same reason: a learner is
-    inside the product and a visitor is being sold it. Two concrete reasons this
-    is a branch rather than one page with flags:
-
-      1. The dashboard chrome is AppShell's — `AppPath` FULL-BLEEDS by cancelling
-         `main`'s `px-5 py-6 sm:px-8`. Signed out, `learn/layout.tsx` renders the
-         marketing shell whose `<main>` has NO padding, so the same negative
-         margins would push the hero off the left edge.
-      2. Everything the spine adds — per-lesson faces, the real test rules, the
-         leaderboard floor — is per-learner. A visitor has none of it.
-
-    ⚠ THE PUBLIC BODY BELOW IS UNCHANGED. `getLearnPath(slug, null)` is what it
-    already resolved to for a visitor, so a shared curriculum URL still shows the
-    full outline to whoever it was shared with.
-  */
   if (viewer) {
     const app = await getAppPath(slug, viewer);
     if (!app) notFound();
-    /* ⚠ `P1-ALL-E034` — the `LEARN` gate shown BEFORE the block. Only the
-       signed-in branch computes it; the public body below is a read and stays
-       completely open. */
-    /* ⚠ THE NOTICE SITS ABOVE THE SPINE, and `AppPath` is unchanged — the
-       curriculum still renders in full beneath it. */
     return (
       <>
-        {/*
-          ── ⚠⚠⚠ LEARN'S TAB ROW (brief 9 WS-A) ──────────────────────────
-
-          ⚠ SCOTT, of this page and the catalogue: *"It is wrong and there are
-          ZERO tabs."* ⚠⚠ A member who opened a path **lost Learn's navigation
-          entirely.**
-          ⚠⚠⚠ **`Learning Paths` IS THE ACTIVE TAB, NOT `My Learning`** — the
-          mockup's view 3 shows it that way, and it is right: a path IS a
-          catalogue entry you are standing inside.
-          ⚠ Signed-in branch only. The signed-out view below keeps the marketing
-          page, because a row naming *"My Learning"* to somebody with no account
-          is a row of doors onto walls (`E579`).
-        */}
+        {}
         <LearnTabs active="paths" teaches={await viewerTeaches(viewer)} />
         {!app.ready && (
           <div className="mx-auto w-full max-w-5xl px-6 pt-8">
@@ -137,10 +61,6 @@ export default async function LearningPathPage({
   const path = await getLearnPath(slug, null);
   if (!path) notFound();
 
-  /* ⚠ `P1-J3-E383` — a COUNT, and whether THIS viewer may open the room. Never a
-     thread title, a snippet or an author name: `getPathForumTeaser` cannot even
-     select them, and `check:forums` fails the build if one is added. Read AFTER
-     `path` because it needs the id. */
   const forum = await getPathForumTeaser(viewer, path.id);
 
   const firstPlayable = path.courses
@@ -156,7 +76,7 @@ export default async function LearningPathPage({
           Learn
         </Link>
         <span className="mx-2">/</span>
-        {/* ⚠ `P2-A4-E611` — an AUDIENCE, said as one. No level column exists. */}
+        {}
         <span>{`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[path.audience] ?? path.audience}`}</span>
         {path.group && (
           <>

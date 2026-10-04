@@ -1,15 +1,3 @@
-/**
- * ── `check:home-switch` — THE FRONT DOOR'S SWITCH (`P2-ALL-E787`) ───────────
- *
- * ⚠⚠⚠ **IT TESTS THE SWITCH WITHOUT STARTING A SERVER**, because the thing under
- * test is a decision `next.config.ts` makes when a server starts — so a running
- * server can only ever show you ONE side of it. ⚠ The config reads the variable
- * INSIDE `redirects()`, which is what lets this call the function twice with the
- * environment toggled and compare the two answers.
- *
- * ⚠⚠ It also re-asserts `E780`'s `/status` rule, because lane 5 edits the same
- * function and the cheapest way to break a neighbour is to edit around it.
- */
 import nextConfig from "../next.config";
 
 type Redirect = {

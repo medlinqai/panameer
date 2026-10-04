@@ -4,41 +4,6 @@ import {
   T, MAG, GREY, PILL, ERP, ERP_EDGE, ERP_INNER, AIP, AIP_EDGE, AIP_INNER, PRO, PRO_EDGE,
 } from "@/components/marketing/diagrams/diagram-tokens";
 
-/**
- * THE PANAMEER INTEGRATION MODEL — `/integrate` spine step 2 (`P1-J0-E335`).
- *
- * Source of truth: `2. Claude Sub-Files/mockups/integration_model_2026-08-26.html`,
- * itself out of `Panameer_Integration_Model_SCW.pptx`.
- *
- * ⚠⚠ THE GEOMETRY IS SCOTT'S AND EVERY COORDINATE IS PORTED AS WRITTEN. Not one
- * box moved, not one gap "improved", not one lane re-laid-out. If something looks
- * off, it looks off in the PPT he edited by hand — CHANGE IT THERE, NOT HERE.
- *
- * ── ⚠ THE THREE THINGS THAT ARE NOT A STRAIGHT COPY, AND WHY ────────────────
- *
- *  1. ⚠⚠ THE MARKER IDS ARE NAMESPACED. Both mockups define `<marker id="m">` and
- *     `<marker id="g">`, and BOTH DIAGRAMS NOW RENDER ON ONE PAGE — shipping them
- *     as written would put four duplicate ids in one document and let one
- *     diagram's arrowheads resolve against the other's defs. `im-*` here,
- *     `eh-*` in `EHubbingDiagram`.
- *  2. The mockup's page chrome — its `eyebrow`, `<h1>` and `.sub` — IS NOT SHIPPED.
- *     The panel this lands in already renders `Step 2 - Punch Out for Talent &
- *     Services` as its eyebrow and the step description as its `<h2>`; adding the
- *     mockup's own heading would stack three headings. The BOARD and the LEGEND are
- *     the diagram. ⚠ REPORTED, not silent.
- *  3. ⚠ THE `<p class="note">` IS A CHAT NOTE AND IS NOT PAGE COPY. Not shipped, by
- *     instruction. Its content is in the brief report's pre-launch list instead.
- *
- * ── ⚠⚠ WHAT THIS DIAGRAM CLAIMS THAT DOES NOT EXIST ─────────────────────────
- *
- * Of the objects drawn, ONLY `Work Request` and the Service Product Catalog
- * (`Package`) are in the schema. `Work Order`, `Settlement Request`, `Payment`,
- * `Invoice`, `Receipts`, `Time Sheet` and `Receivables` DO NOT EXIST, and neither
- * does any punchout endpoint or cXML rail. ⚠ `decisions-01.md` records `0 of 5
- * built, knowingly` and outstanding parts gate PROMOTION not the build — but A
- * DIAGRAM IS A STRONGER CLAIM THAN A STEP LABEL, so the full list is on the
- * pre-launch list. ⚠ DO NOT TREAT THIS PICTURE AS A SPEC OF WHAT IS SHIPPED.
- */
 export function IntegrationModelDiagram() {
   return (
     <>

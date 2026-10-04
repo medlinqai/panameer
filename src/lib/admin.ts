@@ -7,13 +7,6 @@ import {
 } from "@/lib/access";
 import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 
-/**
- * Platform Console (brief_M) — admin, platform-wide reads + the merit Validation
- * grant/reject. Every function gates on `requireAdmin(viewer)` first (the
- * explicit admin path in access.ts — NOT a tenancy bypass), then queries across
- * all P-Accounts. Reads throw on failure so the UI fails loud (no silent empty).
- */
-
 export class AdminError extends Error {
   constructor(
     message: string,
@@ -89,9 +82,6 @@ export async function getAdminDashboard(viewer: Viewer) {
   const people = await prisma.person.findMany({
     select: {
       company: { select: { p_account_id: true } },
-      /* ⚠ The PERSON half of the required set — photo, phone and an address.
-         `providerMeetsRequired` spans both tables. */
-      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
       title: true,
       photo_url: true,
       phone: true,
@@ -101,17 +91,11 @@ export async function getAdminDashboard(viewer: Viewer) {
       is_service_coordinator: true,
       is_support: true,
       providerProfile: {
-        /* ⚠⚠ WIDENED FOR THE REAL GATE (`P2-J3-E590` WS-A, Scott's ruling
-           2026-09-20): *"recompute `live` from the required-set predicate so
-           the admin board cannot disagree with real visibility."*
-           ⚠ SUPERSEDED, quoted not deleted (`E164`):
-           // select: { status: true, completeness: true, validation_status: true }, */
         select: {
           status: true,
           completeness: true,
           validation_status: true,
           paused_at: true,
-          /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title is on the person. */
           role_type_id: true,
           hourly_rate_cents: true,
           rate_min_cents: true,
@@ -136,20 +120,6 @@ export async function getAdminDashboard(viewer: Viewer) {
       .map((p) => p.providerProfile)
       .filter((pp): pp is NonNullable<typeof pp> => pp != null);
     const validated = provs.filter((p) => p.validation_status === "VALIDATED").length;
-    /*
-      ── ⚠⚠⚠ `live` READS THE REAL GATE NOW (`P2-J3-E590` WS-A) ──────────────
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      // const live = provs.filter(
-      //   (p) => p.status === "ACTIVE" && p.completeness >= VISIBILITY_THRESHOLD
-      // ).length;
-
-      ⚠⚠ IT CLAIMED VISIBILITY WHILE READING A SCORE. After `WS-A0` the
-      marketplace gate is `providerMeetsRequired`, so a board counting `live`
-      off the percentage would report a number no buyer surface agrees with —
-      the same split `E585` was, moved onto Scott's own console.
-      ⚠ MEASURED 2026-09-20: the two answers differed on 6 profiles.
-    */
     const live = ppl.filter(
       (p) =>
         p.providerProfile != null &&

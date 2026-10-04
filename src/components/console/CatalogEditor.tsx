@@ -3,29 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-/**
- * THE CATALOG EDITOR (`P1-A1.5-E481`).
- *
- * > **SCOTT:** *"There is no way to add/delete/update a Role, Domain, or
- * > Skill…which would be the point of the page, no? Mostly, this should be
- * > editing."*
- *
- * ⚠⚠ IT DECIDES NOTHING. Every rule — a rename is an UPDATE, a delete is
- * refused at a non-zero link count, an add is `origin: ADMIN` — lives in
- * `lib/catalog-write.ts` behind `/api/admin/catalog`. This component collects
- * input and renders the answer. ⚠ A second copy of "is this safe?" in the
- * browser is a copy that can be bypassed with devtools and that drifts.
- *
- * ⚠ THE LINK COUNT IS FETCHED WHEN THE ROW OPENS, not when delete is pressed.
- * The brief: *"Show the link count in the UI BEFORE the admin acts."* An admin
- * should see "12 providers use this" while deciding, not after being refused.
- *
- * ⚠⚠ THERE IS NO CONFIRM DIALOG ON DELETE, AND THAT IS NOT AN OVERSIGHT. Delete
- * is only ever OFFERED when the count is zero; when it is not zero the button
- * is not a button, it is a sentence explaining why Retire is the answer. A
- * confirm dialog would be a way to click past somebody else's data.
- */
-
 export type EditTarget = {
   table: "skill" | "specialization";
   id: string;
@@ -77,11 +54,6 @@ export function CatalogEditor({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  /*
-    ⚠ `useState` + a one-shot fetch rather than an effect: the row's link count
-    is read once when the editor opens and never changes underneath it. An
-    effect here would re-fire on every keystroke in the name field.
-  */
   if (links === null && !busy) {
     setBusy(true);
     fetch(`/api/admin/catalog?table=${target.table}&id=${target.id}`)

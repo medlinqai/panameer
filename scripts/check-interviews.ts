@@ -13,17 +13,6 @@ import { sendTest, testStateFor, recordTestResult, declineTest } from "@/lib/wor
 import { copyResultFromAttempt, testRequestOutcome } from "@/lib/sourcing";
 import { getStatistics } from "@/lib/statistics";
 
-/**
- * ── ⚠⚠⚠ `check:interviews` (`P2-A8-E621` WS-B) ──────────────────────────
- *
- * ⚠ THE STOP GATE: *"an interview at each reachable state; the test answer; a
- * selection made without either; the dash→count list."*
- *
- * ⚠⚠ IT DRIVES THE REAL WRITERS AND TEARS ITS ROWS DOWN. Six statuses are
- * declared in `InterviewStatus`; a gate that greps for six strings would pass
- * against writers that reach three of them. ⚠⚠⚠ **EVERY STATE HERE IS ARRIVED
- * AT BY CALLING THE FUNCTION THAT MOVES IT**, and the row is read back.
- */
 let pass = 0;
 const fails: string[] = [];
 const check = (name: string, ok: boolean, why = "") => {
@@ -39,21 +28,9 @@ const V = (userId: string) => ({ userId }) as never;
 async function main() {
   const requestIds: string[] = [];
   let proposalIds: string[] = [];
-  /*
-    ⚠⚠⚠ TRACKED FROM THE MOMENT EACH IS CREATED, AND SWEPT IN THE `finally`.
-    ⚠ `LearnTestAttempt` rows are written into a **real member's** attempt
-    history, and `learn-assessment.ts` refuses a new attempt past
-    `max_attempts` counted on `(user_id, learning_path_id)`. ⚠⚠ So a leaked
-    probe attempt does not merely litter — **it spends a real provider's tries
-    and can lock them out of a test they need.** Deleting them at the end of the
-    happy path was not enough: a throw in between would have left them.
-  */
   const attemptIds: string[] = [];
 
   try {
-    /* ── 0 · THE CAST ─────────────────────────────────────────────────────
-       ⚠ A buyer with a company (the P-Account comes through it — the
-       backbone's shape) and a provider who is a different person. */
     const buyer = await prisma.person.findFirst({
       where: { NOT: { user_id: null } },
       select: { id: true, user_id: true, company: { select: { p_account_id: true } } },
@@ -84,10 +61,6 @@ async function main() {
       return wr.id;
     };
 
-    /* ═══ 1 · ⚠⚠⚠ AN INTERVIEW AT EACH REACHABLE STATE ═══════════════════
-       ⚠ The happy path walks four of the six on ONE row, in order, because
-       that is the order a real interview moves in and each writer refuses a
-       row that is in the wrong state. */
     const rA = await makeRequest();
     const ivA = await requestInterview(V(buyer.user_id), {
       workRequestId: rA,
@@ -103,8 +76,6 @@ async function main() {
     check("1 — ⚠⚠ REQUESTED — the buyer can ask", (await readA())?.status === "REQUESTED");
     check("1 — ⚠ and it was CREATED, not found", ivA.created);
 
-    /* ⚠⚠ IDEMPOTENT: asking twice returns the open one rather than a second
-       row. A buyer who double-clicks must not summon two interviews. */
     const again = await requestInterview(V(buyer.user_id), {
       workRequestId: rA,
       providerPersonId: provider.id,
@@ -709,15 +680,6 @@ async function main() {
 
 }
 
-/**
- * ⚠⚠⚠ THE REPORT IS OUTSIDE `main`, AND THAT IS NOT STYLE.
- *
- * ⚠ `main` returns early when the cast is missing, and a `return` inside a
- * `try` runs the `finally` and then LEAVES — so a report written at the bottom
- * of `main` would be skipped and the process would exit **0 with a recorded
- * failure**. ⚠⚠ That is `E586`'s shape exactly: a gate that reports success
- * having asserted nothing. Caught while writing this file, not by a run.
- */
 async function report() {
   try {
     await main();

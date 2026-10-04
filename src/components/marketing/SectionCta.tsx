@@ -1,32 +1,5 @@
 import Link from "next/link";
 
-/**
- * THE TWO EXITS (brief_home_polish_method WS-2).
- *
- * Every section on the home ends in exactly one of two actions — start the
- * assessment, or meet the experts. No section is a dead end, and no section
- * offers a third choice.
- *
- * ── WHY THIS IS A COMPONENT AND NOT A CONVENTION ─────────────────────────────
- *
- * "Every section must end in one of two CTAs" is the kind of rule that holds
- * for exactly as long as somebody is checking. Making the variant a union of
- * two strings means a third exit cannot be added without editing this file and
- * seeing why it is a union — which is the moment to reconsider. The rule
- * enforces itself instead of being remembered.
- *
- * ── THE TWO, AND WHY THOSE TWO ───────────────────────────────────────────────
- *
- *   assessment  the goal. Free, no decision required, and it is the method
- *               demonstrated rather than described — which is the whole
- *               argument for a firm that sells its method.
- *   experts     the resourcing close. The home's job is to hand a warmed-up
- *               buyer to Hire Talent; a value block that ends on its own
- *               argument has warmed somebody up for nobody.
- *
- * A THIRD would be one of "book a call", "see pricing", "read the guide" — each
- * defensible on its own and collectively the reason funnel pages leak.
- */
 export type CtaVariant = "assessment" | "experts";
 
 const CTA = {
