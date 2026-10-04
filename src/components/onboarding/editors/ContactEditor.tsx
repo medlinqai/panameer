@@ -69,6 +69,43 @@ export function ContactEditor({
         ⚠⚠ THE MASK CAPS AT TEN DIGITS, measured at `E597` WS-B: a value typed
         with a `+1` loses its last digit. The id is the net's handle.
       */}
+      {/*
+        COUNTRY FIRST, THEN PHONE (`P2-J1.4-E825`, R-E005). Scott's order is
+        Country → Phone → Street → City → State/Province → Postal. The country
+        decides how the phone is formatted and what the region field even means,
+        so asking it after the phone asked a question whose answer depended on
+        one not yet given. The phone field is NOT moved inside `LocationFields`
+        — a phone is not an address — so the address block draws in two parts
+        with the phone between them.
+      */}
+      <LocationFields
+        part="country"
+        countryHint="Also sets how we format your phone number."
+        value={{
+          country: address.country,
+          line1: address.line1,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+        }}
+        /*
+          ⚠⚠ `undefined` MEANS "NOT TOUCHED" AND `null` MEANS "CLEARED", and the
+          two must not collapse. This normalisation moved WITH the fields rather
+          than staying in the wizard: it is part of how these inputs report a
+          change, not part of what the caller does with it.
+        */
+        onChange={(patch) =>
+          onAddressChange({
+            ...(patch.country !== undefined ? { country: patch.country ?? "" } : {}),
+            ...(patch.line1 !== undefined ? { line1: patch.line1 ?? "" } : {}),
+            ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+            ...(patch.state !== undefined ? { state: patch.state ?? "" } : {}),
+            ...(patch.postalCode !== undefined
+              ? { postalCode: patch.postalCode ?? "" }
+              : {}),
+          })
+        }
+      />
       <PhoneField
         id="review-phone"
         value={phone}
@@ -76,15 +113,8 @@ export function ContactEditor({
         country={phoneCountry}
         onCountryChange={onPhoneCountryChange}
       />
-      {/*
-        E126 — COUNTRY FIRST, above the street line. It decides what
-        the fields under it even mean ("State" here, "Province" in
-        Canada, "County" in Ireland), so asking it last meant asking
-        the rest before knowing what they were. Same shared block as
-        the employer modal (E123), which is what stops one provider
-        meeting two different location forms in one sitting.
-      */}
       <LocationFields
+        part="rest"
         withStreet
         countryHint="Also sets how we format your phone number."
         value={{

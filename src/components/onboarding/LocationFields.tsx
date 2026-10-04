@@ -43,18 +43,26 @@ export function LocationFields({
   onChange,
   /** The address block also collects a street line and a postcode. */
   withStreet = false,
+  part = "all",
   countryHint,
 }: {
   value: LocationValue;
   onChange: (patch: LocationValue) => void;
   withStreet?: boolean;
+  /*
+    WHICH HALF TO RENDER (`P2-J1.4-E825`, R-E005). Scott's order is Country →
+    Phone → Street → City → State/Province → Postal, and the phone field is not
+    part of an address. Rather than move Phone inside this component — it is not
+    a location — a caller can draw `"country"`, then its own field, then
+    `"rest"`. `"all"` is unchanged and is what every other caller gets.
+  */
+  part?: "all" | "country" | "rest";
   countryHint?: string;
 }) {
   const country = value.country ?? "";
   const regions = regionsFor(country);
 
-  return (
-    <>
+  const country_field = (
       <Field label="Country *" hint={countryHint}>
         <select
           value={country}
@@ -96,7 +104,13 @@ export function LocationFields({
           ))}
         </select>
       </Field>
+  );
 
+  return (
+    <>
+      {part !== "rest" && country_field}
+      {part === "country" ? null : (
+        <>
       {withStreet && (
         <Field label="Street Address">
           <TextInput
@@ -152,6 +166,8 @@ export function LocationFields({
             onChange={(e) => onChange({ postalCode: e.target.value })}
           />
         </Field>
+      )}
+        </>
       )}
     </>
   );

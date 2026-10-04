@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 import { formatPhone, isoFor, phoneExpectation, validatePhone } from "@/lib/phone";
 /* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
-import { ALL_COUNTRIES } from "@/lib/country";
+import { countryName, ALL_COUNTRIES } from "@/lib/country";
 import { getCountryCallingCode } from "libphonenumber-js";
 
 /**
@@ -82,16 +82,26 @@ export function PhoneField({
   /* ⚠⚠ ALL 245, BY CODE (`E729` WS-C). ⚠ `"Other"` was filtered out because it has no dial
      code; the new list never contains it, so the filter is gone with it.
      ⚠ SUPERSEDED (`E164`):  //   COUNTRIES.filter((c) => c !== "Other").map((c) => { */
-  const options = ALL_COUNTRIES.map((c) => c.code).map((c) => {
-    const iso = isoFor(c);
+  /*
+    THE PICKER SHOWS THE NAME (`P2-J1.4-E825`, R-E004). Scott, walking Register:
+    it listed bare two-letter codes — "AF, AX, AL…". The cause is right here: the
+    first `.map` took `c.code`, so the field called `name` held a CODE from that
+    point on and the option text was "+93 · AF".
+    ⚠ The VALUE stays the code, because that is what `formatPhone` and the stored
+    column expect; only what a person reads changed.
+    ⚠ SUPERSEDED, quoted not deleted:
+    //   ALL_COUNTRIES.map((c) => c.code).map((c) => { ... return { name: c, dial }; })
+  */
+  const options = ALL_COUNTRIES.map((c) => {
+    const iso = isoFor(c.code);
     let dial = "";
     try {
       dial = iso ? `+${getCountryCallingCode(iso)}` : "";
     } catch {
       dial = "";
     }
-    return { name: c, dial };
-  });
+    return { code: c.code, name: countryName(c.code) ?? c.code, dial };
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Field label={label}>
@@ -122,8 +132,10 @@ export function PhoneField({
         >
           <option value="">Country…</option>
           {options.map((o) => (
-            <option key={o.name} value={o.name}>
-              {o.dial ? `${o.dial} · ${o.name}` : o.name}
+            <option key={o.code} value={o.code}>
+              {/* "United States +1" — Scott's order: the name a person is
+                  looking for first, the dial code after it. */}
+              {o.dial ? `${o.name} ${o.dial}` : o.name}
             </option>
           ))}
         </select>
