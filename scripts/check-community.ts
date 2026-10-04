@@ -1890,7 +1890,15 @@ for (const f of CONNECT_PAGES) {
 */
 const PROFILE_ROW_PAGES = [
   ["profile", "page.tsx"],
-  ["community", "score", "page.tsx"],
+  /*
+    THE SCORE PAGE MOVED (`E816`): `/community/score` is a 308 to `/score` now,
+    and the page that draws the row lives at the new path. The RULE is unchanged
+    — the score belongs to the profile's row, not Connect's — so the assertion
+    follows the file rather than being deleted with it (ruling 14).
+    Superseded, quoted not deleted:
+    //   ["community", "score", "page.tsx"],
+  */
+  ["score", "page.tsx"],
 ].map((seg) => join("src", "app", "(app)", ...seg));
 for (const f of PROFILE_ROW_PAGES) {
   const body = bodies.get(f) ?? "";

@@ -29,7 +29,9 @@ export default async function BuildDigestPage() {
         <span className="font-display text-[22px] font-bold text-ink tabular-nums">
           {recipients.length}
         </span>{" "}
-        {recipients.length === 1 ? "follower has" : "followers have"} asked for the weekly email.
+        {/* `E374` — the verb "Follow" is dead in rendered strings, and the noun
+            carries it. "people" says the same thing and is plainer. */}
+        {recipients.length === 1 ? "person has" : "people have"} asked for the weekly email.
         {recipients.length === 0 && " Sending now would reach nobody."}
       </p>
 
