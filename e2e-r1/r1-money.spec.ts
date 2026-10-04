@@ -343,3 +343,23 @@ test("SOW: buyer writes it at Create Order, provider sees it on the work order",
     await dropFixture(g);
   }
 });
+
+// Run 13 lane 7: the order and the request each show a who/what/when history.
+test("history: order and payment request list their events", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    const sid = await createSettlement(g, "APPROVED");
+    await db().payment.create({ data: { payment_number: `PAY-H-${g.tag}`.slice(0, 40), p_account_id: g.pAccountId, received_at: new Date(), amount_cents: 50000, status: "ALLOCATED",
+      lines: { create: [{ line_number: 1, settlement_request_id: sid, amount_cents: 50000 }] } } });
+    await signIn(page, g.buyer.email);
+    await page.goto(`/orders/${g.orderId}`);
+    const h = page.getByTestId("history");
+    await expect(h).toBeVisible({ timeout: 30_000 });
+    for (const t of ["created work order", "accepted the work order", "released the work order", "submitted payment request", "approved payment request", "recorded the buyer's payment"])
+      await expect(h.getByText(t, { exact: false }).first()).toBeVisible();
+    await page.goto(`/payments/payment-requests/${sid}`);
+    await expect(page.getByTestId("history").getByText("recorded the buyer's payment", { exact: false })).toBeVisible({ timeout: 30_000 });
+  } finally {
+    await dropFixture(g);
+  }
+});

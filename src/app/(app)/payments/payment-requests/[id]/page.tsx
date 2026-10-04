@@ -7,6 +7,8 @@ import { SettlementStatusPill } from "@/components/settle/SettlementRows";
 import { SettlementDecision } from "@/components/settle/SettlementDecision";
 import { getSettlement, SettlementError } from "@/lib/settlements";
 import { BackLink } from "@/components/console/BackLink";
+import { History } from "@/components/orders/History";
+import { settlementHistory } from "@/lib/transaction-history";
 import { remitInstructions } from "@/lib/remit";
 
 export const metadata = { title: "Payment Request · Panameer" };
@@ -191,6 +193,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
         <p className="text-[16px] font-bold">Total {formatCents(s.totalCents, s.currency)}</p>
       </div>
+
+      <History events={await settlementHistory(s.id)} />
     </div>
   );
 }
