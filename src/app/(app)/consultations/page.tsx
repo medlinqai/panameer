@@ -1,9 +1,6 @@
-import { ComingSoon } from "@/components/ComingSoon";
-import { guardPage } from "@/lib/guard";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Book a Consultation · Panameer" };
-
-export default async function Page() {
-  await guardPage("authenticated");
-  return <ComingSoon title="Book a Consultation" />;
+// Not in R1: the stub is retired and the old address goes to the live page.
+export default function Page() {
+  redirect("/shop");
 }

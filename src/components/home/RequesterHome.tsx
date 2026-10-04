@@ -82,19 +82,7 @@ export function RequesterHome({
         {}
         <div className="-mx-1 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3">
           {}
-          <article className="flex w-[280px] shrink-0 snap-start flex-col rounded-brand border border-magenta/30 bg-magenta/[0.04] p-5">
-            {}
-            <p className="font-display text-[18px] font-bold leading-snug">
-              Take the Guided Tour
-            </p>
-            <p className="mt-2 flex-1 text-[14px] leading-relaxed text-ink-2">
-              Book a consultation with an expert to review your project&apos;s
-              budget, timeline and scope one-on-one.
-            </p>
-            <Button href="/consultations" variant="ghost" className="mt-4 w-full">
-              Book a Consultation
-            </Button>
-          </article>
+          {/* The Guided Tour card linked to /consultations, which is not in R1; removed (R1 menus). */}
 
           {individuals.map((e) => (
             <ExpertCard key={e.profileId} expert={e} />

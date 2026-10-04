@@ -29,7 +29,7 @@ export function BuildLine({
     return (
       <section aria-label="Build line" className="mt-7 border-t border-line pt-5">
         <div className="h-[3px] w-full rounded-full bg-line" />
-        <p className="mt-3 text-[13px] text-ink-2">Dates coming soon</p>
+        <p className="mt-3 text-[13px] text-ink-2">No dates set</p>
       </section>
     );
   }
