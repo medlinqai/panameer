@@ -52,7 +52,7 @@ export default async function BoardPage({
           2026-09-23): **ownership is not authority for access.** All four
           general groups are ownerless, which is exactly why they are `OPEN`.
         */}
-        <div className="mt-4 rounded-brand border border-line bg-white p-5">
+        <div className="mt-4 border-t border-line py-5">
           <p className="text-[13px] text-ink-2">
             {board.memberCount} {board.memberCount === 1 ? "member" : "members"}
             {board.owner ? ` · Run by ${board.owner.name}` : ""}

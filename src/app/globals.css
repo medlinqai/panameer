@@ -673,3 +673,11 @@ body {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+
+/* R-E013: Connect pages sit on a white page, as Profile does. */
+main:has(.pm-white-page) {
+  background: var(--color-surface);
+}
+.bg-canvas:has(.pm-white-page) {
+  background: var(--color-surface);
+}

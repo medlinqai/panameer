@@ -262,7 +262,7 @@ export function EducationCards({
       <button
         type="button"
         onClick={openAdd}
-        className="mt-4 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+        className="mt-4 border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
       >
         + Add Education
       </button>
@@ -380,14 +380,14 @@ export function EducationCards({
             <button
               type="button"
               onClick={close}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+              className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={save}
-              className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover"
             >
               Save
             </button>

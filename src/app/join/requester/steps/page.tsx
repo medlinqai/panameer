@@ -338,7 +338,7 @@ export default function RequesterStepsPage() {
               <button
                 type="button"
                 onClick={() => setPhotoModal(true)}
-                className="mt-3 rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+                className="mt-3 border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
               >
                 {draft.photoUrl ? "Change Photo" : "Add a Photo"}
               </button>

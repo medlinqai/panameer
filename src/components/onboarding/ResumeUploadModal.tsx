@@ -155,7 +155,7 @@ export function ResumeUploadModal({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="mt-4 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+            className="mt-4 border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
           >
             Choose File
           </button>
@@ -228,7 +228,7 @@ export function ResumeUploadModal({
             onClose();
           }}
           disabled={busy}
-          className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+          className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
         >
           Cancel
         </button>
@@ -236,7 +236,7 @@ export function ResumeUploadModal({
           type="button"
           onClick={upload}
           disabled={!file || busy}
-          className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
         >
           {busy ? "Working…" : "Continue"}
         </button>

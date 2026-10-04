@@ -317,7 +317,7 @@ export function SkillsEditor({
               type="button"
               onClick={addCustomSkill}
               disabled={!query.trim()}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+              className="border border-ink bg-surface px-5 py-2.5 font-semibold transition-colors hover:bg-surface-hover disabled:opacity-40 text-ink"
             >
               + Add
             </button>
@@ -346,14 +346,14 @@ export function SkillsEditor({
                 <button
                   type="button"
                   onClick={acceptSkillMatch}
-                  className="rounded-full bg-magenta px-4 py-2 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className="bg-ink px-4 py-2 text-[13.5px] font-semibold text-surface transition-colors hover:bg-ink-hover"
                 >
                   Use {match.skill.name}
                 </button>
                 <button
                   type="button"
                   onClick={keepTypedSkill}
-                  className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                  className="border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
                 >
                   Keep &ldquo;{match.typed}&rdquo;
                 </button>
@@ -429,7 +429,7 @@ export function SkillsEditor({
                 {heldNotShown.map((sk) => (
                   <span
                     key={sk.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-line bg-white px-3.5 py-1.5 text-[13.5px] font-bold text-ink-2"
+                    className="inline-flex items-center gap-1.5 border border-ink bg-surface bg-white px-3.5 py-1.5 text-[13.5px] font-semibold text-ink-2 text-ink"
                   >
                     {sk.name}
                     <button

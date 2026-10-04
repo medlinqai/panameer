@@ -27,16 +27,15 @@ export default async function ProfileScorePage() {
   if (!input) redirect("/connect");
 
   return (
-    <>
-      {}
+    <div className="pm-white-page">
       <PageTabs
         wrap
         eyebrow={ACCOUNT_MENU_NAME}
         sequence={tabSequenceFor("/profile")}
         tabs={profileTabs(viewer)}
-        current="/score"
+        current="/community/score"
       />
       <ProfileScoreView score={computeProfileScore(input)} />
-    </>
+    </div>
   );
 }

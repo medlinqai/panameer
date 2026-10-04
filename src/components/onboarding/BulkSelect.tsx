@@ -102,7 +102,7 @@ export function BulkSelectBar({
               void onDelete(state.selected);
             }
           }}
-          className="rounded-full bg-magenta px-4 py-1.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+          className="bg-ink px-4 py-1.5 text-[13.5px] font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-40"
         >
           {busy ? "Removing…" : `Delete ${n || ""}`.trim()}
         </button>

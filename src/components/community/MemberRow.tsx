@@ -20,7 +20,7 @@ export function MemberRow({
   const meta = [person.title, person.company].filter(Boolean).join(" · ");
 
   return (
-    <div className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
+    <div className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5">
       {}
       <Avatar
         firstName={person.name.split(" ")[0] ?? ""}

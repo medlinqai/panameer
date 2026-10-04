@@ -20,9 +20,9 @@ type Props = {
 };
 
 const BTN =
-  "rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors disabled:cursor-default";
-const PRIMARY = `${BTN} bg-magenta text-white hover:bg-magenta/90 disabled:bg-ink-2/15 disabled:text-ink-2`;
-const GHOST = `${BTN} border border-line text-ink-2 hover:border-magenta/50 hover:text-magenta`;
+  "px-3.5 py-1.5 text-[13px] font-semibold transition-colors disabled:cursor-default";
+const PRIMARY = `${BTN} bg-ink text-surface hover:bg-ink-hover disabled:bg-ink-2/15 disabled:text-ink-2`;
+const GHOST = `${BTN} border border-ink bg-surface text-ink hover:bg-surface-hover`;
 const QUIET = `${BTN} text-ink-2`;
 /* ⚠ The opt-in face: white, 1px ink border, ink text — the same family as `pm-btn` on the
    profile rail, so `Hire`, `Message` and this read as one set rather than three treatments. */

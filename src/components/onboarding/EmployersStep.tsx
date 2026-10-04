@@ -620,7 +620,7 @@ export function EmployersStep({
           <button
             type="button"
             onClick={openAddEmployer}
-            className="mt-4 rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="mt-4 bg-ink px-6 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
           >
             + Add Company
           </button>
@@ -1216,7 +1216,7 @@ export function EmployersStep({
             <button
               type="button"
               onClick={openAddEmployer}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+              className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
             >
               + Add Company
             </button>
@@ -1494,7 +1494,7 @@ export function EmployersStep({
               <button
                 type="button"
                 onClick={() => setReclassify(null)}
-                className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink transition-colors hover:bg-surface-hover"
               >
                 Cancel
               </button>
@@ -1559,7 +1559,7 @@ export function EmployersStep({
                     }
                   }
                 }}
-                className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+                className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
               >
                 Save
               </button>
@@ -1726,7 +1726,7 @@ export function EmployersStep({
           <button
             type="button"
             onClick={() => setEmployerModal(null)}
-            className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
+            className="border border-ink bg-surface px-5 py-2.5 font-semibold text-ink hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -1734,7 +1734,7 @@ export function EmployersStep({
             type="button"
             onClick={saveEmployer}
             disabled={busy || !employerForm.name.trim()}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save Company"}
           </button>

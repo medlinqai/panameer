@@ -32,7 +32,7 @@ function ComingSoon() {
       <div className="mt-9 flex flex-col items-center gap-3">
         <Link
           href="/join/requester"
-          className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
         >
           Sign Up as a Requester
         </Link>

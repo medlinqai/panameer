@@ -83,7 +83,7 @@ export function WizardShell({
           <button
             onClick={onBack}
             disabled={busy}
-            className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+            className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
           >
             Back
           </button>
@@ -122,7 +122,7 @@ export function WizardShell({
           <button
             onClick={onContinue}
             disabled={continueDisabled || busy}
-            className="rounded-full bg-magenta px-8 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             {busy ? "Saving…" : continueLabel}
           </button>

@@ -144,7 +144,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           the tab that owns it. */}
       <section className="space-y-3">
         <Heading>Teams</Heading>
-        <div className="rounded-brand border border-line bg-white p-5">
+        <div className="border-t border-line py-5">
           <p className="text-[14px] leading-relaxed text-ink-2">
             A team is a group of providers who take work together, so a buyer
             can hire the group rather than assemble one.{" "}

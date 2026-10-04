@@ -34,7 +34,7 @@ function ConsentPill({ consent }: { consent: RosterRow["consent"] }) {
 
 function PersonLine({ row }: { row: RosterRow }) {
   return (
-    <div className="pm-member-row flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-4">
+    <div className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5">
       <Avatar
         firstName={row.name.split(" ")[0] ?? ""}
         lastName={row.name.split(" ").slice(1).join(" ")}
@@ -94,7 +94,7 @@ export function ProviderTeamSections({
           <div className="space-y-2">
             {}
             {invites.map((i) => (
-              <div key={i.id} className="rounded-brand border border-line bg-white p-4">
+              <div key={i.id} className="border-t border-line py-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <Avatar
                     firstName={i.recruiter.name.split(" ")[0] ?? ""}
@@ -190,7 +190,7 @@ export function RecruiterTeamSections({
 
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Your Team&rsquo;s Coverage</h2>
-        <div className="rounded-brand border border-line bg-white p-5">
+        <div className="border-t border-line py-5">
           {}
           {coverage.length === 0 ? (
             <p className="text-[14px] leading-relaxed text-ink-2">
@@ -207,7 +207,7 @@ export function RecruiterTeamSections({
 
       <section className="space-y-3">
         <h2 className="font-display text-[17px] font-bold">Open Work You Could Field</h2>
-        <div className="rounded-brand border border-line bg-white p-5">
+        <div className="border-t border-line py-5">
           {}
           <p className="text-[14px] leading-relaxed text-ink-2">
             Nothing here yet. Work requests exist but none has been posted — they

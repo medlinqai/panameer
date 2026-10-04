@@ -54,7 +54,7 @@ export function ForumComposer({
   };
 
   return (
-    <form onSubmit={submit} className="rounded-brand border border-line bg-white p-5">
+    <form onSubmit={submit} className="border-t border-line py-5">
       <h2 className="font-display text-[16px] font-bold">
         {mode === "thread" ? "Ask A Question" : "Reply"}
       </h2>
@@ -156,7 +156,7 @@ export function ForumComposer({
           body.trim().length < 2 ||
           (mode === "thread" && title.trim().length < 5)
         }
-        className="mt-4 rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+        className="mt-4 bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
       >
         {busy ? "Posting…" : mode === "thread" ? "Post Question" : "Post Reply"}
       </button>

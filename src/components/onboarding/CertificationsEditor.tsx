@@ -193,7 +193,7 @@ export function CertificationAttachment({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+          className="border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
         >
           {busy ? "Uploading…" : "Attach PDF or Image"}
         </button>

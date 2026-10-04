@@ -102,13 +102,13 @@ export function VerifyGate({
       <div className="flex flex-wrap gap-3">
         <button
           onClick={checkNow}
-          className="rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="bg-ink px-6 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
         >
           I&apos;ve Verified — Continue
         </button>
         <button
           onClick={resend}
-          className="rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+          className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover"
         >
           Resend Email
         </button>
@@ -136,7 +136,7 @@ export function VerifyGate({
           <div className="flex gap-2">
             <button
               onClick={saveEmail}
-              className="rounded-full bg-magenta px-5 py-2.5 font-bold text-white hover:bg-magenta-dark"
+              className="bg-ink px-5 py-2.5 font-semibold text-surface hover:bg-ink-hover"
             >
               Save &amp; Resend
             </button>

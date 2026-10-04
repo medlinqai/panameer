@@ -13,52 +13,38 @@ import {
   accountAccessLines,
   accountCheckCounts,
 } from "@/lib/account-standing";
-import { PatternHeader } from "@/components/casing/PatternHeader";
-import { profileTabLabel } from "@/lib/profile-tabs";
 
 export const metadata = { title: "Account Health Checklist · Panameer" };
 
+// R-C3: built to mockups/score_health_clean_2026-10-03.html (Health half).
 export default async function AccountHealthPage() {
   const viewer = await guardPage("authenticated");
 
   const profile = await prisma.providerProfile.findFirst({
     where: ownedProviderProfile(viewer),
     select: {
-      completeness: true,
       status: true,
-      paused_at: true,
-      validation_status: true,
       available_for_messages: true,
-      person: { select: { phone: true, user: { select: { email_verified: true } } } },
+      person: { select: { user: { select: { email_verified: true } } } },
     },
   });
 
   if (!profile) {
-    return (
-      <p className="text-ink-2">
-        This account has no provider profile, so there is nothing to check yet.
-      </p>
-    );
+    return <p className="text-ink-2">This account has no provider profile, so there is nothing to check yet.</p>;
   }
 
-  const access = accountAccessLines({
-    availableForMessages: profile.available_for_messages,
-  });
-
+  const access = accountAccessLines({ availableForMessages: profile.available_for_messages });
   const standing = accountStandingLines({
     status: profile.status,
     emailVerified: !!profile.person.user?.email_verified,
   });
-
-  const { passing: checksPassing, failing: checksFailing } = accountCheckCounts([
-    access,
-    standing,
-  ]);
+  const checks = [...access, ...standing];
+  const { passing, failing } = accountCheckCounts([access, standing]);
   const summary = accountStandingSummary(standing);
+  const statusValue = standing[0]?.value ?? "—";
 
   return (
-    <>
-      {}
+    <div className="pm-white-page">
       <PageTabs
         wrap
         eyebrow={ACCOUNT_MENU_NAME}
@@ -66,131 +52,152 @@ export default async function AccountHealthPage() {
         tabs={profileTabs(viewer)}
         current="/account-health"
       />
-    <div className="mx-auto max-w-4xl space-y-4">
-      {}
-      <PatternHeader
-        eyebrow={profileTabLabel("/account-health")}
-        headline="Where your account stands"
-        lede="What this account can do today, and whether its record is clear."
-        figures={[
-          { label: "Checks Passing", value: checksPassing },
-          { label: "Needs Attention", value: checksFailing },
-        ]}
-        picture={
-          <div className="flex h-full flex-col justify-center gap-2">
-            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
-              Account Standing
-            </p>
-            <div className="flex items-center gap-3">
-              {}
-              <span
-                aria-hidden
-                className={
-                  "grid h-[44px] w-[44px] flex-none place-items-center rounded-full text-[20px] font-black text-white " +
-                  (summary.ok ? "bg-emerald-500" : "bg-amber-500")
-                }
-              >
-                {summary.ok ? "✓" : "!"}
-              </span>
-              <p className="font-display text-[19px] font-bold leading-tight text-ink">
-                {summary.label}
-              </p>
-            </div>
-            <p className="text-[12.5px] leading-relaxed text-ink-2">
-              {summary.ok
-                ? "Nothing on your record needs your attention."
-                : "The line below names what to fix."}
+      <div className="mx-auto max-w-[1010px]">
+        <p className="pb-[26px] pt-3.5 text-[13px] font-semibold">
+          What your account can do today, and whether its record is clear.{" "}
+          <span className="font-normal text-ink-3">Free as of October 2026.</span>
+        </p>
+
+        <section className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 md:grid-cols-[340px_1fr]">
+          <div>
+            <HealthRing checks={checks.map((c) => c.ok)} />
+            <p className="mt-2 text-center text-[11px] text-ink-2">
+              {passing} of {checks.length} checks passing
             </p>
           </div>
-        }
-      />
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="border-t border-line bg-surface py-5">
-          <h2 className="font-display text-[16px] font-bold">Platform Access</h2>
-          <ul className="mt-3 space-y-3">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">HEALTH</p>
+            <h1 className="mb-5 mt-1.5 text-[30px] font-bold leading-tight">Where Your Account Stands</h1>
+            <div className="flex flex-wrap gap-x-11 gap-y-3 border-b border-line pb-[18px]" data-testid="health-kpis">
+              <Kpi value={passing} label="CHECKS PASSING" />
+              <Kpi value={failing} label="NEEDS ATTENTION" />
+              <Kpi value={statusValue} label="ACCOUNT STATUS" />
+            </div>
+            <p className="my-[18px] text-[14px] leading-[1.65] text-ink-2">
+              {failing === 0
+                ? "All good. Nothing on your record needs your attention, and you can use every part of Panameer open to you today."
+                : `${failing} check${failing === 1 ? "" : "s"} need${failing === 1 ? "s" : ""} attention${summary.ok ? "" : ` — ${summary.label}`}. The lines below say what to fix.`}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {POLICIES.map((p, i) => (
+                <Link
+                  key={p.slug}
+                  href={`/policies/${p.slug}`}
+                  className={
+                    i === 0
+                      ? "inline-flex min-h-11 items-center bg-ink px-6 text-[14px] font-semibold text-surface hover:bg-ink-hover"
+                      : "inline-flex min-h-11 items-center border border-ink bg-surface px-6 text-[14px] font-semibold text-ink hover:bg-surface-hover"
+                  }
+                >
+                  {p.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-9 grid border-t border-line md:grid-cols-2" data-testid="health-checks">
+          <section className="py-5 md:pr-7">
+            <h2 className="mb-1.5 text-[22px] font-bold">Platform Access</h2>
             {access.map((row) => (
-              <li key={row.label} className="flex items-start gap-2.5">
-                <Mark ok={row.ok} />
-                <span className="min-w-0">
-                  <span className="block text-[14.5px] font-semibold">
-                    {row.label}
-                  </span>
-                  <span className="block text-[13px] leading-relaxed text-ink-2">
-                    {row.note}
-                  </span>
-                </span>
-              </li>
+              <Check key={row.label} ok={row.ok} label={row.label} detail={row.note} />
             ))}
-          </ul>
-          {}
-        </section>
-
-        <section className="border-t border-line bg-surface py-5">
-          <h2 className="font-display text-[16px] font-bold">Account Standing</h2>
-          <ul className="mt-3 space-y-3">
+          </section>
+          <section className="border-t border-line py-5 md:border-l md:border-t-0 md:pl-7">
+            <h2 className="mb-1.5 text-[22px] font-bold">Account Standing</h2>
             {standing.map((row) => (
-              <li key={row.label} className="flex items-start gap-2.5">
-                <Mark ok={row.ok} />
-                <span className="min-w-0">
-                  <span className="block text-[14.5px] font-semibold">
-                    {row.label}
-                  </span>
-                  <span className="block text-[13px] text-ink-2">{row.value}</span>
-                </span>
-              </li>
+              <Check key={row.label} ok={row.ok} label={row.label} detail={row.value} />
             ))}
-          </ul>
-          {}
-        </section>
-      </div>
-
-      <EnforcementHistory />
-
-      {}
-      <section className="rounded-brand border border-magenta/25 bg-magenta/[0.04] p-5">
-        <h2 className="font-display text-[16px] font-bold">Trust &amp; Safety Tips</h2>
-        <ul className="mt-3 space-y-2 text-[14px] leading-relaxed text-ink-2">
-          <li>
-            Keep conversations and payments on Panameer — off-platform deals lose
-            you contract protection and settlement.
-          </li>
-          <li>
-            Never share passwords, one-time codes or banking details in a message,
-            however convincing the request looks.
-          </li>
-          <li>
-            Be wary of anyone asking you to pay to be considered for work. Panameer
-            never charges a provider to bid.
-          </li>
-        </ul>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {POLICIES.map((policy) => (
-            <Link
-              key={policy.slug}
-              href={`/policies/${policy.slug}`}
-              className="min-h-11 bg-ink px-5 py-2.5 text-[14px] font-bold text-surface transition-colors hover:bg-magenta-dark"
-            >
-              {policy.title}
-            </Link>
-          ))}
+          </section>
         </div>
-      </section>
+
+        <EnforcementHistory />
+
+        <h2 className="mb-1.5 border-t border-line pt-[30px] text-[22px] font-bold">Trust &amp; Safety Tips</h2>
+        <ul>
+          {[
+            "Keep conversations and payments on Panameer — off-platform deals lose you contract protection and settlement.",
+            "Never share passwords, one-time codes or banking details in a message, however convincing the request looks.",
+            "Be wary of anyone asking you to pay to be considered for work. Panameer never charges a provider to bid.",
+          ].map((t) => (
+            <li key={t} className="border-t border-line py-2.5 text-[14px] text-ink-2">
+              {t}
+            </li>
+          ))}
+        </ul>
+        <div className="h-[60px]" />
+      </div>
     </div>
-    </>
   );
 }
 
-/** Met / not-met, as a mark rather than a colour alone — colour is not a label. */
-function Mark({ ok }: { ok: boolean }) {
+function Kpi({ value, label }: { value: number | string; label: string }) {
   return (
-    <span
-      aria-hidden
-      className={
-        "mt-[3px] grid h-[18px] w-[18px] flex-none place-items-center rounded-full text-[11px] font-black text-white " +
-        (ok ? "bg-emerald-500" : "bg-ink-2/30")
-      }
+    <div>
+      <b className="block whitespace-nowrap text-[26px] font-medium">{value}</b>
+      <span className="whitespace-nowrap text-[11px] font-semibold tracking-[0.08em] text-ink-2">{label}</span>
+    </div>
+  );
+}
+
+function Check({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+  return (
+    <div data-ok={ok} className="flex items-start border-t border-line py-2.5 text-[14px]">
+      <span
+        aria-hidden
+        className={
+          "mr-2.5 mt-px inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] " +
+          (ok ? "bg-ink text-surface" : "border-2 border-magenta text-magenta")
+        }
+      >
+        {ok ? "✓" : "!"}
+      </span>
+      <span>
+        {label}
+        <span className="mt-0.5 block text-[12px] text-ink-2">{detail}</span>
+      </span>
+    </div>
+  );
+}
+
+// One ring segment per check: ink when passing, magenta when it needs attention.
+function HealthRing({ checks }: { checks: boolean[] }) {
+  const n = Math.max(checks.length, 1);
+  const r = 92;
+  const arc = (i: number) => {
+    const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+    const p = (a: number) => `${120 + r * Math.cos(a)} ${120 + r * Math.sin(a)}`;
+    return `M${p(a0)} A${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${p(a1)}`;
+  };
+  const allOk = checks.every(Boolean);
+  return (
+    <svg
+      viewBox="0 0 240 240"
+      className="mx-auto block w-full max-w-[300px]"
+      role="img"
+      aria-label={`${checks.filter(Boolean).length} of ${checks.length} checks passing`}
     >
-      {ok ? "✓" : "!"}
-    </span>
+      <g fill="none" strokeWidth="22">
+        {checks.map((ok, i) => (
+          <path key={i} d={arc(i)} className={ok ? "stroke-ink" : "stroke-magenta"} />
+        ))}
+      </g>
+      <g className="stroke-surface" strokeWidth="4">
+        {checks.map((_, i) => (
+          <line key={i} x1="120" y1="17" x2="120" y2="40" transform={`rotate(${(i * 360) / n} 120 120)`} />
+        ))}
+      </g>
+      {allOk ? (
+        <path d="M96 120 l16 16 l32 -34" fill="none" className="stroke-magenta" strokeWidth="10" strokeLinecap="square" />
+      ) : (
+        <text x="120" y="132" textAnchor="middle" fontSize="44" fontWeight="600" className="fill-magenta">
+          {checks.filter((c) => !c).length}
+        </text>
+      )}
+      <text x="120" y="168" textAnchor="middle" fontSize="13" fontWeight="700" className="fill-ink">
+        {allOk ? "ALL GOOD" : "NEEDS ATTENTION"}
+      </text>
+    </svg>
   );
 }

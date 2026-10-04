@@ -35,7 +35,7 @@ export async function SearchResults({ viewer, query }: { viewer: Viewer; query: 
     return (
       <section className="space-y-3">
         <SectionHeading>Search</SectionHeading>
-        <p className="rounded-brand border border-line bg-white p-5 text-[14px] text-ink-2">
+        <p className="text-[14px] text-ink-2 border-t border-line py-5">
           {query.trim().length < 2
             ? "Type at least two characters."
             : `No members match "${query}".`}
@@ -116,7 +116,7 @@ export async function CommunityBlocks({ viewer }: { viewer: Viewer }) {
       <section className="space-y-3">
         <SectionHeading count={colleagues.length}>Your Colleagues</SectionHeading>
         {colleagues.length === 0 ? (
-          <p className="rounded-brand border border-line bg-white p-5 text-[14px] leading-relaxed text-ink-2">
+          <p className="text-[14px] leading-relaxed text-ink-2 border-t border-line py-5">
             A colleague is someone who accepted your request — a mutual
             connection, so it says something that a stranger&apos;s cannot.
             Search above for people you have worked with.

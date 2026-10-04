@@ -115,7 +115,7 @@ export function CompanyDetailsForm({
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex min-h-[44px] items-center rounded-full bg-magenta px-5 text-[14px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-semibold text-surface transition-opacity hover:bg-ink-hover disabled:opacity-60"
       >
         {}
         {busy ? "Saving…" : "Save Changes"}
