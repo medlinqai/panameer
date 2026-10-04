@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
+import { UsageRows } from "@/components/console/UsageRows";
+import { usageFigures } from "@/lib/usage-figures";
 /* ⚠ `P2-A1.1-E744` — these left with the four cards below the gauges; the components stay on disk. */
 import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
 /* ⚠ `E730` WS-B/WS-C — the areas are defined once, in `lib/usage-areas.ts`, and this
    page renders them twice (comb + gauges). */
 import { usageAreas, usageHoneyCells, usageSummary } from "@/lib/usage-areas";
-import { UsageGauges } from "@/components/console/UsageGauges";
+/* `UsageGauges` (v1, one gauge per area) stays on disk after `E815`
+   replaced it with the six rows of four; nothing renders it. */
 import { Honeycomb } from "@/components/console/Honeycomb";
 import { computeProfileScore } from "@/lib/completeness";
 import { buildCompletenessInput } from "@/lib/onboarding";
@@ -495,6 +498,21 @@ export default async function MyStatsPage({
     ⚠⚠ `stats.work.earnings` IS ALREADY `{ uncounted }` AND IS REUSED — this page
     does not form a second opinion about whether earnings can be counted.
   */
+  /*
+    USAGE v2's 28 FIGURES (`E815`). Read once, here, and handed to the rows —
+    the page already holds the person, user and profile ids the counts need.
+    `isProvider` picks the Work row: the provider's four questions or the
+    buyer's, which is the role-aware row Scott asked for. A member who is both
+    sees the PROVIDER row, matching `railPersona`'s existing provider-wins rule
+    so two surfaces do not disagree about which role someone is acting in.
+  */
+  const figures = await usageFigures({
+    personId: profile.person_id,
+    userId: viewer.userId,
+    profileId: profile.id,
+  });
+  const isProvider = viewer.isServiceProvider;
+
   const areas = usageAreas({
     views: stats.profile.views,
     searchScore,
@@ -757,12 +775,20 @@ export default async function MyStatsPage({
             ⚠⚠ `Invite a Colleague` IS NOT A REPEAT: measured, there is no invite
             door anywhere on this page.
           */
-          primary={
-            gaps.length > 0
-              ? { label: "Finish My Profile", href: "/profile" }
-              : undefined
+          /*
+            INVITE A COLLEAGUE IS THE BLACK SQUARE BUTTON (`E815`, Scott
+            2026-10-03). It was the white secondary. "Finish My Profile" takes
+            the secondary slot when there is anything to finish, so no door is
+            lost — it is still on the page, just no longer the loudest thing on
+            a page about how much you are using Panameer.
+            Superseded, quoted not deleted:
+            //   primary={gaps.length > 0 ? { label: "Finish My Profile", href: "/profile" } : undefined}
+            //   secondary={{ label: "Invite a Colleague", href: "/community" }}
+          */
+          primary={{ label: "Invite a Colleague", href: "/community" }}
+          secondary={
+            gaps.length > 0 ? { label: "Finish My Profile", href: "/profile" } : undefined
           }
-          secondary={{ label: "Invite a Colleague", href: "/community" }}
           /*
             ── ⚠⚠⚠ NO BUTTON, AND I WROTE ONE FIRST ────────────────────────
 
@@ -797,7 +823,11 @@ export default async function MyStatsPage({
         and its gauge cannot disagree about the same member in the same render —
         not because they are kept in step, but because there is only one of them.
       */}
-      <UsageGauges areas={areas} />
+      {/*
+        USAGE v2 (`E815`): six rows of four, from the approved sheet, replacing
+        v1's eight single gauges. `UsageGauges` stays on disk, unrendered.
+      */}
+      <UsageRows figures={figures} isProvider={isProvider} />
 
       {/*
         ── ⚠⚠ THE TWO ACTIONS, AT THE TOP (`P2-J2-E563` WS-B) ────────────────
