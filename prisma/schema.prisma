@@ -8013,3 +8013,16 @@ model BuildDigest {
 
   @@map("build_digests")
 }
+
+/// Work Order Plan (R2): who changed what on a work order, for its History. Additive.
+model WorkOrderEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  work_order_id String   @db.Uuid
+  person_id     String?  @db.Uuid
+  kind          String
+  text          String
+  created_at    DateTime @default(now())
+
+  @@index([work_order_id, created_at])
+  @@map("work_order_events")
+}

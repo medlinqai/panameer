@@ -58,6 +58,9 @@ export async function orderHistory(orderId: string): Promise<HistoryEvent[]> {
   const reqs = await prisma.settlementRequest.findMany({ where: { work_order_id: o.id }, select: { id: true } });
   out.push(...(await settlementEvents(reqs.map((r) => r.id), who, true)));
   if (o.status === "CLOSED") out.push({ at: o.updated_at.toISOString(), who: "", what: "work order closed" });
+  const events = await prisma.workOrderEvent.findMany({ where: { work_order_id: o.id }, orderBy: { created_at: "asc" } });
+  const eventWho = await names(events.map((e) => e.person_id));
+  for (const e of events) out.push({ at: e.created_at.toISOString(), who: eventWho.get(e.person_id ?? "") ?? "", what: e.text });
   return sortAsc(out);
 }
 

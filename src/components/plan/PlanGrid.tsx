@@ -29,7 +29,7 @@ function lines(rows: readonly PublicPlanRow[], level: 1 | 2 | 3, ancestors: stri
   return out;
 }
 
-export function PlanGrid({ plan }: { plan: PublicPlan }) {
+export function PlanGrid({ plan, subtitle }: { plan: PublicPlan; subtitle?: string }) {
   const all = useMemo(() => lines(plan.rows, 1, []), [plan.rows]);
 
   /**
@@ -59,7 +59,7 @@ export function PlanGrid({ plan }: { plan: PublicPlan }) {
     <section className="mt-12 border-t border-line pt-6">
       <h2 className={`text-[24px] text-ink ${HEAD}`}>See the Details</h2>
       <p className="mt-1 text-[13px] text-ink-2">
-        Release, stage and task. Click a row to open it.
+        {subtitle ?? "Release, stage and task. Click a row to open it."}
       </p>
 
       <table className="mt-4 w-full border-collapse text-[13px]">

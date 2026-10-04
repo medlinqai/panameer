@@ -78,6 +78,9 @@ export async function dropFixture(f: R1Fixture | null): Promise<void> {
   await prisma.payment.deleteMany({ where: { id: { in: payLines.map((p) => p.payment_id) } } });
   await prisma.settlementRequest.deleteMany({ where: { id: { in: sIds } } });
   const extraOrders = await prisma.workOrder.findMany({ where: { buyer_person_id: f.buyer.personId }, select: { id: true } });
+  const allOrders = [f.orderId, ...extraOrders.map((o) => o.id)];
+  await prisma.plan.deleteMany({ where: { owner_key: { in: allOrders.map((id) => `wo:${id}`) } } });
+  await prisma.workOrderEvent.deleteMany({ where: { work_order_id: { in: allOrders } } });
   await prisma.workOrder.deleteMany({ where: { id: { in: [f.orderId, ...extraOrders.map((o) => o.id)] } } });
   await prisma.workRequest.deleteMany({ where: { buyer_person_id: f.buyer.personId } });
   await prisma.serviceProductOffer.deleteMany({ where: { OR: [{ buyer_person_id: f.buyer.personId }, { provider_person_id: f.provider.personId }] } });

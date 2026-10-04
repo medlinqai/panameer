@@ -43,7 +43,7 @@ export function barLabel(row: {
   return `${name} · not scheduled · ${row.status}`;
 }
 
-export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string }) {
+export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPlan; today: string; footnote?: boolean }) {
   /**
    * The AXIS row is the track: it already carries `marginLeft: var(--plan-label)`,
    * so its rect is exactly the box a date maps into. Measuring it beats
@@ -267,9 +267,11 @@ export function PlanTimeline({ plan, today }: { plan: PublicPlan; today: string 
 
       </div>
 
-      <p className="mt-9 text-[13px] text-ink-2">
-        The same plan tool you&apos;ll use on your work orders.
-      </p>
+      {footnote && (
+        <p className="mt-9 text-[13px] text-ink-2">
+          The same plan tool you&apos;ll use on your work orders.
+        </p>
+      )}
     </section>
   );
 }

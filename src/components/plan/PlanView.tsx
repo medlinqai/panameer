@@ -4,7 +4,8 @@ import { PlanGrid } from "./PlanGrid";
 
 const HEAD = "font-display font-bold tracking-[-0.3px]";
 
-export function PlanView({ plan, today }: { plan: PublicPlan; today: string }) {
+// `forOrder`: the same view on a work order, without the status page's copy.
+export function PlanView({ plan, today, forOrder = false }: { plan: PublicPlan; today: string; forOrder?: boolean }) {
   if (plan.rows.length === 0) {
     return (
       <section className="mt-12 border-t border-line pt-6">
@@ -18,14 +19,14 @@ export function PlanView({ plan, today }: { plan: PublicPlan; today: string }) {
 
   return (
     <>
-      <PlanTimeline plan={plan} today={today} />
+      <PlanTimeline plan={plan} today={today} footnote={!forOrder} />
       {/*
         The grid replaces the `<details>` accordions (`E803`, Scott 2026-10-03):
         columns # · Name · Owner · Start · End · Status, each phase expanding to
         its child rows. `PhaseAccordion` and its helpers stay below, unrendered,
         rather than deleted.
       */}
-      <PlanGrid plan={plan} />
+      <PlanGrid plan={plan} subtitle={forOrder ? "Phase and task. Click a row to open it." : undefined} />
     </>
   );
 }
