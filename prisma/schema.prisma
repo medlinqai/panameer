@@ -7749,6 +7749,12 @@ model WorkTrackerFollower {
 
   created_at DateTime @default(now())
 
+  /// Opt-in to the weekly Follow the Build email (`P2-ALL-E818`). FALSE by
+  /// default, deliberately: following the build is a page people watch, and
+  /// turning an existing follower into a mail recipient without asking is the
+  /// thing this column exists to prevent. Real followers exist today.
+  weekly_email Boolean @default(false)
+
   @@map("work_tracker_followers")
 }
 
@@ -7967,4 +7973,27 @@ model DataSnapshot {
   @@unique([day, table_name])
   @@index([table_name, day])
   @@map("data_snapshots")
+}
+
+
+/// A week's "Follow the Build" email (`P2-ALL-E818`).
+///
+/// IT IS WRITTEN AS A DRAFT AND NEVER SENDS ITSELF. The Friday job composes it;
+/// Scott reads it and presses Send. Mail is live from production, so a job that
+/// could send on a timer is a job that can mail every follower at 1pm on a week
+/// nobody was watching.
+model BuildDigest {
+  id         String    @id @default(uuid()) @db.Uuid
+  /// `YYYY-MM-DD` of the Friday it covers — one draft per week.
+  week       String    @unique
+  subject    String
+  body       String
+  /// DRAFT until Scott sends it; SENT once, with the count it reached.
+  status     String    @default("DRAFT")
+  sent_at    DateTime?
+  sent_count Int?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  @@map("build_digests")
 }

@@ -16,6 +16,7 @@ export function FollowButton({
   initiallyFollowing,
   variant = "onInk",
   testId,
+  initiallyWeekly = false,
 }: {
   signedIn: boolean;
   initiallyFollowing: boolean;
@@ -26,10 +27,19 @@ export function FollowButton({
    *  it churned across `router.refresh()` and the test failed for a reason that
    *  had nothing to do with the code. Same reasoning as `PageTabs`' own testid. */
   testId?: string;
+  /** Whether this follower has already asked for the weekly email. */
+  initiallyWeekly?: boolean;
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initiallyFollowing);
   const [pending, start] = useTransition();
+  /*
+    THE WEEKLY EMAIL IS A SEPARATE, EXPLICIT YES (`P2-ALL-E818`). Following is
+    watching a page; it is not consent to be mailed. The checkbox appears once
+    someone is following, unticked, and nothing is sent until Scott presses Send
+    on a draft anyway — two gates, not one.
+  */
+  const [weekly, setWeekly] = useState(initiallyWeekly);
 
   const cls =
     "inline-flex min-h-[48px] items-center rounded-[4px] px-6 text-[15px] font-bold transition-opacity disabled:opacity-50 " +
@@ -42,7 +52,7 @@ export function FollowButton({
       ? "bg-[#fff] text-rail hover:opacity-85"
       : "border border-ink bg-surface text-ink hover:bg-ink/5");
 
-  return (
+  const button = (
     <button
       type="button"
       data-testid={testId}
@@ -72,5 +82,36 @@ export function FollowButton({
     >
       {following ? "Following ✓" : "Follow the Build"}
     </button>
+  );
+
+  if (!following) return button;
+
+  return (
+    <span className="inline-flex flex-col items-start gap-2">
+      {button}
+      <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px]">
+        <input
+          type="checkbox"
+          checked={weekly}
+          disabled={pending}
+          onChange={async (e) => {
+            const want = e.target.checked;
+            setWeekly(want);
+            const res = await fetch("/api/status/follow", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ following: true, weeklyEmail: want }),
+            });
+            /* Put the tick back if the server disagreed — a checkbox that lies
+               about what was saved is worse than one that refuses. */
+            if (!res.ok) setWeekly(!want);
+            else start(() => router.refresh());
+          }}
+        />
+        <span className={variant === "onInk" ? "text-[#fff]" : "text-ink-2"}>
+          Email me the weekly update
+        </span>
+      </label>
+    </span>
   );
 }
