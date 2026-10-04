@@ -58,3 +58,27 @@ test("lane 2: start from milestones, see the plan, edit it; both parties; histor
   await page.goto(`/orders/${f!.orderId}`);
   await expect(page.getByTestId("history").getByText("set up the plan from simple milestones")).toBeVisible({ timeout: 30_000 });
 });
+
+test("lane 3: T&E only shows Timesheets; Add a Plan converts in place and keeps the time", async ({ page }) => {
+  const g = await createFixture();
+  try {
+    await createSettlement(g, "APPROVED");
+    await signIn(page, g.provider.email);
+    await page.goto(`/orders/${g.orderId}?tab=plan`);
+    await expect(page.getByRole("link", { name: "Submit Time" })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: "Use T&E Only" }).click();
+    const te = page.getByTestId("wo-te");
+    await expect(te).toBeVisible({ timeout: 30_000 });
+    await expect(te.getByTestId("timesheets").getByText("2026-09-28")).toBeVisible();
+    await expect(te.getByText("Approved")).toBeVisible();
+    await page.screenshot({ path: "e2e-r1/.artifacts/wo-plan-board3-1440.png", fullPage: true });
+    const before = await db().settlementRequest.count({ where: { work_order_id: g.orderId } });
+    await te.getByRole("button", { name: "Add a Plan" }).click();
+    await expect(page.getByRole("button", { name: "Use T&E Only" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Use the Template" }).click();
+    await expect(page.getByTestId("wo-plan").getByText("Kickoff").first()).toBeVisible({ timeout: 30_000 });
+    expect(await db().settlementRequest.count({ where: { work_order_id: g.orderId } })).toBe(before);
+  } finally {
+    await dropFixture(g);
+  }
+});

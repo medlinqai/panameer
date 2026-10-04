@@ -4,17 +4,27 @@ import { toEditorRow } from "@/lib/plan/editor-row";
 import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
-import { copyableOrders, woPlanKey } from "@/lib/wo-plan";
+import { chosenTe, copyableOrders, timesheetWeeks, woPlanKey } from "@/lib/wo-plan";
+import { Timesheets } from "@/components/orders/Timesheets";
+import { WoAddPlan } from "@/components/orders/WoAddPlan";
 import { WoPlanStart } from "@/components/orders/WoPlanStart";
 import { WoPlanEdit } from "@/components/orders/WoPlanEdit";
 
 // Plan tab body: start-from options until a plan exists, then the shared timeline/grid view + Edit plan.
-export async function WoPlanSection({ orderId, viewer, hoursAuthorized }: { orderId: string; viewer: Viewer; hoursAuthorized: number | null }) {
+export async function WoPlanSection({ orderId, viewer, hoursAuthorized, currency }: { orderId: string; viewer: Viewer; hoursAuthorized: number | null; currency: string }) {
   const stored = await getPlan(woPlanKey(orderId));
   const rows = stored?.rows ?? [];
   if (rows.length === 0) {
     const me = await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } });
-    return <WoPlanStart orderId={orderId} copyable={me ? await copyableOrders(me.id, orderId) : []} />;
+    const copyable = me ? await copyableOrders(me.id, orderId) : [];
+    if (await chosenTe(orderId))
+      return (
+        <div data-testid="wo-te">
+          <Timesheets weeks={await timesheetWeeks(orderId)} currency={currency} />
+          <WoAddPlan orderId={orderId} copyable={copyable} />
+        </div>
+      );
+    return <WoPlanStart orderId={orderId} copyable={copyable} />;
   }
   const today = new Date();
   const planHours = rows.filter((r) => r.type === "task").reduce((n, r) => n + (r.hours ?? 0), 0);
