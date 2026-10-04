@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { marketplaceVisibleWhere } from "@/lib/access";
+import { marketplaceVisibleWhere , memberVisibleWhere } from "@/lib/access";
 import type { Instructor, LessonExpertRef } from "@/lib/learn-instructor-format";
 
 // Re-exported so server callers have one import for the whole concern; the
@@ -18,7 +18,7 @@ export async function loadInstructors(
   if (unique.length === 0) return new Map();
 
   const people = await prisma.person.findMany({
-    where: { id: { in: unique } },
+    where: { id: { in: unique }, ...memberVisibleWhere() },
     select: {
       id: true,
       first_name: true,

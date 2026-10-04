@@ -6,9 +6,7 @@ import {
   addSpecialization,
   hardDelete,
   moveSkill,
-  renamePillar,
   setSkillVisibility,
-  renameRoleType,
   renameSkill,
   renameSpecialization,
   setSpecializationKind,
@@ -72,12 +70,8 @@ export async function POST(req: Request) {
         return renameSkill(b.id, b.name);
       case "skill.move":
         return moveSkill(b.id, b.roleTypeId, b.pillarId);
-      case "domain.rename":
-        return renamePillar(b.id, b.name);
       case "skill.visible":
         return setSkillVisibility(b.id, b.visible);
-      case "role.rename":
-        return renameRoleType(b.id, b.name);
       case "spec.promote":
         return promoteSuggestion(b.id, b.kind);
       case "spec.reject":
@@ -89,6 +83,9 @@ export async function POST(req: Request) {
     }
   })();
 
+  if (!result) {
+    return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
+  }
   return NextResponse.json(result, { status: result.ok ? 200 : 409 });
 }
 

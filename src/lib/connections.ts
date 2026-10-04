@@ -1,3 +1,4 @@
+import { memberVisibleWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
@@ -393,7 +394,8 @@ export async function searchMembers(
 
   const rows = await prisma.person.findMany({
     where: {
-      user: { isNot: null, is: { id: { not: me } } },
+      /* `E821` — deactivated and test members are not listed. */
+      user: { isNot: null, is: { id: { not: me }, is_active: true, is_test: false } },
       OR: [
         { first_name: { contains: q, mode: "insensitive" } },
         { last_name: { contains: q, mode: "insensitive" } },
@@ -490,7 +492,8 @@ export async function getMyCommunity(viewer: Viewer) {
     ...new Set(rows.map((r) => (r.from_user_id === me ? r.to_user_id : r.from_user_id))),
   ];
   const people = await prisma.person.findMany({
-    where: { user: { is: { id: { in: otherIds } } } },
+    /* `E821` — a connection to a deactivated member is KEPT but not listed. */
+    where: { user: { is: { id: { in: otherIds }, is_active: true, is_test: false } } },
     select: personSelect,
   });
   const byUser = new Map(people.filter((p) => p.user).map((p) => [p.user!.id, toCard(p)]));
@@ -613,4 +616,48 @@ export async function mutualColleagueCount(
     if (id !== otherUserId && id !== me && theirs.has(id)) shared += 1;
   }
   return shared;
+}
+
+export type OutgoingRequest = {
+  id: string;
+  name: string;
+  title: string | null;
+  photoUrl: string | null;
+  sentAt: Date;
+};
+
+/** Pending colleague requests this member has SENT (R-E011). */
+export async function outgoingRequests(viewer: Viewer): Promise<OutgoingRequest[]> {
+  const rows = await prisma.connection.findMany({
+    where: { from_user_id: viewer.userId, kind: "COLLEAGUE", status: "PENDING" },
+    orderBy: { created_at: "desc" },
+    select: { id: true, to_user_id: true, created_at: true },
+  });
+  if (rows.length === 0) return [];
+  const people = await prisma.person.findMany({
+    where: { user_id: { in: rows.map((r) => r.to_user_id) }, ...memberVisibleWhere() },
+    select: { user_id: true, first_name: true, last_name: true, title: true, photo_url: true },
+  });
+  const byUser = new Map(people.map((p) => [p.user_id, p]));
+  return rows.flatMap((r) => {
+    const p = byUser.get(r.to_user_id);
+    if (!p) return [];
+    return [{
+      id: r.id,
+      name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "A member",
+      title: p.title,
+      photoUrl: p.photo_url,
+      sentAt: r.created_at,
+    }];
+  });
+}
+
+/** Take back a request the member sent. The row is kept: deleting a connection
+ *  loses the history, and WITHDRAWN is not DECLINED. */
+export async function withdrawRequest(viewer: Viewer, connectionId: string): Promise<boolean> {
+  const res = await prisma.connection.updateMany({
+    where: { id: connectionId, from_user_id: viewer.userId, kind: "COLLEAGUE", status: "PENDING" },
+    data: { status: "WITHDRAWN" },
+  });
+  return res.count === 1;
 }

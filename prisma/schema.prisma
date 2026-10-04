@@ -5472,6 +5472,9 @@ enum ConnectionStatus {
   PENDING
   ACCEPTED
   DECLINED
+  /// The sender took their own request back (R-E011). Not DECLINED: that says
+  /// the recipient said no, and the two must not be confused in a history.
+  WITHDRAWN
 }
 
 // ---------------------------------------------------------------------------

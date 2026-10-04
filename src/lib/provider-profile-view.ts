@@ -257,9 +257,8 @@ export async function getProviderProfileView(
       onsiteCents: profile.onsite_rate_cents,
       remoteCents: profile.remote_rate_cents,
       columns: [
-        { key: "hourly", label: "Hourly", cents: profile.hourly_rate_cents },
-        { key: "onsite", label: "Onsite", cents: profile.onsite_rate_cents },
-        { key: "remote", label: "Fully Remote", cents: profile.remote_rate_cents },
+        { key: "onsite", label: "Onsite rate", cents: profile.onsite_rate_cents },
+        { key: "remote", label: "Offsite rate", cents: profile.remote_rate_cents },
       ] as { key: string; label: string; cents: number | null }[],
     },
     serviceFeeBps: profile.service_fee_bps,

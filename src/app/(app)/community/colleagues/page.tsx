@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { outgoingRequests } from "@/lib/connections";
 import { guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
 import { PageTabs } from "@/components/casing/PageTabs";
@@ -15,6 +17,21 @@ export default async function ColleaguesPage() {
   const unread = viewer ? await unreadCount(viewer) : 0;
   const rows = viewer ? await getColleagueRoster(viewer) : [];
 
+  const me = viewer
+    ? await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } })
+    : null;
+  const [requests, invites] = viewer
+    ? await Promise.all([
+        outgoingRequests(viewer),
+        me
+          ? prisma.colleagueInvite.count({
+              where: { inviter_person_id: me.id, status: "PENDING", expires_at: { gt: new Date() } },
+            })
+          : 0,
+      ])
+    : [[], 0];
+  const pendingCount = requests.length + invites;
+
   return (
     <>
       {}
@@ -26,10 +43,17 @@ export default async function ColleaguesPage() {
         current="/community/colleagues"
       />
       <div className="mx-auto max-w-5xl">
-        <header className="mb-5">
+        <header className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
             Colleagues
           </h1>
+          {/* R-E012: the inviter could not see who they had invited. */}
+          <Link
+            href="/invite-colleague"
+            className="text-[13px] font-bold text-ink-2 underline-offset-4 hover:text-magenta hover:underline"
+          >
+            Invitations{pendingCount > 0 ? ` (${pendingCount})` : ""} →
+          </Link>
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_280px]">

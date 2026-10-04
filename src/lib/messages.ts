@@ -1,3 +1,4 @@
+import { memberVisibleWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/notifications";
 import type { Viewer } from "@/lib/access";
@@ -210,7 +211,8 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
   }
 
   const people = await prisma.person.findMany({
-    where: { user_id: { in: [...byOther.keys()] } },
+    /* `E821` */
+    where: { user_id: { in: [...byOther.keys()] }, ...memberVisibleWhere() },
     select: { user_id: true, first_name: true, last_name: true, title: true, photo_url: true },
   });
   for (const p of people) {

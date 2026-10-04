@@ -20,18 +20,19 @@ export function LocationFields({
   onChange,
   /** The address block also collects a street line and a postcode. */
   withStreet = false,
+  part = "all",
   countryHint,
 }: {
   value: LocationValue;
   onChange: (patch: LocationValue) => void;
   withStreet?: boolean;
+  part?: "all" | "country" | "rest";
   countryHint?: string;
 }) {
   const country = value.country ?? "";
   const regions = regionsFor(country);
 
-  return (
-    <>
+  const country_field = (
       <Field label="Country *" hint={countryHint}>
         <select
           value={country}
@@ -60,7 +61,13 @@ export function LocationFields({
           ))}
         </select>
       </Field>
+  );
 
+  return (
+    <>
+      {part !== "rest" && country_field}
+      {part === "country" ? null : (
+        <>
       {withStreet && (
         <Field label="Street Address">
           <TextInput
@@ -114,6 +121,8 @@ export function LocationFields({
             onChange={(e) => onChange({ postalCode: e.target.value })}
           />
         </Field>
+      )}
+        </>
       )}
     </>
   );

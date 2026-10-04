@@ -47,7 +47,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
   ];
 
   const people = await prisma.person.findMany({
-    where: { user: { is: { id: { in: otherIds } } } },
+    where: { user: { is: { id: { in: otherIds }, is_active: true, is_test: false } } },
     select: {
       id: true,
       first_name: true,

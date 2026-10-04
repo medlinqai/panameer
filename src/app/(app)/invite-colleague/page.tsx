@@ -1,5 +1,8 @@
 import { guardPage } from "@/lib/guard";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { outgoingRequests } from "@/lib/connections";
+import { WithdrawRequest } from "@/components/community/WithdrawRequest";
 import { inviteAllowance, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
 import { InviteColleagueClient } from "@/components/console/InviteColleagueClient";
 
@@ -18,6 +21,7 @@ export default async function InviteColleaguePage() {
 
   const allowance = await inviteAllowance(person.id);
 
+  const requests = await outgoingRequests(viewer);
   const sent = await prisma.colleagueInvite.findMany({
     where: { inviter_person_id: person.id },
     orderBy: { created_at: "desc" },
@@ -68,11 +72,46 @@ export default async function InviteColleaguePage() {
   const now = new Date();
   return (
     <div className="mx-auto max-w-3xl">
-      {}
+      {/* R-E012: a way back, above the title. */}
+      <Link
+        href="/colleagues"
+        className="text-[13px] font-bold text-ink-2 underline-offset-4 hover:text-magenta hover:underline"
+      >
+        ← Back to Colleagues
+      </Link>
       <p className="mb-5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
         Panameer is more useful the more of your field is on it. If you know
         someone who buys or delivers Oracle and ERP work, send them a look.
       </p>
+      {/* R-E011: requests sent to people already on Panameer. The email
+          invites below are the other half of the same question. */}
+      {requests.length > 0 && (
+        <section className="mb-6 border-t border-line pt-4">
+          <h2 className="font-display text-[16px] font-bold">
+            Requests sent to members ({requests.length})
+          </h2>
+          <ul className="mt-3">
+            {requests.map((r) => (
+              <li
+                key={r.id}
+                className="flex min-h-11 flex-wrap items-center justify-between gap-2 border-b border-line/60 py-2.5"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-semibold text-ink">{r.name}</span>
+                  {r.title && <span className="block text-[12.5px] text-ink-3">{r.title}</span>}
+                </span>
+                <span className="flex items-center gap-3">
+                  <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                    Requested
+                  </span>
+                  <WithdrawRequest id={r.id} name={r.name} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <InviteColleagueClient
         dayRemaining={allowance.dayRemaining}
         dayLimit={INVITE_LIMIT_PER_DAY}

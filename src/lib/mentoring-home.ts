@@ -26,7 +26,7 @@ export async function getMentoringHome(viewer: Viewer) {
   const followerIds = followerRows.map((r) => r.from_user_id);
   const followerPeople = followerIds.length
     ? await prisma.person.findMany({
-        where: { user: { is: { id: { in: followerIds } } } },
+        where: { user: { is: { id: { in: followerIds }, is_active: true, is_test: false } } },
         select: {
           first_name: true,
           last_name: true,

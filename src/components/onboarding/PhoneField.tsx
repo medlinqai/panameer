@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Field, TextInput } from "@/components/onboarding/controls";
 import { formatPhone, isoFor, phoneExpectation, validatePhone } from "@/lib/phone";
-import { ALL_COUNTRIES } from "@/lib/country";
+import { countryName, ALL_COUNTRIES } from "@/lib/country";
 import { getCountryCallingCode } from "libphonenumber-js";
 
 export function PhoneField({
@@ -27,16 +27,16 @@ export function PhoneField({
   const showError = touched && !check.ok;
   const expectation = phoneExpectation(country);
 
-  const options = ALL_COUNTRIES.map((c) => c.code).map((c) => {
-    const iso = isoFor(c);
+  const options = ALL_COUNTRIES.map((c) => {
+    const iso = isoFor(c.code);
     let dial = "";
     try {
       dial = iso ? `+${getCountryCallingCode(iso)}` : "";
     } catch {
       dial = "";
     }
-    return { name: c, dial };
-  });
+    return { code: c.code, name: countryName(c.code) ?? c.code, dial };
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Field label={label}>
@@ -67,8 +67,10 @@ export function PhoneField({
         >
           <option value="">Country…</option>
           {options.map((o) => (
-            <option key={o.name} value={o.name}>
-              {o.dial ? `${o.dial} · ${o.name}` : o.name}
+            <option key={o.code} value={o.code}>
+              {/* "United States +1" — Scott's order: the name a person is
+                  looking for first, the dial code after it. */}
+              {o.dial ? `${o.name} ${o.dial}` : o.name}
             </option>
           ))}
         </select>

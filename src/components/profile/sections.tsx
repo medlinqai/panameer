@@ -346,8 +346,8 @@ export function ProfileHero({
   overviewShownElsewhere = false,
   validated = false,
   mentor = null,
-  rateMinCents,
-  rateMaxCents,
+  onsiteCents,
+  remoteCents,
   currency = "USD",
   youGetCents,
   language,
@@ -403,6 +403,11 @@ export function ProfileHero({
    * choose one against yet.
    */
   mentor?: MentorState | null;
+  /* `E823` — the two rates the whole app shows now. `rateMin/Max` stay in the
+     TYPE so no caller breaks, and are deliberately not destructured: nothing
+     renders a range any more. */
+  onsiteCents?: number | null;
+  remoteCents?: number | null;
   rateMinCents?: number | null;
   rateMaxCents?: number | null;
   currency?: string;
@@ -436,15 +441,23 @@ export function ProfileHero({
 }) {
   const Heading = HeadingTag;
 
-  /** "$90 – $120" from the range; a single figure when min === max. */
-  const rateLabel = (() => {
-    if (rateMinCents == null && rateMaxCents == null) return null;
-    const lo = rateMinCents ?? rateMaxCents!;
-    const hi = rateMaxCents ?? rateMinCents!;
-    return lo === hi
-      ? formatCents(lo, currency)
-      : `${formatCents(lo, currency)} – ${formatCents(hi, currency)}`;
-  })();
+  /*
+    TWO RATES, NOT A RANGE (`P2-J1.4-E823`, R-E002). Scott, 2026-10-03: the whole
+    app shows ONSITE and OFFSITE. A min–max range said something the member
+    never typed — it was derived from whichever single rate they had set — and
+    "Hourly Rate: $90 – $120" read as a negotiating band.
+    ⚠ Only what is SET is printed: a member with one rate sees one line, not a
+    dash next to a number they never gave.
+    ⚠ SUPERSEDED, quoted not deleted:
+    //   "$90 – $120" from the range; a single figure when min === max.
+    //   const lo = rateMinCents ?? rateMaxCents!; ...
+  */
+  const rateRows = (
+    [
+      ["Onsite rate", onsiteCents],
+      ["Offsite rate", remoteCents],
+    ] as const
+  ).filter(([, cents]) => cents != null) as [string, number][];
 
   /* ⚠ Capped for the hero; the count of what is NOT shown drives "+N more". */
   const shownSkills = skills.slice(0, skillsCap);
@@ -549,10 +562,14 @@ export function ProfileHero({
 
             {/* ── THE RATE ROWS, BENEATH THE IDENTITY (item 7) ───────────────
                 ⚠ `E433` — figures, so INK. They are facts, not controls. */}
-            {rateLabel && (
+            {rateRows.length > 0 && (
               <div>
-                <dt className="inline font-bold">Hourly Rate: </dt>
-                <dd className="inline">{rateLabel}</dd>
+                {rateRows.map(([label, cents]) => (
+                  <span key={label} className="block">
+                    <dt className="inline font-bold">{label}: </dt>
+                    <dd className="inline">{formatCents(cents, currency)}/hr</dd>
+                  </span>
+                ))}
                 {youGetCents != null && (
                   <p className="text-[12.5px] text-ink-2">
                     You&apos;ll Get {formatCents(youGetCents, currency)}/hr

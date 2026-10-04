@@ -30,6 +30,29 @@ export function ContactEditor({
     <div className="space-y-3">
       {}
       {}
+      {}
+      <LocationFields
+        part="country"
+        countryHint="Also sets how we format your phone number."
+        value={{
+          country: address.country,
+          line1: address.line1,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+        }}
+        onChange={(patch) =>
+          onAddressChange({
+            ...(patch.country !== undefined ? { country: patch.country ?? "" } : {}),
+            ...(patch.line1 !== undefined ? { line1: patch.line1 ?? "" } : {}),
+            ...(patch.city !== undefined ? { city: patch.city ?? "" } : {}),
+            ...(patch.state !== undefined ? { state: patch.state ?? "" } : {}),
+            ...(patch.postalCode !== undefined
+              ? { postalCode: patch.postalCode ?? "" }
+              : {}),
+          })
+        }
+      />
       <PhoneField
         id="review-phone"
         value={phone}
@@ -37,8 +60,8 @@ export function ContactEditor({
         country={phoneCountry}
         onCountryChange={onPhoneCountryChange}
       />
-      {}
       <LocationFields
+        part="rest"
         withStreet
         countryHint="Also sets how we format your phone number."
         value={{

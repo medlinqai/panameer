@@ -1,3 +1,4 @@
+import { memberVisibleWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 
@@ -73,7 +74,8 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
 
   const joinedPeople = firstDegree.length
     ? await prisma.person.findMany({
-        where: { user_id: { in: firstDegree } },
+        /* `E821` */
+        where: { user_id: { in: firstDegree }, ...memberVisibleWhere() },
         select: { id: true, user_id: true, first_name: true, last_name: true, photo_url: true },
       })
     : [];
@@ -172,7 +174,8 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
   const candidateIds = [...viaByCandidate.keys()];
   const reachablePeople = candidateIds.length
     ? await prisma.person.findMany({
-        where: { user_id: { in: candidateIds } },
+        /* `E821` */
+        where: { user_id: { in: candidateIds }, ...memberVisibleWhere() },
         select: { id: true, user_id: true, first_name: true, last_name: true, photo_url: true },
       })
     : [];
