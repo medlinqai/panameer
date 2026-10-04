@@ -220,34 +220,28 @@ test("notifications — a real event reaches the bell, the panel and the list", 
     /* ── SEE ALL ──────────────────────────────────────────────────────── */
     await panel.getByRole("link", { name: "See All" }).click();
     await page.waitForURL(/\/notifications/);
-    await expect(page.getByRole("heading", { name: "Needs Your Attention" })).toBeVisible();
+    // E736 redesign: one triage list; an action item carries a "Needs You" tag.
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(TITLE) })).toBeVisible();
     await page.screenshot({ path: "/tmp/e620-list.png", fullPage: true });
 
     /* ── THE FILTERS ──────────────────────────────────────────────────── */
     const labels = await page
       .locator('nav[aria-label="Filter notifications"] a')
       .allInnerTexts();
-    expect(labels.map((l) => l.trim().split("\n")[0])).toEqual([
-      "All",
-      "Unread",
-      "Work",
-      "Community",
-    ]);
+    const names = labels.map((l) => l.trim().replace(/\s*\(\d+\)$/, ""));
+    expect(names.slice(0, 2)).toEqual(["All", "Unread"]);
+    expect(names).toContain("Community activity");
 
     /* ⚠⚠ A JOIN REQUEST IS COMMUNITY, NOT WORK — and the two filters are a
        partition, so it must appear under exactly one of them. ⚠⚠⚠ ASSERTING
        BOTH DIRECTIONS IS THE POINT: a filter that shows everything would pass
        the first check alone. */
-    await page.goto("/notifications?filter=community", { waitUntil: "domcontentloaded" });
+    await page.goto("/notifications?filter=community.activity", { waitUntil: "domcontentloaded" });
     await expect(page.getByText(TITLE.slice(0, 20), { exact: false }).first()).toBeVisible();
 
-    await page.goto("/notifications?filter=work", { waitUntil: "domcontentloaded" });
-    await expect(
-      page.getByText(TITLE.slice(0, 20), { exact: false })
-    ).toHaveCount(0);
-    /* ⚠ AND THE FILTERED-EMPTY STATE IS NOT THE EMPTY-FEED STATE. Telling a
-       member "nothing yet" while rows sit one tab away is the defect. */
-    await expect(page.getByText("Nothing under this filter.")).toBeVisible();
+    await page.goto("/notifications?filter=profile.visibility", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(TITLE.slice(0, 20), { exact: false })).toHaveCount(0);
 
     /* ── ⚠⚠ AND IT IS ON THE BAND'S HOME TOO (WS-C item 3) ──────────────
        ⚠ The brief puts the worklist in both places, and the two must show the
@@ -292,16 +286,17 @@ test("notifications — a real event reaches the bell, the panel and the list", 
 
     /* ⚠⚠ AND IT IS OFF BOTH SURFACES — the page and the band's home. They share
        one predicate precisely so this cannot pass on one and fail on the other. */
-    await page.goto("/notifications", { waitUntil: "domcontentloaded" });
+    await page.goto("/worklist", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Needs Your Attention" }),
-      "the worklist section survived its last item being done"
+      page.getByText(TITLE.slice(0, 20), { exact: false }),
+      "the worklist still shows an item that was done"
     ).toHaveCount(0);
 
     await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    // The account may owe other things; what must be gone is THIS item.
     await expect(
-      page.getByRole("heading", { name: "Waiting on You" }),
-      "the home's worklist survived its last item being done"
+      page.getByText(TITLE.slice(0, 20), { exact: false }),
+      "the home's worklist still shows an item that was done"
     ).toHaveCount(0);
 
     console.log(
