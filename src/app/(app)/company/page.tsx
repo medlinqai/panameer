@@ -13,6 +13,7 @@ import { CompanyShell } from "@/components/company/CompanyShell";
 import { CompanyDetailsRead, CompanyVerification } from "@/components/company/CompanyOverview";
 import { CompanyVisibility } from "@/components/company/CompanyVisibility";
 import { CompanySection } from "@/components/company/CompanySection";
+import { CompanyDetailsEditor } from "@/components/company/CompanyDetailsEditor";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Company · Panameer" };
@@ -20,10 +21,10 @@ export const metadata = { title: "Company · Panameer" };
 const day = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
 // Company → Overview (mockup my_company 2026-10-05). Set-up, pending and declined states keep today's flow.
-export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ blocked?: string; from?: string }> }) {
+export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ blocked?: string; from?: string; edit?: string }> }) {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcompany");
-  const { blocked, from } = await searchParams;
+  const { blocked, from, edit } = await searchParams;
   const blockedMessage = blocked ? TRANSACT_MESSAGE[blocked.toUpperCase() as keyof typeof TRANSACT_MESSAGE] : null;
   const binding = await getCompanyBinding(viewer);
   const blockedCard = blockedMessage && (
@@ -73,9 +74,13 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
     );
   }
 
-  const [view, me] = await Promise.all([
+  const editing = edit === "details" && binding.isAdmin;
+  const [view, me, industries] = await Promise.all([
     loadCompanyView(c.id),
     prisma.user.findUnique({ where: { id: viewer.userId }, select: { tos_accepted_at: true, tos_version: true } }),
+    editing
+      ? prisma.specialization.findMany({ where: { kind: "INDUSTRY", status: "ACTIVE" }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+      : Promise.resolve([]),
   ]);
   if (!view) redirect("/company");
   const role = binding.isAdmin ? "admin" : "member";
@@ -83,7 +88,21 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
     <>
       {blockedMessage && <div className="mx-auto mb-4 w-full max-w-[1010px]">{blockedCard}</div>}
       <CompanyShell c={view} role={role} visibility={<CompanyVisibility on={view.showOnProfiles} canEdit={binding.isAdmin} />}>
-        <CompanyDetailsRead c={view} role={role} />
+        <CompanyDetailsRead
+          c={view}
+          role={role}
+          editor={
+            editing ? (
+              <CompanyDetailsEditor
+                industries={industries}
+                initial={{
+                  name: view.name, legalName: view.legalName, taxType: view.taxTypeCode, country: view.country, stateOfFiling: view.stateOfFiling,
+                  ein: view.ein, industryId: view.industryId, website: view.website, description: view.description,
+                }}
+              />
+            ) : undefined
+          }
+        />
         <CompanyVerification c={view} />
         <CompanySection id="your-terms" title="Your Terms of Service">
           <p className="mt-2.5 text-[14px] text-ink-2">

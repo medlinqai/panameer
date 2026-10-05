@@ -299,7 +299,12 @@ export type UpdateCompanyInput = {
   country?: string | null;
   stateOfFiling?: string | null;
   ein?: string | null;
+  description?: string | null;
+  industryId?: string | null;
+  website?: string | null;
 };
+
+export const COMPANY_DESCRIPTION_MAX = 600;
 
 export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyInput) {
   const binding = await getCompanyBinding(viewer);
@@ -316,10 +321,21 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
   const blank = (v: string | null | undefined) =>
     v === undefined ? undefined : v === null || v.trim() === "" ? null : v.trim();
 
+  if (input.description && input.description.trim().length > COMPANY_DESCRIPTION_MAX) {
+    throw new OnboardingError(`Keep the description to ${COMPANY_DESCRIPTION_MAX} characters`, "INVALID");
+  }
+  if (input.industryId) {
+    const ind = await prisma.specialization.findFirst({ where: { id: input.industryId, kind: "INDUSTRY" }, select: { id: true } });
+    if (!ind) throw new OnboardingError("Pick an industry from the list", "INVALID");
+  }
+
   const company = await prisma.company.update({
     where: { id: binding.company.id },
     data: {
       ...(name ? { name } : {}),
+      ...(input.description !== undefined ? { description: blank(input.description) } : {}),
+      ...(input.industryId !== undefined ? { industry_id: input.industryId || null } : {}),
+      ...(input.website !== undefined ? { website: blank(input.website) } : {}),
       ...(input.legalName !== undefined ? { legal_name: blank(input.legalName) } : {}),
       ...(input.taxType !== undefined ? { tax_type: blank(input.taxType) as never } : {}),
       ...(input.country !== undefined ? countryColumns(blank(input.country)) : {}),

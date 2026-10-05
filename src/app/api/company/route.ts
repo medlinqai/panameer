@@ -28,6 +28,9 @@ const patchSchema = z
     country: z.string().trim().max(80).nullable().optional(),
     stateOfFiling: z.string().trim().max(80).nullable().optional(),
     ein: z.string().trim().max(40).nullable().optional(),
+    description: z.string().trim().max(600).nullable().optional(),
+    industryId: z.string().uuid().nullable().optional(),
+    website: z.string().trim().max(200).nullable().optional(),
   })
   .strict();
 

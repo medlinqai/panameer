@@ -82,7 +82,7 @@ export function BrandingEditor({
   return (
     <div className="space-y-8">
       {/* ---- 1. Your logo ------------------------------------------------- */}
-      <section className="rounded-brand border border-line bg-white p-6">
+      <section className="border-t border-line pb-2 pt-5">
         <h2 className="text-[18px] font-bold">Your Logo</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           We read your brand colour straight out of it. Nothing is saved by
@@ -95,10 +95,10 @@ export function BrandingEditor({
             <img
               src={logoUrl}
               alt={companyName}
-              className="h-16 w-16 rounded-[10px] border border-line object-cover"
+              className="h-16 w-16 border border-line object-cover"
             />
           ) : (
-            <span className="grid h-16 w-16 place-items-center rounded-[10px] border border-dashed border-line text-[18px] font-bold text-ink-2">
+            <span className="grid h-16 w-16 place-items-center border border-dashed border-line text-[18px] font-bold text-ink-2">
               {companyName.slice(0, 2).toUpperCase()}
             </span>
           )}
@@ -124,7 +124,7 @@ export function BrandingEditor({
       </section>
 
       {/* ---- 2. Your brand colour ----------------------------------------- */}
-      <section className="rounded-brand border border-line bg-white p-6">
+      <section className="border-t border-line pb-2 pt-5">
         <h2 className="text-[18px] font-bold">Your Brand Colour</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           This is the only colour you choose. Everything else is derived from it.
@@ -171,12 +171,12 @@ export function BrandingEditor({
                 setHue(e.target.value.slice(0, 7));
               }}
               spellCheck={false}
-              className="w-[120px] rounded-[10px] border border-line px-3 py-2 font-mono text-[14px] outline-none focus:border-magenta"
+              className="w-[120px] border border-line px-3 py-2 font-mono text-[14px] outline-none focus:border-magenta"
             />
           </label>
           <span
             aria-hidden
-            className="h-9 w-9 rounded-[8px] border border-black/10"
+            className="h-9 w-9 border border-black/10"
             style={{ background: isValidHex(hue) ? hue : "transparent" }}
           />
           {!isValidHex(hue) && (
@@ -186,7 +186,7 @@ export function BrandingEditor({
       </section>
 
       {/* ---- 3. The recipe picker ------------------------------------------ */}
-      <section className="rounded-brand border border-line bg-white p-6">
+      <section className="border-t border-line pb-2 pt-5">
         <h2 className="text-[18px] font-bold">Pick a Theme</h2>
         <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
           The structure is fixed — your colour makes it yours. You can&apos;t
@@ -223,27 +223,27 @@ export function BrandingEditor({
       </section>
 
       {/* ---- 4. Live preview ----------------------------------------------- */}
-      <section className="rounded-brand border border-line bg-white p-6">
+      <section className="border-t border-line pb-2 pt-5">
         <h2 className="text-[18px] font-bold">Preview</h2>
         <p className="mt-1 text-[14.5px] text-ink-2">
           This is the console your whole company will see.
         </p>
-        <div className="mt-4 overflow-hidden rounded-brand border border-line">
+        <div className="mt-4 overflow-hidden border border-line">
           <div className="flex min-h-[220px]">
             <div className="w-[168px] shrink-0 p-3" style={{ background: tokens.surfaceDark }}>
               <p className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wide text-white/45">
                 {companyName}
               </p>
               <div
-                className="rounded-[8px] px-2.5 py-2 text-[13.5px] font-semibold"
+                className="px-2.5 py-2 text-[13.5px] font-semibold"
                 style={{ background: tokens.brandPrimary, color: tokens.brandPrimaryText }}
               >
                 Active nav
               </div>
-              <div className="mt-1 rounded-[8px] px-2.5 py-2 text-[13.5px] text-white/75">
+              <div className="mt-1 px-2.5 py-2 text-[13.5px] text-white/75">
                 Inactive nav
               </div>
-              <div className="mt-1 rounded-[8px] px-2.5 py-2 text-[13.5px] text-white/75">
+              <div className="mt-1 px-2.5 py-2 text-[13.5px] text-white/75">
                 Another item
               </div>
             </div>
@@ -266,7 +266,7 @@ export function BrandingEditor({
       </section>
 
       {error && (
-        <p className="rounded-[10px] bg-red-50 px-4 py-3 text-[14px] text-red-700">
+        <p className="bg-red-50 px-4 py-3 text-[14px] text-red-700">
           {error}
         </p>
       )}
@@ -298,7 +298,7 @@ export function BrandingEditor({
 /** The swatch inside a recipe card — the same three surfaces, in miniature. */
 function MiniPreview({ tokens }: { tokens: ThemeTokens }) {
   return (
-    <div className="flex h-[64px] overflow-hidden rounded-[8px] border border-black/10">
+    <div className="flex h-[64px] overflow-hidden border border-black/10">
       <div className="w-1/3" style={{ background: tokens.surfaceDark }} />
       <div className="relative flex-1" style={{ background: tokens.surfaceLight }}>
         <span

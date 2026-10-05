@@ -3,7 +3,7 @@ import { CompanySection, KV } from "@/components/company/CompanySection";
 import { EditLink, type CompanyRole } from "@/components/company/CompanyShell";
 
 // Overview sections: Company Details + Verification. EIN only for the company's own members.
-export function CompanyDetailsRead({ c, role }: { c: NonNullable<CompanyView>; role: CompanyRole }) {
+export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<CompanyView>; role: CompanyRole; editor?: React.ReactNode }) {
   const buyer = role === "buyer";
   const rows = [
     { k: "Company name", v: c.name },
@@ -24,8 +24,8 @@ export function CompanyDetailsRead({ c, role }: { c: NonNullable<CompanyView>; r
     ...(buyer ? [] : [{ k: "Email domain", v: c.emailDomain, add: "Add email domain — people with it can ask to join" }]),
   ];
   return (
-    <CompanySection id="details" title="Company Details" actions={role === "admin" ? <EditLink href="/company?edit=details#details" /> : undefined}>
-      <KV rows={buyer ? rows.filter((r) => r.v) : rows} />
+    <CompanySection id="details" title="Company Details" actions={role === "admin" && !editor ? <EditLink href="/company?edit=details#details" /> : undefined}>
+      {editor ?? <KV rows={buyer ? rows.filter((r) => r.v) : rows} />}
     </CompanySection>
   );
 }
