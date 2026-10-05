@@ -10,7 +10,7 @@ import { PhoneField } from "@/components/onboarding/PhoneField";
 import { Avatar } from "@/components/Avatar";
 import { PhotoCropModal } from "@/components/onboarding/PhotoCropModal";
 import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
-import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
+import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 const LABELS: Record<RequesterStep, string> = {
   requester_info: "Requester Information",
@@ -183,15 +183,17 @@ export default function RequesterStepsPage() {
     : idx > 0
       ? () => setStep(REQUESTER_STEPS[idx - 1])
       : undefined;
+  // Onboarding frame: rail of the work steps + Review (unnumbered), eyebrow from the same list.
+  const railSteps = REQUESTER_WORK_STEPS.map((k) => ({ key: k, label: REQUESTER_STEP_LABELS[k] }));
+  const workIdx = REQUESTER_WORK_STEPS.indexOf(step as (typeof REQUESTER_WORK_STEPS)[number]);
   const shell = {
-    step: fromReview && step !== "review" ? undefined : idx + 1,
-    totalSteps: REQUESTER_STEPS.length,
-    stepLabel: LABELS[step],
+    rail: { steps: railSteps, current: step === "review" ? railSteps.length : workIdx },
+    eyebrow: step === "review" ? "Review" : `Step ${workIdx + 1} of ${railSteps.length} · ${REQUESTER_STEP_LABELS[step]}`,
     busy,
     onBack: back,
     canBack: fromReview || idx > 0,
-    secondaryLabel: "Finish later",
-    onSecondary: () => {
+    leaveLabel: "Finish later",
+    onLeave: () => {
       void fetch("/api/onboarding/requester/finish-later", { method: "POST" }).catch(
         () => {}
       );
@@ -200,7 +202,7 @@ export default function RequesterStepsPage() {
   };
   const nextLabel = fromReview
     ? "Save & Return to Review"
-    : `Next: ${LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
+    : `Next: ${REQUESTER_STEP_LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 
   /*
     ── ⚠⚠ STEP 1 WAS `Which Company Do You Buy For?` AND IT IS GONE (`E418`) ───
@@ -227,7 +229,7 @@ export default function RequesterStepsPage() {
     return (
       <WizardShell
         {...shell}
-        title="Tell Us Who You Are."
+        title="Who's asking for the work?"
         subtitle="This is the person on the request — the contact a provider sees, and the identity your ERP sends if you connect one later."
         continueLabel={nextLabel}
         /*
@@ -322,7 +324,7 @@ export default function RequesterStepsPage() {
             ⚠ SO NOTHING WAS WRITTEN: no new component, no new route, no new
             column. The only new thing is the panel below.
           */}
-          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-6 sm:flex-row sm:items-center sm:text-left">
+          <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
             <Avatar
               firstName={draft.firstName}
               lastName={draft.lastName}
@@ -482,7 +484,7 @@ export default function RequesterStepsPage() {
     return (
       <WizardShell
         {...shell}
-        title="Where Does the Work Happen?"
+        title="Where does the work happen?"
         /*
           ⚠⚠ NO SUBTITLE, AND THAT IS SCOTT'S ANSWER, NOT AN OMISSION (`E278`).
           Asked directly what should replace it, he said: **"none."**
@@ -641,7 +643,7 @@ export default function RequesterStepsPage() {
   return (
     <WizardShell
       {...shell}
-      title="Check This Over."
+      title="Here's your profile. Check it, then finish."
       subtitle="Everything here is editable later — this is the shape a provider sees when you post work."
       continueLabel="Complete My Profile"
       onContinue={finish}
@@ -652,7 +654,7 @@ export default function RequesterStepsPage() {
             <Notice>{error}</Notice>
           </div>
         )}
-        <dl className="overflow-hidden rounded-brand border border-line">
+        <dl className="overflow-hidden border border-line">
           {rows.map((r) => (
             <div
               key={r.label}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import Image from "next/image";
 import { lookupInvite } from "@/lib/coordinator";
 import { getSessionViewer } from "@/lib/session";
@@ -16,17 +16,15 @@ export default async function InviteAcceptPage({
   const lookup = await lookupInvite(token ?? "");
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
-      <Logo priority className="h-9 w-auto" />
-
-      <div className="mt-10 w-full max-w-md rounded-brand border border-line bg-white p-8 text-left shadow-brand">
+    <OnboardingShell compact>
+      <div data-onboarding-page className="mx-auto w-full max-w-md border border-line bg-surface p-8 text-left">
         {!lookup.ok ? (
           <ErrorState reason={lookup.reason} />
         ) : (
           <ValidState token={token!} lookup={lookup} />
         )}
       </div>
-    </div>
+    </OnboardingShell>
   );
 }
 
@@ -43,7 +41,7 @@ function ErrorState({ reason }: { reason: "invalid" | "expired" | "revoked" | "u
       <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-line text-2xl font-black text-ink-2">
         !
       </div>
-      <h1 className="text-2xl font-extrabold tracking-[-0.5px]">{c.title}</h1>
+      <h1 className="text-[23px] font-extrabold sm:text-[30px]">{c.title}</h1>
       <p className="mt-2 text-ink-2">{c.body}</p>
       <Link href="/" className="mt-6 inline-block font-bold text-magenta">
         Go to Panameer
@@ -61,7 +59,7 @@ async function ValidState({
 }) {
   const header = (
     <>
-      <h1 className="text-2xl font-extrabold tracking-[-0.5px]">
+      <h1 className="text-[23px] font-extrabold sm:text-[30px]">
         You&apos;re Invited
       </h1>
       <p className="mt-2 text-ink-2">
@@ -69,7 +67,7 @@ async function ValidState({
         provider.
       </p>
       {lookup.message && (
-        <p className="mt-3 rounded-[12px] border-l-[3px] border-magenta bg-bg-soft px-4 py-3 text-[14px] italic text-ink-2">
+        <p className="mt-3 border-l-[3px] border-magenta bg-bg-soft px-4 py-3 text-[14px] italic text-ink-2">
           “{lookup.message}”
         </p>
       )}

@@ -45,7 +45,7 @@ export function StartPage({
           style={{ ["--start-cols" as string]: `repeat(${cols}, minmax(0, 1fr))` }}
         >
           {cards.map((c, i) => (
-            <div key={c.title} data-testid="start-card" className="rounded-brand border border-line p-5">
+            <div key={c.title} data-testid="start-card" className="border border-line p-5">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-ink text-[13px] font-black text-surface">{i + 1}</span>
               <p className="mt-3 font-bold">{c.title}</p>
               <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">{c.blurb}</p>
