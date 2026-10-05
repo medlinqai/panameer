@@ -43,11 +43,19 @@ for (const scheme of ["light", "dark"] as const)
       await expect(page.getByRole("heading", { name: "Your Profile", exact: true })).toHaveCount(0);
       await expect(act.locator('[aria-current="true"]')).toHaveText("This Month");
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp.width);
+      // P-E003: no boxes — hero and areas carry no radius or shadow.
+      const boxed = await page.locator('[data-testid="usage-hero"], [data-area]').evaluateAll((els) =>
+        els.filter((e) => { const c = getComputedStyle(e); return c.borderTopLeftRadius !== "0px" || c.boxShadow !== "none"; }).length);
+      expect(boxed).toBe(0);
       await page.screenshot({ path: `e2e-r1/.artifacts/usage-v4-${vp.width}-${scheme}.png`, fullPage: true });
       if (vp.width === 1440 && scheme === "light") {
         await act.getByRole("link", { name: "All Time" }).click();
         await expect(page).toHaveURL(/range=all/);
         await expect(page.getByTestId("usage-activity").locator('[aria-current="true"]')).toHaveText("All Time");
+      }
+      if (scheme === "light") {
+        await page.goto("/profile", { waitUntil: "networkidle" });
+        await page.screenshot({ path: `e2e-r1/.artifacts/profile-beside-usage-${vp.width}.png`, fullPage: true });
       }
       await ctx.close();
     });

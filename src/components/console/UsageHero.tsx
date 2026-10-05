@@ -3,8 +3,7 @@ import type { Figure } from "@/lib/figure";
 import { isCounted } from "@/lib/figure";
 import { UsageHive, type HiveCell } from "@/components/console/UsageHive";
 
-// Usage v4 hero: one bordered card — honeycomb left (soft radial pink), stats + summary + actions right.
-export const USAGE_CARD = "rounded-[18px] border border-[#e9e6ef] [[data-theme=dark]_&]:border-white/15 bg-surface shadow-[0_1px_2px_rgba(39,35,52,.04),0_6px_22px_rgba(39,35,52,.05)]";
+// Usage hero (P-E003: Account-page style, no box): honeycomb left, thin vertical rule, stats + summary + actions right.
 
 export function UsageHero({
   cells,
@@ -18,11 +17,11 @@ export function UsageHero({
   scoreComplete: boolean;
 }) {
   return (
-    <section data-testid="usage-hero" className={`${USAGE_CARD} grid overflow-hidden md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]`}>
-      <div className="pm-usage-viz border-b border-[#e9e6ef] md:border-b-0 md:border-r">
+    <section data-testid="usage-hero" className="grid border-b border-line pb-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="pm-usage-viz border-b border-line md:border-b-0 md:border-r">
         <UsageHive cells={cells} />
       </div>
-      <div className="flex flex-col px-6 py-[22px]">
+      <div className="flex flex-col py-[22px] md:pl-8">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-dark">Usage</p>
         <h2 className="mb-3.5 mt-1 text-[22px] font-bold">What&apos;s Happening Around You</h2>
         <div className="mb-3.5 grid grid-cols-3 gap-2.5">
