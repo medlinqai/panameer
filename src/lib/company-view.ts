@@ -1,0 +1,76 @@
+import { prisma } from "@/lib/prisma";
+import { TAX_LABELS } from "@/lib/tax-types";
+
+// My Company read model. `forBuyer` drops the EIN/TIN and anything internal — the buyer-safe view.
+export type CompanyView = Awaited<ReturnType<typeof loadCompanyView>>;
+
+export const READINESS_FIELDS = [
+  ["name", "Company name"],
+  ["legalName", "Legal name"],
+  ["taxType", "Business type"],
+  ["country", "Country"],
+  ["stateOfFiling", "State of filing"],
+  ["ein", "EIN / Tax registration"],
+  ["industry", "Industry"],
+  ["website", "Website"],
+  ["logoUrl", "Logo"],
+  ["description", "Description"],
+] as const;
+export type ReadinessKey = (typeof READINESS_FIELDS)[number][0];
+
+/** Company Readiness: filled fields of the ten above × 10, and the first empty one. */
+export function companyReadiness(c: Partial<Record<ReadinessKey, string | null>>) {
+  const empty = READINESS_FIELDS.filter(([k]) => !c[k]?.toString().trim());
+  return { score: (READINESS_FIELDS.length - empty.length) * 10, left: empty.length, first: empty[0] ?? null };
+}
+
+export async function loadCompanyView(companyId: string, opts: { forBuyer?: boolean } = {}) {
+  const c = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: {
+      id: true, name: true, legal_name: true, tax_type: true, tin: true, country: true, state_of_filing: true,
+      website: true, email_domain: true, logo_url: true, brand_hue: true, theme_recipe: true, description: true,
+      industry_id: true, show_on_profiles: true, created_at: true,
+      entity_validation_status: true, entity_validated_at: true, entity_validation_source_url: true, entity_status_detail: true,
+      company_tos_accepted_at: true, company_tos_version: true,
+      _count: { select: { memberships: { where: { status: "APPROVED" } } } },
+    },
+  });
+  if (!c) return null;
+  const industry = c.industry_id
+    ? await prisma.specialization.findUnique({ where: { id: c.industry_id }, select: { name: true } })
+    : null;
+  const fields = {
+    name: c.name,
+    legalName: c.legal_name,
+    taxType: c.tax_type ? TAX_LABELS[c.tax_type] : null,
+    country: c.country,
+    stateOfFiling: c.state_of_filing,
+    ein: opts.forBuyer ? null : c.tin,
+    industry: industry?.name ?? null,
+    website: c.website,
+    logoUrl: c.logo_url,
+    description: c.description,
+  };
+  return {
+    id: c.id,
+    ...fields,
+    taxTypeCode: c.tax_type,
+    industryId: c.industry_id,
+    emailDomain: c.email_domain,
+    brandHue: c.brand_hue,
+    themeRecipe: c.theme_recipe,
+    showOnProfiles: c.show_on_profiles,
+    since: c.created_at,
+    members: c._count.memberships,
+    verification: {
+      status: c.entity_validation_status,
+      checkedAt: c.entity_validated_at,
+      source: c.entity_validation_source_url,
+      detail: c.entity_status_detail,
+    },
+    tos: { acceptedAt: c.company_tos_accepted_at, version: c.company_tos_version },
+    // Readiness is the company's own measure; a buyer never sees it.
+    readiness: opts.forBuyer ? null : companyReadiness({ ...fields, ein: c.tin }),
+  };
+}
