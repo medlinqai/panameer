@@ -38,7 +38,7 @@ export const BAND_CONTROL_HREFS = [
 ] as const;
 
 const BAND_EXTRA_PREFIXES: Readonly<Record<string, readonly string[]>> = {
-  "/connect": ["/community", "/providers", "/invite-colleague", "/coordinator"],
+  "/connect": ["/community", "/providers", "/companies", "/invite-colleague", "/coordinator"],
   "/shop": ["/my-services", "/services"],
   "/hire": ["/create-work", "/work-requests", "/search", "/consultations"],
   "/orders": ["/payments", "/pay", "/finances", "/manage-money", "/deliver-work"],
