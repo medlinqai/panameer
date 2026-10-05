@@ -35,6 +35,8 @@ export type ParsedProject = {
   client: string | null;
   software: string[];
   employerName: string | null;
+  /** Role-Type text read from an engagement table, mapped to a locked role on write. */
+  roleText?: string | null;
 };
 
 export type ParsedResume = {

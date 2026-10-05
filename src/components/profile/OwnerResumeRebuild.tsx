@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CompanySort } from "@/components/onboarding/CompanySort";
 import { useRouter } from "next/navigation";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import {
@@ -23,6 +24,7 @@ export function OwnerResumeRebuild() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [receipt, setReceipt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -62,7 +64,10 @@ export function OwnerResumeRebuild() {
           showContext
           autoStart={justUploaded}
           reuseStored={justUploaded}
-          onApplied={() => router.refresh()}
+          onApplied={() => {
+            setApplied(true);
+            router.refresh();
+          }}
           emptyFallback={
             <p className="text-[13px] text-ink-2">
               We saved the file, but there is no readable text in it yet, so there is
@@ -71,6 +76,8 @@ export function OwnerResumeRebuild() {
           }
         />
         {}
+        {/* After the read is saved, the member sorts the companies it found (2026-10-05). */}
+        {applied && <CompanySort onSaved={() => router.refresh()} />}
         {error && (
           <p role="alert" className="mt-2 text-[12px] text-red-600">
             {error}

@@ -624,6 +624,8 @@ export type MultiPassOutcome =
       usage: ModelUsage;
       /** ⚠ Per-pass wall time and cost, so the claim can be checked. */
       passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[];
+      /** Pass 1's headings, kept so the review can list the companies found. */
+      inventory: InventoryItem[];
     }
   | {
       ok: false;
@@ -990,5 +992,6 @@ export async function aiExtractResumeMultiPass(
       reasoningTokens: reasoningTok,
     },
     passes,
+    inventory: inv.value,
   };
 }

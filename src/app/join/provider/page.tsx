@@ -97,6 +97,7 @@ import { LANGUAGES } from "@/lib/countries";
    longer mounted here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { LocationFields } from "@/components/onboarding/LocationFields"; */
 import { CompanyStep } from "@/components/company/CompanyStep";
+import { CompanySort } from "@/components/onboarding/CompanySort";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import { Modal } from "@/components/Modal";
@@ -3910,7 +3911,7 @@ setScreen(target);
                   provider with real work history is never nudged toward a
                   re-import they didn't ask for.
                 */}
-                {profile.employers.length === 0 ? (
+                {profile.employers.length === 0 && projects.length === 0 ? (
                   <AiPassPanel
                     compact
                     heading="No work history yet — want us to read your résumé again?"
@@ -3943,9 +3944,19 @@ setScreen(target);
                   <WorkHistoryBody
                     employers={profile.employers}
                     projects={projects}
-                    empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                    empty={
+                      projects.length
+                        ? "No employers yet — your engagements are under Solo Projects. Sort them below."
+                        : "No work history yet. Providers who add work experience and projects are twice as likely to win work."
+                    }
                   />
                 )}
+                <CompanySort
+                  onSaved={async () => {
+                    const r = await fetch("/api/onboarding/status");
+                    if (r.ok) hydrate(await r.json());
+                  }}
+                />
               </ProfileCard>
             </div>
 

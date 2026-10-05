@@ -1,3 +1,5 @@
+import { parseEngagementTables, engagementsToProjects, roleNameFromText } from "@/lib/resume/engagements";
+import { buildCompanyList, normCompany, notACompany } from "@/lib/resume/company-list";
 import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
 import { readTimeRemaining, READ_BUDGET_MS } from "@/lib/resume/budget";
@@ -188,6 +190,16 @@ export async function importProfileDocument({
   // 2. Text → structure. The model reads it when one is configured (E184).
   const read = await readDocument(text, startedAt);
   const parsed = read.parsed;
+  // Engagement line + labelled table CVs are read deterministically: one project per engagement.
+  const engagements = parseEngagementTables(text);
+  if (engagements.length) {
+    // The engagement clients are projects, not jobs; employers the AI read for them, or for headings, go.
+    const clients = new Set(engagements.map((e) => normCompany(e.client)));
+    parsed.experiences = parsed.experiences.filter((x) => x.employer && !clients.has(normCompany(x.employer)) && !notACompany(x.employer));
+    parsed.projects = engagementsToProjects(engagements);
+    parsed.skills = [...new Set([...parsed.skills, ...engagements.flatMap((e) => e.skills)])];
+  }
+  const companies = buildCompanyList(engagements, read.inventory ?? [], parsed);
 
   // 3. Structure → profile, non-destructively.
   /*
@@ -215,7 +227,9 @@ export async function importProfileDocument({
     renders, so the person sees "we found 14 date ranges and imported 9" beside
     their data, while the import still lands. A hard stop mid-signup loses them.
   */
-  if (read.recall) gaps.push(...read.recall.warnings);
+  // The AI's recall sentences count headings the company list replaces; for engagement CVs they are wrong.
+  if (read.recall) gaps.push(...read.recall.warnings.filter((w) => !/company names in your document/.test(w) && !(engagements.length && /in your document/.test(w))));
+  if (companies.length) gaps.push(`We found ${companies.length} ${companies.length === 1 ? "company" : "companies"}. Sort them below.`);
   /*
     ── ⚠⚠ THE FAILURE HAS TO SAY SOMETHING (`P1-A1.4-E415` WS-3) ─────────────
 
@@ -279,7 +293,7 @@ export async function importProfileDocument({
       } left out.`,
     );
   }
-  if (apply && applied.experiences === 0 && applied.education === 0) {
+  if (apply && applied.experiences === 0 && applied.education === 0 && parsed.projects.length === 0) {
     gaps.push(
       "No work history or education could be imported from this file — please add them manually.",
     );
@@ -314,6 +328,7 @@ export async function importProfileDocument({
       storage_path: storagePath,
       raw_text: text.slice(0, 100_000),
       parsed: parsed as unknown as Prisma.InputJsonValue,
+      company_list: companies as unknown as Prisma.InputJsonValue,
       gaps,
       // WS-G provenance, now written on the FIRST parse rather than only when
       // somebody pressed the re-read button. Null on a heuristic parse, which
@@ -480,6 +495,7 @@ async function readDocument(
   path: ImportPath;
   /** ⚠ `P1-A1.4-E399` WS-3 — what the inventory promised vs what arrived. */
   recall?: RecallReport;
+  inventory?: { heading: string; dateRange?: string | null; kind?: string }[];
   /**
    * ⚠⚠ WHY THE MODEL DID NOT PRODUCE THIS PARSE (`P2-J1.4-E519`). Present only
    * when the WHOLE read fell back. Written to `ProfileImport.error` and nowhere
@@ -625,6 +641,7 @@ async function readDocument(
       employersFromHeuristic: employersFailed,
     },
     recall: outcome.recall,
+    inventory: outcome.inventory,
     timing: {
       readMs: Date.now() - readStarted,
       passes: outcome.passes.map((p) => ({
@@ -803,6 +820,7 @@ export async function applyParsedResume(
         name: (pr.name || "Untitled project").slice(0, 200),
         description: description?.slice(0, 4000) ?? null,
         client_name: (pr.client ?? "").slice(0, 200),
+        role_type_id: pr.roleText ? (roleIdByName.get(roleNameFromText(pr.roleText) ?? "") ?? null) : null,
         start_date: pr.startDate ? new Date(pr.startDate) : null,
         end_date: pr.endDate ? new Date(pr.endDate) : null,
         /* ⚠ `E549` — same rule as the employer write above. SUPERSEDED, quoted:
