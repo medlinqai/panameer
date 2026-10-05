@@ -10,6 +10,7 @@ export const USAGE_GOALS = {
   shop: 10,
   orders: 10,
   earnings: 10_000,
+  pay: 10_000,
 } as const;
 
 export type UsageLevel = "none" | "low" | "medium" | "strong";
@@ -96,6 +97,9 @@ export type UsageInput = {
   invoicesOpen: Figure;
   checksPassing: Figure;
   checksFailing: Figure;
+  /** Usage v4: settled earnings in dollars (sum of the member's payouts). */
+  payEarnings: Figure;
+  paidOut: Figure;
 };
 
 /**
@@ -243,6 +247,22 @@ export function usageAreas(u: UsageInput): UsageArea[] {
       counts: "dollars settled",
     },
     {
+      key: "pay",
+      eyebrow: "Pay",
+      label: "Earnings",
+      figure: u.payEarnings,
+      goal: USAGE_GOALS.pay,
+      money: true,
+      subs: [
+        { label: "Paid Out", figure: u.paidOut },
+        { label: "Awaiting Approval", figure: u.awaitingApproval },
+      ],
+      href: "/payments",
+      go: "Payments",
+      tip: tipFor(u.payEarnings, "dollar settled", "dollars settled"),
+      counts: "dollars settled",
+    },
+    {
       key: "health",
       eyebrow: profileTabLabel("/account-health"),
       label: "Checks Passing",
@@ -343,8 +363,17 @@ export function usageHoneyCells(areas: UsageArea[]) {
  * countable at zero, and a real winner are three different sentences, because merging the
  * first two reports "nobody has done anything" about figures nobody can measure.
  */
+/** Usage v4: the six hex cells, in the mockup's order. */
+export const HIVE_KEYS = ["profile", "connect", "learn", "work", "shop", "pay"] as const;
+export function usageHiveCells(areas: UsageArea[]) {
+  return HIVE_KEYS.map((k) => {
+    const a = areas.find((x) => x.key === k)!;
+    return { key: a.key, label: a.eyebrow, figure: a.figure, href: a.href, level: levelFor(a.figure, a.goal), money: a.money };
+  });
+}
+
 export function usageSummary(areas: UsageArea[]): string {
-  const activity = areas.filter((a) => a.key !== "health");
+  const activity = areas.filter((a) => (HIVE_KEYS as readonly string[]).includes(a.key));
   const counted = activity.filter(
     (a): a is UsageArea & { figure: number } => isNum(a.figure)
   );
@@ -375,6 +404,7 @@ export function usageSummary(areas: UsageArea[]): string {
     shop: "Listing one service product gives buyers something to buy.",
     orders: "Orders follow work requests, so that is the thread to pull first.",
     profile: "Profile views come from being findable — the Score tab says what is missing.",
+    pay: "Earnings follow work orders, so work is the thread to pull first.",
   };
 
   const names = (xs: UsageArea[]) =>

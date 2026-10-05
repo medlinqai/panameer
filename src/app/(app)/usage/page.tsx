@@ -4,8 +4,8 @@ import { PatternHeader } from "@/components/casing/PatternHeader";
 import { UsageCards } from "@/components/console/UsageCards";
 import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
-import { usageAreas, usageHoneyCells, usageSummary } from "@/lib/usage-areas";
-import { Honeycomb } from "@/components/console/Honeycomb";
+import { usageAreas, usageHiveCells, usageSummary } from "@/lib/usage-areas";
+import { UsageHero } from "@/components/console/UsageHero";
 import { computeProfileScore } from "@/lib/completeness";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import {
@@ -125,7 +125,7 @@ export default async function MyStatsPage({
     trendOf(sp)
   );
 
-  const [publishedProducts, draftProducts, offersReceived, awaitingApproval] =
+  const [publishedProducts, draftProducts, offersReceived, awaitingApproval, payouts, paid] =
     await Promise.all([
       prisma.serviceProduct.count({
         where: { provider_profile_id: profile.id, status: "PUBLISHED" },
@@ -139,6 +139,9 @@ export default async function MyStatsPage({
       prisma.settlementRequest.count({
         where: { provider_person_id: profile.person_id, status: "SUBMITTED" },
       }),
+      // Pay (usage v4): settled earnings = the member's payouts, net of fee, in dollars.
+      prisma.providerPayout.aggregate({ where: { provider_person_id: profile.person_id }, _sum: { net_cents: true } }),
+      prisma.providerPayout.aggregate({ where: { provider_person_id: profile.person_id, status: "PAID" }, _sum: { net_cents: true } }),
     ]);
 
   const healthChecks = accountCheckCounts([
@@ -178,6 +181,8 @@ export default async function MyStatsPage({
     invoicesOpen: { uncounted: "There is no invoice record" },
     checksPassing: healthChecks.passing,
     checksFailing: healthChecks.failing,
+    payEarnings: Math.round((payouts._sum.net_cents ?? 0) / 100),
+    paidOut: Math.round((paid._sum.net_cents ?? 0) / 100),
   });
 
   const gaps = missingRequired({
@@ -210,29 +215,15 @@ export default async function MyStatsPage({
     <div className="mx-auto max-w-5xl">
       {}
       <div className="mb-6">
-        <PatternHeader
-          open
-          eyebrow={profileTabLabel("/usage").toUpperCase()}
-          headline="What's Happening Around You"
-          picture={
-            <Honeycomb
-              layout="flower"
-              chrome={false}
-              cells={usageHoneyCells(areas)}
-            />
-          }
-          figures={[
+        <UsageHero
+          cells={usageHiveCells(areas)}
+          stats={[
             { label: "Profile Views", value: stats.profile.views },
             { label: "Colleagues", value: stats.network.colleagues },
             { label: "Lessons Done", value: stats.learning.lessonsCompleted },
           ]}
-          move={usageSummary(areas)}
-          figureLead
-          squareActions
-          primary={{ label: "Invite a Colleague", href: "/community" }}
-          secondary={
-            gaps.length > 0 ? { label: "Finish My Profile", href: "/profile" } : undefined
-          }
+          summary={usageSummary(areas)}
+          scoreComplete={searchScore === 100}
         />
       </div>
 
