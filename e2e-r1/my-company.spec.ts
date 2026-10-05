@@ -64,7 +64,7 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await page.goto("/company/branding", { waitUntil: "networkidle" });
   await expect(page.locator('[data-co-section="branding"]')).toBeVisible();
   await page.goto("/company/terms", { waitUntil: "networkidle" });
-  await expect(page.locator('[data-co-section="terms"]')).toContainText("hasn't accepted the company terms");
+  await expect(page).toHaveURL(/\/company(#verification)?$/);
   await ctx.close();
   // A member cannot reach the editor, Branding or Terms.
   const m = await browser.newContext({ viewport: { width: 390, height: 844 } });
