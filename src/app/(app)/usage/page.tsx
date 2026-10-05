@@ -116,7 +116,7 @@ export default async function MyStatsPage({
   }
 
   const sp = await searchParams;
-  const range: ActivityRange = sp.range === "all" ? "all" : "month";
+  const range: ActivityRange = sp.range === "month" ? "month" : "all";
   const stats = await getStatistics(
     profile.person_id,
     viewer.userId,
