@@ -16,6 +16,9 @@ for (const w of [1440, 390])
     const page = await ctx.newPage();
     await signIn(page, f!.provider.email);
     await page.goto("/score", { waitUntil: "networkidle" });
+    // P-E002: one status line, no separate intro.
+    await expect(page.getByText(/Answer every line/)).toHaveCount(0);
+    await expect(page.locator("[data-score-say]")).toContainText(/"I have none" counts too\. Free as of /);
     const seg = page.locator("[data-seg]").first();
     const key = await seg.getAttribute("data-seg");
     const row = page.locator(`[data-line="${key}"]`).first();
