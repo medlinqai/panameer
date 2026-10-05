@@ -2,15 +2,14 @@ import Link from "next/link";
 import { isCounted } from "@/lib/figure";
 import type { ActivityArea, ActivityRange } from "@/lib/usage-activity";
 import { USAGE_LEVEL_LABEL, type UsageLevel } from "@/lib/usage-areas";
-import { USAGE_CARD } from "@/components/console/UsageHero";
 
 // Usage v4 "Your Activity": six area cards, four metric rows each, goal + progress bar (ink when met).
 const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 
 export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[]; range: ActivityRange; levels: Record<string, UsageLevel | null> }) {
   return (
-    <section data-testid="usage-activity" className="mt-4">
-      <div className="mx-0.5 mb-2 flex flex-wrap items-baseline justify-between gap-2.5">
+    <section data-testid="usage-activity" className="mt-8">
+      <div className="mx-0.5 mb-3 flex flex-wrap items-baseline justify-between gap-2.5">
         <h3 className="text-[16px] font-bold">Your Activity</h3>
         <div className="inline-flex border border-ink" role="group" aria-label="Period">
           {([["month", "This Month"], ["all", "All Time"]] as const).map(([k, label]) => (
@@ -26,11 +25,11 @@ export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[];
           ))}
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-x-14 md:grid-cols-2">
         {areas.map((a) => {
           const lvl = levels[a.key];
           return (
-            <section key={a.key} data-area={a.key} className={`${USAGE_CARD} px-5 py-[18px]`}>
+            <section key={a.key} data-area={a.key} className="border-t border-line pb-6 pt-5">
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2.5">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-dark">{a.title}</span>
