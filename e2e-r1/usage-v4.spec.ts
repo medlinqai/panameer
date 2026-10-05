@@ -34,7 +34,20 @@ for (const scheme of ["light", "dark"] as const)
       expect(new Set(sw).size).toBe(4);
       await expect(hero.getByRole("link", { name: /Invite a Colleague/ })).toBeVisible();
       await expect(hero.getByRole("link", { name: /Complete Your Profile|View Your Profile/ })).toBeVisible();
+      const act = page.getByTestId("usage-activity");
+      await expect(act.locator("[data-area]")).toHaveCount(6);
+      expect(await act.locator("[data-area]").evaluateAll((els) => els.map((e) => e.getAttribute("data-area")))).toEqual(["profile", "learn", "connect", "work", "shop", "pay"]);
+      for (const k of ["profile", "learn", "connect", "work", "shop", "pay"]) await expect(act.locator(`[data-area="${k}"] [data-metric]`)).toHaveCount(4);
+      await expect(act.locator('[data-metric="Instructors Messaged"]')).toContainText("NOT COUNTED");
+      await expect(act.locator('[data-area="pay"] [data-metric="Earnings"] b')).toHaveText("$0");
+      await expect(page.getByRole("heading", { name: "Your Profile", exact: true })).toHaveCount(0);
+      await expect(act.locator('[aria-current="true"]')).toHaveText("This Month");
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(vp.width);
       await page.screenshot({ path: `e2e-r1/.artifacts/usage-v4-${vp.width}-${scheme}.png`, fullPage: true });
+      if (vp.width === 1440 && scheme === "light") {
+        await act.getByRole("link", { name: "All Time" }).click();
+        await expect(page).toHaveURL(/range=all/);
+        await expect(page.getByTestId("usage-activity").locator('[aria-current="true"]')).toHaveText("All Time");
+      }
       await ctx.close();
     });
