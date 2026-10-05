@@ -86,12 +86,12 @@ export async function getColleagueSuggestions(
     last_name: true,
     title: true,
     photo_url: true,
-    company: { select: { name: true } },
+    company: { select: { id: true, name: true, show_on_profiles: true } },
     user: { select: { id: true } },
   } as const;
   type Row = {
     id: string; first_name: string; last_name: string; title: string | null;
-    photo_url: string | null; company: { name: string } | null; user: { id: string } | null;
+    photo_url: string | null; company: { id: string; name: string; show_on_profiles: boolean } | null; user: { id: string } | null;
   };
   const card = (p: Row): PersonCard => ({
     userId: p.user?.id ?? "",
@@ -99,7 +99,8 @@ export async function getColleagueSuggestions(
     name: `${p.first_name} ${p.last_name}`.trim(),
     title: p.title,
     photoUrl: p.photo_url,
-    company: p.company?.name ?? null,
+    company: p.company?.show_on_profiles ? p.company.name : null,
+    companyId: p.company?.show_on_profiles ? p.company.id : null,
   });
   const add = (p: Row, rule: SuggestionRule, reason: string) => {
     const uid = p.user?.id;

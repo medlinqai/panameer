@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { CompanyLink } from "@/components/company/CompanyLink";
 
 export function EmployeeProfileForm({
   firstName,
@@ -10,6 +11,7 @@ export function EmployeeProfileForm({
   phone,
   email,
   company,
+  companyId,
   photoUrl,
 }: {
   firstName: string;
@@ -18,6 +20,7 @@ export function EmployeeProfileForm({
   phone: string;
   email: string;
   company: string;
+  companyId: string | null;
   photoUrl: string | null;
 }) {
   const router = useRouter();
@@ -125,7 +128,7 @@ export function EmployeeProfileForm({
           <span className="block text-[13px] font-bold uppercase tracking-wide text-ink-2">
             Company
           </span>
-          {company || "—"}
+          {company ? <CompanyLink id={companyId} name={company} /> : "—"}
         </p>
       </div>
 

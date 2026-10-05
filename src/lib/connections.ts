@@ -302,6 +302,7 @@ export type PersonCard = {
   title: string | null;
   photoUrl: string | null;
   company: string | null;
+  companyId: string | null;
 };
 
 const personSelect = {
@@ -310,7 +311,7 @@ const personSelect = {
   last_name: true,
   title: true,
   photo_url: true,
-  company: { select: { name: true } },
+  company: { select: { id: true, name: true, show_on_profiles: true } },
   user: { select: { id: true } },
 } as const;
 
@@ -320,7 +321,7 @@ type PersonRow = {
   last_name: string;
   title: string | null;
   photo_url: string | null;
-  company: { name: string } | null;
+  company: { id: string; name: string; show_on_profiles: boolean } | null;
   user: { id: string } | null;
 };
 
@@ -330,7 +331,9 @@ const toCard = (p: PersonRow): PersonCard => ({
   name: `${p.first_name} ${p.last_name}`.trim(),
   title: p.title,
   photoUrl: p.photo_url,
-  company: p.company?.name ?? null,
+  // The company's Visibility switch hides its name from members' cards.
+  company: p.company?.show_on_profiles ? p.company.name : null,
+  companyId: p.company?.show_on_profiles ? p.company.id : null,
 });
 
 /**

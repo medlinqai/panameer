@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { NO_RATE_PUBLISHED } from "@/lib/rate-display";
 import type { PersonCard } from "@/lib/connections";
+import { TitleAndCompany } from "@/components/company/CompanyLink";
 
 export function MemberRow({
   person,
@@ -17,7 +18,7 @@ export function MemberRow({
   reason?: string;
   children?: React.ReactNode;
 }) {
-  const meta = [person.title, person.company].filter(Boolean).join(" · ");
+  const meta = person.title || person.company;
 
   return (
     <div className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5">
@@ -38,7 +39,11 @@ export function MemberRow({
             person.name
           )}
         </p>
-        {meta && <p className="text-[13px] text-ink-2">{meta}</p>}
+        {meta && (
+          <p className="text-[13px] text-ink-2">
+            <TitleAndCompany title={person.title} company={person.company} companyId={person.companyId} />
+          </p>
+        )}
         {reason && (
           <p className="mt-0.5 text-[12.5px] italic leading-snug text-ink-2">{reason}</p>
         )}

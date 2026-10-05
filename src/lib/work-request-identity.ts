@@ -32,6 +32,8 @@ export type BuyerIdentity = {
   personTitle: string | null;
   personPhotoUrl: string | null;
   companyName: string | null;
+  /** For the company link; null whenever the name is withheld, so the link can't reveal it. */
+  companyId: string | null;
   /** The alias shown in its place. Null falls back to a neutral phrase in the UI. */
   companyCodeName: string | null;
   companyConfidential: boolean;
@@ -171,6 +173,7 @@ export function buildBuyerIdentity(input: {
     personTitle: person.title?.trim() || null,
     personPhotoUrl: person.photo_url,
     companyName: visibleName,
+    companyId: hidden || !visibleName ? null : (company?.id ?? null),
     companyCodeName: input.companyCodeName?.trim() || null,
     companyConfidential: hidden,
     companyCountry: company?.country ?? null,

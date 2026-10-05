@@ -13,6 +13,7 @@ export type RosterRow = {
   name: string;
   title: string | null;
   company: string | null;
+  companyId: string | null;
   photoUrl: string | null;
   reason: string;
   reasonKind: RosterReasonKind;
@@ -56,7 +57,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       photo_url: true,
       is_service_buyer: true,
       is_service_provider: true,
-      company: { select: { name: true } },
+      company: { select: { id: true, name: true, show_on_profiles: true } },
       site: {
         select: {
           addresses: {
@@ -168,7 +169,8 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       personId: p.id,
       name: `${p.first_name} ${p.last_name}`.trim(),
       title: p.title,
-      company: p.company?.name ?? null,
+      company: p.company?.show_on_profiles ? p.company.name : null,
+      companyId: p.company?.show_on_profiles ? p.company.id : null,
       photoUrl: p.photo_url,
       /* ⚠⚠ THE SHOWN SET, VIA `E517`'s ONE RULE — asked, never re-derived, which
          is the mistake `E585` records. ⚠ No selection shows everything, so a

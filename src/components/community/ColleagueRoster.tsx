@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { ColleagueRowActions } from "@/components/community/ColleagueRowActions";
 import { ConnectControls, type Relation } from "@/components/community/ConnectControls";
 import "./member-row.css";
+import { TitleAndCompany } from "@/components/company/CompanyLink";
 
 type MemberHit = {
   userId: string;
@@ -13,6 +14,7 @@ type MemberHit = {
   name: string;
   title: string | null;
   company: string | null;
+  companyId: string | null;
   photoUrl: string | null;
   relation: Relation;
 };
@@ -23,6 +25,7 @@ export type RosterRowView = {
   name: string;
   title: string | null;
   company: string | null;
+  companyId: string | null;
   photoUrl: string | null;
   reason: string;
   reasonKind: "skills" | "learn" | "employer" | "worked" | "date";
@@ -207,7 +210,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                 </p>
                 {[r.title, r.company].filter(Boolean).length > 0 && (
                   <p className="text-[13px] text-ink-2">
-                    {[r.title, r.company].filter(Boolean).join(" · ")}
+                    <TitleAndCompany title={r.title} company={r.company} companyId={r.companyId} />
                   </p>
                 )}
                 {/* ⚠⚠ THE DISAMBIGUATING LINE (`E742`, B2). ⚠⚠⚠ THE MUTUAL
@@ -381,7 +384,7 @@ function OtherMembers({
                 <p className="text-[15px] font-bold">{m.name}</p>
                 {[m.title, m.company].filter(Boolean).length > 0 && (
                   <p className="text-[13px] text-ink-2">
-                    {[m.title, m.company].filter(Boolean).join(" · ")}
+                    <TitleAndCompany title={m.title} company={m.company} companyId={m.companyId} />
                   </p>
                 )}
               </div>

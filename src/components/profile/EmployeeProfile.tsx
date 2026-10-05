@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/components/Avatar";
 import { EmployeeProfileForm } from "@/components/profile/EmployeeProfileForm";
+import { CompanyLink } from "@/components/company/CompanyLink";
 
 export async function EmployeeProfile({ userId }: { userId: string }) {
   const person = await prisma.person.findUnique({
@@ -11,7 +12,7 @@ export async function EmployeeProfile({ userId }: { userId: string }) {
       title: true,
       phone: true,
       photo_url: true,
-      company: { select: { name: true } },
+      company: { select: { id: true, name: true } },
       user: { select: { email: true, is_system_admin: true } },
     },
   });
@@ -45,7 +46,12 @@ export async function EmployeeProfile({ userId }: { userId: string }) {
             </h1>
             <p className="mt-0.5 text-[15px] text-ink-2">
               {person.title ?? "Panameer"}
-              {person.company?.name ? ` · ${person.company.name}` : ""}
+              {person.company?.name && (
+                <>
+                  {" · "}
+                  <CompanyLink id={person.company.id} name={person.company.name} />
+                </>
+              )}
             </p>
             {person.user?.is_system_admin && (
               <span className="mt-2 inline-block rounded-full bg-magenta/10 px-3 py-1 text-[12px] font-bold text-magenta">
@@ -63,6 +69,7 @@ export async function EmployeeProfile({ userId }: { userId: string }) {
         phone={person.phone ?? ""}
         email={person.user?.email ?? ""}
         company={person.company?.name ?? ""}
+        companyId={person.company?.id ?? null}
         photoUrl={person.photo_url}
       />
 

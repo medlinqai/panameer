@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Face } from "@/components/community/Silhouette";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import type { ColleagueCard, InvitedCard } from "@/lib/community-page";
+import { CompanyLink } from "@/components/company/CompanyLink";
 
 export function JoinedCard({ c }: { c: ColleagueCard }) {
   return (
@@ -21,7 +22,11 @@ export function JoinedCard({ c }: { c: ColleagueCard }) {
         {/* ⚠⚠ THEIR OWN TITLE, VERBATIM AND NEVER RE-CASED (`E568`, item 4).
             A title is DATA. ⚠ Absent means absent — no placeholder, ever. */}
         {c.title && <p className="pm-cm-title">{c.title}</p>}
-        {c.company && <p className="pm-cm-where">{c.company}</p>}
+        {c.company && (
+          <p className="pm-cm-where">
+            <CompanyLink id={c.companyId} name={c.company} />
+          </p>
+        )}
         {c.location && <p className="pm-cm-where">{c.location}</p>}
 
         <div className="pm-cm-actions mt-2">
