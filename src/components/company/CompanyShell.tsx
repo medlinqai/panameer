@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CompanyView } from "@/lib/company-view";
 import { CleanSide } from "@/components/profile/CleanSection";
+import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload";
 import "@/components/community/connect-profile.css";
 
 // My Company layout (mockup my_company 2026-10-05), built like My Profile: logo column left, name + meta right.
@@ -42,9 +43,9 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
               </span>
             )}
             {admin && (
-              <Link href="/company/branding" className="absolute bottom-2 right-2 border border-line bg-surface px-2.5 py-1 text-[11.5px] font-bold text-magenta-dark">
-                Edit logo
-              </Link>
+              <span className="absolute bottom-2 right-2">
+                <CompanyLogoUpload companyId={c.id} className="border border-line bg-surface px-2.5 py-1 text-[11.5px] font-bold text-magenta-dark" />
+              </span>
             )}
           </div>
           {r && (
@@ -102,9 +103,6 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
           <div className="min-w-0 md:col-start-1 md:row-start-2">
             <Link href={`/companies/${c.id}?preview=buyer`} className="mt-1 block bg-ink px-4 py-3 text-center text-[14px] font-bold text-surface hover:bg-ink-hover md:mt-7">
               How Buyers See Our Company
-            </Link>
-            <Link href="/invite-colleague" className="mt-2.5 block border border-ink px-4 py-3 text-center text-[14px] font-bold text-ink hover:bg-surface-hover">
-              Invite Someone to {c.name}
             </Link>
             {visibility}
           </div>

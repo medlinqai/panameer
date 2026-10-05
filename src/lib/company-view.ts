@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { TAX_LABELS } from "@/lib/tax-types";
+import { COMPANY_TOS_VERSION } from "@/lib/tos";
 
 // My Company read model. `forBuyer` drops the EIN/TIN and anything internal — the buyer-safe view.
 export type CompanyView = Awaited<ReturnType<typeof loadCompanyView>>;
@@ -32,11 +33,14 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
       website: true, email_domain: true, logo_url: true, brand_hue: true, theme_recipe: true, description: true,
       industry_id: true, show_on_profiles: true, created_at: true,
       entity_validation_status: true, entity_validated_at: true, entity_validation_source_url: true, entity_status_detail: true,
-      company_tos_accepted_at: true, company_tos_version: true,
+      company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true,
       _count: { select: { memberships: { where: { status: "APPROVED" } } } },
     },
   });
   if (!c) return null;
+  const tosBy = c.company_tos_accepted_by
+    ? await prisma.person.findUnique({ where: { id: c.company_tos_accepted_by }, select: { first_name: true, last_name: true } })
+    : null;
   const industry = c.industry_id
     ? await prisma.specialization.findUnique({ where: { id: c.industry_id }, select: { name: true } })
     : null;
@@ -69,7 +73,12 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
       source: c.entity_validation_source_url,
       detail: c.entity_status_detail,
     },
-    tos: { acceptedAt: c.company_tos_accepted_at, version: c.company_tos_version },
+    tos: {
+      acceptedAt: c.company_tos_accepted_at,
+      version: c.company_tos_version,
+      by: tosBy ? `${tosBy.first_name ?? ""} ${tosBy.last_name ?? ""}`.trim() || null : null,
+      current: c.company_tos_version === COMPANY_TOS_VERSION && !!c.company_tos_accepted_at,
+    },
     // Readiness is the company's own measure; a buyer never sees it.
     readiness: opts.forBuyer ? null : companyReadiness({ ...fields, ein: c.tin }),
   };
