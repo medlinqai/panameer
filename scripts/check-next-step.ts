@@ -17,6 +17,7 @@ const all = (r: ReturnType<typeof nextStep>) => JSON.stringify(r);
 const r1 = nextStep(m({ seller: seller({ published: false }) }));
 check("1 — unpublished seller → Finish your profile", r1.card.rule === 1 && r1.card.cta.href === "/join/provider?step=skills");
 check("1 — why says buyers can't find you", /can't find you until it's published/.test(r1.card.why) && /3 of 6/.test(r1.card.why));
+check("1 — no steps done reads as a plan, not a zero", /It takes 6 short steps/.test(nextStep(m({ seller: seller({ published: false, stepsDone: 0 }) })).card.why));
 check("1 — unpublished recruiter also finishes first", nextStep(m({ seller: seller({ published: false, recruiter: true }) })).card.rule === 1);
 
 const r2 = nextStep(m({ seller: seller({ months: 14, projects: 0, credentials: 0, colleagues: 0 }) }));
@@ -24,7 +25,8 @@ check("2 — little experience → Learn", r2.card.rule === 2 && r2.card.cta.hre
 check("2 — why is derived history, not a self-grade", /work history shows 1 year of work and no projects yet/.test(r2.card.why) && !/Beginner|told us|chose/i.test(all(r2)));
 check("2 — < 2 projects alone triggers it", nextStep(m({ seller: seller({ projects: 1 }) })).card.rule === 2);
 check("2 — 3+ years and 2 projects does not", nextStep(m({ seller: seller({ months: 40, projects: 2, colleagues: 1 }) })).card.rule === 4);
-check("2 — Then lists Connect and Find Work", r2.then.map((t) => t.rule).join() === "3,4", r2.then.map((t) => t.rule).join());
+check("2 — Then: Connect, Add a project, Find Work (mockup A)", r2.then.map((t) => t.title).join(" | ") === "Connect with people you've worked with | Add a project | Browse open work", r2.then.map((t) => t.title).join(" | "));
+check("7 — buyer-only Then: Shop + Invite your team", nextStep(m({ buyer: { openRequest: null } })).then.map((t) => t.link).join() === "Shop,Connect");
 
 const r3 = nextStep(m({ seller: seller({ colleagues: 0 }) }));
 check("3 — experienced, no colleagues → Connect", r3.card.rule === 3 && r3.card.cta.href === "/connect");
@@ -59,7 +61,7 @@ check("order — unpublished beats everything", nextStep(m({ seller: seller({ pu
 // Missing counts are left out, never shown as zero.
 const miss = nextStep(m({ seller: seller({ matchingRequests: null, credentials: null, months: null, projects: 0 }) }));
 check("missing — no fake credentials tick", !miss.card.ticks.some((t) => /Credentials/.test(t.label)));
-check("missing — no dated history says so", /no dated work history yet/.test(miss.card.why));
+check("missing — no dated history says so", /no dated work history and no projects yet/.test(miss.card.why));
 const miss4 = nextStep(m({ seller: seller({ matchingRequests: null }) }));
 check("missing — rule 4 without a count shows no number", !/\d+ open request/.test(all(miss4)) && !miss4.card.ticks.some((t) => /Matching/.test(t.label)));
 const miss6 = nextStep(m({ buyer: { openRequest: { id: "w", title: "", matches: null, invited: null } } }));
@@ -67,7 +69,7 @@ check("missing — rule 6 without counts", miss6.card.title === "See who matches
 check("missing — rule 1 without step counts", !/of \d/.test(nextStep(m({ seller: seller({ published: false, stepsDone: null }) })).card.why));
 
 // Greeting.
-check("greeting — first visit seller", nextStep(m({ seller: seller() })).greeting.title === "Welcome to Panameer, Pat." && nextStep(m({ seller: seller() })).greeting.eyebrow === "Your profile is live");
+check("greeting — first visit seller", nextStep(m({ seller: seller() })).greeting.title === "Welcome to Panameer, Pat." && nextStep(m({ seller: seller() })).greeting.eyebrow === "Your profile is live" && nextStep(m({ seller: seller() })).greeting.short === "Welcome, Pat.");
 check("greeting — later visits", nextStep(m({ firstVisit: false, seller: seller() })).greeting.title === "Welcome back, Pat.");
 
 console.log(`check:next-step — ${pass} passed, ${fails.length} failed`);

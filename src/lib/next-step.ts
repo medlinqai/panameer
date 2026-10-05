@@ -39,7 +39,7 @@ export type NextCard = {
   ticks: Tick[];
 };
 export type ThenRow = { rule: number; title: string; line: string; link: string; href: string };
-export type FirstPage = { greeting: { eyebrow: string; title: string }; card: NextCard; then: ThenRow[] };
+export type FirstPage = { greeting: { eyebrow: string; title: string; short?: string }; card: NextCard; then: ThenRow[] };
 
 /** Lowest experience band: under 3 years of dated work (same edge as the résumé's BEGINNER level). */
 export const LOWEST_BAND_MONTHS = 36;
@@ -67,7 +67,8 @@ const RULES: Rule[] = [
     matches: (m) => !!m.seller && !m.seller.published,
     card: (m) => {
       const s = m.seller!;
-      const steps = s.stepsDone !== null && s.stepsTotal !== null ? ` You've done ${s.stepsDone} of ${s.stepsTotal} steps.` : "";
+      const steps =
+        s.stepsDone === null || s.stepsTotal === null ? "" : s.stepsDone === 0 ? ` It takes ${s.stepsTotal} short steps.` : ` You've done ${s.stepsDone} of ${s.stepsTotal} steps.`;
       return {
         rule: 1,
         title: "Finish your profile",
@@ -88,7 +89,7 @@ const RULES: Rule[] = [
     matches: (m) => sellerLive(m) && isLittleExperience(m.seller!),
     card: (m) => {
       const s = m.seller!;
-      const history = s.months !== null ? `Your work history shows ${yearsText(s.months)} of work` : "Your profile has no dated work history yet";
+      const history = s.months !== null ? `Your work history shows ${yearsText(s.months)} of work` : "Your profile has no dated work history";
       const proj = s.projects ? `${plural(s.projects, "project")}` : "no projects yet";
       return {
         rule: 2,
@@ -222,6 +223,14 @@ export function nextStep(m: MemberFacts): FirstPage {
   // Rule 4's card carries "List a service you sell" with it (first Then row).
   const own = card.rule === 4 ? first.then(m).filter((r) => r.href !== card.cta.href) : [];
   const rows = [...own, ...RULES.filter((r) => r !== first && (r.alsoFits ?? r.matches)(m)).flatMap((r) => r.then(m))];
+  // Mockup rows that are not rules: a live seller with < 2 projects adds one; a buyer-only member browses / invites.
+  if (sellerLive(m) && m.seller!.projects < 2)
+    rows.splice(Math.min(1, rows.length), 0, { rule: 0, title: "Add a project", line: "Even one past project makes it easier to win work.", link: "Add project", href: "/profile" });
+  if (!m.seller && m.buyer)
+    rows.push(
+      { rule: 0, title: "Browse service products", line: "Fixed-price packages you can buy today.", link: "Shop", href: "/shop" },
+      { rule: 0, title: "Invite your team", line: "Colleagues can review proposals with you.", link: "Connect", href: "/connect" }
+    );
   // A member who is both seller and buyer always sees their buyer row in "Then".
   const buyerRows = card.rule <= 5 ? rows.filter((r) => r.rule >= 6).slice(0, 1) : [];
   const then = [...rows.filter((r) => !buyerRows.includes(r)).slice(0, 3 - buyerRows.length), ...buyerRows];
@@ -232,5 +241,5 @@ function greeting(m: MemberFacts, card: NextCard): FirstPage["greeting"] {
   const name = m.firstName ? `, ${m.firstName}` : "";
   if (!m.firstVisit) return { eyebrow: "Welcome back", title: `Welcome back${name}.` };
   const eyebrow = m.seller?.published ? "Your profile is live" : card.rule === 6 ? "Your request is posted" : "Welcome";
-  return { eyebrow, title: `Welcome to Panameer${name}.` };
+  return { eyebrow, title: `Welcome to Panameer${name}.`, short: `Welcome${name}.` };
 }
