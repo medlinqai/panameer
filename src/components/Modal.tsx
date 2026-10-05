@@ -32,7 +32,7 @@ export function Modal({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] ${width} overflow-y-auto rounded-brand border border-line bg-white p-0 font-body text-ink shadow-brand backdrop:bg-black/40 backdrop:backdrop-blur-[2px]`}
+      className={`m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] ${width} overflow-y-auto border border-line bg-white p-0 font-body text-ink shadow-brand backdrop:bg-black/40 backdrop:backdrop-blur-[2px]`}
     >
       <div className="p-6 sm:p-7">
         <div className="mb-4 flex items-start justify-between gap-4">
