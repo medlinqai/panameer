@@ -67,7 +67,7 @@ export function AppRail() {
       onClick={() => setOpen(false)}
       aria-current={isActive(item.href) ? "page" : undefined}
       className={
-        "flex items-center gap-3 whitespace-nowrap rounded-[8px] border px-2.5 py-[5px] " +
+        "flex items-center gap-3 whitespace-nowrap border px-2.5 py-[5px] " +
         "text-[14px] font-medium leading-[20px] transition-colors " +
         (isActive(item.href)
           ? "border-rail-active bg-rail-active text-white"
@@ -156,7 +156,7 @@ export function AppRail() {
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle navigation"
             aria-expanded={open}
-            className="rounded-lg p-2 text-white/80 hover:bg-white/10"
+            className="p-2 text-white/80 hover:bg-white/10"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />

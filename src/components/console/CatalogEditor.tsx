@@ -15,7 +15,7 @@ export type EditTarget = {
 type Links = { total: number; providers: number };
 
 const BTN =
-  "rounded-full border-[1.5px] border-line px-3 py-1.5 text-[13px] font-bold " +
+  "border-[1.5px] border-line px-3 py-1.5 text-[13px] font-bold " +
   "text-ink transition-colors hover:border-magenta hover:text-magenta-ink " +
   "disabled:cursor-not-allowed disabled:opacity-40";
 

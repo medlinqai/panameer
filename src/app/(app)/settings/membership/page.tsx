@@ -92,7 +92,7 @@ export default async function MembershipPage() {
                 disabled
                 title="Billing isn't wired up yet"
                 className={
-                  "mt-5 w-full rounded-full px-5 py-2.5 text-[14.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 " +
+                  "mt-5 w-full px-5 py-2.5 text-[14.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 " +
                   (isCurrent
                     ? "border-[1.5px] border-line text-ink-2"
                     : "bg-magenta text-white")

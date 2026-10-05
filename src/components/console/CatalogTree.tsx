@@ -106,7 +106,7 @@ export function CatalogTree({
           <button
             type="button"
             onClick={() => setOpen(expandedAll ? new Set() : new Set(allIds(nodes)))}
-            className="rounded-[8px] border-[1.5px] border-line px-3 py-1.5 text-[13px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+            className="border-[1.5px] border-line px-3 py-1.5 text-[13px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
           >
             {expandedAll ? "Collapse All" : "Expand All"}
           </button>
@@ -190,7 +190,7 @@ function Group({
           <button
             type="button"
             onClick={() => setEditing(editing === node.id ? null : node.id)}
-            className="shrink-0 rounded-full border-[1.5px] border-line px-2.5 py-0.5 text-[11.5px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta-ink"
+            className="shrink-0 border-[1.5px] border-line px-2.5 py-0.5 text-[11.5px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta-ink"
           >
             {editing === node.id ? "Close" : "Edit"}
           </button>
@@ -276,14 +276,14 @@ export function CatalogEditBar({ sticky = false }: { sticky?: boolean }) {
         <button
           type="button"
           disabled
-          className="cursor-not-allowed rounded-full border-[1.5px] border-line px-4 py-1.5 text-[13px] font-bold text-ink-2/50"
+          className="cursor-not-allowed border-[1.5px] border-line px-4 py-1.5 text-[13px] font-bold text-ink-2/50"
         >
           Discard
         </button>
         <button
           type="button"
           disabled
-          className="cursor-not-allowed rounded-full bg-magenta/30 px-4 py-1.5 text-[13px] font-bold text-white"
+          className="cursor-not-allowed bg-magenta/30 px-4 py-1.5 text-[13px] font-bold text-white"
         >
           Save
         </button>

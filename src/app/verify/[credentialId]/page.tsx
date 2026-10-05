@@ -79,7 +79,7 @@ export default async function VerifyPage({
             {cert.learningPath && cert.learningPath.status === "PUBLISHED" && (
               <Link
                 href={`/learn/${cert.learningPath.slug}`}
-                className="rounded-full border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+                className="border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
               >
                 See the Path
               </Link>
@@ -95,7 +95,7 @@ export default async function VerifyPage({
             {cert.providerProfile && (
               <Link
                 href={`/providers/${cert.providerProfile.id}`}
-                className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                className="bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
                 View Profile
               </Link>

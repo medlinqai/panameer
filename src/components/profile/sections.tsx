@@ -16,7 +16,7 @@ import { CLEAN_CHIP, CleanSection } from "@/components/profile/CleanSection";
 import { PROFICIENCY_LABEL } from "@/lib/languages";
 
 const CHIP_BASE =
-  "inline-flex max-w-full items-center rounded-full px-3 py-1 text-[13px] font-semibold break-words";
+  "inline-flex max-w-full items-center px-3 py-1 text-[13px] font-semibold break-words";
 export const CHIP_TAG = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
 /** ⚠ A SKILL — a tag chip, magenta since ruling 31e. */
 const CHIP_SKILL = CHIP_TAG;
@@ -1497,7 +1497,7 @@ export function ArtifactsBody({ artifacts }: { artifacts: ArtifactItem[] }) {
               href={a.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-magenta/30 bg-magenta/[0.05] px-3 py-1 text-[13px] font-semibold text-magenta-dark transition-colors hover:border-magenta"
+              className="inline-flex items-center gap-1.5 border border-magenta/30 bg-magenta/[0.05] px-3 py-1 text-[13px] font-semibold text-magenta-dark transition-colors hover:border-magenta"
             >
               🔗 {a.label}
             </a>

@@ -91,7 +91,7 @@ export function LockControl({ personId, locked, lockedUntil, failedAttempts }: P
         <button
           type="button"
           onClick={unlock}
-          className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+          className="border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
         >
           Unlock
         </button>

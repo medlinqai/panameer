@@ -485,7 +485,7 @@ function RowAction({
       type="button"
       onClick={onClick}
       className={
-        "rounded-full px-2.5 py-1 text-[12.5px] font-bold transition-colors " +
+        "px-2.5 py-1 text-[12.5px] font-bold transition-colors " +
         (danger
           ? "text-ink-2 hover:bg-red-500/5 hover:text-red-700"
           : "text-magenta hover:bg-magenta/[0.06]")
@@ -519,7 +519,7 @@ function OrdinalButtons({
         aria-label="Move up"
         disabled={!canUp || disabled}
         onClick={() => onMove("up")}
-        className="rounded px-1.5 py-1 text-[13px] text-ink-2 hover:text-magenta disabled:opacity-25"
+        className="px-1.5 py-1 text-[13px] text-ink-2 hover:text-magenta disabled:opacity-25"
       >
         ↑
       </button>
@@ -528,7 +528,7 @@ function OrdinalButtons({
         aria-label="Move down"
         disabled={!canDown || disabled}
         onClick={() => onMove("down")}
-        className="rounded px-1.5 py-1 text-[13px] text-ink-2 hover:text-magenta disabled:opacity-25"
+        className="px-1.5 py-1 text-[13px] text-ink-2 hover:text-magenta disabled:opacity-25"
       >
         ↓
       </button>

@@ -99,7 +99,7 @@ function PublicLinkRow({ url }: { url: string }) {
         />
         <button
           type="button"
-          className="shrink-0 rounded-[4px] border border-ink px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg-soft"
+          className="shrink-0 border border-ink px-3 py-1.5 text-[12.5px] font-semibold text-ink hover:bg-bg-soft"
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(url);

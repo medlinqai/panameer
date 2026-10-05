@@ -16,7 +16,7 @@ export function EmailedNotice({ to }: { to: string }) {
         type="button"
         onClick={() => setDismissed(true)}
         aria-label="Dismiss the email notice"
-        className="-my-1 shrink-0 rounded-full px-2 py-1 text-[18px] leading-none text-ink-2 transition-colors hover:text-ink"
+        className="-my-1 shrink-0 px-2 py-1 text-[18px] leading-none text-ink-2 transition-colors hover:text-ink"
       >
         &times;
       </button>

@@ -27,7 +27,7 @@ export function NavBar({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={
-              "rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+              "px-3 py-2 text-sm font-medium transition-colors " +
               (active
                 ? "bg-black/[0.06] text-black dark:bg-white/10 dark:text-white"
                 : "text-black/60 hover:bg-black/[0.04] hover:text-black dark:text-white/60 dark:hover:bg-white/[0.06] dark:hover:text-white")

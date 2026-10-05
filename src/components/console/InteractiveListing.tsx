@@ -240,7 +240,7 @@ export function InteractiveListing({
                 aria-pressed={size === n}
                 aria-label={`Show ${n} rows per page`}
                 className={
-                  "rounded-full border px-2.5 py-1 font-semibold transition-colors " +
+                  "border px-2.5 py-1 font-semibold transition-colors " +
                   (size === n
                     ? "border-magenta bg-magenta text-white"
                     : "border-line text-ink-2 hover:border-magenta hover:text-magenta focus-visible:border-magenta")
@@ -257,7 +257,7 @@ export function InteractiveListing({
             type="button"
             onClick={() => setPage(Math.max(0, current - 1))}
             disabled={current === 0}
-            className="rounded-full border border-line px-3 py-1 font-semibold transition-colors hover:border-magenta disabled:opacity-40 disabled:hover:border-line"
+            className="border border-line px-3 py-1 font-semibold transition-colors hover:border-magenta disabled:opacity-40 disabled:hover:border-line"
           >
             Previous
           </button>
@@ -268,7 +268,7 @@ export function InteractiveListing({
             type="button"
             onClick={() => setPage(Math.min(pages - 1, current + 1))}
             disabled={current >= pages - 1}
-            className="rounded-full border border-line px-3 py-1 font-semibold transition-colors hover:border-magenta disabled:opacity-40 disabled:hover:border-line"
+            className="border border-line px-3 py-1 font-semibold transition-colors hover:border-magenta disabled:opacity-40 disabled:hover:border-line"
           >
             Next
           </button>

@@ -65,7 +65,7 @@ export function projectValidatedTemplate({
               the Validated &#10003; badge on your profile.
             </p>
             <a href="${profileUrl}"
-               style="display:inline-block;background:#D72CD6;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:999px;">
+               style="display:inline-block;background:#D72CD6;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:0;">
               View My Profile
             </a>
           </td></tr>

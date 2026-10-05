@@ -150,7 +150,7 @@ export function BugReportForm({ applications }: { applications: SupportApplicati
         type="button"
         disabled={!ready || busy}
         onClick={submit}
-        className="mt-5 rounded-full bg-magenta px-7 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+        className="mt-5 bg-magenta px-7 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
       >
         {busy ? "Filing…" : "Submit"}
       </button>

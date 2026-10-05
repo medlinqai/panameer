@@ -52,7 +52,7 @@ function ErrorState({ reason }: { reason: "invalid" | "expired" | "revoked" | "a
       <p className="mt-2 text-ink-2">{c.body}</p>
       <Link
         href={reason === "accepted" ? "/login" : "/join"}
-        className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+        className="mt-6 inline-flex bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
       >
         {reason === "accepted" ? "Log In" : "Join Panameer"}
       </Link>
@@ -92,7 +92,7 @@ function ValidState({
 
       <Link
         href="/join"
-        className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+        className="mt-6 inline-flex bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
       >
         Join Panameer
       </Link>

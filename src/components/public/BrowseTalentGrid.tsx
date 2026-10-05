@@ -102,7 +102,7 @@ export async function BrowseTalentGrid({
         </select>
         <button
           type="submit"
-          className="rounded-[4px] border border-ink bg-ink px-[18px] py-2.5 text-[13.5px] font-semibold text-white hover:bg-ink/90"
+          className="border border-ink bg-ink px-[18px] py-2.5 text-[13.5px] font-semibold text-white hover:bg-ink/90"
         >
           Search
         </button>

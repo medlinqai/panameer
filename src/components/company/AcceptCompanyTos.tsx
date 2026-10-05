@@ -35,7 +35,7 @@ export function AcceptCompanyTos({ companyId }: { companyId: string }) {
         type="button"
         onClick={accept}
         disabled={busy}
-        className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {busy ? "Recording…" : "Accept on behalf of the company"}
       </button>

@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const BTN = "inline-flex min-h-11 items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
-const BTN_2 = "inline-flex min-h-11 items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
+const BTN = "inline-flex min-h-11 items-center bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
+const BTN_2 = "inline-flex min-h-11 items-center border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 
 export function PlanStartFrom({
   ownerKey,

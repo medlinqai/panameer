@@ -23,7 +23,7 @@ export function FollowButton({
   const [weekly, setWeekly] = useState(initiallyWeekly);
 
   const cls =
-    "inline-flex min-h-[48px] items-center rounded-[4px] px-6 text-[15px] font-bold transition-opacity disabled:opacity-50 " +
+    "inline-flex min-h-[48px] items-center px-6 text-[15px] font-bold transition-opacity disabled:opacity-50 " +
     (variant === "onInk"
       ? "bg-[#fff] text-rail hover:opacity-85"
       : "border border-ink bg-surface text-ink hover:bg-ink/5");

@@ -65,7 +65,7 @@ export function DomainFields({
                         markTouched(field.id);
                       }}
                       className={
-                        "rounded-[12px] border px-6 py-2.5 text-[15px] font-bold transition-colors " +
+                        "border px-6 py-2.5 text-[15px] font-bold transition-colors " +
                         (raw === o.v
                           ? "border-magenta bg-magenta text-white"
                           : "border-line bg-white text-ink hover:border-magenta")

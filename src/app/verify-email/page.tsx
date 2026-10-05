@@ -68,7 +68,7 @@ export default async function VerifyEmailPage({
             </p>
             <Link
               href="/join"
-              className="mt-6 inline-flex rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+              className="mt-6 inline-flex border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
             >
               Back to Onboarding
             </Link>

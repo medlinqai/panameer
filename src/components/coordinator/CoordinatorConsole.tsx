@@ -132,7 +132,7 @@ export function CoordinatorConsole() {
           <button
             onClick={invite}
             disabled={busy || !form.email.trim()}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
             {busy ? "Sending…" : "Send Invitation"}
           </button>
@@ -213,13 +213,13 @@ export function CoordinatorConsole() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => act("/api/coordinator/invite/resend", i.id)}
-                          className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-black/[0.04] dark:border-white/15 dark:hover:bg-white/[0.06]"
+                          className="border border-black/10 px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-black/[0.04] dark:border-white/15 dark:hover:bg-white/[0.06]"
                         >
                           Resend
                         </button>
                         <button
                           onClick={() => act("/api/coordinator/invite/revoke", i.id)}
-                          className="rounded-full border border-red-600/20 px-4 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-600/5"
+                          className="border border-red-600/20 px-4 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-600/5"
                         >
                           Revoke
                         </button>

@@ -193,7 +193,7 @@ export function AssessmentReview({
               type="button"
               disabled={busy !== null || belowFloor}
               onClick={() => act("drop")}
-              className="rounded-[10px] border-[1.5px] border-magenta px-4 py-2 text-[14px] font-bold text-magenta-dark disabled:opacity-40"
+              className="border-[1.5px] border-magenta px-4 py-2 text-[14px] font-bold text-magenta-dark disabled:opacity-40"
             >
               Drop {drop.size}
             </button>
@@ -203,7 +203,7 @@ export function AssessmentReview({
               type="button"
               disabled={busy !== null}
               onClick={() => act("unpublish")}
-              className="rounded-[10px] border border-line px-4 py-2 text-[14px] font-bold text-ink disabled:opacity-40"
+              className="border border-line px-4 py-2 text-[14px] font-bold text-ink disabled:opacity-40"
             >
               Unpublish
             </button>
@@ -212,7 +212,7 @@ export function AssessmentReview({
               type="button"
               disabled={busy !== null || belowFloor}
               onClick={() => act("publish")}
-              className="rounded-[10px] bg-magenta px-5 py-2 text-[14px] font-bold text-white disabled:opacity-40"
+              className="bg-magenta px-5 py-2 text-[14px] font-bold text-white disabled:opacity-40"
             >
               Publish
             </button>

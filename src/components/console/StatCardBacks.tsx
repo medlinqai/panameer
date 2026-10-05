@@ -48,7 +48,7 @@ export function TrendBack({
             key={p.key}
             href={hrefFor(p.key)}
             className={
-              "rounded-full px-3 py-1 text-[12px] font-semibold transition-colors " +
+              "px-3 py-1 text-[12px] font-semibold transition-colors " +
               (period === p.key ? "bg-ink text-white" : "text-ink-2 hover:text-ink")
             }
           >

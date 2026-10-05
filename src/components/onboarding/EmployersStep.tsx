@@ -1614,7 +1614,7 @@ export function EmployersStep({
                       onClick={() =>
                         setEmployerForm({ ...employerForm, logoUrl: l.url })
                       }
-                      className="rounded-[8px] border border-line bg-white p-1 transition-colors hover:border-magenta"
+                      className="border border-line bg-white p-1 transition-colors hover:border-magenta"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img

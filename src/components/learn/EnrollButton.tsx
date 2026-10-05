@@ -32,7 +32,7 @@ export function EnrollButton({
         <button
           type="button"
           disabled
-          className="w-full cursor-not-allowed rounded-[11px] border border-white/25 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white/55"
+          className="w-full cursor-not-allowed border border-white/25 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white/55"
         >
           Enroll Now
         </button>
@@ -98,7 +98,7 @@ export function EnrollButton({
         onClick={toggle}
         disabled={busy || blocked}
         className={
-          "rounded-full px-6 py-2.5 text-[14.5px] font-bold transition-colors disabled:opacity-50 " +
+          "px-6 py-2.5 text-[14.5px] font-bold transition-colors disabled:opacity-50 " +
           (enrolled
             ? "border-[1.5px] border-line text-ink-2 hover:border-magenta hover:text-magenta"
             : "bg-magenta text-white hover:bg-magenta-dark")

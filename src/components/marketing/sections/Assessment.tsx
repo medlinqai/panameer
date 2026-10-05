@@ -56,7 +56,7 @@ export function Assessment() {
             {}
             <Link
               href={`/login?callbackUrl=${encodeURIComponent("/#assessment")}`}
-              className="inline-block rounded-[14px] bg-magenta px-[26px] py-3.5 text-left font-display text-[15px] font-bold text-white shadow-[0_12px_28px_rgba(215,44,214,0.28)] transition-colors hover:bg-magenta-dark"
+              className="inline-block bg-magenta px-[26px] py-3.5 text-left font-display text-[15px] font-bold text-white shadow-[0_12px_28px_rgba(215,44,214,0.28)] transition-colors hover:bg-magenta-dark"
             >
               {ASSESSMENT_COPY.cta}
               <span className="mt-0.5 block font-body text-[11.5px] font-normal opacity-90">

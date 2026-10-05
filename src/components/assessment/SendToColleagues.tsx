@@ -102,7 +102,7 @@ export function SendToColleagues({
                     type="button"
                     onClick={() => send(p.key)}
                     disabled={busy === p.key}
-                    className="rounded-full border-[1.5px] border-line px-4 py-2 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                    className="border-[1.5px] border-line px-4 py-2 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
                   >
                     {busy === p.key ? "Sending…" : "Send"}
                   </button>

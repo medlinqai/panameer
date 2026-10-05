@@ -88,13 +88,13 @@ export function projectValidationTemplate({
               <tr>
                 <td style="padding-right:10px;">
                   <a href="${confirmUrl}"
-                     style="display:inline-block;background:#D72CD6;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:999px;">
+                     style="display:inline-block;background:#D72CD6;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:0;">
                     Yes, They Worked On It
                   </a>
                 </td>
                 <td>
                   <a href="${declineUrl}"
-                     style="display:inline-block;background:#ffffff;color:#4a4658;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:999px;border:1.5px solid #ece9f1;">
+                     style="display:inline-block;background:#ffffff;color:#4a4658;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:0;border:1.5px solid #ece9f1;">
                     This Isn&rsquo;t Right
                   </a>
                 </td>

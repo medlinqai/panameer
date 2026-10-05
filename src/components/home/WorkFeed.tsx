@@ -80,7 +80,7 @@ export function WorkFeed({
         </div>
         <button
           type="submit"
-          className="shrink-0 rounded-full bg-magenta px-5 py-2 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="shrink-0 bg-magenta px-5 py-2 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
         >
           Search
         </button>
@@ -89,7 +89,7 @@ export function WorkFeed({
           type="button"
           disabled
           title="Filters open when buyers start posting work"
-          className="shrink-0 rounded-full border-[1.5px] border-line px-5 py-2 text-[14px] font-bold text-ink-2 opacity-50"
+          className="shrink-0 border-[1.5px] border-line px-5 py-2 text-[14px] font-bold text-ink-2 opacity-50"
         >
           Filters
         </button>

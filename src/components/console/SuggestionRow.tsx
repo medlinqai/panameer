@@ -56,7 +56,7 @@ export function SuggestionRow({
         type="button"
         disabled={busy || !kind}
         onClick={() => void run({ action: "spec.promote", id, kind })}
-        className="rounded-full border-[1.5px] border-line px-3 py-1 text-[12.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta-ink disabled:cursor-not-allowed disabled:opacity-40"
+        className="border-[1.5px] border-line px-3 py-1 text-[12.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta-ink disabled:cursor-not-allowed disabled:opacity-40"
         title={kind ? undefined : "Pick a kind first — a suggestion has none until you give it one."}
       >
         Promote
@@ -68,7 +68,7 @@ export function SuggestionRow({
           type="button"
           disabled={busy}
           onClick={() => void run({ action: "spec.reject", id })}
-          className="rounded-full border-[1.5px] border-line px-3 py-1 text-[12.5px] font-bold text-ink-2 transition-colors hover:border-ink hover:text-ink disabled:opacity-40"
+          className="border-[1.5px] border-line px-3 py-1 text-[12.5px] font-bold text-ink-2 transition-colors hover:border-ink hover:text-ink disabled:opacity-40"
         >
           Reject
         </button>

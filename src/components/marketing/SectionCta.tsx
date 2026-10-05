@@ -35,7 +35,7 @@ export function SectionCta({
       <Link
         href={cta.href}
         className={
-          "inline-flex items-center gap-2 rounded-full px-[26px] py-3 font-display text-[15px] font-bold transition-colors " +
+          "inline-flex items-center gap-2 px-[26px] py-3 font-display text-[15px] font-bold transition-colors " +
           /*
             The assessment is the primary action everywhere it appears, so it is
             always the filled button and "meet our experts" is always the

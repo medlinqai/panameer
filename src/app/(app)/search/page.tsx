@@ -106,7 +106,7 @@ export default async function Page({
         <div className="sm:col-span-3">
           <button
             type="submit"
-            className="min-h-11 rounded-full bg-magenta px-6 text-[14.5px] font-bold text-white hover:opacity-90"
+            className="min-h-11 bg-magenta px-6 text-[14.5px] font-bold text-white hover:opacity-90"
           >
             Search
           </button>

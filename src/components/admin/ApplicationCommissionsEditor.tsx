@@ -99,7 +99,7 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
                   type="button"
                   disabled={busy}
                   onClick={() => save(d.kind, null, pct[d.kind] ?? "")}
-                  className="min-h-11 rounded-full border-[1.5px] border-line px-5 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
+                  className="min-h-11 border-[1.5px] border-line px-5 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
                 >
                   Save
                 </button>

@@ -103,7 +103,7 @@ export function CleanEdit({
  * same box. ⚠ Tailwind's arbitrary `shadow-[inset_0_0_0_1px_…]` is the direct translation.
  */
 export const CLEAN_CHIP =
-  "rounded-full px-3 py-1 text-[12px] font-medium text-magenta-dark shadow-[inset_0_0_0_1px_var(--color-magenta)]";
+  "px-3 py-1 text-[12px] font-medium text-magenta-dark shadow-[inset_0_0_0_1px_var(--color-magenta)]";
 
 /**
  * ⚠⚠ THE CLASS IS EXPORTED SEPARATELY BECAUSE `SkillsBody` TAKES A CLASS, NOT A COMPONENT.

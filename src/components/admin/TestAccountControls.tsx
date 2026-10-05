@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const BTN =
-  "inline-flex min-h-11 items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
+  "inline-flex min-h-11 items-center bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
 const BTN_2 =
-  "inline-flex min-h-11 items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
+  "inline-flex min-h-11 items-center border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
 
 type Removable = { id: string; email: string; createdAt: string }[];
 
@@ -55,7 +55,7 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
             key={f}
             href={f === "all" ? "?" : `?test=${f}`}
             className={
-              "min-h-11 inline-flex items-center rounded-[4px] px-2.5 font-semibold " +
+              "min-h-11 inline-flex items-center px-2.5 font-semibold " +
               (filter === f ? "bg-ink text-surface" : "text-ink-2 underline hover:text-ink")
             }
           >

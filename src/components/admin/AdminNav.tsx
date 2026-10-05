@@ -30,7 +30,7 @@ export function AdminNav() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={
-              "flex items-center justify-between whitespace-nowrap rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-colors " +
+              "flex items-center justify-between whitespace-nowrap px-4 py-2.5 text-[15px] font-semibold transition-colors " +
               (active
                 ? "bg-magenta/[0.08] text-magenta"
                 : "text-ink-2 hover:bg-black/[0.03] hover:text-ink")

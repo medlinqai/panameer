@@ -113,7 +113,7 @@ export function ProposeRate({
             key={value}
             type="button"
             onClick={() => setBasis(value)}
-            className={`rounded-full border px-4 py-1.5 text-[13.5px] font-bold transition-colors ${
+            className={`border px-4 py-1.5 text-[13.5px] font-bold transition-colors ${
               basis === value
                 ? "border-magenta bg-magenta/[0.06] text-magenta"
                 : "border-line text-ink-2 hover:border-ink/20"

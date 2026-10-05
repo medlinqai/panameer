@@ -252,7 +252,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
             <button
               type="button"
               onClick={() => setLimit((n) => n + PAGE)}
-              className="w-full rounded-brand border border-line bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:border-magenta hover:text-magenta"
+              className="w-full border border-line bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink hover:border-magenta hover:text-magenta"
             >
               Show More ({more} more)
             </button>

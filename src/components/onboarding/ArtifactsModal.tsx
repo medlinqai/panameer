@@ -116,7 +116,7 @@ export function ArtifactsModal({
       type="button"
       onClick={() => setMode(m)}
       className={
-        "rounded-full px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
+        "px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
         (mode === m
           ? "bg-ink text-surface"
           : "border border-line text-ink-2 hover:border-magenta hover:text-magenta")

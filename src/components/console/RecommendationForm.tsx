@@ -123,7 +123,7 @@ export function RecommendationForm({
           onClick={async () => {
             if (await post({ body, title, company })) setDone("submitted");
           }}
-          className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Sending…" : "Send Recommendation"}
         </button>

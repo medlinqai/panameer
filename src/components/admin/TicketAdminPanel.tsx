@@ -81,7 +81,7 @@ export function TicketAdminPanel({
         type="button"
         disabled={busy || !reply.trim()}
         onClick={send}
-        className="mt-2 rounded-full bg-magenta px-6 py-2 font-bold text-white hover:bg-magenta-dark disabled:opacity-40"
+        className="mt-2 bg-magenta px-6 py-2 font-bold text-white hover:bg-magenta-dark disabled:opacity-40"
       >
         {busy ? "Working…" : "Send Reply"}
       </button>
@@ -124,7 +124,7 @@ export function TicketAdminPanel({
           type="button"
           disabled={busy}
           onClick={() => patch(assigned ? { unassign: true } : { assignToSelf: true })}
-          className="rounded-full border-[1.5px] border-line bg-white px-5 py-2 text-[14px] font-bold hover:border-magenta hover:text-magenta disabled:opacity-40"
+          className="border-[1.5px] border-line bg-white px-5 py-2 text-[14px] font-bold hover:border-magenta hover:text-magenta disabled:opacity-40"
         >
           {assigned ? "Unassign" : "Assign to Me"}
         </button>
@@ -143,7 +143,7 @@ export function TicketAdminPanel({
           type="button"
           disabled={busy}
           onClick={() => patch({ resolution: res })}
-          className="mt-2 rounded-full border-[1.5px] border-line bg-white px-5 py-2 text-[14px] font-bold hover:border-magenta hover:text-magenta disabled:opacity-40"
+          className="mt-2 border-[1.5px] border-line bg-white px-5 py-2 text-[14px] font-bold hover:border-magenta hover:text-magenta disabled:opacity-40"
         >
           Save Resolution
         </button>

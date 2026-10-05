@@ -16,7 +16,7 @@ export function AudienceStrip({ page }: { page: PublicPage }) {
                 href={p.href}
                 aria-current={on ? "page" : undefined}
                 className={
-                  "rounded-full px-4 py-1.5 text-center text-[13.5px] font-bold transition-colors " +
+                  "px-4 py-1.5 text-center text-[13.5px] font-bold transition-colors " +
                   (on
                     ? "bg-magenta text-white"
                     : "text-ink-2 hover:text-magenta")

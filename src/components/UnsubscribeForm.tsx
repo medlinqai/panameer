@@ -81,7 +81,7 @@ export function UnsubscribeForm({
         type="button"
         onClick={() => go(category ? "category" : "all")}
         disabled={busy}
-        className="min-h-[44px] rounded-full bg-magenta px-6 text-[15px] font-bold text-white transition-colors hover:bg-magenta/90 disabled:bg-ink-2/20"
+        className="min-h-[44px] bg-magenta px-6 text-[15px] font-bold text-white transition-colors hover:bg-magenta/90 disabled:bg-ink-2/20"
       >
         {busy ? "Working…" : categoryLabel ? `Stop ${categoryLabel} emails` : "Unsubscribe"}
       </button>

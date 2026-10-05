@@ -356,7 +356,7 @@ export function CreateWorkRequest({
                     type="button"
                     onClick={() => void runImport()}
                     disabled={importText.trim().length < 40}
-                    className="rounded-full bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+                    className="bg-magenta px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
                   >
                     Draft My Work Request
                   </button>
@@ -981,7 +981,7 @@ function JdDoor({
       type="button"
       onClick={onClick}
       className={
-        "w-full rounded-brand border-2 p-5 text-left transition-all hover:border-magenta hover:shadow-brand " +
+        "w-full border-2 p-5 text-left transition-all hover:border-magenta hover:shadow-brand " +
         (primary ? "border-magenta bg-magenta/[0.04] shadow-brand" : "border-line")
       }
     >

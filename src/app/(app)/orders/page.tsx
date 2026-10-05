@@ -105,7 +105,7 @@ export default async function Page() {
           {sells && (
             <Link
               href="/payments"
-              className="inline-flex min-h-11 items-center rounded-brand border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
+              className="inline-flex min-h-11 items-center border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
             >
               Get Paid
             </Link>
@@ -113,7 +113,7 @@ export default async function Page() {
           {buys && (
             <Link
               href="/pay"
-              className="inline-flex min-h-11 items-center rounded-brand border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
+              className="inline-flex min-h-11 items-center border border-line bg-white px-4 text-[14.5px] font-semibold hover:border-magenta hover:text-magenta"
             >
               Pay
             </Link>

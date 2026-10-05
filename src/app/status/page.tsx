@@ -453,9 +453,9 @@ export default async function StatusPage({
 }
 
 const SQUARE_DARK =
-  "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-surface transition-opacity hover:opacity-85";
+  "inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface transition-opacity hover:opacity-85";
 const SQUARE_LIGHT =
-  "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5";
+  "inline-flex min-h-[44px] items-center border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5";
 
 /**
  * ⚠ FOUR SEGMENTS. `filled` is how many are ink; the one after them is magenta

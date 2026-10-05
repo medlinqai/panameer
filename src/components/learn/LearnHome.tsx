@@ -269,7 +269,7 @@ export function LearnHome({
                     type="button"
                     onClick={() => setTab("all")}
                     className={
-                      "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
+                      "px-5 py-2 text-[14px] font-bold transition-colors " +
                       (tab === "all"
                         ? "bg-white text-learn-card"
                         : "text-white/80 hover:text-white")
@@ -281,7 +281,7 @@ export function LearnHome({
                     type="button"
                     onClick={() => setTab("mine")}
                     className={
-                      "rounded-full px-5 py-2 text-[14px] font-bold transition-colors " +
+                      "px-5 py-2 text-[14px] font-bold transition-colors " +
                       (tab === "mine"
                         ? "bg-white text-learn-card"
                         : "text-white/80 hover:text-white")
@@ -314,7 +314,7 @@ export function LearnHome({
                 */}
                   <Link
                     href="/learn/courses"
-                    className="rounded-full px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
+                    className="px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
                   >
                     All Courses
                   </Link>
@@ -353,7 +353,7 @@ export function LearnHome({
                           onClick={() => setGroup(active ? null : c.group)}
                           aria-pressed={active}
                           className={
-                            "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
+                            "border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
                             (active
                               ? "border-white bg-white text-learn-card"
                               : "border-white/35 text-white/90 hover:border-white")
@@ -371,7 +371,7 @@ export function LearnHome({
                       <button
                         type="button"
                         onClick={() => setGroup(null)}
-                        className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-white/70 underline underline-offset-4 hover:text-white"
+                        className="px-3 py-1.5 text-[13.5px] font-semibold text-white/70 underline underline-offset-4 hover:text-white"
                       >
                         Clear
                       </button>
@@ -416,7 +416,7 @@ export function LearnHome({
                     onClick={() => setGroup(active ? null : c.group)}
                     aria-pressed={active}
                     className={
-                      "rounded-full border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
+                      "border px-4 py-1.5 text-[13.5px] font-semibold transition-colors " +
                       (active
                         ? "border-magenta bg-magenta text-white"
                         : "border-line text-ink-2 hover:border-ink/25")
@@ -430,7 +430,7 @@ export function LearnHome({
                 <button
                   type="button"
                   onClick={() => setGroup(null)}
-                  className="rounded-full px-3 py-1.5 text-[13.5px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink"
+                  className="px-3 py-1.5 text-[13.5px] font-semibold text-ink-2 underline underline-offset-4 hover:text-ink"
                 >
                   Clear
                 </button>
@@ -454,7 +454,7 @@ export function LearnHome({
           <button
             type="button"
             onClick={() => setTab("all")}
-            className="mt-4 rounded-full bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="mt-4 bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Browse All Paths
           </button>

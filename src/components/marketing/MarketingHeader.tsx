@@ -277,7 +277,7 @@ function MarketingHeaderInner({ signedIn }: { signedIn: boolean }) {
                       promoted item, and contradicted the weight-vs-colour rule
                       recorded above.
                     */
-                    "rounded-lg px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
+                    "px-2 py-2 hover:bg-bg-soft hover:text-magenta " +
                     (on ? "font-bold text-magenta" : "")
                   }
                 >

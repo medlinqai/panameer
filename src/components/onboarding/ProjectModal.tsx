@@ -413,7 +413,7 @@ export function ProjectModal({
                     key={d}
                     type="button"
                     onClick={() => onChange({ clientDomain: d })}
-                    className="rounded-full border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+                    className="border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
                   >
                     {d}
                   </button>
@@ -468,7 +468,7 @@ export function ProjectModal({
                       type="button"
                       title={l.label}
                       onClick={() => onChange({ logoUrl: l.url })}
-                      className="rounded-[8px] border border-line bg-white p-1 transition-colors hover:border-magenta"
+                      className="border border-line bg-white p-1 transition-colors hover:border-magenta"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={l.url} alt={l.label} className="h-10 w-10 object-contain" />

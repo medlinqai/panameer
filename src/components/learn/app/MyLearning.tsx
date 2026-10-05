@@ -323,7 +323,7 @@ export function MyLearning({ data }: { data: MyLearningData }) {
               </p>
               <Link
                 href="/learn/paths"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-magenta px-5 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                className="mt-4 inline-flex items-center gap-2 bg-magenta px-5 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
                 {/*
                   ⚠⚠ `Browse the Catalog` — SCOTT OVERRODE HIMSELF (`P1-J3-E042`, 2026-08-30).
@@ -711,7 +711,7 @@ function ContinueBlock({ card }: { card: NonNullable<MyLearningData["continueCar
           )}
           <Link
             href={`/learn/${card.pathSlug}/${card.lesson.id}`}
-            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-[9px] bg-magenta px-4 py-2.5 text-[12px] font-semibold text-white transition-colors hover:bg-magenta-dark"
+            className="ml-auto inline-flex shrink-0 items-center gap-2 bg-magenta px-4 py-2.5 text-[12px] font-semibold text-white transition-colors hover:bg-magenta-dark"
           >
             {card.lesson.playable ? (
               <>
@@ -844,7 +844,7 @@ function PathProgressCard({ path, index }: { path: DashPath; index: number }) {
         {path.nextLesson && (
           <Link
             href={`/learn/${path.slug}/${path.nextLesson.id}`}
-            className="mt-2.5 flex items-center gap-2 rounded-[9px] bg-bg-soft px-3 py-2.5 text-[11.5px] text-ink-2 hover:bg-line/60"
+            className="mt-2.5 flex items-center gap-2 bg-bg-soft px-3 py-2.5 text-[11.5px] text-ink-2 hover:bg-line/60"
           >
             {path.nextLesson.playable ? (
               <Play className="h-3.5 w-3.5 shrink-0 fill-magenta text-magenta" aria-hidden />
@@ -933,7 +933,7 @@ function StarterPathCard({ s }: { s: StarterCard }) {
       </p>
       <Link
         href={`/learn/${s.slug}`}
-        className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-5 py-2.5 text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
+        className="mt-4 inline-flex w-fit items-center gap-2 border border-magenta px-5 py-2.5 text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
       >
         {/* ⚠ Title Case (rule 11) — and the label names what the button IS, so
             it changes with the member's state rather than lying about it. */}

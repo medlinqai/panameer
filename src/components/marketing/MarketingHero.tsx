@@ -83,7 +83,7 @@ export function MarketingHero({
           />
           <button
             type="submit"
-            className="shrink-0 whitespace-nowrap rounded-full bg-magenta px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-magenta-dark sm:px-6"
+            className="shrink-0 whitespace-nowrap bg-magenta px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-magenta-dark sm:px-6"
           >
             {copy.searchCta}
           </button>
@@ -95,7 +95,7 @@ export function MarketingHero({
               key={chip}
               href={`/explore?mode=${mode}&q=${encodeURIComponent(chip)}`}
               className={
-                "rounded-full px-4 py-2 text-[13.5px] transition-colors " +
+                "px-4 py-2 text-[13.5px] transition-colors " +
                 // The first chip is the accented one in both mockups.
                 (i === 0
                   ? "border border-magenta bg-magenta/[0.16] text-white"

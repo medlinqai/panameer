@@ -82,7 +82,7 @@ export function LessonPlayer({
             onClick={() => setPip(false)}
             aria-label={`Hide ${instructor.name}`}
             title="Hide"
-            className="absolute right-1 top-1 rounded-full bg-black/55 px-1.5 text-[13px] leading-5 text-white hover:bg-black/80"
+            className="absolute right-1 top-1 bg-black/55 px-1.5 text-[13px] leading-5 text-white hover:bg-black/80"
           >
             ×
           </button>
@@ -93,7 +93,7 @@ export function LessonPlayer({
         <button
           type="button"
           onClick={() => setPip(true)}
-          className="absolute bottom-3 right-3 rounded-full bg-black/55 px-3 py-1.5 text-[12.5px] font-bold text-white hover:bg-black/80"
+          className="absolute bottom-3 right-3 bg-black/55 px-3 py-1.5 text-[12.5px] font-bold text-white hover:bg-black/80"
         >
           Show instructor
         </button>

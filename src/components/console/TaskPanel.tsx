@@ -65,7 +65,7 @@ export function TaskPanel() {
       key={key}
       href={href}
       onClick={() => setActive(null)}
-      className="flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-left text-[14px] font-medium transition-colors hover:bg-magenta/[0.07]"
+      className="flex min-h-11 items-center gap-3 px-3 text-left text-[14px] font-medium transition-colors hover:bg-magenta/[0.07]"
     >
       <Icon className="h-[17px] w-[17px] shrink-0 text-magenta" strokeWidth={1.9} />
       <span className="truncate">{label}</span>
@@ -99,7 +99,7 @@ export function TaskPanel() {
               type="button"
               onClick={() => setActive(null)}
               aria-label="Collapse panel"
-              className="rounded-md p-1 text-ink-2/60 transition-colors hover:bg-black/[0.04] hover:text-ink"
+              className="p-1 text-ink-2/60 transition-colors hover:bg-black/[0.04] hover:text-ink"
             >
               <X className="h-4 w-4" />
             </button>
@@ -138,7 +138,7 @@ export function TaskPanel() {
                         onClick={() => setActive(null)}
                         /* ⚠⚠ 44px ROWS (Scott, D2). `py-2.5` measured 40px. */
                         className={
-                          "flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-left text-[14px] transition-colors hover:bg-magenta/[0.07] " +
+                          "flex min-h-11 items-center gap-3 px-3 text-left text-[14px] transition-colors hover:bg-magenta/[0.07] " +
                           (pathname === item.href || pathname.startsWith(`${item.href}/`)
                             ? "bg-black/[0.05] font-semibold text-ink"
                             : "font-medium text-ink")
@@ -194,7 +194,7 @@ export function TaskPanel() {
                  measured ~38px, under the touch standard the rest of the shell
                  already meets. */
               className={
-                "flex min-h-11 w-[54px] flex-col items-center justify-center gap-0.5 rounded-[10px] px-1 py-1.5 transition-colors " +
+                "flex min-h-11 w-[54px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition-colors " +
                 (on
                   ? "bg-magenta text-white"
                   : "text-ink-2 hover:bg-magenta/[0.08] hover:text-magenta")

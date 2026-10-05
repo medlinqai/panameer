@@ -318,7 +318,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
             !classification
           }
           onClick={save}
-          className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Saving…" : tax ? "Update Tax Details" : "Save Tax Details"}
         </button>
@@ -446,7 +446,7 @@ function MethodsSection({
           type="button"
           disabled={gated || busy || label.trim().length === 0}
           onClick={add}
-          className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Adding…" : "Add Withdrawal Method"}
         </button>

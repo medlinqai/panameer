@@ -77,7 +77,7 @@ export function logoBlock(logoUrl?: string, width: number = EMAIL_LOGO_WIDTH): s
 /** The single magenta call to action. At most one per email. */
 export function primaryButton(href: string, label: string): string {
   return `<a href="${href}"
-     style="display:inline-block;background:${EMAIL_COLORS.magenta};color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:999px;">
+     style="display:inline-block;background:${EMAIL_COLORS.magenta};color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:0;">
     ${escapeHtml(label)}
   </a>`;
 }
@@ -85,7 +85,7 @@ export function primaryButton(href: string, label: string): string {
 /** The secondary action. Outline, never filled. */
 export function ghostButton(href: string, label: string): string {
   return `<a href="${href}"
-     style="display:inline-block;background:#ffffff;color:${EMAIL_COLORS.ink};text-decoration:none;font-weight:700;font-size:15px;padding:12px 25px;border-radius:999px;border:1.5px solid ${EMAIL_COLORS.line};">
+     style="display:inline-block;background:#ffffff;color:${EMAIL_COLORS.ink};text-decoration:none;font-weight:700;font-size:15px;padding:12px 25px;border-radius:0;border:1.5px solid ${EMAIL_COLORS.line};">
     ${escapeHtml(label)}
   </a>`;
 }
@@ -104,7 +104,7 @@ export function chips(items: string[]): string {
   return items
     .map(
       (s) =>
-        `<span style="display:inline-block;border:1px solid ${EMAIL_COLORS.line};border-radius:999px;padding:4px 12px;margin:0 6px 6px 0;font-size:13px;color:${EMAIL_COLORS.body};">${escapeHtml(
+        `<span style="display:inline-block;border:1px solid ${EMAIL_COLORS.line};border-radius:0;padding:4px 12px;margin:0 6px 6px 0;font-size:13px;color:${EMAIL_COLORS.body};">${escapeHtml(
           s
         )}</span>`
     )

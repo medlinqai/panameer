@@ -67,7 +67,7 @@ export function recommendationRequestTemplate({
            A marketplace for Oracle Cloud and enterprise-application talent, training and services.
            If you deliver this kind of work too, you can put up your own profile in a few minutes.
          </p>
-         <a href="${marketingUrl}/join" style="display:inline-block;padding:10px 20px;border-radius:999px;border:1.5px solid #D72CD6;color:#D72CD6;font-weight:700;font-size:14px;text-decoration:none;">
+         <a href="${marketingUrl}/join" style="display:inline-block;padding:10px 20px;border-radius:0;border:1.5px solid #D72CD6;color:#D72CD6;font-weight:700;font-size:14px;text-decoration:none;">
            Create Your Own Profile
          </a>
        </td></tr>`
@@ -88,7 +88,7 @@ export function recommendationRequestTemplate({
       </div>
     </td></tr>
     <tr><td style="padding:24px 32px 28px;">
-      <a href="${respondUrl}" style="display:inline-block;padding:12px 26px;border-radius:999px;background:#D72CD6;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;">Write A Recommendation</a>
+      <a href="${respondUrl}" style="display:inline-block;padding:12px 26px;border-radius:0;background:#D72CD6;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;">Write A Recommendation</a>
       <a href="${declineUrl}" style="display:inline-block;margin-left:14px;padding:12px 8px;color:#4A4658;font-weight:600;font-size:14px;text-decoration:none;">No Thanks</a>
     </td></tr>
     ${inviteBlock}

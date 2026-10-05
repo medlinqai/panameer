@@ -26,7 +26,7 @@ export function CompanyStepInline({ from }: { from?: string | null }) {
         </Notice>
         <Link
           href={destination}
-          className="inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          className="inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
           Continue
         </Link>
@@ -55,7 +55,7 @@ export function CompanyStepInline({ from }: { from?: string | null }) {
           type="button"
           disabled={!valid || busy}
           onClick={() => submit.current?.()}
-          className="inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           {busy ? "Saving…" : "Continue"}
         </button>

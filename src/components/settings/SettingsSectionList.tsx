@@ -22,7 +22,7 @@ export function SettingsSectionList({ isProvider }: { isProvider: boolean }) {
             href={item.href}
             aria-current={current ? "page" : undefined}
             className={
-              "flex min-h-[44px] items-center rounded-[10px] px-3 text-[13.5px] font-semibold transition-colors " +
+              "flex min-h-[44px] items-center px-3 text-[13.5px] font-semibold transition-colors " +
               (current
                 ? "bg-magenta/10 text-magenta"
                 : "text-ink-2 hover:bg-ink/5 hover:text-ink")

@@ -108,7 +108,7 @@ export const MARKETING_PROVIDER_DOOR = {
   href: "/work",
 };
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full px-[22px] py-3 " +
+  "inline-flex items-center justify-center gap-2 px-[22px] py-3 " +
   "text-[15px] font-bold transition-colors cursor-pointer";
 
 export function Btn({

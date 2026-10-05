@@ -65,7 +65,7 @@ export function CompanyRequests({
                 type="button"
                 disabled={busy === r.id}
                 onClick={() => decide(r.id, "REJECTED")}
-                className="rounded-lg border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:border-black/35 disabled:opacity-50 dark:border-white/20 dark:hover:border-white/40"
+                className="border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:border-black/35 disabled:opacity-50 dark:border-white/20 dark:hover:border-white/40"
               >
                 Reject
               </button>
@@ -73,7 +73,7 @@ export function CompanyRequests({
                 type="button"
                 disabled={busy === r.id}
                 onClick={() => decide(r.id, "APPROVED")}
-                className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {busy === r.id ? "Saving…" : "Approve"}
               </button>

@@ -225,7 +225,7 @@ export function AccountMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label="Account menu"
-          className="flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left transition-colors hover:bg-white/10"
+          className="flex w-full items-center gap-2.5 px-2 py-2 text-left transition-colors hover:bg-white/10"
         >
           <Avatar
             firstName={first}
@@ -398,7 +398,7 @@ export function AccountMenu({
               role="menuitem"
               data-menu-item
               onClick={close}
-              className="mt-3 block w-full rounded-[10px] border border-magenta px-3 py-2 text-center text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta/[0.06]"
+              className="mt-3 block w-full border border-magenta px-3 py-2 text-center text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta/[0.06]"
             >
               {/* ⚠ `View Profile` → `My Profile` (`P2-ALL-E687` WS-A, ruling 89f),
                   consistent with `My Company` and `My Tickets` beside it. The href

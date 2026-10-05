@@ -20,7 +20,7 @@ import type { ReactNode } from "react";
  */
 
 const SQUARE =
-  "inline-flex items-center justify-center rounded-[4px] px-[18px] py-2.5 " +
+  "inline-flex items-center justify-center px-[18px] py-2.5 " +
   "text-[13.5px] font-semibold transition-colors";
 
 /** Solid ink. One per view — the thing we want pressed. */

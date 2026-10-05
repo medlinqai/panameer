@@ -46,7 +46,7 @@ function ResetForm() {
         </p>
         <a
           href="/login"
-          className="block w-full rounded-full bg-magenta px-4 py-3 text-center font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="block w-full bg-magenta px-4 py-3 text-center font-bold text-white transition-colors hover:bg-magenta-dark"
         >
           Go to Sign In
         </a>
@@ -108,7 +108,7 @@ function ResetForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-full bg-magenta px-4 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+        className="w-full bg-magenta px-4 py-3 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
       >
         {loading ? "Saving…" : "Save New Password"}
       </button>

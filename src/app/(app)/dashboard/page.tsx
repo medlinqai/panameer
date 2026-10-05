@@ -184,7 +184,7 @@ export default async function DashboardPage({
             </p>
             <Link
               href="/find-work/new"
-              className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Create Work Request
             </Link>
@@ -236,7 +236,7 @@ export default async function DashboardPage({
           </p>
           <Link
             href="/join/requester/steps"
-            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Pick Up Where I Left Off
           </Link>
@@ -250,7 +250,7 @@ export default async function DashboardPage({
           </p>
           <Link
             href="/find-work/new"
-            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Create Work Request
           </Link>
@@ -264,7 +264,7 @@ export default async function DashboardPage({
           </p>
           <Link
             href="/join"
-            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Build My Profile
           </Link>

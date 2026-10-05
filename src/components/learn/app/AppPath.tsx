@@ -188,7 +188,7 @@ export function AppPath({
               <>
                 <Link
                   href={`/learn/${path.slug}/test`}
-                  className="flex w-full items-center justify-center gap-2 rounded-[11px] bg-magenta px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className="flex w-full items-center justify-center gap-2 bg-magenta px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
                   <GraduationCap className="h-4 w-4" aria-hidden />
                   Take the path test
@@ -215,7 +215,7 @@ export function AppPath({
               <>
                 <Link
                   href={`/learn/${path.slug}/${path.nextLesson.id}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-[11px] bg-magenta px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                  className="flex w-full items-center justify-center gap-2 bg-magenta px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
                   {/* ⚠ NO PLAY GLYPH ON AN UNPLAYABLE LESSON, and not "Resume". */}
                   {path.nextLesson.playable ? (
@@ -586,7 +586,7 @@ export function AppPath({
                     {ins.profileSlug && (
                       <Link
                         href={`/providers/${ins.profileSlug}`}
-                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-[7px] border border-line px-2 py-1 text-[10.5px] font-semibold text-ink-2 hover:border-magenta hover:text-magenta"
+                        className="mt-1.5 inline-flex items-center gap-1.5 border border-line px-2 py-1 text-[10.5px] font-semibold text-ink-2 hover:border-magenta hover:text-magenta"
                       >
                         View profile
                       </Link>
@@ -710,7 +710,7 @@ function PathForumPanel({
       {forum.canOpen ? (
         <Link
           href={`/community/groups/path-${pathSlug}`}
-          className="mt-3.5 inline-flex w-fit items-center gap-2 rounded-full border border-magenta px-4 py-2 text-[13px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
+          className="mt-3.5 inline-flex w-fit items-center gap-2 border border-magenta px-4 py-2 text-[13px] font-bold text-magenta transition-colors hover:bg-magenta hover:text-white"
         >
           Open the Group
         </Link>

@@ -611,7 +611,7 @@ export function CompanyStep({
             onClick={() => setMode(m)}
             aria-pressed={mode === m}
             className={
-              "rounded-full px-4 py-1.5 transition-colors " +
+              "px-4 py-1.5 transition-colors " +
               (mode === m
                 ? "bg-ink text-surface"
                 : "text-ink-2 hover:text-ink")

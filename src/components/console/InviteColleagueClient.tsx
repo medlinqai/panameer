@@ -280,7 +280,7 @@ export function InviteColleagueClient({
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="rounded-full border-[1.5px] border-line px-6 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+              className="border-[1.5px] border-line px-6 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
             >
               Back
             </button>
