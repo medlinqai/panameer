@@ -1,4 +1,4 @@
-import { clientNameVisibility } from "@/lib/plus";
+import { buyerDisplay } from "@/lib/buyer-display";
 import {
   missingIdentity,
   WORK_REQUEST_BAR,
@@ -34,6 +34,8 @@ export type BuyerIdentity = {
   companyName: string | null;
   /** For the company link; null whenever the name is withheld, so the link can't reveal it. */
   companyId: string | null;
+  /** What to print for the company (from buyerDisplay): name, code name or "Confidential buyer". */
+  companyLabel: string | null;
   /** The alias shown in its place. Null falls back to a neutral phrase in the UI. */
   companyCodeName: string | null;
   companyConfidential: boolean;
@@ -156,14 +158,12 @@ export function buildBuyerIdentity(input: {
   const { person, viewer } = input;
   const company = person.company;
 
-  const { clientName: visibleName } = clientNameVisibility({
-    visibility: input.companyVisibility,
-    isOwner: viewer.isOwner,
-    isAdmin: viewer.isAdmin,
-    isPlus: viewer.isPlus,
-    clientName: company?.name ?? null,
-  });
-  const hidden = Boolean(company?.name) && visibleName === null;
+  const shown = buyerDisplay(
+    { visibility: input.companyVisibility, codeName: input.companyCodeName, company: company ?? null },
+    { signedIn: true, ...viewer }
+  );
+  const visibleName = shown.name;
+  const hidden = shown.confidential;
 
   const fullName = `${person.first_name} ${person.last_name}`.trim();
   return {
@@ -173,12 +173,13 @@ export function buildBuyerIdentity(input: {
     personTitle: person.title?.trim() || null,
     personPhotoUrl: person.photo_url,
     companyName: visibleName,
-    companyId: hidden || !visibleName ? null : (company?.id ?? null),
+    companyId: shown.companyId,
+    companyLabel: shown.label,
     companyCodeName: input.companyCodeName?.trim() || null,
     companyConfidential: hidden,
     companyCountry: company?.country ?? null,
     companyVertical: company?.vertical ?? null,
-    companyLogoUrl: hidden ? null : (company?.logo_url ?? null),
+    companyLogoUrl: shown.logoUrl,
     standing: input.standing,
     verification: verificationLines({
       emailVerifiedAt: person.user?.email_verified ?? null,

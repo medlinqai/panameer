@@ -4,6 +4,8 @@ import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { Btn } from "@/components/marketing/brand";
 import { searchWorkTeaser, type TeaserWork } from "@/lib/explore";
+import { getSessionViewer } from "@/lib/session";
+import { CompanyLink } from "@/components/company/CompanyLink";
 import { BrowseTalentGrid } from "@/components/public/BrowseTalentGrid";
 
 export const metadata: Metadata = {
@@ -48,7 +50,8 @@ export default async function ExplorePage({
     );
   }
 
-  const { cards, total } = await searchWorkTeaser(query);
+  const viewer = await getSessionViewer();
+  const { cards, total } = await searchWorkTeaser(query, undefined, viewer);
 
   // Back to exactly this search after signing in — the gate must not cost
   // anyone the query they typed.
@@ -181,7 +184,11 @@ function WorkCard({ w, loginHref }: { w: TeaserWork; loginHref: string }) {
       <p className="line-clamp-2 text-[16px] font-bold leading-snug text-ink">
         {w.title}
       </p>
-      {w.company && <p className="mt-1.5 text-[13px] text-ink-2">{w.company}</p>}
+      {w.company && (
+        <p className="mt-1.5 text-[13px] text-ink-2" data-explore-buyer>
+          <CompanyLink id={w.companyId} name={w.company} />
+        </p>
+      )}
       {w.location && <p className="text-[13px] text-ink-2">{w.location}</p>}
 
       {w.skills.length > 0 && (

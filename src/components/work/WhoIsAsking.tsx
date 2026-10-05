@@ -10,8 +10,6 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
     personLastName,
     personTitle,
     personPhotoUrl,
-    companyName,
-    companyCodeName,
     companyConfidential,
     companyId,
     companyCountry,
@@ -21,9 +19,7 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
     verification,
   } = identity;
 
-  const companyLabel = companyConfidential
-    ? (companyCodeName ?? "Company withheld")
-    : companyName;
+  const { companyLabel } = identity;
 
   const companyMeta = [companyVertical, companyCountry].filter(Boolean).join(" · ");
 
