@@ -117,3 +117,39 @@ for (const v of [{ w: 1440, h: 800, scheme: "light" as const }, { w: 390, h: 750
       await dropFixture(f);
     }
   });
+
+// Requester steps + the other pages in scope: slim bar, title in the first screen.
+for (const scheme of ["light", "dark"] as const)
+  test(`requester + other pages (${scheme})`, async ({ browser }) => {
+    const f = await createFixture();
+    await db().requesterProfile.create({ data: { person_id: f.buyer.personId } });
+    try {
+      for (const s of sizes) {
+        const anon = await browser.newContext({ colorScheme: scheme, viewport: s });
+        const a = await anon.newPage();
+        for (const path of ["/join", "/join/buyer", "/join/coming-soon", "/verify-email", "/invite/accept"]) {
+          await a.goto(path, { waitUntil: "domcontentloaded" });
+          await expect(a.locator("[data-onboarding-bar]"), path).toBeVisible({ timeout: 30_000 });
+          await expect(a.locator("[data-marketing-footer], footer.marketing-footer")).toHaveCount(0);
+          const h1 = await a.locator("h1").first().boundingBox();
+          expect(h1 && h1.y + h1.height <= s.height, `${path} title in first screen`).toBeTruthy();
+          expect(await a.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(s.width);
+          await a.screenshot({ path: `e2e-r1/.artifacts/page${path.replace(/\//g, "_")}-${s.width}-${scheme}.png` });
+        }
+        await anon.close();
+        const ctx = await browser.newContext({ colorScheme: scheme, viewport: s });
+        const page = await ctx.newPage();
+        await signIn(page, f.buyer.email);
+        await page.goto("/join/requester/steps", { waitUntil: "domcontentloaded" });
+        await expect(page.locator("[data-step-eyebrow]")).toContainText("Step 1 of 2 · Requester Details", { timeout: 30_000 });
+        await expect(page.locator("[data-onboarding-bar]")).toBeVisible();
+        await page.screenshot({ path: `e2e-r1/.artifacts/requester-steps-${s.width}-${scheme}.png` });
+        await page.goto("/join/requester/start", { waitUntil: "domcontentloaded" });
+        await expect(page.locator("[data-onboarding-bar]")).toBeVisible({ timeout: 30_000 });
+        await ctx.close();
+      }
+    } finally {
+      await db().requesterProfile.deleteMany({ where: { person_id: f.buyer.personId } });
+      await dropFixture(f);
+    }
+  });

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { consumeEmailVerification, issueSignInToken } from "@/lib/verification";
-import { Logo } from "@/components/Logo";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { VerifiedSignIn } from "@/components/onboarding/VerifiedSignIn";
 
 export default async function VerifyEmailPage({
@@ -34,16 +34,14 @@ export default async function VerifyEmailPage({
     : "/join/provider/start";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-soft px-6 text-center font-body text-ink">
-      <Logo className="h-9 w-auto" priority />
-
-      <div className="mt-10 w-full max-w-md rounded-brand border border-line bg-white p-8 shadow-brand">
+    <OnboardingShell compact>
+      <div data-onboarding-page className="mx-auto w-full max-w-md border border-line bg-surface p-8 text-center">
         {ok ? (
           <>
             <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-magenta text-2xl font-black text-white">
               ✓
             </div>
-            <h1 className="text-2xl tracking-[-0.5px]">Email Verified</h1>
+            <h1 className="text-[23px] font-extrabold sm:text-[30px]">Email Verified</h1>
             <p className="mt-2 text-ink-2">
               {person?.requesterProfile
                 ? "You're all set. Let's get you set up to post work."
@@ -58,7 +56,7 @@ export default async function VerifyEmailPage({
             <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-line text-2xl font-black text-ink-2">
               !
             </div>
-            <h1 className="text-2xl tracking-[-0.5px]">
+            <h1 className="text-[23px] font-extrabold sm:text-[30px]">
               {reason === "expired" ? "Link Expired" : "Invalid Link"}
             </h1>
             <p className="mt-2 text-ink-2">
@@ -75,6 +73,6 @@ export default async function VerifyEmailPage({
           </>
         )}
       </div>
-    </div>
+    </OnboardingShell>
   );
 }

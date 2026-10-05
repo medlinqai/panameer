@@ -42,7 +42,11 @@ export default function JoinBuyerPage() {
   const [tier, setTier] = useState<"BASIC" | "BUSINESS_PLUS" | null>(null);
 
   const idx = SCREENS.indexOf(screen);
-  const progress = (idx + 1) / (SCREENS.length + 1); // +1 so "done" isn't 100% mid-flow
+  const BUYER_LABELS = { account: "Account", verify: "Verify email", tier: "Plan" } as const;
+  const frame = {
+    rail: { steps: SCREENS.map((k) => ({ key: k, label: BUYER_LABELS[k] })), current: idx, review: false },
+    eyebrow: `Step ${idx + 1} of ${SCREENS.length} · ${BUYER_LABELS[screen]}`,
+  };
 
   // Land on the right step for a returning/refreshing user.
   useEffect(() => {
@@ -152,8 +156,8 @@ export default function JoinBuyerPage() {
   if (screen === "account") {
     return (
       <WizardShell
-        progress={progress}
-          title="Sign Up to Buy Services and/or Service Products"
+        {...frame}
+        title="Sign Up to Buy Services and/or Service Products"
         subtitle="Create your account to post work and hire experts."
         canBack={false}
         busy={busy}
@@ -225,7 +229,7 @@ export default function JoinBuyerPage() {
             </Field>
           </div>
 
-          <label className="flex items-start gap-3 rounded-brand border border-line p-4">
+          <label className="flex items-start gap-3 border border-line p-4">
             <input
               type="checkbox"
               checked={acct.tos}
@@ -258,7 +262,7 @@ export default function JoinBuyerPage() {
   if (screen === "verify") {
     return (
       <WizardShell
-        progress={progress}
+        {...frame}
         title="Verify Your Email"
         canBack={false}
         hideFooter
@@ -277,7 +281,7 @@ export default function JoinBuyerPage() {
   // tier
   return (
     <WizardShell
-      progress={progress}
+      {...frame}
       title="Choose Your Plan"
       subtitle="Start free, or try Business Plus. No payment required now."
       canBack={false}
@@ -288,7 +292,7 @@ export default function JoinBuyerPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div
           className={
-            "rounded-[18px] border-2 p-6 " +
+            "border p-6 " +
             (tier === "BUSINESS_PLUS" ? "border-magenta shadow-brand" : "border-line")
           }
         >
@@ -315,7 +319,7 @@ export default function JoinBuyerPage() {
           </button>
         </div>
 
-        <div className="rounded-[18px] border-2 border-line p-6">
+        <div className="border border-line p-6">
           <h3 className="text-[20px] font-bold">Basic</h3>
           <p className="mt-1 text-[14.5px] text-ink-2">
             Everything you need to post work and hire your first experts — free.
