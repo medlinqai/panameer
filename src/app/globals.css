@@ -674,10 +674,10 @@ body {
   letter-spacing: 0;
 }
 
-/* R-E013: Connect pages sit on a white page, as Profile does. */
-main:has(.pm-white-page) {
+/* R-E013 + usage v4: white pages (incl. every Account page) sit on the surface token, gutters included. */
+main:has(:is(.pm-white-page, .account-surface)) {
   background: var(--color-surface);
 }
-.bg-canvas:has(.pm-white-page) {
+.bg-canvas:has(:is(.pm-white-page, .account-surface)) {
   background: var(--color-surface);
 }
