@@ -15,7 +15,7 @@ export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[];
           {([["month", "This Month"], ["all", "All Time"]] as const).map(([k, label]) => (
             <Link
               key={k}
-              href={k === "all" ? "/usage?range=all" : "/usage"}
+              href={k === "all" ? "/usage" : "/usage?range=month"}
               scroll={false}
               aria-current={range === k ? "true" : undefined}
               className={`px-3 py-[5px] text-[12px] font-semibold ${range === k ? "bg-ink text-surface" : "bg-surface text-ink"}`}
@@ -54,7 +54,9 @@ export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[];
                         )}
                         <br />
                         <em className="text-[11.5px] font-medium not-italic text-ink-3">
-                          {counted ? `Goal: ${m.money ? money(m.goal) : m.goal}` : (m.value as { uncounted: string }).uncounted}
+                          {counted
+                            ? `${m.now ? "Now" : range === "month" ? "Added this month" : "All time"} · Goal: ${m.money ? money(m.goal) : m.goal}`
+                            : (m.value as { uncounted: string }).uncounted}
                         </em>
                       </span>
                       <b className={counted ? "text-[19px] leading-none" : "text-[15px] leading-none text-ink-3"}>
