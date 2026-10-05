@@ -143,7 +143,7 @@ export function BrandingEditor({
                   onClick={() => setHue(c)}
                   aria-pressed={hue.toLowerCase() === c.toLowerCase()}
                   className={
-                    "flex items-center gap-2.5 rounded-full border-[1.5px] px-3 py-1.5 text-[13.5px] font-semibold transition-colors " +
+                    "flex items-center gap-2.5 border-[1.5px] px-3 py-1.5 text-[13.5px] font-semibold transition-colors " +
                     (hue.toLowerCase() === c.toLowerCase()
                       ? "border-magenta text-magenta"
                       : "border-line text-ink-2 hover:border-magenta/40")
@@ -207,7 +207,7 @@ export function BrandingEditor({
                 }}
                 aria-pressed={on}
                 className={
-                  "rounded-brand border-2 p-3 text-left transition-colors " +
+                  "border-2 p-3 text-left transition-colors " +
                   (on ? "border-magenta" : "border-line hover:border-magenta/40")
                 }
               >

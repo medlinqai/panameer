@@ -144,7 +144,7 @@ export function ReportDashboard({
             </p>
             <Link
               href="/assess/scope"
-              className="mt-4 inline-flex rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="mt-4 inline-flex bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
             >
               Book a 20-min call ›
             </Link>
@@ -164,7 +164,7 @@ export function ReportDashboard({
             </p>
             <Link
               href={`/assess/r/${model.shareToken}/deck`}
-              className="mt-4 inline-flex rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+              className="mt-4 inline-flex border-[1.5px] border-line px-5 py-2.5 text-[14.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
             >
               Open the deck ›
             </Link>

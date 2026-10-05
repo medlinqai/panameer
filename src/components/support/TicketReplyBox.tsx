@@ -43,7 +43,7 @@ export function TicketReplyBox({ ticketId }: { ticketId: string }) {
         type="button"
         disabled={busy || !body.trim()}
         onClick={send}
-        className="mt-2 rounded-full bg-magenta px-6 py-2 font-bold text-white hover:bg-magenta-dark disabled:opacity-40"
+        className="mt-2 bg-magenta px-6 py-2 font-bold text-white hover:bg-magenta-dark disabled:opacity-40"
       >
         {busy ? "Sending…" : "Send"}
       </button>

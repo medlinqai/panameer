@@ -105,7 +105,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                 onClick={() =>
                   send({ action: "accept", offerId: o.id }, o.id, "Offer accepted. It is on the buyer's cart at the offered amount.")
                 }
-                className="min-h-11 rounded-full bg-magenta px-5 text-[14.5px] font-bold text-white hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 bg-magenta px-5 text-[14.5px] font-bold text-white hover:opacity-90 disabled:opacity-50"
               >
                 Accept Offer
               </button>
@@ -113,7 +113,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                 type="button"
                 disabled={busy === o.id}
                 onClick={() => setDenying(denying === o.id ? null : o.id)}
-                className="min-h-11 rounded-full border-[1.5px] border-line px-5 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
+                className="min-h-11 border-[1.5px] border-line px-5 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
               >
                 Decline
               </button>
@@ -170,7 +170,7 @@ export function OffersInbox({ offers }: { offers: OpenOffer[] }) {
                       "Offer declined. The buyer can buy at list, offer again above your minimum, or walk away."
                     );
                   }}
-                  className="mt-3 min-h-11 rounded-full bg-ink px-5 text-[14.5px] font-bold text-white hover:opacity-90 disabled:opacity-50"
+                  className="mt-3 min-h-11 bg-ink px-5 text-[14.5px] font-bold text-white hover:opacity-90 disabled:opacity-50"
                 >
                   Send Decline
                 </button>

@@ -24,7 +24,7 @@ export default function Page() {
               type="button"
               disabled
               title="Messaging isn't built yet"
-              className="cursor-not-allowed rounded-full bg-magenta/30 px-4 py-1.5 text-[13px] font-bold text-white"
+              className="cursor-not-allowed bg-magenta/30 px-4 py-1.5 text-[13px] font-bold text-white"
             >
               + New thread
             </button>

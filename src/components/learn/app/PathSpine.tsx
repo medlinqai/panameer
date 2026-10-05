@@ -104,7 +104,7 @@ export function PathSpine({ path }: { path: AppPathView }) {
                             key={l.id}
                             href={`/learn/${path.slug}/${l.id}`}
                             className={
-                              "flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 " +
+                              "flex items-center gap-2.5 px-2.5 py-2 " +
                               (l.current
                                 ? "border border-magenta/30 bg-magenta/10"
                                 : "border border-transparent hover:bg-bg-soft")
@@ -252,7 +252,7 @@ function CourseHead({
         {body}
         <Link
           href={`/learn/${pathSlug}/course/${course.slug}`}
-          className="shrink-0 rounded-[8px] bg-bg-soft px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 hover:text-magenta"
+          className="shrink-0 bg-bg-soft px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 hover:text-magenta"
         >
           Open
         </Link>

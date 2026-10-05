@@ -53,7 +53,7 @@ export function LessonActions({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/learn/${pathSlug}/course/${courseSlug}`}
-          className="rounded-full border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+          className="border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
         >
           Back
         </Link>
@@ -76,7 +76,7 @@ export function LessonActions({
               the loudest thing next to it is the anti-pattern the button
               standard exists to stop.
             */
-            className="cursor-not-allowed rounded-full border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold text-ink-2 opacity-60"
+            className="cursor-not-allowed border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold text-ink-2 opacity-60"
           >
             Message {instructorName ? "the Instructor" : "the Instructor"}
           </button>
@@ -91,14 +91,14 @@ export function LessonActions({
         {next ? (
           <Link
             href={`/learn/${pathSlug}/${next.id}`}
-            className="rounded-full bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Next Lesson
           </Link>
         ) : (
           <Link
             href={`/learn/${pathSlug}`}
-            className="rounded-full bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Finish Path
           </Link>
@@ -116,7 +116,7 @@ export function LessonActions({
           onClick={() => mark(!done)}
           disabled={busy}
           className={
-            "rounded-full px-5 py-2 text-[14px] font-bold transition-colors disabled:opacity-50 " +
+            "px-5 py-2 text-[14px] font-bold transition-colors disabled:opacity-50 " +
             (done
               ? "border-[1.5px] border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/5"
               : "border-[1.5px] border-line text-ink hover:border-magenta hover:text-magenta")

@@ -91,7 +91,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             type="button"
             aria-disabled="true"
             className={
-              "cursor-default rounded-[12px] border-2 border-magenta bg-magenta " +
+              "cursor-default border-2 border-magenta bg-magenta " +
               "px-[26px] py-3.5 font-display text-[15px] font-bold text-white" + LABEL_WHITE
             }
           >
@@ -103,7 +103,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
             className={
               (isHero
                 ? HERO_BUTTON
-                : "rounded-[12px] border-2 border-magenta bg-magenta px-[26px] py-3.5 " +
+                : "border-2 border-magenta bg-magenta px-[26px] py-3.5 " +
                   "font-display text-[15px] font-bold text-white transition-colors " +
                   "hover:border-magenta-dark hover:bg-magenta-dark") + LABEL_WHITE
             }
@@ -117,7 +117,7 @@ function Section({ s, i }: { s: HomeSection; i: number }) {
           className={
             (isHero
               ? HERO_BUTTON_OUTLINE + LABEL_WHITE
-              : "rounded-[12px] border-2 px-[26px] py-3.5 font-display text-[15px] " +
+              : "border-2 px-[26px] py-3.5 font-display text-[15px] " +
                 "font-bold transition-colors " +
                 (dark
                   ? "border-white/60 text-white hover:border-white hover:bg-white hover:text-[#272334]!" + LABEL_WHITE

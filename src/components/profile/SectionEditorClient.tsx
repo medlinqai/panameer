@@ -357,7 +357,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
                     patch({ roleTypeIds: next, roleTypeId: next[0] ?? null });
                   }}
                   className={
-                    "rounded-[12px] border px-4 py-3 text-left text-[14px] font-semibold transition-colors " +
+                    "border px-4 py-3 text-left text-[14px] font-semibold transition-colors " +
                     (on ? "border-magenta bg-magenta/[0.06] text-magenta-dark" : "border-line hover:border-magenta/40")
                   }
                 >
@@ -390,7 +390,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
                 aria-pressed={on}
                 onClick={() => patch({ workMethod: o.value })}
                 className={
-                  "rounded-[12px] border px-4 py-3 text-left transition-colors " +
+                  "border px-4 py-3 text-left transition-colors " +
                   (on ? "border-magenta bg-magenta/[0.06]" : "border-line hover:border-magenta/40")
                 }
               >
@@ -540,14 +540,14 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           type="button"
           onClick={save}
           disabled={busy || !canSave}
-          className="rounded-full bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:cursor-not-allowed disabled:opacity-50"
         >
           {busy ? "Saving…" : section.step ? "Save" : "Done"}
         </button>
         <button
           type="button"
           onClick={back}
-          className="rounded-full border border-line px-6 py-2.5 text-[14px] font-semibold text-ink-2 transition-colors hover:text-ink"
+          className="border border-line px-6 py-2.5 text-[14px] font-semibold text-ink-2 transition-colors hover:text-ink"
         >
           Cancel
         </button>

@@ -42,7 +42,7 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
           />
           <button
             type="submit"
-            className="shrink-0 rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="shrink-0 bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Search <span aria-hidden>→</span>
           </button>
@@ -55,7 +55,7 @@ export function FindWorkHero({ chips }: { chips: string[] }) {
                 key={chip}
                 type="button"
                 onClick={() => go(chip)}
-                className="rounded-[10px] border border-white/45 px-4 py-2 text-[14.5px] font-semibold text-white transition-colors hover:border-white hover:bg-white/10"
+                className="border border-white/45 px-4 py-2 text-[14.5px] font-semibold text-white transition-colors hover:border-white hover:bg-white/10"
               >
                 {chip} <span aria-hidden>→</span>
               </button>

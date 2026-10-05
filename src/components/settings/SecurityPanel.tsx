@@ -109,7 +109,7 @@ function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
               setNext("");
             }
           }}
-          className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Changing…" : "Change Password"}
         </button>
@@ -208,7 +208,7 @@ function TotpCard({ enabled }: { enabled: boolean }) {
                 const ok = await call({ action: "totp-disable", code });
                 if (ok) router.refresh();
               }}
-              className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14.5px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+              className="border-[1.5px] border-line px-5 py-2.5 text-[14.5px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
             >
               Turn Off
             </button>
@@ -247,7 +247,7 @@ function TotpCard({ enabled }: { enabled: boolean }) {
                   router.refresh();
                 }
               }}
-              className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+              className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
             >
               {busy ? "Checking…" : "Turn On Two-Step"}
             </button>
@@ -263,7 +263,7 @@ function TotpCard({ enabled }: { enabled: boolean }) {
               const result = await call({ action: "totp-begin" });
               if (result?.secret) setSetup(result);
             }}
-            className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
             {busy ? "Setting up…" : "Set Up Authenticator App"}
           </button>
@@ -336,7 +336,7 @@ function QuestionCard({ current }: { current: string | null }) {
               router.refresh();
             }
           }}
-          className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Saving…" : current ? "Update Question" : "Set Question"}
         </button>

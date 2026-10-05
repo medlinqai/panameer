@@ -200,7 +200,7 @@ export function PathStages({ path }: { path: AppPathView }) {
               <Link
                 href={s.href}
                 aria-current={state === "current" ? "step" : undefined}
-                className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-[9px] px-2.5 transition-colors hover:bg-ink/5"
+                className="flex min-h-[44px] shrink-0 items-center gap-2 px-2.5 transition-colors hover:bg-ink/5"
               >
                 {inner}
               </Link>

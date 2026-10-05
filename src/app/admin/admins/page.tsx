@@ -16,7 +16,7 @@ export default async function Page() {
   const input =
     "w-full rounded-[8px] border border-line px-3 py-2 text-[14px] outline-none focus:border-magenta disabled:bg-black/[0.02]";
   const btnOff =
-    "cursor-not-allowed rounded-[8px] bg-magenta/30 px-5 py-2 text-[14px] font-bold text-white";
+    "cursor-not-allowed bg-magenta/30 px-5 py-2 text-[14px] font-bold text-white";
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">

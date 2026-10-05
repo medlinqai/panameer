@@ -50,7 +50,7 @@ export function Composer({ toUserId, maxLength }: { toUserId: string; maxLength:
           type="button"
           onClick={send}
           disabled={busy || body.trim().length === 0}
-          className="min-h-[44px] rounded-full bg-magenta px-4 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta/90 disabled:bg-ink-2/15 disabled:text-ink-2"
+          className="min-h-[44px] bg-magenta px-4 text-[13.5px] font-bold text-white transition-colors hover:bg-magenta/90 disabled:bg-ink-2/15 disabled:text-ink-2"
         >
           {busy ? "Sending…" : "Send"}
         </button>

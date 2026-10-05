@@ -126,7 +126,7 @@ export function AppBand() {
         href={isAdmin ? ADMIN_HOME.href : "/dashboard"}
         aria-label="Panameer home"
         aria-current={isActive(HOME_BAND_HREF) ? "page" : undefined}
-        className="pm-band-brand block rounded-[6px] px-2 py-1 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="pm-band-brand block px-2 py-1 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

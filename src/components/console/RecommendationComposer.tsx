@@ -129,7 +129,7 @@ export function RecommendationComposer({
       <button
         type="submit"
         disabled={busy}
-        className="mt-4 rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+        className="mt-4 bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
       >
         {busy ? "Sending…" : "Send Request"}
       </button>

@@ -137,7 +137,7 @@ export function TestRunner({
                 type="button"
                 onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
                 className={
-                  "flex w-full items-start gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left text-[15px] transition-colors " +
+                  "flex w-full items-start gap-3 border-[1.5px] px-4 py-3 text-left text-[15px] transition-colors " +
                   (chosen
                     ? "border-magenta bg-magenta/[0.06] font-semibold"
                     : "border-line hover:border-magenta/50")
@@ -163,7 +163,7 @@ export function TestRunner({
           type="button"
           disabled={at === 0}
           onClick={() => setAt((n) => n - 1)}
-          className="rounded-full border-[1.5px] border-line px-6 py-2.5 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
+          className="border-[1.5px] border-line px-6 py-2.5 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-40"
         >
           Previous
         </button>
@@ -197,7 +197,7 @@ export function TestRunner({
                 ? "Answer every question before submitting."
                 : undefined
             }
-            className="rounded-full bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+            className="bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
           >
             {busy ? "Marking…" : "Submit Test"}
           </button>
@@ -205,7 +205,7 @@ export function TestRunner({
           <button
             type="button"
             onClick={() => setAt((n) => n + 1)}
-            className="rounded-full bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-6 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Next
           </button>
@@ -332,7 +332,7 @@ function ResultPanel({
       <div className="mt-8 flex flex-wrap gap-3 border-t border-line pt-6">
         <Link
           href={`/learn/${pathSlug}`}
-          className="rounded-full border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+          className="border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
         >
           Back to {pathTitle}
         </Link>
@@ -340,7 +340,7 @@ function ResultPanel({
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Try Again
           </button>

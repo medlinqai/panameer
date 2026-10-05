@@ -81,7 +81,7 @@ export default async function TrendPage({
       key={key}
       href={`/admin/buyers-sellers/trend?status=${key}&period=${period}`}
       className={
-        "rounded-full border-[1.5px] px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
+        "border-[1.5px] px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
         (active
           ? "border-magenta bg-magenta text-white"
           : "border-line text-ink hover:border-magenta")
@@ -116,7 +116,7 @@ export default async function TrendPage({
             key={p}
             href={`/admin/buyers-sellers/trend?status=${wantsAll ? "all" : status}&period=${p}`}
             className={
-              "rounded-full border px-3 py-1 text-[12.5px] font-semibold transition-colors " +
+              "border px-3 py-1 text-[12.5px] font-semibold transition-colors " +
               (p === period
                 ? "border-magenta text-magenta"
                 : "border-line text-ink-2 hover:border-magenta")
@@ -266,7 +266,7 @@ async function JobTrend({ tile }: { tile: (typeof JOB_TILES)[number] }) {
             key={t.key}
             href={`/admin/buyers-sellers/trend?job=${t.key}`}
             className={
-              "rounded-full border-[1.5px] px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
+              "border-[1.5px] px-4 py-1.5 text-[13.5px] font-bold transition-colors " +
               (t.key === tile.key
                 ? "border-magenta bg-magenta text-white"
                 : "border-line text-ink hover:border-magenta")

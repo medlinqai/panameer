@@ -145,7 +145,7 @@ export function EmployeeProfileForm({
           type="button"
           onClick={() => file.current?.click()}
           disabled={busy}
-          className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+          className="border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
         >
           {photoUrl ? "Replace photo" : "Add a photo"}
         </button>
@@ -153,7 +153,7 @@ export function EmployeeProfileForm({
           type="button"
           onClick={save}
           disabled={busy}
-          className="ml-auto rounded-full bg-magenta px-7 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+          className="ml-auto bg-magenta px-7 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
         >
           {busy ? "Saving…" : "Save changes"}
         </button>

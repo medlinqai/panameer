@@ -219,7 +219,7 @@ export function ServiceProductsManager({
           <button
             type="button"
             onClick={openAdd}
-            className="mt-4 rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="mt-4 bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             + Create a Service Product
           </button>
@@ -302,14 +302,14 @@ export function ServiceProductsManager({
                       disabled={
                         busy || (cannotPublish && p.status !== "PUBLISHED")
                       }
-                      className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                      className="border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
                     >
                       {p.status === "PUBLISHED" ? "Unpublish" : "Publish"}
                     </button>
                     <button
                       type="button"
                       onClick={() => openEdit(p)}
-                      className="rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                      className="border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
                     >
                       Edit
                     </button>
@@ -333,7 +333,7 @@ export function ServiceProductsManager({
           <button
             type="button"
             onClick={openAdd}
-            className="mt-5 rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+            className="mt-5 border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
           >
             + Create a Service Product
           </button>
@@ -421,7 +421,7 @@ export function ServiceProductsManager({
                           : domainsForProcess.map((d) => d.id),
                       })
                     }
-                    className="rounded-[9px] border border-magenta px-3 py-1.5 text-[13px] font-bold text-magenta-dark"
+                    className="border border-magenta px-3 py-1.5 text-[13px] font-bold text-magenta-dark"
                   >
                     {allSelected ? "Clear all" : "Select all in this process"}
                   </button>
@@ -691,7 +691,7 @@ export function ServiceProductsManager({
           <button
             type="button"
             onClick={() => setModal(null)}
-            className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
+            className="border-[1.5px] border-line px-5 py-2.5 font-bold text-ink hover:border-[#d9d4e2]"
           >
             Cancel
           </button>
@@ -699,7 +699,7 @@ export function ServiceProductsManager({
             type="button"
             onClick={save}
             disabled={busy || !form.title.trim() || milestoneTotal !== 100}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save ServiceProduct"}
           </button>

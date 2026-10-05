@@ -100,7 +100,7 @@ export function Button({
     <button
       {...rest}
       className={
-        "rounded-full px-5 py-2.5 text-[14px] font-bold transition-colors disabled:opacity-50 " +
+        "px-5 py-2.5 text-[14px] font-bold transition-colors disabled:opacity-50 " +
         cls +
         " " +
         (rest.className ?? "")

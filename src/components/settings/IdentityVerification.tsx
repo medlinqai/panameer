@@ -121,7 +121,7 @@ export function IdentityVerificationPanel({
                 setBusy(false);
                 if (!err) router.refresh();
               }}
-              className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+              className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
             >
               {busy ? "Submitting…" : "Start Verification"}
             </button>

@@ -44,7 +44,7 @@ export function ClosingCta({
         <div className="flex flex-wrap justify-center gap-3.5">
           <Link
             href={href.primary}
-            className="rounded-full bg-magenta px-[30px] py-[15px] text-[16px] font-semibold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-[30px] py-[15px] text-[16px] font-semibold text-white transition-colors hover:bg-magenta-dark"
           >
             {copy.primary}
           </Link>
@@ -54,7 +54,7 @@ export function ClosingCta({
           */}
           <Link
             href={href.secondary}
-            className="rounded-full border-[1.5px] border-white/40 px-[30px] py-[15px] text-[16px] font-semibold text-white transition-colors hover:border-white hover:bg-white/10"
+            className="border-[1.5px] border-white/40 px-[30px] py-[15px] text-[16px] font-semibold text-white transition-colors hover:border-white hover:bg-white/10"
           >
             {copy.secondary}
           </Link>

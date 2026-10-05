@@ -128,7 +128,7 @@ function Row({ href, title, summary }: { href: string; title: string; summary: s
     <li>
       <Link
         href={href}
-        className="group -mx-3 block rounded-brand px-3 py-2.5 transition-colors hover:bg-bg-soft"
+        className="group -mx-3 block px-3 py-2.5 transition-colors hover:bg-bg-soft"
       >
         <span className="text-[15.5px] font-bold group-hover:text-magenta">
           {title}

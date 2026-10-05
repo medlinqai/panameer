@@ -1331,7 +1331,7 @@ export function ConnectProfile({
                                 <Link
                                   key={a.href}
                                   href={a.href}
-                                  className="-mx-2 flex items-center justify-between gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-black/[0.03]"
+                                  className="-mx-2 flex items-center justify-between gap-2 px-2 py-2 transition-colors hover:bg-black/[0.03]"
                                 >
                                   <span className="min-w-0">
                                     <span className="block truncate text-[13.5px] font-semibold">

@@ -245,7 +245,7 @@ export function ReviewStep({
                 type="button"
                 onClick={() => setConfirm(false)}
                 disabled={busy}
-                className="rounded-full border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
+                className="border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
               >
                 Keep editing
               </button>
@@ -253,7 +253,7 @@ export function ReviewStep({
                 type="button"
                 onClick={onPost}
                 disabled={busy}
-                className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+                className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
               >
                 {busy ? "Posting…" : "Post Work Request"}
               </button>

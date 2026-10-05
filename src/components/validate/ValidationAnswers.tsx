@@ -91,7 +91,7 @@ export function ValidationAnswers({
             type="button"
             onClick={save}
             disabled={busy}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save"}
           </button>
@@ -147,7 +147,7 @@ export function ValidationAnswers({
                 onClick={() => setAgain(again === v ? "" : v)}
                 aria-pressed={again === v}
                 className={
-                  "rounded-full border-[1.5px] px-5 py-2 text-[14px] font-bold transition-colors " +
+                  "border-[1.5px] px-5 py-2 text-[14px] font-bold transition-colors " +
                   (again === v ? "border-magenta bg-magenta text-white" : "border-line text-ink hover:border-magenta")
                 }
               >
@@ -190,7 +190,7 @@ export function ValidationAnswers({
             type="button"
             onClick={save}
             disabled={busy}
-            className="rounded-full bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
+            className="bg-magenta px-6 py-2.5 font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save"}
           </button>

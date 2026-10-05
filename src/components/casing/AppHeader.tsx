@@ -73,7 +73,7 @@ export function AppHeader() {
       */}
       <Link
         href={SEARCH_NAV.href}
-        className="mx-auto hidden h-9 min-w-[170px] max-w-[420px] flex-1 items-center gap-2 rounded-full border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
+        className="mx-auto hidden h-9 min-w-[170px] max-w-[420px] flex-1 items-center gap-2 border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
       >
         <SearchIcon />
         <span className="truncate">{SEARCH_NAV.label}</span>

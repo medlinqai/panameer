@@ -65,7 +65,7 @@ export function PublishControls({
         href={`/learn/${slug}${published ? "" : "?preview=1"}`}
         target="_blank"
         rel="noreferrer"
-        className="rounded-full border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+        className="border-[1.5px] border-line px-5 py-2.5 text-[14px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
       >
         {published ? "View Public Page ↗" : "Preview as Public ↗"}
       </a>

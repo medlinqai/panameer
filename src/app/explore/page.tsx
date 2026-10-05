@@ -201,7 +201,7 @@ function WorkCard({ w, loginHref }: { w: TeaserWork; loginHref: string }) {
         {w.budget && <p className="text-[15px] font-bold text-ink">{w.budget}</p>}
         <Link
           href={loginHref}
-          className="mt-2.5 block rounded-full border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+          className="mt-2.5 block border-[1.5px] border-line px-4 py-2 text-center text-[13.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
         >
           View request
         </Link>

@@ -123,7 +123,7 @@ export default async function LearningPathPage({
             {firstPlayable && (
               <Link
                 href={`/learn/${path.slug}/${firstPlayable.id}`}
-                className="rounded-full border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
+                className="border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
               >
                 {path.completed > 0 ? "Continue" : "Start"} Watching
               </Link>
@@ -212,7 +212,7 @@ export default async function LearningPathPage({
               </p>
               <Link
                 href={`/learn/${path.slug}/test`}
-                className="mt-3 inline-block rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+                className="mt-3 inline-block bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
               >
                 Take the Test
               </Link>
@@ -277,7 +277,7 @@ export default async function LearningPathPage({
               </div>
               <Link
                 href={`/learn/${path.slug}/course/${course.slug}`}
-                className="shrink-0 rounded-full border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+                className="shrink-0 border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
               >
                 Open Course
               </Link>

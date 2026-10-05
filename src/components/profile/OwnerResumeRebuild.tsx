@@ -89,7 +89,7 @@ export function OwnerResumeRebuild() {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="rounded-full border border-ink px-3.5 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:bg-black/[0.04]"
+            className="border border-ink px-3.5 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:bg-black/[0.04]"
           >
             Upload a New Résumé
           </button>

@@ -122,7 +122,7 @@ export function SocialSignIn({
                   brighten under the pointer. Concatenating it unconditionally
                   would have left the one interactive-looking behaviour behind.
                 */
-                "flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[13.5px] font-bold whitespace-nowrap transition-colors disabled:cursor-not-allowed " +
+                "flex items-center justify-center gap-1.5 border px-2.5 py-2 text-[13.5px] font-bold whitespace-nowrap transition-colors disabled:cursor-not-allowed " +
                 b.className +
                 (live ? " " + b.hoverClassName : "")
               }

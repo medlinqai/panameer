@@ -60,7 +60,7 @@ export function WantThisButton({
         disabled={busy}
         aria-pressed={wanted}
         className={
-          "inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition-colors " +
+          "inline-flex w-fit items-center gap-2 px-4 py-2 text-[13px] font-bold transition-colors " +
           (wanted
             ? "bg-magenta text-white hover:bg-magenta-dark"
             : "border border-magenta text-magenta hover:bg-magenta hover:text-white")

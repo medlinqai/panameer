@@ -108,7 +108,7 @@ export function TaxRateEditor({
             type="button"
             disabled={busy}
             onClick={() => save(null, globalPct, globalNote)}
-            className="rounded-full bg-magenta px-5 py-3 text-[14.5px] font-bold text-white disabled:opacity-50"
+            className="bg-magenta px-5 py-3 text-[14.5px] font-bold text-white disabled:opacity-50"
           >
             {saved === "global" ? "Saved ✓" : "Save"}
           </button>
@@ -178,7 +178,7 @@ export function TaxRateEditor({
               setNewState("");
               setNewPct("");
             }}
-            className="rounded-full border-[1.5px] border-line px-5 py-3 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
+            className="border-[1.5px] border-line px-5 py-3 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
           >
             Add override
           </button>

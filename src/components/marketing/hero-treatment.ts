@@ -76,7 +76,7 @@ export const HERO_SCRIM =
  * brand-token, and NOT this brief's to fix. No colour token was touched.
  */
 export const HERO_BUTTON =
-  "mt-8 inline-block rounded-[12px] bg-magenta px-7 py-4 font-display " +
+  "mt-8 inline-block bg-magenta px-7 py-4 font-display " +
   "text-[16px] font-bold text-white transition-colors hover:bg-magenta-dark";
 
 /**
@@ -138,7 +138,7 @@ export const HERO_BUTTON =
  */
 // prettier-ignore
 export const HERO_BUTTON_OUTLINE =
-  "mt-8 inline-block rounded-[12px] border border-white/35 bg-[rgba(13,18,48,0.40)] px-7 py-4 font-display text-[16px] font-bold text-white transition-colors hover:bg-[rgba(13,18,48,0.60)]";
+  "mt-8 inline-block border border-white/35 bg-[rgba(13,18,48,0.40)] px-7 py-4 font-display text-[16px] font-bold text-white transition-colors hover:bg-[rgba(13,18,48,0.60)]";
 
 /**
  * ⚠⚠ THE BRIDGE LINE. IDENTICAL ON EVERY PUBLIC PAGE, WORD FOR WORD.

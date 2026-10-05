@@ -66,7 +66,7 @@ export function DevBanner() {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[12.5px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta"
+          className="shrink-0 whitespace-nowrap px-2 py-1 text-[12.5px] font-semibold text-ink-2 underline underline-offset-4 transition-colors hover:text-magenta"
         >
           Dismiss
         </button>

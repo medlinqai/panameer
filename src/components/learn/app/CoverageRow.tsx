@@ -120,7 +120,7 @@ function Arrow({ dir, onClick }: { dir: "left" | "right"; onClick: () => void })
       onClick={onClick}
       aria-label={dir === "left" ? "Scroll to earlier paths" : "Scroll to more paths"}
       className={
-        "absolute top-0 grid h-[78px] w-7 place-items-center rounded-[9px] border border-line bg-white/95 text-ink-2 shadow-[0_6px_18px_-8px_rgba(23,30,62,0.5)] backdrop-blur-sm transition-colors hover:text-magenta " +
+        "absolute top-0 grid h-[78px] w-7 place-items-center border border-line bg-white/95 text-ink-2 shadow-[0_6px_18px_-8px_rgba(23,30,62,0.5)] backdrop-blur-sm transition-colors hover:text-magenta " +
         (dir === "left" ? "left-0" : "right-0")
       }
     >

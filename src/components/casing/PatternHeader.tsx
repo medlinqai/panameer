@@ -180,8 +180,8 @@ export function PatternHeader({
                   href={primary.href}
                   className={
                     squareActions
-                      ? "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-white transition-colors hover:bg-ink-hover"
-                      : "inline-flex min-h-[44px] items-center rounded-full bg-magenta px-5 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
+                      ? "inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-white transition-colors hover:bg-ink-hover"
+                      : "inline-flex min-h-[44px] items-center bg-magenta px-5 text-[14px] font-bold text-white transition-opacity hover:opacity-90"
                   }
                 >
                   {primary.label}
@@ -198,8 +198,8 @@ export function PatternHeader({
                   href={secondary.href}
                   className={
                     squareActions
-                      ? "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
-                      : "inline-flex min-h-[44px] items-center rounded-full border-[1.5px] border-line px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
+                      ? "inline-flex min-h-[44px] items-center border border-ink bg-surface px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
+                      : "inline-flex min-h-[44px] items-center border-[1.5px] border-line px-5 text-[14px] font-bold text-ink transition-colors hover:bg-ink/5"
                   }
                 >
                   {secondary.label}

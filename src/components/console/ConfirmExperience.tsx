@@ -102,7 +102,7 @@ export function ConfirmExperience({
             setOpen(true);
             setSaved(false);
           }}
-          className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="mt-4 inline-block bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
         >
           {}
           {answered.length > 0 ? "Update Your Experience" : "Confirm Your Experience"}
@@ -150,7 +150,7 @@ export function ConfirmExperience({
               type="button"
               onClick={save}
               disabled={busy}
-              className="rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
+              className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
             >
               {/* ⚠ A STATUS SENTENCE INSIDE A BUTTON IS NOT A LABEL and stays a
                   sentence; the other branch names the action and takes Title

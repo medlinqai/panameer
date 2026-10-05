@@ -194,7 +194,7 @@ export function WorkHistoryReview({
                         skillIds: job.skills.filter((x) => x.id !== s.id).map((x) => x.id),
                       })
                     }
-                    className="rounded-full border border-line bg-white px-3 py-1 text-[13px] text-ink hover:border-magenta"
+                    className="border border-line bg-white px-3 py-1 text-[13px] text-ink hover:border-magenta"
                     aria-label={`Remove ${s.name} from ${job.name}`}
                   >
                     {s.name} <span aria-hidden>×</span>

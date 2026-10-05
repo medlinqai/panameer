@@ -142,7 +142,7 @@ export function VerifyGate({
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="rounded-full px-4 py-2.5 font-bold text-ink-2 hover:text-ink"
+              className="px-4 py-2.5 font-bold text-ink-2 hover:text-ink"
             >
               Cancel
             </button>

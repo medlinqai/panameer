@@ -179,7 +179,7 @@ export function InviteToPropose({
                   type="button"
                   disabled={already}
                   onClick={() => toggle(p.personId)}
-                  className={`w-full rounded-brand border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`w-full border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                     on ? "border-magenta bg-magenta/[0.04]" : "border-line bg-white hover:border-magenta/50"
                   }`}
                 >

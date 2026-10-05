@@ -116,7 +116,7 @@ export default async function CoursePage({
           {firstUp && (
             <Link
               href={`/learn/${path.slug}/${firstUp.id}`}
-              className="mt-5 inline-block rounded-full bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+              className="mt-5 inline-block bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
             >
               {course.completed > 0 ? "Continue Course" : "Start Course"}
             </Link>
@@ -137,7 +137,7 @@ export default async function CoursePage({
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
         <Link
           href={`/learn/${path.slug}`}
-          className="rounded-full border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+          className="border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
         >
           Back
         </Link>
@@ -145,14 +145,14 @@ export default async function CoursePage({
           {next && (
             <Link
               href={`/learn/${path.slug}/course/${next.slug}`}
-              className="rounded-full border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
+              className="border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
             >
               Next Course
             </Link>
           )}
           <Link
             href="/learn"
-            className="rounded-full bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="bg-magenta px-7 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Main Menu
           </Link>

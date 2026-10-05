@@ -160,7 +160,7 @@ export default async function CompanyPage({
           </p>
           <Link
             href="/join"
-            className="mt-5 inline-flex rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className="mt-5 inline-flex bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
           >
             Choose another company
           </Link>

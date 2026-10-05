@@ -20,7 +20,7 @@ export function BoardRefresh({ readAt }: { readAt: string }) {
         type="button"
         onClick={() => startTransition(() => router.refresh())}
         disabled={pending}
-        className="rounded-full border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
+        className="border-[1.5px] border-line px-4 py-1.5 text-[13.5px] font-bold text-ink transition-colors hover:border-[#d9d4e2] disabled:opacity-50"
       >
         {pending ? "Refreshing…" : "Refresh"}
       </button>

@@ -80,8 +80,8 @@ export function EmployerValidateActions({
           onClick={() => respond("yes")}
           className={
             declineFirst
-              ? "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink px-5 text-[14px] font-bold text-ink hover:bg-bg-soft disabled:opacity-60"
-              : "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-white hover:bg-ink/90 disabled:opacity-60"
+              ? "inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold text-ink hover:bg-bg-soft disabled:opacity-60"
+              : "inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-white hover:bg-ink/90 disabled:opacity-60"
           }
         >
           {busy === "yes" ? "Recording…" : "Yes, they did"}
@@ -92,8 +92,8 @@ export function EmployerValidateActions({
           onClick={() => respond("no")}
           className={
             declineFirst
-              ? "inline-flex min-h-[44px] items-center rounded-[4px] bg-ink px-5 text-[14px] font-bold text-white hover:bg-ink/90 disabled:opacity-60"
-              : "inline-flex min-h-[44px] items-center rounded-[4px] border border-ink px-5 text-[14px] font-bold text-ink hover:bg-bg-soft disabled:opacity-60"
+              ? "inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-white hover:bg-ink/90 disabled:opacity-60"
+              : "inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold text-ink hover:bg-bg-soft disabled:opacity-60"
           }
         >
           {busy === "no" ? "Recording…" : "No, that isn't right"}

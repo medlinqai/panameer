@@ -252,7 +252,7 @@ export default async function MyStatsPage({
           </p>
           <Link
             href="/join/provider?step=finish"
-            className="mt-4 inline-block rounded-full bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
+            className="mt-4 inline-block bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
           >
             Finish Your Profile
           </Link>

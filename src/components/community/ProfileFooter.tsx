@@ -88,7 +88,7 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
             }
           }}
           className={
-            "inline-flex min-h-[44px] items-center rounded-[4px] px-4 text-[13.5px] font-bold transition-opacity " +
+            "inline-flex min-h-[44px] items-center px-4 text-[13.5px] font-bold transition-opacity " +
             /* ⚠⚠ MAGENTA ONLY ON THE CONFIRMATION, and it is a STATUS, not a
                label — `Copied ✓` reports what just happened, so it is not Title
                Case under load-bearing rule 11. `Copy Link` names an action and
@@ -118,7 +118,7 @@ export function ShareBar({ url, name }: { url: string | null; name: string }) {
                half; a `target="_blank"` without them hands the opened page a
                handle on this one. */
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border border-ink bg-surface px-3.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink/5"
+            className="inline-flex min-h-[44px] items-center gap-2 border border-ink bg-surface px-3.5 text-[13.5px] font-bold text-ink transition-colors hover:bg-ink/5"
           >
             {/* ⚠ `fill="currentColor"` is what keeps the mark in INK and makes it
                 follow dark mode — a hard-coded brand hex would not. */}
@@ -169,7 +169,7 @@ export function HowToWorkWith({
           </p>
           <Link
             href={hireHref}
-            className="mt-3 inline-block rounded-[4px] bg-white px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-white/90"
+            className="mt-3 inline-block bg-white px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-white/90"
           >
             Hire {who}
           </Link>
@@ -184,7 +184,7 @@ export function HowToWorkWith({
           </p>
           <Link
             href={describeHref}
-            className="mt-3 inline-block rounded-[4px] border border-ink px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-bg-soft"
+            className="mt-3 inline-block border border-ink px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-bg-soft"
           >
             Describe What You Need
           </Link>

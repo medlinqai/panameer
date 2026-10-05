@@ -168,14 +168,14 @@ export default function AdminProvidersPage() {
                           <button
                             onClick={() => act(p.id, "validate")}
                             disabled={busyId === p.id || p.validationStatus === "VALIDATED"}
-                            className="rounded-full bg-magenta px-4 py-1.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
+                            className="bg-magenta px-4 py-1.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-40"
                           >
                             Validate
                           </button>
                           <button
                             onClick={() => act(p.id, "reject")}
                             disabled={busyId === p.id || p.validationStatus === "REJECTED"}
-                            className="rounded-full border border-red-500/30 px-4 py-1.5 text-[13px] font-bold text-red-600 transition-colors hover:bg-red-500/5 disabled:opacity-40"
+                            className="border border-red-500/30 px-4 py-1.5 text-[13px] font-bold text-red-600 transition-colors hover:bg-red-500/5 disabled:opacity-40"
                           >
                             Reject
                           </button>

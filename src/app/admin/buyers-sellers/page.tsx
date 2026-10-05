@@ -427,7 +427,7 @@ export default async function Page({
         {testFilter !== "all" && <input type="hidden" name="test" value={testFilter} />}
         <button
           type="submit"
-          className="inline-flex min-h-11 items-center rounded-[4px] bg-ink px-3 text-[13px] font-bold text-surface"
+          className="inline-flex min-h-11 items-center bg-ink px-3 text-[13px] font-bold text-surface"
         >
           Search
         </button>
@@ -443,7 +443,7 @@ export default async function Page({
           href={`/api/admin/export?list=users${q ? `&q=${encodeURIComponent(q)}` : ""}${
             testFilter !== "all" ? `&test=${testFilter}` : ""
           }`}
-          className="inline-flex min-h-11 items-center rounded-[4px] border border-ink bg-surface px-3 text-[13px] font-bold text-ink"
+          className="inline-flex min-h-11 items-center border border-ink bg-surface px-3 text-[13px] font-bold text-ink"
         >
           Export to Excel
         </a>

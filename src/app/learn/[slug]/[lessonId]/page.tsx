@@ -143,7 +143,7 @@ export default async function LessonPage({
                     href={`/learn/${path.slug}/${l.id}`}
                     aria-current={l.current ? "page" : undefined}
                     className={
-                      "flex items-start gap-2 rounded-[10px] px-3 py-2 text-[13.5px] transition-colors " +
+                      "flex items-start gap-2 px-3 py-2 text-[13.5px] transition-colors " +
                       (l.current
                         ? "bg-magenta/[0.08] font-bold text-magenta"
                         : "text-ink-2 hover:bg-black/[0.03] hover:text-ink")

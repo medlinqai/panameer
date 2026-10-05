@@ -50,7 +50,7 @@ export default async function Page({
                 <Link
                   key={s.href}
                   href={s.href}
-                  className="rounded-full border border-line px-3 py-1 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
+                  className="border border-line px-3 py-1 text-[12.5px] font-semibold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
                 >
                   {s.metric}
                 </Link>

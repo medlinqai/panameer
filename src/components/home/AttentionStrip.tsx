@@ -54,7 +54,7 @@ export function AttentionStrip({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="flex w-[132px] shrink-0 flex-col justify-center rounded-brand border border-dashed border-line bg-white px-4 py-3 text-left transition-colors hover:border-magenta/50"
+            className="flex w-[132px] shrink-0 flex-col justify-center border border-dashed border-line bg-white px-4 py-3 text-left transition-colors hover:border-magenta/50"
           >
             <span className="font-display text-[20px] font-bold text-magenta">
               +{overflow}
@@ -122,7 +122,7 @@ function ActionCard({
           type="button"
           onClick={onDismiss}
           aria-label={`Dismiss ${card.label}`}
-          className="relative z-10 -mr-1 -mt-1 shrink-0 rounded-full px-1.5 text-[15px] leading-none text-emerald-700/60 hover:text-emerald-800"
+          className="relative z-10 -mr-1 -mt-1 shrink-0 px-1.5 text-[15px] leading-none text-emerald-700/60 hover:text-emerald-800"
         >
           ×
         </button>

@@ -83,7 +83,7 @@ async function ValidState({
         {header}
         <Link
           href={`/join/provider?invite=${encodeURIComponent(token)}`}
-          className="mt-6 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="mt-6 inline-flex bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
         >
           Accept &amp; Create Your Account
         </Link>
@@ -105,7 +105,7 @@ async function ValidState({
         </p>
         <Link
           href={`/login?callbackUrl=${encodeURIComponent(acceptUrl)}`}
-          className="mt-4 inline-flex rounded-full bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
+          className="mt-4 inline-flex bg-magenta px-6 py-3 font-bold text-white transition-colors hover:bg-magenta-dark"
         >
           Log In to Accept
         </Link>
@@ -130,7 +130,7 @@ async function ValidState({
         </p>
         <Link
           href={`/login?callbackUrl=${encodeURIComponent(acceptUrl)}`}
-          className="mt-4 inline-flex rounded-full border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
+          className="mt-4 inline-flex border-[1.5px] border-line px-6 py-3 font-bold text-ink transition-colors hover:border-[#d9d4e2]"
         >
           Switch Account
         </Link>
