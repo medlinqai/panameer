@@ -7,8 +7,17 @@ export function NextStepCard({ page }: { page: FirstPage }) {
   return (
     <section data-testid="next-step" data-rule={card.rule} className="mb-8 font-body text-ink">
       <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-ink-2">{greeting.eyebrow}</p>
-      <h1 className="mt-1.5 text-[23px] font-extrabold leading-tight sm:text-[30px]">{greeting.title}</h1>
-      <p className="mt-1.5 text-[15px] text-ink-2">Here&apos;s the best place to start.</p>
+      <h1 className="mt-1.5 text-[23px] font-extrabold leading-tight sm:text-[30px]">
+        {greeting.short ? (
+          <>
+            <span className="sm:hidden">{greeting.short}</span>
+            <span className="hidden sm:inline">{greeting.title}</span>
+          </>
+        ) : (
+          greeting.title
+        )}
+      </h1>
+      <p className="mt-1.5 hidden text-[15px] text-ink-2 sm:block">Here&apos;s the best place to start.</p>
 
       <div className="mt-6 grid border border-ink md:grid-cols-[1fr_300px]">
         <div className="p-5 sm:p-6">
