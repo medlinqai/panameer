@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { isStatusHost } from "@/lib/host";
-import { formatInstant, formatStoredDate, todayInSiteZone } from "@/lib/work-tracker/public-time";
+import { formatInstant, todayInSiteZone } from "@/lib/work-tracker/public-time";
 import { redirect } from "next/navigation";
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { BuildLine } from "@/components/status/BuildLine";
@@ -10,6 +10,8 @@ import { PlanView } from "@/components/plan/PlanView";
 import { prisma } from "@/lib/prisma";
 import { getPanameerPlan } from "@/lib/plan/store";
 import { publicPlan, releaseProgressByCode } from "@/lib/plan/public";
+import { phaseCard } from "@/lib/plan/status-card";
+import { StatusPhaseCard } from "@/components/status/StatusPhaseCard";
 import { firstReleasedAt } from "@/lib/plan/model";
 import { releasedSupportCounts } from "@/lib/support-released";
 import { getPublicTracker } from "@/lib/work-tracker/public-view";
@@ -149,7 +151,7 @@ export default async function StatusPage({
     ⚠ SUPERSEDED, quoted not deleted (`E164`):
     //   const updated = new Date(t.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   */
-  const dueLabel = rel?.date ? formatStoredDate(rel.date) : null;
+  const card = phaseCard(pv.rows, todayIso);
   const updated = formatInstant(t.generatedAt);
 
   return (
@@ -183,7 +185,7 @@ export default async function StatusPage({
         1024, so the named breakpoint is written literally rather than rounded to
         the nearest token. ⚠ Below it the two stack, copy first.
       */}
-      <div className="mx-auto grid max-w-[1040px] gap-x-10 gap-y-8 min-[900px]:grid-cols-[1fr_auto] min-[900px]:items-end">
+      <div className="mx-auto grid max-w-[1040px] gap-x-10 gap-y-8 min-[900px]:grid-cols-[1fr_400px] min-[900px]:items-start">
         {/*
           ⚠⚠ THE COPY COLUMN IS THE SIZING CONTAINER (`P2-ALL-E776`). See the
           headline below — it is sized against THIS box, not against the viewport.
@@ -278,95 +280,15 @@ export default async function StatusPage({
           ⚠⚠ `tabular-nums` so 9% and 11% occupy the same width and the column
           does not shift as the build progresses.
         */}
-        <div className="min-[900px]:text-right">
-          {/*
-            ── ⚠⚠⚠ THE BIG FIGURE IS THE CURRENT RELEASE, NOT THE WHOLE PLAN ─────
-            ⚠ Scott: *"I like the percent complete (but that should differ based on
-            MVP R1 and R2."* The plan percentage becomes the small secondary line.
-            ⚠⚠ **`Scope being set` WHEN NO TASKS ARE ASSIGNED — NEVER `0%`.** A
-            release nobody has scoped has not achieved nothing; it has not been
-            measured, and the two must not look the same.
-          */}
-          {/*
-            ── ⚠⚠⚠ THE TEST AND THE FIGURE MUST BE THE SAME NUMBER (`P2-ALL-E785`) ──
-
-            ⚠ This branch used to ask `rel.percent === null` — the AIM-derived
-            release percentage from `public-view.ts` — while the figure printed
-            below it came from the PLAN. ⚠⚠ **Two definitions of one number, and
-            they disagreed the moment the plan replaced the catalog:** with R1
-            carrying AIM task states, `rel.percent` was a number, so this took the
-            else branch and printed a bare `—` for an empty plan.
-            ⚠⚠⚠ **A DASH WITH NO REASON IS EXACTLY WHAT THE COUNTING RULE FORBIDS**
-            (`decisions_2026-09-23.md` §1), and this is the public page.
-            ⚠ So it now tests `heroPercent`, the number it is about. When that is
-            uncountable the page says WHY instead of printing a dash, and the else
-            branch is guaranteed a real figure — including a measured `0`, in ink.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   {rel && rel.percent === null ? (
-          */}
-          {heroPercent === null ? (
-            <p className={`text-[34px] leading-tight text-white/90 sm:text-[44px] ${HEAD}`}>
-              Scope being set
-            </p>
-          ) : (
-            <p className={`flex items-start justify-start leading-[0.82] min-[900px]:justify-end ${HEAD}`}>
-              {/* ⚠ A stable hook so a gate can assert the FIGURE rather than
-                  searching the hero for a dash — the hero legitimately contains
-                  "R1 — Public beta", and a text search for an em-dash matches
-                  that. */}
-              <span data-hero-figure className="text-[112px] tabular-nums sm:text-[184px]">
-                {heroPercent}
-              </span>
-              <span className="mt-[0.22em] text-[40px] text-magenta sm:text-[64px]">%</span>
-            </p>
-          )}
-          <p className="mt-1 text-[14px] text-white/75">
-            {rel ? (
-              <>
-                {rel.code ? `${rel.code} — ` : ""}
-                {rel.name}
-                {rel.date && <> · due {dueLabel}</>}
-              </>
-            ) : pv.progress.percent === null ? (
-              /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — it tested the AIM
-                 figure while describing the plan:
-                 //   ) : t.overallPercent === null ? ( "nothing countable yet"
-                 //   ) : ( "of the plan complete" ) */
-              "nothing countable yet"
-            ) : (
-              "of the plan complete"
-            )}{" "}
-            · updated {updated}
-          </p>
-          {/* ⚠ The WHOLE plan's figure, secondary to the release's. ⚠⚠ It is
-              the PLAN's now, not the AIM catalog's (`E790`).
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   {rel && t.overallPercent !== null && (
-              //     <p …>{t.overallPercent}% of the whole plan</p>
-              //   )} */}
-          {rel && pv.progress.percent !== null && (
-            <p className="mt-1 text-[13px] text-white/60">
-              {pv.progress.percent}% of the whole plan
-            </p>
-          )}
-          {/*
-            ⚠⚠⚠ `moving` IS EVERY ROW IN PROGRESS, AND SCOTT'S RULE SURVIVES THE
-            CHANGE OF SOURCE: *"it must be every task with status In Progress"* —
-            it is now every countable PLAN ROW with that status, counted by the
-            same `countableRows` rule as the percentage above.
-            ⚠⚠ **THE GATES CLAUSE IS GONE.** Gates are an AIM-catalog concept with
-            no equivalent in a plan, and `E785` took the gate section off this
-            page — leaving "0 of 4 gates" under a plan figure described something
-            the page no longer shows.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   {t.doneCount} done · {t.movingCount} moving · {gatesPassed} of {t.gates.length} gates
-            ⚠ `gatesPassed` and `t.gates` are untouched in `public-view.ts` and
-            still served by `/api/status`; only this render went.
-          */}
-          <p className="mt-1 text-[14px] text-white/75">
-            {pv.progress.done} done · {pv.progress.moving} moving · {pv.progress.total} rows
-          </p>
-        </div>
+        <StatusPhaseCard
+          card={card}
+          releaseLabel={rel ? `${rel.code ? `${rel.code} — ` : ""}${rel.name}` : null}
+          releaseCode={rel?.code ?? null}
+          releasePercent={heroPercent}
+          planPercent={pv.progress.percent}
+          counts={pv.progress}
+          updated={updated}
+        />
       </div>
       </section>
 
