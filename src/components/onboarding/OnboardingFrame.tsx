@@ -1,6 +1,7 @@
 import { MarketingHeader } from "@/components/marketing/MarketingHeader";
 import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import type { ReactNode } from "react";
+import { OnboardingBar } from "@/components/onboarding/OnboardingBar";
 
 export const FRAME_WIDTH = "max-w-5xl";
 
@@ -13,6 +14,8 @@ export function OnboardingFrame({
   compact = false,
   centered = false,
   contentWidth,
+  onboarding = false,
+  barRight,
 }: {
   children: ReactNode;
   footer?: ReactNode;
@@ -22,12 +25,15 @@ export function OnboardingFrame({
   centered?: boolean;
   contentWidth?: string;
   className?: string;
+  /** Onboarding pages: slim bar instead of the marketing header and footer. */
+  onboarding?: boolean;
+  barRight?: ReactNode;
 }) {
   const pad = compact ? "py-8 sm:py-10" : "py-10 sm:py-14";
   return (
     <>
       {}
-      {chrome && <MarketingHeader />}
+      {chrome && (onboarding ? <OnboardingBar right={barRight} /> : <MarketingHeader />)}
       <div className={`flex flex-1 flex-col bg-white font-body text-ink ${className}`}>
       {/*
         ── ⚠⚠ THE FRAME'S OWN HEADER IS GONE (`P1-J1.1-E246` §8) ─────────────────
@@ -91,7 +97,7 @@ export function OnboardingFrame({
       )}
       </div>
       {/* ⚠ OUTSIDE the frame AND outside any `.pm-home` — see the note above. */}
-      {chrome && <MarketingFooter />}
+      {chrome && !onboarding && <MarketingFooter />}
     </>
   );
 }

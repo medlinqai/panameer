@@ -259,6 +259,15 @@ const LANGUAGE_LEVELS = PROFICIENCY_OPTIONS;
  * Stepper heading + forward-button label per step — the exact strings from
  * brief_S's table. Mirrors PROVIDER_STEP_LABELS in onboarding.ts.
  */
+const RAIL_LABELS: Partial<Record<Step, string>> = {
+  tell_us: "Résumé",
+  title: "Title",
+  roles: "Roles",
+  skills: "Skills",
+  rate: "Rates",
+  picture: "Photo",
+};
+
 const STEP_LABELS: Record<Step, { stepper: string }> = {
   title: { stepper: "Your Title" },
   work_history: { stepper: "Your Work History" },
@@ -1152,8 +1161,9 @@ setScreen(target);
         different list and both start with `title`, so "the one after title" is right
         for either without naming a step one of them may not have.
       */
+      // Résumé comes first now (2026-10-05): it leads on to Title.
       if (screen === "tell_us") {
-        goTo(steps[steps.indexOf("title") + 1] ?? steps[0] ?? "title");
+        goTo("title");
         return;
       }
       goTo(steps[0] ?? "title");
@@ -1740,9 +1750,8 @@ setScreen(target);
           ⚠ THE DENOMINATOR IS THE SHARED CONSTANT, so this screen and the seven
           counted steps cannot disagree about how long the wizard is.
         */
-        step={1}
-        totalSteps={wizardTotal}
-        title="How Do You Work?"
+        onboardingChrome
+        title="How do you work?"
         /* ⚠ WHY IT IS BEING ASKED, in one line — somebody who arrived by a
            recruiter link and lost the query string has no idea why the wizard
            suddenly wants this. */
@@ -1814,12 +1823,26 @@ setScreen(target);
   // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
   const labels = STEP_LABELS[screen as Step];
   const nextStep = stepIndex >= 0 ? steps[stepIndex + 1] : undefined;
-  const nextLabel = nextStep
-    ? nextStep === "finish"
-      ? "Next: Review Your Profile"
-      : `Next: ${STEP_LABELS[nextStep].stepper}`
-    : "Next: Publish Your Profile";
+  // One count everywhere (2026-10-05): Résumé + the member's own itinerary; Review after, unnumbered.
+  const railKeys = ["tell_us", ...steps.filter((s) => s !== "finish")] as Step[];
+  const railSteps = railKeys.map((k) => ({ key: k, label: RAIL_LABELS[k] ?? STEP_LABELS[k]?.stepper ?? k }));
+  const railIndex = screen === "finish" ? railKeys.length : railKeys.indexOf(screen as Step);
+  const railNext = railIndex >= 0 && railIndex < railKeys.length ? railKeys[railIndex + 1] : undefined;
+  const nextLabel =
+    screen === "finish"
+      ? "Publish profile"
+      : railNext
+        ? `Next: ${RAIL_LABELS[railNext] ?? STEP_LABELS[railNext].stepper}`
+        : "Next: Review";
   const shell = (props: Partial<React.ComponentProps<typeof WizardShell>> & { title: string }) => ({
+    rail: railIndex >= 0 ? { steps: railSteps, current: railIndex } : undefined,
+    eyebrow:
+      screen === "finish"
+        ? "Review"
+        : railIndex >= 0
+          ? `Step ${railIndex + 1} of ${railKeys.length} · ${railSteps[railIndex].label}`
+          : undefined,
+    onboardingChrome: true,
     step: stepNumber,
     /* ⚠ SUPERSEDED, quoted: `totalSteps: steps.length`. That recomputed the
        denominator from the CURRENT itinerary, so a recruiter saw /7 and a
@@ -2030,13 +2053,13 @@ setScreen(target);
     `page.tsx:611`:
     //   const titleEditing = () => ({
     //     canSave: profile.headline.trim() !== "",
-    //     save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+    //     save: () => saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
     //     body: (<> …<Field label="Your Title" …><TextInput … maxLength={HEADLINE_MAX} /></Field>… </>),
     //   });
   */
   const titleEditing = () => ({
     canSave: titleCanSave(profile.headline),
-    save: () => saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+    save: () => saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
     body: (
       <TitleEditor
         value={profile.headline}
@@ -2303,7 +2326,7 @@ setScreen(target);
               Continue both lead on to `2/7`, which can be completed by typing.
             */
             onContinue: () =>
-              saveAnd("title", { headline: profile.headline }, () => goTo("tell_us")),
+              saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
             continueDisabled: profile.headline.trim() === "",
           })}
         >

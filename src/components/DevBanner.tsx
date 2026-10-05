@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IS_PRELAUNCH } from "@/lib/site-status";
 import { isStatusHost } from "@/lib/host";
+import { isOnboardingPath } from "@/lib/onboarding-routes";
 
 export function DevBanner() {
   const [dismissed, setDismissed] = useState(false);
@@ -27,7 +28,7 @@ export function DevBanner() {
 
   // Read at module scope from NEXT_PUBLIC_SITE_STATUS, so the whole component
   // tree-shakes out of a launched build rather than rendering hidden.
-  if (!IS_PRELAUNCH || dismissed) return null;
+  if (!IS_PRELAUNCH || dismissed || isOnboardingPath(pathname)) return null;
 
   return (
     <div

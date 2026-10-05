@@ -212,36 +212,11 @@ for (const [name, files] of [...sent.entries()].sort()) {
   check("6 — it has \"Finish later\"", /secondaryLabel="Finish later"/.test(screen));
   check("6 — its Continue is the shell's, not hand-drawn",
     /onContinue=\{choose\}/.test(screen) && !/bg-magenta px-7/.test(screen));
-  /*
-    ── ⚠⚠ INVERTED BY `P1-A1.4-E406` WS-4 — QUOTED, NOT DELETED (`E164`) ───────
-
-    ⚠ SUPERSEDED, and it fired exactly as designed when the counter was added:
-
-        /* ⚠⚠ ASSERT THE ABSENCE OF A COUNTER. A later change that numbers this
-           screen must go RED — `title` is genuinely step 1, and two screens both
-           reading "1 of 7" is worse than no number. * /
-        check(
-          "6 — ⚠⚠ ABSENCE: the screen carries NO counter",
-          !/\bstep=\{/.test(screen) && !/totalSteps=/.test(screen) && !/counterText=/.test(screen),
-          "a step/totalSteps/counterText prop appeared on an UNCOUNTED screen"
-        );
-
-    ⚠⚠ ITS REASONING WAS SOUND AND ITS PREMISE WAS FALSE. `E405` believed the
-    provider had no get-started page, so `work_method` looked like the unnumbered
-    ask. ⚠ `/join/provider/start` EXISTS — the mirror of
-    `/join/requester/start` — and it is the ask. `work_method` comes after it, so
-    Scott's rule numbers it. ⚠ THE OLD WORRY IS ANSWERED RATHER THAN IGNORED:
-    two screens no longer both read "1 of …" because the counted steps are
-    offset to start at 2.
-
-    ⚠ AN ABSENCE-ASSERTION THAT IS SIMPLY DELETED IS HOW THE THING IT GUARDED
-    COMES BACK, so the guard is REVERSED, not removed: the screen must now carry
-    a counter, and it must read 1 of the shared total.
-  */
+  // E868: the step count is the itinerary (Résumé first); work_method is an unnumbered pre-step.
   check(
-    "6 — ⚠⚠ the screen carries a counter reading 1 of N",
-    /\bstep=\{1\}/.test(screen) && /totalSteps=\{wizardTotal\}/.test(screen),
-    "work_method is step 1 of the numbered run; /join/provider/start is the ask"
+    "6 — the screen carries no step counter",
+    !/\bstep=\{/.test(screen) && !/totalSteps=/.test(screen),
+    "work_method is outside the numbered run (Scott 2026-10-05)"
   );
 
   /*
