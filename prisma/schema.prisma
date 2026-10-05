@@ -374,6 +374,11 @@ model Company {
   company_tos_accepted_at DateTime?
   company_tos_version     String?
 
+  /// My Company (2026-10-05): ≤600-char description, one Industry specialization, and whether
+  /// members' public profiles show the company name.
+  description      String?
+  industry_id      String? @db.Uuid
+  show_on_profiles Boolean @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
