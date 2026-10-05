@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { buyerDisplay } from "@/lib/buyer-display";
+import { viewerIsPlus } from "@/lib/plus";
 /* ⚠ THE ONE RESOLVER (`E728` WS-B). */
 import { countryName } from "@/lib/country";
 import { canSeeRate } from "@/lib/rate-visibility";
@@ -72,8 +74,10 @@ export type TeaserProvider = {
 export type TeaserWork = {
   id: string;
   title: string;
-  /** The buyer's company, not the buyer — the same masking rule, other side. */
+  /** The buyer's company as buyerDisplay prints it ("Confidential buyer" when withheld). */
   company: string | null;
+  /** Set only for signed-in viewers and named companies — the /companies link. */
+  companyId: string | null;
   location: string | null;
   skills: string[];
   budget: string | null;
@@ -296,8 +300,10 @@ export async function searchProvidersTeaser(
  */
 export async function searchWorkTeaser(
   q: string,
-  take = TEASER_LIMIT
+  take = TEASER_LIMIT,
+  viewer: Viewer | null = null
 ): Promise<{ cards: TeaserWork[]; total: number }> {
+  const isPlus = viewer ? await viewerIsPlus(viewer) : false;
   const term = q.trim();
   const like = { contains: term, mode: "insensitive" as const };
   const where = {
@@ -326,7 +332,9 @@ export async function searchWorkTeaser(
         budget_max_cents: true,
         budget_amount_cents: true,
         currency: true,
-        buyer: { select: { company: { select: { name: true } } } },
+        company_visibility: true,
+        company_code_name: true,
+        buyer: { select: { user_id: true, company: { select: { id: true, name: true } } } },
         skills: { select: { skill: { select: { name: true } } }, take: 4 },
       },
     }),
@@ -338,7 +346,13 @@ export async function searchWorkTeaser(
     cards: rows.map((w) => ({
       id: w.id,
       title: w.title,
-      company: w.buyer?.company?.name ?? null,
+      ...(() => {
+        const d = buyerDisplay(
+          { visibility: w.company_visibility, codeName: w.company_code_name, company: w.buyer?.company ?? null },
+          { signedIn: !!viewer, isOwner: !!viewer && viewer.userId === w.buyer?.user_id, isAdmin: !!viewer?.isSystemAdmin, isPlus }
+        );
+        return { company: d.label, companyId: d.companyId };
+      })(),
       location: w.location_country ?? null,
       skills: w.skills.map((s) => s.skill.name),
       budget: rateLabel(
