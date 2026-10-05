@@ -22,6 +22,11 @@ for (const scheme of ["light", "dark"] as const)
         await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", "40");
         await expect(page.getByText("6 things to finish")).toBeVisible();
         for (const id of ["details", "verification"]) await expect(page.locator(`[data-co-section="${id}"]`)).toBeVisible();
+        // Lane 2: no Invite button, no user-terms block; company terms live in Verification.
+        await expect(page.getByText(/Invite Someone to/)).toHaveCount(0);
+        await expect(page.getByText("Your Terms of Service")).toHaveCount(0);
+        await expect(page.locator('[data-co-section="verification"] [data-company-terms]')).toBeVisible();
+        if (who === "admin") await expect(page.locator('[data-co-section="verification"]').getByRole("button", { name: /Accept/ })).toBeVisible();
         await expect(page.locator('[data-co-section="details"]')).toContainText("12-3456789");
         const edits = page.locator("main").getByRole("link", { name: "Edit", exact: true });
         if (who === "admin") await expect(edits.first()).toBeVisible();
@@ -56,6 +61,16 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await expect(page.locator("[data-details-editor]")).toHaveCount(0, { timeout: 20_000 });
   await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", hasIndustry ? "90" : "80");
   await expect(page.locator("[data-company-description]")).toHaveText("Throwaway test company for the My Company page.");
+  // Edit logo uploads in place (no navigation): a 300×200 PNG comes back square.
+  const png = Buffer.from(await page.evaluate(async () => {
+    const c = document.createElement("canvas"); c.width = 300; c.height = 200;
+    const x = c.getContext("2d")!; x.fillStyle = "#d72cd6"; x.fillRect(0, 0, 300, 200);
+    const b: Blob = await new Promise((r) => c.toBlob((v) => r(v!), "image/png"));
+    return Array.from(new Uint8Array(await b.arrayBuffer()));
+  }));
+  await page.locator("[data-logo-input]").first().setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png });
+  await expect(page.locator('img[alt$="logo"]').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/company(#details)?$/);
   // People: approve the asker.
   await page.goto("/company/people", { waitUntil: "networkidle" });
   await page.locator("[data-join-request]").getByRole("button", { name: "Approve" }).click();

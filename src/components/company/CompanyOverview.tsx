@@ -30,7 +30,23 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
   );
 }
 
-export function CompanyVerification({ c, buyer = false }: { c: NonNullable<CompanyView>; buyer?: boolean }) {
+export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonNullable<CompanyView>; buyer?: boolean; acceptTerms?: React.ReactNode }) {
+  const t = c.tos;
+  const termsRow = {
+    k: "Company terms",
+    v: t.current ? (
+      <span data-company-terms="accepted">
+        Accepted{t.by ? ` by ${t.by}` : ""} · {t.acceptedAt!.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} · v{t.version} ·{" "}
+        <a href="/company-terms" className="font-semibold text-magenta-dark underline">Read them</a>
+      </span>
+    ) : (
+      <span data-company-terms="pending">
+        {t.acceptedAt ? `Accepted v${t.version}; the current version needs accepting again.` : "Not accepted yet — the company can't transact until it is."}{" "}
+        <a href="/company-terms" className="font-semibold text-magenta-dark underline">Read them</a>
+        {acceptTerms}
+      </span>
+    ),
+  };
   const v = c.verification;
   const ok = v.status === "in_good_standing";
   const LABEL: Record<string, string> = {
@@ -66,6 +82,7 @@ export function CompanyVerification({ c, buyer = false }: { c: NonNullable<Compa
               <span className="text-ink-2">{buyer ? "Not checked against a state registry yet" : "Checked against the state registry once state of filing is added"}</span>
             ),
           },
+          ...(buyer ? [] : [termsRow]),
         ]}
       />
     </CompanySection>
