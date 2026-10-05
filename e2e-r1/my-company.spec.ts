@@ -36,3 +36,43 @@ for (const scheme of ["light", "dark"] as const)
         await ctx.close();
       }
     });
+
+test("admin edits in place, approves, branding + terms", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await signIn(page, f!.people.admin.email);
+  await page.goto("/company?edit=details", { waitUntil: "networkidle" });
+  const ed = page.locator("[data-details-editor]");
+  await expect(ed).toBeVisible();
+  await ed.locator('input[name="country"]').fill("United States");
+  await ed.locator('input[name="stateOfFiling"]').fill("Delaware");
+  await ed.locator('input[name="website"]').fill("example.com");
+  await ed.locator('textarea[name="description"]').fill("Throwaway test company for the My Company page.");
+  const ind = ed.locator('select[name="industryId"] option').nth(1);
+  const hasIndustry = (await ind.count()) > 0;
+  if (hasIndustry) await ed.locator('select[name="industryId"]').selectOption(await ind.getAttribute("value"));
+  await page.screenshot({ path: "e2e-r1/.artifacts/company-edit-1440.png", fullPage: true });
+  await ed.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("[data-details-editor]")).toHaveCount(0, { timeout: 20_000 });
+  await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", hasIndustry ? "90" : "80");
+  await expect(page.locator("[data-company-description]")).toHaveText("Throwaway test company for the My Company page.");
+  // People: approve the asker.
+  await page.goto("/company/people", { waitUntil: "networkidle" });
+  await page.locator("[data-join-request]").getByRole("button", { name: "Approve" }).click();
+  await expect(page.locator("[data-member]")).toHaveCount(3, { timeout: 20_000 });
+  await page.screenshot({ path: "e2e-r1/.artifacts/company-people-1440.png", fullPage: true });
+  await page.goto("/company/branding", { waitUntil: "networkidle" });
+  await expect(page.locator('[data-co-section="branding"]')).toBeVisible();
+  await page.goto("/company/terms", { waitUntil: "networkidle" });
+  await expect(page.locator('[data-co-section="terms"]')).toContainText("hasn't accepted the company terms");
+  await ctx.close();
+  // A member cannot reach the editor, Branding or Terms.
+  const m = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const mp = await m.newPage();
+  await signIn(mp, f!.people.member.email);
+  await mp.goto("/company?edit=details", { waitUntil: "networkidle" });
+  await expect(mp.locator("[data-details-editor]")).toHaveCount(0);
+  await mp.goto("/company/branding", { waitUntil: "networkidle" });
+  await expect(mp).toHaveURL(/\/company$/);
+  await m.close();
+});

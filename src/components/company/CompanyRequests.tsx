@@ -42,16 +42,19 @@ export function CompanyRequests({
   return (
     <div className="mt-3">
       {error && (
-        <p className="mb-3 rounded-lg border border-red-600/20 bg-red-600/5 px-3 py-2 text-sm text-red-700">
+        <p className="mb-3 text-[13px] font-semibold text-magenta-dark">
           {error}
         </p>
       )}
-      <ul className="divide-y divide-black/10 dark:divide-white/10">
+      <ul>
         {requests.map((r) => (
-          <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
+          <li key={r.id} data-join-request className="grid grid-cols-[40px_1fr] items-center gap-3 border-b border-line/60 py-3 sm:grid-cols-[40px_1fr_auto]">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#cfc9db] text-[13px] font-bold text-ink">
+              {r.name.split(/\s+/).map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase() || "?"}
+            </span>
             <span className="min-w-0">
-              <span className="block font-medium">{r.name || "(unnamed)"}</span>
-              <span className="block text-sm text-black/60 dark:text-white/60">
+              <b className="block text-[14.5px]">{r.name || "(unnamed)"}</b>
+              <span className="block text-[12.5px] text-ink-3">
                 {r.email}
                 {r.title ? ` · ${r.title}` : ""} · asked{" "}
                 {new Date(r.askedAt).toLocaleDateString("en-GB", {
@@ -60,20 +63,20 @@ export function CompanyRequests({
                 })}
               </span>
             </span>
-            <span className="ml-auto flex items-center gap-2">
+            <span className="col-span-2 flex items-center gap-2 sm:col-span-1">
               <button
                 type="button"
                 disabled={busy === r.id}
                 onClick={() => decide(r.id, "REJECTED")}
-                className="border border-black/15 px-3 py-1.5 text-sm font-medium transition-colors hover:border-black/35 disabled:opacity-50 dark:border-white/20 dark:hover:border-white/40"
+                className="border border-ink bg-surface px-3 py-[7px] text-[12.5px] font-bold text-ink hover:bg-surface-hover disabled:opacity-50"
               >
-                Reject
+                Decline
               </button>
               <button
                 type="button"
                 disabled={busy === r.id}
                 onClick={() => decide(r.id, "APPROVED")}
-                className="bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="border border-ink bg-ink px-3 py-[7px] text-[12.5px] font-bold text-surface hover:bg-ink-hover disabled:opacity-50"
               >
                 {busy === r.id ? "Saving…" : "Approve"}
               </button>
