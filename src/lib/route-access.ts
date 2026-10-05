@@ -35,6 +35,9 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/messages", requires: "authenticated" }, // shared buyer ↔ provider
   { prefix: "/community", requires: "authenticated" },
   { prefix: "/connect", requires: "authenticated" },
+  { prefix: "/companies", requires: "authenticated" }, // buyer-safe company pages
+  { prefix: "/company", requires: "authenticated" },
+  { prefix: "/support", requires: "authenticated" },
   { prefix: "/services/offers", requires: "canProvideServices" },
   { prefix: "/dashboard", requires: "authenticated" }, // role-aware content, not gated
 ];

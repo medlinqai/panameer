@@ -30,7 +30,7 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
   );
 }
 
-export function CompanyVerification({ c }: { c: NonNullable<CompanyView> }) {
+export function CompanyVerification({ c, buyer = false }: { c: NonNullable<CompanyView>; buyer?: boolean }) {
   const v = c.verification;
   const ok = v.status === "in_good_standing";
   const LABEL: Record<string, string> = {
@@ -51,7 +51,7 @@ export function CompanyVerification({ c }: { c: NonNullable<CompanyView> }) {
                 {v.status ? LABEL[v.status] ?? v.status : "Not checked yet"}
                 {v.detail && ` — ${v.detail}`}
                 {v.checkedAt && ` · ${v.checkedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}
-                {!v.status && needs && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">NEEDS {needs}</span>}
+                {!buyer && !v.status && needs && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">NEEDS {needs}</span>}
                 {ok && <span className="ml-2 inline-block border border-current px-[7px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] text-[#1f8a5b]">VERIFIED</span>}
               </>
             ),
@@ -63,7 +63,7 @@ export function CompanyVerification({ c }: { c: NonNullable<CompanyView> }) {
                 State registry record
               </a>
             ) : (
-              <span className="text-ink-2">Checked against the state registry once state of filing is added</span>
+              <span className="text-ink-2">{buyer ? "Not checked against a state registry yet" : "Checked against the state registry once state of filing is added"}</span>
             ),
           },
         ]}

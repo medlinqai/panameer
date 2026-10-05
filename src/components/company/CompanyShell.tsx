@@ -80,7 +80,7 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
             {[c.industry, c.taxType].filter(Boolean).join(" · ") || (buyer ? null : <Missing>Add industry and business type</Missing>)}
           </p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] text-ink-2" data-company-meta>
-            <span>{where || (buyer ? null : <Missing>Add country and state</Missing>)}</span>
+            {(where || !buyer) && <span>{where || <Missing>Add country and state</Missing>}</span>}
             <span>On Panameer since {SINCE(c.since)}</span>
             {c.website ? (
               <a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-magenta-dark hover:underline">
@@ -100,7 +100,7 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
 
         {!buyer && (
           <div className="min-w-0 md:col-start-1 md:row-start-2">
-            <Link href={`/companies/${c.id}`} className="mt-1 block bg-ink px-4 py-3 text-center text-[14px] font-bold text-surface hover:bg-ink-hover md:mt-7">
+            <Link href={`/companies/${c.id}?preview=buyer`} className="mt-1 block bg-ink px-4 py-3 text-center text-[14px] font-bold text-surface hover:bg-ink-hover md:mt-7">
               How Buyers See Our Company
             </Link>
             <Link href="/invite-colleague" className="mt-2.5 block border border-ink px-4 py-3 text-center text-[14px] font-bold text-ink hover:bg-surface-hover">

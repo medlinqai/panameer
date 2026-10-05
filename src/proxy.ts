@@ -127,6 +127,10 @@ export const config = {
        `route-access.ts`'s `{ prefix: "/connect" }` entry; a route in neither is
        one the edge silently never runs on. */
     "/connect/:path*",
+    // Account areas (2026-10-05), paired with route-access.ts.
+    "/companies/:path*",
+    "/company/:path*",
+    "/support/:path*",
     /*
       Only the seller sub-route is guarded; the bare prefix is not. See the note
       in route-access.ts.
