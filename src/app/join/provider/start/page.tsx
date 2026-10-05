@@ -7,6 +7,7 @@ import { stepsForProfile, type ProviderStep } from "@/lib/onboarding";
 
 // Seller start page matches the buyer's (Scott 2026-10-05). TestimonialCarousel stays on disk, unused here.
 const CARDS: Partial<Record<ProviderStep, { title: string; blurb: string }>> = {
+  tell_us: { title: "Your Résumé", blurb: "Upload it and we fill in the rest, or type it yourself." },
   title: { title: "Your Title", blurb: "What you do, in one line clients search for." },
   roles: { title: "Your Roles", blurb: "The kinds of work you take on." },
   skills: { title: "Your Skills", blurb: "What you want to be found for." },
@@ -33,7 +34,8 @@ export default async function GetStartedPage() {
   // Still unverified → the wizard owns the verify gate.
   if (!person.user?.email_verified) redirect("/join/provider");
 
-  const cards = stepsForProfile(person.providerProfile)
+  // One count everywhere: Résumé first, then the member's own itinerary (Review is not a step).
+  const cards = (["tell_us", ...stepsForProfile(person.providerProfile)] as ProviderStep[])
     .filter((s) => s !== "finish")
     .map((s) => CARDS[s])
     .filter((c): c is { title: string; blurb: string } => !!c);

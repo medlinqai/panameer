@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { StepRail, type RailStep } from "@/components/onboarding/StepRail";
 import {
   OnboardingFrame,
   FRAME_WIDTH,
@@ -33,6 +34,10 @@ export function WizardShell({
   tightBody = false,
   frameClassName = "",
   chrome = true,
+  rail,
+  eyebrow,
+  aiLine,
+  onboardingChrome = false,
 }: {
   /** 1-based step number. OMIT on pre-verify pages — that hides the stepper. */
   step?: number;
@@ -64,6 +69,13 @@ export function WizardShell({
   /** Passed to OnboardingFrame — see its `className`. */
   frameClassName?: string;
   chrome?: boolean;
+  /** Onboarding frame (2026-10-05): step rail, "Step N of M · Name" eyebrow, slim bar. */
+  rail?: { steps: RailStep[]; current: number; review?: boolean };
+  eyebrow?: string;
+  /** "From your résumé: …" — magenta left rule, no box. */
+  aiLine?: ReactNode;
+  /** Slim onboarding chrome without a rail (pre-steps). */
+  onboardingChrome?: boolean;
 }) {
   const showCounter = typeof step === "number";
   const showStepper = showCounter || typeof progress === "number";
@@ -83,7 +95,7 @@ export function WizardShell({
           <button
             onClick={onBack}
             disabled={busy}
-            className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-50"
+            className="border border-ink bg-surface px-6 py-3 font-semibold text-ink transition-colors hover:bg-surface-hover focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50"
           >
             Back
           </button>
@@ -117,12 +129,12 @@ export function WizardShell({
         )}
       </div>
 
-      <div className="flex flex-1 justify-end">
+      <div className={rail ? "order-first flex w-full justify-end sm:order-none sm:w-auto sm:flex-1" : "flex flex-1 justify-end"}>
         {onContinue && (
           <button
             onClick={onContinue}
             disabled={continueDisabled || busy}
-            className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-50"
+            className={(rail ? "w-full sm:w-auto " : "") + "bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50"}
           >
             {busy ? "Saving…" : continueLabel}
           </button>
@@ -132,9 +144,24 @@ export function WizardShell({
   );
 
   return (
-    <OnboardingFrame width={width} footer={footer} className={frameClassName} chrome={chrome}>
-      {}
-      {showStepper && (
+    <OnboardingFrame width={width} footer={footer} className={frameClassName} chrome={chrome} onboarding={!!rail || onboardingChrome} compact={!!rail || onboardingChrome}
+      barRight={leaveLabel && onLeave ? (
+        <button type="button" onClick={onLeave} disabled={busy} className="text-[14px] font-semibold text-ink underline underline-offset-4 hover:text-magenta disabled:opacity-50">
+          {leaveLabel}
+        </button>
+      ) : undefined}>
+      {rail && <ScrollTop k={`${rail.current}:${title}`} />}
+      {rail && (
+        <div className="-mt-4 mb-5 sm:-mt-6">
+          <StepRail steps={rail.steps} current={rail.current} review={rail.review ?? true} />
+          {eyebrow && (
+            <p data-step-eyebrow className="mt-5 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
+              {eyebrow}
+            </p>
+          )}
+        </div>
+      )}
+      {!rail && showStepper && (
         <div className="mb-9">
           {showCounter && (
             <div className="mb-2.5 flex items-baseline justify-between">
@@ -193,19 +220,24 @@ export function WizardShell({
         answer it.
       */}
       <div>
-        <h1 className="text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]">
+        <h1 className={rail ? "text-[23px] font-extrabold leading-[1.15] sm:text-[30px]" : "text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]"}>
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-3 max-w-4xl text-[17px] leading-relaxed text-ink-2">
+          <p className={rail ? "mt-1.5 max-w-3xl text-[15px] leading-relaxed text-ink-2" : "mt-3 max-w-4xl text-[17px] leading-relaxed text-ink-2"}>
             {subtitle}
+          </p>
+        )}
+        {aiLine && (
+          <p data-ai-line className="mt-5 border-l-2 border-magenta py-2.5 pl-3.5 text-[14px] leading-relaxed">
+            {aiLine}
           </p>
         )}
       </div>
 
       <div
         className={
-          (tightBody ? "mt-4" : "mt-8") +
+          (tightBody || rail ? "mt-4" : "mt-8") +
           (aside ? " grid gap-12 lg:grid-cols-[1fr_380px]" : "")
         }
       >
@@ -217,4 +249,12 @@ export function WizardShell({
       </div>
     </OnboardingFrame>
   );
+}
+
+/** Every step opens at the top: Next used to keep the scroll position and hide the rail and title. */
+function ScrollTop({ k }: { k: string }) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [k]);
+  return null;
 }

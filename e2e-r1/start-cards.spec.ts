@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { db } from "../e2e-shell/_db";
 import { createFixture, dropFixture, signIn, type R1Fixture } from "./_fixture";
 
-// Seller start page matches the buyer's: provider 5 cards, recruiter 4, requester 2; no carousel.
+// Seller start page matches the buyer's: provider 6 cards, recruiter 5, requester 2; no carousel.
 let p: R1Fixture | null = null;
 let r: R1Fixture | null = null;
 test.beforeAll(async () => {
@@ -18,8 +18,8 @@ test.afterAll(async () => {
 });
 
 const cases = () => [
-  { who: "provider", email: p!.provider.email, path: "/join/provider/start", n: 5, last: "Your Photo", head: /Ready for the work to find you\?/ },
-  { who: "recruiter", email: r!.provider.email, path: "/join/provider/start", n: 4, last: "Your Photo", head: /Ready for the work to find you\?/ },
+  { who: "provider", email: p!.provider.email, path: "/join/provider/start", n: 6, last: "Your Photo", head: /Ready for the work to find you\?/ },
+  { who: "recruiter", email: r!.provider.email, path: "/join/provider/start", n: 5, last: "Your Photo", head: /Ready for the work to find you\?/ },
   { who: "requester", email: p!.buyer.email, path: "/join/requester/start", n: 2, last: null, head: /Ready to find the world's best talent\?/ },
 ];
 

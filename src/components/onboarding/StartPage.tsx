@@ -20,6 +20,7 @@ export function StartPage({
   const cols = Math.min(cards.length, 3);
   return (
     <OnboardingShell
+      onboarding
       footer={
         <>
           <p className="max-w-md text-[14.5px] text-ink-2">{footnote}</p>

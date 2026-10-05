@@ -7,12 +7,15 @@ export function OnboardingShell({
   contentWidth,
   compact = false,
   footer,
+  onboarding = true,
 }: {
   children: ReactNode;
   width?: string;
   contentWidth?: string;
   compact?: boolean;
   footer?: ReactNode;
+  /** Every OnboardingShell page is an onboarding page: slim bar, no marketing chrome. */
+  onboarding?: boolean;
 }) {
   return (
     <OnboardingFrame
@@ -20,6 +23,7 @@ export function OnboardingShell({
       contentWidth={contentWidth}
       compact={compact}
       footer={footer}
+      onboarding={onboarding}
     >
       {children}
     </OnboardingFrame>
