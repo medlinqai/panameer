@@ -4,7 +4,7 @@ import { isCounted } from "@/lib/figure";
 import { UsageHive, type HiveCell } from "@/components/console/UsageHive";
 
 // Usage v4 hero: one bordered card — honeycomb left (soft radial pink), stats + summary + actions right.
-export const USAGE_CARD = "rounded-[18px] border border-[#e9e6ef] bg-surface shadow-[0_1px_2px_rgba(39,35,52,.04),0_6px_22px_rgba(39,35,52,.05)]";
+export const USAGE_CARD = "rounded-[18px] border border-[#e9e6ef] [[data-theme=dark]_&]:border-white/15 bg-surface shadow-[0_1px_2px_rgba(39,35,52,.04),0_6px_22px_rgba(39,35,52,.05)]";
 
 export function UsageHero({
   cells,
@@ -33,7 +33,7 @@ export function UsageHero({
             </div>
           ))}
         </div>
-        <p data-usage-summary className="border-t border-[#f3f1f7] pt-3 text-[13px] text-ink-2">{summary}</p>
+        <p data-usage-summary className="border-t border-line pt-3 text-[13px] text-ink-2">{summary}</p>
         <div className="mt-auto flex flex-wrap gap-2 pt-4">
           <Link href="/community" className="inline-flex h-[42px] items-center border border-black bg-black px-[18px] text-[13px] font-bold text-white [[data-theme=dark]_&]:border-white [[data-theme=dark]_&]:bg-white [[data-theme=dark]_&]:text-black">
             Invite a Colleague

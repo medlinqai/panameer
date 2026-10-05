@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { PatternHeader } from "@/components/casing/PatternHeader";
-import { UsageCards } from "@/components/console/UsageCards";
 import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
 import { usageAreas, usageHiveCells, usageSummary } from "@/lib/usage-areas";
 import { UsageHero } from "@/components/console/UsageHero";
+import { UsageActivity } from "@/components/console/UsageActivity";
+import { usageActivity, type ActivityRange } from "@/lib/usage-activity";
 import { computeProfileScore } from "@/lib/completeness";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import {
@@ -20,7 +20,6 @@ import { profileTabs, profileTabLabel, ACCOUNT_MENU_NAME } from "@/lib/profile-t
 import { prisma } from "@/lib/prisma";
 import { guardPage } from "@/lib/guard";
 import { ownedProviderProfile } from "@/lib/access";
-import { missingRequired } from "@/lib/completeness";
 
 export const metadata = { title: "Usage · Panameer" };
 
@@ -31,7 +30,7 @@ function trendOf(sp: { period?: string }): TrendPeriod {
 export default async function MyStatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; range?: string }>;
 }) {
   const viewer = await guardPage("authenticated");
 
@@ -117,6 +116,7 @@ export default async function MyStatsPage({
   }
 
   const sp = await searchParams;
+  const range: ActivityRange = sp.range === "all" ? "all" : "month";
   const stats = await getStatistics(
     profile.person_id,
     viewer.userId,
@@ -185,19 +185,11 @@ export default async function MyStatsPage({
     paidOut: Math.round((paid._sum.net_cents ?? 0) / 100),
   });
 
-  const gaps = missingRequired({
-    headline: profile.person.title,
-    role_type_id: profile.role_type_id,
-    skills: profile.skills,
-    photoUrl: profile.person.photo_url,
-    hasAddress: (profile.person.site?.addresses?.length ?? 0) > 0,
-    hasPhone: Boolean(profile.person.phone?.trim()),
-    hourly_rate_cents: profile.hourly_rate_cents,
-    rate_min_cents: profile.rate_min_cents,
-    rate_max_cents: profile.rate_max_cents,
-    onsite_rate_cents: profile.onsite_rate_cents,
-    remote_rate_cents: profile.remote_rate_cents,
-  });
+  // Usage v4: the activity cards count over the chosen range; the hero stays all-time.
+  const rangeStats = range === "all" ? stats : await getStatistics(profile.person_id, viewer.userId, profile.id, "month", trendOf(sp));
+  const activity = await usageActivity({ range, stats: rangeStats, personId: profile.person_id, userId: viewer.userId, profileId: profile.id, searchScore });
+  const hive = usageHiveCells(areas);
+  const levels = Object.fromEntries(hive.map((c) => [c.key, c.level]));
 
   return (
     <>
@@ -216,7 +208,7 @@ export default async function MyStatsPage({
       {}
       <div className="mb-6">
         <UsageHero
-          cells={usageHiveCells(areas)}
+          cells={hive}
           stats={[
             { label: "Profile Views", value: stats.profile.views },
             { label: "Colleagues", value: stats.network.colleagues },
@@ -229,26 +221,7 @@ export default async function MyStatsPage({
 
       {}
       {}
-      <UsageCards stats={stats} searchScore={searchScore} />
-
-      {}
-      {gaps.length > 0 && (
-        <section className="mb-4 rounded-brand border border-line bg-white p-5">
-          <h2 className="font-display text-[16px] font-bold">
-            Finish Your Profile
-          </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
-            {}
-            Still needed: {gaps.join(" · ")}.
-          </p>
-          <Link
-            href="/join/provider?step=finish"
-            className="mt-4 inline-block bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-          >
-            Finish Your Profile
-          </Link>
-        </section>
-      )}
+      <UsageActivity areas={activity} range={range} levels={levels} />
 
       {}
 
