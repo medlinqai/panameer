@@ -34,6 +34,7 @@ export type Me = {
     website: string | null;
     logoUrl: string | null;
     isAdmin: boolean;
+    isMember: boolean;
   } | null;
   /** Null whenever `person` is — same reason. */
   pAccount: { id: string; name: string; kind: string } | null;

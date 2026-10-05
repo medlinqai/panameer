@@ -186,6 +186,16 @@ const nextConfig: NextConfig = {
         The proxy spec parses that literal and fails if the two disagree in either
         direction, so they cannot be split.
       */
+      // Account areas (Scott 2026-10-05): old company + settings URLs land on their new tab.
+      { source: "/company/settings", destination: "/company", permanent: true },
+      { source: "/company/teams", destination: "/company/people", permanent: true },
+      { source: "/settings", destination: "/settings/notifications", permanent: true },
+      { source: "/settings/company", destination: "/company", permanent: true },
+      { source: "/settings/tax", destination: "/settings/withdrawals/w9", permanent: true },
+      { source: "/settings/preferences", destination: "/settings/contact", permanent: true },
+      { source: "/settings/accounts", destination: "/settings/contact", permanent: true },
+      { source: "/settings/connect", destination: "/settings/security", permanent: true },
+      { source: "/settings/id-badge", destination: "/settings/identity", permanent: true },
       { source: "/stats/:path*", destination: "/usage/:path*", permanent: true },
       { source: "/stats", destination: "/usage", permanent: true },
 

@@ -303,14 +303,16 @@ export const PROVIDER_NAV: NavItem[] = [
 //     ...PERSONA_NAV_PRIMARY,
 //     ...PERSONA_NAV_SECONDARY,
 //   ];
+// Avatar menu (Scott 2026-10-05): Profile · Company · Account · Support, then Theme. Company is added by the
+// menu only for members of a company. Invite / Request a Recommendation live under Connect.
 export const PERSONA_NAV: NavItem[] = [
-  { label: "My Account Settings", href: "/settings" },
-  { label: "Invite a Colleague", href: "/community/grow" },
-  { label: "Request a Recommendation", href: "/recommendations" },
-  { label: "My Tickets", href: "/support/tickets" },
+  { label: "Profile", href: "/profile" },
+  { label: "Account", href: "/settings/notifications" },
+  { label: "Support", href: "/support/tickets" },
 ];
+export const COMPANY_PERSONA_ITEM: NavItem = { label: "Company", href: "/company" };
 
-export const THEME_BEFORE_HREF = "/support/tickets";
+export const THEME_BEFORE_HREF = null;
 
 /** What a Panameer employee keeps of that list. */
 export const ADMIN_PERSONA_NAV: NavItem[] = [
