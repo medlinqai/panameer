@@ -14,6 +14,7 @@ import { SCORE_LINE_COPY, DECLARED_NONE_RIDER } from "@/lib/profile-score-copy";
 import { openScoreLines, openScoreMinutes } from "@/lib/score-open";
 import { editHref } from "@/lib/profile-sections";
 import { RebuildBadge, useRebuild } from "@/components/motion/Rebuild";
+import { FREE_AS_OF_LINE } from "@/lib/free-as-of";
 import "./profile-score.css";
 
 // R-C3: built to mockups/score_health_clean_2026-10-03.html. One ring, one list per side.
@@ -75,15 +76,12 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
   const say = next
     ? open.length === 1
       ? `One line left. ${SCORE_LINE_COPY[next.key].action}${next.declarable ? ', or mark "I have none",' : ""} to reach 100 — about ${minutes} minute${minutes === 1 ? "" : "s"}.`
-      : `${open.length} lines left, worth ${missingPoints} points — about ${minutes} minutes. Start with ${next.label}.`
-    : "Every line is answered. Nothing is waiting on you.";
+      : `${open.length} lines left, worth ${missingPoints} points — about ${minutes} minutes. Start with ${next.label}. "I have none" counts too.`
+    : "Every line is answered — you're at 100. Nothing is waiting on you.";
 
   return (
     <div className="pm-score mx-auto max-w-[1010px]">
-      <p className="pb-[26px] pt-3.5 text-[13px] font-semibold">
-        Answer every line — &ldquo;I have none&rdquo; counts — and you reach 100.{" "}
-        <span className="font-normal text-ink-3">Free as of October 2026.</span>
-      </p>
+      <div className="pt-3.5" />
 
       <section className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 md:grid-cols-[340px_1fr]">
         <div>
@@ -138,7 +136,9 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
             <Kpi value={done.length} label="COMPLETED" />
             <Kpi value={open.length} label="TO DO" />
           </div>
-          <p className="my-[18px] text-[14px] leading-[1.65] text-ink-2">{say}</p>
+          <p data-score-say className="my-[18px] text-[14px] leading-[1.65] text-ink-2">
+            {say} <span className="text-ink-3">{FREE_AS_OF_LINE}</span>
+          </p>
           {next && (
             <div className="flex flex-wrap gap-3">
               <Link href={hrefFor(next)} className={BTN}>
