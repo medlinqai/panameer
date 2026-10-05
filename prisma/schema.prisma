@@ -2943,6 +2943,8 @@ model RequesterProfile {
   onboarding_step RequesterOnboardingStep @default(requester_info)
   /// Set when the wizard finishes — the "Ready to Post Work Request" state.
   completed_at    DateTime?
+  /// First page: null until the member first opens /dashboard (greeting "Welcome to Panameer").
+  dashboard_seen_at DateTime?
 
   /// ⚠⚠ A STATUS, AND DELIBERATELY NOT A MECHANISM (`P1-J1.1-E269`).
   ///

@@ -13,6 +13,9 @@ import { prisma } from "@/lib/prisma";
 import { displayFirstName } from "@/lib/display";
 import { RequesterHome } from "@/components/home/RequesterHome";
 import { listMentors } from "@/lib/mentors";
+import { loadMemberFacts } from "@/lib/next-step-facts";
+import { nextStep } from "@/lib/next-step";
+import { NextStepCard } from "@/components/home/NextStepCard";
 
 export default async function DashboardPage({
   searchParams,
@@ -34,6 +37,9 @@ export default async function DashboardPage({
     );
   }
 
+  // First page: everyone lands here; the next-step card reads the member's facts before the visit is marked.
+  const facts = await loadMemberFacts(viewer);
+  const first = facts.seller || facts.buyer ? <NextStepCard page={nextStep(facts)} /> : null;
   const providerProfile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewer.userId } },
     select: { id: true, person_id: true, completeness: true },
@@ -64,6 +70,7 @@ export default async function DashboardPage({
     return (
       <div className="mx-auto w-full max-w-6xl">
         {}
+        {first}
         <WorklistPanel userId={viewer.userId} />
         <Suspense fallback={null}>
           <PublishedDialog />
@@ -86,6 +93,7 @@ export default async function DashboardPage({
   });
 
   if (requester) {
+    await prisma.requesterProfile.update({ where: { id: requester.id }, data: { dashboard_seen_at: new Date() } });
     const [openWorkCount, experts] = await Promise.all([
       prisma.workRequest.count({
         where: { buyer: { user_id: viewer.userId }, status: "POSTED" },
@@ -95,6 +103,7 @@ export default async function DashboardPage({
 
     return (
       <>
+        <div className="mx-auto w-full max-w-6xl">{first}</div>
         <WorklistPanel userId={viewer.userId} />
         <RequesterHome
         firstName={displayFirstName(requester.person.first_name ?? "")}
@@ -134,8 +143,9 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-8">
+      {first}
       <WorklistPanel userId={viewer.userId} />
-      <header>
+      <header className={first ? "hidden" : undefined}>
         <h1 className="text-3xl tracking-tight">
           Welcome Back{firstName ? `, ${firstName}` : ""}
         </h1>
