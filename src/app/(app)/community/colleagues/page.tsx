@@ -97,6 +97,19 @@ export default async function ColleaguesPage() {
                 day.
               </p>
             </div>
+            {/* Moved from the avatar menu (Scott 2026-10-05): both Connect actions live here. */}
+            <div className="border-t border-line py-5" data-request-recommendation>
+              <h2 className="font-display text-[15px] font-bold">Request a Recommendation</h2>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">
+                Ask someone you&apos;ve worked with to vouch for you. It shows on your profile once they write it.
+              </p>
+              <Link
+                href="/recommendations"
+                className="mt-3 inline-block border border-ink bg-surface px-4 py-2 text-[13.5px] font-semibold text-ink transition-colors hover:bg-surface-hover"
+              >
+                Request a Recommendation
+              </Link>
+            </div>
           </aside>
         </div>
       </div>

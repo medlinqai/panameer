@@ -19,9 +19,8 @@ export async function getMe(viewer: Viewer) {
         select: { id: true, name: true, addresses: { select: { id: true } } },
       },
       companyMemberships: {
-        where: { role: "ADMIN", status: "APPROVED" },
-        select: { id: true },
-        take: 1,
+        where: { status: "APPROVED" },
+        select: { id: true, role: true, company_id: true },
       },
       // Profile summaries so the dashboard/self-profile can resolve them from
       // /api/me without a second round trip.
@@ -98,7 +97,9 @@ export async function getMe(viewer: Viewer) {
       vertical: person.company.vertical,
       website: person.company.website,
       logoUrl: person.company.logo_url,
-      isAdmin: person.companyMemberships.length > 0,
+      isAdmin: person.companyMemberships.some((m) => m.role === "ADMIN"),
+      /** An approved member of a company — the Company area exists only then. */
+      isMember: person.companyMemberships.length > 0,
     },
     pAccount: person.company.pAccount,
     providerProfile: provider

@@ -1,7 +1,4 @@
 import { redirect } from "next/navigation";
-import { PageTabs } from "@/components/casing/PageTabs";
-import { tabSequenceFor } from "@/lib/nav";
-import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { getCompanyBinding, getPendingRequests } from "@/lib/company";
@@ -35,13 +32,6 @@ export default async function CompanyPage({
     return (
       <>
         {}
-        <PageTabs
-          wrap
-          eyebrow={ACCOUNT_MENU_NAME}
-          sequence={tabSequenceFor("/profile")}
-          tabs={profileTabs(viewer)}
-          current="/company"
-        />
       <div className="mx-auto w-full max-w-3xl space-y-6">
         {blockedMessage && (
           <Card>
@@ -106,13 +96,6 @@ export default async function CompanyPage({
   return (
     <>
       {}
-      <PageTabs
-        wrap
-        eyebrow={ACCOUNT_MENU_NAME}
-        sequence={tabSequenceFor("/profile")}
-        tabs={profileTabs(viewer)}
-        current="/company"
-      />
     <div className="mx-auto w-full max-w-3xl space-y-6">
       {blockedMessage && (
         <Card>

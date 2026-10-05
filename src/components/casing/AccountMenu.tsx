@@ -10,9 +10,8 @@ import { useMe } from "@/components/MeProvider";
 import { membershipBadge } from "@/lib/membership";
 import {
   ADMIN_PERSONA_NAV,
-  COMPANY_NAV,
+  COMPANY_PERSONA_ITEM,
   PERSONA_NAV,
-  THEME_BEFORE_HREF,
 } from "@/lib/nav";
 import {
   applyThemeChoice,
@@ -36,7 +35,6 @@ export function AccountMenu({
   const { me, refresh } = useMe();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
-  const [companyOpen, setCompanyOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const theme = useSyncExternalStore(
@@ -74,7 +72,6 @@ export function AccountMenu({
     // The submenus collapse with the menu. Leaving one expanded means the next
     // open shows it mid-interaction, which reads as a stuck control.
     setThemeOpen(false);
-    setCompanyOpen(false);
   }, []);
 
   const first = me?.person?.firstName ?? "";
@@ -393,19 +390,6 @@ export function AccountMenu({
               ⚠ **A stated rule that contradicts correct behaviour is the more
               dangerous half — the next person implements the comment.**
             */}
-            <Link
-              href="/profile"
-              role="menuitem"
-              data-menu-item
-              onClick={close}
-              className="mt-3 block w-full border border-magenta px-3 py-2 text-center text-[13.5px] font-bold text-magenta transition-colors hover:bg-magenta/[0.06]"
-            >
-              {/* ⚠ `View Profile` → `My Profile` (`P2-ALL-E687` WS-A, ruling 89f),
-                  consistent with `My Company` and `My Tickets` beside it. The href
-                  is unchanged. ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old
-                  label was the two words `View` and `Profile`. */}
-              My Profile
-            </Link>
 
             {/*
               The availability toggle sits WITH the identity, not in the list
@@ -476,49 +460,6 @@ export function AccountMenu({
             same APPROVED + ADMIN membership test the page gates use, so this
             menu and the pages behind it cannot disagree about who is an admin.
           */}
-          {company?.name &&
-            (company.isAdmin ? (
-              <>
-                <button
-                  type="button"
-                  aria-expanded={companyOpen}
-                  data-menu-item
-                  onClick={() => setCompanyOpen((v) => !v)}
-                  className={`${rowClass} flex items-center justify-between`}
-                >
-                  <span className="min-w-0 truncate pr-2">My Company</span>
-                  <span
-                    aria-hidden
-                    className={"text-ink-2 " + (companyOpen ? "inline-block rotate-90" : "")}
-                  >
-                    ›
-                  </span>
-                </button>
-                {companyOpen && (
-                  <div className="bg-black/[0.02] py-1">
-                    <p className="truncate px-7 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
-                      {company.name}
-                    </p>
-                    {COMPANY_NAV.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        role="menuitem"
-                        data-menu-item
-                        onClick={close}
-                        className="block w-full px-4 py-2 pl-7 text-left text-[14px] hover:bg-black/[0.04]"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <Link href="/company" role="menuitem" data-menu-item onClick={close} className={rowClass}>
-                My Company
-              </Link>
-            ))}
 
           {/*
             ── ⚠⚠⚠ ONE LIST, IN 89f's ORDER (`P2-ALL-E687` WS-A) ─────────────
@@ -542,9 +483,8 @@ export function AccountMenu({
             row. **It is left in place deliberately** — see `nav.ts` on the
             dropped figures, and `/api/me/menu-summary` is not changed.
           */}
-          {rows.map((item) => (
+          {(company?.isMember && !isAdmin ? [rows[0], COMPANY_PERSONA_ITEM, ...rows.slice(1)] : rows).map((item) => (
             <Fragment key={item.href}>
-              {item.href === THEME_BEFORE_HREF && !isAdmin && themeBlock}
               <MenuRow
                 href={item.href}
                 label={item.label}
@@ -554,6 +494,7 @@ export function AccountMenu({
               />
             </Fragment>
           ))}
+          {!isAdmin && themeBlock}
           {/*
             ── ⚠⚠⚠ `Report a Bug` — PHONE WIDTH ONLY (`P2-ALL-E694` WS-A) ─────
 
@@ -574,17 +515,6 @@ export function AccountMenu({
             same utility area, below the rule, beside `Sign Out` — **so a ruled
             list is not quietly extended by a breakpoint change.**
           */}
-          <div className="border-t border-line md:hidden">
-            <a
-              role="menuitem"
-              data-menu-item
-              href="/support/bug"
-              onClick={close}
-              className={rowClass}
-            >
-              Report a Bug
-            </a>
-          </div>
 
           {/* ---- Sign out ----------------------------------------------- */}
           <div className="border-t border-line">
