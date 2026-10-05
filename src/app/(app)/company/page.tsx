@@ -36,7 +36,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
   if (!binding) {
     return (
       <div className="mx-auto w-full max-w-3xl space-y-6">
-        {blockedCard}
+        {blockedMessage && blockedCard}
         <Card>
           <h1 className="text-2xl tracking-tight">Set Up Your Company</h1>
           <p className="mt-2 text-ink-2">
