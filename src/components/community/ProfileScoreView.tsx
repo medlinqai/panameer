@@ -106,6 +106,11 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                     style={{ animationDelay: `${i * 70}ms` }}
                     onMouseEnter={() => setHover(s.line.key)}
                     onMouseLeave={() => setHover(null)}
+                    onFocus={() => setHover(s.line.key)}
+                    onBlur={() => setHover(null)}
+                    tabIndex={0}
+                    data-seg={s.line.key}
+                    aria-label={`${s.line.label}, ${s.line.points} points`}
                   />
                 ))}
               </g>
@@ -155,7 +160,7 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
         <section className="py-5 md:pr-7" data-testid="score-todo">
           <H2 title="To Do" note={open.length ? `${open.length} line${open.length === 1 ? "" : "s"} · ${missingPoints} points` : "nothing left"} />
           {open.map((l) => (
-            <Row key={l.key} onHover={setHover} lineKey={l.key}>
+            <Row key={l.key} onHover={setHover} lineKey={l.key} active={hover === l.key}>
               <span className="flex items-center">
                 <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none rounded-full border-2 border-magenta" />
                 {l.label}
@@ -198,7 +203,7 @@ export function ProfileScoreView({ score }: { score: ProfileScore }) {
                   </b>
                 </p>
                 {got.map((l) => (
-                  <Row key={l.key} onHover={setHover} lineKey={l.key}>
+                  <Row key={l.key} onHover={setHover} lineKey={l.key} active={hover === l.key}>
                     <span className="flex items-center">
                       <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full bg-ink text-[11px] text-surface">
                         ✓
@@ -242,15 +247,22 @@ function Row({
   children,
   lineKey,
   onHover,
+  active,
 }: {
   children: React.ReactNode;
   lineKey: string;
   onHover: (k: string | null) => void;
+  active: boolean;
 }) {
+  // Two-way link (P-E001): hovering the ring segment highlights its row — tint + ink left rule, no scroll.
   return (
     <div
       data-line={lineKey}
-      className="flex items-center justify-between gap-3 border-t border-line py-2.5 text-[14px]"
+      data-active={active ? "true" : undefined}
+      className={
+        "flex items-center justify-between gap-3 border-t border-line py-2.5 text-[14px] transition-colors " +
+        (active ? "bg-ink/[0.05] shadow-[inset_2px_0_0_var(--color-ink)]" : "")
+      }
       onMouseEnter={() => onHover(lineKey)}
       onMouseLeave={() => onHover(null)}
     >

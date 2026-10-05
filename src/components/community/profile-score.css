@@ -95,6 +95,10 @@
     stroke-width 0.16s ease,
     opacity 0.16s ease;
 }
+/* P-E001: focus = hover (wider segment + highlighted row), so no browser box round the ring. */
+.pm-score-seg:focus {
+  outline: none;
+}
 .pm-score-dim {
   opacity: 0.28;
 }
