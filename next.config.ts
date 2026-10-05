@@ -189,6 +189,7 @@ const nextConfig: NextConfig = {
       // Account areas (Scott 2026-10-05): old company + settings URLs land on their new tab.
       { source: "/company/settings", destination: "/company", permanent: true },
       { source: "/company/teams", destination: "/company/people", permanent: true },
+      { source: "/company/terms", destination: "/company#verification", permanent: true },
       { source: "/settings", destination: "/settings/notifications", permanent: true },
       { source: "/settings/company", destination: "/company", permanent: true },
       { source: "/settings/tax", destination: "/settings/withdrawals/w9", permanent: true },

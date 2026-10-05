@@ -2,7 +2,7 @@ import type { PageTabItem } from "@/lib/nav";
 import { PAGE_TABS } from "@/lib/nav";
 import { hasCapability, type Viewer } from "@/lib/access";
 
-export const ACCOUNT_MENU_NAME = "ACCOUNT INFORMATION";
+export const ACCOUNT_MENU_NAME = "PROFILE";
 
 export function profileTabs(viewer: Viewer | null): PageTabItem[] {
   const all = PAGE_TABS["/profile"] ?? [];

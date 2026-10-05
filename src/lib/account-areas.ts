@@ -3,19 +3,18 @@ export type AreaTab = { label: string; href: string; also?: string[]; sub?: { la
 export type Area = "profile" | "company" | "account" | "support";
 
 export const AREA_EYEBROW: Record<Area, string> = {
-  profile: "ACCOUNT INFORMATION",
+  profile: "PROFILE",
   company: "COMPANY",
   account: "ACCOUNT",
   support: "SUPPORT",
 };
 
-/** Company: non-admins see Overview + People only; the area is hidden without a company. */
+/** Company: Overview · People · Branding (Terms moved into Verification); non-admins see Overview + People. */
 export function companyTabs(isAdmin: boolean): AreaTab[] {
   const all: AreaTab[] = [
     { label: "Overview", href: "/company" },
     { label: "People", href: "/company/people" },
     { label: "Branding", href: "/company/branding" },
-    { label: "Terms", href: "/company/terms" },
   ];
   return isAdmin ? all : all.slice(0, 2);
 }

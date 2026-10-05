@@ -25,6 +25,7 @@ for (const w of [1440, 390])
       const page = await ctx.newPage();
       await signIn(page, f!.people[who].email);
       await page.goto("/profile", { waitUntil: "networkidle" });
+      await expect(page.getByTestId("page-tabs").first()).toContainText("PROFILE");
       const rows = await menuRows(page);
       const want = who === "loner" ? ["Profile", "Account", "Support"] : ["Profile", "Company", "Account", "Support"];
       for (const r of want) expect(rows.some((x) => x === r), `${who} menu has ${r}: ${rows.join(" | ")}`).toBe(true);
@@ -34,7 +35,10 @@ for (const w of [1440, 390])
 
       if (who !== "loner") {
         await page.goto("/company", { waitUntil: "domcontentloaded" });
-        expect(await tabs(page)).toEqual(who === "admin" ? ["Overview", "People", "Branding", "Terms"] : ["Overview", "People"]);
+        expect(await tabs(page)).toEqual(who === "admin" ? ["Overview", "People", "Branding"] : ["Overview", "People"]);
+        await expect(page.getByTestId("page-tabs").first()).toContainText("COMPANY");
+        await page.goto("/company/terms", { waitUntil: "domcontentloaded" });
+        await expect(page).toHaveURL(/\/company(#verification)?$/);
         await page.goto("/company/teams", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL(/\/company\/people$/);
       }
