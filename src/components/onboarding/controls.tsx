@@ -34,8 +34,8 @@ export function OptionCard({
         <span
           aria-hidden
           className={
-            "mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-full border-2 text-[11px] font-black text-white " +
-            (selected ? "border-ink bg-ink text-surface" : "border-line bg-transparent")
+            "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center border-[1.5px] text-[11px] font-black text-white " +
+            (selected ? "border-ink bg-ink text-surface" : "border-ink bg-transparent")
           }
         >
           {selected ? "✓" : ""}
@@ -100,7 +100,7 @@ export function Field({
 }
 
 const INPUT =
-  "w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta";
+  "w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta";
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${INPUT} ${props.className ?? ""}`} />;
@@ -125,7 +125,7 @@ export function Notice({
   return (
     <div
       className={
-        "rounded-[12px] border px-4 py-3 text-[14px] " +
+        "border px-4 py-3 text-[14px] " +
         (tone === "error"
           ? "border-red-600/20 bg-red-600/5 text-red-700"
           : "border-magenta/25 bg-magenta/5 text-magenta-dark")

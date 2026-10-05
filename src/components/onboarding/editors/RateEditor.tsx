@@ -126,7 +126,7 @@ function RateBlock({
       <MoneyField label={label} hint={hint} cents={cents} onChange={onChange} placeholder={placeholder} />
       <div className="mt-2 space-y-1 text-[14px]">
         <Row label={`Service fee (up to ${bpsToPercentLabel(MAX_PROVIDER_FEE_BPS)})`} value={fee != null ? `−${formatCents(fee)}` : "—"} />
-        <Row label="You'll Get (at least)" value={youGet != null ? `${formatCents(youGet)}/hr` : "—"} strong />
+        <Row label="You'll get at least" value={youGet != null ? `${formatCents(youGet)}/hr` : "—"} strong />
       </div>
     </div>
   );

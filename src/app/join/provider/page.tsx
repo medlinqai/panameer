@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
+import { AiLine } from "@/components/onboarding/AiLine";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import {
@@ -75,7 +76,6 @@ import { SUITES, SUITE_ORDER } from "@/lib/suite";
    that applies it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { titleCase } from "@/lib/title-case"; */
 import type { SoftwareSuite } from "@prisma/client";
-import { TestimonialCard, DECK_TESTIMONIALS } from "@/components/onboarding/TestimonialCarousel";
 import {
   ProfileCard,
   ProfileHero,
@@ -308,6 +308,7 @@ const ROLE_CARD_COPY: Record<string, string> = {
   PROJECT_SPECIFIC: "Project Manager, Program Manager, Tester, Trainer",
   OPERATIONS_SPECIFIC:
     "Buyer, HR Manager, Bookkeeper, Customer Service, Contract Administrator",
+  AI_SPECIALIST: "AI Agent Builder, Prompt Engineer, AI Process Analyst, AI Implementation Lead",
 };
 
 const MIN_BIO = 100;
@@ -401,7 +402,7 @@ const MAX_SPECS_PER_TIER = 24;
  * otherwise bounding the height just moves the jumpiness somewhere else.
  */
 const SCROLL_REGION =
-  "overflow-y-auto overscroll-contain rounded-[12px] border border-line/70 bg-bg-soft/40 p-3";
+  "overflow-y-auto overscroll-contain border border-line/70 bg-bg-soft/40 p-3";
 
 /**
  * The PICKED chips wrap (brief_Y keeps them wrapping) — but inside a bound, or
@@ -1889,9 +1890,11 @@ setScreen(target);
           setReturnToReview(false);
           goTo("finish");
         }
-      : stepIndex > 0
-        ? goBack
-        : () => setScreen("work_method"),
+      : screen === "title"
+        ? () => goTo("tell_us")
+        : stepIndex > 0
+          ? goBack
+          : () => setScreen("work_method"),
     canBack: true,
     /*
       ── ⚠⚠ "FINISH LATER" ON EVERY COUNTED STEP (`P1-A1.4-E413` WS-6) ─────────
@@ -2364,16 +2367,6 @@ setScreen(target);
               : "Just upload your resume and let our AI model do the rest.",
             wide: true,
             /*
-              E117 — the example provider card is an INVITATION, and it stops
-              being one the moment there is real data to review. Once the
-              provider has uploaded or entered their own work history, showing
-              "Scott W" beside it invites a comparison nobody asked for and eats
-              the width their own content needs.
-            */
-            aside: hasProfileData ? undefined : (
-              <TestimonialCard t={DECK_TESTIMONIALS[0]} />
-            ),
-            /*
               E201 — NO PAGE-LEVEL SKIP ONCE A RÉSUMÉ HAS BEEN READ. "Skip for
               Now" here advanced past the step without saving, which on the
               upload path means walking away from everything the parse just
@@ -2389,7 +2382,7 @@ setScreen(target);
             secondaryLabel: importOutcome ? undefined : "Skip for Now",
             onSecondary: importOutcome ? undefined : goNext,
             onContinue: () => saveAnd("tell_us", { profileMethod: "MANUAL" }),
-            continueLabel: parsingResume ? "Reading your résumé…" : "Continue",
+            continueLabel: parsingResume ? "Reading your résumé…" : nextLabel,
             continueDisabled: parsingResume,
           })}
         >
@@ -2524,7 +2517,7 @@ setScreen(target);
                 {gapsFor(importOutcome, "work").map((g) => (
                   <p
                     key={g}
-                    className="mb-3 rounded-[10px] border border-amber-500/30 bg-amber-50/60 px-3 py-2 text-[13.5px] text-ink-2"
+                    className="mb-3 border border-amber-500/30 bg-amber-50/60 px-3 py-2 text-[13.5px] text-ink-2"
                   >
                     {g}
                   </p>
@@ -2657,7 +2650,7 @@ setScreen(target);
                     </div>
                     {/* ⚠⚠ THE FAILURE, ON THE CARD (`E511` PART 1). */}
                     {suggestError && (
-                      <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                      <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                         {suggestError}
                       </p>
                     )}
@@ -2701,13 +2694,13 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "What Kind of Work Do You Do?",
+            title: "What kind of work do you do?",
             /* `E297` — `tightBody` closes the 32px gap under the title block to 16.
                It is the opt-in `WizardShell` already provides (`E188`), used here
                to buy back height without touching the shared card. */
             tightBody: true,
             subtitle:
-              "Pick the role that fits. Most people pick one — choose more if you genuinely work across them, like a techno-functional consultant.",
+              "Pick every role that fits. The first one leads your profile.",
             onContinue: () =>
               saveAnd("roles", {
                 roleTypeIds: profile.roleTypeIds,
@@ -2733,15 +2726,10 @@ setScreen(target);
             page reads exactly as it always did.
           */}
           {profile.derivedFromSkills > 0 && profile.derivedRoleTypeIds.length > 0 && (
-            <p className="mb-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13px] text-ink-2">
-              We pre-selected{" "}
-              <b className="text-ink">
-                {profile.derivedRoleTypeIds.length === 1 ? "this role" : "these roles"}
-              </b>{" "}
-              from the {profile.derivedFromSkills} skill
-              {profile.derivedFromSkills === 1 ? "" : "s"} we matched in your résumé.{" "}
-              Change it if it is wrong — you decide.
-            </p>
+            <AiLine>
+              we pre-selected {profile.derivedRoleTypeIds.length === 1 ? "1 role" : `${profile.derivedRoleTypeIds.length} roles`} based on
+              the {profile.derivedFromSkills} skill{profile.derivedFromSkills === 1 ? "" : "s"} we read. Change anything — you decide.
+            </AiLine>
           )}
 
           {fieldRoles.length === 0 ? (
@@ -2782,43 +2770,40 @@ setScreen(target);
                   to, but all on one page."* Tightening the GAP is in scope; tightening the
                   CARD is not — `OptionCard` is shared with `/join` and the brief forbids
                   restyling it. See the report for what this does and does not buy. */}
-              <div className="space-y-2">
-                  {fieldRoles.map((r) => {
-                    const picked = profile.roleTypeIds.includes(r.id);
-                    const isPrimary = profile.roleTypeIds[0] === r.id;
-                    return (
-                      <OptionCard
-                        key={r.id}
-                        selected={picked}
-                        onClick={() => toggleRole(r)}
-                        /*
-                          E186 — "{X}-Specific Roles". `r.name` is already
-                          "Application-Specific" (the taxonomy's own string), so
-                          the title is that plus the noun; deriving it from
-                          `display` and re-adding the suffix would have been a
-                          second place for the two to disagree.
-                        */
-                        title={
-                          roleLong(`${r.name} Roles`) +
-                          (isPrimary && profile.roleTypeIds.length > 1
-                            ? "  ·  primary"
-                            : "")
+              <div className="mt-2 border-t border-line" data-role-rows>
+                {fieldRoles.map((r) => {
+                  const picked = profile.roleTypeIds.includes(r.id);
+                  const leads = profile.roleTypeIds[0] === r.id && profile.roleTypeIds.length > 1;
+                  const fromCv = picked && profile.derivedRoleTypeIds.includes(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      aria-pressed={picked}
+                      onClick={() => toggleRole(r)}
+                      className="flex w-full items-start gap-3.5 border-b border-line px-1 py-3.5 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-ink"
+                    >
+                      <span
+                        aria-hidden
+                        className={
+                          "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center border-[1.5px] border-ink text-[12px] " +
+                          (picked ? "bg-ink text-surface" : "")
                         }
-                        description={
-                          ROLE_CARD_COPY[r.code] ??
-                          `${r.domains.length} area${r.domains.length === 1 ? "" : "s"} of work`
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              {profile.roleTypeIds.length > 1 && (
-                <p className="mt-3 text-[14px] text-ink-2">
-                  You&apos;ll pick skills from all{" "}
-                  {profile.roleTypeIds.length} on the next step. The first one
-                  is what your profile leads with.
-                </p>
-              )}
+                      >
+                        {picked ? "✓" : ""}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[15px] font-bold">
+                          {roleLong(`${r.name} Roles`)}
+                          {leads && <span className="ml-2 text-[11px] font-bold uppercase tracking-[0.08em] text-magenta">Leads profile</span>}
+                          {fromCv && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from résumé</span>}
+                        </span>
+                        <span className="mt-0.5 block text-[13.5px] text-ink-2">{ROLE_CARD_COPY[r.code] ?? r.domains.map((d) => d.name).join(", ")}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
               {/*
                 ── ⚠⚠ THE WARNING, BACK AS INFORMATION (`P2-J1.4-E517`) ────────
@@ -2877,11 +2862,8 @@ setScreen(target);
               provider does here: add everything true of you, and more of them
               means more ways to be found.
             */
-            title: "Which Skills Do You Want to Be Found For?",
-            subtitle:
-              ed.roleNames.length > 0
-                ? `Add every skill you have across ${ed.roleNames.join(" and ")} — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.`
-                : "Add every skill you have — there's no limit, and each one is another search a buyer can find you in. Search the catalog or add your own.",
+            title: "Which skills do you want to be found for?",
+            subtitle: "Buyers search and match on these.",
             onContinue: ed.save,
             continueDisabled: !ed.canSave,
           })}
@@ -3030,7 +3012,7 @@ setScreen(target);
                   place in the list; it was never the text inside it.
                 */
                 key={i}
-                className="flex flex-wrap items-end gap-3 rounded-brand border border-line p-4"
+                className="flex flex-wrap items-end gap-3 border border-line p-4"
               >
                 <div className="min-w-[180px] flex-1">
                   <Field label="Language *">
@@ -3051,7 +3033,7 @@ setScreen(target);
                       <select
                         value={l.name}
                         onChange={(e) => update(i, { name: e.target.value })}
-                        className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+                        className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
                       >
                         <option value="">Choose a language…</option>
                         {LANGUAGES.map((n) => (
@@ -3068,7 +3050,7 @@ setScreen(target);
                     <select
                       value={l.level ?? ""}
                       onChange={(e) => update(i, { level: e.target.value || null })}
-                      className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+                      className="w-full border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
                     >
                       <option value="">Select…</option>
                       {LANGUAGE_LEVELS.map((o) => (
@@ -3187,8 +3169,8 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Tell Clients What You Charge",
-            subtitle: "You can change your rate any time.",
+            title: "What do you charge?",
+            subtitle: "Set one or both. You can change them any time.",
             onContinue: rateEditing().save,
             continueDisabled: !rateEditing().canSave,
           })}
@@ -3243,7 +3225,7 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: "Last Thing — Your Photo and a Few Details",
+            title: "Add your photo and contact details",
             subtitle:
               "Profiles with a photo get noticeably more responses. We need your phone and address too — they stay private, and they're how a buyer reaches you.",
             // E188 — the ONLY change to this step's layout. Its body opens with
@@ -3265,7 +3247,7 @@ setScreen(target);
             E107 — that was resolved when the standalone "You're Done!" page was
             folded into this step and stopped being a separate, wider layout.
           */}
-          <div className="flex flex-col items-center gap-5 rounded-brand border border-line p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-7 sm:text-left">
+          <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-7 sm:text-left">
             <Avatar
               firstName={profile.firstName}
               lastName={profile.lastName}
@@ -3846,7 +3828,7 @@ setScreen(target);
                 />
                 {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
                 {bioError && (
-                  <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                  <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                     {bioError}
                   </p>
                 )}
@@ -3918,7 +3900,7 @@ setScreen(target);
                     TOP of the body, directly under the import control that
                     failed, rather than at the foot below the employer list. */}
                 {workImportError && (
-                  <p className="mb-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                  <p data-ai-line className="mb-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                     {workImportError}
                   </p>
                 )}
@@ -4160,7 +4142,7 @@ setScreen(target);
                   />
                   {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
                   {certError && (
-                    <p className="mt-3 rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[13.5px] text-ink">
+                    <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                       {certError}
                     </p>
                   )}
@@ -4507,7 +4489,7 @@ function ReviewChecklist({
 }) {
   if (errors.length === 0 && changes.length === 0) {
     return (
-      <div className="rounded-brand border border-emerald-500/30 bg-emerald-50/60 p-4">
+      <div className="border border-emerald-500/30 bg-emerald-50/60 p-4">
         <p className="text-[15px] font-bold text-emerald-800">
           ✓ Everything checks out — you&apos;re ready to publish.
         </p>
@@ -4538,7 +4520,7 @@ function ReviewChecklist({
       )}
 
       {changes.length > 0 && (
-        <div className="rounded-brand border border-amber-500/30 bg-amber-50/60 p-4">
+        <div className="border border-amber-500/30 bg-amber-50/60 p-4">
           <p className="text-[15px] font-bold text-ink">
             {changes.length === 1
               ? "1 suggested change"
@@ -4686,7 +4668,7 @@ function ReaderLine({
     */
     if (path.employersFromHeuristic) {
       return (
-        <p className="mb-6 flex flex-wrap items-center gap-2 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13.5px] text-ink-2">
+        <p className="mb-6 flex flex-wrap items-center gap-2 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink-2">
           <SparkIcon />
           <span>
             <b className="text-ink">Panameer AI read this</b> — but it couldn&apos;t
@@ -4704,7 +4686,7 @@ function ReaderLine({
     );
   }
   return (
-    <p className="mb-6 rounded-[10px] border border-dashed border-line px-3 py-2 text-[13.5px] text-ink-2">
+    <p className="mb-6 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink-2">
       <b className="text-ink">AI didn&apos;t read this one</b> — {path.reason}.
       What&apos;s below came from pattern-matching, so check it closely.
       {/*
