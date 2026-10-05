@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { WizardShell } from "@/components/onboarding/WizardShell";
 import { AiLine } from "@/components/onboarding/AiLine";
+import { formatCents } from "@/lib/display";
 import { Avatar } from "@/components/Avatar";
 import { VerifyGate } from "@/components/onboarding/VerifyGate";
 import {
@@ -197,6 +198,7 @@ type Screen = "signup" | "check_email" | "work_method" | Step;
 type EditSection =
   | null
   | "title"
+  | "roles"
   | "rate"
   | "work"
   | "skills"
@@ -510,6 +512,7 @@ export default function JoinProviderPage() {
   const [fieldRoles, setFieldRoles] = useState<FieldRole[]>([]);
   const [specGroups, setSpecGroups] = useState<SpecializationGroup[]>([]);
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
+  const [unsorted, setUnsorted] = useState(0);
   /**
    * E102 — which (role, domain) the SKILLS TIER is currently browsing.
    *
@@ -1002,6 +1005,16 @@ setScreen(target);
     across the whole set, so assembling it client-side from N responses would
     only add N-1 chances for a partial list to look like a complete one.
   */
+  // Review flag: companies from the résumé not yet sorted into Employer / Project client.
+  useEffect(() => {
+    if (screen !== "finish") return;
+    fetch("/api/onboarding/provider/company-sort")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { state?: { rows: { current: string | null }[] } | null } | null) =>
+        setUnsorted(d?.state?.rows.filter((x) => !x.current).length ?? 0)
+      )
+      .catch(() => setUnsorted(0));
+  }, [screen, profile.employers.length]);
   const roleKey = profile.roleTypeIds.join(",");
   useEffect(() => {
     /* ⚠ SUPERSEDED, quoted (`E412` WS-1): `if (screen !== "skills" || !roleKey) return;`
@@ -1995,6 +2008,9 @@ setScreen(target);
       case "education":
         if (await postStep("education", { education: profile.education })) setEditSection(null);
         return;
+      case "roles":
+        if (await postStep("roles", { roleTypeIds: profile.roleTypeIds, roleTypeId: profile.roleTypeId })) setEditSection(null);
+        return;
       case "skills":
         if (
           await postStep("skills", {
@@ -2037,6 +2053,8 @@ setScreen(target);
   const sectionEditorCanSave =
     editSection === "title"
       ? profile.headline.trim() !== ""
+      : editSection === "roles"
+        ? profile.roleTypeIds.length > 0
       : editSection === "rate"
         ? Boolean(profile.hourlyRateCents)
         : editSection === "skills"
@@ -2060,6 +2078,43 @@ setScreen(target);
     //     body: (<> …<Field label="Your Title" …><TextInput … maxLength={HEADLINE_MAX} /></Field>… </>),
     //   });
   */
+  // Role rows: shared by the Roles step and the review's Roles editor.
+  const roleRows = () => (
+    <div className="mt-2 border-t border-line" data-role-rows>
+      {fieldRoles.map((r) => {
+        const picked = profile.roleTypeIds.includes(r.id);
+        const leads = profile.roleTypeIds[0] === r.id && profile.roleTypeIds.length > 1;
+        const fromCv = picked && profile.derivedRoleTypeIds.includes(r.id);
+        return (
+          <button
+            key={r.id}
+            type="button"
+            aria-pressed={picked}
+            onClick={() => toggleRole(r)}
+            className="flex w-full items-start gap-3.5 border-b border-line px-1 py-3.5 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-ink"
+          >
+            <span
+              aria-hidden
+              className={
+                "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center border-[1.5px] border-ink text-[12px] " +
+                (picked ? "bg-ink text-surface" : "")
+              }
+            >
+              {picked ? "✓" : ""}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[15px] font-bold">
+                {roleLong(`${r.name} Roles`)}
+                {leads && <span className="ml-2 text-[11px] font-bold uppercase tracking-[0.08em] text-magenta">Leads profile</span>}
+                {fromCv && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from résumé</span>}
+              </span>
+              <span className="mt-0.5 block text-[13.5px] text-ink-2">{ROLE_CARD_COPY[r.code] ?? r.domains.map((d) => d.name).join(", ")}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
   const titleEditing = () => ({
     canSave: titleCanSave(profile.headline),
     save: () => saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
@@ -2770,40 +2825,7 @@ setScreen(target);
                   to, but all on one page."* Tightening the GAP is in scope; tightening the
                   CARD is not — `OptionCard` is shared with `/join` and the brief forbids
                   restyling it. See the report for what this does and does not buy. */}
-              <div className="mt-2 border-t border-line" data-role-rows>
-                {fieldRoles.map((r) => {
-                  const picked = profile.roleTypeIds.includes(r.id);
-                  const leads = profile.roleTypeIds[0] === r.id && profile.roleTypeIds.length > 1;
-                  const fromCv = picked && profile.derivedRoleTypeIds.includes(r.id);
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      aria-pressed={picked}
-                      onClick={() => toggleRole(r)}
-                      className="flex w-full items-start gap-3.5 border-b border-line px-1 py-3.5 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-ink"
-                    >
-                      <span
-                        aria-hidden
-                        className={
-                          "mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center border-[1.5px] border-ink text-[12px] " +
-                          (picked ? "bg-ink text-surface" : "")
-                        }
-                      >
-                        {picked ? "✓" : ""}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-[15px] font-bold">
-                          {roleLong(`${r.name} Roles`)}
-                          {leads && <span className="ml-2 text-[11px] font-bold uppercase tracking-[0.08em] text-magenta">Leads profile</span>}
-                          {fromCv && <span className="ml-2 border border-line px-1.5 py-px text-[11px] font-semibold text-ink-2">from résumé</span>}
-                        </span>
-                        <span className="mt-0.5 block text-[13.5px] text-ink-2">{ROLE_CARD_COPY[r.code] ?? r.domains.map((d) => d.name).join(", ")}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {roleRows()}
 
               {/*
                 ── ⚠⚠ THE WARNING, BACK AS INFORMATION (`P2-J1.4-E517`) ────────
@@ -3659,9 +3681,8 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            title: `Looking good, ${displayFirstName(profile.firstName)}!`,
-            subtitle:
-              "This is exactly what buyers will see. Fix anything flagged below, then publish.",
+            title: "Here's your profile. Check it, then publish.",
+            subtitle: "This is what buyers will see. Edit any line before you go live.",
             wide: true,
             onContinue: publish,
             // The gate itself is unchanged and still enforced server-side by
@@ -3688,6 +3709,47 @@ setScreen(target);
             line each.
           */}
           <ReviewChecklist errors={errors} changes={[]} onFix={applyFix} />
+          <ReviewRows
+            rows={[
+              {
+                k: "Résumé",
+                v: profile.profileMethod === "MANUAL" && !importOutcome ? "Typed by hand" : profile.employers.length || profile.projects.length ? `Read · ${profile.employers.length} job${profile.employers.length === 1 ? "" : "s"}, ${profile.projects.length + profile.employers.reduce((n, e) => n + (e.projects ?? []).length, 0)} projects` : "Not uploaded",
+                onEdit: () => setUploadModal(true),
+                edit: "Upload",
+              },
+              { k: "Title", v: profile.headline || "Not set", onEdit: () => setEditSection("title") },
+              {
+                k: "Roles",
+                v: profile.roleTypeIds.map((id, i) => `${roleLong(fieldRoles.find((r) => r.id === id)?.name ?? "")}${i === 0 && profile.roleTypeIds.length > 1 ? " (leads)" : ""}`).join(" · ") || "None picked",
+                onEdit: () => setEditSection("roles"),
+              },
+              {
+                k: "Skills",
+                v: shownSkillNames.length + profile.customSkills.length ? `${shownSkillNames.length + profile.customSkills.length} — ${[...shownSkillNames.map((x) => x.name), ...profile.customSkills].slice(0, 5).join(", ")}${shownSkillNames.length + profile.customSkills.length > 5 ? "…" : ""}` : "None yet",
+                onEdit: () => setEditSection("skills"),
+              },
+              ...(steps.includes("rate")
+                ? [{
+                    k: "Rates",
+                    v: [profile.onsiteRateCents ? `Onsite ${formatCents(profile.onsiteRateCents)}/hr` : null, profile.remoteRateCents ? `Offsite ${formatCents(profile.remoteRateCents)}/hr` : null].filter(Boolean).join(" · ") || "Not set",
+                    small: "You'll get up to 14.99% less after the Panameer fee.",
+                    onEdit: () => setEditSection("rate"),
+                  }]
+                : []),
+              { k: "Photo", v: [profile.photoUrl ? "Added" : "No photo yet", addr.city?.trim() || null, addr.country?.trim() || null].filter(Boolean).join(" · "), onEdit: () => setPhotoModal(true) },
+              {
+                k: "Work history",
+                v: profile.employers.length ? `${profile.employers.length} employer${profile.employers.length === 1 ? "" : "s"}` : "No employers yet",
+                warn: unsorted > 0 ? `${unsorted} compan${unsorted === 1 ? "y" : "ies"} found — sort them` : undefined,
+                small: unsorted > 0 ? "From your résumé. Mark each Employer, Project client or Remove." : undefined,
+                onEdit: () =>
+                  unsorted > 0
+                    ? document.querySelector("[data-testid=company-sort]")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    : setEditSection("work"),
+                edit: unsorted > 0 ? "Sort" : "Edit",
+              },
+            ]}
+          />
 
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
@@ -4331,6 +4393,7 @@ setScreen(target);
             )}
 
             {editSection === "title" && titleEditing().body}
+            {editSection === "roles" && roleRows()}
             {editSection === "rate" && rateEditing().body}
             {editSection === "location" && contactEditing().body}
             {editSection === "education" && (
@@ -4403,7 +4466,8 @@ setScreen(target);
  */
 const EDIT_SECTION_TITLES: Record<Exclude<EditSection, null>, string> = {
   title: "Your Title",
-  rate: "Your Rate",
+  roles: "Your Roles",
+  rate: "Your Rates",
   work: "Work History & Projects",
   skills: "Your Skills",
   specializations: "Your Specializations",
@@ -4751,3 +4815,22 @@ function gapsFor(
    ⚠⚠⚠ THAT IS THE 8TH OCCURRENCE OF THAT TRAP, and `check:comment-quotes`
    caught it — the gate working. */
 
+// Review (onboarding frame): one line per step + Work history, each with Edit.
+function ReviewRows({ rows }: { rows: { k: string; v: string; warn?: string; small?: string; onEdit: () => void; edit?: string }[] }) {
+  return (
+    <div data-review-rows className="mt-5 border-t border-line">
+      {rows.map((r) => (
+        <div key={r.k} data-review-row={r.k} className="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-1 border-b border-line px-1 py-3.5 sm:grid-cols-[150px_1fr_auto]">
+          <p className="text-[14px] font-bold">{r.k}</p>
+          <p className="order-3 col-span-2 text-[14px] leading-relaxed sm:order-none sm:col-span-1">
+            {r.warn ? <span className="font-semibold text-magenta-dark">{r.warn}</span> : r.v}
+            {r.small && <small className="block text-[12.5px] text-ink-2">{r.small}</small>}
+          </p>
+          <button type="button" onClick={r.onEdit} className="text-[13px] font-bold underline underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-ink">
+            {r.edit ?? "Edit"}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}

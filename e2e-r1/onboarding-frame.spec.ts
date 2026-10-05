@@ -93,3 +93,27 @@ for (const v of [{ w: 1440, h: 800, scheme: "light" as const }, { w: 390, h: 750
       await dropFixture(f);
     }
   });
+
+// Review: one row per step + Work history, Publish profile.
+for (const v of [{ w: 1440, h: 800, scheme: "light" as const }, { w: 390, h: 750, scheme: "dark" as const }])
+  test(`review rows ${v.w} ${v.scheme}`, async ({ browser }) => {
+    const f = await createFixture();
+    try {
+      const ctx = await browser.newContext({ colorScheme: v.scheme, viewport: { width: v.w, height: v.h } });
+      const page = await ctx.newPage();
+      await signIn(page, f.provider.email);
+      await page.goto("/join/provider?step=finish", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("[data-step-eyebrow]")).toHaveText("Review", { timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Here's your profile. Check it, then publish." })).toBeVisible();
+      for (const k of ["Résumé", "Title", "Roles", "Skills", "Rates", "Photo", "Work history"])
+        await expect(page.locator(`[data-review-row="${k}"]`)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Publish profile" })).toBeVisible();
+      await page.screenshot({ path: `e2e-r1/.artifacts/review-${v.w}-${v.scheme}.png` });
+      await page.locator('[data-review-row="Roles"] button').click();
+      await expect(page.locator("dialog [data-role-rows]")).toBeVisible();
+      await page.screenshot({ path: `e2e-r1/.artifacts/review-roles-${v.w}-${v.scheme}.png` });
+      await ctx.close();
+    } finally {
+      await dropFixture(f);
+    }
+  });
