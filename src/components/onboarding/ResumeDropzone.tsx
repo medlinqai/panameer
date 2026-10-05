@@ -107,7 +107,7 @@ export function ResumeDropzone({
           if (f) choose(f);
         }}
         className={
-          "grid place-items-center rounded-brand border-2 border-dashed p-8 text-center transition-colors " +
+          "grid place-items-center border border-dashed p-8 text-center transition-colors " +
           (dragOver ? "border-magenta bg-magenta/[0.04]" : "border-line")
         }
       >
@@ -180,7 +180,7 @@ export function ResumeDropzone({
       />
 
       {error && (
-        <p className="mt-3 rounded-[10px] bg-red-50 px-3 py-2 text-[14px] text-red-700">
+        <p className="mt-3 text-[14px] font-semibold text-magenta-dark">
           {error}
         </p>
       )}

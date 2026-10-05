@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip, Notice, TextInput } from "@/components/onboarding/controls";
+import { AiLine } from "@/components/onboarding/AiLine";
 import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels";
 import { titleCase } from "@/lib/title-case";
 
@@ -80,19 +81,29 @@ export function SkillsEditor({
   heldNotShownExplanation: string;
 }) {
       const chosenSkills = new Set(selectedIds);
-
-      const basketSkills = shownSkillNames;
+      // One chip per skill name (the same name can sit under two ids); removing it drops every id.
+      const basketSkills = shownSkillNames.filter(
+        (sk, i, a) => a.findIndex((x) => x.name.toLowerCase() === sk.name.toLowerCase()) === i
+      );
+      const idsNamed = (name: string) =>
+        selectedNames.filter((x) => x.name.toLowerCase() === name.toLowerCase()).map((x) => x.id);
       const heldNotShown = heldNotShownSkillNames;
       const basketCount = basketSkills.length + customs.length;
 
       const q = query.trim().toLowerCase();
       // Already-picked skills are chips above, so they stop being suggestions —
       // filtering them out BEFORE the cap keeps a full set of usable options as
-      const matchingSkills = (
-        q ? skillOpts.filter((sk) => sk.name.toLowerCase().includes(q)) : skillOpts
-      ).filter((sk) => !chosenSkills.has(sk.id));
+      const pickedNames = new Set(selectedNames.map((x) => x.name.toLowerCase()));
+      const open = skillOpts.filter((sk) => !chosenSkills.has(sk.id) && !pickedNames.has(sk.name.toLowerCase()));
+      // No query: 10–15 suggestions from the member's software (pillars of skills they hold). Typing searches all.
+      const areas = new Set(selectedNames.map((x) => x.area).filter(Boolean) as string[]);
+      const related = [...open].sort(
+        (a, b) => Number(areas.has(b.pillar?.name ?? "")) - Number(areas.has(a.pillar?.name ?? ""))
+      );
+      const matchingSkills = q ? open.filter((sk) => sk.name.toLowerCase().includes(q)) : related;
       const shownSkills = matchingSkills.slice(0, maxSuggestions);
-      const hiddenSkillCount = matchingSkills.length - shownSkills.length;
+      const hiddenSkillCount = q ? matchingSkills.length - shownSkills.length : 0;
+      const suggestFor = [...areas].slice(0, 2).join(" / ");
 
       const ambiguousSkills = ambiguousSkillNames(
         skillOpts.map((sk) => ({ name: sk.name, area: sk.pillar?.name ?? null }))
@@ -206,9 +217,7 @@ export function SkillsEditor({
         this.
       */
       const fromResume = new Set(resumeSkillIds);
-      const aiMatchedCount = selectedIds.filter((id) =>
-        fromResume.has(id)
-      ).length;
+      const aiMatchedCount = basketSkills.filter((sk) => idsNamed(sk.name).some((id) => fromResume.has(id))).length;
       const cameFromResume = aiMatchedCount > 0;
 
       /* ⚠ `roleNames` and `totalPicked` MOVED TO THE CALLER with `canSave` and
@@ -233,36 +242,35 @@ export function SkillsEditor({
             E187, shown on ARRIVAL rather than after the first manual click.
           */}
           {cameFromResume && (
-            <div className="mb-4 border-l-2 border-ink py-2 pl-4">
-              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
-                <SparkIcon />
-                AI scanned your résumé against the ERP Service Catalog
-              </p>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">
-                It pulled{" "}
-                <b className="text-ink">
-                  {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}
-                </b>{" "}
-                and pre-selected them below. Remove anything that isn&apos;t
-                yours, and add what it missed — buyers match on these.
-              </p>
-            </div>
+            <AiLine className="mb-4">
+              {aiMatchedCount} skill{aiMatchedCount === 1 ? "" : "s"}, pre-selected below. Remove anything that isn&apos;t yours.
+            </AiLine>
           )}
 
           {/* The basket is always on screen and always removable. */}
           {(basketSkills.length > 0 || customs.length > 0) && (
             <div className="mb-4">
-              <p className="mb-1.5 text-[13px] font-bold">
+              <p className="mb-2.5 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
                 {/* E202 — a count, not a quota. "12/15" turned a list of what
                     you can do into a budget you were spending. */}
                 Your Skills{" "}
                 {/* ⚠ E517 — counts what this list SHOWS. Out-of-role skills are
                     still held and are counted in their own block below. */}
-                <span className="font-normal text-ink-2">({basketCount})</span>
+                <span>({basketCount})</span>
               </p>
               <div className={`flex flex-wrap gap-2 ${pickedRegionClass}`}>
                 {basketSkills.map((sk) => (
-                  <Chip key={sk.id} selected onClick={() => toggleSkill(sk.id)}>
+                  <Chip
+                    key={sk.id}
+                    selected
+                    onClick={() => {
+                      const ids = new Set(idsNamed(sk.name));
+                      onChange({
+                        skillIds: selectedIds.filter((x) => !ids.has(x)),
+                        skillNames: selectedNames.filter((x) => !ids.has(x.id)),
+                      });
+                    }}
+                  >
                     {sk.name}
                     {/*
                       ⚠ SUPERSEDED, quoted not deleted (`P1-A1.3-E401` WS-3):
@@ -300,7 +308,7 @@ export function SkillsEditor({
           {/* SEARCH-FIRST. The catalog is meant to grow without limit, so the
               page must never grow with it: a capped suggestion set inside a
               fixed-height scroll region (E053/E054). */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex max-w-[560px] items-stretch gap-2">
             <TextInput
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
@@ -310,8 +318,8 @@ export function SkillsEditor({
                   addCustomSkill();
                 }
               }}
-              placeholder="Search skills — or type your own and press Add"
-              className="max-w-md"
+              placeholder="Search the full catalog, or type your own"
+              className="min-w-0 flex-1"
             />
             <button
               type="button"
@@ -336,7 +344,7 @@ export function SkillsEditor({
             write — a skill is a claim about what somebody can do.
           */}
           {match && (
-            <div className="mt-3 max-w-md rounded-brand border border-line bg-bg-soft p-4">
+            <div className="mt-3 max-w-md border border-line bg-bg-soft p-4">
               <p className="text-[14px] font-bold">{match.prompt}</p>
               <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
                 It&apos;s already in the catalog, so buyers already search for it.
@@ -361,7 +369,12 @@ export function SkillsEditor({
             </div>
           )}
 
-          <div className={`mt-3 max-h-[220px] ${scrollRegionClass}`}>
+          {!q && shownSkills.length > 0 && (
+            <p className="mb-2.5 mt-5 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2" data-skill-suggestions>
+              Suggested{suggestFor ? ` · ${suggestFor}` : ""}
+            </p>
+          )}
+          <div className={q ? `mt-3 max-h-[220px] ${scrollRegionClass}` : "mt-1"}>
             <div className="flex flex-wrap gap-2">
               {shownSkills.map((sk) => (
                 <Chip key={sk.id} selected={false} onClick={() => toggleSkill(sk.id)}>
@@ -391,6 +404,7 @@ export function SkillsEditor({
               +{hiddenSkillCount} more — keep typing to narrow the list.
             </p>
           )}
+          {!q && <p className="mt-2 text-[12.5px] text-ink-2">The full catalog ({skillOpts.length} skills) shows as you type.</p>}
 
           {/*
             ── ⚠⚠ THE REMOVAL GAP (`P2-J1.4-E517`) ──────────────────────────────
@@ -420,7 +434,7 @@ export function SkillsEditor({
             strings are placed in constants so his ruling is a one-line swap.
           */}
           {heldNotShown.length > 0 && (
-            <div className="mt-6 rounded-brand border border-line bg-bg-soft p-4">
+            <div className="mt-6 border border-line bg-bg-soft p-4">
               <p className="text-[14px] font-bold">{heldNotShownHeading}</p>
               <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
                 {heldNotShownExplanation}

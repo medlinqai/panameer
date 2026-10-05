@@ -144,7 +144,7 @@ export function ResumeUploadModal({
             if (f) choose(f);
           }}
           className={
-            "grid place-items-center rounded-brand border-2 border-dashed p-10 text-center transition-colors " +
+            "grid place-items-center border border-dashed p-10 text-center transition-colors " +
             (dragOver ? "border-magenta bg-magenta/[0.04]" : "border-line")
           }
         >
@@ -161,7 +161,7 @@ export function ResumeUploadModal({
           </button>
         </div>
       ) : (
-        <div className="rounded-brand border border-line p-4">
+        <div className="border border-line p-4">
           <div className="flex items-center gap-3">
             <span
               aria-hidden
@@ -215,7 +215,7 @@ export function ResumeUploadModal({
       />
 
       {error && (
-        <p className="mt-4 rounded-[10px] bg-red-50 px-3 py-2 text-[14px] text-red-700">
+        <p className="mt-4 text-[14px] font-semibold text-magenta-dark">
           {error}
         </p>
       )}

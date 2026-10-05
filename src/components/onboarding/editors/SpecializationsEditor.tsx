@@ -23,7 +23,7 @@ function CascadeTier({
   // below the fold. Expanded tiers are unchanged.
   if (chosen) {
     return (
-      <section className="flex items-center gap-3 rounded-brand border border-line px-4 py-2.5">
+      <section className="flex items-center gap-3 border border-line px-4 py-2.5">
         <span
           aria-hidden
           className="grid h-6 w-6 flex-none place-items-center rounded-full bg-ink text-[12px] font-black text-surface"
@@ -50,7 +50,7 @@ function CascadeTier({
   }
 
   return (
-    <section className="rounded-brand border border-line p-4">
+    <section className="border border-line p-4">
       <div className="mb-2 flex items-center justify-between gap-4">
         <h2 className="flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">
           <span
