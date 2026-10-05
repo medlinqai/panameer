@@ -64,6 +64,7 @@ export default async function ColleaguesPage() {
               name: r.name,
               title: r.title,
               company: r.company,
+              companyId: r.companyId,
               skillNames: r.skillNames,
               photoUrl: r.photoUrl,
               reason: r.reason,

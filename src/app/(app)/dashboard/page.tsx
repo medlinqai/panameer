@@ -16,6 +16,7 @@ import { listMentors } from "@/lib/mentors";
 import { loadMemberFacts } from "@/lib/next-step-facts";
 import { nextStep } from "@/lib/next-step";
 import { NextStepCard } from "@/components/home/NextStepCard";
+import { CompanyLink } from "@/components/company/CompanyLink";
 
 export default async function DashboardPage({
   searchParams,
@@ -119,7 +120,7 @@ export default async function DashboardPage({
     where: { user_id: viewer.userId },
     select: {
       first_name: true,
-      company: { select: { name: true } },
+      company: { select: { id: true, name: true } },
       buyerProfile: { select: { subscription_tier: true } },
       requesterProfile: {
         select: {
@@ -151,7 +152,7 @@ export default async function DashboardPage({
         </h1>
         {person?.company?.name && (
           <p className="mt-1 text-black/60 dark:text-white/60">
-            {person.company.name}
+            <CompanyLink id={person.company.id} name={person.company.name} />
           </p>
         )}
       </header>

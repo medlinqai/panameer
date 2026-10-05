@@ -12,6 +12,7 @@ export type ColleagueCard = {
   name: string;
   title: string | null;
   company: string | null;
+  companyId: string | null;
   photoUrl: string | null;
   location: string | null;
   profileId: string | null;
@@ -66,6 +67,7 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
     personId: r.personId,
     title: r.title,
     company: r.company,
+    companyId: r.companyId,
     name: r.name,
     photoUrl: r.photoUrl,
     location: whereById.get(r.personId) ?? null,
