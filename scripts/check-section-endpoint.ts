@@ -274,8 +274,10 @@ for (const [name, files] of [...sent.entries()].sort()) {
      unnumbered get-started ask. If it ever gained a counter, `work_method` would
      no longer be step 1. */
   {
-    const start = strip(readFileSync(join("src","app","join","provider","start","page.tsx"),"utf8"));
-    check("6 — /join/provider/start exists and renders the ask", /Get Started Now!/.test(start));
+    // The page renders the shared StartPage (2026-10-05), which carries the ask.
+    const start = strip(readFileSync(join("src","app","join","provider","start","page.tsx"),"utf8")) +
+      strip(readFileSync(join("src","components","onboarding","StartPage.tsx"),"utf8"));
+    check("6 — /join/provider/start exists and renders the ask", /<StartPage/.test(start) && /Get Started Now!/.test(start));
     check("6 — ⚠ and it carries NO counter", !/\bstep=\{/.test(start) && !/totalSteps/.test(start),
       "it is the unnumbered ask this scheme is anchored to");
   }

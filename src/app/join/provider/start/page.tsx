@@ -1,10 +1,18 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { TestimonialCarousel } from "@/components/onboarding/TestimonialCarousel";
+import { StartPage } from "@/components/onboarding/StartPage";
 import { displayFirstName } from "@/lib/display";
+import { stepsForProfile, type ProviderStep } from "@/lib/onboarding";
+
+// Seller start page matches the buyer's (Scott 2026-10-05). TestimonialCarousel stays on disk, unused here.
+const CARDS: Partial<Record<ProviderStep, { title: string; blurb: string }>> = {
+  title: { title: "Your Title", blurb: "What you do, in one line clients search for." },
+  roles: { title: "Your Roles", blurb: "The kinds of work you take on." },
+  skills: { title: "Your Skills", blurb: "What you want to be found for." },
+  rate: { title: "Your Rates", blurb: "Onsite and Offsite — what you charge." },
+  picture: { title: "Your Photo", blurb: "A face and a few details clients trust." },
+};
 
 export default async function GetStartedPage() {
   const viewer = await getSessionViewer();
@@ -16,7 +24,7 @@ export default async function GetStartedPage() {
       first_name: true,
       is_service_provider: true,
       user: { select: { email_verified: true } },
-      providerProfile: { select: { id: true } },
+      providerProfile: { select: { id: true, work_method: true } },
     },
   });
 
@@ -25,73 +33,19 @@ export default async function GetStartedPage() {
   // Still unverified → the wizard owns the verify gate.
   if (!person.user?.email_verified) redirect("/join/provider");
 
-  const firstName = displayFirstName(person.first_name);
+  const cards = stepsForProfile(person.providerProfile)
+    .filter((s) => s !== "finish")
+    .map((s) => CARDS[s])
+    .filter((c): c is { title: string; blurb: string } => !!c);
 
   return (
-    <OnboardingShell
-      footer={
-        <>
-          {}
-          <Link
-            href="/join/provider"
-            className="ml-auto inline-flex justify-center bg-ink px-8 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-ink-hover"
-          >
-            Get Started Now!
-          </Link>
-        </>
-      }
-    >
-      {}
-      {}
-      <div className="mx-auto w-full max-w-3xl">
-        <div>
-          <h1 className="text-[34px] tracking-[-0.8px] sm:text-[40px]">
-            {}
-            Welcome {firstName}.
-          </h1>
-
-          {}
-          {}
-          <div className="mt-7 flex items-center gap-4">
-            <PersonIcon />
-            <p className="text-[16.5px] leading-relaxed text-ink-2">
-              Let&apos;s build an amazing profile so the work finds you!
-            </p>
-          </div>
-        </div>
-
-        {}
-        {}
-        <section className="mx-auto mt-10 w-full max-w-2xl">
-          <TestimonialCarousel />
-        </section>
-        {}
-        <p className="mt-10 text-center text-[14.5px] text-ink-2">
-          It takes 3-5 minutes, you can edit it later, and we will save as you go.
-        </p>
-      </div>
-    </OnboardingShell>
-  );
-}
-
-function PersonIcon() {
-  return (
-    <span
-      aria-hidden
-      className="mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-full bg-ink/5 text-ink"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="8" r="3.4" />
-        <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-      </svg>
-    </span>
+    <StartPage
+      headline={`Hey ${displayFirstName(person.first_name)}. Ready for the work to find you?`}
+      lead="Tell us what you do and what you charge — then publish your profile."
+      icon="person"
+      cards={cards}
+      footnote="It takes about 3–5 minutes and you can edit it later. We'll save as you go."
+      href="/join/provider"
+    />
   );
 }
