@@ -26,7 +26,7 @@ export default function Page() {
               title="Messaging isn't built yet"
               className="cursor-not-allowed bg-magenta/30 px-4 py-1.5 text-[13px] font-bold text-white"
             >
-              + New thread
+              + New Thread
             </button>
           </span>
         }

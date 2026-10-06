@@ -894,14 +894,14 @@ export function PlanOutlineEditor({
           className={BTN_2}
           onClick={() => setCollapsed(new Set())}
         >
-          Expand all
+          Expand All
         </button>
         <button
           type="button"
           className={BTN_2}
           onClick={() => setCollapsed(new Set(rows.filter((r) => childCount(r.id) > 0).map((r) => r.id)))}
         >
-          Collapse all
+          Collapse All
         </button>
       </div>
     </div>

@@ -116,7 +116,7 @@ export function OwnerResumeRebuild() {
                 }}
                 className="text-[13px] font-bold text-magenta transition-colors hover:text-magenta-dark"
               >
-                Use the one on file
+                Use the One on File
                 {info.documentName ? ` (${info.documentName})` : ""}
               </button>
               <p className="text-[12px] leading-relaxed text-ink-2">

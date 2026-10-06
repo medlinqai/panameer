@@ -95,7 +95,7 @@ export function LessonPlayer({
           onClick={() => setPip(true)}
           className="absolute bottom-3 right-3 bg-black/55 px-3 py-1.5 text-[12.5px] font-bold text-white hover:bg-black/80"
         >
-          Show instructor
+          Show Instructor
         </button>
       )}
     </div>

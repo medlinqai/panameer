@@ -84,7 +84,7 @@ export function MaturityDashboard({
       {area.sample && (
         <p className="mt-3 text-[11.5px] leading-relaxed text-[#8f8caa]">
           Illustrative figures — they show the read a completed assessment
-          produces, not your organisation&apos;s data.
+          produces, not your organization&apos;s data.
         </p>
       )}
     </div>

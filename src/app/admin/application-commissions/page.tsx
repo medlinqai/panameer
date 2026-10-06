@@ -63,7 +63,7 @@ export default async function ApplicationCommissionsPage() {
               value: byKind("SERVICE_PRODUCT")
                 ? `${bpsToPercentLabel(byKind("SERVICE_PRODUCT")!.rate_bps)}%`
                 : "—",
-              hint: "The catalogue made the sale",
+              hint: "The catalog made the sale",
             },
             {
               label: "Overrides",

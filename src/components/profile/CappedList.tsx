@@ -28,7 +28,7 @@ export function CappedList({
         aria-expanded={expanded}
         className="mt-6 w-full border border-dashed border-line px-4 py-3 text-[14px] font-bold text-ink-2 transition-colors hover:border-magenta hover:text-magenta"
       >
-        {expanded ? "Show fewer" : `${overflow} more — pending`}
+        {expanded ? "Show Fewer" : `${overflow} more — pending`}
       </button>
     </div>
   );

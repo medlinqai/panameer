@@ -59,7 +59,7 @@ export function BulkSelectBar({
           onClick={() => state.setActive(true)}
           className="text-[13.5px] font-bold text-magenta hover:text-magenta-dark"
         >
-          Select to delete
+          Select to Delete
         </button>
       </div>
     );
@@ -77,7 +77,7 @@ export function BulkSelectBar({
         onClick={state.allPicked ? () => state.reset() : state.pickAll}
         className="text-[13px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
       >
-        {state.allPicked ? "Clear" : "Select all"}
+        {state.allPicked ? "Clear" : "Select All"}
       </button>
 
       <span className="ml-auto flex items-center gap-3">

@@ -180,7 +180,7 @@ export function TaxRateEditor({
             }}
             className="border-[1.5px] border-line px-5 py-3 text-[14.5px] font-bold text-ink hover:border-magenta hover:text-magenta disabled:opacity-50"
           >
-            Add override
+            Add Override
           </button>
         </div>
       </section>

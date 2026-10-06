@@ -3374,7 +3374,7 @@ setScreen(target);
                 onClick={() => setCompanyPending(null)}
                 className="text-[14.5px] font-bold text-magenta hover:underline"
               >
-                Pick a different company instead
+                Pick a Different Company Instead
               </button>
             </div>
           </WizardShell>
@@ -4293,7 +4293,7 @@ setScreen(target);
                     onClick={() => setEditSection("location")}
                     className="font-bold text-magenta underline underline-offset-4 hover:text-magenta-dark"
                   >
-                    Update your phone or address
+                    Update Your Phone or Address
                   </button>{" "}
                   — they stay private.
                 </p>

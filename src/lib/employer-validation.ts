@@ -80,7 +80,7 @@ export async function requestEmployerValidation(
   const ownDomain = registrableDomain((self?.email ?? "").split("@").pop() ?? "");
   if (ownDomain && domainCheck.domain && ownDomain === domainCheck.domain) {
     throw new OnboardingError(
-      "That contact is at your own domain. Validation has to come from someone outside your organisation.",
+      "That contact is at your own domain. Validation has to come from someone outside your organization.",
       "INVALID"
     );
   }

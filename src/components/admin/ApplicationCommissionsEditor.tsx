@@ -22,7 +22,7 @@ const KIND_LABEL: Record<Kind, string> = {
 const KIND_HINT: Record<Kind, string> = {
   SOLE_SOURCED: "The buyer already knew the provider. Panameer sourced nothing.",
   APP_SOURCED: "Panameer matched, proposed, tested or shortlisted.",
-  SERVICE_PRODUCT: "The catalogue made the sale.",
+  SERVICE_PRODUCT: "The catalog made the sale.",
 };
 const TX_LABEL: Record<TxType, string> = {
   PRODUCT_BY_QTY: "Product by quantity",

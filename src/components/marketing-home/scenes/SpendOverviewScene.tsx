@@ -40,7 +40,7 @@ export function SpendOverviewScene() {
           ) : (
             <button type="button" className="sv-viewbtn" aria-expanded={tables}
               onClick={() => setTables((v) => !v)}>
-              {tables ? "Hide table" : "Table view"}
+              {tables ? "Hide Table" : "Table View"}
             </button>
           )}
         </div>

@@ -67,7 +67,7 @@ export function UnsubscribeForm({
             disabled={busy}
             className="mt-3 text-[13.5px] font-semibold text-ink-2 underline hover:text-magenta"
           >
-            {busy ? "Working…" : "Unsubscribe from everything Panameer sends"}
+            {busy ? "Working…" : "Unsubscribe from Everything Panameer Sends"}
           </button>
         )}
         {error && <p className="mt-2 text-[13px] text-red-600">{error}</p>}

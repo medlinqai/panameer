@@ -114,7 +114,7 @@ export function RecommendationComposer({
             onClick={() => setMessage(defaultMessage)}
             className="text-[12.5px] font-semibold text-magenta hover:underline"
           >
-            Reset to template
+            Reset to Template
           </button>
         </span>
         <textarea

@@ -146,7 +146,7 @@ export function ReportDashboard({
               href="/assess/scope"
               className="mt-4 inline-flex bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
             >
-              Book a 20-min call ›
+              Book a 20-Min Call ›
             </Link>
             <Link
               href="/assess/scope"

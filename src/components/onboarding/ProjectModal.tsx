@@ -697,7 +697,7 @@ export function ProjectModal({
               onClick={() => onChange({ highlights: [...draft.highlights, ""] })}
               className="mt-2 text-[14px] font-bold text-magenta hover:text-magenta-dark"
             >
-              + Add a highlight
+              + Add a Highlight
             </button>
           </div>
         </Group>
@@ -741,7 +741,7 @@ export function ProjectModal({
             }
             className="text-[14px] font-bold text-magenta hover:text-magenta-dark"
           >
-            + Add an outcome
+            + Add an Outcome
           </button>
         </Group>
 

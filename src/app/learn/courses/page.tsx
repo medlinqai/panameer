@@ -9,7 +9,7 @@ import { AUDIENCE_LABEL, AUDIENCE_PREFIX } from "@/lib/learn";
 export const metadata = {
   title: "Courses · Learn · Panameer",
   description:
-    "Every course in the Panameer catalogue, grouped by the learning path it belongs to.",
+    "Every course in the Panameer catalog, grouped by the learning path it belongs to.",
 };
 
 export default async function Page() {

@@ -234,7 +234,7 @@ export function SkillCatalogTree({
             setOpen(allOpen ? new Set() : new Set(roles.flatMap((r) => r.domains.map((d) => `${r.id}:${d.id}`))))
           }
         >
-          {allOpen ? "Collapse all" : "Expand all"}
+          {allOpen ? "Collapse All" : "Expand All"}
         </button>
       </div>
 
@@ -283,7 +283,7 @@ export function SkillCatalogTree({
                         setNote(null);
                       }}
                     >
-                      + Add skill
+                      + Add Skill
                     </button>
                   </div>
                   {isOpen && skills.map((s) => skillRow(s, true))}

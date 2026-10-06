@@ -645,7 +645,7 @@ export function EmployersStep({
               onClick={() => openProject(null)}
               className="min-h-[44px] text-[13.5px] font-bold text-magenta underline underline-offset-2 hover:text-magenta-dark"
             >
-              Add a project with no company
+              Add a Project with No Company
             </button>
           </p>
         </div>
@@ -1204,7 +1204,7 @@ export function EmployersStep({
                       }}
                       className="mt-1 text-[13px] font-bold text-magenta hover:text-magenta-dark"
                     >
-                      Add projects within this job
+                      Add Projects Within This Job
                     </button>
                   )}
                 </div>
@@ -1234,7 +1234,7 @@ export function EmployersStep({
               onClick={() => openProject(null)}
               className="min-h-[44px] text-[13.5px] font-bold text-magenta underline underline-offset-2 hover:text-magenta-dark"
             >
-              Add a project with no company
+              Add a Project with No Company
             </button>
           </div>
         </>

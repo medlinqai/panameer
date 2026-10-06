@@ -173,7 +173,7 @@ Rules:
 - Keep descriptions close to the author's wording; do not embellish.
 
 The four buckets are distinct. Put each item in exactly one:
-- employers: paid positions at an organisation.
+- employers: paid positions at an organization.
 - education: FORMAL STUDY ONLY — a school, college or university the person attended for a qualification. \`institution\` must be the name of that school. An achievement, a responsibility, a project, a training course, a certification or a bullet point describing work is NEVER an education entry. If a line has no named school, it does not belong in education.
 - certifications: named credentials awarded by a body (e.g. "Oracle Cloud Procurement Certified Implementation Professional"), with the issuer when stated.
 - skills: short capability terms only — tools, modules, methods. Not sentences, not achievements.

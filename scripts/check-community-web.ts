@@ -23,7 +23,7 @@ check("1 — the two rings clear each other on X", RING_GAP_OK.x > 0, `${RING_GA
 check("1 — the two rings clear each other on Y", RING_GAP_OK.y > 0, `${RING_GAP_OK.y.toFixed(1)}`);
 check("1 — the outer ring fits the viewBox on X", RING_GAP_OK.fitsX > 0, `${RING_GAP_OK.fitsX.toFixed(1)}`);
 check("1 — the outer ring fits the viewBox on Y", RING_GAP_OK.fitsY > 0, `${RING_GAP_OK.fitsY.toFixed(1)}`);
-check("1 — the centre portrait clears ring one", RING_GAP_OK.centre > 0, `${RING_GAP_OK.centre.toFixed(1)}`);
+check("1 — the center portrait clears ring one", RING_GAP_OK.center > 0, `${RING_GAP_OK.center.toFixed(1)}`);
 
 /* ── 2 · THE EXHAUSTIVE SWEEP ───────────────────────────────────────────── */
 /*

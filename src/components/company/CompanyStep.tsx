@@ -696,7 +696,7 @@ export function CompanyStep({
                 }}
                 className="mt-4 bg-ink px-6 py-2.5 text-[14.5px] font-semibold text-surface transition-colors hover:bg-ink-hover"
               >
-                Add &ldquo;{q.trim()}&rdquo; as my company
+                Add &ldquo;{q.trim()}&rdquo; as My Company
               </button>
             </div>
           )}
@@ -867,7 +867,7 @@ export function CompanyStep({
                 disabled={checking || !stateOfFiling || q.trim().length < 2}
                 className="mt-3 border border-ink bg-surface px-5 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
               >
-                {checking ? "Checking the register…" : "Look up this company"}
+                {checking ? "Checking the register…" : "Look Up This Company"}
               </button>
 
               {/* ── THE RESULT. ⚠ NEVER CLAIMS MORE THAN THE REGISTER RETURNED. * /}
@@ -1182,7 +1182,7 @@ export function CompanyStep({
                   onClick={() => logoInput.current?.click()}
                   className="border border-ink bg-surface px-5 py-2 text-[14px] font-semibold transition-colors hover:bg-surface-hover disabled:opacity-50 text-ink"
                 >
-                  {logoBusy ? "Uploading…" : logoUrl ? "Change logo" : "Upload a logo"}
+                  {logoBusy ? "Uploading…" : logoUrl ? "Change Logo" : "Upload a Logo"}
                 </button>
                 <span className="ml-3 text-[13px] text-ink-2">
                   Optional — PNG, JPG or WebP.
