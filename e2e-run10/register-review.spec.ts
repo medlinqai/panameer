@@ -90,11 +90,11 @@ test("score + health: counts reconcile", async ({ page }) => {
     const kpis = page.getByTestId("score-kpis").locator("b");
     await expect(kpis.first()).toBeVisible({ timeout: 30_000 });
     const [total, completed, todo] = (await kpis.allInnerTexts()).map(Number);
-    const doneRows = page.getByTestId("score-completed").locator("[data-line]");
-    const todoRows = page.getByTestId("score-todo").locator("[data-line]");
+    const doneRows = page.getByTestId("score-lines").locator('[data-line][data-done="true"]');
+    const todoRows = page.getByTestId("score-lines").locator('[data-line][data-done="false"]');
     expect(await doneRows.count()).toBe(completed);
     expect(await todoRows.count()).toBe(todo);
-    const pts = (await doneRows.locator("> span:last-child").allInnerTexts()).map(Number);
+    const pts = (await doneRows.locator("[data-points]").allInnerTexts()).map(Number);
     expect(pts.reduce((a, b) => a + b, 0)).toBe(total);
     await page.screenshot({ path: `e2e-run10/.artifacts/score-${w}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
