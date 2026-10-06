@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CatalogMark } from "@/components/console/CatalogMark";
 import type { Mark } from "@/lib/catalog-marks";
@@ -13,7 +13,35 @@ export type CatalogSkill = {
   added: boolean;
   members: number;
   aliases?: string;
+  aliasList?: string[];
 };
+export type CatalogFilters = { q?: string; role?: string; domain?: string; status?: string };
+const STATUSES = [
+  ["", "Any status"],
+  ["shown", "Shown"],
+  ["hidden", "Hidden"],
+  ["new", "New (from members)"],
+] as const;
+
+/** Wraps every case-insensitive hit of `needle` in <mark>. */
+function hl(text: string, needle: string): ReactNode {
+  if (!needle) return text;
+  const out: ReactNode[] = [];
+  const low = text.toLowerCase();
+  let i = 0;
+  for (let j = low.indexOf(needle); j >= 0; j = low.indexOf(needle, i)) {
+    if (j > i) out.push(text.slice(i, j));
+    out.push(<mark key={j} className="bg-magenta/15 text-inherit">{text.slice(j, j + needle.length)}</mark>);
+    i = j + needle.length;
+  }
+  out.push(text.slice(i));
+  return out;
+}
+
+function csvCell(v: string | number) {
+  const t = String(v);
+  return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+}
 export type CatalogDomain = { id: string; name: string; mark: Mark | null; skills: CatalogSkill[] };
 export type CatalogRole = {
   id: string;
@@ -44,15 +72,20 @@ export function SkillCatalogTree({
   roles,
   unassigned,
   destinations,
+  initial = {},
 }: {
   roles: CatalogRole[];
   unassigned: CatalogSkill[];
   destinations: Dest[];
+  initial?: CatalogFilters;
 }) {
   const router = useRouter();
-  const [q, setQ] = useState("");
-  const [showHidden, setShowHidden] = useState(true);
+  const [q, setQ] = useState(initial.q ?? "");
+  const [roleF, setRoleF] = useState(initial.role ?? "");
+  const [domF, setDomF] = useState(initial.domain ?? "");
+  const [statusF, setStatusF] = useState(STATUSES.some(([v]) => v === initial.status) ? initial.status! : "");
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [shut, setShut] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -67,12 +100,23 @@ export function SkillCatalogTree({
     setOpen((o) => new Set(o).add(key));
   };
   const allOpen = open.size > 0;
-  const toggle = (k: string) =>
-    setOpen((s) => {
+  const flip = (set: typeof setOpen, k: string) =>
+    set((s) => {
       const n = new Set(s);
       n.has(k) ? n.delete(k) : n.add(k);
       return n;
     });
+  const active = !!(needle || roleF || domF || statusF);
+  const toggle = (k: string) => flip(active ? setShut : setOpen, k);
+
+  // The URL holds the filters so a view can be bookmarked.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    for (const [k, v] of [["q", q.trim()], ["role", roleF], ["domain", domF], ["status", statusF]] as const)
+      if (v) u.searchParams.set(k, v);
+      else u.searchParams.delete(k);
+    if (u.href !== window.location.href) window.history.replaceState(window.history.state, "", u.href);
+  }, [q, roleF, domF, statusF]);
 
   const run = async (at: string, body: unknown, done?: () => void) => {
     setBusy(true);
@@ -126,8 +170,8 @@ export function SkillCatalogTree({
           />
         ) : (
           <span className={"min-w-[60%] flex-1 sm:min-w-0 " + (s.hidden || s.retired ? "text-ink-2/70 line-through" : "")}>
-            <span className="block truncate">{s.name}</span>
-            {s.aliases && <span className="block truncate text-[11.5px] text-ink-2 no-underline">{s.aliases}</span>}
+            <span className="block truncate">{hl(s.name, needle)}</span>
+            {s.aliases && <span className="block truncate text-[11.5px] text-ink-2 no-underline">{hl(s.aliases, needle)}</span>}
           </span>
         )}
         {s.hidden && <span className={TAG + " border-line text-ink-2/70"}>HIDDEN</span>}
@@ -203,65 +247,186 @@ export function SkillCatalogTree({
     </Fragment>
   );
 
-  const visible = (s: CatalogSkill, r: CatalogRole, d: CatalogDomain) =>
-    (showHidden || !s.hidden) &&
-    (!needle ||
-      s.name.toLowerCase().includes(needle) ||
-      d.name.toLowerCase().includes(needle) ||
-      r.label.toLowerCase().includes(needle));
+  const textHit = (s: CatalogSkill) =>
+    !needle || s.name.toLowerCase().includes(needle) || (s.aliasList ?? []).some((a) => a.toLowerCase().includes(needle));
+  const statusHit = (s: CatalogSkill) =>
+    !statusF || (statusF === "shown" ? !s.hidden && !s.retired : statusF === "hidden" ? s.hidden || s.retired : false);
+  const hit = (s: CatalogSkill) => statusHit(s) && textHit(s);
 
-  const shownUnassigned = unassigned.filter(
-    (s) => (showHidden || !s.hidden) && (!needle || s.name.toLowerCase().includes(needle))
+  // Role → Domain → matching skills, pruned by every filter at once.
+  const tree = useMemo(
+    () =>
+      roles.map((r) => {
+        const inRole = !roleF || r.id === roleF;
+        const doms = r.domains.map((d) => {
+          const inScope = inRole && (!domF || d.id === domF);
+          return { d, inScope, skills: inScope ? d.skills.filter(hit) : [] };
+        });
+        const total = r.domains.reduce((n, d) => n + d.skills.length, 0);
+        return { r, doms, total, matches: doms.reduce((n, x) => n + x.skills.length, 0) };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [roles, roleF, domF, statusF, needle]
   );
+  const newShown = unassigned.filter((s) => (!statusF || statusF === "new") && !roleF && !domF && textHit(s));
+  const total = roles.reduce((n, r) => n + r.domains.reduce((m, d) => m + d.skills.length, 0), 0) + unassigned.length;
+  const shownCount = tree.reduce((n, t) => n + t.matches, 0) + newShown.length;
+  const missRoles = active ? tree.filter((t) => t.matches === 0) : [];
+
+  const roleOpts = roles.map((r) => ({ id: r.id, label: r.label }));
+  const domOpts = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of roles) if (!roleF || r.id === roleF) for (const d of r.domains) m.set(d.id, d.name);
+    return [...m].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [roles, roleF]);
+  const roleLabel = roles.find((r) => r.id === roleF)?.label;
+  const domLabel = domOpts.find(([id]) => id === domF)?.[1] ?? roles.flatMap((r) => r.domains).find((d) => d.id === domF)?.name;
+  const clearAll = () => {
+    setQ("");
+    setRoleF("");
+    setDomF("");
+    setStatusF("");
+  };
+
+  const exportCsv = () => {
+    const rows: (string | number)[][] = [["Role", "Domain", "Skill", "Aliases", "Status", "Members"]];
+    const st = (s: CatalogSkill) => (s.retired ? "Retired" : s.hidden ? "Hidden" : "Shown");
+    for (const t of tree) for (const x of t.doms) for (const s of x.skills) rows.push([t.r.label, x.d.name, s.name, s.aliases ?? "", st(s), s.members]);
+    for (const s of newShown) rows.push(["", "", s.name, s.aliases ?? "", "New", s.members]);
+    const blob = new Blob([rows.map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `skill-catalog-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const LBL = "mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2";
+  const FIELD = "h-10 w-full border border-ink bg-surface px-3 text-[14px] text-ink outline-none focus:border-magenta";
+  const CRUMB = "font-semibold text-ink underline underline-offset-2 hover:text-magenta";
+  const GREY = "flex min-h-10 items-center border-t border-line pl-2 text-[12.5px] text-ink-2/70 sm:pl-[22px]";
 
   return (
     <div className="font-sans text-ink">
-      <div className="mb-2 mt-1 flex flex-wrap items-center gap-2.5">
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Find a skill, domain or role…"
-          className="h-10 min-w-[220px] flex-1 border-0 border-b border-line bg-transparent px-1 text-[14px] outline-none focus:border-b-2 focus:border-magenta"
-        />
-        <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
-          <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Show hidden
+      <div data-finder-bar className="mt-1 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+        <label className="block">
+          <span className={LBL}>Search</span>
+          <input
+            type="search"
+            data-finder-search
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Any part of a skill name or alias"
+            className={FIELD}
+          />
         </label>
-        <button
-          type="button"
-          className={BTN}
-          onClick={() =>
-            setOpen(allOpen ? new Set() : new Set(roles.flatMap((r) => r.domains.map((d) => `${r.id}:${d.id}`))))
-          }
-        >
-          {allOpen ? "Collapse All" : "Expand All"}
-        </button>
+        <label className="block">
+          <span className={LBL}>Role</span>
+          <select
+            data-finder-role
+            value={roleF}
+            onChange={(e) => {
+              setRoleF(e.target.value);
+              if (e.target.value && domF && !roles.find((r) => r.id === e.target.value)?.domains.some((d) => d.id === domF)) setDomF("");
+            }}
+            className={FIELD}
+          >
+            <option value="">All roles</option>
+            {roleOpts.map((r) => (
+              <option key={r.id} value={r.id}>{r.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className={LBL}>Domain</span>
+          <select data-finder-domain value={domF} onChange={(e) => setDomF(e.target.value)} className={FIELD}>
+            <option value="">All domains</option>
+            {domOpts.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className={LBL}>Status</span>
+          <select data-finder-status value={statusF} onChange={(e) => setStatusF(e.target.value)} className={FIELD}>
+            {STATUSES.map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      {roles.map((r) => {
-        const doms = r.domains
-          .map((d) => ({ d, skills: d.skills.filter((s) => visible(s, r, d)) }))
-          .filter((x) => !needle || x.skills.length > 0);
-        if (needle && doms.length === 0) return null;
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px]">
+        {active && (
+          <nav data-finder-crumbs aria-label="Filters" className="flex flex-wrap items-center gap-1.5 text-ink-2">
+            <button type="button" className={CRUMB} onClick={clearAll}>All</button>
+            {roleLabel && (
+              <>
+                <span>›</span>
+                <button type="button" className={CRUMB} onClick={() => { setDomF(""); setQ(""); }}>{roleLabel}</button>
+              </>
+            )}
+            {domLabel && (
+              <>
+                <span>›</span>
+                <button type="button" className={CRUMB} onClick={() => setQ("")}>{domLabel}</button>
+              </>
+            )}
+            {needle && (
+              <>
+                <span>›</span>
+                <span className="font-semibold text-ink">&ldquo;{q.trim()}&rdquo;</span>
+              </>
+            )}
+            <button type="button" data-finder-clear className="ml-1 text-[12.5px] font-bold text-ink underline underline-offset-2" onClick={clearAll}>
+              Clear
+            </button>
+          </nav>
+        )}
+        <span className="ml-auto flex items-center gap-3 text-ink-2">
+          <span data-finder-count>
+            <b className="text-ink">{shownCount}</b> of {total} skills
+          </span>
+          <button type="button" data-finder-export className={BTN + " h-8 px-2.5"} onClick={exportCsv}>
+            Export CSV
+          </button>
+          {!active && (
+            <button
+              type="button"
+              className={BTN + " h-8 px-2.5"}
+              onClick={() =>
+                setOpen(allOpen ? new Set() : new Set(roles.flatMap((r) => r.domains.map((d) => `${r.id}:${d.id}`))))
+              }
+            >
+              {allOpen ? "Collapse All" : "Expand All"}
+            </button>
+          )}
+        </span>
+      </div>
+
+      {tree.map(({ r, doms, total: rTotal, matches }) => {
+        if (active && matches === 0) return null;
+        const shownDoms = active ? doms.filter((x) => x.skills.length > 0) : doms;
+        const missDoms = active ? doms.length - shownDoms.length : 0;
         return (
-          <section key={r.id} data-testid="catalog-role" className="mt-[22px] border-b border-ink">
-            <div className="flex items-center gap-2.5 py-2.5">
+          <section key={r.id} data-testid="catalog-role" data-role-id={r.id} className="mt-[22px] border-b border-ink">
+            <div className="flex flex-wrap items-center gap-2.5 py-2.5">
               <CatalogMark mark={r.mark} />
               <span className="text-[16px] font-bold">
                 {r.label}
                 {r.paren && <span className="text-[14px] font-medium text-ink-2"> ({r.paren})</span>}
               </span>
               <span className="text-[11px] tracking-[0.05em] text-ink-2/70">FIXED</span>
-              <span className="ml-auto hidden text-[12px] text-ink-2/70 sm:inline">
-                {r.domains.length} domains · domains fixed
+              <span data-node-count className="ml-auto text-[12px] text-ink-2/70">
+                {active ? `${rTotal} skills · ${matches} match` : `${r.domains.length} domains · ${rTotal} skills`}
               </span>
             </div>
-            {doms.map(({ d, skills }) => {
+            {shownDoms.map(({ d, skills }) => {
               const key = `${r.id}:${d.id}`;
-              const isOpen = !!needle || open.has(key) || adding === key;
+              const isOpen = (active ? !shut.has(key) : open.has(key)) || adding === key;
               const warn = adding === key ? addWarning(r, d) : null;
               return (
-                <div key={key} data-testid="catalog-domain" className="border-t border-line">
+                <div key={key} data-testid="catalog-domain" data-domain-id={d.id} className="border-t border-line">
                   <div className="flex min-h-12 items-center gap-2.5 pl-2 sm:pl-[22px]">
                     <button
                       type="button"
@@ -272,7 +437,9 @@ export function SkillCatalogTree({
                       <span className="w-4 text-[12px] text-ink-2">{isOpen ? "▾" : "▸"}</span>
                       <CatalogMark mark={d.mark} />
                       <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{d.name}</span>
-                      <span className="hidden text-[12px] text-ink-2/70 sm:inline">{d.skills.length} skills</span>
+                      <span data-node-count className="text-[12px] text-ink-2/70">
+                        {active ? `${d.skills.length} · ${skills.length} match` : `${d.skills.length} skills`}
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -335,22 +502,33 @@ export function SkillCatalogTree({
                 </div>
               );
             })}
+            {missDoms > 0 && (
+              <div data-no-match className={GREY}>
+                {missDoms} other domain{missDoms === 1 ? "" : "s"} — no match
+              </div>
+            )}
           </section>
         );
       })}
 
-      {shownUnassigned.length > 0 && (
+      {missRoles.length > 0 && missRoles.length < tree.length && (
+        <div data-no-match className="mt-[22px] border-b border-line py-2.5 text-[12.5px] text-ink-2/70">
+          {missRoles.map((t) => t.r.label).join(" · ")} — no match
+        </div>
+      )}
+
+      {newShown.length > 0 && (
         <section data-testid="catalog-unassigned" className="mt-[30px] border-t border-ink">
-          <div className="flex items-center gap-2.5 py-2.5">
-            <span className="text-[16px] font-bold">Unassigned</span>
+          <div className="flex flex-wrap items-center gap-2.5 py-2.5">
+            <span className="text-[16px] font-bold">New from Members</span>
             <span className="ml-auto text-[12px] text-ink-2/70">
-              {unassigned.length} skills with no domain · pick one for each
+              {unassigned.length} skills with no domain{active ? ` · ${newShown.length} match` : " · pick one for each"}
             </span>
           </div>
-          {shownUnassigned.map((s) => (
+          {newShown.map((s) => (
             <Fragment key={s.id}>
-              <div className="flex min-h-[42px] flex-wrap items-center gap-2.5 border-t border-line/60 text-[14px]">
-                <span className="min-w-0 flex-1 truncate">{s.name}</span>
+              <div data-testid="catalog-new" className="flex min-h-[42px] flex-wrap items-center gap-2.5 border-t border-line/60 text-[14px]">
+                <span className="min-w-0 flex-1 truncate">{hl(s.name, needle)}</span>
                 <span className="text-[11px] text-ink-2">
                   {s.members} member{s.members === 1 ? "" : "s"}
                 </span>
@@ -378,8 +556,8 @@ export function SkillCatalogTree({
         </section>
       )}
 
-      {needle && roles.every((r) => r.domains.every((d) => !d.skills.some((s) => visible(s, r, d)))) && shownUnassigned.length === 0 && (
-        <p className="mt-6 text-[14px] text-ink-2">Nothing matches &ldquo;{q.trim()}&rdquo;.</p>
+      {active && shownCount === 0 && (
+        <p data-finder-empty className="mt-6 text-[14px] text-ink-2">Nothing matches these filters.</p>
       )}
 
       <p className="mt-[26px] text-[12px] leading-[1.8] text-ink-2">

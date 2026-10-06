@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; claimed?: string }>;
+  searchParams: Promise<{ view?: string; claimed?: string; q?: string; role?: string; domain?: string; status?: string }>;
 }) {
   const sp = await searchParams;
   const view =
@@ -68,6 +68,7 @@ export default async function Page({
     added: s.origin === "ADMIN",
     members: skillProviders.get(s.id) ?? 0,
     aliases: s.aliases.length ? s.aliases.join(" · ") : undefined,
+    aliasList: s.aliases,
   });
 
   // Paren labels are admin-page only (E820); registration/profile/search keep the short label.
@@ -326,7 +327,12 @@ export default async function Page({
       )}
 
       {!view && !claimedRole && (
-        <SkillCatalogTree roles={treeRoles} unassigned={unassigned} destinations={flatPairs} />
+        <SkillCatalogTree
+          roles={treeRoles}
+          unassigned={unassigned}
+          destinations={flatPairs}
+          initial={{ q: sp.q, role: sp.role, domain: sp.domain, status: sp.status }}
+        />
       )}
       {/* ⚠ `E481` — the bar returns, live. See the note on the Specializations page. */}
       {/*
