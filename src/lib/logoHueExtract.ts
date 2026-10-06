@@ -68,3 +68,35 @@ export async function extractLogoHues(buffer: Buffer, max = 3): Promise<string[]
     return hslToHex(h, s, l);
   });
 }
+
+// Logo palette (2026-10-05): the logo's own colors — up to 6, ordered by area. White/near-white and near-black
+// are ignored unless nothing else is there. Colors closer than ~28 RGB units merge into one.
+export async function extractLogoPalette(buffer: Buffer, max = 6): Promise<string[]> {
+  let data: Buffer;
+  let ch: number;
+  try {
+    const out = await sharp(buffer, { density: 144 }).resize(96, 96, { fit: "inside", kernel: "nearest" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    data = out.data;
+    ch = out.info.channels;
+  } catch {
+    return [];
+  }
+  type C = { r: number; g: number; b: number; n: number; edge: boolean };
+  const groups: C[] = [];
+  for (let i = 0; i < data.length; i += ch) {
+    if (ch === 4 && data[i + 3] < 128) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const { l } = rgbToHsl(r, g, b);
+    const edge = l > 94 || l < 6;
+    const hit = groups.find((c) => c.edge === edge && Math.hypot(c.r / c.n - r, c.g / c.n - g, c.b / c.n - b) < 28);
+    if (hit) {
+      hit.r += r; hit.g += g; hit.b += b; hit.n++;
+    } else groups.push({ r, g, b, n: 1, edge });
+  }
+  const total = groups.reduce((a, c) => a + c.n, 0) || 1;
+  // Anti-aliased edges make thin blends; anything under 1.5% of the logo isn't a brand color.
+  const real = groups.filter((c) => !c.edge && c.n / total >= 0.015);
+  const pick = (real.length ? real : groups).sort((a, b) => b.n - a.n).slice(0, max);
+  const hex = (v: number) => Math.round(v).toString(16).padStart(2, "0");
+  return pick.map((c) => `#${hex(c.r / c.n)}${hex(c.g / c.n)}${hex(c.b / c.n)}`);
+}

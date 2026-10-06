@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
-import { extractLogoHues } from "@/lib/logoHueExtract";
+import { extractLogoHues, extractLogoPalette } from "@/lib/logoHueExtract";
 import { themeProblem } from "@/lib/dynamic-branding";
 
 export const runtime = "nodejs";
@@ -34,8 +34,9 @@ export async function POST(request: Request) {
   if (!file) return NextResponse.json({ error: "Expected a file" }, { status: 400 });
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const hues = await extractLogoHues(buffer);
-  return NextResponse.json({ hues });
+  const [hues, palette] = await Promise.all([extractLogoHues(buffer), extractLogoPalette(buffer)]);
+  if (palette.length) await prisma.company.update({ where: { id: companyId }, data: { logo_palette: palette } });
+  return NextResponse.json({ hues, palette });
 }
 
 /** PUT — persist { brandHue, recipeId }. */

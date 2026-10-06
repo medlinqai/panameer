@@ -101,6 +101,7 @@
     "check:company-links": "npx playwright test -c playwright.company-links.config.ts",
     "check:my-company": "npx playwright test -c playwright.my-company.config.ts",
     "check:usage-counts": "npx playwright test -c playwright.usage-counts.config.ts",
+    "check:logo-palette": "npx playwright test -c playwright.logo-palette.config.ts",
     "check:logo-fit": "npx playwright test -c playwright.logo-fit.config.ts",
     "check:hero-motion": "npx playwright test -c playwright.hero-motion.config.ts",
     "check:usage-white": "npx playwright test -c playwright.usage-white.config.ts",
