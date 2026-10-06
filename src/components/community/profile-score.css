@@ -105,7 +105,7 @@
 
 /* ⚠ Three paints, in the brand's own tokens — there is no blue in the brand. */
 .pm-score-filled {
-  stroke: var(--color-magenta, #d72cd6);
+  stroke: var(--color-ink, #272334);
 }
 /*
   ── ⚠⚠⚠ `declared_none` PAINTS MAGENTA, THE SAME AS FILLED (`P2-A3-E596`) ──
@@ -132,10 +132,11 @@
   declared can still find out; a reader glancing at the ring is no longer misled.
 */
 .pm-score-declared {
-  stroke: var(--color-magenta, #d72cd6);
+  stroke: var(--color-ink, #272334);
 }
+/* Health's palette (2026-10-05): open lines are solid magenta; white gaps between segments. */
 .pm-score-empty {
-  stroke: #ece9f2;
+  stroke: var(--color-magenta, #d72cd6);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

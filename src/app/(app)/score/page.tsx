@@ -35,7 +35,7 @@ export default async function ProfileScorePage() {
         tabs={profileTabs(viewer)}
         current="/community/score"
       />
-      <ProfileScoreView score={computeProfileScore(input)} />
+      <ProfileScoreView score={computeProfileScore(input)} profileId={profile.id} />
     </div>
   );
 }
