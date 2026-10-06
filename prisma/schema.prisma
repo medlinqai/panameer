@@ -381,6 +381,8 @@ model Company {
   show_on_profiles Boolean @default(true)
   /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
   logo_palette     Json?
+  /// Dynamic Branding switch. null = saved before the switch existed: on when a look is saved.
+  theme_enabled    Boolean?
   /// Same company = same website domain, tax ID digits or email domain (2026-10-05). Normalized copies, indexed.
   website_domain   String?
   tin_digits       String?

@@ -9,9 +9,9 @@ import { contrast } from "@/lib/themeRecipes";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 
 // Branding (mockup company_tabs 2026-10-05): Usage/Health layout — hero, then Brand Color · Dynamic Branding · Where It Shows.
-type Props = { companyId: string; companyName: string; logoUrl: string | null; brandHue: string | null; themeRecipe: string | null; palette: string[] };
+type Props = { companyId: string; companyName: string; logoUrl: string | null; brandHue: string | null; themeRecipe: string | null; themeEnabled: boolean | null; palette: string[] };
 
-export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, themeRecipe, palette: savedPalette }: Props) {
+export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, themeRecipe, themeEnabled, palette: savedPalette }: Props) {
   const router = useRouter();
   const saved = { hue: brandHue, look: normalizeLook(themeRecipe) };
   const [hue, setHue] = useState(brandHue ?? DEFAULT_BRAND);
@@ -29,7 +29,8 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
   const t = useMemo(() => brandTokens(valid ? hue : DEFAULT_BRAND, look), [hue, look, valid]);
   const checks = useMemo(() => contrastChecks(t), [t]);
   const readable = valid && checks.every((c) => c.ok);
-  const themed = !!saved.hue && !!saved.look;
+  // On = the company's console uses the saved look (null = saved before the switch: on when a look exists).
+  const themed = !!saved.hue && !!saved.look && themeEnabled !== false;
   // One brand color on the page: the color being edited (saved brand_hue until changed). Hero, stat,
   // swatches, looks, preview and Where It Shows all read this; Save makes it the console's.
   const shown = valid ? hue.toLowerCase() : DEFAULT_BRAND;
@@ -53,14 +54,23 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
       setHexDraft(found[0]);
     } else setMsg({ ok: false, text: "No brand color in that image — a black, white or gray logo has none to find. Type a hex instead." });
   };
-  const put = async (body: { brandHue: string | null; recipeId: string | null }, label: string) => {
+  const put = async (body: { brandHue: string | null; recipeId: string | null; enabled?: boolean }, label: string) => {
     setBusy(label);
     setMsg(null);
     const r = await fetch("/api/company/theme", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
     const b = (await r?.json().catch(() => ({}))) as { error?: string } | undefined;
     setBusy(null);
     if (!r?.ok) return setMsg({ ok: false, text: b?.error ?? "That didn't save." });
-    setMsg({ ok: true, text: body.brandHue ? "Saved. Everyone at the company sees this theme now." : "Back to the Panameer default." });
+    setMsg({
+      ok: true,
+      text: !body.brandHue
+        ? "Back to the Panameer default."
+        : body.enabled === false
+          ? "Dynamic Branding is off. Everyone at the company sees Panameer's default console."
+          : body.enabled === true || themed
+            ? "Saved. Everyone at the company sees this theme now."
+            : "Saved. Turn Dynamic Branding on to apply it.",
+    });
     if (!body.brandHue) {
       setHue(DEFAULT_BRAND);
       setHexDraft(DEFAULT_BRAND);
@@ -137,7 +147,27 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
         </div>
       </CompanySection>
 
-      <CompanySection id="dynamic-branding" title="Dynamic Branding" actions={<span className="text-ink">{themed ? "On" : "Off"}</span>}>
+      <CompanySection
+        id="dynamic-branding"
+        title="Dynamic Branding"
+        actions={
+          <span className="flex items-center gap-2.5 text-[13px] font-semibold text-ink">
+            {themed ? "On" : "Off"}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={themed}
+              aria-label="Dynamic Branding"
+              data-theme-switch
+              disabled={!!busy || (!themed && !readable)}
+              onClick={() => put({ brandHue: shown, recipeId: look, enabled: !themed }, "switch")}
+              className={"relative h-[22px] w-[40px] border border-ink transition-colors disabled:opacity-50 " + (themed ? "bg-ink" : "bg-surface")}
+            >
+              <span className={"absolute top-[3px] h-[14px] w-[14px] transition-all " + (themed ? "left-[21px] bg-surface" : "left-[3px] bg-ink")} />
+            </button>
+          </span>
+        }
+      >
         <p className="mt-2 max-w-[66ch] text-[14px] text-ink-2">
           Your brand color themes the Panameer console for everyone at {companyName}. Pick a look — Panameer keeps every combination readable.
         </p>
@@ -233,6 +263,11 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
           The band, active menu item, primary buttons and links take your color; buttons stay square; text contrast is checked (4.5:1) before it can be saved.
         </p>
         {msg && <p role="status" data-theme-msg className={"mt-2 text-[13px] font-semibold " + (msg.ok ? "text-ink" : "text-magenta-dark")}>{msg.text}</p>}
+        {!themed && (
+          <p data-preview-only className="mt-3 border-l-2 border-magenta py-1.5 pl-3 text-[13px] text-ink">
+            Preview only — turn on to apply to everyone at {companyName}.
+          </p>
+        )}
         {unsaved && <p data-unsaved className="mt-2 text-[12.5px] font-semibold text-ink">Not saved yet — Save Theme to apply {shown} for everyone.</p>}
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" disabled={!readable || !!busy} onClick={() => put({ brandHue: hue.toLowerCase(), recipeId: look }, "save")} className={`${BTN} bg-ink text-surface hover:bg-ink-hover`}>

@@ -52,6 +52,7 @@ export async function PUT(request: Request) {
   const body = await request.json().catch(() => null);
   const brandHue = body?.brandHue ?? null;
   const recipeId = body?.recipeId ?? null;
+  const enabled: boolean | undefined = typeof body?.enabled === "boolean" ? body.enabled : undefined;
 
   // Both null = Reset to Panameer Default. Otherwise every text pair must reach 4.5:1.
   if (brandHue !== null || recipeId !== null) {
@@ -59,9 +60,10 @@ export async function PUT(request: Request) {
     if (problem) return NextResponse.json({ error: problem }, { status: 400 });
   }
 
+  const reset = brandHue === null && recipeId === null;
   await prisma.company.update({
     where: { id: companyId },
-    data: { brand_hue: brandHue, theme_recipe: recipeId },
+    data: { brand_hue: brandHue, theme_recipe: recipeId, ...(reset ? { theme_enabled: null } : enabled !== undefined ? { theme_enabled: enabled } : {}) },
   });
 
   return NextResponse.json({ ok: true });
