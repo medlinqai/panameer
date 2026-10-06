@@ -120,6 +120,7 @@ export function Popover({
 
   if (!open || !mounted) return null;
 
+  // Portal inside the themed shell so menus pick up Dynamic Branding colors.
   return createPortal(
     <div
       ref={panelRef}
@@ -134,7 +135,7 @@ export function Popover({
     >
       {children}
     </div>,
-    document.body
+    (document.querySelector("[data-brand-theme]") ?? document.body)
   );
 }
 

@@ -98,6 +98,8 @@ export function themeVars(brandHex: string | null | undefined, rawLook: string |
       "--color-rail-active": t.railActive,
       "--color-magenta": t.brand,
       "--color-magenta-dark": t.link,
+      "--color-magenta-ink": t.link,
+      "--color-magenta-ink-hover": darkenFor(t.link, WHITE, 7),
     } as Record<string, string>,
   };
 }
