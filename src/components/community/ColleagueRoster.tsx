@@ -122,8 +122,8 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
            matches more than it claims is a box people stop trusting. ⚠ SUPERSEDED,
            quoted not deleted (`E164`):
            //   placeholder="Search your colleagues by name, title or company" */
-        placeholder="Search your colleagues by name, title, company or skill"
-        aria-label="Search your colleagues"
+        placeholder="Search your connections…"
+        aria-label="Search your connections"
         className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
       />
 

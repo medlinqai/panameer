@@ -78,7 +78,7 @@ export default async function InviteColleaguePage() {
         href={ROUTES.colleagues}
         className="text-[13px] font-bold text-ink-2 underline-offset-4 hover:text-magenta hover:underline"
       >
-        ← Back to Colleagues
+        ← Back to Connections
       </Link>
       <p className="mb-5 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
         Panameer is more useful the more of your field is on it. If you know

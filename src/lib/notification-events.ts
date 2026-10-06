@@ -638,7 +638,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: false,
     title: (v) => `${str(v, "fromName", "Someone")} accepted your invitation`,
     body: () => null,
-    href: () => "/community/colleagues",
+    href: () => "/community/connections",
   },
 
   // ── The profile ───────────────────────────────────────────────────────────

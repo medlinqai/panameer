@@ -56,7 +56,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           <p className="text-[14px] leading-relaxed text-ink-2">
             Nothing is waiting on you.{" "}
             <Link
-              href="/community/colleagues"
+              href="/community/connections"
               className="font-semibold text-magenta hover:underline"
             >
               Find people you have worked with
@@ -90,7 +90,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
           <Heading
             seeAll={
               colleagues.length > CAP
-                ? { href: "/community/colleagues", label: `See all ${colleagues.length}` }
+                ? { href: "/community/connections", label: `See all ${colleagues.length}` }
                 : undefined
             }
           >

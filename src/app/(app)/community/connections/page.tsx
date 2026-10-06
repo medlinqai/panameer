@@ -40,12 +40,12 @@ export default async function ColleaguesPage() {
         eyebrow="CONNECT"
         sequence={tabSequenceFor("/connect")}
         tabs={connectTabs(viewer, unread)}
-        current="/community/colleagues"
+        current="/community/connections"
       />
       <div className="mx-auto max-w-5xl">
         <header className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="font-display text-[26px] font-bold tracking-[-0.5px]">
-            Colleagues
+            Connections
           </h1>
           {/* R-E012: the inviter could not see who they had invited. */}
           <Link

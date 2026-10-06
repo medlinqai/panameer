@@ -83,6 +83,8 @@ const nextConfig: NextConfig = {
     */
     const homeShowsStatus = process.env.HOME_SHOWS_STATUS === "1";
     return [
+      // C-E003: Colleagues became Connections.
+      { source: "/community/colleagues/:path*", destination: "/community/connections/:path*", permanent: true },
       // C-E002: status.panameer.com serves only the status page; everything else 308s to the app.
       {
         source: "/:path((?!status(?:/|$)|api/status/|api/auth/|_next/|brand/|favicon|.*\\.[a-z0-9]+$).+)",

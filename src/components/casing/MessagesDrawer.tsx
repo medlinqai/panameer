@@ -133,7 +133,7 @@ export function MessagesDrawer({
                 connected to.
               </p>
               <Link
-                href="/community/colleagues"
+                href="/community/connections"
                 onClick={close}
                 className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
               >

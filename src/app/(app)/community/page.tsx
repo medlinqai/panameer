@@ -87,7 +87,7 @@ async function CommunityBody({ viewer }: { viewer: Viewer }) {
             <h2 className="font-display text-[17px] font-bold">Colleagues</h2>
             {page.colleagues.length > 0 && (
               <Link
-                href="/community/colleagues"
+                href="/community/connections"
                 className="text-[13.5px] font-semibold text-magenta hover:underline"
               >
                 See All {page.colleagues.length}

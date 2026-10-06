@@ -157,7 +157,7 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   ],
   "/connect": [
     { label: "Community", href: "/community" },
-    { label: "Colleagues", href: "/community/colleagues" },
+    { label: "Connections", href: "/community/connections" },
     { label: "Mentors", href: "/community/mentors" },
     { label: "Teams", href: "/community/teams" },
     { label: "Groups", href: "/community/groups", state: "live" },
