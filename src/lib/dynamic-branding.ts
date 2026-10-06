@@ -36,9 +36,12 @@ function darkenFor(hex: string, against: string, min = MIN_CONTRAST): string {
 }
 
 export function brandTokens(brandHex: string, look: LookId): BrandTokens {
-  const brand = brandHex.toLowerCase();
-  const { h, s } = hexToHsl(brand);
-  const brandText = contrast(brand, WHITE) >= contrast(brand, TEXT_DARK) ? WHITE : TEXT_DARK;
+  const raw = brandHex.toLowerCase();
+  const { h, s } = hexToHsl(raw);
+  // Never blocks: ink text if it reads on the color, else darken the fill under white text.
+  const fits = (t: string) => contrast(raw, t) >= MIN_CONTRAST;
+  const brandText = fits(WHITE) ? WHITE : fits(TEXT_DARK) ? TEXT_DARK : WHITE;
+  const brand = fits(brandText) ? raw : darkenFor(raw, WHITE);
   const light = look === "light";
   const rail = look === "ink" ? INK : look === "color" ? hslToHex(h, Math.min(s, 55), 16) : hslToHex(h, Math.min(s, 30), 95);
   return {
@@ -72,8 +75,7 @@ export function contrastChecks(t: BrandTokens): ContrastCheck[] {
 export function themeProblem(brandHex: string | null, look: string | null): string | null {
   if (!isValidHex(brandHex)) return "Pick a color as #rrggbb.";
   if (!look || !LOOK_IDS.includes(look)) return "Pick one of the three looks.";
-  const bad = contrastChecks(brandTokens(brandHex, look as LookId)).filter((c) => !c.ok);
-  return bad.length ? `Not readable: ${bad.map((b) => `${b.pair.toLowerCase()} (${b.ratio}:1)`).join(", ")}. Try a darker or lighter color.` : null;
+  return null;
 }
 
 /** Themes saved before the three looks map onto the nearest one. */

@@ -24,7 +24,22 @@ async function squarePng(file: File, size = 512): Promise<Blob> {
   }
 }
 
-export function CompanyLogoUpload({ companyId, currentUrl = null, label = "Edit logo", className, statusClassName = "" }: { companyId: string; currentUrl?: string | null; label?: string; className?: string; statusClassName?: string }) {
+export function CompanyLogoUpload({
+  companyId,
+  currentUrl = null,
+  label = "Edit logo",
+  className,
+  statusClassName = "",
+  quiet = false,
+}: {
+  companyId: string;
+  currentUrl?: string | null;
+  label?: string;
+  className?: string;
+  statusClassName?: string;
+  quiet?: boolean;
+}) {
+  const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -43,6 +58,10 @@ export function CompanyLogoUpload({ companyId, currentUrl = null, label = "Edit 
       const b = (await r.json().catch(() => ({}))) as { error?: string };
       if (!r.ok) throw new Error(b.error ?? `Upload failed (${r.status}). Try a PNG, JPG, WebP or SVG under 5 MB.`);
       setLast({ file, previous, cropped: crop });
+      if (quiet) {
+        setToast(crop ? "Cropped to square" : "Logo updated");
+        setTimeout(() => setToast(null), 3000);
+      }
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not upload that image.");
@@ -79,7 +98,12 @@ export function CompanyLogoUpload({ companyId, currentUrl = null, label = "Edit 
         data-logo-input
       />
       <span className={`block ${statusClassName}`}>
-      {last && !busy && (
+      {toast && (
+        <span role="status" data-toast className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 bg-ink px-4 py-2.5 text-[13px] font-semibold text-surface shadow-lg">
+          {toast}
+        </span>
+      )}
+      {!quiet && last && !busy && (
         <span data-logo-done className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap text-[12px]">
           <span className="font-semibold text-ink">{last.cropped ? "Cropped to square" : "Logo updated"}</span>
           {!last.cropped && (
@@ -94,6 +118,39 @@ export function CompanyLogoUpload({ companyId, currentUrl = null, label = "Edit 
       )}
       {error && <span role="alert" className="mt-1 block max-w-[260px] text-[12px] font-semibold text-magenta-dark">{error}</span>}
       </span>
+    </>
+  );
+}
+
+/** Crops the current logo to a square and uploads it (Branding's small link under the logo box). */
+export function CropLogoToSquare({ companyId, currentUrl, className }: { companyId: string; currentUrl: string; className?: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const crop = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await (await fetch(currentUrl)).blob();
+      const sq = await squarePng(new File([blob], "logo", { type: blob.type || "image/png" }));
+      const fd = new FormData();
+      fd.append("file", new File([sq], "logo.png", { type: "image/png" }));
+      fd.append("companyId", companyId);
+      const r = await fetch("/api/company/logo", { method: "POST", body: fd });
+      if (!r.ok) throw new Error("Could not crop that logo.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not crop that logo.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <button type="button" data-crop-square onClick={crop} disabled={busy} className={className}>
+        {busy ? "Cropping…" : "Crop to Square"}
+      </button>
+      {error && <span role="alert" className="block text-[12px] font-semibold text-magenta-dark">{error}</span>}
     </>
   );
 }

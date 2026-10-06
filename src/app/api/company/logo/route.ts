@@ -71,9 +71,14 @@ export async function POST(request: Request) {
     }
     const url = await uploadCompanyLogo(companyId ?? person.id, { type, size: bytes.byteLength, bytes });
     if (companyId) {
-      // Keep the colors the logo carries, so Dynamic Branding can offer them without re-reading.
-      const palette = await extractLogoPalette(Buffer.from(bytes)).catch(() => []);
-      await prisma.company.update({ where: { id: companyId }, data: { logo_url: url, ...(palette.length ? { logo_palette: palette } : {}) } });
+      // Upload is the only place colors are read; a company that never picked a color gets the first logo color.
+      const palette = await extractLogoPalette(Buffer.from(bytes)).catch(() => [] as string[]);
+      const co = await prisma.company.findUnique({ where: { id: companyId }, select: { brand_hue: true } });
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { logo_url: url, logo_palette: palette.length ? palette : Prisma.DbNull, ...(!co?.brand_hue && palette[0] ? { brand_hue: palette[0] } : {}) },
+      });
+      return NextResponse.json({ ok: true, logoUrl: url, palette });
     }
     return NextResponse.json({ ok: true, logoUrl: url });
   } catch (e) {
