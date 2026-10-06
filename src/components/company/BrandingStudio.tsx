@@ -104,7 +104,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
             {logoUrl ? "Read your colors from the logo, or type one below." : "Upload a logo and we'll suggest the color from it."}
           </p>
           <div className="flex flex-wrap gap-2">
-            <CompanyLogoUpload companyId={companyId} label="Upload Logo" className={`${BTN} bg-ink text-surface hover:bg-ink-hover`} />
+            <CompanyLogoUpload companyId={companyId} currentUrl={logoUrl} label="Upload Logo" className={`${BTN} bg-ink text-surface hover:bg-ink-hover`} />
             <button type="button" onClick={() => scanInput.current?.click()} disabled={busy === "scan"} className={`${BTN} border border-ink bg-surface text-ink`}>
               {busy === "scan" ? "Reading Your Image…" : "Read Colors From an Image"}
             </button>
