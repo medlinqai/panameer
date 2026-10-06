@@ -547,6 +547,29 @@ export const NOTIFICATION_EVENTS = {
     body: () => "Members entered skills or specializations that aren't in the catalog. Merge, add or reject them in Compare.",
     href: () => "/admin/skill-catalog?tab=compare&status=new",
   },
+  // Company v3 lane 2: payout account changes reach every admin; a second member prompts a payee switch.
+  "company.payout_changed": {
+    event: "company.payout_changed",
+    recipient: "every admin of the company",
+    category: "payout.sent",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: false,
+    title: (v) => `${str(v, "companyName", "Your company")}'s payout account changed`,
+    body: (v) => `${str(v, "byName", "An admin")} ${str(v, "change", "changed the payout account")}. If this wasn't expected, check Legal, Tax & Banking now.`,
+    href: () => "/company/legal#payout",
+  },
+  "company.payee_switch_needed": {
+    event: "company.payee_switch_needed",
+    recipient: "the company's admins",
+    category: "payout.sent",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `Switch Who Gets Paid to This company`,
+    body: (v) => `${str(v, "companyName", "Your company")} has more than one member now, so one person can't be paid for its work. Switch Who Gets Paid to This company.`,
+    href: () => "/company/legal#who-gets-paid",
+  },
   // Company join requests (company-v2 lane 3): domain match → they ask, an admin approves.
   "company.join_requested": {
     event: "company.join_requested",
