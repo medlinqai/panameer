@@ -1,43 +1,51 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
-import { pathForUser } from "@/lib/your-path";
+import { lifecycleForUser } from "@/lib/your-path";
+import { LIFECYCLE_WHO } from "@/lib/user-levels";
+import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Path · Panameer" };
 
-// Your Path: the six steps from sign-up to getting paid, with "You are here" and one Next button.
-export default async function YourPathPage({ searchParams }: { searchParams: Promise<{ as?: string }> }) {
+// Your Path: the 7 lifecycle steps with "You are here" and one Next button. Same for buyers and sellers.
+export default async function YourPathPage() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fyour-path");
-  const { as } = await searchParams;
-  const path = await pathForUser(viewer.userId, as === "buyer" || as === "provider" ? as : undefined);
+  const path = await lifecycleForUser(viewer.userId);
   if (!path) redirect("/dashboard");
-  const { steps, done, current, role } = path;
+  const { steps, done, current, status } = path;
   const next = steps[current];
-  const other = role === "provider" ? "buyer" : "provider";
   return (
-    <div className="pm-white-page mx-auto w-full max-w-[860px] pb-14" data-your-path={role} data-current={current + 1}>
-      <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">YOUR PATH{current < 6 ? ` · STEP ${current + 1} OF 6` : ""}</p>
-      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From sign-up to getting paid</h1>
+    <div className="pm-white-page mx-auto w-full max-w-[860px] pb-14" data-your-path data-current={current + 1} data-status={status}>
+      <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">
+        YOUR PATH{current < 7 ? ` · STEP ${current + 1} OF 7` : ""} · {status.toUpperCase()}
+        <LifecycleHelp className="text-ink" />
+      </p>
+      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From account to getting paid</h1>
       <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
-        Six steps. Each one unlocks something. You can learn, post and send proposals long before you need company paperwork.
+        Buyers and sellers follow the same seven steps. You do the first three; your company does the rest. Panameer contracts with and pays companies, never individuals.
       </p>
       <ol className="mt-6 border-t border-line">
         {steps.map((s, i) => {
           const here = i === current;
           return (
-            <li key={s.key} data-step={s.key} data-done={done[i] || undefined} data-here={here || undefined} className={"grid grid-cols-[36px_1fr] gap-3 border-b border-line py-4 sm:grid-cols-[36px_1fr_auto] " + (here ? "bg-magenta/5" : "")}>
+            <li key={s.key} data-step={i + 1} data-done={done[i] || undefined} data-here={here || undefined} className={"grid grid-cols-[36px_1fr] gap-3 border-b border-line py-4 sm:grid-cols-[36px_1fr_auto] " + (here ? "bg-magenta/5" : "")}>
               <span className={"grid h-8 w-8 place-items-center text-[14px] font-bold " + (done[i] ? "bg-ink text-surface" : here ? "border-2 border-ink" : "border border-line text-ink-3")}>
                 {done[i] ? "✓" : i + 1}
               </span>
               <span className="min-w-0">
-                <span className="block text-[11px] font-bold tracking-[0.1em] text-ink-3">STEP {i + 1}</span>
-                <b className="block text-[16px]">
-                  {s.title} {s.locked && <span aria-label="Admins only">🔒</span>}
-                </b>
+                <span className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
+                  STEP {i + 1}
+                  {s.gate && <span className="border border-ink px-1 text-[9.5px] text-ink">GATE</span>}
+                  <span className="px-1.5 text-[10px]" style={{ background: LIFECYCLE_WHO[s.who].bg, color: LIFECYCLE_WHO[s.who].fg }}>{LIFECYCLE_WHO[s.who].label.toUpperCase()}</span>
+                </span>
+                <b className="block text-[16px]">{s.step}</b>
                 <span className="block text-[13.5px] text-ink-2">{s.desc}</span>
-                <span className="mt-0.5 block text-[12.5px] text-ink-3">Unlocks: {s.unlocks}</span>
+                <span className="mt-0.5 block text-[12.5px] text-ink-3">
+                  Status after it: <b className="text-ink-2">{s.status}</b>
+                  {s.unlocks && ` · Unlocks ${s.unlocks}`}
+                </span>
               </span>
               <span className="col-start-2 self-center sm:col-start-3">
                 {done[i] ? (
@@ -61,14 +69,8 @@ export default async function YourPathPage({ searchParams }: { searchParams: Pro
           </Link>
         </div>
       ) : (
-        <p data-path-done className="mt-6 border-l-2 border-ink py-2 pl-3 text-[15px] font-bold">✓ {role === "provider" ? "Ready to be paid" : "Ready to buy and sign work"}</p>
+        <p data-path-done className="mt-6 border-l-2 border-ink py-2 pl-3 text-[15px] font-bold">✓ Paid — every step is done</p>
       )}
-      <p className="mt-6 text-[13.5px] text-ink-2">
-        {role === "provider" ? "Buying instead?" : "Selling instead?"}{" "}
-        <Link href={`/your-path?as=${other}`} className="font-semibold text-magenta-dark underline underline-offset-2">
-          See the {other} path
-        </Link>
-      </p>
     </div>
   );
 }

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 
-// Account menu top block: "Your Path · Step N of 6", a 6-segment bar and "Next: … Go".
-type Path = { current: number; done: boolean[]; next: { label: string; href: string } | null };
+// Account menu top block: "Your Path · Step N of 7" + "?", a 7-segment bar and "Next: … Go".
+type Path = { current: number; done: boolean[]; status: string; next: { label: string; href: string } | null };
 
 export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void; rowClass: string }) {
   const [path, setPath] = useState<Path | null>(null);
@@ -24,8 +25,11 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
         <div data-path-menu={path.current + 1} className="border-b border-line px-4 py-3">
           {path.next ? (
             <>
-              <p className="text-[11px] font-bold tracking-[0.1em] text-ink-2">YOUR PATH · STEP {path.current + 1} OF 6</p>
-              <div className="mt-1.5 grid grid-cols-6 gap-1" aria-hidden>
+              <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
+                YOUR PATH · STEP {path.current + 1} OF 7
+                <LifecycleHelp onOpen={onNavigate} />
+              </p>
+              <div className="mt-1.5 grid grid-cols-7 gap-1" aria-hidden>
                 {path.done.map((d, i) => (
                   <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
                 ))}
@@ -38,7 +42,9 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
               </p>
             </>
           ) : (
-            <p className="text-[13px] font-bold">✓ Ready to be paid</p>
+            <p className="flex items-center gap-1.5 text-[13px] font-bold">
+              ✓ Paid — every step is done <LifecycleHelp onOpen={onNavigate} />
+            </p>
           )}
         </div>
       )}

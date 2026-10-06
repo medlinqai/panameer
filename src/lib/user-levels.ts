@@ -115,38 +115,38 @@ export function passRate(subjects: LevelSubject[], i: number): number | null {
   return Math.round((subjects.filter((s) => hasReached(s, USER_LEVELS[i + 1])).length / at) * 100);
 }
 
-// ── Your Path (2026-10-06): six steps, unverified to paid. The one definition; menu, page, admin and gate use it.
-export type PathRole = "provider" | "buyer";
-export type PathKey = "verify" | "profile" | "company" | "verified" | "work" | "done";
-export type PathStep = { key: PathKey; title: string; short: string; desc: string; unlocks: string; href: string; next: string; locked?: boolean };
+// ── Lifecycle (2026-10-06): 7 steps, 7 statuses, same for buyers and sellers. The one definition.
+export type LifecycleWho = "you" | "company" | "both";
+export type LifecycleStep = { key: string; step: string; status: string; who: LifecycleWho; gate: boolean; desc: string; unlocks?: string; href: string; next: string };
 
-const BASE: PathStep[] = [
-  { key: "verify", title: "Verify Email", short: "Verify", desc: "Click the link we sent.", unlocks: "your account", href: "/join", next: "verify your email" },
-  { key: "profile", title: "Build Your Profile", short: "Profile", desc: "Résumé, skills, rate.", unlocks: "Learn, Connect, being found", href: "/profile", next: "build your profile" },
-  { key: "company", title: "Join or Add Your Company", short: "Company", desc: "Who pays you: your business or your employer.", unlocks: "sending proposals, listing services", href: "/company?join=1#join", next: "join or add your company" },
+export const LIFECYCLE: LifecycleStep[] = [
+  { key: "account", step: "Create Account", status: "Unverified", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "create your account" },
+  { key: "verify", step: "Verify Account", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "verify your account" },
+  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "Score reaches the bar: résumé, skills, rate.", unlocks: "being found, posting, proposals", href: "/profile", next: "complete your profile" },
+  { key: "link", step: "Link to Company", status: "Linked", who: "company", gate: false, desc: "Join yours by website, or add it — a one-person business is a company too.", href: "/company?join=1#join", next: "link to your company" },
+  { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, desc: "Admin adds legal name, tax ID and W-9 (US) or W-8BEN-E (outside US).", unlocks: "signing work orders", href: "/company/legal", next: "validate your company" },
+  { key: "contract", step: "Get Contracted", status: "Contracted", who: "both", gate: true, desc: "Two validated companies sign a work order.", href: "/orders", next: "get contracted" },
+  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to a bank account in the company's legal name.", href: "/company/legal#payout", next: "get paid" },
 ];
-export const PATH_STEPS: Record<PathRole, PathStep[]> = {
-  provider: [
-    ...BASE,
-    { key: "verified", title: "Get Verified", short: "Get Verified", desc: "Legal name, state, tax ID. Admins only.", unlocks: "signing work orders", href: "/company/legal", next: "get your company verified", locked: true },
-    { key: "work", title: "Win & Sign Work", short: "Win & Sign", desc: "A buyer awards you; both sides sign the work order.", unlocks: "doing paid work", href: "/find-work", next: "win and sign your first work order" },
-    { key: "done", title: "Get Paid", short: "Get Paid", desc: "Add a payout account. Money waits until it's there.", unlocks: "payouts", href: "/company/legal#payout", next: "add a payout account" },
-  ],
-  buyer: [
-    { ...BASE[0] },
-    { ...BASE[1], desc: "Who you are and what you buy.", unlocks: "Learn, Connect, posting work" },
-    { ...BASE[2], desc: "The company you buy for.", unlocks: "posting work requests" },
-    { key: "verified", title: "Get Verified", short: "Get Verified", desc: "Legal name, state, tax ID and a billing method. Admins only.", unlocks: "signing work orders", href: "/company/legal", next: "get your company verified", locked: true },
-    { key: "work", title: "Post Work", short: "Post Work", desc: "Post a work request; providers send proposals.", unlocks: "proposals from providers", href: "/create-work", next: "post your first work request" },
-    { key: "done", title: "Award & Sign", short: "Award & Sign", desc: "Pick a proposal; both sides sign the work order.", unlocks: "work starting", href: "/orders", next: "award and sign your first work order" },
-  ],
+
+export const LIFECYCLE_WHO: Record<LifecycleWho, { label: string; bg: string; fg: string }> = {
+  you: { label: "You", bg: "#eaf6f0", fg: "#1f8a5b" },
+  company: { label: "Your company (admins)", bg: "#efeaf7", fg: "#5a3f8f" },
+  both: { label: "Your company + the other company", bg: "#f3f1f7", fg: "#4a4658" },
 };
 
-export type PathFacts = { emailVerified: boolean; profileDone: boolean; inCompany: boolean; companyVerified: boolean; work: boolean; done: boolean };
+export const LIFECYCLE_RULES = [
+  { title: "We pay companies, not people", body: "Panameer doesn't employ anyone and doesn't pay individuals. Every payment goes to a company's bank account in its legal name." },
+  { title: "US companies", body: "W-9 with the company's tax ID. Checked against the state registry." },
+  { title: "Outside the US", body: "W-8BEN-E on file, as provided by the company. Panameer doesn't verify foreign registrations or file local reporting." },
+];
 
-/** Which steps are done, and the first one that isn't ("You are here"; 6 = all done). */
-export function pathStatus(f: PathFacts) {
-  const done = [f.emailVerified, f.profileDone, f.inCompany, f.companyVerified, f.work, f.done];
-  const current = done.findIndex((d) => !d);
-  return { done, current: current === -1 ? 6 : current };
+export type LifecycleFacts = { verified: boolean; profiled: boolean; linked: boolean; validated: boolean; contracted: boolean; paid: boolean };
+
+/** done[i] per step; current = first step not done (7 = all done); status = the status after the last done step. */
+export function lifecycleStatus(f: LifecycleFacts) {
+  const done = [true, f.verified, f.profiled, f.linked, f.validated, f.contracted, f.paid];
+  const first = done.findIndex((d) => !d);
+  const current = first === -1 ? 7 : first;
+  return { done, current, status: LIFECYCLE[current - 1].status };
 }

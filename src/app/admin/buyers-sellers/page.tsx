@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TestAccountControls } from "@/components/admin/TestAccountControls";
@@ -12,9 +13,11 @@ import {
   levelFor,
   blockingFor,
   type LevelSubject,
-  PATH_STEPS,
-  pathStatus,
+  LIFECYCLE,
+  LIFECYCLE_WHO,
+  lifecycleStatus,
 } from "@/lib/user-levels";
+import { VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { ResendVerification } from "@/components/admin/ResendVerification";
 import {
   ClipboardList, ShoppingCart, UserSearch, Briefcase, ShieldCheck,
@@ -91,6 +94,7 @@ export default async function Page({
           validation_requested_at: true,
           validated_at: true,
           onboarding_completed_at: true,
+          completeness: true,
         },
       },
     },
@@ -116,45 +120,33 @@ export default async function Page({
   const now = new Date().getTime();
   const period = sp.period === "7" ? 7 : sp.period === "all" ? null : 30;
   const realPeople = people.filter((p) => !p.user?.is_test);
-  // Your Path: each real person sits at the first step they haven't done (6 = all done).
+  // Lifecycle: each real person is in the box of their status (Unverified … Paid).
   const companyIds = [...new Set(realPeople.map((p) => p.companyMemberships[0]?.company_id).filter((x): x is string => !!x))];
-  const realIds = realPeople.map((p) => p.id);
   const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
-  const [cos, billing, provOrders, buyerReqs, buyerOrders, payouts] = await Promise.all([
-    prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, state_of_filing: true, tin: true, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
-    prisma.billingMethod.findMany({ where: { person_id: { in: realIds } }, select: { person_id: true } }),
-    prisma.workOrder.groupBy({ by: ["provider_person_id"], where: { provider_person_id: { in: realIds }, status: { in: [...SIGNED] } }, _count: true }),
-    prisma.workRequest.groupBy({ by: ["buyer_person_id"], where: { buyer_person_id: { in: realIds }, status: { not: "DRAFT" } }, _count: true }),
-    prisma.workOrder.groupBy({ by: ["buyer_person_id"], where: { buyer_person_id: { in: realIds }, status: { in: [...SIGNED] } }, _count: true }),
-    prisma.payoutMethod.groupBy({ by: ["company_id"], where: { company_id: { in: companyIds } }, _count: true }),
+  const [cos, orders, payoutsPaid] = await Promise.all([
+    prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true, legal_name: true, tin: true, tax_form_uploaded_at: true, p_account_id: true, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
+    prisma.workOrder.findMany({ where: { status: { in: [...SIGNED] } }, select: { buyer_person_id: true, provider_person_id: true } }),
+    prisma.providerPayout.findMany({ where: { paid_at: { not: null } }, select: { provider_person_id: true } }),
   ]);
+  const paidAccounts = new Set((await prisma.payment.findMany({ where: { p_account_id: { in: cos.map((c) => c.p_account_id) } }, select: { p_account_id: true } })).map((x) => x.p_account_id));
   const coById = new Map(cos.map((c) => [c.id, c]));
-  const billers = new Set(billing.map((b) => b.person_id));
-  const has = (rows: { _count: number }[], key: string, val: string | null) => rows.some((r) => (r as unknown as Record<string, string>)[key] === val);
+  const signedPeople = new Set(orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id]));
+  const paidPeople = new Set(payoutsPaid.map((x) => x.provider_person_id));
   const pathIndex = new Map<string, number>();
   for (const p of realPeople) {
-    const buyer = !p.is_service_provider && p.is_service_buyer;
-    const coId = p.companyMemberships[0]?.company_id ?? null;
-    const co = coId ? coById.get(coId) : null;
-    const legal = !!co?.state_of_filing?.trim() && !!co?.tin?.trim();
-    const billed = !!co?.memberships.some((m) => billers.has(m.person_id));
-    pathIndex.set(p.id, pathStatus({
-      emailVerified: !!p.user?.email_verified,
-      profileDone: !!(p.providerProfile?.onboarding_completed_at ?? p.requesterProfile?.completed_at),
-      inCompany: !!co,
-      companyVerified: legal && (!buyer || billed),
-      work: buyer ? has(buyerReqs, "buyer_person_id", p.id) : has(provOrders, "provider_person_id", p.id),
-      done: buyer ? has(buyerOrders, "buyer_person_id", p.id) : has(payouts, "company_id", coId),
-    }).current);
+    const co = coById.get(p.companyMemberships[0]?.company_id ?? "") ?? null;
+    const members = co ? co.memberships.map((m) => m.person_id) : [p.id];
+    const st = lifecycleStatus({
+      verified: !!p.user?.email_verified,
+      profiled: p.is_service_provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
+      linked: !!co,
+      validated: !!co && !!(co.legal_name ?? co.name)?.trim() && !!co.tin?.trim() && !!co.tax_form_uploaded_at,
+      contracted: members.some((id) => signedPeople.has(id)),
+      paid: members.some((id) => paidPeople.has(id)) || (!!co && paidAccounts.has(co.p_account_id)),
+    });
+    pathIndex.set(p.id, st.current - 1);
   }
-  const BOXES = [
-    ...PATH_STEPS.provider.map((st, i) => ({
-      key: String(i + 1),
-      label: i === 4 ? "Win & Sign / Post Work" : i === 5 ? "Get Paid / Award & Sign" : st.title,
-      hint: i === 3 ? "Legal name, state, tax ID (+ billing for buyers)" : st.desc,
-    })),
-    { key: "7", label: "All Done", hint: "Every step finished" },
-  ];
+  const BOXES = LIFECYCLE.map((s, i) => ({ key: String(i + 1), label: s.status, hint: i < 6 ? `Next: ${LIFECYCLE[i + 1].step}` : "Every step done" }));
   const boxCounts = BOXES.map((_, i) => realPeople.filter((p) => pathIndex.get(p.id) === i).length);
   const reached = (i: number) => realPeople.filter((p) => (pathIndex.get(p.id) ?? 0) >= i).length;
   const rates = BOXES.map((_, i) => (i >= 6 || !reached(i) ? null : Math.round((reached(i + 1) / reached(i)) * 100)));
@@ -425,28 +417,32 @@ export default async function Page({
               })}
             </nav>
           </div>
-          <ol className="mt-3 grid gap-2 md:grid-cols-[repeat(7,minmax(0,1fr))]">
+          <ol className="mt-3 flex flex-col gap-1 md:flex-row md:items-stretch md:gap-0">
             {BOXES.map((b, i) => (
-              <li key={b.key} className="relative">
-                <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover">
-                  <span className="block text-[10.5px] font-bold tracking-[0.1em] text-ink-3">{i < 6 ? `STEP ${i + 1}` : "DONE"}</span>
-                  <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
-                  <span className="block text-[13.5px] font-bold">{b.label}</span>
-                  <span className="block text-[12px] text-ink-2">{b.hint}</span>
-                  <span className="mt-1.5 block text-[12px] text-ink-3">
-                    {i === 0
-                      ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>oldest: {oldestWaiting} days</span>
-                      : movedOn[i] !== undefined
-                        ? `${movedOn[i]} moved on ${period ? `in ${period} days` : "all time"}`
-                        : "—"}
-                  </span>
-                </a>
+              <Fragment key={b.key}>
+                <li className="min-w-0 md:flex-1">
+                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover" style={{ borderTop: `4px solid ${LIFECYCLE_WHO[LIFECYCLE[i].who].fg}` }}>
+                    <span className="block truncate text-[10.5px] font-bold tracking-[0.08em] text-ink-3">STEP {i + 1} · {LIFECYCLE[i].step.toUpperCase()}</span>
+                    <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
+                    <span className="block text-[13.5px] font-bold">{b.label}</span>
+                    <span className="block text-[12px] text-ink-2">{b.hint}</span>
+                    <span className="mt-1.5 block text-[12px] text-ink-3">
+                      {i === 0
+                        ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>oldest: {oldestWaiting} days</span>
+                        : movedOn[i] !== undefined
+                          ? `${movedOn[i]} moved on ${period ? `in ${period} days` : "all time"}`
+                          : "—"}
+                    </span>
+                  </a>
+                </li>
                 {i < 6 && (
-                  <span data-pass={rates[i] ?? ""} className="block py-1 text-center text-[12px] font-bold text-ink-2 md:absolute md:-right-2 md:top-1/2 md:z-10 md:-translate-y-1/2 md:translate-x-1/2 md:bg-canvas md:px-1">
-                    <span className="md:hidden">↓ </span><span className="max-md:hidden">→ </span>{rates[i] === null ? "—" : `${rates[i]}%`}
-                  </span>
+                  <li aria-hidden data-pass={rates[i] ?? ""} className="flex shrink-0 items-center justify-center py-0.5 text-[11.5px] font-bold text-ink-2 md:w-[44px] md:flex-col md:py-0">
+                    <span className="md:hidden">↓&nbsp;</span>
+                    <span className="max-md:hidden">→</span>
+                    <span>{rates[i] === null ? "—" : `${rates[i]}%`}</span>
+                  </li>
                 )}
-              </li>
+              </Fragment>
             ))}
           </ol>
           <p className="mt-2 text-[12.5px] text-ink-2" data-progression-total>

@@ -5,6 +5,7 @@ import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { themeVars } from "@/lib/dynamic-branding";
+import { LifecycleHelpHost } from "@/components/lifecycle/LifecycleHelp";
 
 export async function AppShell({ children }: { children: ReactNode }) {
 
@@ -27,6 +28,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       data-brand-theme={theme ? (theme.light ? "light" : "dark") : undefined}
       className="flex min-h-screen flex-col bg-canvas font-body text-ink"
     >
+      <LifecycleHelpHost />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppBand />
 

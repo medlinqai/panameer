@@ -1,9 +1,8 @@
-import { prisma } from "@/lib/prisma";
+import { companyChecklist } from "@/lib/your-path";
 
-// "Verified ✓" = legal and tax details on file (Your Path step 4); shown next to company names.
+// "Validated ✓" = lifecycle step 5 (legal name, tax ID, W-9 / W-8BEN-E); shown next to company names.
 export async function companyIsVerified(companyId: string) {
-  const c = await prisma.company.findUnique({ where: { id: companyId }, select: { state_of_filing: true, tin: true } });
-  return !!c?.state_of_filing?.trim() && !!c?.tin?.trim();
+  return !!(await companyChecklist(companyId))?.ready;
 }
 
 export async function VerifiedTag({ companyId }: { companyId: string | null | undefined }) {
@@ -12,10 +11,10 @@ export async function VerifiedTag({ companyId }: { companyId: string | null | un
   return (
     <span
       data-verified-tag={ok ? "yes" : "no"}
-      title="Verified = legal and tax details on file. Required before a work order is signed."
+      title="Validated = legal name, tax ID and W-9 / W-8BEN-E on file. Required before a work order is signed."
       className={"ml-2 inline-block border px-[6px] align-[1px] text-[10.5px] font-bold tracking-[0.06em] " + (ok ? "border-[#1f8a5b] text-[#1f8a5b]" : "border-line text-ink-3")}
     >
-      {ok ? "VERIFIED ✓" : "NOT YET VERIFIED"}
+      {ok ? "VALIDATED ✓" : "NOT YET VALIDATED"}
     </span>
   );
 }
