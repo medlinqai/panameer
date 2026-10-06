@@ -1,0 +1,135 @@
+import { prisma } from "@/lib/prisma";
+import type { Viewer } from "@/lib/access";
+import { writeAudit } from "@/lib/admin/audit";
+import type { WriteResult } from "@/lib/catalog-write";
+import { promoteSuggestion, rejectSuggestion, type SpecKind } from "@/lib/catalog-write";
+
+// Catalog review (E909): merge / add / reject member-entered skills and specializations.
+const refuse = (error: string): WriteResult => ({ ok: false, error });
+const withAlias = (aliases: string[], name: string, target: string) =>
+  [target, ...aliases].some((a) => a.toLowerCase() === name.toLowerCase()) ? aliases : [...aliases, name];
+
+/** A member skill waiting for review: no domain, not merged, not rejected. */
+export const NEW_SKILL_WHERE = { pillar_id: null, merged_into_id: null, rejected_at: null, status: "ACTIVE" as const };
+
+async function newSkill(id: string) {
+  const s = await prisma.skill.findUnique({ where: { id }, select: { id: true, name: true, pillar_id: true, merged_into_id: true, rejected_at: true, status: true } });
+  return s && !s.pillar_id && !s.merged_into_id && !s.rejected_at && s.status === "ACTIVE" ? s : null;
+}
+
+export async function skillMembers(id: string) {
+  return prisma.providerSkill.count({ where: { skill_id: id } });
+}
+
+/** Moves every claim from `fromId` to `intoId`, adds the member wording as an alias, retires the source. */
+export async function mergeSkill(viewer: Viewer, fromId: string, intoId: string): Promise<WriteResult> {
+  const from = await newSkill(fromId);
+  if (!from) return refuse("That skill is no longer waiting for review.");
+  const into = await prisma.skill.findUnique({ where: { id: intoId }, select: { id: true, name: true, aliases: true, pillar_id: true, status: true } });
+  if (!into || !into.pillar_id || into.status !== "ACTIVE") return refuse("Pick a live catalog skill to merge into.");
+
+  const moved = await prisma.$transaction(async (tx) => {
+    let n = 0;
+    for (const ps of await tx.providerSkill.findMany({ where: { skill_id: fromId } })) {
+      const dup = await tx.providerSkill.findUnique({ where: { provider_profile_id_skill_id: { provider_profile_id: ps.provider_profile_id, skill_id: intoId } } });
+      if (dup) {
+        await tx.providerSkill.update({
+          where: { id: dup.id },
+          data: { weight: Math.max(dup.weight, ps.weight), months_total: Math.max(dup.months_total, ps.months_total) },
+        });
+        await tx.providerSkill.delete({ where: { id: ps.id } });
+      } else await tx.providerSkill.update({ where: { id: ps.id }, data: { skill_id: intoId } });
+      n++;
+    }
+    // Other link tables: move unless the owner already links the target, then drop the duplicate.
+    const relink = async (rows: { id: string; key: string }[], has: (key: string) => Promise<boolean>, move: (id: string) => Promise<unknown>, drop: (id: string) => Promise<unknown>) => {
+      for (const r of rows) await ((await has(r.key)) ? drop(r.id) : move(r.id));
+    };
+    const js = await tx.jobSkill.findMany({ where: { skill_id: fromId } });
+    await relink(
+      js.map((j) => ({ id: j.id, key: j.employer_id ? `e:${j.employer_id}` : `p:${j.project_id}` })),
+      async (k) => !!(await tx.jobSkill.findFirst({ where: { skill_id: intoId, ...(k.startsWith("e:") ? { employer_id: k.slice(2) } : { project_id: k.slice(2) }) } })),
+      (id) => tx.jobSkill.update({ where: { id }, data: { skill_id: intoId } }),
+      (id) => tx.jobSkill.delete({ where: { id } })
+    );
+    const wr = await tx.workRequestSkill.findMany({ where: { skill_id: fromId } });
+    await relink(
+      wr.map((w) => ({ id: w.id, key: w.work_request_id })),
+      async (k) => !!(await tx.workRequestSkill.findFirst({ where: { skill_id: intoId, work_request_id: k } })),
+      (id) => tx.workRequestSkill.update({ where: { id }, data: { skill_id: intoId } }),
+      (id) => tx.workRequestSkill.delete({ where: { id } })
+    );
+    await tx.skill.update({ where: { id: intoId }, data: { aliases: withAlias(into.aliases, from.name, into.name) } });
+    await tx.skill.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED", visible_to_members: false } });
+    return n;
+  });
+  await writeAudit(viewer, { action: "catalog.skill.merge", targetTable: "skills", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
+}
+
+/** Adds a member skill to a domain; it starts Hidden (E821). Claims stay on the same row. */
+export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string, pillarId: string): Promise<WriteResult> {
+  const s = await newSkill(id);
+  if (!s) return refuse("That skill is no longer waiting for review.");
+  const row = await prisma.skill.findUnique({ where: { id }, select: { catalog_id: true } });
+  const clash = await prisma.skill.findFirst({
+    where: { catalog_id: row!.catalog_id, role_type_id: roleTypeId, pillar_id: pillarId, name: { equals: s.name, mode: "insensitive" }, NOT: { id } },
+    select: { name: true },
+  });
+  if (clash) return refuse(`"${clash.name}" is already in that domain — merge into it instead.`);
+  await prisma.skill.update({ where: { id }, data: { role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, origin: "PROVIDER" } });
+  const members = await skillMembers(id);
+  await writeAudit(viewer, { action: "catalog.skill.add_new", targetTable: "skills", targetId: id, detail: { name: s.name, roleTypeId, pillarId, members } });
+  return { ok: true, id, message: `Added "${s.name}". It is hidden until you click Show.` };
+}
+
+/** Keeps the skill on members' profiles; it never enters the catalog. */
+export async function rejectSkill(viewer: Viewer, id: string): Promise<WriteResult> {
+  const s = await newSkill(id);
+  if (!s) return refuse("That skill is no longer waiting for review.");
+  await prisma.skill.update({ where: { id }, data: { rejected_at: new Date(), visible_to_members: false } });
+  const members = await skillMembers(id);
+  await writeAudit(viewer, { action: "catalog.skill.reject", targetTable: "skills", targetId: id, detail: { name: s.name, members } });
+  return { ok: true, id, message: `Rejected "${s.name}". Members who entered it keep it on their profile.` };
+}
+
+/** Moves every link from a suggested specialization to a live one; the wording becomes an alias. */
+export async function mergeSpecialization(viewer: Viewer, fromId: string, intoId: string): Promise<WriteResult> {
+  const from = await prisma.specialization.findUnique({ where: { id: fromId }, select: { name: true, status: true, origin: true } });
+  if (!from || from.status !== "SUGGESTED") return refuse("That specialization is no longer waiting for review.");
+  const into = await prisma.specialization.findUnique({ where: { id: intoId }, select: { name: true, status: true, aliases: true } });
+  if (!into || into.status !== "ACTIVE") return refuse("Pick a live specialization to merge into.");
+  const moved = await prisma.$transaction(async (tx) => {
+    let n = 0;
+    for (const l of await tx.providerProfileSpecialization.findMany({ where: { specialization_id: fromId } })) {
+      const dup = await tx.providerProfileSpecialization.findUnique({ where: { provider_profile_id_specialization_id: { provider_profile_id: l.provider_profile_id, specialization_id: intoId } } });
+      if (dup) await tx.providerProfileSpecialization.delete({ where: { id: l.id } });
+      else await tx.providerProfileSpecialization.update({ where: { id: l.id }, data: { specialization_id: intoId } });
+      n++;
+    }
+    for (const l of await tx.workRequestSpecialization.findMany({ where: { specialization_id: fromId } })) {
+      const dup = await tx.workRequestSpecialization.findFirst({ where: { work_request_id: l.work_request_id, specialization_id: intoId } });
+      if (dup) await tx.workRequestSpecialization.delete({ where: { id: l.id } });
+      else await tx.workRequestSpecialization.update({ where: { id: l.id }, data: { specialization_id: intoId } });
+    }
+    await tx.project.updateMany({ where: { industry_specialization_id: fromId }, data: { industry_specialization_id: intoId } });
+    await tx.assessment.updateMany({ where: { industry_specialization_id: fromId }, data: { industry_specialization_id: intoId } });
+    await tx.specialization.update({ where: { id: intoId }, data: { aliases: withAlias(into.aliases, from.name, into.name) } });
+    await tx.specialization.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED" } });
+    return n;
+  });
+  await writeAudit(viewer, { action: "catalog.spec.merge", targetTable: "specializations", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
+}
+
+export async function addNewSpecialization(viewer: Viewer, id: string, kind: SpecKind): Promise<WriteResult> {
+  const r = await promoteSuggestion(id, kind);
+  if (r.ok) await writeAudit(viewer, { action: "catalog.spec.add_new", targetTable: "specializations", targetId: id, detail: { kind } });
+  return r;
+}
+
+export async function rejectSpecialization(viewer: Viewer, id: string): Promise<WriteResult> {
+  const r = await rejectSuggestion(id);
+  if (r.ok) await writeAudit(viewer, { action: "catalog.spec.reject", targetTable: "specializations", targetId: id });
+  return r;
+}

@@ -792,6 +792,9 @@ model Skill {
   /// Tech Category for Technology-Specific tools ("Development & Extensibility",
   /// "Integration & APIs"). Null for application modules and agnostic roles.
   category       String?
+  // Catalog review (E909): merged into another skill, or rejected from the catalog.
+  merged_into_id String?       @db.Uuid
+  rejected_at    DateTime?
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 
@@ -1540,6 +1543,8 @@ model Specialization {
   origin     CatalogOrigin      @default(SEED)
   /// ⚠ WHAT STATE THIS ROW IS IN (`P1-A1.5-E480`). See `CatalogStatus`.
   status     CatalogStatus      @default(ACTIVE)
+  aliases    String[]           @default([])
+  merged_into_id String?        @db.Uuid
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 

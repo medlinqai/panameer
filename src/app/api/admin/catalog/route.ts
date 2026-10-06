@@ -16,6 +16,14 @@ import {
   skillLinks,
   specializationLinks,
 } from "@/lib/catalog-write";
+import {
+  addNewSkill,
+  addNewSpecialization,
+  mergeSkill,
+  mergeSpecialization,
+  rejectSkill,
+  rejectSpecialization,
+} from "@/lib/catalog-review";
 
 const Id = z.string().uuid();
 const Name = z.string().trim().min(2).max(120);
@@ -37,6 +45,12 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("spec.promote"), id: Id, kind: Kind }),
   z.object({ action: z.literal("spec.reject"), id: Id }),
+  z.object({ action: z.literal("review.skill.merge"), id: Id, intoId: Id }),
+  z.object({ action: z.literal("review.skill.add"), id: Id, roleTypeId: Id, pillarId: Id }),
+  z.object({ action: z.literal("review.skill.reject"), id: Id }),
+  z.object({ action: z.literal("review.spec.merge"), id: Id, intoId: Id }),
+  z.object({ action: z.literal("review.spec.add"), id: Id, kind: Kind }),
+  z.object({ action: z.literal("review.spec.reject"), id: Id }),
   z.object({
     action: z.literal("delete"),
     table: z.enum(["skill", "specialization"]),
@@ -78,6 +92,18 @@ export async function POST(req: Request) {
         return setStatus(b.table, b.id, b.status);
       case "delete":
         return hardDelete(b.table, b.id);
+      case "review.skill.merge":
+        return mergeSkill(viewer, b.id, b.intoId);
+      case "review.skill.add":
+        return addNewSkill(viewer, b.id, b.roleTypeId, b.pillarId);
+      case "review.skill.reject":
+        return rejectSkill(viewer, b.id);
+      case "review.spec.merge":
+        return mergeSpecialization(viewer, b.id, b.intoId);
+      case "review.spec.add":
+        return addNewSpecialization(viewer, b.id, b.kind);
+      case "review.spec.reject":
+        return rejectSpecialization(viewer, b.id);
     }
   })();
 
