@@ -21,7 +21,7 @@ export type CatalogSkill = {
   hiddenMatch?: string;
 };
 export type CatalogSpec = { id: string; name: string; kind: string; members: number; aliasList?: string[] };
-export type CatalogFilters = { q?: string; role?: string; domain?: string; status?: string; tab?: string };
+export type CatalogFilters = { q?: string; role?: string; domain?: string; status?: string; tab?: string; sub?: string };
 type Pending = { act: "merge" | "add" | "reject"; spec: boolean; id: string; name: string; members: number; intoId?: string; intoName?: string; dest?: string };
 const STATUSES = [
   ["", "Any status"],
@@ -105,7 +105,7 @@ export function SkillCatalogTree({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ at: string; text: string } | null>(null);
   const [tab, setTab] = useState(initial.tab === "compare" ? "compare" : "tree");
-  const [sub, setSub] = useState<"skills" | "specs">("skills");
+  const [sub, setSub] = useState<"skills" | "specs">(initial.sub === "specs" ? "specs" : "skills");
   const [sel, setSel] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [done, setDone] = useState<string | null>(null);

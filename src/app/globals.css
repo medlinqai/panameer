@@ -700,3 +700,6 @@ main:has(:is(.pm-white-page, .account-surface)) {
 [data-brand-theme="light"] .pm-bottomnav :is(a, summary):not(.is-active) {
   color: var(--color-ink) !important;
 }
+
+/* Square rows and cards inside an admin page (design system: no rounded corners). */
+.pm-square [class*="rounded"] { border-radius: 0; }

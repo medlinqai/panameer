@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; claimed?: string; q?: string; role?: string; domain?: string; status?: string; tab?: string }>;
+  searchParams: Promise<{ view?: string; claimed?: string; q?: string; role?: string; domain?: string; status?: string; tab?: string; sub?: string }>;
 }) {
   const sp = await searchParams;
   const view =
@@ -358,7 +358,7 @@ export default async function Page({
           roles={treeRoles}
           unassigned={unassigned}
           destinations={flatPairs}
-          initial={{ q: sp.q, role: sp.role, domain: sp.domain, status: sp.status, tab: sp.tab }}
+          initial={{ q: sp.q, role: sp.role, domain: sp.domain, status: sp.status, tab: sp.tab, sub: sp.sub }}
           specs={specRows.filter((x) => x.status === "ACTIVE").map(toSpec)}
           newSpecs={specRows.filter((x) => x.status === "SUGGESTED").map(toSpec)}
         />
