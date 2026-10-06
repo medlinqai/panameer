@@ -84,7 +84,8 @@ export function normalizeLook(look: string | null | undefined): LookId | null {
 }
 
 /** CSS variables for AppShell; null = Panameer default (no theme saved, or unreadable). */
-export function themeVars(brandHex: string | null | undefined, rawLook: string | null | undefined) {
+export function themeVars(brandHex: string | null | undefined, rawLook: string | null | undefined, enabled: boolean | null = null) {
+  if (enabled === false) return null;
   const look = normalizeLook(rawLook);
   if (!isValidHex(brandHex) || !look || !LOOK_IDS.includes(look) || themeProblem(brandHex, look)) return null;
   const t = brandTokens(brandHex, look as LookId);

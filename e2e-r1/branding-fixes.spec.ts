@@ -73,3 +73,39 @@ test("B-E002 palette finds navy and light blue on a wide white logo", async ({ p
     .toBuffer();
   expect(await scan(three, "three.png", "image/png")).toHaveLength(3);
 });
+
+// B-E003: a real On/Off switch. On → the members' console is themed; Off → Panameer default, preview stays.
+test("B-E003 Dynamic Branding switch", async ({ browser }) => {
+  await db().company.update({ where: { id: f!.companyId }, data: { brand_hue: null, theme_recipe: null, theme_enabled: null } });
+  const memberTheme = async () => {
+    const ctx = await browser.newContext();
+    const p = await ctx.newPage();
+    await signIn(p, f!.people.member.email);
+    await p.goto("/company", { waitUntil: "networkidle" });
+    const v = await p.evaluate(() => (document.querySelector("[data-brand-theme]") as HTMLElement | null)?.style.getPropertyValue("--color-magenta") ?? null);
+    await ctx.close();
+    return v;
+  };
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await signIn(page, f!.people.admin.email);
+  await page.goto("/company/branding", { waitUntil: "networkidle" });
+  const sw = page.locator("[data-theme-switch]");
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator("[data-preview-only]")).toBeVisible();
+  await page.locator('input[name="hex"]').fill("#0f766e");
+  await sw.click();
+  await expect(sw).toHaveAttribute("aria-checked", "true", { timeout: 15_000 });
+  await expect(page.locator("[data-preview-only]")).toHaveCount(0);
+  expect(await memberTheme()).toBe("#0f766e");
+  await sw.click();
+  await expect(sw).toHaveAttribute("aria-checked", "false", { timeout: 15_000 });
+  await expect(page.locator("[data-preview-only]")).toBeVisible();
+  await expect(page.locator("[data-theme-preview]")).toBeVisible();
+  expect(await memberTheme(), "off → default console").toBeNull();
+  // The color and look are kept while off.
+  const row = await db().company.findUniqueOrThrow({ where: { id: f!.companyId }, select: { brand_hue: true, theme_recipe: true, theme_enabled: true } });
+  expect(row).toEqual({ brand_hue: "#0f766e", theme_recipe: "ink", theme_enabled: false });
+  await page.screenshot({ path: "e2e-r1/.artifacts/branding-switch-off.png", fullPage: true });
+  await ctx.close();
+});

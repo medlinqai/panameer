@@ -15,11 +15,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
         await prisma.companyMembership.findFirst({
           where: { person: { user_id: viewer.userId }, status: "APPROVED" },
           orderBy: { created_at: "asc" },
-          select: { company: { select: { brand_hue: true, theme_recipe: true } } },
+          select: { company: { select: { brand_hue: true, theme_recipe: true, theme_enabled: true } } },
         })
       )?.company ?? null
     : null;
-  const theme = themeVars(company?.brand_hue, company?.theme_recipe);
+  const theme = themeVars(company?.brand_hue, company?.theme_recipe, company?.theme_enabled ?? null);
 
   return (
     <div
