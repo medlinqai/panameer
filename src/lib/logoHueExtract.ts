@@ -69,13 +69,18 @@ export async function extractLogoHues(buffer: Buffer, max = 3): Promise<string[]
   });
 }
 
-// Logo palette (2026-10-05): the logo's own colors — up to 6, ordered by area. White/near-white and near-black
-// are ignored unless nothing else is there. Colors closer than ~28 RGB units merge into one.
+// Logo palette: the logo's own colors — up to 6, ordered by area. Shares are measured against the logo's
+// colored pixels only (not the white/black/transparent background), so thin bars on a wide wordmark count.
+// Sampled at 320px on the long side; colors within ~28 RGB units merge; under 3% of the colored area is a speck.
 export async function extractLogoPalette(buffer: Buffer, max = 6): Promise<string[]> {
   let data: Buffer;
   let ch: number;
   try {
-    const out = await sharp(buffer, { density: 144 }).resize(96, 96, { fit: "inside", kernel: "nearest" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const out = await sharp(buffer, { density: 144 })
+      .resize(320, 320, { fit: "inside", kernel: "nearest" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
     data = out.data;
     ch = out.info.channels;
   } catch {
@@ -93,10 +98,30 @@ export async function extractLogoPalette(buffer: Buffer, max = 6): Promise<strin
       hit.r += r; hit.g += g; hit.b += b; hit.n++;
     } else groups.push({ r, g, b, n: 1, edge });
   }
-  const total = groups.reduce((a, c) => a + c.n, 0) || 1;
-  // Anti-aliased edges make thin blends; anything under 1.5% of the logo isn't a brand color.
-  const real = groups.filter((c) => !c.edge && c.n / total >= 0.015);
-  const pick = (real.length ? real : groups).sort((a, b) => b.n - a.n).slice(0, max);
+  const colored = groups.filter((c) => !c.edge).sort((a, b) => b.n - a.n);
+  const coloredTotal = colored.reduce((a, c) => a + c.n, 0);
+  // Anti-aliased edges are blends of a kept color with the background (or with another kept color):
+  // a color within ~22 units of such a line is a blend, not a brand color.
+  type V = [number, number, number];
+  const avg = (c: C): V => [c.r / c.n, c.g / c.n, c.b / c.n];
+  const toSeg = (p: V, a: V, b: V) => {
+    const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const len = ab[0] ** 2 + ab[1] ** 2 + ab[2] ** 2 || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * ab[0] + (p[1] - a[1]) * ab[1] + (p[2] - a[2]) * ab[2]) / len));
+    return Math.hypot(p[0] - (a[0] + t * ab[0]), p[1] - (a[1] + t * ab[1]), p[2] - (a[2] + t * ab[2]));
+  };
+  const ends: V[] = [[255, 255, 255], [0, 0, 0]];
+  const kept: V[] = [];
+  const real: C[] = [];
+  for (const c of colored) {
+    if (c.n / (coloredTotal || 1) < 0.03) continue;
+    const p = avg(c);
+    const blend = kept.some((k) => [...ends, ...kept].some((e) => e !== k && toSeg(p, k, e) < 22));
+    if (blend) continue;
+    kept.push(p);
+    real.push(c);
+  }
+  const pick = (real.length ? real : groups.sort((a, b) => b.n - a.n)).slice(0, max);
   const hex = (v: number) => Math.round(v).toString(16).padStart(2, "0");
   return pick.map((c) => `#${hex(c.r / c.n)}${hex(c.g / c.n)}${hex(c.b / c.n)}`);
 }
