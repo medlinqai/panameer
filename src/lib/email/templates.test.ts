@@ -8,6 +8,7 @@ import { identityVerificationRequestTemplate } from "@/lib/email/templates/ident
 import { verifyEmailTemplate } from "@/lib/email/templates/verify-email";
 import { passwordResetTemplate } from "@/lib/email/templates/password-reset";
 import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
+import { connectInviteTemplate } from "@/lib/email/templates/connect-invite";
 import { assessmentReadyTemplate } from "@/lib/email/templates/assessment-ready";
 import { projectValidatedTemplate } from "@/lib/email/templates/project-validated";
 import { projectValidationTemplate } from "@/lib/email/templates/project-validation";
@@ -145,10 +146,19 @@ const SUITE: { name: string; out: Rendered; inSuite: boolean }[] = [
     inSuite: false,
     out: colleagueInviteTemplate({
       inviterName: "phil",
+      inviterTitle: "Oracle Procurement Lead",
+      inviterCompany: "Acme",
+      companyUrl: "https://acme.example",
       inviteeName: "dana",
+      profileUrl: "https://panameer.com/pro/phil",
       joinUrl: "https://panameer.com/invite/colleague/abc",
       message: "Thought of you for this.",
     }),
+  },
+  {
+    name: "connect-request (member to member)",
+    inSuite: false,
+    out: connectInviteTemplate({ fromName: "phil carter", fromTitle: "Oracle Procurement Lead", recipientFirstName: "dana", profileUrl: "https://panameer.com/providers/x" }),
   },
   { name: "assessment-ready", inSuite: false,
     out: assessmentReadyTemplate({ companyName: "Acme", processName: "Procure-to-Pay", reportUrl: "https://panameer.com/r/x" }) },

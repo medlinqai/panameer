@@ -116,6 +116,7 @@ export async function notify(input: {
         href: data.href,
         wantsEmail,
         suppressed,
+        vars: input.vars ?? {},
       });
 
     if (input.tx) return { sendAfterCommit: send };
@@ -140,6 +141,7 @@ async function emailFor(a: {
   href: string | null;
   wantsEmail: boolean;
   suppressed: string | null;
+  vars?: Vars;
 }): Promise<void> {
   if (a.suppressed) return;
   if (!a.wantsEmail) return;
@@ -209,6 +211,8 @@ async function emailFor(a: {
         : null;
 
       const mail = renderNotificationMail(a.event, {
+        vars: a.vars,
+        base,
         firstName: person.user?.first_name ?? null,
         title,
         body: a.body,

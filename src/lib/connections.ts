@@ -80,8 +80,21 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
 
   const inviter = await prisma.person.findFirst({
     where: { user_id: from },
-    select: { first_name: true, last_name: true },
+    select: {
+      first_name: true,
+      last_name: true,
+      title: true,
+      providerProfile: { select: { id: true } },
+      companyMemberships: {
+        where: { status: "APPROVED" },
+        take: 1,
+        orderBy: { created_at: "asc" },
+        select: { company: { select: { name: true, website: true, show_on_profiles: true } } },
+      },
+    },
   });
+  const co = inviter?.companyMemberships[0]?.company;
+  const shownCo = co?.show_on_profiles ? co : null;
   const invitee = await prisma.person.findFirst({
     where: { user_id: toUserId },
     select: { id: true },
@@ -96,6 +109,11 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
       vars: {
         fromName:
           [inviter?.first_name, inviter?.last_name].filter(Boolean).join(" ") || "Someone",
+        fromFirstName: inviter?.first_name ?? "",
+        fromTitle: inviter?.title?.trim() ?? "",
+        fromCompany: shownCo?.name ?? "",
+        companyUrl: shownCo?.website ? (/^https?:/.test(shownCo.website) ? shownCo.website : `https://${shownCo.website}`) : "",
+        profileHref: inviter?.providerProfile ? `/providers/${inviter.providerProfile.id}` : "",
       },
     });
   }

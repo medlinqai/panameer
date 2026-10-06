@@ -5,6 +5,7 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { colleagueInviteTemplate } from "@/lib/email/templates/colleague-invite";
 import { memberByEmail, type MemberWithRelation } from "@/lib/connections";
 import type { Viewer } from "@/lib/access";
+import { ensureSlug } from "@/lib/public-slug";
 
 /** How long an invitation stays good for. */
 export const INVITE_TTL_DAYS = 30;
@@ -87,16 +88,36 @@ export async function inviteColleague(input: {
 
   const inviter = await prisma.person.findUnique({
     where: { id: input.inviterPersonId },
-    select: { first_name: true, last_name: true },
+    select: {
+      first_name: true,
+      last_name: true,
+      title: true,
+      companyMemberships: {
+        where: { status: "APPROVED" },
+        take: 1,
+        orderBy: { created_at: "asc" },
+        select: { company: { select: { name: true, website: true, show_on_profiles: true } } },
+      },
+      providerProfile: { select: { id: true, onboarding_completed_at: true } },
+    },
   });
+  // "View <First>'s Profile" opens the public profile when there is one; else the invitation page.
+  const slug = inviter?.providerProfile?.onboarding_completed_at ? await ensureSlug(inviter.providerProfile.id) : null;
+  const member = inviter?.companyMemberships[0]?.company;
+  const co = member?.show_on_profiles ? member : null;
   const inviterName =
     `${inviter?.first_name ?? ""} ${inviter?.last_name ?? ""}`.trim() || "A colleague";
 
   const url = `${input.origin}/invite/colleague/${raw}`;
   const { subject, html, text } = colleagueInviteTemplate({
     inviterName,
+    inviterFirstName: inviter?.first_name ?? null,
+    inviterTitle: inviter?.title?.trim() || null,
+    inviterCompany: co?.name ?? null,
+    companyUrl: co?.website ? (/^https?:/.test(co.website) ? co.website : `https://${co.website}`) : null,
     inviteeName: input.firstName?.trim() || null,
     message: input.message?.trim() || null,
+    profileUrl: slug ? `${input.origin}/pro/${slug}` : null,
     joinUrl: url,
   });
 
