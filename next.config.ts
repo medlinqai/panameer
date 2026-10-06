@@ -83,6 +83,13 @@ const nextConfig: NextConfig = {
     */
     const homeShowsStatus = process.env.HOME_SHOWS_STATUS === "1";
     return [
+      // C-E002: status.panameer.com serves only the status page; everything else 308s to the app.
+      {
+        source: "/:path((?!status(?:/|$)|api/status/|api/auth/|_next/|brand/|favicon|.*\\.[a-z0-9]+$).+)",
+        has: [{ type: "host" as const, value: "status.panameer.com" }],
+        destination: "https://app.panameer.com/:path",
+        permanent: true,
+      },
       ...(homeShowsStatus
         ? [
             {
