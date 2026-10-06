@@ -365,8 +365,10 @@ export function usageHoneyCells(areas: UsageArea[]) {
  */
 /** Usage v4: the six hex cells, in the mockup's order. */
 export const HIVE_KEYS = ["profile", "connect", "learn", "work", "shop", "pay"] as const;
+// The honeycomb shows every area, 3 + 3 + 3 (P2-E008); the summary still reads HIVE_KEYS.
+export const HIVE_CELL_KEYS = ["profile", "connect", "learn", "work", "shop", "orders", "earnings", "pay", "health"] as const;
 export function usageHiveCells(areas: UsageArea[]) {
-  return HIVE_KEYS.map((k) => {
+  return HIVE_CELL_KEYS.filter((k) => areas.some((x) => x.key === k)).map((k) => {
     const a = areas.find((x) => x.key === k)!;
     return { key: a.key, label: a.eyebrow, figure: a.figure, href: a.href, level: levelFor(a.figure, a.goal), money: a.money };
   });
