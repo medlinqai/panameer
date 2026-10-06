@@ -8,13 +8,15 @@ import type { UsageLevel } from "@/lib/usage-areas";
 // Usage v4 honeycomb (mockup usage_v4 2026-10-05): six outlined hex cells, tinted by level, rotating every 15s.
 export type HiveCell = { key: string; label: string; figure: Figure; href: string; level: UsageLevel | null; money?: boolean };
 
-// [fill, outline, value, label] — exactly the mockup's FILL table; None is dashed.
+// [fill, outline, value, label] — Health's palette (2026-10-05): None white + grey dashed · Low white + 2.5px ink ·
+// Medium solid magenta · Strong solid ink. No tints.
 export const HIVE_FILL: Record<UsageLevel, [string, string, string, string]> = {
-  none: ["var(--color-surface)", "#b9b3c6", "#8f8aa0", "#8f8aa0"],
-  low: ["#f2c4f2", "#d98ad8", "#a61aa5", "#a61aa5"],
-  medium: ["#d72cd6", "#a61aa5", "#fff", "#fde6fd"],
-  strong: ["#2b2438", "#111", "#fff", "#cfc9db"],
+  none: ["var(--color-surface)", "#9a95ab", "#77728c", "#77728c"],
+  low: ["var(--color-surface)", "var(--color-ink)", "var(--color-ink)", "var(--color-ink)"],
+  medium: ["#d72cd6", "#d72cd6", "#fff", "#fff"],
+  strong: ["var(--color-ink)", "var(--color-ink)", "var(--color-surface)", "var(--color-surface)"],
 };
+const STROKE: Record<UsageLevel, number> = { none: 1.6, low: 2.5, medium: 2, strong: 2 };
 const LEVELS: [UsageLevel, string][] = [["none", "None"], ["low", "Low"], ["medium", "Medium"], ["strong", "Strong"]];
 
 const R = 44;
@@ -54,9 +56,9 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
               aria-label={counted ? `${c.label}: ${value}, ${LEVELS.find((l) => l[0] === lvl)![1]}` : `${c.label}: not counted — ${(c.figure as { uncounted: string }).uncounted}`}
             >
               <g style={{ transform: `translate(${x}px, ${y}px)`, transition: still ? "none" : "transform 1s cubic-bezier(.4,.1,.2,1)" }}>
-                <path d={HEX} fill={fill} stroke={stroke} strokeWidth={dashed ? 1.6 : 2} strokeDasharray={dashed ? "5 4" : undefined} />
-                <text y={3} textAnchor="middle" fontSize={19} fontWeight={700} fill={val}>{value}</text>
-                <text y={18} textAnchor="middle" fontSize={8.5} fontWeight={600} fill={lab}>{c.label}</text>
+                <path d={HEX} style={{ fill, stroke }} strokeWidth={STROKE[lvl]} strokeDasharray={dashed ? "5 4" : undefined} data-stroke={stroke} />
+                <text y={3} textAnchor="middle" fontSize={19} fontWeight={700} style={{ fill: val }}>{value}</text>
+                <text y={18} textAnchor="middle" fontSize={8.5} fontWeight={600} style={{ fill: lab }}>{c.label}</text>
               </g>
             </a>
           );
@@ -69,7 +71,7 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
               aria-hidden
               data-level={k}
               className="mr-1.5 inline-block h-2.5 w-2.5"
-              style={{ background: HIVE_FILL[k][0], border: `1px ${k === "none" ? "dashed" : "solid"} ${HIVE_FILL[k][1]}` }}
+              style={{ background: HIVE_FILL[k][0], border: `${k === "low" ? 2 : 1}px ${k === "none" ? "dashed" : "solid"} ${HIVE_FILL[k][1]}` }}
             />
             {label}
           </li>

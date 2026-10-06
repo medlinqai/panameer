@@ -235,11 +235,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: 300px;
-  background: radial-gradient(
-    circle at 50% 45%,
-    color-mix(in srgb, var(--color-magenta) 7%, transparent),
-    transparent 70%
-  );
+  /* Health's look (2026-10-05): no glow behind the picture. */
 }
 
 /*
@@ -471,12 +467,4 @@ a.pm-hive-cell:focus-visible {
 .pm-usage .pm-hive-key-swatch[data-level="medium"],
 .pm-usage .pm-hive-key-swatch[data-level="strong"] {
   background: var(--color-ink);
-}
-
-/* Usage v4 hero: soft radial pink behind the honeycomb, inside the card (dark: a faint magenta glow). */
-.pm-usage-viz {
-  background: radial-gradient(circle at 50% 45%, #fdf3fd 0%, var(--color-surface) 72%);
-}
-:root[data-theme="dark"] .pm-usage-viz {
-  background: radial-gradient(circle at 50% 45%, rgba(215, 44, 214, 0.12) 0%, var(--color-surface) 72%);
 }
