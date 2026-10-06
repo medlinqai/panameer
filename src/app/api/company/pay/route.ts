@@ -13,6 +13,7 @@ const Body = z.discriminatedUnion("action", [
     label: z.string().trim().min(1, "Give it a name you'll recognize.").max(80),
     last4: z.string().trim().max(34).nullable().optional(),
     country: z.string().trim().min(2, "Where does the money land?").max(80),
+    holderName: z.string().trim().min(2, "Enter the account holder's name.").max(200),
   }),
   z.object({ action: z.literal("remove"), id: z.string().uuid() }),
 ]);

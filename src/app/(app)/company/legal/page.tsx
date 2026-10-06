@@ -6,7 +6,8 @@ import { LegalTaxRead } from "@/components/company/CompanyOverview";
 import { CompanyDetailsEditor, LEGAL_FIELDS } from "@/components/company/CompanyDetailsEditor";
 import { AcceptCompanyTos } from "@/components/company/AcceptCompanyTos";
 import { CompanySection } from "@/components/company/CompanySection";
-import { PayeeChoice } from "@/components/company/PayeeChoice";
+import { TaxFormUpload } from "@/components/company/TaxFormUpload";
+import { taxFormLabel } from "@/components/company/CompanyOverview";
 import { CompanyPayouts } from "@/components/company/CompanyPayouts";
 import { companyPayouts } from "@/lib/company-pay";
 
@@ -23,12 +24,12 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
   if (!c) notFound();
   const { edit } = await searchParams;
   const payouts = await companyPayouts(c.id);
-  const sole = c.payeeType === "SOLE_PROPRIETOR";
-  const taxLabel = sole ? "SSN or ITIN" : "EIN";
+  const taxLabel = "Tax ID (EIN)";
+  const form = taxFormLabel(c.country);
   const r = c.payReady!;
-  const legalNeeds = [!c.stateOfFiling && "state", !c.ein && (sole ? "SSN/ITIN" : "EIN")].filter(Boolean).join(" + ");
+  const legalNeeds = [!c.ein && "tax ID", !c.taxForm?.uploadedAt && form].filter(Boolean).join(" + ");
   const strip = [
-    { n: "1 · WHO GETS PAID", v: sole ? "One person ✓" : "This company ✓", done: r.steps[0].done, href: "#who-gets-paid" },
+    { n: "1 · WHO GETS PAID", v: "This company ✓", done: true, href: "#who-gets-paid" },
     { n: "2 · LEGAL & TAX", v: legalNeeds ? `Needs ${legalNeeds}` : "Done ✓", done: r.steps[1].done, href: "#legal-tax" },
     { n: "3 · PAYOUT ACCOUNT", v: payouts.length ? "Added ✓" : "Not added", done: r.steps[2].done, href: "#payout" },
   ];
@@ -50,18 +51,21 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
         ))}
       </ol>
       <CompanySection id="who-gets-paid" title="1 · Who Gets Paid">
-        <PayeeChoice value={sole ? "SOLE_PROPRIETOR" : "COMPANY"} members={c.members} />
+        <p data-payee-company className="mt-2 text-[14px]">
+          <b>{c.legalName ?? c.name}</b> — Panameer pays companies, never individuals. A one-person business is entered as a company.
+        </p>
       </CompanySection>
       <LegalTaxRead
         c={c}
         taxLabel={taxLabel}
+        taxUpload={<TaxFormUpload label={form} hasFile={!!c.taxForm?.uploadedAt} />}
         acceptTerms={!c.tos.current ? <AcceptCompanyTos companyId={c.id} /> : undefined}
         editor={
           edit === "legal" ? (
             <CompanyDetailsEditor
               fields={LEGAL_FIELDS}
               doneHref="/company/legal#legal-tax"
-              einLabel={sole ? "SSN or ITIN" : "EIN"}
+              einLabel="Tax ID (EIN)"
               einHint={c.ein ? `On file: ${"•••••" + c.ein.replace(/\D/g, "").slice(-4)}. Leave blank to keep it.` : "Masked after saving. Shown only to Panameer, never to buyers."}
               initial={{
                 name: c.name, legalName: c.legalName, taxType: c.taxTypeCode, country: c.country, stateOfFiling: c.stateOfFiling,
@@ -74,7 +78,8 @@ export default async function CompanyLegalPage({ searchParams }: { searchParams:
       <CompanySection id="payout" title="3 · Payout Account">
         <CompanyPayouts
           methods={payouts.map((m) => ({ id: m.id, kind: m.kind, label: m.label, last4: m.last4, country: m.country, isDefault: m.is_default }))}
-          canAdd={c.ein ? null : `Add ${sole ? "the SSN or ITIN" : "the EIN"} in Legal & Tax first.`}
+          canAdd={c.ein ? null : "Add the tax ID in Legal & Tax first."}
+          legalName={c.legalName ?? c.name}
         />
       </CompanySection>
     </div>

@@ -28,13 +28,14 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
 /** Admins only: what's left before the company can sign work orders (Your Path step 4); hidden when done. */
 export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
   if (!c.payReady) return null;
-  const missing = [!c.stateOfFiling?.trim() && "the state of filing", !c.ein?.trim() && "the tax ID"].filter(Boolean) as string[];
+  const form = taxFormLabel(c.country);
+  const missing = [!c.ein?.trim() && "the tax ID", !c.taxForm?.uploadedAt && `the ${form}`].filter(Boolean) as string[];
   if (missing.length === 0) return null;
   return (
     <div data-pay-box={missing.length} className="mt-7 border border-ink p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
       <div>
         <p className="text-[15px] font-bold">
-          Before {c.name} can sign work orders{" "}
+          Before {c.name} can be validated{" "}
           <span className="ml-1 inline-block border border-current px-[7px] align-[2px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">
             {missing.length} LEFT
           </span>
@@ -117,7 +118,10 @@ export function maskTaxId(tin: string | null) {
 }
 
 /** Legal & Tax (admins only): legal name, business type, country, state, masked tax ID, registry check, company terms. */
-export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN" }: { c: NonNullable<CompanyView>; editor?: React.ReactNode; acceptTerms?: React.ReactNode; taxLabel?: string }) {
+export const taxFormLabel = (country: string | null | undefined) =>
+  !country?.trim() || /^(us|usa|united states( of america)?)$/i.test(country.trim()) ? "W-9" : "W-8BEN-E";
+
+export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN", taxUpload }: { c: NonNullable<CompanyView>; editor?: React.ReactNode; acceptTerms?: React.ReactNode; taxLabel?: string; taxUpload?: React.ReactNode }) {
   const v = c.verification;
   const LABEL: Record<string, string> = {
     in_good_standing: "In good standing",
@@ -151,6 +155,21 @@ export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN" }: { c: 
                 </span>
               ) : null,
               add: c.stateOfFiling ? "Not checked yet" : "Runs once the state is added",
+            },
+            {
+              k: taxFormLabel(c.country),
+              v: c.taxForm?.uploadedAt ? (
+                <span data-tax-form>
+                  On file · {c.taxForm.uploadedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {taxFormLabel(c.country) === "W-8BEN-E" && <span className="ml-1 text-ink-3">· Provided by company — not verified</span>}{" "}
+                  {taxUpload}
+                </span>
+              ) : (
+                <span>
+                  <span className="italic text-ink-3">Not uploaded · </span>
+                  {taxUpload}
+                </span>
+              ),
             },
             {
               k: "Company terms",

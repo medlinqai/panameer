@@ -20,7 +20,6 @@ const nameFromDomain = (d: string) => {
 
 export function CompanyFinder(props: Props) {
   const { onDone, onBusyChange, submitRef, onValidityChange } = props;
-  const [who, setWho] = useState<"company" | "employee">("company");
   const [site, setSite] = useState("");
   const [found, setFound] = useState<Found | null>(null);
   const [looking, setLooking] = useState(false);
@@ -83,29 +82,11 @@ export function CompanyFinder(props: Props) {
       </div>
     );
 
-  const RADIO = "flex cursor-pointer gap-3 border-b border-line/60 py-3";
   return (
     <div data-company-finder className="space-y-5">
-      <fieldset>
-        <legend className="text-[15px] font-bold">Who pays you for this work?</legend>
-        <label className={RADIO}>
-          <input type="radio" name="who" checked={who === "company"} onChange={() => setWho("company")} className="mt-1 h-4 w-4" data-who="company" />
-          <span>
-            <b className="block text-[14.5px]">A company or my own business</b>
-            <span className="text-[13.5px] text-ink-2">Includes sole proprietors and 1099 contractors.</span>
-          </span>
-        </label>
-        <label className={RADIO}>
-          <input type="radio" name="who" checked={who === "employee"} onChange={() => setWho("employee")} className="mt-1 h-4 w-4" data-who="employee" />
-          <span>
-            <b className="block text-[14.5px]">I&apos;m an employee (W-2 in the US)</b>
-            <span className="text-[13.5px] text-ink-2">We&apos;ll connect you to your employer&apos;s company.</span>
-          </span>
-        </label>
-      </fieldset>
 
       <label className="block">
-        <span className="block text-[14px] font-semibold">{who === "employee" ? "Your employer's website" : "Your company's website"}</span>
+        <span className="block text-[14px] font-semibold">Your company&apos;s website</span>
         <input
           value={site}
           onChange={(e) => {
@@ -147,28 +128,19 @@ export function CompanyFinder(props: Props) {
       )}
       {!looking && found && !found.match && !found.freeMail && found.domain && (
         <div data-no-match className="border-l-2 border-ink py-1 pl-3 text-[13.5px]">
-          {who === "employee" ? (
-            <>No company on Panameer uses {found.domain} yet. Ask your employer&apos;s admin to add it, or check the website.</>
-          ) : (
-            <>
-              No company on Panameer uses {found.domain} yet.{" "}
-              <button type="button" data-add-found onClick={() => setFallback({ define: true, name: nameFromDomain(found.domain!), website: found.domain! })} className="font-bold text-magenta-dark underline">
-                Add {nameFromDomain(found.domain)} as a New Company
-              </button>
-            </>
-          )}
+          No company on Panameer uses {found.domain} yet.{" "}
+          <button type="button" data-add-found onClick={() => setFallback({ define: true, name: nameFromDomain(found.domain!), website: found.domain! })} className="font-bold text-magenta-dark underline">
+            Add {nameFromDomain(found.domain)} as a New Company
+          </button>
+          <span className="mt-1 block text-ink-3">Working for yourself? A one-person business is a company too.</span>
         </div>
       )}
       {error && <p role="alert" className="text-[13px] font-semibold text-magenta-dark">{error}</p>}
 
       <p className="text-[13px] text-ink-2">
         Not a match?{" "}
-        {who === "company" && (
-          <>
-            <button type="button" onClick={() => setFallback({ define: true })} className="font-semibold text-magenta-dark underline">Add a New Company</button>
-            {" · "}
-          </>
-        )}
+        <button type="button" onClick={() => setFallback({ define: true })} className="font-semibold text-magenta-dark underline">Add a New Company</button>
+        {" · "}
         <button type="button" data-no-website onClick={() => setFallback({ define: false })} className="font-semibold text-magenta-dark underline">My Company Has No Website</button>
       </p>
     </div>

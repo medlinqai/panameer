@@ -384,6 +384,10 @@ model Company {
   /// Dynamic Branding switch. null = saved before the switch existed: on when a look is saved.
   // Company v3: who gets paid — COMPANY (EIN) or SOLE_PROPRIETOR (SSN/ITIN, one-member companies only).
   // Company v3: set when its only member joined another company; never deleted.
+  // Lifecycle step 5: W-9 (US) or W-8BEN-E (outside the US), stored in the private certifications bucket.
+  tax_form_kind        String?
+  tax_form_path        String?
+  tax_form_uploaded_at DateTime?
   archived_at    DateTime?
   payee_type     PayeeType?
   payoutMethods  PayoutMethod[]
@@ -4256,6 +4260,8 @@ model PayoutMethod {
   updated_at DateTime         @updatedAt
 
   // Company v3: the payout account belongs to the company; person link kept.
+  /// Must match the company's legal name (lifecycle: we pay companies only).
+  holder_name String?
   company_id String?          @db.Uuid
   company    Company?         @relation(fields: [company_id], references: [id], onDelete: SetNull)
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)

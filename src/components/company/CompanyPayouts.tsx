@@ -9,10 +9,10 @@ const KIND: Record<string, string> = { BANK_ACCOUNT: "Bank (ACH)", WIRE: "Wire",
 const INPUT = "mt-1 min-h-[42px] w-full border border-line bg-surface px-3 text-[14px] text-ink focus:border-ink focus:outline-none";
 const BTN = "min-h-[42px] px-4 text-[13px] font-bold disabled:opacity-50";
 
-export function CompanyPayouts({ methods, canAdd }: { methods: Method[]; canAdd: string | null }) {
+export function CompanyPayouts({ methods, canAdd, legalName }: { methods: Method[]; canAdd: string | null; legalName: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ kind: "BANK_ACCOUNT", label: "", last4: "", country: "United States" });
+  const [f, setF] = useState({ kind: "BANK_ACCOUNT", label: "", last4: "", country: "United States", holderName: legalName });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -69,6 +69,11 @@ export function CompanyPayouts({ methods, canAdd }: { methods: Method[]; canAdd:
           <label className="block text-[13px] font-semibold">
             Name you&apos;ll recognize
             <input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} name="label" placeholder="Operating account" className={INPUT} />
+          </label>
+          <label className="block text-[13px] font-semibold sm:col-span-2">
+            Account holder name
+            <span className="block text-[12.5px] font-normal text-ink-3">Must be the company&apos;s legal name: {legalName}.</span>
+            <input value={f.holderName} onChange={(e) => setF({ ...f, holderName: e.target.value })} name="holderName" className={INPUT} />
           </label>
           <label className="block text-[13px] font-semibold">
             Last 4 of the account

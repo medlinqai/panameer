@@ -26,13 +26,13 @@ export function companyReadiness(c: Partial<Record<ReadinessKey, string | null>>
 }
 
 /** "Before {Company} can be paid": Who Gets Paid · Legal & Tax (state + tax ID) · Payout Account. */
-export function payReadiness(x: { payee: string | null; state: string | null; tin: string | null; payouts: number }) {
+export function payReadiness(x: { payee: string | null; state: string | null; tin: string | null; payouts: number; taxForm?: boolean }) {
   const steps = [
     { key: "payee", done: !!x.payee },
-    { key: "legal", done: !!x.state?.trim() && !!x.tin?.trim() },
+    { key: "legal", done: !!x.tin?.trim() && !!x.taxForm },
     { key: "payout", done: x.payouts > 0 },
   ];
-  const missing = [!x.state?.trim() && "the state of filing", !x.tin?.trim() && "tax ID", x.payouts === 0 && "a payout account"].filter(Boolean) as string[];
+  const missing = [!x.tin?.trim() && "tax ID", !x.taxForm && "the W-9 / W-8BEN-E", x.payouts === 0 && "a payout account"].filter(Boolean) as string[];
   return { steps, left: steps.filter((s) => !s.done).length, missing };
 }
 
@@ -44,7 +44,7 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
       website: true, email_domain: true, logo_url: true, brand_hue: true, theme_recipe: true, description: true,
       industry_id: true, show_on_profiles: true, created_at: true,
       entity_validation_status: true, entity_validated_at: true, entity_validation_source_url: true, entity_status_detail: true,
-      company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true, payee_type: true,
+      company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true, payee_type: true, tax_form_kind: true, tax_form_uploaded_at: true,
       _count: { select: { memberships: { where: { status: "APPROVED" } }, payoutMethods: true } },
     },
   });
@@ -93,7 +93,8 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
     // Readiness is the company's own measure; a buyer never sees it.
     readiness: opts.forBuyer ? null : companyReadiness({ ...fields, ein: c.tin }),
     payeeType: opts.forBuyer ? null : (c.payee_type ?? "COMPANY"),
+    taxForm: opts.forBuyer ? null : { kind: c.tax_form_kind, uploadedAt: c.tax_form_uploaded_at },
     payoutAccounts: opts.forBuyer ? 0 : c._count.payoutMethods,
-    payReady: opts.forBuyer ? null : payReadiness({ payee: c.payee_type ?? "COMPANY", state: c.state_of_filing, tin: c.tin, payouts: c._count.payoutMethods }),
+    payReady: opts.forBuyer ? null : payReadiness({ payee: c.payee_type ?? "COMPANY", state: c.state_of_filing, tin: c.tin, payouts: c._count.payoutMethods, taxForm: !!c.tax_form_uploaded_at }),
   };
 }
