@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { extractLogoHues } from "@/lib/logoHueExtract";
-import { isValidHex, RECIPE_IDS } from "@/lib/themeRecipes";
+import { themeProblem } from "@/lib/dynamic-branding";
 
 export const runtime = "nodejs";
 
@@ -52,11 +52,10 @@ export async function PUT(request: Request) {
   const brandHue = body?.brandHue ?? null;
   const recipeId = body?.recipeId ?? null;
 
-  if (brandHue !== null && !isValidHex(brandHue)) {
-    return NextResponse.json({ error: "brandHue must be a #rrggbb hex" }, { status: 400 });
-  }
-  if (recipeId !== null && !RECIPE_IDS.includes(recipeId)) {
-    return NextResponse.json({ error: "Unknown theme" }, { status: 400 });
+  // Both null = Reset to Panameer Default. Otherwise every text pair must reach 4.5:1.
+  if (brandHue !== null || recipeId !== null) {
+    const problem = themeProblem(brandHue, recipeId);
+    if (problem) return NextResponse.json({ error: problem }, { status: 400 });
   }
 
   await prisma.company.update({

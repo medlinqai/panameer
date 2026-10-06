@@ -77,7 +77,7 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await expect(page.locator("[data-member]")).toHaveCount(3, { timeout: 20_000 });
   await page.screenshot({ path: "e2e-r1/.artifacts/company-people-1440.png", fullPage: true });
   await page.goto("/company/branding", { waitUntil: "networkidle" });
-  await expect(page.locator('[data-co-section="branding"]')).toBeVisible();
+  await expect(page.locator('[data-co-section="dynamic-branding"]')).toBeVisible();
   await page.goto("/company/terms", { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/\/company(#verification)?$/);
   await ctx.close();

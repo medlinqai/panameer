@@ -132,8 +132,11 @@ export function AppBand() {
         <img
           src="/brand/panameer-lockup-white.png"
           alt="Panameer"
-          className="h-6 w-auto"
+          className="pm-band-logo-white h-6 w-auto"
         />
+        {/* Light rail (Dynamic Branding) swaps in the ink lockup; see globals.css. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/panameer-lockup-ink.png" alt="" aria-hidden className="pm-band-logo-ink hidden h-6 w-auto" />
         {/*
           ⚠ THE CONSOLE LABEL SITS UNDER THE WORDMARK (WS-A 6), as it did in the
           rail. ⚠⚠ THE COMPANY NAME IS NOT HERE — and it was not in the rail

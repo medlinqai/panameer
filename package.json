@@ -93,6 +93,7 @@
     "check:wo-money": "npx esbuild scripts/check-wo-money.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/wo-money.cjs --log-level=error && node .harness/wo-money.cjs",
     "check:status-card": "npx esbuild scripts/check-status-card.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/status-card.cjs --log-level=error && node .harness/status-card.cjs",
     "check:button-shape": "npx esbuild scripts/check-button-shape.ts --bundle --platform=node --format=cjs --packages=external --outfile=.harness/button-shape.cjs --log-level=error && node .harness/button-shape.cjs",
+    "check:dynamic-branding": "npx playwright test -c playwright.dynamic-branding.config.ts",
     "check:company-domain-join": "npx playwright test -c playwright.company-domain-join.config.ts",
     "check:confidential-buyer": "npx playwright test -c playwright.confidential-buyer.config.ts",
     "check:company-links": "npx playwright test -c playwright.company-links.config.ts",
