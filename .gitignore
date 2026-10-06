@@ -122,3 +122,7 @@ e2e-e736/shots/
 e2e-e736/.artifacts/
 e2e-e738/.artifacts/
 e2e-e739/.artifacts/
+
+# Local-only playwright configs and admin run shots.
+.pw-*.config.ts
+e2e-admin/.artifacts/
