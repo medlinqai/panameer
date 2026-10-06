@@ -1,0 +1,16 @@
+skill_id,domain,skill,aliases_before,aliases_after
+50ba5144-adfa-407c-8ce6-13e349faa7d6,Oracle E-Business Suite,iSupplier Portal,POS,POS · procurement
+1bece40f-7f0a-4a99-94ef-eb084c423f6b,Oracle E-Business Suite,Purchasing,PO,PO · procurement
+003002ea-a885-4903-91e8-555b3f2189ee,Oracle E-Business Suite,Sourcing,PON,PON · procurement
+a1611ef9-c854-48cd-ae64-f9b789faf523,Oracle Fusion Cloud,Catalogs,,procurement
+79d943ea-04fa-49a1-8e12-c24c36a29ded,Oracle Fusion Cloud,Negotiations,,procurement
+3c8d1aa6-980b-4384-a481-a18046c7d499,Oracle Fusion Cloud,purchase requisitons,,procurement
+5aeb9170-361a-46c3-93ed-c2f44e3730a7,Oracle Fusion Cloud,Purchasing,PO,PO · procurement
+60dc528f-98c2-4640-a9e2-5fcba3cc5bc6,Oracle Fusion Cloud,Sourcing,Negotiations,Negotiations · procurement
+9039f5f4-4d11-47bc-ade4-14cc4d784b3d,Oracle Fusion Cloud,Spend Classification,,procurement
+a10f1940-500e-4725-9516-8e058497a3d5,Oracle Fusion Cloud,Supplier Management,Supplier Portal,Supplier Portal · procurement
+442c879d-e058-4259-b4a1-1f69c216129d,Oracle Fusion Cloud,Supplier Qualification Management,SQM,SQM · procurement
+9f672b28-3759-4ce7-86e1-63707f72b9a9,Oracle Fusion Cloud,Supplier Qualifications,,procurement
+12f40004-7e7a-4295-b257-372962dbc4b2,PeopleSoft,Purchasing,PO,PO · procurement
+d34dcfb0-d8b9-438e-90ed-8ca84b329176,PeopleSoft,Strategic Sourcing,SS,SS · procurement
+25c2acd0-5c22-4671-9e7b-f10cc9072f87,PeopleSoft,Supplier Contract Management,SCM contracts,SCM contracts · procurement
