@@ -198,7 +198,7 @@ export default async function AdminUserPage({
   return (
     <div className="mx-auto w-full max-w-4xl">
       {/* THE MEDLINQ PATTERN: a way back, ABOVE the title. Same component the */}
-      <BackLink href="/admin/buyers-sellers" label="Users" />
+      <BackLink href="/admin/users" label="Users" />
       <h1 className="mt-1 font-display text-[26px] font-bold">{name}</h1>
       <p className="mt-0.5 text-[13px] text-ink-2">
         {jobs.length ? jobs.join(" · ") : "No job yet"} · joined {d(person.created_at)}

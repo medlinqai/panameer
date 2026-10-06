@@ -36,7 +36,7 @@ export function LifecycleHelpHost() {
   return (
     <Modal open={open} onClose={() => setOpen(false)} title="How Panameer works" width="max-w-5xl">
       <p className="mb-4 text-[14px] text-ink-2">
-        Buyers and sellers follow the same seven steps. You do the first three. Your company does the rest — Panameer contracts with and pays companies, never individuals.
+        Buyers and sellers follow the same seven steps. You do the first four. Your company does the rest — Panameer contracts with and pays companies, not individuals.
       </p>
       <LifecycleGraphic />
     </Modal>

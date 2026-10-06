@@ -120,10 +120,10 @@ export type LifecycleWho = "you" | "company" | "both";
 export type LifecycleStep = { key: string; step: string; status: string; who: LifecycleWho; gate: boolean; desc: string; unlocks?: string; href: string; next: string };
 
 export const LIFECYCLE: LifecycleStep[] = [
-  { key: "account", step: "Create Account", status: "Unverified", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "create your account" },
+  { key: "account", step: "Create Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "create your account" },
   { key: "verify", step: "Verify Account", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "verify your account" },
-  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "Score reaches the bar: résumé, skills, rate.", unlocks: "being found, posting, proposals", href: "/profile", next: "complete your profile" },
-  { key: "link", step: "Link to Company", status: "Linked", who: "company", gate: false, desc: "Join yours by website, or add it — a one-person business is a company too.", href: "/company?join=1#join", next: "link to your company" },
+  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "complete your profile" },
+  { key: "link", step: "Link to Company", status: "Linked", who: "you", gate: false, desc: "Join yours by website, or add it — a one-person business is a company too.", href: "/company?join=1#join", next: "link to your company" },
   { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, desc: "Admin adds legal name, tax ID and W-9 (US) or W-8BEN-E (outside US).", unlocks: "signing work orders", href: "/company/legal", next: "validate your company" },
   { key: "contract", step: "Get Contracted", status: "Contracted", who: "both", gate: true, desc: "Two validated companies sign a work order.", href: "/orders", next: "get contracted" },
   { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to a bank account in the company's legal name.", href: "/company/legal#payout", next: "get paid" },
@@ -136,7 +136,7 @@ export const LIFECYCLE_WHO: Record<LifecycleWho, { label: string; bg: string; fg
 };
 
 export const LIFECYCLE_RULES = [
-  { title: "We pay companies, not people", body: "Panameer doesn't employ anyone and doesn't pay individuals. Every payment goes to a company's bank account in its legal name." },
+  { title: "We pay companies, not people", body: "Panameer doesn't employ people or pay individuals. Every payment goes to a company's bank account in its legal name." },
   { title: "US companies", body: "W-9 with the company's tax ID. Checked against the state registry." },
   { title: "Outside the US", body: "W-8BEN-E on file, as provided by the company. Panameer doesn't verify foreign registrations or file local reporting." },
 ];

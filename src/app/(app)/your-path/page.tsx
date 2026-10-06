@@ -24,7 +24,7 @@ export default async function YourPathPage() {
       </p>
       <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From account to getting paid</h1>
       <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
-        Buyers and sellers follow the same seven steps. You do the first three; your company does the rest. Panameer contracts with and pays companies, never individuals.
+        Buyers and sellers follow the same seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
       </p>
       <ol className="mt-6 border-t border-line">
         {steps.map((s, i) => {

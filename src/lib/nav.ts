@@ -322,7 +322,7 @@ export const ADMIN_NAV: NavGroup[] = [
     title: "Configuration Data",
     items: [
       { label: "Build Plan", href: "/admin/build-plan", icon: "ListChecks" },
-      { label: "Users", href: "/admin/buyers-sellers", icon: "ArrowLeftRight" },
+      { label: "Users", href: "/admin/users", icon: "ArrowLeftRight" },
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },
@@ -347,7 +347,7 @@ export const ADMIN_NAV: NavGroup[] = [
 export const RETIRED_ADMIN_ROUTES: Record<string, string> = {
   "/admin/work": "/admin/work-requests",
   "/admin/packages": "/admin/work-packages",
-  "/admin/talent": "/admin/buyers-sellers",
+  "/admin/talent": "/admin/users",
   "/admin/finances": "/admin/payments",
 };
 
