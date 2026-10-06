@@ -5,10 +5,11 @@ import { signIn } from "./_fixture";
 import { createCompanyFixture, dropCompanyFixture, type CoFixture } from "./_company";
 
 // check:my-company (lane 4): the buyer view never carries the EIN; own company → Overview; preview banner.
-const EIN = "12-3456789";
+let EIN = "";
 let f: CoFixture | null = null;
 test.beforeAll(async () => {
   f = await createCompanyFixture();
+  EIN = f.tin;
 });
 test.afterAll(async () => dropCompanyFixture(f));
 
@@ -22,7 +23,12 @@ test("no API route returns a company's tin", () => {
     return out;
   };
   const hits = walk(join(process.cwd(), "src/app/api")).filter((p) =>
-    /\btin\b/.test(readFileSync(p, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, ""))
+    /\btin\b/.test(
+      readFileSync(p, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/[^\n]*/g, "")
+        .replace(/"[^"\n]*"/g, '""') // a "tin" label (e.g. a match kind) is not the tax ID
+    )
   );
   expect(hits).toEqual([]);
 });

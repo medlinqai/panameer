@@ -7,15 +7,19 @@ export type CoFixture = {
   tag: string;
   companyId: string;
   pAccountId: string;
+  /** Unique per run so the same-tax-ID match never collides with other rows. */
+  tin: string;
   people: Record<"admin" | "member" | "asker" | "loner", { email: string; userId: string; personId: string }>;
 };
 
 export async function createCompanyFixture(): Promise<CoFixture> {
   const prisma = db();
   const tag = `myco-${Date.now()}`;
+  const digits = String(Date.now()).slice(-7) + String(Math.floor(Math.random() * 90) + 10);
+  const tin = `${digits.slice(0, 2)}-${digits.slice(2)}`;
   const pa = await prisma.pAccount.create({ data: { kind: "BOTH", name: `MyCo Test ${tag}` }, select: { id: true } });
   const co = await prisma.company.create({
-    data: { p_account_id: pa.id, name: `MyCo Test ${tag}`, legal_name: `MyCo Test ${tag} LLC`, tax_type: "LLC", tin: "12-3456789", email_domain: `${tag}.example` },
+    data: { p_account_id: pa.id, name: `MyCo Test ${tag}`, legal_name: `MyCo Test ${tag} LLC`, tax_type: "LLC", tin, email_domain: `${tag}.example` },
     select: { id: true },
   });
   const site = await prisma.site.create({ data: { company_id: co.id, name: "HQ" }, select: { id: true } });
@@ -41,7 +45,7 @@ export async function createCompanyFixture(): Promise<CoFixture> {
     return { email, userId: u.id, personId: p.id };
   };
   const people = { admin: await mk("admin"), member: await mk("member"), asker: await mk("asker"), loner: await mk("loner") };
-  return { tag, companyId: co.id, pAccountId: pa.id, people };
+  return { tag, companyId: co.id, pAccountId: pa.id, tin, people };
 }
 
 export async function dropCompanyFixture(f: CoFixture | null) {

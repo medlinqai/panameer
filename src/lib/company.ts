@@ -12,7 +12,8 @@ import {
 } from "@/lib/tos";
 import type { TaxType } from "@prisma/client";
 import { notifyJoinRequested, notifyJoinDecided } from "@/lib/company-domain-join";
-import { checkCompanyFields, CompanyFieldError } from "@/lib/company-fields";
+import { checkCompanyFields, CompanyFieldError, tinDigits, websiteDomain } from "@/lib/company-fields";
+import { findCompanyMatch, type CompanyMatch } from "@/lib/company-match";
 
 export type DefineInput = {
   name: string;
@@ -157,7 +158,17 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
   }
 
   const domain = emailDomain(person.user?.email);
-  const website = input.website?.trim() || null;
+  const website = websiteDomain(input.website) ?? (input.website?.trim() || null);
+  // Same website / email domain / tax ID = same company: route to joining it instead of a duplicate.
+  const match = await findCompanyMatch(null, { website, ein: input.ein, emailDomain: isWorkDomain(domain) ? domain : null });
+  if (match) {
+    throw new OnboardingError(
+      match.kind === "tin"
+        ? "This tax ID is already registered to a company on Panameer. Ask its admin to add you instead."
+        : `${match.companyName} is already on Panameer. Search for it and ask to join instead.`,
+      "INVALID"
+    );
+  }
 
   const reuse = await isPlaceholder(person.company_id);
   const companyId = reuse
@@ -182,8 +193,9 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
       tax_type: input.taxType ?? null,
       ...countryColumns(input.country),
       state_of_filing: input.stateOfFiling?.trim() || null,
-      ...(input.ein?.trim() ? { tin: input.ein.trim() } : {}),
+      ...(input.ein?.trim() ? { tin: input.ein.trim(), tin_digits: tinDigits(input.ein) } : {}),
       website,
+      website_domain: websiteDomain(website),
       ...(input.logoUrl ? { logo_url: input.logoUrl } : {}),
       // Only a WORK domain is stored. Recording gmail.com here would auto-
       // approve every Gmail user in the world into this company.
@@ -303,9 +315,18 @@ export type UpdateCompanyInput = {
   description?: string | null;
   industryId?: string | null;
   website?: string | null;
+  /** After a match: "join" asks to join that company; "distinct" saves anyway and flags it for Panameer. */
+  onMatch?: "join" | "distinct";
 };
 
 export const COMPANY_DESCRIPTION_MAX = 600;
+
+/** Thrown when the values point at another company; the caller offers Ask to Join / This Isn't Us. */
+export class CompanyMatchError extends Error {
+  constructor(public match: CompanyMatch) {
+    super("company match");
+  }
+}
 
 export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyInput) {
   const binding = await getCompanyBinding(viewer);
@@ -325,20 +346,38 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
     if (!ind) throw new CompanyFieldError("industryId", "Pick an industry from the list.");
   }
 
+  const match =
+    input.website !== undefined || input.ein !== undefined
+      ? await findCompanyMatch(binding.company.id, { website: input.website, ein: input.ein })
+      : null;
+  if (match && !input.onMatch) throw new CompanyMatchError(match);
+  if (match && input.onMatch === "join") {
+    // Ask to join the existing company; this member's own company is left as it is.
+    const joined = await joinCompany(viewer, { companyId: match.companyId, attestation: true });
+    return { companyId: binding.company.id, name: binding.company.name, joinRequested: true, joinedName: match.kind === "tin" ? null : joined.name };
+  }
+  const note =
+    match && input.onMatch === "distinct"
+      ? `Saved despite a ${match.kind} match with company ${match.companyId} on ${new Date().toISOString().slice(0, 10)}`
+      : undefined;
+
   const company = await prisma.company.update({
     where: { id: binding.company.id },
     data: {
       ...(name ? { name } : {}),
       ...(input.description !== undefined ? { description: blank(input.description) } : {}),
       ...(input.industryId !== undefined ? { industry_id: input.industryId || null } : {}),
-      ...(input.website !== undefined ? { website: blank(input.website) } : {}),
+      ...(input.website !== undefined
+        ? { website: websiteDomain(input.website) ?? blank(input.website), website_domain: websiteDomain(input.website) }
+        : {}),
+      ...(note ? { duplicate_note: note } : {}),
       ...(input.legalName !== undefined ? { legal_name: blank(input.legalName) } : {}),
       ...(input.taxType !== undefined ? { tax_type: blank(input.taxType) as never } : {}),
       ...(input.country !== undefined ? countryColumns(blank(input.country)) : {}),
       ...(input.stateOfFiling !== undefined
         ? { state_of_filing: blank(input.stateOfFiling) }
         : {}),
-      ...(input.ein !== undefined ? { tin: blank(input.ein) } : {}),
+      ...(input.ein !== undefined ? { tin: blank(input.ein), tin_digits: tinDigits(input.ein) } : {}),
     },
     select: { id: true, name: true, p_account_id: true },
   });

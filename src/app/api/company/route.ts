@@ -5,6 +5,7 @@ import {
   getCompanyBinding,
   searchCompanies,
   updateCompanyDetails,
+  CompanyMatchError,
 } from "@/lib/company";
 import { OnboardingError } from "@/lib/onboarding";
 import { CompanyFieldError } from "@/lib/company-fields";
@@ -32,6 +33,7 @@ const patchSchema = z
     description: z.string().trim().max(600).nullable().optional(),
     industryId: z.string().uuid().nullable().optional(),
     website: z.string().trim().max(200).nullable().optional(),
+    onMatch: z.enum(["join", "distinct"]).optional(),
   })
   .strict();
 
@@ -57,6 +59,11 @@ export async function PATCH(request: Request) {
     const result = await updateCompanyDetails(gate, parsed.data);
     return NextResponse.json({ ok: true, ...result });
   } catch (e) {
+    if (e instanceof CompanyMatchError) {
+      // A tax-ID match never names the other company.
+      const m = e.match;
+      return NextResponse.json({ match: { kind: m.kind, name: m.kind === "tin" ? null : m.companyName } }, { status: 409 });
+    }
     if (e instanceof CompanyFieldError) return NextResponse.json({ error: e.message, field: e.field }, { status: 400 });
     if (e instanceof OnboardingError) {
       return NextResponse.json({ error: e.message }, { status: e.code === "GATE_UNMET" ? 403 : 400 });

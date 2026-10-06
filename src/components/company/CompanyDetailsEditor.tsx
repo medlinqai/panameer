@@ -18,22 +18,34 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErr, setFieldErr] = useState<{ field: string; message: string } | null>(null);
+  const [match, setMatch] = useState<{ kind: string; name: string | null } | null>(null);
+  const [joined, setJoined] = useState<string | null>(null);
   const set = (k: keyof Init) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
   const done = () => {
     router.replace("/company#details", { scroll: false });
     router.refresh();
   };
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(e: React.FormEvent | null, onMatch?: "join" | "distinct") {
+    e?.preventDefault();
     setBusy(true);
+    setMatch(null);
     setError(null);
     setFieldErr(null);
     const body = {
       name: f.name, legalName: f.legalName, taxType: f.taxType || null, country: f.country || null, stateOfFiling: f.stateOfFiling || null,
       ein: f.ein || null, industryId: f.industryId || null, website: f.website || null, description: f.description || null,
+      ...(onMatch ? { onMatch } : {}),
     };
     const r = await fetch("/api/company", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
     setBusy(false);
+    if (r?.status === 409) {
+      const b = (await r.json().catch(() => ({}))) as { match?: { kind: string; name: string | null } };
+      if (b.match) return setMatch(b.match);
+    }
+    if (r?.ok && onMatch === "join") {
+      const b = (await r.json().catch(() => ({}))) as { joinedName?: string | null };
+      return setJoined(b.joinedName ?? "that company");
+    }
     if (!r?.ok) {
       const b = (await r?.json().catch(() => ({}))) as { error?: string; field?: string } | undefined;
       if (b?.field && b.error) return setFieldErr({ field: b.field, message: b.error });
@@ -89,6 +101,28 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
         <FieldMsg field="description" err={fieldErr} />
       </label>
       {error && <p role="alert" className="text-[13px] font-semibold text-magenta-dark sm:col-span-2">{error}</p>}
+      {match && (
+        <div data-company-match={match.kind} className="border-l-2 border-magenta py-2 pl-3.5 text-[14px] sm:col-span-2">
+          <p className="font-semibold">
+            {match.kind === "tin"
+              ? "This tax ID is already registered to a company on Panameer. Ask its admin to add you?"
+              : `${match.name} is already on Panameer. Ask to join ${match.name} instead?`}
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={() => save(null, "join")} className="min-h-[40px] bg-ink px-4 text-[13px] font-bold text-surface">
+              Ask to Join
+            </button>
+            <button type="button" disabled={busy} onClick={() => save(null, "distinct")} className="min-h-[40px] border border-ink bg-surface px-4 text-[13px] font-bold text-ink">
+              This Isn&apos;t Us
+            </button>
+          </div>
+        </div>
+      )}
+      {joined && (
+        <p role="status" data-join-sent className="border-l-2 border-ink py-2 pl-3.5 text-[14px] sm:col-span-2">
+          Request sent. {joined === "that company" ? "Its admin" : `${joined}'s admin`} will approve it; your own company page hasn&apos;t changed.
+        </p>
+      )}
       <div className="flex gap-2.5 sm:col-span-2">
         <button type="submit" disabled={busy} className="min-h-[44px] bg-ink px-5 text-[14px] font-semibold text-surface hover:bg-ink-hover disabled:opacity-60">
           {busy ? "Saving…" : "Save"}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { PossibleDuplicates } from "@/components/admin/PossibleDuplicates";
 import {
   AdminHeading,
   SearchBox,
@@ -46,6 +47,7 @@ export default function AdminCompaniesPage() {
   return (
     <div>
       <AdminHeading title="Companies" subtitle="Every account on the platform." />
+      <PossibleDuplicates />
       <div className="mb-4">
         <SearchBox value={q} onChange={setQ} placeholder="Search company, code, kind…" />
       </div>

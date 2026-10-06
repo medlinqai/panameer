@@ -27,7 +27,7 @@ for (const scheme of ["light", "dark"] as const)
         await expect(page.getByText("Your Terms of Service")).toHaveCount(0);
         await expect(page.locator('[data-co-section="verification"] [data-company-terms]')).toBeVisible();
         if (who === "admin") await expect(page.locator('[data-co-section="verification"]').getByRole("button", { name: /Accept/ })).toBeVisible();
-        await expect(page.locator('[data-co-section="details"]')).toContainText("12-3456789");
+        await expect(page.locator('[data-co-section="details"]')).toContainText(f!.tin);
         const edits = page.locator("main").getByRole("link", { name: "Edit", exact: true });
         if (who === "admin") await expect(edits.first()).toBeVisible();
         else await expect(edits).toHaveCount(0);
@@ -51,7 +51,7 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await expect(ed).toBeVisible();
   await ed.locator('input[name="country"]').fill("United States");
   await ed.locator('input[name="stateOfFiling"]').fill("Delaware");
-  await ed.locator('input[name="website"]').fill("example.com");
+  await ed.locator('input[name="website"]').fill(`${f!.tag}-site.example`);
   await ed.locator('textarea[name="description"]').fill("Throwaway test company for the My Company page.");
   const ind = ed.locator('select[name="industryId"] option').nth(1);
   const hasIndustry = (await ind.count()) > 0;
