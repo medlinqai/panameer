@@ -101,6 +101,7 @@
     "check:company-links": "npx playwright test -c playwright.company-links.config.ts",
     "check:my-company": "npx playwright test -c playwright.my-company.config.ts",
     "check:usage-counts": "npx playwright test -c playwright.usage-counts.config.ts",
+    "check:hero-motion": "npx playwright test -c playwright.hero-motion.config.ts",
     "check:usage-white": "npx playwright test -c playwright.usage-white.config.ts",
     "check:next-step": "npx esbuild scripts/check-next-step.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/next-step.cjs --log-level=error && node .harness/next-step.cjs",
     "check:onboarding-frame": "npx esbuild scripts/check-onboarding-frame.ts --bundle --platform=node --format=cjs --packages=external --alias:@=./src --outfile=.harness/onboarding-frame.cjs --log-level=error && node -r dotenv/config .harness/onboarding-frame.cjs dotenv_config_path=.env.local",

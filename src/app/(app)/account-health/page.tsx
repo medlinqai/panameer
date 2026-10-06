@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountHero, AccountLead, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
@@ -53,48 +54,39 @@ export default async function AccountHealthPage() {
         current="/account-health"
       />
       <div className="mx-auto max-w-[1010px]">
-        <p className="pb-[26px] pt-3.5 text-[13px] font-semibold">
+        <AccountLead>
           What your account can do today, and whether its record is clear.{" "}
           <span className="font-normal text-ink-3">Free as of October 2026.</span>
-        </p>
+        </AccountLead>
 
-        <section className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 md:grid-cols-[340px_1fr]">
-          <div>
-            <HealthRing checks={checks.map((c) => c.ok)} />
-            <p className="mt-2 text-center text-[11px] text-ink-2">
-              {passing} of {checks.length} checks passing
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">HEALTH</p>
-            <h1 className="mb-5 mt-1.5 text-[30px] font-bold leading-tight">Where Your Account Stands</h1>
-            <div className="flex flex-wrap gap-x-11 gap-y-3 border-b border-line pb-[18px]" data-testid="health-kpis">
-              <Kpi value={passing} label="CHECKS PASSING" />
-              <Kpi value={failing} label="NEEDS ATTENTION" />
-              <Kpi value={statusValue} label="ACCOUNT STATUS" />
-            </div>
-            <p className="my-[18px] text-[14px] leading-[1.65] text-ink-2">
-              {failing === 0
-                ? "All good. Nothing on your record needs your attention, and you can use every part of Panameer open to you today."
-                : `${failing} check${failing === 1 ? "" : "s"} need${failing === 1 ? "s" : ""} attention${summary.ok ? "" : ` — ${summary.label}`}. The lines below say what to fix.`}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {POLICIES.map((p, i) => (
-                <Link
-                  key={p.slug}
-                  href={`/policies/${p.slug}`}
-                  className={
-                    i === 0
-                      ? "inline-flex min-h-11 items-center bg-ink px-6 text-[14px] font-semibold text-surface hover:bg-ink-hover"
-                      : "inline-flex min-h-11 items-center border border-ink bg-surface px-6 text-[14px] font-semibold text-ink hover:bg-surface-hover"
-                  }
-                >
-                  {p.title}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+        <AccountHero
+          picture={
+            <>
+              <HealthRing checks={checks.map((c) => c.ok)} />
+              <p className="mt-2 text-center text-[11px] text-ink-2">
+                {passing} of {checks.length} checks passing
+              </p>
+            </>
+          }
+          eyebrow="Health"
+          title="Where Your Account Stands"
+          kpiTestId="health-kpis"
+          kpis={[
+            { value: passing, label: "CHECKS PASSING" },
+            { value: failing, label: "NEEDS ATTENTION" },
+            { value: statusValue, label: "ACCOUNT STATUS" },
+          ]}
+          paragraph={
+            failing === 0
+              ? "All good. Nothing on your record needs your attention, and you can use every part of Panameer open to you today."
+              : `${failing} check${failing === 1 ? "" : "s"} need${failing === 1 ? "s" : ""} attention${summary.ok ? "" : ` — ${summary.label}`}. The lines below say what to fix.`
+          }
+          actions={POLICIES.map((p, i) => (
+            <Link key={p.slug} href={`/policies/${p.slug}`} className={i === 0 ? HERO_BTN : HERO_BTN_W}>
+              {p.title}
+            </Link>
+          ))}
+        />
 
         <div className="mt-9 grid border-t border-line md:grid-cols-2" data-testid="health-checks">
           <section className="py-5 md:pr-7">
@@ -127,15 +119,6 @@ export default async function AccountHealthPage() {
         </ul>
         <div className="h-[60px]" />
       </div>
-    </div>
-  );
-}
-
-function Kpi({ value, label }: { value: number | string; label: string }) {
-  return (
-    <div>
-      <b className="block whitespace-nowrap text-[26px] font-medium">{value}</b>
-      <span className="whitespace-nowrap text-[11px] font-semibold tracking-[0.08em] text-ink-2">{label}</span>
     </div>
   );
 }
