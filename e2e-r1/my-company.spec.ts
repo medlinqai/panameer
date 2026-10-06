@@ -36,8 +36,8 @@ for (const scheme of ["light", "dark"] as const)
         await page.screenshot({ path: `e2e-r1/.artifacts/company-${who}-${vp.width}-${scheme}.png`, fullPage: true });
         await page.goto("/company/people", { waitUntil: "networkidle" });
         await expect(page.locator("[data-member]")).toHaveCount(2);
-        if (who === "admin") await expect(page.getByText("Asking to join (1)")).toBeVisible();
-        else await expect(page.getByText(/Asking to join/)).toHaveCount(0);
+        if (who === "admin") await expect(page.locator('[data-co-section="asking"]')).toContainText("(1)");
+        else await expect(page.locator('[data-co-section="asking"]')).toHaveCount(0);
         await ctx.close();
       }
     });
