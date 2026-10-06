@@ -108,10 +108,10 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
               <b className="block h-[32px] w-[32px] border border-line" style={{ background: shown }} data-brand-color={shown} aria-hidden />
               <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">BRAND COLOR</span>
             </div>
-            <div>
+            <a href="#where-it-shows" data-places-link className="block hover:text-magenta-dark">
               <b className="block text-[26px] font-medium">3</b>
-              <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">PLACES IT SHOWS</span>
-            </div>
+              <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2 underline underline-offset-2">PLACES IT SHOWS</span>
+            </a>
           </div>
           <p className="my-[18px] text-[14px] leading-[1.65] text-ink-2">
             Your logo and color show on your company page, proposals and work orders.{" "}

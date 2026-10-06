@@ -109,3 +109,15 @@ test("B-E003 Dynamic Branding switch", async ({ browser }) => {
   await page.screenshot({ path: "e2e-r1/.artifacts/branding-switch-off.png", fullPage: true });
   await ctx.close();
 });
+
+// B-E004: the "Places it shows" stat jumps to Where It Shows.
+test("B-E004 places stat links to Where It Shows", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await signIn(page, f!.people.admin.email);
+  await page.goto("/company/branding", { waitUntil: "networkidle" });
+  await page.locator("[data-places-link]").click();
+  await expect(page).toHaveURL(/#where-it-shows$/);
+  await expect(page.locator('[data-co-section="where-it-shows"]')).toBeInViewport();
+  await ctx.close();
+});
