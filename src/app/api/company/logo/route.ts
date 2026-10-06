@@ -4,6 +4,7 @@ import { guardApi } from "@/lib/guard";
 import { uploadCompanyLogo, StorageError, MAX_PHOTO_BYTES } from "@/lib/storage";
 import { extractLogoPalette } from "@/lib/logoHueExtract";
 import sharp from "sharp";
+import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -83,4 +84,28 @@ export async function POST(request: Request) {
     console.error("[company] logo upload failed:", e);
     return NextResponse.json({ error: "Could not upload that image." }, { status: 500 });
   }
+}
+
+// Undo: put back the logo this company had before. Admin-only, and only this company's own stored files (or none).
+export async function PUT(request: Request) {
+  const gate = await guardApi("authenticated");
+  if (gate instanceof NextResponse) return gate;
+  const body = (await request.json().catch(() => null)) as { companyId?: string; logoUrl?: string | null } | null;
+  if (!body?.companyId) return NextResponse.json({ error: "Missing company" }, { status: 400 });
+  const admin = await prisma.companyMembership.findFirst({
+    where: { person: { user_id: gate.userId }, company_id: body.companyId, role: "ADMIN", status: "APPROVED" },
+    select: { id: true },
+  });
+  if (!admin) return NextResponse.json({ error: "Only a company admin can change its logo" }, { status: 403 });
+  const url = body.logoUrl ?? null;
+  if (url !== null && !url.includes(`/company-logos/${body.companyId}/`)) {
+    return NextResponse.json({ error: "That isn't one of this company's logos" }, { status: 400 });
+  }
+  let palette: string[] = [];
+  if (url) {
+    const img = await fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+    if (img) palette = await extractLogoPalette(Buffer.from(img)).catch(() => []);
+  }
+  await prisma.company.update({ where: { id: body.companyId }, data: { logo_url: url, logo_palette: palette.length ? palette : Prisma.DbNull } });
+  return NextResponse.json({ ok: true, logoUrl: url });
 }
