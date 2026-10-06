@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardApi } from "@/lib/guard";
 import { uploadCompanyLogo, StorageError, MAX_PHOTO_BYTES } from "@/lib/storage";
+import { extractLogoPalette } from "@/lib/logoHueExtract";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -58,13 +60,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const url = await uploadCompanyLogo(companyId ?? person.id, {
-      type: file.type,
-      size: file.size,
-      bytes: await file.arrayBuffer(),
-    });
+    let bytes = await file.arrayBuffer();
+    let type = file.type;
+    // The logo bucket takes raster images only: an SVG is drawn to a 1200px-wide PNG (transparency kept, nothing cut).
+    if (type === "image/svg+xml") {
+      const png = await sharp(Buffer.from(bytes), { density: 300 }).resize({ width: 1200, withoutEnlargement: false }).png().toBuffer();
+      bytes = png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer;
+      type = "image/png";
+    }
+    const url = await uploadCompanyLogo(companyId ?? person.id, { type, size: bytes.byteLength, bytes });
     if (companyId) {
-      await prisma.company.update({ where: { id: companyId }, data: { logo_url: url } });
+      // Keep the colors the logo carries, so Dynamic Branding can offer them without re-reading.
+      const palette = await extractLogoPalette(Buffer.from(bytes)).catch(() => []);
+      await prisma.company.update({ where: { id: companyId }, data: { logo_url: url, ...(palette.length ? { logo_palette: palette } : {}) } });
     }
     return NextResponse.json({ ok: true, logoUrl: url });
   } catch (e) {

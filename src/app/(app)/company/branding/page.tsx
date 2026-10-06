@@ -15,8 +15,8 @@ export default async function Page() {
   if (!binding?.isAdmin) redirect("/company");
   const c = await prisma.company.findUnique({
     where: { id: binding.company.id },
-    select: { id: true, name: true, logo_url: true, brand_hue: true, theme_recipe: true },
+    select: { id: true, name: true, logo_url: true, brand_hue: true, theme_recipe: true, logo_palette: true },
   });
   if (!c) redirect("/company");
-  return <BrandingStudio companyId={c.id} companyName={c.name} logoUrl={c.logo_url} brandHue={c.brand_hue} themeRecipe={c.theme_recipe} />;
+  return <BrandingStudio companyId={c.id} companyName={c.name} logoUrl={c.logo_url} brandHue={c.brand_hue} themeRecipe={c.theme_recipe} palette={Array.isArray(c.logo_palette) ? (c.logo_palette as string[]) : []} />;
 }

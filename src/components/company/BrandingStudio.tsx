@@ -1,22 +1,26 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CompanySection } from "@/components/company/CompanySection";
 import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload";
-import { LOOKS, brandTokens, contrastChecks, DEFAULT_BRAND, normalizeLook, type LookId } from "@/lib/dynamic-branding";
+import { LOOKS, brandTokens, contrastChecks, DEFAULT_BRAND, MIN_CONTRAST, normalizeLook, type LookId } from "@/lib/dynamic-branding";
+import { contrast } from "@/lib/themeRecipes";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 
 // Branding (mockup company_tabs 2026-10-05): Usage/Health layout — hero, then Brand Color · Dynamic Branding · Where It Shows.
-type Props = { companyId: string; companyName: string; logoUrl: string | null; brandHue: string | null; themeRecipe: string | null };
+type Props = { companyId: string; companyName: string; logoUrl: string | null; brandHue: string | null; themeRecipe: string | null; palette: string[] };
 
-export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, themeRecipe }: Props) {
+export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, themeRecipe, palette: savedPalette }: Props) {
   const router = useRouter();
   const saved = { hue: brandHue, look: normalizeLook(themeRecipe) };
   const [hue, setHue] = useState(brandHue ?? DEFAULT_BRAND);
   const [hexDraft, setHexDraft] = useState(brandHue ?? DEFAULT_BRAND);
   const [look, setLook] = useState<LookId>(saved.look ?? "ink");
-  const [candidates, setCandidates] = useState<string[]>([]);
+  const [palette, setPalette] = useState<string[]>(savedPalette);
+  const savedKey = savedPalette.join(",");
+  // A new logo upload refreshes the page; show the colors read from it.
+  useEffect(() => setPalette(savedKey ? savedKey.split(",") : []), [savedKey]);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const scanInput = useRef<HTMLInputElement>(null);
@@ -34,15 +38,15 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
     const form = new FormData();
     form.append("file", file);
     const r = await fetch("/api/company/theme", { method: "POST", body: form }).catch(() => null);
-    const b = (await r?.json().catch(() => ({}))) as { hues?: string[]; error?: string } | undefined;
+    const b = (await r?.json().catch(() => ({}))) as { hues?: string[]; palette?: string[]; error?: string } | undefined;
     setBusy(null);
     if (scanInput.current) scanInput.current.value = "";
     if (!r?.ok) return setMsg({ ok: false, text: b?.error ?? "Could not read that image." });
-    const hues = b?.hues ?? [];
-    setCandidates(hues);
-    if (hues[0]) {
-      setHue(hues[0]);
-      setHexDraft(hues[0]);
+    const found = b?.palette?.length ? b.palette : (b?.hues ?? []);
+    setPalette(found);
+    if (found[0]) {
+      setHue(found[0]);
+      setHexDraft(found[0]);
     } else setMsg({ ok: false, text: "No brand color in that image — a black, white or gray logo has none to find. Type a hex instead." });
   };
   const put = async (body: { brandHue: string | null; recipeId: string | null }, label: string) => {
@@ -125,12 +129,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
             className="min-h-[42px] w-[130px] border border-line bg-surface px-3 font-mono text-[14px] focus:border-ink focus:outline-none"
           />
           <input type="color" value={valid ? hue : DEFAULT_BRAND} onChange={(e) => { setHue(e.target.value); setHexDraft(e.target.value); }} aria-label="Pick a color" className="h-[42px] w-[42px] cursor-pointer border border-line bg-surface p-0.5" />
-          {candidates.map((c) => (
-            <button key={c} type="button" onClick={() => { setHue(c); setHexDraft(c); }} className="flex items-center gap-1.5 border border-line px-2.5 py-1.5 font-mono text-[12px]" title={`Use ${c}`}>
-              <span className="h-4 w-4" style={{ background: c }} aria-hidden />
-              {c}
-            </button>
-          ))}
+
         </div>
       </CompanySection>
 
@@ -138,6 +137,42 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
         <p className="mt-2 max-w-[66ch] text-[14px] text-ink-2">
           Your brand color themes the Panameer console for everyone at {companyName}. Pick a look — Panameer keeps every combination readable.
         </p>
+        {palette.length > 0 && (
+          <div className="mt-4" data-logo-palette>
+            <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">Colors from your logo</p>
+            <div className="flex flex-wrap gap-3">
+              {palette.map((c) => {
+                const inUse = valid && c.toLowerCase() === hue.toLowerCase();
+                const onWhite = contrast(c, "#ffffff") >= MIN_CONTRAST;
+                const onInk = contrast(c, "#1f2937") >= MIN_CONTRAST;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    data-swatch={c}
+                    data-in-use={inUse ? "true" : undefined}
+                    aria-pressed={inUse}
+                    onClick={() => {
+                      setHue(c);
+                      setHexDraft(c);
+                    }}
+                    className={"w-[92px] p-1.5 text-left " + (inUse ? "border-2 border-ink" : "border border-line")}
+                  >
+                    <span className="block h-[56px] w-full" style={{ background: c }} aria-hidden />
+                    <span className="mt-1 block font-mono text-[11.5px] uppercase">{c}</span>
+                    <span className="block text-[10.5px] text-ink-2" data-contrast-white={onWhite}>
+                      {onWhite ? "✓" : "✕"} white text
+                    </span>
+                    <span className="block text-[10.5px] text-ink-2" data-contrast-ink={onInk}>
+                      {onInk ? "✓" : "✕"} ink text
+                    </span>
+                    {inUse && <span className="mt-0.5 block text-[10.5px] font-bold text-ink">✓ In use</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-[520px]" role="radiogroup" aria-label="Look">
           {LOOKS.map((l) => {
             const lt = brandTokens(valid ? hue : DEFAULT_BRAND, l.id);

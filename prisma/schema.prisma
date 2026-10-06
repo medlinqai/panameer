@@ -379,6 +379,8 @@ model Company {
   description      String?
   industry_id      String? @db.Uuid
   show_on_profiles Boolean @default(true)
+  /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
+  logo_palette     Json?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
