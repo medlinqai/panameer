@@ -54,7 +54,7 @@ for (const scheme of ["light", "dark"] as const)
       await signIn(ap, f!.people.admin.email);
       await ap.goto(url, { waitUntil: "domcontentloaded" });
       await expect(ap).toHaveURL(/\/company$/);
-      await ap.getByRole("link", { name: "How Buyers See Our Company" }).click();
+      await ap.locator("[data-see-as-buyer]").click();
       await expect(ap.locator("[data-buyer-preview]")).toBeVisible();
       await expect(ap.locator('[data-company-page="buyer"]')).toBeVisible();
       // Fresh load of the preview: the response itself must not carry the EIN.

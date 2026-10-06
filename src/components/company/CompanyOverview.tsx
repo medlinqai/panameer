@@ -1,32 +1,53 @@
+import Link from "next/link";
 import type { CompanyView } from "@/lib/company-view";
 import { CompanySection, KV } from "@/components/company/CompanySection";
 import { EditLink, type CompanyRole } from "@/components/company/CompanyShell";
 
-// Overview sections: Company Details + Verification. EIN only for the company's own members.
+// Overview = what buyers see: Website, Company name, Industry, Description. Legal and tax live on Legal, Tax & Banking.
 export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<CompanyView>; role: CompanyRole; editor?: React.ReactNode }) {
   const buyer = role === "buyer";
+  const site = c.website?.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const rows = [
+    { k: "Website", v: site ? <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">{site}</a> : null },
     { k: "Company name", v: c.name },
-    { k: "Legal name", v: c.legalName },
-    { k: "Business type", v: c.taxType },
-    { k: "Country", v: c.country },
-    { k: "State of filing", v: c.stateOfFiling },
-    ...(buyer ? [] : [{ k: "EIN / Tax registration", v: c.ein, add: "Add EIN — shown only to Panameer, never to buyers" }]),
     { k: "Industry", v: c.industry },
-    {
-      k: "Website",
-      v: c.website ? (
-        <a href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">
-          {c.website.replace(/^https?:\/\//, "")}
-        </a>
-      ) : null,
-    },
-    ...(buyer ? [] : [{ k: "Email domain", v: c.emailDomain, add: "Add email domain — people with it can ask to join" }]),
+    { k: "Description", v: c.description, add: "Add · what the company does and for whom — shown on every proposal" },
   ];
   return (
-    <CompanySection id="details" title="Company Details" actions={role === "admin" && !editor ? <EditLink href="/company?edit=details#details" /> : undefined}>
+    <CompanySection
+      id="details"
+      title="About the Company"
+      tag={buyer ? undefined : "buyers see this"}
+      actions={role === "admin" && !editor ? <EditLink href="/company?edit=details#details" /> : undefined}
+    >
       {editor ?? <KV rows={buyer ? rows.filter((r) => r.v) : rows} />}
     </CompanySection>
+  );
+}
+
+/** Admins only: what's left before the company can be paid; hidden when all three are done. */
+export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
+  const r = c.payReady;
+  if (!r || r.left === 0) return null;
+  const list = r.missing.length > 1 ? `${r.missing.slice(0, -1).join(", ")} and ${r.missing.at(-1)}` : r.missing[0];
+  return (
+    <div data-pay-box={r.left} className="mt-7 border border-ink p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
+      <div>
+        <p className="text-[15px] font-bold">
+          Before {c.name} can be paid{" "}
+          <span className="ml-1 inline-block border border-current px-[7px] align-[2px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">
+            {r.left} OF 3 LEFT
+          </span>
+        </p>
+        <p className="mt-1 text-[13.5px] text-ink-2">
+          {list ? `Add ${list}.` : "Choose who gets paid."} Private — admins only.
+        </p>
+      </div>
+      <Link href="/company/legal" className="mt-3 inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover sm:mt-0">
+        <span className="sm:hidden">Finish</span>
+        <span className="max-sm:hidden">Finish in Legal, Tax &amp; Banking</span>
+      </Link>
+    </div>
   );
 }
 
@@ -85,6 +106,70 @@ export function CompanyVerification({ c, buyer = false, acceptTerms }: { c: NonN
           ...(buyer ? [] : [termsRow]),
         ]}
       />
+    </CompanySection>
+  );
+}
+
+/** EIN / SSN shown as the last 4 only — the full number never reaches the page. */
+export function maskTaxId(tin: string | null) {
+  const d = (tin ?? "").replace(/\D/g, "");
+  return d ? `•••••${d.slice(-4)}` : null;
+}
+
+/** Legal & Tax (admins only): legal name, business type, country, state, masked tax ID, registry check, company terms. */
+export function LegalTaxRead({ c, editor, acceptTerms, taxLabel = "EIN" }: { c: NonNullable<CompanyView>; editor?: React.ReactNode; acceptTerms?: React.ReactNode; taxLabel?: string }) {
+  const v = c.verification;
+  const LABEL: Record<string, string> = {
+    in_good_standing: "In good standing",
+    has_issues: "On record, with issues",
+    standing_unknown: "Found; standing not published",
+    not_found: "Not found in the registry",
+  };
+  const t = c.tos;
+  return (
+    <CompanySection id="legal-tax" title="2 · Legal & Tax" actions={!editor ? <EditLink href="/company/legal?edit=legal#legal-tax" /> : undefined}>
+      {editor ?? (
+        <KV
+          rows={[
+            { k: "Legal name", v: c.legalName, add: `${c.name} · if it differs from the name buyers see` },
+            { k: "Business type", v: c.taxType },
+            { k: "Country", v: c.country },
+            { k: "State of filing", v: c.stateOfFiling },
+            { k: taxLabel, v: c.ein ? <span data-tax-id-masked>{maskTaxId(c.ein)}</span> : null, add: "Add · masked after saving" },
+            {
+              k: "Registry check",
+              v: v.status ? (
+                <span>
+                  {LABEL[v.status] ?? v.status}
+                  {v.detail && ` — ${v.detail}`}
+                  {v.source && (
+                    <>
+                      {" · "}
+                      <a href={v.source} target="_blank" rel="noopener noreferrer" className="text-magenta-dark hover:underline">State registry record</a>
+                    </>
+                  )}
+                </span>
+              ) : null,
+              add: c.stateOfFiling ? "Not checked yet" : "Runs once the state is added",
+            },
+            {
+              k: "Company terms",
+              v: t.current ? (
+                <span data-company-terms="accepted">
+                  Accepted{t.by ? ` by ${t.by}` : ""} · v{t.version} ·{" "}
+                  <a href="/company-terms" className="font-semibold text-magenta-dark underline">Read them</a>
+                </span>
+              ) : (
+                <span data-company-terms="pending">
+                  {t.acceptedAt ? `Accepted v${t.version}; the current version needs accepting again.` : "Not accepted yet — the company can't transact until it is."}{" "}
+                  <a href="/company-terms" className="font-semibold text-magenta-dark underline">Read them</a>
+                  {acceptTerms}
+                </span>
+              ),
+            },
+          ]}
+        />
+      )}
     </CompanySection>
   );
 }

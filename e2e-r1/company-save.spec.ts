@@ -20,7 +20,7 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }])
       ["ein", "12", /tax ID/],
     ];
     for (const [field, value, msg] of cases) {
-      await page.goto("/company?edit=details", { waitUntil: "networkidle" });
+      await page.goto(field === "ein" ? "/company/legal?edit=legal" : "/company?edit=details", { waitUntil: "networkidle" });
       const ed = page.locator("[data-details-editor]");
       await ed.locator(`input[name="${field}"]`).fill(value);
       await ed.getByRole("button", { name: "Save" }).click();
@@ -35,9 +35,6 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }])
     const ed = page.locator("[data-details-editor]");
     await ed.locator('input[name="name"]').fill(`Save Test ${vp.width}`);
     await ed.locator('input[name="website"]').fill(`www.save-test-${vp.width}-${Date.now()}.example`);
-    await ed.locator('input[name="country"]').fill("United States");
-    await ed.locator('input[name="stateOfFiling"]').fill("FL");
-    await ed.locator('input[name="ein"]').fill("");
     await ed.getByRole("button", { name: "Save" }).click();
     await expect(ed).toHaveCount(0, { timeout: 15_000 });
     await expect(page.getByRole("heading", { level: 1 })).toContainText(`Save Test ${vp.width}`);

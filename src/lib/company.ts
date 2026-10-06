@@ -606,7 +606,8 @@ export async function getPendingRequests(viewer: Viewer) {
     select: {
       id: true,
       created_at: true,
-      company: { select: { id: true, name: true } },
+      matched_on: true,
+      company: { select: { id: true, name: true, email_domain: true } },
       person: {
         select: {
           first_name: true,
@@ -743,4 +744,18 @@ export async function requestDomainJoin(userId: string): Promise<{ companyId: st
   });
   await notifyJoinRequested(companyId, person.id);
   return { companyId };
+}
+
+/** People tab (company v3): an admin makes a member an admin, or removes a member. Admin rows are left alone. */
+export async function changeMember(viewer: Viewer, membershipId: string, action: "make_admin" | "remove") {
+  const me = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (!me) throw new OnboardingError("No person record", "INVALID");
+  const target = await prisma.companyMembership.findUnique({ where: { id: membershipId }, select: { id: true, company_id: true, person_id: true, role: true, status: true } });
+  if (!target || target.status !== "APPROVED") throw new OnboardingError("That member is no longer here", "INVALID");
+  const isAdmin = await prisma.companyMembership.findFirst({ where: { person_id: me.id, company_id: target.company_id, role: "ADMIN", status: "APPROVED" }, select: { id: true } });
+  if (!isAdmin) throw new OnboardingError("Only a company admin can change members", "GATE_UNMET");
+  if (target.person_id === me.id || target.role === "ADMIN") throw new OnboardingError("Admins can't be changed here", "INVALID");
+  if (action === "make_admin") await prisma.companyMembership.update({ where: { id: target.id }, data: { role: "ADMIN" } });
+  else await prisma.companyMembership.update({ where: { id: target.id }, data: { status: "REJECTED", decided_at: new Date(), decided_by_person_id: me.id } });
+  return { ok: true as const };
 }

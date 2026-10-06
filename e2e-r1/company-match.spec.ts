@@ -55,7 +55,7 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }])
     await signIn(page, B!.people.admin.email);
     const before = await db().company.findUniqueOrThrow({ where: { id: B!.companyId }, select: { name: true, website: true } });
     // Tax-ID match → no name shown; Ask to Join → pending request to A, B unchanged.
-    await page.goto("/company?edit=details", { waitUntil: "networkidle" });
+    await page.goto("/company/legal?edit=legal", { waitUntil: "networkidle" });
     let ed = page.locator("[data-details-editor]");
     await ed.locator('input[name="ein"]').fill("98 765 4321");
     await ed.getByRole("button", { name: "Save" }).click();
@@ -72,7 +72,6 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }])
     // Website match → names the company; This Isn't Us saves and flags.
     await page.goto("/company?edit=details", { waitUntil: "networkidle" });
     ed = page.locator("[data-details-editor]");
-    await ed.locator('input[name="ein"]').fill("");
     await ed.locator('input[name="website"]').fill(`www.match-${tag}.example`);
     await ed.getByRole("button", { name: "Save" }).click();
     const wbox = ed.locator('[data-company-match="website"]');

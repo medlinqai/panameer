@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Add Email Domain: an admin claims their own verified work domain. Free-mail domains are refused server-side.
-export function AddEmailDomain({ ownDomain }: { ownDomain: string | null }) {
+export function AddEmailDomain({ ownDomain, current = null }: { ownDomain: string | null; current?: string | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [domain, setDomain] = useState(ownDomain ?? "");
+  const [domain, setDomain] = useState(current ?? ownDomain ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const save = async () => {
@@ -22,8 +22,8 @@ export function AddEmailDomain({ ownDomain }: { ownDomain: string | null }) {
   };
   if (!open)
     return (
-      <button type="button" onClick={() => setOpen(true)} className="min-h-[42px] bg-ink px-[18px] text-[13px] font-bold text-surface hover:bg-ink-hover">
-        Add Email Domain
+      <button type="button" data-edit-email-domain onClick={() => setOpen(true)} className="min-h-[42px] bg-ink px-[18px] text-[13px] font-bold text-surface hover:bg-ink-hover">
+        {current ? "Change Email Domain" : "Add Email Domain"}
       </button>
     );
   return (

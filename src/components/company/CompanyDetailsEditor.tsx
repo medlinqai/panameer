@@ -12,7 +12,22 @@ type Init = {
 const MAX = 600;
 const INPUT = "mt-1 min-h-[44px] w-full border border-line bg-surface px-3 text-[14px] text-ink focus:border-ink focus:outline-none";
 
-export function CompanyDetailsEditor({ initial, industries }: { initial: Init; industries: { id: string; name: string }[] }) {
+export const OVERVIEW_FIELDS = ["website", "name", "industryId", "description"] as const;
+export const LEGAL_FIELDS = ["legalName", "taxType", "country", "stateOfFiling", "ein"] as const;
+
+export function CompanyDetailsEditor({
+  initial,
+  industries = [],
+  fields = OVERVIEW_FIELDS,
+  doneHref = "/company#details",
+  einHint,
+}: {
+  initial: Init;
+  industries?: { id: string; name: string }[];
+  fields?: readonly (keyof Init)[];
+  doneHref?: string;
+  einHint?: string;
+}) {
   const router = useRouter();
   const [f, setF] = useState(() => Object.fromEntries(Object.entries(initial).map(([k, v]) => [k, v ?? ""])) as Record<keyof Init, string>);
   const [busy, setBusy] = useState(false);
@@ -22,7 +37,7 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
   const [joined, setJoined] = useState<string | null>(null);
   const set = (k: keyof Init) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
   const done = () => {
-    router.replace("/company#details", { scroll: false });
+    router.replace(doneHref, { scroll: false });
     router.refresh();
   };
   async function save(e: React.FormEvent | null, onMatch?: "join" | "distinct") {
@@ -31,9 +46,13 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     setMatch(null);
     setError(null);
     setFieldErr(null);
-    const body = {
+    // Only this form's fields are sent; the server keeps everything else as it is.
+    const all = {
       name: f.name, legalName: f.legalName, taxType: f.taxType || null, country: f.country || null, stateOfFiling: f.stateOfFiling || null,
       ein: f.ein || null, industryId: f.industryId || null, website: f.website || null, description: f.description || null,
+    };
+    const body = {
+      ...Object.fromEntries(fields.filter((k) => !(k === "ein" && f.ein.trim() === (initial.ein ?? ""))).map((k) => [k, all[k]])),
       ...(onMatch ? { onMatch } : {}),
     };
     const r = await fetch("/api/company", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
@@ -57,6 +76,7 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     }
     done();
   }
+  const has = (k: keyof Init) => fields.includes(k);
   const text = (k: keyof Init, label: string, hint?: string) => (
     <label className="block">
       <span className="block text-[13px] font-semibold">{label}</span>
@@ -66,10 +86,11 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     </label>
   );
   return (
-    <form onSubmit={save} data-details-editor className="mt-3 grid gap-3.5 sm:grid-cols-2">
-      {text("name", "Company name")}
-      {text("legalName", "Legal name", "If it differs from the name buyers see.")}
-      <label className="block">
+    <form onSubmit={save} data-details-editor data-fields={fields.join(",")} className="mt-3 grid gap-3.5 sm:grid-cols-2">
+      {has("website") && text("website", "Website", "Your company's own site — people who enter it can ask to join.")}
+      {has("name") && text("name", "Company name")}
+      {has("legalName") && text("legalName", "Legal name", "If it differs from the name buyers see.")}
+      {has("taxType") && <label className="block">
         <span className="block text-[13px] font-semibold">Business type</span>
         <select value={f.taxType} onChange={set("taxType")} className={INPUT} name="taxType">
           <option value="">Not set</option>
@@ -77,8 +98,8 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
             <option key={v} value={v}>{l}</option>
           ))}
         </select>
-      </label>
-      <label className="block">
+      </label>}
+      {has("industryId") && <label className="block">
         <span className="block text-[13px] font-semibold">Industry</span>
         <select value={f.industryId} onChange={set("industryId")} className={INPUT} name="industryId" aria-invalid={fieldErr?.field === "industryId" || undefined}>
           <option value="">Not set</option>
@@ -87,19 +108,18 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
           ))}
         </select>
         <FieldMsg field="industryId" err={fieldErr} />
-      </label>
-      {text("country", "Country")}
-      {text("stateOfFiling", "State of filing")}
-      {text("ein", "EIN / Tax registration", "Shown only to Panameer, never to buyers.")}
-      {text("website", "Website")}
-      <label className="block sm:col-span-2">
+      </label>}
+      {has("country") && text("country", "Country")}
+      {has("stateOfFiling") && text("stateOfFiling", "State of filing")}
+      {has("ein") && text("ein", "EIN / Tax registration", einHint ?? "Shown only to Panameer, never to buyers.")}
+      {has("description") && <label className="block sm:col-span-2">
         <span className="flex justify-between text-[13px] font-semibold">
           Description <span className="font-normal text-ink-3">{f.description.length}/{MAX}</span>
         </span>
         <span className="block text-[12.5px] text-ink-3">What the company does and for whom. Buyers read this on every proposal.</span>
         <textarea value={f.description} onChange={set("description")} maxLength={MAX} rows={4} className={`${INPUT} py-2`} name="description" />
         <FieldMsg field="description" err={fieldErr} />
-      </label>
+      </label>}
       {error && <p role="alert" className="text-[13px] font-semibold text-magenta-dark sm:col-span-2">{error}</p>}
       {match && (
         <div data-company-match={match.kind} className="border-l-2 border-magenta py-2 pl-3.5 text-[14px] sm:col-span-2">

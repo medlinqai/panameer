@@ -25,6 +25,17 @@ export function companyReadiness(c: Partial<Record<ReadinessKey, string | null>>
   return { score: (READINESS_FIELDS.length - empty.length) * 10, left: empty.length, first: empty[0] ?? null };
 }
 
+/** "Before {Company} can be paid": Who Gets Paid · Legal & Tax (state + tax ID) · Payout Account. */
+export function payReadiness(x: { payee: string | null; state: string | null; tin: string | null; payouts: number }) {
+  const steps = [
+    { key: "payee", done: !!x.payee },
+    { key: "legal", done: !!x.state?.trim() && !!x.tin?.trim() },
+    { key: "payout", done: x.payouts > 0 },
+  ];
+  const missing = [!x.state?.trim() && "the state of filing", !x.tin?.trim() && "tax ID", x.payouts === 0 && "a payout account"].filter(Boolean) as string[];
+  return { steps, left: steps.filter((s) => !s.done).length, missing };
+}
+
 export async function loadCompanyView(companyId: string, opts: { forBuyer?: boolean } = {}) {
   const c = await prisma.company.findUnique({
     where: { id: companyId },
@@ -33,8 +44,8 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
       website: true, email_domain: true, logo_url: true, brand_hue: true, theme_recipe: true, description: true,
       industry_id: true, show_on_profiles: true, created_at: true,
       entity_validation_status: true, entity_validated_at: true, entity_validation_source_url: true, entity_status_detail: true,
-      company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true,
-      _count: { select: { memberships: { where: { status: "APPROVED" } } } },
+      company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true, payee_type: true,
+      _count: { select: { memberships: { where: { status: "APPROVED" } }, payoutMethods: true } },
     },
   });
   if (!c) return null;
@@ -81,5 +92,8 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
     },
     // Readiness is the company's own measure; a buyer never sees it.
     readiness: opts.forBuyer ? null : companyReadiness({ ...fields, ein: c.tin }),
+    payeeType: opts.forBuyer ? null : (c.payee_type ?? "COMPANY"),
+    payoutAccounts: opts.forBuyer ? 0 : c._count.payoutMethods,
+    payReady: opts.forBuyer ? null : payReadiness({ payee: c.payee_type ?? "COMPANY", state: c.state_of_filing, tin: c.tin, payouts: c._count.payoutMethods }),
   };
 }

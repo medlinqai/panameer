@@ -106,6 +106,7 @@
     "check:company-match": "npx playwright test -c playwright.company-match.config.ts",
     "check:company-save": "npx playwright test -c playwright.company-save.config.ts",
     "check:branding": "npx playwright test -c playwright.branding.config.ts",
+    "check:company-v3": "npx playwright test -c playwright.company-v3.config.ts",
     "check:catalog-finder": "npx playwright test -c playwright.catalog-finder.config.ts && npx tsx --env-file=.env.local scripts/check-catalog-digest.ts",
     "check:logo-fit": "npx playwright test -c playwright.logo-fit.config.ts",
     "check:hero-motion": "npx playwright test -c playwright.hero-motion.config.ts",

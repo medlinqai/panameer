@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
 // My Company section (mockup my_company 2026-10-05): thin top rule, title + count, actions right. No box.
-export function CompanySection({ id, title, count, actions, children }: { id: string; title: string; count?: number; actions?: ReactNode; children: ReactNode }) {
+export function CompanySection({ id, title, count, tag, actions, children }: { id: string; title: string; count?: number; tag?: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <section id={id} data-co-section={id} className="mt-[22px] scroll-mt-6 border-t border-line pt-[18px]">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-[19px] font-bold">
           {title}
           {count !== undefined && <small className="ml-1 text-[13px] font-medium text-ink-3">({count})</small>}
+          {tag && <small className="ml-2 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3 max-sm:ml-0 max-sm:block">{tag}</small>}
         </h2>
         {actions && <div className="flex items-center gap-3.5 text-[12px] font-bold text-magenta-dark">{actions}</div>}
       </div>
