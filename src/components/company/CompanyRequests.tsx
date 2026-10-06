@@ -13,6 +13,7 @@ export function CompanyRequests({
     title: string | null;
     company: string;
     askedAt: string;
+    matched?: string | null;
   }[];
 }) {
   const router = useRouter();
@@ -61,6 +62,7 @@ export function CompanyRequests({
                   day: "numeric",
                   month: "short",
                 })}
+                {r.matched && <span data-matched> · matched on {r.matched}</span>}
               </span>
             </span>
             <span className="col-span-2 flex items-center gap-2 sm:col-span-1">

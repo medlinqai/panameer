@@ -382,6 +382,9 @@ model Company {
   /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
   logo_palette     Json?
   /// Dynamic Branding switch. null = saved before the switch existed: on when a look is saved.
+  // Company v3: who gets paid — COMPANY (EIN) or SOLE_PROPRIETOR (SSN/ITIN, one-member companies only).
+  payee_type     PayeeType?
+  payoutMethods  PayoutMethod[]
   theme_enabled    Boolean?
   /// Same company = same website domain, tax ID digits or email domain (2026-10-05). Normalized copies, indexed.
   website_domain   String?
@@ -428,6 +431,8 @@ model CompanyMembership {
   decided_by_person_id    String?          @db.Uuid
   /// How the approval happened — an audited domain auto-approval reads very
   /// differently from a human decision when someone asks later.
+  /// How the request matched: "website:x.com" · "email:x.com" · "tin" (company v3).
+  matched_on              String?
   auto_approved           Boolean          @default(false)
 
   created_at DateTime @default(now())
@@ -4248,9 +4253,13 @@ model PayoutMethod {
   created_at DateTime         @default(now())
   updated_at DateTime         @updatedAt
 
+  // Company v3: the payout account belongs to the company; person link kept.
+  company_id String?          @db.Uuid
+  company    Company?         @relation(fields: [company_id], references: [id], onDelete: SetNull)
   person Person @relation(fields: [person_id], references: [id], onDelete: Cascade)
 
   @@index([person_id])
+  @@index([company_id])
   @@map("payout_methods")
 }
 
@@ -8051,4 +8060,9 @@ model WorkOrderEvent {
 
   @@index([work_order_id, created_at])
   @@map("work_order_events")
+}
+
+enum PayeeType {
+  COMPANY
+  SOLE_PROPRIETOR
 }

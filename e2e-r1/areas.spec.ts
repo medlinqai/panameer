@@ -35,10 +35,10 @@ for (const w of [1440, 390])
 
       if (who !== "loner") {
         await page.goto("/company", { waitUntil: "domcontentloaded" });
-        expect(await tabs(page)).toEqual(who === "admin" ? ["Overview", "People", "Branding"] : ["Overview", "People"]);
+        expect(await tabs(page)).toEqual(who === "admin" ? ["Overview", "People", "Legal, Tax & Banking 🔒", "Branding"] : ["Overview", "People"]);
         await expect(page.getByTestId("page-tabs").first()).toContainText("COMPANY");
         await page.goto("/company/terms", { waitUntil: "domcontentloaded" });
-        await expect(page).toHaveURL(/\/company(#verification)?$/);
+        await expect(page).toHaveURL(/\/company\/legal(#legal-tax)?$/);
         await page.goto("/company/teams", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL(/\/company\/people$/);
       }

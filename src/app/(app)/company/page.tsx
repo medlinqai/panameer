@@ -8,20 +8,19 @@ import { Card } from "@/components/Card";
 import { CompanyStepInline } from "@/components/company/CompanyStepInline";
 import { loadCompanyView } from "@/lib/company-view";
 import { CompanyShell } from "@/components/company/CompanyShell";
-import { CompanyDetailsRead, CompanyVerification } from "@/components/company/CompanyOverview";
+import { CompanyDetailsRead, PayReadyBox } from "@/components/company/CompanyOverview";
 import { CompanyVisibility } from "@/components/company/CompanyVisibility";
-import { CompanyDetailsEditor } from "@/components/company/CompanyDetailsEditor";
-import { AcceptCompanyTos } from "@/components/company/AcceptCompanyTos";
+import { CompanyDetailsEditor, OVERVIEW_FIELDS } from "@/components/company/CompanyDetailsEditor";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Company · Panameer" };
 
 
 // Company → Overview (mockup my_company 2026-10-05). Set-up, pending and declined states keep today's flow.
-export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ blocked?: string; from?: string; edit?: string }> }) {
+export default async function CompanyPage({ searchParams }: { searchParams: Promise<{ blocked?: string; from?: string; edit?: string; join?: string }> }) {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fcompany");
-  const { blocked, from, edit } = await searchParams;
+  const { blocked, from, edit, join } = await searchParams;
   const blockedMessage = blocked ? TRANSACT_MESSAGE[blocked.toUpperCase() as keyof typeof TRANSACT_MESSAGE] : null;
   const binding = await getCompanyBinding(viewer);
   const blockedCard = blockedMessage && (
@@ -91,15 +90,31 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
             editing ? (
               <CompanyDetailsEditor
                 industries={industries}
+                fields={OVERVIEW_FIELDS}
                 initial={{
                   name: view.name, legalName: view.legalName, taxType: view.taxTypeCode, country: view.country, stateOfFiling: view.stateOfFiling,
-                  ein: view.ein, industryId: view.industryId, website: view.website, description: view.description,
+                  ein: null, industryId: view.industryId, website: view.website, description: view.description,
                 }}
               />
             ) : undefined
           }
         />
-        <CompanyVerification c={view} acceptTerms={binding.isAdmin && !view.tos.current ? <AcceptCompanyTos companyId={view.id} /> : undefined} />
+        {binding.isAdmin && <PayReadyBox c={view} />}
+        {join === "1" ? (
+          <section data-join-other className="mt-8 border-t border-line pt-5">
+            <h2 className="text-[19px] font-bold">Join Your Company</h2>
+            <div className="mt-3">
+              <CompanyStepInline from={null} />
+            </div>
+          </section>
+        ) : (
+          <p className="mt-8 text-[13.5px] text-ink-2" data-join-instead>
+            Not your company?{" "}
+            <Link href="/company?join=1#join" className="font-bold text-magenta-dark underline underline-offset-2">
+              Join yours instead
+            </Link>
+          </p>
+        )}
       </CompanyShell>
     </>
   );

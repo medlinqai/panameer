@@ -18,16 +18,12 @@ for (const scheme of ["light", "dark"] as const)
         await signIn(page, f!.people[who].email);
         await page.goto("/company", { waitUntil: "networkidle" });
         await expect(page.locator(`[data-company-page="${who}"]`)).toBeVisible();
-        // name, legal name, type, EIN filled → 4 of 10.
-        await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", "40");
-        await expect(page.getByText("6 things to finish")).toBeVisible();
-        for (const id of ["details", "verification"]) await expect(page.locator(`[data-co-section="${id}"]`)).toBeVisible();
-        // Lane 2: no Invite button, no user-terms block; company terms live in Verification.
+        // Company v3: the readiness score became the admins-only "before paid" box; terms + tax ID moved to Legal.
+        await expect(page.locator("[data-pay-box]")).toHaveCount(who === "admin" ? 1 : 0);
+        await expect(page.locator('[data-co-section="details"]')).toBeVisible();
         await expect(page.getByText(/Invite Someone to/)).toHaveCount(0);
         await expect(page.getByText("Your Terms of Service")).toHaveCount(0);
-        await expect(page.locator('[data-co-section="verification"] [data-company-terms]')).toBeVisible();
-        if (who === "admin") await expect(page.locator('[data-co-section="verification"]').getByRole("button", { name: /Accept/ })).toBeVisible();
-        await expect(page.locator('[data-co-section="details"]')).toContainText(f!.tin);
+        await expect(page.locator('[data-co-section="details"]')).not.toContainText(f!.tin);
         const edits = page.locator("main").getByRole("link", { name: "Edit", exact: true });
         if (who === "admin") await expect(edits.first()).toBeVisible();
         else await expect(edits).toHaveCount(0);
@@ -49,8 +45,6 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await page.goto("/company?edit=details", { waitUntil: "networkidle" });
   const ed = page.locator("[data-details-editor]");
   await expect(ed).toBeVisible();
-  await ed.locator('input[name="country"]').fill("United States");
-  await ed.locator('input[name="stateOfFiling"]').fill("Delaware");
   await ed.locator('input[name="website"]').fill(`${f!.tag}-site.example`);
   await ed.locator('textarea[name="description"]').fill("Throwaway test company for the My Company page.");
   const ind = ed.locator('select[name="industryId"] option').nth(1);
@@ -59,8 +53,7 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await page.screenshot({ path: "e2e-r1/.artifacts/company-edit-1440.png", fullPage: true });
   await ed.getByRole("button", { name: "Save" }).click();
   await expect(page.locator("[data-details-editor]")).toHaveCount(0, { timeout: 20_000 });
-  await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", hasIndustry ? "90" : "80");
-  await expect(page.locator("[data-company-description]")).toHaveText("Throwaway test company for the My Company page.");
+  await expect(page.locator('[data-co-section="details"]')).toContainText("Throwaway test company for the My Company page.");
   // Edit logo uploads in place (no navigation).
   const png = Buffer.from(await page.evaluate(async () => {
     const c = document.createElement("canvas"); c.width = 300; c.height = 200;
@@ -81,7 +74,9 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await page.goto("/company/branding", { waitUntil: "networkidle" });
   await expect(page.locator('[data-co-section="dynamic-branding"]')).toBeVisible();
   await page.goto("/company/terms", { waitUntil: "networkidle" });
-  await expect(page).toHaveURL(/\/company(#verification)?$/);
+  await expect(page).toHaveURL(/\/company\/legal(#legal-tax)?$/);
+  await expect(page.locator('[data-co-section="legal-tax"] [data-company-terms]')).toBeVisible();
+  await expect(page.locator('[data-co-section="legal-tax"]').getByRole("button", { name: /Accept/ })).toBeVisible();
   await ctx.close();
   // A member cannot reach the editor, Branding or Terms.
   const m = await browser.newContext({ viewport: { width: 390, height: 844 } });
