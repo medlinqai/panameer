@@ -16,6 +16,7 @@ export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   // Scott 2026-10-04: every action-needed event emails by default (members can switch each off).
   "profile.visibility_off",
   "profile.details_needed",
+  "profile.score_reweight",
   "profile.country_unknown",
   "group.join_requested",
   "company.join_requested",
@@ -61,6 +62,10 @@ export type RenderedMail = {
 const PER_EVENT: Partial<
   Record<NotificationEventKey, (i: NotificationMailInput) => RenderedMail>
 > = {
+  "profile.score_reweight": (i) => ({
+    ...notificationEmail({ firstName: i.firstName, title: i.title, body: i.body, href: i.link, logoUrl: i.logoUrl, cta: "Complete My Profile" }),
+    template: "profile.score_reweight",
+  }),
   "colleague.invite_received": (i) => {
     const v = (k: string) => (typeof i.vars?.[k] === "string" && (i.vars[k] as string).trim()) || null;
     const t = connectInviteTemplate({

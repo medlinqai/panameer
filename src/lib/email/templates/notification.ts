@@ -11,6 +11,7 @@ export function notificationEmail(input: {
   body?: string | null;
   href?: string | null;
   logoUrl?: string;
+  cta?: string;
 }): { subject: string; html: string; text: string } {
   const base = (
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100"
@@ -32,7 +33,7 @@ export function notificationEmail(input: {
     input.body
       ? `<p style="margin:0 0 24px;font-size:16px;line-height:1.55;">${escapeHtml(input.body)}</p>`
       : "",
-    link ? primaryButton(link, "Open in Panameer") : "",
+    link ? primaryButton(link, input.cta ?? "Open in Panameer") : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -43,7 +44,7 @@ export function notificationEmail(input: {
     input.firstName ? `Hi ${input.firstName},` : null,
     input.title,
     input.body ?? null,
-    link ? `Open in Panameer: ${link}` : null,
+    link ? `${input.cta ?? "Open in Panameer"}: ${link}` : null,
     footerText(year),
   ]
     .filter(Boolean)

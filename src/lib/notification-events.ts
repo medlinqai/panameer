@@ -150,6 +150,18 @@ export const NOTIFICATION_EVENTS = {
     href: () => "/dashboard",
   },
   // declared this event and the registry had no row for it. That harness was
+  // Score re-weight (2026-10-06): tells a member who dropped below the search bar exactly what's missing.
+  "profile.score_reweight": {
+    event: "profile.score_reweight",
+    recipient: "members who dropped below the search bar",
+    category: "profile.visibility",
+    aiMode: "DO_IT",
+    visibility: "FEED",
+    requiresAction: true,
+    title: () => "Your Panameer profile needs a few more details",
+    body: (v) => `Still needed: ${str(v, "missing", "a few details")}. Searchable profiles need every section filled.`,
+    href: () => "/profile",
+  },
   "profile.details_needed": {
     event: "profile.details_needed",
     recipient: "the new user",
