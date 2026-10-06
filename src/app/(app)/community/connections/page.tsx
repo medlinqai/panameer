@@ -7,15 +7,33 @@ import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { connectTabs } from "@/lib/connect-tabs";
 import { unreadCount } from "@/lib/messages";
-import { getColleagueRoster } from "@/lib/colleague-roster";
+import { connectionsView, parseFilters, appliedChips } from "@/lib/connections-filter";
+import { getProviderFieldTree } from "@/lib/catalog";
+import { ConnectionsControls, SavedViews } from "@/components/community/ConnectionsControls";
+import type { PickerTree } from "@/components/console/SkillTreePicker";
 import { ColleagueRoster } from "@/components/community/ColleagueRoster";
 import { INVITE_LIMIT_PER_HOUR, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
 
-export default async function ColleaguesPage() {
+export default async function ConnectionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
   const unread = viewer ? await unreadCount(viewer) : 0;
-  const rows = viewer ? await getColleagueRoster(viewer) : [];
+  const f = parseFilters(await searchParams);
+  const views = viewer ? await prisma.connectionView.findMany({ where: { user_id: viewer.userId }, orderBy: { created_at: "asc" }, select: { id: true, name: true, query: true } }) : [];
+  const view = viewer ? await connectionsView(viewer, f, views.map((v) => v.query)) : null;
+  const [fieldTree, skills] = await Promise.all([
+    getProviderFieldTree(),
+    prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, orderBy: { name: "asc" }, select: { id: true, name: true, role_type_id: true, pillar_id: true } }),
+  ]);
+  const tree: PickerTree = fieldTree.map((r) => ({
+    id: r.id,
+    label: r.display || r.name,
+    domains: r.domains
+      .map((d) => ({ id: d.id, name: d.name, skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id).map((s) => ({ id: s.id, name: s.name })) }))
+      .filter((d) => d.skills.length),
+  }));
+  const skillName = new Map(skills.map((s) => [s.id, s.name]));
+  const rows = view?.rows ?? [];
 
   const me = viewer
     ? await prisma.person.findFirst({ where: { user_id: viewer.userId }, select: { id: true } })
@@ -56,28 +74,43 @@ export default async function ColleaguesPage() {
           </Link>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-          <ColleagueRoster
-            rows={rows.map((r) => ({
-              connectionId: r.connectionId,
-              userId: r.userId,
-              name: r.name,
-              title: r.title,
-              company: r.company,
-              companyId: r.companyId,
-              skillNames: r.skillNames,
-              photoUrl: r.photoUrl,
-              reason: r.reason,
-              reasonKind: r.reasonKind,
-              buySide: r.buySide,
-              location: r.location,
-              mutualCount: r.mutualCount,
-              profileHref: r.profileHref,
-            }))}
-          />
+        <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
+            <ConnectionsControls
+              f={f}
+              total={view?.total ?? 0}
+              chipCounts={view?.chipCounts ?? {}}
+              invites={view?.invites ?? { in: 0, out: 0 }}
+              applied={appliedChips(f, (id) => skillName.get(id))}
+              tree={tree}
+            />
+            <ColleagueRoster
+              bare
+              rows={rows.map((r) => ({
+                connectionId: r.connectionId,
+                userId: r.userId,
+                name: r.name,
+                title: r.title,
+                company: r.company,
+                companyId: r.companyId,
+                skillNames: [...r.skillNames.values()],
+                photoUrl: r.photoUrl,
+                reason: r.why.how,
+                reasonKind: "date" as const,
+                buySide: r.buySide,
+                location: r.location,
+                mutualCount: 0,
+                profileHref: r.profileHref,
+                tags: r.why.tags,
+                how: r.why.how,
+                matched: r.why.skill,
+              }))}
+            />
+          </div>
 
           {}
-          <aside className="space-y-3">
+          <aside className="space-y-3 lg:col-start-1 lg:row-start-1">
+            <SavedViews views={views.map((v, i) => ({ ...v, count: view?.savedCounts[i] ?? 0 }))} />
             <div className="border-t border-line py-5">
               <h2 className="font-display text-[15px] font-bold">Invite a Colleague</h2>
               {}

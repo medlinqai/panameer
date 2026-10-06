@@ -34,6 +34,10 @@ export type RosterRowView = {
   location: string | null;
   mutualCount: number;
   profileHref: string | null;
+  // Connections filters: relationship tags, how you know them, the skill that matched.
+  tags?: string[];
+  how?: string;
+  matched?: string | null;
 };
 
 type Filter = "all" | "skills" | "learn" | "worked";
@@ -45,20 +49,20 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "worked", label: "Worked together" },
 ];
 
-export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
+export function ColleagueRoster({ rows, bare = false }: { rows: RosterRowView[]; bare?: boolean }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [asking, setAsking] = useState<RosterRowView | null>(null);
 
   const matching = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return rows;
+    if (bare || !needle) return rows;
     return rows.filter((r) =>
       [r.name, r.title, r.company, ...r.skillNames].some((f) =>
         f?.toLowerCase().includes(needle)
       )
     );
-  }, [rows, q]);
+  }, [rows, q, bare]);
 
   const counts = useMemo(
     () => ({
@@ -81,11 +85,11 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
 
   const shown = useMemo(() => {
     return matching
-      .filter((r) => (filter === "all" ? true : r.reasonKind === filter))
+      .filter((r) => (bare || filter === "all" ? true : r.reasonKind === filter))
       // NAME · TITLE · COMPANY · SKILL WS-E item 3)
       // THE NEEDLE HAS ALREADY BEEN APPLIED, IN `matching` ABOVE ( item 1a), so this
       ;
-  }, [matching, filter]);
+  }, [matching, filter, bare]);
 
   /* The page actually rendered, and whether another one exists. */
   const visible = shown.slice(0, limit);
@@ -93,6 +97,8 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
 
   return (
     <div className="space-y-4">
+      {!bare && (
+      <>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -126,9 +132,13 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         })}
       </div>
 
+      </>
+      )}
       {shown.length === 0 ? (
         <p className="text-[14px] leading-relaxed text-ink-2">
-          {rows.length === 0
+          {bare
+            ? "No one in your connections matches these filters."
+            : rows.length === 0
             ? "You have no colleagues yet. A colleague is someone who accepted your request — a mutual connection."
             : "No colleague matches that."}
         </p>
@@ -192,9 +202,19 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                   </p>
                 )}
                 {/* NEVER BLANK. The lib guarantees a reason — a shared */}
-                <p className="mt-0.5 text-[12.5px] italic leading-snug text-ink-2">
-                  {r.reason}
-                </p>
+                {r.how !== undefined ? (
+                  <p data-why className="mt-1 flex flex-wrap items-center gap-1.5 text-[12.5px] leading-snug text-ink-2">
+                    {r.tags?.map((t) => (
+                      <span key={t} className="border border-line px-1.5 text-[11px] font-semibold text-ink">{t}</span>
+                    ))}
+                    <span className="italic">{r.how}</span>
+                    {r.matched && <span className="bg-magenta/10 px-1.5 text-[11.5px] font-semibold text-ink">{r.matched}</span>}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-[12.5px] italic leading-snug text-ink-2">
+                    {r.reason}
+                  </p>
+                )}
               </div>
               <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
                 <ColleagueRowActions
@@ -220,7 +240,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
       )}
 
       {/* AND THE PEOPLE WHO ARE *NOT* YET COLLEAGUES item 1b) */}
-      <OtherMembers query={q} excludeUserIds={rows.map((r) => r.userId)} />
+      {!bare && <OtherMembers query={q} excludeUserIds={rows.map((r) => r.userId)} />}
 
       {asking && <AskForRecommendation row={asking} onClose={() => setAsking(null)} />}
     </div>

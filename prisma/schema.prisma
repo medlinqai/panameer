@@ -8074,3 +8074,15 @@ enum PayeeType {
   COMPANY
   SOLE_PROPRIETOR
 }
+
+/// Connections saved views (2026-10-06): a named filter set per user; the query string is the filter.
+model ConnectionView {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  name       String
+  query      String
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@map("connection_views")
+}
