@@ -168,8 +168,7 @@ export async function saveProviderSection(
       event: "profile.section_saved",
       personId: owned.person_id,
       dedupeKey: `profile.section_saved:${section}:${Math.floor(Date.now() / 60_000)}`,
-      /* ⚠ The verb travels with the noun — see the note on the event. A section
-         with no entry falls back to "profile" / "was", which reads correctly. */
+      // The verb travels with the noun — see the note on the event. A section
       vars: {
         section: SECTION_LABEL[section]?.noun ?? "profile",
         verb: SECTION_LABEL[section]?.plural ? "were" : "was",
@@ -181,23 +180,14 @@ export async function saveProviderSection(
   return getProviderSettings(viewer);
 }
 
-/**
- * Pause / unpause the profile (brief_K). Paused = hidden from the marketplace
- * regardless of completeness. There is NO publish action — visibility is
- * derived; pausing is the only manual visibility control.
- */
+/** Pause / unpause the profile (brief_K). Paused = hidden from the marketplace */
 export async function setPaused(viewer: Viewer, paused: boolean) {
   const owned = await loadOwned(viewer);
   await prisma.providerProfile.update({
     where: { id: owned.id },
     data: { paused_at: paused ? new Date() : null },
   });
-  /*
-    ── ⚠⚠ ROWS 3 AND 4 — TWO EVENTS, NOT ONE WITH A FLAG (`E741`) ───────────
-    ⚠ Scott's table gives OFF an email default of **on** and ON **off**, and one
-    event cannot carry two defaults. ⚠⚠ Same placement rule as above: after the
-    write, inside a catch, and `notify()` only.
-  */
+  // ROWS 3 AND 4 — TWO EVENTS, NOT ONE WITH A FLAG
   try {
     const { notify } = await import("@/lib/notifications");
     await notify({
@@ -211,12 +201,7 @@ export async function setPaused(viewer: Viewer, paused: boolean) {
   return getProviderSettings(viewer);
 }
 
-/**
- * Request Validation (brief_K) — the merit track. Sets validation_status to
- * REQUESTED + a timestamp; an admin grants/rejects it later (brief_M). Only
- * meaningful from NOT_REQUESTED or REJECTED; already-requested/validated is a
- * no-op. Never changes base visibility.
- */
+/** Request Validation (brief_K) — the merit track. Sets validation_status to */
 export async function requestValidation(viewer: Viewer) {
   const owned = await loadOwned(viewer);
   if (

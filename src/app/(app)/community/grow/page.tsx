@@ -153,17 +153,7 @@ export default async function GrowPage({
         </nav>
 
         {tab.key === "network" ? (
-          /*
-            ── ⚠⚠ MY NETWORK — INVITATIONS, NOT SCORES ──────────────────────
-
-            ⚠ Scott: *"list the people you brought in, with whether each has
-            joined… Show what exists."*
-            ⚠⚠⚠ IT NAMES AN EMAIL, NOT A PERSON, AND CANNOT LINK TO A PROFILE.
-            `colleague_invites` carries `invitee_email` and an optional name;
-            **nothing links an accepted invite to the account it created.** That
-            is `WS-C` item 6. Until it lands, "Joined" here means *"this
-            invitation was accepted"* — the honest claim the data supports.
-          */
+          // MY NETWORK — INVITATIONS, NOT SCORES
           <section className="mt-3.5">
             {network.length === 0 ? (
               <p className="text-[13px] text-ink-3">
@@ -187,9 +177,7 @@ export default async function GrowPage({
                         </span>
                       )}
                     </span>
-                    {/* ⚠ Green for joined, ink for pending — never red. A
-                        colleague who has not joined yet is a to-do, not a
-                        failure. */}
+                    {/* Green for joined, ink for pending — never red. A */}
                     <span
                       className={
                         "flex-none text-[12.5px] font-bold " +
@@ -214,10 +202,7 @@ export default async function GrowPage({
                     key={r.personId}
                     className={
                       "flex items-center justify-between gap-2.5 border-t border-line py-2.5 text-[13.5px] first:border-t-0 " +
-                      /* ⚠⚠ YOUR ROW IS ALWAYS VISIBLE AND HIGHLIGHTED (WS-B 3).
-                         Every scorer is rendered today, so "always visible"
-                         costs nothing yet — it becomes a slice-plus-your-row
-                         when the board is long enough to need one. */
+                      // YOUR ROW IS ALWAYS VISIBLE AND HIGHLIGHTED (WS-B 3).
                       (r.personId === personId ? "bg-magenta/[0.04] font-bold" : "")
                     }
                   >
@@ -232,9 +217,7 @@ export default async function GrowPage({
                         size={28}
                       />
                       <span className="min-w-0">
-                        {/* ⚠ A LINK ONLY WHERE THERE IS SOMEWHERE TO GO. A ranked
-                            buyer has no provider page, and a link to nowhere is
-                            `E579`'s defect. */}
+                        {/* A LINK ONLY WHERE THERE IS SOMEWHERE TO GO. A ranked */}
                         {href ? (
                           <Link href={href} className="block truncate hover:underline">
                             {r.name}
@@ -248,12 +231,7 @@ export default async function GrowPage({
                       </span>
                     </span>
                     <span className="flex flex-none items-center gap-2.5">
-                      {/*
-                        ⚠⚠⚠ MOVEMENT: `null` IS `NEW`, NOT A DASH. Somebody who
-                        was not on last month's board has not held station.
-                        ⚠ A dash means "same rank as last month", which is a
-                        different statement and a real one.
-                      */}
+                      {/* MOVEMENT: `null` IS `NEW`, NOT A DASH. Somebody who */}
                       {movement && (
                         <span
                           className={
@@ -290,18 +268,7 @@ export default async function GrowPage({
           </section>
         ) : (
           <p className="mt-3.5 text-[13px] text-ink-3">
-            {/*
-              ⚠ RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX.
-              ⚠⚠⚠ AND IT IS ABOUT **THE BOARD**, NOT ABOUT YOUR RANK. The hero
-              above says *"Ranking starts once N members have a score"* — that
-              is a sentence about the reader's standing. This one is about
-              whether the LIST exists. ⚠ Scott, 2026-09-22: *"Keep both"*, but
-              reworded so it does not echo.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   No board yet — it appears once three members have a score
-              //   {tab.key === "month" ? " this month" : ""}.
-              ⚠ The threshold is still the lib's, never a literal.
-            */}
+            {/* RULING 6, SAID OUT LOUD RATHER THAN RENDERED AS AN EMPTY BOX. */}
             The board appears once {BOARD_MIN_SCORERS} members have a score
             {tab.key === "month" ? " this month" : ""}.
           </p>
@@ -311,11 +278,7 @@ export default async function GrowPage({
   );
 }
 
-/**
- * ⚠ One counted row and its arithmetic. ⚠⚠ THE POINTS LINE IS DERIVED FROM THE
- * COUNT AND THE WEIGHT, never passed in separately — two numbers that must
- * agree, computed once.
- */
+/** One counted row and its arithmetic. THE POINTS LINE IS DERIVED FROM THE */
 function ScoreRow({ label, count, each }: { label: string; count: number; each: number }) {
   return (
     <div className="flex items-center justify-between gap-2.5 py-2 text-[13.5px]">

@@ -740,10 +740,7 @@ async function refreshProviderScore(personId: string): Promise<void> {
   }
 }
 
-/**
- * After a user verifies their email: if its domain matches exactly one company's domain, create a PENDING
- * request there (never an approval). Free-mail domains and existing memberships do nothing.
- */
+/** After a user verifies their email: if its domain matches exactly one company's domain, create a… */
 export async function requestDomainJoin(userId: string): Promise<{ companyId: string } | null> {
   const person = await prisma.person.findUnique({
     where: { user_id: userId },

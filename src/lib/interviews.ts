@@ -76,9 +76,7 @@ export async function requestInterview(
     select: { id: true },
   });
 
-  /* ⚠⚠ A WORKLIST ITEM FOR THE PROVIDER — they owe times. ⚠ Through `E620`'s
-     one writer, which catches its own failures and never rethrows, so a
-     notification outage cannot fail the request. */
+  // A WORKLIST ITEM FOR THE PROVIDER — they owe times. Through 's
   await notify({
     event: "work.interview_requested",
     personId: input.providerPersonId,
@@ -91,13 +89,7 @@ export async function requestInterview(
   return { id: created.id, created: true };
 }
 
-/**
- * The provider offers times. ⚠⚠ `REQUESTED` → `SLOTS_OFFERED`.
- *
- * ⚠ EACH SLOT IS VALIDATED BY THE SPINE'S `assertInterviewSlot`, imported
- * rather than restated: a slot needs a start instant AND a time zone, because
- * *"2pm"* without one is not a time anybody can turn up to.
- */
+/** The provider offers times. `REQUESTED` → `SLOTS_OFFERED`. */
 export async function offerSlots(
   viewer: Viewer,
   interviewId: string,
@@ -114,16 +106,13 @@ export async function offerSlots(
     select: { id: true, status: true, requested_by_person_id: true },
   });
   if (!iv) throw new SourcingError("That interview isn't yours.", "NOT_FOUND");
-  /* ⚠⚠ RE-OFFERING IS ALLOWED WHILE IT IS STILL OPEN — a provider whose times
-     no longer work replaces them. ⚠ Not after `SCHEDULED`: the buyer has
-     picked, and moving the times under them is a different act. */
+  // RE-OFFERING IS ALLOWED WHILE IT IS STILL OPEN — a provider whose times
   if (iv.status !== "REQUESTED" && iv.status !== "SLOTS_OFFERED") {
     throw new SourcingError("That interview isn't waiting on times.", "NOT_OPEN");
   }
 
   await prisma.$transaction(async (tx) => {
-    /* ⚠ The response row is the provider's; `@unique` on the interview makes
-       re-offering replace rather than duplicate. */
+    // The response row is the provider's; `@unique` on the interview makes
     const response = await tx.interviewResponse.upsert({
       where: { interview_request_id: iv.id },
       create: {
@@ -134,9 +123,7 @@ export async function offerSlots(
       update: { submitted_at: new Date() },
       select: { id: true },
     });
-    /* ⚠⚠ THE OLD SLOTS GO, because they are an OFFER and the offer is being
-       replaced — not a record of anything that happened. ⚠ Scoped to this
-       response, which is scoped to this provider's own interview. */
+    // THE OLD SLOTS GO, because they are an OFFER and the offer is being
     await tx.interviewResponseLine.deleteMany({
       where: { interview_response_id: response.id },
     });
@@ -155,12 +142,7 @@ export async function offerSlots(
   });
 }
 
-/**
- * The buyer confirms one of the offered times. ⚠⚠ `SLOTS_OFFERED` → `SCHEDULED`.
- *
- * ⚠⚠⚠ THE SLOT MUST BE ONE THIS PROVIDER ACTUALLY OFFERED. Confirming an
- * arbitrary id would let a buyer schedule a time nobody agreed to.
- */
+/** The buyer confirms one of the offered times. `SLOTS_OFFERED` → `SCHEDULED`. */
 export async function confirmSlot(
   viewer: Viewer,
   interviewId: string,
@@ -190,7 +172,7 @@ export async function confirmSlot(
     data: { status: "SCHEDULED", confirmed_line_id: line.id },
   });
 
-  /* ⚠ The provider's worklist item is answered — they offered, it is picked. */
+  /* The provider's worklist item is answered — they offered, it is picked. */
   await prisma.notification
     .updateMany({
       where: { dedupe_key: `work.interview_requested:${iv.id}`, resolved_at: null },
@@ -199,12 +181,7 @@ export async function confirmSlot(
     .catch(() => {});
 }
 
-/**
- * The buyer records that the interview happened. ⚠ `SCHEDULED` → `COMPLETED`.
- *
- * ⚠⚠ A HUMAN SAYS SO. Nothing infers completion from the clock passing — an
- * interview nobody attended is not completed, and a time is not an event.
- */
+/** The buyer records that the interview happened. `SCHEDULED` → `COMPLETED`. */
 export async function completeInterview(viewer: Viewer, interviewId: string): Promise<void> {
   const me = await ownPerson(viewer);
   const iv = await prisma.interviewRequest.findUnique({
@@ -222,15 +199,7 @@ export async function completeInterview(viewer: Viewer, interviewId: string): Pr
   });
 }
 
-/**
- * ⚠⚠ THE PROVIDER DECLINES, or the BUYER cancels. Two different facts, two
- * different states, and **neither deletes the row** — a removed interview reads
- * as though it was never asked for, which is the rule `E619`'s group decline
- * and `E621`'s withdrawn proposal both already hold.
- *
- * ⚠⚠⚠ IT IS ONE FUNCTION WITH THE ACTOR CHECKED PER BRANCH, so the two states
- * cannot drift apart in what they clean up.
- */
+/** THE PROVIDER DECLINES, or the BUYER cancels. Two different facts, two */
 export async function closeInterview(
   viewer: Viewer,
   interviewId: string,
@@ -249,9 +218,7 @@ export async function closeInterview(
   if (!iv) throw new SourcingError("That interview isn't available.", "NOT_FOUND");
 
   if (how === "DECLINED") {
-    /* ⚠ Only the provider declines — a buyer "declining" their own request is
-       a cancellation, and calling it a decline would put the refusal on the
-       wrong person's record. */
+    // Only the provider declines — a buyer "declining" their own request is
     if (iv.provider_person_id !== me.id) {
       throw new SourcingError("Only the provider can decline.", "NOT_PROVIDER");
     }
@@ -268,7 +235,7 @@ export async function closeInterview(
     data: { status: how },
   });
 
-  /* ⚠ Whoever owed something no longer does. */
+  /* Whoever owed something no longer does. */
   await prisma.notification
     .updateMany({
       where: { dedupe_key: `work.interview_requested:${iv.id}`, resolved_at: null },

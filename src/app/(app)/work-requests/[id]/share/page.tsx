@@ -99,13 +99,7 @@ export default async function Page({
                 </p>
               )}
 
-              {/*
-                INVITE IS A STUB, AND IT SAYS SO. There is no work-invitation
-                model — `CoordinatorInvite` is a recruiter asking to REPRESENT a
-                provider, a different relationship entirely, and pointing this
-                at it would be fabrication by mislabelling. A ghost button to a
-                titled placeholder is the honest shape until the model exists.
-              */}
+              {/* INVITE IS A STUB, AND IT SAYS SO. There is no work-invitation */}
               <Button
                 href={`/work-requests/${id}/invite`}
                 variant="ghost"

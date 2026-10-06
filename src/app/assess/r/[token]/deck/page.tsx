@@ -17,39 +17,7 @@ export async function generateMetadata({
   return { title: m ? `${m.companyName} — your AI opportunity` : "Deck — Panameer" };
 }
 
-/**
- * THE OUTBOUND PRESENTATION (WS-F) — six slides, generated from the assessment.
- *
- * ── ITS ONLY JOB IS TO GET THE CALL ──────────────────────────────────────────
- *
- * Which is why it leads with the funded number and closes on the ask, and why
- * it is six slides and not sixteen. The report is for the person who answered
- * the questions; this is for the two people they have to convince who were not
- * in the room, and it will be screen-shared or forwarded, not read.
- *
- * ── SAME NUMBERS, ONE SOURCE ─────────────────────────────────────────────────
- *
- * Every figure comes from `buildReport` — the same call the report dashboard
- * makes. Neither surface computes anything itself, so the deck cannot say
- * $90–140K while the report says something else. That failure mode is the
- * reason the view model exists.
- *
- * ── WHAT STAYS OFF THE PAGE ──────────────────────────────────────────────────
- *
- * Offshore and advanced structuring. Locked: those are call-only, and the "how
- * it's funded" slide names the clean levers and then says the rest is covered
- * 1:1. It is a deck that goes to people we have not met, which is exactly why
- * the aggressive half of the story does not travel in it.
- *
- * ── SHAREABLE AND EXPORTABLE ─────────────────────────────────────────────────
- *
- * Shareable is the URL — same token as the report, so forwarding it works with
- * no export step at all. Exportable is print-to-PDF: `deck.css` sets a
- * landscape page and one slide per sheet, so the browser's own PDF engine
- * produces the file. No PDF library, no server-side headless browser, and
- * nothing that can drift from what is on screen — the printed artifact IS the
- * page.
- */
+/** THE OUTBOUND PRESENTATION (WS-F) — six slides, generated from the assessment. */
 export default async function DeckPage({
   params,
 }: {
@@ -132,10 +100,7 @@ export default async function DeckPage({
             AI R&amp;D credits · accelerated depreciation on the tech · straight
             deductibility. Conservative, and your CPA signs off.
           </p>
-          {/*
-            The one line that keeps the aggressive half of the story off a
-            document that travels. Deliberate, and locked.
-          */}
+          {/* The one line that keeps the aggressive half of the story off a */}
           <p className="footnote">(Advanced structuring we cover 1:1.)</p>
         </section>
 

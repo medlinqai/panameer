@@ -224,9 +224,7 @@ export async function submitProposal(
     data: {
       proposal_number: `PRO-${now.getTime().toString(36).toUpperCase()}-${provider.id.slice(0, 4)}`,
       work_request_id: request.id,
-      /* ⚠⚠ NULL ON AN OPEN REQUEST. That is the whole reason the column was
-         made nullable — ruling 14's open half was unreachable while a proposal
-         required an invite. */
+      // NULL ON AN OPEN REQUEST. That is the whole reason the column was
       proposal_request_id: verdict.inviteId,
       provider_person_id: provider.id,
       cover_note: coverNote,
@@ -239,16 +237,7 @@ export async function submitProposal(
 
   await writeRate(created.id, draft.rate ?? null);
 
-  /*
-    ── ⚠⚠ THE BUYER IS TOLD, THROUGH THE ONE WRITER (`E620`) ───────────────
-    ⚠ Ruling 37's finding: all four chain events are registered and uncalled —
-    *"call it, do not invent a second."* This is the first of them to fire.
-    ⚠⚠ IT IS A WORKLIST ITEM: the buyer OWES a response, and it stays until
-    they give one. ⚠⚠⚠ `notify` CATCHES ITS OWN FAILURES AND NEVER RETHROWS, so
-    a notification outage cannot turn a submitted proposal into an error the
-    provider sees — proved by `check:notify-prefs` §4.
-    ⚠ Deduped on the proposal, so a replacement does not tell the buyer twice.
-  */
+  // THE BUYER IS TOLD, THROUGH THE ONE WRITER
   await notify({
     event: "work.proposal_received",
     personId: request.buyerPersonId,
@@ -261,23 +250,13 @@ export async function submitProposal(
   return { id: created.id, replaced: false };
 }
 
-/**
- * ⚠⚠⚠ WITHDRAWAL IS RECORDED, NEVER DELETED (WS-A item 3).
- *
- * ⚠ A deleted proposal reads to the buyer as though it was never sent, and to
- * the provider as though nothing happened — the same argument that keeps a
- * declined group request on the books (`E619`). ⚠⚠ The row stays, the status
- * moves, and `submitted_at` is left alone because it records when they sent it,
- * which remains true.
- */
+/** WITHDRAWAL IS RECORDED, NEVER DELETED (WS-A item 3). */
 export async function withdrawProposal(
   viewer: Viewer,
   proposalId: string
 ): Promise<void> {
   const provider = await ownProvider(viewer);
-  /* ⚠⚠ OWNER-SCOPED IN THE `where`, so a crafted id cannot withdraw somebody
-     else's proposal (load-bearing rule 5). `updateMany` matches nothing rather
-     than throwing on a row that was never yours. */
+  // OWNER-SCOPED IN THE `where`, so a crafted id cannot withdraw somebody
   const res = await prisma.proposal.updateMany({
     where: {
       id: proposalId,
@@ -293,9 +272,7 @@ export async function withdrawProposal(
     );
   }
 
-  /* ⚠ The buyer's worklist item goes with it — they no longer owe a response to
-     a proposal that has been taken back. ⚠⚠ Cleared, never deleted: the
-     notification is a record that it happened. */
+  // The buyer's worklist item goes with it — they no longer owe a response to
   await prisma.notification
     .updateMany({
       where: { dedupe_key: `work.proposal_received:${proposalId}`, resolved_at: null },
@@ -304,19 +281,9 @@ export async function withdrawProposal(
     .catch(() => {});
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   WS-D · THE BUYER READS THE PROPOSALS. ⚠⚠⚠ READ-ONLY — NO DECISION IS TAKEN.
-   ═════════════════════════════════════════════════════════════════════════ */
+// WS-D · THE BUYER READS THE PROPOSALS. READ-ONLY — NO DECISION IS TAKEN.
 
-/**
- * ⚠⚠ **A `Record`, SO AN EIGHTH `ProposalStatus` IS A COMPILE ERROR.** The
- * same call `WORK_REQUEST_STATUS_LABEL` made in WS-A, and for the reason WS-A
- * measured: two pages there turned a five-value enum into copy with a ternary
- * on ONE value, so three states silently read *"Draft"*.
- * ⚠ **THE MODEL'S NAMES ARE NOT THE MEMBER'S NAMES.** A buyer reading
- * `NOT_SELECTED` learns less than one reading *"Not selected"*, and
- * `SHORTLISTED` is the buyer's own earlier act, not a status the provider set.
- */
+/** A `Record`, SO AN EIGHTH `ProposalStatus` IS A COMPILE ERROR. The */
 export const PROPOSAL_STATUS_LABEL: Record<ProposalStatus, string> = {
   DRAFT: "Draft",
   SUBMITTED: "Submitted",
@@ -338,66 +305,16 @@ export type ProposalForBuyer = {
   submittedAt: Date | null;
   validUntil: Date | null;
   coverNote: string | null;
-  /**
-   * ⚠⚠⚠ NULL IS A REAL STATE, NOT AN UNCOUNTABLE ONE. `ProposalDraft.rate` is
-   * optional — *"a provider may pitch before pricing"* — so a proposal with no
-   * rate is a thing that happened, and the page says **"No rate given"** rather
-   * than printing a dash. ⚠ Ruling 18: a dash means *we cannot count this*, and
-   * this is not that.
-   */
+  /** NULL IS A REAL STATE, NOT AN UNCOUNTABLE ONE. `ProposalDraft.rate` is */
   rate: ProposalRate | null;
-  /** ⚠ Set when the proposal answers an invitation; null on an open request. */
+  /** Set when the proposal answers an invitation; null on an open request. */
   invited: boolean;
-  /**
-   * ── ⚠⚠ THE TWO OPTIONAL STEPS (`E683a` WS-E) ───────────────────────────
-   * ⚠ `null` means *"not asked"*, which is a real and common state — **not an
-   * uncountable one** (ruling 18). The page says *"Not requested"* rather than
-   * printing a dash.
-   * ⚠⚠⚠ **NEITHER IS A PRECONDITION OF SELECTION**, and `check:work-chain`
-   * fails if `selection.ts` ever reads either table.
-   */
+  /** THE TWO OPTIONAL STEPS ( WS-E) */
   interviewStatus: string | null;
   testStatus: string | null;
 };
 
-/**
- * ── ⚠⚠⚠ EVERY PROPOSAL ON ONE WORK REQUEST, FOR ITS BUYER (`E682` WS-D) ───
- *
- * ⚠⚠ **WHY THIS IS READ-ONLY AND MUST STAY SO.** WS-D's line in the brief is
- * *"the requester's view of all bids on one `WorkRequest`. **READ-ONLY — no
- * decision is taken here.**"* ⚠⚠⚠ So this function returns rows and **nothing
- * on the page it feeds may write** — shortlisting, declining and awarding are
- * WS-F's `selectProvider`, which does not yet have a surface. ⚠ Rendering a
- * `Select` button here would be `E579` exactly: a control whose handler does
- * not exist.
- *
- * ── ⚠⚠ OWNER-SCOPED TWICE, DELIBERATELY ─────────────────────────────────
- *
- * ⚠ `resolveBuyer` + `loadOwned` are `invitedOn`'s pattern, and they are what
- * make *"not yours"* and *"does not exist"* the same answer (`loadOwned`
- * throws, the page 404s). ⚠⚠ The page that calls this ALREADY proved ownership
- * through `getWorkRequestDetail`, and this repeats it on purpose: a lib that
- * trusts its caller's earlier check is a lib that leaks the first time somebody
- * calls it from somewhere else (load-bearing rule 5).
- *
- * ── ⚠⚠⚠ `submitted_at IS NOT NULL`, WHICH IS NOT THE SAME AS "not DRAFT" ──
- *
- * ⚠⚠ **A PROVIDER'S UNSENT DRAFT IS NOT A PROPOSAL AND THE BUYER MUST NOT SEE
- * ONE.** `status` defaults to `DRAFT` in the schema, so filtering on the status
- * enum would depend on nothing ever writing a draft row; filtering on
- * `submitted_at` asks the question directly. ⚠ It is also the column *Proposals
- * Sent* already counts, so the compare view and Statistics cannot disagree
- * about what a sent proposal is (`E585`).
- *
- * ⚠⚠ **WITHDRAWN PROPOSALS ARE INCLUDED, AND THAT IS THE POINT OF RECORDING
- * RATHER THAN DELETING THEM.** `withdrawProposal`'s own reason: *"a deleted
- * proposal reads to the buyer as though it was never sent."* Hiding it here
- * would recreate exactly that, one layer up.
- *
- * ⚠ **ARRIVAL ORDER, AND THE PAGE SAYS SO.** Sorting by price would be a
- * ranking, and a ranking is a judgement this read has no business making on a
- * screen whose whole instruction is that no decision is taken.
- */
+/** EVERY PROPOSAL ON ONE WORK REQUEST, FOR ITS BUYER ( WS-D) */
 export async function proposalsOn(
   viewer: Viewer,
   workRequestId: string
@@ -427,13 +344,7 @@ export async function proposalsOn(
   if (rows.length === 0) return [];
 
   const providerIds = rows.map((r) => r.provider_person_id);
-  /*
-    ⚠⚠ THE TWO OPTIONAL STEPS, READ ONCE FOR THE WHOLE LIST (`E683a` WS-E).
-    ⚠ One query each rather than one per row — 23 proposals would otherwise be
-    46 round trips for two columns.
-    ⚠⚠⚠ **READ, NEVER WRITTEN HERE.** This function feeds a view; the writers
-    are `requestInterview` and `sendTest`, reached through their own routes.
-  */
+  // THE TWO OPTIONAL STEPS, READ ONCE FOR THE WHOLE LIST ( WS-E).
   const [people, interviews, tests] = await Promise.all([
     prisma.person.findMany({
       where: { id: { in: providerIds } },
@@ -450,8 +361,7 @@ export async function proposalsOn(
       orderBy: { created_at: "desc" },
     }),
   ]);
-  /* ⚠ The NEWEST per provider wins — `orderBy` desc then first-write, because a
-     buyer may ask again after a decline and the latest ask is the live one. */
+  // The NEWEST per provider wins — `orderBy` desc then first-write, because a
   const interviewOf = new Map<string, string>();
   for (const i of interviews) if (!interviewOf.has(i.provider_person_id)) interviewOf.set(i.provider_person_id, i.status);
   const testOf = new Map<string, string>();
@@ -466,8 +376,7 @@ export async function proposalsOn(
       id: r.id,
       proposalNumber: r.proposal_number,
       providerPersonId: r.provider_person_id,
-      /* ⚠ `invitedOn`'s fallback, for the same reason — a missing name is not a
-         blank cell, and "A provider" is true of every row that hits it. */
+      // blank cell, and "A provider" is true of every row that hits it.
       providerName: nameOf.get(r.provider_person_id) || "A provider",
       status: r.status,
       statusLabel: PROPOSAL_STATUS_LABEL[r.status],

@@ -227,26 +227,9 @@ export function AssessmentWizard({
         ? "Get My Report"
         : `Next: ${STEP_LABELS[STEPS[STEPS.indexOf(step) + 1]]}`),
     ...opts,
-    /*
-      ⚠ E017 — `.marketing-surface` on every step. `/assess` was the only public
-      pre-account page without it (`/learn`, `/explore`, `/assess/r/[token]` and
-      `/assess/scope` all have it), which is why dark mode painted `text-ink`
-      figures onto a dark card. It goes on the frame rather than on a wrapper so
-      the `body > flex-1` chain that E020 depends on stays intact.
-    */
+    // E017 — `.marketing-surface` on every step. `/assess` was the only public
     frameClassName: "marketing-surface",
-    /*
-      ⚠ THE BAR IS PER-SCREEN, THE LABEL IS PER-SECTION (E036), and mixing them is
-      deliberate. `step`/`totalSteps` still count screens so the bar advances every
-      time the visitor answers something; a bar driven by the five sections would sit
-      motionless through ten consecutive domain screens and read as broken. The words
-      beside it name sections, because "4 of 15" reads as a chore where "Section 2 of
-      5 · Capability Domains" reads as a place in a structure.
-
-      The whole section string goes in `stepLabel` and the numeric counter is hidden
-      (`counterText: null`), so the top line is exactly the one the brief specifies
-      rather than the shell's default label-left/count-right split.
-    */
+    // THE BAR IS PER-SCREEN, THE LABEL IS PER-SECTION (E036), and mixing them is
     step: STEPS.indexOf(step) + 1,
     totalSteps: STEPS.length,
     stepLabel: sectionProgress(step, STEPS).label,
@@ -259,21 +242,9 @@ export function AssessmentWizard({
     busy,
   });
 
-  /*
-    The old single-screen maturity step counted answers to decide between
-    "Continue" and "Continue anyway". With one domain per step there is nothing
-    to count — each step is individually skippable — so the counter went with it.
-  */
+  // The old single-screen maturity step counted answers to decide between
 
-  /**
-   * WS-4 — CONTINUE IS NEVER SILENTLY DISABLED.
-   *
-   * It used to grey out with nothing on screen saying which of eight fields was
-   * missing, which is exactly what made Scott stop and ask. Now the button is
-   * always live: clicking with something outstanding names the FIRST missing
-   * field and moves focus to it, so the answer is one glance away instead of a
-   * hunt.
-   */
+  /** WS-4 — CONTINUE IS NEVER SILENTLY DISABLED. */
   /** The first unanswered required field ON THIS STEP. */
   const firstMissing = (onStep: Step) =>
     REQUIRED_BASICS.find(
@@ -296,13 +267,7 @@ export function AssessmentWizard({
   async function submit() {
     setBusy(true);
     setError(null);
-    /*
-      THE SESSION ADDRESS IS SENT WHEN THERE IS ONE, so the schema's required
-      `email` is satisfied without a step asking for it. It is NOT the authority
-      — the API re-resolves the address from its own session and overrides this
-      — but posting a blank email would just earn a 400 from a rule the visitor
-      cannot see.
-    */
+    // THE SESSION ADDRESS IS SENT WHEN THERE IS ONE, so the schema's required
     const email = signedInEmail ?? basics.email;
     try {
       const r = await fetch("/api/assessment", {
@@ -312,26 +277,14 @@ export function AssessmentWizard({
           ...basics,
           email,
           process,
-          /*
-            ⚠ THE FOUR NEW CONTACT FIELDS RIDE IN `answers`, NOT AT THE TOP LEVEL, and
-            that is not cosmetic: the `z` schema strips unknown keys, so the copies the
-            `...basics` spread above puts at the top level are DISCARDED. `answers` is
-            Json on the model precisely so a new question is not a migration — the
-            column comment says so — and adding columns would be a schema change this
-            brief does not authorise.
-          */
+          // THE FOUR NEW CONTACT FIELDS RIDE IN `answers`, NOT AT THE TOP LEVEL, and
           answers: {
             maturity,
             spendBand,
             costLeverBand,
             headcountBand,
             aiMode,
-            /*
-              ⚠ BEFORE `contact`, AND THAT IS LOAD-BEARING. `check:catalog-value`
-              reads this payload by slicing from `answers: {` to the FIRST `},` —
-              which is the end of the `contact` block below. A key added after it
-              falls outside the slice and the guard silently stops seeing it.
-            */
+            // BEFORE `contact`, AND THAT IS LOAD-BEARING. `check:catalog-value`
             domainFields: canonicalDomainFields(),
             contact: {
               timeZone: basics.timeZone,
@@ -345,20 +298,7 @@ export function AssessmentWizard({
       const body = await r.json().catch(() => null);
       if (!r.ok) throw new Error(body?.error ?? "Could not submit your answers");
 
-      /*
-        ── THE REPORT IS THE LANDING, NOT THE EMAIL ────────────────────────────
-
-        This used to push to /assess/submitted, which told the visitor to check
-        an inbox — and with no RESEND_API_KEY configured, nothing ever arrived.
-        The assessment was write-only: eight minutes of answers, no report. The
-        API has always returned the share token; now it is used.
-
-        `?emailed=1` is set only when the API says the send actually happened,
-        so the report's "we've also emailed this to you" bar cannot claim a mail
-        that was skipped or refused. It is a flag, not the address — the report
-        already knows the address, and putting an email in a URL puts it in
-        history, logs and referrers.
-      */
+      // THE REPORT IS THE LANDING, NOT THE EMAIL
       const token: string | undefined = body?.shareToken;
       if (token) {
         router.push(`/assess/r/${token}${body?.emailSent ? "?emailed=1" : ""}`);
@@ -385,23 +325,12 @@ export function AssessmentWizard({
               "First, a few basics about your business. Ninety seconds. This is what lets us size the opportunity in real dollars — and figure out how much of it the tax code can fund.",
             /* Never disabled — see `continueBasics`. */
             onContinue: () => continueStep("basics", next),
-            /*
-              ⚠ NO ASIDE. `<ProofStats variant="wizard" />` used to sit here and
-              it cost this step a third of its width: `WizardShell` only applies
-              the `1fr_380px` grid when an aside exists, so removing it widens
-              the step by itself and eight fields stop being a single tall
-              column. E018.
-            */
+            // NO ASIDE. `<ProofStats variant="wizard" />` used to sit here and
           })}
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            TWO COLUMNS AT `lg:` — the step is full width now the aside is gone,
-            and seven fields stacked in one column is what put the Continue
-            button off the bottom of the screen. `items-start` so a field that
-            grows a hint does not stretch its neighbour.
-          */}
+          {/* TWO COLUMNS AT `lg:` — the step is full width now the aside is gone */}
           <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:items-start">
             <div data-field="companyName">
               <Field label="Company name">
@@ -414,17 +343,7 @@ export function AssessmentWizard({
               </Field>
             </div>
 
-            {/*
-              MARK THE ONE OPTIONAL FIELD, NOT THE SEVEN REQUIRED ONES. Industry
-              is the only skippable field on this step; starring seven and
-              leaving one bare reads as a form that wants everything, which is
-              the wrong tone on a free diagnostic.
-
-              A SELECT, NOT FREE TEXT (E007). Scott typed "Den" and stopped —
-              nothing guided the answer and nothing downstream could use it. The
-              options are the catalog's INDUSTRY specializations, passed from the
-              server component.
-            */}
+            {/* MARK THE ONE OPTIONAL FIELD, NOT THE SEVEN REQUIRED ONES. Industry */}
             <Field label="Industry (optional)">
               <select
                 value={basics.industrySpecializationId}
@@ -442,13 +361,7 @@ export function AssessmentWizard({
               </select>
             </Field>
 
-            {/*
-              WS-3 — TWO FACTS, TWO LABELS. One label ("Where do you file?")
-              asked a single question while the control captured two, so a
-              visitor who picked a state reasonably believed they had answered
-              it. Kept adjacent, and the helper below still ties them together
-              as one tax question.
-            */}
+            {/* WS-3 — TWO FACTS, TWO LABELS. One label ("Where do you file?") */}
             <div className="grid gap-5 sm:grid-cols-2">
               <div data-field="state">
                 <Field label="State of filing">
@@ -459,12 +372,7 @@ export function AssessmentWizard({
                     aria-label="State of filing"
                     className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
                   >
-                    {/*
-                      ⚠ THE EMPTY PLACEHOLDER IS LOAD-BEARING. `state` starts as
-                      "", and a <select> with no empty option renders its first
-                      real option as though it were chosen — so someone would see
-                      "AL" and submit a state they never picked. Verified present.
-                    */}
+                    {/* THE EMPTY PLACEHOLDER IS LOAD-BEARING. `state` starts as */}
                     <option value="">Select a state…</option>
                     {STATES.map((st) => (
                       <option key={st} value={st}>
@@ -510,12 +418,7 @@ export function AssessmentWizard({
             </Field>
             </div>
 
-            {/*
-              THE LEAPFROG MESSAGE, and it only appears for the people it is
-              true for. Shown to legacy-ERP answers only — telling a QuickBooks
-              shop there is "a faster path than a cloud migration" is answering
-              a question they did not ask.
-            */}
+            {/* THE LEAPFROG MESSAGE, and it only appears for the people it is */}
             {basics.platform === LEAPFROG_PLATFORM && (
               <Notice>
                 If you&rsquo;re on legacy and dreading a cloud migration, there&rsquo;s usually a
@@ -543,16 +446,8 @@ export function AssessmentWizard({
               <OptionCard
                 key={p.key}
                 selected={process === p.key}
-                /*
-                  ONLY P2P IS SELECTABLE THIS PHASE, and the inactive tiles say
-                  so rather than being hidden. Hiding them would misrepresent
-                  the product as procurement-only; disabling them with an
-                  honest label sets up step 6, where the other three are the
-                  thing you forward to a colleague.
-                */
+                // ONLY P2P IS SELECTABLE THIS PHASE, and the inactive tiles say
                 onClick={() => p.active && setProcess(p.key)}
-                /* ⚠ RULING 18: no schedule on a disabled control. SUPERSEDED (`E164`):
-                   //   title={p.active ? p.name : `${p.name} — coming soon`} */
                 title={p.active ? p.name : `${p.name} — not available`}
                 description={
                   p.active
@@ -563,16 +458,7 @@ export function AssessmentWizard({
               />
             ))}
           </div>
-          {/*
-            WS-8 — DERIVED FROM `active`, not written by hand.
-
-            The old hint named "Procurement" and "Billing" — neither word is on
-            this page, and "Billing" is Order-to-Cash, which renders as a
-            disabled "coming soon" card. The one line whose job is to help an
-            undecided visitor was pointing at an option they cannot choose.
-            Reading the flags means a second suggestion returns by itself when a
-            second process goes live.
-          */}
+          {/* WS-8 — DERIVED FROM `active`, not written by hand. */}
           {(() => {
             const live = PROCESSES.filter((p) => p.active);
             if (live.length === 0) return null;
@@ -597,18 +483,7 @@ export function AssessmentWizard({
             /* Deck slide 13's own title (E040). Was "Financial Details". */
             title: "Financial Information",
             subtitle: "Tell us about your revenue and earnings?",
-            /*
-              ⚠ NO `continueDisabled` HERE ANY MORE, AND ITS REMOVAL IS THE FIX FOR A
-              DEAD END (E038). It used to read
-              `!spendBand || !costLeverBand || !headcountBand` — three fields that have
-              MOVED to `process_detail`. Left in place, this screen would have greyed
-              its own Continue out over answers it no longer displays, with no way for
-              the visitor to satisfy it.
-
-              Revenue and EBITDA are gated the way every other required field is: by
-              `continueStep`, which names the first missing one and moves focus to it
-              rather than silently disabling the button (WS-4).
-            */
+            // NO `continueDisabled` HERE ANY MORE, AND ITS REMOVAL IS THE FIX FOR A
             onContinue: () => continueStep("money", next),
           })}
         >
@@ -630,12 +505,7 @@ export function AssessmentWizard({
             </Field>
             </div>
 
-            {/*
-              WS-4 — EBITDA IS REQUIRED NOW, and the helper names the payoff
-              instead of the escape hatch. funding = EBITDA x TAX_RATE, so
-              skipping it produced a savings figure with no funding figure —
-              half a report. It is a band, so the ask stays small.
-            */}
+            {/* WS-4 — EBITDA IS REQUIRED NOW, and the helper names the payoff */}
             <div data-field="ebitdaBand">
             <Field
               label="Roughly, your profit (EBITDA) last year"
@@ -659,21 +529,7 @@ export function AssessmentWizard({
         </WizardShell>
       );
 
-    /*
-      ── SLIDE 14 — PROCESS INFORMATION (E038) ────────────────────────────────
-
-      Scott: "SLIDE 14 IS NOT RELATED TO AI MODE." These three questions used to
-      share the `money` screen, which made that screen carry five answers and made
-      slide 14 look like it had no content of its own. They are the PROCESS-SPECIFIC
-      three: spend with outside suppliers, share on negotiated contracts, and people
-      supporting purchasing are all about Procure-to-Pay, where revenue and EBITDA
-      would read identically on an Order-to-Cash assessment.
-
-      ⚠ THIS SCREEN GATES ONLY ON FIELDS IT SHOWS. All three are rendered below and
-      all three are in `continueDisabled`; none of them is required anywhere else.
-      They are not in `REQUIRED_BASICS` because they are not part of `basics` — they
-      are their own state and ride to the API inside `answers`.
-    */
+    // SLIDE 14 — PROCESS INFORMATION (E038)
     case "process_detail":
       return (
         <WizardShell
@@ -731,15 +587,7 @@ export function AssessmentWizard({
     // ---- 2b — THE MATURITY TAPS --------------------------------------------
   }
 
-  /*
-    ── ONE STEP PER CAPABILITY DOMAIN (WS-3) ────────────────────────────────────
-
-    Handled before the switch because `cd_*` is a family, not five literals. The
-    deck gives each domain a title, one plain question and four option rows; the
-    rows are the ONBOARDING TRAINSTOP pattern — `OptionCard` from
-    `onboarding/controls`, the same component `/join/requester`, `/join/provider`
-    and `/join/buyer` use — rather than the chips this step used to render.
-  */
+  // ONE STEP PER CAPABILITY DOMAIN (WS-3)
   const domain = domainForStep(step);
   if (domain) {
     const chosen = maturity[domain.key];
@@ -749,22 +597,7 @@ export function AssessmentWizard({
           /* The deck's own title, verbatim. */
           title: `Capability Domain: ${domain.name}`,
           subtitle: domain.question,
-          /*
-            ⚠ THE MATURITY LADDER IS STILL NEVER BLOCKING. `next()` with nothing
-            chosen leaves the key absent, which scores exactly like "Not sure":
-            excluded from the average rather than counted as the worst rung.
-
-            ⚠ WHAT DOES BLOCK NOW IS THE DECK'S EXTRA FIELDS, on slides 2–9 only.
-            Scott, 2026-08-20: "these fields should also be required." Slides 10 and
-            11 carry none, so `domainFieldsComplete` is vacuously true there and
-            those two steps behave exactly as they did before this brief.
-
-            ⚠ THAT ASYMMETRY IS REAL AND IT IS FLAGGED, NOT HIDDEN: on slide 2 a
-            visitor must type two numbers but may still walk past the maturity
-            question itself. Gating maturity too would be a behaviour change on ten
-            screens that the brief does not ask for, and "Not sure" already exists as
-            the honest answer. Reported for Scott.
-          */
+          // THE MATURITY LADDER IS STILL NEVER BLOCKING. `next()` with nothing
           continueDisabled: !domainFieldsComplete(domain.key),
           onContinue: next,
         })}
@@ -783,20 +616,7 @@ export function AssessmentWizard({
           ))}
         </div>
 
-        {/*
-          ⚠ "NOT SURE" IS SUBORDINATE, NOT A FIFTH CARD — and it is kept against
-          the deck, which drops it.
-
-          `scoring.ts` depends on `null` to EXCLUDE a domain from the maturity
-          average. Without this row all eight become mandatory and an honest "I
-          don't know" has to be entered as a false answer — which then scores,
-          and ranks, and ends up on the report as a recommendation. A domain
-          nobody can describe is a real finding (usually "no owner"), and it is
-          surfaced separately.
-
-          Rendered as a plain text row so it reads as an escape hatch rather
-          than as a fifth rung competing with the four.
-        */}
+        {/* the deck, which drops it. */}
         <button
           type="button"
           onClick={() => setMaturity((m) => ({ ...m, [domain.key]: null }))}
@@ -830,13 +650,7 @@ export function AssessmentWizard({
             title: "One Last Question",
             subtitle: AI_MODE_QUESTION,
             continueDisabled: !aiMode,
-            /*
-              ⚠ THE LAST STEP FOR A SIGNED-IN VISITOR. Signed out, the email
-              step follows (deck slide 13) and the label comes from STEP_LABELS
-              via `shell()` — "Next: Where Do We Send It?". Signed in there is
-              no step 13, so this submits, and it borrows the wording that step
-              used rather than inventing a second final-button label.
-            */
+            // THE LAST STEP FOR A SIGNED-IN VISITOR. Signed out, the email
             ...(signedInEmail
               ? { continueLabel: "See My Results", onContinue: submit }
               : { onContinue: next }),
@@ -854,14 +668,7 @@ export function AssessmentWizard({
             ))}
           </div>
 
-          {/*
-            THE ADDRESS IS CONFIRMED, NOT REQUESTED. This is what replaces step
-            13 for someone who is signed in — one line stating where the receipt
-            goes, instead of a screen asking for an address the app already
-            holds. It is not editable on purpose: the API stores the session's
-            address regardless of what the browser posts, so an input here could
-            only ever be a field that quietly ignores what you type.
-          */}
+          {/* THE ADDRESS IS CONFIRMED, NOT REQUESTED. This is what replaces step */}
           {signedInEmail && (
             <p className="mt-6 rounded-brand border border-line bg-bg-soft p-4 text-[14.5px] text-ink-2">
               Your report opens as soon as you submit, and it is saved to your
@@ -880,41 +687,13 @@ export function AssessmentWizard({
             title: "My Information",
             /* Deck slide 15's own question — it asks WHO as well as where now. */
             subtitle: "Who and where do we send your dashboard link to?",
-            /*
-              ⚠ STILL REQUIRED, AND SIGNED-OUT ONLY. Moving email to the end is
-              a FUNNEL change, not a validation change: it is the delivery
-              address for the magic link, and `/api/assessment` rejects a submit
-              without it. The API contract is untouched.
-
-              It is still the CAPTURE — the lead — which is why it was not
-              removed when the report stopped being delivered by email. What
-              changed is what it is FOR: a receipt and a bookmark sent after the
-              fact, rather than the door the report sits behind. A signed-in
-              visitor never reaches this step; see `stepsFor`.
-            */
+            // STILL REQUIRED, AND SIGNED-OUT ONLY. Moving email to the end is
             continueLabel: "See My Results",
             onContinue: () => continueStep("contact", submit),
           })}
         >
           {error && <Notice>{error}</Notice>}
-          {/*
-            ⚠ EMAIL IS THE ONLY REQUIRED FIELD ON THIS SCREEN, AND THAT IS A CHOICE I
-            AM STATING SO IT CAN BE ARGUED WITH (E039). The brief asked which of the
-            deck's other four I made required and why.
-
-            Answer: none of them. Email is the only one the report NEEDS — it is the
-            delivery address for the link and `/api/assessment` rejects a submit
-            without it. First/last name improve a greeting, mobile is a second channel
-            nobody has asked to use yet, and time zone is already answered by the
-            browser. This is the last screen before the payoff, so every additional
-            required field here is paid for in completions, and none of these four buys
-            anything the report cannot do without. Each is marked "(optional)" so the
-            visitor can see that rather than infer it.
-
-            If Scott wants any of them enforced, the change is one line each in
-            `REQUIRED_BASICS` plus the matching `z` field — and `check:assessment`
-            asserts the two agree, so it cannot be done on one side only.
-          */}
+          {/* EMAIL IS THE ONLY REQUIRED FIELD ON THIS SCREEN, AND THAT IS A CHOICE I */}
           <div className="grid max-w-xl gap-5 sm:grid-cols-2">
             <div data-field="firstName">
               <Field label="First name (optional)">
@@ -938,14 +717,7 @@ export function AssessmentWizard({
           <div className="mt-5 max-w-xl" data-field="email">
             <Field
               label="Your email"
-              /*
-                BRACES, NOT A BARE ATTRIBUTE STRING -- and that is the fix, not
-                a style choice. This shipped as hint="...We don\\u2019t sell it..."
-                and the page rendered those six characters literally: a JSX
-                attribute string is NOT a JS string literal, so \\uXXXX is never
-                interpreted there. Inside {} it is an ordinary string literal and
-                the escape resolves to the apostrophe. Wording is unchanged.
-              */
+              // BRACES, NOT A BARE ATTRIBUTE STRING -- and that is the fix, not
               hint={"Your report link is delivered here. We don\u2019t sell it or add you to a list."}
             >
               <TextInput
@@ -983,12 +755,7 @@ export function AssessmentWizard({
                   aria-label="Time zone"
                   className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none focus:border-magenta"
                 >
-                  {/*
-                    ⚠ THE EMPTY OPTION STAYS even though this is prefilled — the same
-                    reasoning as the state select. And the browser's own zone is added
-                    to the list when it is not one of the named ones, so a prefilled
-                    value can never be a <select> showing something it does not hold.
-                  */}
+                  {/* THE EMPTY OPTION STAYS even though this is prefilled — the same */}
                   <option value="">Not sure</option>
                   {(TIME_ZONES.includes(basics.timeZone) || !basics.timeZone
                     ? TIME_ZONES
@@ -1002,13 +769,7 @@ export function AssessmentWizard({
               </Field>
             </div>
           </div>
-          {/*
-            ⚠ NO PHOTO CONTROL, DELIBERATELY. Slide 13 offers an optional "Add
-            Your Photo". There is no `Assessment` column to put it in, and the
-            brief is explicit that adding one is out of scope — so wiring it
-            would be more than a no-op and a control that discards its input is
-            worse than an absent one. Flagged in the report; not built.
-          */}
+          {/* NO PHOTO CONTROL, DELIBERATELY. Slide 13 offers an optional "Add */}
         </WizardShell>
       );
   }

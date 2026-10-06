@@ -52,13 +52,7 @@ export function ein(
    PHONE — an adapter over lib/phone.ts, never a second implementation
    ──────────────────────────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ THE LOGIC IS `lib/phone.ts`'s AND STAYS THERE. This exists only so a caller
- * that already holds a `FormatCheck` does not need a second shape — it is four
- * lines of reshaping and contains no regex, no digit count and no country list
- * of its own. ⚠ `validatePhone` ALREADY RETURNS ITS OWN `reason` STRING, so even
- * the message is not re-authored here.
- */
+/** THE LOGIC IS `lib/phone.ts`'s AND STAYS THERE. This exists only so a caller */
 export function usPhone(
   value: string | null | undefined,
   country: string | null | undefined

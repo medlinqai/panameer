@@ -72,29 +72,15 @@ export async function requestPasswordReset(
     logoUrl: `${base}/brand/panameer-lockup-ink.png`,
     expiresInHours: Math.round(RESET_TOKEN_TTL_MS / (60 * 60 * 1000)),
   });
-  /*
-    ⚠⚠ NO `category` — this is transactional. It is still blocked by a
-    suppress-everything row, and THAT IS REPORTED, NOT DECIDED (`E386` checks
-    suppression inside the transport so a sender cannot forget). ⚠ The brief asks
-    whether a reset should bypass suppression; chat's reading and mine is YES —
-    somebody who unsubscribed from notifications has not given up the ability to
-    get back into their account — but bypassing is a change to the TRANSPORT and
-    it is Scott's call.
-  */
-  /* ⚠ SUBJECT IS THE TOKEN, AND THE TOKEN IS CONSUMED-NOT-DELETED (`E528B`), so
-     the receipt still points at a real row after the reset is used. ⚠⚠ THAT IS
-     ONE OF THE THREE "LOSSY" SENDERS THIS TABLE EXISTS FOR — a reset that never
-     arrives IS an account lockout. */
+  // NO `category` — this is transactional. It is still blocked by a
+  // SUBJECT IS THE TOKEN, AND THE TOKEN IS CONSUMED-NOT-DELETED (`E528B`), so
   await sendEmail({
     to: user.email,
     subject: mail.subject,
     html: mail.html,
     text: mail.text,
     template: "password-reset",
-    /* ⚠⚠ THE EXEMPTION. Scott ruled it 2026-09-17: a reset is mail the person
-       asked for thirty seconds ago, about their own account, and the silent
-       response means a suppressed address would be a PERMANENT LOCKOUT WITH NO
-       EXPLANATION. ⚠ It never overrides a hard bounce. */
+    // THE EXEMPTION. Scott ruled it 2026-09-17: a reset is mail the person
     bypassSuppressionFor: "password-reset",
     subjectType: "VerificationToken",
     subjectId: token.id,
@@ -108,22 +94,12 @@ export type ResetOutcome =
   | { ok: true }
   | { ok: false; reason: "invalid" | "expired" | "used" | "weak" };
 
-/**
- * Consume a reset token and set the new password.
- *
- * ⚠⚠ A SUCCESSFUL RESET CLEARS THE LOCKOUT — `locked`, `locked_until` and
- * `failed_login_attempts` all go. ⚠ The person most likely to reset a password
- * is the person who just failed five times; a reset that leaves them locked out
- * is theatre.
- *
- * ⚠ SINGLE USE: the token is consumed in the SAME transaction as the password
- * write, so a second click cannot land on a half-applied reset.
- */
+/** Consume a reset token and set the new password. */
 export async function resetPasswordWithToken(
   rawToken: string,
   newPassword: string
 ): Promise<ResetOutcome> {
-  /* ⚠ The same floor the sign-up paths enforce (`onboarding.ts:522`). */
+  /* The same floor the sign-up paths enforce (`onboarding.ts:522`). */
   if (!newPassword || newPassword.length < 8) return { ok: false, reason: "weak" };
   if (!rawToken) return { ok: false, reason: "invalid" };
 
@@ -131,8 +107,7 @@ export async function resetPasswordWithToken(
     where: { token_hash: hashToken(rawToken) },
     select: { id: true, user_id: true, type: true, expires_at: true, consumed_at: true },
   });
-  /* ⚠ A token of another TYPE is not a reset token. Scoping every lookup by
-     `type` is what makes sharing the model safe. */
+  // A token of another TYPE is not a reset token. Scoping every lookup by
   if (!record || record.type !== "PASSWORD_RESET") return { ok: false, reason: "invalid" };
   if (record.consumed_at) return { ok: false, reason: "used" };
   if (record.expires_at.getTime() < Date.now()) return { ok: false, reason: "expired" };

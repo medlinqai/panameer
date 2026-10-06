@@ -42,12 +42,6 @@ export async function TalentSpine() {
               <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
                 {`Step ${step.n} - ${step.summary}`}
               </p>
-              {/*
-                ⚠ `.stepd-h2` — THE SHARED RULE, not a local size. `/optimize` and
-                `/learn` draw their panel headlines from the same class in
-                `step-disclosures.css`, so the three pages cannot drift apart on
-                panel type.
-              */}
               <h2 className="stepd-h2">{step.description}</h2>
               {GRAPHICS[step.n]}
             </>

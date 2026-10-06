@@ -71,74 +71,43 @@ export function scrub(
   return t;
 }
 
-/* ── ⚠ THE SHAPES ────────────────────────────────────────────────────────── */
+/* ── THE SHAPES ────────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠⚠ READ THE FIELD LIST AS A WHITELIST. Anything a visitor may not have is
- * ABSENT, not nulled: there is no `firstName`, no `photoUrl`, no `email`, no
- * `employerName`, no `rate`.
- */
+/** READ THE FIELD LIST AS A WHITELIST. Anything a visitor may not have is */
 export type MaskedCard = {
-  /** ⚠ Opaque; used only to build the preview link. Carries no identity. */
+  /** Opaque; used only to build the preview link. Carries no identity. */
   id: string;
   /** The provider's own title (`Person.title`), soft-capped by the caller. */
   title: string;
-  /** ⚠⚠ STATE + COUNTRY — Scott's answer 7. Never a city, never a street. */
+  /** STATE + COUNTRY — Scott's answer 7. Never a city, never a street. */
   location: string | null;
-  /** ⚠ The resolved country name, for the country filter and the card line. */
+  /** The resolved country name, for the country filter and the card line. */
   country: string | null;
   countryCode: string | null;
   /** "30 years", or null — `experienceLabel` never asserts "0 years". */
   experience: string | null;
   /** Whole years, for the experience filter. `null` when nothing is measurable. */
   experienceYears: number | null;
-  /** ⚠⚠ The Search Score, COMPUTED. See `searchScoreFor` for why not the column. */
+  /** The Search Score, COMPUTED. See `searchScoreFor` for why not the column. */
   score: number;
   /** In-role skill names only (`E517`). The card shows up to 3. */
   skills: string[];
   skillCount: number;
   certificationCount: number;
-  /** ⚠ Industry names from PROJECTS that have one. Never invented. */
+  /** Industry names from PROJECTS that have one. Never invented. */
   industries: string[];
-  /**
-   * ── ⚠⚠⚠ THE ONE DELIBERATE EXCEPTION TO "THE MASK IS THE SELECT" (`E767`) ──
-   *
-   * ⚠ **IT IS NOT A PHOTO URL AND IT NEVER BECOMES ONE.** `photo_url` is now read
-   * by the query — the only field on this type that comes from one — and is spent
-   * entirely inside `blurredPhotoDataUri()`. What arrives here is **a 16px-wide
-   * JPEG, inline, as bytes**. The URL is not returned, not logged and not
-   * reachable from the page.
-   *
-   * ⚠⚠ **SO THE RULE IS NARROWED, NOT BROKEN:** every other identifying field is
-   * still absent from the type, and this one is present only in a form from which
-   * the original cannot be recovered — roughly 250 pixels of colour for a whole
-   * face, discarded by the downscale before the bytes exist.
-   *
-   * ⚠ `null` when there is no photo, or when it could not be read. The caller
-   * falls back to the placeholder icon, which is a worse picture and an equally
-   * safe one.
-   */
+  /** THE ONE DELIBERATE EXCEPTION TO "THE MASK IS THE SELECT" */
   photoBlur: string | null;
 };
 
 export type MaskedEmployerRow = {
   id: string;
-  /** ⚠ The role the member played. A title is not an identity. */
+  /** The role the member played. A title is not an identity. */
   roleTitle: string | null;
   dates: string | null;
-  /**
-   * ── ⚠⚠ THE BADGE SHOWS HERE TOO (`P2-A1.1-E748`, WS-C) ──────────────────
-   * ⚠ SCOTT: the badge appears on *"the owner view, the visitor view, and the
-   * masked public preview (the badge shows; who validated doesn't)."*
-   * ⚠⚠⚠ **THERE IS NO `validatedBy` AND NO `validatedAt` ON THIS TYPE, AND THAT
-   * IS THE MASK DOING ITS JOB.** A domain is an employer hint, and this surface
-   * exists to withhold exactly that — so the masked badge is a BOOLEAN and the
-   * tooltip says nothing. ⚠ It is the strongest form of *"who validated
-   * doesn't"*: the source is not in the payload at all.
-   */
+  /** THE BADGE SHOWS HERE TOO , WS-C) */
   validated: boolean;
-  /** ⚠ Projects under this employer, scrubbed; industry only where populated.
-   *  ⚠⚠ `validated` is a BOOLEAN here too — same reason as above. */
+  /** Projects under this employer, scrubbed; industry only where populated. */
   lines: {
     id: string;
     roleTitle: string | null;
@@ -149,73 +118,34 @@ export type MaskedEmployerRow = {
 };
 
 export type MaskedProfile = MaskedCard & {
-  /** ⚠⚠ Scrubbed, or null. See `scrub`. */
+  /** Scrubbed, or null. See `scrub`. */
   summary: string | null;
   /** The year only — never a full date, which narrows a person down. */
   memberSince: number | null;
   certifications: string[];
-  /** ⚠⚠ Degree and field ONLY. `Education.institution` is NEVER selected. */
+  /** Degree and field ONLY. `Education.institution` is NEVER selected. */
   education: string[];
   employers: MaskedEmployerRow[];
-  /** ⚠ Titles only (Scott's answer 10): no price, no cover image. */
+  /** Titles only (Scott's answer 10): no price, no cover image. */
   packages: string[];
   learnPaths: string[];
   languages: string[];
   specializations: string[];
 };
 
-/**
- * ── ⚠⚠⚠ THE MOCKUP'S "VERIFIED SKILLS 12" IS NOT BUILT, ON PURPOSE ────────
- *
- * ⚠⚠ **`ProviderSkill` HAS NO VERIFICATION COLUMN.** Its fields are `weight`,
- * `months_total`, `first_used`, `last_used`, `source` and the suite list —
- * measured 2026-10-01 against `schema.prisma`. ⚠⚠⚠ **SO THE FIGURE HAS NO
- * WRITER, WHICH MAKES IT UNCOUNTABLE** (counting rule 1), and a number beside
- * the words *"Verified skills"* on a buyer-facing page would be a fabrication —
- * the one failure mode Scott has said he will not accept.
- *
- * ⚠ **AND THE MOCKUP IS NOT EVIDENCE THAT THE FIELD EXISTS** (evidence rule 7:
- * *"a field a mockup implies is not a field that exists"*). The side panel ships
- * with the Search Score alone.
- *
- * ⚠⚠ A DEFENSIBLE DEFINITION EXISTS — skills carried by a VALIDATED project or
- * employer — but nobody has ruled on it, and inventing a definition for a trust
- * signal is worse than omitting the signal. **REPORTED FOR SCOTT, NOT BUILT.**
- */
+/** THE MOCKUP'S "VERIFIED SKILLS 12" IS NOT BUILT, ON PURPOSE */
 
-/* ── ⚠⚠⚠ THE SEARCH SCORE ────────────────────────────────────────────────── */
+/* ── THE SEARCH SCORE ────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠⚠ **IT IS COMPUTED, NOT READ FROM `ProviderProfile.completeness`, AND THAT
- * IS A MEASUREMENT RATHER THAN A PREFERENCE.**
- *
- * ⚠ `completeness` is a CACHE written by `recomputeCompleteness`. ⚠⚠ **MEASURED
- * 2026-10-01 OVER THE 59 ELIGIBLE PROFILES: 52 HOLD `0`, 5 HOLD 80–100, 2 HOLD
- * 50–79.** The cache has simply never been refreshed for most members.
- * ⚠⚠⚠ **SO READING THE COLUMN WOULD PRINT `SCORE 0` ON 52 OF 59 CARDS** — a
- * false figure on the one surface built to advertise profile quality, which is
- * strictly worse than showing none.
- *
- * ⚠⚠ THIS IS NOT THE "UNCOUNTABLE FIGURE" CASE (counting rule 1): the score HAS
- * a writer and a definition. It is a STALE CACHE, so the honest answer is to
- * compute it, not to print a dash. ⚠ Same function, same input, same number the
- * owner's own Search Score page shows — `computeProviderCompleteness` over
- * `buildCompletenessInput`, so this surface cannot invent a second score.
- *
- * ⚠⚠ **THE STALENESS IS A SEPARATE, REAL FINDING AND IS REPORTED, NOT FIXED
- * HERE.** Backfilling 52 rows is a write this brief is not authorised to make.
- *
- * ⚠ COST, MEASURED AND ACCEPTED: one extra `findUnique` per profile shown. The
- * grid runs them in parallel for a page of 12.
- */
+/** IT IS COMPUTED, NOT READ FROM `ProviderProfile.completeness`, AND THAT */
 export async function searchScoreFor(profileId: string): Promise<number> {
   const input = await buildCompletenessInput(profileId);
   return input ? computeProviderCompleteness(input) : 0;
 }
 
-/* ── ⚠ SHARED MAPPING ────────────────────────────────────────────────────── */
+/* ── SHARED MAPPING ────────────────────────────────────────────────────── */
 
-/** ⚠ The dated-span list a profile's experience is measured from. */
+/** The dated-span list a profile's experience is measured from. */
 function spansOf(p: {
   employers: { start_date: Date | null; end_date: Date | null; is_current: boolean }[];
   projects: { start_date: Date | null; end_date: Date | null; is_current: boolean }[];
@@ -236,13 +166,11 @@ export function yearRange(
   const s = start?.getUTCFullYear();
   if (!s) return null;
   if (end) return `${s} – ${end.getUTCFullYear()}`;
-  /* ⚠⚠ `E549`'s RULE, ON A PUBLIC PAGE: a job with no end and no affirmative
-     `is_current` is NOT current. *"Started 2019"* is Scott's own wording for it
-     and is already what `lib/date-range-label.ts` prints signed in. */
+  // and is already what `lib/date-range-label.ts` prints signed in.
   return isCurrent ? `${s} – Present` : `Started ${s}`;
 }
 
-/** ⚠ Title soft-cap, reusing `/explore`'s measured 42 (see `lib/explore.ts`). */
+/** Title soft-cap, reusing `/explore`'s measured 42 (see `lib/explore.ts`). */
 export const TITLE_CAP = 42;
 
 export function capTitle(t: string): string {
@@ -253,9 +181,9 @@ export function capTitle(t: string): string {
   return (sp > 0 ? head.slice(0, sp) : head).replace(/[\s,;:/&|-]+$/, "") + "…";
 }
 
-/* ── ⚠⚠ THE GRID — BROWSE TALENT ─────────────────────────────────────────── */
+/* ── THE GRID — BROWSE TALENT ─────────────────────────────────────────── */
 
-/** ⚠ 12 per page, then "Show more" (the brief). */
+/** 12 per page, then "Show more" (the brief). */
 export const BROWSE_PAGE_SIZE = 12;
 
 export type BrowseFilters = {
@@ -269,12 +197,7 @@ export type BrowseFilters = {
   take?: number;
 };
 
-/**
- * ⚠⚠ The same text filter `/explore` already uses, kept as ONE shape so the
- * public search cannot answer differently from the teaser it replaced.
- * ⚠ `headline` is NOT a column — it moved to `Person.title` at `E595` WS-B, and
- * reading it is what 500'd `/explore` for weeks.
- */
+/** The same text filter `/explore` already uses, kept as ONE shape so the */
 function textFilter(q: string) {
   const like = { contains: q, mode: "insensitive" as const };
   return {
@@ -289,14 +212,7 @@ function textFilter(q: string) {
   };
 }
 
-/**
- * ⚠⚠⚠ THE PUBLIC GRID. Returns masked cards and a `hasMore` flag.
- *
- * ⚠ **NO TOTAL COUNT IS RETURNED, AND THAT IS THE BRIEF:** *"No total count of
- * members unless it is true and Scott has seen it."* ⚠⚠ `hasMore` is derived by
- * asking for one row more than the page and throwing it away — which answers
- * *"is there another page"* without ever printing a figure.
- */
+/** THE PUBLIC GRID. Returns masked cards and a `hasMore` flag. */
 export async function browseTalent(
   f: BrowseFilters = {}
 ): Promise<{ cards: MaskedCard[]; hasMore: boolean }> {
@@ -316,54 +232,15 @@ export async function browseTalent(
       : {}),
   };
 
-  /*
-    ── ⚠⚠⚠ WHY THIS PAGES AT THE DATABASE AND ORDERS ON THE CACHED COLUMN ────
-
-    ⚠⚠ **MEASURED 2026-10-01, AND THE FIRST VERSION OF THIS FUNCTION WAS TOO
-    SLOW TO SHIP:** loading every eligible row took **2.7 s** and computing a
-    live Search Score for all 59 took **4.3 s** — ~5.5 s for a page a stranger
-    loads, on the public funnel.
-
-    ⚠ **SO THE ROW SET IS NARROWED AT THE DATABASE, AND THE ORDER KEY HAS TO BE A
-    COLUMN.** The only ranking column is `completeness`.
-
-    ⚠⚠⚠ **AND `completeness` IS A STALE CACHE — 52 OF THE 59 ELIGIBLE PROFILES
-    HOLD `0`** (measured 2026-10-01). So be exact about what is and is not true
-    here, because the two halves have different honesty:
-      · ⚠ **THE FIGURE EACH CARD SHOWS IS EXACT.** It is computed from
-        `buildCompletenessInputs` for the rows on this page — the same function,
-        the same input and the same number as the owner's own Search Score page.
-        **No card ever prints the stale column.**
-      · ⚠⚠ **THE ORDER IS APPROXIMATE** until the cache is backfilled: the five
-        profiles with a refreshed cache sort first and the remaining 52 fall back
-        to `updated_at`. ⚠ It is not random and it is not wrong-looking — it just
-        is not strictly score-ordered.
-
-    ⚠⚠ **THE FIX IS A BACKFILL, NOT A CODE CHANGE** — `recomputeCompleteness`
-    over the eligible set, which is a WRITE this brief is not authorised to make.
-    **REPORTED FOR SCOTT.** The moment the cache is fresh, this ordering becomes
-    exact with no edit here.
-    ⚠⚠⚠ **DO NOT "FIX" THIS BY SORTING THE PAGE IN MEMORY.** Sorting 12 rows by
-    score after the database already chose which 12 reorders a page without
-    changing which members are on it — ⚠ which READS like a score ranking while
-    being nothing of the kind. That is a worse defect than an admitted
-    approximation, because it hides itself.
-  */
+  // WHY THIS PAGES AT THE DATABASE AND ORDERS ON THE CACHED COLUMN
   const rows = await prisma.providerProfile.findMany({
     where,
-    /* ⚠ `take + 1` is how `hasMore` is answered WITHOUT printing a total
-       (the brief: *"No total count of members unless it is true and Scott has
-       seen it."*). The extra row is counted and discarded. */
+    // (the brief: *"No total count of members unless it is true and Scott has
     take: take + 1,
     orderBy: [{ completeness: "desc" }, { updated_at: "desc" }, { id: "asc" }],
     select: {
       id: true,
-      /* ⚠⚠ NOTE WHAT IS ABSENT: no `person.first_name`, no `last_name`, no
-         `phone`, no rate column. ⚠ The mask is the select.
-         ⚠⚠⚠ **`photo_url` IS THE ONE EXCEPTION AND IT IS SPENT, NOT RETURNED**
-         (`E767`): it is handed to `blurredPhotoDataUri()` and what reaches the
-         card is a 16px JPEG's bytes. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   no `person.first_name`, no `last_name`, no `photo_url`, no `phone` */
+      // NOTE WHAT IS ABSENT: no `person.first_name`, no `last_name`, no
       person: {
         select: {
           title: true,
@@ -396,21 +273,10 @@ export async function browseTalent(
   const hasMore = rows.length > take;
   const page = rows.slice(0, take);
 
-  /* ⚠⚠⚠ **ONE QUERY FOR EVERY SCORE ON THE PAGE** — `buildCompletenessInputs`,
-     the batch twin of the single read, sharing its `include` and its mapper so
-     the two cannot disagree (`E585`). ⚠ Twelve ids measured ~0.6 s against
-     4.3 s for the whole eligible set, which is the whole reason this runs after
-     the page is chosen rather than before. ⚠⚠ A profile missing from the map
-     scores `0` — impossible here (the ids came from the row set a moment ago)
-     and the safe answer if it ever happens. */
+  // ONE QUERY FOR EVERY SCORE ON THE PAGE — `buildCompletenessInputs`
   const inputs = await buildCompletenessInputs(page.map((r) => r.id));
 
-  /*
-    ⚠⚠ THE BLURS ARE MADE ONCE, IN PARALLEL, BEFORE THE MAP (`E767`). The mapper
-    is synchronous and must stay that way; making it async would turn one page
-    render into twelve awaited round trips in series. ⚠ `blurredPhotoDataUri`
-    caches on the source URL, so a second render of the same grid costs nothing.
-  */
+  // THE BLURS ARE MADE ONCE, IN PARALLEL, BEFORE THE MAP . The mapper
   const blurs = new Map<string, string | null>(
     await Promise.all(
       page.map(
@@ -429,19 +295,13 @@ export async function browseTalent(
     );
     const spans = spansOf(p);
     const label = experienceLabel(spans);
-    /* ⚠⚠ `null` WHEN NOTHING IS MEASURABLE, NOT `0` — the experience filter must
-       not treat "we cannot tell" as "zero years", which would silently hide
-       every undated profile behind a `1+ years` filter. ⚠ `experienceLabel`
-       returns null below six months, so the two agree by construction. */
+    // not treat "we cannot tell" as "zero years", which would silently hide
     const years = label ? experienceYears(spans) : null;
     const input = inputs.get(p.id);
     return {
       id: p.id,
       title: capTitle(p.person.title ?? ""),
-      /* ⚠⚠ STATE + COUNTRY (Scott's answer 7) — the CITY IS DELIBERATELY NOT
-         SELECTED. ⚠ 4 of the 59 eligible profiles hold no state (measured
-         2026-10-01), so `formatPlace` drops the empty part and the line reads as
-         the country alone rather than ", United States". */
+      // STATE + COUNTRY (Scott's answer 7) — the CITY IS DELIBERATELY NOT
       location: formatPlace(addr?.state, country),
       country,
       countryCode: addr?.country_code ?? null,
@@ -451,8 +311,7 @@ export async function browseTalent(
       skills: shown.map((s) => s.skill.name),
       skillCount: shown.length,
       certificationCount: p._count.certifications,
-      /* ⚠⚠ ONLY WHERE POPULATED (Scott's answer 6). Measured: 3 of 21 projects
-         carry an industry, so most cards show none — and none is invented. */
+      // ONLY WHERE POPULATED (Scott's answer 6). Measured: 3 of 21 projects
       industries: [
         ...new Set(
           p.projects
@@ -464,16 +323,7 @@ export async function browseTalent(
     };
   });
 
-  /*
-    ⚠⚠ THE EXPERIENCE FILTER IS APPLIED AFTER THE PAGE, AND THAT IS A KNOWN
-    LIMITATION STATED RATHER THAN HIDDEN: years are DERIVED from dated spans
-    (`E549`'s rule) and there is no years column to filter on at the database.
-    ⚠ So `minYears` can return fewer than `take` rows for a page. ⚠⚠⚠ IT CANNOT
-    RETURN A **WRONG** ROW, which is the property that matters; "Show more" then
-    fetches a larger window. ⚠ A real fix needs a stored, maintained
-    experience-months column — the same shape of problem as the score cache, and
-    reported with it.
-  */
+  // THE EXPERIENCE FILTER IS APPLIED AFTER THE PAGE, AND THAT IS A KNOWN
   const filtered =
     f.minYears && f.minYears > 0
       ? cards.filter((c) => (c.experienceYears ?? 0) >= f.minYears!)
@@ -482,19 +332,9 @@ export async function browseTalent(
   return { cards: filtered, hasMore };
 }
 
-/* ── ⚠⚠⚠ THE SINGLE MASKED PROFILE — WHAT A SHARE LINK OPENS ─────────────── */
+/* ── THE SINGLE MASKED PROFILE — WHAT A SHARE LINK OPENS ─────────────── */
 
-/**
- * ⚠⚠⚠ Null when the profile does not exist, is not marketplace-visible, or its
- * owner turned the masked preview off. ⚠ The caller renders the SAME
- * "not available" page for all three, because distinguishing them tells a
- * stranger that a hidden member exists.
- *
- * ⚠⚠ `named` ASKS FOR THE NAMED VARIANT (`/in/<slug>` with the member's
- * "Public profile with my name" option ON). It is resolved by the CALLER from
- * `public_name_at` and re-checked here, so a hand-typed query parameter cannot
- * reach it.
- */
+/** Null when the profile does not exist, is not marketplace-visible, or its */
 export async function getMaskedProfile(
   profileId: string
 ): Promise<MaskedProfile | null> {
@@ -503,15 +343,12 @@ export async function getMaskedProfile(
     select: {
       id: true,
       overview: true,
-      /* ⚠⚠⚠ THE NAME IS SELECTED **ONLY TO BE A SCRUB NEEDLE** AND IS NEVER
-         RETURNED. ⚠ That is the one honest reason to read it here, and the
-         leak test (`e2e-e738`) proves the output does not contain it. */
+      // THE NAME IS SELECTED ONLY TO BE A SCRUB NEEDLE AND IS NEVER
       person: {
         select: {
           first_name: true,
           last_name: true,
-          /* ⚠⚠⚠ SPENT, NOT RETURNED (`E767`) — see `MaskedCard.photoBlur`. The
-             URL goes into `blurredPhotoDataUri()` and 16px of JPEG comes out. */
+          // SPENT, NOT RETURNED — see `MaskedCard.photoBlur`. The
           photo_url: true,
           title: true,
           created_at: true,
@@ -526,15 +363,14 @@ export async function getMaskedProfile(
         },
       },
       roles: { select: { role_type_id: true } },
-      /* ⚠ No verification column exists — see the note on `MaskedProfile`. */
+      /* No verification column exists — see the note on `MaskedProfile`. */
       skills: { select: { skill: { select: { name: true, role_type_id: true } } } },
       specializations: { select: { specialization: { select: { name: true } } } },
       certifications: { select: { name: true } },
-      /* ⚠⚠ DEGREE AND FIELD ONLY — `institution` IS NOT IN THIS SELECT.
-         The brief masks the school name, and a school is an identity hint. */
+      // DEGREE AND FIELD ONLY — `institution` IS NOT IN THIS SELECT.
       education: { select: { id: true, degree: true, field: true } },
       employers: {
-        /* ⚠ `name` IS A NEEDLE ONLY. See the `person` note above. */
+        /* `name` IS A NEEDLE ONLY. See the `person` note above. */
         select: {
           id: true,
           name: true,
@@ -542,7 +378,7 @@ export async function getMaskedProfile(
           start_date: true,
           end_date: true,
           is_current: true,
-          /* ⚠ `E748` WS-C — the badge, as a boolean. No date, no domain. */
+          /* `E748` WS-C — the badge, as a boolean. No date, no domain. */
           validation_status: true,
           projects: {
             select: {
@@ -582,8 +418,7 @@ export async function getMaskedProfile(
   });
   if (!p) return null;
 
-  /* ⚠⚠⚠ EVERY NEEDLE, ASSEMBLED BEFORE ANY TEXT IS EMITTED — the member's own
-     name, every employer name, and every client name the profile holds. */
+  // EVERY NEEDLE, ASSEMBLED BEFORE ANY TEXT IS EMITTED — the member's own
   const needles = needlesFrom([
     p.person.first_name,
     p.person.last_name,
@@ -598,18 +433,11 @@ export async function getMaskedProfile(
   const shown = shownSkills(selectedRoleIds(p), p.skills, (s) => s.skill.role_type_id);
   const spans = spansOf(p);
 
-  /* ⚠⚠ SOLO PROJECTS — ONES NO EMPLOYER CLAIMS — BECOME THEIR OWN WORK-HISTORY
-     ROWS, the same derivation `buildCompletenessInput` and the signed-in profile
-     use (`projects.filter(employer_id == null)`). ⚠ `p.projects` is EVERY project
-     on the profile, including the employer-attached ones, so the attached ids are
-     subtracted rather than re-queried. ⚠⚠⚠ WITHOUT THIS, AN INDEPENDENT
-     CONSULTANT'S ENTIRE WORK HISTORY IS MISSING FROM THE PREVIEW — they have
-     engagements and no employers, and that is the population `E536` exists to
-     serve. */
+  // SOLO PROJECTS — ONES NO EMPLOYER CLAIMS — BECOME THEIR OWN WORK-HISTORY
   const attached = new Set(p.employers.flatMap((e) => e.projects.map((pr) => pr.id)));
   const solo = p.projects.filter((pr) => !attached.has(pr.id));
 
-  /* ⚠ One photo, one blur. Awaited here because this mapper already is. */
+  /* One photo, one blur. Awaited here because this mapper already is. */
   const photoBlur = await blurredPhotoDataUri(p.person.photo_url);
 
   return {
@@ -632,18 +460,17 @@ export async function getMaskedProfile(
           .filter((n): n is string => Boolean(n))
       ),
     ],
-    /* ⚠⚠ SCRUBBED, AND DROPPED WHOLE IF IT CANNOT BE SCRUBBED (see `scrub`). */
+    /* SCRUBBED, AND DROPPED WHOLE IF IT CANNOT BE SCRUBBED (see `scrub`). */
     summary: scrub(p.overview, needles),
     memberSince: p.person.created_at?.getUTCFullYear() ?? null,
     certifications: p.certifications.map((c) => c.name),
-    /* ⚠ "Bachelor of Science, Business Administration" — no school. */
+    /* "Bachelor of Science, Business Administration" — no school. */
     education: p.education
       .map((e) => [e.degree, e.field].filter(Boolean).join(", "))
       .filter((s) => s.length > 0),
     employers: p.employers.map((e) => ({
       id: e.id,
-      /* ⚠ A role title can itself name the employer ("Consultant, Ceres"), so
-         it goes through the scrubber like any other free text. */
+      // A role title can itself name the employer ("Consultant, Ceres"), so
       roleTitle: scrub(e.role_title, needles),
       dates: yearRange(e.start_date, e.end_date, e.is_current),
       validated: e.validation_status === "VALIDATED",
@@ -656,18 +483,14 @@ export async function getMaskedProfile(
       })),
     })).concat(soloProjectRows(solo, needles)),
     packages: p.serviceProducts.map((s) => s.title),
-    /* ⚠ Filled by the caller, which owns the Learn read. */
+    /* Filled by the caller, which owns the Learn read. */
     learnPaths: [],
     languages: p.languages.map((l) => l.name),
     specializations: p.specializations.map((s) => s.specialization.name),
   };
 }
 
-/**
- * ⚠ Solo projects, as their own masked rows (no employer claims them).
- * ⚠⚠ A solo engagement has no employer to hide, so it carries NO
- * `EMPLOYER_LOCK_COPY` line — the row is the whole truth about it already.
- */
+/** Solo projects, as their own masked rows (no employer claims them). */
 export function soloProjectRows(
   projects: {
     id: string;
@@ -690,18 +513,7 @@ export function soloProjectRows(
   }));
 }
 
-/**
- * ── ⚠⚠ THE COUNTRY FILTER'S OPTIONS, MEASURED NOT ENUMERATED ─────────────────
- *
- * ⚠⚠⚠ **IT RETURNS ONLY COUNTRIES THAT ACTUALLY HAVE AN ELIGIBLE PROVIDER.**
- * ⚠ The obvious implementation is `ALL_COUNTRIES` from `lib/country.ts`, and it
- * is wrong here: a filter listing ~250 countries when a dozen have providers is
- * **250 ways to empty the page**, and every empty result reads as *"Panameer has
- * nobody"* rather than *"nobody is in Chad"*.
- * ⚠⚠ Same rule as a card's absent industry — do not offer a control whose most
- * likely outcome is a false impression. The counts are real, so they can be
- * shown; the brief forbids only a TOTAL MEMBER count Scott has not seen.
- */
+/** THE COUNTRY FILTER'S OPTIONS, MEASURED NOT ENUMERATED */
 export async function previewCountries(): Promise<
   { code: string; name: string; count: number }[]
 > {

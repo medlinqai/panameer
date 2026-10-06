@@ -131,7 +131,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
           <b className="text-emerald-800">{FORM_LABEL[tax.form]} on file</b> —{" "}
           {tax.legalName}, {tax.country}
           {tax.tinLast4 ? `, ending ${tax.tinLast4}` : ""}. Signed {tax.signedAt}.
-          {/* ⚠ THE HARD COPY THE IRS MAY ASK FOR — see `withdrawals/w9`. */}
+          {/* THE HARD COPY THE IRS MAY ASK FOR — see `withdrawals/w9`. */}
           {tax.form === "W9" && (
             <>
               {" "}
@@ -212,10 +212,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
         />
       </div>
 
-      {/* ⚠ FORMAT ONLY, AND IT SAYS SO. `checkTin` cannot confirm the number is
-          THEIRS — Panameer is not enrolled in IRS TIN Matching and cannot be
-          until it has filed 1099s. A green tick that implied otherwise would be
-          the exact failure `E404` WS-2 warns about. */}
+      {/* FORMAT ONLY, AND IT SAYS SO. `checkTin` cannot confirm the number is */}
       {us && tin.replace(/\D/g, "").length > 0 && (
         <p
           className={
@@ -227,15 +224,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
         </p>
       )}
 
-      {/*
-        ── ⚠⚠ NON-US STOPS HERE. A WRONG TAX FORM IS WORSE THAN NO TAX FORM ────
-
-        `E404`: do NOT build W-8BEN / W-8BEN-E in this pass. They carry different
-        certifications, and showing W-9 wording to a non-US payee would collect a
-        signature on a statement that is false for them. The US question is
-        answered by `lib/tax.ts` from the payout country — jurisdiction decides,
-        not the user — and everyone else is told which form they need and stopped.
-      */}
+      {/* NON-US STOPS HERE. A WRONG TAX FORM IS WORSE THAN NO TAX FORM */}
       {!us ? (
         <div className="mt-4 max-w-xl rounded-[10px] border border-amber-400/60 bg-amber-50 p-4">
           <p className="text-[13.5px] font-bold">{FORM_LABEL[form]} is needed</p>
@@ -246,14 +235,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
           <p className="text-[13.5px] font-bold">Substitute {FORM_LABEL[form]}</p>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{FORM_BLURB[form]}</p>
 
-          {/*
-            ⚠⚠ BOXED AND BOLD ON PURPOSE, NOT FOR EMPHASIS. The IRS requires that
-            where a substitute form's signature line covers anything besides the
-            certifications, the certification language be *"highlighted, boxed,
-            printed in bold-face type, or presented in some other manner that
-            causes the language to stand out."* The border and the bold preamble
-            are that requirement, not a design choice — do not flatten them.
-          */}
+          {/* BOXED AND BOLD ON PURPOSE, NOT FOR EMPHASIS. The IRS requires that */}
           <div className="mt-3 rounded-[10px] border-2 border-ink/25 bg-white p-4">
             <p className="text-[13.5px] font-extrabold uppercase tracking-[0.03em]">
               {W9_CERTIFICATION_PREAMBLE}
@@ -265,7 +247,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
                 </li>
               ))}
             </ul>
-            {/* ⚠ VERBATIM, DIRECTLY ABOVE THE SIGNATURE. Not a paraphrase. */}
+            {/* VERBATIM, DIRECTLY ABOVE THE SIGNATURE. Not a paraphrase. */}
             <p className="mt-3 border-t border-line pt-3 text-[13px] font-semibold leading-relaxed">
               {W9_CONSENT_NOTICE}
             </p>
@@ -300,15 +282,7 @@ function TaxSection({ tax, onSaved }: { tax: Tax | null; onSaved: () => void }) 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          /*
-            ⚠⚠ A US SIGNATURE REQUIRES THE CERTIFICATION TICK AND A CLASSIFICATION.
-            The button is a courtesy — `saveTaxProfile` writes the certification
-            text on every W-9 regardless — but a signature collected without the
-            signer having ticked the perjury statement is not a certification,
-            and this is where that is refused.
-            ⚠ NON-US CANNOT SIGN AT ALL: there is no form to sign yet, so the
-            button stays disabled and the stub explains why.
-          */
+          // A US SIGNATURE REQUIRES THE CERTIFICATION TICK AND A CLASSIFICATION.
           disabled={
             busy ||
             !legalName.trim() ||

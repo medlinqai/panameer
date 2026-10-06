@@ -339,22 +339,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       detail: pathsCertified > 0 ? `${pathsCertified} earned` : `0 of 1 path certified`,
       earned: pathsCertified > 0,
     },
-    /*
-      ── ⚠⚠⚠ `streak_10` IS RETIRED (`P2-A4-E606` R3) ────────────────────────
-
-      ⚠ SCOTT'S TEST: **keep what is a genuine record of something DONE; retire
-      anything that rewards a HABIT rather than an accomplishment. A streak is a
-      habit.** Ten consecutive days is not a thing the member achieved in the
-      catalogue — it is a pattern of showing up, and rewarding it pushes toward
-      opening a lesson to keep a number alive.
-      ⚠⚠ IT WAS ALSO THE ONLY BADGE THE SERVER COULD NOT EARN — `earned: false`
-      always, with `clientComputed` filling it in from the browser's timezone.
-      **The one badge that was not a count was also the one that was not
-      counted.**
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   { key: "streak_10", title: "10-Day Streak",
-      //     detail: "Ten days in a row",  earned: false, clientComputed: "streak10" },
-    */
+    // SCOTT'S TEST: keep what is a genuine record of something DONE; retire
     {
       key: "hundred_lessons",
       title: "100 Lessons",
@@ -364,64 +349,30 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
     {
       key: "perfect_test",
       title: "Perfect Test",
-      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   detail: attempts.some((a) => a.score === 100) ? "100% on a path test" : "Score 100% on a test", */
       detail: attempts.some((a) => a.score === 100)
         ? "100% on a path test"
         : `Best so far: ${attempts.length ? Math.max(...attempts.map((a) => a.score ?? 0)) : 0}% of 100%`,
       earned: attempts.some((a) => a.score === 100),
     },
     {
-      /*
-        ⚠ THIS REPLACES THE MOCKUP'S `Mentor — answer 25 in a room`. There are no
-        rooms, there is no answer model, and there is nothing in the schema that
-        could ever make that badge true. A badge that cannot be earned is worse
-        than one fewer badge.
-      */
+      // THIS REPLACES THE MOCKUP'S `Mentor — answer 25 in a room`. There are no
       key: "course_finisher",
       title: "Course Finisher",
-      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   detail: coursesFinished > 0 ? `${coursesFinished} of ${totalCourses} courses` : "Finish every lesson in a course", */
       detail: `${coursesFinished} of ${totalCourses} courses finished`,
       earned: coursesFinished > 0,
     },
     {
       key: "path_finisher",
       title: "Path Finisher",
-      /* ⚠ COUNTED IN BOTH STATES (R3). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   detail: pathsCertified >= 5 ? "Five paths certified" : `Certify 5 paths — ${pathsCertified} so far`, */
       detail: `${pathsCertified} of 5 paths certified`,
       earned: pathsCertified >= 5,
     },
   ];
 
-  /*
-    ── ⚠ THE SUGGESTED FIRST PATH (`E043`) ────────────────────────────────────
-
-    ⚠ ONLY WHEN THERE IS NOTHING ON THE GO. `continueCard` is the exact
-    condition `MyLearning.tsx` renders the empty state on, so gating the read on
-    the same value means an active learner pays nothing for a half they will
-    never see — and the two can never disagree about which state the page is in.
-  */
+  // THE SUGGESTED FIRST PATH
   const suggestion = continueCard ? null : pickSuggestion(rows, await getLearnerSignal(userId));
 
-  /*
-    ── ⚠⚠⚠ THE STARTER PATH, AND IT IS NOT GATED ON ANYTHING (`E683` WS-C) ──
-
-    ⚠⚠ **COMPLETION MUST HAVE A WRITER OR THE CARD CANNOT SAY IT**, and it does:
-    `LearnCard.completedLessons` is computed by `getLearnHome` from real
-    `LessonProgress` rows. ⚠⚠⚠ **MEASURED 2026-09-26: `LessonProgress` HOLDS
-    ZERO ROWS**, so today every member is honestly at *"0 of N"* — which is a
-    **counted zero rendered in ink**, not a dash (ruling 53c).
-
-    ⚠ **`playable`, NOT `lessons`.** The card's number is a promise about what
-    the member can actually watch, the same rule the chips and the headline
-    total already follow (`E362`). A path of 53 lessons with 25 playable would
-    otherwise show a bar that can never fill.
-    ⚠⚠ **DONE IS `completedLessons >= playable`, AND ONLY WHEN `playable > 0`** —
-    with no playable lessons, `0 >= 0` would mark an empty path complete the
-    moment it is flagged, which is the worst possible first impression.
-  */
+  // THE STARTER PATH, AND IT IS NOT GATED ON ANYTHING ( WS-C)
   const starterVerdict = await starterPath(userId);
   let starter: StarterCard | null = null;
   if (starterVerdict.kind === "one") {
@@ -440,30 +391,16 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
 
   return {
     headline: headlineFor({
-      /*
-        ⚠ `!r.certified`, AND THAT IS A FIX, NOT A TIDY-UP.
-
-        Without it the nearest-certificate search picks the path with the fewest
-        lessons remaining — which is ZERO for a path already certified — and the
-        headline told a learner holding the certificate to "sit the test and claim
-        the certificate". Caught in the browser against a fixture with one
-        certificate and two paths in progress. `nextCertificate` below already
-        excluded certified paths; the headline did not.
-      */
+      // Without it the nearest-certificate search picks the path with the fewest
       enrolled: rows
         .filter((r) => r.enrolled && !r.certified)
         .map((r) => ({ title: r.title, remaining: r.lessons - r.completed, completed: r.completed })),
     }),
-    /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   level: levelFor(lessonsCompleted), */
     totals: {
       paths: rows.length,
       courses: totalCourses,
       lessons: totalLessons,
-      /* ⚠ Counted over EVERY published path, not over `visible` — `visible`
-         already includes a member's own enrolled-but-unready paths, which would
-         make this figure differ per member. What is in production is a fact
-         about the catalogue, the same number for everybody. */
+      // Counted over EVERY published path, not over `visible` — `visible`
       inProduction: paths.filter((p) => !pathHasPlayableLessons(p)).length,
     },
     mine: {
@@ -473,9 +410,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       enrolledPaths: rows.filter((r) => r.enrolled).length,
     },
     completedAt: progress.map((p) => p.completed_at.toISOString()),
-    /* ⚠ `P2-A4-E615` ruling 6 — one row per LEARN credential, newest first.
-       ⚠⚠ `score` comes from the PASSING attempt on that path, so a retake after
-       a pass cannot lower the number a member sees. */
+    // ruling 6 — one row per LEARN credential, newest first.
     certificates: certs
       .filter((c) => c.learning_path_id)
       .map((c) => {
@@ -493,29 +428,7 @@ export async function getMyLearning(userId: string): Promise<MyLearning> {
       .sort((a, b) => (b.earnedOn ?? "").localeCompare(a.earnedOn ?? "")),
     teaching,
     paths: rows,
-    /*
-      ── ⚠⚠⚠ EVERY PATH THE MEMBER IS ENROLLED IN (`P2-A4-E615`, ruling 8) ───
-
-      ⚠⚠ SCOTT, 2026-09-24: **"Every path I'm enrolled in. Enrolling makes a
-      card appear, whether or not a lesson has been watched."**
-
-      ⚠⚠⚠ TWO THINGS WERE HIDING PATHS, AND THE BRIEF ONLY NAMED ONE:
-        1. ⚠ `.slice(0, 3)` — a member enrolled in a fourth path saw three
-           cards and no way to know a fourth existed. **A cap is not a filter;
-           it is a filter that does not say so.**
-        2. ⚠⚠ `!r.certified` — finishing a path made its card DISAPPEAR, which
-           reads as losing the work rather than completing it. A certified path
-           is still a path you are in; it now renders with a `Complete` pill.
-
-      ⚠ THE SORT IS UNCHANGED IN SPIRIT — furthest along first — but certified
-      paths sort last rather than vanishing, because the card a member wants
-      first is the one they can act on.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   inProgress: rows
-      //     .filter((r) => r.enrolled && !r.certified)
-      //     .sort((a, b) => b.percent - a.percent || b.completed - a.completed)
-      //     .slice(0, 3),
-    */
+    // EVERY PATH THE MEMBER IS ENROLLED IN , ruling 8)
     inProgress: rows
       .filter((r) => r.enrolled)
       .sort(

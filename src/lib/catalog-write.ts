@@ -295,18 +295,7 @@ export async function hardDelete(
   return { ok: true, id, message: `Deleted "${row.name}".` };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE SUGGESTION QUEUE (`P1-A1.5-E482`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   > **SCOTT:** *"we will need a way (T?) to see the most commonly requested
-   > platforms, processes, industries that are not in our listing. The admin
-   > will make a judgement call."*
-
-   ⚠ NO NEW TABLE. A suggestion is `status: SUGGESTED` + `origin: PROVIDER` —
-   Part A's two fields already carry it, and the links a provider made when they
-   typed the term ARE the record of who asked.
-*/
+// THE SUGGESTION QUEUE
 
 export type Suggestion = {
   id: string;
@@ -319,26 +308,9 @@ export type Suggestion = {
   postedAt: Date;
 };
 
-/**
- * The queue, ⚠⚠ ORDERED BY HOW MANY PEOPLE ASKED, NOT BY DATE.
- *
- * ⚠ Scott's words: *"the most commonly requested."* A term three providers
- * asked for outranks yesterday's single request, which is the whole point of
- * showing him this list rather than a chronological log.
- * ⚠ TIES BREAK ON THE OLDEST REQUEST, so a thing that has been waiting longer
- * wins a tie rather than the order flickering between equals.
- */
+/** The queue, ORDERED BY HOW MANY PEOPLE ASKED, NOT BY DATE. */
 export async function suggestionQueue(): Promise<Suggestion[]> {
-  /*
-    ⚠⚠ REJECTED ROWS STAY IN THE QUEUE, MARKED. The brief: *"Reject keeps the
-    record — the same suggestion arriving five more times is itself the signal."*
-    ⚠ SHOWING ONLY `SUGGESTED` WOULD HAVE BROKEN THAT. `onboarding.ts` dedupes a
-    typed term onto the EXISTING row whatever its status, so a rejected term
-    that six more providers ask for gains six links and never changes status —
-    it would have accumulated the exact signal Scott asked for, invisibly.
-    ⚠ So the queue reads both, and the count sorts a re-asked reject back to
-    the top on its own.
-  */
+  // REJECTED ROWS STAY IN THE QUEUE, MARKED. The brief: *"Reject keeps the
   const rows = await prisma.specialization.findMany({
     where: {
       origin: "PROVIDER",
@@ -383,8 +355,7 @@ export async function suggestionQueue(): Promise<Suggestion[]> {
       })),
       postedAt: r.created_at,
     }))
-    /* ⚠ MOST-ASKED FIRST; a tie goes to whoever has waited longest. ⚠ Anything
-       still waiting outranks anything already rejected at the same count. */
+    // MOST-ASKED FIRST; a tie goes to whoever has waited longest. Anything
     .sort(
       (a, b) =>
         Number(b.status === "SUGGESTED") - Number(a.status === "SUGGESTED") ||
@@ -393,27 +364,17 @@ export async function suggestionQueue(): Promise<Suggestion[]> {
     );
 }
 
-/**
- * ⚠⚠ PROMOTE — THE ADMIN CHOOSES THE KIND. THAT IS THE WHOLE POINT.
- *
- * A suggestion has no meaningful `kind` (see `onboarding.ts` — the column's
- * default is not a claim), so promotion is the moment it acquires one.
- * ⚠ THE ROW KEEPS ITS ID, so every provider who suggested it is ALREADY
- * attached and stays attached — there is nothing to re-link, which is exactly
- * why this is an UPDATE and not a create. Trap 1, again.
- */
+/** PROMOTE — THE ADMIN CHOOSES THE KIND. THAT IS THE WHOLE POINT. */
 export async function promoteSuggestion(id: string, kind: SpecKind): Promise<WriteResult> {
   const row = await prisma.specialization.findUnique({
     where: { id },
     select: { name: true, status: true, catalog_id: true },
   });
   if (!row) return refuse("That suggestion no longer exists.");
-  /* ⚠ A REJECTED ROW CAN STILL BE PROMOTED — that is the point of keeping it.
-     Only an already-ACTIVE row is refused, because promoting it is a no-op. */
+  // A REJECTED ROW CAN STILL BE PROMOTED — that is the point of keeping it.
   if (row.status === "ACTIVE") return refuse(`"${row.name}" is already live.`);
 
-  /* ⚠ A SUGGESTION THAT DUPLICATES A LIVE ROW IS A MERGE, NOT A PROMOTE, and
-     merging is not built — say so rather than creating a second live row. */
+  // A SUGGESTION THAT DUPLICATES A LIVE ROW IS A MERGE, NOT A PROMOTE, and
   const clash = await prisma.specialization.findFirst({
     where: {
       catalog_id: row.catalog_id,
@@ -443,13 +404,7 @@ export async function promoteSuggestion(id: string, kind: SpecKind): Promise<Wri
   };
 }
 
-/**
- * ⚠ REJECT KEEPS THE RECORD. The same suggestion arriving five more times is
- * itself the signal, and a deleted row cannot accumulate a count.
- * ⚠⚠ IT ALSO KEEPS THE AUTHOR'S LINK — they typed a true thing about themselves
- * and still see it on their own profile. Rejecting means "not in the shared
- * vocabulary", never "you were wrong".
- */
+/** REJECT KEEPS THE RECORD. The same suggestion arriving five more times is */
 export async function rejectSuggestion(id: string): Promise<WriteResult> {
   const row = await prisma.specialization.findUnique({
     where: { id },
@@ -457,8 +412,7 @@ export async function rejectSuggestion(id: string): Promise<WriteResult> {
   });
   if (!row) return refuse("That suggestion no longer exists.");
   if (row.status !== "SUGGESTED") return refuse(`"${row.name}" is not waiting in the queue.`);
-  /* ⚠ `RETIRED`, NOT DELETED — the row, its name and every link that voted for
-     it survive, which is what lets a re-asked term climb back up the queue. */
+  // it survive, which is what lets a re-asked term climb back up the queue.
   await prisma.specialization.update({ where: { id }, data: { status: "RETIRED" } });
   return {
     ok: true,

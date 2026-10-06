@@ -28,15 +28,7 @@ console.log("\nprovider-rollup.ts\n");
 
 // --- months -----------------------------------------------------------------
 ok("a 12-month job is 12 months", monthsBetween(at("2020-01-01"), at("2021-01-01"), false, NOW) === 12);
-/*
-  ── ⚠⚠ THIS CASE CHANGED BECAUSE THE RULING CHANGED (`P2-J1.4-E549`) ─────────
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      ok("an open job runs to today", monthsBetween(at("2025-08-11"), null, NOW) === 12, …)
-  ⚠⚠ Scott overturned that rule on 2026-09-17: a missing end runs to today ONLY
-  when the job is affirmatively current. ⚠ This is NOT `check:cert-skills`, where
-  the gate encoded a standing product rule and the BUILD was wrong. Here the
-  test encoded the OLD rule, which was explicitly overturned.
-*/
+// THIS CASE CHANGED BECAUSE THE RULING CHANGED
 ok(
   "a CURRENT open job runs to today",
   monthsBetween(at("2025-08-11"), null, true, NOW) === 12,
@@ -53,14 +45,11 @@ ok(
 );
 ok("no start date scores nothing", monthsBetween(null, at("2021-01-01"), false, NOW) === 0);
 ok("no start date scores nothing, even when current", monthsBetween(null, null, true, NOW) === 0);
-/*
-  A same-day or reversed range is a typo or a parser slip, not a claim of zero
-  experience. Scoring it 0 would silently drop the skill off the profile.
-*/
+// A same-day or reversed range is a typo or a parser slip, not a claim of zero
 ok("a same-day range still counts as a month", monthsBetween(at("2020-01-01"), at("2020-01-01"), false, NOW) === 1);
 ok("a reversed range still counts as a month", monthsBetween(at("2021-01-01"), at("2020-01-01"), false, NOW) === 1);
 
-// --- ⚠⚠ the profile's "N years" follows the same rule (`E549`) ---------------
+// --- the profile's "N years" follows the same rule (`E549`) ---------------
 const T = NOW.getTime();
 ok(
   "experience: a CURRENT open role counts to today",
@@ -80,7 +69,7 @@ ok(
   String(experienceMonths([{ start: "2020-01-01", end: "2021-01-01" }], T))
 );
 
-// --- ⚠⚠ what the PAGE says about the same rows (`E549`) ----------------------
+// --- what the PAGE says about the same rows (`E549`) ----------------------
 const L = (s: string | null, e: string | null, c: boolean) => dateRangeLabel(s, e, c);
 ok("label: an ended job reads as a span", L("2019-01-01", "2021-06-01", false) === "2019 – 2021", L("2019-01-01", "2021-06-01", false));
 ok("label: a current job reads Present", L("2019-01-01", null, true) === "2019 – Present", L("2019-01-01", null, true));
@@ -89,8 +78,6 @@ ok(
   L("2019-01-01", null, false) === "Started 2019",
   L("2019-01-01", null, false)
 );
-/* ⚠ SUPERSEDED, quoted (`E164`): expected `"? – 2021"` and `"? – Present"` — Scott,
-   2026-09-17: "I am not showing a buyer a question mark." */
 ok("label: no start, ended", L(null, "2021-06-01", false) === "Ended 2021", L(null, "2021-06-01", false));
 ok("label: no start, current", L(null, null, true) === "Ongoing", L(null, null, true));
 ok("⚠ label: no label ever contains a question mark", ![L(null, "2021-06-01", false), L(null, null, true), L("2019-01-01", null, false), L("2019-01-01", "2021-01-01", false), L("2019-01-01", null, true)].some((x) => x.includes("?")));
@@ -125,11 +112,7 @@ ok(
   `${deepRecent.toFixed(1)} vs ${shallowOld.toFixed(1)}`
 );
 
-/*
-  And the harder direction, which is the whole reason for decaying at all:
-  a LONGER but stale engagement should lose to a shorter current one. Two years
-  running right now beats four years that ended twelve years ago.
-*/
+// And the harder direction, which is the whole reason for decaying at all
 const staleLong = 48 * recency(yearsAgo(12), NOW);
 const freshShort = 24 * recency(null, NOW);
 ok(
@@ -138,10 +121,7 @@ ok(
   `${freshShort.toFixed(1)} vs ${staleLong.toFixed(1)}`
 );
 
-/*
-  But not TOO aggressive: a long career should not be erased by a recent gap.
-  Ten years ending two years ago must still beat six months of current work.
-*/
+// But not TOO aggressive: a long career should not be erased by a recent gap.
 const veteran = 120 * recency(yearsAgo(2), NOW);
 const novice = 6 * recency(null, NOW);
 ok(
@@ -151,10 +131,7 @@ ok(
 );
 
 // --- the escape hatch --------------------------------------------------------
-/*
-  Self-added has to be visible but never mistakable for depth: below the
-  shortest plausible real engagement, above nothing.
-*/
+// Self-added has to be visible but never mistakable for depth: below the
 const shortestRealJob = 1 * RECENCY_FLOOR;
 ok("a self-added skill is non-zero", SELF_ADDED_WEIGHT > 0);
 ok(

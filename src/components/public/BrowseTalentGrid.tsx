@@ -58,12 +58,7 @@ export async function BrowseTalentGrid({
         they are and to contact or hire them.
       </p>
 
-      {/*
-        ⚠ SORT IS NOT A CONTROL. The mockup draws a "Sort: Search Score"
-        dropdown and the brief says *"Sort: Search Score (default)"* — ⚠⚠ it is
-        the ONLY option, so a select with one item is a control that does
-        nothing. Added when there is a second ordering to offer.
-      */}
+      {/* SORT IS NOT A CONTROL. The mockup draws a "Sort: Search Score" */}
       <form method="get" action="/explore" className="mt-5 flex flex-wrap gap-2.5">
         <input
           type="search"
@@ -80,8 +75,7 @@ export async function BrowseTalentGrid({
           className="rounded-[4px] border border-line bg-white px-3 py-2.5 text-[13.5px] text-ink dark:border-white/20 dark:bg-white/5 dark:text-white"
         >
           <option value="">All countries</option>
-          {/* ⚠ Only countries with an eligible provider — see
-              `previewCountries`. The count is real and measured. */}
+          {/* Only countries with an eligible provider — see */}
           {countries.map((c) => (
             <option key={c.code} value={c.code}>
               {c.name} ({c.count})
@@ -109,9 +103,7 @@ export async function BrowseTalentGrid({
       </form>
 
       {cards.length === 0 ? (
-        /* ⚠⚠ THE HONEST ZERO. It says what was searched and offers a wider
-           search — it never invents a card and never implies the marketplace is
-           empty when a filter is what emptied it. */
+        // THE HONEST ZERO. It says what was searched and offers a wider
         <div className="mt-8 max-w-[620px]">
           <p className="text-[15px] leading-relaxed text-ink-2">
             No profiles match that yet. Try a broader term — a domain like
@@ -130,16 +122,7 @@ export async function BrowseTalentGrid({
             ))}
           </div>
 
-          {/*
-            ⚠⚠ "SHOW MORE" GROWS THE PAGE RATHER THAN OFFSETTING IT, and that is
-            deliberate on an ordering whose key is a column (see `browseTalent`):
-            ⚠⚠⚠ **AN OFFSET PAGE CAN SKIP OR REPEAT A ROW IF THE ORDER SHIFTS
-            BETWEEN CLICKS** — a profile updated while somebody reads page one
-            moves, and `skip: 12` then hands them a row they already saw or hides
-            one they never did. ⚠ Growing `take` re-renders one consistent list.
-            ⚠ It costs re-fetching the rows already shown; at 12 a page that is
-            the right trade, and it is the honest one.
-          */}
+          {/* deliberate on an ordering whose key is a column (see `browseTalent`) */}
           {hasMore && (
             <div className="mt-8 flex justify-center">
               <PublicSecondary href={qs({ take: size + BROWSE_PAGE_SIZE })}>
@@ -153,21 +136,15 @@ export async function BrowseTalentGrid({
   );
 }
 
-/**
- * ⚠⚠ ONE MASKED CARD. ⚠⚠⚠ THE AVATAR IS A DRAWING AND THE NAME IS NOT A FIELD —
- * see `MaskedAvatar` and `MaskedCard`. ⚠ The link goes STRAIGHT to the preview,
- * not through `/login`: that round trip was `/explore`'s old behaviour and the
- * whole point of WS-A is that the destination is now safe to open.
- */
+/** ONE MASKED CARD. THE AVATAR IS A DRAWING AND THE NAME IS NOT A FIELD — */
 function TalentCard({ c }: { c: MaskedCard }) {
   return (
     <article className="flex flex-col gap-2.5 rounded-[10px] border border-line p-[18px] transition-colors hover:border-magenta dark:border-white/15">
       <div className="flex items-center gap-3">
-        {/* ⚠⚠ THE BLURRED PHOTO (`E767`) — bytes, not a URL. See `MaskedCard.photoBlur`. */}
+        {/* THE BLURRED PHOTO (`E767`) — bytes, not a URL. See `MaskedCard.photoBlur`. */}
         <MaskedAvatar blur={c.photoBlur} />
         <div className="min-w-0">
-          {/* ⚠ The NAME, blurred and constant — the card had no name line at all,
-              so it did not show that there was one to see after joining. */}
+          {/* The NAME, blurred and constant — the card had no name line at all */}
           <BlurredField label="Name hidden — join free to see it" className="text-[13px] font-semibold">
             {PLACEHOLDER.name}
           </BlurredField>
@@ -180,8 +157,7 @@ function TalentCard({ c }: { c: MaskedCard }) {
               .join(" · ")}
           </p>
         </div>
-        {/* ⚠ The score is the one figure on the card, and it is EXACT — computed
-            for this page, never the stale `completeness` column. */}
+        {/* The score is the one figure on the card, and it is EXACT — computed */}
         <div className="ml-auto shrink-0 text-center">
           <b className="block text-[18px] font-bold leading-none">{c.score}</b>
           <span className="text-[10px] tracking-[0.06em] text-ink-3">SCORE</span>
@@ -196,10 +172,7 @@ function TalentCard({ c }: { c: MaskedCard }) {
         </div>
       )}
 
-      {/* ⚠⚠ A FACT ROW THAT ONLY PRINTS FACTS IT HAS. A `0` certification count
-          is a real measured zero and prints as `0`; an EMPTY industry list is
-          absent rather than rendering a dash, because 18 of 21 projects have no
-          industry and a grid of dashes reads as a broken page. */}
+      {/* A FACT ROW THAT ONLY PRINTS FACTS IT HAS. A `0` certification count */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-line pt-2.5 text-[12.5px] text-ink-2 dark:border-white/15">
         <span>
           Certifications <b className="font-semibold text-ink dark:text-white">{c.certificationCount}</b>
@@ -225,12 +198,7 @@ function TalentCard({ c }: { c: MaskedCard }) {
   );
 }
 
-/**
- * ⚠⚠ WHAT A THROTTLED CALLER SEES. It is a human-readable pause, not an error
- * page: the most likely person to hit this is a real buyer clicking fast.
- * ⚠ No figure, no countdown — a precise window tells a scraper exactly how long
- * to sleep.
- */
+/** WHAT A THROTTLED CALLER SEES. It is a human-readable pause, not an error */
 function TooFast() {
   return (
     <div className="mx-auto max-w-[620px] py-12 text-center">

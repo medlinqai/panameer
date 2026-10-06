@@ -44,10 +44,7 @@ export function SpineSteps() {
           <div className="wrap">
             <div className="eyebrow">{s.eyebrow}</div>
             <h2 className="spn-h2">{s.title}</h2>
-            {/*
-              The slot. Empty string = nothing rendered, not an empty box — a
-              framed blank would read as a broken image.
-            */}
+            {/* The slot. Empty string = nothing rendered, not an empty box — a */}
             <StepGraphic graphic={s.graphic} />
           </div>
         </section>

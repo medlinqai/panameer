@@ -52,9 +52,6 @@ export function resolveProvider(): {
   const explicit = env.RESUME_PARSER_PROVIDER;
 
   // The configured parser wins when it is COMPLETE. A half-set trio (key but no
-  // model) silently falling back to the expensive incumbent is exactly the kind
-  // of quiet regression this workstream exists to remove, so it is reported by
-  // `parserConfigProblem()` instead.
   if (env.RESUME_PARSER_API_KEY && env.RESUME_PARSER_MODEL) {
     const provider: ProviderName = explicit ?? "openai";
     return {
@@ -110,30 +107,14 @@ function priceFor(inTok: number, outTok: number): number | null {
   return (inTok / 1_000_000) * pin + (outTok / 1_000_000) * pout;
 }
 
-/**
- * Run one extraction.
- *
- * `system` and `schema` are the STABLE prefix; `text` is the only per-call
- * input. Never throws — every failure comes back as `{ ok: false }`, because
- * the caller's fallback is a heuristic result the user already has.
- */
+/** Run one extraction. */
 export async function callExtractionModel({
   system,
   schema,
   schemaName,
   text,
   maxOutputTokens = 16_000,
-  /*
-    THE USER-MESSAGE WRAPPER, parameterised for the job-posting importer
-    (brief_cwr_specializations_and_import WS-B). It was hardcoded to "Extract
-    this résumé" inside `<resume>` tags, which is right for the one caller that
-    existed and actively misleading for a caller handing the model a job post.
-
-    THE DEFAULTS REPRODUCE THE OLD STRING EXACTLY, byte for byte. The résumé
-    prompt is documented as fragile — change only with a before/after harness
-    run — so the résumé path must not be able to tell this refactor happened.
-    `check:resume` and `check:ai-extract` are the proof.
-  */
+  // THE USER-MESSAGE WRAPPER, parameterised for the job-posting importer
   instruction = "Extract this résumé.",
   tag = "resume",
   toolDescription = "Record the structured contents of this résumé.",
@@ -148,49 +129,9 @@ export async function callExtractionModel({
   instruction?: string;
   tag?: string;
   toolDescription?: string;
-  /*
-    ── ⚠⚠ CONSTRAINED DECODING, OPTED INTO PER CALL SITE (`P1-A1.4-E414`) ────
-
-    ⚠⚠ THE DEFAULT IS `false` AND THAT IS THE WHOLE DESIGN, not caution.
-    `record_resume` — the legacy single-call schema in `ai-extract.ts` — shares
-    this function and is NOT strict-ready: `E413`'s audit counted **10
-    blockers**, five objects with no `additionalProperties: false` and five
-    `required` lists omitting ~22 already-nullable properties. Under
-    `strict: true` OpenAI REJECTS a non-conforming schema outright, so a
-    blanket flip would take that path from "sometimes the wrong shape" to
-    "always a 400". ⚠ OPT IN; NEVER OPT OUT.
-
-    ⚠ WHAT IT ACTUALLY CHANGES. With `strict: false` the JSON schema is
-    transmitted as part of the PROMPT — the model reads it and may answer in
-    another shape. With `strict: true` the vendor constrains the sampler: a
-    token that would depart from the schema cannot be emitted at all.
-    ⚠ `ai-extract.ts:66` said this in writing long before it was acted on —
-    *"the json_schema is a request, not a contract"* — and `:371` named
-    `strict: true` as *"the durable fix … flagged in the report."* ⚠ THIS IS
-    THAT FLAG COMING DUE.
-
-    ⚠ THE SCHEMA MUST EARN IT. Every object needs `additionalProperties:
-    false` and every property named in `required`, with optionality expressed
-    as `type: ["string","null"]`. The six multi-pass schemas already satisfy
-    this because `sub()` builds them that way; `check:strict-schema` §3
-    asserts it for every schema sent with this flag, so a field added next
-    month fails a gate rather than a live call.
-
-    ⚠⚠ AND IT CONSTRAINS SHAPE, NOT CONTENT — see the note at the six call
-    sites in `ai-passes.ts`. It does not make the parser correct; it makes the
-    answer well-formed.
-  */
+  // CONSTRAINED DECODING, OPTED INTO PER CALL SITE
   strict?: boolean;
-  /*
-    ── ⚠⚠ WHAT THE ROUTE HAS LEFT, NOT WHAT THIS CALL WOULD LIKE (`E415` WS-2) ──
-
-    ⚠ OMITTED MEANS "no route around me" — the default `MODEL_TIMEOUT_MS` is
-    used, which is what a script or a gate wants. ⚠ THE IMPORT ROUTE ALWAYS
-    PASSES IT, computed by `callTimeoutMs()` from the moment the request began,
-    so a call late in the chain is granted only the time that actually remains.
-    ⚠⚠ THE INVARIANT HOLDS BY CONSTRUCTION: the value can never exceed
-    `READ_BUDGET_MS`, which is strictly smaller than the route's `maxDuration`.
-  */
+  // WHAT THE ROUTE HAS LEFT, NOT WHAT THIS CALL WOULD LIKE ( WS-2)
   timeoutMs?: number;
 }): Promise<ModelCall> {
   const cfg = resolveProvider();
@@ -199,8 +140,7 @@ export async function callExtractionModel({
   }
 
   const started = Date.now();
-  /* ⚠ ONE RESOLUTION FOR THE WHOLE CALL, so the message below quotes the number
-     that was actually enforced rather than the constant. */
+  // ONE RESOLUTION FOR THE WHOLE CALL, so the message below quotes the number
   const budgetMs = timeoutMs ?? MODEL_TIMEOUT_MS;
   const userContent = `${instruction}\n\n<${tag}>\n${text.slice(0, 120_000)}\n</${tag}>`;
 
@@ -262,7 +202,7 @@ export async function callExtractionModel({
           outputTokens: outTok,
           cachedInputTokens: u.cache_read_input_tokens ?? 0,
           costUsd: priceFor(inTok, outTok),
-          /* ⚠ Anthropic calls it `stop_reason`; a clean finish is `end_turn`. */
+          /* Anthropic calls it `stop_reason`; a clean finish is `end_turn`. */
           finishReason: response.stop_reason ?? null,
           /* Anthropic does not report a separate reasoning count on this path. */
           reasoningTokens: 0,
@@ -271,12 +211,7 @@ export async function callExtractionModel({
       };
     }
 
-    /*
-      OPENAI-COMPATIBLE. Raw fetch rather than a vendor SDK: this endpoint shape
-      is implemented by several providers, and pulling in one vendor's client to
-      talk to another vendor's compatibility layer is how you end up
-      accidentally hardcoded to the SDK's assumptions.
-    */
+    // OPENAI-COMPATIBLE. Raw fetch rather than a vendor SDK: this endpoint shape
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -286,40 +221,10 @@ export async function callExtractionModel({
       body: JSON.stringify({
         model: cfg.model,
         max_completion_tokens: maxOutputTokens,
-        /*
-          REASONING EFFORT — the fix for the AI pass "failing" (WS-4).
-
-          `max_completion_tokens` on a reasoning model is a budget for REASONING
-          PLUS the answer, not for the answer. gpt-5-nano at the vendor default
-          (medium) spent 6,656 of its tokens thinking about Scott's résumé and
-          54.8s doing it; on a longer document the thinking consumed the whole
-          16k, the model emitted nothing, `finish_reason` came back "length" —
-          and the branch below told him HIS DOCUMENT was too long. It was not.
-          The reader had talked itself out of room.
-
-          Measured on Scott's résumé, same request otherwise:
-
-              default (medium)   54.8s   6,656 reasoning tokens   2,276 chars out
-              low                16.0s   1,472 reasoning tokens   2,109 chars out
-              minimal             1.3s       0 reasoning tokens      81 chars out
-
-          `low` is 3.4x faster for the same answer. `minimal` is not a candidate
-          at any speed — 81 characters is the model declining to do the job.
-
-          SENT ONLY TO MODELS THAT UNDERSTAND IT. This endpoint shape is spoken
-          by several vendors and older chat models 400 on an unknown parameter,
-          so a name test gates it rather than sending it blindly.
-        */
+        // REASONING EFFORT — the fix for the AI pass "failing" (WS-4).
         ...(isReasoningModel(cfg.model)
           ? {
-              /*
-                The literal fallback is not redundant — same reason the model id
-                two blocks up carries one. `env.ts` degrades to raw process.env
-                if ANY variable fails validation, and that throws away every
-                schema default including this one. Without the `||`, one
-                unrelated bad env var silently restores the slow behaviour this
-                whole block exists to fix.
-              */
+              // The literal fallback is not redundant — same reason the model id
               reasoning_effort: env.RESUME_PARSER_REASONING_EFFORT || "low",
             }
           : {}),
@@ -327,12 +232,6 @@ export async function callExtractionModel({
           { role: "system", content: system },
           { role: "user", content: userContent },
         ],
-        /* ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E414` WS-1) — this was a
-           hardcoded `strict: false`, which made the schema a suggestion on every
-           path in the product:
-
-               json_schema: { name: schemaName, strict: false, schema },
-        */
         response_format: {
           type: "json_schema",
           json_schema: {
@@ -342,12 +241,7 @@ export async function callExtractionModel({
           },
         },
       }),
-      /*
-        A DEADLINE, so a slow call fails as a sentence rather than as a dead
-        request. Without it the only thing that ever stopped this call was the
-        hosting platform's function timeout, which arrives as a 504 with no body
-        — nothing for the UI to show and nothing in the logs to read.
-      */
+      // A DEADLINE, so a slow call fails as a sentence rather than as a dead
       signal: AbortSignal.timeout(budgetMs),
     });
 
@@ -356,7 +250,7 @@ export async function callExtractionModel({
       return {
         ok: false,
         reason: "error",
-        /* ⚠ `E519` — redacted: the body can quote the key (see `redactSecrets`). */
+        /* `E519` — redacted: the body can quote the key (see `redactSecrets`). */
         message: redactSecrets(`The model endpoint returned ${res.status}. ${body.slice(0, 300)}`),
       };
     }
@@ -372,18 +266,7 @@ export async function callExtractionModel({
     };
     const choice = body.choices?.[0];
     if (choice?.finish_reason === "length") {
-      /*
-        WHOSE FAULT WAS THE TRUNCATION (WS-4).
-
-        This branch had one message and it blamed the document. On a reasoning
-        model that is usually wrong: the budget is shared with the model's own
-        thinking, so a 12-page résumé and a 2-page one truncate for completely
-        different reasons and the 2-page case reads as an insult. Scott got
-        exactly that — "your document is long enough that the reader ran out of
-        room" on an eleven-thousand-character CV.
-
-        The usage block says which happened, so it is asked rather than assumed.
-      */
+      // WHOSE FAULT WAS THE TRUNCATION (WS-4).
       const reasoningTokens =
         body.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
       const spentThinking = reasoningTokens > maxOutputTokens / 2;
@@ -399,34 +282,7 @@ export async function callExtractionModel({
           : "Your document is long enough that the reader ran out of room. Try again, or add your work history manually.",
       };
     }
-    /*
-      ── ⚠⚠ A REFUSAL IS NOT AN EMPTY RESPONSE (`P1-A1.4-E414` WS-2) ──────────
-
-      ⚠ SUPERSEDED, quoted not deleted — the whole branch that stood here:
-
-          const content = choice?.message?.content;
-          if (!content) {
-            return { ok: false, reason: "error", message: "The model returned no content." };
-          }
-
-      ⚠⚠ `refusal` APPEARED NOWHERE IN THIS FILE. Under structured outputs
-      OpenAI may answer with `message.refusal` set and `message.content` NULL —
-      so a refusal fell into the branch above and surfaced as *"The model
-      returned no content."*: indistinguishable from a timeout, a network fault
-      or an empty body, and a log line that sends the next reader hunting the
-      wrong thing.
-
-      ⚠⚠ WS-1 IS WHAT MAKES THIS REACHABLE. The refusal field is part of the
-      structured-outputs contract, so enabling `strict` is what creates the
-      exposure — which is why `E414` ships the two together and why this is not
-      a pre-existing bug that could be left for later.
-
-      ⚠ IT GETS ITS OWN `reason`, NOT `"error"`. A refusal is a DECISION by the
-      model about the content it was given; an error is a failure of the
-      machinery. Collapsing them means nobody can ever count how often the first
-      happens. ⚠ The message says who decided and that nothing was changed —
-      the person's next move is different in each case.
-    */
+    // A REFUSAL IS NOT AN EMPTY RESPONSE WS-2)
     const refusal = (choice?.message as { refusal?: string } | undefined)?.refusal;
     if (refusal) {
       console.warn(`[resume] the model REFUSED: ${refusal.slice(0, 200)}`);
@@ -467,8 +323,7 @@ export async function callExtractionModel({
         outputTokens: outTok,
         cachedInputTokens: body.usage?.prompt_tokens_details?.cached_tokens ?? 0,
         costUsd: priceFor(inTok, outTok),
-        /* ⚠ `stop` here means "the model decided it was done" — which is exactly
-           what a model that SUMMARISED reports. See `ModelUsage`. */
+        // what a model that SUMMARISED reports. See `ModelUsage`.
         finishReason: choice?.finish_reason ?? null,
         reasoningTokens: body.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
       },
@@ -476,22 +331,11 @@ export async function callExtractionModel({
     };
   } catch (e) {
     console.error("[resume] model call failed:", e);
-    /*
-      `AbortSignal.timeout` rejects with a TimeoutError DOMException whose own
-      message is "The operation was aborted due to timeout" — accurate, and
-      meaningless to a provider watching a spinner. Named explicitly so the
-      deadline explains itself.
-    */
+    // message is "The operation was aborted due to timeout" — accurate, and
     if (e instanceof Error && e.name === "TimeoutError") {
       return {
         ok: false,
-        /*
-          ⚠⚠ `deadline`, NOT `error` (`P2-J1.4-E546`). ⚠ SUPERSEDED, quoted not
-          deleted (`E164`): `reason: "error",`. The clock stopped this call, not
-          the model — the same cause `runPass` already reports as `deadline` when
-          the ROUTE runs out. ⚠ Only this branch changes: a real provider failure
-          below still reports `error`.
-        */
+        // deleted : `reason: "error",`. The clock stopped this call, not
         reason: "deadline",
         message: `The reader took longer than ${Math.round(budgetMs / 1000)}s and was stopped. Nothing was changed — try again, or add your work history manually.`,
       };

@@ -83,10 +83,7 @@ export function PathSpine({ path }: { path: AppPathView }) {
                         <span className="text-[10.5px] text-ink-2">
                           {s.lessons.length} lesson{s.lessons.length === 1 ? "" : "s"}
                         </span>
-                        {/*
-                          ⚠ A STATUS, NEVER A PROGRESS BAR. Sections are not
-                          tracked; this is a count of the rows below it.
-                        */}
+                        {/* A STATUS, NEVER A PROGRESS BAR. Sections are not */}
                         <span className="ml-auto text-[10.5px] text-ink-2">
                           {s.completed === 0
                             ? "Not started"
@@ -134,22 +131,13 @@ export function PathSpine({ path }: { path: AppPathView }) {
                             >
                               {l.title}
                             </p>
-                            {/*
-                              ⚠ VERBATIM AS STORED, RIGHT-ALIGNED, OMITTED WHEN
-                              NULL. 290 of 522 rows are null and the non-null ones
-                              include "Intro" and "NA" — showing one row's own
-                              string is honest, adding them up is not.
-                            */}
+                            {/* VERBATIM AS STORED, RIGHT-ALIGNED, OMITTED WHEN */}
                             {l.runTime && (
                               <span className="shrink-0 text-[11px] text-ink-2 tabular-nums">
                                 {l.runTime}
                               </span>
                             )}
-                            {/* ⚠⚠⚠ `P2-A4-E613` — THE STATE, NOT A PROMISE.
-                                *"Soon"* said WHEN, and nothing in the schema
-                                holds a publish date. ⚠ SUPERSEDED, quoted not
-                                deleted (`E164`):
-                                //   Soon */}
+                            {/* — THE STATE, NOT A PROMISE. */}
                             {!l.playable && (
                               <span className="shrink-0 rounded-full bg-bg-soft px-2 py-[2px] text-[9.5px] font-semibold text-ink-2">
                                 {l.stateLabel}
@@ -195,15 +183,7 @@ function CourseHead({
   const body = (
     <>
       <span className="min-w-0 flex-1 text-left">
-        {/*
-          ⚠ THREE COURSES IN THE CATALOG HAVE AN EMPTY TITLE — the ones on
-          `end-user-beginners`, `end-user-erp` and `end-user-implementers`, where
-          the XLS collapsed "Learning Path = Course" and left the course name
-          blank. Rendering the element anyway produced an empty bold line above
-          the counts. The row is omitted rather than back-filled with the path's
-          title, which would assert a name the catalog does not have. Flagged as a
-          fourth catalog data bug.
-        */}
+        {/* THREE COURSES IN THE CATALOG HAVE AN EMPTY TITLE — the ones on */}
         {course.title.trim() && (
           <span className="block font-display text-[15.5px] font-bold leading-[1.25]">
             {course.title}

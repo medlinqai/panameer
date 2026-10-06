@@ -127,8 +127,7 @@ export async function matchProvidersForSkills(input: {
         firstName: p.person.first_name,
         lastName: p.person.last_name,
         name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-        /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
+        // THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
         headline: p.person.title ?? "",
         photoUrl: p.person.photo_url,
         validated: p.validation_status === "VALIDATED",
@@ -146,35 +145,10 @@ export async function matchProvidersForSkills(input: {
         suiteMix: p.suiteProfiles.map((s) => ({ suite: s.suite, pct: s.weight_pct })),
       };
     })
-    /*
-      ⚠⚠ `P2-J1.4-E517` — A PROVIDER WHOSE MATCHING SKILLS ARE ALL HIDDEN DROPS
-      OUT. The `where` above guarantees at least one of the request's skills is
-      HELD; the role filter can take that to zero, and a row with no shown
-      overlap would otherwise be ranked at weight 0 with an empty skill list.
-      ⚠ Scott, 2026-09-17: *"narrowing your roles removes you from those searches.
-      That is what narrowing MEANS."*
-    */
+    // — A PROVIDER WHOSE MATCHING SKILLS ARE ALL HIDDEN DROPS
     .filter((p) => p.relevantSkills > 0);
 
-  /*
-    ── ⚠⚠⚠ GROWTH BREAKS THE TIE (`P2-A2-E600` WS-E) ─────────────────────────
-
-    ⚠ SCOTT, 2026-09-22: *"it is mostly marketing… but it is important to give
-    the younger users a fighting chance to rank."*
-    ⚠⚠ **MATCH STAYS STRICTLY FIRST.** A better-matched provider is never pushed
-    below a worse one — growth replaces the NAME tie-break and nothing else, so
-    it can only order people the ranking already calls equal.
-    ⚠⚠⚠ THAT IS WHAT MAKES THE `Rank Higher in Search Results` CARD TRUE WITHOUT
-    MAKING IT A LEVER: inviting colleagues cannot buy relevance, only the
-    alphabet.
-
-    ⚠ ALL-TIME, NOT THIS MONTH. A buyer's shortlist should not reshuffle on the
-    1st, and a provider who did the work last quarter has still done it.
-    ⚠⚠ ONE QUERY PER CANDIDATE IS ACCEPTED HERE and nowhere else: the list is
-    already bounded at 100 by the `take` above and typically ~24 after the
-    filter. ⚠ If that ceiling ever rises, this becomes one grouped query —
-    recorded so the next reader does not have to rediscover it.
-  */
+  // GROWTH BREAKS THE TIE WS-E)
   const growth = new Map<string, number>(
     await Promise.all(
       candidates.map(
@@ -184,29 +158,10 @@ export async function matchProvidersForSkills(input: {
     )
   );
 
-  /*
-    Weighted depth first; overlap breaks ties. Overlap survives as the
-    tie-break rather than the ranking because two providers of equal depth,
-    one covering four of the asked-for skills and one covering two, are
-    genuinely ordered that way.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — name was the last tie-break:
-    //   b.matchWeight - a.matchWeight ||
-    //   b.relevantSkills - a.relevantSkills ||
-    //   a.name.localeCompare(b.name)
-    ⚠⚠ NAME IS STILL THE FINAL TERM, below growth — two providers with equal
-    match, equal overlap and equal growth must still have a STABLE order, or
-    the list reshuffles between renders.
-  */
+  // Weighted depth first; overlap breaks ties. Overlap survives as the
   const providers = rankMatchedProviders(candidates, growth)
     .slice(0, 24)
-    /*
-      ⚠⚠ `personId` IS STRIPPED. It was carried only to key the growth lookup;
-      `MatchedProvider` never had it, and a buyer's payload does not gain a
-      person id it has no use for.
-      ⚠ WRITTEN AS A `delete` ON A COPY rather than a destructured rest, because
-      the rest form leaves an unused binding and this repo's lint counts those —
-      the rule is 0 NEW against the baseline.
-    */
+    // person id it has no use for.
     .map((c) => {
       const copy: Omit<typeof c, "personId"> & { personId?: string } = { ...c };
       delete copy.personId;
@@ -216,20 +171,7 @@ export async function matchProvidersForSkills(input: {
   return { skillIds, providers };
 }
 
-/**
- * Providers matched to one Work Request — **the original entry point, unchanged in
- * behaviour** (`P2-A5-E709` WS-A made it a wrapper).
- *
- * ⚠⚠ **THE OWNERSHIP CHECK IS THE WHOLE REASON THIS FUNCTION STILL EXISTS
- * SEPARATELY.** `getWorkRequest` enforces ownership and tenancy, and it throws
- * **before any provider is read** — so a request the viewer does not own never
- * reaches the ranker. ⚠ Keeping that in the wrapper rather than the core is what
- * lets the core be addressed by a skill set without inventing a fake request.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the body moved, it did not change:
- * //   const anySuite = !wr.pillarId;
- * //   const skillIds = await widenThroughBridge(wr.skillIds, anySuite);
- * //   ...everything through rankMatchedProviders, now in matchProvidersForSkills
- */
+/** Providers matched to one Work Request — the original entry point, unchanged in */
 export async function matchProvidersFor(
   viewer: Viewer,
   workRequestId: string

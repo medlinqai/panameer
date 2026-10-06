@@ -113,53 +113,16 @@ export function parseMonthYear(raw: string): string | null {
   return null;
 }
 
-/**
- * ⚠ `P2-J1.4-E549` — the words a document uses for an ongoing role. The same
- * vocabulary `findDateRange` has always matched, now shared with the AI mapper.
- */
+/** — the words a document uses for an ongoing role. The same */
 export function isCurrentWord(raw: string): boolean {
   return /^(present|current|currently|now|to date|date|ongoing|today)\.?$/i.test(raw.trim());
 }
 
-/**
- * Find a "Jan 2019 – Present" style range anywhere in a line.
- *
- * TRUNCATION-SAFETY (brief_P pitfall, hardened in brief_Q). The matched span is
- * DELETED from the line so the remainder can be read as title/employer/degree —
- * which means an over-greedy match silently corrupts neighbouring text. Two
- * guards, both load-bearing:
- *   1. the optional month prefix enumerates real month names, so
- *      "…Information Systems  2007 - 2011" can't capture "Systems 2007";
- *   2. `\b` boundaries stop a year matching inside a longer token (an employee
- *      id like "X2019-2021" is not a date range).
- * `stripRange` then repairs the seam left behind, rather than leaving a
- * double space or a dangling separator that would look like a missing field.
- */
+/** Find a "Jan 2019 – Present" style range anywhere in a line. */
 function findDateRange(
   line: string
 ): { start: string | null; end: string | null; isCurrent: boolean; matched: string } | null {
-  /*
-    ── ⚠⚠ NUMERIC `MM/YYYY` IS A DATE TOO (`P1-A1.4-E407` WS-4) ───────────────
-
-    ⚠ SUPERSEDED, quoted not deleted — the token this widens:
-        `((?:${MONTH_RE})?(?:19|20)\d{2})`
-    It accepted "Jan 2019" and a bare "2019" and NOTHING ELSE, so a range written
-    `(06/2025 – 10/2026)` did not register as a date at all.
-
-    ⚠⚠ THAT IS WHY ONE DESCRIPTION SWALLOWED THE REST OF SCOTT'S CV. His client
-    engagements are all written `Client — Engagement (MM/YYYY – MM/YYYY)`. With
-    no range detected, `range && !isBullet` is false, `flush()` never runs, and
-    every one of those lines appends to the employer still in hand. MEASURED: the
-    Medlinq.ai description reached **5,815 characters against a median of 359 —
-    16.2x** — and it contained fourteen engagements that should have been their
-    own entries. The 8 experiences that DID parse are exactly the ones whose
-    dates are written as bare years.
-
-    ⚠ `parseMonthYear` ALREADY UNDERSTOOD `MM/YYYY` (see above) — only the
-    DETECTOR did not, so this is one alternation, not a new date parser.
-    ⚠ THE DAY IS NOT ACCEPTED (`06/01/2025`): a third number changes what the
-    fields mean and this fix has no evidence about that form.
-  */
+  // NUMERIC `MM/YYYY` IS A DATE TOO WS-4)
   const YEAR_TOKEN = `(?:(?:${MONTH_RE})|(?:\\d{1,2}\\/))?(?:19|20)\\d{2}`;
   const re = new RegExp(
     `\\b(${YEAR_TOKEN})\\s*(?:[–—\\-]{1,2}|to|until|through)\\s*(${YEAR_TOKEN}|present|current|now|date)\\b`,
@@ -177,10 +140,7 @@ function findDateRange(
   return { start, end, isCurrent, matched: m[0] };
 }
 
-/**
- * Remove a matched date range and tidy the seam: collapse doubled spaces and
- * drop separators/parentheses that only existed to fence the dates off.
- */
+/** Remove a matched date range and tidy the seam: collapse doubled spaces and */
 function stripRange(line: string, matched: string): string {
   return line
     .replace(matched, " ")
@@ -191,12 +151,7 @@ function stripRange(line: string, matched: string): string {
     .trim();
 }
 
-/**
- * Infer the provider's experience level (E003) from the résumé's career span.
- * Years are counted from the EARLIEST start date to the latest end (or today
- * for a current role). Returns null when there aren't enough dates to be
- * confident — a wrong guess is worse than asking.
- */
+/** Infer the provider's experience level (E003) from the résumé's career span. */
 export function inferExperienceLevel(
   experiences: ParsedExperience[]
 ): { level: "BEGINNER" | "MID_CAREER" | "EXPERT"; years: number } | null {
@@ -208,10 +163,6 @@ export function inferExperienceLevel(
 
   const firstStart = new Date(starts[0]);
   const ends = experiences.map((e) => e.endDate).filter((d): d is string => !!d);
-  /* ⚠ `E549` — affirmative, not inferred from a missing end. SUPERSEDED, quoted
-     (`E164`): `experiences.some((e) => e.startDate && !e.endDate)`. On this
-     parser the two agree (a range without a readable end is not a range), so
-     the level is unchanged; the rule is what changed. */
   const hasCurrentRole = experiences.some((e) => e.startDate && e.isCurrent === true);
   const lastEnd = hasCurrentRole
     ? new Date()
@@ -245,19 +196,8 @@ function classify(line: string): Section | null {
   return null;
 }
 
-/**
- * Parse extracted résumé text into profile data.
- * `text` is the output of `extractText`.
- */
-/**
- * Split a two-column line back into two logical lines (PJv2 WS2 / E055).
- *
- * PDF text extraction reads across the page, so a two-column CV emits
- * "SPECIALIZATIONS        Led the Oracle Cloud rollout" as ONE line — the
- * sidebar heading and the body text concatenated, which is why headings stopped
- * being recognised and content landed in the wrong section. A run of 3+ spaces
- * is the reliable signature of that column gutter.
- */
+/** Parse extracted résumé text into profile data. */
+/** Split a two-column line back into two logical lines (PJv2 WS2 / E055). */
 function delinearize(line: string): string[] {
   const parts = line.split(/\s{3,}/).map((x) => x.trim()).filter(Boolean);
   // Only treat it as two columns when BOTH sides carry real content; a single
@@ -269,18 +209,7 @@ function delinearize(line: string): string[] {
   return parts;
 }
 
-/**
- * TOKEN SANITY (PJv2 WS2, exported in WS-B).
- *
- * Splitting a skills block on commas is right for "Requisitions, Sourcing,
- * Payables" and catastrophic for a prose paragraph that happens to contain
- * commas — that is where "252 skills" came from. A skill is a SHORT NOUN PHRASE,
- * so anything sentence-shaped is rejected.
- *
- * Module-level and exported because WS-B's suggest-and-confirm list has to apply
- * the SAME test: a term the parser would have refused as a skill must not come
- * back as a suggestion the provider is invited to confirm. One rule, one place.
- */
+/** TOKEN SANITY (PJv2 WS2, exported in WS-B). */
 export function isPlausibleSkillTerm(t: string): boolean {
   if (t.length < 2 || t.length > 60) return false;
   if (!/[a-z]/i.test(t)) return false; // pure numbers / punctuation
@@ -300,18 +229,7 @@ export function isPlausibleSkillTerm(t: string): boolean {
 export const STOPWORD_START =
   /^(and|or|but|with|within|across|for|from|into|onto|to|of|in|on|at|by|as|the|a|an|plus|including|many|several|various|over|about)\b/i;
 
-/**
- * ── ⚠ TELLING A COMPANY FROM A ROLE (`P1-A1.4-E407` WS-3) ───────────────────
- *
- * Used ONLY to decide which half of a `X — Y` heading is which. ⚠ NEITHER IS A
- * CLASSIFIER: both are deliberately narrow, and where they disagree or say
- * nothing the parser keeps the order it already had.
- *
- * ⚠ THE CORPORATE-SUFFIX LIST IS THE ONE ALREADY IN THIS FILE (`looksLikeCompany`
- * on the two-line header path), plus the dotted internet forms a modern company
- * name uses — `Medlinq.ai` carries no suffix at all and is still obviously a
- * company.
- */
+/** TELLING A COMPANY FROM A ROLE WS-3) */
 function looksLikeCompanyName(s: string): boolean {
   return (
     /\b(llc|inc\.?|ltd\.?|llp|plc|gmbh|corp(oration)?|pty|group|technologies|solutions|consulting|systems|services|partners|associates|holdings|labs|studios|university|school|hospital)\b/i.test(
@@ -320,11 +238,7 @@ function looksLikeCompanyName(s: string): boolean {
   );
 }
 
-/**
- * ⚠ ROLE NOUNS, NOT VERBS. A title is named by what the person IS — the words
- * below are the ones that actually appear in the heading half of a CV line.
- * ⚠ WORD-BOUNDED: "Designer" must not match inside a company called "Designs".
- */
+/** ROLE NOUNS, NOT VERBS. A title is named by what the person IS — the words */
 function looksLikeRoleTitle(s: string): boolean {
   return /\b(founder|co-?founder|owner|principal|partner|consultant|manager|director|engineer|developer|designer|builder|architect|analyst|specialist|administrator|lead|head|chief|officer|president|vp|vice\s+president|associate|advisor|adviser|strategist|scientist|coordinator|supervisor|intern|contractor|freelancer|writer|creator|instructor|trainer|executive)\b/i.test(
     s
@@ -362,11 +276,7 @@ export function parseResume(text: string): ParsedResume {
     );
   }
 
-  // --- Headline ------------------------------------------------------------
-  // The header block is usually: NAME, then the professional title, then
-  // contact lines. We want the TITLE, so drop contact lines and prefer the
-  // second remaining line — taking the first would set the headline to the
-  // person's own name.
+  // Headline ------------------------------------------------------------
   const headerCandidates = buckets.header
     .map((l) => l.trim())
     .filter(
@@ -391,66 +301,15 @@ export function parseResume(text: string): ParsedResume {
   const flush = () => {
     if (pending && (pending.employer || pending.roleTitle)) {
       // A role with no employer still carries value; label it rather than drop.
-      /* ⚠ THE VALUE IS SHOWN TO A PERSON after an import, which is why this one
-         line is in scope while the rest of this file's `employer` naming — field
-         keys and internals bound to `model Employer` — is not (WS-3). */
-      /*
-        ── ⚠⚠ THE SENTINEL WAS STORED, NOT JUST SHOWN (`P1-A1.4-E415` WS-4) ────
-
-        ⚠ SUPERSEDED, quoted not deleted:
-
-            if (!pending.employer) pending.employer = "(Company not detected)";
-
-        ⚠⚠ NOTHING STRIPPED IT BEFORE STORAGE. `import.ts` already writes
-        `name: e.employer ? … : null` — the null branch simply could never be
-        reached, because this line had filled the field first. So a heuristic
-        import put the literal `(Company not detected)` into `Employer.name`,
-        and the provider's profile read it back as their company.
-
-        ⚠ `E373` MADE `Employer.name` NULLABLE PRECISELY SO THIS STRING WOULD
-        NOT EXIST. SCOTT: *"I was a contractor for 20+ years… Legally I HAVE to
-        have a company… so no one tends to mention it."* ⚠ `null` is the honest
-        value and `employerDisplayName` renders it as **Independent** — one
-        word, in one place, already used by every other surface.
-
-        ⚠⚠ AND THE COUNT SURVIVES THE NULL, which is the whole difficulty. The
-        *"N companies imported with a missing company or job title"* gap is what
-        tells somebody to fill it in, so it could not simply go with the
-        sentinel. It now counts the ABSENCE instead of a magic string — see the
-        `unnamed` filter below. ⚠ THE ROLE-TITLE SENTINEL IS UNTOUCHED: it is a
-        different column (`role_title`), it is not what `E373` made nullable,
-        and `check:field-quality`'s write/compare pairing still holds for it.
-
-        ⚠ THE HEURISTIC PATH RUNS WHEN THE MODEL IS UNAVAILABLE OR OUT OF TIME —
-        which `E415`'s own deadline makes considerably more common. That is why
-        this sits in this brief and not a later one.
-      */
+      // THE VALUE IS SHOWN TO A PERSON after an import, which is why this one
+      // THE SENTINEL WAS STORED, NOT JUST SHOWN WS-4)
       if (!pending.roleTitle) pending.roleTitle = "(Role not detected)";
       experiences.push(pending);
     }
     pending = null;
   };
 
-  /*
-    E122 — TWO-LINE BLOCKS. Eddie Cairnie's résumé (and this is a common
-    consulting layout) writes each job as
-
-        OraCloud Plus, LLC, Management Consulting, Miami Florida   ← company
-        Director 2018-Present                                       ← role + dates
-        Analyze, design, deploy and support …                       ← summary
-        Key Contributions:                                          ← label
-        • …                                                         ← bullets
-
-    The old loop only ever read the employer out of the SAME line as the dates,
-    so every one of these roles imported as "(Employer not detected)" — the
-    company was one line up, and once a role was pending, the next company line
-    was swallowed as description.
-
-    The fix is a one-line LOOKAHEAD: an undated, unbulleted line whose next
-    meaningful line carries dates is a company header, not prose. That is what
-    distinguishes "Citigroup, Expense Management Group, New York" from a
-    sentence about what someone did there.
-  */
+  // E122 — TWO-LINE BLOCKS. Eddie Cairnie's résumé (and this is a common
   const expLines = buckets.experience;
   /** The next line that is not blank — what the lookahead actually reads. */
   const nextMeaningful = (from: number): string | null => {
@@ -460,14 +319,7 @@ export function parseResume(text: string): ParsedResume {
     return null;
   };
 
-  /**
-   * "OraCloud Plus, LLC, Management Consulting, Miami Florida" → the company.
-   *
-   * These headers are `Company, [suffix,] descriptor, location`, so the first
-   * comma segment is the name — plus a corporate suffix when the second segment
-   * is one, because "OraCloud Plus, LLC" is the company and "OraCloud Plus" is a
-   * truncation of it.
-   */
+  /** These headers are `Company, [suffix,] descriptor, location`, so the first */
   const companyFromHeader = (line: string): string => {
     const parts = line.split(",").map((x) => x.trim()).filter(Boolean);
     if (parts.length === 0) return line.trim();
@@ -494,14 +346,7 @@ export function parseResume(text: string): ParsedResume {
 
     if (!isBullet && isSectionLabel(trimmed)) continue;
 
-    /*
-      E122 — the trailing prose roll-up. Eddie's last line is "Additional
-      experience as an Executive Director at Morgan Stanley, …, Consultant at
-      Cairnie Associates, and Vice President at Salomon Brothers, …" — real
-      employers, named, with no dates. Left alone it became description text
-      hanging off the previous job. Each "<role> at <Company>" pair becomes its
-      own undated entry, which the review page then asks the provider to date.
-    */
+    // E122 — the trailing prose roll-up. Eddie's last line is "Additional
     if (!isBullet && /^additional\s+(experience|roles?|positions?)\b/i.test(trimmed)) {
       flush();
       companyHeader = null;
@@ -524,29 +369,7 @@ export function parseResume(text: string): ParsedResume {
       flush();
       const rest = stripRange(line, range.matched);
       const parts = rest.split(/\s+(?:at|@|—|–|\||,)\s+/).map((s) => s.trim()).filter(Boolean);
-      /*
-        ── ⚠⚠ WHICH SIDE IS THE COMPANY? ASK, DO NOT ASSUME (`E407` WS-3) ───────
-
-        ⚠ SUPERSEDED, quoted not deleted:
-            roleTitle: parts[0] ?? "",
-            employer:  parts[1] ?? (companyHeader ? companyFromHeader(companyHeader) : ""),
-
-        ⚠⚠ THAT HARDCODED ONE ORDER — "Title — Employer" — AND SCOTT'S CV USES THE
-        OTHER. His lines read `StratERP Inc. — Founder & Principal Consultant`, so
-        the COMPANY landed in `roleTitle` and the ROLE landed in `employer`, on
-        every single row. MEASURED before the fix: `employer:"Founder & Principal
-        Consultant" roleTitle:"StratERP Inc."`, and the `"(Company not detected)"`
-        sentinel sitting in `employer` while `"Oracle Corporation"` sat in
-        `roleTitle` — which is what put a role where the company belongs on the
-        review card.
-
-        ⚠ IT IS NOT FLIPPED — BOTH ORDERS ARE COMMON AND BOTH MUST WORK. The swap
-        happens only on POSITIVE EVIDENCE from both halves: the left looks like a
-        company AND the right looks like a role. With no evidence the original
-        order stands, so every document that parsed correctly before still does.
-        ⚠ THE fin-rajesh CASE THE COMMENT BELOW WARNS ABOUT IS SAFE: its left half
-        ("Senior Associate Financial Functional") reads as a ROLE, so nothing swaps.
-      */
+      // WHICH SIDE IS THE COMPANY? ASK, DO NOT ASSUME ( WS-3)
       const left = parts[0] ?? "";
       const right = parts[1] ?? "";
       const swap = right !== "" && looksLikeCompanyName(left) && looksLikeRoleTitle(right)
@@ -672,12 +495,7 @@ export function parseResume(text: string): ParsedResume {
   }
 
   // --- Skills / languages --------------------------------------------------
-  /**
-   * TOKEN SANITY (PJv2 WS2). Splitting a skills block on commas is right for
-   * "Requisitions, Sourcing, Payables" and catastrophic for a prose paragraph
-   * that happens to contain commas — that is where "252 skills" came from. A
-   * skill is a SHORT NOUN PHRASE, so anything sentence-shaped is rejected.
-   */
+  /** TOKEN SANITY (PJv2 WS2). Splitting a skills block on commas is right for */
   const isPlausibleSkill = isPlausibleSkillTerm;
 
   const splitList = (ls: string[], sane: (t: string) => boolean) =>
@@ -687,16 +505,7 @@ export function parseResume(text: string): ParsedResume {
       .filter((t) => !STOPWORD_START.test(t))
       .filter(sane);
 
-  /**
-   * Is this block a LIST or is it PROSE?
-   *
-   * Both contain commas, so length is no help — a genuine 300-skill list is one
-   * very long line, and a paragraph can be short. What separates them is TOKEN
-   * SHAPE: split a list and you get many short tokens ("Payables", "Sourcing");
-   * split a paragraph and you get few long clause fragments ("programmes across
-   * fourteen countries"). If most tokens aren't short, this is prose, and the
-   * honest result is ZERO skills plus a note — never a page of junk (E051).
-   */
+  /** Is this block a LIST or is it PROSE? */
   const isListLike = (tokens: string[]): boolean => {
     if (tokens.length === 0) return false;
     const short = tokens.filter((t) => t.split(/\s+/).length <= 3).length;
@@ -740,19 +549,7 @@ export function parseResume(text: string): ParsedResume {
     );
   }
 
-  /*
-    E185 — the gap this used to emit is GONE, not reworded.
-
-    It said "we couldn't work out your years of experience from the dates, so
-    pick your experience level yourself", and it survived the reshape that
-    deleted the thing it points at: `experience_level` was dropped from
-    provider_profiles in WS7 (E068) and years are DERIVED from the work history
-    (E178). There is no experience-level step and no field to pick one in, so
-    the note was instructing the provider to go and do something impossible.
-
-    The inference itself stays — `experienceYears` is still read downstream.
-    It just no longer nags when it comes back empty.
-  */
+  // E185 — the gap this used to emit is GONE, not reworded.
   const inferred = inferExperienceLevel(experiences);
 
   const cappedExperiences = experiences.slice(0, CAPS.experiences);
@@ -772,9 +569,7 @@ export function parseResume(text: string): ParsedResume {
   return {
     headline,
     overview,
-    /* ⚠ THE HEURISTIC PATH DOES NOT READ CERTIFICATIONS, and says so rather than
-       leaving the field to be inferred from an absence. `SECTION_PATTERNS` has no
-       certifications section; only the AI path produces them (`P1-A1.4-E399`). */
+    // THE HEURISTIC PATH DOES NOT READ CERTIFICATIONS, and says so rather than
     certifications: [],
     experienceLevel: inferred?.level ?? null,
     experienceYears: inferred?.years ?? null,

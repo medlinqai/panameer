@@ -93,25 +93,14 @@ export function ConfigDrawer({
             </header>
 
             <div className="pm-drawer-body">
-              {/*
-                ⚠⚠ THE GROUPS ARE RENDERED AS GROUPS. `AppBand` flattened them
-                and lost three headings that say what the items underneath are
-                for; a drawer has the height to keep them.
-                ⚠ `flex-col` at every width — this is a panel, not a row, so
-                there is nothing here that could scroll sideways. **The defect
-                this replaces was a sideways scroll.**
-              */}
+              {/* THE GROUPS ARE RENDERED AS GROUPS. `AppBand` flattened them */}
               {groups.map((group) => (
-                /* ⚠ KEYED ON THE FIRST ITEM'S href, NOT THE TITLE — `NavGroup.title`
-                   is `string | null`, so a title key would collide across every
-                   untitled group. Measured, not assumed: the type says nullable. */
+                // KEYED ON THE FIRST ITEM'S href, NOT THE TITLE — `NavGroup.title`
                 <section
                   key={group.items[0]?.href ?? group.title ?? ""}
                   className="border-b border-line last:border-b-0"
                 >
-                  {/* ⚠ A NULL TITLE RENDERS NO HEADING rather than an empty one —
-                      an empty heading is a label that says nothing occupies space
-                      as though it said something. */}
+                  {/* A NULL TITLE RENDERS NO HEADING rather than an empty one — */}
                   {group.title && (
                     <h3 className="px-4 pt-4 pb-1 text-[11.5px] font-bold uppercase tracking-wide text-ink-2">
                       {group.title}
@@ -126,19 +115,9 @@ export function ConfigDrawer({
                           key={item.href}
                           href={item.href}
                           aria-current={active ? "page" : undefined}
-                          /* ⚠⚠ FOLLOWING A LINK CLOSES THE PANEL. Without this it
-                             sits over the page it just navigated to, which reads
-                             as a rendering fault rather than as a drawer.
-                             ⚠ Done ON THE CLICK rather than in an effect keyed on
-                             `pathname`: `setState` inside an effect is the
-                             `react-hooks/set-state-in-effect` error this repo
-                             already carries eleven of, and the rule is 0 NEW.
-                             ⚠ It is also the truer statement — the drawer closes
-                             because you chose something, not because a string
-                             changed. */
+                          // FOLLOWING A LINK CLOSES THE PANEL. Without this it
                           onClick={() => setOpen(false)}
-                          /* ⚠ 44px rows (88a) — the same touch standard the tab
-                             row already meets. */
+                          // 44px rows (88a) — the same touch standard the tab
                           className={
                             "flex min-h-11 items-center px-4 text-[14.5px] transition-colors " +
                             (active

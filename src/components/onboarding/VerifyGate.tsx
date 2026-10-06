@@ -76,10 +76,6 @@ export function VerifyGate({
   };
 
   // shells (the provider check-email screen and the buyer verify step), and now
-  // that both are on the wide shared frame, an uncapped prompt would stretch a
-  // one-sentence instruction across the full width in whichever of the two
-  // nobody remembered to wrap. Owning the constraint here fixes both and cannot
-  // be forgotten at a third call site.
   return (
     <div className="mx-auto w-full max-w-md space-y-5">
       <p className="text-[17px] text-ink-2">

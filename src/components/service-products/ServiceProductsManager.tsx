@@ -280,15 +280,7 @@ export function ServiceProductsManager({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    {/*
-                      ⚠⚠ ONLY *PUBLISHING* IS BLOCKED (`P1-ALL-E034`).
-                      `Unpublish` stays live for an already-published product —
-                      nothing is retro-unpublished, and somebody who published
-                      before the bar existed must still be able to withdraw it.
-                      ⚠ THE BUTTON STAYS VISIBLE AND DISABLED, never hidden and
-                      never `pointer-events: none` (the `E306` rule); the reason
-                      is in the notice above the list.
-                    */}
+                    {/* ONLY *PUBLISHING* IS BLOCKED . */}
                     <button
                       type="button"
                       onClick={() =>
@@ -355,12 +347,7 @@ export function ServiceProductsManager({
             />
           </Field>
 
-          {/*
-            ⚠ CLASSIFICATION SITS DIRECTLY AFTER TITLE AND IS REQUIRED. Scott: "ok to put it
-            near the top...REQUIRED." It is above scope and price because it decides whether
-            the product is findable at all — the rest describes something nobody reaches
-            otherwise.
-          */}
+          {/* CLASSIFICATION SITS DIRECTLY AFTER TITLE AND IS REQUIRED. Scott: "ok to put it */}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Business process *"
@@ -369,12 +356,7 @@ export function ServiceProductsManager({
               <select
                 value={form.process}
                 onChange={(e) =>
-                  /*
-                    ⚠ CHANGING PROCESS CLEARS THE DOMAINS, on purpose. A domain belongs to
-                    exactly one process, so keeping the old selection would leave the product
-                    classified under domains its process no longer offers — invisible in a way
-                    that looks fine on screen.
-                  */
+                  // CHANGING PROCESS CLEARS THE DOMAINS, on purpose. A domain belongs to
                   setForm({
                     ...form,
                     process: e.target.value,
@@ -404,12 +386,7 @@ export function ServiceProductsManager({
               </p>
             ) : (
               <>
-                {/*
-                  ⚠ ONE CLICK, NOT TEN. Scott: "Might have to be a 'select all CDs' as opposed
-                  to choose which CD this agent runs on." A health check or an agent that
-                  watches everything legitimately spans the whole process, and making that ten
-                  clicks would push people to under-classify.
-                */}
+                {/* ONE CLICK, NOT TEN. Scott: "Might have to be a 'select all CDs' as opposed */}
                 <div className="mb-2.5 flex items-center gap-3">
                   <button
                     type="button"
@@ -467,12 +444,7 @@ export function ServiceProductsManager({
             )}
           </Field>
 
-          {/*
-            ⚠ A NOTICE, NOT A BLOCK, FOR A PACKAGE THAT PREDATES THIS FIELD. Blocking every
-            edit to a legacy package would freeze published catalog entries behind a field
-            their author never saw. It can still be saved; it just cannot be found until it is
-            classified, and it says so.
-          */}
+          {/* A NOTICE, NOT A BLOCK, FOR A PACKAGE THAT PREDATES THIS FIELD. Blocking every */}
           {legacyUnclassified && (
             <Notice>
               This package has no capability domains yet, so buyers cannot find

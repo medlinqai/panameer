@@ -103,16 +103,7 @@ export function WorkFeed({
           title={query ? `Nothing matches “${query}”` : "No work posted yet"}
           detail={
             query
-              /*
-                ⚠⚠ RULING 18: no promise, no date, no apology. ⚠⚠⚠ *"when this
-                opens"* SAID THE FEATURE WAS SHUT — and it is not: `work-request.ts`
-                creates work requests today and `/create-work` is reachable. The
-                honest fact is about the DATA (no buyer has posted yet), never about
-                the MECHANISM, and the two had been collapsed into one sentence.
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   "Buyers aren't posting work requests on Panameer yet, so there is nothing to match against."
-                //   "Buyers aren't posting work requests yet. Your profile is what they find you by in the meantime — keep it current and you'll be near the top when this opens."
-              */
+              // RULING 18: no promise, no date, no apology. *"when this
               ? "No work request matches that search yet."
               : "No buyer has posted a work request yet. Your profile is what they find you by, so keep it current."
           }
@@ -157,17 +148,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
 
   return (
     <article className="overflow-hidden rounded-brand border border-line bg-white transition-colors hover:border-magenta/40">
-      {/*
-        THE PHOTO IS DECORATIVE AND DETERMINISTIC (brief_work_card_images).
-        Chosen from the id so the same job keeps the same picture across
-        reloads — a card whose image changes on refresh reads as broken.
-
-        A BANNER ON MOBILE, A THUMBNAIL ABOVE sm. Stacking full-width under 640px
-        is what keeps the text column readable on a phone; side-by-side, a fixed
-        176px rail keeps every card's text starting at the same x, which is what
-        makes a list of them scannable. `sizes` matches those two cases so the
-        browser never fetches the 800px file to paint a 176px box.
-      */}
+      {/* THE PHOTO IS DECORATIVE AND DETERMINISTIC (brief_work_card_images). */}
       <div className="flex flex-col sm:flex-row">
         <div className="relative h-40 w-full shrink-0 bg-bg-soft sm:h-auto sm:w-44 sm:self-stretch">
           <Image
@@ -182,35 +163,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
         <div className="min-w-0 flex-1 p-5">
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
-              {/*
-                ── ⚠⚠⚠ THE DETAIL ROUTE EXISTS NOW (`P2-A8-E664`) ──────────────
-
-                ⚠⚠ THE LINK AND ITS TARGET MOVED IN ONE CHANGE, deliberately: a
-                link landing in one commit and its page in the next is a window
-                where the 404 is still live.
-
-                ⚠ IT IS `/find-work/[id]`, NOT `/work/[id]`, AND THE REASONS ARE
-                MEASURED — `/work` is the PUBLIC marketing page (allowlisted
-                category 1, EXACT, no subtree) and has NO entry in `ROUTE_ACCESS`,
-                while `/find-work` is already gated `canProvideServices` at the
-                edge. ⚠⚠ The full reasoning, and the open question about whether a
-                stranger should be able to read one, is in
-                `src/app/(app)/find-work/[id]/page.tsx`.
-
-                ⚠⚠⚠ ONE ROUTE SERVES BOTH SURFACES. This component renders on
-                `/dashboard` as well as `/find-work`, and `basePath` is NOT used
-                here on purpose: the card's target is the work request, which is
-                the same page whichever feed you arrived from. Only the TAB hrefs
-                are relative to where the feed lives.
-
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   `/work/[id]` DOES NOT EXIST YET — there is no work-request
-                //   detail page, and building one is beyond this brief. The link
-                //   is written to where that page belongs rather than to a
-                //   stand-in, and it is unreachable today because no buyer has
-                //   posted a work request, so no card renders. It becomes live
-                //   the moment the detail route lands.
-              */}
+              {/* THE DETAIL ROUTE EXISTS NOW */}
               <h3 className="text-[16.5px] font-bold">
                 <Link href={`/find-work/${card.id}`} className="hover:text-magenta">
                   {card.title}
@@ -241,41 +194,7 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
               )}
             </div>
 
-            {/*
-              ── ⚠⚠ WHO IS ASKING (`P1-J4-E025`) ─────────────────────────────
-
-              SCOTT: *"I SEE THEIR REQUEST… WANT TO SEE WHO THEY ARE JUST LIKE I
-              WOULD IN LINKEDIN… AND THERE IS ONLY A TITLE? LOOKS LIKE A SCAM
-              FOR A SITE I DO NOT KNOW WELL."*
-
-              ⚠ BESIDE THE REQUEST ON A WIDE CARD, UNDER IT ON A NARROW ONE. The
-              block is four rows of prose; squeezed into a 200px column beside
-              the description at 390px it renders a word per line, which is the
-              failure `CoverageCard`'s closing strip already documents.
-
-              ⚠⚠ IT IS NO LONGER THE ONLY SURFACE (`P2-A8-E664`). The detail
-              route exists — `/find-work/[id]` — and `WhoIsAsking` renders there
-              UNEDITED, which is what its own docblock promised. ⚠ The block stays
-              on the card too: a provider scanning a list needs to know who is
-              asking BEFORE deciding to open one, which is the whole argument
-              `E025` made.
-
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   ⚠⚠ THIS IS THE ONLY SURFACE A PROVIDER CAN SEE A WORK REQUEST
-              //   ON TODAY, which is why the block lands here. `/work/[id]` — the
-              //   detail route this card's title has always linked to — STILL
-              //   DOES NOT EXIST; that 404 is pre-existing and was reported at
-              //   `E025` rather than fixed inside this brief. `WhoIsAsking` takes
-              //   a `BuyerIdentity` and reads nothing else, so it moves there
-              //   unchanged on the day that page lands.
-
-              ⚠ SUPERSEDED, quoted not deleted: a bare 40px company logo sat here
-              — *"The buyer's mark, when they have one. Absent rather than a grey
-              placeholder square."* The logo is now inside the block, where it is
-              captioned by the company name and suppressed with it when the
-              request is confidential. A floating logo beside a redacted name
-              would have named the company anyway.
-            */}
+            {/* WHO IS ASKING */}
             <div className="hidden w-[260px] shrink-0 min-[900px]:block">
               <WhoIsAsking identity={card.identity} />
             </div>
@@ -286,25 +205,10 @@ function WorkRequestCard({ card }: { card: WorkCard }) {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-2">
-            {/*
-              ⚠ THE COMPANY NAME CAME OUT OF THIS ROW (`P1-J4-E025`). It is in
-              the "Who's asking" block above, where it is redacted when the
-              request is confidential; leaving a second unredacted copy down here
-              would have defeated the redaction entirely.
-            */}
+            {/* THE COMPANY NAME CAME OUT OF THIS ROW . It is in */}
             {card.postedAt && <span>Posted {relativeDay(card.postedAt)}</span>}
-            {/* ⚠ THE PER-CARD EARN HOOK, PARKED 2026-09-03 (`P1-ALL-E375`).
-                ⚠ ITS REASONING IS PRESERVED HERE VERBATIM because the wrapper
-                below cannot contain a nested delimiter: *"THE EARN HOOK. Stated
-                as the rule rather than a number, because CREDIT_RULES lands with
-                the ledger in the master brief's PHASE 3 and a hardcoded '100'
-                here would be a second source that drifts the moment Scott tunes
-                the first."* That rule still applies if Credits return. */}
-            {/*
-            <span className="ml-auto font-semibold text-magenta">
-              Responding earns Community Credits
-            </span>
-            */}
+            {/* THE PER-CARD EARN HOOK, PARKED 2026-09-03 . */}
+            {/* <span className="ml-auto font-semibold text-magenta"> */}
           </div>
         </div>
       </div>

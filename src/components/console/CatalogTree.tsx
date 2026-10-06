@@ -259,12 +259,7 @@ function Group({
   );
 }
 
-/**
- * The Save/Discard bar Medlinq's editor carries, in its disabled state.
- *
- * Present because the pattern is what was asked for, disabled because the write
- * path isn't built — and it SAYS so, rather than looking broken.
- */
+/** The Save/Discard bar Medlinq's editor carries, in its disabled state. */
 export function CatalogEditBar({ sticky = false }: { sticky?: boolean }) {
   return (
     <div className={(sticky ? "sticky bottom-3 z-10 bg-bg-soft/95 backdrop-blur " : "") + "mt-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-dashed border-line px-4 py-3"}>
@@ -292,16 +287,7 @@ export function CatalogEditBar({ sticky = false }: { sticky?: boolean }) {
   );
 }
 
-/**
- * + ADD DOMAIN / + ADD SKILL, on the header row (`P2-A1.5-E817`).
- *
- * Scott, 2026-10-03: "there is no add." The loose "Add a skill…" bar did not ask
- * which role or domain a skill belonged to, so a new skill landed unattached —
- * which is where the orphans in the Unassigned group came from. This button
- * knows both, because it sits on the header that names them.
- *
- * Roles stay locked: there is no + Add role here, and adding one is a brief.
- */
+/** + ADD DOMAIN / + ADD SKILL, on the header row . */
 function CatalogAddButton({
   action,
 }: {

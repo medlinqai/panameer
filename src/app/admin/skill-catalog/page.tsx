@@ -113,19 +113,7 @@ export default async function Page({
   });
   const toSpec = (x: (typeof specRows)[number]) => ({ id: x.id, name: x.name, kind: x.kind, members: x._count.providerProfiles, aliasList: x.aliases });
 
-  /*
-    ── ⚠ EVERY TILE OPENS A LISTING (`P1-A1.5-E463`) ──────────────────────────
-
-    **SCOTT, on both pages:** *"the tiles do not link to lists of their
-    contents."*
-
-    ⚠ THE DRILL-IN REPLACES THE TREE IN THE LISTING SLOT — it does not sit
-    beside it. The console template is `tiles → ONE listing → footer`, and two
-    data containers stacked is what WS-4 just finished removing.
-    ⚠⚠ THAT IS ALSO WHAT KEEPS ONE SEARCH BOX ON THE PAGE: the tree's toolbar
-    and the listing's own box are mutually exclusive because only one of them
-    ever renders.
-  */
+  // EVERY TILE OPENS A LISTING
   const flat = roles.flatMap((r) =>
     r.domains.map((d) => ({ role: r.display || r.name, roleId: r.id, domain: d, }))
   );
@@ -171,9 +159,7 @@ export default async function Page({
     };
   });
 
-  /* ⚠ WS-6's drill-in: every domain in one role, ranked by DISTINCT providers,
-     ⚠⚠ ZEROES INCLUDED AT THE BOTTOM — a domain nobody has claimed is the most
-     actionable row on the page, and dropping it would hide exactly that. */
+  // WS-6's drill-in: every domain in one role, ranked by DISTINCT providers
   const claimedRole = claimed ? roles.find((r) => r.id === claimed) ?? null : null;
   const rankedDomains = claimedRole
     ? claimedRole.domains
@@ -185,62 +171,17 @@ export default async function Page({
         .sort((a, b) => b.providers - a.providers || a.name.localeCompare(b.name))
     : [];
 
-  /*
-    ── ⚠⚠ A DRILL-IN TAKES OVER THE PAGE (`P1-A1.5-E485`) ────────────────────
-
-    > **SCOTT, 2026-09-13:** *"none of these link to reports"*
-
-    ⚠⚠ THEY DO LINK, AND THEY ALWAYS DID. The bug is WHERE THE RESULT APPEARS:
-    the footer tiles sit at the bottom of a long page and the ranked listing
-    rendered in the page BODY, above them — outside the viewport being looked at.
-    Nothing visibly happened, so the tile read as dead.
-
-    ⚠ THE BRIEF'S PREMISE WAS HALF RIGHT, AND THE HALF IT MISSED IS THE CAUSE.
-    It says to hide the tree and the tile row *"as `?view=` already does"*.
-    ⚠⚠ MEASURED: `?view=` HID THE TREE AND NOTHING ELSE. The tile row and the
-    footer strip rendered on EVERY drill-in, so `?claimed=` put its listing
-    between two strips instead of replacing them — and `?view=` had the same
-    flaw, just less visibly because its tiles are at the top.
-
-    ⚠ SO ONE FLAG COVERS BOTH, and both drill-ins now behave identically: tiles
-    out, tree out, footer out, the listing IS the page. Same shape as the Users
-    page's `?stage=` drill-in, which is the pattern Scott approved.
-    ⚠ ZEROES STAY, AT THE BOTTOM — `E465b`'s rule holds: a category nobody has
-    claimed is the most actionable row on the page. Moving the listing does not
-    filter it.
-  */
+  // A DRILL-IN TAKES OVER THE PAGE
   const isDrillIn = !!view || !!claimedRole;
 
-  /*
-    ⚠ `E486` — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
-    (reported: the brief expected it to), so this is the catalog's own back
-    affordance and it takes the same `--color-magenta-ink` token rather than
-    saturated `#d72cd6`. ⚠ SUPERSEDED, quoted not deleted: `text-magenta`.
-    ⚠ IT STAYS IN THE LISTING'S `action` SLOT, not above the title — the card
-    header is where it already sits and `E485` says to keep it wired as-is.
-  */
+  // — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
   const clearLink = (
     <BackLink href="/admin/skill-catalog" label="the Catalog" />
   );
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      {/*
-        ── ⚠⚠ THE "Catalog Details" CARD IS GONE; THE TILES STAYED (`E461`) ────
-
-        **SCOTT:** *"not sure what that Catalog details card is. REMOVE IT."* and,
-        next breath, *"the tiles are in the old format. Please convert to the new
-        format on users."*
-
-        ⚠ THOSE TWO READ TOGETHER, BECAUSE THE TILES LIVED INSIDE THE CARD.
-        "Remove the card" means the WRAPPER — the `<section>`, the
-        `<h2>Catalog Details</h2>` and the paragraph *"The service vocabulary
-        every provider profile, package and work request is built from."* — not
-        the numbers.
-        ⚠ THREE ACROSS, NOT FIVE. The row is not padded out to fill the grid.
-        ⚠ `hint` IS DROPPED (S-1): the Learn tile is two lines and a third undoes
-        the "thinner" this is copying.
-      */}
+      {/* THE "Catalog Details" CARD IS GONE; THE TILES STAYED */}
       {!isDrillIn && (
       <TileRow
         tiles={[
@@ -277,19 +218,7 @@ export default async function Page({
       </p>
       )}
 
-      {/*
-        ── ⚠ THE CATALOG MOVES INTO THE CONSOLE'S LISTING SLOT (`E470`) ────────
-
-        **SCOTT:** *"The grid is at the bottom of the page. All of the
-        specializations should occur within this grid...then be expandable."* and
-        *"i forgot to mention this on the RDS page as well, but it applies."*
-
-        The console template is `tiles → ONE listing → footer`, and this page put
-        its real data in a floating accordion outside that slot.
-        ⚠ THE ROWS STAY EXPANDABLE — the hierarchy is not flattened.
-        ⚠ RDS HAS NO STUB TO REMOVE: measured, this page never called `SpecPage`,
-        so there is no empty grid and no `TBD` row here. Container change only.
-      */}
+      {/* THE CATALOG MOVES INTO THE CONSOLE'S LISTING SLOT */}
       {view === "roles" && (
         <Listing
           title={`Roles (${roles.length})`}
@@ -318,8 +247,7 @@ export default async function Page({
       )}
 
       {view === "skills" && (
-        /* ⚠ DEFAULT 25, NOT 7 (`E463`). 7 exists on Users to reveal the footer
-           tiles below it; this page has no such fold and 7 of 710 is 102 pages. */
+        // DEFAULT 25, NOT 7 . 7 exists on Users to reveal the footer
         <Listing
           title={`Skills (${skillCount})`}
           columns={["Skill", "Domain", "Role", "Providers"]}
@@ -363,55 +291,12 @@ export default async function Page({
           newSpecs={specRows.filter((x) => x.status === "SUGGESTED").map(toSpec)}
         />
       )}
-      {/* ⚠ `E481` — the bar returns, live. See the note on the Specializations page. */}
-      {/*
-        THE LOOSE "Add a skill…" BAR IS GONE (`E817`). It never asked which role
-        or domain the skill belonged to, so every skill added through it landed
-        unattached — which is exactly where the Unassigned group's orphans came
-        from. The add buttons on the headers know both.
-        Superseded, quoted not deleted:
-        //   {!isDrillIn && <CatalogAddBar table="skill" label="skill" />}
-      */}
+      {/* `E481` — the bar returns, live. See the note on the Specializations page. */}
+      {/* THE LOOSE "Add a skill…" BAR IS GONE . It never asked which role */}
 
-      {/*
-        ── ⚠ THE OLD EDIT BAR, SUPERSEDED (`P1-A1.5-E479`) ────────────────────
+      {/* THE OLD EDIT BAR */}
 
-        > **SCOTT, 2026-09-13, on the bar:** *"What does this mean?"*
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`): `<CatalogEditBar sticky />` — a
-        sticky footer reading *"Editing this catalog needs write endpoints that
-        aren't built yet — it's read-only for now"* beside a dead Save button.
-
-        ⚠⚠ THIS IS THE THIRD INSTANCE OF A PATTERN SCOTT HAS DELETED TWICE
-        ALREADY — the `TBD / metric to be defined` tiles (`E470c`) and the
-        explanatory paragraph (`E457`). A page that explains why part of itself
-        does not work is a page apologising for itself, and these two pages are
-        ones he is considering showing buyers.
-        ⚠⚠ THE COMPONENT IS NOT DELETED. Part 3 brings it back with a Save that
-        works; `E164`, and it is five lines. Only the call site goes.
-      */}
-
-      {/*
-        ── ⚠⚠ THE FOOTER STOPS BEING A TREND AND BECOMES "MOST CLAIMED" ───────
-        (`P1-A1.5-E465b`)
-
-        **SCOTT, 2026-09-13:** *"Use each card to give an idea of how many users
-        are aligned with each cat or which categories have the most users...some
-        way to see what RDS are most popular with our user base."*
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — chat's earlier prescription:
-        *"REMOVE IT. A catalog is not a transaction stream… 27 rows that change a
-        handful of times a year have no 90-day trend worth drawing."*
-        ⚠⚠ THE DIAGNOSIS WAS RIGHT AND THE PRESCRIPTION WAS WRONG. The problem is
-        the X AXIS. Volume over TIME is meaningless for a catalog; volume over
-        CATEGORY is the most useful thing on the page.
-
-        ⚠⚠ FIXED CATALOG ORDER — `getRoleClaims` returns roles by `sort_order`
-        and this does NOT re-sort by count. A strip that rearranges itself
-        between page loads destroys the muscle memory that makes a footer
-        scannable, and the numbers sit side by side anyway. THE RANKING LIVES
-        INSIDE THE DRILL-IN.
-      */}
+      {/* THE FOOTER STOPS BEING A TREND AND BECOMES "MOST CLAIMED" */}
       {!isDrillIn && (
       <>
       <VolumeFooter

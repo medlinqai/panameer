@@ -19,8 +19,7 @@ export function JoinedCard({ c }: { c: ColleagueCard }) {
           )}
         </p>
 
-        {/* ⚠⚠ THEIR OWN TITLE, VERBATIM AND NEVER RE-CASED (`E568`, item 4).
-            A title is DATA. ⚠ Absent means absent — no placeholder, ever. */}
+        {/* THEIR OWN TITLE, VERBATIM AND NEVER RE-CASED ( , item 4). */}
         {c.title && <p className="pm-cm-title">{c.title}</p>}
         {c.company && (
           <p className="pm-cm-where">
@@ -37,47 +36,23 @@ export function JoinedCard({ c }: { c: ColleagueCard }) {
   );
 }
 
-/**
- * ── ⚠⚠ AN INVITED PERSON'S CARD: NAME, EMAIL, WHEN IT WAS SENT ────────────
- *
- * ⚠⚠⚠ AND NOTHING ELSE (WS-C item 4). No title, no location, no photo.
- * ⚠ **NEVER A PLACEHOLDER TITLE** — Scott, 2026-09-20: *"Invites will ONLY have
- * the information we provide (name and email). they will have no title."* A
- * fabricated title on a person who has not joined is a record of somebody who
- * does not exist yet.
- *
- * ⚠⚠ THE CARD DOES NOT OPEN ANYTHING, because there is no profile to open. It
- * is not an anchor and carries no `pm-cm-open`, so it cannot be tabbed to as a
- * link and cannot look like one.
- *
- * ⚠ THE FACE IS THE GREY SILHOUETTE, NOT INITIALS — and it is here precisely
- * BECAUSE they have no photo: the glyph says *"no photo yet"* where initials
- * would manufacture a monogram for somebody who has never signed in.
- */
+/** AN INVITED PERSON'S CARD: NAME, EMAIL, WHEN IT WAS SENT */
 export function InvitedCardView({ i }: { i: InvitedCard }) {
   return (
     <div className="pm-cm-card pm-cm-card-invited">
       <Face photoUrl={null} size={44} />
       <div className="min-w-0 flex-1">
-        {/* ⚠ The name may be null — the invite holds it only if it was typed.
-            Then the EMAIL is the identity, and it is not repeated below. */}
+        {/* The name may be null — the invite holds it only if it was typed. */}
         <p className="pm-cm-name">{i.name ?? i.email}</p>
         {i.name && <p className="pm-cm-email">{i.email}</p>}
         <p className="pm-cm-sent">Invited {sentLabel(i.sentAt)}</p>
 
         <div className="pm-cm-actions mt-2 flex gap-2">
-          {/* ⚠⚠ `Nudge` AND `Resend` ARE THE TWO ACTIONS THE BRIEF NAMES, and
-              they are rendered DISABLED because neither endpoint exists.
-              ⚠⚠⚠ A CONTROL THAT LOOKS LIVE AND DOES NOTHING IS WORSE THAN NO
-              CONTROL — `E560` and `E493` are both records of a door that led
-              nowhere. ⚠ `title` says why, so the state is explained rather than
-              merely applied. Wiring them is its own brief. */}
+          {/* they are rendered DISABLED because neither endpoint exists. */}
           <button
             type="button"
             disabled
-            /* ⚠⚠⚠ RULING 18 + `E579`: this control is DISABLED and its tooltip named a
-             backlog. A disabled control says WHAT it is, never WHEN it will work.
-             ⚠ SUPERSEDED (`E164`): //   "Nudging an invitation isn't built yet." */
+            // RULING 18 + : this control is DISABLED and its tooltip named a
             title="Nudging an invitation is not available."
             className="border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
           >
@@ -86,7 +61,7 @@ export function InvitedCardView({ i }: { i: InvitedCard }) {
           <button
             type="button"
             disabled
-            /* ⚠ SUPERSEDED (`E164`): //   "Resending an invitation isn't built yet." */
+            /* SUPERSEDED (`E164`): //   "Resending an invitation isn't built yet." */
             title="Resending an invitation is not available."
             className="border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
           >
@@ -98,24 +73,7 @@ export function InvitedCardView({ i }: { i: InvitedCard }) {
   );
 }
 
-/**
- * ── ⚠⚠⚠ "WAITING ON YOU" — THE ONE BLOCK THAT IS A DEBT, NOT AN INVITATION ─
- *
- * ⚠⚠ THIS NEARLY SHIPPED MISSING, AND `check:connect-walk` CAUGHT IT. The WS-C
- * layout replaced `ConnectHome`, whose first block was this one — and with it
- * gone, **an incoming colleague request had no door anywhere in the app.**
- * `/community/colleagues` renders the roster, not the pending requests, so a
- * member could not accept or decline at all.
- *
- * ⚠⚠⚠ THAT IS A WALL, NOT A COSMETIC LOSS, and it is precisely the defect
- * `connect-walk.spec.ts` already records in its own words: *"Removing a tab
- * without proving the replacement exists is exactly how `E493`'s invite and
- * `E519`'s résumé re-run got buried."*
- *
- * ⚠ FIRST IN THE COLUMN, ABOVE THE WEB, because it is the only place somebody
- * else is blocked on this member. Everything below it is discovery.
- * ⚠ It renders NOTHING at zero — no empty box, no "0 requests".
- */
+/** THIS NEARLY SHIPPED MISSING, AND `check:connect-walk` CAUGHT IT. The WS-C */
 export function WaitingOnYou({
   rows,
 }: {
@@ -133,9 +91,7 @@ export function WaitingOnYou({
               <p className="pm-cm-name">{r.name}</p>
               {r.title && <p className="pm-cm-title">{r.title}</p>}
               <div className="pm-cm-actions mt-2">
-                {/* ⚠ `showDecline` — `Decline` IS A REAL BUTTON (`E374`), not a
-                    hidden menu item. Nothing is destroyed: the connection row is
-                    UPDATED, never deleted. */}
+                {/* hidden menu item. Nothing is destroyed: the connection row is */}
                 <ConnectControls
                   toUserId={r.userId}
                   relation="PENDING"
@@ -151,12 +107,7 @@ export function WaitingOnYou({
   );
 }
 
-/**
- * ⚠ A relative day count, computed on the SERVER from a real column.
- * ⚠⚠ NO `toLocaleDateString()` HERE — the server's locale and the reader's can
- * differ, and a date that changes between the HTML and the hydrated render is a
- * hydration mismatch. Days are the same integer everywhere.
- */
+/** A relative day count, computed on the SERVER from a real column. */
 function sentLabel(sentAt: Date): string {
   const days = Math.floor((Date.now() - sentAt.getTime()) / 86_400_000);
   if (days <= 0) return "today";

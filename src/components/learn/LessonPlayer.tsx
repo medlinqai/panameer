@@ -21,9 +21,6 @@ export function LessonPlayer({
   if (!embedUrl) {
     if (thumbnailUrl) {
       // With real art, the picture carries the page and the status is a badge.
-      // The first build centred the full "coming soon" paragraph over the
-      // image; the artwork already says what the lesson is, and the paragraph
-      // sat across the author's own typography and made both unreadable.
       return (
         <div>
           <div className="relative aspect-video w-full overflow-hidden rounded-brand border border-line bg-[#0d0a1a]">

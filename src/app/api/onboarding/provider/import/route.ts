@@ -67,11 +67,7 @@ export async function POST(request: Request) {
     console.info(
       `[resume] route=${routeMs}ms of ${maxDuration}s status=${result.status}`
     );
-    /*
-      ⚠⚠ STORED, NOT ONLY LOGGED (`P2-J1.4-E546`). A log line is gone tomorrow;
-      `route_ms − read_ms` on every row is the real write tail, which is what
-      `ROUTE_TAIL_RESERVE_MS` must cover. ⚠ It never fails the upload.
-    */
+    // STORED, NOT ONLY LOGGED . A log line is gone tomorrow
     await prisma.profileImport
       .update({ where: { id: result.importId }, data: { route_ms: routeMs } })
       .catch((e) => console.error("[resume] could not record route_ms:", e));

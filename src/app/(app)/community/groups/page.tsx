@@ -120,7 +120,7 @@ export default async function GroupsPage({
                   Post a Starter Question
                 </Link>
               )}
-              {/* ⚠ An anchor to the ONE form in the rail — not a second form. */}
+              {/* An anchor to the ONE form in the rail — not a second form. */}
               <Link href="#start-a-group" className="pm-groups-ghost">
                 Start a Group
               </Link>
@@ -128,11 +128,7 @@ export default async function GroupsPage({
           </div>
         </section>
 
-        {/* ── 1b · THE THREE VIEWS — the mockup's own switcher ──────────────
-            ⚠⚠ LINKS, NOT BUTTONS. Each view is a real URL, so it is
-            shareable, bookmarkable and survives the back button — and a link
-            needs no JavaScript to work. ⚠ `aria-current` is what tells a
-            screen reader which one is showing; colour alone would not. */}
+        {/* 1b · THE THREE VIEWS — the mockup's own switcher */}
         <nav aria-label="Groups views" className="pm-groups-views">
           {VIEWS.map((v) => (
             <Link
@@ -142,10 +138,7 @@ export default async function GroupsPage({
               className={v.key === view ? "is-on" : undefined}
             >
               {v.label}
-              {/* ⚠⚠⚠ THE COUNT RIDES THE TAB ONLY WHEN IT IS ABOVE ZERO AND
-                  ONLY WHERE IT IS COUNTED. `pendingForMe` is read on every
-                  view because a request waiting on you is the one thing you
-                  should see without going looking for it. */}
+              {/* THE COUNT RIDES THE TAB ONLY WHEN IT IS ABOVE ZERO AND */}
               {v.key === "requests" && pendingForMe > 0 && (
                 <span className="pm-groups-pill">{pendingForMe}</span>
               )}
@@ -156,12 +149,7 @@ export default async function GroupsPage({
         {view === "my" && (
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_280px]">
           <div className="space-y-6">
-            {/* ── 2 · NEEDS YOU ─────────────────────────────────────────────
-                ⚠⚠ OLDEST FIRST. ⚠⚠⚠ MEASURED: `ForumThread` holds ZERO rows,
-                so this is an EMPTY STATE for everybody today — and the brief is
-                explicit that it says what will appear there with **no invented
-                questions**. A seeded question would put words in a real
-                member's mouth (`E564`). */}
+            {/* 2 · NEEDS YOU */}
             <section className="space-y-3">
               <h2 className="font-display text-[17px] font-bold">Needs You</h2>
               {home && home.needsYou.length > 0 ? (
@@ -195,8 +183,7 @@ export default async function GroupsPage({
               empty="You don't run a group yet. Starting one puts you here."
             />
 
-            {/* ⚠ The joined list renders only when there is one — an empty
-                second list beneath an empty first is two failures, not one. */}
+            {/* The joined list renders only when there is one — an empty */}
             {joined.length > 0 && (
               <GroupList
                 heading="Groups You Joined"
@@ -237,13 +224,7 @@ export default async function GroupsPage({
               <StartGroup />
             </div>
 
-            {/* ── 4c · PAID GROUPS ───────────────────────────────────────────
-                ⚠⚠⚠ IT STATES A SETUP STATE AND OFFERS NO PURCHASE. MEASURED:
-                **0 of 27 boards carry a price**, nothing writes `price_cents`,
-                and no `Payment` row is created anywhere in the codebase. ⚠ A
-                figure here would be a count of a state with no writer, and a
-                "Join for $X" would promise a mechanism that does not exist —
-                the rule that dashed Earnings at `E603`. */}
+            {/* 4c · PAID GROUPS */}
             <div className="border-t border-line py-5">
               <h3 className="font-display text-[15px] font-bold">Paid Groups</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
@@ -267,25 +248,10 @@ export default async function GroupsPage({
   );
 }
 
-/**
- * ⚠⚠ THE ONE LINE, DERIVED FROM THE COUNTS. ⚠⚠⚠ NO FABRICATED ENCOURAGEMENT,
- * no promises and no absolutes (`decisions_2026-09-23` §4) — every branch below
- * states a COUNT or names a MOVE, and the order runs from the most urgent fact
- * to the emptiest.
- */
+/** THE ONE LINE, DERIVED FROM THE COUNTS. NO FABRICATED ENCOURAGEMENT */
 function actionLine(home: Awaited<ReturnType<typeof getGroupsHome>> | null): string {
   if (!home || home.runCount + home.joinedCount === 0) {
-    /*
-      ⚠⚠ IT NAMES `Discover` AGAIN — BECAUSE DISCOVER NOW EXISTS (WS-B).
-      ⚠ WS-A shipped this as *"Starting one is the first move"* on purpose: at
-      that point the line's first draft pointed at a surface with no route, and
-      that was caught in a SCREENSHOT rather than by an assertion, because a
-      sentence cannot 404. ⚠⚠⚠ `E579` IN PROSE — a door onto a wall is still a
-      door onto a wall when it is a noun instead of a button.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`) — true only while WS-A stood
-      alone, and restored the moment its destination was built:
-      //   return "You're not in a group yet. Starting one is the first move.";
-    */
+    // IT NAMES `Discover` AGAIN — BECAUSE DISCOVER NOW EXISTS (WS-B).
     return "You're not in a group yet. Start one, or join one from Discover.";
   }
   if (home.questionsWaiting > 0) {
@@ -300,11 +266,7 @@ function actionLine(home: Awaited<ReturnType<typeof getGroupsHome>> | null): str
   return `${home.circles.length - quiet} of your ${home.circles.length} groups have something posted.`;
 }
 
-/**
- * ⚠ Two across on desktop, one on a phone — the brief's grid, phone first.
- * ⚠⚠ `Show All N` appears only when there ARE more, and it names the REAL
- * remainder rather than a rounded word.
- */
+/** Two across on desktop, one on a phone — the brief's grid, phone first. */
 function GroupList({
   heading,
   cards,
@@ -320,10 +282,7 @@ function GroupList({
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-display text-[17px] font-bold">{heading}</h2>
-        {/* ⚠⚠ THE SORT IS STATED WHERE IT APPLIES (`decisions_2026-09-23` §3 —
-            a control says what it governs at the point it governs it). It is a
-            LABEL, not a control: the order is fixed by the brief, and a picker
-            that offered one option would be a control that governs nothing. */}
+        {/* THE SORT IS STATED WHERE IT APPLIES (`decisions_2026-09-23` §3 — */}
         {cards.length > 1 && (
           <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">
             Quietest First
@@ -345,10 +304,7 @@ function GroupList({
                 className="pm-groups-card"
               >
                 <p className="pm-groups-card-t">{c.title}</p>
-                {/* ⚠⚠ EVERY PART OF THIS LINE IS COUNTED. `no posts yet` is the
-                    ZERO branch in words — `E433`'s rule is that a figure is
-                    ink, and "quiet" is the same fact without the accusation
-                    (the wording `ForumRooms` established and Scott kept). */}
+                {/* EVERY PART OF THIS LINE IS COUNTED. `no posts yet` is the */}
                 <p className="pm-groups-card-m">
                   {c.pathBacked ? "Path group" : "Member group"} ·{" "}
                   <span className="pm-groups-n">{c.members}</span>{" "}
@@ -383,22 +339,7 @@ function GroupList({
   );
 }
 
-/**
- * ── ⚠⚠⚠ DISCOVER (`P2-A3-E619` WS-B 1) ─────────────────────────────────
- *
- * ⚠ THE BRIEF: *"groups you're not in, grouped by track, each with member count
- * and **Join**; a group you're already in says so and opens instead."*
- *
- * ⚠⚠⚠ THE JOIN CONTROL IS `GroupJoin` — THE ONE THAT ALREADY EXISTS. It knows
- * every offer kind, it posts to the one route, and it refuses to render a
- * control that cannot work. ⚠ A second Join button here would be a second
- * predicate, which is precisely the shape that shipped eight real rates to
- * signed-out visitors on `/explore` earlier the same day (`E618`).
- *
- * ⚠⚠ "ALREADY IN IT" NEVER REACHES THIS LIST — `getDiscoverGroups` filters
- * those out by membership OR ownership, so the `member` branch is unreachable
- * here by construction rather than by a check this component remembers.
- */
+/** DISCOVER WS-B 1) */
 function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
   if (tracks.length === 0) {
     return (
@@ -410,19 +351,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
   }
   return (
     <div className="mt-6 space-y-6">
-      {/*
-        ── ⚠⚠ THE VIEW SAYS WHAT IT IS (`P2-A3-E678`) ───────────────────────
-
-        ⚠ Discover opened on a bare track name with nothing saying what the
-        list was. The mockup heads it `Groups You Can Join` with a lede.
-        ⚠⚠ **THE LEDE IS NOT THE MOCKUP'S WORD FOR WORD:** its version reads
-        *"Free with the path · open to every member"*, and **"free" is a price
-        claim** — `groups/page.tsx` measures that **0 of 27 boards carry a
-        price and nothing writes `price_cents`**, so *"free"* is true only by
-        accident of there being no paid groups yet. ⚠ This says what is
-        actually known: these are groups this member is not in.
-        ⚠ It also avoids the retired word *"rooms"* (ruling 1 / `E619` WS-C).
-      */}
+      {/* THE VIEW SAYS WHAT IT IS */}
       <div>
         <h2 className="font-display text-[17px] font-bold">Groups You Can Join</h2>
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
@@ -433,7 +362,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
         <section key={t.track} className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-[17px] font-bold">{t.track}</h2>
-            {/* ⚠ `E433` — the count is a figure, so ink. */}
+            {/* `E433` — the count is a figure, so ink. */}
             <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-3">
               {t.groups.length} {t.groups.length === 1 ? "group" : "groups"}
             </p>
@@ -457,9 +386,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
                   )}
                 </p>
                 <div className="mt-3">
-                  {/* ⚠⚠ `boardId`, not slug — the one join route is keyed on it.
-                      ⚠ `canLeave` is false: nothing in Discover is a group you
-                      are in, so a Leave control could never apply. */}
+                  {/* are in, so a Leave control could never apply. */}
                   <GroupJoin
                     boardId={g.boardId}
                     offer={g.offer}
@@ -477,23 +404,7 @@ function Discover({ tracks }: { tracks: DiscoverTrack[] }) {
   );
 }
 
-/**
- * ── ⚠⚠⚠ REQUESTS, BOTH DIRECTIONS (`P2-A3-E619` WS-B 3) ────────────────
- *
- * ⚠⚠⚠ THIS VIEW COULD NOT HAVE EXISTED BEFORE THIS BRANCH, AND THE REASON IS
- * WORTH KEEPING: every one of the 27 boards that existed was `OPEN`, nothing
- * wrote a board's `type`, and nothing could move a `PENDING` row. ⚠ So a
- * Requests screen built on today's trunk would have been **permanently empty —
- * not "nobody has asked yet", but "nothing can ask"**. `createGroup` accepting
- * `REQUEST` and `decideJoinRequest` answering one are what make this list a
- * real zero instead of an impossible one.
- *
- * ⚠⚠ "TOLD EITHER WAY" IS THE `Your Requests` HALF. Notifications about group
- * activity are out of scope by the brief's own list and belong to
- * `brief_notifications` — so the answer is delivered where the asker already
- * looks. ⚠ A DECLINE IS SHOWN, NOT HIDDEN: a decline they cannot see reads as
- * *"you never asked"*, and they ask again forever.
- */
+/** REQUESTS, BOTH DIRECTIONS WS-B 3) */
 function Requests({
   incoming,
   mine,
@@ -521,10 +432,7 @@ function Requests({
         ) : (
           <div className="space-y-2">
             {incoming.map((r) => (
-              /* ⚠ A named class, so a gate can address the ROW rather than
-                 guessing at div nesting — the first version of the walk
-                 located `div` by text and resolved to the innermost one,
-                 which holds the name but NOT the buttons, and hung. */
+              // A named class, so a gate can address the ROW rather than
               <div
                 key={r.id}
                 className="pm-groups-req flex flex-wrap items-center gap-3 border-t border-line py-5"
@@ -550,13 +458,7 @@ function Requests({
               You haven&rsquo;t asked to join anything. Groups that need an owner&rsquo;s
               say-so show up here while you wait.
             </p>
-            {/* ⚠⚠ THE DOOR OUT (`P2-A3-E678`). The mockup carries
-                `Discover Groups →` here and it was dropped. ⚠⚠⚠ **AN EMPTY
-                STATE THAT NAMES NO NEXT MOVE IS A DEAD END** — the
-                2026-09-23 rules, item 4: *"AT GENUINE ZERO, NAME THE FIRST
-                MOVE RATHER THAN REPORTING EMPTINESS."* ⚠ It links to this
-                page's own `Discover` view, which exists, so it is not a door
-                onto a wall. */}
+            {/* THE DOOR OUT . The mockup carries */}
             <Link
               href="/community/groups?view=discover"
               className="mt-3 inline-block text-[13.5px] font-bold text-magenta hover:underline"
@@ -578,8 +480,7 @@ function Requests({
                   >
                     {r.groupTitle}
                   </Link>
-                  {/* ⚠⚠ THE STATE IN WORDS, NOT A COLOURED DOT. A decline that
-                      only a colour communicates is not an answer. */}
+                  {/* THE STATE IN WORDS, NOT A COLOURED DOT. A decline that */}
                   <p className="mt-0.5 text-[13px] text-ink-2">
                     {r.state === "PENDING"
                       ? "Waiting on the group's owner."

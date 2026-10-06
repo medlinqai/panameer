@@ -104,22 +104,10 @@ export async function POST(req: Request) {
     ? `${appBaseUrl()}/assess/r/${a.share_token}`
     : `${appBaseUrl()}/assess/claim/${a.share_token}`;
 
-  /*
-    ── THE EMAIL IS A RECEIPT NOW, NOT THE DOOR ───────────────────────────────
-
-    The client no longer waits on this to show the report — it redirects
-    straight to /assess/r/<shareToken> — so everything below is best-effort. But
-    `emailSent` goes back in the response, because the report renders "we've
-    also emailed this link to you" and that sentence must not be printed on a
-    send that did not happen.
-  */
+  // THE EMAIL IS A RECEIPT NOW, NOT THE DOOR
   let emailSent = false;
   if (!mailConfigured()) {
-    /*
-      NOT AN ERROR, AND DELIBERATELY NOT LOGGED AS ONE. RESEND_API_KEY is simply
-      absent — the normal state of a dev machine. The report URL goes in the
-      line so a local walk has the link the email would have carried.
-    */
+    // NOT AN ERROR, AND DELIBERATELY NOT LOGGED AS ONE. RESEND_API_KEY is simply
     console.warn(
       `[assessment] report email SKIPPED — RESEND_API_KEY is not configured (configuration, not an outage). Assessment ${a.id} saved; report link: ${url}`
     );

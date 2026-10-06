@@ -77,13 +77,7 @@ export default async function ThreadPage({
               {e.body}
             </p>
 
-            {/*
-              ⚠ THE MARK IS VISIBLE TO EVERYONE; THE BUTTON IS NOT.
-
-              A reader needs to see which answer worked — that is the entire
-              point of the signal. Only the person who asked gets the control,
-              and never on their own reply.
-            */}
+            {/* THE MARK IS VISIBLE TO EVERYONE; THE BUTTON IS NOT. */}
             {(e.markedHelpfulAt || e.canMarkHelpful) && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {e.markedHelpfulAt && !e.canMarkHelpful && (
@@ -97,23 +91,12 @@ export default async function ThreadPage({
               </div>
             )}
 
-            {/*
-              ⚠⚠ THE INSTRUCTOR'S SIGNAL, SEPARATE FROM THE ASKER'S
-              (`P2-J3-E558` WS-B). A reader needs to see BOTH: an answer the
-              asker found helpful and an answer the instructor says is CORRECT
-              are different claims, and an answer can carry one without the other.
-            */}
+            {/* THE INSTRUCTOR'S SIGNAL, SEPARATE FROM THE ASKER'S */}
             {(e.instructorConfirmedAt || e.canConfirm) && (
               <div className="mt-2 flex flex-wrap items-center gap-3" id="confirm">
                 {e.instructorConfirmedAt && !e.canConfirm && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-bg-soft px-3 py-1.5 text-[12.5px] font-semibold text-ink-2">
-                    {/* ⚠⚠ THE NAME, NOT JUST THE FACT. Authority here is
-                        `teachesPathWhere`, which is wide on purpose — a
-                        lesson-level expert qualifies. ⚠ Attribution is the
-                        counterweight: "confirmed by the instructor" is not
-                        checkable, "confirmed by Marelise Steenkamp" is.
-                        ⚠ `E433` — the NAME is a fact, so ink; nothing here is
-                        interactive, so nothing here is magenta. */}
+                    {/* THE NAME, NOT JUST THE FACT. Authority here is */}
                     ✓ Confirmed
                     {e.instructorConfirmedBy ? ` by ${e.instructorConfirmedBy}` : ""}
                   </span>

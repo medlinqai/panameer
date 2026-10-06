@@ -42,10 +42,7 @@ export function AssessmentHero() {
             {HOME_HERO.frameworkNote}
           </p>
 
-          {/*
-            The lockup survives as a quiet through-line rather than the
-            headline — it is the brand's line, not the reader's reason.
-          */}
+          {/* The lockup survives as a quiet through-line rather than the */}
           <p className="mt-7 font-display text-[13px] font-semibold uppercase tracking-[0.2em] text-[#a7a3c6]">
             {BRAND_BADGE_SHORT}
           </p>

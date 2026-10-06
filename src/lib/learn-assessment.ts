@@ -5,21 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { DOC_SOURCE_LABEL, docExcerpt } from "@/lib/learn-doc-source";
 
-/**
- * AI-GENERATED path assessments (brief_learn_experience WS5).
- *
- * Scott's constraint is the design constraint: he will not hand-build question
- * banks, so the test is written by the model from the course content the admin
- * console already captures — path summary, course summaries, section
- * descriptions, lesson titles and descriptions. Transcripts later; the
- * descriptions are what exist today.
- *
- * Reuses the ai-extract.ts pattern deliberately — tool-based structured output,
- * a lazily constructed client, Zod validation of what comes back — because the
- * failure modes are the same ones that were already learned the hard way there:
- * a truncated response arrives as a well-formed empty object, and defaults hide
- * it. See `ai-extract.ts`.
- */
+/** AI-GENERATED path assessments (brief_learn_experience WS5). */
 
 const MODEL = "claude-sonnet-5";
 
@@ -36,24 +22,9 @@ export const QUESTION_SCHEMA = z.object({
   explanation: z.string().default(""),
   /** Which course this came from, so a review can point somewhere useful. */
   courseTitle: z.string().default(""),
-  /**
-   * ⚠ WHICH LESSON THIS QUESTION TESTS — REQUIRED
-   * (brief_learn_assessments_generate WS2).
-   *
-   * The single most useful constraint available. A question that cannot name the
-   * lesson it tests is a question written from the reference documentation alone,
-   * or from a title, and both are the exact failure this work exists to prevent.
-   * `generateAssessment` REJECTS any question whose `lessonId` is not in the
-   * path — the same defensive posture as the existing self-consistency check.
-   */
+  /** WHICH LESSON THIS QUESTION TESTS — REQUIRED */
   lessonId: z.string().min(1),
-  /**
-   * Whether the vendor documentation was needed to write it.
-   *
-   * Not decoration: it is the field a reviewer sorts by. A LESSON_PLUS_DOCS
-   * question is the one most likely to have drifted outside what a learner could
-   * have learned here, which is the thing review is for.
-   */
+  /** Whether the vendor documentation was needed to write it. */
   sourceKind: z.enum(["LESSON", "LESSON_PLUS_DOCS"]).default("LESSON"),
 });
 
@@ -61,21 +32,7 @@ export const ASSESSMENT_SCHEMA = z.object({
   questions: z.array(QUESTION_SCHEMA).min(1),
 });
 
-/**
- * ⚠ THE MODEL'S RAW OUTPUT IS PARSED LENIENTLY, THEN FILTERED, THEN VALIDATED
- * STRICTLY — and that order was learned the hard way.
- *
- * `QUESTION_SCHEMA` is the STORAGE contract and it stays strict. But parsing the
- * model's reply against it makes ONE bad question fail the WHOLE set: measured on
- * the 4-lesson Payroll path, the reply came back with an empty string as a fifth
- * option and the run died with `questions.2.options.4`, discarding nineteen good
- * questions with it.
- *
- * That is the wrong shape of strictness. The file's own established posture is to
- * throw out the bad question and keep the set — the `correctIndex` check right
- * below has always done exactly that. So: read loosely, discard per question,
- * and re-validate each survivor against the strict schema before storage.
- */
+/** THE MODEL'S RAW OUTPUT IS PARSED LENIENTLY, THEN FILTERED, THEN VALIDATED */
 const LENIENT_ASSESSMENT_SCHEMA = z.object({
   questions: z
     .array(
@@ -95,14 +52,7 @@ const LENIENT_ASSESSMENT_SCHEMA = z.object({
 
 export type AssessmentQuestion = z.infer<typeof QUESTION_SCHEMA>;
 
-/**
- * What a learner is allowed to see: everything except the answer.
- *
- * ⚠ `lessonId` AND `sourceKind` ARE ALSO WITHHELD. They exist for the REVIEWER —
- * "which lesson does this test" and "did this need the vendor docs" are the two
- * questions a review turns on — and neither is information a learner mid-test
- * benefits from. Smaller payload, and nothing to reverse-engineer from.
- */
+/** What a learner is allowed to see: everything except the answer. */
 export type PublicQuestion = Omit<
   AssessmentQuestion,
   "correctIndex" | "explanation" | "lessonId" | "sourceKind"
@@ -120,32 +70,7 @@ function client(): Anthropic {
   return _client;
 }
 
-/**
- * ── ⚠ THE THREE CATALOG DEFECTS THAT WOULD POISON A GENERATED TEST ───────────
- * (brief_learn_assessments_generate WS3; the defects are `P1-J3-E003`)
- *
- * FILTERED OUT OF THE SOURCE, NOT FIXED HERE. They are content bugs and fixing
- * them inside a generation change would hide them — each is reported with a
- * per-path count instead.
- *
- *   1  "Ideas for Future Videos" — production notes, learner-visible by
- *      accident. One of them is literally
- *      `How to Use Supplier Portal for Sub-Consultants (Portal V Cognibox?)`.
- *
- *   2  "Learning Path Overview" sections. ⚠ WIDER THAN THE BRIEF ASKED, and
- *      deliberately: the brief says exclude the ones naming a DIFFERENT path.
- *      Measured, there are seven, each holding exactly ONE lesson, and four
- *      demonstrably name the next path in the import order (Advanced
- *      Procurement's Catalogs course points at the Supplier Integration LP).
- *      The other three are `Learning Path = Course` and similar — pointers to a
- *      path rather than teachable content. NONE of the seven is material a
- *      question can be right or wrong about, and a name-matching heuristic to
- *      separate four from three would be a fragile guess in place of a simple
- *      true statement. All seven are excluded; the count is reported.
- *
- *   3  Courses with an EMPTY title. Three of them, already omitted from the
- *      spine UI for the same reason.
- */
+/** THE THREE CATALOG DEFECTS THAT WOULD POISON A GENERATED TEST */
 const EXCLUDE_SECTION_TITLE = [
   /ideas\s+for\s+future/i,
   /^\s*learning\s+path\s+overview\s*$/i,
@@ -170,23 +95,7 @@ export type AssessmentSource = {
   docSources: string[];
 };
 
-/**
- * Flatten a path into the text the model writes questions from.
- *
- * Lesson TITLES carry most of the signal in this catalog — descriptions are
- * sparse and 290 of 522 are empty — so titles are always included and
- * descriptions are added where they exist, rather than dropping a lesson that
- * has no prose. That is precisely why WS1's reference documentation exists.
- *
- * ⚠ EVERY LESSON IS EMITTED WITH ITS ID, and the ids are returned in `index`.
- * That is what lets `generateAssessment` reject a question naming a lesson
- * outside this path — the constraint is worth nothing if the model cannot see
- * the identifiers it is being asked to cite.
- *
- * ⚠ THE VENDOR DOCS ARE DELIMITED AND LABELLED AS VENDOR DOCS, never presented
- * as though the instructor said it. The prompt then forbids testing anything the
- * lessons do not cover — the docs are context for ACCURACY, not extra syllabus.
- */
+/** Flatten a path into the text the model writes questions from. */
 export async function buildAssessmentSource(learningPathId: string): Promise<AssessmentSource> {
   const path = await prisma.learningPath.findUnique({
     where: { id: learningPathId },
@@ -250,10 +159,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
       }
     }
 
-    /*
-      Collected rather than inlined, so the curriculum — which carries the
-      lessonIds the model must cite — is never the part that gets truncated.
-    */
+    // Collected rather than inlined, so the curriculum — which carries the
     const doc = docExcerpt(c.doc_source_text);
     if (doc && c.doc_source_url) {
       docSources.push(c.doc_source_url);
@@ -263,12 +169,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
     }
   }
 
-  /*
-    ⚠ THE CURRICULUM IS NEVER THE PART THAT GETS CUT. The old version sliced the
-    whole string at MAX_SOURCE_CHARS, which with documentation appended could have
-    truncated the lesson list and silently removed ids the model was told to cite.
-    Curriculum first, in full; documentation only while there is room.
-  */
+  // THE CURRICULUM IS NEVER THE PART THAT GETS CUT. The old version sliced the
   let text = lines.join("\n");
   for (const block of docBlocks) {
     if (text.length + block.length > MAX_SOURCE_CHARS) break;
@@ -278,18 +179,7 @@ export async function buildAssessmentSource(learningPathId: string): Promise<Ass
   return { title: path.title, text: text.slice(0, MAX_SOURCE_CHARS), lessons: index.length, index, excluded, docSources };
 }
 
-/**
- * ⚠ REJECT ANY QUESTION NAMING A LESSON OUTSIDE THIS PATH (WS2).
- *
- * Extracted rather than inlined so it can be exercised with an INJECTED bad
- * question — the brief asks for exactly that, and a rule enforced only inside a
- * live model call is a rule nobody can test. `check:learn-assessment` calls this
- * with a fabricated orphan.
- *
- * REJECTED, never repaired. A question citing an unknown lessonId was written
- * from the reference documentation or from a title, and there is no honest way to
- * guess which lesson it meant.
- */
+/** REJECT ANY QUESTION NAMING A LESSON OUTSIDE THIS PATH (WS2). */
 export function keepQuestionsInPath<T extends { lessonId: string }>(
   questions: T[],
   known: Map<string, unknown> | Set<string>
@@ -322,13 +212,7 @@ export type GenerateOutcome =
     }
   | { ok: false; message: string };
 
-/**
- * Ask the model for a question set.
- *
- * Question COUNT scales with the path: a 1-lesson path with a 20-question exam
- * would be absurd, and a 105-lesson path with 5 questions would be worthless as
- * evidence of anything.
- */
+/** Ask the model for a question set. */
 export async function generateAssessment(
   learningPathId: string,
   requested?: number
@@ -421,14 +305,7 @@ export async function generateAssessment(
             `- Do not write questions about the platform, the video format, or the course ` +
             `structure itself. Only the subject matter.\n` +
             `- Give each question a short stable id (q1, q2, …) and name the course it came from.\n` +
-            /*
-              ── ⚠ THE TWO CONSTRAINTS THAT DO THE WORK (WS2) ──────────────────
-              The first is checkable after the fact — `lessonId` is rejected if it
-              is not in this path — which is why it is stated as a hard rule
-              rather than a preference. The second is not checkable, so it is
-              stated as plainly as possible: the vendor documentation is there to
-              stop the model being WRONG, not to widen the syllabus.
-            */
+            // THE TWO CONSTRAINTS THAT DO THE WORK (WS2)
             `- ⚠ REQUIRED: give every question the exact lessonId of the lesson it tests, ` +
             `copied from that lesson's [lessonId: …] marker. If you cannot attribute a ` +
             `question to one specific lesson in the list, do not write it.\n` +
@@ -466,12 +343,7 @@ export async function generateAssessment(
       };
     }
 
-    /*
-      Per-question strict validation. A question that fails here is DROPPED, not
-      repaired: an empty option could be deleted, but that shifts `correctIndex`
-      and there is no way to know whether the model meant the option before or
-      after the hole.
-    */
+    // Per-question strict validation. A question that fails here is DROPPED, not
     const wellFormed: AssessmentQuestion[] = [];
     let malformed = 0;
     for (const raw of loose.data.questions) {
@@ -487,25 +359,12 @@ export async function generateAssessment(
       };
     }
 
-    /*
-      Throw out anything self-inconsistent BEFORE it is stored. A question whose
-      correctIndex points past its own options list is unanswerable — it would
-      mark every learner wrong forever, and it is the kind of thing that is
-      invisible until someone fails a test they passed.
-    */
+    // Throw out anything self-inconsistent BEFORE it is stored. A question whose
     const answerable = parsed.data.questions.filter(
       (q) => q.correctIndex >= 0 && q.correctIndex < q.options.length
     );
 
-    /*
-      ── ⚠ AND THROW OUT ANYTHING THAT CANNOT NAME A LESSON IN THIS PATH (WS2) ──
-
-      Same posture as the check above, applied to the constraint that matters
-      here. A question citing a lessonId this path does not contain was written
-      from the reference documentation or from a title — the precise failure this
-      whole change exists to prevent — and it is REJECTED rather than repaired,
-      because there is no honest way to guess which lesson it meant.
-    */
+    // AND THROW OUT ANYTHING THAT CANNOT NAME A LESSON IN THIS PATH (WS2)
     const known = new Map(source.index.map((l) => [l.id, l]));
     const { kept: usable, orphaned } = keepQuestionsInPath(answerable, known);
 
@@ -519,20 +378,7 @@ export async function generateAssessment(
       };
     }
 
-    /*
-      ── ⚠ SPREAD, ASSERTED RATHER THAN REQUESTED (WS2) ────────────────────────
-
-      The prompt has always asked for spread "rather than clustering on one
-      course". Asking is not the same as checking. A test where two thirds of the
-      questions come from one of six courses is not a test of the path, and it is
-      the shape a model drifts into when one course has richer descriptions than
-      the rest — which, in this catalog, several do.
-
-      REPORTED, NOT REJECTED: dropping questions to satisfy a ratio would thin an
-      already-thin set, and the honest response is to hand a reviewer the number.
-      Single-course paths are exempt by arithmetic — 100% of one course is the
-      only possible answer.
-    */
+    // SPREAD, ASSERTED RATHER THAN REQUESTED (WS2)
     const byCourse = new Map<string, number>();
     for (const q of usable) {
       const c = known.get(q.lessonId)!.courseTitle;
@@ -584,14 +430,7 @@ export function toPublicQuestions(questions: AssessmentQuestion[]): PublicQuesti
   }));
 }
 
-/**
- * ⚠ THE PUBLISH GATE, IN ONE PLACE (brief_learn_assessments_generate WS4).
- *
- * A generated test nobody has read must not award a certificate, so this is the
- * only function the learner-facing paths go through and it refuses anything that
- * is missing or still DRAFT. `AssessmentNotReady` rather than a bare Error so a
- * route can answer 409 instead of 500 — "not ready yet" is a state, not a fault.
- */
+/** THE PUBLISH GATE, IN ONE PLACE (brief_learn_assessments_generate WS4). */
 export class AssessmentNotReady extends Error {
   constructor(
     message: string,
@@ -621,16 +460,7 @@ export async function getPublishedAssessment(learningPathId: string) {
   return row;
 }
 
-/**
- * Read the cached set, generating it on first use. ⚠ ADMIN AND BATCH ONLY.
- *
- * It used to be what the learner's GET went through, which meant clicking "Take
- * the test" could trigger a model call. With the review gate that is worse than
- * wasteful: the call would happen, the set would be stored as DRAFT, and the
- * learner would be told it is not ready. Generation is now a deliberate act —
- * the admin trigger or `prisma/generate-learn-assessments.ts` — and the learner
- * path is a pure read through `getPublishedAssessment`.
- */
+/** Read the cached set, generating it on first use. ADMIN AND BATCH ONLY. */
 export async function getOrCreateAssessment(learningPathId: string) {
   const existing = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
@@ -645,57 +475,22 @@ export async function getOrCreateAssessment(learningPathId: string) {
       learning_path_id: learningPathId,
       questions: outcome.questions,
       model: outcome.model,
-      /* ⚠ DRAFT, like every other generated set. Nothing that writes questions
-         also publishes them. */
+      // DRAFT, like every other generated set. Nothing that writes questions
       source_note: outcome.docSources.length > 0 ? outcome.docSources.join(" ") : null,
     },
   });
 }
 
-/**
- * ── ⚠ THE REVIEW ACTIONS — PUBLISH, UNPUBLISH, DROP (P1-J3-E020) ─────────────
- *
- * `status` has defaulted to `DRAFT` since `brief_learn_assessments_generate`, and
- * `reviewed_by` / `reviewed_at` were added at the same time — and NOTHING WROTE
- * THEM. Every generated set was therefore permanently unsittable: the columns for
- * the human act existed and the act itself was unimplemented. Generating all 23
- * sets would have produced 23 tests nobody could take.
- *
- * ⚠ REVIEW IS NOT AUTHORING. Scott will not hand-build question banks, so there is
- * deliberately no editor here: no `addQuestion`, no way to rewrite a stem or an
- * option. The only destructive act is DROPPING a whole question, and the remedy for
- * a bad set is REGENERATE, not repair.
- */
+/** THE REVIEW ACTIONS — PUBLISH, UNPUBLISH, DROP */
 
-/**
- * ⚠ THE FLOOR A REVIEWED SET MAY NOT FALL THROUGH.
- *
- * It is the generator's own floor, not a new number:
- * `Math.max(5, Math.min(20, round(lessons / 4) + 4))` in `generateAssessment` can
- * never ask for fewer than five, so a set that drops below five is smaller than
- * anything this system would have written on purpose.
- *
- * ⚠ AND LOWERING IT IS HOW A CERTIFICATE STOPS MEANING ANYTHING. The same argument
- * `MIN_LESSONS` carries in the batch script: a three-question test that certifies
- * somebody is worse than no test.
- */
+/** THE FLOOR A REVIEWED SET MAY NOT FALL THROUGH. */
 export const MIN_REVIEWED_QUESTIONS = 5;
 
 export type ReviewOutcome =
   | { ok: true; questions: AssessmentQuestion[]; status: string }
   | { ok: false; message: string; code: "MISSING" | "TOO_FEW" | "NO_PERSON" };
 
-/**
- * Drop questions by id, renumbering nothing — ids are stable and the ORDER is the
- * stored order.
- *
- * ⚠ IT REFUSES TO TAKE THE SET BELOW THE FLOOR, rather than letting the caller
- * discover that at publish time. A reviewer who has just dropped four questions
- * needs to be told immediately, not after clicking Publish.
- *
- * ⚠ DROPPING DOES NOT PUBLISH AND DOES NOT TOUCH `reviewed_by`. Reading a set and
- * standing behind it are two acts; only the second one signs.
- */
+/** Drop questions by id, renumbering nothing — ids are stable and the ORDER is the */
 export async function dropQuestions(
   learningPathId: string,
   dropIds: string[]
@@ -722,20 +517,7 @@ export async function dropQuestions(
   return { ok: true, questions: readQuestions(saved), status: saved.status };
 }
 
-/**
- * Publish a set: `status = PUBLISHED`, and STAMP WHO SAID SO.
- *
- * ⚠ `reviewed_by` IS NOT OPTIONAL HERE AND THE REASON IS A DIFFERENT FEATURE.
- * `P1-J2.4-E024` records the EXPERT badge — "created assessment" — as unbuildable
- * because this model recorded only WHICH MODEL wrote a set and never which human
- * stood behind it. A publish that leaves this null makes that badge unearnable all
- * over again, so a viewer with no `Person` CANNOT publish rather than publishing
- * anonymously.
- *
- * ⚠ IT ALSO REFUSES A SET BELOW THE FLOOR. `dropQuestions` checks at drop time and
- * this checks again at publish time, because the two are separate requests and a
- * set can be shrunk by a regenerate in between.
- */
+/** Publish a set: `status = PUBLISHED`, and STAMP WHO SAID SO. */
 export async function publishAssessment(
   learningPathId: string,
   userId: string
@@ -777,18 +559,7 @@ export async function publishAssessment(
   return { ok: true, questions: readQuestions(saved), status: saved.status };
 }
 
-/**
- * Back to `DRAFT`.
- *
- * ⚠ IT DELETES NOTHING. Attempts reference this row, and someone who passed last
- * week passed a real test — the same reasoning the regenerate path already carries.
- * Revoking a set from circulation and erasing the history of it being sat are two
- * different acts and only the first one is offered.
- *
- * ⚠ `reviewed_by` AND `reviewed_at` ARE LEFT STANDING. They record that a human DID
- * review this set on that date, which remains true after it is withdrawn; clearing
- * them would rewrite history to say nobody ever looked.
- */
+/** Back to `DRAFT`. */
 export async function unpublishAssessment(learningPathId: string): Promise<ReviewOutcome> {
   const row = await prisma.certificationTest.findUnique({
     where: { learning_path_id: learningPathId },
@@ -833,22 +604,13 @@ export type GradeResult = {
   credential: { id: string; url: string } | null;
 };
 
-/**
- * Grade an attempt and, on a pass, issue the credential.
- *
- * GRADING IS SERVER-SIDE AND THE ANSWERS NEVER LEAVE IT. `toPublicQuestions`
- * strips correctIndex on the way out, the client posts only its choices, and
- * the comparison happens here against the stored set. Any other arrangement
- * means the test is decorative — and this one issues a credential that goes on
- * a professional profile, so it has to actually mean something.
- */
+/** Grade an attempt and, on a pass, issue the credential. */
 export async function gradeAttempt(
   userId: string,
   learningPathId: string,
   answers: Record<string, number>
 ): Promise<GradeResult> {
-  /* ⚠ PUBLISHED ONLY. Grading a DRAFT would award a certificate from a question
-     set nobody has read, which is the whole thing the gate exists to stop. */
+  // PUBLISHED ONLY. Grading a DRAFT would award a certificate from a question
   const assessment = await getPublishedAssessment(learningPathId);
   const questions = readQuestions(assessment);
   if (questions.length === 0) {
@@ -915,50 +677,18 @@ export async function gradeAttempt(
   };
 }
 
-/**
- * A public credential id that is safe to put in a URL.
- *
- * Not the row's uuid: that is an internal key, and a verify URL is pasted into
- * LinkedIn, emailed, and indexed. A separate opaque id means the public
- * identifier can be rotated or revoked without touching the record, and knowing
- * one credential's URL tells you nothing about how to find another.
- */
+/** A public credential id that is safe to put in a URL. */
 function credentialId(): string {
   return createHash("sha256").update(randomUUID()).digest("hex").slice(0, 24);
 }
 
-/**
- * Issue (or return) the Learn credential for a passed path.
- *
- * Reuses the Certification model rather than forking a parallel one — the
- * schema comment on `issued_from` is explicit that a Learn certificate IS a
- * certification, and a second model would give a provider's profile two
- * Certifications sections that looked identical and behaved differently.
- *
- * ── ⚠ IT NO LONGER REQUIRES A ProviderProfile (`P1-J3-E019`) ────────────────
- *
- * This function used to open `if (!profile || !path) return null`, and the note
- * here used to say a non-provider learner "simply has nowhere to hang the badge
- * yet". ⚠ THAT WAS THE DEFECT, NOT A CAVEAT: they passed the test, no row was
- * written, no credential existed, no verify page resolved, and NO ERROR WAS
- * RAISED — while the public Learn page invited exactly that person and §6 of the
- * spine promised "the credential is issued in your name".
- *
- * `Certification.user_id` is the owner now. The provider profile is attached WHEN
- * THERE IS ONE, so a seller's profile still shows the credential, and its absence
- * is no longer a reason to issue nothing.
- *
- * ⚠ THE LOOKUP IS BY `user_id`, NOT BY PROFILE. Keying the "already issued?"
- * check on the profile would have re-issued a second credential to anyone who
- * became a seller after passing.
- */
+/** Issue (or return) the Learn credential for a passed path. */
 export async function issueCredential(
   userId: string,
   learningPathId: string
 ): Promise<{ id: string; url: string } | null> {
   const [profile, path] = await Promise.all([
-    /* ⚠ OPTIONAL NOW. Looked up so a seller's profile still shows the credential;
-       its absence is no longer a reason to issue nothing. */
+    // OPTIONAL NOW. Looked up so a seller's profile still shows the credential
     prisma.providerProfile.findFirst({
       where: { person: { user_id: userId } },
       select: { id: true },
@@ -968,8 +698,7 @@ export async function issueCredential(
       select: { title: true },
     }),
   ]);
-  /* ⚠ ONLY THE PATH IS REQUIRED. `!profile` used to be half of this test — see
-     the note above; that half was `E019`. */
+  // ONLY THE PATH IS REQUIRED. `!profile` used to be half of this test — see
   if (!path) return null;
 
   const existing = await prisma.certification.findFirst({
@@ -990,7 +719,7 @@ export async function issueCredential(
   const id = credentialId();
   await prisma.certification.create({
     data: {
-      /* ⚠ THE OWNER IS THE USER. The profile rides along when there is one. */
+      /* THE OWNER IS THE USER. The profile rides along when there is one. */
       user_id: userId,
       provider_profile_id: profile?.id ?? null,
       name: path.title,
@@ -1027,12 +756,7 @@ export async function getTestState(userId: string | null, learningPathId: string
     pathTitle: path?.title ?? "",
     pathSlug: path?.slug ?? "",
     exists: Boolean(assessment),
-    /**
-     * ⚠ THE ONE THE UI SHOULD BRANCH ON. `exists` says a row is there; `ready`
-     * says a human has read it. Twenty-two of twenty-three paths have no row at
-     * all, and the twenty-third is now DRAFT, so the honest default for every
-     * path today is "not ready" rather than "broken".
-     */
+    /** THE ONE THE UI SHOULD BRANCH ON. `exists` says a row is there; `ready` */
     status: assessment?.status ?? null,
     ready: assessment?.status === "PUBLISHED",
     available: aiAssessmentAvailable(),

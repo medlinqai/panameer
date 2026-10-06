@@ -58,35 +58,10 @@ export function ForumComposer({
       <h2 className="font-display text-[16px] font-bold">
         {mode === "thread" ? "Ask A Question" : "Reply"}
       </h2>
-      {/* ⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — the feature is commented
-            out, so a live surface must not keep promising it. See `src/lib/credits.ts`.
-          ⚠ THE WHOLE SENTENCE IS CREDITS COPY — both clauses are about earning,
-          so nothing non-Credits was lost here. */}
-      {/*
-      {mode === "thread" && (
-        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-          Posting earns Community Credits once the ledger is switched on — and
-          answering someone else&apos;s question earns more than asking.
-        </p>
-      )}
-      */}
+      {/* CREDITS COPY PARKED 2026-09-03 — the feature is commented */}
+      {/* {mode === "thread" && ( */}
 
-      {/*
-        ── ⚠⚠ YOU POST AS A PERSON, NOT AN INBOX (`P1-ALL-E033`) ───────────────
-
-        SCOTT: *"Anyone can give a BS email and verify it, no?"* — yes, and the
-        answer is non-anonymity rather than vetting.
-
-        ⚠⚠ THE COMPOSER IS DISABLED WITH THE REASON VISIBLE, NEVER HIDDEN. A
-        missing composer reads as broken; a composer that says why reads as a
-        next step. ⚠ AND NEVER `pointer-events: none` — that is the `E306` rule
-        and it still stands even though its nav gate came out. The fields carry
-        the `disabled` attribute, so a keyboard user reaches this explanation and
-        every link in it by tabbing, which a pointer-events trap would deny them.
-
-        ⚠ NOT STYLED AS AN ERROR. Nothing has gone wrong; three fields are not
-        filled in. Red here would read as a fault and this is not one.
-      */}
+      {/* YOU POST AS A PERSON, NOT AN INBOX */}
       {blocked && (
         <div className="mt-3 rounded-[10px] border border-line bg-bg-soft p-4">
           <p className="text-[14px] font-bold">

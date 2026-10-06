@@ -32,7 +32,7 @@ export function TrendBack({
         {!counted ? (
           <p className="text-[13px] leading-relaxed text-ink-2">{series.uncounted}</p>
         ) : total === 0 ? (
-          /* ⚠⚠⚠ EMPTY, SAID PLAINLY — NOT A ZERO LINE. */
+          /* EMPTY, SAID PLAINLY — NOT A ZERO LINE. */
           <p className="text-[13px] leading-relaxed text-ink-2">
             Nothing recorded in this period yet, so there is no line to draw.
           </p>
@@ -41,7 +41,7 @@ export function TrendBack({
         )}
       </div>
 
-      {/* ⚠ Two periods, as links — a period is shareable and survives a refresh. */}
+      {/* Two periods, as links — a period is shareable and survives a refresh. */}
       <div className="mt-auto flex gap-1.5 border-t border-line pt-2.5">
         {periods.map((p) => (
           <Link
@@ -60,8 +60,7 @@ export function TrendBack({
   );
 }
 
-/** ⚠ `E433` — the line is a FIGURE drawn, so it is ink-and-magenta as data, and
- *  nothing in it is clickable. */
+/** — the line is a FIGURE drawn, so it is ink-and-magenta as data, and */
 function Sparkline({ values }: { values: number[] }) {
   const max = Math.max(...values, 1);
   const w = 280;
@@ -81,15 +80,7 @@ function Sparkline({ values }: { values: number[] }) {
   );
 }
 
-/**
- * ⚠⚠ THE ACTION BACK — one counted credit line, then the links that move THIS
- * card's figures.
- * ⚠⚠⚠ THE CREDIT LINE IS A COUNT, NOT A COMPLIMENT. Scott: *"Credit what a
- * member has done the moment they do it."* If they have done nothing it says
- * what the card measures — it does not congratulate them for arriving.
- * ⚠ EVERY LINK HERE ALSO LIVES SOMEWHERE ELSE — a link that exists only behind
- * a flip is a hidden door. Where each one else lives is reported at the gate.
- */
+/** THE ACTION BACK — one counted credit line, then the links that move THIS */
 export function ActionBack({
   title,
   credit,
@@ -116,43 +107,13 @@ export function ActionBack({
   );
 }
 
-/**
- * ⚠⚠ "EVERY FIGURE ZERO" MEANS EVERY **COUNTED** FIGURE IS ZERO.
- * ⚠⚠⚠ AN UNCOUNTED FIGURE IS NOT A ZERO AND MUST NOT VOTE — a card whose only
- * figures are dashes has no history to show and no achievement to credit, and
- * treating a dash as a zero would flip it to an action back on the strength of
- * something nobody measured.
- */
+/** AN UNCOUNTED FIGURE IS NOT A ZERO AND MUST NOT VOTE — a card whose only */
 export function allZero(figures: Figure[]): boolean {
   const counted = figures.filter(isCounted);
   return counted.length > 0 && counted.every((n) => n === 0);
 }
 
-/**
- * ── ⚠⚠⚠ THE BREAKDOWN BACK — A DIFFERENT CUT OF THE SAME NUMBER ──────────
- *
- * ⚠ SCOTT, 2026-09-23: *"The old tiles' detail moves to the new card's flip
- * back. That is what a trend back is for: a different cut of the same number."*
- *
- * ⚠⚠⚠ THE SUBSETS ARE DRAWN **FROM** THE TOTAL, NEVER ADDED **TO** IT, AND
- * THAT IS WHY THE REMAINDER IS RENDERED RATHER THAN LEFT IMPLICIT.
- * ⚠ `Offered` IS the total — `interviewRequest.count({ provider_person_id })`,
- * byte-identical to the front's figure. `Taken` is `COMPLETED`; `Declined or
- * cancelled` is `DECLINED + CANCELLED`. ⚠⚠ THE STATES `REQUESTED`,
- * `SLOTS_OFFERED` AND `SCHEDULED` ARE IN NEITHER SUBSET, so the two parts
- * genuinely do not add up to the total and never will.
- * ⚠⚠⚠ SCOTT: *"A breakdown that doesn't add up is a breakdown that's wrong —
- * show the remainder or don't show the split."* The remainder is named and
- * rendered, so the four rows reconcile on screen by inspection.
- *
- * ── ⚠⚠ AND IF IT STILL DOES NOT RECONCILE, IT SAYS SO ────────────────────
- *
- * ⚠ A negative remainder means a subset exceeded its own total — impossible by
- * construction, which is exactly why it must be caught rather than assumed:
- * it would mean the two queries had drifted apart. ⚠⚠ THE CARD THEN REFUSES TO
- * PRINT THE SPLIT and says the figures disagree, rather than showing numbers a
- * reader would have to reconcile themselves and could not.
- */
+/** THE BREAKDOWN BACK — A DIFFERENT CUT OF THE SAME NUMBER */
 export function BreakdownBack({
   title,
   totalLabel,
@@ -166,14 +127,12 @@ export function BreakdownBack({
   totalLabel: string;
   total: Figure;
   parts: { label: string; figure: Figure }[];
-  /** ⚠ What the unaccounted-for rows ARE — never just "other". */
+  /** What the unaccounted-for rows ARE — never just "other". */
   remainderLabel: string;
   note?: string;
   links?: { label: string; href: string }[];
 }) {
-  /* ⚠⚠ ONLY COUNTED FIGURES CAN BE RECONCILED. If the total or any part is a
-     dash, there is no arithmetic to do and the split is not shown — an
-     uncountable figure is not a zero and must not be treated as one. */
+  // ONLY COUNTED FIGURES CAN BE RECONCILED. If the total or any part is a
   const countable = isCounted(total) && parts.every((p) => isCounted(p.figure));
   const partSum = countable
     ? parts.reduce((a, p) => a + (p.figure as number), 0)
@@ -190,7 +149,7 @@ export function BreakdownBack({
           counted, so there is no split to show.
         </p>
       ) : remainder < 0 ? (
-        /* ⚠⚠⚠ SAY IT, DO NOT PRINT IT. */
+        /* SAY IT, DO NOT PRINT IT. */
         <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
           These figures disagree — the parts come to {partSum.toLocaleString("en-US")},
           which is more than the {(total as number).toLocaleString("en-US")} counted.
@@ -203,7 +162,7 @@ export function BreakdownBack({
             {parts.map((p) => (
               <StatSplitRow key={p.label} label={p.label} figure={p.figure} indent />
             ))}
-            {/* ⚠ The remainder is a real row, named, so the column adds up. */}
+            {/* The remainder is a real row, named, so the column adds up. */}
             <StatSplitRow label={remainderLabel} figure={remainder} indent />
           </div>
           {note && <p className="mt-2 text-[12px] leading-snug text-ink-3">{note}</p>}
@@ -225,8 +184,7 @@ export function BreakdownBack({
   );
 }
 
-/** ⚠ One row of a breakdown. ⚠⚠ A dash still carries its reason here, exactly
- *  as in `StatFigureRow` — the rule does not relax on a back face. */
+/** One row of a breakdown. A dash still carries its reason here, exactly */
 function StatSplitRow({
   label,
   figure,

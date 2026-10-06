@@ -92,12 +92,7 @@ export function formatDuration(seconds: number): string {
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
-/**
- * The sentence a surface may print. ⚠ IT NAMES THE GAP RATHER THAN HIDING IT.
- *
- * ⚠ THE STRINGS ARE CC'S AND ARE A PROPOSAL — nothing renders them yet; the
- * display surfaces are separate briefs. Reported at `E361` for Scott to overrule.
- */
+/** The sentence a surface may print. IT NAMES THE GAP RATHER THAN HIDING IT. */
 export function describeTotal(t: DurationTotal): string {
   if (t.counted === 0) return "";
   const base = formatDuration(t.seconds);

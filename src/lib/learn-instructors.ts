@@ -62,12 +62,7 @@ export async function loadInstructors(
   );
 }
 
-/**
- * Turn a tally + a loaded directory into the ordered instructor list.
- *
- * `declaredLeadId` is the path's own `expert_person_id`. It is used ONLY when
- * the lessons name nobody — see the note at the top of this file.
- */
+/** Turn a tally + a loaded directory into the ordered instructor list. */
 export function resolveInstructors(
   tally: { id: string; lessons: number }[],
   directory: Map<string, Omit<Instructor, "lessons">>,
@@ -88,11 +83,7 @@ export function resolveInstructors(
   return declared ? [{ ...declared, lessons: 0 }] : [];
 }
 
-/**
- * Every id this scope might need loaded — the lesson experts plus the declared
- * lead, since the lead is only consulted when the lessons are silent but has to
- * already be in the directory when that happens.
- */
+/** Every id this scope might need loaded — the lesson experts plus the declared */
 export function instructorIdsFor(
   lessons: LessonExpertRef[],
   declaredLeadId?: string | null

@@ -34,22 +34,7 @@ function phraseRe(phrase: string, flags: string): RegExp {
   return new RegExp(`(^|[^A-Za-z0-9])${escaped}([^A-Za-z0-9]|$)`, flags);
 }
 
-/**
- * Is this alias safe to match anywhere, or only under an anchored suite?
- *
- * A multi-word alias ("Fixed Assets", "Self-Service Procurement") is specific
- * enough to stand alone. A SINGLE TOKEN is not: "GL", "AP", "PO" and "CE" occur
- * in ordinary prose, in ticket numbers and in other vendors' vocabularies, and
- * matching them loosely is how a profile fills with modules nobody worked on.
- *
- * Single tokens are therefore accepted only when BOTH hold:
- *   · they appear in the text as ISOLATED UPPERCASE — "AP" not "Ap" or "ap";
- *   · the job's suite is already known from other evidence (suite-gated).
- *
- * That is the brief's rule, and the ordering matters: the suite must come from
- * something else first, so an acronym can never be the thing that decides which
- * vendor a job belongs to.
- */
+/** Is this alias safe to match anywhere, or only under an anchored suite? */
 function isSingleToken(alias: string): boolean {
   return !/\s/.test(alias.trim());
 }
@@ -60,12 +45,7 @@ type Hit = { entry: VocabEntry; viaAcronym: boolean };
 function anchoredHits(text: string, vocab: VocabEntry[]): Hit[] {
   const hits: Hit[] = [];
   for (const entry of vocab) {
-    /*
-      CANONICAL NAMES ARE MATCHED CASE-SENSITIVELY when they are short or
-      capitalised oddly, and case-insensitively when they are long enough to be
-      unmistakable. "Assets" lowercase in prose ("managed assets") is not the
-      Oracle Assets module; "Self-Service Procurement" in any casing is.
-    */
+    // CANONICAL NAMES ARE MATCHED CASE-SENSITIVELY when they are short or
     const longEnough = entry.name.length >= 12 || entry.name.includes(" ");
     if (phraseRe(entry.name, longEnough ? "i" : "").test(text)) {
       hits.push({ entry, viaAcronym: false });
@@ -97,17 +77,7 @@ function acronymHits(text: string, vocab: VocabEntry[], suite: SoftwareSuite): H
   return hits;
 }
 
-/**
- * Extract one job's skills, suite and role.
- *
- * Order is the whole design:
- *   1. match only what is safe without knowing the suite;
- *   2. use those, plus any suite named in the prose, to decide the suite;
- *   3. only then resolve shared modules and acronyms against that suite.
- *
- * Doing (3) before (2) is what produces a job tagged Oracle because it said
- * "AP" and a job tagged PeopleSoft because it said "GL".
- */
+/** Extract one job's skills, suite and role. */
 export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtraction {
   const blank: JobExtraction = {
     skillIds: [], suite: null, needsSuite: false, role: null, names: [],
@@ -116,11 +86,7 @@ export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtracti
 
   const hits = anchoredHits(text, vocab);
 
-  /*
-    A skill name is UNAMBIGUOUS when the catalog holds it under exactly one
-    suite — "Visual Builder Studio" is Oracle's and nobody else's. Those are the
-    only hits allowed to vote on which suite this job was.
-  */
+  // A skill name is UNAMBIGUOUS when the catalog holds it under exactly one
   const suitesByName = new Map<string, Set<SoftwareSuite>>();
   for (const v of vocab) {
     if (!v.suite) continue;
@@ -129,22 +95,13 @@ export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtracti
   const votes = new Map<SoftwareSuite, number>();
   for (const { entry } of hits) {
     if (!entry.suite) continue;
-    /*
-      A platform-neutral tool cannot tell you the vendor. "SQL" is evidence
-      about the work, not about the system — a block mentioning only SQL is an
-      unanchored block, not a Cross-Vendor job.
-    */
+    // A platform-neutral tool cannot tell you the vendor. "SQL" is evidence
     if (entry.suite === "CROSS_VENDOR") continue;
     if ((suitesByName.get(entry.name)?.size ?? 0) !== 1) continue;
     votes.set(entry.suite, (votes.get(entry.suite) ?? 0) + 1);
   }
 
-  /*
-    AN EXPLICIT MENTION OUTWEIGHS CO-OCCURRENCE. "Implemented Oracle Cloud
-    Financials" states the suite; inferring from module names is the fallback
-    for blocks that do not. Weighted rather than absolute so a block naming one
-    system while listing five modules of another still resolves sensibly.
-  */
+  // AN EXPLICIT MENTION OUTWEIGHS CO-OCCURRENCE. "Implemented Oracle Cloud
   for (const s of suitesMentioned(text)) {
     votes.set(s, (votes.get(s) ?? 0) + 2);
   }
@@ -159,48 +116,25 @@ export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtracti
   for (const h of hits) all.set(h.entry.skillId, h);
   if (suite) for (const h of acronymHits(text, vocab, suite)) all.set(h.entry.skillId, h);
 
-  /*
-    RESOLVE SHARED MODULES TO THE JOB'S SUITE. "Payables" matched every suite's
-    row; only the one for this job's suite survives. Agnostic rows (no suite)
-    are always kept — a Cross-Vendor tool belongs to whatever job mentions it.
-  */
+  // RESOLVE SHARED MODULES TO THE JOB'S SUITE. "Payables" matched every suite's
   const resolved = [...all.values()].filter(({ entry }) => {
-    /*
-      CROSS_VENDOR IS NOT A COMPETING SUITE. It is the catalog's home for SQL,
-      Git and REST — tools that belong to whichever job mentions them. Filtering
-      it against the job's suite (as an earlier version did, because
-      CROSS_VENDOR is an enum value like any other) silently dropped every
-      platform-neutral tool from every job that had a suite, which is every job
-      that parsed correctly.
-    */
+    // CROSS_VENDOR IS NOT A COMPETING SUITE. It is the catalog's home for SQL
     if (!entry.suite || entry.suite === "CROSS_VENDOR") return true;
     if (!suite) return (suitesByName.get(entry.name)?.size ?? 0) === 1;
     return entry.suite === suite;
   });
 
-  /*
-    NEEDS-SUITE: the block used names that exist on more than one suite and gave
-    nothing to anchor them. Do not guess — flag the job, ask on that job alone.
-  */
+  // NEEDS-SUITE: the block used names that exist on more than one suite and gave
   const sharedUnanchored = !suite && hits.some(
     ({ entry }) => entry.suite && (suitesByName.get(entry.name)?.size ?? 0) > 1
   );
 
-  /*
-    ROLE IS DERIVED BY WEIGHT OF EVIDENCE, not by first match. A job can carry
-    both application modules and technical tools; the majority is the honest
-    answer, and the provider can override it.
-  */
+  // ROLE IS DERIVED BY WEIGHT OF EVIDENCE, not by first match. A job can carry
   const roleVotes = new Map<string, number>();
   for (const { entry } of resolved) {
     roleVotes.set(entry.role, (roleVotes.get(entry.role) ?? 0) + 1);
   }
-  /*
-    Ties break toward Application-Specific, and by name after that, so the same
-    job never derives two different roles on two runs. A functional reading is
-    the safer default on a tie: most ERP work is functional, and the provider
-    corrects it in one click either way.
-  */
+  // Ties break toward Application-Specific, and by name after that, so the same
   const role =
     [...roleVotes.entries()].sort(
       (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
@@ -215,35 +149,19 @@ export function extractJobSkills(text: string, vocab: VocabEntry[]): JobExtracti
   };
 }
 
-/**
- * The résumé's CURRENT OR MOST-RECENT employer, as a company SUGGESTION (WS-3).
- *
- * The WS-4 company step prefills with this. It is a suggestion and must stay
- * one: for an independent consultant it is usually their own entity and the
- * right answer; for a W-2 employee it is their employer, which is emphatically
- * NOT the Panameer billing entity a work order is written against. The same
- * string is also already a work-history Employer row, so auto-creating a
- * Company from it would silently produce a second meaning for one name.
- *
- * Current work wins (no end date); otherwise the latest end date; ties break on
- * document order, which is how CVs are written.
- */
+/** The résumé's CURRENT OR MOST-RECENT employer, as a company SUGGESTION (WS-3). */
 export function suggestedCompany(
-  /* ⚠ `employer` NULLABLE (`P1-J1.4-E373`). */
+  /* `employer` NULLABLE (`P1-J1.4-E373`). */
   experiences: { employer: string | null; endDate?: string | null }[]
 ): string | null {
   if (!experiences.length) return null;
   const current = experiences.find((e) => !e.endDate && e.employer?.trim());
-  /* ⚠ `!` IS SAFE HERE — the predicate above already required a non-empty
-     employer (`P1-J1.4-E373`). */
   if (current) return current.employer!.trim();
 
   const dated = experiences
     .filter((e) => e.endDate && e.employer?.trim())
     .sort((a, b) => (a.endDate! < b.endDate! ? 1 : a.endDate! > b.endDate! ? -1 : 0));
-  /* ⚠ THE FIRST BRANCH IS FILTERED TO NON-EMPTY ABOVE; the second is not, so it
-     keeps its optional chain and can legitimately yield null — a résumé whose
-     only entries name no company HAS no current employer to report. */
+  // THE FIRST BRANCH IS FILTERED TO NON-EMPTY ABOVE; the second is not, so it
   return dated[0]?.employer?.trim() ?? experiences[0]?.employer?.trim() ?? null;
 }
 
@@ -257,15 +175,7 @@ export function buildVocabulary(
     pillar: { name: string } | null;
   }[]
 ): VocabEntry[] {
-  /*
-    VENDOR ROLES ONLY, and this is the line that keeps role derivation
-    deterministic. Six names exist as both an application module and an
-    Operations capability ("Project Costing", "Grants Management"); including
-    the agnostic rows would make those six votes for two different roles at
-    once. Ops/Project skills carry no aliases precisely because they are not
-    résumé vocabulary — nobody writes "Requisitioning & Demand Management" on a
-    CV — so excluding them costs nothing real.
-  */
+  // VENDOR ROLES ONLY, and this is the line that keeps role derivation
   return rows
     .filter((r) => r.roleType.name === "Application-Specific" || r.roleType.name === "Technology-Specific")
     .map((r) => ({

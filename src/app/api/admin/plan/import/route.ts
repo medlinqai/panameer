@@ -30,8 +30,7 @@ export async function POST(request: Request) {
   }
 
   const rawMode = String(form.get("mode") ?? "");
-  /** ⚠⚠ NO DEFAULT. Guessing between "add to my plan" and "delete my plan and
-   *  use this one" is not a guess anyone should make on someone else's behalf. */
+  /** NO DEFAULT. Guessing between "add to my plan" and "delete my plan and */
   if (rawMode !== "replace" && rawMode !== "append") {
     return NextResponse.json({ error: "Choose whether to replace the plan or add to it." }, { status: 400 });
   }
@@ -41,8 +40,7 @@ export async function POST(request: Request) {
 
   try {
     const parsed = await parsePlanFile(file.name, await file.arrayBuffer());
-    /** ⚠⚠⚠ NOTHING IS WRITTEN WHEN NO ROW SURVIVED — but the per-row reasons are
-     *  still returned, because "it didn't work" without them is unactionable. */
+    /** NOTHING IS WRITTEN WHEN NO ROW SURVIVED — but the per-row reasons are */
     if (parsed.rows.length === 0) {
       return NextResponse.json(
         { error: "Nothing in that file could be imported.", problems: parsed.problems },
@@ -51,13 +49,9 @@ export async function POST(request: Request) {
     }
     const plan = await ensurePlan(ownerKey, "Panameer build", gate);
     const result = await writeImportedRows(plan.id, parsed.rows, mode, gate);
-    /** ⚠ A PARTIAL success is reported as a success WITH its problems — 39 of 40
-     *  rows imported is a result, not a failure. */
+    /** A PARTIAL success is reported as a success WITH its problems — 39 of 40 */
     const problems = [...parsed.problems];
-    /** ⚠⚠⚠ AN UNRECOGNISED RELEASE CODE IS SAID OUT LOUD. The rows still import;
-     *  they simply arrive untagged, and the person is told which code we did not
-     *  know — because silently dropping the release is what cost the live plan
-     *  its R1 scope. */
+    /** AN UNRECOGNISED RELEASE CODE IS SAID OUT LOUD. The rows still import */
     for (const code of result.unknownReleases) {
       problems.push({ line: 1, message: `Release "${code}" isn't one we know — those rows came in with no release.` });
     }

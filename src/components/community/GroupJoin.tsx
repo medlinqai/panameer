@@ -49,7 +49,7 @@ export function GroupJoin({
       }
       router.refresh();
     } catch {
-      /* ⚠ A thrown fetch must not produce silence (`E516`). */
+      /* A thrown fetch must not produce silence (`E516`). */
       setError("That didn't work. Try again.");
     } finally {
       setBusy(false);
@@ -62,7 +62,7 @@ export function GroupJoin({
   return (
     <div>
       {offer.kind === "priced" && (
-        /* ⚠⚠ STORE THE PRICE, SHOW THE PRICE, OFFER NO PURCHASE. */
+        /* STORE THE PRICE, SHOW THE PRICE, OFFER NO PURCHASE. */
         <p className="mb-1.5 text-[15px] font-bold">
           {money(offer.priceCents)}
           {offer.period ? ` / ${offer.period}` : ""}
@@ -95,12 +95,10 @@ export function GroupJoin({
         </button>
       )}
 
-      {/* ⚠⚠⚠ `invite_only` AND `priced` RENDER **NO CONTROL AT ALL**. The
-          sentence above is the whole affordance, because there is nothing a
-          non-member can do here and a disabled button would imply there is. */}
+      {/* sentence above is the whole affordance, because there is nothing a */}
 
       {offer.kind === "by_enrolment" && pathSlug && (
-        /* ⚠ ONE DOOR: it points at the path, which is the only way in. */
+        /* ONE DOOR: it points at the path, which is the only way in. */
         <a
           href={`/learn/${pathSlug}`}
           className={
@@ -123,8 +121,7 @@ export function GroupJoin({
       )}
 
       {offer.kind === "member" && !canLeave && pathSlug && (
-        /* ⚠⚠ NOT A DISABLED LEAVE BUTTON. There is no second door to explain —
-           unenrolling is the action, and it lives on the path. */
+        // NOT A DISABLED LEAVE BUTTON. There is no second door to explain —
         <p className="mt-2 text-[12.5px] leading-relaxed text-ink-2">
           You&apos;re here because you enrolled. Unenrol from{" "}
           <a href={`/learn/${pathSlug}`} className="font-semibold text-magenta underline">

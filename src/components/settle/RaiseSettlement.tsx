@@ -42,10 +42,6 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 retired
-     `WorkOrderLine.basis`, so the option carries the order line's own kind:
-     //   const rate = form.lines.filter((l) => l.basis === "RATE");
-     //   const amount = form.lines.filter((l) => l.basis === "AMOUNT"); */
   const rate = form.lines.filter((l) => l.transactionType !== "SERVICE_BY_AMT");
   const amount = form.lines.filter((l) => l.transactionType === "SERVICE_BY_AMT");
 
@@ -53,7 +49,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   const setRows = (id: string, rows: Row[]) =>
     setRowsByLine((prev) => ({ ...prev, [id]: rows }));
 
-  /** ⚠ CLAIMED SO FAR, PER LINE — what "remaining" counts down from. */
+  /** CLAIMED SO FAR, PER LINE — what "remaining" counts down from. */
   const claimedQty = (id: string) =>
     rowsFor(id).reduce((n, r) => n + (Number(r.quantity) || 0), 0);
 
@@ -65,7 +61,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowsByLine, claimed, form]);
 
-  /** ⚠ THE OVERDRAW IS SHOWN BEFORE SUBMIT — the server still refuses it. */
+  /** THE OVERDRAW IS SHOWN BEFORE SUBMIT — the server still refuses it. */
   const overdrawn = rate.filter(
     (l) => claimedQty(l.workOrderLineId) > (l.remainingQuantity ?? 0)
   );
@@ -79,8 +75,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
     setBusy(true);
     setError(null);
     try {
-      /* ⚠ ONE BODY SHAPE FOR BOTH RENDERINGS. A timesheet contributes many lines
-         naming one order line; a milestone contributes one with no quantity. */
+      // ONE BODY SHAPE FOR BOTH RENDERINGS. A timesheet contributes many lines
       const lines = [
         ...rate.flatMap((l) =>
           rowsFor(l.workOrderLineId)
@@ -120,8 +115,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
         </div>
       )}
 
-      {/* ⚠ THE PERIOD MUST SIT INSIDE THE ORDER'S — E388 rule 5. The bounds are
-          set as `min`/`max` so the picker cannot offer an illegal day. */}
+      {/* THE PERIOD MUST SIT INSIDE THE ORDER'S — E388 rule 5. The bounds are */}
       <div className="grid gap-4 rounded-brand border border-line bg-white p-5 sm:grid-cols-2">
         <div>
           <label className="block text-[13.5px] font-semibold">Period from *</label>
@@ -183,7 +177,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
             <p className="text-[16px] font-bold">
               Total {formatCents(total, form.currency)}
             </p>
-            {/* ⚠ THE BUTTON SAYS WHY IT IS OFF — the pattern E392/E393 follow. */}
+            {/* THE BUTTON SAYS WHY IT IS OFF — the pattern E392/E393 follow. */}
             <p className="mt-1 text-[14px] text-ink-2">
               {overdrawn.length > 0
                 ? `Line ${overdrawn[0].lineNumber} claims more than remains on the order.`
@@ -203,10 +197,7 @@ export function RaiseSettlement({ form, resubmit }: { form: SettleForm; resubmit
   );
 }
 
-/**
- * ⚠ A RATE LINE IS A DAY-BY-DAY GRID. One `SettlementLine` per row, each with a
- * `service_date` — which is what makes it a timesheet rather than a number.
- */
+/** A RATE LINE IS A DAY-BY-DAY GRID. One `SettlementLine` per row, each with a */
 function TimesheetLine({
   line,
   currency,
@@ -236,12 +227,7 @@ function TimesheetLine({
           <p className="mt-1 text-[16px] font-bold">{line.description}</p>
         </div>
         <div className="text-right">
-          {/*
-            ⚠⚠ THE RATE IS TEXT, NOT A DISABLED INPUT. A disabled field still
-            reads as "a box that could be enabled", and the brief is explicit that
-            a provider who thinks they can adjust it will try. The sentence under
-            it is the whole reason it is not editable.
-          */}
+          {/* THE RATE IS TEXT, NOT A DISABLED INPUT. A disabled field still */}
           <p className="text-[15px] font-bold">
             {formatCents(line.unitPriceCents ?? 0, currency)} / {unit}
           </p>
@@ -249,7 +235,7 @@ function TimesheetLine({
         </div>
       </div>
 
-      {/* ⚠ REMAINING COUNTS DOWN AS THEY TYPE, from E393's drawdown. */}
+      {/* REMAINING COUNTS DOWN AS THEY TYPE, from E393's drawdown. */}
       <p className={`mt-2.5 text-[13.5px] font-semibold ${left < 0 ? "text-amber-700" : "text-ink-2"}`}>
         {left < 0
           ? `${Math.abs(left)} ${unit}${Math.abs(left) === 1 ? "" : "s"} over the ${remaining} remaining on this line`
@@ -320,12 +306,7 @@ function TimesheetLine({
   );
 }
 
-/**
- * ⚠⚠ AN AMOUNT LINE IS ONE ROW AND A CHECKBOX, because in-full-or-not-at-all has
- * exactly two states. **There is no quantity field and no amount field** — a
- * number input here would invite a partial claim, which `E388` refuses and which
- * cannot exist.
- */
+/** AN AMOUNT LINE IS ONE ROW AND A CHECKBOX, because in-full-or-not-at-all has */
 function MilestoneLine({
   line,
   currency,

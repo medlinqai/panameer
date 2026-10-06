@@ -1,33 +1,20 @@
 "use client";
 
-/* ⚠ PURE MODULE — no prisma, so a client component may import it. That is why
-   the helper lives in `lib/employer-display.ts` and not beside the DB reads. */
+// PURE MODULE — no prisma, so a client component may import it. That is why
 import { employerDisplayName } from "@/lib/employer-display";
 import { dateRangeLabel } from "@/lib/date-range-label";
 import { projectMonogram } from "@/lib/project-monogram";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
-/* ⚠ THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
+/* THE LOSS SENTENCE IS THE LIB'S, NOT RE-TYPED HERE (`E296`). */
 import { describeProjectLoss as describeLoss, clean } from "@/lib/reclassify";
 import { Field, TextInput, TextArea, Notice } from "@/components/onboarding/controls";
 import { LocationFields } from "@/components/onboarding/LocationFields";
 
-/** The "no job" option's wording. ⚠ A STATE, NOT AN ERROR (`E413` WS-1). */
+/** The "no job" option's wording. A STATE, NOT AN ERROR (`E413` WS-1). */
 export const NO_PARENT_LABEL = "Not under a job yet";
 
-/*
-  ── ⚠⚠ THE PARENT PICKER — ONE CONTROL, PLACED AND UNPLACED (`E413` WS-1) ─────
-
-  ⚠ THE UNPLACED PANEL'S PICKER WAS `value=""` WITH A *"Put it under…"*
-  PLACEHOLDER. That is right for a row with no parent and ⚠ **wrong for one that
-  has one**, where a control displaying nothing reads as "not set" and invites a
-  blind change. ⚠ SO THIS ONE IS ALWAYS BOUND TO THE CURRENT PARENT — the same
-  component serves both, and a placed row shows where it actually is.
-
-  ⚠ DETACH IS ALWAYS OFFERED. `employerId: null` is legal, `unplaced` is a real
-  state (`E296`), and before this there was no route back into it: the only way
-  out of a misplacement was ✕ and retype.
-*/
+// THE PARENT PICKER — ONE CONTROL, PLACED AND UNPLACED ( WS-1)
 function ParentPicker({
   project,
   employers,
@@ -53,16 +40,7 @@ function ParentPicker({
         onChange={(ev) => onMove(project, ev.target.value || null)}
         className="rounded-[8px] border border-line bg-white px-2.5 py-1.5 text-[13.5px]"
       >
-        {/*
-          ⚠⚠ THE EMPTY OPTION IS "DETACH", NOT A PLACEHOLDER. On an unplaced row
-          it is the current value and reads as a state; on a placed row it is the
-          way back out. ⚠ THE WORDING IS A STATE, NOT AN ERROR — "Not under a job
-          yet" describes where the row is, where "No job" or "None" would read as
-          something missing that ought to be filled in. `unplaced` is a
-          first-class concept (`E296`) and after `E410` it is the NORMAL arrival
-          state for 22–24 rows.
-          ⚠ "Add a job first" survives for the genuinely empty case.
-        */}
+        {/* THE EMPTY OPTION IS "DETACH", NOT A PLACEHOLDER. On an unplaced row */}
         <option value="">
           {employers.length === 0 ? "Add a job first" : NO_PARENT_LABEL}
         </option>
@@ -76,24 +54,14 @@ function ParentPicker({
   );
 }
 
-/*
-  ── ⚠ THE EMPLOYER CARD'S TWO LINES, AS FUNCTIONS (`P1-A1.4-E413` WS-3) ───────
-
-  ⚠ PURE AND MODULE-LEVEL so `check:project-parent` can call them with a row
-  shaped like Scott's and assert the OUTPUT, rather than pattern-matching the
-  JSX. An assertion about a regex over markup goes green the moment somebody
-  reformats it; an assertion about a value does not.
-*/
+// THE EMPLOYER CARD'S TWO LINES, AS FUNCTIONS WS-3)
 
 /** The heading: the work if the row names any, otherwise the company. */
 export function cardTitle(e: { roleTitle?: string | null; name?: string | null }): string {
   return clean(e.roleTitle, 200) ?? employerDisplayName(e.name);
 }
 
-/**
- * The company line — ⚠ `""` WHEN THE HEADING IS ALREADY THE COMPANY, which is
- * the whole defect. Callers render it only when it is non-empty.
- */
+/** The company line — `""` WHEN THE HEADING IS ALREADY THE COMPANY, which is */
 export function cardCompany(e: { roleTitle?: string | null; name?: string | null }): string {
   const company = employerDisplayName(e.name);
   return cardTitle(e) === company ? "" : company;
@@ -111,19 +79,7 @@ import {
   type ProjectDraft,
 } from "@/components/onboarding/ProjectModal";
 
-/**
- * "Your Employers" capture step (brief_U, per `employer-project-step-mockup.png`).
- *
- * Imported employers show as cards with edit/delete pencils; clicking a card
- * opens it to add PROJECTS within that job. Manual users get an empty state
- * with "+ Add Employer".
- *
- * Everything writes through the owner-scoped `/api/provider/employers`
- * endpoint, which re-checks each id against the session's own profile — the
- * client never names a target profile.
- *
- * Optional by design: this step nudges but never blocks publishing.
- */
+/** Imported employers show as cards with edit/delete pencils; clicking a card */
 
 export type EmployerProject = {
   id: string;
@@ -135,7 +91,7 @@ export type EmployerProject = {
   endDate: string | null;
   /** brief_project_model_v2 — the rest of the card + modal payload. */
   isCurrent?: boolean;
-  /** ⚠ `P1-J1.4-E296` — carried so a conversion round-trips. Not rendered. */
+  /** `P1-J1.4-E296` — carried so a conversion round-trips. Not rendered. */
   roleTitle?: string | null;
   location?: string | null;
   clientName?: string;
@@ -173,11 +129,7 @@ export type EmployerCard = {
   startDate: string | null;
   endDate: string | null;
   projects: EmployerProject[];
-  /*
-    WS-4 — the per-job attribution the review step reads and writes. Optional
-    because this card type is also built by surfaces that predate the per-job
-    model (Settings, the project modal) and have no business inventing a suite.
-  */
+  // WS-4 — the per-job attribution the review step reads and writes. Optional
   suite?: string | null;
   roleTypeId?: string | null;
   skills?: { id: string; name: string }[];
@@ -203,9 +155,7 @@ type EmployerForm = ReturnType<typeof emptyEmployerForm>;
 
 
 
-/* ⚠ `P2-J1.4-E549` — the provider's own list follows the profile's rule.
-   SUPERSEDED, quoted (`E164`):
-     return `${y(a)} – ${current ? "Present" : b ? y(b) : "Present"}`; */
+// — the provider's own list follows the profile's rule.
 function dateRange(a: string | null, b: string | null, current: boolean) {
   return dateRangeLabel(a, b, current);
 }
@@ -219,17 +169,7 @@ export function EmployersStep({
   employers: EmployerCard[];
   onChanged: (next: EmployerCard[]) => void;
   onError: (msg: string | null) => void;
-  /**
-   * ⚠⚠ THE FLAT LIST, FOR THE OTHER HALF OF THE `E294` HOLE (`P1-J1.4-E296`).
-   *
-   * `listEmployers` returns projects NESTED UNDER employers only, so a project
-   * with `employer_id: null` vanishes from that payload entirely. The Review step
-   * already renders those as "Solo Projects"; THIS step did not, so somebody who
-   * imported a résumé saw them on Review, came back to fix them, and found no
-   * trace of them on the page where employers are edited.
-   * ⚠ THE WIZARD'S STATUS PAYLOAD RETURNS THE FULL FLAT LIST DELIBERATELY —
-   * `lib/onboarding.ts` says why. This prop is that list.
-   */
+  /** THE FLAT LIST, FOR THE OTHER HALF OF THE HOLE . */
   projects?: EmployerProject[];
 }) {
   const [busy, setBusy] = useState(false);
@@ -242,20 +182,12 @@ export function EmployersStep({
   >(null);
   const [employerForm, setEmployerForm] = useState<EmployerForm>(emptyEmployerForm());
 
-  /* ⚠⚠ `employerId: null` IS A SOLO PROJECT (`P1-J2-E032`), not a missing id.
-     ⚠ The schema has always allowed it and the importer has always produced
-     it; only the CREATE path demanded a company. */
+  // The schema has always allowed it and the importer has always produced
   const [projectModal, setProjectModal] = useState<
     { employerId: string | null; project?: EmployerProject } | null
   >(null);
 
-  /*
-    ── ⚠⚠ RECLASSIFY IN PLACE (`P1-J1.4-E296`) ────────────────────────────────
-
-    SCOTT: *"Maybe if there was a employer/project radio button?"* — so it is a
-    radio, and it changes NOTHING until Save. A radio that mutates on click is a
-    trapdoor.
-  */
+  // RECLASSIFY IN PLACE
   const [reclassify, setReclassify] = useState<
     | { kind: "employer"; id: string; name: string }
     | { kind: "project"; id: string; name: string; clientName: string }
@@ -267,22 +199,14 @@ export function EmployersStep({
   const [reclassifyClient, setReclassifyClient] = useState("");
   const [reclassifyName, setReclassifyName] = useState("");
   const [loss, setLoss] = useState<string | null>(null);
-  /*
-    ⚠ UNDO IS THE INVERSE CONVERSION, NOT A SNAPSHOT TABLE. The two directions
-    are exact inverses now that `role_title` and `location` exist, so all that is
-    held here is what to call the opposite action with.
-    ⚠ AND IT IS PAGE-STATE ONLY, WHICH THE STRING SAYS OUT LOUD.
-  */
+  // UNDO IS THE INVERSE CONVERSION, NOT A SNAPSHOT TABLE. The two directions
   const [undo, setUndo] = useState<
     | { kind: "toProject"; projectId: string; name: string }
     | { kind: "toEmployer"; employerId: string; name: string; targetEmployerId: string; clientName: string }
     | null
   >(null);
   const [projectForm, setProjectForm] = useState<ProjectDraft>(emptyProject());
-  /**
-   * WS4 — which owner's artifacts are open. One modal serves BOTH an employer
-   * and a project; the owner id decides which, and the server re-checks it.
-   */
+  /** WS4 — which owner's artifacts are open. One modal serves BOTH an employer */
   const [artifactsFor, setArtifactsFor] = useState<
     | { kind: "employer"; id: string; label: string; items: ArtifactView[] }
     | { kind: "project"; id: string; label: string; items: ArtifactView[] }
@@ -292,45 +216,17 @@ export function EmployersStep({
   const [logos, setLogos] = useState<LogoSuggestion[]>([]);
   const [logoLoading, setLogoLoading] = useState(false);
 
-  /*
-    ⚠ THE UNATTACHED ROWS, DERIVED not fetched (`P1-J1.4-E296`). `projects` is the
-    FLAT list from the wizard's status payload; anything already nested under an
-    employer is filtered out by id so a row never appears twice on one screen.
-  */
+  // THE UNATTACHED ROWS, DERIVED not fetched . `projects` is the
   const nested = new Set(employers.flatMap((e) => (e.projects ?? []).map((p) => p.id)));
 
-  /*
-    ── ⚠⚠ A ROW DETACHED IN THIS SESSION MUST NOT VANISH (`P1-A1.4-E413` WS-1) ──
-
-    ⚠ `unplaced` was derived from the `projects` PROP, which is the wizard's
-    status payload — fetched once, on load. ⚠⚠ AND `/api/provider/employers`
-    RETURNS ONLY `employers`, with projects NESTED: a project with no employer is
-    reachable through neither. So the moment detach existed, a project CREATED
-    this session and then detached would leave `nested`, fail to appear in
-    `projects`, and disappear from the screen entirely — the appearance of data
-    loss, introduced by the very control meant to make placement reversible.
-
-    ⚠ SO THE DETACHED ROW IS REMEMBERED CLIENT-SIDE, with the object already in
-    hand at the call site. ⚠ IT IS FORGOTTEN THE MOMENT IT FINDS A HOME or is
-    deleted, so this can never resurrect a row the server no longer has.
-    ⚠ NO SERVER CHANGE: the brief is explicit that `moveProject` stays the only
-    writer and that this is a UI omission with a finished endpoint behind it.
-    Widening the response shape is a job for whoever needs it on the server.
-  */
+  // A ROW DETACHED IN THIS SESSION MUST NOT VANISH WS-1)
   const [detached, setDetached] = useState<EmployerProject[]>([]);
   const knownProjects = new Map<string, EmployerProject>();
   for (const p of projects) knownProjects.set(p.id, p);
   for (const p of detached) knownProjects.set(p.id, p);
   const unplaced = [...knownProjects.values()].filter((p) => !nested.has(p.id));
 
-  /*
-    ⚠ IT RETURNS THE PAYLOAD, NOT A BOOLEAN (`P1-J1.4-E296`).
-    ⚠ SUPERSEDED, quoted: `Promise<boolean>`. The conversion actions return the id
-    of the row they CREATED, and Undo has to call the inverse with that id — a
-    boolean threw it away, and the first draft of Undo silently posted an empty
-    string. An object is still truthy, so every existing `if (ok)` call site
-    behaves exactly as before.
-  */
+  // IT RETURNS THE PAYLOAD, NOT A BOOLEAN .
   const post = async (
     body: Record<string, unknown>
   ): Promise<Record<string, unknown> | null> => {
@@ -347,8 +243,7 @@ export function EmployersStep({
         onError(data.error ?? "Could not save.");
         return null;
       }
-      /* ⚠ `projectLoss` is a READ and returns no employer list — leave the list
-         alone rather than blanking it. */
+      // alone rather than blanking it.
       if (data.employers) onChanged(data.employers);
       return data;
     } finally {
@@ -356,26 +251,7 @@ export function EmployersStep({
     }
   };
 
-  /*
-    ── ⚠⚠ ONE MOVE, THREE SURFACES (`P1-A1.4-E413` WS-1 + WS-2) ────────────────
-
-    ⚠ WS-1 AND WS-2 ARE THE SAME MISSING IDEA FROM OPPOSITE ENDS: **the parent
-    link is data, and data is editable from either end.** WS-1 is "this project
-    is under the wrong job"; WS-2 is "I am in this job and want that project".
-    ⚠ SO THERE IS ONE IMPLEMENTATION AND IT IS THIS FUNCTION — every surface that
-    changes a parent calls it, and it is the ONLY place in this component that
-    posts `moveProject`.
-
-    ⚠⚠ `employers.ts` SAYS `moveProject` IS *"the only code path that can set
-    `Project.employer_id`"* AND THAT SENTENCE HAS TO STAY TRUE — it is what makes
-    the double ownership re-check unskippable. ⚠ NOTHING HERE TEACHES
-    `updateProject` about `employerId`; the brief's STOP condition is not reached
-    because the server already does all of this, unchanged. The endpoint has
-    handled re-attach and detach since `E296`; it simply never had a button.
-
-    ⚠ `employerId: null` IS DETACH and is a legal, meaningful value — the route
-    reads it with `?? null` precisely so it is not stringified into `"null"`.
-  */
+  // ONE MOVE, THREE SURFACES WS-1 + WS-2)
   const moveTo = async (pr: EmployerProject, employerId: string | null) => {
     const ok = await post({ action: "moveProject", projectId: pr.id, employerId });
     if (!ok) return;
@@ -384,33 +260,11 @@ export function EmployersStep({
         ? [...d.filter((x) => x.id !== pr.id), pr]
         : d.filter((x) => x.id !== pr.id)
     );
-    /*
-      ── ⚠⚠ FOLLOW THE ROW TO ITS NEW HOME (`P1-A1.4-E413` WS-1) ──────────────
-
-      ⚠ FOUND BY WALKING IT, NOT BY READING IT. A project row only renders
-      inside an EXPANDED employer card. Move one from the open card to a closed
-      one and the move succeeds, the server is right, every gate stays green —
-      and on screen the row simply DISAPPEARS.
-
-      ⚠⚠ THAT IS THE EXACT COMPLAINT THIS TRACK ALREADY ANSWERED ONCE. Scott, on
-      `E411`: *"then the whole projects thing disappeared… I had to refresh to
-      get them back."* A control whose success looks identical to a deletion is
-      not a fixed control. ⚠ SO THE DESTINATION CARD OPENS: the person sees the
-      row arrive where they sent it, which is the confirmation the move
-      otherwise has none of.
-
-      ⚠ ON DETACH THE OPEN CARD IS LEFT ALONE — the row's destination is the
-      "Projects not yet under a job" panel below, which is always visible when
-      it is non-empty, so there is nothing to open and nothing to scroll past.
-    */
+    // FOLLOW THE ROW TO ITS NEW HOME WS-1)
     if (employerId) setOpenId(employerId);
   };
 
-  /*
-    ⚠ WHAT WOULD BE LOST, FETCHED BEFORE THE DIALOG COMMITS (`E296`). Counted and
-    NAMED by the server — never a generic "some data may be lost", which tells
-    nobody anything.
-  */
+  // WHAT WOULD BE LOST, FETCHED BEFORE THE DIALOG COMMITS . Counted and
   const loadLoss = async (projectId: string) => {
     try {
       const r = await fetch("/api/provider/employers", {
@@ -478,12 +332,7 @@ export function EmployersStep({
     setEmployerModal({ mode: "edit", id: e.id });
   };
 
-  /**
-   * E127 — a range that ends before it starts (shared by employers and
-   * projects). Certifications already refused expiry-before-issue; work history
-   * and projects accepted it silently and then rendered "2019 – 2015" on the
-   * profile, which reads as broken data rather than as a typo.
-   */
+  /** E127 — a range that ends before it starts (shared by employers and */
   const badRange = (start: string, end: string, current: boolean): string | null => {
     if (current || !start || !end) return null;
     return end < start ? "The end date can't be before the start date." : null;
@@ -555,12 +404,7 @@ export function EmployersStep({
           }
         : {
             ...emptyProject(),
-            /*
-              E113 — a project added from INSIDE a job defaults its client to
-              that job's employer. It is the answer in every case but the
-              exception (a project delivered for someone else), and typing the
-              name of the company you are standing in is pure friction.
-            */
+            // E113 — a project added from INSIDE a job defaults its client to
             clientName:
               employers.find((e) => e.id === employerId)?.name ?? "",
           }
@@ -593,11 +437,7 @@ export function EmployersStep({
       projectModal?.project
         ? { action: "updateProject", projectId: projectModal.project.id, project }
         : {
-            /* ⚠⚠⚠ PASSED THROUGH AS-IS, INCLUDING `null`. The route
-               distinguishes `null` (deliberately no company) from an ABSENT
-               key and REFUSES the latter — ruling 67: the test is presence in
-               the payload, never the parsed value. Coercing here would put the
-               string "null" on the wire. */
+            // PASSED THROUGH AS-IS, INCLUDING `null`. The route
             action: "createProject",
             employerId: projectModal!.employerId,
             project,
@@ -610,8 +450,7 @@ export function EmployersStep({
     <div>
       {employers.length === 0 ? (
         <div className="rounded-brand border-2 border-dashed border-line p-10 text-center">
-          {/* ⚠ NOT IN WS-3's TABLE — reported. Same rule, same component:
-              the chrome cannot say `employers` while the fields say `Company`. */}
+          {/* NOT IN WS-3's TABLE — reported. Same rule, same component */}
           <p className="font-bold">No companies yet</p>
           <p className="mx-auto mt-1 max-w-md text-[14px] text-ink-2">
             Add the companies you&apos;ve worked for, then add the projects you
@@ -624,21 +463,7 @@ export function EmployersStep({
           >
             + Add Company
           </button>
-          {/*
-            ── ⚠⚠⚠ A PROJECT WITH NO COMPANY (`P1-J2-E032`) ──────────────────
-
-            ⚠ SCOTT: *"no way to add a project independent of an
-            employer/company."*
-            ⚠⚠ **THE COPY ABOVE MADE THE COMPANY SOUND COMPULSORY** — *"Add the
-            companies you've worked for, THEN add the projects you delivered
-            within each job"* — so an independent consultant with no employer
-            read the empty state as *"you must invent a company first."*
-            ⚠⚠⚠ **IT IS A SECOND DOOR, NOT A COMPETING ONE:** quieter than
-            `+ Add Company`, because most work does hang off a job and the
-            common path should stay the loud one (ruling 45(4)'s reasoning about
-            a second button — this one is genuinely a different action, not a
-            repeat of the first).
-          */}
+          {/* A PROJECT WITH NO COMPANY */}
           <p className="mt-3">
             <button
               type="button"
@@ -651,26 +476,12 @@ export function EmployersStep({
         </div>
       ) : (
         <>
-          {/*
-            E112 + E116 — a STACK, not a 3-column grid, and the two errors have
-            one cause.
-
-            At three across, each card got ~310px of a 976px column, so
-            "Lead Oracle Cloud Procurement Consultant" wrapped to three lines and
-            every project title wrapped too — the "squished" cards. And because
-            grid cells share a row, expanding one card to show its projects
-            re-flowed the two beside it: the page visibly jumped before the
-            add-project modal appeared. Full-width rows fix both at once — the
-            text gets the whole column, and expansion pushes content DOWN instead
-            of shoving neighbours sideways.
-          */}
+          {/* E112 + E116 — a STACK, not a 3-column grid, and the two errors have */}
           <div className="space-y-4">
             {/* WS9b/E143 — tick the wrong AI-added employers and remove them in
                 one action instead of a trash icon and a confirm() per card. */}
             <BulkSelectBar
-              /* ⚠ NOT IN WS-3's TABLE — reported. `BulkSelect` interpolates this
-                 into *"Select the {label} to remove"* and *"Remove N {label}?"*,
-                 so it is rendered copy, not a key. */
+              // NOT IN WS-3's TABLE — reported. `BulkSelect` interpolates this
               label="companies"
               count={employers.length}
               state={bulk}
@@ -710,47 +521,8 @@ export function EmployersStep({
                   >
                     ✏️
                   </button>
-                  {/*
-                    ── ⚠ THE THIRD CONTROL (`P1-J1.4-E296`) ────────────────────
-                    SCOTT: *"I would need to delete EVERY employer and then
-                    re-add them as a project."* Same 9x9 magenta circle as its two
-                    neighbours — no new button style was invented.
-                  */}
-                  {/*
-                    ── ⚠⚠ THE PLAYBACK RADIO (`P1-J1.4-E373` WS-3) ─────────────
-
-                    SCOTT: *"either we ask the style (employer-based or project
-                    based) or we play it back to them in a way that is easy to
-                    change (radio buttons)."*
-
-                    ⚠ SUPERSEDED, QUOTED NOT DELETED — this was `E296`'s `⇄`
-                    button: *"THE THIRD CONTROL. SCOTT: 'I would need to delete
-                    EVERY employer and then re-add them as a project.' Same 9x9
-                    magenta circle as its two neighbours."* ⚠ THE CONVERSION IT
-                    OPENED IS UNCHANGED AND IS NOT REBUILT — this radio calls the
-                    same `setReclassify` path into the same dialog and the same
-                    transactional `moveProject`. Only the AFFORDANCE changed: a
-                    hidden swap button becomes a visible statement of what the
-                    parser decided.
-
-                    ⚠⚠ WHY A RADIO RATHER THAN ASKING THE STYLE UP FRONT: the
-                    honest answer for a 20-year career is BOTH — ten years
-                    employed, then ten contracting — so a global choice gets the
-                    majority case wrong for exactly the people this brief is
-                    about.
-
-                    ⚠ `Employer` IS PRE-SELECTED, AND THE SIGNAL IS STRUCTURAL
-                    RATHER THAN A GUESS: every row in this list IS an `Employer`
-                    record, so "employer" is what the parser actually decided.
-                    ⚠ WHETHER THE IMPORT SHOULD DEFAULT TO PROJECT INSTEAD IS
-                    STILL OPEN AND IS NOT DECIDED HERE — reported at `E373`.
-
-                    ⚠ CHOOSING `Project` OPENS THE EXISTING DIALOG rather than
-                    converting on the spot, and that is not a half-measure: the
-                    conversion needs a CLIENT NAME or a target employer to nest
-                    under, and a radio cannot collect either. A one-click convert
-                    would either invent a client or lose one.
-                  */}
+                  {/* THE THIRD CONTROL */}
+                  {/* THE PLAYBACK RADIO WS-3) */}
                   <fieldset className="flex items-center gap-2 rounded-full border border-line px-2 py-1">
                     <legend className="sr-only">
                       {`Is ${employerDisplayName(e.name)} a job or a project?`}
@@ -764,26 +536,7 @@ export function EmployersStep({
                         readOnly
                         className="accent-magenta"
                       />
-                      {/*
-                        ⚠⚠ `Job`, NOT `Company`, AND THIS IS THE ONE WS-3 CHOICE THE
-                        BRIEF DID NOT MAKE — reported for Scott to overrule.
-
-                        This radio is not naming an entity, it is naming a KIND of
-                        history row, and its partner is `Project`. `Company` is not
-                        the opposite of `Project` — a project sits UNDER a company —
-                        so that pair would not read as a choice.
-
-                        ⚠ THE PRECEDENT IS SCOTT'S OWN, FROM THIS WORK-STREAM. WS-3
-                        rewrites the reclassify modal's legend to *"A job or a
-                        project"*, and the modal's radios already read *"A job"* /
-                        *"A project"*. THIS ROW'S OWN `sr-only` LEGEND ALREADY SAYS
-                        *"Is X a job or a project?"* — so `Job` is the word three
-                        surrounding strings already use for exactly this binary.
-
-                        ⚠ The brief's own rule says why: `Employers` vs `Projects` is
-                        ONGOING ENGAGEMENT vs DISCRETE PIECE OF WORK. That is a
-                        distinction between kinds of work, not between entities.
-                      */}
+                      {/* BRIEF DID NOT MAKE — reported for Scott to overrule. */}
                       Job
                     </label>
                     <label className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
@@ -811,20 +564,7 @@ export function EmployersStep({
                   <button
                     type="button"
                     onClick={() => {
-                      /*
-                        ── ⚠⚠ `P1-J1.4-E307` — THIS SENTENCE WAS FALSE ──────────
-
-                        ⚠ SUPERSEDED, quoted: *"Remove {name}? Its projects will
-                        be removed too."* `Project.employer_id` is
-                        `onDelete: SetNull`, NOT Cascade — the projects are not
-                        removed, they are ORPHANED, and because `listEmployers`
-                        only reaches projects through their employer they became
-                        INVISIBLE while still sitting in the database.
-                        ⚠ THE SCHEMA IS RIGHT AND THE COPY WAS WRONG. Deleting a
-                        job must not destroy the project history under it, and
-                        there is now somewhere for the orphans to land — the
-                        "Projects not yet under a job" section below.
-                      */
+                      // — THIS SENTENCE WAS FALSE
                       if (
                         confirm(
                           `Remove ${employerDisplayName(e.name)}? Any projects under it are kept — they move to “Projects not yet under a job”, where you can place them again.`
@@ -850,18 +590,7 @@ export function EmployersStep({
                       items: e.artifacts ?? [],
                     })
                   }
-                  /*
-                    E125 — GREY WHEN EMPTY. Magenta reads as "this opens
-                    something you have", so an empty Artifacts link beside a live
-                    Edit link promised content that wasn't there.
-
-                    Still CLICKABLE, deliberately: in the editor this link is the
-                    only way to attach the first artifact, so disabling it at zero
-                    would remove the feature rather than fix the signal. Colour
-                    carries the state; the action stays available. On the
-                    read-only profile (`WorkHistoryEntry`) there is nothing to
-                    open, and there it is genuinely disabled.
-                  */
+                  // E125 — GREY WHEN EMPTY. Magenta reads as "this opens
                   className={
                     "mb-2 text-[13px] font-bold transition-colors " +
                     (e.artifacts?.length
@@ -893,21 +622,7 @@ export function EmployersStep({
                     ) : (
                       <span
                         aria-hidden
-                        /*
-                          ⚠⚠ THE SECOND `📁`, AND THE BRIEF DID NOT KNOW ABOUT IT
-                          (`P2-J1.4-E512`). `E512` names `ProjectCard`'s fallback;
-                          this is the WIZARD's employer tile — same emoji, same
-                          wash, same 10×10 square. ⚠ Fixing one and not the other
-                          would make the wizard and the published profile disagree
-                          about what a logo-less row looks like.
-                          ⚠ SUPERSEDED, quoted not deleted (`E164`): `📁`.
-
-                          ⚠ ONE DIFFERENCE FROM THE PROJECT TILE: the RAW name is
-                          passed, never `employerDisplayName(e.name)`. An unnamed
-                          employer renders as "Independent" — a word WE supply
-                          (`E373`) — and a monogram of it would put `I` on a tile
-                          as if the person had typed it. ⚠⚠ No name, no letter.
-                        */
+                        // THE SECOND `📁`, AND THE BRIEF DID NOT KNOW ABOUT IT
                         className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-ink/5 text-ink"
                       >
                         <span className="text-[14px] font-bold tracking-[0.02em]">
@@ -916,43 +631,7 @@ export function EmployersStep({
                       </span>
                     )}
                     <div className="min-w-0">
-                      {/*
-                        ── ⚠⚠ NEVER PRINT ONE FIELD TWICE (`P1-A1.4-E413` WS-3) ──
-
-                        ⚠ SUPERSEDED, quoted not deleted:
-
-                            <p className="font-bold leading-snug">{e.roleTitle || e.name}</p>
-                            <p className="mt-1 text-[13.5px] text-ink-2">
-                              <b className="text-ink">{employerDisplayName(e.name)}</b>
-                              {e.description ? ` — ${e.description}` : ""}
-                            </p>
-
-                        SCOTT: *"When i go into edit, looks like the company an
-                        description are mixed here."*
-
-                        ⚠⚠ WITH A ROLE TITLE the card read `Role` / **`Company`**
-                        — description. WITHOUT ONE it read `Company` /
-                        **`Company`** — description: the same string twice, and
-                        no line that was only the company. That is exactly what
-                        *"mixed"* describes.
-
-                        ⚠ MEASURED ON SCOTT'S OWN ROWS BEFORE ANY EDIT, per the
-                        brief. `test15@panameer.com` employer `[20]`:
-                            name        = "Oracle Cloud Content & AI-Native Application Developer"
-                            role_title  = ""      ← EMPTY STRING, not null
-                            description = (byte-identical to the "Panameer" row above it)
-                        ⚠⚠ SO IT IS A LIVE STATE, NOT AN EDGE CASE — and note the
-                        empty string: `{e.roleTitle || e.name}` fell through on
-                        `""` while a `??` would not have. Same disagreement WS-4
-                        fixes in `employerToProjectData`.
-
-                        ⚠ THE SHAPE CHOSEN: the heading is the WORK when there is
-                        one and the COMPANY otherwise; the line under it carries
-                        the company ONLY when the heading is not already it.
-                        ⚠ THE SEPARATOR MOVES WITH IT — a description promoted to
-                        the start of its line must not begin with a dangling
-                        " — ".
-                      */}
+                      {/* NEVER PRINT ONE FIELD TWICE WS-3) */}
                       <p className="font-bold leading-snug">{cardTitle(e)}</p>
                       {(cardCompany(e) || e.description) && (
                         <p className="mt-1 text-[13.5px] text-ink-2">
@@ -1038,8 +717,7 @@ export function EmployersStep({
                               >
                                 Edit
                               </button>
-                              {/* ⚠ THE MIRROR CONTROL (`P1-J1.4-E296`) — same
-                                  modal, radio defaulted to Project. */}
+                              {/* THE MIRROR CONTROL — same */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1062,8 +740,7 @@ export function EmployersStep({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  /* ⚠ FORGET A DELETED ROW so the client-side
-                                     detach registry can never resurrect it. */
+                                  // FORGET A DELETED ROW so the client-side
                                   setDetached((d) => d.filter((x) => x.id !== pr.id));
                                   void post({
                                     action: "deleteProject",
@@ -1076,41 +753,7 @@ export function EmployersStep({
                               </button>
                             </div>
                           </div>
-                          {/*
-                            ── ⚠⚠ THE DOOR THAT ONLY OPENED OUTWARD (`E413` WS-1) ──
-
-                            SCOTT: *"I added Medlinq to StratERP and it should be
-                            under Panameer… but there is no way to edit the add
-                            once you added the project to the wrong company."*
-
-                            ⚠⚠ HE WAS RIGHT AND IT WAS STRUCTURAL. `moveProject`
-                            was reachable from the "Projects not yet under a job"
-                            panel and NOWHERE ELSE — and the instant it
-                            succeeded the row entered `nested`, left `unplaced`,
-                            and the only control that could call it unmounted
-                            itself. A one-way door that closed behind the row.
-                            ⚠ This row's other controls are Artifacts · Edit · ⇄ ·
-                            ✕ and not one of them could change its parent;
-                            `updateProject` never sends `employerId` at all. The
-                            only way out of a mistake was ✕ and retype.
-
-                            ⚠⚠ AND IT UNDERMINED `E410`. That brief routed 44
-                            engagement sections to Project rows and invented no
-                            parent, on the stated ground that *"`moveProject`
-                            already exists for the person to place it."* Place,
-                            yes — re-place, no. With 22–24 rows arriving
-                            unplaced, a wrong pick is arithmetic, not an edge
-                            case.
-
-                            ⚠ THE SHAPE CHOSEN: a picker on the row, over an
-                            employer field in the project modal. It is the
-                            control Scott already found and used in the unplaced
-                            panel, it is one click rather than open-change-save,
-                            and it puts the affordance on the thing being moved.
-                            ⚠ IT SHOWS THE CURRENT PARENT — `currentEmployerId`
-                            is this card's employer, so it never reads as "not
-                            set".
-                          */}
+                          {/* THE DOOR THAT ONLY OPENED OUTWARD ( WS-1) */}
                           <div className="mt-2 flex justify-end">
                             <ParentPicker
                               project={pr}
@@ -1130,35 +773,7 @@ export function EmployersStep({
                         >
                           + Add Project
                         </button>
-                        {/*
-                          ── ⚠⚠ CREATE WAS THE ONLY VERB ON OFFER (`E413` WS-2) ──
-
-                          SCOTT: *"when I go to edit the first one an add
-                          projects - i haev to type them in."*
-
-                          ⚠ MEASURED: `+ Add Project` calls `openProject(e.id)`
-                          with no project, which loads `emptyProject()` and
-                          prefills only `clientName` (`E113`). ⚠ It can CREATE.
-                          It cannot ATTACH.
-
-                          ⚠⚠ AND AFTER `E410` THAT IS BACKWARDS. A real import
-                          lands 22–24 projects already extracted and sitting
-                          unplaced. Somebody standing in StratERP wanting to add
-                          projects almost certainly means *those* — and the only
-                          thing on offer was a blank form asking them to retype
-                          work the parser had already read.
-
-                          ⚠ ONE CLICK, NO MODAL, NO RETYPING: the picker fires
-                          the same `moveTo` the row picker does, with this card's
-                          employer id.
-
-                          ⚠⚠ RENDERED ONLY WHEN THERE IS SOMETHING TO ATTACH.
-                          `E125`'s rule — colour and presence carry state — and
-                          the brief is explicit that *"an empty picker beside
-                          `+ Add Project` is worse than no picker."* An empty
-                          dropdown reads as a broken control; its absence reads
-                          as "nothing is waiting", which is the truth.
-                        */}
+                        {/* CREATE WAS THE ONLY VERB ON OFFER ( WS-2) */}
                         {unplaced.length > 0 && (
                           <label className="flex items-center gap-2 text-[13px] text-ink-2">
                             <span className="sr-only">
@@ -1190,14 +805,7 @@ export function EmployersStep({
                   {openId !== e.id && (
                     <button
                       type="button"
-                      /*
-                        E124 — ONE click. This used to only expand the card, and
-                        the "+ Add Project" button it revealed was what actually
-                        opened the modal — so a link that says "Add projects
-                        within this job" did not add a project, it changed its own
-                        label. Now it expands AND opens, which is what the label
-                        promises.
-                      */
+                      // E124 — ONE click. This used to only expand the card, and
                       onClick={() => {
                         setOpenId(e.id);
                         openProject(e.id);
@@ -1220,15 +828,7 @@ export function EmployersStep({
             >
               + Add Company
             </button>
-            {/*
-              ⚠⚠ THE SAME DOOR IN THE POPULATED STATE (`P1-J2-E032`). ⚠ Putting
-              it only on the empty state would mean **the moment you add one
-              company, the ability to record independent work disappears** —
-              which is the population most likely to need it, since a consultant
-              usually has both.
-              ⚠⚠⚠ Solo projects already render in their own list below, so this
-              button has somewhere to land and is not a door onto a wall.
-            */}
+            {/* THE SAME DOOR IN THE POPULATED STATE . Putting */}
             <button
               type="button"
               onClick={() => openProject(null)}
@@ -1240,24 +840,7 @@ export function EmployersStep({
         </>
       )}
 
-      {/*
-        ── ⚠⚠ WS-6 — THE OTHER HALF OF THE `E294` HOLE (`P1-J1.4-E296`) ─────────
-
-        `resume/import.ts` writes projects with `employer_id: null` whenever the
-        model could not place them, and `listEmployers` only reaches projects
-        through their employer — so those rows were INVISIBLE on this step. The
-        Review step already showed them as "Solo Projects"; a user who imported a
-        résumé saw them there, came back here to fix them, and found nothing.
-
-        ⚠ ONE CONTROL, ONE CLICK, NO MODAL. Scott's whole point is the cheapness
-        of the edit: *"what really determines the value of the AI is how easy the
-        edit is."* A picker that fires `moveProject` on change is the cheapest
-        correct thing. ⚠ IT IS ALSO WHERE ORPHANS FROM A DELETED JOB LAND, which
-        is what makes `E307`'s corrected copy true.
-
-        ⚠ RENDERED ONLY WHEN THE LIST IS NON-EMPTY — an empty "nothing to place"
-        section on every profile is noise.
-      */}
+      {/* WS-6 — THE OTHER HALF OF THE HOLE */}
       {unplaced.length > 0 && (
         <section className="mt-8 rounded-brand border border-dashed border-line p-4">
           <h3 className="text-[15px] font-bold">Projects not yet under a job</h3>
@@ -1272,16 +855,7 @@ export function EmployersStep({
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5"
               >
                 <span className="min-w-0 flex-1 text-[14px] font-semibold">{pr.name}</span>
-                {/*
-                  ⚠ SUPERSEDED, quoted not deleted (`E413` WS-1) — this panel
-                  held its own inline `<select value="">` with a *"Put it
-                  under…"* placeholder and an `if (!employerId) return;` that
-                  made the empty option INERT. That guard is what made detach
-                  unreachable even here. The shared `ParentPicker` replaces it;
-                  on an unplaced row `currentEmployerId` is "", so it renders
-                  exactly as before except that the empty option now means
-                  something.
-                */}
+                {/* held its own inline `<select value="">` with a *"Put it */}
                 <ParentPicker
                   project={pr}
                   employers={employers}
@@ -1294,17 +868,7 @@ export function EmployersStep({
         </section>
       )}
 
-      {/*
-        ── ⚠ UNDO — THE INVERSE, NOT A SNAPSHOT (`P1-J1.4-E296`) ────────────────
-
-        ⚠ NO UNDO LOG, NO UNDO TABLE, NO SOFT DELETE. The two conversions are
-        exact inverses now that `role_title` and `location` have a home, so undo
-        is just the opposite call with what the client already knew.
-        ⚠ PERSISTENT, NOT A TOAST — a timed toast on a destructive edit is a race
-        with the reader.
-        ⚠ AND THE STRING SAYS ITS OWN SCOPE. "Undo" unqualified promises
-        durability that does not exist here.
-      */}
+      {/* UNDO — THE INVERSE, NOT A SNAPSHOT */}
       {undo && (
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-brand border border-line bg-bg-soft px-4 py-3">
           <span className="text-[13.5px]">
@@ -1340,17 +904,7 @@ export function EmployersStep({
         </div>
       )}
 
-      {/*
-        ── ⚠⚠ THE RECLASSIFY MODAL (`P1-J1.4-E296`) ─────────────────────────────
-
-        SCOTT ASKED FOR A RADIO, SO IT SHIPS A RADIO. ⚠ AND THE RADIO CHANGES
-        NOTHING UNTIL SAVE — a radio that mutates on click is a trapdoor on a
-        destructive edit.
-        ⚠ THE EXISTING `Modal` COMPONENT, not a hand-rolled one.
-        ⚠ SAVE IS DISABLED UNTIL THE CHOICE IS COMPLETE. The modal is not the
-        security boundary — the lib re-checks every id against the session — but
-        it must not offer an impossible save.
-      */}
+      {/* THE RECLASSIFY MODAL */}
       <Modal
         open={reclassify !== null}
         onClose={() => setReclassify(null)}
@@ -1359,10 +913,7 @@ export function EmployersStep({
         {reclassify && (
           <div className="space-y-4">
             <fieldset className="grid gap-2">
-              {/* ⚠ A THIRD ANSWER, NOT EITHER WORD (WS-3). The radios below read
-                  *"A job"* and *"A project"*, so this legend named a choice that is
-                  not on offer — it was already wrong today, independent of the
-                  rename, and a screen-reader user heard the mismatch. */}
+              {/* A THIRD ANSWER, NOT EITHER WORD (WS-3). The radios below read */}
               <legend className="sr-only">A job or a project</legend>
               {(["employer", "project"] as const).map((v) => (
                 <label
@@ -1402,21 +953,14 @@ export function EmployersStep({
                     value={reclassifyTarget}
                     onChange={(ev) => {
                       setReclassifyTarget(ev.target.value);
-                      /*
-                        ⚠ SUGGESTED, THEN CONFIRMED — NEVER AUTO-APPLIED. The
-                        `E043` rule the logo and `client_domain` already follow.
-                        The natural client is the job it will sit under, but the
-                        user has to be able to change it, and the server takes
-                        whatever the field ends up holding.
-                      */
+                      // SUGGESTED, THEN CONFIRMED — NEVER AUTO-APPLIED. The
                       const chosen = employers.find((x) => x.id === ev.target.value);
                       if (chosen && !reclassifyClient.trim()) setReclassifyClient(chosen.name);
                     }}
                     className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px]"
                   >
                     <option value="">Choose a job…</option>
-                    {/* ⚠ NEVER ITSELF. A row cannot be its own parent, and the
-                        server refuses it too. */}
+                    {/* NEVER ITSELF. A row cannot be its own parent, and the */}
                     {employers
                       .filter((x) => x.id !== reclassify.id)
                       .map((x) => (
@@ -1442,35 +986,7 @@ export function EmployersStep({
             {/* PROJECT → EMPLOYER: it needs a name, and it can lose things. */}
             {reclassify.kind === "project" && reclassifyAs === "employer" && (
               <>
-                {/*
-                  ⚠⚠ THE RENAME HELD HERE, AND IT WAS CHECKED BEFORE IT WAS
-                  APPLIED. The brief warned this field sits inside the modal
-                  whose whole purpose is choosing between employer and project,
-                  so renaming it might make the modal's own explanation
-                  incoherent, and said to STOP AND REPORT if so.
-
-                  It does not, for one reason: THE CHOICE THIS MODAL OFFERS IS
-                  NOT WORDED `Employer`. The radios read *"A job"* and *"A
-                  project"*, so the word being renamed is not the word being
-                  chosen. And this field's own placeholder ALREADY read *"The
-                  company you worked for"* — `Company name *` agrees with the
-                  placeholder that was always there, where `Employer name *`
-                  quietly disagreed with it.
-
-                  ⚠ THE SIBLING FIELD STAYS `Client name *`. It is the other
-                  branch and the other direction: `Company` is the entity you
-                  worked at, `Client` is who a piece of work was delivered for.
-
-                  `P2-J1.1-E012` — a work-history row is a COMPANY, not an employer.
-       A resume row looks identical for employment and for contract work, the
-       parser cannot tell them apart, and a user must not have to declare their
-       tax status to fill one in. `Company` names the ENTITY, which is constant;
-       `Employer` names the RELATIONSHIP, which varies. ⚠ `Company/Employer` was
-       considered and REJECTED — a slash label puts the tax question back into a
-       UI that had deliberately stopped asking it. ⚠ `Organization` is the fully
-       correct superset and was CONSIDERED, NOT CHOSEN (Scott took `Company` for
-       length and schema fit); recorded so nobody reopens it unknowing.
-                */}
+                {/* THE RENAME HELD HERE, AND IT WAS CHECKED BEFORE IT WAS */}
                 <Field label="Company name *">
                   <TextInput
                     value={reclassifyName}
@@ -1481,7 +997,7 @@ export function EmployersStep({
                 <p className="text-[13px] leading-relaxed text-ink-2">
                   Its skills and artifacts move with it.
                 </p>
-                {/* ⚠⚠ ENUMERATED, NEVER GENERIC — the server counts and names it. */}
+                {/* ENUMERATED, NEVER GENERIC — the server counts and names it. */}
                 {loss && (
                   <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900">
                     {loss}
@@ -1521,9 +1037,7 @@ export function EmployersStep({
                     });
                     if (ok) {
                       setReclassify(null);
-                      /* ⚠ THE INVERSE IS PRE-FILLED FROM THE SERVER'S OWN ANSWER —
-                         `projectId` is the row it just created, which is the only
-                         thing the opposite call needs. */
+                      // THE INVERSE IS PRE-FILLED FROM THE SERVER'S OWN ANSWER —
                       setUndo({
                         kind: "toProject",
                         projectId: String(ok.projectId ?? ""),
@@ -1538,12 +1052,7 @@ export function EmployersStep({
                     });
                     if (ok) {
                       setReclassify(null);
-                      /*
-                        ⚠ UNDOING THIS DIRECTION NEEDS A TARGET JOB, and the
-                        project's original parent is gone by now. Only offer Undo
-                        when there is somewhere for it to go back to — otherwise
-                        the button would open a modal, which is not an undo.
-                      */
+                      // UNDOING THIS DIRECTION NEEDS A TARGET JOB, and the
                       const target = employers.find((x) => x.id !== ok.employerId);
                       setUndo(
                         target

@@ -87,10 +87,7 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
                 <Field label={`${KIND_LABEL[d.kind]} (%)`}>
                   <TextInput
                     value={pct[d.kind] ?? ""}
-                    /* ⚠ THE EVENT, NOT THE VALUE — `TextInput` forwards the
-                       native handler, which `TaxRateEditor` beside it already
-                       does. The compiler caught the mismatch rather than a
-                       runtime `undefined`. */
+                    // THE EVENT, NOT THE VALUE — `TextInput` forwards the
                     onChange={(e) => setPct({ ...pct, [d.kind]: e.target.value })}
                     inputMode="decimal"
                   />
@@ -105,9 +102,7 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
                 </button>
               </div>
               <p className="mt-1.5 text-[13.5px] text-ink-2">{KIND_HINT[d.kind]}</p>
-              {/* ⚠⚠ A KIND WITH NO ROW IS SAYING SOMETHING AND MUST SAY IT. It
-                  falls to the built-in floor, which means nobody chose the
-                  number being charged. */}
+              {/* A KIND WITH NO ROW IS SAYING SOMETHING AND MUST SAY IT. It */}
               {!d.row && (
                 <p className="mt-1 text-[13.5px] font-semibold text-ink">
                   Not saved yet — the built-in floor is being used.
@@ -124,8 +119,7 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
           Most specific wins — an override here beats the kind&apos;s default.
         </p>
         {overrides.length === 0 ? (
-          /* ⚠ A REAL ZERO, IN INK, WITH ITS REASON — never a dash and never a
-             fabricated row. There are none because none was asked for. */
+          // A REAL ZERO, IN INK, WITH ITS REASON — never a dash and never a
           <p className="mt-3 text-[14px] text-ink-2">
             None. The three defaults above are doing all the work, which is how
             this shipped.
@@ -146,19 +140,10 @@ export function ApplicationCommissionsEditor({ rows }: { rows: CommissionRow[] }
       </section>
 
       {error && <Notice tone="error">{error}</Notice>}
-      {/* ⚠ `Notice` offers `info` and `error` only — there is no success tone,
-          and inventing one here would be a second visual language for the same
-          idea. */}
+      {/* and inventing one here would be a second visual language for the same */}
       {saved && <Notice tone="info">{saved}</Notice>}
 
-      {/*
-        ── ⚠⚠⚠ THE FOOTER THAT SAYS THE OPPOSITE OF THE PAGE BESIDE IT ─────────
-        ⚠ `/admin/tax-rates` ends: *"a change here applies to reports that have
-        already been sent. That is intended — the rate is a current statement,
-        not a historical one."* ⚠⚠ **CORRECT THERE. THE EXACT REVERSE HERE**, and
-        stated in full so a reader cannot carry the first page's rule onto this
-        one (ruling `97b`).
-      */}
+      {/* THE FOOTER THAT SAYS THE OPPOSITE OF THE PAGE BESIDE IT */}
       <p className="text-[13.5px] text-ink-2">
         ⚠ A change here applies to <strong className="text-ink">new transactions only</strong>.
         The rate is resolved once when a work order is created and written onto

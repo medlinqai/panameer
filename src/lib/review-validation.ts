@@ -92,11 +92,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
       step: "rate",
     });
   }
-  /*
-    THE ROLE is the answer now, not the (Role, Domain) pair: the domain left the
-    UI and is derived server-side, so checking `pillarId` here would flash an
-    error for a question nobody was asked.
-  */
+  // THE ROLE is the answer now, not the (Role, Domain) pair: the domain left the
   if (!p.roleTypeId) {
     err("field", "Choose the work you do.", "Choose work", {
       kind: "step",
@@ -127,10 +123,7 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
     });
   }
 
-  // --- CHANGES — optional, and each one is worth money ---------------------
-  // WS5 — a missing bio is a NOTE now, not a gate. The AI usually writes one;
-  // when the résumé gave it nothing to work with, the section is blank on
-  // purpose and this is the line that says so.
+  // CHANGES — optional, and each one is worth money ---------------------
   if (p.overview.trim().length === 0) {
     chg("overview-empty", "Add a bio later — clients like to see one.", "Write bio", {
       kind: "field",
@@ -151,27 +144,12 @@ export function reviewItems(p: ReviewInput): ReviewItem[] {
   }
 
   // A work-history entry with no start date cannot show a span on the live
-  // profile — the reader sees when it ENDED, or nothing at all.
-  //
-  // ⚠ `P2-J1.4-E549` — SUPERSEDED, quoted not deleted (`E164`): this said the
-  // entry *"renders as '? – Present' on the live profile, which reads as broken
-  // data"*, and the copy below quoted that string. Both stopped being true when
-  // the labels became sentences: an undated entry now reads "Ended 2021",
-  // "Ongoing", or nothing — never "? – Present". ⚠⚠ The copy no longer quotes a
-  // rendering that varies by case; it says what the provider loses.
-  //
-  // EMPLOYERS, never "roles" (WS4). "Role" is reserved twice over — security
-  // roles, and the catalog's Role -> Domain -> Skill — so using it for a job
-  // someone held makes two different things share one word in a product that
-  // shows both to the same person.
   const undated = p.employers.filter((e) => !e.startDate);
   if (undated.length > 0) {
     chg(
       "employer-dates",
       undated.length === 1
-        /* ⚠ "how long this role lasted", not "how long you were there" — the
-           entry may be a CURRENT role, where the past tense reads wrong
-           (Scott, 2026-09-17). */
+        // entry may be a CURRENT role, where the past tense reads wrong
         ? `${undated[0].name} has no start date — the profile can't show how long this role lasted.`
         : `${undated.length} employers have no start date — the profile can't show how long these roles lasted.`,
       "Add dates",

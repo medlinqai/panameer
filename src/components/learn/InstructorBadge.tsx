@@ -30,20 +30,7 @@ export function InstructorAvatar({
   );
 }
 
-/**
- * "Instructors: A, B and 2 others" — the path and course header (WS6, corrected).
- *
- * A path can genuinely be taught by several people: Advanced Procurement is 85
- * lessons by one person and 18 by another. So this renders a LIST, ordered by
- * how much of the material each one actually teaches, and only says "Instructor"
- * singular when there is genuinely one.
- *
- * Each name is a LINK only when that person has a marketplace-visible profile —
- * which is the whole differentiator, since the person teaching you is someone
- * you can look up and hire. A link to a profile the marketplace would refuse to
- * render is worse than plain text, so the visibility check happens in the query
- * and this component only honours it.
- */
+/** A path can genuinely be taught by several people: Advanced Procurement is 85 */
 export function InstructorBadge({
   instructors,
   size = "md",

@@ -50,12 +50,7 @@ export function AssessmentWizardShot() {
             <div className="wz-bar" aria-hidden>
               <b style={{ width: `${PROGRESS_PCT}%` }} />
             </div>
-            {/*
-              Mapped over the ten, never hard-coded — an eleventh domain appears
-              here, in the counter above and in the Step 3 funnel with no edit.
-              State is derived from position against ACTIVE_INDEX, so moving the
-              active domain moves the ticks with it.
-            */}
+            {/* Mapped over the ten, never hard-coded — an eleventh domain appears */}
             <ul className="wz-dl">
               {CAPABILITY_DOMAINS.map((d, i) => {
                 const done = i < ACTIVE_INDEX;
@@ -83,15 +78,7 @@ export function AssessmentWizardShot() {
               Capability domain {ACTIVE_INDEX + 1} of{" "}
               {CAPABILITY_DOMAINS.length} · {ACTIVE_DOMAIN.name}
             </p>
-            {/*
-              ⚠ DERIVED, NOT WRITTEN (E155). This shipped carrying chat's wording,
-              "How are purchase orders created, approved and priced today?" — the one
-              hand-authored string sitting among derived ones. It matters for honesty
-              rather than tidiness: the domain list, all four rung titles and all four
-              example lines come from the bank, so a written question made this a
-              PICTURE OF the wizard instead of the wizard, and it was the one string
-              that would drift the moment Scott edits the bank.
-            */}
+            {/* DERIVED, NOT WRITTEN (E155). This shipped carrying chat's wording */}
             <h4 className="wz-q">{ACTIVE_LADDER.question}</h4>
             <p className="wz-qs">
               Pick the description closest to how it actually runs — not how the
@@ -108,11 +95,7 @@ export function AssessmentWizardShot() {
                     <span className="wz-oh">{r.title}</span>
                     <span className="wz-op">{r.examples}</span>
                   </div>
-                  {/* ⚠ "Option", NOT "Rung" (E035). Scott: "change the word 'rung' to
-                      'option'? Rung is an odd word. Good for a ladder." The CLASS stays
-                      `wz-rung` — it is not user-visible, and renaming it would touch
-                      home.css for no reader's benefit. The ladder metaphor is still
-                      correct in the CODE, where it explains the 10/23/37/50 spacing. */}
+                  {/* home.css for no reader's benefit. The ladder metaphor is still */}
                   <span className="wz-rung">Option {i + 1}</span>
                 </div>
               ))}

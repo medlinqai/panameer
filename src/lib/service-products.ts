@@ -183,23 +183,14 @@ async function validSkillIds(ids?: string[]): Promise<string[]> {
   const wanted = (ids ?? []).slice(0, 20);
   if (wanted.length === 0) return [];
   const found = await prisma.skill.findMany({
-    /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
-       VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
-       Filtering it would silently drop a provider's existing selection the
-       moment an admin retired that row, which is the exact data loss this
-       brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
+    // NO `status` FILTER HERE, DELIBERATELY . This
     where: { id: { in: wanted } },
     select: { id: true },
   });
   return found.map((f) => f.id);
 }
 
-/**
- * Filters to capability domains that really exist. Mirrors `validSkillIds`, with one
- * difference: unknown ids are dropped SILENTLY there because a stale skill is cosmetic,
- * whereas here dropping everything would leave a product invisible — so the caller checks
- * the result is non-empty rather than trusting it.
- */
+/** Filters to capability domains that really exist. Mirrors `validSkillIds`, with one */
 async function validCapabilityDomainIds(ids?: string[]): Promise<string[]> {
   const wanted = [...new Set(ids ?? [])].slice(0, 100);
   if (wanted.length === 0) return [];
@@ -210,26 +201,7 @@ async function validCapabilityDomainIds(ids?: string[]): Promise<string[]> {
   return found.map((f) => f.id);
 }
 
-/**
- * ⚠ WHEN AT LEAST ONE DOMAIN IS REQUIRED — AND WHY IT IS NOT SIMPLY "ALWAYS".
- *
- * The brief asked for this to be decided and reported rather than assumed, because
- * "existing packages have no domains" and it must not "silently invalidate every published
- * package". The rule is:
- *
- *   CREATE            -> required. Nothing is published yet, nobody is inconvenienced, and
- *                        a product born unclassified is a product nobody can find.
- *   UPDATE, had >= 1   -> required. A classified product must not become unclassified; that
- *                        would be a silent regression to invisibility.
- *   UPDATE, had 0      -> NOT required. A package that predates this field can still have
- *                        its price fixed or a typo corrected. It is nagged, not blocked —
- *                        the form shows a standing notice, and the moment it gains a domain
- *                        the rule above locks it in.
- *
- * The alternative — blocking every edit to a legacy package — would freeze published
- * catalog entries behind a field their author never saw, which is the exact failure the
- * brief named.
- */
+/** WHEN AT LEAST ONE DOMAIN IS REQUIRED — AND WHY IT IS NOT SIMPLY "ALWAYS". */
 function requireDomains(resolved: string[], hadBefore: number, isCreate: boolean) {
   const mustHave = isCreate || hadBefore > 0;
   if (mustHave && resolved.length === 0) {
@@ -321,33 +293,7 @@ export async function deleteServiceProduct(viewer: Viewer, serviceProductId: str
   if (res.count === 0) throw new OnboardingError("ServiceProduct not found", "INVALID");
 }
 
-/**
- * Draft ⇄ Publish. Publishing is what puts a package in front of buyers, so it
- * requires the parts a buyer needs to make a decision — a nameless, priceless
- * package on the catalog would be worse than no package.
- *
- * ── ⚠⚠ AND IT NOW REQUIRES `SELL` (`P1-ALL-E034`) ───────────────────────────
- *
- * **SCOTT:** *"You list a product, someone likes it, then you don't have
- * details… wait buyer… then you add fake details and the product then is deemed
- * to be fake and not available… this is messy."*
- *
- * ⚠ THE TIMING IS THE WHOLE POINT. The late gate is what CAUSES the fake data —
- * a seller under pressure to close types whatever closes it. Asking at publish
- * costs an empty listing; asking at purchase costs a buyer.
- *
- * ⚠ SUPERSEDED, quoted: this call was gated on the ROLE and nothing else.
- * `api/provider/packages/route.ts` checks `canProvideServices`, which asks *"is
- * this kind of user allowed to sell"* and nothing about whether this particular
- * seller can be found, contracted or paid.
- *
- * ⚠⚠ DRAFTS ARE NEVER GATED. The check is inside the `status === "PUBLISHED"`
- * branch, so DRAFT ⇄ DRAFT and PUBLISHED → DRAFT both pass untouched — you can
- * build a product freely and you can always withdraw one.
- * ⚠ AND NOTHING IS RETRO-UNPUBLISHED. This runs on the TRANSITION only; an
- * already-PUBLISHED row is never re-checked. `check:transaction-gates` asserts
- * that placement.
- */
+/** Draft ⇄ Publish. Publishing is what puts a package in front of buyers, so it */
 export async function setServiceProductStatus(
   viewer: Viewer,
   serviceProductId: string,
@@ -361,12 +307,7 @@ export async function setServiceProductStatus(
   if (!pkg) throw new OnboardingError("ServiceProduct not found", "INVALID");
 
   if (status === "PUBLISHED") {
-    /*
-      ⚠ THE SELLER GATE RUNS FIRST, BEFORE THE PRODUCT GATE. The product checks
-      below are about THIS package; `SELL` is about whether this seller can be
-      found and paid at all. Reporting a missing deliverable to someone who also
-      has no rate and no payout method would send them to fix the smaller thing.
-    */
+    // THE SELLER GATE RUNS FIRST, BEFORE THE PRODUCT GATE. The product checks
     const gaps = await sellGaps(viewer.userId);
     if (gaps.length > 0) {
       throw new OnboardingError(gapSentence(gaps), "GATE_UNMET", gaps);
@@ -396,10 +337,7 @@ export async function setServiceProductStatus(
   await prisma.serviceProduct.update({ where: { id: pkg.id }, data: { status } });
 }
 
-/**
- * PUBLISHED packages for the buyer-facing catalog. Takes a profile id, not a
- * viewer — the profile page has already applied brief_K's visibility gate.
- */
+/** PUBLISHED packages for the buyer-facing catalog. Takes a profile id, not a */
 export async function listPublishedServiceProducts(profileId: string) {
   const rows = await prisma.serviceProduct.findMany({
     where: { provider_profile_id: profileId, status: "PUBLISHED" },

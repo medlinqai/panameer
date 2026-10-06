@@ -82,34 +82,12 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
   const shown = useMemo(() => {
     return matching
       .filter((r) => (filter === "all" ? true : r.reasonKind === filter))
-      /*
-        ── ⚠⚠ NAME · TITLE · COMPANY · SKILL (`P2-A3-E596` WS-E item 3) ──────
-
-        ⚠ SCOTT: search *"the fields a person actually remembers someone by"*.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — skill was the one missing:
-        //   [r.name, r.title, r.company].some((f) => f?.toLowerCase().includes(needle))
-
-        ⚠⚠ MEASURED AT THE GATE BEFORE BUILDING: three of the four were already
-        here, so WS-E was WIRING, not building — exactly what item 1 asked to be
-        checked first. ⚠ `searchMembers` in `connections.ts` is a DIFFERENT
-        search over the WHOLE member directory, and it was left alone; this one
-        is scoped to the viewer's own accepted colleagues by construction.
-        ⚠⚠⚠ THE SKILL NAMES ARE THE **SHOWN** SET (`E517`), resolved on the
-        server. A skill the colleague's own profile will not display must not
-        be a way to find them, or a buyer reaches a page that cannot confirm it.
-      */
-      /* ⚠ THE NEEDLE HAS ALREADY BEEN APPLIED, IN `matching` ABOVE (`E721` item 1a), so this
-         memo is now the chip filter alone. ⚠⚠ The field list and the reasoning for it moved
-         with the code; the `E164` note above is what it said.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   .filter((r) => !needle ? true
-         //     : [r.name, r.title, r.company, ...r.skillNames].some((f) =>
-         //         f?.toLowerCase().includes(needle)));
-      */
+      // NAME · TITLE · COMPANY · SKILL WS-E item 3)
+      // THE NEEDLE HAS ALREADY BEEN APPLIED, IN `matching` ABOVE ( item 1a), so this
       ;
   }, [matching, filter]);
 
-  /* ⚠ The page actually rendered, and whether another one exists. */
+  /* The page actually rendered, and whether another one exists. */
   const visible = shown.slice(0, limit);
   const more = shown.length - visible.length;
 
@@ -118,10 +96,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        /* ⚠ THE PLACEHOLDER NAMES EVERY FIELD IT SEARCHES. A box that quietly
-           matches more than it claims is a box people stop trusting. ⚠ SUPERSEDED,
-           quoted not deleted (`E164`):
-           //   placeholder="Search your colleagues by name, title or company" */
+        // THE PLACEHOLDER NAMES EVERY FIELD IT SEARCHES. A box that quietly
         placeholder="Search your connections…"
         aria-label="Search your connections"
         className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[14.5px] outline-none focus:border-magenta"
@@ -142,9 +117,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
               }
             >
               {f.label}{" "}
-              {/* ⚠ `E433` — THE COUNT IS A FIGURE, NOT AN INTERACTIVE THING, so
-                  it never carries magenta. On the active chip it inherits white
-                  from the button; off it, it is ink. */}
+              {/* — THE COUNT IS A FIGURE, NOT AN INTERACTIVE THING, so */}
               <span className={active ? "font-normal" : "font-normal text-ink-2"}>
                 ({counts[f.key]})
               </span>
@@ -166,11 +139,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
               key={r.connectionId}
               className="pm-member-row flex flex-wrap items-center gap-3 border-t border-line py-5"
             >
-              {/* ⚠⚠ THE PHOTO LINKS TOO (`E742`, B2: *"Name and photo link to the
-                  profile"*). ⚠ A 44px avatar is a small target, so it and the
-                  name are two links to one place rather than one of them being
-                  decoration. ⚠⚠⚠ NOT A LINK AT ALL when there is no profile —
-                  see `profileHref`. */}
+              {/* THE PHOTO LINKS TOO ( , B2: *"Name and photo link to the */}
               {r.profileHref ? (
                 <Link href={r.profileHref} aria-label={`${r.name} — view profile`}>
                   <Avatar
@@ -197,11 +166,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                   ) : (
                     r.name
                   )}
-                  {/* ⚠⚠ THE BUY-SIDE MARKER IS QUIET AND IT IS NOT A WARNING.
-                      Under the class rule these are not peer connections — but
-                      they are real, they are not hidden and they are not
-                      deleted. ⚠ `E433`: it is a FACT, so it is ink, not
-                      magenta. */}
+                  {/* THE BUY-SIDE MARKER IS QUIET AND IT IS NOT A WARNING. */}
                   {r.buySide && (
                     <span className="ml-2 rounded-full bg-black/[0.06] px-2 py-0.5 text-[11.5px] font-bold text-ink-2">
                       Buy-side
@@ -213,12 +178,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                     <TitleAndCompany title={r.title} company={r.company} companyId={r.companyId} />
                   </p>
                 )}
-                {/* ⚠⚠ THE DISAMBIGUATING LINE (`E742`, B2). ⚠⚠⚠ THE MUTUAL
-                    COUNT IS SHOWN **ONLY ABOVE ZERO**, per the brief — a `0`
-                    beside every name is noise, and on a roster where most pairs
-                    share nobody it would be noise on most rows. ⚠ The whole
-                    line is absent when neither fact exists, rather than
-                    rendering an empty paragraph. */}
+                {/* THE DISAMBIGUATING LINE ( , B2). THE MUTUAL */}
                 {(r.location || r.mutualCount > 0) && (
                   <p className="text-[12.5px] text-ink-2">
                     {[
@@ -231,9 +191,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
                       .join(" · ")}
                   </p>
                 )}
-                {/* ⚠⚠ NEVER BLANK. The lib guarantees a reason — a shared
-                    employer, shared skills, shared paths, or the connection
-                    date as the fallback that always computes. */}
+                {/* NEVER BLANK. The lib guarantees a reason — a shared */}
                 <p className="mt-0.5 text-[12.5px] italic leading-snug text-ink-2">
                   {r.reason}
                 </p>
@@ -248,9 +206,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
               </div>
             </div>
           ))}
-          {/* ⚠⚠ THE REMAINDER IS A REAL COUNT, not "Show more" with nothing
-              behind it. ⚠ It is a plain button, not a link: nothing is fetched,
-              the rows are already here. */}
+          {/* THE REMAINDER IS A REAL COUNT, not "Show more" with nothing */}
           {more > 0 && (
             <button
               type="button"
@@ -263,16 +219,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
         </div>
       )}
 
-      {/*
-        ── ⚠⚠⚠ AND THE PEOPLE WHO ARE *NOT* YET COLLEAGUES (`P2-A3-E721` item 1b) ──────────
-
-        ⚠ **SCOTT: *"Under the roster, 'Other members matching &lt;query&gt;', from the existing
-        member/provider search (don't write a second search, `E585`)."***
-        ⚠⚠ **THIS WAS THE HALF THAT MADE THE DEFECT FEEL LIKE A DEAD END.** Typing a real
-        member's name into a box headed *"Search your colleagues"* returned nothing and
-        offered nothing — correct, and useless, because **the one thing a member wants at
-        that moment is to connect to the person they just failed to find.**
-      */}
+      {/* AND THE PEOPLE WHO ARE *NOT* YET COLLEAGUES item 1b) */}
       <OtherMembers query={q} excludeUserIds={rows.map((r) => r.userId)} />
 
       {asking && <AskForRecommendation row={asking} onClose={() => setAsking(null)} />}
@@ -280,28 +227,7 @@ export function ColleagueRoster({ rows }: { rows: RosterRowView[] }) {
   );
 }
 
-/**
- * ── ⚠⚠⚠ `Other members matching "…"` (`P2-A3-E721` item 1b) ──────────────────────────────
- *
- * ⚠⚠⚠ **IT IMPLEMENTS NO SEARCH.** It calls `GET /api/community/members/search`, which is
- * transport over `searchMembers` (`lib/connections.ts:412`) — **the same function
- * `/community`'s own search box uses.** ⚠ Scott named `E585` in the brief, and the roster
- * file's own comment had already flagged the risk two briefs ago: *"`searchMembers` is a
- * DIFFERENT search over the WHOLE member directory, and it was left alone."* It is still
- * left alone; it is now also CALLED.
- *
- * ⚠⚠ **"OTHER" IS A PRESENTATION RULE AND IS DECIDED HERE, NOT IN THE QUERY.** The server
- * search is the member directory and must stay general; excluding the viewer's own roster is
- * this page's business, because this page is the one already showing them above. ⚠ Without
- * it a colleague appears twice on one screen, once with `Message` and once in a list headed
- * *"other members"*.
- *
- * ⚠⚠ **DEBOUNCED AT 300ms, THE SAME FIGURE `MemberSearchBox` USES**, and for the same reason:
- * one Postgres search per keystroke. ⚠⚠⚠ **AND IT NEVER RACES ITSELF** — every response
- * checks that its own query is still the live one before it renders, so a slow request for
- * `"to"` cannot land after `"tom"` and repaint the older answer. That is the failure mode a
- * plain `fetch().then(setState)` has and it only shows up on a slow connection.
- */
+/** IT IMPLEMENTS NO SEARCH. It calls `GET /api/community/members/search`, which is */
 function OtherMembers({
   query,
   excludeUserIds,
@@ -309,35 +235,19 @@ function OtherMembers({
   query: string;
   excludeUserIds: string[];
 }) {
-  /*
-    ── ⚠⚠⚠ THE ANSWER IS STORED *WITH THE QUESTION IT ANSWERS* ───────────────────
-
-    ⚠ One piece of state, `{ q, rows }`, rather than a `results` list beside a `loading` flag.
-    ⚠⚠ **IT IS THE STALENESS GUARD, AND IT IS STRONGER THAN A `live` BOOLEAN:** render compares
-    the stored `q` against the live needle, so a slow response for `"to"` cannot repaint the
-    answer for `"tom"` even if it arrives after it. A cancel flag only covers the unmount case;
-    this covers the overtake case too.
-    ⚠⚠⚠ **AND IT IS WHAT KEEPS THIS EFFECT FREE OF SYNCHRONOUS `setState`.** The first version
-    cleared state in the effect body on a short query and tripped
-    `react-hooks/set-state-in-effect` — **a NEW lint ERROR against a baseline of 11**, which the
-    house rule counts as a regression. `loading` is now DERIVED from whether the stored answer
-    matches the current question, so there is nothing to clear.
-  */
+  // THE ANSWER IS STORED *WITH THE QUESTION IT ANSWERS*
   const [hits, setHits] = useState<{ q: string; rows: MemberHit[] } | null>(null);
   const needle = query.trim();
 
   useEffect(() => {
-    /* ⚠ THE SAME TWO-CHARACTER FLOOR `searchMembers` ENFORCES. ⚠⚠ It is repeated here ONLY to
-       avoid a round trip that is guaranteed to return `[]`; the server still owns the rule,
-       and a change there is honoured whatever this line says. */
+    // THE SAME TWO-CHARACTER FLOOR `searchMembers` ENFORCES. It is repeated here ONLY to
     if (needle.length < 2) return;
     let live = true;
     const t = setTimeout(() => {
       fetch(`/api/community/members/search?q=${encodeURIComponent(needle)}`)
         .then((r) => (r.ok ? r.json() : { members: [] }))
         .then((d) => live && setHits({ q: needle, rows: (d.members ?? []) as MemberHit[] }))
-        /* ⚠⚠ A THROWN FETCH MUST NOT PRODUCE SILENCE (`E516`). An empty list is recorded for
-           THIS query rather than a spinner that never resolves. */
+        // A THROWN FETCH MUST NOT PRODUCE SILENCE . An empty list is recorded for
         .catch(() => live && setHits({ q: needle, rows: [] }));
     }, 300);
     return () => {
@@ -348,7 +258,7 @@ function OtherMembers({
 
   if (needle.length < 2) return null;
 
-  /* ⚠ `null` MEANS "no answer for THIS question yet" — which is exactly what loading is. */
+  /* `null` MEANS "no answer for THIS question yet" — which is exactly what loading is. */
   const rows_ = hits && hits.q === needle ? hits.rows : null;
   const loading = rows_ === null;
   const exclude = new Set(excludeUserIds);
@@ -362,8 +272,7 @@ function OtherMembers({
       {loading ? (
         <p className="mt-2 text-[13.5px] text-ink-2">Searching…</p>
       ) : others.length === 0 ? (
-        /* ⚠⚠ A REAL ZERO, SAID PLAINLY (counting rule 2) — and it is the honest end of the
-           road rather than an empty space the member has to interpret. */
+        // A REAL ZERO, SAID PLAINLY (counting rule 2) — and it is the honest end of the
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-2">
           Nobody else on Panameer matches that.
         </p>
@@ -389,16 +298,7 @@ function OtherMembers({
                 )}
               </div>
               <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
-                {/*
-                  ⚠⚠ `ConnectControls` PICKS ITS OWN BUTTON FROM THE RELATION THE SERVER
-                  COMPUTED — `Connect as Colleague`, `Requested`, `Accept` or `Message`. ⚠⚠⚠
-                  **NO SECOND CONNECT BUTTON WAS WRITTEN HERE AND THIS SURFACE DECIDES
-                  NOTHING**, which is the same rule `InviteColleagueClient` follows for the
-                  already-a-member card.
-                  ⚠ `part="colleague"` (`E720`): this list is about becoming colleagues, and
-                  a mentor control here would offer a second, unrelated relationship on a row
-                  the member has not even connected to yet.
-                */}
+                {/* COMPUTED — `Connect as Colleague`, `Requested`, `Accept` or `Message`. */}
                 <ConnectControls
                   toUserId={m.userId}
                   relation={m.relation ?? null}
@@ -413,18 +313,7 @@ function OtherMembers({
   );
 }
 
-/**
- * ── ⚠⚠ THE ASK (`P2-J3-E558` WS-A) ────────────────────────────────────────
- *
- * ⚠ THE RELATIONSHIP IS DERIVED, NOT TYPED. LinkedIn asks the requester to
- * declare it, which is where inflation enters. ⚠⚠ IT ALWAYS READS `Colleague`
- * HERE — `USER_CLASS` is not stored, so `Client` is a label the data cannot
- * prove yet.
- * ⚠ THE NOTE IS STILL ASKED FOR. A specific ask produces a specific
- * recommendation; a blank one produces a generic one.
- * ⚠ The POST sends `toUserId`, NEVER an email — the address is resolved
- * server-side from a connection the viewer demonstrably has.
- */
+/** THE ASK WS-A) */
 function AskForRecommendation({
   row,
   onClose,
@@ -448,9 +337,7 @@ function AskForRecommendation({
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /* ⚠ THE SERVER'S OWN SENTENCE IS SHOWN — "you've reached the limit" and
-           "they aren't a colleague" are different answers and collapsing them
-           into "couldn't send" is what makes a wall. */
+        // THE SERVER'S OWN SENTENCE IS SHOWN — "you've reached the limit" and
         setError(data?.error ?? "We couldn't send that just now.");
         return;
       }
@@ -487,8 +374,7 @@ function AskForRecommendation({
         ) : (
           <>
             <p className="mt-2 text-[13.5px] text-ink-2">
-              {/* ⚠ DERIVED AND STATED, so the requester can see what will be
-                  recorded rather than choosing it. */}
+              {/* DERIVED AND STATED, so the requester can see what will be */}
               This will be recorded as a <span className="font-bold text-ink">Colleague</span>{" "}
               recommendation.
             </p>
@@ -508,8 +394,7 @@ function AskForRecommendation({
               <p className="mt-2 text-[13.5px] font-semibold text-red-700">{error}</p>
             )}
             <div className="mt-4 flex flex-wrap justify-end gap-2">
-              {/* ⚠ `Back`, not `Cancel` — nothing has happened yet. The same
-                  reasoning Scott ruled for the invitation confirm step. */}
+              {/* reasoning Scott ruled for the invitation confirm step. */}
               <button
                 type="button"
                 onClick={onClose}

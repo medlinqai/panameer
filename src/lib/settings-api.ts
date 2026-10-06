@@ -26,9 +26,6 @@ export async function settingsWrite<S extends z.ZodTypeAny>(
   } catch (e) {
     if (e instanceof SettingsError) {
       // GATED is a rule the user can satisfy (add a tax form first); NOT_FOUND
-      // and INVALID are the request being wrong. Both are the caller's to fix,
-      // so both are 400 — a 403 would suggest the account lacks permission,
-      // which is a different and more alarming thing to tell someone.
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
     console.error("[settings] write failed:", e);

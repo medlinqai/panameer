@@ -102,14 +102,11 @@ export type SerializedLine = {
   serviceEnd: string | null;
   noteToSupplier: string | null;
   status: WorkRequestLineStatus;
-  /** ⚠ Invited-to-bid count for THIS line. A count, never the bids themselves. */
+  /** Invited-to-bid count for THIS line. A count, never the bids themselves. */
   invitedCount: number;
 };
 
-/**
- * ⚠ THE PROVIDER'S NAME IS RESOLVED IN ONE BATCH, NOT PER LINE. Four lines
- * naming four providers is four queries the obvious way; this is one.
- */
+/** THE PROVIDER'S NAME IS RESOLVED IN ONE BATCH, NOT PER LINE. Four lines */
 async function namesFor(personIds: string[]): Promise<Map<string, string>> {
   const ids = [...new Set(personIds)];
   if (ids.length === 0) return new Map();
@@ -126,26 +123,9 @@ export type WorkRequestDetail = {
   id: string;
   title: string;
   description: string;
-  /* ⚠⚠ THE ENUM, NOT `string` (`P2-A8-E679`) — same reason as `hire.ts`:
-     `string` is what let `status === "POSTED" ? … : "Draft"` compile while
-     three values fell through it. ⚠ `WorkRequestLineStatus` beside it was
-     already narrowed; only the REQUEST's status was loose.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   status: string; */
+  // THE ENUM, NOT `string` — same reason as `hire.ts`
   status: WorkRequestStatus;
-  /*
-    ── ⚠⚠⚠ THE KIND, AND IT DECIDES WHETHER SOURCING EXISTS (`P2-A8-E712` WS-B) ──
-
-    ⚠⚠ **SCOTT, 2026-09-27:** *"There are two types of work requests — direct and
-    sourced"*, renamed to **externally sourced**, and *"this will allow web and ERP users
-    to skip the sourcing process."*
-    ⚠⚠⚠ **AN EXTERNALLY SOURCED REQUEST SKIPS INVITE → PROPOSE → COMPARE ENTIRELY, SO THE
-    PAGE MUST KNOW FROM THE START WHETHER TO RENDER A SOURCING RAIL — rather than
-    rendering one and discovering nobody used it.**
-    ⚠ `loadOwned` uses `include` with no `select`, so this column was **already fetched
-    and only dropped here** — the same shape `E710` found on the provider profile. Nothing
-    was missing from the round trip, only from what the page could see.
-    ⚠ Measured 2026-09-29: before this, `sole_sourced` was read by **nothing** in `src/`.
-  */
+  // THE KIND, AND IT DECIDES WHETHER SOURCING EXISTS WS-B)
   soleSourced: boolean;
   postedAt: string | null;
   currency: string;
@@ -164,14 +144,7 @@ export type WorkRequestDetail = {
   completeness: Completeness;
 };
 
-/**
- * The detail page's whole payload, owner-scoped.
- *
- * ⚠ IT CALLS `ensureFirstLine` FIRST. A request created before this brief — or
- * by the wizard, which writes the header and not a line — would otherwise open on
- * an empty table with a Complete button that can never go green, and the reason
- * would be invisible. The call is idempotent; see the file header.
- */
+/** The detail page's whole payload, owner-scoped. */
 export async function getWorkRequestDetail(
   viewer: Viewer,
   id: string
@@ -190,8 +163,7 @@ export async function getWorkRequestDetail(
     rows.map((r) => r.provider_person_id).filter((x): x is string => !!x)
   );
 
-  /* ⚠ A COUNT OF INVITES PER LINE — NOT THE BIDS. `E395`'s fence: this brief
-     creates invitations and renders none of what comes back. */
+  // A COUNT OF INVITES PER LINE — NOT THE BIDS. 's fence: this brief
   const inviteRows = await prisma.proposalRequestLine.findMany({
     where: { work_request_line_id: { in: rows.map((r) => r.id) } },
     select: { work_request_line_id: true },
@@ -231,7 +203,7 @@ export async function getWorkRequestDetail(
     title: wr.title,
     description: wr.description ?? "",
     status: wr.status,
-    /* ⚠ `P2-A8-E712` WS-B — the branch above the sourcing chain. See the type. */
+    /* `P2-A8-E712` WS-B — the branch above the sourcing chain. See the type. */
     soleSourced: wr.sole_sourced,
     postedAt: wr.posted_at ? wr.posted_at.toISOString() : null,
     currency: wr.currency,
@@ -262,21 +234,7 @@ export async function getWorkRequestDetail(
    WRITE — every one owner-scoped through `loadOwned`
    ═════════════════════════════════════════════════════════════════════════ */
 
-/**
- * ⚠⚠ LINE 1, MATERIALISED FROM THE HEADER THE WIZARD ALREADY FILLED. Idempotent:
- * if the request has any line at all this does nothing and returns.
- *
- * ⚠ THE BASIS COMES FROM `basisForPricingType`, THE SPINE'S OWN MAPPING —
- * HOURLY → RATE, FIXED → AMOUNT. Re-deriving it here with a ternary would be a
- * second answer to a question `E388` already settled.
- *
- * ⚠ IT DOES NOT INVENT A PRICE. A header with `budget_type = HOURLY` and a range
- * (`budget_min_cents`..`budget_max_cents`) has NO single rate, and picking the
- * midpoint would put a number on the line that the requester never typed. The
- * line comes through UNPRICED, the COMPLETE gate says so by name, and the
- * requester fills it in. **A budget is what you are willing to pay; a line price
- * is what you agreed to pay, and they are not the same fact.**
- */
+/** LINE 1, MATERIALISED FROM THE HEADER THE WIZARD ALREADY FILLED. Idempotent */
 export async function ensureFirstLine(workRequestId: string): Promise<void> {
   const existing = await prisma.workRequestLine.count({
     where: { work_request_id: workRequestId },
@@ -298,12 +256,7 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
   });
   if (!wr) return;
 
-  /* ⚠⚠ THE TYPE COMES FROM THE SPINE'S MAPPING, NOT A LOCAL TERNARY (`E585`).
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const basis: LineBasis = wr.budget_type ? basisForPricingType(wr.budget_type) : "AMOUNT";
-     ⚠⚠⚠ `basis` IS NOT WRITTEN AT ALL ANY MORE. It is retained on the model and
-     nullable so trunk's readers keep working (ruling 37b), and a new line must
-     not invent a value for a field on its way out. */
+  // THE TYPE COMES FROM THE SPINE'S MAPPING, NOT A LOCAL TERNARY .
   const transactionType: TransactionType = wr.budget_type
     ? transactionTypeForPricingType(wr.budget_type)
     : "SERVICE_BY_AMT";
@@ -317,8 +270,7 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
         transaction_type: transactionType,
         description,
         currency: wr.currency,
-        /* ⚠ A FIXED budget IS a line amount; an HOURLY one is not a unit price —
-           see the docblock. Only the unambiguous half is carried across. */
+        // A FIXED budget IS a line amount; an HOURLY one is not a unit price —
         amount_cents: pricedByQuantity(transactionType) ? null : wr.budget_amount_cents,
         uom: pricedByQuantity(transactionType) ? "HOUR" : null,
         role_type_id: wr.role_type_id,
@@ -327,10 +279,7 @@ export async function ensureFirstLine(workRequestId: string): Promise<void> {
       },
     });
   } catch {
-    /* ⚠ THE RACE LOSES ON THE UNIQUE CONSTRAINT AND THAT IS THE DESIGN. Two
-       concurrent loads of the detail page both see zero lines; the second
-       `create` violates `@@unique([work_request_id, line_number])` and lands
-       here. The outcome — exactly one line 1 — is what was wanted either way. */
+    // THE RACE LOSES ON THE UNIQUE CONSTRAINT AND THAT IS THE DESIGN. Two
   }
 }
 
@@ -345,7 +294,7 @@ async function nextLineNumber(workRequestId: string): Promise<number> {
 }
 
 export type LineDraft = {
-  /** ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;` */
+  /** SUPERSEDED, quoted not deleted (`E164`): `basis: LineBasis;` */
   transaction_type: TransactionType;
   description: string;
   uom?: string | null;
@@ -357,20 +306,10 @@ export type LineDraft = {
   noteToSupplier?: string | null;
 };
 
-/**
- * ⚠ A NEW LINE MAY BE UNPRICED, AND THAT IS THE POINT OF THE COMPLETE GATE.
- * `assertLineShape` — the spine's rule — refuses a line that carries BOTH a rate
- * and an amount, which is the shape that can be settled twice. It is only run
- * once a line actually carries a price, because a line with nothing in it yet is
- * a line the requester has not finished, not a malformed one.
- */
+/** A NEW LINE MAY BE UNPRICED, AND THAT IS THE POINT OF THE COMPLETE GATE. */
 function validateDraft(d: LineDraft): void {
   if (!d.description || d.description.trim().length < 2)
     throw new WorkRequestError("A line needs a description", "INVALID");
-  /* ⚠⚠ SCOTT'S THREE TYPES (`E621`, ruling 37b). ⚠ SUPERSEDED, quoted not
-     deleted (`E164`):
-     //   if (d.basis !== "RATE" && d.basis !== "AMOUNT")
-     //     throw new WorkRequestError("A line is priced by RATE or by AMOUNT", "INVALID"); */
   const TYPES: TransactionType[] = ["PRODUCT_BY_QTY", "SERVICE_BY_QTY", "SERVICE_BY_AMT"];
   if (!TYPES.includes(d.transaction_type))
     throw new WorkRequestError("A line needs a transaction type", "INVALID");
@@ -382,15 +321,7 @@ function validateDraft(d: LineDraft): void {
   const priced =
     pricedByQuantity(d.transaction_type) ? d.unitPriceCents != null : d.amountCents != null;
   if (priced) {
-    /* ⚠⚠⚠ NO TRANSLATION ANY MORE (ruling 44). The spine's rule now has a
-       `TransactionType` door onto the identical body, so the requisition line is
-       checked in its OWN vocabulary. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   ⚠⚠ `assertLineShape` IS ORDER-SIDE and still speaks `LineBasis`, so the
-       //   type is translated through the spine's one bridge rather than compared
-       //   here (`basisForTransactionType`).
-       //   assertLineShape({
-       //     basis: basisForTransactionType(d.transaction_type),
-       //     ... */
+    // NO TRANSLATION ANY MORE (ruling 44). The spine's rule now has a
     assertTransactionLineShape({
       transaction_type: d.transaction_type,
       uom: pricedByQuantity(d.transaction_type) ? d.uom ?? "HOUR" : null,
@@ -405,9 +336,7 @@ function validateDraft(d: LineDraft): void {
 
 function draftToData(d: LineDraft) {
   return {
-    /* ⚠⚠⚠ `basis` IS NOT WRITTEN. It is retained on the model and nullable so
-       trunk's readers keep working (ruling 37b); a new line carries only the
-       live field. ⚠ SUPERSEDED, quoted not deleted (`E164`): `basis: d.basis,` */
+    // trunk's readers keep working (ruling 37b); a new line carries only the
     transaction_type: d.transaction_type,
     description: d.description.trim(),
     uom: pricedByQuantity(d.transaction_type) ? d.uom?.trim() || "HOUR" : null,
@@ -436,15 +365,7 @@ export async function addLine(viewer: Viewer, id: string, draft: LineDraft) {
   return getWorkRequestDetail(viewer, id);
 }
 
-/**
- * Edit a line.
- *
- * ⚠⚠ THE `lineId` IS CHECKED AGAINST THE REQUEST THE VIEWER OWNS, NOT TRUSTED.
- * `updateMany` scoped to `{ id, work_request_id }` is what makes a line id from
- * another tenant's request update ZERO rows instead of theirs. Ownership comes
- * from the session via `loadOwned`; the client supplies only which line of
- * something it already proved it owns.
- */
+/** Edit a line. */
 export async function updateLine(
   viewer: Viewer,
   id: string,
@@ -462,16 +383,7 @@ export async function updateLine(
   return getWorkRequestDetail(viewer, id);
 }
 
-/**
- * Remove a line.
- *
- * ⚠ LINE 1 IS NOT REMOVABLE while it is the only line: a work request with no
- * lines is a request for nothing, and the COMPLETE gate would report `NO_LINES`
- * on something the requester thinks they just tidied.
- * ⚠ AND A LINE SOMEBODY HAS BEEN INVITED TO BID ON IS NOT REMOVABLE EITHER —
- * the ITB names this line, and deleting it would leave a provider holding an
- * invitation to price something that no longer exists.
- */
+/** Remove a line. */
 export async function removeLine(viewer: Viewer, id: string, lineId: string) {
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, id, pAccountId);
@@ -499,14 +411,7 @@ export async function removeLine(viewer: Viewer, id: string, lineId: string) {
   return getWorkRequestDetail(viewer, id);
 }
 
-/**
- * Assign (or clear) the provider on a line.
- *
- * ⚠ THE PROVIDER IS A `Person` WHO CAN ACTUALLY PROVIDE SERVICES, checked here
- * rather than assumed from the picker. The picker is a convenience; this is the
- * boundary, and a `provider_person_id` pointing at a buyer would produce a work
- * order nobody can accept.
- */
+/** Assign (or clear) the provider on a line. */
 export async function assignProvider(
   viewer: Viewer,
   id: string,
@@ -529,8 +434,7 @@ export async function assignProvider(
     where: { id: lineId, work_request_id: wr.id },
     data: {
       provider_person_id: providerPersonId,
-      /* ⚠ THE LINE'S STATUS FOLLOWS THE ASSIGNMENT, and it is the only thing
-         that writes it here. `ORDERED` is the Work Order's to set, not this. */
+      // THE LINE'S STATUS FOLLOWS THE ASSIGNMENT, and it is the only thing
       status: providerPersonId ? "ASSIGNED" : "DRAFT",
     },
   });
@@ -538,19 +442,7 @@ export async function assignProvider(
   return getWorkRequestDetail(viewer, id);
 }
 
-/**
- * ⚠⚠ THE COMPLETE ACTION — AND IT READS `completenessFor`, THE SAME FUNCTION THE
- * PAGE DISABLES ITS BUTTON WITH.
- *
- * ⚠ THIS IS THE BOUNDARY, NOT THE BUTTON. The route is reachable without ever
- * loading the page, so the refusal has to live here; the page's grey button is
- * the courtesy. And because both read one function, the refusal the API sends
- * back is WORD FOR WORD what the page was already showing.
- *
- * ⚠ WHAT "COMPLETE" DOES NOT DO: it does not create a Work Order. `E388` built
- * that model and awarding is `E392`/`E393` territory once a bid exists to award.
- * Marking the lines ASSIGNED is the whole of it.
- */
+/** THE COMPLETE ACTION — AND IT READS `completenessFor`, THE SAME FUNCTION THE */
 export async function completeWorkRequest(viewer: Viewer, id: string) {
   const { pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, id, pAccountId);
@@ -570,8 +462,7 @@ export async function completeWorkRequest(viewer: Viewer, id: string) {
   if (!completeness.complete)
     throw new WorkRequestError(completenessMessage(completeness), "INCOMPLETE");
 
-  /* ⚠ BELT AND BRACES: the spine's own rule, asserted at the boundary. If these
-     two ever disagree the request is refused rather than let through. */
+  // BELT AND BRACES: the spine's own rule, asserted at the boundary. If these
   if (!workRequestIsComplete(rows))
     throw new WorkRequestError("Every line needs a provider and a price", "INCOMPLETE");
 

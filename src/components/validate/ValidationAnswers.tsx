@@ -169,11 +169,7 @@ export function ValidationAnswers({
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your job title (optional)" className={field} aria-label="Your job title" />
         </div>
 
-        {/*
-          ⚠⚠ TWO TICKBOXES, NOT ONE. "Show what I wrote" and "use my name" are
-          different permissions and a client may well give one and not the other.
-          Both default OFF — nothing is published without an explicit tick.
-        */}
+        {/* TWO TICKBOXES, NOT ONE. "Show what I wrote" and "use my name" are */}
         <div className="space-y-2 rounded-brand border border-line bg-bg-soft/40 p-4">
           <label className="flex items-start gap-2 text-[14px]">
             <input type="checkbox" checked={showPublic} onChange={(e) => setShowPublic(e.target.checked)} className="mt-1 h-4 w-4 accent-[#d72cd6]" />

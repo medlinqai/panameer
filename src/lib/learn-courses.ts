@@ -74,18 +74,11 @@ export async function getLearnCourses(): Promise<CourseGroup[]> {
         };
       }),
     }))
-    /* ⚠ A PUBLISHED PATH WITH NO COURSES RENDERS NOTHING RATHER THAN AN EMPTY
-       HEADING. The heading would be a promise of content that is not there. */
+    // A PUBLISHED PATH WITH NO COURSES RENDERS NOTHING RATHER THAN AN EMPTY
     .filter((g) => g.courses.length > 0);
 }
 
-/**
- * ⚠⚠ THE TWO FIGURES THE HEADER STATES, DERIVED FROM THE SAME ROWS THE PAGE
- * DRAWS — so the header cannot disagree with the list beneath it.
- *
- * ⚠ Exported and pure so `check:learn-views` can drive it from a fixture
- * rather than asserting a rendered number (`E607`).
- */
+/** THE TWO FIGURES THE HEADER STATES, DERIVED FROM THE SAME ROWS THE PAGE */
 export function courseTotals(groups: CourseGroup[]): {
   courses: number;
   paths: number;

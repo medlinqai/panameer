@@ -1,18 +1,7 @@
-/* ⚠⚠ `--magenta` IS NOT A TOKEN — THIS IS TAILWIND v4 AND IT IS
-   `--color-magenta` (`E601` WS-D). ⚠ The fallback `#d72cd6` is EXACTLY
-   `--color-magenta`'s value, so the stroke never looked wrong and the bug
-   was invisible; now the variable actually resolves and themes with it. */
-/*
- * ── ⚠⚠ THE SCORE PAGE'S GEOMETRY (`P2-J3-E590` WS-B) ──────────────────────
- *
- * ⚠ Geometry lives in a stylesheet, the same rule `app-band.css` and
- * `connect-profile.css` follow. A grid declared in one place and broken at a
- * breakpoint declared in another is how those two drift apart.
- */
+/* was invisible; now the variable actually resolves and themes with it. */
+/* THE SCORE PAGE'S GEOMETRY WS-B) */
 
-/* ⚠⚠ 50/50. Scott: *"split. 50/50"*. Equal columns, not a golden ratio —
-   the left is a to-do list and the right is a record, and neither outranks
-   the other. */
+/* 50/50. Scott: *"split. 50/50"*. Equal columns, not a golden ratio — */
 .pm-score-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -20,14 +9,7 @@
   align-items: start;
 }
 
-/*
-  ⚠⚠ ONE COLUMN WHEN THE SPLIT STOPS FITTING. ⚠ MEASURED IN THE APP, not taken
-  from the mockup's 880: `AppShell`'s `<main>` carries `px-5 py-6 sm:px-8`, so
-  the usable width is the viewport MINUS 64px at `sm` and above. A column below
-  ~400px starts wrapping the step rows (a number, a label, two actions and a
-  points badge), so 2 × 400 + 20 = 820 of content → 884 viewport.
-  ⚠ Rounded to 900 so the step happens just BEFORE the rows get tight.
-*/
+/* ONE COLUMN WHEN THE SPLIT STOPS FITTING. MEASURED IN THE APP, not taken */
 @media (max-width: 900px) {
   .pm-score-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -35,17 +17,7 @@
 }
 
 /* ── the dial ───────────────────────────────────────────────────────────── */
-/*
-  ⚠⚠ 290, NOT 340 (`P2-A3-E596` WS-B item 2). ⚠ SUPERSEDED, quoted not deleted
-  (`E164`):
-  //   max-width: 340px;
-  ⚠ The dial sits ABOVE "What's left" in the left column, so every pixel it
-  gives back moves the to-do list up by the same amount. MEASURED at 1440×900
-  before the change: the dial rendered at exactly 340px and the card below it
-  started at y=652 and ended at y=1511 — 611px below the fold.
-  ⚠⚠ THE RING IS STILL THE PAGE'S SUBJECT and 290 keeps it so; this is a trim,
-  not a demotion.
-*/
+/* 290, NOT 340 WS-B item 2). */
 .pm-score-dial {
   position: relative;
   width: 100%;
@@ -54,8 +26,7 @@
   margin: 0 auto;
 }
 
-/* ⚠ `-90deg` starts the first segment at twelve o'clock. Without it the arc
-   begins at three o'clock and the group order reads as arbitrary. */
+/* begins at three o'clock and the group order reads as arbitrary. */
 .pm-score-svg {
   display: block;
   width: 100%;
@@ -71,24 +42,12 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  /* ⚠⚠ THE CENTRE MUST NOT EAT THE HOVER. It sits on top of the ring, so
-     without this every pointer event over the middle is swallowed and the
-     slices nearest the centre stop responding. */
+  /* THE CENTRE MUST NOT EAT THE HOVER. It sits on top of the ring, so */
   pointer-events: none;
   padding: 0 21%;
 }
 
-/*
-  ⚠⚠⚠ THE RING IS MAGENTA, AND THAT REVERSES `E588` ON PURPOSE (`E590`
-  ruling 1, confirmed by Scott 2026-09-20: *"good on the ring color."*).
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — `CompletionRing.tsx`:
-  //   THE RING IS INK. `E433` — MAGENTA MARKS INTERACTIVE THINGS, and a ring
-  //   is a figure nobody clicks.
-  ⚠⚠ THE PREMISE OF THAT RULING NO LONGER HOLDS: every slice here is a hover
-  target wired to a row, and on the profile card the ring is the link to this
-  page. `E433` is not being broken — it is being applied to a ring that changed
-  category. ⚠ THE FIGURE IN THE CENTRE STAYS INK: it is still a number.
-*/
+/* THE RING IS MAGENTA, AND THAT REVERSES ON PURPOSE ( */
 .pm-score-seg {
   cursor: pointer;
   transition:
@@ -103,34 +62,11 @@
   opacity: 0.28;
 }
 
-/* ⚠ Three paints, in the brand's own tokens — there is no blue in the brand. */
+/* Three paints, in the brand's own tokens — there is no blue in the brand. */
 .pm-score-filled {
   stroke: var(--color-ink, #272334);
 }
-/*
-  ── ⚠⚠⚠ `declared_none` PAINTS MAGENTA, THE SAME AS FILLED (`P2-A3-E596`) ──
-
-  ⚠ SCOTT, 2026-09-21, ruling at WS-B's gate: *"lines answered 'I have none'
-  paint MAGENTA, the same as filled. If a line counts toward the score, the ring
-  shows it as filled, so the ring always agrees with the number."*
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   ⚠⚠ A SOLID GREY, NOT A TINT OF THE EMPTY COLOUR. `declared_none` COUNTS
-  //   toward the figure; painting it like the unanswered track would tell the
-  //   provider their answer did not register.
-  //   .pm-score-declared { stroke: #b7b1c6; }
-
-  ⚠⚠ THE OLD RULE WAS HALF RIGHT AND THAT IS WHY IT LASTED: it correctly refused
-  to paint a declared line like the empty track. ⚠⚠⚠ BUT A THIRD COLOUR STILL
-  BROKE THE ONE THING THE RING IS FOR — a profile at 78 with several *"I have
-  none"* answers showed a mostly-grey ring beside a high number, so the picture
-  contradicted the figure. **The ring is a picture of the SCORE, and the score
-  counts these.**
-  ⚠ THE DISTINCTION IS NOT LOST, IT MOVED TO WORDS: the legend still reads
-  *"You have none — still counts"*, and every declared line carries its rider in
-  the "What you've done" list. ⚠⚠ A reader who wants to know WHICH lines were
-  declared can still find out; a reader glancing at the ring is no longer misled.
-*/
+/* SCOTT, 2026-09-21, ruling at WS-B's gate: *"lines answered 'I have none' */
 .pm-score-declared {
   stroke: var(--color-ink, #272334);
 }
@@ -139,24 +75,10 @@
   stroke: var(--color-magenta, #d72cd6);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠⚠ THE WIDE TWO-PART HEADER (`P2-A2-E600` WS-C, `E001`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   ⚠ SCOTT'S PAGE RULE, 2026-09-22: *"Score · Grow · Statistics — the wide
-   two-part header across the screen: a moving picture on the left, the story on
-   the right."* ⚠⚠ **MY PROFILE DOES NOT GET ONE**, which is why this lives here
-   and not in `connect-profile.css`.
-
-   ⚠⚠⚠ IT REPLACES THE RING CARD RATHER THAN SITTING ABOVE IT — one ring on the
-   page, not two. The ring's own `.pm-score-dial` rules are unchanged and are
-   reused verbatim; only the box around them moved.
-*/
+/* THE WIDE TWO-PART HEADER WS-C, ) */
 .pm-score-hero {
   display: grid;
-  /* ⚠ The picture is the anchor, so it takes the smaller fixed share and the
-     story takes the rest — the opposite of a 50/50 split, which would have made
-     the ring bigger than it needs to be to be read. */
+  /* The picture is the anchor, so it takes the smaller fixed share and the */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   align-items: center;
 }
@@ -164,13 +86,7 @@
   border-right: 1px solid var(--line, #e7e5ea);
 }
 
-/*
-  ⚠⚠ IT STACKS BEFORE THE PAGE DOES. A ring beside two counts and a button needs
-  roughly 300 + 360 of content; below that the story's numbers wrap onto three
-  lines each and stop reading as a pair.
-  ⚠ THE BORDER MOVES WITH THE SPLIT — a right border on a stacked panel is a
-  line down the middle of nothing.
-*/
+/* IT STACKS BEFORE THE PAGE DOES. A ring beside two counts and a button needs */
 @media (max-width: 760px) {
   .pm-score-hero {
     grid-template-columns: minmax(0, 1fr);
@@ -181,19 +97,7 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠⚠ THE REBUILD DRAW (`P2-A2-E600` WS-D)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   ⚠ SCOTT: *"every 15 seconds the picture redraws (the ring's segments fill in
-   turn)"*.
-   ⚠⚠ IT IS CSS, NOT A JS ANIMATION LOOP. React re-keys the group, the browser
-   remounts the circles, and this replays — so there is no per-frame state, no
-   `requestAnimationFrame`, and nothing to leak when the tab is hidden.
-   ⚠⚠⚠ **ONLY THE DRAWING MOVES.** The segments' lengths and offsets are
-   untouched; this animates OPACITY and stroke width, so a rebuild cannot
-   change what the ring says.
-*/
+/* THE REBUILD DRAW WS-D) */
 @keyframes pm-rebuild-seg {
   from {
     opacity: 0;
@@ -206,12 +110,7 @@
   animation: pm-rebuild-seg 420ms ease-out both;
 }
 
-/*
-  ⚠⚠ REDUCED MOTION STOPS IT HERE TOO, NOT ONLY IN JS. `useRebuild` already
-  stops the clock, but a reader who changes the setting mid-animation should see
-  it stop immediately rather than after the current pass. ⚠ Belt and braces on
-  an accessibility preference is the right amount.
-*/
+/* REDUCED MOTION STOPS IT HERE TOO, NOT ONLY IN JS. `useRebuild` already */
 @media (prefers-reduced-motion: reduce) {
   .pm-rebuild-draw > circle {
     animation: none;

@@ -83,17 +83,7 @@ export async function ParserHealth() {
         </p>
       )}
 
-      {/*
-        ── ⚠⚠ BY MODEL + PROMPT, NEVER ONE BLENDED LINE (`P1-A1.5-E488`) ──────
-
-        ⚠ THIS EXTENDS THE CARD, IT DOES NOT REPLACE IT — everything above is
-        untouched. A single blended average cannot show that a change made
-        things worse, which is the whole reason Scott wants this screen.
-
-        ⚠⚠ NO CHART LIBRARY. package.json carries no recharts/chart.js/d3/visx,
-        and a bar per variant is a `<div>` with a width. Adding a dependency to
-        draw a handful of rectangles is not a trade worth making.
-      */}
+      {/* BY MODEL + PROMPT, NEVER ONE BLENDED LINE */}
       {variants.length > 0 && (
         <div className="mt-5 border-t border-line pt-4">
           <h3 className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
@@ -120,7 +110,7 @@ export async function ParserHealth() {
                     <span className="rounded-full bg-ink/[0.06] px-2 py-0.5 text-[11px] font-semibold text-ink-2">
                       {v.promptVersion}
                     </span>
-                    {/* ⚠ THE SAMPLE SIZE SITS BESIDE EVERY AVERAGE. */}
+                    {/* THE SAMPLE SIZE SITS BESIDE EVERY AVERAGE. */}
                     <span className="text-[12px] text-ink-2">
                       {v.runs} run{v.runs === 1 ? "" : "s"} · {v.objects} objects
                     </span>
@@ -130,7 +120,7 @@ export async function ParserHealth() {
                     <span className="w-[112px] shrink-0 text-[12px] text-ink-2">Yield</span>
                     <span className="h-2 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
                       {pct > 0 && (
-                        /* ⚠ INK, NOT MAGENTA — a bar is not interactive (`E433`). */
+                        /* INK, NOT MAGENTA — a bar is not interactive (`E433`). */
                         <span
                           className="block h-full rounded-full bg-ink-2/70"
                           style={{ width: `${pct}%` }}
@@ -155,7 +145,7 @@ export async function ParserHealth() {
                       )}
                     </span>
                     <span className="w-[132px] shrink-0 text-right text-[12px] tabular-nums text-ink">
-                      {/* ⚠⚠ NEVER IMPUTED. "Not reviewed yet" is the honest answer. */}
+                      {/* NEVER IMPUTED. "Not reviewed yet" is the honest answer. */}
                       {v.accuracy === null
                         ? "— not reviewed yet"
                         : `${Math.round(v.accuracy * 100)}% (n=${v.reviewedRuns})`}

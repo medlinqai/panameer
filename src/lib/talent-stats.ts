@@ -11,40 +11,19 @@ export function plural(n: number, singular: string): string {
 }
 
 export async function talentHeroStats(): Promise<TalentStat[]> {
-  /*
-    ⚠ TWO QUERIES, IN PARALLEL, AND NEITHER IS FILTERED BY A VIEWER. These are
-    site-wide totals on a public page — there is no owner to scope to, which is
-    exactly why they are safe to compute once at build time.
-  */
+  // TWO QUERIES, IN PARALLEL, AND NEITHER IS FILTERED BY A VIEWER. These are
   const [providers, products] = await Promise.all([
     prisma.providerProfile.count(),
-    /*
-      ⚠ THE PREDICATE IS `status: "PUBLISHED"` ON `packages.status`
-      (`PackageStatus`), AND IT IS THE ONLY DEFENSIBLE ONE. `decisions-01.md`
-      records that publishing a product is NOT the same as being
-      dashboard-eligible, and that the curation-gate field DOES NOT EXIST — so
-      "published" is the strongest true statement available. ⚠ DRAFT ROWS ARE
-      EXCLUDED: there are 2 today and they are nobody's product yet.
-    */
+    // THE PREDICATE IS `status: "PUBLISHED"` ON `packages.status`
     prisma.serviceProduct.count({ where: { status: "PUBLISHED" } }),
   ]);
 
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the label moved with R4:
-     //   const lessons = CATALOG_COUNTS.find((c) => c.label === "Lessons"); */
-  /* ⚠⚠ BY `key`, NOT BY LABEL — the label pluralises off the number, so a
-     label lookup silently drops the tile at n === 1. */
+  // BY `key`, NOT BY LABEL — the label pluralises off the number, so a
   const lessons = (await getCatalogCounts()).find((c) => c.key === "lessons");
 
-  /*
-    ⚠ THE ORDER IS THE BRIEF'S TABLE ORDER — Lessons, Providers, Service Products.
-    An earlier cut put `Lessons` last so the two live reads sat together; that was
-    CC's preference, not an instruction, and it is not worth diverging for.
-  */
+  // THE ORDER IS THE BRIEF'S TABLE ORDER — Lessons, Providers, Service Products.
   return [
-    /*
-      ⚠ IF `CATALOG_COUNTS` IS EVER RESHAPED THIS TILE DISAPPEARS rather than
-      printing a wrong number — the label is the module's own, never retyped here.
-    */
+    // IF `CATALOG_COUNTS` IS EVER RESHAPED THIS TILE DISAPPEARS rather than
     ...(lessons ? [{ value: lessons.value, label: lessons.label }] : []),
     { value: String(providers), label: plural(providers, "Provider") },
     { value: String(products), label: plural(products, "Service Product") },

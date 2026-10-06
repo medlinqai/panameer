@@ -312,15 +312,7 @@ export function WorkTrackerEditor({
                     {phasePct === null ? "— not countable" : `${phasePct}%`} · {tasks.length} tasks ·{" "}
                     {p.stages.length} stages
                   </span>
-                  {/*
-                    ⚠⚠⚠ THE ADMIN NAMES THE CURRENT PHASE (Scott, 2026-10-02).
-                    ⚠ It is the FIRST of three sources — admin, then the dates,
-                    then the first phase under 100%. ⚠⚠ The old page had only the
-                    third, which returns `Define` the moment one Define task is
-                    open, and it had been saying `Define` while the work was in
-                    `Build`. ⚠ A radio, not a checkbox: exactly one phase is
-                    current, and the writer clears the others in one transaction.
-                  */}
+                  {/* THE ADMIN NAMES THE CURRENT PHASE (Scott, 2026-10-02). */}
                   <label className="ml-auto flex items-center gap-1.5 text-[12px] text-ink-2">
                     <input
                       type="radio"
@@ -331,10 +323,7 @@ export function WorkTrackerEditor({
                     />
                     Current
                   </label>
-                  {/* ⚠ The brief's per-phase `Set dates` action. It is a LABEL on
-                      controls that already existed rather than a button that opens
-                      them — the two inputs are the whole of the action, and hiding
-                      them behind a click would be a step backwards. */}
+                  {/* The brief's per-phase `Set dates` action. It is a LABEL on */}
                   <span className="text-[12px] font-bold text-ink-2">Set dates</span>
                   <label className="flex items-center gap-1.5 text-[12px] text-ink-2">
                     Start
@@ -364,13 +353,7 @@ export function WorkTrackerEditor({
 
                 {isOpen &&
                   p.stages.map((s) => {
-                    /* ⚠⚠ STAGES EXPAND TOO (Scott: *"sections with no way to
-                       expand"*). ⚠⚠⚠ WITH 212 CATALOG TASKS, AN OPEN PHASE USED TO
-                       PRINT EVERY ROW IT HAD — the page was long enough that the
-                       sections below it were not reachable without scrolling past
-                       all of them. ⚠ The key is `phase/stage` because stage names
-                       repeat across phases; keying on the name alone would open
-                       two. */
+                    // STAGES EXPAND TOO (Scott: *"sections with no way to
                     const stageKey = `${p.name}/${s.name}`;
                     const stageOpen = openStage === stageKey;
                     return (
@@ -390,13 +373,8 @@ export function WorkTrackerEditor({
                         <span className="text-[12px] text-ink-2">
                           {pct(s.tasks) === null ? "— not countable" : `${pct(s.tasks)}%`} · {s.tasks.length}
                         </span>
-                        {/* ⚠ BULK SET BY STAGE — the brief's one bulk affordance. It
-                            writes only the tasks the CATALOG puts in this stage. */}
-                        {/* ⚠⚠ BULK ASSIGN BY STAGE — Scott's example was *"all of
-                            Prototype 2 → R1."* ⚠ It writes only the tasks the
-                            CATALOG puts in this stage, in ONE transaction: a bulk
-                            write that half-lands leaves a release's percentage
-                            wrong and nobody knows which half. */}
+                        {/* BULK SET BY STAGE — the brief's one bulk affordance. It */}
+                        {/* BULK ASSIGN BY STAGE — Scott's example was *"all of */}
                         <label className="ml-auto flex items-center gap-1.5 text-[12px] text-ink-2">
                           → release
                           <select
@@ -484,15 +462,8 @@ export function WorkTrackerEditor({
                               onBlur={(e) => post({ action: "task", taskId: t.id, note: e.target.value }, t.id)}
                               className={FIELD}
                             />
-                            {/* ⚠⚠ THE STAGE PICKER IS ONLY ON THE TEN JOURNEY ROWS
-                                (`E757`). An ordinary AIM task has no four-segment
-                                bar on the public page, so offering it one here
-                                would invite data that nothing renders. */}
-                            {/* ⚠⚠ THE RELEASE PICKER IS ON EVERY TASK, not only
-                                journeys — Scott assigns ordinary catalog work to
-                                R1 too. ⚠ "No release" is selectable because
-                                unassigning is a real action: the task stops
-                                counting toward that release's percentage. */}
+                            {/* THE STAGE PICKER IS ONLY ON THE TEN JOURNEY ROWS */}
+                            {/* THE RELEASE PICKER IS ON EVERY TASK, not only */}
                             <select
                               defaultValue={t.releaseId}
                               disabled={pending}
@@ -518,9 +489,7 @@ export function WorkTrackerEditor({
                                 className={FIELD}
                                 aria-label={`${t.id} journey stage`}
                               >
-                                {/* ⚠ "No stage" is selectable, because clearing must
-                                    be possible — null renders no segments, which is
-                                    an honest "not started", not a guess. */}
+                                {/* be possible — null renders no segments, which is */}
                                 <option value="">No stage</option>
                                 {JOURNEY_STAGES.map((j) => (
                                   <option key={j} value={j}>
@@ -529,12 +498,7 @@ export function WorkTrackerEditor({
                                 ))}
                               </select>
                             )}
-                            {/* ⚠⚠ ONE MARK PER ROW, NOT PER FIELD, AND IT IS KEYED
-                                ON THE TASK ID. ⚠ Five controls on this row write
-                                the same record; five independent ticks would say
-                                the row saved five times and race each other on the
-                                fade. ⚠⚠⚠ The mark reports what actually happened —
-                                THE ROW WAS WRITTEN. */}
+                            {/* ONE MARK PER ROW, NOT PER FIELD, AND IT IS KEYED */}
                             <SaveMark entry={marks[t.id]} onRetry={() => retry(t.id)} />
                           </li>
                         ))}
@@ -556,11 +520,7 @@ export function WorkTrackerEditor({
             const answered = g.criteria.filter((c) => c.value !== "").length;
             const passed = g.criteria.every((c) => c.value === "Yes" || c.value === "N/A");
             return (
-              /* ⚠ `data-testid` IS DELIBERATE, NOT DEBRIS. The gate block has no
-                 stable wrapper otherwise, and a locator that walks up from the
-                 heading to a guessed `div` matches the inner flex row instead —
-                 it went green-by-absence on the first run. Same reasoning as
-                 `PageTabs`' own testid. */
+              // stable wrapper otherwise, and a locator that walks up from the
               <div key={g.id} data-testid={`gate-${g.id.replace(/\s+/g, "-").toLowerCase()}`} className="border-b border-line py-3">
                 <div className="flex flex-wrap items-baseline gap-x-3">
                   <h3 className="font-display text-[16px] font-bold text-ink">{g.id}</h3>
@@ -596,14 +556,7 @@ export function WorkTrackerEditor({
                         }
                         className={FIELD}
                       >
-                        {/* ⚠⚠⚠ "Not answered" IS SELECTABLE (Scott, 2026-10-02:
-                            *"yes, an admin can clear one"*). Picking it DELETES the
-                            row, which is the only way back to unanswered — and
-                            unanswered is a different fact from `No`, so it cannot be
-                            represented by writing a value.
-                            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                            //   "Unanswered" is not a stored value - picking it is
-                            //   not offered, because un-deciding is not a decision. */}
+                        {/* row, which is the only way back to unanswered — and */}
                         <option value="">Not answered</option>
                         {GATE_VALUES.map((v) => (
                           <option key={v} value={v}>
@@ -630,9 +583,7 @@ export function WorkTrackerEditor({
           </button>
         }
       >
-        {/* ⚠⚠ THEIR OWN LIST, NOT JOURNEYS (Scott, 2026-10-02). The Build Line's
-            flags and the public Milestones section both read from this table —
-            `PNM-011`/`PNM-012` stay catalog tasks and leave the Journeys grid. */}
+        {/* THEIR OWN LIST, NOT JOURNEYS (Scott, 2026-10-02). The Build Line's */}
         <p className="mt-1 text-[13px] text-ink-2">
           Releases carry scope: assign tasks to one and the page shows its own percentage. A new release is a draft until you publish it.
         </p>
@@ -648,7 +599,7 @@ export function WorkTrackerEditor({
                 key={m.id}
                 className="grid grid-cols-1 gap-2 border-b border-line py-3 sm:grid-cols-[72px_104px_1fr_132px_auto]"
               >
-                {/* ⚠ `code` is what Scott says out loud — R1, R2. */}
+                {/* `code` is what Scott says out loud — R1, R2. */}
                 <input
                   defaultValue={m.code}
                   placeholder="R1"
@@ -669,7 +620,7 @@ export function WorkTrackerEditor({
                     onBlur={(e) => post({ action: "release-update", id: m.id, title: e.target.value }, m.id)}
                     className={FIELD}
                   />
-                  {/* ⚠ `summary` is the PUBLIC line; the admin note stays private. */}
+                  {/* `summary` is the PUBLIC line; the admin note stays private. */}
                   <input
                     defaultValue={m.summary}
                     placeholder="One public line"
@@ -725,14 +676,7 @@ export function WorkTrackerEditor({
           </button>
         }
       >
-        {/*
-          ⚠⚠⚠ WORK THE AIM CATALOG DOES NOT HAVE (`P2-ALL-E765`). The catalog is a
-          STATIC FILE and deliberately so — it is the published method — so adding
-          Panameer's own work to it would turn the method into a scratchpad.
-          ⚠⚠ **THE TITLE IS ADMIN-ONLY.** These count toward a release's percentage
-          exactly like catalog tasks, and the public page shows the COUNT and never
-          the title. The leak test asserts it.
-        */}
+        {/* WORK THE AIM CATALOG DOES NOT HAVE . The catalog is a */}
         <p className="mt-1 text-[13px] text-ink-2">
           These count toward a release like catalog tasks. Their titles never leave this page.
         </p>
@@ -878,8 +822,7 @@ function CustomTaskForm({
       onSubmit={async (e) => {
         e.preventDefault();
         const ok = await onCreate({ action: "custom-create", title, phase, releaseId });
-        /* ⚠ Clears only on SUCCESS — a failed save must not throw away what was
-           typed and say nothing. */
+        // Clears only on SUCCESS — a failed save must not throw away what was
         if (ok) setTitle("");
       }}
     >
@@ -935,8 +878,7 @@ function ReleaseForm({
       onSubmit={async (e) => {
         e.preventDefault();
         const ok = await onCreate({ action: "release-create", code, date, title, summary: description });
-        /* ⚠ Clears only on SUCCESS — a failed save must not throw away what the
-           admin typed and tell them nothing. */
+        // Clears only on SUCCESS — a failed save must not throw away what the
         if (ok) {
           setCode("");
           setTitle("");
@@ -967,16 +909,7 @@ function ReleaseForm({
           className={FIELD}
         />
       </span>
-      {/* ⚠⚠ `Create …` ON THE FORM, `Add …` ON THE SECTION, AND THEY MUST DIFFER.
-          Both read as the same action to a person and as the SAME ACCESSIBLE NAME
-          to a locator: with the form revealed there were two `Add Task` buttons on
-          the page, which is a strict-mode violation and an ambiguity for anyone
-          using the keyboard. ⚠ Scott's words stay on the primary action — the one
-          in the section header — and the submit says what it does to the form.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   `Add Release`, not `Add Draft` - the Shipped form already owns that
-          label and two identical buttons on one page is ambiguous to a person and
-          to a locator (it broke the gate as a strict-mode violation). */}
+      {/* Both read as the same action to a person and as the SAME ACCESSIBLE NAME */}
       <button type="submit" disabled={pending || title.trim() === "" || date === ""} className={BTN}>
         Create Release
       </button>
@@ -1003,8 +936,7 @@ function ShippedForm({
       onSubmit={async (e) => {
         e.preventDefault();
         const ok = await onCreate({ action: "shipped-create", date, journeyTag, title, body });
-        /* ⚠ The form clears only on SUCCESS. Clearing on failure would throw away
-           what the admin typed and tell them nothing. */
+        // The form clears only on SUCCESS. Clearing on failure would throw away
         if (ok) {
           setTitle("");
           setBody("");

@@ -18,13 +18,9 @@ export type IntegrateStat = {
 const plural = (n: number, singular: string) =>
   n === 1 ? singular : `${singular}s`;
 
-/**
- * ⚠ BUILD-TIME READ. Reading the database in a server component does not make a
- * route dynamic — only reading REQUEST-time data does. ⚠ MEASURED: `/integrate`
- * stays `○` before and after.
- */
+/** BUILD-TIME READ. Reading the database in a server component does not make a */
 export async function integrateHeroStats(): Promise<IntegrateStat[]> {
-  /* ⚠ THE ONLY LIVE QUERY IN THIS FUNCTION. */
+  /* THE ONLY LIVE QUERY IN THIS FUNCTION. */
   const serviceWorkRequests = await prisma.workRequest.count();
 
   return [

@@ -35,8 +35,7 @@ export async function setLineDeclaration(
   }
 
   const column = DECLARABLE_LINES[line];
-  /* ⚠⚠ A TIMESTAMP, NOT A BOOLEAN. `null` is unanswered; a date is the
-     declaration and says when it was made. See the schema comments. */
+  // A TIMESTAMP, NOT A BOOLEAN. `null` is unanswered; a date is the
   const declaredAt = declared ? new Date() : null;
 
   await prisma.providerProfile.update({
@@ -44,14 +43,7 @@ export async function setLineDeclaration(
     data: { [column]: declaredAt },
   });
 
-  /*
-    ⚠⚠⚠ THE SCORE IS RECOMPUTED HERE, NOT LEFT TO DRIFT. A declaration that did
-    not move the stored number would show the provider a ring that disagrees
-    with the list beside it — the exact disagreement `E590` exists to remove.
-    ⚠ Imported lazily to keep this module free of the onboarding barrel at
-    import time; `recomputeCompleteness` reads `buildCompletenessInput`, the one
-    write path, so the number cannot be computed a second way.
-  */
+  // THE SCORE IS RECOMPUTED HERE, NOT LEFT TO DRIFT. A declaration that did
   const { recomputeCompleteness } = await import("@/lib/onboarding");
   await recomputeCompleteness(profile.id);
 

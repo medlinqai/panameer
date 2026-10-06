@@ -103,9 +103,6 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
                 person={c.person as PersonCard}
                 profileId={colleagueFacts.get(c.person!.personId)}
               >
-                {/* ⚠ `relation="ACCEPTED"` IS A FACT, NOT A GUESS —
-                    `getMyCommunity` builds `colleagues` by filtering
-                    `kind === "COLLEAGUE" && status === "ACCEPTED"`. */}
                 <ConnectControls toUserId={c.person!.userId} relation="ACCEPTED" />
               </MemberRow>
             ))}
@@ -117,11 +114,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
       {shownSuggestions.length > 0 && (
         <section className="space-y-3">
           <Heading>People You May Know</Heading>
-          {/* ⚠⚠ EVERY CARD CARRIES ITS REASON VERBATIM, and some read as
-              nonsense — *"You were both at Founder & Principal Consultant"*.
-              THAT IS EXPECTED AND THEY SHIP ANYWAY (`P1-J1.4-E373`):
-              `Employer.name` holds job titles for consultants. ⚠ NO HEURISTIC
-              HIDES THEM — it would mask a data defect that needs fixing. */}
+          {/* EVERY CARD CARRIES ITS REASON VERBATIM, and some read as */}
           <div className="space-y-2">
             {shownSuggestions.map((s) => (
               <MemberRow
@@ -137,11 +130,7 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
         </section>
       )}
 
-      {/* ── 4 · TEAMS ───────────────────────────────────────────────────────
-          ⚠ AN EXPLAINER, NOT AN EMPTY LIST. The viewer is on no team and there
-          is no join flow yet, so a bordered box with a zero in it would be a
-          feature pretending to exist. This says what a team IS and points at
-          the tab that owns it. */}
+      {/* 4 · TEAMS */}
       <section className="space-y-3">
         <Heading>Teams</Heading>
         <div className="border-t border-line py-5">

@@ -172,9 +172,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       company: p.company?.show_on_profiles ? p.company.name : null,
       companyId: p.company?.show_on_profiles ? p.company.id : null,
       photoUrl: p.photo_url,
-      /* ⚠⚠ THE SHOWN SET, VIA `E517`'s ONE RULE — asked, never re-derived, which
-         is the mistake `E585` records. ⚠ No selection shows everything, so a
-         colleague with no role recorded is searchable on all of their skills. */
+      // THE SHOWN SET, VIA 's ONE RULE — asked, never re-derived, which
       skillNames: p.providerProfile
         ? shownSkills(
             selectedRoleIds(p.providerProfile),
@@ -185,8 +183,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
       reason,
       reasonKind,
       buySide: p.is_service_buyer && !p.is_service_provider,
-      /* ⚠ `P2-A1.1-E742` (B2). `formatPlace` drops an empty part rather than
-         rendering ", United States", and `countryName` is the one resolver. */
+      // (B2). `formatPlace` drops an empty part rather than
       location: (() => {
         const a = p.site?.addresses[0];
         return formatPlace(a?.city, countryName(a?.country_code, a?.country));
@@ -196,7 +193,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
         if (!theirs) return 0;
         let n = 0;
         for (const x of theirs) {
-          /* ⚠ Neither the viewer nor this colleague counts as "in common". */
+          /* Neither the viewer nor this colleague counts as "in common". */
           if (x === me || x === otherId) continue;
           if (myColleagues.has(x)) n += 1;
         }
@@ -208,19 +205,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
     });
   }
 
-  /*
-    ── ⚠⚠⚠ THE ORDER SCOTT SPECIFIED (`P2-A1.1-E742`, B2) ────────────────────
-
-    ⚠ *"colleagues in common first, then shared skills, then name, reusing
-    existing signals (no second ranker)."*
-    ⚠⚠ **BOTH SIGNALS ARE ALREADY ON THE ROW** — `mutualCount` from the single
-    query above, `sharedSkillCount` from the reason line that was already being
-    computed. ⚠⚠⚠ **NOTHING NEW IS SCORED, WEIGHTED OR TUNED**, which is what
-    *"no second ranker"* forbids: a weighted blend of the two would be a new
-    ranking model nobody asked for and nobody could explain to a member.
-    ⚠ The name is the final tie-break, so the order is TOTAL and stable — a list
-    that reshuffles between loads looks broken even when it is not.
-  */
+  // THE ORDER SCOTT SPECIFIED , B2)
   rows.sort(
     (a, b) =>
       b.mutualCount - a.mutualCount ||
@@ -230,11 +215,7 @@ export async function getColleagueRoster(viewer: Viewer): Promise<RosterRow[]> {
   return rows;
 }
 
-/**
- * ⚠ THE SEARCH IS AN IN-MEMORY FILTER OVER A LIST THE VIEWER ALREADY HAS.
- * ⚠⚠ NOT A QUERY. There is no database read here at all, so no future edit can
- * accidentally widen it to every member — the defect this page exists to close.
- */
+/** THE SEARCH IS AN IN-MEMORY FILTER OVER A LIST THE VIEWER ALREADY HAS. */
 export function filterRoster(rows: RosterRow[], q: string): RosterRow[] {
   const needle = q.trim().toLowerCase();
   if (!needle) return rows;
@@ -243,8 +224,7 @@ export function filterRoster(rows: RosterRow[], q: string): RosterRow[] {
   );
 }
 
-/** ⚠ `worked` IS ALWAYS 0 TODAY and ships reading 0 — it is the counter that
-    fills in when transactions exist. Shipping it at 0 is the honest version. */
+/** fills in when transactions exist. Shipping it at 0 is the honest version. */
 export function rosterCounts(rows: RosterRow[]) {
   return {
     all: rows.length,

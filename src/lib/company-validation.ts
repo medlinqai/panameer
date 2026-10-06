@@ -84,11 +84,7 @@ export function socrataUrl(
 const f = (v: string | undefined | null, sourceUrl: string): SourcedField | undefined =>
   v && String(v).trim() ? { value: String(v).trim(), sourceUrl } : undefined;
 
-/**
- * ⚠ THE SUPPORTED SET IS EXACTLY WHAT WS-1 REACHED, and adding a state means
- * proving it the same way first. ⚠ A STATE THAT IS NOT HERE RETURNS
- * `unsupported_state` — never a guess, never a scrape.
- */
+/** THE SUPPORTED SET IS EXACTLY WHAT WS-1 REACHED, and adding a state means */
 export const ADAPTERS: Record<string, Adapter> = {
   Texas: {
     registerName: "Texas Comptroller — Active Franchise Taxpayers",
@@ -97,22 +93,12 @@ export const ADAPTERS: Record<string, Adapter> = {
     nameColumn: "taxpayer_name",
     search: socrataAdapter({ host: "data.texas.gov", dataset: "9cir-efmm", nameColumn: "taxpayer_name" }),
     publishesStatus: true,
-    /* ⚠ `right_to_transact_business_code` IS THE GOOD-STANDING SIGNAL. Measured
-       value for an active entity is `A`. Anything else is not asserted as good
-       standing — it is reported as the register's own code. */
+    // value for an active entity is `A`. Anything else is not asserted as good
     goodStanding: (r) => String(r.right_to_transact_business_code ?? "").toUpperCase().startsWith("A"),
     map: (r, u) => ({
       legalName: { value: String(r.taxpayer_name), sourceUrl: u },
       entityNumber: f(r.secretary_of_state_sos_or_coa_file_number, u),
-      /*
-        ⚠ THE RAW CODE IS `A`, WHICH TELLS A READER NOTHING. Texas's
-        `right_to_transact_business_code` of `A` means the entity has the RIGHT TO
-        TRANSACT BUSINESS in Texas, so it is glossed to `Active` — which is what
-        the field means and no more.
-        ⚠ ANYTHING ELSE IS PASSED THROUGH VERBATIM rather than guessed at. A code
-        this adapter has not been told the meaning of must not be translated into
-        a reassuring word.
-      */
+      // THE RAW CODE IS `A`, WHICH TELLS A READER NOTHING. Texas's
       status: f(
         String(r.right_to_transact_business_code ?? "").toUpperCase() === "A"
           ? "Active — right to transact business"
@@ -125,9 +111,7 @@ export const ADAPTERS: Record<string, Adapter> = {
       city: f(r.taxpayer_city, u),
       stateCode: f(r.taxpayer_state, u),
       postalCode: f(r.taxpayer_zip, u),
-      /* ⚠⚠ `taxpayer_number` IS NOT MAPPED. It is the 11-digit Texas Comptroller
-         number, NOT the federal EIN, and putting it anywhere near a tax id field
-         would be wrong in the field the hire gate reads. */
+      // number, NOT the federal EIN, and putting it anywhere near a tax id field
     }),
   },
   Colorado: {
@@ -137,7 +121,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     nameColumn: "entityname",
     search: socrataAdapter({ host: "data.colorado.gov", dataset: "4ykn-tg5h", nameColumn: "entityname" }),
     publishesStatus: true,
-    /* ⚠ COLORADO PUBLISHES THE PHRASE ITSELF — measured: `"Good Standing"`. */
+    /* COLORADO PUBLISHES THE PHRASE ITSELF — measured: `"Good Standing"`. */
     goodStanding: (r) => String(r.entitystatus ?? "").toLowerCase().includes("good standing"),
     map: (r, u) => ({
       legalName: { value: String(r.entityname), sourceUrl: u },
@@ -163,13 +147,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     dataset: "n9v6-gdp6",
     nameColumn: "current_entity_name",
     search: socrataAdapter({ host: "data.ny.gov", dataset: "n9v6-gdp6", nameColumn: "current_entity_name" }),
-    /*
-      ⚠⚠ NEW YORK PUBLISHES NO STATUS COLUMN. The dataset is *Active*
-      Corporations, so being in it means the entity is listed as active — but
-      there is no good-standing field to read. `publishesStatus: false` is what
-      stops the UI claiming one, and it is why `validated` for NY means "found in
-      the active register" and nothing stronger.
-    */
+    // NEW YORK PUBLISHES NO STATUS COLUMN. The dataset is *Active*
     publishesStatus: false,
     map: (r, u) => ({
       legalName: { value: String(r.current_entity_name), sourceUrl: u },
@@ -185,30 +163,9 @@ export const ADAPTERS: Record<string, Adapter> = {
     }),
   },
 
-  /* ═══ ADDED BY `P1-J1.1-E387`. Each proved by a MEASURED call, 2026-09-08 ═══
-     ⚠ THE PROVING PROTOCOL: date, latency, the name column read off a RETURNED
-     ROW (never a field list), whether a status column exists at all, and one
-     real sample. A lead that was not called is not an adapter. */
+  // ADDED BY . Each proved by a MEASURED call, 2026-09-08
 
-  /**
-   * CONNECTICUT — measured 2026-09-08.
-   *   probe `?$limit=1` .............. 471ms, 12 columns
-   *   production query shape ......... 355ms, 9 rows, 9 DISTINCT names ✓
-   *   sample row ..... {"name":"ACME 2 REALTY, L.L.C.","status":"Active"}
-   *
-   * ⚠⚠ THE STATUS VALUES WERE READ OFF THE REGISTER, NOT GUESSED FROM THE COLUMN
-   * NAME. Grouped over the whole dataset, the register's own values are:
-   *   Active 459,523 · Forfeited 357,259 · Dissolved 318,882 · Withdrawn 53,760 ·
-   *   Revoked 46,479 · Cancelled 18,795 · Merged 12,710 · Expired Reservation
-   *   12,045 · Rejected 9,314 · … 25 distinct values in all.
-   *
-   * ⚠ SO `goodStanding` IS EXACT-MATCH `Active`, NOT A PREFIX. `Active - Pending
-   * Domestication` (2 rows) is deliberately NOT asserted as good standing — it is
-   * passed through verbatim, the same way Texas treats any code that is not `A`.
-   * ⚠⚠ AND NO SECOND GLOSS IS ADDED: the string travels into
-   * `entity_status_detail` exactly as the register wrote it. Texas's `A` remains
-   * the only translation in this codebase.
-   */
+  /** CONNECTICUT — measured 2026-09-08. */
   Connecticut: {
     registerName: "Connecticut Secretary of the State — Business Registry",
     host: "data.ct.gov",
@@ -225,22 +182,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     }),
   },
 
-  /**
-   * PENNSYLVANIA — measured 2026-09-08.
-   *   probe `?$limit=1` .............. 383ms, 17 columns
-   *   production query shape ......... 129ms, 9 rows
-   *   sample row ..... {"business_name":"Macro, Inc.","filing_number":"0006436709",
-   *                     "typeofbusinessregistration":"Foreign Business Corporation"}
-   *
-   * ⚠⚠ NO STATUS COLUMN EXISTS, so `publishesStatus: false` — the safe default and
-   * the honest one. Being in this dataset means a registration was filed; it does
-   * NOT mean the entity is currently in good standing, and nothing here claims it.
-   *
-   * ⚠ MATCHING SEMANTICS DIFFER FROM THE OTHERS AND IT IS REPORTED, NOT PAPERED
-   * OVER: a row is a PARTY on a filing (`party_type: "Governor"`), so one entity
-   * can occupy several rows. Measured: a 9-row page for `ACME` held 7 distinct
-   * names. The user sees a slightly short list, never a wrong one.
-   */
+  /** PENNSYLVANIA — measured 2026-09-08. */
   Pennsylvania: {
     registerName: "Pennsylvania Department of State — Business Registrations",
     host: "data.pa.gov",
@@ -260,27 +202,7 @@ export const ADAPTERS: Record<string, Adapter> = {
     }),
   },
 
-  /**
-   * OREGON — measured 2026-09-08.
-   *   probe `?$limit=1` .............. 475ms, 11 columns
-   *   production query shape ......... 211ms, 9 rows
-   *   sample row ..... {"business_name":"ACME ACRES","registry_number":"299818",
-   *                     "entity_type":"DOMESTIC NONPROFIT CORPORATION"}
-   *
-   * ⚠⚠ NO STATUS COLUMN, so `publishesStatus: false`. The dataset is titled
-   * *Active Businesses — ALL*, and a TITLE IS NOT A FIELD: nothing here claims
-   * good standing from the name of a file.
-   *
-   * ⚠⚠ THE WORST DUPLICATION OF THE THREE, MEASURED AND REPORTED: a row is an
-   * ASSOCIATED NAME (`associated_name_type: "PRINCIPAL PLACE OF BUSINESS"`), so
-   * one registry number spans many rows. A 9-row page for `ACME` held only
-   * **3 DISTINCT NAMES** — the same company four times over. ⚠ A buyer typing a
-   * partial name sees a short, repetitive list. `E387` reports this rather than
-   * adding a de-duplication step, because de-duplicating would change the shared
-   * search contract for the three states that already work, and WS-1 forbids
-   * exactly that. **Scott's call whether it ships as-is or waits for a
-   * `dedupeBy` field.**
-   */
+  /** OREGON — measured 2026-09-08. */
   Oregon: {
     registerName: "Oregon Secretary of State — Active Businesses",
     host: "data.oregon.gov",
@@ -304,12 +226,7 @@ export const ADAPTERS: Record<string, Adapter> = {
 
 export const SUPPORTED_STATES = Object.keys(ADAPTERS).sort();
 
-/**
- * ⚠ EVERY US STATE, so the picker offers all of them and the UNSUPPORTED ones
- * fail HONESTLY rather than being hidden. Hiding Delaware would leave a user
- * wondering why their state is missing; telling them we cannot check it yet is
- * information.
- */
+/** EVERY US STATE, so the picker offers all of them and the UNSUPPORTED ones */
 export const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
   "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
@@ -325,13 +242,7 @@ export const US_STATES = [
 /** How many matches travel back. More than this is a "narrow it down" case. */
 export const MAX_MATCHES = 8;
 
-/**
- * Look a company up. ⚠ NEVER THROWS — every failure is an `{ ok: false }`.
- *
- * ⚠ `unavailable` IS A FIRST-CLASS OUTCOME, not an error to swallow. The UI has
- * to be able to say "we couldn't check right now" and let the user carry on
- * typing, because a failed lookup never blocks Continue (decision 5).
- */
+/** Look a company up. NEVER THROWS — every failure is an `{ ok: false }`. */
 export async function validateEntity(input: {
   name: string;
   stateOfFiling: string;
@@ -348,11 +259,7 @@ export async function validateEntity(input: {
 
   const adapter = ADAPTERS[state];
   if (!adapter) {
-    /*
-      ⚠⚠ THE HONEST DEAD END. `Delaware` lands here, and it is the single most
-      important state commercially. Saying so is the whole point — the
-      alternative is a confident tick beside data nobody checked.
-    */
+    // THE HONEST DEAD END. `Delaware` lands here, and it is the single most
     return {
       ok: false,
       reason: "unsupported_state",
@@ -360,14 +267,10 @@ export async function validateEntity(input: {
     };
   }
 
-  /* ⚠ SoQL string literals are single-quoted; a quote in the name would break
-     the predicate, so it is doubled the way SQL requires. */
+  // SoQL string literals are single-quoted; a quote in the name would break
   const needle = name.toUpperCase().replace(/'/g, "''");
 
-  /* ⚠⚠ THE ADAPTER BUILDS ITS OWN REQUEST NOW (`E387` WS-1). `validateEntity` no
-     longer knows what a Socrata URL looks like — it knows only that an adapter
-     can be asked for rows. The URL a Socrata adapter produces is unchanged and
-     asserted byte-for-byte in `check:trust-claims`. */
+  // THE ADAPTER BUILDS ITS OWN REQUEST NOW ( WS-1). `validateEntity` no
   let rows: Record<string, string>[];
   let url: string;
   try {
@@ -407,12 +310,7 @@ export async function validateEntity(input: {
   const capped = rows.slice(0, MAX_MATCHES);
   const matches = capped.map((r) => adapter.map(r, url));
 
-  /*
-    ⚠ STATUS IS JUDGED ON THE FIRST MATCH ONLY, and only where the register
-    publishes one. With several matches the UI is asking the user which entity
-    they meant, so asserting a status across all of them would be asserting
-    something about rows they have not picked.
-  */
+  // STATUS IS JUDGED ON THE FIRST MATCH ONLY, and only where the register
   let status: ValidationOutcome = "validated";
   if (adapter.publishesStatus && adapter.goodStanding && !adapter.goodStanding(capped[0])) {
     status = "not_in_good_standing";

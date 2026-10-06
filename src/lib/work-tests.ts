@@ -78,9 +78,7 @@ export async function sendTest(
       provider_person_id: input.providerPersonId,
       requested_by_person_id: me.id,
       proposal_id: proposal.id,
-      /* ⚠⚠ ISSUED IN ONE ACT. A `DRAFT` test request would be a test nobody
-         sent, and no screen resumes one — a state with no way out is the
-         door-onto-a-wall shape `E579` names. */
+      // ISSUED IN ONE ACT. A `DRAFT` test request would be a test nobody
       status: "ISSUED",
       issued_at: new Date(),
       responds_by: input.respondsBy ?? null,
@@ -89,7 +87,7 @@ export async function sendTest(
         create: [
           {
             line_number: 1,
-            /* ⚠⚠⚠ THE FOREIGN KEY **IS** THE REUSE. No engine is copied. */
+            /* THE FOREIGN KEY **IS** THE REUSE. No engine is copied. */
             certification_test_id: assessment!.id,
           },
         ],
@@ -98,76 +96,21 @@ export async function sendTest(
     select: { id: true },
   });
 
-  /*
-    ── ⚠⚠⚠ THE PROVIDER IS TOLD (`P2-A8-E683a` WS-E) ───────────────────────
-
-    ⚠⚠ **THIS WRITER SHIPPED WITHOUT AN EVENT AND TOLD NOBODY.** Measured at
-    WS-E's premise check: **zero `notify()` calls in this file**, and no
-    `work.test_*` entry in the registry at all — so a buyer could send a test
-    and the provider would never learn it existed. ⚠ It is `E680`'s shape
-    exactly: the writer landed ahead of its event.
-
-    ⚠⚠ **IT IS A WORKLIST ITEM** — the provider owes a response, and it clears
-    when they sit the test or decline it.
-    ⚠⚠⚠ **NO BUYER NAME IS PASSED**, and that is the load-bearing omission:
-    `WorkRequest` carries `company_visibility`/`company_code_name`, and
-    `buildBuyerIdentity` is the ONE redaction deciding what a provider may see.
-    A notification is outside the page that applies it, so passing the name here
-    would bypass the rule `check:work-request-identity` guards. The title falls
-    back to *"A buyer"*, which is true under both visibilities.
-    ⚠ Deduped on the request, so re-sending cannot stack a second worklist row —
-    and `sendTest` already returns the open one rather than creating a second.
-    ⚠⚠ `notify` catches its own failures and never rethrows, so a notification
-    outage cannot turn a sent test into an error the buyer sees.
-  */
+  // THE PROVIDER IS TOLD WS-E)
   await notify({
     event: "work.test_requested",
     personId: input.providerPersonId,
     entityType: "test_request",
     entityId: created.id,
     dedupeKey: `work.test_requested:${created.id}`,
-    /*
-      ── ⚠⚠⚠ THE REQUEST IS NAMED; THE BUYER STILL IS NOT (`P2-ALL-E802`) ────
-
-      ⚠ **SCOTT, 2026-10-03:** *"show each pending test once (name the
-      buyer/skill if known)."*
-      ⚠⚠⚠ **THE BUYER CANNOT BE NAMED HERE AND THAT IS DELIBERATE, NOT AN
-      OMISSION** — `buildBuyerIdentity` is the one redaction deciding what a
-      provider may see of `company_visibility` / `company_code_name`, a
-      notification is outside the page that applies it, and passing the name
-      would bypass the rule `check:work-request-identity` guards. The paragraph
-      above this call says so.
-      ⚠⚠ **AND THERE IS NO SKILL TO NAME: `TestRequest` RECORDS NONE** (measured
-      — the model carries no skill column or relation).
-      ⚠ **SO THE REQUEST'S OWN TITLE IS WHAT IS KNOWN AND SAFE.** The provider is
-      already looking at that request on `/find-work/<id>`, and
-      `work.order_offered` has always put `requestTitle` in its body — so this
-      follows a precedent rather than opening a question.
-      ⚠⚠ It goes in the BODY, not the title: the title is what `getWorklist`
-      groups on, and a per-request title would make five tests five rows again —
-      which is the repetition Scott asked to remove.
-    */
+    // THE REQUEST IS NAMED; THE BUYER STILL IS NOT
     vars: { requestId: wr.id, requestTitle: wr.title },
   });
 
   return { id: created.id, created: true };
 }
 
-/**
- * ⚠⚠⚠ WHAT THE PROVIDER IS ALLOWED TO DO ABOUT THIS TEST — AND IT IS A READ.
- *
- * ⚠⚠ **A BUYER'S REQUEST GRANTS NO ATTEMPTS AND CONSUMES NONE.** Attempts are
- * counted where they always were — `LearnTestAttempt` by `(user_id,
- * learning_path_id)`, the same pair `learn-assessment.ts` refuses past — so a
- * second buyer asking for the same test cannot hand the provider a fresh set of
- * tries, and cannot burn the ones they have.
- *
- * ⚠⚠⚠ **AN EXISTING PASS IS REUSED, NOT RE-SAT.** The schema says so in as many
- * words: *"a second buyer requesting the same test points at THE EXISTING
- * ATTEMPT — it does not force a retake — or the test becomes a toll gate rather
- * than a credential."* ⚠ `testRequestOutcome` is the one place that decides
- * between the three states, and it is imported.
- */
+/** WHAT THE PROVIDER IS ALLOWED TO DO ABOUT THIS TEST — AND IT IS A READ. */
 export async function testStateFor(
   viewer: Viewer,
   testRequestId: string
@@ -193,8 +136,7 @@ export async function testStateFor(
   });
   if (!assessment) throw new SourcingError("That test doesn't exist.", "NOT_FOUND");
 
-  /* ⚠⚠ COUNTED ON `(user_id, learning_path_id)` — THE LEARN RULE'S OWN PAIR, so
-     the two cannot disagree about how many tries are left. */
+  // COUNTED ON `(user_id, learning_path_id)` — THE LEARN RULE'S OWN PAIR, so
   const where = {
     user_id: viewer.userId,
     learning_path_id: assessment.learning_path_id,
@@ -215,19 +157,7 @@ export async function testStateFor(
   });
 }
 
-/**
- * ⚠⚠⚠ RECORD THE RESULT — **COPIED FROM THE ATTEMPT, NEVER SUPPLIED.**
- *
- * ⚠ `copyResultFromAttempt` is imported, and it THROWS if a caller passes a
- * score: *"a typed score is a second source of truth."* ⚠⚠ That guard existed
- * with nothing calling it; **this is its first caller**, and it is what makes a
- * work test's result unforgeable — the number comes from the attempt the
- * provider actually sat, and `LearnTestAttempt` stays the system of record.
- *
- * ⚠⚠ THE PROVIDER RECORDS THEIR OWN. They sat it; the attempt is theirs; the
- * buyer reads the outcome. A buyer writing a provider's score would be a second
- * writer for a number that already has one.
- */
+/** RECORD THE RESULT — COPIED FROM THE ATTEMPT, NEVER SUPPLIED. */
 export async function recordTestResult(
   viewer: Viewer,
   input: { testRequestId: string; learnTestAttemptId: string }
@@ -265,12 +195,7 @@ export async function recordTestResult(
     },
   });
   if (!attempt) throw new SourcingError("That attempt doesn't exist.", "NOT_FOUND");
-  /* ⚠⚠⚠ THE ATTEMPT MUST BE **THEIRS**, AND OF **THIS** ASSESSMENT. Without the
-     first, a provider could point at somebody else's pass; without the second,
-     at their own pass on an easier test. Either one forges the result, and
-     neither is caught by the copy guard — that one only stops a TYPED score.
-     ⚠ The owner column is `user_id`, not a person id: `LearnTestAttempt` is
-     keyed on the USER because that is who sits a lesson. */
+  // THE ATTEMPT MUST BE THEIRS, AND OF THIS ASSESSMENT. Without the
   if (attempt.user_id !== viewer.userId) {
     throw new SourcingError("That attempt isn't yours.", "ATTEMPT_NOT_YOURS");
   }
@@ -278,8 +203,7 @@ export async function recordTestResult(
     throw new SourcingError("That attempt is for a different test.", "ATTEMPT_WRONG_TEST");
   }
 
-  /* ⚠ The guard that refuses a supplied score. The empty draft IS the point —
-     there is no parameter through which a score could arrive. */
+  // The guard that refuses a supplied score. The empty draft IS the point —
   const copied = copyResultFromAttempt({}, attempt);
 
   await prisma.$transaction(async (tx) => {
@@ -295,8 +219,7 @@ export async function recordTestResult(
       update: { submitted_at: new Date(), status: "COMPLETED" },
       select: { id: true },
     });
-    /* ⚠ One line per request line, replaced rather than appended, so a provider
-       who re-sits and records again does not leave two scores behind. */
+    // One line per request line, replaced rather than appended, so a provider
     await tx.testResponseLine.deleteMany({ where: { test_response_id: response.id } });
     await tx.testResponseLine.create({
       data: {
@@ -312,14 +235,10 @@ export async function recordTestResult(
   return { passed: copied.passed, score: copied.score };
 }
 
-/**
- * ⚠ The provider declines a test. ⚠⚠ RECORDED, NEVER DELETED — the same rule the
- * withdrawn proposal and the closed interview both hold.
- */
+/** The provider declines a test. RECORDED, NEVER DELETED — the same rule the */
 export async function declineTest(viewer: Viewer, testRequestId: string): Promise<void> {
   const me = await ownPerson(viewer);
-  /* ⚠⚠ OWNER-SCOPED IN THE `where` (load-bearing rule 5), and `updateMany` so a
-     crafted id matches nothing rather than throwing on somebody else's row. */
+  // OWNER-SCOPED IN THE `where` (load-bearing rule 5), and `updateMany` so a
   const res = await prisma.testRequest.updateMany({
     where: {
       id: testRequestId,

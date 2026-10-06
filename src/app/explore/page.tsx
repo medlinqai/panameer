@@ -102,10 +102,7 @@ export default async function ExplorePage({
                 ))}
               </div>
 
-              {/*
-                E032 — THE GATE. The cards are the bait; identity, contact and
-                the rest of the roster are the purchase.
-              */}
+              {/* E032 — THE GATE. The cards are the bait; identity, contact and */}
               <div className="mt-9 rounded-brand border border-magenta/25 bg-magenta/6 p-6">
                 <p className="text-[17px] font-bold">
                   {remaining > 0
@@ -122,7 +119,7 @@ export default async function ExplorePage({
                       ? `Create a free account to see all ${total}`
                       : "Create a free account"}
                   </Btn>
-                  {/* ⚠ `/join` FLAT (`P1-J1.1-E234`, 2026-08-30). */}
+                  {/* `/join` FLAT (`P1-J1.1-E234`, 2026-08-30). */}
                   <Btn href="/join" variant="ghost">
                     Create your provider profile
                   </Btn>
@@ -130,10 +127,7 @@ export default async function ExplorePage({
               </div>
             </>
           ) : (
-            /*
-              THE HONEST ZERO. Work mode reaches this for every query today —
-              there are no posted Work Requests at all — and it invents nothing.
-            */
+            // THE HONEST ZERO. Work mode reaches this for every query today —
             <div className="mt-6 max-w-[680px]">
               <p className="text-[17px] leading-relaxed text-ink-2">
                 No Work Requests are open yet — Panameer is pre-launch, and
@@ -141,7 +135,7 @@ export default async function ExplorePage({
                 you&apos;ll be in the pool the day the first one posts.
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                {/* ⚠ `/join` flat — same reasoning as the CTA above (`E234`). */}
+                {/* `/join` flat — same reasoning as the CTA above (`E234`). */}
                 <Btn href="/join">Create your provider profile</Btn>
                 <Btn href="/" variant="ghost">
                   Back to the home page
@@ -168,15 +162,7 @@ export default async function ExplorePage({
   );
 }
 
-/**
- * A masked expert.
- *
- * THE PHOTO IS RENDERED HERE RATHER THAN THROUGH <Avatar>, and that is the
- * masking again: Avatar takes firstName AND lastName and puts both into its
- * `alt` and its initials fallback. Passing a surname to a component whose job
- * is to display it, on the one page built not to display it, is how a mask
- * leaks through an accessibility attribute.
- */
+/** A masked expert. */
 /** The provider-side twin. Nothing renders it today — there is no posted work. */
 function WorkCard({ w, loginHref }: { w: TeaserWork; loginHref: string }) {
   return (

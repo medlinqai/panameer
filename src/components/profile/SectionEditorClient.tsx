@@ -102,23 +102,13 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       .catch(() => setError("We couldn't load skills. Please refresh."));
   }, [section.slug, roleKey]);
 
-  /*
-    ⚠⚠ BACK TO THE PROFILE, SCROLLED TO THE SECTION. The slug is the anchor, so
-    a member who edited Specializations lands looking at Specializations rather
-    than at the top of a long page. ⚠ `router.push` then `refresh` so the
-    server re-renders with the new value — without the refresh the profile would
-    show the value it had when it was last rendered.
-  */
+  // BACK TO THE PROFILE, SCROLLED TO THE SECTION. The slug is the anchor, so
   const back = useCallback(() => {
     router.push(`/profile#${section.slug}`);
     router.refresh();
   }, [router, section.slug]);
 
-  /*
-    ⚠⚠ THE ONE POST. Both the page's Save button and `CertificationCards`'
-    own `onSave` go through it, so the section has a single place that talks to
-    `/api/onboarding/provider/step`.
-  */
+  // THE ONE POST. Both the page's Save button and `CertificationCards`'
   const postSection = useCallback(
     async (data: Record<string, unknown>): Promise<boolean> => {
       if (!section.step) return true;
@@ -137,8 +127,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
         }
         return true;
       } catch {
-        /* ⚠ A HUMAN SENTENCE, never `err.message` — `E516`'s rule, and the same
-           copy the wizard uses for the same failure. */
+        // A HUMAN SENTENCE, never `err.message` — 's rule, and the same
         setError("Couldn't reach Panameer to save that. Check your connection and try again.");
         return false;
       } finally {
@@ -149,9 +138,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
   );
 
   const save = useCallback(async () => {
-    /* ⚠ `EmployersStep` COMMITS AS IT GOES (`E411`) — there is nothing to post
-       for Work History or Solo Projects, and posting anything would be a second
-       save path for rows that are already saved. */
+    // for Work History or Solo Projects, and posting anything would be a second
     if (!section.step || !section.payload) {
       back();
       return;
@@ -170,9 +157,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
 
   switch (section.slug) {
     case "bio":
-      /* ⚠ THE SAME FIELD THE REVIEW EDITS IN PLACE. The review keeps its inline
-         textarea (`#review-overview`); this is the same control and the same
-         `bio` step, not a second bio editor. */
+      // THE SAME FIELD THE REVIEW EDITS IN PLACE. The review keeps its inline
       body = (
         <TextArea
           id="profile-edit-overview"
@@ -184,15 +169,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       );
       canSave = draft.overview.trim().length > 0;
       break;
-    /*
-      ── ⚠⚠⚠ THE SIX `E600` WS-F EDITORS ─────────────────────────────────────
-
-      ⚠ Each mounts a component that ALREADY EXISTS and saves through the step
-      its field already uses. ⚠⚠ NO NEW EDITORS AND NO SECOND SAVE PATH (`E595`)
-      — `TitleEditor` and `ContactEditor` were extracted by `E597` WS-B and were
-      unused by this route until now; `PhotoUpload` and
-      `EducationLanguagesEditor` are the wizard's own.
-    */
+    // THE SIX WS-F EDITORS
     case "title":
       body = (
         <TitleEditor
@@ -203,8 +180,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       canSave = titleCanSave(draft.headline);
       break;
     case "contact":
-      /* ⚠⚠ ONE EDITOR, TWO SCORE LINES — `identity` (address + phone) and
-         `location` (the address's city/state/country). One address, one save. */
+      // ONE EDITOR, TWO SCORE LINES — `identity` (address + phone) and
       body = (
         <ContactEditor
           address={
@@ -222,8 +198,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           }
           phone={draft.phone ?? ""}
           onPhoneChange={(next) => patch({ phone: next })}
-          /* ⚠ NULLABLE ON PURPOSE (`E126`): `PhoneField` refuses to validate
-             against a country it has not been told. */
+          // NULLABLE ON PURPOSE : `PhoneField` refuses to validate
           phoneCountry={draft.address?.country || null}
           onPhoneCountryChange={(next) =>
             patch({
@@ -237,15 +212,11 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           }
         />
       );
-      /* ⚠ THE ADDRESS IS THE SCORED FACT. A phone with no address answers
-         neither line, and the server's `finish` case persists both. */
+      // THE ADDRESS IS THE SCORED FACT. A phone with no address answers
       canSave = Boolean(draft.address?.country?.trim());
       break;
     case "photo":
-      /* ⚠⚠⚠ `PhotoUpload` TALKS TO `POST /api/profile/photo` ITSELF and hands
-         back a URL once the server confirms. This step then persists that URL
-         onto the profile — the same two-step shape the wizard uses, not a
-         second save path. */
+      // back a URL once the server confirms. This step then persists that URL
       body = (
         <PhotoUpload
           firstName={draft.firstName}
@@ -255,62 +226,28 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           size={120}
         />
       );
-      /* ⚠ A PHOTO CAN BE CLEARED BACK TO INITIALS, so `null` is a legitimate
-         save — the gate is that the step can run, not that a photo exists. */
+      // A PHOTO CAN BE CLEARED BACK TO INITIALS, so `null` is a legitimate
       canSave = true;
       break;
     case "languages":
-      /* ⚠ `EducationLanguagesEditor` OWNS BOTH LISTS and this section edits only
-         the languages half — `education` is passed straight back unchanged, so
-         nothing this editor touches can write the other list. */
+      // the languages half — `education` is passed straight back unchanged, so
       body = (
         <EducationLanguagesEditor
-          /* ⚠ CAST, AND DELIBERATELY SO. `EducationCards` and
-             `EducationLanguagesEditor` each declare their own `EducationDraft`;
-             this section never touches education — `onEducation` is a no-op and
-             the payload carries only `languages` — so the list is passed
-             straight through. ⚠⚠ UNIFYING THE TWO TYPES IS A REAL TIDY-UP WITH
-             ITS OWN BLAST RADIUS and is not this brief. */
+          // CAST, AND DELIBERATELY SO. `EducationCards` and
           education={draft.education as never}
-          /*
-            ⚠⚠ TWO `LanguageDraft` SHAPES, AND THE DIFFERENCE IS HISTORICAL.
-            `onboarding-draft.ts` has `{ name, level }`; the editor's has
-            `{ name, proficiency, level? }`, whose own comment records that
-            `level` is canonical since `E016` and `proficiency` is *"the
-            pre-brief_P free text"*.
-            ⚠⚠⚠ SO `level` IS THE FIELD THAT MATTERS and it is carried both
-            ways; `proficiency` is filled from it on the way in and dropped on
-            the way out. ⚠ Unifying the two types is a real tidy-up with its own
-            blast radius and is not this brief.
-          */
-          /* ⚠⚠ `proficiency` IS NO LONGER SYNTHESISED FROM `level` (`E723` item 11). The
-             editor's picklist reads and writes `level` alone. ⚠ SUPERSEDED (`E164`):
-             //   proficiency: l.level ?? null, */
+          // TWO `LanguageDraft` SHAPES, AND THE DIFFERENCE IS HISTORICAL.
+          // editor's picklist reads and writes `level` alone.
           languages={draft.languages.map((l) => ({
             name: l.name,
             proficiency: null,
             level: l.level,
           }))}
-          /* ⚠ THE EDUCATION HALF IS HIDDEN — this section saves languages only,
-             and an `+ Add Education` button here would add a row nothing saves. */
+          // THE EDUCATION HALF IS HIDDEN — this section saves languages only
           showEducation={false}
           onEducation={() => {}}
           onLanguages={(next) =>
             patch({
-              /*
-                ── ⚠⚠⚠ THE BUG SCOTT FOUND, AT ITS SOURCE (`P2-A2-E723` item 11) ──────────
-
-                ⚠ **`level ?? proficiency` LOOKS LIKE A FALLBACK AND IS NOT ONE.** `??` only
-                falls back on `null`/`undefined`; **`level` was `""` for every existing row,
-                and `""` is neither** — so the empty string won and whatever was typed into
-                the proficiency box was thrown away on save.
-                ⚠⚠⚠ **THE FIX IS NOT A BETTER OPERATOR, IT IS ONE FIELD.** The picklist writes
-                `level`, `proficiency` is gone from this editor's data, and there is no longer
-                a second value for a fallback to choose between. **`||` would have papered
-                over the same two-field ambiguity.**
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   level: l.level ?? l.proficiency ?? null,
-              */
+              // THE BUG SCOTT FOUND, AT ITS SOURCE item 11)
               languages: next.map((l) => ({
                 name: l.name,
                 level: l.level && l.level !== "" ? l.level : null,
@@ -319,25 +256,13 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           }
         />
       );
-      /* ⚠⚠⚠ BOTH FIELDS, AND AT LEAST ONE ROW (`E723` items 10 + 12). ⚠ Scott: proficiency is
-         *"required per language"*, and *"every profile has at least one language"*. ⚠⚠ A row
-         with a name and no level would otherwise save as a language with no proficiency —
-         the state the picklist exists to make unreachable.
-         ⚠ SUPERSEDED, quoted not deleted (`E164`):
-         //   canSave = draft.languages.some((l) => l.name.trim() !== ""); */
+      // BOTH FIELDS, AND AT LEAST ONE ROW ( items 10 + 12). Scott: proficiency is
       canSave =
         draft.languages.length > 0 &&
         draft.languages.every((l) => l.name.trim() !== "" && !!l.level && l.level !== "");
       break;
     case "role":
-      /*
-        ⚠⚠ MULTIPLE ROLES, NOT ONE (`WS2` / `E172`, `E173`). A techno-functional
-        consultant genuinely works as both, and forcing one meant the skills
-        step could only ever offer half their catalog.
-        ⚠⚠⚠ `roleTypeId` IS KEPT IN STEP WITH THE LIST — the server's `category`
-        case reads both, and leaving the single id stale would make the primary
-        role disagree with the set. The wizard does the same.
-      */
+      // MULTIPLE ROLES, NOT ONE (`WS2` / , ). A techno-functional
       body = (
         <div className="flex flex-col gap-2">
           {roleTypes.length === 0 ? (
@@ -368,17 +293,11 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           )}
         </div>
       );
-      /* ⚠ AT LEAST ONE — the same floor the wizard's Continue enforces. */
+      /* AT LEAST ONE — the same floor the wizard's Continue enforces. */
       canSave = draft.roleTypeIds.length > 0;
       break;
     case "work-method":
-      /*
-        ⚠⚠⚠ `RECRUITER` IS NOT JUST A LABEL. The server's `work_method` case
-        grants the COORDINATOR actor flag on it and `RECRUITER_STEPS` forks the
-        wizard — so this is a real capability change made from a small screen.
-        ⚠ The options come from `WORK_METHOD_OPTIONS`, the wizard's own list,
-        shared rather than copied.
-      */
+      // grants the COORDINATOR actor flag on it and `RECRUITER_STEPS` forks the
       body = (
         <div className="flex flex-col gap-2">
           {WORK_METHOD_OPTIONS.map((o) => {
@@ -432,8 +351,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           onQueryChange={setSkillQuery}
           match={skillMatch}
           onMatchChange={setSkillMatch}
-          /* ⚠ `E517`'s shown/held split is the WIZARD's one rule; this page has
-             no role picker, so everything held is shown here. */
+          // no role picker, so everything held is shown here.
           shownSkillNames={draft.skillNames}
           heldNotShownSkillNames={[]}
           maxSuggestions={12}
@@ -477,17 +395,9 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       break;
     case "certifications":
       body = (
-        /*
-          ⚠⚠ `CertificationCards` SAVES ITSELF. Its contract is
-          `onSave: (next) => Promise<boolean>` — it commits each card and reads
-          the answer, which is why it has no `onChange`. ⚠ So the handler posts
-          the SAME `certifications` step through the SAME endpoint, and the
-          page's own Save button becomes `Done`: there is nothing left to post.
-        */
+        // the answer, which is why it has no `onChange`. So the handler posts
         <div className="space-y-3">
-          {/* ⚠ Title Case on the label (rule 11), and the `+` is the same
-              affordance the wizard's header uses, so the two screens teach the
-              same gesture. */}
+          {/* Title Case on the label (rule 11), and the `+` is the same */}
           <button
             type="button"
             onClick={() => setCertSignal((n) => n + 1)}
@@ -533,9 +443,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
       {error && <Notice tone="error">{error}</Notice>}
       {body}
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
-        {/* ⚠⚠ `Done`, NOT `Save`, FOR THE TWO THAT COMMIT AS THEY GO. A Save
-            button on a surface that has already saved is a promise about what
-            the click does that is not true. */}
+        {/* button on a surface that has already saved is a promise about what */}
         <button
           type="button"
           onClick={save}

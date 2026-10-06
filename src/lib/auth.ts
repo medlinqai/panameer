@@ -223,17 +223,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    /**
-     * OAuth create-or-link (brief_Q).
-     *
-     * With JWT sessions and no Prisma adapter, NextAuth would otherwise hand us
-     * a token whose `sub` is the PROVIDER's account id and never touch our
-     * database. So we resolve (or create) the Panameer User here and rewrite
-     * `user.id` to our own id — `jwt` then carries the real user through.
-     *
-     * Fails CLOSED: no email, an unverified email, or a locked/inactive account
-     * all deny the sign-in.
-     */
+    /** OAuth create-or-link (brief_Q). */
     async signIn({ user, account, profile }) {
       // Both credentials-style providers resolve their own Panameer user.
       if (
@@ -318,9 +308,6 @@ export const authOptions: NextAuthOptions = {
         token.isSupport = user.isSupport;
       } else if (trigger === "update" && token.sub) {
         // Role-change refresh: when a user gains a role mid-session (finishes
-        // provider onboarding, accepts a coordinator invite), the client calls
-        // useSession().update() and we re-read the actor flags from the linked
-        // Person — the only place a per-request DB read happens.
         const actor = await getActorFlags(token.sub);
         token.isServiceBuyer = actor.isServiceBuyer;
         token.isServiceProvider = actor.isServiceProvider;

@@ -36,12 +36,7 @@ export default async function Page() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fhire");
 
-  /*
-    ⚠ THE COMPANY GATE, SAME AS `/create-work`. A work request commits a company,
-    so a requester with no approved membership is sent to fix that rather than
-    shown an empty list they can never add to. `from=` names where they were, so
-    `/company` can send them back — `P1-J1.2-E004`.
-  */
+  // THE COMPANY GATE, SAME AS `/create-work`. A work request commits a company
   const transact = await checkTransact(viewer);
   if (!transact.ok) {
     redirect(`/company?blocked=${transact.reason}&from=${encodeURIComponent("/hire")}`);
@@ -58,14 +53,7 @@ export default async function Page() {
           <h1 className="font-display text-[28px] font-bold tracking-[-0.5px]">
             Work Requests
           </h1>
-          {/*
-            ⚠⚠ NARROWED TO WHAT IS PROVEN. ⚠⚠⚠ The brief's line ended *"You pay only for
-            work you buy"* — and that describes a mechanism that **does not exist**: the
-            commission rate is written onto an order and never computed, deducted or
-            settled, and `check:work-chain` §6 FAILS THE BUILD on that arithmetic anywhere
-            in `src/`. ⚠ *"every provider"* also went, because the matcher caps at 100.
-            ⚠ Posting and searching ARE free — that half is measured and is what ships.
-          */}
+          {/* NARROWED TO WHAT IS PROVEN. The brief's line ended *"You pay only for */}
           <FreeLine claim="Post work and search providers, free." />
           <p className="mt-1.5 text-[15px] text-ink-2">
             {requests.length === 0
@@ -114,26 +102,13 @@ export default async function Page() {
                       {budget && <> · {budget}</>}
                     </p>
                   </div>
-                  {/* ⚠⚠ ONE PLACE (`P2-A8-E679`). This read
-                      `status === "POSTED" ? "Posted" : "Draft"`, so **ASSIGNED,
-                      ORDERED and CANCELLED all rendered as "Draft"** — a
-                      request under contract reading as unfinished.
-                      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                      //   className={ r.status === "POSTED"
-                      //     ? "…bg-emerald-50…text-emerald-700"
-                      //     : "…bg-ink/[0.05]…text-ink-2" }
-                      //   {r.status === "POSTED" ? "Posted" : "Draft"} */}
+                  {/* ONE PLACE . This read */}
                   <span className={workRequestStatusPillClass(r.status)}>
                     {WORK_REQUEST_STATUS_LABEL[r.status]}
                   </span>
                 </div>
 
-                {/*
-                  ⚠ THE COMPLETE GATE, SAID OUT LOUD ON THE LIST TOO. It reads
-                  `completenessFor` — the SAME function the detail page greys its
-                  button with and the SAME one the API refuses with — so this row
-                  and that button cannot disagree about which lines are short.
-                */}
+                {/* THE COMPLETE GATE, SAID OUT LOUD ON THE LIST TOO. It reads */}
                 <p className="mt-2.5 text-[13.5px]">
                   {r.completeness.complete ? (
                     <span className="font-semibold text-emerald-700">

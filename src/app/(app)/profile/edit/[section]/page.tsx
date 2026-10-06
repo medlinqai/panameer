@@ -35,23 +35,9 @@ export default async function ProfileSectionEditPage({
         <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.5px]">
           {section.title}
         </h1>
-        {/* ⚠⚠ NO STEP COUNTER AND NO "Next". This edits ONE thing; a counter
-            would say it is part of a sequence, which is the wizard's claim and
-            the thing Scott filed. */}
+        {/* NO STEP COUNTER AND NO "Next". This edits ONE thing; a counter */}
       </header>
-      {/*
-        ⚠⚠ THE SLUG CROSSES THE BOUNDARY, NOT THE SPEC. A `SectionSpec` carries
-        `payload`, a FUNCTION, and a server component cannot serialise one into a
-        client component — *"Functions cannot be passed directly to Client
-        Components"*, a 500 on every section that has a payload.
-        ⚠ SIX OF EIGHT 500ed AND THE OTHER TWO DID NOT: `work-history` and
-        `solo-projects` carry `payload: null`, so they serialised fine and the
-        route looked half-built rather than broken.
-        ⚠⚠⚠ NEITHER `tsc` NOR `npm run build` CAUGHT IT — the prop types agree
-        and the boundary is only enforced at render. Measured, not reasoned.
-        ⚠ The client re-reads the spec from the same registry, so there is still
-        ONE definition of what a section posts.
-      */}
+      {/* THE SLUG CROSSES THE BOUNDARY, NOT THE SPEC. A `SectionSpec` carries */}
       <SectionEditorClient slug={section.slug} />
     </div>
   );

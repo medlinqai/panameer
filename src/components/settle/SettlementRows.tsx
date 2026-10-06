@@ -40,8 +40,7 @@ export function SettlementRowCard({ row }: { row: SettlementRow }) {
             {row.settlementNumber}
           </Link>
           <p className="mt-1 text-[14.5px]">
-            {/* ⚠ THE ROW NAMES THE OTHER SIDE and says which side that is — one
-                page can show both, so "Acme" alone would be ambiguous. */}
+            {/* THE ROW NAMES THE OTHER SIDE and says which side that is — one */}
             <span className="text-ink-2">{row.party === "BUYER" ? "From: " : "To: "}</span>
             <span className="font-semibold">{row.counterpartyName}</span>
           </p>

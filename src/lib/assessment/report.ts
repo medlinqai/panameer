@@ -139,14 +139,7 @@ export async function buildReport(shareToken: string): Promise<ReportModel | nul
   };
 }
 
-/**
- * "$90–140K" — the report's money format.
- *
- * Rounded to the nearest 10K above six figures and 1K below, because the inputs
- * are bands and a range that reads "$91,340–$143,905" claims a precision the
- * answers cannot support. A collapsed range (both ends equal, which happens on
- * the open-ended top band) prints as one figure rather than "$X–$X".
- */
+/** Rounded to the nearest 10K above six figures and 1K below, because the inputs */
 export function formatRange([lo, hi]: MoneyRange): string {
   const fmt = (cents: number) => {
     const d = cents / 100;
@@ -160,29 +153,7 @@ export function formatRange([lo, hi]: MoneyRange): string {
   return a === b ? a : `${a}–${b.replace("$", "")}`;
 }
 
-/**
- * Stored rows → the `Scored` shape the report and the deck already render.
- *
- * ── ⚠ NOTHING HERE IS ARITHMETIC ON THE ANSWERS ──────────────────────────────
- *
- * Each field is either read straight off a row or is a pure function of the
- * stored rows. In particular:
- *
- *   maturityPct   `Assessment.score_pct` — frozen at submit since day one.
- *   opportunity   the SUM of the stored per-domain ranges.
- *   investment    55–70% of the opportunity LOW end. This is not a weight, it is
- *                 the "pays for itself" ratio the tile's own claim rests on, and
- *                 it is reproduced here EXACTLY — including the rounding — because
- *                 a report re-rendered after this change has to print what it
- *                 printed before.
- *   leapfrog      a field read: `platform === "legacy"`.
- *
- * ⚠ `name` AND `formal` STILL COME FROM THE QUESTION BANK, not from the row.
- * They are display copy, not results — a typo fix in a domain's name SHOULD
- * appear on an old report, and storing them would freeze the typo. `domain_key`
- * is the durable identifier; a key the bank no longer knows falls back to
- * showing the key rather than an empty label.
- */
+/** Stored rows → the `Scored` shape the report and the deck already render. */
 function scoredFromStored(rows: StoredDomainRow[], scorePct: number, platform: string | null): Scored {
   const domains: DomainResult[] = rows.map((r) => {
     const d = P2P_DOMAINS.find((x) => x.key === r.domain_key);
@@ -191,11 +162,7 @@ function scoredFromStored(rows: StoredDomainRow[], scorePct: number, platform: s
       name: d?.name ?? r.domain_key,
       formal: d?.formal ?? r.domain_key,
       rung: r.rung,
-      /*
-        ⚠ `?? 0` AFTER `Number()`, NOT A BigInt LITERAL. `0n` needs an ES2020
-        target and this tsconfig targets lower; `Number(null)` is 0 anyway, so
-        the coalesce guards the null case without a literal the build rejects.
-      */
+      // target and this tsconfig targets lower; `Number(null)` is 0 anyway, so
       opportunity: [
         Number(r.opportunity_low_cents ?? 0),
         Number(r.opportunity_high_cents ?? 0),
@@ -204,14 +171,7 @@ function scoredFromStored(rows: StoredDomainRow[], scorePct: number, platform: s
     };
   });
 
-  /*
-    ⚠ THE BANK'S ORDER, NOT THE QUERY'S. `scoreAssessment` maps over
-    `P2P_DOMAINS`, so `domains` was always in bank order — and the report's
-    "areas still manual" tile counts over it while the dashboard lists it. The
-    query is ordered by rank so `ranked` rebuilds correctly; this puts `domains`
-    back the way every renderer has always received it. Rows whose key is not in
-    the bank keep their relative order at the end.
-  */
+  // THE BANK'S ORDER, NOT THE QUERY'S. `scoreAssessment` maps over
   const bankIndex = new Map(P2P_DOMAINS.map((d, i) => [d.key, i]));
   domains.sort(
     (x, y) =>

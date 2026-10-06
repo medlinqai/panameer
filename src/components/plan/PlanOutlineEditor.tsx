@@ -1,48 +1,23 @@
 "use client";
 
-/**
- * ── ⚠⚠⚠ THE PLAN OUTLINE EDITOR (`P2-ALL-E784`) ────────────────────────────
- *
- * ⚠ **SCOTT:** a plan is *"set up in 5–15 minutes"*. ⚠⚠ **SO THIS IS AN OUTLINE,
- * NOT A FORM.** You type a row, press Enter, type the next one. A form with an
- * Add dialog per row is the thing that made the AIM tracker *"too complicated"*.
- *
- * ⚠⚠⚠ **IT TAKES ITS PLAN AS PROPS AND POSTS TO AN ENDPOINT IT IS GIVEN, SO
- * WORK ORDERS MOUNT THE SAME COMPONENT IN R2** (the brief's requirement). It
- * knows nothing about `/admin`, nothing about the Panameer build, and nothing
- * about who is allowed to edit — that is the route's job, and the route resolves
- * the plan from an owner key rather than trusting an id from here.
- *
- * ⚠ Numbering is NOT held here: it comes from `buildTree` in `lib/plan/model.ts`,
- * the same function `/status` renders from, so the editor and the public page
- * cannot number a plan differently (`E585`).
- */
+/** THE PLAN OUTLINE EDITOR */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MILESTONE_MARK, ROW_STATUSES, buildTree, flattenTree, isLate, type PlanRowLike, type RowStatus, type RowType } from "@/lib/plan/model";
-/** ⚠ `toEditorRow` is imported, not defined here: the admin SERVER page calls it
- *  too, and a function exported from a `"use client"` module cannot be called
- *  from the server. See `lib/plan/editor-row.ts`. */
+/** too, and a function exported from a `"use client"` module cannot be called */
 import { toEditorRow, toModelRow, type EditorRow } from "@/lib/plan/editor-row";
 
 export type ReleaseOption = { id: string; label: string };
 
-/**
- * ⚠ 44px, not the 36px the rest of admin uses. The brief asks for it on the row
- * controls and `E789` asks for it everywhere; a 36px × on a phone is a miss.
- */
+/** 44px, not the 36px the rest of admin uses. The brief asks for it on the row */
 /* `TAP` left with the stacked field cards (`E808`); `GRIP` replaced it. */
 const BTN = "inline-flex min-h-11 items-center bg-ink px-3 text-[13px] font-bold text-surface transition-opacity hover:opacity-85 disabled:opacity-40";
 const BTN_2 = "inline-flex min-h-11 items-center border border-ink bg-surface px-3 text-[13px] font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-40";
-/** ⚠ A thin underline, not a box: twenty boxed inputs read as a form. */
+/** A thin underline, not a box: twenty boxed inputs read as a form. */
 const LINE = "w-full border-0 border-b border-line bg-transparent px-0 py-1.5 text-[14px] text-ink outline-none focus:border-magenta";
 /* A compact glyph button. The ROW is the 44px target; eight 44px buttons on one
    line would not fit, so these are 28px inside a 44px-tall row. */
-/**
- * The mockup's column grid: drag · caret · # · name · start · end · status ·
- * owner · row actions. At phone width it collapses to number · name · actions
- * and the fields wrap underneath.
- */
+/** The mockup's column grid: drag · caret · # · name · start · end · status · */
 const GRID =
   "grid grid-cols-[22px_22px_44px_1fr_108px] gap-1.5 sm:grid-cols-[22px_22px_64px_minmax(200px,1fr)_124px_124px_124px_100px_126px]";
 /** What a row IS, by level — the mockup's cue beside each name. */
@@ -70,11 +45,7 @@ export function PlanOutlineEditor({
   rows: EditorRow[];
   ownerKey: string;
   endpoint?: string;
-  /**
-   * SUPERSEDED (`E808`): a row's release is the release it SITS UNDER now that
-   * releases are top-level rows, so the per-row dropdown is gone. The prop is
-   * still DECLARED — the admin page passes it — and deliberately unread.
-   */
+  /** a row's release is the release it SITS UNDER now that */
   releases?: ReleaseOption[];
   today?: Date;
 }) {
@@ -83,60 +54,27 @@ export function PlanOutlineEditor({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   /** The selected row. The Add buttons work relative to it, as the mockup does. */
   const [sel, setSel] = useState<string | null>(null);
-  /**
-   * What the pointer is over while dragging: which row, and whether the drop
-   * would go INTO it (last child) or BETWEEN rows at that point. The row
-   * highlights for `into` and shows a line for `before`/`after`, so the target
-   * is visible before the mouse is released.
-   */
+  /** What the pointer is over while dragging: which row, and whether the drop */
   const [dropAt, setDropAt] = useState<{ id: string; where: "into" | "before" | "after" } | null>(null);
   const [inFlight, setInFlight] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<SaveState>("idle");
-  /** ⚠⚠ The last delete, held CLIENT-SIDE. A server-side undo buffer in a shared
-   *  process would belong to whoever edited last. */
+  /** The last delete, held CLIENT-SIDE. A server-side undo buffer in a shared */
   const [undo, setUndo] = useState<{ rows: unknown[]; label: string } | null>(null);
-  /** ⚠⚠ A REF, NOT STATE. The row to focus is written by an event handler and
-   *  read by an effect; holding it in state would mean calling `setState` inside
-   *  that effect, which is the `react-hooks/set-state-in-effect` error this repo
-   *  carries eleven of already and adds none to. */
+  /** A REF, NOT STATE. The row to focus is written by an event handler and */
   const focusRef = useRef<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-  /** ⚠ What each pending timer would have sent, so `flush` can send it now. */
+  /** What each pending timer would have sent, so `flush` can send it now. */
   const payloads = useRef(new Map<string, Record<string, unknown>>());
-  /**
-   * ── ⚠⚠⚠ A PENDING KEYSTROKE IS UNSAVED WORK, AND THE PAGE HAS TO SAY SO ────
-   *
-   * ⚠⚠ **FOUND BY THE GATE, AND IT WAS A REAL DEFECT, NOT A TEST ARTEFACT.**
-   * The indicator counted requests IN FLIGHT only, so between a keystroke and
-   * the 500ms debounce firing it read **"All changes saved"** — about text that
-   * had not left the browser. A reload in that window lost the edit silently,
-   * which is the one thing `E768`'s save tick exists to prevent.
-   * ⚠ So pending debounces are counted too, and the field flushes on blur.
-   */
+  /** A PENDING KEYSTROKE IS UNSAVED WORK, AND THE PAGE HAS TO SAY SO */
   const [pending, setPending] = useState(0);
 
-  /**
-   * ⚠⚠ KEEPING PROPS AND STATE IN STEP **WITHOUT AN EFFECT**. When the server
-   * re-renders — `PlanStartFrom` applying a template, say — `initialRows` is a
-   * new array and the local copy is stale.
-   * ⚠ This is React's documented "adjusting state when a prop changes" pattern:
-   * compare during render and set immediately, which re-renders before anything
-   * is painted. ⚠⚠ The obvious `useEffect(() => setRows(initialRows))` is the
-   * `set-state-in-effect` error, and the rule here is 0 NEW.
-   */
+  /** KEEPING PROPS AND STATE IN STEP WITHOUT AN EFFECT. When the server */
   const [seenRows, setSeenRows] = useState(initialRows);
   if (initialRows !== seenRows) {
     setSeenRows(initialRows);
-    /**
-     * ⚠⚠ A SNAPSHOT THAT ARRIVES WHILE WORK IS UNSAVED IS STALE BY DEFINITION,
-     * AND IT IS DROPPED RATHER THAN QUEUED. `seenRows` is marked either way, so
-     * it cannot be applied later once the writes settle — by then the editor's
-     * own read (`reload`) is newer than anything the server sent before them.
-     * ⚠ This is the second half of the fix above: one stops the editor racing
-     * itself, this stops any other refresh overwriting live keystrokes.
-     */
+    /** A SNAPSHOT THAT ARRIVES WHILE WORK IS UNSAVED IS STALE BY DEFINITION */
     if (inFlight === 0 && pending === 0) setRows(initialRows);
   }
 
@@ -152,9 +90,7 @@ export function PlanOutlineEditor({
         });
         const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
         if (!res.ok) {
-          /** ⚠⚠ THE SERVER'S REASON IS SHOWN, NOT REPLACED. `store.ts` writes
-           *  these for a person to read; a generic "couldn't save" is how a
-           *  refused Tab becomes a mystery. */
+          /** THE SERVER'S REASON IS SHOWN, NOT REPLACED. `store.ts` writes */
           setError(typeof json.error === "string" ? json.error : "Couldn’t save that.");
           setState("error");
           return null;
@@ -179,23 +115,7 @@ export function PlanOutlineEditor({
     const json = await post({ action: "read" });
     const plan = json?.plan as { rows?: PlanRowLike[] } | null | undefined;
     if (plan?.rows) setRows(plan.rows.map(toEditorRow));
-    /**
-     * ⚠⚠⚠ NO `router.refresh()` HERE, AND REMOVING IT FIXED A REAL DATA-LOSS BUG.
-     *
-     * ⚠ A refresh is ASYNCHRONOUS. One fired when a row was ADDED resolved
-     * AFTER the person had typed into it, handing back a server snapshot in
-     * which that row still had an empty title — and the prop-sync below applied
-     * it, **blanking the input while the database held the typed value.**
-     * ⚠⚠ Measured by the gate: `savedTitle` confirmed "Operate" was saved, and
-     * the delete control's label still read `Delete row`, because the component
-     * had reverted to "".
-     * ⚠⚠⚠ **IT LOOKED LIKE A FAILED SAVE AND IT WAS A LOST RENDER.**
-     *
-     * ⚠ The editor owns the rows once it is mounted — it has just read them
-     * itself, on the line above. The server component's job is the FIRST render
-     * and whatever `PlanStartFrom` changes wholesale (template, copy, clear),
-     * which still arrives through `initialRows`.
-     */
+    /** NO `router.refresh()` HERE, AND REMOVING IT FIXED A REAL DATA-LOSS BUG. */
   }, [post]);
 
   /** Typed fields save on a short debounce, per row+field. */
@@ -220,8 +140,7 @@ export function PlanOutlineEditor({
     [post],
   );
 
-  /** ⚠ Blur means "I am done with this field", so it writes immediately rather
-   *  than leaving the last edit sitting in a timer. */
+  /** Blur means "I am done with this field", so it writes immediately rather */
   const flush = useCallback(() => {
     for (const [, t] of timers.current) clearTimeout(t);
     const keys = [...timers.current.keys()];
@@ -238,7 +157,7 @@ export function PlanOutlineEditor({
       const json = await post({ action: "add", type: opts.type ?? "task", parentId: opts.parentId ?? null, afterId: opts.afterId ?? null });
       const row = json?.row as PlanRowLike | undefined;
       if (row) focusRef.current = row.id;
-      /** ⚠ Same rule as `structural`: a refused add leaves its reason on screen. */
+      /** Same rule as `structural`: a refused add leaves its reason on screen. */
       if (json) await reload();
     },
     [post, reload],
@@ -246,19 +165,7 @@ export function PlanOutlineEditor({
 
   const structural = useCallback(
     async (action: "indent" | "outdent" | "move", rowId: string, extra: Record<string, unknown> = {}) => {
-      /**
-       * ── ⚠⚠⚠ RELOAD ONLY ON SUCCESS, OR THE REASON VANISHES ──────────────────
-       *
-       * ⚠⚠ **FOUND BY THE GATE, AND IT WAS A REAL DEFECT.** A refused indent set
-       * the message — *"A plan is two levels deep…"* — and then this function
-       * reloaded unconditionally. The read SUCCEEDED, which cleared `error` and
-       * set the state back to `saved`, **wiping the explanation off the screen
-       * before anyone could read it.**
-       * ⚠⚠⚠ So Tab appeared to do nothing, silently — which is the exact defect
-       * the message exists to prevent (`E539`'s sticky error, on a new surface).
-       * ⚠ Nothing structural changed on a refusal, so there is nothing to
-       * re-read either: skipping the reload is both the fix and the truth.
-       */
+      /** RELOAD ONLY ON SUCCESS, OR THE REASON VANISHES */
       const ok = await post({ action, rowId, ...extra });
       if (ok) await reload();
     },
@@ -280,16 +187,13 @@ export function PlanOutlineEditor({
   const runUndo = useCallback(async () => {
     if (!undo) return;
     const json = await post({ action: "restore", rows: undo.rows });
-    /** ⚠⚠ THE UNDO BUFFER IS KEPT ON FAILURE. Clearing it would throw away the
-     *  only copy of the deleted rows — the person would lose both the row and
-     *  the way back. */
+    /** THE UNDO BUFFER IS KEPT ON FAILURE. Clearing it would throw away the */
     if (!json) return;
     setUndo(null);
     await reload();
   }, [post, reload, undo]);
 
-  /** Focus the title of a row the editor just created. ⚠ Keyed on `rows`,
-   *  which is exactly when the new row first exists in the DOM. */
+  /** Focus the title of a row the editor just created. Keyed on `rows` */
   useEffect(() => {
     const id = focusRef.current;
     if (!id) return;
@@ -300,8 +204,7 @@ export function PlanOutlineEditor({
     }
   }, [rows]);
 
-  /** ⚠⚠ UNSAVED MEANS "IN FLIGHT **OR** WAITING ON A DEBOUNCE". Either one and
-   *  the screen must not claim the work is saved. */
+  /** UNSAVED MEANS "IN FLIGHT OR WAITING ON A DEBOUNCE". Either one and */
   const busy = inFlight > 0 || pending > 0;
 
   const tree = useMemo(() => buildTree(rows.map(toModelRow)), [rows]);
@@ -359,15 +262,7 @@ export function PlanOutlineEditor({
   );
 
 
-  /**
-   * WHERE THIS ROW COULD GO — the "Move to…" list (`P2-ALL-E813`).
-   *
-   * Drag is a mouse gesture; this is the same move for a keyboard, and the
-   * precise one when two stages look alike on screen. It offers the top level
-   * and every phase or stage that can legally hold the row — its own subtree,
-   * its current parent and anything too deep are left out, so every option in
-   * the list works.
-   */
+  /** WHERE THIS ROW COULD GO — the "Move to…" list . */
   const destinationsFor = useCallback(
     (id: string) => {
       const mine = descendantsOf(id);
@@ -390,18 +285,7 @@ export function PlanOutlineEditor({
     [rows, ordered, byId, descendantsOf],
   );
 
-  /**
-   * WHERE A DROP WOULD LAND (`P2-ALL-E813`).
-   *
-   * The top and bottom quarters of a row mean BETWEEN — insert at that point in
-   * that row's own list, whichever parent that is. The middle half means INTO —
-   * become that row's last child. That is the pattern every outline editor
-   * uses, and it is what lets one gesture do both of the things Scott asked
-   * for without a modifier key.
-   *
-   * Returns null when the drop is not allowed, which is also what stops
-   * `preventDefault` firing, so the cursor shows "no".
-   */
+  /** WHERE A DROP WOULD LAND . */
   const dropZone = useCallback(
     (e: React.DragEvent, targetId: string): "into" | "before" | "after" | null => {
       if (!dragId || dragId === targetId) return null;
@@ -461,12 +345,7 @@ export function PlanOutlineEditor({
     [dragId, byId, rows, structural],
   );
 
-  /**
-   * Add a row AT a level, relative to the selection. Level 1 is top-level;
-   * deeper rows walk UP from the selection to the parent that can hold them, so
-   * clicking + Stage with a task selected still adds a stage to that task's
-   * phase rather than refusing.
-   */
+  /** Add a row AT a level, relative to the selection. Level 1 is top-level */
   const addAt = useCallback(
     async (level: 1 | 2 | 3, milestone: boolean) => {
       const type: RowType = milestone ? "milestone" : level === 1 ? "release" : level === 2 ? "phase" : "task";
@@ -494,11 +373,7 @@ export function PlanOutlineEditor({
     [addRow, rows, sel, selLevel],
   );
 
-  /**
-   * The rows on screen: everything whose ancestors are all expanded. Walked up
-   * the chain rather than tracked as a flag, so collapsing a release hides its
-   * tasks too without a second bookkeeping path.
-   */
+  /** The rows on screen: everything whose ancestors are all expanded. Walked up */
   const visible = useMemo(() => {
     if (collapsed.size === 0) return ordered;
     const hidden = (id: string | null): boolean => {
@@ -512,20 +387,7 @@ export function PlanOutlineEditor({
     return ordered.filter((n) => !hidden(byId.get(n.id)?.parent_id ?? null));
   }, [ordered, collapsed, byId]);
 
-  /**
-   * ── ⚠⚠ KEYBOARD — AND THE ONE TRADE-OFF, STATED ───────────────────────────
-   *
-   * Enter makes the next row · Tab indents · Shift+Tab outdents · Backspace on
-   * an empty row deletes it. That is what an outline editor does and what the
-   * brief asks for.
-   *
-   * ⚠⚠⚠ **TAB THEREFORE DOES NOT MOVE FOCUS OUT OF A TITLE FIELD, AND THAT IS A
-   * REAL COST, NOT A FREE CHOICE.** It is confined to the TITLE input — Tab
-   * works normally in every date, status and owner field — and **Escape moves
-   * focus to the row's own ← → × controls**, which are real buttons at 44px.
-   * ⚠ So nothing here is reachable by mouse only; the outline keys live on one
-   * field and there is a stated way off it.
-   */
+  /** KEYBOARD — AND THE ONE TRADE-OFF, STATED */
   const onTitleKey = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>, row: EditorRow) => {
       if (e.key === "Enter") {
@@ -553,8 +415,7 @@ export function PlanOutlineEditor({
 
   const onHandleKey = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>, row: EditorRow) => {
-      /** ⚠⚠ A DRAG-ONLY REORDER IS UNREACHABLE WITHOUT A MOUSE. The handle is a
-       *  button, and Up/Down move the row — same action, same code path. */
+      /** A DRAG-ONLY REORDER IS UNREACHABLE WITHOUT A MOUSE. The handle is a */
       if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
         void structural("move", row.id, { delta: e.key === "ArrowUp" ? -1 : 1 });
@@ -565,8 +426,7 @@ export function PlanOutlineEditor({
 
   return (
     <div>
-      {/* ⚠ One live region for the whole editor; per-row ticks would make a
-          screen reader announce every keystroke's save. */}
+      {/* One live region for the whole editor; per-row ticks would make a */}
       <p
         data-plan-save
         aria-live="polite"
@@ -591,8 +451,7 @@ export function PlanOutlineEditor({
       )}
 
       {rows.length === 0 ? (
-        /** ⚠⚠ AT GENUINE ZERO, NAME THE FIRST MOVE RATHER THAN REPORTING
-         *  EMPTINESS (the 2026-09-23 card rule). */
+        /** AT GENUINE ZERO, NAME THE FIRST MOVE RATHER THAN REPORTING */
         <p className="mt-6 text-[14px] leading-relaxed text-ink-2">
           No rows yet. Start with a phase, or start from the template above.
         </p>
@@ -809,12 +668,7 @@ export function PlanOutlineEditor({
                   >
                     →
                   </button>
-                  {/*
-                    MOVE TO… — the same move without a mouse, and the precise
-                    one when two stages look alike. It is a `select` so it is
-                    reachable by keyboard and announces its options; every
-                    option in it is a destination the row can legally take.
-                  */}
+                  {/* MOVE TO… — the same move without a mouse, and the precise */}
                   <select
                     aria-label={`Move ${row.title || "row"} to…`}
                     title="Move to…"
@@ -852,12 +706,7 @@ export function PlanOutlineEditor({
         </div>
       )}
 
-      {/*
-        THE ADD BAR (`P2-ALL-E812`, the editor mockup). The buttons work on the
-        SELECTED row: + Stage goes inside the selected phase, + Task inside the
-        selected stage. A button that cannot act is disabled rather than
-        silently doing nothing — the `E539` rule.
-      */}
+      {/* THE ADD BAR , the editor mockup). The buttons work on the */}
       <div className="mt-5 flex flex-wrap items-center gap-2.5">
         <button type="button" className={BTN} onClick={() => void addAt(1, false)}>
           + Phase

@@ -283,28 +283,16 @@ export async function saveTaxProfile(
   const personId = await ownPersonId(viewer);
   const form = formFor(input.country, input.asEntity);
 
-  /*
-    ── ⚠⚠ THE CERTIFICATION IS STORED AS TEXT, NOT AS A FLAG (`E404` WS-3) ────
-
-    `w9Signature()` builds the name and the exact wording together so a caller
-    cannot record one without the other. If IRS Part II wording ever changes, an
-    old row still proves what ITS signer saw — which a boolean, or a pointer to
-    "the current text", could not.
-
-    ⚠ ONLY ON A W-9. A W-8 has different certifications and `E404` forbids
-    building those forms here; attaching W-9 wording to a W-8 record would be a
-    false statement about what was agreed.
-  */
+  // THE CERTIFICATION IS STORED AS TEXT, NOT AS A FLAG ( WS-3)
   const cert = form === "W9" ? w9Signature(input.signedName) : null;
 
   const data = {
     form,
     legal_name: input.legalName.trim().slice(0, 160),
-    /* ⚠⚠ BOTH COLUMNS (`E729` WS-C) — `country` is NOT NULL here too, and it is what
-       `formFor()` below derives the W-9/W-8 answer from. */
+    // BOTH COLUMNS ( WS-C) — `country` is NOT NULL here too, and it is what
     country: countryColumns(input.country).country ?? input.country.trim().slice(0, 80),
     country_code: countryColumns(input.country).country_code,
-    /* ⚠ LAST FOUR ONLY. The full TIN is not stored — see the schema note. */
+    /* LAST FOUR ONLY. The full TIN is not stored — see the schema note. */
     tin_last4: digits(input.tinLast4, 4),
     tin_kind: input.tinKind ?? null,
     classification: input.classification ?? null,
@@ -329,12 +317,7 @@ export async function addPayoutMethod(
 ) {
   const personId = await ownPersonId(viewer);
 
-  /*
-    THE MONEY GATE. A payout method cannot exist before a tax profile does.
-    Enforced HERE rather than only in the UI: the button being disabled is a
-    courtesy, this is the rule. Paying someone with no form on file is the one
-    thing in this area that creates a real obligation for Panameer.
-  */
+  // THE MONEY GATE. A payout method cannot exist before a tax profile does.
   const tax = await prisma.taxProfile.findUnique({
     where: { person_id: personId },
     select: { id: true },
@@ -353,12 +336,7 @@ export async function addPayoutMethod(
       kind: input.kind,
       label: input.label.trim().slice(0, 80),
       last4: digits(input.last4, 4),
-      /*
-        ⚠⚠ BOTH COLUMNS (`E729` WS-C) — AND `country` IS NOT NULL ON THIS MODEL, so the raw
-        value is the floor. ⚠ `countryColumns` only ever returns `country: null` for an EMPTY
-        input, and the route's validator is `min(2)`, so the fallback is unreachable in
-        practice and present so the type is honest rather than asserted away.
-      */
+      // BOTH COLUMNS ( WS-C) — AND `country` IS NOT NULL ON THIS MODEL, so the raw
       country: countryColumns(input.country).country ?? input.country.trim().slice(0, 80),
       country_code: countryColumns(input.country).country_code,
       is_default: count === 0,
@@ -403,11 +381,7 @@ export async function getNotificationPrefs(viewer: Viewer) {
   });
   const byKey = new Map(rows.map((r) => [r.category, r]));
 
-  /*
-    AN ABSENT ROW MEANS THE DECLARED DEFAULT, resolved here rather than
-    backfilled on write. That is what lets a new category ship without a
-    migration: it simply arrives with the behaviour its definition states.
-  */
+  // AN ABSENT ROW MEANS THE DECLARED DEFAULT, resolved here rather than
   return NOTIFICATION_CATEGORIES.map((c) => {
     const row = byKey.get(c.key);
     return {
@@ -415,22 +389,7 @@ export async function getNotificationPrefs(viewer: Viewer) {
       inApp: row?.in_app ?? c.defaults.inApp,
       email: row?.email ?? c.defaults.email,
       sms: row?.sms ?? c.defaults.sms,
-      /*
-        ── ⚠⚠⚠ IS THIS A CHOICE, OR JUST THE DEFAULT? (`P2-A3-E620`, ruling 34d)
-
-        ⚠ SCOTT, 2026-09-24, CORRECTING RULING 13: *"Keep absent-means-default.
-        The settings page shows the EFFECTIVE value and says plainly when it is
-        the default rather than a choice."*
-        ⚠⚠ RULING 13 HAD SAID the opposite — *"never an absent row read as
-        yes"* — and it was **withdrawn** because `E612`'s group-type precedent
-        does not transfer: a stored enum where *"nobody decided"* is dangerous
-        is not a preference where *"I never touched this"* is a real and useful
-        state. ⚠⚠⚠ Writing a row on first notification would **freeze every
-        member's settings against the defaults of the day they were first
-        notified**, and those defaults should be free to improve.
-        ⚠ THE VALUES ABOVE ARE ALREADY EFFECTIVE — this flag is the only new
-        thing, and it is what lets the page say WHY a switch is where it is.
-      */
+      // IS THIS A CHOICE, OR JUST THE DEFAULT? , ruling 34d)
       isDefault: row === undefined,
     };
   });
@@ -477,71 +436,19 @@ function digits(raw: string | null | undefined, n: number): string | null {
 
 /* ---- The settings landing page's status lines (ruling 77) ---------------- */
 
-/**
- * ── ⚠⚠⚠ WHAT EACH SECTION NEEDS FROM THE MEMBER, OR `null` ──────────────
- *
- * ⚠ SCOTT, on the fixed `/settings`: *"looks like a menu within the menu."* The
- * rail and the index cards were **the same eight labels and blurbs side by
- * side.**
- * ⚠⚠ **RULING 77 SETTLES WHICH HALF GIVES WAY: the rail is the navigation and
- * DOES NOT GO** — *"de-duplicate data and logic; do not de-duplicate doors."*
- * ⚠⚠⚠ **SO THE CARDS STOP REPEATING THE LIST AND START REPORTING STATE.** The
- * rail navigates; the cards say **which section needs the member.**
- *
- * ── ⚠⚠ THE WRITER TEST, APPLIED PER CARD AND MEASURED BEFORE BUILDING ────
- *
- * ⚠ Counted across the whole database, not inferred from the schema:
- *   `Person.phone` 61 · `Address` 233 · `providerProfile.paused_at` 0 of 63
- *   `TwoFactorSetting` 0 · `IdentityVerification` 0 · `TaxProfile` 0
- *   `PayoutMethod` 0 · `BillingMethod` 0 · `NotificationPreference` 0
- *
- * ⚠⚠⚠ **FIVE OF THOSE TABLES HOLD ZERO ROWS AND THAT IS NOT A MISSING WRITER —
- * IT IS THE STATE.** `IdentityVerification.status` **defaults to
- * `NOT_STARTED`**, so *"Not started"* is TRUE for everyone and a real writer
- * (`submitIdentity`) would flip it. ⚠ *"Two-step off"* and *"No card on file"*
- * are the same shape: **a binary whose other side has a writer.** That is
- * ruling 24's test passing, not failing — **unlike a counted zero, which
- * reports a quantity nobody measured.**
- *
- * ── ⚠⚠ TWO SECTIONS GET NO STATUS LINE, AND BOTH REFUSALS ARE DELIBERATE ─
- *
- * ⚠⚠⚠ **`membership` — REFUSED AS A MONEY CLAIM.** There is **no plan column
- * anywhere in the schema**, and the membership page's own comment records that
- * its "cycle" is **the account's anniversary, not a billing period**. ⚠ Scott's
- * example line was *"Membership — Plus, renews 14 Oct"*; **`Plus` does not
- * exist and `renews` asserts a charge.** Ruling 25 — no money moves — and
- * ruling 18 — no promises. **It keeps its blurb.**
- * ⚠⚠ **`notifications` — REFUSED AS UNINFORMATIVE.** Ruling 13 ships every
- * category ON and the table holds 0 rows, so the status would read the same
- * for **every member on the platform**. ⚠ A line that cannot differ is not a
- * status; it is decoration that costs a row of the member's attention.
- *
- * ⚠ **THE BLURBS DO NOT MOVE.** `SETTINGS_NAV` still owns them and the rail and
- * the cards keep reading that one source (`E585`); this adds a SECOND line, it
- * does not replace the first.
- */
+/** WHAT EACH SECTION NEEDS FROM THE MEMBER, OR `null` */
 export async function getSettingsStatuses(
   viewer: Viewer
 ): Promise<Record<string, string | null>> {
   const personId = await ownPersonId(viewer);
 
-  /* ⚠⚠ THE `providerProfile` READ WENT WITH THE `/settings/profile` STATUS
-     (ruling 78). ⚠ `76a` again: removing the line left its QUERY behind — an
-     unused variable, and a round trip to the database for a card that no
-     longer exists. **A deletion leaves a hole with a shape, and sometimes the
-     shape is a query.**
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   prisma.providerProfile.findFirst({
-     //     where: { person_id: personId }, select: { paused_at: true } }), */
+  // THE `providerProfile` READ WENT WITH THE `/settings/profile` STATUS
   const [person, twoFactor, identity, tax, payouts, billing] = await Promise.all([
     prisma.person.findUnique({
       where: { id: personId },
       select: { phone: true, site: { select: { addresses: { select: { line1: true }, take: 1 } } } },
     }),
-    /* ⚠ KEYED ON THE USER, because two-step is an AUTH fact and
-       `TwoFactorSetting.user_id` is its `@unique`. ⚠⚠ The other rows here are
-       keyed on the PERSON — the two are not interchangeable, which is the
-       distinction `levels.ts` and `community-hero.ts` both record. */
+    // KEYED ON THE USER, because two-step is an AUTH fact and
     prisma.twoFactorSetting.findUnique({
       where: { user_id: viewer.userId },
       select: { confirmed_at: true },
@@ -557,8 +464,7 @@ export async function getSettingsStatuses(
 
   const hasPhone = Boolean(person?.phone?.trim());
   const hasAddress = Boolean(person?.site?.addresses?.[0]?.line1?.trim());
-  /* ⚠ NAMES WHAT IS MISSING, because that is what a landing page is for. When
-     both are present it says so once rather than listing them. */
+  // NAMES WHAT IS MISSING, because that is what a landing page is for. When
   const contact = !hasPhone && !hasAddress
     ? "No phone or address yet"
     : !hasPhone
@@ -567,26 +473,18 @@ export async function getSettingsStatuses(
         ? "No address yet"
         : "Phone and address on file";
 
-  /* ⚠⚠ THE IDV STATUS IS THE COLUMN'S OWN ENUM, mapped to the member's words.
-     ⚠ A MISSING ROW IS `NOT_STARTED` — the schema's default, so absence and
-     the explicit value say the same thing and neither is invented. */
+  // THE IDV STATUS IS THE COLUMN'S OWN ENUM, mapped to the member's words.
   const idv = identity?.status ?? "NOT_STARTED";
   const identityLine =
     idv === "VERIFIED" ? "Verified" : idv === "SUBMITTED" ? "In review" : "Not started";
 
   return {
     "/settings/contact": contact,
-    /* ⚠ REFUSED — see the docblock. No plan column, and "renews" is a money
-       claim on a page where no money moves. */
+    // REFUSED — see the docblock. No plan column, and "renews" is a money
     "/settings/membership": null,
-    /* ⚠ `/settings/profile` IS GONE (ruling 78) — the section is deleted and
-       Visibility lives on `/profile` now, so there is no card to status. */
+    // Visibility lives on `/profile` now, so there is no card to status.
     "/settings/billing": billing === 0 ? "No payment method yet" : `${billing} on file`,
-    /* ⚠⚠ THE SECTION IS *"How Panameer pays you, AND the tax details required
-       first"* — so the status reads BOTH, in the order the blurb states them.
-       ⚠ I had queried `payouts` and then ignored it; lint caught the unused
-       variable and the real defect underneath was that **a provider with tax
-       details and no payout method would have been told they were done.** */
+    // THE SECTION IS *"How Panameer pays you, AND the tax details required
     "/settings/withdrawals": !tax
       ? "Tax details needed first"
       : payouts === 0
@@ -594,8 +492,7 @@ export async function getSettingsStatuses(
         : "Tax details and payout method on file",
     "/settings/security": twoFactor?.confirmed_at ? "Two-step on" : "Two-step off",
     "/settings/identity": identityLine,
-    /* ⚠ REFUSED — ruling 13 ships every category ON, so this would read the
-       same for every member. A line that cannot differ is not a status. */
+    // REFUSED — ruling 13 ships every category ON, so this would read the
     "/settings/notifications": null,
   };
 }

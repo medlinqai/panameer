@@ -111,11 +111,7 @@ export function ErpIntegration({ className }: { className?: string }) {
       <div className="wrap">
         <div className="eyebrow">ERP Integration</div>
         <h2 className="erpx-h2">Integrate Seamlessly — with the Click of a Button</h2>
-        {/*
-          FROM `brand.ts`, NEVER TYPED HERE. It is a positioning line, the same
-          class as BRAND_BADGE, and the Enterprise page will render it too — a
-          second copy is how two surfaces come to disagree.
-        */}
+        {/* FROM `brand.ts`, NEVER TYPED HERE. It is a positioning line, the same */}
         <p className="erpx-tagline">{BRAND_ERP_TAGLINE}</p>
         <p className="erpx-lead">
           Organizations spend <b>millions</b> on ERPs and still email PDFs back
@@ -135,15 +131,9 @@ export function ErpIntegration({ className }: { className?: string }) {
           <div className="erpx-rows">
             <div className="erpx-side">
               <div className="erpx-sh">Your system of record</div>
-              {/* ⚠ TEXT, NOT A LOGO. Trademark — see the file header. */}
+              {/* TEXT, NOT A LOGO. Trademark — see the file header. */}
               <div className="erpx-sn">Oracle Cloud ERP</div>
-              {/*
-                ⚠ THE STACK IS ITS OWN FLEX CHILD so it can distribute. Six
-                documents against nine objects left this card visibly empty at
-                the bottom; `space-between` on the stack spreads them down the
-                full height, which is what slide 2 does. Without this wrapper
-                there is nothing to give `flex:1` to.
-              */}
+              {/* THE STACK IS ITS OWN FLEX CHILD so it can distribute. Six */}
               <div className="erpx-docs">
                 {ERP_DOCS.map((d) => (
                   <div className="erpx-doc" key={d}>
@@ -157,13 +147,7 @@ export function ErpIntegration({ className }: { className?: string }) {
               {RAILS.map((r) => (
                 <div className={`erpx-rail ${r.out ? "out" : "back"}`} key={r.name}>
                   <div className="erpx-lb">{r.name}</div>
-                  {/*
-                    The line and its arrowhead are drawn in CSS (::before /
-                    ::after on `.erpx-ln`), so the direction is carried by the
-                    `out`/`back` class rather than by a character that a screen
-                    reader would try to pronounce. The caption states the
-                    direction in words for everyone.
-                  */}
+                  {/* The line and its arrowhead are drawn in CSS (::before / */}
                   <div className="erpx-ln" aria-hidden />
                   <div className="erpx-dir">{r.caption}</div>
                 </div>
@@ -198,12 +182,7 @@ export function ErpIntegration({ className }: { className?: string }) {
               style={{ ["--tf" as string]: d.tf }}
               onClick={() => setOpenIdx(i)}
             >
-              {/*
-                ⚠ NOTHING INSIDE THE CROP IS INTERACTIVE — the E097 rule. These
-                two scenes have no controls at all, so the provider is belt and
-                braces; it is here so a future edit to the flow inherits the
-                guard instead of rediscovering it.
-              */}
+              {/* NOTHING INSIDE THE CROP IS INTERACTIVE — the E097 rule. These */}
               <span className="crop" aria-hidden>
                 <DecorativeSceneProvider value={true}>
                   <span className="crop-inner" style={{ transform: d.tf }}>
@@ -232,12 +211,7 @@ export function ErpIntegration({ className }: { className?: string }) {
         </div>
       </div>
 
-      {/*
-        THE SHIPPED LIGHTBOX, NOT A SECOND ONE. `Lightbox` already carries the
-        focus trap, the Esc and click-outside handling and the focus return, and
-        `check:ui` already asserts all of it. A second implementation would be a
-        second thing to get wrong.
-      */}
+      {/* THE SHIPPED LIGHTBOX, NOT A SECOND ONE. `Lightbox` already carries the */}
       <Lightbox
         open={active !== null}
         label={active?.label ?? ""}

@@ -172,22 +172,13 @@ export function ReportDashboard({
         </aside>
       </div>
 
-      {/*
-        THE EXISTING MaturityDashboard, fed real numbers. Not a rebuild — the
-        component already draws the gauge and the stage ladder, and it drops its
-        "Sample Read" chip on its own now that `sample` is false. This is the
-        handoff its own comment was written for.
-      */}
+      {/* THE EXISTING MaturityDashboard, fed real numbers. Not a rebuild — the */}
       <section className="mt-10">
         <h2 className="font-display text-[22px] font-bold tracking-[-0.3px]">
           Where you are today
         </h2>
         <p className="mt-1.5 max-w-3xl text-[14.5px] text-ink-2">
-          {/*
-            ⚠ WAS "the eight procurement capability domains" AND WENT STALE THE DAY TWO
-            MORE WERE ADDED (E034). Derived from the bank now, so it cannot say the
-            wrong number again — an eleventh domain updates this sentence with no edit.
-          */}
+          {/* WAS "the eight procurement capability domains" AND WENT STALE THE DAY TWO */}
           Your maturity across the {model.maturityArea.domains.length} procurement
           capability domains — measured from your answers, not a sample.
         </p>
@@ -196,13 +187,7 @@ export function ReportDashboard({
         </div>
       </section>
 
-      {/*
-        THE PROCESS THEY ANSWERED COUNTS AS DONE, and it was missing — the walk
-        rendered a "send this to a colleague" form for Procure-to-Pay on the
-        report of the person who had just completed Procure-to-Pay. The API
-        already refused it ("You already completed that one"), so the only way
-        to find it was to look at the page.
-      */}
+      {/* THE PROCESS THEY ANSWERED COUNTS AS DONE, and it was missing — the walk */}
       <SendToColleagues
         shareToken={model.shareToken}
         companyName={model.companyName}
@@ -248,13 +233,7 @@ function Tile({
   );
 }
 
-/**
- * A real SVG ring at whatever percentage it is given — including zero.
- *
- * Zero draws the track and no arc, which is visually honest: the shape of the
- * goal is there and none of it is filled. A "0%" printed over an empty box
- * would read as a rendering failure; an empty ring reads as not started.
- */
+/** A real SVG ring at whatever percentage it is given — including zero. */
 function Donut({ pct }: { pct: number }) {
   const r = 52;
   const c = 2 * Math.PI * r;

@@ -64,26 +64,7 @@ export function ProviderProfileShot() {
   );
 }
 
-/**
- * STEP 4 — THE THREE THINGS A PROVIDER CAN PUBLISH.
- *
- * ⚠ THE THREE ROWS ARE `PackageKind`, NOT AN INVENTION: `HOURS` (a named person's
- * time, `HOURLY` or `RECURRING`), `DELIVERABLE` (a defined scope, `FIXED`) and
- * `DEPLOYABLE` (an agent under a standing SOW, `RECURRING`). Every pricing shape
- * shown is the one that enum's own doc comments specify.
- *
- * ⚠⚠ IT IS THE PROVIDER'S VIEW, AND THAT IS THE WHOLE REASON IT IS NOT
- * `GetTheTalentShot`. That component draws the same three kinds with BUYER actions
- * — "Interview", "Review & hire", "Deploy". On a step called *Create Service
- * Products* those would show the buyer doing the work.
- *
- * ⚠ SO THE ACTIONS HERE ARE THE PROVIDER'S OWN STATES — `Published`, `Draft` — which
- * is exactly what `/settings/packages` shows, and `Package.status` is a real column
- * with those values.
- *
- * ⚠ ONE ROW IS DELIBERATELY A DRAFT. Publishing is a real gate, and a shot where
- * everything is already live would imply it is not.
- */
+/** STEP 4 — THE THREE THINGS A PROVIDER CAN PUBLISH. */
 export function ServiceProductsShot() {
   const ROWS = [
     {

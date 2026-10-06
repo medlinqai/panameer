@@ -66,9 +66,7 @@ export function PlanStartFrom({
         replaced?: number;
         problems?: { line: number; message: string }[];
       };
-      /** ⚠⚠ THE PER-ROW REASONS ARE SHOWN ON FAILURE **AND** ON SUCCESS. A
-       *  partial import — 39 of 40 rows — is a result, and the one row that did
-       *  not make it is the only thing the person needs to act on. */
+      /** THE PER-ROW REASONS ARE SHOWN ON FAILURE AND ON SUCCESS. A */
       setProblems(json.problems ?? []);
       if (!res.ok) {
         setError(json.error ?? "We couldn't read that file.");
@@ -157,7 +155,7 @@ export function PlanStartFrom({
 
         <fieldset className="mt-3">
           <legend className="text-[13px] font-bold text-ink">What should it do?</legend>
-          {/* ⚠ Neither is checked. The Import button is disabled until one is. */}
+          {/* Neither is checked. The Import button is disabled until one is. */}
           <label className="mt-1.5 flex min-h-11 items-center gap-2 text-[14px] text-ink">
             <input
               type="radio"

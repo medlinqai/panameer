@@ -103,11 +103,7 @@ export default async function Page() {
         empty={<StubEmpty what="learning paths" why="The catalog is empty." />}
       />
 
-      {/*
-        ⚠ THE QUEUE, AND THE `Described` COLUMN IS THE POINT OF IT. A path with a
-        DRAFT set and 0% described lessons is the `P1-J3-E006` trap: twenty
-        well-formed questions written from titles that a reviewer will skim and pass.
-      */}
+      {/* THE QUEUE, AND THE `Described` COLUMN IS THE POINT OF IT. A path with a */}
       <Listing
         title="Certification Tests"
         columns={["Learning Path", "Lessons", "Described", "Test", "Questions", ""]}
@@ -159,22 +155,7 @@ export default async function Page() {
         empty={<StubEmpty what="learning paths" why="The catalog is empty." />}
       />
 
-      {/*
-        ── ⚠⚠⚠ THE PRODUCTION QUEUE (`P2-A4-E611` WS-C) ────────────────────
-
-        ⚠⚠ SCOTT, 2026-09-23: *"The count is visible to Scott, not necessarily
-        to members. Report where he reads it, and **if it lands in a table
-        nobody has a screen for, it is the same as losing it.**"*
-        ⚠ This is that screen.
-
-        ⚠⚠ THE ORDER IS HIS: **cost first, then demand.** A path with recorded
-        material outranks one without however many votes the second has —
-        finishing it is hours rather than days.
-        ⚠⚠⚠ THE THIRD COLUMN IS THE 59 AND IT IS NOT A STATE, IT IS AN OPEN
-        QUESTION. A lesson whose status claims a URL with no `vimeo_ref` may or
-        may not have been shot; nothing in the data says. **Scott rules on
-        those, grouped by path — that is the whole remaining ask.**
-      */}
+      {/* THE PRODUCTION QUEUE WS-C) */}
       <Listing
         title="Production Queue"
         columns={["Path", "Recorded", "Planned", "Status unclear", "Wanted by"]}
@@ -185,8 +166,7 @@ export default async function Page() {
           q.recorded > 0 ? `${q.recorded}` : "—",
           q.planned > 0 ? `${q.planned}` : "—",
           q.unpublished > 0 ? `${q.unpublished}` : "—",
-          /* ⚠ A MEASURED ZERO PRINTS `0`. Nobody has asked yet, and that is a
-             fact, not an uncountable figure — the writer exists. */
+          // A MEASURED ZERO PRINTS `0`. Nobody has asked yet, and that is a
           `${q.votes}`,
         ])}
         empty={<StubEmpty what="outstanding lessons" why="Every published path is fully produced." />}
@@ -197,7 +177,7 @@ export default async function Page() {
           { label: "Learning Paths", value: paths },
           { label: "Courses", value: courses },
           { label: "Lessons", value: lessons },
-          /* ⚠ REAL NUMBERS NOW — the review screen made them meaningful. */
+          /* REAL NUMBERS NOW — the review screen made them meaningful. */
           { label: "Tests", value: publishedTests },
           { label: "Tests in draft", value: draftTests },
           { label: "Certifications" },

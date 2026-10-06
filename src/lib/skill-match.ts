@@ -87,34 +87,7 @@ export function matchSkill(typed: string, candidates: SkillCandidate[]): SkillMa
 
 export const didYouMean = (candidateName: string) => `Did you mean ${candidateName}?`;
 
-/**
- * ── ⚠⚠⚠ A NEW SKILL IS STORED IN TITLE CASE (`P2-A2-E602` WS-B 3) ─────────
- *
- * ⚠ SCOTT, 2026-09-22: *"New skills are stored in Title Case."*
- *
- * ⚠⚠⚠ AND THE 18 ORACLE PRODUCT NAMES KEEP THEIRS. Scott, the same day:
- * *"The 18 non-Title-Case names are Oracle product names (iProcurement,
- * eBenefits); leave them."* ⚠ Those are SEED rows and this never touches them —
- * but a provider can TYPE `iProcurement`, and a naive title-caser would store
- * `Iprocurement`, inventing the very defect this is meant to prevent.
- *
- * ⚠⚠ THE RULE, AND IT IS DELIBERATELY CONSERVATIVE: **a word is capitalised
- * only when it is ENTIRELY lower case.** Anything already carrying an upper-case
- * letter is left exactly as typed.
- *   `purchase requisitions` → `Purchase Requisitions`
- *   `iProcurement`          → `iProcurement`   (intra-word capital)
- *   `eBenefits`             → `eBenefits`
- *   `OTBI`, `PIM`, `BI Publisher` → unchanged  (acronyms)
- * ⚠⚠⚠ IT CANNOT "FIX" A NAME SOMEBODY CAPITALISED ON PURPOSE, WHICH IS THE
- * POINT: the failure mode being avoided is a matcher that rewrites a product
- * name, not a member who shouts.
- *
- * ⚠ Small words are NOT lower-cased back down (`of`, `and`): this is a NAME,
- * not a sentence, and `Bill of Materials` vs `Bill Of Materials` is a judgement
- * about a specific product name that no general rule can make correctly.
- * ⚠ Separators are preserved exactly — spaces, `/`, `-`, `&` — so
- * `negotiations/sourcing` becomes `Negotiations/Sourcing`.
- */
+/** A NEW SKILL IS STORED IN TITLE CASE WS-B 3) */
 export function titleCaseSkill(raw: string): string {
   return formatSkillName(raw);
 }
@@ -122,10 +95,7 @@ export function titleCaseSkill(raw: string): string {
 const TERMS = new Map(SKILL_NAME_TERMS.map((t) => [t.toLowerCase(), t]));
 const SMALL = new Set(SKILL_NAME_SMALL_WORDS);
 
-/**
- * Skill / specialization names: lowercase words get Title Case (small words lower, known terms exact).
- * A word already carrying capitals is kept as typed (FNDLOAD, MLOps, OAuth); an all-caps name is re-cased.
- */
+/** Skill / specialization names: lowercase words get Title Case (small words lower, known terms exact). */
 export function formatSkillName(raw: string): string {
   // Typed in capitals (PROCURE TO PAY), not a run of acronyms (CEMLI / RICEW): has a real word of 6+ letters.
   const shouting = !/[a-z]/.test(raw) && /(?:^|[^A-Za-z])[A-Z]{6,}(?:[^A-Za-z]|$)/.test(raw) && raw.trim().includes(" ");

@@ -61,8 +61,7 @@ export function SuggestionRow({
       >
         Promote
       </button>
-      {/* ⚠ REJECT KEEPS THE RECORD — see `rejectSuggestion`. It is not a delete,
-          which is why an already-rejected row still shows a Promote button. */}
+      {/* REJECT KEEPS THE RECORD — see `rejectSuggestion`. It is not a delete */}
       {status === "SUGGESTED" && (
         <button
           type="button"

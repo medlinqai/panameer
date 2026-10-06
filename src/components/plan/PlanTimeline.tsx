@@ -44,11 +44,7 @@ export function barLabel(row: {
 }
 
 export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPlan; today: string; footnote?: boolean }) {
-  /**
-   * The AXIS row is the track: it already carries `marginLeft: var(--plan-label)`,
-   * so its rect is exactly the box a date maps into. Measuring it beats
-   * re-deriving the label width from a CSS variable in two units.
-   */
+  /** The AXIS row is the track: it already carries `marginLeft: var(--plan-label)` */
   const axisRef = useRef<HTMLDivElement>(null);
   /** Scrubber position as a % of the track, or null when not scrubbing. */
   const [scrub, setScrub] = useState<number | null>(null);
@@ -89,11 +85,7 @@ export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPla
     setScrub(p < 0 || p > 100 ? null : p);
   };
 
-  /**
-   * RELEASES, AND THE STAGES UNDER THEM WHEN OPEN (`E809`, the mockup).
-   * Tasks never appear here — they are the grid's job — so this is two levels,
-   * with a ▸ on each release.
-   */
+  /** RELEASES, AND THE STAGES UNDER THEM WHEN OPEN ( , the mockup). */
   const lines: { row: PublicPlanRow; band: boolean }[] = [];
   for (const top of plan.rows) {
     lines.push({ row: top, band: top.type === "release" });
@@ -104,11 +96,7 @@ export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPla
 
   return (
     <section className="mt-10" aria-label="Plan timeline">
-      {/*
-        `--plan-label` is the ONE definition of the label column: the label box
-        takes its width from it and the axis, scrubber and today line take their
-        left offset from it, so the three cannot drift apart (`E798`).
-      */}
+      {/* takes its width from it and the axis, scrubber and today line take their */}
       <div
         data-plan-scrubarea
         className="relative touch-none [--plan-label:150px] sm:[--plan-label:260px]"
@@ -142,13 +130,7 @@ export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPla
                 /* Every third label on a phone: the track is ~230px there and
                    twelve labels collide (`E798`). CSS, not measurement, so the
                    server and the client render the same count. */
-                /*
-                  PHONE THINNING IS ADAPTIVE (`E819`). `weekTicks` already thins
-                  by span; hiding every third on top of that left SHORT plans
-                  with one or two labels on a phone — `E777`'s rule inverted,
-                  since a label nobody can see is not a label. Only thin when
-                  there are enough to spare.
-                */
+                // PHONE THINNING IS ADAPTIVE . `weekTicks` already thins
                 (ticks.length > 6 && i % 2 !== 0 ? "hidden sm:inline" : "")
               }
               style={{ left: `${clamp(pct(t.iso))}%` }}
@@ -158,17 +140,9 @@ export function PlanTimeline({ plan, today, footnote = true }: { plan: PublicPla
           ))}
         </div>
 
-        {/*
-          THE ROWS. One list, so a label and its bar are the same element — they
-          were briefly two lists and the pairing a tooltip test checks could not
-          be made (`E803`).
-        */}
+        {/* THE ROWS. One list, so a label and its bar are the same element — they */}
         <ul className="relative mt-2">
-          {/*
-            THE SCRUBBER's marks. `pointer-events-none` so a bar underneath still
-            receives hover — the handlers live on the wrapper below, which is why
-            the line and the bar tooltip can both work at once.
-          */}
+          {/* THE SCRUBBER's marks. `pointer-events-none` so a bar underneath still */}
           {todayInRange && (
             <li
               aria-hidden

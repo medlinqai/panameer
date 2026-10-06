@@ -496,11 +496,7 @@ function RowAction({
   );
 }
 
-/**
- * Up/down ordinals rather than drag-and-drop. The brief allows either for v1,
- * and ordinals work with a keyboard, survive a 105-row list, and can't drop an
- * item into the wrong course by accident.
- */
+/** Up/down ordinals rather than drag-and-drop. The brief allows either for v1 */
 function OrdinalButtons({
   canUp,
   canDown,
@@ -716,15 +712,7 @@ function SectionForm({
   );
 }
 
-/**
- * Creating a lesson asks for the title and nothing else.
- *
- * Everything else — description, run time, URL, expert, thumbnail — is edited
- * afterwards in the lesson editor, which is where an admin is looking at one
- * lesson rather than adding twelve. Front-loading those fields would make
- * building out a section slower for no benefit, since none of them are required
- * for the lesson to exist.
- */
+/** Creating a lesson asks for the title and nothing else. */
 function NewLessonForm({
   sectionId,
   onClose,

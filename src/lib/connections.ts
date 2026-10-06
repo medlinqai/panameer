@@ -120,14 +120,7 @@ export async function requestColleague(viewer: Viewer, toUserId: string) {
   return created;
 }
 
-/**
- * ⚠⚠ CLEAR THE INVITE'S WORKLIST ITEM. Ruling 34e: *"an item disappears when
- * the thing is DONE, not when it is read."* ⚠ Accepting and declining both END
- * the wait, so both clear it — a decline that left the item standing would ask
- * the member to answer something they already answered.
- * ⚠⚠ It never throws into the caller: clearing a list item must not fail the
- * decision that was just recorded.
- */
+/** CLEAR THE INVITE'S WORKLIST ITEM. Ruling 34e: *"an item disappears when */
 async function clearInviteWorklist(connectionId: string) {
   await prisma.notification
     .updateMany({
@@ -137,48 +130,12 @@ async function clearInviteWorklist(connectionId: string) {
     .catch(() => {});
 }
 
-/**
- * MENTOR — one click, `ACCEPTED` immediately.
- *
- * ⚠⚠ THE LABEL IS **FOLLOW**, NOT ADD, and the survey is why: `lib/mentors.ts`
- * is a directory of ELIGIBLE providers, and its own header says *"there is no
- * `MentorProfile`, so nobody has OPTED IN to mentoring"*. So this row means
- * **"I follow this person"** — it does NOT mean they agreed to mentor anybody,
- * and it must never be rendered as if it did.
- * ⚠ FOLLOWING AND BOOKING ARE TWO DIFFERENT ACTIONS ON THE SAME PERSON. This
- * touches neither `MICRO_SESSION_PRICE` nor any booking path; both survive
- * independently.
- */
+/** MENTOR — one click, `ACCEPTED` immediately. */
 export async function followMentor(viewer: Viewer, toUserId: string) {
   const from = await ownUserId(viewer);
   refuseSelf(from, toUserId);
 
-  /*
-    ── ⚠⚠⚠ THE CONSENT IS ENFORCED HERE NOW, NOT ONLY DRAWN (`P2-A3-E721` item 3) ─────────
-
-    ⚠ **SCOTT: *"followMentor must enforce `open_for_mentoring`. The UI respects it; the route
-    doesn't."*** ⚠⚠ **MEASURED AT `E720` AND REPORTED THEN: this function read NOTHING about
-    the target except that a `User` row existed**, so a hand-rolled POST could attach a mentee
-    to any of the 63 providers, none of whom have ticked the box.
-    ⚠⚠⚠ **`ProviderProfile.open_for_mentoring` (`schema.prisma:1102`) IS THE CONSENT** — its
-    own docblock says *"THE CHECKBOX IS THE CONSENT"* and that it is WHY `ConnectionKind.MENTOR`
-    needs no `PENDING` state. **A one-way row created `ACCEPTED` on the spot is only defensible
-    if the target said yes in advance**; without this check, *"following requires no
-    permission"* meant nobody's permission at all.
-    ⚠ **THE SAME COLUMN THE UI READS, NOT A SECOND RULE (`E585`)** — `ConnectProfile` gates its
-    section on `p.openForMentoring`, and `listMentors({ openOnly: true })` gates the directory,
-    both on this field.
-
-    ⚠⚠ **A TARGET WITH NO `ProviderProfile` IS REFUSED, AND THAT IS CORRECT RATHER THAN A GAP:**
-    the flag lives on the provider profile, so a buyer has nowhere to express willingness and
-    has therefore never expressed it. ⚠⚠⚠ **`getMentoringHome` ALREADY READS THAT CASE AS
-    `null`, NEVER AS "OPEN"** (`mentoring-home.ts:95`), so refusing is the reading the rest of
-    the codebase already takes.
-    ⚠ **THE RELATION IS `person.providerProfile` (`@relation("ProfileOwner")`), CHECKED IN THE
-    SCHEMA AND NOT GUESSED** — `Person` also carries `repProviderProfiles`
-    (`"CoordinatorProviders"`), a LIST of profiles this person represents, and reading that one
-    would have asked whether somebody's CLIENT accepts mentees.
-  */
+  // THE CONSENT IS ENFORCED HERE NOW, NOT ONLY DRAWN item 3)
   const target = await prisma.user.findUnique({
     where: { id: toUserId },
     select: {
@@ -188,10 +145,7 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
   });
   if (!target) throw new ConnectionError("That person isn't on Panameer", "NOT_A_MEMBER");
   if (!target.person?.providerProfile?.open_for_mentoring) {
-    /* ⚠⚠ ONE SENTENCE, DESCRIBING THE OTHER PERSON'S SETTING RATHER THAN BLAMING THE ASKER.
-       ⚠⚠⚠ IT DELIBERATELY DOES NOT DISTINGUISH *"has no provider profile"* FROM *"has not
-       ticked the box"*: both mean the same thing to the reader, and naming which would leak
-       whether a member is a provider at all to anybody who can POST. */
+    // ONE SENTENCE, DESCRIBING THE OTHER PERSON'S SETTING RATHER THAN BLAMING THE ASKER.
     throw new ConnectionError("This member isn’t accepting mentees right now.", "NOT_OPEN");
   }
 
@@ -202,9 +156,7 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
   });
   if (existing) return existing;
 
-  /* ⚠ `responded_at` IS SET AT CREATION. There was a response — it is "none
-     needed" — and leaving it null would make an ACCEPTED row indistinguishable
-     from a colleague row that skipped acceptance. */
+  // needed" — and leaving it null would make an ACCEPTED row indistinguishable
   return prisma.connection.create({
     data: {
       from_user_id: from,
@@ -216,9 +168,7 @@ export async function followMentor(viewer: Viewer, toUserId: string) {
   });
 }
 
-/** ⚠ Unfollowing DOES delete — a follow is not a claim about the other person,
-    so there is nothing to preserve. ⚠ CONTRAST `declineColleague`, which never
-    deletes, because a decline IS a claim. */
+/** Unfollowing DOES delete — a follow is not a claim about the other person */
 export async function unfollowMentor(viewer: Viewer, toUserId: string) {
   const from = await ownUserId(viewer);
   await prisma.connection.deleteMany({
@@ -226,33 +176,25 @@ export async function unfollowMentor(viewer: Viewer, toUserId: string) {
   });
 }
 
-/** Accept a colleague request addressed to me. ⚠ Only the RECIPIENT may. */
+/** Accept a colleague request addressed to me. Only the RECIPIENT may. */
 export async function acceptColleague(viewer: Viewer, connectionId: string) {
   const me = await ownUserId(viewer);
   const row = await prisma.connection.findFirst({
     where: { id: connectionId, to_user_id: me, kind: "COLLEAGUE", status: "PENDING" },
-    /* ⚠ `from_user_id` — the invite's SENDER is who hears that it was accepted. */
+    /* `from_user_id` — the invite's SENDER is who hears that it was accepted. */
     select: { id: true, from_user_id: true },
   });
   if (!row) throw new ConnectionError("That request is no longer open", "NOT_FOUND");
   const updated = await prisma.connection.update({
     where: { id: row.id },
-    /* ⚠ `responded_at` IS NOT OPTIONAL HERE — the harness fails the build if an
-       ACCEPTED colleague row lacks one. */
+    // ACCEPTED colleague row lacks one.
     data: { status: "ACCEPTED", responded_at: new Date() },
   });
 
-  /* ⚠⚠ THE WAIT IS OVER, SO THE WORKLIST ITEM GOES (ruling 34e). */
+  /* THE WAIT IS OVER, SO THE WORKLIST ITEM GOES (ruling 34e). */
   await clearInviteWorklist(row.id);
 
-  /*
-    ⚠⚠⚠ AND THE PERSON WHO ASKED IS TOLD — a notice, never a worklist item.
-    ⚠ Nothing is owed by them; they asked and got an answer. ⚠⚠ The recipient is
-    the INVITER (`from_user_id`), which is the opposite direction from the
-    invite above — getting that backwards would tell the accepter that they
-    accepted, which is the "nobody is notified about their own action" rule
-    (WS-B item 3) failing in the most confusing way available.
-  */
+  // AND THE PERSON WHO ASKED IS TOLD — a notice, never a worklist item.
   const accepter = await prisma.person.findFirst({
     where: { user_id: me },
     select: { first_name: true, last_name: true },
@@ -277,13 +219,7 @@ export async function acceptColleague(viewer: Viewer, connectionId: string) {
   return updated;
 }
 
-/**
- * Decline one. ⚠⚠ IT UPDATES, IT NEVER DELETES.
- *
- * Scott's growth strategy treats a request as *"I vouch for this person"*, so the
- * decline is the signal that keeps the vouch honest. Deleting the row would throw
- * that away AND let the same request arrive again tomorrow.
- */
+/** Decline one. IT UPDATES, IT NEVER DELETES. */
 export async function declineColleague(viewer: Viewer, connectionId: string) {
   const me = await ownUserId(viewer);
   const row = await prisma.connection.findFirst({
@@ -296,15 +232,7 @@ export async function declineColleague(viewer: Viewer, connectionId: string) {
     data: { status: "DECLINED", responded_at: new Date() },
   });
 
-  /*
-    ⚠⚠ DECLINING ALSO ENDS THE WAIT, SO THE ITEM GOES. ⚠⚠⚠ AND NOBODY IS TOLD:
-    `DECLINED` is a first-class state here precisely so a declined request is
-    not re-offered, and the standing rule on this surface is that a colleague
-    decline is SILENT — telling the sender they were turned down is a judgement
-    the product deliberately does not deliver. ⚠ That is the opposite of the
-    GROUP decline (ruling 34e), and the difference is real: a group owner is
-    administering a room, while a colleague request is personal.
-  */
+  // DECLINING ALSO ENDS THE WAIT, SO THE ITEM GOES. AND NOBODY IS TOLD
   await clearInviteWorklist(row.id);
   return updated;
 }
@@ -354,19 +282,7 @@ const toCard = (p: PersonRow): PersonCard => ({
   companyId: p.company?.show_on_profiles ? p.company.id : null,
 });
 
-/**
- * ⚠⚠ ONE RELATION CALCULATION, AND THIS IS IT (`P2-J3-E525`).
- *
- * Extracted from `searchMembers`, which is still its only other caller, so that
- * `memberByEmail` below cannot drift from it. ⚠ A SECOND COPY OF THIS IS THE
- * DEFECT — `E525` exists because `/invite-colleague` answered "is there a row"
- * with its own lookup instead of asking the question this file already answers.
- *
- * ⚠ `incomingConnectionId` IS THE HALF `relation` CANNOT CARRY. `relation` is
- * `"PENDING"` whether I sent it or they did, and `ConnectControls` renders
- * `Accept` rather than a disabled `Requested` only when it has the id. The
- * direction is read here, from `to_user_id`, not guessed by the caller.
- */
+/** ONE RELATION CALCULATION, AND THIS IS IT . */
 type ConnectionRow = {
   id: string;
   from_user_id: string;
@@ -383,8 +299,7 @@ function relationFor(me: string, userId: string, rows: ConnectionRow[]) {
     (c) => c.kind === "MENTOR" && c.from_user_id === me && c.to_user_id === userId
   );
   return {
-    /* ⚠ THE ROW'S LABEL COMES FROM THE DATA, so it can read "Requested" rather
-       than offering an add that would be a no-op. */
+    // THE ROW'S LABEL COMES FROM THE DATA, so it can read "Requested" rather
     relation: rel
       ? (rel.status as ConnectionStatusValue)
       : follows
@@ -396,14 +311,7 @@ function relationFor(me: string, userId: string, rows: ConnectionRow[]) {
   };
 }
 
-/**
- * Search members by name, company or title.
- *
- * ⚠ ONLY PEOPLE WITH A LOGIN. A `Person` with no `user_id` cannot receive a
- * request, so offering them would be an add that goes nowhere.
- * ⚠ AND NEVER YOURSELF — the lib refuses it anyway, but a search result you
- * cannot act on is noise.
- */
+/** Search members by name, company or title. */
 export async function searchMembers(
   viewer: Viewer,
   query: string,
@@ -445,27 +353,7 @@ export async function searchMembers(
   });
 }
 
-/**
- * ⚠⚠ ONE MEMBER, RESOLVED BY EMAIL ADDRESS (`P2-J3-E525`).
- *
- * SCOTT, 2026-09-15: *"I put the email in and it exists...show the card for that
- * email and the CONNECT or MESSAGE buttons."*
- *
- * ⚠⚠ THIS IS `searchMembers`' ANSWER FOR ONE PERSON, NOT A SECOND CARD TYPE.
- * Same `personSelect`, same `toCard`, same `relationFor`. The only thing that
- * differs is the question — an exact address rather than a name fragment — which
- * is why it cannot simply call `searchMembers`: that one searches name, title and
- * company, and never email.
- *
- * ⚠⚠ IT DOES NOT EXCLUDE YOURSELF, AND THAT IS DELIBERATE. `searchMembers` drops
- * your own row because a search result you cannot act on is noise; here you typed
- * the address, so the honest answer is "that is you". ⚠ `isSelf` carries it and
- * `ConnectControls` renders nothing for it — the rule stays in the control.
- *
- * ⚠ RETURNS `null` FOR AN ADDRESS WITH NO `Person`. A `User` can exist without
- * one, and there is no card to draw for it — the caller keeps its old refusal for
- * that case rather than inventing a blank card.
- */
+/** ONE MEMBER, RESOLVED BY EMAIL ADDRESS . */
 export type MemberWithRelation = PersonCard & {
   relation: ConnectionStatusValue | "FOLLOWING" | null;
   incomingConnectionId: string | null;
@@ -479,9 +367,7 @@ export async function memberByEmail(
 ): Promise<MemberWithRelation | null> {
   const me = await ownUserId(viewer);
 
-  /* ⚠ THE ADDRESS IS MATCHED AS THE CALLER NORMALISED IT. `normalizeEmail` runs
-     at every write and a `lower(email)` unique index backs it, so an exact match
-     is the same lookup the old `findFirst({ where: { email } })` did. */
+  // THE ADDRESS IS MATCHED AS THE CALLER NORMALISED IT. `normalizeEmail` runs
   const row = await prisma.person.findFirst({
     where: { user: { is: { email } } },
     select: personSelect,
@@ -526,7 +412,7 @@ export async function getMyCommunity(viewer: Viewer) {
       .filter((r) => r.kind === "COLLEAGUE" && r.status === "ACCEPTED")
       .map((r) => ({ connectionId: r.id, person: other(r) }))
       .filter((x) => x.person),
-    /** Requests waiting on ME. ⚠ The only list with Accept / Decline on it. */
+    /** Requests waiting on ME. The only list with Accept / Decline on it. */
     incoming: rows
       .filter((r) => r.kind === "COLLEAGUE" && r.status === "PENDING" && r.to_user_id === me)
       .map((r) => ({ connectionId: r.id, person: other(r) }))
@@ -540,69 +426,17 @@ export async function getMyCommunity(viewer: Viewer) {
       .filter((r) => r.kind === "MENTOR" && r.from_user_id === me)
       .map((r) => ({ connectionId: r.id, person: other(r) }))
       .filter((x) => x.person),
-    /*
-      ⚠ DECLINED ROWS ARE COUNTED, NOT LISTED. They are kept forever and they
-      stop a re-send, but putting "3 people said no" on somebody's own page would
-      be cruelty with no purpose. The count exists so the number is auditable.
-    */
+    // DECLINED ROWS ARE COUNTED, NOT LISTED. They are kept forever and they
     declinedCount: rows.filter((r) => r.kind === "COLLEAGUE" && r.status === "DECLINED").length,
 
-    /*
-      ⚠⚠ HOW MANY MEMBERS CONNECTED TO **ME** AS A MENTOR (`P1-ALL-E374`).
-
-      ⚠ THIS IS THE MECHANISM, NOT A VANITY COUNTER, AND IT IS THE REASON THIS
-      READ EXISTS AT ALL. Everything else in this function answers "who did I
-      reach out to". `following` is MENTOR rows where `from_user_id` is me —
-      people I asked. This is the mirror: MENTOR rows where `to_user_id` is me.
-
-      SCOTT, 2026-09-03: *"everyone CAN be. the determining factor is if anyone
-      wants you to be...and therefore makes a request from you."*
-
-      ⚠⚠ SO THIS NUMBER IS THE ONLY PLACE IN THE ENTIRE PRODUCT WHERE A MEMBER
-      FINDS OUT THEY ARE A MENTOR. There is no opt-in, no MentorProfile, no
-      application and no approval — being asked IS the qualification, so the
-      count IS the status. Nothing else tells them.
-
-      ⚠ THERE IS DELIBERATELY NOTHING TO ACT ON. No accept, no decline, no
-      inbox. A MENTOR row is written ACCEPTED by `followMentor`, and
-      `check:community` asserts a MENTOR row is never PENDING — so there is no
-      pending state that could need a button. Adding one would invent an
-      approval step Scott explicitly refused.
-
-      ⚠ THE CALLER HIDES THE BLOCK AT ZERO. *"0 members connected to you as a
-      mentor"* tells a new member they are unwanted, which is useless and untrue
-      this early. The lib still returns the honest 0 — hiding is a rendering
-      decision, and the number stays auditable either way.
-    */
+    // HOW MANY MEMBERS CONNECTED TO ME AS A MENTOR .
     mentorConnectionCount: rows.filter(
       (r) => r.kind === "MENTOR" && r.to_user_id === me
     ).length,
   };
 }
 
-/**
- * ── ⚠⚠ `You Both Know` — MUTUAL COLLEAGUES (`P2-J3-E588` WS-B) ─────────────
- *
- * ⚠ THE VISITOR'S SIDE OF THE LEFT RAIL. Where an owner sees `Viewing Me` —
- * which has no data and renders a dash — a visitor sees this, and this IS a
- * real query. The brief: *"`You Both Know` IS computable from `Connection` —
- * build that one, it is a real query."*
- *
- * ⚠⚠ ACCEPTED COLLEAGUE EDGES ONLY, ON BOTH SIDES. A pending request is not a
- * colleague, and counting one would tell a visitor they share a connection that
- * neither person has agreed to. ⚠ `DECLINED` is excluded for the same reason it
- * is never listed anywhere: it is the other person's business (`E372`).
- *
- * ⚠ A connection is UNDIRECTED for `COLLEAGUE` — the row exists once, with
- * whoever asked as `from`. So "who are X's colleagues" has to read both columns,
- * which is why this cannot be a single `where` on one field.
- *
- * ⚠⚠ MENTOR ROWS ARE EXCLUDED. A `MENTOR` row is created `ACCEPTED`
- * unilaterally — `followMentor` writes it without the other person agreeing —
- * so counting them would let anyone inflate a shared-connection number by
- * following people. That is the same reasoning that keeps messaging
- * colleague-only.
- */
+/** THE VISITOR'S SIDE OF THE LEFT RAIL. Where an owner sees `Viewing Me` — */
 export async function mutualColleagueCount(
   viewer: Viewer,
   otherUserId: string
@@ -631,9 +465,7 @@ export async function mutualColleagueCount(
 
   let shared = 0;
   for (const id of mine) {
-    /* ⚠ THE TWO PEOPLE THEMSELVES ARE NOT "SHARED". If they are already
-       colleagues with each other, each appears in the other's set, and counting
-       that would report a mutual connection that is just the pair. */
+    // THE TWO PEOPLE THEMSELVES ARE NOT "SHARED". If they are already
     if (id !== otherUserId && id !== me && theirs.has(id)) shared += 1;
   }
   return shared;

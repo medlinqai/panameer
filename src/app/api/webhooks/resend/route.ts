@@ -64,12 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, ignored: "malformed" });
   }
 
-  /*
-    ⚠⚠ MATCHED ON (resend_message_id, to_email) — THE PAIR, NOT THE ID.
-    A batch send returns ONE id for every recipient, so matching on the id alone
-    would mark all three bounced when one address failed. ⚠ That is why the
-    column is not unique and why the index is on the pair.
-  */
+  // MATCHED ON (resend_message_id, to_email) — THE PAIR, NOT THE ID.
   const bounceType = data.bounce?.type ?? null;
   const updated = await prisma.sentEmail.updateMany({
     where: { resend_message_id: messageId, to_email: { in: recipients } },
@@ -77,29 +72,11 @@ export async function POST(request: Request) {
   });
 
   if (updated.count === 0) {
-    /*
-      ⚠ NOT AN ERROR, AND NOT SILENT. A receipt can legitimately be missing: mail
-      sent before this table existed, or a row already aged out. ⚠⚠ STILL LOGGED,
-      because a RISING count of these means the transport stopped writing and the
-      whole table would quietly go stale.
-    */
+    // NOT AN ERROR, AND NOT SILENT. A receipt can legitimately be missing: mail
     console.warn(`[resend-webhook] ${type} matched no receipt (${messageId})`);
   }
 
-  /*
-    ── ⚠⚠ A HARD BOUNCE SUPPRESSES. A SOFT ONE DOES NOT. ──────────────────────
-
-    ⚠ Scott, 2026-09-17: *"a HARD BOUNCE is not an unsubscribe. A hard bounce
-    means the address does not exist — sending again achieves nothing and
-    damages a young sending domain."*
-    ⚠⚠ `Permanent` IS THE SIGNAL. A `Transient` bounce is a full mailbox or a
-    greylist and the address is fine tomorrow; suppressing on one would lock
-    somebody out of their own account over a temporary condition.
-    ⚠ A COMPLAINT ALWAYS SUPPRESSES — the person pressed "spam". There is no
-    soft version of that.
-    ⚠⚠ `reason` IS WHAT THE PASSWORD-RESET BYPASS READS, so these two strings
-    are load-bearing: `bounce` is never bypassed, `complaint` is.
-  */
+  // A HARD BOUNCE SUPPRESSES. A SOFT ONE DOES NOT.
   if (type === "email.bounced" && bounceType === "Permanent") {
     for (const email of recipients) await suppress(email, null, "bounce");
   }

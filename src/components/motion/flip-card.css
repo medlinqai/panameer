@@ -1,22 +1,9 @@
-/*
-  ── ⚠⚠⚠ THE FLIP CARD (`P2-A2-E603` WS-A) ─────────────────────────────────
-
-  ⚠ The Oracle infolet GESTURE and POSITION, in our tokens. No Oracle chrome.
-
-  ⚠⚠ EVERY CUSTOM PROPERTY HERE IS `--color-*`, DECLARED IN `globals.css`, AND
-  NONE CARRIES A `var()` FALLBACK. ⚠⚠⚠ A FALLBACK HIDES A DEAD VARIABLE —
-  `E601` WS-D found five rules that had been inert for months behind one, and
-  `check:css-vars` exists to catch exactly that. A bare `var()` fails loudly.
-*/
+/* THE FLIP CARD WS-A) */
 .pm-flip {
   position: relative;
 }
 
-/*
-  ⚠⚠⚠ BOTH FACES IN ONE GRID CELL — THIS IS WHAT KEEPS THE HEIGHT FIXED.
-  ⚠ The card is as tall as its taller face and a flip resizes nothing. A card
-  that grows on flip shoves every card below it down the page.
-*/
+/* BOTH FACES IN ONE GRID CELL — THIS IS WHAT KEEPS THE HEIGHT FIXED. */
 .pm-flip-faces {
   display: grid;
 }
@@ -25,11 +12,7 @@
   min-width: 0;
 }
 
-/*
-  ⚠⚠ THE SPIN IS DECORATION. The face swap is the information, and it happens
-  whether or not this animation runs — the hidden face is `hidden`, not rotated
-  out of view, so nothing depends on the transform landing.
-*/
+/* THE SPIN IS DECORATION. The face swap is the information, and it happens */
 .pm-flip-face {
   animation: pm-flip-in 320ms cubic-bezier(0.2, 0.7, 0.3, 1);
   transform-origin: center;
@@ -45,18 +28,14 @@
   }
 }
 
-/* ⚠⚠⚠ REDUCED MOTION: THE FACES SWAP, NO SPIN (Scott). */
+/* REDUCED MOTION: THE FACES SWAP, NO SPIN (Scott). */
 @media (prefers-reduced-motion: reduce) {
   .pm-flip-face {
     animation: none;
   }
 }
 
-/*
-  ⚠ BOTTOM-RIGHT — the infolet muscle memory. ⚠⚠ 44px IS A REAL TAP TARGET on a
-  phone; a 13px glyph alone is not, and this control is the only way to the back
-  face.
-*/
+/* BOTTOM-RIGHT — the infolet muscle memory. 44px IS A REAL TAP TARGET on a */
 .pm-flip-toggle {
   position: absolute;
   right: 4px;
@@ -75,7 +54,7 @@
 .pm-flip-toggle:hover {
   color: var(--color-magenta);
 }
-/* ⚠ A visible focus ring — the control is keyboard-operable and must look it. */
+/* A visible focus ring — the control is keyboard-operable and must look it. */
 .pm-flip-toggle:focus-visible {
   outline: 2px solid var(--color-magenta);
   outline-offset: -2px;
@@ -88,15 +67,7 @@
   background: var(--color-background);
 }
 
-/*
-  ⚠⚠⚠ THE HIDDEN FACE KEEPS ITS BOX. `display: none` would drop it out of the
-  grid and the card would resize on every flip — measured at 303px → 192px
-  before this existed. ⚠ `visibility: hidden` also removes it from the
-  accessibility tree, so the face is hidden from a screen reader WITHOUT being
-  moved off screen, which is the requirement.
-  ⚠ `pointer-events: none` so a hidden face cannot swallow a click meant for
-  the face in front of it.
-*/
+/* THE HIDDEN FACE KEEPS ITS BOX. `display: none` would drop it out of the */
 .pm-flip-hidden {
   visibility: hidden;
   pointer-events: none;

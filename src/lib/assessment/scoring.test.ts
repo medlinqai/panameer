@@ -146,10 +146,7 @@ console.log("\n=== funding is the admin's rate, applied to EBITDA ===");
   check("a different admin rate produces a different number", at25[0] > at18[0], { at18, at25 });
   check("basis points, so 18% is exact", DEFAULT_TAX_RATE_BPS === 1800, DEFAULT_TAX_RATE_BPS);
 
-  /*
-    EBITDA is optional. Skipping it must not zero the funding tile — it falls
-    back to a conservative share of revenue.
-  */
+  // EBITDA is optional. Skipping it must not zero the funding tile — it falls
   const skipped = ebitdaRange({ ...BASICS, ebitdaBand: null });
   check("skipping EBITDA still yields a funding base", skipped[1] > 0, skipped);
   check("…and that base is below the real band (conservative)", skipped[1] < e[1], { skipped, given: e });
@@ -189,15 +186,7 @@ console.log("\n=== money formatting ===");
     formatRange([150_000_000, 150_000_000]));
 }
 
-/*
-  THE CHECK THAT WOULD HAVE CAUGHT THE 10x BUG.
-
-  Every band carries a human label and a pair of cent values, and nothing tied
-  them together — so "$500K–$2M" quietly held $5M–$20M and the only symptom was
-  a funding figure an order of magnitude too big on a page nobody had rendered
-  yet. This parses the label and asserts the cents agree, for every band in
-  every table. It is a boring test and it is the one that matters.
-*/
+// THE CHECK THAT WOULD HAVE CAUGHT THE 10x BUG.
 console.log("\n=== band labels agree with their cent values ===");
 {
   const parse = (t: string): number | null => {
@@ -229,18 +218,7 @@ console.log("\n=== band labels agree with their cent values ===");
   }
 }
 
-/*
-  WS-4 — THE CLIENT GATE AND THE SERVER SCHEMA ARE ONE RULE STATED TWICE.
-
-  A client that gates on more than the server enforces is a client one fetch
-  call walks around; a server that requires more than the client asks for is a
-  form that fails on submit. Neither file can import the other's list without
-  dragging React into a route handler or Zod into a component, so this reads
-  BOTH SOURCES AS TEXT and asserts they name the same fields.
-
-  Text-matching is the honest tool here: the thing that drifts is the source, and
-  a test that re-declares the list would just be a third copy to forget.
-*/
+// WS-4 — THE CLIENT GATE AND THE SERVER SCHEMA ARE ONE RULE STATED TWICE.
 console.log("\n=== the required set: client gate === z schema ===");
 {
   const wizard = readFileSync("src/components/assessment/AssessmentWizard.tsx", "utf8");

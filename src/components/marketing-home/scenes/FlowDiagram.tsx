@@ -97,18 +97,11 @@ function ActorColumn({
 }
 
 export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) {
-  /*
-    Sanitised because React 18 returns `:r0:` and React 19 `«r0»`; neither set of
-    delimiters belongs inside `url(#…)`. Stripping them keeps the value unique —
-    instances differ in the alphanumeric core, not the wrapper.
-  */
+  // Sanitised because React 18 returns `:r0:` and React 19 `«r0»`; neither set of
   const uid = `fd${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const gradId = `${uid}-panel`;
   const titleId = `${uid}-title`;
-  /*
-    THREE ARROWHEADS, ALL NAMESPACED PER INSTANCE (§13). `white` is for the
-    VERTICAL step-to-step connectors only — see the note where they are drawn.
-  */
+  // THREE ARROWHEADS, ALL NAMESPACED PER INSTANCE (§13). `white` is for the
   const mk = { mag: `${uid}-mag`, navy: `${uid}-navy`, white: `${uid}-white` };
   const headFor: Record<string, string> = { mag: mk.mag, navy: mk.navy, note: mk.navy };
 
@@ -180,7 +173,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
         strokeWidth="2"
       />
       <rect x="214" y="56" width="152" height="26" rx="7" fill="#f2f5fb" stroke={COL_STROKE} />
-      {/* ⚠ TEXT, NOT ORACLE'S LOGO. Trademark uncleared — see ErpIntegration. */}
+      {/* TEXT, NOT ORACLE'S LOGO. Trademark uncleared — see ErpIntegration. */}
       <text x="227" y="74" fontSize="10" fontWeight="800" letterSpacing="1" fill={NAVY}>
         ORACLE CLOUD ERP
       </text>
@@ -200,11 +193,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
       {/* ── Oracle document chips ─────────────────────────────────────────── */}
       {spec.docs.map((doc) => {
         const mid = doc.y + doc.h / 2;
-        /*
-          A RULED CHIP IS TWO DOCUMENTS IN ONE BOX, so each row centres in its own
-          half rather than straddling the chip's centre. That is why the two
-          two-line cases use different offsets — it is not an inconsistency.
-        */
+        // A RULED CHIP IS TWO DOCUMENTS IN ONE BOX, so each row centres in its own
         const rows =
           doc.lines.length === 1
             ? [mid + 5]
@@ -246,16 +235,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
       {spec.steps.map((step) => (
         <g key={`${step.actor} ${step.label}`}>
           <rect x={STEP.x} y={step.y} width={STEP.w} height={STEP.h} rx={STEP.r} fill="#ffffff" />
-          {/*
-            ⚠ ONE <text>, TWO <tspan>s, STILL CENTRED (E112). Actor bold, verb
-            regular. They share one text element so the pair centres AS A UNIT —
-            two elements would each centre on their own and the sentence would
-            come apart.
-
-            The deck right-aligned provider actions and left-aligned requester
-            ones, so alignment was carrying the actor. Naming it replaces that
-            idea entirely: the labels stay centred, and no legend is needed.
-          */}
+          {/* ONE <text>, TWO <tspan>s, STILL CENTRED (E112). Actor bold, verb */}
           <text
             x={STEP.cx}
             y={step.y + 20}
@@ -269,24 +249,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
         </g>
       ))}
 
-      {/*
-        ⚠ VERTICAL WHITE CONNECTORS CARRY A HEAD. HORIZONTAL STUBS DO NOT.
-
-        This is not a contradiction of "white lines, no arrow heads" — it is the
-        distinction that rule was about:
-
-          vertical, step -> step   HEAD. It is the only thing asserting sequence
-                                   inside the panel; it means "then this".
-          horizontal, edge -> chip NO HEAD. It is the last 16px of a magenta
-                                   crossing that already placed its arrowhead at
-                                   the panel edge. Two heads on one journey.
-
-        Stroke 2, not 1.6: against the near-black top of the gradient a 1.6px
-        white line is nearly invisible.
-
-        Drawn only where `follows` is set — see the rule on `FlowStep`, which is
-        about where the input CAME FROM, not about spacing.
-      */}
+      {/* VERTICAL WHITE CONNECTORS CARRY A HEAD. HORIZONTAL STUBS DO NOT. */}
       {spec.steps.map((step, i) => {
         const prev = spec.steps[i - 1];
         if (!step.follows || !prev) return null;
@@ -320,12 +283,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
         );
       })}
 
-      {/*
-        ⚠ THE LAST 16px, IN WHITE, WITH NO ARROWHEAD (E111).
-        Derived from the magenta it finishes — see `stubFor`. Drawn last so it
-        sits over the panel edge rather than under it, and white because it is
-        the one colour that reads against every stop of the gradient.
-      */}
+      {/* THE LAST 16px, IN WHITE, WITH NO ARROWHEAD (E111). */}
       {spec.connectors.map((c) => {
         const s = stubFor(c);
         if (!s) return null;
@@ -343,13 +301,7 @@ export function FlowDiagram({ title, spec }: { title: string; spec: FlowSpec }) 
   );
 }
 
-/**
- * The scene shell both flows share: heading, sub, the diagram, the closing note.
- *
- * The note is the argument in both cases — a dozen arrows look like a lot of
- * process until the note points out the buyer only acts twice — so it is part of
- * the scene rather than something the card carries.
- */
+/** The scene shell both flows share: heading, sub, the diagram, the closing note. */
 export function FlowScene({
   title,
   sub,

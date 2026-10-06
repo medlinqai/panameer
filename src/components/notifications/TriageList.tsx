@@ -106,12 +106,7 @@ export function TriageList({
         </div>
       </div>
 
-      {/*
-        ⚠⚠⚠ THE CONFIRM STATES THE COUNT (Scott: *"a confirm dialog that states the
-        count"*). ⚠ "Are you sure?" asks somebody to agree to an amount nobody told them.
-        ⚠⚠ AND IT SAYS WHAT DISMISS DOES NOT DO — an action row stays on the worklist, so a
-        member cannot clear an obligation by tidying.
-      */}
+      {/* THE CONFIRM STATES THE COUNT (Scott: *"a confirm dialog that states the */}
       {confirming && (
         <div className="pm-triage-confirm" role="alertdialog" aria-label="Dismiss all">
           <p>
@@ -131,8 +126,7 @@ export function TriageList({
       )}
 
       {/* ── CHIPS ───────────────────────────────────────────────────────────── */}
-      {/* ⚠ Links, not buttons: the filter lives in the URL so a filtered list can be
-          shared, bookmarked and reached with the back button. */}
+      {/* Links, not buttons: the filter lives in the URL so a filtered list can be */}
       <nav className="pm-triage-chips" aria-label="Filter notifications">
         {chips.map((c) => (
           <Link
@@ -143,9 +137,7 @@ export function TriageList({
             data-on={filter === c.key ? "yes" : "no"}
           >
             {c.label}
-            {/* ⚠⚠ A ZERO IS NOT PRINTED — a chip only exists when it has rows, so a `(0)`
-                would be a contradiction. `all` and `unread` always render, and `unread`
-                drops its number at zero rather than showing one. */}
+            {/* A ZERO IS NOT PRINTED — a chip only exists when it has rows, so a `(0)` */}
             {c.n > 0 && <span className="pm-triage-chip-n">({c.n})</span>}
           </Link>
         ))}
@@ -211,7 +203,7 @@ export function TriageList({
                 />
                 <div className="pm-triage-main" onClick={() => open(r)}>
                   <div className="pm-triage-t">
-                    {/* ⚠ The unread dot is the only magenta on the row besides a link. */}
+                    {/* The unread dot is the only magenta on the row besides a link. */}
                     {r.unread && <span className="pm-triage-dot" aria-hidden />}
                     {r.href ? (
                       <Link href={r.href} className="pm-triage-title" onClick={(e) => e.stopPropagation()}>
@@ -253,7 +245,7 @@ export function TriageList({
             ))}
           </ul>
 
-          {/* ⚠ Scott: *"page by 25; no infinite list."* The cursor is the last row's id. */}
+          {/* Scott: *"page by 25; no infinite list."* The cursor is the last row's id. */}
           {more && (
             <div className="pm-triage-more">
               <Link

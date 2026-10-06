@@ -216,11 +216,7 @@ export function CreateWorkRequest({
       setOffCatalogSkills(body.unmatchedSkills ?? []);
       setDoorsOpen("manual");
       setImportText("");
-      /*
-        STILL STEP 1. The import fills everything downstream of the cascade, but
-        role and domain are the requester's call — inferring them from a paste
-        would have them confirm a taxonomy decision they never made.
-      */
+      // STILL STEP 1. The import fills everything downstream of the cascade, but
       setStep("role");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not import that posting");
@@ -286,18 +282,7 @@ export function CreateWorkRequest({
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            BRING YOUR JD — three doors, mirroring the provider résumé step.
-
-            The port already worked; what it lacked was a frame. A single dashed
-            "Import a job you posted elsewhere" button above the role list read
-            as an aside, which left "fill it in yourself" as the thing that
-            happens when you ignore the aside. Manual is a legitimate choice and
-            should be stated as one.
-
-            Offered on step 1 only. A shortcut presented halfway through the
-            wizard is not a shortcut, it is a reason to start over.
-          */}
+          {/* BRING YOUR JD — three doors, mirroring the provider résumé step. */}
           {doorsOpen === null ? (
             <div className="mb-6">
               <p className="mb-1 text-[15px] font-bold">Bring your JD</p>
@@ -318,16 +303,10 @@ export function CreateWorkRequest({
                   description="Answer seven short questions. Takes a few minutes."
                   onClick={() => setDoorsOpen("manual")}
                 />
-                {/*
-                  ⚠ NOT BUILT, AND NOT CLICKABLE. Inbound email needs a
-                  tokenized intake address and sender verification — its own
-                  brief. A door that opened onto nothing would be worse than one
-                  that says it is not ready, so this one is disabled rather than
-                  wired to a placeholder page.
-                */}
+                {/* NOT BUILT, AND NOT CLICKABLE. Inbound email needs a */}
                 <JdDoor
                   title="Email Your JD"
-                  /* ⚠ RULING 18: SUPERSEDED (`E164`): //   badge="Coming soon" */
+                  /* RULING 18: SUPERSEDED (`E164`): //   badge="Coming soon" */
                   badge="Not available"
                   disabled
                   description="Forward a JD to Panameer and we'll draft it for you."
@@ -393,19 +372,7 @@ export function CreateWorkRequest({
                   )
                 }
                 title={r.display}
-                /*
-                  THE DECK DESCRIBES EACH ROLE BY WHAT IS INSIDE IT, not by a
-                  count — "Core Technical Developers, Creative & Content
-                  Generation, Data & Support Services" under AI-Specialist. "5
-                  service domains" told the requester how much was behind the
-                  card without telling them whether it was the right card.
-
-                  Derived from the role's own domains rather than hand-written,
-                  so it cannot drift from the catalog. The deck writes the
-                  enterprise ones as example job titles instead ("Coder, Report
-                  Writer, Integration Specialist"); that is copy Scott owns, and
-                  a per-role line here would override this the day it exists.
-                */
+                // THE DECK DESCRIBES EACH ROLE BY WHAT IS INSIDE IT, not by a
                 description={(domainsByRole[r.id] ?? [])
                   .map((d) => d.name)
                   .join(", ")}
@@ -447,12 +414,7 @@ export function CreateWorkRequest({
               />
             ))}
             {domains.length === 0 && (
-              /*
-                THE AI-SPECIALIST BRANCH LANDS HERE UNTIL THE VERTICAL IS SEEDED
-                (noted in the brief as a parallel data task). An empty domain
-                list is a catalog fact, so the step says so rather than
-                pretending the role has no domains.
-              */
+              // THE AI-SPECIALIST BRANCH LANDS HERE UNTIL THE VERTICAL IS SEEDED
               <Notice tone="info">
                 No service domains are in the catalog for {roleName || "this role"}{" "}
                 yet. Go back and pick another role, or come back once the catalog
@@ -468,19 +430,7 @@ export function CreateWorkRequest({
       const chosen = new Set(draft?.skillIds ?? []);
       const q = skillQuery.trim().toLowerCase();
 
-      /*
-        WHAT THE IMPORT FOUND, offered here rather than saved earlier.
-
-        Imported skills cannot be written until a role and domain exist to
-        validate them against, so they waited. Only the ones that belong to the
-        pair the requester actually chose are offered — an import from a Java
-        posting must not put Java in front of someone who picked Payables.
-
-        SUGGESTED, NOT APPLIED. Every one is a tick. The requester is the one
-        who knows whether the posting they pasted still describes what they
-        want, and pre-selecting on their behalf is how a wrong skill gets posted
-        unnoticed.
-      */
+      // WHAT THE IMPORT FOUND, offered here rather than saved earlier.
       const inThisPair = new Set(skills.map((s) => s.id));
       const suggested = pendingSkills.filter(
         (s) => inThisPair.has(s.id) && !chosen.has(s.id)
@@ -559,14 +509,7 @@ export function CreateWorkRequest({
               <p className="text-[14px] font-bold">
                 Also mentioned, but not in our catalog
               </p>
-              {/*
-                SHOWN, NOT SELECTABLE. These are terms the posting used that the
-                catalog does not have. A Work Request can only carry catalog
-                skills — matching depends on it — so offering them as ticks
-                would promise a match that cannot happen. Naming them is still
-                worth it: it tells the requester what we did NOT capture, which
-                is the difference between an honest import and a lossy one.
-              */}
+              {/* SHOWN, NOT SELECTABLE. These are terms the posting used that the */}
               <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
                 {offCatalogSkills.join(", ")} — add the closest catalog skill
                 below, or mention them in the description.
@@ -624,12 +567,7 @@ export function CreateWorkRequest({
               saveAnd("specializations", {
                 specializationIds: draft?.specializationIds ?? [],
               }),
-            /*
-              SKIP SAVES AN EMPTY SET rather than jumping the step. A requester
-              who looked and decided none applied has answered the question, and
-              the answer should survive a Back — which it cannot if the step is
-              simply stepped over.
-            */
+            // SKIP SAVES AN EMPTY SET rather than jumping the step. A requester
             secondaryLabel: "None apply",
             onSecondary: () =>
               void saveAnd("specializations", { specializationIds: [] }),
@@ -637,13 +575,7 @@ export function CreateWorkRequest({
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            TWO LEVELS, THREE SECTIONS, ONE PAGE. The vocabulary is already
-            grouped by `kind` server-side, so the section headers are the
-            catalog's own — Products & Platforms, Processes & Methodologies,
-            Industries — rather than three labels typed here that could drift
-            from what the endpoint returns.
-          */}
+          {/* TWO LEVELS, THREE SECTIONS, ONE PAGE. The vocabulary is already */}
           {specGroups.map((g) => (
             <section key={g.kind} className="mb-6">
               <h2 className="mb-2 text-[13px] font-bold uppercase tracking-[0.07em] text-ink-2">
@@ -773,11 +705,7 @@ export function CreateWorkRequest({
                 budgetMinDollars: budgetMin,
                 budgetMaxDollars: budgetMax,
               }),
-            /*
-              THE ESCAPE IS A REAL ANSWER, not a skip. It clears the range and
-              moves on, so a request with no budget is a stated position rather
-              than an unfinished step.
-            */
+            // THE ESCAPE IS A REAL ANSWER, not a skip. It clears the range and
             secondaryLabel: "Not ready to set a budget",
             onSecondary: () =>
               void saveAnd("budget", {
@@ -827,12 +755,7 @@ export function CreateWorkRequest({
             </Field>
           </div>
 
-          {/*
-            NO RATE HISTOGRAM. The deck shows "the average rate for similar
-            projects" as a distribution; nothing has been transacted through
-            Panameer, so drawing one would be inventing a market. It comes back
-            when there are rates to average.
-          */}
+          {/* NO RATE HISTOGRAM. The deck shows "the average rate for similar */}
         </AppWizardShell>
       );
 
@@ -865,13 +788,7 @@ export function CreateWorkRequest({
                 <li>· What already exists and what is missing</li>
                 <li>· How you will judge the work is done</li>
               </ul>
-              {/*
-                NO ATTACH FILE. There is no attachment model on WorkRequest —
-                `Artifact` belongs to a provider's Employer or Project — so the
-                button would either drop the file or write it somewhere it does
-                not belong. Deferred, and said out loud rather than shipped as a
-                control that silently loses a document.
-              */}
+              {/* NO ATTACH FILE. There is no attachment model on WorkRequest — */}
               <p className="mt-4 border-t border-line pt-3 text-[13px] text-ink-2">
                 Attachments aren&apos;t supported yet — paste the key details
                 here and share documents once a provider is engaged.
@@ -916,19 +833,7 @@ export function CreateWorkRequest({
   }
 }
 
-/**
- * One of the three ways in.
- *
- * Same shape as the provider journey's method cards, deliberately: a requester
- * who has already onboarded as a provider has seen this exact chooser, and two
- * different-looking answers to "how do you want to start?" is two things to
- * learn instead of one.
- *
- * `disabled` renders the door as a static div rather than a dead <button>. A
- * disabled button still draws a pointer on some platforms and still reads as
- * "control" to a screen reader; a card that is plainly not a control is a
- * clearer statement that this one is not ready yet.
- */
+/** One of the three ways in. */
 function JdDoor({
   title,
   description,

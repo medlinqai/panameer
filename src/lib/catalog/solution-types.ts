@@ -34,9 +34,7 @@ export function solutionViolations(r: SolutionRow): string[] {
     bad.push(`${r.kind} may not be priced ${r.pricing_type} (allowed: ${allowed.join(", ")})`);
   }
 
-  /* ⚠ BOTH DIRECTIONS. A FIXED package carrying a period is as wrong as a RECURRING
-     one without it — the first is a number nobody will read, the second is $450 with
-     no answer to "per what". */
+  // BOTH DIRECTIONS. A FIXED package carrying a period is as wrong as a RECURRING
   if (r.pricing_type === "RECURRING" && r.billing_period === null) {
     bad.push("RECURRING needs a billing_period — $450 is not $450/mo");
   }
@@ -44,9 +42,7 @@ export function solutionViolations(r: SolutionRow): string[] {
     bad.push(`${r.pricing_type} must not carry a billing_period (${r.billing_period})`);
   }
 
-  /* ⚠ THE DELIVERY CONSTRUCTS. An agent has coverage and setup, not a duration and a
-     list of things delivered once. A milestone on a thing that never ends has nothing
-     to be a percentage of the completion of. */
+  // THE DELIVERY CONSTRUCTS. An agent has coverage and setup, not a duration and a
   if (r.kind === "DEPLOYABLE") {
     if (r.duration_weeks !== null) {
       bad.push(`DEPLOYABLE must not have duration_weeks (${r.duration_weeks}) — it runs until cancelled`);

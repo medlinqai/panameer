@@ -16,16 +16,13 @@ export function CourseSpineBar({ spine, title }: { spine: Spine | null; title: s
           aria-label={blockLabel(b)}
           style={{ width: `${b.widthPct}%` }}
           className={
-            /* ⚠ A HAIRLINE BETWEEN BLOCKS, NOT A GAP. A `gap` would stop the
-               widths summing to the bar, and the bar's whole claim is that its
-               proportions are the path's proportions. */
+            // A HAIRLINE BETWEEN BLOCKS, NOT A GAP. A `gap` would stop the
             "h-full shrink-0 border-r border-white/70 last:border-r-0 " +
             (b.state === "watched"
               ? "bg-magenta"
               : b.state === "ready"
                 ? "bg-magenta/25"
-                : /* ⚠ WHITE WITH A DASHED EDGE — "not shot yet" must read as
-                     absent, not as a third kind of progress. */
+                : /* WHITE WITH A DASHED EDGE — "not shot yet" must read as */
                   "border-y border-dashed border-magenta/40 bg-white")
           }
         />

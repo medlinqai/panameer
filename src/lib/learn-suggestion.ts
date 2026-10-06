@@ -62,12 +62,7 @@ export function skillMatchesPath(skill: string, path: SuggestPath): boolean {
   return tokens(needle).some((t) => hayTokens.has(t));
 }
 
-/*
-  ⚠⚠ THESE FOUR REASON LINES ARE CC'S WORDS, NOT SCOTT'S. He specified the
-  SELECTION rule and said the half carries "a reason line"; he did not write the
-  sentences. They are reported verbatim in the `E043` report so he can replace
-  any of them — each is one string in this file and nothing else reads them.
-*/
+// THESE FOUR REASON LINES ARE CC'S WORDS, NOT SCOTT'S. He specified the
 export const REASON_NO_SKILLS =
   "No skills on your profile yet, so start where everyone starts.";
 export const REASON_TOO_NEW =
@@ -82,27 +77,12 @@ export const reasonForSkills = (matched: string[]) =>
 /** How many matched skills the reason line will name. Three is a sentence. */
 const MAX_NAMED_SKILLS = 3;
 
-/**
- * THE PICKER. Pure — no database, no clock — so `check:learn` can drive every
- * branch of Scott's rule without a fixture account.
- */
+/** THE PICKER. Pure — no database, no clock — so `check:learn` can drive every */
 export function pickSuggestion(
   paths: SuggestPath[],
   signal: LearnerSignal
 ): Suggestion | null {
-  /*
-    Never suggest something they are already in.
-
-    ⚠⚠ AND NEVER SUGGEST A PATH WITH NOTHING TO WATCH (`P1-J3-E362`). Suggesting
-    a path whose Start button leads to a wall of "video coming" is the worst
-    version of the bug that brief closes — this is the one card on the page that
-    says "begin here".
-    ⚠ `learn-dashboard.ts` ALREADY FILTERS ITS ROWS, so this is a second line of
-    defence rather than the only one. It is here because `pickSuggestion` is PURE
-    and a future caller could hand it an unfiltered list.
-    ⚠ `undefined` MEANS "NOT TOLD", NOT "ZERO" — a caller that has not populated
-    the field keeps its old behaviour instead of getting an empty catalog.
-  */
+  // Never suggest something they are already in.
   const open = paths.filter(
     (p) => !p.enrolled && !p.certified && p.playableLessons !== 0
   );
@@ -121,7 +101,7 @@ export function pickSuggestion(
     return null;
   };
 
-  /* ⚠ SCOTT'S TWO FALLBACK CLAUSES, IN HIS ORDER. */
+  /* SCOTT'S TWO FALLBACK CLAUSES, IN HIS ORDER. */
   if (signal.skills.length === 0) return foundations(REASON_NO_SKILLS);
   if (signal.years < MIN_YEARS_FOR_SKILL_MATCH) return foundations(REASON_TOO_NEW);
 
@@ -140,7 +120,7 @@ export function pickSuggestion(
     }
   }
 
-  /* ⚠ THE UNCOVERED CASE — see the header. Foundations, with its own reason. */
+  /* THE UNCOVERED CASE — see the header. Foundations, with its own reason. */
   if (!best) return foundations(REASON_NO_MATCH);
 
   /* De-duplicated: the rollup can hold the same `Skill.name` twice through two
@@ -156,14 +136,7 @@ export function pickSuggestion(
   };
 }
 
-/**
- * The two inputs, read once.
- *
- * ⚠ A LEARNER WITH NO PROVIDER PROFILE IS NORMAL, NOT AN ERROR. A buyer, an
- * admin, or a brand-new account has none — `findFirst` returns null, and they
- * come back as zero skills and zero years, which is precisely the state Scott's
- * first fallback clause already describes. No throw, no special case.
- */
+/** The two inputs, read once. */
 export async function getLearnerSignal(userId: string): Promise<LearnerSignal> {
   const profile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: userId } },

@@ -1,13 +1,4 @@
-/**
- * `npm run check:ai-extract`
- *
- * Covers the parts of the AI tier that DON'T need a model: schema validation and
- * the conversion into the shape the review step already consumes. Those are
- * where a wrong answer would silently corrupt a profile, and they are pure — so
- * they are testable without a key, a network, or spending anything.
- *
- * The live call itself is exercised in WS5 against the banked fixtures.
- */
+/** Covers the parts of the AI tier that DON'T need a model: schema validation and */
 import {
   AI_RESUME_SCHEMA,
   aiToParsedResume,
@@ -68,28 +59,7 @@ console.log("=== schema validation ===");
   const ok = AI_RESUME_SCHEMA.safeParse(MARELISE_LIKE);
   check("a well-formed response validates", ok.success, ok.success ? undefined : ok.error.issues[0]);
 
-  /*
-    ⚠⚠ RE-HOMED BY `P1-J1.4-E373`, NOT DELETED — AND IT FIRED, WHICH IS THE
-    HARNESS WORKING CORRECTLY.
-
-    ⚠ SUPERSEDED, QUOTED NOT DELETED: *"A model that omits a required field must
-    be REFUSED, not partially applied — half an employer in someone's profile is
-    worse than no employer."* and `check("an employer with no name is refused",
-    !bad.success)`.
-
-    ⚠⚠ THAT RULE IS NOW FALSE BY DESIGN, AND ITS FALSENESS WAS THE BUG. Scott:
-    *"Legally I HAVE to have a company (aka employer), but it could just be a one
-    person LLC…so no one tends to mention it."* A REQUIRED name with no honest
-    value is what forced the extractor to write the JOB TITLE into it — 36 of 250
-    rows, and 38 of 91 live colleague suggestions reading *"You were both at
-    Founder & Principal Consultant"*.
-
-    ⚠ SO THE ASSERTION IS INVERTED RATHER THAN DROPPED, AND THE RULE IT ACTUALLY
-    PROTECTED SURVIVES IN A STRONGER FORM. The point was never "a name must
-    exist" — it was "the schema must not accept a half-formed employer". A
-    MISSING name is now valid; an employer that is not an OBJECT, or that omits
-    the key entirely rather than nulling it, still is not.
-  */
+  // RE-HOMED BY , NOT DELETED — AND IT FIRED, WHICH IS THE
   const noName = AI_RESUME_SCHEMA.safeParse({
     ...EDDIE_LIKE,
     employers: [{ name: null, roleTitle: "Director" }],
@@ -99,8 +69,7 @@ console.log("=== schema validation ===");
     noName.success,
     noName.success ? undefined : noName.error.issues[0]
   );
-  /* ⚠ AND THE HALF-FORMED CASE IS STILL REFUSED — a non-object employer is not
-     an employer, and that is what the original assertion was really guarding. */
+  // AND THE HALF-FORMED CASE IS STILL REFUSED — a non-object employer is not
   const bad = AI_RESUME_SCHEMA.safeParse({
     ...EDDIE_LIKE,
     employers: ["Director"],
@@ -114,31 +83,7 @@ console.log("=== schema validation ===");
 console.log("\n=== projects survive the conversion (the Marelise case) ===");
 {
   const parsed = aiToParsedResume(AI_RESUME_SCHEMA.parse(MARELISE_LIKE));
-  /*
-    ── ⚠⚠ RE-HOMED, NOT WEAKENED (`P1-J1.4-E294`, 2026-09-01) ──────────────────
-
-    The SCENARIO is unchanged — Marelise's ten project tables, no employers — and
-    the assertions are STRONGER: they now pin the equation this brief is judged on.
-
-    ⚠ SUPERSEDED, quoted, all four:
-      · `check("all 10 projects become entries", parsed.experiences.length === 10)`
-      · `check("each carries its client as the employer",
-         parsed.experiences.every((e) => /^Client \d+$/.test(e.employer)))`
-      · `check("each carries a start date",
-         parsed.experiences.every((e) => e.startDate === "2023-09-01"))`
-      · `check("software is named in the description, not lost",
-         parsed.experiences[0]?.description?.includes(...))`
-
-    The first asserted the FLATTENING — ten projects arriving as ten fake
-    employers, which is precisely the defect Scott filed as *"28 employers"*.
-    Correct for the old contract, wrong for this one, so it is INVERTED.
-
-    ⚠⚠ AND TWO OF THE FOUR HAD ALREADY GONE VACUOUSLY GREEN. With `experiences`
-    now empty, `parsed.experiences.every(...)` is TRUE OF AN EMPTY ARRAY — the
-    client and start-date checks were passing while asserting nothing at all.
-    A test that cannot fail is worse than a missing one, so both were re-pointed
-    at `projects`, where the data actually is.
-  */
+  // RE-HOMED, NOT WEAKENED , 2026-09-01)
   check("no project is promoted to a fake employer", parsed.experiences.length === 0, parsed.experiences.length);
   check("all 10 projects survive as projects", parsed.projects.length === 10, parsed.projects.length);
   check(
@@ -211,11 +156,7 @@ console.log("\n=== degenerate responses ===");
 
 console.log("\n=== WS3: absent keys vs a genuinely empty résumé ===");
 {
-  /*
-    The distinction the guard turns on. Both of these validate; only one is a
-    real answer. Zod's `.default([])` makes them identical AFTER parsing, which
-    is why the check has to look at the raw keys before defaults are applied.
-  */
+  // The distinction the guard turns on. Both of these validate; only one is a
   const allAbsent: Record<string, unknown> = {};
   const genuinelyEmpty = {
     headline: "Recent graduate",
@@ -272,20 +213,7 @@ console.log("\n=== WS7a: a degree is not a school ===");
     field: "Business Administration",
   });
   check(
-    /*
-      ⚠ THIS ASSERTION IS REVERSED FROM ITS FIRST VERSION, on purpose.
-
-      It used to assert that "Business Administration" was LEFT in the
-      institution slot, on the reasoning that a field-shaped string is a
-      different defect needing its own signal. WS-3 (2026-08-13) settles the
-      question the other way: the institution field's job is to name a school,
-      and anything that does not name one is blank rather than kept. Nine live
-      rows look exactly like this.
-
-      Nothing is lost here — the string duplicates `field`, so it is dropped
-      rather than refiled. That is what makes blanking safe, and it is asserted
-      below so a future change that starts destroying data fails this test.
-    */
+    // THIS ASSERTION IS REVERSED FROM ITS FIRST VERSION, on purpose.
     "a field-shaped institution is blanked, and its duplicate text dropped",
     dupe.institution === "" &&
       dupe.degree === "Bachelor of Science" &&
@@ -351,11 +279,7 @@ console.log("\n=== WS-3: the institution scrub (2026-08-13) ===");
     atSchool
   );
 
-  /*
-    THE COUNTER-CASE that keeps the 'at' rule from being a wrecking ball. The
-    tail "Buffalo" names nothing, so the split is rejected and the real name
-    stands. Without this the rule would rename a university after a city.
-  */
+  // THE COUNTER-CASE that keeps the 'at' rule from being a wrecking ball. The
   const atBuffalo = scrubInstitution("University at Buffalo");
   check(
     "'University at Buffalo' is not split into 'Buffalo'",

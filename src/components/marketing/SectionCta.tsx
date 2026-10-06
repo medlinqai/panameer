@@ -36,12 +36,7 @@ export function SectionCta({
         href={cta.href}
         className={
           "inline-flex items-center gap-2 px-[26px] py-3 font-display text-[15px] font-bold transition-colors " +
-          /*
-            The assessment is the primary action everywhere it appears, so it is
-            always the filled button and "meet our experts" is always the
-            outline. Consistent weighting across the page means a reader learns
-            the hierarchy once rather than re-reading it per section.
-          */
+          // The assessment is the primary action everywhere it appears, so it is
           (variant === "assessment"
             ? "bg-magenta text-white shadow-[0_12px_28px_rgba(215,44,214,0.25)] hover:bg-magenta-dark"
             : "border-[1.5px] border-line text-ink hover:border-magenta hover:text-magenta")

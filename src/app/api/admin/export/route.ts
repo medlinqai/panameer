@@ -88,8 +88,7 @@ export async function GET(request: Request) {
       p.title ?? "",
       jobLabel(p),
       p.phone ?? "",
-      /** ⚠ Words, not TRUE/FALSE — the file is read by a person, and "TRUE"
-       *  in a column called Test is ambiguous about which way it points. */
+      /** Words, not TRUE/FALSE — the file is read by a person, and "TRUE" */
       p.user?.is_test ? "TEST" : "real",
       p.user?.is_active === false ? "deactivated" : "active",
       p.user?.locked ? "locked" : "",
@@ -111,7 +110,7 @@ export async function GET(request: Request) {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="panameer-users-${stamp}.xlsx"`,
-      /** ⚠⚠ Never cached: it carries real email addresses. */
+      /** Never cached: it carries real email addresses. */
       "Cache-Control": "no-store",
     },
   });

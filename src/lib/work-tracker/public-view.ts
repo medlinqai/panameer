@@ -115,9 +115,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     prisma.workTrackerTaskState.findMany({
       select: { task_id: true, status: true, stage: true, release_id: true },
     }),
-    /* ⚠⚠ CUSTOM TASKS COUNT EVERYWHERE CATALOG TASKS COUNT — but only their
-       STATUS and RELEASE are read here. ⚠⚠⚠ The title and note are ADMIN-ONLY and
-       are not even selected, so they cannot reach the payload by accident. */
+    // CUSTOM TASKS COUNT EVERYWHERE CATALOG TASKS COUNT — but only their
     prisma.workTrackerCustomTask.findMany({
       select: { status: true, release_id: true, phase: true },
     }),
@@ -125,23 +123,15 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       select: { gate_id: true, value: true },
     }),
     prisma.workTrackerPhaseDate.findMany(),
-    /* ⚠⚠⚠ `published: true` IS IN THE WHERE CLAUSE, NOT IN AN `if` AFTERWARDS.
-       A draft must be unreachable, not merely unrendered — the same shape the
-       masked profile uses, so a forgotten branch cannot leak one. */
+    // A draft must be unreachable, not merely unrendered — the same shape the
     prisma.workTrackerShipped.findMany({
       where: { published: true },
       orderBy: [{ date: "desc" }, { created_at: "desc" }],
       take: 50,
       select: { date: true, journey_tag: true, title: true, body: true },
     }),
-    /* ⚠⚠ THE STATUS SETS COME FROM `support.ts`, NOT FROM A LIST RETYPED HERE.
-       My first version hard-coded both, which is a second definition of one
-       thing kept in step by hand (`E585`) — and the one that drifts is always
-       found on the surface a stranger sees. `TICKETS_TERMINAL_STATUSES` is
-       derived from `TICKET_OWNER`, so a new status lands on the right side of
-       this count by itself. */
-    /* ⚠⚠ `published: true` IN THE WHERE CLAUSE, like Shipped — a draft milestone
-       must be unreachable, not merely unrendered. */
+    // THE STATUS SETS COME FROM `support.ts`, NOT FROM A LIST RETYPED HERE.
+    // must be unreachable, not merely unrendered.
     prisma.workTrackerRelease.findMany({
       where: { published: true },
       orderBy: [{ sort: "asc" }, { date: "asc" }],
@@ -156,12 +146,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     prisma.supportTicket.count({
       where: { status: { in: TICKETS_TERMINAL_STATUSES } },
     }),
-    /* ⚠⚠⚠ `date_solved`, NOT `updated_at` — the column is DERIVED FROM THE
-       STATUS and cleared on reopen, so a re-opened ticket leaves this window
-       instead of sitting in the wrong week. ⚠ Seven days back from now, which is
-       a rolling window and not a calendar week: the page is read daily by people
-       in unknown timezones, and "this week" would mean a different thing to each
-       of them. */
+    // STATUS and cleared on reopen, so a re-opened ticket leaves this window
     prisma.supportTicket.count({
       where: {
         date_solved: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
@@ -176,8 +161,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     stages.set(r.task_id, r.stage);
   }
   const statusOf = (id: string): TaskStatus => status.get(id) ?? "Not Started";
-  /* ⚠ An unrecognised stored stage reads as null — no segments — rather than
-     being trusted. The column is a string; nothing at the DB level guards it. */
+  // An unrecognised stored stage reads as null — no segments — rather than
   const stageOf = (id: string): string | null => stages.get(id) ?? null;
 
   const dates = new Map(dateRows.map((d) => [d.phase, { ...d, isCurrent: d.is_current }]));
@@ -197,27 +181,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     };
   });
 
-  /*
-    ── ⚠⚠⚠ THREE SOURCES, IN ORDER, AND THEY ARE NOT EQUALS (Scott, 2026-10-02) ─
-
-    ⚠ **1. THE ADMIN'S OWN ANSWER** (`WorkTrackerPhaseDate.is_current`). A person
-    who knows where the build is beats any inference, and this is the only source
-    that can say "Build" while `Define` still has unticked tasks — which is the
-    true state and is exactly what the old code got wrong.
-    ⚠ **2. THE DATES** — the phase whose start has passed and whose end has not.
-    ⚠ **3. THE FIRST PHASE THAT IS NOT 100% DONE**, as a last resort.
-
-    ⚠⚠⚠ **"NEVER SIMPLY THE FIRST PHASE" IS THE RULE THIS REPLACES.** The old code
-    was `phases.find(p => p.percent < 100)`, which returns `Define` the moment one
-    Define task is open — and it had been saying `Define` while the work was in
-    `Build`. ⚠ A page that reports the wrong phase is worse than one that reports
-    none: a stranger reads it as fact.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const firstUnfinished = phases.find((p) => p.percent === null || p.percent < 100);
-    //   const current = firstUnfinished ?? phases[phases.length - 1] ?? null;
-
-    ⚠ All phases complete → the LAST phase, because `Operate` does not end.
-  */
+  // THREE SOURCES, IN ORDER, AND THEY ARE NOT EQUALS (Scott, 2026-10-02)
   const adminNamed = phases.find((p) => dates.get(p.name)?.isCurrent === true) ?? null;
 
   const today = Date.now();
@@ -226,7 +190,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       const d = dates.get(p.name);
       if (!d?.start_date) return false;
       if (d.start_date.getTime() > today) return false;
-      /* ⚠ No end date means "still running", which is a fact and not a gap. */
+      /* No end date means "still running", which is a fact and not a gap. */
       return !d.end_date || d.end_date.getTime() >= today;
     }) ?? null;
 
@@ -236,27 +200,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
   const current = adminNamed ?? byDate ?? firstUnfinished ?? phases[phases.length - 1] ?? null;
   if (current) current.current = true;
 
-  /*
-    ── ⚠⚠⚠ ONE STAGE IS HIDDEN FROM THE PUBLIC LIST (`P2-ALL-E774`) ——————
-
-    ⚠ **SCOTT, 2026-10-02, walking the live page:** `Panameer Build` reads
-    *"0% · In Progress"* and is the one row that says nothing.
-
-    ⚠⚠⚠ **IT IS HIDDEN BECAUSE EVERYTHING IN IT IS ALREADY ON THE PAGE, NOT
-    BECAUSE 0% LOOKS BAD.** Measured: the stage holds exactly **12 tasks, all
-    `PNM-*`** — the **ten journeys**, which have their own grid, and
-    `PNM-011`/`PNM-012`, which are the Milestones pair with their own section.
-    ⚠ So the row duplicates two sections and contributes a percentage nobody can
-    act on.
-
-    ⚠⚠ **THE ADMIN KEEPS IT** (Scott). `stagesForPhase()` is shared with the
-    Builder, so the filter lives HERE, at the public read, and not in that helper
-    — hiding it from both would take away the only place those twelve rows can be
-    edited.
-    ⚠ **A HIDDEN STAGE STILL COUNTS.** It is removed from the LIST only; its
-    tasks remain in `taskCount`, `doneCount`, `movingCount` and every percentage,
-    because they are real work and the figures are the whole plan.
-  */
+  // ONE STAGE IS HIDDEN FROM THE PUBLIC LIST ——————
   const PUBLIC_HIDDEN_STAGES = new Set(["Panameer Build"]);
 
   const currentPhaseStages: PublicStage[] = current
@@ -276,16 +220,10 @@ export async function getPublicTracker(): Promise<PublicTracker> {
         })
     : [];
 
-  /*
-    ⚠⚠⚠ TEN JOURNEYS, NOT TWELVE (Scott, 2026-10-02). `PNM-011`/`PNM-012` are
-    segment `Milestones` and have their OWN table and section — my first version
-    returned all twelve, which rendered two rows both named "Milestones".
-    ⚠ The filter lives in `journeyTasks()` so the admin editor and this reader
-    cannot disagree about what a journey is (`E585`).
-  */
+  // TEN JOURNEYS, NOT TWELVE (Scott, 2026-10-02). `PNM-011`/`PNM-012` are
   const journeys: PublicJourney[] = journeyTasks().map((t) => ({
     name: t.segment,
-    /* ⚠⚠ PUBLIC COPY, NEVER `t.task` — see `JOURNEY_COPY` above. */
+    /* PUBLIC COPY, NEVER `t.task` — see `JOURNEY_COPY` above. */
     description: JOURNEY_COPY[t.segment] ?? "",
     status: statusOf(t.id),
     stage: isJourneyStage(stageOf(t.id)) ? (stageOf(t.id) as JourneyStage) : null,
@@ -307,66 +245,35 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       after: g.after,
       criteriaCount: g.criteria.length,
       answered: e.answered,
-      /* ⚠⚠ A GATE PASSES ONLY WHEN EVERY CRITERION IS ANSWERED AND NONE IS `No`.
-         ⚠ An UNANSWERED criterion is not a pass — "0 of 5 answered" would
-         otherwise read as passed, which is the most expensive thing this page
-         could get wrong. */
+      // A GATE PASSES ONLY WHEN EVERY CRITERION IS ANSWERED AND NONE IS `No`.
       passed: e.answered === g.criteria.length && e.yes === g.criteria.length,
     };
   });
 
-  /*
-    ⚠⚠⚠ "DAY N" IS HIDDEN UNTIL DEFINE HAS A START DATE (Scott, 2026-10-02:
-    *"no NaN, no invented date"*). ⚠ `null` here is what makes the eyebrow drop
-    the "· Day N" clause entirely rather than printing `Day NaN` — and the reason
-    this matters is that a test once left an invented `2026-05-01` in that very
-    column and the public page printed it as fact.
-    ⚠ Day 1 is the start date itself, not day 0 — a person reading "Day 1" on the
-    day work began is right.
-  */
-  /*
-    ⚠⚠⚠ AND IT COUNTS IN THE SITE'S ZONE, NOT THE SERVER'S (`P2-ALL-E775`).
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   Math.max(1, Math.floor((Date.now() - defineStart.getTime()) / 86_400_000) + 1)
-    ⚠⚠ **THAT DIVIDED MILLISECONDS FROM A MIDNIGHT-UTC DATE, SO IT ROLLED OVER AT
-    UTC MIDNIGHT** — measured at 8:36 PM ET on 2 Oct, the page already said
-    **DAY 50** while ET was still on day 49. ⚠ `dayNumber()` counts CALENDAR days
-    between two `YYYY-MM-DD` strings, so there is no instant left to round.
-  */
+  // the "· Day N" clause entirely rather than printing `Day NaN` — and the reason
+  // AND IT COUNTS IN THE SITE'S ZONE, NOT THE SERVER'S .
   const defineStart = dates.get(PHASES[0]?.name ?? "")?.start_date ?? null;
   const dayNumber = defineStart
     ? dayNumberInSiteZone(defineStart.toISOString().slice(0, 10))
     : null;
 
-  /*
-    ── ⚠⚠⚠ THE RELEASES, AND THEIR PERCENTAGES (`P2-ALL-E765`) ─────────────────
-
-    ⚠ Scott: *"I need to be able to cfg the time and tasks per R that have
-    been/need to be done."* ⚠⚠ A release's figure counts **only the tasks actually
-    assigned to it** — catalog tasks and admin-added custom tasks alike, because
-    both are real work.
-
-    ⚠⚠⚠ **`N/A` LEAVES THE DENOMINATOR AND AN EMPTY RELEASE IS `null`, NOT `0`.**
-    A release nobody has scoped yet has not achieved nothing — it has not been
-    measured, and the page says `Scope being set`. Printing `0%` there would be
-    the dash-and-a-real-zero confusion the counting rule exists to prevent.
-  */
+  // THE RELEASES, AND THEIR PERCENTAGES
   const releaseOfTask = new Map<string, string | null>();
   for (const r of taskRows) releaseOfTask.set(r.task_id, r.release_id);
 
   const releases: PublicRelease[] = releaseRows.map((r) => {
-    /* ⚠ Catalog tasks assigned to this release … */
+    /* Catalog tasks assigned to this release … */
     const catalogStatuses = TASKS.filter((t) => releaseOfTask.get(t.id) === r.id).map((t) =>
       statusOf(t.id),
     );
-    /* ⚠ … and the admin's own, which count identically. */
+    /* … and the admin's own, which count identically. */
     const customStatuses = customRows
       .filter((c) => c.release_id === r.id)
       .map((c) => (isTaskStatus(c.status) ? c.status : "Not Started"));
     const all = [...catalogStatuses, ...customStatuses];
     const live = all.filter((x) => x !== "N/A");
 
-    /* ⚠⚠ THE JOURNEYS IN THIS RELEASE — segment NAMES, never task text. */
+    /* THE JOURNEYS IN THIS RELEASE — segment NAMES, never task text. */
     const journeyNames = journeyTasks()
       .filter((t) => releaseOfTask.get(t.id) === r.id)
       .map((t) => t.segment);
@@ -375,8 +282,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
       code: r.code,
       name: releaseName(r.code, r.title),
       summary: r.summary ?? r.description,
-      /* ⚠ `target_date` first, falling back to the legacy `date` column — the one
-         existing row predates the rename and must keep working. */
+      // existing row predates the rename and must keep working.
       date: (r.target_date ?? r.date)?.toISOString().slice(0, 10) ?? null,
       status: r.status,
       percent: live.length === 0 ? null : Math.round((live.filter((x) => x === "Done").length / live.length) * 100),
@@ -386,10 +292,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     };
   });
 
-  /* ⚠⚠ THE CURRENT RELEASE IS THE FIRST ONE NOT YET RELEASED, in the admin's own
-     `sort` order — not the nearest date, which would jump backwards the moment a
-     target slipped. ⚠ All released → the last, because the page still has to say
-     which one it is reporting. */
+  // THE CURRENT RELEASE IS THE FIRST ONE NOT YET RELEASED, in the admin's own
   const currentRelease =
     releases.find((r) => r.status !== "Released") ?? releases[releases.length - 1] ?? null;
 
@@ -400,19 +303,7 @@ export async function getPublicTracker(): Promise<PublicTracker> {
     overallPercent: percentDone(allStatuses),
     taskCount: allStatuses.filter((s) => s !== "N/A").length,
     doneCount: allStatuses.filter((s) => s === "Done").length,
-    /*
-      ⚠⚠⚠ "MOVING" IS EVERY TASK IN PROGRESS, ACROSS THE WHOLE PLAN.
-
-      ⚠ Scott, walking `/status` 2026-10-02: *"'moving' count is wrong: it shows
-      1; it must be every task with status In Progress (27 today)."*
-      ⚠⚠ **IT WAS COUNTING STAGES OF THE CURRENT PHASE**, not tasks — the page did
-      `currentPhaseStages.filter(s => s.status === "In Progress").length`, which is
-      a count of ROLLUPS and returns 1 while 27 tasks are actually moving.
-      ⚠ The figure sits beside `doneCount`, which has always counted tasks, so the
-      two were not even counting the same kind of thing.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   const moving = t.currentPhaseStages.filter((s) => s.status === "In Progress").length;
-    */
+    // Scott, walking `/status` 2026-10-02: *"'moving' count is wrong: it shows
     movingCount: allStatuses.filter((s) => s === "In Progress").length,
     phases,
     gates,

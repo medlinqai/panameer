@@ -17,8 +17,7 @@ ok("a skill outside the selection is hidden", !isSkillShown([APP], TECH));
 ok("multi-select shows both", isSkillShown([APP, TECH], TECH) && isSkillShown([APP, TECH], APP));
 ok("a third role is still hidden", !isSkillShown([APP, TECH], OPS));
 
-/* ⚠⚠ ABSENCE IS NOT A NEGATIVE STATEMENT (Scott, 2026-09-17). 28 profiles hold
-   165 skills with no role recorded; they must not blank. */
+// ABSENCE IS NOT A NEGATIVE STATEMENT (Scott, 2026-09-17). 28 profiles hold
 ok("NO selection shows everything", isSkillShown([], TECH) && isSkillShown(new Set<string>(), OPS));
 ok("a skill with no role at all is shown, never hidden by accident", isSkillShown([APP], null));
 
@@ -30,7 +29,7 @@ ok("selectedRoleIds prefers the multi-select", JSON.stringify(selectedRoleIds({ 
 ok("selectedRoleIds falls back to the primary", JSON.stringify(selectedRoleIds({ role_type_id: OPS, roles: [] })) === JSON.stringify([OPS]));
 ok("selectedRoleIds empty means empty", selectedRoleIds({ role_type_id: null, roles: [] }).length === 0);
 
-/* ⚠ NOTHING EXPIRES — there is no date in this module at all. */
+/* NOTHING EXPIRES — there is no date in this module at all. */
 ok("the rule has no notion of age", !/(expire|month|year|Date)/.test(readFileSync("src/lib/shown-skills.ts", "utf8").replace(/\/\*[\s\S]*?\*\//g, "")));
 
 if (failures.length > 0) { console.error(`\ncheck:shown-skills — ${failures.length} FAILED, ${pass} passed\n`); process.exit(1); }

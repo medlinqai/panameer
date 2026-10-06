@@ -60,13 +60,7 @@ export function workRequestInviteTemplate({
        </div>`
     : "";
 
-  /*
-    NO "ABOUT THE REQUESTER" BLOCK. The deck marks it optional and shown ONLY
-    when real data exists — rating, reviews, total spend, hires, hire rate.
-    Nothing has been transacted through Panameer, so every one of those would
-    be a zero presented as a fact about this company. Omitted rather than
-    rendered empty.
-  */
+  // NO "ABOUT THE REQUESTER" BLOCK. The deck marks it optional and shown ONLY
   return {
     subject: `You're invited to propose — ${workRequestTitle}`,
     html: emailShell({

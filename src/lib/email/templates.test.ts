@@ -285,11 +285,7 @@ for (const { name, out, inSuite } of SUITE) {
   ok(`${name}: has a text part`, out.text.trim().length > 0);
   ok(`${name}: declares utf-8`, out.html.includes('<meta charset="utf-8">'));
 
-  /*
-    ONE MAGENTA PRIMARY (E217). Counted on the button's background fill, not on
-    any appearance of the colour — links use magentaDark and the count must not
-    trip over them.
-  */
+  // ONE MAGENTA PRIMARY (E217). Counted on the button's background fill, not on
   const primaries = (out.html.match(new RegExp(`background:${EMAIL_COLORS.magenta};`, "g")) ?? [])
     .length;
   ok(`${name}: at most one magenta primary`, primaries <= 1, `found ${primaries}`);
@@ -303,12 +299,7 @@ for (const { name, out, inSuite } of SUITE) {
       prose.match(new RegExp(`.{0,40}\\b${banned}\\b.{0,40}`, "i"))?.[0]
     );
   }
-  /*
-    "job" and "project" are checked on the VISIBLE copy only. The html carries
-    URLs and attribute names that legitimately contain neither, but a future
-    link like /jobs would trip a naive scan of the markup — the text part is
-    what a person actually reads.
-  */
+  // URLs and attribute names that legitimately contain neither, but a future
   for (const banned of ["job", "jobs", "project", "projects"]) {
     ok(
       `${name}: no "${banned}" in visible copy`,
@@ -395,14 +386,7 @@ ok(
 ok("request: CTA is Get Started", request.html.includes("Get Started"));
 ok("request: states the seven-day window", request.text.includes("seven days"));
 
-// ---------------------------------------------------------------------------
-// ⚠⚠ THE CAPTURE TRANSPORT MUST NEVER BE THE DEFAULT (`P1-ALL-E371` WS-A2).
-//
-// A capture mode that switched itself on is the worst failure this code can
-// have: every transactional email silently stops reaching anyone while the
-// caller is told it succeeded. Verification, invites, recommendations — all
-// dead, all reporting success. So the default is asserted, not trusted.
-// ---------------------------------------------------------------------------
+// THE CAPTURE TRANSPORT MUST NEVER BE THE DEFAULT WS-A2).
 
 const resendSrc = readFileSync(join("src", "lib", "resend.ts"), "utf8");
 
@@ -410,61 +394,31 @@ ok(
   "WS-A2 — the capture transport exists",
   /export function mailCaptureEnabled/.test(resendSrc)
 );
-/* ⚠ EXACTLY `"1"`, NOT TRUTHINESS. `MAIL_CAPTURE=0` and `MAIL_CAPTURE=false`
-   must both mean SEND — and `Boolean("0")` is `true`, which would turn either
-   of those into silent capture. */
+// EXACTLY `"1"`, NOT TRUTHINESS. `MAIL_CAPTURE=0` and `MAIL_CAPTURE=false`
 ok(
   "WS-A2 — capture requires MAIL_CAPTURE === \"1\" exactly",
   /process\.env\.MAIL_CAPTURE\?\.trim\(\) === "1"/.test(resendSrc),
   "truthiness would make MAIL_CAPTURE=0 mean capture"
 );
-/* ⚠ AND THE LIVE PROCESS PROVES IT, not just the source: this harness runs with
-   no MAIL_CAPTURE set, so the real function must say "send". */
+// AND THE LIVE PROCESS PROVES IT, not just the source: this harness runs with
 ok(
   "WS-A2 — with no MAIL_CAPTURE set, the live build takes the SENDING path",
   mailCaptureEnabled() === false,
   `MAIL_CAPTURE=${JSON.stringify(process.env.MAIL_CAPTURE ?? null)} -> capture=${mailCaptureEnabled()}`
 );
-/* ⚠ THE CAPTURE BRANCH IS THE ONLY EARLY RETURN and sits BEFORE `getResend()`,
-   which throws without a key. Reordering them would make capture unusable on a
-   machine with no key — which is exactly the machine that needs it. */
+// THE CAPTURE BRANCH IS THE ONLY EARLY RETURN and sits BEFORE `getResend()`
 ok(
   "WS-A2 — the capture branch precedes the Resend client construction",
   resendSrc.indexOf("if (mailCaptureEnabled())") < resendSrc.indexOf("await getResend()"),
   "getResend() throws without a key, so capture must be reached first"
 );
-/* ⚠ CAPTURED MAIL IS GITIGNORED. Nothing captured may enter the repo — a
-   captured file holds a real recipient address and a rendered body. */
+// CAPTURED MAIL IS GITIGNORED. Nothing captured may enter the repo — a
 ok(
   "WS-A2 — the capture directory is gitignored",
   readFileSync(".gitignore", "utf8").includes(".mail-capture"),
   "a captured file holds a real address and a rendered body"
 );
-/*
-  ── ⚠⚠⚠ THIS ASSERTION WAS RENAMED BECAUSE IT WAS READ AS A LIE ────────────
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the old label and its comment:
-      "WS-A — EMAIL_FROM still defaults to the Resend test domain"
-      "⚠ AND THE SAFETY NET FOR WS-A: the default sender is Resend's test domain,
-       which only delivers to the account's own address. ⚠⚠ WHEN THIS DEFAULT
-       CHANGES TO A VERIFIED PANAMEER DOMAIN, MAIL GOES WHEREVER THE CODE SAYS —
-       this assertion is the tripwire for that moment."
-
-  ⚠⚠ IT CALLED ITSELF A TRIPWIRE AND IT CANNOT BE ONE. It greps the SOURCE of
-  `lib/resend.ts` for the literal `onboarding@resend.dev` — it NEVER READS
-  `process.env.EMAIL_FROM`, and a static check cannot see an environment it does
-  not run in. ⚠ The statement it makes is TRUE (the code's FALLBACK is still the
-  sandbox) and it was READ as a different, FALSE statement: that mail cannot
-  reach real addresses.
-  ⚠⚠ THE REAL STATE: `EMAIL_FROM` has pointed at a verified `mail.panameer.com`
-  sender since 2026-09-11 with `MAIL_CAPTURE` off, so localhost has been able to
-  send to anyone for six days — and this assertion stayed green throughout.
-  ⚠ PROVEN: `EMAIL_FROM='Panameer <anything@whatever.com>' npm run check:email`
-  passes, unchanged.
-
-  ⚠⚠⚠ THE TRIPWIRE HAS TO BE A RUNTIME SURFACE, NOT A CHECK. Reported to Scott;
-  not built here. ⚠ DO NOT re-word this back into a claim about reach.
-*/
+// THIS ASSERTION WAS RENAMED BECAUSE IT WAS READ AS A LIE
 ok(
   "WS-A — the FALLBACK sender in the code is still the Resend sandbox (⚠ says NOTHING about EMAIL_FROM at runtime)",
   /onboarding@resend\.dev/.test(resendSrc),
@@ -476,19 +430,14 @@ if (failures.length) {
   for (const f of failures) console.error(`  ✗ ${f}\n`);
 }
 
-/*
-  ⚠⚠ PRINTED LOUDLY, AND ALWAYS — including on a green run. The whole risk of a
-  known-open entry is that it goes quiet and becomes permanent; a line nobody
-  sees is the same as a deleted assertion.
-*/
+// PRINTED LOUDLY, AND ALWAYS — including on a green run. The whole risk of a
 if (opened.length) {
   console.log(`\n⚠⚠ ${opened.length} KNOWN OPEN — asserted, failing, NOT counted as a failure:\n`);
   for (const o of opened) console.log(`  ⚠ ${o}\n`);
   console.log(`  ⚠ These are open QUESTIONS, not passing tests. Each needs a ruling.\n`);
 }
 
-/* ⚠ An entry that has been FIXED must be removed from KNOWN_OPEN — otherwise
-   the list rots into a place where real failures can hide. */
+// An entry that has been FIXED must be removed from KNOWN_OPEN — otherwise
 const stale = KNOWN_OPEN.filter((k) => !opened.some((o) => o.includes(k.label)));
 if (stale.length) {
   console.error(`\n${stale.length} STALE known-open entries — they now PASS; delete them:\n`);

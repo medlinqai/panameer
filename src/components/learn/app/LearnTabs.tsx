@@ -8,12 +8,9 @@ const ACTIVE = `${TAB} border-magenta text-magenta-ink`;
 
 export function LearnTabs({
   active,
-  /** ⚠ Capability, not a count — see the docblock. */
+  /** Capability, not a count — see the docblock. */
   teaches,
-  /**
-   * ⚠⚠ TRUE ONLY ON `/learn`, where the two anchored sections actually exist.
-   * ⚠ Off it, the same two become links back to that page.
-   */
+  /** TRUE ONLY ON `/learn`, where the two anchored sections actually exist. */
   onLearnHome = false,
 }: {
   active: LearnTab;
@@ -23,25 +20,7 @@ export function LearnTabs({
   const anchor = (id: string) => (onLearnHome ? `#${id}` : `/learn#${id}`);
 
   return (
-    /*
-      ── ⚠⚠⚠ IT WRAPS. `E609`, AND THE ACTIVE TAB IS WHY (brief 9, 53d) ──────
-
-      ⚠⚠ **MEASURED AT 390px ON `/learn/courses`: THE ACTIVE TAB WAS OFF-SCREEN.**
-      The row is `LEARN · My Learning · Learning Paths · Courses · Certificates`
-      and only the first three fitted — so on the page whose own tab is fourth,
-      **the member saw a tab row with nothing lit in it.**
-      ⚠⚠⚠ **THAT IS WORSE THAN THE SLICED WORD `E609` RULED ON.** A cut-off label
-      is a legibility problem; **a row where the current tab is invisible is a row
-      that answers "where am I" with silence** — and `E625` is this same run
-      fixing a row that answered it with the WRONG page.
-      ⚠ `PageTabs` keeps its scroller and has a recorded reason: it relies on the
-      browser scrolling the active tab into view, and making it a client
-      component to do that in JS was rejected at `E378` WS-5. ⚠⚠ **WRAPPING GETS
-      THE SAME OUTCOME WITH NO JAVASCRIPT AT ALL** — every tab is on screen, so
-      there is nothing to scroll to.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   className="flex items-center gap-[26px] overflow-x-auto border-b border-line bg-white px-5 sm:px-6"
-    */
+    // IT WRAPS. , AND THE ACTIVE TAB IS WHY (brief 9, 53d)
     <nav className="flex flex-wrap items-center gap-x-[26px] border-b border-line bg-white px-5 sm:px-6">
       <span className="shrink-0 border-r border-line py-[14px] pr-[22px] font-display text-[12px] font-bold tracking-[0.12em] text-ink">
         LEARN

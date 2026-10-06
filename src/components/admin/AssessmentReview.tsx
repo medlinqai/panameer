@@ -88,12 +88,7 @@ export function AssessmentReview({
         <p className="mt-2 text-[14px] text-ink-2">
           No question set has been generated for this path yet.
         </p>
-        {/*
-          ⚠ NO "GENERATE" BUTTON WHEN THERE IS NOTHING. Generation is a deliberate
-          act with a model call behind it and it belongs in the batch script, where
-          the operator can see the per-path source quality before spending it. The
-          admin trigger exists for REgenerating a set somebody has read and rejected.
-        */}
+        {/* NO "GENERATE" BUTTON WHEN THERE IS NOTHING. Generation is a deliberate */}
         <p className="mt-4 rounded-[10px] bg-bg-soft p-3 text-[13px] text-ink-2">
           Generate it with{" "}
           <code className="rounded bg-white px-1.5 py-0.5">
@@ -127,14 +122,7 @@ export function AssessmentReview({
           </span>
         </div>
 
-        {/*
-          ── ⚠ THE RATIO A REVIEWER SHOULD READ BEFORE A SINGLE QUESTION ─────────
-
-          `P1-J3-E006`: with no lesson description the model writes from the title
-          and produces twenty plausible, confidently-wrong questions. They READ
-          FINE, which is why this is stated as a number at the top rather than left
-          for the reviewer to notice question by question.
-        */}
+        {/* THE RATIO A REVIEWER SHOULD READ BEFORE A SINGLE QUESTION */}
         <div className="mt-4 grid gap-3 min-[720px]:grid-cols-2">
           <div className="rounded-[10px] bg-bg-soft p-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2">
@@ -217,12 +205,7 @@ export function AssessmentReview({
               Publish
             </button>
           )}
-          {/*
-            ⚠ THE ONLY DESTRUCTIVE ACTION, AND IT IS LAST AND QUIET. Regenerating
-            replaces every question — including any the reviewer has just decided to
-            keep — and leaves past attempts standing. It is the remedy for a bad set,
-            not a refresh.
-          */}
+          {/* THE ONLY DESTRUCTIVE ACTION, AND IT IS LAST AND QUIET. Regenerating */}
           <button
             type="button"
             disabled={busy !== null}
@@ -235,10 +218,7 @@ export function AssessmentReview({
 
         {belowFloor && (
           <p className="mt-3 text-[13px] font-semibold text-magenta">
-            {/*
-              ⚠ THE SCREEN SAYS SO AND REFUSES, rather than letting Publish fail with
-              a 409 the reviewer has to interpret. The floor is the generator's own.
-            */}
+            {/* THE SCREEN SAYS SO AND REFUSES, rather than letting Publish fail with */}
             That leaves {remaining} question{remaining === 1 ? "" : "s"}. A set needs at
             least {minQuestions} — regenerate it instead of publishing a short one.
           </p>
@@ -278,11 +258,7 @@ export function AssessmentReview({
                 </label>
               </div>
 
-              {/*
-                ⚠ THE EXPECTED ANSWER IS MARKED, not hidden behind a reveal. The
-                reason is already recorded in the API: you cannot judge whether a
-                generated question is fair without seeing which answer it expects.
-              */}
+              {/* THE EXPECTED ANSWER IS MARKED, not hidden behind a reveal. The */}
               <ul className="mt-3 list-none space-y-1.5 p-0">
                 {q.options.map((o, oi) => (
                   <li
@@ -310,15 +286,12 @@ export function AssessmentReview({
                 <span>
                   <span className="font-bold uppercase tracking-[0.08em]">Lesson</span>{" "}
                   {q.lessonTitle ?? (
-                    /* ⚠ The catalog moved under a stored set — worth showing, not hiding. */
+                    /* The catalog moved under a stored set — worth showing, not hiding. */
                     <span className="font-semibold text-magenta">unknown lesson</span>
                   )}
                   {q.courseTitle ? ` · ${q.courseTitle}` : ""}
                 </span>
-                {/*
-                  ⚠ THE PER-QUESTION VERDICT ON ITS SOURCE. This is the column that
-                  makes `P1-J3-E006` visible one question at a time.
-                */}
+                {/* THE PER-QUESTION VERDICT ON ITS SOURCE. This is the column that */}
                 <span
                   className={
                     "ml-auto rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] " +

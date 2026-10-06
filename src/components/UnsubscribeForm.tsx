@@ -59,7 +59,7 @@ export function UnsubscribeForm({
             ? `Done — no more ${categoryLabel} emails to this address.`
             : "Done — no more emails to this address."}
         </p>
-        {/* ⚠ THE SECONDARY ACTION, AND ONLY NOW. */}
+        {/* THE SECONDARY ACTION, AND ONLY NOW. */}
         {category && (
           <button
             type="button"

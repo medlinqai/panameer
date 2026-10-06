@@ -62,10 +62,7 @@ export async function digestRecipients(): Promise<{ email: string; name: string 
     .map((p) => ({ email: p.user!.email, name: p.first_name ?? "there" }));
 }
 
-/**
- * SEND. Only ever called from Scott's button — never from the cron route, which
- * does not import it.
- */
+/** SEND. Only ever called from Scott's button — never from the cron route, which */
 export async function sendDigest(week: string): Promise<{ sent: number }> {
   const digest = await prisma.buildDigest.findUnique({ where: { week } });
   if (!digest) throw new Error("No draft for that week.");

@@ -36,12 +36,7 @@ export default async function Page() {
           : `${mine.length} raised · ${mine.filter((s) => s.status === "SUBMITTED").length} awaiting approval`}
       </p>
 
-      {/*
-        ⚠⚠ THE ANSWER TO "WHAT DOES A PROVIDER SEE WHEN NOTHING IS RELEASED."
-        Not an empty form, and not a dead button — the reason, named. A work order
-        has to be ACCEPTED by the provider and then RELEASED by the buyer (`E393`)
-        before anything can be claimed against it.
-      */}
+      {/* THE ANSWER TO "WHAT DOES A PROVIDER SEE WHEN NOTHING IS RELEASED." */}
       {settleable.length === 0 ? (
         <div className="mt-7 rounded-brand border border-dashed border-line px-6 py-10 text-center">
           <p className="text-[16px] font-bold">No work order is ready to bill against</p>
@@ -72,7 +67,7 @@ export default async function Page() {
                   </Link>
                   <span className="ml-2 text-[13.5px] text-ink-2">{o.counterpartyName}</span>
                 </span>
-                {/* ⚠ RAISING LIVES INSIDE THE ORDER — this is a link there. */}
+                {/* RAISING LIVES INSIDE THE ORDER — this is a link there. */}
                 <Button href={`/orders/${o.id}/settle`} variant="ghost">
                   Raise a payment request
                 </Button>

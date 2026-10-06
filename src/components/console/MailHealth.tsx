@@ -27,7 +27,7 @@ export function MailHealth() {
       {!s.captured && !s.sandbox && (
         <p className="mt-1 text-[14px] text-ink-2">
           Sending as{" "}
-          {/* ⚠ DOMAIN ONLY — see the header. */}
+          {/* DOMAIN ONLY — see the header. */}
           <span className="font-bold text-ink">{s.domain ?? "an unreadable address"}</span>
         </p>
       )}
@@ -40,9 +40,7 @@ export function MailHealth() {
       )}
 
       <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
-        {/* ⚠ SAYS WHERE THE ANSWER COMES FROM. A health card nobody trusts is a
-            health card nobody reads — and the check that USED to answer this
-            could not see the environment it was asked about. */}
+        {/* SAYS WHERE THE ANSWER COMES FROM. A health card nobody trusts is a */}
         Read from this environment at request time — <code>EMAIL_FROM</code> and{" "}
         <code>MAIL_CAPTURE</code> as they actually are here, not as a build-time
         check guesses them.

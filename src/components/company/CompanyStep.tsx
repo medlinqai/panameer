@@ -3,47 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
-/* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
+/* THE ONE CANONICAL LIST (`E729` WS-C). */
 import { ALL_COUNTRIES } from "@/lib/country";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
-/* ⚠ IMPORTS KEPT FOR THE COMMENTED FIELD BLOCKS BELOW (`E408` / `E164`). */
-// import {
-//   LocationFields,
-//   type LocationValue,
-// } from "@/components/onboarding/LocationFields";
-// import {
-//   EIN_MESSAGE,
-//   US_ZIP_MESSAGE,
-//   ein as einFormat,
-//   isUnitedStates,
-//   usZip,
-// } from "@/lib/field-formats";
-// import {
-//   SUPPORTED_STATES,
-//   US_STATES,
-//   type ValidationResult,
-// } from "@/lib/company-validation";
+/* IMPORTS KEPT FOR THE COMMENTED FIELD BLOCKS BELOW (`E408` / `E164`). */
+// } from "@/components/onboarding/LocationFields"
 
-/**
- * DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks
- * (brief_company_model WS2 + WS5).
- *
- * One component because it is one question. The buyer side asks it as step 1 of
- * the requester wizard and the seller side asks it inside the provider wizard;
- * two implementations would be two places for the attestation, the ToS record
- * and the domain rule to drift, and those three are the whole point.
- *
- * WHAT IT REPLACES: a plain pick-from-list that attached anyone to any company
- * with no check at all. Now every path through it produces a recorded decision —
- * define (you become the admin, you accept the company terms), join with a
- * matching work domain (auto-approved), or join without one (a request your
- * would-be admin approves).
- *
- * EVERY PROVIDER AND BUYER IS A COMPANY. A sole proprietor picks "Sole
- * Proprietor / Individual" as the tax type and is a company of one — there is
- * deliberately no separate individual path, because the tax type is what the
- * payout gate reads for SSN-vs-EIN and 1099-reportability.
- */
+/** DEFINE OR JOIN — the company building block, shared by BOTH onboarding tracks */
 
 export type TaxTypeValue =
   | "C_CORP"
@@ -53,8 +19,7 @@ export type TaxTypeValue =
   | "SOLE_PROP_INDIVIDUAL"
   | "NONPROFIT";
 
-/* ⚠ UNREAD SINCE `E408` stripped Business Type from the form. Kept per `E164` —
-   the payment gate asks the same question as `classification`. */
+// UNREAD SINCE stripped Business Type from the form. Kept per —
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TAX_TYPES: { value: TaxTypeValue; label: string; hint?: string }[] = [
   { value: "SOLE_PROP_INDIVIDUAL", label: "Sole Proprietor / Individual", hint: "Just me — a company of one" },
@@ -75,15 +40,7 @@ export type CompanyHit = {
 export type CompanyOutcome = {
   companyId: string;
   name: string;
-  /*
-    ⚠ `NAME_ONLY` (`P2-J1.1-E025`) — the person typed an employer name but has
-    not completed the company form. The name IS STORED (the signup placeholder is
-    renamed) but nothing is BOUND: no membership, no tax type, no ToS acceptance.
-    ⚠⚠ CALLERS MUST NOT TREAT IT AS `APPROVED`. `companyBound` stays false for it,
-    because `getCompanyBinding` reads memberships and there is deliberately none —
-    see `saveCompanyName` in `lib/company.ts` for why creating one would reproduce
-    the `test2`-`test6` corruption.
-  */
+  // not completed the company form. The name IS STORED (the signup placeholder is
   status: "APPROVED" | "PENDING" | "REJECTED" | "NAME_ONLY";
   autoApproved?: boolean;
 };
@@ -106,74 +63,20 @@ export function CompanyStep({
 }: {
   onDone: (outcome: CompanyOutcome) => void;
   onBusyChange?: (busy: boolean) => void;
-  /**
-   * The wizard owns the Continue button, so it needs a handle on submit. A
-   * ref-shaped callback rather than a duplicate button inside the step: two
-   * primary actions on one screen is exactly the confusion the shared footer
-   * band exists to prevent.
-   */
+  /** The wizard owns the Continue button, so it needs a handle on submit. A */
   submitRef?: { current: null | (() => void) };
   onValidityChange?: (valid: boolean) => void;
-  /**
-   * ⚠ SEPARATE FROM `onValidityChange`, AND THAT SEPARATION IS THE FIX
-   * (`P2-J1.1-E025` / `E026`).
-   *
-   * `valid` means "this company can be DEFINED" — name, tax type, country, ZIP,
-   * EIN, attestation and company ToS. `hasName` means only "there is a name
-   * worth keeping". The wizard used to have just the first, so its Continue
-   * handler saw one bit where there are three states: valid, part-answered, and
-   * untouched. Part-answered fell into the same branch as untouched and the
-   * typed name was silently discarded.
-   */
+  /** SEPARATE FROM `onValidityChange`, AND THAT SEPARATION IS THE FIX */
   onHasNameChange?: (hasName: boolean) => void;
-  /**
-   * WS8 / E179 — bound the body's height so the step is ONE PAGE.
-   *
-   * Measured before the change: 1010px in join mode and 1222px in define mode
-   * against a 900px viewport, with the Continue button off-screen in both. A
-   * provider filled the form and could not see the way forward — the "leaks
-   * down the bottom" report. The wizard passes this; the standalone /company
-   * page doesn't, because there the page IS the content and scrolling is fine.
-   */
+  /** WS8 / E179 — bound the body's height so the step is ONE PAGE. */
   bounded?: boolean;
-  /**
-   * WS-4 — the résumé's current or most-recent employer, offered as a starting
-   * point for the search box.
-   *
-   * A SUGGESTION, never an application. For an independent consultant it is
-   * usually their own entity and exactly right; for a W-2 employee it is the
-   * company that pays them, which is emphatically not the Panameer billing
-   * entity a work order is written against. So it seeds the query — the
-   * provider still has to pick or define — and nothing is created until they
-   * pass the step.
-   */
+  /** WS-4 — the résumé's current or most-recent employer, offered as a starting */
   suggestedName?: string | null;
   /** Website-first join hands off here: open the define form with the name and website filled in. */
   startDefine?: boolean;
   defineName?: string | null;
   defineWebsite?: string | null;
-  /**
-   * ── ⚠⚠ THE ENTITY WORD, BECAUSE THIS STEP RENDERS ON THREE SURFACES AND THEY
-   *    DO NOT MEAN THE SAME THING (`P2-J1.1-E012`, 2026-09-05) ────────────────
-   *
-   * `/join/requester` -> `Employer Name *`
-   * `/join/provider`  -> `Company Name *`  (the default)
-   * `/company`        -> `Company Name *`  (the default)
-   *
-   * ⚠ THE RULE IS LEGAL, NOT STYLISTIC. A requester is an EMPLOYEE of the
-   * buying organisation, so that organisation is their employer. A provider is
-   * a CONTRACTOR, and under IRS rules a contractor has no employer — they have
-   * a company and they work for clients. Scott, 2026-09-05: *"according to the
-   * IRS, contractors (which MOST of us are) do not have employers."*
-   *
-   * ⚠⚠ ONE PROP, NOT A COMPONENT FORK, AND NOT A SECOND STEP. This component is
-   * the ONLY UI in the codebase that can create a company membership; two
-   * copies of it is how the surfaces drift apart.
-   *
-   * ⚠ THE DEFAULT IS THE LEGALLY SAFE ONE. A surface that says nothing gets
-   * `Company`, which is never wrong about an entity — only ever less specific.
-   * `Employer` is the claim that has to be made deliberately.
-   */
+  /** THE ENTITY WORD, BECAUSE THIS STEP RENDERS ON THREE SURFACES AND THEY */
   nameLabel?: string;
 }) {
   const [mode, setMode] = useState<"join" | "define">(startDefine ? "define" : "join");
@@ -187,93 +90,15 @@ export function CompanyStep({
 
   // define
   const [name, setName] = useState(defineName ?? "");
-  /* ⚠ UNUSED SINCE `P1-A1.4-E408` STRIPPED THE FORM — COMMENTED, NOT DELETED
-     (`E164`). It comes back with its field at the payment gate. */
+  // UNUSED SINCE STRIPPED THE FORM — COMMENTED, NOT DELETED
   // const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
   const [website, setWebsite] = useState(defineWebsite ?? "");
-  /*
-    ⚠ THE COMPANY'S COUNTRY, STANDALONE (`E408` WS-1). It used to live inside
-    `regAddress`; the address is gone and the country is not, because
-    `WORK_REQUEST_BAR` gates posting on it. ⚠ DEFAULTED, so nobody is blocked by
-    doing nothing — the same reasoning `E260a` gave for the field it replaces.
-  */
-  /* ⚠ SUPERSEDED (`E164`):  //   useState<string>(COUNTRIES[0]);
-     ⚠⚠ IT DEFAULTED TO THE FIRST ENTRY, WHICH WAS "United States". The new list is
-     alphabetical by name, so the first entry is AFGHANISTAN — defaulting to it would be a
-     silent wrong answer. An empty default makes the member choose, which is what the
-     `!!country` Continue gate already expects. */
+  // THE COMPANY'S COUNTRY, STANDALONE ( WS-1). It used to live inside
   const [country, setCountry] = useState<string>("");
-  /*
-    ── ⚠⚠ THE CONTRACTING SET (`P1-J1.1-E273` + `E280`, Scott 2026-08-30) ──────
+  // THE CONTRACTING SET + , Scott 2026-08-30)
 
-    *"we need to capture the EIN for the company when created"* and *"we NEED the
-    corp address here… this will be part of the contracting requirements."*
-
-    `ein` writes to `Company.tin`, WHICH ALREADY EXISTED — nullable and never
-    captured. No schema change for it; this is a form catching up with a column.
-
-    `regAddress` is the REGISTERED address and is stored as a `Site` + `Address`
-    on the existing backbone (P-Account → Company → Site → Address → Person).
-    ⚠ THAT CHOICE IS EXPLAINED IN `lib/company.ts`, and it needed NO schema
-    change at all — not even a `db:push`.
-
-    ⚠⚠ REGISTERED ADDRESS ≠ DELIVER-TO. The requester wizard's Work Location is a
-    separate value on `RequesterProfile.work_site_id` and stays that way. Scott's
-    spec calls that one *"the deliver-to for the engagement"*, and the ERP model
-    carries a deliver-to PER TRANSACTION — merging them would make it impossible
-    to have work delivered anywhere but head office.
-
-    ── ⚠ ONE COUNTRY QUESTION, NOT TWO — A REPORTED PRESENTATION CHANGE ────────
-
-    `E260a` shipped jurisdiction as its own `<select>`: required, defaulting to
-    the United States. An address block also asks for a country, so keeping both
-    would have put TWO country selects on one short form and allowed a company
-    whose jurisdiction says United States and whose registered address says
-    Canada — a contradiction the form itself invites.
-
-    ⚠ SO THERE IS NOW ONE COUNTRY FIELD, inside the address block, and
-    `Company.country` is derived from it. ⚠ `E260a`'s CONTRACT IS UNCHANGED:
-    still required, still defaults to the United States, still a full country
-    name from `COUNTRIES`. Only where it is drawn moved. REPORTED, because Scott
-    ruled on that field directly.
-  */
-  // const [ein, setEin] = useState("");   ⚠ `E408` — commented, not deleted
-  /*
-    ── ⚠ US ZIP, CHECKED ON BLUR (`P1-J1.4-E299`) ─────────────────────────────
-    The same rule the server enforces, shown where it can still be fixed cheaply.
-    ⚠ US ONLY — see the route's note. Other countries keep the length cap and no
-    format, because `K1A 0B1` and `SW1A 1AA` are correct postcodes.
-    ⚠ THE BLUR FLAG EXISTS SO THE MESSAGE DOES NOT SCOLD SOMEBODY MID-TYPE — the
-    same contract `PhoneField` uses (`E203`): mask/allow on change, judge on blur.
-  */
-  /* ⚠ UNUSED SINCE `P1-A1.4-E408` STRIPPED THE FORM — COMMENTED, NOT DELETED
-     (`E164`). It comes back with its field at the payment gate. */
-  // const [zipTouched, setZipTouched] = useState(false);
-  /* ⚠ UNUSED SINCE `P1-A1.4-E408` STRIPPED THE FORM — COMMENTED, NOT DELETED
-     (`E164`). It comes back with its field at the payment gate. */
-  // const [einTouched, setEinTouched] = useState(false);
-
-  /*
-    ── ENTITY VALIDATION (`P1-J1.1-E282`) ─────────────────────────────────────
-
-    SCOTT: *"Every state has a Secretary of State website. They list their
-    corporations under a corporate search."* — and *"let's present it and use
-    it"*, which is present and use, NOT lock.
-
-    ⚠⚠ `Continue` IS NEVER DISABLED BY ANY OF THIS (decision 5). Nothing below
-    touches `valid`.
-  */
-  // const [stateOfFiling, setStateOfFiling] = useState("");   ⚠ `E408`
-  /* ⚠ `checking` IS UNREAD SINCE `E408` (its spinner was in the removed state
-     block) but `setChecking` is still written by `runLookup` below, which is
-     kept whole per `E164`. Renamed-in-place rather than deleted. */
-  // const [, setChecking] = useState(false);   ⚠ `E408`
-  // const [lookup, setLookup] = useState<ValidationResult | null>(null);   ⚠ `E408`
-  /**
-   * ⚠ WHICH FIELDS CAME FROM THE REGISTER, so each can carry a visible marker
-   * UNTIL THE USER EDITS IT. Cleared per-field on edit rather than wholesale —
-   * correcting the city should not un-mark the postcode.
-   */
+  // SCOTT: *"Every state has a Secretary of State website. They list their
+  /** WHICH FIELDS CAME FROM THE REGISTER, so each can carry a visible marker */
   const [fromRegister, setFromRegister] = useState<Set<string>>(new Set());
   const unmark = (k: string) =>
     setFromRegister((prev) => {
@@ -282,71 +107,19 @@ export function CompanyStep({
       next.delete(k);
       return next;
     });
-  // ⚠ `E408` — the registered address left the form; kept per `E164`.
-  // const [regAddress, setRegAddress] = useState<LocationValue>({
-  //   country: COUNTRIES[0],
-  // });
+  // — the registered address left the form; kept per .
   const [companyTos, setCompanyTos] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
   const logoInput = useRef<HTMLInputElement>(null);
 
-  /*
-    ⚠ THE LOOKUP IS A READ AND IT WRITES NOTHING. `/api/company/validate` never
-    persists; `defineCompany()` stays the only writer, which is what lets a user
-    correct a bad match before anything is saved.
-  */
-  /* ⚠ UNREAD SINCE `P1-A1.4-E408` STRIPPED THE FORM — COMMENTED, NOT DELETED
-     (`E164`); it returns with its field at the payment gate. */
+  // THE LOOKUP IS A READ AND IT WRITES NOTHING. `/api/company/validate` never
+  // UNREAD SINCE STRIPPED THE FORM — COMMENTED, NOT DELETED
   // const runLookup = async () => {
-  // setChecking(true);
-  // setLookup(null);
-  // try {
-  // const r = await fetch("/api/company/validate", {
-  // method: "POST",
-  // headers: { "Content-Type": "application/json" },
-  // body: JSON.stringify({ name: q.trim(), stateOfFiling }),
-  // });
-  // const data = (await r.json()) as ValidationResult;
-  // setLookup(data);
-  // /* ⚠ EXACTLY ONE MATCH AUTO-FILLS. With several, the user picks — filling
-  // from the first would be choosing an entity on their behalf. * /
-  // if (data.ok && data.status !== "not_found" && data.matches.length === 1) {
-  // applyMatch(data.matches[0]);
-  // }
-  // } catch {
-  // setLookup({
-  // ok: false,
-  // reason: "error",
-  // message: "We couldn't reach the register just now. Nothing has been checked.",
-  // });
-  // } finally {
-  // setChecking(false);
-  // }
-  // };
 
-  /**
-   * ⚠ PRE-FILL, NOT LOCK. Every field stays editable and marked until edited.
-   * ⚠ AND IT NEVER TOUCHES THE EIN — a state register does not publish one, and
-   * Texas's taxpayer number is a different identifier (see `lib/company-validation.ts`).
-   */
-  /* ⚠ UNREAD SINCE `P1-A1.4-E408` — its only caller was the register-lookup UI,
-     commented out below. Kept per `E164`; it returns with that field. */
+  /** PRE-FILL, NOT LOCK. Every field stays editable and marked until edited. */
+  // UNREAD SINCE — its only caller was the register-lookup UI
   // const applyMatch = (m: NonNullable<Extract<ValidationResult, { ok: true }>["matches"]>[number]) => {
-  // const marks = new Set<string>();
-  // setName(m.legalName.value);
-  // setQ(m.legalName.value);
-  // marks.add("name");
-  // setRegAddress((a) => {
-  // const next = { ...a };
-  // if (m.addressLine1) { next.line1 = m.addressLine1.value; marks.add("line1"); }
-  // if (m.city) { next.city = m.city.value; marks.add("city"); }
-  // if (m.stateCode) { next.state = m.stateCode.value; marks.add("state"); }
-  // if (m.postalCode) { next.postalCode = m.postalCode.value; marks.add("postalCode"); }
-  // return next;
-  // });
-  // setFromRegister(marks);
-  // };
 
 
   /** What the signup email suggests the company might be (E167 nudge). */
@@ -355,18 +128,7 @@ export function CompanyStep({
   // both
   const [attestation, setAttestation] = useState(false);
 
-  /*
-    THE DOMAIN NUDGE (E167 enhancement).
-
-    Someone whose work email is @straterp.com almost certainly works at
-    StratERP, so the search starts with that word rather than an empty box.
-
-    IT IS A SUGGESTION AND NOTHING MORE. It pre-fills a text field; it does not
-    select a company, does not grant a membership, and does not influence
-    approval — auto-approval stays keyed to the company's OWN recorded
-    email_domain, decided server-side. A pre-filled search box that quietly
-    conferred access would be the same hole this whole model closed.
-  */
+  // THE DOMAIN NUDGE (E167 enhancement).
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -395,59 +157,18 @@ export function CompanyStep({
     return () => clearTimeout(t);
   }, [q, mode]);
 
-  /*
-    ⚠⚠ THE SAME FUNCTION THE SERVER RUNS (`P1-J1.4-E299`). Empty is allowed;
-    wrong is not.
+  // THE SAME FUNCTION THE SERVER RUNS . Empty is allowed
+  // — the US ZIP no longer gates Continue; the address is gone.
 
-    ⚠ SUPERSEDED, quoted: this was a re-typed `/^\d{5}(-\d{4})?$/` plus
-    `regAddress.country !== "United States"`, described in its own comment as
-    *"Mirrors the server's superRefine exactly"* — a comment asserting two copies
-    agree is the tell that there are two copies. Now there is one, in
-    `lib/field-formats.ts`, and "mirrors" is a fact rather than a hope.
-    ⚠ THE EXACT STRING COMPARE WENT WITH IT: `"USA"` used to skip the check.
-  */
-  // ⚠ `E408` — the US ZIP no longer gates Continue; the address is gone.
-  // const zipOk = usZip(regAddress.postalCode, regAddress.country).ok;
-
-  /*
-    ⚠ EIN, SAME RULE AS THE SERVER'S OBJECT-LEVEL REFINE, INCLUDING HOW COUNTRY
-    RESOLVES — jurisdiction first, then the registered address. Optional: blank
-    is valid and never blocks Continue.
-  */
-  // ⚠ `E408` — the EIN moved to the payment gate (`api/settings/tax`).
-  // const einCountry = regAddress.country ?? null;
-  // const einOk = einFormat(ein, einCountry).ok;
+  // EIN, SAME RULE AS THE SERVER'S OBJECT-LEVEL REFINE, INCLUDING HOW COUNTRY
+  // — the EIN moved to the payment gate (`api/settings/tax`).
 
   const valid =
     mode === "join"
       ? !!picked && attestation
       : name.trim().length > 1 &&
-        /*
-          ── ⚠ WHAT CONTINUE NOW REQUIRES (`E408` WS-1) ────────────────────────
-
-          ⚠ SUPERSEDED, quoted not deleted — the removed conjuncts:
-              `!!taxType &&`        (Business Type — moved to the payment gate)
-              `zipOk &&`            (US ZIP — the address is gone)
-              `einOk &&`            (EIN — moved to the payment gate)
-          ⚠ `!!regAddress.country` becomes `!!country`, the standalone select.
-
-          ⚠⚠ `attestation` AND `companyTos` ARE UNTOUCHED. They are not form
-          fields: `defineCompany` and `joinCompany` each THROW without the
-          attestation, and those are the only two writers of `CompanyMembership`
-          in the product. `E408` closes that question explicitly.
-        */
-        /*
-          ⚠ COUNTRY IS THE REQUIRED PART OF THE ADDRESS, and the street/city are
-          not — deliberately, and it is what makes `E273`/`E280`/`E274` consistent
-          with each other. `E274` makes the whole COMPANY optional at onboarding
-          ("we still probably want to make the company optional at this point"),
-          and `E280`'s full contracting set is required BEFORE HIRE, not before
-          Continue — see the note on `requesterGaps` in `lib/requester-onboarding.ts`.
-          Gating Continue on a full registered address here would re-impose at
-          step 1 the requirement Scott just deferred to the work order.
-          ⚠ COUNTRY ITSELF STAYS REQUIRED because `E260a` said so, and it is
-          defaulted, so nobody is blocked by doing nothing.
-        */
+        // WHAT CONTINUE NOW REQUIRES ( WS-1)
+        // COUNTRY IS THE REQUIRED PART OF THE ADDRESS, and the street/city are
         !!country &&
         attestation &&
         companyTos;
@@ -456,8 +177,7 @@ export function CompanyStep({
     onValidityChange?.(valid);
   }, [valid, onValidityChange]);
 
-  /* ⚠ `> 1` MATCHES the server's `min(2)` and `saveCompanyName`'s own guard, so
-     the button cannot offer a save the lib will refuse. */
+  // the button cannot offer a save the lib will refuse.
   const hasName = mode === "define" && name.trim().length > 1;
   useEffect(() => {
     onHasNameChange?.(hasName);
@@ -468,20 +188,7 @@ export function CompanyStep({
   }, [busy, onBusyChange]);
 
   const submit = async () => {
-    /*
-      ── ⚠⚠ PART-ANSWERED IS ITS OWN OUTCOME NOW (`P2-J1.1-E025` / `E026`) ──────
-
-      ⚠ SUPERSEDED, quoted not deleted: this was `if (!valid) return;` — a silent
-      no-op. Together with the wizard's `if (companyValid) { … } void save({});`
-      it meant a requester who typed `Seattle Gas Company`, failed verification
-      and pressed Continue got NO POST, NO company row, NO membership and NO
-      error. Two gates, same outcome, neither said anything.
-
-      ⚠ THE PREDICATE IS UNTOUCHED. `valid` still means exactly what it meant —
-      the brief's guardrail is *"fix the branch, not the predicate"*, because
-      widening it would push an incomplete company through a gate built to stop
-      one. This adds a THIRD branch rather than moving the first.
-    */
+    // PART-ANSWERED IS ITS OWN OUTCOME NOW / )
     if (!valid) {
       if (!hasName) return;
       setBusy(true);
@@ -516,56 +223,10 @@ export function CompanyStep({
               ? { companyId: picked!.id, attestation }
               : {
                   name: name.trim(),
-                  /* ⚠ SUPERSEDED, quoted not deleted (`E408` WS-1): `taxType,`.
-                     The form no longer asks for a business type, so nothing is
-                     sent — `Company.tax_type` stays null until the payment gate
-                     collects `classification`. ⚠ SEE WS-2b: this is what makes
-                     `company.defined` false for every new company. */
                   taxType: undefined,
-                  /*
-                    `E280` — jurisdiction IS the registered address's country.
-
-                    ── ⚠⚠ THIS FIELD IS A POSTING GATE. DO NOT REMOVE THE ADDRESS
-                       WITHOUT REPLACING IT (`P1-A1.4-E408`, MEASURED 2026-09-10)
-
-                    `E408` proposed stripping this step to a name and a website,
-                    which would delete `regAddress` and leave `Company.country`
-                    NULL on every newly-defined company. ⚠ MEASURED: `country`
-                    is not merely displayed —
-
-                        identity-bar.ts:60   WORK_REQUEST_BAR includes
-                                             "companyCountry"
-                        work-request-identity.ts:360
-                                             companyCountry: company?.country
-                        work-request-identity.ts:269
-                                             "Add your company's country"
-
-                    — so `missingIdentityForPost` REFUSES TO POST A WORK REQUEST
-                    without it. ⚠⚠ A buyer whose company was created after the
-                    strip would be silently unable to post, and the failure would
-                    look like a broken filter rather than a missing field.
-
-                    ⚠ AND THE REMEDIATION LINK IS ALREADY BROKEN: five hrefs —
-                    `identity-bar.ts:265/270/275`, `work-request-identity.ts:260/266`
-                    — point at `/settings/company`, and THERE IS NO SUCH PAGE.
-                    A blocked buyer is sent to a 404 today.
-
-                    ⚠ SO THE COUNTRY QUESTION HAS TO SURVIVE THE STRIP IN SOME
-                    FORM, or the posting bar has to change — and that bar is
-                    `P1-J4-E025`'s decision, not this brief's. STOPPED AND
-                    REPORTED rather than nulling a gate.
-                  */
-                  /* ⚠ FROM THE STANDALONE SELECT NOW (`E408` WS-1), not from the
-                     removed address block. ⚠ SUPERSEDED, quoted:
-                     `country: regAddress.country || null,` */
+                  // — jurisdiction IS the registered address's country.
+                  // FROM THE STANDALONE SELECT NOW ( WS-1), not from the
                   country: country || null,
-                  /* ⚠ SUPERSEDED, quoted not deleted (`E408` WS-1) — the form no
-                     longer asks for any of these, so nothing is sent and the
-                     columns stay null until the payment gate collects them:
-                       `ein: ein.trim() || null,`
-                       `stateOfFiling: stateOfFiling || null,`
-                       `registeredAddress: regAddress,`
-                     ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER — reported. */
                   website: website.trim() || null,
                   logoUrl,
                   attestation,
@@ -585,12 +246,7 @@ export function CompanyStep({
     }
   };
 
-  /*
-    Publish `submit` to the parent AFTER render, not during it. Assigning a ref
-    in the render body is "Cannot update ref during render" — and the closure
-    changes with every keystroke, so it genuinely needs re-publishing each
-    render rather than once on mount.
-  */
+  // Publish `submit` to the parent AFTER render, not during it. Assigning a ref
   useEffect(() => {
     if (submitRef) submitRef.current = submit;
   });
@@ -599,13 +255,7 @@ export function CompanyStep({
     <div className={bounded ? "space-y-3" : "space-y-4"}>
       {error && <Notice>{error}</Notice>}
 
-      {/*
-        WS8 / E180 — a SEGMENTED CONTROL, not two large cards.
-
-        The cards were the tallest thing on the step and they asked a question
-        the provider can answer in a word. This is the same choice in one row,
-        which is most of what buys the page back its footer.
-      */}
+      {/* WS8 / E180 — a SEGMENTED CONTROL, not two large cards. */}
       <div className="inline-flex rounded-full border border-line p-1 text-[14px] font-semibold">
         {(
           [
@@ -650,7 +300,7 @@ export function CompanyStep({
             <TextInput
               value={q}
               onChange={(e) => {
-                /* ⚠ EDITING CLEARS THE MARKER — the value is the user's now. */
+                /* EDITING CLEARS THE MARKER — the value is the user's now. */
                 unmark("name");
                 setQ(e.target.value);
                 setPicked(null);
@@ -681,13 +331,7 @@ export function CompanyStep({
           )}
 
           {q.trim().length >= 2 && hits.length === 0 && (
-            /*
-              E167 — this was one grey sentence with a link in it, and the walk
-              read it as a dead end: search returns nothing, Next stays disabled,
-              no way forward. It is now a card that says WHY there is no match
-              (only companies somebody has already added are listed) and carries
-              the way out as a button.
-            */
+            // E167 — this was one grey sentence with a link in it, and the walk
             <div className="rounded-brand border-[1.5px] border-dashed border-line p-5">
               <p className="text-[15.5px] font-bold">
                 No company here matches &ldquo;{q.trim()}&rdquo;.
@@ -710,13 +354,7 @@ export function CompanyStep({
           )}
 
           {picked && (
-            /*
-              WS8 / E180 — "You work here? Attach." The step should feel
-              behind-the-scenes: recognise the company, say what happens next in
-              one line, and get out of the way. Verification is deferred to the
-              pay gate — nobody self-associates to a company that will pay them,
-              so the pre-payout fraud risk is low and the friction here is real.
-            */
+            // WS8 / E180 — "You work here? Attach." The step should feel
             <Notice tone="info">
               <b>You work at {picked.name}?</b>{" "}
               {picked.domain ? (
@@ -742,395 +380,31 @@ export function CompanyStep({
             />
           </Field>
 
-          {/*
-            ── ⚠⚠ STRIPPED BY `P1-A1.4-E408`. COMMENTED, NOT DELETED (`E164`) ────
+          {/* STRIPPED BY . COMMENTED, NOT DELETED */}
 
-            SCOTT: *"we are trying to do something that is **not yet needed** AND we
-            are adding **complexity that will scare people off**… Get rid of all
-            that extra requesting. Lets just ask for the company name and the
-            website (optional — most small contractors will not have a website)."*
-
-            ⚠ THE QUESTIONS BELOW MOVE TO THE PAYMENT GATE, which `P1-ALL-E404`
-            already built: `api/settings/tax/route.ts` collects `legalName`,
-            `country`, `classification` (the business type) and `tinKind` before
-            any money moves. ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER —
-            reported, and the payment-gate brief inherits it.
-
-            ⚠⚠ COUNTRY DID **NOT** MOVE — it is a single select below. Deferring it
-            would have nulled `Company.country`, which `WORK_REQUEST_BAR` requires
-            to post a work request: a buyer would be blocked, with the fix sitting
-            behind the transaction it was blocking.
-
-            ⚠ RESTORING ANY OF THIS MEANS RE-READING `E408` FIRST — the fields are
-            kept so the payment gate can lift them, not so the signup form can.
-            ── REMOVED: Business Type ──
-
-          <Field
-            label="Business Type *"
-            hint="This sets which tax details we ask for later, and nothing else changes."
-          >
-            <select
-              value={taxType}
-              onChange={(e) => setTaxType(e.target.value as TaxTypeValue)}
-              className={SELECT}
-            >
-              <option value="">Choose a business type…</option>
-              {TAX_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                  {t.hint ? ` — ${t.hint}` : ""}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          */}
-
-          {/*
-            ⚠ SCOTT NAMED THIS FIELD "EIN" (`E273`) and the label uses his word.
-            It writes to `Company.tin`, which is the generic tax-registration id
-            (EIN · VAT/company number · SSN/ITIN) — the column is deliberately
-            broader than the US-specific label, and the hint says so rather than
-            promising a US-only form.
-            ⚠ NOT REQUIRED HERE — see the `valid` note above and `E274`.
-          */}
-          {/*
-            ── ⚠⚠ STATE OF FILING + THE LOOKUP (`P1-J1.1-E282`) ────────────────
-
-            SCOTT: *"The user gives the company name and the state of filing.
-            Panameer does the rest."*
-
-            ⚠ US ONLY (decision 5), so the whole block is conditional on the
-            registered address's country — which is also the jurisdiction
-            (`E260`/`E280`).
-            ⚠⚠ AND NOTHING HERE CAN BLOCK `Continue`. `valid` is untouched by
-            this feature: a failed lookup, an unsupported state and a company
-            that is not on the register all leave the form exactly as the user
-            left it.
-            ⚠ EVERY US STATE IS OFFERED, INCLUDING THE ONES WE CANNOT CHECK.
-            Hiding Delaware would leave somebody wondering why their state is
-            missing; telling them we cannot check it yet is information.
-          */}
-          {/*
-            ⚠ THE MARKER, NOT A LOCK. Scott: *"let's present it and use it"* —
-            so the value is filled in, attributed, and fully editable; the chip
-            disappears the moment the user changes the field.
-          */}
+          {/* SCOTT NAMED THIS FIELD "EIN" and the label uses his word. */}
+          {/* STATE OF FILING + THE LOOKUP */}
+          {/* THE MARKER, NOT A LOCK. Scott: *"let's present it and use it"* — */}
           {fromRegister.has("name") && (
             <p className="-mt-2 text-[12.5px] text-ink-2">
               ✓ Legal name from the state register — edit it if it&rsquo;s wrong.
             </p>
           )}
 
-          {/*
-            ── ⚠⚠ STRIPPED BY `P1-A1.4-E408`. COMMENTED, NOT DELETED (`E164`) ────
-
-            SCOTT: *"we are trying to do something that is **not yet needed** AND we
-            are adding **complexity that will scare people off**… Get rid of all
-            that extra requesting. Lets just ask for the company name and the
-            website (optional — most small contractors will not have a website)."*
-
-            ⚠ THE QUESTIONS BELOW MOVE TO THE PAYMENT GATE, which `P1-ALL-E404`
-            already built: `api/settings/tax/route.ts` collects `legalName`,
-            `country`, `classification` (the business type) and `tinKind` before
-            any money moves. ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER —
-            reported, and the payment-gate brief inherits it.
-
-            ⚠⚠ COUNTRY DID **NOT** MOVE — it is a single select below. Deferring it
-            would have nulled `Company.country`, which `WORK_REQUEST_BAR` requires
-            to post a work request: a buyer would be blocked, with the fix sitting
-            behind the transaction it was blocking.
-
-            ⚠ RESTORING ANY OF THIS MEANS RE-READING `E408` FIRST — the fields are
-            kept so the payment gate can lift them, not so the signup form can.
-            ── REMOVED: State of filing + corporate-register lookup ──
-
-          {isUnitedStates(regAddress.country) && (
-            <div className="rounded-brand border border-line p-4">
-              <Field
-                label="State of filing"
-                hint="Where the company is registered. We'll look it up on that state's corporate register."
-              >
-                <select
-                  value={stateOfFiling}
-                  onChange={(e) => {
-                    setStateOfFiling(e.target.value);
-                    setLookup(null);
-                  }}
-                  className="w-full rounded-[10px] border border-line px-3 py-2.5 text-[15px]"
-                >
-                  <option value="">Choose a state…</option>
-                  {US_STATES.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                      {SUPPORTED_STATES.includes(st) ? "" : " — can't check yet"}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <button
-                type="button"
-                onClick={() => void runLookup()}
-                disabled={checking || !stateOfFiling || q.trim().length < 2}
-                className="mt-3 border border-ink bg-surface px-5 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-surface-hover disabled:opacity-40"
-              >
-                {checking ? "Checking the register…" : "Look Up This Company"}
-              </button>
-
-              {/* ── THE RESULT. ⚠ NEVER CLAIMS MORE THAN THE REGISTER RETURNED. * /}
-              {lookup && !lookup.ok && (
-                <p className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-ink-2">
-                  {lookup.message}
-                </p>
-              )}
-              {lookup?.ok && lookup.status === "not_found" && (
-                <p className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-ink-2">
-                  No company starting with that name on the {lookup.registerName}.
-                  Check the spelling, or carry on — we haven&rsquo;t changed anything.
-                </p>
-              )}
-              {lookup?.ok && lookup.matches.length > 1 && (
-                <div className="mt-3">
-                  <p className="text-[13.5px] font-semibold">
-                    {lookup.totalMatches} entities start with that name. Which one?
-                  </p>
-                  <ul className="mt-2 grid gap-1.5">
-                    {lookup.matches.map((m) => (
-                      <li key={m.entityNumber?.value ?? m.legalName.value}>
-                        <button
-                          type="button"
-                          onClick={() => applyMatch(m)}
-                          className="w-full rounded-[10px] border border-line bg-white px-3 py-2 text-left text-[13.5px] transition-colors hover:border-magenta"
-                        >
-                          <b>{m.legalName.value}</b>
-                          <span className="text-ink-2">
-                            {m.entityType ? ` · ${m.entityType.value}` : ""}
-                            {m.city ? ` · ${m.city.value}` : ""}
-                            {m.status ? ` · ${m.status.value}` : ""}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {lookup?.ok && lookup.matches.length === 1 && (
-                <div className="mt-3 rounded-[10px] border border-line bg-bg-soft px-3 py-2.5 text-[13.5px] leading-relaxed">
-                  {/*
-                    ⚠⚠ THE CLAIM MATCHES WHAT WAS ACTUALLY READ. New York's
-                    register publishes NO status column, so for New York this says
-                    "listed on" and never "in good standing" — `publishesStatus`
-                    is what carries that, and it comes from the adapter.
-                  * /}
-                  <p>
-                    <b>
-                      {lookup.status === "not_in_good_standing"
-                        ? "Found, but not marked in good standing"
-                        : "Found on the register"}
-                    </b>{" "}
-                    — {lookup.matches[0].legalName.value}
-                    {lookup.matches[0].entityNumber
-                      ? `, entity #${lookup.matches[0].entityNumber.value}`
-                      : ""}
-                    .
-                  </p>
-                  <p className="mt-1 text-ink-2">
-                    {lookup.publishesStatus && lookup.matches[0].status
-                      ? `The register records its status as “${lookup.matches[0].status.value}”.`
-                      : "This register doesn't publish a status, so we haven't checked good standing."}
-                  </p>
-                  <p className="mt-1 text-ink-2">
-                    We&rsquo;ve filled in what it holds. Everything stays editable —
-                    change anything that looks wrong.
-                  </p>
-                  <a
-                    href={lookup.matches[0].legalName.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-1.5 inline-block font-semibold text-magenta hover:underline"
-                  >
-                    {lookup.registerName} ↗
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-          */}
+          {/* STRIPPED BY . COMMENTED, NOT DELETED */}
 
 
-          {/*
-            ── ⚠⚠ STRIPPED BY `P1-A1.4-E408`. COMMENTED, NOT DELETED (`E164`) ────
-
-            SCOTT: *"we are trying to do something that is **not yet needed** AND we
-            are adding **complexity that will scare people off**… Get rid of all
-            that extra requesting. Lets just ask for the company name and the
-            website (optional — most small contractors will not have a website)."*
-
-            ⚠ THE QUESTIONS BELOW MOVE TO THE PAYMENT GATE, which `P1-ALL-E404`
-            already built: `api/settings/tax/route.ts` collects `legalName`,
-            `country`, `classification` (the business type) and `tinKind` before
-            any money moves. ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER —
-            reported, and the payment-gate brief inherits it.
-
-            ⚠⚠ COUNTRY DID **NOT** MOVE — it is a single select below. Deferring it
-            would have nulled `Company.country`, which `WORK_REQUEST_BAR` requires
-            to post a work request: a buyer would be blocked, with the fix sitting
-            behind the transaction it was blocking.
-
-            ⚠ RESTORING ANY OF THIS MEANS RE-READING `E408` FIRST — the fields are
-            kept so the payment gate can lift them, not so the signup form can.
-            ── REMOVED: EIN ──
-
-          <Field
-            label="EIN"
-            hint="Your federal tax id. Outside the US, the equivalent company or VAT registration number."
-          >
-            <TextInput
-              value={ein}
-              onChange={(e) => setEin(e.target.value)}
-              onBlur={() => setEinTouched(true)}
-              placeholder="12-3456789"
-              autoComplete="off"
-            />
-            {/*
-              ⚠ ON BLUR, WHICH IS WHAT SCOTT ASKED FOR: *"i added an alpha and
-              tabbed out… didn't get an error."* Not while typing — flagging
-              `12-345` mid-entry would call every EIN wrong for the first eight
-              keystrokes.
-              ⚠ THE MESSAGE IS THE SHARED CONSTANT, so this cannot drift from the
-              route's refusal.
-            * /}
-            {einTouched && !einOk && (
-              <p className="mt-1 text-[13px] text-red-700">{EIN_MESSAGE}</p>
-            )}
-          </Field>
-          */}
+          {/* STRIPPED BY . COMMENTED, NOT DELETED */}
 
 
-          {/*
-            ⚠⚠ THE REGISTERED ADDRESS (`E280`) — the entity you contract WITH,
-            not where work is delivered. See the block at the top of this file.
-            ⚠ `LocationFields` IS REUSED, NOT RE-TYPED: it is the one component
-            that already knows a region is a "State" in the US and a "Province"
-            in Canada, and it is what the requester wizard's Work Location uses.
-            Two address forms in one product is the drift it exists to prevent.
-          */}
-          {/*
-            ── ⚠⚠ STRIPPED BY `P1-A1.4-E408`. COMMENTED, NOT DELETED (`E164`) ────
-
-            SCOTT: *"we are trying to do something that is **not yet needed** AND we
-            are adding **complexity that will scare people off**… Get rid of all
-            that extra requesting. Lets just ask for the company name and the
-            website (optional — most small contractors will not have a website)."*
-
-            ⚠ THE QUESTIONS BELOW MOVE TO THE PAYMENT GATE, which `P1-ALL-E404`
-            already built: `api/settings/tax/route.ts` collects `legalName`,
-            `country`, `classification` (the business type) and `tinKind` before
-            any money moves. ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER —
-            reported, and the payment-gate brief inherits it.
-
-            ⚠⚠ COUNTRY DID **NOT** MOVE — it is a single select below. Deferring it
-            would have nulled `Company.country`, which `WORK_REQUEST_BAR` requires
-            to post a work request: a buyer would be blocked, with the fix sitting
-            behind the transaction it was blocking.
-
-            ⚠ RESTORING ANY OF THIS MEANS RE-READING `E408` FIRST — the fields are
-            kept so the payment gate can lift them, not so the signup form can.
-            ── REMOVED: Registered Address (LocationFields) — replaced by ONE country select ──
-
-          <div>
-            <p className="mb-2 text-[14px] font-bold text-ink">
-              Registered Address
-            </p>
-            <div className="space-y-3">
-              <div onBlur={() => setZipTouched(true)}>
-                <LocationFields
-                  value={regAddress}
-                  onChange={(patch) => {
-                    /* ⚠ ONLY THE EDITED KEYS LOSE THEIR MARKER — correcting the
-                       city must not un-attribute the postcode. * /
-                    for (const k of Object.keys(patch)) unmark(k);
-                    setRegAddress((a) => ({ ...a, ...patch }));
-                  }}
-                  withStreet
-                  countryHint="Where the company is registered — its jurisdiction."
-                />
-              </div>
-              {/*
-                ⚠ THE MESSAGE LIVES HERE, NOT INSIDE `LocationFields` (`E299`).
-                That component is SHARED with the requester wizard's Work
-                Location, and this brief says not to touch the requester wizard.
-                A blur listener on the wrapper gets the same behaviour without
-                changing a component two journeys render.
-              * /}
-              {/* ⚠ `E282` — same marker rule for the address the lookup filled. * /}
-              {["line1", "city", "state", "postalCode"].some((k) => fromRegister.has(k)) && (
-                <p className="mt-1 text-[12.5px] text-ink-2">
-                  ✓ Address from the state register — edit anything that looks wrong.
-                </p>
-              )}
-              {/* ⚠ THE CONSTANT, NOT THE SENTENCE (`E299`). The literal that was
-                  here was the second copy of the server's message. * /}
-              {zipTouched && !zipOk && (
-                <p className="mt-1 text-[13px] text-red-700">{US_ZIP_MESSAGE}</p>
-              )}
-            </div>
-          </div>
-          */}
+          {/* THE REGISTERED ADDRESS — the entity you contract WITH */}
+          {/* STRIPPED BY . COMMENTED, NOT DELETED */}
 
 
-          {/*
-            ── ⚠⚠ STRIPPED BY `P1-A1.4-E408`. COMMENTED, NOT DELETED (`E164`) ────
-
-            SCOTT: *"we are trying to do something that is **not yet needed** AND we
-            are adding **complexity that will scare people off**… Get rid of all
-            that extra requesting. Lets just ask for the company name and the
-            website (optional — most small contractors will not have a website)."*
-
-            ⚠ THE QUESTIONS BELOW MOVE TO THE PAYMENT GATE, which `P1-ALL-E404`
-            already built: `api/settings/tax/route.ts` collects `legalName`,
-            `country`, `classification` (the business type) and `tinKind` before
-            any money moves. ⚠ THE REGISTERED ADDRESS HAS NO DOWNSTREAM ASKER —
-            reported, and the payment-gate brief inherits it.
-
-            ⚠⚠ COUNTRY DID **NOT** MOVE — it is a single select below. Deferring it
-            would have nulled `Company.country`, which `WORK_REQUEST_BAR` requires
-            to post a work request: a buyer would be blocked, with the fix sitting
-            behind the transaction it was blocking.
-
-            ⚠ RESTORING ANY OF THIS MEANS RE-READING `E408` FIRST — the fields are
-            kept so the payment gate can lift them, not so the signup form can.
-            ── REMOVED: Website field — re-emitted below as OPTIONAL ──
-
-          <Field label="Website">
-            <TextInput
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://acme.com"
-              autoComplete="url"
-            />
-          </Field>
-          */}
+          {/* STRIPPED BY . COMMENTED, NOT DELETED */}
 
 
-          {/*
-            ── ⚠⚠ ONE COUNTRY SELECT — NOT AN ADDRESS BLOCK (`E408` WS-1) ────────
-
-            ⚠ SUPERSEDED, quoted not deleted: this was `regAddress.country`, read
-            off the `LocationFields` block commented out above.
-
-            ⚠⚠ IT STAYS BECAUSE IT IS A GATE, NOT A DETAIL. `identity-bar.ts:64`
-            puts `"companyCountry"` in `WORK_REQUEST_BAR` and
-            `missingIdentityForPost` refuses to post a work request without it —
-            so a company created with a null country would leave its buyer unable
-            to post. SCOTT: *"I want users (buyers/sellers) to be organized by
-            their company."*
-
-            ⚠ EXACTLY ONE COUNTRY FIELD ON THE FORM, which is `E280`'s rule and
-            still binds. The list is `COUNTRIES`, unchanged — only where it is
-            drawn moved.
-          */}
+          {/* ONE COUNTRY SELECT — NOT AN ADDRESS BLOCK ( WS-1) */}
           <Field
             label="Country *"
             hint="Where the company is based. It decides how you'd be paid, and buyers filter by it."
@@ -1140,8 +414,7 @@ export function CompanyStep({
               onChange={(e) => setCountry(e.target.value)}
               className={SELECT}
             >
-              {/* ⚠⚠ ALL 245, BY CODE, SHOWING THE NAME (`E729` WS-C). `check:company-step`
-                  asserts EXACTLY ONE `.map` renders this select — still true. */}
+              {/* ALL 245, BY CODE, SHOWING THE NAME ( WS-C). `check:company-step` */}
               <option value="">Choose a country…</option>
               {ALL_COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -1151,10 +424,7 @@ export function CompanyStep({
             </select>
           </Field>
 
-          {/* ⚠ OPTIONAL, AND THE HINT SAYS SO IN WORDS. Scott: *"most small
-              contractors will not have a website."* An optional field that looks
-              required is the same friction this brief exists to remove — the
-              label carries no asterisk and the hint states it outright. */}
+          {/* OPTIONAL, AND THE HINT SAYS SO IN WORDS. Scott: *"most small */}
           <Field label="Website" hint="Optional — leave it blank if you don't have one.">
             <TextInput
               value={website}
@@ -1164,12 +434,7 @@ export function CompanyStep({
             />
           </Field>
 
-          {/*
-            COMPANY LOGO (E168). Optional, and it uploads immediately so the
-            person sees what they picked before committing — the same pattern as
-            the profile photo. Storing it under the person's folder until the
-            company exists is what lets it be uploaded BEFORE define.
-          */}
+          {/* COMPANY LOGO (E168). Optional, and it uploads immediately so the */}
           <div>
             <span className="mb-1 block text-[14px] font-bold text-ink">
               Company Logo

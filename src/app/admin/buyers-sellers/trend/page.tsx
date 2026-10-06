@@ -17,26 +17,7 @@ import { StatusTrendChart } from "@/components/admin/StatusTrendChart";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Admin → Buyers/Sellers → TREND (`P1-J1.1-E257`).
- *
- * Scott, 2026-08-30: *"do trending."* Clicking a status tile on the board lands
- * here with that status selected; `?status=all` is the across-all-steps view.
- *
- * ⚠⚠ THIS SHIPPED ONE BRIEF LATE AND THE REASON IS RECORDED, because the stop
- * was correct behaviour. `E257` originally required reading
- * `.claude/skills/dataviz` before writing any chart code, AND stopping if a
- * status had no timestamp to trend on. Both conditions fired: the skill path did
- * not exist anywhere (it was chat's error, later withdrawn — *"THAT PATH DOES
- * NOT EXIST AND NEVER DID"*), and the buyer-side `Validated` genuinely had no
- * column. `E269b` added `RequesterProfile.validated_at` and the skill
- * requirement was withdrawn, so both blockers are gone and this is built.
- *
- * ⚠ NO EVENT LOG — see `lib/onboarding-trend.ts`. Every series reads a state
- * column, so the four are cumulative-by-nature rather than exclusive buckets and
- * a user who moved BACKWARDS is invisible. Stated on the page itself, not just
- * here, because the person reading the chart is the one who needs to know.
- */
+/** Admin → Buyers/Sellers → TREND . */
 export default async function TrendPage({
   searchParams,
 }: {
@@ -44,22 +25,7 @@ export default async function TrendPage({
 }) {
   const sp = await searchParams;
 
-  /*
-    ── ⚠⚠ THE PER-JOB VIEW (`P1-A1.5-E456`) ──────────────────────────────────
-
-    > **SCOTT:** *"please create reports for each of the footer tiles (like
-    > medlinq) showing how many were added each week over the last 90 days."*
-
-    ⚠⚠ THIS IS WHERE THE TREND LINK WENT. `E457` deleted the sentence that was
-    this route's ONLY entry point, and Part 1 stopped rather than strand it.
-    Scott's answer is the FOOTER: five job tiles, five links, into here.
-
-    ⚠ A NEW PARAMETER, NOT A NEW ROUTE, and ⚠⚠ IT NEVER TOUCHES `?status=`.
-    Handing a JOB to `getStatusTrend` would fall through to its `else` branch and
-    render the Validated series under a Providers heading — silently. Two axes,
-    two parameters. `?job=` is checked FIRST and returns its own page, so the
-    two code paths never meet.
-  */
+  // THE PER-JOB VIEW
   const jobTile = JOB_TILES.find((t) => t.key === sp.job);
   if (jobTile) return <JobTrend tile={jobTile} />;
   const period: Period = PERIODS.includes(sp.period as Period)
@@ -144,11 +110,7 @@ export default async function TrendPage({
         ))}
       </div>
 
-      {/*
-        ⚠ THE CAVEAT BELONGS ON THE PAGE, not only in the source. Somebody
-        reading a chart will act on it, and these three facts change what it
-        means.
-      */}
+      {/* THE CAVEAT BELONGS ON THE PAGE, not only in the source. Somebody */}
       <div className="mt-8 rounded-brand border border-line bg-white p-4">
         <p className="text-[13px] font-bold text-ink">How to read this</p>
         <ul className="mt-2 space-y-1 text-[12.5px] leading-relaxed text-ink-2">
@@ -177,25 +139,7 @@ export default async function TrendPage({
 }
 
 
-/**
- * ONE JOB, THIRTEEN WEEKS (`P1-A1.5-E456` WS-7).
- *
- * ⚠⚠ NO CHART LIBRARY AND NO NEW CHART. `package.json` carries no recharts /
- * chart.js / d3 / visx / nivo, and the brief forbids adding one for thirteen
- * rectangles. This reuses `StatusTrendChart` — its axes, its tick-stride rule,
- * its inward-anchored end labels, its `role="img"` summary and its readable
- * table — through the `variant="bar"` opt-in, and reuses `onboarding-trend.ts`'s
- * Monday-start week rule so two charts cannot disagree about the same fortnight.
- *
- * ⚠ COUNTED ON `Person.created_at`, the only timestamp every row reliably
- * carries. A job flag has no timestamp of its own, so this is **people who hold
- * this job today, by when they joined** — not when they acquired the job. That
- * is stated on the page rather than buried here.
- *
- * ⚠⚠ EXPECT IT LUMPY AND DO NOT SMOOTH IT. Most of these rows were seeded in a
- * few bursts, so most weeks are legitimately zero. A chart that looks plausible
- * because it was smoothed is worse than an ugly honest one.
- */
+/** ONE JOB, THIRTEEN WEEKS WS-7). */
 async function JobTrend({ tile }: { tile: (typeof JOB_TILES)[number] }) {
   const people = await prisma.person.findMany({
     select: {
@@ -221,7 +165,7 @@ async function JobTrend({ tile }: { tile: (typeof JOB_TILES)[number] }) {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      {/* ⚠ SAME `BackLink` AS `E455`/`E460` — one component, or they diverge. */}
+      {/* SAME `BackLink` AS `E455`/`E460` — one component, or they diverge. */}
       <BackLink href="/admin/buyers-sellers" label="Users" />
       <h1 className="mt-1 font-display text-[26px] font-bold text-ink">
         {tile.label}
@@ -239,10 +183,7 @@ async function JobTrend({ tile }: { tile: (typeof JOB_TILES)[number] }) {
             status: tile.label,
             period: "week",
             points,
-            /* ⚠ THE CHART'S EMPTY STATE KEYS OFF `total`, so this is the count
-               IN THE WINDOW, not the all-time count. 139 providers who all
-               joined 6 months ago must render "none joined in this period"
-               rather than 13 empty bars under a total of 139. */
+            // THE CHART'S EMPTY STATE KEYS OFF `total`, so this is the count
             total: inWindow,
             sources: ["Person.created_at"],
             missing: [],

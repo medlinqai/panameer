@@ -58,33 +58,10 @@ const RULES: PhoneRule[] = [
   },
 ];
 
-/**
- * The generic fallback. E.164 allows 15 digits including the country code, and
- * no national number anywhere is shorter than 4 — so anything in that band is
- * accepted and left unformatted rather than pushed into a shape that might be
- * wrong for that country.
- *
- * ⚠ IT IS NOW THE LAST RESORT, NOT THE SECOND ONE (`P1-ALL-E417`). Before this
- * brief every country except three landed here. Now only a country with no ISO
- * code to hand does — in practice `"Other"`, and an empty country.
- */
+/** The generic fallback. E.164 allows 15 digits including the country code, and */
 const GENERIC = { min: 7, max: 15 };
 
-/**
- * ⚠⚠ THE COUNTRY LIST SPEAKS DISPLAY NAMES; THE LIBRARY SPEAKS ISO 3166-1.
- *
- * `COUNTRIES` in `lib/countries.ts` stores "Saudi Arabia", and every caller
- * passes that string straight through from the address block or the sign-up
- * form. The library needs `"SA"`. This map is the whole translation layer, and
- * it is written out rather than derived because a wrong guess here is a silently
- * mis-validated number.
- *
- * ⚠ EVERY ENTRY IN `COUNTRIES` HAS A ROW, plus the short aliases the curated
- * rules below already accepted ("USA", "UK", "GB"...). `check:phone` asserts the
- * two lists have not drifted apart, so adding a country without its code fails
- * the build rather than quietly falling back to the generic band.
- * ⚠ `"Other"` HAS NO CODE ON PURPOSE — it is the escape hatch, not a country.
- */
+/** THE COUNTRY LIST SPEAKS DISPLAY NAMES; THE LIBRARY SPEAKS ISO 3166-1. */
 const ISO: Record<string, CountryCode> = {
   "United States": "US", USA: "US", US: "US",
   Canada: "CA", CA: "CA",
@@ -120,12 +97,7 @@ export function isoFor(country: string | null | undefined): CountryCode | null {
   return hit ? ISO[hit] : null;
 }
 
-/**
- * What we tell the person we are checking against — the honest version of the
- * hint that used to promise a format for countries this module had never heard
- * of. Returns the curated example where there is one, otherwise the dial code,
- * otherwise null so the caller says nothing rather than something false.
- */
+/** What we tell the person we are checking against — the honest version of the */
 export function phoneExpectation(
   country: string | null | undefined
 ): { example?: string; dialCode?: string; country: string } | null {
@@ -153,59 +125,21 @@ export function digitsOf(value: string): string {
   return value.replace(/\D+/g, "");
 }
 
-/**
- * What the input should display for what has been typed so far.
- *
- * Formats INCREMENTALLY — "(212) 55" while mid-entry — because a mask that only
- * appears once the number is complete makes the field look broken until the
- * last keystroke. Never emits a trailing separator: "(212) " with nothing after
- * it invites someone to stop there and call it done.
- */
+/** What the input should display for what has been typed so far. */
 export function formatPhone(value: string, country: string | null | undefined): string {
   const digits = digitsOf(value);
   if (!digits) return "";
   const rule = ruleFor(country);
   if (rule) return rule.format(digits).replace(/[\s(-]+$/, "");
 
-  /*
-    ⚠ EVERY OTHER COUNTRY NOW GETS ITS REAL NATIONAL GROUPING (`P1-ALL-E417`) —
-    an Indian mobile renders `98765 43210` where it used to render `9876543210`.
-    ⚠ SUPERSEDED, quoted not deleted: `if (!rule) return digits.slice(0, GENERIC.max);`
-
-    `AsYouType` is INCREMENTAL by design, which is the same contract the curated
-    masks keep: a format that only appears on the last keystroke makes the field
-    look broken until then.
-    ⚠ THE TRAILING-SEPARATOR RULE APPLIES HERE TOO. The library will happily
-    return "98765 " mid-entry, and a field that shows a dangling space invites
-    someone to stop there — so the same trim runs on both paths.
-  */
+  // EVERY OTHER COUNTRY NOW GETS ITS REAL NATIONAL GROUPING —
   const iso = isoFor(country);
   if (!iso) return digits.slice(0, GENERIC.max);
   const typed = new AsYouType(iso).input(digits.slice(0, GENERIC.max));
   return (typed || digits.slice(0, GENERIC.max)).replace(/[\s(-]+$/, "");
 }
 
-/**
- * ── ⚠⚠ HOW THE PHONE'S OWN COUNTRY IS PERSISTED (`P1-ALL-E417` WS-2a) ────────
- *
- * **SCOTT, 2026-09-12:** *"The selected phone country is stored with the phone,
- * independent of the address country — do not overwrite one from the other."*
- *
- * ⚠⚠ THERE IS NO `phone_country` COLUMN AND THIS BRIEF FORBIDS A `db:push`
- * (*"no `db:push` — if you think you need one, STOP"*). So the country is stored
- * INSIDE the number, in E.164: `+919876543210`. That satisfies the requirement
- * literally — the country travels with the phone, nothing derives it from the
- * address, and no schema moves. It is also what an international phone column
- * should hold.
- *
- * ⚠ THE INPUT STILL SHOWS THE NATIONAL FORM. `+91` lives in the picker beside
- * the field; the box reads `98765 43210`. Only the SAVED string is E.164.
- *
- * ⚠ LEGACY ROWS ARE NOT MIGRATED AND NOT REWRITTEN (`E164`). Numbers saved
- * before this brief are national text like `(212) 559-9999`; `parseStoredPhone`
- * returns `country: null` for them and the caller falls back to the sign-up
- * country, exactly as it did before. Nothing is back-filled.
- */
+/** HOW THE PHONE'S OWN COUNTRY IS PERSISTED WS-2a) */
 export function toE164(value: string, country: string | null | undefined): string | null {
   const digits = digitsOf(value);
   if (!digits) return null;
@@ -215,15 +149,7 @@ export function toE164(value: string, country: string | null | undefined): strin
   return parsed?.isValid() ? parsed.number : null;
 }
 
-/**
- * Read a stored value back into the two things the field needs: which country
- * it belongs to, and what to show in the box.
- *
- * ⚠ TOLERANT BY DESIGN. A stored E.164 gives both answers; anything else — a
- * legacy national string, or a number typed before this field existed — gives
- * the digits back and `null` for the country, so the caller can fall back
- * rather than guess.
- */
+/** Read a stored value back into the two things the field needs: which country */
 export function parseStoredPhone(
   stored: string | null | undefined
 ): { country: string | null; display: string } {
@@ -244,13 +170,7 @@ export function parseStoredPhone(
 
 export type PhoneCheck = { ok: boolean; reason?: string };
 
-/**
- * Blur-time validation.
- *
- * Deliberately reports WHAT IS WRONG rather than "invalid phone number": the
- * two real failures — letters, and a number that stops short — have different
- * fixes, and "incomplete" is the one people hit.
- */
+/** Deliberately reports WHAT IS WRONG rather than "invalid phone number": the */
 export function validatePhone(
   value: string,
   country: string | null | undefined
@@ -262,63 +182,13 @@ export function validatePhone(
   const digits = digitsOf(raw);
   const rule = ruleFor(country);
 
-  /*
-    ── ⚠⚠⚠ THE LIBRARY JUDGES EVERY COUNTRY NOW (`P2-A1.1-E728` WS-B, ruling 3) ───────────
+  // THE LIBRARY JUDGES EVERY COUNTRY NOW WS-B, ruling 3)
 
-    ⚠ **SCOTT: *"Phone validation uses libphonenumber-js for every country, not just the
-    curated US rule."***
-
-    ⚠⚠⚠ **THE CURATED BRANCH USED TO RETURN A VERDICT, AND IT ONLY EVER COUNTED DIGITS.**
-    Ten digits was a pass — so `5551234567` was accepted as a US number, and
-    `isValidPhoneNumber` rejects it (555 is the reserved fictional range). **MEASURED BEFORE
-    THIS CHANGE: 61 of 61 stored phones "passed", including 53 seeded `555` numbers.**
-    ⚠⚠ **SO THE OLD PASS RATE WAS NOT A MEASUREMENT OF ANYTHING** — it was a digit count
-    wearing a verdict's clothes, and it is exactly the shape ruling 11 warns about: an
-    assertion its own subject cannot fail.
-
-    ⚠⚠⚠ **THE RULE IS NOT DELETED — IT IS DEMOTED FROM JUDGE TO PHRASEBOOK.** `rule.example`
-    is the only thing a curated entry is genuinely better at: *"(212) 555-0199 is the shape we
-    expect"* is a more useful sentence than *"that's too short for a United States number"*.
-    **The verdict comes from the library; the wording still comes from the curated example
-    where there is one.**
-    ⚠ **ITS OTHER TWO JOBS ARE UNTOUCHED:** `formatPhone` still uses `rule.format` for live
-    as-you-type formatting, and `phoneExpectation` still prefers `rule.example` for the hint.
-    This change is about the VERDICT only.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the branch that returned early:
-    //   if (rule) {
-    //     // A number typed with its country code - "1 212 559 9999" - is the same
-    //     // number, so it is accepted rather than counted as too long.
-    //     const national = digits.startsWith(rule.countryCode)
-    //       ? digits.slice(rule.countryCode.length) : digits;
-    //     if (national.length < rule.nationalDigits) return { ok: false, reason: … };
-    //     if (national.length > rule.nationalDigits) return { ok: false, reason: … };
-    //     return { ok: true };
-    //   }
-  */
-
-  /*
-    ── ⚠⚠ EVERY OTHER COUNTRY, JUDGED BY ITS OWN RULES (`P1-ALL-E417`) ────────
-
-    This is the half of the brief that matters: before it, India and all six GCC
-    states fell to the digit band below, which accepted `1234567` as an Indian
-    number. `isValidPhoneNumber` is the authority — measured, it accepts a real
-    Indian mobile with or without the `91`/`0` prefix, accepts a Saudi mobile at
-    nine digits with or without the leading `0`, and REFUSES a US number offered
-    as a Saudi one.
-
-    ⚠ LENGTH ONLY PICKS THE WORDS. `validatePhoneNumberLength` gives TOO_SHORT /
-    TOO_LONG, which are the two failures people actually hit and the reason this
-    function reports what is wrong instead of "invalid phone number". It is NOT
-    the verdict: an eleven-digit Indian number returns no length complaint and is
-    still not a valid number, so validity is asked separately.
-    ⚠ THE COUNTRY IS NAMED IN THE REFUSAL. "That's too short" on a screen whose
-    country the person cannot see is the defect this brief opened with.
-  */
+  // EVERY OTHER COUNTRY, JUDGED BY ITS OWN RULES
   const iso = isoFor(country);
   if (iso) {
     const lengthProblem = validatePhoneNumberLength(digits, iso);
-    /* ⚠⚠ THE CURATED EXAMPLE STILL SHAPES THE WORDS WHERE THERE IS ONE (`E728` WS-B) — that
-       is the phrasebook job the rule keeps. Everywhere else the country is named instead. */
+    // THE CURATED EXAMPLE STILL SHAPES THE WORDS WHERE THERE IS ONE ( WS-B) — that
     const shape = rule ? `${rule.example} is the shape we expect.` : `for a ${country} number.`;
     if (lengthProblem === "TOO_SHORT") {
       return { ok: false, reason: rule ? `That's too short — ${shape}` : `That's too short ${shape}` };
@@ -326,12 +196,7 @@ export function validatePhone(
     if (lengthProblem === "TOO_LONG") {
       return { ok: false, reason: rule ? `That's too long — ${shape}` : `That's too long ${shape}` };
     }
-    /*
-      ⚠ A NUMBER CAN BE THE RIGHT LENGTH AND STILL NOT EXIST — a Saudi number
-      starting 21 is neither a mobile nor a landline there. The refusal says
-      which country it was checked against, because the country came from the
-      sign-up form or the address block and may simply be the wrong one.
-    */
+    // A NUMBER CAN BE THE RIGHT LENGTH AND STILL NOT EXIST — a Saudi number
     if (!isValidPhoneNumber(digits, iso)) {
       return {
         ok: false,
@@ -341,7 +206,7 @@ export function validatePhone(
     return { ok: true };
   }
 
-  /* ⚠ ONLY "Other" AND AN UNANSWERED COUNTRY REACH THIS NOW. */
+  /* ONLY "Other" AND AN UNANSWERED COUNTRY REACH THIS NOW. */
   if (digits.length < GENERIC.min) return { ok: false, reason: "That number looks too short." };
   if (digits.length > GENERIC.max) return { ok: false, reason: "That number looks too long." };
   return { ok: true };

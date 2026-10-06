@@ -32,60 +32,11 @@ const montserrat = Montserrat({
   weight: ["400", "600", "700", "800"],
 });
 
-/*
-  METADATA IS THE ONE PLACE "MARKETPLACE" BELONGS (WS-D).
-
-  It is the word people TYPE INTO A SEARCH BOX, not the word the product says
-  about itself — display copy positions Panameer as "Enterprise Systems + AI".
-  Keeping the two apart is the whole distinction, and keeping both strings in
-  lib/brand.ts beside the display copy is what stops a future edit quietly
-  promoting the keyword into a headline.
-
-  The old title said "services-procurement marketplace with ERP integration",
-  which is the mechanism rather than the category anybody searches for.
-*/
+// METADATA IS THE ONE PLACE "MARKETPLACE" BELONGS (WS-D).
 export const metadata: Metadata = {
   title: SEO_TITLE,
   description: SEO_DESCRIPTION,
-  /*
-    ── ⚠⚠ THERE IS NO `icons` BLOCK HERE, AND THAT IS THE FIX (`P1-ALL-E391`) ──
-
-    ⚠ SUPERSEDED, QUOTED NOT DELETED — this file used to declare:
-
-        icons: {
-          // WS4 — the new looped-P mark. `apple` gets the 180px padded variant: iOS
-          // composites a transparent touch icon onto black, and the supplied mark is
-          // 44px, so it is upscaled onto white rather than shipped bare.
-          icon: "/brand/panameer-new-mark.png",
-          shortcut: "/brand/panameer-new-mark.png",
-          apple: "/brand/panameer-new-mark-180.png",
-        },
-
-    ⚠⚠ TWO SOURCES WERE EMITTING ICONS AND THE METADATA ONE WAS WINNING.
-    MEASURED on the running app before any change — the browser received FOUR
-    tags, in this order:
-
-      1  <link rel="shortcut icon" href="/brand/panameer-new-mark.png">   ← metadata
-      2  <link rel="icon" href="/favicon.ico?..." sizes="32x32">          ← src/app/favicon.ico
-      3  <link rel="icon" href="/brand/panameer-new-mark.png">            ← metadata
-      4  <link rel="apple-touch-icon" href="/brand/panameer-new-mark-180.png">
-
-    Next auto-detects `src/app/favicon.ico` AND emits the explicit block, and a
-    browser takes the LAST usable `rel="icon"` — tag 3. So `src/app/favicon.ico`
-    existed, was served at `/favicon.ico`, and was OVERRIDDEN. ⚠⚠ THAT IS WHY A
-    FAVICON "WON'T UPDATE": the file everyone edits is not the one being used.
-
-    ⚠ SO THE FIX IS ONE SOURCE, NOT A BETTER-ORDERED TWO. Next's file conventions
-    in `src/app/` are now the only declaration:
-
-      src/app/icon.png        the tab icon    (the 32px compressed-ramp file)
-      src/app/apple-icon.png  iOS home screen (the delivered 180px, already padded)
-      src/app/favicon.ico     the legacy /favicon.ico request
-
-    ⚠ AND `apple-icon` IS NEXT'S CONVENTION NAME — not `apple-touch-icon`, which
-    is the HTML `rel` value Next generates FROM it. A file named
-    `apple-touch-icon.png` in `src/app/` is detected as nothing at all.
-  */
+  // THERE IS NO `icons` BLOCK HERE, AND THAT IS THE FIX
 };
 
 export default function RootLayout({
@@ -100,99 +51,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/*
-          J2.4 WS-B (E021) — resolve the theme BEFORE first paint.
-
-          The attribute this writes is what every dark rule keys off, and it has
-          to be on the element before the browser paints or the user sees the
-          light theme flash to dark on every navigation. That rules out doing it
-          in an effect, which is why this is an inline script rather than a
-          component. `suppressHydrationWarning` on <html> is the price: the
-          server renders no attribute and the client has already added one.
-
-          ── ⚠⚠⚠ THIS IS A RAW `<script>` ON PURPOSE. DO NOT "FIX" IT. ─────
-
-          ⚠ SCOTT RULED IT, 2026-09-21, ON THE `P0-E595` WS-C GATE: *"keep the
-          raw <script> at layout.tsx:113. Your measurement settles it: next/script
-          brings back the E021 theme flash."* ⚠⚠ AND: *"Don't suppress the
-          warning."* — no `eslint-disable`, no console filter, no `type` attribute
-          chosen to dodge React's check. The warning is the honest cost and it is
-          paid deliberately.
-
-
-          ⚠⚠ A RAW `<script>` INSIDE A COMPONENT MAKES REACT LOG, ON THE CLIENT:
-          *"Encountered a script tag while rendering React component. Scripts
-          inside React components are never executed when rendering on the
-          client."* — `react-dom-client.development.js`, which `console.error`s
-          whenever it has to CREATE a `script` element during a client commit.
-
-          ⚠⚠⚠ MEASURED BEFORE CHANGING ANYTHING, BECAUSE THE WARNING READS WORSE
-          THAN IT IS: the script WAS running and the theme WAS being applied.
-          `curl` of the SSR'd HTML puts it in `<head>` at byte 3079 with `<body>`
-          at 3424 — i.e. before first paint — and `<html data-theme>` reads
-          `light` in a real browser. ⚠ What never executed is the COPY React
-          re-creates on the client from the flight payload, and that copy is
-          redundant: the attribute is already on `<html>` and survives client
-          navigation. **So there was no user-visible defect, and "fix the
-          warning" must not become "break the thing that works."**
-
-          ── ⚠⚠⚠ `next/script` WAS TRIED, MEASURED, AND REVERTED ─────────────
-
-          ⚠ `<Script id="panameer-theme-boot" strategy="beforeInteractive" …>`
-          is the documented Next way to declare an inline script, and it DOES
-          silence the warning — React never owns the node.
-          ⚠⚠ IT ALSO BREAKS THE ONE THING THIS SCRIPT EXISTS FOR. `beforeInteractive`
-          does not emit a synchronous tag; it pushes the source into
-          `self.__next_s` for the Next runtime to execute. MEASURED, same page,
-          `localStorage` pinned to `dark`:
-
-              data-theme at commit : null      ← paints in the WRONG theme
-              data-theme at DCL    : null
-              data-theme settled   : dark      ← after first paint
-
-          ⚠ With the raw tag the attribute is set during HTML parse, before the
-          first paint, which is the entire requirement.
-          ⚠⚠⚠ SO THE WARNING STAYS, DELIBERATELY, AND IT IS COSMETIC: React is
-          telling us a client-created COPY of this script would not execute, and
-          that copy is redundant because the attribute is already on `<html>`.
-          **Trading a real theme flash for a clean dev console would be the wrong
-          way round.** ⚠ React offers no exemption that keeps execution —
-          `isScriptDataBlock` suppresses the warning only for a NON-executable
-          `type`. ⚠ RAISED FOR SCOTT RATHER THAN DECIDED QUIETLY (rule 13), AND HE RULED — see the top of this block.
-        */}
+        {/* J2.4 WS-B (E021) — resolve the theme BEFORE first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       {/* `min-h-dvh` so a `flex-1` frame fills what is left under DevBanner (E020). */}
       <body className="min-h-dvh flex flex-col">
-        {/*
-          FIRST IN <body>, AND ABOVE BOTH SHELLS.
-
-          The root layout is the only mount point that covers pre-auth AND
-          authenticated pages, which is what "sitewide" has to mean here — the
-          marketing surface and the console have separate chrome and no other
-          common ancestor.
-
-          ── ⚠⚠⚠ IT MOVED INSIDE <Providers> (`P2-ALL-E787`, Scott 2026-10-03) ──
-
-          ⚠ **ITS OLD REASON FOR BEING OUTSIDE IS NOW FALSE, SO THE COMMENT
-          CHANGED WITH THE CODE** (`decisions_2026-09-23.md` §6). It read:
-          *"Outside <Providers> because the banner needs neither a session nor a
-          theme context, and a component that renders before them cannot be
-          broken by them."*
-          ⚠⚠ **THE BANNER NOW NEEDS A SESSION:** Scott ruled that `Join free` is
-          never shown to a signed-in member, and the signal for that is
-          `useSession()` — the same one `MarketingHeader` uses. Outside the
-          provider it was `undefined` and the prerender threw
-          *"Cannot destructure property 'status'"*.
-          ⚠⚠⚠ **DOM ORDER IS UNCHANGED.** `Providers` renders its children
-          directly with no wrapper element, so the banner is still the first node
-          in `<body>` and still PUSHES both shells down rather than overlaying
-          either — which is what `E020`'s `min-h-dvh` depends on.
-          ⚠ The trade is real and small: a failure in `SessionProvider` can now
-          affect the banner, where before it could not. ⚠⚠ The session read is
-          confined to the tracker variant, so **no page that did not already read
-          the session starts doing so** — see `DevBanner`'s `TrackerLinks`.
-        */}
+        {/* FIRST IN <body>, AND ABOVE BOTH SHELLS. */}
         <Providers>
           <DevBanner />
           {children}

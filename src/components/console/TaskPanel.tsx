@@ -132,11 +132,9 @@ export function TaskPanel() {
                         aria-current={
                           pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined
                         }
-                        /* ⚠ Closed ON THE CLICK, not in an effect keyed on
-                           `pathname` — `set-state-in-effect` is the error this
-                           repo carries eleven of and the rule is 0 NEW. */
+                        // Closed ON THE CLICK, not in an effect keyed on
                         onClick={() => setActive(null)}
-                        /* ⚠⚠ 44px ROWS (Scott, D2). `py-2.5` measured 40px. */
+                        /* 44px ROWS (Scott, D2). `py-2.5` measured 40px. */
                         className={
                           "flex min-h-11 items-center gap-3 px-3 text-left text-[14px] transition-colors hover:bg-magenta/[0.07] " +
                           (pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -171,14 +169,7 @@ export function TaskPanel() {
         </div>
       )}
 
-      {/*
-        ⚠⚠ ALL THREE ARE LABELLED IN THE STRIP (`E459`). **SCOTT, twice:**
-        *"Label all three"* — an unlabeled icon goes unused. The strip was
-        `w-12` and icon-only, with the name available only as a `title` tooltip,
-        which is invisible on first read and unreachable by touch.
-        ⚠ THE TOOLTIP AND `aria-label` STAY: the visible label is 10px, and the
-        title is what a screen reader and a hover both still get.
-      */}
+      {/* ALL THREE ARE LABELLED IN THE STRIP . SCOTT, twice */}
       <div className="flex w-[62px] flex-col items-center gap-1 self-center rounded-[16px] border border-line bg-white py-2 shadow-lg">
         {TABS.map((t) => {
           const on = active === t.key;
@@ -190,9 +181,7 @@ export function TaskPanel() {
               title={FULL_LABEL[t.key] ?? t.label}
               aria-label={FULL_LABEL[t.key] ?? t.label}
               aria-pressed={on}
-              /* ⚠⚠ `min-h-11` = 44px (Scott, D2). The icon-plus-label stack
-                 measured ~38px, under the touch standard the rest of the shell
-                 already meets. */
+              // measured ~38px, under the touch standard the rest of the shell
               className={
                 "flex min-h-11 w-[54px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition-colors " +
                 (on

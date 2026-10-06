@@ -1,83 +1,26 @@
-/*
-  ── ⚠⚠⚠ THE HEADER'S HEADLINE IN MONTSERRAT (`P2-A1.1-E731`) ──────────────
-
-  ⚠ **SCOTT: *"Wrap `/usage` in `.account-surface`, so headings are Montserrat
-  like Profile."*** ⚠⚠ **THE WRAPPER ALONE DOES NOT DO IT, AND THE REASON IS
-  CASCADE LAYERS, NOT SPECIFICITY.** `globals.css` scopes
-  `.account-surface :is(h1, h2, h3, h4) { font-family: var(--font-body) }` inside
-  `@layer base`; `PatternHeader`'s `<h2>` carries Tailwind's `font-display`
-  UTILITY, which lives in `@layer utilities`. ⚠⚠⚠ **A LATER LAYER BEATS AN
-  EARLIER ONE NO MATTER HOW SPECIFIC THE EARLIER SELECTOR IS** — so the scoped
-  rule, which is (0,1,1) against the utility's (0,1,0), still loses.
-  ⚠ **MEASURED, NOT ASSUMED:** the headline rendered in Comfortaa in the 1280
-  screenshot with the wrapper already in place.
-
-  ⚠⚠ **THIS RULE IS UNLAYERED, WHICH IS WHY IT WINS** — unlayered declarations
-  outrank every layer. ⚠ It is SCOPED to this PAGE (`.pm-usage`) rather than
-  applied globally, because making the `globals.css` rule unlayered would flip
-  every `font-display` heading on `/profile` and `/providers/[id]` too, and that
-  is a change to two other pages this brief does not name.
-  ⚠⚠⚠ **THE UNDERLYING DEFECT IS REPORTED RATHER THAN SWEPT: `.account-surface`
-  does not do what its own comment says wherever a `font-display` utility is
-  present.** Fixing that properly is a decision about every Account Information
-  page.
-*/
+/* THE HEADER'S HEADLINE IN MONTSERRAT */
 .pm-usage :is(h1, h2, h3, h4) {
   font-family: var(--font-body);
 }
 
-/*
-  ── ⚠⚠⚠ THE GAUGE CARDS (`P2-A1.1-E730` WS-C) ────────────────────────────
+/* THE GAUGE CARDS WS-C) */
 
-  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
-  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
-  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
-  still see the name, but nobody ever finds out the token was wrong.
-  ⚠⚠ `--color-ink-3` **IS** A TOKEN NOW — `E723` item 6 declared it, on Scott's
-  instruction (*"`--color-ink-3` is never declared. Declare it"*), and it is
-  repointed under `data-theme="dark"`. ⚠ `--color-line-2` is still NOT one.
-
-  ⚠⚠⚠ THERE IS NO `background: #fff` ANYWHERE IN THIS FILE, AND THAT IS THE
-  `E723` LESSON APPLIED RATHER THAN RESTATED: the card paints `--color-surface`,
-  so dark mode needs no second rule here. A hard-coded white card is exactly what
-  broke `/profile` and `/providers/[id]` in dark mode.
-*/
-
-/*
-  ── ⚠⚠⚠ OPEN COLUMNS, NOT CARDS (`P2-A1.1-E745`, lane 2) ────────────────────
-
-  ⚠ **SCOTT, 2026-10-02: *"four open columns divided by thin vertical lines (two
-  columns at tablet width, stacked at phone width with a line between each)."***
-  ⚠⚠ **THIS ALSO SETTLES THE CONNECT CARD BORDER** he asked about — there are no
-  card borders left to settle.
-
-  ⚠⚠⚠ **"FOUR COLUMNS" IS THE GRID, NOT THE NUMBER OF GAUGES.** There are
-  **eight** (seven areas + Account Health) and the mockup draws four because a
-  mockup is an illustration — *"a mockup is a layout, not a data source"* (the
-  2026-09-23 rules, 7). ⚠ Dropping four gauges would delete four measured
-  figures, so eight render in a four-wide grid: two rows.
-
-  ⚠ **PHONE STACKS TO ONE**, which is a change: it was two. Scott's line says
-  *"stacked at phone width"*, and at 390 a two-up dial was ~170px with its label
-  wrapping underneath.
-*/
+/* OPEN COLUMNS, NOT CARDS , lane 2) */
 .pm-gauges {
   display: grid;
-  /* ⚠ ONE AT PHONE, stacked, with a rule between each — Scott's line. */
+  /* ONE AT PHONE, stacked, with a rule between each — Scott's line. */
   grid-template-columns: 1fr;
   gap: 0;
 }
 
-/* ⚠ The divider is a BORDER on the item, never a `gap` with a background
-   showing through: the page is one surface now, so there is nothing behind the
-   grid to see. */
+/* The divider is a BORDER on the item, never a `gap` with a background */
 .pm-gauge {
   position: relative;
   padding: 20px 0 22px;
   border-bottom: 1px solid var(--color-line);
 }
 
-/* ⚠ TABLET — two columns. The vertical rule falls between the pair. */
+/* TABLET — two columns. The vertical rule falls between the pair. */
 @media (min-width: 640px) {
   .pm-gauges {
     grid-template-columns: repeat(2, 1fr);
@@ -85,8 +28,7 @@
   .pm-gauge {
     padding: 20px 20px 22px;
   }
-  /* ⚠⚠ `nth-child(2n)` IS THE RIGHT-HAND COLUMN — it gets no right rule, so the
-     grid does not draw a line down its own outer edge. */
+  /* grid does not draw a line down its own outer edge. */
   .pm-gauge:not(:nth-child(2n)) {
     border-right: 1px solid var(--color-line);
   }
@@ -98,13 +40,12 @@
   }
 }
 
-/* ⚠ DESKTOP — four columns. */
+/* DESKTOP — four columns. */
 @media (min-width: 900px) {
   .pm-gauges {
     grid-template-columns: repeat(4, 1fr);
   }
-  /* ⚠ Reset the tablet rules before re-stating them for a four-wide row, or a
-     card can carry both a 2-up and a 4-up edge. */
+  /* Reset the tablet rules before re-stating them for a four-wide row, or a */
   .pm-gauge,
   .pm-gauge:nth-child(2n),
   .pm-gauge:nth-child(2n + 1) {
@@ -118,36 +59,15 @@
   .pm-gauge:nth-child(4n + 1) {
     padding-left: 0;
   }
-  /* ⚠⚠ THE LAST ROW KEEPS NO BOTTOM RULE — with eight gauges that is the
-     second row, and a trailing line under the final row would read as the start
-     of a section that is not there. */
+  /* THE LAST ROW KEEPS NO BOTTOM RULE — with eight gauges that is the */
   .pm-gauge:nth-last-child(-n + 4) {
     border-bottom: 0;
   }
 }
 
-/* ⚠⚠ NO HOVER BORDER ANY MORE — there is no border to colour. The `Go to …`
-   link inside each column is the affordance, and `E433` says magenta means
-   interactive, so the column itself does not need to light up.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   .pm-gauge {
-   //     position: relative;
-   //     border: 1px solid var(--color-line);
-   //     border-radius: 12px;
-   //     padding: 16px 16px 14px;
-   //     background: var(--color-surface);
-   //     transition: border-color 0.15s;
-   //   }
-   //   .pm-gauge:hover { border-color: var(--color-magenta); }
-   ⚠ And the old grid, which was two-up at phone and gapped:
-   //   .pm-gauges { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-   //   @media (min-width: 900px) {
-   //     .pm-gauges { grid-template-columns: repeat(4, 1fr); gap: 14px; }
-   //   }
-*/
+/* NO HOVER BORDER ANY MORE — there is no border to colour. The `Go to …` */
 
-/* ⚠ The area's MENU label. Magenta because it names the destination the
-   `Go to …` link below leads to — `E433`: magenta means interactive. */
+/* The area's MENU label. Magenta because it names the destination the */
 .pm-gauge-eyebrow {
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -173,12 +93,7 @@
   margin: 8px 0 2px;
 }
 
-/*
-  ── ⚠⚠ THE LEVEL WORD, BESIDE `Goal: N` (`P2-A1.1-E731`) ──────────────────
-  ⚠ It is the WORD, not a second colour scale: the comb carries the hue, this
-  carries the name. ⚠⚠ Together they are the key — a reader who cannot tell two
-  mid-tones apart reads `Medium` here instead.
-*/
+/* THE LEVEL WORD, BESIDE `Goal: N` */
 .pm-gauge-level {
   margin-left: 6px;
   font-weight: 700;
@@ -186,15 +101,13 @@
 }
 
 .pm-gauge-level[data-level="none"] {
-  /* ⚠ A measured zero is still a RESULT, so the word is quiet rather than absent —
-     absent would read as "no data", which is the other state entirely. */
+  /* A measured zero is still a RESULT, so the word is quiet rather than absent — */
   color: var(--color-ink-3);
 }
 
 .pm-gauge-scale {
   display: flex;
-  /* ⚠ The left-hand axis zero is gone (see UsageGauges.tsx), so the row holds one item
-     and right-aligns it under the dial's goal end. */
+  /* The left-hand axis zero is gone (see UsageGauges.tsx), so the row holds one item */
   justify-content: flex-end;
   gap: 4px;
   margin-top: -4px;
@@ -202,11 +115,7 @@
   font-size: 11px;
 }
 
-/*
-  ⚠⚠ THE FIGURE IS INK (`E433`) — magenta means interactive, and a statistic is
-  not a link even when the card around it carries one.
-  ⚠ `tabular-nums` so eight cards in a grid line their digits up.
-*/
+/* THE FIGURE IS INK ( ) — magenta means interactive, and a statistic is */
 .pm-gauge-value {
   margin-top: 2px;
   text-align: center;
@@ -217,18 +126,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/*
-  ⚠⚠⚠ THE UNCOUNTED FIGURE IS FAINT BUT STILL LEGIBLE. ⚠ At 0.45 the em-dash all
-  but vanished in `E603`'s honeycomb screenshot and the glyph cue was gone — the
-  rule is *"a dash carries its reason"*, and a dash nobody can see carries nothing.
-*/
+/* THE UNCOUNTED FIGURE IS FAINT BUT STILL LEGIBLE. At 0.45 the em-dash all */
 .pm-gauge[data-counted="no"] .pm-gauge-value {
   color: var(--color-ink);
   opacity: 0.6;
   font-size: 22px;
 }
 
-/* ⚠ The reason, under the dash, in words. Never optional. */
+/* The reason, under the dash, in words. Never optional. */
 .pm-gauge-why {
   display: block;
   margin-top: 2px;
@@ -259,25 +164,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/*
-  ── ⚠⚠⚠ `NOT COUNTED` IS A BADGE, AND IT IS QUIET RATHER THAN RED ──────────
-  ⚠ Red would read as an ERROR. An uncounted figure is not a failure — it is a
-  measurement nobody can make yet, which is information.
-
-  ⚠⚠⚠ THE MOCKUP USED AN AMBER PAIR AND THIS DOES NOT, FOR A MEASURED REASON:
-  `--color-warm` AND `--color-warm-wash` DO NOT EXIST. The declared palette is
-  ink / ink-2 / ink-3 / line / surface / bg-soft / canvas / magenta* / rail* /
-  learn-*, and nothing else. ⚠⚠ ADDING TWO PALETTE ENTRIES IS A DESIGN DECISION,
-  NOT A CSS CONVENIENCE — Scott ruled against promoting tokens at `E601` WS-D —
-  and a `var(--color-warm)` that resolves to nothing would paint the badge
-  TRANSPARENT ON TRANSPARENT: invisible text, with the gate still able to see the
-  name. That is exactly the failure the no-fallback rule exists to surface.
-  ⚠ SO IT IS BUILT FROM DECLARED TOKENS AND THE COLOUR IS THE FOURTH CUE, NOT THE
-  ONLY ONE: the words `NOT COUNTED`, the hatched dial and the em-dash all carry it
-  too, so the distinction survives with the colour removed.
-  ⚠⚠ REPORTED TO SCOTT: if he wants the amber, it is two token declarations in
-  `globals.css` (light and dark) plus this rule, and it is his call.
-*/
+/* Red would read as an ERROR. An uncounted figure is not a failure — it is a */
 .pm-gauge-nc {
   display: inline-block;
   background: var(--color-bg-soft);
@@ -303,12 +190,7 @@
   text-decoration: underline;
 }
 
-/*
-  ⚠⚠ THE HOVER LINE IS ALWAYS IN THE DOM, under a top rule, rather than being a
-  popover this card has to own. ⚠⚠⚠ A TOOLTIP THAT ONLY EXISTS ON HOVER IS
-  UNREACHABLE BY TOUCH AND BY KEYBOARD — and this page's whole audience on a
-  phone is touch. ⚠ It is quiet, not hidden.
-*/
+/* THE HOVER LINE IS ALWAYS IN THE DOM, under a top rule, rather than being a */
 .pm-gauge-tip {
   margin-top: 10px;
   border-top: 1px solid var(--color-line);

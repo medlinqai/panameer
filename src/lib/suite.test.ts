@@ -46,11 +46,7 @@ ok("'oracle cloud' → ORACLE_FUSION_CLOUD", suiteFromText("oracle cloud") === "
 ok("'SFDC' → SALESFORCE", suiteFromText("SFDC") === "SALESFORCE");
 ok("'PSFT' → PEOPLESOFT", suiteFromText("PSFT") === "PEOPLESOFT");
 
-/*
-  THE ONE THAT MATTERS. "Oracle" alone is Fusion, EBS and PeopleSoft at once.
-  Resolving it to any of them is the exact mistake the per-job model exists to
-  stop making — better to leave the job unanchored and ask.
-*/
+// THE ONE THAT MATTERS. "Oracle" alone is Fusion, EBS and PeopleSoft at once.
 ok("bare 'Oracle' resolves to nothing", suiteFromText("Oracle") === null);
 ok("empty text resolves to nothing", suiteFromText("") === null);
 

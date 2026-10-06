@@ -44,38 +44,13 @@ export function StatisticsCards({
   cards = "all",
 }: {
   s: Statistics;
-  /** ⚠ Which trend period the back faces show. Front faces have none. */
+  /** Which trend period the back faces show. Front faces have none. */
   period: TrendPeriod;
-  /**
-   * ── ⚠⚠⚠ WHICH CARDS RENDER (`P2-A1.1-E732`) ──────────────────────────────────────
-   *
-   * ⚠ **SCOTT, 2026-10-01: *"Remove the old stat tiles from `/usage` (Your Profile ·
-   * Your Learning · Your Work · Your Network). The gauges replace them, per the
-   * mockup."***
-   * ⚠⚠ **`"teaching"` IS NOT IN HIS LIST AND IS NOT REMOVED.** Two of its four figures —
-   * `Questions in Your Groups` and `Questions Waiting on You` — appear on **no gauge**,
-   * and the second is the only ACTIONABLE figure on the page. ⚠⚠⚠ **DROPPING IT WOULD
-   * DELETE A FIGURE RATHER THAN RELOCATE ONE**, which is not what "the gauges replace
-   * them" says.
-   *
-   * ⚠⚠ **THE FOUR CARDS ARE NOT DELETED, THEY ARE NOT RENDERED.** `E164` — superseded
-   * code is quoted, never deleted — and more practically: **`check:statistics` asserts
-   * live rules against their bodies** (the flip variants, `allZero`, the credit lines,
-   * the uncounted-figure treatment). ⚠ Before deleting dead code, check whether a gate
-   * asserts a live rule against it (`E603`'s lesson 14). **Deleting them would have taken
-   * roughly 30 assertions with them.**
-   * ⚠ **THE BUYER BRANCH IS UNTOUCHED** — `BuyerStatistics` is a different component, and
-   * the buyer half of `/usage` has **no gauges**, so removing its cards would leave it
-   * blank.
-   */
+  /** WHICH CARDS RENDER */
   cards?: "all" | "teaching-only";
 }) {
   const onlyTeaching = cards === "teaching-only";
-  /*
-    ⚠⚠⚠ THE DATA PICKS THE VARIANT AND WHICH FACE IS UP (Scott).
-    ⚠ `allZero` counts only COUNTED figures — a dash is not a zero and must not
-    vote a card onto its action back.
-  */
+  // THE DATA PICKS THE VARIANT AND WHICH FACE IS UP (Scott).
   const networkEmpty = allZero([
     s.network.colleagues,
     s.network.invitesSent,
@@ -92,48 +67,15 @@ export function StatisticsCards({
     Array.isArray(s.network.inviteSeries) && s.network.inviteSeries.some((n) => n > 0);
   const learningHasHistory =
     Array.isArray(s.learning.lessonSeries) && s.learning.lessonSeries.some((n) => n > 0);
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — the Work card's back is now a
-     BREAKDOWN, so nothing chooses a variant or a starting face for it:
-     //   const workHasHistory =
-     //     Array.isArray(s.work.orderSeries) && s.work.orderSeries.some((n) => n > 0);
-     //   const workEmpty = allZero([s.work.requestsReceived, s.work.interviews, s.work.workOrders]);
-     ⚠⚠ `orderSeries` IS STILL COMPUTED AND IS NOW UNDRAWN — reported at the
-     gate rather than deleted, because deleting it is a decision about whether
-     the Work card ever gets a trend, and that is Scott's. */
 
   return (
     <>
-      {/*
-        ── ⚠⚠⚠ THE HONEYCOMB MOVED INTO THE HEADER (`P2-A1.1-E730` WS-B) ──────
+      {/* THE HONEYCOMB MOVED INTO THE HEADER WS-B) */}
 
-        ⚠ It is now `PatternHeader`'s `picture` on `/usage`, tessellated, with nine
-        cells. ⚠⚠ **IT IS MOUNTED THERE INSTEAD OF HERE, NOT AS WELL AS** — two combs
-        on one page would be two pictures of one thing, and the second would be the
-        one nobody scrolled to.
-        ⚠⚠⚠ `honeyCells(s)` IS **NOT** DELETED and is still exported: `check:statistics`
-        §25 asserts the cells are derived from the cards' own figures, and that rule is
-        unchanged — it is simply no longer this component that renders them. ⚠ Before
-        deleting dead code, check whether a gate asserts a live rule against it
-        (`E603`'s lesson 14).
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   THE HONEYCOMB LEADS (WS-B) - one cell per area, on E600 WS-D's shared
-        //   15-second rebuild. ITS CELLS ARE DERIVED FROM THE SAME `s` THE CARDS
-        //   BELOW DRAW, so a cell and its card cannot disagree.
-        //   <Honeycomb cells={honeyCells(s)} />
-      */}
-
-      {/* ⚠ The four cards Scott named. Hidden on `/usage` since `E732`; still rendered
-          wherever `cards` is left at its default. */}
+      {/* The four cards Scott named. Hidden on `/usage` since ; still rendered */}
       {!onlyTeaching && (
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        {/*
-          ⚠⚠ YOUR PROFILE — USAGE ONLY, NO COMPLETION (correction 2).
-          ⚠ Scott: *"Statistics measures what the application DID with the
-          profile."* Completion lives on the Score page.
-          ⚠⚠⚠ NO FLIP CONTROL: its other two figures are uncounted and profile
-          views have no second dimension to show, so a back would be thin — and
-          a flip onto a thin back is a door onto a wall (`E579`).
-        */}
+        {/* YOUR PROFILE — USAGE ONLY, NO COMPLETION (correction 2). */}
         <Shell>
           <FlipCard
             title="Your Profile"
@@ -151,11 +93,7 @@ export function StatisticsCards({
           />
         </Shell>
 
-        {/*
-          ⚠⚠ YOUR NETWORK — a trend back, because every figure is dated.
-          ⚠ `growthScore` is `E599`'s, re-asked rather than recomputed, so this
-          page and `/community/grow` cannot disagree about the same member.
-        */}
+        {/* YOUR NETWORK — a trend back, because every figure is dated. */}
         <Shell>
           <FlipCard
             title="Your Network"
@@ -177,8 +115,7 @@ export function StatisticsCards({
               </Card>
             }
             back={
-              /* ⚠⚠ DATED FIGURES EARN A TREND BACK; a card with nothing to plot
-                 gets the action back instead — the data picks, not the author. */
+              // DATED FIGURES EARN A TREND BACK; a card with nothing to plot
               networkHasHistory ? (
                 <TrendBack
                   title="Your Network"
@@ -190,7 +127,7 @@ export function StatisticsCards({
               ) : (
                 <ActionBack
                   title="Your Network"
-                  /* ⚠ A COUNT, NOT A COMPLIMENT. */
+                  /* A COUNT, NOT A COMPLIMENT. */
                   credit={creditLine(s)}
                   links={[
                     { label: "Invite a Colleague", href: "/invite-colleague" },
@@ -203,10 +140,7 @@ export function StatisticsCards({
           />
         </Shell>
 
-        {/*
-          ⚠⚠ YOUR LEARNING — *"this was the Usage page"* (`E600`'s fold).
-          ⚠⚠⚠ THE SPARKLINE IS ON THE BACK, NOT THE FRONT (Scott).
-        */}
+        {/* YOUR LEARNING — *"this was the Usage page"* ( 's fold). */}
         <Shell>
           <FlipCard
             title="Your Learning"
@@ -242,35 +176,11 @@ export function StatisticsCards({
             }
           />
         </Shell>
-        {/*
-          ── ⚠⚠⚠ YOUR WORK — SHIPPED BECAUSE UNRENDERED CODE IS UNREVIEWED CODE ──
-
-          ⚠ SCOTT, 2026-09-23: *"Unrendered code is unreviewed code — `s.work`
-          computing five figures that reach no screen is exactly how defect 3
-          survived."*
-          ⚠⚠ THE DEFECT HE MEANS: `workOrders` was `prisma.workOrder.count()`
-          with **no `where` at all** — the platform total, presented as one
-          member's figure. It survived review because nothing drew it. ⚠⚠⚠ A
-          FIGURE NOBODY SEES IS A FIGURE NOBODY CHECKS.
-
-          ⚠ ALL FIVE ARE SCOPED OR DASHED, AND `check:statistics` §13 ASSERTS
-          THE SCOPE BY SHAPE rather than trusting an empty result — the three
-          counted ones all filter `provider_person_id`, which is the PROVIDER
-          column on each model (each also carries a separate buyer-side column,
-          `invited_by_person_id` / `requested_by_person_id`).
-        */}
+        {/* YOUR WORK — SHIPPED BECAUSE UNRENDERED CODE IS UNREVIEWED CODE */}
         <Shell>
           <FlipCard
             title="Your Work"
             backLabel="The detail"
-            /* ⚠⚠ THE FRONT ALWAYS LEADS NOW. ⚠ SUPERSEDED, quoted not deleted
-               (`E164`):
-               //   backLabel={workHasHistory ? "Trend" : "What to do next"}
-               //   initialBack={workEmpty && !workHasHistory}
-               ⚠⚠⚠ THE DATA NO LONGER PICKS THE VARIANT HERE, because there is
-               only ONE variant worth turning to: a breakdown of figures the
-               front is already showing. Starting face-down on a breakdown of
-               zeros would hide the figures to show their parts. */
             front={
               <Card
                 title="Your Work"
@@ -296,21 +206,7 @@ export function StatisticsCards({
               </Card>
             }
             back={
-              /*
-                ⚠⚠⚠ THE BACK IS NOW THE **BREAKDOWN** THE OLD TILES CARRIED
-                (`E603` item 5). Scott: *"The old tiles' detail moves to the new
-                card's flip back — that is what a trend back is for: a different
-                cut of the same number."*
-                ⚠⚠ `Offered` IS the front's `Interviews`, byte for byte — the
-                same query, not a second one. The two subsets are drawn FROM it,
-                and the in-flight remainder is NAMED so the column reconciles on
-                screen. ⚠ `REQUESTED`, `SLOTS_OFFERED` and `SCHEDULED` are the
-                states in neither subset; the schema has **no `EXPIRED`**, so
-                the label must never say it.
-                ⚠ The links stay, because retiring the old tiles must not retire
-                the entrances they carried — all three also live in the
-                Application menu.
-              */
+              // THE BACK IS NOW THE BREAKDOWN THE OLD TILES CARRIED
               <BreakdownBack
                 title="Your Work"
                 totalLabel="Interviews offered"
@@ -333,12 +229,7 @@ export function StatisticsCards({
       </div>
       )}
 
-      {/*
-        ⚠⚠⚠ TEACHING RENDERS ONLY FOR SOMEBODY WHO TEACHES — the ONE card that
-        hides, and it hides on a CAPABILITY (`E593`'s `teachesPathWhere`), not on
-        emptiness. ⚠ That is the rule correction 2 settled: a card hides only
-        when the capability is absent.
-      */}
+      {/* TEACHING RENDERS ONLY FOR SOMEBODY WHO TEACHES — the ONE card that */}
       {s.teaching.teaches && (
         <Shell>
           <FlipCard
@@ -368,42 +259,9 @@ export function StatisticsCards({
   );
 }
 
-/**
- * ⚠⚠⚠ CREDIT WHAT A MEMBER HAS DONE THE MOMENT THEY DO IT (correction 6).
- *
- * ⚠ SCOTT: the old zero-state predicate *"tested colleagues and lessons while
- * the card printed Invites Sent and Joined, so a buyer with five invites and no
- * colleagues was told there was nothing to measure."*
- * ⚠⚠ THIS NAMES WHAT THEY ACTUALLY DID, from the figures the card prints — it
- * cannot miss a dimension the card shows, because it reads the same four.
- */
-/* ⚠⚠ EXPORTED FOR `check:statistics`, AND THE REASON IS A MEASUREMENT, NOT a
-   preference: **NO SEEDED PERSONA REACHES THE NON-EMPTY BRANCH.** All 14 sellers
-   sampled at 2026-09-23 are either all-zero (so the line reads *"Nothing counted
-   on this card yet."*) or have invite history (so the card shows a TREND back and
-   this function never runs). ⚠⚠⚠ A BRANCH NO RENDER CAN REACH IS PROVEN BY
-   ASSERTION OR IT IS NOT PROVEN — the alternative is seeding, and seeding is
-   forbidden during the test window. */
-/**
- * ── ⚠⚠⚠ ONE CELL PER AREA, DERIVED FROM THE FIGURES THE CARDS DRAW ───────
- *
- * ⚠ Each area's HEADLINE figure — the one a member would name if asked how that
- * area is going. ⚠⚠ THEY COME FROM `s`, NOT FROM A SECOND QUERY: a honeycomb
- * that counted for itself would be a second definition of every figure on the
- * page, and the two would disagree the first time one of them changed
- * (`E585`).
- *
- * ⚠⚠⚠ `Teaching` FOLLOWS THE CARD'S RULE AND HIDES ON THE **CAPABILITY**, not
- * on emptiness — a teacher with no learners still gets a cell showing `0`,
- * because a zero is information. Somebody who does not teach gets no cell,
- * because the area does not exist for them.
- *
- * ⚠ AN UNCOUNTABLE HEADLINE IS PASSED THROUGH AS THE DASH IT IS. `Your
- * Profile`'s headline is views, which is uncountable for a member with no
- * provider profile — that cell then carries its reason, and the honeycomb has
- * a worked example of the two-dashes rule on ordinary data rather than only in
- * a gate.
- */
+/** CREDIT WHAT A MEMBER HAS DONE THE MOMENT THEY DO IT (correction 6). */
+// EXPORTED FOR `check:statistics`, AND THE REASON IS A MEASUREMENT, NOT a
+/** ONE CELL PER AREA, DERIVED FROM THE FIGURES THE CARDS DRAW */
 export function honeyCells(s: Statistics): HoneyCell[] {
   const cells: HoneyCell[] = [
     {
@@ -447,16 +305,7 @@ export function honeyCells(s: Statistics): HoneyCell[] {
   return cells;
 }
 
-/**
- * ⚠⚠ THE WORK CARD'S CREDIT LINE — the same rule as the network one: a COUNT,
- * never a compliment, and it reads only the figures the card prints.
- * ⚠⚠⚠ IT CANNOT CREDIT A DASH. Proposals and Earnings are uncountable, so they
- * are absent from this sentence entirely — crediting *"0 proposals sent"* would
- * report a result where there is no mechanism.
- * ⚠ At genuine zero it names the FIRST MOVE rather than reporting emptiness
- * (Scott, 2026-09-23) — and the first move for work is being findable, which is
- * what the links beneath it go to.
- */
+/** THE WORK CARD'S CREDIT LINE — the same rule as the network one: a COUNT */
 export function workCreditLine(s: Statistics): string {
   const bits: string[] = [];
   const n = (f: Figure) => (typeof f === "number" ? f : 0);
@@ -481,42 +330,11 @@ export function creditLine(s: Statistics): string {
   if (n(s.network.colleagues) > 0)
     bits.push(`${n(s.network.colleagues)} colleague${n(s.network.colleagues) === 1 ? "" : "s"} connected`);
   if (n(s.network.joined) > 0) bits.push(`${n(s.network.joined)} joined from your invitations`);
-  /* ⚠ No trailing flourish. The sentence ends where the counting ends. */
+  /* No trailing flourish. The sentence ends where the counting ends. */
   return bits.length ? `${bits.join(", ")}.` : "Nothing counted on this card yet.";
 }
 
-/**
- * ── ⚠⚠⚠ THE BUYER RULE, CORRECTED (correction 2) ─────────────────────────
- *
- * ⚠ SCOTT, 2026-09-23: *"A card renders for anyone who COULD have the thing it
- * measures, showing honest zeros. A card hides only when the CAPABILITY is
- * absent — Teaching on `teachesPathWhere`."*
- *
- * ⚠⚠ THE PREVIOUS COMMENT HERE SAID SOMETHING ELSE AND WAS WRONG — *"a card
- * renders when the viewer HAS the thing it measures"* — which would justify
- * hiding a buyer's empty Network card. ⚠⚠⚠ THE CODE WAS ALREADY RIGHT AND THE
- * STATED RULE WAS NOT, WHICH IS THE MORE DANGEROUS HALF: the next person
- * implements the comment.
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   a card renders when the viewer HAS the thing it measures, not when the
- * //   viewer holds a capability
- *
- * ⚠⚠ THE REASON, IN SCOTT'S WORDS: *"a buyer with no colleagues who sees no
- * Network card loses the entrance to inviting anyone. Removing a card can remove
- * a capability's only entrance. A zero is information; an absent card is a dead
- * end."* ⚠ That is `OwnerResumeRerun`'s lesson again, one brief later.
- *
- * ⚠ The zero-state sentence is GONE (correction 6) — the action back replaces
- * it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   const nothing = isCounted(s.network.colleagues) && s.network.colleagues === 0 &&
- * //     isCounted(s.learning.lessonsCompleted) && s.learning.lessonsCompleted === 0;
- * //   {nothing && <p>Nothing to measure yet. These fill in as you connect…</p>}
- * ⚠⚠ ITS PREDICATE HAD A HOLE: it tested colleagues and lessons while the card
- * printed Invites Sent and Joined.
- *
- * ⚠ Seller cards still require the provider profile that branch lacks — that
- * part was right and is unchanged.
- */
+/** THE BUYER RULE, CORRECTED (correction 2) */
 export function BuyerStatistics({ s, period }: { s: Statistics; period: TrendPeriod }) {
   return <StatisticsCards s={s} period={period} />;
 }

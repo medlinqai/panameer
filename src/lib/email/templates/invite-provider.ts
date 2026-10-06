@@ -19,12 +19,7 @@ export function inviteProviderTemplate({
   message?: string | null;
 }): { subject: string; html: string; text: string } {
   const subject = `${coordinatorName} invited you to join Panameer as a service provider`;
-  /*
-    E006 — CAPITALISED. This template greeted "Hi scott," for anyone who typed
-    their name in lower case at signup, which is the exact defect E006 fixed in
-    verify-email and never reached here. Caught by `check:email`, which asserts
-    the rule across every template rather than the one it was written for.
-  */
+  // E006 — CAPITALISED. This template greeted "Hi scott," for anyone who typed
   const inviteeName = inviteeFirstName ? capitalizeName(inviteeFirstName) : "";
   const greeting = inviteeName ? `Hi ${escapeHtml(inviteeName)},` : "Hi,";
 

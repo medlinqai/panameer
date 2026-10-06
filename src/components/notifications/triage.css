@@ -1,19 +1,4 @@
-/*
-  ── ⚠⚠⚠ THE TRIAGE LIST AND THE WORKLIST (`P2-A1.1-E736`) ────────────────
-
-  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
-  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
-  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
-  still see the name, but nobody ever finds out the token was wrong.
-
-  ⚠⚠ THERE IS NO `background: #fff` IN THIS FILE. Surfaces paint
-  `--color-surface`, which flips with the theme — the `E723` lesson applied
-  rather than restated. A hard-coded white card is exactly what broke `/profile`
-  and `/community` in dark mode.
-
-  ⚠ SQUARE BUTTONS, 4px, one accent (the style pass). Magenta is used for links
-  and the unread dot ONLY — `E433`: magenta means interactive, and a row is not.
-*/
+/* THE TRIAGE LIST AND THE WORKLIST */
 
 .pm-triage {
   max-width: 980px;
@@ -40,8 +25,7 @@
 .pm-triage-btn {
   display: inline-flex;
   align-items: center;
-  /* ⚠ 36px, not 44px: these sit in a toolbar, not under a thumb on a form. The
-     ROW controls below are the touch targets and they are 44. */
+  /* 36px, not 44px: these sit in a toolbar, not under a thumb on a form. The */
   min-height: 36px;
   padding: 0 14px;
   border-radius: 0;
@@ -120,8 +104,7 @@
   color: var(--color-ink);
 }
 
-/* ⚠ The SELECTED chip is ink-on-surface-inverted, not magenta: magenta is the
-   link colour and every chip is a link, so magenta could not distinguish them. */
+/* The SELECTED chip is ink-on-surface-inverted, not magenta: magenta is the */
 .pm-triage-chip[data-on="yes"] {
   background: var(--color-ink);
   border-color: var(--color-ink);
@@ -129,8 +112,7 @@
 }
 
 .pm-triage-chip-n {
-  /* ⚠ The gap is CSS, not a leading space in JSX — JSX trims leading whitespace in a text
-     node, which rendered "All(3)" instead of "All (3)". Seen in the 1280 screenshot. */
+  /* The gap is CSS, not a leading space in JSX — JSX trims leading whitespace in a text */
   margin-left: 4px;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
@@ -138,11 +120,7 @@
 
 /* ── SELECTION BAR ─────────────────────────────────────────────────────── */
 
-/*
-  ⚠⚠ STICKY, SO IT IS REACHABLE AFTER SELECTING A ROW NEAR THE BOTTOM. ⚠ A bulk
-  bar that scrolls away is a bulk bar you select against and then have to hunt
-  for — which is the "not usable at scale" complaint in miniature.
-*/
+/* STICKY, SO IT IS REACHABLE AFTER SELECTING A ROW NEAR THE BOTTOM. A bulk */
 .pm-triage-bar {
   position: sticky;
   top: 8px;
@@ -192,11 +170,7 @@
   padding: 0;
 }
 
-/*
-  ⚠⚠⚠ THIN LINES, NOT A CARD PER ROW (Scott's item 1). ⚠ A card carries padding,
-  a border and a radius on all four sides; twenty-five of them is a column of
-  boxes you scroll past rather than a list you scan. The separator is one line.
-*/
+/* THIN LINES, NOT A CARD PER ROW (Scott's item 1). A card carries padding */
 .pm-triage-row {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
@@ -240,8 +214,7 @@
   line-height: 1.35;
 }
 
-/* ⚠ BOLD WHEN UNREAD (Scott's item 1) — weight, not colour, so it survives a
-   greyscale screenshot and a colour-blind reader. */
+/* BOLD WHEN UNREAD (Scott's item 1) — weight, not colour, so it survives a */
 .pm-triage-row[data-unread="yes"] .pm-triage-title {
   font-weight: 700;
 }
@@ -255,8 +228,7 @@ a.pm-triage-title:hover {
   text-decoration: underline;
 }
 
-/* ⚠ WORDS, NOT A COLOUR. The same choice the bell panel made: a reader who
-   cannot see the accent still reads "Needs You". */
+/* WORDS, NOT A COLOUR. The same choice the bell panel made: a reader who */
 .pm-triage-needs {
   font-size: 10px;
   font-weight: 700;
@@ -265,7 +237,7 @@ a.pm-triage-title:hover {
   color: var(--color-magenta);
 }
 
-/* ⚠ ONE LINE OF BODY (Scott's item 1). It is a list, not the message. */
+/* ONE LINE OF BODY (Scott's item 1). It is a list, not the message. */
 .pm-triage-body {
   margin-top: 2px;
   font-size: 13px;
@@ -284,14 +256,7 @@ a.pm-triage-title:hover {
   padding-top: 1px;
 }
 
-/*
-  ⚠⚠⚠ THE ROW ACTIONS ARE HIDDEN UNTIL HOVER ON A POINTER, AND ALWAYS VISIBLE
-  WITHOUT ONE. ⚠ Scott asked for hover actions; a touch device has no hover, so
-  hiding them there would remove the control entirely. ⚠⚠ `@media (hover: hover)`
-  is the test for a real pointer — not a width breakpoint, which gets a laptop
-  with a touchscreen wrong in both directions.
-  ⚠ They are also revealed on keyboard focus, or they would be unreachable by tab.
-*/
+/* THE ROW ACTIONS ARE HIDDEN UNTIL HOVER ON A POINTER, AND ALWAYS VISIBLE */
 .pm-triage-row-acts {
   display: flex;
   gap: 2px;
@@ -300,7 +265,7 @@ a.pm-triage-title:hover {
 .pm-triage-row-acts button {
   display: grid;
   place-items: center;
-  /* ⚠ 44px — these ARE the touch targets. */
+  /* 44px — these ARE the touch targets. */
   width: 44px;
   height: 44px;
   margin-top: -6px;
@@ -337,8 +302,7 @@ a.pm-triage-title:hover {
 /* ── PHONE ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 560px) {
-  /* ⚠ The time moves under the title so the body keeps its width; a 390px row
-     cannot hold a checkbox, a title, a time and two buttons on one line. */
+  /* The time moves under the title so the body keeps its width; a 390px row */
   .pm-triage-row {
     grid-template-columns: auto 1fr auto;
   }
@@ -489,9 +453,7 @@ a.pm-triage-title:hover {
   .pm-wl-view {
     border: 1px solid var(--color-line);
   }
-  /* ⚠⚠ A TABLE CANNOT REFLOW, so the header is hidden and each cell carries its
-     own label from `data-label`. ⚠ The markup stays a real `<table>`, so a
-     screen reader still gets rows and columns. */
+  /* A TABLE CANNOT REFLOW, so the header is hidden and each cell carries its */
   .pm-wl-table thead {
     display: none;
   }
@@ -525,18 +487,7 @@ a.pm-triage-title:hover {
   }
 }
 
-/*
-  ── ⚠⚠ THE HIDDEN-PROFILE BANNER (`P2-A1.1-E737`, A3) ────────────────────
-
-  ⚠ A THIN strip, not a card: it sits between the band and every page, so it
-  spends the page's vertical space on every route a member visits. ⚠⚠ It is
-  persistent and undismissable, which is exactly why it must be CHEAP to look at.
-
-  ⚠⚠⚠ IT IS NOT RED. A hidden profile is a STATE the member can change, not an
-  error they made — and this strip appears on every page, so an alarm colour
-  would shout continuously. ⚠ The ink ground is the same one the selection bar
-  uses, and the call to action carries the only accent.
-*/
+/* THE HIDDEN-PROFILE BANNER , A3) */
 .pm-hidden-banner {
   display: flex;
   flex-wrap: wrap;

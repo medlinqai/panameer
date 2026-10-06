@@ -53,9 +53,7 @@ export function MemberRow({
           </p>
         )}
       </div>
-      {/* ⚠ THE ACTIONS SLOT IS WRAPPED so the container query has something to
-          move. Wrapping is what lets three buttons drop together beneath the
-          name while one stays inline. */}
+      {/* THE ACTIONS SLOT IS WRAPPED so the container query has something to */}
       {children && (
         <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
           {children}

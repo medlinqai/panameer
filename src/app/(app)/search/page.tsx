@@ -155,7 +155,7 @@ export default async function Page({
                       {p.name}
                     </Link>
                   </h2>
-                  {/* ⚠⚠ THE RATE IS A RANGE (a locked decision), so both ends print. */}
+                  {/* THE RATE IS A RANGE (a locked decision), so both ends print. */}
                   {p.rateMinCents != null && (
                     <span className="text-[13.5px] text-ink-2">
                       {formatCents(p.rateMinCents, p.currency ?? "USD")}
@@ -166,32 +166,13 @@ export default async function Page({
                   )}
                 </div>
                 {p.headline && <p className="text-[14px] text-ink-2">{p.headline}</p>}
-                {/*
-                  ── ⚠⚠⚠ `depthMonths` IS DELIBERATELY NOT PRINTED ──────────────
-
-                  ⚠⚠ **`ProviderSkill.months_total` IS 0 FOR MOST ROWS AND THAT IS NOT
-                  ZERO EXPERIENCE — IT IS UNCOUNTABLE.** `E551` measured it: **436 of
-                  463 rows carry no months**, because skills are not linked to dated
-                  jobs on the import path, not because the work did not happen.
-                  ⚠⚠⚠ **SO "0 months" BESIDE A REAL CONSULTANT'S NAME WOULD BE A FALSE
-                  FIGURE ON THE SURFACE PANAMEER SELLS ON** — the family Scott named as
-                  *"the one failure mode I will not accept"*. ⚠ Counting rule 1: a
-                  truncated chain is uncountable at the point it stops, and this one
-                  stops at job-skill attachment.
-                  ⚠ `lastUsed` IS printed when it exists, because a real date is a real
-                  fact; when it is null nothing is claimed either way.
-                */}
+                {/* ZERO EXPERIENCE — IT IS UNCOUNTABLE. measured it: 436 of */}
                 {p.lastUsed && (
                   <p className="mt-1 text-[13px] text-ink-2">
                     Last used {p.lastUsed.getFullYear()}
                   </p>
                 )}
-                {/*
-                  ⚠⚠ WHY THEY MATCHED, NAMED. A ranked list that will not say what it
-                  ranked on is asking to be trusted rather than read — and these are
-                  the provider's SHOWN skills, so the profile will agree with this row
-                  (`E517`).
-                */}
+                {/* WHY THEY MATCHED, NAMED. A ranked list that will not say what it */}
                 {p.matchedSkillNames.length > 0 && (
                   <p className="mt-1.5 text-[13.5px] text-ink-2">
                     Matched on {p.matchedSkillNames.slice(0, 6).join(" · ")}

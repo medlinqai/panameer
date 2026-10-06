@@ -20,12 +20,7 @@ export function PlanView({ plan, today, forOrder = false }: { plan: PublicPlan; 
   return (
     <>
       <PlanTimeline plan={plan} today={today} footnote={!forOrder} />
-      {/*
-        The grid replaces the `<details>` accordions (`E803`, Scott 2026-10-03):
-        columns # · Name · Owner · Start · End · Status, each phase expanding to
-        its child rows. `PhaseAccordion` and its helpers stay below, unrendered,
-        rather than deleted.
-      */}
+      {/* The grid replaces the `<details>` accordions ( , Scott 2026-10-03) */}
       <PlanGrid plan={plan} subtitle={forOrder ? "Phase and task. Click a row to open it." : undefined} />
     </>
   );
@@ -37,17 +32,14 @@ export function PlanView({ plan, today, forOrder = false }: { plan: PublicPlan; 
    named disable rather than a deletion. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PhaseAccordion({ row }: { row: PublicPlanRow }) {
-  /** ⚠⚠ THE IN-PROGRESS PHASE IS OPEN BY DEFAULT (the design). Everything else
-   *  starts closed so the page can be scanned in seconds. */
+  /** THE IN-PROGRESS PHASE IS OPEN BY DEFAULT (the design). Everything else */
   const open = row.status === "In progress";
   return (
     <details open={open} className="border-b border-line">
       <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-3">
         <span
           className={
-            /** ⚠⚠ NO FILLED BADGE. A top-level row keeps a 20px OUTLINED badge;
-             *  a milestone is the magenta mark; anything else is a plain grey
-             *  number (`E792`, Scott: the chart is "a little heavy"). */
+            /** NO FILLED BADGE. A top-level row keeps a 20px OUTLINED badge */
             "inline-flex h-5 min-w-5 items-center justify-center px-1 font-mono text-[11px] " +
             (row.type === "milestone"
               ? "text-magenta"
@@ -89,9 +81,7 @@ function DateRange({ row }: { row: PublicPlanRow }) {
   if (row.type === "milestone" && (row.start || row.end)) {
     return <span className="font-mono text-[12px] text-ink-3">{fmt(row.start ?? row.end!)}</span>;
   }
-  /** ⚠⚠ THREE STATES, AND THEY MUST NOT LOOK ALIKE: both dates, a start with no
-   *  end, and nothing at all. ⚠ A missing end never prints "Present" — that was
-   *  `E549`'s defect, and the rule is the same here. */
+  /** THREE STATES, AND THEY MUST NOT LOOK ALIKE: both dates, a start with no */
   if (row.start && row.end) {
     return <span className="font-mono text-[12px] text-ink-3">{fmt(row.start)} – {fmt(row.end)}</span>;
   }
@@ -100,8 +90,7 @@ function DateRange({ row }: { row: PublicPlanRow }) {
 }
 
 function StatusMark({ row }: { row: PublicPlanRow }) {
-  /** ⚠⚠ `Late` IS SHOWN BESIDE THE STATUS, NEVER INSTEAD OF IT. It is derived
-   *  from the end date, and replacing the status would hide what was set. */
+  /** from the end date, and replacing the status would hide what was set. */
   return (
     <span className="ml-auto flex items-center gap-2">
       {row.late && <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-magenta">Past due</span>}

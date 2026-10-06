@@ -1,39 +1,4 @@
-/*
- * ── ⚠⚠ THE APP BAND — THE THREE ANCHORS (`P2-ALL-E559` WS-B) ─────────────────
- *
- * SCOTT, 2026-09-17: *"once you remove the Panameer logo, the icons with the
- * text under them should be centered between the right side icons and the left
- * side."*
- *
- * ⚠⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS, AND THAT IS DELIBERATE.
- * `pitfalls.md` 2026-08-19 and `check:app-shell` both forbid an arbitrary
- * variant (`min-[930px]:`) competing with a named one — both media queries match
- * and SOURCE ORDER decides, which is how `sm:` beat `min-[1100px]:`. The band
- * needs breakpoints that are not in the named scale, so it takes a stylesheet.
- *
- * ── ⚠⚠⚠ THE GRID RULE, AND IT IS NOT WHAT THE BRIEF PRESCRIBED ───────────────
- *
- * THE ANCHOR: the menu's centre must equal `(logo.right + cluster.left) / 2`,
- * where `logo.right` is 0 when the logo is hidden.
- *
- * ⚠ THE THREE COLUMNS STAY AT EVERY WIDTH. Only `.pm-band-brand` hides.
- * With `grid-template-columns: auto minmax(0,1fr) auto` and a symmetric gap G,
- * the middle column runs from `logo.right + G` to `cluster.left - G`, so its
- * centre is `(logo.right + cluster.left) / 2` — the two gaps CANCEL. That holds
- * when the logo collapses to zero width too.
- *
- * ⚠⚠ THE BRIEF SAID TO DROP THE COLUMN AT 930 AND RE-NUMBER THE OTHER TWO.
- * MEASURED, THAT IS THE VERSION THAT IS OFF-CENTRE: with two columns the menu
- * column runs `0 → cluster.left - G`, whose centre is `cluster.left/2 - G/2` —
- * ⚠ 10px LEFT at a 20px gap. The brief attributes that 10px to KEEPING the
- * column; the arithmetic and the measurement both put it on DROPPING it.
- * ⚠ Reported with the five numbers rather than silently switched.
- *
- * ⚠ THE BRIEF'S TRAP 1 IS REAL AND IS GUARDED HERE: `display:none` removes a
- * grid ITEM from auto-placement, so without an explicit `grid-column` on each
- * child the menu would fall into column 1 when the logo hides. Every child
- * below names its own column.
- */
+/* THE APP BAND — THE THREE ANCHORS WS-B) */
 
 .pm-band {
   display: grid;
@@ -41,146 +6,28 @@
   gap: 20px;
   align-items: center;
 
-  /*
-    ── ⚠⚠⚠ THE BAND IS PINNED (`P2-ALL-E587` WS-A) ─────────────────────────
-
-    ⚠ SCOTT, 2026-09-19: *"The dark app bar at the top scrolls away when you
-    scroll down. I ruled it should stay pinned."* ⚠⚠ He had ruled it before and
-    it was never written down and never built, which is why it is an id.
-
-    ⚠⚠ IT LIVES HERE, NOT AS A TAILWIND CLASS ON THE JSX. The element's grid,
-    its columns and its gap are already declared in this file; splitting its
-    geometry across two places is how those two drift apart. `AppBand.tsx`'s
-    `className` stays byte-unchanged.
-
-    ── ⚠⚠ WHY `sticky` HOLDS HERE, MEASURED ────────────────────────────────
-
-    ⚠ `position: sticky` fails silently if ANY ancestor sets `overflow`.
-    MEASURED on `aae84f2`: `AppShell.tsx` sets none — its root is
-    `flex min-h-screen flex-col`, the band's parent is
-    `flex min-w-0 flex-1 flex-col`, and neither carries an overflow rule.
-    ⚠⚠ THAT PARENT IS THE CONTAINING BLOCK, and it spans band + main + footer —
-    i.e. the whole page — so the band stays pinned for the entire scroll rather
-    than un-sticking at the end of a short ancestor.
-
-    ── ⚠⚠⚠ THE Z-INDEX IS NOT A FREE CHOICE. THE STACK, RE-MEASURED ────────
-
-    ⚠ Live code only, `E164` quotes and comments stripped, on `aae84f2`:
-
-      z-10 / z-20 ordinary page content        → UNDER the band
-      z-40        **the band**                 → above content
-      z-50        modals and overlays          → OVER the band
-      z-[60]      `Popover.tsx` (account menu) → OVER the band
-      z-index 60  `messages-drawer.css`        → OVER the band
-      z-[70]      `ReviewWorkRequest.tsx`      → OVER the band
-
-    ⚠⚠ **A BAND THAT COVERS THE ACCOUNT MENU OR THE MESSAGES DRAWER IS A WORSE
-    BUG THAN A BAND THAT SCROLLS.** Both sit at 60 and both are proved to open
-    over it at the WS-A gate.
-
-    ⚠ ONE OTHER THING SITS AT 40 AND IT IS A DELIBERATE TIE:
-    `console/TaskPanel.tsx` is `fixed right-2 top-1/2 … hidden lg:flex`. It is
-    LATER IN THE DOM than the band, so at an equal z-index it paints over —
-    which is the right answer for a floating panel, and they only meet at all on
-    a very short viewport. Recorded rather than nudged, because moving either
-    number to avoid a tie nobody can see is how a stack becomes folklore.
-
-    ── ⚠ PINNED, NOT RESTYLED ──────────────────────────────────────────────
-
-    ⚠⚠ NO SHADOW, NO BLUR, NO BACKGROUND CHANGE ON SCROLL. The brief is explicit
-    and so is the ruling: *"Pinned is not 'clever.'"* The band looks identical
-    scrolled and unscrolled; only its position changed.
-  */
+  /* THE BAND IS PINNED WS-A) */
   position: sticky;
   top: 0;
   z-index: 40;
 
-  /*
-    ── ⚠⚠⚠ THE HEIGHT IS DECLARED, AND THE BAND IS HELD TO IT ───────────────
-
-    ⚠⚠ `--pm-band-h` IS THE ONE SOURCE OF TRUTH, and `height` below is what
-    makes it TRUE BY CONSTRUCTION rather than a number somebody copied off a
-    screenshot. ⚠ A custom property holding a literal that the band merely
-    happens to match is a hard-coded height with extra steps: it is wrong the
-    moment the band's real height differs, and nothing says so.
-
-    ⚠⚠⚠ THERE ARE TWO HEIGHTS, AND THAT IS MEASURED, NOT A HEDGE. The band is
-    67px while the menu carries labels and 57px once it goes icons-only — the
-    menu's own box is 46px vs 30px, and `padding: 10px` top and bottom is
-    constant. MEASURED 2026-09-20 on seven widths: 67 at 1440/1100/930/860,
-    57 at 480/390/360.
-    ⚠ **ONE VALUE WOULD BREAK ONE REGIME.** Forcing 57 everywhere overflows a
-    46px menu inside a 57px band; forcing 67 everywhere steals 10px from a phone,
-    where the space is scarcest. ⚠⚠ So the property is RESPONSIVE and the
-    override below shares the 780px breakpoint with the rule that hides the
-    labels — the two cannot drift, because the thing that changes the height IS
-    the thing that changes at 780px.
-
-    ⚠ THE RIGHT-HAND GROUP SHRINKS, IT DOES NOT WRAP: it is a `flex` row, which
-    is `nowrap` by default, and the menu column carries `min-width: 0`. A fixed
-    height is only safe because nothing in here can reflow to a second row.
-    ⚠⚠ `check:app-shell` ASSERTS THE RENDERED HEIGHT EQUALS THE DECLARED ONE at
-    both regimes, so this comment cannot quietly become false.
-  */
+  /* THE HEIGHT IS DECLARED, AND THE BAND IS HELD TO IT */
   height: var(--pm-band-h);
 }
 
-/*
-  ── ⚠⚠⚠ THE PROPERTY LIVES ON `:root`, NOT ON `.pm-band` ───────────────────
-
-  ⚠⚠ CUSTOM PROPERTIES INHERIT DOWN, NEVER ACROSS. The two things that have to
-  clear the band — the Learn lesson aside and the `AppPath` rail — are SIBLINGS
-  of the band inside `AppShell`, not descendants of it. Declared on `.pm-band`
-  they would read nothing, silently fall back, and be wrong at exactly the width
-  where the band is shorter.
-  ⚠ MEASURED AND CAUGHT DURING `WS-B`, before it shipped.
-
-  ⚠ IT IS STILL ONE SOURCE OF TRUTH: `.pm-band` sets its own `height` FROM this
-  property, so the declared value and the rendered one cannot disagree.
-  ⚠⚠ AND IT IS SCOPED WITHOUT A SELECTOR TRICK: this stylesheet is imported by
-  `AppBand`, so it only loads on pages that render the band. A marketing page
-  never sees the property, and the `scroll-padding-top` below is simply invalid
-  there — which is the correct behaviour, not a bug.
-*/
+/* THE PROPERTY LIVES ON `:root`, NOT ON `.pm-band` */
 :root {
   --pm-band-h: 67px;
 }
 
-/*
-  ⚠⚠ EVERY IN-SHELL ANCHOR CLEARS THE BAND IN ONE DECLARATION. `scroll-mt-*`
-  utilities are scattered across `company`, `WorkFeed`, `sections.tsx` and
-  others; editing each is how one gets missed. ⚠ `scroll-padding-top` on the
-  SCROLL CONTAINER covers all of them, including anchors nobody has written yet.
-  ⚠ A page's own `scroll-mt` still adds on top of this, which is what those
-  values were for — breathing room, not band clearance.
-*/
+/* EVERY IN-SHELL ANCHOR CLEARS THE BAND IN ONE DECLARATION. `scroll-mt-*` */
 html {
   scroll-padding-top: var(--pm-band-h);
 }
 
-/*
-  ── ⚠⚠ THE MENU'S OFFSET IS A CONSEQUENCE OF THE SIDE COLUMNS ──────────────
+/* THE MENU'S OFFSET IS A CONSEQUENCE OF THE SIDE COLUMNS */
 
-  ⚠ Recorded at Scott's instruction, 2026-09-20, after `WS-B2` removed two chips
-  from the right-hand group and the menu moved RIGHT by 101.44px — exactly half
-  the freed width.
-  ⚠⚠ THE MENU IS CENTRED IN THE MIDDLE COLUMN, NOT IN THE BAND. With `auto`
-  side columns of unequal width, the middle column's centre sits
-  `(leftWidth − rightWidth) / 2` away from the band's centre, so the menu
-  inherits that offset. MEASURED after `WS-B2`: −31.13px, constant at every
-  width from 1000 to 1440 (it was −132.57px before).
-
-  ⚠ **RULED TO STAND** (Scott, 2026-09-20): it moved CLOSER to true centre, and
-  rewriting a collision-safe grid for 31px is not worth re-opening a layout that
-  `check:app-shell` asserts 29 things about.
-  ⚠⚠ **THE FIX, IF IT IS EVER WANTED, IS ONE LINE:**
-        grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-  That makes the side columns share the slack equally, so the middle column — and
-  the menu in it — centres on the band. ⚠ It changes how the band collapses at
-  narrow widths, so it needs its own measurement pass, not a quick swap.
-*/
-
-/* ⚠ EXPLICIT COLUMNS — the guard against trap 1. Never remove these. */
+/* EXPLICIT COLUMNS — the guard against trap 1. Never remove these. */
 .pm-band-brand {
   grid-column: 1;
   justify-self: start;
@@ -189,18 +36,7 @@ html {
   grid-column: 2;
   justify-self: center;
   min-width: 0;
-  /*
-    ⚠⚠ `max-width` IS LOAD-BEARING AT 360px, AND IT IS NOT COSMETIC.
-    `justify-self: center` sizes this item to MAX-CONTENT and centres it — so
-    once the six icons are wider than the column it overflows EQUALLY ON BOTH
-    SIDES, and the left half goes off-screen. ⚠ `check:app-shell` caught exactly
-    that: *"/dashboard @360: header content clipped off the LEFT"* — and note it
-    caught the LEFT, which `scrollWidth` alone never sees (`E168`).
-    ⚠ Capped at the grid area, the inner row scrolls instead (see below).
-    ⚠⚠ IT DOES NOT MOVE THE ANCHOR: below the cap the item is still centred in
-    its column, and at the cap its box IS the column, whose centre is the same
-    number either way.
-  */
+  /* once the six icons are wider than the column it overflows EQUALLY ON BOTH */
   max-width: 100%;
 }
 .pm-band-right {
@@ -208,97 +44,14 @@ html {
   justify-self: end;
 }
 
-/*
- * ── ⚠ THE SHRINK ORDER IS SCOTT'S (`E559` WS-C) ──────────────────────────────
- * 1. the date chip   2. `AI on`   3. the Panameer logo block
- * Below that the menu goes icon-only. It must never wrap and never push the
- * utility cluster off-screen.
- */
+/* THE SHRINK ORDER IS SCOTT'S ( WS-C) */
 
-/*
- * ── ⚠⚠ STEPS 1 AND 2 ARE GONE WITH THEIR CHIPS (`P2-ALL-E587` WS-B2) ────────
- *
- * ⚠ SCOTT, 2026-09-20: the date chip and `AI on` are REMOVED — *"They are not
- * functional and I really want to simplify."* ⚠⚠ A shrink step for an element
- * that no longer exists is a rule nothing can match: it reads as live, and the
- * next person maintaining the shrink order has to discover by hand that two of
- * its three steps are dead.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`), with line comments per rule 12:
- *
- *   // 1 - the date chip goes first.
- *   // @media (max-width: 1400px) {
- *   //   .pm-band-date { display: none; }
- *   // }
- *   // 2 - then `AI on`.
- *   // @media (max-width: 1180px) {
- *   //   .pm-band-ai { display: none; }
- *   // }
- *
- * ⚠⚠ THE SHRINK ORDER ABOVE IS NOW A ONE-STEP ORDER: the logo block. ⚠ THAT
- * STEP IS UNTOUCHED, and so is the rule that the menu must never wrap and never
- * push the utility cluster off-screen.
- */
+/* STEPS 1 AND 2 ARE GONE WITH THEIR CHIPS WS-B2) */
 
-/*
- * 3 — then the whole logo block. ⚠ THE COLUMN STAYS; only the item hides.
- *
- * ── ⚠⚠⚠ AND THE AVAILABLE SPACE MUST THEN START AT THE LEFT EDGE ────────────
- *
- * SCOTT'S RULE: *"once you remove the Panameer logo, the icons with the text
- * under them should be centered between the right side icons and the left
- * side"* — and the brief makes it arithmetic: the menu's centre equals
- * `(logo.right + cluster.left) / 2` with `logo.right = 0`.
- *
- * ⚠⚠ MEASURED 2026-09-18, FIRST ATTEMPT: hiding only the logo left the menu
- * ⚠ +12.0px RIGHT of centre at BOTH 900 and 700. The cause is not the grid —
- * it is that `logo.right = 0` means the VIEWPORT EDGE, while the menu column
- * still began after the band's 24px left padding AND the 20px column gap. The
- * column ran `[44, cluster.left − 20]`, whose centre is 12px right of
- * `cluster.left / 2`. ⚠ `(44 + (cluster.left − 20) − cluster.left) / 2 = 12`.
- *
- * ⚠ SO BOTH ARE ZEROED ON THIS SIDE ONLY: the left padding and the column gap.
- * The menu column then spans `[0, cluster.left]` exactly and its centre is
- * `cluster.left / 2` — off by 0. ⚠⚠ THE RIGHT PADDING IS UNTOUCHED, so the
- * cluster keeps its inset from the right edge.
- * ⚠ `.pm-band-menu` takes the gap back as PADDING, which keeps the menu's
- * content clear of the cluster without moving its box's centre — padding is
- * inside the box being centred, so it cancels.
- */
-/*
-  ── ⚠⚠⚠ THE BRAND IS VISIBLE AT EVERY WIDTH (`P2-A2-E602` WS-E 3) ─────────
-
-  ⚠ SCOTT, 2026-09-22, ruling after the Home icon was removed: his reason was
-  *"they can click the logo in the upper left"* — **so the fix is to make that
-  true on a phone, not to put the icon back.**
-
-  ⚠⚠⚠ MEASURED FIRST, AND THE MEASUREMENT IS WHY THIS RULING EXISTS: with the
-  Home icon gone and `.pm-band-brand { display: none }` below 930px, there were
-  **ZERO visible links to `/dashboard`** at 360, 390 and 780px — the account
-  menu carries none either. **The band's only way home was hidden exactly where
-  the icon had been carrying it.**
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the hide, and the centring fix
-  that existed ONLY because the brand column was zero-width:
-  //   @media (max-width: 930px) {
-  //     .pm-band-brand { display: none; }
-  //     .pm-band { padding-left: 0; column-gap: 0; }
-  //     .pm-band-menu { padding: 0 20px; }
-  //   }
-  ⚠⚠ THOSE THREE WENT TOGETHER AND THEY COME BACK TOGETHER. `E559` zeroed the
-  left padding and the column gap so the MENU's box centred on the cluster once
-  the brand vanished; with the brand present the ordinary three-column geometry
-  applies again, which is what every width above 930px has always used.
-
-  ⚠ THE MARK IS COMPACT, NOT ABSENT — Scott: *"the mark alone, without 'Provider
-  Console', is fine"*. The same lockup asset is kept (no new brand decision is
-  taken here) and simply capped, so it stays a tap target without crowding the
-  menu.
-*/
+/* 3 — then the whole logo block. THE COLUMN STAYS; only the item hides. */
+/* THE BRAND IS VISIBLE AT EVERY WIDTH WS-E 3) */
 @media (max-width: 930px) {
-  /* ⚠ THE MARK ALONE — the console label is what made the brand column wide
-     enough to squeeze the menu to 14px once the brand stopped being hidden.
-     ⚠⚠ MEASURED BEFORE AND AFTER, not assumed. */
+  /* THE MARK ALONE — the console label is what made the brand column wide */
   .pm-band-console {
     display: none;
   }
@@ -310,15 +63,7 @@ html {
   }
 }
 
-/*
-  ⚠⚠⚠ THE NARROWEST WIDTH NEEDS ANOTHER 12px, AND THE GATE FOUND IT. At 360px
-  an 88px mark pushed the LAST journey icon to `right=366` — six pixels past the
-  viewport — and `GUARD 1+2` failed with *"header content past the RIGHT edge"*.
-  ⚠ MEASURED, NOT GUESSED: 5 of 6 menu items were fully visible at 360px and all
-  6 at 390px, so the shortfall was real and small.
-  ⚠⚠ THE MARK GIVES THE PIXELS BACK, NOT THE MENU — the six journeys are the
-  band's job; the brand only has to stay a visible, tappable way home.
-*/
+/* THE NARROWEST WIDTH NEEDS ANOTHER 12px, AND THE GATE FOUND IT. At 360px */
 @media (max-width: 400px) {
   .pm-band-brand img {
     max-width: 72px;
@@ -327,13 +72,7 @@ html {
 
 /* Below that the menu is icons only — the label is what costs the width. */
 @media (max-width: 780px) {
-  /*
-    ⚠⚠ THE BAND GETS SHORTER HERE, AND FOR EXACTLY THIS REASON: losing the
-    labels takes the menu's box from 46px to 30px. ⚠ The override lives in the
-    SAME media query as the cause so the two cannot drift apart — if this
-    breakpoint ever moves, the height moves with it.
-    ⚠ MEASURED: 57px at 480/390/360.
-  */
+  /* THE BAND GETS SHORTER HERE, AND FOR EXACTLY THIS REASON: losing the */
   :root {
     --pm-band-h: 57px;
   }
@@ -346,8 +85,7 @@ html {
   }
 }
 
-/* ⚠ THE MENU NEVER WRAPS, AT ANY WIDTH. It scrolls sideways before it wraps —
-   a second line would change the band's height on every logged-in page. */
+/* THE MENU NEVER WRAPS, AT ANY WIDTH. It scrolls sideways before it wraps — */
 .pm-band-menu-row {
   display: flex;
   align-items: center;
@@ -364,25 +102,7 @@ html {
   flex-shrink: 0;
 }
 
-/*
- * ── ⚠⚠⚠ M1 LEAVES THE BAND BELOW `md` (`P2-ALL-E694` WS-B, ruling 88) ───────
- *
- * ⚠ The operational menu becomes a fixed BOTTOM BAR at phone width
- * (`BottomNav.tsx` / `bottom-nav.css`), so the band's centre column is not
- * narrowed here — **it is not rendered at all.**
- *
- * ⚠⚠⚠ **THIS IS WHAT ACTUALLY FIXES THE 122px.** Every earlier attempt bought
- * width by taking something away from the row and leaving it in place: the
- * console label went at 930, the mark shrank at 400, and `.pm-band-label` — the
- * word that says what an icon IS — went at 780. ⚠ **The row still hid 122px
- * afterwards, and 52px even with only two items** (`E692`). Squeezing a row that
- * does not fit produces a smaller row that does not fit.
- *
- * ⚠⚠ **767.98px IS TAILWIND'S `md` BOUNDARY, DELIBERATELY** — `BottomNav` is
- * `md:hidden`, so the two must switch at the same pixel or there is a width with
- * two menus or none. ⚠ The brief's own line: *"Above `md`, the band is
- * unchanged."*
- */
+/* M1 LEAVES THE BAND BELOW `md` WS-B, ruling 88) */
 @media (max-width: 767.98px) {
   .pm-band-menu {
     display: none;

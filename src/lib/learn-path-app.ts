@@ -111,11 +111,7 @@ export function leaderLabel(first: string | null, last: string | null): string {
 }
 
 export async function getAppPath(
-  /* ⚠ `P2-A4-E611` — IT TAKES THE VIEWER, NOT THE ID. `getPathForumTeaser` asks
-     `canAccessPathForum`, whose signature is the `Viewer`. ⚠⚠ Reconstructing a
-     Viewer from an id inside here would be a second, thinner idea of who the
-     member is. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   export async function getAppPath(slug: string, userId: string | null) */
+  // — IT TAKES THE VIEWER, NOT THE ID. `getPathForumTeaser` asks
   slug: string,
   viewer: Viewer | null
 ): Promise<AppPathView | null> {
@@ -177,8 +173,7 @@ export async function getAppPath(
       : Promise.resolve([]),
     loadInstructors(instructorIdsFor(allLessons, path.expert_person_id)),
     prisma.learnEnrollment.count({ where: { learning_path_id: path.id } }),
-    /* ⚠ THE SAME TEASER THE PUBLIC PAGE USED — counts and `canOpen`, nothing
-       else. ⚠⚠ It is not a second query shaped like it. */
+    // THE SAME TEASER THE PUBLIC PAGE USED — counts and `canOpen`, nothing
     getPathForumTeaser(viewer, path.id),
     pathInterestFor(userId, path.id),
     userId
@@ -248,7 +243,7 @@ export async function getAppPath(
       summary: c.summary,
       lessons: courseLessons.length,
       completed,
-      /* ⚠ `E364` WS-5 — playable denominator. */
+      /* `E364` WS-5 — playable denominator. */
       percent: playableProgress(courseLessons, done).percent,
       sectionCount: c.sections.length,
       instructors: courseInstructors,
@@ -269,13 +264,10 @@ export async function getAppPath(
     audience: path.audience,
     lessons: allLessons.length,
     completed,
-    /* ⚠ `E364` WS-5 — playable denominator, path level. */
+    /* `E364` WS-5 — playable denominator, path level. */
     percent: playableProgress(allLessons, done).percent,
     enrolled: Boolean(enrolment),
-    /* ⚠⚠⚠ THE SAME PREDICATE DISCOVERY USES (`E607`). This was the THIRD
-       selection of a path and the second that admitted one discovery hides:
-       `findFirst({ where: { slug, status: "PUBLISHED" } })`, no playable
-       clause. ⚠ `pathIsOpenTo` is imported, never restated. */
+    // THE SAME PREDICATE DISCOVERY USES . This was the THIRD
     ready: pathIsOpenTo(allLessons.some(isPlayable), Boolean(enrolment)),
     forum,
     interest,
@@ -305,15 +297,7 @@ export async function getAppPath(
   };
 }
 
-/**
- * This path, this month — ranked by lessons finished SINCE THE 1st.
- *
- * "This month" is what the card says, so it is what is counted; ranking by
- * lifetime progress under a monthly heading would be a quietly wrong claim on a
- * card that names people.
- *
- * ⚠ Only reached above `AUDIENCE_FLOOR`, so this is unreachable today.
- */
+/** This path, this month — ranked by lessons finished SINCE THE 1st. */
 async function getLeaderboard(pathId: string, viewerId: string | null): Promise<LeaderRow[]> {
   const monthStart = new Date();
   monthStart.setDate(1);

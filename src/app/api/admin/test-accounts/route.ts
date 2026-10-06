@@ -47,8 +47,7 @@ export async function POST(request: Request) {
     }
   } catch (e) {
     if (e instanceof TestAccountError) {
-      /** ⚠ The reason reaches the screen — "Type REMOVE 9 to confirm" is
-       *  unactionable as a generic 400. */
+      /** The reason reaches the screen — "Type REMOVE 9 to confirm" is */
       return NextResponse.json({ error: e.message, code: e.code }, { status: 400 });
     }
     console.error("[test-accounts] unexpected", e);

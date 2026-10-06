@@ -299,13 +299,7 @@ export async function saveSection(
       break;
     }
 
-    /*
-      STEP 6 — the budget, as a RANGE, and "no budget" is a real answer.
-
-      An empty range clears both columns rather than failing validation: the
-      deck has a "not ready to set a budget?" escape, and a requester who takes
-      it has answered the question.
-    */
+    // STEP 6 — the budget, as a RANGE, and "no budget" is a real answer.
     case "budget": {
       const budgetType = data.budgetType ?? null;
       if (budgetType && !BUDGET_TYPES.includes(budgetType)) {
@@ -341,12 +335,7 @@ export async function saveSection(
       if (!description) {
         throw new WorkRequestError("Describe what you need", "INVALID");
       }
-      /*
-        THE TITLE IS DERIVED when the requester has not set one. The deck's flow
-        never asks for a title, but `title` gates posting and is what a provider
-        sees in the feed — so the first line of the description becomes it,
-        rather than posting a request called "".
-      */
+      // THE TITLE IS DERIVED when the requester has not set one. The deck's flow
       const title =
         (data.title ?? "").trim() ||
         wr.title.trim() ||
@@ -367,19 +356,9 @@ export async function saveSection(
           "INVALID"
         );
       }
-      /*
-        EVERY SKILL MUST BE INSIDE THE CASCADE the requester walked: the chosen
-        role, and — once a domain has been picked — the chosen domain too. The
-        first wizard only checked the role, which was right when there was no
-        domain step; now a skill from a sibling domain would contradict the
-        answer given one screen earlier.
-      */
+      // EVERY SKILL MUST BE INSIDE THE CASCADE the requester walked: the chosen
       const skills = await prisma.skill.findMany({
-        /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
-           VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
-           Filtering it would silently drop a provider's existing selection the
-           moment an admin retired that row, which is the exact data loss this
-           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
+        // NO `status` FILTER HERE, DELIBERATELY . This
         where: { id: { in: skillIds } },
         select: { id: true, role_type_id: true, pillar_id: true },
       });
@@ -468,24 +447,7 @@ export async function saveSection(
       break;
     }
 
-    /*
-      ── ⚠⚠ STEP 10 — HOW IT PUBLISHES (`P1-J4-E025`) ─────────────────────────
-
-      The review step was a no-op case because reviewing wrote nothing. It now
-      carries the one publishing decision the buyer makes: whether the COMPANY
-      NAME is shown.
-
-      ⚠ SAME THREE-STATE PATTERN AS `Project.client_visibility`, on the SAME
-      `ClientVisibility` enum, validated the same way — `employers.ts:301`
-      refuses a CONFIDENTIAL project with no code name, and this refuses the
-      same thing for the same reason: a redaction with nothing in its place
-      renders as missing data rather than as a decision.
-
-      ⚠ IT GOVERNS THE NAME AND NOTHING ELSE. There is deliberately no way to
-      hide the person, the standing counts, the industry or the verification
-      state — a request that hid all of those is the scam this brief exists to
-      stop.
-    */
+    // STEP 10 — HOW IT PUBLISHES
     case "review": {
       if (data.companyVisibility === undefined && data.companyCodeName === undefined) break;
       const visibility = String(data.companyVisibility ?? wr.company_visibility);
@@ -525,26 +487,7 @@ function missingForPost(wr: Awaited<ReturnType<typeof loadOwned>>): string[] {
   return missing;
 }
 
-/**
- * ⚠⚠ THE IDENTITY HALF OF THE POST GATE (`P1-J4-E025`) — SERVER-SIDE.
- *
- * **SCOTT:** *"i am letting you post for free… if you refuse to give basic
- * details… meh, maybe it isn't the place for you?"*
- *
- * ⚠ THIS IS THE BOUNDARY. The wizard mirrors it, but the wizard is not it — the
- * route is reachable directly and a client that skipped the check would post an
- * anonymous request anyway. The UI reads the SAME function.
- *
- * ⚠ IT EXTENDS `missingForPost`'s CONTRACT RATHER THAN ADDING A SECOND GATE.
- * ⚠ SUPERSEDED, quoted: the brief that ordered this said the post route *"today
- * checks only `guardApi(\"canHireTalent\")`"*. IT DID NOT — `missingForPost`
- * already required title, category and skills server-side. That check is
- * untouched and this runs after it, so nothing that used to be refused is now
- * allowed.
- *
- * ⚠ DRAFTS ARE NEVER TOUCHED BY THIS. `saveSection` does not call it; only
- * posting does. Write and save whatever you like.
- */
+/** THE IDENTITY HALF OF THE POST GATE — SERVER-SIDE. */
 export async function missingIdentityForPerson(buyerPersonId: string): Promise<PostRequirementKey[]> {
   const person = await prisma.person.findUnique({
     where: { id: buyerPersonId },
@@ -589,12 +532,7 @@ export async function postWorkRequest(viewer: Viewer, id: string) {
     );
   }
 
-  /*
-    ⚠ THE REFUSAL NAMES THE FIELD AND SAYS WHY, one reason per field, in the
-    PROVIDER's interest. Not "complete your profile". The structured `fields`
-    array carries the link so the UI can offer it; `message` is the same content
-    flattened for a client that only reads the string.
-  */
+  // THE REFUSAL NAMES THE FIELD AND SAYS WHY, one reason per field, in the
   const missingIds = await missingIdentityForPerson(wr.buyer_person_id);
   if (missingIds.length) {
     const reqs = missingIds.map(requirementFor);
@@ -614,20 +552,7 @@ export async function postWorkRequest(viewer: Viewer, id: string) {
   return getWorkRequest(viewer, id);
 }
 
-/**
- * The "your Work Request is live" confirmation
- * (brief_transactional_email_suite WS-B).
- *
- * NEVER THROWS. The request IS posted by the time this runs — the write above
- * already committed — so a Resend outage must not surface as "could not post"
- * and send the requester back to a wizard for work that is already done. It
- * logs and returns.
- *
- * Skipped entirely when RESEND_API_KEY is unset, which is every local
- * environment: `sendEmail` constructs its client lazily and throws without a
- * key, and posting a Work Request on a dev machine should not depend on having
- * one.
- */
+/** The "your Work Request is live" confirmation */
 async function sendPostedConfirmation(
   workRequestId: string,
   buyerPersonId: string,
@@ -654,9 +579,7 @@ async function sendPostedConfirmation(
       viewUrl: `${base}/work-requests/${workRequestId}/share`,
       logoUrl: `${base}/brand/panameer-lockup-ink.png`,
     });
-    /* ⚠ NO SUBJECT ROW PER MESSAGE: `WorkRequest` is what the mail is ABOUT, and
-       one request produces many sends to many recipients. The request id is
-       still the most useful pointer, so it is recorded as the subject. */
+    // NO SUBJECT ROW PER MESSAGE: `WorkRequest` is what the mail is ABOUT, and
     await sendEmail({
       to,
       subject,

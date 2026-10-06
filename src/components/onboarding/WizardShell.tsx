@@ -187,9 +187,7 @@ export function WizardShell({
             aria-valuenow={showCounter ? step : Math.round(pct)}
             aria-valuemin={showCounter ? 1 : 0}
             aria-valuemax={showCounter ? totalSteps : 100}
-            /* ⚠ the accessible name follows the VISIBLE counter when one is supplied —
-               announcing "Step 4 of 15" under a label reading "Section 2 of 5" would
-               describe a different progress model to a screen-reader user. */
+            // the accessible name follows the VISIBLE counter when one is supplied —
             aria-label={
               showCounter
                 ? [counterText ?? `Step ${step} of ${totalSteps}`, subCounter]
@@ -206,19 +204,7 @@ export function WizardShell({
         </div>
       )}
 
-      {/*
-        TITLE AND SUBTITLE RUN FULL WIDTH, then the body and the aside sit below
-        them (E103-import-page.png / walk7 WS3).
-
-        They used to live INSIDE the left column of the two-column grid, so on
-        any step with an aside the heading was squeezed to ~60% of the frame
-        while the example card had the rest — the method-select page wrapped
-        "How would you like to tell us about yourself?" across two lines beside
-        a card that needed none of that room. The mockup runs both across the
-        top and puts the choices and the card underneath, which is also just
-        the right reading order: what you are being asked, then the ways to
-        answer it.
-      */}
+      {/* TITLE AND SUBTITLE RUN FULL WIDTH, then the body and the aside sit below */}
       <div>
         <h1 className={rail ? "text-[23px] font-extrabold leading-[1.15] sm:text-[30px]" : "text-[30px] font-extrabold tracking-[-0.6px] sm:text-[32px]"}>
           {title}

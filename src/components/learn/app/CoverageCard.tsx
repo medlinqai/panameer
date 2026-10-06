@@ -87,21 +87,8 @@ export function CoverageCard({ data }: { data: MyLearning }) {
           </span>
         </div>
 
-        {/*
-          THE CLOSING STRIP. Omitted entirely when nothing is enrolled: a "next
-          certificate" panel on an account with no enrollments would have to
-          invent a target.
-        */}
-        {/*
-          ⚠ IT STACKS BELOW 640px, AND THAT IS A FIX. As a `flex-wrap` row the text
-          block was `min-w-0 flex-1` beside a 190px bar and a percentage; inside
-          this card's right column at 390px that left the prose about 30px wide and
-          it rendered ONE WORD PER LINE. `flex-wrap` does not help when a flex
-          child is allowed to shrink to nothing instead of wrapping. Caught in a
-          390px screenshot, NOT by a scrollWidth check — nothing overflowed, it
-          just became unreadable, which is why the phone screenshots are part of
-          the verification and not a nicety.
-        */}
+        {/* THE CLOSING STRIP. Omitted entirely when nothing is enrolled: a "next */}
+        {/* IT STACKS BELOW 640px, AND THAT IS A FIX. As a `flex-wrap` row the text */}
         {nextCertificate && (
           <div className="mt-4 flex flex-col items-start gap-3 rounded-[12px] border border-line bg-bg-soft px-4 py-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-3">
             <div className="min-w-0 sm:flex-1">

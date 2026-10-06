@@ -127,11 +127,7 @@ export function InviteColleagueClient({
             </p>
             <div className="mt-2">
               <MemberRow person={member as PersonCard} profileId={member.profileId}>
-                {/* ⚠⚠ ONE CONTROL, AND IT PICKS ITS OWN BUTTON. `Connect as
-                    colleague` / `Requested` / `Accept` / `Message` are all
-                    `ConnectControls` switching on the relation the SERVER
-                    computed. ⚠ No second Connect button was written here, and
-                    this surface decides nothing. */}
+                {/* ONE CONTROL, AND IT PICKS ITS OWN BUTTON. `Connect as */}
                 <ConnectControls
                   toUserId={member.userId}
                   relation={member.relation}
@@ -148,14 +144,7 @@ export function InviteColleagueClient({
             <p className="font-semibold text-emerald-800">
               Invitation sent. It shows below until they join.
             </p>
-            {/*
-              THE ADDRESS IS REPEATED BACK (`P2-J3-E821`, R-E010).
-              Measured read-only: the off-platform send WORKED — a SentEmail row
-              for info@staterp.com, status `sent`, from production. The address
-              was simply a letter short of the one intended ("staterp", not
-              "straterp"), and nothing on screen said where it had gone. A
-              confirmation that does not repeat the address cannot catch a typo.
-            */}
+            {/* THE ADDRESS IS REPEATED BACK , . */}
             {done.email && (
               <p className="mt-1 text-emerald-900">
                 Sent to <span className="font-bold">{done.email}</span> — check the address is
@@ -207,11 +196,7 @@ export function InviteColleagueClient({
           <input
             type="email"
             value={email}
-            /* ⚠⚠ EDITING THE ADDRESS RETRACTS THE CONFIRMATION (`E522` Part B).
-               Without this, a member could confirm address A, correct it to B,
-               and the second click would send B — an address NOBODY READ BACK.
-               That is the exact failure the step exists to prevent, so the ask
-               must be re-answered for the new address. */
+            // EDITING THE ADDRESS RETRACTS THE CONFIRMATION ( Part B).
             onChange={(e) => {
               setEmail(e.target.value);
               setConfirming(false);
@@ -239,21 +224,7 @@ export function InviteColleagueClient({
           />
         </label>
 
-        {/*
-          ⚠⚠ THE CONFIRM STEP (`P2-J3-E522` PART B). WORDING APPROVED AS WRITTEN
-          BY SCOTT, 2026-09-17, including *"`Back` rather than `Cancel` is
-          right"* — nothing has happened yet, so there is nothing to cancel.
-
-          ⚠ THE ADDRESS IS BOLD AND ON ITS OWN LINE. The entire point is to make
-          the reader LOOK AT IT; a sentence with the address buried mid-line is
-          the thing that already failed three times.
-
-          ⚠⚠ "just disappears" IS A CLAIM WITH AN EXPIRY, AND SCOTT REQUIRED IT
-          RECORDED AS ONE: it is true TODAY and becomes FALSE the day `E522`
-          Part A ships, because the bounce webhook is precisely what stops an
-          invitation to a wrong address disappearing silently. ⚠ NOTED AGAINST
-          PART A — whoever builds the webhook updates this sentence.
-        */}
+        {/* THE CONFIRM STEP PART B). WORDING APPROVED AS WRITTEN */}
         {confirming && (
           <div className="mt-4 rounded-brand border border-magenta/30 bg-magenta/[0.04] p-4">
             <p className="text-[15px] font-bold">Send this invitation?</p>
@@ -274,8 +245,7 @@ export function InviteColleagueClient({
           >
             {busy ? "Sending…" : "Send Invitation"}
           </button>
-          {/* ⚠ `Back` UNSENDS NOTHING — it returns to the form so the address can
-              be corrected. It only appears once the ask is on screen. */}
+          {/* be corrected. It only appears once the ask is on screen. */}
           {confirming && !busy && (
             <button
               type="button"
@@ -285,9 +255,7 @@ export function InviteColleagueClient({
               Back
             </button>
           )}
-          {/* ⚠ THE ALLOWANCE IS SHOWN ONLY WHEN IT IS NEARLY GONE. Printing
-              "36 of 40 left" on a page where nobody will ever send four would
-              make a limit that exists for abuse look like a quota on the user. */}
+          {/* THE ALLOWANCE IS SHOWN ONLY WHEN IT IS NEARLY GONE. Printing */}
           {dayRemaining <= 5 && (
             <span className="text-[13px] text-ink-2">
               {dayRemaining === 0
@@ -308,18 +276,13 @@ export function InviteColleagueClient({
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {sent.map((row) => {
-              /* ⚠ THE COLUMN IS THE LEAST TRUSTWORTHY OF THE THREE FACTS, so
-                 it is read last. `joined` is derived live; expiry is a date
-                 nothing sweeps on a timer; `status` only carries what a person
-                 actually set (REVOKED). */
+              // THE COLUMN IS THE LEAST TRUSTWORTHY OF THE THREE FACTS, so
               const key: SentInvite["status"] = row.joined
                 ? "ACCEPTED"
                 : row.status === "PENDING" && row.expired
                   ? "EXPIRED"
                   : row.status;
-              /* ⚠ `Joined` wins: if they are on the platform, the mail reached
-                 them whatever a stale receipt says. Otherwise a failure to
-                 deliver is the more useful fact than "still pending". */
+              // them whatever a stale receipt says. Otherwise a failure to
               const status =
                 row.undelivered && !row.joined ? UNDELIVERED : STATUS[key];
               return (

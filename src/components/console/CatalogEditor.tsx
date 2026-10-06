@@ -70,8 +70,7 @@ export function CatalogEditor({
     setBusy(false);
     if (r.ok) {
       setNote(r.message ?? "Saved.");
-      /* ⚠ THE SERVER IS THE SOURCE OF TRUTH — refresh rather than patching a
-         local copy of the tree, which is how a grid and its data drift. */
+      // THE SERVER IS THE SOURCE OF TRUTH — refresh rather than patching a
       router.refresh();
     } else {
       setNote(r.error ?? "That didn't save.");
@@ -91,12 +90,7 @@ export function CatalogEditor({
           aria-label="Name"
         />
 
-        {/*
-          ⚠⚠ THE `kind` EDIT IS THE REPAIR PATH FOR THE HARD-CODED PRODUCT BUG.
-          `onboarding.ts` files every provider-typed specialization as PRODUCT
-          whatever it is; this is how an industry gets moved back. The row keeps
-          its id, so nobody loses the selection in the move.
-        */}
+        {/* THE `kind` EDIT IS THE REPAIR PATH FOR THE HARD-CODED PRODUCT BUG. */}
         {target.table === "specialization" && (
           <select
             className={FIELD}
@@ -163,7 +157,7 @@ export function CatalogEditor({
           </button>
         )}
 
-        {/* ⚠ ALWAYS AVAILABLE, ALWAYS SAFE — links are untouched either way. */}
+        {/* ALWAYS AVAILABLE, ALWAYS SAFE — links are untouched either way. */}
         <button
           type="button"
           className={BTN}
@@ -180,11 +174,7 @@ export function CatalogEditor({
           {retired ? "Reactivate" : "Retire"}
         </button>
 
-        {/*
-          ⚠⚠ DELETE IS OFFERED ONLY AT ZERO LINKS. Otherwise it is not a
-          disabled button either — it is the sentence below, which says what is
-          in the way and what to do instead.
-        */}
+        {/* DELETE IS OFFERED ONLY AT ZERO LINKS. Otherwise it is not a */}
         {deletable && (
           <button
             type="button"
@@ -225,13 +215,7 @@ export function CatalogEditor({
   );
 }
 
-/**
- * The add form, and the bar `E479` took away.
- *
- * ⚠ `E479` stopped rendering `CatalogEditBar` precisely so it could come back
- * meaning something. It said *"editing needs write endpoints that aren't built
- * yet"*; they are built now, so this is the same slot carrying a live control.
- */
+/** The add form, and the bar took away. */
 export function CatalogAddBar({
   table,
   roleTypeId,
@@ -294,7 +278,7 @@ export function CatalogAddBar({
         </button>
       </div>
       <p className="mt-2 text-[12px] text-ink-2">
-        {/* ⚠ SAYS THE THING THAT MATTERS: the row is protected from the seed. */}
+        {/* SAYS THE THING THAT MATTERS: the row is protected from the seed. */}
         Added rows are marked <b>ADMIN</b> and survive every catalog reseed.
       </p>
       {note && <p className="mt-1 text-[12.5px] font-semibold text-magenta-ink">{note}</p>}

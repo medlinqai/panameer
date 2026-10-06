@@ -79,9 +79,7 @@ function ValidState({
         </p>
       )}
 
-      {/* ⚠ WHAT IT IS, BEFORE IT ASKS FOR ANYTHING. The recipient may never have
-          heard of Panameer; a sign-up button with no explanation above it is how
-          an invitation becomes spam. */}
+      {/* WHAT IT IS, BEFORE IT ASKS FOR ANYTHING. The recipient may never have */}
       <p className="mt-4 text-[14px] leading-relaxed text-ink-2">
         Panameer is a marketplace for Oracle and ERP services. Buyers describe
         the work they need; the people who do that work put their experience in
@@ -95,9 +93,7 @@ function ValidState({
         Join Panameer
       </Link>
 
-      {/* ⚠ SAYS WHAT IT IS NOT — the same disclosure the email carries. An
-          invitation that does not disclaim a relationship reads as one, and
-          this one creates nothing and shares nothing. */}
+      {/* SAYS WHAT IT IS NOT — the same disclosure the email carries. An */}
       <p className="mt-4 text-[12.5px] leading-relaxed text-ink-2">
         Nothing has been created for you, and {lookup.inviterName} can&apos;t see
         anything about you unless you join and choose to connect.

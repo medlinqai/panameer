@@ -6,9 +6,7 @@ export function asId(v: unknown): string | null {
   return typeof v === "string" && v ? v : null;
 }
 
-/** `YYYY-MM-DD` → a UTC date, `""`/null → null. ⚠ Parsed as UTC on purpose:
- *  these are pure dates, and a local-midnight parse shifts them a day in
- *  America/New_York (`E775`'s rule, on the write side). */
+/** these are pure dates, and a local-midnight parse shifts them a day in */
 export function asDate(v: unknown): Date | null | undefined {
   if (v === undefined) return undefined;
   if (v === null || v === "") return null;

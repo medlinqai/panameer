@@ -160,7 +160,7 @@ export function MessagesDrawer({
                         <span className="truncate text-[14.5px] font-bold">
                           {c.name || "Panameer member"}
                         </span>
-                        {/* ⚠ `E433` — a timestamp is a fact, so ink. */}
+                        {/* `E433` — a timestamp is a fact, so ink. */}
                         <span className="shrink-0 text-[12px] text-ink-2">
                           {shortWhen(c.lastAt)}
                         </span>
@@ -169,9 +169,7 @@ export function MessagesDrawer({
                         {c.lastBody}
                       </span>
                     </span>
-                    {/* ⚠⚠ A DOT, NEVER A DIGIT — the standing rule for this
-                        surface. It marks that something is unread; the number is
-                        on the conversation itself. */}
+                    {/* A DOT, NEVER A DIGIT — the standing rule for this */}
                     {c.unread > 0 && (
                       <span
                         aria-label="Unread"
@@ -185,7 +183,7 @@ export function MessagesDrawer({
           )}
         </div>
 
-        {/* ⚠ THE DRAWER LINKS THE PAGE — `/messages` stays and is the full view. */}
+        {/* THE DRAWER LINKS THE PAGE — `/messages` stays and is the full view. */}
         <footer className="border-t border-line px-4 py-3">
           <Link
             href="/messages"
@@ -200,7 +198,7 @@ export function MessagesDrawer({
   );
 }
 
-/** A compact relative stamp. ⚠ Parsed from the ISO string the API sent. */
+/** A compact relative stamp. Parsed from the ISO string the API sent. */
 function shortWhen(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "";

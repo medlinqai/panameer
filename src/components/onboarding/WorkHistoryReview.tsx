@@ -94,11 +94,7 @@ export function WorkHistoryReview({
   return (
     <div className="space-y-4">
       {unanchored > 0 && (
-        /*
-          Named as a small, finishable task. "3 issues" reads as a failure
-          report on the provider's own CV; "we couldn't tell on 3 jobs" is the
-          truth and puts the uncertainty where it belongs — on the reader.
-        */
+        // Named as a small, finishable task. "3 issues" reads as a failure
         <p className="border-l-2 border-ink px-4 py-2.5 text-[14px] text-ink">
           We couldn&apos;t tell which system{" "}
           <b>{unanchored === 1 ? "one job" : `${unanchored} jobs`}</b> ran on.
@@ -133,12 +129,7 @@ export function WorkHistoryReview({
                 onChange={(e) =>
                   patch(job.id, {
                     suite: (e.target.value || null) as SoftwareSuite | null,
-                    /*
-                      Changing the suite invalidates the module chips: they were
-                      that suite's rows. Cleared rather than re-mapped, because
-                      silently swapping in another suite's same-named module is
-                      the exact guess the model refuses to make.
-                    */
+                    // Changing the suite invalidates the module chips: they were
                     skillIds: [],
                   })
                 }

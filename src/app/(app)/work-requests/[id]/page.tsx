@@ -99,11 +99,7 @@ export default async function Page({
               : WORK_REQUEST_STATUS_LABEL[detail.status]}
           </p>
         </div>
-        {/* ⚠⚠ ONE PLACE (`P2-A8-E679`) — this pill read `posted ? … : "Draft"`,
-            so an ORDERED request was badged `Draft`.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   className={ posted ? "…emerald…" : "…ink…" }
-            //   {posted ? "Posted" : "Draft"} */}
+        {/* ONE PLACE — this pill read `posted ? … : "Draft"` */}
         <span className={workRequestStatusPillClass(detail.status)}>
           {WORK_REQUEST_STATUS_LABEL[detail.status]}
         </span>
@@ -142,29 +138,8 @@ export default async function Page({
         </p>
       )}
 
-      {/*
-        ⚠ POST LIVES HERE TOO, not only at the end of the wizard. A requester who
-        left the wizard at step 8 and came back has a DRAFT and no obvious way to
-        post it; `/create-work` resumes the LATEST draft, which is not necessarily
-        this one. The route it calls is the existing `POST .../post`, unchanged —
-        including its identity gate.
-      */}
-      {/*
-        ── ⚠⚠⚠ DRAFT-ONLY, NOT "NOT POSTED" (`P2-A8-E684b`) ─────────────────
-
-        ⚠⚠⚠ **AN ORDERED REQUEST WAS TOLD IT WAS STILL A DRAFT.** `posted` is
-        `status === "POSTED"`, so `!posted` is TRUE for `ASSIGNED`, `ORDERED`
-        **and** `CANCELLED` — this panel offered *"This request is still a
-        draft"* and a wizard link on a request that is under contract.
-        ⚠⚠ **IT IS `E679`'s FAMILY EXACTLY** — a boolean standing in for a
-        five-value enum — and WS-A fixed the pill and the subtitle while this
-        block kept the old shape. ⚠ It was unreachable until now because
-        nothing could move a request past `POSTED`; **WS-F builds both
-        transitions, so it went live with them** — the same expiry that made
-        `E680(b)` this brief's problem rather than a later one.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   {!posted && (
-      */}
+      {/* POST LIVES HERE TOO, not only at the end of the wizard. A requester who */}
+      {/* DRAFT-ONLY, NOT "NOT POSTED" */}
       {detail.status === "DRAFT" && (
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-brand border border-line bg-white p-5">
           <div className="min-w-0 flex-1">
@@ -180,63 +155,19 @@ export default async function Page({
       )}
 
       <div className="mt-8">
-        {/*
-          ⚠⚠⚠ `key` FORCES A REMOUNT WHEN THE STATUS MOVES (`P2-A8-E684c`).
-          `WorkRequestLines` holds `useState(initial)`, and React KEEPS client
-          state across a `router.refresh()` — so after selecting, the section
-          still read *"No provider assigned · Needs provider and price"* for a
-          line that had just been given a provider and a rate.
-          ⚠⚠ **I MADE THIS REACHABLE:** until WS-F, nothing outside that
-          component ever changed a line, so its local copy could not go stale.
-          ⚠ The key is the STATUS because that is precisely what moves when
-          selection or ordering rewrites the lines; a remount then is correct
-          and costs one render.
-        */}
+        {/* state across a `router.refresh()` — so after selecting, the section */}
         <WorkRequestLines key={detail.status} initial={detail} />
       </div>
 
-      {/* ══ THE PROPOSALS THAT CAME BACK ═══════════════════════════════════
-          ⚠⚠⚠ `P2-A8-E682` WS-D. **READ-ONLY — NO DECISION IS TAKEN HERE.**
-          Shortlisting, declining and awarding are `selectProvider` (WS-F),
-          which has no surface yet, so this section renders NO control that
-          writes. ⚠ A `Select` button here would be `E579` exactly.
-
-          ⚠⚠ IT SITS ABOVE THE INVITATIONS, AND THE NOTIFICATION IS WHY. The
-          registry sends `work.proposal_received` to `/work-requests/{id}` —
-          this page — so a buyer arriving from their bell is here to read a
-          PROPOSAL. Landing them above the list of who was asked, and making
-          them scroll past it to find what came back, would answer a different
-          question than the one they clicked. */}
-      {/*
-        ── ⚠⚠⚠ THE BRANCH (`P2-A8-E712` WS-B) — NOT RENDERED, NOT HIDDEN ──────────
-
-        ⚠⚠ **SCOTT, 2026-09-27:** an externally sourced request *"skips the sourcing
-        process"* — *"no invite step, no bid list, no compare view."*
-        ⚠⚠⚠ **THE BRIEF IS EXPLICIT AND SO IS THIS: `NOT HIDDEN WITH CSS. NOT RENDERED.`
-        A CONTROL THAT EXISTS AND REFUSES IS `E579`** — and a `hidden` class would leave
-        `Invite providers` in the DOM, reachable by keyboard, readable by a screen reader,
-        and clickable by anyone who opened the panel.
-        ⚠ **THE SOURCING RAIL IS TWO BLOCKS — THIS ONE (Proposals, with its steps and the
-        award transition) AND `Invited to bid` BELOW.** Both are guarded on the same
-        boolean, and `check:externally-sourced` asserts the pair together so one cannot be
-        guarded while the other is forgotten.
-        ⚠⚠ **WHAT DELIBERATELY STAYS: `AssignDirectly` BETWEEN THEM.** That is
-        `assignProviderDirectly`, `route: "DIRECT"` — **the externally sourced path's own
-        destination**, naming a provider and a rate. ⚠⚠⚠ Hiding it here would remove the
-        one door this kind of request is supposed to walk through, which would be `E579`
-        committed in the other direction.
-      */}
+      {/* THE PROPOSALS THAT CAME BACK */}
+      {/* THE BRANCH WS-B) — NOT RENDERED, NOT HIDDEN */}
       {!detail.soleSourced && (
       <div className="mt-8">
         <h2 className="font-display text-[20px] font-bold tracking-[-0.3px]">
           Proposals <span className="font-normal text-ink-2">({proposals.length})</span>
         </h2>
         {proposals.length === 0 ? (
-          /*
-            ⚠⚠ AN HONEST ZERO WITH THE FIRST MOVE NAMED (§4), not a report of
-            emptiness — and the two reasons are genuinely different, so the copy
-            splits on the one fact that decides it.
-          */
+          // AN HONEST ZERO WITH THE FIRST MOVE NAMED (§4), not a report of
           <p className="mt-3 text-[14.5px] text-ink-2">
             {posted
               ? "No proposals yet. Providers can find this request, and inviting someone puts it in front of them directly."
@@ -244,11 +175,7 @@ export default async function Page({
           </p>
         ) : (
           <>
-            {/*
-              ⚠⚠⚠ THE ORDER IS STATED BECAUSE IT IS NOT A RANKING. Sorting by
-              price would be a judgement, on a screen whose whole instruction is
-              that no decision is taken here.
-            */}
+            {/* THE ORDER IS STATED BECAUSE IT IS NOT A RANKING. Sorting by */}
             <p className="mt-1 text-[13px] text-ink-2">In the order they arrived.</p>
             <ul className="mt-3 grid gap-3">
               {proposals.map((p) => (
@@ -273,12 +200,7 @@ export default async function Page({
                   </div>
 
                   <p className="mt-1.5 text-[15px]">
-                    {/*
-                      ⚠⚠⚠ "No rate given" IS NOT A DASH, AND THE DIFFERENCE IS
-                      RULING 18. A dash means *we cannot count this*; a proposal
-                      with no price is a thing that HAPPENED — the writer allows
-                      a pitch before pricing — so it is reported in words.
-                    */}
+                    {/* RULING 18. A dash means *we cannot count this*; a proposal */}
                     {p.rate ? (
                       <>
                         <span className="font-bold">
@@ -310,18 +232,7 @@ export default async function Page({
                     </p>
                   )}
 
-                  {/*
-                    ── ⚠⚠⚠ THE TWO OPTIONAL STEPS (`E683a` WS-E) ─────────────
-                    ⚠⚠ **WS-D MADE THIS SECTION READ-ONLY, AND THAT RULE IS
-                    UNCHANGED: it forbids a DECISION.** Shortlisting, declining
-                    and awarding are `selectProvider` (WS-F) and still have no
-                    control here — `check:proposals` §11 names those writers and
-                    fails if any becomes reachable from this page.
-                    ⚠⚠⚠ An interview and a test are **not** decisions about who
-                    gets the work: the brief calls both optional and says
-                    **neither may be a precondition of WS-F**, and
-                    `selection.ts` reads neither table.
-                  */}
+                  {/* THE TWO OPTIONAL STEPS ( WS-E) */}
                   <ProposalSteps
                     workRequestId={detail.id}
                     providerPersonId={p.providerPersonId}
@@ -331,17 +242,7 @@ export default async function Page({
                     tests={sendableTests}
                   />
 
-                  {/*
-                    ── ⚠⚠⚠ TRANSITION ONE (`E684` WS-F) ───────────────────────
-                    ⚠⚠ **WS-D's READ-ONLY RULE ENDS HERE, DELIBERATELY AND BY
-                    RULING**, not by drift: WS-D said *"no decision is taken
-                    here"* because `selectProvider` had no surface and a control
-                    would have been `E579`. WS-F is that surface.
-                    ⚠ `check:proposals` §11 and `check:work-chain` §8 were
-                    updated in this same commit and say so — the gate changed
-                    because the RULING changed (`check:rollup`'s case), not
-                    because the code drifted past it.
-                  */}
+                  {/* TRANSITION ONE ( WS-F) */}
                   <SelectProposal
                     workRequestId={detail.id}
                     providerPersonId={p.providerPersonId}
@@ -357,37 +258,14 @@ export default async function Page({
       </div>
       )}
 
-      {/*
-        ── ⚠⚠⚠ THE OTHER ROUTE, AND THE SECOND TRANSITION (`E684` WS-F) ──────
-
-        ⚠⚠ **`AssignDirectly` IS WHAT REPLACES `Assign a provider…`'s WRITE.**
-        That select wrote a NAME with no rate, no line status and no bid; this
-        writes the pair through `assignProviderDirectly`, the `route: "DIRECT"`
-        the model already named. ⚠ It is offered while nobody is selected yet —
-        `ASSIGNED` and `ORDERED` both mean that question is answered.
-        ⚠⚠⚠ **THE CAPABILITY IS NEVER ABSENT (rule 5):** the line PATCH stops
-        accepting `providerPersonId` in this same commit, and this is the door
-        that takes over from it.
-      */}
+      {/* THE OTHER ROUTE, AND THE SECOND TRANSITION ( WS-F) */}
       {(detail.status === "DRAFT" || detail.status === "POSTED") && options.length > 0 && (
         <AssignDirectly workRequestId={detail.id} providers={options} />
       )}
       {detail.status === "ASSIGNED" && <CreateOrder workRequestId={detail.id} />}
 
-      {/* ══ WHO HAS BEEN INVITED ═══════════════════════════════════════════
-          ⚠⚠ THE INVITATIONS, NOT THE RESPONSES.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`): *"`E392`'s fence: this
-          brief creates invites and renders nothing that comes back. No bid
-          rows, no statuses, no comparison — those are their own brief."*
-          ⚠⚠ That brief is `E682` WS-D and it is the section ABOVE. The fence
-          was right for `E392` and is simply spent; this section still shows the
-          invitations only, which is what it was always for. */}
-      {/*
-        ⚠⚠⚠ THE SECOND HALF OF THE SAME BRANCH (`P2-A8-E712` WS-B). ⚠ Guarded on the same
-        boolean as the Proposals block above, because **the `Invite providers` button lives
-        here** — and an externally sourced request that still offers to invite bidders is
-        the sourcing process it was created to skip.
-      */}
+      {/* WHO HAS BEEN INVITED */}
+      {/* THE SECOND HALF OF THE SAME BRANCH WS-B). Guarded on the same */}
       {!detail.soleSourced && (
       <div className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">

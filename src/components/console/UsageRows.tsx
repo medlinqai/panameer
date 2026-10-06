@@ -43,13 +43,7 @@ export function UsageRows({
 }
 
 function Cell({ metric, figures }: { metric: MetricDef; figures: Figures }) {
-  /*
-    NOT COUNTED IS A STATE, NOT A ZERO. `counted: false` means nothing writes
-    this yet, so the figure is `null` and the gauge draws dashed with the words.
-    A metric whose writer exists but has produced nothing shows a real 0, in ink
-    — the 2026-09-23 rule that a measured zero and an uncountable figure must
-    not look the same.
-  */
+  // NOT COUNTED IS A STATE, NOT A ZERO. `counted: false` means nothing writes
   const figure: Figure = metric.uncounted
     ? { uncounted: metric.uncounted }
     : (figures[metric.label] ?? 0);

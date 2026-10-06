@@ -43,8 +43,7 @@ export async function MaskedProviderPage({
               />
             </>
           ) : (
-            /* ⚠ A throttled caller gets the PAUSE, not "not available" — the
-               two are different facts and must not read the same. */
+            // A throttled caller gets the PAUSE, not "not available" — the
             allowed ? <NotAvailable joinHref={joinHref} /> : <TooFast />
           )}
         </div>
@@ -55,21 +54,13 @@ export async function MaskedProviderPage({
   );
 }
 
-/**
- * ⚠ The Learn read lives here rather than in `getMaskedProfile`, which owns the
- * masking and should not also own the Learn join. ⚠⚠ Titles only — a learning
- * path's title names a SUBJECT, not a person, so nothing needs scrubbing.
- */
+/** The Learn read lives here rather than in `getMaskedProfile`, which owns the */
 async function taughtTitles(profileId: string): Promise<string[]> {
   const paths = await getPathsTaughtByProfile(profileId);
   return paths.map((p) => p.title);
 }
 
-/**
- * ⚠⚠ "NOT AVAILABLE" — and it does not say why.
- * ⚠ It still offers a way forward (Browse Talent, Join Free) rather than being
- * a dead end: `E608`'s rule, *"no dead ends"*.
- */
+/** It still offers a way forward (Browse Talent, Join Free) rather than being */
 function NotAvailable({ joinHref }: { joinHref: string }) {
   return (
     <div className="mx-auto max-w-[620px] py-10 text-center">
@@ -87,7 +78,7 @@ function NotAvailable({ joinHref }: { joinHref: string }) {
   );
 }
 
-/** ⚠ See `BrowseTalentGrid`'s twin: a pause, not an error, and no countdown. */
+/** See `BrowseTalentGrid`'s twin: a pause, not an error, and no countdown. */
 function TooFast() {
   return (
     <div className="mx-auto max-w-[620px] py-10 text-center">

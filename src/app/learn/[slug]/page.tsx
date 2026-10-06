@@ -99,11 +99,7 @@ export default async function LearningPathPage({
 
           {path.instructors.length > 0 && (
             <div className="mt-5">
-              {/*
-                Lesson counts are shown here because on a multi-teacher path
-                "who taught most of this" is exactly what a learner deciding to
-                enroll, and a buyer deciding to hire, want to know.
-              */}
+              {/* Lesson counts are shown here because on a multi-teacher path */}
               <InstructorBadge instructors={path.instructors} showLessonCounts />
             </div>
           )}
@@ -139,34 +135,7 @@ export default async function LearningPathPage({
             </div>
           )}
 
-          {/*
-            ── ⚠⚠ THE PATH'S FORUM (`P1-J3-E383`) ────────────────────────────
-
-            SCOTT, 2026-09-04: *"every learning path should have a forum."* and
-            *"everyone can see them, but only members enrolled in the LP can
-            access them...marketing."*
-
-            ⚠ IT SITS IN THE HERO, UNDER THE ENROL CONTROLS, ON PURPOSE. This
-            page is PUBLIC — its own docblock says *"The full outline is public —
-            every course, section and lesson title"* — so a signed-out visitor is
-            exactly who this is aimed at, and a forum mentioned below a 39-lesson
-            outline is a forum nobody deciding whether to enrol will ever read.
-
-            ⚠⚠ VISIBILITY AND ACCESS ARE TWO RULES AND ONLY ACCESS IS CLOSED.
-            Everyone sees THAT the room exists; only a member or one of its
-            instructors can open it. `canOpen` comes from `canAccessPathForum`
-            in the lib — this page decides nothing.
-
-            ⚠⚠ ACTIVITY IS THE PITCH, ABOVE ZERO ONLY. But a forum advertising
-            `0 threads` is an ANTI-advertisement — the identical rule to the
-            unread badge, to `declinedCount` rendering nowhere, and to `$0` never
-            standing in for a rate. Scott, on the LEARN home: *"coming in to a
-            bunch of what look like incomplete tiles is not a good look."*
-            ⚠ AT ZERO: say the room exists. Show NO number.
-
-            ⚠⚠ AND THE TEASER LEAKS NO CONTENT. A COUNT IS A FACT ABOUT THE ROOM;
-            A TITLE IS A THING SOMEBODY WROTE.
-          */}
+          {/* THE PATH'S FORUM */}
           <div className="mt-5 rounded-brand border border-line bg-white p-4">
             <p className="text-[14.5px] font-bold">Path group</p>
             {forum.threads > 0 ? (
@@ -188,19 +157,14 @@ export default async function LearningPathPage({
                 Open the group &rarr;
               </Link>
             ) : (
-              /* ⚠ THE DOOR IS NAMED, NOT HIDDEN. Somebody who cannot open it
-                 should know why, and what to do about it — which is enrol. */
+              // THE DOOR IS NAMED, NOT HIDDEN. Somebody who cannot open it
               <p className="mt-2 text-[13px] text-ink-2">
                 Enroll to read and ask questions.
               </p>
             )}
           </div>
 
-          {/*
-            The payoff, surfaced the moment it is earned (WS5). A certificate
-            nobody is told about is not a reward — this is the one screen where
-            a learner has just finished and is looking for what comes next.
-          */}
+          {/* The payoff, surfaced the moment it is earned (WS5). A certificate */}
           {path.lessons > 0 && path.completed >= path.lessons && (
             <div className="mt-5 max-w-md rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5">
               <p className="text-[15.5px] font-bold">
@@ -241,11 +205,7 @@ export default async function LearningPathPage({
           <section key={course.id} className="rounded-brand border border-line">
             <header className="flex flex-wrap items-start gap-4 border-b border-line p-5">
               <div className="min-w-0 flex-1">
-                {/*
-                  A single-course path — 17 of the 23 — doesn't get a "Course 1 of
-                  1" label. Numbering one thing draws attention to a structure the
-                  learner has no decision to make about.
-                */}
+                {/* A single-course path — 17 of the 23 — doesn't get a "Course 1 of */}
                 {!singleCourse && (
                   <p className="text-[12.5px] font-bold uppercase tracking-wide text-magenta">
                     Course {i + 1} of {path.courses.length}

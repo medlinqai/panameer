@@ -82,8 +82,7 @@ export async function saveAttestations(
           category: claim.category,
         },
       },
-      /* ⚠ `attested_at` IS NOT TOUCHED ON UPDATE — it records when the person
-         first made a claim about this category. `updated_at` carries the edit. */
+      // first made a claim about this category. `updated_at` carries the edit.
       update: { years: claim.years },
       create: {
         provider_profile_id: profileId,

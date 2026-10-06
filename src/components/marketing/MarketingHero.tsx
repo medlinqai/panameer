@@ -107,13 +107,7 @@ export function MarketingHero({
           ))}
         </div>
 
-        {/*
-          ⚠ MICROCOPY, NOT A CONTROL. Both AI hints describe what the sign-up
-          flow does with a document or a résumé — the résumé parser is real and
-          shipped — but there is no drop target in this hero, so it is a
-          sentence and never a button. Dressing it as an upload would be the
-          page implying something it cannot do.
-        */}
+        {/* MICROCOPY, NOT A CONTROL. Both AI hints describe what the sign-up */}
         <p className="mt-3.5 flex items-center gap-[7px] text-[13.5px] text-[#cdc9e6]">
           <span aria-hidden className="text-magenta">
             ✦

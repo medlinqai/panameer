@@ -92,8 +92,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
     represents: reps.map((p) => ({
       profileId: p.id,
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-      /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
+      // THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
       headline: p.person.title || null,
       photoUrl: p.person.photo_url,
       visible: isMarketplaceVisible({ ...p, meetsRequired: providerMeetsRequired(p) }),
@@ -118,20 +117,7 @@ export async function getMyTeams(viewer: Viewer): Promise<MyTeams> {
   };
 }
 
-/**
- * ── ⚠⚠ THE ROSTER'S COVERAGE (`P2-J3-E558` WS-D) ──────────────────────────
- *
- * ⚠⚠ THIS IS THE RECRUITER'S PROFILE, NOT A STATISTIC. A recruiter's skills roll
- * up from their team the way a provider's roll up from their jobs — it is what
- * they can field, stated as skills.
- *
- * ⚠⚠⚠ ROLLED UP THROUGH `shown-skills.ts`, SO `E517`'s OFFER-SIDE FILTER APPLIES.
- * Coverage shows what the roster OFFERS, not everything its people HOLD. A
- * provider who narrowed their roles is making an offer-side statement, and a
- * recruiter's coverage is an offer-side surface — quoting held-but-hidden skills
- * there would re-expose exactly what `E517` hid.
- * ⚠ `E481`: FILTER WHAT IS OFFERED, NEVER WHAT IS HELD.
- */
+/** THE ROSTER'S COVERAGE WS-D) */
 export async function rosterCoverage(coordinatorPersonId: string): Promise<string[]> {
   const members = await prisma.providerProfile.findMany({
     where: { coordinator_person_id: coordinatorPersonId },
@@ -146,8 +132,7 @@ export async function rosterCoverage(coordinatorPersonId: string): Promise<strin
 
   const names = new Set<string>();
   for (const m of members) {
-    /* ⚠ ONE RULE, THE SAME ONE THE PROFILE AND THE MATCHER READ. Not a second
-       copy of "which skills count" — `check:shown-skills` holds it. */
+    // ONE RULE, THE SAME ONE THE PROFILE AND THE MATCHER READ. Not a second
     for (const s of shownSkills(selectedRoleIds(m), m.skills, (x) => x.skill.role_type_id)) {
       names.add(s.skill.name);
     }
@@ -155,25 +140,7 @@ export async function rosterCoverage(coordinatorPersonId: string): Promise<strin
   return [...names].sort((a, b) => a.localeCompare(b));
 }
 
-/**
- * ── ⚠⚠ AN INVITATION MUST NOT BE BLIND (`P2-J3-E558` WS-D item 4) ─────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the brief first asked for:
- * *"An invitation carries the work — who the buyer is, the scope, the viewer's
- * part. An invitation without the work attached is a request to trust the
- * recruiter."*
- *
- * ⚠⚠ `CoordinatorInvite` HAS NO RELATION TO `WorkRequest` AND NONE WAS ADDED.
- * ⚠⚠⚠ THE ROSTER IS STANDING, NOT PER-JOB — accepting sets
- * `coordinator_person_id` permanently, and the schema comment says it *"ATTACHES
- * THE provider"*. ⚠ SO BEING ASKED TO TRUST THE RECRUITER **IS** THE
- * TRANSACTION, not a defect in it. Attaching a single work request to a standing
- * commitment would misdescribe what accepting does.
- *
- * ⚠ THE PRINCIPLE SURVIVES ON THE RIGHT OBJECT: the invitation carries WHO THE
- * RECRUITER IS, HOW BIG THE ROSTER IS, AND WHAT IT COVERS — what a person needs
- * to judge a standing commitment.
- */
+/** AN INVITATION MUST NOT BE BLIND WS-D item 4) */
 export type IncomingRosterInvite = {
   id: string;
   invitedAt: string;
@@ -191,9 +158,7 @@ export async function incomingRosterInvites(
   });
   if (!user?.email) return [];
 
-  /* ⚠ MATCHED ON THE ADDRESS, because an invite is sent before the invitee is
-     known to exist — the same reason `CoordinatorInvite` stores an email rather
-     than a person id. ⚠ `normalizeEmail` is what the invite path stores with. */
+  // MATCHED ON THE ADDRESS, because an invite is sent before the invitee is
   const invites = await prisma.coordinatorInvite.findMany({
     where: { invitee_email: normalizeEmail(user.email), status: "PENDING" },
     orderBy: { created_at: "desc" },
@@ -219,8 +184,7 @@ export async function incomingRosterInvites(
       rosterSize: await prisma.providerProfile.count({
         where: { coordinator_person_id: i.inviter.id },
       }),
-      /* ⚠ THE SAME ROLLUP THE RECRUITER SEES ON THEIR OWN PAGE — one function,
-         so the invitation cannot describe a roster differently from the roster. */
+      // THE SAME ROLLUP THE RECRUITER SEES ON THEIR OWN PAGE — one function
       coverage: await rosterCoverage(i.inviter.id),
     }))
   );

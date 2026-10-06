@@ -23,34 +23,8 @@ export function employerValidationTemplate({
 
   const declineUrl = `${confirmUrl}?decline=1`;
 
-/*
-  ── ⚠⚠ ONE LOGO BLOCK, NOT FOUR (`P1-ALL-E402` WS-2) ─────────────────────────
-
-  ⚠ SUPERSEDED, quoted not deleted:
-
-      const logoBlock = logoUrl
-        ? `<img src="${logoUrl}" alt="Panameer" width="180" height="25" …>`
-        : `<div style="…">Panameer</div>`;
-
-  ⚠⚠ THE BRIEF FOUND ONE INLINE COPY. THERE WERE THREE — this file,
-  `project-validation.ts` and `project-validated.ts` — each carrying the same
-  wrong `height="25"` for a 524×132 asset, and each branching on the URL being
-  ABSENT rather than UNFETCHABLE. Three copies is three places to fix a rule
-  twice and miss once, which is exactly what happened: `E397` and `E400` both
-  fixed hardcoded dimensions elsewhere and none of them reached here.
-
-  ⚠ THESE TEMPLATES DO NOT USE `emailShell()` — they build their own table
-  scaffold, because they land in a stranger's inbox and are deliberately styled
-  as marketing assets rather than system notifications. That is why they had
-  their own copy at all. ⚠ ONLY THE LOGO BLOCK IS SHARED; their layout, copy and
-  footers are untouched, which is what the brief fences off.
-*/
-  /*
-    ⚠⚠ THE FACTS, AND ONLY THE ONES THE ROW ACTUALLY HAS. ⚠⚠⚠ A line reading
-    *"as null, null–null"* is how a template tells a stranger the data is junk;
-    each part is dropped when it is missing, and if both are missing the line is
-    the employer name alone.
-  */
+// ONE LOGO BLOCK, NOT FOUR WS-2)
+  // THE FACTS, AND ONLY THE ONES THE ROW ACTUALLY HAS. A line reading
   const factLine = [roleTitle?.trim() ? `as ${roleTitle.trim()}` : null, dates?.trim() || null]
     .filter(Boolean)
     .join(", ");

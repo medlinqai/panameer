@@ -225,41 +225,14 @@ async function emailFor(a: {
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
-        /* ⚠⚠ THE EVENT'S OWN TEMPLATE NAME, NOT A CONSTANT. `E522` makes
-           `template` required precisely so a receipt says WHICH mail went, and
-           stamping every notification `"notification"` would have made the
-           `finish-later` receipts indistinguishable from the rest the day a
-           bounce needed tracing. */
+        // THE EVENT'S OWN TEMPLATE NAME, NOT A CONSTANT. makes
         template: mail.template,
         subjectType: "notification",
         subjectId: a.notificationId,
         userId: person.user?.id ?? null,
       });
 
-      /*
-        ── ⚠⚠⚠ A SEND-SHAPED SUCCESS IS NOT A SEND. **FOUND BY THE WS-B PROOF,
-           IN MY OWN CODE, AND IT IS THE EXACT DEFECT THIS COLUMN EXISTS TO
-           PREVENT.** ────────────────────────────────────────────────────────
-
-        ⚠⚠ `sendEmail` DOES NOT THROW when it refuses. Two of its rails return
-        **`{ id: "refused" }`** (an undeliverable domain, or `E607`'s
-        non-production allow-list) and one returns **`{ id: "suppressed" }`** —
-        each of them *"send-shaped success, so every caller's success path still
-        runs."* ⚠ That is correct for the transport and it is a **trap for a
-        caller that treats "did not throw" as "went"**.
-        ⚠⚠⚠ **MEASURED: THE FIRST VERSION OF THIS FUNCTION STAMPED
-        `email_sent_at` ON A MAIL THE TRANSPORT HAD REFUSED** — the row then
-        claimed an email that nobody could ever have received, and the one
-        question the column exists to answer would have been answered WRONG.
-        **A stamp that lies is worse than no stamp**, for the same reason
-        `E522` gives: a send that never happened and never bounced.
-
-        ⚠ **A CAPTURE IS DELIBERATELY TREATED AS A SEND** (`capture-N`). The
-        capture transport's own comment says it *"returns a send-shaped result so
-        every caller's success path is exercised exactly as it would be in
-        production"* — that is the whole point of it, and a proof that skipped
-        the stamp would be testing the transport instead of this caller.
-      */
+      // A SEND-SHAPED SUCCESS IS NOT A SEND. FOUND BY THE WS-B PROOF
       const wentNowhere = result?.id === "refused" || result?.id === "suppressed";
       if (wentNowhere) {
         await prisma.notification.update({
@@ -272,9 +245,7 @@ async function emailFor(a: {
         return;
       }
     } catch (sendError) {
-      /* ⚠⚠ THE STAMP IS RELEASED SO THE ROW NEVER CLAIMS AN EMAIL THAT DID NOT
-         GO, and so a retry is possible. The reason is written in the same
-         update, so the row says what happened rather than going quiet. */
+      // THE STAMP IS RELEASED SO THE ROW NEVER CLAIMS AN EMAIL THAT DID NOT
       await prisma.notification.update({
         where: { id: a.notificationId },
         data: { email_sent_at: null, suppressed_reason: "email_send_failed" },
@@ -282,7 +253,7 @@ async function emailFor(a: {
       console.error("[notify] email failed:", a.event, sendError);
     }
   } catch (e) {
-    /* ⚠ NEVER INTO THE CALLER'S TRANSACTION. */
+    /* NEVER INTO THE CALLER'S TRANSACTION. */
     console.error("[notify] email path failed:", a.event, e);
   }
 }

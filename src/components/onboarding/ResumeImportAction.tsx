@@ -133,13 +133,7 @@ export function ResumeImportAction({
       if (n("languages") > 0) parts.push(`${n("languages")} languages`);
       if (ap.headline === true) parts.push("a title");
       if (ap.overview === true) parts.push("an overview");
-      /*
-        ── ⚠⚠⚠ REMOVALS ARE REPORTED SEPARATELY, NEVER FOLDED INTO "ADDED" ───
-        ⚠ `P2-A1.1-E740` A2. ⚠⚠ **A RECEIPT THAT SAYS *"Added 3 skills"* AFTER
-        DELETING TWO JOBS IS A TRUE SENTENCE THAT LEAVES OUT THE ONLY PART THE
-        MEMBER MIGHT WANT BACK.** The destructive half gets its own clause and
-        its own verb. ⚠ Counted from the server's measured delete, not the tick.
-      */
+      // REMOVALS ARE REPORTED SEPARATELY, NEVER FOLDED INTO "ADDED"
       const rm = body.removed ?? { employers: 0, projects: 0 };
       const removedParts: string[] = [];
       if (rm.employers > 0)
@@ -203,13 +197,7 @@ export function ResumeImportAction({
                       />
                       <label htmlFor={`sk-${s.id}`} className="min-w-0">
                         {s.name}
-                        {/*
-                          ⚠⚠⚠ THE SILENT NO-OP, SAID OUT LOUD. `E517` filters what
-                          is OFFERED, not what is HELD — a skill outside the
-                          provider's chosen roles is saved and never rendered.
-                          ⚠ Saying "added" and showing nothing afterwards is a lie
-                          by omission, so it is said BEFORE the tick.
-                        */}
+                        {/* THE SILENT NO-OP, SAID OUT LOUD. filters what */}
                         {!s.shown && (
                           <span className="block text-[12px] text-ink-2">
                             Saved, but not shown on your profile — it sits outside
@@ -252,7 +240,7 @@ export function ResumeImportAction({
           </>
         )}
 
-        {/* ⚠⚠ INFORMATION ONLY — NO CHECKBOX, NO REMOVE, EVER. */}
+        {/* INFORMATION ONLY — NO CHECKBOX, NO REMOVE, EVER. */}
         {d.skills.noLongerMentioned.length > 0 && (
           <div className="mt-3 border-t border-line pt-3">
             <p className="text-[12px] font-bold uppercase tracking-wide text-ink-2">
@@ -261,27 +249,14 @@ export function ResumeImportAction({
             <p className="mt-1 text-[12.5px] text-ink-2">
               Nothing is removed. Listed so you know what the reader did not see.
             </p>
-            {/* ⚠ `E433` — names are facts, so ink. */}
+            {/* `E433` — names are facts, so ink. */}
             <p className="mt-1.5 text-ink-2">
               {d.skills.noLongerMentioned.map((s) => s.name).join(" · ")}
             </p>
           </div>
         )}
 
-        {/*
-          ── ⚠⚠⚠ "ON YOUR PROFILE BUT NOT IN THIS RÉSUMÉ" (`P2-A1.1-E740`, A2) ──
-
-          ⚠ SCOTT, super run 2026-09-30 item 6: *"Each row is unticked by
-          default; only ticked rows are removed on save."*
-
-          ⚠⚠ **IT IS THE ONLY DESTRUCTIVE CONTROL IN THIS PANEL**, so it says
-          what each tick costs ON THE ROW rather than in a footnote. ⚠⚠⚠ A
-          checkbox beside a job, with the consequences a scroll away, is how
-          somebody deletes work history they meant to keep.
-          ⚠ **THE HEADING DOES NOT SAY "MISSING" OR "OUTDATED".** A résumé that
-          stops mentioning a job is not evidence the job did not happen — the
-          same rule `noLongerMentioned` states for skills.
-        */}
+        {/* SCOTT, super run 2026-09-30 item 6: *"Each row is unticked by */}
         {(d.onProfileNotInResume.employers.length > 0 ||
           d.onProfileNotInResume.projects.length > 0) && (
           <div className="mt-3 border-t border-line pt-3">
@@ -312,13 +287,7 @@ export function ResumeImportAction({
                   <span className="text-[13px] font-semibold text-ink">
                     {[e.name, e.roleTitle].filter(Boolean).join(" — ") || "Untitled job"}
                   </span>
-                  {/* ⚠⚠ THE CONSEQUENCES, FROM THE SCHEMA, NOT FROM A GUESS:
-                      `Project.employer_id` is `SetNull` (orphaned, kept) and
-                      `JobSkill.employer_id` is `Cascade` (deleted). ⚠⚠⚠ THE
-                      ORPHAN WARNING IS THE LOAD-BEARING HALF — `E307` measured
-                      that an orphaned project stays in the database but becomes
-                      INVISIBLE, because `listEmployers` only reaches projects
-                      through their employer. */}
+                  {/* THE CONSEQUENCES, FROM THE SCHEMA, NOT FROM A GUESS */}
                   {(e.projectCount > 0 || e.jobSkillCount > 0) && (
                     <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-3">
                       {[
@@ -369,24 +338,14 @@ export function ResumeImportAction({
           </div>
         )}
 
-        {/* ⚠ The categories this route does NOT write, shown so nothing about the
-            re-run is a surprise. ⚠⚠ "yours is empty", never "will replace" —
-            headline and overview are only ever written when empty. */}
+        {/* The categories this route does NOT write, shown so nothing about the */}
         {(d.other.headlineWillFill ||
           d.other.overviewWillFill ||
           d.other.employers > 0 ||
           d.other.education > 0 ||
           d.other.certifications > 0) && (
           <div className="mt-3 border-t border-line pt-3">
-            {/*
-              ⚠⚠ IT IS APPLIED NOW, AND IT IS ONE TICK. ⚠ SUPERSEDED, quoted not
-              deleted (`E164`): *"Also in the résumé — not applied here"* and
-              *"This update covers skills and specializations only."*
-              ⚠⚠⚠ GROUPED BECAUSE THE DATA IS COUPLED, not to save a checkbox:
-              projects attach to employers created in the same write, and a
-              certificate's title feeds the skill match. Splitting the tick would
-              mean editing the writer, which the brief forbids.
-            */}
+            {/* IT IS APPLIED NOW, AND IT IS ONE TICK. */}
             <label className="flex items-start gap-2">
               <input
                 type="checkbox"
@@ -458,16 +417,7 @@ export function ResumeImportAction({
   if (stage === "confirm" || stage === "reading") {
     return (
       <span className="flex flex-wrap items-center gap-2 text-[13px]">
-        {/*
-          ── ⚠⚠⚠ NO SILENT WAIT (`P2-ALL-E782`, Scott) ──────────────────────────
-          ⚠ **MEASURED: a whole read of this CV took 64.5 s.** A spinner labelled
-          *"Reading…"* beside an unchanged sentence is not enough at that length —
-          it is the same silence the upload had.
-          ⚠⚠ **THE MINUTE IS NAMED**, so a wait that long reads as expected rather
-          than as broken. ⚠ It says "about a minute" and not a countdown: the
-          measured range is 25–70 s and a precise number we cannot keep would be
-          worse than an honest approximation.
-        */}
+        {/* NO SILENT WAIT , Scott) */}
         <span className="text-ink-2">
           {stage === "reading" ? (
             <>
@@ -516,12 +466,7 @@ export function ResumeImportAction({
   return (
     <div className="mt-4 border-t border-amber-400/25 pt-3">
       <p className="text-[13.5px] font-semibold text-ink">Read your résumé again</p>
-      {/*
-        ⚠⚠ THE BRIEF'S SENTENCE, AND IT IS TRUE NOW. WS-A deliberately did NOT
-        ship this line, because the flow applied on a single blind confirm.
-        ⚠ It proposes first, nothing is written until a tick, and the receipt
-        reports what was actually written — so the promise is kept.
-      */}
+      {/* THE BRIEF'S SENTENCE, AND IT IS TRUE NOW. WS-A deliberately did NOT */}
       <p className="mt-0.5 text-[13px] leading-relaxed text-ink-2">
         You approve every change.
         {info.lastParseAt && <> Last read {formatWhen(info.lastParseAt)}.</>}
@@ -531,7 +476,7 @@ export function ResumeImportAction({
   );
 }
 
-/** ⚠ A date, not a countdown — "8 months ago" is what makes the offer land. */
+/** A date, not a countdown — "8 months ago" is what makes the offer land. */
 function formatWhen(iso: string): string {
   const then = new Date(iso);
   if (Number.isNaN(then.getTime())) return "";

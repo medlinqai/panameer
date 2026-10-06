@@ -25,11 +25,7 @@ export function CommunitySignalBlock({
       </div>
 
       <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-4">
-        {/*
-          ⚠ THE HELPFUL COUNT IS THE ONLY ONE GIVEN WEIGHT, and it is stated in
-          terms of who decided: the person who asked. That phrasing is the whole
-          defence against it being read as a popularity number.
-        */}
+        {/* THE HELPFUL COUNT IS THE ONLY ONE GIVEN WEIGHT, and it is stated in */}
         <div>
           <p className="font-display text-[30px] font-bold leading-none text-magenta">
             {helpfulAnswers}
@@ -54,16 +50,7 @@ export function CommunitySignalBlock({
       {boards.length > 0 && (
         <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-ink-2">
           <span className="font-semibold">Active in:</span>
-          {/*
-            ── ⚠⚠ ONE TAG STYLE (`P2-A2-E720` item 5) ──────────────────────────────────
-
-            ⚠ **SCOTT: *"every chip … uses the Skills chip. One definition."*** ⚠⚠ These
-            group names were a grey outline on `bg-bg-soft` — a fourth chip language on a
-            page that also carried the magenta skill chip, the magenta `CHIP_TAG` and the
-            ink-wash project chips. ⚠ One consumer, so nothing outside this page moves.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   className="rounded-full border border-line bg-bg-soft px-2.5 py-1 text-[12.5px]"
-          */}
+          {/* ONE TAG STYLE item 5) */}
           {boards.map((b) => (
             <span key={b} className={CLEAN_CHIP}>
               {b}

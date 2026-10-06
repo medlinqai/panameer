@@ -90,24 +90,7 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
                 metric to be defined
               </p>
             ) : (
-              /*
-                ── ⚠ THE COUNTS ARE INK, NOT MAGENTA (`P1-A1.5-E430` WS-5a) ──
-
-                **SCOTT, 2026-09-12:** *"the numbers on the tiles… not good pink.
-                it is too much. lets change those to black."*
-
-                ⚠ SUPERSEDED, quoted not deleted: `(known ? "text-magenta" : …)`.
-                At 26px, repeated across the top of every console page, the
-                accent stopped being an accent. ⚠ MAGENTA STAYS FOR INTERACTIVE
-                THINGS — links, the active rail item, buttons. A COUNT IS NOT
-                INTERACTIVE.
-                ⚠ `TileRow` IS SHARED: eight admin pages import it directly and
-                `StubConsolePage`/`SpecPage` carry it to nine more, so this lands
-                on every console page that draws tiles. Reported before shipping,
-                not discovered after.
-                ⚠ THE UNKNOWN STATE IS UNCHANGED — `text-ink-2/30` on "—", so a
-                real count and a placeholder still look different.
-              */
+              // THE COUNTS ARE INK, NOT MAGENTA WS-5a)
               <p
                 className={
                   "mt-1 font-display text-[26px] font-bold leading-none " +
@@ -141,24 +124,7 @@ export function TileRow({ tiles }: { tiles: Tile[] }) {
 }
 
 /** M1 — the page's main listing. Full width, per the template. */
-/**
- * ── ⚠⚠ INTERACTIVITY IS OPT-IN (`P1-A1.5-E430` WS-0) ────────────────────────
- *
- * **SCOTT CHOSE OPTION (c), 2026-09-12:** *"Listing stays a server component and
- * delegates to a client child only when searchable/sortable/paginated props are
- * passed."*
- *
- * ⚠ THE REASON IS THE BLAST RADIUS. `Listing` is rendered by THIRTEEN admin
- * pages — `/admin`, `/admin/learn`, `/admin/messages` and `/admin/buyers-sellers`
- * directly, plus nine more through `SpecPage` and `StubConsolePage`. Twelve of
- * them are stubs with no rows to search, and making them all client components
- * would buy nothing. ⚠ PASS NO INTERACTIVE PROP AND THIS RENDERS EXACTLY WHAT IT
- * RENDERED BEFORE, still on the server.
- *
- * ⚠ THE LOOK IS SHARED EITHER WAY. Both paths import their class strings from
- * `listing-shared.ts`, so WS-5's quieter header and tighter rows reach every
- * console page while the BEHAVIOUR stays on the one page that asked for it.
- */
+/** INTERACTIVITY IS OPT-IN WS-0) */
 export function Listing({
   title,
   columns,
@@ -177,32 +143,23 @@ export function Listing({
   columns: string[];
   /** Cells per row. Empty array renders the honest empty state. */
   rows?: ReactNode[][];
-  /**
-   * ⚠ THE OPT-IN SWITCH. One entry per row — `text` for the search, `sort` for
-   * the comparator — because a `ReactNode` cell can be neither searched nor
-   * compared. Supplying it (with a placeholder or a page size) is what promotes
-   * this listing to the interactive renderer.
-   */
+  /** THE OPT-IN SWITCH. One entry per row — `text` for the search, `sort` for */
   rowMeta?: RowMeta[];
   empty: ReactNode;
   action?: ReactNode;
   /** Set false to omit the search box (pages the deck draws without one). */
   search?: boolean;
-  /** ⚠ Names what is searched, per WS-4b. Implies the interactive renderer. */
+  /** Names what is searched, per WS-4b. Implies the interactive renderer. */
   searchPlaceholder?: string;
   sortable?: boolean;
   pageSize?: number;
-  /** ⚠ `E458` — opt-in, like `TileRow`'s `icon`. See `InteractiveListing`. */
+  /** `E458` — opt-in, like `TileRow`'s `icon`. See `InteractiveListing`. */
   pageSizeOptions?: number[];
   pageSizeKey?: string;
 }) {
   const hasRows = rows && rows.length > 0;
 
-  /*
-    ⚠ ONE CONDITION, STATED ONCE. Interactive only when the caller supplied the
-    metadata that makes interaction possible — anything else would promote a
-    listing whose search box cannot search and whose headers cannot sort.
-  */
+  // ONE CONDITION, STATED ONCE. Interactive only when the caller supplied the
   if (rowMeta && rows) {
     return (
       <InteractiveListing
@@ -227,14 +184,7 @@ export function Listing({
         <h2 className={CARD_TITLE}>{title}</h2>
         <span className="ml-auto flex items-center gap-3">
           {search !== false && (
-            /* Every deck slide draws a Search box. DISABLED while the listing
-               is empty: a live box over no rows invites a query that cannot be
-               answered, which reads as broken rather than unbuilt.
-               ⚠ THAT REASONING STILL HOLDS **HERE ONLY** (`E430`): on a page
-               that passed no `rowMeta` the box genuinely cannot search, so it is
-               decoration and says so by being disabled. The page that CAN search
-               takes the interactive branch above, where the box is never
-               disabled. */
+            // Every deck slide draws a Search box. DISABLED while the listing
             <input
               type="search"
               placeholder="Search"
@@ -282,13 +232,7 @@ export function Listing({
   );
 }
 
-/**
- * The Volume-Over-Time footer.
- *
- * Medlinq's version links each tile to a time-series report. Ours doesn't:
- * there are no reports and no series to plot, so a link would promise a page
- * that isn't there. The tiles state the metric and say the series is pending.
- */
+/** The Volume-Over-Time footer. */
 export function VolumeFooter({
   tiles,
   title = "Volume Last 90 Days",
@@ -304,31 +248,12 @@ export function VolumeFooter({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((t, ti) => {
           const known = t.value !== undefined && t.value !== null;
-          /*
-            WS3 — a volume tile with an href IS the entry to that metric's
-            report, and the same report the task panel lists. Tiles without one
-            (TBD slots) stay inert: there is no report for an undefined metric.
-          */
+          // WS3 — a volume tile with an href IS the entry to that metric's
           const cls =
             "block rounded-brand border border-line bg-white p-4 " +
             (t.href ? "transition-colors hover:border-magenta" : "");
 
-          /*
-            ── ⚠ THE LEARN-STYLE CHIP IS OPT-IN HERE TOO (`P1-A1.5-E456`) ──────
-
-            ⚠ `Tile` ALREADY CARRIED `icon` AND `tone` — `TileRow` has rendered
-            them since `E454`, and this component simply ignored them. So this
-            is the same opt-in reaching the footer, NOT a new prop and NOT a
-            second tile component.
-
-            ⚠⚠ FIVE DIFFERENT HUES, DELIBERATELY UNLIKE THE HEADER STRIP. The
-            header tiles deepen ONE hue because they are a progression through a
-            single funnel; these are five genuinely different JOBS, so a ramp
-            would imply an order that does not exist.
-            ⚠ PASS NO `icon` AND THIS RENDERS EXACTLY WHAT IT RENDERED BEFORE —
-            `VolumeFooter` reaches nine pages through `SpecPage` and
-            `StubConsolePage`, and none of them change.
-          */
+          // THE LEARN-STYLE CHIP IS OPT-IN HERE TOO
           if (t.icon && !t.tbd) {
             const inner = (
               <>
@@ -345,7 +270,7 @@ export function VolumeFooter({
                     {t.label}
                   </span>
                 </span>
-                {/* ⚠ INK, NOT MAGENTA (`E433`) — a count is not interactive. */}
+                {/* INK, NOT MAGENTA (`E433`) — a count is not interactive. */}
                 <p
                   className={
                     "mt-1.5 font-display text-[22px] font-bold leading-none " +
@@ -380,15 +305,7 @@ export function VolumeFooter({
               >
                 {known ? t.value : "—"}
               </p>
-              {/*
-                ⚠ THE LEADER LINE IS OPT-IN (`P1-A1.5-E465b`/`E470c`), exactly
-                like `TileRow`'s `icon`. **A footer tile that says
-                `Application-Specific · 142 providers · top: Oracle Fusion Cloud
-                (88)` is worth looking at; `Total to date` is not.**
-                ⚠ PASS NO `hint` AND THIS RENDERS WHAT IT ALWAYS RENDERED —
-                `VolumeFooter` reaches nine stub pages through `SpecPage` and
-                `StubConsolePage`, and none of them change.
-              */}
+              {/* THE LEADER LINE IS OPT-IN / ), exactly */}
               <p className="mt-1 text-[11px] text-ink-2/70">
                 {t.tbd
                   ? "metric to be defined"

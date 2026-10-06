@@ -101,7 +101,7 @@ export async function requestEmployerValidation(
     );
   }
 
-  /* ⚠ One open request per employer; resend after seven days. */
+  /* One open request per employer; resend after seven days. */
   const live = await prisma.employerValidation.findFirst({
     where: { employer_id: employer.id, status: "SENT" },
     orderBy: { sent_at: "desc" },
@@ -115,8 +115,7 @@ export async function requestEmployerValidation(
 
   const raw = randomBytes(32).toString("base64url");
   const tx = await prisma.$transaction([
-    /* ⚠ A resend SUPERSEDES: only the newest link may work. `EXPIRED` rather
-       than deleted, so the history of what was sent survives. */
+    // A resend SUPERSEDES: only the newest link may work. `EXPIRED` rather
     prisma.employerValidation.updateMany({
       where: { employer_id: employer.id, status: "SENT" },
       data: { status: "EXPIRED" },
@@ -144,8 +143,7 @@ export async function requestEmployerValidation(
     ),
     employerName: employer.name,
     roleTitle: employer.role_title,
-    /* ⚠ THE ONE DATE FORMATTER (`E738`) — `Started 2019` for a job with no end
-       and no affirmative `is_current`, which is `E549`'s rule. */
+    // THE ONE DATE FORMATTER — `Started 2019` for a job with no end
     dates: yearRange(employer.start_date, employer.end_date, employer.is_current),
     confirmUrl,
     logoUrl: `${base}/brand/panameer-lockup-ink.png`,
@@ -169,7 +167,7 @@ export async function requestEmployerValidation(
   return { sent: false, devLink: confirmUrl, contactEmail };
 }
 
-/** ⚠ What the public confirm page may reveal. Deliberately minimal. */
+/** What the public confirm page may reveal. Deliberately minimal. */
 export type EmployerValidationView = {
   token: string;
   providerName: string;
@@ -202,8 +200,7 @@ export async function getEmployerValidationRequest(
     },
   });
   if (!record) return null;
-  /* ⚠ An expired link is not a 404 — the page says so kindly rather than
-     implying the request never existed. */
+  // An expired link is not a 404 — the page says so kindly rather than
   if (record.expires_at.getTime() < Date.now()) return null;
   return {
     token: rawToken,
@@ -222,14 +219,7 @@ export async function getEmployerValidationRequest(
   };
 }
 
-/**
- * ⚠⚠ The contact's answer. ⚠⚠⚠ **POST-ON-CLICK, NOT GET** — the project flow's
- * rule and the reason is unchanged: mail scanners pre-fetch links, and a GET
- * that confirms would let a security appliance validate somebody's career.
- *
- * ⚠ `Yes` stamps the employer `VALIDATED` with the contact's **domain** as the
- * source, never their name. `No` returns it to `NONE`.
- */
+/** The contact's answer. POST-ON-CLICK, NOT GET — the project flow's */
 export async function respondToEmployerValidation(
   rawToken: string,
   answer: "yes" | "no",
@@ -242,7 +232,7 @@ export async function respondToEmployerValidation(
       employer_id: true,
       status: true,
       expires_at: true,
-      /* ⚠ `P2-A1.1-E749` WS-D — who to tell, and what to call the thing. */
+      /* `P2-A1.1-E749` WS-D — who to tell, and what to call the thing. */
       employer: {
         select: {
           name: true,
@@ -267,22 +257,12 @@ export async function respondToEmployerValidation(
     }),
     prisma.employer.update({
       where: { id: record.employer_id },
-      /* ⚠⚠ A `No` GOES BACK TO `NONE`, NOT TO A "REJECTED" STATE. The enum has
-         no such member, and more importantly a buyer must never see that
-         somebody declined — the provider is told, kindly, and that is all. */
+      // A `No` GOES BACK TO `NONE`, NOT TO A "REJECTED" STATE. The enum has
       data: { validation_status: answer === "yes" ? "VALIDATED" : "NONE" },
     }),
   ]);
 
-  /*
-    ── ⚠⚠ TELL THE PROVIDER (`P2-A1.1-E749`, WS-D) ──────────────────────────
-    ⚠ Scott: *"the provider gets a bell notice on Yes and on No."*
-    ⚠⚠ **AFTER THE WRITE, INSIDE A CATCH, AND IT CAN NEVER FAIL THE ANSWER.**
-    The contact has already clicked and the row is committed — turning a
-    notification outage into a failed confirmation would lose the one thing this
-    whole flow exists to capture. ⚠ Same rule the receipt follows (`E522`).
-    ⚠⚠⚠ **`notify()` ONLY — no `sendEmail()` from here** (ruling 86).
-  */
+  // TELL THE PROVIDER , WS-D)
   try {
     const { notify } = await import("@/lib/notifications");
     await notify({

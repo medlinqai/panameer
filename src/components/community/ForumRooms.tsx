@@ -20,9 +20,7 @@ function Room({ r }: { r: RoomView }) {
       >
         <span className="font-semibold">{r.title}</span>
         <span className="shrink-0 text-[12px] text-ink-2">
-          {/* ⚠ `Teach` IS THE ONLY RELATION WORTH MARKING. "Enrolled" is the
-              default way to be in a room, and labelling the common case adds
-              noise to every line to explain the rare one. */}
+          {/* default way to be in a room, and labelling the common case adds */}
           {r.relation === "teach" ? "Teach" : null}
         </span>
       </Link>
@@ -37,11 +35,7 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
 
   return (
     <div className="border-t border-line py-5">
-      {/* ⚠⚠ `P2-A3-E612` Q17 — `Groups`, matching the page it sits on. Leaving
-          this as `Forums` under a page headed `Groups` would be the same
-          two-words-for-one-thing defect Q17 exists to remove (`E459`).
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <h2 …>Your Forums</h2> */}
+      {/* Q17 — `Groups`, matching the page it sits on. Leaving */}
       <h2 className="font-display text-[15px] font-bold">Your Groups</h2>
 
       {rooms.length === 0 ? (
@@ -68,15 +62,14 @@ export function ForumRooms({ rooms }: { rooms: RoomView[] }) {
                   ))}
                 </ul>
               ) : (
-                /* ⚠ ONE LINK, NOT A LIST. The count is a figure and stays ink
-                    (`E433`); the control is the words around it. */
+                // ONE LINK, NOT A LIST. The count is a figure and stays ink
                 <button
                   type="button"
                   onClick={() => setShowQuiet(true)}
                   className="text-[13px] font-semibold text-magenta hover:underline"
                 >
                   Show <span className="text-ink-2">{quiet.length}</span> quiet{" "}
-                  {/* ⚠ Ruling 1 — SUPERSEDED (`E164`): "room" : "rooms" */}
+                  {/* Ruling 1 — SUPERSEDED (`E164`): "room" : "rooms" */}
                   {quiet.length === 1 ? "group" : "groups"}
                 </button>
               )}

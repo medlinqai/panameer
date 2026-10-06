@@ -1,23 +1,4 @@
-/*
-  ── ⚠⚠⚠ THE HONEYCOMB (`P2-A2-E603` WS-B) ────────────────────────────────
-
-  ⚠ ONE CELL PER AREA, on `E600` WS-D's shared 15-second rebuild.
-
-  ⚠⚠⚠ EVERY CUSTOM PROPERTY BELOW IS A `--color-*` TOKEN THAT EXISTS, AND NONE
-  CARRIES A `var()` FALLBACK. Scott, 2026-09-22: a fallback HIDES A DEAD
-  VARIABLE — `var(--nope, #fff)` paints white forever and `check:css-vars` can
-  still see the name, but nobody ever finds out the token was wrong.
-  ⚠⚠ CORRECTED BY `E730` WS-B — `--color-ink-3` **IS** A TOKEN NOW. `E723` item 6
-  declared it on Scott's instruction (*"`--color-ink-3` is never declared.
-  Declare it"*) and repointed it under `data-theme="dark"`. ⚠ A stated rule that
-  contradicts the code is the more dangerous half (standing rule 6) — the next
-  person reads this and works around a restriction that is gone.
-  ⚠ `--color-line-2` IS STILL NOT A TOKEN and is still a class only.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   --color-ink-3 AND --color-line-2 ARE NOT TOKENS (Scott ruled against
-  //   promoting them at E601 WS-D). They exist as Tailwind utilities only, so
-  //   they are used as CLASSES in the TSX and never as var() here.
-*/
+/* THE HONEYCOMB WS-B) */
 
 .pm-hive {
   display: grid;
@@ -31,50 +12,11 @@
   }
 }
 
-/*
-  ── ⚠⚠⚠ THE FLOWER (`P2-A1.1-E730` WS-B) ─────────────────────────────────
-
-  ⚠ SCOTT, 2026-09-30, on the mockup: *"I like the graphic."* ⚠⚠ THE GRAPHIC IS
-  THE TESSELLATION — hexagons that interlock rather than sit in a rectangle with
-  gaps between them.
-
-  ⚠⚠⚠ MEASURED REASON THIS IS A SEPARATE LAYOUT AND NOT A CELL COUNT: the `grid`
-  rules above put nine hexagons in a 3×3 rectangle with NO row offset and NO
-  vertical overlap, so the diagonals leave six triangular gaps and there is no
-  middle cell to call the centre. ⚠ Passing nine cells to the old layout renders
-  a block, not a comb.
-
-  ── ⚠⚠ HOW IT TESSELLATES, AND WHY THESE TWO NUMBERS ──────────────────────
-
-  ⚠ The cell is a POINTY-TOP hexagon (`clip-path` above: flat left and right
-  edges, points at top and bottom). Such a comb interlocks by shifting alternate
-  rows HALF A COLUMN sideways and pulling them up by a QUARTER of the cell's
-  height — the clip's own geometry, where the sloped shoulders occupy the top and
-  bottom 25%.
-  ⚠⚠ `--pm-hex-overlap: 24%` IS THE PULL-UP and sits just inside that quarter, so
-  the shoulders nest without the points colliding at a fractional pixel.
-  ⚠⚠⚠ THE OFFSET IS `50%` OF A COLUMN PLUS HALF THE GAP, which is why it is
-  written as a `calc` over the SAME gap variable the grid uses rather than as a
-  typed pixel figure — a hand-typed `45px` is correct at exactly one cell width
-  and wrong at every other (the mockup's own number, and it only held because the
-  mockup fixed the cell at 84px).
-
-  ⚠ ROWS 1 AND 3 ARE THE OFFSET ONES, so the shape is symmetric top to bottom and
-  index 4 of nine is the middle cell of the middle row — which is what makes
-  "Profile in the centre" a fact about the layout rather than a hope.
-*/
+/* THE FLOWER WS-B) */
 .pm-hive-flower {
   --pm-hex-gap: 6px;
   --pm-hex-overlap: 24%;
-  /*
-    ⚠⚠⚠ SIX COLUMNS FOR A 2-3-2 FLOWER, AND THE HALF-COLUMN IS THE WHOLE TRICK.
-    ⚠ A hexagonal flower's short rows sit HALF A CELL in from the long one, and a
-    grid cannot place anything on a half column — so the track is **half-width**
-    and every cell spans TWO of them. ⚠⚠ A short row then starts on column 2
-    instead of column 1, which is exactly half a cell.
-    ⚠ `grid-column` below does the placing; nothing is positioned absolutely, so
-    the comb still reflows and still has a real height.
-  */
+  /* SIX COLUMNS FOR A 2-3-2 FLOWER, AND THE HALF-COLUMN IS THE WHOLE TRICK. */
   grid-template-columns: repeat(6, 1fr);
   gap: 0 var(--pm-hex-gap);
   max-width: 300px;
@@ -88,12 +30,7 @@
   }
 }
 
-/*
-  ⚠⚠ ROW 1 IS CELLS 1-2 · ROW 2 IS 3-5 (PROFILE IS 4, THE MIDDLE) · ROW 3 IS 6-7.
-  ⚠ Written as explicit placements rather than a formula because the row lengths
-  ALTERNATE — 2, 3, 2 — and that pattern is the layout, not an implementation
-  detail of it.
-*/
+/* ROW 1 IS CELLS 1-2 · ROW 2 IS 3-5 (PROFILE IS 4, THE MIDDLE) · ROW 3 IS 6-7. */
 .pm-hive-flower > :nth-child(1) { grid-column: 2 / span 2; grid-row: 1; }
 .pm-hive-flower > :nth-child(2) { grid-column: 4 / span 2; grid-row: 1; }
 
@@ -104,43 +41,13 @@
 .pm-hive-flower > :nth-child(6) { grid-column: 2 / span 2; grid-row: 3; }
 .pm-hive-flower > :nth-child(7) { grid-column: 4 / span 2; grid-row: 3; }
 
-/* ⚠ The vertical interlock — rows 2 and 3 are pulled up into the shoulders of
-   the row above. ⚠⚠ `margin-top` and NOT `transform`: see the cascade note
-   further down, where the settle animation's filled `transform: none` wins. */
+/* The vertical interlock — rows 2 and 3 are pulled up into the shoulders of */
 .pm-hive-flower > :nth-child(n + 3) {
   margin-top: calc(-1 * var(--pm-hex-overlap));
 }
 
-/*
-  ── ⚠⚠⚠ THE LEVEL — ONE HUE, FOUR STEPS, PALE TO SOLID (`P2-A1.1-E731`) ───
-
-  ⚠ **SCOTT: *"one hue, light to dark (None = pale with dashed edge; Strong =
-  solid ink, white text)."***
-
-  ⚠⚠⚠ THE HUE IS `--color-ink` AND THE STEPS ARE `color-mix` AGAINST
-  `--color-surface`, WHICH IS WHY DARK MODE NEEDS NO SECOND RULE: both ends are
-  tokens that already flip, so the ramp re-derives itself on the dark palette
-  instead of being re-typed for it (`E723`'s lesson, applied rather than
-  restated). ⚠ Four hard-coded greys would have been four more things to flip.
-
-  ⚠⚠ `none` KEEPS A DASHED EDGE because a measured zero and an uncountable
-  figure must still differ — the zero is PALE-WITH-AN-EDGE and prints `0`; the
-  uncountable one is HATCHED and prints an em-dash with its reason. ⚠⚠⚠ THEY ARE
-  NEITHER THE SAME COLOUR NOR THE SAME GLYPH, which is the rule holding.
-*/
-/*
-  ⚠⚠⚠ `none` IS **PALE**, NOT WHITE, AND THAT WAS A MEASURED DEFECT. ⚠ Painted
-  `--color-surface` the hexagons DISAPPEARED: white on white, with the dashed
-  border clipped away on all four diagonals by `clip-path` — exactly the failure
-  this file already documents a few rules down, reproduced by me in the first
-  render. **The 1280 screenshot showed two faint vertical ticks per cell and no
-  hexagon at all.**
-  ⚠⚠ SO THE FILL CARRIES THE SHAPE (`--color-bg-soft`, the comb's own pale
-  ground) AND THE DASHED EDGE IS THE SECOND CUE WHERE CLIPPING LETS IT SHOW —
-  the same compromise the uncounted cell already makes, for the same reason.
-  ⚠ It is still clearly the lightest step of the ramp, which is what `none` has
-  to be.
-*/
+/* THE LEVEL — ONE HUE, FOUR STEPS, PALE TO SOLID */
+/* border clipped away on all four diagonals by `clip-path` — exactly the failure */
 .pm-hive-cell[data-level="none"]::before {
   background: var(--color-bg-soft);
   border-style: dashed;
@@ -156,10 +63,7 @@
   border-color: var(--color-ink);
 }
 
-/* ⚠⚠ THE TEXT HAS TO FOLLOW THE FILL OR IT DISAPPEARS INTO IT. ⚠ At `medium` the
-   ground is already dark enough that ink-on-ink loses contrast, so the figure
-   goes white there as well as at `strong` — measured against the ramp, not
-   guessed from the name. */
+/* THE TEXT HAS TO FOLLOW THE FILL OR IT DISAPPEARS INTO IT. At `medium` the */
 .pm-hive-cell[data-level="medium"] .pm-hive-figure,
 .pm-hive-cell[data-level="medium"] .pm-hive-label,
 .pm-hive-cell[data-level="strong"] .pm-hive-figure,
@@ -167,12 +71,7 @@
   color: var(--color-surface);
 }
 
-/*
-  ── ⚠⚠ THE KEY ───────────────────────────────────────────────────────────
-  ⚠ The swatches carry the SAME `data-level` attribute the cells do, so the rules
-  above paint them. ⚠⚠ A separate set of colours here would be the drift the key
-  exists to prevent.
-*/
+/* The swatches carry the SAME `data-level` attribute the cells do, so the rules */
 .pm-hive-key {
   display: flex;
   flex-wrap: wrap;
@@ -215,20 +114,7 @@
   border-color: var(--color-ink);
 }
 
-/*
-  ── ⚠⚠ THE PICTURE GROUND ────────────────────────────────────────────────
-  ⚠ The mockup sets the comb on a soft radial wash rather than flat white, which
-  is what stops the hexagons floating in an empty half-panel.
-  ⚠⚠ IT IS BUILT FROM `--color-magenta` AT LOW ALPHA AND FADES TO `transparent`,
-  NOT TO WHITE — ⚠⚠⚠ A HARD-CODED WHITE STOP WOULD PAINT A PALE DISC ON THE DARK
-  THEME, which is the `E723` defect in a gradient. Fading to transparent lets the
-  panel's own ground show through on both themes.
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the overhang padding the 3×3
-  rhombus needed. The flower places cells by `grid-column` and overhangs nothing,
-  and the leftover padding pushed the whole comb off-centre in its panel:
-  //   .pm-hive-picture { position: relative; padding-right: calc(33.333% / 2); }
-*/
+/* THE PICTURE GROUND */
 .pm-hive-picture {
   position: relative;
   display: flex;
@@ -238,21 +124,9 @@
   /* Health's look (2026-10-05): no glow behind the picture. */
 }
 
-/*
-  ⚠⚠ THE PICTURE FORM OWNS NO COLOURS — it inherits. ⚠⚠⚠ DARK MODE IS THEREFORE
-  NOT A SEPARATE RULE HERE, AND THAT IS DELIBERATE (the `E723` lesson): the cell's
-  fill is `--color-bg-soft` and its text `--color-ink*`, all tokens that already
-  flip. A hard-coded `background: #fff` on this wrapper is exactly what broke dark
-  mode on `/profile`, so there is not one.
-*/
+/* THE PICTURE FORM OWNS NO COLOURS — it inherits. DARK MODE IS THEREFORE */
 
-/*
-  ── ⚠⚠ THE CELL ──────────────────────────────────────────────────────────
-  ⚠ A hexagon by `clip-path`, so the shape costs no images and scales with the
-  cell. ⚠⚠ THE CLIP IS ON A WRAPPER, NOT ON THE TEXT: clipping a box that holds
-  text can shave a descender at some widths, so the hexagon is the BACKGROUND
-  layer and the content sits above it with its own padding.
-*/
+/* A hexagon by `clip-path`, so the shape costs no images and scales with the */
 .pm-hive-cell {
   position: relative;
   display: flex;
@@ -276,44 +150,8 @@
   border: 1px solid var(--color-line);
 }
 
-/*
-  ── ⚠⚠⚠ THE TWO DASHES MUST NOT LOOK ALIKE ───────────────────────────────
-
-  ⚠ SCOTT: *"A dashed cell meaning 'nothing here' and one meaning 'we can't
-  count this' must not look identical."*
-
-  ⚠⚠ THEY DIFFER IN THREE WAYS AT ONCE, NOT ONE — a single cue (colour alone,
-  or a border alone) fails for a colour-blind reader, at low contrast, and in a
-  screenshot:
-    1. ⚠ THE GLYPH — a measured zero prints `0`; an uncountable figure prints an
-       em-dash. **A real zero is never softened into a dash.**
-    2. ⚠⚠ THE FILL — a counted cell is SOLID, an uncountable one is HATCHED.
-       ⚠ SUPERSEDED, quoted not deleted (`E164`):
-       //   2. THE OUTLINE — counted cells are SOLID, uncountable cells are DASHED.
-       ⚠⚠⚠ THE OUTLINE ALONE DID NOT SURVIVE `clip-path` — see the block below.
-       The dashed border is kept, but it is the second half of this cue, not the
-       cue itself.
-    3. ⚠⚠ THE REASON — an uncountable cell CARRIES ITS REASON and a counted one
-       has none. `StatFigureRow`'s rule, in a hexagon: the component cannot
-       print a dash without saying why.
-  ⚠⚠⚠ SO AN EMPTY AREA AND AN UNKNOWN ONE ARE DISTINGUISHABLE BY SHAPE ALONE,
-  WITH THE COLOUR REMOVED.
-*/
-/*
-  ⚠⚠⚠ THE UNCOUNTABLE CELL IS **HATCHED**, NOT MERELY DASHED, AND THE REASON IS
-  A MEASURED RENDERING DEFECT, NOT A TASTE:
-
-  ⚠⚠ `clip-path` CLIPS THE BORDER ALONG WITH THE BOX. On a hexagon that means
-  the border SURVIVES ONLY ON THE TWO STRAIGHT SIDES and is cut away on all
-  four diagonals — so `border-style: dashed` rendered as two faint vertical
-  ticks rather than a dashed hexagon. ⚠ Seen in the WS-B screenshot, not in the
-  CSS: every gate was green and the rule was still not carried on screen.
-
-  ⚠⚠⚠ A FILL IS NOT CLIPPED AWAY — it is clipped TO the hexagon, which is
-  exactly what we want. So the load-bearing cue is the hatch, and the dashed
-  border is kept as the SECOND cue where it does show.
-  ⚠ The hatch is drawn in `--color-line`, a token that exists, with no fallback.
-*/
+/* THE TWO DASHES MUST NOT LOOK ALIKE */
+/* THE UNCOUNTABLE CELL IS HATCHED, NOT MERELY DASHED, AND THE REASON IS */
 .pm-hive-cell[data-counted="no"]::before {
   border-style: dashed;
   background: repeating-linear-gradient(
@@ -326,23 +164,14 @@
 .pm-hive-figure {
   font-weight: 700;
   line-height: 1;
-  /* ⚠ `E433` — a figure is INK. Magenta means interactive, and a statistic is
-     not a link even when the cell around it is one. */
+  /* — a figure is INK. Magenta means interactive, and a statistic is */
   color: var(--color-ink);
   font-size: 23px;
   font-variant-numeric: tabular-nums;
 }
 
 .pm-hive-cell[data-counted="no"] .pm-hive-figure {
-  /*
-    ⚠ Faint, because it must not read as a RESULT — but ⚠⚠⚠ STILL LEGIBLE,
-    because the rule is *"a dash carries its reason"* and a dash nobody can see
-    carries nothing. ⚠ At 0.45 the em-dash had all but vanished against the
-    hatch in the WS-B screenshot; the hatch was doing the whole job and the
-    glyph cue was gone.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   opacity: 0.45;
-  */
+  /* Faint, because it must not read as a RESULT — but STILL LEGIBLE */
   color: var(--color-ink-2);
   opacity: 0.75;
 }
@@ -362,8 +191,7 @@
   max-width: 13ch;
 }
 
-/* ⚠ The whole cell is the link, so the tap target is the hexagon and not a
-   6px word. ⚠⚠ 104px tall — a real target on a phone. */
+/* The whole cell is the link, so the tap target is the hexagon and not a */
 a.pm-hive-cell:hover::before {
   border-color: var(--color-magenta);
 }
@@ -373,13 +201,7 @@ a.pm-hive-cell:focus-visible {
   border-radius: 4px;
 }
 
-/*
-  ── ⚠⚠⚠ THE REARRANGE ────────────────────────────────────────────────────
-  ⚠ Each cell fades and lifts a little, staggered by its position, replayed on
-  every cycle. ⚠⚠ THE ANIMATION IS DECORATION — THE REARRANGE IS THE ORDER
-  CHANGE ITSELF, which happens in the markup whether or not this runs. A gate
-  that watched the animation would be watching the wrong thing.
-*/
+/* Each cell fades and lifts a little, staggered by its position, replayed on */
 @keyframes pm-hive-settle {
   from {
     opacity: 0;
@@ -395,29 +217,12 @@ a.pm-hive-cell:focus-visible {
   animation: pm-hive-settle 420ms ease-out both;
 }
 
-/*
-  ⚠⚠⚠ AND IT MUST COME **AFTER** THE RULE ABOVE. ⚠ Both selectors carry the same
-  specificity — three compound parts each — so ⚠⚠ THE LATER ONE WINS, AND ORDER IS
-  THE ONLY THING DECIDING IT. ⚠⚠⚠ MEASURED: with this block placed EARLIER in the
-  file the computed `animation-name` stayed `pm-hive-settle`, the filled
-  `transform: none` kept beating the offset, and the comb rendered as a 3×3 block
-  with the overlap applied but no shift — `margin-top: -24.47px` and
-  `transform: matrix(1, 0, 0, 1, 0, 0)` side by side in the probe.
-  ⚠ THAT IS WHY THE FIX IS POSITION RATHER THAN `!important`: the cascade is doing
-  exactly what it should, and the rule simply has to be downstream of the one it
-  narrows.
-*/
+/* AND IT MUST COME AFTER THE RULE ABOVE. Both selectors carry the same */
 .pm-hive-flower[data-still="no"] .pm-hive-cell {
   animation-name: pm-hive-settle-flat;
 }
 
-/*
-  ⚠ FADE ONLY — no lift. ⚠⚠ The component's own comment is the licence for this:
-  the animation is DECORATION and *"the rearrange is the order change itself, which
-  happens in the markup whether or not this runs."* ⚠⚠⚠ THE LIFT CANNOT COEXIST
-  WITH A STATIC `transform` ON THE SAME ELEMENT, so the flower keeps the half of
-  the decoration that does not collide. The grid layout is byte-unchanged.
-*/
+/* FADE ONLY — no lift. The component's own comment is the licence for this */
 @keyframes pm-hive-settle-flat {
   from {
     opacity: 0;
@@ -427,15 +232,7 @@ a.pm-hive-cell:focus-visible {
   }
 }
 
-/*
-  ⚠⚠⚠ REDUCED MOTION: A STILL PICTURE AND NO COUNTDOWN (Scott's rule 4).
-  ⚠ THE ORDER STOPS CHANGING TOO, not just the fade. A grid whose cells
-  silently swap places without animating is still motion to somebody who asked
-  for none — it is the worst version, because it happens with no transition to
-  explain it. ⚠⚠ The ORDER is frozen in the component; this rule only stops the
-  decoration, and the media query is belt-and-braces for a reader whose
-  preference the JS has not seen yet.
-*/
+/* REDUCED MOTION: A STILL PICTURE AND NO COUNTDOWN (Scott's rule 4). */
 @media (prefers-reduced-motion: reduce) {
   .pm-hive .pm-hive-cell {
     animation: none;

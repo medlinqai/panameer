@@ -7,16 +7,7 @@ export const AUDIENCE_PATH: Record<Audience, string> = {
   provider: "/work",
 };
 
-// ---------------------------------------------------------------------------
 // THREE PUBLIC PAGES (brief_public_pages_ia WS-4).
-//
-// `Audience` above is about VOICE — does this section speak to a buyer or a
-// seller — and sections keep using it. This is about ROUTING: which of the
-// three public pages is on screen. They are deliberately separate concepts,
-// because the home and Hire Talent are both buyer-voiced but are different
-// destinations with different jobs, and collapsing the two would force the
-// switch to treat them as one place.
-// ---------------------------------------------------------------------------
 
 export type PublicPage = "home" | "hire" | "work";
 

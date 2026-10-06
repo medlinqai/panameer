@@ -24,14 +24,7 @@ export function Silhouette({
   );
 }
 
-/**
- * ⚠ A face where one may or may not exist: the photo when there is one, the
- * silhouette when there is not. ⚠⚠ ONE DECISION IN ONE PLACE, so no caller can
- * accidentally fall back to initials.
- *
- * ⚠ `alt=""` on the photo for the same reason the glyph is `aria-hidden` — the
- * person's name is always rendered next to it.
- */
+/** A face where one may or may not exist: the photo when there is one, the */
 export function Face({
   photoUrl,
   size = 44,
@@ -43,22 +36,7 @@ export function Face({
 }) {
   if (!photoUrl) return <Silhouette size={size} className={className} />;
 
-  /*
-    ── ⚠⚠⚠ THE SILHOUETTE SITS **BEHIND** THE PHOTO, NOT INSTEAD OF IT ───────
-
-    ⚠⚠ MEASURED ON THE REAL PAGE, 2026-09-20: `Test User 5` has a non-null
-    `photo_url` whose image DOES NOT LOAD, and the card rendered as a bare
-    magenta circle — the halo with nothing in it. ⚠ A null photo was handled;
-    a photo that is present and BROKEN was not, and it is the more common case
-    on seeded data.
-
-    ⚠⚠ THIS IS THE TECHNIQUE `components/Avatar.tsx` ALREADY USES and the one
-    thing about it worth keeping: the fallback is a LAYER UNDERNEATH, so a 404,
-    a blocked host, a transparent 1×1 or an empty `src` all reveal it with no
-    `onError` handler and no client JavaScript. ⚠ This is a SERVER COMPONENT —
-    an `onError` would make every card in the grid a client component.
-    ⚠ What is NOT kept is the initials: the layer underneath is the silhouette.
-  */
+  // THE SILHOUETTE SITS BEHIND THE PHOTO, NOT INSTEAD OF IT
   return (
     <span
       className={`pm-face-wrap ${className}`}

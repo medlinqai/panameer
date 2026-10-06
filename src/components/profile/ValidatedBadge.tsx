@@ -27,8 +27,7 @@ export function ValidatedBadge({
       title={title}
       className="ml-2 inline-flex shrink-0 items-center gap-1 rounded-[3px] border border-line px-1.5 py-[1px] align-middle text-[11px] font-semibold text-ink-2"
     >
-      {/* ⚠ The tick is the one accent; `aria-hidden` because the word beside it
-          already says what it means. */}
+      {/* The tick is the one accent; `aria-hidden` because the word beside it */}
       <span aria-hidden className="text-magenta">
         ✓
       </span>
@@ -37,13 +36,7 @@ export function ValidatedBadge({
   );
 }
 
-/**
- * ⚠⚠ OWNER-ONLY. The brief: *"Pending shows only to the owner: 'Validation
- * requested <date>'."*
- * ⚠⚠⚠ **A VISITOR MUST NEVER SEE THIS.** It says somebody was asked and has not
- * answered — which is nobody's business and reads as a doubt about the member
- * rather than as a queue.
- */
+/** OWNER-ONLY. The brief: *"Pending shows only to the owner: 'Validation */
 export function ValidationPending({ since }: { since?: string | null }) {
   const when = since
     ? new Date(since).toLocaleDateString("en-US", { month: "long", year: "numeric" })

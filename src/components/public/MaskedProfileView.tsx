@@ -69,29 +69,16 @@ export function MaskedProfileView({
               className="relative pb-[22px] pl-7 before:absolute before:left-[3px] before:top-2.5 before:bottom-[-6px] before:border-l before:border-dashed before:border-magenta after:absolute after:left-0 after:top-[7px] after:h-2 after:w-2 after:rounded-full after:bg-magenta last:pb-0 last:before:hidden"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                {/* ⚠ A role title is what the member DID, not who they are. */}
+                {/* A role title is what the member DID, not who they are. */}
                 <h3 className="text-[15px] font-semibold">
                   {e.roleTitle ?? "Consulting engagement"}
-                  {/*
-                    ⚠⚠ THE BADGE SHOWS ON THE MASKED PREVIEW TOO (`E748` WS-C) —
-                    Scott: *"the owner view, the visitor view, and the masked
-                    public preview (the badge shows; who validated doesn't)."*
-                    ⚠⚠⚠ **NO DATE AND NO DOMAIN ARE PASSED, BECAUSE NEITHER IS
-                    IN THE PAYLOAD.** `MaskedEmployerRow.validated` is a boolean;
-                    a domain would be an employer hint on the one surface built
-                    to withhold exactly that.
-                  */}
+                  {/* THE BADGE SHOWS ON THE MASKED PREVIEW TOO ( WS-C) — */}
                   {e.validated && <ValidatedBadge validatedAt={null} validatedBy={null} />}
                 </h3>
                 {e.dates && <span className="text-[13.5px] text-ink-2">{e.dates}</span>}
               </div>
-              {/* ⚠⚠ SCOTT'S ANSWER 6 — role + dates + the lock line, and **NO
-                  INVENTED INDUSTRY**. `Employer` has no industry column, so
-                  there is nothing honest to put here but the lock. */}
-              {/* ⚠⚠ THE EMPLOYER NAME RENDERS IN PLACE, BLURRED (`E767`) — the row
-                  used to show only a lock line, so a reader could not tell whether
-                  an employer existed at all. ⚠ The lock line stays beneath it and
-                  says what to do about it. */}
+              {/* SCOTT'S ANSWER 6 — role + dates + the lock line, and NO */}
+              {/* THE EMPLOYER NAME RENDERS IN PLACE, BLURRED — the row */}
               <div className="mt-1 text-[13.5px] text-ink-2">
                 <BlurredField label="Employer hidden — join free to see it">
                   {PLACEHOLDER.employer}
@@ -106,15 +93,13 @@ export function MaskedProfileView({
                     <li key={l.id} className="text-[13.5px] text-ink-2">
                       {l.roleTitle ?? "Project"}
                       {" · "}
-                      {/* ⚠ The CLIENT, blurred and constant — `MaskedEmployerRow`
-                          has never carried a client name and still does not. */}
+                      {/* The CLIENT, blurred and constant — `MaskedEmployerRow` */}
                       <BlurredField label="Client hidden — join free to see it">
                         {PLACEHOLDER.client}
                       </BlurredField>
                       {l.dates ? ` · ${l.dates}` : ""}
                       {l.validated && <ValidatedBadge validatedAt={null} validatedBy={null} />}
-                      {/* ⚠ Industry ONLY where the column is populated — 3 of
-                          21 projects today. Never a fallback label. */}
+                      {/* Industry ONLY where the column is populated — 3 of */}
                       {l.industry ? ` · ${l.industry}` : ""}
                     </li>
                   ))}
@@ -134,7 +119,7 @@ export function MaskedProfileView({
       count: p.education.length,
       body: (
         <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
-          {/* ⚠⚠ DEGREE AND FIELD. The school name is not in the payload. */}
+          {/* DEGREE AND FIELD. The school name is not in the payload. */}
           {p.education.map((e, i) => (
             <li key={`${e}-${i}`}>{e}</li>
           ))}
@@ -148,7 +133,7 @@ export function MaskedProfileView({
       label: "Services",
       count: p.packages.length,
       body: (
-        /* ⚠ SCOTT'S ANSWER 10: *"Packages: titles only, no price or cover."* */
+        /* SCOTT'S ANSWER 10: *"Packages: titles only, no price or cover."* */
         <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
           {p.packages.map((t, i) => (
             <li key={`${t}-${i}`}>{t}</li>
@@ -197,11 +182,7 @@ export function MaskedProfileView({
       <aside>
         <MaskedAvatarLarge blur={p.photoBlur} />
 
-        {/* ⚠⚠ SCOTT'S ANSWER 5: the Search Score SHOWS on the masked page.
-            ⚠ `visitor-profile.spec.ts`'s "Search Score" needle asserts the
-            OWNER-ONLY block is absent from the SIGNED-IN visitor view; that
-            test signs in, so it never reaches this page and the two rules do
-            not actually collide. Stated because the answer anticipated one. */}
+        {/* SCOTT'S ANSWER 5: the Search Score SHOWS on the masked page. */}
         <div className="mt-6 border-t border-line pt-4 dark:border-white/15">
           <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
             SEARCH SCORE
@@ -216,19 +197,8 @@ export function MaskedProfileView({
           <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
             RATES
           </h4>
-          {/*
-            ⚠⚠⚠ THERE IS NO BLURRED FIGURE HERE, AND THE MOCKUP'S BLUR IS WHY
-            THIS NOTE EXISTS. The mockup draws `$145.00` under a CSS blur as a
-            placeholder graphic. ⚠ A blur over real text is not masking — the
-            number is in the DOM and `filter: blur()` is one dev-tools toggle
-            away. ⚠⚠ The rate is simply NOT IN THE PAYLOAD (`MaskedProfile` has
-            no rate field), so there is nothing to blur and nothing to leak.
-          */}
-          {/* ⚠⚠ A BLURRED FIGURE AT LAST — AND READ THE NOTE ABOVE BEFORE
-              CHANGING IT. The mockup's blur was over a REAL rate and that is why
-              it was refused. This one is `$000 / hr`, a constant, and the real
-              rate is STILL not in the payload. ⚠⚠⚠ The difference is not the
-              blur, it is what is underneath it. */}
+          {/* THERE IS NO BLURRED FIGURE HERE, AND THE MOCKUP'S BLUR IS WHY */}
+          {/* A BLURRED FIGURE AT LAST — AND READ THE NOTE ABOVE BEFORE */}
           <div className="mb-1 text-[18px] font-bold">
             <BlurredField label="Rate hidden — register free to see it">
               {PLACEHOLDER.rate}
@@ -237,8 +207,7 @@ export function MaskedProfileView({
           <LockLine>{RATE_LOCKED_COPY}</LockLine>
         </div>
 
-        {/* ⚠ CONTACT — it did not render at all before, so the page did not show
-            that there was one to withhold. */}
+        {/* CONTACT — it did not render at all before, so the page did not show */}
         <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
           <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">CONTACT</h4>
           <div className="mb-1 text-[14px]">
@@ -257,18 +226,8 @@ export function MaskedProfileView({
       </aside>
 
       <main>
-        {/* ⚠⚠⚠ THE `<h1>` IS THE **TITLE**, NEVER THE NAME — and the page's
-            `<title>` and Open Graph tags follow the same rule (see the route).
-            ⚠ `E602` records what happens when a page has no `<h1>` at all; this
-            one has exactly one. */}
-        {/*
-          ⚠⚠⚠ THE NAME IS **SHOWN AS A BLURRED PLACEHOLDER**, NOT WITHHELD (`E767`).
-          ⚠ Scott: *"maybe all that info, but blurry."* The shape of a profile —
-          that there IS a name here — is part of what a visitor is being shown;
-          an empty space says less and sells less.
-          ⚠⚠ **WHAT IS BLURRED IS A CONSTANT.** `MaskedProfile` still has no name
-          field, so there is nothing real on this page to un-blur.
-        */}
+        {/* THE `<h1>` IS THE TITLE, NEVER THE NAME — and the page's */}
+        {/* THE NAME IS SHOWN AS A BLURRED PLACEHOLDER, NOT WITHHELD . */}
         <BlurredField label="Name hidden — join free to see it" className="text-[20px] font-bold">
           {PLACEHOLDER.name}
         </BlurredField>
@@ -282,8 +241,7 @@ export function MaskedProfileView({
           </div>
         )}
 
-        {/* ⚠⚠ SCRUBBED SERVER-SIDE, OR ABSENT. `scrub()` returns null rather
-            than a string with holes in it — see its note. */}
+        {/* SCRUBBED SERVER-SIDE, OR ABSENT. `scrub()` returns null rather */}
         {p.summary && (
           <p className="mt-4 max-w-[680px] text-[14.5px] leading-relaxed text-ink-2">
             {p.summary}
@@ -300,8 +258,7 @@ export function MaskedProfileView({
 
         <div className="mt-6">
           {sections.map((s) => (
-            /* ⚠ NATIVE `<details>`: this page is reached signed out and the
-               folding must work before any JavaScript arrives. */
+            // NATIVE `<details>`: this page is reached signed out and the
             <details
               key={s.label}
               open={s.open}
@@ -323,7 +280,7 @@ export function MaskedProfileView({
           ))}
         </div>
 
-        {/* ⚠⚠ THE END CARD — the brief's wording, verbatim. */}
+        {/* THE END CARD — the brief's wording, verbatim. */}
         <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-ink p-[22px] dark:border-white/40">
           <div>
             <h2 className="text-[18px] font-bold">See who this is</h2>
@@ -346,12 +303,7 @@ export function MaskedProfileView({
   );
 }
 
-/**
- * ⚠⚠ THE STICKY BAR. The brief: *"A thin sticky bar: 'Showing a masked
- * preview.' **Join Free to See Full Profiles** · **Sign In**."*
- * ⚠ `sticky bottom-0`, not `fixed`: a fixed bar covers the end card on a phone
- * and there is no way to scroll past it.
- */
+/** THE STICKY BAR. The brief: *"A thin sticky bar: 'Showing a masked */
 export function MaskedPreviewBar({
   joinHref,
   signInHref,

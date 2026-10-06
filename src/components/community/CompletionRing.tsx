@@ -32,8 +32,7 @@ export function CompletionRing({ score }: { score: ProfileScore }) {
           aria-label={`${score.total} of 100`}
         >
           <circle cx="59" cy="59" r={R} fill="none" className="stroke-line-2" strokeWidth="11" />
-          {/* ⚠ Re-keyed on `cycle` so the CSS replays — same mechanism as the
-              Score ring, same stylesheet, no second animation path. */}
+          {/* Re-keyed on `cycle` so the CSS replays — same mechanism as the */}
           <g key={cycle} className="pm-rebuild-draw">
           {segments.map((s) => (
             <circle
@@ -57,23 +56,13 @@ export function CompletionRing({ score }: { score: ProfileScore }) {
       </div>
 
       <p className="text-[12px] text-ink-2">of 100</p>
-      {/* ⚠ The same caption as the Score page's ring, from the same component —
-          one wording, three pictures. */}
+      {/* The same caption as the Score page's ring, from the same component — */}
       <RebuildBadge secondsLeft={secondsLeft} />
     </div>
   );
 }
 
-/* ⚠⚠⚠ `completionHook` MOVED TO `lib/completion-hook.ts` (`P2-A2-E600` WS-D).
-   ⚠ ADDING `"use client"` TO THIS FILE MADE IT A CLIENT FUNCTION, and
-   `ConnectProfile` — a SERVER component — calls it. The page 500ed with
-   *"Attempted to call completionHook() from the server but completionHook is on
-   the client."*
-   ⚠⚠ `npm run build` AND `tsc` BOTH PASSED. Only rendering caught it — the same
-   class as `E597` WS-C's `SectionSpec` across the boundary, and the second time
-   this session that a boundary error was invisible to both.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`): the function lived here, directly
-   below the component that shares its stylesheet. */
+// ADDING `"use client"` TO THIS FILE MADE IT A CLIENT FUNCTION, and
 
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";

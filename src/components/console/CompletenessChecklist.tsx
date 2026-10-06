@@ -55,8 +55,7 @@ export function CompletenessChecklist({
                 ✓
               </span>{" "}
               {r.label}
-              {/* ⚠ A COUNT ONLY WHERE ONE MEANS SOMETHING — `Photo (1)` would be
-                  noise, so only rows that carry a real tally show one. */}
+              {/* A COUNT ONLY WHERE ONE MEANS SOMETHING — `Photo (1)` would be */}
               {r.count !== undefined && r.count > 0 ? ` (${r.count})` : ""}
             </li>
           ))}

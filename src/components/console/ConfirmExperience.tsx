@@ -152,9 +152,7 @@ export function ConfirmExperience({
               disabled={busy}
               className="bg-magenta px-5 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark disabled:opacity-60"
             >
-              {/* ⚠ A STATUS SENTENCE INSIDE A BUTTON IS NOT A LABEL and stays a
-                  sentence; the other branch names the action and takes Title
-                  Case (rule 11). */}
+              {/* A STATUS SENTENCE INSIDE A BUTTON IS NOT A LABEL and stays a */}
               {busy ? "Saving your answers…" : "Save Your Experience"}
             </button>
             <button

@@ -151,9 +151,6 @@ export function EducationCards({
 
   const save = () => {
     // E033 — the modal used to save with only a school filled in, which left
-    // entries too thin to be worth showing. School, degree, field and a start
-    // year are all required now; the end year stays optional for study still
-    // in progress.
     const missing: string[] = [];
     if (!draft.institution.trim()) missing.push("School");
     if (!draft.degree?.trim()) missing.push("Degree");
@@ -315,18 +312,7 @@ export function EducationCards({
             </datalist>
           </Field>
 
-          {/*
-            E166 — THE ASTERISK WAS ON THE WRONG THING.
-
-            The group said "Dates Attended *" while its two controls carried no
-            marker, and only FROM is actually required — To is deliberately
-            optional for study still in progress. So the one field that blocks
-            Save looked identical to the one that doesn't, and the validation
-            error named a field ("Dates Attended (from)") that appeared nowhere
-            on screen. The marker now sits on the required control, exactly like
-            School *, Degree * and Field of Study * above it, and the optional
-            one says it is optional.
-          */}
+          {/* E166 — THE ASTERISK WAS ON THE WRONG THING. */}
           <div>
             <span className="mb-1.5 block text-[14px] font-bold text-ink">
               Dates Attended

@@ -36,14 +36,7 @@ export type TalentLineMath = {
 const money = (cents: number) =>
   `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-/**
- * ⚠⚠⚠ THE ONE PLACE THE TOTAL IS COMPUTED, AND IT RETURNS ITS WORKING.
- *
- * ⚠ *"Print the arithmetic; never hard-code a total."* — so the caller is handed
- * the inputs AND the steps, and the dialog renders what this returned rather
- * than re-multiplying anything. ⚠⚠ A second multiplication on the screen is two
- * definitions of one number, which is `E585` with a price attached.
- */
+/** THE ONE PLACE THE TOTAL IS COMPUTED, AND IT RETURNS ITS WORKING. */
 export function talentLineMath(input: {
   startDate: Date;
   endDate: Date;
@@ -70,9 +63,7 @@ export function talentLineMath(input: {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE WRITER — ⚠⚠ ONE REQUISITION SHAPE, TWO DOORS (item 3)
-   ═════════════════════════════════════════════════════════════════════════ */
+// THE WRITER — ONE REQUISITION SHAPE, TWO DOORS (item 3)
 
 async function ownPerson(viewer: Viewer) {
   const person = await prisma.person.findUnique({
@@ -107,7 +98,7 @@ export type Selection = {
   workRequestId: string;
   workRequestLineId: string;
   providerPersonId: string;
-  /** ⚠ Null on Route B — there was no proposal to award. */
+  /** Null on Route B — there was no proposal to award. */
   proposalId: string | null;
   math: TalentLineMath;
   /** How many other proposals were marked `NOT_SELECTED`. */
@@ -115,19 +106,7 @@ export type Selection = {
   route: "PROPOSAL" | "DIRECT";
 };
 
-/**
- * ⚠⚠⚠ THE SHARED BODY. **BOTH ROUTES END HERE AND NOTHING DOWNSTREAM CAN TELL
- * WHICH DOOR OPENED** — the same discipline WS-D's two doors need, applied one
- * step earlier. ⚠ WS-C item 3: *"One requisition shape, whichever route produced
- * it."* If Route B had its own line-writing code the two shapes would drift, and
- * the drift would show up as a work order that is missing a field.
- *
- * ⚠⚠ THE LINE IS **ONE TALENT LINE**: a provider, a rate and a quantity, with
- * **no `supplier_part_id`.** ⚠⚠⚠ Ruling, `requisition_model_2026-09-21.md`:
- * *"the fact that Scott has a rate and can be bought for hours DOES NOT create
- * an item… Buying a person's time is NOT an item."* A talent line carrying an
- * Item ID would be that retired design coming back.
- */
+/** THE SHARED BODY. BOTH ROUTES END HERE AND NOTHING DOWNSTREAM CAN TELL */
 async function writeRequisitionLine(args: {
   workRequest: { id: string; title: string; start_date: Date | null; end_date: Date | null };
   providerPersonId: string;
@@ -138,13 +117,7 @@ async function writeRequisitionLine(args: {
   route: "PROPOSAL" | "DIRECT";
 }): Promise<{ lineId: string; math: TalentLineMath }> {
   const { workRequest: wr } = args;
-  /*
-    ⚠⚠⚠ THE BUYER'S DATES ARE REQUIRED, AND THEIR ABSENCE IS A REFUSAL RATHER
-    THAN A GUESS. ⚠ `WorkRequest.start_date` and `end_date` are both nullable, so
-    a request can reach selection with neither — and **hours cannot follow from
-    dates that do not exist.** ⚠⚠ Defaulting to "a month" would put a number
-    nobody chose onto a line somebody is going to be paid against.
-  */
+  // THE BUYER'S DATES ARE REQUIRED, AND THEIR ABSENCE IS A REFUSAL RATHER
   if (!wr.start_date || !wr.end_date) {
     throw new SourcingError(
       "Add a start and end date to this work request before selecting somebody — the hours are worked out from them.",
@@ -152,7 +125,7 @@ async function writeRequisitionLine(args: {
     );
   }
 
-  /* ⚠ `positions` lives on the line, and on a new line it is the default 1. */
+  /* `positions` lives on the line, and on a new line it is the default 1. */
   const math = talentLineMath({
     startDate: wr.start_date,
     endDate: wr.end_date,
@@ -166,62 +139,26 @@ async function writeRequisitionLine(args: {
     );
   }
 
-  /*
-    ⚠⚠ ONE TALENT LINE PER SELECTION, REPLACED RATHER THAN APPENDED. Selecting,
-    reversing and selecting again must leave ONE line — `line_number` 1 with a
-    `@@unique([work_request_id, line_number])` behind it, so the database
-    refuses a second rather than this function remembering to look.
-  */
+  // ONE TALENT LINE PER SELECTION, REPLACED RATHER THAN APPENDED. Selecting
   const line = await prisma.workRequestLine.upsert({
     where: { work_request_id_line_number: { work_request_id: wr.id, line_number: 1 } },
     create: {
       work_request_id: wr.id,
       line_number: 1,
-      /*
-        ⚠⚠⚠ SERVICE BY QUANTITY — HOURS AT A RATE. ⚠ Ruling 44 deleted the
-        `LineBasis` ⇄ `TransactionType` BRIDGE, so this is stated directly
-        rather than translated from a basis. **A translation is where a rate
-        silently changes between what was bid and what was ordered.**
-      */
+      // SERVICE BY QUANTITY — HOURS AT A RATE. Ruling 44 deleted the
       transaction_type: "SERVICE_BY_QTY",
       description: wr.title || "Professional services",
       uom: args.uom ?? "HOUR",
       quantity: math.hours,
       unit_price_cents: math.unitPriceCents,
-      /*
-        ── ⚠⚠⚠ NO `amount_cents` ON A RATE LINE (`P2-A8-E684a`) ─────────────
-
-        ⚠⚠⚠ **THIS LINE CARRIED BOTH, AND IT MADE EVERY ORDER IMPOSSIBLE.**
-        `assertPricedShape` in `transaction-spine.ts:114` refuses it by name —
-        *"A RATE line must not carry an amount — it would be settleable
-        twice"* — and `buildWorkOrder` runs that assertion over every
-        requisition line before it copies one. ⚠⚠ So `selectProvider` wrote a
-        line the order builder was guaranteed to reject: **`POST /order`
-        returned 500 with `RATE_HAS_AMOUNT` the first time anything called it.**
-
-        ⚠ **NOBODY HAD EVER CALLED IT.** `WorkOrder` holds 0 rows and had no
-        door until WS-F — the two modules disagreed in private for as long as
-        neither was reachable. **`E585` in the money layer, and the door is what
-        found it.**
-
-        ⚠⚠ **THE AMOUNT WAS REDUNDANT, WHICH IS WHY THIS IS SAFE AND NOT A
-        TRADE:** the order's value for a quantity-priced line is
-        `quantity × unit_price_cents` (`work-orders.ts:198`) and **never reads
-        `amount_cents`**, and completeness checks `unit_price_cents` for a
-        quantity line (`work-request-lines.ts:106`). The total and the
-        completeness verdict are byte-identical either way.
-        ⚠ `math.amountCents` IS STILL COMPUTED AND STILL RETURNED — the caller
-        reports it; it simply stops being stored on a line that must not hold it.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   amount_cents: math.amountCents,
-      */
+      // NO `amount_cents` ON A RATE LINE
       amount_cents: null,
       provider_person_id: args.providerPersonId,
       recruiter_person_id: args.recruiterPersonId,
-      /* ⚠⚠ NO `supplier_part_id` — a person's time is not an item. */
+      /* NO `supplier_part_id` — a person's time is not an item. */
       service_start: wr.start_date,
       service_end: wr.end_date,
-      /* ⚠ Scott's *"Created"* — `SOURCED` is WS-D's, when the order is built. */
+      /* Scott's *"Created"* — `SOURCED` is WS-D's, when the order is built. */
       status: "ASSIGNED",
     },
     update: {
@@ -230,9 +167,7 @@ async function writeRequisitionLine(args: {
       uom: args.uom ?? "HOUR",
       quantity: math.hours,
       unit_price_cents: math.unitPriceCents,
-      /* ⚠⚠ THE SAME ON THE UPDATE HALF — and it has to be NULL rather than
-         omitted, or re-selecting would leave the old amount behind on a line
-         that must not carry one. See the create branch for why. */
+      // THE SAME ON THE UPDATE HALF — and it has to be NULL rather than
       amount_cents: null,
       provider_person_id: args.providerPersonId,
       recruiter_person_id: args.recruiterPersonId,
@@ -246,14 +181,7 @@ async function writeRequisitionLine(args: {
   return { lineId: line.id, math };
 }
 
-/**
- * ⚠⚠ ROUTE A — the buyer picks a winner from the proposals.
- *
- * ⚠⚠⚠ THE RATE IS **THE PROVIDER'S OWN**, READ FROM THEIR PROPOSAL LINE, NEVER
- * TYPED BY THE BUYER. ⚠ The same argument that makes a test score uncopyable:
- * the moment the buyer can enter the number, there are two rates for one
- * engagement and the provider's is the one that loses.
- */
+/** ROUTE A — the buyer picks a winner from the proposals. */
 export async function selectProvider(
   viewer: Viewer,
   input: { workRequestId: string; providerPersonId: string }
@@ -261,8 +189,7 @@ export async function selectProvider(
   const me = await ownPerson(viewer);
   const wr = await buyerRequest(input.workRequestId, me.id);
 
-  /* ⚠⚠ RULING 17, THE FORWARD HALF: once the order exists the selection is
-     fixed, so a request already `ORDERED` cannot be re-selected. */
+  // RULING 17, THE FORWARD HALF: once the order exists the selection is
   if (wr.status === "ORDERED") {
     throw new SourcingError(
       "This work request already has a work order — the selection can't be changed.",
@@ -299,9 +226,7 @@ export async function selectProvider(
   }
   const proposalLine = winner.lines[0];
   if (!proposalLine || proposalLine.unit_price_cents == null) {
-    /* ⚠⚠⚠ A REFUSAL, NOT A FALLBACK. Without their rate there is nothing to
-       multiply, and the provider's listed profile rate is what they advertise —
-       not what they proposed for this work. */
+    // A REFUSAL, NOT A FALLBACK. Without their rate there is nothing to
     throw new SourcingError(
       "That proposal doesn't state a rate, so the hours can't be priced.",
       "PROPOSAL_HAS_NO_RATE"
@@ -318,13 +243,7 @@ export async function selectProvider(
     route: "PROPOSAL",
   });
 
-  /*
-    ── ⚠⚠ THE LOSERS (item 2) ──────────────────────────────────────────────
-    ⚠⚠⚠ THEIR PROPOSALS STAY ON THE RECORD. `NOT_SELECTED` is a status, not a
-    deletion — the same rule withdrawal and a declined interview both hold.
-    ⚠ Only OPEN ones move: a proposal already `WITHDRAWN` or `DECLINED` reached
-    its own end and overwriting that would rewrite what happened.
-  */
+  // THE LOSERS (item 2)
   const losers = await prisma.proposal.updateMany({
     where: {
       work_request_id: wr.id,
@@ -336,32 +255,15 @@ export async function selectProvider(
 
   await prisma.$transaction([
     prisma.proposal.update({ where: { id: winner.id }, data: { status: "AWARDED" } }),
-    /* ⚠⚠ RULING 17: creating the ORDER moves the status to `ORDERED`; selecting
-       moves it to `ASSIGNED`, which is the state a reversal can still leave. */
-    /* ⚠⚠ `sole_sourced: false` IS STATED, NOT LEFT TO THE DEFAULT
-       (`P2-A15-E696` WS-D). ⚠⚠⚠ The column's `@default(false)` means *"nobody
-       decided"*; writing it HERE means **this path decided** — and those are
-       different facts (`90b`). ⚠ This is the proposal route: Panameer matched
-       and proposed, so the platform did the sourcing and the rate is
-       `APP_SOURCED`. */
+    // RULING 17: creating the ORDER moves the status to `ORDERED`; selecting
+    // WS-D). The column's `@default(false)` means *"nobody
     prisma.workRequest.update({
       where: { id: wr.id },
       data: { status: "ASSIGNED", sole_sourced: false },
     }),
   ]);
 
-  /*
-    ⚠⚠⚠ THE BUYER'S WORKLIST ITEMS ARE CLEARED — they no longer owe a response
-    to any proposal on this request, because they have answered all of them by
-    choosing. ⚠ Resolved, never deleted: the notification is the record that the
-    proposal arrived.
-    ⚠⚠ AND THE LOSERS ARE NOT MAILED, WHICH IS MEASURED RATHER THAN FORGOTTEN:
-    **no `work.*` event for "you were not selected" is registered** — the four
-    that exist are `proposal_received`, `interview_requested`, `order_offered`
-    and `settlement_approval`. ⚠ Ruling 37: *call the event that exists; do not
-    invent a second.* So a provider learns it from their own proposal's status,
-    and the missing event is REPORTED AS OWED.
-  */
+  // THE BUYER'S WORKLIST ITEMS ARE CLEARED — they no longer owe a response
   const allProposals = await prisma.proposal.findMany({
     where: { work_request_id: wr.id },
     select: { id: true },
@@ -387,19 +289,7 @@ export async function selectProvider(
   };
 }
 
-/**
- * ⚠⚠⚠ ROUTE B — DIRECT ASSIGNMENT. **A FIRST-CLASS PATH, NOT A FALLBACK**
- * (item 3). No proposal, no invite, no interview, no test.
- *
- * ⚠⚠ THE BUYER SUPPLIES THE RATE HERE, AND THAT IS THE DIFFERENCE BETWEEN THE
- * TWO ROUTES RATHER THAN A HOLE IN THIS ONE: nobody proposed, so there is no
- * provider-stated rate to read. ⚠ On Route A the buyer typing a rate would
- * overwrite the provider's own; on Route B it is the only number that exists,
- * and the provider still has to ACCEPT the work order it produces (WS-D).
- *
- * ⚠⚠⚠ MEASURED AT THE PREMISE CHECK, AND IT IS WHY THIS FUNCTION EXISTS:
- * **no code path attached a provider to a work request directly.** This is it.
- */
+/** ROUTE B — DIRECT ASSIGNMENT. A FIRST-CLASS PATH, NOT A FALLBACK */
 export async function assignProviderDirectly(
   viewer: Viewer,
   input: {
@@ -407,7 +297,7 @@ export async function assignProviderDirectly(
     providerPersonId: string;
     unitPriceCents: number;
     uom?: string | null;
-    /** ⚠ Scott's WR_LINE *Recruiter ID* — set when a recruiter placed them. */
+    /** Scott's WR_LINE *Recruiter ID* — set when a recruiter placed them. */
     recruiterPersonId?: string | null;
   }
 ): Promise<Selection> {
@@ -427,8 +317,7 @@ export async function assignProviderDirectly(
   }
   await assertCanSign(me.id, me.id, input.providerPersonId);
 
-  /* ⚠ The provider must be a real person with an account — a direct assignment
-     to a row nobody can sign in as is a work order that can never be accepted. */
+  // The provider must be a real person with an account — a direct assignment
   const person = await prisma.person.findFirst({
     where: { id: input.providerPersonId, NOT: { user_id: null } },
     select: { id: true },
@@ -447,22 +336,7 @@ export async function assignProviderDirectly(
     route: "DIRECT",
   });
 
-  /*
-    ── ⚠⚠⚠ `sole_sourced` IS WRITTEN HERE, AND IT IS A CONTROL, NOT A FLAG ────
-
-    `P2-A15-E696` WS-D, ruling `97d`. ⚠⚠ **AN HOUR AGO IT WAS A CONVENIENCE SO A
-    REQUEST COULD BE TOLD APART LATER. IT NOW DECIDES A THREE-TIMES DIFFERENCE IN
-    THE FEE** — 4.99% here against 9.99% on the proposal route.
-
-    ⚠⚠⚠ **WRITTEN FROM THE PATH THE REQUEST ACTUALLY TOOK, IN THE SAME UPDATE AS
-    THE STATUS — TWO FACTS FROM ONE DECISION, SO THEY CANNOT DISAGREE.** This is
-    `assignProviderDirectly`: the buyer named the provider and Panameer sourced
-    nothing.
-
-    ⚠⚠ **AND IT IS NEVER SETTABLE BY HAND** — no route, form or update surface
-    accepts it. ⚠⚠⚠ **OTHERWISE THE CHEAPEST ROUTE THROUGH THE PRODUCT IS "TICK
-    SOLE-SOURCED", AND THE 9.99 AND 14.99 TIERS COLLECT NOTHING.**
-  */
+  // WS-D, ruling `97d`. AN HOUR AGO IT WAS A CONVENIENCE SO A
   await prisma.workRequest.update({
     where: { id: wr.id },
     data: { status: "ASSIGNED", sole_sourced: true },
@@ -479,23 +353,7 @@ export async function assignProviderDirectly(
   };
 }
 
-/**
- * ⚠⚠⚠ RULING 17 — **SELECTION IS REVERSIBLE UNTIL THE WORK ORDER IS CREATED.**
- *
- * ⚠ SCOTT, 2026-09-24: *"selection is reversible until the work order is
- * created, and creating it moves the work request's status."*
- *
- * ⚠⚠ MEASURED BEFORE BUILDING IT, AS WS-C ITEM 4 REQUIRES — **the models CAN
- * express this, and here is exactly how:** `WorkRequestLine.work_order_id` is
- * nullable, so "has an order" is a readable fact rather than an inference;
- * `ProposalStatus` carries both `AWARDED` and `NOT_SELECTED`, so an award can
- * be walked back to `SUBMITTED`; and `WorkRequestStatus` has `POSTED` to return
- * to. ⚠⚠⚠ **NOTHING HERE IS INVENTED — no reversal column was added.**
- *
- * ⚠ The line is kept and re-pointed rather than deleted, for the reason every
- * other writer in this chain keeps its row: a line that vanishes reads as though
- * the buyer never chose anybody.
- */
+/** RULING 17 — SELECTION IS REVERSIBLE UNTIL THE WORK ORDER IS CREATED. */
 export async function reverseSelection(
   viewer: Viewer,
   workRequestId: string
@@ -503,8 +361,7 @@ export async function reverseSelection(
   const me = await ownPerson(viewer);
   const wr = await buyerRequest(workRequestId, me.id);
 
-  /* ⚠⚠⚠ THE FENCE, READ FROM THE LINE RATHER THAN FROM THE HEADER'S STATUS.
-     The status is a summary; `work_order_id` is the fact. */
+  // THE FENCE, READ FROM THE LINE RATHER THAN FROM THE HEADER'S STATUS.
   const ordered = await prisma.workRequestLine.findFirst({
     where: { work_request_id: wr.id, work_order_id: { not: null } },
     select: { id: true },
@@ -516,9 +373,7 @@ export async function reverseSelection(
     );
   }
 
-  /* ⚠ Back to the state before the choice: the award returns to `SUBMITTED` and
-     so does every proposal the choice closed. ⚠⚠ A `WITHDRAWN` or `DECLINED`
-     one is NOT revived — the provider ended those, not the buyer. */
+  // Back to the state before the choice: the award returns to `SUBMITTED` and
   const reopened = await prisma.proposal.updateMany({
     where: {
       work_request_id: wr.id,

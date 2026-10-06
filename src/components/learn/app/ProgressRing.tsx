@@ -60,11 +60,7 @@ export function ProgressRing({
         )}
         <g transform={`rotate(-90 ${c} ${c})`}>
           <circle cx={c} cy={c} r={r} fill="none" stroke={trackColor} strokeWidth={w} />
-          {/*
-            ⚠ NO `stroke-linecap:round` AT ZERO. A rounded cap on a zero-length
-            dash paints a DOT — a new learner's empty ring would show a small
-            magenta pip at 12 o'clock that reads as "1%". Butt caps below 2%.
-          */}
+          {/* NO `stroke-linecap:round` AT ZERO. A rounded cap on a zero-length */}
           <circle
             cx={c}
             cy={c}

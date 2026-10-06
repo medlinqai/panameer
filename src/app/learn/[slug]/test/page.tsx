@@ -46,20 +46,7 @@ export default async function TestPage({
           <BackLink href={`/learn/${path.slug}`} label={path.title} />
         </div>
       ) : !state.ready ? (
-        /*
-          ── ⚠ NOT READY IS NOT AN ERROR (WS4) ────────────────────────────────
-
-          Before the review gate this branch did not exist: the page rendered the
-          runner, the runner fetched, and a path with no question set produced a
-          503 and a red box. Now it says what is true. Two states, one message,
-          deliberately: whether the set is MISSING or merely unreviewed is not the
-          learner's business, and telling them "a draft exists" would invite
-          "so let me see it".
-
-          ⚠ NO THRESHOLD OR ATTEMPT COUNT PRINTED HERE. There is no assessment
-          row, so `getTestState`'s 70/3 fallbacks are not this path's rules — and
-          printing them would be the literal `check:learn-assessment` forbids.
-        */
+        // NOT READY IS NOT AN ERROR (WS4)
         <div className="mt-6 rounded-brand border border-line p-6">
           <p className="text-[15.5px] font-bold">The test isn&apos;t open yet.</p>
           <p className="mt-1.5 max-w-lg text-[14.5px] text-ink-2">

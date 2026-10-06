@@ -44,17 +44,7 @@ export type SettleableOrder = {
   drawnCents: number;
 };
 
-/**
- * The RELEASED orders this provider can raise a settlement against.
- *
- * ⚠⚠ `RELEASED`, NOT `ACCEPTED` — `E388`'s own rule, and `E393` built the two
- * events that get there. *"Drawing against an order the buyer has not released
- * bills for work nobody authorised to start."*
- *
- * ⚠ IT READS `listOrders` — `E393`'s function — rather than querying work orders
- * again. The party derivation and the value/drawn arithmetic already live there,
- * and a second copy is the defect this stack has now avoided three times.
- */
+/** The RELEASED orders this provider can raise a settlement against. */
 export async function settleableOrdersFor(viewer: Viewer): Promise<SettleableOrder[]> {
   const orders = await listOrders(viewer);
   return orders
@@ -74,17 +64,14 @@ export async function settleableOrdersFor(viewer: Viewer): Promise<SettleableOrd
 export type SettleLineOption = {
   workOrderLineId: string;
   lineNumber: number;
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`) — ruling 44 retired
-     `WorkOrderLine.basis`; this view now carries the order line's own kind:
-     //   basis: LineBasis; */
   transactionType: TransactionType;
   description: string;
   uom: string | null;
   unitPriceCents: number | null;
   amountCents: number | null;
-  /** ⚠ RATE only — what is left to draw. Straight from `E393`'s drawdown. */
+  /** RATE only — what is left to draw. Straight from `E393`'s drawdown. */
   remainingQuantity: number | null;
-  /** ⚠ AMOUNT only — an already-drawn line cannot appear again. */
+  /** AMOUNT only — an already-drawn line cannot appear again. */
   alreadyDrawn: boolean;
   /** False when there is nothing left to claim on this line. */
   claimable: boolean;
@@ -95,7 +82,7 @@ export type SettleForm = {
   orderNumber: string;
   currency: string;
   buyerName: string;
-  /** ⚠ The period the settlement must sit inside — `E388` rule 5. */
+  /** The period the settlement must sit inside — `E388` rule 5. */
   orderPeriodStart: string | null;
   orderPeriodEnd: string | null;
   notToExceedCents: number | null;
@@ -103,24 +90,11 @@ export type SettleForm = {
   lines: SettleLineOption[];
 };
 
-/**
- * Everything the create screen needs, for one order.
- *
- * ⚠⚠ REMAINING COMES FROM `E393`'s `drawdownFor`, VIA `getOrderDetail`. THIS
- * FILE DOES NOT COMPUTE IT. The brief is explicit — *"a second computation of
- * remaining is exactly the two-implementations-that-agree-today defect this stack
- * has now avoided twice"* — and `drawdownFor` already exposed both halves
- * (`remainingQuantity` for RATE, `drawn` for AMOUNT), so it needed no extension.
- * `check:settle` asserts this file contains no arithmetic on `drawn_quantity`.
- *
- * ⚠ AND `getOrderDetail` IS ALSO THE PARTY CHECK. A viewer who is not a party to
- * the order gets NOT_FOUND from it, before any line is read.
- */
+/** Everything the create screen needs, for one order. */
 export async function settleFormFor(viewer: Viewer, orderId: string): Promise<SettleForm> {
   const o = await getOrderDetail(viewer, orderId);
 
-  /* ⚠ ONLY THE PROVIDER RAISES A SETTLEMENT. A buyer reaching this URL is not
-     shown a form they cannot submit — the party is the first test, as in `E393`. */
+  // ONLY THE PROVIDER RAISES A SETTLEMENT. A buyer reaching this URL is not
   if (o.party !== "PROVIDER")
     throw new SettlementError("Only the provider on this order can raise a payment request", "FORBIDDEN");
   if (o.status !== "RELEASED")
@@ -150,13 +124,10 @@ export async function settleFormFor(viewer: Viewer, orderId: string): Promise<Se
         uom: l.uom,
         unitPriceCents: l.unitPriceCents,
         amountCents: l.amountCents,
-        /* ⚠ ASKED OF THE DRAWDOWN, WHICH ALREADY ANSWERED IT — no second
-           derivation here. ⚠ SUPERSEDED (`E164`): //   d.basis === "RATE" */
+        // ASKED OF THE DRAWDOWN, WHICH ALREADY ANSWERED IT — no second
         remainingQuantity: d.pricedBy === "QUANTITY" ? d.remainingQuantity : null,
         alreadyDrawn: d.pricedBy === "AMOUNT" ? d.drawn : false,
-        /* ⚠ A RATE line with nothing left, or an AMOUNT line already drawn, is
-           shown but not claimable — hiding it would make a provider wonder where
-           their line went. */
+        // A RATE line with nothing left, or an AMOUNT line already drawn, is
         claimable: d.pricedBy === "QUANTITY" ? d.remainingQuantity > 0 : !d.drawn,
       };
     }),
@@ -169,20 +140,11 @@ async function settledCentsFor(orderId: string, db: Prisma.TransactionClient = p
     where: {
       settlementRequest: {
         work_order_id: orderId,
-        /* ⚠ A REJECTED SETTLEMENT DOES NOT CONSUME THE CAP. It was refused, so
-           the money was never owed; counting it would shrink the order's
-           remaining budget every time a buyer sent something back. */
+        // A REJECTED SETTLEMENT DOES NOT CONSUME THE CAP. It was refused, so
         status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "PAID"] },
       },
     },
-    /* ⚠⚠ THIS QUERY IS OVER `SettlementLine`, NOT `WorkOrderLine` — and the
-       distinction matters after ruling 44. ⚠ **`SettlementLine.basis` is
-       untouched and still live**: the ruling named the ORDER line only, and this
-       is the settlement side, which keeps `LineBasis` until its own brief
-       (register entry 3). ⚠⚠⚠ I moved this to `transaction_type` on a first pass
-       by mis-reading which model it queried, and the compiler caught it —
-       recorded because "it is in settlements.ts" is not the same question as
-       "which table is this". */
+    // THIS QUERY IS OVER `SettlementLine`, NOT `WorkOrderLine` — and the
     select: { basis: true, quantity: true, unit_price_cents: true, amount_cents: true },
   });
   let cents = 0;
@@ -200,9 +162,9 @@ async function settledCentsFor(orderId: string, db: Prisma.TransactionClient = p
 
 export type SettleLineInput = {
   workOrderLineId: string;
-  /** ⚠ RATE only — the day. A timesheet row IS a service date plus hours. */
+  /** RATE only — the day. A timesheet row IS a service date plus hours. */
   serviceDate?: string | null;
-  /** ⚠ RATE only — hours (or whatever the line's UOM is). */
+  /** RATE only — hours (or whatever the line's UOM is). */
   quantity?: number | null;
   note?: string | null;
 };
@@ -215,32 +177,7 @@ export type SettleInput = {
   resubmitsId?: string | null;
 };
 
-/**
- * ⚠⚠ THE ONE CREATE PATH, SERVING BOTH RENDERINGS.
- *
- * A timesheet arrives as many `lines` naming one `workOrderLineId`; a milestone
- * arrives as one line naming an AMOUNT order line and no quantity. **Nothing
- * below asks which kind it is** — the order line's `basis` decides everything,
- * and there is no `type` parameter, no branch on a request field and no second
- * endpoint.
- *
- * ── ⚠⚠ AND ONE THING THE CALLER MUST DO THAT `E388` DOES NOT ────────────────
- *
- * **`assertSettlementDraw`'s rule 3 does not ACCUMULATE within a batch.** It
- * reads `orderLine.drawn_quantity` fresh for every draft, so five timesheet rows
- * of 40 hours each against a 100-hour line pass individually and overdraw by
- * 100. **MEASURED, not theorised** — the timesheet grid is the FIRST caller that
- * can produce two drafts against one order line, so nothing could reach it
- * before today.
- *
- * ⚠ SO THE ROWS ARE AGGREGATED PER ORDER LINE BEFORE THE RULE RUNS, and the
- * per-day rows are persisted afterwards. The assertion sees the total, which is
- * what rule 3 is about; the provider still gets their day-by-day grid.
- * ⚠⚠ THIS IS A CALLER-SIDE FIX FOR A SHARED-FUNCTION FOOTGUN AND IT IS REPORTED
- * AS SUCH. `E388`'s function is unchanged — a UI brief does not quietly edit an
- * asserted rule — and `check:settle` asserts the aggregation so this path cannot
- * regress.
- */
+/** THE ONE CREATE PATH, SERVING BOTH RENDERINGS. */
 export async function createSettlement(
   viewer: Viewer,
   orderId: string,
@@ -274,8 +211,7 @@ export async function createSettlement(
     if (!orderLineById.has(r.workOrderLineId))
       throw new SettlementError("That line is not on this work order", "NOT_FOUND");
 
-  /* ⚠⚠ THE AGGREGATION — see the docblock. One draft per ORDER LINE, carrying
-     the summed quantity, so rule 3 sees the whole draw. */
+  // THE AGGREGATION — see the docblock. One draft per ORDER LINE, carrying
   const byOrderLine = new Map<string, { quantity: number; count: number }>();
   for (const r of rows) {
     const cur = byOrderLine.get(r.workOrderLineId) ?? { quantity: 0, count: 0 };
@@ -287,31 +223,7 @@ export async function createSettlement(
   const drafts: { draft: DraftSettlementLine; orderLine: OrderLineForDraw }[] = [];
   for (const [workOrderLineId, agg] of byOrderLine) {
     const ol = orderLineById.get(workOrderLineId)!;
-    /*
-      ── ⚠⚠⚠ THE ONE TRANSLATION LEFT, AND IT IS REPORTED, NOT HIDDEN ───────
-
-      ⚠ Ruling 44 moved the **WORK ORDER** line to `TransactionType`. It named
-      `WorkOrderLine` and nothing else, and ruling 41's *"one cleanup, one
-      place"* applies: **`SettlementLine` and the spine's settlement types still
-      speak `LineBasis`**, and widening them tonight would be the fold-in the
-      ruling forbids.
-
-      ⚠⚠ SO ONE TRANSLATION HAPPENS HERE, AT THAT BOUNDARY, ONCE — and it is
-      **NOT a reusable bridge function**, deliberately: a named helper is what
-      turns a boundary into an idiom, and ruling 44 deleted the last one for
-      exactly that reason.
-
-      ⚠⚠⚠ AND IT LOSES NOTHING **FOR THIS PURPOSE**, which is why it is
-      acceptable where the old bridge was not. The settlement draw rules ask only
-      *quantity or amount*; they never ask product-versus-service, which is the
-      single distinction `LineBasis` cannot hold. ⚠ The moment a settlement rule
-      DOES need that difference — receiving versus timesheeting — this stops being
-      safe.
-
-      ⚠⚠ REGISTER ENTRY 3, OWED, WITH ITS TRIGGER STATED IN ADVANCE exactly as
-      ruling 41 entry 2 was: **retires when `SettlementLine` gains
-      `TransactionType`.** That entry is reported to Scott rather than acted on.
-    */
+    // THE ONE TRANSLATION LEFT, AND IT IS REPORTED, NOT HIDDEN
     const settlementBasis: LineBasis = pricedByQuantity(ol.transactionType)
       ? "RATE"
       : "AMOUNT";
@@ -326,8 +238,7 @@ export async function createSettlement(
       drawn_quantity: ol.drawdown.pricedBy === "QUANTITY" ? ol.drawdown.drawnQuantity : 0,
       drawn_amount_cents: ol.drawdown.drawnCents,
     };
-    /* ⚠ AN AMOUNT LINE MAY NOT BE SPLIT ACROSS ROWS — it claims once, in full,
-       so more than one row against it is a milestone being invoiced twice. */
+    // AN AMOUNT LINE MAY NOT BE SPLIT ACROSS ROWS — it claims once, in full
     if (!byQuantity && agg.count > 1)
       throw new SettlementError(
         "A fixed-amount line is claimed in full, on one row — it cannot be split",
@@ -337,18 +248,14 @@ export async function createSettlement(
       draft: {
         work_order_line_id: workOrderLineId,
         basis: settlementBasis,
-        /* ⚠⚠ NO PRICE IS SUPPLIED. `priceSettlementLine` REFUSES a supplied one,
-           and that refusal is the point: the rate is the order's, not the
-           claimant's. */
+        // NO PRICE IS SUPPLIED. `priceSettlementLine` REFUSES a supplied one
         quantity: byQuantity ? agg.quantity : null,
       },
       orderLine,
     });
   }
 
-  /* ⚠⚠ THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
-     `ORDER_NOT_RELEASED`, the period bounds, the draw limits and the
-     not-to-exceed cap all come back from here with their own codes. */
+  // THE SPINE'S FIVE RULES, RUN AS ONE. Nothing above re-implements them —
   // Check and draw in one transaction, with the order row locked, so two requests cannot both pass the cap.
   const created = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM work_orders WHERE id = ${o.id}::uuid FOR UPDATE`;
@@ -376,9 +283,7 @@ export async function createSettlement(
       alreadySettledCents: await settledCentsFor(orderId, tx),
     });
 
-    /* ⚠ THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
-       a milestone. Priced by `priceSettlementLine`, the ONLY place a settlement
-       line's price is assigned. */
+    // THE PERSISTED ROWS ARE THE PROVIDER'S OWN — one per timesheet day, one for
     const created = await tx.settlementRequest.create({
       data: {
         settlement_number: newSettlementNumber(),
@@ -393,10 +298,7 @@ export async function createSettlement(
         lines: {
           create: rows.map((r, i) => {
             const ol = orderLineById.get(r.workOrderLineId)!;
-            /* ⚠⚠ THE SAME ONE TRANSLATION AS THE DRAFT BOUNDARY ABOVE, AND FOR THE
-               SAME REASON — the settlement side still speaks `LineBasis` (register
-               entry 3). ⚠ Computed from `transaction_type`, never read from the
-               retired `WorkOrderLine.basis`. */
+            // THE SAME ONE TRANSLATION AS THE DRAFT BOUNDARY ABOVE, AND FOR THE
             const olByQuantity = pricedByQuantity(ol.transactionType);
             const olBasis: LineBasis = olByQuantity ? "RATE" : "AMOUNT";
             const priced = priceSettlementLine(
@@ -420,10 +322,7 @@ export async function createSettlement(
               basis: olBasis,
               description: ol.description,
               uom: olByQuantity ? ol.uom : null,
-              /* ⚠ THE QUANTITY IS THE PROVIDER'S CLAIM; THE PRICE IS THE ORDER'S.
-                 `priceSettlementLine` returns only the two price columns, and that
-                 is the boundary exactly where it belongs — how many hours you
-                 worked is yours to state, what an hour is worth is not. */
+              // THE QUANTITY IS THE PROVIDER'S CLAIM; THE PRICE IS THE ORDER'S.
               quantity: olByQuantity ? Number(r.quantity ?? 0) : null,
               unit_price_cents: priced.unit_price_cents ?? null,
               amount_cents: priced.amount_cents ?? null,
@@ -436,14 +335,9 @@ export async function createSettlement(
       select: { id: true },
     });
 
-    /* ⚠⚠ THE DRAW IS TAKEN AT SUBMIT, NOT AT APPROVAL, AND THE REVERSE IS AT
-       REJECTION. `WorkOrderLine.drawn_*` is what rule 3 reads, so if it only moved
-       on approval two settlements submitted the same afternoon would each see zero
-       drawn and both pass. `rejectSettlement` gives it back — see there. */
+    // THE DRAW IS TAKEN AT SUBMIT, NOT AT APPROVAL, AND THE REVERSE IS AT
     for (const [workOrderLineId, agg] of byOrderLine) {
       const ol = orderLineById.get(workOrderLineId)!;
-      /* ⚠ ASKED OF `transaction_type` (ruling 44). SUPERSEDED (`E164`):
-         //   if (ol.basis === "RATE") { */
       if (pricedByQuantity(ol.transactionType)) {
         await tx.workOrderLine.update({
           where: { id: workOrderLineId },
@@ -497,21 +391,7 @@ async function providerPersonIdOf(orderId: string): Promise<string> {
 
 export type SettlementAction = "APPROVE" | "REJECT";
 
-/**
- * ⚠⚠ THE PARTY RULE, AND IT IS `E393`'s, NOT A SECOND ONE.
- *
- * **A provider raises a settlement; a buyer approves or rejects it; neither
- * action may render for the wrong party.** `E393` proved this with
- * `availableActions(order, party)` plus a component taking no party prop and
- * reading no session — `components/orders/OrderActivation.tsx`. This is the same
- * shape for the same reason, and `SettlementActions.tsx` is the same kind of
- * component.
- *
- * ⚠ THE PARTY IS TESTED FIRST AND EVERY BRANCH RETURNS EARLY, ending in `[]`.
- * A provider has no action here at all: they have already acted by submitting.
- * ⚠ AND THE TWO ARRIVE TOGETHER because they are one decision with two answers —
- * a buyer looking at a submitted request either accepts the work or says why not.
- */
+/** THE PARTY RULE, AND IT IS 's, NOT A SECOND ONE. */
 export function settlementActions(
   settlement: { status: SettlementStatus },
   party: OrderParty
@@ -562,12 +442,12 @@ export type SettlementDetail = {
   /** Resubmission links (run 13): the rejected request this replaces, and the one that replaced it. */
   resubmitOf: { id: string; number: string } | null;
   resubmittedAs: { id: string; number: string } | null;
-  /** ⚠ RATE if any line is a timesheet — decides which rendering the reader gets. */
+  /** RATE if any line is a timesheet — decides which rendering the reader gets. */
   hasTimesheet: boolean;
   actions: SettlementAction[];
 };
 
-/** ⚠ ONE definition of a settlement line's value, read by the detail and the list. */
+/** ONE definition of a settlement line's value, read by the detail and the list. */
 function lineValue(l: {
   basis: LineBasis;
   quantity?: unknown;
@@ -579,14 +459,7 @@ function lineValue(l: {
     : l.amount_cents ?? 0;
 }
 
-/**
- * One settlement, if the viewer is a party to its ORDER.
- *
- * ⚠ THE PARTY COMES FROM THE ORDER, NOT FROM THE SETTLEMENT. A settlement has a
- * `provider_person_id` and no buyer column, so asking it alone would answer "are
- * you the provider?" and nothing else. `getOrderDetail` answers both sides, and
- * it is already the party check.
- */
+/** One settlement, if the viewer is a party to its ORDER. */
 export async function getSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
   const s = await prisma.settlementRequest.findUnique({
     where: { id },
@@ -598,8 +471,7 @@ export async function getSettlement(viewer: Viewer, id: string): Promise<Settlem
   try {
     order = await getOrderDetail(viewer, s.work_order_id);
   } catch (e) {
-    /* ⚠ NOT A PARTY TO THE ORDER MEANS NOT FOUND, NOT FORBIDDEN — the same
-       reasoning `/orders/[id]` follows: confirming an id exists is itself a leak. */
+    // NOT A PARTY TO THE ORDER MEANS NOT FOUND, NOT FORBIDDEN — the same
     if (e instanceof OrderError) throw new SettlementError("Payment request not found", "NOT_FOUND");
     throw e;
   }
@@ -690,13 +562,7 @@ export type SettlementRow = {
   paidOut: boolean;
 };
 
-/**
- * Every settlement the viewer is a party to — **both scopes, one function**.
- *
- * ⚠ THE ORDERS ARE THE FENCE. `listOrders` already answers "which orders is this
- * person a party to", so this reads settlements against THAT set rather than
- * asking the settlement table who the buyer is — which it cannot answer.
- */
+/** Every settlement the viewer is a party to — both scopes, one function. */
 export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> {
   const orders = await listOrders(viewer);
   if (orders.length === 0) return [];
@@ -741,15 +607,7 @@ export async function listSettlements(viewer: Viewer): Promise<SettlementRow[]> 
    THE BUYER'S DECISION
    ═════════════════════════════════════════════════════════════════════════ */
 
-/**
- * ⚠⚠ APPROVING A SETTLEMENT IS ACCEPTING THE WORK.
- *
- * *"ACCEPTANCE MUST BE DEFINED"* in Scott's journey doc, and this is where it is
- * defined: for a deliverable, there is no separate acceptance step, so the
- * approval IS it. The screen says so in a sentence, because **it is the
- * difference between paying an invoice and accepting a deliverable and the buyer
- * should know which they are doing.**
- */
+/** APPROVING A SETTLEMENT IS ACCEPTING THE WORK. */
 export async function approveSettlement(viewer: Viewer, id: string): Promise<SettlementDetail> {
   const current = await getSettlement(viewer, id);
   if (!settlementActions({ status: current.status }, current.party).includes("APPROVE"))
@@ -766,18 +624,7 @@ export async function approveSettlement(viewer: Viewer, id: string): Promise<Set
   return getSettlement(viewer, id);
 }
 
-/**
- * ⚠⚠ A REJECTION WITHOUT A STATED REASON IS UNANSWERABLE (`E388`).
- *
- * The provider's only next move is to guess what to change. So the reason is
- * required HERE, at the boundary — the form marks it required too, but a required
- * field in a form is a convention and this is the rule.
- *
- * ⚠ AND THE DRAW IS GIVEN BACK. `createSettlement` takes the draw at SUBMIT so
- * two same-afternoon claims cannot both see zero drawn; a rejection means the
- * money was never owed, so the quantity returns to the line and the provider can
- * re-file. Without this, every rejection would silently shrink the order.
- */
+/** A REJECTION WITHOUT A STATED REASON IS UNANSWERABLE . */
 export async function rejectSettlement(
   viewer: Viewer,
   id: string,
@@ -808,8 +655,7 @@ export async function rejectSettlement(
     },
   });
 
-  /* ⚠ ONLY IF THIS CALL IS THE ONE THAT REJECTED IT. Two buyers clicking at once
-     must not return the draw twice. */
+  // ONLY IF THIS CALL IS THE ONE THAT REJECTED IT. Two buyers clicking at once
   if (done.count === 1) await returnTheDraw(id);
   return getSettlement(viewer, id);
 }
@@ -837,8 +683,7 @@ async function returnTheDraw(settlementId: string): Promise<void> {
         },
       });
     } else {
-      /* ⚠ AN AMOUNT LINE GOES BACK TO ZERO AND OPEN — it draws once in full, so
-         there is no partial to restore. */
+      // AN AMOUNT LINE GOES BACK TO ZERO AND OPEN — it draws once in full, so
       await prisma.workOrderLine.update({
         where: { id: workOrderLineId },
         data: { drawn_amount_cents: 0, status: "OPEN" },

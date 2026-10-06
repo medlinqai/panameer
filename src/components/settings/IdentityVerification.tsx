@@ -135,10 +135,7 @@ export function IdentityVerificationPanel({
         </Card>
       )}
 
-      {/*
-        THE DISTINCTION, said plainly and on the page — not left to a naming
-        convention nobody outside the team knows.
-      */}
+      {/* THE DISTINCTION, said plainly and on the page — not left to a naming */}
       <Card
         title="This Is Not the Validated Badge"
         tone="dashed"

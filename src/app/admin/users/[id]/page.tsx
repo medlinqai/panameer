@@ -174,8 +174,7 @@ export default async function AdminUserPage({
   const u = person.user;
   const name = `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || "(unnamed)";
 
-  /* ⚠ THE GRID'S RULES, IMPORTED — not re-derived. See `lib/user-jobs.ts` and
-     `lib/user-levels.ts`; two copies is how the grid and the badge drifted. */
+  // THE GRID'S RULES, IMPORTED — not re-derived. See `lib/user-jobs.ts` and
   const jobs = jobsFor(person);
   const registeredAddress = person.company?.sites?.[0]?.addresses?.[0] ?? null;
   const subject: LevelSubject = {
@@ -194,16 +193,11 @@ export default async function AdminUserPage({
   const level = levelFor(subject);
   const blocking = blockingFor(subject);
 
-  /* ⚠⚠ `lockTitle` IS GONE (`E528`). It rendered on the SERVER, so a timed
-     lock's release time was formatted in the server's timezone and hard-coded to
-     `en-GB` — an admin in Eastern Time read somebody else's clock. `LockControl`
-     is a client component and formats it in the VIEWER's locale, and it is also
-     the only place the three states are now described. */
+  // lock's release time was formatted in the server's timezone and hard-coded to
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      {/* ⚠ THE MEDLINQ PATTERN: a way back, ABOVE the title. Same component the
-          tile drill-ins will use (`E455`), so the two cannot diverge. */}
+      {/* THE MEDLINQ PATTERN: a way back, ABOVE the title. Same component the */}
       <BackLink href="/admin/buyers-sellers" label="Users" />
       <h1 className="mt-1 font-display text-[26px] font-bold">{name}</h1>
       <p className="mt-0.5 text-[13px] text-ink-2">
@@ -228,44 +222,8 @@ export default async function AdminUserPage({
             </span>
           </div>
           <Row label="Name" value={name} />
-          {/*
-            ⚠⚠ `P1-A1.5-E529` FINDING 1 — THIS ROW WAS LYING ABOUT MOST OF THE
-            PLATFORM. Scott, 2026-09-16: *"i noticed that phil has no title...
-            that is an error. I am sure I aded one."* He had: Phil's
-            `ProviderProfile.headline` is *"Oracle Cloud Supply Chain Expert"*
-            and his `Person.title` is null.
-
-            ⚠ MEASURED: **87 of 111 providers (78.4%)** have an empty
-            `Person.title` AND a real `headline`. Only **2** have a title. So
-            the console said *"No title on file"* about four-fifths of the
-            platform while their profiles read fine.
-
-            ⚠⚠ THE FIELDS ARE NOT MERGED AND NOTHING IS BACKFILLED. A headline
-            is provider MARKETING COPY; a title is IDENTITY, and collapsing them
-            is a model decision Scott has not been asked. This row keeps reading
-            `Person.title` FIRST and only falls through — and when it falls
-            through it SAYS SO, because two different fields under one word is
-            exactly how this defect happened.
-            ⚠ `Headline` also still has its own row under Seller detail; this
-            does not replace it.
-          */}
-          {/*
-            ⚠⚠⚠ THE HEADLINE FALLBACK WAS UNREACHABLE AND IS NOW GONE (`E796`).
-            `E595` WS-B DROPPED THE `headline` COLUMN — the comment above says so
-            itself, two paragraphs up — but the fallback was left behind as
-            `person.title ? person.title : person.title ? <badge> : <none>`, a
-            second test of the same value that can never be true.
-            ⚠ So the badge it describes has never rendered for anybody, and the
-            long note above it reads as though a merge rule were live.
-            ⚠⚠ THE CODE IS WHAT WAS WRONG HERE, NOT THE COMMENT — the stated
-            intent (title first, say so when it falls through) is right; there is
-            simply nothing left to fall through TO.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) - the dead middle branch:
-            //   : person.title ? (
-            //       <span>{person.title}</span>
-            //       <span>from Headline · no title on file</span>
-            //     )
-          */}
+          {/* FINDING 1 — THIS ROW WAS LYING ABOUT MOST OF THE */}
+          {/* THE HEADLINE FALLBACK WAS UNREACHABLE AND IS NOW GONE . */}
           <Row
             label="Title"
             value={person.title || <span className="text-ink-2">No title on file</span>}
@@ -285,11 +243,7 @@ export default async function AdminUserPage({
             label="Locked"
             value={
               u ? (
-                /* ⚠⚠ `E528` — THE CHECKBOX IS LIVE. It used to be `disabled`
-                   with no endpoint behind it anywhere in `src/app/api`.
-                   ⚠ It says WHICH KIND of lock it is and when a timed one
-                   releases, because an admin who does not know it self-releases
-                   will unlock something that did not need it. */
+                // — THE CHECKBOX IS LIVE. It used to be `disabled`
                 <LockControl
                   personId={person.id}
                   locked={u.locked}
@@ -309,16 +263,7 @@ export default async function AdminUserPage({
             title="Edit & fix"
             note="Changes the record above. Lock and deactivate ask before they act, and a password reset emails the member."
           >
-            {/*
-              ⚠⚠ IT SITS BESIDE IDENTITY ON PURPOSE. The rows above are the
-              RECORD and this is how it changes; a panel at the foot of the page
-              would have an admin scrolling between the value and the field that
-              sets it.
-              ⚠⚠⚠ THE READ-ONLY ROWS ARE NOT REMOVED. They are every account
-              fact in one list, including the ones nothing here can edit
-              (terms, last login), and replacing them with inputs would make the
-              page an editor rather than a record.
-            */}
+            {/* IT SITS BESIDE IDENTITY ON PURPOSE. The rows above are the */}
             <UserEditPanel
               state={{
                 personId: person.id,
@@ -337,9 +282,7 @@ export default async function AdminUserPage({
           </Section>
         ) : (
           <Section title="Edit & fix" note="Nothing here can act without a login to act on.">
-            {/* ⚠ THE SECTION STILL RENDERS. An absent section is
-                indistinguishable from one that failed to load — the rule stated
-                at the top of this file. */}
+            {/* THE SECTION STILL RENDERS. An absent section is */}
             <Empty>
               This person has no `User` record, so there is no email, no password
               and no lock to change. A person without a login is a profile
@@ -419,9 +362,7 @@ export default async function AdminUserPage({
                   )
                 }
               />
-              {/* ⚠ THE HONEST CAVEAT. Every account is given a placeholder company
-                  named after the person at sign-up (`E418`), so a name here is not
-                  evidence that anybody entered one. */}
+              {/* THE HONEST CAVEAT. Every account is given a placeholder company */}
               <p className="mt-2 text-[12.5px] text-ink-2">
                 Every account is created with a placeholder company named after the
                 person, so a name alone is not evidence that company details were given.
@@ -489,12 +430,7 @@ export default async function AdminUserPage({
           </Section>
         )}
 
-        {/*
-          ── ⚠⚠ THE REST OF THE RECORD (`P2-ALL-E794`) ────────────────────────
-          ⚠ `-1` from the loader means "this table could not be counted here" —
-          it prints a dash WITH ITS REASON rather than a zero (the counting
-          rule). ⚠⚠ A real zero prints `0`, in ink.
-        */}
+        {/* THE REST OF THE RECORD */}
         <Section
           title="Connections"
           note="Colleague and mentor links, both directions."
@@ -518,9 +454,7 @@ export default async function AdminUserPage({
           <Row
             label="Work orders"
             value={
-              /* ⚠⚠ UNCOUNTABLE PER PERSON TODAY: `WorkOrder` carries no person
-                 column to scope by, so a total would be every order on the
-                 platform. A dash with its reason, never a misleading figure. */
+              // UNCOUNTABLE PER PERSON TODAY: `WorkOrder` carries no person
               <span className="text-ink-2">— no per-person column on work orders</span>
             }
           />
@@ -555,10 +489,7 @@ export default async function AdminUserPage({
           note="Admin changes recorded against this account."
         >
           {auditRows.length === 0 ? (
-            /* ⚠⚠ IT SAYS WHY IT IS EMPTY. The log starts at `E793`, so silence
-               here means nothing has happened SINCE — not that nothing ever
-               did, which is exactly the ambiguity Scott hit with his missing
-               test users. */
+            // IT SAYS WHY IT IS EMPTY. The log starts at , so silence
             <p className="text-[13px] text-ink-2">
               Nothing recorded. The audit log starts at the 2026-10-03 release, so
               changes made before then are not in it.
@@ -586,11 +517,7 @@ export default async function AdminUserPage({
   );
 }
 
-/**
- * ⚠⚠ A COUNT, OR A DASH WITH ITS REASON. `-1` is the loader's "could not count
- * this here" and prints as a dash; a measured `0` prints as `0`, in ink. ⚠ The
- * two must not look the same (`decisions_2026-09-23.md` §1).
- */
+/** A COUNT, OR A DASH WITH ITS REASON. `-1` is the loader's "could not count */
 function Count({ n }: { n: number }) {
   if (n < 0) return <span className="text-ink-2">— not countable here</span>;
   return <span className="font-semibold text-ink">{n}</span>;

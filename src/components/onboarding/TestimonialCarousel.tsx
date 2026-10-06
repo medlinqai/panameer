@@ -88,19 +88,7 @@ function rateText(cents: number): string {
   return `${Math.round(cents / 100)}/hr`;
 }
 
-/**
- * The example-provider card (WS1 / E080 · E082, matching
- * `get-started-examples/scott-w-card-mockup.png`).
- *
- * ONE card, two very different homes: a ~300px aside on the Upload/Review step
- * and a wide column on Get Started. It sizes itself with CONTAINER queries
- * rather than viewport breakpoints, because a viewport breakpoint cannot tell
- * those two apart — at 1440px wide both are "desktop", and the aside would get
- * the big-card treatment it has no room for. That mismatch is the actual
- * mechanism behind the recurring "card too small" / "rate hangs off the edge"
- * pair (E064d, E069-4, E080, E082): one fixed size was being asked to work in
- * two containers, so it was wrong in one of them whichever size was chosen.
- */
+/** The example-provider card (WS1 / E080 · E082, matching */
 export function TestimonialCard({ t }: { t: Testimonial }) {
   // The @container lives on the WRAPPER, not the figure — an element cannot
   // query its own width, so the queries below would never fire on the figure
@@ -129,11 +117,7 @@ export function TestimonialCard({ t }: { t: Testimonial }) {
           <p className="mt-1.5 text-[14.5px] leading-snug text-ink-2 @[340px]:text-[15px]">
             {t.headline}
           </p>
-          {/*
-            Rates as two labelled lines, as in the design. `flex-wrap` +
-            `min-w-0` above is what keeps them inside the figure at any width —
-            the E064d bug was a non-wrapping row in a 300px aside.
-          */}
+          {/* Rates as two labelled lines, as in the design. `flex-wrap` + */}
           <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[14.5px] @[340px]:mt-4 @[340px]:block @[340px]:space-y-1">
             <div className="flex gap-2">
               <dt className="text-ink-2">Onsite:</dt>
@@ -168,32 +152,10 @@ export function TestimonialCarousel({
   const arrow =
     "grid h-10 w-10 flex-none place-items-center rounded-full border-[1.5px] border-line bg-white text-[19px] leading-none text-ink shadow-brand transition-colors hover:border-magenta hover:text-magenta";
 
-  /*
-    WS3/E080 — the arrows FLANK the card from OUTSIDE it, with a real gap, as
-    circular buttons.
-
-    E064(b) asked for flanking and got overlap, for a good reason at the time:
-    in the 300px aside this component then lived in, two flanking columns cost
-    ~80px, which wrapped the headline onto five lines and truncated the name. The
-    honest fix was the column, not the arrows — the carousel now sits in a 460px
-    column (WS2's widened frame paid for it), so the arrows can take their own
-    space and the card still clears the 340px it wants. It is only used here, so
-    this costs the narrow aside nothing.
-
-    Dots removed: the design has none, and with three items the arrows already say
-    everything the dots did.
-  */
+  // WS3/E080 — the arrows FLANK the card from OUTSIDE it, with a real gap, as
   return (
     <div className="@container">
-      {/*
-        Flanking costs ~104px of horizontal room. That is affordable in the 460px
-        column on Get Started and impossible at 375px, where it would crush the
-        card to 223px and push the rating row back out through the border — the
-        very E064d symptom this pass exists to end. So the arrows flank when the
-        COLUMN can pay for them and wrap to a centred row beneath the card when it
-        can't. A viewport breakpoint would get this wrong; the constraint is the
-        column's width, not the screen's.
-      */}
+      {/* Flanking costs ~104px of horizontal room. That is affordable in the 460px */}
       <div className="flex flex-wrap items-center justify-center gap-3 @[440px]:flex-nowrap">
         <div className="order-1 w-full min-w-0 @[440px]:order-2 @[440px]:w-auto @[440px]:flex-1">
           <TestimonialCard t={items[i]} />

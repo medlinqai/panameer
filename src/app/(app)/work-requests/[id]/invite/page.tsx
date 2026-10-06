@@ -91,10 +91,7 @@ export default async function Page({
           }))}
           providers={options}
           initialLineId={
-            /* ⚠ VALIDATED AGAINST THIS REQUEST'S OWN LINES. A `?line=` from a
-               stale link or another request must not preselect anything — the
-               API would refuse it, and a form that starts on a value the server
-               will reject is a trap. */
+            // VALIDATED AGAINST THIS REQUEST'S OWN LINES. A `?line=` from a
             line && detail.lines.some((l) => l.id === line) ? line : null
           }
           alreadyInvitedPersonIds={invited.map((i) => i.personId)}

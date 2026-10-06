@@ -37,11 +37,7 @@ export function notificationEmail(input: {
     .filter(Boolean)
     .join("\n");
 
-  /* ⚠ `footerText` IS THE PLAIN-TEXT FOOTER AND BELONGS ONLY IN THE TEXT PART —
-     `emailShell` renders the HTML footer itself, so putting it in `bodyHtml` too
-     would print the footer twice in an HTML client. ⚠⚠ Caught by the compiler,
-     which is the pattern Scott asked for: `footerText(year)` takes a required
-     argument, so a careless `footerText()` does not build. */
+  // would print the footer twice in an HTML client. Caught by the compiler
   const year = new Date().getFullYear();
   const text = [
     input.firstName ? `Hi ${input.firstName},` : null,
@@ -54,9 +50,7 @@ export function notificationEmail(input: {
     .join("\n\n");
 
   return {
-    /* ⚠ THE SUBJECT IS THE ROW'S TITLE. The registry already wrote the one
-       sentence that names what happened; inventing a second phrasing here is how
-       a bell entry and its email start describing different things. */
+    // THE SUBJECT IS THE ROW'S TITLE. The registry already wrote the one
     subject: input.title,
     html: emailShell({ logoUrl: input.logoUrl, bodyHtml }),
     text,

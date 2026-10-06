@@ -205,13 +205,7 @@ export function SaveBar({
   );
 }
 
-/**
- * POST helper shared by every settings form.
- *
- * Returns null on success and the server's message otherwise, which is the
- * shape `SaveBar` and `ToggleRow` both want — and it means no page hand-rolls
- * its own idea of what a failed save looks like.
- */
+/** POST helper shared by every settings form. */
 export async function postSetting(
   url: string,
   body: unknown

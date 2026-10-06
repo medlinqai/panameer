@@ -22,9 +22,6 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/hire", requires: "canHireTalent" },
   { prefix: "/work-requests", requires: "canHireTalent" },
   // FIND WORK IS A PROVIDER SURFACE — searching open job postings. This said
-  // canHireTalent while nav.ts offered the same route to providers, so the rail
-  // showed a provider "Find Work" and the gate then bounced them to
-  // walking into the redirect. The nav was right; the gate was wrong.
   { prefix: "/find-work", requires: "canProvideServices" },
   { prefix: "/find-work/new", requires: "canHireTalent" },
   { prefix: "/reports", requires: "canHireTalent" },

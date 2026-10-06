@@ -147,15 +147,7 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
                   <p className="mt-1 text-[16px] font-bold">{l.description}</p>
                 </div>
                 <div className="text-right">
-                  {/*
-                    ⚠ THE PRICE SHOWN IS THE ONE ITS TYPE USES. A by-quantity
-                    line prices by `unitPriceCents` and a by-amount line by
-                    `amountCents`; reading one column for both is how a line of
-                    the other kind renders as free.
-                    ⚠⚠ `pricedByQuantity` IS THE SPINE'S PREDICATE, not a local
-                    comparison — the page and the completeness gate must not
-                    disagree about which price a line carries (`E585`).
-                  */}
+                  {/* THE PRICE SHOWN IS THE ONE ITS TYPE USES. A by-quantity */}
                   <p className="text-[15px] font-bold">
                     {pricedByQuantity(l.transaction_type)
                       ? l.unitPriceCents != null
@@ -197,40 +189,8 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
               )}
 
               <div className="mt-3.5 flex flex-wrap items-center gap-3 border-t border-line pt-3.5">
-                {/*
-                  ⚠ ASSIGN IS A SELECT, NOT A FREE-TEXT ID. The options are the
-                  providers this request's skills actually matched; the API
-                  re-checks `is_service_provider` regardless, because the picker
-                  is a convenience and the route is the boundary.
-                */}
-                {/*
-                  ── ⚠⚠⚠ READ-ONLY NOW (`P2-A8-E684` WS-F) ──────────────────
-
-                  ⚠⚠⚠ **THIS SELECT WAS A THIRD WRITER OF *"WHO IS DOING THIS
-                  WORK"*, AND THE WEAKEST OF THE THREE.** It PATCHed a NAME and
-                  nothing else — no rate, no line status, no bid, no request
-                  status — producing the half-state `selectProvider` and
-                  `assignProviderDirectly` are both careful to avoid. ⚠ It could
-                  also put a different provider on line 2 while line 1 had been
-                  awarded, and could silently contradict an award afterwards.
-
-                  ⚠⚠ **SCOTT, 2026-09-27:** *"The select becomes a read-only
-                  display of whoever the two real routes set."* ⚠ Enforced in
-                  the ROUTE, not here — the PATCH refuses `providerPersonId`
-                  with `USE_SELECTION`; this is the display catching up with the
-                  boundary, not the boundary itself.
-                  ⚠ SUPERSEDED, quoted not deleted (`E164`) — the writing select
-                  and its PATCH, with the "assigned earlier, no longer matches"
-                  option that existed only because this control could write:
-                  //   <select value={l.providerPersonId ?? ""} disabled={busy}
-                  //     onChange={(e) => send(`${base}/lines/${l.id}`, {
-                  //       method: "PATCH",
-                  //       body: JSON.stringify({ providerPersonId: e.target.value || null }),
-                  //     })}>
-                  //     <option value="">Assign a provider…</option>
-                  //     {providers.map(...)}
-                  //   </select>
-                */}
+                {/* ASSIGN IS A SELECT, NOT A FREE-TEXT ID. The options are the */}
+                {/* READ-ONLY NOW WS-F) */}
                 <span className="rounded-[10px] border border-line bg-ink/[0.03] px-3 py-2 text-[14px] text-ink-2">
                   {l.providerName ?? "No provider yet"}
                 </span>
@@ -300,11 +260,7 @@ export function WorkRequestLines({ initial }: { initial: WorkRequestDetail }) {
             <p className="text-[16px] font-bold">
               {c.complete ? "Ready to complete" : "Not ready yet"}
             </p>
-            {/*
-              ⚠⚠ THE REASON, ALWAYS. This sentence is built from the SAME
-              `completeness` the button reads and the API refuses with — never
-              from a second check written here.
-            */}
+            {/* THE REASON, ALWAYS. This sentence is built from the SAME */}
             <p className="mt-1 text-[14px] leading-relaxed text-ink-2">
               {c.reason === "COMPLETE"
                 ? "Every line has a provider and a price."
@@ -361,13 +317,7 @@ function LineFields({
           onChange={(e) => set({ transaction_type: e.target.value as TransactionType })}
           className={input}
         >
-          {/* ⚠⚠ SCOTT'S THREE TYPES. ⚠ `PRODUCT_BY_QTY` IS OFFERED because a
-              buyer genuinely can order a good by quantity — it is only
-              unreachable from a BUDGET TYPE (see `transactionTypeForPricingType`),
-              not from a person choosing here.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   <option value="RATE">A rate — per hour or per day</option>
-              //   <option value="AMOUNT">A fixed amount</option> */}
+          {/* SCOTT'S THREE TYPES. `PRODUCT_BY_QTY` IS OFFERED because a */}
           <option value="SERVICE_BY_QTY">A rate — per hour or per day</option>
           <option value="SERVICE_BY_AMT">A fixed amount</option>
           <option value="PRODUCT_BY_QTY">A product, by quantity</option>
@@ -442,12 +392,7 @@ function LineFields({
           className={input}
         />
       </div>
-      {/*
-        ⚠ A PRICE IS OPTIONAL WHILE YOU ARE WRITING THE LINE, and the COMPLETE
-        gate is what insists on it later. Forcing it here would stop a requester
-        writing down what they need before they know what it costs — which is the
-        normal order, and the reason they are about to invite people to bid.
-      */}
+      {/* A PRICE IS OPTIONAL WHILE YOU ARE WRITING THE LINE, and the COMPLETE */}
     </div>
   );
 }

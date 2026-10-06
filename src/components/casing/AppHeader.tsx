@@ -36,14 +36,7 @@ export function AppHeader() {
 
   const first = me?.person?.firstName ?? "";
 
-  // const [credits, setCredits] = useState<CreditsSummary | null>(null);
-  // useEffect(() => {
-  //   let alive = true;
-  //   getCreditsSummary(me?.person?.id ?? null).then((c) => alive && setCredits(c));
-  //   return () => {
-  //     alive = false;
-  //   };
-  // }, [me?.person?.id]);
+  // const [credits, setCredits] = useState<CreditsSummary | null>(null)
 
   return (
     <header className="flex items-center gap-3 border-b border-line bg-white px-5 py-3 sm:px-8">
@@ -58,19 +51,7 @@ export function AppHeader() {
             : "\u00a0"}
       </p>
 
-      {/*
-        ---- CENTRE: Search -------------------------------------------------
-
-        A LINK SHAPED LIKE A SEARCH FIELD, not a search field. `/search` is
-        still a Coming-Soon stub, so a real input here would take a query and
-        throw it away — the reference's centre affordance without the lie. When
-        the page gains a backend this becomes an input and nothing else moves.
-
-        Below sm it becomes an icon on the right (see below) — the pill needs
-        width this row does not have at 375px, but Search is one of the four
-        controls this brief exists to make reachable, so it does not simply
-        vanish.
-      */}
+      {/* CENTRE: Search ------------------------------------------------- */}
       <Link
         href={SEARCH_NAV.href}
         className="mx-auto hidden h-9 min-w-[170px] max-w-[420px] flex-1 items-center gap-2 border border-line bg-canvas px-3.5 text-[14px] text-ink-2 transition-colors hover:border-[#d9d4e2] hover:text-ink sm:flex"
@@ -81,162 +62,14 @@ export function AppHeader() {
 
       {/* ---- RIGHT (spec order): Credits · date · AI on · Home · Bug ·
               Notifications · Profile ------------------------------------- */}
-      {/*
-        ── ⚠ THE BREAKPOINTS ON THE THREE AMBIENT PILLS ARE DERIVED, NOT PICKED
-             (P1-ALL-E001) ──────────────────────────────────────────────────
-
-        This row overflowed EVERY authenticated page between 760 and 1180, and
-        the defect was being filed against whatever page was being walked.
-
-        ⚠⚠ SUPERSEDED IN PART 2026-09-13 (`E164` / `P1-A1.5-E475`): THE RAIL IS
-        NOW 240px, NOT 248. Every "248" below reads 240, so the document's
-        min-content is 1251 not 1259, and the ceiling is 1043 + 240 = 1283 not
-        1291. ⚠ NO BREAKPOINT MOVES AND NO CODE CHANGES: this derivation
-        SUBTRACTS the rail from the viewport, so each available width A grew by
-        8px while every required R is unchanged — `credits → xl` now has
-        A = 1040 against R = 912, `AI on → 2xl` A = 1296 against R = 1043.
-        ⚠ NARROWING THE RAIL CAN ONLY LOOSEN THIS ARITHMETIC. The reasoning is
-        kept verbatim because it is the reason the breakpoints are what they are.
-
-        ⚠ THE 248px NOBODY COULD ACCOUNT FOR IS THE RAIL, NOT THE HEADER.
-        `documentElement.scrollWidth` measured 1259 at viewports of both 1100 and
-        1180 — wider than the header's own 1011 min-content, which looked like
-        something being sized from the viewport. It is not. `AppShell` is
-        `flex-col lg:flex-row`, and `AppRail`'s desktop column is
-        `hidden w-[248px] shrink-0 lg:block`. At lg the rail becomes a SIBLING
-        COLUMN of fixed width that cannot shrink, so the document's min-content
-        is rail + header: 248 + 1011 = 1259. Below lg the rail is a stacked top
-        bar and contributes nothing, which is why the number steps by breakpoint
-        (771 · 1011 · 1259) instead of scaling with the window.
-
-        ⚠ AND 1011 IS NOT THE HEADER'S REAL MINIMUM EITHER. Chromium's
-        `scrollWidth` omits the end padding once content overflows, so the true
-        figure is 1011 + 32 = 1043.
-
-        MEASURED WIDTHS (Chromium, 2026-08-19, /dashboard signed in):
-
-          CreditsPill      411px   (301 below md — "Coming soon" is md:inline)
-          day/date pill    125px
-          "AI on"           69px
-          each icon link    36px   x4 (Search-icon below sm, Home, Bug, Bell)
-          AccountMenu       36px
-          gap between       6px
-
-        THE ARITHMETIC. Required header width R = 64 (px-8 both sides) + 24 (two
-        12px gaps) + 170 (the search pill's floor) + G, and the available width A
-        is the viewport minus 248 at lg and above:
-
-          G = 4 icons                          162   R =  420
-          G + "AI on"                          231   R =  489
-          G + AI + credits(301)                544   R =  802
-          G + AI + credits(411)                654   R =  912
-          G + AI + credits + date              785   R = 1043
-
-        The rail is what creates the trap: at 1023 the header has 1023px and the
-        old set (R = 1043) nearly fits; at 1024 it has 776 and the same set needs
-        1043. So every threshold that lands between 1024 and 1043 + 248 = 1291 has
-        to be pushed to the next NAMED breakpoint above it.
-
-          credits  → xl  (1280): A = 1032, R = 912 ✓   (lg would be A = 776 ✗)
-          AI on    → 2xl (1536): A = 1288, R = 1043 ✓
-          date     → 2xl (1536): same row, same budget ✓
-
-        ⚠ NAMED VARIANTS ONLY. `pitfalls.md` 2026-08-19: `sm:` beat
-        `min-[1100px]:` because both media queries match and source order decides.
-        Named breakpoints are ordered by definition. `check:app-shell` fails the
-        build on an arbitrary variant competing with a named one.
-
-        ⚠ THE ORDER THEY DISAPPEAR IN IS THE SPEC'S: date → "AI on" → credits.
-        Credits outlives both, which is why it sits a whole breakpoint lower. The
-        date and "AI on" now go together at 2xl rather than in two steps — there
-        is no named breakpoint between them and 1291, and inventing one to
-        preserve a two-step sequence would be a design-system change to satisfy a
-        sequence nobody watches.
-
-        ⚠ WHAT DID NOT CHANGE, AND WHY. `shrink-0` on this container stays: it is
-        what stops the controls being squeezed into each other, and dropping
-        ambient items is strictly better than shrinking controls people tap. The
-        search pill's `min-w-[170px]` floor also stays — collapsing it to its icon
-        form across a wider band would buy ~134px and is a DESIGN change, so it is
-        proposed in the report rather than shipped here.
-      */}
+      {/* THE BREAKPOINTS ON THE THREE AMBIENT PILLS ARE DERIVED, NOT PICKED */}
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        {/*
-          THE PILL DROPS BELOW xl, and it is the right thing to drop. Something
-          had to — at 375px the greeting, a 150px pill and four controls
-          measured 482px against a 360px viewport, and the three controls on the
-          right were pushed clean off the screen. Everything else in this row is
-          a way to GO somewhere; the pill is a number you read.
+        {/* THE PILL DROPS BELOW xl, and it is the right thing to drop. Something */}
+        {/* COMMUNITY CREDITS CHIP PARKED 2026-09-03 , amendment */}
+        {/* {credits && ( */}
 
-          ⚠ IT USED TO RETURN AT sm (640) AND NOW RETURNS AT xl (1280). At 411px
-          it is by far the widest thing in this row — wider than the four icon
-          links, the date and "AI on" put together — and at sm it made the row
-          802px wide against a 640px viewport. It is still the LAST of the three
-          ambient items to go, per the spec's ranking; it just needs a viewport
-          that can hold it.
-        */}
-        {/* ⚠⚠ COMMUNITY CREDITS CHIP PARKED 2026-09-03 (`P1-ALL-E375`, amendment
-            A2). Scott: *"just comment it out... that has no real value."* Parked
-            deliberately, not abandoned — no ledger, no scheduling, no mentor
-            asking for the Friday commitment. See `src/lib/credits.ts`.
-            ⚠ THE BREAKPOINT LADDER ABOVE IS PARKED, NOT DELETED, AND STAYS
-            ACCURATE FOR THE DAY THIS RETURNS: it was solved in a browser against
-            a 411px chip (301px below `md`), and re-deriving it would mean
-            re-measuring rather than reading. ⚠ THE ROW IS NOW ONE ITEM SHORTER,
-            so the `xl` breakpoint this chip forced is no longer load-bearing —
-            REPORTED at `E375`, not re-tuned, because retuning it would be
-            inventing pixel figures nobody measured. */}
-        {/* {credits && (
-          <span className="hidden xl:contents">
-            <CreditsPill summary={credits} />
-          </span>
-        )} */}
-
-        {/*
-          DAY/DATE — ambient, so it is the first thing to go as the row narrows.
-          Restored from 4b7e0ef per the locked spec.
-
-          ⚠ md (768) → 2xl (1536). At md it was visible in the exact band where
-          the rail also appears and nothing could shrink, and its 125px was the
-          difference between 912 and 1043 required against 776 available.
-        */}
-        {/*
-          ── ⚠⚠ THE DATE CHIP JOINS THE NEUTRAL RAMP (`P1-A1.5-E445`) ──────────
-
-          ⚠ SUPERSEDED, quoted not deleted: `bg-[#f1faff]` with
-          `text-[#1f7ab8]` — a pale blue on a blue, both HARD-CODED HEX and
-          neither in the token set `E432` settled. It was the only blue on a
-          logged-in page.
-
-          ⚠ IT MATCHES THE "AI on" CHIP BESIDE IT EXACTLY NOW — same
-          `bg-ink/[0.05]`, same `text-ink-2` — because they are the same KIND of
-          thing: a status nobody can act on.
-
-          ⚠⚠ SUPERSEDED AGAIN 2026-09-13 (`P1-A1.5-E445b`) — THIS LINE WAS THE
-          MISS, quoted not deleted (`E164`):
-            *"⚠⚠ NOT MAGENTA. `E433` reserves magenta for interactive things."*
-
-          > **SCOTT, 2026-09-12:** *"this was a blue, thought it was being changed
-          > to a pink hue like the 'Panameer is in active development' ribbon."*
-          > **AND 2026-09-13:** *"thought we were putting some color in these"*
-
-          ⚠⚠ THE BRIEF THAT SHIPPED THIS CARRIED BOTH THE WRONG INSTRUCTION AND
-          ITS CORRECTION, AND THE WRONG ONE WAS FOLLOWED. `E433` governs
-          SATURATED magenta (`--color-magenta` `#d72cd6`) marking things you can
-          CLICK. ⚠ A PALE MAGENTA WASH IS A SURFACE TINT, NOT AN INTERACTIVE
-          MARKER — the dev-development ribbon and the status pills both use one
-          and neither is clickable.
-
-          ⚠ THE TOKEN IS THE RIBBON'S OWN, REUSED NOT RE-EYEBALLED:
-          `DevBanner.tsx:49` is `border-b border-magenta/20 bg-magenta/8`. This
-          chip takes the same `bg-magenta/8` + `border-magenta/20`, with
-          `--color-magenta-ink` (`#a61aa5`) for the text and icon.
-          ⚠ STILL NOT SATURATED `#d72cd6`. Wash + ink, exactly like the pills.
-          ⚠ BLAST RADIUS, REPORTED NOT HIDDEN: `AppShell` renders this header for
-          BOTH `/admin` and `(app)`, so this lands on every logged-in page — and
-          the brief forbids special-casing `/admin`, correctly: two different
-          date chips would be worse than one neutral one.
-        */}
+        {/* DAY/DATE — ambient, so it is the first thing to go as the row narrows. */}
+        {/* THE DATE CHIP JOINS THE NEUTRAL RAMP */}
         {dateLabel && (
           <span className="hidden items-center gap-1.5 rounded-full border border-magenta/20 bg-magenta/8 px-3 py-1.5 text-[13px] font-semibold text-magenta-ink 2xl:inline-flex">
             <CalendarIcon />
@@ -244,46 +77,15 @@ export function AppHeader() {
           </span>
         )}
 
-        {/*
-          ⚠ "AI on" IS DECORATION. A static marketing chip: no toggle, no
-          backend, nothing reads it (Scott, 2026-08-13 — locked spec). It is
-          styled as a status rather than a control precisely so nobody tries to
-          click it, and it carries no aria-live or role — announcing a state
-          that never changes would be noise to a screen reader.
-
-          ⚠ sm (640) → 2xl (1536). It is only 69px, so it is not what broke the
-          row — but it is the item the spec ranks SECOND to go, and leaving it at
-          sm would have inverted the ranking against credits at xl. It costs
-          nothing to a walk and it is the cheapest thing on the row to lose.
-        */}
-        {/* ⚠ `E445b` — the same ribbon wash as the date chip beside it. */}
+        {/* backend, nothing reads it (Scott, 2026-08-13 — locked spec). It is */}
+        {/* `E445b` — the same ribbon wash as the date chip beside it. */}
         <span className="hidden items-center gap-1.5 rounded-full border border-magenta/20 bg-magenta/8 px-3 py-1.5 text-[12.5px] font-semibold text-magenta-ink 2xl:inline-flex">
-          {/*
-            ── ⚠⚠ THE GREEN COMES BACK (`P1-A1.5-E445b`) ─────────────────────
-
-            ⚠ SUPERSEDED, quoted not deleted (`E164`) — the reasoning that took
-            it out, and the line it produced:
-              *"THE DOT WAS THE ONLY GREEN ON THE ROW (`E445`). The chip around
-               it was already neutral, so the dot was a semantic colour attached
-               to a thing with no semantics."*
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-2/45" />
-
-            ⚠⚠ THAT LEFT "AI on" WITH NOTHING SAYING IT WAS ON. The chip reads
-            "AI on" and the only thing carrying that meaning is the dot; a grey
-            dot beside the word "on" contradicts the word.
-            ⚠ AND THE PREMISE IS GONE ANYWAY — the chip around it is no longer
-            neutral, so "a semantic colour attached to a thing with no
-            semantics" no longer describes it.
-          */}
+          {/* THE GREEN COMES BACK */}
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           AI on
         </span>
 
-        {/*
-          Search as an ICON below sm, where the centre pill has no room. All
-          four universal controls stay reachable at 375px — hiding one of them
-          would undo the point of moving them here.
-        */}
+        {/* Search as an ICON below sm, where the centre pill has no room. All */}
         <span className="sm:hidden">
           <IconLink
             href={SEARCH_NAV.href}
@@ -297,12 +99,7 @@ export function AppHeader() {
         <IconLink
           href={HOME_NAV.href}
           label={HOME_NAV.label}
-          /*
-            EXACT match, not startsWith. "/dashboard" is a prefix of nothing
-            today, but the rail learned this the hard way with "/admin" lighting
-            fifteen pages at once, and the cheap version of that lesson is to
-            write the exact test the first time.
-          */
+          // EXACT match, not startsWith. "/dashboard" is a prefix of nothing
           active={pathname === HOME_NAV.href}
         >
           <HomeIcon />
@@ -316,23 +113,7 @@ export function AppHeader() {
           </IconLink>
         </span>
 
-        {/*
-          ⚠⚠ THE BADGE SHIPS WITH THE FEED, IN ONE CHANGE (`P1-ALL`, 2026-09-01).
-        
-          ⚠ SUPERSEDED, quoted, and it was a PROMISE rather than a limitation: *"NO
-          COUNT ON THE BELL, deliberately. The notifications backend is not built;
-          the page renders an empty state… because a '0' badge asserts something we
-          haven't checked and a fake number is worse than none. The badge ships with
-          the feed, in one change, when there is a number behind it."*
-          THERE IS NOW A NUMBER BEHIND IT, so the comment is redeemed rather than
-          left lying next to a badge it says should not exist.
-        
-          ⚠ IT COUNTS UNREAD **AND DELIVERED** rows only — a `DIGEST` or `SILENT`
-          row exists but was never sent, and badging one would point the user at
-          something they cannot open.
-          ⚠ AND IT STILL RENDERS NOTHING AT ZERO. The original objection was to a
-          "0" badge, and that objection survives: absent, not zero.
-        */}
+        {/* THE BADGE SHIPS WITH THE FEED, IN ONE CHANGE (`P1-ALL`, 2026-09-01). */}
         <IconLink
           href={NOTIFICATIONS_NAV.href}
           label={NOTIFICATIONS_NAV.label}
@@ -437,15 +218,7 @@ function BugIcon() {
   );
 }
 
-/*
-  The clock, as an external store.
-
-  Nothing to subscribe to — the header does not tick — so `subscribe` returns a
-  no-op unsubscribe. The value that matters is the pair of snapshots: null on
-  the server (which renders no greeting) and a real Date on the client. That is
-  what keeps the greeting out of the server's markup without an effect writing
-  state on mount.
-*/
+// The clock, as an external store.
 function subscribeNothing() {
   return () => {};
 }

@@ -42,8 +42,7 @@ export function FlipCard({
           {back}
         </div>
       </div>
-      {/* ⚠ Bottom-right — the infolet position. ⚠⚠ A REAL TAP TARGET on a phone:
-          44px, not a 16px glyph. */}
+      {/* Bottom-right — the infolet position. A REAL TAP TARGET on a phone */}
       <button
         type="button"
         onClick={() => setFlipped((f) => !f)}
@@ -51,13 +50,12 @@ export function FlipCard({
         className="pm-flip-toggle"
         title={flipped ? `Back to ${title}` : backLabel ? `${title}: ${backLabel}` : title}
       >
-        {/* ⚠ The accessible name says what the control DOES and to which card —
-            "Flip" alone is meaningless when six cards each have one. */}
+        {/* The accessible name says what the control DOES and to which card — */}
         <span className="sr-only">
           {flipped ? `Show ${title} figures` : `Show ${backLabel ?? "more"} for ${title}`}
         </span>
         <span aria-hidden className="pm-flip-glyph">
-          {/* ⚠ A corner fold, drawn in our tokens. Not an Oracle icon. */}
+          {/* A corner fold, drawn in our tokens. Not an Oracle icon. */}
           <svg viewBox="0 0 16 16" width="13" height="13" fill="none">
             <path
               d="M2 8.5 A6.5 6.5 0 0 1 13.5 4.6"

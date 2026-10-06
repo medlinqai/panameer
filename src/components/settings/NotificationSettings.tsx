@@ -149,20 +149,7 @@ export function NotificationSettings({
           })}
         </ul>
 
-        {/*
-          ── ⚠⚠⚠ THE SCREEN SAYS WHICH STATE IT IS IN (`P0-E689` WS-D) ────────
-
-          ⚠⚠ **A GREYED TOGGLE WITH NO REASON IS THE DEFECT, NOT THE FIX.**
-          Seventeen of eighteen categories cannot send email today, and a member
-          looking at seventeen greyed boxes deserves to know that their choice is
-          still recorded and will apply — ⚠ which is true, because `E382` keeps
-          the stored preference untouched and the defaults unflipped.
-
-          ⚠ **RULE 3 OF THE 2026-09-23 SESSION:** *"a control says what it
-          governs at the point it governs it"* — and a footnote saying *"some of
-          these are exempt"* **without saying which** is worse than no note. So
-          the count is named, and the per-row state is on the row itself.
-        */}
+        {/* THE SCREEN SAYS WHICH STATE IT IS IN WS-D) */}
         {emailConfigured && sendingCount < totalCategories && (
           <p className="mt-4 rounded-brand border border-dashed border-line px-4 py-3 text-[13px] leading-relaxed text-ink-2">
             Email is switched on one notification at a time as each is ready —{" "}
@@ -172,24 +159,7 @@ export function NotificationSettings({
           </p>
         )}
 
-        {/*
-          ── ⚠⚠ SMS: THE REASON WAS WRONG AND IS CORRECTED (rule 6 / `86e`) ───
-
-          ⚠⚠⚠ **"connected in test mode only" IS FALSE.** Measured 2026-09-27:
-          `lib/sms.ts` is a **real Twilio sender** that POSTs to the REST API —
-          it is not a stub and there is no test mode. ⚠ **All three `TWILIO_*`
-          variables are simply UNSET**, so `smsConfigured()` is false and
-          `sendSms()` takes its console fallback.
-          ⚠⚠ **AND THE CONSEQUENCE IS WORTH SAYING OUT LOUD (ruling `90b`): the
-          one `phone_verified_at` on this build was set by a code PRINTED TO A
-          CONSOLE, never by a text message.** 73 persons · 61 with a phone · 1
-          "verified" · **0 `PhoneVerification` rows.**
-          ⚠ `86e` holds — *a channel you cannot reach is not a channel you can
-          offer* — **but for the transport's reason, not the column's.**
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   SMS is recorded but not yet sending - Panameer's text provider is
-          //   connected in test mode only.
-        */}
+        {/* SMS: THE REASON WAS WRONG AND IS CORRECTED (rule 6 / `86e`) */}
         <p className="mt-4 text-[13px] leading-relaxed text-ink-2">
           SMS is recorded but not yet sending — text delivery isn&apos;t
           connected. Push notifications arrive with the mobile app.

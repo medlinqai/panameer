@@ -74,20 +74,9 @@ export default async function CoursePage({
           </p>
         </div>
 
-        {/*
-          min-w-[260px], not min-w-0. With min-w-0 this column can shrink to
-          nothing rather than wrapping: at 375px the 240px tile plus the gap
-          left it 27px wide and the instructor line spilled off the page. A
-          basis says "wrap instead of being crushed", which is what flex-wrap
-          on the row was for.
-        */}
+        {/* min-w-[260px], not min-w-0. With min-w-0 this column can shrink to */}
         <div className="min-w-[260px] flex-1">
-          {/*
-            THIS COURSE's instructors, not the path's. Within one path the
-            courses can be taught by different people, and naming the path's
-            lead here would credit the wrong person on the very screen a buyer
-            clicks through to a profile from.
-          */}
+          {/* THIS COURSE's instructors, not the path's. Within one path the */}
           {course.instructors.length > 0 && (
             <InstructorBadge instructors={course.instructors} showLessonCounts />
           )}
@@ -124,12 +113,7 @@ export default async function CoursePage({
         </div>
       </div>
 
-      {/*
-        One table for the whole course, sections as sub-headers inside it. A
-        section header is only worth a row when there is more than one — many
-        courses are a single unnamed run of lessons, and "1. Course Overview"
-        above the only section is noise.
-      */}
+      {/* One table for the whole course, sections as sub-headers inside it. A */}
       <div className="mt-9 overflow-hidden rounded-brand border border-line">
         <LessonTable pathSlug={path.slug} sections={course.sections} />
       </div>

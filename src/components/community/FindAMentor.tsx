@@ -85,9 +85,7 @@ export function FindAMentor({
                     {m.skills.slice(0, 4).join(" · ")}
                   </p>
                 )}
-                {/* ⚠⚠ THE SIGNAL, EVEN AT 0 — it is the evaluation basis, and at
-                    0 it honestly says there is no evidence yet.
-                    ⚠ `E433` — a figure, so ink, never magenta. */}
+                {/* THE SIGNAL, EVEN AT 0 — it is the evaluation basis, and at */}
                 <p className="mt-0.5 text-[12.5px] text-ink-2">
                   {m.helpfulAnswers === 0 ? (
                     "No evidence yet — no answers marked helpful"
@@ -102,11 +100,7 @@ export function FindAMentor({
                 </p>
               </div>
               <div className="pm-member-row-actions flex flex-wrap items-center gap-2">
-                {/* ⚠⚠ ONE ACTION, AND IT IS `Follow as a Mentor`. `ConnectControls`
-                    with `isMentor` renders exactly that, and `Disconnect` once
-                    following — the verb is never `Unfollow` (`check:community`
-                    fails the build if `Follow` returns as a bare verb).
-                    ⚠ NOTHING HERE OFFERS A BOOKING, A SESSION OR A PAYMENT. */}
+                {/* ONE ACTION, AND IT IS `Follow as a Mentor`. `ConnectControls` */}
                 {m.userId && m.userId !== viewerUserId && (
                   <ConnectControls
                     toUserId={m.userId}
@@ -123,21 +117,7 @@ export function FindAMentor({
   );
 }
 
-/**
- * ── ⚠⚠ THE EMPTY STATE RECRUITS, IT DOES NOT APOLOGISE (`E558` WS-C2 item 7) ─
- *
- * ⚠⚠ `open_for_mentoring` DEFAULTS TO FALSE, SO THIS SURFACE RETURNS NOTHING ON
- * DAY ONE. That is correct, not a defect, and it MUST NOT be papered over by
- * widening the gate — widening it would mean presenting people as mentors who
- * never agreed to be, which is the exact harm the flag exists to prevent.
- *
- * ⚠ SO THE EMPTY STATE SAYS WHY IT IS EMPTY and, for someone who could fix it,
- * offers the fix in place. ⚠⚠ THE TOGGLE IS THE SAME COMPONENT AND THE SAME
- * ENDPOINT AS WS-C1 — `POST /api/provider/mentoring`. NO SECOND ENDPOINT WAS
- * BUILT, and no second copy of the consent rule exists.
- * ⚠ OFFERED ONLY TO SOMEONE WITH A PROVIDER PROFILE, the same rule as the WS-C1
- * panel: it is a declaration about what THEY will do.
- */
+/** THE EMPTY STATE RECRUITS, IT DOES NOT APOLOGISE ( WS-C2 item 7) */
 function EmptyState({
   skill,
   openForMentoring,
@@ -152,9 +132,7 @@ function EmptyState({
           {skill ? `Nobody open for mentoring matches “${skill}” yet.` : "Nobody has opted in yet."}
         </p>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
-          {/* ⚠ STATES THE MECHANISM, NOT AN APOLOGY. "Nothing found" teaches
-              nothing; "mentoring is opt-in and nobody has opted in" tells the
-              reader both why the list is empty and what would change it. */}
+          {/* STATES THE MECHANISM, NOT AN APOLOGY. "Nothing found" teaches */}
           Mentoring is opt-in. People appear here only after they choose to be
           found as a mentor, so an empty list means nobody has chosen yet — not
           that nobody is qualified.
@@ -171,9 +149,7 @@ function EmptyState({
       )}
       {openForMentoring === true && (
         <p className="text-[13.5px] leading-relaxed text-ink-2">
-          {/* ⚠ Someone already opted in still sees an empty list — because THEY
-              are excluded from their own search. Saying so stops it reading as
-              a broken toggle. */}
+          {/* Someone already opted in still sees an empty list — because THEY */}
           You are open for mentoring. You do not appear in your own search.
         </p>
       )}

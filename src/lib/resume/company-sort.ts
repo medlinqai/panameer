@@ -46,11 +46,7 @@ export async function companySortState(profileId: string): Promise<SortState | n
 
 export type SortInput = { name: string; choice: SortChoice | null; employer?: string | null };
 
-/**
- * Writes the member's choices. Employer → a Work History job; Project client → a project under the
- * chosen employer (id, or the name of a row marked Employer in this batch, or "independent");
- * Remove → the rows for that company are deleted. Untouched rows are left alone.
- */
+/** Writes the member's choices. Employer → a Work History job; Project client → a project under the */
 export async function applyCompanySort(profileId: string, input: SortInput[]) {
   const state = await companySortState(profileId);
   if (!state) return { employers: 0, projects: 0, removed: 0 };

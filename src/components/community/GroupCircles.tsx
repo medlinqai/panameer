@@ -42,12 +42,10 @@ export function GroupCircles({ circles }: { circles: GroupCircle[] }) {
             style={{
               width: `${c.r * 2}px`,
               height: `${c.r * 2}px`,
-              /* ⚠ A stagger so the field draws in rather than snapping. It is
-                 presentation, and it carries no meaning. */
+              // A stagger so the field draws in rather than snapping. It is
               animationDelay: `${Math.min(i * 40, 800)}ms`,
             }}
-            /* ⚠⚠ THE TITLE CARRIES THE COUNT, so the picture is readable to
-               somebody who cannot judge area — and to a screen reader. */
+            // THE TITLE CARRIES THE COUNT, so the picture is readable to
             title={`${c.title} — ${c.members} ${c.members === 1 ? "member" : "members"}, ${
               c.posts === 0 ? "no posts yet" : `${c.posts} posted`
             }`}

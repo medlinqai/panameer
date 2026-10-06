@@ -40,10 +40,9 @@ export function IntegrateSpine() {
               <p className="font-body text-[19px] font-bold uppercase leading-[28.5px] tracking-[2.66px] text-magenta-ink">
                 {`Step ${step.n} - ${step.summary}`}
               </p>
-              {/* ⚠ `.stepd-h2` — the SHARED rule, so the six spines cannot drift
-                  apart on panel type. */}
+              {/* apart on panel type. */}
               <h2 className="stepd-h2">{step.description}</h2>
-              {/* ⚠ STEPS 1-3 ONLY. An absent key renders nothing — see `GRAPHICS`. */}
+              {/* STEPS 1-3 ONLY. An absent key renders nothing — see `GRAPHICS`. */}
               {GRAPHICS[step.n]}
             </>
           ),

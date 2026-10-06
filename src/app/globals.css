@@ -5,282 +5,59 @@
   --foreground: #171717;
 }
 
-/*
- * Panameer brand system. Registered in the Tailwind theme so these become
- * real utilities (bg-magenta, text-ink, border-line, rounded-brand,
- * shadow-brand, font-display, font-body) AND CSS vars (var(--color-magenta)…)
- * usable app-wide. This is the app-wide design system; the in-app shell keeps
- * its current look until a dedicated reskin.
- */
+/* Panameer brand system. Registered in the Tailwind theme so these become */
 @theme {
   --color-magenta: #d72cd6;
   --color-magenta-dark: #b324b2;
-  /*
-    ── ⚠⚠ THE MAGENTAS THAT TEXT IS ALLOWED TO USE (`P1-J4-E020`) ────────────
-
-    Brand Guidelines v2 slide 5 rates `#d72cd6` at **4.02:1 — large & UI only**,
-    *"below the 4.5:1 that small text needs. Use navy for anything that has to be
-    read."* Slide 6 supplies the remedy, and both figures were re-measured here
-    rather than trusted: `#A61AA5` on white is **6.34:1** and `#8E138D` is
-    **7.99:1**, matching the deck exactly.
-
-    ⚠ `E020` WAS NEVER AN OPEN DECISION — it was this constraint, documented, and
-    the build did not follow it.
-
-    ⚠⚠ THESE ARE FOR TEXT ON LIGHT SURFACES ONLY, AND THAT IS A HARD LIMIT THE
-    DECK DOES NOT STATE. Contrast is symmetric, so a DARKER magenta on a DARK
-    surface is WORSE. Measured:
-
-                          on white   on #272334 navy
-        #d72cd6             4.02          4.05
-        #A61AA5             6.34          2.57   <- fails badly
-        #8E138D             7.99          2.04   <- fails badly
-
-    ⚠ SO NEVER SUBSTITUTE THESE FOR MAGENTA TEXT ON A DARK CARD, A DARK FOOTER OR
-    OVER A HERO GRADIENT. Those sites keep `#d72cd6`, or use the light pink the
-    dark heroes already use (`#efa3ee`).
-    ⚠ AND THE BUTTON FILL STAYS `--color-magenta`. It is the brand.
-  */
+  /* THE MAGENTAS THAT TEXT IS ALLOWED TO USE */
   --color-magenta-ink: #a61aa5;
   --color-magenta-ink-hover: #8e138d;
   --color-ink: #272334;
   --color-ink-2: #4a4658;
-  /*
-    ── ⚠⚠⚠ `--color-ink-3` IS DECLARED (`P2-A2-E723` item 6) ─────────────────
-
-    ⚠ **SCOTT: *"`--color-ink-3` is never declared. Declare it; this is also why the location
-    pin and calendar icons are invisible (`MetaIcon` uses `stroke-ink-3`)."***
-    ⚠⚠ Reported unfixed since `E713`: **56 `ink-3` uses across ~15 files emitted NO CSS**,
-    because Tailwind v4 generates nothing for a token that does not exist and says nothing
-    about it (the `HERO_SCRIM`/`E338` trap).
-    ⚠⚠⚠ **AND THE SCOPED PATCH THAT HID IT ONLY EVER FIXED HALF THE PROBLEM.**
-    `.account-surface .text-ink-3` sets `color`, so text looked right on the two profile
-    pages — **but `MetaIcon` uses `stroke-ink-3`, and no `color` rule can paint an SVG
-    stroke.** The icon had `fill="none"` and no stroke at all, so it drew nothing. That is
-    exactly why Scott could read the text and not see the pin.
-    ⚠ **THE VALUE IS THE ONE THE CODEBASE ALREADY INTENDED** — `#8a869a`, lifted from that
-    patch rather than chosen afresh, so nothing that already looked right moves.
-    ⚠⚠ **CONTRAST, MEASURED AND REPORTED RATHER THAN QUIETLY ACCEPTED: 3.53:1 on white.**
-    That is below AA for body text. It is the value ~15 files were already written against,
-    and re-picking it is a design decision, not a bug fix — so it ships as-is and is reported.
-  */
+  /* SCOTT: *"`--color-ink-3` is never declared. Declare it; this is also why the location */
   --color-ink-3: #8a869a;
-  /*
-    ⚠⚠ THE CARD / PAGE SURFACE, AS A TOKEN (`P2-A2-E723` item 1). ⚠ `#171128` was hard-coded
-    in the dark `.bg-white` rule while `.account-surface` hard-coded `#fff` with no dark value
-    at all — two halves of one idea, neither able to follow the theme.
-  */
+  /* THE CARD / PAGE SURFACE, AS A TOKEN item 1). `#171128` was hard-coded */
   --color-surface: #fff;
-  /* ⚠⚠ THE TWO HOVER GROUNDS, ALSO TOKENS (`E723` item 1). ⚠ `.pm-btn`'s hovers were
-     `#3b3550` and `#f6f5f9`, hard-coded — a dark hover on a light button and a light hover
-     on a dark one, the moment the theme flips. */
+  /* THE TWO HOVER GROUNDS, ALSO TOKENS ( item 1). `.pm-btn`'s hovers were */
   --color-ink-hover: #3b3550;
   --color-surface-hover: #f6f5f9;
-  /*
-    ── ⚠⚠ ONE NEUTRAL FAMILY (`P1-A1.5-E432`, 2026-09-12) ─────────────────────
-
-    **SCOTT:** *"i like the grey in the medlinq pages better…softer."* → *"change
-    the brand neutrals."* → after reviewing a rendered three-way comparison,
-    *"go with option 2."* Option 2 is the Medlinq neutral values, adopted
-    unchanged. ⚠ He also reviewed and REJECTED a faint-violet-bias variant: the
-    largest channel difference was 3/255, below what the eye resolves.
-    ⚠ DO NOT REINTRODUCE A HUE BIAS INTO THESE THREE TOKENS.
-
-    ⚠ SUPERSEDED, quoted not deleted: `--color-line: #ece9f1` · `--color-bg-soft:
-    #f0f7f8` · `--color-canvas: #f7f7f5` (below, at the canvas token).
-
-    ── FINDING 1 — THE LINE TOKEN WAS TOO FAINT ───────────────────────────────
-
-    ⚠⚠ THE BRIEF'S ARITHMETIC FOR THIS FINDING WAS WRONG AND IS CORRECTED HERE.
-    ⚠ SUPERSEDED, quoted not deleted: *"Relative luminance of `#ece9f1` is
-    0.9322; of the old canvas `#f7f7f5`, 0.9289. THE BORDER WAS BRIGHTER THAN THE
-    PAGE IT WAS DRAWN ON — contrast 1.004:1, so every rule landing on the page
-    ground was not faint, it was ABSENT. Even on a white card it reached only
-    1.036:1."*
-
-    Re-measured with WCAG relative luminance, twice — once through
-    `lib/themeRecipes.contrast` in `check:theme` and once with an independent
-    implementation, agreeing to three decimals:
-
-        L(#ece9f1) = 0.8246   (the brief said 0.9322)
-        L(#f7f7f5) = 0.9289   (agrees)
-
-    ⚠ SO THE BORDER WAS **DARKER** THAN THE PAGE ALL ALONG, not brighter — 0.9322
-    is what you get by skipping the sRGB gamma linearisation, and it inverted the
-    comparison. The real figures: line-on-canvas was **1.119:1** and line-on-card
-    **1.201:1**. Faint, not absent.
-
-    ⚠⚠ THE DECISION IS UNAFFECTED AND THE DIRECTION STILL HOLDS. Scott chose
-    these values by LOOKING at rendered comparisons, not from this arithmetic,
-    and the ramp still does what it claims — see the principle below. Only the
-    magnitude of the complaint was overstated. REPORTED, not resolved by quietly
-    adjusting a colour to fit a number.
-
-    ── FINDING 2 — FOUR SURFACE FILLS, THREE OF THEM TINTED ───────────────────
-
-    Measured pixel-wise from Scott's screenshots: white cards 46.0% (neutral),
-    canvas 20.8% (WARM), bg-soft 4.0% (TEAL), tile fill 3.3% (MAGENTA), rules
-    (VIOLET). **SCOTT:** *"i am noticing that the tiles and sections have a
-    different shading as well."* ⚠ It is a HUE difference, not a lightness one,
-    and four disagreeing tints read as grubbiness rather than as colour.
-
-    ── ⚠⚠ THE PRINCIPLE: STRUCTURE COMES FROM THE RULE, NOT THE FILL ──────────
-
-    MEASURED, not quoted — `check:theme` prints these on every run:
-
-    ground-to-card separation  1.073:1 → 1.044:1   (SOFTER, on purpose)
-    line-on-canvas separation  1.119:1 → 1.186:1   (FIRMER, on purpose)
-
-    ⚠ The brief predicted 1.023 and 1.187 for the "after" pair; the second is
-    right, the first is not — `#fafafa` against white is 1.044:1. Both still move
-    in OPPOSITE directions, which is the claim that matters.
-
-    ⚠ Both move in OPPOSITE directions and that is the whole point. Softer
-    fills, firmer rules. ⚠ IF A CHANGE HERE MAKES THE CARD STAND OUT MORE, IT
-    HAS BEEN APPLIED WRONG.
-
-    ⚠ `--color-ink` and `--color-ink-2` DO NOT MOVE. Their contrast on the new
-    canvas is computed and asserted by `check:theme`: **14.619:1** and
-    **8.717:1**, both AA and AAA. ⚠ The brief said 14.77 and 8.72; the second
-    agrees, the first is out by 1% — again the brief's arithmetic, not the
-    colour. No value was adjusted to make a number match.
-  */
+  /* ONE NEUTRAL FAMILY , 2026-09-12) */
   --color-line: #e5e7eb;
   --color-bg-soft: #f9fafb;
 
-  /*
-   * LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed.
-   *
-   * Sampled from Run6-Design-Refs/E134-provider-home-design.png with a pixel
-   * reader (brief_provider_home_page_v2 WS3, which asks for the mockup's colours
-   * exactly AND for tokens rather than inline hex — so the measurements are
-   * recorded here once and referenced everywhere).
-   *
-   *   hero gradient, top-left     #1b0d36   (x=340,y=210)
-   *   hero gradient, bottom-right #bf1e8b   (x=1320,y=390)
-   *   learning-path card fill     #3d1a5b   (flat across every card)
-   *
-   * The hero runs diagonally: sampling a grid across it gives 291245 → 3d1a5b →
-   * 6d1e7c → 871f87 → a61e89 → bf1e8b left-to-right, and darkens slightly
-   * upward, which is a ~115deg linear ramp between the two corner values.
-   *
-   * These are NOT the same as --color-magenta (#d72cd6). The eyebrow labels
-   * ("FIND WORK", "BUILD SKILLS") sample as #d41ad3, which IS brand magenta
-   * within antialiasing — so the brand token stays right for type, while the
-   * deep purples above belong to this surface and needed naming.
-   */
+  /* LEARN / HOME PALETTE — measured out of the design PNG, not eyeballed. */
   --color-learn-deep: #1b0d36;
   --color-learn-card: #3d1a5b;
   --color-learn-mid: #6d1e7c;
   --color-learn-hot: #bf1e8b;
 
-  /*
-   * LEARN APP RAMP — a SECOND dark ramp, added rather than a repaint of the
-   * four above (brief_learn_app_shell WS1, which asks explicitly whether the
-   * existing tokens were reused or extended).
-   *
-   * ⚠ MEASURED BEFORE DECIDING, because "close enough" was the question. CIE76
-   * ΔE between the existing ramp and the mockup's, stop for stop:
-   *
-   *   0   #1b0d36 → #0f0b1c   ΔE 20.2
-   *   1   #3d1a5b → #241546   ΔE 12.0
-   *   2   #6d1e7c → #4a1560   ΔE 14.0
-   *   3   #bf1e8b → #6b1a6e   ΔE 30.1
-   *
-   * A just-noticeable difference is ~2.3. Stop 3 is the one that settles it:
-   * the existing ramp ENDS IN HOT MAGENTA (#bf1e8b) and the mockup's ends in a
-   * deep aubergine, with the magenta arriving instead as a radial wash on top.
-   * Repointing --color-learn-hot to #6b1a6e would have silently restyled the
-   * marketing Learn band, PathCard, ProviderHome and the /learn public hero,
-   * none of which this brief touches.
-   *
-   * So: FOUR NEW TOKENS, the old four untouched. The cost is two dark ramps in
-   * one stylesheet, which is worth naming — if the surfaces ever converge, this
-   * is the block to delete.
-   */
+  /* LEARN APP RAMP — a SECOND dark ramp, added rather than a repaint of the */
   --color-learn-night: #0f0b1c;
   --color-learn-plum: #241546;
   --color-learn-wine: #4a1560;
   --color-learn-orchid: #6b1a6e;
 
-  /*
-   * LEARN ACCENTS — the section-icon rhythm and the progress rings.
-   *
-   * Tokens rather than Tailwind's emerald/amber/blue because these four values
-   * are a SET: grey book, green plus, blue magnifier, amber pencil is the
-   * four-part rhythm the catalog repeats, and its job is that a learner reads
-   * the verb from the colour. Picking each one out of a different palette scale
-   * is how a set drifts.
-   */
+  /* LEARN ACCENTS — the section-icon rhythm and the progress rings. */
   --color-learn-gold: #f0a500;
   --color-learn-green: #12a05f;
   --color-learn-blue: #4a63d8;
   --color-learn-slate: #6b7280;
 
-  /*
-   * CASING PALETTE — sampled from E151-provider-home-casing.png (MASTER WS9),
-   * the same pixel-reader method the Learn tokens used:
-   *   rail            #272334   (see the E212 note below)
-   *   active nav pill #d127d0   (brand magenta within antialiasing)
-   *   page canvas     #f7f7f5   (NOT white — the white cards need an edge)
-   * The rail is deliberately its own token rather than a tint of --color-ink:
-   * ink is body type and this is a surface, and tying them would mean a
-   * type-colour change silently repainted the navigation.
-   */
-  /*
-   * E212 — LIFTED ONE STEP, AND DESATURATED. The sampled #140c29 was very dark
-   * (10% lightness) and quite saturated (55%), which on a large flat surface
-   * reads as a void with a purple cast rather than as a dark UI. #272334 is
-   * ~17% lightness at ~20% saturation: still unmistakably dark, still in the
-   * brand's purple family rather than neutral grey, but it now behaves like a
-   * surface — the white/10 hover states and the white/10 dividers on it are
-   * visible, which at 10% lightness they barely were.
-   *
-   * Contrast is unaffected where it matters: white text clears 12:1 and the
-   * magenta active pill still separates cleanly.
-   */
+  /* CASING PALETTE — sampled from E151-provider-home-casing.png (MASTER WS9) */
+  /* E212 — LIFTED ONE STEP, AND DESATURATED. The sampled #140c29 was very dark */
   --color-rail: #272334;
 
-  /*
-   * E217 — THE ACTIVE NAV FILL, desaturated for the lifted rail.
-   *
-   * Brand magenta (#d72cd6) was sampled against the old near-black #140c29 and
-   * needed that much punch to read on it. On the lighter #272334 the same value
-   * is neon: it vibrates against the surface and drags the eye off whatever the
-   * page is actually showing. This is the same hue a step down in saturation and
-   * lightness — unmistakably the brand's magenta, no longer shouting.
-   *
-   * The BRAND magenta is unchanged. This token is the rail's active pill only;
-   * buttons, links and eyebrows all keep #d72cd6, because they sit on white
-   * where it was measured.
-   */
+  /* E217 — THE ACTIVE NAV FILL, desaturated for the lifted rail. */
   --color-rail-active: #b02aae;
 
-  /*
-    ── ⚠ THE PARKING TOKEN IS GONE (`P2-ALL-E760`, closed 2026-10-02) ──────────
-
-    ⚠⚠ `--color-bottomnav-active` existed for ONE reason: to hold the phone bottom
-    nav's active pill at the colour already on screen (`#3a3150`) while Scott
-    decided whether it should become magenta. ⚠ **He ruled magenta**, so
-    `bottom-nav.css` reads `--color-rail-active` directly and a second token for
-    one state would be two definitions of one thing (`E585`).
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   --color-bottomnav-active: #3a3150;
-  */
-  /* ⚠ `E432` — the third of the three neutrals; see the block above for the
-     measurements and Scott's decision. ⚠ SUPERSEDED: `#f7f7f5` (warm). */
+  /* THE PARKING TOKEN IS GONE , closed 2026-10-02) */
+  /* — the third of the three neutrals; see the block above for the */
   --color-canvas: #fafafa;
 
   --radius-brand: 14px;
   --shadow-brand: 0 10px 30px rgba(20, 10, 40, 0.08);
 
-  /*
-    MONTSERRAT FOR DISPLAY (`P2-ALL-E811`, Scott 2026-10-03, both mockups).
-    The LOGO stays Comfortaa — it is an image (`panameer-lockup-white.png`), so
-    it is untouched by this and needs no exception here.
-    Superseded, quoted not deleted:
-    //   --font-display: var(--font-comfortaa), "Comfortaa", cursive;
-  */
+  /* MONTSERRAT FOR DISPLAY , Scott 2026-10-03, both mockups). */
   --font-display:
     var(--font-montserrat), "Montserrat", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -293,94 +70,32 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  /*
-    NO MONOSPACE IN THE UI (`E811`). Dates and figures keep their columns with
-    TABULAR FIGURES instead — see the `.font-mono` rule below, which is what
-    makes the swap safe for anything currently lining numbers up.
-    Superseded, quoted not deleted:
-    //   --font-mono: var(--font-geist-mono);
-  */
+  /* NO MONOSPACE IN THE UI ( ). Dates and figures keep their columns with */
   --font-mono: var(--font-montserrat), "Montserrat", sans-serif;
 }
 
-/*
- * DARK THEME (J2.4 WS-B / E021).
- *
- * Driven by `data-theme` on <html>, written by the boot script in the root
- * layout — NOT by `prefers-color-scheme` directly. The media query can only say
- * what the device wants; the attribute can also carry what the user chose in
- * the persona menu, and Auto is implemented by resolving the query INTO the
- * attribute rather than by having two independent sources of truth fight.
- *
- * TOKENS, plus one utility override. Redefining the brand tokens re-themes
- * every surface that uses them (canvas, ink, ink-2, line) — which is most of
- * the console. `bg-white` is the exception: it is a literal, several hundred
- * card and panel elements use it, and it would stay white on a dark canvas. The
- * override below repoints that one utility at a dark surface colour. It is a
- * blunt instrument and it is deliberately the ONLY one — anything more would be
- * re-skinning the app through the stylesheet, which is a design pass, not a
- * menu brief.
- *
- * Magenta does not change. It is the brand and it carries enough contrast on
- * both grounds.
- */
+/* DARK THEME (J2.4 WS-B / E021). */
 :root[data-theme="dark"] {
   --background: #0f0b1c;
   --foreground: #f2f0f7;
 
   --color-ink: #f2f0f7;
   --color-ink-2: #b3adc4;
-  /*
-    ⚠⚠ ONE STEP FURTHER TOWARD THE GROUND, the same way the light value sits below its
-    `ink-2`. ⚠ **Measured against the dark background `#0f0b1c`: 5.48:1 — clears AA.**
-    ⚠⚠⚠ The LIGHT value is 3.53:1 and is deliberately NOT changed here; see the note in
-    `@theme`.
-  */
+  /* ONE STEP FURTHER TOWARD THE GROUND, the same way the light value sits below its */
   --color-ink-3: #8b84a1;
   --color-line: #2b2440;
   --color-canvas: #0b0817;
-  /* ⚠ The value the dark `.bg-white` rule below already hard-coded, now named once. */
+  /* The value the dark `.bg-white` rule below already hard-coded, now named once. */
   --color-surface: #171128;
 
-  /*
-    ── ⚠⚠⚠ `--color-bg-soft` GETS A DARK VALUE (`P2-ALL-E763`, Scott's option A) ─
-
-    ⚠⚠ **IT HAD NONE, AND THAT IS WHY A BAR WENT WHITE IN DARK MODE** (`E762`,
-    ticket PAN-CTXFTX). ⚠ Measured before this line existed: the bar held
-    `#f9fafb` in dark while `text-ink-2` correctly flipped to a light grey —
-    **2.07:1, against a 4.5:1 AA floor.** A light-only token on a themed page is
-    `E723`, and `bg-soft` was the last one without a dark half.
-
-    ⚠⚠⚠ **99 OF THE 112 `bg-bg-soft` SITES ARE STATIC BACKGROUNDS** (13 are
-    `hover:`), across 70 files — so this is not one bar, it is every panel, empty
-    state, modal and wizard step that uses the token. ⚠ They are mostly
-    conditionally rendered, which is why the defect surfaced on a ticket rather
-    than in a walk.
-
-    ⚠⚠ **THE VALUE PRESERVES THE RELATIONSHIP RATHER THAN INVENTING ONE.** In
-    light, `bg-soft` (`#f9fafb`) is a hair DARKER than `surface` (`#fff`) — a
-    recessed panel. `#0b0817` is a hair darker than the dark `surface`
-    (`#171128`), so a panel still reads as recessed instead of inverting into a
-    raised white slab. ⚠ It is `canvas`'s dark value, exactly as `bg-soft` already
-    sits on `canvas`'s light value (`#fafafa` vs `#f9fafb`).
-
-    ⚠ **CONTRAST ON IT, MEASURED:** `ink` 17.51:1 · `ink-2` 9.13:1 · `ink-3`
-    5.57:1 — all clear AA.
-
-    ⚠⚠⚠ **LIGHT MODE IS BYTE-IDENTICAL AND THAT IS THE POINT OF PUTTING IT HERE.**
-    This is the `[data-theme="dark"]` scope only. ⚠ It is deliberately NOT added
-    to the `.marketing-surface` mirror below — Scott: that block is light-only by
-    design, and a dark value there would theme a surface that is meant not to be.
-  */
+  /* IT HAD NONE, AND THAT IS WHY A BAR WENT WHITE IN DARK MODE (  */
   --color-bg-soft: #0b0817;
   --color-ink-hover: #ddd9e8;
   --color-surface-hover: #221a3a;
 }
 
 :root[data-theme="dark"] .bg-white {
-  /* ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   background-color: #171128;
-     ⚠⚠ BYTE-IDENTICAL RESULT — `--color-surface` IS `#171128` in dark. Naming it is what
-     stops `.account-surface` and every `.bg-white` card drifting apart. */
+  /* // background-color: #171128 */
   background-color: var(--color-surface);
 }
 
@@ -390,18 +105,7 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-/*
- * TITLES RENDER IN COMFORTAA (brief_S / E021).
- *
- * `--font-display` was registered as a theme token from the start but never
- * actually used, so every heading inherited the body font (Montserrat) and the
- * brand's display face never appeared anywhere except the logo image. Setting
- * it on the heading elements themselves is the fix: it applies the brand system
- * to titles app-wide rather than relying on each surface to remember a class.
- *
- * Comfortaa's heaviest weight is 700, so headings cap there — asking for 800
- * (`font-extrabold`) would make the browser synthesise a faux-bold.
- */
+/* TITLES RENDER IN COMFORTAA (brief_S / E021). */
 @layer base {
   h1,
   h2,
@@ -416,33 +120,8 @@ body {
   }
 }
 
-/*
- * The indeterminate sweep behind ParseHeartbeat (E200).
- *
- * A LOOPING SWEEP, NOT A FILLING BAR. The model call reports no progress, so a
- * bar that filled toward 100% would be inventing a measurement — and the one
- * that sits at 90% is exactly what made the old state read as hung. This claims
- * only "still working", which is all we actually know.
- *
- * `prefers-reduced-motion` stops the animation rather than hiding the bar: the
- * copy above it already changes as the wait grows, so the state stays legible
- * without anything moving.
- */
-/*
- * E031 — the hero subhead swaps with the hire/work toggle, and a swap that
- * happens instantly reads as a glitch rather than a response. A 220ms fade is
- * enough to say "this changed because you did that".
- *
- * DEFINED HERE BECAUSE IT HAS TO BE. `animate-[fadeIn_220ms_ease-out]` names an
- * animation; Tailwind emits the shorthand but cannot invent the keyframes, so
- * without this block the class compiles to a rule referencing an animation that
- * does not exist and nothing moves — silently.
- *
- * REDUCED MOTION IS HANDLED AT THE ELEMENT, with `motion-reduce:animate-none`,
- * not by the media query further down: that block names `.animate-parse-sweep`
- * specifically and does not zero animations in general. Worth knowing before
- * adding the next keyframe here and assuming it is covered.
- */
+/* The indeterminate sweep behind ParseHeartbeat (E200). */
+/* E031 — the hero subhead swaps with the hire/work toggle, and a swap that */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -474,75 +153,9 @@ body {
   }
 }
 
-/*
- * THE MARKETING SURFACE IS THEME-INDEPENDENT (E003, E011).
- *
- * This is the fix for "Log In is invisible at rest", and the cause is worth
- * writing down because it will otherwise be re-introduced. The dark theme
- * repoints `--color-ink` to near-white and repaints `.bg-white` dark — but the
- * marketing header is `bg-white/90`, which Tailwind emits as a SEPARATE class
- * (`.bg-white\/90`) that the override never matched. So on a dark-theme browser
- * the header stayed white while its text turned white: "Log In" vanished, and
- * only reappeared when you dragged a selection over it. Several of the
- * below-the-fold contrast complaints are the same half-flipped-token story.
- *
- * Rather than chase every partially-overridden utility, the pre-auth marketing
- * pages re-declare the LIGHT tokens locally. A signed-out visitor has expressed
- * no theme preference — the toggle lives inside the app's account menu, behind
- * a login — so there is nothing here to honour, and a brand front door with a
- * fixed palette is the normal thing anyway. The app itself is untouched and
- * still themes.
- */
-/*
- * E052 — LINE BREAKS, ONCE, FOR EVERY MARKETING SURFACE.
- *
- * The walk keeps finding the same defect in different sections: a heading or a
- * subhead breaking one or two words early and leaving an orphan on the last
- * line ("…the performance of / your business today"). It has been fixed three
- * times by widening a max-width, which fixes the instance and not the class —
- * the next section written at a comfortable prose measure has it again.
- *
- * `balance` on headings: the browser evens the lines out, so a three-word
- * second line becomes two lines of similar length. Capped by browsers at a
- * handful of lines, which is why it is scoped to headings rather than applied
- * to everything.
- *
- * `pretty` on body copy: does not rebalance, just refuses to leave a single
- * word alone on the final line. That is the right treatment for a paragraph,
- * where balancing would fight the reading rhythm.
- *
- * BOTH ARE PROGRESSIVE. A browser without them wraps exactly as it does today,
- * so this can only improve the result.
- *
- * SCOPED TO .marketing-surface deliberately. The app side has tables, dense
- * rails and truncating cells where re-flowing text would be a change nobody
- * asked for.
- *
- * ⚠ AND WRAPPED IN @layer base, WHICH IS LOAD-BEARING (E052 walk 2). Unlayered
- * CSS beats every layer, so as plain rules these outranked Tailwind's own
- * `text-balance` / `text-pretty` utilities no matter what a component asked
- * for — adding `text-balance` to a <p> in here compiled, shipped, and silently
- * lost the cascade. In `base` they are what they were always meant to be: a
- * DEFAULT that a utility can override. Verified against the built stylesheet,
- * not assumed.
- */
-/*
- * REDUCED MOTION STOPS THE MARKETING VIDEOS — IN CSS, NOT IN REACT.
- *
- * The four beat cards paint their poster as a background-image and lay the
- * <video> over it. Hiding the video here reveals the poster that was already
- * underneath, which means:
- *
- *   · the components stay SERVER components — no media-query hook, no island,
- *     and both marketing routes stay statically prerendered;
- *   · the fallback is correct on the very first paint, where a JS check only
- *     corrects itself after hydration;
- *   · and it degrades the right way — no JS at all still honours the setting.
- *
- * `display:none` rather than pausing: a paused <video> still downloads, and
- * someone who has asked for less motion has usually also asked for less of
- * everything else.
- */
+/* THE MARKETING SURFACE IS THEME-INDEPENDENT (E003, E011). */
+/* E052 — LINE BREAKS, ONCE, FOR EVERY MARKETING SURFACE. */
+/* REDUCED MOTION STOPS THE MARKETING VIDEOS — IN CSS, NOT IN REACT. */
 @media (prefers-reduced-motion: reduce) {
   [data-autoplay-video] {
     display: none;
@@ -558,81 +171,22 @@ body {
     text-wrap: pretty;
   }
 
-  /*
-    ── ⚠⚠⚠ MONTSERRAT HEADINGS, SCOPED (`P2-A2-E713` WS-A item 2) ──────────────
-
-    ⚠ **SCOTT, 2026-09-26:** *"Headings in Montserrat."* · **Comfortaa stays on the logo
-    only.**
-    ⚠⚠⚠ **THE GLOBAL `h1, h2, h3 { font-family: var(--font-display) }` RULE ABOVE IS NOT
-    TOUCHED, AND THAT IS THE ONE FENCE THIS BRIEF KEEPS: changing it restyles EVERY page in
-    the app**, including the marketing surface and everything the WORK and LEARN lanes
-    shipped. ⚠ The brief names the fence and names the way round it.
-    ⚠⚠ **`.marketing-surface` DIRECTLY ABOVE IS THE PRECEDENT** — a wrapper class inside
-    `@layer base` that narrows a global typographic rule to one surface. This is the same
-    mechanism for the same reason.
-    ⚠ **SPECIFICITY IS WHAT MAKES IT WIN, NOT ORDER:** `.account-surface :is(h1…)` is
-    (0,1,1) against the global's (0,0,1), and both sit in `@layer base`, so the scoped rule
-    takes precedence wherever the wrapper is present and **nowhere else**.
-    ⚠⚠ `--font-body` IS ALREADY MONTSERRAT (`:236`), so this is not a new face being loaded
-    — it is the heading giving up Comfortaa and inheriting what the page already uses.
-    ⚠⚠⚠ **`h4` IS INCLUDED DELIBERATELY** even though the global rule stops at `h3`: the
-    clean left column's eyebrows are `h4`, and leaving them out would have left one row of
-    headings in a different face for no reason anybody could see.
-  */
+  /* MONTSERRAT HEADINGS, SCOPED WS-A item 2) */
   .account-surface :is(h1, h2, h3, h4) {
     font-family: var(--font-body);
   }
 
-  /*
-    ── ⚠⚠⚠ THE MASKED SURFACES, SAME MECHANISM (`P2-A1.1-E771`) —————————
-
-    ⚠ **SCOTT, 2026-10-02:** the masked preview's headline renders in Comfortaa;
-    Montserrat, like `/status`.
-
-    ⚠⚠ **MEASURED BY COMPUTED STYLE, NOT BY GREP, AND THE NUMBER WAS BIGGER THAN
-    THE REPORT:** `/providers/[id]` rendered **10** Comfortaa elements and
-    `/explore` **16** — not one headline. ⚠ The split matters:
-    **6 of the 10 and 3 of the 16 are `MarketingFooter`'s video headings**, which
-    `AppShell` also renders, i.e. nearly every page in the app.
-    ⚠⚠⚠ **SO THIS RULE DELIBERATELY DOES NOT REACH THEM.** Scott's ruling:
-    page headings only — the 4 on the profile, the 13 on the grid. The footer is
-    logged as `E772` and is NOT fixed here, because fixing it is an app-wide
-    typographic change and the `@layer base` fence directly above exists to stop
-    exactly that happening by accident.
-
-    ⚠⚠ **IT IS A SEPARATE CLASS, NOT AN ADDITION TO `.marketing-surface`.** Both
-    masked pages carry `.marketing-surface` already, and putting the rule there
-    would re-case every public page in one commit about talent masking.
-    ⚠ Specificity is what makes it win, not order: `(0,1,1)` against the global
-    rule's `(0,0,1)`, both inside `@layer base`.
-    ⚠ `h4` is included for the same reason `.account-surface` includes it — the
-    `SEARCH SCORE` / `RATES` / `CONTACT` eyebrows are `h4` and leaving them out
-    would strand one row of headings in a different face for no visible reason.
-  */
+  /* THE MASKED SURFACES, SAME MECHANISM ————————— */
   .masked-surface :is(h1, h2, h3, h4) {
     font-family: var(--font-body);
   }
 }
 
 .marketing-surface {
-  /*
-    ── ⚠⚠ THIS IS NOT A DUPLICATE OF `@theme` — IT IS A LIGHT-PALETTE PIN ─────
-
-    `:root[data-theme="dark"]` repoints ink/ink-2/line/canvas for the console.
-    The marketing surface stays LIGHT in either theme, so it re-declares the
-    light values at a more specific scope to win over that override — which is
-    why the rules below also have to undo the dark theme's white-card repaint.
-
-    ⚠⚠ SO IT MUST MOVE WITH `@theme`, EVERY TIME. If these three drift from the
-    tokens above, the public pages keep the old neutrals while the app gets the
-    new ones — and nothing would fail. `check:theme` asserts the two blocks
-    agree exactly (`E432`); mutate one and the gate goes red.
-  */
+  /* THIS IS NOT A DUPLICATE OF `@theme` — IT IS A LIGHT-PALETTE PIN */
   --color-ink: #272334;
   --color-ink-2: #4a4658;
-  /* ⚠⚠ MIRRORED, BECAUSE THIS BLOCK MUST NOT DRIFT FROM `@theme` (`E432`) — and
-     `check:theme`'s mirror list is extended to cover both new tokens, so a future edit to
-     one and not the other goes red instead of going unnoticed. */
+  /* MIRRORED, BECAUSE THIS BLOCK MUST NOT DRIFT FROM `@theme` ( ) — and */
   --color-ink-3: #8a869a;
   --color-surface: #fff;
   --color-ink-hover: #3b3550;
@@ -640,8 +194,7 @@ body {
   --color-line: #e5e7eb;
   --color-bg-soft: #f9fafb;
   --color-canvas: #fafafa;
-  /* ⚠ MIRRORED so `.marketing-surface` resolves them too — light surfaces only;
-     see the note in `@theme`. */
+  /* MIRRORED so `.marketing-surface` resolves them too — light surfaces only */
   --color-magenta-ink: #a61aa5;
   --color-magenta-ink-hover: #8e138d;
   color: var(--color-ink);
@@ -651,24 +204,12 @@ body {
 :root[data-theme="dark"] .marketing-surface .bg-white {
   background-color: #fff;
 }
-/*
-  ⚠ AND THE SAME-ELEMENT CASE, which the descendant rule above cannot reach.
-  `OnboardingFrame` puts `marketing-surface` and `bg-white` on ONE element, so
-  in dark mode it fell through to `:root[data-theme="dark"] .bg-white` and
-  painted itself #171128 while the surface forced the LIGHT ink palette on
-  everything inside it — `text-ink` #272334 on a #171128 card, contrast 1.13.
-  That is E017, and adding the class alone did not fix it.
-*/
+/* AND THE SAME-ELEMENT CASE, which the descendant rule above cannot reach. */
 :root[data-theme="dark"] .marketing-surface.bg-white {
   background-color: #fff;
 }
 
-/*
-  `font-mono` NOW MEANS "MONTSERRAT, FIGURES ALIGNED" (`P2-ALL-E811`).
-  The utility is used in ~39 places for dates, ids and counts; repointing the
-  token alone would have taken the alignment with the typeface, so the figures
-  are made tabular here in one rule rather than in 39 class lists.
-*/
+/* The utility is used in ~39 places for dates, ids and counts; repointing the */
 .font-mono {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;

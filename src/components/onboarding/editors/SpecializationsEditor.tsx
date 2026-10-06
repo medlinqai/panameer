@@ -18,9 +18,6 @@ function CascadeTier({
   children: React.ReactNode;
 }) {
   // a three-line box (heading row, then the value on its own line) that spent
-  // ~100px to recap a single word; two of those ate a quarter of the viewport
-  // before the step's actual work began, which is most of why the footer sat
-  // below the fold. Expanded tiers are unchanged.
   if (chosen) {
     return (
       <section className="flex items-center gap-3 border border-line px-4 py-2.5">
@@ -124,9 +121,6 @@ export function SpecializationsEditor({
 
       const sq = query.trim().toLowerCase();
       // TWO MODES, one for each job (PJv2 WS9). Browsing is a cascade — one open
-      // tier at a time. Searching is a flat lookup ACROSS the tiers, because
-      // someone typing "Workday" should not have to know whether we filed it
-      // under a product, a methodology or an industry.
       const searching = sq.length > 0;
 
       // Which tier each catalog item belongs to — the cascade needs it to count
@@ -308,19 +302,7 @@ export function SpecializationsEditor({
                   )}
                 </>
               ) : (
-                /*
-                  BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
-                  INDUSTRIES AS ITS OWN TIER rather than a third heading inside a
-                  shared scroll box. Industry is a different KIND of claim from a
-                  product or a method — "I know Workday" and "I know utilities"
-                  are answers to different buyer questions — and burying it third
-                  in one list made it the section people scrolled past.
-
-                  Unlike Role → Domain → Skill, these tiers are INDEPENDENT: none
-                  gates the next, because a provider with no product to name still
-                  has an industry. So the cascade here is only the disclosure
-                  shape — one tier open, the others one line each.
-                */
+                // BROWSE MODE — the RDS collapsing-cascade (WS9 / E073), now with
                 <div className="mt-3 space-y-2.5">
                   {groups0.map((g, gi) => {
                     const picked = pickedNames(g.kind);
@@ -344,24 +326,10 @@ export function SpecializationsEditor({
                         changeLabel={picked.length === 0 ? "Add" : "Change"}
                         onChange={() => onOpenTierChange(g.kind)}
                       >
-                        {/* Exactly THREE chip rows (38px chip + 48px pitch +
-                            the region's own 12px padding). A round number like
-                            132px lands mid-chip, and a chip sliced through the
-                            middle reads as a rendering bug rather than as "there
-                            is more below" — the tinted, bordered, scrolling box
-                            already says that. */}
+                        {/* Exactly THREE chip rows (38px chip + 48px pitch + */}
                         <div className={`max-h-[176px] ${scrollRegionClass}`}>
                           <div className="flex flex-wrap gap-2">
-                            {/*
-                              E086 — this tier's OWN picks, first and removable.
-                              An expanded section used to show only what you could
-                              still add, so Industries could read "Retail +" while
-                              saying nothing about the two industries you had
-                              already chosen; the only evidence was the aggregate
-                              row at the top and the collapsed summary you had just
-                              opened. The skills tier has always shown its picks
-                              in place, and this is the same rule.
-                            */}
+                            {/* E086 — this tier's OWN picks, first and removable. */}
                             {chosenHere.map((item) => (
                               <Chip
                                 key={item.id}

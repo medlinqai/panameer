@@ -56,41 +56,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  /*
-    ⚠⚠ `matcher` IS AND MUST REMAIN A STATIC LITERAL ARRAY OF STRINGS.
-    Next reads `config.matcher` AT BUILD TIME and CANNOT EVALUATE an imported,
-    spread or computed value. Deriving it from `ROUTE_ACCESS` looks tidier and
-    TAKES THE WHOLE SITE DOWN. ⚠⚠ MEASURED 2026-08-26, not assumed — with
-    `matcher: PROTECTED_PREFIX_MATCHERS` the edge runs on EVERY route:
-      /talent /work /learn /shop   307 -> /login?callbackUrl=...
-      /login                       307 -> /login   (redirects to ITSELF)
-      /                            500
-    ⚠ If you are here to make it dynamic, stop — you have misread this.
-
-    ⚠ SO IT IS ASSERTED, NOT DERIVED. `e2e-shell/app-shell.spec.ts` ("THE PUBLIC
-    ALLOWLIST") parses this literal out of this file's SOURCE and fails if it and
-    `ROUTE_ACCESS` disagree in either direction. That is what replaced the old
-    "Keep in sync" comment below — a comment cannot fail a build.
-
-    "/" is the HOST SPLIT, not a gate (see the top of this file). The rest mirror
-    the prefixes in `src/lib/route-access.ts`, which stays the source of truth
-    for WHAT each requires; this list is only WHERE the edge runs.
-
-    ⚠ PUBLIC IS NOW AN ENUMERATED ALLOWLIST: `src/lib/public-routes.ts`. A route
-    that is in neither that file nor this matcher nor a self-guard FAILS the
-    assertion by name. Absence from this list is no longer "public by default".
-
-    The Upwork-holdover routes /deliver-work and /manage-money were removed from
-    this matcher — they are not the real IA — and both self-guard with
-    `guardPage`, which is why removing them did not open them.
-
-    ⚠⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E025`) — the dead half of the old comment:
-      *"Their sibling /find-work is a PUBLIC page now (E029), so it is in the
-       allowlist rather than here."*
-    FALSE TWICE OVER: `/find-work/:path*` is listed BELOW, and since the route
-    swap (`P1-ALL-E017`) `/find-work` is the SIGNED-IN PROVIDER FEED. The public
-    page is `/work`. The comment described the pre-swap world.
-  */
+  // Next reads `config.matcher` AT BUILD TIME and CANNOT EVALUATE an imported
   matcher: [
     "/",
     "/admin/:path*",
@@ -103,43 +69,29 @@ export const config = {
     "/recommendations/:path*",
     "/worklist/:path*",
     "/worklist",
-    /* ⚠ `P2-J3-E493`. Paired with `route-access.ts`'s entry — the spec parses
-       this literal and fails if the two disagree in either direction. */
+    // Paired with `route-access.ts`'s entry — the spec parses
     "/invite-colleague/:path*",
     "/hire/:path*",
-    /* ⚠ `P1-J4-E392`. Paired with `route-access.ts`'s entry — the spec parses
-       this literal and fails if the two disagree in either direction. */
+    // Paired with `route-access.ts`'s entry — the spec parses
     "/work-requests/:path*",
     "/find-work/:path*",
     "/reports/:path*",
     "/search/:path*",
-    /* ⚠ `/contracts` -> `/orders` (`P1-ALL-E380`). */
+    /* `/contracts` -> `/orders` (`P1-ALL-E380`). */
     "/orders/:path*",
-    /* ⚠ `P1-J4-E394`. Paired with `route-access.ts`'s entry — the buyer's
-       Payments surface was outside the edge entirely until it was built. */
+    // Paired with `route-access.ts`'s entry — the buyer's
     "/pay/:path*",
     "/payments/:path*",
     "/finances/:path*",
     "/messages/:path*",
     "/community/:path*",
-    /* ⚠⚠ `P2-J3-E591` WS-A — the member's own profile moved from `/community`
-       to `/connect`, and `/community/:path*` DOES NOT MATCH IT. Paired with
-       `route-access.ts`'s `{ prefix: "/connect" }` entry; a route in neither is
-       one the edge silently never runs on. */
+    // WS-A — the member's own profile moved from `/community`
     "/connect/:path*",
     // Account areas (2026-10-05), paired with route-access.ts.
     "/companies/:path*",
     "/company/:path*",
     "/support/:path*",
-    /*
-      Only the seller sub-route is guarded; the bare prefix is not. See the note
-      in route-access.ts.
-      ⚠ SUPERSEDED 2026-08-26 (`P1-ALL-E025`): this said *"/services itself is
-      the PUBLIC Packages page"*. THERE IS NO `/services` PAGE — `src/app/services`
-      does not exist. `/services` is a 308 in `next.config.ts` and, since
-      `P1-ALL-E023`, it points at `/shop`. Keeping the prefix narrow is still
-      right, for the reason route-access.ts gives; the stated reason was stale.
-    */
+    // Only the seller sub-route is guarded; the bare prefix is not. See the note
     "/services/offers/:path*",
     "/dashboard/:path*",
   ],

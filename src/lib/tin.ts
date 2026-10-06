@@ -38,14 +38,7 @@ export function maskTin(raw: string | null | undefined): string {
   return d.length < 4 ? "••••" : `•••••${d.slice(-4)}`;
 }
 
-/**
- * Check a tax id. ⚠ THE CALLER MUST SAY WHICH KIND IT IS — see `TinKind`.
- *
- * ⚠⚠ THIS FUNCTION NEVER THROWS AND NEVER ECHOES THE INPUT. A validation error
- * that quotes the value it rejected puts a TIN into an error string, and error
- * strings reach logs, Sentry and the browser console. Every message below is
- * constant text; the only variable part is `masked`.
- */
+/** Check a tax id. THE CALLER MUST SAY WHICH KIND IT IS — see `TinKind`. */
 export function checkTin(raw: string, kind: TinKind): TinCheck {
   const d = digitsOf(raw ?? "");
   const masked = maskTin(d);
@@ -64,17 +57,13 @@ export function checkTin(raw: string, kind: TinKind): TinCheck {
 
   if (!/^\d{9}$/.test(d)) return out("MALFORMED");
 
-  /* ⚠ THE RULE THE BRIEF NAMES: well-formed is not the same as possible.
-     `00-0000000` passes every length and character test and cannot exist. */
+  // THE RULE THE BRIEF NAMES: well-formed is not the same as possible.
   if (/^(\d)\1{8}$/.test(d)) return out("IMPOSSIBLE");
 
   if (kind === "EIN") {
     const prefix = d.slice(0, 2);
     if (prefix === "00") return out("IMPOSSIBLE");
-    /* ⚠⚠ NOT A HARD FAILURE — see `IRS_EIN_PREFIXES`. The IRS adds prefixes, and
-       a list that has gone stale would reject a real, newly-issued EIN. The
-       caller decides whether to warn or block; the validator refuses to pretend
-       it knows. */
+    // NOT A HARD FAILURE — see `IRS_EIN_PREFIXES`. The IRS adds prefixes, and
     if (!IRS_EIN_PREFIXES.has(prefix)) return out("UNKNOWN_PREFIX");
     return out("VALID");
   }
@@ -90,12 +79,7 @@ export function checkTin(raw: string, kind: TinKind): TinCheck {
   return out("VALID");
 }
 
-/**
- * ⚠ A SENTENCE A PERSON CAN ACT ON, carrying no digits.
- *
- * ⚠⚠ IT NEVER SAYS "VERIFIED". The most it can say about a passing number is
- * that it *looks* right, because that is the most that is known.
- */
+/** A SENTENCE A PERSON CAN ACT ON, carrying no digits. */
 export function tinFormatMessage(c: TinCheck): string {
   switch (c.format) {
     case "VALID":

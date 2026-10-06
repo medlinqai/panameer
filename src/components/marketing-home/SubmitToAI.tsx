@@ -55,16 +55,7 @@ export function SubmitToAI() {
     >
       <div
         className="fnl-procs"
-        /*
-          Explicit rows, so no chip can be a different height from its siblings.
-          ⚠ PASSED AS A CUSTOM PROPERTY, NOT AS `gridTemplateRows`, AND THAT IS
-          DELIBERATE. An inline `grid-template-rows` beats every stylesheet
-          selector, so the ten fixed 34px rows could not be released on a phone —
-          two-up would have placed ten chips into five of ten rows and left five
-          empty 34px rows below them, and `min-height` on a chip locked to a
-          34px track just overflows it. home.css reads this var for the desktop
-          rows and overrides the PROPERTY at <=900, which the cascade allows.
-        */
+        // Explicit rows, so no chip can be a different height from its siblings.
         style={{ ["--fnl-rows" as string]: `${LABEL_H}px repeat(${n}, ${CHIP_H}px)` }}
       >
         <span className="fnl-domk">Procure-to-Pay capability domains</span>
@@ -87,15 +78,7 @@ export function SubmitToAI() {
         </svg>
         <Arrow top={aipY} />
       </div>
-      {/*
-        ⚠ THE STACKED FLOW MARKER, AND IT IS NOT AN ARROWHEAD. `display:none`
-        above 900px; below it the connector cells are gone and there is nothing
-        left joining the three groups, which is why the stack stopped reading as a
-        funnel and started reading as three unrelated lists. This is a separate
-        decorative element rather than a re-pointed connector path: the SVGs are
-        `display:none` here, and their arrowheads are placed against a coordinate
-        system that no longer exists once the columns collapse.
-      */}
+      {/* THE STACKED FLOW MARKER, AND IT IS NOT AN ARROWHEAD. `display:none` */}
       <div className="fnl-gap" aria-hidden>
         <span className="fnl-chev" />
       </div>
@@ -139,13 +122,7 @@ export function SubmitToAI() {
       </div>
 
       <div className="fnl-outs">
-        {/*
-          ⚠ BOTH BADGES ARE LOAD-BEARING. They draw the distinction locked
-          2026-08-17: AI can build the dashboard on its own; the roadmap needs the
-          client in the room to say what they require and in what order. That is
-          the reason the expert call exists rather than being a sales pretext.
-          Keep both, and keep the magenta edge on the ROADMAP only.
-        */}
+        {/* BOTH BADGES ARE LOAD-BEARING. They draw the distinction locked */}
         <div className="fnl-out">
           <span className="fnl-badge is-ai">AI builds this</span>
           <span className="fnl-out-h">Optimization Dashboard</span>

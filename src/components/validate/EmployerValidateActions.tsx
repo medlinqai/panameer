@@ -45,7 +45,7 @@ export function EmployerValidateActions({
         <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">
           {done === "yes"
             ? `We've recorded that ${request.providerName} worked at ${request.employerName}. Their profile will show it as validated.`
-            : /* ⚠ No blame, no follow-up question, and nothing is published. */
+            : /* No blame, no follow-up question, and nothing is published. */
               "We've recorded that. Nothing will be shown as validated, and we won't email you about this again."}
         </p>
       </div>
@@ -61,9 +61,7 @@ export function EmployerValidateActions({
       </h1>
       {facts && <p className="mt-2 text-[15px] text-ink-2">{facts}</p>}
       <p className="mt-4 text-[15px] leading-relaxed text-ink-2">
-        {/* ⚠⚠ IT SAYS WHAT HAPPENS AND WHAT DOES NOT. A stranger answering a
-            question about somebody's career needs to know their own name is not
-            going anywhere. */}
+        {/* IT SAYS WHAT HAPPENS AND WHAT DOES NOT. A stranger answering a */}
         {request.providerName} listed this on their Panameer profile. One click is
         all we need — your name is never shown, only that someone at{" "}
         {request.employerName} confirmed it.
@@ -72,8 +70,7 @@ export function EmployerValidateActions({
       {error && <p className="mt-4 text-[14px] text-magenta-ink">{error}</p>}
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {/* ⚠ `declineFirst` only reorders emphasis — both buttons are always
-            present, because arriving via the wrong link must not trap anyone. */}
+        {/* present, because arriving via the wrong link must not trap anyone. */}
         <button
           type="button"
           disabled={busy !== null}

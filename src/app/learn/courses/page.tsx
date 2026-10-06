@@ -58,8 +58,7 @@ export default async function Page() {
                     {g.pathTitle}
                   </Link>
                 </h2>
-                {/* ⚠ `P2-A4-E611` — the audience carries its prefix and is
-                    NEVER rendered as a difficulty. There is no level column. */}
+                {/* — the audience carries its prefix and is */}
                 <span className="text-[11.5px] font-semibold uppercase tracking-[0.07em] text-ink-2">
                   {`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[g.audience] ?? g.audience}`}
                   {g.group ? ` · ${g.group}` : ""}
@@ -76,21 +75,7 @@ export default async function Page() {
                       href={c.href}
                       className="flex h-full min-h-[44px] flex-col rounded-brand border border-line bg-white p-4 transition-colors hover:border-magenta"
                     >
-                      {/*
-                        ── ⚠⚠⚠ THREE COURSES IN THE CATALOGUE HAVE NO TITLE ───
-
-                        ⚠ Recorded at `E611` in `PathSpine.tsx`: on
-                        `end-user-beginners`, `end-user-erp` and
-                        `end-user-implementers` the XLS collapsed *"Learning Path
-                        = Course"* and left the course name blank.
-                        ⚠⚠ **THE PATH'S TITLE IS NOT BORROWED TO FILL THE HOLE**
-                        — `PathSpine` refused that because it *"would assert a
-                        name the catalog does not have"*, and the same refusal
-                        holds here. ⚠⚠⚠ **INSTEAD THE GROUPING CARRIES THE
-                        IDENTITY:** the card sits under its path's heading, so an
-                        untitled course reads as *"this path's course"* rather
-                        than as a blank line. That is why this page groups.
-                      */}
+                      {/* THREE COURSES IN THE CATALOGUE HAVE NO TITLE */}
                       {c.title.trim() ? (
                         <b className="font-display text-[14.5px] font-bold leading-[1.3] text-ink">
                           {c.title}
@@ -105,14 +90,7 @@ export default async function Page() {
                           {c.summary}
                         </p>
                       )}
-                      {/*
-                        ⚠⚠ TWO COUNTS, AND THE SECOND ONLY WHEN IT DISAGREES
-                        WITH THE FIRST. *"9 lessons · 4 with video"* is worth
-                        saying; *"9 lessons · 9 with video"* is the same fact
-                        twice. ⚠ A measured `0` is still printed — *"0 with
-                        video"* is exactly what somebody deciding whether to open
-                        this course needs to know (`E607`'s notice, same rule).
-                      */}
+                      {/* TWO COUNTS, AND THE SECOND ONLY WHEN IT DISAGREES */}
                       <span className="mt-auto pt-2 text-[11.5px] text-ink-2">
                         {c.lessons} lesson{c.lessons === 1 ? "" : "s"}
                         {c.playable !== c.lessons ? ` · ${c.playable} with video` : ""}

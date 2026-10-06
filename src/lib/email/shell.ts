@@ -111,65 +111,9 @@ export function chips(items: string[]): string {
     .join("");
 }
 
-/**
- * The footer, identical on every email in the suite.
- *
- * UNSUBSCRIBE AND PRIVACY ARE NOT OPTIONAL. Both are legal furniture for bulk
- * mail and both were absent from every template before this.
- *
- * ── ⚠⚠ CORRECTED 2026-09-04 (`P1-ALL-E386`). SUPERSEDED, QUOTED NOT DELETED ──
- *
- * This docblock used to finish: *"/settings/notifications is where a signed-in
- * person actually turns email off, which is a truer 'unsubscribe' than a link
- * that silently does nothing."*
- *
- * ⚠ THAT WAS HALF RIGHT, AND THE WRONG HALF WAS THE LEGALLY LOAD-BEARING ONE.
- * True for a signed-in PROVIDER. False for everyone else: `route-access.ts:59`
- * gates `/settings` behind `canProvideServices`, so a BUYER clicking Unsubscribe
- * was BOUNCED, a SIGNED-OUT recipient was bounced, and an address with no
- * account had no page at all.
- *
- * ⚠⚠ AND `E371` MADE IT LIVE. Seven senders now deliver for real, so this was
- * no longer a dead link in a drawer — it was a dead unsubscribe in DELIVERED
- * mail, which is how a sending domain gets blocked. `mail.panameer.com` has no
- * reputation yet to spend.
- *
- * ⚠ SO THE FOOTER NOW CARRIES A PLACEHOLDER, AND THE TRANSPORT RESOLVES IT to a
- * per-recipient signed link. It cannot be resolved here: templates are
- * recipient-agnostic — `footer()` takes only a year — and only `sendEmail()`
- * knows `to`.
- */
+/** The footer, identical on every email in the suite. */
 function footer(year: number): string {
-  /*
-    ── ⚠⚠ FOOTER LINKS LOOK LIKE LINKS (`P2-J1.1-E017`) ────────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted:
-      `style="color:${EMAIL_COLORS.muted};text-decoration:none;"`
-    — grey (#8a8199) with the underline EXPLICITLY REMOVED.
-
-    SCOTT, on his own received mail: *"then at least make a pink hyperlink. that
-    way i know they re links...not just dead text."* His diagnosis was exactly
-    right, and the code was worse than he thought: these were never dead text,
-    they were LIVE LINKS WEARING A DISGUISE.
-
-    ⚠⚠ THE UNDERLINE IS RESTORED **AS WELL AS** THE COLOR, not instead of it.
-    Color as the sole affordance fails color-blind readers, and grey→magenta is
-    a HUE shift more than a contrast one — the two most common forms of color
-    blindness are exactly the ones that flatten it. The underline is the
-    affordance that survives; the color is what makes it noticeable.
-
-    ⚠ NO ICONS, AND THIS IS EVIDENCE-BASED. Scott's received email had its images
-    BLOCKED BY OUTLOOK and the Panameer wordmark rendered as an empty box. Today
-    this footer degrades to readable words; as icons it would degrade to nothing.
-
-    ⚠⚠ `primaryButton`'s *"at most one magenta call to action per email"* IS NOT
-    BROKEN BY THIS, AND THE READING IS DELIBERATE RATHER THAN CONVENIENT. That
-    sentence is `primaryButton`'s OWN docblock, and this module's header frames
-    the rule as being about SOLID FILLS — *"a second action uses `ghostButton`
-    … two solid buttons is not emphasis, it is the absence of a decision."* It
-    governs which control is THE action, not what color a text link may be.
-    There is still exactly one filled magenta button per email.
-  */
+  // FOOTER LINKS LOOK LIKE LINKS
   const link = (href: string, label: string) =>
     `<a href="${href}" style="color:${EMAIL_COLORS.magenta};text-decoration:underline;">${label}</a>`;
   const dot = `<span style="color:${EMAIL_COLORS.line};"> · </span>`;
@@ -204,13 +148,7 @@ ${PANAMEER_ADDRESS}
 © Panameer Inc ${year}`;
 }
 
-/**
- * Wrap a body in the Panameer card.
- *
- * `year` is injectable so a test can assert a fixed copyright line rather than
- * asserting against whatever year the suite happens to run in — the kind of
- * test that passes for eleven months and fails on New Year's Day.
- */
+/** Wrap a body in the Panameer card. */
 export function emailShell({
   logoUrl,
   bodyHtml,

@@ -77,31 +77,7 @@ export default async function ClaimPage({
           </a>
         )}
 
-        {/*
-          ── ⚠⚠ THE TERMS, NAMED AND LINKED (`P1-ALL-E384` WS-1a) ──────────────
-
-          The account above is created with `tos_accepted_at` and `tos_version`,
-          and this is what makes that legitimate rather than assumed: THE TERMS
-          ARE NAMED, AND BOTH ARE REACHABLE IN ONE CLICK.
-
-          ⚠ NO CHECKBOX, DELIBERATELY. The click is the affirmative act and this
-          flow is the top of the funnel — a control would add a second step to a
-          one-step flow. Scott's fix was to the RECORD, not to the friction.
-
-          ⚠⚠ AND HERE IS THE SEQUENCING PROBLEM, REPORTED RATHER THAN PAPERED
-          OVER. The brief asked for this notice *"immediately adjacent to the
-          button"* and *"BEFORE the click"*. It is adjacent — but it is NOT
-          before, because THE ACCOUNT IS CREATED DURING THIS PAGE'S RENDER, above,
-          and the click that caused it happened in the EMAIL. By the time anybody
-          reads this, the row exists.
-          ⚠ THE ONLY SURFACE THAT IS GENUINELY "BEFORE" IS THE EMAIL CARRYING THE
-          CLAIM LINK — `email/templates/assessment-ready.ts`. That is template
-          COPY, which `E384` puts out of scope, so it is reported at `E384` as the
-          one remaining half of this fix rather than done here.
-          ⚠ THIS NOTICE STILL EARNS ITS PLACE: it is the first moment the person
-          is told an account was created at all, and without it they would not
-          know there were terms to read.
-        */}
+        {/* THE TERMS, NAMED AND LINKED WS-1a) */}
         <p className="mt-4 text-[13px] leading-relaxed text-ink-2">
           {CLAIM_TERMS_NOTICE.replace(
             " Terms of Use and Privacy Policy.",

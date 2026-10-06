@@ -73,14 +73,7 @@ export function BillingMethods({ methods }: { methods: Method[] }) {
                   <p className="text-[13px] text-ink-2">
                     {KIND_LABEL[m.kind]}
                     {m.last4 ? ` ending ${m.last4}` : ""}
-                    {/* ⚠⚠ THE EXPIRY DISPLAY IS GONE (`P2-A2-E677`). WS-D forbids
-                        expiry being stored at all, `E672` removed the writer and
-                        the select, and this was the last reader. ⚠ It rendered
-                        for 0 rows, so nothing visible changes — but a display
-                        waiting for a column to be repopulated is an invitation
-                        (`E563`'s unused-select lesson, one layer out).
-                        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                        //   {m.expMonth && m.expYear ? ` · expires ${m.expMonth}/${m.expYear}` : ""} */}
+                    {/* THE EXPIRY DISPLAY IS GONE . WS-D forbids */}
                   </p>
                 </div>
                 <button

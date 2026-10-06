@@ -225,9 +225,7 @@ export function assertSettlementDraw(input: {
         );
       drawCents += Math.round(want * (priced.unit_price_cents ?? 0));
     } else {
-      /* ⚠⚠ AMOUNT DRAWS ONCE, IN FULL — the exact amount, and never twice. A
-         partial draw on an AMOUNT line is a milestone that was never ordered;
-         a second draw is the same money leaving twice. */
+      // AMOUNT DRAWS ONCE, IN FULL — the exact amount, and never twice. A
       if ((orderLine.drawn_amount_cents ?? 0) > 0)
         throw new SpineError("An AMOUNT line has already been drawn", "AMOUNT_ALREADY_DRAWN");
       if (draft.amount_cents != null && draft.amount_cents !== orderLine.amount_cents)
@@ -236,9 +234,7 @@ export function assertSettlementDraw(input: {
     }
   }
 
-  /* ── RULE 4 — not-to-exceed caps the WHOLE order ──────────────────────────
-     ⚠ Across every settlement against it, not just this one: a cap that only
-     looked at the current draw would be cleared by filing two. */
+  // RULE 4 — not-to-exceed caps the WHOLE order
   if (
     input.order.not_to_exceed_cents != null &&
     input.alreadySettledCents + drawCents > input.order.not_to_exceed_cents
@@ -253,17 +249,7 @@ export function assertSettlementDraw(input: {
    WS-4 · ALLOCATION AND RELEASE
    ═════════════════════════════════════════════════════════════════════════ */
 
-/**
- * ⚠⚠ `SUM(PaymentLine)` MUST NEVER EXCEED `Payment.amount_cents`.
- *
- * Over-allocating releases payouts against money that never arrived — Panameer
- * would be paying providers out of its own balance and the shortfall would only
- * surface at a bank reconciliation, long after the cash left.
- *
- * ⚠ PARTIAL ALLOCATION IS EXPLICITLY LEGAL: `<` is fine, only `>` is refused.
- * A payment covering three of four settlements pays those three, because
- * all-or-nothing matching holds three providers hostage to one disputed line.
- */
+/** Over-allocating releases payouts against money that never arrived — Panameer */
 export function assertAllocation(paymentAmountCents: number, lineAmounts: number[]): void {
   const allocated = lineAmounts.reduce((n, a) => n + a, 0);
   if (lineAmounts.some((a) => a <= 0))
@@ -284,16 +270,7 @@ export function paymentStatusFor(
   return allocated >= paymentAmountCents ? "ALLOCATED" : "PARTIALLY_ALLOCATED";
 }
 
-/**
- * ⚠⚠ A PAYOUT IS `RELEASABLE` ONLY WHEN **ITS OWN** SETTLEMENT IS ALLOCATED.
- *
- * Not when the payment arrives, and not when the PO is paid in full — PER
- * SETTLEMENT, so one stuck or disputed line never blocks the others.
- *
- * ⚠ AND NOT BEFORE. Paying a provider before the buyer pays makes Panameer the
- * lender, which is a different business with different capital requirements and
- * a different licence.
- */
+/** A PAYOUT IS `RELEASABLE` ONLY WHEN ITS OWN SETTLEMENT IS ALLOCATED. */
 export function payoutIsReleasable(input: {
   settlementAllocatedCents: number;
   settlementTotalCents: number;

@@ -28,12 +28,7 @@ export async function userIdForPerson(personId: PersonId): Promise<UserId> {
     throw new LearnIdentityError(`No person with id ${personId}.`, "NO_ACCOUNT");
   }
   if (!person.user_id) {
-    /*
-      ⚠⚠ THE REFUSAL THAT MATTERS. A provider with no account cannot have sat a test, but
-      *"has not passed"* and *"cannot be asked"* are different answers, and only the
-      caller knows which it needs. ⚠⚠⚠ Collapsing them here is how `ALREADY_PASSED`
-      silently becomes `CAN_REQUEST`.
-    */
+    // THE REFUSAL THAT MATTERS. A provider with no account cannot have sat a test, but
     throw new LearnIdentityError(
       `Person ${personId} has no account, so no Learn result can be read for them.`,
       "NO_ACCOUNT"

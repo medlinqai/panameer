@@ -67,11 +67,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         )}
       </dl>
 
-      {/*
-        ⚠⚠ A REJECTION IS SHOWN WITH ITS REASON, PROMINENTLY. That is the whole
-        point of requiring one — `E388`: *"a rejection with no stated reason is
-        unanswerable."* Hiding it in a timeline would waste the requirement.
-      */}
+      {/* A REJECTION IS SHOWN WITH ITS REASON, PROMINENTLY. That is the whole */}
       {(s.resubmitOf || s.resubmittedAs) && (
         <p data-testid="resubmit-link" className="mt-4 text-[14px] text-ink-2">
           {s.resubmitOf && (
@@ -103,8 +99,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
-      {/* ⚠ THE DECISION — renders for the buyer on a SUBMITTED request and for
-          nobody else. It returns null when `actions` is empty. */}
+      {/* THE DECISION — renders for the buyer on a SUBMITTED request and for */}
       {s.party === "PROVIDER" && s.paidOut && (
         <section data-testid="paid-out" className="mt-6 border-t-2 border-ink pt-5">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PAID</p>
@@ -150,8 +145,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   <tr key={l.id} className="border-b border-line last:border-0">
                     <td className="px-5 py-3">{l.serviceDate ?? "—"}</td>
                     <td className="px-5 py-3">{l.quantity ?? 0}</td>
-                    {/* ⚠ THE RATE IS THE ORDER'S, SHOWN AS A FACT. It was never
-                        typed here — `priceSettlementLine` copied it. */}
+                    {/* THE RATE IS THE ORDER'S, SHOWN AS A FACT. It was never */}
                     <td className="px-5 py-3 text-ink-2">
                       {formatCents(l.unitPriceCents ?? 0, s.currency)}
                     </td>

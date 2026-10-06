@@ -97,14 +97,10 @@ export async function addRow(input: AddRowInput, viewer: Viewer): Promise<Stored
       data: {
         plan_id: input.planId,
         parent_id: parentId,
-        /** ⚠ A temporary slot past the end; `writeOrder` below puts it where it
-         *  belongs. Computing the final sort here as well would be two answers
-         *  to one question (`E585`). */
+        /** A temporary slot past the end; `writeOrder` below puts it where it */
         sort: siblings.length,
         type,
-        /** ⚠⚠ AN EMPTY TITLE IS ALLOWED AND IS THE WHOLE POINT OF AN OUTLINE
-         *  EDITOR: Enter makes the next row and the cursor lands in it. A
-         *  `title` the writer refused would make the editor unusable. */
+        /** AN EMPTY TITLE IS ALLOWED AND IS THE WHOLE POINT OF AN OUTLINE */
         title: (input.title ?? "").trim(),
         updated_by: viewer.userId,
       },
@@ -139,20 +135,13 @@ export async function updateRow(rowId: string, patch: RowPatch, viewer: Viewer):
   }
   if (patch.type !== undefined) {
     if (!isRowType(patch.type)) throw new PlanError(`Unknown row type: ${patch.type}`, "INVALID");
-    /** ⚠⚠ A ROW WITH CHILDREN CANNOT BECOME A MILESTONE. A milestone is a date,
-     *  not a container; allowing it would put tasks under a diamond and make
-     *  the numbering unreadable. */
+    /** A ROW WITH CHILDREN CANNOT BECOME A MILESTONE. A milestone is a date */
     if (patch.type === "milestone" && (await childCount(row.id)) > 0) {
       throw new PlanError("Move or delete the rows underneath before making this a milestone.", "INVALID");
     }
     data.type = patch.type;
   }
-  /**
-   * ⚠⚠ DATES ARE SET INDEPENDENTLY AND AN END BEFORE A START IS REFUSED — but
-   * only when BOTH are known after the patch. ⚠ Half a range is a normal state
-   * in an outline editor (you type the start, then the end), so a validation
-   * that demanded both would reject the first keystroke of every row.
-   */
+  /** DATES ARE SET INDEPENDENTLY AND AN END BEFORE A START IS REFUSED — but */
   const nextStart = patch.start_date !== undefined ? patch.start_date : row.start_date;
   const nextEnd = patch.end_date !== undefined ? patch.end_date : row.end_date;
   if (nextStart && nextEnd && nextEnd.getTime() < nextStart.getTime()) {
@@ -175,14 +164,7 @@ export async function updateRow(rowId: string, patch: RowPatch, viewer: Viewer):
   return prisma.planRow.update({ where: { id: rowId }, data, select: ROW_SELECT });
 }
 
-/**
- * How deep a row sits: 0 top level, 1 under a release or a phase, 2 a task under
- * a phase that is itself under a release (`P2-ALL-E807`).
- *
- * Walked from the row rather than inferred from `type`, because the tree is what
- * decides depth — a `phase` row is depth 0 at the top and depth 1 inside a
- * release, and both are legitimate.
- */
+/** How deep a row sits: 0 top level, 1 under a release or a phase, 2 a task under */
 export const MAX_DEPTH = 2;
 
 async function depthOf(row: { parent_id: string | null }): Promise<number> {
@@ -211,12 +193,7 @@ async function subtreeHeight(rowId: string): Promise<number> {
 
 /* ── structure ──────────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ INDENT MEANS "BECOME A CHILD OF THE ROW ABOVE", and the row above must be
- * a top-level non-milestone. Everything else is refused with a reason rather
- * than silently ignored — Tab doing nothing with no explanation is the defect
- * `E539`'s sticky error was about.
- */
+/** INDENT MEANS "BECOME A CHILD OF THE ROW ABOVE", and the row above must be */
 export async function indentRow(rowId: string, viewer: Viewer): Promise<StoredRow> {
   const row = await requireRow(rowId);
   const depth = await depthOf(row);
@@ -271,42 +248,26 @@ export async function outdentRow(rowId: string, viewer: Viewer): Promise<StoredR
       data: { parent_id: newParentId, updated_by: viewer.userId },
       select: ROW_SELECT,
     });
-    /** ⚠⚠ THE ORDER IS BUILT FROM THE LIST AS IT WAS *BEFORE* THE ROW JOINED
-     *  IT, so "directly after its old parent" means what it says. Reading the
-     *  list back after the update and compacting it would renumber against a
-     *  list that already contains the row, which is how a reorder turns into a
-     *  reshuffle. */
+    /** THE ORDER IS BUILT FROM THE LIST AS IT WAS *BEFORE* THE ROW JOINED */
     await writeOrder(tx, insertAfter(top, moved, parentId));
     await renormalise(tx, row.plan_id, parentId);
     return moved;
   });
 }
 
-/**
- * Reorder within the current parent. `delta` is -1 (up) or +1 (down); an
- * `index` moves straight to a slot, which is what a drag handle sends.
- */
+/** Reorder within the current parent. `delta` is -1 (up) or +1 (down); an */
 export async function moveRow(
   rowId: string,
   to: { delta?: number; index?: number; parentId?: string | null },
   viewer: Viewer,
 ): Promise<StoredRow> {
   const row = await requireRow(rowId);
-  /**
-   * MOVING ACROSS PARENTS (`P2-ALL-E813`). `parentId` undefined means "stay
-   * where you are and reorder" — the original behaviour — while `null` means
-   * "go to the top level". The two are different answers and the API tells them
-   * apart by whether the key was sent at all.
-   */
+  /** MOVING ACROSS PARENTS . `parentId` undefined means "stay */
   const changingParent = to.parentId !== undefined && to.parentId !== row.parent_id;
   const newParentId = changingParent ? (to.parentId ?? null) : row.parent_id;
 
   if (changingParent && newParentId) {
-    /**
-     * A ROW CANNOT BECOME ITS OWN DESCENDANT'S CHILD. Without this, dropping a
-     * phase onto one of its own stages would detach that whole branch from the
-     * tree — the rows would still exist and nothing would render them.
-     */
+    /** A ROW CANNOT BECOME ITS OWN DESCENDANT'S CHILD. Without this, dropping a */
     let cursor: string | null = newParentId;
     while (cursor) {
       if (cursor === row.id) {
@@ -319,10 +280,7 @@ export async function moveRow(
       cursor = up?.parent_id ?? null;
     }
     await assertCanParent(newParentId, row.plan_id);
-    /* The whole subtree has to fit inside three levels, not just this row.
-       `depthOf({ parent_id })` already answers "how deep would a CHILD of this
-       be", so the +1 is in there — adding another was an off-by-one that
-       refused every legal cross-parent move. */
+    // The whole subtree has to fit inside three levels, not just this row.
     const landingDepth = await depthOf({ parent_id: newParentId });
     if (landingDepth + (await subtreeHeight(row.id)) > MAX_DEPTH) {
       throw new PlanError(
@@ -338,8 +296,7 @@ export async function moveRow(
   const from = siblings.findIndex((s) => s.id === row.id);
   const raw = to.index !== undefined ? to.index : from + (to.delta ?? 0);
   const ceiling = changingParent ? siblings.length : siblings.length - 1;
-  /** ⚠ Clamped, not refused: dragging past the end means "last", and Up on the
-   *  first row is a no-op the editor should not have to special-case. */
+  /** Clamped, not refused: dragging past the end means "last", and Up on the */
   const target = Math.max(0, Math.min(ceiling, raw));
   if (!changingParent && target === from) return row;
 
@@ -368,12 +325,7 @@ export async function moveRow(
   });
 }
 
-/**
- * ⚠⚠ DELETE RETURNS WHAT IT REMOVED, SO UNDO IS POSSIBLE AT ALL. The editor
- * offers "undo last delete", and an undo that cannot restore the children of a
- * deleted phase is not an undo — the FK cascade takes them, so they have to be
- * read back BEFORE the delete, not after.
- */
+/** DELETE RETURNS WHAT IT REMOVED, SO UNDO IS POSSIBLE AT ALL. The editor */
 export async function deleteRow(rowId: string, viewer: Viewer): Promise<StoredRow[]> {
   const row = await requireRow(rowId);
   const removed = await prisma.planRow.findMany({
@@ -389,11 +341,7 @@ export async function deleteRow(rowId: string, viewer: Viewer): Promise<StoredRo
   return removed;
 }
 
-/**
- * Put back exactly what `deleteRow` returned — ⚠ including the original ids, so
- * a restored row is the same row and nothing that referenced it is left
- * pointing at a ghost. Parents are written before their children.
- */
+/** Put back exactly what `deleteRow` returned — including the original ids, so */
 export async function restoreRows(rows: readonly StoredRow[], viewer: Viewer): Promise<number> {
   if (rows.length === 0) return 0;
   const ordered = [...rows].sort((a, b) => Number(!!a.parent_id) - Number(!!b.parent_id));
@@ -407,12 +355,7 @@ export async function restoreRows(rows: readonly StoredRow[], viewer: Viewer): P
 
 /* ── copy ───────────────────────────────────────────────────────────────── */
 
-/**
- * Copy every row of one plan into another owner key. ⚠⚠ ADMIN NOTES ARE COPIED
- * — a copy is for the same organisation and dropping them would lose work — but
- * `copyPlan` is admin-only, and the public payload strips `admin_note` at the
- * boundary (lane 3), never here. ⚠ One rule, one place.
- */
+/** Copy every row of one plan into another owner key. ADMIN NOTES ARE COPIED */
 export async function copyPlan(
   sourceOwnerKey: string,
   targetOwnerKey: string,
@@ -437,8 +380,7 @@ export async function copyPlan(
     }
     for (const c of source.rows.filter((r) => r.parent_id)) {
       const parent = idMap.get(c.parent_id!);
-      /** ⚠ A child whose parent was not copied is skipped rather than written
-       *  at the top level — silently promoting it would change the plan. */
+      /** A child whose parent was not copied is skipped rather than written */
       if (!parent) continue;
       await tx.planRow.create({
         data: { ...rowPayload(c), plan_id: target.id, parent_id: parent, updated_by: viewer.userId },
@@ -485,8 +427,7 @@ async function assertCanParent(parentId: string, planId: string) {
     select: { id: true, plan_id: true, parent_id: true, type: true },
   });
   if (!parent) throw new PlanError("That phase is gone.", "NOT_FOUND");
-  /** ⚠⚠ A ROW NEVER MOVES BETWEEN PLANS. Without this, a stale id from one
-   *  plan's editor would graft a row onto another plan's tree. */
+  /** A ROW NEVER MOVES BETWEEN PLANS. Without this, a stale id from one */
   if (parent.plan_id !== planId) throw new PlanError("That row belongs to another plan.", "INVALID");
   /* A parent may sit at depth 0 or 1 — three levels (`E807`). */
   if ((await depthOf(parent)) >= MAX_DEPTH) {
@@ -505,11 +446,7 @@ async function siblingsOf(tx: Tx, planId: string, parentId: string | null) {
   });
 }
 
-/**
- * The sibling list with `row` placed directly after `afterId` — or appended
- * when `afterId` is absent or not in the list. ⚠ Pure, so the gate can prove
- * the placement without a database.
- */
+/** The sibling list with `row` placed directly after `afterId` — or appended */
 export function insertAfter<T extends { id: string }>(
   siblings: readonly T[],
   row: T,
@@ -546,19 +483,7 @@ function emptyToNull(v: string | null) {
 
 export type ImportMode = "replace" | "append";
 
-/**
- * Write imported rows into a plan.
- *
- * ⚠⚠⚠ **`replace` AND `append` ARE BOTH DESTRUCTIVE-ADJACENT AND THE PERSON
- * CHOOSES ON SCREEN** (Scott: ask on screen). `replace` deletes every existing
- * row first; `append` adds after what is there. ⚠ Neither is the default in the
- * UI — there is no pre-selected option, because a mis-click on a 200-row plan
- * is not recoverable from the editor's one-row undo.
- *
- * ⚠⚠ **IT IS ONE TRANSACTION.** A half-written plan — some rows in, the parent
- * links missing — is worse than a refused import, because it looks like a
- * successful one.
- */
+/** Write imported rows into a plan. */
 export async function writeImportedRows(
   planId: string,
   imported: readonly {
@@ -570,14 +495,7 @@ export async function writeImportedRows(
 ): Promise<{ written: number; replaced: number; unknownReleases: string[] }> {
   if (imported.length === 0) throw new PlanError("Nothing in that file could be imported.", "INVALID");
 
-  /**
-   * ── ⚠⚠⚠ THE RELEASE CODE IS RESOLVED HERE (`P2-ALL-E795`) ─────────────────
-   *
-   * ⚠ The spreadsheet carries `R1`; the row stores an id. ⚠⚠ **A CODE WE DO NOT
-   * RECOGNISE IS REPORTED, NEVER GUESSED AND NEVER SILENTLY DROPPED** — silently
-   * dropping the release is precisely what cost the live plan its whole R1 scope
-   * on 2026-10-03.
-   */
+  /** THE RELEASE CODE IS RESOLVED HERE */
   const releases = await prisma.workTrackerRelease.findMany({ select: { id: true, code: true } });
   const byCode = new Map(releases.filter((r) => r.code).map((r) => [r.code!.toUpperCase(), r.id]));
   const unknownReleases = [
@@ -594,8 +512,7 @@ export async function writeImportedRows(
       const { count } = await tx.planRow.deleteMany({ where: { plan_id: planId } });
       replaced = count;
     }
-    /** ⚠ Appended rows start after the existing top-level rows, so an append
-     *  does not interleave with what is already there. */
+    /** Appended rows start after the existing top-level rows, so an append */
     const base = mode === "append"
       ? await tx.planRow.count({ where: { plan_id: planId, parent_id: null } })
       : 0;
@@ -616,8 +533,7 @@ export async function writeImportedRows(
         status: r.status,
         owner: r.owner,
         hours: r.hours,
-        /** ⚠⚠ THE RELEASE SURVIVES THE ROUND TRIP (`E795`). An unrecognised code
-         *  lands `null` and is reported in `unknownReleases` — never guessed. */
+        /** THE RELEASE SURVIVES THE ROUND TRIP . An unrecognised code */
         release_id: r.release ? byCode.get(r.release.trim().toUpperCase()) ?? null : null,
         updated_by: viewer.userId,
       };
@@ -626,8 +542,7 @@ export async function writeImportedRows(
           data: { ...data, parent_id: null, sort: topSort++ },
           select: { id: true, type: true },
         });
-        /** ⚠⚠ A MILESTONE IS NEVER A PARENT, so a level-2 row after one has no
-         *  parent to take — `readGrid` has already promoted it and said so. */
+        /** A MILESTONE IS NEVER A PARENT, so a level-2 row after one has no */
         parentId = made.type === "milestone" ? null : made.id;
         childSort = 0;
       } else {

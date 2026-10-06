@@ -47,22 +47,11 @@ export function PhoneField({
           onChange={(e) => {
             const next = e.target.value;
             onCountryChange?.(next);
-            /*
-              ⚠ RE-MASK THE NUMBER FOR THE NEW COUNTRY IMMEDIATELY. The digits
-              are the person's; the grouping belongs to the country. Switching
-              India → United States has to redraw 9876543210 as (987) 654-3210
-              rather than leave the old country's shape on screen.
-            */
+            // RE-MASK THE NUMBER FOR THE NEW COUNTRY IMMEDIATELY. The digits
             onChange(formatPhone(value, next));
           }}
           disabled={!onCountryChange}
-          /*
-            ⚠ WIDE ENOUGH FOR THE NAME, MEASURED IN THE WALK. At 128px the
-            closed select truncated to "+966 · Saudi A…", which is exactly the
-            country a Saudi user needs to be able to read back. ⚠ MEASURED IN THE
-            APP, not guessed from a font metric — chat cannot measure text width
-            (`CLAUDE.md` rule 4).
-          */
+          // WIDE ENOUGH FOR THE NAME, MEASURED IN THE WALK. At 128px the
           className="w-[172px] flex-none rounded-[12px] border border-line bg-white px-2 py-3 text-[14px] text-ink outline-none transition-colors focus:border-magenta disabled:bg-[#f7f6f9]"
         >
           <option value="">Country…</option>
@@ -99,12 +88,7 @@ export function PhoneField({
           {check.reason}
         </span>
       ) : (
-        /*
-          ⚠ THE HINT SAYS WHAT IS TRUE FOR THE SELECTED COUNTRY, and says nothing
-          when no country is selected. The old version promised a format for
-          three countries and stayed silent for every other, on a screen whose
-          country the person could not see.
-        */
+        // THE HINT SAYS WHAT IS TRUE FOR THE SELECTED COUNTRY, and says nothing
         <span className="mt-1 block text-[13px] text-ink-2">
           {!country
             ? "Pick your country so we check the number against the right rules."

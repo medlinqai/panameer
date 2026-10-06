@@ -52,29 +52,14 @@ export function PathCard({
       href={href ?? `/learn/${card.slug}`}
       className="group flex flex-col overflow-hidden rounded-brand bg-learn-card text-white shadow-brand transition-transform hover:-translate-y-0.5"
     >
-      {/*
-        16:9 when the card carries authored cover art, 4:3 when it is fronted by
-        a portrait. The imported covers are 960×540 designs WITH TEXT ON THEM
-        ("Enterprise Resource Planning Overview"); cropping them to a portrait
-        frame cut the wording in half. Faces crop fine and read better tall.
-      */}
+      {/* 16:9 when the card carries authored cover art, 4:3 when it is fronted by */}
       <div
         className={
           "relative w-full overflow-hidden bg-learn-card " +
           (card.coverImage ? "aspect-video" : "aspect-[4/3]")
         }
       >
-        {/*
-          THE PATH'S OWN COVER WINS when there is one.
-
-          WS6 made this card instructor-fronted, and that was right when the
-          only image available was a face. The thumbnail import brought in art
-          drawn FOR these paths ("ERP Overview", "oracle cloud careers") — a
-          picture of the subject beats a portrait of the teacher on a catalog
-          card, and the instructor is still named with their avatar underneath,
-          so nothing is lost. Where no cover was imported the face still leads,
-          which is most of the catalog today.
-        */}
+        {/* THE PATH'S OWN COVER WINS when there is one. */}
         {(() => {
           if (card.coverImage) {
             return (
@@ -127,31 +112,14 @@ export function PathCard({
           {card.playable > 0 && ` · ${card.playable} ready`}
         </p>
 
-        {/*
-          ── ⚠⚠⚠ AN UNREADY PATH SAYS SO ON THE CARD (`P2-A4-E611`) ──────────
-
-          ⚠⚠ The catalogue now lists all 23 paths so a demand signal can reach
-          Scott at all — which means **11 of them are cards a member cannot
-          start**, and a card that does not say so is the dead end `E607`
-          existed to close, moved one screen earlier.
-
-          ⚠ IT IS A STATE, NOT A WARNING, AND IT PROMISES NOTHING: no date, no
-          ETA, no queue position. The schema holds no publish date.
-          ⚠⚠ THE CARD IS STILL A LINK. Reading is never gated (`E362`) — the
-          outline is real and is exactly what someone deciding whether to ask
-          for this path needs to see.
-        */}
+        {/* AN UNREADY PATH SAYS SO ON THE CARD */}
         {!card.ready && (
           <p className="mt-1.5 inline-flex w-fit rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-bold text-white/75">
             No videos yet
           </p>
         )}
 
-        {/*
-          The progress bar only exists once you're enrolled. An empty 0% bar on
-          every card would read as "you've done nothing here" across a catalog
-          you haven't started, which is discouraging and untrue.
-        */}
+        {/* The progress bar only exists once you're enrolled. An empty 0% bar on */}
         {card.enrolled && card.progress !== null && (
           <div className="mt-2">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
@@ -166,27 +134,7 @@ export function PathCard({
           </div>
         )}
 
-        {/*
-          ── ⚠⚠⚠ THE STANDING, AND THE ONE ACTION THAT MATCHES IT (WS-B 5) ──
-
-          ⚠ SCOTT's note on the mockup: *"Each card states your standing (done,
-          %, test ready, or enroll), so this page doubles as 'what's next.'"*
-          ⚠⚠ The card already said WHERE YOU WERE — a badge and a bar — and never
-          **what to do about it.**
-
-          ⚠⚠⚠ **IT IS A SIGNPOST, NOT A SECOND CONTROL, AND THAT IS DELIBERATE:
-          THE WHOLE CARD IS ALREADY A `<Link>`.** A nested `<a>` is invalid HTML
-          and would give one card two destinations. ⚠ So this states the next
-          move and the card carries you to the page where that move lives —
-          `AppPath` holds `Continue`, `Review` and the test door alike.
-          ⚠⚠ **DO NOT "FIX" THIS INTO A LINK.** It is styled as a label with an
-          arrow rather than as a button precisely so it does not claim to be a
-          control it is not (`E579`).
-
-          ⚠ `standingFor` is the lib's — one derivation, one place. A second copy
-          here is how the card and the path page start disagreeing about whether
-          somebody has finished.
-        */}
+        {/* THE STANDING, AND THE ONE ACTION THAT MATCHES IT (WS-B 5) */}
         <p className="mt-3 text-[13px] font-bold text-white">
           {standingFor(card).action} <span aria-hidden>&rarr;</span>
         </p>

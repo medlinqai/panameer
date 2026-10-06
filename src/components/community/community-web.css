@@ -1,16 +1,4 @@
-/*
-  ── ⚠⚠ THE LIVING WEB (`P2-J3-E591` WS-B) ──────────────────────────────────
-
-  ⚠ The `<svg>` carries a `viewBox` and is sized `width: 100%; height: auto`, so
-  it scales to whatever column it lands in. ⚠⚠ THAT IS WHY THE LAYOUT MATH IS
-  SCALE-FREE: a clearance expressed in viewBox units holds at every rendered
-  width, which is what makes `check:community-web`'s sweep a proof about the
-  PAGE and not only about the arithmetic.
-
-  ⚠ WHAT THE WIDTH STILL DECIDES is how SMALL a node gets, which is why the node
-  counts are capped in `community-web.ts` and why the narrow widths are
-  screenshotted at the stop gate rather than reasoned about.
-*/
+/* THE LIVING WEB WS-B) */
 .pm-web {
   margin: 0 0 18px;
 }
@@ -19,23 +7,10 @@
   display: block;
   width: 100%;
   height: auto;
-  /*
-    ── ⚠⚠ A CEILING, AND IT CAME FROM THE MEASUREMENT, NOT FROM TASTE ────────
-
-    ⚠ `E591` WS-B measured the rendered box before setting this: in the
-    `max-w-5xl` column at a 1440px viewport the web came out **1024 × 731px**.
-    ⚠⚠ 731px TALL IS MOST OF A LAPTOP SCREEN — the web is the page's hero, not
-    the whole page, and at that size the colleague list below it was entirely
-    below the fold.
-    ⚠ The viewBox is 560 × 400 (a 1.4 ratio), so 620px wide is 443px tall, which
-    keeps the first colleague card visible on a 900px-high window.
-    ⚠⚠ IT IS A `max-width`, NOT A FIXED ONE: below 620px the web still fills its
-    container, which is the phone and tablet case and the `WS-C` rail case.
-  */
+  /* A CEILING, AND IT CAME FROM THE MEASUREMENT, NOT FROM TASTE */
   max-width: 620px;
   margin-inline: auto;
-  /* ⚠ A floor, so the web does not become a stripe in a narrow rail. Below
-     this the caps are what keep it legible. */
+  /* A floor, so the web does not become a stripe in a narrow rail. Below */
   min-height: 200px;
 }
 
@@ -43,23 +18,7 @@
 .pm-web-link {
   fill: none;
 }
-/*
-  ── ⚠⚠ THE FLOWING DASHES ARE BACK (`P2-A3-E596` WS-C item 4) ─────────────
-
-  ⚠ SCOTT, on the mockup: *"the graphic was cool with the moving dotted lines,
-  cant we keep those in?"*
-  ⚠⚠ ONLY THE **JOINED** LINKS FLOW. `invited` and `reachable` are already
-  dashed to mean *"not a real edge yet"*, and animating those would say the
-  opposite — movement reads as traffic, and nothing is travelling down an
-  unanswered invitation.
-
-  ⚠ `stroke-dashoffset` IS THE ONLY THING ANIMATED. It is a paint-only property
-  on a line whose geometry is unchanged, so the tween the rebuild already runs
-  on `x1/y1/x2/y2` is untouched and the two cannot fight.
-  ⚠⚠ `opacity` RISES 0.55 -> 0.7 BECAUSE A DASHED LINE READS LIGHTER than a
-  solid one of the same colour — the line would otherwise look like it faded
-  when it started moving.
-*/
+/* THE FLOWING DASHES ARE BACK WS-C item 4) */
 .pm-web-link-joined {
   stroke: var(--color-magenta, #d72cd6);
   stroke-width: 2.4;
@@ -69,9 +28,7 @@
   animation: pm-web-flow 1.1s linear infinite;
 }
 
-/* ⚠ NEGATIVE, so the dashes travel OUTWARD from the viewer at the centre —
-   the direction a network grows. The distance is one full dash + gap, so the
-   loop is seamless. */
+/* NEGATIVE, so the dashes travel OUTWARD from the viewer at the centre — */
 @keyframes pm-web-flow {
   to {
     stroke-dashoffset: -12;
@@ -91,12 +48,7 @@
 
 /* ── the three node states ───────────────────────────────────────────────── */
 
-/*
-  ⚠⚠ THE HALO IS A RING **BEHIND** THE PHOTO (WS-B item 2). The blur filter is
-  applied to THIS circle — a plain magenta disc under the portrait — and never
-  to the `<image>`, which would blur the person's face.
-  ⚠ `check:community-web` §8 fails the build on a `filter=` on an `<image>`.
-*/
+/* THE HALO IS A RING BEHIND THE PHOTO (WS-B item 2). The blur filter is */
 .pm-web-halo {
   fill: var(--color-magenta, #d72cd6);
   opacity: 0.55;
@@ -107,8 +59,7 @@
   stroke-width: 2.2;
 }
 
-/* ⚠ Hollow and dashed: an invitation is an open question, and it has no face
-   because the row holds name and email only. */
+/* Hollow and dashed: an invitation is an open question, and it has no face */
 .pm-web-invited {
   fill: #fff;
   stroke: var(--color-magenta, #d72cd6);
@@ -116,8 +67,7 @@
   stroke-dasharray: 3.4 3;
 }
 
-/* ⚠ Fainter still — nobody has been asked yet, so it must not read as a
-   relationship that exists. */
+/* Fainter still — nobody has been asked yet, so it must not read as a */
 .pm-web-reachable {
   fill: #fff;
   stroke: var(--color-line, #b9b3c4);
@@ -136,8 +86,7 @@
   opacity: 0.6;
 }
 
-/* ⚠ Grey and colourless on purpose — it must read as "no photo yet", never as
-   a photo, and never as initials. */
+/* Grey and colourless on purpose — it must read as "no photo yet", never as */
 .pm-web-sil {
   fill: #9a93a6;
 }
@@ -151,19 +100,7 @@
   fill: #2c2338;
 }
 
-/*
-  ── ⚠⚠ THE RE-SETTLE ────────────────────────────────────────────────────────
-
-  ⚠⚠⚠ THE CLASS IS ADDED ONLY AFTER A SUCCESSFUL REFRESH. It is not on the
-  first paint and it is never added when a fetch fails — so a page whose
-  endpoint is down holds still, which is the ruling: *"if the endpoint fails, it
-  must NOT animate."*
-
-  ⚠ A CSS transition rather than a JS tween: the layout is recomputed to its new
-  coordinates and the browser glides the attributes. ⚠⚠ NO `requestAnimationFrame`
-  LOOP — the mockup's hand-rolled tween re-rendered the whole tree ~60 times a
-  second for 2.6 seconds, which is a lot of work to move twenty circles.
-*/
+/* THE CLASS IS ADDED ONLY AFTER A SUCCESSFUL REFRESH. It is not on the */
 .pm-web-move circle,
 .pm-web-move image,
 .pm-web-move line,
@@ -179,12 +116,7 @@
     y2 2.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/*
-  ⚠⚠ THE SECOND HALF OF `prefers-reduced-motion`, AND IT IS BELT AND BRACES.
-  The component already withholds the class when the media query matches; this
-  stops the transition even if a future edit forgets. ⚠ THE REBUILD STILL
-  HAPPENS — this suppresses the glide, not the update.
-*/
+/* THE SECOND HALF OF `prefers-reduced-motion`, AND IT IS BELT AND BRACES. */
 @media (prefers-reduced-motion: reduce) {
   .pm-web-move circle,
   .pm-web-move image,
@@ -192,12 +124,7 @@
   .pm-web-move g {
     transition: none;
   }
-  /*
-    ⚠⚠⚠ AND THE FLOW STOPS TOO (`P2-A3-E596` WS-C item 4). ⚠ It is an INFINITE
-    animation, which is the kind `prefers-reduced-motion` exists for — the glide
-    above at least ends. ⚠ THE DASHES REMAIN: the line keeps its dashed pattern
-    and simply stops travelling, so nothing about the picture's meaning changes.
-  */
+  /* AND THE FLOW STOPS TOO WS-C item 4). It is an INFINITE */
   .pm-web-link-joined {
     animation: none;
   }

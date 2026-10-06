@@ -55,11 +55,7 @@ export async function PATCH(
     | { action?: string; dropIds?: unknown }
     | null;
 
-  /*
-    ⚠ THE ACTION IS AN ALLOW-LIST, NOT A SWITCH WITH A DEFAULT. An unrecognised
-    string must do NOTHING — a default branch that fell through to `publish` is
-    how a stale client publishes a set nobody read.
-  */
+  // THE ACTION IS AN ALLOW-LIST, NOT A SWITCH WITH A DEFAULT. An unrecognised
   if (body?.action === "publish") {
     const out = await publishAssessment(id, viewer.userId);
     return out.ok
@@ -103,12 +99,7 @@ export async function POST(
     return NextResponse.json({ error: outcome.message }, { status: 503 });
   }
 
-  /*
-    Regenerating REPLACES the set but leaves past attempts standing. Someone who
-    passed last week passed a real test; deleting the questions they answered
-    doesn't undo that, and cascading the attempts away would quietly revoke
-    credentials that were properly earned.
-  */
+  // Regenerating REPLACES the set but leaves past attempts standing. Someone who
   const row = await prisma.certificationTest.upsert({
     where: { learning_path_id: id },
     create: { learning_path_id: id, questions: outcome.questions, model: outcome.model },

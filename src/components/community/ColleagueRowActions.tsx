@@ -59,7 +59,7 @@ export function ColleagueRowActions({
             role="menu"
             className="absolute right-0 z-20 mt-1 w-[240px] overflow-hidden rounded-brand border border-line bg-white py-1 shadow-lg"
           >
-            {/* ⚠⚠ MENTORING IS OMITTED ON BUY-SIDE ROWS — see the header. */}
+            {/* MENTORING IS OMITTED ON BUY-SIDE ROWS — see the header. */}
             {!buySide && (
               <Link
                 role="menuitem"

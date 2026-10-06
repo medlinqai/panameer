@@ -53,12 +53,7 @@ export function EnrollButton({
     setBusy(true);
     setError(null);
     try {
-      /*
-        ⚠⚠ THE ONLY PLACE THIS URL IS FETCHED FROM, AND IT MOVED WITH THE
-        DIRECTORY (`P1-J3-E039`, 2026-08-27). `api/learn/enrol` -> `api/learn/enroll`.
-        ⚠ A ROUTE PATH IS A LIVE URL — the rename and this string had to change in
-        ONE commit or enrollment 404s. Verified end to end signed in.
-      */
+      // THE ONLY PLACE THIS URL IS FETCHED FROM, AND IT MOVED WITH THE
       const r = await fetch("/api/learn/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,14 +72,7 @@ export function EnrollButton({
 
   return (
     <span className="inline-flex flex-col">
-      {/*
-        ⚠⚠ THE REASON IS SHOWN BEFORE THE BLOCK, NOT AFTER THE CLICK
-        (`P1-ALL-E034`). Learning what you owe by being refused is the worst
-        version of this, and the page already knows.
-        ⚠ THE BUTTON STAYS VISIBLE AND DISABLED — never hidden, never
-        `pointer-events: none`, so the explanation and its links are reachable by
-        keyboard (the `E306` rule).
-      */}
+      {/* THE REASON IS SHOWN BEFORE THE BLOCK, NOT AFTER THE CLICK */}
       {blocked && (
         <GateNotice
           className="mb-3 max-w-md"

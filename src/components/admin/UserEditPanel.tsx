@@ -170,7 +170,7 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
           {asking !== null && (
             <div className="mt-2 flex flex-wrap items-center gap-3 border-l-2 border-magenta pl-3">
               <span className="text-[13px] text-ink">
-                {/* ⚠⚠ THE CONSEQUENCE, IN WORDS, BEFORE THE CLICK. */}
+                {/* THE CONSEQUENCE, IN WORDS, BEFORE THE CLICK. */}
                 {asking === "lock"
                   ? "Locking signs this person out and blocks sign-in until you unlock it."
                   : "Deactivating signs this person out and hides them from members. Nothing is deleted."}
@@ -197,7 +197,7 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
       {said && <p className="mt-3 text-[13px] font-bold text-ink">{said}</p>}
       {error && <p className="mt-3 text-[13px] font-bold text-magenta">{error}</p>}
       <p className="mt-3 text-[12.5px] text-ink-2">
-        {/* ⚠ Said on screen because it is the lane's whole promise. */}
+        {/* Said on screen because it is the lane's whole promise. */}
         Every change here is recorded in the audit log, with the value before and
         after. Nothing on this page deletes a real account.
       </p>

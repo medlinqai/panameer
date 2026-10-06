@@ -62,29 +62,14 @@ export function LessonActions({
           <button
             type="button"
             disabled
-            /* ⚠⚠⚠ RULING 18, AND THIS ONE LEAKED AN INTERNAL BACKLOG TO A LEARNER —
-               "it's a Medlinq port on the backlog" names another product and a
-               work queue. ⚠ A member is owed what the control does, not our plan.
-               ⚠ SUPERSEDED (`E164`):
-               //   "Messages isn't built yet — it's a Medlinq port on the backlog." */
+            // RULING 18, AND THIS ONE LEAKED AN INTERNAL BACKLOG TO A LEARNER —
             title="Messaging is not available."
-            /*
-              E217 — A DISABLED GHOST, not a faded primary. This sat beside
-              "Next Lesson" as a second solid magenta button at 35% — two
-              primaries in one row, one of which does nothing. The live action
-              on this row is Next Lesson; a control that is both unavailable AND
-              the loudest thing next to it is the anti-pattern the button
-              standard exists to stop.
-            */
+            // E217 — A DISABLED GHOST, not a faded primary. This sat beside
             className="cursor-not-allowed border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold text-ink-2 opacity-60"
           >
             Message {instructorName ? "the Instructor" : "the Instructor"}
           </button>
-          {/* ⚠⚠ `P2-A4-E611` — IT NAMES THE MECHANISM, NOT A DATE. Messaging is
-              COLLEAGUE-ONLY today; learner→instructor messaging is not built and
-              nothing schedules it. ⚠ *"Coming soon"* promised a timeline with no
-              writer behind it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   <span className="mt-1 text-[12px] text-ink-2">Coming soon</span> */}
+          {/* — IT NAMES THE MECHANISM, NOT A DATE. Messaging is */}
           <span className="mt-1 text-[12px] text-ink-2">Not open yet</span>
         </span>
 

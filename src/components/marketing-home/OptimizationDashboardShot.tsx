@@ -171,26 +171,7 @@ export function OptimizationDashboardShot() {
                 <span className="osd-kico is-c" aria-hidden>
                   <DollarSign className="ash-sv" strokeWidth={2} aria-hidden />
                 </span>
-                {/*
-                  ── ⚠ A BAND, AND THE REASON IS ARITHMETIC (P1-J0-E257) ───────
-
-                  ⚠ THE OPERATION WAS WRONG, NOT MERELY THE PRECISION. The figure
-                  here was the SUM of the five findings below — 980 + 610 + 520 +
-                  265 + 215 — and those findings OVERLAP: invoice matching, PO
-                  price alerts and rogue-spend all read the same purchase-order
-                  and invoice lines. Adding them counts the same dollars up to
-                  three times. A more precise total would have been more wrong.
-
-                  ⚠ IT IS THE ROADMAP'S BAND, NOT A NEW NUMBER. `AiRoadmapShot`
-                  already ships `$1.8M – $3.2M` for THE SAME FIVE OPPORTUNITIES —
-                  the dashboard and the roadmap describe one set of findings, and
-                  until now they stated two different totals for it. One band,
-                  both places.
-
-                  ⚠ NO OVERLAP OR NETTING MODEL WAS BUILT. That needs
-                  per-solution economics which do not exist. The band is the
-                  honest answer, not a placeholder for a calculation.
-                */}
+                {/* A BAND, AND THE REASON IS ARITHMETIC */}
                 <span className="osd-kv">$1.8M &ndash; $3.2M</span>
               </div>
               <p className="osd-klab">Est. Savings — Rev/Heads</p>
@@ -245,24 +226,7 @@ export function OptimizationDashboardShot() {
         </div>
       </AppShot>
 
-      {/*
-        ⚠ THE EMAIL IS ON STEP 4, NOT STEP 3, AND THAT WAS RULED ON. Scott
-        considered step 3, chat built it there, and he reversed it: "dont add the
-        email to the step 3 graphic...add it to the step 4 graphic like this." The
-        Step 3 funnel is untouched.
-
-        ⚠ NOTHING IN THE DASHBOARD MAY BE OBSCURED. Scott: "dont want to obscure the
-        numbers or the text for the highest value savings number (TDWCA)." The fix is
-        NOT to slide the card off the frame — it is to give the frame blank canvas to
-        be overlapped, which is what `osd-main`'s 118px bottom padding is for. The
-        overlapping portion lands entirely in that empty band below the findings
-        table. Asserted by intersection test against every td, th, KPI value, label,
-        note, heading and pill at eight widths, not by eye.
-
-        ⚠ IT IMPLIES AN EMAIL THAT DOES NOT SEND YET — `RESEND_API_KEY` is commented
-        out and the share token currently comes back in the `POST /api/assessment`
-        response rather than by mail. Counsel-gate item, not a build blocker.
-      */}
+      {/* THE EMAIL IS ON STEP 4, NOT STEP 3, AND THAT WAS RULED ON. Scott */}
       <aside className="osd-mail">
         <div className="osd-mail-from">
           <span className="osd-mail-av" aria-hidden>
@@ -274,23 +238,12 @@ export function OptimizationDashboardShot() {
           </span>
         </div>
         <p className="osd-mail-subj">Your P2P AI Maturity report is ready</p>
-        {/*
-          ⚠ "every capability domain", NOT "all eight". Scott's reference image said
-          eight; the dashboard directly beside this card says "Across 10 capability
-          domains" and "Procure-to-Pay · all ten capability domains". Eight against
-          ten inside one frame would show a visitor the gap between what the bank
-          measures (8) and what the page advertises (10). "Every" is true either way
-          and does not require resolving that gap here.
-        */}
+        {/* eight; the dashboard directly beside this card says "Across 10 capability */}
         <p className="osd-mail-body">
           We scored every capability domain and ranked the opportunities by the
           dollars running through each one. Your dashboard is live.
         </p>
-        {/*
-          ⚠ THIS PATH DOES NOT MATCH THE APP. Scott's string from his image is
-          `/assess/claim/`; the real route is `/assess/r/<token>`. Shipping his, and
-          flagged in the report so he can decide which one moves.
-        */}
+        {/* THIS PATH DOES NOT MATCH THE APP. Scott's string from his image is */}
         <span className="osd-mail-link">panameer.com/assess/claim/8f2c…</span>
         <p className="osd-mail-foot">
           The link signs you in. No password to set, nothing to install.

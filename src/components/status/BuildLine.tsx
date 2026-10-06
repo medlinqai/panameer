@@ -68,15 +68,13 @@ export function BuildLine({
           className="absolute left-0 top-0 h-[3px] rounded-full bg-magenta"
           style={{ width: `${todayPct}%` }}
         />
-        {/* ⚠⚠ `motion-safe:` ONLY — reduced motion turns the pulse off entirely
-            (the brief's rule), and the dot is still there, just still. */}
+        {/* (the brief's rule), and the dot is still there, just still. */}
         <span
           aria-hidden
           className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-magenta motion-safe:animate-pulse"
           style={{ left: `${todayPct}%` }}
         />
-        {/* ⚠ A release with no target date cannot be placed, so it is simply not
-            flagged — never pinned to "today" or to the end of the line. */}
+        {/* A release with no target date cannot be placed, so it is simply not */}
         {releases
           .filter((r) => r.date)
           .map((r) => (
@@ -89,36 +87,18 @@ export function BuildLine({
           ))}
       </div>
 
-      {/*
-        ── ⚠⚠⚠ THE AXIS CARRIES LABELS ONLY WHERE THERE IS ROOM (`P2-ALL-E769`) ──
-
-        ⚠⚠ MEASURED AT 390: `Define · Design` and `Build` sit 0% and 26% apart —
-        which is **91px** of a 350px axis — and the labels are wider than that, so
-        they printed over each other as `Define ·BuildIn` / `2026-08Q026-09-01`.
-        ⚠⚠⚠ **NOTHING SHRINKS OR TRUNCATES: A DATE THAT HAS TO BE GUESSED AT IS
-        WORSE THAN A DATE ON ITS OWN LINE.** Below `sm` the same marks render as a
-        LIST and the rail above keeps the shape — the fill to today, the today dot
-        and the release flags are all still there and all still positioned.
-      */}
+      {/* THE AXIS CARRIES LABELS ONLY WHERE THERE IS ROOM */}
       <div className={"relative mt-3 hidden sm:block " + (twoRows ? "h-[72px]" : "h-10")}>
         {marks.map((m, i) => (
           <span
             key={m.date}
             className={
               "absolute whitespace-nowrap text-[11px] " +
-              /* ⚠ The second row sits below the first, with a leader line drawn by
-                 `before:` back up to the rail so a reader can tell which marker a
-                 dropped label belongs to. */
+              // The second row sits below the first, with a leader line drawn by
               (rows[i] === 1
                 ? "top-[34px] before:absolute before:-top-[30px] before:left-1/2 before:h-[26px] before:w-px before:bg-line "
                 : "top-0 ") +
-              /*
-                ⚠⚠ A LABEL AT EITHER END IS ALIGNED, NOT CENTRED, AND THIS WAS A
-                MEASURED DEFECT: centring puts half of it outside the page.
-                ⚠⚠⚠ The first label sits at 0% and the last at 100%, so
-                `-translate-x-1/2` printed `n` for `Design` and `Prove` ran off the
-                right edge — both clipped, on the live page.
-              */
+              // A LABEL AT EITHER END IS ALIGNED, NOT CENTRED, AND THIS WAS A
               (m.at <= 2 ? "" : m.at >= 98 ? "-translate-x-full" : "-translate-x-1/2") +
               " " +
               (m.current ? "font-bold text-ink" : "text-ink-2")
@@ -131,7 +111,7 @@ export function BuildLine({
         ))}
       </div>
 
-      {/* ⚠ The same marks, stacked, for phone. One source, two arrangements. */}
+      {/* The same marks, stacked, for phone. One source, two arrangements. */}
       <ul className="mt-3 sm:hidden">
         {marks.map((m) => (
           <li
@@ -147,13 +127,7 @@ export function BuildLine({
         ))}
       </ul>
 
-      {/*
-        ⚠⚠ THE UNDATED PHASES, AFTER THE LINE AND IN ORDER (`E769`). ⚠⚠⚠ THEY ARE
-        NAMED RATHER THAN OMITTED: a reader who knows the method counts six phases,
-        and silently dropping two would read as "there are four" — a quieter lie
-        than a wrong date. ⚠ `dates to come` is the whole claim; nothing is implied
-        about when.
-      */}
+      {/* THE UNDATED PHASES, AFTER THE LINE AND IN ORDER . THEY ARE */}
       {undated.length > 0 && (
         <p className="mt-1 text-[12px] text-ink-3">
           {undated.map((p) => p.name).join(" · ")} — dates to come

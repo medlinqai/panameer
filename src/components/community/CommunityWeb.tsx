@@ -89,10 +89,7 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         className="pm-web-svg"
       >
         <defs>
-          {/* ⚠⚠ THE HALO IS A RING BEHIND THE PHOTO, NOT A FILTER OVER IT
-              (WS-B item 2). A filtered `<image>` blurs the face — so the blur
-              is applied to a plain circle UNDER the portrait, and the portrait
-              itself is clipped, never filtered. */}
+          {/* THE HALO IS A RING BEHIND THE PHOTO, NOT A FILTER OVER IT */}
           <filter id="pm-web-halo" x="-70%" y="-70%" width="240%" height="240%">
             <feGaussianBlur stdDeviation="5" result="b" />
             <feMerge>
@@ -117,7 +114,7 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
             <Node key={n.key} n={n} face={faceFor(n, data)} />
           ))}
 
-          {/* ⚠ The viewer, last, so nothing paints over them. */}
+          {/* The viewer, last, so nothing paints over them. */}
           <circle cx={VIEW.cx} cy={VIEW.cy} r={NODE_R.me} className="pm-web-me-bg" />
           {data.me?.photoUrl && (
             <>
@@ -142,18 +139,7 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         </g>
       </svg>
 
-      {/*
-        ⚠ The legend states what each shape MEANS. Three shapes with no key is a
-        puzzle, and the states are facts about people, not styling.
-        ⚠⚠⚠ THE NUMBERS LEFT IT — SCOTT, 2026-09-25: the three figures **move
-        into the header**. ⚠ They are now stated ONCE, in ink, where the mockup
-        puts them; repeating them under the picture is the same figure in two
-        places, which is how two surfaces start disagreeing.
-        ⚠⚠ **THE KEY ITSELF STAYS**, because its job was never the counting — it
-        is what stops three colours being a puzzle.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   {nJ} joined · {nI} invited · {nR} reachable
-      */}
+      {/* The legend states what each shape MEANS. Three shapes with no key is a */}
       <ul className="pm-web-key" aria-hidden>
         <li>
           <i className="pm-web-key-joined" />
@@ -169,24 +155,15 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         </li>
       </ul>
 
-      {/* ⚠⚠ THE OVERFLOW IS TOLD, NOT SWALLOWED. A ring has a circumference; a
-          capped web that said nothing would be under-reporting somebody's
-          network, which is worse than a smaller picture. */}
-      {/* ⚠⚠ THE PICTURE STATES WHAT IT DREW, ALWAYS — not only when it ran out
-          of room. ⚠ A line that appears only on overflow makes "how much of my
-          network is this?" a question the page answers sometimes, and the
-          reader cannot tell the difference between "all of it" and "nobody
-          told me". ⚠⚠⚠ NOW THE LEGEND IS THE NETWORK AND THIS IS THE DRAWING;
-          the two facts never share a numeral again. */}
+      {/* THE OVERFLOW IS TOLD, NOT SWALLOWED. A ring has a circumference; a */}
+      {/* THE PICTURE STATES WHAT IT DREW, ALWAYS — not only when it ran out */}
       {drawnText(data) && <p className="pm-web-more">{drawnText(data)}</p>}
 
-      {/* ⚠ The same caption as both rings, from the same component — one
-          wording, three pictures (`P2-A2-E600` WS-D). */}
+      {/* The same caption as both rings, from the same component — one */}
       <RebuildBadge secondsLeft={secondsLeft} />
 
       {nJ + nI + nR === 0 && (
-        /* ⚠ THE EMPTY STATE STATES THE MECHANISM. "No colleagues" on its own
-           reads as a broken feature rather than a new account. */
+        // THE EMPTY STATE STATES THE MECHANISM. "No colleagues" on its own
         <p className="pm-web-empty">
           Your community starts with one person. Invite a colleague and they
           appear here.
@@ -200,58 +177,22 @@ function plural(n: number, one: string, many = ""): string {
   return `${n} ${n === 1 ? one : many || one + "s"}`;
 }
 
-/**
- * ── ⚠⚠⚠ THE WEB SAYS IT IS A SAMPLE (`P2-A3-E596` WS-C item 3) ────────────
- *
- * ⚠ SCOTT: *"Scott will have 25,000+ colleagues; the web must never try to draw
- * them. It already caps — what is missing is saying so."*
- * ⚠⚠ THE WEB IS AN EMOTIONAL DEVICE, NOT A DIRECTORY. Its job is to make the
- * network feel alive and show unexplored territory; the colleague list is the
- * directory. A label that says *"12 of 25,431 shown"* keeps it honest without
- * asking it to be something else.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`):
- * //   const n = o.joined + o.invited + o.reachable;
- * //   return n > 0 ? `+${n} more not shown` : null;
- * ⚠⚠ `+N more not shown` NAMED THE REMAINDER AND NEVER THE WHOLE, so a reader
- * could not tell whether they were looking at most of their network or a
- * fraction of it. **Shown-of-total answers the question that was actually being
- * asked.**
- *
- * ⚠ SELECTION IS **MOST RECENT**, and `community-web.ts` WAS CHANGED TO MAKE
- * THAT TRUE rather than having the label assert it. ⚠⚠ MEASURED FIRST: neither
- * the connection query nor the person query carried an `orderBy`, so the cap
- * took an ARBITRARY sixteen that could differ between two renders. **A label
- * naming a selection the code does not make is worse than no label.**
- */
+/** THE WEB SAYS IT IS A SAMPLE WS-C item 3) */
 function drawnText(d: WebData): string | null {
   const o = d.overflow;
   const hidden = o.joined + o.invited + o.reachable;
   const shown = d.joined.length + d.invited.length + d.reachable.length;
-  /* ⚠ NOTHING TO SAY ABOUT AN EMPTY PICTURE — the empty state below says it
-     properly, and "0 of 0 drawn" beside it would be a second, worse answer. */
+  // NOTHING TO SAY ABOUT AN EMPTY PICTURE — the empty state below says it
   if (shown === 0) return null;
-  /* ⚠⚠ RENAMED FROM `overflowText` AND NO LONGER RETURNS null WHEN NOTHING IS
-     HIDDEN (`E601` WS-A). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   function overflowText(d: WebData): string | null {
-     //     const hidden = o.joined + o.invited + o.reachable;
-     //     if (hidden <= 0) return null;
-     ⚠⚠⚠ THE OLD EARLY RETURN IS THE WHOLE DEFECT: the one sentence that told a
-     reader how much of their network they were looking at was suppressed in
-     precisely the case where the answer was reassuring. */
+  // RENAMED FROM `overflowText` AND NO LONGER RETURNS null WHEN NOTHING IS
   if (hidden <= 0) return `All ${shown} drawn`;
-  /* ⚠ `toLocaleString` with NO locale argument would format differently on the
-     server and in the browser and hydrate mismatched. `en-US` is pinned for the
-     same reason `date-range-label.ts` refuses `toLocaleDateString`. */
+  // server and in the browser and hydrate mismatched. `en-US` is pinned for the
   const total = (shown + hidden).toLocaleString("en-US");
-  /* ⚠ "drawn", matching the all-drawn case above — one verb for one fact, so
-     the two states read as the same sentence answering the same question.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   return `${shown} of ${total} shown · most recent`; */
+  // the two states read as the same sentence answering the same question.
   return `${shown} of ${total} drawn · most recent`;
 }
 
-/** ⚠ `invited` has no person and therefore never a face. That is the model. */
+/** `invited` has no person and therefore never a face. That is the model. */
 function faceFor(n: PlacedNode, d: WebData): string | null {
   if (n.kind === "joined") return d.joined.find((j) => j.id === n.key)?.photoUrl ?? null;
   if (n.kind === "reachable") return d.reachable.find((r) => r.id === n.key)?.photoUrl ?? null;
@@ -260,8 +201,7 @@ function faceFor(n: PlacedNode, d: WebData): string | null {
 
 function Node({ n, face }: { n: PlacedNode; face: string | null }) {
   if (n.kind === "invited") {
-    /* ⚠⚠ HOLLOW, DASHED, NO FACE — because an invite holds NAME AND EMAIL ONLY.
-       ⚠ Anything face-shaped here would imply a profile that does not exist. */
+    // HOLLOW, DASHED, NO FACE — because an invite holds NAME AND EMAIL ONLY.
     return <circle cx={n.x} cy={n.y} r={n.r} className="pm-web-invited" />;
   }
   if (n.kind === "reachable") {
@@ -293,14 +233,7 @@ function Node({ n, face }: { n: PlacedNode; face: string | null }) {
   );
 }
 
-/**
- * ⚠⚠ THE SAME SILHOUETTE EVERYWHERE A FACE IS MISSING, AND NEVER INITIALS.
- * Scott, 2026-09-20: *"makes sure to use the icons you used on the mock up if
- * there are no pictures."*
- * ⚠ DRAWN INLINE, NOT FETCHED — *"a placeholder that 404s is worse than the gap
- * it fills."* ⚠ Deliberately grey and colourless, so it reads as *"no photo
- * yet"* rather than as a photo.
- */
+/** THE SAME SILHOUETTE EVERYWHERE A FACE IS MISSING, AND NEVER INITIALS. */
 function Silhouette({
   cx,
   cy,

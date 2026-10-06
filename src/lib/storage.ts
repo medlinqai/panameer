@@ -1,87 +1,27 @@
 import { StorageClient } from "@supabase/storage-js";
 import { randomUUID } from "crypto";
 
-/**
- * Supabase Storage — profile photos (brief_O).
- *
- * SERVER ONLY. Uses the service-role key, so this module must never be
- * imported into a client component.
- *
- * The client is constructed LAZILY (same pattern as the Resend client, see
- * pitfalls.md): building it at module load would throw when the Supabase env
- * vars are unset, which breaks `next build`'s page-data collection for every
- * route that transitively imports this file.
- *
- * Uses `@supabase/storage-js` directly rather than supabase-js's `createClient`
- * — the latter always spins up a RealtimeClient, which throws on Node 20
- * ("WebSocket is not available"). We only need Storage.
- */
+/** Supabase Storage — profile photos (brief_O). */
 
 /** Public bucket holding provider/person profile photos. See deployment.md. */
 export const PROFILE_PHOTO_BUCKET = "profile-photos";
 
-/**
- * PUBLIC bucket holding COMPANY LOGOS (brief_j14 WS-D / E168).
- *
- * Public for the same reason profile photos are: a logo is rendered on pages
- * anyone can see — a work request, a provider card — and signing every one of
- * them would add a round trip per image for a mark the company publishes
- * everywhere anyway.
- */
+/** PUBLIC bucket holding COMPANY LOGOS (brief_j14 WS-D / E168). */
 export const COMPANY_LOGO_BUCKET = "company-logos";
 
-/**
- * PRIVATE bucket holding uploaded résumés (brief_Q).
- *
- * Deliberately NOT public, unlike profile photos: a résumé is personal data
- * (home address, phone, employment history). Objects are reachable only through
- * the service-role key on the server, and the app hands out short-lived signed
- * URLs when a file genuinely needs to be re-read.
- */
+/** PRIVATE bucket holding uploaded résumés (brief_Q). */
 export const RESUME_BUCKET = "resumes";
 
-/**
- * PRIVATE bucket for uploaded certificates (brief_U / E044). Private for the
- * same reason as résumés: a certificate carries a full legal name and a
- * credential number. Served only through short-lived signed URLs.
- */
+/** PRIVATE bucket for uploaded certificates (brief_U / E044). Private for the */
 export const CERTIFICATION_BUCKET = "certifications";
 
-/**
- * PRIVATE bucket for project supporting documents (brief_project_model_v2).
- *
- * Private is the whole point: a statement of work or a case study carries the
- * client's name, scope and commercials — exactly the material a provider may
- * have marked `CONFIDENTIAL` on the project itself. Storing a public URL here
- * would leak around that setting, so this follows the certificate rule and
- * returns an object PATH, read back only through a short-lived signed URL.
- */
+/** PRIVATE bucket for project supporting documents (brief_project_model_v2). */
 export const PROJECT_DOC_BUCKET = "project-docs";
 
-/**
- * PRIVATE bucket for work ARTIFACTS (PJv2 WS4 / E078a) — the deliverables a
- * provider attaches to a job or a project as proof.
- *
- * Private for the same reason as project docs: an artifact is a design doc, a
- * runbook, a screenshot of a client's system. It is evidence shown deliberately,
- * not published, so this returns an object PATH read back through a short-lived
- * signed URL.
- */
+/** PRIVATE bucket for work ARTIFACTS (PJv2 WS4 / E078a) — the deliverables a */
 export const ARTIFACT_BUCKET = "artifacts";
 
-/**
- * PRIVATE bucket for BUG-REPORT SCREENSHOTS (`P2-J1.1-E032` WS-3).
- *
- * ⚠⚠ PRIVATE, AND THIS IS THE ONE REAL DECISION IN THAT WORK-STREAM. The split
- * above is deliberate — `profile-photos` and `company-logos` are public
- * *because a logo is rendered on pages anyone can see*. A BUG SCREENSHOT IS THE
- * OPPOSITE: it is whatever was on the reporter's screen when it broke, which
- * routinely means another user's name, an email address, a session, or an
- * internal admin page. Read back only through short-lived signed URLs, like
- * résumés and project docs.
- * ⚠ The bucket was CREATED private and verified as such (`public=false`) rather
- * than assumed to exist.
- */
+/** PRIVATE bucket for BUG-REPORT SCREENSHOTS WS-3). */
 export const SUPPORT_SCREENSHOT_BUCKET = "support-screenshots";
 
 /** E012 — "PDF / Word / rich text, ≤5MB". */
@@ -148,12 +88,7 @@ function getStorageClient(): StorageClient {
 /** Human-readable list for error copy. */
 const allowedList = "PNG, JPG, or WebP";
 
-/**
- * Validate + upload one profile photo, returning its public URL.
- *
- * `personId` is ALWAYS resolved server-side from the session — never accepted
- * from client input — so a caller can only ever write into their own folder.
- */
+/** Validate + upload one profile photo, returning its public URL. */
 export async function uploadProfilePhoto(
   personId: string,
   file: { type: string; size: number; bytes: ArrayBuffer }
@@ -195,13 +130,7 @@ export async function uploadProfilePhoto(
   return data.publicUrl;
 }
 
-/**
- * Validate + upload one company logo, returning its public URL.
- *
- * `companyId` is resolved server-side from the caller's ADMIN membership, never
- * from client input — the same ownership boundary as the profile photo, applied
- * to an entity rather than a person.
- */
+/** Validate + upload one company logo, returning its public URL. */
 export async function uploadCompanyLogo(
   companyId: string,
   file: { type: string; size: number; bytes: ArrayBuffer }
@@ -236,15 +165,7 @@ export async function uploadCompanyLogo(
   return bucket.getPublicUrl(objectPath).data.publicUrl;
 }
 
-/**
- * Store an uploaded résumé and return its OBJECT PATH
- * (brief_Q) — not a URL, because the bucket is private. Keeping the original
- * file means a parse can be re-run or audited without asking the user to
- * upload again, and the review page can offer the source document back.
- *
- * Storage failures are the CALLER's to tolerate: a lost file must never fail an
- * import whose parse already succeeded.
- */
+/** Store an uploaded résumé and return its OBJECT PATH */
 export async function uploadResumeFile(
   profileId: string,
   file: { name: string; type: string; bytes: ArrayBuffer }
@@ -269,20 +190,7 @@ export async function uploadResumeFile(
   return objectPath;
 }
 
-/**
- * Remove a résumé object from the private bucket (`P1-A1.4-E413` WS-7).
- *
- * ⚠⚠ A MISSING OBJECT IS A SUCCESS, NOT A FAILURE. This runs when a NEW résumé
- * supersedes an old one, and the new upload has already happened by then — so a
- * stale `storage_path`, a hand-deleted object or a bucket that never received
- * the file must not fail the import that triggered the cleanup. ⚠ Supabase's
- * `remove()` does not error on an absent key, and the `catch` covers the
- * transport failing outright.
- *
- * ⚠ IT RETURNS A BOOLEAN AND NEVER THROWS. The caller logs; nothing upstream
- * branches on it, because "the old file could not be removed" is not a reason
- * to refuse somebody their new résumé.
- */
+/** Remove a résumé object from the private bucket WS-7). */
 export async function deleteResumeFile(objectPath: string): Promise<boolean> {
   if (!objectPath.trim()) return true;
   try {
@@ -301,11 +209,7 @@ export async function deleteResumeFile(objectPath: string): Promise<boolean> {
 }
 
 /** Store a certificate file; returns its object PATH (the bucket is private). */
-/**
- * ⚠ THE FOLDER IS THE OWNER'S USER ID SINCE `P1-J3-E019` — a credential belongs
- * to the person, so its attachment is filed under the person. Existing objects
- * under a profile-id folder are not moved; see the route's note.
- */
+/** THE FOLDER IS THE OWNER'S USER ID SINCE — a credential belongs */
 export async function uploadCertificationFile(
   ownerId: string,
   file: { name: string; type: string; bytes: ArrayBuffer }
@@ -374,10 +278,7 @@ export async function uploadArtifactFile(
   return objectPath;
 }
 
-/**
- * A short-lived signed URL for a stored résumé. The bucket is private, so this
- * is the only way to read one back, and the link expires.
- */
+/** A short-lived signed URL for a stored résumé. The bucket is private, so this */
 export async function signedResumeUrl(
   objectPath: string,
   expiresInSeconds = 300
@@ -393,15 +294,7 @@ export async function signedResumeUrl(
 }
 
 
-/**
- * Store a bug-report screenshot and return its OBJECT PATH — not a URL, because
- * the bucket is private (`P2-J1.1-E032` WS-3).
- *
- * ⚠ FOLDERED BY TICKET so everything attached to one report sits together and a
- * ticket's objects can be found without a database round trip.
- * ⚠ THE UPLOAD IS OPTIONAL AT THE CALL SITE: a reporter with no screenshot must
- * still be able to file, so this is never on the required path.
- */
+/** Store a bug-report screenshot and return its OBJECT PATH — not a URL, because */
 export async function uploadSupportScreenshot(
   ticketId: string,
   file: { name: string; type: string; size: number; bytes: ArrayBuffer }
@@ -427,12 +320,7 @@ export async function uploadSupportScreenshot(
   return objectPath;
 }
 
-/**
- * A short-lived signed URL for a bug-report screenshot. The bucket is private,
- * so this is the only way to read one back, and the link expires.
- * ⚠ SAME SHAPE AS `signedResumeUrl`, deliberately — one way to read a private
- * object in this codebase, not two.
- */
+/** A short-lived signed URL for a bug-report screenshot. The bucket is private */
 export async function signedSupportScreenshotUrl(
   objectPath: string,
   expiresInSeconds = 300

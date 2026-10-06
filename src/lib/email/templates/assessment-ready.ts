@@ -59,15 +59,7 @@ export function assessmentReadyTemplate({
   return { subject, html: emailShell({ logoUrl, bodyHtml }), text };
 }
 
-/**
- * The colleague invite (WS-E) — "Dana thought you should see this".
- *
- * FROM THE COLLEAGUE, NOT FROM US. The subject names the sender and the body
- * leads with them, because that is the entire mechanism: an invite from someone
- * you work with gets answered and a cold email from a vendor does not. The
- * honesty rail is that it never pretends to BE from them — it is sent by
- * Panameer, on their behalf, and says so.
- */
+/** The colleague invite (WS-E) — "Dana thought you should see this". */
 export function assessmentInviteTemplate({
   fromName,
   companyName,

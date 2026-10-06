@@ -221,20 +221,7 @@ export function InstructorsShot() {
 
 /* ── §8 · WHAT DO YOU DO AFTER THE TRAINING ───────────────────────────────── */
 
-/**
- * ⚠ `LinkedIn` HERE IS SCOTT'S OWN WORD AND IS NOT THE REMOVED OAUTH PROVIDER. LinkedIn was
- * removed everywhere as an identity provider and as a profile field; "a URL you can paste into
- * LinkedIn" is a place a learner puts a link, which is what he asked for verbatim.
- *
- * ⚠ `P1-J3-E019` IS FIXED, AND THIS NOTE USED TO SAY THE OPPOSITE. It recorded that the issuer
- * opened `if (!profile || !path) return null` and that `Certification.provider_profile_id` was
- * not nullable, so a learner without a seller profile passed the test and got nothing,
- * silently. As of 2026-08-21 `Certification.user_id` is the owner, the profile link is
- * nullable, and only the path is required. ⚠ THE CARD'S CLAIM IS TRUE FOR EVERYONE NOW.
- *
- * ⚠ §8's COPY IS STILL UNCHANGED, deliberately — `P1-J0-E282`/`E283` are separate rows and
- * still need Scott. The schema stopped lying; the sentence is his to widen.
- */
+/** removed everywhere as an identity provider and as a profile field; "a URL you can paste into */
 export function ProfileCertificatesShot() {
   return (
     <ShotCard>

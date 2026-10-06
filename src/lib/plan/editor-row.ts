@@ -56,8 +56,7 @@ export function toModelRow(r: EditorRow): PlanRowLike {
   };
 }
 
-/** ⚠ Parsed and printed in UTC: these are pure dates and a local-midnight round
- *  trip shifts them a day in America/New_York (`E775`). */
+/** Parsed and printed in UTC: these are pure dates and a local-midnight round */
 function iso(d: Date | string | null): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;

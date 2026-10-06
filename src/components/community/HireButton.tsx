@@ -29,9 +29,7 @@ export function HireButton({ providerPersonId }: { providerPersonId: string }) {
       }
       router.push(`/work-requests/${json.workRequestId}`);
     } catch {
-      /* ⚠⚠ A THROWN FETCH MUST NOT PRODUCE SILENCE. `E516` records five blocks in this
-         codebase with `try`/`finally` and no `catch`, where a network failure left the member
-         looking at a button that had simply stopped working. */
+      // A THROWN FETCH MUST NOT PRODUCE SILENCE. records five blocks in this
       setError("Could not reach the server. Try again.");
       setBusy(false);
     }
@@ -46,9 +44,7 @@ export function HireButton({ providerPersonId }: { providerPersonId: string }) {
         data-e719-hire
         className="pm-btn pm-btn-primary transition-colors disabled:opacity-60"
       >
-        {/* ⚠ A STATUS SENTENCE INSIDE A BUTTON IS NOT A LABEL AND STAYS A SENTENCE
-            (load-bearing rule 11): `Hire` names the action and takes Title Case; the busy
-            text reports progress and does not. */}
+        {/* A STATUS SENTENCE INSIDE A BUTTON IS NOT A LABEL AND STAYS A SENTENCE */}
         {busy ? "Starting your request…" : "Hire"}
       </button>
       {error && (

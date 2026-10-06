@@ -204,25 +204,7 @@ export default function RequesterStepsPage() {
     ? "Save & Return to Review"
     : `Next: ${REQUESTER_STEP_LABELS[REQUESTER_STEPS[idx + 1] ?? "review"]}`;
 
-  /*
-    ── ⚠⚠ STEP 1 WAS `Which Company Do You Buy For?` AND IT IS GONE (`E418`) ───
-
-    ⚠ SUPERSEDED, quoted not deleted — the screen removed here was 153 lines and
-    carried, in its own words:
-      · title *"Which Company Do You Buy For?"*, subtitle *"Your company is the
-        legal entity every work order and settlement is between. Join it if it's
-        already here, or add it and become its admin."*
-      · an embedded `<CompanyStep bounded nameLabel="Employer Name *">` — the
-        Find/Add tabs, the company search and the domain auto-attach;
-      · a PENDING branch, *"Waiting on {company}."*, for a join awaiting a
-        company admin's approval;
-      · `if (companyValid || companyHasName) companySubmit.current?.();` — the
-        three-state Continue that `P2-J1.1-E025` added after a part-answered
-        company was silently thrown away.
-
-    ⚠ ALL OF IT STAYS ON DISK IN `components/company/CompanyStep.tsx` (`E164`),
-    unimported by this wizard, for work order acceptance to use.
-  */
+  // STEP 1 WAS `Which Company Do You Buy For?` AND IT IS GONE
 
   // ---- 1/3 — Requester Information --------------------------------------
   if (step === "requester_info") {
@@ -232,98 +214,33 @@ export default function RequesterStepsPage() {
         title="Who's asking for the work?"
         subtitle="This is the person on the request — the contact a provider sees, and the identity your ERP sends if you connect one later."
         continueLabel={nextLabel}
-        /*
-          ⚠⚠ THE GATE IS FIRST + LAST + A COMPLETE PHONE, AND THAT IS TWO BRIEF
-          CLAUSES RECONCILED (`E262` + `E242`, reported).
-
-          `E262` says the gate "becomes first name + last name only" — it is
-          describing the removal of the `!draft.address.country` clause that the
-          deleted address block used to require. `E242` says phone BECOMES
-          REQUIRED. Taken literally together they contradict: a required field
-          the gate ignores is not required. So the address clause is gone and a
-          phone clause replaces it.
-
-          ⚠ `isPhoneComplete`, NOT `.trim()` — a half-typed number is not an
-          answer, and `lib/phone.ts` already owns what "complete" means per
-          country (`E203`). No new validation was written here.
-        */
+        // THE GATE IS FIRST + LAST + A COMPLETE PHONE, AND THAT IS TWO BRIEF
         continueDisabled={
           !draft.firstName.trim() ||
           !draft.lastName.trim() ||
-          /*
-            `E281` — photo AND title are REQUIRED, per Scott: *"The requester
-            onboarding never asked me for a picture like the provider... it is
-            annoying to have no image."*
-            ⚠ VERIFIED SATISFIABLE BEFORE BEING MADE REQUIRED. Supabase storage
-            is configured and 28 people already carry a `photo_url`, so this is
-            not a gate nobody can pass — which is the failure mode that
-            dead-ended this wizard once already this week.
-            ⚠ GATED HERE, NOT IN `requesterGaps` — see the report. An existing
-            requester already parked on `review` never re-passes this step, so
-            the server does not enforce it retroactively.
-          */
+          // — photo AND title are REQUIRED, per Scott: *"The requester
           !draft.photoUrl ||
           !draft.title.trim() ||
           !isPhoneComplete(draft.phone, phoneCountry)
         }
-        /* ⚠⚠ `save()` ALREADY TOOK THIS PARAMETER AND NO CALLER EVER PASSED IT
-           (`E504`). `save(payload, "review")` is the entire behaviour Scott
-           asked for. ⚠ `save` ITSELF IS UNCHANGED — there is no second save
-           path and no rewrite. */
+        // `save(payload, "review")` is the entire behaviour Scott
         onContinue={() =>
           save({
             firstName: draft.firstName,
             lastName: draft.lastName,
-            /* `E281`. ⚠ NO `photoUrl` — `/api/profile/photo` already wrote it. */
+            /* `E281`. NO `photoUrl` — `/api/profile/photo` already wrote it. */
             title: draft.title,
-            /*
-              ⚠⚠ SAVED IN E.164 SO THE COUNTRY TRAVELS WITH THE NUMBER (`E417`).
-              Scott: *"The selected phone country is stored with the phone,
-              independent of the address country."* There is no `phone_country`
-              column and this brief forbids a `db:push`, so the country lives
-              inside the value — `+966512345678`. ⚠ THE BOX STILL SHOWS THE
-              NATIONAL FORM; only what is persisted changes.
-              ⚠ FALLS BACK TO THE TYPED STRING if it cannot be made E.164, which
-              `continueDisabled` has already ruled out — a save is never the
-              place to silently drop what somebody typed.
-            */
+            // SAVED IN E.164 SO THE COUNTRY TRAVELS WITH THE NUMBER .
             phone: toE164(draft.phone, phoneCountry) ?? draft.phone,
             employeeId: draft.employeeId,
-            /*
-              ⚠ `address` IS NO LONGER POSTED (`E262`). The block that collected
-              it is gone, so re-sending the hydrated copy would rewrite the
-              signup-seeded Address from client state that no field on this
-              screen can change. The record stays exactly as
-              `requester-onboarding.ts:120` wrote it.
-            */
+            // it is gone, so re-sending the hydrated copy would rewrite the
           }, fromReview ? "review" : undefined)
         }
       >
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            ── ⚠⚠ THE PROVIDER'S OWN UPLOADER, REUSED (`P1-J1.1-E281`) ──────────
-
-            `PhotoCropModal` + `Avatar` is EXACTLY the pattern
-            `join/provider/page.tsx:2746` uses on its own photo step, and the
-            modal posts to the owner-scoped `POST /api/profile/photo`.
-
-            ⚠ WHY THAT ROUTE NEEDED NO CHANGE: it already branches on whether the
-            person has a `providerProfile` — providers go through
-            `applyProviderSection` so `completeness` recomputes, and EVERYONE ELSE
-            gets `Person.photo_url` written directly. A requester was always the
-            "everyone else" case; nobody had ever sent one down it.
-
-            ⚠ `PhotoUpload.tsx` WAS **NOT** USED, and it is the trap here. It
-            looks like the obvious component and its own docblock says it is
-            *"CURRENTLY UNUSED"* — the provider wizard uses this modal instead,
-            because this one CROPS. Reusing the unused one would have shipped a
-            second upload path for one column, which is the defect the brief
-            named.
-            ⚠ SO NOTHING WAS WRITTEN: no new component, no new route, no new
-            column. The only new thing is the panel below.
-          */}
+          {/* THE PROVIDER'S OWN UPLOADER, REUSED */}
           <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:text-left">
             <Avatar
               firstName={draft.firstName}
@@ -347,26 +264,8 @@ export default function RequesterStepsPage() {
             </div>
           </div>
 
-          {/*
-            ⚠⚠ A ROLE, NOT A SALES HEADLINE (`E281`). Same `Person.title` column
-            the provider writes, and the copy is the whole difference: a provider
-            types *"Oracle Cloud P2P Expert"* to be FOUND, a requester types
-            *"Director of Procurement"* so a provider knows WHO THEY ARE TALKING
-            TO. The label, placeholder and hint all say job, not pitch.
-            ⚠ THE COPY IS CC'S AND IS REPORTED FOR SCOTT TO OVERRULE — he named
-            the concept and the example, not these words.
-          */}
-          {/*
-            ⚠ `Title *`, NOT `Job Title *` (`P2-J1.1-E007`, 2026-09-05). Scott
-            asked for the change *"on CARD and in the question that solicits the
-            value"*, so the review row and this label move together — a card that
-            calls a thing one name and the question that collects it another is
-            two names for one field.
-            ⚠ SUPERSEDED, quoted not deleted: `label="Job Title *"`.
-            ⚠ THE HINT AND PLACEHOLDER ARE UNTOUCHED. They still say *"role"* and
-            *"Director of Procurement"*, which is the `E281` copy above and was
-            not in scope.
-          */}
+          {/* A ROLE, NOT A SALES HEADLINE . Same `Person.title` column */}
+          {/* asked for the change *"on CARD and in the question that solicits the */}
           <Field
             label="Title *"
             hint="Your role at your company — for example, Director of Procurement. Providers see it next to your name."
@@ -396,21 +295,9 @@ export default function RequesterStepsPage() {
             </Field>
           </div>
 
-          {/*
-            ⚠ FULL WIDTH SINCE `P1-ALL-E417`, and measured in the walk rather
-            than guessed: this row was a two-column grid holding ONE field, a
-            leftover from when a second field sat beside it. With the country
-            picker now inside the phone field, half a row left the number itself
-            clipped to "98765 43…". Nothing sits next to it, so the row is a row.
-          */}
+          {/* FULL WIDTH SINCE , and measured in the walk rather */}
           <div className="grid gap-3">
-            {/*
-              ⚠ THE BUILT VALIDATOR, NOT A RAW INPUT (`E241`). This was a plain
-              `TextInput` while `PhoneField` — masking on change, validating on
-              blur, backed by `lib/phone.ts` and `npm run check:phone` — was
-              already shipping on `/join/provider`. No new validation was
-              written; the component was imported.
-            */}
+            {/* THE BUILT VALIDATOR, NOT A RAW INPUT . This was a plain */}
             <PhoneField
               value={draft.phone}
               onChange={(next) => setDraft((d) => ({ ...d, phone: next }))}
@@ -419,83 +306,30 @@ export default function RequesterStepsPage() {
             />
           </div>
 
-          {/*
-            ⚠ THE SHARED MODAL. `onUploaded` fires only after the server has
-            stored the file and returned its public URL, so `draft.photoUrl` can
-            never hold a URL the database does not also have.
-          */}
+          {/* THE SHARED MODAL. `onUploaded` fires only after the server has */}
           <PhotoCropModal
             open={photoModal}
             onClose={() => setPhotoModal(false)}
             onUploaded={(photoUrl) => setDraft((d) => ({ ...d, photoUrl }))}
           />
 
-          {/*
-            ⚠⚠ THE `Your address` BLOCK STOOD HERE AND IS GONE (`E262`).
-
-            ⚠ SUPERSEDED, quoted: a `<p>Your address</p>` heading over
-            `<LocationFields withStreet>` bound to `draft.address`.
-
-            ⚠ THE ADDRESS RECORD ITSELF SURVIVES. `requester-onboarding.ts:120`
-            still creates a country-only `Address` from the sign-up country at
-            account creation, and `draft.address` is still hydrated from it —
-            which is what feeds the phone mask above and what Work Location
-            pre-fills from. WORK LOCATION IS NOW THE ONLY FULL ADDRESS THIS
-            WIZARD CAPTURES.
-          */}
+          {/* THE `Your address` BLOCK STOOD HERE AND IS GONE . */}
         </div>
       </WizardShell>
     );
   }
 
-  /*
-    ⚠⚠ THE `buyer_approver` SCREEN STOOD HERE AND IS GONE (`P1-J1.1-E263`).
-
-    ⚠ SUPERSEDED, quoted not deleted so nobody rebuilds it from scratch: it
-    asked *"Who buys with you, and who approves?"* under the sub-line *"One
-    named approver is enough to start. Approval chains and spend thresholds are
-    set up on the company later."*, collected `buyerName` / `buyerEmail` /
-    `approverName` / `approverEmail` in two labelled sections, gated Continue on
-    `approverName` alone, and closed with *"We record the name now. Nothing is
-    sent to them yet — routing approvals is a later step."*
-
-    Scott, 2026-08-30: *"we can leave it in the first onboarding page (for now),
-    but it is likely to come out at some point."* The four columns survive on
-    `RequesterProfile` and nothing gates on them.
-  */
+  // THE `buyer_approver` SCREEN STOOD HERE AND IS GONE .
 
   // ---- 2/3 — Work Location ----------------------------------------------
   if (step === "work_location") {
-    /*
-      ⚠⚠ THIS FALLBACK IS NOT A PRE-FILL ANY MORE (`P1-J1.1-E278`, 2026-08-30).
-
-      ⚠ THE LOGIC IS DELIBERATELY UNCHANGED and the comment is the fix. It reads
-      "use the work location once touched, otherwise the requester's address" —
-      which WAS a real pre-fill while step 2 collected a full address. `E262`
-      deleted that block, so `draft.address` is now the country-only `Address`
-      seeded at signup (`requester-onboarding.ts:120`) and NOTHING ELSE.
-
-      So this supplies A COUNTRY and never a street, city or postcode. That is
-      still worth having — it seeds the country select and drives the phone
-      mask — but anyone reading it as "their address is already in here" will be
-      wrong. ⚠ THE NOTICE THAT SAID EXACTLY THAT IS GONE; see below.
-    */
+    // THIS FALLBACK IS NOT A PRE-FILL ANY MORE , 2026-08-30).
     const wl = draft.workLocationSet ? draft.workLocation : draft.address;
     return (
       <WizardShell
         {...shell}
         title="Where does the work happen?"
-        /*
-          ⚠⚠ NO SUBTITLE, AND THAT IS SCOTT'S ANSWER, NOT AN OMISSION (`E278`).
-          Asked directly what should replace it, he said: **"none."**
-
-          ⚠ SUPERSEDED, quoted not deleted: *"The deliver-to for your
-          engagements. It starts as your own address — change it if the work
-          lands somewhere else."* The second sentence described the `E262`
-          pre-fill that no longer exists, so the line was half false; he chose to
-          drop the whole thing rather than have chat draft a replacement.
-          ⚠ DO NOT WRITE ONE. A subtitle here is copy Scott has already declined.
-        */
+        // NO SUBTITLE, AND THAT IS SCOTT'S ANSWER, NOT AN OMISSION .
         continueLabel={nextLabel}
         continueDisabled={!wl.country}
         onContinue={() => save({ workLocation: wl }, fromReview ? "review" : undefined)}
@@ -503,18 +337,7 @@ export default function RequesterStepsPage() {
         <div className="mx-auto w-full max-w-xl space-y-4">
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            ⚠⚠ THE "Pre-filled from your address" NOTICE IS GONE (`E278`).
-            Scott: *"that notice just gets removed."*
-
-            ⚠ SUPERSEDED, quoted: *"Pre-filled from your address. Edit any field
-            to make it different."* It was TRUE until `E262` deleted the address
-            block on step 2; after that the fields rendered EMPTY under a banner
-            claiming they were filled — a notice that contradicted the form
-            directly beneath it.
-            ⚠ ITS `sameAsYours` FLAG WENT WITH IT. Nothing else read it, and a
-            computed value with no reader is a lint error waiting to happen.
-          */}
+          {/* THE "Pre-filled from your address" NOTICE IS GONE . */}
 
           <div className="space-y-3">
             <LocationFields
@@ -536,102 +359,23 @@ export default function RequesterStepsPage() {
 
   // ---- 3/3 — Review ------------------------------------------------------
   const addr = (a: LocationValue) =>
-    /* ⚠⚠ RESOLVED (`E729` WS-C ruling 4) — `a.country` is the form draft, which holds a CODE
-       since the picker switched, so the review card printed "US" without this. */
+    // RESOLVED ( WS-C ruling 4) — `a.country` is the form draft, which holds a CODE
     [a.line1, a.city, a.state, a.postalCode, countryName(a.country, a.country)]
       .filter(Boolean)
       .join(", ") ||
     "—";
-  /*
-    ── ⚠⚠ THE LABELS SAY WHAT THE FIELD IS (`P2-J1.1-E005`, `E006`, `E007`,
-       2026-09-05) ───────────────────────────────────────────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted: `Company` (`E005`), `Requester` (`E006`),
-    `Job Title` (`E007`). Three label STRINGS changed. Nothing else did.
-
-    ⚠⚠ `Employer` IS DISPLAY COPY OVER `Company`, AND THAT DISTINCTION IS
-    LOAD-BEARING. The value is still `draft.companyName`, the Edit link still
-    goes to the `company` step, the Prisma model is still `Company` — and
-    `model Employer` ALREADY EXISTS in the schema as a different entity, the
-    work-history employer that `P1-ALL-E373` made honest. Renaming anything in
-    Prisma to match this word would collide with it. This is one string on one
-    card.
-
-    ⚠⚠ SUPERSEDED THE SAME DAY BY `P2-J1.1-E013` — quoted, not deleted:
-    *"`Employee ID` KEEPS ITS NAME. It is the person's staff number
-    (`draft.employeeId`) and not the employer."* ⚠ THE SECOND HALF OF THAT WAS
-    WRONG, and the brief that fixed it says why: the column is the ERP USER ID —
-    the POSR `User`/`UserId` extrinsic — not an HR staff number. The row is gone
-    from this card entirely; see the block on the rows below.
-  */
+  // THE LABELS SAY WHAT THE FIELD IS , , 
   const rows: { label: string; value: string; step: RequesterStep }[] = [
-    /*
-      ── ⚠ THE ORDER IS THE ORDER A PERSON WOULD SAY IT IN (`P2-J1.1-E008`) ────
-
-      Name, Title, Employer, Work Location, Phone. Who you are, what you do, who
-      you do it for, where you do it, and last the way to reach you.
-
-      ⚠ FIVE ROWS, NOT SIX (`P2-J1.1-E013`, same day). ⚠ SUPERSEDED, quoted not
-      deleted: *"Name, Title, Employer, Employee ID, Work Location, Phone… the
-      number that identifies you there"*. `Employee ID` was removed from the UI
-      because it is the requester's id IN THEIR OWN ERP, which arrives in a
-      punchout request and is not something a person can type. ⚠ THE COLUMN, THE
-      ZOD FIELD AND THE WRITE PATH ALL SURVIVE — a later punchout brief needs
-      them, and `draft.employeeId` is still hydrated and still posted, so an
-      existing value round-trips untouched rather than being blanked.
-
-      ⚠ SUPERSEDED, quoted not deleted, the order this replaced:
-        `Company · Requester · Job Title · Phone · Employee ID · Work Location`
-      Phone sat third because it was typed third on the form. The form's order
-      is a typing order; this card is a reading order, and they are allowed to
-      differ.
-
-      ⚠ A PURE REORDER OF LITERALS. Every `value` and every `step` travels with
-      its own label — no field, link or lookup changed.
-    */
+    // THE ORDER IS THE ORDER A PERSON WOULD SAY IT IN
     {
       label: "Name",
       value: `${draft.firstName} ${draft.lastName}`.trim() || "—",
       step: "requester_info",
     },
-    /* `E281` — a required field belongs on the review. ⚠ ITS ORIGINAL REASONING
-       IS SPENT, quoted not deleted: *"Employee ID is OPTIONAL and has always
-       been listed, so omitting a REQUIRED one would be odd."* `E013` removed
-       that row, so the comparison it drew no longer has a second term. Title
-       stays on the card on its own merits — it is required and it is what a
-       provider reads next to a name. */
+    // — a required field belongs on the review. ITS ORIGINAL REASONING
     { label: "Title", value: draft.title || "—", step: "requester_info" },
-    /*
-      ⚠⚠ THE `Employer` ROW IS GONE (`P1-A1.4-E418`, 2026-09-11).
-
-      ⚠ SUPERSEDED, quoted not deleted:
-        `{ label: "Employer", value: draft.companyName || "—", step: "company" }`
-
-      Its VALUE came from a question this wizard no longer asks and its EDIT LINK
-      pointed at a step that no longer exists — the same two failures that
-      retired the `Your Address` row below, and a row whose Edit goes nowhere is
-      worse than no row. ⚠ THE `Company` RECORD IS NOT DELETED: the signup
-      placeholder still exists on `Person.company_id`. Only the row is gone,
-      because a provider learns who is asking at work order acceptance.
-    */
-    /*
-      ⚠⚠ THE `Your Address` ROW IS GONE (`P1-J1.1-E279`, 2026-08-30).
-
-      ⚠ SUPERSEDED, quoted not deleted:
-        `{ label: "Your Address", value: addr(draft.address), step: "requester_info" }`
-
-      Two things were wrong with it once `E262` removed the address block. Its
-      VALUE was the signup-seeded country and nothing else, so it printed
-      "United States" under a label promising an address. And its EDIT LINK
-      pointed at `requester_info` — a step that no longer contains a single
-      address field, so the one action the row offered led somewhere that could
-      not honour it. A review row whose Edit goes nowhere useful is worse than no
-      row: it invites a click that cannot work.
-
-      ⚠ THE UNDERLYING `Address` RECORD IS NOT DELETED. It still exists, still
-      holds the signup country, and still feeds the phone mask and the Work
-      Location country. Only this row is gone.
-    */
+    // THE `Employer` ROW IS GONE , 2026-09-11).
+    // THE `Your Address` ROW IS GONE , 2026-08-30).
     {
       label: "Work Location",
       value: addr(draft.workLocationSet ? draft.workLocation : draft.address),
@@ -664,12 +408,7 @@ export default function RequesterStepsPage() {
                 {r.label}
               </dt>
               <dd className="min-w-0 flex-1 text-[15.5px]">{r.value}</dd>
-              {/*
-                ⚠⚠ THE EDIT JUMPED TO THE STEP AND REMEMBERED NOTHING (`E504`).
-                ⚠ SUPERSEDED, quoted not deleted: `onClick={() => setStep(r.step)}`.
-                That single line is why one field change walked three screens:
-                the step had no way to know it had been entered from here.
-              */}
+              {/* THE EDIT JUMPED TO THE STEP AND REMEMBERED NOTHING . */}
               <button
                 type="button"
                 onClick={() => {

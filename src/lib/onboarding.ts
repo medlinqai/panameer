@@ -1,9 +1,9 @@
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+/* THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
-/* ⚠ THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
+/* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
 import { PROFICIENCY_OPTIONS, PROFICIENCY_LABEL, type ProficiencyValue } from "@/lib/languages";
 import { notify } from "@/lib/notifications";
 import {
@@ -21,7 +21,7 @@ import {
   VISIBILITY_THRESHOLD,
 } from "@/lib/completeness";
 import type { Viewer } from "@/lib/access";
-/* ⚠ `P2-J3-E590` WS-A0 — the ONE gate. This file used to hand-roll it. */
+/* `P2-J3-E590` WS-A0 — the ONE gate. This file used to hand-roll it. */
 import { isMarketplaceVisible, providerMeetsRequired } from "@/lib/access";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
@@ -33,121 +33,13 @@ import { capitalizeName } from "@/lib/display";
 import { formatSkillName, matchSkill } from "@/lib/skill-match";
 import { autoLinkSameLetters, notifyCatalogReview } from "@/lib/catalog-review";
 
-/**
- * Provider onboarding — all business logic for the /join wizard (API-first, so
- * the mobile app reuses it). Access control is by identity: every read/write is
- * keyed on `viewer.userId` and the Person 1:1-linked to it, so a viewer can
- * only ever touch their own draft profile.
- */
+/** Provider onboarding — all business logic for the /join wizard (API-first, so */
 
-/**
- * The post-verification profile build (PJv2 WS1 / E070) — spec = Scott's
- * "Overview of Reg Steps by User Type" diagram.
- *
- * The Upwork-derived opening (Experience Level, Goal, a standalone "How Do You
- * Work") is GONE: two of those were self-reported guesses we now derive or no
- * longer need (E068/E067), and the third is a USER-TYPE fork that belongs at the
- * front of the journey, not three screens deep (E066).
- *
- * TITLE FIRST, then the steps mirror the profile's own sections, so the wizard
- * and the finished profile read in the same order.
- *
- *   Provider  (10): Title → RDS → Upload/Review → Specializations → Education
- *                   → Languages → Bio → Rate → Picture → Review All
- *   Recruiter  (8): the same, minus Education and Rate — a recruiter sells other
- *                   people's time, so neither is theirs to state.
- *
- * `RECRUITER_STEPS` is a strict subset, which is what lets one `ProviderStep`
- * type, one label table and one save path serve both.
- */
-/**
- * THE COUNTED ITINERARY — six stops (brief_onboarding_slimdown WS1 / E169).
- *
- * The wizard was ELEVEN trainstops. The thesis behind this cut: capture only
- * what makes a provider MATCHABLE (skills, rate) and CONTACTABLE (photo,
- * company, address, phone), AI-prefill everything else onto the review page
- * unprompted, and nudge the deliberate gaps by email later.
- *
- * Bio, Education and Specializations are NOT deleted — they stay in the model,
- * stay AI-prefilled from the résumé, and stay editable on the review page. They
- * simply stop being stops, and they no longer gate publish (WS6).
- *
- * ⚠ LANGUAGES IS AN INFERENCE, FLAGGED. The brief names Bio / Education /
- * Specializations / DOB as removed and lists the six steps exhaustively —
- * Languages appears in neither list. It is treated like the other three (kept,
- * AI-prefilled, editable on review, not a stop, not a gate) because that is
- * what the brief's own principle implies for anything outside the required set.
- * If Languages was meant to stay a stop, this is the one line to change.
- *
- * `tell_us` — the résumé upload / AI entry — is deliberately NOT in this list.
- * The brief keeps it "up-front… preceding the steps", so it renders before step
- * 1 without a number. It was already excluded from resume targets, so nothing
- * downstream treated it as a milestone anyway.
- */
-/*
-  THE ITINERARY (brief_per_job_skill_model WS-4).
-
-  `roles` and `skills` are GONE as stops. Role is derived from each job's
-  skills, and skills are facts of a job — so asking for them at profile level
-  was asking the provider to answer, in the abstract, a question their own work
-  history already answers concretely. It also produced the ambiguity the whole
-  model exists to remove: a profile-level "General Ledger" belongs to no system.
-
-  `work_history` takes their place. The résumé lands there pre-tagged — each job
-  showing its suite, its derived role and its module chips — and the provider
-  scans and corrects. Same information, one screen instead of two, and every
-  answer attached to the engagement that evidences it.
-
-  Both names survive in `ProviderStep` and in `SAVEABLE_STEPS` below: Settings
-  still posts them, and a client tab left open mid-flow will too. Removing the
-  ability to WRITE would 400 a surface this brief does not touch. They are no
-  longer stops on the tour.
-*/
-/*
-  ── ⚠⚠ THE V3 ITINERARY, RESTORED (`P1-J1.1-E283`, 2026-08-31) ────────────────
-
-  Scott, of the V3 deck: *"this is what used to be and it worked. i want this."*
-
-  ⚠ SUPERSEDED, quoted not deleted — this list was SIX and it was a launch-class
-  fatal:  title · work_history · rate · picture · company · finish
-
-  `0ae97e2` (08-11, "the work-history review replaces Role and Skills") swapped
-  the two steps a provider can COMPLETE BY TYPING for one that only REVIEWS
-  imported data, gated on `employers.length > 0`. Its only producer — the résumé
-  screen — had already been demoted to a one-shot pre-step by `db803b5` eight days
-  earlier. Nobody wrote a bug: a producer step was replaced by a display step
-  after its producer had quietly become unreachable. A provider who typed a title
-  could never get back to the upload and could never leave `2/6`.
-
-  ⚠⚠ THE PROPERTY THAT MAKES V3 WORK, AND THE REASON THIS IS THE FIX:
-  THE RÉSUMÉ IS AN OFFER, AND EVERY COUNTED STEP CAN BE COMPLETED BY TYPING.
-  Upload and Role and Skills arrive pre-filled; skip it and you type them. NOTHING
-  COUNTED IS EVER GATED ON AN IMPORT HAVING HAPPENED. Keep that true and the dead
-  end cannot come back — a stronger guarantee than patching this one path.
-
-  ⚠ NOT A `git revert` of `0ae97e2`. Three weeks sit on top of it and it carries
-  per-job capture Scott has walked and likes. The steps are RE-LISTED; the history
-  is not unwound. `work_history` leaves the itinerary and keeps its file, its
-  `case` block and its type membership (`E164`).
-*/
-/*
-  ── ⚠⚠ SIX, NOT SEVEN — `company` IS GONE (`P1-A1.4-E418`, 2026-09-11) ───────
-
-  ⚠ SUPERSEDED, quoted not deleted, the seventh step:
-      `"company", //  6 — the entity a work order is with (brief_company_model)`
-
-  SCOTT, 2026-09-11: *"Regarding the company… strip it all out."* A provider
-  sells as a PERSON; the entity a work order is with is captured ONCE, at work
-  order acceptance — *"IF you are going to accept the WO... on behalf of whom?"*
-  — which is also the moment an ERP client first has a company name, on the PO.
-  ⚠ SO THE GATE MOVED, IT DID NOT VANISH: see the TODO on `acceptOrder` in
-  `lib/orders.ts`, the single capture point.
-
-  ⚠⚠ AND IT CAME OUT OF THE PUBLISH GATE AND THE MARKETPLACE PREDICATE WITH THE
-  STEP. Leaving either would have been the invisible-profile bug class this file
-  keeps warning about, in its purest form: a provider who completed every step
-  they were shown, refused publication for a question nobody asked them.
-*/
+/** The post-verification profile build (PJv2 WS1 / E070) — spec = Scott's */
+/** THE COUNTED ITINERARY — six stops (brief_onboarding_slimdown WS1 / E169). */
+// THE ITINERARY (brief_per_job_skill_model WS-4).
+// THE V3 ITINERARY, RESTORED , 2026-08-31)
+// SIX, NOT SEVEN — `company` IS GONE , 2026-09-11)
 export const PROVIDER_STEPS = [
   "title", //    1 — what you do
   "roles", //    2 — typed, or pre-filled by the résumé
@@ -158,72 +50,21 @@ export const PROVIDER_STEPS = [
 ] as const;
 export type ProviderStep =
   | (typeof PROVIDER_STEPS)[number]
-  /*
-    STILL RENDERABLE, JUST NOT COUNTED. These screens exist — `tell_us` as the
-    pre-step, the other four as review-page sections and Settings targets — so
-    they stay in the type and in the save switch. Dropping them from the union
-    would delete the ability to WRITE the data, which is not what the brief
-    asks: it asks for them to stop being prompted.
-  */
+  // STILL RENDERABLE, JUST NOT COUNTED. These screens exist — `tell_us` as the
   | "tell_us"
-  /*
-    WS-4 — no longer STOPS, still writable. Settings posts them and so does a
-    client tab left open mid-flow; refusing the write would 400 a surface this
-    brief does not touch. They are simply no longer on the itinerary.
-  */
-  /*
-    ⚠ `roles` AND `skills` ARE BACK IN `PROVIDER_STEPS` (`E283`), so they reach
-    this union through the first branch and are NOT listed again here — a
-    duplicate member is legal TypeScript and a lie to the reader.
-  */
-  /*
-    ⚠⚠ `work_history` LEFT THE ITINERARY AND STAYS IN THE CODEBASE (`E283`).
-
-    HOUSE RULE `E164`: a retired screen stays on disk, unimported. So
-    `WorkHistoryReview.tsx` stays, its `case` block in `page.tsx` stays, its
-    `applyProviderSection` case stays, and it stays in this union — dropping it
-    here would delete the ability to WRITE work history at all, from Settings and
-    from the review page, which is not what was asked. It is simply no longer a
-    numbered stop.
-  */
+  // WS-4 — no longer STOPS, still writable. Settings posts them and so does a
+  // this union through the first branch and are NOT listed again here — a
+  // HOUSE RULE : a retired screen stays on disk, unimported. So
   | "work_history"
-  /*
-    ⚠⚠ `company` LEFT THE ITINERARY AND STAYS IN THE CODEBASE (`E418`), exactly
-    as `work_history` did above and for the same house rule (`E164`).
-
-    It keeps its place in this union, its `case` in the save switch and its entry
-    in `PROVIDER_STEP_LABELS` so that `CompanyStep` — which work order acceptance
-    will use — still has a step name to post under, and so that a client tab left
-    open mid-flow posts a no-op instead of a 400. ⚠ IT IS NO LONGER A PROMPT ON
-    ANY JOURNEY: not the provider's, not the recruiter's, not the requester's.
-  */
+  // as `work_history` did above and for the same house rule .
   | "company"
   | "specializations"
   | "education"
   | "languages"
   | "bio"
-  /*
-    The combined Role→Domain→Skills page WS3 replaced. Kept in the union and in
-    the save switch because Settings still posts it and an older client tab
-    mid-flow will too — refusing it would 400 a surface this brief doesn't
-    touch. It is simply no longer in the itinerary.
-  */
+  // The combined Role→Domain→Skills page WS3 replaced. Kept in the union and in
   | "catalog"
-  /*
-    ── ⚠⚠⚠ THE SECTION EDITORS' OWN STEPS (`P2-A2-E602` WS-A) ───────────────
-
-    ⚠ `photo`, `work_method` and `certifications` each have a `case` in the save
-    switch and each was MISSING FROM THIS UNION and from `SAVEABLE_STEPS`, so
-    `/api/onboarding/provider/step` answered `{"error":"Unknown step"}` and the
-    handlers were unreachable.
-    ⚠⚠ ADDING THEM HERE IS WHAT MADE THE COMPILER POINT AT `SAVEABLE_STEPS` —
-    the pattern Scott asked to be repeated: *"a forgetful sender being a compile
-    error rather than a silent gap is worth more than any check we could write
-    after the fact."* ⚠⚠⚠ THREE PLACES STATED ONE CONCEPT — the `case`, this
-    union and the array — and only two of the three were kept in step.
-    ⚠ `picture` (the wizard's step) and `photo` (the section's) are DIFFERENT
-    NAMES FOR DIFFERENT SURFACES, which is part of why this read as covered.
-  */
+  // THE SECTION EDITORS' OWN STEPS WS-A)
   | "photo"
   | "work_method"
   | "certifications";
@@ -231,17 +72,12 @@ export type ProviderStep =
 /** The uncounted screens that precede the numbered steps. */
 export const PRE_STEPS = ["tell_us"] as const;
 
-/**
- * Every step name the save endpoint accepts — the counted itinerary PLUS the
- * screens that still write data without being stops. The API validates against
- * this; validating against the itinerary would refuse a review-page bio edit.
- */
+/** Every step name the save endpoint accepts — the counted itinerary PLUS the */
 export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   ...PROVIDER_STEPS,
   "roles",
   "skills",
-  /* ⚠ LISTED EXPLICITLY SINCE `E418` — it used to arrive through
-     `PROVIDER_STEPS`. The endpoint still accepts it; nothing prompts it. */
+  // LISTED EXPLICITLY SINCE — it used to arrive through
   "company",
   "catalog",
   "tell_us",
@@ -249,59 +85,13 @@ export const SAVEABLE_STEPS: readonly ProviderStep[] = [
   "education",
   "languages",
   "bio",
-  /*
-    ── ⚠⚠⚠ THREE STEPS HAD A HANDLER AND NO WHITELIST ENTRY (`P2-A2-E602` WS-A)
-
-    ⚠ `saveProviderStep` has carried `case "photo"`, `case "work_method"` and
-    `case "certifications"` all along. ⚠⚠ **THE ROUTE NEVER REACHED THEM**:
-    `/api/onboarding/provider/step` validates against this list FIRST and
-    returned `{"error":"Unknown step"}` with a 400, so the handlers were
-    unreachable code and the editors could not save at all.
-
-    ⚠⚠⚠ THIS IS `E585`'s SHAPE — TWO COMPUTATIONS OF ONE CONCEPT KEPT IN STEP BY
-    HAND. "What the server can save" is stated twice: once as a `case`, once as
-    this array. Nothing made them agree, so one drifted and nobody noticed.
-
-    ⚠ HOW IT SURVIVED: `certifications` was only ever saved from the wizard's
-    review screen, which posts through its own path — so the gap was invisible
-    until `E597`/`E600` gave each section its own editor posting through THIS
-    route. ⚠⚠ `photo` and `work_method` were shipped by `E600` WS-F, whose save
-    proof covered `title` ONLY. **One section proved is not the section set
-    proved** — measured here, 2026-09-22, by a no-op save against every step.
-
-    ⚠ `PROVIDER_STEPS` carries `"picture"`, NOT `"photo"` — a different name for
-    a different thing (the wizard's step vs the section's), which is part of why
-    this read as covered.
-  */
+  // THREE STEPS HAD A HANDLER AND NO WHITELIST ENTRY WS-A)
   "photo",
   "work_method",
   "certifications",
 ];
 
-/**
- * Recruiter journey: no Rate — a recruiter sells other people's time (E070).
- *
- * ⚠ RESTORED TO MATCH V3 (`E283`). ⚠ SUPERSEDED, quoted:
- *     title · work_history · picture · company · finish
- * A recruiter was blocked by the same `work_history` dead end as a provider.
- *
- * ⚠ IT TAKES `roles` AND `skills`, and that follows from the code rather than a
- * preference: `PROVIDER_ONLY_STEPS` below holds exactly `education` and `rate`,
- * so every OTHER counted step belongs to both journeys. Excluding Role and Skills
- * here would have been inventing a third rule — and a recruiter who cannot say
- * what kind of work they place, or which skills, is not searchable.
- *
- * ⚠⚠ FIVE, NOT SIX (`P1-A1.4-E418`) — Rate is still the one difference.
- * ⚠ SUPERSEDED, quoted not deleted: `title · roles · skills · picture · company
- * · finish`.
- *
- * ⚠⚠ THE RECRUITER IS NAMED EXPLICITLY AND WALKED, NOT LEFT TO THE COMPILER.
- * SCOTT, 2026-09-11: *"that changes ALL pathways. Just keep that in mind. ALL of
- * them have company."* Dropping `"company"` from `ProviderStep` would have
- * FORCED its removal here via `satisfies` — but a type error is a safety net,
- * not a plan, and `company` deliberately stays in that union (see above), so
- * nothing would have forced it at all.
- */
+/** Recruiter journey: no Rate — a recruiter sells other people's time (E070). */
 export const RECRUITER_STEPS = [
   "title",
   "roles",
@@ -313,10 +103,7 @@ export const RECRUITER_STEPS = [
 /** Steps that only exist on the provider journey. */
 const PROVIDER_ONLY_STEPS = new Set<ProviderStep>(["education", "rate"]);
 
-/**
- * A RECRUITER is a provider whose `work_method` is RECRUITER — the discriminator
- * the up-front fork now sets, instead of a mid-wizard question.
- */
+/** A RECRUITER is a provider whose `work_method` is RECRUITER — the discriminator */
 export function isRecruiterProfile(p: { work_method: string | null }): boolean {
   return p.work_method === "RECRUITER";
 }
@@ -328,9 +115,7 @@ export function stepsForProfile(p: {
   return isRecruiterProfile(p) ? RECRUITER_STEPS : PROVIDER_STEPS;
 }
 
-/* ⚠ SEVEN (`E283`). The comment said `10 (PJv2 WS1)` while the array held six —
-   two restructures had moved past it. Derived from the array either way, but a
-   false comment is how the next reader gets the count wrong. */
+// SEVEN . The comment said `10 (PJv2 WS1)` while the array held six —
 export const TOTAL_PROVIDER_STEPS = PROVIDER_STEPS.length; // 6 (E418 removed company)
 
 /** 1-based position within the caller's own step list. */
@@ -341,21 +126,12 @@ export function providerStepNumber(
   return steps.indexOf(step) + 1;
 }
 
-/**
- * Stepper heading + forward-button label per step.
- *
- * The "Next: …" labels name the step that follows on the PROVIDER journey; the
- * wizard overrides the label for a recruiter where the next step differs, so
- * the button never promises a step that user will not see.
- */
+/** Stepper heading + forward-button label per step. */
 export const PROVIDER_STEP_LABELS: Record<
   ProviderStep,
   { stepper: string; next: string }
 > = {
-  /* ⚠ `E283` — the title forwards to the résumé screen and then Role.
-     `nextLabelFor` derives the real label from the live itinerary; this is only
-     the fallback, and it said "Next: Your Work History", which is no longer a
-     counted step at all. */
+  // — the title forwards to the résumé screen and then Role.
   title: { stepper: "Your Title", next: "Next: Your Role" },
   work_history: {
     stepper: "Your Work History",
@@ -365,12 +141,9 @@ export const PROVIDER_STEP_LABELS: Record<
   skills: { stepper: "Your Skills", next: "Next: Your Rate" },
   catalog: { stepper: "Your Role & Skills", next: "Next: Your Rate" },
   rate: { stepper: "Your Rate", next: "Next: Your Photo" },
-  /* ⚠ `E418` — Photo is now the last question before Review on BOTH journeys,
-     so the fallback label names Review. `nextLabelFor` still derives the real
-     one from the live itinerary; this only matters when it cannot. */
+  // — Photo is now the last question before Review on BOTH journeys
   picture: { stepper: "Your Photo", next: "Next: Review Your Profile" },
-  /* ⚠ UNCOUNTED SINCE `E418`. Kept for `CompanyStep`'s eventual caller at work
-     order acceptance; `next` is unused because nothing forwards to it. */
+  // UNCOUNTED SINCE . Kept for `CompanyStep`'s eventual caller at work
   company: { stepper: "Your Company", next: "" },
   finish: {
     stepper: "Review Your Profile",
@@ -381,46 +154,15 @@ export const PROVIDER_STEP_LABELS: Record<
   specializations: { stepper: "Your Specializations", next: "" },
   education: { stepper: "Your Education", next: "" },
   languages: { stepper: "Your Languages", next: "" },
-  /*
-    ⚠⚠ "Overview", NOT "Bio" (`P1-A1.4-E399` WS-5a). ONE FIELD HAD TWO NAMES AND
-    BOTH WERE ON SCREEN AT ONCE: the empty state read *"No overview yet"* while
-    the button beside it read *"Edit bio"*, and the wizard step was called `bio`
-    and saved `{ overview }`. Scott: *"sounds like they are the same. If yes,
-    remove one."* They are.
-
-    ⚠ THE USER-FACING WORD IS NOW "OVERVIEW" EVERYWHERE, chosen because it is what
-    the COLUMN is called — so a reader of the screen and a reader of the schema see
-    the same word and nobody has to learn a mapping.
-    ⚠⚠ THE STEP KEY STAYS `bio` AND THE COLUMN STAYS `overview`. The key is a
-    wire format the client posts and the server switches on; renaming it is a
-    change to an API for a cosmetic reason. Renaming the column is a migration
-    this brief does not authorise.
-  */
+  // BOTH WERE ON SCREEN AT ONCE: the empty state read *"No overview yet"* while
   bio: { stepper: "Your Overview", next: "" },
-  /*
-    ── ⚠⚠ NOT WIZARD STOPS, SO THEY CARRY NO STEPPER COPY (`E602` WS-A) ─────
-    ⚠ `photo`, `work_method` and `certifications` are SECTION editors reached
-    from the profile, never stops on the itinerary — nothing renders a stepper
-    or a *"Next: …"* for them. ⚠⚠ THEY ARE PRESENT ONLY BECAUSE THIS MAP IS
-    `Record<ProviderStep, …>` AND THE COMPILER REQUIRES TOTALITY, which is
-    exactly the behaviour that found the missing whitelist entries.
-    ⚠⚠⚠ THE EMPTY `next` IS DELIBERATE AND MUST STAY EMPTY: a label here would
-    be a promise of a following step that does not exist.
-  */
+  // NOT WIZARD STOPS, SO THEY CARRY NO STEPPER COPY ( WS-A)
   photo: { stepper: "Photo", next: "" },
   work_method: { stepper: "How You Work", next: "" },
   certifications: { stepper: "Certifications", next: "" },
 };
 
-/*
-  THE "NEXT:" LABELS ARE DERIVED, NOT TYPED (pitfalls.md — a label must never
-  promise a step that no longer exists).
-
-  The recruiter journey skips Rate, so a hardcoded "Next: Your Rate" on the
-  Role step lies to half the users of that step. `nextLabelFor` reads the
-  ACTUAL itinerary the caller is walking; the table above is the fallback for
-  the provider path and the source of the stepper headings.
-*/
+// THE "NEXT:" LABELS ARE DERIVED, NOT TYPED (pitfalls.md — a label must never
 export function nextLabelFor(
   step: ProviderStep,
   steps: readonly ProviderStep[]
@@ -432,21 +174,9 @@ export function nextLabelFor(
   return `Next: ${PROVIDER_STEP_LABELS[next].stepper}`;
 }
 
-/**
- * Steps a user may pass without entering data. Education is explicitly
- * optional-with-a-Skip (E015): not everyone has one, but we still ask.
- * `tell_us` is a method CHOICE — picking "manual" is a valid way through it.
- */
+/** Steps a user may pass without entering data. Education is explicitly */
 const OPTIONAL_STEPS = new Set<ProviderStep>([
-  /*
-    The Upload/Review screen: uploading is one valid way through it, and entering
-    everything by hand is the other.
-    ⚠ SUPERSEDED, quoted: this said *"Never a resume target."* `E283` made the
-    screen reachable more than once — a provider who skips it must be able to come
-    back — so it IS a legitimate target now. It stays OPTIONAL because skipping it
-    is still a complete answer; what changed is that skipping is no longer
-    permanent.
-  */
+  // The Upload/Review screen: uploading is one valid way through it, and entering
   "tell_us",
   // WS1 — these left the itinerary entirely. Listed so that if one is ever put
   // back, it comes back optional rather than silently becoming a blocker.
@@ -456,11 +186,7 @@ const OPTIONAL_STEPS = new Set<ProviderStep>([
   "bio",
 ]);
 
-/**
- * Section names that are NOT wizard steps but are still written by the Settings
- * area (brief_H). `experience` here is work HISTORY (employers/projects) — not
- * to be confused with the `experience_level` step.
- */
+/** Section names that are NOT wizard steps but are still written by the Settings */
 export const LEGACY_SECTIONS = [
   "work_type",
   "region",
@@ -482,56 +208,18 @@ export const LEGACY_SECTIONS = [
 ] as const;
 
 const WORK_TYPES = ["HOURLY", "PACKAGES", "AGENCY", "CONTRACT_TO_HIRE"] as const;
-/* ⚠ `SERVICES` is the merged card (`P1-A1.4-E405`); `HOURLY` and `PACKAGES` stay
-   ACCEPTED so an existing row can be re-saved without being rejected by the very
-   validator that let it in. ⚠ DO NOT CONFUSE WITH `WORK_TYPES` ABOVE — a
-   different field with an overlapping vocabulary, and the four-letter name
-   collision that caused `E405` WS-1. */
+// ACCEPTED so an existing row can be re-saved without being rejected by the very
 const WORK_METHODS = ["SERVICES", "HOURLY", "PACKAGES", "RECRUITER"] as const;
 // "LINKEDIN" is retained ONLY so rows imported before PJv2 WS13 still read; no
 // code path writes it any more (E069).
 const PROFILE_METHODS = ["LINKEDIN", "RESUME", "MANUAL"] as const;
-/*
-  ── ⚠⚠⚠ THE ALLOWLIST READS THE ONE DEFINITION (`P2-A2-E723` item 10) ────────────────────
-
-  ⚠⚠ **THIS ARRAY WAS A HAND-KEPT COPY AND IT WOULD HAVE SILENTLY EATEN `PROFESSIONAL`.**
-  The save path is `LANGUAGE_LEVELS.includes(l.level) ? l.level : null` — **a value missing
-  from this list is not rejected, it is turned into `null`** — so a member could pick
-  Professional, save, and get a language with no proficiency and no error.
-  ⚠⚠⚠ **THAT IS WHY `E585` IS THE INSTRUCTION AND NOT A TIDINESS PREFERENCE:** five places
-  defined these five values (here, the signup step's picklist, two label tables and the new
-  module), and the two allowlists were the ones that fail SILENTLY.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-  //   const LANGUAGE_LEVELS = ["BASIC", "CONVERSATIONAL", "FLUENT", "NATIVE_OR_BILINGUAL"] as const;
-*/
+// THE ALLOWLIST READS THE ONE DEFINITION item 10)
 const LANGUAGE_LEVELS: readonly ProficiencyValue[] = PROFICIENCY_OPTIONS.map((o) => o.value);
 
-/*
-  E202 — THERE IS NO SKILL CEILING ANY MORE.
-
-  E014 capped a provider at 15. The importer never honoured it — the parser's
-  own cap is 40 and matched skills are written straight to the profile — so a
-  résumé that produced 18 matches landed the provider on a step reading "18/15"
-  with an error about a limit they never chose to exceed and could only clear by
-  deleting real skills. The cap also made no sense on its own terms: buyers match
-  on skills, so a ceiling on them is a ceiling on being found.
-*/
+// E202 — THERE IS NO SKILL CEILING ANY MORE.
 /** E017 — a bio must be a real answer, not one word. */
 export const MIN_BIO_CHARS = 100;
-/**
- * A few lines, not an essay (Run6 WS7 / E087).
- *
- * Was 4500 — roughly forty lines. This field becomes the profile's OVERVIEW, and
- * the hero it renders into is built for a short paragraph; a long one throws the
- * whole hero/Overview balance out (E076). The hero also read-more-clamps (E060),
- * but a clamp is damage control: it hides the overrun from the buyer and leaves
- * the provider believing the whole thing is being read. The INPUT cap is the real
- * fix, because it is the only version of this that tells the author the truth
- * while they are still writing.
- *
- * 600 characters is about four to six lines at profile width. The MINIMUM is
- * unchanged (E017) — the point is a ceiling, not a harder floor.
- */
+/** A few lines, not an essay (Run6 WS7 / E087). */
 export const MAX_BIO_CHARS = 600;
 /** E016 — every profile includes English unless the user changes it. */
 export const DEFAULT_LANGUAGE = "English";
@@ -547,9 +235,7 @@ export class OnboardingError extends Error {
       | "NOT_VERIFIED"
       | "INVALID"
       | "INCOMPLETE"
-      /* ⚠ `P1-ALL-E034`. Distinct from INCOMPLETE because the fix is not on the
-         thing being published — it is on the PROFILE — and the UI has to tell
-         those two refusals apart to link to the right place. */
+      // Distinct from INCOMPLETE because the fix is not on the
       | "GATE_UNMET",
     /** Populated for GATE_UNMET: the named fields, their reasons, their links. */
     public fields?: { key: string; field: string; reason: string; href: string }[]
@@ -568,11 +254,7 @@ export type CreateProviderAccountInput = {
   lastName: string;
   email: string;
   password: string;
-  /**
-   * brief_P moved experience level + goal OUT of sign-up and into profile
-   * steps 1 and 2 (E003/E004), so both are optional here. The schema defaults
-   * (MID_CAREER / NONE) hold until the provider reaches those steps.
-   */
+  /** brief_P moved experience level + goal OUT of sign-up and into profile */
   /** Deck sign-up fields (E001 CHANGE 2). */
   country?: string;
   marketingOptIn?: boolean;
@@ -581,11 +263,7 @@ export type CreateProviderAccountInput = {
   inviteToken?: string;
 };
 
-/**
- * Creates PAccount(PROVIDER) → Company → User → Person(is_service_provider) →
- * draft ProviderProfile, atomically, persisting the held experience + goal.
- * A provider is their own company (Company name defaults to their full name).
- */
+/** Creates PAccount(PROVIDER) → Company → User → Person(is_service_provider) → */
 export async function createProviderAccount(
   input: CreateProviderAccountInput
 ): Promise<{ userId: string; email: string }> {
@@ -619,13 +297,7 @@ export async function createProviderAccount(
         first_name: firstName,
         last_name: lastName,
         role: "MEMBER",
-        /*
-          WS6 — THE PROVIDER PATH RECORDED NOTHING. The API has required
-          `tosAccepted: literal(true)` since brief_P, the form has a required
-          checkbox, and neither wrote a row: every provider who ticked it has no
-          acceptance on file. The buyer path did write the timestamp. Found by
-          reading the three signup paths side by side for this brief.
-        */
+        // WS6 — THE PROVIDER PATH RECORDED NOTHING. The API has required
         tos_accepted_at: new Date(),
         tos_version: USER_TOS_VERSION,
       },
@@ -643,11 +315,7 @@ export async function createProviderAccount(
     await tx.providerProfile.create({
       data: {
         person_id: person.id,
-        /* ⚠ `headline: ""` REMOVED (`E595` WS-B) — the column is gone. The Title
-           step now writes `Person.title`, which needs no placeholder row. */
-        // Both default in the schema; brief_P collects them at steps 1–2.
-        // The deck's "send me helpful emails" opt-in (E001) maps onto the
-        // preference store brief_H already created — no new column needed.
+        // step now writes `Person.title`, which needs no placeholder row.
         notify_product_updates: input.marketingOptIn === true,
         // status defaults PENDING → ACTIVE on email verify (brief_K);
         // validation_status defaults NOT_REQUESTED; completeness starts 0.
@@ -661,7 +329,7 @@ export async function createProviderAccount(
         data: { company_id: company.id, name: "Primary" },
       });
       await tx.address.create({
-        /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+        /* BOTH COLUMNS (`E729` WS-C). */
         data: { site_id: site.id, line1: "", ...countryColumns(input.country) },
       });
       await tx.person.update({
@@ -674,9 +342,6 @@ export async function createProviderAccount(
   });
 
   // If this signup came from a coordinator invite, link the new provider to the
-  // inviter (brief_I). Reuses the authoritative acceptInviteForUser, which
-  // enforces the email matches the invite — a mismatch just skips linking and
-  // never fails the signup.
   if (input.inviteToken) {
     try {
       await acceptInviteForUser(userId, input.inviteToken);
@@ -686,34 +351,12 @@ export async function createProviderAccount(
   }
 
 
-  /*
-    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
-
-    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
-    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
-    `Joined` was structurally 0 for every member.
-    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
-    row must not be able to roll back a new member. It cannot throw, cannot fail
-    a signup, and returns `null` when there is nothing to credit, which is the
-    ordinary case.
-  */
+  // CREDIT THE INVITATION THAT BROUGHT THEM IN WS-C)
   await creditInviteForNewUser(userId, email);
   return { userId, email };
 }
 
-/**
- * Give an ALREADY-AUTHENTICATED user the provider backbone (brief_Q).
- *
- * OAuth sign-in creates the `User` only — signing in with Google says nothing
- * about whether someone is a buyer or a provider, so `linkOAuthUser`
- * deliberately stops at identity. This is the other half: called from the
- * provider join flow, where the intent IS known, it builds
- * PAccount(PROVIDER) → Company → Person(is_service_provider) → draft
- * ProviderProfile for a user who has no Person yet.
- *
- * Idempotent — a user who already has a provider profile just gets it back, so
- * a double-submit or a refresh mid-flow can't create a second company.
- */
+/** Give an ALREADY-AUTHENTICATED user the provider backbone (brief_Q). */
 export async function ensureProviderBackbone(
   viewer: Viewer,
   opts: { country?: string; marketingOptIn?: boolean; inviteToken?: string } = {}
@@ -758,7 +401,7 @@ export async function ensureProviderBackbone(
           data: { company_id: company.id, name: "Primary" },
         });
         await tx.address.create({
-          /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+          /* BOTH COLUMNS (`E729` WS-C). */
           data: { site_id: site.id, line1: "", ...countryColumns(opts.country) },
         });
         siteId = site.id;
@@ -792,7 +435,7 @@ export async function ensureProviderBackbone(
     await tx.providerProfile.create({
       data: {
         person_id: personId,
-        /* ⚠ `headline: ""` REMOVED (`E595` WS-B) — see the sibling create above. */
+        /* `headline: ""` REMOVED (`E595` WS-B) — see the sibling create above. */
         notify_product_updates: opts.marketingOptIn === true,
       },
     });
@@ -810,26 +453,8 @@ export async function ensureProviderBackbone(
   return { created: true };
 }
 
-/**
- * Correct a mistyped email — allowed only while the account is still
- * unverified. Updates the User's email + name-derived Company/Person nothing
- * else; the caller re-issues verification to the new address.
- */
-/**
- * The profile skills traceable to the most recent parsed import (E187).
- *
- * DERIVED, NOT STORED, and deliberately so. The alternative was a column
- * recording which skills the import added, which means a migration and a second
- * source of truth that can disagree with the join table. The import row already
- * holds the free-text terms it read off the document, and `matchSkills` is the
- * same pure function the import used to turn those into catalog rows — so
- * running it again, with the PROFILE'S OWN skills as the catalog, answers
- * exactly "which of these did the résumé produce?" without storing anything.
- *
- * Scoped to the profile's skills rather than the full catalog on purpose: a term
- * that would match a catalog skill the provider never took is not a skill they
- * have, and it must not appear in a count claiming otherwise.
- */
+/** Correct a mistyped email — allowed only while the account is still */
+/** The profile skills traceable to the most recent parsed import (E187). */
 function resumeSkillIds(
   imports: { status: string; parsed: unknown }[],
   skills: { skill_id: string; skill: { name: string } }[]
@@ -929,10 +554,6 @@ async function loadDraft(viewer: Viewer) {
             },
           },
           // ALL projects, not only the employer-nested ones. A project with a
-          // null `employer_id` is deliberately unattached (delivered between or
-          // outside companies), and reading projects only through employers is
-          // what made those invisible on the Review while the published profile
-          // showed them (brief_profile_layout_v2 §4).
           projects: {
             orderBy: [{ sort_order: "asc" }, { created_at: "desc" }],
             include: {
@@ -962,54 +583,15 @@ async function loadDraft(viewer: Viewer) {
   return person;
 }
 
-/**
- * The furthest incomplete step to resume at. Only REQUIRED steps are resume
- * targets — optional steps (tell-us, education) are encountered walking forward
- * but never send a returning user backward. Because the wizard enforces linear
- * order, the first incomplete required step IS the furthest reached.
- *
- * A provider who already pressed Publish resumes on the finish step, so the
- * wizard hands them straight to the review page rather than re-walking them.
- */
+/** The furthest incomplete step to resume at. Only REQUIRED steps are resume */
 function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderStep {
   const pp = p.providerProfile!;
   const done: Record<ProviderStep, boolean> = {
-    /* ⚠ READS `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
-       //   title: pp.headline.trim() !== "", */
     title: (p.title ?? "").trim() !== "",
-    /*
-      WS3 — two steps, two conditions. A provider who claimed a role and then
-      closed the tab resumes onto SKILLS, not back onto the role they already
-      answered. The domain is derived, so it is not part of either condition.
-    */
+    // WS3 — two steps, two conditions. A provider who claimed a role and then
     roles: pp.role_type_id != null,
     skills: pp.skills.length > 0,
-    /*
-      WS-4 — done when there is at least one job to review.
-
-      DELIBERATELY NOT "every job has a suite". A provider whose one unanchored
-      job is waiting on the needs-suite prompt has still answered this step, and
-      parking them here until the AI's uncertainty is resolved would make an
-      optional correction into a blocker. The review surface nudges; it does not
-      hold the door.
-
-      ⚠⚠ THE PARAGRAPH THAT STOOD HERE WAS WRONG, AND `E283` CHECKED IT RATHER
-      THAN INHERITING IT. ⚠ SUPERSEDED, quoted: *"Note this reads `employers`,
-      not `skills`: the old skills condition counted profile-level picks, which
-      nothing writes any more, so leaving it as the gate would strand every new
-      provider on a step they cannot pass."*
-
-      `pp.skills` IS WRITTEN, by four paths — the skills step itself
-      (`applyProviderSection` case "skills", `deleteMany` + `createMany` from
-      `skillIds`), the résumé import (`resume/import.ts`), the rollup
-      (`provider-rollup.ts`) and `skill-suggestions`. The claim was false when it
-      was written, or became false shortly after.
-
-      ⚠ AND THE SKILLS STEP CANNOT BE PASSED WITHOUT WRITING ONE: its Continue is
-      `continueDisabled: totalPicked === 0`. So `skills: pp.skills.length > 0` is
-      a SAFE resume condition — passing the step and satisfying the condition are
-      the same act, which is exactly what `work_history` was NOT.
-    */
+    // WS-4 — done when there is at least one job to review.
     work_history: pp.employers.length > 0,
     // The combined page these replaced. Not in any itinerary; satisfied so a
     // stray value can never park anyone on a step that is not offered.
@@ -1021,43 +603,12 @@ function computeResumeStep(p: Awaited<ReturnType<typeof loadDraft>>): ProviderSt
     bio: !!pp.overview && pp.overview.trim().length >= MIN_BIO_CHARS,
     // A range now (E078c); either end being set means the step was answered.
     rate: pp.rate_min_cents != null || pp.hourly_rate_cents != null,
-    /*
-      The photo step also collects the CONTACT block — phone and address.
-
-      DATE OF BIRTH IS GONE from this condition (WS1, completed by WS7). It was
-      part of "done" here, so with DOB no longer asked anywhere a returning
-      provider would have been parked on this step forever, unable to finish.
-      That is the removal half of the invisible-profile bug class: a condition
-      that outlives the question it was checking.
-    */
+    // The photo step also collects the CONTACT block — phone and address.
     picture: p.photo_url != null && p.phone != null,
-    /*
-      ⚠⚠ SATISFIED UNCONDITIONALLY SINCE `E418`, like `catalog` above it.
-
-      ⚠ SUPERSEDED, quoted not deleted:
-        `company: p.companyMemberships.some((m) => m.status === "APPROVED"),`
-        *"Done when a company binding EXISTS AND IS APPROVED. A pending join is
-        not done — the provider is waiting on somebody, and resuming them past it
-        would let them publish with no entity behind the profile."*
-
-      Nobody is asked for a company at registration, so nobody can satisfy that
-      condition — and it is consulted by `stepsForProfile`, which no longer
-      contains `company` on either journey. Leaving the membership read here
-      would be a condition that outlives the question it was checking: the exact
-      failure the `picture`/DOB note above records, which stranded providers
-      forever on a step they could not pass.
-    */
+    // SATISFIED UNCONDITIONALLY SINCE , like `catalog` above it.
     company: true,
     finish: pp.onboarding_completed_at != null,
-    /*
-      ⚠⚠⚠ ALWAYS `true`, AND THAT IS THE POINT: **NEVER A RESUME TARGET.**
-      `photo`, `work_method` and `certifications` are edited from the profile,
-      not walked in the wizard, so a returning provider must never be sent
-      "back" to one. ⚠ `true` here means *"nothing incomplete to resume at"* —
-      it is a statement about the ITINERARY, not about the data.
-      ⚠⚠ Marking them `false` would strand a provider on a step the wizard has
-      no screen for, which is `E283`'s failure exactly.
-    */
+    // ALWAYS `true`, AND THAT IS THE POINT: NEVER A RESUME TARGET.
     photo: true,
     work_method: true,
     certifications: true,
@@ -1078,27 +629,7 @@ export async function getOnboardingState(viewer: Viewer) {
   const p = await loadDraft(viewer);
   const pp = p.providerProfile!;
   const emailVerified = p.user?.email_verified != null;
-  /*
-    ── ⚠⚠⚠ A THIRD COPY OF THE GATE, FOUND AND CLOSED (`P2-J3-E590` WS-A0) ────
-
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    // Marketplace visibility is completeness-gated (brief_K), no submit step.
-    // const visible =
-    //   pp.status === "ACTIVE" &&
-    //   pp.completeness >= VISIBILITY_THRESHOLD &&
-    //   pp.paused_at == null;
-
-    ⚠⚠ THIS WAS NOT ONE OF THE FIVE CALL SITES THE COMPILER FOUND, BECAUSE IT
-    NEVER CALLED `isMarketplaceVisible` — it re-implemented it by hand against
-    the percentage. ⚠ A hand-rolled copy of a rule is invisible to a type
-    change, which is exactly why it survived while the other five were caught.
-
-    ⚠⚠⚠ AND IT IS THE WORST PLACE TO BE WRONG: this is what the ONBOARDING
-    SCREEN tells a provider about their own visibility. With the marketplace on
-    the predicate and this on the score, a provider could be told *"you are
-    live"* by the wizard while every buyer surface hid them — the
-    invisible-profile bug wearing a reassurance.
-  */
+  // A THIRD COPY OF THE GATE, FOUND AND CLOSED WS-A0)
   const visible = isMarketplaceVisible({
     status: pp.status,
     completeness: pp.completeness,
@@ -1111,8 +642,7 @@ export async function getOnboardingState(viewer: Viewer) {
 
   const address = p.site?.addresses?.[0] ?? null;
 
-  /* ⚠ `E509` WS-A — what THIS provider's own skills imply. Computed for the
-     role page's PREFILL; it writes nothing. Empty when there is no evidence. */
+  // WS-A — what THIS provider's own skills imply. Computed for the
   const derived = await deriveRolesFromSkills(pp.id);
 
   return {
@@ -1122,38 +652,7 @@ export async function getOnboardingState(viewer: Viewer) {
     // WS1 — the client no longer hard-codes the step list: a recruiter walks a
     // shorter journey, and the server is the only place that knows which.
     steps: stepsForProfile(pp),
-    /*
-      ── ⚠⚠ THE WIZARD'S DISPLAYED TOTAL (`P1-A1.4-E406` WS-1) ────────────────
-
-      `PROVIDER_STEPS.length` counted steps **plus one** for the `work_method`
-      screen, which `P1-A1.3-E401` deliberately made a SCREEN and not a STEP.
-
-      ⚠ IT IS SENT FROM HERE BECAUSE THE WIZARD CANNOT IMPORT IT. `page.tsx` is a
-      `"use client"` component and this module reaches Prisma, so importing
-      `PROVIDER_STEPS` into it pulls `dns`/`fs`/`net`/`tls` into the browser
-      bundle and the route 500s. ⚠⚠ MEASURED — that is exactly what happened on
-      the first attempt, and `tsc`, lint and every gate stayed green; only
-      walking the page found it.
-
-      ⚠ DERIVED, NEVER TYPED, and derived HERE so `PROVIDER_STEPS` stays the one
-      source. A literal in the client would be a third copy of a number that
-      already exists in this array and in the `onboarding_step` enum.
-
-      ⚠ IT IS THE **PROVIDER** TOTAL ON BOTH ITINERARIES — Scott: *"Use the
-      larger number (7), most will be providers."* A denominator computed from
-      the person's own itinerary would flip under them at the moment they chose.
-      ⚠ THE COST, REPORTED NOT HIDDEN: a recruiter finishes one short and the bar
-      never fills.
-
-      ⚠ THE NUMBERS MOVED IN `P1-A1.4-E418` and the ARITHMETIC DID NOT — company
-      left both itineraries, so this is 6 + 1 = **7** where it was 7 + 1 = 8, and
-      a recruiter now finishes at 6 of 7 where it read 7 of 8. Scott's "(7)" was
-      the provider step count of the day; the rule he stated — use the larger,
-      most will be providers — is what survives, and it is still derived.
-
-      ⚠⚠ DISPLAY ONLY. `PROVIDER_STEPS`, `RECRUITER_STEPS` and `onboarding_step`
-      are untouched.
-    */
+    // THE WIZARD'S DISPLAYED TOTAL WS-1)
     displayTotalSteps: PROVIDER_STEPS.length + 1,
     isRecruiter: isRecruiterProfile(pp),
     totalSteps: stepsForProfile(pp).length,
@@ -1181,25 +680,13 @@ export async function getOnboardingState(viewer: Viewer) {
       pillarName: pp.pillar?.name ?? null,
       // The chosen field is the (Role, Domain) pair (brief_R).
       roleTypeId: pp.role_type_id,
-      /*
-        WS2 — the full role set. `roleTypeId` above stays the PRIMARY so every
-        existing reader keeps working; this is additive. Falls back to the
-        primary for profiles written before the join table existed, so an
-        older profile reads as a one-role provider rather than a role-less one.
-      */
+      // WS2 — the full role set. `roleTypeId` above stays the PRIMARY so every
       roleTypeIds: pp.roles.length
         ? pp.roles.map((r) => r.roleType.id)
         : pp.role_type_id
           ? [pp.role_type_id]
           : [],
-      /*
-        ⚠⚠ THE PREFILL, NEVER AN ASSIGNMENT (`E509` WS-A). The role page reads
-        this to PRE-TICK what the résumé's skills imply; the provider can change
-        it, and nothing is written until they continue.
-        ⚠ EMPTY WHEN THERE IS NO EVIDENCE — "Pick your role", not a guess.
-        ⚠ IT NEVER OVERWRITES A ROLE ALREADY CHOSEN: `roleTypeIds` above is the
-        stored answer and the page prefers it whenever it is non-empty.
-      */
+      // THE PREFILL, NEVER AN ASSIGNMENT ( WS-A). The role page reads
       derivedRoleTypeIds: derived.roleTypeIds,
       derivedPillarId: derived.pillarId,
       derivedFromSkills: derived.evidence,
@@ -1226,35 +713,15 @@ export async function getOnboardingState(viewer: Viewer) {
         kind: s.specialization.kind,
       })),
       skillIds: pp.skills.map((s) => s.skill_id),
-      /*
-        ⚠⚠ `roleTypeId` RIDES ALONG SO THE SKILLS STEP CAN SEE WHAT IS HIDDEN
-        (`P2-J1.4-E517`). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        `skillNames: pp.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),`
-
-        ⚠ THE STEP READS WHAT IS HELD — every row, hidden ones included — because
-        the only place a provider can REMOVE a skill is the place that lists it.
-        The role is what lets the step say WHICH of them their current roles do
-        not show, live, against `profile.roleTypeIds` in the wizard rather than
-        the roles last saved.
-      */
+      // THE STEP READS WHAT IS HELD — every row, hidden ones included — because
       skillNames: pp.skills.map((s) => ({
         id: s.skill_id,
         name: s.skill.name,
         roleTypeId: s.skill.role_type_id,
       })),
-      /*
-        WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
-
-        The Skills step credits AI for the pre-selection, and its only evidence
-        was `importOutcome` — client state from the upload that just happened.
-        Gone on reload, and gone by the time the provider walks back to the
-        step, so the banner either vanished or fell back to "an import exists
-        and some skill is ticked", which credits AI for skills the provider
-        typed themselves. This is the server-side answer, and it survives both.
-      */
+      // WHICH OF THOSE SKILLS CAME OFF THE RÉSUMÉ (E187).
       resumeSkillIds: resumeSkillIds(pp.imports, pp.skills),
-      /* ⚠ THE WIRE KEY STAYS `headline`; the SOURCE is now `Person.title`
-         (`E595` WS-B). ⚠ SUPERSEDED (`E164`): `headline: pp.headline,` */
+      // THE WIRE KEY STAYS `headline`; the SOURCE is now `Person.title`
       headline: p.title ?? "",
       overview: pp.overview ?? "",
       hourlyRateCents: pp.hourly_rate_cents,
@@ -1300,44 +767,17 @@ export async function getOnboardingState(viewer: Viewer) {
         startDate: e.start_date ? e.start_date.toISOString().slice(0, 10) : null,
         endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
         // brief_project_model_v2 + _validation — the SAME mapper the employers
-        // API uses. This projection used to list a handful of columns by hand,
-        // so the wizard's project modal opened a v2 project with its client,
-        // role, tools, outcomes and contact email all blank — and saving from
-        // there wrote those blanks back. One mapper, one place to forget a
-        // field.
         artifacts: e.artifacts.map(toArtifactView),
         projects: e.projects.map(projectToCard),
-        /*
-          WS-4 — what the review step renders on each job card: the suite badge,
-          the derived role and the module chips, all inline-editable.
-        */
+        // WS-4 — what the review step renders on each job card: the suite badge
         suite: e.software_suite,
         roleTypeId: e.job_role_type_id,
         skills: e.skills.map((s) => ({ id: s.skill_id, name: s.skill.name })),
-        /*
-          THE PROMPT FIRES ON THIS AND NOTHING ELSE.
-
-          A job needs the "which system?" question when it has skills but no
-          suite — the parser found modules and could not anchor them. A job with
-          no skills at all is not unanchored, it is unread, and asking which
-          system it ran on would be asking about nothing. Most jobs answer
-          false and never see the prompt, which is the point.
-        */
+        // THE PROMPT FIRES ON THIS AND NOTHING ELSE.
         needsSuite: e.software_suite == null && e.skills.length > 0,
       })),
       projects: pp.projects.map(projectToCard),
-      /*
-        WS-4 — THE WEIGHTED ROLLUP, for the review/publish screen.
-
-        Read from the derived tables rather than recomputed here: they are
-        already current (every job write recomputes them), and a second
-        implementation of the weighting on the read path is how two answers to
-        one question appear.
-
-        Top skills only. The point of the screen is "here is what your history
-        says you are", and a provider with forty modules scrolling past forty
-        chips learns nothing from the tail.
-      */
+      // WS-4 — THE WEIGHTED ROLLUP, for the review/publish screen.
       rollup: {
         skills: pp.skills
           .filter((s) => s.weight > 0 || s.source === "SELF_ADDED")
@@ -1357,16 +797,7 @@ export async function getOnboardingState(viewer: Viewer) {
           .sort((a, b) => b.weight_pct - a.weight_pct)
           .map((s) => ({ suite: s.suite, pct: Math.round(s.weight_pct) })),
       },
-      /*
-        WS-4 — the company step's prefill: the résumé's current or most-recent
-        employer, offered as a SUGGESTION to confirm or replace.
-
-        Not auto-applied, and this is the reason: for an independent consultant
-        it is usually their own entity and correct, but for a W-2 employee it is
-        their employer, which is not the Panameer billing entity a work order is
-        written against. The same string is also already a work-history row, so
-        creating a Company from it silently would give one name two meanings.
-      */
+      // WS-4 — the company step's prefill: the résumé's current or most-recent
       // Employers read from a résumé are past employers — never offered as the member's company.
       suggestedCompanyName: null,
       education: pp.education.map((e) => ({
@@ -1411,34 +842,11 @@ export async function getOnboardingState(viewer: Viewer) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StepData = Record<string, any>;
 
-/**
- * Every editable profile section. The onboarding wizard uses PROVIDER_STEPS;
- * the Settings area (brief_H) additionally edits the LEGACY_SECTIONS — work
- * method, employers, certifications — on the same live profile.
- */
+/** Every editable profile section. The onboarding wizard uses PROVIDER_STEPS */
 export type ProfileSection = ProviderStep | (typeof LEGACY_SECTIONS)[number];
 
-/**
- * Apply ONE profile section — pure persistence + validation, no gating.
- * Shared by onboarding (`saveProviderStep`, behind the verify gate) and the
- * Settings area (`saveProviderSection`, owner-scoped) so the write logic —
- * including the one-main-RoleType rule and cents conversion — lives in exactly
- * one place. `personId` is needed for the photo (lives on Person).
- */
-/**
- * The collection a REPLACE-ALL section is about to overwrite (E121).
- *
- * Six sections delete every row for the profile and recreate from the payload.
- * Each used to read its list as `Array.isArray(data.x) ? data.x : []`, which
- * makes a missing key mean "clear it" — and that is how a Walk6 POST with the
- * wrong key name deleted four employers while returning 200.
- *
- * The route validates shapes now, but this is the writer's own guard: a caller
- * reaching `applyProviderSection` directly (a script, a seed, a future endpoint)
- * gets the same refusal. An ABSENT key throws; an EMPTY ARRAY is honoured,
- * because deliberately clearing a section is a legitimate thing to do and the
- * two must stay distinguishable.
- */
+/** Apply ONE profile section — pure persistence + validation, no gating. */
+/** The collection a REPLACE-ALL section is about to overwrite (E121). */
 function replaceList(data: StepData, key: string, section: string): StepData[] {
   const value = data[key];
   if (value === undefined || value === null) {
@@ -1478,10 +886,6 @@ export async function applyProviderSection(
 
     case "work_method": {
       // E009 — the Provider vs Recruiter fork. A recruiter sells the services
-      // of OTHERS, which is the app's Coordinator role (brief_I), so choosing
-      // it grants the coordinator actor flag. The provider flag is NOT removed:
-      // a recruiter still has their own provider profile, and dropping it would
-      // strand them outside /join/provider mid-wizard.
       const method = data.workMethod;
       if (!WORK_METHODS.includes(method)) {
         throw new OnboardingError("Pick how you work", "INVALID");
@@ -1498,23 +902,7 @@ export async function applyProviderSection(
     }
 
     case "category": {
-      /*
-        MULTIPLE ROLES (WS2 / E172, E173) — this supersedes the locked "one main
-        RoleType" rule. A techno-functional consultant genuinely works as both
-        Application-Specific and Technology-Specific, and forcing one meant the
-        skills step could only ever offer half their catalog.
-
-        `role_type_id` on the profile SURVIVES as the primary — what the profile
-        leads with and what every existing derivation reads. The join table
-        carries the full set including that primary, so nothing has to union two
-        sources to answer "which roles?".
-
-        DOMAIN IS STILL WRITTEN. It left the UI (WS3), not the data: a Skill's
-        identity is its (role, domain) pair, and `pillar_id` remains the
-        profile's primary domain. It is now DERIVED from the first chosen
-        role's skills rather than picked, so the pair stays coherent without
-        asking a question the brief removed.
-      */
+      // MULTIPLE ROLES (WS2 / E172, E173) — this supersedes the locked "one main
       const roleTypeIds: string[] = Array.isArray(data.roleTypeIds)
         ? [...new Set(data.roleTypeIds.map(String))]
         : data.roleTypeId
@@ -1536,12 +924,7 @@ export async function applyProviderSection(
       // provider has exactly one, which is the common case.
       const primaryRoleId = roleTypeIds[0];
 
-      /*
-        The primary DOMAIN, derived rather than asked. A supplied pillarId is
-        honoured when it belongs to the primary role (Settings still posts one);
-        otherwise take the primary role's first domain by skill count so the
-        (role, domain) pair on the profile is always a real pair.
-      */
+      // The primary DOMAIN, derived rather than asked. A supplied pillarId is
       let pillarId: string | null =
         typeof data.pillarId === "string" && data.pillarId ? data.pillarId : null;
       if (pillarId) {
@@ -1552,34 +935,7 @@ export async function applyProviderSection(
         if (!ok) pillarId = null;
       }
       if (!pillarId) {
-        /*
-          ── ⚠⚠ THE PROVIDER'S OWN SKILLS DECIDE THE DOMAIN (`E509` WS-A) ─────
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — and the comment above it,
-          which explains what it was FOR and why that was the wrong target:
-            *"take the primary role's first domain by skill count so the
-             (role, domain) pair on the profile is always a real pair"*
-            const grouped = await prisma.skill.groupBy({
-              by: ["pillar_id"],
-              where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
-              _count: { _all: true },
-              orderBy: { _count: { id: "desc" } },   // ⚠⚠ the biggest CATALOG domain
-              take: 1 });
-
-          ⚠⚠ IT COUNTED CATALOG ROWS, SO IT WAS PROVIDER-INDEPENDENT — measured
-          today, `Technology-Specific` returns Salesforce 60 · Oracle EBS 51 ·
-          Oracle Fusion 49, so EVERY Technology-Specific provider was handed
-          Salesforce. It optimised for "a real pair", not "the right pair", and
-          CATALOG SIZE IS NOT RELEVANCE TO THIS PROVIDER.
-
-          ⚠ NOW: this provider's own matched skills within the primary role.
-          ⚠ THE CATALOG COUNT SURVIVES AS THE FALLBACK, DELIBERATELY, and that
-          is a reading of the brief worth stating: a provider who picks a role
-          MANUALLY has no skills yet, and the original comment's guarantee — that
-          the stored pair is always a REAL pair — is still worth keeping for
-          them. Evidence wins when there is evidence; the catalog only answers
-          when there is none.
-        */
+        // THE PROVIDER'S OWN SKILLS DECIDE THE DOMAIN ( WS-A)
         const mine = await deriveRolesFromSkills(profileId);
         pillarId =
           mine.roleTypeIds[0] === primaryRoleId && mine.pillarId ? mine.pillarId : null;
@@ -1587,7 +943,7 @@ export async function applyProviderSection(
         if (!pillarId) {
           const grouped = await prisma.skill.groupBy({
             by: ["pillar_id"],
-            /* ⚠ `E481` — a domain whose skills are all retired is not suggested. */
+            /* `E481` — a domain whose skills are all retired is not suggested. */
             where: { role_type_id: primaryRoleId, pillar_id: { not: null }, ...OFFERABLE },
             _count: { _all: true },
             orderBy: { _count: { id: "desc" } },
@@ -1613,84 +969,21 @@ export async function applyProviderSection(
         }),
       ]);
 
-      /*
-        ── ⚠⚠ THE PRUNE IS GONE. THE FILTER MOVED TO THE READ (`P2-J1.4-E517`) ──
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-
-            await prisma.providerSkill.deleteMany({
-              where: {
-                provider_profile_id: profileId,
-                skill: { role_type_id: { notIn: roleTypeIds } },
-              },
-            });
-
-          with the reason *"The prune still earns its place — a résumé import
-          matches across the whole catalog, so a skill can arrive from a role the
-          provider never claimed, and the skills step would neither show it nor
-          accept it on save. Scoped to the ROLES they actually chose, it removes
-          exactly those strandable rows and nothing else."*
-
-        ⚠⚠ IT DELETED TEN OF SCOTT'S OWN SKILLS FROM A RADIO BUTTON, silently,
-        with no undo (`E517`, 2026-09-14). The reasoning above is right about what
-        to SHOW and wrong about what to DESTROY.
-
-        ⚠⚠ SCOTT'S RULING, 2026-09-17 — `E481` ON A NEW AXIS: *"FILTER WHAT IS
-        OFFERED, NEVER WHAT IS HELD. A role selection is an offer-side statement —
-        'present me as an Application-Specific consultant'. It is not evidence
-        that the other skills are false, so it must not delete them."*
-        ⚠ *"THE ESCAPE HATCH BECOMES EXPLICIT, NOT A SIDE EFFECT… If a provider
-        wants a skill gone, they remove that skill. Changing roles changes what is
-        SHOWN."*
-
-        ⚠ WHAT REPLACED IT: `lib/shown-skills.ts`, read by every offer-side
-        surface — the profile, search cards, matching, completeness. The rows stay
-        in `ProviderSkill`; re-widening the roles brings them back.
-        ⚠⚠ AND THE SKILLS STEP LISTS THE HIDDEN ONES with a remove control, because
-        a row nobody can see or touch is worse than a deleted one.
-
-        ⚠ Option A (warn, then delete anyway) was rejected on measurement: a
-        warning fires on CHANGE, and 5 profiles already held 14 out-of-role rows
-        that the next save would have deleted with no change at all.
-      */
+      // THE PRUNE IS GONE. THE FILTER MOVED TO THE READ
       break;
     }
 
     case "employers": {
       // brief_U — employers are created/edited through the dedicated
-      // owner-scoped endpoint (`/api/provider/employers`), which validates each
-      // id against the viewer's own profile. Continuing past the step has
-      // nothing left to persist; this case exists so the step is a legal POST
-      // target and so completeness is recomputed on the way through.
       break;
     }
 
-    /*
-      WS-4 — THE WORK-HISTORY REVIEW: per-job suite, role and skill corrections.
-
-      The payload is a sparse list of jobs the provider actually touched, not
-      the whole history. Sending everything back would make an untouched job
-      indistinguishable from one deliberately cleared, and the review's own
-      "leave what's right alone" promise depends on being able to tell.
-
-          jobs: [{ employerId, suite?, roleTypeId?, skillIds? }]
-
-      Each field is applied only when PRESENT. `suite: null` is a real value —
-      "I don't know either" — and must survive; `suite` absent means untouched.
-    */
+    // WS-4 — THE WORK-HISTORY REVIEW: per-job suite, role and skill corrections.
     case "work_history": {
       const jobs = Array.isArray(data.jobs) ? (data.jobs as StepData[]) : [];
       if (jobs.length === 0) break;
 
-      /*
-        OWNERSHIP IS RE-CHECKED HERE, not assumed from the session.
-
-        Every employerId arrives from the client. `applyProviderSection` is
-        called with a profileId the caller already resolved from the session, so
-        the fence is: only touch jobs whose provider_profile_id IS that profile.
-        A foreign id then matches nothing and is skipped, which is the same
-        answer as a job that does not exist.
-      */
+      // OWNERSHIP IS RE-CHECKED HERE, not assumed from the session.
       const owned = await prisma.employer.findMany({
         where: {
           provider_profile_id: profileId,
@@ -1713,22 +1006,12 @@ export async function applyProviderSection(
 
         if (Array.isArray(job.skillIds)) {
           const wanted = [...new Set((job.skillIds as unknown[]).map(String))];
-          /*
-            REPLACE, not merge. The chips on that one job are the complete
-            answer for that job — a provider removing a wrongly-tagged module
-            must see it stay removed, and a merge would silently put it back.
-            Scoped to the single employer, so the rest of the history is
-            untouched.
-          */
+          // REPLACE, not merge. The chips on that one job are the complete
           await prisma.jobSkill.deleteMany({ where: { employer_id: employerId } });
           if (wanted.length > 0) {
             // Only real catalog rows — a client-supplied id is not a skill.
             const real = await prisma.skill.findMany({
-              /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
-                 VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
-                 Filtering it would silently drop a provider's existing selection the
-                 moment an admin retired that row, which is the exact data loss this
-                 brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD. */
+              // NO `status` FILTER HERE, DELIBERATELY . This
               where: { id: { in: wanted } },
               select: { id: true },
             });
@@ -1742,31 +1025,8 @@ export async function applyProviderSection(
       break;
     }
 
-    /*
-      WS3 — the combined page became two steps, each saving its own half.
-
-      They can now be left half-written by design: claiming a role and stopping
-      is a legitimate place to pause, and the resume logic sends that provider
-      to Skills rather than back to a question they answered. The old "save as
-      one unit" argument was about a cross-domain skill surviving into the next
-      step, and that is handled where it belongs — the role writer prunes skills
-      outside the claimed ROLES (WS2).
-    */
-    /*
-      ⚠ THE STEP NAMES AND THE SECTION NAMES ARE DIFFERENT NAMESPACES, and this
-      switch is the SECTION one.
-
-      WS3 first put `case "roles"` and `case "skills"` here. `applyProviderSection`
-      already has a "skills" section further down, so the new case shadowed it
-      and delegated to "skills" — itself — and every skills save died with
-      "Maximum call stack size exceeded", surfacing as a 500 and "Add at least
-      one skill" on a profile that had picked three. The build was clean and the
-      UI walk passed, because nothing had tried to SAVE.
-
-      The step→section mapping belongs in `saveProviderStep`, which is where it
-      is now. This case stays as it always was: the combined page's section,
-      still reachable from Settings.
-    */
+    // WS3 — the combined page became two steps, each saving its own half.
+    // THE STEP NAMES AND THE SECTION NAMES ARE DIFFERENT NAMESPACES, and this
     case "catalog": {
       await applyProviderSection(profileId, personId, "category", data);
       await applyProviderSection(profileId, personId, "skills", data);
@@ -1784,9 +1044,6 @@ export async function applyProviderSection(
       ) as unknown as string[];
 
       // E031 — add-on-the-fly. A provider's real specialization may simply not
-      // be in the seeded vocabulary yet; refusing it would cost us the signal.
-      // Custom entries join the SAME vocabulary (deduped case-insensitively) so
-      // the next provider can pick it from the list rather than retyping it.
       const custom: string[] = Array.isArray(data.customSpecializations)
         ? data.customSpecializations
         : [];
@@ -1803,58 +1060,20 @@ export async function applyProviderSection(
           if (!ids.includes(existing.id)) ids.push(existing.id);
           continue;
         }
-        /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
-           rows exist and this line used to pick between them arbitrarily —
-           which is how a provider-typed `Workday` landed in the legacy ERP
-           catalog, invisible to the seed and to every picker. See
-           `activeCatalogId`. */
+        // BY CODE, NEVER `findFirst()` . Two ServiceCatalog
         const catalogId = await activeCatalogId();
         if (!catalogId) break;
-        /*
-          ── ⚠⚠ A PROVIDER TYPING A TERM IS NOW A SUGGESTION (`P1-A1.5-E482`) ──
-
-          > **SCOTT:** *"I do think i said to add the skills people suggest...i
-          > want to take that back. only the ADMIN should add/update/delete."*
-
-          ⚠ SUPERSEDED, quoted not deleted (`E164`) — `E031`, and ONLY its last
-          sentence is what Scott reversed:
-            *"Custom entries join the SAME vocabulary (deduped
-             case-insensitively) so the next provider can pick it from the list
-             rather than retyping it."*
-          ⚠ THE FIRST HALF STANDS AND HE RESTATED IT HIMSELF: THE SIGNAL IS
-          STILL WANTED. A provider must still be able to type what they actually
-          do, and still see it on their own profile. What changed is that typing
-          it no longer publishes it to everyone else.
-
-          ⚠⚠ AND `kind: "PRODUCT"` IS GONE — quoted SUPERSEDED here because it
-          was a real defect, not a style choice: a provider typing an INDUSTRY
-          (`Utilities`) or a PROCESS (`Quote-to-Cash`) had it filed under
-          Products & Platforms, in everyone's picker, under the wrong heading.
-          `Workday` was the live proof.
-          ⚠ THE QUEUE FIXES IT BY CONSTRUCTION: a suggestion has NO KIND until
-          an admin gives it one at promotion. The column is non-nullable and its
-          schema default still applies, so ⚠⚠ THE STORED `kind` IS MEANINGLESS
-          WHILE `status` IS `SUGGESTED` — the queue never reads it and the
-          promote action requires the admin to choose.
-        */
+        // A PROVIDER TYPING A TERM IS NOW A SUGGESTION
         const created = await prisma.specialization.create({
           data: {
             catalog_id: catalogId,
             name,
-            /* ⚠ NO `kind` — see above. Whatever the column defaults to is not
-               a claim about what this row is. */
-            /* ⚠⚠ NOT OFFERED TO ANYONE ELSE. `status: SUGGESTED` is excluded by
-               `OFFERABLE`, which every picker defaults to (`E481`). The author
-               still sees it on their own profile, because a profile renders the
-               links a provider holds and does not re-filter the catalog. */
+            // NO `kind` — see above. Whatever the column defaults to is not
+            // NOT OFFERED TO ANYONE ELSE. `status: SUGGESTED` is excluded by
             status: "SUGGESTED",
             // Sorts after the seeded vocabulary.
             sort_order: 900,
-            /* ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`), NOT `is_custom`.
-               The seed's retirement pass reads `origin` and may only delete
-               `SEED` rows. ⚠ WITHOUT THIS LINE THIS ROW DEFAULTS TO `SEED` AND
-               THE NEXT RESEED DELETES IT SILENTLY. Both are written while
-               `is_custom` survives as the superseded ancestor. */
+            // The seed's retirement pass reads `origin` and may only delete
             is_custom: true,
             origin: "PROVIDER",
           },
@@ -1904,25 +1123,10 @@ export async function applyProviderSection(
         : [];
 
       // E031 — add-on-the-fly skills. Created INSIDE the chosen (Role, Domain)
-      // so they satisfy the same scoping rule as catalog skills and show up on
-      // that field's list for everyone afterwards. The catalog is seed-driven
-      // today; an admin editor is a later brief.
       const customSkills: string[] = Array.isArray(data.customSkills)
         ? data.customSkills
         : [];
-      /*
-        WS2 — an add-on-the-fly skill is filed under a DECLARED role.
-
-        `customSkillRoleId` is what the UI sends when a provider has more than
-        one role and picks which the new skill belongs to; it defaults to the
-        primary. The role must be one they actually claimed — otherwise a client
-        could seed the catalog under any role at all, and the skill would then
-        be invisible to its own author on the next visit.
-
-        The domain still comes from the profile's primary pillar, because a
-        Skill's uniqueness key is the full (catalog, role, domain, name) path —
-        `pitfalls.md`: a name is not a key once the taxonomy gains a level.
-      */
+      // WS2 — an add-on-the-fly skill is filed under a DECLARED role.
       const declaredRoles = await prisma.providerProfileRole.findMany({
         where: { provider_profile_id: profileId },
         select: { role_type_id: true },
@@ -1950,49 +1154,16 @@ export async function applyProviderSection(
       let newTerms = 0;
       const freshSkills: string[] = [];
       if (customSkills.length > 0 && customRoleId && customPillarId) {
-        /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
-           rows exist and this line used to pick between them arbitrarily —
-           which is how a provider-typed `Workday` landed in the legacy ERP
-           catalog, invisible to the seed and to every picker. See
-           `activeCatalogId`. */
+        // BY CODE, NEVER `findFirst()` . Two ServiceCatalog
         const catalogId2 = await activeCatalogId();
         const catalogRow = catalogId2 ? { id: catalogId2 } : null;
-        /*
-          ── ⚠⚠ MATCH THE WHOLE CATALOG BEFORE CREATING ANYTHING (`E298`) ──────
-
-          SCOTT: *"i added a new skill - purchase requisitions… but that is as i
-          typed it… that means we will get misspellings and non-capitalizations."*
-
-          ⚠ THE PATTERN IS `resolveApplicationIds`' (`lib/employers.ts:352`),
-          copied not invented — its own comment states the rule: *"Matching is
-          case-insensitive against the WHOLE catalog before creating anything, so
-          typing 'oracle fusion' when 'Oracle Fusion' already exists links the
-          baseline row instead of spawning a near-duplicate custom for an admin to
-          clean up later."*
-
-          ⚠⚠ ONLY THE **EXACT-ISH** TIER ACTS HERE, AND THAT IS THE WHOLE DESIGN.
-          A NEAR match ASKS, and a server cannot ask — so `matchSkill`'s `near`
-          result is deliberately treated as `none` on this path and the custom
-          row is created as typed. THE ASKING HAPPENS IN THE UI, against
-          `api/onboarding/provider/skill-match`, which runs THIS SAME matcher
-          before the wizard ever submits. ⚠ SO A NEAR MATCH IS NEVER SILENTLY
-          APPLIED ANYWHERE — a skill is a claim about what somebody can do, and
-          rewriting it without an answer puts words in their mouth.
-          ⚠ THIS SPLIT IS REPORTED AT `E298`. It is why the server is not the only
-          place the matcher runs, and why it is still the place that prevents the
-          duplicate.
-
-          ⚠ NAMES ARE LOADED ONCE, NOT PER SKILL. `select: { id, name }` over the
-          catalog rather than a query per typed term.
-        */
+        // MATCH THE WHOLE CATALOG BEFORE CREATING ANYTHING
         const catalogRows = await prisma.skill.findMany({
-          /* ⚠ `E481` — a retired row is never matched onto a typed skill. */
+          /* `E481` — a retired row is never matched onto a typed skill. */
           where: OFFERABLE,
           select: { id: true, name: true, is_custom: true },
         });
-        /* ⚠ `is_custom` -> `isCustom`: the matcher prefers a BASELINE row over a
-           provider-authored one, the same preference `resolveApplicationIds`
-           states. See `lib/skill-match.ts`. */
+        // provider-authored one, the same preference `resolveApplicationIds`
         const catalogSkills = catalogRows.map((c) => ({
           id: c.id,
           name: c.name,
@@ -2002,11 +1173,7 @@ export async function applyProviderSection(
         for (const raw of customSkills) {
           const name = formatSkillName(String(raw).trim().slice(0, 120));
           if (!name || !catalogRow) continue;
-          /*
-            ⚠ EXACT-ISH LINKS THE EXISTING ROW AND CREATES NOTHING. This is the
-            line that stops `Purchase Requisitions` becoming a second row when
-            the catalog already holds it.
-          */
+          // EXACT-ISH LINKS THE EXISTING ROW AND CREATES NOTHING. This is the
           const m = matchSkill(name, catalogSkills);
           if (m.kind === "exact") {
             if (!skillIds.includes(m.skill.id)) skillIds.push(m.skill.id);
@@ -2027,14 +1194,6 @@ export async function applyProviderSection(
               role_type_id: customRoleId,
               pillar_id: customPillarId,
               name,
-              /* ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                   "`is_custom` is the seed-retirement shield: the taxonomy
-                    reseed removes catalog rows it no longer ships, and a
-                    provider-authored skill must survive that."
-                 ⚠⚠ `origin` IS THE SHIELD NOW (`P1-A1.5-E480`) — the retirement
-                 pass reads it and may only delete `SEED` rows. The reasoning is
-                 unchanged; the field carrying it is wider. WITHOUT `origin` THIS
-                 ROW WOULD DEFAULT TO `SEED` AND BE DELETED ON THE NEXT RESEED. */
               is_custom: true,
               origin: "PROVIDER",
               review_pending: true,
@@ -2051,44 +1210,9 @@ export async function applyProviderSection(
       if (skillIds.length === 0) {
         throw new OnboardingError("Pick at least one skill", "INVALID");
       }
-      /*
-        WS1/E102 + E110 — the single-domain lock is GONE.
-
-        These two throws ("All skills must belong to the selected category" /
-        "…to the field you chose") blocked any provider whose skills span more
-        than one domain. Linus spans Supply Chain AND Finance, so his profile
-        could not be saved at all — a hard stop on the flow, not a nicety.
-
-        It was never a data constraint. `ProviderSkill` is a plain join and
-        carries no domain of its own, and the review page's "Skills we couldn't
-        place" path has always written skills across domains without complaint.
-        The rule existed only on this one code path, which is why the product
-        contradicted itself depending on which screen you used.
-
-        The profile's own `role_type_id` / `pillar_id` stay as the PRIMARY field —
-        what the profile leads with and what buyers filter on. They are no longer
-        a fence around which skills may be attached.
-
-        The integrity check that matters is kept: every id must resolve to a real
-        Skill, so a client cannot invent one.
-      */
+      // WS1/E102 + E110 — the single-domain lock is GONE.
       const skills = await prisma.skill.findMany({
-        /* ⚠⚠ NO `status` FILTER HERE, DELIBERATELY (`P1-A1.5-E481`). This
-           VALIDATES IDS THE CALLER ALREADY HOLDS — it does not OFFER anything.
-           Filtering it would silently drop a provider's existing selection the
-           moment an admin retired that row, which is the exact data loss this
-           brief exists to prevent. ⚠ FILTER WHAT IS OFFERED, NEVER WHAT IS HELD.
-
-           ⚠⚠ AND NO CATALOG FILTER EITHER — DELIBERATELY (`P2-J1.4-E541`).
-           ⚠ DO NOT "TIDY" THIS. `E541` scoped SIX reads in `lib/catalog.ts` to
-           the active catalog, and a future pass will see an unscoped `findMany`
-           two lines from six scoped ones and assume it was missed. It was not.
-           ⚠⚠ SCOTT RULED IT, 2026-09-16: *"The defect is the offer, not the
-           check."* Scoping this would make a provider who ALREADY HOLDS a legacy
-           `ERP` skill fail validation, and the skills step would refuse a
-           selection they can see on their own profile — `E517`'s standing lesson
-           and the exact loss `E481` exists to prevent. ⚠ 16 such rows exist
-           across 7 profiles today (`E540`), so this is live, not theoretical. */
+        // NO `status` FILTER HERE, DELIBERATELY . This
         where: { id: { in: skillIds } },
         select: { id: true },
       });
@@ -2096,55 +1220,8 @@ export async function applyProviderSection(
         throw new OnboardingError("Unknown skill selected", "INVALID");
       }
 
-      /*
-        ── ⚠⚠ `SELF_ADDED`, NOT THE DEFAULT (`E283`) ───────────────────────────
-
-        THIS IS THE TRAP THE BRIEF SENT ME LOOKING FOR, AND IT IS REAL.
-        `ProviderSkill.source` DEFAULTS TO `DERIVED`, and this `createMany` set no
-        source — so every skill a provider TYPED was stored as though it had been
-        computed from a job. `recomputeProviderRollup` deletes exactly that:
-        *"Only DERIVED rows are cleared."* Any later rollup — adding an employer,
-        importing a résumé, editing a job — silently wiped the hand-picked skills,
-        `pp.skills.length` fell to 0, and `computeResumeStep` sent the provider
-        back to Skills. `3/7` WOULD HAVE STRANDED PEOPLE EXACTLY THE WAY `2/6`
-        DOES TODAY.
-
-        ⚠ `SELF_ADDED` IS THE PURPOSE-BUILT ESCAPE HATCH — the enum's own comment
-        calls it *"claimed on the profile with no job behind it"*, and the rollup
-        preserves those rows unless the skill later gains a job, at which point
-        the job is better evidence and DERIVED replaces it. That is precisely the
-        semantics of a typed skill.
-
-        ⚠ `SELF_ADDED_WEIGHT` TRAVELS WITH IT. Left at the 0 default these rows
-        would be hidden by `getOnboardingState`, which filters on
-        `s.weight > 0 || s.source === "SELF_ADDED"`, and would misreport depth.
-        One constant, already tuned, in one place (`provider-rollup.ts:55`).
-      */
-      /*
-        ── ⚠⚠ THIS STEP REPLACES THE PROVIDER'S OWN PICKS AND NOTHING ELSE
-           (`P1-A1.4-E552`) ────────────────────────────────────────────────────
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            prisma.providerSkill.deleteMany({
-              where: { provider_profile_id: profileId },
-            }),
-        ⚠⚠ IT DELETED EVERY SKILL ROW ON THE PROFILE — INCLUDING THE ROLLUP'S,
-        WITH THEIR `months_total` — and rewrote the picks with 0 months. So every
-        save of this step erased the computed depth until something triggered a
-        recompute. ⚠ MEASURED 2026-09-17: **all 27 "dated job, zero months" rows
-        were this**, across 6 profiles.
-
-        ⚠ Scott, 2026-09-17: *"A SAVE DELETES DATA IT DID NOT CREATE."* Same rule
-        `E553` broke from the other side.
-
-        ⚠ SO THE DELETE IS SCOPED TWICE: to `SELF_ADDED` (the rows this step owns)
-        and to skills the provider has DROPPED. ⚠⚠ A `DERIVED` row is the
-        ROLLUP'S, backed by a dated job, and only the rollup may remove it.
-        ⚠ `skipDuplicates` then protects a pick that is ALREADY `DERIVED`: the job
-        is the better evidence, exactly as `recomputeProviderRollup` treats it.
-        ⚠ AND AN EMPTY LIST STILL CLEARS THE PICKS — `notIn: []` is not a reliable
-        "match everything", so the no-picks case is its own branch.
-      */
+      // THIS IS THE TRAP THE BRIEF SENT ME LOOKING FOR, AND IT IS REAL.
+      // THIS STEP REPLACES THE PROVIDER'S OWN PICKS AND NOTHING ELSE
       await prisma.$transaction([
         prisma.providerSkill.deleteMany({
           where: {
@@ -2160,8 +1237,7 @@ export async function applyProviderSection(
             source: "SELF_ADDED" as const,
             weight: SELF_ADDED_WEIGHT,
           })),
-          /* ⚠ `E552` — a pick the provider already holds must not be re-inserted
-             (the composite unique) and a DERIVED row must not be downgraded. */
+          // — a pick the provider already holds must not be re-inserted
           skipDuplicates: true,
         }),
       ]);
@@ -2173,34 +1249,10 @@ export async function applyProviderSection(
     }
 
     case "title": {
-      /*
-        ── ⚠⚠⚠ THE TITLE STEP WRITES `Person.title` NOW (`P0-E595` WS-B) ─────
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   const headline: string = (data.headline ?? "").trim();
-        //   if (!headline) throw new OnboardingError("Title is required", "INVALID");
-        //   await prisma.providerProfile.update({
-        //     where: { id: profileId },
-        //     data: { headline },
-        //   });
-
-        ⚠⚠ THIS STEP WAS ALREADY CALLED *"Title"* AND ALREADY THREW *"Title is
-        required"* — it simply wrote the wrong column. The REQUESTER wizard has
-        always written `Person.title`, and `requester-onboarding.ts`'s own
-        comment claimed *"Same `Person.title` column both sides write"*, which
-        was false for this side. ⚠⚠⚠ THAT IS THE WHOLE BUG: two wizards asking
-        one question and storing it in two places, which is why two titles
-        rendered on one card.
-
-        ⚠ THE PAYLOAD KEY IS STILL `headline` and that is DELIBERATE for now —
-        the wizard's client state and `section-schemas.ts` name it that, and
-        re-keying the wire format is a separate change with its own risk. **The
-        COLUMN is what collapsed.**
-      */
+      // THE TITLE STEP WRITES `Person.title` NOW WS-B)
       const title: string = (data.headline ?? "").trim();
       if (!title) throw new OnboardingError("Title is required", "INVALID");
-      /* ⚠ Owner-scoped through the profile, exactly as before: the person is
-         resolved FROM the profile id, never accepted from input. */
+      // Owner-scoped through the profile, exactly as before: the person is
       const owner = await prisma.providerProfile.findUnique({
         where: { id: profileId },
         select: { person_id: true },
@@ -2222,7 +1274,7 @@ export async function applyProviderSection(
           description: e.description?.trim() || null,
           startDate: e.startDate ? new Date(e.startDate) : null,
           endDate: e.endDate ? new Date(e.endDate) : null,
-          /* ⚠ `E549` — affirmative only; see the write below. */
+          /* `E549` — affirmative only; see the write below. */
           isCurrent: e.isCurrent === true,
           projects: (Array.isArray(e.projects) ? e.projects : [])
             .map((pr: StepData) => ({
@@ -2234,16 +1286,6 @@ export async function applyProviderSection(
         .filter((e) => e.employer && e.roleTitle);
 
       // brief_project_model_v2 — imported projects are left UNCLASSIFIED.
-      //
-      // `client_name` is required and the employer is a truthful value for it
-      // (the work was delivered there by definition). `role_type_id` is NOT
-      // guessed: a parser cannot know whether a role was functional or
-      // technical, and writing a default would put a value the provider never
-      // chose into the reporting grain. Null instead, and the review page
-      // nudges them to classify — see `reviewItems`.
-      // brief_U / E042 — writes EMPLOYERS now. Settings still posts this
-      // "experience" shape, so the section survives; only its destination
-      // changed, from the retired flat WorkExperience to Employer + Project.
       await prisma.$transaction(async (tx) => {
         await tx.employer.deleteMany({
           where: { provider_profile_id: profileId },
@@ -2256,21 +1298,9 @@ export async function applyProviderSection(
               role_title: e.roleTitle,
               description: e.description,
               start_date: e.startDate,
-              /* ⚠ A current role carries no end date. */
+              /* A current role carries no end date. */
               end_date: e.isCurrent ? null : e.endDate,
-              /*
-                ⚠⚠ AFFIRMATIVE ONLY (`P2-J1.4-E549`) — THE THIRD PLACE. SUPERSEDED,
-                quoted not deleted (`E164`):
-                  `is_current: Boolean(e.startDate) && !e.endDate,`
-                ⚠ This writer's only form, `ExperienceEditor`, has NO current box —
-                just the hint "Leave blank if current" — so a blank end was
-                recorded as a running job whether or not the person meant it.
-                Scott, 2026-09-17: *"If it does NOT [have the box], it is the same
-                defect in a third place and I want it fixed in this pass."*
-                ⚠ `ExperienceEditor` is imported nowhere today; the section is still
-                reachable through the Settings and legacy-step endpoints, so the
-                payload may now say `isCurrent: true` explicitly.
-              */
+              // AFFIRMATIVE ONLY — THE THIRD PLACE.
               is_current: Boolean(e.startDate) && e.isCurrent,
               sort_order: i * 10,
               projects: {
@@ -2301,26 +1331,7 @@ export async function applyProviderSection(
         "languages",
         "education_languages"
       );
-      /*
-        E164 — THIS WRITER WAS LOSING HALF THE ROW.
-
-        Education has two writers: the wizard's `education` step, which stores
-        start_year, end_year and description, and this section, which stored
-        only institution / degree / field / the LEGACY single `year`. Both
-        delete-and-recreate the whole list — so the moment anything saved
-        through this path, every date and description the wizard had collected
-        was gone, and the review then rendered a row with no dates. That is
-        "education edits don't show on Review": the edit saved, and a different
-        writer erased the other half of it.
-
-        The two now write the SAME columns. `year` is still accepted for rows
-        that predate start/end, and start_year falls back to it rather than
-        being dropped.
-
-        Languages had the identical bug one field over: this wrote the legacy
-        free-text `proficiency` while `level` is canonical (E016), so a level
-        set in the wizard disappeared on the next settings save.
-      */
+      // E164 — THIS WRITER WAS LOSING HALF THE ROW.
       const cleanEdu = education
         .map((e) => {
           const legacyYear = typeof e.year === "number" ? e.year : null;
@@ -2413,10 +1424,7 @@ export async function applyProviderSection(
       const clean = list
         .map((l) => ({
           name: (l.name ?? "").trim(),
-          /* ⚠⚠ THE CAST IS THE NARROWING, AND IT IS SAFE BECAUSE `includes` IS THE GUARD:
-             `l.level` arrives as unknown step data, and only a value that IS one of the five
-             survives the test. ⚠⚠⚠ `ProficiencyValue` IS DERIVED FROM THE SAME ARRAY, so the
-             type and the runtime check cannot disagree (`E585`). */
+          // THE CAST IS THE NARROWING, AND IT IS SAFE BECAUSE `includes` IS THE GUARD
           level: LANGUAGE_LEVELS.includes(l.level as ProficiencyValue)
             ? (l.level as ProficiencyValue)
             : null,
@@ -2494,25 +1502,7 @@ export async function applyProviderSection(
       const onsite = toCents(data.onsiteDollars);
       const remote = toCents(data.remoteDollars);
 
-      /*
-        ── ⚠⚠⚠ "NOT SENT" AND "SENT EMPTY" ARE DIFFERENT (brief 10 WS-B) ──────
-
-        ⚠⚠ `toCents` maps BOTH `undefined` and `""` to `null`, so the old
-        condition below could not tell **a caller that never mentions these
-        columns** (the wizard, `E018`) from **a provider who cleared both boxes**
-        — and it resolved the ambiguity by writing NEITHER.
-        ⚠⚠⚠ **THAT WAS UNREACHABLE UNTIL THIS BRIEF AND IS REACHABLE NOW:** the
-        Rates editor previously exposed only the hourly field, so nothing could
-        clear the pair. **Making them editable is what turns a latent defect into
-        a live one — so it is fixed in the same commit that exposes it**, not
-        filed for later.
-        ⚠ The test is PRESENCE IN THE PAYLOAD, not the parsed value: `undefined`
-        means the caller is not speaking about this column at all.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   ...(onsite != null || remote != null
-        //     ? { onsite_rate_cents: onsite, remote_rate_cents: remote }
-        //     : {}),
-      */
+      // condition below could not tell a caller that never mentions these
       const sentOnsite = data.onsiteDollars !== undefined;
       const sentRemote = data.remoteDollars !== undefined;
 
@@ -2552,28 +1542,8 @@ export async function applyProviderSection(
 
     case "finish": {
       // E019 — the "You're Done!" details. Photo is uploaded separately
-      // (brief_O endpoint); phone verification is its own challenge/response.
-      // This persists DOB + address and nothing else, so a half-filled finish
-      // page still saves. Publishing is a SEPARATE call (`publishProfile`),
-      // which is where the required-field gate lives.
-      /*
-        DATE OF BIRTH IS NO LONGER CAPTURED (WS7 / E178).
-
-        It gated publish and marketplace visibility and nothing in the
-        marketplace ever read it — a buyer needs to reach a provider, not know
-        their age. If age or legal capacity is ever required it belongs to the
-        tax/payout gate, where there is a reason to ask and a form that already
-        asks it.
-
-        The COLUMN stays, nullable, and existing values are left alone: no
-        destructive drop, per the brief. `lib/dob.ts` also stays — it is the
-        validator that gate will want.
-      */
+      // DATE OF BIRTH IS NO LONGER CAPTURED (WS7 / E178).
       // E036 — phone verification is STUBBED. We store the number the provider
-      // typed so the profile is complete and publishable; we do NOT mark it
-      // verified, because it hasn't been. The real SMS challenge/response is
-      // built and untouched (`phone-verification.ts`) — flipping it back on is
-      // re-adding the publish-gate line, not rebuilding the flow.
       if (typeof data.phone === "string" && data.phone.trim()) {
         await prisma.person.update({
           where: { id: personId },
@@ -2600,34 +1570,7 @@ export async function applyProviderSection(
       break;
     }
 
-    /*
-      The COMPANY step writes NOTHING here (WS5).
-
-      The binding is created by /api/company/define or /api/company/join, which
-      own the attestation, the company ToS and the approval decision. This case
-      exists so the wizard's save-as-you-go call for the step is a no-op rather
-      than an "Unknown step" error.
-
-      ── ⚠⚠ IT IS A PURE NO-OP NOW (`P1-A1.4-E418`, 2026-09-11) ────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted — the membership re-check this case used
-      to perform, *"so a client that skipped the company screen can't advance
-      past it"*:
-
-          const bound = await prisma.companyMembership.findFirst({
-            where: { person_id: personId, status: "APPROVED" },
-            select: { id: true },
-          });
-          if (!bound) {
-            throw new OnboardingError(
-              "Add or join your company before continuing", "INVALID");
-          }
-
-      No journey shows a company screen any more, so there is no screen to skip
-      — and the throw would now refuse a step the provider was never offered.
-      ⚠ THE CASE STAYS so an open tab from before the change posts a no-op
-      instead of a 400 (`E164`, and `SAVEABLE_STEPS` still lists it).
-    */
+    // The COMPANY step writes NOTHING here (WS5).
     case "company": {
       break;
     }
@@ -2666,9 +1609,6 @@ export async function applyProviderSection(
       };
 
       // brief_U / E044 — a certification is STANDALONE: it belongs to the
-      // certifying agency that issued it, not to an employer. The employer
-      // column, relation and the brief_T "carry the link forward by name"
-      // logic are all gone.
       const clean = list
         .map((c) => ({
           name: (c.name ?? "").trim(),
@@ -2684,20 +1624,13 @@ export async function applyProviderSection(
         }))
         .filter((c) => c.name);
 
-      /*
-        ⚠ THE OWNER IS THE USER, AND IT IS RESOLVED FROM THE PERSON THIS WRITER
-        ALREADY HAS (`P1-J3-E019`). `Certification.user_id` is required now: a
-        credential belongs to the person, not to the seller profile they happen to
-        be editing. The profile is still written so the profile page keeps showing
-        them — writes set BOTH while `provider_profile_id` exists.
-      */
+      // THE OWNER IS THE USER, AND IT IS RESOLVED FROM THE PERSON THIS WRITER
       const certOwner = await prisma.person.findUnique({
         where: { id: personId },
         select: { user_id: true },
       });
       if (!certOwner?.user_id) {
-        /* ⚠ REFUSED, NOT GUESSED. A Person with no User cannot own a credential,
-           and inventing one would put a certificate under an account nobody holds. */
+        // REFUSED, NOT GUESSED. A Person with no User cannot own a credential
         throw new OnboardingError(
           "This profile has no account attached, so certifications cannot be saved.",
           "INVALID"
@@ -2706,10 +1639,7 @@ export async function applyProviderSection(
       const certUserId = certOwner.user_id;
 
       await prisma.$transaction([
-        /* ⚠ SCOPED TO THIS PROFILE, NOT TO THE USER. The editor is replacing the
-           SELF_REPORTED list on one seller profile; deleting by user would sweep
-           away LEARN credentials Panameer issued, which is the very thing this
-           brief stopped the cascade from doing. */
+        // SCOPED TO THIS PROFILE, NOT TO THE USER. The editor is replacing the
         prisma.certification.deleteMany({
           where: { provider_profile_id: profileId, issued_from: "SELF_REPORTED" },
         }),
@@ -2730,26 +1660,7 @@ export async function applyProviderSection(
 
   }
 
-  /*
-    ── ⚠⚠ THE DOMAIN IS SELF-CORRECTING, NOT PERMANENT (`P2-J1.4-E507` PART D) ─
-
-    `E509` WS-A left a CATALOG-COUNT FALLBACK in the role step, and deliberately:
-    a provider who picks a role MANUALLY has no skills yet, and the stored
-    (role, domain) pair still has to be a REAL pair or `E511`'s button 400s.
-    ⚠⚠ BUT THAT FALLBACK MUST NOT OUTLIVE THE EVIDENCE. Once the provider HAS
-    skills — parsed or typed — the domain chosen by catalog size is simply wrong,
-    and nothing was recomputing it: it was written once at the role step and
-    never revisited.
-
-    ⚠ SO IT RECOMPUTES WHENEVER THE SKILL SET CHANGES. `deriveRolesFromSkills`
-    is CALLED, never copied — one derivation, one place, so the role page's
-    prefill and this correction can never disagree.
-    ⚠ IT ONLY EVER MOVES THE DOMAIN **WITHIN THE ROLE THE PROVIDER CHOSE**: the
-    derivation's primary must match the stored role, or nothing happens. A
-    provider's ROLE is their answer and this must never overwrite it — that is
-    `E509`'s whole rule, and it applies to its own follow-up.
-    ⚠ AND IT NEVER NULLS A DOMAIN. No evidence means no change, not a blank.
-  */
+  // THE DOMAIN IS SELF-CORRECTING, NOT PERMANENT PART D)
   if (section === "skills") {
     const stored = await prisma.providerProfile.findUnique({
       where: { id: profileId },
@@ -2774,30 +1685,13 @@ export async function applyProviderSection(
   // visibility gate reads this column, so it must stay current on every write.
   await recomputeCompleteness(profileId);
 
-  /*
-    …and the weighted skill rollup (WS-2), for the sections that touch jobs.
-
-    Narrow on purpose. `recomputeCompleteness` runs after every section because
-    every section can move the percentage; the rollup only changes when a job,
-    its dates, its suite or its skills change, and rebuilding a provider's whole
-    vector because they edited their bio would be work with no possible effect.
-
-    The list is the sections that write Employer/Project/JobSkill rows. Adding a
-    new one means adding it here — which is why it is a named constant rather
-    than an inline check, so it reads as a thing to maintain.
-    */
+  // …and the weighted skill rollup (WS-2), for the sections that touch jobs.
   if (SECTIONS_AFFECTING_ROLLUP.has(section)) {
     await recomputeProviderRollup(profileId);
   }
 }
 
-/**
- * The sections whose writes change what the weighted rollup would compute.
- *
- * `experience` rewrites the whole work history; `work_history_review` is the
- * WS-4 surface where suites and per-job skills are corrected. Everything else
- * — bio, languages, rate, photo — cannot move a single weight.
- */
+/** The sections whose writes change what the weighted rollup would compute. */
 const SECTIONS_AFFECTING_ROLLUP = new Set<string>([
   "experience",
   "work_history_review",
@@ -2808,13 +1702,7 @@ const SECTIONS_AFFECTING_ROLLUP = new Set<string>([
 // ---------------------------------------------------------------------------
 
 /** Display labels for the E016 proficiency levels. */
-/* ⚠⚠ THE SECOND LABEL TABLE, RETIRED (`E723` item 10). ⚠ It is `PROFICIENCY_LABEL` now, and
-   the words changed with it on Scott's instruction: `BASIC` reads **Beginner** and
-   `NATIVE_OR_BILINGUAL` reads **Native**.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   export const LANGUAGE_LEVEL_LABELS: Record<string, string> = {
-   //     BASIC: "Basic", CONVERSATIONAL: "Conversational", FLUENT: "Fluent",
-   //     NATIVE_OR_BILINGUAL: "Native or Bilingual" }; */
+// THE SECOND LABEL TABLE, RETIRED ( item 10). It is `PROFICIENCY_LABEL` now, and
 export const LANGUAGE_LEVEL_LABELS = PROFICIENCY_LABEL;
 
 /** Coerce a year-ish value to a plausible 4-digit year, or null. */
@@ -2828,17 +1716,8 @@ function toYear(v: unknown): number | null {
   return n;
 }
 
-/**
- * Persist the provider's address on the BACKBONE (E019) rather than bolting
- * address columns onto Person: P-Account → Company → Site → Address → Person is
- * the model (architecture.md), so a provider's address is an Address on their
- * own company's Site. Creates the Site/Address on first save, updates after.
- */
-/* ⚠⚠⚠ EXPORTED FOR SETTINGS (brief 10 WS-B). ⚠ It is the ONE writer of a
-   provider's address and it owns the backbone step — creating the `Site` on
-   first save. ⚠⚠ Settings CALLS IT rather than writing its own upsert: a second
-   address writer would be `E585` on the one record a buyer uses to reach
-   somebody, and only one of the two would know about the Site. */
+/** Persist the provider's address on the BACKBONE (E019) rather than bolting */
+// EXPORTED FOR SETTINGS (brief 10 WS-B). It is the ONE writer of a
 export async function saveProviderAddress(personId: string, addr: StepData): Promise<void> {
   const line1 = (addr.line1 ?? "").trim();
   if (!line1) return; // nothing to save yet — the finish page saves partially
@@ -2855,7 +1734,7 @@ export async function saveProviderAddress(personId: string, addr: StepData): Pro
     city: addr.city?.trim() || null,
     state: addr.state?.trim() || null,
     postal_code: addr.postalCode?.trim() || null,
-    /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+    /* BOTH COLUMNS (`E729` WS-C). */
     ...countryColumns(addr.country),
   };
 
@@ -2882,46 +1761,9 @@ export async function saveProviderAddress(personId: string, addr: StepData): Pro
   }
 }
 
-/**
- * Recompute + persist a provider's `completeness` (0–100) from the single
- * `computeProviderCompleteness` helper. Called after every section save.
- */
-/**
- * ⚠ `E489` — THE SCORER'S INPUT, BUILT ONCE AND READ TWICE.
- *
- * ⚠⚠ IT RETURNS THE INPUT, NOT A SECOND SCORE. `providerProfile.completeness`
- * stays the one number and stays the gate; this exists so the checklist beside
- * it is computed from IDENTICAL FACTS. Assembling this shape twice is exactly
- * how a number and its own breakdown start disagreeing.
- */
-/* ═══════════════════════════════════════════════════════════════════════════
-   ⚠⚠ THE ROLE IS DERIVED FROM THE PROVIDER'S OWN SKILLS (`P2-J1.4-E509` WS-A)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   > **SCOTT, 2026-09-13:** *"i think we show the resume parser first. I think it
-   > parses and we use the skills to derive the role(s). For those who do not or
-   > their resume cannot use the parser… they will need to add their RDS
-   > manually."*
-
-   ⚠ NOT A NEW IDEA — IT IS THIS PROJECT'S OWN MODEL, FROM AUGUST.
-   `provider_skill_model_decision.md`: *"Role is derived from the skills (a skill
-   belongs to exactly one role)… a provider can span roles across jobs."* The
-   wizard diverged from the model doc; this puts it back.
-
-   ── ⚠⚠ THE BUG THIS REPLACES, MEASURED NOT ASSUMED ──────────────────────────
-
-   The domain was chosen by COUNTING CATALOG ROWS under the picked role:
-       orderBy: { _count: { id: "desc" } }, take: 1   // the biggest domain wins
-   ⚠ THAT IS PROVIDER-INDEPENDENT. Run today, per role:
-       Technology-Specific → Salesforce 60 · Oracle EBS 51 · Oracle Fusion 49
-   ⚠⚠ SO EVERY Technology-Specific PROVIDER WAS HANDED SALESFORCE, FOREVER —
-   which is exactly how a twelve-year Oracle Financials consultant was filed as
-   `Technology-Specific · Salesforce`. ⚠ IT WAS NEVER AN AI FAILURE. It is a
-   deterministic count, and it optimised for "a real pair", not "the right pair".
-
-   ⚠ A SKILL BELONGS TO EXACTLY ONE ROLE, so this needs no model call and no
-   confidence score: count the provider's matched skills by role, rank, done.
-*/
+/** Recompute + persist a provider's `completeness` (0–100) from the single */
+/** — THE SCORER'S INPUT, BUILT ONCE AND READ TWICE. */
+// THE ROLE IS DERIVED FROM THE PROVIDER'S OWN SKILLS WS-A)
 
 export type DerivedRoles = {
   /** Ordered by THIS provider's skill count, desc. `[0]` is the primary. */
@@ -2932,20 +1774,7 @@ export type DerivedRoles = {
   evidence: number;
 };
 
-/**
- * What this provider's own skills say their role(s) are.
- *
- * ⚠⚠ IT DERIVES, IT NEVER WRITES. The caller uses it as a PREFILL on the role
- * page. A derived role is a SUGGESTION the provider can change — never a silent
- * assignment, because a silent assignment is precisely how
- * `Technology-Specific · Salesforce` survived unnoticed.
- *
- * ⚠ NO RÉSUMÉ MEANS NO SKILLS MEANS NOTHING TO DERIVE. The answer is then an
- * EMPTY SET AND A NULL DOMAIN — NOT A GUESS. Same rule as `LearningPath.pillar`:
- * *"a path whose group is not in the mapping keeps `null` rather than being
- * guessed into a family… the null is what makes that visible instead of
- * invented."*
- */
+/** What this provider's own skills say their role(s) are. */
 export async function deriveRolesFromSkills(profileId: string): Promise<DerivedRoles> {
   const held = await prisma.providerSkill.findMany({
     where: { provider_profile_id: profileId },
@@ -2956,9 +1785,7 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
     },
   });
 
-  /* ⚠ `E481` — a RETIRED skill still counts as evidence of what this person
-     does, but it must not steer them into a role via a row nobody may pick.
-     Only ACTIVE rows vote. */
+  // — a RETIRED skill still counts as evidence of what this person
   const rows = held
     .map((h) => h.skill)
     .filter((sk): sk is NonNullable<typeof sk> => !!sk && sk.status === "ACTIVE");
@@ -2970,14 +1797,14 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
     if (!r.role_type_id) continue;
     byRole.set(r.role_type_id, (byRole.get(r.role_type_id) ?? 0) + 1);
   }
-  /* ⚠ TIES BREAK ON THE ROLE ID so the order cannot flicker between equals. */
+  /* TIES BREAK ON THE ROLE ID so the order cannot flicker between equals. */
   const roleTypeIds = [...byRole.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([id]) => id);
 
   if (roleTypeIds.length === 0) return { roleTypeIds: [], pillarId: null, evidence: 0 };
 
-  /* ⚠ THE DOMAIN, SAME RULE: this provider's skills WITHIN the primary role. */
+  /* THE DOMAIN, SAME RULE: this provider's skills WITHIN the primary role. */
   const primary = roleTypeIds[0];
   const byPillar = new Map<string, number>();
   for (const r of rows) {
@@ -2991,41 +1818,26 @@ export async function deriveRolesFromSkills(profileId: string): Promise<DerivedR
   return { roleTypeIds, pillarId, evidence: rows.length };
 }
 
-/**
- * ── ⚠⚠⚠ THE SCORER'S `include`, AS ONE CONSTANT (`P2-A1.1-E738`) ───────────
- *
- * ⚠⚠ **EXTRACTED SO A BATCH LOADER CANNOT LOAD LESS THAN THE MAPPER READS.**
- * `completenessInputFrom` below is a pure function over this exact shape; if the
- * shape and the mapper could drift apart, a batch caller would silently score a
- * profile as if it had no languages, no certifications and no projects — i.e. it
- * would return a REAL-LOOKING NUMBER THAT IS TOO LOW, which is the worst kind of
- * wrong figure because nothing about it looks broken.
- * ⚠ `satisfies` keeps it a literal type for Prisma while still type-checking it.
- */
+/** THE SCORER'S `include`, AS ONE CONSTANT */
 export const COMPLETENESS_INCLUDE = {
       skills: { include: { skill: { select: { role_type_id: true } } } },
-      /* ⚠ `E517` — the selection the filter reads. */
+      /* `E517` — the selection the filter reads. */
       roles: { select: { role_type_id: true } },
       specializations: true,
       employers: true,
       education: true,
       languages: true,
       certifications: true,
-      /* ⚠⚠ `P2-J3-E590` WS-A — Solo Projects is its own scored line now, and a
-         solo project is one no employer claims. ⚠ Dates come with the row and
-         feed the `Years of Experience` line. */
+      // WS-A — Solo Projects is its own scored line now, and a
       projects: { select: { employer_id: true, start_date: true } },
       person: {
         select: {
-          /* ⚠ THE TITLE LIVES HERE NOW (`E595` WS-B) — the scorer's `headline`
-             input is fed from `Person.title`. */
+          // THE TITLE LIVES HERE NOW ( WS-B) — the scorer's `headline`
           title: true,
           photo_url: true,
           phone: true,
           phone_verified_at: true,
-          /* ⚠ `city`/`state`/`country` ADDED (`E590` WS-A) — `Location` is a
-             scored line and is NOT the same fact as `hasAddress`, which is a
-             street line and belongs to the required set. */
+          // scored line and is NOT the same fact as `hasAddress`, which is a
           site: {
             select: {
               addresses: {
@@ -3034,33 +1846,16 @@ export const COMPLETENESS_INCLUDE = {
               },
             },
           },
-          /*
-            ⚠ THE MEMBERSHIP SELECT LEFT WITH THE WEIGHT (`E418`). ⚠ SUPERSEDED,
-            quoted not deleted: *"WS6 — company is part of the required set now,
-            so the meter has to be able to see it. pitfalls.md: add the field to
-            CompletenessInput AND to every caller that builds one, or the weight
-            is unreachable."* There is no `company` weight to reach any more.
-          */
+          // THE MEMBERSHIP SELECT LEFT WITH THE WEIGHT .
         },
       },
 } as const;
 
-/**
- * ⚠⚠⚠ THE INPUT SHAPE, AS A PURE FUNCTION. No database, no session, no clock.
- *
- * ⚠ `E489`'s rule unchanged — *"the shape is built ONCE and handed to both
- * readers"* — now with a third reader (the public Browse Talent grid, which
- * loads many profiles in one query and maps each through here).
- * ⚠⚠ THE CHECKLIST MIRRORS THIS PREDICATE FOR PREDICATE, so assembling the
- * input twice is how the number and its breakdown would start disagreeing.
- */
+/** THE INPUT SHAPE, AS A PURE FUNCTION. No database, no session, no clock. */
 export function completenessInputFrom(
   profile: NonNullable<Awaited<ReturnType<typeof loadForCompleteness>>>
 ) {
   return {
-    /* ⚠ `completeness.ts`'s input keeps the key `headline`; its SOURCE is now
-       `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
-       //   headline: profile.headline, */
     headline: profile.person.title,
     overview: profile.overview,
     work_method: profile.work_method,
@@ -3069,18 +1864,7 @@ export function completenessInputFrom(
     onsite_rate_cents: profile.onsite_rate_cents,
     remote_rate_cents: profile.remote_rate_cents,
     hourly_rate_cents: profile.hourly_rate_cents,
-    /*
-      ── ⚠⚠ COMPLETENESS COUNTS SHOWN, NOT HELD (`P2-J1.4-E517`) ──────────────
-      ⚠ SUPERSEDED, quoted not deleted (`E164`): `skills: profile.skills,`
-      ⚠⚠ Scott, 2026-09-17: *"A gate that counts invisible skills lets a provider
-      pass it and then show a buyer an empty profile. That defeats the gate's only
-      purpose."* ⚠ This is the ONE write path for the stored `completeness`
-      column, so every downstream reader — `access.ts`, the admin board, the
-      profile — inherits it.
-      ⚠ MEASURED BEFORE FLIPPING (Scott's condition): **ZERO providers fall below
-      `VISIBILITY_THRESHOLD`.** The skills points are awarded at >= 1 and no
-      provider holds ALL their skills out-of-role, so no score moves today.
-    */
+    // COMPLETENESS COUNTS SHOWN, NOT HELD
     skills: shownSkills(selectedRoleIds(profile), profile.skills, (s) => s.skill.role_type_id),
     languages: profile.languages,
     employers: profile.employers,
@@ -3093,23 +1877,20 @@ export function completenessInputFrom(
     hasPhone: Boolean(profile.person.phone?.trim()),
     phoneVerified: profile.person.phone_verified_at != null,
 
-    /* ── ⚠⚠ THE `E590` LINES. ⚠ ALL SUPPLIED HERE, THE ONE WRITE PATH. ────── */
+    /* ── THE `E590` LINES. ALL SUPPLIED HERE, THE ONE WRITE PATH. ────── */
     hasLocation: Boolean(
       profile.person.site?.addresses?.[0]?.city?.trim() ||
         profile.person.site?.addresses?.[0]?.state?.trim() ||
         profile.person.site?.addresses?.[0]?.country?.trim()
     ),
-    /* ⚠ A SOLO PROJECT IS ONE NO EMPLOYER CLAIMS — the same derivation the
-       profile uses, kept identical so the score and the page cannot disagree
-       about which projects are solo. */
+    // A SOLO PROJECT IS ONE NO EMPLOYER CLAIMS — the same derivation the
     soloProjects: profile.projects.filter((pr) => pr.employer_id == null),
-    /* ⚠⚠ DERIVED, NEVER SELF-REPORTED (`E068` retired the self-reported level).
-       One dated job or project is enough to draw a span from. */
+    // DERIVED, NEVER SELF-REPORTED ( retired the self-reported level).
     hasExperienceYears:
       profile.employers.some((e) => e.start_date != null) ||
       profile.projects.some((pr) => pr.start_date != null),
 
-    /* ⚠ `null` MEANS UNANSWERED. See the column comments on `ProviderProfile`. */
+    /* `null` MEANS UNANSWERED. See the column comments on `ProviderProfile`. */
     declaredNoWorkHistoryAt: profile.declared_no_work_history_at,
     declaredNoEducationAt: profile.declared_no_education_at,
     declaredNoSpecializationsAt: profile.declared_no_specializations_at,
@@ -3118,7 +1899,7 @@ export function completenessInputFrom(
   };
 }
 
-/** ⚠ The one-profile load, in the shared shape. */
+/** The one-profile load, in the shared shape. */
 async function loadForCompleteness(profileId: string) {
   return prisma.providerProfile.findUnique({
     where: { id: profileId },
@@ -3126,27 +1907,14 @@ async function loadForCompleteness(profileId: string) {
   });
 }
 
-/**
- * ⚠ Unchanged contract: the input for ONE profile, or null if it does not exist.
- */
+/** Unchanged contract: the input for ONE profile, or null if it does not exist. */
 export async function buildCompletenessInput(profileId: string) {
   const profile = await loadForCompleteness(profileId);
   if (!profile) return null;
   return completenessInputFrom(profile);
 }
 
-/**
- * ── ⚠⚠ THE SAME INPUT FOR MANY PROFILES, IN **ONE** QUERY (`P2-A1.1-E738`) ──
- *
- * ⚠⚠⚠ **WHY IT EXISTS: THE PUBLIC GRID SHOWS 12 SEARCH SCORES AND THE STORED
- * `completeness` COLUMN IS STALE FOR 52 OF 59 ELIGIBLE PROFILES** (measured
- * 2026-10-01), so the figures have to be computed. ⚠ Twelve calls to
- * `buildCompletenessInput` measured **4.4 s** through the pooler — unacceptable
- * on a page a stranger loads. One query is ~0.3 s.
- * ⚠⚠ IT IS THE SAME `include` AND THE SAME MAPPER, so the batch cannot produce
- * a different number from the single read. ⚠ Returned as a Map keyed on profile
- * id; a missing id is simply absent, never a zero.
- */
+/** THE SAME INPUT FOR MANY PROFILES, IN ONE QUERY */
 export async function buildCompletenessInputs(
   profileIds: string[]
 ): Promise<Map<string, ReturnType<typeof completenessInputFrom>>> {
@@ -3158,10 +1926,7 @@ export async function buildCompletenessInputs(
   return new Map(rows.map((r) => [r.id, completenessInputFrom(r)]));
 }
 
-/**
- * Recompute + persist a provider's `completeness` (0–100).
- * ⚠ Unchanged behaviour — it now reads its input from `buildCompletenessInput`.
- */
+/** Recompute + persist a provider's `completeness` (0–100). */
 export async function recomputeCompleteness(profileId: string): Promise<number> {
   const input = await buildCompletenessInput(profileId);
   if (!input) return 0;
@@ -3173,10 +1938,7 @@ export async function recomputeCompleteness(profileId: string): Promise<number> 
   return completeness;
 }
 
-/**
- * Save-as-you-go for the onboarding wizard — behind the email-verify gate, then
- * delegates to the shared `applyProviderSection`. Returns the fresh state.
- */
+/** Save-as-you-go for the onboarding wizard — behind the email-verify gate, then */
 export async function saveProviderStep(
   viewer: Viewer,
   step: ProviderStep,
@@ -3186,27 +1948,13 @@ export async function saveProviderStep(
   if (p.user?.email_verified == null) {
     throw new OnboardingError("Verify your email first", "NOT_VERIFIED");
   }
-  /*
-    WS3 — the STEP "roles" writes the SECTION "category". Every other step name
-    happens to equal its section name, which is exactly why this mapping has to
-    be explicit: an implicit identity that holds for nine of ten cases is the
-    kind that gets assumed for the tenth.
-  */
+  // WS3 — the STEP "roles" writes the SECTION "category". Every other step name
   const section: ProfileSection = step === "roles" ? "category" : (step as ProfileSection);
   await applyProviderSection(p.providerProfile!.id, p.id, section, data);
   return getOnboardingState(viewer);
 }
 
-/**
- * "Publish Profile" (E019) — the finish action. Marks onboarding complete and
- * hands the provider to the review page.
- *
- * IMPORTANT: this is NOT a visibility switch. brief_K locked marketplace
- * visibility as DERIVED (status ACTIVE ∧ completeness ≥ 80 ∧ not paused) and
- * deliberately deleted the old `published` flag — resurrecting one here would
- * relitigate that decision. `onboarding_completed_at` records only that the
- * provider walked the journey to the end.
- */
+/** hands the provider to the review page. */
 export async function publishProfile(viewer: Viewer) {
   const p = await loadDraft(viewer);
   if (p.user?.email_verified == null) {
@@ -3214,36 +1962,8 @@ export async function publishProfile(viewer: Viewer) {
   }
   const pp = p.providerProfile!;
 
-  /*
-    THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
-    marketplace gate reads, deliberately. Publishing into invisibility is the
-    worst outcome this flow can produce: the provider is told they are live and
-    no buyer can see them.
-
-    Bio, languages and date of birth are GONE from this list. They were here
-    while the wizard asked for them; with the slimdown it no longer does, so
-    keeping them would refuse to publish a provider who completed every step
-    they were shown — a dead end with no way out from inside the product.
-
-    ── ⚠⚠ AND COMPANY IS GONE FOR EXACTLY THAT REASON (`P1-A1.4-E418`) ────────
-
-    ⚠ SUPERSEDED, quoted not deleted: *"Company is new here: a work order is
-    between companies, so a provider without an approved membership cannot be
-    contracted."* The premise still holds and the PLACE was wrong — the company
-    is captured at work order acceptance, which is the moment that sentence is
-    actually about. Asking for it at publish refused a provider a question
-    nobody had asked them, which is the dead end this very block warns about.
-
-    ⚠ THE MEMBERSHIP LOOKUP THAT FED IT WENT WITH IT:
-        const person = await prisma.person.findUnique({
-          where: { id: p.id },
-          select: { companyMemberships: { where: { status: "APPROVED" },
-                    select: { id: true }, take: 1 } },
-        });
-  */
+  // THE PUBLISH GATE IS THE REQUIRED SET (WS6) — and it is the same set the
   const missing = missingRequired({
-    /* ⚠ Source is `Person.title` (`E595` WS-B). ⚠ SUPERSEDED (`E164`):
-       //   headline: pp.headline, */
     headline: p.title,
     role_type_id: pp.role_type_id,
     skills: pp.skills,
@@ -3271,16 +1991,7 @@ export async function publishProfile(viewer: Viewer) {
   });
   await recomputeCompleteness(pp.id);
 
-  /*
-    ⚠ TWO EVENTS AT ONE WRITE POINT (`P1-ALL`), because the spec defines two:
-      · `profile.ready`     -> FEED, the user is told
-      · `profile.published` -> SILENT, recorded and deliberately NOT delivered,
-        because the user is looking at the screen that says it. A decision not to
-        notify is a decision; the row is what stops it being re-litigated.
-    ⚠ ONLY ON THE TRANSITION. Re-saving a published profile must not re-announce
-    it, which is what `wasAlreadyPublished` guards — the dedupe key would also
-    catch it, and both is deliberate: one is intent, one is the safety net.
-  */
+  // TWO EVENTS AT ONE WRITE POINT (`P1-ALL`), because the spec defines two
   if (!wasAlreadyPublished) {
     await notify({
       event: "profile.ready",
@@ -3298,30 +2009,13 @@ export async function publishProfile(viewer: Viewer) {
     });
   }
 
-  /*
-    WS-G — THE CORRECTION SIGNAL, captured at review-save.
-
-    Publish is the moment the person has finished editing what the parser gave
-    them, so it is the only point where "what the model said" and "what a human
-    actually kept" both exist. Awaited but never fatal — the audit writer
-    swallows its own errors, because losing a publish over telemetry would be
-    an absurd trade.
-  */
+  // WS-G — THE CORRECTION SIGNAL, captured at review-save.
   await recordPublishAudit(pp.id);
   await recordGapFlags(pp.id);
   return getOnboardingState(viewer);
 }
 
-/**
- * WS5 — record which optional sections this profile left empty.
- *
- * Written at publish, when "what did they choose not to fill in" is finally a
- * settled question. RECORDED, NOT SENT: the re-engagement engine is its own
- * feature and out of scope, but it cannot be built retrospectively against
- * history nobody kept.
- *
- * Never fatal — a telemetry write must not cost somebody their publish.
- */
+/** WS5 — record which optional sections this profile left empty. */
 async function recordGapFlags(profileId: string): Promise<void> {
   try {
     const pp = await prisma.providerProfile.findUnique({
@@ -3359,13 +2053,7 @@ async function recordGapFlags(profileId: string): Promise<void> {
   }
 }
 
-/**
- * Compare the most recent AI parse against the profile as it now stands.
- *
- * Only AI parses are audited: a heuristic parse has no model and no cost, so
- * there is nothing to attribute an accuracy number to. One audit per import,
- * enforced by the resume-hash check, so republishing doesn't inflate the counts.
- */
+/** Compare the most recent AI parse against the profile as it now stands. */
 async function recordPublishAudit(profileId: string): Promise<void> {
   try {
     const imp = await prisma.profileImport.findFirst({
@@ -3376,7 +2064,7 @@ async function recordPublishAudit(profileId: string): Promise<void> {
         parsed: true,
         ai_model: true,
         ai_provider: true,
-        /* ⚠ `E487` — the prompt that RAN. */
+        /* `E487` — the prompt that RAN. */
         ai_prompt_version: true,
         ai_input_tokens: true,
         ai_output_tokens: true,
@@ -3404,7 +2092,7 @@ async function recordPublishAudit(profileId: string): Promise<void> {
       costUsd: imp.ai_cost_usd ? Number(imp.ai_cost_usd) : null,
       latencyMs: imp.ai_latency_ms,
       parsed: imp.parsed as unknown as ParsedResume,
-      /* ⚠ `E487` — the version that RAN, carried forward from the parse. */
+      /* `E487` — the version that RAN, carried forward from the parse. */
       promptVersion: imp.ai_prompt_version,
       final,
     });
@@ -3418,8 +2106,7 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
   const pp = await prisma.providerProfile.findUnique({
     where: { id: profileId },
     select: {
-      /* ⚠ `headline` COLUMN IS GONE (`E595` WS-B) — the title comes off the
-         person now. ⚠ SUPERSEDED (`E164`): `headline: true,` */
+      // person now. `headline: true,`
       person: { select: { title: true } },
       overview: true,
       employers: {
@@ -3447,13 +2134,10 @@ async function currentProfileAsParsed(profileId: string): Promise<ParsedResume> 
   });
   const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
   return {
-    /* ⚠ `ParsedResume` keeps the key `headline`; the SOURCE is `Person.title`
-       (`E595` WS-B). ⚠ SUPERSEDED (`E164`): `headline: pp?.headline ?? null,` */
+    // ( WS-B). `headline: pp?.headline ?? null,`
     headline: pp?.person?.title ?? null,
     overview: pp?.overview ?? null,
-    /* ⚠ Built from what is already STORED, not from a document — this shape feeds
-       a re-read comparison, and certifications are not part of that comparison
-       today (`P1-A1.4-E399`). Empty is the honest value, not a missing one. */
+    // Built from what is already STORED, not from a document — this shape feeds
     certifications: [],
     experienceLevel: null,
     experienceYears: null,
@@ -3488,12 +2172,7 @@ function formatList(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-// ===========================================================================
 // Buyer onboarding (brief_G) — the lighter sibling of the provider flow.
-// Buyers are NOT reviewed: no review gate; active on verify +
-// tier choice. Reuses the same email-verification machinery (VerificationToken
-// + /verify-email + issue/consume) — nothing new there.
-// ===========================================================================
 
 const SUBSCRIPTION_TIERS = ["BASIC", "BUSINESS_PLUS"] as const;
 
@@ -3505,11 +2184,7 @@ export type CreateBuyerAccountInput = {
   tosAccepted: boolean;
 };
 
-/**
- * Creates PAccount(BUYER) → Company → User → Person(is_service_buyer) → draft
- * BuyerProfile, atomically. A buyer is their own company (name defaults to the
- * full name). Records ToS acceptance timestamp on the User.
- */
+/** Creates PAccount(BUYER) → Company → User → Person(is_service_buyer) → draft */
 export async function createBuyerAccount(
   input: CreateBuyerAccountInput
 ): Promise<{ userId: string; email: string }> {
@@ -3567,17 +2242,7 @@ export async function createBuyerAccount(
   });
 
 
-  /*
-    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
-
-    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
-    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
-    `Joined` was structurally 0 for every member.
-    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
-    row must not be able to roll back a new member. It cannot throw, cannot fail
-    a signup, and returns `null` when there is nothing to credit, which is the
-    ordinary case.
-  */
+  // CREDIT THE INVITATION THAT BROUGHT THEM IN WS-C)
   await creditInviteForNewUser(userId, email);
   return { userId, email };
 }
@@ -3612,10 +2277,7 @@ export async function getBuyerState(viewer: Viewer) {
   };
 }
 
-/**
- * Set the buyer's subscription tier. BUSINESS_PLUS records a trial start (no
- * billing collected — payment is deferred). BASIC clears any trial start.
- */
+/** Set the buyer's subscription tier. BUSINESS_PLUS records a trial start (no */
 export async function setBuyerTier(
   viewer: Viewer,
   tier: (typeof SUBSCRIPTION_TIERS)[number]

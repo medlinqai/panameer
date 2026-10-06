@@ -150,11 +150,7 @@ export async function requestRecommendation(
     invite: offPlatform,
   });
 
-  /*
-    NO RESEND KEY = NO SEND, and the link comes back instead. The same dev
-    affordance verify-email and project validation use (E048): the loop stays
-    walkable locally rather than silently doing nothing.
-  */
+  // NO RESEND KEY = NO SEND, and the link comes back instead. The same dev
   try {
     await sendEmail({
       to: email,
@@ -176,28 +172,7 @@ export async function requestRecommendation(
 }
 
 /** What the provider sees on their own page. Never exposes the token hash. */
-/**
- * ── ⚠⚠ ASK AN ACCEPTED COLLEAGUE (`P2-J3-E558` WS-A) ──────────────────────
- *
- * ⚠⚠ GATED ON THE CONNECTION, NOT ON "WORKED TOGETHER". Measured 2026-09-17:
- * LinkedIn restricts requests to 1st-degree connections. ⚠ So the boundary is
- * the one MESSAGING already uses — an ACCEPTED COLLEAGUE row — and it is
- * verified here, server-side, on every call.
- *
- * ⚠⚠⚠ THE CALLER SENDS A `userId`, NEVER AN EMAIL. The open compose form still
- * takes an address because it is FOR off-platform contacts, but a row on the
- * Colleagues page must not put colleague email addresses into the HTML for
- * every row on the page. The address is resolved here from a connection the
- * viewer demonstrably has.
- *
- * ⚠ THE RELATIONSHIP IS DERIVED, NEVER TYPED BY THE REQUESTER. LinkedIn makes
- * it self-declared, which is where inflation enters.
- * ⚠⚠ AND IT IS ALWAYS `Colleague` IN THIS BRIEF. The class rule would make a
- * cross-class ask a `Client`, but `USER_CLASS` IS NOT STORED, the rule is
- * unenforced, and buy-side colleague rows already exist that are NOT
- * transactions. ⚠ `Colleague` is the only thing today's data can prove; the
- * `Client` label arrives with the rule.
- */
+/** ASK AN ACCEPTED COLLEAGUE WS-A) */
 export async function requestRecommendationFromColleague(
   viewer: Viewer,
   input: { toUserId: string; message: string },
@@ -215,8 +190,7 @@ export async function requestRecommendationFromColleague(
     select: { id: true },
   });
   if (!connection) {
-    /* ⚠ THE SAME ANSWER WHETHER THEY ARE A STRANGER OR DECLINED YOU — a
-       distinguishable refusal here would turn this into a relationship oracle. */
+    // THE SAME ANSWER WHETHER THEY ARE A STRANGER OR DECLINED YOU — a
     throw new RecommendationError(
       "You can only ask a colleague for a recommendation.",
       "INVALID"
@@ -307,10 +281,7 @@ export async function submitRecommendation(
       id: true,
       status: true,
       expires_at: true,
-      /* ⚠ `P2-A1.1-E749` WS-D — who to tell, and who to say it was from.
-         ⚠⚠ The recommender's name is `contact_name`; there is no
-         `recommender_name` column (measured — `tsc` refused my first draft).
-         ⚠ `provider_profile_id` is a scalar, so the person is resolved below. */
+      // WS-D — who to tell, and who to say it was from.
       contact_name: true,
       provider_profile_id: true,
     },
@@ -340,21 +311,7 @@ export async function submitRecommendation(
     },
   });
 
-  /*
-    ── ⚠⚠⚠ `recommendation.received` HAD NO CALLER (`P2-A1.1-E749`, WS-D) ─────
-
-    ⚠ Super run 4 lane 4 found **15 registry events nothing fires**, and this is
-    one of the two the brief assigns to lane 3: *"`recommendation.received` is
-    owed to the Usage gauges."*
-    ⚠⚠ **IT IS THE OBVIOUS PLACE AND IT WAS SIMPLY NEVER WIRED** — the event, its
-    category and its copy all existed; the one line that fires it did not.
-    ⚠ MEASURED: `RecommendationRequest` holds **0 rows**, so nothing has been
-    missed yet — this is a gap closed before it cost anything, not a repair.
-
-    ⚠⚠ **AFTER THE WRITE, INSIDE A CATCH.** The recommendation is committed; a
-    notification outage must never discard somebody's written recommendation.
-    ⚠ `notify()` only — no `sendEmail()` from a writer (ruling 86).
-  */
+  // Super run 4 lane 4 found 15 registry events nothing fires, and this is
   try {
     const owner = await prisma.providerProfile.findUnique({
       where: { id: row.provider_profile_id },
@@ -365,10 +322,7 @@ export async function submitRecommendation(
     await notify({
       event: "recommendation.received",
       personId: owner.person_id,
-      /* ⚠ The recommender PUT THEIR NAME TO THIS — it is a public testimonial,
-         not an anonymous validation, so naming them is the point rather than a
-         leak. ⚠⚠ That is exactly the opposite of the validation badge, and the
-         difference is consent. */
+      // The recommender PUT THEIR NAME TO THIS — it is a public testimonial
       vars: { fromName: row.contact_name || "Someone" },
       dedupeKey: `recommendation:${row.id}`,
     });
@@ -390,48 +344,7 @@ export async function declineRecommendation(raw: string): Promise<void> {
   });
 }
 
-/**
- * The public RECOMMENDATIONS for a profile.
- *
- * SUBMITTED only, and no contact address ever leaves this function — a
- * recommendation names its author and their title, not a way to email them.
- *
- * ── ⚠⚠ THE NAME IS STALE ON PURPOSE (`P2-J1.1-E014`) ────────────────────────
- *
- * The CARD this feeds now reads `Recommendations`, because it always rendered
- * `recommendationRequest` rows — never `ProjectValidation`. The function keeps
- * its name and so does the exported `Testimonial` type, and that was a decision:
- * renaming is FIVE edits across three files, not the one clean symbol change the
- * brief allowed for, AND `Testimonial` collides with a SECOND, unrelated
- * `Testimonial` type in `components/onboarding/TestimonialCarousel.tsx` — the
- * MARKETING deck's social proof, which this row must not touch. Renaming one and
- * not the other would blur exactly the boundary this change exists to keep.
- * ⚠ It is an internal symbol, not a user-facing string. Reported, not renamed.
- *
- * ── ⚠⚠ AND THERE IS NO PROVENANCE BADGE, BECAUSE NOTHING PROVES PROVENANCE ───
- *
- * `E014`'s settled badge is `Client-verified`, and NO ROW CAN CARRY IT TODAY.
- * Checked field by field rather than assumed — `RecommendationRequest` holds
- * `contact_name`, `contact_email`, `contact_off_platform`, `message`,
- * `token_hash`, `status`, `expires_at`, `sent_at`, `responded_at`, `body`,
- * `recommender_title`, `recommender_company`, `responder_ip`, `responder_ua`.
- * NOT ONE OF THEM RECORDS A RELATIONSHIP:
- *   · `recommender_company` is FREE TEXT the recommender typed about themselves.
- *   · `contact_off_platform` is `!existingUser` — it proves the address has a
- *     Panameer ACCOUNT, which is identity, not "was a client of this provider".
- *     A member could be a colleague, a mentor, or another provider.
- *   · `contact_email`'s DOMAIN would be a guess, and a guess is not proof.
- *   · There is NO engagement to join back to: `model WorkOrder` does not exist
- *     and this row links to no order, contract or project.
- * The structured `Relationship` field is `E044`'s second half and is not built.
- *
- * ⚠⚠ SO NO BADGE RENDERS, AND AN ABSENT BADGE IS THE HONEST STATE — it is the
- * absence of a claim, not a judgement about the provider. Badging on account
- * existence would say *a client vouched* when what is known is *this person has
- * a login*, which is the same overload class the noun change just removed. And
- * `Validated` is Panameer's OWN grant (`ProviderProfile.validation_status`, the
- * circle of trust) and must never be borrowed for a claim a client made.
- */
+/** The public RECOMMENDATIONS for a profile. */
 export async function publicTestimonials(profileId: string) {
   const rows = await prisma.recommendationRequest.findMany({
     where: { provider_profile_id: profileId, status: "SUBMITTED" },

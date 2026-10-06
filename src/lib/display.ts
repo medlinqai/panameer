@@ -58,67 +58,10 @@ export function bpsToPercentLabel(bps: number): string {
   return `${pct.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}%`;
 }
 
-/**
- * ── ⚠⚠ THE ONE PLACE THE DEFAULT FEE IS WRITTEN IN TYPESCRIPT ───────────────
- *
- * It MIRRORS `ProviderProfile.service_fee_bps @default(1490)` in the schema, and
- * that duplication is unavoidable — a Prisma `@default` is not readable from TS.
- * What IS avoidable is having it written THREE times, which is what was here
- * before `P1-J4-E388`: the schema, plus two literals in
- * `join/provider/page.tsx`. Two literals for one default WILL drift from the
- * schema, and the drift shows up as a provider being quoted one fee on screen
- * and charged another.
- *
- * ⚠⚠ THE DUPLICATION THAT REMAINS IS ASSERTED, NOT TRUSTED. `check:service-fee`
- * reads the `@default` out of `schema.prisma` as text and FAILS THE BUILD if it
- * and this constant differ. **That assertion is what stops the fourth copy** —
- * and it is the only thing that can, because no import can cross that boundary.
- *
- * ── ⚠⚠ 1490, AND EXISTING PROVIDERS ARE GRANDFATHERED ON PURPOSE (`E390`) ───
- *
- * **SCOTT, 2026-09-07:** *"Take it to 14.9%… I do not want to charge my customer
- * — removes a big NO. Providers will gladly pay to get work."*
- *
- * ⚠ SUPERSEDED, QUOTED NOT DELETED — this constant was `1000` and its docblock
- * said *"THE VALUE IS NOT CHANGED HERE… That is `E390`'s brief, NOT this one."*
- * `E390` is this change, and the reason it was held back is the reason the split
- * below is deliberate rather than an oversight.
- *
- * ⚠⚠ A PRISMA `@default` APPLIES ONLY ON INSERT. The 91 `ProviderProfile` rows
- * that existed on 2026-09-07 keep 1000 (10%) and every row created after it gets
- * 1490 (14.9%). **THAT IS THE DECISION, NOT AN ACCIDENT** — raising a live
- * provider's fee without telling them is not something a marketplace recovers
- * from. ⚠ DO NOT "FINISH THE JOB" WITH A BACKFILL: migrating existing providers
- * is its own decision and its own brief, and it needs `WorkOrder.fee_bps` (which
- * `E388` built) so an in-flight engagement finishes at the rate it was agreed
- * at. `check:service-fee` fails the build on any `UPDATE` over that column.
- *
- * ── ⚠⚠ THE "NEVER CHARGES THE BUYER" CLAIM IS DELETED, NOT REWORDED (`E396`) ─
- *
- * ⚠ SUPERSEDED, quoted not deleted: *"⚠ AND PANAMEER CHARGES THE PROVIDER ONLY.
- * There is no buyer-side fee anywhere in the schema or the code, and none is
- * being added."*
- *
- * ⚠⚠ THE SECOND HALF OF THAT SENTENCE IS STILL TRUE AND THE FIRST HALF IS NOT.
- * `check:service-fee` still asserts there is no buyer-fee column and no
- * `buyerFee` in the code, and both assertions pass — **that is a fact about the
- * SCHEMA.** What is no longer true is the marketing claim built on top of it:
- * `direct-contracts-terms` charges a Service Buyer a **$49/month Direct Work
- * Orders Fee**, and Scott has a **flat monthly buyer subscription** planned.
- *
- * ⚠ SCOTT'S DECISION WAS TO DELETE THE CLAIM RATHER THAN SOFTEN IT. The
- * accurate statement is that Panameer charges the buyer no COMMISSION — no
- * percentage of a transaction — which is a narrower thing than "no fee", and
- * narrowing it here in a code comment is not where that decision belongs.
- * ⚠⚠ NO REPLACEMENT CLAIM IS WRITTEN. Copy is Scott's.
- */
+/** THE ONE PLACE THE DEFAULT FEE IS WRITTEN IN TYPESCRIPT */
 export const DEFAULT_SERVICE_FEE_BPS = 1490;
 
-/**
- * The E018 rate breakdown, computed in integer cents end to end.
- * `fee` rounds to the nearest cent; `youGet` is the remainder, so the three
- * figures always reconcile exactly (rate = fee + youGet).
- */
+/** The E018 rate breakdown, computed in integer cents end to end. */
 export function rateBreakdown(
   hourlyCents: number | null | undefined,
   serviceFeeBps: number

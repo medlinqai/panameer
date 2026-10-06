@@ -39,12 +39,7 @@ function Figure({ figure, figureLead }: { figure: HeaderFigure; figureLead?: boo
       </dt>
       {uncounted ? (
         <>
-          {/*
-            ⚠⚠⚠ A DASH AND ITS REASON, NEVER A BARE DASH. The reason comes from
-            the TYPE, so a dash with no reason is unrepresentable — that is the
-            counting rule, enforced by the shape rather than by remembering.
-            ⚠ And a measured `0` is NOT this branch: it renders as `0`, in ink.
-          */}
+          {/* A DASH AND ITS REASON, NEVER A BARE DASH. The reason comes from */}
           <dd className="font-display text-[26px] font-bold leading-none text-ink-2" aria-hidden>
             &mdash;
           </dd>
@@ -74,54 +69,15 @@ export function PatternHeader({
   open,
   picture,
 }: PatternHeaderProps) {
-  /*
-    ⚠⚠ SIZED FROM THE LENGTH, CLAMPED AT THREE. A caller passing four does not
-    render four in a three-wide grid — it renders the first three.
-
-    ⚠⚠⚠ **`check:pattern-header` DOES NOT EXIST, AND THIS COMMENT CLAIMED IT
-    DID** (found `P2-A2-E659`, 2026-09-26, while mounting this on `/stats`).
-    ⚠ There is no such npm script and **nothing in `scripts/` mentions
-    `PatternHeader` at all.** ⚠⚠ So the sentence below was not a belt — **the
-    truncation IS the only rule**, and a caller passing four figures loses the
-    fourth SILENTLY.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   …and `check:pattern-header` fails the build on a caller that passes
-    //   more, so the truncation is a belt rather than the rule.
-    ⚠⚠ **THIS IS THE `check:support-count` DEFECT, INHERITED RATHER THAN
-    AUTHORED** — a gate named in prose before it was built. A stated rule that
-    nothing enforces is the half the next person trusts (the 2026-09-23 rules,
-    6). ⚠⚠⚠ **THE HONEST FIX IS A TUPLE TYPE, NOT A GATE** — `[HeaderFigure]`
-    | `[…, …]` | `[…, …, …]` would make a fourth a COMPILE error, the pattern
-    Scott asks to be reached for before a check. ⚠ **NOT DONE HERE:** it
-    changes a shared component's public type and every existing caller's array
-    literal would have to be re-typed. **Filed, not smuggled into a page brief.**
-  */
+  // SIZED FROM THE LENGTH, CLAMPED AT THREE. A caller passing four does not
   const shown = figures.slice(0, 3);
   const cols =
     shown.length >= 3 ? "grid-cols-3" : shown.length === 2 ? "grid-cols-2" : "grid-cols-1";
 
   return (
-    /*
-      ⚠⚠ `open` DROPS THE BOX (`P2-A1.1-E745`). ⚠⚠⚠ **IT ALSO DROPS
-      `bg-white`, WHICH WAS A DARK-MODE DEFECT WAITING ITS TURN** — `E723`'s
-      lesson, and `gauges.css` already states it: *"a hard-coded white card is
-      exactly what broke `/profile` and `/providers/[id]` in dark mode."* ⚠ The
-      boxed variant keeps it byte-for-byte so the five other callers do not move.
-    */
+    // lesson, and `gauges.css` already states it: *"a hard-coded white card is
     <section
-      /*
-        ── ⚠⚠ A STABLE HANDLE, BECAUSE THE CLASS STOPPED BEING ONE (`E745`) ────
-
-        ⚠⚠⚠ `check:usage` ANCHORED ON `section.rounded-brand` AND `open` TOOK THE
-        CLASS AWAY — so the locator matched nothing and the gate **hung** rather
-        than failing, which reads as a broken harness instead of a moved anchor.
-        ⚠ This file already carries the lesson for the tab row: *"walking up from
-        a link to a guessed container is the approach `E560` already recorded as
-        failing."* A styling class is the same guess in a different coat — it is
-        free to change, and a gate must not depend on it.
-        ⚠⚠ `data-testid` IS THE CONTRACT: it survives any restyle, and `PageTabs`
-        already uses exactly this (`data-testid="page-tabs"`).
-      */
+      // A STABLE HANDLE, BECAUSE THE CLASS STOPPED BEING ONE
       data-testid="pattern-header"
       className={
         open
@@ -148,7 +104,7 @@ export function PatternHeader({
           </div>
         ) : null}
         <div className={open ? "" : "p-5"}>
-          {/* ⚠ REQUIRED. The one thing that says which page this is. */}
+          {/* REQUIRED. The one thing that says which page this is. */}
           <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-ink-2">
             {eyebrow}
           </p>
@@ -187,12 +143,7 @@ export function PatternHeader({
                   {primary.label}
                 </Link>
               ) : null}
-              {/*
-                ⚠⚠⚠ ABSENT UNLESS REAL (ruling 45(4)). There is no `disabled`
-                branch here on purpose: a greyed second button would be the door
-                onto a wall the ruling names, and this component gives a caller
-                no way to render one.
-              */}
+              {/* ABSENT UNLESS REAL (ruling 45(4)). There is no `disabled` */}
               {secondary ? (
                 <Link
                   href={secondary.href}

@@ -214,8 +214,7 @@ async function run() {
       );
     }
     for (const cap of c.mustAppearAtMost ?? []) {
-      /* ⚠ LITERAL COUNT — the probe strings carry `&`, `.` and `,`, so the
-         needle is escaped rather than treated as a pattern. */
+      // LITERAL COUNT — the probe strings carry `&`, `.` and `,`, so the
       const n = text.split(cap.text).length - 1;
       assert(
         n <= cap.atMost,
@@ -259,12 +258,7 @@ async function run() {
       );
     }
     if (c.namedEmployers) {
-      /*
-        E122 — count roles that actually NAME an employer. Eddie's résumé used to
-        yield roles with "(Employer not detected)" because the company sat one
-        line above the dates; a count alone would not have caught that, since the
-        rows existed. This is the assertion that would have failed.
-      */
+      // E122 — count roles that actually NAME an employer. Eddie's résumé used to
       const named = p.experiences.filter(
         (e) => e.employer && e.employer !== "(Employer not detected)"
       ).length;
@@ -288,31 +282,7 @@ async function run() {
     for (const f of failures) console.log(`  ✗ ${f}`);
   }
 
-  /*
-    ── ⚠⚠⚠ A ZERO-CASE RUN FAILS. THIS IS `E586`, THE NAMESAKE (`P2-J14-E586`) ──
-
-    ⚠⚠ **THE DEFECT WAS NEVER THE MISSING FIXTURES — IT IS THAT A RUN WHICH
-    FOUND NONE OF ITS SIXTEEN CASES EXITED 0.** Measured on clean `main`,
-    2026-09-19 and again 2026-09-26: `0 passed, 0 failed, 16 skipped`, **exit
-    code 0**, in **0.708 s**. ⚠⚠⚠ **IN A GATE TABLE THAT IS INDISTINGUISHABLE
-    FROM A SUITE THAT RAN AND PASSED, AND IT HAS BEEN QUOTED AS GREEN FOR
-    WEEKS.**
-
-    ⚠ **THE FIXTURES ARE DELIBERATELY NOT ADDED.** `.gitignore` excludes
-    `__fixtures__/` because they are **real people's CVs**, and `CLAUDE.md`
-    says in terms: *"DO NOT FIX IT BY ADDING FIXTURES — what the corpus should
-    be is its own decision."* ⚠⚠ Adding them would also only ever green **one
-    machine**; a clean clone would still find nothing. **What the corpus should
-    contain is Scott's decision, not a side effect of repairing a runner.**
-
-    ⚠⚠ **SO THE RUNNER STOPS CLAIMING TO BE A GATE WHEN IT HAS NOTHING TO
-    ASSERT.** `pass === 0 && fail === 0` is the only case that changes: a real
-    pass is unaffected, and a real failure still fails for its own reason — the
-    two reds stay distinguishable, which is the point of `E607`.
-    ⚠ It prints the count it found and the reason, rather than a bare red: *"a
-    gate that fails on correct code is a gate someone switches off"*, and a red
-    with no explanation is the same thing one step later.
-  */
+  // A ZERO-CASE RUN FAILS. THIS IS , THE NAMESAKE
   if (pass === 0 && fail === 0) {
     console.log(
       `\n⚠⚠⚠ NOT A GATE — 0 of ${skipped} cases ran. This suite asserted NOTHING.\n` +

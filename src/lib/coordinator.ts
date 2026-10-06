@@ -35,7 +35,7 @@ const coordinatorName = (p: { first_name: string; last_name: string }) =>
 
 /** Send (or dev-log) an invite email for an existing invite row. */
 async function sendInviteEmail(invite: {
-  /* ⚠ `P2-J3-E522` Part A — the receipt needs to say WHICH invite. */
+  /* `P2-J3-E522` Part A — the receipt needs to say WHICH invite. */
   id: string;
   invitee_email: string;
   invitee_first_name: string | null;
@@ -68,10 +68,7 @@ async function sendInviteEmail(invite: {
   return { sent: false, devLink: acceptUrl };
 }
 
-/**
- * Create a PENDING invite + send the branded email. Re-inviting the same email
- * revokes any prior PENDING invites from this coordinator.
- */
+/** Create a PENDING invite + send the branded email. Re-inviting the same email */
 export async function createInvite(
   viewer: Viewer,
   input: { email: string; firstName?: string; lastName?: string; message?: string }
@@ -170,19 +167,12 @@ export async function getRoster(viewer: Viewer) {
   const reps = await prisma.providerProfile.findMany({
     where: { coordinator_person_id: coordinator.id },
     include: {
-      /*
-        ⚠⚠ WIDENED FOR THE ONE GATE (`P2-J3-E590` WS-A0). ⚠ SUPERSEDED, quoted
-        not deleted (`E164`):
-        // person: { select: { first_name: true, last_name: true } },
-        ⚠ `include` already brings every SCALAR on the profile, so the rate
-        columns, `headline` and `role_type_id` were here all along — what was
-        missing is the PERSON side of the required set and the skills relation.
-      */
+      // WIDENED FOR THE ONE GATE WS-A0).
       person: {
         select: {
           first_name: true,
           last_name: true,
-          /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+          /* `title` — the profile's title lives on the PERSON since `E595` WS-B. */
           title: true,
           photo_url: true,
           phone: true,
@@ -213,8 +203,7 @@ export async function getRoster(viewer: Viewer) {
     providers: reps.map((p) => ({
       id: p.id,
       name: `${p.person.first_name} ${p.person.last_name}`.trim(),
-      /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
+      // THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
       headline: p.person.title || null,
       // brief_K: status + derived visibility + validation (no approval/publish).
       status: p.status,
@@ -248,11 +237,7 @@ export type InviteLookup =
     }
   | { ok: false; reason: "invalid" | "expired" | "revoked" | "used" };
 
-/**
- * Validate a raw invite token WITHOUT side effects beyond lazily flipping a
- * past-due PENDING invite to EXPIRED. Used by the accept page + the wizard
- * pre-fill. Never links anything.
- */
+/** Validate a raw invite token WITHOUT side effects beyond lazily flipping a */
 export async function lookupInvite(rawToken: string): Promise<InviteLookup> {
   if (!rawToken) return { ok: false, reason: "invalid" };
   const invite = await prisma.coordinatorInvite.findUnique({
@@ -292,15 +277,7 @@ export async function lookupInvite(rawToken: string): Promise<InviteLookup> {
   };
 }
 
-/**
- * AUTHORITATIVE link: attach the accepting user's provider profile to the
- * inviting coordinator and mark the invite ACCEPTED. Used by BOTH accept paths
- * (new user after account creation, existing provider logged-in accept).
- *
- * Enforces `user.email === invite.invitee_email` — so a token can never
- * reassign someone else's provider; only the invitee, authenticated as their
- * own account, can accept. Requires the user to have a ProviderProfile.
- */
+/** AUTHORITATIVE link: attach the accepting user's provider profile to the */
 export async function acceptInviteForUser(
   userId: string,
   rawToken: string

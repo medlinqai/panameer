@@ -285,7 +285,7 @@ export async function getRoleClaims(): Promise<ClaimCount[]> {
       orderBy: { sort_order: "asc" },
       select: { id: true, name: true, display: true },
     }),
-    /* ⚠ ONE QUERY. Every provider-skill link with the two ids that place it. */
+    /* ONE QUERY. Every provider-skill link with the two ids that place it. */
     prisma.providerSkill.findMany({
       select: {
         provider_profile_id: true,
@@ -296,7 +296,7 @@ export async function getRoleClaims(): Promise<ClaimCount[]> {
 
   return roles.map((r) => {
     const mine = links.filter((l) => l.skill?.role_type_id === r.id);
-    /* ⚠ DISTINCT PEOPLE — a Set, not `mine.length`. */
+    /* DISTINCT PEOPLE — a Set, not `mine.length`. */
     const providers = new Set(mine.map((l) => l.provider_profile_id)).size;
 
     const byDomain = new Map<string, Set<string>>();
@@ -306,7 +306,7 @@ export async function getRoleClaims(): Promise<ClaimCount[]> {
       if (!byDomain.has(name)) byDomain.set(name, new Set());
       byDomain.get(name)!.add(l.provider_profile_id);
     }
-    /* ⚠ TIES BREAK ON NAME so a leader line does not flicker between equals. */
+    /* TIES BREAK ON NAME so a leader line does not flicker between equals. */
     const top =
       [...byDomain.entries()]
         .map(([name, set]) => ({ name, providers: set.size }))
@@ -318,7 +318,7 @@ export async function getRoleClaims(): Promise<ClaimCount[]> {
 
 /** Distinct providers per specialization KIND, with the most-claimed row in it. */
 export async function getSpecializationClaims(): Promise<ClaimCount[]> {
-  /* ⚠ ONE QUERY. */
+  /* ONE QUERY. */
   const links = await prisma.providerProfileSpecialization.findMany({
     select: {
       provider_profile_id: true,
@@ -350,10 +350,7 @@ export async function getSpecializationClaims(): Promise<ClaimCount[]> {
   });
 }
 
-/**
- * Distinct providers per SPECIALIZATION row — the `N providers` column.
- * ⚠ ONE QUERY for the whole grid, keyed by specialization id.
- */
+/** Distinct providers per SPECIALIZATION row — the `N providers` column. */
 export async function getSpecializationProviderCounts(): Promise<Map<string, number>> {
   const links = await prisma.providerProfileSpecialization.findMany({
     select: { provider_profile_id: true, specialization_id: true },
@@ -366,17 +363,7 @@ export async function getSpecializationProviderCounts(): Promise<Map<string, num
   return new Map([...by].map(([k, v]) => [k, v.size]));
 }
 
-/**
- * Distinct providers per ROLE-DOMAIN PAIR — the ranked drill-in behind a
- * `Most claimed` role tile. Keyed `${role_type_id}::${pillar_id}`.
- *
- * ⚠ THE KEY IS THE PAIR, NOT THE PILLAR (`E462`). Five vendor suites sit under
- * two roles each, and Oracle Fusion Cloud's functional providers are not its
- * technical ones — keying on `pillar_id` alone would merge two genuinely
- * different branches and inflate both.
- * ⚠ ONE QUERY. The caller supplies the full domain list, so pairs nobody has
- * claimed are absent here and render as zero rows at the bottom of the ranking.
- */
+/** Distinct providers per ROLE-DOMAIN PAIR — the ranked drill-in behind a */
 export async function getRoleDomainProviderCounts(): Promise<Map<string, number>> {
   const links = await prisma.providerSkill.findMany({
     select: {
@@ -394,10 +381,7 @@ export async function getRoleDomainProviderCounts(): Promise<Map<string, number>
   return new Map([...by].map(([k, v]) => [k, v.size]));
 }
 
-/**
- * Distinct providers per SKILL — the `N providers` column on RDS.
- * ⚠ ONE QUERY for the whole tree.
- */
+/** Distinct providers per SKILL — the `N providers` column on RDS. */
 export async function getSkillProviderCounts(): Promise<Map<string, number>> {
   const links = await prisma.providerSkill.findMany({
     select: { provider_profile_id: true, skill_id: true },

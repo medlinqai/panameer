@@ -57,11 +57,6 @@ export function SignUpForm({
 
   return (
     // max-w-2xl (672px), not the max-w-md this replaced. brief_W specified
-    // max-w-xl (576px) for this, but 576 measurably does NOT fit three full
-    // "Continue with …" labels in one row: at 576 each button gets 185px and
-    // the LinkedIn label alone is 166px, so its brand mark was being squeezed
-    // to nothing. 672 is the first standard width where all three fit with
-    // their icons at a legible 13.5px — see the note in SocialSignIn.
     <div className="mx-auto w-full max-w-2xl">
       <h1 className="text-center text-[28px] font-extrabold tracking-[-0.6px]">
         {title}

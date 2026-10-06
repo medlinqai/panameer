@@ -131,45 +131,10 @@ export function matchSkills(
   return { matched: [...matched.values()], unmatched };
 }
 
-/**
- * The unmatched terms worth OFFERING to the provider (WS-B / E051-5).
- *
- * Policy, decided: SUGGEST AND CONFIRM, never auto-add. An unmatched term is not
- * evidence of a missing catalog entry — it is just as likely to be a fragment,
- * a version string, or a line the section detector mis-bucketed. Auto-adding
- * would pollute the taxonomy that makes the marketplace searchable, and the
- * provider is the only party who knows which of their own terms are real.
- *
- * Two filters before anything reaches them:
- *
- *  - `isPlausibleSkillTerm`, the SAME test the parser applies when deciding what
- *    is a skill at all. A term the parser would have refused must not reappear
- *    as something the provider is invited to tick — that would launder rejected
- *    junk back in through the UI.
- *  - `STOPWORD_START`, so clause fragments ("and Payables") never show up.
- *
- * Deduped case-insensitively and capped, because a list long enough to skim past
- * is a list that gets confirmed wholesale — which is auto-add with extra steps.
- */
+/** The unmatched terms worth OFFERING to the provider (WS-B / E051-5). */
 export const MAX_SKILL_SUGGESTIONS = 20;
 
-/**
- * STRICTER than the parse-time rule, on purpose.
- *
- * `isPlausibleSkillTerm` decides what may be KEPT from a skills block, where the
- * cost of being wrong is one odd entry in a list the provider is already
- * reviewing. A suggestion costs more: it is a question put to the provider, and
- * a question they have to answer "no" to is one that should not have been asked.
- * Measured on the fixtures, the parse-time rule alone offered "Oracle Cloud
- * application experience since 2017" and "Related Skills for this Job Request" —
- * both six words, both legal by that rule, neither a skill anyone would tick.
- *
- * Three extra tells, all cheap and all specific to prose that leaked into a
- * skills bucket:
- *   - more than four words — real skill names are short;
- *   - a colon — that is a LABEL introducing a list, not a member of one;
- *   - an unbalanced bracket — the term was cut out of a longer phrase.
- */
+/** STRICTER than the parse-time rule, on purpose. */
 function isWorthSuggesting(term: string): boolean {
   if (term.split(/\s+/).length > 4) return false;
   if (term.includes(":")) return false;

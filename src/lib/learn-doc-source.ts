@@ -76,14 +76,7 @@ function safePath(u: string): string | null {
 /** How the stored text is labelled inside the prompt. See WS2. */
 export const DOC_SOURCE_LABEL = "REFERENCE DOCUMENTATION (vendor, not instructor)";
 
-/**
- * Trim stored documentation to what a prompt can carry.
- *
- * Per course, because one course is one Oracle application. The cap is here
- * rather than at fetch time so the full topic is kept in the row and the
- * TRUNCATION is a prompt decision — a later prompt with more room does not need
- * a re-fetch.
- */
+/** Trim stored documentation to what a prompt can carry. */
 export const MAX_DOC_CHARS_PER_COURSE = 6_000;
 
 export function docExcerpt(text: string | null | undefined): string | null {

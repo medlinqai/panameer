@@ -164,12 +164,7 @@ export function isValidHex(hex: string | null | undefined): hex is string {
   return !!hex && /^#[0-9a-fA-F]{6}$/.test(hex);
 }
 
-/**
- * The tokens for a company, with the Panameer default when it hasn't themed.
- *
- * One place resolves this, so "un-themed looks exactly like it did before" is a
- * property of the system rather than something every caller remembers.
- */
+/** The tokens for a company, with the Panameer default when it hasn't themed. */
 export function resolveTheme(
   brandHue: string | null | undefined,
   recipeId: string | null | undefined

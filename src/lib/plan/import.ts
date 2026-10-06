@@ -135,7 +135,7 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
   let lastTopLevel = false;
 
   for (let n = 1; n < nonEmpty.length; n++) {
-    /** ⚠ `+ 1` because a spreadsheet counts its header as row 1. */
+    /** `+ 1` because a spreadsheet counts its header as row 1. */
     const line = n + 1;
     const r = nonEmpty[n];
     const title = cell(r, "Title");
@@ -157,9 +157,7 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
       problems.push({ line, message: `Level "${rawLevel}" is not 1 or 2 — treated as 1.` });
       level = 1;
     }
-    /** ⚠⚠ A level-2 row with nothing above it has no parent. Rather than drop
-     *  it, it is promoted and SAID — silently promoting would change the plan,
-     *  and silently dropping would lose the row. */
+    /** A level-2 row with nothing above it has no parent. Rather than drop */
     if (level === 2 && !lastTopLevel) {
       problems.push({ line, message: "Nothing above this row to sit under — imported at the top level." });
       level = 1;
@@ -176,8 +174,7 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
     }
     const startVal = start === false ? null : start;
     const endVal = end === false ? null : end;
-    /** ⚠ Reported, and BOTH are kept — the person can see and fix it in the
-     *  editor, which is better than discarding one of the two dates they typed. */
+    /** Reported, and BOTH are kept — the person can see and fix it in the */
     if (startVal && endVal && endVal < startVal) {
       problems.push({ line, message: "The end date is before the start date." });
     }
@@ -207,9 +204,7 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
       status,
       owner: cell(r, "Owner") || null,
       hours,
-      /** ⚠ Upper-cased and trimmed, so `r1`, ` R1 ` and `R1` are one answer.
-       *  ⚠⚠ An UNKNOWN code is reported per row by the writer, not dropped
-       *  here — the parser does not know which releases exist. */
+      /** Upper-cased and trimmed, so `r1`, ` R1 ` and `R1` are one answer. */
       release: cell(r, "Release").toUpperCase() || null,
     });
   }
@@ -221,13 +216,10 @@ export function readGrid(grid: string[][]): ParsedPlanFile {
 export function readDate(raw: string): string | null | false {
   if (!raw) return null;
   const s = raw.trim();
-  /** ⚠ ISO first — it is what the template writes and what `<input type=date>`
-   *  produces. */
+  /** ISO first — it is what the template writes and what `<input type=date>` */
   let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   if (m) return valid(+m[1], +m[2], +m[3]);
-  /** ⚠⚠ `M/D/YYYY` — what a US Excel writes when the cell is text. The two-digit
-   *  year is NOT guessed: a plan dated `11/15/26` could mean 1926, and `E549`'s
-   *  ruling is that unreadable text is not evidence of a date. */
+  /** year is NOT guessed: a plan dated `11/15/26` could mean 1926, and 's */
   m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
   if (m) return valid(+m[3], +m[1], +m[2]);
   return false;
@@ -236,16 +228,14 @@ export function readDate(raw: string): string | null | false {
 function valid(y: number, mo: number, d: number): string | false {
   if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
   const dt = new Date(Date.UTC(y, mo - 1, d));
-  /** ⚠ Catches 31 February: the Date rolls over, so the parts must round-trip. */
+  /** Catches 31 February: the Date rolls over, so the parts must round-trip. */
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return false;
   return dt.toISOString().slice(0, 10);
 }
 
 function normaliseStatus(raw: string): RowStatus | null {
   const s = raw.trim().toLowerCase();
-  /** ⚠ Spelling variants people actually type, mapped onto the four we store.
-   *  ⚠⚠ `late` is NOT here — it is computed from the end date and storing it
-   *  would let the badge and the dates contradict each other. */
+  /** Spelling variants people actually type, mapped onto the four we store. */
   const map: Record<string, RowStatus> = {
     planned: "Planned",
     "not started": "Planned",
@@ -269,10 +259,7 @@ function normaliseStatus(raw: string): RowStatus | null {
 
 /* ── Excel ──────────────────────────────────────────────────────────────── */
 
-/**
- * ⚠ `exceljs` is imported lazily so a CSV upload — and every page that merely
- * links to this module — does not pull a megabyte of workbook code.
- */
+/** links to this module — does not pull a megabyte of workbook code. */
 export async function parseXlsx(buffer: ArrayBuffer): Promise<ParsedPlanFile> {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
@@ -291,12 +278,7 @@ export async function parseXlsx(buffer: ArrayBuffer): Promise<ParsedPlanFile> {
   return readGrid(grid);
 }
 
-/**
- * ⚠⚠ A DATE CELL COMES BACK AS A `Date`, NOT A STRING, and `String(date)` would
- * produce `Wed Nov 05 2026 …` in the SERVER's zone — which `readDate` cannot
- * read, so every dated row would import blank. ⚠ Excel stores a pure date as
- * UTC midnight, so the UTC parts are the ones to take.
- */
+/** A DATE CELL COMES BACK AS A `Date`, NOT A STRING, and `String(date)` would */
 function cellText(v: unknown): string {
   if (v === null || v === undefined) return "";
   if (v instanceof Date) {
@@ -306,9 +288,7 @@ function cellText(v: unknown): string {
   }
   if (typeof v === "object") {
     const o = v as { text?: unknown; result?: unknown; richText?: { text?: string }[] };
-    /** ⚠ Hyperlink cells carry `text`; formula cells carry `result`; styled
-     *  cells carry `richText` runs that have to be joined or the title arrives
-     *  as "[object Object]". */
+    /** Hyperlink cells carry `text`; formula cells carry `result`; styled */
     if (Array.isArray(o.richText)) return o.richText.map((r) => r.text ?? "").join("");
     if (o.text !== undefined) return String(o.text);
     if (o.result !== undefined) return String(o.result);
@@ -323,9 +303,7 @@ export async function parsePlanFile(
 ): Promise<ParsedPlanFile> {
   if (/\.csv$/i.test(name)) return readGrid(parseCsv(new TextDecoder().decode(buffer)));
   if (/\.xlsx$/i.test(name)) return parseXlsx(buffer);
-  /** ⚠⚠ `.xls` and `.mpp` are refused BY NAME with the reason, rather than
-   *  being fed to a reader that cannot read them and failing obscurely.
-   *  ⚠ Microsoft Project XML is a later decision (Scott, 2026-10-03). */
+  /** being fed to a reader that cannot read them and failing obscurely. */
   return {
     rows: [],
     problems: [

@@ -15,12 +15,9 @@ import {
   type SignUpValues,
 } from "@/components/onboarding/SignUpForm";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-/* ⚠ `ambiguousSkillNames` and `skillQualifier` MOVED WITH `SkillsEditor`
-   (`P2-A2-E597` WS-B) — `E515`'s disambiguation belongs with the picker that
-   shows it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { ambiguousSkillNames, skillQualifier } from "@/lib/skill-labels"; */
+// WS-B) — 's disambiguation belongs with the picker that
 import { isSkillShown } from "@/lib/shown-skills";
-/* ⚠ THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
+/* THE ONE DEFINITION of the five proficiencies (`E723`, `E585`). */
 import { PROFICIENCY_OPTIONS } from "@/lib/languages";
 
 import {
@@ -31,21 +28,10 @@ import {
   TextArea,
   Notice,
 } from "@/components/onboarding/controls";
-/* ⚠ `EducationDraft` MOVED WITH THE DRAFT — `lib/onboarding-draft.ts` imports
-   it now. ⚠ SUPERSEDED, quoted not deleted (`E164`):  type EducationDraft, */
+// it now. type EducationDraft
 import { EducationCards } from "@/components/onboarding/EducationCards";
 import { type CertificationDraft } from "@/components/onboarding/CertificationsEditor";
-/*
-  ⚠⚠ THE DRAFT, ITS SHAPE AND ITS ONE MAPPING MOVED TO `lib/onboarding-draft.ts`
-  (`P2-A2-E597` WS-C) — `/profile/edit/[section]` mounts the same editors and
-  needs the same draft, and a second mapping would be `E585` in a new place.
-  ⚠ `Profile` KEEPS ITS LOCAL NAME HERE via the alias, so nothing else in this
-  5,000-line file had to be renamed to move a type.
-  ⚠ SUPERSEDED, quoted not deleted (`E164`): `type ProfilePayload`,
-  `type Profile`, `type StatusPayload`, `type AddressDraft`,
-  `type LanguageDraft`, `const ALL_STEPS`, `type Step` and `const emptyProfile`
-  were all declared in this file.
-*/
+// THE DRAFT, ITS SHAPE AND ITS ONE MAPPING MOVED TO `lib/onboarding-draft.ts`
 import {
   type ProviderDraft as Profile,
   type StatusPayload,
@@ -60,7 +46,7 @@ import {
 import { CertificationCards } from "@/components/onboarding/CertificationCards";
 import {
   EmployersStep,
-  /* ⚠ `EmployerCard` and `EmployerProject` moved with the draft (`E164`). */
+  /* `EmployerCard` and `EmployerProject` moved with the draft (`E164`). */
 } from "@/components/onboarding/EmployersStep";
 import {
   ResumeUploadModal,
@@ -73,9 +59,7 @@ import {
   type JobPatch,
 } from "@/components/onboarding/WorkHistoryReview";
 import { SUITES, SUITE_ORDER } from "@/lib/suite";
-/* ⚠ `titleCase` MOVED WITH `SkillsEditor` — `E298`'s rule lives with the field
-   that applies it. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { titleCase } from "@/lib/title-case"; */
+// that applies it.
 import type { SoftwareSuite } from "@prisma/client";
 import {
   ProfileCard,
@@ -94,9 +78,7 @@ import {
   WorkHistoryBody,
 } from "@/components/profile/sections";
 import { LANGUAGES } from "@/lib/countries";
-/* ⚠ `LocationFields` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B) and is no
-   longer mounted here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { LocationFields } from "@/components/onboarding/LocationFields"; */
+// longer mounted here.
 import { CompanyFinder } from "@/components/company/CompanyFinder";
 import { CompanySort } from "@/components/onboarding/CompanySort";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
@@ -110,91 +92,34 @@ import {
   type ReviewFix,
 } from "@/lib/review-validation";
 import {
-  /* ⚠ `formatCents` and `bpsToPercentLabel` MOVED WITH `RateEditor`
-     (`P2-A2-E597` WS-B) — the fee panel that used them is there now.
-     ⚠ `rateBreakdown` STAYS: the wizard still computes the breakdown and passes
-     it in, so the fee maths keeps its single home in `lib/display.ts`.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):  formatCents, bpsToPercentLabel, */
+  // WS-B) — the fee panel that used them is there now.
   rateBreakdown,
   displayFirstName,
-  /* ⚠ `DEFAULT_SERVICE_FEE_BPS` moved with `emptyDraft` (`E164`). */
+  /* `DEFAULT_SERVICE_FEE_BPS` moved with `emptyDraft` (`E164`). */
 } from "@/lib/display";
-/* ⚠ `PhoneField` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B).
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   import { PhoneField } from "@/components/onboarding/PhoneField"; */
-/* ⚠ EDITOR 1 OF 5 (`P2-A2-E597` WS-B). One component, mounted by the step and
-   the review modal — and by `/connect/edit/title` when WS-C lands. */
-/* ⚠ `HEADLINE_MAX` IS NOT RE-IMPORTED HERE. It moved to `TitleEditor.tsx` with
-   the field that enforces it, and nothing left in this file reads it — an
-   import kept "for completeness" is an unused symbol and one new lint warning
-   against a baseline whose rule is zero. */
+// import { PhoneField } from "@/components/onboarding/PhoneField"
+// EDITOR 1 OF 5 WS-B). One component, mounted by the step and
+// the field that enforces it, and nothing left in this file reads it — an
 import { TitleEditor, titleCanSave } from "@/components/onboarding/editors/TitleEditor";
-/* ⚠ EDITOR 2 OF 5 (`P2-A2-E597` WS-B). Both fields it mounts were already
-   shared; what moved out is the wiring between them. */
+// EDITOR 2 OF 5 WS-B). Both fields it mounts were already
 import { ContactEditor } from "@/components/onboarding/editors/ContactEditor";
-/* ⚠ EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
+/* EDITOR 3 OF 5 (`P2-A2-E597` WS-B). The wizard's local `Row` moved with it. */
 import { RateEditor, rateCanSave, syncedHourly } from "@/components/onboarding/editors/RateEditor";
-/* ⚠ EDITOR 4 OF 5 (`P2-A2-E597` WS-B). `CascadeTier` moved with it; every
-   piece of state stayed here. */
+// EDITOR 4 OF 5 WS-B). `CascadeTier` moved with it; every
 import { SpecializationsEditor } from "@/components/onboarding/editors/SpecializationsEditor";
-/* ⚠ EDITOR 5 OF 5 (`P2-A2-E597` WS-B). `SparkIcon` moved with it; the three
-   data-loading effects did NOT — they are this page's and serve other screens. */
+// EDITOR 5 OF 5 WS-B). `SparkIcon` moved with it; the three
 import { SkillsEditor, SparkIcon } from "@/components/onboarding/editors/SkillsEditor";
 import { formatPhone, isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 
-/**
- * Provider (Seller) onboarding — journey P1-J1 (brief_P, extended by brief_R).
- *
- * Shape:
- *   PRE-VERIFY  (no stepper, E001): sign up → "check your email"
- *   then        /verify-email → /join/provider/start ("Get Started Now!", E002)
- *   POST-VERIFY (stepper x/13, E003/E010): the 13 profile steps, ending on the
- *               one-page review (step 12) → Publish → the live Profile View
- *
- * brief_R added the Specializations step at position 8, taking the count from
- * 12 to 13.
- *
- * Every step saves on Continue (save-as-you-go, brief_E) and the server derives
- * the resume point, so there is no progress column to keep in sync.
- */
+/** Provider (Seller) onboarding — journey P1-J1 (brief_P, extended by brief_R). */
 
-/**
- * Every step this wizard can render (PJv2 WS1 / E070). The ORDER a given user
- * walks comes from the server — a recruiter skips Education and Rate — so this
- * is the union, not the itinerary.
- */
-/*
-  Every screen this wizard can RENDER. The counted itinerary is a subset and
-  comes from the server (`status.steps`), which is what lets the provider and
-  recruiter journeys differ without this file knowing how.
-
-  WS1 — Bio, Education, Specializations and Languages left the itinerary but not
-  this list: they still render as review-page sections and Settings targets. The
-  slimdown removes them as PROMPTS, not as data.
-*/
-/* ⚠ `ALL_STEPS` and `type Step` MOVED to `lib/onboarding-draft.ts` and are
-   imported above — the section route names the same steps when it saves, so the
-   list has one home. */
-/*
-  ── ⚠⚠ `work_method` IS A SCREEN, NOT A STEP (`P1-A1.3-E401` WS-1) ───────────
-
-  It has to ask the question WITHOUT touching `RECRUITER_STEPS`,
-  `PROVIDER_STEPS`, `stepsForProfile` or `isRecruiterProfile` — that fork is
-  correct and `E401` forbids editing it. A `Screen` that is not a `Step` is
-  exactly the seam that allows it: `check_email` already works this way, and
-  `P1-J1.1-E285` established that uncounted screens are legal jump targets.
-  ⚠ IT IS UNCOUNTED ON PURPOSE — the stepper still reads x/6 or x/7 from the
-  step list, so asking the question does not renumber anybody's itinerary.
-*/
+/** Every step this wizard can render (PJv2 WS1 / E070). The ORDER a given user */
+// Every screen this wizard can RENDER. The counted itinerary is a subset and
+// imported above — the section route names the same steps when it saves, so the
+// It has to ask the question WITHOUT touching `RECRUITER_STEPS`
 type Screen = "signup" | "check_email" | "work_method" | Step;
 
-/**
- * The review screen's in-place editors (`P1-A1.4-E412` WS-1). Each value names a
- * section CARD on the review, not a wizard step — `"work"` covers Work History
- * and Solo Projects because `EmployersStep` is one editor holding both, and
- * `"location"` has no wizard step of its own at all (the address is collected on
- * `picture`, whose `LocationFields` block this reuses).
- */
+/** The review screen's in-place editors WS-1). Each value names a */
 type EditSection =
   | null
   | "title"
@@ -222,45 +147,13 @@ const GOAL_OPTIONS = [
   { value: "NONE", title: "Just Exploring", description: "Seeing what's here for now." },
 ];
 
-/*
-  ── ⚠⚠ TWO CARDS, BECAUSE THERE WERE ONLY EVER TWO QUESTIONS (`E405` WS-3) ───
+// TWO CARDS, BECAUSE THERE WERE ONLY EVER TWO QUESTIONS ( WS-3)
+// MOVED TO `lib/onboarding-draft.ts` WS-F) so
 
-  ⚠ SUPERSEDED, quoted not deleted — the three-card list `E009` wrote:
-
-      { value: "HOURLY",   title: "I Sell My Services by the Hour",
-        description: "Clients book your time at an hourly rate." },
-      { value: "PACKAGES", title: "I Sell My Services in Packages",
-        description: "Fixed-scope offerings at a set price." },
-
-  ⚠⚠ THOSE TWO WERE NOT MUTUALLY EXCLUSIVE AND NOTHING BRANCHED ON THEM.
-  Measured: the strings appear only in this list and two type arrays; the schema
-  carries BOTH `hourly_rate_cents` and a `Package` model, so a provider who
-  picked HOURLY could already publish packages. The screen forced a choice that
-  was not a choice and told a provider something untrue at step one —
-  consultants routinely do both: hourly for advisory, fixed price for a defined
-  deliverable.
-
-  ⚠ THE RECRUITER CARD IS UNCHANGED AND IS LOAD-BEARING: it selects
-  `RECRUITER_STEPS` (six, not seven), suppresses the rate step and feeds the
-  Coordinator gates. That is a real fork; the other two were not.
-
-  ⚠ SCOTT'S WORDING, VERBATIM — including the "and/or" and the "hour/month"
-  slash. Do not tidy either.
-*/
-/* ⚠ MOVED TO `lib/onboarding-draft.ts` (`P2-A2-E600` WS-F) so
-   `/profile/edit/work-method` asks the SAME question with the SAME options.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`): the array lived here. */
-
-/* ⚠⚠⚠ THE SIGN-UP STEP'S PICKLIST READS THE ONE DEFINITION (`E723` item 10, `E585`).
-   ⚠ Without this it would have offered four levels while the profile editor offered five.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   const LANGUAGE_LEVELS = [{ value: "BASIC", label: "Basic" }, … ]; */
+// THE SIGN-UP STEP'S PICKLIST READS THE ONE DEFINITION ( item 10, ).
 const LANGUAGE_LEVELS = PROFICIENCY_OPTIONS;
 
-/**
- * Stepper heading + forward-button label per step — the exact strings from
- * brief_S's table. Mirrors PROVIDER_STEP_LABELS in onboarding.ts.
- */
+/** Stepper heading + forward-button label per step — the exact strings from */
 const RAIL_LABELS: Partial<Record<Step, string>> = {
   tell_us: "Résumé",
   title: "Title",
@@ -280,7 +173,7 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   specializations: { stepper: "Your Specializations" },
   education: { stepper: "Your Education" },
   languages: { stepper: "Your Languages" },
-  /* ⚠ "Overview", matching the column and the rest of the UI (`P1-A1.4-E399`). */
+  /* "Overview", matching the column and the rest of the UI (`P1-A1.4-E399`). */
   bio: { stepper: "Your Overview" },
   rate: { stepper: "Your Rate" },
   picture: { stepper: "Your Photo" },
@@ -288,20 +181,7 @@ const STEP_LABELS: Record<Step, { stepper: string }> = {
   finish: { stepper: "Review Your Profile" },
 };
 
-/**
- * ROLE CARD COPY (E186) — the designed content, keyed by RoleType.code.
- *
- * The cards used to be titled with the bare taxonomy name and subtitled
- * "5 areas of work" — a count of the DOMAIN tier, which is a level the UI
- * deliberately stopped showing (E030 collapsed the cascade). So the one line
- * meant to help someone choose was describing a thing they would never see,
- * and it said the same thing about every card except the number.
- *
- * Keyed on `code` rather than `name`: the codes are stable identifiers written
- * by the taxonomy seed, the names are display strings. A role with no entry here
- * falls back to the old count line rather than rendering an empty subtitle — the
- * catalog is meant to grow, and a new role type must not arrive blank.
- */
+/** ROLE CARD COPY (E186) — the designed content, keyed by RoleType.code. */
 const ROLE_CARD_COPY: Record<string, string> = {
   APPLICATION_SPECIFIC:
     "Mgt Consultant, P2P, O2C, R2R, Functional Analyst, Business Process Specialist",
@@ -314,105 +194,33 @@ const ROLE_CARD_COPY: Record<string, string> = {
 };
 
 const MIN_BIO = 100;
-/**
- * Mirrors `MAX_BIO_CHARS` in onboarding.ts (E087). Kept as a local constant like
- * MIN_BIO beside it rather than imported, matching how this file already treats
- * the minimum — but the server is authoritative and rejects anything longer.
- */
+/** Mirrors `MAX_BIO_CHARS` in onboarding.ts (E087). Kept as a local constant like */
 const MAX_BIO = 600;
 /** E030 — never show more than ~15 options at once on the cascade page. */
 const MAX_VISIBLE_OPTIONS = 15;
 
-/**
- * Bounded pickers (brief_Y / E053+E054).
- *
- * THE RULE: a wizard step's height must not depend on how big the catalog is.
- * The service catalog is meant to grow without limit — Scott's "race without a
- * finish" — so any step that renders it needs TWO independent bounds:
- *
- *   1. a COUNT cap on how many suggestions are rendered, with a
- *      "+N more — keep typing to narrow" affordance, and
- *   2. a fixed-height, internally-scrolling region, so even the capped set
- *      cannot push the footer and its Continue button off-screen.
- *
- * Either alone is insufficient: a cap with no height bound still grows when
- * chips wrap onto more lines, and a height bound with no cap renders hundreds
- * of nodes the provider will never scroll through.
- */
+/** Bounded pickers (brief_Y / E053+E054). */
 const MAX_SKILL_SUGGESTIONS = 12;
 
-/*
-  ── ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) ─────────────────────────
-
-  ⚠ Scott names things. These were proposed, he ruled, and the alternatives are
-  kept so nobody re-opens a settled choice (`E164`).
-
-  ⚠ HEADING — chosen: "Not on your profile right now".
-    ⚠ SUPERSEDED, quoted not deleted: "Skills your roles don't show" · "Held,
-    but not shown".
-    ⚠⚠ THE CHOSEN ONE IS THE ONLY ONE THAT NAMES A STATE RATHER THAN A CAUSE,
-    and "right now" is what says it is reversible.
-
-  ⚠ EXPLANATION — chosen: the line below, with "You still hold these" →
-    "These are still yours".
-    ⚠ SUPERSEDED, quoted not deleted: "You still hold these — your current roles
-    just don't put them in front of buyers. …" · "You still hold these. Your
-    current roles just don't offer them to buyers." · "Widen your roles to show
-    these again, or remove any you no longer want."
-
-  ⚠⚠ WHAT THE WORDING MUST NOT SAY, and this still binds if anyone edits it:
-  that the skill is gone, expired, wrong or unverified. It is held, it is
-  theirs, and nothing about it has been judged — saying otherwise re-creates the
-  harm `E517` fixed, in copy.
-*/
+// NAMED BY SCOTT, 2026-09-17
 const HELD_NOT_SHOWN_HEADING = "Not on your profile right now";
 const HELD_NOT_SHOWN_EXPLANATION =
   "These are still yours — your current roles just don't put them in front of buyers. Widen your roles to show them again, or remove any you no longer want.";
 
-/*
-  ⚠⚠ NAMED BY SCOTT, 2026-09-17 (`P2-J1.4-E517`) — the roles step's one-liner.
-  ⚠ He took the alternative, not the first draft.
-
-  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    · "{n} skills you hold aren't shown by the roles you've picked. They're
-      still yours — re-tick the role to show them again."
-    · "Buyers won't see {n} of your skills with these roles selected. Nothing
-      is deleted."
-
-  ⚠⚠ NO SINGULAR/PLURAL BRANCHING, AND THAT IS A PROPERTY OF THE CHOSEN STRING,
-  not an omission: "{n} of your skills" reads correctly at every n >= 1, and the
-  line does not render at 0.
-
-  ⚠ IT SAYS THE SKILLS ARE KEPT. That is not decoration — it is the fact the old
-  prune got wrong. A bare count reads as a loss.
-*/
+// NAMED BY SCOTT, 2026-09-17 — the roles step's one-liner.
 const ROLE_STEP_HIDDEN_NOTE = (n: number) =>
   `${n} of your skills sit under roles you haven't picked. They stay on your record — they just won't be offered to buyers.`;
 /** Per GROUP, so every specialization section stays represented (E054). */
 /** Per-group cap while SEARCHING — three groups have to share one window. */
 const MAX_SPECS_PER_GROUP = 6;
-/**
- * Per-tier cap while BROWSING (PJv2 WS9). Higher than the search cap because an
- * open tier owns the whole window rather than sharing it with two siblings; the
- * scroll region still bounds the height either way.
- */
+/** Per-tier cap while BROWSING (PJv2 WS9). Higher than the search cap because an */
 const MAX_SPECS_PER_TIER = 24;
 
-/**
- * A fixed-height scroll region. `overscroll-contain` keeps a scroll gesture
- * that reaches the end of this list from continuing on to scroll the page —
- * otherwise bounding the height just moves the jumpiness somewhere else.
- */
+/** A fixed-height scroll region. `overscroll-contain` keeps a scroll gesture */
 const SCROLL_REGION =
   "overflow-y-auto overscroll-contain border border-line/70 bg-bg-soft/40 p-3";
 
-/**
- * The PICKED chips wrap (brief_Y keeps them wrapping) — but inside a bound, or
- * the step just moves its growth problem from the suggestion list to the
- * selection list: 15 skills wrap to five rows and push the footer off-screen
- * exactly as the unbounded catalog did. Capped at ~2 rows, unpadded so a single
- * row costs nothing.
- */
+/** The PICKED chips wrap (brief_Y keeps them wrapping) — but inside a bound, or */
 // Raised from 84px for E102: a single-domain basket was two rows, a
 // multi-domain one is three or four, and clipping the thing that proves your
 // earlier picks survived defeats the point of showing it.
@@ -449,8 +257,7 @@ type SkillOpt = {
 
 ;
 
-/* ⚠ `emptyProfile` MOVED to `lib/onboarding-draft.ts` as `emptyDraft` and is
-   imported above under its old name. */
+// imported above under its old name.
 
 const emptyAddress = (country = "United States"): AddressDraft => ({
   line1: "",
@@ -461,15 +268,8 @@ const emptyAddress = (country = "United States"): AddressDraft => ({
   country,
 });
 
-/**
- * The provider title cap (WS-4). Matches the talent card's one-line soft cap in
- * `lib/explore.ts` — the two must agree, or the field promises a length the
- * card will not honour.
- */
-/* ⚠ `HEADLINE_MAX` MOVED TO `TitleEditor.tsx` (`P2-A2-E597` WS-B) and is
-   re-exported through the import below — the cap and the input that enforces it
-   belong together. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   const HEADLINE_MAX = 42; */
+/** The provider title cap (WS-4). Matches the talent card's one-line soft cap in */
+// re-exported through the import below — the cap and the input that enforces it
 
 export default function JoinProviderPage() {
   const router = useRouter();
@@ -477,19 +277,9 @@ export default function JoinProviderPage() {
   const [screen, setScreen] = useState<Screen>("signup");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /**
-   * E090 — the DOB's own error, shown ON the field. A top-of-page Notice was the
-   * only surface before, and the next error to arrive replaced it, so the one
-   * message that named the actual problem was the one the user never got to
-   * read. Field-level errors survive because nothing else writes to them.
-   */
+  /** E090 — the DOB's own error, shown ON the field. A top-of-page Notice was the */
   const [notProvider, setNotProvider] = useState(false);
-  /**
-   * The answer to the work-method screen, held before it is saved
-   * (`P1-A1.3-E401` WS-1). ⚠ IT IS NOT PART OF `profile`: `hydrate` overwrites
-   * that wholesale from the server on every re-read, and this value has to
-   * survive the re-read it causes.
-   */
+  /** The answer to the work-method screen, held before it is saved */
   const [workMethodPick, setWorkMethodPick] = useState<string | null>(null);
 
   const [acct, setAcct] = useState<SignUpValues>({
@@ -513,26 +303,8 @@ export default function JoinProviderPage() {
   const [specGroups, setSpecGroups] = useState<SpecializationGroup[]>([]);
   const [skillOpts, setSkillOpts] = useState<SkillOpt[]>([]);
   const [unsorted, setUnsorted] = useState(0);
-  /**
-   * E102 — which (role, domain) the SKILLS TIER is currently browsing.
-   *
-   * Separate from `profile.roleTypeId` / `pillarId`, which are the PRIMARY field
-   * the profile leads with and which buyers filter on. Conflating the two is
-   * what made the picker single-domain: browsing to a second area had to either
-   * overwrite the primary or be forbidden, and it was forbidden.
-   *
-   * Null means "no area open" — the domain tier is showing its list.
-   */
-  /**
-   * E118 — JUMP AND RETURN. When an edit pencil on the review sends you to a
-   * step, saving that step comes BACK to the review instead of advancing into
-   * the rest of the wizard.
-   *
-   * Without this, fixing one word in your bio at the end of registration lands
-   * you on Bio 7/10 and then walks you forward through Rate, Photo & Details and
-   * Review again — three screens of nothing you asked for. The user asked to
-   * change a field, not to redo the tail of the flow.
-   */
+  /** E102 — which (role, domain) the SKILLS TIER is currently browsing. */
+  /** E118 — JUMP AND RETURN. When an edit pencil on the review sends you to a */
   const [returnToReview, setReturnToReview] = useState(false);
 
   const [browseArea, setBrowseArea] = useState<{
@@ -541,145 +313,54 @@ export default function JoinProviderPage() {
     pillarName: string;
   } | null>(null);
   const [skillQuery, setSkillQuery] = useState("");
-  /*
-    ⚠ THE PENDING "DID YOU MEAN…?" (`P1-J1.4-E298`). Non-null means the matcher
-    found a NEAR row and nothing has been added — the member has to answer.
-  */
+  // THE PENDING "DID YOU MEAN…?" . Non-null means the matcher
   const [skillMatch, setSkillMatch] = useState<{
     typed: string;
     prompt: string;
     skill: { id: string; name: string };
   } | null>(null);
-  /*
-    WS-4 — the work-history review's pending corrections, and the module lists
-    it offers.
-
-    `jobPatches` is SPARSE: only jobs the provider actually touched. Sending the
-    whole history back would make an untouched job indistinguishable from one
-    deliberately cleared, and the review's promise to leave the right answers
-    alone depends on telling those apart.
-
-    `suiteSkills` is loaded once per suite when the step opens rather than per
-    job — six requests instead of one per card, and the card's picker has to be
-    synchronous because it renders inside the list.
-  */
+  // WS-4 — the work-history review's pending corrections, and the module lists
   const [jobPatches, setJobPatches] = useState<JobPatch[]>([]);
   const [suiteSkills, setSuiteSkills] = useState<Record<string, { id: string; name: string }[]>>({});
   const [specQuery, setSpecQuery] = useState("");
-  /**
-   * Which specialization tier is expanded (PJv2 WS9) — null means "whichever is
-   * still empty", resolved at render. Pinned as soon as the provider picks
-   * something, or the tier they are working in would collapse under them the
-   * instant it stopped being the first empty one.
-   */
+  /** Which specialization tier is expanded (PJv2 WS9) — null means "whichever is */
   const [openSpecTier, setOpenSpecTier] = useState<string | null>(null);
-  /**
-   * E057 — bumping this asks the review page's certification editor to open its
-   * add-modal. A counter rather than a boolean so the "Add certification"
-   * click-to-fix works the second and third time it's clicked, not just once.
-   */
+  /** E057 — bumping this asks the review page's certification editor to open its */
   const [certSignal, setCertSignal] = useState(0);
-  /**
-   * WS1 — the step list comes from the server, because it depends on the user
-   * type chosen at the fork. Falls back to the provider journey.
-   */
+  /** WS1 — the step list comes from the server, because it depends on the user */
   const [steps, setSteps] = useState<readonly Step[]>(DEFAULT_STEPS);
-  /* ⚠ FALLS BACK TO THE COUNTED ITINERARY + 1 until `status` answers, so the
-     counter is never absent and never wrong by more than the one screen. */
+  // FALLS BACK TO THE COUNTED ITINERARY + 1 until `status` answers, so the
   const [wizardTotal, setWizardTotal] = useState<number>(DEFAULT_STEPS.length + 1);
   const [isRecruiter, setIsRecruiter] = useState(false);
 
   const [importOutcome, setImportOutcome] = useState<ImportOutcome | null>(null);
-  /*
-    E187 — "an import exists on this profile" is gone. It was only ever a proxy
-    for "some of these skills came off a résumé", and it answered that question
-    wrongly the moment the provider ticked one by hand. `profile.resumeSkillIds`
-    answers it directly, so the proxy has no remaining caller.
-  */
+  // E187 — "an import exists on this profile" is gone. It was only ever a proxy
   const [uploadModal, setUploadModal] = useState(false);
-  /**
-   * A résumé is uploading/parsing right now (E200). Held on the WIZARD, not in
-   * the dropzone, because the control that has to react to it is the step's own
-   * footer Continue — which sits in `shell()`, one level up from the dropzone.
-   */
+  /** A résumé is uploading/parsing right now (E200). Held on the WIZARD, not in */
   const [parsingResume, setParsingResume] = useState(false);
   /** WS5/E084 — the post-upload review shows work history the way the profile
    *  does, and swaps to the editor in place when you ask to change it. */
   const [editingWork, setEditingWork] = useState(false);
 
-  /*
-    ── ⚠⚠ WHICH SECTION THE REVIEW IS EDITING IN PLACE (`P1-A1.4-E412` WS-1) ──
-
-    `null` means "just reviewing". Anything else means a `Modal` is open over
-    the review screen holding that section's own editor.
-
-    ⚠ IT IS DELIBERATELY NOT A `Screen`. A `Screen` is somewhere you GO, and the
-    whole point of `E412` is that this is somewhere you do not go: `screen`
-    stays `"finish"` the entire time, the review stays mounted and scrolled
-    where it was, and closing the modal reveals it rather than re-rendering it.
-    ⚠ THAT ALSO KEEPS `returnToReview` OUT OF IT — there is no return trip to
-    manage, which is the whole class of defect `E411` had to repair.
-  */
+  // WHICH SECTION THE REVIEW IS EDITING IN PLACE WS-1)
   const [editSection, setEditSection] = useState<EditSection>(null);
   /** WS-B — which imported-but-unmatched terms the provider has ticked. */
   const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
   const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestDone, setSuggestDone] = useState<string[] | null>(null);
-  /* ⚠ `E511` PART 1 — this card's own error, because the page-level Notice is a
-     screen and a half above it. See `confirmSuggestions`. */
+  // PART 1 — this card's own error, because the page-level Notice is a
   const [suggestError, setSuggestError] = useState<string | null>(null);
-  /*
-    ── ⚠⚠ THE REVIEW STEP'S PER-CARD ERRORS (`P2-J1.4-E516` PART 2) ──────────
-
-    ⚠ THE DEFECT NAMES ITSELF: A CONTROL BELOW THE FOLD WHOSE FAILURE RENDERS
-    ABOVE IT. The page-level `Notice` is at the top of the `WizardShell`; the
-    review step is the longest page in the product, so a card near its foot puts
-    the message a screen or more out of view. ⚠⚠ A CORRECT ERROR RENDERED WHERE
-    NOBODY CAN SEE IT IS INDISTINGUISHABLE FROM A DEAD BUTTON — `E511` proved
-    that on the suggestions card and this applies the same fix to the other
-    three cards that can fail.
-    ⚠ THIS IS NOT A SWEEP OF ALL 22 `setError` SITES. On a short step the
-    top-of-page Notice is IN VIEW and correct; changing it there would be churn
-    with a regression risk and no gain.
-    ⚠⚠ BOTH ARE SET, NEVER ONE. The page-level Notice is untouched, so a reader
-    who IS at the top still sees it. These ADD a local copy.
-  */
+  // THE REVIEW STEP'S PER-CARD ERRORS PART 2)
   const [bioError, setBioError] = useState<string | null>(null);
   const [workImportError, setWorkImportError] = useState<string | null>(null);
   const [certError, setCertError] = useState<string | null>(null);
   const [photoModal, setPhotoModal] = useState(false);
 
-  /**
-   * Phone number (E019, verification STUBBED by E036). The SMS
-   * challenge/response server-side is intact (`phone-verification.ts`) — only
-   * the client-side code entry is retired while the stub is in place.
-   */
+  /** Phone number (E019, verification STUBBED by E036). The SMS */
   const [phoneInput, setPhoneInput] = useState("");
-  /*
-    ── ⚠⚠ THE PHONE'S OWN COUNTRY (`P1-ALL-E417` WS-2a) ───────────────────────
-
-    On THIS journey the address block sits on the same screen, so the old
-    `country={addr.country}` was not the hard block it was on the requester
-    wizard. It is still replaced, on Scott's instruction: *"Same control on the
-    provider journey so both pathways use one component."*
-
-    ⚠⚠ AND THE TWO ARE INDEPENDENT ON PURPOSE — *"do not overwrite one from the
-    other."* Seeded from the stored number (E.164 carries its own country), then
-    the sign-up/address country, and after that only the person moves it. It is
-    NOT re-derived from `addr.country` on every render, which is what would
-    silently rewrite a British mobile the moment somebody set their address to
-    the United Arab Emirates.
-  */
+  // THE PHONE'S OWN COUNTRY WS-2a)
   const [phoneCountry, setPhoneCountry] = useState<string | null>(null);
-  /*
-    ⚠⚠ WHAT GETS PERSISTED IS E.164 (`P1-ALL-E417`), so the country travels with
-    the number: `+919876543210`. There is no `phone_country` column and the brief
-    forbids a `db:push`, so the value carries its own country — and every save
-    path below uses this one derived string rather than re-deriving it five times.
-    ⚠ THE INPUT STILL SHOWS THE NATIONAL FORM; only what is stored changes.
-    ⚠ FALLS BACK TO THE TYPED STRING when it cannot be made E.164 — a save is
-    never the place to silently drop what somebody typed.
-  */
+  // WHAT GETS PERSISTED IS E.164 , so the country travels with
   const phoneToSave = toE164(phoneInput, phoneCountry) ?? phoneInput;
 
   const stepIndex = steps.indexOf(screen as Step);
@@ -693,22 +374,11 @@ export default function JoinProviderPage() {
     if (typeof s.isRecruiter === "boolean") setIsRecruiter(s.isRecruiter);
     const p = s.profile;
     if (!p) return;
-    /*
-      ⚠⚠ ONE MAPPING, IMPORTED (`P2-A2-E597` WS-C). The 90-line object literal
-      that used to be here is `draftFromStatus` in `lib/onboarding-draft.ts`,
-      because `/profile/edit/[section]` hydrates the same draft and a second
-      copy would drift the day either changed.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`): `setProfile({ workMethod:
-      p.workMethod ?? null, … languages: (p.languages ?? []).map(…) });`
-    */
+    // ONE MAPPING, IMPORTED WS-C). The 90-line object literal
     setProfile(draftFromStatus(p));
     // Masked on load as well, so a number stored before E203 displays the same
     // way a freshly typed one does.
-    /*
-      ⚠ THE STORED NUMBER NAMES ITS OWN COUNTRY (`E417`). A number this field
-      saved is E.164; a legacy national string is not, and falls back to the
-      address/sign-up country exactly as before.
-    */
+    // THE STORED NUMBER NAMES ITS OWN COUNTRY . A number this field
     if (p.phone) {
       const stored = parseStoredPhone(p.phone);
       const seeded = stored.country ?? p.address?.country ?? null;
@@ -719,51 +389,16 @@ export default function JoinProviderPage() {
     }
   }, []);
 
-  /**
-   * WHERE THE WIZARD OPENS — the deep-link-aware resume point.
-   *
-   * ⚠⚠ EXTRACTED, NOT REWRITTEN (`P1-A1.3-E401` WS-1). It ran in exactly one
-   * place, inline in the mount effect. It now has a SECOND caller: the
-   * work-method screen, which has to land the person somewhere once they
-   * answer. ⚠ Answering a question must not cost them their deep link — an
-   * owner who clicked "edit Overview" on their live profile and was asked for
-   * their work method on the way still has to arrive at Overview, and a copy of
-   * this logic in the screen would have dropped `?step=` and `return=review`
-   * on the floor. One definition, two callers, no drift.
-   *
-   * ⚠ ITS DEPENDENCIES ARE ALL SETTERS AND MODULE CONSTANTS, so the callback is
-   * stable and the mount effect below still runs exactly once.
-   */
+  /** WHERE THE WIZARD OPENS — the deep-link-aware resume point. */
   const resumeInto = useCallback((s: StatusPayload) => {
     // The review page's edit pencils deep-link back to a specific step
     // (?step=bio). Anything unrecognised falls back to the resume point.
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("step");
-    /*
-      ⚠⚠ UNCOUNTED SCREENS ARE LEGAL JUMP TARGETS TOO (`P1-J1.1-E285`).
-    
-      ⚠ SUPERSEDED, quoted: `const target = (s.steps ?? DEFAULT_STEPS).includes(
-      requested) ? requested : s.resumeStep`.
-    
-      `s.steps` is the COUNTED itinerary, and `tell_us` has never been in it — so
-      the provider profile's two "Work History" and "Solo Projects" edit links
-      (`ProviderProfileView.tsx:259` and `:321`, both
-      `?step=tell_us&return=review`) silently failed the guard and dumped the owner
-      on their resume step instead of the section they clicked. Two dead links that
-      looked alive.
-    
-      ⚠ THE ITINERARY GUARD IS NOT WEAKENED. A step that is not on YOUR journey is
-      still refused — a recruiter still cannot jump to `rate`. What is added is the
-      set of screens that are renderable but never counted, which `PRE_STEPS`
-      already names. `E283` made `tell_us` genuinely reachable, so this is the
-      guard catching up with that rather than a new permission.
-    */
+    // UNCOUNTED SCREENS ARE LEGAL JUMP TARGETS TOO .
     const jumpable = new Set<Step>([
       ...((s.steps ?? DEFAULT_STEPS) as Step[]),
-      /* The uncounted-but-renderable screens. `page.tsx` keeps its own
-         `Step` vocabulary (`ALL_STEPS` above) rather than importing the
-         server's, so this names the screen directly instead of pulling in
-         `PRE_STEPS` and coupling the two lists. */
+      // The uncounted-but-renderable screens. `page.tsx` keeps its own
       "tell_us" as Step,
     ]);
     const target = jumpable.has(requested as Step)
@@ -775,37 +410,7 @@ export default function JoinProviderPage() {
     if (params.get("return") === "review" && target !== "finish") {
       setReturnToReview(true);
     }
-    /*
-      ── ⚠⚠ THE ONE-SHOT `fresh` GATE IS GONE (`P1-J1.1-E283`) ──────────────────
-    
-      ⚠ SUPERSEDED, quoted not deleted, because the reasoning was sound and only
-      its PLACEMENT was wrong: *"WS1 — THE UPLOAD IS A PRE-STEP, not stop 1. The
-      brief keeps the résumé / AI entry 'up-front, preceding the steps', so it
-      renders before the counter starts and carries no number. Shown only on a
-      genuinely fresh profile: nothing imported and no work history typed. A
-      returning provider goes straight to wherever the server resumed them,
-      because being asked to upload a CV again on every visit is exactly the
-      friction this brief cuts."* The condition was:
-    
-          const fresh = target === "title"
-            && (s.imports?.length ?? 0) === 0
-            && (s.profile?.employers?.length ?? 0) === 0
-            && !requested;
-    
-      ⚠⚠ THAT GATE IS HALF OF THE LAUNCH-CLASS FATAL. It could fire ONCE, before
-      the title, on a profile with nothing on it. The moment a provider typed a
-      title it could never be true again, so the upload became permanently
-      unreachable — and `0ae97e2` then made the next step depend on data only the
-      upload produced.
-    
-      ⚠ AND IT COUNTED FAILED IMPORTS. `s.imports` carries `status` and `error`
-      and nothing filtered on either, so ONE FAILED PARSE locked a provider out of
-      the upload for good. Deleting the gate removes that bug with it — there is
-      no longer any count that can lock the door.
-    
-      In V3 the screen sits AFTER the title and is reachable whenever the provider
-      is on it, so resume simply honours the target.
-    */
+    // THE ONE-SHOT `fresh` GATE IS GONE
 setScreen(target);
   }, []);
 
@@ -834,10 +439,6 @@ setScreen(target);
       let r = await fetch("/api/onboarding/status");
 
       // Signed in with no provider profile — the one-click OAuth path (brief_Q).
-      // `linkOAuthUser` creates the User only, because a Google login carries no
-      // buyer/provider intent; THIS page is where that intent is known, so build
-      // the backbone now and re-read. A 409 means they're a buyer — that really
-      // is "not a provider".
       if (r.status === 404) {
         const made = await fetch("/api/onboarding/provider/backbone", {
           method: "POST",
@@ -857,16 +458,7 @@ setScreen(target);
         let s = await r.json();
         setEmail(s.email);
 
-        /**
-         * PJv2 WS1 — honour the user-type fork from `/join`.
-         *
-         * `?type=recruiter` is the ONLY thing that distinguishes the two
-         * journeys, and it has to be persisted (as `work_method`) before the
-         * step list is read, or a recruiter would be handed the 10-step
-         * provider itinerary and asked for a rate. Only ever sets it when the
-         * profile has no method yet, so re-entering the URL cannot silently
-         * re-type an existing provider.
-         */
+        /** PJv2 WS1 — honour the user-type fork from `/join`. */
         const wanted = new URLSearchParams(window.location.search).get("type");
         if (wanted === "recruiter" && !s.profile?.workMethod) {
           // `work_method` is a SECTION now, not a wizard step, so it goes
@@ -880,28 +472,7 @@ setScreen(target);
               data: { workMethod: "RECRUITER" },
             }),
           });
-          /*
-            ── ⚠⚠ A FAILED WRITE MUST SURFACE, NOT FALL THROUGH (`E405` WS-1) ──
-
-            ⚠ SUPERSEDED, quoted not deleted:
-
-                if (saved.ok) {
-                  const again = await fetch("/api/onboarding/status");
-                  if (again.ok) s = await again.json();
-                }
-
-            ⚠⚠ THERE WAS NO `else`, AND THAT IS WHY THE DEFECT HID. When this
-            POST started returning 400, the recruiter entrance discarded it in
-            silence: `workMethod` stayed null, the router fell through to the
-            `work_method` screen, and that screen 400'd too. **BOTH entrances to
-            the recruiter fork were dead and neither said so** — the URL one
-            because it swallowed the error, the screen one because it showed a
-            message with no way past it.
-
-            ⚠ IT SETS THE SAME `error` STATE THE `choose()` HANDLER SETS. One
-            honest message, one surface — not a second error UI invented for the
-            entrance nobody sees.
-          */
+          // A FAILED WRITE MUST SURFACE, NOT FALL THROUGH ( WS-1)
           if (saved.ok) {
             const again = await fetch("/api/onboarding/status");
             if (again.ok) s = await again.json();
@@ -916,28 +487,7 @@ setScreen(target);
         if (!s.emailVerified) {
           setScreen("check_email");
         } else if (!s.profile?.workMethod) {
-          /*
-            ── ⚠⚠ THE IDENTITY IS RECOVERABLE INSIDE THE WIZARD NOW ────────────
-
-            `?type=recruiter` was **the only thing in the codebase that set
-            `work_method`**, and `app/join/page.tsx` was the only place that sent
-            it. So a recruiter who bookmarked the wizard, resumed from an email
-            link, reloaded after the param dropped, or typed the URL became a
-            PROVIDER SILENTLY — which is what Scott walked into: `/join/provider`,
-            no query string, step 4/7, *"Tell Clients What You Charge."*
-
-            ⚠⚠ AND THE CONSEQUENCE IS BIGGER THAN A WRONG STEP. `work_method`
-            drives the Coordinator role and its capability gates, so a mis-typed
-            recruiter is MIS-PERMISSIONED, not merely mis-stepped.
-
-            ⚠ SO A MISSING METHOD ASKS RATHER THAN ASSUMES. The default was never
-            chosen — it was the absence of a choice, reading as "provider".
-            ⚠⚠ AND IT KEEPS THE PROPERTY THE URL GUARD HAD: this fires ONLY when
-            `workMethod` is null. An established provider is never asked and never
-            re-typed; a person answering for themselves is the point.
-            ⚠ MEASURED 2026-09-09: of 92 profiles, **79 carry no work_method at
-            all** and **ZERO are RECRUITER** — the fork has never once been taken.
-          */
+          // THE IDENTITY IS RECOVERABLE INSIDE THE WIZARD NOW
           setScreen("work_method");
         } else {
           resumeInto(s);
@@ -949,28 +499,8 @@ setScreen(target);
 
   // ---- reference data ---------------------------------------------------
   useEffect(() => {
-    /*
-      WS3 — the roles list is needed on THREE screens now: the Roles step, the
-      Skills step (which names the roles in its subtitle and labels chips) and
-      the retired combined page. Gating this on "catalog" alone left the new
-      Roles step rendering an empty list with no error — the fetch simply never
-      ran. Found by walking it; nothing failed, there was just nothing there.
-    */
-    /*
-      ── ⚠⚠ THE EDITOR CAN NOW BE OPEN ON A DIFFERENT `screen` (`E412` WS-1) ──
-
-      ⚠ SUPERSEDED, quoted not deleted:
-          `if ((screen === "roles" || screen === "skills" || screen === "catalog") &&`
-
-      ⚠⚠ EVERY ONE OF THESE FETCHES IS GATED ON `screen`, AND `E412` MOUNTS THE
-      SAME PICKERS WHILE `screen === "finish"`. Left alone, the review's Skills
-      Edit opens a modal with an EMPTY catalog and no error — the identical
-      failure the `roles` half of this condition was added to fix: *"nothing
-      failed, there was just nothing there."*
-
-      ⚠ THE MODAL IS ADDED TO THE CONDITION, NOT SUBSTITUTED FOR IT — the steps
-      still load their own data on arrival exactly as before.
-    */
+    // WS3 — the roles list is needed on THREE screens now: the Roles step, the
+    // THE EDITOR CAN NOW BE OPEN ON A DIFFERENT `screen` ( WS-1)
     if (
       (screen === "roles" ||
         screen === "skills" ||
@@ -983,8 +513,6 @@ setScreen(target);
         .then((d) => setFieldRoles(d.roles ?? []))
         .catch(() => setError("We couldn't load the categories. Please refresh."));
     }
-    /* ⚠ SUPERSEDED, quoted (`E412` WS-1): `if (screen === "specializations" && …`
-       — same reason as above; the review mounts this picker on `finish`. */
     if (
       (screen === "specializations" || editSection === "specializations") &&
       specGroups.length === 0
@@ -998,13 +526,7 @@ setScreen(target);
     }
   }, [screen, editSection, fieldRoles.length, specGroups.length]);
 
-  /*
-    WS3 — the skills page shows the UNION across every claimed role.
-
-    One request for all of them rather than one per role: the picker searches
-    across the whole set, so assembling it client-side from N responses would
-    only add N-1 chances for a partial list to look like a complete one.
-  */
+  // WS3 — the skills page shows the UNION across every claimed role.
   // Review flag: companies from the résumé not yet sorted into Employer / Project client.
   useEffect(() => {
     if (screen !== "finish") return;
@@ -1017,10 +539,6 @@ setScreen(target);
   }, [screen, profile.employers.length]);
   const roleKey = profile.roleTypeIds.join(",");
   useEffect(() => {
-    /* ⚠ SUPERSEDED, quoted (`E412` WS-1): `if (screen !== "skills" || !roleKey) return;`
-       The skill OPTIONS are the list the picker is made of; without this the
-       review's Skills modal renders its chips-you-already-have and an otherwise
-       empty box. */
     if ((screen !== "skills" && editSection !== "skills") || !roleKey) return;
     fetch(`/api/catalog/skills?roleTypeIds=${encodeURIComponent(roleKey)}`)
       .then((r) => r.json())
@@ -1040,15 +558,7 @@ setScreen(target);
       .catch(() => setError("We couldn't load skills. Please refresh."));
   }, [screen, browseArea]);
 
-  /*
-    WS-4 — load each suite's module list when the review step opens.
-
-    Keyed off the DOMAIN rows the field-role fetch already returns: for the two
-    vendor roles a domain IS a software suite, so the pillar id is already in
-    hand and there is nothing new to resolve. Runs once per suite, not once per
-    job card, and only on this step — a provider who never reaches the review
-    never pays for it.
-  */
+  // WS-4 — load each suite's module list when the review step opens.
   useEffect(() => {
     if (screen !== "work_history" || fieldRoles.length === 0) return;
     const vendorRoles = fieldRoles.filter(
@@ -1074,12 +584,7 @@ setScreen(target);
           }));
         })
         .catch(() => {
-          /*
-            Silent. A suite whose modules fail to load leaves that picker empty,
-            which is recoverable by reloading; surfacing six possible errors on
-            a review screen would bury the one thing the provider came here to
-            do.
-          */
+          // Silent. A suite whose modules fail to load leaves that picker empty
         });
     }
     return () => {
@@ -1104,15 +609,7 @@ setScreen(target);
   const [companyBusy, setCompanyBusy] = useState(false);
   const [companyPending, setCompanyPending] = useState<string | null>(null);
 
-  /*
-    WS2/WS3 — ROLES ARE MULTI-SELECT, defaulting to one.
-
-    The first role chosen is the PRIMARY: what `roleTypeId` means, what the
-    profile leads with, and what every existing derivation reads. De-selecting
-    the primary promotes the next one rather than leaving a role set with no
-    primary. Hoisted to component scope because the Roles screen and the Skills
-    screen are two steps now.
-  */
+  // WS2/WS3 — ROLES ARE MULTI-SELECT, defaulting to one.
   const toggleRole = (role: FieldRole) => {
     setProfile((p) => {
       const has = p.roleTypeIds.includes(role.id);
@@ -1133,19 +630,7 @@ setScreen(target);
     });
   };
 
-  /*
-    ── ⚠⚠ SHOWN vs HELD, ONCE, FOR THE WHOLE WIZARD (`P2-J1.4-E517`) ──────────
-
-    ⚠ Hoisted to component scope because THREE surfaces need the same split and
-    they must not disagree: the Skills step's basket, its held-but-not-shown
-    block, and ⚠⚠ THE REVIEW CARD — a screen headed "here is your profile" must
-    not list skills the profile does not show (Scott, 2026-09-17).
-
-    ⚠ Computed against `profile.roleTypeIds` — the roles IN THE WIZARD, not the
-    roles last saved — so unticking a role updates all three immediately.
-    ⚠⚠ `profile.skillNames` STAYS THE FULL HELD SET. Nothing here filters what
-    is HELD; this only decides what each surface SHOWS.
-  */
+  // SHOWN vs HELD, ONCE, FOR THE WHOLE WIZARD
   const shownSkillNames = profile.skillNames.filter((sk) =>
     isSkillShown(profile.roleTypeIds, sk.roleTypeId)
   );
@@ -1161,20 +646,9 @@ setScreen(target);
       goTo("finish");
       return;
     }
-    /*
-      From an UNCOUNTED screen (the upload pre-step) "next" means the first
-      counted step — there is no index to add one to. Without this the pre-step's
-      Continue did nothing at all, which is how a pre-step becomes a dead end.
-    */
+    // From an UNCOUNTED screen (the upload pre-step) "next" means the first
     if (stepIndex < 0) {
-      /*
-        ⚠ `E283` — THE RÉSUMÉ SCREEN NOW SITS AFTER THE TITLE, so "next" from it is
-        the step after `title`, not `steps[0]`. Sending it to `steps[0]` would bounce
-        the provider back onto the title they just filled in — a loop.
-        ⚠ DERIVED FROM THE ITINERARY, not hardcoded to `roles`: a recruiter walks a
-        different list and both start with `title`, so "the one after title" is right
-        for either without naming a step one of them may not have.
-      */
+      // — THE RÉSUMÉ SCREEN NOW SITS AFTER THE TITLE, so "next" from it is
       // Résumé comes first now (2026-10-05): it leads on to Title.
       if (screen === "tell_us") {
         goTo("title");
@@ -1189,11 +663,7 @@ setScreen(target);
     if (stepIndex > 0) goTo(steps[stepIndex - 1]);
   };
 
-  /**
-   * The address draft. Hoisted to component scope in WS8 — the Photo & Details
-   * step and the Review both read it now, and a copy per case is how the two
-   * surfaces would start disagreeing about what is stored.
-   */
+  /** The address draft. Hoisted to component scope in WS8 — the Photo & Details */
   const addr = profile.address ?? emptyAddress(acct.country);
   const setAddr = (patch: Partial<AddressDraft>) =>
     setProfile((p) => ({ ...p, address: { ...addr, ...patch } }));
@@ -1222,20 +692,8 @@ setScreen(target);
       hydrate(body);
       return true;
     } catch {
-      /*
-        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
-
-        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-        dropped connection, a sleeping laptop — produced an unhandled rejection,
-        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
-        NOTHING AT ALL, and the button looked idle and ready.
-        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
-        "Failed to fetch", which tells a provider nothing they can act on.
-        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
-      */
-      /* ⚠⚠ THIS IS THE WIZARD'S GENERIC SAVE, so it is EVERY STEP. ⚠ It returns
-         `false` exactly as a non-OK response does, which is what lets `publish`
-         stop on a thrown save instead of carrying on past it (`E090`). */
+      // THERE WAS NO `catch`
+      // THIS IS THE WIZARD'S GENERIC SAVE, so it is EVERY STEP. It returns
       setError("Couldn't reach Panameer to save that. Check your connection and try again.");
       return false;
     } finally {
@@ -1247,18 +705,7 @@ setScreen(target);
     if (await postStep(step, data)) then();
   };
 
-  /**
-   * Certifications are a profile SECTION, not one of the 13 wizard steps, so
-   * they save through the owner-scoped section endpoint (the step route
-   * deliberately only accepts PROVIDER_STEPS). Optional — a failure here never
-   * blocks publishing.
-   *
-   * E057 — takes the list to write as an ARGUMENT. It used to read
-   * `profile.certifications` out of the closure, which is only correct while
-   * the save is a separate click from the edit; the modal saves in the same
-   * handler that produces the new list, and a closure read there would persist
-   * the version before the edit.
-   */
+  /** Certifications are a profile SECTION, not one of the 13 wizard steps, so */
   const saveCertifications = async (
     certifications: CertificationDraft[]
   ): Promise<boolean> => {
@@ -1283,17 +730,7 @@ setScreen(target);
       if (status.ok) hydrate(await status.json());
       return true;
     } catch {
-      /*
-        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
-
-        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-        dropped connection, a sleeping laptop — produced an unhandled rejection,
-        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
-        NOTHING AT ALL, and the button looked idle and ready.
-        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
-        "Failed to fetch", which tells a provider nothing they can act on.
-        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
-      */
+      // THERE WAS NO `catch`
       setError(
         "Couldn't reach Panameer to save your certifications. Check your connection and try again."
       );
@@ -1346,19 +783,8 @@ setScreen(target);
       }));
       goTo("check_email");
     } catch {
-      /*
-        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
-
-        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-        dropped connection, a sleeping laptop — produced an unhandled rejection,
-        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
-        NOTHING AT ALL, and the button looked idle and ready.
-        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
-        "Failed to fetch", which tells a provider nothing they can act on.
-        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
-      */
-      /* ⚠⚠ THIS ONE IS SIGNUP. A silent failure here is A REGISTRATION WALL —
-         the single class of defect the whole walk exists to find. */
+      // THERE WAS NO `catch`
+      // THIS ONE IS SIGNUP. A silent failure here is A REGISTRATION WALL —
       setError(
         "Couldn't reach Panameer to create your account. Check your connection and try again."
       );
@@ -1367,15 +793,12 @@ setScreen(target);
     }
   };
 
-  /**
-   * WS-B — add the ticked terms as custom skills. Suggest-and-confirm: nothing
-   * here was added by the import, and nothing unticked is added now.
-   */
+  /** WS-B — add the ticked terms as custom skills. Suggest-and-confirm: nothing */
   const confirmSuggestions = async () => {
     if (pickedSuggestions.length === 0) return;
     setSuggestBusy(true);
     setError(null);
-    /* ⚠ `E511` PART 1 — the card's OWN error slot, cleared on every attempt. */
+    /* `E511` PART 1 — the card's OWN error slot, cleared on every attempt. */
     setSuggestError(null);
     try {
       const r = await fetch("/api/onboarding/provider/skill-suggestions", {
@@ -1385,23 +808,7 @@ setScreen(target);
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        /*
-          ── ⚠⚠ THE FAILURE RENDERS ON THE CARD (`P2-J1.4-E511` PART 1) ───────
-
-          > **SCOTT:** *"Clicking the 'ADD 13 SELECTED' button and nothing is
-          > happening."*
-
-          ⚠ THE ERROR WAS ALWAYS BEING SET — `setError` ran correctly. But
-          `{error && <Notice>}` renders at the TOP of the `WizardShell`, and
-          this card is at the FOOT of a very long review page: the message
-          appeared roughly a screen and a half above where he was looking.
-          ⚠⚠ A CORRECT ERROR, RENDERED WHERE NOBODY CAN SEE IT, IS
-          INDISTINGUISHABLE FROM A DEAD BUTTON.
-          ⚠ THE SUCCESS MESSAGE ALREADY LIVES ON THIS CARD (`✓ Added …`); the
-          failure had no reason to live somewhere else.
-          ⚠ BOTH ARE SET, NOT ONE: the page-level Notice is untouched, so a
-          reader who IS at the top still sees it. This ADDS a local one.
-        */
+        // THE FAILURE RENDERS ON THE CARD PART 1)
         const msg = body.error ?? "Could not add those skills.";
         setError(msg);
         setSuggestError(msg);
@@ -1411,16 +818,7 @@ setScreen(target);
       setSuggestDone(body.added ?? []);
       setPickedSuggestions([]);
     } catch {
-      /*
-        ── ⚠⚠ THERE WAS NO `catch` (`E511` PART 2) ──────────────────────────
-
-        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-        dropped connection — produced an unhandled rejection, `setError` never
-        ran, the spinner cleared, and ⚠⚠ THE USER SAW EXACTLY WHAT SCOTT SAW:
-        nothing. That is a second, independent route to the same silence.
-        ⚠ A HUMAN SENTENCE, NEVER THE RAW EXCEPTION. `err.message` here is
-        "Failed to fetch", which tells a provider nothing they can act on.
-      */
+      // THERE WAS NO `catch` ( PART 2)
       const msg = "Couldn't reach Panameer to add those. Check your connection and try again.";
       setError(msg);
       setSuggestError(msg);
@@ -1429,11 +827,7 @@ setScreen(target);
     }
   };
 
-  /**
-   * WS3 — run the AI extractor over the document already uploaded and
-   * repopulate the review. The heuristic result stays if this fails; the panel
-   * says so rather than clearing what the provider has.
-   */
+  /** WS3 — run the AI extractor over the document already uploaded and */
   /** WS4 instrumentation — which way a low-confidence import was resolved. */
   const logResumePath = (path: string) =>
     fetch("/api/onboarding/provider/resume-path", {
@@ -1447,16 +841,7 @@ setScreen(target);
 
     setBusy(true);
     try {
-      /*
-        E090 — the save's RESULT is now checked. This previously ran as a
-        fire-and-forget `await postStep(...)`, so when the finish handler threw
-        (an invalid DOB aborts it before it writes anything — DOB, phone AND
-        address all fail together) the flow carried straight on to /publish. That
-        call then failed for a DIFFERENT reason — "add your date of birth", the
-        gate reporting the value that never got saved — and its message
-        overwrote the real one. The section looked like it "didn't save" and the
-        stated cause was wrong. Stop here and let postStep's error stand.
-      */
+      // E090 — the save's RESULT is now checked. This previously ran as a
       const saved = await postStep("finish", {
         address: profile.address,
         // E036 — phone verification is stubbed: the number is saved with the
@@ -1473,37 +858,11 @@ setScreen(target);
         return;
       }
       // The review IS step 12 now (E035), so publishing lands the provider on
-      /*
-        E149 — publish lands on the new Provider Home, with a pop-up.
-
-        home_v2 sent it to a "You're live" confirmation page; the MASTER brief
-        RETIRES that page, and it is right to. The confirmation was a whole
-        screen re-rendering the profile the provider had just spent ten minutes
-        reviewing, to tell them one thing. The one thing is now a dialog on the
-        page they actually want to be on, and the casing's upper-right avatar is
-        what makes its instruction ("click your image in the upper right") true.
-      */
+      // E149 — publish lands on the new Provider Home, with a pop-up.
       router.push("/dashboard?published=1");
     } catch {
-      /*
-        ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
-
-        ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-        dropped connection, a sleeping laptop — produced an unhandled rejection,
-        `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
-        NOTHING AT ALL, and the button looked idle and ready.
-        ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
-        "Failed to fetch", which tells a provider nothing they can act on.
-        ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
-      */
-      /* ⚠⚠ `E090`'s RESULT CHECK IS UNTOUCHED AND IS A DIFFERENT FAILURE. Above,
-         `if (!saved) return` still stops the flow when the save SUCCEEDED as a
-         request but FAILED as an operation, and `postStep`'s message still
-         stands. ⚠ This `catch` only covers the third case — the request never
-         completing at all. ⚠⚠ BOTH ARE CAUGHT; neither replaces the other.
-         ⚠ A thrown save inside `postStep` is caught THERE and returns `false`,
-         so it lands on `E090`'s early return and never reaches this block —
-         which is why this sentence names publishing, not saving. */
+      // THERE WAS NO `catch`
+      // request but FAILED as an operation, and `postStep`'s message still
       setError(
         "Couldn't reach Panameer to publish your profile. Check your connection and try again."
       );
@@ -1538,29 +897,11 @@ setScreen(target);
   // ===== PRE-VERIFY (no stepper, E001) ====================================
   if (screen === "signup") {
     // compact — the sign-up form is the one pre-verify page long enough to run
-    // off the bottom of a laptop screen (E047).
-    // max-w-2xl, not the brief's ~md/lg: brief_W/E046 MEASURED that the three
-    // social buttons need 672px to fit their full labels with icons, and 576px
-    // does not. Still a capped, centred form column — 672 of 1024 — so the rule
-    // holds; the number comes from that measurement rather than from taste.
     return (
       <PlainShell
         compact
         contentWidth="max-w-2xl"
-        /*
-          ── ⚠⚠ THE ACTION BAND THIS SCREEN USED TO OPT OUT OF (`E246` §5) ────────
-
-          This was the ONE onboarding screen passing no `footer`, so the frame's
-          full-bleed band never rendered and the rule was drawn INSIDE `SignUpForm`'s
-          capped `max-w-2xl` column — stopping at the form width instead of running
-          edge to edge. That is what Scott filed on the walk.
-          ⚠ THE SAME TWO BUTTONS, the same handlers, the same disabled logic; only
-          WHERE they render moved. `SignUpForm` has no `<form>` element and never
-          used `type="submit"`, so nothing about how submit fires changed — checked
-          before anything was moved.
-          ⚠ `canSignUp` IS IMPORTED, NOT REIMPLEMENTED. One definition of the gate,
-          `tosAccepted` included; retyping it here is `P1-J4-E024`.
-        */
+        // THE ACTION BAND THIS SCREEN USED TO OPT OUT OF ( §5)
         footer={
           <>
             <button
@@ -1588,22 +929,13 @@ setScreen(target);
           </div>
         )}
         <SignUpForm
-          /* ⚠ SCOTT'S WORDS, VERBATIM (`E288`). Was inherited from the removed
-             default, which read "Sign Up to Find Work". */
+          // SCOTT'S WORDS, VERBATIM . Was inherited from the removed
           title="Sign Up to Sell Services and/or Service Products"
           values={acct}
           onChange={(patch) => setAcct((a) => ({ ...a, ...patch }))}
           error={error}
           emailLocked={!!inviteToken}
-          /*
-            ⚠ EXPLICIT, AND IT IS LOAD-BEARING (`P1-J1.1-E234`, 2026-08-30).
-            This was IMPLICIT: `SignUpForm`'s `callbackUrl` defaulted to
-            "/join/provider" and this call site relied on it. `E234` changed that
-            default to "/join" so no shared component pre-picks a side — which
-            would have ejected a provider from the wizard they are standing in.
-            Stating it here keeps THIS flow byte-identical in behaviour while the
-            default stops deciding for everybody.
-          */
+          // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
           callbackUrl="/join/provider"
         />
       </PlainShell>
@@ -1633,34 +965,14 @@ setScreen(target);
     );
   }
 
-  /*
-    ── ⚠⚠ THE WORK-METHOD SCREEN — UNCOUNTED, AND ASKED ONLY WHEN UNKNOWN ──────
-
-    `P1-A1.3-E401` WS-1. Rendered from `WORK_METHOD_OPTIONS`, which had been
-    DEAD CODE since `E009` defined it: grep found exactly one reference in the
-    whole repo, its own definition. The three options were written, reviewed and
-    never shown to anybody — the fork existed only as `?type=recruiter`.
-
-    ⚠ IT IS A SCREEN, NOT A STEP, so `RECRUITER_STEPS`, `PROVIDER_STEPS`,
-    `stepsForProfile` and `isRecruiterProfile` are all untouched and the stepper
-    still counts the same x/N it counted before. It renders in `PlainShell`, the
-    same uncounted-screen shell `check_email` uses, ABOVE the counted-step
-    machinery below — so it never reaches `STEP_LABELS[screen]`.
-
-    ⚠⚠ AND IT ASKS ONCE. The router reaches here only when `workMethod` is null,
-    which is the same guard `?type=recruiter` has always carried. A person can
-    still change their own method later in Settings; what stays impossible is a
-    URL — or this screen — re-typing an established provider under them.
-  */
+  // THE WORK-METHOD SCREEN — UNCOUNTED, AND ASKED ONLY WHEN UNKNOWN
   if (screen === "work_method") {
     const choose = async () => {
       if (!workMethodPick) return;
       setBusy(true);
       setError(null);
       try {
-        /* ⚠ THE SAME OWNER-SCOPED SECTION ENDPOINT the `?type=recruiter` block
-           posts to — one write path for this field, so the two entrances cannot
-           drift apart. The id is resolved from the session there, never sent. */
+        // THE SAME OWNER-SCOPED SECTION ENDPOINT the `?type=recruiter` block
         const saved = await fetch("/api/settings/profile/section", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1673,10 +985,7 @@ setScreen(target);
           setError("We couldn't save that. Please try again.");
           return;
         }
-        /* ⚠⚠ RE-READ RATHER THAN ASSUME THE ITINERARY. The step list is the
-           SERVER's answer to this question — choosing RECRUITER changes which
-           steps exist — so the resume point comes back from `status`, not from
-           anything computed here. */
+        // RE-READ RATHER THAN ASSUME THE ITINERARY. The step list is the
         const again = await fetch("/api/onboarding/status");
         if (!again.ok) {
           setError("We couldn't save that. Please try again.");
@@ -1686,17 +995,7 @@ setScreen(target);
         hydrate(s2);
         resumeInto(s2);
       } catch {
-      /*
-          ── ⚠⚠ THERE WAS NO `catch` (`P2-J1.4-E516`) ─────────────────────────
-
-          ⚠ `try`/`finally` with no `catch`: a THROWN fetch — offline, DNS, a
-          dropped connection, a sleeping laptop — produced an unhandled rejection,
-          `setError` never ran, and `finally` cleared the spinner. ⚠⚠ THE USER SAW
-          NOTHING AT ALL, and the button looked idle and ready.
-          ⚠ A HUMAN SENTENCE, NEVER `err.message` — the raw value is
-          "Failed to fetch", which tells a provider nothing they can act on.
-          ⚠ SHOWN, NOT SWALLOWED. `E511`'s `confirmSuggestions` is the reference.
-        */
+      // THERE WAS NO `catch`
         setError(
           "Couldn't reach Panameer to save that. Check your connection and try again."
         );
@@ -1705,91 +1004,18 @@ setScreen(target);
       }
     };
 
-    /*
-      ── ⚠⚠ `WizardShell`, NOT `PlainShell` (`P1-A1.4-E405` WS-2) ─────────────
-
-      SCOTT: *"this whole page is a different style. It is not consistent with
-      the service buyer registration pages."* Then, itemised: no line above the
-      button · the bottom buttons are not in a footer band · no Finish later ·
-      *"oh yeah, no back button either."*
-
-      ⚠ SUPERSEDED, quoted not deleted: this rendered
-      `<PlainShell contentWidth="max-w-2xl">` and drew its OWN full-width magenta
-      Continue INSIDE the content column.
-
-      ⚠⚠ `PlainShell` IS THE **PRE**-VERIFY CHROME — logo only, deliberately no
-      stepper (`E001`). This screen is reached only AFTER `s.emailVerified`, so
-      it was wearing the pre-verify shell in a post-verify position. ⚠ NOTHING
-      NEW WAS BUILT: `WizardShell` has taken every one of these props all along
-      and `join/requester/steps/page.tsx` already passes them.
-      ⚠ `PlainShell` IS NOT RESTYLED — it is still correct for `signup` and
-      `check_email`, which Scott did not complain about.
-
-      ── ⚠⚠ AND IT CARRIES NO COUNTER. THAT IS THE DECISION, NOT AN OMISSION ──
-
-      SCOTT: *"Must function the same way the buyer functions... I believe there
-      is an ask to 'get started' and every page after that is numbered, no?"* He
-      is right, and the buyer side already works that way: `/join/requester/start`
-      is ONE UNNUMBERED ASK carrying the full footer band, and every page after
-      it is numbered. This is the provider's equivalent of that ask.
-
-      ⚠ `work_method` IS AN UNCOUNTED SCREEN, NOT A STEP (`P1-A1.3-E401` WS-1),
-      and the screen AFTER it — `title` — is genuinely step 1. Two consecutive
-      screens both reading "1 of 7" is worse than no number at all.
-
-      ⚠ SO NO `step`, NO `totalSteps`, NO `counterText`. `WizardShell`'s own
-      docblock says *"OMIT on pre-verify pages — that hides the stepper"*, and
-      VERIFIED IN THE SOURCE rather than assumed: `showStepper` gates ONLY the
-      counter and the progress track, while the rule above the buttons is
-      `OnboardingFrame`'s footer `border-t`, which renders whenever a `footer`
-      exists. Omitting `step` drops the number and keeps the band.
-    */
+    // SCOTT: *"this whole page is a different style. It is not consistent with
     return (
       <WizardShell
-        /*
-          ── ⚠⚠ IT CARRIES A NUMBER NOW (`P1-A1.4-E406` WS-1) ──────────────────
-
-          ⚠ SUPERSEDED, quoted not deleted — `E405` passed NO `step`, reasoning:
-          *"the buyer side has exactly one unnumbered ask… `work_method` is the
-          provider side's equivalent of that ask."*
-
-          ⚠⚠ THAT RESTED ON A FALSE PREMISE AND THE PREMISE WAS THE BRIEF'S.
-          `/join/provider/start` EXISTS — an `OnboardingShell` with a footer and
-          a *"Get Started Now!"* link, the exact mirror of
-          `/join/requester/start`. **That** is the provider's unnumbered ask, and
-          it sits BEFORE this screen. So Scott's rule — *"there is an ask to 'get
-          started' and every page after that is numbered"* — makes this page 1 of
-          the numbered run, not the ask.
-
-          ⚠ THE DENOMINATOR IS THE SHARED CONSTANT, so this screen and the seven
-          counted steps cannot disagree about how long the wizard is.
-        */
+        // IT CARRIES A NUMBER NOW WS-1)
         onboardingChrome
         title="How do you work?"
-        /* ⚠ WHY IT IS BEING ASKED, in one line — somebody who arrived by a
-           recruiter link and lost the query string has no idea why the wizard
-           suddenly wants this. */
+        // WHY IT IS BEING ASKED, in one line — somebody who arrived by a
         subtitle="This sets up the rest of your profile — you can change it later in Settings."
-        /*
-          ⚠ BACK GOES TO `/join`, THE ROLE PICKER, and that is the only truthful
-          destination: it is where this screen was arrived from, and there is no
-          earlier wizard screen to return to — `check_email` sits behind a
-          verification that has already passed, so sending anyone there is a dead
-          end.
-        */
+        // BACK GOES TO `/join`, THE ROLE PICKER, and that is the only truthful
         onBack={() => router.push("/join")}
         canBack
-        /*
-          ⚠ "Finish later" MATCHES THE REQUESTER'S DESTINATION.
-          ⚠⚠ IT DOES NOT MIRROR THE REQUESTER'S EMAIL: that side also posts
-          `/api/onboarding/requester/finish-later`, and THERE IS NO PROVIDER
-          EQUIVALENT — `src/app/api/onboarding/provider/` has no `finish-later`
-          route. Navigating only is the honest half; the missing email is
-          reported, not invented here.
-          ⚠ SCOPED TO THIS SCREEN. `WizardShell` has ONE secondary slot and the
-          counted provider steps already spend it on "Skip for Now"; putting
-          "Finish later" on them would take that away.
-        */
+        // IT DOES NOT MIRROR THE REQUESTER'S EMAIL: that side also posts
         secondaryLabel="Finish later"
         onSecondary={() => router.push("/dashboard")}
         onContinue={choose}
@@ -1821,18 +1047,8 @@ setScreen(target);
   }
 
   // ===== POST-VERIFY: the counted steps (stepper x/N) =====================
-  /*
-    An UNCOUNTED screen (the upload pre-step, or a review-page section opened
-    for editing) is not in the itinerary, so `stepIndex` is -1. Passing 0/6 to
-    the shell would render a counter for a step that does not exist — the exact
-    thing pitfalls.md warns about, one level down. Undefined hides it.
-  */
-  /*
-    ⚠ OFFSET BY ONE (`P1-A1.4-E406` WS-1). ⚠ SUPERSEDED, quoted not deleted:
-        `const stepNumber = stepIndex >= 0 ? stepIndex + 1 : undefined;`
-    `work_method` is displayed as step 1, so the first COUNTED step is 2. The
-    itinerary is unchanged — only what the counter prints moved.
-  */
+  // An UNCOUNTED screen (the upload pre-step, or a review-page section opened
+  // OFFSET BY ONE WS-1).
   const stepNumber = stepIndex >= 0 ? stepIndex + 2 : undefined;
   // Exact stepper heading + "Next: …" label per brief_S's table (E024–E035).
   const labels = STEP_LABELS[screen as Step];
@@ -1858,46 +1074,12 @@ setScreen(target);
           : undefined,
     onboardingChrome: true,
     step: stepNumber,
-    /* ⚠ SUPERSEDED, quoted: `totalSteps: steps.length`. That recomputed the
-       denominator from the CURRENT itinerary, so a recruiter saw /7 and a
-       provider /8 — the flip Scott's "use the larger number" answers. */
     totalSteps: wizardTotal,
     stepLabel: labels?.stepper,
     continueLabel: nextLabel,
     busy,
-    /*
-      ── ⚠ THE FIRST COUNTED STEP HAS A BACK NOW (`E406` WS-3) ────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted:
-          `onBack: stepIndex > 0 ? goBack : undefined,`
-          `canBack: stepIndex > 0,`
-      Before `E401` there was nowhere for step 1 to go back TO. There is now —
-      the `work_method` screen sits in front of it.
-
-      ⚠⚠ AND RETURNING THERE MUST NOT RE-TYPE ANYBODY. The screen's own
-      `choose()` re-reads `/api/onboarding/status` and resumes from the SERVER's
-      answer, so changing the answer and continuing lands on the itinerary the
-      NEW answer implies. ⚠ THE ROUTER'S `!workMethod` GUARD IS UNAFFECTED: this
-      is a person navigating deliberately, not a URL re-typing them.
-    */
-    /*
-      ── ⚠⚠ BACK HONOURS `returnToReview` FIRST (`P1-A1.4-E411` WS-1) ──────────
-
-      ⚠ SUPERSEDED, quoted not deleted (`E406` WS-3):
-          `onBack: stepIndex > 0 ? goBack : () => setScreen("work_method"),`
-
-      ⚠⚠ THAT WAS RIGHT FOR THE COUNTED STEPS AND WRONG FOR `tell_us`. `tell_us`
-      is UNCOUNTED, so `stepIndex` is -1 and the expression fell through to the
-      `work_method` branch — meaning somebody who reached the editor from the
-      review's Edit link and pressed Back landed on *"How Do You Work?"* instead
-      of the review they came from. ⚠ Before `E406` the same case did NOTHING at
-      all (`goBack` returns early when `stepIndex <= 0`), which is why Scott
-      *"had to refresh to get them back"*.
-
-      ⚠ `goNext` HAS HONOURED THIS FLAG SINCE `E118` — *"an edit that came FROM
-      the review goes back to it, once."* Back simply never learned the same
-      rule, so the two halves of one round trip disagreed.
-    */
+    // THE FIRST COUNTED STEP HAS A BACK NOW ( WS-3)
+    // BACK HONOURS `returnToReview` FIRST WS-1)
     onBack: returnToReview
       ? () => {
           setReturnToReview(false);
@@ -1909,88 +1091,17 @@ setScreen(target);
           ? goBack
           : () => setScreen("work_method"),
     canBack: true,
-    /*
-      ── ⚠⚠ "FINISH LATER" ON EVERY COUNTED STEP (`P1-A1.4-E413` WS-6) ─────────
-
-      SCOTT, 2026-09-10: *"'Finish Later' — do it."* ⚠ `E406` WS-2 stopped here
-      and the stop is released.
-
-      ⚠ SUPERSEDED, quoted not deleted — the note at the `work_method` screen
-      that scoped it to that one screen:
-
-          ⚠ SCOPED TO THIS SCREEN. `WizardShell` has ONE secondary slot and the
-          counted provider steps already spend it on "Skip for Now"; putting
-          "Finish later" on them would take that away.
-
-      ⚠⚠ IT NO LONGER TAKES ANYTHING AWAY. `WizardShell` now renders the
-      secondary and the leave verb in the SAME centre slot, so "Skip for Now"
-      keeps its place on the three steps that use it and every counted step
-      gains the exit. ⚠ Neither verb replaced the other — that was the whole
-      constraint, and it is why this is a shell change and not a label change.
-
-      ⚠ IT GOES IN `shell()` RATHER THAN ON EACH STEP so a step added later
-      cannot forget it — the failure mode `E406` fixed for the step counter.
-      ⚠ `...props` STILL WINS, so a screen that needs a different exit can say so.
-
-      ⚠⚠ IT NAVIGATES AND NOTHING ELSE, AND THAT IS THE HONEST HALF. The
-      requester's "Finish later" also posts
-      `/api/onboarding/requester/finish-later`; there is no provider equivalent
-      and this brief does not build one. Shipping the button on seven more
-      screens does not make the missing mail worse — it does make it worth
-      answering, and it is reported rather than invented.
-    */
+    // SCOTT, 2026-09-10: *"'Finish Later' — do it."* WS-2 stopped here
     leaveLabel: "Finish later",
     onLeave: () => router.push("/dashboard"),
     ...props,
   });
 
 
-  /*
-    ── ⚠⚠ ONE EDITOR, TWO MOUNTS (`P1-A1.4-E412` WS-1) ────────────────────────
+  // ONE EDITOR, TWO MOUNTS WS-1)
 
-    SCOTT'S RULE, and it is the whole brief: *"a person on the review screen
-    never leaves it to edit."* The review's Edit links used to call `goTo(step)`
-    — the person left the page they were reviewing, edited on a wizard step, and
-    came back through `returnToReview`. Seven of the twelve cards did that.
-
-    ⚠⚠ AND THE FIX IS NOT A SECOND EDITOR. `E412`: *"Build no new editors."* A
-    forked copy of the Skills picker on the review page is how two surfaces that
-    are meant to be the same thing start disagreeing — the exact failure
-    `WorkHistoryBody` was shared to prevent (`E084`), and the one
-    `SettingsNav`/`SettingsHeading` share a definition to avoid.
-
-    ⚠ SO THE STEP BODY IS HOISTED, NOT COPIED. Each helper below returns the
-    SAME JSX the wizard step has always rendered plus the save call that step
-    has always made; the step renders it inside `WizardShell` and the review
-    renders it inside `Modal`. There is one implementation and two mounts, so a
-    change to the picker reaches both by construction.
-
-    ⚠ THEY ARE PLAIN FUNCTIONS, NOT COMPONENTS, and deliberately so — every
-    piece of state they touch (`profile`, `skillOpts`, `specGroups`,
-    `skillQuery`, `setProfile`) already lives in this closure. Making them
-    components would mean plumbing a dozen props through for no gain and would
-    put the pickers behind a second identity in the tree.
-  */
-
-  /*
-    ⚠ THE TITLE FIELD (`E412` WS-1). `case "title"` renders this and so does the
-    review's "Edit title". ⚠ `then: () => goTo("tell_us")` is the STEP's
-    forwarding rule (`E283`) and stays with the step — the modal's save just
-    closes, because there is nowhere to forward TO from a review screen.
-  */
-  /*
-    ── ⚠⚠ SAVE, THEN CLOSE — AND ONLY IF THE SAVE WORKED (`E412` WS-1) ────────
-
-    ⚠ `postStep` RETURNS `false` AND SETS `error` ON A REJECTED WRITE, and this
-    keeps the modal OPEN in that case with the message inside it. Closing first
-    and reporting later is how somebody loses an edit and is told about it on a
-    screen that no longer holds the field — `E090`'s lesson, which the `picture`
-    step already applies to its two-call save.
-
-    ⚠ THE WIZARD STEPS' OWN `saveAnd` FORWARDS TO THE NEXT STEP; THIS DOES NOT.
-    Same write, different sequel: there is nowhere to forward to from a review
-    screen, so the sequel is "the card behind you now shows what you typed".
-  */
+  // THE TITLE FIELD ( WS-1). `case "title"` renders this and so does the
+  // SAVE, THEN CLOSE — AND ONLY IF THE SAVE WORKED ( WS-1)
   const saveEditSection = async () => {
     switch (editSection) {
       case "title":
@@ -2042,14 +1153,7 @@ setScreen(target);
     }
   };
 
-  /*
-    ⚠ THE SAME CONDITION THE STEP'S `continueDisabled` USES, section by section
-    — a Title that is blank or a Rate that is unset cannot be saved from the
-    review either. ⚠ THE OPTIONAL SECTIONS RETURN `true`: Education,
-    Specializations and Location are all skippable in the wizard (Education and
-    Specializations literally carry a "Skip for Now"), so a Save that refused an
-    empty one would be stricter on the review than on the step that owns it.
-  */
+  // THE SAME CONDITION THE STEP'S `continueDisabled` USES, section by section
   const sectionEditorCanSave =
     editSection === "title"
       ? profile.headline.trim() !== ""
@@ -2061,23 +1165,7 @@ setScreen(target);
           ? profile.skillIds.length + profile.customSkills.length > 0
           : true;
 
-  /*
-    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 1 of 5) ──────────────────────
-
-    ⚠ THE BODY NOW LIVES IN `components/onboarding/editors/TitleEditor.tsx`.
-    This helper stays, and stays thin, because it is the ONE SAVE PATH: the
-    step's Continue and the review modal's Save both come through here.
-    ⚠⚠ WHAT MOVED IS PRESENTATION. What did NOT move is `saveAnd("title", …)` —
-    two save paths for one field is how the two titles happened (`E595`).
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the whole field,
-    its 42-character cap and its counter inline; the cap constant lived at
-    `page.tsx:611`:
-    //   const titleEditing = () => ({
-    //     canSave: profile.headline.trim() !== "",
-    //     save: () => saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
-    //     body: (<> …<Field label="Your Title" …><TextInput … maxLength={HEADLINE_MAX} /></Field>… </>),
-    //   });
-  */
+  // EXTRACTED WS-B, editor 1 of 5)
   // Role rows: shared by the Roles step and the review's Roles editor.
   const roleRows = () => (
     <div className="mt-2 border-t border-line" data-role-rows>
@@ -2126,27 +1214,7 @@ setScreen(target);
     ),
   });
 
-  /*
-    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 3 of 5) ──────────────────────
-
-    ⚠ THE FIELDS AND THE FEE PANEL NOW LIVE IN
-    `components/onboarding/editors/RateEditor.tsx`, and the wizard's LOCAL `Row`
-    helper moved with them — WS-A's order said it would.
-    ⚠⚠ `rateBreakdown` IS STILL CALLED HERE, not inside the component: the fee
-    maths is `lib/display.ts`'s and has ONE home. Re-deriving it in a component
-    is how two screens start quoting different take-home figures.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held the $-prefixed
-    number field, the dollars/cents conversion and the whole fee panel inline:
-    //   const rateEditing = () => {
-    //     const { rate, fee, youGet } = rateBreakdown(profile.hourlyRateCents, profile.serviceFeeBps);
-    //     return {
-    //       canSave: Boolean(profile.hourlyRateCents),
-    //       save: () => saveAnd("rate", { hourlyDollars: … }),
-    //       body: (<>…<Field label="Hourly Rate" …><TextInput type="number" …/></Field>
-    //         <div className="rounded-brand …"><Row label={`Service fee (…)`} …/>…</div>…</>),
-    //     };
-    //   };
-  */
+  // EXTRACTED WS-B, editor 3 of 5)
   const rateEditing = () => ({
     canSave: rateCanSave(profile.onsiteRateCents, profile.remoteRateCents),
     save: () => {
@@ -2171,37 +1239,8 @@ setScreen(target);
     ),
   });
 
-  /*
-    ⚠⚠ PHONE + ADDRESS, ONE BLOCK (`E412` WS-1/WS-4).
-
-    ⚠ THE REVIEW'S `Location` CARD HAD NO EDIT AT ALL — `E412` WS-4 — and the
-    only place the address is collected is the `picture` step. This is that
-    step's own `Your Details` block, hoisted so both mount it.
-
-    ⚠ PHONE RIDES WITH IT ON PURPOSE, and it is not scope creep: `LocationFields`
-    has always promised that country *"sets how we format your phone number"*
-    (`E203`), and `Verify Identity` on the review pointed at the `picture` step
-    to change a phone — the last remaining "leave the page to edit" on this
-    screen. Splitting the block would have meant either a second editor for the
-    phone (forbidden) or a link that still navigates away.
-  */
-  /*
-    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 2 of 5) ──────────────────────
-
-    ⚠ THE FIELDS NOW LIVE IN `components/onboarding/editors/ContactEditor.tsx`.
-    This helper stays because it is the ONE SAVE PATH — `postStep("finish", …)`
-    writes `Person.phone` and hands the address to `saveProviderAddress`.
-    ⚠⚠ THE `patch.x !== undefined` NORMALISATION MOVED WITH THE FIELDS: telling
-    "not touched" from "cleared" is part of how those inputs report a change,
-    not part of what this caller does with it.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure held `PhoneField`,
-    `LocationFields` and that whole patch spread inline:
-    //   const contactEditing = () => ({
-    //     save: () => postStep("finish", { address: profile.address, phone: phoneToSave }),
-    //     body: (<><div className="space-y-3"><PhoneField id="review-phone" … />
-    //       <LocationFields withStreet … onChange={(patch) => setAddr({ …spread… })} /></div></>),
-    //   });
-  */
+  // PHONE + ADDRESS, ONE BLOCK ( WS-1/WS-4).
+  // EXTRACTED WS-B, editor 2 of 5)
   const contactEditing = () => ({
     save: () =>
       postStep("finish", { address: profile.address, phone: phoneToSave }),
@@ -2223,48 +1262,14 @@ setScreen(target);
     ),
   });
 
-  /*
-    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 5 of 5) ──────────────────────
-
-    ⚠ 468 lines moved to `components/onboarding/editors/SkillsEditor.tsx`, and
-    the wizard's local `SparkIcon` moved with it.
-
-    ── ⚠⚠⚠ THE THREE `useEffect`s DID NOT MOVE, AND DID NOT NEED TO ─────────
-
-    ⚠ The brief flagged them as the stop condition. MEASURED: `skillsEditing`
-    CONTAINED NO `useEffect` AT ALL. The three are THIS component's data
-    loaders — `fieldRoles`, `specGroups`, `skillOpts` — and two of them serve
-    screens the skills editor has nothing to do with: the `fieldRoles` fetch
-    fires for `screen === "roles"` and `screen === "catalog"` as well, and the
-    specializations fetch shares the same effect body.
-    ⚠⚠ MOVING THEM WOULD HAVE BEEN EXACTLY THE CHANGE SCOTT WARNED ABOUT — a
-    component that only mounts for skills cannot fire for `roles` or `catalog`.
-    ⚠ SO NOTHING MOVED AND NOTHING FIRES DIFFERENTLY. `skillOpts` and
-    `fieldRoles` are passed in, the same shape `specGroups` is.
-
-    ⚠ `E517`'s TWO NAMED STRINGS ARE PASSED IN, NOT COPIED. Scott named them and
-    their rejected alternatives are quoted beside them here under `E164`; a
-    second copy in the component would be a second place to edit settled wording.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure derived
-    `basketSkills`, `heldNotShown`, `matchingSkills`, `ambiguousSkills`,
-    `toggleSkill`, `addCustomSkill`, `acceptSkillMatch` and `keepTypedSkill`
-    inline, then rendered the basket, the search box, the suggestions and the
-    held-but-not-shown block.
-  */
+  // EXTRACTED WS-B, editor 5 of 5)
   const skillsEditing = () => ({
-    /* ⚠ `roleNames` AND `canSave` ARE PART OF THIS HELPER'S CONTRACT, not the
-       component's: the STEP's header prints the role names and its Continue
-       reads `canSave`. Both derive from the same `profile` the component
-       renders, so there is still one source. */
+    // component's: the STEP's header prints the role names and its Continue
     roleNames: profile.roleTypeIds
       .map((id) => fieldRoles.find((r) => r.id === id)?.name)
       .filter(Boolean) as string[],
     canSave: profile.skillIds.length + profile.customSkills.length > 0,
-    /* ⚠⚠ THE FULL PAYLOAD, RESTORED. An earlier pass of this extraction reduced
-       it to `saveAnd("skills", {})` — the five fields the server needs were
-       silently dropped. `tsc` did not care (the object is untyped at that call)
-       and the SAVE would have appeared to work. ⚠ Caught because `roleNames`
-       and `canSave` went missing at the same time and forced a second look. */
+    // THE FULL PAYLOAD, RESTORED. An earlier pass of this extraction reduced
     save: () =>
       saveAnd("skills", {
         skillIds: profile.skillIds,
@@ -2303,29 +1308,7 @@ setScreen(target);
     ),
   });
 
-  /*
-    ── ⚠⚠ EXTRACTED (`P2-A2-E597` WS-B, editor 4 of 5) ──────────────────────
-
-    ⚠ 335 lines of derivation and JSX moved to
-    `components/onboarding/editors/SpecializationsEditor.tsx`, and the wizard's
-    local `CascadeTier` (70 lines) moved with it — WS-A's order said it would.
-    ⚠⚠⚠ EVERY PIECE OF STATE STAYED HERE. `specQuery` and `openSpecTier` are
-    passed IN, not owned by the component: the modal unmounts on close, so
-    component-owned state would reset the search and the open tier on every
-    reopen. That is arguably nicer and it is NOT this brief's job — `E597` moves
-    editors, it does not redesign them.
-    ⚠ `onChange` hands back a PARTIAL and this caller merges it, so there is
-    still exactly one `setProfile` and one `saveAnd("specializations", …)`.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`) — the closure derived
-    `chosenSpecs`, `specById`, `kindById`, `groups`, `openSpecKind`,
-    `addCustomSpec` and `toggleSpec` inline, then rendered the picked chips, the
-    search box and the three cascade tiers:
-    //   const specializationsEditing = () => {
-    //     const chosenSpecs = new Set(profile.specializationIds);
-    //     … const toggleSpec = (id) => { setOpenSpecTier(kind); setProfile(…); };
-    //     return { save: () => saveAnd("specializations", {…}), body: (<>…</>) };
-    //   };
-  */
+  // EXTRACTED WS-B, editor 4 of 5)
   const specializationsEditing = () => ({
     save: () =>
       saveAnd("specializations", {
@@ -2364,25 +1347,10 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            /* ⚠ SCOTT'S WORDS, VERBATIM (`E292`). ⚠ SUPERSEDED, quoted: *"Got it. Now,
-               add a title to tell the world what you do."*
-               ⚠ `Got it.` WAS AN ANSWERING WORD WHOSE ANTECEDENT IS GONE — after
-               `E290` the screen before this asks nothing, so it answered a
-               question nobody had been asked. A sequencing fix, not a tone
-               preference. ⚠ The sub-copy on the next line is NOT changed. */
             title: "Let's start by telling the world what you do.",
             subtitle:
               "It's the very first thing clients see, so make it count. Stand out by describing your expertise in your own words.",
-            /*
-              ⚠⚠ THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 (`E283`).
-              That is the V3 order and the deck shows it: `1/7` Your Title → "How would
-              you like to tell us about yourself?" (uncounted) → the import review
-              (uncounted) → `2/7` Your Role.
-              ⚠ SUPERSEDED: this passed no `then`, so it used the default `goNext` and
-              went straight to the next COUNTED step, leaving the upload unreachable.
-              ⚠ IT IS AN OFFER, NOT A GATE — the résumé screen's own Skip for Now and
-              Continue both lead on to `2/7`, which can be completed by typing.
-            */
+            // THE TITLE FORWARDS TO THE RÉSUMÉ SCREEN, NOT TO STEP 2 .
             onContinue: () =>
               saveAnd("title", { headline: profile.headline }, () => goTo(steps[steps.indexOf("title") + 1] ?? "roles")),
             continueDisabled: profile.headline.trim() === "",
@@ -2395,12 +1363,7 @@ setScreen(target);
 
     // ---- 5/12 — Tell us about yourself (E012/E029) --------------------
     case "tell_us": {
-      /**
-       * WS2 (E069) — once anything has been imported OR entered, this step stops
-       * asking "how would you like to tell us" and becomes pure review/edit.
-       * Leaving the method cards up after an upload was the single most
-       * confusing thing on the step: the question was already answered.
-       */
+      /** WS2 (E069) — once anything has been imported OR entered, this step stops */
       const hasProfileData =
         importOutcome != null ||
         profile.employers.length > 0 ||
@@ -2416,24 +1379,9 @@ setScreen(target);
             subtitle: hasProfileData
               ? "Edit anything that's wrong or missing. This is what buyers will see."
               // E183 — AI-forward. E103 cut this to one line because the old
-              // three-clause version repeated the cards below it; this says the
-              // one thing the cards DON'T, which is that the fast path is a
-              // model reading the document rather than a form filling itself.
               : "Just upload your resume and let our AI model do the rest.",
             wide: true,
-            /*
-              E201 — NO PAGE-LEVEL SKIP ONCE A RÉSUMÉ HAS BEEN READ. "Skip for
-              Now" here advanced past the step without saving, which on the
-              upload path means walking away from everything the parse just
-              extracted — the one place on this wizard where skipping destroys
-              work rather than deferring it. It stays on the empty/manual path,
-              where there is nothing to lose.
-
-              E200 — CONTINUE IS THE VISIBLE COMPLETION SIGNAL. It is disabled
-              while the model reads and says so, then enables the moment the
-              parse lands. Leaving it live during the parse let a click discard
-              the answer that was seconds away.
-            */
+            // E201 — NO PAGE-LEVEL SKIP ONCE A RÉSUMÉ HAS BEEN READ. "Skip for
             secondaryLabel: importOutcome ? undefined : "Skip for Now",
             onSecondary: importOutcome ? undefined : goNext,
             onContinue: () => saveAnd("tell_us", { profileMethod: "MANUAL" }),
@@ -2443,19 +1391,8 @@ setScreen(target);
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            WS5/E051 — what landed is now ONE line, not a panel. The prose
-            "Here's What We Captured" box plus its separate "Needs your
-            attention" list said, at length, what the sections below already show
-            by simply being filled in. The gaps that box carried are routed to the
-            sections they belong to instead (see `gapsFor`), where they are next
-            to the field that fixes them.
-          */}
-          {/*
-            WS3/E129 — THE GATE, now the shared `AiPassPanel`. It used to be
-            inline here, which meant the action existed only in the ninety
-            seconds after an upload; the same panel is on the review now.
-          */}
+          {/* WS5/E051 — what landed is now ONE line, not a panel. The prose */}
+          {/* WS3/E129 — THE GATE, now the shared `AiPassPanel`. It used to be */}
           {importOutcome?.confidence?.score === "low" && (
             <div className="mb-6">
               <AiPassPanel
@@ -2487,23 +1424,10 @@ setScreen(target);
             </p>
           )}
 
-          {/*
-            E184 — NAME THE READER THAT RAN.
-
-            The product claims an AI read the document in four separate places.
-            For the whole of run 7 no model ran at all, and nothing on any screen
-            could have told you: an AI parse and a heuristic parse rendered
-            identically, differing only in being right. One line, always present
-            after an import, ends that.
-          */}
+          {/* E184 — NAME THE READER THAT RAN. */}
           {importOutcome?.path && <ReaderLine path={importOutcome.path} />}
 
-          {/*
-            E029 — the upload control is INLINE and visible on arrival. It used
-            to be hidden behind a card that opened a modal, and the Run-2 walk
-            reported no control present at all. WS2 hides the whole invitation
-            once there is data to review.
-          */}
+          {/* E029 — the upload control is INLINE and visible on arrival. It used */}
           {!hasProfileData && (
           <section className="mb-4 border-t-2 border-ink pb-2 pt-6">
             <div className="mb-3 flex items-center gap-2">
@@ -2512,13 +1436,7 @@ setScreen(target);
                 Fastest
               </span>
             </div>
-            {/*
-              E103 — the "We'll read it and fill in your title, experience,
-              education, skills and languages" line is gone. It explained the
-              feature to someone already standing on it, and the two lines it
-              cost were exactly the vertical room the testimonial card needed.
-              The FASTEST badge and the dropzone already say what this does.
-            */}
+            {/* E103 — the "We'll read it and fill in your title, experience */}
             <ResumeDropzone
               onBusyChange={setParsingResume}
               onImported={(outcome) => {
@@ -2540,20 +1458,7 @@ setScreen(target);
             </div>
           )}
 
-          {/*
-            WS1/WS2 (E071) — there is no separate Employers step any more, so
-            work history is edited HERE, on the step that produced it.
-
-            E083 — but only AFTER a method is chosen. This block used to render
-            unconditionally, so someone still deciding how to tell us about
-            themselves was shown "Your Work History / No employers yet / + Add
-            Employer" underneath the question. That is review content, and it
-            leaked onto the chooser when the standalone Employers step was
-            collapsed into Upload/Review (E070/E071): an empty state advertising
-            a third way to answer, beneath the two cards that were supposed to be
-            the answer. Relocated, not removed — picking either method sets
-            `hasProfileData`, and the manual path lands straight on this editor.
-          */}
+          {/* WS1/WS2 (E071) — there is no separate Employers step any more, so */}
           {hasProfileData && (
             <div className="mt-8">
               <ProfileCard
@@ -2581,13 +1486,7 @@ setScreen(target);
                 {editingWork ? (
                   <EmployersStep
                     employers={profile.employers}
-                    /*
-                      ⚠ THE FLAT PROJECT LIST (`P1-J1.4-E296`). `listEmployers`
-                      nests projects under employers, so `employer_id: null` rows
-                      never reach the step through `employers`. This list already
-                      held them — the Review step has been rendering them as
-                      "Solo Projects" all along — it just was not passed down.
-                    */
+                    // THE FLAT PROJECT LIST . `listEmployers`
                     projects={profile.projects}
                     onChanged={(employers) =>
                       setProfile((p) => ({ ...p, employers }))
@@ -2595,39 +1494,17 @@ setScreen(target);
                     onError={setError}
                   />
                 ) : (
-                  /*
-                    E084 — the SAME `WorkHistoryBody` the final Review and the
-                    public profile use, so this surface cannot drift from them
-                    again. It also inherits E085 for free: the entry component
-                    clamps long descriptions behind "Read More", which is what
-                    stops an over-extracted import (the Medlinq.ai description in
-                    the walk) running the length of the page.
-                  */
+                  // E084 — the SAME `WorkHistoryBody` the final Review and the
                   <WorkHistoryBody
                     employers={profile.employers}
                     // Without this the Projects disclosure resolves to nothing
-                    // and greys out on every entry: WorkHistoryBody matches an
-                    // employer's nested project IDS against this flat list, so
-                    // omitting it silently empties the link rather than erroring.
                     projects={profile.projects}
                     empty="No work history yet. Providers who add work experience and projects are twice as likely to win work."
                   />
                 )}
               </ProfileCard>
 
-              {/*
-                WS-B/E051-5 — SUGGEST AND CONFIRM. The import used to report "34
-                skills aren't in the Panameer catalog and were not added": true,
-                unactionable, and read as a verdict on the provider's CV. The
-                same terms are now a tick-list. Ticking adds them as custom
-                skills on this profile; leaving them unticked discards them, and
-                nothing reaches the catalog that a person didn't affirm.
-
-                Already filtered through the parser's own plausibility rule, so
-                version strings and clause fragments never appear here — a
-                suggestion the provider has to reject is a suggestion that
-                shouldn't have been made.
-              */}
+              {/* WS-B/E051-5 — SUGGEST AND CONFIRM. The import used to report "34 */}
               {(importOutcome?.applied.skillSuggestions?.length ?? 0) > 0 && (
                 <div className="mt-4">
                   <ProfileCard title="AI Found These — They're Not in Our Catalog Yet">
@@ -2655,24 +1532,7 @@ setScreen(target);
                         );
                       })}
                     </div>
-                    {/*
-                      ── ⚠⚠ IT SAYS WHY IT CANNOT RUN, BEFORE IT IS CLICKED (`E511`) ──
-
-                      ⚠ THE ROUTE'S GUARD IS CORRECT AND STAYS: the upsert's
-                      composite key is `catalog_id + role_type_id + pillar_id +
-                      name`, so without a role there is literally no row to
-                      write. ⚠⚠ THE ROUTE WAS NEVER THE BUG — the card was
-                      rendered six steps before the answer it requires existed.
-
-                      ⚠ `E509` WS-A NOW DERIVES THE ROLE AND DOMAIN FROM THE
-                      PROVIDER'S OWN MATCHED SKILLS, so by the time this review
-                      renders both are usually populated and the 400 cannot
-                      happen. ⚠⚠ BUT THE MANUAL PATH IS STILL REAL: a provider
-                      whose résumé matched nothing has no derivation, so the role
-                      is null and the button is back in its original state.
-                      ⚠ A BUTTON THAT LOOKS LIVE AND CANNOT BE IS THE DEFECT. A
-                      disabled one that explains itself is honest.
-                    */}
+                    {/* IT SAYS WHY IT CANNOT RUN, BEFORE IT IS CLICKED */}
                     <div className="mt-4 flex flex-wrap items-center gap-4">
                       <button
                         type="button"
@@ -2696,14 +1556,14 @@ setScreen(target);
                           ✓ Added {suggestDone.join(", ")}
                         </span>
                       )}
-                      {/* ⚠ THE REASON, BEFORE THE CLICK — not an error after it. */}
+                      {/* THE REASON, BEFORE THE CLICK — not an error after it. */}
                       {!profile.roleTypeIds.length && (
                         <span className="text-[13.5px] text-ink-2">
                           Available once you choose your role.
                         </span>
                       )}
                     </div>
-                    {/* ⚠⚠ THE FAILURE, ON THE CARD (`E511` PART 1). */}
+                    {/* THE FAILURE, ON THE CARD (`E511` PART 1). */}
                     {suggestError && (
                       <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                         {suggestError}
@@ -2737,14 +1597,7 @@ setScreen(target);
       );
     }
 
-    // ---- 7/13 — Role → Domain → Skills, ONE cascading page (E030) ------
-    // ---- ROLE(S) — WS3 step 2, its own page ---------------------------
-    //
-    // The Domain tier is GONE FROM THE UI. A skill still belongs to its
-    // (role, domain) pair — that pair is the catalog's uniqueness key and the
-    // FK is untouched — but asking a provider to navigate a taxonomy level
-    // before they can name a skill was the slowest part of the old cascade.
-    // The domain is derived from the role server-side (WS2).
+    // 7/13 — Role → Domain → Skills, ONE cascading page (E030) ------
     case "roles": {
       return (
         <WizardShell
@@ -2766,20 +1619,7 @@ setScreen(target);
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            ── ⚠⚠ A DERIVED ROLE IS A SUGGESTION, AND IT SAYS SO (`E509` WS-A) ──
-
-            > **SCOTT:** *"we use the skills to derive the role(s)."*
-
-            ⚠ THE STEP DOES NOT MOVE AND THE PAGE STILL ASKS. What changed is
-            that the answer arrives PRE-TICKED when the résumé's own skills imply
-            one — and this line is what stops that being a SILENT assignment.
-            ⚠⚠ SILENCE IS HOW `Technology-Specific · Salesforce` SURVIVED: the
-            provider was never told a choice had been made for them, so they
-            never knew to correct it.
-            ⚠ NOTHING RENDERS WITH NO RÉSUMÉ — no evidence, no claim, and the
-            page reads exactly as it always did.
-          */}
+          {/* A DERIVED ROLE IS A SUGGESTION, AND IT SAYS SO ( WS-A) */}
           {profile.derivedFromSkills > 0 && profile.derivedRoleTypeIds.length > 0 && (
             <AiLine>
               we pre-selected {profile.derivedRoleTypeIds.length === 1 ? "1 role" : `${profile.derivedRoleTypeIds.length} roles`} based on
@@ -2791,68 +1631,11 @@ setScreen(target);
             <p className="text-ink-2">Loading roles…</p>
           ) : (
             <>
-              {/*
-                ── ⚠⚠ NO WRAPPER. THE CARDS SIT ON THE PAGE (`P1-J1.4-E297`, 2026-09-01) ──
-              
-                Scott, with both screenshots: *"I want image 1 to look like the style of
-                image 2. No grey, no scroll... shrink them if you have to, but all on one
-                page."* Image 2 is `/join`, which renders the SAME `OptionCard` straight
-                onto white.
-              
-                ⚠ SUPERSEDED, quoted: `<div className={`max-h-[420px] ${SCROLL_REGION}`}>`,
-                carrying *"Bounded for the same reason the skills list is: the page's height
-                must not depend on how big the taxonomy gets."*
-              
-                ⚠⚠ ONE WRAPPER WAS CAUSING ALL THREE COMPLAINTS, and removing it fixes a
-                fourth thing that is not obvious: `SCROLL_REGION` carries `bg-bg-soft/40`,
-                and `OptionCard` SETS NO BACKGROUND WHEN UNSELECTED — it is transparent and
-                takes whatever is behind it. So the tint was showing THROUGH the cards. On
-                `/join` the page behind them is white, which is why they look different
-                there. Dropping the wrapper makes the unselected cards white by itself.
-                ⚠ DO NOT "FIX" THAT BY ADDING `bg-white` TO `OptionCard` — it is shared, and
-                that would repaint every card in the app, including ones deliberately on
-                tinted surfaces.
-              
-                ⚠ SAFE TO UNBOUND HERE, AND ONLY HERE. `fieldRoles` is `RoleType`, a SEEDED
-                TAXONOMY, not user data — five rows today (AI-Specialist,
-                Application-Specific, Operations-Specific, Project-Specific,
-                Technology-Specific), counted against the live database, and it grows only
-                when someone edits the catalog. ⚠ THE SKILLS STEP KEEPS ITS `SCROLL_REGION`
-                (300+ catalog entries) AND SO DO THE OTHER THREE USES. The constant stays.
-                `E053`/`E054` are about lists that grow; this list does not.
-              */}
-              {/* ⚠ `space-y-2`, NOT `space-y-3` (`E297`). Scott: *"shrink them if you have
-                  to, but all on one page."* Tightening the GAP is in scope; tightening the
-                  CARD is not — `OptionCard` is shared with `/join` and the brief forbids
-                  restyling it. See the report for what this does and does not buy. */}
+              {/* NO WRAPPER. THE CARDS SIT ON THE PAGE , 2026-09-01) */}
+              {/* to, but all on one page."* Tightening the GAP is in scope; tightening the */}
               {roleRows()}
 
-              {/*
-                ── ⚠⚠ THE WARNING, BACK AS INFORMATION (`P2-J1.4-E517`) ────────
-
-                ⚠ SCOTT, 2026-09-17: *"BRING THE WARNING BACK — AS INFORMATION,
-                NOT PROTECTION."*
-
-                ⚠⚠ THE OLD WARNING WAS NEVER BUILT, AND IT WOULD HAVE BEEN THE
-                WRONG SHAPE ANYWAY. Option A — warn, then delete — was rejected
-                on measurement: a warning fires on CHANGE, and 5 profiles already
-                held 14 out-of-role rows that the next save would have deleted
-                with NO CHANGE AT ALL. A confirm dialog protects nobody from a
-                deletion that needs no interaction to happen.
-
-                ⚠ NOW NOTHING IS AT RISK, so this line is not a warning at all:
-                it tells the provider what their selection DOES, at the moment
-                they make it. ⚠⚠ NO CONFIRM, NO BLOCK, NO "Are you sure" — the
-                choice is theirs and it is reversible by re-ticking the role.
-
-                ⚠ SAYS "still yours" ON PURPOSE. The single most important fact
-                is the one the old prune got wrong, and a count with no
-                reassurance reads as a loss.
-
-                ⚠ Free: `skillNames` already carries `roleTypeId` (the skills
-                step needed it), so this is a client-side count against state
-                already in hand — no fetch, no server change.
-              */}
+              {/* THE WARNING, BACK AS INFORMATION */}
               {(() => {
                 const n = profile.skillNames.filter(
                   (sk) => !isSkillShown(profile.roleTypeIds, sk.roleTypeId)
@@ -2875,15 +1658,7 @@ setScreen(target);
       return (
         <WizardShell
           {...shell({
-            /*
-              E202 — THE ASK IS EXPLICIT ON ARRIVAL. The old subtitle described
-              the controls ("Search, or add your own") and left the actual
-              instruction implicit, so the step read as a search box with no
-              stated goal — and with the cap gone there is no longer a number in
-              the UI implying one. Say the two things that decide what a
-              provider does here: add everything true of you, and more of them
-              means more ways to be found.
-            */
+            // E202 — THE ASK IS EXPLICIT ON ARRIVAL. The old subtitle described
             title: "Which skills do you want to be found for?",
             subtitle: "Buyers search and match on these.",
             onContinue: ed.save,
@@ -2896,14 +1671,7 @@ setScreen(target);
       );
     }
 
-    /*
-      WS-4 — THE WORK-HISTORY REVIEW, which replaces the Role and Skills steps.
-
-      The résumé has already tagged each job with its suite, role and modules
-      (WS-3); this is where the provider scans and corrects. Two steps became
-      one, and every answer is now attached to the engagement that evidences it
-      rather than asserted at profile level.
-    */
+    // WS-4 — THE WORK-HISTORY REVIEW, which replaces the Role and Skills steps.
     case "work_history": {
       const reviewJobs = profile.employers.map((e) => ({
         id: e.id,
@@ -2983,20 +1751,7 @@ setScreen(target);
 
     // ---- 9/12 — Languages (E016/E034, both fields required) -----------
     case "languages": {
-      /*
-        ── ⚠⚠⚠ ENGLISH · FLUENT, PRE-FILLED (`P2-A1.4-E724` item 1a) ──────────────────────
-
-        ⚠ **SCOTT, 2026-09-30: *"New sign-ups: the languages step starts with English · Fluent
-        already filled in, editable and removable if another language is added."***
-        ⚠⚠ **THE ROW WAS ALREADY SEEDED — WITH NO LEVEL** — so the step opened on a language
-        with an empty required field, and `E034`'s server rule then refused the save until the
-        member noticed. **A default that cannot be submitted is not a default.**
-        ⚠⚠⚠ **IT IS A CLIENT-SIDE PREFILL, NOT A WRITE.** Nothing is stored until the member
-        continues, so a provider who replaces English with Portuguese stores Portuguese and
-        only Portuguese — the default never leaves a trace of itself.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   : [{ name: "English", level: null }];
-      */
+      // ENGLISH · FLUENT, PRE-FILLED item 1a)
       const langs =
         profile.languages.length > 0
           ? profile.languages
@@ -3024,15 +1779,7 @@ setScreen(target);
           <div className="space-y-3">
             {langs.map((l, i) => (
               <div
-                /*
-                  E106 — keyed by POSITION, not by value.
-
-                  The key was `${l.name}-${i}`, so every keystroke produced a new
-                  key, React threw the row away and mounted a fresh one, and the
-                  input lost focus after each character — the user had to click
-                  back in to type the next letter. The row's identity is its
-                  place in the list; it was never the text inside it.
-                */
+                // E106 — keyed by POSITION, not by value.
                 key={i}
                 className="flex flex-wrap items-end gap-3 border border-line p-4"
               >
@@ -3046,12 +1793,7 @@ setScreen(target);
                         className="bg-bg-soft text-ink-2"
                       />
                     ) : (
-                      /*
-                        E106 — a pick-list. Free text collected "spanish",
-                        "Spanish (fluent)" and "Espanol" as three different
-                        languages, which makes the field useless for matching
-                        and is invisible to the person typing it.
-                      */
+                      // E106 — a pick-list. Free text collected "spanish"
                       <select
                         value={l.name}
                         onChange={(e) => update(i, { name: e.target.value })}
@@ -3083,17 +1825,7 @@ setScreen(target);
                     </select>
                   </Field>
                 </div>
-                {/*
-                  ── ⚠⚠ REMOVABLE ONCE A SECOND LANGUAGE EXISTS (`E724` item 1a) ────────────
-
-                  ⚠ **SCOTT: *"editable and removable if another language is added."***
-                  ⚠⚠ **IT WAS `i > 0`, WHICH PINNED ROW ONE FOREVER** — a member who added
-                  Portuguese still could not remove the English they never chose. ⚠⚠⚠ The rule
-                  is about HOW MANY rows exist, not WHICH row this is, and it is now the same
-                  rule the profile editor uses (`E723` item 12): **the last one cannot go, any
-                  other can.**
-                  ⚠ SUPERSEDED, quoted not deleted (`E164`):  //   {i > 0 && (
-                */}
+                {/* REMOVABLE ONCE A SECOND LANGUAGE EXISTS ( item 1a) */}
                 {langs.length > 1 && (
                   <button
                     type="button"
@@ -3153,11 +1885,7 @@ setScreen(target);
             placeholder="I help organizations implement and optimize…"
           />
           <div className="mt-2 flex justify-between text-[13px]">
-            {/* E061, same principle as E059 — AMBER while under the minimum,
-                not red. Someone mid-sentence has not done anything wrong; they
-                are simply not finished. Red is for genuine errors. Once the
-                minimum is met the counter turns green, so the state change is
-                a small reward rather than the mere absence of an alarm. */}
+            {/* E061, same principle as E059 — AMBER while under the minimum */}
             <span
               className={
                 len < MIN_BIO ? "text-amber-700" : "font-semibold text-emerald-600"
@@ -3204,29 +1932,14 @@ setScreen(target);
     }
 
 
-    // ---- Picture (PJv2 WS1) --------------------------------------------
-    //
-    // Its own step now rather than a button buried on the review. A photo is
-    // worth 10 completeness points and is the single biggest driver of whether
-    // a buyer opens a profile, so it gets asked for explicitly — and stays
-    // skippable, because nobody should be blocked on finding a headshot.
-    // ---- 9/10 — Photo & Details: the WRAPUP step (WS8/E088) -----------
+    // Picture (PJv2 WS1) --------------------------------------------
     case "picture": {
-      /*
-        E203 — "has some characters in it" was the old test, and it passed for
-        "abc". Continue now needs a phone that could actually be dialled.
-      */
+      // E203 — "has some characters in it" was the old test, and it passed for
       const wrapupReady =
-        /* ⚠ `E417` — judged against the PHONE's country, not the address's. */
+        /* `E417` — judged against the PHONE's country, not the address's. */
         Boolean(profile.photoUrl) && isPhoneComplete(phoneInput, phoneCountry);
 
-      /**
-       * Saves BOTH halves. The photo is its own step payload; phone and
-       * address go through the `finish` handler, which is where those columns
-       * are written. Two calls rather than one because the step handlers
-       * are keyed by step, and inventing a third payload shape to merge them
-       * would put the same three columns behind two different writers.
-       */
+      /** Saves BOTH halves. The photo is its own step payload; phone and */
       const saveWrapup = async () => {
         if (!(await postStep("picture", { photoUrl: profile.photoUrl ?? null }))) {
           return;
@@ -3251,24 +1964,13 @@ setScreen(target);
             subtitle:
               "Profiles with a photo get noticeably more responses. We need your phone and address too — they stay private, and they're how a buyer reaches you.",
             // E188 — the ONLY change to this step's layout. Its body opens with
-            // the 140px avatar panel, which is already a visual break; the
-            // standard 32px title gap on top of that pushed the photo and the
-            // Country field down the page for nothing.
             tightBody: true,
             onContinue: saveWrapup,
             continueDisabled: !wrapupReady,
           })}
         >
           {error && <Notice>{error}</Notice>}
-          {/*
-            E107 — photo BESIDE the details on a wide screen, stacked below it on
-            a narrow one. The photo panel was a full-width block with a 140px
-            avatar centred in it, so the page ran tall and the fields underneath
-            were pushed well below the fold on a laptop. Nothing here overflows
-            horizontally (measured 1280 → 320px), which was the other half of
-            E107 — that was resolved when the standalone "You're Done!" page was
-            folded into this step and stopped being a separate, wider layout.
-          */}
+          {/* E107 — photo BESIDE the details on a wide screen, stacked below it on */}
           <div className="flex flex-col items-center gap-5 border border-line p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-7 sm:text-left">
             <Avatar
               firstName={profile.firstName}
@@ -3301,13 +2003,7 @@ setScreen(target);
             </div>
           </div>
 
-          {/*
-            WS8/E088 — the "You're Done!" details, now IN the counted flow. They
-            used to be collected after the last numbered step, so two required
-            things sat outside the 10 the provider was being counted through, and
-            a returning provider was never resumed onto them. Upwork-style: the
-            photo step is the wrapup catch-all.
-          */}
+          {/* WS8/E088 — the "You're Done!" details, now IN the counted flow. They */}
           <div className="mt-6">
             <ProfileCard title="Your Details">
               {contactEditing().body}
@@ -3323,35 +2019,7 @@ setScreen(target);
       );
     }
 
-    // ---- 13/13 — Review + publish (E035, rebuilt by brief_X / E056) ----
-    //
-    // The review IS the Profile View. E056: the old two-column card grid was a
-    // second, thinner design for the same content, so what the provider
-    // approved at the end of onboarding was not what buyers would see. It now
-    // renders the SAME sections, from `components/profile/sections`, as the
-    // published page — plus the two things only a pre-publish screen has:
-    // per-section edit controls, and the errors/changes checklist that gates
-    // Publish.
-    //
-    // ---- YOUR COMPANY (WS5) ------------------------------------------
-    //
-    // THE SAME COMPONENT THE BUYER SIDE USES. Every provider is a company: a
-    // sole proprietor picks "Sole Proprietor / Individual" as the business type
-    // and is a company of one. There is deliberately no separate individual
-    // branch, because the tax type is what the payout gate reads later for
-    // SSN-vs-EIN and 1099-reportability — a second path would have to answer
-    // the same question anyway, in a place nobody would think to look.
-    //
-    // ── ⚠⚠ UNREACHABLE SINCE `P1-A1.4-E418` (2026-09-11) ──────────────────
-    //
-    // `company` is in neither `PROVIDER_STEPS` nor `RECRUITER_STEPS` any more,
-    // and the itinerary comes from the SERVER (`status.steps`) — so nothing
-    // navigates here on either journey. ⚠ THE CASE STAYS ON DISK (`E164`),
-    // exactly like `work_history` above it: it is the screen work order
-    // acceptance will reuse, and deleting it would delete the ability to
-    // collect a company at all. ⚠ DO NOT PUT IT BACK ON AN ITINERARY — Scott,
-    // 2026-09-11: *"we will get their company information during the work
-    // order acceptance."* See the TODO on `acceptOrder` in `lib/orders.ts`.
+    // 13/13 — Review + publish (E035, rebuilt by brief_X / E056) ----
     case "company": {
       if (companyPending) {
         return (
@@ -3439,13 +2107,7 @@ setScreen(target);
         })
       );
 
-      /*
-        WS5 — a section's own quiet note, rendered inside it.
-
-        Non-blocking by construction: it takes its text from the `changes` list
-        that used to be a panel, so the two can never disagree about what is
-        suggested, and it renders as a sentence rather than a warning row.
-      */
+      // WS5 — a section's own quiet note, rendered inside it.
       const noteFor = (id: string) => {
         const item = changes.find((c) => c.id === id);
         if (!item) return null;
@@ -3456,40 +2118,7 @@ setScreen(target);
         );
       };
 
-      /*
-        ── ⚠⚠ CLICK-TO-FIX IS AN EDIT AFFORDANCE TOO (`P1-A1.4-E412` WS-1) ─────
-
-        ⚠ SUPERSEDED, quoted not deleted — two of its four branches navigated:
-
-            case "step":  goTo(fix.step as Step); break;
-            case "field": …
-              // WS8 — these inputs live on the Photo & Details step now, so the
-              // click-to-fix has to travel there before it can focus anything.
-              goTo("picture");
-
-        ⚠⚠ IT IS THE MOST PROMINENT CONTROL ON THE PAGE — `ReviewChecklist` sits
-        at the very top and its button is what somebody with an error clicks
-        FIRST. A rule that every card's Edit stays put, while the checklist above
-        them all still jumped to another screen, would be a rule about the
-        quiet half of the page.
-
-        ⚠ EVERY TARGET NOW HAS AN IN-PLACE EDITOR, so this is a complete map and
-        not a partial one — checked against `review-validation.ts`, which emits
-        exactly these six steps and two fields:
-            title · rate · catalog · education · specializations · tell_us
-            overview · phone
-        ⚠⚠ AND THERE IS NO NAVIGATING FALLBACK — the first version kept
-        `else goTo(fix.step as Step)` for a target this map had not learned, and
-        `check:review-screen` §1 went RED on it, correctly: *"the review screen
-        contains no `goTo(…)` at all"* is the rule, and a branch that is only
-        taken by a bug is still a branch that leaves the page.
-
-        ⚠ AN UNMAPPED TARGET IS CAUGHT AT BUILD TIME INSTEAD. That gate reads
-        `review-validation.ts` and fails if it emits a step this map lacks, so
-        the omission surfaces in CI rather than as a silent click. ⚠ AT RUNTIME
-        IT SAYS SO OUT LOUD rather than doing nothing — a button that appears
-        dead is the failure the fallback was there to avoid.
-      */
+      // CLICK-TO-FIX IS AN EDIT AFFORDANCE TOO WS-1)
       const FIX_STEP_TO_SECTION: Record<string, Exclude<EditSection, null>> = {
         title: "title",
         rate: "rate",
@@ -3515,11 +2144,7 @@ setScreen(target);
             setCertSignal((n) => n + 1);
             break;
           case "field": {
-            /*
-              WS5 — the BIO is edited on THIS page. It has no step to travel to
-              any more, so sending the fix to the photo step would scroll past
-              the very field it is about.
-            */
+            // WS5 — the BIO is edited on THIS page. It has no step to travel to
             if (fix.field === "overview") {
               const bio = document.getElementById("review-overview");
               bio?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3529,14 +2154,7 @@ setScreen(target);
               );
               break;
             }
-            /*
-              ⚠ `phone` LIVES IN THE CONTACT EDITOR, which is the same block the
-              `picture` step renders — so opening it here reaches the identical
-              field the old `goTo("picture")` was travelling for. ⚠ THE FOCUS
-              SURVIVES: `PhoneField` still carries `id="review-phone"`, and it
-              is now inside the dialog rather than on another screen, so the
-              delayed focus below finds it exactly as before.
-            */
+            // field the old `goTo("picture")` was travelling for. THE FOCUS
             setEditSection("location");
             const el = document.getElementById(`review-${fix.field}`);
             el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3549,13 +2167,6 @@ setScreen(target);
       };
 
       // The wizard draft has no standalone projects — during onboarding every
-      // project is captured under the employer it was delivered for, which is
-      // the same `Project` row the published page reads. Flatten them so the
-      // review shows the Projects section the live profile shows.
-      // The review renders the SAME ProjectCard the published profile does.
-      // Read the FULL project list — flattening employers would drop any
-      // project with no `employer_id` (brief_profile_layout_v2 §4), and label
-      // each with its employer for the card subtitle.
       const employerNameById = new Map(
         profile.employers.flatMap((e) =>
           (e.projects ?? []).map((pr) => [pr.id, e.name] as const)
@@ -3569,95 +2180,12 @@ setScreen(target);
       // E074 — Solo Projects is null-employer ONLY.
       const soloProjects = projects.filter((pr) => !employerNameById.has(pr.id));
 
-      /*
-        ⚠⚠ CITY AND REGION ONLY — NO POSTAL CODE, AND THAT IS THE WHOLE POINT
-        OF PASSING IT EXPLICITLY (`E412` WS-4). ⚠ `formatLocality(addr)` would
-        have picked `addr.postalCode` up, because the wizard HAS it: this page
-        is the owner looking at their own address. ⚠ THE PUBLISHED PROFILE DOES
-        NOT — `provider-profile-view.ts` does not even select the column, and
-        putting a postcode on a public profile is a privacy decision nobody has
-        made. ⚠⚠ THIS SCREEN'S OWN PROMISE IS *"This is exactly what buyers
-        will see"*, so it must show the buyer's version, not the owner's.
-        ⚠ FOUND BY WALKING IT: the first version passed `addr` whole and the
-        card read *"Ponte Vedra Beach, England 32081"* against the profile's
-        *"Ponte Vedra Beach, England"*. Nothing in the type system objected.
-      */
+      // CITY AND REGION ONLY — NO POSTAL CODE, AND THAT IS THE WHOLE POINT
       const reviewLocality = formatLocality({ city: addr.city, state: addr.state });
 
-      /*
-        E130 — ONE affordance rule for every section.
-
-        The review offered two patterns: five sections had an "✏️ Edit" pencil
-        and Certifications had a "+ Add Certification" button inside its body, so
-        an empty section either invited you in or didn't depending on which one
-        you were looking at — and a pencil on an empty section reads as "edit
-        what?".
-
-        The rule: EMPTY sections say "+ Add X", populated ones say "✏️ Edit".
-        One verb per state, applied everywhere, so the affordance describes what
-        the click actually does.
-      */
-      /*
-        ── ⚠⚠ EDIT HAS TO OPEN EDIT MODE, NOT JUST NAVIGATE (`P1-A1.4-E411`) ────
-
-        ⚠ SUPERSEDED, quoted not deleted — this helper set `returnToReview` and
-        called `goTo(step)` and NOTHING ELSE:
-
-            onClick={() => { setReturnToReview(true); goTo(step); }}
-
-        ⚠⚠ ON `tell_us` THAT LANDS ON THE READ-ONLY SCREEN. That step renders
-        `editingWork ? <EmployersStep …> : <WorkHistoryBody …>`, so an Edit link
-        that never sets `editingWork` shows the read-only body — which draws
-        employers and **no solo-projects surface at all**.
-
-        SCOTT: *"the projects are not attached to the providers, they are solo.
-        so, i wanted to click edit and see if i could link them. then the whole
-        projects thing disappeared… I had to refresh to get them back."* ⚠ They
-        did not disappear; the screen that shows them was never opened.
-
-        ⚠⚠ AND IT BLOCKED `E410`'s DESIGN. That brief routes engagements to
-        Project rows and deliberately invents no parent, on the stated grounds
-        that *"`moveProject` already exists for the person to place it."*
-        `EmployersStep` is the ONLY place that affordance lives — the flat
-        `projects` list, `unplaced`, and the "Pick where each one belongs"
-        section. If it never renders, an unplaced project cannot be attached from
-        anywhere in the wizard.
-
-        ⚠ THE FLAG IS PER-CALL, NOT BLANKET. Of the five callers only two target
-        `tell_us` (Work History and Solo Projects); Skills → `catalog`,
-        Specializations → `specializations` and Education → `education` have no
-        edit mode, and handing them a flag that means nothing there is how a prop
-        starts lying. ⚠ THE SHAPE IS COPIED FROM `AiPassPanel`'s `onManual`,
-        which already does exactly this.
-      */
-      /*
-        ── ⚠⚠ SUPERSEDED ON ARRIVAL BY `P1-A1.4-E412` WS-1 ──────────────────────
-
-        ⚠ SCOTT'S RULE: *"A PERSON ON THE REVIEW SCREEN NEVER LEAVES IT TO
-        EDIT."* ⚠ THE WHOLE `E411` MECHANISM ABOVE IS THE RIGHT FIX TO THE WRONG
-        PROBLEM — it made the trip to `tell_us` land somewhere useful, and
-        `E412` removes the trip. ⚠ SUPERSEDED, quoted not deleted, per that
-        brief's instruction to delete `E411`'s WS-1 line with a quote naming
-        this one:
-
-            const sectionAction = (title, step, isEmpty, opensEditor = false) => (
-              <EditButton … onClick={() => {
-                setReturnToReview(true);
-                goTo(step);
-                if (opensEditor) setEditingWork(true);
-              }} />
-            );
-
-        ⚠ `E411`'s REASONING SURVIVES INTACT AND IS WHY `"work"` IS ONE VALUE
-        RATHER THAN TWO: `EmployersStep` is still the only surface carrying the
-        flat project list, `unplaced` and the placement UI, so Work History and
-        Solo Projects open the SAME editor. What changed is only where it opens.
-
-        ⚠ `step` IS GONE FROM THE SIGNATURE. Keeping it would have left a
-        parameter that names a place nobody goes — the way a prop starts lying,
-        which is the objection `E411` raised against `opensEditor` being
-        blanket. ⚠ AND `returnToReview` IS NOT SET: there is no return trip.
-      */
+      // E130 — ONE affordance rule for every section.
+      // EDIT HAS TO OPEN EDIT MODE, NOT JUST NAVIGATE
+      // SCOTT'S RULE: *"A PERSON ON THE REVIEW SCREEN NEVER LEAVES IT TO
       const sectionAction = (
         title: string,
         section: Exclude<EditSection, null>,
@@ -3686,21 +2214,7 @@ setScreen(target);
         >
           {error && <Notice>{error}</Notice>}
 
-          {/*
-            WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE.
-
-            A wall of amber "needs attention" rows at the top of the last screen
-            reads as "here is all this work, and it is still not right" — the
-            opposite of a page whose whole claim is that you are two minutes
-            from published. `profile_tiers.md` makes the same point: with a lot
-            missing, keep the top light and let the SECTIONS carry their own
-            fixes.
-
-            So only ERRORS appear up here — and after WS6 there is usually
-            exactly one candidate, an AI-written bio over the limit. The
-            suggestions moved into the sections they are about, as one quiet
-            line each.
-          */}
+          {/* WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE. */}
           <ReviewChecklist errors={errors} changes={[]} onFix={applyFix} />
           <ReviewRows
             rows={[
@@ -3754,24 +2268,8 @@ setScreen(target);
               lastName={profile.lastName}
               photoUrl={profile.photoUrl}
               headline={profile.headline}
-              /*
-                E205 — NO BIO IN THE HERO ON THIS PAGE. The published profile
-                shows it here; the review page also has to EDIT it, and a
-                600-character paragraph rendered twice — once read-only in the
-                hero and again in the textarea below — was the single largest
-                block of duplicated height on the page. The editable copy is the
-                one that survives, because it is the one that does something,
-                and the hero's "Edit overview" button already scrolls to it.
-              */
-              /*
-                ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E411` WS-2):
-                    `overview={null}`
-                ⚠⚠ `null` MEANT "HE HAS NONE" TO THE HERO, so it printed *"No
-                overview yet."* directly above the card holding 420 characters of
-                his text. `E205`'s reasoning above is unchanged and still right —
-                the overview is NOT rendered twice. What changed is that the hero
-                is now TOLD which of the two things is meant.
-              */
+              // E205 — NO BIO IN THE HERO ON THIS PAGE. The published profile
+              // overview yet."* directly above the card holding 420 characters of
               overviewShownElsewhere
               /* `E823` (R-E002) — two rates, not a derived range. */
               onsiteCents={profile.onsiteRateCents}
@@ -3779,11 +2277,7 @@ setScreen(target);
               youGetCents={youGet}
               language={profile.languages[0]?.name ?? null}
               country={addr.country?.trim() || null}
-              /* ⚠⚠ THE REVIEW PASSES ITS OWN DRAFT SKILLS (`P2-J2-E562` WS-C
-                 item 8). ⚠ SAME PROP, SAME RENDERER, DIFFERENT SOURCE — the
-                 pattern this page already uses for every other hero field.
-                 ⚠⚠ THE HERO DOES NOT KNOW WHICH SURFACE IT IS; if it ever needs
-                 to, it has forked (`E056`). */
+              // THE REVIEW PASSES ITS OWN DRAFT SKILLS WS-C
               skills={shownSkillNames}
               aside={
                 <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -3794,7 +2288,7 @@ setScreen(target);
                   >
                     {profile.photoUrl ? "Change Photo" : "+ Add Photo"}
                   </button>
-                  {/* ⚠ SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("title")}` */}
+                  {/* SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("title")}` */}
                   <EditButton
                     title="Title"
                     onClick={() => setEditSection("title")}
@@ -3814,7 +2308,7 @@ setScreen(target);
                     }}
                     label="Edit overview"
                   />
-                  {/* ⚠ SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("rate")}` */}
+                  {/* SUPERSEDED, quoted (`E412` WS-1): `onClick={() => goTo("rate")}` */}
                   <EditButton
                     title="Rate"
                     onClick={() => setEditSection("rate")}
@@ -3825,20 +2319,7 @@ setScreen(target);
             />
             <div className="min-w-0">
 
-            {/*
-              ---- Bio, EDITED IN PLACE (WS5) -------------------------------
-
-              The bio stopped being a step, and nothing else on the app could
-              edit it: `OverviewBody` was imported here and never rendered, so
-              with the step gone an AI-written bio would have been unreachable —
-              including one over the 600-character limit, which is the one hard
-              error this page can still raise. The fix has to live where the
-              problem is.
-
-              Saves on blur rather than on a button: this is a review page, not
-              a form, and a section that silently keeps your edit is the pattern
-              every other section here already uses.
-            */}
+            {/* Bio, EDITED IN PLACE (WS5) ------------------------------- */}
             <div>
               <ProfileCard
                 title="Overview"
@@ -3856,16 +2337,7 @@ setScreen(target);
                   }
                   onBlur={async () => {
                     if (profile.overview.trim().length > MAX_BIO) return;
-                    /*
-                      ⚠⚠ `void` DISCARDED THE ANSWER (`E516` PART 2). `postStep`
-                      returns whether the save worked, and this threw it away —
-                      so a failed bio save was silent even once `postStep` had a
-                      `catch`, because nothing here ever read the result. ⚠ It is
-                      awaited now, and the failure lands ON THIS CARD.
-                      ⚠ A BLUR, NOT A BUTTON: there is no control to disable and
-                      nothing for the provider to re-click, which is exactly why
-                      the message has to appear where they are typing.
-                    */
+                    // returns whether the save worked, and this threw it away —
                     setBioError(null);
                     const saved = await postStep("bio", { overview: profile.overview });
                     if (!saved) {
@@ -3881,7 +2353,7 @@ setScreen(target);
                       : ""
                   }
                 />
-                {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
+                {/* THE FAILURE, ON THE CARD (`E516` PART 2). */}
                 {bioError && (
                   <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                     {bioError}
@@ -3913,15 +2385,7 @@ setScreen(target);
                       onApplied={async () => {
                         // Re-read the profile so the section shows what was just
                         // imported, rather than trusting a local patch.
-                        /*
-                          ⚠⚠ THIS `fetch` HAD NO `catch` AT ALL (`E516` PART 2) —
-                          a bare call in an async handler, so a thrown request
-                          was an unhandled rejection and the section simply never
-                          refreshed. ⚠ THE IMPORT ITSELF HAD ALREADY SUCCEEDED,
-                          which makes the silence worse than usual: the work was
-                          saved and the page kept showing the old, empty section.
-                          ⚠ So the sentence says exactly that.
-                        */
+                        // THIS `fetch` HAD NO `catch` AT ALL ( PART 2) —
                         setWorkImportError(null);
                         try {
                           const r = await fetch("/api/onboarding/status");
@@ -3939,10 +2403,6 @@ setScreen(target);
                         }
                       }}
                     />
-                    {/* ⚠ SUPERSEDED, quoted (`E412` WS-1):
-                        `sectionAction("Work History", "tell_us", …, true)` — the
-                        `true` meant "and turn edit mode on once you get there".
-                        There is no getting there now. */}
                     {sectionAction(
                       "Work History",
                       "work",
@@ -3951,26 +2411,13 @@ setScreen(target);
                   </span>
                 }
               >
-                {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). It sits at the
-                    TOP of the body, directly under the import control that
-                    failed, rather than at the foot below the employer list. */}
+                {/* THE FAILURE, ON THE CARD ( PART 2). It sits at the */}
                 {workImportError && (
                   <p data-ai-line className="mb-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                     {workImportError}
                   </p>
                 )}
-                {/*
-                  E129 — THE REACHABLE OFFER. An empty work history on the review
-                  used to be a dead end: the AI pass only existed on the import
-                  step, so a provider who imported last week — or whose profile
-                  predates the parser, which is Marelise and Eddie — had no way
-                  to ask for another read. Now the offer is where the emptiness
-                  actually is.
-
-                  Shown only when there is nothing to lose (no employers), so a
-                  provider with real work history is never nudged toward a
-                  re-import they didn't ask for.
-                */}
+                {/* E129 — THE REACHABLE OFFER. An empty work history on the review */}
                 {profile.employers.length === 0 && projects.length === 0 ? (
                   <AiPassPanel
                     compact
@@ -3978,16 +2425,6 @@ setScreen(target);
                     reasons={[
                       "Your profile has no jobs or projects on it. If you uploaded a résumé, our reader may have missed a layout it couldn't follow.",
                     ]}
-                    /* ⚠ SUPERSEDED, quoted (`E412` WS-1) — both handlers began
-                       `goTo("tell_us")`:
-                           onUpload: goTo("tell_us"); setUploadModal(true);
-                           onManual: setReturnToReview(true); goTo("tell_us");
-                                     setEditingWork(true);
-                       ⚠ THESE ARE EDIT AFFORDANCES TOO. They sit inside the Work
-                       History card and are the only thing in it when it is empty,
-                       so leaving them navigating would have satisfied the gate's
-                       letter on an empty profile and broken its rule. The upload
-                       modal is mounted on this screen for the same reason. */
                     onUpload={() => {
                       void logResumePath("reupload");
                       setUploadModal(true);
@@ -4020,39 +2457,11 @@ setScreen(target);
               </ProfileCard>
             </div>
 
-            {/*
-              ---- pg1b: Solo Projects, FULL WIDTH ------------------------
-
-              ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E412` WS-2). This card
-              was the first cell of the two-column grid below, under this
-              heading:
-
-                  ---- pg2: the 2-column grid -------------------------------
-                  E205 — SOLO PROJECTS JOINED THE GRID. It was full-width below
-                  Work History, and for most providers it is empty or two lines —
-                  a whole screen-width band carrying one sentence, directly above
-                  a grid of cards the same size as its content. Bio and Work
-                  History stay full width because they genuinely fill it.
-
-              ⚠⚠ `E205` WAS RIGHT WHEN IT WAS WRITTEN AND IS WRONG NOW, and the
-              reason is `E410`: engagement sections became **Project** rows, so
-              a real import lands 22–25 projects with employer-length names
-              instead of "empty or two lines". ⚠ MEASURED: at half width the
-              card nests a further two-up grid inside itself, putting each
-              project at roughly a QUARTER of the page — which is how *"Kamehameha
-              Schools (via Elire) — Oracle Cloud P2P with OBN"* came to stack five
-              lines deep.
-
-              ⚠ SAME WEIGHT, SAME WIDTH: it sits with Work History now, because
-              after `E410` it carries the same kind of content.
-            */}
+            {/* pg1b: Solo Projects, FULL WIDTH ------------------------ */}
             <div>
               <ProfileCard
                 title="Solo Projects"
-                /* ⚠ THE SAME EDITOR AS WORK HISTORY, and that is `E411`'s finding
-                   standing unchanged: `EmployersStep` is the ONLY surface holding
-                   the flat project list, `unplaced` and the placement UI. Two
-                   cards, one editor. */
+                // THE SAME EDITOR AS WORK HISTORY, and that is 's finding
                 edit={sectionAction(
                   "Solo Projects",
                   "work",
@@ -4066,34 +2475,9 @@ setScreen(target);
               </ProfileCard>
             </div>
 
-            {/*
-              ---- pg2: the 2-column grid -------------------------------
-
-              ⚠ SIX CARDS, THREE EVEN ROWS, and Skills keeps a partner (`E412`
-              WS-2 asks what happens to it). It pairs with **Specializations**
-              rather than going full width: both are chip clouds answering "what
-              can this person do", they are the two shortest cards on the page,
-              and a chip cloud run to 1100px wraps into a band of loose text with
-              a lot of white to its right. ⚠ NOTHING ELSE MOVED — the brief says
-              not to restructure the page around it, and removing one cell from
-              a six-cell grid needed no restructuring at all.
-            */}
+            {/* pg2: the 2-column grid ------------------------------- */}
             <div>
-              {/*
-                ⚠⚠ THE REVIEW CARD SHOWS WHAT THE PROFILE SHOWS (`P2-J1.4-E517`).
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                  `edit={sectionAction("Skills", "skills", profile.skillNames.length === 0)}`
-                  `skills={profile.skillNames}`
-
-                ⚠ Scott, 2026-09-17: *"a screen headed 'here is your profile'
-                must not list skills the profile does not show."* ⚠⚠ THIS CARD
-                IS THE SAME MISMATCH THE SKILLS BASKET HAD — a chip claiming to
-                be on the profile when every offer-side read filters it out.
-                ⚠ The button label follows the card, so "Add Skills" appears
-                when the card is empty rather than "Edit" over nothing.
-                ⚠⚠ THE ROWS ARE UNTOUCHED. The Skills step still lists every
-                held skill, which is where they can be seen and removed.
-              */}
+              {/* THE REVIEW CARD SHOWS WHAT THE PROFILE SHOWS . */}
               <ProfileCard
                 title="Skills"
                 edit={sectionAction("Skills", "skills", shownSkillNames.length === 0)}
@@ -4133,34 +2517,6 @@ setScreen(target);
                 <ProfileCard
                   title="Certifications"
                   // Certifications opens a modal rather than a step, so its
-                  // action bumps the modal signal — but it LOOKS and reads
-                  // exactly like every other section's.
-                  /*
-                    ── ⚠⚠ THE DOUBLE EDIT (`P1-A1.4-E412` WS-3b) ───────────────
-
-                    ⚠ SUPERSEDED, quoted not deleted:
-
-                        label={profile.certifications.length === 0
-                          ? "Add Certification" : "Edit"}
-                        icon={profile.certifications.length === 0 ? "+" : "✏️"}
-
-                    ⚠ WHAT EACH OF THE TWO LINKS DID, since `E412` asks: this
-                    header one bumps `certSignal`, which `CertificationCards`
-                    reads as `setEditing(-1)` — **the ADD modal, every time.**
-                    The row's own `Edit` calls `openEdit(i)` — that row's modal.
-                    ⚠⚠ SO THEY WERE NEVER REDUNDANT; THE HEADER ONE WAS
-                    MISLABELLED. With one certification on the page it said
-                    "✏️ Edit" twice, a few pixels apart, and the two did
-                    different things — which is precisely why it *"reads as a
-                    rendering fault"*.
-
-                    ⚠ IT NOW ALWAYS SAYS WHAT IT DOES. The per-row `Edit` is the
-                    only Edit, and Add stays exactly where `E144` put it after
-                    Scott's directive — *"the header link is the one that
-                    stays"*. ⚠ `E130`'s empty/populated rule is NOT re-broken
-                    here: `E144` already reversed it for this section, and this
-                    keeps that reversal while dropping the false verb.
-                  */
                   edit={
                     <EditButton
                       title="Certifications"
@@ -4176,15 +2532,8 @@ setScreen(target);
                     openSignal={certSignal}
                     onSave={async (next) => {
                       // Optimistic locally so the card list updates with the
-                      // modal close; `saveCertifications` re-hydrates from the
-                      // server immediately after, so a rejected write cannot
-                      // leave the page showing something that wasn't stored.
                       setProfile((pp) => ({ ...pp, certifications: next }));
-                      /* ⚠⚠ `E516` PART 2 — the failure lands ON THIS CARD. The
-                         optimistic update above is exactly why: on a failed save
-                         the list already shows the new certification, so a
-                         message a screen away would leave the provider believing
-                         it was stored. */
+                      // PART 2 — the failure lands ON THIS CARD. The
                       setCertError(null);
                       const saved = await saveCertifications(next);
                       if (!saved) {
@@ -4195,7 +2544,7 @@ setScreen(target);
                       return saved;
                     }}
                   />
-                  {/* ⚠⚠ THE FAILURE, ON THE CARD (`E516` PART 2). */}
+                  {/* THE FAILURE, ON THE CARD (`E516` PART 2). */}
                   {certError && (
                     <p data-ai-line className="mt-3 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink">
                       {certError}
@@ -4204,26 +2553,7 @@ setScreen(target);
                 </ProfileCard>
 
 
-              {/*
-                ⚠⚠ IT HAD NO EDIT AT ALL (`E412` WS-1 measured it, WS-4 names it).
-                Every other card on this page offered one; this one was read-only
-                with no way to reach the fields behind it from here. The editor is
-                the `picture` step's own `Your Details` block — see
-                `contactEditing()`.
-
-                ⚠ SUPERSEDED, quoted not deleted (`E412` WS-4) — the flat join:
-
-                    location={[addr.city, addr.state, addr.country]
-                      .filter((x) => x && x.trim()).join(", ") || null}
-
-                ⚠⚠ THE COUNTRY BEING INSIDE THAT STRING IS WHAT MADE IT FLAT.
-                `LocationBody` prints `country` on its own second line unless the
-                first line already contains it — and it always did. Same join,
-                same defect, in `provider-profile-view.ts:186`; `formatLocality`
-                is now the one copy. ⚠ THE `.filter()` WAS ALREADY DOING THE
-                DANGLING-COMMA JOB and the helper keeps that property by
-                construction: parts are dropped BEFORE the join, never after.
-              */}
+              {/* IT HAD NO EDIT AT ALL ( WS-1 measured it, WS-4 names it). */}
               <ProfileCard
                 title="Location"
                 edit={sectionAction(
@@ -4239,13 +2569,6 @@ setScreen(target);
               </ProfileCard>
 
               {/* E039 — testimonials are EARNED after delivering work. */}
-              {/* ⚠ `Recommendations` (`P2-J1.1-E014`). ⚠ SUPERSEDED, quoted:
-                  `title="Testimonials"` / `No testimonials yet — …`. THIS IS THE
-                  DECK PREVIEW OF THE PROFILE CARD ABOVE, so it must say the same
-                  word: a provider who is shown `Testimonials` here and finds
-                  `Recommendations` on the real profile has been told the product
-                  has two things when it has one. ⚠ The E039 comment above is
-                  HISTORY and stays; only the rendered strings moved. */}
               <ProfileCard title="Recommendations">
                 <Empty>
                   No recommendations yet — you&apos;ll collect these as you
@@ -4254,11 +2577,7 @@ setScreen(target);
               </ProfileCard>
             </div>
 
-            {/*
-              WS8/E088 — the identity FIELDS moved to the Picture step, which is
-              now the wrapup. What stays here is the read-only status: "is my
-              email verified" belongs on the page you publish from.
-            */}
+            {/* WS8/E088 — the identity FIELDS moved to the Picture step, which is */}
             <div>
               <ProfileCard title="Verify Identity">
                 <VerificationsBody
@@ -4266,20 +2585,7 @@ setScreen(target);
                   phoneOnFile={Boolean(phoneInput.trim())}
                   phoneVerified={profile.phoneVerified}
                 />
-                {/*
-                  ⚠ SUPERSEDED, quoted not deleted (`E412` WS-1) — the last
-                  `goTo` left on this screen:
-
-                      Phone and address are collected on the
-                      <button onClick={() => goTo("picture")}>Photo & Details</button>
-                      step.
-
-                  ⚠⚠ IT NAMED A STEP AND SENT YOU THERE, which is the exact thing
-                  the brief's rule forbids — and it was the only route to change a
-                  phone number from the review. It now opens the SAME block that
-                  step renders, in place. ⚠ The sentence stops naming a step
-                  because there is no longer a step to name.
-                */}
+                {/* Phone and address are collected on the */}
                 <p className="mt-3 text-[13.5px] text-ink-2">
                   <button
                     type="button"
@@ -4301,12 +2607,7 @@ setScreen(target);
             onUploaded={(photoUrl) => setProfile((p) => ({ ...p, photoUrl }))}
           />
 
-          {/*
-            ⚠ MOUNTED HERE TOO (`E412` WS-1). The résumé upload modal lives in
-            `case "tell_us"`, so the review's *"want us to read your résumé
-            again?"* offer had to travel there for it to appear. One extra mount
-            of the SAME component is what lets the offer stay put.
-          */}
+          {/* MOUNTED HERE TOO ( WS-1). The résumé upload modal lives in */}
           <ResumeUploadModal
             open={uploadModal}
             onClose={() => setUploadModal(false)}
@@ -4316,26 +2617,7 @@ setScreen(target);
             }}
           />
 
-          {/*
-            ── ⚠⚠ THE IN-PLACE SECTION EDITOR (`P1-A1.4-E412` WS-1) ────────────
-
-            ⚠ ONE `Modal`, SWITCHED ON `editSection` — not one modal per section.
-            Seven near-identical dialogs is how six of them drift.
-
-            ⚠⚠ THE RETURN PATH IS `postStep`, AND IT WAS ALREADY CORRECT.
-            Every save here goes through `postStep`, which `hydrate`s the
-            server's response into `profile` — so the card behind the modal shows
-            what was STORED, not a local patch, the moment the modal closes. That
-            is why there is no refresh, no `router.refresh()`, and no optimistic
-            copy to get out of step. ⚠ `EmployersStep` is the exception and does
-            not need one: it writes through its own endpoints and reports back
-            via `onChanged`, which is the same state.
-
-            ⚠ THE MODAL IS WIDE FOR THE PICKERS AND NARROW FOR THE FIELDS.
-            Skills, Specializations and Work History are browse-and-choose
-            surfaces that were designed at page width; Title, Rate and Location
-            are three fields and would look absurd in a 4xl dialog.
-          */}
+          {/* THE IN-PLACE SECTION EDITOR WS-1) */}
           <Modal
             open={editSection !== null}
             onClose={() => setEditSection(null)}
@@ -4348,37 +2630,7 @@ setScreen(target);
                 : "max-w-lg"
             }
           >
-            {/*
-              ── ⚠⚠ THE ERROR STICKS TO THE TOP OF THE MODAL (`P2-J1.4-E539`) ──
-
-              ⚠ SUPERSEDED, quoted not deleted (`E164`): `{error && <Notice>…}`,
-              a plain block at the top of the modal body.
-
-              ⚠⚠ THE CLAIM THAT THIS RENDERED *BEHIND* THE MODAL WAS WRONG, AND
-              IT IS CORRECTED HERE RATHER THAN QUIETLY FIXED. The modal has
-              always re-rendered the same `error` state at its own top, so the
-              message was inside the dialog all along. ⚠ THE REAL DEFECT IS
-              DISTANCE, AND IT IS MEASURED: `Modal` is
-              `max-h-[calc(100dvh-2rem)] overflow-y-auto`, and at 1280×800 the
-              `Work History & Projects` editor is **2454px of body in a 766px
-              window** — so a `Notice` pinned to the top of that body sits
-              roughly 1,700px above whatever the provider is actually editing.
-              ⚠ The other three editors measured 750 / 648 / 352 and do NOT
-              scroll at that height, so this bites ONE section today — but it
-              bites it hard, and it is the section most likely to fail because
-              `EmployersStep` commits through its own endpoints AS YOU GO.
-
-              ⚠⚠ STICKY, NOT MOVED, AND THAT IS THE PROPOSAL. Anchoring the
-              message to the action row instead was considered and REJECTED:
-              Work History's errors arrive from `EmployersStep`'s `onError`
-              while you edit, not when you press a button — and its button says
-              `Done`, not `Save`, because there is nothing left to submit. An
-              error parked by that button would be furthest from the row that
-              actually failed. Sticking it to the top keeps it adjacent to the
-              content wherever you have scrolled to.
-              ⚠ `z-10` so the sticky bar sits over the scrolling content rather
-              than being painted through by it.
-            */}
+            {/* THE ERROR STICKS TO THE TOP OF THE MODAL */}
             {error && (
               <div className="sticky top-0 z-10 -mx-6 mb-2 bg-white px-6 pb-2 sm:-mx-7 sm:px-7">
                 <Notice>{error}</Notice>
@@ -4398,13 +2650,7 @@ setScreen(target);
             {editSection === "skills" && skillsEditing().body}
             {editSection === "specializations" && specializationsEditing().body}
             {editSection === "work" && (
-              /*
-                ⚠ THE SAME COMPONENT `case "tell_us"` MOUNTS, with the same four
-                props. ⚠ `projects` IS THE FLAT LIST (`E296`) — without it a
-                project with `employer_id: null` never reaches the editor, which
-                is exactly what `E411` found and is the whole reason Solo
-                Projects' Edit opens THIS.
-              */
+              // THE SAME COMPONENT `case "tell_us"` MOUNTS, with the same four
               <EmployersStep
                 employers={profile.employers}
                 projects={profile.projects}
@@ -4413,14 +2659,7 @@ setScreen(target);
               />
             )}
 
-            {/*
-              ⚠⚠ `EmployersStep` GETS `Done`, NOT `Save`, AND THE DIFFERENCE IS
-              REAL. It commits each employer and project through its own
-              endpoints as you go — there is nothing left to submit, and a Save
-              button implying otherwise would suggest that closing without it
-              loses work. Every other section here holds its edit in `profile`
-              until the button is pressed.
-            */}
+            {/* REAL. It commits each employer and project through its own */}
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-line pt-4">
               <button
                 type="button"
@@ -4449,14 +2688,7 @@ setScreen(target);
   return null;
 }
 
-/**
- * What the in-place editor calls itself (`P1-A1.4-E412` WS-1).
- *
- * ⚠ THESE NAME THE CARD, NOT THE WIZARD STEP. Somebody who clicked Edit on
- * "Solo Projects" and landed in a dialog headed "Tell Us About Yourself" would
- * reasonably think they had gone somewhere — the thing this brief exists to
- * stop. ⚠ `work` says both, because it genuinely is both.
- */
+/** What the in-place editor calls itself WS-1). */
 const EDIT_SECTION_TITLES: Record<Exclude<EditSection, null>, string> = {
   title: "Your Title",
   roles: "Your Roles",
@@ -4468,28 +2700,12 @@ const EDIT_SECTION_TITLES: Record<Exclude<EditSection, null>, string> = {
   location: "Contact & Location",
 };
 
-/**
- * Pre-verification chrome: logo only, deliberately NO stepper (E001).
- *
- * E091 — on the shared frame width like every other onboarding page, with the
- * form column capped by `contentWidth`. The earlier version narrowed the whole
- * PAGE to keep the form readable, which fixed the lines and made these pages a
- * different shape from the steps either side of them. Capping the column gets
- * both.
- */
+/** Pre-verification chrome: logo only, deliberately NO stepper (E001). */
 function PlainShell({
   children,
   contentWidth,
   compact = false,
-  /*
-    ⚠ `footer` FORWARDED (`P1-J1.1-E246` §5). `OnboardingShell` and
-    `OnboardingFrame` have both accepted it all along; THIS local wrapper simply
-    never passed it on, which is why the sign-up screen was the one onboarding page
-    with no full-bleed action band and drew its own rule inside the form column.
-    ⚠ ADDING THE PASSTHROUGH IS THE WHOLE FIX — no frame or shell change was needed.
-    ⚠ OPTIONAL, so the two callers that pass nothing (`check_email`, and this one's
-    sibling) render exactly as before.
-  */
+  // never passed it on, which is why the sign-up screen was the one onboarding page
   footer,
 }: {
   children: React.ReactNode;
@@ -4508,33 +2724,11 @@ function PlainShell({
   );
 }
 
-/**
- * One tier of the Role → Domain → Skills cascade (E030).
- *
- * Collapses to a one-line summary with a Change link once a choice is made, so
- * only the tier the provider is actually working on is expanded — that is what
- * keeps the page short instead of three stacked lists.
- */
-/* ⚠ `CascadeTier` MOVED TO `SpecializationsEditor.tsx` (`P2-A2-E597` WS-B) —
-   it was local to this file and the specializations picker was its only caller.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   function CascadeTier({ index, label, chosen, onChange, changeLabel = "Change", children }) { … } */
+/** One tier of the Role → Domain → Skills cascade (E030). */
+// it was local to this file and the specializations picker was its only caller.
 
 
-/**
- * The review page's validation surface (brief_X / E056) — Scott's framing:
- *
- *   ERRORS  block Publish. Red, listed first, each with a click-to-fix.
- *   CHANGES don't. Amber, collapsed under a summary line, same click-to-fix.
- *
- * The two are deliberately different colours, different headings and different
- * weights: the whole point of the split is that a provider can tell at a glance
- * which list they are *required* to clear and which is advice. A single
- * undifferentiated "needs attention" list is what the old page had.
- *
- * When both are empty this renders the green all-clear — the end of onboarding
- * should say so plainly rather than showing nothing.
- */
+/** The review page's validation surface (brief_X / E056) — Scott's framing */
 function ReviewChecklist({
   errors,
   changes,
@@ -4556,11 +2750,7 @@ function ReviewChecklist({
 
   return (
     <div className="space-y-3">
-      {/* E059 — MAGENTA, not red. This box is the last thing a provider sees
-          before publishing, and red framed a normal, expected state (a profile
-          that isn't finished yet) as a failure. Brand magenta reads as "this is
-          the app talking to you"; red is reserved for genuinely destructive
-          states — deleting a record, an action that loses data. */}
+      {/* E059 — MAGENTA, not red. This box is the last thing a provider sees */}
       {errors.length > 0 && (
         <div className="border-l-2 border-ink py-2 pl-4">
           <p className="text-[15px] font-bold text-magenta-dark">
@@ -4662,20 +2852,8 @@ function MethodCard({
   );
 }
 
-/**
- * "Here's what we captured — confirm or fix" (brief_Q / E012+E019).
- *
- * The anti-drop-off lever is that the remaining steps become a REVIEW. Showing
- * the counts and the gaps immediately after the upload — rather than only on
- * the final review page — tells the user what they still need to touch.
- */
-/**
- * One sentence naming what the import filled in (WS5/E051).
- *
- * Replaces the "Here's What We Captured" panel. That panel listed the counts in
- * prose ABOVE sections that were already showing the same information by being
- * populated — the user read it twice, once as a claim and once as a fact.
- */
+/** The anti-drop-off lever is that the remaining steps become a REVIEW. Showing */
+/** One sentence naming what the import filled in (WS5/E051). */
 function capturedLine(outcome: ImportOutcome): string | null {
   const a = outcome.applied;
   const bits: string[] = [];
@@ -4697,32 +2875,14 @@ function capturedLine(outcome: ImportOutcome): string | null {
   return `We filled in ${bits.join(", ")}. Check it over and fix anything that's wrong.`;
 }
 
-/**
- * WHICH READER RAN, said out loud (E184).
- *
- * Named model, not "AI" — "we read it with AI" is exactly the claim that was
- * being made while nothing ran, so the version that replaces it carries
- * something checkable. A heuristic fallback says so plainly and says why; it
- * does not apologise, because for a document the rules handle it is a perfectly
- * good answer, just not the one the rest of the page is promising.
- */
+/** WHICH READER RAN, said out loud (E184). */
 function ReaderLine({
   path,
 }: {
   path: NonNullable<ImportOutcome["path"]>;
 }) {
   if (path.reader === "ai") {
-    /*
-      ── ⚠⚠ SAY WHICH SECTION FELL BACK, NOT "AI DIDN'T READ THIS" (`E407`) ────
-
-      The page used to contradict itself: this banner said *"AI didn't read this
-      one"* while the skills card further down said *"AI read these off your
-      document"*. Both could not be true, and after `E407` WS-1 neither is — the
-      model reads most of the document and one PASS can fail on its own.
-      ⚠ MEASURED: on four runs of the same CV a DIFFERENT pass failed each time
-      (`reason: "shape"`, never truncation), so "the AI failed" was always too
-      broad a claim to put on the page.
-    */
+    // SAY WHICH SECTION FELL BACK, NOT "AI DIDN'T READ THIS"
     if (path.employersFromHeuristic) {
       return (
         <p className="mb-6 flex flex-wrap items-center gap-2 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink-2">
@@ -4746,38 +2906,12 @@ function ReaderLine({
     <p className="mb-6 border-l-2 border-magenta py-2 pl-3.5 text-[13.5px] text-ink-2">
       <b className="text-ink">AI didn&apos;t read this one</b> — {path.reason}.
       What&apos;s below came from pattern-matching, so check it closely.
-      {/*
-        ── ⚠⚠ `configProblem` IS NOT SHOWN TO A PROVIDER (`E407` WS-7) ─────────
-
-        ⚠ SUPERSEDED, quoted not deleted:
-            {path.configProblem && (
-              <span className="mt-1 block text-[12.5px]">{path.configProblem}</span>
-            )}
-
-        ⚠⚠ IT PRINTED AN ENVIRONMENT VARIABLE NAME ON A SIGNUP PAGE. Scott, reading
-        his own: *"What is this? `$/parse can t be computed…`"* — the sentence names
-        `RESUME_PARSER_PRICE_IN_PER_M`. A provider cannot act on it, it is not their
-        problem, and it reads as a broken app at the moment they are deciding
-        whether to trust one with their CV.
-
-        ⚠ THE FIELD STAYS ON THE OBJECT — `parserConfigProblem()`'s own docblock
-        says where it belongs, *"for the admin health card and the eval script"*,
-        and `ParserHealth.tsx` still reads it. What changes is that no
-        provider-facing surface renders it; `check:resume-review` asserts that.
-      */}
+      {/* {path.configProblem && ( */}
     </p>
   );
 }
 
-/**
- * Route an import gap to the section that can fix it (WS5/E051).
- *
- * The gaps used to pile into one "Needs your attention" list sitting apart from
- * every field it referred to, which made each item a search task. The parser
- * emits them as sentences, so they are matched on the noun they mention rather
- * than by a code the parser does not carry — imperfect by construction, so
- * anything unmatched still surfaces, just at the bottom rather than not at all.
- */
+/** Route an import gap to the section that can fix it (WS5/E051). */
 function gapsFor(
   outcome: ImportOutcome | null,
   where: "work" | "other"
@@ -4787,26 +2921,10 @@ function gapsFor(
   return where === "work" ? gaps.filter(isWork) : gaps.filter((g) => !isWork(g));
 }
 
-/* ⚠ `Row` MOVED TO `RateEditor.tsx` (`P2-A2-E597` WS-B) — it was local to this
-   file and the rate panel was its only remaining caller. ⚠ SUPERSEDED, quoted
-   not deleted (`E164`):
-   //   function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-   //     return (<div className="flex items-baseline justify-between gap-4">…</div>);
-   //   } */
+// file and the rate panel was its only remaining caller.
 
 /** The AI mark used wherever the product attributes work to AI (WS4/E174). */
-/* ⚠⚠ `SparkIcon` MOVED TO `SkillsEditor.tsx` (`P2-A2-E597` WS-B) AND IS
-   IMPORTED BACK — it has TWO OTHER CALLERS in this file (the AI-pass panel),
-   which the extraction surfaced. ⚠ MEASURED, not assumed: `tsc` named both the
-   moment the definition left. ⚠⚠ ONE DEFINITION, TWO CONSUMERS is the point;
-   leaving a copy here would have been the duplication this brief removes.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   function SparkIcon() { … }
-   ⚠⚠ ITS DOCBLOCK IS PARAPHRASED, NOT COPIED — rule 12. It said the mark is
-   used wherever the product attributes work to AI (WS4/E174), and quoting it
-   verbatim would put a comment terminator inside this one and close it early.
-   ⚠⚠⚠ THAT IS THE 8TH OCCURRENCE OF THAT TRAP, and `check:comment-quotes`
-   caught it — the gate working. */
+// IMPORTED BACK — it has TWO OTHER CALLERS in this file (the AI-pass panel)
 
 // Review (onboarding frame): one line per step + Work history, each with Edit.
 function ReviewRows({ rows }: { rows: { k: string; v: string; warn?: string; small?: string; onEdit: () => void; edit?: string }[] }) {

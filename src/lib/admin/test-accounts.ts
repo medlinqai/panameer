@@ -117,12 +117,7 @@ export async function removeTestAccounts(
   const ids = removable.map((r) => r.id);
   const emails = removable.map((r) => r.email);
 
-  /**
-   * ⚠⚠ THE AUDIT ROW IS WRITTEN BEFORE THE DELETE, and that order is the point:
-   * if the delete fails the log says it was attempted, and if the log fails the
-   * delete still happens — but the console carries it. A row written afterwards
-   * would be lost exactly when the delete half-succeeded.
-   */
+  /** THE AUDIT ROW IS WRITTEN BEFORE THE DELETE, and that order is the point */
   await writeAudit(viewer, {
     action: "test_accounts.remove",
     targetTable: "users",
@@ -130,24 +125,14 @@ export async function removeTestAccounts(
     rowCount: ids.length,
   });
 
-  /**
-   * ⚠⚠⚠ `deleteMany` WITH BOTH THE IDS **AND** `is_test: true`. The ids alone
-   * would be enough; the flag is repeated so that **no single edit can turn this
-   * into an unfiltered delete** — the gate mutates each half away and both must
-   * fail it.
-   */
+  /** would be enough; the flag is repeated so that no single edit can turn this */
   const { count } = await prisma.user.deleteMany({ where: { id: { in: ids }, is_test: true } });
   return { removed: count, emails };
 }
 
 /* ── the flag itself ────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠⚠ **MARKING A REAL ACCOUNT AS TEST IS THE ONE WAY A REAL MEMBER COULD BE
- * SWEPT INTO THE REMOVE PATH**, so it needs the caller to say so explicitly.
- * The UI asks first; this refuses silently-destructive use by requiring the
- * acknowledgement rather than trusting the screen.
- */
+/** MARKING A REAL ACCOUNT AS TEST IS THE ONE WAY A REAL MEMBER COULD BE */
 export async function setTestFlag(
   viewer: Viewer,
   userId: string,

@@ -57,10 +57,6 @@ export async function getMe(viewer: Viewer) {
   const provider = person.providerProfile;
 
   // Now that we know the person's org, enrich the viewer with the tenancy
-  // fence and use it for a genuinely PAccount-scoped read — demonstrating the
-  // private-query boundary end to end. Company carries `p_account_id`, so the
-  // fence applies directly; models that don't (Person, Site) scope through
-  // their Company relation instead.
   const scopedViewer = withPAccount(viewer, person.company.p_account_id);
   const orgCompanyCount = await prisma.company.count({
     where: scopedToPAccount(scopedViewer, {}),

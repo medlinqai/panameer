@@ -42,12 +42,7 @@ export function OrderActivation({
         setError(out.error ?? "That didn't work.");
         return;
       }
-      /*
-        ⚠ A REFRESH, NOT A LOCAL STATE PATCH. Accepting changes the status, which
-        changes which actions exist — and that recomputation belongs on the
-        server, where the one function lives. Patching it here would be a second
-        derivation of exactly the rule this brief is about.
-      */
+      // A REFRESH, NOT A LOCAL STATE PATCH. Accepting changes the status, which
       router.refresh();
     } finally {
       setBusy(null);
@@ -59,7 +54,7 @@ export function OrderActivation({
       <SignGateModal gate={gate} onClose={() => setGate(null)} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
-        {/* ⚠⚠ THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
+        {/* THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
         {actions.map((a) => (
           <Button key={a} disabled={busy !== null} onClick={() => run(a)}>
             {busy === a ? "Working…" : LABEL[a]}

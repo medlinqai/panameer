@@ -50,10 +50,7 @@ export async function genericBlurredPhoto(): Promise<string | null> {
 
 export async function blurredPhotoDataUri(photoUrl: string | null | undefined): Promise<string | null> {
   const url = photoUrl?.trim();
-  /* ⚠⚠ NO PHOTO IS NOT NOTHING (`E778`) — it is the shared placeholder, so every
-     masked card gets the same treatment. ⚠ A failed READ still falls back to it
-     too, below: the reader should never be able to tell a missing photo from an
-     unreachable one. */
+  // NO PHOTO IS NOT NOTHING — it is the shared placeholder, so every
   if (!url) return genericBlurredPhoto();
   if (cache.has(url)) return cache.get(url) ?? null;
 
@@ -62,8 +59,7 @@ export async function blurredPhotoDataUri(photoUrl: string | null | undefined): 
 
   try {
     const out = await sharp(input, {
-      /* ⚠ An SVG is rendered at a sane size before the downscale; without a
-         density the rasteriser can produce a 1px image for a viewBox-only file. */
+      // An SVG is rendered at a sane size before the downscale; without a
       density: 72,
     })
       .resize(WIDTH, WIDTH, { fit: "cover", position: "attention" })
@@ -75,24 +71,9 @@ export async function blurredPhotoDataUri(photoUrl: string | null | undefined): 
   }
 }
 
-/**
- * ── ⚠⚠⚠ THE TEXT PLACEHOLDERS — FIXED LENGTH, FIXED ALPHABET ───────────────
- *
- * ⚠ **SCOTT, 2026-10-02:** *"fixed-length placeholders, not same-length — no
- * length leak, fixed alphabet."*
- *
- * ⚠⚠⚠ **A SAME-LENGTH SCRAMBLE WOULD HAVE LEAKED THE CHARACTER COUNT OF A NAME,
- * WHICH TODAY'S PAYLOAD DOES NOT LEAK AT ALL.** Over a whole grid that is a real
- * narrowing — initials plus a length is often one person.
- * ⚠⚠ **AND THE ALPHABET IS FIXED, NOT THE REAL LETTERS.** Shuffling the person's
- * own characters preserves their letter multiset, which is worse than a length:
- * it is nearly an anagram.
- *
- * ⚠ So these are CONSTANTS. They depend on nothing about the person, which is
- * the strongest statement a placeholder can make.
- */
+/** THE TEXT PLACEHOLDERS — FIXED LENGTH, FIXED ALPHABET */
 export const PLACEHOLDER = {
-  /** ⚠ A name-shaped bar. Rendered blurred, never as readable text. */
+  /** A name-shaped bar. Rendered blurred, never as readable text. */
   name: "Anskeld Marrowen",
   employer: "Verthane Industries",
   client: "Oridane Group",

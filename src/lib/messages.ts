@@ -124,42 +124,11 @@ export type ConversationSummary = {
   title: string | null;
   lastBody: string;
   lastAt: Date;
-  /** ⚠ Unread means addressed TO me and unread. My own sent rows never count. */
+  /** Unread means addressed TO me and unread. My own sent rows never count. */
   unread: number;
 };
 
-/**
- * ⚠ THE CONVERSATION LIST IS DERIVED FROM THE PAIRS, because there is no thread
- * row to read. Every message the viewer is either end of, folded by "the other
- * person", newest first.
- *
- * ⚠ NOT PAGINATED, AND THAT IS A KNOWN LIMIT rather than an oversight: messaging
- * is colleague-only, so the list is bounded by how many colleagues somebody has.
- * It needs paging the day that stops being true.
- *
- * ── ⚠⚠⚠ THE DERIVATION IS A DELIBERATE INTERIM (`P2-ALL-E560`, 2026-09-18) ──
- *
- * SCOTT RULED THIS, AND IT WAS CHOSEN RATHER THAN SETTLED FOR. The `E560` drawer
- * lists conversations, which is exactly what a `Conversation` model would serve —
- * so the question "why is there no model?" WILL be asked again. The answer:
- *
- *   · ⚠ `E379` CHOSE *"One table. No Thread, no Participant"* DELIBERATELY. It
- *     was a decision, not an omission.
- *   · ⚠⚠ `Message` HELD **ZERO ROWS** when the drawer was built (measured
- *     2026-09-18). **A model designed now would be designed against no data and
- *     backfilled from nothing** — every shape choice a guess.
- *   · ⚠ `@@index([from_user_id, to_user_id, created_at])` ALREADY EXISTS and is
- *     what makes folding the pairs in memory reasonable.
- *
- * ⚠⚠ THE NAMED CONDITION THAT UNBLOCKS THE MODEL — do not add one before it:
- * **"IF THE DERIVATION GETS SLOW, THAT IS THE SIGNAL TO ADD IT — WITH REAL
- * MESSAGES TO SHAPE IT."** ⚠ Slow means measured, on real rows, not suspected.
- *
- * ⚠ ONE DEFINITION, TWO CALLERS: the `/messages` page and `GET /api/messages`
- * (the drawer) both come here. ⚠⚠ A SECOND DERIVATION IS THE FAILURE TO AVOID —
- * two surfaces listing conversations by different rules is the `teachesPathWhere`
- * mistake in a new place.
- */
+/** THE CONVERSATION LIST IS DERIVED FROM THE PAIRS, because there is no thread */
 export async function listConversations(viewer: Viewer): Promise<ConversationSummary[]> {
   const rows = await prisma.message.findMany({
     where: { OR: [{ from_user_id: viewer.userId }, { to_user_id: viewer.userId }] },
@@ -206,9 +175,7 @@ export async function listConversations(viewer: Viewer): Promise<ConversationSum
     entry.photoUrl = p.photo_url;
   }
 
-  /* ⚠ A conversation with somebody who has no Person row still lists, with an
-     empty name rather than being dropped — losing a real message from the list
-     is worse than showing it unlabelled. */
+  // A conversation with somebody who has no Person row still lists, with an
   return [...byOther.values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
 }
 
@@ -226,12 +193,7 @@ export async function getConversation(viewer: Viewer, otherUserId: string) {
   });
 }
 
-/**
- * ⚠⚠ THE RECIPIENT'S ROWS ONLY. The `to_user_id: viewer.userId` clause is the
- * whole guarantee — without it a sender could mark their own outgoing messages
- * read and the unread count would become a number nobody set. `check:messages`
- * asserts this scope.
- */
+/** THE RECIPIENT'S ROWS ONLY. The `to_user_id: viewer.userId` clause is the */
 export async function markRead(viewer: Viewer, otherUserId: string) {
   await prisma.message.updateMany({
     where: { to_user_id: viewer.userId, from_user_id: otherUserId, read_at: null },
@@ -239,54 +201,14 @@ export async function markRead(viewer: Viewer, otherUserId: string) {
   });
 }
 
-/** One number, for the tab badge. ⚠ Zero renders NOTHING — see `PageTabs`. */
+/** One number, for the tab badge. Zero renders NOTHING — see `PageTabs`. */
 export async function unreadCount(viewer: Viewer): Promise<number> {
   return prisma.message.count({
     where: { to_user_id: viewer.userId, read_at: null },
   });
 }
 
-/**
- * ── ⚠⚠⚠ DEAD SINCE `8f71ac2`. IT MATCHES NOTHING (`P2-ALL-E691`, rule 6) ────
- *
- * ⚠⚠ **IT LOOKS FOR A TAB WHOSE `href` IS `/messages`, AND THE CONNECT ROW HAS
- * NOT CONTAINED ONE SINCE `8f71ac2`** (*"`P2-J3-E557` WS-A — Connect is a room,
- * not a path"*). ⚠ **MEASURED: feeding it the live row with `unread = 7`
- * produces ZERO badges.**
- *
- * ⚠⚠⚠ **SO THIS RETURNED ITS INPUT UNCHANGED FOR WEEKS WHILE `unreadCount()`
- * RAN ON EVERY `/messages` AND `/community` PAGE LOAD.** The figure's WRITER was
- * live and its READER was dead, which is the quietest way for a number to
- * disappear: nothing errors, nothing logs, and the query still costs.
- * ⚠ **THE COUNT NOW RENDERS IN THE TITLE LINE** on `/messages` (ruling `88b`),
- * which is where 88b puts it anyway.
- *
- * ⚠⚠ **NOT DELETED, AND THE REASON IS §14: BEFORE DELETING DEAD CODE, CHECK
- * WHETHER A GATE ASSERTS A LIVE RULE AGAINST IT.** The zero rule below is live,
- * quoted by the page that replaced this, and `PageTabs` still honours `badge`
- * for any row that grows one later. ⚠ It is kept, marked, and asserted dead by
- * `check:community` so it cannot come back to life unnoticed.
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — what it claimed to do:
- * //   THE UNREAD BADGE, APPLIED TO A TAB SET (P1-ALL-E379). The /community tab
- * //   row is shared by five pages, so the badge is put on here rather than in
- * //   each of them - five copies of "which tab is Messages" is five chances to
- * //   disagree.
- *
- * ⚠ ORIGINAL NOTE, STILL TRUE AND STILL THE RULE:
- *
- * The `/community` tab row is shared by five pages, so the badge is put on here
- * rather than in each of them — five copies of "which tab is Messages" is five
- * chances to disagree.
- *
- * ⚠⚠ ZERO PASSES `undefined`, NEVER `0`. The badge must not render for a person
- * with nothing unread, and `PageTabs` guards it a second time. A "0" badge
- * reports an absence as a measurement — the same fault as a fabricated `$0`
- * rate, and the same rule that keeps `declinedCount` off the page entirely.
- *
- * ⚠ PURE. It takes the count rather than reading it, so the page decides
- * whether it is worth a query for an anonymous viewer.
- */
+/** DEAD SINCE `8f71ac2`. IT MATCHES NOTHING , rule 6) */
 export function tabsWithUnread<T extends { href: string; badge?: number }>(
   tabs: T[],
   unread: number

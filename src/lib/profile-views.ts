@@ -52,21 +52,11 @@ export async function recordProfileView(opts: {
       }
     }
   } catch {
-    /* ⚠ Swallowed on purpose — see the note above. */
+    /* Swallowed on purpose — see the note above. */
   }
 }
 
-/**
- * How many views this profile has — one per viewer per day, all time.
- *
- * ⚠⚠ NO TIME WINDOW, AND THAT IS THE `Counters` DECISION APPLIED RATHER THAN A
- * SHRUG. Scott, LOCKED: *"a real count of what is in the database, seeded rows
- * included, or a number Scott specifies. Count it and print it."* ⚠ A trailing
- * 30- or 90-day window is a product choice nobody has made, and picking one
- * here would put a number on a real person's profile that no ruling supports.
- * ⚠ The rows carry `viewed_on`, so a window can be added later without
- * re-recording anything — which is the half that genuinely cannot be retrofitted.
- */
+/** How many views this profile has — one per viewer per day, all time. */
 export async function countProfileViews(profileId: string): Promise<number> {
   return prisma.profileView.count({ where: { profile_id: profileId } });
 }

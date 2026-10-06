@@ -11,30 +11,14 @@ export function slugifyName(first: string | null, last: string | null): string {
   return folded;
 }
 
-/**
- * ⚠⚠ Reserved first segments. ⚠⚠⚠ **A MEMBER MUST NOT BE ABLE TO MINT A SLUG
- * THAT SHADOWS A REAL PATH** — `/in/login` would be harmless today because the
- * route is `/in/[slug]`, but these are also the words a person reads as a
- * system page, and a provider called "Admin" presenting `/in/admin` is a
- * phishing surface we would have built ourselves.
- */
+/** Reserved first segments. A MEMBER MUST NOT BE ABLE TO MINT A SLUG */
 const RESERVED = new Set([
   "admin", "api", "login", "logout", "join", "signup", "sign-up", "settings",
   "profile", "providers", "explore", "learn", "shop", "work", "talent", "in",
   "me", "new", "edit", "search", "support", "help", "about", "panameer",
 ]);
 
-/**
- * ⚠⚠ Find a free slug for `base`, trying `base`, `base-2`, `base-3`, …
- *
- * ⚠⚠⚠ **IT CHECKS THE WHOLE TABLE, WHICH IS WHY LIVE AND RETIRED SLUGS SHARE
- * ONE.** A retired slug is still reachable (it redirects), so handing it to a
- * different member would silently point an old email-signature link at a
- * stranger's profile.
- * ⚠ The `@unique` on `slug` is the real guarantee; this loop just avoids making
- * the database reject us. A race is still possible and is handled by the caller
- * retrying on a unique violation.
- */
+/** Find a free slug for `base`, trying `base`, `base-2`, `base-3`, … */
 async function freeSlug(base: string): Promise<string> {
   const safe = RESERVED.has(base) ? `${base}-1` : base;
   for (let n = 1; n < 200; n++) {
@@ -45,12 +29,12 @@ async function freeSlug(base: string): Promise<string> {
     });
     if (!taken) return candidate;
   }
-  /* ⚠ 200 members with one name is not a case worth a prettier answer; a
+  /* 200 members with one name is not a case worth a prettier answer; a
      random suffix is still a working, unique URL. */
   return `${safe}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** ⚠ The member's live slug, or null if they have never had one. */
+/** The member's live slug, or null if they have never had one. */
 export async function currentSlug(profileId: string): Promise<string | null> {
   const row = await prisma.providerProfileSlug.findFirst({
     where: { profile_id: profileId, is_current: true },
@@ -60,14 +44,7 @@ export async function currentSlug(profileId: string): Promise<string | null> {
   return row?.slug ?? null;
 }
 
-/**
- * ⚠⚠ The member's live slug, minting one from their name if they have none.
- *
- * ⚠ Called when a member first needs a public URL — i.e. when the Visibility
- * card renders their "Your public link" row. ⚠⚠ Minting on READ is safe
- * because the slug alone grants nothing: `/in/<slug>` serves the MASKED preview
- * unless `public_name_at` is set, and that is a separate, explicit opt-in.
- */
+/** The member's live slug, minting one from their name if they have none. */
 export async function ensureSlug(profileId: string): Promise<string | null> {
   const existing = await currentSlug(profileId);
   if (existing) return existing;
@@ -78,8 +55,7 @@ export async function ensureSlug(profileId: string): Promise<string | null> {
   });
   if (!profile) return null;
   const base = slugifyName(profile.person.first_name, profile.person.last_name);
-  /* ⚠ A member with no usable name yet gets no slug rather than a slug like
-     `-2`. The Visibility card then shows nothing, which is honest. */
+  // A member with no usable name yet gets no slug rather than a slug like
   if (!base) return null;
 
   const slug = await freeSlug(base);
@@ -89,23 +65,12 @@ export async function ensureSlug(profileId: string): Promise<string | null> {
     });
     return slug;
   } catch {
-    /* ⚠⚠ A UNIQUE VIOLATION HERE MEANS A CONCURRENT MINT WON — so re-read
-       rather than retry the loop. ⚠ Returning null would make the card flicker
-       empty for a member who now HAS a slug. */
+    // A UNIQUE VIOLATION HERE MEANS A CONCURRENT MINT WON — so re-read
     return currentSlug(profileId);
   }
 }
 
-/**
- * ⚠⚠ The member edits their URL. The old slug is RETIRED, not deleted.
- *
- * ⚠⚠⚠ **RETIRING RATHER THAN DELETING IS THE WHOLE REASON THE TABLE EXISTS.**
- * A deleted slug 404s every link already in the wild AND frees the name for
- * somebody else. ⚠ Retired rows keep `@unique` doing its job and let
- * `/in/<old>` issue a 308.
- *
- * ⚠ Returns the new slug, or null when `wanted` is unusable.
- */
+/** The member edits their URL. The old slug is RETIRED, not deleted. */
 export async function changeSlug(
   profileId: string,
   wanted: string
@@ -123,23 +88,19 @@ export async function changeSlug(
     where: { slug: base },
     select: { profile_id: true, is_current: true },
   });
-  /* ⚠ Their OWN live slug is not "taken" — re-submitting the form unchanged
-     must not be an error. */
+  // Their OWN live slug is not "taken" — re-submitting the form unchanged
   if (taken && taken.profile_id !== profileId) return { error: "taken" };
   if (taken && taken.profile_id === profileId && taken.is_current) {
     return { slug: base };
   }
 
-  /* ⚠⚠ ONE TRANSACTION: retire every current row, then add the new one. Two
-     statements outside a transaction can leave a member with two live slugs or
-     none, and `check:public-profile` asserts exactly that invariant. */
+  // ONE TRANSACTION: retire every current row, then add the new one. Two
   await prisma.$transaction(async (tx) => {
     await tx.providerProfileSlug.updateMany({
       where: { profile_id: profileId, is_current: true },
       data: { is_current: false },
     });
-    /* ⚠ A row they once held and retired can be revived rather than duplicated
-       — the `@unique` would refuse a second row with the same slug. */
+    // A row they once held and retired can be revived rather than duplicated
     if (taken) {
       await tx.providerProfileSlug.update({
         where: { slug: base },
@@ -154,14 +115,7 @@ export async function changeSlug(
   return { slug: base };
 }
 
-/**
- * ⚠⚠ Resolve an incoming `/in/<slug>`.
- *
- * ⚠ Three outcomes, and the caller must treat them differently:
- *   · `{ profileId, canonical: true }`  → render
- *   · `{ profileId, canonical: false, slug }` → **308 to the live slug**
- *   · `null` → the "not available" page
- */
+/** Resolve an incoming `/in/<slug>`. */
 export async function resolveSlug(
   slug: string
 ): Promise<{ profileId: string; canonical: boolean; current: string | null } | null> {

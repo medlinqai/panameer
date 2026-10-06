@@ -121,9 +121,7 @@ export async function POST(request: Request) {
     }
   } catch (e) {
     if (e instanceof PlanError) {
-      /** ⚠⚠ THE REASON REACHES THE SCREEN. `store.ts` writes these messages for
-       *  a person — "A plan is two levels deep" — and swallowing them into a
-       *  generic 400 is how Tab-does-nothing becomes unexplainable. */
+      /** THE REASON REACHES THE SCREEN. `store.ts` writes these messages for */
       return NextResponse.json({ error: e.message }, { status: e.code === "NOT_FOUND" ? 404 : 400 });
     }
     console.error("[plan] unexpected", e);

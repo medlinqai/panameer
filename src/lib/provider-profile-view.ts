@@ -312,9 +312,6 @@ export async function getProviderProfileView(
     })),
 
     // brief_project_model_v2 — the full card payload. `clientName` is sent as
-    // stored; the REDACTION is applied at render (see `ProjectCard`), so the
-    // one rule lives in one place and the future Plus tier can lift it without
-    // touching every query.
     projects: profile.projects.map((p) => ({
       id: p.id,
       name: p.name,

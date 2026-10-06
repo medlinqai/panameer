@@ -44,35 +44,17 @@ export function LegalPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-ink">
-      {/*
-        THE PUBLIC HEADER, not a bare logo (brief_nav_casing_consistency WS-B).
-
-        These pages rendered a one-off strip with just the wordmark, so a reader
-        who landed on the Privacy Policy from a footer link had no way back into
-        the site — the logo went home and that was the whole nav. Legal pages
-        are public content, and the model says public means MARKETING_NAV.
-      */}
+      {/* THE PUBLIC HEADER, not a bare logo (brief_nav_casing_consistency WS-B). */}
       <MarketingHeader />
 
-      {/*
-        TWO COLUMNS ABOVE lg, ONE BELOW. The document list is genuinely useful
-        on a desktop reading session and pure noise above the text on a phone,
-        so on narrow screens it moves to the END of the page — present for
-        someone who reaches the bottom and wants the next document, absent for
-        everyone scrolling to read this one.
-      */}
+      {/* TWO COLUMNS ABOVE lg, ONE BELOW. The document list is genuinely useful */}
       <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-6 py-12 lg:flex-row lg:gap-12">
         <aside className="order-2 w-full shrink-0 border-t border-line pt-8 lg:order-1 lg:w-[248px] lg:border-0 lg:pt-0">
           <LegalDocNav current={self ?? undefined} />
         </aside>
 
         <main className="order-1 min-w-0 max-w-3xl flex-1 lg:order-2">
-        {/*
-          VERSION AND EFFECTIVE DATE TOGETHER. A legal document is identified by
-          both, and the effective date is the one a reader actually needs — so
-          it says outright that there isn't one yet rather than quietly printing
-          only the version and letting the page look settled.
-        */}
+        {/* VERSION AND EFFECTIVE DATE TOGETHER. A legal document is identified by */}
         <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
           Version {version} · Effective date: none yet (draft)
         </p>
@@ -102,13 +84,7 @@ export function LegalPage({
           </p>
         </div>
 
-        {/*
-          THE SIMPLE SUMMARY (legal_center design reference). Plain English, one
-          sentence, and explicitly NOT part of the agreement — a summary that
-          could be mistaken for the terms would be worse than no summary, since
-          a reader would stop at it. The text is the same line the index uses,
-          so the two can never describe a document differently.
-        */}
+        {/* THE SIMPLE SUMMARY (legal_center design reference). Plain English, one */}
         {summary && (
           <div className="mt-6 rounded-brand border-l-[3px] border-magenta bg-magenta/[0.04] px-5 py-4">
             <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-magenta">
@@ -162,26 +138,14 @@ export function LegalPage({
   );
 }
 
-/**
- * The anchor for a heading.
- *
- * A NUMBERED SECTION ANCHORS ON ITS NUMBER — `#section-7`, not
- * `#7-non-circumvention`. The cross-references in the Terms of Use and Privacy
- * Policy cite "Section 7 of our User Agreement", and a title-derived anchor
- * would break the moment counsel reworded a heading, which is exactly the sort
- * of edit a legal review makes. The number is the stable part.
- */
+/** The anchor for a heading. */
 export function headingId(text: string): string {
   const numbered = /^(\d+(?:\.\d+)*)\.?\s/.exec(text);
   if (numbered) return `section-${numbered[1].replace(/\./g, "-")}`;
   return slug(text);
 }
 
-/**
- * The transcribed tables mark their label column with markdown bold. The first
- * column is already styled as the label, so the asterisks would render as
- * literal asterisks in a legal document.
- */
+/** The transcribed tables mark their label column with markdown bold. The first */
 function stripBold(cell: string): string {
   return cell.replace(/\*\*/g, "");
 }
@@ -226,17 +190,7 @@ function LegalBlock({
         </h4>
       );
     case "table":
-      /*
-        THE THREE PRIVACY TABLES, transcribed by hand from the source after
-        pdf-to-text shredded them cell-by-cell.
-
-        MOBILE IS THE HARD PART. A four-column table of long prose cells cannot
-        shrink to 375px, so it SCROLLS INSIDE ITS OWN BOX rather than pushing
-        the page sideways — a legal page whose body scrolls horizontally is
-        unreadable on a phone in a way that a scrollable table is not. The
-        min-width keeps the columns legible instead of collapsing to one word
-        per line, and the header repeats on scroll via a sticky row.
-      */
+      // THE THREE PRIVACY TABLES, transcribed by hand from the source after
       return (
         <div className="my-6 overflow-x-auto rounded-brand border border-line">
           <table className="w-full min-w-[720px] border-collapse text-left text-[13.5px]">
@@ -276,14 +230,7 @@ function LegalBlock({
         </div>
       );
     case "gap":
-      /*
-        A LABELLED HOLE. The source PDF's tables were extracted cell-by-cell in
-        column order, so their rows cannot be rebuilt — and rebuilding them by
-        guessing which cell belongs to which row would mean inventing the
-        contents of a privacy policy. The reader is told a table is missing and
-        roughly how big it was, which is the only honest thing this page can say
-        about text it does not have.
-      */
+      // A LABELLED HOLE. The source PDF's tables were extracted cell-by-cell in
       return (
         <p className="my-6 rounded-brand border border-dashed border-line bg-bg-soft px-5 py-4 text-[14px] leading-relaxed text-ink-2">
           <b className="font-bold text-ink">A table is missing here.</b> About{" "}

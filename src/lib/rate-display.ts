@@ -22,8 +22,7 @@ export function rateDisplay(r: RateFields): string | null {
 
   if (r.hourlyRateCents != null) return formatCents(r.hourlyRateCents, currency);
 
-  /* ⚠ ONE HALF OF A RANGE IS NOT A RANGE, and it is not a rate either. Falling
-     back to whichever bound exists would advertise a floor as a price. */
+  // ONE HALF OF A RANGE IS NOT A RANGE, and it is not a rate either. Falling
   return null;
 }
 

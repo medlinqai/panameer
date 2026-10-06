@@ -38,11 +38,7 @@ console.log("\n=== the enum mirrors schema.prisma ===");
 
 console.log("\n=== ⚠ every basis references a variable the wizard COLLECTS ===");
 {
-  /*
-    The wizard's collected answer variables, read from the payload it POSTs plus the
-    `Basics` type. Derived from the source rather than re-listed here — a list in this file
-    would be a third copy to forget.
-  */
+  // The wizard's collected answer variables, read from the payload it POSTs plus the
   const answersBlock = wizard.slice(
     wizard.indexOf("answers: {"),
     wizard.indexOf("},", wizard.indexOf("answers: {"))
@@ -51,13 +47,7 @@ console.log("\n=== ⚠ every basis references a variable the wizard COLLECTS ===
     wizard.indexOf("type Basics = {"),
     wizard.indexOf("};", wizard.indexOf("type Basics = {"))
   );
-  /*
-    ⚠ COMMENT LINES ARE STRIPPED FIRST, AND THAT MATTERS FOR SOUNDNESS. Both blocks carry
-    `⚠ Scott: "..."` quotes, and `Scott:` matches a `word:` pattern — so the collected set
-    picked up "Scott" and would have accepted a basis that required a field named after any
-    word appearing as `Word:` in a comment. Over-inclusion is the DANGEROUS direction for
-    this guard: it makes a bogus basis pass. Stripped, the set is only real code.
-  */
+  // COMMENT LINES ARE STRIPPED FIRST, AND THAT MATTERS FOR SOUNDNESS. Both blocks carry
   const decomment = (t: string) =>
     t
       .split("\n")

@@ -51,20 +51,13 @@ export async function getColleagueSuggestions(
           specializations: { select: { specialization_id: true } },
         },
       },
-      /* ⚠⚠ `country` DROPPED — IT WAS NEVER READ (`E729` WS-C, ruling 5). `E728`'s inventory
-         found it selected here and used nowhere; only `state` is consulted. ⚠ A dead select
-         is a column this file appears to depend on and does not, which is exactly what makes
-         a migration look bigger than it is. */
+      // found it selected here and used nowhere; only `state` is consulted. A dead select
       site: { select: { addresses: { select: { state: true }, take: 1 } } },
     },
   });
   if (!me?.providerProfile) return [];
 
-  /*
-    ⚠ EXCLUDE ANYONE ALREADY CONNECTED IN ANY STATE — including DECLINED.
-    Re-suggesting somebody who said no is exactly what makes a decline
-    meaningless, and it is the same reasoning that keeps the row.
-  */
+  // EXCLUDE ANYONE ALREADY CONNECTED IN ANY STATE — including DECLINED.
   const known = await prisma.connection.findMany({
     where: {
       kind: "COLLEAGUE",
@@ -104,8 +97,7 @@ export async function getColleagueSuggestions(
   });
   const add = (p: Row, rule: SuggestionRule, reason: string) => {
     const uid = p.user?.id;
-    /* ⚠ NO LOGIN, NO SUGGESTION — a request to a person with no account goes
-       nowhere, and inviting a non-member needs the mail pipe this brief excludes. */
+    // NO LOGIN, NO SUGGESTION — a request to a person with no account goes
     if (!uid || excludeUsers.has(uid) || out.has(uid)) return;
     out.set(uid, { person: card(p), rule, reason });
   };
@@ -132,10 +124,7 @@ export async function getColleagueSuggestions(
     for (const t of theirs) {
       const b: JobSpan = { start: t.start_date, end: t.end_date, isCurrent: t.is_current };
       if (!overlaps(a, b, now)) continue;
-      /* ⚠ THE REASON NAMES THE EMPLOYER AND THE YEARS — the fact, not a score.
-         ⚠ `E549` — the shared span ends at the EARLIER effective end, and reads
-         "present" only when both are still there. Both ends are known here:
-         `overlaps` refused any unknown end. */
+      // THE REASON NAMES THE EMPLOYER AND THE YEARS — the fact, not a score.
       const ae = effectiveEnd(a, now)!;
       const be = effectiveEnd(b, now)!;
       const both = span(
@@ -193,8 +182,7 @@ export async function getColleagueSuggestions(
     });
     for (const t of theirs) {
       const spec = t.specializations[0]?.specialization?.name;
-      /* ⚠ NO NAME, NO SUGGESTION. "Same specialization" with nothing to name is
-         the unexplained row this rule exists to avoid. */
+      // NO NAME, NO SUGGESTION. "Same specialization" with nothing to name is
       if (!spec) continue;
       add(t.person, "specialization", `Both in ${spec}, both in ${myState}`);
     }

@@ -53,9 +53,7 @@ export function StartGroup() {
           {error}
         </p>
       )}
-      {/* ⚠⚠ RULE 11: the LABEL is Title Case, and the BUSY string is a status
-          sentence, which stays a sentence. Scott, 2026-09-16: the test is
-          whether it names an action or reports progress. */}
+      {/* RULE 11: the LABEL is Title Case, and the BUSY string is a status */}
       <button
         type="submit"
         disabled={busy || title.trim().length < 3}

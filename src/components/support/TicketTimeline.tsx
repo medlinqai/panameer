@@ -15,8 +15,7 @@ function sentence(e: TimelineEntry, names: Map<string, string>): string {
     case "filed":
       return `${e.actorName} filed the ticket`;
     case "assigned":
-      /* ⚠ "assigned it to themselves" reads better than repeating the name, and
-         it is also the honest description of what happened. */
+      // it is also the honest description of what happened.
       return e.toValue === e.actorPersonId
         ? `${e.actorName} assigned it to themselves`
         : `${e.actorName} assigned it to ${who(e.toValue)}`;
@@ -42,9 +41,7 @@ export function TicketTimeline({
   const nameMap = new Map(Object.entries(names));
 
   if (entries.length === 0) {
-    /* ⚠⚠ A REAL EMPTY STATE, NOT A BLANK. The timeline begins at the `filed`
-       event, and a ticket with none is a ticket from before `E761` whose backfill
-       has not run — saying so beats an empty box. */
+    // A REAL EMPTY STATE, NOT A BLANK. The timeline begins at the `filed`
     return <p className="mt-3 text-[14px] text-ink-2">No history recorded yet.</p>;
   }
 
@@ -56,8 +53,7 @@ export function TicketTimeline({
             <span className="font-mono">{when(e.at)}</span>
             <span className="mx-2 text-ink-3">·</span>
             <span className="text-ink">{sentence(e, nameMap)}</span>
-            {/* ⚠ The from → to pair is shown for status and priority, which are
-                the two kinds where the VALUES are the information. */}
+            {/* The from → to pair is shown for status and priority, which are */}
             {(e.kind === "status" || e.kind === "priority") && (
               <span className="ml-2 text-ink-2">
                 {e.fromValue ?? "—"} → <span className="font-semibold text-ink">{e.toValue}</span>

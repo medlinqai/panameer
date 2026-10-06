@@ -26,28 +26,13 @@ export const SEO_DESCRIPTION =
   "experts, or connect your ERP and search, request, order and settle services " +
   "without leaving your system of record.";
 
-// ---------------------------------------------------------------------------
 // THE MARKETING PAGES (brief_home_rebuild_08_09).
-//
-// Every string the buyer `/` and seller `/find-work` pages render lives
-// here, lifted verbatim from the approved mockups. The brief is explicit that
-// new copy belongs in this module rather than inline in components, and the
-// reason is the one this file has always had: copy typed into a component is
-// copy that gets re-worded in one place and not the other.
-//
-// Grouped by section, in page order, so a section's words can be read without
-// opening the component that renders them.
-// ---------------------------------------------------------------------------
 
 /** The hero, per audience. Buyer is `/`; seller is `/find-work`. */
 export const HERO_COPY = {
   buyer: {
     kicker: "Continuous Transformation",
-    /*
-      brief_public_pages_ia — this hero now only ever renders on /hire-talent,
-      so the subhead speaks to somebody who has already decided to hire rather
-      than to a cold visitor who has not.
-    */
+    // brief_public_pages_ia — this hero now only ever renders on /hire-talent
     subhead:
       "Search real, rated experts by the system they actually run. Engage them " +
       "for two hours or six months — one contract, one payment, no employment " +
@@ -67,19 +52,7 @@ export const HERO_COPY = {
   },
   provider: {
     kicker: "Go Direct",
-    /*
-      WS-5 — "Be your own brand" is bound WHOLE.
-
-      Round 1 bound only "your\u00A0own", which held that pair and moved the
-      break to "own / brand" — a bind relocates a break, it does not remove
-      one, so binding half a phrase just picks a different place to cut it.
-      All four words are bound now.
-      `text-balance` evens the LINE LENGTHS; it has no opinion about where in a
-      phrase the break lands, and at every sensible measure this sentence split
-      between "Be your" and "own brand". Widening the container just moves
-      which phrase gets cut. A non-breaking space is the only fix that holds at
-      every width, including the ones a phone picks.
-    */
+    // WS-5 — "Be your own brand" is bound WHOLE.
     subhead:
       "Find consistent work. Break the hourly ceiling. " +
       "Be\u00A0your\u00A0own\u00A0brand — we handle everything that isn't the work.",
@@ -98,13 +71,7 @@ export const HERO_COPY = {
   },
 } as const;
 
-/**
- * The audience toggle's labels.
- *
- * Longer and more literal than the "Hire an Expert / Work & Earn" they replace,
- * because they have to be self-describing in a hero with no surrounding
- * explanation: a first-time visitor reads one line and knows which is them.
- */
+/** The audience toggle's labels. */
 export const AUDIENCE_TOGGLE = {
   buyer: "I Hire Experts & Buy Services",
   provider: "I Sell Hourly & Packaged Services",
@@ -114,31 +81,13 @@ export const AUDIENCE_TOGGLE = {
 export const THREE_WAYS = {
   eyebrow: "Why Panameer",
   headline: "Three ways to get the work done.",
-  /*
-    WS-5 — "honest\u00A0comparison" is bound, and the em dash deliberately is
-    NOT. `text-balance` evens line LENGTHS and has no opinion about where
-    inside a phrase the break falls, so this split between "honest" and
-    "comparison"; binding the pair fixes that.
-
-    ⚠ BINDING THE DASH TOO MADE IT WORSE, which is worth recording because the
-    instinct is to bind more. "honest comparison —" as one unit no longer fit
-    beside "You have options. Here's the", so the whole unit wrapped and line
-    one ended on the article. A bind can only ever move a break; it cannot
-    create room.
-  */
+  // WS-5 — "honest\u00A0comparison" is bound, and the em dash deliberately is
   lead: "You have options. Here's the honest\u00A0comparison — and where Panameer fits.",
   ways: [
     {
       tag: "Go it alone",
       title: "Hire an independent",
-      /*
-        ⚠ NEVER "cheaper" — not even about the alternative
-        (`panameer_virtual_firm_identity.md`). The moment price framing appears
-        anywhere on the page, the page is competing on price, and the comparison
-        the reader then runs is Panameer against offshore. The DIY card's real
-        argument was never the invoice anyway: it is that the invoice is the
-        only thing that is smaller.
-      */
+      // NEVER "cheaper" — not even about the alternative
       blurb: "The smallest invoice — and you carry everything else.",
       points: [
         { ok: false, text: "Unvetted, no shared ratings" },
@@ -158,11 +107,7 @@ export const THREE_WAYS = {
     },
     {
       tag: "Panameer",
-      /*
-        Bound on both sides of the break: "direct —" so the dash cannot start a
-        line, and "with a safety net" so the tail stays whole. The only break
-        left is between them, which is the one place this title should break.
-      */
+      // Bound on both sides of the break: "direct —" so the dash cannot start a
       title: "Go direct\u00A0— with\u00A0a\u00A0safety\u00A0net",
       blurb: "The same senior expert, direct. None of the markup.",
       badge: "The third way",
@@ -177,11 +122,7 @@ export const THREE_WAYS = {
 
 /** The four-beat video sequence, framed per audience. */
 export const SEQUENCE_COPY = {
-  /*
-    WS-4 — the eyebrow names the VALUE, per audience, where it used to count
-    the steps. "Four Steps, Start to Settle" described the graphic underneath
-    it, which the graphic already does; this says who the four steps are for.
-  */
+  // WS-4 — the eyebrow names the VALUE, per audience, where it used to count
   eyebrow: {
     buyer: "How Panameer Creates Value for Service Buyers",
     provider: "How Panameer Creates Value for Service Providers",
@@ -232,13 +173,7 @@ export const SEQUENCE_COPY = {
       {
         word: "Create",
         cap: "Do the Work",
-        /*
-          NOT "our experts" here, and that is the point of reading the rule
-          rather than running find-and-replace: this is the PROVIDER page, where
-          the provider IS the expert. "Deliver with our experts" would tell a
-          consultant that somebody else does their work. The banned phrase is
-          removed by rewriting the sentence, not by flipping the pronoun.
-        */
+        // NOT "our experts" here, and that is the point of reading the rule
         body: "Deliver your way, augmented by your own AI. We handle the paperwork.",
       },
       {
@@ -250,25 +185,7 @@ export const SEQUENCE_COPY = {
   },
 } as const;
 
-/*
-  Buyer §4 — the ERP punchout loop.
-
-  WS-3 — THE VOCABULARY RULE, and this section is where it bites hardest
-  because both kinds of noun appear in the same five cards.
-
-    Panameer transactions are NAMED OBJECTS and take capitals: Work Order,
-    Work Request. They are things this platform creates and the user will see
-    under those names in the product.
-
-    Generic ERP transactions are COMMON NOUNS and stay lowercase: purchase
-    order, requisition, service receipt. They belong to the customer's ERP,
-    not to us, and capitalising them would quietly claim them.
-
-  "PO" keeps its capitals as an acronym. The step TITLES are sentence case, so
-  "Service receipt" and "Requisition" are capitalised as the first word of a
-  title rather than as proper nouns — which is why "Work Order" mid-title is
-  the one that stays fully capitalised.
-*/
+// Buyer §4 — the ERP punchout loop.
 export const PUNCHOUT_COPY = {
   eyebrow: "Extend Your ERP",
   headline: "Punch out for talent — not just parts.",
@@ -358,12 +275,7 @@ export const VALUE_STACK = {
     "engagement after spins up with zero contracting friction.",
 } as const;
 
-/**
- * The AI strip, per audience.
- *
- * ⚠ `soon` IS A LABEL AND NOTHING ELSE. Those two items are not built; the tag
- * is the whole honesty mechanism, so it must never become a link.
- */
+/** The AI strip, per audience. */
 export const AI_STRIP = {
   lead: "Panameer is AI-native",
   tags: {
@@ -400,15 +312,7 @@ export const TWO_PAINS = {
   ],
 } as const;
 
-/*
-  Seller §3 — every way to sell expertise.
-
-  WS-6 — CUT TO FRAGMENTS. Scott's note is that /find-work reads as
-  run-ons. These card bodies were full sentences with a subordinate clause
-  each; in a five-across grid at 12.5px that is four lines per card and the row
-  becomes a wall. A fragment per card is the right density for a scan, and the
-  detail belongs on the page that sells each one.
-*/
+// Seller §3 — every way to sell expertise.
 export const OMNI_CHANNEL = {
   eyebrow: "Omni-Channel Monetization",
   headline: "Sell your expertise every way there is.",
@@ -438,14 +342,7 @@ export const OMNI_CHANNEL = {
   ],
 } as const;
 
-/**
- * Seller §5 — Go Direct, and the Bionic Consultant.
- *
- * ⚠ THE BIONIC PANEL SAYS "BRING YOUR AI", NOT "WE GIVE YOU AI". Panameer does
- * not supply the consultant with a model; it helps them package and label what
- * they already use. The distinction is the difference between a positioning
- * line and a product claim we cannot honour.
- */
+/** Seller §5 — Go Direct, and the Bionic Consultant. */
 export const GO_DIRECT = {
   eyebrow: "Go Direct",
   headline: "Stop being the marked-up resource.",
@@ -466,16 +363,7 @@ export const GO_DIRECT = {
   },
 } as const;
 
-/**
- * The closing band, per audience.
- *
- * ⚠ THE HOME HAS ITS OWN (brief_home_polish_method WS-2). The buyer band ends
- * on "Describe what you need" + "Talk to us" — two asks, neither of which is
- * one of the home's two exits. On Hire Talent that is exactly right, because
- * the reader arrived intending to hire. On the home it is a third and fourth
- * competing action at the very bottom of a funnel whose entire job is the
- * assessment.
- */
+/** The closing band, per audience. */
 export const CLOSING_CTA = {
   home: {
     headline: "See where you stand. Free.",
@@ -501,39 +389,16 @@ export const CLOSING_CTA = {
 export const ASSESSMENT_COPY = {
   eyebrow: "See Where You Stand on AI Adoption",
   headline: "Assess your adoption by capability domain",
-  /*
-    WS-3 — StratERP density. The lead ran to two sentences of throat-clearing
-    ("Transformation isn't slowing down — it's accelerating") before reaching
-    the offer. A firm presenting its method states the method; the reader did
-    not come for a trend observation.
-  */
+  // WS-3 — StratERP density. The lead ran to two sentences of throat-clearing
   leadStrong: "Every process you run, scored.",
   lead: "Where you sit today, paper to AI-driven — and the gaps worth closing first.",
   cta: "See where you stand →",
   ctaSub: "Sign in to be first in line.",
 } as const;
 
-// ---------------------------------------------------------------------------
 // THREE PAGES, ONE AUDIENCE EACH (brief_public_pages_ia).
-//
-// The home used to do all three jobs at once — talent search, buyer value and
-// the assessment — so every visitor met two thirds of a page written for
-// somebody else. Each page now has one audience and one job, and the content
-// below is the same content re-allocated, not new claims.
-//
-// VOICE: second person, active, what YOU get. "You learn where you stand",
-// never "we teach you". The distinction is not stylistic — "we teach" describes
-// our activity and leaves the reader working out what it buys them.
-// ---------------------------------------------------------------------------
 
-/**
- * THE FOUR BEATS, per page.
- *
- * Learn · Connect · Create · Settle is the through-line on all three pages, but
- * it means something different to each audience, so each page states its own
- * version rather than repeating one generic set. On the HOME the "Learn" beat
- * IS the assessment — that is the page's whole job.
- */
+/** THE FOUR BEATS, per page. */
 export const PAGE_BEATS = {
   home: {
     eyebrow: "Learn. Connect. Create. Settle.",
@@ -611,65 +476,20 @@ export const HOME_HERO = {
     "A free operating-maturity assessment, in minutes. All it costs is your email.",
   cta: "Start the free assessment",
   ctaSub: "Sign in to be first in line.",
-  /*
-    ⚠ HONEST FRAMING, and it is load-bearing. There is no scoring engine behind
-    this yet, so the hero says what the assessment IS — a framework read across
-    the processes you run — rather than implying a live measurement. The
-    dashboard beside it is labelled "Sample Read" for the same reason.
-  */
-  /*
-    WS-3 — halved. It said the same thing twice ("what you'll be scored
-    against" / "not your data") and the dashboard beside it already carries a
-    "Sample Read" chip and its own caption. Honesty does not get more honest by
-    being repeated; it gets skipped.
-  */
+  // HONEST FRAMING, and it is load-bearing. There is no scoring engine behind
+  // WS-3 — halved. It said the same thing twice ("what you'll be scored
   frameworkNote:
     "Sample read — the framework below is what you're scored against.",
 } as const;
 
-/**
- * HOME — OUR METHOD, the section that proves this is a firm.
- *
- * ── WHY IT IS "METHOD" AND NOT "ROADMAP" ─────────────────────────────────────
- *
- * Panameer's positioning is a VIRTUAL FIRM, not a marketplace
- * (`panameer_virtual_firm_identity.md`): a marketplace has no point of view —
- * it lists people and leaves you to it. A firm has a method, produces
- * deliverables, and puts a human at the point of accountability. This section
- * is where that claim is made or lost, so it is written as the method rather
- * than as a timeline of activity.
- *
- * EVERY CARD NAMES AN OUTPUT. "Score and prioritise" is us describing our
- * activity; "your maturity read + a prioritized gap list" is a thing the client
- * receives. Firms are bought on deliverables, and an activity list is what a
- * marketplace would show.
- *
- * TIME LABELS STAY. "Weeks 1–2" sells to an owner who wants to know when;
- * "Analyze / Design / Deploy" is the AIM method's own vocabulary and belongs
- * back-office. The method is the moat — it does not need to be recited to be
- * felt.
- *
- * THE LAST CARD CLOSES THE LOOP. Re-score plus an alert when a new solution
- * lands for one of your gaps is what makes "continuous transformation" literal
- * instead of a tagline; a four-step plan that ends is a project, and a project
- * is a one-off.
- */
+/** HOME — OUR METHOD, the section that proves this is a firm. */
 export const ROADMAP_COPY = {
   eyebrow: "Our method",
   headline: "The assessment is the first step of a method.",
   lead: "Every gap becomes a deliverable, with the expertise attached.",
-  /*
-    ⚠ ILLUSTRATIVE. The AIM tool is a later brief; this is the shape of what an
-    assessment produces, not a plan from anybody's data. Said on the page.
-  */
+  // ILLUSTRATIVE. The AIM tool is a later brief; this is the shape of what an
   note: "Illustrative — an example sequence.",
-  /*
-    THE HUMAN ANCHOR, and it is the most important line in the section.
-    Everything above it could be automated; a named senior person who translates
-    the read and stands behind the quality of the consultants is what makes this
-    a firm rather than software that sold you something. The page PROMISES the
-    coordinator — assignment logic is a later build.
-  */
+  // THE HUMAN ANCHOR, and it is the most important line in the section.
   coordinator:
     "When your assessment completes, a coordinator is assigned — a senior person who translates the read, scopes the work, and stands behind the experts on it.",
   steps: [
@@ -696,13 +516,7 @@ export const ROADMAP_COPY = {
   ],
 } as const;
 
-/**
- * HOME — the condensed comparison, which must CLOSE ON TALENT.
- *
- * Every value block on the home ends by pointing at the experts, because the
- * home's job is to hand a warmed-up buyer to Hire Talent. A value section that
- * ends on its own argument is a dead end on a funnel page.
- */
+/** HOME — the condensed comparison, which must CLOSE ON TALENT. */
 export const HOME_TEASER = {
   eyebrow: "The third way",
   headline: "You have options. Here's the honest comparison.",
@@ -712,35 +526,14 @@ export const HOME_TEASER = {
 
 /** HIRE TALENT hero. */
 export const HIRE_HERO = {
-  /*
-    The eyebrow must not restate the headline. First pass set both to "Hire
-    pre-vetted experts, direct" and the hero read the same sentence twice in
-    two type sizes — the eyebrow's job is to say who this page is for, so it
-    does that instead.
-  */
+  // The eyebrow must not restate the headline. First pass set both to "Hire
   kicker: "For teams ready to hire",
   headline: "Hire pre-vetted experts, direct.",
   subhead:
     "Search real, rated experts by the system they actually run. Engage them for two hours or six months — one contract, one payment.",
 } as const;
 
-/**
- * ── THE THREE BLOCK-2 DESTINATION PAGES: PLACEHOLDER HERO COPY ───────────────
- *
- * ⚠ EVERY STRING BELOW IS A PLACEHOLDER AND SAYS SO IN THE STRING ITSELF.
- *
- * `brief_public_ia_block2` WS-5: Scott writes the real copy after he walks the
- * three pages, so these exist to give each page a hero of realistic SHAPE
- * without putting words in his mouth. The `PLACEHOLDER — ` prefix is not a
- * comment — it renders on screen — precisely so it cannot survive a walk or a
- * screenshot unnoticed the way an unmarked draft would.
- *
- * They are deliberately descriptive rather than persuasive: a placeholder that
- * reads like finished marketing is the one that ships by accident.
- *
- * ⚠ REPLACING THESE IS A COPY EDIT IN ONE PLACE. Do not scatter hero strings
- * into the page files — that is why HIRE_HERO above lives here too.
- */
+/** THE THREE BLOCK-2 DESTINATION PAGES: PLACEHOLDER HERO COPY */
 export const ENTERPRISE_HERO = {
   kicker: "PLACEHOLDER — Enterprise",
   headline: "PLACEHOLDER — headline about ERP integration goes here.",
@@ -752,9 +545,7 @@ export const WHY_HERO = {
 } as const;
 
 export const BUY_SERVICES_HERO = {
-  /* ⚠ "Shop" since E222 (2026-08-19). Still a PLACEHOLDER awaiting Scott's copy —
-     the rename only keeps the page's own eyebrow from saying "Buy Services" on a
-     page the header now calls Shop. */
+  // the rename only keeps the page's own eyebrow from saying "Buy Services" on a
   kicker: "PLACEHOLDER — Shop",
   headline: "PLACEHOLDER — headline about packaged services goes here.",
 } as const;

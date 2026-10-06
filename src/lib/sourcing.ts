@@ -44,18 +44,7 @@ export function assertPricingShapesAgree(proposalFields: string[], orderFields: 
     );
 }
 
-/**
- * ⚠⚠ `basis` ON A BID LINE MUST MATCH ITS WORK-REQUEST LINE.
- *
- * A provider cannot answer an hourly request with a lump sum. Not because the
- * number would be wrong but because the two are not comparable: a shortlist that
- * ranks $150/hr beside $18,000 is ranking nothing, and the buyer cannot see that
- * from the grid.
- *
- * ⚠ IF THE PRODUCT EVER NEEDS THAT, IT IS A COUNTER-OFFER AND A DIFFERENT
- * FEATURE — a second document with its own status, not a relaxed check here. The
- * error code says so, so the day someone hits it the next step is legible.
- */
+/** A provider cannot answer an hourly request with a lump sum. Not because the */
 export function assertProposalLineBasis(proposalBasis: LineBasis, workRequestLineBasis: LineBasis): void {
   if (proposalBasis !== workRequestLineBasis)
     throw new SourcingError(
@@ -64,24 +53,13 @@ export function assertProposalLineBasis(proposalBasis: LineBasis, workRequestLin
     );
 }
 
-/**
- * A bid line is a work-order line waiting to happen, so it is held to the SAME
- * shape rule.
- *
- * ⚠ `assertLineShape` IS IMPORTED, NOT REIMPLEMENTED. A second copy of
- * "RATE needs a quantity, AMOUNT must not carry one" is the drift this whole
- * work stream exists to prevent, one level up.
- */
+/** A bid line is a work-order line waiting to happen, so it is held to the SAME */
 export function assertProposalLine(line: LineShape, workRequestLineBasis: LineBasis): void {
   assertProposalLineBasis(line.basis, workRequestLineBasis);
   assertLineShape(line);
 }
 
-/**
- * ⚠⚠ A BID WITH NO CLOSING DATE NEVER CLOSES, and a requester cannot shortlist
- * against an open-ended set — there is no moment at which the set is final.
- * DRAFT may be incomplete; ISSUING is what requires the date.
- */
+/** A BID WITH NO CLOSING DATE NEVER CLOSES, and a requester cannot shortlist */
 export function assertIssuable(itb: { responds_by?: Date | null }): void {
   if (itb.responds_by == null)
     throw new SourcingError(
@@ -90,57 +68,23 @@ export function assertIssuable(itb: { responds_by?: Date | null }): void {
     );
 }
 
-/**
- * ── ⚠⚠⚠ MAY THIS INVITE STILL BE PROPOSED AGAINST? (`P2-A8-E621` WS-A) ────
- *
- * ⚠ WS-A item 5: *"A declined or expired `ProposalRequest` cannot be proposed
- * against. **Import the predicate; do not restate it.**"* ⚠⚠ It did not exist,
- * so it is created HERE — once, beside its siblings — rather than inlined in
- * the writer, which is what "do not restate it" is guarding against.
- *
- * ── ⚠⚠ TWO WAYS AN INVITE CLOSES, AND BOTH MUST BE CHECKED ───────────────
- *
- * ⚠ **A STATUS** — `DECLINED` (the provider said no), `WITHDRAWN` (the buyer
- * pulled it), `EXPIRED` (already marked), and `DRAFT` (never issued at all: an
- * invite nobody sent is not an invite).
- * ⚠⚠⚠ **AND A DATE**, WHICH IS THE HALF A STATUS CHECK ALONE WOULD MISS.
- * `responds_by` passing does NOT rewrite the row to `EXPIRED` — nothing sweeps
- * these — so an invite can be `ISSUED` in the database and closed in fact. ⚠ A
- * predicate that trusted the status would let a provider bid a week late.
- *
- * ⚠ `now` IS INJECTED so the rule is testable at a chosen instant rather than
- * only at whatever time the suite happens to run.
- */
+/** MAY THIS INVITE STILL BE PROPOSED AGAINST? WS-A) */
 export type InviteForProposal = {
   status: ProposalRequestStatus;
   responds_by?: Date | null;
 };
 
 export function inviteIsOpen(itb: InviteForProposal, now: Date = new Date()): boolean {
-  /* ⚠ Only these two statuses are live. `RESPONDED` is deliberately live too:
-     editing a proposal before a decision REPLACES it (WS-A item 3), so the
-     invite it came from must still be open to receive the replacement. */
+  // Only these two statuses are live. `RESPONDED` is deliberately live too
   const liveStatus =
     itb.status === "ISSUED" || itb.status === "VIEWED" || itb.status === "RESPONDED";
   if (!liveStatus) return false;
-  /* ⚠⚠ A CLOSING DATE THAT HAS PASSED CLOSES IT, whatever the status says. */
+  /* A CLOSING DATE THAT HAS PASSED CLOSES IT, whatever the status says. */
   if (itb.responds_by != null && itb.responds_by.getTime() < now.getTime()) return false;
   return true;
 }
 
-/**
- * ── ⚠⚠ WHO MAY SEE A DECLINE ────────────────────────────────────────────────
- *
- * `E366`'s rule, unchanged: **the decline shows to the REQUESTER who issued the
- * ITB, never to other buyers, and never as a mark on the provider.** *"A recorded
- * refusal becomes a scarlet letter on a marketplace."*
- *
- * ⚠ THE PROVIDER SEES THEIR OWN — declining and then not being able to see that
- * you declined is a different bug. What nobody sees is ANOTHER provider's, and
- * what does not exist anywhere is a COUNT: no decline count, no decline rate, no
- * responsiveness score. `check:sourcing` asserts that absence across the tree,
- * because the aggregate is the scarlet letter and a single row is not.
- */
+/** WHO MAY SEE A DECLINE */
 export function canSeeDecline(input: {
   viewerPersonId: string;
   invitedByPersonId: string;
@@ -156,21 +100,7 @@ export function canSeeDecline(input: {
    WS-2 · THE TEST
    ═════════════════════════════════════════════════════════════════════════ */
 
-/**
- * ⚠⚠ A TEST CAN ONLY BE REQUESTED WHERE THE PATH HAS A **PUBLISHED**
- * ASSESSMENT.
- *
- * Both halves are refusals, and the second is the one that would have been
- * missed: a path with a DRAFT assessment LOOKS testable — the row exists — and
- * `gradeAttempt()` refuses to grade it, so the provider gets an ITB, opens the
- * test and hits a wall they cannot clear.
- *
- * ⚠ MEASURED ON THIS TRUNK, 2026-09-07: **23 learning paths, 8 carry an
- * assessment row, and only 2 of those are PUBLISHED** (Basic Procurement,
- * Advanced Procurement). `E366`'s *"8 of 23"* counted ROWS, before
- * `LearnAssessment.status` existed and defaulted every existing set to DRAFT.
- * **The number that governs this rule today is 2, not 8.**
- */
+/** A TEST CAN ONLY BE REQUESTED WHERE THE PATH HAS A PUBLISHED */
 export function assertTestRequestLine(target: {
   assessment: { id: string; status: string } | null;
 }): void {
@@ -187,35 +117,14 @@ export function assertTestRequestLine(target: {
 }
 
 export type TestRequestOutcome =
-  /** A pass already exists. ⚠ THE BUYER SEES IT; THE PROVIDER DOES NOT RE-SIT. */
+  /** A pass already exists. THE BUYER SEES IT; THE PROVIDER DOES NOT RE-SIT. */
   | { state: "EXISTING_PASS"; attemptId: string; attemptsUsed: number; attemptsAllowed: number }
   /** Attempts remain and no pass exists — the provider can sit it. */
   | { state: "CAN_SIT"; attemptId: null; attemptsUsed: number; attemptsAllowed: number }
-  /** ⚠ A STATE TO SHOW, NOT A RULE TO BYPASS. */
+  /** A STATE TO SHOW, NOT A RULE TO BYPASS. */
   | { state: "ATTEMPTS_SPENT"; attemptId: null; attemptsUsed: number; attemptsAllowed: number };
 
-/**
- * ── ⚠⚠ WHAT A BUYER'S TEST REQUEST DOES TO A PROVIDER'S ATTEMPTS: NOTHING ───
- *
- * TWO RULES, AND THEY ARE THE SAME RULE SEEN FROM TWO SIDES.
- *
- * ⚠⚠ (2) `max_attempts` IS ALREADY ENFORCED AND A BUYER'S REQUEST DOES NOT RESET
- * IT. `lib/learn-assessment.ts:869` counts `LearnTestAttempt` by
- * `(user_id, learning_path_id)` and refuses past the limit; nothing in this file
- * writes, deletes or filters that count, and `attemptsUsed` is passed in as
- * measured. **Silently granting a fresh attempt devalues every score in the
- * marketplace** — if three buyers can each hand out three tries, the bar is nine
- * tries and the number printed on the certificate means nothing.
- *
- * ⚠⚠ (3) A PASSED SCORE IS THE PROVIDER'S PROPERTY. A second buyer requesting the
- * same test SEES THE EXISTING ATTEMPT; it does not force a retake. **Otherwise
- * the test becomes a toll gate rather than a credential** — the provider pays the
- * cost again for each buyer, and the pass they earned buys them nothing.
- *
- * ⚠ NOTE THE ORDER: the existing pass is checked BEFORE the attempt limit. A
- * provider who passed on their third try is not "spent" — they are DONE, and
- * `gradeAttempt` makes the same carve-out for the same reason.
- */
+/** WHAT A BUYER'S TEST REQUEST DOES TO A PROVIDER'S ATTEMPTS: NOTHING */
 export function testRequestOutcome(input: {
   attemptsUsed: number;
   attemptsAllowed: number;
@@ -231,19 +140,7 @@ export function testRequestOutcome(input: {
 
 export type AttemptRecord = { id: string; score: number; passed: boolean; created_at: Date };
 
-/**
- * ⚠⚠ THE ONLY WRITER OF `TestResponseLine.score` / `.passed`, AND IT REFUSES A
- * SUPPLIED VALUE.
- *
- * The denormalised pair exists for ONE reason — a shortlist grid that would
- * otherwise join every row to Learn — and the moment a second path can set it,
- * there are two scores for one test and no way to tell which is the real one.
- * `LearnTestAttempt` is the system of record and **the provider's own record must
- * win.**
- *
- * ⚠ SAME SHAPE AS `priceSettlementLine` IN THE SPINE, which refuses a supplied
- * price for the identical reason. One pattern, twice, on purpose.
- */
+/** THE ONLY WRITER OF `TestResponseLine.score` / `.passed`, AND IT REFUSES A */
 export function copyResultFromAttempt(
   draft: { score?: number | null; passed?: boolean | null },
   attempt: AttemptRecord
@@ -267,20 +164,7 @@ export function copyResultFromAttempt(
 
 export type SlotDraft = { starts_at: Date | null; time_zone?: string | null };
 
-/**
- * ⚠⚠ A SLOT CARRIES UTC **AND** THE PROPOSER'S ZONE.
- *
- * **Two parties, two timezones — the commonest defect in every scheduling
- * feature ever shipped.** The instant alone cannot render *"3pm your time on
- * Tuesday"* back to the person who offered it, and cannot survive a DST boundary
- * falling between the offer and the interview.
- *
- * ⚠ AND IT MUST BE AN IANA ZONE NAME, NOT AN OFFSET. `-05:00` is a fact about one
- * instant; `America/New_York` is a fact about a place, and only the second one
- * still means the right thing in November. The check is deliberately cheap — a
- * `Region/City` shape — rather than a zone-database lookup, so it holds in a
- * harness with no ICU data.
- */
+/** A SLOT CARRIES UTC AND THE PROPOSER'S ZONE. */
 export function assertInterviewSlot(slot: SlotDraft): void {
   if (slot.starts_at == null)
     throw new SourcingError("A slot needs a start instant", "SLOT_NO_START");
@@ -311,25 +195,7 @@ export type ProviderFacingInterview = {
   slots: { id: string; line_number: number; starts_at: Date; time_zone: string }[];
 };
 
-/**
- * ⚠⚠ THE ONLY PROJECTION OF AN INTERVIEW A PROVIDER SURFACE MAY RENDER — AND
- * `InterviewNote` IS NOT IN IT.
- *
- * **A candidate reading *"weak on OTBI"* is the failure mode**, and it is never
- * a styling accident: it is ONE careless `include`. Three things stop it, and
- * `check:sourcing` asserts all three:
- *
- *   1. the `notes` relation exists on `InterviewRequest` — the BUYER's document —
- *      and NOT on `InterviewResponse`, which is what a provider reads back, so
- *      there is no edge to traverse from the provider's own row;
- *   2. this function returns a CLOSED object literal, so a note cannot arrive by
- *      spread from a wider row that happened to be loaded;
- *   3. no file under a provider-facing path references `InterviewNote` at all.
- *
- * ⚠ IT TAKES THE WHOLE ROW ON PURPOSE. A projection that accepted a pre-narrowed
- * object would be trusting the caller to have narrowed it, which is exactly the
- * thing that fails.
- */
+/** THE ONLY PROJECTION OF AN INTERVIEW A PROVIDER SURFACE MAY RENDER — AND */
 export function providerFacingInterview(row: {
   id: string;
   status: string;
@@ -358,16 +224,4 @@ export function providerFacingInterview(row: {
   };
 }
 
-/**
- * ── ⚠⚠ NO INTERVIEW SCORE IS COMPUTED, AND THAT IS A DECISION ───────────────
- *
- * PeopleSoft sPro averages completed interview ratings into a score. `E395`
- * STORES the ratings and does NOT average them. **A score built from two
- * interviews is not a score** — it is two opinions with a decimal point on them,
- * and it will be sorted on, filtered by and eventually shown to somebody.
- *
- * ⚠ THERE IS DELIBERATELY NO FUNCTION HERE. `InterviewRating` has no numeric
- * mapping anywhere in the tree and `check:sourcing` fails the build if one
- * appears — a constant like `{ EXCELLENT: 4, GOOD: 3 }` is the whole feature, and
- * it would arrive looking like a display helper. **Flagged, not built.**
- */
+/** NO INTERVIEW SCORE IS COMPUTED, AND THAT IS A DECISION */

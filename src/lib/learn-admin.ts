@@ -67,11 +67,7 @@ export type LearnLibraryStats = {
   sections: number;
   lessons: number;
   playable: number;
-  /**
-   * Lessons whose production status SAYS a URL was added but which have no
-   * `vimeo_ref`. This is the number the whole brief exists to drive to zero —
-   * the gap the spreadsheet left. See `learn.ts` for why the two disagree.
-   */
+  /** Lessons whose production status SAYS a URL was added but which have no */
   urlMissing: number;
 };
 
@@ -188,14 +184,7 @@ export async function listGroups(): Promise<string[]> {
   return rows.map((r) => r.group!).filter(Boolean);
 }
 
-/**
- * People who can front a path or a lesson.
- *
- * Deliberately NOT limited to providers: the schema comment on
- * `expert_person_id` is explicit that an expert need not have a provider
- * profile, so restricting the picker here would contradict the model. Ordered
- * by name and capped, since this feeds a searchable select rather than a page.
- */
+/** People who can front a path or a lesson. */
 export async function listExperts(query?: string): Promise<
   { id: string; name: string; email: string | null; photoUrl: string | null }[]
 > {
@@ -216,7 +205,7 @@ export async function listExperts(query?: string): Promise<
       id: true,
       first_name: true,
       last_name: true,
-      /* ⚠ `title` — the profile's title lives on the PERSON since `E595` WS-B. */
+      /* `title` — the profile's title lives on the PERSON since `E595` WS-B. */
       title: true,
       photo_url: true,
       user: { select: { email: true } },
@@ -246,27 +235,8 @@ export type PathInput = {
   status?: string;
 };
 
-/**
- * Every write here sets `is_custom: true`.
- *
- * That flag is the XLS re-run shield the WS1 seed established: a re-import is
- * authoritative only for rows it created, and anything a human touched is left
- * alone. An admin editing a path in this console IS that human touch, so the
- * flag has to be set on the way out of every mutation — otherwise the next
- * catalog import silently overwrites the work this console exists to do.
- */
-/**
- * ⚠⚠ THE FORUM IS CREATED WITH THE PATH, IN THE SAME TRANSACTION (`P1-J3-E383`).
- *
- * SCOTT, 2026-09-04: *"every learning path should have a forum."* and *"this
- * needs to be baked into the LP creation."*
- *
- * ⚠ A PATH WITHOUT ITS FORUM MUST NOT BE A STATE THE DATABASE CAN BE IN, which
- * is why this is `$transaction` and not two awaits. A create that half-succeeded
- * would leave a path whose forum silently never appears, and nothing would ever
- * notice — `check:forums` asserts every path has exactly one board across the
- * LIVE library, so a gap becomes a red gate rather than a mystery.
- */
+/** Every write here sets `is_custom: true`. */
+/** THE FORUM IS CREATED WITH THE PATH, IN THE SAME TRANSACTION . */
 export async function createPath(input: PathInput) {
   const slug = await uniquePathSlug(input.slug?.trim() || input.title);
   return prisma.$transaction(async (tx) => {
@@ -285,9 +255,7 @@ export async function createPath(input: PathInput) {
       },
       select: { id: true, slug: true, title: true, summary: true },
     });
-    /* ⚠ THE SAME IDEMPOTENT HELPER the seed and the backfill call — one shape,
-       three callers, so they cannot drift. Title and description are the PATH'S
-       OWN; no copy was written here. */
+    // THE SAME IDEMPOTENT HELPER the seed and the backfill call — one shape
     await ensurePathBoard(tx, path);
     return { id: path.id, slug: path.slug };
   });
@@ -300,22 +268,7 @@ export async function updatePath(id: string, input: PathInput) {
   });
   if (!existing) throw new LearnAdminError("That learning path no longer exists.", "NOT_FOUND");
 
-  /*
-    A SLUG ONLY CHANGES WHEN SOMEONE ASKS IT TO.
-
-    This previously fell back to the title when `slug` was absent, and then
-    rewrote the stored slug whenever slugify(title) didn't match it. The catalog
-    importer builds slugs with an audience/group prefix — "1. Background" is
-    stored as "beginners-foundational-learning-paths-1-background" — so that
-    condition was true for EVERY imported path, and any edit that omitted the
-    slug field silently changed a live public URL. Assigning an instructor broke
-    /learn/<path> for everyone holding the old link.
-
-    Found by walking into a 404 in brief_learn_experience after an expert edit,
-    not by reading the code. Now: an omitted slug means "leave it alone", and a
-    supplied one is honoured. New paths still derive theirs from the title,
-    where there is no existing URL to protect.
-  */
+  // A SLUG ONLY CHANGES WHEN SOMEONE ASKS IT TO.
   const slug =
     input.slug?.trim()
       ? slugify(input.slug) === existing.slug
@@ -341,23 +294,14 @@ export async function updatePath(id: string, input: PathInput) {
   });
 }
 
-/**
- * Delete a path — BLOCKED while it still has courses.
- *
- * The brief asks for "cascade or block; pick block + explain", and block is
- * right: the FK is `onDelete: Cascade`, so a single mis-click on a 100-lesson
- * path would take the whole subtree with it and there is no undo in this
- * console. Making the admin empty it first turns an irreversible accident into
- * a deliberate sequence of steps. Enrollments are checked for the same reason,
- * and matter more — those are learners' records, not ours.
- */
+/** Delete a path — BLOCKED while it still has courses. */
 export async function deletePath(id: string) {
   const path = await prisma.learningPath.findUnique({
     where: { id },
     select: {
       id: true,
       title: true,
-      /* ⚠ `forumBoards` ADDED BY `P1-J3-E383`. See the threads check below. */
+      /* `forumBoards` ADDED BY `P1-J3-E383`. See the threads check below. */
       _count: { select: { courses: true, enrollments: true } },
       forumBoards: { select: { _count: { select: { threads: true } } } },
     },
@@ -593,11 +537,7 @@ export type SectionInput = {
   thumbnailUrl?: string | null;
 };
 
-/**
- * (course, title) is a Section's natural key — the XLS carries no ids, so that
- * pair IS its identity and the database enforces it. A duplicate title has to
- * come back as an explanation, not as a raw unique-constraint error.
- */
+/** (course, title) is a Section's natural key — the XLS carries no ids, so that */
 export async function createSection(courseId: string, input: SectionInput) {
   const course = await prisma.course.findUnique({
     where: { id: courseId },
@@ -659,12 +599,7 @@ export async function updateSection(id: string, input: SectionInput) {
   });
 }
 
-/**
- * Deleting a course or a section takes its children with it (the FK cascades),
- * so both refuse while children exist — same reasoning as deletePath. A lesson
- * has no children and deletes directly, except that progress rows are checked
- * first: those belong to learners.
- */
+/** Deleting a course or a section takes its children with it (the FK cascades) */
 export async function deleteCourse(id: string) {
   const course = await prisma.course.findUnique({
     where: { id },
@@ -713,16 +648,7 @@ export async function deleteLesson(id: string) {
   return { ok: true as const };
 }
 
-/**
- * Move one child up or down among its siblings.
- *
- * Ordinals are NOT assumed to be dense or unique — the XLS import wrote them
- * from spreadsheet row order, and nothing has enforced them since. So this
- * reads the actual sibling order, swaps the two neighbours in that list, and
- * REWRITES every ordinal in one transaction. Swapping the two rows' stored
- * values instead would be a no-op whenever they happen to be equal, which on
- * imported data is common.
- */
+/** Move one child up or down among its siblings. */
 export async function reorder(
   kind: "course" | "section" | "lesson",
   id: string,
@@ -803,32 +729,12 @@ export type LessonInput = {
   expertPersonId?: string | null;
 };
 
-/**
- * Normalise a pasted Vimeo reference on the way IN.
- *
- * `vimeoEmbedUrl` already tolerates every shape at render time, so storing the
- * raw paste would work — but then the column holds four formats for the same
- * thing and every future consumer has to tolerate all four too. Normalising
- * once, here, means the database says what it means. Returns null for a value
- * we can't make sense of, and the caller rejects it rather than storing a
- * string that will silently never play.
- */
+/** Normalise a pasted Vimeo reference on the way IN. */
 export function normalizeVimeoRef(input: string): string | null {
   const raw = input.trim();
   if (!raw) return null;
   if (/^\d+$/.test(raw)) return raw;
-  /*
-    IT MUST ACCEPT ITS OWN OUTPUT, and it did not.
-
-    The stored form of an unlisted video is `123456/abcdef` — id plus hash, no
-    host. That matched neither the bare-numeric branch nor the vimeo.com regex,
-    so `normalizeVimeoRef(normalizeVimeoRef(url))` returned null for every
-    unlisted video. Harmless while the only caller was an admin pasting a full
-    URL; it surfaced the moment the bulk loader passed an already-normalised ref
-    back through `setLessonUrl`, which rejected 243 of 304 rows with "that isn't
-    a Vimeo link". A function whose output its own input refuses is a trap, and
-    the fix belongs here rather than in each caller remembering to pass raw.
-  */
+  // IT MUST ACCEPT ITS OWN OUTPUT, and it did not.
   const bare = /^(\d+)\/([0-9a-z]+)$/i.exec(raw);
   if (bare) return `${bare[1]}/${bare[2]}`;
   const m = /vimeo\.com\/(?:channels\/[^/]+\/|video\/)?(\d+)(?:[/?]([0-9a-z]+))?/i.exec(raw);
@@ -930,17 +836,7 @@ export async function createLesson(sectionId: string, input: LessonInput) {
   });
 }
 
-/**
- * Set just the URL — the fast path for the per-section table, where an admin
- * pastes down a column and never opens a lesson.
- *
- * Setting a URL also ADVANCES the production status to URL_ADDED_TO_LESSON when
- * it is behind, because otherwise the lesson still wouldn't play: the gate in
- * learn.ts needs both halves. Filling in the URL and having nothing happen is
- * precisely the confusion this brief exists to remove. A status already further
- * along the ladder (BLOG_CREATED, BLOG_RELEASED) is left alone — that is
- * forward progress we shouldn't undo.
- */
+/** Set just the URL — the fast path for the per-section table, where an admin */
 export async function setLessonUrl(id: string, rawUrl: string | null) {
   const lesson = await prisma.lesson.findUnique({
     where: { id },
@@ -949,16 +845,7 @@ export async function setLessonUrl(id: string, rawUrl: string | null) {
   if (!lesson) throw new LearnAdminError("That lesson no longer exists.", "NOT_FOUND");
 
   if (!rawUrl || !rawUrl.trim()) {
-    /*
-      Clearing the URL rolls the ladder back off URL_ADDED_TO_LESSON.
-
-      The symmetry matters more than it looks. Without it, clearing a URL leaves
-      the lesson claiming a URL it no longer has — which manufactures a brand new
-      row of exactly the inconsistency this brief exists to remove, from inside
-      the tool built to remove it. Only that one rung is rolled back: BLOG_CREATED
-      and BLOG_RELEASED are further progress and record something real that
-      removing a video doesn't undo.
-    */
+    // Clearing the URL rolls the ladder back off URL_ADDED_TO_LESSON.
     const rollback = lesson.production_status === "URL_ADDED_TO_LESSON";
     await prisma.lesson.update({
       where: { id },
@@ -1009,16 +896,7 @@ export type PublishReadiness = {
   urlMissing: number;
 };
 
-/**
- * Can this path go live, and what will a learner find if it does?
- *
- * The brief draws a sharp line here and it is the right one: structure is a
- * BLOCKER, empty videos are a WARNING. A path with no lessons is not a page, it
- * is a dead link — nothing to show and nothing to fix by publishing. A path
- * whose lessons are all "coming soon" is a real page that says what is coming;
- * the public catalog already reports "0 ready to watch" honestly, so publishing
- * it is a legitimate choice and not ours to refuse.
- */
+/** Can this path go live, and what will a learner find if it does? */
 export async function getPublishReadiness(id: string): Promise<PublishReadiness> {
   const path = await prisma.learningPath.findUnique({
     where: { id },
@@ -1047,12 +925,7 @@ export async function getPublishReadiness(id: string): Promise<PublishReadiness>
 
   const lessons = path.courses.flatMap((c) => c.sections.flatMap((s) => s.lessons));
   const playable = lessons.filter(isPlayable).length;
-  /* ⚠ `P2-A4-E610` — the extracted amber predicate, not a fifth copy of it.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   const urlMissing = lessons.filter(
-     //     (l) =>
-     //       CLAIMS.includes(l.production_status) && !l.vimeo_ref?.trim()
-     //   ).length; */
+  // — the extracted amber predicate, not a fifth copy of it.
   const urlMissing = lessons.filter(urlMissingRow).length;
 
   if (path.courses.length === 0) {
@@ -1083,20 +956,7 @@ export async function getPublishReadiness(id: string): Promise<PublishReadiness>
   if (lessons.length > 0 && playable === 0) {
     warnings.push(
       lessons.length === 1
-        /*
-          ⚠⚠⚠ CORRECTED 2026-09-25 — THIS ADMIN GUIDANCE DESCRIBED A LEARNER
-          STRING THAT NO LONGER EXISTS. It told an admin the lesson *"will show
-          as 'coming soon'"*; ⚠ measured, there is **no `coming soon` anywhere a
-          learner can see in Learn** — `E611` removed it, and `check:learn-build`
-          and `check:learn-my-learning` both now FORBID it.
-          ⚠⚠ So the sentence was stale in the most misleading direction: it told
-          the person who could fix it that the product still says a thing it does
-          not. **The comment is half the code, and admin copy is a comment the
-          product renders.**
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   …so it will show as "coming soon".
-          //   …so every one will show as "coming soon".
-        */
+        // CORRECTED 2026-09-25 — THIS ADMIN GUIDANCE DESCRIBED A LEARNER
         ? `The only lesson here has no video yet, so it will not be playable. You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
         : `None of the ${lessons.length} lessons have a video yet, so none will be playable. You can still publish — the catalog says "0 ready to watch" rather than pretending otherwise.`
     );
@@ -1117,14 +977,7 @@ export async function getPublishReadiness(id: string): Promise<PublishReadiness>
   };
 }
 
-/**
- * Flip a path's status.
- *
- * Publishing re-checks readiness SERVER-SIDE rather than trusting that the UI
- * disabled the button — the readiness call and the publish are separate
- * requests, and a path can lose its last lesson in between. Unpublishing has no
- * gate: pulling something back is always allowed.
- */
+/** Flip a path's status. */
 export async function setPathStatus(id: string, status: "DRAFT" | "PUBLISHED") {
   if (status === "PUBLISHED") {
     const readiness = await getPublishReadiness(id);

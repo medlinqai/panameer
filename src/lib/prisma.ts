@@ -40,7 +40,6 @@ function warnIfStale() {
       console.error(`\n⚠ PRISMA CLIENT [${problem}] — ${message}\n`);
     }
   } catch {
-    /** ⚠⚠ A CHECK THAT CANNOT RUN MUST BE SILENT. It is a convenience, and an
-     *  error from it would be indistinguishable from the error it describes. */
+    /** A CHECK THAT CANNOT RUN MUST BE SILENT. It is a convenience, and an */
   }
 }

@@ -57,12 +57,7 @@ function monthYear(iso: string): string {
   });
 }
 
-/**
- * ⚠ EXPIRY IS A THREE-STATE, NOT A BOOLEAN: no expiry date (most credentials —
- * say nothing), expires in the future, expired. ⚠ AN UNPARSEABLE DATE IS
- * TREATED AS "NOT EXPIRED" on purpose — telling somebody their credential has
- * lapsed because a string failed to parse is the worse error of the two.
- */
+/** EXPIRY IS A THREE-STATE, NOT A BOOLEAN: no expiry date (most credentials — */
 function expiryState(c: CertificationDraft): "none" | "current" | "expired" {
   if (!c.expiresOn) return "none";
   const d = new Date(`${c.expiresOn.slice(0, 10)}T00:00:00Z`);
@@ -91,11 +86,7 @@ export function CertificationCards({
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState<CertificationDraft>(emptyCertification());
-  /**
-   * E108 — is the agency being typed rather than picked? Held as state rather
-   * than derived from the value, so an existing certification whose issuer isn't
-   * in the list opens in the free-text box instead of silently losing it.
-   */
+  /** E108 — is the agency being typed rather than picked? Held as state rather */
   const [otherAgency, setOtherAgency] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seenSignal, setSeenSignal] = useState(openSignal);
@@ -163,17 +154,7 @@ export function CertificationCards({
   return (
     <div>
       {items.length > 0 ? (
-        /*
-          E109 — a LIST, matching Education, not a stack of boxes.
-
-          Education renders through `EducationBody` on the review while
-          certifications rendered through these bordered, bold cards, so two
-          sections holding the same shape of information looked like different
-          products — and with three or four certifications the page became a
-          column of heavy boxes ("comical", per the walk). Same type scale as
-          Education now: semibold name, meta in ink-2, no per-item border, and
-          the edit affordance kept but quieted.
-        */
+        // E109 — a LIST, matching Education, not a stack of boxes.
         <ul className="space-y-3 text-[14px]">
           {items.map((c, i) => (
             <li
@@ -181,17 +162,7 @@ export function CertificationCards({
               className="flex items-start justify-between gap-4"
             >
               <div className="min-w-0">
-                {/*
-                  ⚠ THE NAME KEEPS ITS WEIGHT AND THE LIST KEEPS ITS SHAPE.
-                  `E109` made this a LIST matching Education — *"semibold name,
-                  meta in ink-2, no per-item border"* — after a walk called the
-                  bordered version "comical". ⚠ NOTHING HERE RE-ADDS A BOX:
-                  what changed is the meta LINE, and one chip. ⚠ No new colour,
-                  font or component (`E412`): the chip is the same
-                  `rounded-full` + `border-line` shape the app's chips already
-                  use, and `red-700` is the tone `Notice` and the over-limit bio
-                  warning already carry.
-                */}
+                {/* THE NAME KEEPS ITS WEIGHT AND THE LIST KEEPS ITS SHAPE. */}
                 <p className="flex flex-wrap items-baseline gap-2 font-semibold">
                   {c.name}
                   {expiryState(c) === "expired" && (
@@ -203,15 +174,7 @@ export function CertificationCards({
                 {(certMeta(c) || expiryState(c) !== "none") && (
                   <p className="text-ink-2">
                     {certMeta(c)}
-                    {/*
-                      ⚠⚠ HOW AN EXPIRED CREDENTIAL READS DIFFERENTLY, which is
-                      what `E412` asks to be reported — TWO signals, not one:
-                      the chip above states it in a word, and the date below
-                      changes both its VERB and its colour. *"Valid to Jun 2027"*
-                      in ink-2 versus *"Expired Jun 2026"* in red. ⚠ Colour alone
-                      would carry none of this to a screen reader or to anyone
-                      who cannot separate the two hues.
-                    */}
+                    {/* HOW AN EXPIRED CREDENTIAL READS DIFFERENTLY, which is */}
                     {expiryState(c) === "current" && (
                       <span>
                         {certMeta(c) ? " · " : ""}
@@ -269,15 +232,7 @@ export function CertificationCards({
             No certifications yet. Adding your credentials increases your chances
             of getting hired.
           </p>
-          {/*
-            ⚠⚠ THE SAME LINE AS THE PROFILE'S CERTIFICATIONS CARD (`E602` WS-E 1),
-            because this editor is the other place a member stares at an empty
-            Certifications list. ⚠ It ships because the test EXISTS: two
-            `LearnAssessment` rows are PUBLISHED and free (measured 2026-09-22).
-            ⚠⚠⚠ `/learn`, NOT `/test` — the test is gated on finishing the path,
-            so a link straight to it would open onto *"Finish the path first"*,
-            which is `E579`.
-          */}
+          {/* THE SAME LINE AS THE PROFILE'S CERTIFICATIONS CARD ( WS-E 1) */}
           <Link
             href="/learn"
             className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
@@ -287,22 +242,7 @@ export function CertificationCards({
         </div>
       )}
 
-      {/*
-        NO BODY BUTTON (walk7 WS6 / E144). The review renders this inside a card
-        that already carries a "+ Add Certification" link in its header, so the
-        section offered the same action twice, a few pixels apart.
-
-        The header link is the one that stays — it is where every other section
-        puts its affordance, so Certifications stops being the exception. This
-        reverses the E130 rule for THIS section on Scott's directive, and
-        reconciles with brief_profile_tiers_review WS3, whose empty-state rule
-        pointed the other way; the two were going to fight over one button.
-
-        The header link opens this component's modal through `openSignal`, so
-        the capability is untouched — only the second copy of the button is
-        gone. Its `openAdd` handler went with it: lint showed it had no other
-        caller, and a comment claiming otherwise would have been wrong.
-      */}
+      {/* NO BODY BUTTON (walk7 WS6 / E144). The review renders this inside a card */}
 
       <Modal
         open={editing !== null}
@@ -318,17 +258,7 @@ export function CertificationCards({
             />
           </Field>
 
-          {/*
-            E108 — a real SELECT with an explicit "Other…", not a datalist.
-
-            A datalist looks like a text box, so nobody discovers the list: the
-            walk showed providers typing an agency that was sitting two
-            keystrokes away in the suggestions. Worse, it accepts anything
-            silently, which is how one issuer ends up stored three ways. The
-            select makes the vocabulary visible, and "Other…" makes leaving it a
-            deliberate act that then REQUIRES the free-text field — so an
-            unlisted agency is still captured, just never by accident.
-          */}
+          {/* E108 — a real SELECT with an explicit "Other…", not a datalist. */}
           <Field label="Certifying Agency">
             {otherAgency ? (
               <div className="flex items-center gap-2">

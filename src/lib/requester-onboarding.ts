@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-/* ⚠ THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
+/* THE ONE WRITE BOUNDARY for country (`E729` WS-C). */
 import { countryColumns } from "@/lib/country";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { hashPassword } from "@/lib/password";
@@ -8,25 +8,9 @@ import { OnboardingError } from "@/lib/onboarding";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import type { Viewer } from "@/lib/access";
 
-/**
- * REQUESTER onboarding (P1-J1.2, brief_requester_onboarding).
- *
- * Its own module rather than more of `onboarding.ts` — that file is already
- * 1700 lines of provider journey, and the requester shares its SHELL, not its
- * logic.
- *
- * The shape deliberately mirrors the provider: create account → verify email →
- * intro → save-as-you-go steps → review → a "ready" state. Every writer here is
- * OWNER-SCOPED: the requester is resolved from the session, never from a body
- * field, so there is no request shape that edits someone else's record.
- */
+/** REQUESTER onboarding (P1-J1.2, brief_requester_onboarding). */
 
-/**
- * The step list lives in `requester-steps.ts` (no server imports) and is
- * re-exported here so server callers have one import. The client wizard must
- * import it from there — pulling it through this module drags Prisma, and
- * therefore `pg`, into the browser bundle.
- */
+/** The step list lives in `requester-steps.ts` (no server imports) and is */
 export { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 import { REQUESTER_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
@@ -47,24 +31,11 @@ export type CreateRequesterAccountInput = {
   country?: string;
   marketingOptIn?: boolean;
   tosAccepted: boolean;
-  /*
-    ⚠ WHICH JOB REGISTERED (`P1-A1.2-E421`). Optional and defaulting to
-    `"requester"`, so every existing caller and the whole requester journey are
-    byte-for-byte unchanged — the buyer path is the only one that sets it.
-  */
+  // WHICH JOB REGISTERED . Optional and defaulting to
   job?: "requester" | "buyer";
 };
 
-/**
- * Create the requester account + backbone in one transaction.
- *
- * The COMPANY here is a placeholder named after the person, exactly as the
- * provider and buyer signups do it. The real company is the wizard's first
- * step, which either renames this one or moves the Person onto an existing
- * company — the backbone requires a company before the question can be asked,
- * and asking it before the account exists would mean holding a password in the
- * browser across four screens.
- */
+/** Create the requester account + backbone in one transaction. */
 export async function createRequesterAccount(
   input: CreateRequesterAccountInput
 ): Promise<{ userId: string; email: string }> {
@@ -112,53 +83,13 @@ export async function createRequesterAccount(
         first_name: firstName,
         last_name: lastName,
         status: "ACTIVE",
-        /*
-          USER_CLASS SERVICE_BUYER × USER_JOB Requester, expressed in the model
-          that exists today. The schema has no USER_CLASS/USER_JOB enums yet —
-          that is brief_user_class_job_model, explicitly a separate piece of
-          work — so the class rides on the actor flag the whole app already
-          gates on (canHireTalent === is_service_buyer) and the JOB is carried
-          by owning a RequesterProfile. When the enums land, this is the one
-          place that changes.
-        */
+        // USER_CLASS SERVICE_BUYER × USER_JOB Requester, expressed in the model
         is_service_buyer: true,
       },
     });
     await tx.requesterProfile.create({ data: { person_id: person.id } });
 
-    /*
-      ── ⚠⚠ USER_JOB = BUYER, IN THE MODEL THAT EXISTS TODAY (`P1-A1.2-E421`) ──
-
-      SCOTT: *"i want them to both collect the same data. this cant be hard."*
-      ⚠ IT IS NOT: a buyer now walks THIS wizard, answers THESE questions and
-      lands in the same tables. The only thing that differs is this row.
-
-      ⚠⚠ AND IT IS THE SAME MECHANISM THE COMMENT ABOVE ALREADY DESCRIBES —
-      *"the JOB is carried by owning a RequesterProfile"*. A `BuyerProfile` is
-      the other half of that sentence, and it is a MARKER, not a form:
-      `person_id`, `subscription_tier` and two timestamps. There is nothing in
-      it to ask anybody, which is exactly why the two journeys can collect
-      identical data.
-
-      ⚠ NO SCHEMA CHANGE AND NO NEW COLUMN. `E421` forbids inventing one, and
-      none is needed: both tables exist and `createBuyerAccount` already writes
-      this row on the retired path.
-
-      ⚠⚠ THE `RequesterProfile` IS STILL WRITTEN, AND THAT IS DELIBERATE, NOT
-      LEFTOVER. It is what `onboarding_step` and `completed_at` live on, so it
-      is what makes the wizard resumable — and `/api/me` derives `isRequester`
-      from it (`lib/me.ts:106`), which is what routes a half-finished
-      registration back into this wizard at `join/page.tsx:198`. Dropping it
-      would break resume for the very people this brief is unblocking.
-
-      ⚠ SO A BUYER OWNS BOTH ROWS, AND THAT IS READABLE: `RequesterProfile` =
-      "walked this wizard", `BuyerProfile` = "registered as a buyer". ⚠ WHEN THE
-      `USER_JOB` ENUM LANDS this is the one place that changes — the same
-      sentence the comment above already commits to.
-
-      ⚠ `subscription_tier` DEFAULTS TO `BASIC` AND NOBODY IS ASKED (`E421`
-      WS-2): tier is an upsell, not registration, and no payment is collected.
-    */
+    // USER_JOB = BUYER, IN THE MODEL THAT EXISTS TODAY
     if (input.job === "buyer") {
       await tx.buyerProfile.create({ data: { person_id: person.id } });
     }
@@ -170,7 +101,7 @@ export async function createRequesterAccount(
         data: { company_id: company.id, name: "Primary" },
       });
       await tx.address.create({
-        /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+        /* BOTH COLUMNS (`E729` WS-C). */
         data: { site_id: site.id, line1: "", ...countryColumns(input.country) },
       });
       await tx.person.update({ where: { id: person.id }, data: { site_id: site.id } });
@@ -180,17 +111,7 @@ export async function createRequesterAccount(
   });
 
 
-  /*
-    ── ⚠⚠⚠ CREDIT THE INVITATION THAT BROUGHT THEM IN (`P2-A3-E599` WS-C) ────
-
-    ⚠ Scott: *"acceptance link the joined person to the invite, so Joined can
-    count."* ⚠⚠ MEASURED: `accepted_at` HAD NO WRITER ANYWHERE IN `src/`, so
-    `Joined` was structurally 0 for every member.
-    ⚠⚠⚠ AFTER THE TRANSACTION, NEVER INSIDE IT — a locked `colleague_invites`
-    row must not be able to roll back a new member. It cannot throw, cannot fail
-    a signup, and returns `null` when there is nothing to credit, which is the
-    ordinary case.
-  */
+  // CREDIT THE INVITATION THAT BROUGHT THEM IN WS-C)
   await creditInviteForNewUser(userId, email);
   return { userId, email };
 }
@@ -210,19 +131,7 @@ async function loadRequester(viewer: Viewer) {
       company_id: true,
       site_id: true,
       company: { select: { id: true, name: true, p_account_id: true } },
-      /*
-        ⚠ THE MEMBERSHIPS ARE WHAT "HAS A COMPANY" MEANS (P1-J1.2-E003).
-
-        `Person.company_id` above is the SIGNUP PLACEHOLDER — every account gets
-        one automatically — and `requesterGaps` used to accept its `name` as
-        proof. `getCompanyBinding` and `checkTransact` read memberships instead,
-        so a person could satisfy onboarding forever and never satisfy the
-        transact gate. This select is what lets both ask the same question.
-
-        Ordered the way `getCompanyBinding` orders: APPROVED first (status sorts
-        alphabetically before PENDING and REJECTED), newest decision first within
-        a status, so `[0]` is the binding that matters.
-      */
+      // THE MEMBERSHIPS ARE WHAT "HAS A COMPANY" MEANS .
       companyMemberships: {
         orderBy: [{ status: "asc" }, { updated_at: "desc" }],
         select: {
@@ -288,20 +197,7 @@ export async function getRequesterState(viewer: Viewer) {
         }
       : null;
 
-  /*
-    ── ⚠ THE BINDING, ON THE PAYLOAD (P1-J1.2-E003 / E005) ────────────────────
-
-    Added here rather than fetched a second way by the client, because two reads
-    of "does this person have a company" is how the two answers diverged in the
-    first place. `pitfalls.md`: a new field has to reach the TYPE and every
-    caller that builds one — `RequesterState` is inferred from this return and
-    the only caller is `/api/onboarding/requester/status`, which passes the whole
-    object through, so both are satisfied by adding it once, here.
-
-    `bound` is deliberately "ANY membership", not "an APPROVED one". Onboarding
-    needs a membership to EXIST; transacting needs it APPROVED. Two different
-    bars, both correct — see `requesterGaps`.
-  */
+  // THE BINDING, ON THE PAYLOAD / E005)
   const membership = p.companyMemberships[0] ?? null;
 
   return {
@@ -314,44 +210,14 @@ export async function getRequesterState(viewer: Viewer) {
       /** Any CompanyMembership at all — PENDING counts. */
       bound: p.companyMemberships.length > 0,
       status: membership?.status ?? null,
-      /**
-       * The bound company has a `tax_type`, i.e. somebody actually DEFINED it
-       * rather than binding to a bare placeholder. Null when unbound.
-       *
-       * ── ⚠⚠ THIS READS `false` FOR EVERY COMPANY CREATED AFTER `P1-A1.4-E408` ─
-       *
-       * `E408` stripped Business Type off the company form, so `tax_type` is
-       * never written at signup and stays null until the payment gate collects
-       * `classification` (`api/settings/tax/route.ts`).
-       *
-       * ⚠ IT IS SAFE **ONLY BECAUSE NOTHING READS IT.** Measured 2026-09-10:
-       * `state.company.defined` has exactly one other occurrence in the repo —
-       * the SUPERSEDED QUOTE at line ~599 of this file, inside the block `E274`
-       * removed. No gate, no screen, no API consumes it. ⚠ `check:company-binding`
-       * asserts the COMPUTATION, not the value, so it stays green.
-       *
-       * ⚠⚠ SO DO NOT START READING IT WITHOUT FIXING IT FIRST. A surface that
-       * showed "your company is incomplete" from this flag would tell every new
-       * company it is missing a field the form no longer asks for — the `E405`
-       * dead-end repeating, and the reason `E408` WS-2b called it the sharpest
-       * edge in the brief. Either drop the `tax_type` dependency or ask the
-       * question again; do not display it as it stands.
-       */
+      /** The bound company has a `tax_type`, i.e. somebody actually DEFINED it */
       defined: membership ? membership.company.tax_type !== null : false,
       name: membership?.company.name ?? null,
     },
     profile: {
       firstName: p.first_name,
       lastName: p.last_name,
-      /*
-        `E281` — the requester gets a face and a role. ⚠ BOTH COLUMNS ALREADY
-        EXISTED on `Person`; this is the wizard finally reading them.
-        ⚠ `photo_url` IS NOT WRITTEN BY THIS MODULE. `POST /api/profile/photo`
-        owns that column — it uploads, then writes `Person.photo_url` directly
-        for anyone without a `providerProfile`. So the wizard READS it here to
-        show what is already stored and never posts it back, which is why there
-        is no `photoUrl` on `StepPayload` below.
-      */
+      // — the requester gets a face and a role. BOTH COLUMNS ALREADY
       photoUrl: p.photo_url,
       title: p.title,
       phone: p.phone,
@@ -369,12 +235,7 @@ export async function getRequesterState(viewer: Viewer) {
   };
 }
 
-/**
- * Write one Site + its Address, reusing the row if it already exists.
- *
- * Sites are created rather than updated-in-place across steps because a
- * requester who edits their address twice should not accumulate sites.
- */
+/** Write one Site + its Address, reusing the row if it already exists. */
 async function upsertSiteAddress(
   companyId: string,
   siteId: string | null,
@@ -387,7 +248,7 @@ async function upsertSiteAddress(
     city: addr.city?.trim() || null,
     state: addr.state?.trim() || null,
     postal_code: addr.postalCode?.trim() || null,
-    /* ⚠ BOTH COLUMNS (`E729` WS-C). */
+    /* BOTH COLUMNS (`E729` WS-C). */
     ...countryColumns(addr.country),
   };
 
@@ -420,29 +281,12 @@ export type StepPayload = {
   /** requester_info */
   firstName?: string;
   lastName?: string;
-  /*
-    `E281` — the requester's ROLE ("Director of Procurement"), not a provider's
-    sales headline. Same `Person.title` column both sides write; THE DIFFERENCE IS
-    THE COPY ASKING FOR IT, which lives in the wizard.
-    ⚠ NO `photoUrl` HERE ON PURPOSE — `POST /api/profile/photo` already owns that
-    column and writes it directly. A second writer would be two paths to one field.
-  */
+  // — the requester's ROLE ("Director of Procurement"), not a provider's
   title?: string | null;
   phone?: string | null;
   employeeId?: string | null;
   address?: AddressInput;
-  /*
-    ⚠⚠ THESE FOUR OUTLIVED THEIR STEP (`P1-J1.1-E263`, 2026-08-30).
-
-    `buyer_approver` was removed from `REQUESTER_STEPS`, so NOTHING POSTS THESE
-    TODAY and no branch below reads them. They are kept — here, in the step
-    route's zod schema, and as columns on `RequesterProfile` — because Scott
-    removed the SCREEN, not the model: *"we can leave it in the first
-    onboarding page (for now), but it is likely to come out at some point."*
-    ⚠ DO NOT "TIDY" THEM AWAY. Deleting them is a second, separate decision he
-    has not made, and the columns already hold data for the profiles that
-    completed the old five-step wizard.
-  */
+  // THESE FOUR OUTLIVED THEIR STEP , 2026-08-30).
   buyerName?: string | null;
   buyerEmail?: string | null;
   approverName?: string | null;
@@ -451,12 +295,7 @@ export type StepPayload = {
   workLocation?: AddressInput;
 };
 
-/**
- * Save one step and advance the resume point (save-as-you-go).
- *
- * The step name decides what is written, so a payload carrying extra keys can't
- * reach past the step it belongs to.
- */
+/** Save one step and advance the resume point (save-as-you-go). */
 export async function saveRequesterStep(
   viewer: Viewer,
   step: RequesterStep,
@@ -465,35 +304,14 @@ export async function saveRequesterStep(
   const p = await loadRequester(viewer);
   const rp = p.requesterProfile!;
 
-  /*
-    ⚠⚠ THERE IS NO `company` STEP TO HANDLE (`P1-A1.4-E418`, 2026-09-11).
-
-    ⚠ SUPERSEDED, quoted not deleted: an `if (step === "company") { }` block
-    stood here. It was already a NO-OP — `E274` had removed the last thing it
-    did, an APPROVED-membership lookup that threw
-    `OnboardingError("Choose or add your company before continuing", "INVALID")`
-    — and it survived only to document that the binding is written by
-    `lib/company.ts`, never by this module. With `company` gone from
-    `RequesterStep` the branch is unreachable by type, so the documentation moved
-    here and the dead branch went.
-
-    ⚠ `lib/company.ts` IS UNCHANGED AND STILL OWNS THE WRITE (`E164`). Work order
-    acceptance is where it gets called from next — see `acceptOrder`.
-  */
+  // THERE IS NO `company` STEP TO HANDLE , 2026-09-11).
   if (step === "requester_info") {
     await prisma.person.update({
       where: { id: p.id },
       data: {
         ...(payload.firstName?.trim() ? { first_name: payload.firstName.trim() } : {}),
         ...(payload.lastName?.trim() ? { last_name: payload.lastName.trim() } : {}),
-        /*
-          `E281` — the requester's ROLE.
-          ⚠ KEYED ON `!== undefined`, NOT ON TRUTHINESS, unlike the two names
-          above. Those use `?.trim() ? ... : {}` so an empty string leaves the
-          stored name alone — right for a name, wrong here: it would make the
-          field impossible to CLEAR once set. An absent key means "not
-          submitted"; an empty one means "cleared".
-        */
+        // — the requester's ROLE.
         ...(payload.title !== undefined
           ? { title: payload.title?.trim() || null }
           : {}),
@@ -520,16 +338,7 @@ export async function saveRequesterStep(
     }
   }
 
-  /*
-    ⚠ SUPERSEDED, quoted not deleted (`P1-J1.1-E263`): a `buyer_approver` branch
-    sat here and wrote `buyer_name` / `buyer_email` / `approver_name` /
-    `approver_email`, normalising both addresses through `normalizeEmail`.
-
-    It went with the step. It is NOT commented-out code kept "just in case" —
-    `RequesterStep` no longer contains that value, so the comparison would not
-    compile. If the step ever returns, the columns and the payload keys are
-    still here and this branch is four lines of `prisma.requesterProfile.update`.
-  */
+  // a `buyer_approver` branch
 
   if (step === "work_location" && payload.workLocation) {
     const current = await prisma.person.findUnique({
@@ -564,116 +373,9 @@ export async function saveRequesterStep(
 }
 
 /** What's still missing before the requester can finish. */
-/**
- * ── ⚠ WHAT "HAS A COMPANY" MEANS, AND WHY THIS CHANGED (P1-J1.2-E003) ────────
- *
- * This function used to test `profile.companyName`, which is
- * `Person.company.name` — THE SIGNUP PLACEHOLDER, which every account gets
- * automatically and which therefore always has a name. So onboarding always
- * passed, while `getCompanyBinding` and `checkTransact` read
- * `Person.companyMemberships` and always failed. Two pieces of code disagreeing
- * about one word, and a person could satisfy the first forever without ever
- * satisfying the second — a closed loop with the only company form behind it.
- *
- * ⚠ PENDING COUNTS AS SATISFIED HERE. `joinCompany` on a company whose admin
- * must approve you legitimately leaves the membership PENDING, and the wizard
- * already has a branch that lets that move on. Requiring APPROVED would swap
- * this trap for a worse one: a requester frozen until a stranger clicks a
- * button. ONBOARDING NEEDS A MEMBERSHIP TO EXIST; TRANSACTING NEEDS IT
- * APPROVED. Two bars, both correct, and `verifyTransactAbility` owns the second.
- *
- * ⚠ THE NAME CHECK IS NOT DELETED, IT IS MOVED. A person bound to a company that
- * still has no `tax_type` is on a placeholder somebody joined without defining —
- * a real, different gap, so it keeps its own line worded for what it is.
- *
- * ⚠ THIS MAKES SOME "COMPLETE" REQUESTERS INCOMPLETE AGAIN. That is the intent
- * and it is the safe direction: they are already blocked from transacting, so
- * this only surfaces the block somewhere they can act on it. NO BACKFILL MINTS
- * MEMBERSHIPS — a `CompanyMembership` is an attestation a human made, and
- * manufacturing one silently binds a person to a company they never claimed.
- */
-/*
-  ── ⚠⚠ A GATE MAY ONLY REQUIRE WHAT THE WIZARD CAN COLLECT (`E263`/`E262`) ───
-
-  ⚠⚠ THIS FUNCTION BLOCKED EVERY REQUESTER ON THE DAY THE STEPS CHANGED, and it
-  is worth being explicit about because the brief said the opposite.
-
-  `E263` removed the `buyer_approver` step on the stated premise that the four
-  columns behind it are *"all `nullish()`, nothing gates on them."* THAT PREMISE
-  WAS FALSE. This function required `approverName`, and it is the only thing
-  standing between the Review step and `completed_at`. With the step gone and the
-  check left in place, `Complete My Profile` failed for everybody with
-  *"Still needed: Your approver."* — CAUGHT BY WALKING THE WIZARD, not by reading
-  it, and it would have shipped as a dead-ended journey.
-
-  ⚠ `Your address` WENT FOR THE SAME REASON, and it was a QUIETER version of the
-  same defect. `E262` removed the address block from step 2, so the only source
-  left is the country-only `Address` seeded at signup — and signup's `country` is
-  `.optional()` in `api/onboarding/requester/account/route.ts:12`. A requester who
-  signed up without one would have been permanently unable to finish, with NO
-  SCREEN ANYWHERE that could supply the missing value. `E262` also says Work
-  Location is now the only full address this journey captures, and the
-  `workLocation` gap below already enforces exactly that.
-
-  ⚠ THE OTHER THREE GATES ARE UNCHANGED and each still maps to a live step:
-  company binding + business type (step 1), name (step 2), work location (step 3).
-  ⚠ THE COLUMNS ARE NOT DELETED — `buyer_name` / `approver_name` and the seeded
-  `Address` all still exist and still hold data for profiles that completed the
-  old five-step wizard. This removes a REQUIREMENT, not a record.
-*/
-/*
-  ── ⚠⚠ THE COMPANY IS OPTIONAL **HERE** AND MANDATORY **BEFORE HIRE** ────────
-     (`P1-J1.1-E274` + `E280`, Scott 2026-08-30)
-
-  ⚠⚠ IF YOU ARE BUILDING WORK ORDERS, THIS BLOCK IS ADDRESSED TO YOU. Read it
-  before you decide what a buyer needs on file.
-
-  THE RULE SCOTT SET, in his words: *"we still probably want to make the company
-  optional at this point. We will need it before a work order could become a
-  legal document."* And on why: *"we need to know what corporate or business
-  entity we are contracting with."*
-
-  So the requirement is:
-
-      COMPANY + EIN + REGISTERED ADDRESS ARE REQUIRED BEFORE A BUYER CAN **HIRE**
-      (web), AND BEFORE AN APPROVED **PO IS ACCEPTED** (ERP).
-      They are NOT required to finish onboarding.
-
-  ⚠⚠ THAT GATE IS NOT BUILT, AND DELIBERATELY SO — THERE IS NOTHING TO BUILD IT
-  ON. There is no `WorkOrder` model and no hire route in this codebase;
-  `WorkRequest` and `WorkRequestStatus` exist and the second half of the pipeline
-  does not. A gate written here would fire at onboarding, which is the exact
-  place Scott just said it must NOT fire. ⚠ A FAKE GATE WOULD BE WORSE THAN
-  NONE: it would read as "the rule is enforced" while enforcing it in the wrong
-  place, and the real one would never get written.
-
-  ⚠ SO THE REQUIREMENT IS RECORDED HERE INSTEAD, where whoever adds the hire
-  path will be reading. The three values are already captured and already
-  nullable, so the check is a read, not a migration:
-      · company    — `Person.company_id` + an APPROVED `CompanyMembership`
-      · EIN        — `Company.tin`               (captured by `E273`)
-      · registered address — the `Site` named `REGISTERED_SITE_NAME`
-                     and its `Address`           (captured by `E280`)
-
-  ── ⚠ WHY THE TWO COMPANY CHECKS CAME OUT OF THE LIST BELOW ─────────────────
-
-  ⚠ SUPERSEDED, quoted not deleted:
-      `if (!state.company.bound) gaps.push("Your company");`
-      `else if (!state.company.defined) gaps.push("Your company's business type");`
-
-  ⚠⚠ AND THEY DID NOT COME OUT ALONE. Two other gates enforced the same thing
-  and ALL THREE had to go in one change, because leaving one standing is exactly
-  what dead-ended every requester this morning when `approverName` survived
-  `E263`:
-      1. these two gaps;
-      2. `continueDisabled={!companyValid}` on the company step;
-      3. the `OnboardingError("Choose or add your company before continuing")`
-         thrown by `saveRequesterStep` below — SERVER-SIDE, so removing only the
-         client gate would have produced a Continue button that posted and
-         failed.
-  ⚠ A GATE IS NOT REMOVED UNTIL EVERY LAYER OF IT IS. Walk the flow, do not
-  grep for one string.
-*/
+/** WHAT "HAS A COMPANY" MEANS, AND WHY THIS CHANGED */
+// A GATE MAY ONLY REQUIRE WHAT THE WIZARD CAN COLLECT ( / )
+// THE COMPANY IS OPTIONAL HERE AND MANDATORY BEFORE HIRE
 export function requesterGaps(state: RequesterState): string[] {
   const p = state.profile;
   const gaps: string[] = [];
@@ -682,13 +384,7 @@ export function requesterGaps(state: RequesterState): string[] {
   return gaps;
 }
 
-/**
- * Finish onboarding → "Ready to Post Work Request".
- *
- * Refuses on a gap rather than completing a half-filled requester: the ready
- * state is a claim that this person can be put on a work request, and a
- * requester with no deliver-to cannot.
- */
+/** Finish onboarding → "Ready to Post Work Request". */
 export async function completeRequester(viewer: Viewer) {
   const state = await getRequesterState(viewer);
   const gaps = requesterGaps(state);

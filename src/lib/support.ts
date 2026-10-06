@@ -69,15 +69,7 @@ export type CreateTicketInput = {
   priority?: string | null;
 };
 
-/**
- * File a ticket. Returns the row so the caller can attach a screenshot to it —
- * the object path is foldered by ticket id, so the ticket must exist first.
- *
- * ⚠ A UNIQUE `ticket_code` COLLISION IS RETRIED RATHER THAN THROWN. 32^6 makes
- * it vanishingly unlikely, but "vanishingly unlikely" is not "impossible", and
- * losing a bug report to a code clash would be its own instance of the defect
- * this whole feature exists to fix.
- */
+/** File a ticket. Returns the row so the caller can attach a screenshot to it — */
 export async function createTicket(viewer: Viewer, input: CreateTicketInput) {
   const person = await actingPerson(viewer);
 
@@ -90,10 +82,7 @@ export async function createTicket(viewer: Viewer, input: CreateTicketInput) {
 
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      /* ⚠⚠ `filed` IS WRITTEN WITH THE TICKET, IN ONE TRANSACTION (`E761`). A
-         timeline whose first line can be missing is a timeline that starts at an
-         arbitrary point. ⚠ The retry loop below re-runs the WHOLE transaction on a
-         `ticket_code` clash, so a retried attempt cannot leave an orphan event. */
+      // timeline whose first line can be missing is a timeline that starts at an
       return await prisma.$transaction(async (tx) => {
         const created = await tx.supportTicket.create({
         data: {
@@ -135,16 +124,7 @@ export async function setTicketScreenshot(ticketId: string, objectPath: string) 
   });
 }
 
-/**
- * Post a message on a ticket.
- *
- * ⚠⚠ `side` IS DECIDED BY THE CALLER'S CAPABILITY, NEVER BY THE REQUEST BODY.
- * A reporter cannot post as `panameer` and an admin replying is always
- * `panameer` — otherwise the thread's own record of who said what is
- * client-controlled, which makes it evidence of nothing.
- * ⚠ `last_message_at` IS BUMPED HERE so the admin list sorts by recency. That
- * is the column's whole reason to exist.
- */
+/** Post a message on a ticket. */
 export async function postMessage(
   viewer: Viewer,
   ticketId: string,
@@ -161,8 +141,7 @@ export async function postMessage(
   });
   if (!ticket) throw new SupportError("That ticket no longer exists", "NOT_FOUND");
 
-  /* ⚠ A reporter may only post on their OWN ticket. The admin side is gated by
-     `canAdminister` at the route; this is the other half. */
+  // A reporter may only post on their OWN ticket. The admin side is gated by
   if (side === "user" && ticket.reporter_person_id !== person.id) {
     throw new SupportError("That isn't your ticket", "FORBIDDEN");
   }
@@ -176,11 +155,7 @@ export async function postMessage(
       where: { id: ticketId },
       data: { last_message_at: new Date() },
     }),
-    /* ⚠⚠ THE MESSAGE GETS AN EVENT TOO (`E761`), in the SAME transaction that was
-       already here. ⚠ The timeline interleaves events and messages, so a message
-       without an event would appear in the thread and vanish from the history —
-       two views of one ticket that disagree. ⚠⚠ The body is NOT copied into the
-       event: one definition lives in `TicketMessage`, and the timeline joins. */
+    // THE MESSAGE GETS AN EVENT TOO , in the SAME transaction that was
     prisma.ticketEvent.create({
       data: { ticket_id: ticketId, actor_person_id: person.id, kind: "message" },
     }),
@@ -188,21 +163,7 @@ export async function postMessage(
   return message;
 }
 
-/**
- * ── ⚠⚠⚠ THE TIMELINE (`P2-ALL-E761`) ────────────────────────────────────────
- *
- * One list, oldest first, interleaving events and messages — because that is how
- * a person reads a ticket: *"filed … assigned … asked a question … resolved."*
- *
- * ⚠⚠ **THE REPORTER SEES LESS, AND IT IS ENFORCED HERE RATHER THAN IN THE
- * TEMPLATE.** `forReporter` filters at the QUERY, so a future page that forgets
- * to check cannot leak an assignee's name or a priority the reporter was never
- * shown. ⚠ Scott's rule: the reporter gets **status changes and messages only**.
- *
- * ⚠ **ACTOR NAMES ARE RESOLVED AT RENDER, FROM IDS.** A name stored at write time
- * would freeze somebody's old name into the record — and the same person's name
- * would then differ between two rows of one timeline.
- */
+/** One list, oldest first, interleaving events and messages — because that is how */
 export type TimelineEntry = {
   id: string;
   at: Date;
@@ -211,12 +172,12 @@ export type TimelineEntry = {
   actorName: string;
   fromValue: string | null;
   toValue: string | null;
-  /** ⚠ Present only for `message` rows; the body lives in `TicketMessage`. */
+  /** Present only for `message` rows; the body lives in `TicketMessage`. */
   body: string | null;
   authorSide: string | null;
 };
 
-/** ⚠ What the REPORTER may see. `assigned`/`unassigned`/`priority` are absent. */
+/** What the REPORTER may see. `assigned`/`unassigned`/`priority` are absent. */
 const REPORTER_KINDS = ["filed", "status", "message"];
 
 export async function ticketTimeline(
@@ -236,10 +197,7 @@ export async function ticketTimeline(
     }),
   ]);
 
-  /* ⚠⚠ A `message` EVENT CARRIES NO BODY — it is joined to its message by TIME
-     AND AUTHOR, because the two rows are written in one transaction and share an
-     instant. ⚠ Messages that predate `E761` have no event; they are rendered from
-     the message list directly so nothing from before the change disappears. */
+  // A `message` EVENT CARRIES NO BODY — it is joined to its message by TIME
   const used = new Set<string>();
   const rows: TimelineEntry[] = [];
 
@@ -278,9 +236,7 @@ export async function ticketTimeline(
     });
   }
 
-  /* ⚠⚠⚠ MESSAGES WITH NO EVENT — everything posted BEFORE `E761` — still show.
-     ⚠ Scott's rule: *"no backfill can be honest"*, and that cuts both ways. We do
-     not invent events for the past, and we do not hide what we already have. */
+  // MESSAGES WITH NO EVENT — everything posted BEFORE — still show.
   for (const m of messages) {
     if (used.has(m.id)) continue;
     rows.push({
@@ -298,7 +254,7 @@ export async function ticketTimeline(
 
   rows.sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  /* ⚠ ONE QUERY FOR EVERY ACTOR, resolved at render as promised above. */
+  /* ONE QUERY FOR EVERY ACTOR, resolved at render as promised above. */
   const ids = [...new Set(rows.map((r) => r.actorPersonId).filter((x): x is string => !!x))];
   const people = ids.length
     ? await prisma.person.findMany({
@@ -310,7 +266,7 @@ export async function ticketTimeline(
     people.map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
   );
   for (const r of rows) {
-    /* ⚠ A missing actor renders as `Panameer`, never as a guess at a person. */
+    /* A missing actor renders as `Panameer`, never as a guess at a person. */
     r.actorName = (r.actorPersonId && nameById.get(r.actorPersonId)) || "Panameer";
   }
   return rows;
@@ -343,12 +299,7 @@ export async function getTicket(viewer: Viewer, ticketId: string, asAdmin = fals
   return { ticket, messages };
 }
 
-/**
- * ── THE ADMIN SIDE ──────────────────────────────────────────────────────────
- * Every function below is called only from surfaces already behind
- * `canAdminister` — `/admin
-
-/** The triage list. Ordered by recency of ACTIVITY, which is why the column exists. */
+/** THE ADMIN SIDE */
 export async function listAllTickets() {
   return prisma.supportTicket.findMany({
     orderBy: [{ last_message_at: "desc" }, { created_at: "desc" }],

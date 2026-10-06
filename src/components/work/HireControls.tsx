@@ -25,9 +25,7 @@ function useHirePost(workRequestId: string) {
         return false;
       }
       if (!r.ok) {
-        /* ⚠⚠ THE WRITER'S OWN SENTENCE REACHES THE BUYER — "that proposal
-           doesn't state a rate, so the hours can't be priced" is what they need
-           to read, and a generic failure would hide the one actionable fact. */
+        // THE WRITER'S OWN SENTENCE REACHES THE BUYER — "that proposal
         setError(out.error ?? "That didn't work.");
         return false;
       }
@@ -41,7 +39,7 @@ function useHirePost(workRequestId: string) {
   return { post, busy, error, setError, gateModal };
 }
 
-/** ⚠ TRANSITION ONE, offered per proposal — the buyer picks a person, not a row. */
+/** TRANSITION ONE, offered per proposal — the buyer picks a person, not a row. */
 export function SelectProposal({
   workRequestId,
   providerPersonId,
@@ -52,9 +50,7 @@ export function SelectProposal({
   workRequestId: string;
   providerPersonId: string;
   providerName: string;
-  /** ⚠⚠ `selectProvider` REFUSES a proposal with no rate; the button says so
-      rather than posting into a refusal (`E579` — do not render a control whose
-      handler is known to refuse). */
+  /** rather than posting into a refusal ( — do not render a control whose */
   hasRate: boolean;
   selected: boolean;
 }) {
@@ -91,14 +87,7 @@ export function SelectProposal({
   );
 }
 
-/**
- * ⚠⚠⚠ THE DIRECT ROUTE, AND THE REASON THE LINE PATCH LOST `providerPersonId`
- * IN THE SAME COMMIT. `Assign a provider…` wrote a NAME with no rate, no line
- * status and no bid. This writes the pair the model actually needs, through
- * `assignProviderDirectly` — the `route: "DIRECT"` the schema already named.
- * ⚠ **A RATE IS REQUIRED**, because a line with a provider and no price cannot
- * be ordered — `work-request-lines.ts` counts both as `missing`.
- */
+/** THE DIRECT ROUTE, AND THE REASON THE LINE PATCH LOST `providerPersonId` */
 export function AssignDirectly({
   workRequestId,
   providers,
@@ -115,27 +104,8 @@ export function AssignDirectly({
   return (
     <div className="mt-4 rounded-brand border border-line bg-white p-5">
       {gateModal}
-      {/*
-        ── ⚠⚠⚠ THE WORD, RENAMED (`P2-A8-E712` WS-D) ──────────────────────────
-
-        ⚠⚠ **SCOTT, 2026-09-27:** *"change the name… from 'direct' (borrowed from Upwork)
-        to 'externally sourced'."* ⚠ Here it was the ADVERB form of the same borrowed
-        concept — *"directly"* meaning *"without Panameer's sourcing"* — so it is the same
-        rename, not a different word that happens to look like it.
-        ⚠⚠⚠ **THE THING THAT IS EXTERNALLY SOURCED IS THE PROVIDER**, which is Scott's own
-        framing: *"externally sourced transactions (when the provider is sourced
-        off-platform)."*
-        ⚠ **A HEADING, SO SENTENCE CASE** — rule 11 governs a button LABEL, not this.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   <h3 className="text-[15px] font-bold">Assign someone directly</h3>
-      */}
-      {/*
-        ⚠⚠ **SCOTT'S PHRASE, NOT A PLAINER ONE OF MINE.** I first wrote *"a provider you
-        sourced yourself"*, which reads more easily — ⚠⚠⚠ **but WS-D says *"externally
-        sourced" everywhere a member can read it*, AND THE PHRASE IS IN THE TERMS OF
-        SERVICE.** One word for one thing (`E585`) matters more than my better sentence
-        when the word is contractual.
-      */}
+      {/* THE WORD, RENAMED WS-D) */}
+      {/* SCOTT'S PHRASE, NOT A PLAINER ONE OF MINE. I first wrote *"a provider you */}
       <h3 className="text-[15px] font-bold">Assign an externally sourced provider</h3>
       <p className="mt-1 text-[13.5px] text-ink-2">
         No proposal needed — but their rate is, because the order is priced from it.
@@ -175,9 +145,7 @@ export function AssignDirectly({
           onClick={() =>
             post(
               "assign",
-              /* ⚠⚠ ROUNDED, NOT TRUNCATED — `19.99 * 100` is
-                 `1998.9999999999998` in IEEE 754, and `Math.trunc` would set a
-                 rate a cent light. The same rule the proposal form records. */
+              // ROUNDED, NOT TRUNCATED — `19.99 * 100` is
               { providerPersonId: personId, unitPriceCents: Math.round(dollars * 100), uom: "HOUR" },
               "assign"
             )
@@ -195,7 +163,7 @@ export function AssignDirectly({
   );
 }
 
-/** ⚠⚠⚠ TRANSITION TWO. The irreversible one, and it says so before it is pressed. */
+/** TRANSITION TWO. The irreversible one, and it says so before it is pressed. */
 export function CreateOrder({ workRequestId }: { workRequestId: string }) {
   const { post, busy, error, gateModal } = useHirePost(workRequestId);
   const [sow, setSow] = useState("");
@@ -203,12 +171,7 @@ export function CreateOrder({ workRequestId }: { workRequestId: string }) {
     <div className="mt-4 rounded-brand border-2 border-magenta/40 bg-magenta/[0.04] p-5">
       {gateModal}
       <p className="text-[15px] font-bold">A provider is selected.</p>
-      {/*
-        ⚠⚠ IT NAMES WHAT CHANGES AND WHAT STOPS BEING POSSIBLE. Ruling 17's
-        split only helps a buyer who is TOLD that the second step is the one
-        that closes the door — otherwise the two buttons look like one action
-        split for no reason.
-      */}
+      {/* IT NAMES WHAT CHANGES AND WHAT STOPS BEING POSSIBLE. Ruling 17's */}
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
         Creating the work order sends it to them to accept, and the selection
         can&apos;t be changed after that.

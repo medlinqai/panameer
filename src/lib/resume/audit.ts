@@ -214,8 +214,7 @@ export async function parserVariants(): Promise<VariantStats[]> {
     for (const [k, n] of Object.entries((r.built ?? {}) as Record<string, number>)) {
       v.byType[k] = (v.byType[k] ?? 0) + (typeof n === "number" ? n : 0);
     }
-    /* ⚠ YIELD NEEDS BOTH HALVES. A run with no `source_chars` (every
-       pre-E487 row) contributes to neither the numerator nor the denominator. */
+    // YIELD NEEDS BOTH HALVES. A run with no `source_chars` (every
     if (r.source_chars && r.source_chars > 0 && r.built_total !== null) {
       v.yieldRuns += 1;
       v.yieldPer1k =
@@ -223,7 +222,7 @@ export async function parserVariants(): Promise<VariantStats[]> {
           (r.built_total / r.source_chars) * 1000) /
         v.yieldRuns;
     }
-    /* ⚠⚠ ACCURACY IS AVERAGED OVER REVIEWED RUNS ONLY. */
+    /* ACCURACY IS AVERAGED OVER REVIEWED RUNS ONLY. */
     if (r.accuracy !== null) {
       v.reviewedRuns += 1;
       v.accuracy = ((v.accuracy ?? 0) * (v.reviewedRuns - 1) + r.accuracy) / v.reviewedRuns;
@@ -233,32 +232,7 @@ export async function parserVariants(): Promise<VariantStats[]> {
   return [...by.values()].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RETENTION — OPTION 2 (`P1-A1.5-E490`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   > **Scott:** *"I want to store the rating, not the details of the parse and
-   > build."*
-
-   ⚠⚠ TODAY THE TABLE STORES THE WHOLE RÉSUMÉ TWICE PER RUN — `parsed` and
-   `final`, both full JSON: employment history, education, names. That is the
-   OPPOSITE of what he asked for, and it is personal data sitting in an audit
-   table.
-
-   ⚠ SCOTT CHOSE OPTION 2: the tallies are permanent, the blobs age out. So
-   `accuracy`, `built`, `built_total`, `source_chars`, `prompt_version`, the cost
-   and the latency all survive forever — every number the health card draws —
-   while the content that made them is cleared after the window.
-
-   ⚠⚠ IT KEEPS A RE-CHECK WINDOW, WHICH IS THE POINT OF 90 DAYS RATHER THAN 0.
-   `accuracy` can be recomputed from `parsed` + `final` if the diff logic ever
-   changes; after the window it cannot, and that is an accepted, stated cost.
-
-   ⚠⚠ THIS IS NOT SCHEDULED, DELIBERATELY. There is no cron, no `vercel.json`
-   entry and no caller — the brief says build the function and do not schedule
-   it. ⚠ A retention job that starts deleting the moment it merges is not
-   something to switch on in the same change that introduces it.
-*/
+// RETENTION — OPTION 2
 
 /** Rows older than this keep their numbers and lose their content. */
 export const AUDIT_BLOB_RETENTION_DAYS = 90;
@@ -273,24 +247,14 @@ export type RetentionReport = {
   dryRun: boolean;
 };
 
-/**
- * Clear `parsed` / `final` on audit rows past the retention window.
- *
- * ⚠ DRY RUN BY DEFAULT. Call it with `{ apply: true }` to actually clear —
- * a function that deletes on its first accidental invocation is a bad function.
- * ⚠ THE TALLIES ARE NEVER TOUCHED. Only the two content columns are emptied,
- * and the ROW SURVIVES: deleting rows would take the ratings with them, which
- * is exactly what Scott asked to keep.
- */
+/** Clear `parsed` / `final` on audit rows past the retention window. */
 export async function pruneAuditBlobs(
   opts: { apply?: boolean; days?: number } = {}
 ): Promise<RetentionReport> {
   const days = opts.days ?? AUDIT_BLOB_RETENTION_DAYS;
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  /* ⚠ MEASURED IN THE DATABASE, not by pulling every blob into node to
-     `JSON.stringify` it — that would load the very PII this job exists to
-     remove into application memory to count it. */
+  // MEASURED IN THE DATABASE, not by pulling every blob into node to
   const sized = await prisma.$queryRawUnsafe<{ n: bigint; bytes: bigint }[]>(
     `select count(*)::bigint as n,
             coalesce(sum(pg_column_size(parsed) + pg_column_size(final)), 0)::bigint as bytes
@@ -304,9 +268,7 @@ export async function pruneAuditBlobs(
 
   if (!opts.apply) return { cutoff, eligible, bytes, cleared: 0, dryRun: true };
 
-  /* ⚠ `Prisma.JsonNull` writes a JSON null INTO the column; the columns are
-     NOT NULL, so a database null would be rejected. The row and every tally on
-     it stay exactly where they are. */
+  // NOT NULL, so a database null would be rejected. The row and every tally on
   const res = await prisma.resumeParseAudit.updateMany({
     where: { created_at: { lt: cutoff } },
     data: { parsed: Prisma.JsonNull, final: Prisma.JsonNull },

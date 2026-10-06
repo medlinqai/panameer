@@ -77,15 +77,7 @@ export default function AdminProvidersPage() {
               value={data.stages.scoredUnder80}
               hint="profile score, not visibility"
             />
-            {/*
-              ⚠⚠ RENAMED FROM `80% Complete` (`P2-J3-E590` WS-C). ⚠ SUPERSEDED,
-              quoted not deleted (`E164`):
-              //  label="80% Complete"  value={data.stages.eightyComplete}
-              //  hint="live, not validated"
-              ⚠⚠⚠ THE OLD LABEL SAID `Complete` AND THE OLD HINT SAID `live`, and
-              neither was true: it is a SCORE over a threshold, and visibility is
-              the required-set predicate, not this number.
-            */}
+            {/* RENAMED FROM `80% Complete` WS-C). */}
             <StatTile
               label="Score 80+"
               value={data.stages.scoredOver80}
@@ -95,21 +87,7 @@ export default function AdminProvidersPage() {
             <StatTile label="Validated" value={data.stages.validated} tone="green" />
           </div>
 
-          {/*
-            ── ⚠⚠ THE DATED NOTE (`P2-J3-E590` WS-C, Scott's rider 2026-09-20) ─
-
-            ⚠⚠⚠ A STEP CHANGE NOBODY CAUSED WILL BE READ AS LOST PROVIDERS
-            UNLESS THE BOARD SAYS OTHERWISE. `Score 80+` fell from 43 to 24 on
-            2026-09-20 with no provider doing anything: the scoring table was
-            re-weighted so 100 means *"every line answered"*, and 111 stored
-            scores were recomputed to match.
-            ⚠ IT SITS ON THE BOARD RATHER THAN IN A BRIEF because the person
-            reading the number is the person who needs the explanation, and a
-            note in a document is a note nobody is holding at the moment the
-            question occurs to them.
-            ⚠ **Remove this line once the change is old enough not to surprise
-            anyone — it is a notice, not furniture.**
-          */}
+          {/* THE DATED NOTE WS-C, Scott's rider 2026-09-20) */}
           <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
             <b className="text-ink">Note, 2026-09-20:</b> profile scores were
             re-weighted so 100 now means every line answered, and all stored

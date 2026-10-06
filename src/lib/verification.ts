@@ -95,10 +95,7 @@ export async function issueEmailVerification(
   return { ok: true, sent: false, devLink: verifyUrl };
 }
 
-/**
- * Verify a raw token from the email link. Idempotent: a token consumed after
- * the user is already verified still reports success.
- */
+/** Verify a raw token from the email link. Idempotent: a token consumed after */
 export async function consumeEmailVerification(
   rawToken: string
 ): Promise<{ ok: true; userId: string } | { ok: false; reason: "invalid" | "expired" }> {
@@ -149,18 +146,7 @@ export async function consumeEmailVerification(
 /** Short window — this token exists only to bridge one redirect. */
 const SIGNIN_TOKEN_TTL_MS = 5 * 60 * 1000;
 
-/**
- * Mint a SINGLE-USE token that can establish a session (E022).
- *
- * Clicking the emailed verify link has to leave the provider signed in — a GET
- * page can't create a NextAuth session by itself, so the verified page hands
- * this token to the `verify-token` credentials provider, which exchanges it for
- * a real session.
- *
- * Safe because it is only ever minted AFTER an email-verification token has
- * been validated, it is stored as a SHA-256 hash like every other token here,
- * it expires in five minutes, and it is consumed on first use.
- */
+/** Mint a SINGLE-USE token that can establish a session (E022). */
 export async function issueSignInToken(userId: string): Promise<string> {
   const raw = randomBytes(32).toString("base64url");
 
@@ -182,11 +168,7 @@ export async function issueSignInToken(userId: string): Promise<string> {
   return raw;
 }
 
-/**
- * Exchange a sign-in token for the user it belongs to, consuming it.
- * Returns null for anything invalid, expired, already used, or belonging to a
- * locked/deactivated account — the same fail-closed posture as `authorize`.
- */
+/** Exchange a sign-in token for the user it belongs to, consuming it. */
 export async function consumeSignInToken(
   rawToken: string
 ): Promise<{ id: string } | null> {

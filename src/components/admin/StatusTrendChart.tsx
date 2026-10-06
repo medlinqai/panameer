@@ -77,14 +77,7 @@ export function StatusTrendChart({
         ))}
 
         {variant === "bar" ? (
-          /*
-            ⚠ INK, NOT MAGENTA (`E433`) — a bar is not interactive. `currentColor`
-            is inherited from `text-ink-2` on the `<svg>`, so it is a token that
-            already flips with the theme rather than a new hex.
-            ⚠ THE BAR IS PINNED TO THE BASELINE and a ZERO WEEK DRAWS NOTHING —
-            no minimum height, no placeholder stub. A week with no joins must
-            look like a week with no joins.
-          */
+          // INK, NOT MAGENTA — a bar is not interactive. `currentColor`
           points.map((p, i) => {
             const slot = iw / points.length;
             const w = Math.max(2, slot * 0.62);
@@ -119,14 +112,7 @@ export function StatusTrendChart({
           </>
         )}
 
-        {/*
-          ⚠ THE END LABELS ANCHOR INWARD, they do not centre. A centred label on
-          the last point hangs half its width past the plot area and the viewBox
-          clips it — "Aug 2026" rendered as "Aug 202" at 1440. Anchoring the
-          first label to `start` and the last to `end` keeps both inside the
-          frame at every width, which a wider right padding would not: the
-          overflow scales with the label, not with the chart.
-        */}
+        {/* THE END LABELS ANCHOR INWARD, they do not centre. A centred label on */}
         {points.map((p, i) =>
           i % stride === 0 || i === points.length - 1 ? (
             <text
@@ -144,7 +130,7 @@ export function StatusTrendChart({
           ) : null
         )}
 
-        {/* ⚠ BOTH AXES ARE LABELLED, and the period is named on the x axis. */}
+        {/* BOTH AXES ARE LABELLED, and the period is named on the x axis. */}
         <text x={PAD.left + iw / 2} y={H - 6} textAnchor="middle" fontSize="11.5" fill="currentColor" fontWeight="600">
           {period === "day" ? "Day" : period === "week" ? "Week commencing" : "Month"}
         </text>
@@ -159,7 +145,7 @@ export function StatusTrendChart({
         </text>
       </svg>
 
-      {/* ⚠ THE SAME NUMBERS AS TEXT — see the docblock. */}
+      {/* THE SAME NUMBERS AS TEXT — see the docblock. */}
       <details className="mt-3">
         <summary className="cursor-pointer text-[13px] font-semibold text-ink-2">
           Show the numbers ({points.length} {period}s, {total} total)

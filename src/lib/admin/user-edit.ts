@@ -42,13 +42,11 @@ export async function setName(viewer: Viewer, personId: string, first: string, l
   const p = await load(personId);
   const f = first.trim();
   const l = last.trim();
-  /** ⚠ A person with no name at all is how a row becomes unfindable — the
-   *  defect this lane exists to end. One of the two must be present. */
+  /** A person with no name at all is how a row becomes unfindable — the */
   if (!f && !l) throw new UserEditError("A person needs a first or last name.", "INVALID");
 
   await prisma.person.update({ where: { id: personId }, data: { first_name: f, last_name: l } });
-  /** ⚠⚠ `User` CARRIES ITS OWN COPY OF THE NAME and it is kept in step — two
-   *  spellings of one person is `E585` on the most-searched field. */
+  /** spellings of one person is on the most-searched field. */
   if (p.user_id) {
     await prisma.user.update({ where: { id: p.user_id }, data: { first_name: f, last_name: l } });
   }
@@ -66,11 +64,7 @@ export async function setName(viewer: Viewer, personId: string, first: string, l
 
 /* ── email ──────────────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠⚠ CHANGING AN EMAIL UN-VERIFIES IT AND SENDS A FRESH VERIFICATION. An
- * address nobody has proved they own must not inherit the old one's verified
- * state — that is an account-takeover shape, not a tidiness point.
- */
+/** CHANGING AN EMAIL UN-VERIFIES IT AND SENDS A FRESH VERIFICATION. An */
 export async function setEmail(viewer: Viewer, personId: string, rawEmail: string, origin?: string | null) {
   const p = await load(personId);
   if (!p.user_id || !p.user) throw new UserEditError("That person has no account to change.", "INVALID");
@@ -93,8 +87,7 @@ export async function setEmail(viewer: Viewer, personId: string, rawEmail: strin
     detail: { field: "email", before: p.user.email, after: email, verified: "cleared" },
   });
 
-  /** ⚠ The send is best-effort and reported — a mail outage must not leave the
-   *  address half-changed, because the change itself is already committed. */
+  /** The send is best-effort and reported — a mail outage must not leave the */
   const r = await issueEmailVerification(p.user_id, { origin, throttle: false });
   return { changed: true, sent: r.ok ? r.sent : false };
 }
@@ -109,9 +102,7 @@ export async function markEmailVerified(viewer: Viewer, personId: string) {
     action: "user.mark_verified",
     targetTable: "users",
     targetId: p.user_id,
-    /** ⚠⚠ RECORDED AS AN ADMIN OVERRIDE, because that is what it is: nobody
-     *  clicked a link. The audit row is the only thing that can later tell this
-     *  apart from a real verification. */
+    /** RECORDED AS AN ADMIN OVERRIDE, because that is what it is: nobody */
     detail: { field: "email_verified", before: null, after: now.toISOString(), by: "admin override" },
   });
 }
@@ -144,26 +135,18 @@ export async function setRoles(
 
 /* ── lock / deactivate ──────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ LOCK AND DEACTIVATE ARE DIFFERENT THINGS AND BOTH ALREADY EXISTED:
- * `locked` is the auth lockout (failed attempts), `is_active` is the account
- * being switched off. ⚠⚠⚠ **THEY NEED A CONFIRMATION BECAUSE THEY LOCK A REAL
- * PERSON OUT OF THEIR OWN ACCOUNT** — the caller passes it, and this refuses
- * without it rather than trusting the screen.
- */
+/** LOCK AND DEACTIVATE ARE DIFFERENT THINGS AND BOTH ALREADY EXISTED */
 export async function setLocked(viewer: Viewer, personId: string, locked: boolean, confirmed: boolean) {
   const p = await load(personId);
   if (!p.user_id || !p.user) throw new UserEditError("That person has no account.", "INVALID");
-  /** ⚠ Refused BEFORE the confirmation is considered: a question whose only
-   *  answer is "no" should not be asked. */
+  /** Refused BEFORE the confirmation is considered: a question whose only */
   if (locked) refuseSelf(viewer, p.user_id, "lock");
   if (locked && !confirmed) throw new UserEditError("Locking signs this person out. Confirm first.", "CONFIRM");
   if (p.user.locked === locked) return;
 
   await prisma.user.update({
     where: { id: p.user_id },
-    /** ⚠ Unlocking clears the counter and the window too, or the next sign-in
-     *  re-locks them on the stale failure count. */
+    /** Unlocking clears the counter and the window too, or the next sign-in */
     data: locked
       ? { locked: true }
       : { locked: false, failed_login_attempts: 0, locked_until: null },
@@ -176,12 +159,7 @@ export async function setLocked(viewer: Viewer, personId: string, locked: boolea
   });
 }
 
-/**
- * ⚠⚠⚠ SOFT, AND THAT IS THE POINT. It blocks sign-in (`auth.ts` already reads
- * `is_active`), hides them from members (`E796` adds that to the shared
- * marketplace predicate), and KEEPS EVERY ROW. Scott: nothing here hard-deletes
- * a real account.
- */
+/** SOFT, AND THAT IS THE POINT. It blocks sign-in (`auth.ts` already reads */
 export async function setActive(viewer: Viewer, personId: string, active: boolean, confirmed: boolean) {
   const p = await load(personId);
   if (!p.user_id || !p.user) throw new UserEditError("That person has no account.", "INVALID");
@@ -202,12 +180,7 @@ export async function setActive(viewer: Viewer, personId: string, active: boolea
 
 /* ── password reset ─────────────────────────────────────────────────────── */
 
-/**
- * ⚠⚠ IT REUSES `E528`'s PATH, which carries the 1-hour expiry, the 3-per-hour
- * limit and the token consumption. ⚠⚠⚠ **IT DOES NOT SET A PASSWORD AND NEVER
- * RETURNS ONE** — an admin who can read a member's password is a worse problem
- * than a member who cannot sign in.
- */
+/** IT REUSES 's PATH, which carries the 1-hour expiry, the 3-per-hour */
 export async function sendPasswordReset(viewer: Viewer, personId: string, origin?: string | null) {
   const p = await load(personId);
   if (!p.user_id || !p.user) throw new UserEditError("That person has no account.", "INVALID");
@@ -217,11 +190,9 @@ export async function sendPasswordReset(viewer: Viewer, personId: string, origin
     action: "user.password_reset_sent",
     targetTable: "users",
     targetId: p.user_id,
-    /** ⚠ The address is recorded; no token and no link ever is. */
+    /** The address is recorded; no token and no link ever is. */
     detail: { to: p.user.email, via: "E528 reset path" },
   });
-  /** ⚠⚠ The caller is told it was SENT, not whether the address exists — the
-   *  reset path is deliberately silent about that (`E528`), and leaking it here
-   *  would undo that for anyone with admin. */
+  /** The caller is told it was SENT, not whether the address exists — the */
   return { sent: true };
 }

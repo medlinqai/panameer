@@ -85,20 +85,7 @@ export function ReviewStep({
     >
       {error && <Notice>{error}</Notice>}
 
-      {/*
-        ── ⚠⚠ WHO IS ASKING — THE POST GATE, STATED BEFORE THE BUTTON ─────────
-
-        SCOTT: *"i am letting you post for free… if you refuse to give basic
-        details… meh, maybe it isn't the place for you?"*
-
-        ⚠ EACH ROW NAMES THE FIELD, GIVES ONE REASON IN THE PROVIDER'S INTEREST,
-        AND LINKS TO WHERE IT IS FIXED. Not "complete your profile" — that tells
-        a requester nothing and is the exact refusal this replaces. The strings
-        come from `POST_REQUIREMENTS`, the same table the server refuses with.
-
-        ⚠ IT IS NOT STYLED AS AN ERROR. Nothing has gone wrong; they have not
-        finished. Red here would read as a fault.
-      */}
+      {/* WHO IS ASKING — THE POST GATE, STATED BEFORE THE BUTTON */}
       {identityGaps.length > 0 && (
         <div className="mb-5 rounded-brand border border-line bg-bg-soft p-5">
           <p className="text-[15px] font-bold">
@@ -152,20 +139,7 @@ export function ReviewStep({
         </ReviewCard>
       </div>
 
-      {/*
-        ── ⚠⚠ CONFIDENTIAL HIRING (`P1-J4-E025`) ───────────────────────────────
-
-        ⚠ IT HIDES THE COMPANY NAME AND THE LOGO. NOTHING ELSE — and the copy
-        says so out loud, because a buyer who believes this hides THEM will use
-        it expecting anonymity and a provider will read the result as a scam.
-        The person, the country, the industry, the standing counts and both
-        verification lines stay visible: *"a verified company in Oil & Gas,
-        hiring confidentially"* is still answerable.
-
-        ⚠ A CODE NAME IS REQUIRED, exactly as `employers.ts:301` requires one for
-        a CONFIDENTIAL project. The server refuses without it; this asks for it
-        first rather than letting the save fail.
-      */}
+      {/* IT HIDES THE COMPANY NAME AND THE LOGO. NOTHING ELSE — and the copy */}
       <div className="mt-5 rounded-brand border border-line p-5">
         <label className="flex cursor-pointer items-start gap-3">
           <input
@@ -229,12 +203,7 @@ export function ReviewStep({
             <h2 className="font-display text-[20px] font-bold">
               What happens after you post your Work Request?
             </h2>
-            {/*
-              PANAMEER'S VOICE, and only claims that are true. No "job", no
-              third-party assistant persona, and nothing about proposal volume
-              or timing — nobody has posted one yet, so any number here would be
-              invented.
-            */}
+            {/* PANAMEER'S VOICE, and only claims that are true. No "job", no */}
             <ul className="mt-3 grid gap-2 text-[14.5px] leading-relaxed text-ink-2">
               <li>· Providers can find it and send you proposals.</li>
               <li>· You can invite providers to it directly.</li>

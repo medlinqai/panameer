@@ -80,15 +80,10 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
       })
     : [];
 
-  /* ⚠ user id -> person id, needed to resolve a second-degree node's `via`. */
+  /* user id -> person id, needed to resolve a second-degree node's `via`. */
   const personIdByUser = new Map(joinedPeople.map((p) => [p.user_id ?? "", p.id]));
 
-  /*
-    ⚠⚠ `findMany` DOES NOT PRESERVE THE ORDER OF AN `in` LIST — SQL has no such
-    guarantee — so the newest-first order established by `colleagueUserIds` is
-    re-applied here rather than assumed. ⚠ Without this the label's *"most
-    recent"* would be a claim about a set nothing had sorted.
-  */
+  // guarantee — so the newest-first order established by `colleagueUserIds` is
   const rankByUser = new Map(firstDegree.map((u, i) => [u, i]));
   const joinedAll: WebPerson[] = joinedPeople
     .slice()
@@ -104,14 +99,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
     }));
 
   /* ── 2 · invited ─────────────────────────────────────────────────────── */
-  /*
-    ⚠⚠ EXPIRY IS COMPUTED FROM `expires_at`, NOT READ FROM `status`. The
-    `ColleagueInviteStatus` enum has an `EXPIRED` value and NOTHING EVER WRITES
-    IT — measured 2026-09-20. ⚠ Filtering on `status: "PENDING"` alone would
-    draw invitations that lapsed weeks ago as if they were still in flight.
-    ⚠ `inviteColleague` already treats "live" as exactly this pair of
-    conditions; this agrees with it rather than inventing a second rule.
-  */
+  // EXPIRY IS COMPUTED FROM `expires_at`, NOT READ FROM `status`. The
   const invitedAll = mePerson
     ? await prisma.colleagueInvite.findMany({
         where: {
@@ -130,16 +118,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
     : [];
 
   /* ── 3 · reachable — the second degree ───────────────────────────────── */
-  /*
-    ⚠⚠ THIS DID NOT EXIST BEFORE `E591` WS-B, and `getColleagueSuggestions` is
-    NOT it: that is a FACT match (same employer, same client, same
-    specialization + state) and reads no edges at all. ⚠ The web's third ring is
-    a GRAPH claim — *"a colleague's colleague"* — so it has to walk the graph.
-
-    ⚠ ONE QUERY FOR THE WHOLE SECOND DEGREE, not one per colleague. The
-    alternative is `mutualColleagueCount`'s shape, which costs two queries per
-    person and would be N+1 across a roster.
-  */
+  // THIS DID NOT EXIST BEFORE WS-B, and `getColleagueSuggestions` is
   const secondRows = firstDegree.length
     ? await prisma.connection.findMany({
         where: {
@@ -151,12 +130,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
       })
     : [];
 
-  /*
-    ⚠⚠ FIRST `via` WINS, DELIBERATELY. Somebody reachable through three
-    colleagues is still ONE person and must be ONE node — drawing them once per
-    path would overstate the network, which is the `E537` sum-versus-union
-    mistake in a picture.
-  */
+  // FIRST `via` WINS, DELIBERATELY. Somebody reachable through three
   const viaByCandidate = new Map<string, string>();
   for (const r of secondRows) {
     const [a, b] = [r.from_user_id, r.to_user_id];
@@ -165,7 +139,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
       [b, a],
     ] as const) {
       if (!firstSet.has(via)) continue;
-      /* ⚠ Not me, not already a colleague, not already claimed. */
+      /* Not me, not already a colleague, not already claimed. */
       if (cand === meUserId || firstSet.has(cand) || viaByCandidate.has(cand)) continue;
       viaByCandidate.set(cand, via);
     }
@@ -190,17 +164,11 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
         viaId: personIdByUser.get(viaUser) ?? "",
       };
     })
-    /* ⚠ A node with no resolvable `via` has nothing to hang off and is dropped
-       rather than drawn floating at the centre. */
+    // A node with no resolvable `via` has nothing to hang off and is dropped
     .filter((r) => r.viaId !== "");
 
   /* ── caps ────────────────────────────────────────────────────────────── */
-  /*
-    ⚠⚠ THE INNER RING HOLDS `joined` AND `invited` TOGETHER, so they share one
-    cap — they are drawn on the same circle and it is the circle that runs out
-    of room. ⚠ Joined are kept first: a real colleague outranks an unanswered
-    invitation for the last seat.
-  */
+  // THE INNER RING HOLDS `joined` AND `invited` TOGETHER, so they share one
   const joined = joinedAll.slice(0, WEB_CAPS.inner);
   const invitedRoom = Math.max(0, WEB_CAPS.inner - joined.length);
   const invited = invitedAll.slice(0, invitedRoom).map((i) => ({
@@ -209,8 +177,7 @@ export async function getCommunityWeb(viewer: Viewer): Promise<CommunityWeb> {
     email: i.invitee_email,
   }));
 
-  /* ⚠ A reachable node whose `via` was capped off the inner ring has nothing to
-     link to, so it goes too. Consistency beats node count. */
+  // A reachable node whose `via` was capped off the inner ring has nothing to
   const keptJoined = new Set(joined.map((j) => j.id));
   const reachable = reachableAll
     .filter((r) => keptJoined.has(r.viaId))

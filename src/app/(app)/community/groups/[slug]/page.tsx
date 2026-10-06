@@ -41,17 +41,7 @@ export default async function BoardPage({
           </p>
         )}
 
-        {/*
-          ── ⚠⚠⚠ WHAT THIS GROUP IS, AND WHAT IT OFFERS YOU (`P2-A3-E612`) ──
-
-          ⚠ Every figure here is counted and scoped: `memberCount` is `ACTIVE`
-          membership rows for THIS board. ⚠⚠ It has a writer now — before this
-          brief *"Groups You Joined"* would have been a dash, because joining did
-          not exist as a concept.
-          ⚠⚠ THE OWNER IS A NAME AND NOTHING MORE (`E572`, reaffirmed
-          2026-09-23): **ownership is not authority for access.** All four
-          general groups are ownerless, which is exactly why they are `OPEN`.
-        */}
+        {/* WHAT THIS GROUP IS, AND WHAT IT OFFERS YOU */}
         <div className="mt-4 border-t border-line py-5">
           <p className="text-[13px] text-ink-2">
             {board.memberCount} {board.memberCount === 1 ? "member" : "members"}
@@ -72,21 +62,7 @@ export default async function BoardPage({
       {board.threads.length === 0 ? (
         <div className="rounded-brand border border-dashed border-line px-4 py-8 text-center">
           <p className="text-[15px] font-semibold">No questions here yet.</p>
-          {/* ⚠⚠ CREDITS COPY PARKED 2026-09-03 (`P1-ALL-E375`) — AND THIS IS
-              THE ONE PLACE WHERE PARKING CREDITS COST A NON-CREDITS SENTENCE.
-              REPORTED, NOT PAPERED OVER.
-
-              The Credits promise was welded mid-sentence by an em-dash, so the
-              clause could not be lifted out without REWRITING the sentence —
-              and nothing here gets to invent copy. So ONE COMPLETE SENTENCE was
-              removed rather than edited, preserved verbatim for a one-paste
-              restore: *"A question with real detail gets a real answer — and
-              both earn Credits once the ledger is on."*
-
-              ⚠ *"Someone has to go first."* IS UNTOUCHED and still carries the
-              empty state on its own. If Scott wants the lost half back without
-              the Credits clause, that is a copy decision for him, not a
-              silent rewrite here. */}
+          {/* CREDITS COPY PARKED 2026-09-03 — AND THIS IS */}
           <p className="mx-auto mt-1 max-w-md text-[13.5px] leading-relaxed text-ink-2">
             Someone has to go first.
           </p>
@@ -99,25 +75,7 @@ export default async function BoardPage({
                 href={`/community/groups/thread/${t.id}`}
                 className="group flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4"
               >
-                {/*
-                  ── ⚠⚠ NON-ANONYMITY ONLY WORKS IF IT IS VISIBLE (`P1-ALL-E033`)
-
-                  ⚠ A rule that COLLECTS a photo and does not SHOW it buys
-                  nothing. The thread PAGE already rendered all three — avatar,
-                  name and job title — but this LIST rendered the name alone:
-                  *"{t.author.name} · {relativeDay(t.lastPostAt)}"*, quoted here
-                  because it is what changed. So the board, which is where most
-                  people decide whether a thread is worth opening, was the one
-                  surface where the author was still just a string.
-
-                  ⚠ THE DATA WAS ALREADY THERE — `authorView` in `lib/forums.ts`
-                  has carried `photoUrl` and `title` all along; nothing was
-                  added to the query.
-
-                  ⚠ NO BADGE, NO SCORE, NO POST COUNT, NO VERIFIED TICK. Facts
-                  about who wrote it, nothing more. `mentorState` exists and is
-                  deliberately not used here.
-                */}
+                {/* NON-ANONYMITY ONLY WORKS IF IT IS VISIBLE */}
                 <Avatar
                   firstName={t.author.firstName}
                   lastName={t.author.lastName}

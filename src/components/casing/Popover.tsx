@@ -83,11 +83,7 @@ export function Popover({
   useLayoutEffect(() => {
     if (!open) return;
     position();
-    /*
-      `capture: true` on scroll, because scroll does not bubble: without it a
-      panel anchored to something inside a scrolling column stays put while its
-      trigger moves away underneath it.
-    */
+    // panel anchored to something inside a scrolling column stays put while its
     window.addEventListener("scroll", position, true);
     window.addEventListener("resize", position);
     return () => {
@@ -127,10 +123,7 @@ export function Popover({
       role="menu"
       aria-label={label}
       style={{ width, visibility: "hidden" }}
-      /*
-        z-[60] clears the mobile rail drawer and any sticky page chrome. Hidden
-        until positioned, so it never flashes in the top-left corner first.
-      */
+      // z-[60] clears the mobile rail drawer and any sticky page chrome. Hidden
       className="fixed z-[60] max-h-[calc(100vh-1rem)] overflow-y-auto overscroll-contain rounded-[14px] border border-line bg-white py-1.5 text-ink shadow-brand"
     >
       {children}

@@ -114,8 +114,6 @@ export async function requestProjectValidation(
 
   const raw = randomBytes(32).toString("base64url");
 
-  /* ⚠ `tx[1]` is the new ProjectValidation row — the receipt's subject
-     (`P2-J3-E522` Part A). */
   const tx = await prisma.$transaction([
     // A resend SUPERSEDES: only the newest link may work. Marked EXPIRED rather
     // than deleted so the history of what was sent survives.
@@ -182,13 +180,7 @@ export type ValidationRequestView = {
   isCurrent: boolean;
 };
 
-/**
- * Look up a request by its RAW token for the public page.
- *
- * Returns only what the contact needs to answer the question — provider,
- * project, client, dates. No rate, no bio, no other projects, no session. The
- * token proves they were asked about THIS project and nothing more.
- */
+/** Look up a request by its RAW token for the public page. */
 export async function getValidationRequest(
   rawToken: string
 ): Promise<
@@ -243,15 +235,7 @@ export async function getValidationRequest(
   };
 }
 
-/**
- * Record the contact's answer. Single-use: the token is spent either way, so a
- * "Decline" cannot be re-opened and clicked "Confirm" by whoever the mail was
- * forwarded to.
- *
- * Only CONFIRM touches the project's badge. DECLINED and EXPIRED leave it
- * exactly as it was — an unanswered or refused request is not evidence of
- * anything, and must never look like it is.
- */
+/** Record the contact's answer. Single-use: the token is spent either way, so a */
 export async function respondToValidation(
   rawToken: string,
   decision: "confirm" | "decline",
@@ -288,31 +272,7 @@ export async function respondToValidation(
     }),
   ]);
 
-  /*
-    ── ⚠⚠⚠ A BELL ENTRY ON **BOTH** ANSWERS (`P2-A1.1-E749`, lane 3 WS-D) ─────
-
-    ⚠ **SCOTT, 2026-10-01: *"the provider gets a bell notice on Yes and on No."***
-    ⚠⚠ **THIS SUPERSEDES THE RULE THIS BLOCK USED TO STATE** (rule 13 — the
-    newest dated statement from Scott is the live one). ⚠ SUPERSEDED, quoted not
-    deleted (`E164`):
-    //   One event, no noise (brief §6): tell the provider only on a CONFIRM. A
-    //   decline is a conversation to have offline, not a push notification.
-    ⚠⚠⚠ **THE DECLINE NOTICE CARRIES NO WORDING AND NO NAME** — the brief: *"the
-    provider is told kindly, without the contact's wording."* So the old concern
-    is answered rather than overruled: what it feared was relaying a judgement,
-    and the event does not.
-
-    ── ⚠⚠ THIS IS NOT A DOUBLE-SEND, AND THE CHECK IS WORTH RECORDING ─────────
-
-    ⚠ `notifyProviderValidated` below sends the `project-validated` EMAIL
-    directly, which is ruling 86c's shape. ⚠⚠ **IT IS NOT DUPLICATED HERE:
-    `validation.confirmed` IS NOT ON `NOTIFICATION_EMAIL_EVENTS`**, so `notify()`
-    writes a bell row and sends nothing. ⚠⚠⚠ One email, one bell entry — which
-    is exactly ruling 86's division: the transaction owns the mail, the
-    notification layer owns the entry.
-    ⚠ **DO NOT ADD `validation.confirmed` TO THE ALLOWLIST WITHOUT REMOVING THE
-    DIRECT SEND**, or the provider gets the same news twice.
-  */
+  // A BELL ENTRY ON BOTH ANSWERS , lane 3 WS-D)
   if (decision === "confirm") {
     void notifyProviderValidated(record.project_id).catch((e) =>
       console.error("[project-validation] provider notify failed (non-fatal):", e)
@@ -333,8 +293,7 @@ export async function respondToValidation(
       });
     }
   } catch (e) {
-    /* ⚠⚠ IT CAN NEVER FAIL THE ANSWER. The contact has clicked and the row is
-       committed; a notification outage must not lose the confirmation. */
+    // IT CAN NEVER FAIL THE ANSWER. The contact has clicked and the row is
     console.error("[project-validation] could not record a notification:", e);
   }
 
@@ -371,8 +330,7 @@ async function notifyProviderValidated(projectId: string) {
   });
 
   if (process.env.RESEND_API_KEY) {
-    /* ⚠ THE CONFIRMATION BACK TO THE PROVIDER. There is no row per MESSAGE here
-       — the send follows a `project.update` — so the PROJECT is the subject. */
+    // THE CONFIRMATION BACK TO THE PROVIDER. There is no row per MESSAGE here
     await sendEmail({
       to: email,
       subject,
@@ -389,10 +347,7 @@ async function notifyProviderValidated(projectId: string) {
   );
 }
 
-/**
- * Per-project validation state for the provider's own surfaces.
- * Keyed by project id.
- */
+/** Per-project validation state for the provider's own surfaces. */
 export async function validationStateFor(
   profileId: string
 ): Promise<Record<string, ValidationState>> {
@@ -423,29 +378,7 @@ export async function validationStateFor(
   return out;
 }
 
-/**
- * ── ⚠⚠ SAVE THE FIVE ANSWERS (`P1-J2.1-E024`, 2026-09-01) ────────────────────
- *
- * ⚠⚠ THIS FUNCTION IS DELIBERATELY UNABLE TO AFFECT THE VALIDATION. It never
- * writes `status`, never writes `responded_at`, and never touches `Project`. The
- * badge was earned by the click that came before this, in `respondToValidation`'s
- * own transaction, and nothing here can take it back or hold it up.
- *
- * ⚠ THE TOKEN IS THE AUTHORIZATION, exactly as the confirm path already works —
- * no session, and a `projectId` is NEVER accepted from the client. The token
- * hashes to one row and that row names its own project.
- *
- * ⚠ IT MUST WORK ON AN ALREADY-CONFIRMED REQUEST. That is the NORMAL case, not an
- * edge one: confirmation commits first, and only then are the questions shown. A
- * guard that refused a CONFIRMED row would break the only path this ever runs on.
- * ⚠ SO IT DOES NOT USE `getValidationRequest`, which treats an answered row as
- * `used` and refuses it. It re-reads the row directly and applies the two checks
- * that DO still matter: the token must resolve, and it must not have expired.
- *
- * ⚠ EVERY FIELD IS OPTIONAL. Saving an empty response is legal and simply stamps
- * `answered_at` — a client may open the questions, decide they have nothing to
- * add, and press Save. That is a complete interaction, not a failure.
- */
+/** SAVE THE FIVE ANSWERS , 2026-09-01) */
 export async function saveValidationAnswers(
   rawToken: string,
   answers: {
@@ -492,7 +425,7 @@ export async function saveValidationAnswers(
       worked_from: date(answers.workedFrom),
       worked_to: date(answers.workedTo),
       role_note: text(answers.roleNote, 300),
-      /* ⚠ CAPPED AT 12 and de-duplicated. Free strings, never catalog ids. */
+      /* CAPPED AT 12 and de-duplicated. Free strings, never catalog ids. */
       skills_noted: [
         ...new Set(
           (answers.skillsNoted ?? [])

@@ -1,11 +1,4 @@
-/*
- * ── ⚠⚠ M1's BOTTOM BAR (`P2-ALL-E694` WS-B) ────────────────────────────────
- *
- * ⚠ PLAIN CSS, NOT TAILWIND ARBITRARY VARIANTS — the same reason `app-band.css`
- * and `messages-drawer.css` give: `check:app-shell` GUARD 3 forbids a `min-[…]`
- * variant competing with a named one, and this needs `env()` for the iOS safe
- * area, which the named scale does not express.
- */
+/* M1's BOTTOM BAR WS-B) */
 
 .pm-bottomnav {
   position: fixed;
@@ -13,22 +6,11 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  /* ⚠⚠ `--color-rail`, NOT `--rail` (`P2-ALL-E760`). Nothing has ever defined
-     `--rail`, so this has been painting the hard-coded fallback and a company
-     theme could not reach the phone bottom nav. ⚠ `#211c2e` → `#272334` is a
-     19-point channel move — measured, imperceptible. The fallback stays. */
+  /* theme could not reach the phone bottom nav. `#211c2e` → `#272334` is a */
   background: var(--color-rail, #211c2e);
   border-top: 1px solid rgb(255 255 255 / 0.1);
 
-  /*
-    ── ⚠⚠⚠ iOS SAFARI'S CHROME SITS AT THE BOTTOM AND WILL FIGHT A FIXED BAR ──
-    ⚠ Ruling 88a names this explicitly. `env(safe-area-inset-bottom)` is the home
-    indicator's strip on a notched iPhone; without it the last 34px of this bar
-    sits UNDER the indicator and the labels are half-eaten.
-    ⚠⚠ `max()` not `+`: on a device with no inset the value is `0px`, and the bar
-    still needs its own padding. A bare `+` would give 6px there and 40px on an
-    iPhone, which is two different bars.
-  */
+  /* iOS SAFARI'S CHROME SITS AT THE BOTTOM AND WILL FIGHT A FIXED BAR */
   padding-bottom: max(6px, env(safe-area-inset-bottom));
   padding-top: 6px;
 }
@@ -39,23 +21,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  /*
-    ⚠⚠⚠ NO `overflow-x`. NOT `auto`, NOT `scroll`, NOT AT ANY WIDTH.
-    ⚠ That is the defect this whole brief exists to remove, and ruling 91's
-    namesake case: a row that scrolls with a hidden scrollbar satisfies every
-    check that never ran against it. `check:mobile-rows` asserts its absence BY
-    SHAPE, so writing one here fails a named test rather than passing quietly.
-  */
+  /* NO `overflow-x`. NOT `auto`, NOT `scroll`, NOT AT ANY WIDTH. */
 }
 
-/*
-  ⚠⚠ EQUAL CELLS, AND THAT IS WHAT MAKES IT FIT RATHER THAN SCROLL. Five cells
-  at `1 1 0` share 390px as 78px each; the label truncates inside its own cell
-  instead of pushing the row wider.
-  ⚠ `min-width: 0` IS LOAD-BEARING — without it a flex item refuses to shrink
-  below its content and the row overflows again, which is precisely how the band
-  ended up hiding 122px.
-*/
+/* EQUAL CELLS, AND THAT IS WHAT MAKES IT FIT RATHER THAN SCROLL. Five cells */
 .pm-bottomnav-cell {
   flex: 1 1 0;
   min-width: 0;
@@ -84,28 +53,14 @@
   background: rgb(255 255 255 / 0.08);
 }
 
-/* ⚠ `E217`'s ONE RULE, carried over rather than re-invented: active is a solid
-   fill; the translucent wash is hover and nothing else. */
+/* fill; the translucent wash is hover and nothing else. */
 .pm-bottomnav-link.is-active {
-  /* ⚠⚠ `--color-rail-active` — MAGENTA, RULED BY SCOTT 2026-10-02. The pill was
-     parked on `#3a3150` while the decision was open; it now matches the band's
-     active fill, which is the same state on the same navigation.
-     ⚠ The token is PINNED (defined once, outside the dark block), so the pill is
-     the same colour in both schemes — which is right for an accent.
-     ⚠ White on it measures 5.54:1 — clears AA.
-     ⚠ SUPERSEDED, quoted not deleted (`E164`):
-     //   background: var(--color-bottomnav-active, #3a3150);   (E760, parked)
-     //   background: var(--rail-active, #3a3150);              (the original bug) */
+  /* parked on `#3a3150` while the decision was open; it now matches the band's */
   background: var(--color-rail-active, #b02aae);
   color: #fff;
 }
 
-/*
-  ⚠⚠ THE LABEL TRUNCATES; IT DOES NOT WRAP AND IT DOES NOT PUSH.
-  ⚠ Wrapping would make the bar two lines tall on one long word — Scott on the
-  tab row: *"downright unprofessional"* — and pushing is the overflow this brief
-  removes. ⚠⚠⚠ THE LABEL IS NEVER REMOVED, only narrowed: 88a bans icon-only.
-*/
+/* THE LABEL TRUNCATES; IT DOES NOT WRAP AND IT DOES NOT PUSH. */
 .pm-bottomnav-label {
   max-width: 100%;
   overflow: hidden;
@@ -127,7 +82,7 @@
   display: none;
 }
 
-/* ⚠ The overflow opens UPWARD — there is nothing below a bottom bar. */
+/* The overflow opens UPWARD — there is nothing below a bottom bar. */
 .pm-bottomnav-overflow {
   position: absolute;
   bottom: 100%;
@@ -136,10 +91,7 @@
   margin: 0 0 6px;
   padding: 4px;
   list-style: none;
-  /* ⚠⚠ `--color-rail`, NOT `--rail` (`P2-ALL-E760`). Nothing has ever defined
-     `--rail`, so this has been painting the hard-coded fallback and a company
-     theme could not reach the phone bottom nav. ⚠ `#211c2e` → `#272334` is a
-     19-point channel move — measured, imperceptible. The fallback stays. */
+  /* theme could not reach the phone bottom nav. `#211c2e` → `#272334` is a */
   background: var(--color-rail, #211c2e);
   border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 10px;
@@ -160,12 +112,7 @@
   color: #fff;
 }
 
-/*
-  ── ⚠⚠⚠ THE PAGE MUST NOT END UNDERNEATH THE BAR ──────────────────────────
-  ⚠ A fixed bar covers whatever the page's last element is, and on a phone that
-  is usually the primary action. ⚠⚠ The reserve is the bar's own height plus the
-  safe-area inset, expressed once so the two cannot drift.
-*/
+/* THE PAGE MUST NOT END UNDERNEATH THE BAR */
 @media (max-width: 767.98px) {
   body {
     padding-bottom: calc(58px + max(6px, env(safe-area-inset-bottom)));

@@ -51,7 +51,7 @@ export function InstructorChip() {
   );
 }
 
-/** ⚠ INLINE SVG, NEVER A GLYPH — `▦ ◔ ▤ ◈ ⚙` and `⌘` all failed to render on real boxes. */
+/** INLINE SVG, NEVER A GLYPH — `▦ ◔ ▤ ◈ ⚙` and `⌘` all failed to render on real boxes. */
 export function Check({ className = "h-[11px] w-[11px]" }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" className={className} fill="none" aria-hidden focusable="false">

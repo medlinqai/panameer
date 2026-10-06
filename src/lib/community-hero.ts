@@ -57,16 +57,14 @@ export async function getCommunityHero(viewer: Viewer): Promise<CommunityHero | 
   const shown = boardIsShown(board);
   return {
     score,
-    /* ⚠ `rankFor` ALREADY returns null while the board is hidden — the guard is
-       the lib's, and this reads it rather than re-deriving the threshold. */
+    // the lib's, and this reads it rather than re-deriving the threshold.
     rank: shown ? rankFor(board, personId) : null,
     boardShown: shown,
     boardSize: board.length,
     move: nextMove(board, score)?.text ?? null,
     daysLeft: daysLeftInMonth(now),
     minScorers: BOARD_MIN_SCORERS,
-    /* ⚠ A person with no readable name is not a story — better nothing than
-       *"joined from your invite"* with a blank where the name goes. */
+    // A person with no readable name is not a story — better nothing than
     latestJoin: name && joined?.accepted_at ? { name, at: joined.accepted_at } : null,
   };
 }

@@ -144,71 +144,36 @@ async function buildWorkOrder(
 
   const orderNumber = `WO-${Date.now().toString(36).toUpperCase()}-${wr.id.slice(0, 4)}`;
 
-  /*
-    ⚠⚠⚠ THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
-    TRANSACTION. ⚠ Without it a crash between the two leaves an order nobody can
-    find from the request, or a request marked `ORDERED` with no order — and the
-    second would block every retry.
-  */
+  // THE ORDER, ITS LINES AND THE REQUISITION'S STATUS MOVE IN ONE
   const built = await prisma.$transaction(async (tx) => {
     const order = await tx.workOrder.create({
       data: {
         order_number: orderNumber,
-        /* ⚠⚠ THE ONE FIELD THAT DIFFERS BETWEEN THE DOORS. */
+        /* THE ONE FIELD THAT DIFFERS BETWEEN THE DOORS. */
         origin,
         work_request_id: wr.id,
         buyer_person_id: wr.buyer_person_id,
         p_account_id: wr.p_account_id,
         provider_person_id: providerPersonId,
         currency: wr.currency,
-        /*
-          ⚠⚠⚠ `ISSUED`, NOT `DRAFT`. The provider's acceptance is only reachable
-          out of `ISSUED` (`canAcceptNow`), and there is no screen that issues a
-          draft — a `DRAFT` order would be a contract nobody could act on, which
-          is the door-onto-a-wall shape `E579` names.
-        */
+        // out of `ISSUED` (`canAcceptNow`), and there is no screen that issues a
         status: "ISSUED",
         period_start: periodStart,
         period_end: periodEnd,
         fee_bps: feeBps,
-        /*
-          ── ⚠⚠⚠ THE CAP, WHICH NOTHING HAS EVER WRITTEN (`P2-A8-E684` WS-F) ──
-
-          ⚠⚠ **MEASURED BEFORE WRITING IT: `not_to_exceed_cents` HAD ZERO
-          WRITERS IN `src/`** — every order ever created carries `null` — while
-          `transaction-spine.ts:495` **already enforces it whenever it is set**:
-          a draw that would take the settled total past this cap is refused.
-          ⚠⚠⚠ So the enforcement existed and the number it enforces did not,
-          which means **no order has ever had a ceiling.** The schema says the
-          field *"caps the WHOLE order"*; this is the line that makes that true.
-
-          ⚠⚠ **IT IS THE ORDER'S OWN TOTAL, NOT A NEW NUMBER.** `valueCents` is
-          summed from the lines that were just copied, so the cap says *"no more
-          than what was ordered"* — a restatement of the order, never an
-          estimate, a forecast or a budget somebody would have to defend.
-          ⚠ **NO FEE ARITHMETIC AND NO CUT.** `fee_bps` is written beside this
-          and is neither multiplied nor divided here — `check:work-chain` §6
-          fails the build on `fee_bps`/`feeBps` arithmetic anywhere in `src/`,
-          and it passed before this change and after it.
-          ⚠⚠ **IT MOVES NO MONEY.** No `Payment` row, no `PAID`, nothing
-          settled — a ceiling is a refusal, not a transfer.
-        */
+        // THE CAP, WHICH NOTHING HAS EVER WRITTEN WS-F)
         not_to_exceed_cents: valueCents,
-        /* ⚠ Recorded, never branched on. */
+        /* Recorded, never branched on. */
         external_ref: input.externalRef?.trim() || null,
         sow_text: input.sowText?.trim().slice(0, 20000) || null,
         lines: {
           create: lines.map((l) => ({
             line_number: l.line_number,
-            /* ⚠⚠ THE ORDER LINE POINTS BACK AT THE REQUISITION LINE IT CAME
-               FROM, which is what makes `termChanges` able to say what moved. */
+            // THE ORDER LINE POINTS BACK AT THE REQUISITION LINE IT CAME
             work_request_line_id: l.id,
-            /* ⚠⚠⚠ COPIED, FIELD FOR FIELD, INCLUDING THE KIND (ruling 44).
-               ⚠ `basis` is NOT written — it is retired and nullable, and writing
-               it would mean deriving it, which is the deleted bridge. */
+            // COPIED, FIELD FOR FIELD, INCLUDING THE KIND (ruling 44).
             transaction_type: l.transaction_type,
-            /* ⚠⚠⚠ THE STAMP. Resolved above, written here, never looked up
-               again — ruling `97b`. */
+            // THE STAMP. Resolved above, written here, never looked up
             fee_bps: lineFees.get(l.id)!,
             description: l.description,
             unspsc_code: l.unspsc_code,
@@ -225,27 +190,18 @@ async function buildWorkOrder(
       select: { id: true, order_number: true, origin: true },
     });
 
-    /* ⚠⚠ RULING 17'S OTHER HALF: creating the order moves the request's status,
-       and that is what makes the selection irreversible from here. */
+    // RULING 17'S OTHER HALF: creating the order moves the request's status
     await tx.workRequest.update({ where: { id: wr.id }, data: { status: "ORDERED" } });
     await tx.workRequestLine.updateMany({
       where: { work_request_id: wr.id, status: "ASSIGNED" },
-      /* ⚠ Scott's WR_LINE line status: *"Sourced = used to create a WO."* */
+      /* Scott's WR_LINE line status: *"Sourced = used to create a WO."* */
       data: { status: "ORDERED", work_order_id: order.id },
     });
 
     return order;
   });
 
-  /*
-    ── ⚠⚠ THE PROVIDER IS TOLD, THROUGH THE EVENT THAT ALREADY EXISTS ──────
-    ⚠ `work.order_offered` is registered and, until now, uncalled — its own
-    comment says it was registered in advance so *"this brief"* would have one
-    line to call rather than inventing an event. ⚠⚠ Ruling 37: call it.
-    ⚠⚠⚠ IT IS A WORKLIST ITEM: the provider owes an acceptance, and `notify`
-    catches its own failures and never rethrows, so a notification outage cannot
-    turn a created work order into an error the buyer sees.
-  */
+  // THE PROVIDER IS TOLD, THROUGH THE EVENT THAT ALREADY EXISTS
   await notify({
     event: "work.order_offered",
     personId: providerPersonId,
@@ -264,10 +220,7 @@ async function buildWorkOrder(
   };
 }
 
-/**
- * ⚠⚠ DOOR 1 — **THE BUYER PRESSES HIRE.** Panameer generated these terms, so it
- * can assert them: `origin = INDIRECT`.
- */
+/** DOOR 1 — THE BUYER PRESSES HIRE. Panameer generated these terms, so it */
 export async function hire(
   viewer: Viewer,
   input: { workRequestId: string; sowText?: string | null }
@@ -275,16 +228,7 @@ export async function hire(
   return buildWorkOrder(viewer, { workRequestId: input.workRequestId, sowText: input.sowText }, "INDIRECT");
 }
 
-/**
- * ⚠⚠ DOOR 2 — **THE ERP RETURNS A PO.** The terms were approved in the buyer's
- * own system, so Panameer records the order's existence rather than asserting its
- * terms: `origin = DIRECT`.
- *
- * ⚠⚠⚠ THIS IS NOT AN INTEGRATION AND MUST NOT GROW INTO ONE. WS-D's scope is the
- * EVENT, not the transport — **no cXML, no webhook, no queue** (explicitly out of
- * scope). ⚠ This is the function such a transport would call, and it takes a PO
- * reference as a plain string because that is all a PO gives us that we keep.
- */
+/** DOOR 2 — THE ERP RETURNS A PO. The terms were approved in the buyer's */
 export async function acceptPurchaseOrder(
   viewer: Viewer,
   input: { workRequestId: string; poNumber: string }
@@ -299,25 +243,7 @@ export async function acceptPurchaseOrder(
   );
 }
 
-/**
- * ── ⚠⚠⚠ THE PROVIDER DECLINES THE WORK ORDER — RULING 16 ────────────────
- *
- * ⚠ WS-D item 5 said this was undecided and told me to report the options rather
- * than pick one. ⚠⚠ **SCOTT RULED IT AFTERWARDS (ruling 16): a declined work
- * order goes back to the buyer to pick somebody else.** So the stop is closed and
- * this is that ruling, not a choice of mine.
- *
- * ⚠⚠ WHAT THAT MEANS IN THE MODELS, AND ALL OF IT ALREADY EXISTS:
- * · the ORDER is `CANCELLED` — recorded, never deleted;
- * · the declining provider's proposal is `DECLINED`, with `declined_at`;
- * · **every other proposal goes back to `SUBMITTED`**, because the buyer is
- *   choosing again and a `NOT_SELECTED` row would present last time's answer;
- * · the work request returns to `POSTED` and its line loses the provider.
- *
- * ⚠⚠⚠ THE DECLINING PROVIDER IS NOT PUT BACK IN THE POOL. They said no to these
- * terms; offering them again on the buyer's next click would ask the same
- * question twice. ⚠ Their proposal keeps `DECLINED` and stays on the record.
- */
+/** THE PROVIDER DECLINES THE WORK ORDER — RULING 16 */
 export async function declineWorkOrder(
   viewer: Viewer,
   orderId: string,
@@ -330,9 +256,7 @@ export async function declineWorkOrder(
     select: { id: true, status: true, work_request_id: true },
   });
   if (!order) throw new SourcingError("That work order isn't yours.", "NOT_FOUND");
-  /* ⚠⚠ ONLY BEFORE ACCEPTING. Once a provider has accepted the terms the order is
-     a contract in force, and walking away from that is a cancellation with
-     consequences — a different act, and not this brief's. */
+  // ONLY BEFORE ACCEPTING. Once a provider has accepted the terms the order is
   if (order.status !== "ISSUED") {
     throw new SourcingError(
       "This work order can no longer be declined.",
@@ -346,7 +270,7 @@ export async function declineWorkOrder(
       data: { status: "CANCELLED" },
     });
     if (order.work_request_id) {
-      /* ⚠ The declining provider's own proposal records the refusal. */
+      /* The declining provider's own proposal records the refusal. */
       await tx.proposal.updateMany({
         where: {
           work_request_id: order.work_request_id,
@@ -358,8 +282,7 @@ export async function declineWorkOrder(
           decline_reason: reason?.trim() || null,
         },
       });
-      /* ⚠⚠ AND EVERYONE ELSE IS BACK IN CONTENTION. ⚠ `WITHDRAWN` and `DECLINED`
-         are left alone — those providers ended their own involvement. */
+      // AND EVERYONE ELSE IS BACK IN CONTENTION. `WITHDRAWN` and `DECLINED`
       await tx.proposal.updateMany({
         where: {
           work_request_id: order.work_request_id,
@@ -379,8 +302,7 @@ export async function declineWorkOrder(
     }
   });
 
-  /* ⚠ The provider's own worklist item goes — they answered it. ⚠⚠ Resolved,
-     never deleted: the notification records that they were asked. */
+  // The provider's own worklist item goes — they answered it. Resolved
   await prisma.notification
     .updateMany({
       where: { dedupe_key: `work.order_offered:${order.id}`, resolved_at: null },

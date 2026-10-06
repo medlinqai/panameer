@@ -26,22 +26,18 @@ export function Gauge({
   label,
 }: {
   figure: Figure;
-  /** ⚠⚠ `null` MEANS THERE IS NO HONEST SCALE — not a scale of zero. */
+  /** `null` MEANS THERE IS NO HONEST SCALE — not a scale of zero. */
   goal: number | null;
   money?: boolean;
-  /** ⚠ For the accessible name. The dial is a picture; the words carry the meaning. */
+  /** For the accessible name. The dial is a picture; the words carry the meaning. */
   label: string;
 }) {
   const counted = isCounted(figure);
-  /*
-    ⚠⚠⚠ A NEEDLE IS DRAWN ONLY WHEN BOTH HALVES ARE REAL. ⚠ `goal > 0` as well as
-    non-null: a scale of zero would make every fraction `Infinity` and park every needle
-    hard right, which reads as "complete" on a card that has measured nothing.
-  */
+  // A NEEDLE IS DRAWN ONLY WHEN BOTH HALVES ARE REAL. `goal > 0` as well as
   const scaled = counted && goal != null && goal > 0;
   const fraction = scaled ? Math.min(figure / goal, 1) : 0;
 
-  /* ⚠ Ten ticks, every fifth one longer — the mockup's dial face. */
+  /* Ten ticks, every fifth one longer — the mockup's dial face. */
   const ticks = Array.from({ length: 11 }, (_, i) => {
     const f = i / 10;
     const [x0, y0] = pointAt(f);
@@ -70,13 +66,7 @@ export function Gauge({
 
   return (
     <svg viewBox="0 0 180 100" role="img" aria-label={name} className="pm-gauge-dial">
-      {/*
-        ⚠⚠ THE HATCH IS AN SVG `<pattern>`, NOT A CSS GRADIENT. ⚠⚠⚠ A `repeating-linear-
-        gradient` CANNOT BE A `stroke`, and the track here IS a stroke — so the hatch the
-        honeycomb gets from CSS has to be a paint server in SVG. ⚠ Same cue, same meaning,
-        different mechanism, and the mechanism is forced by the shape rather than chosen.
-        ⚠ The id is per-label so two gauges on one page cannot collide on it.
-      */}
+      {/* THE HATCH IS AN SVG `<pattern>`, NOT A CSS GRADIENT. A `repeating-linear- */}
       {!counted && (
         <defs>
           <pattern
@@ -103,7 +93,7 @@ export function Gauge({
         }
       />
 
-      {/* ⚠ The filled arc exists only when there is a scale to fill. */}
+      {/* The filled arc exists only when there is a scale to fill. */}
       {scaled && fraction > 0 && (
         <path
           d={arcPath(0, fraction)}
@@ -126,8 +116,7 @@ export function Gauge({
         />
       ))}
 
-      {/* ⚠⚠ NO NEEDLE AND NO HUB WITHOUT A SCALE. ⚠ The hub alone would read as a needle
-          pointing straight at `0`, which is a measurement this card has not made. */}
+      {/* NO NEEDLE AND NO HUB WITHOUT A SCALE. The hub alone would read as a needle */}
       {scaled && (
         <>
           <line

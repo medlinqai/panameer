@@ -38,8 +38,7 @@ export function ProposalSteps({
         setError(out.error ?? `Could not ${kind === "interview" ? "request that interview" : "send that test"}.`);
         return;
       }
-      /* ⚠ The server component re-reads `proposalsOn`, so the status line below
-         and the database cannot disagree after a click. */
+      // The server component re-reads `proposalsOn`, so the status line below
       router.refresh();
     } finally {
       setBusy(null);
@@ -49,12 +48,7 @@ export function ProposalSteps({
   return (
     <div className="mt-3 border-t border-line pt-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-ink-2">
-        {/*
-          ⚠⚠ THE STATE FIRST, THE ACTION SECOND. A buyer reads what has already
-          been asked before deciding whether to ask again — and both writers
-          return the OPEN row rather than creating a second, so "Requested"
-          means the button is now a no-op rather than a duplicate.
-        */}
+        {/* THE STATE FIRST, THE ACTION SECOND. A buyer reads what has already */}
         <span>
           Interview:{" "}
           <span className="font-semibold text-ink">
@@ -80,11 +74,7 @@ export function ProposalSteps({
               : "Request an Interview"}
         </Button>
 
-        {/*
-          ⚠⚠⚠ NO TESTS PUBLISHED MEANS NO CONTROL, NOT A DISABLED ONE. A button
-          that cannot do anything is `E579`'s door onto a wall; the sentence
-          says why instead, which is the honest form of the same information.
-        */}
+        {/* NO TESTS PUBLISHED MEANS NO CONTROL, NOT A DISABLED ONE. A button */}
         {tests.length === 0 ? (
           <span className="text-[13px] text-ink-2">
             No published tests to send yet.

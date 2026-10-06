@@ -24,13 +24,11 @@ export function lockStateLabel(
   if (!locked) return `Not locked${attempts}`;
 
   if (!lockedUntil) {
-    /* ⚠⚠ THE ONE THAT STRANDED SCOTT. It never releases on its own. */
+    /* THE ONE THAT STRANDED SCOTT. It never releases on its own. */
     return `Locked — will not release on its own${attempts}`;
   }
 
-  /* ⚠ A PAST `locked_until` IS NOT A LOCK. `releaseExpiredLock` clears it on the
-     next attempt, so the honest reading is "already expired" rather than a
-     release time in the past that looks like a bug. */
+  // A PAST `locked_until` IS NOT A LOCK. `releaseExpiredLock` clears it on the
   if (lockedUntil.getTime() <= Date.now()) {
     return `Locked — the wait has already passed, next sign-in releases it${attempts}`;
   }
@@ -64,9 +62,7 @@ export function LockControl({ personId, locked, lockedUntil, failedAttempts }: P
         setError(data?.error ?? "That didn't go through.");
         return;
       }
-      /* ⚠ THE SERVER OWNS THE TRUTH. The row re-renders from the database
-         rather than from an optimistic guess — this is an admin screen and a
-         wrong lock state here is worse than a 300ms wait. */
+      // THE SERVER OWNS THE TRUTH. The row re-renders from the database
       router.refresh();
     } catch {
       setError("That didn't go through.");
@@ -80,7 +76,7 @@ export function LockControl({ personId, locked, lockedUntil, failedAttempts }: P
       <input
         type="checkbox"
         checked={locked}
-        /* ⚠ ONLY AN UNLOCK IS POSSIBLE, so the box is inert unless it is ticked. */
+        /* ONLY AN UNLOCK IS POSSIBLE, so the box is inert unless it is ticked. */
         disabled={!locked || busy}
         onChange={unlock}
         aria-label={locked ? "Unlock this account" : label}

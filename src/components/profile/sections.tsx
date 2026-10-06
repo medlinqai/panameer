@@ -18,57 +18,22 @@ import { PROFICIENCY_LABEL } from "@/lib/languages";
 const CHIP_BASE =
   "inline-flex max-w-full items-center px-3 py-1 text-[13px] font-semibold break-words";
 export const CHIP_TAG = `${CHIP_BASE} border border-magenta/30 bg-magenta/[0.06] text-magenta-dark`;
-/** ⚠ A SKILL — a tag chip, magenta since ruling 31e. */
+/** A SKILL — a tag chip, magenta since ruling 31e. */
 const CHIP_SKILL = CHIP_TAG;
-/** ⚠ A SPECIALIZATION — the same tag chip. 31e: *"Skills matches Specializations."* */
+/** A SPECIALIZATION — the same tag chip. 31e: *"Skills matches Specializations."* */
 const CHIP_SPEC = CHIP_TAG;
 
-/**
- * The Profile-View section vocabulary (brief_X / E056).
- *
- * ONE set of section renderers, shared by the two surfaces that must look the
- * same:
- *
- *   1. the PUBLISHED profile — `components/profile/ProviderProfileView.tsx`
- *   2. the PRE-PUBLISH review — step 13 of `/join/provider`
- *
- * E056 was "the review page doesn't match the design"; the design *is* the
- * published profile. Forking a second review layout is how the two drift apart
- * again, so the markup lives here and each surface supplies only what actually
- * differs: the published page passes `<Link>` edit affordances and reads the
- * server view-model, the review page passes `<button>` affordances and reads
- * the wizard's local draft.
- *
- * Deliberately free of client-only code (no hooks, no handlers of its own) so
- * the server component and the "use client" wizard can both import it. Every
- * prop type is STRUCTURAL and minimal — the wizard draft and the prisma-loaded
- * view-model satisfy them without either side converting to the other's shape.
- */
+/** The Profile-View section vocabulary (brief_X / E056). */
 
-/* ⚠⚠ THE THIRD LABEL TABLE, RETIRED (`E723` item 10, `E585`). ⚠ Re-exported rather than
-   deleted so the ~4 files importing `LEVEL_LABELS` keep working; there is one table now.
-   ⚠ SUPERSEDED, quoted not deleted (`E164`):
-   //   export const LEVEL_LABELS: Record<string, string> = {
-   //     BASIC: "Basic", CONVERSATIONAL: "Conversational", FLUENT: "Fluent",
-   //     NATIVE_OR_BILINGUAL: "Native or Bilingual" }; */
+// THE THIRD LABEL TABLE, RETIRED ( item 10, ). Re-exported rather than
 export const LEVEL_LABELS: Record<string, string> = PROFICIENCY_LABEL;
 
 // ---------------------------------------------------------------------------
 // Frame
 // ---------------------------------------------------------------------------
 
-/**
- * One profile section card. `edit` is a SLOT, not a href or a handler: the
- * published page needs a `<Link>` (navigation) and the review page needs a
- * `<button>` (in-page state), and pushing both through one prop is what makes a
- * shared component grow a `isReview` flag.
- */
-/**
- * The card shell used by every profile section. The mockup draws a noticeably
- * darker stroke than the app's usual hairline `border-line`, so this sits
- * between the two — dark enough to read as the mockup, not so dark it fights
- * the rest of the product.
- */
+/** One profile section card. `edit` is a SLOT, not a href or a handler: the */
+/** The card shell used by every profile section. The mockup draws a noticeably */
 export const CARD =
   "rounded-[18px] border border-ink/25 bg-white p-5 sm:p-6";
 
@@ -124,32 +89,12 @@ export function EditButton({
   );
 }
 
-/**
- * ── ⚠⚠ THE SAME AFFORDANCE AS A LINK (`P2-J3-E593` WS-B item 6) ───────────
- *
- * ⚠ `EditButton` is the CLIENT-side version — it takes an `onClick` and opens a
- * modal. This is the SERVER-side one: a navigation to a wizard step.
- * ⚠⚠ THEY SHARE `EDIT_CLASS` SO THE TWO RENDER IDENTICALLY, which is the whole
- * reason that constant exists and what the brief means by *"do not invent a
- * second pattern."*
- *
- * ── ⚠⚠⚠ THIS IS A REVIVAL, NOT A NEW COMPONENT ───────────────────────────
- *
- * ⚠ An `EditLink` existed inside `ProviderProfileView.tsx` and was DEAD: that
- * component is rendered by no page since `E588` WS-B, and the function had
- * **zero live references** (measured at `E593`'s premise gate, comments
- * stripped). ⚠⚠ IT IS MOVED HERE RATHER THAN COPIED, so there is one of it —
- * beside the button it has to match, in the file that owns the constant.
- * ⚠ The original is quoted at its old site under `E164`.
- *
- * ⚠ `aria-label` NAMES THE THING BEING EDITED, because half a dozen identical
- * *"Edit"* links on one page are indistinguishable to a screen reader.
- */
+/** THE SAME AFFORDANCE AS A LINK WS-B item 6) */
 export function EditLink({
   href,
   title,
   label = "Edit",
-  /** ⚠ "✏️" to edit, "+" to add — `E130`'s one rule, two states. */
+  /** "✏️" to edit, "+" to add — `E130`'s one rule, two states. */
   icon = "✏️",
 }: {
   href: string;
@@ -166,15 +111,7 @@ export function EditLink({
 
 export { EDIT_CLASS };
 
-/**
- * "2019 – Present" from ISO dates. Empty when the role carries no dates.
- *
- * ⚠⚠ `P2-J1.4-E549` — THE WORST INSTANCE, NOT THE SMALLEST. SUPERSEDED, quoted
- * not deleted (`E164`):
- *     return `${y(start) ?? "?"} – ${isCurrent ? "Present" : end ? y(end) : "Present"}`;
- * ⚠ The final `"Present"` printed a NON-current job as ongoing on the profile a
- * buyer reads. The rule now lives in `lib/date-range-label.ts`.
- */
+/** — THE WORST INSTANCE, NOT THE SMALLEST. */
 export function dateRange(
   start: string | null,
   end: string | null,
@@ -188,10 +125,7 @@ export function dateRange(
 // ---------------------------------------------------------------------------
 
 export type SkillItem = { id: string; name: string };
-/** ⚠ `kind` IS `SpecializationKind` — `PRODUCT` · `METHODOLOGY` · `INDUSTRY`.
- *  ⚠⚠ It was ALREADY selected and mapped by `provider-profile-view.ts`; only
- *  this type and the render never used it (`E602` WS-C). Optional so an older
- *  caller that omits it still typechecks and falls into `Other`. */
+/** It was ALREADY selected and mapped by `provider-profile-view.ts`; only */
 export type SpecializationItem = { id: string; name: string; kind?: string | null };
 export type LanguageItem = {
   id?: string;
@@ -217,7 +151,7 @@ export type ArtifactItem = {
 
 export type EmployerItem = {
   id: string;
-  /* ⚠ NULLABLE (`P1-J1.4-E373`) — render via `employerDisplayName()`. */
+  /* NULLABLE (`P1-J1.4-E373`) — render via `employerDisplayName()`. */
   name: string | null;
   roleTitle?: string | null;
   location?: string | null;
@@ -232,10 +166,7 @@ export type EmployerItem = {
   contactEmail?: string | null;
   hasContact?: boolean;
   locked?: boolean;
-  /* ── ⚠⚠ THE VALIDATION BADGE (`P2-A1.1-E748`, WS-C) ──────────────────────
-     ⚠ `validated` is what a BUYER may see; `validationPending` is OWNER-ONLY and
-     the renderer gates it. ⚠⚠ `validatedBy` is a DOMAIN or the literal
-     `"colleague"` — ⚠⚠⚠ **NEVER A PERSON'S NAME.** */
+  // THE VALIDATION BADGE , WS-C)
   validated?: boolean;
   validationPending?: boolean;
   validatedAt?: string | null;
@@ -270,16 +201,7 @@ export type ProjectItem = {
   locked?: boolean;
 };
 
-/**
- * Who the work was for, as the card is allowed to say it
- * (brief_project_model_v2).
- *
- * ONE place decides this. `CONFIDENTIAL` replaces the client with the code name
- * and the industry — "Project Falcon · Confidential — Energy" — and the real
- * name never reaches the markup, so it cannot leak through a stray render.
- * `PLUS_ONLY` deliberately behaves as PUBLIC until membership ships; when it
- * does, this function is the only thing that changes.
- */
+/** Who the work was for, as the card is allowed to say it */
 export function clientLabel(p: ProjectItem): {
   title: string;
   redacted: boolean;
@@ -308,13 +230,7 @@ export type CertificationItem = {
   url?: string | null;
   notes?: string | null;
   attachmentName?: string | null;
-  /*
-    ⚠⚠ PROVENANCE (`P2-A4-E710`). ⚠ Optional because three callers fill this type and
-    they arrived at different times; **absent is rendered as self-reported**, which is
-    the truthful default — every one of the 12 rows in the database is exactly that.
-    ⚠⚠⚠ It is NOT defaulted to earned for any reason, ever: an unset field claiming a
-    Panameer test would be the trust defect this brief exists to remove.
-  */
+  // PROVENANCE . Optional because three callers fill this type and
   issuedFrom?: string | null;
   credentialId?: string | null;
 };
@@ -323,18 +239,7 @@ export type CertificationItem = {
 // Header
 // ---------------------------------------------------------------------------
 
-/**
- * The full-width HERO — PJv2 WS3, matching "Profile Review Mock up" pg1.
- *
- * Three columns: photo · (name → tagline → bio) · meta rail.
- *
- * The BIO lives INSIDE the hero, which is the mockup's real insight: the first
- * card answers "who is this, what do they charge, can I read them" in one
- * glance, instead of making a buyer scroll to a separate Overview card. The meta
- * rail is right-aligned inside the hero rather than being a page-level column,
- * so there is no left/right rail below and the sections underneath run
- * full-width.
- */
+/** The full-width HERO — PJv2 WS3, matching "Profile Review Mock up" pg1. */
 export function ProfileHero({
   firstName,
   lastName,
@@ -361,45 +266,10 @@ export function ProfileHero({
   photoUrl?: string | null;
   headline?: string | null;
   overview?: string | null;
-  /**
-   * ── ⚠⚠ "NOT SHOWN HERE" IS NOT "HE HASN'T WRITTEN ONE" (`P1-A1.4-E411` WS-2) ─
-   *
-   * SCOTT: *"Why is there still two overviews… image 1 and image two are
-   * overviews."* The review screen's hero read **"No overview yet."** directly
-   * above a card showing **420/600** of his own text.
-   *
-   * ⚠ ONE VALUE CARRIED TWO MEANINGS. `E205` deliberately passes
-   * `overview={null}` on the review page — *"a 600-character paragraph rendered
-   * twice… was the single largest block of duplicated height"* — and the empty
-   * state fires on any falsy value. So a caller saying **don't render it** got a
-   * caller saying **he has none**, and the screen stated the false one.
-   *
-   * ⚠⚠ THIS IS `P1-A1.4-E399`'s DEFECT IN A NEW FORM. That one fixed a field with
-   * two NAMES on screen at once — *"the empty state read 'No overview yet' while
-   * the button beside it read 'Edit bio'."* This is the same field with two
-   * VALUES on screen at once. Same screen, same field, same class of bug.
-   *
-   * ⚠ SO THE CALLER SAYS WHICH IT MEANS. `true` = this surface renders the
-   * overview elsewhere, so draw nothing here — no text AND no empty line.
-   * ⚠⚠ IT DEFAULTS TO `false`, WHICH FAILS SAFE: a caller that forgets it shows
-   * the overview, and the worst case is `E205`'s duplication rather than a
-   * provider's paragraph silently vanishing from their published profile.
-   * ⚠ `undefined`-means-omit WAS THE OTHER CANDIDATE and was rejected for exactly
-   * that reason — a forgotten prop would hide real text.
-   * ⚠ THE "Edit overview" BUTTON IS UNAFFECTED; `E205` says it should scroll to
-   * the editable copy either way.
-   */
+  /** SCOTT: *"Why is there still two overviews… image 1 and image two are */
   overviewShownElsewhere?: boolean;
   validated?: boolean;
-  /**
-   * ⚠ THE MENTOR BADGE, SHIPPED DARK ON PURPOSE (brief_community_signal WS3).
-   *
-   * `null` renders NO ROW — that is the onboarding review, which knows nothing
-   * about forums. A state object renders the badge with its condition in words,
-   * and `earned` cannot be true until a threshold exists: see
-   * MENTOR_HELPFUL_THRESHOLD, which is `null` because there is no distribution to
-   * choose one against yet.
-   */
+  /** THE MENTOR BADGE, SHIPPED DARK ON PURPOSE (brief_community_signal WS3). */
   mentor?: MentorState | null;
   /* `E823` — the two rates the whole app shows now. `rateMin/Max` stay in the
      TYPE so no caller breaks, and are deliberately not destructured: nothing
@@ -414,42 +284,16 @@ export function ProfileHero({
   country?: string | null;
   /** WS6 — DERIVED from work-history spans, never self-reported. */
   experience?: string | null;
-  /**
-   * ── ⚠⚠ SKILLS IN THE HERO (`P2-J2-E562` WS-C item 8) ──────────────────────
-   *
-   * ⚠ SAME PROP, SAME RENDERER, DIFFERENT SOURCE — the pattern this file
-   * already uses for every other field. The published profile passes the
-   * server view-model's shown skills; the review passes the wizard's DRAFT.
-   * ⚠⚠ NEITHER SURFACE KNOWS WHICH IT IS, and that is the point: the moment
-   * this component can tell, it has forked.
-   *
-   * ⚠ Defaults to `[]` so any existing caller compiles and renders nothing,
-   * rather than a caller silently losing skills it never knew to pass.
-   */
+  /** SKILLS IN THE HERO WS-C item 8) */
   skills?: SkillItem[];
-  /**
-   * ⚠⚠ CAPPED AT EIGHT. A provider with thirty chips pushes everything below
-   * off the first screen — the hero stops being a summary and becomes the page.
-   * ⚠ A PROP, not a literal, so the cap is stated once and can be read by a
-   * caller that genuinely needs a different one. Nobody passes it today.
-   */
+  /** CAPPED AT EIGHT. A provider with thirty chips pushes everything below */
   skillsCap?: number;
   aside?: ReactNode;
   headingAs?: "h1" | "h2";
 }) {
   const Heading = HeadingTag;
 
-  /*
-    TWO RATES, NOT A RANGE (`P2-J1.4-E823`, R-E002). Scott, 2026-10-03: the whole
-    app shows ONSITE and OFFSITE. A min–max range said something the member
-    never typed — it was derived from whichever single rate they had set — and
-    "Hourly Rate: $90 – $120" read as a negotiating band.
-    ⚠ Only what is SET is printed: a member with one rate sees one line, not a
-    dash next to a number they never gave.
-    ⚠ SUPERSEDED, quoted not deleted:
-    //   "$90 – $120" from the range; a single figure when min === max.
-    //   const lo = rateMinCents ?? rateMaxCents!; ...
-  */
+  // TWO RATES, NOT A RANGE , . Scott, 2026-10-03: the whole
   const rateRows = (
     [
       ["Onsite rate", onsiteCents],
@@ -457,42 +301,13 @@ export function ProfileHero({
     ] as const
   ).filter(([, cents]) => cents != null) as [string, number][];
 
-  /* ⚠ Capped for the hero; the count of what is NOT shown drives "+N more". */
+  /* Capped for the hero; the count of what is NOT shown drives "+N more". */
   const shownSkills = skills.slice(0, skillsCap);
   const moreSkills = Math.max(0, skills.length - shownSkills.length);
 
   return (
     <header className="lg:sticky lg:top-24 lg:self-start">
-      {/*
-        ── ⚠⚠ TWO COLUMNS (`P2-J2-E562` WS-C item 7) ────────────────────────
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the three-zone hero this
-        replaces, as LINE comments per rule 12:
-        // <div className="flex flex-col gap-6 sm:flex-row">
-        //   <Avatar ... size={120} />
-        //   <div className="min-w-0 flex-1">   name · headline · overview · aside
-        //   <dl className="w-full flex-none ... sm:w-[190px]">   the META RAIL:
-        //       Validated · Mentor · Hourly Rate · Experience · Language · Country
-        //   </dl>
-        // </div>
-
-        ⚠⚠ LEFT IS IDENTITY, RIGHT IS WHAT YOU SAY ABOUT YOURSELF. The old
-        layout put the OVERVIEW in the middle and the RATE on the right, so the
-        two halves of "who is this" were split by a paragraph.
-        ⚠ NOTHING IS DELETED — every meta-rail row moved into the left column,
-        beneath the identity, in the same order.
-
-        ⚠⚠⚠ NO SURFACE-AWARE BRANCH. This component does not know whether it is
-        the published profile or the onboarding review, and it must never learn:
-        the moment it can tell, it has forked, and forking is the failure this
-        file exists to prevent (`E056`). ⚠ The review suppresses Overview via
-        `overviewShownElsewhere` and passes no `mentor` — BOTH are ordinary
-        props, not surface checks.
-
-        ⚠ WHEN THE RIGHT COLUMN IS EMPTY (review, no overview, no draft skills)
-        it renders nothing and the flex row collapses to the left column alone —
-        ordinary responsive behaviour, no special case.
-      */}
+      {/* TWO COLUMNS WS-C item 7) */}
       <div className="flex flex-col gap-6">
         {/* ── LEFT — IDENTITY ────────────────────────────────────────────── */}
         <div className="w-full">
@@ -510,9 +325,7 @@ export function ProfileHero({
               <p className="mt-1 text-[15.5px] leading-snug text-ink-2">
                 {headline || "Add a professional title"}
               </p>
-              {/* ⚠⚠ RESOLVED (`E729` WS-C ruling 4). This is fed from the WIZARD DRAFT, whose
-                  country is a CODE since the picker switched — without this it printed "US".
-                  ⚠ SUPERSEDED (`E164`):  //   <p …>{country}</p> */}
+              {/* RESOLVED ( WS-C ruling 4). This is fed from the WIZARD DRAFT, whose */}
               {country && (
                 <p className="mt-1 text-[13.5px] text-ink-2">
                   {countryName(country, country)}
@@ -521,14 +334,7 @@ export function ProfileHero({
             </div>
           </div>
 
-          {/*
-            ── STATUS PILLS ────────────────────────────────────────────────
-            ⚠⚠ DIM UNTIL EARNED — unchanged from the meta rail, byte for byte.
-            `E562` WS-C item 9 asked for this and it was ALREADY BUILT; it is
-            MOVED here, not rewritten. ⚠ Emerald = a fact earned; the unearned
-            state is ink at 60%, never amber and never magenta — it is not a
-            to-do and it does not block.
-          */}
+          {/* DIM UNTIL EARNED — unchanged from the meta rail, byte for byte. */}
           <dl className="mt-4 space-y-2 text-[14.5px]">
             <div>
               <dd
@@ -541,14 +347,7 @@ export function ProfileHero({
                 {validated ? "✓ Validated" : "Validated"}
               </dd>
             </div>
-            {/*
-              MENTOR — same treatment as Validated: dim until earned. It cannot
-              be earned yet by construction (no threshold), so the sub-line
-              carries what it is FOR, which is the point of shipping it dark
-              rather than hiding it.
-              ⚠ `null` RENDERS NO ROW — that is the onboarding review, which
-              knows nothing about forums. A prop, not a surface check.
-            */}
+            {/* MENTOR — same treatment as Validated: dim until earned. It cannot */}
             {mentor && (
               <div>
                 <dd className={mentor.earned ? "font-bold text-emerald-600" : "text-ink-2/60"}>
@@ -558,8 +357,7 @@ export function ProfileHero({
               </div>
             )}
 
-            {/* ── THE RATE ROWS, BENEATH THE IDENTITY (item 7) ───────────────
-                ⚠ `E433` — figures, so INK. They are facts, not controls. */}
+            {/* THE RATE ROWS, BENEATH THE IDENTITY (item 7) */}
             {rateRows.length > 0 && (
               <div>
                 {rateRows.map(([label, cents]) => (
@@ -592,23 +390,9 @@ export function ProfileHero({
           {aside}
         </div>
 
-        {/*
-          ── RIGHT — OVERVIEW, THEN SKILLS ────────────────────────────────
-
-          ⚠⚠ `empty:hidden` IS WHAT MAKES THE ONE-COLUMN CASE REAL, AND IT IS
-          MEASURED, NOT ASSUMED. Without it an EMPTY `flex-1` still claims the
-          free space — measured 2026-09-19: emptying this column left it 722px
-          wide, so the hero did not collapse, it grew a 722px gutter.
-          ⚠ The case is the REVIEW with no overview (`E205`) and a draft with no
-          skills yet; it cannot occur on a published profile, because a
-          marketplace-visible provider must hold at least one skill.
-          ⚠⚠⚠ IT KEYS ON EMPTINESS, NOT ON WHICH SURFACE THIS IS. The component
-          still cannot tell where it is rendering, which is the rule: the moment
-          it can, it has forked (`E056`).
-        */}
+        {/* RIGHT — OVERVIEW, THEN SKILLS */}
         <div className="min-w-0 flex-1 empty:hidden">
-          {/* ⚠ THREE STATES, NOT TWO (`E411` WS-2): text · genuinely empty ·
-              rendered elsewhere. The third draws nothing at all. */}
+          {/* THREE STATES, NOT TWO ( WS-2): text · genuinely empty · */}
           {overviewShownElsewhere ? null : overview ? (
             <RichText
               text={overview}
@@ -619,16 +403,7 @@ export function ProfileHero({
             <p className="text-[14px] text-ink-2">No overview yet.</p>
           )}
 
-          {/*
-            ── SKILLS, UNDER OVERVIEW (item 8) ─────────────────────────────
-            ⚠⚠ CAPPED AT EIGHT PLUS "+N more". ⚠ `E433` — the chips are facts,
-            not controls, so they carry the same neutral border the standalone
-            Skills card used; the "+N more" is INK for the same reason, and is
-            deliberately NOT a link: there is nowhere to send a buyer that shows
-            the rest, and a link that goes nowhere is the dead-affordance defect.
-            ⚠ NO COUNT TAG ANYWHERE (item 10) — "+N more" states what is hidden,
-            which is the opposite of advertising how few there are.
-          */}
+          {/* SKILLS, UNDER OVERVIEW (item 8) */}
           {shownSkills.length > 0 && (
             <div className={overviewShownElsewhere ? "" : "mt-4"}>
               <div className="flex flex-wrap gap-2">
@@ -654,15 +429,7 @@ export function ProfileHero({
   );
 }
 
-/**
- * The pre-v2 header card. `ProfileHero` above replaced it on both v2 surfaces in
- * WS3, so nothing renders this today — it stays only until `/providers/[id]` is
- * converged, which is its own pass rather than something smuggled into a brief.
- *
- * The self-reported experience LEVEL it used to print is gone (WS6/WS7 dropped
- * the column); years of experience are derived from the work history now, so
- * there is nothing here to replace it with.
- */
+/** The pre-v2 header card. `ProfileHero` above replaced it on both v2 surfaces in */
 export function ProfileHeaderCard({
   firstName,
   lastName,
@@ -791,9 +558,7 @@ export function LanguagesBody({ languages }: { languages: LanguageItem[] }) {
   );
 }
 
-/** ⚠ Same rule as `CertificationsBody` above — an empty section offers a door
- *  (`E593` WS-C item 16), and `emptyAction` is optional so other callers are
- *  unchanged. */
+/** Same rule as `CertificationsBody` above — an empty section offers a door */
 export function EducationBody({
   education,
   emptyAction,
@@ -808,37 +573,8 @@ export function EducationBody({
         {emptyAction}
       </>
     );
-  /*
-    ── ⚠⚠⚠ THE FACTS ARE LABELLED (brief 10 WS-B) ──────────────────────────
-
-    ⚠ SCOTT: *"Education → label major, minor, years, GPA."*
-    ⚠⚠ **MEASURED AGAINST `model Education` FIRST, AND TWO OF THE FOUR HAVE NO
-    COLUMN:** `institution · degree? · field? · year? · start_year? · end_year? ·
-    description?`.
-    · **major → `field`** ✅ exists, under a different name — *an absent name is
-      not an absent thing* (ruling 53e).
-    · **years → `start_year` / `end_year`** ✅ exist.
-    · ⚠⚠⚠ **minor → NO COLUMN. gpa → NO COLUMN.**
-    ⚠ **SCOTT RULED, 2026-09-25: *"Neither — don't render them."*** ⚠⚠ **AND NO
-    NULLABLE COLUMNS ARE ADDED WHILE WE ARE IN HERE** — a column nothing renders
-    is an owed cleanup waiting to happen. **So two labels appear and two do not**,
-    which is `PatternHeader`'s rule for figures applied to a record: *show what
-    you have; do not pad to a shape.*
-
-    ⚠⚠ **THE LABELS ARE VISIBLE, NOT IMPLIED (ruling 65).** `degree, field`
-    rendered as a bare comma-joined line — **"MBA, Finance" does not say which
-    word is the major**, and the reader had to infer it from position. ⚠ A row
-    renders only when its value exists, so nothing prints an empty label.
-  */
-  /*
-    ⚠⚠ THE LOCAL `Row` IS GONE — it was byte-identical to `CertRow`, and both are now
-    `LabelValue` (`E718` item 5). ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const Row = ({ label, value }: { label: string; value: string }) => (
-    //     <p className="text-[13px] text-ink-2">
-    //       <span className="font-semibold text-ink-3">{label}</span> {value}
-    //     </p>
-    //   );
-  */
+  // THE FACTS ARE LABELLED (brief 10 WS-B)
+  // THE LOCAL `Row` IS GONE — it was byte-identical to `CertRow`, and both are now
 
   return (
     <ul className="space-y-3 text-[14px]">
@@ -846,15 +582,7 @@ export function EducationBody({
         const years = [e.startYear, e.endYear].filter(Boolean).join(" – ");
         return (
           <li data-row key={e.id ?? `${e.institution}-${i}`}>
-            {/*
-              ⚠⚠ AN EMPTY INSTITUTION RENDERS NOTHING, NOT AN EMPTY BOLD LINE.
-              ⚠ `institution` is a required `String`, so a row the importer
-              could not name holds `""` rather than null — and the old markup
-              printed a blank heading above the details. ⚠⚠⚠ THE PATH'S OWN
-              RULE, APPLIED AGAIN: `PathSpine` omits an untitled course rather
-              than back-filling it, because borrowing a name *"would assert a
-              name the catalog does not have."*
-            */}
+            {/* AN EMPTY INSTITUTION RENDERS NOTHING, NOT AN EMPTY BOLD LINE. */}
             {e.institution.trim() && (
               <p className="font-semibold">{e.institution}</p>
             )}
@@ -868,24 +596,7 @@ export function EducationBody({
   );
 }
 
-/**
- * ── ⚠⚠⚠ GROUPED BY KIND (`P2-A2-E602` WS-C 2) ────────────────────────────
- *
- * ⚠ SCOTT: *"Grouped by type (Industry · Business Process · Product · …), with
- * each group labelled the way Skills groups by product family."*
- * ⚠⚠ THE BRIEF SAID **STOP AND REPORT IF THE DATA CARRIES NO TYPE.** It does:
- * `Specialization.kind` is a real enum — **PRODUCT 11 · METHODOLOGY 6 ·
- * INDUSTRY 10** — and it was ALREADY selected and mapped. Nothing is invented.
- *
- * ⚠⚠⚠ THE ORDER IS FIXED, NOT ALPHABETICAL, AND NOT BY COUNT. Product first
- * (what a buyer searches), then Industry (where they work), then Methodology
- * (how they work). ⚠ Ordering by count would reshuffle the page whenever
- * somebody edited their profile, which is the `check:catalog` lesson about two
- * pickers in two different orders.
- * ⚠ `METHODOLOGY` renders as **"Business Process"** — the enum is the storage
- * name and the label is the person's word; Scott's own list says *"Industry ·
- * Business Process · Product"*.
- */
+/** GROUPED BY KIND WS-C 2) */
 const SPEC_KIND_ORDER: { key: string; label: string }[] = [
   { key: "PRODUCT", label: "Product" },
   { key: "INDUSTRY", label: "Industry" },
@@ -894,17 +605,14 @@ const SPEC_KIND_ORDER: { key: string; label: string }[] = [
 
 export function SpecializationsBody({
   specializations,
-  /* ⚠⚠ SAME REASON AS `SkillsBody` (`P2-A2-E713`): `/join/provider:4012` renders this and
-     must not change, so `CHIP_SPEC` stays the DEFAULT and the clean profile passes its own. */
+  // SAME REASON AS `SkillsBody` : `/join/provider:4012` renders this and
   chipClass,
 }: {
   specializations: SpecializationItem[];
   chipClass?: string;
 }) {
   if (specializations.length === 0) return <Empty>None listed.</Empty>;
-  /* ⚠⚠ A ROW WITH AN UNKNOWN OR MISSING `kind` IS NOT DROPPED — it falls into
-     `Other`. ⚠⚠⚠ SILENTLY HIDING A SPECIALIZATION BECAUSE ITS ENUM GREW A
-     FOURTH MEMBER IS THE DEFECT THIS WHOLE BRIEF KEEPS FINDING. */
+  // A ROW WITH AN UNKNOWN OR MISSING `kind` IS NOT DROPPED — it falls into
   const known = new Set(SPEC_KIND_ORDER.map((k) => k.key));
   const groups = [
     ...SPEC_KIND_ORDER.map((k) => ({
@@ -914,8 +622,7 @@ export function SpecializationsBody({
     { label: "Other", items: specializations.filter((s) => !s.kind || !known.has(s.kind)) },
   ].filter((g) => g.items.length > 0);
 
-  /* ⚠ ONE GROUP IS NOT A GROUPING. With everything under a single kind the
-     heading says nothing the card's title has not already said. */
+  // ONE GROUP IS NOT A GROUPING. With everything under a single kind the
   if (groups.length === 1)
     return <SpecChips items={groups[0].items} chipClass={chipClass} />;
 
@@ -923,8 +630,7 @@ export function SpecializationsBody({
     <div>
       {groups.map((g) => (
         <div key={g.label} className="mb-3 last:mb-0">
-          {/* ⚠ The same eyebrow Skills uses for its product families, so the
-              two cards read as one idea. */}
+          {/* The same eyebrow Skills uses for its product families, so the */}
           <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
             {g.label}
           </p>
@@ -937,7 +643,7 @@ export function SpecializationsBody({
 
 function SpecChips({
   items,
-  /* ⚠ Threaded from `SpecializationsBody` — see its `chipClass` note. */
+  /* Threaded from `SpecializationsBody` — see its `chipClass` note. */
   chipClass,
 }: {
   items: SpecializationItem[];
@@ -980,17 +686,7 @@ export function OverviewBody({
 export function SkillsBody({
   skills,
   field,
-  /*
-    ── ⚠⚠⚠ THE CHIP LOOK ARRIVES AS A PROP (`P2-A2-E713` WS-A item 4) ──────────
-
-    ⚠⚠ **`/join/provider:3994` RENDERS THIS COMPONENT AND MUST LOOK EXACTLY AS IT DOES
-    NOW** (premise 2). ⚠⚠⚠ **SO `CHIP_SKILL` IS NOT EDITED — IT IS THE DEFAULT.** Changing
-    the constant would have restyled the onboarding review, which is the one page this brief
-    is forbidden to touch, and it would have done so silently.
-    ⚠ The clean profile passes `CleanChip`'s thinner 1px-outline class; every other caller
-    passes nothing and is unaffected. **The brief's own words: the box leaves by a prop or a
-    new component.**
-  */
+  // THE CHIP LOOK ARRIVES AS A PROP WS-A item 4)
   chipClass,
 }: {
   skills: SkillItem[];
@@ -1023,15 +719,7 @@ export function SkillsBody({
   );
 }
 
-/**
- * Skills + Specializations in ONE band (brief_profile_layout_v2 §3.2).
- *
- * Together and high on the page because these are the two axes buyers actually
- * search on — Role→Domain→Skill (what they can do) and Specializations (which
- * systems/sectors they know). Split across a column and a rail they read as
- * trivia; side by side under the bio they read as the answer to "can this person
- * do my job".
- */
+/** Skills + Specializations in ONE band (brief_profile_layout_v2 §3.2). */
 export function SkillsSpecializationsBand({
   skills,
   specializations,
@@ -1079,14 +767,7 @@ export function ProjectsBody({
   );
 }
 
-/**
- * The project card (brief_project_model_v2).
- *
- * Reads top-down the way a buyer scans: WHO it was for, WHAT the numbers were,
- * then the detail. The outcome pills sit high on purpose — a quantified result
- * is the single most persuasive thing on a provider's profile, and burying it
- * under a paragraph wastes it.
- */
+/** The project card (brief_project_model_v2). */
 export function ProjectCard({
   p,
   isOwner = false,
@@ -1105,12 +786,7 @@ export function ProjectCard({
 
   return (
     <article
-      /*
-        ⚠ `data-row` — ONE COUNTED ROW (`P2-A2-E722`). ⚠⚠ A `ProjectCard` is a row of
-        SOLO PROJECTS, and it is ALSO rendered NESTED inside a Work History employer. So the
-        gate counts only TOP-LEVEL `[data-row]` elements — those with no `[data-row]` ancestor
-        — or Work History's employer count would be inflated by the projects hanging off it.
-      */
+      // SOLO PROJECTS, and it is ALSO rendered NESTED inside a Work History employer. So the
       data-row
       // Anchor target for the Work-History cross-links (brief §4).
       // `scroll-mt-24` keeps the card clear of the top of the viewport after a
@@ -1131,28 +807,7 @@ export function ProjectCard({
         ) : (
           <span
             aria-hidden
-            /*
-              ── ⚠⚠ A MONOGRAM, NOT AN EMOJI (`P2-J1.4-E512`) ──────────────────
-
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                  className="… bg-magenta/10 text-[17px]"
-                  {redacted ? "🔒" : "📁"}
-              ⚠⚠ `📁` IS A SYSTEM FONT GLYPH: macOS paints a grey-lavender folder
-              onto this pale magenta wash — two soft things stacked, no contrast —
-              and every operating system draws it differently. A project HAS a
-              name; its initials say more and render identically everywhere.
-              ⚠ The precedent is `E453b`'s avatar (initials behind the photo) and
-              the vendor tiles (`EBS` · `OFC` · `PS`), which shipped monograms
-              rather than wait on licensed logos.
-
-              ⚠ `E433` — THE TILE IS A SURFACE, NOT AN INTERACTIVE THING. The wash
-              stays `bg-magenta/10` and the letters are INK. It must never become
-              saturated magenta.
-
-              ⚠⚠ `🔒` IS UNTOUCHED AND STAYS A GLYPH. It is a STATE, not an
-              identity — and a monogram there would leak the very initial the
-              redaction exists to hide.
-            */
+            // A MONOGRAM, NOT AN EMOJI
             className="grid h-10 w-10 flex-none place-items-center rounded-[8px] bg-magenta/10 text-ink"
           >
             {redacted ? (
@@ -1168,36 +823,11 @@ export function ProjectCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-[15px] leading-snug">{p.name}</h3>
-            {/*
-              ── ⚠⚠⚠ ONE BADGE FOR BOTH LEVELS (`P2-A1.1-E748`, WS-C) ──────────
-
-              ⚠ The RULE is unchanged and is the one this comment always carried:
-              **VALIDATED is public — that is the whole point. PENDING is
-              OWNER-ONLY**, because a buyer seeing *"awaiting reply"* learns that
-              a provider asked and has not been answered, which is worse than
-              silence and is not theirs to know.
-
-              ⚠⚠ **WHAT CHANGED IS THE LOOK, AND SCOTT NAMED IT:** *"Square,
-              quiet, ink with the accent tick; no pill, no colour block."* This
-              was an emerald pill and an amber pill.
-              ⚠⚠⚠ **AND IT IS NOW THE SAME COMPONENT THE EMPLOYER ROW USES**
-              (`E585`): two hand-rolled badges for one concept would drift the
-              first time either level's wording changed — and WS-C adds the
-              second level, so that day was today.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   <span className="flex-none rounded-full bg-emerald-50 px-2 py-0.5
-              //     text-[11px] font-extrabold text-emerald-700">✓ Validated</span>
-              //   <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5
-              //     text-[11px] font-extrabold text-amber-700">Validation requested</span>
-            */}
+            {/* ONE BADGE FOR BOTH LEVELS , WS-C) */}
             {p.validationStatus === "VALIDATED" ? (
               <ValidatedBadge
                 validatedAt={p.validatedAt ?? null}
-                /* ⚠ The project flow does not record the responder's domain
-                   today, so the tooltip says "Validated on <date>" and names
-                   nobody — which is the rule anyway. ⚠⚠ REPORTED: the employer
-                   flow does record it; wiring the project one is a one-field
-                   change in `respondToValidation`. */
+                // The project flow does not record the responder's domain
                 validatedBy={null}
               />
             ) : isOwner && p.validationStatus === "PENDING" ? (
@@ -1206,19 +836,10 @@ export function ProjectCard({
           </div>
           {title && (
             // Wraps rather than truncates: the confidential form of this line
-            // ("Project Falcon · Confidential — Energy Services") is the whole
-            // substitute for the client name, and clipping it to "Confidential
-            // — E…" throws away the industry it exists to show.
             <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{title}</p>
           )}
           {range && <p className="text-[12.5px] text-ink-2">{range}</p>}
-          {/* ⚠⚠ THE SEPARATE "Confirmed <date>" LINE IS GONE (`E748` WS-C). The
-              badge's own tooltip carries the date now, and an emerald sentence
-              under a quiet ink badge was the colour block Scott removed, one
-              line down. ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   {p.validationStatus === "VALIDATED" && p.validatedAt && (
-              //     <p className="text-[12px] text-emerald-700">Confirmed {…}</p>
-              //   )} */}
+          {/* THE SEPARATE "Confirmed <date>" LINE IS GONE ( WS-C). The */}
         </div>
       </div>
 
@@ -1239,23 +860,7 @@ export function ProjectCard({
       )}
 
       {(p.roleType || tools.length > 0) && (
-        /*
-          ── ⚠⚠⚠ ONE TAG STYLE (`P2-A2-E720` item 5) ────────────────────────────────────
-
-          ⚠ **SCOTT: *"every chip on /profile and /providers/[id] (Groups, Teaching, all of
-          them) uses the Skills chip. One definition."***
-          ⚠⚠ THE ROLE TYPE WAS AN INK WASH AND THE TOOLS WERE A GREY OUTLINE — **two more
-          chip languages on a card that already sits beside magenta skill chips**, so a
-          project row showed three different tag treatments at once.
-          ⚠⚠⚠ **THIS REPAINTS `/join/provider`'s REVIEW STEP TOO, AND THAT IS CORRECT RATHER
-          THAN COLLATERAL.** `ProjectCard` is shared with the wizard review, and `E056`'s
-          invariant is **AGREEMENT, NOT STILLNESS** — the review exists to show the member
-          what their profile looks like, so a chip that changes on the profile and not in the
-          review is the defect, not the change. `E562` WS-C made the same call for the hero.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   <span className="rounded-full bg-ink/[0.06] px-2.5 py-0.5 text-[12px] font-bold text-ink">
-          //   <span key={t.id} className="rounded-full border border-line px-2.5 py-0.5 text-[12px] font-semibold text-ink-2">
-        */
+        // ONE TAG STYLE item 5)
         <div className="mt-3 flex flex-wrap gap-1.5">
           {p.roleType && <span className={CLEAN_CHIP} title={roleLong(p.roleType.name)}>{p.roleType.name}</span>}
           {tools.slice(0, 4).map((t) => (
@@ -1324,13 +929,7 @@ export function ProjectCard({
   );
 }
 
-/**
- * Work History — PJv2 WS3, mockup pg1.
- *
- * Employer is the ONE work-history model (E042). Each entry is a client
- * component because its four links are disclosures; the list itself stays here
- * so both profile surfaces share it.
- */
+/** Work History — PJv2 WS3, mockup pg1. */
 export function WorkHistoryBody({
   employers,
   empty,
@@ -1340,24 +939,9 @@ export function WorkHistoryBody({
   contactFor,
   condensed = false,
   cap,
-  /*
-    ── ⚠⚠⚠ THE TIMELINE, OPT-IN (`P2-A2-E713` WS-A item 7) ─────────────────────
-
-    ⚠ **SCOTT: *"a thin dashed line runs from employer to employer, with a small dot at each
-    one."*** ⚠⚠ **IT IS A PROP AND IT DEFAULTS OFF BECAUSE `E084` MADE THIS COMPONENT SHARED
-    ON PURPOSE:** `/join/provider` renders it in two places (`:2525`, `:3907`) and must look
-    exactly as it does now. ⚠⚠⚠ A dashed magenta line appearing in the onboarding review
-    would be this brief leaking into the one page it may not touch.
-    ⚠ The line and the dot are `::before`/`::after` in `connect-profile.css`, so switching
-    this on adds **one class** and **no markup** — no decorative `<div>` for a screen reader
-    to read out as an empty item.
-  */
+  // THE TIMELINE, OPT-IN WS-A item 7)
   timeline = false,
-  /*
-    ⚠⚠ THE SAME OPT-IN AS `timeline`, AND FOR THE SAME REASON (`E715` row 12): the role leads
-    on `/profile` only. ⚠⚠⚠ `/join/provider` renders this body at `:2525` and `:3907` and must
-    be untouched, so the default is today's order.
-  */
+  // THE SAME OPT-IN AS `timeline`, AND FOR THE SAME REASON ( row 12): the role leads
   roleFirst = false,
 }: {
   employers: EmployerItem[];
@@ -1373,29 +957,11 @@ export function WorkHistoryBody({
   /** One tight line per role — the "You're live" page (WS1/E146). */
   condensed?: boolean;
   timeline?: boolean;
-  /**
-   * Show at most this many entries, the rest behind a "N more — pending"
-   * disclosure (walk7 WS5). Used only by the "You're live" page.
-   *
-   * home_v2 condensed each entry to one line so that page would read as "here's
-   * your live profile" rather than a scroll. Measured, that wasn't enough: a
-   * 13-employer history is still 1144px of it. Condensing shrank each row; this
-   * caps how many rows there are. Five covers the recent history most people
-   * have; the rest are the older jobs a buyer skims past, and nothing is hidden —
-   * the group says how many are behind it and opens in place.
-   */
+  /** Show at most this many entries, the rest behind a "N more — pending" */
   cap?: number;
 }) {
   if (employers.length === 0) return <Empty>{empty}</Empty>;
-  /*
-    E089 — NO divider between entries. The full-width rules were the main reason
-    the section read as "an empty table row, not fun to look at" (Scott): a rule
-    spanning the card turns each job into a row in a grid, and the four action
-    links stranded across the same width completed the effect. Entries are
-    separated by SPACE now. The fix here is taking lines away, not adding
-    containment — bordered cards per job would trade one heavy treatment for
-    another.
-  */
+  // E089 — NO divider between entries. The full-width rules were the main reason
   return (
     <CappedList
       cap={cap}
@@ -1425,14 +991,7 @@ export function WorkHistoryBody({
   );
 }
 
-/**
- * Solo Projects — PJv2 WS3 / E074, mockup pg2.
- *
- * Full-width, and ONLY projects with no `employer_id`. Work delivered inside a
- * job lives under its employer in Work History; this section is the work done
- * between or outside companies. The note says so out loud, because two homes for
- * "projects" is exactly the ambiguity E074 reported.
- */
+/** Solo Projects — PJv2 WS3 / E074, mockup pg2. */
 export function SoloProjectsBody({
   projects,
   empty,
@@ -1444,24 +1003,7 @@ export function SoloProjectsBody({
 }) {
   return (
     <>
-      {/*
-        ── ⚠⚠⚠ THE SENTENCE IS SAID ONCE (`P2-A2-E720` item 7) ──────────────────────────
-
-        ⚠ **SCOTT: *"Solo Projects repeats its sentence: show it once."***
-        ⚠⚠ **IT WAS PRINTED TWICE, IN TWO WORDINGS, FROM TWO FILES.** This `<p>` renders
-        unconditionally, and the caller's `empty` prop was
-        *"Employee projects sit under their employer in Work History. No solo projects yet."*
-        — so an owner with no solo projects read the same fact in consecutive paragraphs,
-        phrased differently each time.
-        ⚠⚠⚠ **THE FIX IS ON THE CALLER, NOT HERE, AND THAT IS THE POINT:** this paragraph is
-        the explanation and it is true in BOTH states — an owner who HAS solo projects still
-        needs to know where the employee ones went. **Deleting this line instead would have
-        removed the explanation from the only state that shows any projects.** The `empty`
-        string is now the count alone.
-        ⚠ Two wordings of one fact is `E585` in prose: the copies had already drifted
-        (*"are under their Employer"* vs *"sit under their employer"*) before anyone noticed
-        there were two.
-      */}
+      {/* THE SENTENCE IS SAID ONCE item 7) */}
       <p className="mb-4 text-[13px] text-ink-2">
         Employee projects are under their Employer in Work History.
       </p>
@@ -1478,14 +1020,7 @@ export function SoloProjectsBody({
   );
 }
 
-/**
- * Artifacts, read-only (PJv2 WS4 / E078a).
- *
- * UPLOADs show as a file chip and are NOT linked: the bucket is private, so a
- * public href would either 404 or leak. Reading one back needs a signed URL,
- * which is a separate (viewer-permissioned) step — showing the name is the
- * honest amount of information a public profile can give.
- */
+/** Artifacts, read-only (PJv2 WS4 / E078a). */
 export function ArtifactsBody({ artifacts }: { artifacts: ArtifactItem[] }) {
   if (artifacts.length === 0) return <Empty>No artifacts attached.</Empty>;
   return (
@@ -1516,14 +1051,7 @@ export function ArtifactsBody({ artifacts }: { artifacts: ArtifactItem[] }) {
   );
 }
 
-/**
- * The Validation Contact — Plus's first lever (PJv2 WS5 / E078b).
- *
- * Free tier sees that a contact EXISTS and is invited to upgrade; Plus sees the
- * address. The distinction is enforced server-side (lib/plus.ts) — by the time
- * this renders, a locked contact simply has no address to leak, so this component
- * cannot accidentally show one.
- */
+/** The Validation Contact — Plus's first lever (PJv2 WS5 / E078b). */
 export function ContactBody({
   contactEmail,
   locked,
@@ -1563,43 +1091,12 @@ export function ContactBody({
 }
 
 /** Location card (mockup pg2 grid). */
-/**
- * ── ⚠⚠ THE COUNTRY RULE, IN ONE PLACE (`P2-A2-E671`) ──────────────────────
- *
- * ⚠ WS-B: *"ADD COUNTRY — Panameer is global."* ⚠⚠ The identity card's location
- * line and the Location card answer the SAME question, and before this they
- * answered it differently: the card showed the country, the identity line did
- * not — while `country` was on the view model the whole time
- * (`provider-profile-view.ts:420`), loaded, carried and never rendered.
- *
- * ⚠⚠⚠ **THE RULE IS NOT "APPEND THE COUNTRY".** It is *show the country unless
- * the location already names it* — otherwise a provider in `London, England`
- * with `country: England` reads `London, England · England`. ⚠ That rule was
- * already written, once, inside `LocationBody`; this extracts it so the second
- * caller reads it rather than restating it (`E585`).
- *
- * ⚠ **`formatLocality` IS DELIBERATELY NOT CHANGED.** `provider-profile-view.ts`
- * removed country from it for a measured reason and quotes the removal under
- * `E164`; putting it back would re-open that, and would change every OTHER
- * consumer of `location` at the same time.
- */
+/** THE COUNTRY RULE, IN ONE PLACE */
 export function locationLines(
   location?: string | null,
   country?: string | null
 ): { primary: string; secondary: string | null } | null {
-  /*
-    ── ⚠⚠⚠ RESOLVED HERE, ONCE, SO EVERY CALLER IS COVERED (`E729` WS-C ruling 4) ─────────
-
-    ⚠⚠ **`locationLines` IS THE ONE RULE** the profile's meta line, the Location card AND the
-    Google-Maps `?query=` all read. ⚠⚠⚠ **RESOLVING AT EACH CALLER WOULD HAVE BEEN THREE
-    CHANCES TO MISS ONE — and the one missed would have been the Maps URL**, where `…query=
-    Saint Augustine, FL, US` is a materially worse search than the country name.
-    ⚠ It takes a code OR a name and returns the name, so a caller that already resolved (the
-    provider view model, since WS-B) is unaffected.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const primary = location || country;
-    //   secondary: location && country && !location.includes(country) ? country : null,
-  */
+  // RESOLVED HERE, ONCE, SO EVERY CALLER IS COVERED ( WS-C ruling 4)
   const label = countryName(country, country);
   const primary = location || label;
   if (!primary) return null;
@@ -1626,49 +1123,13 @@ export function LocationBody({
   );
 }
 
-/**
- * ── ⚠⚠ AN EMPTY SECTION OFFERS A DOOR (`P2-J3-E593` WS-C item 16) ─────────
- *
- * ⚠ Scott's anti-dead-end rule applied to empty states: *"No certifications →
- * link to LEARN. No education → link to LEARN."*
- * ⚠⚠ `emptyAction` IS OPTIONAL AND DEFAULTS TO NOTHING, so the wizard review
- * and `CertificationCards` — the other callers — are byte-unchanged.
- *
- * ⚠⚠⚠ AND IT IS A DOOR, NOT A GAP. `E593` WS-C settles who owns which
- * sentence: **the SCORE PAGE owns *"what is missing"*; an empty SECTION owns
- * *"here is where to get one."*** ⚠ So this renders a route, never a count, a
- * percentage or a list of what else is absent — that would be the score page
- * said twice, which is the duplication `E588` WS-A ruled against.
- */
-/** ⚠ One labelled row, so the cert card and the education card read alike. */
-/**
- * ── ⚠⚠⚠ `Label: value`, ONE RENDERER (`P2-A2-E718` item 5) ───────────────────
- *
- * ⚠ **SCOTT: *"Label : value pairs are unclear… label in grey regular with a colon, value in
- * ink. `Degree: Bachelor of Science (BS)`, not `Degree Bachelor of Science (BS)`."***
- * ⚠⚠ **THE OLD SHAPE MADE THE LABEL THE LOUDEST THING ON THE LINE AND THEN DROPPED THE
- * PUNCTUATION THAT SEPARATES IT:** the label was `font-semibold` and the value was plain, so
- * `Degree Bachelor of Science (BS)` read as one run of words with an emphasised first word.
- * ⚠⚠⚠ **THE WEIGHTS ARE NOW THE RIGHT WAY ROUND — the VALUE is the information.** Label grey
- * and regular, colon, value in ink.
- *
- * ── ⚠⚠ IT WAS WRITTEN TWICE, BYTE FOR BYTE ──────────────────────────────────
- *
- * ⚠⚠⚠ **`CertRow` HERE AND A LOCAL `Row` INSIDE `EducationBody` WERE IDENTICAL** — same
- * markup, same classes, same absent colon. `E585`: one concept, two places, kept in step by
- * hand. ⚠ Fixing the copy Scott named and leaving the other would have left Certifications
- * reading one way and Education the other, on the same page, which is the defect in a new
- * shape. **One component now, used by both.**
- * ⚠ **BLAST RADIUS, MEASURED AND REPORTED:** `EducationBody` is also rendered by
- * `/join/provider` (`:4020`), so the onboarding review inherits the clearer pairs. That is a
- * legibility fix to the same unclear label, not a layout change — reported rather than
- * hidden, because earlier briefs froze that page's appearance.
- */
+/** AN EMPTY SECTION OFFERS A DOOR WS-C item 16) */
+/** One labelled row, so the cert card and the education card read alike. */
+/** SCOTT: *"Label : value pairs are unclear… label in grey regular with a colon, value in */
 export function LabelValue({ label, value }: { label: string; value: string }) {
   return (
     <p className="text-[13px]">
-      {/* ⚠ `text-ink-3` is the page's grey; inside `.account-surface` it resolves to the
-          mockup's #8a869a (see `connect-profile.css`). */}
+      {/* mockup's #8a869a (see `connect-profile.css`). */}
       <span className="font-normal text-ink-3">{label}:</span>{" "}
       <span className="text-ink">{value}</span>
     </p>
@@ -1694,39 +1155,12 @@ export function CertificationsBody({
   return (
     <ul className="space-y-3">
       {certifications.map((c, i) => {
-        /*
-          ── ⚠⚠⚠ STACKED AND LABELLED, LIKE EDUCATION (brief 10 WS-B) ────────
-
-          ⚠ SCOTT: *"Certifications → stack to the left like Education. List
-          certifying agency, expiration, and begin-or-test date. Capitalize
-          titles such as 'Expire'."*
-          ⚠⚠ **ALL THREE HAVE COLUMNS, MEASURED BEFORE BUILDING:** certifying
-          agency → `issuer`, expiration → `expires_on`, begin-or-test date →
-          `issued_on` (with `year` as the older fallback). **Nothing invented.**
-
-          ⚠⚠⚠ **WHAT THE RUN-ON LINE COST:** it rendered
-          `name — issuer · 2019 · expires 2026`, so **a bare year had no label
-          at all** and the reader had to know by position which of two dates it
-          was. ⚠ Ruling 65's shape: the information existed and the page did not
-          show what it meant.
-          ⚠ **`expires` → `Expires`** — Scott's capitalisation, and it is now a
-          LABEL rather than a word buried mid-sentence.
-          ⚠⚠ A row renders only when its value exists, so an undated
-          certification prints a name and nothing else rather than empty labels.
-        */
+        // STACKED AND LABELLED, LIKE EDUCATION (brief 10 WS-B)
         const earned = c.issuedOn ? c.issuedOn.slice(0, 4) : c.year ? String(c.year) : null;
         return (
           <li data-row key={c.id ?? `${c.name}-${i}`} className="text-[14px]">
             <b className="block">{c.name}</b>
-            {/*
-              ── ⚠⚠⚠ WHERE IT CAME FROM, ON ITS OWN LINE (`P2-A4-E710`) ──────────
-
-              ⚠⚠ **DIRECTLY UNDER THE NAME, BECAUSE THAT IS WHERE A BUYER'S EYE ALREADY
-              IS** — and above `Agency`, because who issued it and whether Panameer
-              witnessed it are different facts and the second one qualifies the first.
-              ⚠ One component decides the treatment for all three renderers (`E585`);
-              this file chooses only the POSITION.
-            */}
+            {/* WHERE IT CAME FROM, ON ITS OWN LINE */}
             <CredentialProvenance
               issuedFrom={c.issuedFrom ?? null}
               credentialId={c.credentialId ?? null}
@@ -1742,20 +1176,7 @@ export function CertificationsBody({
                 rel="noreferrer"
                 className="ml-2 text-[13px] font-bold text-magenta hover:text-magenta-dark"
               >
-                {/*
-                  ── ⚠⚠⚠ SCOTT RULED IT, 2026-09-29 (`P2-ALL-E712`) ─────────────
-
-                  ⚠⚠ **IT SAID `Verify`, ON A URL THE PROVIDER TYPED IN.** `E710` reported
-                  it: the word invited a buyer to believe Panameer had checked something,
-                  and it sat inches from *"Earned on Panameer"*, which is the one that
-                  means verification. Two meanings of one word on one credential — `E459`.
-                  ⚠ **SCOTT CHOSE `View Credential` OVER MY `Issuer's link`:** mine was
-                  more precise, **his is shorter and claims nothing**, which is the whole
-                  requirement. ⚠⚠ *"Earned on Panameer"* vs *"Self-reported"* stays as
-                  built.
-                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                  //   Verify
-                */}
+                {/* SCOTT RULED IT, 2026-09-29 */}
                 View Credential
               </a>
             )}

@@ -19,17 +19,7 @@ export default async function Page() {
     redirect(`/company?blocked=${transact.reason}&from=${encodeURIComponent("/create-work")}`);
   }
 
-  /*
-    ── ⚠⚠ THE UI MIRROR OF THE POST GATE (`P1-J4-E025`) ───────────────────────
-
-    ⚠ A MIRROR, NOT THE BOUNDARY. `postWorkRequest` runs the identical check
-    server-side and refuses regardless of what this page renders; the API is
-    reachable without ever loading this component. This exists so a requester
-    learns what is missing BEFORE they write a whole request, rather than at the
-    Post button.
-    ⚠ IT READS THE SAME FUNCTION — `missingIdentityForPerson` — so the two
-    cannot disagree about the rule, and the strings come from the same table.
-  */
+  // THE UI MIRROR OF THE POST GATE
   const person = await prisma.person.findFirst({
     where: { user_id: viewer.userId },
     select: { id: true },

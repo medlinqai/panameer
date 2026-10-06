@@ -136,34 +136,22 @@ export function OwnerResumeRebuild() {
         <ResumeUploadModal
           open={uploadOpen}
           onClose={() => setUploadOpen(false)}
-          /* ⚠⚠⚠ THE OPT-IN (`E721` item 2). ⚠ Without it this branch would apply on upload,
-             which is the whole defect. ⚠⚠ The wizard passes no `mode` and is unaffected. */
+          // THE OPT-IN ( item 2). Without it this branch would apply on upload
           mode="store-only"
           onImported={(outcome: ImportOutcome) => {
             setUploadOpen(false);
             if (outcome.status === "FAILED") {
-              /* ⚠⚠ A FAILED READ IS REPORTED, NEVER SWALLOWED. `E516` records five blocks in
-                 this codebase where a failure produced silence. */
+              // A FAILED READ IS REPORTED, NEVER SWALLOWED. records five blocks in
               setError(
                 outcome.error ??
                   "We couldn’t read that file. Try a different one."
               );
               return;
             }
-            /*
-              ⚠⚠⚠ THE DOCUMENT IS ON FILE AND **NOTHING HAS BEEN WRITTEN TO THE PROFILE**
-              (`E721` item 2), so the panel below is the real approval step rather than a
-              second pass over an already-applied import.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`) — it was TRUE when the upload applied,
-              and would now be a plain falsehood:
-              //   setReceipt("Read. Your profile has been updated.");
-              ⚠⚠ NO `router.refresh()` EITHER: there is nothing new on the server to re-read,
-              and refreshing would suggest something had landed.
-            */
+            // THE DOCUMENT IS ON FILE AND NOTHING HAS BEEN WRITTEN TO THE PROFILE
             setError(null);
             setReceipt(null);
-            /* ⚠ `justUploaded` is what tells the panel to go straight to the
-               preview rather than offering to re-read (`E782`). */
+            // preview rather than offering to re-read .
             setJustUploaded(true);
             setStage("panel");
           }}
@@ -174,27 +162,7 @@ export function OwnerResumeRebuild() {
 
   return (
     <>
-      {/*
-        ── ⚠⚠⚠ A BUTTON NOW, NOT A TEXT LINK (`P2-A2-E723` item 8) ──────────────────────
-
-        ⚠ **SCOTT'S SKETCH: *"Rebuild From New Résumé becomes a button under it: same width,
-        height, radius and text size; white, 1px ink border, 8px gap."***
-        ⚠⚠ **`E720` SHIPPED IT AS A MAGENTA TEXT LINK ON SCOTT'S OWN INSTRUCTION** — *"a
-        magenta text link under How Others See My Profile"* — and the sketch of 2026-09-30
-        supersedes that (rule 13). ⚠⚠⚠ **IT REUSES `.pm-btn` RATHER THAN RESTATING FOUR
-        FIGURES**, so "same width, height, radius and text size" holds by construction and
-        keeps holding if the primary above it ever changes.
-        ⚠ `E433` IS NOT BROKEN BY THIS: the ink button above is still the one solid fill and
-        still the only primary; this is the outlined secondary, the same face `Message` and
-        `Connect as a Colleague` wear on the visitor rail.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        //   <div className="mt-3">
-        //   {/* A MAGENTA TEXT LINK, WHICH IS SCOTT'S WORD FOR IT - and E433's rule working
-        //       as intended: magenta is the link affordance, and the ink button above it is
-        //       the page's primary. A second solid button here would claim a second primary.
-        //   <button type="button" data-e720-rebuild onClick={() => setStage("choose")}
-        //     className="text-[13px] font-bold text-magenta transition-colors hover:text-magenta-dark">
-      */}
+      {/* A BUTTON NOW, NOT A TEXT LINK item 8) */}
       <button
         type="button"
         data-e720-rebuild

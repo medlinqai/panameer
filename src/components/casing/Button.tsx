@@ -39,11 +39,7 @@ export function Button({
 }) {
   const cls = `${BASE} ${TONE[variant]} ${className}`;
 
-  /*
-    A disabled LINK is rendered as a disabled button, not as an <a> with a
-    handler swallowed. An anchor with href still navigates on middle-click and
-    still reads as a link to a screen reader, however much CSS says otherwise.
-  */
+  // A disabled LINK is rendered as a disabled button, not as an <a> with a
   if (href && !disabled) {
     return (
       <Link href={href} title={title} className={cls}>

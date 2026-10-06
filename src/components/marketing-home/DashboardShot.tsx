@@ -11,18 +11,7 @@ const FINDINGS = [
 const TOTAL_SAVINGS = FINDINGS.reduce((n, f) => n + f.savings, 0);
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 
-/**
- * ⚠ ALL THREE SPARKLINES ARE GONE, and that is the point of this change.
- *
- * Each tile carried a rising area chart implying a trend on a number with no
- * history — this is one assessment at one moment. The worst was tile 1, where a
- * RISING line sat under a −31 point deficit and read as "improving".
- *
- * Each tile now gets a graphic that means what the tile says:
- *   T1  a benchmark track — the gap is a distance you can see
- *   T2  one column per capability domain — where the findings are, not just how many
- *   T3  the five findings drawn to scale — a preview of the table below it
- */
+/** ALL THREE SPARKLINES ARE GONE, and that is the point of this change. */
 
 /** T1 — 0→100 rail, filled to `you`, dark marker at `peers`. */
 function BenchmarkTrack({ you, peers }: { you: number; peers: number }) {
@@ -42,11 +31,7 @@ function BenchmarkTrack({ you, peers }: { you: number; peers: number }) {
   );
 }
 
-/**
- * T2 — one column per capability domain, in `capability-domains.ts` order.
- * Columns of 3+ take the full purple; the rest a lighter step, so "where the
- * concentration is" is legible before you read a single number.
- */
+/** T2 — one column per capability domain, in `capability-domains.ts` order. */
 function DomainColumns({ counts }: { counts: readonly number[] }) {
   const W = 300, gap = 6, bw = (W - gap * (counts.length - 1)) / counts.length;
   const max = Math.max(...counts);
@@ -67,23 +52,11 @@ function DomainColumns({ counts }: { counts: readonly number[] }) {
   );
 }
 
-/**
- * T3 — the five findings to scale, DERIVED FROM `FINDINGS`.
- *
- * Same array the table below renders and the same array TOTAL_SAVINGS reduces,
- * so the tile total is visibly the sum of its parts and the three cannot
- * disagree. Darkest blue on the largest segment.
- */
+/** T3 — the five findings to scale, DERIVED FROM `FINDINGS`. */
 const FINDING_BLUES = ["#4b7bef", "#6a8ff3", "#89a4f6", "#a7b9f9", "#c5cefc"];
 
 function FindingsBar() {
-  /*
-    Offsets computed UP FRONT rather than accumulated inside the map. A `let x`
-    mutated during render is a reassignment after render completes as far as the
-    compiler is concerned, and it is also the shape that breaks if React ever
-    re-orders or re-runs the callback. A scan is the same arithmetic, stated
-    once.
-  */
+  // Offsets computed UP FRONT rather than accumulated inside the map. A `let x`
   const segments = FINDINGS.reduce<{ f: (typeof FINDINGS)[number]; x: number; w: number }[]>(
     (acc, f) => {
       const w = ((300 - 8) * f.savings) / TOTAL_SAVINGS;
@@ -153,13 +126,7 @@ export function DashboardShot() {
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: 'var(--mag)' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 20V10M18 20V4M6 20v-4" /></svg></div>
-                      {/*
-                        WS-3 — NO `.chg` PILL. A gap against a peer benchmark
-                        has no period-over-period delta to report; "+83%" beside
-                        a −31 point gap is a number that cannot mean anything.
-                        U+2212 MINUS, not a hyphen — a hyphen next to a figure
-                        reads as a dash and sets the wrong column width.
-                      */}
+                      {/* WS-3 — NO `.chg` PILL. A gap against a peer benchmark */}
                       <div><span className="val">&#8722;31 pts</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
@@ -170,12 +137,7 @@ export function DashboardShot() {
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: '#8a2be2' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4h6v3H9z" /><path d="m9 13 2 2 4-4" /></svg></div>
-                      {/*
-                        WS-4 — a COUNT, so no currency symbol and no `.chg`.
-                        23 findings across all ten capability domains; the list
-                        itself is deliberately not here, because the list is the
-                        sales conversation.
-                      */}
+                      {/* WS-4 — a COUNT, so no currency symbol and no `.chg`. */}
                       <div><span className="val">23</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
@@ -186,52 +148,17 @@ export function DashboardShot() {
                   <div className="kpi">
                     <div className="kpi-top">
                       <div className="kpi-ic" style={{ background: '#4b7bef' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 1v22M17 5.5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></div>
-                      {/*
-                        WS-5 — DERIVED FROM THE TABLE, never typed. This is the
-                        sum of the five findings below; see the FINDINGS
-                        comment. The basis is addressable P2P SPEND, not
-                        revenue (decided 2026-08-14).
-                      */}
+                      {/* WS-5 — DERIVED FROM THE TABLE, never typed. This is the */}
                       <div><span className="val">{usd(TOTAL_SAVINGS)}</span></div>
                       <span className="kpi-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" /></svg></span>
                     </div>
-                    {/*
-                      E105 — SHORTENED TWICE, AND THIS IS THE ONE THAT CLOSES IT.
-
-                      "Estimated Savings Based on Rev/Heads" needed a 332px tile
-                      and the tile maxes at 322px, so it wrapped at every width.
-                      "Est. Savings Based on Rev/Heads" needed 245px against a
-                      196-229px label box between 920 and 1075, so it still
-                      wrapped in that band. This reads 187px and fits from 920 up
-                      — measured, with the table in the brief's report.
-
-                      The extra line mattered because it made this tile's label
-                      block taller than T1's and T2's and knocked the three
-                      sub-lines and graphics out of alignment. Shortened rather
-                      than restyled: dropping the tracking or the size here would
-                      make one tile's label differ from the other two, which is
-                      the same misalignment by another route. `white-space:nowrap`
-                      was the other candidate and is worse — it trades wrapping
-                      for overflow at any width narrower than the label.
-
-                      ⚠ The em dash is spaced and is a real em dash, not a hyphen.
-                    */}
+                    {/* E105 — SHORTENED TWICE, AND THIS IS THE ONE THAT CLOSES IT. */}
                     <div className="lab">Est. Savings — Rev/Heads</div>
                     <div className="sub">14% of $18.5M addressable P2P spend</div>
                     <FindingsBar />
                   </div>
                 </div>
-                {/*
-                  WS-6 — ONE findings panel replaces BOTH old panels (the Net
-                  Monthly Savings bar chart and the Savings-vs-Plan donut). Both
-                  were deleted rather than hidden: they showed realised progress
-                  against a plan, which is a story an assessment has not earned
-                  yet — the assessment produces the plan.
-
-                  A real <table> because this is tabular data. `.ftable` gets
-                  the per-row decorative wash; see home.css for why it is on a
-                  ::before rather than on the text.
-                */}
+                {/* WS-6 — ONE findings panel replaces BOTH old panels (the Net */}
                 <div className="panel findings">
                   <div className="panel-head">
                     <h4>Optimization Findings</h4>

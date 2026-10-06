@@ -13,11 +13,7 @@ function check(label: string, actual: unknown, expected: unknown) {
   }
 }
 
-/**
- * `NODE_ENV` is readonly in the Node types and Next inlines it at build time;
- * in this bundled harness it is a plain property, so the cast is the honest way
- * to say "this test drives the thing the compiler thinks is a constant".
- */
+/** in this bundled harness it is a plain property, so the cast is the honest way */
 function withEnv(env: string, run: () => void) {
   const before = process.env.NODE_ENV;
   (process.env as Record<string, string>).NODE_ENV = env;
@@ -71,18 +67,7 @@ withEnv("development", () => {
   check("localhost.evil.com", isMarketingHost("localhost.evil.com"), false);
 });
 
-/**
- * ── ⚠⚠⚠ THE STATUS HOST (`P2-ALL-E753`) ─────────────────────────────────────
- *
- * ⚠ Same reasoning as the block at the top of this file, with a sharper edge:
- * the status host serves a PUBLIC page on a domain nobody signs in to, so the
- * failure that matters is a host drifting into or out of that set unnoticed.
- *
- * ⚠⚠ **THE TWO SETS MUST STAY DISJOINT, AND THAT IS ASSERTED BOTH WAYS.** The
- * proxy tests `isStatusHost` FIRST and falls through to `isMarketingHost`; if
- * one host ever answered true to both, which page a visitor saw would depend on
- * the order of two `if`s rather than on a decision anybody made.
- */
+/** THE STATUS HOST */
 console.log("\nproduction — the status host, and only the status host");
 withEnv("production", () => {
   check("status.panameer.com", isStatusHost("status.panameer.com"), true);
@@ -93,10 +78,9 @@ withEnv("production", () => {
   check("www.panameer.com", isStatusHost("www.panameer.com"), false);
   check("app.panameer.com", isStatusHost("app.panameer.com"), false);
   check("a Vercel preview", isStatusHost("panameer-git-main-medlinqai.vercel.app"), false);
-  // ⚠ A lookalike is not the host. `status.panameer.com.evil.com` ends in a
-  // different registrable domain and must never be served the tracker.
+  // A lookalike is not the host. `status.panameer.com.evil.com` ends in a
   check("status.panameer.com.evil.com", isStatusHost("status.panameer.com.evil.com"), false);
-  // ⚠⚠ THE DEV SPELLING IS COMPILED OUT OF A PRODUCTION BUILD.
+  // THE DEV SPELLING IS COMPILED OUT OF A PRODUCTION BUILD.
   check("status.localhost in prod", isStatusHost("status.localhost:3101"), false);
 });
 

@@ -41,7 +41,7 @@ export default async function Page({
         </div>
       );
     }
-    /* ⚠ A NON-PARTY NEVER GETS HERE — `getOrderDetail` threw NOT_FOUND first. */
+    /* A NON-PARTY NEVER GETS HERE — `getOrderDetail` threw NOT_FOUND first. */
     throw e;
   }
 

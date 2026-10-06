@@ -87,11 +87,7 @@ async function fromBrandfetch(name: string): Promise<LogoSuggestion[]> {
     }));
 }
 
-/**
- * Wikidata P154 ("logo image"). Keyless, so this is the fallback that keeps the
- * feature alive on an unconfigured environment. Two hops: search for the
- * entity, then read its logo claim.
- */
+/** Wikidata P154 ("logo image"). Keyless, so this is the fallback that keeps the */
 async function fromWikidata(name: string): Promise<LogoSuggestion[]> {
   const search = (await fetchJson(
     "https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&limit=5&search=" +
@@ -120,9 +116,6 @@ async function fromWikidata(name: string): Promise<LogoSuggestion[]> {
     if (!file) continue;
 
     // P856 = "official website". brief_validation_domain_guard needs a DOMAIN
-    // to check validation contacts against, and this keyless path is the only
-    // one that works without a Logo.dev/Brandfetch key — without it the domain
-    // suggestion would be dead on an unconfigured environment.
     const site = claims?.P856?.[0]?.mainsnak?.datavalue?.value;
     const domain =
       typeof site === "string"

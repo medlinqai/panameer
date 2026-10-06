@@ -22,18 +22,7 @@ export function readThemeChoice(): ThemeChoice {
   }
 }
 
-/*
-  AN EXTERNAL STORE, so the menu can render the current choice without an
-  effect that setStates on mount.
-
-  localStorage genuinely IS an external store, which makes `useSyncExternalStore`
-  the right primitive rather than a workaround for the lint rule: it takes a
-  server snapshot ("auto", what the markup is built against) and swaps to the
-  client snapshot during hydration, which is exactly the behaviour a
-  read-after-mount effect was approximating. `storage` events cover other tabs;
-  the local listener set covers this one, because a tab does not receive its own
-  storage event.
-*/
+// AN EXTERNAL STORE, so the menu can render the current choice without an
 const listeners = new Set<() => void>();
 
 export function subscribeThemeChoice(onChange: () => void): () => void {
@@ -51,13 +40,7 @@ export const themeChoiceSnapshot = readThemeChoice;
 /** The server snapshot: no storage, so nobody has chosen anything yet. */
 export const themeChoiceServerSnapshot = (): ThemeChoice => "auto";
 
-/**
- * Persist a choice and apply it immediately.
- *
- * Resolving `auto` here rather than leaving the attribute off keeps ONE code
- * path in the CSS: `[data-theme]` is always present and always one of two
- * values, so no stylesheet has to handle the "unset" case as a third state.
- */
+/** Persist a choice and apply it immediately. */
 export function applyThemeChoice(choice: ThemeChoice): void {
   if (typeof window === "undefined") return;
   try {

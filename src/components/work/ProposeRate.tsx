@@ -43,7 +43,7 @@ export function ProposeRate({
           coverNote: coverNote.trim() || null,
           validUntil: validUntil || null,
           rate: {
-            /* ⚠⚠ ROUNDED, NOT TRUNCATED — see the docblock. */
+            /* ROUNDED, NOT TRUNCATED — see the docblock. */
             unitPriceCents: Math.round(dollars * 100),
             basis,
           },
@@ -55,8 +55,7 @@ export function ProposeRate({
         return;
       }
       setDone({ replaced: Boolean(out.replaced) });
-      /* ⚠ The server component re-reads `proposeEligibility`, so the page's own
-         summary and this form's prefill cannot disagree after a submit. */
+      // The server component re-reads `proposeEligibility`, so the page's own
       router.refresh();
     } finally {
       setBusy(false);
@@ -69,12 +68,7 @@ export function ProposeRate({
         <p className="text-[16px] font-bold">
           {done.replaced ? "Your proposal is updated." : "Your proposal is sent."}
         </p>
-        {/*
-          ⚠⚠ IT NAMES WHAT HAPPENS NEXT AND PROMISES NO TIMING. The buyer now
-          owes a response and their worklist says so (`work.proposal_received`),
-          but nothing in this build tells them WHEN — so this copy must not
-          either (ruling 18's family: do not print what has no writer).
-        */}
+        {/* IT NAMES WHAT HAPPENS NEXT AND PROMISES NO TIMING. The buyer now */}
         <p className="mt-1.5 text-[14px] text-ink-2">
           The buyer has it on their list to answer. You can change your rate here
           until they decide.
@@ -96,12 +90,7 @@ export function ProposeRate({
         </p>
       )}
 
-      {/*
-        ⚠ TWO BASES, BECAUSE `LineBasis` HAS EXACTLY TWO and they mean different
-        things to a buyer: `RATE` is hours at a price, `AMOUNT` is a fixed fee
-        for the whole job. ⚠⚠ Buttons, not a select, so both readings are visible
-        without opening anything.
-      */}
+      {/* TWO BASES, BECAUSE `LineBasis` HAS EXACTLY TWO and they mean different */}
       <div className="mt-4 flex gap-2">
         {(
             [
@@ -144,12 +133,7 @@ export function ProposeRate({
             <span className="text-[14px] text-ink-2">per hour</span>
           )}
         </div>
-        {/*
-          ⚠⚠ THE BUYER'S DATES DECIDE THE HOURS, NOT THE PROVIDER. `writeRate`
-          writes `quantity: null` deliberately — *"a provider-supplied quantity
-          would be a second source for the number"* — so this form must not ask
-          for one, and this line is what stops somebody adding it later.
-        */}
+        {/* THE BUYER'S DATES DECIDE THE HOURS, NOT THE PROVIDER. `writeRate` */}
         {basis === "RATE" && (
           <span className="mt-1 block text-[12.5px] text-ink-2">
             You state the rate. The hours come from the buyer&apos;s dates.

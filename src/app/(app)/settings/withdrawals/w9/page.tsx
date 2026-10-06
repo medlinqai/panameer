@@ -56,7 +56,7 @@ export default async function W9HardCopyPage() {
             tax.classification ? tax.classification.replace(/_/g, " ") : "Not recorded"
           )}
           {row("Taxpayer ID type", tax.tin_kind ?? "Not recorded")}
-          {/* ⚠ LAST FOUR ONLY — the full number is not stored. */}
+          {/* LAST FOUR ONLY — the full number is not stored. */}
           {row(
             "Taxpayer identification number",
             tax.tin_last4 ? `•••••${tax.tin_last4}` : "Not recorded"
@@ -64,11 +64,7 @@ export default async function W9HardCopyPage() {
           {row("Country of tax residence", tax.country)}
         </dl>
 
-        {/*
-          ⚠⚠ THE STORED TEXT, VERBATIM, IN A BOX. This is what the signer saw.
-          `whitespace-pre-line` preserves the paragraph breaks the text was
-          stored with, so the hard copy reads as the form did.
-        */}
+        {/* THE STORED TEXT, VERBATIM, IN A BOX. This is what the signer saw. */}
         <section className="mt-5 rounded-[10px] border-2 border-ink/25 p-4">
           <h2 className="text-[12px] font-extrabold uppercase tracking-[0.06em]">
             Certification

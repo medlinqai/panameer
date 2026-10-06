@@ -55,11 +55,7 @@ export function Honeycomb({
         key={still ? "still" : cycle}
       >
         {shown.map((c) => {
-          /* ⚠⚠ `fig` IS A `const` ALIAS AND `counted` IS A `const` BOOLEAN, so
-             TypeScript narrows the union through BOTH — the figure is a number
-             inside the true branch and `{ uncounted }` inside the false one,
-             with no cast anywhere. ⚠⚠⚠ A CAST WOULD HAVE SILENCED EXACTLY THE
-             CHECK THIS TYPE EXISTS TO MAKE, which is why there is not one. */
+          // TypeScript narrows the union through BOTH — the figure is a number
           const fig = c.figure;
           const counted = isCounted(fig);
           return (
@@ -69,13 +65,9 @@ export function Honeycomb({
               className="pm-hive-cell"
               data-cell={c.key}
               data-counted={counted ? "yes" : "no"}
-              /* ⚠ Absent rather than `"null"` when there is no level — a missing attribute
-                 cannot be matched by `[data-level="..."]`, so the hatched treatment stands
-                 with no extra rule. */
+              // Absent rather than `"null"` when there is no level — a missing attribute
               data-level={c.level ?? undefined}
-              /* ⚠⚠ THE ACCESSIBLE NAME CARRIES THE REASON TOO. A screen reader
-                 cannot see a dashed outline, so for an uncountable cell the
-                 distinction the CSS makes visually must be in the WORDS. */
+              // THE ACCESSIBLE NAME CARRIES THE REASON TOO. A screen reader
               aria-label={
                 counted
                   ? `${c.label}: ${fig.toLocaleString("en-US")} ${c.counts}`
@@ -88,9 +80,7 @@ export function Honeycomb({
               <span className="pm-hive-label" aria-hidden>
                 {c.label}
               </span>
-              {/* ⚠⚠⚠ THE REASON IS NOT OPTIONAL. It comes from the figure
-                  itself, exactly as in `StatFigureRow`, so a cell cannot print
-                  a dash without saying why. */}
+              {/* THE REASON IS NOT OPTIONAL. It comes from the figure */}
               {!counted && (
                 <span className="pm-hive-why" aria-hidden>
                   {fig.uncounted}
@@ -103,15 +93,12 @@ export function Honeycomb({
     </>
   );
 
-  /* ⚠⚠ THE PICTURE FORM — no section, no border, no heading, no derived line. ⚠ The badge
-     stays: it is what accounts for the movement. */
+  // THE PICTURE FORM — no section, no border, no heading, no derived line. The badge
   if (!chrome) {
     return (
       <div className="pm-hive-picture">
         {grid}
-        {/* ⚠⚠ THE KEY ONLY APPEARS WHERE LEVELS DO. ⚠ A legend for a scale the cells are
-            not using would be a caption about nothing — the `grid` layout passes no
-            `level`, so it gets none. */}
+        {/* THE KEY ONLY APPEARS WHERE LEVELS DO. A legend for a scale the cells are */}
         {cells.some((c) => c.level) && <LevelKey />}
         <RebuildBadge secondsLeft={secondsLeft} />
       </div>
@@ -131,17 +118,7 @@ export function Honeycomb({
   );
 }
 
-/**
- * ── ⚠⚠ THE KEY (`P2-A1.1-E731`) ──────────────────────────────────────────
- *
- * ⚠ **SCOTT: *"a small key under the honeycomb."*** ⚠⚠ **A TINTED CELL MEANS NOTHING
- * WITHOUT ONE.** Four shades of one hue carry an ordering a reader can see but cannot
- * NAME, and an unnamed ordering invites the wrong reading — darker could as easily mean
- * *"needs attention"* as *"doing well"*.
- * ⚠⚠⚠ **THE SWATCHES ARE THE REAL CELLS, NOT A SECOND SET OF COLOURS.** They carry the
- * same `data-level` attribute the hexagons do, so the key is painted by the same CSS rules
- * — it cannot drift from what it explains (`E585`).
- */
+/** SCOTT: *"a small key under the honeycomb."* A TINTED CELL MEANS NOTHING */
 function LevelKey() {
   const LEVELS = [
     ["none", "None"],
@@ -161,33 +138,13 @@ function LevelKey() {
   );
 }
 
-/**
- * ── ⚠⚠⚠ THE BUSIEST / QUIET LINE IS DERIVED, AND IT SAYS WHAT FROM ───────
- *
- * ⚠ SCOTT: *"The busiest/quiet line is derived, and says so plainly if every
- * area is empty."*
- *
- * ⚠⚠ IT READS THE SAME `cells` ARRAY THE GRID DRAWS, so it cannot name an area
- * the honeycomb is not showing. ⚠ It is given the UNROTATED array on purpose —
- * the sentence must not change when the cells move, because the cells moving
- * does not change which area is busiest.
- *
- * ⚠⚠⚠ ONLY COUNTED FIGURES VOTE. An uncountable area is not a quiet one — it is
- * an unmeasured one, and calling it "quietest" would report a result where
- * nothing was measured. That is the same rule `allZero` carries for the cards.
- *
- * ⚠⚠ AND IT STATES ITS OWN LIMITATION. Areas count different things, so "most
- * counted" is a comparison of raw counts and nothing more — saying "busiest"
- * without saying that would be a claim the data does not support.
- */
+/** THE BUSIEST / QUIET LINE IS DERIVED, AND IT SAYS WHAT FROM */
 function BusiestLine({ cells }: { cells: HoneyCell[] }) {
   const counted = cells.filter(
     (c): c is HoneyCell & { figure: number } => isCounted(c.figure)
   );
 
-  /* ⚠⚠ NOTHING COUNTABLE AT ALL — a different sentence from "all zero", and
-     the two must not be merged: one means nobody has done anything, the other
-     means nothing can be measured. */
+  // NOTHING COUNTABLE AT ALL — a different sentence from "all zero", and
   if (counted.length === 0) {
     return (
       <p className="mt-3 border-t border-line pt-3 text-[12.5px] text-ink-2">
@@ -196,23 +153,12 @@ function BusiestLine({ cells }: { cells: HoneyCell[] }) {
     );
   }
 
-  /* ⚠ EVERY COUNTED AREA EMPTY — said plainly, with no busiest and no quietest.
-     ⚠⚠ A "busiest" among a set of zeros would name an arbitrary winner. */
+  // EVERY COUNTED AREA EMPTY — said plainly, with no busiest and no quietest.
   if (counted.every((c) => c.figure === 0)) {
     const un = cells.length - counted.length;
     return (
       <p className="mt-3 border-t border-line pt-3 text-[12.5px] text-ink-2">
-        {/*
-          ⚠⚠⚠ *"Nothing counted in any area yet"* ON ITS OWN WOULD MERGE THE TWO
-          STATES THIS WHOLE CARD EXISTS TO KEEP APART. ⚠ Found in the WS-B
-          render, not in review: a buyer sees three measured zeros AND an
-          uncountable Profile cell, and the sentence reported all four as
-          empty. ⚠⚠ AN AREA THAT COULD NOT BE COUNTED IS NOT AN EMPTY ONE, and
-          the line must not quietly absorb it — the cells are careful about
-          this distinction and the sentence beneath them has to be too.
-          ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   Nothing counted in any area yet.
-        */}
+        {/* STATES THIS WHOLE CARD EXISTS TO KEEP APART. Found in the WS-B */}
         Nothing counted in any area yet
         {un > 0
           ? `, and ${un} area${un === 1 ? "" : "s"} could not be counted at all.`
@@ -229,8 +175,7 @@ function BusiestLine({ cells }: { cells: HoneyCell[] }) {
     <p className="mt-3 border-t border-line pt-3 text-[12.5px] leading-relaxed text-ink-2">
       Busiest: <strong className="font-bold text-ink">{top.label}</strong>, with{" "}
       {top.figure.toLocaleString("en-US")} {top.counts}.
-      {/* ⚠ Only name a quietest when it is a DIFFERENT area — with one counted
-          area, "busiest and quietest" is the same cell twice. */}
+      {/* Only name a quietest when it is a DIFFERENT area — with one counted */}
       {sorted.length > 1 && bottom.key !== top.key && (
         <>
           {" "}

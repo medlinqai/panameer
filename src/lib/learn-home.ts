@@ -299,9 +299,6 @@ export async function getLearnPath(
       lessons: flat.length,
       completed: flat.filter((l) => l.completed).length,
       // A course's instructors come from ITS OWN lessons: within one path the
-      // courses can be taught by different people, and saying otherwise on a
-      // course page would credit the wrong person on the very screen a buyer
-      // clicks through to their profile from.
       instructors: resolveInstructors(
         tallyExperts(courseLessonRows),
         directory,
@@ -726,18 +723,10 @@ export async function starterPath(userId: string | null): Promise<StarterVerdict
     );
     return decided;
   }
-  /*
-    ⚠⚠ THE CARD COMES FROM `getLearnHome`, NOT FROM A SECOND QUERY (`E585`).
-    Its `ready`, `playable` and `lessons` are computed there, and a starter card
-    that counted its lessons differently from every other card on the page would
-    disagree with them in public.
-  */
+  // THE CARD COMES FROM `getLearnHome`, NOT FROM A SECOND QUERY .
   const cards = await getLearnHome(userId);
-  /* ⚠ `decided.id`, not `marked[0].id` — reading the array again would re-derive
-     what `decideStarter` has already decided, which is how the two drift. */
+  // what `decideStarter` has already decided, which is how the two drift.
   const card = cards.find((c) => c.id === decided.id);
-  /* ⚠ A flagged path `getLearnHome` does not return is the unpublished case the
-     `where` already excludes — but `find` can still miss, so this says "none"
-     rather than asserting a card it does not have. */
+  // A flagged path `getLearnHome` does not return is the unpublished case the
   return card ? { kind: "one", path: card } : { kind: "none" };
 }

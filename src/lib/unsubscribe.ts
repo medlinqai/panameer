@@ -9,10 +9,7 @@ export function unsubscribeToken(email: string, category: string | null): string
   return createHmac("sha256", secret).update(payload).digest("base64url");
 }
 
-/**
- * ⚠ CONSTANT-TIME COMPARISON. A `===` on a signature leaks its prefix through
- * timing, which is the standard way these get forged one byte at a time.
- */
+/** CONSTANT-TIME COMPARISON. A `===` on a signature leaks its prefix through */
 export function verifyUnsubscribeToken(
   email: string,
   category: string | null,
@@ -21,8 +18,7 @@ export function verifyUnsubscribeToken(
   try {
     const expected = Buffer.from(unsubscribeToken(email, category));
     const given = Buffer.from(token);
-    /* ⚠ `timingSafeEqual` THROWS ON A LENGTH MISMATCH, so the lengths are
-       compared first — and a wrong length is already a rejection. */
+    // compared first — and a wrong length is already a rejection.
     if (expected.length !== given.length) return false;
     return timingSafeEqual(expected, given);
   } catch {
@@ -30,38 +26,11 @@ export function verifyUnsubscribeToken(
   }
 }
 
-/**
- * ⚠⚠ IS THIS ADDRESS SUPPRESSED FOR THIS CATEGORY.
- *
- * Two ways to be suppressed: a row for the exact category, or a row with a NULL
- * category, which means everything.
- */
+/** IS THIS ADDRESS SUPPRESSED FOR THIS CATEGORY. */
 export async function isSuppressed(
   email: string,
   category?: string | null,
-  /*
-    ── ⚠⚠ THE ONE EXEMPTION, NAMED (`P2-J3-E522` PART A) ──────────────────────
-
-    ⚠ SCOTT, 2026-09-17: *"`EmailSuppression` exists to stop UNWANTED mail. A
-    password reset is mail the person asked for thirty seconds ago, about their
-    own account. Respecting suppression here means somebody who once
-    unsubscribed can never get back into their account, and the response is
-    deliberately silent, so they never learn why. That is a permanent lockout
-    with no explanation."*
-
-    ⚠⚠ BUT NO HOLE IN THE TRANSPORT. `E386` centralised this so a sender cannot
-    forget; an `if (template !== "password-reset")` inside `sendEmail` would be
-    exactly that hole. ⚠ So the bypass is a NAMED PARAMETER that only the reset
-    sender passes, and `check:sent-email` FAILS IF ANY OTHER SENDER PASSES IT —
-    the `check:derived-source` pattern Scott asked for.
-
-    ⚠⚠⚠ AND IT IS NARROW: a HARD BOUNCE IS NEVER BYPASSED. A bounce means the
-    address does not exist, so re-sending achieves nothing and damages a young
-    sending domain — the whole subject of `E522`. ⚠ Only `unsubscribe_link` and
-    `complaint` are overridden, and the reasons are matched EXPLICITLY rather
-    than by "anything that is not a bounce", so a new reason added later is
-    RESPECTED by default instead of silently bypassed.
-  */
+  // THE ONE EXEMPTION, NAMED PART A)
   bypassFor?: "password-reset"
 ): Promise<boolean> {
   const normalized = normalizeEmail(email);
@@ -80,36 +49,17 @@ export async function isSuppressed(
   return true;
 }
 
-/** ⚠ The reasons a password reset may override. ⚠⚠ `bounce` IS NOT ONE. */
+/** The reasons a password reset may override. `bounce` IS NOT ONE. */
 export const OVERRIDABLE_REASONS = ["unsubscribe_link", "complaint"];
 
-/**
- * Record a suppression. ⚠ IDEMPOTENT — clicking unsubscribe twice is not an
- * error, and the second click must not 500 on a unique violation.
- *
- * ⚠⚠ AND IT NEVER DELETES. There is no `unsuppress()` in this module. Somebody
- * who wants mail again re-opts-in through the settings screen, which writes
- * `NotificationPreference` — the suppression row stays as the record that they
- * once said no. `check:unsubscribe` fails the build if any code deletes one.
- */
+/** Record a suppression. IDEMPOTENT — clicking unsubscribe twice is not an */
 export async function suppress(
   email: string,
   category: string | null,
   reason: string
 ): Promise<void> {
   const normalized = normalizeEmail(email);
-  /*
-    ⚠⚠ NOT AN `upsert`, AND THE REASON IS A PRISMA CONSTRAINT RATHER THAN A
-    PREFERENCE: a compound unique containing a NULLABLE column cannot be used in
-    a `findUnique`/`upsert` `where` when that column is null — and `category:
-    null` ("everything") is the most important case here. Measured: it is a
-    TS2322 at the `where`, not a runtime surprise.
-
-    ⚠ SO IT IS FIND-THEN-CREATE, WITH THE RACE CAUGHT. Two simultaneous clicks
-    on the same link would both pass the find and one would violate the unique;
-    swallowing THAT specific error is correct, because the row it collided with
-    is the row we wanted.
-  */
+  // NOT AN `upsert`, AND THE REASON IS A PRISMA CONSTRAINT RATHER THAN A
   const existing = await prisma.emailSuppression.findFirst({
     where: { email: normalized, category },
     select: { id: true },
@@ -118,20 +68,13 @@ export async function suppress(
   try {
     await prisma.emailSuppression.create({ data: { email: normalized, category, reason } });
   } catch (e) {
-    /* ⚠ P2002 IS THE UNIQUE VIOLATION AND IS THE ONLY ONE SWALLOWED. Anything
-       else is a real failure and must surface. */
+    // P2002 IS THE UNIQUE VIOLATION AND IS THE ONLY ONE SWALLOWED. Anything
     const code = (e as { code?: string })?.code;
     if (code !== "P2002") throw e;
   }
 }
 
-/**
- * ⚠ THE ADDRESS IS MASKED ON THE PAGE — `s••••@straterp.com`.
- *
- * The unsubscribe URL may be forwarded, quoted in a reply, or pasted into a
- * ticket. Printing the full address turns a link somebody forwarded into a
- * disclosure of who was on the list.
- */
+/** THE ADDRESS IS MASKED ON THE PAGE — `s••••@straterp.com`. */
 export function maskEmail(email: string): string {
   const [local, domain] = normalizeEmail(email).split("@");
   if (!domain) return "•••";

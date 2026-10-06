@@ -109,8 +109,7 @@ export function AiPassPanel({
               className="inline-flex items-center gap-2.5 bg-ink px-6 py-2.5 font-semibold text-surface transition-colors hover:bg-ink-hover disabled:opacity-60"
             >
               {busy && <Spinner />}
-              {/* ⚠ `P1-ALL-E533` — the LABEL is Title Case (rule 11); the BUSY string is a
-                  STATUS SENTENCE and stays a sentence. Scott, 2026-09-16. */}
+              {/* — the LABEL is Title Case (rule 11); the BUSY string is a */}
               {busy ? "Reading your document…" : "Let AI Take a Pass"}
             </button>
           ) : (
@@ -146,21 +145,8 @@ export function AiPassPanel({
         )}
       </div>
 
-      {/*
-        A REAL in-progress affordance (walk7 WS8 / E142, revised by E200).
-
-        The control sat on the words "Reading your document…" with nothing
-        moving, which read as hung. E142 answered that with a promised duration;
-        E200 replaced the promise with a heartbeat, because the wait sometimes
-        exceeds any number worth printing.
-      */}
-      {/*
-        E200 — the promised "20–30 seconds" is gone. It was accurate at the
-        median and a liability at the tail: once the page has broken its own
-        promise, a static line is more alarming than no number at all. The
-        heartbeat keeps changing what it says instead, which is what
-        distinguishes slow from hung.
-      */}
+      {/* A REAL in-progress affordance (walk7 WS8 / E142, revised by E200). */}
+      {/* E200 — the promised "20–30 seconds" is gone. It was accurate at the */}
       {busy && <ParseHeartbeat className="mt-3" />}
 
       {info?.hasDocument && info.documentName && !done && !busy && (

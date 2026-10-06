@@ -41,16 +41,12 @@ export function DomainFields({
               className={field.type === "boolean" ? "min-[640px]:col-span-2" : ""}
             >
               <span className="mb-1.5 block text-[14px] font-bold text-ink">
-                {/* ⚠ VERBATIM FROM THE DECK — do not reword, retitle or add a period. */}
+                {/* VERBATIM FROM THE DECK — do not reword, retitle or add a period. */}
                 {field.label}
               </span>
 
               {field.type === "boolean" ? (
-                /*
-                  ⚠ TWO EXPLICIT BUTTONS, NEVER A CHECKBOX. An unticked checkbox is
-                  indistinguishable from an unanswered question, and this field is
-                  required — so "not yet answered" has to be a visible third state.
-                */
+                // TWO EXPLICIT BUTTONS, NEVER A CHECKBOX. An unticked checkbox is
                 <div className="flex gap-2.5">
                   {[
                     { v: "true", label: "Yes" },
@@ -86,13 +82,7 @@ export function DomainFields({
                     </span>
                   )}
                   <input
-                    /*
-                      ⚠ `type="text"`, NOT `type="number"`. A number input silently
-                      drops a typed comma, refuses a leading `$`, and scroll-wheels a
-                      figure without the visitor noticing. Scott asked for free text
-                      with an edit on it, and that is what this is: the edit lives in
-                      `parseFieldValue`, in one place, shared with the server.
-                    */
+                    // drops a typed comma, refuses a leading `$`, and scroll-wheels a
                     type="text"
                     inputMode={field.type === "dollars" ? "decimal" : "numeric"}
                     value={raw}
@@ -128,15 +118,7 @@ export function DomainFields({
       </div>
 
       {groupTotal !== null && (
-        /*
-          ⚠ THE RUNNING TOTAL, SHOWN — and Continue stays blocked until it is 100.
-
-          ⚠ THE THIRD BOX IS NEVER AUTO-FILLED FROM THE OTHER TWO. A buyer who
-          genuinely splits across four rails — cards, for instance — needs to SEE
-          that the deck's three-rail model does not fit them. Silently balancing the
-          last box would hide precisely the finding worth having, and it is the same
-          rail split as the payment architecture in `decisions-01.md` § 2026-08-20.
-        */
+        // THE RUNNING TOTAL, SHOWN — and Continue stays blocked until it is 100.
         <p
           role="status"
           className={

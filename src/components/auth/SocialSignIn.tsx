@@ -112,16 +112,7 @@ export function SocialSignIn({
               className={
                 // `whitespace-nowrap`, never `truncate`: a label that doesn't
                 // fit must be visible as a layout bug, not quietly clipped.
-                /*
-                  ⚠ NO `disabled:opacity-45` (`E233`). It used to sit here and it
-                  is what turned both brand colours grey whenever OAuth was not
-                  configured. `disabled:cursor-not-allowed` STAYS — with the
-                  colour no longer signalling the state, the cursor and the
-                  caption beneath the row are what say "not yet".
-                  ⚠ THE HOVER CLASS IS GATED ON `live`, so a dead button does not
-                  brighten under the pointer. Concatenating it unconditionally
-                  would have left the one interactive-looking behaviour behind.
-                */
+                // NO `disabled:opacity-45` . It used to sit here and it
                 "flex items-center justify-center gap-1.5 border px-2.5 py-2 text-[13.5px] font-bold whitespace-nowrap transition-colors disabled:cursor-not-allowed " +
                 b.className +
                 (live ? " " + b.hoverClassName : "")
@@ -135,26 +126,7 @@ export function SocialSignIn({
       </div>
 
       {available !== null && !anyLive && (
-        /*
-          ⚠⚠ `sign in`, NOT `create an account` (`P1-J1.4-E230`, Scott 2026-08-26:
-          *"make the change."*).
-
-          ⚠ THE FORM BELOW THIS CALLS `signIn("credentials")` AND NOTHING ELSE. IT
-          AUTHENTICATES; IT CANNOT REGISTER. So this line used to instruct a
-          brand-new visitor to create an account, and the only control under the
-          instruction would reject them. ⚠ IT IS ALSO THE LANDING SPOT FOR
-          `/learn`'s `Start Learning for Free`, so the first thing a new learner
-          read was an instruction the page could not honour.
-
-          ⚠ SUPERSEDED 2026-08-26, quoted not deleted:
-            *"Social sign-in isn't configured yet — create an account with your
-             email below."*
-
-          ⚠ THE FIX IS THE COPY PLUS THE WAY OUT — `login/page.tsx` now carries a
-          `Need an account? Sign up` link to `/join`, the only sign-up door that
-          exists. ⚠ REGISTRATION WAS NOT BUILT HERE; real sign-up on `/login` is a
-          separate brief Scott has parked.
-        */
+        // THE FORM BELOW THIS CALLS `signIn("credentials")` AND NOTHING ELSE. IT
         <p className="mt-2.5 text-center text-[13px] text-ink-2">
           Social sign-in isn&apos;t configured yet — sign in with your email
           below.

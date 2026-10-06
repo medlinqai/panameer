@@ -109,24 +109,7 @@ export function NotificationBell({
       </button>
 
       {open && (
-        /*
-          ── ⚠⚠⚠ ON A PHONE IT IS PINNED TO THE VIEWPORT, NOT TO THE BELL ────
-
-          ⚠ Scott asked for it to open on the right, and above `sm` it does —
-          anchored to the button, which is where a desktop reader expects it.
-          ⚠⚠ AT PHONE WIDTH THAT IS A DEFECT, AND IT SHIPPED ONCE: a 360px
-          panel hanging off a button near the right edge of a 390px screen put
-          its left side **30.8px off-screen**, measured, and the heading read
-          *"otifications"*. ⚠⚠⚠ AN ABSOLUTELY-POSITIONED BOX OFF THE LEFT EDGE
-          DOES NOT WIDEN THE DOCUMENT, so no page-scroll check can see it —
-          `check:notifications-ui` measures the panel's OWN box against the
-          viewport, and that assertion fails on the version below this one.
-
-          ⚠ `fixed` is what pins it: the band is sticky, so an `absolute` child
-          can only ever be positioned against the band, never against the
-          screen. ⚠⚠ SUPERSEDED, quoted not deleted (`E164`):
-          //   className="absolute right-0 top-11 z-50 … w-[min(92vw,360px)] …"
-        */
+        // ON A PHONE IT IS PINNED TO THE VIEWPORT, NOT TO THE BELL
         <div
           role="menu"
           aria-label="Notifications"
@@ -134,13 +117,7 @@ export function NotificationBell({
         >
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <p className="text-[14px] font-bold">Notifications</p>
-            {/*
-              ⚠⚠ TWO DOORS, NOT ONE (`E736`). ⚠ Scott: *"The bell's dropdown links See All →
-              `/notifications`, and shows 'N need action' → `/worklist`."*
-              ⚠⚠⚠ THE SECOND ONE RENDERS ONLY ABOVE ZERO, and that is the counting rule, not
-              tidiness: *"0 need action"* is a sentence about an obligation nobody has, and a
-              link offering to show it is a door onto an empty room (`E579`).
-            */}
+            {/* TWO DOORS, NOT ONE . Scott: *"The bell's dropdown links See All → */}
             <span className="flex items-center gap-3">
               {needActionCount > 0 && (
                 <Link
@@ -162,16 +139,14 @@ export function NotificationBell({
           </div>
 
           {failed ? (
-            /* ⚠ A FAILURE SAYS SO. Rendering "nothing yet" on a failed fetch
-               would tell a member they have no notifications when the truth is
-               that we could not ask. */
+            // A FAILURE SAYS SO. Rendering "nothing yet" on a failed fetch
             <p className="px-4 py-6 text-center text-[13.5px] text-ink-2">
               We couldn&rsquo;t load these. Try again in a moment.
             </p>
           ) : rows === null ? (
             <p className="px-4 py-6 text-center text-[13.5px] text-ink-2">Loading…</p>
           ) : rows.length === 0 ? (
-            /* ⚠ THE EMPTY STATE SAYS WHAT WILL APPEAR THERE (WS-C item 4). */
+            /* THE EMPTY STATE SAYS WHAT WILL APPEAR THERE (WS-C item 4). */
             <p className="px-4 py-6 text-center text-[13.5px] leading-relaxed text-ink-2">
               Nothing yet. When something needs you — a request to join a group,
               an invitation, a proposal — it appears here.
@@ -187,10 +162,7 @@ export function NotificationBell({
                     className="block w-full border-b border-line px-4 py-3 text-left transition-colors last:border-0 hover:bg-line-2"
                   >
                     <span className="flex items-start gap-2">
-                      {/* ⚠⚠ UNREAD IS A DOT **AND** A WEIGHT, never colour
-                          alone — a single magenta dot is invisible to a
-                          colour-blind reader, and this is the only thing
-                          distinguishing two otherwise identical rows. */}
+                      {/* UNREAD IS A DOT AND A WEIGHT, never colour */}
                       <span
                         aria-hidden
                         className={
@@ -207,9 +179,7 @@ export function NotificationBell({
                         >
                           {n.title}
                         </span>
-                        {/* ⚠ A WORKLIST ITEM SAYS SO IN WORDS. "You owe an
-                            action" and "you have not read this" are different
-                            facts and must not look the same. */}
+                        {/* A WORKLIST ITEM SAYS SO IN WORDS. "You owe an */}
                         {n.needsAction && (
                           <span className="mt-0.5 block text-[11.5px] font-bold uppercase tracking-[0.05em] text-magenta">
                             Needs You

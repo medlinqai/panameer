@@ -177,11 +177,7 @@ export function ProjectModal({
 
   // Logo suggestions from the CLIENT name — the E043 flow, one debounce.
   const clientName = draft.clientName;
-  /**
-   * E113 — has the provider chosen "Other…"? Held here rather than derived from
-   * the value, because a typed name that happens to match an employer must not
-   * silently snap the control back to the dropdown mid-edit.
-   */
+  /** E113 — has the provider chosen "Other…"? Held here rather than derived from */
   const [otherClient, setOtherClient] = useState(false);
 
   // Reset between openings — the modal instance is reused for every project, so
@@ -315,19 +311,7 @@ export function ProjectModal({
           </Field>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {/*
-              E113 — "Client" is a pick-list of the provider's own employers plus
-              "Other…", not a free-text box. In the overwhelming majority of
-              cases the client IS one of the companies they already listed, and
-              retyping it by hand is how the same organisation ends up in the
-              database three ways.
-
-              The label stays "Client", not "Employer", deliberately: for a
-              consultant these differ. The employer is who paid them; the client
-              is who the work was for, and a project delivered THROUGH an
-              employer for someone else needs to be able to say so — which is
-              what "Other…" is for.
-            */}
+            {/* E113 — "Client" is a pick-list of the provider's own employers plus */}
             <Field label="Client *">
               {employerNames.length > 0 && !otherClient ? (
                 <select
@@ -387,11 +371,7 @@ export function ProjectModal({
             </Field>
           </div>
 
-          {/* brief_validation_domain_guard — the domain a validation contact
-              must belong to. SUGGESTED from the client name via the same brand
-              lookup that suggests the logo (E043), never auto-applied: name →
-              domain is fuzzy, and a wrong domain here silently blocks a real
-              validation. */}
+          {/* brief_validation_domain_guard — the domain a validation contact */}
           <Field
             label="Client Domain"
             hint="Used to check who may validate this project. Never shown publicly."

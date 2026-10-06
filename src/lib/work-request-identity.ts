@@ -183,11 +183,7 @@ export function buildBuyerIdentity(input: {
     standing: input.standing,
     verification: verificationLines({
       emailVerifiedAt: person.user?.email_verified ?? null,
-      /* ⚠⚠ THE COLUMN IS CARRIED THROUGH EXPLICITLY (`P1-ALL-E282`). This
-         object NARROWS `company`, so omitting the field here would drop it even
-         though the type allows it — silently reading "unverified" forever. That
-         is the exact failure the brief warned about, and it was live in this
-         line until `E282`. */
+      // THE COLUMN IS CARRIED THROUGH EXPLICITLY . This
       company: company
         ? {
             id: company.id,
@@ -199,13 +195,7 @@ export function buildBuyerIdentity(input: {
   };
 }
 
-/**
- * "Member since March 2025 · First work request".
- *
- * ⚠ A FIRST-TIME POSTER IS STATED, NOT WARNED ABOUT. Scott: it is honest and it
- * is not a warning. No "new account" pill, no amber, no caution icon —
- * everybody's first request is somebody's first request.
- */
+/** A FIRST-TIME POSTER IS STATED, NOT WARNED ABOUT. Scott: it is honest and it */
 export function standingLine(s: BuyerStanding): string {
   const parts: string[] = [];
   if (s.memberSince) {

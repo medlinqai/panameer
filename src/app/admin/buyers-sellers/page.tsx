@@ -204,8 +204,7 @@ export default async function Page({
           p.title,
           p.phone,
           p.id,
-          /** ⚠ The USER id as well as the PERSON id — Scott pastes either, and a
-           *  search that silently knows only one of them is the defect above. */
+          /** The USER id as well as the PERSON id — Scott pastes either, and a */
           p.user_id ?? "",
           jobLabel(p),
           isTest ? "test" : "real",
@@ -213,19 +212,7 @@ export default async function Page({
         return haystack.some((v) => (v ?? "").toString().toLowerCase().includes(q));
       });
 
-  /*
-    ── ⚠⚠ THE FIVE JOBS (`P1-A1.5-E456`) ─────────────────────────────────────
-
-    ⚠ COUNTED WITH `holdsJob`, WHICH ASKS EACH TILE'S QUESTION INDEPENDENTLY.
-    A dual-role person answers yes twice and IS COUNTED TWICE — no first-match,
-    which is the exact defect `E444` existed to remove. The caption says so.
-    ⚠ `Requesters` NOW USES THE GRID'S OWN RULE (`jobsFor`), not "owns a
-    RequesterProfile". ⚠ SUPERSEDED, quoted not deleted:
-      const requesters = people.filter((p) => !!p.requesterProfile).length;
-    That counted 45 because `E421` gives a BUYER both profiles; the job rule
-    counts 38, which is the number the brief measured and the number the Role
-    column in the grid below already prints. One rule, two surfaces.
-  */
+  // THE FIVE JOBS
   const adminFlagsFor = (p: (typeof people)[number]) => ({
     isSystemAdmin: p.user?.is_system_admin ?? false,
     isSupport: p.is_support,
@@ -254,14 +241,7 @@ export default async function Page({
   /* Read at the moment the query returned, printed by the SERVER — see BoardRefresh. */
   const readAt = new Date().toLocaleTimeString("en-GB");
 
-  /*
-    ── ⚠⚠ NO MORE `slice(0, 50)` (`P1-A1.5-E430` WS-2) ────────────────────────
-
-    ⚠ SUPERSEDED, quoted not deleted: `people.slice(0, 50).map(...)`.
-    That single expression is why Scott *"could not see half of them"* — 199
-    people, 50 rendered, no pager and no total. Every row is handed to the grid
-    now and the pager decides what is on screen, so NO RECORD IS UNREACHABLE.
-  */
+  // NO MORE `slice(0, 50)` WS-2)
   const rows = visible.map((p) => {
     const u = p.user;
     const name = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "(unnamed)";
@@ -270,24 +250,10 @@ export default async function Page({
     const level = levelFor(subject);
     const blocking = blockingFor(subject);
 
-    /*
-      ⚠ THE RULE MOVED TO `lib/user-jobs.ts` (`E460`), UNCHANGED. A second
-      surface — `/admin/users/[id]` — needs the same answer, and the brief is
-      explicit: *"Do not re-derive this. Import the grid's rule or the grid and
-      the page will drift."* Two copies of "is this person a Buyer?" is exactly
-      how the badge and this grid disagreed before `E444`.
-    */
+    // THE RULE MOVED TO `lib/user-jobs.ts` , UNCHANGED. A second
     const roles = jobLabel(p);
 
-    /*
-      ⚠ THE LOCK CELL LOST ITS SENTENCE AND KEPT ITS FACTS (`E252a`). Scott's
-      spec says LOCKED is *"a checkbox"*, so the state is the checkbox and the
-      attempt count and expiry — which are what tell an admin whether to
-      intervene — move into its title. A lock that lifts itself in 20 minutes
-      and an indefinite admin lock still have to be distinguishable.
-      ⚠ IT IS `disabled`, DELIBERATELY: locking and unlocking is an ACTION and
-      this brief builds none. A live checkbox would promise one.
-    */
+    // THE LOCK CELL LOST ITS SENTENCE AND KEPT ITS FACTS . Scott's
     const lockTitle = u?.locked
       ? u.locked_until
         ? `Locked until ${u.locked_until.toLocaleTimeString("en-GB")} — ${u.failed_login_attempts} failed attempts`
@@ -296,45 +262,10 @@ export default async function Page({
         ? `Not locked — ${u.failed_login_attempts} failed attempts`
         : "Not locked";
 
-    /*
-      ⚠ SUPERSEDED, quoted not deleted (`E446`) — the two locals that fed the
-      Validation cell, and the note that came with them:
-        *"`E270` / `E255` — validation stays its OWN column, on Scott's
-        instruction 2026-09-12."*
-        const validation = p.providerProfile ? p.providerProfile.validation_status
-          : p.requesterProfile ? p.requesterProfile.validation_status : "—";
-        const validationAsked = p.providerProfile?.validation_requested_at
-          ? ` — asked ${d(p.providerProfile.validation_requested_at)}` : "";
-      ⚠ THAT INSTRUCTION WAS REVERSED THE SAME DAY: *"i did not ask for
-      validation."* The columns they fed are gone, so the locals go with them —
-      an unused local is a new lint warning, and the rule is 0 new.
-      ⚠ THE QUERY STILL SELECTS `validation_status`; 31 other files read it.
-    */
+    // Validation cell, and the note that came with them
 
-    /*
-      ⚠⚠ THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO. Scott's spec says
-      *"a hyperlink to that person's profile"*, and `/providers/[id]` is a real
-      route — but ONLY providers have one. There is no per-person page for a
-      requester or a buyer anywhere in the app, so their name renders as text
-      rather than as a link to a 404. ⚠ REPORTED, not papered over.
-    */
-    /*
-      ── ⚠⚠ EVERY NAME LINKS NOW (`P1-A1.5-E460`) ──────────────────────────────
-
-      ⚠ SUPERSEDED, quoted not deleted:
-        `const profileHref = p.providerProfile ? `/providers/${p.providerProfile.id}` : null;`
-      with the reasoning *"THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO…
-      ONLY providers have one… so their name renders as text rather than as a
-      link to a 404."*
-
-      ⚠⚠ THAT WAS RIGHT ABOUT THE REPO AND WRONG ABOUT THE PRODUCT. **SCOTT:**
-      *"Everyone has a profile...just sellers have more info on theirs, no?"* —
-      and Level 1 proves it: name · email · phone · title · profile · ToS,
-      identical on both sides of the marketplace. The answer was not to withhold
-      94 links; it was to build the page that was missing. ⚠ ALL 199 ROWS LINK.
-      ⚠ `/providers/[id]` IS NOT REPLACED — it is the PUBLIC page, and it now
-      hangs off this admin page's Seller detail section.
-    */
+    // THE NAME LINKS ONLY WHERE THERE IS A PAGE TO LINK TO. Scott's spec says
+    // EVERY NAME LINKS NOW
     const profileHref = `/admin/users/${p.id}`;
 
     const cells = [
@@ -346,21 +277,7 @@ export default async function Page({
         size={32}
       />,
       (
-        /*
-          ── ⚠ IT LOOKED EXACTLY LIKE THE PLAIN TEXT (`P1-A1.5-E443`) ──────────
-
-          ⚠ SUPERSEDED, quoted not deleted:
-            className="font-semibold text-ink hover:text-magenta hover:underline"
-          At REST that is `font-semibold text-ink` — character for character the
-          non-linked `<span>` beside it. The link existed and was invisible.
-
-          ⚠ `--color-magenta-ink` (#a61aa5) IS THE TEXT MAGENTA, not the brand
-          fill: `globals.css` measures it at 6.34:1 on white where `#d72cd6` is
-          4.02:1 and "large & UI only". A grid cell is small text.
-          ⚠ AND IT IS STILL MAGENTA-FAMILY ON PURPOSE — `E433` reserves magenta
-          for INTERACTIVE things, and this is the one genuinely interactive cell
-          in the row.
-        */
+        // IT LOOKED EXACTLY LIKE THE PLAIN TEXT
         <span key="name" className="inline-flex items-center gap-2">
           <Link
             href={profileHref}
@@ -368,14 +285,7 @@ export default async function Page({
           >
             {name}
           </Link>
-          {/*
-            ⚠⚠ THE `TEST` CHIP (`P2-ALL-E793`). ⚠ Scott's trigger for this whole
-            lane was that his `test2*` accounts had been deleted and **nothing in
-            the app showed that**. A chip is the smallest honest answer: which of
-            these rows is disposable, visible without opening anything.
-            ⚠ Outlined, not filled — it is a label, not a status to celebrate,
-            and `E433` reserves magenta fills for interactive things.
-          */}
+          {/* THE `TEST` CHIP . Scott's trigger for this whole */}
           {isTest && (
             <span className="rounded-full border border-ink-3 px-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-ink-2">
               Test
@@ -384,18 +294,7 @@ export default async function Page({
         </span>
       ),
       roles,
-      /*
-        ── ⚠ USER-ID IS TRUNCATED, DISPLAY ONLY (`P1-A1.5-E442`) ───────────────
-
-        MEASURED in `E430`: this column alone took 350px of the 1243px the eight
-        columns wanted against a 1058px card, because the test addresses are long
-        (`e417.saudi.1789224772447@example.com`).
-        ⚠ THE FULL VALUE IS ON HOVER — `title` is enough here: this is an admin
-        page on a pointer device, not a touch surface.
-        ⚠⚠ SEARCH STILL MATCHES THE WHOLE ADDRESS. `rowMeta.text` below carries
-        the untruncated email, so typing any fragment still finds the row — the
-        truncation is CSS, never the data.
-      */
+      // USER-ID IS TRUNCATED, DISPLAY ONLY
       <span
         key="email"
         title={u?.email ?? undefined}
@@ -416,17 +315,7 @@ export default async function Page({
       />,
     ] as React.ReactNode[];
 
-    /*
-      ── ⚠⚠ THE SEARCH AND SORT METADATA (WS-2) ────────────────────────────────
-
-      ⚠ A `ReactNode` CELL CANNOT BE SEARCHED OR COMPARED — `String(<Link/>)` is
-      "[object Object]". So the row's searchable text and its per-column sort
-      values are built HERE, from the same data the cells came from, and travel
-      alongside them. One entry per column, in the same order.
-      ⚠ `text` CARRIES MORE THAN THE VISIBLE CELLS: the company and the email are
-      both searchable even when the company column scrolls out of view, because
-      Scott's actual task was finding which test email ids were free.
-    */
+    // THE SEARCH AND SORT METADATA (WS-2)
     const meta = {
       text: [name, roles, u?.email ?? "", level, p.company?.name ?? ""]
         .join(" ")
@@ -438,8 +327,7 @@ export default async function Page({
         roles,
         u?.email ?? null,
         u?.email_verified ? u.email_verified.getTime() : null,
-        /* ⚠ THE LEVEL SORTS BY PROGRESSION, NOT ALPHABETICALLY — "Company"
-           before "Verified" would be nonsense on a lifecycle column. */
+        // THE LEVEL SORTS BY PROGRESSION, NOT ALPHABETICALLY — "Company"
         USER_LEVELS.indexOf(level),
         u?.locked ? 1 : 0,
       ],
@@ -452,22 +340,8 @@ export default async function Page({
     <div className="mx-auto w-full max-w-6xl">
       <BoardRefresh readAt={readAt} />
 
-      {/*
-        ── ⚠⚠ THE TEST-ACCOUNT PANEL SITS IN THE MAIN BODY (`P2-ALL-E793`) ─────
-        ⚠⚠⚠ **NOT INSIDE `{stageTile && …}`.** My first placement went into the
-        DRILL-IN header, which renders only when a lifecycle tile is selected —
-        so the panel was invisible on the page everyone actually opens, and
-        `check:admin-ui` caught it. ⚠ A control that exists only behind a filter
-        is a hidden door (the 2026-09-23 card rule).
-      */}
-      {/*
-        ── ⚠⚠ SEARCH + EXPORT (`P2-ALL-E794`) ─────────────────────────────────
-
-        ⚠ A plain `GET` form, server-rendered: no client JavaScript, the query
-        stays in the URL so a search is linkable and the browser's back button
-        works. ⚠⚠ The Export link carries the SAME `q` and `test`, so the file
-        matches the list on screen rather than silently exporting everything.
-      */}
+      {/* THE TEST-ACCOUNT PANEL SITS IN THE MAIN BODY */}
+      {/* SEARCH + EXPORT */}
       <form method="get" className="mt-4 flex flex-wrap items-end gap-2">
         <label className="flex-1 min-w-[240px]">
           <span className="block text-[11px] font-bold uppercase tracking-[0.1em] text-ink-2">
@@ -481,7 +355,7 @@ export default async function Page({
             className="mt-1 min-h-11 w-full border border-line bg-surface px-2 text-[14px] text-ink"
           />
         </label>
-        {/* ⚠ The current filter rides along, or searching would silently drop it. */}
+        {/* The current filter rides along, or searching would silently drop it. */}
         {testFilter !== "all" && <input type="hidden" name="test" value={testFilter} />}
         <button
           type="submit"
@@ -517,11 +391,7 @@ export default async function Page({
 
       <TestAccountControls filter={testFilter} />
 
-      {/*
-        ⚠ THE SUB-PAGE HEADER (`E455`), the Medlinq pattern Scott pointed at.
-        ⚠ SAME COMPONENT AS `E460`'s user page — the brief asks for one
-        `BackLink` in both *"or they will diverge"*.
-      */}
+      {/* THE SUB-PAGE HEADER , the Medlinq pattern Scott pointed at. */}
       {stageTile && (
         <div className="mb-4">
           <BackLink href="/admin/buyers-sellers" label="Users" />
@@ -534,43 +404,9 @@ export default async function Page({
         </div>
       )}
 
-      {/*
-        ── ⚠⚠ FIVE LIFECYCLE TILES, NOT FOUR WIZARD STATUSES (WS-5b) ──────────
-
-        **SCOTT, 2026-09-12:** *"replace the four wizard-status tiles with FIVE
-        lifecycle tiles (verified -> user -> company -> payee, plus total).
-        Counts cumulative so the drop-off between stages is visible."*
-
-        ⚠ SUPERSEDED, quoted not deleted — the strip this replaces, which mapped
-        `ONBOARDING_STATUSES` and linked each tile to the trend sub-page:
-          THE PROGRESSION STRIP (`E256`) — one tile per status, in Scott's order,
-          with a live count.
-          <TileRow tiles={ONBOARDING_STATUSES.map((s) => ({ label: s,
-            value: counts.get(s) ?? 0,
-            href: `…/trend?status=${encodeURIComponent(s)}&period=month`,
-            hint: s === "Created" ? "No profile yet" : … }))} />
-
-        ⚠⚠ THE NEW TILES CARRY NO `href`, AND THAT IS DELIBERATE. The trend page
-        takes `?status=` from `ONBOARDING_STATUSES`; a Level 2 tile pointing at
-        it would ask for a status that does not exist and quietly render the
-        wrong series. The trend sub-page is out of scope here, so the link stays
-        in the caption below, where it is still true.
-        ⚠ THE PER-SIDE COUNTS ARE NOT DELETED — `counts` and `sideTotal` still
-        feed that caption, and the Validation column still reads the per-side
-        statuses. Neither model is renamed.
-      */}
-      {/*
-        ⚠ WS-7 — the icons are supplied HERE, which is what opts this one page
-        into the Learn-style layout; the other sixteen `TileRow` pages pass none
-        and render exactly as before. ⚠ THE HINT IS DROPPED in this layout: the
-        Learn tile is two lines, and a third would undo the "thinner" Scott asked
-        for. It survives as the label's `title`.
-      */}
-      {/*
-        ⚠ THE TILE ROW DISAPPEARS ON THE DRILL-IN (`E455`) — Medlinq shows no
-        tiles on the sub-page, and a strip of five counts above a list of one of
-        them invites the reader to compare a number with itself.
-      */}
+      {/* FIVE LIFECYCLE TILES, NOT FOUR WIZARD STATUSES (WS-5b) */}
+      {/* WS-7 — the icons are supplied HERE, which is what opts this one page */}
+      {/* THE TILE ROW DISAPPEARS ON THE DRILL-IN — Medlinq shows no */}
       {!isDrillIn && (
         <section data-progression className="mb-6">
           <div className="flex flex-wrap items-end justify-between gap-2">
@@ -619,59 +455,8 @@ export default async function Page({
           </p>
         </section>
       )}
-      {/*
-        ── ⚠⚠ `E457` · THE EXPLANATORY PARAGRAPH IS GONE ──────────────────────
-
-        > **SCOTT, 2026-09-12:** *"don't need this."*
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole block, because the
-        link inside it is the part that mattered:
-
-          <p className="mt-2 mb-6 text-[12.5px] text-ink-2">
-            The lifecycle, counted per PERSON and cumulative — each stage
-            includes everyone past it... <b>{people.length}</b> people. The
-            wizard statuses are a different model, counted per SIDE
-            ({sideTotal} sides), and{" "}
-            <Link href="/admin/buyers-sellers/trend?status=all&period=month">
-              they keep their own trend</Link>.
-          </p>
-
-        ⚠⚠ THE PRECONDITION IS ANSWERED. Part 1 STOPPED here rather than delete:
-        grepping the tree showed this paragraph was the ONLY entry point to
-        `/admin/buyers-sellers/trend`, and stranding a live route to remove a
-        sentence was not a call to make unasked. ⚠ SCOTT'S ANSWER: the trend
-        hangs off the FOOTER. Each of the five job tiles below now opens
-        `/trend?job=<JOB>`, so the route is reachable from FIVE places instead
-        of one, and by a link that says what it opens.
-        ⚠ NOT a stopgap link, NOT the Reports panel — see `E456` below.
-      */}
-      {/*
-        ── ⚠⚠ SCOTT'S COLUMN ORDER, VERBATIM (WS-3) ───────────────────────────
-
-        ⚠ SUPERSEDED, quoted not deleted — the eight columns this replaces, three
-        of which wrapped to two lines and drove the row height to 144px:
-          "Person - Company" · "Email" · "Onboarding Status" · "Lock / Failed" ·
-          "Last Login" · "Validation"
-
-        ⚠ WHAT CHANGED AND WHY, beyond the order:
-        · PICTURE is new — the avatar Medlinq leads with.
-        · `Person - Company` SPLIT: NAME is its own column (a link where there is
-          a page to link to) and COMPANY moved to the end, which is what Scott
-          asked for — *"Add COMPANY if there is room."* Measured: with `nowrap`
-          cells the nine columns need more than the card's width, so the pager
-          and the horizontal scroller carry it; nothing is clipped.
-        · `Last Login` IS GONE. Scott's spec does not include it, and it was the
-          column being pushed off the right edge. ⚠ THE DATA IS STILL QUERIED and
-          nothing is dropped from the read — restoring the column is one line.
-        · LOCKED is a checkbox, per the spec; its attempt count and expiry moved
-          into the checkbox's title so no fact was lost.
-        · STATUS is the lifecycle pill, and VALIDATION keeps its own column on
-          Scott's instruction.
-
-        ⚠ EVERY HEADER IS ONE WORD OR TWO AND NONE WRAPS — `listing-shared.ts`
-        sets `whitespace-nowrap`, which is also what makes the scroller engage
-        visibly instead of the table silently shrinking to fit.
-      */}
+      {/* THE EXPLANATORY PARAGRAPH IS GONE */}
+      {/* SCOTT'S COLUMN ORDER, VERBATIM (WS-3) */}
       {isDrillIn ? (
         <div data-stuck-list className="overflow-x-auto border border-line">
           <table className="w-full min-w-[640px] text-[13.5px]">
@@ -713,10 +498,8 @@ export default async function Page({
         </div>
       ) : (
       <Listing
-        /* ⚠ `E454` — Scott: *"change Buyers/Sellers to Users."* The route keeps
-           its name; see the note in `lib/nav.ts`. */
-        /* ⚠ `E455` — the card heading repeats the tile's label with its count,
-           so the sub-page says what it is listing and how many. */
+        // — Scott: *"change Buyers/Sellers to Users."* The route keeps
+        // — the card heading repeats the tile's label with its count
         title="Users"
         columns={[
           "Picture",
@@ -726,94 +509,23 @@ export default async function Page({
           "Verified",
           "Status",
           "Locked",
-          /*
-            ── ⚠⚠ "Validation" IS GONE (`P1-A1.5-E446`) ─────────────────────────
-
-            **SCOTT:** *"i did not ask for validation."* And on the walk:
-            *"validation still showing."* His column spec was PICTURE · NAME ·
-            ROLE · USER-ID · VERIFIED · STATUS · LOCKED (+ COMPANY if room);
-            Validation was chat's addition and `E430` carried it forward.
-
-            ⚠ `validation_status` STAYS IN THE QUERY, deliberately — it has 86
-            references across 31 files, including `/account-health`, the
-            marketplace card, the admin validate/reject routes and
-            `onboarding-status.ts`'s per-side statuses, which still drive the
-            trend sub-page. The COLUMN went; the DATA did not.
-          */
-          /*
-            ⚠⚠ "Company" IS NOT HERE, AND THAT IS SCOTT'S OWN CONDITION MET
-            HONESTLY: *"Add COMPANY if there is room."* MEASURED at a 1440px
-            viewport — the nine columns needed 1428px against a 1058px card, and
-            even the eight without Company need 1243px. There is no room, so the
-            column that was explicitly conditional is the one that goes.
-            ⚠ IT IS STILL SEARCHABLE. `rowMeta.text` carries the company name, so
-            typing a company still finds its people — the data did not leave, the
-            column did. ⚠ AND THE SORT KEY IS STILL BUILT for it, so restoring
-            the column is one line in each of two arrays.
-          */
+          // SCOTT: *"i did not ask for validation."* And on the walk
+          // HONESTLY: *"Add COMPANY if there is room."* MEASURED at a 1440px
         ]}
         rows={rows.map((r) => r.cells)}
-        /*
-          ⚠ THE OPT-IN. `rowMeta` is what promotes this one listing to the
-          interactive renderer; the other twelve pages pass none and stay
-          server-rendered (WS-0, option (c)).
-        */
+        // THE OPT-IN. `rowMeta` is what promotes this one listing to the
         rowMeta={rows.map((r) => r.meta)}
         searchPlaceholder="Search people, email or company…"
-        /*
-          ── ⚠⚠ SEVEN, AND THE POINT IS THE FOLD (`P1-A1.5-E458`) ──────────────
-
-          **SCOTT:** *"looks like we need to take the display rows down to 7 with
-          the option to change how many return (to show the footer is there)."*
-
-          ⚠ SUPERSEDED, quoted not deleted: `pageSize={15}` — *"I am trying to get
-          everything to fit on one page so you can see the footer tiles."* Fifteen
-          was the right instruction and the wrong number: MEASURED at 1440×900
-          with the banner dismissed, it still pushed the footer below the fold.
-          ⚠ THE NUMBER IS NOT THE POINT AND MUST NOT BE TUNED BLIND — it is
-          whatever makes the header tiles, the grid and the footer all visible at
-          once. The measurement is in the report.
-          ⚠ AND IT IS NOW THE VIEWER'S TO CHANGE: the picker remembers 7/15/25/50
-          per person, so an admin who would rather scan 50 is one click away.
-        */
+        // SEVEN, AND THE POINT IS THE FOLD
         pageSize={7}
         pageSizeOptions={[7, 15, 25, 50]}
-        /* ⚠ SCOPED TO THIS GRID. A second listing that opts in later gets its own
-           key rather than inheriting a size chosen for a different table. */
+        // SCOPED TO THIS GRID. A second listing that opts in later gets its own
         pageSizeKey="panameer.admin.users.pageSize"
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
       )}
 
-      {/*
-        ── ⚠⚠ FIVE JOBS, AND ONE OF THE LABELS WAS A LOCK VIOLATION (`E456`) ──
-
-        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-          { label: "Service Requesters", value: requesters }   // 45, wrong rule
-          { label: "Buyers",  value: buyers }                  // is_service_buyer
-          { label: "Coordinators", value: coordinators }       // ⚠⚠ LOCK BREACH
-          { label: "Providers", value: providers }
-          { label: "Total", value: people.length }             // not a job
-
-        ⚠⚠ `Coordinators` PUT THE DATABASE COLUMN `is_service_coordinator` ON
-        SCREEN. `USER_JOB` has been RECRUITER since the naming was locked
-        2026-08-02, so this was a violation of that lock rather than a rename.
-        ⚠ THE COLUMN IS NOT RENAMED — no schema change, no `db:push`. That is
-        `brief_user_class_job_model`'s job and this must not pre-empt it.
-
-        ⚠ `Service Requesters` (45) BECAME `Requesters` (38) because it now uses
-        the GRID'S OWN RULE. `E421` gives a buyer BOTH profiles, so "owns a
-        RequesterProfile" counted buyers as requesters too. One rule, two
-        surfaces — the same reason `E460` moved it into `lib/user-jobs.ts`.
-        ⚠ `Total` BECAME `Administrators`: a headcount is not a job, and the
-        number it printed is already the `Total Users` tile at the top.
-
-        ⚠ THE `VolumeFooter` COMPONENT IS NOT DELETED OR FORKED — it is the same
-        shared component, given five different tiles. It reaches nine other
-        pages through `SpecPage`/`StubConsolePage` and none of them change.
-        ⚠ IT WAS NOT EMPTY HERE: it already held these five slots. The labels,
-        the counts and the links changed; the region did not move.
-      */}
+      {/* FIVE JOBS, AND ONE OF THE LABELS WAS A LOCK VIOLATION */}
       {!isDrillIn && (
         <>
           <VolumeFooter
@@ -821,7 +533,7 @@ export default async function Page({
             tiles={JOB_TILES.map((t, i) => ({
               label: t.label,
               value: jobCounts[t.key] ?? 0,
-              /* ⚠ FIVE HUES, NOT A RAMP — five different jobs, not one funnel. */
+              /* FIVE HUES, NOT A RAMP — five different jobs, not one funnel. */
               tone: t.tone,
               icon: [
                 <ClipboardList key="i" className="h-[16px] w-[16px]" aria-hidden />,
@@ -830,10 +542,7 @@ export default async function Page({
                 <Briefcase key="i" className="h-[16px] w-[16px]" aria-hidden />,
                 <ShieldCheck key="i" className="h-[16px] w-[16px]" aria-hidden />,
               ][i],
-              /* ⚠ `E456` WS-7 — THIS IS WHERE THE TREND LINK WENT. A new
-                 parameter on the EXISTING trend route: `?job=`, never
-                 `?status=`, because a job handed to the status reader renders
-                 the wrong series silently. */
+              // WS-7 — THIS IS WHERE THE TREND LINK WENT. A new
               href: `/admin/buyers-sellers/trend?job=${t.key}`,
               hint: "90-day weekly trend →",
             }))}

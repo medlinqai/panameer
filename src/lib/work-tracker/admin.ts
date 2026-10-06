@@ -66,11 +66,7 @@ export async function phaseDates() {
   );
 }
 
-/**
- * ⚠⚠ MILESTONES (`P2-ALL-E757`). ADMIN read — returns drafts too.
- * ⚠ Ordered by `sort` then `date`, because two milestones can share a date and
- * chronological is not always the reading order.
- */
+/** MILESTONES . ADMIN read — returns drafts too. */
 export async function releases() {
   return prisma.workTrackerRelease.findMany({ orderBy: [{ sort: "asc" }, { date: "asc" }] });
 }
@@ -98,8 +94,7 @@ export async function createRelease(viewer: Viewer, input: ReleaseInput) {
   const title = trimToNull(input.title);
   if (!title) throw new WorkTrackerError("A milestone needs a title", "INVALID");
   const date = toDateOrNull(input.date, "date");
-  /* ⚠⚠ THE DATE IS REQUIRED AND THAT IS THE POINT OF THE TABLE — a milestone
-     with no date cannot be placed on the Build Line, which is why it exists. */
+  // THE DATE IS REQUIRED AND THAT IS THE POINT OF THE TABLE — a milestone
   if (!date) throw new WorkTrackerError("A milestone needs a date", "INVALID");
   if (input.status !== undefined && !isReleaseStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
@@ -113,12 +108,10 @@ export async function createRelease(viewer: Viewer, input: ReleaseInput) {
       code: trimToNull(input.code),
       summary: trimToNull(input.summary),
       start_date: toDateOrNull(input.start, "start_date"),
-      /* ⚠ `target_date` is the new field; `date` is kept in step so the legacy
-         column never goes stale while both exist (see the schema). */
+      // column never goes stale while both exist (see the schema).
       target_date: date,
       sort: Number.isInteger(Number(input.sort)) ? Number(input.sort) : 0,
-      /* ⚠ A new milestone is a DRAFT, for the same reason a Shipped entry is:
-         Scott approves what the public sees. `published` is ignored on create. */
+      // A new milestone is a DRAFT, for the same reason a Shipped entry is
       published: false,
       updated_by: viewer.userId,
     },
@@ -139,8 +132,7 @@ export async function updateRelease(viewer: Viewer, id: string, input: ReleaseIn
   if (input.status !== undefined && !isReleaseStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a milestone status`, "INVALID");
   }
-  /* ⚠ A milestone announces when its STATE moves while it is public — not when
-     its wording is corrected, and not while it is still a draft. */
+  // A milestone announces when its STATE moves while it is public — not when
   const stateMoved =
     input.status !== undefined && input.status !== existing.status && existing.published;
   const becomingPublic = input.published === true && existing.published === false;
@@ -182,7 +174,7 @@ export async function deleteRelease(id: string) {
   return prisma.workTrackerRelease.delete({ where: { id } });
 }
 
-/** ⚠ ADMIN read — returns drafts too. The public reader filters in the WHERE. */
+/** ADMIN read — returns drafts too. The public reader filters in the WHERE. */
 export async function shippedEntries() {
   return prisma.workTrackerShipped.findMany({ orderBy: [{ date: "desc" }, { created_at: "desc" }] });
 }
@@ -200,9 +192,7 @@ export async function setTaskState(
   if (input.status !== undefined && !isTaskStatus(input.status)) {
     throw new WorkTrackerError(`"${String(input.status)}" is not a task status`, "INVALID");
   }
-  /* ⚠⚠ `stage` ACCEPTS `null` DELIBERATELY — clearing it back to "no segments"
-     must be possible, or a mis-click is permanent. Empty string and null both
-     clear; anything else must be one of the four. */
+  // must be possible, or a mis-click is permanent. Empty string and null both
   if (input.stage !== undefined && input.stage !== null && input.stage !== "" && !isJourneyStage(input.stage)) {
     throw new WorkTrackerError(`"${String(input.stage)}" is not a journey stage`, "INVALID");
   }
@@ -223,11 +213,7 @@ export async function setTaskState(
   });
 }
 
-/**
- * ⚠⚠ BULK SET BY STAGE — the brief's one bulk affordance.
- * ⚠ It writes only the tasks the CATALOG puts in that stage, so a stage name
- * that does not exist changes nothing rather than matching everything.
- */
+/** BULK SET BY STAGE — the brief's one bulk affordance. */
 export async function setStageStatus(
   viewer: Viewer,
   phase: string,
@@ -262,14 +248,7 @@ export async function setGateCriterion(
   if (!Number.isInteger(criterionIndex) || criterionIndex < 0 || criterionIndex >= gate.criteria.length) {
     throw new WorkTrackerError(`Criterion ${criterionIndex} is not in ${gateId}`, "NOT_FOUND");
   }
-  /*
-    ⚠⚠⚠ AN ADMIN CAN CLEAR AN ANSWER (Scott, 2026-10-02: *"yes, an admin can
-    clear one"*). ⚠ `""` or `null` DELETES the row, which is what returns the
-    criterion to UNANSWERED — and unanswered is a different fact from `No`, which
-    is why it cannot be represented by writing a value.
-    ⚠ `deleteMany` rather than `delete`: clearing something already clear must
-    not throw. The admin pressed the button; the end state is what they asked for.
-  */
+  // AN ADMIN CAN CLEAR AN ANSWER (Scott, 2026-10-02: *"yes, an admin can
   if (value === "" || value === null) {
     await prisma.workTrackerGateState.deleteMany({
       where: { gate_id: gateId, criterion_index: criterionIndex },
@@ -285,10 +264,7 @@ export async function setGateCriterion(
     create: { gate_id: gateId, criterion_index: criterionIndex, value, updated_by: viewer.userId },
   });
 
-  /* ⚠⚠ A GATE PASSES WHEN EVERY CRITERION IS ANSWERED AND NONE IS `No` — the
-     SAME definition the public page uses, so the notice and the page cannot
-     disagree (`E585`). ⚠ Re-asserting a Yes on an already-passed gate dedupes on
-     the gate id, so it announces once. */
+  // A GATE PASSES WHEN EVERY CRITERION IS ANSWERED AND NONE IS `No` — the
   const answers = await prisma.workTrackerGateState.findMany({ where: { gate_id: gateId } });
   const passed =
     answers.length === gate.criteria.length &&
@@ -307,15 +283,7 @@ export async function setGateCriterion(
   return row;
 }
 
-/**
- * ⚠⚠⚠ THE ADMIN NAMES THE CURRENT PHASE (`P2-ALL-E757`, Scott 2026-10-02).
- *
- * ⚠ **AT MOST ONE PHASE MAY HOLD IT**, and that is enforced here rather than
- * hoped for: the clear and the set are one transaction, so there is no instant
- * where two phases are current and no way for a failed write to leave two.
- * ⚠⚠ Passing `null` clears the choice and hands the question back to the
- * fallbacks — which is a real action, not an absence.
- */
+/** THE ADMIN NAMES THE CURRENT PHASE , Scott 2026-10-02). */
 export async function setCurrentPhase(viewer: Viewer, phase: string | null) {
   if (phase !== null && !PHASE_NAMES.includes(phase)) {
     throw new WorkTrackerError(`No catalog phase "${phase}"`, "NOT_FOUND");
@@ -326,8 +294,7 @@ export async function setCurrentPhase(viewer: Viewer, phase: string | null) {
       data: { is_current: false },
     });
     if (phase) {
-      /* ⚠ Upsert, because a phase can be named current before anybody has given
-         it dates — the two facts are independent. */
+      // Upsert, because a phase can be named current before anybody has given
       await tx.workTrackerPhaseDate.upsert({
         where: { phase },
         update: { is_current: true, updated_by: viewer.userId },
@@ -337,13 +304,7 @@ export async function setCurrentPhase(viewer: Viewer, phase: string | null) {
   });
 }
 
-/**
- * ⚠⚠⚠ ASSIGN WORK TO A RELEASE (`P2-ALL-E765`).
- *
- * ⚠ `releaseId` of `null` UNASSIGNS, which is a real action: a task that leaves a
- * release stops counting toward it, and the percentage moves. ⚠⚠ That is why the
- * column is nullable and why unassigned is not the same as "in R1".
- */
+/** ASSIGN WORK TO A RELEASE . */
 export async function setTaskRelease(viewer: Viewer, taskId: string, releaseId: string | null) {
   if (!taskById(taskId)) throw new WorkTrackerError(`No catalog task "${taskId}"`, "NOT_FOUND");
   await assertReleaseExists(releaseId);
@@ -354,11 +315,7 @@ export async function setTaskRelease(viewer: Viewer, taskId: string, releaseId: 
   });
 }
 
-/**
- * ⚠⚠ BULK ASSIGN BY STAGE OR SEGMENT — Scott's example: *"all of Prototype 2 →
- * R1."* ⚠ It writes only the tasks the CATALOG puts in that group, so a name that
- * matches nothing changes nothing rather than matching everything.
- */
+/** BULK ASSIGN BY STAGE OR SEGMENT — Scott's example: *"all of Prototype 2 → */
 export async function bulkAssignRelease(
   viewer: Viewer,
   by: { phase?: string; stage?: string; segment?: string },
@@ -372,8 +329,7 @@ export async function bulkAssignRelease(
       (by.segment ? t.segment === by.segment : true),
   ).map((t) => t.id);
   if (ids.length === 0) throw new WorkTrackerError("That group has no catalog tasks", "NOT_FOUND");
-  /* ⚠ A bulk write that half-lands leaves a release's percentage wrong and
-     nobody knows which half, so it is one transaction. */
+  // A bulk write that half-lands leaves a release's percentage wrong and
   await prisma.$transaction(async (tx) => {
     for (const id of ids) {
       await tx.workTrackerTaskState.upsert({
@@ -389,13 +345,11 @@ export async function bulkAssignRelease(
 async function assertReleaseExists(releaseId: string | null) {
   if (releaseId === null) return;
   const hit = await prisma.workTrackerRelease.findUnique({ where: { id: releaseId } });
-  /* ⚠⚠ THE TABLES HAVE NO FOREIGN KEYS, SO THIS IS THE REFERENTIAL INTEGRITY. A
-     bad id would otherwise sit there forever pointing at nothing, and the admin
-     page — which iterates real releases — would never show it. */
+  // THE TABLES HAVE NO FOREIGN KEYS, SO THIS IS THE REFERENTIAL INTEGRITY. A
   if (!hit) throw new WorkTrackerError("No such release", "NOT_FOUND");
 }
 
-/** ⚠ Admin-added work. The TITLE is admin-only and never reaches the public. */
+/** Admin-added work. The TITLE is admin-only and never reaches the public. */
 export async function createCustomTask(
   viewer: Viewer,
   input: { title?: unknown; phase?: unknown; stage?: unknown; releaseId?: unknown },
@@ -496,9 +450,7 @@ export async function createShipped(viewer: Viewer, input: ShippedInput) {
       journey_tag: trimToNull(input.journeyTag),
       title,
       body: trimToNull(input.body),
-      /* ⚠⚠⚠ A NEW ENTRY IS A DRAFT, FULL STOP. `published` is ignored on create
-         on purpose: Scott approves each entry, and an API that could create one
-         already published would make that approval optional. */
+      // A NEW ENTRY IS A DRAFT, FULL STOP. `published` is ignored on create
       published: false,
       updated_by: viewer.userId,
     },
@@ -516,14 +468,8 @@ export async function updateShipped(viewer: Viewer, id: string, input: ShippedIn
   if (input.date !== undefined && !date) {
     throw new WorkTrackerError("A Shipped entry needs a date", "INVALID");
   }
-  /* ⚠ The two guards above already refused a blank title and an unreadable date,
-     so these are non-null HERE — but `trimToNull`/`toDateOrNull` return nullable
-     types and the columns are not nullable. Narrowing at the call rather than
-     loosening the helpers keeps the refusal in one place. */
-  /* ⚠⚠⚠ NOTIFY ON THE TRANSITION TO PUBLISHED, NOT ON EVERY SAVE. An admin
-     fixing a typo on an already-published entry must not re-announce it, and an
-     unpublish must not announce anything at all. ⚠ `dedupeKey` is the row id, so
-     even a publish → unpublish → publish lands one notification. */
+  // The two guards above already refused a blank title and an unreadable date
+  // NOTIFY ON THE TRANSITION TO PUBLISHED, NOT ON EVERY SAVE. An admin
   const becomingPublic = input.published === true && existing.published === false;
 
   const updated = await prisma.workTrackerShipped.update({
@@ -539,8 +485,7 @@ export async function updateShipped(viewer: Viewer, id: string, input: ShippedIn
   });
 
   if (becomingPublic) {
-    /* ⚠ Failure to notify must not fail the publish — the entry is live and a
-       notification outage is not an editing outage. Logged, not rethrown. */
+    // Failure to notify must not fail the publish — the entry is live and a
     try {
       await notifyFollowers(
         "work_tracker.shipped",
@@ -568,12 +513,7 @@ function trimToNull(v: unknown): string | null {
   return t.length === 0 ? null : t;
 }
 
-/**
- * ⚠⚠ A DATE WE COULD NOT READ IS REFUSED, NEVER SILENTLY TREATED AS TODAY.
- * ⚠ That is `E549`'s ruling applied here: *"a parse failure must never silently
- * extend a job to today"* — the same mistake on a phase date would print a
- * start that nobody chose.
- */
+/** A DATE WE COULD NOT READ IS REFUSED, NEVER SILENTLY TREATED AS TODAY. */
 function toDateOrNull(v: unknown, field: string): Date | null {
   if (v === null || v === undefined || v === "") return null;
   if (typeof v !== "string") throw new WorkTrackerError(`${field} must be a date string`, "INVALID");

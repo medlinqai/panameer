@@ -54,11 +54,7 @@ export function CoverageRow({ paths }: { paths: DashPath[] }) {
               aria-label={label}
               className="group w-[78px] shrink-0"
             >
-              {/*
-                ⚠ THE THREE STATE APPEARANCES ARE CARRIED OVER UNCHANGED from the
-                grid this replaces — same border, same gradient, same slab, same
-                glyphs. Only the container around them is new.
-              */}
+              {/* THE THREE STATE APPEARANCES ARE CARRIED OVER UNCHANGED from the */}
               <span
                 className={
                   "relative grid aspect-square w-full place-items-center overflow-hidden rounded-[9px] transition-transform group-hover:scale-105 " +
@@ -86,8 +82,7 @@ export function CoverageRow({ paths }: { paths: DashPath[] }) {
                   <em className="text-[9.5px] not-italic text-ink-2/70">{p.lessons}</em>
                 )}
               </span>
-              {/* ⚠ `aria-hidden`: the `aria-label` above already speaks the title,
-                  and without this a screen reader reads the name twice. */}
+              {/* and without this a screen reader reads the name twice. */}
               <span
                 aria-hidden
                 className="mt-1.5 block text-[9.5px] leading-[1.25] text-ink-2 [display:-webkit-box] [overflow:hidden] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
@@ -105,13 +100,7 @@ export function CoverageRow({ paths }: { paths: DashPath[] }) {
   );
 }
 
-/*
-  ⚠ THE ARROW SITS OVER THE TILES, NOT BESIDE THEM. Beside them it would steal
-  width from the row on every viewport — including the ones where it is hidden
-  because everything fits — which is the opposite of "show what space allows".
-  ⚠ IT IS ALIGNED TO THE SQUARE, NOT TO THE COLUMN: `top-0 h-[78px]` matches the
-  tile's own height so the button does not drift down over the captions.
-*/
+// THE ARROW SITS OVER THE TILES, NOT BESIDE THEM. Beside them it would steal
 function Arrow({ dir, onClick }: { dir: "left" | "right"; onClick: () => void }) {
   const Icon = dir === "left" ? ChevronLeft : ChevronRight;
   return (

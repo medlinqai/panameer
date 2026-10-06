@@ -1,11 +1,4 @@
-/*
-  THE DECK'S OWN STYLESHEET — six slides on screen, six pages in a PDF.
-
-  Scoped to `.deck-page` so nothing here can leak into the app. It is a
-  stylesheet rather than utilities because the print rules (@page size, page
-  breaks, colour-adjust) have no Tailwind equivalent and the slide is a fixed
-  aspect-ratio surface, which is exactly the case utilities are worst at.
-*/
+/* THE DECK'S OWN STYLESHEET — six slides on screen, six pages in a PDF. */
 .deck-page {
   background: #f4f2f8;
   min-height: 100vh;
@@ -114,11 +107,7 @@
   text-decoration: none;
 }
 
-/*
-  PRINT = THE EXPORT. One slide per landscape page, backgrounds preserved
-  (print-color-adjust, or the dark slides come out white with white text), and
-  every screen-only control removed.
-*/
+/* PRINT = THE EXPORT. One slide per landscape page, backgrounds preserved */
 @media print {
   @page { size: 279mm 157mm; margin: 0; }
   .no-print { display: none !important; }

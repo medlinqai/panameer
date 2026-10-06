@@ -128,11 +128,7 @@ export function LessonEditor({
             hint="Paste the Vimeo URL, or just the numeric id. Unlisted videos keep their /hash."
           />
 
-          {/*
-            The playability statement. Both halves are required and the admin
-            can see which one is missing — the alternative is saving, going to
-            the public page, and finding "coming soon" with no explanation.
-          */}
+          {/* The playability statement. Both halves are required and the admin */}
           <div className="mt-4 border-t border-line pt-3 text-[13.5px]">
             {willPlay ? (
               <p className="font-semibold text-emerald-700">
@@ -186,15 +182,7 @@ export function LessonEditor({
   );
 }
 
-/**
- * The per-section URL table — fast entry for many lessons (WS3).
- *
- * The brief is explicit that pasting URLs one modal at a time doesn't scale to
- * 296 gaps. Each row saves on blur or Enter and reports for itself, so an admin
- * can go down the column without waiting: a failure marks its own row rather
- * than throwing away the whole batch, which is the difference between "one of
- * these twelve was a typo" and "start again".
- */
+/** The per-section URL table — fast entry for many lessons (WS3). */
 export function SectionUrlTable({
   section,
   onChanged,
@@ -236,10 +224,7 @@ export function SectionUrlTable({
         <tbody>
           {section.lessons.map((l) => {
             const s = state[l.id];
-            /* ⚠ `P2-A4-E610` — the one rule, adapted once in `StructureEditor`.
-               ⚠ SUPERSEDED, quoted not deleted (`E164`):
-               //   const missing =
-               //     CLAIMS_URL.includes(l.productionStatus) && !l.vimeoRef?.trim(); */
+            // — the one rule, adapted once in `StructureEditor`.
             const missing = urlMissing(l);
             return (
               <tr key={l.id} className="align-top">

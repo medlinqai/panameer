@@ -45,8 +45,7 @@ export function SettlementDecision({
         setError(out.error ?? "That didn't work.");
         return;
       }
-      /* ⚠ A REFRESH, NOT A LOCAL PATCH. Deciding changes the status, which changes
-         which actions exist — and that recomputation belongs on the server. */
+      // A REFRESH, NOT A LOCAL PATCH. Deciding changes the status, which changes
       router.refresh();
     } finally {
       setBusy(null);
@@ -55,11 +54,7 @@ export function SettlementDecision({
 
   return (
     <div className="rounded-brand border border-line bg-white p-5">
-      {/*
-        ⚠⚠ WHAT APPROVAL MEANS, SAID BEFORE THE CLICK. The wording differs
-        because the two are genuinely different acts: signing off hours worked,
-        versus accepting a deliverable as done.
-      */}
+      {/* WHAT APPROVAL MEANS, SAID BEFORE THE CLICK. The wording differs */}
       <p className="text-[15px] font-bold">
         {hasTimesheet
           ? "Approving signs off these hours as worked"
@@ -91,7 +86,7 @@ export function SettlementDecision({
             className="mt-1 w-full rounded-[10px] border border-line bg-white p-2.5 text-[14.5px] outline-none focus:border-magenta"
           />
           <p className="mt-1 text-[13px] text-ink-2">
-            {/* ⚠ THE REASON THE FIELD EXISTS, not just that it is required. */}
+            {/* THE REASON THE FIELD EXISTS, not just that it is required. */}
             Required — without a reason there is nothing for the provider to act on.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -115,15 +110,14 @@ export function SettlementDecision({
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          {/* ⚠⚠ THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
+          {/* THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}
           {actions.map((a) =>
             a === "APPROVE" ? (
               <Button key={a} disabled={busy !== null} onClick={() => run("APPROVE")}>
                 {busy === "APPROVE" ? "Working…" : LABEL[a]}
               </Button>
             ) : (
-              /* ⚠ REJECT OPENS THE REASON BOX — it never posts directly, so there
-                 is no path from this button to a reasonless rejection. */
+              // REJECT OPENS THE REASON BOX — it never posts directly, so there
               <Button key={a} variant="ghost" disabled={busy !== null} onClick={() => setRejecting(true)}>
                 {LABEL[a]}
               </Button>

@@ -136,13 +136,7 @@ export default async function MembershipPage() {
   );
 }
 
-/**
- * A one-year cycle from the anniversary of `since`.
- *
- * Formatted on the SERVER with a fixed locale. `toLocaleDateString` with the
- * viewer's locale is the hydration mismatch this codebase has been bitten by
- * twice; a settings page is not worth a third.
- */
+/** A one-year cycle from the anniversary of `since`. */
 function cycleFrom(since: Date): { from: string; to: string } {
   const now = new Date();
   const start = new Date(since);

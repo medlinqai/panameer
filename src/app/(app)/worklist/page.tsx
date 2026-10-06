@@ -86,8 +86,7 @@ export default async function Page({
               </Link>
             </li>
           ))}
-          {/* ⚠ One view per category that HAS action rows — from the registry, like the
-              triage chips. Never a hard-coded list. */}
+          {/* One view per category that HAS action rows — from the registry, like the */}
           {counts.byCategory.map((c) => (
             <li key={c.key}>
               <Link
@@ -104,7 +103,7 @@ export default async function Page({
         </ul>
 
         <div>
-          {/* ⚠ A plain GET form — no JavaScript, and the result is a real URL. */}
+          {/* A plain GET form — no JavaScript, and the result is a real URL. */}
           <form className="pm-wl-tools" method="get" action="/worklist">
             {view !== "open" && <input type="hidden" name="view" value={view} />}
             {sp.cat && <input type="hidden" name="cat" value={sp.cat} />}
@@ -126,7 +125,7 @@ export default async function Page({
           </form>
 
           {rows.length === 0 ? (
-            /* ⚠ SCOTT'S WORDS, verbatim. */
+            /* SCOTT'S WORDS, verbatim. */
             <p className="pm-wl-empty">This queue is clear.</p>
           ) : (
             <table className="pm-wl-table">
@@ -159,9 +158,7 @@ export default async function Page({
                           Open
                         </Link>
                       ) : (
-                        /* ⚠ A row with no href has nowhere to send anybody. ⚠⚠ The cell
-                           says so rather than rendering a button that refuses — a door
-                           onto a wall (`E579`). */
+                        // A row with no href has nowhere to send anybody. The cell
                         <span className="text-[12.5px] text-ink-3">No link</span>
                       )}
                     </td>

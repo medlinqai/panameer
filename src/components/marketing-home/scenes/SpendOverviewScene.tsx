@@ -213,14 +213,7 @@ function Bars({ data, onTip }: { data: readonly SpendRow[]; onTip: TipSetter }) 
   );
 }
 
-/**
- * ⚠ TWO CHARTS, TWO SCALES — never one plot with two y-axes.
- *
- * Active suppliers run ~1,200 and new suppliers ~40. On a shared scale the new
- * line is flat on the floor; on a dual axis the chart says whatever you want by
- * choosing where the axes cross. Small multiples is the honest shape, and the
- * sub-head says "separate scales" so the reader is told.
- */
+/** TWO CHARTS, TWO SCALES — never one plot with two y-axes. */
 function SupplierCountPair({ onTip }: { onTip: TipSetter }) {
   const W = 420, H = 210, L = 42, R = 46, GAP = 16;
   const rowH = (H - GAP - 24) / 2;

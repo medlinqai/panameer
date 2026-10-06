@@ -84,14 +84,7 @@ export default async function VerifyPage({
                 See the Path
               </Link>
             )}
-            {/*
-              ⚠ ONLY WHEN THERE IS A PROFILE TO VIEW (E019). A learner who is not
-              a seller has a real, verifiable credential and no public profile
-              page; linking to `/providers/undefined` would turn a working verify
-              page into a 404 for exactly the person this brief exists to serve.
-              `HomeFooter`'s standing rule again: a link ships only when its
-              destination exists.
-            */}
+            {/* ONLY WHEN THERE IS A PROFILE TO VIEW (E019). A learner who is not */}
             {cert.providerProfile && (
               <Link
                 href={`/providers/${cert.providerProfile.id}`}

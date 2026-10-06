@@ -58,12 +58,7 @@ const PHASES = [
   },
 ] as const;
 
-/**
- * ⚠ `n of m` AND THE PERCENTAGE ARE DERIVED, NOT TYPED. A group's completion is
- * counted from its own rows and its bar is the mean of their percentages, so editing a
- * row's `pct` cannot leave a header claiming something the rows below it contradict —
- * which is exactly the class of error a hand-typed "1 of 2, 55%" invites.
- */
+/** counted from its own rows and its bar is the mean of their percentages, so editing a */
 const phaseStats = (rows: readonly { state: string; pct: number }[]) => {
   const done = rows.filter((r) => r.state === "done").length;
   const pct = Math.round(rows.reduce((n, r) => n + r.pct, 0) / rows.length);
@@ -94,12 +89,7 @@ export function WorkTracker() {
   return (
     <section className="ptr">
       <div className="wrap">
-        {/*
-          ⚠ THE EYEBROW ANSWERS A QUESTION INSTEAD OF NAMING A FEATURE.
-          "Work Tracker" labelled the tool; this labels the moment in the
-          narrative — assess, dashboard, AI Roadmap, and then what? Only the
-          eyebrow changes; the heading below it was already right.
-        */}
+        {/* THE EYEBROW ANSWERS A QUESTION INSTEAD OF NAMING A FEATURE. */}
         <div className="eyebrow">What Comes After the Roadmap</div>
         <h2 className="ptr-h2">And this is where you watch the score move.</h2>
         <p className="ptr-lead">
@@ -109,32 +99,12 @@ export function WorkTracker() {
           track the work you just bought.
         </p>
 
-        {/*
-          ⚠ THE SHARED `AppShot` FRAME, `railActive={4}` — the documents tile, which is
-          the one the mockup highlights. Steps 4/2/5 use 0/1/2, so all four product
-          shots on this page now point at a different rail item, which is what makes
-          them read as four screens of one product rather than four screenshots.
-
-          ⚠ NO WRAPPER AND NO PADDING MODIFIER HERE, unlike steps 4 and 5: nothing
-          overhangs this frame, so there is nothing for `.ash`'s `overflow:hidden` to
-          clip and no blank band to reserve. `.ash-main` is shared by steps 2/4/5 and
-          this adds nothing to it.
-        */}
+        {/* THE SHARED `AppShot` FRAME, `railActive={4}` — the documents tile, which is */}
         <AppShot railActive={4}>
           <div className="ash-main">
             <div className="ash-mh">
               <div>
-                {/*
-                  ⚠ "Work Tracker", NOT "Work Tracker" (E250), and Scott is
-                  right on a harder point than vocabulary: `Project` IS ALREADY A
-                  DIFFERENT OBJECT. `prisma/schema.prisma` defines `model Project`
-                  with ProjectValidation / ProjectApplication / ProjectOutcome —
-                  THE PROVIDER'S PORTFOLIO WORK, owned by the seller and shown on
-                  their profile. This tracker tracks the BUYER'S purchased work:
-                  work requests and work orders. Naming it after an entity that
-                  exists and means something else is the P1-J2-E004 defect again,
-                  a display string standing in for an identity.
-                */}
+                {/* right on a harder point than vocabulary: `Project` IS ALREADY A */}
                 <h3 className="ash-h3">
                   Procure-to-Pay AI Roadmap — Work Tracker
                 </h3>
@@ -216,11 +186,7 @@ export function WorkTracker() {
                             style={{ width: `${r.pct}%` }}
                           />
                         </span>
-                        {/*
-                          ⚠ DRAWN, NOT WIRED — a span with a chevron, no <select>, no
-                          state, no "use client". Every graphic on this page is inert;
-                          a control that swallows a click is worse than no control.
-                        */}
+                        {/* DRAWN, NOT WIRED — a span with a chevron, no <select>, no */}
                         <span
                           className={
                             "trk-st" + (r.state === "done" ? " is-done" : "")
@@ -241,12 +207,7 @@ export function WorkTracker() {
                 Every expert, package and agent you deployed — in one place,
                 without buying a PSA tool.
               </p>
-              {/*
-                ⚠ COUNSEL GATE: this claims a flow that does not exist. The
-                roadmap→work-request path is recorded in
-                `claude/roadmap_to_talent_flow.md` and is unbuilt. It joins the list
-                with the inert Timeline/Roadmap tab on Step 5.
-              */}
+              {/* COUNSEL GATE: this claims a flow that does not exist. The */}
               <span className="trk-btn">
                 Add work from your roadmap
                 <ArrowRight className="ash-sv" strokeWidth={2} aria-hidden />
@@ -255,20 +216,7 @@ export function WorkTracker() {
           </div>
         </AppShot>
 
-        {/*
-          ⚠ THE PAGE NOW ENDS ON THE TRACKER SCREENSHOT WITH NO CLOSING ACTION,
-          AND THAT IS DELIBERATE (E251). Scott: "remove this."
-
-          It was the page's THIRD assessment CTA — the hero has `Take Our Free
-          Assessment` and GetTheTalent has `Start the Assessment ›`, and all three
-          pointed at /assess. The grey note beneath the button went with it rather
-          than being relocated: it quoted a duration that sits on the same page as
-          E226's "in under an hour of your time" — two true statements that were
-          never reconciled, and moving one of them elsewhere would not have
-          reconciled them either.
-
-          ⚠ DO NOT RESTORE IT AS A MISSING CTA.
-        */}
+        {/* THE PAGE NOW ENDS ON THE TRACKER SCREENSHOT WITH NO CLOSING ACTION */}
       </div>
     </section>
   );

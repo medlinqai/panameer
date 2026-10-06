@@ -149,11 +149,7 @@ export function ResumeDropzone({
             <p className="mt-1 text-[14px] text-ink-2">
               PDF, Word, or rich text · up to 5 MB
             </p>
-            {/*
-              E184 — the upload IS the consent now. The AI pass used to be a
-              second, explicit click; it happens on upload, so the screen has to
-              say so at the point the file is handed over rather than afterwards.
-            */}
+            {/* E184 — the upload IS the consent now. The AI pass used to be a */}
             <p className="mt-1 text-[13px] text-ink-2">
               Panameer AI reads it to fill in your profile.
             </p>

@@ -36,7 +36,7 @@ export async function NamedProfilePage({
   }
 
   const who = `${p.named.firstName} ${p.named.lastName}`.trim();
-  /* ⚠ `/pro/`, renamed from `/in/` (`P2-A1.1-E756`). */
+  /* `/pro/`, renamed from `/in/` (`P2-A1.1-E756`). */
   const dest = `/pro/${slug}`;
   const joinHref = `/join?callbackUrl=${encodeURIComponent(dest)}`;
   const signInHref = `/login?callbackUrl=${encodeURIComponent(dest)}`;
@@ -51,26 +51,8 @@ export async function NamedProfilePage({
     <Shell>
       <div className="grid gap-8 md:grid-cols-[260px_1fr] md:gap-12">
         <aside>
-          {/* ⚠⚠ THE REAL PHOTO, BECAUSE THE MEMBER ASKED FOR IT. ⚠ `alt` names
-              them, which is correct here and is exactly what `MaskedAvatar`
-              refuses to do on the masked page. */}
-          {/*
-            ⚠⚠⚠ A PLAIN `<img>`, NOT `next/image`, AND THIS WAS A LIVE 500
-            (`P2-A1.1-E779`). ⚠ `next/image` refuses a remote host that is not in
-            `next.config.ts` — **and this project has NO `images` config at all** —
-            so every provider whose photo is a Supabase upload (**6 of the 60**)
-            made this page throw *"hostname … is not configured"*.
-            ⚠⚠ **IT WAS PRE-EXISTING AND INVISIBLE BECAUSE NOBODY HAS THE FLAG ON:
-            ZERO profiles have `public_name_at` set**, so the named page has never
-            been rendered in anger. It was found by turning the flag on to verify
-            this lane, and attributed by re-running the same test against `HEAD`.
-            ⚠ **THE REST OF THE APP ALREADY DOES IT THIS WAY** — `Avatar.tsx`,
-            `InstructorBadge.tsx` and `LessonPlayer.tsx` all render a remote photo
-            with a plain `<img>` and this same eslint exemption. Matching them
-            needs no config change and no new remote host allowlist.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   <Image src={p.named.photoUrl} alt={who} width={260} height={260} ... />
-          */}
+          {/* THE REAL PHOTO, BECAUSE THE MEMBER ASKED FOR IT. `alt` names */}
+          {/* A PLAIN `<img>`, NOT `next/image`, AND THIS WAS A LIVE 500 */}
           {p.named.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -94,25 +76,7 @@ export async function NamedProfilePage({
             </div>
           </div>
 
-          {/*
-            ── ⚠⚠⚠ RATES AND CONTACT ARE SHOWN, BLURRED (`P2-A1.1-E779`) ──────────
-
-            ⚠ **SCOTT, 2026-10-02:** the named page shows name, photo and work —
-            *"but blur rates and contact"*, with `Join free to see rates and
-            contact`.
-
-            ⚠⚠⚠ **THIS IS PRESENTATION ONLY, AND THE MEASUREMENT SAYS SO.** The
-            page ALREADY withheld both: `NamedProfile` is `MaskedProfile` plus a
-            name object, and **`MaskedProfile` HAS NO RATE FIELD AND NO CONTACT
-            FIELD** — there has never been a figure here to hide. What changed is
-            that a bare lock line did not show there was anything to come back for.
-
-            ⚠⚠ **SO WHAT IS BLURRED IS A CONSTANT**, from `PLACEHOLDER` — fixed
-            length, fixed alphabet, identical for every member (`E767`). A reader
-            who selects, views source or opens dev tools gets the same invented
-            string for everybody, which is the property a CSS-blurred real value
-            could never have.
-          */}
+          {/* RATES AND CONTACT ARE SHOWN, BLURRED */}
           <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
             <h2 className="mb-2.5 text-[11px] font-bold tracking-[0.1em] text-ink-3">
               RATES
@@ -134,14 +98,12 @@ export async function NamedProfilePage({
                 {PLACEHOLDER.contact}
               </BlurredField>
             </div>
-            {/* ⚠ Scott's wording for this surface, verbatim. */}
+            {/* Scott's wording for this surface, verbatim. */}
             <LockLine>Join free to see rates and contact</LockLine>
           </div>
 
           <div className="mt-5 border-t border-line pt-4 dark:border-white/15">
-            {/* ⚠⚠ SCOTT'S WORDING, VERBATIM: *"Join free to contact <first
-                name>"*. ⚠ First name only — it reads like a person, and the
-                surname is already in the `<h1>` above. */}
+            {/* SCOTT'S WORDING, VERBATIM: *"Join free to contact <first */}
             <PublicPrimary href={joinHref} className="w-full">
               {`Join Free to Contact ${p.named.firstName}`.trim()}
             </PublicPrimary>
@@ -149,8 +111,7 @@ export async function NamedProfilePage({
         </aside>
 
         <main>
-          {/* ⚠⚠ THE NAME **IS** THE `<h1>` HERE — the opposite of the masked
-              page, and the whole point of the opt-in. */}
+          {/* THE NAME IS THE `<h1>` HERE — the opposite of the masked */}
           <h1 className="text-[26px] font-bold leading-tight sm:text-[30px]">{who}</h1>
           <p className="mt-1 text-[16px] font-semibold text-ink-2">{p.title}</p>
 
@@ -205,9 +166,7 @@ export async function NamedProfilePage({
                         <span className="text-[13.5px] text-ink-2">{e.dates}</span>
                       )}
                     </div>
-                    {/* ⚠⚠ THE EMPLOYER IS NAMED — the opt-in's second promise.
-                        ⚠ A row with no stored name falls back to the lock line
-                        rather than rendering a blank. */}
+                    {/* THE EMPLOYER IS NAMED — the opt-in's second promise. */}
                     <p className="mt-1 text-[13.5px] text-ink-2">
                       {e.name?.trim() ? e.name : <LockLine>{EMPLOYER_LOCK_COPY}</LockLine>}
                     </p>
@@ -230,10 +189,7 @@ export async function NamedProfilePage({
 
           {p.education.length > 0 && (
             <Section label="Education" count={p.education.length}>
-              {/* ⚠⚠ STILL DEGREE AND FIELD ONLY. The school name was never
-                  selected by the masked read this extends, and the opt-in Scott
-                  described names the MEMBER and their EMPLOYERS — not their
-                  school. ⚠ Reported rather than assumed. */}
+              {/* STILL DEGREE AND FIELD ONLY. The school name was never */}
               <ul className="space-y-1 pb-5 text-[13.5px] text-ink-2">
                 {p.education.map((e, i) => (
                   <li key={`${e}-${i}`}>{e}</li>

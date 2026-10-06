@@ -85,22 +85,12 @@ export function HowItWorks({
                       "hiw-card" + (s.optional ? " is-opt" : ` is-g${s.n}`)
                     }
                   >
-                    {/*
-                      THE SCRIM, over the gradient and under the words — the same
-                      180deg navy ramp VideoSequence uses. It is what lets 13px
-                      body copy sit on a saturated fill without hand-tuning a text
-                      colour per card.
-                    */}
+                    {/* THE SCRIM, over the gradient and under the words — the same */}
                     <span className="hiw-scrim" aria-hidden />
                     <span className="hiw-n" aria-hidden>
                       {s.n}
                     </span>
-                    {/*
-                      Top-RIGHT, where VideoSequence puts its play chip — the one
-                      corner in this design system that carries a card-level flag.
-                      Inside the anchor and NOT aria-hidden, so its accessible
-                      name opens with "Optional".
-                    */}
+                    {/* Top-RIGHT, where VideoSequence puts its play chip — the one */}
                     {s.optional && <span className="hiw-tag">Optional</span>}
 
                     <span className="hiw-text">
@@ -112,11 +102,7 @@ export function HowItWorks({
               ))}
             </ol>
 
-            {/*
-              Four circles on the four seams. `--k` is the seam index; the exact
-              offset is computed in home.css from the grid gap, because "20%" is
-              not the seam centre once a gap exists.
-            */}
+            {/* Four circles on the four seams. `--k` is the seam index; the exact */}
             {[1, 2, 3, 4].map((k) => (
               <span
                 className="hiw-arrow"
@@ -124,25 +110,7 @@ export function HowItWorks({
                 key={k}
                 aria-hidden
               >
-                {/*
-                  ⚠ AN OPEN CHEVRON, NOT A FILLED DISC (E122 revised).
-
-                  Scott: "These arrows are childish. Can you make them bigger?
-                  Better?" It was a 42px saturated magenta circle with a drop
-                  shadow, five of them across the row — which read as five
-                  identical buttons and broke the standing PINK = SMALL ACCENTS
-                  ONLY rule (decisions-01.md, 2026-08-13).
-
-                  An open stroke can grow without gaining weight, which is the
-                  whole trick: this is TALLER than the disc it replaces and
-                  narrower, so it reads bigger while taking less of the gutter and
-                  giving the rail more room to show. Magenta is the STROKE now;
-                  there is no fill and no shadow.
-
-                  Drawn as SVG rather than a text glyph so stroke weight and cap
-                  shape are controllable rather than whatever the font ships.
-                  No `id` anywhere — nothing for check:ui §13 to collide with.
-                */}
+                {/* AN OPEN CHEVRON, NOT A FILLED DISC (E122 revised). */}
                 <svg
                   viewBox="0 0 14 28"
                   fill="none"

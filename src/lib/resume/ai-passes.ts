@@ -103,88 +103,9 @@ async function runPass<T>(
     schemaName: `resume_${name}`,
     text,
     maxOutputTokens,
-    /* ⚠ `E415` — the smaller of this pass's ceiling and what the route has left. */
+    /* `E415` — the smaller of this pass's ceiling and what the route has left. */
     timeoutMs: budget,
-    /*
-      ── ⚠⚠ CONSTRAINED DECODING FOR THE SIX PASSES (`P1-A1.4-E414` WS-1) ─────
-
-      ⚠ ONE SITE, SIX SCHEMAS. `runPass` is the only funnel every multi-pass
-      schema goes through — `resume_inventory`, `resume_employers`,
-      `resume_projects`, `resume_certifications`, `resume_skills` and
-      `resume_profile` — so opting in here opts in exactly those and cannot
-      reach anything else. ⚠ `record_resume` calls `callExtractionModel`
-      DIRECTLY from `ai-extract.ts` and the job importer from
-      `work-request/job-import.ts`; neither passes the flag, so both keep the
-      default of `false`. That is structural, not a convention.
-
-      ⚠ WHY IT WAS SAFE HERE AND NOWHERE ELSE. `sub()` below builds every one of
-      these schemas with `additionalProperties: false` and every property named
-      in `required`, with optionality as `type: ["string","null"]` — which is
-      exactly strict mode's contract. `record_resume` does not: `E413`'s audit
-      counted ten blockers on it. ⚠ `check:strict-schema` §3 re-derives this
-      from the REQUEST BODIES rather than trusting the claim, so a field added
-      to one of these schemas without a `required` entry fails a gate instead of
-      a live call.
-
-      ── ⚠ MEASURED, BOTH SIDES, SAME DOCUMENTS (`E414` WS-3) ──────────────
-
-      60 pass calls each side — 5 rounds x 6 passes x 2 documents:
-
-          shape failures   13/60 (21.7%)  ->  0/60 (0.0%)
-            projects 6->0 · certifications 4->0 · inventory 2->0 · employers 1->0
-          finishReason     `stop` on all 60, BOTH sides
-
-      ⚠⚠ `stop` ON EVERY CALL IS THE POINT. The model was always answering
-      completely and always within budget; it was simply free to answer in
-      another shape. Nothing about capacity or truncation changed here.
-
-      ⚠⚠ AND ONE RESULT CONTRADICTS THE EXPECTATION — output tokens rose
-      **+18.8%** (115,349 -> 137,007), concentrated in the two passes with the
-      most nullable fields:
-
-          employers  2590 -> 3738 mean output tokens  (+1148)
-          projects   2555 -> 3497                     (+942)
-          inventory / certifications / skills / profile   ~flat
-
-      ⚠ THAT IS INHERENT TO STRICT, NOT A REGRESSION: every property must appear
-      in `required`, so the model now emits `"client": null, "employer": null`
-      where it previously omitted them. ⚠ COSTED AT THE PUBLISHED `gpt-5-nano`
-      RATE, the output side of a full parse goes **$0.00461 -> $0.00548**, about
-      **+$0.0009 per parse.** ⚠ The brief expected zero difference; it is not
-      zero, it is small and explainable, and it is recorded here rather than
-      left to surprise somebody reading a bill.
-
-      ⚠ NO WARMUP WAS MEASURABLE. Structured outputs are documented to carry a
-      one-time schema-processing cost on first use. First-call deltas came back
-      MIXED IN SIGN on both sides and well inside the run-to-run spread (the
-      `projects` pass alone ranged 4,192–31,865ms), so at this sample size there
-      is no warmup signal above the noise. Reported as not-detected rather than
-      as absent.
-
-      ── ⚠⚠ WHAT THIS DOES **NOT** FIX (`E414` WS-5) ────────────────────────
-
-      ⚠⚠ STRICT CONSTRAINS SHAPE, NOT CONTENT. **29, 30 and 51 sections on the
-      same document were every one of them SCHEMA-VALID** (`E410` WS-2, measured
-      again by `E413`). Constrained decoding would not have prevented a single
-      one of those, and a green shape-failure rate must not be read as a fixed
-      parser.
-
-      ⚠⚠ AND `E414`'s OWN AFTER-RUN PROVES IT, WITH STRICT ON: the long CV
-      returned **30, 29, 52, 29, 31** sections across five rounds and the short
-      one **30, 50, 32, 32, 29**. Zero shape failures, and a 29-to-52 spread on
-      one unchanged document. ⚠ THE PARSER IS WELL-FORMED NOW; IT IS NOT
-      CORRECT.
-
-      ⚠ SEGMENTATION INSTABILITY REMAINS OPEN AND IS SCOTT'S DECISION. After
-      this brief it is the only parser defect left standing.
-
-      ⚠ AND THE LINK `E413` FOUND, RECORDED HERE BECAUSE THIS IS WHERE SOMEBODY
-      WILL COME LOOKING: the extra section in the high run is *"Oracle Cloud
-      Content & AI-Native Application Developer"* — the SAME row that sits in
-      the database as the duplicate-description employer (`E413` WS-3 candidate
-      B, whose `role_title` is the empty string). ⚠ They are one defect wearing
-      two names. Not fixed here.
-    */
+    // CONSTRAINED DECODING FOR THE SIX PASSES WS-1)
     strict: true,
   });
   if (!call.ok)
@@ -258,23 +179,7 @@ If the document says nothing about a field, use null — never invent one.`;
         description: `Exactly ${inventory.length} entries, one per listed heading, in order.`,
         items: sub(
           {
-            /*
-              ── ⚠⚠ THE DESCRIPTIONS ARE BACK (`P1-A1.4-E407` WS-3) ────────────
-
-              ⚠ `E399` SPLIT THE PROMPT INTO PASSES AND DROPPED THEM. The
-              superseded single-pass schema (`ai-extract.ts`) carries
-              `P1-J1.4-E373`'s instruction, and E373's own comment says why it is
-              load-bearing: *"Making the Zod field nullable without telling the
-              model changes nothing: the model answers the DESCRIPTION, not the
-              schema."* These two fields went BARE when the passes were written.
-
-              ⚠⚠ CARRIED BACK EVEN THOUGH THE AI PATH IS NOT WHAT SWAPPED SCOTT'S
-              ROWS — the heuristic did that (`parse.ts`, fixed in this brief).
-              This is the same defect latent on the other path, waiting for the
-              AI to be the one answering. Measured: the AI's own orientation is
-              currently CORRECT (`employer:"StratERP Inc."`), which is exactly
-              when it is cheap to protect.
-            */
+            // THE DESCRIPTIONS ARE BACK WS-3)
             name: {
               type: ["string", "null"],
               description:
@@ -288,15 +193,7 @@ If the document says nothing about a field, use null — never invent one.`;
             description: { type: ["string", "null"] },
             startDate: { type: ["string", "null"] },
             endDate: { type: ["string", "null"] },
-            /*
-              ⚠⚠ RESTORED (`P2-J1.4-E549`, Scott authorised 2026-09-17) — exactly
-              as the single-call schema carried it, and NOTHING ELSE from that
-              prompt (no date format). ⚠ It is the only way the model can tell
-              "Current" from "unknown", which is the distinction the rollup now
-              turns on. ⚠ SUPERSEDED, quoted (`E164`): the property list ended at
-              `endDate`, and `required` read
-              `["name", "roleTitle", "description", "startDate", "endDate"]`.
-            */
+            // RESTORED , Scott authorised 2026-09-17) — exactly
             isCurrent: { type: ["boolean", "null"] },
           },
           ["name", "roleTitle", "description", "startDate", "endDate", "isCurrent"]
@@ -314,11 +211,10 @@ If the document says nothing about a field, use null — never invent one.`;
 export function projectsPass(
   text: string,
   engagements: InventoryItem[] = [],
-  /* ⚠ `startedAt` — the containing request's clock (`E415`). Null off-route. */
+  /* `startedAt` — the containing request's clock (`E415`). Null off-route. */
   startedAt: number | null = null
 ) {
-  /* ⚠ THE ENGAGEMENTS FROM PASS 1 ARE HANDED BACK AS A CHECKLIST, the same way
-     the employers pass gets its own — so the count is a contract here too. */
+  // THE ENGAGEMENTS FROM PASS 1 ARE HANDED BACK AS A CHECKLIST, the same way
   const list = engagements.length
     ? `\n\nThese ${engagements.length} client engagements were already identified in this document:\n` +
       engagements.map((i, n) => `${n + 1}. ${i.heading}`).join("\n") +
@@ -357,7 +253,7 @@ If the document says nothing about a field, use null — never invent one.${list
   }, 12_000, startedAt);
 }
 
-/** ⚠ ON ITS OWN PASS BECAUSE IT WAS THE WORST HIT — 0 of 5 (`E399`). */
+/** ON ITS OWN PASS BECAUSE IT WAS THE WORST HIT — 0 of 5 (`E399`). */
 export function certificationsPass(text: string, startedAt: number | null = null) {
   const system = `You are transcribing, not summarising.
 
@@ -387,7 +283,7 @@ If the document says nothing about a field, use null — never invent one.`;
   return runPass("certifications", system, schema as unknown as Record<string, unknown>, text, (v) => {
     const r = partial(["certifications"]).safeParse(v);
     return r.success ? r.data.certifications : null;
-    /* ⚠ Same reasoning-budget trap as the inventory — see `inventoryPass`. */
+    /* Same reasoning-budget trap as the inventory — see `inventoryPass`. */
   }, 8_000, startedAt);
 }
 
@@ -444,17 +340,9 @@ If the document says nothing about a field, use null — never invent one.`;
   }, 8_000, startedAt);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE ORCHESTRATOR — AND ⚠⚠ THE THING THAT NOTICES (WS-3)
-   ═════════════════════════════════════════════════════════════════════════ */
+// THE ORCHESTRATOR — AND THE THING THAT NOTICES (WS-3)
 
-/**
- * ⚠⚠ COUNTABLE FEATURES OF THE SOURCE, INDEPENDENT OF THE MODEL.
- *
- * The inventory is itself a model output, so trusting it alone would be marking
- * the model's homework with the model's own pen. Date ranges are countable from
- * the raw text with a regex, which is why they are the second opinion.
- */
+/** COUNTABLE FEATURES OF THE SOURCE, INDEPENDENT OF THE MODEL. */
 export function countDateRanges(text: string): number {
   const RANGE =
     /\b(?:(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2})\s*(?:–|—|-|to|through)\s*(?:present|current|(?:19|20)\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(?:19|20)\d{2})/gi;
@@ -470,31 +358,15 @@ export type RecallReport = {
   certificationsReturned: number;
   /** Countable from the raw text, no model involved. */
   dateRangesInSource: number;
-  /*
-    ⚠ Passes that failed, AND WHY (`P1-A1.4-E415` WS-3). ⚠ SUPERSEDED, quoted:
-    `failedPasses: string[]` — the name alone. ⚠⚠ "We couldn't read the projects
-    section" is true whether the model errored or the REQUEST RAN OUT OF TIME,
-    and those are different problems with different next steps: one is worth
-    retrying immediately, the other will happen again on the same document.
-  */
+  // Passes that failed, AND WHY WS-3).
   failedPasses: { name: string; reason: string }[];
-  /** ⚠⚠ True when the contract was not met — a DETECTED failure, not a result. */
+  /** True when the contract was not met — a DETECTED failure, not a result. */
   shortfall: boolean;
   /** Plain sentences for the review screen. Empty when nothing is wrong. */
   warnings: string[];
 };
 
-/**
- * ⚠⚠ THE DEEPEST DEFECT `E399` FOUND WAS NOT THAT THE IMPORT WAS SHORT — IT IS
- * THAT NOTHING NOTICED. The pipeline validated that the JSON parsed; nothing ever
- * compared what came back against what is in the document, so 1-of-5 cleared
- * every gate and presented a half-profile as finished.
- *
- * ⚠ THIS DOES NOT FAIL THE IMPORT. The provider is mid-signup and a hard stop
- * loses them; a short import plus an honest warning is strictly better.
- * ⚠⚠ AND IT DOES NOT AUTO-RETRY. A second call costs money and may return the
- * same thing — that is the person's decision, offered as a button.
- */
+/** THE DEEPEST DEFECT FOUND WAS NOT THAT THE IMPORT WAS SHORT — IT IS */
 export function recallReport(input: {
   headings: number;
   employers: number;
@@ -507,53 +379,8 @@ export function recallReport(input: {
 }): RecallReport {
   const warnings: string[] = [];
   if (input.headings > 0 && input.employers < input.headings) {
-    /*
-      ── ⚠⚠ IT SAID "employers" ABOUT THINGS THAT ARE NOT EMPLOYERS (`E508`) ──
-
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-        `We found ${input.headings} employers in your document and imported
-         ${input.employers} — check your work history.`
-
-      > **`E506` flagged this as possible silent data loss.** ⚠⚠ COUNTING THE
-      > FILE SAYS OTHERWISE, AND THAT FLAG IS STOOD DOWN.
-
-      ⚠ CONFIRMED AGAINST SCOTT'S ACTUAL STORED RUN of
-      `PPM_FIN - Srilakshmi Kundanala.docx`, not against the brief's arithmetic:
-      the run recorded `headings: 11`, imported 5, and the five it imported are
-      the five real employers. The document's OTHER six company names —
-      PureCS · Emaar · Hackett · Oracle SSI · E&Y India · Capgemini — are the
-      CLIENT COLUMNS of the "Key Projects" matrix. ⚠⚠ 5 + 6 = 11. NOTHING WAS
-      LOST.
-
-      ⚠ THE DEFECT IS THE WORD "employers". `headings` is pass 1's inventory of
-      COMPANY NAMES, and calling them employers made a true number tell a false
-      story — it read as "we dropped six of your jobs".
-      ⚠ SO THE SENTENCE NAMES WHAT THE OTHERS PROBABLY ARE and stops implying
-      loss. ⚠⚠ "look like" IS DELIBERATE HEDGING: the pipeline does not actually
-      classify them, and claiming it did would be the opposite lie.
-    */
-    /*
-      ── ⚠⚠⚠ "imported" WAS A LIE IN PREVIEW MODE (`P2-A1.1-E733`) ────────────
-
-      ⚠ **SCOTT, 2026-09-30: *"fix the preview's 'imported' copy."***
-      ⚠⚠ **MEASURED ON HIS OWN RUN:** the stored row said *"We found 29 company names
-      in your document and **imported 4** as employers"* — and **nothing had been
-      imported.** `E721` item 2 made the profile's rebuild a PREVIEW
-      (`apply: false`), so the upload parses, stores the document, and writes **no
-      profile rows at all** until the member ticks a diff and saves.
-      ⚠⚠⚠ **THE SENTENCE TOLD HIM WORK HAD BEEN DONE THAT HAD NOT BEEN DONE**, which
-      is why he read 2 employers on his profile and could not reconcile it with "4".
-
-      ⚠ **`read` IS THE HONEST VERB FOR BOTH MODES.** The pass genuinely DID read
-      them; whether they are then written is the caller's decision and not something
-      this sentence can know — `recallReport` runs inside the reader and has no
-      access to `apply`. ⚠⚠ **SO THE FIX IS A WORD THAT IS TRUE IN BOTH MODES RATHER
-      THAN A FLAG THREADED THROUGH THE READER** to make one sentence conditional.
-      ⚠ SUPERSEDED, quoted not deleted (`E164`):
-      //   `We found ${input.headings} company names in your document and imported `
-      //   `${input.employers} as employers — the other ${others} look like project `
-      //   `clients rather than jobs. Check your work history.`
-    */
+    // IT SAID "employers" ABOUT THINGS THAT ARE NOT EMPLOYERS
+    // SCOTT, 2026-09-30: *"fix the preview's 'imported' copy."*
     const others = input.headings - input.employers;
     warnings.push(
       `We found ${input.headings} company names in your document and read ` +
@@ -561,18 +388,13 @@ export function recallReport(input: {
         `clients rather than jobs. Check your work history.`
     );
   }
-  /* ⚠ THE SECOND OPINION. A source with many more date ranges than imported
-     entries is the signature of the sampling failure, even when the inventory
-     itself came back short. */
+  // THE SECOND OPINION. A source with many more date ranges than imported
   const imported = input.employers + input.projects;
-  /* ⚠⚠ THE STRONGEST SIGNAL IS PASS 1'S OWN TOTAL, because it is measured on the
-     document rather than inferred from a regex — date ranges only catch entries
-     that carry one, and this CV prints only eight of them for 29 headings. */
+  // THE STRONGEST SIGNAL IS PASS 1'S OWN TOTAL, because it is measured on the
   const total = input.headingsTotal ?? 0;
   if (total > 0 && imported < total) {
     warnings.push(
-      /* ⚠ `E733` — same word, same reason as the warning above: in preview mode nothing
-         is imported. ⚠ SUPERSEDED, quoted (`E164`): "…and imported ${imported}…" */
+      // — same word, same reason as the warning above: in preview mode nothing
       `We found ${total} roles and projects in your document and read ${imported} — check your work history.`
     );
   }
@@ -582,13 +404,7 @@ export function recallReport(input: {
     );
   }
   for (const p of input.failedPasses) {
-    /*
-      ⚠⚠ THE CLOCK IS NAMED WHEN THE CLOCK IS THE CAUSE (`E415` WS-3). Scott's
-      complaint was that the failure *"told me it did not work"* and nothing
-      else. A section dropped because the upload ran out of time will be dropped
-      again on the same document — saying so is the difference between "try
-      again" and "try again and expect the same".
-    */
+    // THE CLOCK IS NAMED WHEN THE CLOCK IS THE CAUSE ( WS-3). Scott's
     const outOfTime = p.reason === "deadline" || p.reason === "truncated";
     const why = outOfTime
       ? " — your document took longer to read than we allow for one upload"
@@ -622,7 +438,7 @@ export type MultiPassOutcome =
       inputChars: number;
       ms: number;
       usage: ModelUsage;
-      /** ⚠ Per-pass wall time and cost, so the claim can be checked. */
+      /** Per-pass wall time and cost, so the claim can be checked. */
       passes: { name: string; ok: boolean; ms: number; costUsd: number | null }[];
       /** Pass 1's headings, kept so the review can list the companies found. */
       inventory: InventoryItem[];
@@ -631,39 +447,22 @@ export type MultiPassOutcome =
       ok: false;
       reason: "no_key" | "error" | "refusal" | "deadline";
       message: string;
-      /* ⚠ `P2-J1.4-E546` — the time spent before failing, and the per-call
-         record, so a FAILED read is measured as well as a successful one. */
+      // — the time spent before failing, and the per-call
       ms: number;
       passes: PassTiming[];
     };
 
-/** ⚠ `P2-J1.4-E546` — one call's duration, as stored on `ProfileImport.read_passes`. */
+/** `P2-J1.4-E546` — one call's duration, as stored on `ProfileImport.read_passes`. */
 export type PassTiming = { name: string; ok: boolean; ms: number; reason?: string };
 
-/**
- * ⚠ EVERY PASS IS INDEPENDENT AND PARTIAL SUCCESS IS THE NORMAL OUTCOME. Only a
- * failed INVENTORY is fatal — without it there is no contract to measure against,
- * and an unmeasured import is the state this brief exists to end.
- */
+/** EVERY PASS IS INDEPENDENT AND PARTIAL SUCCESS IS THE NORMAL OUTCOME. Only a */
 export async function aiExtractResumeMultiPass(
   text: string,
-  /*
-    ⚠ THE CONTAINING REQUEST'S CLOCK (`P1-A1.4-E415` WS-2). Every pass below
-    receives it, so each asks how much of the ROUTE is left rather than how much
-    it would like. ⚠ `null` off-route — scripts and gates keep the per-call
-    ceiling and nothing else.
-  */
+  // THE CONTAINING REQUEST'S CLOCK WS-2). Every pass below
   startedAt: number | null = null
 ): Promise<MultiPassOutcome> {
   const started = Date.now();
-  /*
-    ⚠ `reason` AND `message` ARE CARRIED NOW (`P1-A1.4-E407` WS-2). They used to
-    be dropped on the failure branch, so a provider error, a truncation and a
-    SHAPE mismatch all arrived as one indistinguishable `{ok:false}` — and the
-    next person to diagnose it would be guessing between a budget problem and a
-    schema problem. Measured 2026-09-09: the failures are `shape`, on runs whose
-    `finishReason` is `stop`, which rules truncation out entirely.
-  */
+  // be dropped on the failure branch, so a provider error, a truncation and a
   const passes: {
     name: string;
     ok: boolean;
@@ -671,7 +470,7 @@ export async function aiExtractResumeMultiPass(
     costUsd: number | null;
     reason?: string;
     message?: string;
-    /** ⚠ Present on a `shape` failure — the call ran, so the spend is knowable. */
+    /** Present on a `shape` failure — the call ran, so the spend is knowable. */
     finishReason?: string | null;
     outputTokens?: number | null;
     reasoningTokens?: number | null;
@@ -693,14 +492,12 @@ export async function aiExtractResumeMultiPass(
       cachedTok += r.usage.cachedInputTokens; reasoningTok += r.usage.reasoningTokens;
       if (r.usage.costUsd != null) { cost += r.usage.costUsd; anyCost = true; }
       model = r.model; provider = r.provider; tier = r.tier;
-      /* ⚠ ANY pass reporting a truncation is the one worth surfacing. */
+      /* ANY pass reporting a truncation is the one worth surfacing. */
       if (r.usage.finishReason && r.usage.finishReason !== "stop" && r.usage.finishReason !== "end_turn")
         finishReason = r.usage.finishReason;
       else finishReason = finishReason ?? r.usage.finishReason;
     } else {
       passes.push({
-        /* ⚠ SUPERSEDED, quoted not deleted (`E164`): `ms: 0` — a timed-out call
-           spent its whole ceiling and was recorded as instant (`E546`). */
         name, ok: false, ms: r.ms ?? 0, costUsd: r.usage?.costUsd ?? null,
         reason: r.reason, message: r.message,
         finishReason: r.usage?.finishReason ?? null,
@@ -714,12 +511,10 @@ export async function aiExtractResumeMultiPass(
   const inv = await inventoryPass(text, startedAt);
   tally("inventory", inv);
   if (!inv.ok) {
-    /* ⚠ SUPERSEDED, quoted (`E414` WS-2): `inv.reason === "no_key" ? "no_key" : "error"`. */
+    /* SUPERSEDED, quoted (`E414` WS-2): `inv.reason === "no_key" ? "no_key" : "error"`. */
     return {
       ok: false,
-        /* ⚠ `deadline` joins them (`E415`): the route ran out of room, which is
-         neither a model error nor a refusal, and `import.ts` records the string
-         on `ImportPath.reason`. */
+        // neither a model error nor a refusal, and `import.ts` records the string
       reason:
         inv.reason === "no_key" || inv.reason === "refusal" || inv.reason === "deadline"
           ? inv.reason
@@ -730,55 +525,7 @@ export async function aiExtractResumeMultiPass(
     };
   }
 
-  /* ⚠ THE DETAIL PASSES RUN TOGETHER — they are independent, and running them in
-     sequence would multiply the wall time a provider waits by four. */
-  /*
-    ⚠⚠ ROUTE BY `kind`. Handing all 29 headings to the employers pass is what
-    produced 29 employers for a five-employer CV on the first measured run.
-    ⚠ AN INVENTORY THAT CLASSIFIES NOTHING FALLS BACK TO "ALL EMPLOYERS", which is
-    the old behaviour and is safe: over-listing employers is visible to the person
-    reviewing, where dropping them silently is not.
-  */
-  /*
-    ── ⚠⚠ `kind` IS A ROUTE HERE, AND MEASUREMENT SAYS IT SHOULD BE A DEFAULT ──
-       (`P1-A1.4-E409` WS-1 — MEASURED 2026-09-10, NOT CHANGED. See the report.)
-
-    ⚠ THIS SPLIT IS THE 29→7 DEFECT, AND IT IS **NOT** A CAPACITY PROBLEM.
-    Measured on Scott's CV with the failure-path usage this brief added:
-
-      inventory  ->  49 sections   (kind: 5 employer, 44 engagement)
-      employersPass(pool=5)   ->  5 entries   finish=stop out=  930 / 12,000
-      employersPass(pool=49)  -> 49 entries   finish=stop out=3,675 / 12,000
-
-    ⚠⚠ THE PASS HONOURS ITS CHECKLIST EXACTLY — give it 5 and it returns 5; give
-    it 49 and it returns 49, at THIRTY-ONE PERCENT of its token budget with
-    `finishReason: stop`. Nothing truncates. **The units are not lost to
-    capacity; they are never asked for**, because 44 of them are filtered out
-    here and handed to `projectsPass`, which then returns 0 or fails on `shape`.
-
-    ⚠ SO THE FIX IS THIS FILTER, NOT A FUNNEL AND NOT CHUNKING — but making the
-    change means deciding what type the 44 become, and `E409` WS-2 reserves that
-    default to Scott ("REPORT, do not choose"). ⚠⚠ CHANGING IT HERE WOULD CHOOSE
-    IT SILENTLY, so it is measured, reported, and left alone.
-  */
-  /*
-    ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E410` WS-1) — the filter above
-    described the defect and this is the line that fixed it:
-
-        const employers = inv.value.filter((i) => i.kind !== "engagement");
-        …
-        employersPass(text, employers.length ? employers : inv.value),
-
-    ⚠⚠ 44 OF 49 SECTIONS WERE HANDED TO `projectsPass` AND NEVER ARRIVED. The
-    employers pass never saw them, so it could not have returned them; the
-    projects pass returned 0 or failed `shape`. **The units were not lost to
-    capacity — they were never asked for.**
-
-    ⚠ SO EVERY SECTION GOES TO THE PASS THAT DEMONSTRABLY HONOURS ITS CHECKLIST.
-    `E409` measured it: pool=5 → 5 entries, pool=49 → 49 entries, `finish=stop`
-    at 31% of a 12,000-token budget. `kind` no longer decides WHETHER a section
-    is extracted; it decides only WHAT THE ROW BECOMES, below.
-  */
+  // THE DETAIL PASSES RUN TOGETHER — they are independent, and running them in
   const engagements = inv.value.filter((i) => i.kind === "engagement");
 
   const [emp, proj, certs, skills, prof] = await Promise.all([
@@ -794,77 +541,12 @@ export async function aiExtractResumeMultiPass(
   tally("skills", skills);
   tally("profile", prof);
 
-  /*
-    ── ⚠⚠ `kind` IS A DEFAULT, NOT A ROUTE (`P1-A1.4-E410` WS-1) ───────────────
-
-    SCOTT: engagement sections become **Project** rows, employer sections become
-    **Employer** rows, and no section is filtered out of extraction.
-
-    ⚠ AND IT IS RIGHT ON THE MERITS, NOT ONLY THE ASYMMETRY: on Scott's CV the 44
-    engagements are client work delivered under StratERP — Ceres, Kamehameha, WSP.
-    StratERP is the employer; those are the work.
-
-    ⚠ ALIGNMENT IS BY INDEX, WHICH IS THE PASS'S OWN CONTRACT — its schema says
-    *"Exactly N entries, one per listed heading, in order."* ⚠⚠ AND IT IS CHECKED,
-    NOT ASSUMED: if the model returns a different count the index no longer means
-    the same section, so the split is ABANDONED and every entry stays an employer
-    — the pre-`E410` shape. A mis-split would file real jobs as projects, which is
-    worse than the row being the wrong type in a way the radio can fix.
-
-    ⚠ NO PARENT IS INVENTED FROM PROXIMITY. A converted engagement carries
-    `employer: null`; `import.ts` then writes it with `employer_id` null and
-    surfaces it as `unplaced` (`P1-J1.4-E296`) for the person to place in one
-    click. An engagement listed under StratERP in the document is not proof that
-    it belongs to StratERP.
-  */
-  /*
-    ── ⚠⚠⚠ THE DETERMINISTIC RULE (`P2-A1.1-E733`) ────────────────────────────
-
-    ⚠ **SCOTT, 2026-09-30: *"Build the deterministic employer-vs-project rule after
-    both passes."***
-
-    ⚠⚠ **MEASURED, FIVE READS OF ONE CV ON THE OLD CODE AND FIVE ON THIS ONE.** The
-    failure it fixes was caught in the act on run 3 of the AFTER side, which logged
-    `29 entries for 31 sections`. ⚠⚠⚠ **ON THE OLD CODE THAT RUN PRODUCES 29
-    EMPLOYERS; ON THIS ONE IT PRODUCES 4 EMPLOYERS AND 25 PROJECTS.**
-
-    ⚠⚠⚠ **THE FALLBACK WAS THE DEFECT, NOT THE MODEL.** The classification is
-    already right — pass 1 types every heading `employer` or `engagement` — and a
-    **two-row** count mismatch threw ALL of it away and promoted every section to an
-    employer. ⚠ An off-by-N in the count should cost N rows' certainty, not the
-    whole split.
-
-    ── ⚠⚠ SO THE SPLIT HAS THREE ROUTES, IN ORDER ─────────────────────────────
-
-    1. ⚠ **INDEX**, when the counts match — the pass's own contract is *"exactly N
-       entries, one per listed heading, in order"*. **Byte-for-byte the previous
-       behaviour**, which is why the common case is untouched.
-    2. ⚠⚠ **NAME**, when they do not. Pass 1's heading and the employers pass's
-       `name` describe the same section, so the heading is matched to the row by
-       normalised name — ⚠⚠⚠ **ORDER- AND COUNT-INDEPENDENT, which is the whole
-       point: a dropped row no longer re-types the rows around it.**
-       ⚠ A heading often reads `Client — Role (dates)`, so a PREFIX match counts.
-       **A bare substring match is NOT used** — `Oracle` would match `Oracle
-       Corporation` and half a dozen client names.
-    3. ⚠ **EMPLOYER**, for anything still unmatched — the same safe default as
-       before, now reached only by rows the inventory genuinely never listed.
-       ⚠⚠ **A mis-split files real jobs as projects, which is worse than a row being
-       the wrong type in a way the radio can fix.**
-
-    ⚠ **NO REGEX OVER HEADING TEXT, STILL.** `(via Elire)` and an em-dash are
-    conventions of one CV. The only thing read here is pass 1's own `kind`.
-    ⚠⚠ **THIS DOES NOT FIX `E410`.** The model still returns 4, 5 or 6 employers for
-    the same document on consecutive reads; what it fixes is the 29.
-    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-    //   const aligned = emp.ok && emp.value.length === inv.value.length;
-    //   const sectionEmployers = aligned ? empRows.filter(...) : empRows;
-    //   const sectionProjects  = aligned ? empRows.map(...).filter(...) : [];
-  */
+  // SCOTT: engagement sections become Project rows, employer sections become
+  // THE DETERMINISTIC RULE
   const empRows = emp.ok ? emp.value : [];
   const aligned = emp.ok && empRows.length === inv.value.length;
 
-  /** ⚠ Letters and digits only — punctuation and spacing differ between a heading
-   *  and the name the employers pass echoes back. */
+  /** Letters and digits only — punctuation and spacing differ between a heading */
   const normName = (x: string | null | undefined) =>
     (x ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
@@ -874,7 +556,7 @@ export async function aiExtractResumeMultiPass(
     if (k) byName.set(k, item.kind === "engagement" ? "engagement" : "employer");
   }
 
-  /** ⚠⚠ The route each row took, counted, so the log says WHY rather than only what. */
+  /** The route each row took, counted, so the log says WHY rather than only what. */
   const routed = { name: 0, fallback: 0 };
 
   const kindOf = (row: { name?: string | null }, i: number): "employer" | "engagement" => {
@@ -886,8 +568,6 @@ export async function aiExtractResumeMultiPass(
         routed.name++;
         return exact;
       }
-      /* ⚠ `Ceres Insurance — Oracle Cloud Quick Install (4 Months)` starts with
-         `Ceres Insurance`. ⚠⚠ PREFIX ONLY, never a bare `includes`. */
       for (const [heading, kind] of byName) {
         if (heading.startsWith(n + " ")) {
           routed.name++;
@@ -905,9 +585,7 @@ export async function aiExtractResumeMultiPass(
     .map((e, i) => ({ e, kind: kinds[i] }))
     .filter(({ kind }) => kind === "engagement")
     .map(({ e }) => ({
-      /* ⚠ THE ENGAGEMENT IS THE ROLE HALF OF THE HEADING and the client is
-         the company half — `Ceres Insurance — Oracle Cloud Quick Install`
-         parses as name="Ceres Insurance", roleTitle="…Quick Install". */
+      // THE ENGAGEMENT IS THE ROLE HALF OF THE HEADING and the client is
       name: e.roleTitle || e.name || "Untitled project",
       client: e.name ?? null,
       roleType: null,
@@ -916,8 +594,7 @@ export async function aiExtractResumeMultiPass(
       description: e.description ?? null,
       startDate: e.startDate ?? null,
       endDate: e.endDate ?? null,
-      /* ⚠ `E549` — the employers pass read this section, so its current flag
-         travels with it when the section is filed as a project. */
+      // — the employers pass read this section, so its current flag
       isCurrent: e.isCurrent ?? null,
       employer: null,
     }));
@@ -930,9 +607,7 @@ export async function aiExtractResumeMultiPass(
     );
   }
 
-  /* ⚠ DEDUPED BY NAME. `projectsPass` still runs and still finds sub-projects the
-     inventory never listed; a section must not arrive twice because two passes
-     both described it. Section rows win — they are the ones `kind` typed. */
+  // DEDUPED BY NAME. `projectsPass` still runs and still finds sub-projects the
   const seen = new Set(sectionProjects.map((p) => p.name.trim().toLowerCase()));
   const extraProjects = (proj.ok ? proj.value : []).filter(
     (p) => !seen.has((p.name ?? "").trim().toLowerCase())
@@ -950,27 +625,15 @@ export async function aiExtractResumeMultiPass(
   };
 
   const recall = recallReport({
-    /*
-      ⚠ SUPERSEDED, quoted not deleted (`P1-A1.4-E410`):
-          `headings: (employers.length ? employers : inv.value).length,`
-      with the reason *"THE CONTRACT IS THE EMPLOYER SUBSET. Comparing employers
-      returned against every heading in the document would report a shortfall on
-      every CV that has more projects than jobs."*
-
-      ⚠⚠ THAT SUBSET NO LONGER EXISTS. `E410` sends EVERY section to the
-      extraction pass, so the contract is now the whole inventory — and the
-      recall figure counts rows of BOTH kinds against it, which is the number
-      Scott's *"we found 29 and imported 7"* line was trying to be.
-    */
+    // with the reason *"THE CONTRACT IS THE EMPLOYER SUBSET. Comparing employers
     headings: inv.value.length,
-    /* ⚠ BOTH KINDS COUNT TOWARD THE SECTIONS FOUND — an engagement section that
-       became a Project row was imported, not missed. */
+    // BOTH KINDS COUNT TOWARD THE SECTIONS FOUND — an engagement section that
     employers: data.employers.length,
     projects: data.projects.length,
     certifications: data.certifications.length,
     dateRanges: countDateRanges(text),
     failedPasses: failed,
-    /* ⚠ The whole inventory is still the second opinion for TOTAL coverage. */
+    /* The whole inventory is still the second opinion for TOTAL coverage. */
     headingsTotal: inv.value.length,
   });
 

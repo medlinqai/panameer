@@ -114,14 +114,7 @@ export async function getStatusTrend(
       "ProviderProfile.onboarding_completed_at (seller)"
     );
   } else {
-    /*
-      ⚠ THIS IS THE SERIES `E257` STOPPED ON THE FIRST TIME. The buyer half had
-      NO column, so `Validated` could not be trended and inventing one was
-      explicitly forbidden. `E269b` added `RequesterProfile.validated_at` on
-      Scott's instruction, which is what unblocked this.
-      ⚠ IT WILL READ ZERO ON THE BUYER SIDE UNTIL SOMETHING SETS IT — there is
-      still no buyer validation mechanism, by design.
-    */
+    // THIS IS THE SERIES STOPPED ON THE FIRST TIME. The buyer half had
     const [rp, pp] = await Promise.all([
       prisma.requesterProfile.findMany({
         where: { validated_at: { not: null } },
@@ -160,29 +153,7 @@ export async function getAllTrends(period: Period): Promise<TrendSeries[]> {
   return Promise.all(ONBOARDING_STATUSES.map((s) => getStatusTrend(s, period)));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE PER-JOB TREND (`P1-A1.5-E456`)
-   ═══════════════════════════════════════════════════════════════════════════
-
-   > **SCOTT:** *"please create reports for each of the footer tiles (like
-   > medlinq) showing how many were added each week over the last 90 days."*
-
-   ⚠⚠ THIS REUSES `bucket()` AND THE WEEK RULE ABOVE RATHER THAN RESTATING THEM.
-   `E257` already decided that a week starts Monday so a bucket never straddles
-   two labels, and a second definition of "a week" in the same app is how two
-   charts start disagreeing about the same fortnight.
-
-   ⚠⚠ AND IT DOES NOT TOUCH `?status=`. `getStatusTrend` reads
-   `ONBOARDING_STATUSES`; a JOB value handed to it would fall through to the
-   `else` branch and silently render the Validated series under a Providers
-   heading. ⚠ A JOB IS A DIFFERENT AXIS, SO IT GETS A DIFFERENT PARAMETER —
-   `?job=`, never `?status=`. The two never mix.
-
-   ⚠ COUNTED ON `Person.created_at` — the brief's instruction, and the only
-   timestamp every row reliably carries. A job flag has no timestamp of its own,
-   so this is "people who hold this job today, by when they JOINED", not "when
-   they acquired the job". ⚠ SAID ON THE PAGE, not hidden here.
-*/
+// THE PER-JOB TREND
 
 /** Exactly `weeks` buckets ending this week — a window, not a span of the data. */
 function fillWindow(counts: Map<string, number>, weeks: number): TrendPoint[] {
@@ -202,16 +173,7 @@ function fillWindow(counts: Map<string, number>, weeks: number): TrendPoint[] {
   return out;
 }
 
-/**
- * Weekly joins over the last `weeks` weeks for the people in `stamps`.
- *
- * ⚠⚠ THE WINDOW IS FIXED AND EMPTY WEEKS ARE KEPT. `fill()` above spans first
- * observed bucket to last, which is right for "when did this status happen" and
- * WRONG here: a 13-week report that silently becomes a 2-week report because
- * nothing landed in the other eleven is not the report Scott asked for.
- * ⚠ EXPECT IT LUMPY AND DO NOT SMOOTH IT — most of these rows were seeded in a
- * few bursts, so most weeks are legitimately zero.
- */
+/** Weekly joins over the last `weeks` weeks for the people in `stamps`. */
 export function weeklyJoins(
   stamps: Date[],
   weeks = 13

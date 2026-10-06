@@ -58,10 +58,7 @@ export function reportsFor(pathname: string): Report[] {
   }));
 }
 
-/**
- * Every report the console can reach, by slug — so a report URL can name its
- * own metric without the page it came from being in the request.
- */
+/** Every report the console can reach, by slug — so a report URL can name its */
 export const REPORT_INDEX: Record<string, { metric: string; from: string }> =
   (() => {
     const out: Record<string, { metric: string; from: string }> = {};

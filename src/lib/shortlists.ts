@@ -41,18 +41,7 @@ async function shortlistFor(workRequestId: string, personId: string) {
 
 export type Suggestion = { providerPersonId: string; note?: string | null };
 
-/**
- * ⚠⚠⚠ REPLACE THE SEARCH'S SUGGESTIONS. **THIS IS THE FUNCTION THE COLUMN EXISTS FOR.**
- *
- * ⚠⚠ **IT DELETES ONLY `SUGGESTED` ROWS.** A `SHORTLISTED` or `ADDED` row is the buyer's
- * own decision and survives every re-run — ⚠⚠⚠ **deleting one would throw away a choice
- * a human made, which is the `E552`/`E553` sentence again: a save must not delete data it
- * did not create.**
- *
- * ⚠ **AND A PROVIDER THE BUYER ALREADY KEPT IS NOT RE-SUGGESTED.** The pair is unique on
- * `(shortlist_id, provider_person_id)`, so inserting them again would throw — but more
- * importantly it would be wrong: they are already further along than "suggested".
- */
+/** REPLACE THE SEARCH'S SUGGESTIONS. THIS IS THE FUNCTION THE COLUMN EXISTS FOR. */
 export async function replaceSuggestions(
   viewer: Viewer,
   workRequestId: string,
@@ -63,15 +52,12 @@ export async function replaceSuggestions(
   const sl = await shortlistFor(workRequestId, me.id);
 
   return prisma.$transaction(async (tx) => {
-    /* ⚠⚠⚠ SCOPED TO `SUGGESTED` AND TO THIS SHORTLIST. Never a bare deleteMany. */
+    /* SCOPED TO `SUGGESTED` AND TO THIS SHORTLIST. Never a bare deleteMany. */
     await tx.shortlistLine.deleteMany({
       where: { shortlist_id: sl.id, source: "SUGGESTED" },
     });
 
-    /*
-      ⚠ THE SURVIVORS decide what may be re-suggested, and they are read AFTER the delete
-      so the set is exactly what the buyer owns.
-    */
+    // THE SURVIVORS decide what may be re-suggested, and they are read AFTER the delete
     const kept = await tx.shortlistLine.findMany({
       where: { shortlist_id: sl.id },
       select: { provider_person_id: true, line_number: true },
@@ -86,7 +72,7 @@ export async function replaceSuggestions(
           shortlist_id: sl.id,
           line_number: ++next,
           provider_person_id: s.providerPersonId,
-          /* ⚠ THE REASON THIS PROVIDER WAS SUGGESTED. `note` carries it (94e). */
+          /* THE REASON THIS PROVIDER WAS SUGGESTED. `note` carries it (94e). */
           note: s.note ?? null,
           source: "SUGGESTED" as const,
         })),
@@ -96,13 +82,7 @@ export async function replaceSuggestions(
   });
 }
 
-/**
- * ⚠⚠ THE BUYER KEEPS ONE. `SUGGESTED` → `SHORTLISTED`, which takes it out of the
- * search's reach forever.
- *
- * ⚠ It does not copy the row or create a second one: **the same line changes hands**, so
- * the note the search wrote is preserved and the buyer's `note` can replace it.
- */
+/** THE BUYER KEEPS ONE. `SUGGESTED` → `SHORTLISTED`, which takes it out of the */
 export async function keepProvider(
   viewer: Viewer,
   input: { workRequestId: string; providerPersonId: string; note?: string | null }
@@ -131,13 +111,7 @@ export async function keepProvider(
   return { id: line.id, source: "SHORTLISTED" };
 }
 
-/**
- * ⚠⚠⚠ STRAIGHT ONTO THE REQUEST, SKIPPING THE SHORTLIST — **THE COMMONEST PATH.**
- *
- * ⚠ Scott: *"they will not shortlist…they will add them to the WR."* ⚠⚠ Recorded as
- * `ADDED` so a later re-run cannot sweep it, and so the flow can be read back: this
- * provider was never suggested and never kept, they were simply chosen.
- */
+/** STRAIGHT ONTO THE REQUEST, SKIPPING THE SHORTLIST — THE COMMONEST PATH. */
 export async function addProvider(
   viewer: Viewer,
   input: { workRequestId: string; providerPersonId: string; note?: string | null }
@@ -157,8 +131,7 @@ export async function addProvider(
         provider_person_id: input.providerPersonId,
       },
     },
-    /* ⚠⚠ AN UPSERT, BECAUSE A PROVIDER ALREADY SUGGESTED MAY BE ADDED DIRECTLY — and
-       that must PROMOTE the existing row rather than fail or duplicate it. */
+    // AN UPSERT, BECAUSE A PROVIDER ALREADY SUGGESTED MAY BE ADDED DIRECTLY — and
     update: { source: "ADDED", ...(input.note != null ? { note: input.note } : {}) },
     create: {
       shortlist_id: sl.id,

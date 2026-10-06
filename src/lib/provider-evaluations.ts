@@ -55,8 +55,7 @@ export async function recordEvaluation(
   assertRating(input.overallRating, "Overall rating");
   for (const l of input.lines ?? []) assertRating(l.rating, `Rating for "${l.criterion}"`);
 
-  /* ⚠⚠⚠ A SUBMITTED EVALUATION MUST SAY SOMETHING. A submit with no overall
-     rating and no lines is an empty document wearing a verdict. */
+  // A SUBMITTED EVALUATION MUST SAY SOMETHING. A submit with no overall
   if (input.submit && input.overallRating == null && (input.lines ?? []).length === 0) {
     throw new SourcingError(
       "Add a rating or at least one criterion before submitting.",
@@ -64,9 +63,7 @@ export async function recordEvaluation(
     );
   }
 
-  /* ⚠ TYPED AS THE ENUM, NOT INFERRED AS `string` — Prisma refuses a widened
-     literal, and that refusal is the compiler doing the job a runtime check
-     would have done worse. */
+  // TYPED AS THE ENUM, NOT INFERRED AS `string` — Prisma refuses a widened
   const status: ProviderEvaluationStatus = input.submit ? "SUBMITTED" : "DRAFT";
 
   return prisma.$transaction(async (tx) => {
@@ -102,8 +99,7 @@ export async function recordEvaluation(
       : await tx.providerEvaluation.create({
           data: {
             ...data,
-            /* ⚠ Human-readable and unique. `PE-` is Provider Evaluation — and it
-               is chosen to collide with nothing: `PRO-` is a proposal number. */
+            // Human-readable and unique. `PE-` is Provider Evaluation — and it
             evaluation_number: `PE-${Date.now().toString(36).toUpperCase()}-${input.providerPersonId.slice(0, 4)}`,
           },
           select: { id: true, status: true },
@@ -127,13 +123,7 @@ export async function recordEvaluation(
   });
 }
 
-/**
- * ⚠⚠ THE READER. **A WRITER WITH NO READER IS HALF A FEATURE** — the brief's own
- * acceptance, and the reason this ships in the same commit as `recordEvaluation`.
- *
- * ⚠ Owner-scoped: only the requester who owns the work request sees the
- * judgements written against it.
- */
+/** THE READER. A WRITER WITH NO READER IS HALF A FEATURE — the brief's own */
 export async function evaluationsOn(
   viewer: Viewer,
   workRequestId: string

@@ -92,35 +92,16 @@ export function CleanEdit({
   );
 }
 
-/**
- * ── ⚠⚠ THE THIN CHIP (`P2-A2-E713` WS-A item 4) ────────────────────────────
- *
- * ⚠ **Scott: *"thinner chips: 1px outline, small type"*.** ⚠⚠ Still magenta — **ruling
- * `31e` is unchanged and this does not reopen it.**
- * ⚠⚠⚠ **THE OUTLINE IS AN INSET `box-shadow`, NOT A `border`, AND THAT IS THE MOCKUP'S OWN
- * CHOICE:** a border adds 2px to the chip's box and shifts every neighbour, so a row of
- * chips reflows the moment the outline changes weight. An inset shadow paints inside the
- * same box. ⚠ Tailwind's arbitrary `shadow-[inset_0_0_0_1px_…]` is the direct translation.
- */
+/** THE THIN CHIP WS-A item 4) */
 export const CLEAN_CHIP =
   "px-3 py-1 text-[12px] font-medium text-magenta-dark shadow-[inset_0_0_0_1px_var(--color-magenta)]";
 
-/**
- * ⚠⚠ THE CLASS IS EXPORTED SEPARATELY BECAUSE `SkillsBody` TAKES A CLASS, NOT A COMPONENT.
- * ⚠ One string, two consumers (`E585`): this component for markup that draws its own chips,
- * and `chipClass` for the shared body that already has a `<span>` of its own.
- */
+/** THE CLASS IS EXPORTED SEPARATELY BECAUSE `SkillsBody` TAKES A CLASS, NOT A COMPONENT. */
 export function CleanChip({ children }: { children: ReactNode }) {
   return <span className={CLEAN_CHIP}>{children}</span>;
 }
 
-/**
- * ⚠⚠ A FLAT LEFT-COLUMN BLOCK (WS-A item 9) — Rates, Visibility, Rank Higher.
- *
- * ⚠ **Scott: those four *"lose their boxes too, and are separated by thin lines."***
- * ⚠⚠ The heading is a 12px uppercase eyebrow, and it carries its own optional `Edit` on
- * the right — the mockup's `.side h4` with `justify-content: space-between`.
- */
+/** A FLAT LEFT-COLUMN BLOCK (WS-A item 9) — Rates, Visibility, Rank Higher. */
 export function CleanSide({
   title,
   titleHref,
@@ -128,32 +109,18 @@ export function CleanSide({
   children,
 }: {
   title: string;
-  /**
-   * ── ⚠⚠ AN OPTIONAL DOOR ON THE LABEL (`P2-A2-E716`) ──────────────────────────
-   *
-   * ⚠ **SCOTT: the `SEARCH SCORE` label becomes a link to the Score tab.** ⚠⚠ **THE
-   * SMALL-CAPS TREATMENT IS KEPT AND THAT IS EXPLICIT IN THE INSTRUCTION** — it stays a
-   * 12px uppercase eyebrow and becomes magenta-ink, the colour `CleanEdit` already uses, so
-   * every link in this column says *"link"* the same way (`E433`).
-   * ⚠⚠⚠ **OPTIONAL, SO `Rates` IS UNTOUCHED.** `CleanSide` renders the Rates block too, and
-   * its label is not a door — it has an `Edit` control instead. A required href would have
-   * forced a destination on a block that does not want one.
-   */
+  /** AN OPTIONAL DOOR ON THE LABEL */
   titleHref?: string;
   action?: ReactNode;
   children: ReactNode;
 }) {
   const label = "text-[12px] font-semibold uppercase tracking-[0.08em]";
   return (
-    /* ⚠ `pm-side` is the stable hook the phone layout needs: inside `pm-rail-top` the
-       top rule and the 28px margin are suppressed, because there the block sits BESIDE
-       the photo rather than under a divider (`E718` item 1). */
+    // top rule and the 28px margin are suppressed, because there the block sits BESIDE
     <div className="pm-side mt-7 border-t border-line pt-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         {titleHref ? (
-          /* ⚠ `<h4>` WRAPS THE LINK RATHER THAN THE LINK WRAPPING THE HEADING: the block still
-             has a heading in the outline when the link is ignored, and a screen reader
-             announces a link inside a heading rather than a heading that happens to be one. */
+          // has a heading in the outline when the link is ignored, and a screen reader
           <h4 className={label}>
             <Link href={titleHref} className="text-magenta-dark hover:underline">
               {title}

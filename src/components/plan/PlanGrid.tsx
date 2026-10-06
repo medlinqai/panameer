@@ -32,12 +32,7 @@ function lines(rows: readonly PublicPlanRow[], level: 1 | 2 | 3, ancestors: stri
 export function PlanGrid({ plan, subtitle }: { plan: PublicPlan; subtitle?: string }) {
   const all = useMemo(() => lines(plan.rows, 1, []), [plan.rows]);
 
-  /**
-   * Open on arrival: every release, and any row that is In progress at any
-   * depth — so MVP R1 and the Develop stage inside it are both expanded, which
-   * is the mockup's `openIds = {'1','1.3'}` expressed as a rule rather than as
-   * two hard-coded ids.
-   */
+  /** Open on arrival: every release, and any row that is In progress at any */
   const [open, setOpen] = useState<ReadonlySet<string>>(() => {
     const ids = new Set<string>();
     for (const { row } of all) {
@@ -65,12 +60,7 @@ export function PlanGrid({ plan, subtitle }: { plan: PublicPlan; subtitle?: stri
       <table className="mt-4 w-full border-collapse text-[13px]">
         <thead>
           <tr>
-            {/*
-              NO OWNER COLUMN ON THE PUBLIC PAGE (`P2-ALL-E822`, R-E015). Scott,
-              2026-10-04. The admin Build Plan editor keeps its Owner column and
-              `PublicPlanRow.owner` is untouched — the data stays, this surface
-              stops printing it.
-            */}
+            {/* NO OWNER COLUMN ON THE PUBLIC PAGE , . Scott */}
             {["#", "Name", "Start", "End", "Status"].map((h) => (
               <th
                 key={h}
@@ -145,12 +135,7 @@ export function PlanGrid({ plan, subtitle }: { plan: PublicPlan; subtitle?: stri
                       Past due
                     </span>
                   )}
-                  {/*
-                    A RELEASE SHOWS ITS PERCENTAGE, not a status — the figure is
-                    the half-credit one from the view model, so it is the same
-                    number as the hero. A release with nothing countable under it
-                    shows its status instead of a false 0%.
-                  */}
+                  {/* A RELEASE SHOWS ITS PERCENTAGE, not a status — the figure is */}
                   {level === 1 && row.progress && row.progress.percent !== null ? (
                     <span data-plan-release-pct={row.progress.percent} className="font-bold text-ink">
                       {row.progress.percent}%

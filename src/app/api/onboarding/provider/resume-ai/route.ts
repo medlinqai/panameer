@@ -75,16 +75,7 @@ export async function POST(req: Request) {
 
   const parsed = aiToParsedResume(outcome.data);
 
-  /*
-    WS3, second signal. A well-formed response can still be a failure: zero
-    entries out of a document the heuristic could see date ranges all over means
-    the model returned nothing useful, not that this person has never worked.
-
-    Gated on the DOCUMENT having ≥3 date ranges precisely so a résumé that
-    genuinely has no work history — a new graduate's, say — is not false-flagged.
-    No dates in the source, no complaint: empty is then a truthful answer and is
-    reported as one.
-  */
+  // WS3, second signal. A well-formed response can still be a failure: zero
   const sourceConfidence = assessParse(row.raw_text, parsed, { source: "ai" });
   if (
     parsed.experiences.length === 0 &&
@@ -103,42 +94,27 @@ export async function POST(req: Request) {
     );
   }
 
-  /*
-    ⚠ THE MODE IS READ AFTER THE PARSE, DELIBERATELY. The parse is the expensive
-    half and BOTH modes need it; branching earlier would duplicate it.
-    ⚠⚠ A malformed or absent body means APPLY — the historical behaviour.
-  */
+  // THE MODE IS READ AFTER THE PARSE, DELIBERATELY. The parse is the expensive
   if (preview) {
-    /* ⚠ Bank the parse so a later apply reuses it without a second model call. */
+    /* Bank the parse so a later apply reuses it without a second model call. */
     await prisma.profileImport.update({
       where: { id: row.id },
       data: { parsed: parsed as unknown as Prisma.InputJsonValue },
     });
     const diff = await computeRerunDiff(profile.id, parsed);
-    /* ⚠⚠ NO `applied`, NO `state` — nothing changed, and returning an `applied`
-       shape here would invite a caller to render a receipt for a write that
-       never happened. */
+    // NO `applied`, NO `state` — nothing changed, and returning an `applied`
     return NextResponse.json({ ok: true, preview: true, reused: false, diff });
   }
 
   const applied = await applyParsedResume(profile.id, parsed, "RESUME");
   const confidence = sourceConfidence;
 
-  /*
-    WS-G — bank WHAT the model produced and WHAT IT COST, on the import row.
-
-    The audit that compares this against the user's final edits is written much
-    later, at publish; by then the call is long gone, so its provenance has to
-    be persisted now. `parsed` is overwritten with the AI result because the
-    heuristic pass it replaces is no longer what the review is showing.
-  */
+  // WS-G — bank WHAT the model produced and WHAT IT COST, on the import row.
   await prisma.profileImport.update({
     where: { id: row.id },
     data: {
       parsed: parsed as unknown as Prisma.InputJsonValue,
-      /* ⚠ CAPTURED AT PARSE TIME (`P1-A1.5-E487`) — the audit is written later,
-         at review-save, and a prompt edited in between would otherwise be
-         recorded against a run it never touched. */
+      // CAPTURED AT PARSE TIME — the audit is written later
       ai_prompt_version: PROMPT_VERSION,
       ai_model: outcome.model,
       ai_provider: outcome.provider,

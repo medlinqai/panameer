@@ -98,12 +98,7 @@ export function flattenTree<T extends PlanRowLike>(tree: readonly PlanNode<T>[])
   return out;
 }
 
-/**
- * ⚠⚠ LATE IS COMPUTED, AND IT NEEDS `today` PASSED IN. A function that reached
- * for `new Date()` itself could not be tested across a date boundary, and the
- * one thing this must never do is disagree with the Today line on the timeline
- * — which takes its date from the same caller.
- */
+/** LATE IS COMPUTED, AND IT NEEDS `today` PASSED IN. A function that reached */
 export function isLate(row: PlanRowLike, today: Date): boolean {
   if (row.status === "Done") return false;
   if (!row.end_date) return false;
@@ -114,66 +109,23 @@ function startOfUtcDay(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-/**
- * ── READINESS ──────────────────────────────────────────────────────────────
- *
- * The brief says *"overall % (rows Done ÷ rows)"*. ⚠⚠ "Rows" HAD TO BE PINNED
- * DOWN, because two honest readings give materially different numbers and the
- * figure goes on a public page:
- *
- *   · a PHASE WITH CHILDREN is a container, not work. Counting it as well as
- *     its tasks counts the same work twice, and marking a phase Done while its
- *     tasks are not would print progress nobody made.
- *   · a MILESTONE is a date, not work. ◆ R1 sitting Planned would drag the
- *     figure down for the whole run-up to the day it is reached.
- *
- * ⚠ SO: countable = rows that are not milestones and have no children. A phase
- * Scott has typed but not filled still counts — it is real work, just not
- * broken down yet.
- * ⚠⚠ `total` IS RETURNED BESIDE `percent` SO A SURFACE CAN PRINT "12 of 34"
- * AND NEVER HAVE TO RE-DERIVE IT. One definition, one place.
- */
+/** The brief says *"overall % (rows Done ÷ rows)"*. "Rows" HAD TO BE PINNED */
 export type Readiness = {
   done: number;
-  /** ⚠ `In progress` rows, returned so a surface never recounts them (`E585`). */
+  /** `In progress` rows, returned so a surface never recounts them (`E585`). */
   moving: number;
   total: number;
   percent: number | null;
 };
 
-/**
- * ── ⚠⚠⚠ HALF CREDIT FOR WORK IN PROGRESS — SCOTT, 2026-10-03 (`E797`) ───────
- *
- * ⚠ **THE RULE: `(Done + ½ × In progress) ÷ countable rows`.** `Blocked` and
- * `Planned` count **0**.
- * ⚠⚠ **SUPERSEDED, quoted not deleted (`E164`):**
- * //   const done = counted.filter((r) => r.status === "Done").length;
- * //   percent = Math.round((done / counted.length) * 100)
- *
- * ⚠⚠ **WHY IT IS NOT A SOFTENING OF THE NUMBER:** on a plan where most rows are
- * open, Done-only readiness sits near zero for weeks while real work moves, so
- * the figure stops tracking the thing it names. ⚠ Half is the honest weight for
- * a row that has started and not finished — it is not a claim about how far
- * through that row is, and no row may ever be weighted by a guess at its own
- * progress.
- * ⚠⚠⚠ **`done` AND `moving` ARE STILL RETURNED AS WHOLE COUNTS.** The halving
- * lives in the PERCENTAGE only, so *"66 done · 36 moving"* keeps meaning
- * exactly what it says — a reader must always be able to get back to the rows
- * behind the figure.
- */
+/** HALF CREDIT FOR WORK IN PROGRESS — SCOTT, 2026-10-03 */
 export function readiness<T extends PlanRowLike>(rows: readonly T[]): Readiness {
   const counted = countableRows(rows);
   const done = counted.filter((r) => r.status === "Done").length;
   const moving = counted.filter((r) => r.status === "In progress").length;
-  /** ⚠ `Blocked` and `Planned` are absent from this sum ON PURPOSE, not by
-   *  oversight: neither has produced anything yet. */
+  /** oversight: neither has produced anything yet. */
   const credit = done + moving / 2;
-  /**
-   * ⚠⚠⚠ AN EMPTY PLAN RETURNS `percent: null`, NOT `0`. A plan with no rows is
-   * UNCOUNTABLE, not 0% complete, and the two must not look the same — the
-   * 2026-09-23 counting rule, applied here at its source rather than left to
-   * each card to remember.
-   */
+  /** AN EMPTY PLAN RETURNS `percent: null`, NOT `0`. A plan with no rows is */
   return {
     done,
     moving,
@@ -182,14 +134,7 @@ export function readiness<T extends PlanRowLike>(rows: readonly T[]): Readiness 
   };
 }
 
-/**
- * Readiness over ONE SUBTREE — a release heading or a phase (`P2-ALL-E807`).
- *
- * Scott, 2026-10-03: "Each release heading shows its own % (Done + ½ In
- * progress)". It is the same rule as `readiness()`, applied to the rows beneath
- * one node, so a release's figure and the plan's cannot be computed two
- * different ways (`E585`).
- */
+/** Readiness over ONE SUBTREE — a release heading or a phase . */
 export function subtreeReadiness<T extends PlanRowLike>(
   node: { id: string; children?: readonly unknown[] },
   all: readonly T[],
@@ -206,8 +151,7 @@ export function subtreeReadiness<T extends PlanRowLike>(
   return readiness(descendants);
 }
 
-/** The same rule, for one release's rows. ⚠ A release nobody has tagged is
- *  uncountable, which is why this returns the same nullable shape. */
+/** The same rule, for one release's rows. A release nobody has tagged is */
 export function releaseReadiness<T extends PlanRowLike>(rows: readonly T[], releaseId: string): Readiness {
   return readiness(rows.filter((r) => r.release_id === releaseId));
 }
@@ -222,17 +166,7 @@ export function countableRows<T extends PlanRowLike>(rows: readonly T[]): T[] {
   );
 }
 
-/**
- * WHEN THE FIRST WORK WAS RELEASED, from the plan (`P2-ALL-E810`).
- *
- * Scott, 2026-10-03: the support section on `/status` shows only for RELEASED
- * work — "until a phase's Deploy ◆ is marked Done, hide the section entirely."
- *
- * A Deploy milestone marked `Done` is the plan's own statement that a release
- * went out, so this reads that rather than a separate flag somebody has to
- * remember to set. `null` means nothing has shipped yet, which is a different
- * answer from "no tickets" and the caller must treat it as such.
- */
+/** WHEN THE FIRST WORK WAS RELEASED, from the plan . */
 export function firstReleasedAt(rows: readonly PlanRowLike[]): Date | null {
   const dates = rows
     .filter((r) => r.type === "milestone" && r.status === "Done")
@@ -244,11 +178,7 @@ export function firstReleasedAt(rows: readonly PlanRowLike[]): Date | null {
   return new Date(Math.min(...dates.map((d) => d.getTime())));
 }
 
-/**
- * The window the timeline draws. ⚠ Returns null when no row carries a date —
- * **a timeline with no dates is not a timeline from 1970 to today**, it is
- * nothing to draw, and the caller shows the accordions alone.
- */
+/** The window the timeline draws. Returns null when no row carries a date — */
 export function planSpan(rows: readonly PlanRowLike[]): { start: Date; end: Date } | null {
   const dates: number[] = [];
   for (const r of rows) {

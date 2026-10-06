@@ -142,7 +142,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     added: { skills: skills.length, specializations: specializations.length },
-    /* ⚠ MEASURED FROM THE DELETE'S OWN COUNT, never from the request. */
+    /* MEASURED FROM THE DELETE'S OWN COUNT, never from the request. */
     removed: { employers: removedEmployers, projects: removedProjects },
     applied,
     skipped: {

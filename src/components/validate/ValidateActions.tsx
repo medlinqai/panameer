@@ -64,11 +64,7 @@ export function ValidateActions({
           </p>
         </div>
 
-        {/*
-          ⚠ A DECLINING CLIENT IS NOT ASKED FIVE QUESTIONS. One optional line and
-          nothing else — they have already told us the thing that mattered, and
-          interrogating a "no" is how you never get an honest one again.
-        */}
+        {/* A DECLINING CLIENT IS NOT ASKED FIVE QUESTIONS. One optional line and */}
         <ValidationAnswers
           token={request.token}
           declined={done === "decline"}

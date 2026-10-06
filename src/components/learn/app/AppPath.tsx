@@ -65,41 +65,8 @@ export function AppPath({
               </p>
             )}
 
-            {/*
-              ⚠ COUNTS, NOT HOURS. The mockup's `24h RUN TIME` is struck: `run_time`
-              is spreadsheet display copy that cannot be summed (290 of 522 rows
-              null; the rest include "Intro", "NA" and "3:22:00" for three
-              minutes). Courses, lessons and one certificate are exact.
-
-              ⚠ AND `1,240 ENROLLED` IS OMITTED UNLESS IT IS REAL. It renders only
-              above the same floor the leaderboard uses — measured on the live DB
-              there are 2 enrollment rows in the whole catalog, so it renders
-              nowhere today. A header reading "1 ENROLLED" is worse than a header
-              with one fewer figure.
-            */}
-            {/*
-              ── ⚠⚠⚠ `CERTIFICATE` WAS A HARD-CODED `1` ON EVERY PATH (WS-C) ──
-
-              ⚠⚠ **MEASURED 2026-09-25, AND IT WAS FALSE ON MOST OF THE
-              CATALOGUE:** `learn_assessments` holds **8 rows against 23 paths**
-              — 2 `PUBLISHED`, 6 `DRAFT` — so ⚠⚠⚠ **FIFTEEN PATHS HAVE NO
-              ASSESSMENT AT ALL AND CANNOT PRODUCE A CERTIFICATE BY ANY ROUTE.**
-              ⚠ A certificate is a `Certification` row with `issued_from:
-              "LEARN"`, and the only way to earn one is to pass the path test.
-              **No test, no certificate.** ⚠⚠ `Certification` where
-              `issued_from = "LEARN"`: **0 rows issued, ever.**
-              ⚠⚠⚠ **SO `<Stat n={1} label="CERTIFICATE" />` WAS A FIGURE WITH NO
-              WRITER, PRINTED AS A FACT** — the counting rules' first line, and
-              the same defect class as the `ADDS SKILLS` chips (`E631`), except
-              this one was already on the screen.
-              ⚠ IT IS NOT A DASH: an uncountable figure shows a dash and its
-              reason, but this is not uncountable — **it is countable and the
-              answer is that the path offers none**, so the stat is OMITTED.
-              Rendering "0 CERTIFICATES" would be worse: it reads as a score the
-              member failed to get rather than as something the path never had.
-              ⚠ SUPERSEDED, quoted not deleted (`E164`):
-              //   <Stat n={1} label="CERTIFICATE" />
-            */}
+            {/* COUNTS, NOT HOURS. The mockup's `24h RUN TIME` is struck: `run_time` */}
+            {/* MEASURED 2026-09-25, AND IT WAS FALSE ON MOST OF THE */}
             <div className="mt-5 flex flex-wrap gap-x-7 gap-y-3">
               <Stat n={path.courses.length} label={path.courses.length === 1 ? "COURSE" : "COURSES"} />
               <Stat n={path.lessons} label={path.lessons === 1 ? "LESSON" : "LESSONS"} />
@@ -132,19 +99,7 @@ export function AppPath({
             )}
           </div>
 
-          {/*
-            The arc + the one CTA that is true for this learner's state.
-
-            ── ⚠⚠⚠ AN UNREADY PATH SHOWS NO ARC (`P2-A4-E611`, Q4) ───────────
-            ⚠ SCOTT, 2026-09-23: *"on an unready path: hide the progress ring
-            and the stage rail; keep Enroll disabled with a reason."*
-            ⚠⚠ A 0% RING ON A PATH WITH NOTHING TO WATCH IS NOT A ZERO — it is a
-            measurement of a thing that cannot be measured, and it reads as *you
-            have not started* when the truth is *there is nothing to start.*
-            ⚠ MEASURED at 390px on 2026-09-23: the unready path rendered the
-            ring, the full stage rail AND a live Enroll button beneath `E607`'s
-            "This Path Has No Videos Yet" notice.
-          */}
+          {/* The arc + the one CTA that is true for this learner's state. */}
           <div className="rounded-[18px] border border-white/20 bg-white/10 p-5 text-center backdrop-blur-[6px]">
             {path.ready && (
             <ProgressRing
@@ -193,18 +148,7 @@ export function AppPath({
                   <GraduationCap className="h-4 w-4" aria-hidden />
                   Take the path test
                 </Link>
-                {/*
-                  ⚠⚠ THE CERTIFICATE IS NAMED ONLY WHERE ONE CAN BE EARNED.
-                  ⚠ 15 of 23 paths have no assessment row, so *"the last thing
-                  between you and the certificate"* named a prize that path does
-                  not award — a promise, which ruling 18 bans outright.
-                  ⚠⚠⚠ THE `allDone` BRANCH'S LINK IS DELIBERATELY NOT GATED:
-                  ruling 54 keeps the test open to anyone, and the test page
-                  itself degrades honestly (*"The test isn't open yet."*), so it
-                  is a real destination rather than a door onto a wall.
-                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                  //   Every lesson watched. The test is the last thing between you and the certificate.
-                */}
+                {/* THE CERTIFICATE IS NAMED ONLY WHERE ONE CAN BE EARNED. */}
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
                   {path.test.exists
                     ? "Every lesson watched. The test is the last thing between you and the certificate."
@@ -217,7 +161,7 @@ export function AppPath({
                   href={`/learn/${path.slug}/${path.nextLesson.id}`}
                   className="flex w-full items-center justify-center gap-2 bg-magenta px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-magenta-dark"
                 >
-                  {/* ⚠ NO PLAY GLYPH ON AN UNPLAYABLE LESSON, and not "Resume". */}
+                  {/* NO PLAY GLYPH ON AN UNPLAYABLE LESSON, and not "Resume". */}
                   {path.nextLesson.playable ? (
                     <>
                       <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
@@ -227,17 +171,7 @@ export function AppPath({
                     <>Open lesson {path.nextLesson.position}</>
                   )}
                 </Link>
-                {/*
-                  ⚠⚠⚠ THE TEST IS REACHABLE AT 0% (ruling 26a). Before this, the
-                  `Take the path test` link rendered ONLY in the `allDone` branch
-                  — so a member who wanted to audit the test had **no way to
-                  reach it from the page that is about it.** ⚠ That is `E579`
-                  inverted: not a control that refuses, but a control that is not
-                  drawn for somebody entitled to press it.
-                  ⚠⚠ `Resume` stays the PRIMARY action, because finishing the
-                  lessons is still the ordinary path — this is a second, quieter
-                  door, not a competing one.
-                */}
+                {/* THE TEST IS REACHABLE AT 0% (ruling 26a). Before this, the */}
                 {path.test.ready && (
                   <Link
                     href={`/learn/${path.slug}/test`}
@@ -246,13 +180,7 @@ export function AppPath({
                     Or sit the path test now
                   </Link>
                 )}
-                {/*
-                  ⚠⚠ SAME RULE, SECOND SITE — and finding it twice is why the
-                  certificate claim is now driven by `test.exists` in all three
-                  places rather than written out by hand in each.
-                  ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                  //   {remaining} lesson(s) and the path test stand between you and the certificate.
-                */}
+                {/* SAME RULE, SECOND SITE — and finding it twice is why the */}
                 <p className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">
                   {path.test.exists ? (
                     <>
@@ -273,46 +201,10 @@ export function AppPath({
 
       <div className="grid items-start gap-6 px-5 pt-6 pb-8 sm:px-8 min-[1100px]:grid-cols-[1fr_296px]">
         <div className="min-w-0">
-          {/*
-            ── ⚠⚠⚠ THE STAGE RAIL DOES NOT RENDER ON AN UNREADY PATH (Q4) ────
-
-            ⚠⚠ The rail is Enrolled → Courses → Path Test → Certificate. On a
-            path with no playable lesson **every one of those stages is
-            unreachable**, so drawing them as pending says the member is part
-            way along a journey that has not opened.
-            ⚠ `E607`'s notice above already states the fact plainly; the rail
-            underneath it was contradicting the notice.
-            ⚠⚠⚠ CORRECTION, CAUGHT IN THE SCREENSHOT AND NOT BY A GATE:
-            **`PathSpine` IS THE COURSE OUTLINE, NOT THE STAGE RAIL.** My first
-            pass hid it, and the result was `E607`'s notice saying *"The outline
-            below is real — these are the lessons this path will cover"* above
-            **nothing at all**. ⚠ The notice pointed at an empty page.
-            ⚠ SO THE OUTLINE RENDERS ALWAYS. Reading is never gated (`E362`):
-            *"somebody deciding whether this path is worth waiting for needs to
-            see what it covers."* ⚠⚠ THE STAGE RAIL IS THE TEST NODE AND THE
-            CERTIFICATE NODE BELOW — those are the stages nothing can reach, and
-            those are what stay hidden.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   ⚠⚠ THE OUTLINE IS NOT HIDDEN WITH IT — `PathSpine` is the STAGE rail…
-            //   {path.ready && <PathSpine path={path} />}
-          */}
-          {/*
-            ── ⚠⚠⚠ THE STAGE RAIL, WS-C ITEM 1 ──────────────────────────────
-
-            ⚠ *"The same stage tags as a WORK record… so the whole app speaks one
-            pattern."* ⚠⚠ **IT IS SIGNED-IN ONLY, AND THAT IS THE SAME RULE
-            `LearnTabs` FOLLOWS** (`E627`): all four stages are statements about
-            THIS MEMBER'S standing, so for a visitor every one of them would draw
-            as `upcoming` — **a journey they are supposedly part-way along when
-            they do not have an account.** ⚠ The enrol button already says what a
-            visitor's next move is, in one place.
-            ⚠⚠ **AND IT INHERITS Q4's RULE:** it sits inside `path.ready`, because
-            on a path with no playable lesson every stage is unreachable and
-            drawing them pending contradicts the notice above.
-          */}
+          {/* THE STAGE RAIL DOES NOT RENDER ON AN UNREADY PATH (Q4) */}
+          {/* THE STAGE RAIL, WS-C ITEM 1 */}
           {path.ready && signedIn && <PathStages path={path} />}
-          {/* ⚠ THE `Courses` STAGE'S DESTINATION. `scroll-mt` so the app band
-              does not cover the heading the anchor lands on. */}
+          {/* THE `Courses` STAGE'S DESTINATION. `scroll-mt` so the app band */}
           <div id="path-courses" className="scroll-mt-24">
             <PathSpine path={path} />
           </div>
@@ -325,20 +217,10 @@ export function AppPath({
               className="absolute top-4 left-0 z-[2] grid h-10 w-10 place-items-center rounded-[13px] border-2 border-dashed border-line bg-white"
               aria-hidden
             >
-              {/*
-                ⚠⚠⚠ NO PADLOCK, EVER (ruling 26a). Scott ruled there is **no
-                completion gate — anyone may audit the certification test.**
-                `E611` removed the gate from the TEST PAGE and missed this glyph
-                and the copy below it. ⚠ A padlock is a claim about permission,
-                and the permission it claims does not exist.
-                ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                //   {allDone ? <GraduationCap …/> : <Lock className="… text-ink-2/50" />}
-              */}
+              {/* NO PADLOCK, EVER (ruling 26a). Scott ruled there is no */}
               <GraduationCap className="h-[17px] w-[17px] text-magenta" />
             </span>
-            {/* ⚠ STACKS BELOW 640px — same defect as the coverage strip: a
-                `flex-1` prose block beside a fixed right column collapsed to one
-                word per line at 390px rather than wrapping. */}
+            {/* STACKS BELOW 640px — same defect as the coverage strip: a */}
             <div className="flex flex-col gap-4 rounded-[15px] bg-[linear-gradient(115deg,#1a1030,var(--color-learn-wine)_60%,var(--color-learn-orchid))] px-5 py-5 text-white shadow-[0_20px_44px_-26px_rgba(61,21,96,0.7)] sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
               <div className="min-w-0 sm:flex-1">
                 <h4 className="font-display text-[16.5px] font-bold">
@@ -348,44 +230,19 @@ export function AppPath({
                   One test for the whole path — every learner sits the same question set, so passing
                   means the same thing every time.
                 </p>
-                {/*
-                  ⚠ THE UNLOCK RULE IS A DECISION, NOT A MEASUREMENT, AND IT IS NOT
-                  SETTLED. Nothing in the schema enforces a prerequisite — the test
-                  route does not check completion today. The copy ships AS MOCKED
-                  ("all N lessons") and whether the bar is 100%, 80% or none is
-                  Scott's call. Flagged in the report; it belongs in its own brief.
-                */}
+                {/* THE UNLOCK RULE IS A DECISION, NOT A MEASUREMENT, AND IT IS NOT */}
                 <span className="mt-2.5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-2.5 py-1.5 text-[10.5px]">
                   {allDone ? (
                     <>
                       <Check className="h-3 w-3" aria-hidden />
-                      {/*
-                        ⚠ "the test is open" IS ONLY TRUE IF IT IS. Finishing the
-                        lessons clears the PREREQUISITE; whether the question set
-                        has been reviewed is a separate gate, and this chip sat
-                        next to a column saying the set was still being checked.
-                        Two true sentences that read as a contradiction.
-                      */}
+                      {/* lessons clears the PREREQUISITE; whether the question set */}
                       {path.test.ready
                         ? "Every lesson complete — the test is open"
                         : "Every lesson complete — waiting on the question set"}
                     </>
                   ) : (
                     <>
-                      {/*
-                        ⚠⚠⚠ THE GATE IS GONE AND SO IS THE SENTENCE THAT NAMED IT
-                        (ruling 26a). It read *"Unlocks when all N lessons are
-                        complete"* — ⚠ **a promise about a rule that does not
-                        exist.** The test route has never checked completion, so
-                        this copy described a lock nothing enforced.
-                        ⚠⚠ What replaces it states the two TRUE facts: the test
-                        is open, and there are lessons left. **A member may sit it
-                        now; the count is information, not a barrier.**
-                        ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                        //   <Lock className="h-3 w-3" aria-hidden />
-                        //   Unlocks when {path.lessons === 1 ? "the lesson is" : `all ${path.lessons} lessons are`}
-                        //   complete — {remaining} to go
-                      */}
+                      {/* THE GATE IS GONE AND SO IS THE SENTENCE THAT NAMED IT */}
                       {path.test.ready
                         ? `Open now — ${remaining} lesson${remaining === 1 ? "" : "s"} still to watch`
                         : "Waiting on the question set"}
@@ -393,20 +250,9 @@ export function AppPath({
                   )}
                 </span>
               </div>
-              {/*
-                ⚠ READ FROM `LearnAssessment`, NOT PRINTED AS 70 / 3. Measured on
-                the live DB: exactly ONE of the 23 paths has an assessment row
-                (70% / 3). The other 22 have none, so this block says so rather
-                than quoting the column defaults as though they were this path's
-                rules.
-              */}
+              {/* READ FROM `LearnAssessment`, NOT PRINTED AS 70 / 3. Measured on */}
               <div className="flex gap-8 sm:block sm:shrink-0 sm:text-right">
-                {/*
-                  ⚠ `ready`, NOT `exists` (WS4). A generated set lands as DRAFT
-                  until a human reads it; quoting its pass mark and attempt limit
-                  beside a test nobody can sit would be the page stating the rules
-                  of a closed door.
-                */}
+                {/* until a human reads it; quoting its pass mark and attempt limit */}
                 {path.test.ready ? (
                   <>
                     <div className="mb-2">
@@ -432,20 +278,7 @@ export function AppPath({
               </div>
             </div>
 
-            {/*
-              ── ⚠⚠⚠ THE CERTIFICATE NODE RENDERS ONLY WHERE ONE CAN BE EARNED ──
-
-              ⚠⚠ Its copy — *"Lands on your profile with a public verify link"* —
-              is a PROMISE, and on the **15 of 23 paths with no assessment row**
-              it promised something that path cannot award by any route.
-              ⚠ **A certificate comes from passing the path test. No test, no
-              certificate.** `Certification` where `issued_from = "LEARN"`:
-              **0 rows issued, ever.**
-              ⚠⚠⚠ **THE THIRD SITE OF ONE FALSEHOOD** — the `CERTIFICATE` stat,
-              the two hero sentences, and this node all asserted it separately.
-              **`E585`: one concept in N places, kept in step by hand** — which
-              is exactly why it stayed wrong in three of them at once.
-            */}
+            {/* THE CERTIFICATE NODE RENDERS ONLY WHERE ONE CAN BE EARNED */}
             {path.test.exists && (
             <div className="mt-3 flex flex-col items-start gap-3 rounded-[15px] border-2 border-magenta bg-[linear-gradient(135deg,#fff,#fbeafb)] px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full bg-[linear-gradient(140deg,var(--color-magenta),#8b1fa8)]">
@@ -456,25 +289,11 @@ export function AppPath({
                   {path.title} — {path.certificate.earned ? "Certified" : "Certificate"}
                 </b>
                 <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">
-                  {/*
-                    ⚠⚠⚠ `Free, like everything here.` IS AN UNQUALIFIED BLANKET CLAIM OVER
-                    THE WHOLE PRODUCT, AND IT IS ALREADY FALSE (`E734`): `lib/plans.ts`
-                    prices Plus at $19.99. ⚠ It also carried no "as of" date.
-                    ⚠⚠ THE REPLACEMENT CLAIMS ONLY WHAT THIS SENTENCE IS ABOUT — the
-                    certificate — which is the rule: *"only claim what the app does today."*
-                    ⚠ SUPERSEDED, quoted not deleted (`E164`):
-                    //   Lands on your profile with a public verify link. Free, like
-                    //   everything here.
-                  */}
+                  {/* THE WHOLE PRODUCT, AND IT IS ALREADY FALSE : `lib/plans.ts` */}
                   Lands on your profile with a public verify link. {FREE_AS_OF_LINE}
                 </p>
               </div>
-              {/*
-                ⚠ THE REAL ROUTE. `/verify/[credentialId]` exists and
-                `Certification.public_credential_url` holds the path — so an earned
-                certificate LINKS to its own page, and an unearned one shows the
-                SHAPE of the URL rather than a fabricated id.
-              */}
+              {/* THE REAL ROUTE. `/verify/[credentialId]` exists and */}
               {path.certificate.earned && path.certificate.verifyUrl ? (
                 <Link
                   href={path.certificate.verifyUrl}
@@ -491,32 +310,8 @@ export function AppPath({
           </>
           )}
 
-          {/*
-            ── ⚠⚠⚠ THE PATH FORUM PANEL (`P2-A4-E611`, Q8) ───────────────────
-
-            ⚠⚠ IT RENDERED TO NOBODY UNTIL NOW, AND THAT IS `E579` EXACTLY.
-            `[slug]/page.tsx` returns `<AppPath>` early for ANY signed-in
-            viewer — before `getPathForumTeaser` is ever reached — and the
-            teaser's `canOpen` is false for every signed-OUT viewer by
-            `canAccessPathForum`'s first line. ⚠ So the only door to a path's
-            room was drawn on the one branch where it could never open.
-
-            ⚠ THE COUNTS ARE COUNTED AND THE ROOM IS EMPTY: 27 boards,
-            **0 threads and 0 posts** on 2026-09-23. ⚠⚠ The panel says so
-            rather than implying activity.
-          */}
-          {/*
-            ── ⚠⚠ THE DEMAND SIGNAL (`P2-A4-E611` WS-C) ──────────────────────
-            ⚠ SCOTT: *"list them and mix them down only if there is an
-            interest."* ⚠⚠ Until now there was **no way to ask** — the 11
-            unready paths were hidden from discovery entirely, so silence was
-            never evidence.
-            ⚠ PER PATH, NOT PER LESSON — a tenth of the noise for the same
-            signal, and the production decision is taken a path at a time.
-            ⚠⚠ THE HEADING CHANGES WITH THE STATE, THE CONTROL DOES NOT: on an
-            unready path the ask is for the videos; on a ready one it is for
-            more of the same. **Neither promises anything.**
-          */}
+          {/* THE PATH FORUM PANEL , Q8) */}
+          {/* THE DEMAND SIGNAL WS-C) */}
           <div className="mt-6 rounded-brand border border-line bg-white p-5">
             <h3 className="font-display text-[16px] font-bold">
               {path.ready ? "Want More Like This?" : "Want This One Made?"}
@@ -537,23 +332,8 @@ export function AppPath({
           {path.forum && <PathForumPanel forum={path.forum} pathSlug={path.slug} />}
         </div>
 
-        {/*
-          ⚠ STICKY ONLY WHERE THERE ARE TWO COLUMNS. `min-[1100px]:sticky` — below
-          that the rail is stacked under the spine, and a sticky card in a single
-          column pins itself over whatever follows.
-        */}
-        {/*
-          ⚠⚠ IT CLEARS THE PINNED BAND (`P2-ALL-E587` WS-B). ⚠ SUPERSEDED,
-          quoted not deleted (`E164`):
-          // <aside className="flex flex-col gap-3.5 min-[1100px]:sticky min-[1100px]:top-3.5">
-          ⚠ Same reason as the lesson aside: `top-3.5` was measured against the
-          page, and a pinned band sits over it. `0.875rem` is `top-3.5`'s own
-          value. ⚠⚠ THE `top` APPLIES AT EVERY WIDTH AND IS HARMLESS BELOW
-          1100px, where `position` is `static` and `top` does nothing.
-          ⚠⚠⚠ NO FALLBACK IN THE `var()` — see the lesson aside. A literal 67px
-          fallback is the hard-coded height this brief removes, and it is wrong
-          below 780px.
-        */}
+        {/* STICKY ONLY WHERE THERE ARE TWO COLUMNS. `min-[1100px]:sticky` — below */}
+        {/* IT CLEARS THE PINNED BAND WS-B). */}
         <aside
           className="flex flex-col gap-3.5 min-[1100px]:sticky"
           style={{ top: "calc(var(--pm-band-h) + 0.875rem)" }}
@@ -575,14 +355,7 @@ export function AppPath({
                         ? `${ins.lessons} lesson${ins.lessons === 1 ? "" : "s"} in this path`
                         : "Path lead"}
                     </span>
-                    {/*
-                      ⚠ `Message` IS NOT BUILT. There is no instructor-messaging
-                      model in the schema, and the standing rule (decisions-01,
-                      2026-08-19) is that a link ships only when its destination
-                      exists. `View profile` is the one real action, and it only
-                      renders when the marketplace would actually show that
-                      profile — the visibility check is already done in the query.
-                    */}
+                    {/* model in the schema, and the standing rule (decisions-01 */}
                     {ins.profileSlug && (
                       <Link
                         href={`/providers/${ins.profileSlug}`}
@@ -608,12 +381,7 @@ export function AppPath({
             </Card>
           )}
 
-          {/*
-            ⚠ THE LEADERBOARD IS OMITTED, NOT EMPTIED, BELOW THE FLOOR. A ranking
-            of three named learners published to a fourth is a different act from a
-            ranking of a thousand. `getAppPath` returns [] below 10 enrolled, and
-            measured on the live DB nothing clears that today.
-          */}
+          {/* THE LEADERBOARD IS OMITTED, NOT EMPTIED, BELOW THE FLOOR. A ranking */}
           {path.leaderboard.length > 0 && (
             <Card title="This Path, This Month">
               {path.leaderboard.map((r, i) => (
@@ -662,30 +430,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-/**
- * ── ⚠⚠⚠ THE PATH FORUM PANEL (`P2-A4-E611`, Q8) ──────────────────────────
- *
- * ⚠⚠ THE MOCKUP SHOWS *"42 learners · 6 new posts this week"*. ⚠⚠⚠ BOTH ARE
- * SAMPLES. Measured 2026-09-23: **27 boards, 0 threads, 0 posts**, and one
- * enrolment in the whole database. **A mockup is a layout, not a data source;
- * where they disagree the query wins.**
- *
- * ⚠ THE POST COUNT RENDERS ONLY ABOVE ZERO — `getPathForumTeaser`'s own note
- * says why: *"a forum advertising '0 threads' is an anti-advertisement."*
- * ⚠⚠ AND THE EMPTY ROOM STILL SAYS SOMETHING TRUE rather than going quiet: at
- * genuine zero it names the first move, which is the standing rule for a zero.
- * ⚠ IT PROMISES NOTHING — no "join the conversation", no activity implied.
- *
- * ⚠⚠ NO THREAD TITLE REACHES THIS COMPONENT AND NONE EVER MAY. The teaser
- * carries counts only and `check:forums` fails the build if a title enters it.
- *
- * ⚠⚠ `canOpen` IS NOT THE BOUNDARY — `getBoard` refuses on the server. It only
- * decides whether to offer a door, so a member who cannot enter is told what
- * would let them in instead of meeting a refusal.
- *
- * ⚠ THE SLUG IS `path-${path.slug}`, WHICH IS `ensurePathBoard`'S OWN
- * DERIVATION, and it is the convention `[slug]/page.tsx` already linked with.
- */
+/** THE PATH FORUM PANEL , Q8) */
 function PathForumPanel({
   forum,
   pathSlug,
@@ -697,7 +442,7 @@ function PathForumPanel({
     <div className="mt-6 rounded-brand border border-line bg-white p-5">
       <h3 className="font-display text-[16px] font-bold">Path Group</h3>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">
-        {/* ⚠ A COUNTED FIGURE, SCOPED TO THIS PATH — enrolments in it. */}
+        {/* A COUNTED FIGURE, SCOPED TO THIS PATH — enrolments in it. */}
         {forum.members} {forum.members === 1 ? "learner" : "learners"}
         {forum.threads > 0 ? ` · ${forum.threads} ` : ""}
         {forum.threads > 0 ? (forum.threads === 1 ? "thread" : "threads") : ""}
@@ -715,7 +460,7 @@ function PathForumPanel({
           Open the Group
         </Link>
       ) : (
-        /* ⚠ IT NAMES WHAT OPENS THE DOOR, never what the member lacks. */
+        /* IT NAMES WHAT OPENS THE DOOR, never what the member lacks. */
         <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
           The group is for people taking this path. Enrolling opens it.
         </p>

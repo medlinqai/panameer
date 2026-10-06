@@ -150,18 +150,7 @@ export default async function Page({
         )}
       </dl>
 
-      {/*
-        ⚠⚠ WHAT CHANGED — SHOWN TO THE PROVIDER BEFORE THEY ACCEPT.
-        *"ERP approvers cut quantities and shorten dates — that is what approval
-        IS."* Accepting terms without being shown they moved is how a marketplace
-        loses providers.
-
-        ⚠⚠ AND THE HEADING SAYS EXACTLY WHAT IS BEING COMPARED. This is the ORDER
-        against the WORK-REQUEST LINE — what the provider was ASKED to price. It
-        is NOT the bid: `WorkOrderLine` has no link of any kind to
-        `ProposalLine`, so an order-versus-bid diff cannot be computed today
-        and this does not imply one. See `termChanges` and the report.
-      */}
+      {/* WHAT CHANGED — SHOWN TO THE PROVIDER BEFORE THEY ACCEPT. */}
       {o.hasChanges && (
         <div className="mt-6 rounded-brand border-2 border-amber-400/60 bg-amber-50/50 p-5">
           <p className="text-[16px] font-bold">These terms differ from the request</p>
@@ -207,18 +196,7 @@ export default async function Page({
       <History events={await orderHistory(o.id)} />
 
       <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
-        {/*
-          ⚠⚠ RAISING A PAYMENT REQUEST LIVES INSIDE THE ORDER (`P1-J4-E394`).
-          `nav.ts`: *"Timesheet and fixed-firm-price billing both surface as
-          Payment Requests generated from a Work Order… A rail item for a thing
-          that is a tab inside another thing taught the wrong model of how work
-          gets billed."*
-
-          ⚠ AND IT RENDERS FOR THE PROVIDER, ON A RELEASED ORDER, AND NOBODY
-          ELSE — the same party rule the Accept/Release buttons follow. A buyer
-          has nothing to claim; an unreleased order has nothing claimable.
-          Absent, not disabled.
-        */}
+        {/* RAISING A PAYMENT REQUEST LIVES INSIDE THE ORDER . */}
         {o.party === "PROVIDER" && o.status === "RELEASED" && (
           <Button href={`/orders/${o.id}/settle`}>Raise a payment request</Button>
         )}
@@ -233,17 +211,7 @@ export default async function Page({
   );
 }
 
-/**
- * ⚠⚠ THE TWO BASES DRAW DIFFERENTLY AND THE TWO BRANCHES ARE NOT COSMETIC.
- *
- * A `RATE` line draws down BY QUANTITY, repeatedly, so it gets ordered / drawn /
- * remaining and a bar.
- *
- * ⚠⚠ AN `AMOUNT` LINE DRAWS ONCE, IN FULL (`E388` rule 3) — so it gets DRAWN or
- * NOT DRAWN and **no bar, no percentage and no "remaining"**. A part-drawn amount
- * line cannot exist, and `Drawdown`'s AMOUNT variant carries no field that could
- * express one, so this branch has nothing partial to render even by mistake.
- */
+/** THE TWO BASES DRAW DIFFERENTLY AND THE TWO BRANCHES ARE NOT COSMETIC. */
 function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: string; showFee: boolean }) {
   const d = line.drawdown;
   return (
@@ -296,7 +264,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
           </>
         ) : (
           <div className="text-[14px]">
-            {/* ⚠ DRAWN OR NOT. There is no third state, and no bar. */}
+            {/* DRAWN OR NOT. There is no third state, and no bar. */}
             {d.drawn ? (
               <span className="font-semibold text-emerald-700">
                 ✓ Drawn in full — {formatCents(d.drawnCents, currency)}
@@ -306,12 +274,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
                 Not drawn yet · draws once, in full
               </span>
             )}
-            {/*
-              ⚠⚠ THE IMPOSSIBLE STATE IS REPORTED, NOT DRAWN. `assertSettlementDraw`
-              refuses a partial amount draw, so a row that is neither 0 nor the full
-              amount did not come from the settlement path. Rendering it as a
-              progress bar would make a data fault look like a feature.
-            */}
+            {/* THE IMPOSSIBLE STATE IS REPORTED, NOT DRAWN. `assertSettlementDraw` */}
             {d.inconsistent && (
               <p className="mt-1.5 text-[13.5px] font-semibold text-amber-700">
                 This line records a partial draw of {formatCents(d.drawnCents, currency)}
@@ -323,8 +286,7 @@ function LineCard({ line, currency, showFee }: { line: OrderLineView; currency: 
         )}
       </div>
 
-      {/* ⚠ A line with no originating request line says so, rather than showing an
-          empty diff — which would imply a comparison was made and found nothing. */}
+      {/* A line with no originating request line says so, rather than showing an */}
       {!line.hasOrigin && (
         <p className="mt-3 text-[13px] text-ink-2">
           No originating work-request line — nothing to compare these terms with.

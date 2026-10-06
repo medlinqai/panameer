@@ -34,11 +34,7 @@ export default async function LessonPage({
         <Link href={`/learn/${path.slug}`} className="font-semibold hover:text-magenta">
           {path.title}
         </Link>
-        {/*
-          A single-course path usually names its course after itself, so the
-          crumb would read "1. Background / 1. Background" and look like a bug.
-          Skip the repeat rather than render it.
-        */}
+        {/* A single-course path usually names its course after itself, so the */}
         {course.title !== path.title && (
           <>
             <span className="mx-2">/</span>
@@ -91,34 +87,13 @@ export default async function LessonPage({
             completed={lesson.completed}
             next={view.next}
             instructorName={instructor?.name ?? null}
-            /*
-              D2 — the lesson itself stays open to everyone. Only recording that
-              you finished it needs somewhere to record it.
-            */
+            // D2 — the lesson itself stays open to everyone. Only recording that
             signedIn={Boolean(viewer)}
           />
         </div>
 
         {/* In-course nav — where you are, and what's on either side. */}
-        {/*
-          ⚠⚠ IT CLEARS THE PINNED BAND (`P2-ALL-E587` WS-B). ⚠ SUPERSEDED,
-          quoted not deleted (`E164`):
-          // <aside className="lg:sticky lg:top-6 lg:self-start">
-          ⚠⚠⚠ `top-6` WAS MEASURED AGAINST THE TOP OF THE PAGE. With the band
-          pinned (`WS-A`) that puts the aside UNDERNEATH it — the defect this
-          workstream exists to fix. ⚠ It now reads the band's own height, so it
-          cannot drift when the band changes: `--pm-band-h` is declared once in
-          `app-band.css` and is 67px or 57px depending on the menu's shape.
-          ⚠ The `1.5rem` is `top-6`'s own value, kept.
-          ⚠⚠⚠ NO FALLBACK IN THE `var()`, DELIBERATELY. It read
-          `var(--pm-band-h, 67px)` until `WS-C` caught it: a literal fallback is
-          the hard-coded height this brief exists to remove, and 67 is WRONG
-          below 780px where the band is 57. ⚠ With no fallback, a missing
-          property makes `top` invalid and the aside simply does not stick —
-          visible and debuggable, rather than silently off by ten pixels.
-          ⚠ It cannot fire in practice: `app-band.css` is imported by `AppBand`,
-          so anywhere the band renders, the property is declared.
-        */}
+        {/* IT CLEARS THE PINNED BAND WS-B). */}
         <aside
           className="lg:sticky lg:self-start"
           style={{ top: "calc(var(--pm-band-h) + 1.5rem)" }}

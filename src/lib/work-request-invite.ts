@@ -18,33 +18,18 @@ export type InviteInput = {
   /** The line the invited providers are asked to price. */
   lineId: string;
   providerPersonIds: string[];
-  /** ⚠ REQUIRED TO ISSUE. See `assertIssuable`. */
+  /** REQUIRED TO ISSUE. See `assertIssuable`. */
   respondsBy: string | null;
   message?: string | null;
 };
 
 export type InviteResult = {
   created: { providerPersonId: string; requestNumber: string }[];
-  /** ⚠ Already invited — reported, not treated as a failure. See below. */
+  /** Already invited — reported, not treated as a failure. See below. */
   alreadyInvited: string[];
 };
 
-/**
- * Issue one ITB per named provider.
- *
- * ⚠⚠ ONE ITB PER PROVIDER, WHICH IS `E395`'s `@@unique([work_request_id,
- * provider_person_id])`. The fan-out is the document, not a list inside one — so
- * this loops and creates N rows rather than creating one row with N providers.
- *
- * ⚠ RE-INVITING SOMEBODY IS NOT AN ERROR, IT IS A NO-OP THAT SAYS SO. A buyer
- * who invites five providers and then invites a sixth by selecting all six must
- * not get a wall of "already invited" and no sixth invitation. The unique
- * constraint decides; the result reports both halves.
- *
- * ⚠ AND THE LINE IS NAMED ON THE ITB. `ProposalRequestLine.work_request_line_id` is
- * why — not every ITB covers every line, and a request for a DBA and a developer
- * goes out as two different invitations naming two different lines.
- */
+/** Issue one ITB per named provider. */
 export async function inviteProviders(
   viewer: Viewer,
   workRequestId: string,
@@ -53,16 +38,14 @@ export async function inviteProviders(
   const { personId, pAccountId } = await resolveBuyer(viewer);
   const wr = await loadOwned(viewer, workRequestId, pAccountId);
 
-  /* ⚠ THE LINE MUST BELONG TO THE REQUEST THE VIEWER OWNS. The client supplies a
-     line id; ownership is proved by the join, never by the id. */
+  // THE LINE MUST BELONG TO THE REQUEST THE VIEWER OWNS. The client supplies a
   const line = await prisma.workRequestLine.findFirst({
     where: { id: input.lineId, work_request_id: wr.id },
     select: { id: true },
   });
   if (!line) throw new WorkRequestError("Line not found", "NOT_FOUND");
 
-  /* ⚠⚠ A BID WITH NO CLOSING DATE NEVER CLOSES — `E395`'s rule, enforced by
-     `E395`'s function rather than restated here. */
+  // A BID WITH NO CLOSING DATE NEVER CLOSES — 's rule, enforced by
   const respondsBy = input.respondsBy ? new Date(input.respondsBy) : null;
   assertIssuable({ responds_by: respondsBy });
   if (respondsBy && respondsBy.getTime() < Date.now())
@@ -71,8 +54,7 @@ export async function inviteProviders(
   const ids = [...new Set(input.providerPersonIds)].filter(Boolean);
   if (ids.length === 0) throw new WorkRequestError("Choose at least one provider", "INVALID");
 
-  /* ⚠ EVERY INVITEE MUST ACTUALLY BE A PROVIDER — checked here, not assumed from
-     the picker. The picker is a convenience; this is the boundary. */
+  // EVERY INVITEE MUST ACTUALLY BE A PROVIDER — checked here, not assumed from
   const providers = await prisma.person.findMany({
     where: { id: { in: ids }, is_service_provider: true },
     select: { id: true },
@@ -98,7 +80,7 @@ export async function inviteProviders(
           request_number: requestNumber,
           work_request_id: wr.id,
           provider_person_id: providerPersonId,
-          /* ⚠ THE INVITER IS RESOLVED FROM THE SESSION. Never from input. */
+          /* THE INVITER IS RESOLVED FROM THE SESSION. Never from input. */
           invited_by_person_id: personId,
           issued_at: new Date(),
           responds_by: respondsBy,
@@ -109,56 +91,23 @@ export async function inviteProviders(
       });
       created.push({ providerPersonId, requestNumber });
 
-      /*
-        ── ⚠⚠⚠ THE BELL ENTRY (`P2-A8-E680`, ruling 86) ────────────────────
-
-        ⚠⚠ **THIS WRITER SHIPPED WITHOUT ONE.** `proposalRequest.create` has been
-        running from a reachable page all along and **the invited provider was
-        never told** — no bell row, nothing on their worklist. It is the one
-        piece of WS-B that was missing; the match and the invite were already
-        built.
-
-        ⚠ **INSIDE THE LOOP AND AFTER THE ROW**, so a provider is notified only
-        about an invitation that actually exists, and a re-invite (the `continue`
-        above) notifies nobody twice.
-        ⚠⚠ **`notify()` NEVER THROWS INTO THIS CALLER** — it catches, logs and
-        continues by its own contract, so a notification outage cannot cost a
-        buyer their invitations. Awaited for ordering, not for safety.
-        ⚠⚠⚠ **NO SENDER.** Ruling 86: `notify()` writes the entry and has no
-        email half; `86c`/`86e` are Scott's open decision. Nothing here sends.
-
-        ⚠⚠ **NO BUYER NAME IS PASSED, AND THAT IS DELIBERATE.** `WorkRequest`
-        carries `company_visibility` / `company_code_name`, and
-        `buildBuyerIdentity` is the ONE redaction that decides what a provider
-        may see. ⚠⚠⚠ **A notification is precisely where that rule would be
-        bypassed** — the provider's bell is outside the page that applies it.
-        Re-implementing the redaction here would be a second definition
-        (`E585`) of the rule `check:work-request-identity` guards with 54
-        assertions. So the title falls back to *"A buyer"*, which is true for
-        both visibilities. ⚠ Passing the name safely means passing
-        `buildBuyerIdentity`'s OUTPUT, and that is a change to this function's
-        query — reported, not smuggled in.
-      */
+      // THE BELL ENTRY , ruling 86)
       await notify({
         event: "work.invited_to_propose",
         personId: providerPersonId,
         entityType: "ProposalRequest",
         entityId: wr.id,
-        /* ⚠ ONE ENTRY PER (PROVIDER × REQUEST). Re-inviting after a decline
-           must not stack a second identical row on their worklist. */
+        // ONE ENTRY PER (PROVIDER × REQUEST). Re-inviting after a decline
         dedupeKey: `work.invited_to_propose:${wr.id}:${providerPersonId}`,
         vars: { workTitle: wr.title, requestId: wr.id },
       });
     } catch {
-      /* ⚠ THE UNIQUE CONSTRAINT IS THE ARBITER UNDER A RACE. Two concurrent
-         invites of the same provider: the second lands here and is reported as
-         already invited, which is the truth. */
+      // THE UNIQUE CONSTRAINT IS THE ARBITER UNDER A RACE. Two concurrent
       already.add(providerPersonId);
     }
   }
 
-  /* ⚠ MARK THE LINE AS BEING SOURCED — but only from DRAFT. A line already
-     ASSIGNED to somebody is not walked backwards by inviting a second opinion. */
+  // MARK THE LINE AS BEING SOURCED — but only from DRAFT. A line already
   if (created.length)
     await prisma.workRequestLine.updateMany({
       where: { id: line.id, status: "DRAFT" },
@@ -176,14 +125,7 @@ export type InvitedProvider = {
   respondsBy: string | null;
 };
 
-/**
- * Who has already been invited on this request.
- *
- * ⚠⚠ THIS RETURNS THE INVITATIONS, NOT THE RESPONSES. There is deliberately no
- * `status` of the bid here and no `include: { proposal: true }` — see the fence at the
- * top of the file. A buyer looking at this page learns who was asked; what came
- * back is the bid screen's job and the bid screen is not this brief.
- */
+/** Who has already been invited on this request. */
 export async function invitedOn(
   viewer: Viewer,
   workRequestId: string

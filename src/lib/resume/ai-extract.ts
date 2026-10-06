@@ -266,33 +266,8 @@ export async function aiExtractResume(text: string): Promise<AiExtractOutcome> {
   };
 }
 
-/**
- * AI output → the shape the rest of the import already speaks.
- *
- * Keeping this conversion here means `import.ts`, the review step and the
- * fixture harness are unchanged by the AI tier — the two paths converge before
- * anything downstream can tell them apart. Projects are folded onto their
- * employer where one is named, and kept as standalone entries otherwise, which
- * is the same distinction the profile already draws (Solo Projects, E074).
- */
-/*
-  A DEGREE IS NOT A SCHOOL (WS7a, post-processing).
-
-  Live data holds education rows whose institution is "Bachelor of Arts in
-  Accounting" or "Business Administration" — the model put the qualification in
-  the school field and left the school out. The row then renders as if someone
-  attended a university called "Bachelor of Arts in Accounting".
-
-  Fixed HERE rather than in the prompt, deliberately. The brief warns the prompt
-  is fragile and requires a before/after harness run for any change to it; a
-  deterministic post-filter needs no such gamble, is unit-testable without
-  spending a model call, and repairs rows the prompt fix could never reach —
-  everything already imported.
-
-  It only ever MOVES a value it is confident about, and never invents a school:
-  a row left without an institution keeps its degree and field, which is a
-  partial record rather than a wrong one.
-*/
+/** AI output → the shape the rest of the import already speaks. */
+// A DEGREE IS NOT A SCHOOL (WS7a, post-processing).
 const DEGREE_LEAD =
   /^(bachelors?|masters?|associates?|doctor(ate)?|ph\.?d|b\.?s\.?c?|b\.?a|m\.?s\.?c?|m\.?b\.?a|m\.?a|b\.?eng|m\.?eng|b\.?tech|diploma|certificate)\b/i;
 
@@ -303,24 +278,7 @@ const NAMES_A_SCHOOL =
 /** Qualification words that are not degree-LEADS — "Post Graduate Program". */
 const QUALIFICATION = /\b(degree|diploma|certificat\w*|program(me)?|course)\b/i;
 
-/**
- * SCRUB THE INSTITUTION STRING, then decide whether what is left is a school.
- *
- * WS-3 (2026-08-13). `fixEducationRow` already moved a degree out of the
- * institution slot, but it only fired when the string did NOT name a school —
- * so "San Diego State University  •  3.72 GPA" sailed through untouched and
- * printed, GPA and all, on a public card. Nine live rows look like that. The
- * scrub runs FIRST, so a school with debris attached becomes a clean school
- * instead of being waved past as "already fine".
- *
- * Every rule here is subtractive. Nothing is inferred, completed or guessed:
- * a school name only ever comes out of the string that went in.
- *
- * Returns the school when one survives, and otherwise returns the scrubbed text
- * as `salvage` with an EMPTY institution — the caller re-files it. Blank beats
- * wrong: a card with two pedigree items is missing a fact, a card that calls
- * "Bachelor of Arts in Accounting" a university states one.
- */
+/** SCRUB THE INSTITUTION STRING, then decide whether what is left is a school. */
 export function scrubInstitution(raw: string): {
   institution: string;
   salvage: string | null;
@@ -332,12 +290,7 @@ export function scrubInstitution(raw: string): {
   // rows; the verb is the résumé's, not part of anyone's name.
   t = t.replace(/^(attended|studied at|graduated from|graduate of)\s+/i, "").trim();
 
-  /*
-    Drop a trailing bullet-separated fragment when it is a GRADE, not a campus.
-    "San Diego State University  •  3.72 GPA" -> the university, but
-    "Universidad Nacional • Bogotá" keeps its tail. The test is the fragment
-    itself: a number-with-decimal, or the word GPA/CGPA/honours.
-  */
+  // Drop a trailing bullet-separated fragment when it is a GRADE, not a campus.
   const parts = t.split(/\s*[•·|]\s*/);
   if (parts.length > 1) {
     const kept = parts.filter(
@@ -351,14 +304,7 @@ export function scrubInstitution(raw: string): {
     .replace(/\s*[,(\-–]?\s*(gpa|cgpa)[:\s]*\d+(\.\d+)?\s*\)?\s*$/i, "")
     .trim();
 
-  /*
-    "Dual Enrollment During High School at Polk State College" -> the college.
-    Only when the TAIL names a school, which is the whole guard: "University at
-    Buffalo" splits to a tail of "Buffalo", which names nothing, so the split is
-    rejected and the real name stands. (An earlier version ALSO required the
-    head not to name a school — which rejected the Polk row, since "High School"
-    names one. The tail test alone is both sufficient and correct.)
-  */
+  // Only when the TAIL names a school, which is the whole guard: "University at
   const at = t.split(/\s+\bat\b\s+/i);
   if (at.length > 1) {
     const tail = at[at.length - 1].trim();
@@ -373,17 +319,7 @@ export function scrubInstitution(raw: string): {
     : { institution: "", salvage: t };
 }
 
-/**
- * Where does text evicted from the institution slot go?
- *
- * NOTHING IS DELETED THAT IS NOT ALREADY RECORDED. A qualification becomes the
- * degree; anything that merely repeats the degree or field is dropped, because
- * it is a duplicate rather than a loss; everything else lands in `description`,
- * the row's free-text field, verbatim. That last branch is the honest place for
- * "Configure operating systems and administer cloud-based (SaaS) software" — a
- * résumé bullet that was never an education row and should not be silently
- * binned either.
- */
+/** Where does text evicted from the institution slot go? */
 function refileSalvage(
   salvage: string,
   row: { degree: string | null; field: string | null; description: string | null }
@@ -406,13 +342,7 @@ export function fixEducationRow(e: {
   startYear?: number | string | null;
   endYear?: number | string | null;
 }) {
-  /*
-    The scrub decides. A school whose NAME begins with a degree word —
-    "Bachelor College" — is still a school, and `scrubInstitution` keeps it for
-    the same reason the old inline rule did: it tests whether the string names
-    an institution, not whether it starts with a degree word. That case has its
-    own unit test; the first version of this rule gutted it.
-  */
+  // The scrub decides. A school whose NAME begins with a degree word —
   const { institution, salvage } = scrubInstitution(e.institution ?? "");
 
   const refiled = refileSalvage(salvage ?? "", {
@@ -431,21 +361,7 @@ export function fixEducationRow(e: {
   };
 }
 
-/**
- * IS THIS ROW ACTUALLY A SCHOOL? (E164, deterministic half.)
- *
- * The walk found accomplishment bullets — "Led the P2P transformation across
- * three business units" — sitting in the education list, where they render as
- * institutions somebody attended. The prompt now separates the buckets
- * explicitly, but a prompt rule is a request and this is a guarantee: the same
- * argument `fixEducationRow` already makes for repairing degree-as-institution
- * rows, and it also repairs documents parsed before either change.
- *
- * DELIBERATELY CONSERVATIVE — it only rejects rows that are BOTH un-school-like
- * AND sentence-shaped. A short unrecognised institution ("IIM Bangalore",
- * "ENSAE") passes, because a dropped real school is a worse error than a stray
- * bullet the user can delete on the review page.
- */
+/** IS THIS ROW ACTUALLY A SCHOOL? (E164, deterministic half.) */
 export function isPlausibleEducationRow(e: {
   institution: string;
   degree?: string | null;
@@ -475,21 +391,7 @@ export function isPlausibleEducationRow(e: {
   return true;
 }
 
-/**
- * ── ⚠⚠ A DATE STRING AS A RÉSUMÉ ACTUALLY WRITES IT (`P2-J1.4-E549`) ────────
- *
- * ⚠ SUPERSEDED, quoted not deleted (`E164`) — the whole of the old `iso()`:
- *     if (!v) return null;
- *     const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(v.trim());
- *     if (!m) return null;
- * ⚠⚠ IT ACCEPTED ONLY A LEADING YEAR. The per-call passes carry no date format,
- * so the model returns the document faithfully — `"09/2024"`, `"May 2023"`,
- * `"Current"` — and every one became null. Measured 2026-09-17: **38 employers and
- * 185 projects** carry a document date that this threw away.
- * ⚠ SCOTT: *"THE FIX IS iso(), NOT THE PROMPT… A parser must handle real-world
- * date strings whatever the prompt says."* So the year-first form is kept and
- * the pattern-matcher's own `parseMonthYear` handles the rest.
- */
+/** A DATE STRING AS A RÉSUMÉ ACTUALLY WRITES IT */
 export function isoDate(v: string | null | undefined): string | null {
   if (!v) return null;
   const t = v.trim();
@@ -498,21 +400,7 @@ export function isoDate(v: string | null | undefined): string | null {
   return parseMonthYear(t);
 }
 
-/**
- * ── ⚠⚠ AN END DATE HAS THREE STATES, NOT TWO (`P2-J1.4-E549`) ─────────────
- *
- * ⚠⚠ SCOTT, 2026-09-17: *"TEXT WE COULD NOT READ IS EVIDENCE THE JOB ENDED, NOT
- * EVIDENCE IT IS CURRENT. An unparseable end string is the OPPOSITE of an absent
- * one. A parse failure must NEVER silently extend a job to today."*
- *
- *   · a current word ("Present", "Current"…)  → no date, CURRENT
- *   · a readable date                          → that date, not current
- *   · present but UNREADABLE                   → no date, NOT current, unreadable
- *   · absent                                   → no date; current ONLY if the
- *                                                model said so (`isCurrent`)
- * ⚠ AFFIRMATIVE ONLY. An absent end with `isCurrent` false or null is not a
- * current role — it is an end nobody wrote down, and it earns no months.
- */
+/** AN END DATE HAS THREE STATES, NOT TWO */
 export function readEndDate(
   v: string | null | undefined,
   modelSaysCurrent: boolean | null | undefined
@@ -529,64 +417,18 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
   const iso = isoDate;
 
   const experiences = ai.employers.map((e) => ({
-    /* ⚠ `null` FLOWS THROUGH AS `null` (`P1-J1.4-E373`) — it is not coerced to
-       "" here, because an empty string is indistinguishable from a name nobody
-       typed and the whole point is that the absence is now recordable. */
+    // typed and the whole point is that the absence is now recordable.
     employer: e.name ?? null,
     roleTitle: e.roleTitle ?? "",
     description: e.description ?? null,
     startDate: iso(e.startDate),
-    /* ⚠ `E549` — end date, current flag and unreadable flag decided together. */
+    /* `E549` — end date, current flag and unreadable flag decided together. */
     ...readEndDate(e.endDate, e.isCurrent),
   }));
 
-  /*
-    ── ⚠⚠ NOTHING IS DISCARDED. TWO OUTCOMES, NEVER A THIRD (`P1-J1.4-E294`) ────
+  // NOTHING IS DISCARDED. TWO OUTCOMES, NEVER A THIRD
 
-    Scott, 2026-09-01: *"make the projects under the employers... IF you are not
-    sure, make them separate AND allow the user an easy way to add them under an
-    employer."*
-
-    ⚠ SUPERSEDED, QUOTED NOT DELETED — the block that stood here, and the line
-    that lost the data:
-
-        const alreadyUnderEmployer =
-          p.employer && experiences.some((e) => e.employer === p.employer);
-        if (alreadyUnderEmployer) continue;          // <-- DISCARDED
-        experiences.push({ employer: p.client ?? p.employer ?? p.name, ... });
-
-    carrying the reasoning *"Projects the document did NOT attach to an employer
-    still describe work, and dropping them would lose Marelise's entire history —
-    her ten tables are projects, not jobs. They become entries in their own right,
-    with the client as the employer when one is named, so the review shows them
-    rather than silently discarding them."*
-
-    ⚠⚠ THAT COMMENT WAS HALF RIGHT AND THE CODE DID THE OPPOSITE OF WHAT IT SAID.
-    It protected the UNPLACEABLE projects by promoting them to fake employers —
-    Scott's 28 "employers" — and it SILENTLY DELETED the placeable ones, which is
-    the dangerous face: five clean employers, no projects anywhere, and a page
-    that looks right while the data is gone.
-
-    ⚠ BOTH FACES GO. Every project the model returns now reaches the caller,
-    either attached or explicitly unattached. `continue` is deleted and no project
-    is ever pushed into `experiences` again.
-  */
-
-  /*
-    MATCHING, AND IT DELIBERATELY ERRS TOWARD "NOT SURE".
-
-    A document will not spell an employer the same way twice — `Oracle` vs
-    `Oracle Corporation`, a trailing `Inc.`, stray case and punctuation. The
-    comparison is normalised: lower-cased, punctuation stripped, common legal
-    suffixes removed, whitespace collapsed.
-
-    ⚠ AND WHEN IN DOUBT IT DOES NOT MATCH. An UNATTACHED project is recoverable in
-    one click (`E296`); a WRONGLY attached one is a lie the user has to spot first.
-    An ambiguous key — one that matches two employers — resolves to null rather
-    than picking a winner. That is recall-over-precision applied in the only
-    direction that is safe here: never lose the row, never assert a link the
-    document did not support.
-  */
+  // MATCHING, AND IT DELIBERATELY ERRS TOWARD "NOT SURE".
   const LEGAL_SUFFIX =
     /\b(inc|llc|ltd|limited|corp|corporation|co|plc|gmbh|sa|nv|bv|pty|llp|lp)\b/g;
   const normEmployer = (v: string) =>
@@ -599,9 +441,7 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
 
   const employerKeys = experiences.map((e) => ({
     name: e.employer,
-    /* ⚠ A NULL EMPLOYER GETS AN EMPTY KEY (`P1-J1.4-E373`), which never matches a
-       real one — so unnamed lines are never merged with each other or with a
-       named employer. Two contractors are not the same company. */
+    // A NULL EMPLOYER GETS AN EMPTY KEY , which never matches a
     key: e.employer ? normEmployer(e.employer) : "",
   }));
 
@@ -634,27 +474,14 @@ export function aiToParsedResume(ai: AiResume): ParsedResume {
     employerName: matchEmployer(p.employer) ?? matchEmployer(p.client),
   }));
 
-  /*
-    ⚠ THE EQUATION, ASSERTED AT THE BOUNDARY. `E294`'s acceptance test is
-    extracted === attached + unattached. Checking it HERE — where the mapper hands
-    off — makes "nothing is dropped" a property of the code rather than a claim in
-    a commit message. It can only fire if someone reintroduces a filter.
-  */
+  // THE EQUATION, ASSERTED AT THE BOUNDARY. 's acceptance test is
   if (projects.length !== ai.projects.length) {
     throw new Error(
       `resume mapper lost projects: extracted ${ai.projects.length}, mapped ${projects.length}`
     );
   }
 
-  /*
-    ── ⚠⚠ CERTIFICATIONS WERE EXTRACTED AND THROWN AWAY (`P1-A1.4-E399` WS-4) ───
-
-    `AI_RESUME_SCHEMA` has carried `certifications` since it was written, the
-    prompt asks for them and Zod validates them — and this mapper never returned
-    them, because `ParsedResume` had no field to put them in. So five Oracle
-    certifications were parsed correctly and dropped one line before they would
-    have been saved. ⚠ The model was never the problem here.
-  */
+  // CERTIFICATIONS WERE EXTRACTED AND THROWN AWAY WS-4)
   const certifications = ai.certifications.map((c) => ({
     name: c.name,
     issuer: c.issuer ?? null,

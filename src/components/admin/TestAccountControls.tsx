@@ -70,9 +70,7 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
           if (!json) return;
           const created = (json.created as string[]) ?? [];
           const skipped = (json.skipped as string[]) ?? [];
-          /** ⚠⚠ IT REPORTS BOTH HALVES. "Created 0, skipped 9" is the honest
-           *  answer on a second press, and it is the one that tells Scott the
-           *  set is already there rather than that nothing happened. */
+          /** IT REPORTS BOTH HALVES. "Created 0, skipped 9" is the honest */
           setSaid(
             `Created ${created.length}${created.length ? ` (${created.join(", ")})` : ""}` +
               (skipped.length ? ` · skipped ${skipped.length} that already exist` : ""),
@@ -103,9 +101,7 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
               <p className="text-[13px] font-bold text-ink">
                 These {removable.length} accounts will be deleted, with everything attached to them:
               </p>
-              {/* ⚠ EVERY address, not a count and not a sample — the brief says
-                  "lists exactly what will go", and a truncated list is how a
-                  surprise happens. */}
+              {/* EVERY address, not a count and not a sample — the brief says */}
               <ul className="mt-1 max-h-48 overflow-y-auto text-[13px] text-ink-2">
                 {removable.map((r) => (
                   <li key={r.id}>{r.email}</li>
@@ -124,8 +120,7 @@ export function TestAccountControls({ filter }: { filter: "all" | "real" | "test
                 <button
                   type="button"
                   className={BTN}
-                  /** ⚠⚠ DISABLED UNTIL IT MATCHES — and the server checks again,
-                   *  because a disabled button is not a guarantee. */
+                  /** DISABLED UNTIL IT MATCHES — and the server checks again */
                   disabled={busy !== null || confirmation.trim() !== expected}
                   onClick={async () => {
                     const json = await call("remove", { confirmation });

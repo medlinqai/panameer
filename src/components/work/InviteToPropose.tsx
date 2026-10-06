@@ -78,11 +78,7 @@ export function InviteToPropose({
         <p className="text-[16px] font-bold">
           {sent.created} invitation{sent.created === 1 ? "" : "s"} sent.
         </p>
-        {/*
-          ⚠ "ALREADY INVITED" IS REPORTED, NOT TREATED AS A FAILURE. A buyer who
-          invites five and then selects all six must get the sixth invitation and
-          a note about the five, never a wall of errors and no sixth.
-        */}
+        {/* invites five and then selects all six must get the sixth invitation and */}
         {sent.already > 0 && (
           <p className="mt-1.5 text-[14px] text-ink-2">
             {sent.already} of those{" "}
@@ -108,12 +104,7 @@ export function InviteToPropose({
       <div className="grid gap-4 rounded-brand border border-line bg-white p-5 sm:grid-cols-2">
         <div>
           <label className="block text-[13.5px] font-semibold">Which line? *</label>
-          {/*
-            ⚠ THE INVITE NAMES A LINE, and that is `E395`'s shape:
-            `ProposalRequestLine.work_request_line_id`. Not every ITB covers every
-            line — a request for a DBA and a developer goes out as two different
-            invitations naming two different lines.
-          */}
+          {/* THE INVITE NAMES A LINE, and that is 's shape */}
           <select
             value={lineId}
             onChange={(e) => setLineId(e.target.value)}
@@ -243,7 +234,7 @@ export function InviteToPropose({
           Back to the request
         </Link>
       </div>
-      {/* ⚠ THE BUTTON SAYS WHY IT IS OFF — the same rule the detail page follows. */}
+      {/* THE BUTTON SAYS WHY IT IS OFF — the same rule the detail page follows. */}
       {!ready && !busy && (
         <p className="mt-3 text-[13.5px] text-ink-2">
           {picked.length === 0

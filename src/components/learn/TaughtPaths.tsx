@@ -46,11 +46,7 @@ export function TaughtPaths({
               <p className="font-bold leading-snug">{p.title}</p>
               {p.group && <p className="mt-0.5 text-[13px] text-ink-2">{p.group}</p>}
               <p className="mt-auto pt-2 text-[12.5px] text-ink-2">
-                {/*
-                  On a co-taught path, say which share is theirs — "18 of 105
-                  lessons" is both more honest and more useful than either
-                  number alone.
-                */}
+                {/* On a co-taught path, say which share is theirs — "18 of 105 */}
                 {p.taughtByThem > 0 && p.taughtByThem < p.lessons
                   ? `${p.taughtByThem} of ${p.lessons} lessons`
                   : `${p.lessons} lesson${p.lessons === 1 ? "" : "s"}`}

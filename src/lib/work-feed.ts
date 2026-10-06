@@ -84,15 +84,7 @@ export function workBudgetLabel(input: {
   return pretty(input.budgetType);
 }
 
-/**
- * One tab's worth of work.
- *
- * BEST MATCHES is ordered by how many of the provider's own skills a request
- * touches — the only ranking signal that exists today, and an honest one. It is
- * computed in memory over the matched set rather than in SQL because the set is
- * bounded by `take` and the alternative is a raw query this early in the
- * model's life.
- */
+/** One tab's worth of work. */
 export async function getWorkFeed(input: {
   tab: WorkFeedTab;
   profileId: string | null;
@@ -139,9 +131,7 @@ export async function getWorkFeed(input: {
       description: true,
       budget_type: true,
       budget_amount_cents: true,
-      /* ⚠⚠ `P2-A8-E664` — THE RANGE THE CURRENT WIZARD ACTUALLY WRITES. Without
-         these two the card printed `Hourly` where the buyer set a figure; see
-         `workBudgetLabel` above for the measurement. */
+      // — THE RANGE THE CURRENT WIZARD ACTUALLY WRITES. Without
       budget_min_cents: true,
       budget_max_cents: true,
       currency: true,
@@ -151,8 +141,7 @@ export async function getWorkFeed(input: {
       worksite: true,
       posted_at: true,
       roleType: { select: { display: true, name: true } },
-      /* ⚠ `P1-J4-E025` — the poster, their company and their account. All of it
-         already hung off the row; none of it was reaching the provider. */
+      // — the poster, their company and their account. All of it
       company_visibility: true,
       company_code_name: true,
       p_account_id: true,
@@ -170,9 +159,7 @@ export async function getWorkFeed(input: {
               vertical: true,
               logo_url: true,
               tin: true,
-              /* ⚠⚠ REQUIRED BY `P1-ALL-E282`. `entityVerificationState` reads
-                 this; a select that omits it silently returns "unverified" and
-                 the original bug survives while looking fixed. */
+              // REQUIRED BY . `entityVerificationState` reads
               entity_validated_at: true,
             },
           },
@@ -183,14 +170,7 @@ export async function getWorkFeed(input: {
     },
   });
 
-  /*
-    ── ⚠ STANDING, IN TWO QUERIES FOR THE WHOLE PAGE ──────────────────────────
-
-    `groupBy` over the accounts actually on this page rather than a count per
-    card: 40 cards would otherwise be 80 round trips for two numbers.
-    ⚠ THE POSTED COUNT IS A REAL COUNT OF POSTED ROWS, seeded rows included —
-    Scott's counters rule, 2026-08-27. Nothing is filtered out to flatter it.
-  */
+  // STANDING, IN TWO QUERIES FOR THE WHOLE PAGE
   const accountIds = [...new Set(rows.map((w) => w.p_account_id))];
   const [postedCounts, accounts] = await Promise.all([
     accountIds.length
@@ -210,15 +190,7 @@ export async function getWorkFeed(input: {
   const postedByAccount = new Map(postedCounts.map((r) => [r.p_account_id, r._count._all]));
   const createdByAccount = new Map(accounts.map((a) => [a.id, a.created_at]));
 
-  /*
-    ⚠ THE FEED IS A PROVIDER SURFACE, so the viewer is never the owner, never an
-    admin, and Plus is not plumbed into this read. `clientNameVisibility` is
-    given the honest answer — all three false — which means CONFIDENTIAL and
-    PLUS_ONLY both redact here. ⚠ THAT IS STRICTER THAN THE PROJECT RULE, NOT
-    LOOSER: the failure this brief exists to prevent is a name LEAKING, and a
-    Plus buyer seeing a code name they were entitled to read is a lesser fault
-    than the reverse. Flagged at `E025` — plumbing Plus through is a follow-up.
-  */
+  // THE FEED IS A PROVIDER SURFACE, so the viewer is never the owner, never an
   const identityFor = (w: (typeof rows)[number]) =>
     buildBuyerIdentity({
       person: w.buyer,
@@ -235,7 +207,7 @@ export async function getWorkFeed(input: {
     id: w.id,
     title: w.title || "Untitled work request",
     description: w.description,
-    /* ⚠ ONE DEFINITION, SHARED WITH `/find-work/[id]` (`P2-A8-E664`). */
+    /* ONE DEFINITION, SHARED WITH `/find-work/[id]` (`P2-A8-E664`). */
     budgetLabel: workBudgetLabel({
       amountCents: w.budget_amount_cents,
       minCents: w.budget_min_cents,

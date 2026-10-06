@@ -80,8 +80,7 @@ export async function listMentors(
     name: `${p.person.first_name} ${p.person.last_name}`.trim(),
     firstName: p.person.first_name,
     lastName: p.person.last_name,
-    /* ⚠ THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
-       `E595` WS-B collapsed the two columns into one. */
+    // THE DTO KEY STAYS `headline`; the SOURCE is `Person.title` since
     headline: p.person.title ?? "",
     photoUrl: p.person.photo_url,
     validated: p.validation_status === "VALIDATED",
@@ -102,14 +101,7 @@ export async function listMentors(
     teaches: p.person.learnLessons.length,
   }));
 
-  /*
-    ⚠⚠ SORTED IN MEMORY, AND THAT IS NOT LAZINESS. Postgres orders an enum by
-    DECLARATION order, and `ValidationStatus` is declared
-    `NOT_REQUESTED, REQUESTED, VALIDATED, REJECTED` — so `asc` puts UNVALIDATED
-    first and `desc` puts REJECTED first. NEITHER DIRECTION LEADS WITH VALIDATED.
-    A boolean derived in the mapping can be ordered correctly; the column cannot.
-    ⚠ The page is already bounded at 48, so this sorts a page, not a table.
-  */
+  // SORTED IN MEMORY, AND THAT IS NOT LAZINESS. Postgres orders an enum by
   return cards.sort(
     (a, b) =>
       Number(b.validated) - Number(a.validated) ||

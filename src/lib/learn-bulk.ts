@@ -121,13 +121,7 @@ async function loadIndex(): Promise<LessonIndexRow[]> {
 const fullPath = (r: LessonIndexRow) =>
   `${r.pathTitle} › ${r.courseTitle} › ${r.sectionTitle} › ${r.title}`;
 
-/**
- * Work out what a CSV would do, WITHOUT writing anything.
- *
- * Separating the plan from the apply is the whole safety story: the admin sees
- * matched / ambiguous / unmatched counts and the actual lesson each row would
- * touch before a single write happens.
- */
+/** Work out what a CSV would do, WITHOUT writing anything. */
 export async function planBulkUrls(csv: string): Promise<BulkPlan> {
   const grid = parseCsv(csv);
   if (grid.length === 0) {
@@ -250,26 +244,11 @@ export async function planBulkUrls(csv: string): Promise<BulkPlan> {
   };
 }
 
-/**
- * Apply a plan — CONFIDENT MATCHES ONLY.
- *
- * Re-plans from the CSV rather than trusting a client-supplied list of lesson
- * ids. The preview the admin approved was computed server-side; letting the
- * browser hand back "these ids, these URLs" would make the confirm step
- * decorative, and this endpoint could then write anywhere in the catalog.
- */
+/** Apply a plan — CONFIDENT MATCHES ONLY. */
 export async function applyBulkUrls(csv: string): Promise<BulkPlan & { applied: number }> {
   const plan = await planBulkUrls(csv);
 
-  /*
-    Deduplicate by lesson before writing. A CSV can name the same lesson twice —
-    once by title path and once by id, which is exactly what happens when two
-    exports are pasted together — and both rows are legitimately "matched". Left
-    alone that puts two updates for one row in the transaction and, worse,
-    reports "filled 3 lessons" when three rows touched two. Last row wins, which
-    matches how a person reading top-to-bottom would expect a later correction to
-    override an earlier line.
-  */
+  // Deduplicate by lesson before writing. A CSV can name the same lesson twice —
   const byLesson = new Map<string, BulkMatch>();
   for (const m of plan.matches) {
     if (m.outcome === "matched" && m.lessonId) byLesson.set(m.lessonId, m);

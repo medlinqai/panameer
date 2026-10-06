@@ -116,10 +116,7 @@ export function TicketAdminPanel({
       </div>
 
       <div className="mt-4">
-        {/* ⚠ ASSIGN-TO-SELF rather than a picker: there is exactly one Panameer
-            admin today, the same fact that made Scott defer `TicketHelper`. An
-            id parameter would be an unused surface taking a person id from the
-            client. This grows a picker when there is a second admin. */}
+        {/* ASSIGN-TO-SELF rather than a picker: there is exactly one Panameer */}
         <button
           type="button"
           disabled={busy}
@@ -147,8 +144,7 @@ export function TicketAdminPanel({
         >
           Save Resolution
         </button>
-        {/* ⚠ `date_solved` IS DERIVED FROM THE STATUS server-side, never sent —
-            so the column and the status cannot disagree. */}
+        {/* so the column and the status cannot disagree. */}
       </div>
     </div>
   );
