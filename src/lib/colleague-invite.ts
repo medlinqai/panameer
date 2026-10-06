@@ -86,6 +86,15 @@ export async function inviteColleague(input: {
     select: { id: true },
   });
 
+  const r = await sendInviteEmail({ inviteId: row.id, inviterPersonId: input.inviterPersonId, email, raw, origin: input.origin, firstName: input.firstName, message: input.message });
+  return { ok: true, outcome: "sent", sent: r.sent, ...(r.sent ? {} : { devLink: r.url }) };
+}
+
+/** The colleague-invite email (same template for the first send and a resend). */
+async function sendInviteEmail(input: { inviteId: string; inviterPersonId: string; email: string; raw: string; origin: string; firstName?: string | null; message?: string | null }) {
+  const row = { id: input.inviteId };
+  const email = input.email;
+  const raw = input.raw;
   const inviter = await prisma.person.findUnique({
     where: { id: input.inviterPersonId },
     select: {
@@ -132,17 +141,43 @@ export async function inviteColleague(input: {
       subjectType: "ColleagueInvite",
       subjectId: row.id,
     });
-    return { ok: true, outcome: "sent", sent: true };
+    return { sent: true, url };
   } catch {
     void row;
-    return { ok: true, outcome: "sent", sent: false, devLink: url };
+    return { sent: false, url };
   }
+}
+
+/** Resend: a fresh link (earlier links still work), "Invited" moves to now; once per 24 h per invite. Inviter only. */
+export async function resendColleagueInvite(inviterPersonId: string, inviteId: string, origin: string) {
+  const inv = await prisma.colleagueInvite.findFirst({
+    where: { id: inviteId, inviter_person_id: inviterPersonId },
+    select: { id: true, status: true, invitee_email: true, invitee_first_name: true, message: true, token_hash: true, prior_token_hashes: true, created_at: true, last_sent_at: true },
+  });
+  if (!inv) return { ok: false as const, error: "That invitation isn't yours." };
+  if (inv.status !== "PENDING") return { ok: false as const, error: "That invitation is no longer open." };
+  const last = inv.last_sent_at ?? inv.created_at;
+  if (Date.now() - last.getTime() < 86_400_000) return { ok: false as const, error: "Sent today", sentToday: true };
+  const raw = randomBytes(32).toString("hex");
+  await prisma.colleagueInvite.update({
+    where: { id: inv.id },
+    data: { token_hash: hash(raw), prior_token_hashes: [...inv.prior_token_hashes, inv.token_hash], last_sent_at: new Date(), expires_at: new Date(Date.now() + INVITE_TTL_DAYS * 86_400_000) },
+  });
+  const r = await sendInviteEmail({ inviteId: inv.id, inviterPersonId, email: inv.invitee_email, raw, origin, firstName: inv.invitee_first_name, message: inv.message });
+  return { ok: true as const, sent: r.sent };
+}
+
+/** Cancel Invite: the inviter withdraws it; its links then say it was cancelled. */
+export async function cancelColleagueInvite(inviterPersonId: string, inviteId: string) {
+  const r = await prisma.colleagueInvite.updateMany({ where: { id: inviteId, inviter_person_id: inviterPersonId, status: "PENDING" }, data: { status: "REVOKED" } });
+  return r.count ? { ok: true as const } : { ok: false as const, error: "That invitation isn't yours, or it's already closed." };
 }
 
 /** Look one up by its raw token, for the accept surface. */
 export async function lookupColleagueInvite(rawToken: string) {
-  const row = await prisma.colleagueInvite.findUnique({
-    where: { token_hash: hash(rawToken) },
+  const h = hash(rawToken);
+  const row = await prisma.colleagueInvite.findFirst({
+    where: { OR: [{ token_hash: h }, { prior_token_hashes: { has: h } }] },
     select: {
       id: true,
       invitee_email: true,

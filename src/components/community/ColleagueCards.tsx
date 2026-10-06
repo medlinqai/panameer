@@ -3,6 +3,7 @@ import { Face } from "@/components/community/Silhouette";
 import { ConnectControls } from "@/components/community/ConnectControls";
 import type { ColleagueCard, InvitedCard } from "@/lib/community-page";
 import { CompanyLink } from "@/components/company/CompanyLink";
+import { InviteActions } from "@/components/community/InviteActions";
 
 export function JoinedCard({ c }: { c: ColleagueCard }) {
   return (
@@ -47,27 +48,7 @@ export function InvitedCardView({ i }: { i: InvitedCard }) {
         {i.name && <p className="pm-cm-email">{i.email}</p>}
         <p className="pm-cm-sent">Invited {sentLabel(i.sentAt)}</p>
 
-        <div className="pm-cm-actions mt-2 flex gap-2">
-          {/* they are rendered DISABLED because neither endpoint exists. */}
-          <button
-            type="button"
-            disabled
-            // RULING 18 + : this control is DISABLED and its tooltip named a
-            title="Nudging an invitation is not available."
-            className="border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
-          >
-            Nudge
-          </button>
-          <button
-            type="button"
-            disabled
-            /* SUPERSEDED (`E164`): //   "Resending an invitation isn't built yet." */
-            title="Resending an invitation is not available."
-            className="border border-line px-2.5 py-1 text-[12.5px] font-semibold text-ink-3"
-          >
-            Resend
-          </button>
-        </div>
+        <InviteActions id={i.id} email={i.email} sentToday={i.sentToday} />
       </div>
     </div>
   );

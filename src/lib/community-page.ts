@@ -24,6 +24,7 @@ export type InvitedCard = {
   name: string | null;
   email: string;
   sentAt: Date;
+  sentToday: boolean;
 };
 
 function formatWhere(city: string | null, state: string | null): string | null {
@@ -80,6 +81,7 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
     select: { id: true },
   });
 
+  const now = new Date().getTime();
   const invited: InvitedCard[] = me
     ? (
         await prisma.colleagueInvite.findMany({
@@ -95,6 +97,7 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
             invitee_first_name: true,
             invitee_last_name: true,
             created_at: true,
+            last_sent_at: true,
           },
         })
       ).map((i) => ({
@@ -102,7 +105,8 @@ export async function getCommunityPage(viewer: Viewer): Promise<{
         name:
           `${i.invitee_first_name ?? ""} ${i.invitee_last_name ?? ""}`.trim() || null,
         email: i.invitee_email,
-        sentAt: i.created_at,
+        sentAt: i.last_sent_at ?? i.created_at,
+        sentToday: now - (i.last_sent_at ?? i.created_at).getTime() < 86_400_000,
       }))
     : [];
 

@@ -28,8 +28,8 @@ function ErrorState({ reason }: { reason: "invalid" | "expired" | "revoked" | "a
       body: "This invitation is older than 30 days. You can still join Panameer — it's free and open.",
     },
     revoked: {
-      title: "Invitation Withdrawn",
-      body: "This invitation is no longer active. You can still join Panameer — it's free and open.",
+      title: "Invitation Cancelled",
+      body: "This invitation was cancelled. You can still join Panameer — it's free and open.",
     },
     accepted: {
       title: "Already Accepted",

@@ -3193,6 +3193,9 @@ model ColleagueInvite {
   /// SHA-256 of the raw token; the raw token lives only in the emailed link.
   /// ⚠ Same discipline as `CoordinatorInvite` — the DB never holds the secret.
   token_hash         String                @unique
+  /// Resend rotates the token; earlier links keep working.
+  prior_token_hashes String[]              @default([])
+  last_sent_at       DateTime?
   status             ColleagueInviteStatus @default(PENDING)
   expires_at         DateTime
   /// ⚠ Set when they sign up. NO provider id, NO roster row — see the note above.
