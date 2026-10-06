@@ -17,6 +17,7 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
   const [f, setF] = useState(() => Object.fromEntries(Object.entries(initial).map(([k, v]) => [k, v ?? ""])) as Record<keyof Init, string>);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErr, setFieldErr] = useState<{ field: string; message: string } | null>(null);
   const set = (k: keyof Init) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
   const done = () => {
     router.replace("/company#details", { scroll: false });
@@ -26,6 +27,7 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setFieldErr(null);
     const body = {
       name: f.name, legalName: f.legalName, taxType: f.taxType || null, country: f.country || null, stateOfFiling: f.stateOfFiling || null,
       ein: f.ein || null, industryId: f.industryId || null, website: f.website || null, description: f.description || null,
@@ -33,8 +35,12 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     const r = await fetch("/api/company", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
     setBusy(false);
     if (!r?.ok) {
-      const b = (await r?.json().catch(() => ({}))) as { error?: string } | undefined;
-      setError(b?.error ?? "That didn't save.");
+      const b = (await r?.json().catch(() => ({}))) as { error?: string; field?: string } | undefined;
+      if (b?.field && b.error) return setFieldErr({ field: b.field, message: b.error });
+      setError(
+        b?.error ??
+          (r ? `The server couldn't save your changes (HTTP ${r.status}). Your entries are still here — try again.` : "Couldn't reach Panameer. Check your connection; your entries are still here.")
+      );
       return;
     }
     done();
@@ -43,7 +49,8 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
     <label className="block">
       <span className="block text-[13px] font-semibold">{label}</span>
       {hint && <span className="block text-[12.5px] text-ink-3">{hint}</span>}
-      <input value={f[k]} onChange={set(k)} className={INPUT} name={k} />
+      <input value={f[k]} onChange={set(k)} className={INPUT} name={k} aria-invalid={fieldErr?.field === k || undefined} />
+      <FieldMsg field={k} err={fieldErr} />
     </label>
   );
   return (
@@ -61,12 +68,13 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
       </label>
       <label className="block">
         <span className="block text-[13px] font-semibold">Industry</span>
-        <select value={f.industryId} onChange={set("industryId")} className={INPUT} name="industryId">
+        <select value={f.industryId} onChange={set("industryId")} className={INPUT} name="industryId" aria-invalid={fieldErr?.field === "industryId" || undefined}>
           <option value="">Not set</option>
           {industries.map((i) => (
             <option key={i.id} value={i.id}>{i.name}</option>
           ))}
         </select>
+        <FieldMsg field="industryId" err={fieldErr} />
       </label>
       {text("country", "Country")}
       {text("stateOfFiling", "State of filing")}
@@ -78,6 +86,7 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
         </span>
         <span className="block text-[12.5px] text-ink-3">What the company does and for whom. Buyers read this on every proposal.</span>
         <textarea value={f.description} onChange={set("description")} maxLength={MAX} rows={4} className={`${INPUT} py-2`} name="description" />
+        <FieldMsg field="description" err={fieldErr} />
       </label>
       {error && <p role="alert" className="text-[13px] font-semibold text-magenta-dark sm:col-span-2">{error}</p>}
       <div className="flex gap-2.5 sm:col-span-2">
@@ -89,5 +98,14 @@ export function CompanyDetailsEditor({ initial, industries }: { initial: Init; i
         </button>
       </div>
     </form>
+  );
+}
+
+function FieldMsg({ field, err }: { field: string; err: { field: string; message: string } | null }) {
+  if (err?.field !== field) return null;
+  return (
+    <span role="alert" data-field-error={field} className="mt-1 block text-[12.5px] font-semibold text-magenta-dark">
+      {err.message}
+    </span>
   );
 }

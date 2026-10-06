@@ -12,6 +12,7 @@ import {
 } from "@/lib/tos";
 import type { TaxType } from "@prisma/client";
 import { notifyJoinRequested, notifyJoinDecided } from "@/lib/company-domain-join";
+import { checkCompanyFields, CompanyFieldError } from "@/lib/company-fields";
 
 export type DefineInput = {
   name: string;
@@ -314,19 +315,14 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
   }
 
   const name = input.name?.trim();
-  if (input.name !== undefined && (!name || name.length < 2)) {
-    throw new OnboardingError("A company name is required", "INVALID");
-  }
+  checkCompanyFields(input, COMPANY_DESCRIPTION_MAX);
 
   const blank = (v: string | null | undefined) =>
     v === undefined ? undefined : v === null || v.trim() === "" ? null : v.trim();
 
-  if (input.description && input.description.trim().length > COMPANY_DESCRIPTION_MAX) {
-    throw new OnboardingError(`Keep the description to ${COMPANY_DESCRIPTION_MAX} characters`, "INVALID");
-  }
   if (input.industryId) {
     const ind = await prisma.specialization.findFirst({ where: { id: input.industryId, kind: "INDUSTRY" }, select: { id: true } });
-    if (!ind) throw new OnboardingError("Pick an industry from the list", "INVALID");
+    if (!ind) throw new CompanyFieldError("industryId", "Pick an industry from the list.");
   }
 
   const company = await prisma.company.update({
