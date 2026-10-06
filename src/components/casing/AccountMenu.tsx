@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signOutEverywhere } from "@/lib/sign-out";
+import { PathMenuBlock } from "@/components/casing/PathMenuBlock";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
 import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
@@ -435,6 +436,7 @@ export function AccountMenu({
             )}
           </div>
 
+          <PathMenuBlock onNavigate={close} rowClass={rowClass} />
           {/*
             ── MY COMPANY (E099, and it REVERSES E225) ────────────────────────
 

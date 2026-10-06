@@ -1,3 +1,4 @@
+import { SignGateError } from "@/lib/your-path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TRANSACT_MESSAGE } from "@/lib/transact-message";
@@ -32,6 +33,7 @@ export async function POST(
   try {
     return NextResponse.json(await hire(gate, { workRequestId: id, sowText: parsed.data.sowText ?? null }));
   } catch (e) {
+    if (e instanceof SignGateError) return NextResponse.json({ error: e.message, code: "SIGN_GATE", gate: e.gate }, { status: 409 });
     if (e instanceof Error && e.name === "SourcingError") {
       const code = (e as Error & { code?: string }).code ?? "INVALID";
       const status = code === "NOT_FOUND" ? 404 : code === "NOT_BUYER" ? 403 : 400;

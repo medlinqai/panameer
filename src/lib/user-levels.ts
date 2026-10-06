@@ -114,3 +114,39 @@ export function passRate(subjects: LevelSubject[], i: number): number | null {
   if (!at || i + 1 >= USER_LEVELS.length) return null;
   return Math.round((subjects.filter((s) => hasReached(s, USER_LEVELS[i + 1])).length / at) * 100);
 }
+
+// ── Your Path (2026-10-06): six steps, unverified to paid. The one definition; menu, page, admin and gate use it.
+export type PathRole = "provider" | "buyer";
+export type PathKey = "verify" | "profile" | "company" | "verified" | "work" | "done";
+export type PathStep = { key: PathKey; title: string; short: string; desc: string; unlocks: string; href: string; next: string; locked?: boolean };
+
+const BASE: PathStep[] = [
+  { key: "verify", title: "Verify Email", short: "Verify", desc: "Click the link we sent.", unlocks: "your account", href: "/join", next: "verify your email" },
+  { key: "profile", title: "Build Your Profile", short: "Profile", desc: "Résumé, skills, rate.", unlocks: "Learn, Connect, being found", href: "/profile", next: "build your profile" },
+  { key: "company", title: "Join or Add Your Company", short: "Company", desc: "Who pays you: your business or your employer.", unlocks: "sending proposals, listing services", href: "/company?join=1#join", next: "join or add your company" },
+];
+export const PATH_STEPS: Record<PathRole, PathStep[]> = {
+  provider: [
+    ...BASE,
+    { key: "verified", title: "Get Verified", short: "Get Verified", desc: "Legal name, state, tax ID. Admins only.", unlocks: "signing work orders", href: "/company/legal", next: "get your company verified", locked: true },
+    { key: "work", title: "Win & Sign Work", short: "Win & Sign", desc: "A buyer awards you; both sides sign the work order.", unlocks: "doing paid work", href: "/find-work", next: "win and sign your first work order" },
+    { key: "done", title: "Get Paid", short: "Get Paid", desc: "Add a payout account. Money waits until it's there.", unlocks: "payouts", href: "/company/legal#payout", next: "add a payout account" },
+  ],
+  buyer: [
+    { ...BASE[0] },
+    { ...BASE[1], desc: "Who you are and what you buy.", unlocks: "Learn, Connect, posting work" },
+    { ...BASE[2], desc: "The company you buy for.", unlocks: "posting work requests" },
+    { key: "verified", title: "Get Verified", short: "Get Verified", desc: "Legal name, state, tax ID and a billing method. Admins only.", unlocks: "signing work orders", href: "/company/legal", next: "get your company verified", locked: true },
+    { key: "work", title: "Post Work", short: "Post Work", desc: "Post a work request; providers send proposals.", unlocks: "proposals from providers", href: "/create-work", next: "post your first work request" },
+    { key: "done", title: "Award & Sign", short: "Award & Sign", desc: "Pick a proposal; both sides sign the work order.", unlocks: "work starting", href: "/orders", next: "award and sign your first work order" },
+  ],
+};
+
+export type PathFacts = { emailVerified: boolean; profileDone: boolean; inCompany: boolean; companyVerified: boolean; work: boolean; done: boolean };
+
+/** Which steps are done, and the first one that isn't ("You are here"; 6 = all done). */
+export function pathStatus(f: PathFacts) {
+  const done = [f.emailVerified, f.profileDone, f.inCompany, f.companyVerified, f.work, f.done];
+  const current = done.findIndex((d) => !d);
+  return { done, current: current === -1 ? 6 : current };
+}

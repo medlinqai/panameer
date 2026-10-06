@@ -14,6 +14,7 @@ export const ROUTE_ACCESS: { prefix: string; requires: RouteRequirement }[] = [
   { prefix: "/settings/withdrawals", requires: "canProvideServices" },
   { prefix: "/profile", requires: "authenticated" },
   { prefix: "/usage", requires: "authenticated" },
+  { prefix: "/your-path", requires: "authenticated" },
   { prefix: "/account-health", requires: "authenticated" },
   { prefix: "/recommendations", requires: "authenticated" },
   { prefix: "/worklist", requires: "authenticated" },

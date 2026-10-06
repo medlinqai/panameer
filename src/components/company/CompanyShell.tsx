@@ -5,6 +5,7 @@ import { CleanSide } from "@/components/profile/CleanSection";
 import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload";
 import "@/components/community/connect-profile.css";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
+import { VerifiedTag } from "@/components/company/VerifiedTag";
 
 // My Company layout (mockup my_company 2026-10-05), built like My Profile: logo column left, name + meta right.
 // role "buyer" = the public, buyer-safe view: no readiness, no edit, no invite, no visibility.
@@ -50,7 +51,10 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
         </aside>
 
         <main className="min-w-0">
-          <h1 className="text-[30px] font-extrabold leading-tight">{c.name}</h1>
+          <h1 className="text-[30px] font-extrabold leading-tight">
+            {c.name}
+            <VerifiedTag companyId={c.id} />
+          </h1>
           <p className="mt-1.5 flex flex-wrap gap-x-2 text-[14px] text-ink-2" data-company-meta>
             {site ? (
               <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-magenta-dark hover:underline">

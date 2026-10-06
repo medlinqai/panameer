@@ -25,22 +25,22 @@ export function CompanyDetailsRead({ c, role, editor }: { c: NonNullable<Company
   );
 }
 
-/** Admins only: what's left before the company can be paid; hidden when all three are done. */
+/** Admins only: what's left before the company can sign work orders (Your Path step 4); hidden when done. */
 export function PayReadyBox({ c }: { c: NonNullable<CompanyView> }) {
-  const r = c.payReady;
-  if (!r || r.left === 0) return null;
-  const list = r.missing.length > 1 ? `${r.missing.slice(0, -1).join(", ")} and ${r.missing.at(-1)}` : r.missing[0];
+  if (!c.payReady) return null;
+  const missing = [!c.stateOfFiling?.trim() && "the state of filing", !c.ein?.trim() && "the tax ID"].filter(Boolean) as string[];
+  if (missing.length === 0) return null;
   return (
-    <div data-pay-box={r.left} className="mt-7 border border-ink p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
+    <div data-pay-box={missing.length} className="mt-7 border border-ink p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
       <div>
         <p className="text-[15px] font-bold">
-          Before {c.name} can be paid{" "}
+          Before {c.name} can sign work orders{" "}
           <span className="ml-1 inline-block border border-current px-[7px] align-[2px] text-[10.5px] font-bold tracking-[0.06em] text-[#b26b00]">
-            {r.left} OF 3 LEFT
+            {missing.length} LEFT
           </span>
         </p>
         <p className="mt-1 text-[13.5px] text-ink-2">
-          {list ? `Add ${list}.` : "Choose who gets paid."} Private — admins only.
+          Add {missing.join(" and ")}. You can post and send proposals now. Private — admins only.
         </p>
       </div>
       <Link href="/company/legal" className="mt-3 inline-flex min-h-[42px] items-center bg-ink px-4 text-[13px] font-bold text-surface hover:bg-ink-hover sm:mt-0">

@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 
 export function VerifiedSignIn({
   token,
-  callbackUrl = "/join/provider/start",
+  callbackUrl = "/join/provider/path",
 }: {
   token: string;
   callbackUrl?: string;

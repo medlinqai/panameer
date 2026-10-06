@@ -10,13 +10,10 @@ import { BoardRefresh } from "@/components/admin/BoardRefresh";
 import {
   USER_LEVELS,
   levelFor,
-  hasReached,
-  type UserLevel,
   blockingFor,
   type LevelSubject,
-  PROGRESSION,
-  currentCounts,
-  passRate,
+  PATH_STEPS,
+  pathStatus,
 } from "@/lib/user-levels";
 import { ResendVerification } from "@/components/admin/ResendVerification";
 import {
@@ -64,6 +61,7 @@ export default async function Page({
         },
       },
       payoutMethods: { select: { id: true }, take: 1 },
+      companyMemberships: { where: { status: "APPROVED" }, select: { company_id: true }, take: 1 },
       user: {
         select: {
           email: true,
@@ -118,31 +116,72 @@ export default async function Page({
   const now = new Date().getTime();
   const period = sp.period === "7" ? 7 : sp.period === "all" ? null : 30;
   const realPeople = people.filter((p) => !p.user?.is_test);
-  const realSubjects = realPeople.map((p) => levelByPerson.get(p.id)!);
-  const boxCounts = currentCounts(realSubjects);
+  // Your Path: each real person sits at the first step they haven't done (6 = all done).
+  const companyIds = [...new Set(realPeople.map((p) => p.companyMemberships[0]?.company_id).filter((x): x is string => !!x))];
+  const realIds = realPeople.map((p) => p.id);
+  const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+  const [cos, billing, provOrders, buyerReqs, buyerOrders, payouts] = await Promise.all([
+    prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, state_of_filing: true, tin: true, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
+    prisma.billingMethod.findMany({ where: { person_id: { in: realIds } }, select: { person_id: true } }),
+    prisma.workOrder.groupBy({ by: ["provider_person_id"], where: { provider_person_id: { in: realIds }, status: { in: [...SIGNED] } }, _count: true }),
+    prisma.workRequest.groupBy({ by: ["buyer_person_id"], where: { buyer_person_id: { in: realIds }, status: { not: "DRAFT" } }, _count: true }),
+    prisma.workOrder.groupBy({ by: ["buyer_person_id"], where: { buyer_person_id: { in: realIds }, status: { in: [...SIGNED] } }, _count: true }),
+    prisma.payoutMethod.groupBy({ by: ["company_id"], where: { company_id: { in: companyIds } }, _count: true }),
+  ]);
+  const coById = new Map(cos.map((c) => [c.id, c]));
+  const billers = new Set(billing.map((b) => b.person_id));
+  const has = (rows: { _count: number }[], key: string, val: string | null) => rows.some((r) => (r as unknown as Record<string, string>)[key] === val);
+  const pathIndex = new Map<string, number>();
+  for (const p of realPeople) {
+    const buyer = !p.is_service_provider && p.is_service_buyer;
+    const coId = p.companyMemberships[0]?.company_id ?? null;
+    const co = coId ? coById.get(coId) : null;
+    const legal = !!co?.state_of_filing?.trim() && !!co?.tin?.trim();
+    const billed = !!co?.memberships.some((m) => billers.has(m.person_id));
+    pathIndex.set(p.id, pathStatus({
+      emailVerified: !!p.user?.email_verified,
+      profileDone: !!(p.providerProfile?.onboarding_completed_at ?? p.requesterProfile?.completed_at),
+      inCompany: !!co,
+      companyVerified: legal && (!buyer || billed),
+      work: buyer ? has(buyerReqs, "buyer_person_id", p.id) : has(provOrders, "provider_person_id", p.id),
+      done: buyer ? has(buyerOrders, "buyer_person_id", p.id) : has(payouts, "company_id", coId),
+    }).current);
+  }
+  const BOXES = [
+    ...PATH_STEPS.provider.map((st, i) => ({
+      key: String(i + 1),
+      label: i === 4 ? "Win & Sign / Post Work" : i === 5 ? "Get Paid / Award & Sign" : st.title,
+      hint: i === 3 ? "Legal name, state, tax ID (+ billing for buyers)" : st.desc,
+    })),
+    { key: "7", label: "All Done", hint: "Every step finished" },
+  ];
+  const boxCounts = BOXES.map((_, i) => realPeople.filter((p) => pathIndex.get(p.id) === i).length);
+  const reached = (i: number) => realPeople.filter((p) => (pathIndex.get(p.id) ?? 0) >= i).length;
+  const rates = BOXES.map((_, i) => (i >= 6 || !reached(i) ? null : Math.round((reached(i + 1) / reached(i)) * 100)));
   const profileDoneAt = (p: (typeof people)[number]) => p.providerProfile?.onboarding_completed_at ?? p.requesterProfile?.completed_at ?? null;
-  // When the person reached the step they're stuck at (best available date).
-  const enteredAt = (p: (typeof people)[number], level: UserLevel): Date =>
-    (level === "Verified" ? p.user?.email_verified : level === "User" ? profileDoneAt(p) ?? p.user?.email_verified : null) ?? p.created_at;
-  const daysStuck = (p: (typeof people)[number]) => Math.floor((now - enteredAt(p, levelFor(levelByPerson.get(p.id)!)).getTime()) / DAY);
-  const since = period ? now - period * DAY : 0;
-  const movedOn: Partial<Record<UserLevel, number>> = {
-    Registered: realPeople.filter((p) => p.user?.email_verified && p.user.email_verified.getTime() >= since).length,
-    Verified: realPeople.filter((p) => { const d = profileDoneAt(p); return !!d && d.getTime() >= since && hasReached(levelByPerson.get(p.id)!, "User"); }).length,
+  // When the person reached the step they're on (best available date).
+  const enteredAt = (p: (typeof people)[number]): Date => {
+    const i = pathIndex.get(p.id) ?? 0;
+    return (i === 1 ? p.user?.email_verified : i === 2 ? profileDoneAt(p) ?? p.user?.email_verified : null) ?? p.created_at;
   };
-  const oldestWaiting = Math.max(0, ...realPeople.filter((p) => levelFor(levelByPerson.get(p.id)!) === "Registered").map(daysStuck));
-  const rates = PROGRESSION.map((_, i) => passRate(realSubjects, i));
-  const drop = rates.reduce<{ i: number; r: number } | null>((m, r, i) => (r === null || i >= 4 ? m : !m || r < m.r ? { i, r } : m), null);
+  const daysStuck = (p: (typeof people)[number]) => Math.floor((now - enteredAt(p).getTime()) / DAY);
+  const since = period ? now - period * DAY : 0;
+  const movedOn: Record<number, number> = {
+    0: realPeople.filter((p) => p.user?.email_verified && p.user.email_verified.getTime() >= since).length,
+    1: realPeople.filter((p) => { const d = profileDoneAt(p); return !!d && d.getTime() >= since; }).length,
+  };
+  const oldestWaiting = Math.max(0, ...realPeople.filter((p) => pathIndex.get(p.id) === 0).map(daysStuck));
+  const drop = rates.reduce<{ i: number; r: number } | null>((m, r, i) => (r === null ? m : !m || r < m.r ? { i, r } : m), null);
 
-  // R2-E003: a box opens the people CURRENTLY at that step (not everyone who passed it).
-  const stageBox = PROGRESSION.find((b) => b.level === sp.stage) ?? null;
-  const stageTile = stageBox ? { label: stageBox.label, hint: stageBox.hint, level: stageBox.level as UserLevel | "TOTAL" } : null;
+  // A box opens the people CURRENTLY at that step.
+  const stageBox = BOXES.find((b) => b.key === sp.stage) ?? null;
+  const stageTile = stageBox ? { label: stageBox.label, hint: stageBox.hint, level: stageBox.key } : null;
   const isDrillIn = !!stageTile;
 
   const staged = stageTile
     ? stageTile.level === "TOTAL"
       ? people
-      : people.filter((p) => !p.user?.is_test && levelFor(levelByPerson.get(p.id)!) === stageTile.level)
+      : people.filter((p) => !p.user?.is_test && pathIndex.get(p.id) === Number(stageTile.level) - 1)
     : people;
 
   const testFilter = sp.test === "real" || sp.test === "test" ? sp.test : "all";
@@ -550,23 +589,23 @@ export default async function Page({
               })}
             </nav>
           </div>
-          <ol className="mt-3 grid gap-2 md:grid-cols-[repeat(5,minmax(0,1fr))]">
-            {PROGRESSION.map((b, i) => (
-              <li key={b.level} className="relative">
-                <a href={`?stage=${b.level}`} data-box={b.level} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover">
-                  <span className="block text-[10.5px] font-bold tracking-[0.1em] text-ink-3">STEP {i + 1}</span>
-                  <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[b.level]}</b>
+          <ol className="mt-3 grid gap-2 md:grid-cols-[repeat(7,minmax(0,1fr))]">
+            {BOXES.map((b, i) => (
+              <li key={b.key} className="relative">
+                <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover">
+                  <span className="block text-[10.5px] font-bold tracking-[0.1em] text-ink-3">{i < 6 ? `STEP ${i + 1}` : "DONE"}</span>
+                  <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
                   <span className="block text-[13.5px] font-bold">{b.label}</span>
                   <span className="block text-[12px] text-ink-2">{b.hint}</span>
                   <span className="mt-1.5 block text-[12px] text-ink-3">
                     {i === 0
                       ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>oldest: {oldestWaiting} days</span>
-                      : movedOn[b.level] !== undefined
-                        ? `${movedOn[b.level]} moved on ${period ? `in ${period} days` : "all time"}`
+                      : movedOn[i] !== undefined
+                        ? `${movedOn[i]} moved on ${period ? `in ${period} days` : "all time"}`
                         : "—"}
                   </span>
                 </a>
-                {i < 4 && (
+                {i < 6 && (
                   <span data-pass={rates[i] ?? ""} className="block py-1 text-center text-[12px] font-bold text-ink-2 md:absolute md:-right-2 md:top-1/2 md:z-10 md:-translate-y-1/2 md:translate-x-1/2 md:bg-canvas md:px-1">
                     <span className="md:hidden">↓ </span><span className="max-md:hidden">→ </span>{rates[i] === null ? "—" : `${rates[i]}%`}
                   </span>
@@ -575,8 +614,8 @@ export default async function Page({
             ))}
           </ol>
           <p className="mt-2 text-[12.5px] text-ink-2" data-progression-total>
-            <b className="text-ink">{realPeople.length}</b> users · the five boxes add up to this
-            {drop && <> · Biggest drop: {PROGRESSION[drop.i].label} → {PROGRESSION[drop.i + 1].label} ({drop.r}%)</>}
+            <b className="text-ink">{realPeople.length}</b> users · the boxes add up to this
+            {drop && <> · Biggest drop: {BOXES[drop.i].label} → {BOXES[drop.i + 1].label} ({drop.r}%)</>}
           </p>
         </section>
       )}
@@ -660,7 +699,7 @@ export default async function Page({
                       <td className={"px-3 py-2 font-semibold " + (daysStuck(p) > 7 ? "text-[#b26b00]" : "")} data-days-stuck>{daysStuck(p)}</td>
                       <td className="px-3 py-2">{d(p.user?.last_login)}</td>
                       <td className="px-3 py-2 text-ink-2">{leftOff || "—"}</td>
-                      <td className="px-3 py-2 text-right">{stageTile?.level === "Registered" && p.user_id ? <ResendVerification userId={p.user_id} /> : null}</td>
+                      <td className="px-3 py-2 text-right">{stageTile?.level === "1" && p.user_id ? <ResendVerification userId={p.user_id} /> : null}</td>
                     </tr>
                   );
                 })}

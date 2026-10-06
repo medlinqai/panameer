@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
+import { SignGateModal, type SignGate } from "@/components/work/SignGateModal";
 import type { OrderAction } from "@/lib/orders";
 
 const LABEL: Record<OrderAction, string> = {
@@ -25,6 +26,7 @@ export function OrderActivation({
   const router = useRouter();
   const [busy, setBusy] = useState<OrderAction | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<SignGate | null>(null);
 
   async function run(action: OrderAction) {
     setBusy(action);
@@ -32,6 +34,10 @@ export function OrderActivation({
     try {
       const r = await fetch(`/api/orders/${orderId}/${ENDPOINT[action]}`, { method: "POST" });
       const out = await r.json().catch(() => ({}));
+      if (r.status === 409 && out.code === "SIGN_GATE") {
+        setGate(out.gate);
+        return;
+      }
       if (!r.ok) {
         setError(out.error ?? "That didn't work.");
         return;
@@ -50,6 +56,7 @@ export function OrderActivation({
 
   return (
     <div className="rounded-brand border border-line bg-white p-5">
+      <SignGateModal gate={gate} onClose={() => setGate(null)} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="min-w-0 flex-1 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
         {/* ⚠⚠ THE ONLY PLACE EITHER BUTTON CAN COME FROM. */}

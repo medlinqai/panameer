@@ -1,3 +1,4 @@
+import { assertCanSign } from "@/lib/your-path";
 import { WorkOrderOrigin } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -73,6 +74,8 @@ async function buildWorkOrder(
     },
   });
   if (!wr) throw new SourcingError("That work request isn't available.", "NOT_FOUND");
+  const assignedTo = wr.lines.find((l) => l.provider_person_id)?.provider_person_id;
+  if (assignedTo) await assertCanSign(me.id, wr.buyer_person_id, assignedTo);
   if (wr.buyer_person_id !== me.id) {
     throw new SourcingError("Only the buyer can order this work.", "NOT_BUYER");
   }

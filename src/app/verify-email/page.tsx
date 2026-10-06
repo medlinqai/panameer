@@ -34,7 +34,7 @@ export default async function VerifyEmailPage({
     ? person.requesterProfile.completed_at
       ? "/join/requester/ready"
       : "/join/requester/start"
-    : "/join/provider/start";
+    : "/join/provider/path";
 
   return (
     <OnboardingShell compact>

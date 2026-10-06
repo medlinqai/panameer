@@ -1,3 +1,5 @@
+import { VerifiedTag } from "@/components/company/VerifiedTag";
+import { CompanyLink } from "@/components/company/CompanyLink";
 import { notFound, redirect } from "next/navigation";
 import { checkTransact, guardPage } from "@/lib/guard";
 import { getSessionViewer } from "@/lib/session";
@@ -51,6 +53,11 @@ export default async function Page({
     invitedOn(viewer, id),
     proposalsOn(viewer, id),
   ]);
+  const memberships = await prisma.companyMembership.findMany({
+    where: { person_id: { in: proposals.map((p) => p.providerPersonId) }, status: "APPROVED" },
+    select: { person_id: true, company: { select: { id: true, name: true } } },
+  });
+  const providerCompany = new Map(memberships.map((m) => [m.person_id, m.company]));
 
   const sendableTests = (
     await prisma.certificationTest.findMany({
@@ -250,7 +257,16 @@ export default async function Page({
                   className="rounded-[12px] border border-line bg-white px-4 py-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-                    <span className="font-semibold">{p.providerName}</span>
+                    <span className="font-semibold">
+                      {p.providerName}
+                      {providerCompany.get(p.providerPersonId) && (
+                        <span className="font-normal text-ink-2">
+                          {" · "}
+                          <CompanyLink id={providerCompany.get(p.providerPersonId)!.id} name={providerCompany.get(p.providerPersonId)!.name} />
+                          <VerifiedTag companyId={providerCompany.get(p.providerPersonId)!.id} />
+                        </span>
+                      )}
+                    </span>
                     <span className="rounded-full bg-ink/[0.05] px-3 py-0.5 text-[12.5px] font-bold text-ink">
                       {p.statusLabel}
                     </span>

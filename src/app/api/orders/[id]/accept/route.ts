@@ -1,3 +1,4 @@
+import { SignGateError } from "@/lib/your-path";
 import { NextResponse } from "next/server";
 import { guardApi } from "@/lib/guard";
 import { acceptOrder, OrderError } from "@/lib/orders";
@@ -12,6 +13,7 @@ export async function POST(
   try {
     return NextResponse.json(await acceptOrder(gate, id));
   } catch (e) {
+    if (e instanceof SignGateError) return NextResponse.json({ error: e.message, code: "SIGN_GATE", gate: e.gate }, { status: 409 });
     if (e instanceof OrderError) {
       const status = e.code === "NOT_FOUND" ? 404 : e.code === "FORBIDDEN" ? 403 : 400;
       return NextResponse.json({ error: e.message, code: e.code }, { status });

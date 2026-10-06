@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/casing/Button";
+import { SignGateModal, type SignGate } from "@/components/work/SignGateModal";
 
 function useHirePost(workRequestId: string) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<SignGate | null>(null);
   async function post(path: string, body: Record<string, unknown>, label: string) {
     setBusy(label);
     setError(null);
@@ -18,6 +20,10 @@ function useHirePost(workRequestId: string) {
         body: JSON.stringify(body),
       });
       const out = await r.json().catch(() => ({}));
+      if (r.status === 409 && out.code === "SIGN_GATE") {
+        setGate(out.gate);
+        return false;
+      }
       if (!r.ok) {
         /* ⚠⚠ THE WRITER'S OWN SENTENCE REACHES THE BUYER — "that proposal
            doesn't state a rate, so the hours can't be priced" is what they need
@@ -31,7 +37,8 @@ function useHirePost(workRequestId: string) {
       setBusy(null);
     }
   }
-  return { post, busy, error, setError };
+  const gateModal = <SignGateModal gate={gate} onClose={() => setGate(null)} />;
+  return { post, busy, error, setError, gateModal };
 }
 
 /** ⚠ TRANSITION ONE, offered per proposal — the buyer picks a person, not a row. */
@@ -51,7 +58,7 @@ export function SelectProposal({
   hasRate: boolean;
   selected: boolean;
 }) {
-  const { post, busy, error } = useHirePost(workRequestId);
+  const { post, busy, error, gateModal } = useHirePost(workRequestId);
   if (selected) {
     return (
       <p className="mt-3 border-t border-line pt-3 text-[13.5px] font-bold text-emerald-700">
@@ -61,6 +68,7 @@ export function SelectProposal({
   }
   return (
     <div className="mt-3 border-t border-line pt-3">
+      {gateModal}
       {hasRate ? (
         <Button
           disabled={busy !== null}
@@ -98,7 +106,7 @@ export function AssignDirectly({
   workRequestId: string;
   providers: { personId: string; name: string }[];
 }) {
-  const { post, busy, error } = useHirePost(workRequestId);
+  const { post, busy, error, gateModal } = useHirePost(workRequestId);
   const [personId, setPersonId] = useState("");
   const [amount, setAmount] = useState("");
   const dollars = Number(amount);
@@ -106,6 +114,7 @@ export function AssignDirectly({
 
   return (
     <div className="mt-4 rounded-brand border border-line bg-white p-5">
+      {gateModal}
       {/*
         ── ⚠⚠⚠ THE WORD, RENAMED (`P2-A8-E712` WS-D) ──────────────────────────
 
@@ -188,10 +197,11 @@ export function AssignDirectly({
 
 /** ⚠⚠⚠ TRANSITION TWO. The irreversible one, and it says so before it is pressed. */
 export function CreateOrder({ workRequestId }: { workRequestId: string }) {
-  const { post, busy, error } = useHirePost(workRequestId);
+  const { post, busy, error, gateModal } = useHirePost(workRequestId);
   const [sow, setSow] = useState("");
   return (
     <div className="mt-4 rounded-brand border-2 border-magenta/40 bg-magenta/[0.04] p-5">
+      {gateModal}
       <p className="text-[15px] font-bold">A provider is selected.</p>
       {/*
         ⚠⚠ IT NAMES WHAT CHANGES AND WHAT STOPS BEING POSSIBLE. Ruling 17's

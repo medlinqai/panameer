@@ -1,3 +1,4 @@
+import { assertCanSign } from "@/lib/your-path";
 import { prisma } from "@/lib/prisma";
 import { SourcingError } from "@/lib/sourcing";
 import type { Viewer } from "@/lib/access";
@@ -271,6 +272,7 @@ export async function selectProvider(
   if (wr.status === "CANCELLED") {
     throw new SourcingError("This work request was cancelled.", "CANCELLED");
   }
+  await assertCanSign(me.id, me.id, input.providerPersonId);
 
   const winner = await prisma.proposal.findUnique({
     where: {
@@ -423,6 +425,7 @@ export async function assignProviderDirectly(
   if (!Number.isInteger(input.unitPriceCents) || input.unitPriceCents <= 0) {
     throw new SourcingError("Enter the rate for this engagement.", "NO_RATE");
   }
+  await assertCanSign(me.id, me.id, input.providerPersonId);
 
   /* ⚠ The provider must be a real person with an account — a direct assignment
      to a row nobody can sign in as is a work order that can never be accepted. */

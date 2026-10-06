@@ -1,3 +1,4 @@
+import { assertCanSign } from "@/lib/your-path";
 import { TransactionType, WorkOrderOrigin, WorkOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { feeSplit, pricedByQuantity } from "@/lib/transaction-spine";
@@ -686,6 +687,9 @@ export async function acceptOrder(viewer: Viewer, id: string): Promise<OrderDeta
     scoped to the status means two clicks race to one winner and the loser changes
     nothing rather than stamping a second timestamp.
   */
+  const parties = await prisma.workOrder.findUnique({ where: { id: order.id }, select: { buyer_person_id: true, provider_person_id: true } });
+  const actor = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (parties && actor) await assertCanSign(actor.id, parties.buyer_person_id, parties.provider_person_id);
   if (party === "PROVIDER") {
     await prisma.workOrder.updateMany({
       where: { id: order.id, status: "ISSUED" },

@@ -1,5 +1,6 @@
 import { BadgeCheck, CircleDashed } from "lucide-react";
 import { CompanyLink } from "@/components/company/CompanyLink";
+import { VerifiedTag } from "@/components/company/VerifiedTag";
 import { Avatar } from "@/components/Avatar";
 import { standingLine, type BuyerIdentity } from "@/lib/work-request-identity";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
@@ -50,6 +51,7 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
         <div className="min-w-0">
           <p className="truncate text-[13.5px] font-semibold">
             {companyLabel && !companyConfidential ? <CompanyLink id={companyId} name={companyLabel} /> : (companyLabel ?? "—")}
+            {!companyConfidential && <VerifiedTag companyId={companyId} />}
           </p>
           {}
           {companyConfidential && (

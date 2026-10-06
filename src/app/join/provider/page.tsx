@@ -1624,7 +1624,7 @@ setScreen(target);
               email={email}
               onEmailChange={setEmail}
               statusUrl="/api/onboarding/status"
-              onVerified={() => router.push("/join/provider/start")}
+              onVerified={() => router.push("/join/provider/path")}
               initialDevLink={devLink}
             />
           </div>
