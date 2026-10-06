@@ -103,6 +103,7 @@
     "check:usage-counts": "npx playwright test -c playwright.usage-counts.config.ts",
     "check:logo-palette": "npx playwright test -c playwright.logo-palette.config.ts",
     "check:sign-out": "npx playwright test -c playwright.sign-out.config.ts",
+    "check:company-match": "npx playwright test -c playwright.company-match.config.ts",
     "check:company-save": "npx playwright test -c playwright.company-save.config.ts",
     "check:logo-fit": "npx playwright test -c playwright.logo-fit.config.ts",
     "check:hero-motion": "npx playwright test -c playwright.hero-motion.config.ts",

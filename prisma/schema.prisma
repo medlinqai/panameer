@@ -381,6 +381,11 @@ model Company {
   show_on_profiles Boolean @default(true)
   /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
   logo_palette     Json?
+  /// Same company = same website domain, tax ID digits or email domain (2026-10-05). Normalized copies, indexed.
+  website_domain   String?
+  tin_digits       String?
+  /// Set when an admin saved past a match ("This Isn't Us") — shown to Panameer admins.
+  duplicate_note   String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -394,6 +399,8 @@ model Company {
   assessments Assessment[]
 
   @@index([p_account_id])
+  @@index([website_domain])
+  @@index([tin_digits])
   @@index([email_domain])
   @@map("companies")
 }
