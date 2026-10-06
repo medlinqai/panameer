@@ -3,6 +3,7 @@ import { countryColumns } from "@/lib/country";
 import { validateEntity } from "@/lib/company-validation";
 import type { Viewer } from "@/lib/access";
 import { recomputeCompleteness } from "@/lib/onboarding";
+import { nudgePayeeSwitch } from "@/lib/company-pay";
 import { OnboardingError } from "@/lib/onboarding";
 import {
   COMPANY_TOS_VERSION,
@@ -670,6 +671,7 @@ export async function decideRequest(
     });
     if (joiner) await moveInto(target.person_id, target.company_id, joiner.company_id);
     await refreshProviderScore(target.person_id);
+    await nudgePayeeSwitch(target.company_id);
   }
 
   await notifyJoinDecided(target.company_id, target.person_id, decision === "APPROVED");

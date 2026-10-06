@@ -21,12 +21,14 @@ export function CompanyDetailsEditor({
   fields = OVERVIEW_FIELDS,
   doneHref = "/company#details",
   einHint,
+  einLabel = "EIN / Tax registration",
 }: {
   initial: Init;
   industries?: { id: string; name: string }[];
   fields?: readonly (keyof Init)[];
   doneHref?: string;
   einHint?: string;
+  einLabel?: string;
 }) {
   const router = useRouter();
   const [f, setF] = useState(() => Object.fromEntries(Object.entries(initial).map(([k, v]) => [k, v ?? ""])) as Record<keyof Init, string>);
@@ -111,7 +113,7 @@ export function CompanyDetailsEditor({
       </label>}
       {has("country") && text("country", "Country")}
       {has("stateOfFiling") && text("stateOfFiling", "State of filing")}
-      {has("ein") && text("ein", "EIN / Tax registration", einHint ?? "Shown only to Panameer, never to buyers.")}
+      {has("ein") && text("ein", einLabel, einHint ?? "Shown only to Panameer, never to buyers.")}
       {has("description") && <label className="block sm:col-span-2">
         <span className="flex justify-between text-[13px] font-semibold">
           Description <span className="font-normal text-ink-3">{f.description.length}/{MAX}</span>
