@@ -2,24 +2,24 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TestAccountControls } from "@/components/admin/TestAccountControls";
 import {
-  TileRow,
   Listing,
   VolumeFooter,
   StubEmpty,
 } from "@/components/console/ConsolePage";
 import { BoardRefresh } from "@/components/admin/BoardRefresh";
 import {
-  LEVEL_TILES,
   USER_LEVELS,
-  levelCounts,
   levelFor,
   hasReached,
   type UserLevel,
   blockingFor,
   type LevelSubject,
+  PROGRESSION,
+  currentCounts,
+  passRate,
 } from "@/lib/user-levels";
+import { ResendVerification } from "@/components/admin/ResendVerification";
 import {
-  Users, MailCheck, UserCheck, Building2, Wallet,
   ClipboardList, ShoppingCart, UserSearch, Briefcase, ShieldCheck,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
@@ -33,7 +33,7 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string; test?: string; q?: string }>;
+  searchParams: Promise<{ stage?: string; test?: string; q?: string; period?: string }>;
 }) {
   const sp = await searchParams;
   const people = await prisma.person.findMany({
@@ -92,6 +92,7 @@ export default async function Page({
           validation_status: true,
           validation_requested_at: true,
           validated_at: true,
+          onboarding_completed_at: true,
         },
       },
     },
@@ -110,20 +111,38 @@ export default async function Page({
     companyRegisteredAddress: (p.company?.sites?.[0]?.addresses?.length ?? 0) > 0,
     payoutMethodCount: p.payoutMethods.length,
   }));
-  const levelTotals = levelCounts(subjects);
   /** Per-person level, by row, so the grid and the tiles cannot disagree. */
   const levelByPerson = new Map(people.map((p, i) => [p.id, subjects[i]]));
+  // Progression boxes: real accounts only, each person in exactly one box.
+  const DAY = 86_400_000;
+  const now = new Date().getTime();
+  const period = sp.period === "7" ? 7 : sp.period === "all" ? null : 30;
+  const realPeople = people.filter((p) => !p.user?.is_test);
+  const realSubjects = realPeople.map((p) => levelByPerson.get(p.id)!);
+  const boxCounts = currentCounts(realSubjects);
+  const profileDoneAt = (p: (typeof people)[number]) => p.providerProfile?.onboarding_completed_at ?? p.requesterProfile?.completed_at ?? null;
+  // When the person reached the step they're stuck at (best available date).
+  const enteredAt = (p: (typeof people)[number], level: UserLevel): Date =>
+    (level === "Verified" ? p.user?.email_verified : level === "User" ? profileDoneAt(p) ?? p.user?.email_verified : null) ?? p.created_at;
+  const daysStuck = (p: (typeof people)[number]) => Math.floor((now - enteredAt(p, levelFor(levelByPerson.get(p.id)!)).getTime()) / DAY);
+  const since = period ? now - period * DAY : 0;
+  const movedOn: Partial<Record<UserLevel, number>> = {
+    Registered: realPeople.filter((p) => p.user?.email_verified && p.user.email_verified.getTime() >= since).length,
+    Verified: realPeople.filter((p) => { const d = profileDoneAt(p); return !!d && d.getTime() >= since && hasReached(levelByPerson.get(p.id)!, "User"); }).length,
+  };
+  const oldestWaiting = Math.max(0, ...realPeople.filter((p) => levelFor(levelByPerson.get(p.id)!) === "Registered").map(daysStuck));
+  const rates = PROGRESSION.map((_, i) => passRate(realSubjects, i));
+  const drop = rates.reduce<{ i: number; r: number } | null>((m, r, i) => (r === null || i >= 4 ? m : !m || r < m.r ? { i, r } : m), null);
 
-  const stageTile =
-    LEVEL_TILES.find((t) => t.level === sp.stage) ?? null;
+  // R2-E003: a box opens the people CURRENTLY at that step (not everyone who passed it).
+  const stageBox = PROGRESSION.find((b) => b.level === sp.stage) ?? null;
+  const stageTile = stageBox ? { label: stageBox.label, hint: stageBox.hint, level: stageBox.level as UserLevel | "TOTAL" } : null;
   const isDrillIn = !!stageTile;
 
   const staged = stageTile
     ? stageTile.level === "TOTAL"
       ? people
-      : people.filter((p) =>
-          hasReached(levelByPerson.get(p.id)!, stageTile.level as UserLevel)
-        )
+      : people.filter((p) => !p.user?.is_test && levelFor(levelByPerson.get(p.id)!) === stageTile.level)
     : people;
 
   const testFilter = sp.test === "real" || sp.test === "test" ? sp.test : "all";
@@ -471,8 +490,7 @@ export default async function Page({
             {stageTile.label}
           </h1>
           <p className="mt-1 text-[13px] text-ink-2">
-            {stageTile.hint}. ⚠ Cumulative — everyone who has reached this stage
-            or gone past it, which is exactly what the tile counts.
+            {stageTile.hint}. People at this step now, longest stuck first. Test accounts excluded.
           </p>
         </div>
       )}
@@ -515,24 +533,52 @@ export default async function Page({
         them invites the reader to compare a number with itself.
       */}
       {!isDrillIn && (
-      <TileRow
-        tiles={LEVEL_TILES.map((t, i) => ({
-          label: t.label,
-          value: levelTotals[t.level] ?? 0,
-          tone: t.tone,
-          /* ⚠ `E455` — every tile opens its own listing. SUPERSEDED, quoted not
-             deleted: *"THE NEW TILES CARRY NO `href`, AND THAT IS DELIBERATE."*
-             That held only while `?stage=` did not exist. It does now. */
-          href: `/admin/buyers-sellers?stage=${encodeURIComponent(t.level)}`,
-          icon: [
-            <Users key="i" className="h-[19px] w-[19px]" aria-hidden />,
-            <MailCheck key="i" className="h-[19px] w-[19px]" aria-hidden />,
-            <UserCheck key="i" className="h-[19px] w-[19px]" aria-hidden />,
-            <Building2 key="i" className="h-[19px] w-[19px]" aria-hidden />,
-            <Wallet key="i" className="h-[19px] w-[19px]" aria-hidden />,
-          ][i],
-        }))}
-      />
+        <section data-progression className="mb-6">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-[20px] font-bold">User Progression</h2>
+              <p className="text-[13px] text-ink-2">Where every user is right now. Each person is in exactly one box.</p>
+            </div>
+            <nav className="flex gap-1 text-[12.5px]" aria-label="Period">
+              {(["7", "30", "all"] as const).map((k) => {
+                const on = (k === "all" ? null : Number(k)) === period;
+                return (
+                  <a key={k} href={`?period=${k}`} className={"border px-2.5 py-1 font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink-2")}>
+                    {k === "all" ? "All Time" : `${k} Days`}
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+          <ol className="mt-3 grid gap-2 md:grid-cols-[repeat(5,minmax(0,1fr))]">
+            {PROGRESSION.map((b, i) => (
+              <li key={b.level} className="relative">
+                <a href={`?stage=${b.level}`} data-box={b.level} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover">
+                  <span className="block text-[10.5px] font-bold tracking-[0.1em] text-ink-3">STEP {i + 1}</span>
+                  <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[b.level]}</b>
+                  <span className="block text-[13.5px] font-bold">{b.label}</span>
+                  <span className="block text-[12px] text-ink-2">{b.hint}</span>
+                  <span className="mt-1.5 block text-[12px] text-ink-3">
+                    {i === 0
+                      ? <span className={oldestWaiting > 7 ? "font-semibold text-[#b26b00]" : ""}>oldest: {oldestWaiting} days</span>
+                      : movedOn[b.level] !== undefined
+                        ? `${movedOn[b.level]} moved on ${period ? `in ${period} days` : "all time"}`
+                        : "—"}
+                  </span>
+                </a>
+                {i < 4 && (
+                  <span data-pass={rates[i] ?? ""} className="block py-1 text-center text-[12px] font-bold text-ink-2 md:absolute md:-right-2 md:top-1/2 md:z-10 md:-translate-y-1/2 md:translate-x-1/2 md:bg-canvas md:px-1">
+                    <span className="md:hidden">↓ </span><span className="max-md:hidden">→ </span>{rates[i] === null ? "—" : `${rates[i]}%`}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2 text-[12.5px] text-ink-2" data-progression-total>
+            <b className="text-ink">{realPeople.length}</b> users · the five boxes add up to this
+            {drop && <> · Biggest drop: {PROGRESSION[drop.i].label} → {PROGRESSION[drop.i + 1].label} ({drop.r}%)</>}
+          </p>
+        </section>
       )}
       {/*
         ── ⚠⚠ `E457` · THE EXPLANATORY PARAGRAPH IS GONE ──────────────────────
@@ -587,12 +633,52 @@ export default async function Page({
         sets `whitespace-nowrap`, which is also what makes the scroller engage
         visibly instead of the table silently shrinking to fit.
       */}
+      {isDrillIn ? (
+        <div data-stuck-list className="overflow-x-auto border border-line">
+          <table className="w-full min-w-[640px] text-[13.5px]">
+            <thead>
+              <tr className="border-b border-ink text-left text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                {["Person", "Signed up", "Days stuck", "Last seen", "Left off at", ""].map((h) => (
+                  <th key={h} className="px-3 py-2">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...visible]
+                .sort((x, y) => daysStuck(y) - daysStuck(x))
+                .map((p) => {
+                  const subj = levelByPerson.get(p.id)!;
+                  const leftOff = p.requesterProfile?.onboarding_step ?? blockingFor(subj).join(", ") ?? "—";
+                  return (
+                    <tr key={p.id} data-stuck-row className="border-b border-line/60">
+                      <td className="px-3 py-2">
+                        <Link href={`/admin/users/${p.id}`} className="font-semibold text-magenta-ink underline underline-offset-2">
+                          {`${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.user?.email || "(unnamed)"}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">{d(p.created_at)}</td>
+                      <td className={"px-3 py-2 font-semibold " + (daysStuck(p) > 7 ? "text-[#b26b00]" : "")} data-days-stuck>{daysStuck(p)}</td>
+                      <td className="px-3 py-2">{d(p.user?.last_login)}</td>
+                      <td className="px-3 py-2 text-ink-2">{leftOff || "—"}</td>
+                      <td className="px-3 py-2 text-right">{stageTile?.level === "Registered" && p.user_id ? <ResendVerification userId={p.user_id} /> : null}</td>
+                    </tr>
+                  );
+                })}
+              {visible.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-3 py-4 text-ink-2">Nobody is at this step.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <Listing
         /* ⚠ `E454` — Scott: *"change Buyers/Sellers to Users."* The route keeps
            its name; see the note in `lib/nav.ts`. */
         /* ⚠ `E455` — the card heading repeats the tile's label with its count,
            so the sub-page says what it is listing and how many. */
-        title={stageTile ? `${stageTile.label} (${visible.length})` : "Users"}
+        title="Users"
         columns={[
           "Picture",
           "Name",
@@ -658,6 +744,7 @@ export default async function Page({
         pageSizeKey="panameer.admin.users.pageSize"
         empty={<StubEmpty what="people" why="Nobody has signed up yet." />}
       />
+      )}
 
       {/*
         ── ⚠⚠ FIVE JOBS, AND ONE OF THE LABELS WAS A LOCK VIOLATION (`E456`) ──

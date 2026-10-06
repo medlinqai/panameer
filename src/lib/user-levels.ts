@@ -92,3 +92,25 @@ export function blockingFor(s: LevelSubject): string[] {
   if (next === "Payee") gaps.push("no payout method");
   return gaps;
 }
+
+/** R2-E003: five boxes, each person counted where they are now (levelFor), so the boxes sum to the total. */
+export const PROGRESSION: { level: UserLevel; label: string; hint: string }[] = [
+  { level: "Registered", label: "Waiting to Verify", hint: "Signed up, email not confirmed" },
+  { level: "Verified", label: "Verified · No Profile", hint: "Email confirmed, profile not built" },
+  { level: "User", label: "Profile · No Company", hint: "Profile live, no company yet" },
+  { level: "Company", label: "Company · Not Payee", hint: "Company set, payout not ready" },
+  { level: "Payee", label: "Ready to Be Paid", hint: "Payee: can sell and get paid" },
+];
+
+export function currentCounts(subjects: LevelSubject[]): Record<UserLevel, number> {
+  const out = Object.fromEntries(USER_LEVELS.map((l) => [l, 0])) as Record<UserLevel, number>;
+  for (const s of subjects) out[levelFor(s)]++;
+  return out;
+}
+
+/** Share of people at or past step i who got past it (all time); null when nobody reached step i. */
+export function passRate(subjects: LevelSubject[], i: number): number | null {
+  const at = subjects.filter((s) => hasReached(s, USER_LEVELS[i])).length;
+  if (!at || i + 1 >= USER_LEVELS.length) return null;
+  return Math.round((subjects.filter((s) => hasReached(s, USER_LEVELS[i + 1])).length / at) * 100);
+}
