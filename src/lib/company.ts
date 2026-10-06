@@ -7,11 +7,11 @@ import { OnboardingError } from "@/lib/onboarding";
 import {
   COMPANY_TOS_VERSION,
   companyTosCurrent,
-  domainMatches,
   emailDomain,
   isWorkDomain,
 } from "@/lib/tos";
 import type { TaxType } from "@prisma/client";
+import { notifyJoinRequested, notifyJoinDecided } from "@/lib/company-domain-join";
 
 export type DefineInput = {
   name: string;
@@ -370,7 +370,7 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
     return { companyId: target.id, name: target.name, status: "APPROVED" as const };
   }
 
-  const auto = domainMatches(person.user?.email, target.email_domain);
+  // Ask-then-approve (Scott 2026-10-05): every join is a request an admin decides, domain match or not.
   const now = new Date();
 
   const membership = await prisma.companyMembership.upsert({
@@ -378,32 +378,30 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
     update: {
       // Re-requesting after a rejection reopens the SAME row rather than
       // stacking requests, so an admin sees one decision to make.
-      status: auto ? "APPROVED" : "PENDING",
+      status: "PENDING",
       attestation_accepted_at: now,
-      auto_approved: auto,
-      decided_at: auto ? now : null,
+      auto_approved: false,
+      decided_at: null,
       decided_by_person_id: null,
     },
     create: {
       person_id: person.id,
       company_id: target.id,
       role: "MEMBER",
-      status: auto ? "APPROVED" : "PENDING",
+      status: "PENDING",
       attestation_accepted_at: now,
-      auto_approved: auto,
-      decided_at: auto ? now : null,
+      auto_approved: false,
     },
     select: { status: true },
   });
 
-  if (auto) await moveInto(person.id, target.id, person.company_id);
-  if (auto) await refreshProviderScore(person.id);
+  if (membership.status === "PENDING") await notifyJoinRequested(target.id, person.id);
 
   return {
     companyId: target.id,
     name: target.name,
     status: membership.status,
-    autoApproved: auto,
+    autoApproved: false,
   };
 }
 
@@ -638,6 +636,7 @@ export async function decideRequest(
     await refreshProviderScore(target.person_id);
   }
 
+  await notifyJoinDecided(target.company_id, target.person_id, decision === "APPROVED");
   return { ok: true as const, status: decision };
 }
 
@@ -686,4 +685,27 @@ async function refreshProviderScore(personId: string): Promise<void> {
   } catch (e) {
     console.error("[company] completeness refresh failed (non-fatal):", e);
   }
+}
+
+/**
+ * After a user verifies their email: if its domain matches exactly one company's domain, create a PENDING
+ * request there (never an approval). Free-mail domains and existing memberships do nothing.
+ */
+export async function requestDomainJoin(userId: string): Promise<{ companyId: string } | null> {
+  const person = await prisma.person.findUnique({
+    where: { user_id: userId },
+    select: { id: true, company_id: true, user: { select: { email: true, email_verified: true } }, companyMemberships: { select: { company_id: true } } },
+  });
+  if (!person?.user?.email_verified) return null;
+  const domain = emailDomain(person.user.email);
+  if (!domain || !isWorkDomain(domain)) return null;
+  const matches = await prisma.company.findMany({ where: { email_domain: domain }, select: { id: true }, take: 2 });
+  if (matches.length !== 1) return null;
+  const companyId = matches[0].id;
+  if (person.company_id === companyId || person.companyMemberships.some((m) => m.company_id === companyId)) return null;
+  await prisma.companyMembership.create({
+    data: { person_id: person.id, company_id: companyId, role: "MEMBER", status: "PENDING", auto_approved: false },
+  });
+  await notifyJoinRequested(companyId, person.id);
+  return { companyId };
 }

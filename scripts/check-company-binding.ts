@@ -242,11 +242,18 @@ const stripped = strip(companyLibRaw);
   version of this mistake than a whole new file.
 */
 const createSites = (stripped.match(/companyMembership\.(create|createMany|upsert)/g) ?? []).length;
+// Scott 2026-10-05 (company-v2 lane 3): a third path — a PENDING request when a verified email matches the
+// company's domain. It may only ever create PENDING; an admin still decides.
 check(
-  "GUARD 2 — exactly two ways a membership can be CREATED",
-  createSites === 2,
-  `${createSites} found — defineCompany and joinCompany are the only two attestations a human makes`
+  "GUARD 2 — exactly three ways a membership can be CREATED (define, join, domain-matched request)",
+  createSites === 3,
+  `${createSites} found`
 );
+{
+  const fn = stripped.slice(stripped.indexOf("export async function requestDomainJoin"));
+  const body = fn.slice(0, fn.indexOf("\n}\n") + 3);
+  check("GUARD 2b — the domain-matched request is PENDING only, never APPROVED", /status: "PENDING"/.test(body) && !/APPROVED/.test(body));
+}
 /*
   ⚠ AND ANY STATUS TRANSITION IS BEHIND AN ADMIN CHECK. `decideRequest` may flip
   PENDING → APPROVED, and the thing that makes that safe is `actorIsAdmin`; a

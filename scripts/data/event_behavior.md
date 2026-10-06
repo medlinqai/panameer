@@ -196,6 +196,9 @@ it, because an item with no clearing writer would sit there forever (`E579` one 
 | `group.join_requested` | the group's owner | `Send for Approval` | worklist | ⚠ Fires ONLY on a `REQUEST` group, where a decision is genuinely owed. **Cleared by `decideJoinRequest`.** |
 | `group.join_approved` | the member who asked | `Do It` | in-app | Nothing is owed by them — they asked and got an answer |
 | `group.join_declined` | the member who asked | `Do It` | in-app | ⚠⚠ **TOLD, NOT SWALLOWED.** A decline nobody sees reads as *"you never asked"*. ⚠ It names no reason and blames nobody — the owner gave none |
+| `company.join_requested` | the company's admins | `Send for Approval` | worklist | Fires when someone asks to join, including the automatic request when a verified email matches the company's domain. **Cleared by `decideRequest`.** |
+| `company.join_approved` | the person who asked | `Do It` | in-app | Nothing is owed — they asked and got an answer |
+| `company.join_declined` | the person who asked | `Do It` | in-app | Told, not swallowed; names no reason |
 | `group.question_asked` | the group's owner | `Send for Approval` | worklist | ⚠ The same question `countThreadsWaitingOn` counts on the Groups page — one definition. **Cleared by answering.** ⚠⚠ The four general boards are ownerless, so nothing fires |
 | `colleague.invite_received` | the person invited | `Send for Approval` | worklist | **Cleared by accepting OR declining** — both end the wait |
 | `colleague.invite_accepted` | the person who invited | `Do It` | in-app | ⚠ A colleague DECLINE is deliberately silent — that is a judgement this product does not deliver, unlike a group decline, where an owner is administering a room |

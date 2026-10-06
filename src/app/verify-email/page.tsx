@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { consumeEmailVerification, issueSignInToken } from "@/lib/verification";
+import { requestDomainJoin } from "@/lib/company";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { VerifiedSignIn } from "@/components/onboarding/VerifiedSignIn";
 
@@ -20,6 +21,8 @@ export default async function VerifyEmailPage({
   // Only minted on success, and only good for one exchange within 5 minutes.
   const userId = ok ? (result as { userId: string }).userId : null;
   const signInToken = userId ? await issueSignInToken(userId) : null;
+  // A verified work email that matches a company's domain becomes a join request for its admins.
+  if (userId) await requestDomainJoin(userId).catch((e) => console.error("[company] domain join request failed:", e));
 
   const person = userId
     ? await prisma.person.findUnique({
