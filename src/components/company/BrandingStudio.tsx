@@ -30,6 +30,10 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
   const checks = useMemo(() => contrastChecks(t), [t]);
   const readable = valid && checks.every((c) => c.ok);
   const themed = !!saved.hue && !!saved.look;
+  // One brand color on the page: the color being edited (saved brand_hue until changed). Hero, stat,
+  // swatches, looks, preview and Where It Shows all read this; Save makes it the console's.
+  const shown = valid ? hue.toLowerCase() : DEFAULT_BRAND;
+  const unsaved = valid && hue.toLowerCase() !== (saved.hue ?? DEFAULT_BRAND).toLowerCase();
 
   const scan = async (file: File | undefined) => {
     if (!file) return;
@@ -78,8 +82,8 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
             )}
           </div>
           <div className="text-center">
-            <span className="block h-[52px] w-[52px] border border-line" style={{ background: themed ? saved.hue! : DEFAULT_BRAND }} aria-hidden />
-            <span className="mt-1.5 block font-mono text-[11.5px] uppercase text-ink-2">{themed ? saved.hue : DEFAULT_BRAND}</span>
+            <span className="block h-[52px] w-[52px] border border-line" style={{ background: shown }} data-brand-color={shown} aria-hidden />
+            <span className="mt-1.5 block font-mono text-[11.5px] uppercase text-ink-2"><span data-brand-hex>{shown}</span></span>
           </div>
         </div>
         <div>
@@ -91,7 +95,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
               <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">LOGO</span>
             </div>
             <div>
-              <b className="block h-[32px] w-[32px] border border-line" style={{ background: themed ? saved.hue! : DEFAULT_BRAND }} aria-hidden />
+              <b className="block h-[32px] w-[32px] border border-line" style={{ background: shown }} data-brand-color={shown} aria-hidden />
               <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">BRAND COLOR</span>
             </div>
             <div>
@@ -229,6 +233,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
           The band, active menu item, primary buttons and links take your color; buttons stay square; text contrast is checked (4.5:1) before it can be saved.
         </p>
         {msg && <p role="status" data-theme-msg className={"mt-2 text-[13px] font-semibold " + (msg.ok ? "text-ink" : "text-magenta-dark")}>{msg.text}</p>}
+        {unsaved && <p data-unsaved className="mt-2 text-[12.5px] font-semibold text-ink">Not saved yet — Save Theme to apply {shown} for everyone.</p>}
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" disabled={!readable || !!busy} onClick={() => put({ brandHue: hue.toLowerCase(), recipeId: look }, "save")} className={`${BTN} bg-ink text-surface hover:bg-ink-hover`}>
             {busy === "save" ? "Saving…" : "Save Theme"}
@@ -248,7 +253,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
           ].map(([sample, where]) => (
             <div key={where} className="border-t border-line pt-3">
               <span className="flex items-center gap-2 text-[14px] font-semibold">
-                <span className="h-3 w-3" style={{ background: themed ? saved.hue! : DEFAULT_BRAND }} aria-hidden />
+                <span className="h-3 w-3" style={{ background: shown }} data-brand-color={shown} aria-hidden />
                 {sample}
               </span>
               <span className="text-[13px] text-ink-2">{where}</span>
