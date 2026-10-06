@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionViewer } from "@/lib/session";
 import { EmployeeProfile } from "@/components/profile/EmployeeProfile";
-import { FreeLine } from "@/components/marketing/FreeLine";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
@@ -155,50 +154,6 @@ export default async function MyProfilePage() {
         which is a visual regression with no error attached to it.
       */}
       <div className="account-surface">
-      {/*
-        ── ⚠⚠⚠ THE LEAD LINE LIVES **INSIDE** THE WHITE SURFACE (`P2-A1.1-E739`) ──
-
-        ⚠ **SCOTT, 2026-10-01, walking `/profile` at 390: *"the new free lead line sits
-        in its own strip, indented past the page gutter, and the photo butts against
-        it… Put the lead line inside the page's normal gutter, with no separate
-        background and one standard gap below it."***
-
-        ⚠⚠ **THREE MEASURED CAUSES, NOT ONE**, and each half of his sentence was a
-        different defect:
-          1. ⚠ **INDENTED** — the wrapper carried `px-4` inside an ancestor that
-             already supplies the page gutter, so the `<p>` sat at **x=36** while
-             `.pm-cp3`, the photo and every section below sat at **x=20**. ⚠⚠ It also
-             used `max-w-5xl` (1024px) against the profile column's **1120px**, so it
-             was narrower than its own content at desktop width.
-          2. ⚠⚠ **ITS OWN STRIP** — it rendered ABOVE `.account-surface`, i.e. on
-             `bg-canvas` (**rgb(250,250,250)**, probed) while the content it introduces
-             is on **white**. ⚠⚠⚠ **A LINE THAT INTRODUCES A CARD MUST SIT ON THE
-             CARD**, or it reads as chrome belonging to the tab row above it.
-          3. ⚠ **THE PHOTO BUTTING AGAINST IT** — no gap of its own; `mb-4` is now the
-             one standard gap below, and nothing above (the surface supplies that).
-
-        ⚠⚠ **IT IS STILL ON THE PAGE AND NOT INSIDE `ConnectProfile`, WHICH IS
-        `E737`'s LOAD-BEARING REASON AND IS UNCHANGED:** that component is shared with
-        `/providers/[id]`, so a line placed there would tell a visitor that THEIR résumé
-        build is free while they are looking at a stranger's profile.
-        ⚠ Both halves of the claim remain measured: the résumé rebuild is reachable
-        (`OwnerResumeRebuild` below) and the Search Score is on the `Score` tab above.
-        ⚠ SUPERSEDED, quoted not deleted (`E164`) — both earlier wrappers:
-        //   <div className="mx-auto max-w-5xl px-4 pt-3 sm:px-6">   (E737, on canvas)
-        //   <div className="mx-auto mb-4 max-w-[1120px]">           (E739 first pass)
-      */}
-      <div className="mx-auto mb-4 max-w-[1120px]">
-        {/* ⚠⚠ "UPDATE", NOT "BUILD" (`P2-A1.1-E750`). Scott, 2026-10-02:
-            *"Build makes no sense when I already have a profile."* Ruling:
-            *"Update sounds better."* ⚠ This is the OWNER's own page — everyone
-            reading this line already has a profile, so "Build" described a state
-            none of them is in. ⚠ "latest" is what carries the repeatability: the
-            résumé rebuild can be run again, which is the thing being offered.
-            ⚠ SUPERSEDED, quoted not deleted (`E164`):
-            //   claim="Build your profile from your résumé and see your full Search Score, free."
-        */}
-        <FreeLine claim="Update your profile from your latest résumé and see your full Search Score, free." />
-      </div>
       <ConnectProfile
         /* ⚠ `publicUrl` is resolved HERE and nowhere else — see `ensureSlug`
            above. The view model carries `null` for every other surface. */
