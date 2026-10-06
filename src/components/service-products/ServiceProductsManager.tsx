@@ -423,7 +423,7 @@ export function ServiceProductsManager({
                     }
                     className="border border-magenta px-3 py-1.5 text-[13px] font-bold text-magenta-dark"
                   >
-                    {allSelected ? "Clear all" : "Select all in this process"}
+                    {allSelected ? "Clear All" : "Select All in This Process"}
                   </button>
                   <span className="text-[13px] text-ink-2">
                     {form.capabilityDomainIds.length} of{" "}

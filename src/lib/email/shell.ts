@@ -152,11 +152,11 @@ function footer(year: number): string {
     right, and the code was worse than he thought: these were never dead text,
     they were LIVE LINKS WEARING A DISGUISE.
 
-    ⚠⚠ THE UNDERLINE IS RESTORED **AS WELL AS** THE COLOUR, not instead of it.
-    Colour as the sole affordance fails colour-blind readers, and grey→magenta is
-    a HUE shift more than a contrast one — the two most common forms of colour
+    ⚠⚠ THE UNDERLINE IS RESTORED **AS WELL AS** THE COLOR, not instead of it.
+    Color as the sole affordance fails color-blind readers, and grey→magenta is
+    a HUE shift more than a contrast one — the two most common forms of color
     blindness are exactly the ones that flatten it. The underline is the
-    affordance that survives; the colour is what makes it noticeable.
+    affordance that survives; the color is what makes it noticeable.
 
     ⚠ NO ICONS, AND THIS IS EVIDENCE-BASED. Scott's received email had its images
     BLOCKED BY OUTLOOK and the Panameer wordmark rendered as an empty box. Today
@@ -167,7 +167,7 @@ function footer(year: number): string {
     sentence is `primaryButton`'s OWN docblock, and this module's header frames
     the rule as being about SOLID FILLS — *"a second action uses `ghostButton`
     … two solid buttons is not emphasis, it is the absence of a decision."* It
-    governs which control is THE action, not what colour a text link may be.
+    governs which control is THE action, not what color a text link may be.
     There is still exactly one filled magenta button per email.
   */
   const link = (href: string, label: string) =>

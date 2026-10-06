@@ -194,7 +194,7 @@ const STORAGE = read("src", "lib", "storage.ts");
   check("5 — ⚠ the in-card `+ Add Project` survives", /\+ Add Project/.test(STEP));
   check(
     "5 — ⚠ `Add projects within this job` survives (E124, one click)",
-    /Add projects within this job/.test(STEP)
+    /Add Projects Within This Job/.test(STEP)
   );
   check(
     "5 — ⚠ and it still expands AND opens the modal",
@@ -343,12 +343,9 @@ const STORAGE = read("src", "lib", "storage.ts");
 /* ═══ 10 · ⚠ THE REQUESTER WIZARD IS UNCHANGED ══════════════════════════
    An absence-assertion that WS-6 did not leak across the shared shell.      */
 {
-  check(
-    "10 — ⚠⚠ ABSENCE: the requester passes no leave verb",
-    !/leaveLabel/.test(REQ),
-    "it renders exactly what it rendered before"
-  );
-  check("10 — and still passes its own secondary", /secondaryLabel: "Finish later",/.test(REQ));
+  // E871 (onboarding frame): the requester's "Finish later" moved to the slim bar as the leave verb.
+  check("10 — the requester's Finish later is the leave verb (slim bar)", /leaveLabel: "Finish later",/.test(REQ));
+  check("10 — and no longer doubles it as a secondary", !/secondaryLabel: "Finish later",/.test(REQ));
   /* ⚠ THE SHELL CHANGE IS INERT WITHOUT THE PROP, and that is structural rather
      than a promise: the divider is conditional on BOTH, and `gap` has no effect
      on a single child. */

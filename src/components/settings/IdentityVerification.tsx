@@ -7,7 +7,7 @@ import { Card, Select, postSetting } from "@/components/settings/controls";
 
 type Status = "NOT_STARTED" | "SUBMITTED" | "VERIFIED" | "REJECTED" | "EXPIRED";
 
-const DOCS = ["Passport", "Driving licence", "National ID card"];
+const DOCS = ["Passport", "Driver's license", "National ID card"];
 
 const STATE: Record<Status, { label: string; tone: string; blurb: string }> = {
   NOT_STARTED: {

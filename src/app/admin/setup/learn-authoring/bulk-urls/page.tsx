@@ -248,7 +248,7 @@ function Tally({
   value: number;
   tone?: "emerald" | "amber" | "red";
 }) {
-  const colour =
+  const color =
     value === 0
       ? "text-ink-2"
       : tone === "emerald"
@@ -261,7 +261,7 @@ function Tally({
   return (
     <div className="rounded-brand border border-line p-4">
       <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">{label}</p>
-      <p className={"mt-0.5 text-[24px] font-extrabold " + colour}>{value}</p>
+      <p className={"mt-0.5 text-[24px] font-extrabold " + color}>{value}</p>
     </div>
   );
 }

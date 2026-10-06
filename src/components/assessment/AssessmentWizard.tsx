@@ -808,7 +808,7 @@ export function AssessmentWizard({
               : "text-ink-2 hover:text-ink")
           }
         >
-          I&rsquo;m not sure
+          I&rsquo;m Not Sure
         </button>
 
         <DomainFields

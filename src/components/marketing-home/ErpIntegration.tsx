@@ -75,7 +75,7 @@ const COSTS: readonly { row: string; body: React.ReactNode }[] = [
     body: (
       <>
         <span className="erpx-free">Free.</span> Integrating your ERP to
-        Panameer costs nothing — no setup fee, no licence, no minimum.
+        Panameer costs nothing — no setup fee, no license, no minimum.
         Connection is not the product.
       </>
     ),

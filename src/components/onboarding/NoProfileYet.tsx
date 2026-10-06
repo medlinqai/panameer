@@ -44,7 +44,7 @@ export function NoProfileYet({
             href={companyHref}
             className="bg-ink px-7 py-3 text-[15px] font-semibold text-surface hover:bg-ink-hover"
           >
-            Set up your company →
+            Set Up Your Company →
           </Link>
           <Link href="/dashboard" className="text-[14px] font-bold text-ink-2 hover:text-ink">
             Go to Dashboard

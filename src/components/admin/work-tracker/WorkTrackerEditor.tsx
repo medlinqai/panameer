@@ -69,7 +69,7 @@ function SaveMark({ entry, onRetry }: { entry?: SaveEntry; onRetry?: () => void 
   return (
     <span className="flex items-center gap-1.5 text-[12px] text-magenta">
       {}
-      {entry.message ?? "Couldn\u2019t save"} — <button type="button" onClick={onRetry} className="underline">retry</button>
+      {entry.message ?? "Couldn\u2019t save"} — <button type="button" onClick={onRetry} className="underline">Retry</button>
     </span>
   );
 }

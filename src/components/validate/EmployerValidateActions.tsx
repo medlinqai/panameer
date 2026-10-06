@@ -84,7 +84,7 @@ export function EmployerValidateActions({
               : "inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-white hover:bg-ink/90 disabled:opacity-60"
           }
         >
-          {busy === "yes" ? "Recording…" : "Yes, they did"}
+          {busy === "yes" ? "Recording…" : "Yes, They Did"}
         </button>
         <button
           type="button"
@@ -96,7 +96,7 @@ export function EmployerValidateActions({
               : "inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold text-ink hover:bg-bg-soft disabled:opacity-60"
           }
         >
-          {busy === "no" ? "Recording…" : "No, that isn't right"}
+          {busy === "no" ? "Recording…" : "No, That Isn't Right"}
         </button>
       </div>
     </div>

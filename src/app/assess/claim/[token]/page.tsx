@@ -73,7 +73,7 @@ export default async function ClaimPage({
             href={destination}
             className="mt-6 inline-flex bg-magenta px-6 py-3 text-[15px] font-bold text-white"
           >
-            Open my report
+            Open My Report
           </a>
         )}
 

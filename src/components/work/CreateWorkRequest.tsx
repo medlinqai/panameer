@@ -368,7 +368,7 @@ export function CreateWorkRequest({
                     }}
                     className="text-[14px] font-semibold text-ink-2 underline underline-offset-4 hover:text-magenta"
                   >
-                    Back to the three ways in
+                    Back to the Three Ways In
                   </button>
                   {/* v2, named so nobody wonders why pasting is the only way. */}
                   <span className="text-[12.5px] text-ink-2">

@@ -264,7 +264,7 @@ function ResultPanel({
               {verifyUrl ?? result.credential.url}
             </Link>
             <p className="mt-3 text-[13px] text-ink-2">
-              Paste that link into LinkedIn&apos;s &ldquo;Add licence or
+              Paste that link into LinkedIn&apos;s &ldquo;Add license or
               certification&rdquo; as the credential URL.
             </p>
           </div>

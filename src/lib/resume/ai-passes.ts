@@ -361,7 +361,7 @@ If the document says nothing about a field, use null — never invent one.${list
 export function certificationsPass(text: string, startedAt: number | null = null) {
   const system = `You are transcribing, not summarising.
 
-List EVERY certification, credential, licence or accreditation named in this
+List EVERY certification, credential, license or accreditation named in this
 document — including any under a heading like "CERTIFICATIONS", "ORACLE CLOUD
 CERTIFICATIONS", "CREDENTIALS" or "LICENCES".
 If there are five, return five. Copy each name verbatim.

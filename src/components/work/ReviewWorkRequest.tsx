@@ -247,7 +247,7 @@ export function ReviewStep({
                 disabled={busy}
                 className="border-[1.5px] border-line px-5 py-2.5 font-bold text-ink transition-colors hover:border-magenta hover:text-magenta disabled:opacity-50"
               >
-                Keep editing
+                Keep Editing
               </button>
               <button
                 type="button"

@@ -173,7 +173,7 @@ export const SUPPLEMENT_META: Record<string, SupplementMeta> = {
     notice: {
       kind: "stub",
       body:
-        "Panameer's mark use guidelines are being written. The source document specified another company's logo, its clear-space and colour rules, and the exact spellings of its name — none of which describe Panameer's brand, and rebranding those rules verbatim would publish guidance that is simply wrong. This page will carry the real guidelines once Panameer's brand assets are finalised.",
+        "Panameer's mark use guidelines are being written. The source document specified another company's logo, its clear-space and color rules, and the exact spellings of its name — none of which describe Panameer's brand, and rebranding those rules verbatim would publish guidance that is simply wrong. This page will carry the real guidelines once Panameer's brand assets are finalised.",
     },
   },
 };

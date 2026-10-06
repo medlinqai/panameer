@@ -264,7 +264,7 @@ const SWITCH = WIZ.slice(WIZ.indexOf("switch (screen) {"));
   );
   check(
     "7 — ⚠ `Add projects within this job` survives (E124, one click)",
-    /Add projects within this job/.test(STEP),
+    /Add Projects Within This Job/.test(STEP),
     "collapsed card — expands AND opens the modal"
   );
   check("7 — `+ Add Company` still sits at list level", /\+ Add Company/.test(STEP));

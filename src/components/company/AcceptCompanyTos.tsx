@@ -37,7 +37,7 @@ export function AcceptCompanyTos({ companyId }: { companyId: string }) {
         disabled={busy}
         className="bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {busy ? "Recording…" : "Accept on behalf of the company"}
+        {busy ? "Recording…" : "Accept on Behalf of the Company"}
       </button>
       <p className="mt-2 text-xs text-black/55 dark:text-white/55">
         We record your name, the date and the version.

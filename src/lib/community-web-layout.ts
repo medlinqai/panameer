@@ -105,7 +105,7 @@ export const RING_GAP_OK = (() => {
     y: outerMinY - innerMaxY,
     fitsX: VIEW.cx - (OUTER.rx * (1 + BREATHE) + NODE_R.reachable),
     fitsY: VIEW.cy - (OUTER.ry * (1 + BREATHE) + NODE_R.reachable),
-    centre: INNER.ry * (1 - BREATHE) - NODE_R.joined - NODE_R.me,
+    center: INNER.ry * (1 - BREATHE) - NODE_R.joined - NODE_R.me,
   };
 })();
 

@@ -138,7 +138,7 @@ export function RecommendationForm({
             (startDeclined ? "text-ink" : "text-ink-2")
           }
         >
-          No thanks
+          No Thanks
         </button>
       </div>
     </div>

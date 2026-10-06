@@ -312,7 +312,7 @@ function TimesheetLine({
             onClick={() => onChange([...rows, newRow(defaultDate)])}
             className="mt-3 text-[14px] font-bold text-ink-2 underline underline-offset-4 hover:text-magenta"
           >
-            Add a day
+            Add a Day
           </button>
         </>
       )}

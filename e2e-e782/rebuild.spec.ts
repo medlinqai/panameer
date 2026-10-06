@@ -78,7 +78,7 @@ test.describe("P2-ALL-E782 — the rebuild panel", () => {
     await link.click();
     await page.waitForTimeout(800);
 
-    /* ⚠ Reached by "Use the one on file" the panel is not available here (no
+    /* ⚠ Reached by "Use the One on File" the panel is not available here (no
        document), so the upload branch is the only way in — but the component's
        own fallback is what this asserts, and it is reachable by rendering the
        panel at all. The copy is the contract. */
