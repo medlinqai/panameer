@@ -61,7 +61,7 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
   await expect(page.locator("[data-details-editor]")).toHaveCount(0, { timeout: 20_000 });
   await expect(page.locator("[data-readiness]")).toHaveAttribute("data-readiness", hasIndustry ? "90" : "80");
   await expect(page.locator("[data-company-description]")).toHaveText("Throwaway test company for the My Company page.");
-  // Edit logo uploads in place (no navigation): a 300×200 PNG comes back square.
+  // Edit logo uploads in place (no navigation).
   const png = Buffer.from(await page.evaluate(async () => {
     const c = document.createElement("canvas"); c.width = 300; c.height = 200;
     const x = c.getContext("2d")!; x.fillStyle = "#d72cd6"; x.fillRect(0, 0, 300, 200);
@@ -69,7 +69,10 @@ test("admin edits in place, approves, branding + terms", async ({ browser }) => 
     return Array.from(new Uint8Array(await b.arrayBuffer()));
   }));
   await page.locator("[data-logo-input]").first().setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png });
+  await page.locator("[data-logo-confirm]").first().getByRole("button", { name: "Use as Is" }).click();
   await expect(page.locator('img[alt$="logo"]').first()).toBeVisible({ timeout: 30_000 });
+  // The original is kept: 300×200 stays 3:2, not a square crop.
+  await expect.poll(() => page.locator('img[alt$="logo"]').first().evaluate((i) => (i as HTMLImageElement).naturalWidth / (i as HTMLImageElement).naturalHeight), { timeout: 15_000 }).toBeCloseTo(1.5, 1);
   await expect(page).toHaveURL(/\/company(#details)?$/);
   // People: approve the asker.
   await page.goto("/company/people", { waitUntil: "networkidle" });

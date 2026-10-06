@@ -110,7 +110,11 @@ const EXTENSION: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "image/svg+xml": "svg",
 };
+
+/** Company logos also take SVG (shown only through <img>, so no script runs). */
+export const ALLOWED_LOGO_MIME = [...ALLOWED_PHOTO_MIME, "image/svg+xml"] as const;
 
 export class StorageError extends Error {
   constructor(
@@ -202,9 +206,9 @@ export async function uploadCompanyLogo(
   companyId: string,
   file: { type: string; size: number; bytes: ArrayBuffer }
 ): Promise<string> {
-  if (!ALLOWED_PHOTO_MIME.includes(file.type as (typeof ALLOWED_PHOTO_MIME)[number])) {
+  if (!ALLOWED_LOGO_MIME.includes(file.type as (typeof ALLOWED_LOGO_MIME)[number])) {
     throw new StorageError(
-      `That file type isn't supported. Upload a ${allowedList} image.`,
+      "That file type isn't supported. Upload a PNG, JPG, WebP or SVG image.",
       "INVALID_TYPE"
     );
   }

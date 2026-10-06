@@ -4,6 +4,7 @@ import type { CompanyView } from "@/lib/company-view";
 import { CleanSide } from "@/components/profile/CleanSection";
 import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload";
 import "@/components/community/connect-profile.css";
+import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 
 // My Company layout (mockup my_company 2026-10-05), built like My Profile: logo column left, name + meta right.
 // role "buyer" = the public, buyer-safe view: no readiness, no edit, no invite, no visibility.
@@ -33,10 +34,9 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
       {/* Desktop: logo column left (top + bottom blocks), page right. Phone: logo | readiness, page, then actions. */}
       <div className="grid gap-[26px] md:grid-cols-[234px_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:gap-x-[50px] md:gap-y-0">
         <aside className="grid min-w-0 grid-cols-[140px_minmax(0,1fr)] items-center gap-5 md:col-start-1 md:row-start-1 md:block">
-          <div className="relative grid h-[140px] w-[140px] place-items-center border border-line bg-surface md:h-[234px] md:w-[234px]">
+          <div className="relative grid h-[140px] w-[140px] place-items-center border border-line bg-surface md:h-[234px] md:w-[234px]" data-logo-box>
             {c.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.logoUrl} alt={`${c.name} logo`} className="max-h-[80%] max-w-[80%] object-contain" />
+              <CompanyLogoTile src={c.logoUrl} alt={`${c.name} logo`} className="h-full w-full" />
             ) : (
               <span className="grid h-[72px] w-[72px] place-items-center bg-[linear-gradient(135deg,#2b2438,#5b4d78)] text-[28px] font-extrabold text-white md:h-[120px] md:w-[120px] md:text-[44px]">
                 {c.name.trim()[0]?.toUpperCase() ?? "?"}

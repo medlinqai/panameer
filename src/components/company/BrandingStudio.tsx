@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CompanySection } from "@/components/company/CompanySection";
 import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload";
 import { LOOKS, brandTokens, contrastChecks, DEFAULT_BRAND, normalizeLook, type LookId } from "@/lib/dynamic-branding";
+import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 
 // Branding (mockup company_tabs 2026-10-05): Usage/Health layout — hero, then Brand Color · Dynamic Branding · Where It Shows.
 type Props = { companyId: string; companyName: string; logoUrl: string | null; brandHue: string | null; themeRecipe: string | null };
@@ -65,10 +66,9 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
     <div className="pm-white-page mx-auto w-full max-w-[1010px] pb-14" data-branding>
       <section className="grid items-center gap-x-14 gap-y-6 border-b border-line pb-9 md:grid-cols-[340px_1fr]">
         <div className="flex items-center justify-center gap-5">
-          <div className="grid h-[150px] w-[150px] place-items-center border border-line bg-surface text-center">
+          <div className="grid h-[150px] w-[220px] place-items-center border border-line bg-surface text-center" data-logo-box>
             {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={`${companyName} logo`} className="max-h-[80%] max-w-[80%] object-contain" />
+              <CompanyLogoTile src={logoUrl} alt={`${companyName} logo`} className="h-full w-full" pad="8%" />
             ) : (
               <span className="text-[12.5px] text-ink-3">No logo yet</span>
             )}
