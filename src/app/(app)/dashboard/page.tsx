@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { getSessionViewer } from "@/lib/session";
 import { PublishedDialog } from "@/components/home/PublishedDialog";
 import { AttentionStrip } from "@/components/home/AttentionStrip";
-import { WorklistPanel } from "@/components/home/WorklistPanel";
 import { WorkFeed } from "@/components/home/WorkFeed";
 import { getAttentionCards } from "@/lib/attention";
 // import { getCreditsSummary } from "@/lib/credits";
@@ -14,8 +13,7 @@ import { displayFirstName } from "@/lib/display";
 import { RequesterHome } from "@/components/home/RequesterHome";
 import { listMentors } from "@/lib/mentors";
 import { loadMemberFacts } from "@/lib/next-step-facts";
-import { nextStep } from "@/lib/next-step";
-import { NextStepCard } from "@/components/home/NextStepCard";
+import { FiveThings } from "@/components/home/FiveThings";
 import { CompanyLink } from "@/components/company/CompanyLink";
 
 export default async function DashboardPage({
@@ -40,7 +38,8 @@ export default async function DashboardPage({
 
   // First page: everyone lands here; the next-step card reads the member's facts before the visit is marked.
   const facts = await loadMemberFacts(viewer);
-  const first = facts.seller || facts.buyer ? <NextStepCard page={nextStep(facts)} /> : null;
+  // "5 things you can do today" replaces the single next-step card and its "Why" / "Then" lists.
+  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} /> : null;
   const providerProfile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewer.userId } },
     select: { id: true, person_id: true, completeness: true },
@@ -72,7 +71,6 @@ export default async function DashboardPage({
       <div className="mx-auto w-full max-w-6xl">
         {}
         {first}
-        <WorklistPanel userId={viewer.userId} />
         <Suspense fallback={null}>
           <PublishedDialog />
         </Suspense>
@@ -105,7 +103,6 @@ export default async function DashboardPage({
     return (
       <>
         <div className="mx-auto w-full max-w-6xl">{first}</div>
-        <WorklistPanel userId={viewer.userId} />
         <RequesterHome
         firstName={displayFirstName(requester.person.first_name ?? "")}
         openWorkCount={openWorkCount}
@@ -145,7 +142,6 @@ export default async function DashboardPage({
   return (
     <div className="space-y-8">
       {first}
-      <WorklistPanel userId={viewer.userId} />
       <header className={first ? "hidden" : undefined}>
         <h1 className="text-3xl tracking-tight">
           Welcome Back{firstName ? `, ${firstName}` : ""}
