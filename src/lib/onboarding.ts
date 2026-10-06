@@ -1975,6 +1975,10 @@ export async function publishProfile(viewer: Viewer) {
     remote_rate_cents: pp.remote_rate_cents,
     hasAddress: Boolean(p.site?.addresses?.[0]?.line1?.trim()),
     hasPhone: Boolean(p.phone?.trim()),
+    overview: pp.overview,
+    specializations: pp.specializations,
+    languages: pp.languages,
+    hasLocation: Boolean(p.site?.addresses?.[0]?.city?.trim() || p.site?.addresses?.[0]?.state?.trim() || p.site?.addresses?.[0]?.country?.trim()),
   });
 
   if (missing.length > 0) {

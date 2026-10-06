@@ -45,31 +45,27 @@ export type CompletenessInput = {
 };
 
 // should eb able to go down that list and get to 100%."*
+// Lifecycle step 3: the required set (Profiled + searchable) is exactly 80; the other 20 rank you higher.
 export const COMPLETENESS_WEIGHTS = {
-  // ── SO BUYERS CAN FIND YOU — 50 ──────────────────────────────────────────
-  // opt-out here would let a provider declare their way to invisible.
   headline: 8, //   Title
-  field: 8, //      Field
-  skills: 10, //    Skills
-  rate: 8, //       Hourly Rate
+  field: 8, //      Role
+  skills: 10, //    ≥ 3 skills
+  rate: 8, //       Rate
   photo: 8, //      Photo
-  identity: 8, //   Identity Verified — address + phone
-
-  // ── WHO YOU ARE — 24 ─────────────────────────────────────────────────────
-  overview: 8, //       Bio (>= BIO_MIN_CHARS)
-  location: 4, //       Location — a city/state/country to show
-  languages: 4, //      Languages
-  experienceYears: 3, // Years of Experience — a dated job or project
-  workMethod: 5, //     How You Work
-
-  // ── WHAT YOU'VE DONE — 26 ────────────────────────────────────────────────
-  // still scores — that is the whole feature.
-  workHistory: 8,
-  education: 5,
-  specializations: 4,
-  certifications: 6,
-  soloProjects: 3,
+  identity: 8, //   Address + phone
+  overview: 8, //   Bio ≥ 100 chars
+  location: 6, //   Location
+  languages: 6, //  ≥ 1 language
+  specializations: 10, // ≥ 1 specialization
+  experienceYears: 2,
+  workMethod: 3,
+  workHistory: 6,
+  education: 3,
+  certifications: 4,
+  soloProjects: 2,
 } as const;
+export const REQUIRED_SCORE_KEYS = ["headline", "field", "skills", "rate", "photo", "identity", "overview", "location", "languages", "specializations"] as const;
+export const MIN_SKILLS = 3;
 
 export const COMPLETENESS_TOTAL = Object.values(COMPLETENESS_WEIGHTS).reduce(
   (a, b) => a + b,
@@ -86,6 +82,11 @@ export type RequiredSetInput = Pick<
   CompletenessInput,
   "headline" | "role_type_id" | "skills" | "photoUrl" | "hasAddress" | "hasPhone"
 > & {
+  // Checked when provided (lifecycle step 3).
+  overview?: string | null;
+  specializations?: unknown[];
+  languages?: unknown[];
+  hasLocation?: boolean;
   hourly_rate_cents?: number | null;
   rate_min_cents?: number | null;
   rate_max_cents?: number | null;
@@ -99,11 +100,15 @@ export function missingRequired(p: RequiredSetInput): string[] {
   const missing: string[] = [];
   if (!p.headline?.trim()) missing.push("a title");
   if (!p.role_type_id) missing.push("a role");
-  if (p.skills.length < 1) missing.push("at least one skill");
+  if (p.skills.length < MIN_SKILLS) missing.push("at least three skills");
   if (!hasAnyRate(p)) missing.push("your rate");
   if (!p.photoUrl) missing.push("a photo");
   if (!p.hasAddress) missing.push("your address");
   if (!p.hasPhone) missing.push("your phone number");
+  if (p.overview !== undefined && (p.overview?.trim().length ?? 0) < BIO_MIN_CHARS) missing.push("a bio of at least 100 characters");
+  if (p.specializations !== undefined && p.specializations.length < 1) missing.push("at least one specialization");
+  if (p.languages !== undefined && p.languages.length < 1) missing.push("at least one language");
+  if (p.hasLocation !== undefined && !p.hasLocation) missing.push("your location");
   return missing;
 }
 
@@ -180,7 +185,7 @@ export function computeProfileScore(p: CompletenessInput): ProfileScore {
     L("headline", "Title", W.headline, "find", state(!!p.headline?.trim())),
     // THE ROLE IS THE ANSWER. `pillar_id` is derived server-side and is no
     L("field", "Field", W.field, "find", state(!!p.role_type_id)),
-    L("skills", "Skills", W.skills, "find", state(has(p.skills))),
+    L("skills", "Skills", W.skills, "find", state((p.skills?.length ?? 0) >= MIN_SKILLS)),
     L("rate", "Rates", W.rate, "find", state(hasAnyRate(p))),
     L("photo", "Photo", W.photo, "find", state(!!p.photoUrl)),
     // IDENTITY IS ADDRESS + PHONE (`WS7`). Date of birth left the wizard
@@ -201,15 +206,19 @@ export function computeProfileScore(p: CompletenessInput): ProfileScore {
       state(has(p.employers), p.declaredNoWorkHistoryAt), true),
     L("education", "Education", W.education, "done",
       state(has(p.education), p.declaredNoEducationAt), true),
-    L("specializations", "Specializations", W.specializations, "done",
-      state(has(p.specializations), p.declaredNoSpecializationsAt), true),
+    // Required: "I have none" doesn't count here.
+    L("specializations", "Specializations", W.specializations, "find", state(has(p.specializations))),
     L("certifications", "Certifications", W.certifications, "done",
       state(has(p.certifications), p.declaredNoCertificationsAt), true),
     L("soloProjects", "Solo Projects", W.soloProjects, "done",
       state(has(p.soloProjects), p.declaredNoSoloProjectsAt), true),
   ];
 
-  const total = lines.reduce((a, l) => a + (lineCounts(l.state) ? l.points : 0), 0);
+  // Optional points count only once the required set is complete, so 80 = checklist done.
+  const req = new Set<string>(REQUIRED_SCORE_KEYS);
+  const reqLines = lines.filter((l) => req.has(l.key));
+  const reqDone = reqLines.every((l) => l.state === "filled");
+  const total = lines.reduce((a, l) => a + (l.state === "filled" || (lineCounts(l.state) && !req.has(l.key)) ? (req.has(l.key) || reqDone ? l.points : 0) : 0), 0);
   return { total, lines };
 }
 

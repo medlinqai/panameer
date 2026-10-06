@@ -71,7 +71,11 @@ export type GateField =
   | "address"
   | "phone"
   /** `SELL` adds one on top of `SEARCHABLE`. */
-  | "payoutMethod";
+  | "payoutMethod"
+  | "bio"
+  | "specialization"
+  | "language"
+  | "location";
 
 export type GateSetName = "IDENTITY" | "LEARN" | "SEARCHABLE" | "SELL";
 
@@ -84,6 +88,10 @@ export type GateGap = {
 };
 
 export const GATE_REASONS: Record<GateField, { field: string; reason: string; href: string }> = {
+  bio: { field: "Write a bio (100+ characters)", reason: "Buyers read it before they reply.", href: "/profile" },
+  specialization: { field: "Add a specialization", reason: "It's how buyers filter for your product or industry.", href: "/profile" },
+  language: { field: "Add a language", reason: "Buyers need to know you can work in theirs.", href: "/profile" },
+  location: { field: "Add your location", reason: "Many engagements depend on time zone or country.", href: "/profile" },
   name: {
     field: "Add your name",
     reason: "People answer people, and buyers don't hire someone they can't name.",
@@ -167,7 +175,11 @@ export function missingForLearn(subject: LearnSubject): GateGap[] {
 export const REQUIRED_PHRASE_TO_FIELD: Record<string, GateField> = {
   "a title": "title",
   "a role": "role",
-  "at least one skill": "skill",
+  "at least three skills": "skill",
+  "a bio of at least 100 characters": "bio",
+  "at least one specialization": "specialization",
+  "at least one language": "language",
+  "your location": "location",
   "your rate": "rate",
   "a photo": "photo",
   "your address": "address",
