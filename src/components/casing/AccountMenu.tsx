@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { signOut } from "next-auth/react";
+import { signOutEverywhere } from "@/lib/sign-out";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
 import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
@@ -35,6 +35,7 @@ export function AccountMenu({
   const { me, refresh } = useMe();
   const [open, setOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const theme = useSyncExternalStore(
@@ -521,10 +522,15 @@ export function AccountMenu({
             <button
               role="menuitem"
               data-menu-item
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className={`${rowClass} font-semibold text-red-600`}
+              data-sign-out
+              disabled={signingOut}
+              onClick={() => {
+                setSigningOut(true);
+                void signOutEverywhere();
+              }}
+              className={`${rowClass} font-semibold text-red-600 disabled:opacity-70`}
             >
-              Sign Out
+              {signingOut ? "Signing out…" : "Sign Out"}
             </button>
           </div>
         </div>
