@@ -4,31 +4,27 @@ import { HiddenProfileBanner } from "@/components/casing/HiddenProfileBanner";
 import { AppBand } from "@/components/casing/AppBand";
 import { getSessionViewer } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { resolveTheme } from "@/lib/themeRecipes";
+import { themeVars } from "@/lib/dynamic-branding";
 
 export async function AppShell({ children }: { children: ReactNode }) {
 
   const viewer = await getSessionViewer();
+  // Dynamic Branding: only approved members of the company get its theme; everyone else sees Panameer's.
   const company = viewer
-    ? await prisma.company.findFirst({
-        where: { people: { some: { user_id: viewer.userId } } },
-        select: { brand_hue: true, theme_recipe: true },
-      })
+    ? (
+        await prisma.companyMembership.findFirst({
+          where: { person: { user_id: viewer.userId }, status: "APPROVED" },
+          orderBy: { created_at: "asc" },
+          select: { company: { select: { brand_hue: true, theme_recipe: true } } },
+        })
+      )?.company ?? null
     : null;
-  const themed = Boolean(company?.brand_hue || company?.theme_recipe);
-  const t = resolveTheme(company?.brand_hue, company?.theme_recipe);
-  const themeVars = themed
-    ? ({
-        "--color-rail": t.surfaceDark,
-        "--color-canvas": t.surfaceLight,
-        "--color-rail-active": t.brandPrimary,
-        "--color-magenta": t.brandPrimary,
-      } as React.CSSProperties)
-    : undefined;
+  const theme = themeVars(company?.brand_hue, company?.theme_recipe);
 
   return (
     <div
-      style={themeVars}
+      style={theme?.vars as React.CSSProperties | undefined}
+      data-brand-theme={theme ? (theme.light ? "light" : "dark") : undefined}
       className="flex min-h-screen flex-col bg-canvas font-body text-ink"
     >
       <div className="flex min-w-0 flex-1 flex-col">

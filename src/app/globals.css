@@ -681,3 +681,22 @@ main:has(:is(.pm-white-page, .account-surface)) {
 .bg-canvas:has(:is(.pm-white-page, .account-surface)) {
   background: var(--color-surface);
 }
+
+/* Dynamic Branding, Light rail: the band is a light tint, so its text turns ink (the lit item keeps white). */
+[data-brand-theme="light"] .pm-band {
+  border-color: var(--color-line);
+}
+[data-brand-theme="light"] .pm-band :is(.text-white, [class*="text-white/"]):not(.bg-rail-active, .bg-rail-active *) {
+  color: var(--color-ink) !important;
+}
+[data-brand-theme="light"] .pm-band .pm-band-logo-white {
+  display: none;
+}
+[data-brand-theme="light"] .pm-band .pm-band-logo-ink {
+  display: block;
+}
+/* Light rail also tints the phone bottom nav: its links turn ink (the active pill keeps white). */
+[data-brand-theme="light"] :is(.pm-bottomnav-cell, .pm-bottomnav-more > summary, .pm-bottomnav-overflow-link):not(.is-active),
+[data-brand-theme="light"] .pm-bottomnav :is(a, summary):not(.is-active) {
+  color: var(--color-ink) !important;
+}
