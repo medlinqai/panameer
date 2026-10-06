@@ -2,6 +2,7 @@ import { BadgeCheck, CircleDashed } from "lucide-react";
 import { CompanyLink } from "@/components/company/CompanyLink";
 import { Avatar } from "@/components/Avatar";
 import { standingLine, type BuyerIdentity } from "@/lib/work-request-identity";
+import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 
 export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
   const {
@@ -45,14 +46,7 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
 
       {/* 2 — the company */}
       <div className="mt-3 flex items-center gap-2.5">
-        {companyLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={companyLogoUrl}
-            alt=""
-            className="h-6 w-6 shrink-0 rounded-[5px] object-cover"
-          />
-        )}
+        {companyLogoUrl && <CompanyLogoTile src={companyLogoUrl} alt="" className="h-7 w-12 shrink-0 border border-line" pad="2px" />}
         <div className="min-w-0">
           <p className="truncate text-[13.5px] font-semibold">
             {companyLabel && !companyConfidential ? <CompanyLink id={companyId} name={companyLabel} /> : (companyLabel ?? "—")}

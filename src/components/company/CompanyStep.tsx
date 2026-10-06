@@ -5,6 +5,7 @@ import { LegalLink } from "@/components/legal/LegalLink";
 import { Field, TextInput, Notice, OptionCard } from "@/components/onboarding/controls";
 /* ⚠ THE ONE CANONICAL LIST (`E729` WS-C). */
 import { ALL_COUNTRIES } from "@/lib/country";
+import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
 /* ⚠ IMPORTS KEPT FOR THE COMMENTED FIELD BLOCKS BELOW (`E408` / `E164`). */
 // import {
 //   LocationFields,
@@ -1167,10 +1168,9 @@ export function CompanyStep({
               Company Logo
             </span>
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[10px] border border-line bg-bg-soft">
+              <span className="grid h-11 w-16 shrink-0 place-items-center overflow-hidden border border-line bg-bg-soft">
                 {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+                  <CompanyLogoTile src={logoUrl} alt="" className="h-full w-full" pad="3px" />
                 ) : (
                   <span className="text-[11px] font-semibold text-ink-2">Logo</span>
                 )}

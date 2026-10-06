@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Edit logo in place (Scott 2026-10-05): pick a file → centre-crop to a square PNG → save. No page change.
+// Edit logo in place: the original file is kept as uploaded (no forced crop); "Crop to Square" is optional.
 async function squarePng(file: File, size = 512): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
@@ -29,14 +29,16 @@ export function CompanyLogoUpload({ companyId, label = "Edit logo", className }:
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const choose = async (file: File | undefined) => {
+  const [picked, setPicked] = useState<File | null>(null);
+  const choose = async (file: File | undefined, crop = false) => {
     if (!file) return;
     setBusy(true);
     setError(null);
+    setPicked(null);
     try {
-      const blob = await squarePng(file);
+      const upload = crop ? new File([await squarePng(file)], "logo.png", { type: "image/png" }) : file;
       const fd = new FormData();
-      fd.append("file", new File([blob], "logo.png", { type: "image/png" }));
+      fd.append("file", upload);
       fd.append("companyId", companyId);
       const r = await fetch("/api/company/logo", { method: "POST", body: fd });
       const b = (await r.json().catch(() => ({}))) as { error?: string };
@@ -54,7 +56,27 @@ export function CompanyLogoUpload({ companyId, label = "Edit logo", className }:
       <button type="button" data-logo-upload onClick={() => input.current?.click()} disabled={busy} className={className}>
         {busy ? "Uploading…" : label}
       </button>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => choose(e.target.files?.[0])} data-logo-input />
+      <input
+        ref={input}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) setPicked(f);
+        }}
+        data-logo-input
+      />
+      {picked && (
+        <span data-logo-confirm className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px]">
+          <button type="button" onClick={() => choose(picked)} className="border border-ink bg-ink px-2.5 py-1 font-bold text-surface">
+            Use as Is
+          </button>
+          <button type="button" onClick={() => choose(picked, true)} className="border border-ink bg-surface px-2.5 py-1 font-bold text-ink">
+            Crop to Square
+          </button>
+        </span>
+      )}
       {error && <span role="alert" className="mt-1 block text-[12px] font-semibold text-magenta-dark">{error}</span>}
     </>
   );
