@@ -1,3 +1,4 @@
+import { SKILL_NAME_SMALL_WORDS, SKILL_NAME_TERMS } from "@/lib/skill-name-terms";
 
 /** Same letters: case, spacing and punctuation ignored, "&" = "and" (catalog auto-link rule). */
 export function sameLetters(raw: string): string {
@@ -115,7 +116,54 @@ export const didYouMean = (candidateName: string) => `Did you mean ${candidateNa
  * `negotiations/sourcing` becomes `Negotiations/Sourcing`.
  */
 export function titleCaseSkill(raw: string): string {
-  return raw.replace(/[^\s/&-]+/g, (word) =>
-    word === word.toLowerCase() ? word.charAt(0).toUpperCase() + word.slice(1) : word
-  );
+  return formatSkillName(raw);
+}
+
+const TERMS = new Map(SKILL_NAME_TERMS.map((t) => [t.toLowerCase(), t]));
+const SMALL = new Set(SKILL_NAME_SMALL_WORDS);
+
+/**
+ * Skill / specialization names: lowercase words get Title Case (small words lower, known terms exact).
+ * A word already carrying capitals is kept as typed (FNDLOAD, MLOps, OAuth); an all-caps name is re-cased.
+ */
+export function formatSkillName(raw: string): string {
+  // Typed in capitals (PROCURE TO PAY), not a run of acronyms (CEMLI / RICEW): has a real word of 6+ letters.
+  const shouting = !/[a-z]/.test(raw) && /(?:^|[^A-Za-z])[A-Z]{6,}(?:[^A-Za-z]|$)/.test(raw) && raw.trim().includes(" ");
+  let first = true;
+  const cased = (core: string): string => {
+    const known = TERMS.get(core.toLowerCase());
+    if (known) return known;
+    if (!first && SMALL.has(core.toLowerCase())) return core.toLowerCase();
+    return core.charAt(0).toUpperCase() + core.slice(1).toLowerCase();
+  };
+  const part = (p: string): string => {
+    const [, pre, core, post] = /^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9]*)$/.exec(p)!;
+    if (!core) return p;
+    const out = cased(core);
+    first = false;
+    return pre + out + post;
+  };
+  return raw
+    .split(" ")
+    .map((word) => {
+      if (!word) return word;
+      // Already has capitals beyond its first letter: the author meant them.
+      if (!shouting && /[A-Z]/.test(word.slice(1))) {
+        first = false;
+        return word;
+      }
+      // Title-case words stay as typed (Salesforce "Apex" is not Oracle "APEX").
+      if (!shouting && /^[^a-z]*[A-Z]/.test(word)) {
+        first = false;
+        return word;
+      }
+      const bare = word.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "");
+      const whole = TERMS.get(bare.toLowerCase());
+      if (whole && bare.includes("/")) {
+        first = false;
+        return word.replace(bare, whole);
+      }
+      return word.split(/([-/])/).map((p) => (p === "-" || p === "/" ? p : part(p))).join("");
+    })
+    .join(" ");
 }

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { prisma } from "@/lib/prisma";
 import { autoLinkSameLetters, likelyDomain, NEW_SKILL_WHERE } from "@/lib/catalog-review";
-import { sameLetters } from "@/lib/skill-match";
+import { formatSkillName, sameLetters } from "@/lib/skill-match";
 
 // Skill catalog cleanup (2026-10-06, Scott-approved). Dry run writes a CSV; --apply writes the rows.
 // Usage: tsx scripts/catalog-cleanup.ts <aliases|samematch|case> [--apply]
@@ -61,7 +61,38 @@ async function samematch() {
   console.log(`samematch ${apply ? `APPLIED — ${linked.length} auto-linked` : `dry run — ${rows.filter((r) => String(r[3]).startsWith("link")).length} would link`} → ${path}`);
 }
 
-const steps: Record<string, () => Promise<void>> = { aliases, samematch };
+// Row 3: case-only re-casing of every skill and specialization name (letters asserted identical per row).
+async function recase() {
+  const [skills, specs] = await Promise.all([
+    prisma.skill.findMany({ select: { id: true, name: true, origin: true } }),
+    prisma.specialization.findMany({ select: { id: true, name: true, origin: true } }),
+  ]);
+  const rows: (string | number)[][] = [["table", "id", "origin", "old", "new", "result"]];
+  let done = 0;
+  for (const [table, list] of [["skills", skills], ["specializations", specs]] as const) {
+    for (const r of list) {
+      const next = formatSkillName(r.name);
+      if (next === r.name) continue;
+      if (next.toLowerCase() !== r.name.toLowerCase()) throw new Error(`letters changed: "${r.name}" → "${next}"`);
+      let result = "dry run";
+      if (apply) {
+        try {
+          if (table === "skills") await prisma.skill.update({ where: { id: r.id }, data: { name: next } });
+          else await prisma.specialization.update({ where: { id: r.id }, data: { name: next } });
+          result = "applied";
+          done++;
+        } catch {
+          result = "skipped — same name already exists in that domain";
+        }
+      }
+      rows.push([table, r.id, r.origin, r.name, next, result]);
+    }
+  }
+  const path = out("capitalization_2026-10-06.csv", rows);
+  console.log(`case ${apply ? `APPLIED — ${done} re-cased` : `dry run — ${rows.length - 1} would change`} → ${path}`);
+}
+
+const steps: Record<string, () => Promise<void>> = { aliases, samematch, case: recase };
 (async () => {
   if (!steps[step]) throw new Error(`step must be one of ${Object.keys(steps).join(", ")}`);
   await steps[step]();

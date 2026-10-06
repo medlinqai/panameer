@@ -1,3 +1,4 @@
+import { formatSkillName } from "@/lib/skill-match";
 import { roleLong } from "@/lib/role-labels";
 import { formatLocality } from "@/lib/locality";
 import { prisma } from "@/lib/prisma";
@@ -289,7 +290,7 @@ export async function getProviderProfileView(
       (s) => s.skill.role_type_id
     ).map((s) => ({
       id: s.skill.id,
-      name: s.skill.name,
+      name: formatSkillName(s.skill.name),
       pillar: s.skill.pillar?.name ?? null,
     })),
     specializations: profile.specializations.map((s) => ({

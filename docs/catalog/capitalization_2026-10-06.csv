@@ -1,0 +1,7 @@
+table,id,origin,old,new,result
+skills,3c8d1aa6-980b-4384-a481-a18046c7d499,PROVIDER,purchase requisitons,Purchase Requisitons,applied
+skills,5ea33f4c-a4b0-4f94-b958-22039d74d26f,SEED,PeopleSoft Workflow (classic),PeopleSoft Workflow (Classic),applied
+skills,f66db369-5acb-494c-9583-6a2b4210a0e5,SEED,Object Transporter (promotion),Object Transporter (Promotion),applied
+skills,3ef9ef44-d8b6-40d3-b28b-70b9f8fb8c98,SEED,Jest (LWC tests),Jest (LWC Tests),applied
+specializations,6c3084b9-4097-44ef-9f0d-0dd22fb12046,PROVIDER,oracle integration,Oracle Integration,applied
+specializations,3e478330-4cef-437e-9a6f-29dcd9708b8a,PROVIDER,epm,EPM,applied

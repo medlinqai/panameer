@@ -30,7 +30,7 @@ import { matchSkills } from "@/lib/resume/match";
 import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
-import { matchSkill } from "@/lib/skill-match";
+import { formatSkillName, matchSkill } from "@/lib/skill-match";
 import { autoLinkSameLetters, notifyCatalogReview } from "@/lib/catalog-review";
 
 /**
@@ -1793,7 +1793,7 @@ export async function applyProviderSection(
       let newSpecs = 0;
       const freshSpecs: string[] = [];
       for (const raw of custom) {
-        const name = String(raw).trim().slice(0, 80);
+        const name = formatSkillName(String(raw).trim().slice(0, 80));
         if (!name) continue;
         const existing = await prisma.specialization.findFirst({
           where: { name: { equals: name, mode: "insensitive" } },
@@ -2000,7 +2000,7 @@ export async function applyProviderSection(
         }));
 
         for (const raw of customSkills) {
-          const name = String(raw).trim().slice(0, 120);
+          const name = formatSkillName(String(raw).trim().slice(0, 120));
           if (!name || !catalogRow) continue;
           /*
             ⚠ EXACT-ISH LINKS THE EXISTING ROW AND CREATES NOTHING. This is the

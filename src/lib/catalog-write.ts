@@ -1,3 +1,4 @@
+import { formatSkillName } from "@/lib/skill-match";
 import { prisma } from "@/lib/prisma";
 import { activeCatalogId } from "@/lib/catalog";
 
@@ -44,7 +45,8 @@ export async function specializationLinks(id: string) {
 
 export type SpecKind = "PRODUCT" | "METHODOLOGY" | "INDUSTRY";
 
-export async function addSpecialization(name: string, kind: SpecKind): Promise<WriteResult> {
+export async function addSpecialization(rawName: string, kind: SpecKind): Promise<WriteResult> {
+  const name = formatSkillName(rawName);
   const catalogId = await activeCatalogId();
   if (!catalogId) return refuse("There is no service catalog to add to.");
 
@@ -67,7 +69,8 @@ export async function addSpecialization(name: string, kind: SpecKind): Promise<W
   return { ok: true, id: row.id, message: `Added "${row.name}".` };
 }
 
-export async function renameSpecialization(id: string, name: string): Promise<WriteResult> {
+export async function renameSpecialization(id: string, rawName: string): Promise<WriteResult> {
+  const name = formatSkillName(rawName);
   const row = await prisma.specialization.findUnique({
     where: { id },
     select: { id: true, catalog_id: true, name: true },
@@ -98,10 +101,11 @@ export async function setSpecializationKind(id: string, kind: SpecKind): Promise
 /* ── SKILLS ───────────────────────────────────────────────────────────────── */
 
 export async function addSkill(
-  name: string,
+  rawName: string,
   roleTypeId: string,
   pillarId: string
 ): Promise<WriteResult> {
+  const name = formatSkillName(rawName);
   const catalogId = await activeCatalogId();
   if (!catalogId) return refuse("There is no service catalog to add to.");
 
@@ -140,7 +144,8 @@ export async function addSkill(
   };
 }
 
-export async function renameSkill(id: string, name: string): Promise<WriteResult> {
+export async function renameSkill(id: string, rawName: string): Promise<WriteResult> {
+  const name = formatSkillName(rawName);
   const row = await prisma.skill.findUnique({
     where: { id },
     select: { catalog_id: true, role_type_id: true, pillar_id: true },

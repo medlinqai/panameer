@@ -21,7 +21,7 @@ import {
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
 import { NEW_SKILL_WHERE, hiddenSameLetterNames } from "@/lib/catalog-review";
-import { sameLetters } from "@/lib/skill-match";
+import { formatSkillName, sameLetters } from "@/lib/skill-match";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +65,7 @@ export default async function Page({
   });
   const toSkill = (s: (typeof skills)[number]): CatalogSkill => ({
     id: s.id,
-    name: s.name,
+    name: formatSkillName(s.name),
     hidden: !s.visible_to_members,
     retired: s.status === "RETIRED",
     added: s.origin === "ADMIN",
