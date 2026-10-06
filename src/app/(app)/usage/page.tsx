@@ -4,7 +4,6 @@ import { BuyerStatistics } from "@/components/console/StatisticsCards";
 import { getStatistics } from "@/lib/statistics";
 import { usageAreas, usageHiveCells, usageSummary } from "@/lib/usage-areas";
 import { UsageHero } from "@/components/console/UsageHero";
-import { AccountLead } from "@/components/casing/AccountHero";
 import { UsageActivity } from "@/components/console/UsageActivity";
 import { usageActivity, type ActivityRange } from "@/lib/usage-activity";
 import { computeProfileScore } from "@/lib/completeness";
@@ -206,10 +205,6 @@ export default async function MyStatsPage({
     {}
     <div className="account-surface pm-usage -mx-4 bg-surface px-4 pb-10 sm:-mx-6 sm:px-6">
     <div className="mx-auto max-w-[1010px]">
-      <AccountLead>
-        What&apos;s happening around you on Panameer.{" "}
-        <span className="font-normal text-ink-3">Counts only — nothing estimated.</span>
-      </AccountLead>
       <div className="mb-6">
         <UsageHero
           cells={hive}
