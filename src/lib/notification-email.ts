@@ -5,6 +5,7 @@ import {
 import { emailConfigured } from "@/lib/email-status";
 import { finishLaterTemplate } from "@/lib/email/templates/finish-later";
 import { notificationEmail } from "@/lib/email/templates/notification";
+import { connectInviteTemplate } from "@/lib/email/templates/connect-invite";
 
 export const NOTIFICATION_EMAIL_EVENTS: readonly NotificationEventKey[] = [
   "account.finish_later",
@@ -42,6 +43,10 @@ export type NotificationMailInput = {
   body: string | null;
   /** The row's `href`, already resolved to an absolute URL. */
   link: string | null;
+  /** The notify() vars, for templates that name the sender. */
+  vars?: Record<string, unknown>;
+  /** App origin, for building absolute links. */
+  base?: string;
   logoUrl: string;
 };
 export type RenderedMail = {
@@ -54,6 +59,19 @@ export type RenderedMail = {
 const PER_EVENT: Partial<
   Record<NotificationEventKey, (i: NotificationMailInput) => RenderedMail>
 > = {
+  "colleague.invite_received": (i) => {
+    const v = (k: string) => (typeof i.vars?.[k] === "string" && (i.vars[k] as string).trim()) || null;
+    const t = connectInviteTemplate({
+      fromName: v("fromName") ?? "Someone",
+      fromFirstName: v("fromFirstName"),
+      fromTitle: v("fromTitle"),
+      fromCompany: v("fromCompany"),
+      companyUrl: v("companyUrl"),
+      recipientFirstName: i.firstName,
+      profileUrl: v("profileHref") ? `${i.base ?? ""}${v("profileHref")}` : (i.link ?? `${i.base ?? ""}/community`),
+    });
+    return { ...t, template: "connect-request" };
+  },
   "account.finish_later": (i) => {
     const t = finishLaterTemplate({
       firstName: i.firstName ?? "",

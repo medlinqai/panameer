@@ -5,6 +5,7 @@ import { outgoingRequests } from "@/lib/connections";
 import { WithdrawRequest } from "@/components/community/WithdrawRequest";
 import { inviteAllowance, INVITE_LIMIT_PER_DAY } from "@/lib/colleague-invite";
 import { InviteColleagueClient } from "@/components/console/InviteColleagueClient";
+import { ROUTES } from "@/lib/routes";
 
 export const metadata = { title: "Invite a Colleague · Panameer" };
 
@@ -74,7 +75,7 @@ export default async function InviteColleaguePage() {
     <div className="mx-auto max-w-3xl">
       {/* R-E012: a way back, above the title. */}
       <Link
-        href="/colleagues"
+        href={ROUTES.colleagues}
         className="text-[13px] font-bold text-ink-2 underline-offset-4 hover:text-magenta hover:underline"
       >
         ← Back to Colleagues

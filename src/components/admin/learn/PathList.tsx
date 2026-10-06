@@ -10,6 +10,7 @@ import {
   StatusPill,
 } from "@/components/admin/learn/primitives";
 import { PathForm, EMPTY_PATH, type PathDraft } from "@/components/admin/learn/PathForm";
+import { ROUTES } from "@/lib/routes";
 
 type Row = {
   id: string;
@@ -143,7 +144,7 @@ export function PathList() {
                 <tr key={p.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/learn/${p.id}`}
+                      href={ROUTES.learnPathEditor(p.id)}
                       className="font-bold hover:text-magenta"
                     >
                       {p.title}

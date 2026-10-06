@@ -23,6 +23,7 @@ import {
   isFollowing,
 } from "@/lib/work-tracker/followers";
 import { FollowButton } from "@/components/status/FollowButton";
+import { ROUTES } from "@/lib/routes";
 
 export const revalidate = 60;
 
@@ -397,7 +398,7 @@ export default async function StatusPage({
             resolved this week
           </p>
           <p className="mt-4 flex flex-wrap gap-3">
-            <Link href="/support" className={SQUARE_DARK}>
+            <Link href={ROUTES.reportProblem} className={SQUARE_DARK}>
               Report an Issue
             </Link>
             <Link href="/support/tickets" className={SQUARE_LIGHT}>
@@ -443,7 +444,7 @@ export default async function StatusPage({
             panameer.com
           </a>
           <span aria-hidden className="text-ink-3">·</span>
-          <Link href="/support" className="text-ink-2 underline underline-offset-4 hover:text-magenta">
+          <Link href={ROUTES.reportProblem} className="text-ink-2 underline underline-offset-4 hover:text-magenta">
             Report an issue
           </Link>
         </p>
