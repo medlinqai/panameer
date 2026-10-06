@@ -196,6 +196,7 @@ it, because an item with no clearing writer would sit there forever (`E579` one 
 | `group.join_requested` | the group's owner | `Send for Approval` | worklist | ⚠ Fires ONLY on a `REQUEST` group, where a decision is genuinely owed. **Cleared by `decideJoinRequest`.** |
 | `group.join_approved` | the member who asked | `Do It` | in-app | Nothing is owed by them — they asked and got an answer |
 | `group.join_declined` | the member who asked | `Do It` | in-app | ⚠⚠ **TOLD, NOT SWALLOWED.** A decline nobody sees reads as *"you never asked"*. ⚠ It names no reason and blames nobody — the owner gave none |
+| `catalog.review_new` | Panameer catalog admins | `Send for Approval` | worklist | One per admin per day when a member saves a skill or specialization not in the catalog; later ones that day update the count, no second email. Cleared when nothing is left to review. |
 | `company.join_requested` | the company's admins | `Send for Approval` | worklist | Fires when someone asks to join, including the automatic request when a verified email matches the company's domain. **Cleared by `decideRequest`.** |
 | `company.join_approved` | the person who asked | `Do It` | in-app | Nothing is owed — they asked and got an answer |
 | `company.join_declined` | the person who asked | `Do It` | in-app | Told, not swallowed; names no reason |

@@ -795,6 +795,7 @@ model Skill {
   // Catalog review (E909): merged into another skill, or rejected from the catalog.
   merged_into_id String?       @db.Uuid
   rejected_at    DateTime?
+  review_pending Boolean       @default(false)
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 

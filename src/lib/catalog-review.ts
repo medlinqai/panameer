@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { writeAudit } from "@/lib/admin/audit";
+import { notify } from "@/lib/notifications";
 import type { WriteResult } from "@/lib/catalog-write";
 import { promoteSuggestion, rejectSuggestion, type SpecKind } from "@/lib/catalog-write";
 
@@ -9,12 +10,12 @@ const refuse = (error: string): WriteResult => ({ ok: false, error });
 const withAlias = (aliases: string[], name: string, target: string) =>
   [target, ...aliases].some((a) => a.toLowerCase() === name.toLowerCase()) ? aliases : [...aliases, name];
 
-/** A member skill waiting for review: no domain, not merged, not rejected. */
-export const NEW_SKILL_WHERE = { pillar_id: null, merged_into_id: null, rejected_at: null, status: "ACTIVE" as const };
+/** A member skill waiting for review: no domain or flagged pending, not merged, not rejected. */
+export const NEW_SKILL_WHERE = { OR: [{ pillar_id: null }, { review_pending: true }], merged_into_id: null, rejected_at: null, status: "ACTIVE" as const };
 
 async function newSkill(id: string) {
-  const s = await prisma.skill.findUnique({ where: { id }, select: { id: true, name: true, pillar_id: true, merged_into_id: true, rejected_at: true, status: true } });
-  return s && !s.pillar_id && !s.merged_into_id && !s.rejected_at && s.status === "ACTIVE" ? s : null;
+  const s = await prisma.skill.findUnique({ where: { id }, select: { id: true, name: true, pillar_id: true, review_pending: true, merged_into_id: true, rejected_at: true, status: true } });
+  return s && (!s.pillar_id || s.review_pending) && !s.merged_into_id && !s.rejected_at && s.status === "ACTIVE" ? s : null;
 }
 
 export async function skillMembers(id: string) {
@@ -60,10 +61,11 @@ export async function mergeSkill(viewer: Viewer, fromId: string, intoId: string)
       (id) => tx.workRequestSkill.delete({ where: { id } })
     );
     await tx.skill.update({ where: { id: intoId }, data: { aliases: withAlias(into.aliases, from.name, into.name) } });
-    await tx.skill.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED", visible_to_members: false } });
+    await tx.skill.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED", visible_to_members: false, review_pending: false } });
     return n;
   });
   await writeAudit(viewer, { action: "catalog.skill.merge", targetTable: "skills", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  await refreshCatalogReview();
   return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
 }
 
@@ -77,9 +79,10 @@ export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string
     select: { name: true },
   });
   if (clash) return refuse(`"${clash.name}" is already in that domain — merge into it instead.`);
-  await prisma.skill.update({ where: { id }, data: { role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, origin: "PROVIDER" } });
+  await prisma.skill.update({ where: { id }, data: { role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, review_pending: false } });
   const members = await skillMembers(id);
   await writeAudit(viewer, { action: "catalog.skill.add_new", targetTable: "skills", targetId: id, detail: { name: s.name, roleTypeId, pillarId, members } });
+  await refreshCatalogReview();
   return { ok: true, id, message: `Added "${s.name}". It is hidden until you click Show.` };
 }
 
@@ -87,9 +90,10 @@ export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string
 export async function rejectSkill(viewer: Viewer, id: string): Promise<WriteResult> {
   const s = await newSkill(id);
   if (!s) return refuse("That skill is no longer waiting for review.");
-  await prisma.skill.update({ where: { id }, data: { rejected_at: new Date(), visible_to_members: false } });
+  await prisma.skill.update({ where: { id }, data: { rejected_at: new Date(), visible_to_members: false, review_pending: false } });
   const members = await skillMembers(id);
   await writeAudit(viewer, { action: "catalog.skill.reject", targetTable: "skills", targetId: id, detail: { name: s.name, members } });
+  await refreshCatalogReview();
   return { ok: true, id, message: `Rejected "${s.name}". Members who entered it keep it on their profile.` };
 }
 
@@ -119,17 +123,65 @@ export async function mergeSpecialization(viewer: Viewer, fromId: string, intoId
     return n;
   });
   await writeAudit(viewer, { action: "catalog.spec.merge", targetTable: "specializations", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  await refreshCatalogReview();
   return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
 }
 
 export async function addNewSpecialization(viewer: Viewer, id: string, kind: SpecKind): Promise<WriteResult> {
   const r = await promoteSuggestion(id, kind);
   if (r.ok) await writeAudit(viewer, { action: "catalog.spec.add_new", targetTable: "specializations", targetId: id, detail: { kind } });
+  if (r.ok) await refreshCatalogReview();
   return r;
 }
 
 export async function rejectSpecialization(viewer: Viewer, id: string): Promise<WriteResult> {
   const r = await rejectSuggestion(id);
   if (r.ok) await writeAudit(viewer, { action: "catalog.spec.reject", targetTable: "specializations", targetId: id });
+  if (r.ok) await refreshCatalogReview();
   return r;
+}
+
+// ── Daily review notice (E910): one bell item + one email per admin per day.
+const DIGEST = "catalog.review_new";
+const etDay = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+
+export async function waitingCounts() {
+  const [skills, specs] = await Promise.all([
+    prisma.skill.count({ where: NEW_SKILL_WHERE }),
+    prisma.specialization.count({ where: { origin: "PROVIDER", status: "SUGGESTED" } }),
+  ]);
+  return { skills, specs };
+}
+const summaryOf = ({ skills, specs }: { skills: number; specs: number }) =>
+  [skills && `${skills} new skill${skills === 1 ? "" : "s"}`, specs && `${specs} new specialization${specs === 1 ? "" : "s"}`].filter(Boolean).join(", ");
+
+/** A member saved a term not in the catalog: create today's notice, or refresh its count. `to` overrides recipients (tests). */
+export async function notifyCatalogReview(to?: string[], fromProfileId?: string) {
+  try {
+    // Test accounts never notify the real admins.
+    if (fromProfileId) {
+      const who = await prisma.providerProfile.findUnique({ where: { id: fromProfileId }, select: { person: { select: { user: { select: { email: true } } } } } });
+      if (/@(example\.seed|[^@]*\.example)$/i.test(who?.person.user?.email ?? "")) return;
+    }
+    const counts = await waitingCounts();
+    if (!counts.skills && !counts.specs) return;
+    const summary = summaryOf(counts);
+    const admins = to ?? (await prisma.person.findMany({ where: { user: { is_system_admin: true } }, select: { id: true } })).map((p) => p.id);
+    const key = `${DIGEST}:${etDay()}`;
+    for (const personId of admins) {
+      const open = await prisma.notification.findUnique({ where: { person_id_dedupe_key: { person_id: personId, dedupe_key: key } }, select: { id: true } });
+      if (open) await prisma.notification.update({ where: { id: open.id }, data: { title: `${summary} to review`, resolved_at: null } });
+      else await notify({ event: DIGEST, personId, entityType: "catalog", dedupeKey: key, vars: { summary } });
+    }
+  } catch (e) {
+    console.error("[catalog-review] notice failed", e);
+  }
+}
+
+/** After a review action: refresh open notices' counts, or clear them when nothing is left. */
+export async function refreshCatalogReview() {
+  const counts = await waitingCounts();
+  const where = { event_key: DIGEST, resolved_at: null };
+  if (!counts.skills && !counts.specs) await prisma.notification.updateMany({ where, data: { resolved_at: new Date() } });
+  else await prisma.notification.updateMany({ where, data: { title: `${summaryOf(counts)} to review` } });
 }

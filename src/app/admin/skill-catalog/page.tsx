@@ -59,7 +59,7 @@ export default async function Page({
     select: {
       id: true, name: true, role_type_id: true, pillar_id: true,
       status: true, origin: true, aliases: true, visible_to_members: true,
-      merged_into_id: true, rejected_at: true,
+      merged_into_id: true, rejected_at: true, review_pending: true,
     },
   });
   const toSkill = (s: (typeof skills)[number]): CatalogSkill => ({
@@ -83,10 +83,10 @@ export default async function Page({
       id: d.id,
       name: d.name,
       mark: RDS_DOMAIN_MARKS[d.code] ?? null,
-      skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id).map(toSkill),
+      skills: skills.filter((s) => s.role_type_id === r.id && s.pillar_id === d.id && !s.review_pending).map(toSkill),
     })),
   }));
-  const waiting = skills.filter((s) => s.pillar_id === null && !s.merged_into_id && !s.rejected_at && s.status === NEW_SKILL_WHERE.status);
+  const waiting = skills.filter((s) => (s.pillar_id === null || s.review_pending) && !s.merged_into_id && !s.rejected_at && s.status === NEW_SKILL_WHERE.status);
   // Best-guess domain for each new skill: the domain its claimers use most for their other skills.
   const claims = await prisma.providerSkill.findMany({ where: { skill_id: { in: waiting.map((s) => s.id) } }, select: { skill_id: true, provider_profile_id: true } });
   const theirs = await prisma.providerSkill.findMany({
@@ -99,7 +99,7 @@ export default async function Page({
     for (const t of theirs) if (who.has(t.provider_profile_id)) { const k = `${t.skill.role_type_id}:${t.skill.pillar_id}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
     return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0];
   };
-  const unassigned = waiting.map((s) => ({ ...toSkill(s), guess: guessOf(s.id) }));
+  const unassigned = waiting.map((s) => ({ ...toSkill(s), guess: s.pillar_id ? `${s.role_type_id}:${s.pillar_id}` : guessOf(s.id) }));
   const specRows = await prisma.specialization.findMany({
     where: { OR: [{ status: "ACTIVE" }, { status: "SUGGESTED", origin: "PROVIDER" }] },
     orderBy: { name: "asc" },

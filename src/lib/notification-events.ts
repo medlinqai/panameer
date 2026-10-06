@@ -535,6 +535,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "The group's owner decides who joins.",
     href: () => "/community/groups?view=discover",
   },
+  // Catalog review (E910): one per admin per day; the count is refreshed as new terms arrive.
+  "catalog.review_new": {
+    event: "catalog.review_new",
+    recipient: "Panameer catalog admins",
+    category: "community.activity",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `${str(v, "summary", "New skills")} to review`,
+    body: () => "Members entered skills or specializations that aren't in the catalog. Merge, add or reject them in Compare.",
+    href: () => "/admin/skill-catalog?tab=compare&status=new",
+  },
   // Company join requests (company-v2 lane 3): domain match → they ask, an admin approves.
   "company.join_requested": {
     event: "company.join_requested",

@@ -32,6 +32,7 @@ import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
 import { matchSkill } from "@/lib/skill-match";
+import { notifyCatalogReview } from "@/lib/catalog-review";
 
 /**
  * Provider onboarding — all business logic for the /join wizard (API-first, so
@@ -1794,6 +1795,7 @@ export async function applyProviderSection(
       const custom: string[] = Array.isArray(data.customSpecializations)
         ? data.customSpecializations
         : [];
+      let newSpecs = 0;
       for (const raw of custom) {
         const name = String(raw).trim().slice(0, 80);
         if (!name) continue;
@@ -1862,6 +1864,7 @@ export async function applyProviderSection(
           },
         });
         ids.push(created.id);
+        newSpecs++;
       }
 
       if (ids.length > 0) {
@@ -1888,6 +1891,7 @@ export async function applyProviderSection(
             ]
           : []),
       ]);
+      if (newSpecs) await notifyCatalogReview(undefined, profileId);
       break;
     }
 
@@ -1943,6 +1947,7 @@ export async function applyProviderSection(
           ? data.pillarId
           : profileRow?.pillar_id) ?? null;
 
+      let newTerms = 0;
       if (customSkills.length > 0 && customRoleId && customPillarId) {
         /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
            rows exist and this line used to pick between them arbitrarily —
@@ -2031,8 +2036,10 @@ export async function applyProviderSection(
                  ROW WOULD DEFAULT TO `SEED` AND BE DELETED ON THE NEXT RESEED. */
               is_custom: true,
               origin: "PROVIDER",
+              review_pending: true,
             },
           });
+          if (Date.now() - skill.created_at.getTime() < 60_000) newTerms++;
           if (!skillIds.includes(skill.id)) skillIds.push(skill.id);
         }
       }
@@ -2154,6 +2161,7 @@ export async function applyProviderSection(
           skipDuplicates: true,
         }),
       ]);
+      if (newTerms) await notifyCatalogReview(undefined, profileId);
       break;
     }
 
