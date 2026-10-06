@@ -27,7 +27,6 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { createHash } from "node:crypto";
 import { recordParseAudit } from "@/lib/resume/audit";
 import { matchSkills } from "@/lib/resume/match";
-import { suggestedCompany } from "@/lib/resume/job-skills";
 import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
@@ -1368,12 +1367,8 @@ export async function getOnboardingState(viewer: Viewer) {
         written against. The same string is also already a work-history row, so
         creating a Company from it silently would give one name two meanings.
       */
-      suggestedCompanyName: suggestedCompany(
-        pp.employers.map((e) => ({
-          employer: e.name,
-          endDate: e.end_date ? e.end_date.toISOString().slice(0, 10) : null,
-        }))
-      ),
+      // Employers read from a résumé are past employers — never offered as the member's company.
+      suggestedCompanyName: null,
       education: pp.education.map((e) => ({
         id: e.id,
         institution: e.institution,

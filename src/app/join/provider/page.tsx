@@ -97,7 +97,7 @@ import { LANGUAGES } from "@/lib/countries";
 /* ⚠ `LocationFields` MOVED WITH `ContactEditor` (`P2-A2-E597` WS-B) and is no
    longer mounted here. ⚠ SUPERSEDED, quoted not deleted (`E164`):
    //   import { LocationFields } from "@/components/onboarding/LocationFields"; */
-import { CompanyStep } from "@/components/company/CompanyStep";
+import { CompanyFinder } from "@/components/company/CompanyFinder";
 import { CompanySort } from "@/components/onboarding/CompanySort";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
@@ -3357,18 +3357,12 @@ setScreen(target);
         return (
           <WizardShell
             {...shell({
-              title: `Waiting on ${companyPending}.`,
-              subtitle:
-                "Your request went to that company's admin. You can finish your profile as soon as they approve it — nothing you've entered is lost.",
+              title: `Request sent to ${companyPending}.`,
+              subtitle: `An admin there will review it — you'll get a notice when they answer. Nothing you've entered is lost.`,
               onContinue: undefined,
             })}
           >
             <div className="mx-auto w-full max-w-xl space-y-4">
-              <Notice tone="info">
-                We couldn&apos;t confirm you automatically because your work
-                email isn&apos;t on that company&apos;s domain. That&apos;s
-                normal — it just needs a person to say yes.
-              </Notice>
               <button
                 type="button"
                 onClick={() => setCompanyPending(null)}
@@ -3395,9 +3389,8 @@ setScreen(target);
           busy={busy || companyBusy}
         >
           <div className="mx-auto w-full max-w-xl">
-            <CompanyStep
+            <CompanyFinder
               bounded
-              suggestedName={profile.suggestedCompanyName ?? null}
               submitRef={companySubmit}
               onValidityChange={setCompanyValid}
               onBusyChange={setCompanyBusy}

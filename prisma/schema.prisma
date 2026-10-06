@@ -383,6 +383,8 @@ model Company {
   logo_palette     Json?
   /// Dynamic Branding switch. null = saved before the switch existed: on when a look is saved.
   // Company v3: who gets paid — COMPANY (EIN) or SOLE_PROPRIETOR (SSN/ITIN, one-member companies only).
+  // Company v3: set when its only member joined another company; never deleted.
+  archived_at    DateTime?
   payee_type     PayeeType?
   payoutMethods  PayoutMethod[]
   theme_enabled    Boolean?

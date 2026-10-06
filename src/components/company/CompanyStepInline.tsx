@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { CompanyStep, type CompanyOutcome } from "@/components/company/CompanyStep";
+import type { CompanyOutcome } from "@/components/company/CompanyStep";
+import { CompanyFinder } from "@/components/company/CompanyFinder";
 import { Notice } from "@/components/onboarding/controls";
 
 export function CompanyStepInline({ from }: { from?: string | null }) {
@@ -20,9 +21,7 @@ export function CompanyStepInline({ from }: { from?: string | null }) {
     return (
       <div className="space-y-4">
         <Notice>
-          Your request to join <strong>{pending.name}</strong> has been sent. An admin there has
-          to approve it before you can create work or transact — you&apos;ll keep access to
-          everything else in the meantime.
+          Request sent to <strong>{pending.name}</strong>. An admin there will review it — you&apos;ll get a notice when they answer.
         </Notice>
         <Link
           href={destination}
@@ -36,7 +35,7 @@ export function CompanyStepInline({ from }: { from?: string | null }) {
 
   return (
     <div>
-      <CompanyStep
+      <CompanyFinder
         submitRef={submit}
         onValidityChange={setValid}
         onBusyChange={setBusy}

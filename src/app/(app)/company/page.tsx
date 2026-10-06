@@ -6,6 +6,7 @@ import { TRANSACT_MESSAGE } from "@/lib/transact-message";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/Card";
 import { CompanyStepInline } from "@/components/company/CompanyStepInline";
+import { PendingJoinLine } from "@/components/company/PendingJoinLine";
 import { loadCompanyView } from "@/lib/company-view";
 import { CompanyShell } from "@/components/company/CompanyShell";
 import { CompanyDetailsRead, PayReadyBox } from "@/components/company/CompanyOverview";
@@ -78,6 +79,10 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
       : Promise.resolve([]),
   ]);
   if (!view) redirect("/company");
+  const elsewhere = await prisma.companyMembership.findFirst({
+    where: { person: { user_id: viewer.userId }, status: "PENDING", company_id: { not: c.id } },
+    select: { company: { select: { id: true, name: true } } },
+  });
   const role = binding.isAdmin ? "admin" : "member";
   return (
     <>
@@ -100,7 +105,9 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
           }
         />
         {binding.isAdmin && <PayReadyBox c={view} />}
-        {join === "1" ? (
+        {elsewhere ? (
+          <PendingJoinLine companyId={elsewhere.company.id} name={elsewhere.company.name} />
+        ) : join === "1" ? (
           <section data-join-other className="mt-8 border-t border-line pt-5">
             <h2 className="text-[19px] font-bold">Join Your Company</h2>
             <div className="mt-3">

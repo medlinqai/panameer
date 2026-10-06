@@ -40,6 +40,7 @@ export type DefineInput = {
 export type JoinInput = {
   companyId: string;
   attestation: boolean;
+  matchedOn?: string | null;
 };
 
 async function actingPerson(viewer: Viewer) {
@@ -405,6 +406,15 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
   if (target.id === person.company_id) {
     return { companyId: target.id, name: target.name, status: "APPROVED" as const };
   }
+  // A sole admin can't leave a company that still has other members.
+  const mine = await prisma.companyMembership.findFirst({ where: { person_id: person.id, status: "APPROVED", role: "ADMIN", company_id: { not: target.id } }, select: { company_id: true } });
+  if (mine) {
+    const [others, admins] = await Promise.all([
+      prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", person_id: { not: person.id } } }),
+      prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", role: "ADMIN" } }),
+    ]);
+    if (others > 0 && admins === 1) throw new OnboardingError("Make someone else an admin of your company first — it still has other members.", "INVALID");
+  }
 
   // Ask-then-approve (Scott 2026-10-05): every join is a request an admin decides, domain match or not.
   const now = new Date();
@@ -415,6 +425,7 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
       // Re-requesting after a rejection reopens the SAME row rather than
       // stacking requests, so an admin sees one decision to make.
       status: "PENDING",
+      matched_on: input.matchedOn ?? null,
       attestation_accepted_at: now,
       auto_approved: false,
       decided_at: null,
@@ -425,6 +436,7 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
       company_id: target.id,
       role: "MEMBER",
       status: "PENDING",
+      matched_on: input.matchedOn ?? null,
       attestation_accepted_at: now,
       auto_approved: false,
     },
@@ -669,7 +681,10 @@ export async function decideRequest(
       where: { id: target.person_id },
       select: { company_id: true },
     });
-    if (joiner) await moveInto(target.person_id, target.company_id, joiner.company_id);
+    if (joiner) {
+      await moveInto(target.person_id, target.company_id, joiner.company_id);
+      await leaveOldCompanies(target.person_id, target.company_id);
+    }
     await refreshProviderScore(target.person_id);
     await nudgePayeeSwitch(target.company_id);
   }
@@ -759,5 +774,37 @@ export async function changeMember(viewer: Viewer, membershipId: string, action:
   if (target.person_id === me.id || target.role === "ADMIN") throw new OnboardingError("Admins can't be changed here", "INVALID");
   if (action === "make_admin") await prisma.companyMembership.update({ where: { id: target.id }, data: { role: "ADMIN" } });
   else await prisma.companyMembership.update({ where: { id: target.id }, data: { status: "REJECTED", decided_at: new Date(), decided_by_person_id: me.id } });
+  return { ok: true as const };
+}
+
+/** After joining another company: close the old memberships; archive an old company nobody is left in. */
+async function leaveOldCompanies(personId: string, keepCompanyId: string) {
+  const old = await prisma.companyMembership.findMany({ where: { person_id: personId, status: "APPROVED", company_id: { not: keepCompanyId } }, select: { id: true, company_id: true } });
+  for (const m of old) {
+    await prisma.companyMembership.update({ where: { id: m.id }, data: { status: "REJECTED", decided_at: new Date() } });
+    const left = await prisma.companyMembership.count({ where: { company_id: m.company_id, status: "APPROVED" } });
+    if (left === 0) await prisma.company.updateMany({ where: { id: m.company_id }, data: { archived_at: new Date() } });
+  }
+}
+
+/** Website-first join: the company already on Panameer for this website (never matched on tax ID here). */
+export async function findWebsiteMatch(viewer: Viewer, raw: string) {
+  const domain = websiteDomain(raw);
+  if (!domain) return { domain: null, freeMail: false, match: null };
+  if (!isWorkDomain(domain)) return { domain, freeMail: true, match: null };
+  const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { company_id: true } });
+  const hit = await prisma.company.findFirst({
+    where: { archived_at: null, OR: [{ website_domain: domain }, { email_domain: domain }], memberships: { some: { status: "APPROVED" } }, ...(person ? { id: { not: person.company_id } } : {}) },
+    select: { id: true, name: true, logo_url: true },
+  });
+  return { domain, freeMail: false, match: hit ? { id: hit.id, name: hit.name, logoUrl: hit.logo_url } : null };
+}
+
+/** Withdraw your own pending request to join a company. */
+export async function cancelJoinRequest(viewer: Viewer, companyId: string) {
+  const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true } });
+  if (!person) throw new OnboardingError("No person record", "INVALID");
+  await prisma.companyMembership.deleteMany({ where: { person_id: person.id, company_id: companyId, status: "PENDING" } });
+  await prisma.notification.updateMany({ where: { dedupe_key: { startsWith: `company.join_requested:${companyId}:${person.id}:` }, resolved_at: null }, data: { resolved_at: new Date() } });
   return { ok: true as const };
 }

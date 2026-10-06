@@ -99,6 +99,9 @@ export function CompanyStep({
   onHasNameChange,
   bounded = false,
   suggestedName = null,
+  startDefine = false,
+  defineName = null,
+  defineWebsite = null,
   nameLabel = "Company Name *",
 }: {
   onDone: (outcome: CompanyOutcome) => void;
@@ -145,6 +148,10 @@ export function CompanyStep({
    * pass the step.
    */
   suggestedName?: string | null;
+  /** Website-first join hands off here: open the define form with the name and website filled in. */
+  startDefine?: boolean;
+  defineName?: string | null;
+  defineWebsite?: string | null;
   /**
    * ── ⚠⚠ THE ENTITY WORD, BECAUSE THIS STEP RENDERS ON THREE SURFACES AND THEY
    *    DO NOT MEAN THE SAME THING (`P2-J1.1-E012`, 2026-09-05) ────────────────
@@ -169,7 +176,7 @@ export function CompanyStep({
    */
   nameLabel?: string;
 }) {
-  const [mode, setMode] = useState<"join" | "define">("join");
+  const [mode, setMode] = useState<"join" | "define">(startDefine ? "define" : "join");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -179,11 +186,11 @@ export function CompanyStep({
   const [picked, setPicked] = useState<CompanyHit | null>(null);
 
   // define
-  const [name, setName] = useState("");
+  const [name, setName] = useState(defineName ?? "");
   /* ⚠ UNUSED SINCE `P1-A1.4-E408` STRIPPED THE FORM — COMMENTED, NOT DELETED
      (`E164`). It comes back with its field at the payment gate. */
   // const [taxType, setTaxType] = useState<TaxTypeValue | "">("");
-  const [website, setWebsite] = useState("");
+  const [website, setWebsite] = useState(defineWebsite ?? "");
   /*
     ⚠ THE COMPANY'S COUNTRY, STANDALONE (`E408` WS-1). It used to live inside
     `regAddress`; the address is gone and the country is not, because
