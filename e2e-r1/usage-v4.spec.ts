@@ -27,10 +27,14 @@ for (const scheme of ["light", "dark"] as const)
       await expect(cells).toHaveCount(6);
       expect(await cells.evaluateAll((els) => els.map((e) => e.getAttribute("data-cell")))).toEqual(["profile", "connect", "learn", "work", "shop", "pay"]);
       // Every cell has an outline.
-      const strokes = await hero.locator(".pm-hive-cell path").evaluateAll((ps) => ps.map((p) => p.getAttribute("stroke")));
+      const strokes = await hero.locator(".pm-hive-cell path").evaluateAll((ps) => ps.map((p) => getComputedStyle(p).stroke));
       expect(strokes.every((s) => s && s !== "none")).toBe(true);
+      // Health's palette: no pink tints anywhere in the picture.
+      const fills = await hero.locator(".pm-hive-cell path").evaluateAll((ps) => ps.map((p) => getComputedStyle(p).fill));
+      expect(fills.some((f) => /rgb\(242, 196, 242\)/.test(f))).toBe(false);
+      expect(await hero.locator(".pm-hive-picture").evaluate((e) => getComputedStyle(e).backgroundImage), "no glow").toBe("none");
       await expect(hero.locator('.pm-hive-cell[data-cell="pay"] text').first()).toHaveText(/^\$/);
-      const sw = await hero.locator(".pm-hive-key [data-level]").evaluateAll((els) => els.map((e) => getComputedStyle(e).backgroundColor));
+      const sw = await hero.locator(".pm-hive-key [data-level]").evaluateAll((els) => els.map((e) => { const c = getComputedStyle(e); return `${c.backgroundColor}|${c.borderTopStyle}|${c.borderTopWidth}|${c.borderTopColor}`; }));
       expect(new Set(sw).size).toBe(4);
       await expect(hero.getByRole("link", { name: /Invite a Colleague/ })).toBeVisible();
       await expect(hero.getByRole("link", { name: /Complete Your Profile|View Your Profile/ })).toBeVisible();

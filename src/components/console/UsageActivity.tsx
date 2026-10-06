@@ -10,7 +10,7 @@ export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[];
   return (
     <section data-testid="usage-activity" className="mt-8">
       <div className="mx-0.5 mb-3 flex flex-wrap items-baseline justify-between gap-2.5">
-        <h3 className="text-[16px] font-bold">Your Activity</h3>
+        <h3 className="text-[19px] font-bold">Your Activity</h3>
         <div className="inline-flex border border-ink" role="group" aria-label="Period">
           {([["month", "This Month"], ["all", "All Time"]] as const).map(([k, label]) => (
             <Link
@@ -25,14 +25,15 @@ export function UsageActivity({ areas, range, levels }: { areas: ActivityArea[];
           ))}
         </div>
       </div>
-      <div className="grid gap-x-14 md:grid-cols-2">
-        {areas.map((a) => {
+      {/* Health's lower half: two columns, one vertical rule (right cells carry it), rows with thin top rules. */}
+      <div className="grid border-b border-line md:grid-cols-2">
+        {areas.map((a, i) => {
           const lvl = levels[a.key];
           return (
-            <section key={a.key} data-area={a.key} className="border-t border-line pb-6 pt-5">
+            <section key={a.key} data-area={a.key} className={"border-t border-line pb-6 pt-5 " + (i % 2 ? "md:border-l md:pl-7" : "md:pr-7")}>
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2.5">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-magenta-dark">{a.title}</span>
+                  <span className="text-[19px] font-bold text-ink">{a.title}</span>
                   {lvl && <span className="ml-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-ink-3">{USAGE_LEVEL_LABEL[lvl]}</span>}
                   {a.sub && <div className="text-[11.5px] text-ink-3">{a.sub}</div>}
                 </div>
