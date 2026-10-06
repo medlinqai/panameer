@@ -17,6 +17,8 @@ export type CatalogSkill = {
   aliasList?: string[];
   /** New member skills: best-guess `roleId:domainId` from the claimers' other skills. */
   guess?: string;
+  /** Spelled the same as a Hidden catalog skill — still reviewed, labelled. */
+  hiddenMatch?: string;
 };
 export type CatalogSpec = { id: string; name: string; kind: string; members: number; aliasList?: string[] };
 export type CatalogFilters = { q?: string; role?: string; domain?: string; status?: string; tab?: string };
@@ -233,6 +235,7 @@ export function SkillCatalogTree({
         >
           <span className="min-w-[50%] flex-1 truncate sm:min-w-0">{hl(s.name, needle)}</span>
           <span className={TAG + " border-magenta text-magenta"}>NEW</span>
+          {s.hiddenMatch && <span data-hidden-match className={TAG + " border-line text-ink-2"}>MATCHES A HIDDEN SKILL</span>}
           <span className="shrink-0 text-[11px] text-ink-2">{s.members} member{s.members === 1 ? "" : "s"}</span>
           <span className="flex shrink-0 flex-wrap gap-0.5">
             {top && (
@@ -578,6 +581,7 @@ export function SkillCatalogTree({
       <div key={it.id} data-testid="review-item" data-id={it.id} data-selected={on || undefined} className={"border-t border-line/60 " + (on ? "bg-magenta/10" : "")}>
         <button type="button" onClick={() => { setSel(on ? null : it.id); setPending(null); }} className="flex min-h-[42px] w-full items-center gap-2.5 px-2 text-left text-[14px]">
           <span className="min-w-0 flex-1 truncate">{hl(it.name, needle)}</span>
+          {!spec && (it as CatalogSkill).hiddenMatch && <span data-hidden-match className="shrink-0 text-[11px] font-semibold text-ink-2">matches a hidden skill</span>}
           {guess && <span className="hidden truncate text-[11px] text-ink-2/70 sm:inline">likely {guess.label.split(" › ")[1]}</span>}
           <span className="shrink-0 text-[11px] text-ink-2">{it.members} member{it.members === 1 ? "" : "s"}</span>
         </button>

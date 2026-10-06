@@ -1,7 +1,13 @@
 
+/** Same letters: case, spacing and punctuation ignored, "&" = "and" (catalog auto-link rule). */
+export function sameLetters(raw: string): string {
+  return raw.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
 export function normaliseSkill(raw: string): string {
   return raw
     .toLowerCase()
+    .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(" ")

@@ -31,7 +31,7 @@ import type { ParsedResume } from "@/lib/resume/parse";
 import { USER_TOS_VERSION } from "@/lib/tos";
 import { capitalizeName } from "@/lib/display";
 import { matchSkill } from "@/lib/skill-match";
-import { notifyCatalogReview } from "@/lib/catalog-review";
+import { autoLinkSameLetters, notifyCatalogReview } from "@/lib/catalog-review";
 
 /**
  * Provider onboarding — all business logic for the /join wizard (API-first, so
@@ -1791,6 +1791,7 @@ export async function applyProviderSection(
         ? data.customSpecializations
         : [];
       let newSpecs = 0;
+      const freshSpecs: string[] = [];
       for (const raw of custom) {
         const name = String(raw).trim().slice(0, 80);
         if (!name) continue;
@@ -1860,6 +1861,7 @@ export async function applyProviderSection(
         });
         ids.push(created.id);
         newSpecs++;
+        freshSpecs.push(created.id);
       }
 
       if (ids.length > 0) {
@@ -1886,7 +1888,10 @@ export async function applyProviderSection(
             ]
           : []),
       ]);
-      if (newSpecs) await notifyCatalogReview(undefined, profileId);
+      if (newSpecs) {
+        await autoLinkSameLetters({ specs: freshSpecs });
+        await notifyCatalogReview(undefined, profileId);
+      }
       break;
     }
 
@@ -1943,6 +1948,7 @@ export async function applyProviderSection(
           : profileRow?.pillar_id) ?? null;
 
       let newTerms = 0;
+      const freshSkills: string[] = [];
       if (customSkills.length > 0 && customRoleId && customPillarId) {
         /* ⚠⚠ BY CODE, NEVER `findFirst()` (`P1-A1.5-E483`). Two ServiceCatalog
            rows exist and this line used to pick between them arbitrarily —
@@ -2034,7 +2040,10 @@ export async function applyProviderSection(
               review_pending: true,
             },
           });
-          if (Date.now() - skill.created_at.getTime() < 60_000) newTerms++;
+          if (Date.now() - skill.created_at.getTime() < 60_000) {
+            newTerms++;
+            freshSkills.push(skill.id);
+          }
           if (!skillIds.includes(skill.id)) skillIds.push(skill.id);
         }
       }
@@ -2156,7 +2165,10 @@ export async function applyProviderSection(
           skipDuplicates: true,
         }),
       ]);
-      if (newTerms) await notifyCatalogReview(undefined, profileId);
+      if (newTerms) {
+        await autoLinkSameLetters({ skills: freshSkills });
+        await notifyCatalogReview(undefined, profileId);
+      }
       break;
     }
 

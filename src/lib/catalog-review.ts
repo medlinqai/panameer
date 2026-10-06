@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { Viewer } from "@/lib/access";
 import { writeAudit } from "@/lib/admin/audit";
 import { notify } from "@/lib/notifications";
+import { sameLetters } from "@/lib/skill-match";
 import type { WriteResult } from "@/lib/catalog-write";
 import { promoteSuggestion, rejectSuggestion, type SpecKind } from "@/lib/catalog-write";
 
@@ -23,7 +24,7 @@ export async function skillMembers(id: string) {
 }
 
 /** Moves every claim from `fromId` to `intoId`, adds the member wording as an alias, retires the source. */
-export async function mergeSkill(viewer: Viewer, fromId: string, intoId: string): Promise<WriteResult> {
+export async function mergeSkill(viewer: Viewer | null, fromId: string, intoId: string, action = "catalog.skill.merge"): Promise<WriteResult> {
   const from = await newSkill(fromId);
   if (!from) return refuse("That skill is no longer waiting for review.");
   const into = await prisma.skill.findUnique({ where: { id: intoId }, select: { id: true, name: true, aliases: true, pillar_id: true, status: true } });
@@ -64,7 +65,7 @@ export async function mergeSkill(viewer: Viewer, fromId: string, intoId: string)
     await tx.skill.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED", visible_to_members: false, review_pending: false } });
     return n;
   });
-  await writeAudit(viewer, { action: "catalog.skill.merge", targetTable: "skills", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  await writeAudit(viewer, { action, targetTable: "skills", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
   await refreshCatalogReview();
   return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
 }
@@ -98,7 +99,7 @@ export async function rejectSkill(viewer: Viewer, id: string): Promise<WriteResu
 }
 
 /** Moves every link from a suggested specialization to a live one; the wording becomes an alias. */
-export async function mergeSpecialization(viewer: Viewer, fromId: string, intoId: string): Promise<WriteResult> {
+export async function mergeSpecialization(viewer: Viewer | null, fromId: string, intoId: string, action = "catalog.spec.merge"): Promise<WriteResult> {
   const from = await prisma.specialization.findUnique({ where: { id: fromId }, select: { name: true, status: true, origin: true } });
   if (!from || from.status !== "SUGGESTED") return refuse("That specialization is no longer waiting for review.");
   const into = await prisma.specialization.findUnique({ where: { id: intoId }, select: { name: true, status: true, aliases: true } });
@@ -122,7 +123,7 @@ export async function mergeSpecialization(viewer: Viewer, fromId: string, intoId
     await tx.specialization.update({ where: { id: fromId }, data: { merged_into_id: intoId, status: "RETIRED" } });
     return n;
   });
-  await writeAudit(viewer, { action: "catalog.spec.merge", targetTable: "specializations", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
+  await writeAudit(viewer, { action, targetTable: "specializations", targetId: fromId, detail: { from: from.name, into: into.name, intoId, members: moved }, rowCount: moved });
   await refreshCatalogReview();
   return { ok: true, id: intoId, message: `Merged "${from.name}" into ${into.name}. ${moved} member${moved === 1 ? "" : "s"} moved; "${from.name}" is now an alias.` };
 }
@@ -184,4 +185,51 @@ export async function refreshCatalogReview() {
   const where = { event_key: DIGEST, resolved_at: null };
   if (!counts.skills && !counts.specs) await prisma.notification.updateMany({ where, data: { resolved_at: new Date() } });
   else await prisma.notification.updateMany({ where, data: { title: `${summaryOf(counts)} to review` } });
+}
+
+// ── Same-letter auto-link: a member term that equals a Shown catalog entry never reaches review.
+const SHOWN_SKILL = { status: "ACTIVE" as const, visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null };
+
+/** Links every waiting member skill/specialization whose name equals a Shown catalog entry. Returns counts. */
+export async function autoLinkSameLetters(onlyIds?: { skills?: string[]; specs?: string[] }) {
+  const [waiting, shown, specWaiting, specShown] = await Promise.all([
+    prisma.skill.findMany({ where: { ...NEW_SKILL_WHERE, ...(onlyIds?.skills ? { id: { in: onlyIds.skills } } : {}) }, select: { id: true, name: true, role_type_id: true, pillar_id: true } }),
+    prisma.skill.findMany({ where: SHOWN_SKILL, select: { id: true, name: true, role_type_id: true, pillar_id: true, _count: { select: { providerSkills: true } } } }),
+    prisma.specialization.findMany({ where: { origin: "PROVIDER", status: "SUGGESTED", ...(onlyIds?.specs ? { id: { in: onlyIds.specs } } : {}) }, select: { id: true, name: true } }),
+    prisma.specialization.findMany({ where: { status: "ACTIVE" }, select: { id: true, name: true } }),
+  ]);
+  const linked: { kind: string; from: string; into: string }[] = [];
+  for (const w of waiting) {
+    const same = shown.filter((c) => c.id !== w.id && sameLetters(c.name) === sameLetters(w.name));
+    if (!same.length) continue;
+    // Only within the member's own domain (its own, or the one its claimers use most) — never across products.
+    const domain = w.pillar_id ?? (await likelyDomain(w.id));
+    const pick = same.find((c) => c.pillar_id === domain);
+    if (!pick) continue;
+    const r = await mergeSkill(null, w.id, pick.id, "auto_match_same_letters");
+    if (r.ok) linked.push({ kind: "skill", from: w.name, into: pick.name });
+  }
+  for (const w of specWaiting) {
+    const pick = specShown.find((c) => sameLetters(c.name) === sameLetters(w.name));
+    if (!pick) continue;
+    const r = await mergeSpecialization(null, w.id, pick.id, "auto_match_same_letters");
+    if (r.ok) linked.push({ kind: "specialization", from: w.name, into: pick.name });
+  }
+  return linked;
+}
+
+/** For Compare: the Hidden catalog skill a waiting item spells the same as, if any. */
+export async function hiddenSameLetterNames() {
+  const hidden = await prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: false, pillar_id: { not: null }, review_pending: false }, select: { name: true } });
+  return new Map(hidden.map((h) => [sameLetters(h.name), h.name]));
+}
+
+/** The domain a waiting skill's claimers use most for their other skills. */
+export async function likelyDomain(skillId: string): Promise<string | null> {
+  const who = (await prisma.providerSkill.findMany({ where: { skill_id: skillId }, select: { provider_profile_id: true } })).map((c) => c.provider_profile_id);
+  if (!who.length) return null;
+  const theirs = await prisma.providerSkill.findMany({ where: { provider_profile_id: { in: who }, skill: { pillar_id: { not: null }, review_pending: false } }, select: { skill: { select: { pillar_id: true } } } });
+  const tally = new Map<string, number>();
+  for (const t of theirs) tally.set(t.skill.pillar_id!, (tally.get(t.skill.pillar_id!) ?? 0) + 1);
+  return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 }

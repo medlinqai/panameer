@@ -1,0 +1,7 @@
+kind,member_term,catalog_match,action
+skill,Negotiations,Negotiations (Oracle Fusion Cloud),keep for review (match is in another domain)
+skill,Contracts,Contracts (PeopleSoft),link → PeopleSoft
+skill,Catalogs,Catalogs (Oracle Fusion Cloud),link → Oracle Fusion Cloud
+skill,Payments,Payments (Oracle E-Business Suite),keep for review (match is in another domain)
+skill,Inventory,Inventory (Oracle E-Business Suite) | Inventory (Workday) | Inventory (PeopleSoft),link → PeopleSoft
+# applied 2026-10-06: Catalogs → Oracle Fusion Cloud only. Contracts / Inventory (guess = PeopleSoft) held for Scott: claimers are Fusion consultants.

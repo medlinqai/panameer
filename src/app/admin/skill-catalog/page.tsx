@@ -20,7 +20,8 @@ import {
 } from "@/components/console/SkillCatalogTree";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
-import { NEW_SKILL_WHERE } from "@/lib/catalog-review";
+import { NEW_SKILL_WHERE, hiddenSameLetterNames } from "@/lib/catalog-review";
+import { sameLetters } from "@/lib/skill-match";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +100,12 @@ export default async function Page({
     for (const t of theirs) if (who.has(t.provider_profile_id)) { const k = `${t.skill.role_type_id}:${t.skill.pillar_id}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
     return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0];
   };
-  const unassigned = waiting.map((s) => ({ ...toSkill(s), guess: s.pillar_id ? `${s.role_type_id}:${s.pillar_id}` : guessOf(s.id) }));
+  const hiddenSame = await hiddenSameLetterNames();
+  const unassigned = waiting.map((s) => ({
+    ...toSkill(s),
+    guess: s.pillar_id ? `${s.role_type_id}:${s.pillar_id}` : guessOf(s.id),
+    hiddenMatch: hiddenSame.get(sameLetters(s.name)),
+  }));
   const specRows = await prisma.specialization.findMany({
     where: { OR: [{ status: "ACTIVE" }, { status: "SUGGESTED", origin: "PROVIDER" }] },
     orderBy: { name: "asc" },

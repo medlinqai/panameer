@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { prisma } from "@/lib/prisma";
+import { autoLinkSameLetters, likelyDomain, NEW_SKILL_WHERE } from "@/lib/catalog-review";
+import { sameLetters } from "@/lib/skill-match";
 
 // Skill catalog cleanup (2026-10-06, Scott-approved). Dry run writes a CSV; --apply writes the rows.
 // Usage: tsx scripts/catalog-cleanup.ts <aliases|samematch|case> [--apply]
@@ -31,7 +33,35 @@ async function aliases() {
   console.log(`aliases ${apply ? "APPLIED" : "dry run"} — ${hit.length} skills get "procurement" → ${path}`);
 }
 
-const steps: Record<string, () => Promise<void>> = { aliases };
+// Row 2: waiting member terms spelled the same as a Shown catalog entry are linked to it.
+async function samematch() {
+  const [waiting, shown, specs, liveSpecs] = await Promise.all([
+    prisma.skill.findMany({ where: NEW_SKILL_WHERE, select: { id: true, name: true, pillar_id: true } }),
+    prisma.skill.findMany({ where: { status: "ACTIVE", visible_to_members: true, pillar_id: { not: null }, review_pending: false, merged_into_id: null }, select: { name: true, pillar_id: true, pillar: { select: { name: true } } } }),
+    prisma.specialization.findMany({ where: { origin: "PROVIDER", status: "SUGGESTED" }, select: { id: true, name: true } }),
+    prisma.specialization.findMany({ where: { status: "ACTIVE" }, select: { name: true } }),
+  ]);
+  const rows: (string | number)[][] = [["kind", "member_term", "catalog_match", "action"]];
+  for (const w of waiting) {
+    const m = shown.filter((c) => sameLetters(c.name) === sameLetters(w.name));
+    if (!m.length) continue;
+    const domain = w.pillar_id ?? (await likelyDomain(w.id));
+    const pick = m.find((c) => c.pillar_id === domain);
+    rows.push(["skill", w.name, m.map((c) => `${c.name} (${c.pillar?.name})`).join(" | "), pick ? `link → ${pick.pillar?.name}` : "keep for review (match is in another domain)"]);
+  }
+  for (const w of specs) {
+    const m = liveSpecs.find((c) => sameLetters(c.name) === sameLetters(w.name));
+    if (m) rows.push(["specialization", w.name, m.name, "link"]);
+  }
+  const path = out("same_letter_matches_2026-10-06.csv", rows);
+  // --only=Name,Name limits the apply to terms checked by hand (live profiles).
+  const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7).split(",");
+  const onlyIds = only ? (await prisma.skill.findMany({ where: { ...NEW_SKILL_WHERE, name: { in: only } }, select: { id: true } })).map((x) => x.id) : undefined;
+  const linked = apply ? await autoLinkSameLetters(onlyIds ? { skills: onlyIds, specs: [] } : undefined) : [];
+  console.log(`samematch ${apply ? `APPLIED — ${linked.length} auto-linked` : `dry run — ${rows.filter((r) => String(r[3]).startsWith("link")).length} would link`} → ${path}`);
+}
+
+const steps: Record<string, () => Promise<void>> = { aliases, samematch };
 (async () => {
   if (!steps[step]) throw new Error(`step must be one of ${Object.keys(steps).join(", ")}`);
   await steps[step]();
