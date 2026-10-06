@@ -41,3 +41,35 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }])
     await page.screenshot({ path: `e2e-r1/.artifacts/branding-one-color-${vp.width}.png`, fullPage: true });
     await ctx.close();
   });
+
+// B-E002: a StratERP-like wordmark (navy text + thin light-blue bars on white, 5:1) yields both colors.
+const near = (a: string, b: string, tol = 34) => {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return Math.hypot(...p(a).map((v, i) => v - p(b)[i])) < tol;
+};
+const strateLike = () =>
+  Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="200">
+    <rect width="1000" height="200" fill="#ffffff"/>
+    <text x="40" y="120" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="110" fill="#1c2d40">StratERP</text>
+    <rect x="40" y="148" width="560" height="9" fill="#8fb8de"/>
+    <rect x="620" y="148" width="300" height="9" fill="#8fb8de"/>
+    <text x="40" y="186" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#1c2d40">MORE CAPABILITY, LESS ADMINISTRATION</text>
+  </svg>`);
+
+test("B-E002 palette finds navy and light blue on a wide white logo", async ({ page }) => {
+  await signIn(page, f!.people.admin.email);
+  const scan = async (buf: Buffer, name: string, type: string) =>
+    (await (await page.request.post("/api/company/theme", { multipart: { file: { name, mimeType: type, buffer: buf } } })).json()).palette as string[];
+  const wide = await scan(strateLike(), "strat.svg", "image/svg+xml");
+  expect(wide.some((c) => near(c, "#1c2d40")), `navy in ${wide}`).toBe(true);
+  expect(wide.some((c) => near(c, "#8fb8de")), `light blue in ${wide}`).toBe(true);
+  expect(wide.length, `no specks: ${wide}`).toBeLessThanOrEqual(3);
+  // The 3-color block logo still gives exactly 3.
+  const sharp = (await import("sharp")).default;
+  const block = (c: string, w: number) => sharp({ create: { width: w, height: 120, channels: 3, background: c } }).png().toBuffer();
+  const three = await sharp({ create: { width: 640, height: 200, channels: 3, background: "#ffffff" } })
+    .composite([{ input: await block("#0f766e", 300), left: 20, top: 40 }, { input: await block("#d72cd6", 180), left: 330, top: 40 }, { input: await block("#f59e0b", 100), left: 520, top: 40 }])
+    .png()
+    .toBuffer();
+  expect(await scan(three, "three.png", "image/png")).toHaveLength(3);
+});
