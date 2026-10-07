@@ -136,7 +136,27 @@ export const catalogKey = norm;
 export function cleanParsedResume(parsed: ParsedResume, text: string, catalog?: Set<string>) {
   cleanEmployers(parsed, text);
   mergeCertifications(parsed, text);
-  parsed.skills = cleanSkills(parsed.skills, catalog);
+  const kept = cleanSkills(parsed.skills, catalog);
+  const keptKeys = new Set(kept.map(norm));
+  parsed.droppedSkills = [...new Set(parsed.skills.map((x) => x.trim()).filter((x) => x && !keptKeys.has(norm(x.replace(/^\s*(and|&|with)\s+/i, "").replace(/[\s.,;:!?]+$/, "")))))].slice(0, 40);
+  parsed.skills = kept;
   dedupeEducation(parsed);
   return parsed;
 }
+
+/** Char offsets of every case-insensitive occurrence of each item, keyed "kind:normalized". */
+export function sourceOffsets(text: string, items: { kind: string; name: string }[]) {
+  const lower = text.toLowerCase();
+  const out: Record<string, number[]> = {};
+  for (const it of items) {
+    const n = it.name.trim();
+    if (n.length < 2) continue;
+    const key = `${it.kind}:${norm(n)}`;
+    if (out[key]) continue;
+    const hits: number[] = [];
+    for (let i = lower.indexOf(n.toLowerCase()); i >= 0 && hits.length < 20; i = lower.indexOf(n.toLowerCase(), i + n.length)) hits.push(i);
+    if (hits.length) out[key] = hits;
+  }
+  return out;
+}
+export const itemKey = (kind: string, name: string) => `${kind}:${norm(name)}`;

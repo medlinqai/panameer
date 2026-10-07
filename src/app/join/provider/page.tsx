@@ -80,7 +80,7 @@ import {
 import { LANGUAGES } from "@/lib/countries";
 // longer mounted here.
 import { CompanyFinder } from "@/components/company/CompanyFinder";
-import { CompanySort } from "@/components/onboarding/CompanySort";
+import { ResumeReview } from "@/components/onboarding/ResumeReview";
 import { AiPassPanel } from "@/components/onboarding/AiPassPanel";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import { Modal } from "@/components/Modal";
@@ -1439,6 +1439,17 @@ setScreen(target);
           {/* E184 — NAME THE READER THAT RAN. */}
           {importOutcome?.path && <ReaderLine path={importOutcome.path} />}
 
+          {/* "What we got": the read, fixed chunk by chunk (2026-10-07). */}
+          {hasProfileData && (
+            <ResumeReview
+              onChanged={async () => {
+                const r = await fetch("/api/onboarding/status");
+                if (r.ok) hydrate(await r.json());
+              }}
+              onContinue={goNext}
+            />
+          )}
+
           {/* E029 — the upload control is INLINE and visible on arrival. It used */}
           {!hasProfileData && (
           <section className="mb-4 border-t-2 border-ink pb-2 pt-6">
@@ -2460,12 +2471,6 @@ setScreen(target);
                     }
                   />
                 )}
-                <CompanySort
-                  onSaved={async () => {
-                    const r = await fetch("/api/onboarding/status");
-                    if (r.ok) hydrate(await r.json());
-                  }}
-                />
               </ProfileCard>
             </div>
 

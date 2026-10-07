@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CompanySort } from "@/components/onboarding/CompanySort";
+import { ResumeReview } from "@/components/onboarding/ResumeReview";
 import { useRouter } from "next/navigation";
 import { ResumeImportAction } from "@/components/onboarding/ResumeImportAction";
 import {
@@ -76,8 +76,8 @@ export function OwnerResumeRebuild() {
           }
         />
         {}
-        {/* After the read is saved, the member sorts the companies it found (2026-10-05). */}
-        {applied && <CompanySort onSaved={() => router.refresh()} />}
+        {/* After the read is saved, the member reviews it chunk by chunk (2026-10-07). */}
+        {applied && <ResumeReview onChanged={() => router.refresh()} onContinue={() => { setApplied(false); setStage("link"); router.refresh(); }} />}
         {error && (
           <p role="alert" className="mt-2 text-[12px] text-red-600">
             {error}

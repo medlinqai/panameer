@@ -1282,6 +1282,8 @@ model ProviderProfile {
   // The coordinator Person who represents this provider (brief_I). Nullable —
   // most providers are independent. Set only via the provider's own authenticated
   // acceptance of a coordinator invite.
+  /// The member's résumé-review fixes, re-applied after any re-read: { removed: {kind: [names]}, switches: {company: choice} }.
+  resume_fixes            Json?
   coordinator_person_id   String?            @db.Uuid
   created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt
@@ -2835,6 +2837,8 @@ model ProfileImport {
   /// Human-readable list of import gaps shown on the review page.
   /// "Companies we found" for the member to sort (Employer / Project client / Remove), 2026-10-05. Additive.
   company_list Json?
+  /// Where each found item sits in raw_text: { "kind:normalized name": [char offsets] } (résumé review).
+  source_offsets      Json?
   gaps                Json?
   /**
    * WS-G — WHAT PRODUCED THIS PARSE. Recorded at parse time because the audit is

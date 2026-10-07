@@ -1,5 +1,6 @@
 import { parseEngagementTables, engagementsToProjects, roleNameFromText } from "@/lib/resume/engagements";
-import { cleanParsedResume, catalogKey } from "@/lib/resume/cleanup";
+import { cleanParsedResume, catalogKey, sourceOffsets } from "@/lib/resume/cleanup";
+import { applyResumeFixes } from "@/lib/resume/fixes";
 import { buildCompanyList, normCompany, notACompany } from "@/lib/resume/company-list";
 import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
@@ -108,6 +109,7 @@ export async function importProfileDocument({
   bytes,
   startedAt = null,
   apply = true,
+  reuse = null,
 }: {
   profileId: string;
   source: "RESUME";
@@ -118,11 +120,13 @@ export async function importProfileDocument({
   startedAt?: number | null;
   /** STORE AND PARSE, WRITE NOTHING item 2) */
   apply?: boolean;
+  /** "Read my résumé again": the stored text and file, no new upload. */
+  reuse?: { text: string; storagePath: string | null } | null;
 }): Promise<ImportResult> {
   // 1. Text out of the document.
   let text: string;
   try {
-    text = await extractText(bytes, mimeType, fileName);
+    text = reuse ? reuse.text : await extractText(bytes, mimeType, fileName);
   } catch (e) {
     const message =
       e instanceof ExtractError ? e.message : "We couldn't read that file.";
@@ -168,6 +172,16 @@ export async function importProfileDocument({
   const applied = apply
     ? await applyParsedResume(profileId, parsed, source)
     : emptyApplied();
+  // The member's review fixes survive any re-read.
+  if (apply) await applyResumeFixes(profileId);
+  const offsets = sourceOffsets(text, [
+    ...companies.map((c) => ({ kind: "company", name: c.name })),
+    ...parsed.experiences.map((e) => ({ kind: "company", name: e.employer ?? "" })),
+    ...parsed.projects.map((p) => ({ kind: "project", name: p.name })),
+    ...[...parsed.skills, ...(parsed.droppedSkills ?? [])].map((n) => ({ kind: "skill", name: n })),
+    ...parsed.certifications.map((c) => ({ kind: "cert", name: c.name })),
+    ...parsed.education.map((e) => ({ kind: "edu", name: e.institution })),
+  ]);
 
   const gaps = [...parsed.gaps];
   // THE IMPORT NOW SAYS WHEN IT CAME UP SHORT WS-3).
@@ -201,8 +215,8 @@ export async function importProfileDocument({
   }
 
   // Keep the source document (private bucket) so a parse can be re-run or
-  let storagePath: string | null = null;
-  try {
+  let storagePath: string | null = reuse ? reuse.storagePath : null;
+  if (!reuse) try {
     storagePath = await uploadResumeFile(profileId, {
       name: fileName,
       type: mimeType,
@@ -227,6 +241,7 @@ export async function importProfileDocument({
       raw_text: text.slice(0, 100_000),
       parsed: parsed as unknown as Prisma.InputJsonValue,
       company_list: companies as unknown as Prisma.InputJsonValue,
+      source_offsets: offsets as unknown as Prisma.InputJsonValue,
       gaps,
       // WS-G provenance, now written on the FIRST parse rather than only when
       ai_prompt_version: read.path.reader === "ai" ? PROMPT_VERSION : null,

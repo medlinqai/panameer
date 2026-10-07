@@ -52,6 +52,8 @@ export type ParsedResume = {
   skills: string[];
   languages: string[];
   gaps: string[];
+  /** Items the skills filter dropped ("probably not skills"), kept for the review. */
+  droppedSkills?: string[];
 };
 
 /** Section headings we recognise, mapped to a canonical bucket. */
