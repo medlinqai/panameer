@@ -1,4 +1,5 @@
 import { parseEngagementTables, engagementsToProjects, roleNameFromText } from "@/lib/resume/engagements";
+import { cleanParsedResume, catalogKey } from "@/lib/resume/cleanup";
 import { buildCompanyList, normCompany, notACompany } from "@/lib/resume/company-list";
 import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
@@ -158,6 +159,8 @@ export async function importProfileDocument({
     parsed.projects = engagementsToProjects(engagements);
     parsed.skills = [...new Set([...parsed.skills, ...engagements.flatMap((e) => e.skills)])];
   }
+  const catalog = new Set((await prisma.skill.findMany({ where: OFFERABLE, select: { name: true } })).map((x) => catalogKey(x.name)));
+  cleanParsedResume(parsed, text, catalog);
   const companies = buildCompanyList(engagements, read.inventory ?? [], parsed);
 
   // 3. Structure → profile, non-destructively.
@@ -358,8 +361,10 @@ export async function readDocument(
   const signals = assessParse(text, parsed, { source: "ai" }).signals;
 
   // THE FALLBACK IS PER-SECTION NOW WS-1)
+  // A consultant CV can list only dated client projects; that's not a failed employer read.
+  const datedProjects = parsed.projects.filter((p) => p.startDate).length;
   const employersFailed =
-    parsed.experiences.length === 0 && signals.dateRangesInText >= 3;
+    parsed.experiences.length === 0 && signals.dateRangesInText >= 3 && datedProjects < signals.dateRangesInText / 2;
   if (employersFailed) {
     console.error(
       `[resume] the model returned no work history from a document with ${signals.dateRangesInText} date ranges — falling back to the heuristic for EMPLOYERS ONLY; the other sections keep the model's answer`,

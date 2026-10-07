@@ -5,7 +5,7 @@ import { basename, join } from "node:path";
 // Usage: npx tsx --env-file=.env.local scripts/resume-bench.ts <A|B|C>   (A gpt-5-nano · B gpt-5-mini · C Claude Sonnet)
 // Real CVs are read in place; results go only to .harness/resume-bench/ (gitignored). No DB writes.
 const SAMPLES = "../../1. Project Documents/2. Design/06. Resume Samples for Parser";
-const OUT = ".harness/resume-bench";
+const OUT = process.env.BENCH_OUT || ".harness/resume-bench";
 const SKIP = /contract|invoice|\bPIS\b|PISS|\bPDS\b|bank|matrix|picture|photo|MSC-|SOW-/i;
 // $ per million tokens (in, out): list prices; the env price applies to every provider, so the bench sets its own.
 const CONFIGS = {
@@ -43,6 +43,10 @@ const junk = (skills: string[]) => skills.filter((s) => s.replace(/[^A-Za-z]/g, 
   const { readDocument } = await import("@/lib/resume/import");
   const { parseEngagementTables, engagementsToProjects } = await import("@/lib/resume/engagements");
   const { buildCompanyList, normCompany, notACompany } = await import("@/lib/resume/company-list");
+  const { cleanParsedResume, catalogKey } = await import("@/lib/resume/cleanup");
+  const { prisma } = await import("@/lib/prisma");
+  const { OFFERABLE } = await import("@/lib/catalog");
+  const catalog = new Set((await prisma.skill.findMany({ where: OFFERABLE, select: { name: true } })).map((x) => catalogKey(x.name)));
   mkdirSync(join(OUT, "json"), { recursive: true });
   const scorecard = join(OUT, "scorecard.csv");
   if (!existsSync(scorecard)) writeFileSync(scorecard, "file,config,reader,seconds,usd,employers,projects,skills,certifications,education,junk_skills,companies,text_chars,notes\n");
@@ -71,6 +75,7 @@ const junk = (skills: string[]) => skills.filter((s) => s.replace(/[^A-Za-z]/g, 
         parsed.projects = engagementsToProjects(engagements);
         parsed.skills = [...new Set([...parsed.skills, ...engagements.flatMap((e) => e.skills)])];
       }
+      cleanParsedResume(parsed, text, catalog);
       const companies = buildCompanyList(engagements, read.inventory ?? [], parsed);
       const secs = (Date.now() - t0) / 1000;
       const usd = read.usage ? (read.usage.inputTokens / 1e6) * cfg.price[0] + (read.usage.outputTokens / 1e6) * cfg.price[1] : 0;
