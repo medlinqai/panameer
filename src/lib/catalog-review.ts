@@ -173,6 +173,21 @@ export async function waitingTermCounts() {
   ].sort((a, b) => b.people - a.people);
 }
 
+/** Keywords (terms the catalog doesn't know) by how many real people hold them. */
+export async function keywordCounts() {
+  const rows = await prisma.providerProfile.findMany({ where: { keywords: { isEmpty: false }, person: REAL_PERSON }, select: { id: true, keywords: true } });
+  const by = new Map<string, { name: string; people: Set<string> }>();
+  for (const r of rows)
+    for (const k of r.keywords) {
+      const key = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!key) continue;
+      const e = by.get(key) ?? { name: k, people: new Set<string>() };
+      e.people.add(r.id);
+      by.set(key, e);
+    }
+  return [...by.entries()].map(([key, e]) => ({ key, name: e.name, people: e.people.size })).sort((a, b) => b.people - a.people);
+}
+
 /** A member saved a new term: tell admins about each term that has now reached CATALOG_NOTIFY_MIN_PEOPLE (once per term). `to` overrides recipients (tests). */
 export async function notifyCatalogReview(to?: string[], fromProfileId?: string) {
   try {
@@ -181,11 +196,15 @@ export async function notifyCatalogReview(to?: string[], fromProfileId?: string)
       if (who?.person.user?.is_test || /@(example\.seed|panameer\.com|[^@]*\.example)$/i.test(who?.person.user?.email ?? "")) return;
     }
     const hot = (await waitingTermCounts()).filter((t) => t.people >= CATALOG_NOTIFY_MIN_PEOPLE);
-    if (!hot.length) return;
+    const hotWords = (await keywordCounts()).filter((t) => t.people >= CATALOG_NOTIFY_MIN_PEOPLE);
+    if (!hot.length && !hotWords.length) return;
     const admins = to ?? (await prisma.person.findMany({ where: { user: { is_system_admin: true } }, select: { id: true } })).map((p) => p.id);
     for (const t of hot)
       for (const personId of admins)
         await notify({ event: "catalog.term_catches_on", personId, entityType: t.kind, entityId: t.id, dedupeKey: `catalog.term_catches_on:${t.id}`, vars: { term: t.name, people: String(t.people), kind: t.kind } });
+    for (const t of hotWords)
+      for (const personId of admins)
+        await notify({ event: "catalog.term_catches_on", personId, entityType: "keyword", dedupeKey: `catalog.term_catches_on:kw:${t.key}`, vars: { term: t.name, people: String(t.people), kind: "keyword" } });
   } catch (e) {
     console.error("[catalog-review] notice failed", e);
   }

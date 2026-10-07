@@ -2,10 +2,11 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normCompany } from "@/lib/resume/company-list";
 import { applyCompanySort, type SortChoice } from "@/lib/resume/company-sort";
+import { removeKeywords } from "@/lib/terms";
 import { retype, type Piece, type PieceKind, type Target } from "@/lib/resume/retype";
 
 // The member's résumé-review fixes, kept on the profile and re-applied after any re-read.
-export type FixKind = "skill" | "newSkill" | "junk" | "project" | "cert" | "edu" | "company";
+export type FixKind = "skill" | "spec" | "keyword" | "newSkill" | "junk" | "project" | "cert" | "edu" | "company";
 export type Move = { from: PieceKind; key: string; to: Target };
 export type Hidden = { id: string; from: PieceKind; piece: Piece };
 export type ResumeFixes = { removed: Partial<Record<FixKind, string[]>>; switches: Record<string, SortChoice>; keepBoth?: string[]; moves?: Move[]; hidden?: Hidden[] };
@@ -43,6 +44,14 @@ export async function recordSwitch(profileId: string, company: string, choice: S
 export async function applyResumeFixes(profileId: string) {
   const f = await loadFixes(profileId);
   const has = (kind: FixKind, name: string | null | undefined) => (f.removed[kind] ?? []).includes(fixKey(name));
+  const [specs, prof] = await Promise.all([
+    prisma.providerProfileSpecialization.findMany({ where: { provider_profile_id: profileId }, select: { specialization_id: true, specialization: { select: { name: true } } } }),
+    prisma.providerProfile.findUnique({ where: { id: profileId }, select: { keywords: true } }),
+  ]);
+  const dropSpecs = specs.filter((r) => has("spec", r.specialization.name)).map((r) => r.specialization_id);
+  if (dropSpecs.length) await prisma.providerProfileSpecialization.deleteMany({ where: { provider_profile_id: profileId, specialization_id: { in: dropSpecs } } });
+  const dropWords = (prof?.keywords ?? []).filter((k) => has("keyword", k));
+  if (dropWords.length) await removeKeywords(profileId, dropWords);
   const [skills, projects, certs, edu] = await Promise.all([
     prisma.providerSkill.findMany({ where: { provider_profile_id: profileId }, select: { id: true, skill: { select: { name: true } } } }),
     prisma.project.findMany({ where: { provider_profile_id: profileId }, select: { id: true, name: true } }),

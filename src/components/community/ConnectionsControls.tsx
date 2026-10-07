@@ -185,6 +185,7 @@ function FiltersPanel({ f, tree, onClose }: { f: ConnFilters; tree: PickerTree; 
             <input value={d.pastco} onChange={(e) => setD({ ...d, pastco: e.target.value })} placeholder="Past companies: type a company…" aria-label="Past company" className={`${INPUT} mt-2 w-full`} />
           </G>
           <G n={3} title="What they do">
+            <p className="mb-1.5 text-[12px] text-ink-3">Skills: features of the software, e.g., Purchase Requisitions</p>
             <SkillTreePicker tree={tree} selected={d.skills} onChange={(skills) => setD({ ...d, skills })} />
             <div className="mt-2 flex flex-wrap gap-1.5">{["func", "tech", "techfunc", "pm"].map((v) => pill("roles", v))}</div>
           </G>

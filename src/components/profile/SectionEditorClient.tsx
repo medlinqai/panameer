@@ -15,6 +15,7 @@ import { PhotoUpload } from "@/components/PhotoUpload";
 import { EducationLanguagesEditor } from "@/components/onboarding/EducationLanguagesEditor";
 import { SkillsEditor } from "@/components/onboarding/editors/SkillsEditor";
 import { SpecializationsEditor } from "@/components/onboarding/editors/SpecializationsEditor";
+import { KeywordsEditor } from "@/components/profile/KeywordsEditor";
 import {
   draftFromStatus,
   emptyDraft,
@@ -392,6 +393,9 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
           scrollRegionClass="overflow-y-auto overscroll-contain rounded-[12px] border border-line/70 bg-bg-soft/40 p-3"
         />
       );
+      break;
+    case "keywords":
+      body = <KeywordsEditor />;
       break;
     case "certifications":
       body = (

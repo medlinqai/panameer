@@ -205,6 +205,7 @@ function textFilter(q: string) {
       { person: { title: like } },
       { overview: like },
       { skills: { some: { skill: { name: like } } } },
+      { keywords_text: like },
       { roleType: { name: like } },
       { roleType: { display: like } },
       { pillar: { name: like } },

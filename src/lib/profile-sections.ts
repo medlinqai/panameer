@@ -5,6 +5,7 @@ export type SectionSlug =
   | "rates"
   | "skills"
   | "specializations"
+  | "keywords"
   | "certifications"
   | "education"
   | "work-history"
@@ -62,6 +63,7 @@ export const PROFILE_SECTIONS: readonly SectionSpec[] = [
       customSpecializations: d.customSpecializations,
     }),
   },
+  { slug: "keywords", title: "Keywords", step: null, payload: null },
   {
     slug: "certifications",
     title: "Certifications",

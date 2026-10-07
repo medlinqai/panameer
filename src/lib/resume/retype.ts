@@ -1,12 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
-import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
-import { formatSkillName, matchSkill } from "@/lib/skill-match";
-import { autoLinkSameLetters, notifyCatalogReview } from "@/lib/catalog-review";
 import { splitList } from "@/lib/resume/split-list";
+import { addTerms, removeKeywords } from "@/lib/terms";
 
 // "This is a…": move a résumé piece to another type, carrying name/title/dates across.
-export type PieceKind = "employer" | "project" | "edu" | "cert" | "skill" | "term";
+export type PieceKind = "employer" | "project" | "edu" | "cert" | "skill" | "spec" | "keyword" | "term";
 export type Target = "employer" | "project" | "edu" | "cert" | "skill" | "hidden";
 export type Piece = { name: string; title: string | null; start: string | null; end: string | null };
 export type PieceRef = { id: string } | { key: string };
@@ -44,6 +41,15 @@ export async function readPiece(profileId: string, from: PieceKind, ref: PieceRe
     const r = match(await prisma.certification.findMany({ where: own }), (x) => x.id, (x) => x.name);
     return r ? { piece: { name: r.name, title: r.issuer, start: iso(r.issued_on) ?? ofYear(r.year), end: null }, remove: () => prisma.certification.delete({ where: { id: r.id } }) } : null;
   }
+  if (from === "spec") {
+    const r = match(await prisma.providerProfileSpecialization.findMany({ where: own, select: { specialization_id: true, specialization: { select: { name: true } } } }), (x) => x.specialization_id, (x) => x.specialization.name);
+    return r ? { piece: { name: r.specialization.name, title: null, start: null, end: null }, remove: () => prisma.providerProfileSpecialization.deleteMany({ where: { ...own, specialization_id: r.specialization_id } }) } : null;
+  }
+  if (from === "keyword") {
+    const p = await prisma.providerProfile.findUnique({ where: { id: profileId }, select: { keywords: true } });
+    const k = (p?.keywords ?? []).find((x) => ("id" in ref ? x === ref.id : key(x) === ref.key));
+    return k ? { piece: { name: k, title: null, start: null, end: null }, remove: () => removeKeywords(profileId, [k]) } : null;
+  }
   const r = match(await prisma.providerSkill.findMany({ where: own, select: { id: true, skill: { select: { name: true } } } }), (x) => x.id, (x) => x.skill.name);
   return r ? { piece: { name: r.skill.name, title: null, start: null, end: null }, remove: () => prisma.providerSkill.delete({ where: { id: r.id } }) } : null;
 }
@@ -71,7 +77,7 @@ export async function writePiece(profileId: string, to: Target, p: Piece) {
     const single = names.length === 1;
     for (const n of names)
       if (!have.has(key(n))) await prisma.certification.create({ data: { ...own, user_id: userId, name: clip(n), issuer: single ? clip(p.title) || null : null, issued_on: single ? date(p.start) : null } });
-  } else await addMemberSkills(profileId, splitList(p.name));
+  } else await addTerms(profileId, splitList(p.name));
 }
 
 /** Moves one piece; returns what it was, for the "Not needed" restore list. */
@@ -81,35 +87,4 @@ export async function retype(profileId: string, from: PieceKind, ref: PieceRef, 
   await writePiece(profileId, to, found.piece);
   await found.remove();
   return found.piece;
-}
-
-/** Skills by name: catalog matches link; the rest become the member's own, suggested to the catalog. */
-export async function addMemberSkills(profileId: string, names: string[]) {
-  const [p, catalogId, rows] = await Promise.all([
-    prisma.providerProfile.findUnique({ where: { id: profileId }, select: { role_type_id: true, pillar_id: true } }),
-    activeCatalogId(),
-    prisma.skill.findMany({ where: OFFERABLE, select: { id: true, name: true, is_custom: true } }),
-  ]);
-  const known = rows.map((r) => ({ id: r.id, name: r.name, isCustom: r.is_custom }));
-  const ids: string[] = [];
-  const fresh: string[] = [];
-  for (const raw of names.slice(0, 30)) {
-    const name = formatSkillName(raw.trim().slice(0, 120));
-    if (!name) continue;
-    const m = matchSkill(name, known);
-    if (m.kind === "exact") { ids.push(m.skill.id); continue; }
-    if (!p?.role_type_id || !p.pillar_id || !catalogId) continue;
-    const s = await prisma.skill.upsert({
-      where: { catalog_id_role_type_id_pillar_id_name: { catalog_id: catalogId, role_type_id: p.role_type_id, pillar_id: p.pillar_id, name } },
-      update: {},
-      create: { catalog_id: catalogId, role_type_id: p.role_type_id, pillar_id: p.pillar_id, name, is_custom: true, origin: "PROVIDER", review_pending: true },
-    });
-    ids.push(s.id);
-    if (Date.now() - s.created_at.getTime() < 60_000) fresh.push(s.id);
-  }
-  if (ids.length) await prisma.providerSkill.createMany({ data: ids.map((skill_id) => ({ provider_profile_id: profileId, skill_id, source: "SELF_ADDED" as const, weight: SELF_ADDED_WEIGHT })), skipDuplicates: true });
-  if (fresh.length) {
-    await autoLinkSameLetters({ skills: fresh });
-    await notifyCatalogReview(undefined, profileId);
-  }
 }

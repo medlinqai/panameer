@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { OFFERABLE } from "@/lib/catalog";
 import { SELF_ADDED_WEIGHT } from "@/lib/provider-rollup";
-import { addMemberSkills, retype, writePiece, type PieceKind, type Target } from "@/lib/resume/retype";
+import { retype, writePiece, type PieceKind, type Target } from "@/lib/resume/retype";
+import { removeKeywords, termKey, type SpecKind } from "@/lib/terms";
 import { recomputeCompleteness } from "@/lib/onboarding";
-import { matchSkills } from "@/lib/resume/match";
 import { normCompany } from "@/lib/resume/company-list";
 import { companySortState, applyCompanySort, type SortChoice } from "@/lib/resume/company-sort";
 import { fixKey, loadFixes, saveFixes, recordRemoved, forgetRemoved, recordSwitch, type FixKind } from "@/lib/resume/fixes";
@@ -42,6 +42,8 @@ export async function reviewState(profileId: string) {
         certifications: { select: { id: true, name: true, issuer: true, year: true }, orderBy: { created_at: "asc" } },
         education: { select: { id: true, institution: true, degree: true, field: true, end_year: true }, orderBy: { created_at: "asc" } },
         skills: { select: { id: true, skill: { select: { id: true, name: true, is_custom: true, review_pending: true } } } },
+        specializations: { select: { specialization: { select: { id: true, name: true, kind: true } } } },
+        keywords: true,
       },
     }),
     loadFixes(profileId),
@@ -74,15 +76,13 @@ export async function reviewState(profileId: string) {
   const certs = profile.certifications.map((c) => ({ id: c.id, name: c.name, issuer: c.issuer, year: c.year }));
   const edu = profile.education.map((e) => ({ id: e.id, institution: e.institution, degree: e.degree, field: e.field, year: e.end_year }));
 
-  // Skills: in the catalog · new to Panameer · probably not skills.
-  const onProfile = profile.skills.map((s) => ({ id: s.id, skillId: s.skill.id, name: s.skill.name, custom: s.skill.is_custom }));
-  const have = new Set(onProfile.map((s) => fixKey(s.name)));
-  let fresh: string[] = [];
-  if (parsed?.skills?.length) {
-    const catalog = await prisma.skill.findMany({ where: OFFERABLE, select: { id: true, name: true, role_type_id: true } });
-    fresh = matchSkills(parsed.skills, catalog).unmatched.filter((n) => !have.has(fixKey(n)) && !removed("newSkill", n));
-  }
-  const junk = (parsed?.droppedSkills ?? []).filter((n) => !removed("junk", n) && !removed("newSkill", n) && !have.has(fixKey(n)));
+  // Skills sorted by the catalog: skills · specializations by kind · keywords · probably not skills. One chip per name.
+  const have = new Set<string>();
+  const once = (name: string) => { const k = termKey(name); if (!k || have.has(k)) return false; have.add(k); return true; };
+  const onProfile = profile.skills.map((s) => ({ id: s.id, skillId: s.skill.id, name: s.skill.name, custom: s.skill.is_custom })).filter((s) => once(s.name));
+  const specs = profile.specializations.map((s) => ({ id: s.specialization.id, name: s.specialization.name, kind: s.specialization.kind as SpecKind })).filter((s) => once(s.name));
+  const keywords = profile.keywords.filter(once);
+  const junk = (parsed?.droppedSkills ?? []).filter((n) => !removed("junk", n) && !removed("newSkill", n) && once(n));
 
   const groups = {
     projects: dupes(projects, (p) => `${fixKey(p.name)}|${fixKey(p.client)}`),
@@ -98,7 +98,7 @@ export async function reviewState(profileId: string) {
     edu: groups.edu.length,
     about: (about.title.trim() ? 0 : 1) + (about.overview.trim() ? 0 : 1),
   };
-  const count: Record<ChunkKey, number> = { companies: companies.length, projects: projects.length, skills: onProfile.length + fresh.length, certs: certs.length, edu: edu.length, about: 0 };
+  const count: Record<ChunkKey, number> = { companies: companies.length, projects: projects.length, skills: onProfile.length + specs.length + keywords.length, certs: certs.length, edu: edu.length, about: 0 };
   return {
     importId: imp?.id ?? null,
     fileName: imp?.file_name ?? null,
@@ -112,7 +112,7 @@ export async function reviewState(profileId: string) {
     projects,
     certs,
     edu,
-    skills: { catalog: onProfile.filter((s) => !s.custom), mine: onProfile.filter((s) => s.custom), fresh, junk },
+    skills: { skills: onProfile, specs, keywords, junk },
     dupes: groups,
     about,
     count,
@@ -127,7 +127,8 @@ export async function searchCatalog(q: string) {
 }
 
 export type ReviewAction =
-  | { action: "remove"; kind: "skill" | "project" | "cert" | "edu"; id: string }
+  | { action: "remove"; kind: "skill" | "spec" | "project" | "cert" | "edu"; id: string }
+  | { action: "removeKeyword"; name: string }
   | { action: "dismiss"; kind: "newSkill" | "junk"; names: string[] }
   | { action: "edit"; kind: "project"; id: string; name: string; client: string }
   | { action: "edit"; kind: "cert"; id: string; name: string; issuer: string }
@@ -151,8 +152,15 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       if (a.kind === "skill") {
         const row = await prisma.providerSkill.findFirst({ where: { id: a.id, ...own }, select: { id: true, skill: { select: { name: true } } } });
         if (!row) return { ok: false, error: "Not found." };
-        await prisma.providerSkill.delete({ where: { id: row.id } });
+        // Every row of the same name goes (the catalog holds one name under several roles).
+        const same = await prisma.providerSkill.findMany({ where: own, select: { id: true, skill: { select: { name: true } } } });
+        await prisma.providerSkill.deleteMany({ where: { id: { in: same.filter((x) => termKey(x.skill.name) === termKey(row.skill.name)).map((x) => x.id) } } });
         await recordRemoved(profileId, "skill", [row.skill.name]);
+      } else if (a.kind === "spec") {
+        const row = await prisma.providerProfileSpecialization.findFirst({ where: { specialization_id: a.id, ...own }, select: { specialization: { select: { name: true } } } });
+        if (!row) return { ok: false, error: "Not found." };
+        await prisma.providerProfileSpecialization.deleteMany({ where: { specialization_id: a.id, ...own } });
+        await recordRemoved(profileId, "spec", [row.specialization.name]);
       } else if (a.kind === "project") {
         const row = await prisma.project.findFirst({ where: { id: a.id, ...own }, select: { name: true } });
         if (!row) return { ok: false, error: "Not found." };
@@ -171,6 +179,10 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       }
       break;
     }
+    case "removeKeyword":
+      await removeKeywords(profileId, [a.name]);
+      await recordRemoved(profileId, "keyword", [a.name]);
+      break;
     case "dismiss":
       await recordRemoved(profileId, a.kind, a.names);
       break;
@@ -263,7 +275,7 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       const f = await loadFixes(profileId);
       const h = (f.hidden ?? []).find((x) => x.id === a.id);
       if (!h) return { ok: false, error: "Not found." };
-      await writePiece(profileId, h.from === "term" ? "skill" : h.from, h.piece);
+      await writePiece(profileId, h.from === "term" || h.from === "spec" || h.from === "keyword" ? "skill" : h.from, h.piece);
       f.hidden = (f.hidden ?? []).filter((x) => x.id !== a.id);
       f.moves = (f.moves ?? []).filter((m) => !(m.to === "hidden" && m.key === fixKey(h.piece.name)));
       await saveFixes(profileId, f);
@@ -280,11 +292,8 @@ export async function reviewAction(profileId: string, a: ReviewAction): Promise<
       if (r.status === "FAILED") return { ok: false, error: r.error ?? "We couldn't read it again." };
       break;
     }
-    case "commit": {
-      const st = await reviewState(profileId);
-      if (st?.skills.fresh.length) await addMemberSkills(profileId, st.skills.fresh);
+    case "commit":
       break;
-    }
   }
   await recomputeCompleteness(profileId).catch(() => null);
   return { ok: true };

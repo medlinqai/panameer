@@ -26,6 +26,7 @@ type Person = {
   employers: string[];
   skillIds: Set<string>;
   skillNames: Map<string, string>;
+  keywords: string[];
   roles: Set<string>;
   modes: Set<string>;
   rate: number | null;
@@ -69,6 +70,7 @@ async function loadPeople(viewer: Viewer): Promise<Person[]> {
           select: {
             id: true, completeness: true, coordinator_person_id: true, onsite_rate_cents: true, remote_rate_cents: true, hourly_rate_cents: true, rate_min_cents: true,
             skills: { select: { skill_id: true, skill: { select: { name: true } } } },
+            keywords: true,
             employers: { select: { name: true } },
             roles: { select: { roleType: { select: { code: true } } } },
           },
@@ -148,6 +150,7 @@ async function loadPeople(viewer: Viewer): Promise<Person[]> {
       employers: (pp?.employers ?? []).map((e) => e.name ?? "").filter(Boolean),
       skillIds: new Set((pp?.skills ?? []).map((s) => s.skill_id)),
       skillNames: new Map((pp?.skills ?? []).map((s) => [s.skill_id, s.skill.name])),
+      keywords: pp?.keywords ?? [],
       roles,
       modes,
       rate: rates.length ? Math.min(...rates) / 100 : null,
@@ -172,7 +175,7 @@ function panelMatch(p: Person, f: ConnFilters) {
   const lc = (s: string) => s.toLowerCase();
   if (f.q) {
     const n = lc(f.q);
-    if (![p.name, p.title ?? "", p.company ?? "", ...p.skillNames.values()].some((x) => lc(x).includes(n))) return false;
+    if (![p.name, p.title ?? "", p.company ?? "", ...p.skillNames.values(), ...p.keywords].some((x) => lc(x).includes(n))) return false;
   }
   if (f.rel.length && !f.rel.some((r) => p.rel.has(r))) return false;
   if (f.how.length && !f.how.some((h) => p.how.has(h))) return false;

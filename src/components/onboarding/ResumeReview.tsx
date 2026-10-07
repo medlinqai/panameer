@@ -195,6 +195,26 @@ export function ResumeReview({ onContinue, onChanged }: { onContinue?: () => voi
 }
 
 type Act = (body: Record<string, unknown>) => Promise<boolean>;
+
+// Skills & expertise as the catalog sorted them; each chip knows how to remove itself.
+type SkillChip = { key: string; name: string; from: PieceKind; id: string; remove: Record<string, unknown> };
+const SPEC_GROUPS = [
+  { kind: "PRODUCT", label: "Software & Platforms" },
+  { kind: "METHODOLOGY", label: "Processes & Methods" },
+  { kind: "INDUSTRY", label: "Industries" },
+] as const;
+function skillGroups(st: ReviewState): { key: string; label: string; note?: string; items: SkillChip[] }[] {
+  const { skills, specs, keywords } = st.skills;
+  return [
+    ...SPEC_GROUPS.map((g) => ({
+      key: g.kind,
+      label: g.label,
+      items: specs.filter((x) => x.kind === g.kind).map((x) => ({ key: `spec:${x.id}`, name: x.name, from: "spec" as const, id: x.id, remove: { action: "remove", kind: "spec", id: x.id } })),
+    })),
+    { key: "skills", label: "Skills", items: skills.map((x) => ({ key: `skill:${x.id}`, name: x.name, from: "skill" as const, id: x.id, remove: { action: "remove", kind: "skill", id: x.id } })) },
+    { key: "keywords", label: "Keywords", note: "not in the catalog yet — kept exactly as written", items: keywords.map((k) => ({ key: `kw:${k}`, name: k, from: "keyword" as const, id: k, remove: { action: "removeKeyword", name: k } })) },
+  ].filter((g) => g.items.length > 0);
+}
 type PanelProps = { st: ReviewState; act: Act; busy: boolean; onSrc: (s: Src) => void };
 
 function Head({ title, line }: { title: string; line: string }) {
@@ -230,29 +250,23 @@ function Skills({ st, act, busy, onSrc }: PanelProps) {
       clearTimeout(t);
     };
   }, [q]);
-  const { catalog, mine, fresh, junk } = st.skills;
+  const { junk } = st.skills;
   const src = (name: string) => onSrc({ kind: "skill", name });
   return (
     <div data-review-skills>
-      <Head title="Skills" line={`${st.count.skills} found · click one to see where it came from`} />
-      <p className="mb-1.5 text-[12.5px] font-bold text-ink-2">In the Panameer catalog ({catalog.length + mine.length})</p>
-      <div className="flex flex-wrap gap-1.5">
-        {[...catalog, ...mine].map((s) => (
-          <Chip key={s.id} name={s.name} busy={busy} onSrc={() => src(s.name)} onRemove={() => act({ action: "remove", kind: "skill", id: s.id })} />
-        ))}
-      </div>
-      {fresh.length > 0 && (
-        <>
-          <p className="mb-1.5 mt-4 text-[12.5px] font-bold text-ink-2">
-            New to Panameer ({fresh.length}) <span className="font-normal">we&apos;ll suggest them to the catalog</span>
+      <Head title="Skills & expertise" line={`${st.count.skills} found · sorted by the Panameer catalog · click one to see where it came from`} />
+      {skillGroups(st).map((g) => (
+        <div key={g.key} data-skill-group={g.key} className="mb-4">
+          <p className="mb-1.5 text-[12.5px] font-bold text-ink-2">
+            {g.label} ({g.items.length}){g.note && <span className="font-normal"> {g.note}</span>}
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {fresh.map((n) => (
-              <Chip key={n} name={n} busy={busy} onSrc={() => src(n)} onRemove={() => act({ action: "dismiss", kind: "newSkill", names: [n] })} />
+            {g.items.map((it) => (
+              <Chip key={it.key} name={it.name} busy={busy} onSrc={() => src(it.name)} onRemove={() => act(it.remove)} />
             ))}
           </div>
-        </>
-      )}
+        </div>
+      ))}
       {junk.length > 0 && (
         <div data-review-junk className="mt-4 border-l-2 border-amber-500 bg-amber-50 p-3">
           <p className="mb-1.5 flex flex-wrap items-center justify-between gap-2 text-[12.5px] font-bold text-amber-900">
@@ -443,12 +457,12 @@ const TYPES: { key: Target; label: string; bucket: string; c: string; bg: string
   { key: "project", label: "Project", bucket: "Projects", c: "#1f8a5b", bg: "#eaf6f0" },
   { key: "edu", label: "Education", bucket: "Education", c: "#7a4fc0", bg: "#f2ecfb" },
   { key: "cert", label: "Certification", bucket: "Certifications", c: "#b26b00", bg: "#fff4e0" },
-  { key: "skill", label: "Skill", bucket: "Skills", c: "#4a4658", bg: "#f1f0f4" },
+  { key: "skill", label: "Skill or expertise", bucket: "Skills & expertise", c: "#4a4658", bg: "#f1f0f4" },
   { key: "hidden", label: "Not needed", bucket: "Not needed", c: "#a0a0ad", bg: "#f7f7f9" },
 ];
 const TYPE = Object.fromEntries(TYPES.map((t) => [t.key, t])) as Record<Target, (typeof TYPES)[number]>;
 
-type Piece = { uid: string; type: Target; from: PieceKind | "hidden"; id: string; name: string; title: string | null; dates: string | null; why: string | null };
+type Piece = { uid: string; type: Target; from: PieceKind | "hidden"; id: string; name: string; title: string | null; dates: string | null; why: string | null; group?: string; remove?: Record<string, unknown> };
 
 function piecesOf(st: ReviewState): Piece[] {
   const p = (type: Target, from: Piece["from"], id: string, name: string, title: string | null, dates: string | null, why: string | null = null): Piece => ({ uid: `${from}:${id}`, type, from, id, name, title, dates, why });
@@ -458,9 +472,8 @@ function piecesOf(st: ReviewState): Piece[] {
     ...st.projects.map((x) => (x.client ? p("project", "project", x.id, x.client, x.name !== x.client ? x.name : null, x.dates) : p("project", "project", x.id, x.name, null, x.dates))),
     ...st.edu.map((e) => p("edu", "edu", e.id, e.institution, e.degree, e.year ? String(e.year) : null)),
     ...st.certs.map((c) => p("cert", "cert", c.id, c.name, c.issuer, c.year ? String(c.year) : null, listy(c.name))),
-    ...[...st.skills.catalog, ...st.skills.mine].map((k) => p("skill", "skill", k.id, k.name, null, null, listy(k.name))),
-    ...st.skills.fresh.map((n) => p("skill", "term", n, n, null, null, listy(n))),
-    ...st.skills.junk.map((n) => p("skill", "term", n, n, null, null, "probably not a skill")),
+    ...skillGroups(st).flatMap((g) => g.items.map((it) => ({ ...p("skill", it.from, it.id, it.name, null, null, listy(it.name)), group: g.label, remove: it.remove }))),
+    ...st.skills.junk.map((n) => ({ ...p("skill", "term", n, n, null, null, "probably not a skill"), group: "Probably not skills", remove: { action: "dismiss", kind: "junk", names: [n] } })),
     ...st.hidden.map((h) => p("hidden", "hidden", h.id, h.name, h.title, null)),
   ];
 }
@@ -473,7 +486,7 @@ function preview(x: Piece, to: Target) {
   if (to === "project") return `Client ${x.name} · Project ${x.title || x.name}${d}`;
   if (to === "edu") return `School ${x.name}${x.title ? ` · Degree ${x.title}` : ""}${d}`;
   if (to === "cert") return parts.length > 1 ? `split into ${parts.length}: ${parts.join(" · ")}` : `Name ${x.name}${x.title ? ` · Issuer ${x.title}` : ""}`;
-  if (to === "skill") return parts.length > 1 ? `split into ${parts.length}: ${parts.join(" · ")}` : x.name;
+  if (to === "skill") return `${parts.length > 1 ? `split into ${parts.length}: ${parts.join(" · ")}` : x.name} — the catalog files each as a skill, a specialization or a keyword`;
   return "hidden from your profile — you can restore it";
 }
 
@@ -561,7 +574,24 @@ function DocView({ st, act, busy }: { st: ReviewState; act: Act; busy: boolean }
                   {t.bucket} <span>{items.length}</span>
                 </p>
                 {items.length === 0 && <p className="px-3 py-2 text-[12.5px] text-ink-3">Nothing here yet</p>}
-                {shown.map((x) => (
+                {t.key === "skill" && [...new Set(items.map((x) => x.group))].map((g) => (
+                  <div key={g} className="border-t border-line px-3 py-2">
+                    <p className="mb-1 text-[11.5px] font-bold text-ink-2">{g}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.filter((x) => x.group === g).map((x) => (
+                        <span key={x.uid} data-bucket-piece={x.uid} className={"relative " + CHIP + (x.why ? " border-dashed border-red-600 bg-red-50" : "") + (x.uid === sel ? " ring-2 ring-ink" : "")}>
+                          <button type="button" onClick={() => pick(x.uid, "bucket")} className="text-left hover:underline">{x.name}</button>
+                          {x.why && (
+                            <button type="button" data-retype aria-label={`This is a… ${x.name}`} onClick={() => { setMenu(menu === x.uid ? null : x.uid); setSel(x.uid); }} className="text-[11px] font-bold">▾</button>
+                          )}
+                          <button type="button" aria-label={`Remove ${x.name}`} disabled={busy} onClick={() => x.remove && act(x.remove)} className={X}>✕</button>
+                          {menu === x.uid && <Retype x={x} busy={busy} onCancel={() => setMenu(null)} onMove={(to) => move(x, to)} />}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {t.key !== "skill" && shown.map((x) => (
                   <div key={x.uid} data-bucket-piece={x.uid} className={"relative flex items-center justify-between gap-2 border-t border-line px-3 py-1.5 text-[13px] " + (x.why ? "bg-red-50 " : "") + (x.uid === sel ? "ring-2 ring-inset ring-ink" : "")}>
                     <button type="button" onClick={() => pick(x.uid, "bucket")} className="min-w-0 text-left">
                       <span className="block truncate">{x.name}{x.dates ? <span className="text-ink-3"> · {x.dates}</span> : null}</span>
@@ -577,7 +607,7 @@ function DocView({ st, act, busy }: { st: ReviewState; act: Act; busy: boolean }
                     {menu === x.uid && <Retype x={x} busy={busy} onCancel={() => setMenu(null)} onMove={(to) => move(x, to)} />}
                   </div>
                 ))}
-                {items.length > 8 && !more.has(t.key) && (
+                {t.key !== "skill" && items.length > 8 && !more.has(t.key) && (
                   <button type="button" onClick={() => setMore(new Set([...more, t.key]))} className="w-full border-t border-line px-3 py-1.5 text-left text-[12.5px] font-bold text-magenta">
                     + {items.length - 8} More
                   </button>
@@ -600,7 +630,7 @@ function Retype({ x, busy, onCancel, onMove }: { x: Piece; busy: boolean; onCanc
         &ldquo;{x.name}&rdquo; — we filed this as {/^[AEIOU]/.test(TYPE[x.type].label) ? "an" : "a"} <b>{TYPE[x.type].label}</b>. What is it?
       </p>
       {TYPES.map((t) => (
-        <button key={t.key} type="button" disabled={t.key === x.type} onClick={() => setTo(t.key)} className={"flex w-full items-center justify-between border-b border-line px-3 py-1.5 text-left text-[13px] disabled:text-ink-3 " + (to === t.key ? "font-bold" : "")} style={to === t.key ? { background: t.bg } : undefined}>
+        <button key={t.key} type="button" disabled={t.key === x.type && x.from !== "term"} onClick={() => setTo(t.key)} className={"flex w-full items-center justify-between border-b border-line px-3 py-1.5 text-left text-[13px] disabled:text-ink-3 " + (to === t.key ? "font-bold" : "")} style={to === t.key ? { background: t.bg } : undefined}>
           <span className="inline-flex items-center gap-2"><i className="inline-block h-2.5 w-2.5" style={{ background: t.c }} />{t.label}</span>
           {to === t.key && "✓"}
         </button>

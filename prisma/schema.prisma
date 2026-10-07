@@ -1284,6 +1284,10 @@ model ProviderProfile {
   // acceptance of a coordinator invite.
   /// The member's résumé-review fixes, re-applied after any re-read: { removed: {kind: [names]}, switches: {company: choice} }.
   resume_fixes            Json?
+  /// Terms the catalog doesn't know, kept exactly as the member typed them.
+  keywords                String[]           @default([])
+  /// Lower-cased keywords joined, for the search text filter.
+  keywords_text           String?
   coordinator_person_id   String?            @db.Uuid
   created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt

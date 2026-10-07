@@ -302,6 +302,7 @@ export async function getProviderProfileView(
       name: s.specialization.name,
       kind: s.specialization.kind,
     })),
+    keywords: profile.keywords,
 
     packages: packages.map((pk) => ({
       id: pk.id,

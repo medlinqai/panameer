@@ -663,6 +663,7 @@ export function ConnectProfile({
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("skills")} title="Skills" /> : undefined}
         >
+          <p data-hint className="-mt-1 mb-2.5 text-[12.5px] text-ink-3">Features of the software, e.g., Purchase Requisitions</p>
           {p.skills.length > 0 ? (
             groupSkillsByPillar(p.skills).map((g) => (
               <div key={g.pillar ?? "__none"} className="mb-3 last:mb-0">
@@ -694,7 +695,27 @@ export function ConnectProfile({
           showWhenEmpty={owner}
           action={owner ? <CleanEdit href={editHref("specializations")} title="Specializations" /> : undefined}
         >
+          <p data-hint className="-mt-1 mb-2.5 text-[12.5px] text-ink-3">Areas of expertise, e.g., Procure-to-Pay, Coupa, Healthcare</p>
           <SpecializationsBody specializations={p.specializations} chipClass={CLEAN_CHIP} />
+        </CleanSection>
+
+        <CleanSection
+          id="keywords"
+          open={false}
+          title="Keywords"
+          count={p.keywords.length}
+          showWhenEmpty={owner}
+          action={owner ? <CleanEdit href={editHref("keywords")} title="Keywords" /> : undefined}
+        >
+          {p.keywords.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {p.keywords.map((k) => (
+                <span key={k} data-row className={CLEAN_CHIP}>{k}</span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13.5px] text-ink-2">No keywords yet.</p>
+          )}
         </CleanSection>
 
         <div className="pm-cp-pair">

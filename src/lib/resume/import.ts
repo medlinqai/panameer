@@ -1,6 +1,7 @@
 import { parseEngagementTables, engagementsToProjects, roleNameFromText } from "@/lib/resume/engagements";
 import { cleanParsedResume, catalogKey, sourceOffsets } from "@/lib/resume/cleanup";
 import { applyResumeFixes } from "@/lib/resume/fixes";
+import { addTerms } from "@/lib/terms";
 import { buildCompanyList, normCompany, notACompany } from "@/lib/resume/company-list";
 import { OFFERABLE, OFFERABLE_BASE, activeCatalogId } from "@/lib/catalog";
 import { jobKey } from "@/lib/resume/job-key";
@@ -172,6 +173,8 @@ export async function importProfileDocument({
   const applied = apply
     ? await applyParsedResume(profileId, parsed, source)
     : emptyApplied();
+  // Terms the catalog didn't match as skills: specializations link, the rest become keywords.
+  if (apply && applied.skillsUnmatched.length) await addTerms(profileId, applied.skillsUnmatched);
   // The member's review fixes survive any re-read.
   if (apply) await applyResumeFixes(profileId);
   const offsets = sourceOffsets(text, [

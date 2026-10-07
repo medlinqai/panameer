@@ -24,7 +24,8 @@ export async function GET(req: Request) {
 const s = z.string().max(300);
 const uuid = z.string().uuid();
 const Body = z.union([
-  z.object({ action: z.literal("remove"), kind: z.enum(["skill", "project", "cert", "edu"]), id: uuid }),
+  z.object({ action: z.literal("remove"), kind: z.enum(["skill", "spec", "project", "cert", "edu"]), id: uuid }),
+  z.object({ action: z.literal("removeKeyword"), name: s.min(1) }),
   z.object({ action: z.literal("dismiss"), kind: z.enum(["newSkill", "junk"]), names: z.array(s).max(100) }),
   z.object({ action: z.literal("edit"), kind: z.literal("project"), id: uuid, name: s, client: s }),
   z.object({ action: z.literal("edit"), kind: z.literal("cert"), id: uuid, name: s, issuer: s }),
@@ -35,7 +36,7 @@ const Body = z.union([
   z.object({ action: z.literal("companyMerge"), keep: s.min(1), drop: s.min(1) }),
   z.object({ action: z.literal("keepBoth"), a: s.min(1), b: s.min(1) }),
   z.object({ action: z.literal("addSkill"), skillId: uuid }),
-  z.object({ action: z.literal("retype"), from: z.enum(["employer", "project", "edu", "cert", "skill", "term"]), id: uuid.optional(), name: s.optional(), to: z.enum(["employer", "project", "edu", "cert", "skill", "hidden"]) }),
+  z.object({ action: z.literal("retype"), from: z.enum(["employer", "project", "edu", "cert", "skill", "spec", "keyword", "term"]), id: s.optional(), name: s.optional(), to: z.enum(["employer", "project", "edu", "cert", "skill", "hidden"]) }),
   z.object({ action: z.literal("restore"), id: uuid }),
   z.object({ action: z.literal("reread") }),
   z.object({ action: z.literal("commit") }),
