@@ -181,10 +181,12 @@ export async function getProviderProfileView(
   const primaryLanguage = profile.languages[0]?.name ?? null;
 
   // The company that sells this provider (one seller = one company, R1).
+  // Same rule as the Company area (getCompanyBinding): the most recently
+  // updated APPROVED membership is the company this person sells through.
   const sellingCompany =
     (await prisma.companyMembership.findFirst({
       where: { person_id: profile.person.id, status: "APPROVED" },
-      orderBy: { created_at: "asc" },
+      orderBy: { updated_at: "desc" },
       select: { company: { select: { id: true, name: true, logo_url: true } } },
     }))?.company ?? null;
   return {
