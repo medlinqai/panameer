@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AccountHero, AccountLead, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { PageTabs } from "@/components/casing/PageTabs";
 import { tabSequenceFor } from "@/lib/nav";
 import { profileTabs, ACCOUNT_MENU_NAME } from "@/lib/profile-tabs";
@@ -54,10 +54,6 @@ export default async function AccountHealthPage() {
         current="/account-health"
       />
       <div className="mx-auto max-w-[1010px]">
-        <AccountLead>
-          What your account can do today, and whether its record is clear.{" "}
-          <span className="font-normal text-ink-3">Free as of October 2026.</span>
-        </AccountLead>
 
         <AccountHero
           picture={
