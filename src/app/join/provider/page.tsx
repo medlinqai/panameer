@@ -1084,7 +1084,7 @@ setScreen(target);
   const railNext = railIndex >= 0 && railIndex < railKeys.length ? railKeys[railIndex + 1] : undefined;
   const nextLabel =
     screen === "finish"
-      ? "Publish profile"
+      ? "Publish Profile"
       : railNext
         ? `Next: ${RAIL_LABELS[railNext] ?? STEP_LABELS[railNext].stepper}`
         : "Next: Review";
