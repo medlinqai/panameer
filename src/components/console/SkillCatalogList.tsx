@@ -233,7 +233,7 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
               </select>
             </label>
             <label className="flex flex-col text-[11px] font-bold tracking-[0.08em] text-ink-3">
-              <span className="flex items-center justify-between gap-2">AREA <button type="button" data-manage-areas-link onClick={() => setManage(true)} className="text-[11px] font-semibold tracking-normal text-magenta-dark underline">Manage areas</button></span>
+              <span className="flex items-center justify-between gap-2">AREA <button type="button" data-manage-areas-link onClick={() => setManage(true)} className="text-[11px] font-semibold tracking-normal text-magenta-dark underline">Manage Areas</button></span>
               <span className="mt-1"><AreaSelect value={area} onChange={(v) => { setArea(v); reset(); }} empty="All" extra={<option value="none">No area</option>} className={SEL + " font-normal tracking-normal text-ink"} /></span>
             </label>
           </div>
