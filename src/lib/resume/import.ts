@@ -288,7 +288,7 @@ function describePath(p: ImportPath): string {
 }
 
 /** Read the document with the model, falling back to the rules (E184). */
-async function readDocument(
+export async function readDocument(
   text: string,
   /* The containing request's clock (`P1-A1.4-E415`). Null off-route. */
   startedAt: number | null
