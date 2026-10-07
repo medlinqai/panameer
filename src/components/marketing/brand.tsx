@@ -100,6 +100,7 @@ export const FOOTER_LEGAL: FooterEntry[] = [
   { label: "User Agreement", href: "/user-agreement" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Cookie Policy", href: "/legal/cookie-policy" },
+  { label: "Glossary", href: "/glossary" },
   { label: "All legal documents", href: "/legal" },
 ];
 

@@ -37,6 +37,7 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { route: "/login", category: 2 },
   { route: "/join", category: 2, subtree: true },
 
+  { route: "/glossary", category: 3 },
   { route: "/terms", category: 3 },
   { route: "/user-agreement", category: 3 },
   { route: "/privacy", category: 3 },

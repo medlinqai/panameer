@@ -324,6 +324,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: "Users", href: "/admin/users", icon: "ArrowLeftRight" },
       { label: "Roles>Domains>Skills", href: "/admin/skill-catalog", icon: "FolderTree" },
       { label: "Specializations", href: "/admin/specializations", icon: "Award" },
+      { label: "Glossary", href: "/admin/glossary", icon: "BookOpen" },
       { label: "Assessment Rate", href: "/admin/tax-rates", icon: "Percent" },
       { label: "Commission Rate", href: "/admin/application-commissions", icon: "Percent" },
     ],

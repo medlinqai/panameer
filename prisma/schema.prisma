@@ -8112,3 +8112,29 @@ model SkillArea {
 
   @@map("skill_areas")
 }
+
+enum GlossaryVisibility {
+  PUBLIC
+  ADMIN
+}
+
+/// The Panameer glossary: terms, acronyms and what not to say. Admin-managed; hidden, never deleted.
+model GlossaryTerm {
+  id          String             @id @default(uuid()) @db.Uuid
+  term        String
+  /// Lower-cased term, so a term is unique case-insensitively.
+  term_key    String             @unique
+  category    String?
+  type        String?
+  definition  String
+  also_called String?
+  dont_say    String?
+  visibility  GlossaryVisibility @default(PUBLIC)
+  hidden      Boolean            @default(false)
+  /// The draft's "Scott to confirm" note, kept for the admin until cleared.
+  confirm_note String?
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @updatedAt
+
+  @@map("glossary_terms")
+}
