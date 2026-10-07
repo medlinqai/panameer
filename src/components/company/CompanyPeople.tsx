@@ -33,6 +33,35 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
     const d = emailDomain(r.person.user?.email);
     return d && d === r.company.email_domain ? `@${d} email` : null;
   };
+  // Just you: a short note instead of the full screen until a second person joins or asks to.
+  if (members.length <= 1 && requests.length === 0) {
+    return (
+      <div className="pm-white-page mx-auto w-full max-w-[1010px] pb-14" data-company-people="solo">
+        <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PEOPLE</p>
+        <h1 className="mt-1.5 text-[30px] font-bold leading-tight">Who&apos;s at {c.name}</h1>
+        <div className="mt-6 border border-ink px-5 py-4">
+          <b className="text-[15px]">Just you.</b>
+          <p className="mt-1 text-[14px] text-ink-2">
+            {site ? (
+              <>Others can ask to join by entering <b>{site}</b>. You approve each request.</>
+            ) : (
+              <>Others can ask to join once your company has a website. You approve each request.</>
+            )}
+          </p>
+          {admin && (
+            <div className="mt-3 flex flex-wrap items-start gap-4">
+              {!site && (
+                <Link href="/company?edit=details#details" className="text-[12.5px] font-bold text-magenta-dark underline underline-offset-2">
+                  Add Website
+                </Link>
+              )}
+              <AddEmailDomain ownDomain={own && isWorkDomain(own) ? own : null} current={c.email_domain} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="pm-white-page mx-auto w-full max-w-[1010px] pb-14" data-company-people>
       <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PEOPLE</p>
