@@ -24,7 +24,9 @@ export function AttentionStrip({
   const live = cards.filter((c) => !dismissed.includes(c.id));
 
   if (live.length === 0) {
-    return <CalmStrip completeness={completeness} />;
+    // Calm mode (caught up / Earnings / Profile Strength) hidden on the dashboard — the road says it.
+    void CalmStrip;
+    return null;
   }
 
   const visible = expanded ? live : live.slice(0, VISIBLE_CAP);

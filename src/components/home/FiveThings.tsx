@@ -4,6 +4,7 @@ import type { Viewer } from "@/lib/access";
 import { fiveThings, type Thing } from "@/lib/five-things";
 import { lifecycleForUser } from "@/lib/your-path";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
+import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { TurnOnButton, MoreCards } from "@/components/home/FiveThingsClient";
 
 // Dashboard (mockup dashboard_five_things 2026-10-06): greeting + Your Path bar, 5 cards, "Waiting on you" tiles.
@@ -41,7 +42,20 @@ export async function FiveThings({ viewer, firstName }: { viewer: Viewer; firstN
   return (
     <section data-five-things className="mb-8 font-body text-ink">
       <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ""}.</h1>
-      {path && (
+      {path && path.steps.length === 9 && path.current < 6 && (
+        <div data-path-road className="mt-4 border border-line bg-surface px-4 py-4 sm:px-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-[17px] font-bold">How Panameer works <LifecycleHelp /></h2>
+            <span className="text-[11px] font-bold tracking-[0.1em] text-ink-2">STEP {path.current + 1} OF {path.steps.length}</span>
+          </div>
+          <div className="mt-3 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={path.current} /></div></div>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
+            <span className="text-ink-2">Connect and Learn are open now. Add your company when you&apos;re ready to sell.</span>
+            {next && <Link href={next.href} className={BTN}>Next: {next.next} →</Link>}
+          </div>
+        </div>
+      )}
+      {path && !(path.steps.length === 9 && path.current < 6) && (
         <div data-path-bar className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border border-line px-4 py-3">
           <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
             YOUR PATH{path.current < path.steps.length ? ` · STEP ${path.current + 1} OF ${path.steps.length}` : " · DONE"}

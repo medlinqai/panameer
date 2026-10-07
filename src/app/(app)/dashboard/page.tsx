@@ -81,7 +81,8 @@ export default async function DashboardPage({
           completeness={providerProfile.completeness}
         />
 
-        <WorkFeed tab={tab} query={query} cards={cards} />
+        {/* Find Work feed hidden here (lives at /find-work). */}
+        {false && <WorkFeed tab={tab} query={query} cards={cards} />}
       </div>
     );
   }

@@ -35,6 +35,8 @@ export async function fiveThings(viewer: Viewer) {
   });
   const pp = person?.providerProfile ?? null;
   const things: Thing[] = [];
+  // Before a company is added: Learn and Connect lead; Add Company is one card, not a push.
+  const hasCompany = person ? !!(await prisma.companyMembership.findFirst({ where: { person_id: person.id, status: "APPROVED" }, select: { id: true } })) : false;
 
   if (pp?.paused_at)
     things.push({ key: "visible", icon: "eye", title: "Get seen by buyers", line: "Your profile is hidden. Turn it back on.", chips: [], time: "1 click", cta: { label: "Turn On", href: "/profile" }, toggleVisibility: true });
@@ -70,6 +72,17 @@ export async function fiveThings(viewer: Viewer) {
       ? { key: "service", icon: "tag", title: "List a service", line: "A fixed-price package buyers can order today.", chips: [], time: "10 min", cta: { label: "List a Service", href: "/my-services" } }
       : { key: "post", icon: "send", title: "Post work", line: "Describe the job; providers send proposals.", chips: ["Free"], time: "5 min", cta: { label: "Post Work", href: "/create-work" } },
   ];
+  if (pp && !hasCompany) {
+    const pre: Thing[] = [
+      ...things.filter((t) => t.key === "visible" || t.key === "rank"),
+      things.find((t) => t.key === "learn")!,
+      fillers[0],
+      { key: "mentor", icon: "people", title: "Find a mentor", line: "Ask someone who's done the work. Free.", chips: ["Free"], time: "", cta: { label: "Find a Mentor", href: "/community/mentors" } } as Thing,
+      fillers[1],
+    ].slice(0, 4);
+    pre.push({ key: "company", icon: "folder", title: "Add your company", line: "When you're ready to sell. A one-person business is a company too.", chips: [], time: "2 min", cta: { label: "Add Company", href: "/company?join=1#join" } });
+    things.splice(0, things.length, ...pre);
+  }
   for (const f of fillers) if (things.length < 5) things.push(f);
 
   const [messages, requests, credentials] = await Promise.all([
