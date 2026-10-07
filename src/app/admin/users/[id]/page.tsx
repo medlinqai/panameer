@@ -199,7 +199,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           )}
         </Step>
 
-        <Step n="4" title="Link to Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
+        <Step n="4" title="Create Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
           <Row label="Company" value={co ? <><Link href={`/admin/companies/${co.id}`} className="font-semibold text-magenta-ink underline">{co.name}</Link> · {member!.role === "ADMIN" ? "admin" : "member"}</> : <No>None</No>} />
           <Row label="Join requests" value={pending.length ? pending.map((p) => `${p.company.name} (asked ${d(p.created_at)})`).join(", ") : <No>None</No>} />
         </Step>
