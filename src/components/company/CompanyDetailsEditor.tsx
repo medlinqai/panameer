@@ -8,11 +8,13 @@ import { TAX_LABELS } from "@/lib/tax-types";
 type Init = {
   name: string; legalName: string | null; taxType: string | null; country: string | null; stateOfFiling: string | null;
   ein: string | null; industryId: string | null; website: string | null; description: string | null;
+  sizeBand?: string | null; erpUsed?: string | null;
 };
+export const SIZE_BANDS = ["1–10", "11–50", "51–200", "201–1,000", "1,001–5,000", "5,000+"];
 const MAX = 600;
 const INPUT = "mt-1 min-h-[44px] w-full border border-line bg-surface px-3 text-[14px] text-ink focus:border-ink focus:outline-none";
 
-export const OVERVIEW_FIELDS = ["website", "name", "industryId", "description"] as const;
+export const OVERVIEW_FIELDS = ["website", "name", "industryId", "sizeBand", "erpUsed", "description"] as const;
 export const LEGAL_FIELDS = ["legalName", "taxType", "country", "stateOfFiling", "ein"] as const;
 
 export function CompanyDetailsEditor({
@@ -52,6 +54,7 @@ export function CompanyDetailsEditor({
     const all = {
       name: f.name, legalName: f.legalName, taxType: f.taxType || null, country: f.country || null, stateOfFiling: f.stateOfFiling || null,
       ein: f.ein || null, industryId: f.industryId || null, website: f.website || null, description: f.description || null,
+      sizeBand: f.sizeBand || null, erpUsed: f.erpUsed || null,
     };
     const body = {
       ...Object.fromEntries(fields.filter((k) => !(k === "ein" && f.ein.trim() === (initial.ein ?? ""))).map((k) => [k, all[k]])),
@@ -111,6 +114,14 @@ export function CompanyDetailsEditor({
         </select>
         <FieldMsg field="industryId" err={fieldErr} />
       </label>}
+      {has("sizeBand") && <label className="block">
+        <span className="block text-[13px] font-semibold">Company size</span>
+        <select value={f.sizeBand ?? ""} onChange={set("sizeBand")} className={INPUT} name="sizeBand">
+          <option value="">Not set</option>
+          {SIZE_BANDS.map((b) => <option key={b} value={b}>{b} people</option>)}
+        </select>
+      </label>}
+      {has("erpUsed") && text("erpUsed", "ERP used", "e.g., Oracle Fusion Cloud, SAP S/4HANA — shown on your Buyer Track Record.")}
       {has("country") && text("country", "Country")}
       {has("stateOfFiling") && text("stateOfFiling", "State of filing")}
       {has("ein") && text("ein", einLabel, einHint ?? "Shown only to Panameer, never to buyers.")}

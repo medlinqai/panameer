@@ -319,6 +319,8 @@ export type UpdateCompanyInput = {
   ein?: string | null;
   description?: string | null;
   industryId?: string | null;
+  sizeBand?: string | null;
+  erpUsed?: string | null;
   website?: string | null;
   /** After a match: "join" asks to join that company; "distinct" saves anyway and flags it for Panameer. */
   onMatch?: "join" | "distinct";
@@ -372,6 +374,8 @@ export async function updateCompanyDetails(viewer: Viewer, input: UpdateCompanyI
       ...(name ? { name } : {}),
       ...(input.description !== undefined ? { description: blank(input.description) } : {}),
       ...(input.industryId !== undefined ? { industry_id: input.industryId || null } : {}),
+      ...(input.sizeBand !== undefined ? { size_band: blank(input.sizeBand) } : {}),
+      ...(input.erpUsed !== undefined ? { erp_used: blank(input.erpUsed) } : {}),
       ...(input.website !== undefined
         ? { website: websiteDomain(input.website) ?? blank(input.website), website_domain: websiteDomain(input.website) }
         : {}),

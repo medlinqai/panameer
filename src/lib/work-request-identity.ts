@@ -1,3 +1,4 @@
+import type { TrackRecord } from "@/lib/buyer-track-record";
 import { buyerDisplay } from "@/lib/buyer-display";
 import {
   missingIdentity,
@@ -44,7 +45,13 @@ export type BuyerIdentity = {
   companyLogoUrl: string | null;
   standing: BuyerStanding;
   verification: VerificationLine[];
+  /** Buyer Track Record, when loaded; confidential buyers get the numbers without the identifying facts. */
+  track?: TrackRecord | null;
 };
+
+/** A confidential buyer's track record keeps its numbers but drops what would name the company. */
+export const scrubTrack = (t: TrackRecord | null, confidential: boolean): TrackRecord | null =>
+  t && confidential ? { ...t, companyName: "", industry: null, size: null, location: null, erp: null } : t;
 
 export const VERIFICATION_COPY: Record<
   VerificationLine["key"],

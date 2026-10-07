@@ -14,6 +14,7 @@ import { WoPlanSection } from "@/components/orders/WoPlanSection";
 import { History } from "@/components/orders/History";
 import { orderHistory } from "@/lib/transaction-history";
 import { CloseOrder } from "@/components/orders/CloseOrder";
+import { BuyerCard } from "@/components/orders/BuyerCard";
 
 export const metadata = { title: "Work Order · Panameer" };
 
@@ -80,6 +81,7 @@ export default async function Page({
       </div>
 
       <OrderTabs id={o.id} current="overview" />
+      {o.party === "PROVIDER" && <BuyerCard personId={o.buyerPersonId} />}
 
       {}
       <div className="mt-6">

@@ -354,6 +354,7 @@ export type OrderDetail = {
   party: OrderParty;
   counterpartyName: string;
   buyerName: string;
+  buyerPersonId: string;
   providerName: string;
   currency: string;
   periodStart: string | null;
@@ -513,6 +514,7 @@ export async function getOrderDetail(viewer: Viewer, id: string): Promise<OrderD
         ? names.get(o.provider_person_id) ?? "A provider"
         : names.get(o.buyer_person_id) ?? "A buyer",
     buyerName: names.get(o.buyer_person_id) ?? "A buyer",
+    buyerPersonId: o.buyer_person_id,
     providerName: names.get(o.provider_person_id) ?? "A provider",
     currency: o.currency,
     periodStart: o.period_start ? o.period_start.toISOString().slice(0, 10) : null,

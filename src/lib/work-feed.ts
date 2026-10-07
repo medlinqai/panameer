@@ -1,6 +1,7 @@
 import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
-import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
+import { buildBuyerIdentity, scrubTrack, type BuyerIdentity } from "@/lib/work-request-identity";
+import { buyerTrackRecord } from "@/lib/buyer-track-record";
 
 export type WorkFeedTab =
   | "best"
@@ -191,8 +192,10 @@ export async function getWorkFeed(input: {
   const createdByAccount = new Map(accounts.map((a) => [a.id, a.created_at]));
 
   // THE FEED IS A PROVIDER SURFACE, so the viewer is never the owner, never an
-  const identityFor = (w: (typeof rows)[number]) =>
-    buildBuyerIdentity({
+  const companyIds = [...new Set(rows.map((w) => w.buyer.company?.id).filter((x): x is string => !!x))];
+  const tracks = new Map(await Promise.all(companyIds.map(async (id) => [id, await buyerTrackRecord(id)] as const)));
+  const identityFor = (w: (typeof rows)[number]) => {
+    const id = buildBuyerIdentity({
       person: w.buyer,
       companyVisibility: w.company_visibility,
       companyCodeName: w.company_code_name,
@@ -202,6 +205,9 @@ export async function getWorkFeed(input: {
       },
       viewer: { isOwner: false, isAdmin: false, isPlus: false },
     });
+    id.track = w.buyer.company ? scrubTrack(tracks.get(w.buyer.company.id) ?? null, id.companyConfidential) : null;
+    return id;
+  };
 
   const cards = rows.map((w) => ({
     id: w.id,

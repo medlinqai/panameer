@@ -32,6 +32,8 @@ const patchSchema = z
     ein: z.string().trim().max(40).nullable().optional(),
     description: z.string().trim().max(600).nullable().optional(),
     industryId: z.string().uuid().nullable().optional(),
+    sizeBand: z.string().trim().max(40).nullable().optional(),
+    erpUsed: z.string().trim().max(120).nullable().optional(),
     website: z.string().trim().max(200).nullable().optional(),
     onMatch: z.enum(["join", "distinct"]).optional(),
   })

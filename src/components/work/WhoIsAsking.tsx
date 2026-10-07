@@ -4,6 +4,7 @@ import { VerifiedTag } from "@/components/company/VerifiedTag";
 import { Avatar } from "@/components/Avatar";
 import { standingLine, type BuyerIdentity } from "@/lib/work-request-identity";
 import { CompanyLogoTile } from "@/components/company/CompanyLogoTile";
+import { BuyerTrackRecord } from "@/components/company/BuyerTrackRecord";
 
 export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
   const {
@@ -87,6 +88,7 @@ export function WhoIsAsking({ identity }: { identity: BuyerIdentity }) {
           );
         })}
       </ul>
+      {identity.track && <BuyerTrackRecord t={identity.track} compact />}
     </section>
   );
 }

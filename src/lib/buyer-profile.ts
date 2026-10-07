@@ -59,7 +59,7 @@ export async function saveBuyerProfile(personId: string, p: BuyerProfileInput) {
     ...(p.overview !== undefined ? { overview: p.overview?.trim().slice(0, 4000) || null } : {}),
     ...(p.workHistory ? { work_history: p.workHistory.filter((w) => w.employer?.trim()).slice(0, 30) as unknown as Prisma.InputJsonValue } : {}),
     ...(p.education ? { education: p.education.filter((e) => e.institution?.trim()).slice(0, 20) as unknown as Prisma.InputJsonValue } : {}),
-    ...(p.languages ? { languages: [...new Set(p.languages.map((l) => l.trim()).filter(Boolean))].slice(0, 20) } : {}),
+    ...(p.languages ? { languages: [...new Map(p.languages.map((l) => l.trim()).filter(Boolean).map((l) => [l.toLowerCase(), l] as const)).values()].slice(0, 20) } : {}),
   };
   if (Object.keys(data).length) await prisma.requesterProfile.upsert({ where: { person_id: personId }, create: { person_id: personId, ...data }, update: data });
 }

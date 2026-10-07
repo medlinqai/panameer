@@ -11,6 +11,8 @@ import { loadCompanyView } from "@/lib/company-view";
 import { CompanyShell } from "@/components/company/CompanyShell";
 import { CompanyDetailsRead, PayReadyBox } from "@/components/company/CompanyOverview";
 import { CompanyVisibility } from "@/components/company/CompanyVisibility";
+import { BuyerTrackRecord } from "@/components/company/BuyerTrackRecord";
+import { buyerTrackRecord } from "@/lib/buyer-track-record";
 import { CompanyDetailsEditor, OVERVIEW_FIELDS } from "@/components/company/CompanyDetailsEditor";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +81,7 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
       : Promise.resolve([]),
   ]);
   if (!view) redirect("/company");
+  const track = await buyerTrackRecord(c.id);
   const elsewhere = await prisma.companyMembership.findFirst({
     where: { person: { user_id: viewer.userId }, status: "PENDING", company_id: { not: c.id } },
     select: { company: { select: { id: true, name: true } } },
@@ -98,12 +101,13 @@ export default async function CompanyPage({ searchParams }: { searchParams: Prom
                 fields={OVERVIEW_FIELDS}
                 initial={{
                   name: view.name, legalName: view.legalName, taxType: view.taxTypeCode, country: view.country, stateOfFiling: view.stateOfFiling,
-                  ein: null, industryId: view.industryId, website: view.website, description: view.description,
+                  ein: null, industryId: view.industryId, website: view.website, description: view.description, sizeBand: view.sizeBand, erpUsed: view.erpUsed,
                 }}
               />
             ) : undefined
           }
         />
+        {track && <BuyerTrackRecord t={track} />}
         {binding.isAdmin && <PayReadyBox c={view} />}
         {elsewhere ? (
           <PendingJoinLine companyId={elsewhere.company.id} name={elsewhere.company.name} />

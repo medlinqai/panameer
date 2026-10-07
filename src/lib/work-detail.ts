@@ -1,6 +1,7 @@
 import { roleLong } from "@/lib/role-labels";
 import { prisma } from "@/lib/prisma";
-import { buildBuyerIdentity, type BuyerIdentity } from "@/lib/work-request-identity";
+import { buildBuyerIdentity, scrubTrack, type BuyerIdentity } from "@/lib/work-request-identity";
+import { buyerTrackRecord } from "@/lib/buyer-track-record";
 import { pretty, workBudgetLabel } from "@/lib/work-feed";
 import {
   SOURCING_STAGE_LABEL,
@@ -97,6 +98,7 @@ export async function getWorkDetailForProvider(input: {
     },
     viewer: { isOwner: false, isAdmin: false, isPlus: false },
   });
+  identity.track = w.buyer.company ? scrubTrack(await buyerTrackRecord(w.buyer.company.id), identity.companyConfidential) : null;
 
   const stage = input.providerPersonId
     ? await sourcingStageForProvider(w.id, input.providerPersonId)

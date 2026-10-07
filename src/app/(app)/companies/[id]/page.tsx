@@ -7,6 +7,8 @@ import { loadCompanyView } from "@/lib/company-view";
 import { CompanyShell } from "@/components/company/CompanyShell";
 import { CompanyDetailsRead, CompanyVerification } from "@/components/company/CompanyOverview";
 import { CompanySection, initials } from "@/components/company/CompanySection";
+import { BuyerTrackRecord } from "@/components/company/BuyerTrackRecord";
+import { buyerTrackRecord } from "@/lib/buyer-track-record";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ export default async function CompanyPublicPage({ params, searchParams }: { para
   if (isOwn && preview !== "buyer") redirect("/company");
   const view = await loadCompanyView(id, { forBuyer: true });
   if (!view) notFound();
+  const track = await buyerTrackRecord(id);
   const people = await prisma.companyMembership.findMany({
     where: { company_id: id, status: "APPROVED", person: { providerProfile: { onboarding_completed_at: { not: null } } } },
     orderBy: { created_at: "asc" },
@@ -38,6 +41,7 @@ export default async function CompanyPublicPage({ params, searchParams }: { para
       <CompanyShell c={view} role="buyer">
         <CompanyDetailsRead c={view} role="buyer" />
         <CompanyVerification c={view} buyer />
+        {track && <BuyerTrackRecord t={track} />}
         <CompanySection id="people" title="Team" count={people.length}>
           {people.length === 0 ? (
             <p className="mt-2.5 text-[14px] text-ink-2">No public profiles yet.</p>

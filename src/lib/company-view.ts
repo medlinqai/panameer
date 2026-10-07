@@ -42,7 +42,7 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
     select: {
       id: true, name: true, legal_name: true, tax_type: true, tin: true, country: true, state_of_filing: true,
       website: true, email_domain: true, logo_url: true, brand_hue: true, theme_recipe: true, description: true,
-      industry_id: true, show_on_profiles: true, created_at: true,
+      industry_id: true, show_on_profiles: true, created_at: true, size_band: true, erp_used: true,
       entity_validation_status: true, entity_validated_at: true, entity_validation_source_url: true, entity_status_detail: true,
       company_tos_accepted_at: true, company_tos_version: true, company_tos_accepted_by: true, payee_type: true, tax_form_kind: true, tax_form_uploaded_at: true,
       _count: { select: { memberships: { where: { status: "APPROVED" } }, payoutMethods: true } },
@@ -72,6 +72,8 @@ export async function loadCompanyView(companyId: string, opts: { forBuyer?: bool
     ...fields,
     taxTypeCode: c.tax_type,
     industryId: c.industry_id,
+    sizeBand: c.size_band,
+    erpUsed: c.erp_used,
     emailDomain: c.email_domain,
     brandHue: c.brand_hue,
     themeRecipe: c.theme_recipe,
