@@ -2,16 +2,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normCompany } from "@/lib/resume/company-list";
 import { applyCompanySort, type SortChoice } from "@/lib/resume/company-sort";
+import { retype, type Piece, type PieceKind, type Target } from "@/lib/resume/retype";
 
 // The member's résumé-review fixes, kept on the profile and re-applied after any re-read.
 export type FixKind = "skill" | "newSkill" | "junk" | "project" | "cert" | "edu" | "company";
-export type ResumeFixes = { removed: Partial<Record<FixKind, string[]>>; switches: Record<string, SortChoice>; keepBoth?: string[] };
+export type Move = { from: PieceKind; key: string; to: Target };
+export type Hidden = { id: string; from: PieceKind; piece: Piece };
+export type ResumeFixes = { removed: Partial<Record<FixKind, string[]>>; switches: Record<string, SortChoice>; keepBoth?: string[]; moves?: Move[]; hidden?: Hidden[] };
 export const fixKey = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
 
 export async function loadFixes(profileId: string): Promise<ResumeFixes> {
   const p = await prisma.providerProfile.findUnique({ where: { id: profileId }, select: { resume_fixes: true } });
   const f = (p?.resume_fixes ?? null) as ResumeFixes | null;
-  return { removed: f?.removed ?? {}, switches: f?.switches ?? {}, keepBoth: f?.keepBoth ?? [] };
+  return { removed: f?.removed ?? {}, switches: f?.switches ?? {}, keepBoth: f?.keepBoth ?? [], moves: f?.moves ?? [], hidden: f?.hidden ?? [] };
 }
 
 export async function saveFixes(profileId: string, f: ResumeFixes) {
@@ -55,4 +58,6 @@ export async function applyResumeFixes(profileId: string) {
   ]);
   const switches = Object.entries(f.switches);
   if (switches.length) await applyCompanySort(profileId, switches.map(([name, choice]) => ({ name, choice })));
+  // "This is a…" moves, replayed by name; a piece already moved is simply not found.
+  for (const m of f.moves ?? []) if (m.from !== "term") await retype(profileId, m.from, { key: m.key }, m.to);
 }

@@ -35,6 +35,8 @@ const Body = z.union([
   z.object({ action: z.literal("companyMerge"), keep: s.min(1), drop: s.min(1) }),
   z.object({ action: z.literal("keepBoth"), a: s.min(1), b: s.min(1) }),
   z.object({ action: z.literal("addSkill"), skillId: uuid }),
+  z.object({ action: z.literal("retype"), from: z.enum(["employer", "project", "edu", "cert", "skill", "term"]), id: uuid.optional(), name: s.optional(), to: z.enum(["employer", "project", "edu", "cert", "skill", "hidden"]) }),
+  z.object({ action: z.literal("restore"), id: uuid }),
   z.object({ action: z.literal("reread") }),
   z.object({ action: z.literal("commit") }),
 ]);

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChunkKey, ReviewState } from "@/lib/resume/review";
 import { itemKey } from "@/lib/resume/cleanup";
+import { splitList } from "@/lib/resume/split-list";
+import type { PieceKind, Target } from "@/lib/resume/retype";
 
 // "What we got": the résumé review, fixed chunk by chunk; every change saves as you go.
 const CHUNKS: { key: ChunkKey; label: string }[] = [
@@ -29,6 +31,7 @@ export function ResumeReview({ onContinue, onChanged }: { onContinue?: () => voi
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [src, setSrc] = useState<Src | null>(null);
+  const [view, setView] = useState<"doc" | "sections">("doc");
 
   useEffect(() => {
     let live = true;
@@ -85,7 +88,15 @@ export function ResumeReview({ onContinue, onChanged }: { onContinue?: () => voi
         {counts}.{" "}
         {toCheck ? `${plural(toCheck, "piece")} ${toCheck === 1 ? "needs" : "need"} a quick look — everything else is ready.` : "Everything is ready."}
       </p>
+      <div role="tablist" className="mt-3 inline-flex border border-ink">
+        {(["doc", "sections"] as const).map((v) => (
+          <button key={v} type="button" role="tab" aria-selected={view === v} data-review-view={v} onClick={() => setView(v)} className={"px-3 py-1.5 text-[12.5px] font-bold " + (view === v ? "bg-ink text-surface" : "hover:bg-bg-soft")}>
+            {v === "doc" ? "Your Document" : "By Section"}
+          </button>
+        ))}
+      </div>
 
+      {view === "doc" ? <DocView st={st} act={act} busy={busy} /> : (
       <div className="mt-4 grid gap-4 sm:grid-cols-[200px_1fr] lg:grid-cols-[200px_1fr_300px]">
         <ul data-review-chunks className={(open ? "hidden sm:block" : "") + " border-t border-line"}>
           {CHUNKS.map((c) => {
@@ -165,6 +176,7 @@ export function ResumeReview({ onContinue, onChanged }: { onContinue?: () => voi
 
         <Source key={src ? itemKey(src.kind, src.name) : "none"} text={st.text} offsets={st.offsets} src={src} className={open ? "" : "hidden sm:block"} />
       </div>
+      )}
 
       {err && <p role="alert" className="mt-3 text-[13px] font-semibold text-magenta-dark">{err}</p>}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
@@ -422,5 +434,182 @@ function Source({ text, offsets, src, className }: { text: string; offsets: Reco
         </>
       )}
     </aside>
+  );
+}
+
+// ── Part 1 + 2: the document in its own order, each piece colored by its type; "This is a…" moves it.
+const TYPES: { key: Target; label: string; bucket: string; c: string; bg: string }[] = [
+  { key: "employer", label: "Employer", bucket: "Employers", c: "#2f6fb0", bg: "#eaf2fb" },
+  { key: "project", label: "Project", bucket: "Projects", c: "#1f8a5b", bg: "#eaf6f0" },
+  { key: "edu", label: "Education", bucket: "Education", c: "#7a4fc0", bg: "#f2ecfb" },
+  { key: "cert", label: "Certification", bucket: "Certifications", c: "#b26b00", bg: "#fff4e0" },
+  { key: "skill", label: "Skill", bucket: "Skills", c: "#4a4658", bg: "#f1f0f4" },
+  { key: "hidden", label: "Not needed", bucket: "Not needed", c: "#a0a0ad", bg: "#f7f7f9" },
+];
+const TYPE = Object.fromEntries(TYPES.map((t) => [t.key, t])) as Record<Target, (typeof TYPES)[number]>;
+
+type Piece = { uid: string; type: Target; from: PieceKind | "hidden"; id: string; name: string; title: string | null; dates: string | null; why: string | null };
+
+function piecesOf(st: ReviewState): Piece[] {
+  const p = (type: Target, from: Piece["from"], id: string, name: string, title: string | null, dates: string | null, why: string | null = null): Piece => ({ uid: `${from}:${id}`, type, from, id, name, title, dates, why });
+  const listy = (n: string) => (splitList(n).length > 2 ? "looks like a list" : null);
+  return [
+    ...st.employers.map((e) => p("employer", "employer", e.id, e.name, e.title, e.dates, e.why)),
+    ...st.projects.map((x) => (x.client ? p("project", "project", x.id, x.client, x.name !== x.client ? x.name : null, x.dates) : p("project", "project", x.id, x.name, null, x.dates))),
+    ...st.edu.map((e) => p("edu", "edu", e.id, e.institution, e.degree, e.year ? String(e.year) : null)),
+    ...st.certs.map((c) => p("cert", "cert", c.id, c.name, c.issuer, c.year ? String(c.year) : null, listy(c.name))),
+    ...[...st.skills.catalog, ...st.skills.mine].map((k) => p("skill", "skill", k.id, k.name, null, null, listy(k.name))),
+    ...st.skills.fresh.map((n) => p("skill", "term", n, n, null, null, listy(n))),
+    ...st.skills.junk.map((n) => p("skill", "term", n, n, null, null, "probably not a skill")),
+    ...st.hidden.map((h) => p("hidden", "hidden", h.id, h.name, h.title, null)),
+  ];
+}
+
+/** What the piece becomes, mirroring the server's carry-over. */
+function preview(x: Piece, to: Target) {
+  const d = x.dates ? ` · ${x.dates}` : "";
+  const parts = splitList(x.name);
+  if (to === "employer") return `Name ${x.name}${x.title ? ` · Title ${x.title}` : ""}${d}`;
+  if (to === "project") return `Client ${x.name} · Project ${x.title || x.name}${d}`;
+  if (to === "edu") return `School ${x.name}${x.title ? ` · Degree ${x.title}` : ""}${d}`;
+  if (to === "cert") return parts.length > 1 ? `split into ${parts.length}: ${parts.join(" · ")}` : `Name ${x.name}${x.title ? ` · Issuer ${x.title}` : ""}`;
+  if (to === "skill") return parts.length > 1 ? `split into ${parts.length}: ${parts.join(" · ")}` : x.name;
+  return "hidden from your profile — you can restore it";
+}
+
+/** The document cut into lines; each piece claims the line its name first appears on. */
+function blocks(text: string, pieces: Piece[]) {
+  const lower = text.toLowerCase();
+  const claims = new Map<number, { end: number; pieces: Piece[] }>();
+  for (const x of pieces) {
+    const n = x.name.toLowerCase().trim();
+    const at = n.length > 1 ? lower.indexOf(n) : -1;
+    if (at < 0) continue;
+    const start = text.lastIndexOf("\n", at) + 1;
+    const nl = text.indexOf("\n", at + n.length);
+    const c = claims.get(start);
+    if (c) c.pieces.push(x);
+    else claims.set(start, { end: nl < 0 ? text.length : nl, pieces: [x] });
+  }
+  const out: ({ text: string } | { text: string; pieces: Piece[] })[] = [];
+  let pos = 0;
+  for (const [start, c] of [...claims.entries()].sort((a, b) => a[0] - b[0])) {
+    if (start < pos) continue;
+    if (start > pos) out.push({ text: text.slice(pos, start) });
+    out.push({ text: text.slice(start, c.end), pieces: c.pieces });
+    pos = c.end;
+  }
+  if (pos < text.length) out.push({ text: text.slice(pos) });
+  return out;
+}
+
+function DocView({ st, act, busy }: { st: ReviewState; act: Act; busy: boolean }) {
+  const pieces = useMemo(() => piecesOf(st), [st]);
+  const parts = useMemo(() => blocks(st.text, pieces.filter((x) => x.type !== "hidden")), [st.text, pieces]);
+  const [sel, setSel] = useState<string | null>(null);
+  const [menu, setMenu] = useState<string | null>(null);
+  const [more, setMore] = useState<Set<Target>>(new Set());
+  const unsure = pieces.filter((x) => x.why && x.type !== "hidden").length;
+  const pick = (uid: string, from: "doc" | "bucket") => {
+    setSel(uid);
+    const sideSel = from === "doc" ? `[data-bucket-piece="${CSS.escape(uid)}"]` : `[data-doc-pieces~="${CSS.escape(uid)}"]`;
+    requestAnimationFrame(() => document.querySelector(sideSel)?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+  };
+  const move = async (x: Piece, to: Target) => {
+    const ok = x.from === "hidden" ? await act({ action: "restore", id: x.id }) : await act({ action: "retype", from: x.from, ...(x.from === "term" ? { name: x.id } : { id: x.id }), to });
+    if (ok) setMenu(null);
+  };
+  return (
+    <div data-review-doc className="mt-4">
+      <p className="text-[14px] text-ink-2">
+        We split your résumé into {plural(pieces.filter((x) => x.type !== "hidden").length, "piece")}. Each color is what we think a piece is.
+        {unsure > 0 && ` ${plural(unsure, "piece")} ${unsure === 1 ? "has" : "have"} a red dashed outline — we weren't sure.`} Click any piece to change it.
+      </p>
+      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+        {TYPES.map((t) => (
+          <span key={t.key} className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2.5" style={{ background: t.c }} />{t.label}</span>
+        ))}
+        <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-3 border border-dashed border-red-600" />not sure</span>
+      </p>
+      <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_380px]">
+        <div className="max-h-[640px] overflow-y-auto border border-line bg-white p-3 text-[12.5px] leading-relaxed">
+          <p className="mb-2 text-[12px] font-bold text-ink-2">Your document{st.fileName ? ` · ${st.fileName}` : ""}</p>
+          {parts.map((b, i) => {
+            if (!("pieces" in b)) return <pre key={i} className="whitespace-pre-wrap font-sans text-ink-3">{b.text}</pre>;
+            const t = TYPE[b.pieces[0].type];
+            const doubt = b.pieces.some((x) => x.why);
+            const on = b.pieces.some((x) => x.uid === sel);
+            return (
+              <button key={i} type="button" data-doc-pieces={b.pieces.map((x) => x.uid).join(" ")} onClick={() => pick(b.pieces[0].uid, "doc")} className={"my-1 block w-full border-l-4 px-2.5 py-1.5 text-left " + (doubt ? "outline-dashed outline-1 outline-red-600 " : "") + (on ? "ring-2 ring-ink" : "")} style={{ borderColor: t.c, background: t.bg }}>
+                <span className="mb-0.5 inline-block px-1 text-[10px] font-bold tracking-[0.06em] text-white" style={{ background: t.c }}>
+                  {t.label.toUpperCase()}{b.pieces.length > 1 ? ` · ${b.pieces.length}` : ""}{doubt ? "?" : ""}
+                </span>
+                <pre className="whitespace-pre-wrap font-sans">{b.text}</pre>
+                {doubt && <span className="text-[11.5px] font-semibold text-red-700">not sure — {b.pieces.find((x) => x.why)!.why}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <div>
+          <p className="mb-2 text-[12px] font-bold text-ink-2">Sorted into <span className="font-normal">click &ldquo;This is a…&rdquo; to move</span></p>
+          {TYPES.map((t) => {
+            const items = pieces.filter((x) => x.type === t.key);
+            const shown = more.has(t.key) ? items : items.slice(0, 8);
+            return (
+              <div key={t.key} data-bucket={t.key} className="mb-2.5 border border-line">
+                <p className="flex justify-between border-l-4 px-3 py-1.5 text-[13px] font-bold" style={{ borderColor: t.c, background: t.bg }}>
+                  {t.bucket} <span>{items.length}</span>
+                </p>
+                {items.length === 0 && <p className="px-3 py-2 text-[12.5px] text-ink-3">Nothing here yet</p>}
+                {shown.map((x) => (
+                  <div key={x.uid} data-bucket-piece={x.uid} className={"relative flex items-center justify-between gap-2 border-t border-line px-3 py-1.5 text-[13px] " + (x.why ? "bg-red-50 " : "") + (x.uid === sel ? "ring-2 ring-inset ring-ink" : "")}>
+                    <button type="button" onClick={() => pick(x.uid, "bucket")} className="min-w-0 text-left">
+                      <span className="block truncate">{x.name}{x.dates ? <span className="text-ink-3"> · {x.dates}</span> : null}</span>
+                      {x.why && <span className="text-[10.5px] font-bold tracking-[0.06em] text-red-700">NOT SURE</span>}
+                    </button>
+                    {x.from === "hidden" ? (
+                      <button type="button" disabled={busy} onClick={() => move(x, "hidden")} className={BTN}>Restore</button>
+                    ) : (
+                      <button type="button" data-retype onClick={() => { setMenu(menu === x.uid ? null : x.uid); setSel(x.uid); }} className="shrink-0 border border-ink bg-white px-2 py-0.5 text-[12px] font-bold">
+                        This Is a… ▾
+                      </button>
+                    )}
+                    {menu === x.uid && <Retype x={x} busy={busy} onCancel={() => setMenu(null)} onMove={(to) => move(x, to)} />}
+                  </div>
+                ))}
+                {items.length > 8 && !more.has(t.key) && (
+                  <button type="button" onClick={() => setMore(new Set([...more, t.key]))} className="w-full border-t border-line px-3 py-1.5 text-left text-[12.5px] font-bold text-magenta">
+                    + {items.length - 8} More
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <p className="mt-2 text-[12.5px] text-ink-3">The document recolors as you move pieces. &ldquo;Read my résumé again&rdquo; keeps every move.</p>
+    </div>
+  );
+}
+
+function Retype({ x, busy, onCancel, onMove }: { x: Piece; busy: boolean; onCancel: () => void; onMove: (to: Target) => void }) {
+  const [to, setTo] = useState<Target | null>(null);
+  return (
+    <div data-retype-pop className="absolute right-0 top-full z-20 w-[300px] border-2 border-ink bg-white shadow-lg">
+      <p className="border-b border-line px-3 py-2 text-[12.5px]">
+        &ldquo;{x.name}&rdquo; — we filed this as {/^[AEIOU]/.test(TYPE[x.type].label) ? "an" : "a"} <b>{TYPE[x.type].label}</b>. What is it?
+      </p>
+      {TYPES.map((t) => (
+        <button key={t.key} type="button" disabled={t.key === x.type} onClick={() => setTo(t.key)} className={"flex w-full items-center justify-between border-b border-line px-3 py-1.5 text-left text-[13px] disabled:text-ink-3 " + (to === t.key ? "font-bold" : "")} style={to === t.key ? { background: t.bg } : undefined}>
+          <span className="inline-flex items-center gap-2"><i className="inline-block h-2.5 w-2.5" style={{ background: t.c }} />{t.label}</span>
+          {to === t.key && "✓"}
+        </button>
+      ))}
+      {to && <p className="px-3 py-2 text-[12px] text-ink-2">Moves to {TYPE[to].label} as: {preview(x, to)}</p>}
+      <div className="flex justify-end gap-2 border-t border-line px-3 py-2">
+        <button type="button" onClick={onCancel} className="text-[12.5px] font-semibold text-ink-2">Cancel</button>
+        <button type="button" disabled={busy || !to} onClick={() => to && onMove(to)} className="bg-ink px-3 py-1.5 text-[12.5px] font-bold text-surface disabled:opacity-50">Move</button>
+      </div>
+    </div>
   );
 }
