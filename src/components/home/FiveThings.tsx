@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, TrendingUp, BadgeCheck, BookOpen, FolderPlus, Users, Search, Tag, Send, MessageSquare, UserPlus, AlertTriangle } from "lucide-react";
+import { Lock, Eye, TrendingUp, BadgeCheck, BookOpen, FolderPlus, Users, Search, Tag, Send, MessageSquare, UserPlus, AlertTriangle } from "lucide-react";
 import type { Viewer } from "@/lib/access";
 import { fiveThings, type Thing } from "@/lib/five-things";
 import { lifecycleForUser } from "@/lib/your-path";
@@ -44,8 +44,8 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
   const choices = [
     { key: "learn", icon: BookOpen, title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
     { key: "connect", icon: Users, title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/community" },
-    { key: "services", icon: Search, title: "Sell my services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work" },
-    { key: "products", icon: Tag, title: "Sell service products", line: hasCompany ? "List a fixed-price package buyers can order." : "List a fixed-price package. Starts with adding your company.", cta: hasCompany ? "List a Service" : "Add Company", href: hasCompany ? "/my-services" : "/company?join=1#join" },
+    { key: "services", icon: Search, title: "Sell my services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work", needsCompany: true },
+    { key: "products", icon: Tag, title: "Sell service products", line: "List a fixed-price package buyers can order.", cta: "List a Service", href: "/my-services", needsCompany: true },
   ];
   return (
     <section data-five-things className="mb-8 font-body text-ink">
@@ -87,14 +87,28 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
         <>
           <h2 className="mt-7 text-[17px] font-bold">What do you want to do{firstVisit ? " first" : ""}?</h2>
           <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {choices.map((c) => (
-              <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface p-5 hover:border-ink">
-                <span className="grid h-11 w-11 place-items-center bg-bg-soft text-ink"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
-                <b className="mt-3 block text-[18px] leading-snug">{c.title}</b>
-                <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
-                <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
-              </Link>
-            ))}
+            {choices.map((c) => {
+              const locked = "needsCompany" in c && c.needsCompany && !hasCompany;
+              return locked ? (
+                <div key={c.key} role="listitem" data-choice={c.key} data-locked className="flex flex-col border border-dashed border-line bg-bg-soft p-5">
+                  <span className="flex items-center justify-between">
+                    <span className="grid h-11 w-11 place-items-center bg-surface text-ink-3"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
+                    <span className="flex items-center gap-1 text-[11px] font-bold tracking-[0.08em] text-ink-2"><Lock className="h-3.5 w-3.5" aria-hidden /> AFTER STEP 4</span>
+                  </span>
+                  <b className="mt-3 block text-[18px] leading-snug text-ink-3">{c.title}</b>
+                  <span className="mt-1 block flex-1 text-[13.5px] text-ink-3">{c.line}</span>
+                  <span className="mt-3 block text-[13px] font-bold text-ink">Add your company first.</span>
+                  <Link href="/company?join=1#join" className="mt-2 inline-flex min-h-[40px] w-full items-center justify-center border border-ink px-4 text-[13.5px] font-bold text-ink hover:bg-surface-hover">Add Company →</Link>
+                </div>
+              ) : (
+                <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface p-5 hover:border-ink">
+                  <span className="grid h-11 w-11 place-items-center bg-bg-soft text-ink"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
+                  <b className="mt-3 block text-[18px] leading-snug">{c.title}</b>
+                  <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
+                  <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
+                </Link>
+              );
+            })}
           </div>
         </>
       ) : (
