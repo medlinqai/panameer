@@ -41,9 +41,9 @@ export default async function DashboardPage({
   // "5 things you can do today" replaces the single next-step card and its "Why" / "Then" lists.
   const providerProfile = await prisma.providerProfile.findFirst({
     where: { person: { user_id: viewer.userId } },
-    select: { id: true, person_id: true, completeness: true, dashboard_seen_at: true },
+    select: { id: true, person_id: true, completeness: true, dashboard_seen_at: true, onboarding_completed_at: true },
   });
-  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={!!providerProfile && !providerProfile.dashboard_seen_at} /> : null;
+  const first = facts.seller || facts.buyer ? <FiveThings viewer={viewer} firstName={facts.firstName} firstVisit={!!providerProfile && (!providerProfile.dashboard_seen_at || (!!providerProfile.onboarding_completed_at && providerProfile.dashboard_seen_at < providerProfile.onboarding_completed_at))} /> : null;
 
   if (providerProfile) {
     const sp = await searchParams;
