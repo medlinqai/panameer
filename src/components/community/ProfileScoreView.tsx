@@ -101,7 +101,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       strokeDasharray={`${s.len} ${C - s.len}`}
                       strokeDashoffset={s.offset}
                       className={"pm-score-seg " + paintClass(s.line.state) + (hover && hover !== s.line.key ? " pm-score-dim" : "")}
-                      style={{ animationDelay: `${i * 70}ms` }}
+                      style={{ animationDelay: `${i * 70}ms`, ...(lineCounts(s.line.state) ? { stroke: shadeFor(s.line.group) } : {}) }}
                       onMouseEnter={() => setHover(s.line.key)}
                       onMouseLeave={() => setHover(null)}
                       onFocus={() => setHover(s.line.key)}
@@ -176,7 +176,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
               return (
                 <div key={g} className="mb-4" data-score-group={g}>
                   <h2 className="mb-1.5 flex items-baseline justify-between text-[19px] font-bold">
-                    {SCORE_GROUP_LABELS[g]}
+                    <span className="flex items-center gap-2"><span aria-hidden className="inline-block h-3 w-3" style={{ background: shadeFor(g) }} />{SCORE_GROUP_LABELS[g]}</span>
                     <small className="text-[13px] font-semibold text-ink-2">
                       {got} / {all}
                     </small>
@@ -187,7 +187,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       <Row key={l.key} onHover={setHover} lineKey={l.key} active={hover === l.key} done={ok}>
                         <span className="flex min-w-0 items-center">
                           {ok ? (
-                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full bg-ink text-[11px] text-surface">✓</span>
+                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: shadeFor(l.group) }}>✓</span>
                           ) : (
                             <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none border-2 border-magenta" />
                           )}
@@ -262,6 +262,15 @@ function Row({
 
 // Both answered states count, so both paint as filled; the class still tells them apart.
 // Health's palette: answered (filled or "I have none") = solid ink, open = solid magenta.
+// Each group answered in its own lightness of the Panameer logo's purple (Scott 2026-10-07,
+// "purple in different lightnesses like my logo"): darkest → lightest in group order.
+// Open lines are a light grey track (the open checkbox keeps its magenta outline).
+const GROUP_SHADES = ["#5E1A5C", "#A8239F", "#D772D5"];
+function shadeFor(group: ScoreGroup): string {
+  const i = (Object.keys(SCORE_GROUP_LABELS) as ScoreGroup[]).indexOf(group);
+  return GROUP_SHADES[Math.max(0, i) % GROUP_SHADES.length];
+}
+
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";
   if (state === "declared_none") return "pm-score-declared";
