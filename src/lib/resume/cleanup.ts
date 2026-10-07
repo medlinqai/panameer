@@ -129,6 +129,28 @@ export function dedupeEducation(parsed: ParsedResume) {
   });
 }
 
+/** Projects: one row per client (or name) + start + end month; duplicates merge into the first. */
+export function dedupeProjects(parsed: ParsedResume) {
+  const byKey = new Map<string, ParsedResume["projects"][number]>();
+  const out: ParsedResume["projects"] = [];
+  for (const p of parsed.projects) {
+    const who = norm(p.client || p.name || "");
+    const k = `${who}|${(p.startDate ?? "").slice(0, 7)}|${(p.endDate ?? (p.isCurrent ? "now" : "")).slice(0, 7)}`;
+    const first = who ? byKey.get(k) : undefined;
+    if (!first) {
+      if (who) byKey.set(k, p);
+      out.push(p);
+      continue;
+    }
+    if (!first.description || (p.description && p.description.length > first.description.length)) first.description = p.description;
+    first.software = [...new Set([...(first.software ?? []), ...(p.software ?? [])])];
+    first.client = first.client ?? p.client;
+    first.employerName = first.employerName ?? p.employerName;
+    first.roleText = first.roleText ?? p.roleText;
+  }
+  parsed.projects = out;
+}
+
 /** Everything above, in order. `catalog` = normalized catalog skill names (optional). */
 /** Normalized catalog names, so the skill cap keeps catalog matches first. */
 export const catalogKey = norm;
@@ -141,6 +163,7 @@ export function cleanParsedResume(parsed: ParsedResume, text: string, catalog?: 
   parsed.droppedSkills = [...new Set(parsed.skills.map((x) => x.trim()).filter((x) => x && !keptKeys.has(norm(x.replace(/^\s*(and|&|with)\s+/i, "").replace(/[\s.,;:!?]+$/, "")))))].slice(0, 40);
   parsed.skills = kept;
   dedupeEducation(parsed);
+  dedupeProjects(parsed);
   return parsed;
 }
 
