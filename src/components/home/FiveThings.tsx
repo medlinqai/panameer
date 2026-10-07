@@ -44,10 +44,10 @@ export async function FiveThings({ viewer, firstName }: { viewer: Viewer; firstN
       {path && (
         <div data-path-bar className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border border-line px-4 py-3">
           <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
-            YOUR PATH{path.current < 7 ? ` · STEP ${path.current + 1} OF 7` : " · DONE"}
+            YOUR PATH{path.current < path.steps.length ? ` · STEP ${path.current + 1} OF ${path.steps.length}` : " · DONE"}
             <LifecycleHelp />
           </span>
-          <span className="grid w-[140px] grid-cols-7 gap-1" aria-hidden>
+          <span className={"grid w-[140px] gap-1 " + (path.steps.length === 9 ? "grid-cols-9" : "grid-cols-7")} aria-hidden>
             {path.done.map((d, i) => (
               <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
             ))}

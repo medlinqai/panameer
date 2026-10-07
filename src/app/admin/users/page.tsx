@@ -11,7 +11,7 @@ import { BoardRefresh } from "@/components/admin/BoardRefresh";
 import {
   blockingFor,
   type LevelSubject,
-  LIFECYCLE,
+  PROVIDER_ROAD as LIFECYCLE,
   LIFECYCLE_WHO,
   lifecycleStatus,
 } from "@/lib/user-levels";
@@ -86,6 +86,7 @@ export default async function Page({
       providerProfile: {
         select: {
           id: true,
+          _count: { select: { serviceProducts: { where: { status: "PUBLISHED" } } } },
           status: true,
           validation_status: true,
           validation_requested_at: true,
@@ -121,10 +122,16 @@ export default async function Page({
   const companyIds = [...new Set(people.map((p) => p.companyMemberships[0]?.company_id).filter((x): x is string => !!x))];
   const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
   const [cos, orders, payoutsPaid] = await Promise.all([
-    prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true, legal_name: true, tin: true, tax_form_uploaded_at: true, p_account_id: true, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
+    prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true, legal_name: true, tin: true, tax_form_uploaded_at: true, p_account_id: true, _count: { select: { payoutMethods: true } }, memberships: { where: { status: "APPROVED" }, select: { person_id: true } } } }),
     prisma.workOrder.findMany({ where: { status: { in: [...SIGNED] } }, select: { buyer_person_id: true, provider_person_id: true } }),
     prisma.providerPayout.findMany({ where: { paid_at: { not: null } }, select: { provider_person_id: true } }),
   ]);
+  const [proposers, requesters] = await Promise.all([
+    prisma.proposal.findMany({ where: { submitted_at: { not: null } }, select: { provider_person_id: true }, distinct: ["provider_person_id"] }),
+    prisma.settlementRequest.findMany({ where: { submitted_at: { not: null } }, select: { provider_person_id: true }, distinct: ["provider_person_id"] }),
+  ]);
+  const proposed = new Set(proposers.map((x) => x.provider_person_id));
+  const requested = new Set(requesters.map((x) => x.provider_person_id));
   const paidAccounts = new Set((await prisma.payment.findMany({ where: { p_account_id: { in: cos.map((c) => c.p_account_id) } }, select: { p_account_id: true } })).map((x) => x.p_account_id));
   const coById = new Map(cos.map((c) => [c.id, c]));
   const signedPeople = new Set(orders.flatMap((o) => [o.buyer_person_id, o.provider_person_id]));
@@ -133,20 +140,25 @@ export default async function Page({
   for (const p of people) {
     const co = coById.get(p.companyMemberships[0]?.company_id ?? "") ?? null;
     const members = co ? co.memberships.map((m) => m.person_id) : [p.id];
+    // Everyone on the provider road's 9 boxes; for buyers, Sell and Request Payment don't apply and count as passed.
+    const prov = p.is_service_provider;
+    const contract = members.some((id) => signedPeople.has(id));
     const st = lifecycleStatus({
-      verified: !!p.user?.email_verified,
-      profiled: p.is_service_provider ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
-      linked: !!co,
-      validated: !!co && !!(co.legal_name ?? co.name)?.trim() && !!co.tin?.trim() && !!co.tax_form_uploaded_at,
-      contracted: members.some((id) => signedPeople.has(id)),
+      verify: !!p.user?.email_verified,
+      profile: prov ? (p.providerProfile?.completeness ?? 0) >= VISIBILITY_THRESHOLD : !!p.requesterProfile?.completed_at,
+      link: !!co,
+      list: prov ? (p.providerProfile?._count.serviceProducts ?? 0) > 0 || proposed.has(p.id) : true,
+      validate: !!co && !!(co.legal_name ?? co.name)?.trim() && !!co.tin?.trim() && !!co.tax_form_uploaded_at && (!prov || co._count.payoutMethods > 0),
+      contract,
+      request: prov ? members.some((id) => requested.has(id)) : contract,
       paid: members.some((id) => paidPeople.has(id)) || (!!co && paidAccounts.has(co.p_account_id)),
-    });
+    }, LIFECYCLE);
     pathIndex.set(p.id, st.current - 1);
   }
-  const BOXES = LIFECYCLE.map((s, i) => ({ key: String(i + 1), label: s.status, hint: i < 6 ? `Next: ${LIFECYCLE[i + 1].step}` : "Every step done" }));
+  const BOXES = LIFECYCLE.map((s, i) => ({ key: String(i + 1), label: s.status, hint: i < LIFECYCLE.length - 1 ? `Next: ${LIFECYCLE[i + 1].step}` : "Every step done" }));
   const boxCounts = BOXES.map((_, i) => realPeople.filter((p) => pathIndex.get(p.id) === i).length);
   const reached = (i: number) => realPeople.filter((p) => (pathIndex.get(p.id) ?? 0) >= i).length;
-  const rates = BOXES.map((_, i) => (i >= 6 || !reached(i) ? null : Math.round((reached(i + 1) / reached(i)) * 100)));
+  const rates = BOXES.map((_, i) => (i >= LIFECYCLE.length - 1 || !reached(i) ? null : Math.round((reached(i + 1) / reached(i)) * 100)));
   const profileDoneAt = (p: (typeof people)[number]) => p.providerProfile?.onboarding_completed_at ?? p.requesterProfile?.completed_at ?? null;
   // When the person reached the step they're on (best available date).
   const enteredAt = (p: (typeof people)[number]): Date => {
@@ -418,7 +430,7 @@ export default async function Page({
             {BOXES.map((b, i) => (
               <Fragment key={b.key}>
                 <li className="min-w-0 md:flex-1">
-                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-3 hover:bg-surface-hover" style={{ borderTop: `4px solid ${LIFECYCLE_WHO[LIFECYCLE[i].who].fg}` }}>
+                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-2.5 hover:bg-surface-hover" style={{ borderTop: `4px solid ${LIFECYCLE_WHO[LIFECYCLE[i].who].fg}` }}>
                     <span className="block truncate text-[10.5px] font-bold tracking-[0.08em] text-ink-3">STEP {i + 1} · {LIFECYCLE[i].step.toUpperCase()}</span>
                     <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
                     <span className="block text-[13.5px] font-bold">{b.label}</span>
@@ -432,8 +444,8 @@ export default async function Page({
                     </span>
                   </a>
                 </li>
-                {i < 6 && (
-                  <li aria-hidden data-pass={rates[i] ?? ""} className="flex shrink-0 items-center justify-center py-0.5 text-[11.5px] font-bold text-ink-2 md:w-[44px] md:flex-col md:py-0">
+                {i < LIFECYCLE.length - 1 && (
+                  <li aria-hidden data-pass={rates[i] ?? ""} className="flex shrink-0 items-center justify-center py-0.5 text-[11.5px] font-bold text-ink-2 md:w-[30px] md:flex-col md:py-0">
                     <span className="md:hidden">↓&nbsp;</span>
                     <span className="max-md:hidden">→</span>
                     <span>{rates[i] === null ? "—" : `${rates[i]}%`}</span>

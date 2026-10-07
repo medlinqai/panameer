@@ -75,7 +75,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
   const [path, input, check, verifySent, counts, audit, coPayouts] = await Promise.all([
     lifecycleFor(person.id),
     person.providerProfile ? buildCompletenessInput(person.providerProfile.id) : Promise.resolve(null),
-    co ? companyChecklist(co.id) : Promise.resolve(null),
+    co ? companyChecklist(co.id, { payout: person.is_service_provider }) : Promise.resolve(null),
     userId ? prisma.sentEmail.findFirst({ where: { user_id: userId, template: "verify-email" }, orderBy: { created_at: "desc" }, select: { created_at: true } }) : Promise.resolve(null),
     Promise.all([
       prisma.workRequest.count({ where: { buyer_person_id: person.id } }),
@@ -94,7 +94,10 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
   const missing = input ? missingRequired(input) : null;
   const score = person.providerProfile?.completeness ?? null;
   const searchable = !!person.providerProfile && !person.providerProfile.paused_at && (score ?? 0) >= VISIBILITY_THRESHOLD;
-  const cur = path?.current ?? 1; // index of the first step not done (7 = all done)
+  const cur = path?.current ?? 1; // index of the first step not done (steps.length = all done)
+  const steps = path?.steps ?? [];
+  const curKey = steps[cur]?.key ?? null;
+  const nOf = (k: string) => String(steps.findIndex((s) => s.key === k) + 1);
   const status = path?.status ?? "Registered";
   // When the person reached their current status (best available date).
   const reachedAt =
@@ -112,12 +115,14 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
 
   // Blocked by: the first unmet step and its fix.
   const blocked =
-    cur === 1 ? { text: "email not verified", sub: verifySent ? `Verification email sent ${d(verifySent.created_at)}` : "No verification email on record", fix: userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : null }
-    : cur === 2 ? { text: "profile checklist not complete", sub: missing?.length ? `Missing: ${missing.join(", ")}` : person.providerProfile ? `Score ${score} of 80` : "Buyer profile not finished", fix: person.providerProfile ? <NudgeToFinish personId={person.id} /> : null }
-    : cur === 3 ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
-    : cur === 4 ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
-    : cur === 5 ? { text: "no signed work order yet", sub: "Two validated companies sign a work order.", fix: null }
-    : cur === 6 ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
+    curKey === "verify" ? { text: "email not verified", sub: verifySent ? `Verification email sent ${d(verifySent.created_at)}` : "No verification email on record", fix: userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : null }
+    : curKey === "profile" ? { text: "profile checklist not complete", sub: missing?.length ? `Missing: ${missing.join(", ")}` : person.providerProfile ? `Score ${score} of 80` : "Buyer profile not finished", fix: person.providerProfile ? <NudgeToFinish personId={person.id} /> : null }
+    : curKey === "link" ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
+    : curKey === "list" ? { text: "nothing for sale yet", sub: "No published service product and no proposal sent.", fix: null }
+    : curKey === "validate" ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
+    : curKey === "contract" ? { text: "no signed work order yet", sub: "Two validated companies sign a work order.", fix: null }
+    : curKey === "request" ? { text: "no payment request yet", sub: "A timesheet or milestone request on a signed work order.", fix: null }
+    : curKey === "paid" ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
     : null;
 
   return (
@@ -135,11 +140,11 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </div>
         <div className="text-right" data-status={status}>
           <span className="inline-block border-2 border-ink px-2 py-0.5 text-[13px] font-extrabold uppercase tracking-[0.08em]">{status}</span>
-          <p className="mt-1 text-[12.5px] text-ink-2">{cur < 7 ? `Step ${cur} of 7 · stuck ${stuck} day${stuck === 1 ? "" : "s"}` : "Every step done"}</p>
+          <p className="mt-1 text-[12.5px] text-ink-2">{cur < steps.length ? `Step ${cur} of ${steps.length} · stuck ${stuck} day${stuck === 1 ? "" : "s"}` : "Every step done"}</p>
         </div>
       </div>
 
-      <div className="mt-5"><LifecycleStrip current={cur - 1} intro="they" hereLabel="Here now" /></div>
+      <div className="mt-5"><LifecycleStrip steps={steps.length ? steps : undefined} current={cur - 1} intro="they" hereLabel="Here now" /></div>
 
       {blocked && (
         <div data-blocked className="mt-4 flex flex-wrap items-center justify-between gap-3 border-2 border-[#b26b00] p-4">
@@ -199,12 +204,12 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           )}
         </Step>
 
-        <Step n="4" title="Add Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
+        <Step n={nOf("link")} title="Add Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
           <Row label="Company" value={co ? <><Link href={`/admin/companies/${co.id}`} className="font-semibold text-magenta-ink underline">{co.name}</Link> · {member!.role === "ADMIN" ? "admin" : "member"}</> : <No>None</No>} />
           <Row label="Join requests" value={pending.length ? pending.map((p) => `${p.company.name} (asked ${d(p.created_at)})`).join(", ") : <No>None</No>} />
         </Step>
 
-        <Step n="5" title="Validate Company" tag={!co ? "—" : check?.ready ? "VALIDATED" : "WAITING"} tone={!co ? "none" : check?.ready ? "done" : "wait"} actions={co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : undefined}>
+        <Step n={nOf("validate")} title="Validate Company" tag={!co ? "—" : check?.ready ? "VALIDATED" : "WAITING"} tone={!co ? "none" : check?.ready ? "done" : "wait"} actions={co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : undefined}>
           {co ? (
             <>
               <Row label="Legal name" value={co.legal_name ?? <No>{co.name} (no separate legal name)</No>} />
@@ -220,7 +225,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           )}
         </Step>
 
-        <Step n="6–7" title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
+        <Step n={`${nOf("contract")}–${nOf("paid")}`} title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
           <Row label="Work requests · proposals" value={`${workRequests} · ${proposals}`} />
           <Row label="Signed work orders" value={signed} />
           <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />

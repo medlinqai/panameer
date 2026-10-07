@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 
-// Account menu top block: "Your Path · Step N of 7" + "?", a 7-segment bar and "Next: … Go".
+// Account menu top block: "Your Path · Step N of 9" (7 for buyers) + "?", a segment bar and "Next: … Go".
 type Path = { current: number; done: boolean[]; status: string; next: { label: string; href: string } | null };
 
 export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void; rowClass: string }) {
@@ -26,10 +26,10 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
           {path.next ? (
             <>
               <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
-                YOUR PATH · STEP {path.current + 1} OF 7
+                YOUR PATH · STEP {path.current + 1} OF {path.done.length}
                 <LifecycleHelp onOpen={onNavigate} />
               </p>
-              <div className="mt-1.5 grid grid-cols-7 gap-1" aria-hidden>
+              <div className={"mt-1.5 grid gap-1 " + (path.done.length === 9 ? "grid-cols-9" : "grid-cols-7")} aria-hidden>
                 {path.done.map((d, i) => (
                   <span key={i} className={"h-1.5 " + (d ? "bg-magenta" : i === path.current ? "bg-ink" : "bg-line")} />
                 ))}

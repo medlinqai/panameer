@@ -4,29 +4,43 @@ import { getSessionViewer } from "@/lib/session";
 import { lifecycleForUser } from "@/lib/your-path";
 import { LIFECYCLE_WHO } from "@/lib/user-levels";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
+import { RoadGraphic } from "@/components/lifecycle/RoadGraphic";
 import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Path · Panameer" };
 
-// Your Path: the 7 lifecycle steps with "You are here" and one Next button. Same for buyers and sellers.
+// Your Path: the road (9 stops for providers, 7 for buyers) with "You are here" and one Next button.
 export default async function YourPathPage() {
   const viewer = await getSessionViewer();
   if (!viewer) redirect("/login?callbackUrl=%2Fyour-path");
   const path = await lifecycleForUser(viewer.userId);
   if (!path) redirect("/dashboard");
-  const { steps, done, current, status } = path;
+  const { steps, done, current, status, road } = path;
+  const total = steps.length;
   const next = steps[current];
   return (
-    <div className="pm-white-page mx-auto w-full max-w-[860px] pb-14" data-your-path data-current={current + 1} data-status={status}>
+    <div className={"pm-white-page mx-auto w-full pb-14 " + (road === "provider" ? "max-w-[1120px]" : "max-w-[860px]")} data-your-path data-current={current + 1} data-status={status}>
       <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] text-magenta">
-        YOUR PATH{current < 7 ? ` · STEP ${current + 1} OF 7` : ""} · {status.toUpperCase()}
+        YOUR PATH{current < total ? ` · STEP ${current + 1} OF ${total}` : ""} · {status.toUpperCase()}
         <LifecycleHelp className="text-ink" />
       </p>
       <h1 className="mt-1.5 text-[30px] font-bold leading-tight">From account to getting paid</h1>
-      <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
-        Buyers and sellers follow the same seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
-      </p>
+      {road === "provider" ? (
+        <>
+          <p className="mt-1.5 max-w-[780px] text-[14.5px] text-ink-2">
+            Nine stops. You can sell before any company paperwork — that comes right before your first work order. Panameer contracts with and pays companies, not individuals.
+          </p>
+          <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={current} /></div></div>
+          <Link href="/join/provider/road" data-detailed-road-link className="mt-2 inline-block text-[13.5px] font-bold text-magenta-dark underline underline-offset-4">
+            See the detailed road (offers, work requests, interviews) →
+          </Link>
+        </>
+      ) : (
+        <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
+          Buyers follow seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
+        </p>
+      )}
       <div className="mt-6"><LifecycleStrip current={current} /></div>
       <ol className="mt-8 border-t border-line">
         {steps.map((s, i) => {

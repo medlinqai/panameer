@@ -1,4 +1,4 @@
-import { LIFECYCLE } from "@/lib/user-levels";
+import { LIFECYCLE, type LifecycleStep } from "@/lib/user-levels";
 
 // Brand neutrals (Panameer brand guide): done = secondary, now = ink, ahead = borders/disabled.
 const DONE = "#5C6485";
@@ -6,16 +6,19 @@ const AHEAD_RING = "#C9CDDC";
 const AHEAD_NUM = "#8A90A8";
 const TRACK = "#E8EAF1";
 
-// The 7-step strip: numbered circles, ✓ when done, "You are here" on the current step.
-export function LifecycleStrip({ current, intro = "you", hereLabel = "You are here" }: { current: number; intro?: "you" | "they" | false; hereLabel?: string }) {
-  const n = Math.min(Math.max(current, 0), 7);
-  const pct = n === 0 ? 0 : (Math.min(n, 6) / 6) * 100;
+const WORDS: Record<number, string> = { 7: "seven", 9: "nine" };
+
+// The compact strip: numbered circles, ✓ when done, "You are here" on the current step.
+export function LifecycleStrip({ current, intro = "you", hereLabel = "You are here", steps = LIFECYCLE }: { current: number; intro?: "you" | "they" | false; hereLabel?: string; steps?: LifecycleStep[] }) {
+  const total = steps.length;
+  const n = Math.min(Math.max(current, 0), total);
+  const pct = n === 0 ? 0 : (Math.min(n, total - 1) / (total - 1)) * 100;
   return (
     <div data-lifecycle-strip>
       {intro && (
         <p className="mb-4 text-[14.5px] text-ink-2">
-          There are <b className="text-ink">seven steps</b> from creating an account to getting paid.{" "}
-          {n < 7 ? (
+          There are <b className="text-ink">{WORDS[total] ?? total} steps</b> from creating an account to getting paid.{" "}
+          {n < total ? (
             <>
               {intro === "you" ? "You're" : "They're"} on <b className="text-ink">step {n + 1}</b>.
             </>
@@ -24,10 +27,10 @@ export function LifecycleStrip({ current, intro = "you", hereLabel = "You are he
           )}
         </p>
       )}
-      <ol className="relative grid grid-cols-1 gap-3 sm:grid-cols-7 sm:gap-0" aria-label="Lifecycle">
+      <ol className={"relative grid grid-cols-1 gap-3 sm:gap-0 " + (total === 9 ? "sm:grid-cols-9" : "sm:grid-cols-7")} aria-label="Lifecycle">
         <span aria-hidden className="absolute left-[7%] right-[7%] top-[21px] hidden h-[3px] sm:block" style={{ background: TRACK }} />
         <span aria-hidden className="absolute left-[7%] top-[21px] hidden h-[3px] sm:block" style={{ background: DONE, width: `${pct * 0.86}%` }} />
-        {LIFECYCLE.map((s, i) => {
+        {steps.map((s, i) => {
           const done = i < n;
           const here = i === n;
           return (
