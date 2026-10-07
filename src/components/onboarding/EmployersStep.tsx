@@ -1200,7 +1200,7 @@ export function EmployersStep({
               </label>
               {logoError && <p className="mt-1 text-[12.5px] text-red-700">{logoError}</p>}
               <p className="mt-1.5 text-[12.5px] text-ink-2">
-                {logos.length > 0 ? "Pick a suggestion, upload your own, or leave it blank." : "Upload your own, or leave it blank."}
+                {logos.length > 0 ? "Pick a suggestion, upload your own (best 600 × 200 px), or leave it blank." : "Upload your own (best 600 × 200 px), or leave it blank."}
               </p>
             </div>
           )}

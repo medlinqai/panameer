@@ -44,6 +44,7 @@ export function CompanyShell({ c, role, visibility, children }: { c: NonNullable
                   className="text-[12px] font-bold text-magenta-dark underline underline-offset-2"
                   statusClassName="text-left"
                 />
+                <p className="mt-1 text-left text-[11.5px] text-ink-3">Best: 600 × 200 px, PNG, white or transparent background.</p>
               </div>
             )}
           </div>

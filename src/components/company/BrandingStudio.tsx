@@ -88,7 +88,7 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
           </div>
           <div className="min-w-0 flex-1">
             <CompanyLogoUpload companyId={companyId} currentUrl={logoUrl} quiet label={logoUrl ? "Replace Logo" : "Upload Logo"} className={`${BTN} bg-ink text-surface hover:bg-ink-hover`} />
-            <p className="mt-2 text-[13px] text-ink-2">PNG, JPG or SVG. We read your colors from it.</p>
+            <p className="mt-2 text-[13px] text-ink-2">Best: 600 × 200 px, PNG or SVG, white or transparent background. We read your colors from it.</p>
           </div>
         </div>
       </CompanySection>
