@@ -13,6 +13,9 @@ import { getCommunitySignalForProfile } from "@/lib/community-signal";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import { computeProfileScore } from "@/lib/completeness";
 import { growthBoard, growthScore, rankFor } from "@/lib/growth-score";
+import { prisma } from "@/lib/prisma";
+import { buyerProfileFor } from "@/lib/buyer-profile";
+import { BuyerProfileEditor } from "@/components/buyer/BuyerProfileEditor";
 
 export default async function MyProfilePage() {
   const viewer = await getSessionViewer();
@@ -23,7 +26,13 @@ export default async function MyProfilePage() {
   if (viewer.isSystemAdmin) return <EmployeeProfile userId={viewer.userId} />;
 
   const profile = await getOwnProviderProfileView(viewer.userId, viewer);
-  if (!profile) redirect("/community");
+  if (!profile) {
+    // A buyer-only person gets their Buyer Profile here.
+    const person = await prisma.person.findUnique({ where: { user_id: viewer.userId }, select: { id: true, first_name: true, last_name: true } });
+    const buyer = person ? await buyerProfileFor(person.id) : null;
+    if (!buyer || !person) redirect("/community");
+    return <div className="account-surface"><BuyerProfileEditor initial={buyer} firstName={person.first_name ?? ""} lastName={person.last_name ?? ""} /></div>;
+  }
 
   const [taughtPathsList, takenPaths] = await Promise.all([
     getPathsTaughtByProfile(profile.id),

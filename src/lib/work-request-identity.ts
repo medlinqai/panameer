@@ -108,19 +108,19 @@ export const POST_REQUIREMENTS: {
     key: "name",
     field: "Add your name",
     reason: "Providers will not answer an unnamed request, and there is no way to check one.",
-    href: "/settings/profile",
+    href: "/profile",
   },
   {
     key: "photo",
     field: "Add a photo",
     reason: "Providers see who is asking before they spend an afternoon on a proposal.",
-    href: "/settings/profile",
+    href: "/profile",
   },
   {
     key: "jobTitle",
     field: "Add your job title",
     reason: "It tells a provider whether they are talking to the person who decides.",
-    href: "/settings/profile",
+    href: "/profile",
   },
 ];
 

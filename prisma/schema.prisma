@@ -378,6 +378,9 @@ model Company {
   /// members' public profiles show the company name.
   description      String?
   industry_id      String? @db.Uuid
+  /// Buyer Track Record: company size band and the ERP it runs (free text), both optional.
+  size_band        String?
+  erp_used         String?
   show_on_profiles Boolean @default(true)
   /// Colors read from the logo (up to 6 hex strings, by area) — shown in Dynamic Branding.
   logo_palette     Json?
@@ -3028,6 +3031,13 @@ model RequesterProfile {
   /// else the money path needs. ⚠ THAT STEP IS NOT BUILT AND IS NOT IN THIS
   /// BRIEF. Do not read this column as evidence that it is.
   validated_at DateTime?
+  /// Buyer Profile (2026-10-07): optional, filled by hand or from a résumé; never a gate.
+  overview     String?
+  /// [{ employer, title, start, end }]
+  work_history Json?
+  /// [{ institution, degree, year }]
+  education    Json?
+  languages    String[] @default([])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
