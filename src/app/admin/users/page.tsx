@@ -304,7 +304,7 @@ export default async function Page({
         {u?.email ?? "—"}
       </span>,
       u?.email_verified ? d(u.email_verified) : "No",
-      <span key="level" className="inline-block border border-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em]" title={blocking.join(", ") || undefined}>{LIFECYCLE[pathIndex.get(p.id) ?? 0].status}</span>,
+      <span key="level" className="inline-block border border-[#5C6485] bg-[#5C6485] text-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em]" title={blocking.join(", ") || undefined}>{LIFECYCLE[pathIndex.get(p.id) ?? 0].status}</span>,
       <input
         key="lock"
         type="checkbox"
@@ -430,7 +430,7 @@ export default async function Page({
             {BOXES.map((b, i) => (
               <Fragment key={b.key}>
                 <li className="min-w-0 md:flex-1">
-                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-2.5 hover:bg-surface-hover" style={{ borderTop: `4px solid ${LIFECYCLE_WHO[LIFECYCLE[i].who].fg}` }}>
+                  <a href={`?stage=${b.key}`} data-box={b.key} className="block h-full border border-ink bg-surface p-2.5 hover:bg-surface-hover" style={{ borderTop: "4px solid #5C6485" }}>
                     <span className="block truncate text-[10.5px] font-bold tracking-[0.08em] text-ink-3">STEP {i + 1} · {LIFECYCLE[i].step.toUpperCase()}</span>
                     <b className="block text-[28px] leading-tight" data-box-count>{boxCounts[i]}</b>
                     <span className="block text-[13.5px] font-bold">{b.label}</span>

@@ -102,7 +102,7 @@ export async function FiveThings({ viewer, firstName, firstVisit = false }: { vi
                 </div>
               ) : (
                 <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface p-5 hover:border-ink">
-                  <span className="grid h-11 w-11 place-items-center bg-bg-soft text-ink"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
+                  <span className="grid h-11 w-11 place-items-center bg-[#E8EAF1] text-[#5C6485]"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
                   <b className="mt-3 block text-[18px] leading-snug">{c.title}</b>
                   <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
                   <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>

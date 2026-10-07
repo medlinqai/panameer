@@ -35,7 +35,7 @@ function Step({ n, title, tag, tone, actions, children }: { n: string; title: st
         <h2 className="text-[17px] font-bold">
           {n} {title}
         </h2>
-        <span className={"border px-1.5 text-[10.5px] font-bold tracking-[0.06em] " + (tone === "done" ? "border-[#1f8a5b] text-[#1f8a5b]" : tone === "wait" ? "border-[#b26b00] text-[#b26b00]" : "border-line text-ink-3")}>{tag}</span>
+        <span className={"border px-1.5 text-[10.5px] font-bold tracking-[0.06em] " + (tone === "done" ? "border-[#5C6485] bg-[#5C6485] text-white" : tone === "wait" ? "border-[#b26b00] text-[#b26b00]" : "border-line text-ink-3")}>{tag}</span>
         {actions && <span className="ml-auto flex flex-wrap items-center gap-2">{actions}</span>}
       </div>
       <div className="mt-2">{children}</div>
