@@ -76,7 +76,7 @@ export async function assertCanSign(actingPersonId: string, buyerPersonId: strin
   const own = buyerActs ? bc : sc;
   const other = buyerActs ? sc : bc;
   const items = [
-    ...(own ? own.items.map((i) => ({ company: own.company, ...i })) : [{ company: "Your company", item: "Create Company", done: false }]),
+    ...(own ? own.items.map((i) => ({ company: own.company, ...i })) : [{ company: "Your company", item: "Add Company", done: false }]),
     { company: other?.company ?? (buyerActs ? "The provider" : "The buyer"), item: "Validated", done: !!other?.ready },
   ];
   throw new SignGateError({ items, isAdmin: (buyerActs ? b : s)?.role === "ADMIN" });
