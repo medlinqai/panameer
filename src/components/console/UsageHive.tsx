@@ -10,6 +10,7 @@ export type HiveCell = { key: string; label: string; figure: Figure; href: strin
 
 // [fill, outline, value, label] — Health's palette (2026-10-05): None white + grey dashed · Low white + 2.5px ink ·
 // Medium solid magenta · Strong solid ink. No tints.
+// 2026-10-07: active = #3A4166, none yet = #C9CDDC dashed (brand completed / not completed).
 // P2-E008: solid ink hexes with white text for any count > 0; dashed outline and muted text for 0.
 const R = 40;
 const HEX = (() => {
@@ -50,7 +51,7 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
               <g style={{ transform: `translate(${x}px, ${y}px)`, transition: still ? "none" : "transform 1s cubic-bezier(.4,.1,.2,1)" }}>
                 <path
                   d={HEX}
-                  style={{ fill: active ? "var(--color-ink)" : "var(--color-surface)", stroke: active ? "var(--color-ink)" : "var(--color-ink-3)" }}
+                  style={{ fill: active ? "#3A4166" : "var(--color-surface)", stroke: active ? "#3A4166" : "#C9CDDC" }}
                   strokeWidth={active ? 2 : 1.6}
                   strokeDasharray={active ? undefined : "5 4"}
                 />
@@ -63,11 +64,11 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
       </svg>
       <ul className="pm-hive-key mb-1 flex justify-center gap-3.5 text-[11px] text-ink-3" aria-label="What the shading means">
         <li className="flex items-center">
-          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 bg-ink" />
+          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 bg-[#3A4166]" />
           Activity
         </li>
         <li className="flex items-center">
-          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 border border-dashed border-ink-3" />
+          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 border border-dashed border-[#C9CDDC]" />
           None yet
         </li>
       </ul>
