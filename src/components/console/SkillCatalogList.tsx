@@ -37,14 +37,19 @@ function AreaSelect({ value, onChange, empty, extra, className = SEL, label = "A
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const opts = areas.filter((a) => !a.hidden || a.code === value);
+  const router = useRouter();
+  const [err, setErr] = useState<string | null>(null);
+  void run;
+  // Calls the API directly so a refusal shows HERE, not behind the edit box.
   const save = async () => {
-    const r = await run({ action: "area.add", label: name.trim(), ...(code.trim() ? { code: code.trim().toUpperCase() } : {}) });
-    if (r && r.code) {
-      onChange(r.code);
-      setAdding(false);
-      setName("");
-      setCode("");
-    }
+    setErr(null);
+    const r = await post({ action: "area.add", label: name.trim(), ...(code.trim() ? { code: code.trim().toUpperCase() } : {}) });
+    if (!r.ok) { setErr(r.error); return; }
+    if (r.code) onChange(r.code);
+    setAdding(false);
+    setName("");
+    setCode("");
+    router.refresh();
   };
   return (
     <span className="inline-block">
@@ -60,6 +65,7 @@ function AreaSelect({ value, onChange, empty, extra, className = SEL, label = "A
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Short code (optional)" aria-label="New area short code" className={SEL + " w-[150px] uppercase"} />
           <button type="button" disabled={name.trim().length < 2} onClick={save} className={BTN_K}>Save</button>
           <button type="button" onClick={() => setAdding(false)} className="font-semibold text-ink-2">Cancel</button>
+          {err && <span role="alert" className="w-full font-semibold text-magenta-dark">{err}</span>}
         </span>
       )}
     </span>
