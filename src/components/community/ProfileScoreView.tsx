@@ -41,7 +41,10 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
   const R = 118;
   const C = 2 * Math.PI * R;
   const GAP = 3;
-  const segments = score.lines.reduce<{ line: ScoreLine; len: number; offset: number }[]>((acc, l) => {
+  // Ring order = group order, so the purple steps from dark to light all the way round.
+  const groupOrder = Object.keys(SCORE_GROUP_LABELS) as ScoreGroup[];
+  const ringLines = [...score.lines].sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group));
+  const segments = ringLines.reduce<{ line: ScoreLine; len: number; offset: number }[]>((acc, l) => {
     const used = acc.reduce((a, s) => a + (s.line.points / 100) * C, 0);
     acc.push({ line: l, len: (l.points / 100) * C - GAP, offset: -used });
     return acc;
@@ -101,7 +104,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       strokeDasharray={`${s.len} ${C - s.len}`}
                       strokeDashoffset={s.offset}
                       className={"pm-score-seg " + paintClass(s.line.state) + (hover && hover !== s.line.key ? " pm-score-dim" : "")}
-                      style={{ animationDelay: `${i * 70}ms`, ...(lineCounts(s.line.state) ? { stroke: shadeFor(s.line.group) } : {}) }}
+                      style={{ animationDelay: `${i * 70}ms`, ...(lineCounts(s.line.state) ? { stroke: stepShade(i, segments.length) } : {}) }}
                       onMouseEnter={() => setHover(s.line.key)}
                       onMouseLeave={() => setHover(null)}
                       onFocus={() => setHover(s.line.key)}
@@ -187,7 +190,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       <Row key={l.key} onHover={setHover} lineKey={l.key} active={hover === l.key} done={ok}>
                         <span className="flex min-w-0 items-center">
                           {ok ? (
-                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: shadeFor(l.group) }}>✓</span>
+                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: stepShade(Math.max(0, segments.findIndex((x) => x.line.key === l.key)), segments.length) }}>✓</span>
                           ) : (
                             <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none border-2 border-magenta" />
                           )}
@@ -269,6 +272,13 @@ const GROUP_SHADES = ["#5E1A5C", "#A8239F", "#D772D5"];
 function shadeFor(group: ScoreGroup): string {
   const i = (Object.keys(SCORE_GROUP_LABELS) as ScoreGroup[]).indexOf(group);
   return GROUP_SHADES[Math.max(0, i) % GROUP_SHADES.length];
+}
+// One step per segment from the darkest to the lightest logo purple, so the ring
+// gets steadily lighter all the way round (Scott 2026-10-07).
+function stepShade(i: number, n: number): string {
+  const a = [0x5e, 0x1a, 0x5c], b = [0xd7, 0x72, 0xd5];
+  const t = n <= 1 ? 0 : i / (n - 1);
+  return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * t).toString(16).padStart(2, "0")).join("");
 }
 
 function paintClass(state: ScoreLine["state"]): string {
