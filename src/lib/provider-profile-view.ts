@@ -180,6 +180,13 @@ export async function getProviderProfileView(
   const country = countryName(addr?.country_code, addr?.country)?.trim() || null;
   const primaryLanguage = profile.languages[0]?.name ?? null;
 
+  // The company that sells this provider (one seller = one company, R1).
+  const sellingCompany =
+    (await prisma.companyMembership.findFirst({
+      where: { person_id: profile.person.id, status: "APPROVED" },
+      orderBy: { created_at: "asc" },
+      select: { company: { select: { id: true, name: true, logo_url: true } } },
+    }))?.company ?? null;
   return {
     id: profile.id,
     isOwner,
@@ -231,6 +238,7 @@ export async function getProviderProfileView(
         )
       : null,
 
+    sellingCompany,
     identityMasked: !showSurname,
     person: {
       firstName: profile.person.first_name,

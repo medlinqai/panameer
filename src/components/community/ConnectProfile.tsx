@@ -580,6 +580,26 @@ export function ConnectProfile({
             </p>
           )}
 
+          {/* THE COMPANY — Panameer contracts with companies, so it leads (Scott 2026-10-07). */}
+          {p.sellingCompany ? (
+            <p data-profile-company className="mt-2 flex items-center gap-2 text-[15px] font-semibold text-ink">
+              {p.sellingCompany.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.sellingCompany.logo_url} alt="" className="h-6 w-6 border border-line bg-white object-contain" />
+              ) : (
+                <span aria-hidden className="grid h-6 w-6 place-items-center bg-[#E8EAF1] text-[11px] font-bold text-[#5C6485]">
+                  {p.sellingCompany.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <Link href={`/companies/${p.sellingCompany.id}`} className="hover:underline">{p.sellingCompany.name}</Link>
+            </p>
+          ) : owner ? (
+            <p data-profile-company className="mt-2 text-[14px] text-ink-2">
+              No company yet ·{" "}
+              <Link href="/company?join=1#join" className="font-bold text-magenta-dark underline underline-offset-2">Add Company</Link>
+            </p>
+          ) : null}
+
           {/* THE META LINE. EVERY ITEM IS A FACT THAT EXISTS */}
           <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[14px] text-ink-2">
             {/* ITEM 11 — THE MAP LINK, AND WHAT IS NOT IN IT */}
