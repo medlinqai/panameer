@@ -290,12 +290,14 @@ export function ConnectProfile({
             </div>
             {/* THE COMPANY, UNDER THE PHOTO (Scott 2026-10-07, LinkedIn-style): logo + name, one link. */}
             {p.sellingCompany ? (
-              <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company className="group mt-3 block">
-                {p.sellingCompany.logo_url && (
+              <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company aria-label={p.sellingCompany.name} title={p.sellingCompany.name} className="group mt-5 flex justify-center">
+                {p.sellingCompany.logo_url ? (
+                  // Logo only, centred, no box (Scott's mockup 2026-10-07) — the logo carries the name.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.sellingCompany.logo_url} alt="" className="block max-h-[44px] max-w-full object-contain object-left" />
+                  <img src={p.sellingCompany.logo_url} alt={p.sellingCompany.name} className="block h-[52px] w-auto max-w-[80%] object-contain" />
+                ) : (
+                  <span className="text-[15px] font-bold text-ink group-hover:underline">{p.sellingCompany.name}</span>
                 )}
-                <span className="mt-1.5 block text-[14px] font-bold text-ink group-hover:underline">{p.sellingCompany.name}</span>
               </Link>
             ) : owner ? (
               <p data-profile-company className="mt-3 text-[13px] text-ink-2">
