@@ -103,13 +103,19 @@ export async function extractText(
     } else if (resolved === "text/plain") {
       text = bytes.toString("utf8");
     } else if (resolved === "application/msword") {
-      // Legacy binary .doc has no pure-JS parser worth carrying. Salvage the
-      // readable runs so the user still gets *something* rather than a hard
-      // failure, and let the parser's gap list report what was lost.
-      text = bytes
-        .toString("latin1")
-        .replace(/[^\x20-\x7E\n\r\t]+/g, " ")
-        .replace(/\s{3,}/g, "\n");
+      // Legacy binary .doc: read it with word-extractor; salvage readable runs only if that fails.
+      try {
+        const WordExtractor = (await import("word-extractor")).default;
+        const doc = await new WordExtractor().extract(bytes);
+        text = [doc.getHeaders?.({ includeFooters: false }) ?? "", doc.getBody(), doc.getTextboxes?.({ includeHeadersAndFooters: false }) ?? ""].filter(Boolean).join("\n");
+      } catch {
+        text = "";
+      }
+      if (text.replace(/\s/g, "").length < 40)
+        text = bytes
+          .toString("latin1")
+          .replace(/[^\x20-\x7E\n\r\t]+/g, " ")
+          .replace(/\s{3,}/g, "\n");
     } else {
       throw new ExtractError(
         "That file type isn't supported. Upload a PDF, Word, or rich-text file.",
