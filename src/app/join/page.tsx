@@ -169,7 +169,6 @@ function JoinRouter() {
               : "What Do You Do on the Buying Side?"}
         </h1>
         {step === 1 ? (
-          <p className="mt-2 text-[17px] text-ink-2">You can switch the other side on later from your account menu.</p>
         ) : (
           <p className="mt-2 text-[17px] text-ink-2">
             {userType === "seller"
