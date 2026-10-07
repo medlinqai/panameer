@@ -69,6 +69,20 @@ export async function POST(request: Request) {
       bytes = png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer;
       type = "image/png";
     }
+    // Trim empty margins (white or transparent, judged from the corner pixel) so the
+    // logo fills its box everywhere; a thin even border is put back. Never cuts artwork.
+    try {
+      const trimmed = await sharp(Buffer.from(bytes)).trim({ threshold: 12 }).toBuffer({ resolveWithObject: true });
+      const m = Math.max(4, Math.round(Math.min(trimmed.info.width, trimmed.info.height) * 0.08));
+      const corner = await sharp(Buffer.from(bytes)).extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer();
+      const hasAlpha = corner.length === 4;
+      const bg = hasAlpha && corner[3] < 16 ? { r: 0, g: 0, b: 0, alpha: 0 } : { r: corner[0], g: corner[1], b: corner[2], alpha: 1 };
+      const png = await sharp(trimmed.data).extend({ top: m, bottom: m, left: m, right: m, background: bg }).png().toBuffer();
+      bytes = png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer;
+      type = "image/png";
+    } catch {
+      // A logo we can't trim is uploaded as given.
+    }
     const url = await uploadCompanyLogo(companyId ?? person.id, { type, size: bytes.byteLength, bytes });
     if (companyId) {
       // Upload is the only place colors are read; a company that never picked a color gets the first logo color.
