@@ -157,23 +157,35 @@ const summaryOf = ({ skills, specs }: { skills: number; specs: number }) =>
   [skills && `${skills} new skill${skills === 1 ? "" : "s"}`, specs && `${specs} new specialization${specs === 1 ? "" : "s"}`].filter(Boolean).join(", ");
 
 /** A member saved a term not in the catalog: create today's notice, or refresh its count. `to` overrides recipients (tests). */
+// A new term is reported once, when it reaches this many different (real) people.
+export const CATALOG_NOTIFY_MIN_PEOPLE = Math.max(1, Number(process.env.CATALOG_NOTIFY_MIN_PEOPLE) || 3);
+const REAL_PERSON = { user: { is_test: false, NOT: [{ email: { endsWith: "@panameer.com" } }, { email: { endsWith: "@example.seed" } }, { email: { endsWith: ".example" } }] } };
+
+/** People (test accounts excluded) per waiting skill / specialization, highest first. */
+export async function waitingTermCounts() {
+  const [skills, specs] = await Promise.all([
+    prisma.skill.findMany({ where: NEW_SKILL_WHERE, select: { id: true, name: true, providerSkills: { where: { providerProfile: { person: REAL_PERSON } }, select: { provider_profile_id: true } } } }),
+    prisma.specialization.findMany({ where: { origin: "PROVIDER", status: "SUGGESTED" }, select: { id: true, name: true, providerProfiles: { where: { providerProfile: { person: REAL_PERSON } }, select: { provider_profile_id: true } } } }),
+  ]);
+  return [
+    ...skills.map((x) => ({ id: x.id, name: x.name, kind: "skill" as const, people: new Set(x.providerSkills.map((p) => p.provider_profile_id)).size })),
+    ...specs.map((x) => ({ id: x.id, name: x.name, kind: "specialization" as const, people: new Set(x.providerProfiles.map((p) => p.provider_profile_id)).size })),
+  ].sort((a, b) => b.people - a.people);
+}
+
+/** A member saved a new term: tell admins about each term that has now reached CATALOG_NOTIFY_MIN_PEOPLE (once per term). `to` overrides recipients (tests). */
 export async function notifyCatalogReview(to?: string[], fromProfileId?: string) {
   try {
-    // Test accounts never notify the real admins.
     if (fromProfileId) {
-      const who = await prisma.providerProfile.findUnique({ where: { id: fromProfileId }, select: { person: { select: { user: { select: { email: true } } } } } });
-      if (/@(example\.seed|[^@]*\.example)$/i.test(who?.person.user?.email ?? "")) return;
+      const who = await prisma.providerProfile.findUnique({ where: { id: fromProfileId }, select: { person: { select: { user: { select: { email: true, is_test: true } } } } } });
+      if (who?.person.user?.is_test || /@(example\.seed|panameer\.com|[^@]*\.example)$/i.test(who?.person.user?.email ?? "")) return;
     }
-    const counts = await waitingCounts();
-    if (!counts.skills && !counts.specs) return;
-    const summary = summaryOf(counts);
+    const hot = (await waitingTermCounts()).filter((t) => t.people >= CATALOG_NOTIFY_MIN_PEOPLE);
+    if (!hot.length) return;
     const admins = to ?? (await prisma.person.findMany({ where: { user: { is_system_admin: true } }, select: { id: true } })).map((p) => p.id);
-    const key = `${DIGEST}:${etDay()}`;
-    for (const personId of admins) {
-      const open = await prisma.notification.findUnique({ where: { person_id_dedupe_key: { person_id: personId, dedupe_key: key } }, select: { id: true } });
-      if (open) await prisma.notification.update({ where: { id: open.id }, data: { title: `${summary} to review`, resolved_at: null } });
-      else await notify({ event: DIGEST, personId, entityType: "catalog", dedupeKey: key, vars: { summary } });
-    }
+    for (const t of hot)
+      for (const personId of admins)
+        await notify({ event: "catalog.term_catches_on", personId, entityType: t.kind, entityId: t.id, dedupeKey: `catalog.term_catches_on:${t.id}`, vars: { term: t.name, people: String(t.people), kind: t.kind } });
   } catch (e) {
     console.error("[catalog-review] notice failed", e);
   }

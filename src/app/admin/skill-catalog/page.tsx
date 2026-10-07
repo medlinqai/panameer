@@ -20,7 +20,7 @@ import {
 } from "@/components/console/SkillCatalogTree";
 import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
-import { NEW_SKILL_WHERE, hiddenSameLetterNames } from "@/lib/catalog-review";
+import { NEW_SKILL_WHERE, hiddenSameLetterNames, waitingTermCounts } from "@/lib/catalog-review";
 import { formatSkillName, sameLetters } from "@/lib/skill-match";
 
 export const dynamic = "force-dynamic";
@@ -101,11 +101,14 @@ export default async function Page({
     return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0];
   };
   const hiddenSame = await hiddenSameLetterNames();
+  // Compare shows real people per term (test accounts excluded), highest first.
+  const people = new Map((await waitingTermCounts()).map((t) => [t.id, t.people]));
   const unassigned = waiting.map((s) => ({
     ...toSkill(s),
     guess: s.pillar_id ? `${s.role_type_id}:${s.pillar_id}` : guessOf(s.id),
     hiddenMatch: hiddenSame.get(sameLetters(s.name)),
-  }));
+    members: people.get(s.id) ?? 0,
+  })).sort((a, b) => b.members - a.members || a.name.localeCompare(b.name));
   const specRows = await prisma.specialization.findMany({
     where: { OR: [{ status: "ACTIVE" }, { status: "SUGGESTED", origin: "PROVIDER" }] },
     orderBy: { name: "asc" },
@@ -288,7 +291,7 @@ export default async function Page({
           destinations={flatPairs}
           initial={{ q: sp.q, role: sp.role, domain: sp.domain, status: sp.status, tab: sp.tab, sub: sp.sub }}
           specs={specRows.filter((x) => x.status === "ACTIVE").map(toSpec)}
-          newSpecs={specRows.filter((x) => x.status === "SUGGESTED").map(toSpec)}
+          newSpecs={specRows.filter((x) => x.status === "SUGGESTED").map((x) => ({ ...toSpec(x), members: people.get(x.id) ?? 0 })).sort((a, b) => b.members - a.members)}
         />
       )}
       {/* `E481` — the bar returns, live. See the note on the Specializations page. */}

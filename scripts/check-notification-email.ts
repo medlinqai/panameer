@@ -149,6 +149,7 @@ const RECIPIENT_HOLDS: Record<string, string> = {
   "work.test_requested": "canProvideServices",
   "shop.offer_received": "canProvideServices",
   "catalog.review_new": "canAdminister",
+  "catalog.term_catches_on": "canAdminister",
 };
 let hrefChecked = 0;
 for (const key of NOTIFICATION_EMAIL_EVENTS) {

@@ -412,6 +412,18 @@ export const NOTIFICATION_EVENTS = {
     body: () => "The group's owner decides who joins.",
     href: () => "/community/groups?view=discover",
   },
+  // Catalog: a member-entered term reached CATALOG_NOTIFY_MIN_PEOPLE real people (once per term).
+  "catalog.term_catches_on": {
+    event: "catalog.term_catches_on",
+    recipient: "Panameer catalog admins",
+    category: "community.activity",
+    aiMode: "SEND_FOR_APPROVAL",
+    visibility: "FEED",
+    requiresAction: true,
+    title: (v) => `"${str(v, "term", "A new term")}" is catching on — ${str(v, "people", "3")} members use it`,
+    body: (v) => `Members typed this ${str(v, "kind", "skill")} and it isn't in the catalog. Merge it, add it, or reject it in Compare.`,
+    href: (v) => `/admin/skill-catalog?tab=compare&q=${encodeURIComponent(str(v, "term", ""))}`,
+  },
   // Catalog review (E910): one per admin per day; the count is refreshed as new terms arrive.
   "catalog.review_new": {
     event: "catalog.review_new",

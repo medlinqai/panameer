@@ -571,7 +571,8 @@ export function SkillCatalogTree({
     const g = groupLookAlikes(items.map((i) => i.name));
     const by = new Map<number, T[]>();
     items.forEach((it, i) => by.set(g[i], [...(by.get(g[i]) ?? []), it]));
-    return [...by.values()].sort((x, y) => y.length - x.length || x[0].name.localeCompare(y[0].name));
+    const peopleIn = (g: T[]) => Math.max(...g.map((i) => (i as T & { members?: number }).members ?? 0));
+    return [...by.values()].sort((x, y) => peopleIn(y) - peopleIn(x) || y.length - x.length || x[0].name.localeCompare(y[0].name));
   };
 
   const newItem = (it: CatalogSkill | CatalogSpec, spec: boolean) => {
@@ -583,7 +584,7 @@ export function SkillCatalogTree({
           <span className="min-w-0 flex-1 truncate">{hl(it.name, needle)}</span>
           {!spec && (it as CatalogSkill).hiddenMatch && <span data-hidden-match className="shrink-0 text-[11px] font-semibold text-ink-2">matches a hidden skill</span>}
           {guess && <span className="hidden truncate text-[11px] text-ink-2/70 sm:inline">likely {guess.label.split(" › ")[1]}</span>}
-          <span className="shrink-0 text-[11px] text-ink-2">{it.members} member{it.members === 1 ? "" : "s"}</span>
+          <span data-people={it.members} className="shrink-0 text-[11px] font-semibold text-ink-2">{it.members} {it.members === 1 ? "person" : "people"}</span>
         </button>
         {on && (
           <div className="px-2 pb-3">
