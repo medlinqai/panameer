@@ -39,15 +39,16 @@ export function ContactEditor({
   onPhoneCountryChange: (next: string | null) => void;
 }) {
   const countryCode = toCountryCode(address.country);
+  const phoneCode = toCountryCode(phoneCountry) || countryCode;
 
   // Normalize a name to its code, and default the phone country to it.
   useEffect(() => {
     if (countryCode && countryCode !== address.country) {
       onAddressChange({ country: countryCode });
     }
-    if (countryCode && !phoneCountry) onPhoneCountryChange(countryCode);
+    if (phoneCode && phoneCode !== phoneCountry) onPhoneCountryChange(phoneCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryCode]);
+  }, [countryCode, phoneCode]);
 
   return (
     <div className="space-y-3">
@@ -80,7 +81,7 @@ export function ContactEditor({
         id="review-phone"
         value={phone}
         onChange={onPhoneChange}
-        country={phoneCountry}
+        country={phoneCode || null}
         onCountryChange={onPhoneCountryChange}
       />
       <LocationFields
