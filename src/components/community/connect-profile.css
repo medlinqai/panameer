@@ -468,7 +468,8 @@
   letter-spacing: 0.06em;
 }
 /* MORE AIR BETWEEN THE RING AND THE FIGURES, and between the two lines of figures. */
-.pm-score-block .pm-score-ring + span {
+.pm-score-block .pm-score-ring + span,
+.pm-score-block [data-score-ring] + span {
   font-size: 14.5px;
   line-height: 1.55;
 }

@@ -222,13 +222,14 @@ export function ConnectProfile({
         <div className="pm-score-block">
         <CleanSide title="Search Score" titleHref="/score">
           <div className="flex items-center gap-4">
-            <span
-              className="pm-score-ring"
-              style={{
-                background: `conic-gradient(#3A4166 0 ${score.total}%, #C9CDDC ${score.total}% 100%)`,
-              }}
-            >
-              <span className="tabular-nums">{score.total}</span>
+            {/* SVG ring: one stroke width all the way round (a CSS conic ring rendered uneven). */}
+            <span className="relative inline-grid h-[78px] w-[78px] flex-none place-items-center" data-score-ring>
+              <svg viewBox="0 0 78 78" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden>
+                <circle cx="39" cy="39" r="35" fill="none" stroke="#C9CDDC" strokeWidth="6" />
+                <circle cx="39" cy="39" r="35" fill="none" stroke="#3A4166" strokeWidth="6"
+                  strokeDasharray={`${(Math.min(100, Math.max(0, score.total)) / 100) * 2 * Math.PI * 35} ${2 * Math.PI * 35}`} />
+              </svg>
+              <span className="relative text-[23px] font-bold tabular-nums">{score.total}</span>
             </span>
             <span className="min-w-0 text-[13px] leading-snug text-ink-2">
               {/* SCOTT ( item 12): the figure's unit reads "out of 100". */}
