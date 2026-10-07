@@ -17,6 +17,8 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
   const [hue, setHue] = useState<string | null>(brandHue?.toLowerCase() ?? palette[0]?.toLowerCase() ?? null);
   const [look, setLook] = useState<LookId>(savedLook ?? "ink");
   const [on, setOn] = useState(!!brandHue && !!savedLook && themeEnabled !== false);
+  // No brand color yet → "On" would just show Panameer magenta, so the switch waits for a color.
+  const noColor = !hue || hue === DEFAULT_BRAND.toLowerCase();
   const [custom, setCustom] = useState(false);
   const [hexDraft, setHexDraft] = useState(brandHue ?? "");
   const [busy, setBusy] = useState(false);
@@ -130,8 +132,8 @@ export function BrandingStudio({ companyId, companyName, logoUrl, brandHue, them
         title="3 · Dynamic Branding"
         actions={
           <span className="flex items-center gap-2.5 text-[13px] font-semibold text-ink">
-            <span data-switch-label>{on ? `On — everyone at ${companyName} sees this` : "Off — Panameer default"}</span>
-            <button type="button" role="switch" aria-checked={on} aria-label="Dynamic Branding" data-theme-switch disabled={busy} onClick={toggle} className={"relative h-[22px] w-[40px] shrink-0 border border-ink transition-colors disabled:opacity-50 " + (on ? "bg-ink" : "bg-surface")}>
+            <span data-switch-label>{noColor ? "Pick a brand color first" : on ? `On — everyone at ${companyName} sees this` : "Off — Panameer default"}</span>
+            <button type="button" role="switch" aria-checked={on} aria-label="Dynamic Branding" data-theme-switch disabled={busy || noColor} onClick={toggle} className={"relative h-[22px] w-[40px] shrink-0 border border-ink transition-colors disabled:opacity-50 " + (on ? "bg-ink" : "bg-surface")}>
               <span className={"absolute top-[3px] h-[14px] w-[14px] transition-all " + (on ? "left-[21px] bg-surface" : "left-[3px] bg-ink")} />
             </button>
           </span>
