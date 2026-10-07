@@ -9,7 +9,7 @@ export const POLICIES: Policy[] = [
     slug: "community-guidelines",
     title: "Community Guidelines",
     summary:
-      "How providers, recruiters and buyers are expected to behave on Panameer: honest profiles, work delivered as described, and conversations kept professional.",
+      "How providers and buyers are expected to behave on Panameer: honest profiles, work delivered as described, and conversations kept professional.",
   },
   {
     slug: "trust-and-safety",

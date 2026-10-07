@@ -359,7 +359,7 @@ export async function createProviderAccount(
 /** Give an ALREADY-AUTHENTICATED user the provider backbone (brief_Q). */
 export async function ensureProviderBackbone(
   viewer: Viewer,
-  opts: { country?: string; marketingOptIn?: boolean; inviteToken?: string } = {}
+  opts: { country?: string; marketingOptIn?: boolean; inviteToken?: string; enableSelling?: boolean } = {}
 ): Promise<{ created: boolean }> {
   const user = await prisma.user.findUnique({
     where: { id: viewer.userId },
@@ -373,7 +373,8 @@ export async function ensureProviderBackbone(
 
   // A Person that exists but isn't a provider belongs to the buyer side; the
   // provider wizard must not silently convert it.
-  if (person && !person.is_service_provider) {
+  // R1 "Start Selling": an existing buyer turns the seller side on explicitly.
+  if (person && !person.is_service_provider && !opts.enableSelling) {
     throw new OnboardingError(
       "This account isn't a provider profile",
       "NOT_A_PROVIDER"

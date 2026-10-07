@@ -5,7 +5,7 @@ export function SettlementScene() {
   return (
     <FlowScene
       title="Service Procurement — Settlement"
-      sub="Requester to provider. From work delivered to money moved."
+      sub="Buyer to provider. From work delivered to money moved."
       spec={SETTLEMENT_FLOW}
       note={
         <>

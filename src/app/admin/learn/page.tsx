@@ -73,7 +73,7 @@ export default async function Page() {
 
       <Listing
         title="Learning Paths"
-        columns={["Time", "Requester - Company", "Role", "Status", "Start Date", "Message"]}
+        columns={["Time", "Buyer - Company", "Role", "Status", "Start Date", "Message"]}
         action={
           <Link
             href="/admin/setup/learn-authoring"

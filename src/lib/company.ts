@@ -172,6 +172,7 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
     );
   }
 
+  await assertCanLeave(person.id);
   const reuse = await isPlaceholder(person.company_id);
   const companyId = reuse
     ? person.company_id
@@ -267,6 +268,8 @@ export async function defineCompany(viewer: Viewer, input: DefineInput) {
   });
 
   if (!reuse) await moveInto(person.id, company.id, person.company_id);
+  // R1: one seller = one company — defining a new one closes any other membership.
+  await leaveOldCompanies(person.id, company.id);
   await refreshProviderScore(person.id);
 
   return { companyId: company.id, name: company.name, status: "APPROVED" as const };
@@ -406,15 +409,7 @@ export async function joinCompany(viewer: Viewer, input: JoinInput) {
   if (target.id === person.company_id) {
     return { companyId: target.id, name: target.name, status: "APPROVED" as const };
   }
-  // A sole admin can't leave a company that still has other members.
-  const mine = await prisma.companyMembership.findFirst({ where: { person_id: person.id, status: "APPROVED", role: "ADMIN", company_id: { not: target.id } }, select: { company_id: true } });
-  if (mine) {
-    const [others, admins] = await Promise.all([
-      prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", person_id: { not: person.id } } }),
-      prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", role: "ADMIN" } }),
-    ]);
-    if (others > 0 && admins === 1) throw new OnboardingError("Make someone else an admin of your company first — it still has other members.", "INVALID");
-  }
+  await assertCanLeave(person.id, target.id);
 
   // Ask-then-approve (Scott 2026-10-05): every join is a request an admin decides, domain match or not.
   const now = new Date();
@@ -804,4 +799,15 @@ export async function cancelJoinRequest(viewer: Viewer, companyId: string) {
   await prisma.companyMembership.deleteMany({ where: { person_id: person.id, company_id: companyId, status: "PENDING" } });
   await prisma.notification.updateMany({ where: { dedupe_key: { startsWith: `company.join_requested:${companyId}:${person.id}:` }, resolved_at: null }, data: { resolved_at: new Date() } });
   return { ok: true as const };
+}
+
+/** A sole admin can't leave a company that still has other members. */
+async function assertCanLeave(personId: string, exceptCompanyId?: string) {
+  const mine = await prisma.companyMembership.findFirst({ where: { person_id: personId, status: "APPROVED", role: "ADMIN", ...(exceptCompanyId ? { company_id: { not: exceptCompanyId } } : {}) }, select: { company_id: true } });
+  if (!mine) return;
+  const [others, admins] = await Promise.all([
+    prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", person_id: { not: personId } } }),
+    prisma.companyMembership.count({ where: { company_id: mine.company_id, status: "APPROVED", role: "ADMIN" } }),
+  ]);
+  if (others > 0 && admins === 1) throw new OnboardingError("Make someone else an admin of your company first — it still has other members.", "INVALID");
 }

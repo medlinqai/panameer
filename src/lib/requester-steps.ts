@@ -7,7 +7,7 @@ export const REQUESTER_STEPS = [
 export type RequesterStep = (typeof REQUESTER_STEPS)[number];
 
 export const REQUESTER_STEP_LABELS: Record<RequesterStep, string> = {
-  requester_info: "Requester Details",
+  requester_info: "Buyer Details",
   work_location: "Location Details",
   review: "Review",
 };

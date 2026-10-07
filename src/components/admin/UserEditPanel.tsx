@@ -127,7 +127,6 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
           {([
             ["buyer", "Buyer", state.buyer],
             ["provider", "Provider", state.provider],
-            ["coordinator", "Recruiter", state.coordinator],
           ] as const).map(([key, label, on]) => (
             <label key={key} className="flex min-h-11 items-center gap-2 text-[14px] text-ink">
               <input

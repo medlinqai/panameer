@@ -25,7 +25,7 @@ function ComingSoon() {
         <p className="mx-auto mt-3 max-w-md text-[16px] leading-relaxed text-ink-2">
           The Buyer journey — the person who supports the buying — is still
           being built. If you&apos;re the one who <b>needs the work done</b>,
-          that&apos;s a Requester, and that flow is ready now.
+          that&apos;s a Buyer, and that flow is ready now.
         </p>
       </div>
 
@@ -34,7 +34,7 @@ function ComingSoon() {
           href="/join/requester"
           className="bg-ink px-8 py-3 font-semibold text-surface transition-colors hover:bg-ink-hover"
         >
-          Sign Up as a Requester
+          Sign Up as a Buyer
         </Link>
         <Link
           href="/join/buyer"

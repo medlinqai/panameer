@@ -37,7 +37,8 @@ export async function CommunityRail({
       {/* RULING 49b — THE RAIL IS THREE CARDS, IN THIS ORDER */}
 
       {/* ── YOUR TEAMS — RECRUITERS ONLY. ABSENT WHEN NOT YOURS. ─────── */}
-      {owns && (
+      {/* R1: Teams are off. */}
+      {false && owns && (
         <section className="pm-cm-panel">
           <h2>Your Teams</h2>
           {teams.represents.slice(0, 5).map((m) => (

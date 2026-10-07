@@ -285,9 +285,5 @@ export const WORK_METHOD_OPTIONS = [
     description:
       "You sell your time by the hour/month or pre-defined deliverables.",
   },
-  {
-    value: "RECRUITER",
-    title: "I Sell the Services of Others (Recruiter)",
-    description: "You represent other providers and place them on work.",
-  },
+  // R1: the Recruiter option is hidden (data kept): { value: "RECRUITER", title: "I Sell the Services of Others (Recruiter)" }.
 ];

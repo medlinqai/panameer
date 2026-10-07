@@ -11,7 +11,7 @@ export function jobsFor(p: UserJobInput): string[] {
   return [
     p.is_service_coordinator ? "Recruiter" : null,
     p.is_service_provider ? "Provider" : null,
-    p.buyerProfile ? "Buyer" : p.requesterProfile ? "Requester" : null,
+    p.buyerProfile ? "Buyer Admin" : p.requesterProfile ? "Buyer" : null,
   ].filter((j): j is string => j !== null);
 }
 
@@ -25,17 +25,17 @@ export const JOB_TILES: {
   label: string;
   tone: "neutral" | "amber" | "emerald" | "emeraldDeep" | "emeraldSolid";
 }[] = [
-  { key: "REQUESTER", label: "Requesters", tone: "amber" },
-  { key: "BUYER", label: "Buyers", tone: "emerald" },
-  { key: "RECRUITER", label: "Recruiters", tone: "emeraldDeep" },
+  // R1: the user-facing word is Buyer (internal key stays REQUESTER); recruiters are hidden.
+  { key: "REQUESTER", label: "Buyers", tone: "amber" },
+  { key: "BUYER", label: "Buyer Admins", tone: "emerald" },
   { key: "PROVIDER", label: "Providers", tone: "emeraldSolid" },
   { key: "ADMINISTRATOR", label: "Administrators", tone: "neutral" },
 ];
 
 /** What `jobsFor` returns, keyed the way `JOB_TILES` and `?job=` spell it. */
 const JOB_BY_KEY: Record<string, string> = {
-  REQUESTER: "Requester",
-  BUYER: "Buyer",
+  REQUESTER: "Buyer",
+  BUYER: "Buyer Admin",
   RECRUITER: "Recruiter",
   PROVIDER: "Provider",
 };

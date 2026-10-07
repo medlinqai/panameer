@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StartBuyingButton } from "@/components/onboarding/StartBuyingButton";
 
 export function NoProfileYet({
   /** "buyer" or "requester" — the path they were trying to start. */
@@ -24,14 +25,15 @@ export function NoProfileYet({
       <div className="w-full max-w-md text-center">
         {/* TEMPLATE LITERALS, NOT JSX TEXT WITH `{path}` INLINE MID-SENTENCE. */}
         <h1 className="text-2xl font-extrabold">
-          {`This account has no ${path} profile yet`}
+          {`This account has no ${path === "requester" ? "buyer" : path} profile yet`}
         </h1>
         <p className="mt-3 text-ink-2">
-          {`You’re signed in, but nothing on the ${path} path has been set up for ` +
+          {`You’re signed in, but nothing on the ${path === "requester" ? "buying" : path} side has been set up for ` +
             `this account. Setting up your company is the first step either way — ` +
             `start there and we’ll pick up from what you already have.`}
         </p>
         <div className="mt-6 flex flex-col items-center gap-3">
+          {path === "requester" && <StartBuyingButton />}
           <Link
             href={companyHref}
             className="bg-ink px-7 py-3 text-[15px] font-semibold text-surface hover:bg-ink-hover"

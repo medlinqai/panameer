@@ -130,8 +130,8 @@ export async function ConnectHome({ viewer }: { viewer: Viewer }) {
         </section>
       )}
 
-      {/* 4 · TEAMS */}
-      <section className="space-y-3">
+      {/* R1: Teams are off. */}
+      <section className="hidden">
         <Heading>Teams</Heading>
         <div className="border-t border-line py-5">
           <p className="text-[14px] leading-relaxed text-ink-2">

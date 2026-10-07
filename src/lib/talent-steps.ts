@@ -52,7 +52,7 @@ export async function talentSteps(): Promise<TalentStepLabel[]> {
     summary: "Sell Direct to Oracle Licensees",
     // DRAFT — CC's words, not Scott's — AND HALF-UNBACKED. THE SHELF EXISTS
     description:
-      "Put your products in front of the organizations running Oracle — searchable by the systems you actually know, without a recruiter in between.",
+      "Put your products in front of the organizations running Oracle — searchable by the systems you actually know, with nobody in between.",
   },
   ];
 }

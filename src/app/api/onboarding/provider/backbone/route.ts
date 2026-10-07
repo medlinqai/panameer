@@ -11,6 +11,7 @@ const schema = z.object({
   country: z.string().trim().max(80).optional(),
   marketingOptIn: z.boolean().optional(),
   inviteToken: z.string().optional(),
+  enableSelling: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {

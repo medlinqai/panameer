@@ -83,6 +83,9 @@ const nextConfig: NextConfig = {
     */
     const homeShowsStatus = process.env.HOME_SHOWS_STATUS === "1";
     return [
+      // R1: Teams and recruiter-only pages are off (data kept).
+      { source: "/community/teams/:path*", destination: "/community/connections", permanent: true },
+      { source: "/coordinator/:path*", destination: "/dashboard", permanent: true },
       // C-E003: Colleagues became Connections.
       { source: "/community/colleagues/:path*", destination: "/community/connections/:path*", permanent: true },
       // C-E002: status.panameer.com serves only the status page; everything else 308s to the app.

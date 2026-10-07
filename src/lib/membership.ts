@@ -11,10 +11,10 @@ function plan(me: Me): Plan {
 function roleWord(me: Me): string | null {
   const r = me.person?.roles;
   if (!r) return null;
-  if (r.isServiceCoordinator) return "Recruiter";
+  // R1: recruiters are off; a coordinator is labelled by their other roles.
   if (r.isServiceProvider) return "Provider";
   if (r.isBuyer) return "Buyer";
-  if (r.isRequester) return "Requester";
+  if (r.isRequester) return "Buyer";
   if (r.isSupport) return "Support";
   return null;
 }

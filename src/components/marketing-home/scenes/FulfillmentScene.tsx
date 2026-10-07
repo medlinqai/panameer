@@ -5,7 +5,7 @@ export function FulfillmentScene() {
   return (
     <FlowScene
       title="Service Procurement — Fulfillment"
-      sub="Requester to provider. Every hand-off, and which system it happens in."
+      sub="Buyer to provider. Every hand-off, and which system it happens in."
       spec={FULFILLMENT_FLOW}
       note={
         <>

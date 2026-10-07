@@ -337,6 +337,13 @@ export function AccountMenu({
           </div>
 
           <PathMenuBlock onNavigate={close} rowClass={rowClass} />
+          {/* R1: switch the other side on — buy and sell are per work order, not account types. */}
+          {me?.person?.roles && !me.person.roles.isServiceProvider && (
+            <MenuRow href="/join/provider" label="Start Selling" value={null} onClick={close} className={rowClass} />
+          )}
+          {me?.person?.roles && !me.person.roles.isRequester && !me.person.roles.isServiceBuyer && (
+            <MenuRow href="/join/requester" label="Start Buying" value={null} onClick={close} className={rowClass} />
+          )}
           {/* MY COMPANY (E099, and it REVERSES E225) */}
 
           {/* ONE LIST, IN 89f's ORDER WS-A) */}

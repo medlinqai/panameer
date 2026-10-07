@@ -98,7 +98,8 @@ export function RequesterHome({
       </section>
 
       {}
-      {recruiters.length > 0 && (
+      {/* R1: recruiters are off. */}
+      {false && recruiters.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-[22px] font-bold tracking-[-0.3px]">
             Work With a Recruiter

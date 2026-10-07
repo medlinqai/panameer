@@ -30,7 +30,7 @@ export const ADMIN_PAGES: Record<string, AdminPageSpec> = {
   "work-requests": {
     tiles: WORK_TILES,
     listingTitle: "Work Requests",
-    columns: ["Time", "Requester - Company", "Role", "Status", "Start Date", "Message"],
+    columns: ["Time", "Buyer - Company", "Role", "Status", "Start Date", "Message"],
     what: "work requests",
     why: WHY_TRANSACTION,
     volume: [

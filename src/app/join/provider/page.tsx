@@ -460,7 +460,8 @@ setScreen(target);
 
         /** PJv2 WS1 — honour the user-type fork from `/join`. */
         const wanted = new URLSearchParams(window.location.search).get("type");
-        if (wanted === "recruiter" && !s.profile?.workMethod) {
+        // R1: recruiters are off — the ?type=recruiter fork no longer sets anyone up as one.
+        if (wanted === "recruiter-r2" && !s.profile?.workMethod) {
           // `work_method` is a SECTION now, not a wizard step, so it goes
           // through the owner-scoped section endpoint; then re-read the state so
           // the step list reflects the recruiter itinerary.
@@ -884,9 +885,20 @@ setScreen(target);
     return (
       <div className="grid min-h-screen place-items-center bg-white px-6 text-center font-body text-ink">
         <div>
-          <h1 className="text-2xl font-extrabold">You&apos;re already signed in</h1>
-          <p className="mt-2 text-ink-2">This account isn&apos;t a provider profile.</p>
-          <a href="/dashboard" className="mt-4 inline-block font-bold text-magenta">
+          <h1 className="text-2xl font-extrabold">Start Selling</h1>
+          <p className="mt-2 text-ink-2">Turn on the selling side of your account — your buying stays as it is.</p>
+          <button
+            type="button"
+            data-start-selling
+            onClick={async () => {
+              const r = await fetch("/api/onboarding/provider/backbone", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enableSelling: true }) }).catch(() => null);
+              if (r?.ok) window.location.reload();
+            }}
+            className="mt-4 inline-flex min-h-[44px] items-center bg-ink px-5 font-bold text-surface"
+          >
+            Start Selling
+          </button>
+          <a href="/dashboard" className="mt-3 block font-bold text-magenta">
             Go to Dashboard →
           </a>
         </div>

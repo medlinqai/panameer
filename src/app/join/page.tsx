@@ -11,11 +11,6 @@ type Job = "provider" | "recruiter" | "requester" | "buyer-admin";
 const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> = {
   seller: [
     {
-      id: "recruiter",
-      title: "Recruiter",
-      description: "I sell service providers to service buyers",
-    },
-    {
       id: "provider",
       title: "Service Provider",
       description: "I sell my services to service buyers",
@@ -24,7 +19,7 @@ const JOBS: Record<UserType, { id: Job; title: string; description: string }[]> 
   buyer: [
     {
       id: "requester",
-      title: "Requester",
+      title: "Buyer",
       description: "I hire talent and shop for service products",
     },
     {
@@ -98,8 +93,9 @@ function JoinRouter() {
   const go = () => {
     if (!choice) return;
 
+    // R1: one question — Buy or Sell — picks the starting screens; the other side switches on later.
     if (step === 1) {
-      router.push(`/join?type=${choice}`);
+      router.push(withCtx(choice === "seller" ? "/join/provider" : "/join/requester"));
       return;
     }
 
@@ -127,16 +123,13 @@ function JoinRouter() {
       ? [
           {
             id: "buyer" as const,
-            title: "Service Buyer",
-            // SCOTT'S COPY, VERBATIM , 2026-08-31)
-            description:
-              "I buy services",
+            title: "Buy",
+            description: "Hire people and buy service products for your company.",
           },
           {
             id: "seller" as const,
-            title: "Service Seller",
-            description:
-              "I sell services",
+            title: "Sell",
+            description: "Sell your services or service products through your company.",
           },
         ]
       : JOBS[userType!];
@@ -170,13 +163,13 @@ function JoinRouter() {
         {/* E161 — the H1 names the QUESTION on the page. Both steps said "Welcome */}
         <h1 className="text-[28px] font-extrabold tracking-[-0.6px]">
           {step === 1
-            ? "Welcome to Panameer"
+            ? "What do you want to do first?"
             : userType === "seller"
               ? "Whose Services Do You Sell?"
               : "What Do You Do on the Buying Side?"}
         </h1>
         {step === 1 ? (
-          <p className="mt-2 text-[17px] text-ink-2">Which describes you best?</p>
+          <p className="mt-2 text-[17px] text-ink-2">You can switch the other side on later from your account menu.</p>
         ) : (
           <p className="mt-2 text-[17px] text-ink-2">
             {userType === "seller"

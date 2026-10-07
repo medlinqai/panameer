@@ -130,7 +130,7 @@ export type FlowDoc = {
   rule?: boolean;
 };
 
-export type FlowActor = "Requester" | "Provider" | "Panameer";
+export type FlowActor = "Buyer" | "Provider" | "Panameer";
 
 export type FlowStep = {
   y: number;
@@ -181,10 +181,10 @@ export const FULFILLMENT_FLOW: FlowSpec = {
     { y: 472, h: 46, lines: ["Purchase Order", "Acknowledge"] },
   ],
   steps: [
-    { y: 95, actor: "Requester", label: "Creates Work Request" },
-    { y: 140, actor: "Requester", label: "Invites Providers to Bid", follows: true },
+    { y: 95, actor: "Buyer", label: "Creates Work Request" },
+    { y: 140, actor: "Buyer", label: "Invites Providers to Bid", follows: true },
     { y: 185, actor: "Provider", label: "Proposes Rate" },
-    { y: 230, actor: "Requester", label: "Accepts Rate", follows: true },
+    { y: 230, actor: "Buyer", label: "Accepts Rate", follows: true },
     { y: 310, actor: "Panameer", label: "Creates Work Order" },
     { y: 355, actor: "Panameer", label: "Invites Provider to Accept WO", follows: true },
     { y: 435, actor: "Provider", label: "Accepts Work Order" },
@@ -220,10 +220,10 @@ export const SETTLEMENT_FLOW: FlowSpec = {
     { y: 372, h: 46, lines: ["Payment"] },
   ],
   steps: [
-    { y: 95, actor: "Requester", label: "Manages Work Order" },
+    { y: 95, actor: "Buyer", label: "Manages Work Order" },
     { y: 140, actor: "Panameer", label: "Manages Timeline via Tracker" },
     { y: 185, actor: "Provider", label: "Creates Settlement Trans." },
-    { y: 230, actor: "Requester", label: "Approves Settlement Trans.", follows: true },
+    { y: 230, actor: "Buyer", label: "Approves Settlement Trans.", follows: true },
     { y: 380, actor: "Panameer", label: "Auto-Creates Payment" },
   ],
   connectors: [

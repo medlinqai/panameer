@@ -38,16 +38,5 @@ export const PLANS: PlanDefinition[] = [
       "Earnings privacy — hide your rate history from buyers",
     ],
   },
-  {
-    tier: "Pro",
-    price: "Contact us",
-    cadence: "",
-    tagline: "For recruiters and agencies representing several providers.",
-    features: [
-      "Everything in Plus",
-      "Represent multiple providers under one login",
-      "Team billing and consolidated withdrawals",
-      "Dedicated onboarding support",
-    ],
-  },
+  // R1: the Pro plan (recruiters / agencies representing several providers) is hidden; data unchanged.
 ];

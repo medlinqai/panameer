@@ -13,7 +13,7 @@ import { isPhoneComplete, parseStoredPhone, toE164 } from "@/lib/phone";
 import { REQUESTER_STEPS, REQUESTER_STEP_LABELS, REQUESTER_WORK_STEPS, type RequesterStep } from "@/lib/requester-steps";
 
 const LABELS: Record<RequesterStep, string> = {
-  requester_info: "Requester Information",
+  requester_info: "Buyer Information",
   work_location: "Work Location",
   review: "Review",
 };

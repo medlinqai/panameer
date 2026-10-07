@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
 
       <Listing
         title="New Contracts Last 30 Days"
-        columns={["Time", "Requester - Provider", "Role", "Status", "Start Date", "Message"]}
+        columns={["Time", "Buyer - Provider", "Role", "Status", "Start Date", "Message"]}
         empty={
           <StubEmpty
             what="contracts"
