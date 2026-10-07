@@ -37,6 +37,7 @@ export function SignUpForm({
   title,
   callbackUrl = "/join",
   altPrompt,
+  hideCountry = false,
 }: {
   values: SignUpValues;
   onChange: (patch: Partial<SignUpValues>) => void;
@@ -48,6 +49,8 @@ export function SignUpForm({
   callbackUrl?: string;
   /** The "wrong side of the marketplace?" link under the form. */
   altPrompt?: { label: string; href: string; cta: string };
+  /** Provider sign-up asks Country once, on the Photo & Details step. */
+  hideCountry?: boolean;
 }) {
   const passwordTooShort =
     values.password.length > 0 && values.password.length < 8;
@@ -164,6 +167,7 @@ export function SignUpForm({
             )}
         </Field>
 
+        {!hideCountry && (
         <Field label="Country">
           <select
             value={values.country}
@@ -179,6 +183,7 @@ export function SignUpForm({
             ))}
           </select>
         </Field>
+        )}
 
         <label className="flex cursor-pointer items-start gap-3">
           <input

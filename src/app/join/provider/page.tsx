@@ -961,6 +961,7 @@ setScreen(target);
           emailLocked={!!inviteToken}
           // EXPLICIT, AND IT IS LOAD-BEARING , 2026-08-30).
           callbackUrl="/join/provider"
+          hideCountry
         />
       </PlainShell>
     );
