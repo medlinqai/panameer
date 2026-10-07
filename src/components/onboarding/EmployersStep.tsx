@@ -243,7 +243,10 @@ export function EmployersStep({
   const knownProjects = new Map<string, EmployerProject>();
   for (const p of projects) knownProjects.set(p.id, p);
   for (const p of detached) knownProjects.set(p.id, p);
-  const unplaced = [...knownProjects.values()].filter((p) => !nested.has(p.id));
+  // Rows deleted here (or already gone on the server) stay hidden — `projects`
+  // is the page-load list and isn't refreshed after a delete.
+  const [gone, setGone] = useState<Set<string>>(new Set());
+  const unplaced = [...knownProjects.values()].filter((p) => !nested.has(p.id) && !gone.has(p.id));
 
   // IT RETURNS THE PAYLOAD, NOT A BOOLEAN .
   const post = async (
@@ -887,7 +890,12 @@ export function EmployersStep({
                   onClick={() => {
                     if (!window.confirm(`Delete "${pr.name}"?`)) return;
                     setDetached((d) => d.filter((x) => x.id !== pr.id));
-                    void post({ action: "deleteProject", projectId: pr.id });
+                    setGone((g) => new Set(g).add(pr.id));
+                    void (async () => {
+                      const r = await post({ action: "deleteProject", projectId: pr.id });
+                      // "Project not found" = already gone; nothing to report.
+                      if (!r) onError(null);
+                    })();
                   }}
                   aria-label={`Delete ${pr.name}`}
                   title="Delete this project"

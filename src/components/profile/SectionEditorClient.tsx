@@ -188,28 +188,27 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
             draft.address ?? { country: "", line1: "", line2: "", city: "", state: "", postalCode: "" }
           }
           onAddressChange={(p2) =>
-            patch({
+            // Functional merge: autofill sends several fields in one tick.
+            setDraft((d) => ({
+              ...d,
               address: {
-                ...(draft.address ?? {
-                  country: "", line1: "", line2: "", city: "", state: "", postalCode: "",
-                }),
+                ...(d.address ?? { country: "", line1: "", line2: "", city: "", state: "", postalCode: "" }),
                 ...p2,
               },
-            })
+            }))
           }
           phone={draft.phone ?? ""}
           onPhoneChange={(next) => patch({ phone: next })}
           // NULLABLE ON PURPOSE : `PhoneField` refuses to validate
           phoneCountry={draft.address?.country || null}
           onPhoneCountryChange={(next) =>
-            patch({
+            setDraft((d) => ({
+              ...d,
               address: {
-                ...(draft.address ?? {
-                  country: "", line1: "", line2: "", city: "", state: "", postalCode: "",
-                }),
+                ...(d.address ?? { country: "", line1: "", line2: "", city: "", state: "", postalCode: "" }),
                 country: next ?? "",
               },
-            })
+            }))
           }
         />
       );

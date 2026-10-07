@@ -344,6 +344,8 @@ export default function JoinProviderPage() {
 
   // WHICH SECTION THE REVIEW IS EDITING IN PLACE WS-1)
   const [editSection, setEditSection] = useState<EditSection>(null);
+  // An error from one editor shouldn't show up inside the next one opened.
+  useEffect(() => { setError(null); }, [editSection]);
   /** WS-B — which imported-but-unmatched terms the provider has ticked. */
   const [pickedSuggestions, setPickedSuggestions] = useState<string[]>([]);
   const [suggestBusy, setSuggestBusy] = useState(false);
@@ -678,8 +680,10 @@ setScreen(target);
 
   /** The address draft. Hoisted to component scope in WS8 — the Photo & Details */
   const addr = profile.address ?? emptyAddress(acct.country);
+  // Merge into the LATEST address, not this render's copy — browser autofill
+  // fires several field changes in one tick and the stale copy kept only the last.
   const setAddr = (patch: Partial<AddressDraft>) =>
-    setProfile((p) => ({ ...p, address: { ...addr, ...patch } }));
+    setProfile((p) => ({ ...p, address: { ...(p.address ?? emptyAddress(acct.country)), ...patch } }));
 
   /** Scroll + focus one of the identity inputs (`review-<field>`). */
   const focusReviewField = (field: string) => {
