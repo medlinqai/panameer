@@ -288,6 +288,23 @@ export function ConnectProfile({
                 </Link>
               )}
             </div>
+            {/* THE COMPANY, UNDER THE PHOTO (Scott 2026-10-07, LinkedIn-style): logo + name, one link. */}
+            {p.sellingCompany ? (
+              <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company className="group mt-3 block">
+                {p.sellingCompany.logo_url && (
+                  <span className="block border border-line bg-white p-2" style={{ background: "#ffffff" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.sellingCompany.logo_url} alt="" className="mx-auto block max-h-[64px] w-full object-contain" />
+                  </span>
+                )}
+                <span className="mt-1.5 block text-[14px] font-bold text-ink group-hover:underline">{p.sellingCompany.name}</span>
+              </Link>
+            ) : owner ? (
+              <p data-profile-company className="mt-3 text-[13px] text-ink-2">
+                No company yet ·{" "}
+                <Link href="/company?join=1#join" className="font-bold text-magenta-dark underline underline-offset-2">Add Company</Link>
+              </p>
+            ) : null}
           </div>
         </section>
         {/* THE SCORE BLOCK IS RENDERED HERE, INSIDE `pm-rail-top`, so the phone row can put */}
@@ -579,29 +596,6 @@ export function ConnectProfile({
               {owner && <CleanEdit href={editHref("title")} title="Title" />}
             </p>
           )}
-
-          {/* THE COMPANY — Panameer contracts with companies, so it leads (Scott 2026-10-07). */}
-          {p.sellingCompany ? (
-            // LinkedIn-style: small logo + bold name, the whole line one link to the company.
-            <p data-profile-company className="mt-2">
-              <Link href={`/companies/${p.sellingCompany.id}`} className="group inline-flex items-center gap-3 text-[16px] font-bold text-ink">
-                {p.sellingCompany.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.sellingCompany.logo_url} alt="" className="h-10 w-auto max-w-[160px] object-contain" />
-                ) : (
-                  <span aria-hidden className="grid h-10 w-10 place-items-center bg-[#E8EAF1] text-[16px] font-bold text-[#5C6485]">
-                    {p.sellingCompany.name.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                <span className="group-hover:underline">{p.sellingCompany.name}</span>
-              </Link>
-            </p>
-          ) : owner ? (
-            <p data-profile-company className="mt-2 text-[14px] text-ink-2">
-              No company yet ·{" "}
-              <Link href="/company?join=1#join" className="font-bold text-magenta-dark underline underline-offset-2">Add Company</Link>
-            </p>
-          ) : null}
 
           {/* THE META LINE. EVERY ITEM IS A FACT THAT EXISTS */}
           <div className="mt-3.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[14px] text-ink-2">
