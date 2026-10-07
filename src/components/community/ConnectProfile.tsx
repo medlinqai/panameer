@@ -292,10 +292,8 @@ export function ConnectProfile({
             {p.sellingCompany ? (
               <Link href={`/companies/${p.sellingCompany.id}`} data-profile-company className="group mt-3 block">
                 {p.sellingCompany.logo_url && (
-                  <span className="block border border-line bg-white p-2" style={{ background: "#ffffff" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.sellingCompany.logo_url} alt="" className="mx-auto block max-h-[64px] w-full object-contain" />
-                  </span>
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.sellingCompany.logo_url} alt="" className="block max-h-[44px] max-w-full object-contain object-left" />
                 )}
                 <span className="mt-1.5 block text-[14px] font-bold text-ink group-hover:underline">{p.sellingCompany.name}</span>
               </Link>
