@@ -120,26 +120,26 @@ export type LifecycleWho = "you" | "company" | "both";
 export type LifecycleStep = { key: string; step: string; status: string; who: LifecycleWho; gate: boolean; admin?: boolean; desc: string; unlocks?: string; href: string; next: string; time?: string };
 
 export const LIFECYCLE: LifecycleStep[] = [
-  { key: "account", step: "Create Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "create your account" },
-  { key: "verify", step: "Verify Account", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "verify your account" },
-  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "complete your profile" },
-  { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "add your company" },
-  { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, desc: "Admin adds legal name, tax ID and W-9 (US) or W-8BEN-E (outside US).", unlocks: "signing work orders", href: "/company/legal", next: "validate your company" },
-  { key: "contract", step: "Get Contracted", status: "Contracted", who: "both", gate: true, desc: "Two validated companies sign a work order.", href: "/orders", next: "get contracted" },
-  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to a bank account in the company's legal name.", href: "/company/legal#payout", next: "get paid" },
+  { key: "account", step: "Create Account", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Create Your Account" },
+  { key: "verify", step: "Verify Account", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Verify Your Account" },
+  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "Complete Your Profile" },
+  { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "Add Your Company" },
+  { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, desc: "Admin adds legal name, tax ID and W-9 (US) or W-8BEN-E (outside US).", unlocks: "signing work orders", href: "/company/legal", next: "Validate Your Company" },
+  { key: "contract", step: "Get Contracted", status: "Contracted", who: "both", gate: true, desc: "Two validated companies sign a work order.", href: "/orders", next: "Get Contracted" },
+  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to a bank account in the company's legal name.", href: "/company/legal#payout", next: "Get Paid" },
 ];
 
 // Provider road (2026-10-07): 9 stops; banking sits in Validate Company. Buyers keep LIFECYCLE.
 export const PROVIDER_ROAD: LifecycleStep[] = [
-  { key: "account", step: "Register", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "register", time: "1 min" },
-  { key: "verify", step: "Verify", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "verify your account", time: "1 min" },
-  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "complete your profile", time: "about 10 min" },
-  { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "add your company", time: "2 min" },
-  { key: "list", step: "Sell Products / Services", status: "Listed", who: "you", gate: false, desc: "Post a service product, or send a proposal on a work request.", href: "/my-services", next: "post a service or send a proposal", time: "10 min each" },
-  { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, admin: true, desc: "Admin adds legal name, tax ID, W-9 (US) or W-8BEN-E (outside US), and a payout account in the legal name.", unlocks: "signing work orders", href: "/company/legal", next: "validate your company", time: "8 min · tax form + bank" },
-  { key: "contract", step: "Do Work", status: "Contracted", who: "both", gate: true, desc: "Sign a work order with a validated buyer.", href: "/orders", next: "sign a work order", time: "signed work order" },
-  { key: "request", step: "Request Payment", status: "Requested", who: "you", gate: false, desc: "Send a payment request — a timesheet, a milestone…", href: "/orders", next: "request payment", time: "5 min each" },
-  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to the company's bank account in its legal name.", href: "/company/legal#payout", next: "get paid", time: "automatic" },
+  { key: "account", step: "Register", status: "Registered", who: "you", gate: false, desc: "One account per email.", href: "/join", next: "Register", time: "1 min" },
+  { key: "verify", step: "Verify", status: "Verified", who: "you", gate: false, desc: "Click the link sent to your email.", unlocks: "Learn, Connect", href: "/join", next: "Verify Your Account", time: "1 min" },
+  { key: "profile", step: "Complete Profile", status: "Profiled", who: "you", gate: true, desc: "No empty sections: photo, bio, 3 skills, a specialization, rate, language, location.", unlocks: "being found, posting, proposals", href: "/profile", next: "Complete Your Profile", time: "about 10 min" },
+  { key: "link", step: "Add Company", status: "Linked", who: "you", gate: false, desc: "Add your company, or join it by website — a one-person business is a company too.", href: "/company?join=1#join", next: "Add Your Company", time: "2 min" },
+  { key: "list", step: "Sell Products / Services", status: "Listed", who: "you", gate: false, desc: "Post a service product, or send a proposal on a work request.", href: "/my-services", next: "Post a Service or Send a Proposal", time: "10 min each" },
+  { key: "validate", step: "Validate Company", status: "Validated", who: "company", gate: true, admin: true, desc: "Admin adds legal name, tax ID, W-9 (US) or W-8BEN-E (outside US), and a payout account in the legal name.", unlocks: "signing work orders", href: "/company/legal", next: "Validate Your Company", time: "8 min · tax form + bank" },
+  { key: "contract", step: "Do Work", status: "Contracted", who: "both", gate: true, desc: "Sign a work order with a validated buyer.", href: "/orders", next: "Sign a Work Order", time: "signed work order" },
+  { key: "request", step: "Request Payment", status: "Requested", who: "you", gate: false, desc: "Send a payment request — a timesheet, a milestone…", href: "/orders", next: "Request Payment", time: "5 min each" },
+  { key: "paid", step: "Get Paid", status: "Paid", who: "both", gate: false, desc: "Paid to the company's bank account in its legal name.", href: "/company/legal#payout", next: "Get Paid", time: "automatic" },
 ];
 
 export const LIFECYCLE_WHO: Record<LifecycleWho, { label: string; bg: string; fg: string }> = {
