@@ -163,7 +163,7 @@ function HealthRing({ checks }: { checks: boolean[] }) {
     >
       <g fill="none" strokeWidth="22">
         {checks.map((ok, i) => (
-          <path key={i} d={arc(i)} className={ok ? "stroke-[#3A4166]" : "stroke-magenta"} />
+          <path key={i} d={arc(i)} className={ok ? "stroke-ink" : "stroke-magenta"} />
         ))}
       </g>
       <g className="stroke-surface" strokeWidth="4">

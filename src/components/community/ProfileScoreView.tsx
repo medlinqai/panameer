@@ -265,9 +265,9 @@ function Row({
 
 // Both answered states count, so both paint as filled; the class still tells them apart.
 // Health's palette: answered (filled or "I have none") = solid ink, open = solid magenta.
-// Done vs not done, two brand colours (Scott 2026-10-07): completed = #3A4166 (heading alt),
-// not completed = #C9CDDC (borders). Softer than black; the logo-purple steps below are kept unused.
-const DONE = "#3A4166";
+// Done vs not done (Scott 2026-10-07): completed = ink (he tried #3A4166, black looks better),
+// not completed = #C9CDDC (brand Borders).
+const DONE = "var(--color-ink)";
 
 
 function paintClass(state: ScoreLine["state"]): string {

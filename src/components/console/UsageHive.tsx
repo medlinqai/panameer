@@ -51,7 +51,7 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
               <g style={{ transform: `translate(${x}px, ${y}px)`, transition: still ? "none" : "transform 1s cubic-bezier(.4,.1,.2,1)" }}>
                 <path
                   d={HEX}
-                  style={{ fill: active ? "#3A4166" : "var(--color-surface)", stroke: active ? "#3A4166" : "#C9CDDC" }}
+                  style={{ fill: active ? "var(--color-ink)" : "var(--color-surface)", stroke: active ? "var(--color-ink)" : "#C9CDDC" }}
                   strokeWidth={active ? 2 : 1.6}
                   strokeDasharray={active ? undefined : "5 4"}
                 />
@@ -64,7 +64,7 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
       </svg>
       <ul className="pm-hive-key mb-1 flex justify-center gap-3.5 text-[11px] text-ink-3" aria-label="What the shading means">
         <li className="flex items-center">
-          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 bg-[#3A4166]" />
+          <span aria-hidden className="mr-1.5 inline-block h-2.5 w-2.5 bg-ink" />
           Activity
         </li>
         <li className="flex items-center">
