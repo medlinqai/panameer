@@ -80,7 +80,7 @@ export async function fiveThings(viewer: Viewer) {
   const hidden = !!pp && (!!pp.paused_at || pp.completeness < 80);
   const waiting = [
     { key: "messages", icon: "message", value: String(messages), label: messages === 1 ? "new message" : "new messages", href: "/messages", problem: false },
-    { key: "requests", icon: "person", value: String(requests), label: "asking to join", href: "/company/people#asking", problem: false },
+    { key: "requests", icon: "person", value: String(requests), label: "asking to join", href: "/company/team#asking", problem: false },
     { key: "visibility", icon: "alert", value: hidden ? "Hidden" : "Visible", label: hidden ? "your profile is off" : "buyers can find you", href: "/profile", problem: hidden },
     { key: "credentials", icon: "badge", value: String(credentials), label: credentials === 1 ? "credential earned" : "credentials earned", href: "/profile#certifications", problem: false },
   ];

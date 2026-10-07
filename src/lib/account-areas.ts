@@ -13,7 +13,7 @@ export const AREA_EYEBROW: Record<Area, string> = {
 export function companyTabs(isAdmin: boolean): AreaTab[] {
   const all: AreaTab[] = [
     { label: "Overview", href: "/company" },
-    { label: "Team", href: "/company/people" },
+    { label: "Team", href: "/company/team" },
     { label: "Legal, Tax & Banking 🔒", href: "/company/legal" },
     { label: "Branding", href: "/company/branding" },
   ];

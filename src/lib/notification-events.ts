@@ -469,7 +469,7 @@ export const NOTIFICATION_EVENTS = {
     requiresAction: true,
     title: (v) => `${str(v, "askerName", "Someone")} asked to join ${str(v, "companyName", "your company")}`,
     body: () => "Approve or decline on your company's People tab.",
-    href: () => "/company/people",
+    href: () => "/company/team",
   },
   "company.join_approved": {
     event: "company.join_approved",
