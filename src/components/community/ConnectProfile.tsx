@@ -225,7 +225,7 @@ export function ConnectProfile({
             <span
               className="pm-score-ring"
               style={{
-                background: `conic-gradient(var(--color-ink) 0 ${score.total}%, var(--color-line) ${score.total}% 100%)`,
+                background: `conic-gradient(#3A4166 0 ${score.total}%, #C9CDDC ${score.total}% 100%)`,
               }}
             >
               <span className="tabular-nums">{score.total}</span>
