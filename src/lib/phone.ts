@@ -125,9 +125,21 @@ export function digitsOf(value: string): string {
   return value.replace(/\D+/g, "");
 }
 
+/** Digits without the trunk "0" or a typed "+44"-style prefix — how a UK number
+ *  is usually written ("07911 123456") must not be chopped to 10 digits. */
+function nationalDigits(value: string, country: string | null | undefined): string {
+  const digits = digitsOf(value);
+  const iso = isoFor(country);
+  if (!iso || !digits) return digits;
+  const typedIntl = value.trim().startsWith("+");
+  if (!typedIntl && !digits.startsWith("0")) return digits;
+  const parsed = parsePhoneNumberFromString(typedIntl ? value.trim() : digits, iso);
+  return parsed?.nationalNumber ? String(parsed.nationalNumber) : digits;
+}
+
 /** What the input should display for what has been typed so far. */
 export function formatPhone(value: string, country: string | null | undefined): string {
-  const digits = digitsOf(value);
+  const digits = nationalDigits(value, country);
   if (!digits) return "";
   const rule = ruleFor(country);
   if (rule) return rule.format(digits).replace(/[\s(-]+$/, "");
@@ -141,7 +153,7 @@ export function formatPhone(value: string, country: string | null | undefined): 
 
 /** HOW THE PHONE'S OWN COUNTRY IS PERSISTED WS-2a) */
 export function toE164(value: string, country: string | null | undefined): string | null {
-  const digits = digitsOf(value);
+  const digits = nationalDigits(value, country);
   if (!digits) return null;
   const iso = isoFor(country);
   if (!iso) return null;
@@ -179,7 +191,7 @@ export function validatePhone(
   if (!raw) return { ok: false, reason: "Add a phone number so buyers can reach you." };
   if (/[a-z]/i.test(raw)) return { ok: false, reason: "Numbers only, please." };
 
-  const digits = digitsOf(raw);
+  const digits = nationalDigits(raw, country);
   const rule = ruleFor(country);
 
   // THE LIBRARY JUDGES EVERY COUNTRY NOW WS-B, ruling 3)
