@@ -99,12 +99,12 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       cy="150"
                       r={R}
                       fill="none"
-                      strokeWidth={!lineCounts(s.line.state) ? (hover === s.line.key ? 12 : 8) : hover === s.line.key ? 30 : 22}
+                      strokeWidth={hover === s.line.key ? 30 : 22}
                       strokeLinecap="butt"
                       strokeDasharray={`${s.len} ${C - s.len}`}
                       strokeDashoffset={s.offset}
                       className={"pm-score-seg " + paintClass(s.line.state) + (hover && hover !== s.line.key ? " pm-score-dim" : "")}
-                      style={{ animationDelay: `${i * 70}ms`, ...(lineCounts(s.line.state) ? { stroke: stepShade(i, segments.length) } : {}) }}
+                      style={{ animationDelay: `${i * 70}ms`, ...(lineCounts(s.line.state) ? { stroke: DONE } : {}) }}
                       onMouseEnter={() => setHover(s.line.key)}
                       onMouseLeave={() => setHover(null)}
                       onFocus={() => setHover(s.line.key)}
@@ -179,7 +179,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
               return (
                 <div key={g} className="mb-4" data-score-group={g}>
                   <h2 className="mb-1.5 flex items-baseline justify-between text-[19px] font-bold">
-                    <span className="flex items-center gap-2"><span aria-hidden className="inline-block h-3 w-3" style={{ background: shadeFor(g) }} />{SCORE_GROUP_LABELS[g]}</span>
+                    {SCORE_GROUP_LABELS[g]}
                     <small className="text-[13px] font-semibold text-ink-2">
                       {got} / {all}
                     </small>
@@ -190,9 +190,9 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       <Row key={l.key} onHover={setHover} lineKey={l.key} active={hover === l.key} done={ok}>
                         <span className="flex min-w-0 items-center">
                           {ok ? (
-                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: stepShade(Math.max(0, segments.findIndex((x) => x.line.key === l.key)), segments.length) }}>✓</span>
+                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full text-[11px] text-white" style={{ background: DONE }}>✓</span>
                           ) : (
-                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none border-2 border-magenta" />
+                            <span className="mr-2.5 inline-flex h-[18px] w-[18px] flex-none rounded-full border-2 border-[#C9CDDC]" />
                           )}
                           <span className="min-w-0">
                             {l.label}
@@ -265,22 +265,10 @@ function Row({
 
 // Both answered states count, so both paint as filled; the class still tells them apart.
 // Health's palette: answered (filled or "I have none") = solid ink, open = solid magenta.
-// Each group answered in its own lightness of the Panameer logo's purple (Scott 2026-10-07,
-// "purple in different lightnesses like my logo"): darkest → lightest in group order.
-// Open lines are a light grey track (the open checkbox keeps its magenta outline).
-const GROUP_SHADES = ["#DD8FDF", "#9E3A9F", "#64195F"];
-function shadeFor(group: ScoreGroup): string {
-  const i = (Object.keys(SCORE_GROUP_LABELS) as ScoreGroup[]).indexOf(group);
-  return GROUP_SHADES[Math.max(0, i) % GROUP_SHADES.length];
-}
-// Like the Panameer logo: starts super light at 12 o'clock and gets steadily darker
-// clockwise until 11:59 (Scott 2026-10-07). Stops sampled from the logo.
-function stepShade(i: number, n: number): string {
-  const stops = [[0xed, 0xdb, 0xf3], [0xd4, 0x58, 0xd4], [0x55, 0x12, 0x57]];
-  const t = n <= 1 ? 0 : i / (n - 1);
-  const [a, b, u] = t < 0.5 ? [stops[0], stops[1], t / 0.5] : [stops[1], stops[2], (t - 0.5) / 0.5];
-  return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * u).toString(16).padStart(2, "0")).join("");
-}
+// Done vs not done, two brand colours (Scott 2026-10-07): completed = #3A4166 (heading alt),
+// not completed = #C9CDDC (borders). Softer than black; the logo-purple steps below are kept unused.
+const DONE = "#3A4166";
+
 
 function paintClass(state: ScoreLine["state"]): string {
   if (state === "filled") return "pm-score-filled";
