@@ -294,7 +294,7 @@ export function ConnectProfile({
                 {p.sellingCompany.logo_url ? (
                   // Logo only, centred, no box (Scott's mockup 2026-10-07) — the logo carries the name.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.sellingCompany.logo_url} alt={p.sellingCompany.name} className="block h-[52px] w-auto max-w-[80%] object-contain" />
+                  <img src={p.sellingCompany.logo_url} alt={p.sellingCompany.name} className="block h-auto max-h-[80px] w-[75%] object-contain" />
                 ) : (
                   <span className="text-[15px] font-bold text-ink group-hover:underline">{p.sellingCompany.name}</span>
                 )}
