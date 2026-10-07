@@ -30,7 +30,7 @@ const ymd = (m: string, y: string) => `${y}-${m.padStart(2, "0")}-01`;
 const list = (s: string | null) =>
   (s ?? "")
     .split(/[,;•]/)
-    .map((x) => x.trim())
+    .map((x) => x.trim().replace(/^(and|&)\s+/i, "").replace(/[.]+$/, "").trim())
     .filter(Boolean);
 
 /** Reads every engagement line whose next block is a labelled table. Fewer than 3 → not this shape. */
