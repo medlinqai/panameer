@@ -7,20 +7,40 @@ import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
 // Account menu top block: "Your Path · Step N of 9" (7 for buyers) + "?", a segment bar and "Next: … Go".
 type Path = { current: number; done: boolean[]; status: string; next: { label: string; href: string } | null };
 
+// Fetched once per page load (prefetched when the header mounts), so the
+// menu opens with the path already in place instead of popping in and
+// shifting the rows under the cursor.
+let cached: Path | null | undefined;
+let inflight: Promise<Path | null> | null = null;
+export function prefetchPath(): Promise<Path | null> {
+  if (cached !== undefined) return Promise.resolve(cached);
+  inflight ??= fetch("/api/your-path")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((b) => (cached = (b?.path ?? null) as Path | null))
+    .catch(() => (cached = null));
+  return inflight;
+}
+
 export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void; rowClass: string }) {
-  const [path, setPath] = useState<Path | null>(null);
+  const [path, setPath] = useState<Path | null | undefined>(cached);
   useEffect(() => {
     let live = true;
-    fetch("/api/your-path")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((b) => live && setPath(b?.path ?? null))
-      .catch(() => {});
+    void prefetchPath().then((p) => live && setPath(p));
+    // Quietly refresh in case the member moved a step since the page loaded.
+    if (cached !== undefined) {
+      fetch("/api/your-path")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((b) => { if (b) { cached = (b.path ?? null) as Path | null; if (live) setPath(cached); } })
+        .catch(() => {});
+    }
     return () => {
       live = false;
     };
   }, []);
   return (
     <>
+      {/* Same height as the block while it loads — nothing below moves. */}
+      {path === undefined && <div aria-hidden className="h-[86px] border-b border-line" />}
       {path && (
         <div data-path-menu={path.current + 1} className="border-b border-line px-4 py-3">
           {path.next ? (

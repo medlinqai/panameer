@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signOutEverywhere } from "@/lib/sign-out";
-import { PathMenuBlock } from "@/components/casing/PathMenuBlock";
+import { PathMenuBlock, prefetchPath } from "@/components/casing/PathMenuBlock";
 import { Avatar } from "@/components/Avatar";
 import { Popover } from "@/components/casing/Popover";
 import { BAND_LIT, BAND_TILE } from "@/components/casing/band-lit";
@@ -49,6 +49,8 @@ export function AccountMenu({
   const serverAvailable = me?.providerProfile?.availableForMessages ?? null;
   const available = pending ?? serverAvailable;
 
+  // Load the path before the menu is opened, so it opens complete.
+  useEffect(() => { void prefetchPath(); }, []);
   const [summary, setSummary] = useState<MenuSummary | null>(null);
   const fetched = useRef(false);
   useEffect(() => {
