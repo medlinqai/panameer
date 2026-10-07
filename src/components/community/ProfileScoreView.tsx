@@ -268,17 +268,18 @@ function Row({
 // Each group answered in its own lightness of the Panameer logo's purple (Scott 2026-10-07,
 // "purple in different lightnesses like my logo"): darkest → lightest in group order.
 // Open lines are a light grey track (the open checkbox keeps its magenta outline).
-const GROUP_SHADES = ["#5E1A5C", "#A8239F", "#D772D5"];
+const GROUP_SHADES = ["#DD8FDF", "#9E3A9F", "#64195F"];
 function shadeFor(group: ScoreGroup): string {
   const i = (Object.keys(SCORE_GROUP_LABELS) as ScoreGroup[]).indexOf(group);
   return GROUP_SHADES[Math.max(0, i) % GROUP_SHADES.length];
 }
-// One step per segment from the darkest to the lightest logo purple, so the ring
-// gets steadily lighter all the way round (Scott 2026-10-07).
+// Like the Panameer logo: starts super light at 12 o'clock and gets steadily darker
+// clockwise until 11:59 (Scott 2026-10-07). Stops sampled from the logo.
 function stepShade(i: number, n: number): string {
-  const a = [0x5e, 0x1a, 0x5c], b = [0xd7, 0x72, 0xd5];
+  const stops = [[0xed, 0xdb, 0xf3], [0xd4, 0x58, 0xd4], [0x55, 0x12, 0x57]];
   const t = n <= 1 ? 0 : i / (n - 1);
-  return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * t).toString(16).padStart(2, "0")).join("");
+  const [a, b, u] = t < 0.5 ? [stops[0], stops[1], t / 0.5] : [stops[1], stops[2], (t - 0.5) / 0.5];
+  return "#" + a.map((v, k) => Math.round(v + (b[k] - v) * u).toString(16).padStart(2, "0")).join("");
 }
 
 function paintClass(state: ScoreLine["state"]): string {
