@@ -99,7 +99,7 @@ export function ProfileScoreView({ score, profileId }: { score: ProfileScore; pr
                       cy="150"
                       r={R}
                       fill="none"
-                      strokeWidth={hover === s.line.key ? 30 : 22}
+                      strokeWidth={!lineCounts(s.line.state) ? (hover === s.line.key ? 12 : 8) : hover === s.line.key ? 30 : 22}
                       strokeLinecap="butt"
                       strokeDasharray={`${s.len} ${C - s.len}`}
                       strokeDashoffset={s.offset}

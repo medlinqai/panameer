@@ -72,7 +72,7 @@
 }
 /* Health's palette (2026-10-05): open lines are solid magenta; white gaps between segments. */
 .pm-score-empty {
-  stroke: #E8EAF1;
+  stroke: #C9CDDC; /* open = thin grey track, so it never reads as the lightest purple */
 }
 
 /* THE WIDE TWO-PART HEADER WS-C, ) */
