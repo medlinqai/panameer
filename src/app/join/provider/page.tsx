@@ -484,11 +484,23 @@ setScreen(target);
           }
         }
 
+        // R1: one way to work (services), so it's set silently instead of asked.
+        if (s.emailVerified && !s.profile?.workMethod) {
+          const saved = await fetch("/api/settings/profile/section", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ section: "work_method", data: { workMethod: "SERVICES" } }),
+          });
+          if (saved.ok) {
+            const again = await fetch("/api/onboarding/status");
+            if (again.ok) s = await again.json();
+          }
+        }
         hydrate(s);
         if (!s.emailVerified) {
           setScreen("check_email");
         } else if (!s.profile?.workMethod) {
-          // THE IDENTITY IS RECOVERABLE INSIDE THE WIZARD NOW
+          // Only if the silent save failed.
           setScreen("work_method");
         } else {
           resumeInto(s);
@@ -1101,7 +1113,7 @@ setScreen(target);
         ? () => goTo("tell_us")
         : stepIndex > 0
           ? goBack
-          : () => setScreen("work_method"),
+          : () => router.push("/join/provider/path"),
     canBack: true,
     // SCOTT, 2026-09-10: *"'Finish Later' — do it."* WS-2 stopped here
     leaveLabel: "Finish later",
