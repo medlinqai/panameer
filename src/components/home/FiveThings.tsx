@@ -36,12 +36,20 @@ function Card({ t, i }: { t: Thing; i: number }) {
   );
 }
 
-export async function FiveThings({ viewer, firstName }: { viewer: Viewer; firstName: string }) {
-  const [{ things, waiting }, path] = await Promise.all([fiveThings(viewer), lifecycleForUser(viewer.userId)]);
+export async function FiveThings({ viewer, firstName, firstVisit = false }: { viewer: Viewer; firstName: string; firstVisit?: boolean }) {
+  const [{ things, waiting, hasCompany }, path] = await Promise.all([fiveThings(viewer), lifecycleForUser(viewer.userId)]);
   const next = path ? path.steps[path.current] : null;
+  // While on the road (before Validate Company), the cards become one question with four directions.
+  const onRoad = !!path && path.steps.length === 9 && path.current < 6;
+  const choices = [
+    { key: "learn", icon: BookOpen, title: "Learn", line: "Free courses and certification tests.", cta: "Start Learning", href: "/learn" },
+    { key: "connect", icon: Users, title: "Connect", line: "Find colleagues and mentors.", cta: "Find People", href: "/community" },
+    { key: "services", icon: Search, title: "Sell my services", line: "Browse open work and get invited to propose.", cta: "Browse Work", href: "/find-work" },
+    { key: "products", icon: Tag, title: "Sell service products", line: hasCompany ? "List a fixed-price package buyers can order." : "List a fixed-price package. Starts with adding your company.", cta: hasCompany ? "List a Service" : "Add Company", href: hasCompany ? "/my-services" : "/company?join=1#join" },
+  ];
   return (
     <section data-five-things className="mb-8 font-body text-ink">
-      <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ""}.</h1>
+      <h1 className="text-[26px] font-extrabold leading-tight sm:text-[30px]">{firstVisit ? "Welcome" : "Welcome back"}{firstName ? `, ${firstName}` : ""}.</h1>
       {path && path.steps.length === 9 && path.current < 6 && (
         <div data-path-road className="mt-4 border border-line bg-surface px-4 py-4 sm:px-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -75,15 +83,33 @@ export async function FiveThings({ viewer, firstName }: { viewer: Viewer; firstN
         </div>
       )}
 
+      {onRoad ? (
+        <>
+          <h2 className="mt-7 text-[17px] font-bold">What do you want to do{firstVisit ? " first" : ""}?</h2>
+          <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {choices.map((c) => (
+              <Link key={c.key} role="listitem" href={c.href} data-choice={c.key} className="group flex flex-col border border-line bg-surface p-5 hover:border-ink">
+                <span className="grid h-11 w-11 place-items-center bg-bg-soft text-ink"><c.icon className="h-[22px] w-[22px]" aria-hidden /></span>
+                <b className="mt-3 block text-[18px] leading-snug">{c.title}</b>
+                <span className="mt-1 block flex-1 text-[13.5px] text-ink-2">{c.line}</span>
+                <span className={`${BTN} mt-4 w-full`}>{c.cta} →</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
       <h2 className="mt-7 text-[17px] font-bold">
-        5 things you can do today <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>
-      </h2>
-      <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {things.slice(0, 2).map((t, i) => <Card key={t.key} t={t} i={i} />)}
-        <MoreCards count={things.length - 2}>
-          {things.slice(2).map((t, i) => <Card key={t.key} t={t} i={i + 2} />)}
-        </MoreCards>
-      </div>
+          5 things you can do today <span className="text-[12.5px] font-normal text-ink-3">most useful first</span>
+        </h2>
+        <div role="list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {things.slice(0, 2).map((t, i) => <Card key={t.key} t={t} i={i} />)}
+          <MoreCards count={things.length - 2}>
+            {things.slice(2).map((t, i) => <Card key={t.key} t={t} i={i + 2} />)}
+          </MoreCards>
+        </div>
+        </>
+      )}
 
       <h2 className="mt-8 text-[17px] font-bold">Waiting on you</h2>
       <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">

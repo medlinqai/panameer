@@ -97,5 +97,5 @@ export async function fiveThings(viewer: Viewer) {
     { key: "visibility", icon: "alert", value: hidden ? "Hidden" : "Visible", label: hidden ? "your profile is off" : "buyers can find you", href: "/profile", problem: hidden },
     { key: "credentials", icon: "badge", value: String(credentials), label: credentials === 1 ? "credential earned" : "credentials earned", href: "/profile#certifications", problem: false },
   ];
-  return { things: things.slice(0, 5), waiting };
+  return { things: things.slice(0, 5), waiting, hasCompany };
 }
