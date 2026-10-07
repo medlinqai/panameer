@@ -881,6 +881,20 @@ export function EmployersStep({
                   disabled={busy}
                   onMove={(project, employerId) => void moveTo(project, employerId)}
                 />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!window.confirm(`Delete "${pr.name}"?`)) return;
+                    setDetached((d) => d.filter((x) => x.id !== pr.id));
+                    void post({ action: "deleteProject", projectId: pr.id });
+                  }}
+                  aria-label={`Delete ${pr.name}`}
+                  title="Delete this project"
+                  className="grid h-9 w-9 place-items-center border border-ink text-ink transition-colors hover:bg-surface-hover"
+                >
+                  🗑
+                </button>
               </li>
             ))}
           </ul>
