@@ -168,8 +168,7 @@ function JoinRouter() {
               ? "Whose Services Do You Sell?"
               : "What Do You Do on the Buying Side?"}
         </h1>
-        {step === 1 ? (
-        ) : (
+        {step === 1 ? null : (
           <p className="mt-2 text-[17px] text-ink-2">
             {userType === "seller"
               ? "This decides the profile you build."
