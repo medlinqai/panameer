@@ -2161,6 +2161,7 @@ setScreen(target);
         education: "education",
         specializations: "specializations",
         tell_us: "work",
+        roles: "roles",
       };
 
       /** Click-to-fix: open the section's editor, focus the field, or open the modal. */
@@ -2174,6 +2175,9 @@ setScreen(target);
           }
           case "photo":
             setPhotoModal(true);
+            break;
+          case "sortCompanies":
+            document.querySelector("[data-testid=company-sort]")?.scrollIntoView({ behavior: "smooth", block: "start" });
             break;
           case "certifications":
             setCertSignal((n) => n + 1);
@@ -2250,48 +2254,32 @@ setScreen(target);
           {error && <Notice>{error}</Notice>}
 
           {/* WS5 / E181 — THE BIG SUGGESTIONS PANEL IS GONE. */}
-          <ReviewChecklist errors={errors} changes={[]} onFix={applyFix} />
-          <ReviewRows
-            rows={[
-              {
-                k: "Résumé",
-                v: profile.profileMethod === "MANUAL" && !importOutcome ? "Typed by hand" : profile.employers.length || profile.projects.length ? `Read · ${profile.employers.length} job${profile.employers.length === 1 ? "" : "s"}, ${profile.projects.length + profile.employers.reduce((n, e) => n + (e.projects ?? []).length, 0)} projects` : "Not uploaded",
-                onEdit: () => setUploadModal(true),
-                edit: "Upload",
-              },
-              { k: "Title", v: profile.headline || "Not set", onEdit: () => setEditSection("title") },
-              {
-                k: "Roles",
-                v: profile.roleTypeIds.map((id, i) => `${roleLong(fieldRoles.find((r) => r.id === id)?.name ?? "")}${i === 0 && profile.roleTypeIds.length > 1 ? " (leads)" : ""}`).join(" · ") || "None picked",
-                onEdit: () => setEditSection("roles"),
-              },
-              {
-                k: "Skills",
-                v: shownSkillNames.length + profile.customSkills.length ? `${shownSkillNames.length + profile.customSkills.length} — ${[...shownSkillNames.map((x) => x.name), ...profile.customSkills].slice(0, 5).join(", ")}${shownSkillNames.length + profile.customSkills.length > 5 ? "…" : ""}` : "None yet",
-                onEdit: () => setEditSection("skills"),
-              },
-              ...(steps.includes("rate")
+          <ReviewChecklist
+            errors={errors}
+            changes={[
+              ...(unsorted > 0
                 ? [{
-                    k: "Rates",
-                    v: [profile.onsiteRateCents ? `Onsite ${formatCents(profile.onsiteRateCents)}/hr` : null, profile.remoteRateCents ? `Offsite ${formatCents(profile.remoteRateCents)}/hr` : null].filter(Boolean).join(" · ") || "Not set",
-                    small: "You'll get up to 14.99% less after the Panameer fee.",
-                    onEdit: () => setEditSection("rate"),
+                    id: "sort-companies",
+                    severity: "change" as const,
+                    message: `${unsorted} compan${unsorted === 1 ? "y" : "ies"} found in your résumé — mark each Employer, Project client or Remove.`,
+                    fixLabel: "Sort",
+                    fix: { kind: "sortCompanies" as const },
                   }]
                 : []),
-              { k: "Photo", v: [profile.photoUrl ? "Added" : "No photo yet", addr.city?.trim() || null, addr.country?.trim() || null].filter(Boolean).join(" · "), onEdit: () => setPhotoModal(true) },
-              {
-                k: "Work history",
-                v: profile.employers.length ? `${profile.employers.length} employer${profile.employers.length === 1 ? "" : "s"}` : "No employers yet",
-                warn: unsorted > 0 ? `${unsorted} compan${unsorted === 1 ? "y" : "ies"} found — sort them` : undefined,
-                small: unsorted > 0 ? "From your résumé. Mark each Employer, Project client or Remove." : undefined,
-                onEdit: () =>
-                  unsorted > 0
-                    ? document.querySelector("[data-testid=company-sort]")?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    : setEditSection("work"),
-                edit: unsorted > 0 ? "Sort" : "Edit",
-              },
+              ...(profile.roleTypeIds.length === 0
+                ? [{
+                    id: "pick-roles",
+                    severity: "change" as const,
+                    message: "Pick your roles so buyers can find you.",
+                    fixLabel: "Pick roles",
+                    fix: { kind: "step" as const, step: "roles" },
+                  }]
+                : []),
             ]}
+            onFix={applyFix}
           />
+          {/* The summary table is gone: the review IS the profile template.
+              What still needs attention is listed in the box above. */}
 
           {/* The soft page background the published profile sits on, so the
               white section cards read the same way here as they do there. */}
@@ -2769,8 +2757,8 @@ function ReviewChecklist({
 }) {
   if (errors.length === 0 && changes.length === 0) {
     return (
-      <div className="border border-emerald-500/30 bg-emerald-50/60 p-4">
-        <p className="text-[15px] font-bold text-emerald-800">
+      <div className="border-l-2 border-ink py-2 pl-4">
+        <p className="text-[15px] font-bold text-ink">
           ✓ Everything checks out — you&apos;re ready to publish.
         </p>
       </div>

@@ -11,7 +11,9 @@ export type ReviewFix =
   /** Open the certifications modal. */
   | { kind: "certifications" }
   /** Open the photo upload modal. */
-  | { kind: "photo" };
+  | { kind: "photo" }
+  /** Scroll to the résumé company sorter on the review page. */
+  | { kind: "sortCompanies" };
 
 export type ReviewField =
   | "overview"
