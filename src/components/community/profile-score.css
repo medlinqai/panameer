@@ -21,7 +21,7 @@
 .pm-score-dial {
   position: relative;
   width: 100%;
-  max-width: 290px;
+  max-width: 300px; /* same size as Health's ring (2026-10-07) */
   aspect-ratio: 1 / 1;
   margin: 0 auto;
 }

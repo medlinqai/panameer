@@ -30,8 +30,8 @@ export function UsageHive({ cells }: { cells: HiveCell[] }) {
   const off = still ? 0 : cycle;
   const n = Math.min(cells.length, SLOTS.length);
   return (
-    <div className="pm-hive-picture relative flex h-full min-h-[290px] flex-col md:min-h-[330px]">
-      <svg viewBox="74 28 272 214" preserveAspectRatio="xMidYMid meet" className="pm-hive w-full flex-1" data-layout="v5" data-cycle={cycle} role="list" aria-label="Your areas">
+    <div className="pm-hive-picture relative flex h-full min-h-[300px] flex-col justify-center">
+      <svg viewBox="74 28 272 214" preserveAspectRatio="xMidYMid meet" className="pm-hive mx-auto block w-full max-w-[290px]" data-layout="v5" data-cycle={cycle} role="list" aria-label="Your areas">
         {cells.slice(0, n).map((c, i) => {
           const counted = isCounted(c.figure);
           const active = counted && (c.figure as number) > 0;
