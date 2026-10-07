@@ -2,7 +2,7 @@
 
 import { LocationFields } from "@/components/onboarding/LocationFields";
 import { PhoneField } from "@/components/onboarding/PhoneField";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ALL_COUNTRIES, codeForName } from "@/lib/country";
 
 // Stored country can be a name ("United States") from the résumé parse;
@@ -49,6 +49,16 @@ export function ContactEditor({
     if (phoneCode && phoneCode !== phoneCountry) onPhoneCountryChange(phoneCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryCode, phoneCode]);
+
+  // Picking a Country sets the phone country to match; they can still change it.
+  const lastCountry = useRef(countryCode);
+  useEffect(() => {
+    if (countryCode && countryCode !== lastCountry.current) {
+      onPhoneCountryChange(countryCode);
+    }
+    lastCountry.current = countryCode;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryCode]);
 
   return (
     <div className="space-y-3">
