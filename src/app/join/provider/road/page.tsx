@@ -82,7 +82,7 @@ export default function DetailedRoadPage() {
           <li>Validate Company covers the tax form <b>and</b> a payout account in the company&apos;s legal name.</li>
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Start My Profile</Link>
+          <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">Complete My Profile</Link>
           <Link href="/join/provider/path" className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">‹ The simple road</Link>
         </div>
       </div>

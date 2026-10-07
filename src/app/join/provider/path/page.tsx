@@ -23,7 +23,7 @@ export default async function RegistrationPathPage() {
         <div className="mt-4 overflow-x-auto"><div className="min-w-[640px]"><RoadGraphic current={2} /></div></div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
           <Link href="/join/provider" className="inline-flex min-h-[48px] items-center bg-ink px-6 text-[15px] font-bold text-surface hover:bg-ink-hover">
-            Start My Profile
+            Complete My Profile
           </Link>
           <Link href="/join/provider/road" data-detailed-road-link className="text-[14px] font-bold text-magenta-dark underline underline-offset-4">
             See the detailed road (offers, work requests, interviews) →
