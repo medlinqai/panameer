@@ -3,7 +3,6 @@ import { isSuppressed, unsubscribeUrl } from "@/lib/unsubscribe";
 import { prisma } from "@/lib/prisma";
 import { normalizeEmail } from "@/lib/normalizeEmail";
 import { undeliverableRule } from "@/lib/email/undeliverable-domains";
-import { allowedOutsideProduction } from "@/lib/email/non-production-allowlist";
 import { PANAMEER_URL, UNSUBSCRIBE_PLACEHOLDER } from "@/lib/email/shell";
 
 let _resend: Resend | null = null;
@@ -116,8 +115,6 @@ export async function sendEmail({
 
   // UNDELIVERABLE DOMAINS ARE REFUSED HERE, IN THE TRANSPORT
   // OUTSIDE PRODUCTION, A RECIPIENT MUST BE NAMED
-  const env = sendingEnvironment();
-  const isProduction = env === "production";
 
   const deliverable: string[] = [];
   const refused: string[] = [];
@@ -125,13 +122,6 @@ export async function sendEmail({
     const rule = undeliverableRule(r);
     if (rule) {
       console.warn(`[mail] REFUSED (undeliverable domain, matched "${rule}") ${subject} -> ${r}`);
-      refused.push(r);
-      continue;
-    }
-    if (!isProduction && !allowedOutsideProduction(r)) {
-      console.warn(
-        `[mail] REFUSED (environment "${env}" is not production and ${r} is not on the non-production allow-list) ${subject}`
-      );
       refused.push(r);
       continue;
     }
