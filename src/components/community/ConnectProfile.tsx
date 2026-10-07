@@ -587,9 +587,9 @@ export function ConnectProfile({
               <Link href={`/companies/${p.sellingCompany.id}`} className="group inline-flex items-center gap-3 text-[16px] font-bold text-ink">
                 {p.sellingCompany.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.sellingCompany.logo_url} alt="" className="h-[72px] w-auto max-w-[220px] object-contain" />
+                  <img src={p.sellingCompany.logo_url} alt="" className="h-10 w-auto max-w-[160px] object-contain" />
                 ) : (
-                  <span aria-hidden className="grid h-[72px] w-[72px] place-items-center bg-[#E8EAF1] text-[26px] font-bold text-[#5C6485]">
+                  <span aria-hidden className="grid h-10 w-10 place-items-center bg-[#E8EAF1] text-[16px] font-bold text-[#5C6485]">
                     {p.sellingCompany.name.slice(0, 1).toUpperCase()}
                   </span>
                 )}
