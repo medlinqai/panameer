@@ -13,6 +13,8 @@ import {
   setStatus,
   promoteSuggestion,
   rejectSuggestion,
+  updateSkill,
+  type WriteResult,
   skillLinks,
   specializationLinks,
 } from "@/lib/catalog-write";
@@ -28,6 +30,7 @@ import {
 const Id = z.string().uuid();
 const Name = z.string().trim().min(2).max(120);
 const Kind = z.enum(["PRODUCT", "METHODOLOGY", "INDUSTRY"]);
+const Area = z.enum(["PRC", "FIN", "O2C", "HCM", "SCM", "PPM", "ANALYTICS", "TECH"]);
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("spec.add"), name: Name, kind: Kind }),
@@ -46,7 +49,27 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("spec.promote"), id: Id, kind: Kind }),
   z.object({ action: z.literal("spec.reject"), id: Id }),
   z.object({ action: z.literal("review.skill.merge"), id: Id, intoId: Id }),
-  z.object({ action: z.literal("review.skill.add"), id: Id, roleTypeId: Id, pillarId: Id }),
+  z.object({ action: z.literal("review.skill.add"), id: Id, roleTypeId: Id, pillarId: Id, name: Name.optional() }),
+  z.object({
+    action: z.literal("skill.update"),
+    id: Id,
+    name: Name.optional(),
+    roleTypeId: Id.optional(),
+    pillarId: Id.optional(),
+    aliases: z.array(z.string().trim().max(120)).max(50).optional(),
+    area: Area.nullable().optional(),
+    visible: z.boolean().optional(),
+  }),
+  z.object({ action: z.literal("skill.merge"), id: Id, intoId: Id }),
+  z.object({
+    action: z.literal("skill.bulk"),
+    ids: z.array(Id).min(1).max(500),
+    op: z.enum(["move", "area", "hide", "show", "merge"]),
+    roleTypeId: Id.optional(),
+    pillarId: Id.optional(),
+    area: Area.nullable().optional(),
+    intoId: Id.optional(),
+  }),
   z.object({ action: z.literal("review.skill.reject"), id: Id }),
   z.object({ action: z.literal("review.spec.merge"), id: Id, intoId: Id }),
   z.object({ action: z.literal("review.spec.add"), id: Id, kind: Kind }),
@@ -95,7 +118,26 @@ export async function POST(req: Request) {
       case "review.skill.merge":
         return mergeSkill(viewer, b.id, b.intoId);
       case "review.skill.add":
-        return addNewSkill(viewer, b.id, b.roleTypeId, b.pillarId);
+        return addNewSkill(viewer, b.id, b.roleTypeId, b.pillarId, b.name);
+      case "skill.update":
+        return updateSkill(b.id, b);
+      case "skill.merge":
+        return mergeSkill(viewer, b.id, b.intoId, "catalog.skill.merge", true);
+      case "skill.bulk": {
+        const results: WriteResult[] = [];
+        for (const id of b.ids) {
+          if (b.op === "move" && b.roleTypeId && b.pillarId) results.push(await updateSkill(id, { roleTypeId: b.roleTypeId, pillarId: b.pillarId }));
+          else if (b.op === "area" && b.area !== undefined) results.push(await updateSkill(id, { area: b.area }));
+          else if (b.op === "hide" || b.op === "show") results.push(await updateSkill(id, { visible: b.op === "show" }));
+          else if (b.op === "merge" && b.intoId) results.push(await mergeSkill(viewer, id, b.intoId, "catalog.skill.merge", true));
+          else return { ok: false as const, error: "Pick where to apply that." };
+        }
+        const bad = results.filter((r) => !r.ok);
+        const done = results.length - bad.length;
+        return bad.length
+          ? { ok: false as const, error: `${done} done; ${bad.length} not: ${bad.map((r) => (r.ok ? "" : r.error)).slice(0, 3).join(" · ")}` }
+          : { ok: true as const, id: b.ids[0], message: `Done for ${done} skill${done === 1 ? "" : "s"}.` };
+      }
       case "review.skill.reject":
         return rejectSkill(viewer, b.id);
       case "review.spec.merge":

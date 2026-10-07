@@ -22,13 +22,27 @@ import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
 import { NEW_SKILL_WHERE, hiddenSameLetterNames, waitingTermCounts } from "@/lib/catalog-review";
 import { formatSkillName, sameLetters } from "@/lib/skill-match";
+import { SkillCatalogList, type ListSkill, type Pair, type ReviewCard } from "@/components/console/SkillCatalogList";
+
+// To Review: tidy capitals and common abbreviations for the "Add as" name.
+const ABBR: Record<string, string> = { mgt: "Management", mgmt: "Management", mngt: "Management", admin: "Administration", acct: "Accounting", rpt: "Reporting", rpts: "Reports", dev: "Development", config: "Configuration" };
+const tidy = (s: string) => formatSkillName(s.split(/(\s+)/).map((w) => ABBR[w.toLowerCase()] ?? w).join(""));
+const toks = (s: string) => s.toLowerCase().replace(/\([^)]*\)/g, " ").split(/[^a-z0-9]+/).filter(Boolean);
+// "mgt" ~ "management": same first letter and its letters appear in order.
+const abbrevOf = (a: string, b: string) => a.length >= 3 && a[0] === b[0] && [...a].every(((i) => (ch: string) => (i = b.indexOf(ch, i) + 1) > 0)(0));
+const tokenMatch = (a: string, b: string) => a === b || (a.length >= 4 && b.startsWith(a)) || (b.length >= 4 && a.startsWith(b)) || abbrevOf(a, b) || abbrevOf(b, a);
+function similarity(a: string, b: string) {
+  const ta = toks(a), tb = toks(b);
+  if (!ta.length || !tb.length) return 0;
+  return ta.filter((x) => tb.some((y) => tokenMatch(x, y))).length / Math.max(ta.length, tb.length);
+}
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; claimed?: string; q?: string; role?: string; domain?: string; status?: string; tab?: string; sub?: string }>;
+  searchParams: Promise<{ view?: string; claimed?: string; q?: string; role?: string; domain?: string; status?: string; tab?: string; sub?: string; area?: string; st?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const view =
@@ -60,7 +74,7 @@ export default async function Page({
     select: {
       id: true, name: true, role_type_id: true, pillar_id: true,
       status: true, origin: true, aliases: true, visible_to_members: true,
-      merged_into_id: true, rejected_at: true, review_pending: true,
+      merged_into_id: true, rejected_at: true, review_pending: true, area: true,
     },
   });
   const toSkill = (s: (typeof skills)[number]): CatalogSkill => ({
@@ -115,6 +129,34 @@ export default async function Page({
     select: { id: true, name: true, kind: true, status: true, aliases: true, _count: { select: { providerProfiles: true } } },
   });
   const toSpec = (x: (typeof specRows)[number]) => ({ id: x.id, name: x.name, kind: x.kind, members: x._count.providerProfiles, aliasList: x.aliases });
+
+  // The one-list view (default): live and hidden catalog skills, plus the To Review cards.
+  const pairs: Pair[] = roles.flatMap((r) => r.domains.map((d) => ({ roleTypeId: r.id, pillarId: d.id, role: r.display || r.name, domain: d.name })));
+  const pairLabel = new Map(pairs.map((p) => [`${p.roleTypeId}:${p.pillarId}`, p]));
+  const listRows: ListSkill[] = skills
+    .filter((s) => s.status === "ACTIVE" && !s.merged_into_id && !s.rejected_at && s.pillar_id && !s.review_pending)
+    .map((s) => {
+      const at = pairLabel.get(`${s.role_type_id}:${s.pillar_id}`);
+      return { id: s.id, name: s.name, aliases: s.aliases, roleTypeId: s.role_type_id, pillarId: s.pillar_id, role: at?.role ?? "—", domain: at?.domain ?? "—", area: s.area, members: skillProviders.get(s.id) ?? 0, hidden: !s.visible_to_members, isNew: s.origin === "PROVIDER" };
+    });
+  const reviewCards: ReviewCard[] = unassigned.map((u) => {
+    const guess = u.guess ?? null;
+    const g = guess ? pairLabel.get(guess) : null;
+    const ranked = listRows
+      .map((r) => ({ r, score: sameLetters(r.name) === sameLetters(u.name) ? 2 : similarity(u.name, r.name) + (r.aliases.some((a) => sameLetters(a) === sameLetters(u.name)) ? 1.5 : 0) }))
+      .filter((x) => x.score >= 0.5)
+      .sort((a, b) => b.score - a.score || Number(b.r.pillarId === g?.pillarId) - Number(a.r.pillarId === g?.pillarId) || b.r.members - a.r.members);
+    const best = ranked[0];
+    return {
+      id: u.id,
+      typed: u.name,
+      members: u.members,
+      place: g ? `${g.role} › ${g.domain}` : null,
+      guess,
+      addAs: tidy(u.name),
+      closest: best ? { id: best.r.id, name: best.r.name, domain: best.r.domain, members: best.r.members, same: best.score >= 1 } : null,
+    };
+  });
 
   // EVERY TILE OPENS A LISTING
   const flat = roles.flatMap((r) =>
@@ -176,6 +218,18 @@ export default async function Page({
 
   // A DRILL-IN TAKES OVER THE PAGE
   const isDrillIn = !!view || !!claimedRole;
+  if (!isDrillIn && sp.view !== "tree")
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <SkillCatalogList
+          rows={listRows}
+          pairs={pairs}
+          review={reviewCards}
+          specReviewCount={specRows.filter((x) => x.status === "SUGGESTED").length}
+          initial={{ tab: sp.tab, q: sp.q, role: sp.role, domain: sp.domain, area: sp.area, st: sp.st, page: sp.page }}
+        />
+      </div>
+    );
 
   // — ONE LINK COLOUR ON THE PAGE. `BackLink` does NOT render here
   const clearLink = (

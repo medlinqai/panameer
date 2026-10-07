@@ -420,3 +420,34 @@ export async function rejectSuggestion(id: string): Promise<WriteResult> {
     message: `Rejected "${row.name}". The record is kept — if it is asked for again it comes back up the queue.`,
   };
 }
+
+/** One skill's edit panel: name exactly as typed, place, aliases, area, shown/hidden. Same row id, so members keep it. */
+export async function updateSkill(
+  id: string,
+  p: { name?: string; roleTypeId?: string; pillarId?: string; aliases?: string[]; area?: string | null; visible?: boolean }
+): Promise<WriteResult> {
+  const row = await prisma.skill.findUnique({ where: { id }, select: { name: true, catalog_id: true, role_type_id: true, pillar_id: true } });
+  if (!row) return refuse("That skill no longer exists.");
+  const name = p.name?.trim().replace(/\s+/g, " ") ?? row.name;
+  if (name.length < 2) return refuse("A skill needs a name.");
+  const roleTypeId = p.roleTypeId ?? row.role_type_id;
+  const pillarId = p.pillarId ?? row.pillar_id;
+  const clash = await prisma.skill.findFirst({
+    where: { catalog_id: row.catalog_id, role_type_id: roleTypeId, pillar_id: pillarId, name: { equals: name, mode: "insensitive" }, merged_into_id: null, NOT: { id } },
+    select: { name: true },
+  });
+  if (clash) return refuse(`"${clash.name}" already exists there — merge into it instead.`);
+  const aliases = p.aliases && [...new Set(p.aliases.map((a) => a.trim()).filter((a) => a && a.toLowerCase() !== name.toLowerCase()))];
+  await prisma.skill.update({
+    where: { id },
+    data: {
+      name,
+      role_type_id: roleTypeId,
+      pillar_id: pillarId,
+      ...(aliases ? { aliases } : {}),
+      ...(p.area !== undefined ? { area: p.area } : {}),
+      ...(p.visible !== undefined ? { visible_to_members: p.visible } : {}),
+    },
+  });
+  return { ok: true, id, message: name !== row.name ? `Renamed to "${name}".` : `Saved "${name}".` };
+}

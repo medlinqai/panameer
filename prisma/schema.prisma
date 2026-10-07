@@ -803,6 +803,8 @@ model Skill {
   /// Tech Category for Technology-Specific tools ("Development & Extensibility",
   /// "Integration & APIs"). Null for application modules and agnostic roles.
   category       String?
+  /// Business area (PRC, FIN, O2C, HCM, SCM, PPM, ANALYTICS, TECH); vendor-neutral, null = not set.
+  area           String?
   // Catalog review (E909): merged into another skill, or rejected from the catalog.
   merged_into_id String?       @db.Uuid
   rejected_at    DateTime?

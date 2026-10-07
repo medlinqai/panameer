@@ -24,9 +24,12 @@ export async function skillMembers(id: string) {
 }
 
 /** Moves every claim from `fromId` to `intoId`, adds the member wording as an alias, retires the source. */
-export async function mergeSkill(viewer: Viewer | null, fromId: string, intoId: string, action = "catalog.skill.merge"): Promise<WriteResult> {
-  const from = await newSkill(fromId);
-  if (!from) return refuse("That skill is no longer waiting for review.");
+export async function mergeSkill(viewer: Viewer | null, fromId: string, intoId: string, action = "catalog.skill.merge", anySkill = false): Promise<WriteResult> {
+  if (fromId === intoId) return refuse("Pick a different skill to merge into.");
+  const from = anySkill
+    ? await prisma.skill.findFirst({ where: { id: fromId, merged_into_id: null, status: "ACTIVE" }, select: { id: true, name: true } })
+    : await newSkill(fromId);
+  if (!from) return refuse(anySkill ? "That skill no longer exists." : "That skill is no longer waiting for review.");
   const into = await prisma.skill.findUnique({ where: { id: intoId }, select: { id: true, name: true, aliases: true, pillar_id: true, status: true } });
   if (!into || !into.pillar_id || into.status !== "ACTIVE") return refuse("Pick a live catalog skill to merge into.");
 
@@ -71,16 +74,20 @@ export async function mergeSkill(viewer: Viewer | null, fromId: string, intoId: 
 }
 
 /** Adds a member skill to a domain; it starts Hidden (E821). Claims stay on the same row. */
-export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string, pillarId: string): Promise<WriteResult> {
-  const s = await newSkill(id);
-  if (!s) return refuse("That skill is no longer waiting for review.");
+export async function addNewSkill(viewer: Viewer, id: string, roleTypeId: string, pillarId: string, asName?: string): Promise<WriteResult> {
+  const found = await newSkill(id);
+  if (!found) return refuse("That skill is no longer waiting for review.");
+  // "Add as": the admin's edited name, exactly; the member's wording stays as an alias.
+  const as = asName?.trim().replace(/\s+/g, " ");
+  const s = as && as !== found.name ? { ...found, name: as } : found;
   const row = await prisma.skill.findUnique({ where: { id }, select: { catalog_id: true } });
   const clash = await prisma.skill.findFirst({
     where: { catalog_id: row!.catalog_id, role_type_id: roleTypeId, pillar_id: pillarId, name: { equals: s.name, mode: "insensitive" }, NOT: { id } },
     select: { name: true },
   });
   if (clash) return refuse(`"${clash.name}" is already in that domain — merge into it instead.`);
-  await prisma.skill.update({ where: { id }, data: { role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, review_pending: false } });
+  const typed = s.name !== found.name ? { name: s.name, aliases: { push: found.name } } : {};
+  await prisma.skill.update({ where: { id }, data: { ...typed, role_type_id: roleTypeId, pillar_id: pillarId, visible_to_members: false, review_pending: false } });
   const members = await skillMembers(id);
   await writeAudit(viewer, { action: "catalog.skill.add_new", targetTable: "skills", targetId: id, detail: { name: s.name, roleTypeId, pillarId, members } });
   await refreshCatalogReview();
