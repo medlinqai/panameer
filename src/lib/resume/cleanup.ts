@@ -1,18 +1,27 @@
 import type { ParsedResume, ParsedCertification } from "@/lib/resume/parse";
-import { normCompany, notACompany } from "@/lib/resume/company-list";
+import { normCompany } from "@/lib/resume/company-list";
 
 // Deterministic clean-up after the model answers: employers, certifications, skills, education.
 const DATE_RANGE = /\b(?:\d{1,2}\/)?(?:\d{1,2}\/)?(?:19|20)\d{2}\s*(?:-|–|—|to)\s*(?:(?:\d{1,2}\/)?(?:\d{1,2}\/)?(?:19|20)\d{2}|present|current|now|date)/gi;
 const norm = (s: string) => s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
 const year = (d: string | null | undefined) => (d ? d.slice(0, 4) : null);
 
+/** A section heading or content title read as an employer (ALL-CAPS company names are kept). */
+function isSectionHeading(h: string) {
+  if (/^how to\b/i.test(h)) return true;
+  if (/\b(experience|content|creator|creation|summary|skills|education|certifications?|projects?|profile|objective)\b/i.test(h) && !/\d{4}/.test(h) && !/\b(inc|ltd|llc|limited|corp|corporation|group|solutions|consulting|services|bank)\b/i.test(h)) return true;
+  return false;
+}
+
 /** Employers: merge duplicates, drop headings / project and course titles, undated rows, and an implausible excess. */
 export function cleanEmployers(parsed: ParsedResume, text: string) {
-  const projectNames = new Set(parsed.projects.flatMap((p) => [normCompany(p.name), normCompany(p.client)]).filter(Boolean));
+  // A row whose "employer" is really a project title goes; an employer that projects name as their employer stays.
+  const projectNames = new Set(parsed.projects.map((p) => normCompany(p.name)).filter(Boolean));
+  const employerNames = new Set(parsed.projects.map((p) => normCompany(p.employerName)).filter(Boolean));
   let rows = parsed.experiences.filter((x) => {
     const e = (x.employer ?? "").trim();
-    if (!e || notACompany(e)) return false;
-    if (projectNames.has(normCompany(e))) return false;
+    if (!e || isSectionHeading(e)) return false;
+    if (projectNames.has(normCompany(e)) && !employerNames.has(normCompany(e))) return false;
     if (/\b(course|training|bootcamp|certificat|workshop|webinar)\b/i.test(e)) return false;
     return true;
   });
@@ -37,7 +46,8 @@ export function cleanEmployers(parsed: ParsedResume, text: string) {
   const ranges = (text.match(DATE_RANGE) ?? []).map((m) => m.match(/(?:19|20)\d{2}/g) ?? []);
   if (ranges.length && rows.length > Math.max(3, ranges.length) * 1.5) {
     const years = new Set(ranges.flat());
-    rows = rows.filter((r) => r.startDate && years.has(year(r.startDate)!));
+    const matched = rows.filter((r) => r.startDate && years.has(year(r.startDate)!));
+    if (matched.length) rows = matched; // never empty the list on this rule
   }
   parsed.experiences = rows;
 }

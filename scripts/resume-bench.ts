@@ -75,6 +75,7 @@ const junk = (skills: string[]) => skills.filter((s) => s.replace(/[^A-Za-z]/g, 
         parsed.projects = engagementsToProjects(engagements);
         parsed.skills = [...new Set([...parsed.skills, ...engagements.flatMap((e) => e.skills)])];
       }
+      const raw = JSON.parse(JSON.stringify(parsed));
       cleanParsedResume(parsed, text, catalog);
       const companies = buildCompanyList(engagements, read.inventory ?? [], parsed);
       const secs = (Date.now() - t0) / 1000;
@@ -83,7 +84,7 @@ const junk = (skills: string[]) => skills.filter((s) => s.replace(/[^A-Za-z]/g, 
       const bad = junk(parsed.skills);
       if (read.failure) note = [note, read.failure.slice(0, 120)].filter(Boolean).join(" · ");
       row = [name, cfgKey, reader, secs.toFixed(1), usd.toFixed(4), parsed.experiences.length, parsed.projects.length, parsed.skills.length, parsed.certifications.length, parsed.education.length, bad.length, companies.length, text.length, note];
-      writeFileSync(join(OUT, "json", `${name.replace(/[^\w.-]+/g, "_")}.${cfgKey}.json`), JSON.stringify({ file: name, config: cfgKey, model: cfg.model, reader, seconds: secs, usd, junk: bad, companies, parsed, usage: read.usage, timing: read.timing }, null, 1));
+      writeFileSync(join(OUT, "json", `${name.replace(/[^\w.-]+/g, "_")}.${cfgKey}.json`), JSON.stringify({ file: name, config: cfgKey, model: cfg.model, reader, seconds: secs, usd, junk: bad, companies, parsed, raw, usage: read.usage, timing: read.timing }, null, 1));
     } catch (e) {
       row = [name, cfgKey, "error", ((Date.now() - t0) / 1000).toFixed(1), 0, 0, 0, 0, 0, 0, 0, 0, text.length, `${note} ${e instanceof Error ? e.message : e}`.trim()];
     }
