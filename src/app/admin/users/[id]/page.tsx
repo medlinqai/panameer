@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
 import { BackLink } from "@/components/console/BackLink";
 import { jobsFor } from "@/lib/user-jobs";
-import { LIFECYCLE, LIFECYCLE_WHO } from "@/lib/user-levels";
+import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 import { lifecycleFor, companyChecklist } from "@/lib/your-path";
 import { buildCompletenessInput } from "@/lib/onboarding";
 import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness";
@@ -139,18 +139,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <ol className="mt-4 grid grid-cols-7 gap-1" aria-label="Lifecycle">
-        {LIFECYCLE.map((s, i) => {
-          const isDone = i < cur;
-          const now_ = i === cur - 1;
-          return (
-            <li key={s.key} data-strip={s.status} className={"border-t-4 px-1 pt-1 text-[11px] font-semibold " + (isDone ? "text-ink" : "text-ink-3")} style={{ borderTopColor: isDone ? LIFECYCLE_WHO[s.who].fg : "var(--color-line)" }}>
-              {s.status}
-              {now_ && <span className="block text-[10px] font-bold text-magenta-dark">now</span>}
-            </li>
-          );
-        })}
-      </ol>
+      <div className="mt-5"><LifecycleStrip current={cur - 1} intro="they" hereLabel="Here now" /></div>
 
       {blocked && (
         <div data-blocked className="mt-4 flex flex-wrap items-center justify-between gap-3 border-2 border-[#b26b00] p-4">

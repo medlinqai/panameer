@@ -4,6 +4,7 @@ import { getSessionViewer } from "@/lib/session";
 import { lifecycleForUser } from "@/lib/your-path";
 import { LIFECYCLE_WHO } from "@/lib/user-levels";
 import { LifecycleHelp } from "@/components/lifecycle/LifecycleHelp";
+import { LifecycleStrip } from "@/components/lifecycle/LifecycleStrip";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Path · Panameer" };
@@ -26,7 +27,8 @@ export default async function YourPathPage() {
       <p className="mt-1.5 max-w-[62ch] text-[14.5px] text-ink-2">
         Buyers and sellers follow the same seven steps. You do the first four; your company does the rest. Panameer contracts with and pays companies, not individuals.
       </p>
-      <ol className="mt-6 border-t border-line">
+      <div className="mt-6"><LifecycleStrip current={current} /></div>
+      <ol className="mt-8 border-t border-line">
         {steps.map((s, i) => {
           const here = i === current;
           return (

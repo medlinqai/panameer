@@ -130,9 +130,10 @@ export const LIFECYCLE: LifecycleStep[] = [
 ];
 
 export const LIFECYCLE_WHO: Record<LifecycleWho, { label: string; bg: string; fg: string }> = {
-  you: { label: "You", bg: "#eaf6f0", fg: "#1f8a5b" },
-  company: { label: "Your company (admins)", bg: "#efeaf7", fg: "#5a3f8f" },
-  both: { label: "Your company + the other company", bg: "#f3f1f7", fg: "#4a4658" },
+  // Brand neutrals (Panameer brand guide): sunken / borders / canvas.
+  you: { label: "You", bg: "#E8EAF1", fg: "#3A4166" },
+  company: { label: "Your company (admins)", bg: "#C9CDDC", fg: "#272334" },
+  both: { label: "Your company + the other company", bg: "#F7F7F5", fg: "#5C6485" },
 };
 
 export const LIFECYCLE_RULES = [
