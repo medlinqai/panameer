@@ -215,6 +215,25 @@ export function EmployersStep({
 
   const [logos, setLogos] = useState<LogoSuggestion[]>([]);
   const [logoLoading, setLogoLoading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  // Upload your own logo — same endpoint as the company logo, stored under the person.
+  const uploadLogo = async (file: File) => {
+    setLogoUploading(true);
+    setLogoError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/company/logo", { method: "POST", body: fd });
+      const d = (await r.json().catch(() => ({}))) as { logoUrl?: string; error?: string };
+      if (!r.ok || !d.logoUrl) throw new Error(d.error ?? "Could not upload that image.");
+      setEmployerForm((f) => ({ ...f, logoUrl: d.logoUrl ?? null }));
+    } catch (e) {
+      setLogoError(e instanceof Error ? e.message : "Could not upload that image.");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
   // THE UNATTACHED ROWS, DERIVED not fetched . `projects` is the
   const nested = new Set(employers.flatMap((e) => (e.projects ?? []).map((p) => p.id)));
@@ -1096,7 +1115,7 @@ export function EmployersStep({
 
           {/* E043 — SUGGESTED logos. Never auto-applied: name → company
               matching is fuzzy, and a wrong logo is worse than none. */}
-          {(logoLoading || logos.length > 0 || employerForm.logoUrl) && (
+          {(
             <div>
               <p className="mb-2 text-[13px] font-bold">Company Logo</p>
               <div className="flex flex-wrap items-center gap-2">
@@ -1143,8 +1162,23 @@ export function EmployersStep({
                   </button>
                 )}
               </div>
+              <label className="mt-2 inline-flex cursor-pointer items-center border border-ink px-3 py-1.5 text-[13px] font-bold text-ink hover:bg-surface-hover">
+                {logoUploading ? "Uploading…" : "Upload Logo"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="hidden"
+                  disabled={logoUploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadLogo(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {logoError && <p className="mt-1 text-[12.5px] text-red-700">{logoError}</p>}
               <p className="mt-1.5 text-[12.5px] text-ink-2">
-                Suggestions based on the company name — pick one or leave it blank.
+                {logos.length > 0 ? "Pick a suggestion, upload your own, or leave it blank." : "Upload your own, or leave it blank."}
               </p>
             </div>
           )}
