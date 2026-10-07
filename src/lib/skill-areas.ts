@@ -1,4 +1,4 @@
-// Skill areas (2026-10-07): a fixed, vendor-neutral list; backfilled by keyword rules, never by AI.
+// The 8 starting areas (seed only; the SkillArea table is the source of truth) and the keyword rules for backfill.
 export const SKILL_AREAS = [
   { code: "PRC", label: "Procurement (PRC)" },
   { code: "FIN", label: "Financials (FIN)" },
@@ -10,8 +10,6 @@ export const SKILL_AREAS = [
   { code: "TECH", label: "Technical / Integration" },
 ] as const;
 export type SkillArea = (typeof SKILL_AREAS)[number]["code"];
-export const AREA_LABEL: Record<string, string> = Object.fromEntries(SKILL_AREAS.map((a) => [a.code, a.label]));
-export const isArea = (x: unknown): x is SkillArea => typeof x === "string" && x in AREA_LABEL;
 
 // First matching rule wins; order puts the specific (reporting, integration) before the broad.
 const RULES: [SkillArea, RegExp][] = [

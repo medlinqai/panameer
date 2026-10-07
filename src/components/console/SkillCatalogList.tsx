@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
-import { SKILL_AREAS, AREA_LABEL } from "@/lib/skill-areas";
+import type { AreaRow } from "@/lib/skill-area-store";
 
 // Admin › Skill Catalog as one searchable list (mockup skill_catalog_admin 2026-10-07): A list, B edit panel, C To Review.
 export type ListSkill = { id: string; name: string; aliases: string[]; roleTypeId: string; pillarId: string | null; role: string; domain: string; area: string | null; members: number; hidden: boolean; isNew: boolean };
@@ -22,11 +22,98 @@ const csvCell = (v: string | number) => (/[",\n]/.test(String(v)) ? `"${String(v
 
 async function post(body: Record<string, unknown>) {
   const r = await fetch("/api/admin/catalog", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
-  const b = (await r?.json().catch(() => null)) as { ok?: boolean; error?: string; message?: string } | null;
-  return r?.ok ? { ok: true as const, message: b?.message ?? "Saved." } : { ok: false as const, error: b?.error ?? "That didn't save." };
+  const b = (await r?.json().catch(() => null)) as { ok?: boolean; error?: string; message?: string; code?: string } | null;
+  return r?.ok ? { ok: true as const, message: b?.message ?? "Saved.", code: b?.code } : { ok: false as const, error: b?.error ?? "That didn't save." };
 }
 
-export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial }: { rows: ListSkill[]; pairs: Pair[]; review: ReviewCard[]; specReviewCount: number; initial: Initial }) {
+// Areas come from the SkillArea table; every picker can add one ("+ New Area…").
+const AreasCtx = createContext<{ areas: AreaRow[]; run: Run }>({ areas: [], run: async () => false });
+const NEW = "__new";
+
+/** An area picker: visible areas (plus the current one even if hidden) and "+ New Area…" last, which adds inline. */
+function AreaSelect({ value, onChange, empty, extra, className = SEL, label = "Area" }: { value: string; onChange: (v: string) => void; empty: string; extra?: React.ReactNode; className?: string; label?: string }) {
+  const { areas, run } = useContext(AreasCtx);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const opts = areas.filter((a) => !a.hidden || a.code === value);
+  const save = async () => {
+    const r = await run({ action: "area.add", label: name.trim(), ...(code.trim() ? { code: code.trim().toUpperCase() } : {}) });
+    if (r && r.code) {
+      onChange(r.code);
+      setAdding(false);
+      setName("");
+      setCode("");
+    }
+  };
+  return (
+    <span className="inline-block">
+      <select value={value} aria-label={label} onChange={(e) => (e.target.value === NEW ? setAdding(true) : onChange(e.target.value))} className={className}>
+        <option value="">{empty}</option>
+        {opts.map((a) => <option key={a.code} value={a.code}>{a.label}{a.hidden ? " (hidden)" : ""}</option>)}
+        {extra}
+        <option value={NEW}>+ New Area…</option>
+      </select>
+      {adding && (
+        <span data-new-area className="mt-1.5 flex flex-wrap items-center gap-1.5 border border-ink bg-surface p-2 text-[12.5px] font-normal tracking-normal text-ink">
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (required)" aria-label="New area name" className={SEL + " w-[200px]"} />
+          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Short code (optional)" aria-label="New area short code" className={SEL + " w-[150px] uppercase"} />
+          <button type="button" disabled={name.trim().length < 2} onClick={save} className={BTN_K}>Save</button>
+          <button type="button" onClick={() => setAdding(false)} className="font-semibold text-ink-2">Cancel</button>
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** One area's name + short code; a code change moves every skill that uses it. */
+function AreaEdit({ area, onDone }: { area: AreaRow; onDone: () => void }) {
+  const { run } = useContext(AreasCtx);
+  const [label, setLabel] = useState(area.label);
+  const [code, setCode] = useState(area.code);
+  return (
+    <span data-area-edit className="flex flex-wrap items-center gap-1.5 text-[12.5px] font-normal tracking-normal text-ink">
+      <input value={label} onChange={(e) => setLabel(e.target.value)} aria-label="Area name" className={SEL + " w-[200px]"} />
+      <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} aria-label="Area short code" className={SEL + " w-[120px] uppercase"} />
+      <button type="button" disabled={label.trim().length < 2 || code.trim().length < 2} onClick={async () => (await run({ action: "area.update", id: area.id, label: label.trim(), code: code.trim() })) && onDone()} className={BTN_K}>Save</button>
+      <button type="button" onClick={onDone} className="font-semibold text-ink-2">Cancel</button>
+    </span>
+  );
+}
+
+function ManageAreas({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { areas, run } = useContext(AreasCtx);
+  const [editing, setEditing] = useState<string | null>(null);
+  return (
+    <Modal open={open} onClose={onClose} title="Manage Areas" width="max-w-2xl">
+      <p className="mb-3 text-[12.5px] text-ink-2">Hidden areas drop out of pickers; skills keep them. Areas are never deleted.</p>
+      <ul data-manage-areas className="border-t border-line">
+        {areas.map((a, i) => (
+          <li key={a.id} data-area-row={a.code} className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2 text-[13.5px]">
+            {editing === a.id ? (
+              <AreaEdit area={a} onDone={() => setEditing(null)} />
+            ) : (
+              <span className={a.hidden ? "text-ink-3" : ""}>
+                <b>{a.label}</b> <span className="text-[12px] text-ink-3">{a.code}{a.hidden ? " · hidden" : ""}</span>
+              </span>
+            )}
+            {editing !== a.id && (
+              <span className="flex items-center gap-1.5">
+                <button type="button" aria-label={`Move ${a.label} up`} disabled={i === 0} onClick={() => run({ action: "area.move", id: a.id, dir: "up" })} className={BTN}>↑</button>
+                <button type="button" aria-label={`Move ${a.label} down`} disabled={i === areas.length - 1} onClick={() => run({ action: "area.move", id: a.id, dir: "down" })} className={BTN}>↓</button>
+                <button type="button" onClick={() => setEditing(a.id)} className={BTN}>Edit</button>
+                <button type="button" onClick={() => run({ action: "area.hidden", id: a.id, hidden: !a.hidden })} className={BTN}>{a.hidden ? "Show" : "Hide"}</button>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3"><AreaSelect value="" onChange={() => null} empty="Add an area…" label="Add an area" /></div>
+    </Modal>
+  );
+}
+
+export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial, areas }: { rows: ListSkill[]; pairs: Pair[]; review: ReviewCard[]; specReviewCount: number; initial: Initial; areas: AreaRow[] }) {
   const router = useRouter();
   const path = usePathname();
   const [tab, setTab] = useState(initial.tab === "review" || initial.tab === "compare" ? "review" : initial.tab === "hidden" ? "hidden" : "all");
@@ -68,8 +155,10 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
       after?.();
       router.refresh();
     }
-    return r.ok;
+    return r.ok ? r : false;
   };
+  const AREA_LABEL: Record<string, string> = Object.fromEntries(areas.map((a) => [a.code, a.label]));
+  const [manage, setManage] = useState(false);
 
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -102,6 +191,7 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
   };
 
   return (
+    <AreasCtx.Provider value={{ areas, run }}>
     <div data-skill-catalog-list>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
@@ -143,12 +233,8 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
               </select>
             </label>
             <label className="flex flex-col text-[11px] font-bold tracking-[0.08em] text-ink-3">
-              AREA
-              <select value={area} onChange={(e) => { setArea(e.target.value); reset(); }} className={SEL + " mt-1 font-normal tracking-normal text-ink"}>
-                <option value="">All</option>
-                {SKILL_AREAS.map((a) => <option key={a.code} value={a.code}>{a.label}</option>)}
-                <option value="none">No area</option>
-              </select>
+              <span className="flex items-center justify-between gap-2">AREA <button type="button" data-manage-areas-link onClick={() => setManage(true)} className="text-[11px] font-semibold tracking-normal text-magenta-dark underline">Manage areas</button></span>
+              <span className="mt-1"><AreaSelect value={area} onChange={(v) => { setArea(v); reset(); }} empty="All" extra={<option value="none">No area</option>} className={SEL + " font-normal tracking-normal text-ink"} /></span>
             </label>
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -236,11 +322,13 @@ export function SkillCatalogList({ rows, pairs, review, specReviewCount, initial
         </>
       )}
       {panel && <EditPanel key={panel} skill={rows.find((r) => r.id === panel)!} pairs={pairs} rows={rows} busy={busy} run={run} onClose={() => setPanel(null)} />}
+      <ManageAreas open={manage} onClose={() => setManage(false)} />
     </div>
+    </AreasCtx.Provider>
   );
 }
 
-type Run = (body: Record<string, unknown>, after?: () => void) => Promise<boolean>;
+type Run = (body: Record<string, unknown>, after?: () => void) => Promise<false | { ok: true; message: string; code?: string }>;
 
 function PairSelect({ pairs, value, onChange, label }: { pairs: Pair[]; value: string; onChange: (v: string) => void; label: string }) {
   return (
@@ -282,11 +370,7 @@ function BulkBar({ ids, pairs, rows, busy, run, clear }: { ids: string[]; pairs:
       <b>{ids.length} ticked:</b>
       <PairSelect pairs={pairs} value={to} onChange={setTo} label="Move to domain" />
       <button type="button" disabled={busy || !to} onClick={() => run({ action: "skill.bulk", op: "move", ids, ...splitPair(to) }, clear)} className={BTN}>Move</button>
-      <select value={area} onChange={(e) => setArea(e.target.value)} aria-label="Set area" className={SEL}>
-        <option value="">Set area…</option>
-        {SKILL_AREAS.map((a) => <option key={a.code} value={a.code}>{a.label}</option>)}
-        <option value="none">No area</option>
-      </select>
+      <AreaSelect value={area} onChange={setArea} empty="Set area…" label="Set area" extra={<option value="none">No area</option>} />
       <button type="button" disabled={busy || !area} onClick={() => run({ action: "skill.bulk", op: "area", ids, area: area === "none" ? null : area }, clear)} className={BTN}>Set</button>
       <button type="button" disabled={busy} onClick={() => run({ action: "skill.bulk", op: "hide", ids }, clear)} className={BTN}>Hide</button>
       <button type="button" disabled={busy} onClick={() => run({ action: "skill.bulk", op: "show", ids }, clear)} className={BTN}>Show</button>
@@ -319,6 +403,9 @@ function EditPanel({ skill, pairs, rows, busy, run, onClose }: { skill: ListSkil
   const [name, setName] = useState(skill.name);
   const [at, setAt] = useState(pairKey(skill.roleTypeId, skill.pillarId));
   const [area, setArea] = useState(skill.area ?? "");
+  const { areas } = useContext(AreasCtx);
+  const [editArea, setEditArea] = useState(false);
+  const areaRow = areas.find((a) => a.code === area);
   const [aliases, setAliases] = useState(skill.aliases.join(", "));
   const [hidden, setHidden] = useState(skill.hidden);
   const save = () => run({ action: "skill.update", id: skill.id, name: name.trim(), ...splitPair(at), area: area || null, aliases: aliases.split(",").map((a) => a.trim()).filter(Boolean), visible: !hidden }, onClose);
@@ -336,10 +423,11 @@ function EditPanel({ skill, pairs, rows, busy, run, onClose }: { skill: ListSkil
         </label>
         <label className="block text-[11px] font-bold tracking-[0.08em] text-ink-3">
           AREA
-          <select value={area} onChange={(e) => setArea(e.target.value)} className={SEL + " mt-1 block font-normal tracking-normal text-ink"}>
-            <option value="">No area</option>
-            {SKILL_AREAS.map((a) => <option key={a.code} value={a.code}>{a.label}</option>)}
-          </select>
+          <span className="mt-1 flex flex-wrap items-start gap-2 font-normal tracking-normal">
+            <AreaSelect value={area} onChange={setArea} empty="No area" className={SEL + " text-ink"} />
+            {area && !editArea && <button type="button" data-area-pencil aria-label="Edit this area" title="Edit this area" onClick={() => setEditArea(true)} className="h-[34px] px-1.5 text-[15px] text-ink-2 hover:text-ink">✎</button>}
+          </span>
+          {editArea && areaRow && <span className="mt-1.5 block"><AreaEdit area={areaRow} onDone={() => setEditArea(false)} /></span>}
         </label>
         <label className="block text-[11px] font-bold tracking-[0.08em] text-ink-3">
           ALSO MATCHES (WHAT RÉSUMÉS SAY)

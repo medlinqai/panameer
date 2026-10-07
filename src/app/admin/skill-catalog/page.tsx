@@ -22,6 +22,7 @@ import { RDS_DOMAIN_MARKS, RDS_ROLE_MARKS } from "@/lib/catalog-marks";
 import { BackLink } from "@/components/console/BackLink";
 import { NEW_SKILL_WHERE, hiddenSameLetterNames, waitingTermCounts } from "@/lib/catalog-review";
 import { formatSkillName, sameLetters } from "@/lib/skill-match";
+import { getSkillAreas } from "@/lib/skill-area-store";
 import { SkillCatalogList, type ListSkill, type Pair, type ReviewCard } from "@/components/console/SkillCatalogList";
 
 // To Review: tidy capitals and common abbreviations for the "Add as" name.
@@ -227,6 +228,7 @@ export default async function Page({
           review={reviewCards}
           specReviewCount={specRows.filter((x) => x.status === "SUGGESTED").length}
           initial={{ tab: sp.tab, q: sp.q, role: sp.role, domain: sp.domain, area: sp.area, st: sp.st, page: sp.page }}
+          areas={await getSkillAreas()}
         />
       </div>
     );

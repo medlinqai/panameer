@@ -26,11 +26,12 @@ import {
   rejectSkill,
   rejectSpecialization,
 } from "@/lib/catalog-review";
+import { AREA_CODE, addArea, isAreaCode, moveArea, setAreaHidden, updateArea } from "@/lib/skill-area-store";
 
 const Id = z.string().uuid();
 const Name = z.string().trim().min(2).max(120);
 const Kind = z.enum(["PRODUCT", "METHODOLOGY", "INDUSTRY"]);
-const Area = z.enum(["PRC", "FIN", "O2C", "HCM", "SCM", "PPM", "ANALYTICS", "TECH"]);
+const Area = z.string().trim().toUpperCase().regex(AREA_CODE);
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("spec.add"), name: Name, kind: Kind }),
@@ -61,6 +62,10 @@ const Body = z.discriminatedUnion("action", [
     visible: z.boolean().optional(),
   }),
   z.object({ action: z.literal("skill.merge"), id: Id, intoId: Id }),
+  z.object({ action: z.literal("area.add"), label: Name, code: z.string().trim().max(16).optional() }),
+  z.object({ action: z.literal("area.update"), id: Id, label: Name.optional(), code: Area.optional() }),
+  z.object({ action: z.literal("area.move"), id: Id, dir: z.enum(["up", "down"]) }),
+  z.object({ action: z.literal("area.hidden"), id: Id, hidden: z.boolean() }),
   z.object({
     action: z.literal("skill.bulk"),
     ids: z.array(Id).min(1).max(500),
@@ -90,6 +95,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That edit didn't look right." }, { status: 400 });
   }
   const b = parsed.data;
+  if ((b.action === "skill.update" || b.action === "skill.bulk") && b.area && !(await isAreaCode(b.area)))
+    return NextResponse.json({ ok: false, error: "That area doesn't exist." }, { status: 400 });
 
   const result = await (async () => {
     switch (b.action) {
@@ -121,6 +128,14 @@ export async function POST(req: Request) {
         return addNewSkill(viewer, b.id, b.roleTypeId, b.pillarId, b.name);
       case "skill.update":
         return updateSkill(b.id, b);
+      case "area.add":
+        return addArea(b.label, b.code);
+      case "area.update":
+        return updateArea(b.id, { label: b.label, code: b.code });
+      case "area.move":
+        return moveArea(b.id, b.dir);
+      case "area.hidden":
+        return setAreaHidden(b.id, b.hidden);
       case "skill.merge":
         return mergeSkill(viewer, b.id, b.intoId, "catalog.skill.merge", true);
       case "skill.bulk": {

@@ -8099,3 +8099,16 @@ model ConnectionView {
   @@index([user_id])
   @@map("connection_views")
 }
+
+/// Skill areas (vendor-neutral, admin-managed). `Skill.area` holds the code; codes rename in one transaction.
+model SkillArea {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  label      String
+  sort_order Int      @default(100)
+  hidden     Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("skill_areas")
+}
