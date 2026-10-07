@@ -582,16 +582,19 @@ export function ConnectProfile({
 
           {/* THE COMPANY — Panameer contracts with companies, so it leads (Scott 2026-10-07). */}
           {p.sellingCompany ? (
-            <p data-profile-company className="mt-2 flex items-center gap-2 text-[15px] font-semibold text-ink">
-              {p.sellingCompany.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.sellingCompany.logo_url} alt="" className="h-6 w-6 border border-line bg-white object-contain" />
-              ) : (
-                <span aria-hidden className="grid h-6 w-6 place-items-center bg-[#E8EAF1] text-[11px] font-bold text-[#5C6485]">
-                  {p.sellingCompany.name.slice(0, 1).toUpperCase()}
-                </span>
-              )}
-              <Link href={`/companies/${p.sellingCompany.id}`} className="hover:underline">{p.sellingCompany.name}</Link>
+            // LinkedIn-style: small logo + bold name, the whole line one link to the company.
+            <p data-profile-company className="mt-2">
+              <Link href={`/companies/${p.sellingCompany.id}`} className="group inline-flex items-center gap-2 text-[15px] font-bold text-ink">
+                {p.sellingCompany.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.sellingCompany.logo_url} alt="" className="h-6 w-auto max-w-[72px] object-contain" />
+                ) : (
+                  <span aria-hidden className="grid h-6 w-6 place-items-center bg-[#E8EAF1] text-[11px] font-bold text-[#5C6485]">
+                    {p.sellingCompany.name.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="group-hover:underline">{p.sellingCompany.name}</span>
+              </Link>
             </p>
           ) : owner ? (
             <p data-profile-company className="mt-2 text-[14px] text-ink-2">
