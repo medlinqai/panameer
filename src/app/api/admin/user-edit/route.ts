@@ -10,6 +10,8 @@ import {
   setLocked,
   setName,
   setRoles,
+  nudgeFinishProfile,
+  addToCompany,
 } from "@/lib/admin/user-edit";
 
 export async function POST(request: Request) {
@@ -38,7 +40,8 @@ export async function POST(request: Request) {
       case "email":
         return NextResponse.json({ ok: true, ...(await setEmail(gate, personId, String(body.email ?? ""), origin)) });
       case "verify":
-        await markEmailVerified(gate, personId);
+        if (!String(body.reason ?? "").trim()) return NextResponse.json({ error: "Give a reason for marking this verified." }, { status: 400 });
+        await markEmailVerified(gate, personId, String(body.reason));
         return NextResponse.json({ ok: true });
       case "roles":
         await setRoles(gate, personId, {
@@ -52,6 +55,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       case "active":
         await setActive(gate, personId, body.active === true, confirmed);
+        return NextResponse.json({ ok: true });
+      case "nudge":
+        return NextResponse.json({ ok: true, ...(await nudgeFinishProfile(gate, personId)) });
+      case "add_company":
+        await addToCompany(gate, personId, String(body.companyId ?? ""), String(body.reason ?? ""));
         return NextResponse.json({ ok: true });
       case "reset":
         return NextResponse.json({ ok: true, ...(await sendPasswordReset(gate, personId, origin)) });

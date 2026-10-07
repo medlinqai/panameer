@@ -107,16 +107,7 @@ export function UserEditPanel({ state }: { state: UserEditState }) {
           >
             Change Email
           </button>
-          {!state.verified && (
-            <button
-              type="button"
-              className={BTN_2 + " self-end"}
-              disabled={disabled}
-              onClick={() => void call("verify", {}, "Marked verified — recorded as an admin override.")}
-            >
-              Mark Verified
-            </button>
-          )}
+          {/* Mark Verified lives in step 2 (asks for a reason). */}
         </div>
       )}
 

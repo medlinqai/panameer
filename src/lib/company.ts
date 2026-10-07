@@ -811,3 +811,16 @@ async function assertCanLeave(personId: string, exceptCompanyId?: string) {
   ]);
   if (others > 0 && admins === 1) throw new OnboardingError("Make someone else an admin of your company first — it still has other members.", "INVALID");
 }
+
+/** Admin fix: put a person into a company as an approved member; any other membership closes (one company per person). */
+export async function adminAddToCompany(personId: string, companyId: string) {
+  const person = await prisma.person.findUnique({ where: { id: personId }, select: { company_id: true } });
+  if (!person) throw new OnboardingError("No person record", "INVALID");
+  await prisma.companyMembership.upsert({
+    where: { person_id_company_id: { person_id: personId, company_id: companyId } },
+    update: { status: "APPROVED", decided_at: new Date() },
+    create: { person_id: personId, company_id: companyId, role: "MEMBER", status: "APPROVED", decided_at: new Date() },
+  });
+  await moveInto(personId, companyId, person.company_id);
+  await leaveOldCompanies(personId, companyId);
+}

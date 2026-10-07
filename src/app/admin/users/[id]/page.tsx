@@ -2,523 +2,270 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
-import { Avatar } from "@/components/Avatar";
 import { BackLink } from "@/components/console/BackLink";
-import { LevelPill } from "@/components/console/LevelPill";
 import { jobsFor } from "@/lib/user-jobs";
-import { blockingFor, levelFor, type LevelSubject } from "@/lib/user-levels";
-import { REGISTERED_SITE_NAME } from "@/lib/company";
-import { LockControl } from "@/components/admin/LockControl";
+import { LIFECYCLE, LIFECYCLE_WHO } from "@/lib/user-levels";
+import { lifecycleFor, companyChecklist } from "@/lib/your-path";
+import { buildCompletenessInput } from "@/lib/onboarding";
+import { missingRequired, VISIBILITY_THRESHOLD } from "@/lib/completeness";
 import { UserEditPanel } from "@/components/admin/UserEditPanel";
+import { ResendVerification } from "@/components/admin/ResendVerification";
+import { MarkVerified, NudgeToFinish, AddToCompany } from "@/components/admin/LifecycleFixes";
 
 export const dynamic = "force-dynamic";
 
-/** A section that is always present, so two people's pages have one shape. */
-function Section({
-  title,
-  children,
-  note,
-}: {
-  title: string;
-  children: ReactNode;
-  note?: string;
-}) {
-  return (
-    <section className="rounded-brand border border-line bg-white p-5">
-      <h2 className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">
-        {title}
-      </h2>
-      {note && <p className="mt-1 text-[12.5px] text-ink-2">{note}</p>}
-      <div className="mt-3">{children}</div>
-    </section>
-  );
-}
+// Admin › Users › one person (mockup admin_user_detail 2026-10-06): status first, then one section per lifecycle step with its fixes.
+const d = (v: Date | null | undefined) => (v ? v.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—");
+const dt = (v: Date) => v.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const No = ({ children }: { children: ReactNode }) => <span className="text-ink-3">{children}</span>;
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line py-2 last:border-0">
-      <span className="w-[150px] shrink-0 text-[12.5px] text-ink-2">{label}</span>
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line/60 py-2 last:border-0">
+      <span className="w-[160px] shrink-0 text-[12.5px] text-ink-2">{label}</span>
       <span className="min-w-0 text-[14px]">{value}</span>
     </div>
   );
 }
 
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="text-[14px] text-ink-2">{children}</p>;
-}
-
-const d = (v: Date | null | undefined) =>
-  v
-    ? v.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-    : "—";
-
-export default async function AdminUserPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
-  const person = await prisma.person.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      user_id: true,
-      first_name: true,
-      last_name: true,
-      title: true,
-      phone: true,
-      photo_url: true,
-      created_at: true,
-      is_service_buyer: true,
-      is_service_provider: true,
-      is_service_coordinator: true,
-      is_support: true,
-      user: {
-        select: {
-          email: true,
-          email_verified: true,
-          tos_accepted_at: true,
-          locked: true,
-          locked_until: true,
-          failed_login_attempts: true,
-          last_login: true,
-          is_system_admin: true,
-          is_active: true,
-        },
-      },
-      company: {
-        select: {
-          name: true,
-          tax_type: true,
-          tin: true,
-          sites: {
-            where: { name: REGISTERED_SITE_NAME },
-            select: {
-              name: true,
-              addresses: {
-                select: { line1: true, city: true, state: true, postal_code: true, country: true },
-                take: 1,
-              },
-            },
-            take: 1,
-          },
-        },
-      },
-      payoutMethods: { select: { id: true, kind: true, label: true, last4: true, country: true } },
-      requesterProfile: { select: { id: true, onboarding_step: true, completed_at: true } },
-      buyerProfile: { select: { id: true } },
-      providerProfile: {
-        select: {
-          id: true,
-          status: true,
-          work_method: true,
-          validation_status: true,
-          validation_requested_at: true,
-          validated_at: true,
-          completeness: true,
-        },
-      },
-    },
-  });
-
-  const userId = person?.user_id ?? null;
-  const [
-    connectionCount,
-    connections,
-    workRequests,
-    proposals,
-    enrollments,
-    certifications,
-    sentEmails,
-    tickets,
-    follows,
-    auditRows,
-  ] = person
-    ? await Promise.all([
-        userId
-          ? prisma.connection.count({
-              where: { OR: [{ from_user_id: userId }, { to_user_id: userId }] },
-            })
-          : Promise.resolve(0),
-        userId
-          ? prisma.connection.findMany({
-              where: { OR: [{ from_user_id: userId }, { to_user_id: userId }] },
-              select: { kind: true, status: true, created_at: true },
-              orderBy: { created_at: "desc" },
-              take: 5,
-            })
-          : Promise.resolve([] as { kind: string; status: string; created_at: Date }[]),
-        prisma.workRequest.count({ where: { buyer_person_id: person.id } }).catch(() => -1),
-        prisma.proposal.count({ where: { provider_person_id: person.id } }).catch(() => -1),
-        userId ? prisma.learnEnrollment.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
-        userId ? prisma.certification.count({ where: { user_id: userId } }).catch(() => -1) : Promise.resolve(0),
-        userId
-          ? prisma.sentEmail.count({ where: { user_id: userId } }).catch(() => -1)
-          : Promise.resolve(0),
-        prisma.supportTicket.count({ where: { reporter_person_id: person.id } }).catch(() => -1),
-        prisma.workTrackerFollower.count({ where: { person_id: person.id } }).catch(() => -1),
-        userId
-          ? prisma.adminAudit.findMany({
-              where: { target_id: userId },
-              select: { action: true, actor_email: true, detail: true, created_at: true, row_count: true },
-              orderBy: { created_at: "desc" },
-              take: 8,
-            })
-          : Promise.resolve([] as { action: string; actor_email: string | null; detail: unknown; created_at: Date; row_count: number }[]),
-      ])
-    : [0, [], -1, -1, -1, -1, 0, -1, -1, []];
-
-  if (!person) notFound();
-
-  const u = person.user;
-  const name = `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || "(unnamed)";
-
-  // THE GRID'S RULES, IMPORTED — not re-derived. See `lib/user-jobs.ts` and
-  const jobs = jobsFor(person);
-  const registeredAddress = person.company?.sites?.[0]?.addresses?.[0] ?? null;
-  const subject: LevelSubject = {
-    firstName: person.first_name,
-    lastName: person.last_name,
-    emailVerified: u?.email_verified ?? null,
-    tosAcceptedAt: u?.tos_accepted_at ?? null,
-    phone: person.phone,
-    title: person.title,
-    hasProfile: !!person.requesterProfile || !!person.providerProfile,
-    companyTaxType: person.company?.tax_type ?? null,
-    companyTin: person.company?.tin ?? null,
-    companyRegisteredAddress: !!registeredAddress,
-    payoutMethodCount: person.payoutMethods.length,
-  };
-  const level = levelFor(subject);
-  const blocking = blockingFor(subject);
-
-  // lock's release time was formatted in the server's timezone and hard-coded to
-
+function Step({ n, title, tag, tone, actions, children }: { n: string; title: string; tag: string; tone: "done" | "wait" | "none"; actions?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      {/* THE MEDLINQ PATTERN: a way back, ABOVE the title. Same component the */}
-      <BackLink href="/admin/users" label="Users" />
-      <h1 className="mt-1 font-display text-[26px] font-bold">{name}</h1>
-      <p className="mt-0.5 text-[13px] text-ink-2">
-        {jobs.length ? jobs.join(" · ") : "No job yet"} · joined {d(person.created_at)}
-      </p>
-
-      <div className="mt-5 grid gap-4">
-        {/* 1 · IDENTITY */}
-        <Section
-          title="Identity"
-          note="The full email lives here — the grid truncates it to fit."
-        >
-          <div className="mb-3 flex items-center gap-3">
-            <Avatar
-              firstName={person.first_name ?? ""}
-              lastName={person.last_name ?? ""}
-              photoUrl={person.photo_url}
-              size={48}
-            />
-            <span className="text-[13px] text-ink-2">
-              {person.photo_url ? "Photo on file" : "No photo on file"}
-            </span>
-          </div>
-          <Row label="Name" value={name} />
-          {/* FINDING 1 — THIS ROW WAS LYING ABOUT MOST OF THE */}
-          {/* THE HEADLINE FALLBACK WAS UNREACHABLE AND IS NOW GONE . */}
-          <Row
-            label="Title"
-            value={person.title || <span className="text-ink-2">No title on file</span>}
-          />
-          <Row
-            label="Email"
-            value={u?.email ?? <span className="text-ink-2">No login on this record</span>}
-          />
-          <Row label="Phone" value={person.phone || <span className="text-ink-2">No phone on file</span>} />
-          <Row
-            label="Email verified"
-            value={u?.email_verified ? d(u.email_verified) : <span className="text-ink-2">Not verified</span>}
-          />
-          <Row label="Terms accepted" value={u?.tos_accepted_at ? d(u.tos_accepted_at) : <span className="text-ink-2">Not recorded</span>} />
-          <Row label="Last login" value={d(u?.last_login)} />
-          <Row
-            label="Locked"
-            value={
-              u ? (
-                // — THE CHECKBOX IS LIVE. It used to be `disabled`
-                <LockControl
-                  personId={person.id}
-                  locked={u.locked}
-                  lockedUntil={u.locked_until ? u.locked_until.toISOString() : null}
-                  failedAttempts={u.failed_login_attempts ?? 0}
-                />
-              ) : (
-                <span className="text-[13px] text-ink-2">No login on this record</span>
-              )
-            }
-          />
-        </Section>
-
-        {/* 1b · EDIT & FIX (`P2-ALL-E796`) */}
-        {u ? (
-          <Section
-            title="Edit & fix"
-            note="Changes the record above. Lock and deactivate ask before they act, and a password reset emails the member."
-          >
-            {/* IT SITS BESIDE IDENTITY ON PURPOSE. The rows above are the */}
-            <UserEditPanel
-              state={{
-                personId: person.id,
-                hasAccount: true,
-                first: person.first_name ?? "",
-                last: person.last_name ?? "",
-                email: u.email ?? "",
-                verified: Boolean(u.email_verified),
-                locked: u.locked,
-                active: u.is_active,
-                buyer: person.is_service_buyer,
-                provider: person.is_service_provider,
-                coordinator: person.is_service_coordinator,
-              }}
-            />
-          </Section>
-        ) : (
-          <Section title="Edit & fix" note="Nothing here can act without a login to act on.">
-            {/* THE SECTION STILL RENDERS. An absent section is */}
-            <Empty>
-              This person has no `User` record, so there is no email, no password
-              and no lock to change. A person without a login is a profile
-              somebody else created.
-            </Empty>
-          </Section>
-        )}
-
-        {/* 2 · JOBS */}
-        <Section
-          title="Jobs"
-          note="Buyer where a BuyerProfile exists, Requester where only a RequesterProfile does, and neither when the person has not answered yet."
-        >
-          {jobs.length ? (
-            <div className="flex flex-wrap gap-2">
-              {jobs.map((j) => (
-                <span
-                  key={j}
-                  className="rounded-full bg-ink/[0.06] px-2.5 py-1 text-[12px] font-semibold text-ink-2"
-                >
-                  {j}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <Empty>
-              No job yet — this person carries the buyer flag but has answered
-              neither side of the fork.
-            </Empty>
-          )}
-          {u?.is_system_admin && (
-            <p className="mt-2 text-[13px] text-ink-2">Also a Panameer administrator.</p>
-          )}
-        </Section>
-
-        {/* 3 · LEVEL */}
-        <Section title="Level" note="The lifecycle position, and what stands between this person and the next stage.">
-          <div className="flex flex-wrap items-center gap-3">
-            <LevelPill level={level} blocking={blocking} />
-            <span className="text-[13.5px] text-ink-2">
-              {blocking.length ? (
-                <>
-                  Next: <b className="font-semibold text-ink">{blocking.join(", ")}</b>
-                </>
-              ) : (
-                "Nothing outstanding at this level."
-              )}
-            </span>
-          </div>
-        </Section>
-
-        {/* 4 · COMPANY */}
-        <Section title="Company">
-          {person.company ? (
-            <>
-              <Row label="Name" value={person.company.name} />
-              <Row
-                label="Tax type"
-                value={person.company.tax_type ?? <span className="text-ink-2">Not captured</span>}
-              />
-              <Row label="TIN" value={person.company.tin ?? <span className="text-ink-2">Not captured</span>} />
-              <Row
-                label="Registered address"
-                value={
-                  registeredAddress ? (
-                    [
-                      registeredAddress.line1,
-                      registeredAddress.city,
-                      registeredAddress.state,
-                      registeredAddress.postal_code,
-                      registeredAddress.country,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")
-                  ) : (
-                    <span className="text-ink-2">No registered address on file</span>
-                  )
-                }
-              />
-              {/* THE HONEST CAVEAT. Every account is given a placeholder company */}
-              <p className="mt-2 text-[12.5px] text-ink-2">
-                Every account is created with a placeholder company named after the
-                person, so a name alone is not evidence that company details were given.
-              </p>
-            </>
-          ) : (
-            <Empty>No company on file.</Empty>
-          )}
-        </Section>
-
-        {/* 5 · PAYMENT */}
-        <Section title="Payment">
-          {person.payoutMethods.length ? (
-            person.payoutMethods.map((m) => (
-              <Row
-                key={m.id}
-                label={m.kind}
-                value={`${m.label ?? "Method"}${m.last4 ? ` ···· ${m.last4}` : ""}${m.country ? ` · ${m.country}` : ""}`}
-              />
-            ))
-          ) : (
-            <Empty>Not a payee — no payout method on file.</Empty>
-          )}
-        </Section>
-
-        {}
-        {person.providerProfile && (
-          <Section
-            title="Seller detail"
-            note="What a seller has and a buyer does not — the longer profile."
-          >
-            {}
-            <Row label="Title" value={person.title || <span className="text-ink-2">No title</span>} />
-            <Row label="Status" value={person.providerProfile.status} />
-            <Row
-              label="Work method"
-              value={person.providerProfile.work_method ?? <span className="text-ink-2">Not chosen</span>}
-            />
-            <Row label="Completeness" value={`${person.providerProfile.completeness}%`} />
-            <Row
-              label="Validation"
-              value={
-                <>
-                  {person.providerProfile.validation_status}
-                  {person.providerProfile.validation_requested_at
-                    ? ` — asked ${d(person.providerProfile.validation_requested_at)}`
-                    : ""}
-                  {person.providerProfile.validated_at
-                    ? ` · validated ${d(person.providerProfile.validated_at)}`
-                    : ""}
-                </>
-              }
-            />
-            <Row
-              label="Public profile"
-              value={
-                <Link
-                  href={`/providers/${person.providerProfile.id}`}
-                  className="font-semibold text-magenta-ink underline decoration-magenta-ink/30 underline-offset-2 hover:text-magenta-ink-hover"
-                >
-                  /providers/{person.providerProfile.id.slice(0, 8)}…
-                </Link>
-              }
-            />
-          </Section>
-        )}
-
-        {/* THE REST OF THE RECORD */}
-        <Section
-          title="Connections"
-          note="Colleague and mentor links, both directions."
-        >
-          <Row label="Total" value={<Count n={connectionCount} />} />
-          {connections.length === 0 ? (
-            <p className="text-[13px] text-ink-2">No connections yet.</p>
-          ) : (
-            <ul className="mt-2 text-[13px] text-ink-2">
-              {connections.map((c, i) => (
-                <li key={i}>
-                  {c.kind} · {c.status} · {c.created_at.toISOString().slice(0, 10)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section title="Work" note="What this person has posted, bid on and been paid for.">
-          <Row label="Work requests posted" value={<Count n={workRequests} />} />
-          <Row
-            label="Work orders"
-            value={
-              // UNCOUNTABLE PER PERSON TODAY: `WorkOrder` carries no person
-              <span className="text-ink-2">— no per-person column on work orders</span>
-            }
-          />
-          <Row label="Bids / proposals" value={<Count n={proposals} />} />
-          <Row
-            label="Settlements"
-            value={<span className="text-ink-2">— no per-person column on settlements</span>}
-          />
-        </Section>
-
-        <Section title="Learn">
-          <Row label="Enrollments" value={<Count n={enrollments} />} />
-          <Row label="Certifications" value={<Count n={certifications} />} />
-        </Section>
-
-        <Section title="Email" note="Mail Panameer sent to this account.">
-          <Row label="Messages sent" value={<Count n={sentEmails} />} />
-          {!userId && (
-            <p className="text-[13px] text-ink-2">
-              This person has no user account, so no mail is attached to them.
-            </p>
-          )}
-        </Section>
-
-        <Section title="Support and follows">
-          <Row label="Support tickets" value={<Count n={tickets} />} />
-          <Row label="Following the build" value={<Count n={follows} />} />
-        </Section>
-
-        <Section
-          title="History"
-          note="Admin changes recorded against this account."
-        >
-          {auditRows.length === 0 ? (
-            // IT SAYS WHY IT IS EMPTY. The log starts at , so silence
-            <p className="text-[13px] text-ink-2">
-              Nothing recorded. The audit log starts at the 2026-10-03 release, so
-              changes made before then are not in it.
-            </p>
-          ) : (
-            <ul className="text-[13px] text-ink-2">
-              {auditRows.map((a, i) => (
-                <li key={i} className="border-t border-line py-1.5 first:border-t-0">
-                  <span className="font-semibold text-ink">{a.action}</span>{" "}
-                  {a.actor_email ? `by ${a.actor_email}` : "by the system"} ·{" "}
-                  {a.created_at.toISOString().slice(0, 16).replace("T", " ")}
-                  {a.row_count !== 1 && ` · ${a.row_count} rows`}
-                  {a.detail ? (
-                    <span className="block font-mono text-[12px] text-ink-3">
-                      {JSON.stringify(a.detail).slice(0, 160)}
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+    <section data-step-section={n} className="border-t border-line pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-[17px] font-bold">
+          {n} {title}
+        </h2>
+        <span className={"border px-1.5 text-[10.5px] font-bold tracking-[0.06em] " + (tone === "done" ? "border-[#1f8a5b] text-[#1f8a5b]" : tone === "wait" ? "border-[#b26b00] text-[#b26b00]" : "border-line text-ink-3")}>{tag}</span>
+        {actions && <span className="ml-auto flex flex-wrap items-center gap-2">{actions}</span>}
       </div>
-    </div>
+      <div className="mt-2">{children}</div>
+    </section>
   );
 }
 
-/** A COUNT, OR A DASH WITH ITS REASON. `-1` is the loader's "could not count */
-function Count({ n }: { n: number }) {
-  if (n < 0) return <span className="text-ink-2">— not countable here</span>;
-  return <span className="font-semibold text-ink">{n}</span>;
+const CHECK: [string, string][] = [
+  ["Photo", "a photo"], ["Title", "a title"], ["Role", "a role"], ["Bio (100+)", "a bio of at least 100 characters"],
+  ["3 skills", "at least three skills"], ["Specialization", "at least one specialization"], ["Rate", "your rate"],
+  ["Language", "at least one language"], ["Location", "your location"], ["Address", "your address"], ["Phone", "your phone number"],
+];
+const SIGNED = ["ACCEPTED", "RELEASED", "ACTIVE", "CLOSED"] as const;
+
+export default async function AdminUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const person = await prisma.person.findUnique({
+    where: { id },
+    select: {
+      id: true, user_id: true, first_name: true, last_name: true, phone: true, created_at: true,
+      is_service_buyer: true, is_service_provider: true, is_service_coordinator: true,
+      user: { select: { email: true, email_verified: true, tos_accepted_at: true, locked: true, last_login: true, is_active: true, is_test: true } },
+      requesterProfile: { select: { id: true, completed_at: true } },
+      buyerProfile: { select: { id: true } },
+      providerProfile: { select: { id: true, completeness: true, paused_at: true, onboarding_completed_at: true } },
+      companyMemberships: { orderBy: { updated_at: "desc" }, select: { status: true, role: true, decided_at: true, created_at: true, company: { select: { id: true, name: true, legal_name: true, tin: true, country: true, tax_form_uploaded_at: true, p_account_id: true } } } },
+    },
+  });
+  if (!person) notFound();
+  const u = person.user;
+  const userId = person.user_id;
+  const name = `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || "(unnamed)";
+  const member = person.companyMemberships.find((m) => m.status === "APPROVED") ?? null;
+  const pending = person.companyMemberships.filter((m) => m.status === "PENDING");
+  const co = member?.company ?? null;
+
+  const [path, input, check, verifySent, counts, audit, coPayouts] = await Promise.all([
+    lifecycleFor(person.id),
+    person.providerProfile ? buildCompletenessInput(person.providerProfile.id) : Promise.resolve(null),
+    co ? companyChecklist(co.id) : Promise.resolve(null),
+    userId ? prisma.sentEmail.findFirst({ where: { user_id: userId, template: "verify-email" }, orderBy: { created_at: "desc" }, select: { created_at: true } }) : Promise.resolve(null),
+    Promise.all([
+      prisma.workRequest.count({ where: { buyer_person_id: person.id } }),
+      prisma.proposal.count({ where: { provider_person_id: person.id } }),
+      prisma.workOrder.count({ where: { status: { in: [...SIGNED] }, OR: [{ buyer_person_id: person.id }, { provider_person_id: person.id }] } }),
+      prisma.providerPayout.count({ where: { provider_person_id: person.id, paid_at: { not: null } } }),
+      co ? prisma.payment.count({ where: { p_account_id: co.p_account_id } }) : Promise.resolve(0),
+      userId ? prisma.connection.count({ where: { status: "ACCEPTED", OR: [{ from_user_id: userId }, { to_user_id: userId }] } }) : Promise.resolve(0),
+      userId ? prisma.learnEnrollment.count({ where: { user_id: userId } }) : Promise.resolve(0),
+      userId ? prisma.certification.count({ where: { user_id: userId } }) : Promise.resolve(0),
+    ]),
+    prisma.adminAudit.findMany({ where: { target_id: { in: [userId, person.id].filter((x): x is string => !!x) } }, orderBy: { created_at: "desc" }, take: 15, select: { action: true, actor_email: true, detail: true, created_at: true } }),
+    co ? prisma.payoutMethod.findMany({ where: { company_id: co.id }, select: { label: true, last4: true, holder_name: true } }) : Promise.resolve([]),
+  ]);
+  const [workRequests, proposals, signed, payouts, payments, connections, enrollments, credentials] = counts;
+  const missing = input ? missingRequired(input) : null;
+  const score = person.providerProfile?.completeness ?? null;
+  const searchable = !!person.providerProfile && !person.providerProfile.paused_at && (score ?? 0) >= VISIBILITY_THRESHOLD;
+  const cur = path?.current ?? 1; // index of the first step not done (7 = all done)
+  const status = path?.status ?? "Registered";
+  // When the person reached their current status (best available date).
+  const reachedAt =
+    cur === 1 ? person.created_at
+    : cur === 2 ? u?.email_verified ?? person.created_at
+    : cur === 3 ? person.providerProfile?.onboarding_completed_at ?? person.requesterProfile?.completed_at ?? person.created_at
+    : cur === 4 ? member?.decided_at ?? member?.created_at ?? person.created_at
+    : person.created_at;
+  const now = new Date().getTime();
+  const stuck = Math.max(0, Math.floor((now - reachedAt.getTime()) / 86_400_000));
+  const legal = (co?.legal_name ?? co?.name ?? "").trim();
+  const same = (a: string | null) => !!a && a.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() === legal.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const roles = jobsFor(person).join(" · ") || "No role yet";
+  const isTest = u?.is_test || /@(panameer\.com|example\.seed)$/i.test(u?.email ?? "");
+
+  // Blocked by: the first unmet step and its fix.
+  const blocked =
+    cur === 1 ? { text: "email not verified", sub: verifySent ? `Verification email sent ${d(verifySent.created_at)}` : "No verification email on record", fix: userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : null }
+    : cur === 2 ? { text: "profile checklist not complete", sub: missing?.length ? `Missing: ${missing.join(", ")}` : person.providerProfile ? `Score ${score} of 80` : "Buyer profile not finished", fix: person.providerProfile ? <NudgeToFinish personId={person.id} /> : null }
+    : cur === 3 ? { text: "not linked to a company", sub: pending.length ? `Asked to join ${pending.map((p) => p.company.name).join(", ")}` : "No company and no pending request", fix: <AddToCompany personId={person.id} /> }
+    : cur === 4 ? { text: "company not validated", sub: check ? `Missing: ${check.items.filter((i) => !i.done).map((i) => i.item).join(", ")}` : "", fix: co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : null }
+    : cur === 5 ? { text: "no signed work order yet", sub: "Two validated companies sign a work order.", fix: null }
+    : cur === 6 ? { text: "not paid yet", sub: "Paid to a bank account in the company's legal name.", fix: null }
+    : null;
+
+  return (
+    <div className="mx-auto w-full max-w-4xl pb-14" data-admin-user={status}>
+      <BackLink href="/admin/users" label="Users" />
+      <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-[26px] font-bold">
+            {name}
+            {isTest && <span className="ml-2 border border-ink-3 px-1.5 align-middle text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-2">Test</span>}
+          </h1>
+          <p className="mt-0.5 text-[13px] text-ink-2">
+            {u?.email ?? "No login"} · {roles} · joined {d(person.created_at)} · last login {d(u?.last_login)}
+          </p>
+        </div>
+        <div className="text-right" data-status={status}>
+          <span className="inline-block border-2 border-ink px-2 py-0.5 text-[13px] font-extrabold uppercase tracking-[0.08em]">{status}</span>
+          <p className="mt-1 text-[12.5px] text-ink-2">{cur < 7 ? `Step ${cur} of 7 · stuck ${stuck} day${stuck === 1 ? "" : "s"}` : "Every step done"}</p>
+        </div>
+      </div>
+
+      <ol className="mt-4 grid grid-cols-7 gap-1" aria-label="Lifecycle">
+        {LIFECYCLE.map((s, i) => {
+          const isDone = i < cur;
+          const now_ = i === cur - 1;
+          return (
+            <li key={s.key} data-strip={s.status} className={"border-t-4 px-1 pt-1 text-[11px] font-semibold " + (isDone ? "text-ink" : "text-ink-3")} style={{ borderTopColor: isDone ? LIFECYCLE_WHO[s.who].fg : "var(--color-line)" }}>
+              {s.status}
+              {now_ && <span className="block text-[10px] font-bold text-magenta-dark">now</span>}
+            </li>
+          );
+        })}
+      </ol>
+
+      {blocked && (
+        <div data-blocked className="mt-4 flex flex-wrap items-center justify-between gap-3 border-2 border-[#b26b00] p-4">
+          <div className="min-w-0">
+            <b className="block text-[15px]">Blocked by: {blocked.text}</b>
+            {blocked.sub && <span className="text-[13px] text-ink-2">{blocked.sub}</span>}
+          </div>
+          {blocked.fix && <div className="flex flex-wrap items-center gap-2">{blocked.fix}</div>}
+        </div>
+      )}
+
+      <div className="mt-6 space-y-6">
+        <Step n="1" title="Account" tag="DONE" tone="done">
+          <Row label="Phone" value={person.phone || <No>Not added</No>} />
+          <Row label="Terms accepted" value={u?.tos_accepted_at ? d(u.tos_accepted_at) : <No>Not recorded</No>} />
+          <Row label="Account" value={u ? `${u.is_active ? "Active" : "Deactivated"} · ${u.locked ? "locked" : "not locked"}` : <No>No login on this record</No>} />
+          {u ? (
+            <UserEditPanel
+              state={{
+                personId: person.id, hasAccount: true, first: person.first_name ?? "", last: person.last_name ?? "", email: u.email ?? "",
+                verified: Boolean(u.email_verified), locked: u.locked, active: u.is_active,
+                buyer: person.is_service_buyer, provider: person.is_service_provider, coordinator: person.is_service_coordinator,
+              }}
+            />
+          ) : (
+            <p className="text-[13.5px] text-ink-2">This person has no sign-in account, so there is no email, password or lock to change.</p>
+          )}
+        </Step>
+
+        <Step n="2" title="Verify Account" tag={u?.email_verified ? "DONE" : "WAITING"} tone={u?.email_verified ? "done" : "wait"} actions={!u?.email_verified && userId ? <><ResendVerification userId={userId} /><MarkVerified personId={person.id} /></> : undefined}>
+          <Row label="Email verified" value={u?.email_verified ? d(u.email_verified) : <No>No{verifySent ? ` · link sent ${d(verifySent.created_at)}` : ""}</No>} />
+        </Step>
+
+        <Step
+          n="3"
+          title="Complete Profile"
+          tag={person.providerProfile ? `${score} OF 80` : person.requesterProfile?.completed_at ? "DONE" : "WAITING"}
+          tone={cur > 3 ? "done" : "wait"}
+          actions={person.providerProfile ? <><Link href={`/providers/${person.providerProfile.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">View Public Profile</Link>{missing?.length ? <NudgeToFinish personId={person.id} /> : null}</> : undefined}
+        >
+          {person.providerProfile && missing ? (
+            <>
+              <ul data-checklist className="flex flex-wrap gap-x-4 gap-y-1 text-[13.5px]">
+                {CHECK.map(([label, phrase]) => {
+                  const ok = !missing.includes(phrase);
+                  return (
+                    <li key={label} className={ok ? "" : "text-[#b26b00]"}>
+                      {ok ? "✓" : "✗"} {label}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-[13px]">Searchable: <b>{searchable ? "Yes" : "No"}</b>{person.providerProfile.paused_at ? " · paused by the member" : ""}</p>
+            </>
+          ) : (
+            <Row label="Buyer profile" value={person.requesterProfile?.completed_at ? `Finished ${d(person.requesterProfile.completed_at)}` : <No>Not finished</No>} />
+          )}
+        </Step>
+
+        <Step n="4" title="Link to Company" tag={co ? "DONE" : "NOT YET"} tone={co ? "done" : "wait"} actions={<AddToCompany personId={person.id} />}>
+          <Row label="Company" value={co ? <><Link href={`/admin/companies/${co.id}`} className="font-semibold text-magenta-ink underline">{co.name}</Link> · {member!.role === "ADMIN" ? "admin" : "member"}</> : <No>None</No>} />
+          <Row label="Join requests" value={pending.length ? pending.map((p) => `${p.company.name} (asked ${d(p.created_at)})`).join(", ") : <No>None</No>} />
+        </Step>
+
+        <Step n="5" title="Validate Company" tag={!co ? "—" : check?.ready ? "VALIDATED" : "WAITING"} tone={!co ? "none" : check?.ready ? "done" : "wait"} actions={co ? <Link href={`/admin/companies/${co.id}`} className="inline-flex min-h-[38px] items-center border border-ink px-3 text-[13px] font-bold">Open Company Legal &amp; Tax</Link> : undefined}>
+          {co ? (
+            <>
+              <Row label="Legal name" value={co.legal_name ?? <No>{co.name} (no separate legal name)</No>} />
+              <Row label="Tax ID" value={co.tin ? `•••••${co.tin.replace(/\D/g, "").slice(-4)}` : <No>Not added</No>} />
+              <Row label="Tax form" value={co.tax_form_uploaded_at ? `On file · ${d(co.tax_form_uploaded_at)}` : <No>Not uploaded (W-9 / W-8BEN-E)</No>} />
+              <Row
+                label="Payout account"
+                value={coPayouts.length ? coPayouts.map((p) => `${p.label}${p.last4 ? ` ··${p.last4}` : ""} — holder ${p.holder_name ? (same(p.holder_name) ? "matches ✓" : `"${p.holder_name}" doesn't match`) : "not recorded"}`).join("; ") : <No>None — holder must match the legal name</No>}
+              />
+            </>
+          ) : (
+            <p className="text-[13.5px] text-ink-3">No company yet.</p>
+          )}
+        </Step>
+
+        <Step n="6–7" title="Contracts & Payments" tag={payouts + payments > 0 ? "PAID" : signed > 0 ? "CONTRACTED" : "—"} tone={signed > 0 ? "done" : "none"}>
+          <Row label="Work requests · proposals" value={`${workRequests} · ${proposals}`} />
+          <Row label="Signed work orders" value={signed} />
+          <Row label="Payouts · payments" value={`${payouts} · ${payments}`} />
+        </Step>
+
+        <section className="border-t border-line pt-4">
+          <h2 className="text-[17px] font-bold">Activity</h2>
+          <Row label="Connections" value={connections} />
+          <Row label="Learn" value={`${enrollments} enrollments · ${credentials} credentials`} />
+        </section>
+
+        <section className="border-t border-line pt-4" data-admin-changes>
+          <h2 className="text-[17px] font-bold">Admin Changes</h2>
+          <p className="text-[12.5px] text-ink-3">Every fix above is logged here.</p>
+          {audit.length ? (
+            <ul className="mt-2">
+              {audit.map((a, i) => {
+                const reason = (a.detail as { reason?: string } | null)?.reason;
+                return (
+                  <li key={i} className="grid grid-cols-[150px_1fr] gap-3 border-b border-line/60 py-1.5 text-[13px]">
+                    <span className="text-ink-2">{dt(a.created_at)}</span>
+                    <span>
+                      <b>{a.action}</b> · {a.actor_email ?? "System"}
+                      {reason && <span className="text-ink-2"> · “{reason}”</span>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-2 text-[13px] text-ink-3">No admin changes yet.</p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
 }

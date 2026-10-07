@@ -4,6 +4,10 @@ import { normalizeEmail } from "@/lib/normalizeEmail";
 import { requestPasswordReset } from "@/lib/password-reset";
 import { issueEmailVerification } from "@/lib/verification";
 import { writeAudit } from "./audit";
+import { notify } from "@/lib/notifications";
+import { buildCompletenessInput } from "@/lib/onboarding";
+import { missingRequired } from "@/lib/completeness";
+import { adminAddToCompany } from "@/lib/company";
 
 export class UserEditError extends Error {
   constructor(message: string, public code: "INVALID" | "NOT_FOUND" | "CONFIRM") {
@@ -92,7 +96,7 @@ export async function setEmail(viewer: Viewer, personId: string, rawEmail: strin
   return { changed: true, sent: r.ok ? r.sent : false };
 }
 
-export async function markEmailVerified(viewer: Viewer, personId: string) {
+export async function markEmailVerified(viewer: Viewer, personId: string, reason?: string) {
   const p = await load(personId);
   if (!p.user_id || !p.user) throw new UserEditError("That person has no account.", "INVALID");
   if (p.user.email_verified) return;
@@ -103,7 +107,7 @@ export async function markEmailVerified(viewer: Viewer, personId: string) {
     targetTable: "users",
     targetId: p.user_id,
     /** RECORDED AS AN ADMIN OVERRIDE, because that is what it is: nobody */
-    detail: { field: "email_verified", before: null, after: now.toISOString(), by: "admin override" },
+    detail: { field: "email_verified", before: null, after: now.toISOString(), by: "admin override", reason: reason?.trim() || null },
   });
 }
 
@@ -195,4 +199,29 @@ export async function sendPasswordReset(viewer: Viewer, personId: string, origin
   });
   /** The caller is told it was SENT, not whether the address exists — the */
   return { sent: true };
+}
+
+/* ── lifecycle fixes (admin user detail) ─────────────────────────────── */
+
+const listOf = (a: string[]) => (a.length > 1 ? `${a.slice(0, -1).join(", ")} and ${a.at(-1)}` : a[0] ?? "");
+
+/** Step 3: "finish your profile" — one notice naming exactly what's missing. */
+export async function nudgeFinishProfile(viewer: Viewer, personId: string) {
+  const p = await prisma.person.findUnique({ where: { id: personId }, select: { user_id: true, providerProfile: { select: { id: true } } } });
+  if (!p?.providerProfile) throw new UserEditError("This person has no seller profile to finish.", "INVALID");
+  const input = await buildCompletenessInput(p.providerProfile.id);
+  const missing = input ? missingRequired(input) : [];
+  if (!missing.length) throw new UserEditError("Their profile checklist is already complete.", "INVALID");
+  await notify({ event: "profile.score_reweight", personId, entityType: "provider_profile", entityId: p.providerProfile.id, dedupeKey: `profile.nudge:${new Date().toISOString().slice(0, 10)}`, vars: { missing: listOf(missing) } });
+  await writeAudit(viewer, { action: "user.nudge_profile", targetTable: "people", targetId: p.user_id ?? personId, detail: { missing } });
+  return { missing };
+}
+
+/** Step 4: add the person to a company as a member (one company per person). */
+export async function addToCompany(viewer: Viewer, personId: string, companyId: string, reason?: string) {
+  const p = await load(personId);
+  const co = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true, name: true } });
+  if (!co) throw new UserEditError("That company is gone.", "NOT_FOUND");
+  await adminAddToCompany(personId, companyId);
+  await writeAudit(viewer, { action: "user.add_to_company", targetTable: "company_memberships", targetId: p.user_id ?? personId, detail: { company: co.name, companyId, role: "MEMBER", reason: reason?.trim() || null } });
 }
