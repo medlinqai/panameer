@@ -9,11 +9,11 @@ export const AREA_EYEBROW: Record<Area, string> = {
   support: "SUPPORT",
 };
 
-/** Company v3: Overview · People · Legal, Tax & Banking 🔒 · Branding; non-admins see Overview + People. */
+/** Company v3: Overview · Team · Legal, Tax & Banking 🔒 · Branding; non-admins see Overview + Team. */
 export function companyTabs(isAdmin: boolean): AreaTab[] {
   const all: AreaTab[] = [
     { label: "Overview", href: "/company" },
-    { label: "People", href: "/company/people" },
+    { label: "Team", href: "/company/people" },
     { label: "Legal, Tax & Banking 🔒", href: "/company/legal" },
     { label: "Branding", href: "/company/branding" },
   ];

@@ -38,7 +38,7 @@ export default async function CompanyPublicPage({ params, searchParams }: { para
       <CompanyShell c={view} role="buyer">
         <CompanyDetailsRead c={view} role="buyer" />
         <CompanyVerification c={view} buyer />
-        <CompanySection id="people" title="People" count={people.length}>
+        <CompanySection id="people" title="Team" count={people.length}>
           {people.length === 0 ? (
             <p className="mt-2.5 text-[14px] text-ink-2">No public profiles yet.</p>
           ) : (

@@ -8,7 +8,7 @@ import { CompanySection, KV, initials } from "@/components/company/CompanySectio
 import { AddEmailDomain } from "@/components/company/AddEmailDomain";
 import { MemberActions } from "@/components/company/MemberActions";
 
-// People (mockup company_area_v3 B): Asking to Join → Members → How People Join.
+// People (mockup company_area_v3 B): Asking to Join → Members → How People Join Your Team.
 export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; binding: NonNullable<CompanyBinding> }) {
   const c = binding.company;
   const admin = binding.isAdmin;
@@ -37,8 +37,8 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
   if (members.length <= 1 && requests.length === 0) {
     return (
       <div className="pm-white-page mx-auto w-full max-w-[1010px] pb-14" data-company-people="solo">
-        <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PEOPLE</p>
-        <h1 className="mt-1.5 text-[30px] font-bold leading-tight">Who&apos;s at {c.name}</h1>
+        <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">TEAM</p>
+        <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{c.name}&apos;s Team</h1>
         <div className="mt-6 border border-ink px-5 py-4">
           <b className="text-[15px]">Just you.</b>
           <p className="mt-1 text-[14px] text-ink-2">
@@ -64,8 +64,8 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
   }
   return (
     <div className="pm-white-page mx-auto w-full max-w-[1010px] pb-14" data-company-people>
-      <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">PEOPLE</p>
-      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">Who&apos;s at {c.name}</h1>
+      <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">TEAM</p>
+      <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{c.name}&apos;s Team</h1>
 
       {admin && (
         <CompanySection id="asking" title="Asking to Join" count={requests.length}>
@@ -87,7 +87,7 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
         </CompanySection>
       )}
 
-      <CompanySection id="members" title="Members" count={members.length}>
+      <CompanySection id="members" title="Team Members" count={members.length}>
         <div className="mt-2">
           {members.map((m) => {
             const name = `${m.person.first_name ?? ""} ${m.person.last_name ?? ""}`.trim() || "(unnamed)";
@@ -113,7 +113,7 @@ export async function CompanyPeople({ viewer, binding }: { viewer: Viewer; bindi
         </div>
       </CompanySection>
 
-      <CompanySection id="how-people-join" title="How People Join">
+      <CompanySection id="how-people-join" title="How People Join Your Team">
         <KV
           rows={[
             {

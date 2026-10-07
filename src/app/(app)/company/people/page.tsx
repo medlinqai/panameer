@@ -4,7 +4,7 @@ import { getCompanyBinding } from "@/lib/company";
 import { CompanyPeople } from "@/components/company/CompanyPeople";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "People · Panameer" };
+export const metadata = { title: "Team · Panameer" };
 
 export default async function CompanyPeoplePage() {
   const viewer = await getSessionViewer();
