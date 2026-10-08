@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
+import { CREDENTIAL_KINDS } from "@/components/profile/CredentialsBody";
 import { Field, TextInput, TextArea } from "@/components/onboarding/controls";
 import {
   CertificationAttachment,
@@ -20,6 +21,7 @@ const emptyCertification = (): CertificationDraft => ({
   attachmentPath: null,
   attachmentName: null,
   notes: null,
+  kind: "CERTIFICATION",
 });
 
 /** A representative list — the field accepts anything typed. */
@@ -123,7 +125,7 @@ export function CertificationCards({
     // The server drops nameless rows on write, so an unnamed certification
     // would vanish without a word. Catch it here where it can be explained.
     if (!draft.name.trim()) {
-      setError("Certification name is required.");
+      setError("A credential name is required.");
       return;
     }
     if (draft.issuedOn && draft.expiresOn && draft.expiresOn < draft.issuedOn) {
@@ -155,82 +157,89 @@ export function CertificationCards({
     <div>
       {items.length > 0 ? (
         // E109 — a LIST, matching Education, not a stack of boxes.
-        <ul className="space-y-3 text-[14px]">
-          {items.map((c, i) => (
-            <li
-              key={`${c.name}-${i}`}
-              className="flex items-start justify-between gap-4"
-            >
-              <div className="min-w-0">
-                {/* THE NAME KEEPS ITS WEIGHT AND THE LIST KEEPS ITS SHAPE. */}
-                <p className="flex flex-wrap items-baseline gap-2 font-semibold">
-                  {c.name}
-                  {expiryState(c) === "expired" && (
-                    <span className="rounded-full border border-red-700/30 bg-red-700/[0.06] px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.4px] text-red-700">
-                      Expired
-                    </span>
-                  )}
-                </p>
-                {(certMeta(c) || expiryState(c) !== "none") && (
-                  <p className="text-ink-2">
-                    {certMeta(c)}
-                    {/* HOW AN EXPIRED CREDENTIAL READS DIFFERENTLY, which is */}
-                    {expiryState(c) === "current" && (
-                      <span>
-                        {certMeta(c) ? " · " : ""}
-                        Valid to {monthYear(c.expiresOn!)}
-                      </span>
-                    )}
-                    {expiryState(c) === "expired" && (
-                      <span className="font-semibold text-red-700">
-                        {certMeta(c) ? " · " : ""}
-                        Expired {monthYear(c.expiresOn!)}
-                      </span>
-                    )}
-                  </p>
-                )}
-                {c.credentialId && (
-                  <p className="text-[13px] text-ink-2">
-                    Credential ID {c.credentialId}
-                  </p>
-                )}
-                {c.notes && (
-                  <p className="text-[13px] text-ink-2">{c.notes}</p>
-                )}
-                <div className="mt-0.5 flex flex-wrap items-center gap-3">
-                  {c.url && (
-                    <a
-                      href={c.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
+        <div className="space-y-4">
+          {CREDENTIAL_KINDS.filter((g) => items.some((c) => (c.kind ?? "CERTIFICATION") === g.key)).map((g) => (
+            <div key={g.key} data-credential-group={g.key}>
+              <p className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">{g.label}</p>
+              <ul className="space-y-3 text-[14px]">
+                {items.map((c, i) => ({ c, i })).filter(({ c }) => (c.kind ?? "CERTIFICATION") === g.key).map(({ c, i }) => (
+                  <li
+                    key={`${c.name}-${i}`}
+                    className="flex items-start justify-between gap-4"
+                  >
+                    <div className="min-w-0">
+                      {/* THE NAME KEEPS ITS WEIGHT AND THE LIST KEEPS ITS SHAPE. */}
+                      <p className="flex flex-wrap items-baseline gap-2 font-semibold">
+                        {c.name}
+                        {expiryState(c) === "expired" && (
+                          <span className="rounded-full border border-red-700/30 bg-red-700/[0.06] px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.4px] text-red-700">
+                            Expired
+                          </span>
+                        )}
+                      </p>
+                      {(certMeta(c) || expiryState(c) !== "none") && (
+                        <p className="text-ink-2">
+                          {certMeta(c)}
+                          {/* HOW AN EXPIRED CREDENTIAL READS DIFFERENTLY, which is */}
+                          {expiryState(c) === "current" && (
+                            <span>
+                              {certMeta(c) ? " · " : ""}
+                              Valid to {monthYear(c.expiresOn!)}
+                            </span>
+                          )}
+                          {expiryState(c) === "expired" && (
+                            <span className="font-semibold text-red-700">
+                              {certMeta(c) ? " · " : ""}
+                              Expired {monthYear(c.expiresOn!)}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                      {c.credentialId && (
+                        <p className="text-[13px] text-ink-2">
+                          Credential ID {c.credentialId}
+                        </p>
+                      )}
+                      {c.notes && (
+                        <p className="text-[13px] text-ink-2">{c.notes}</p>
+                      )}
+                      <div className="mt-0.5 flex flex-wrap items-center gap-3">
+                        {c.url && (
+                          <a
+                            href={c.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[13px] font-bold text-magenta hover:text-magenta-dark"
+                          >
+                            Verify →
+                          </a>
+                        )}
+                        {c.attachmentName && (
+                          <span className="text-[13px] text-ink-2">
+                            📎 {c.attachmentName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(i)}
+                      aria-label={`Edit ${c.name}`}
+                      className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
                     >
-                      Verify →
-                    </a>
-                  )}
-                  {c.attachmentName && (
-                    <span className="text-[13px] text-ink-2">
-                      📎 {c.attachmentName}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => openEdit(i)}
-                aria-label={`Edit ${c.name}`}
-                className="shrink-0 text-[13px] font-bold text-magenta hover:text-magenta-dark"
-              >
-                Edit
-              </button>
-            </li>
+                      Edit
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
         <div className="text-[14px] text-ink-2">
           <p>
-            No certifications yet. Adding your credentials increases your chances
-            of getting hired.
+            No credentials yet. Certifications, licenses, awards, memberships and
+            insurance all help you get hired.
           </p>
           {/* THE SAME LINE AS THE PROFILE'S CERTIFICATIONS CARD ( WS-E 1) */}
           <Link
@@ -247,10 +256,22 @@ export function CertificationCards({
       <Modal
         open={editing !== null}
         onClose={close}
-        title={editing === -1 ? "Add Certification" : "Edit Certification"}
+        title={editing === -1 ? "Add Credential" : "Edit Credential"}
       >
         <div className="space-y-4">
-          <Field label="Certification *">
+          <Field label="Type">
+            <select
+              value={draft.kind ?? "CERTIFICATION"}
+              onChange={(e) => setDraft({ ...draft, kind: e.target.value })}
+              aria-label="Credential type"
+              className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-magenta"
+            >
+              {CREDENTIAL_KINDS.map((k) => (
+                <option key={k.key} value={k.key}>{k.one}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Name *">
             <TextInput
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
@@ -259,7 +280,7 @@ export function CertificationCards({
           </Field>
 
           {/* E108 — a real SELECT with an explicit "Other…", not a datalist. */}
-          <Field label="Certifying Agency">
+          <Field label="Issued By">
             {otherAgency ? (
               <div className="flex items-center gap-2">
                 <TextInput

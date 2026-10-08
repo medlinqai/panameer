@@ -2537,12 +2537,12 @@ setScreen(target);
                 {/* E057 — cards + a proper modal. The eight-field form that
                     used to be squeezed into the sidebar column is gone. */}
                 <ProfileCard
-                  title="Certifications"
+                  title="Credentials"
                   // Certifications opens a modal rather than a step, so its
                   edit={
                     <EditButton
-                      title="Certifications"
-                      label="Add Certification"
+                      title="Credentials"
+                      label="Add Credential"
                       icon="+"
                       onClick={() => setCertSignal((n) => n + 1)}
                     />

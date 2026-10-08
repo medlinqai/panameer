@@ -16,6 +16,8 @@ export type CertificationDraft = {
   attachmentPath?: string | null;
   attachmentName?: string | null;
   notes?: string | null;
+  /** CERTIFICATION · LICENSE · AWARD · MEMBERSHIP · INSURANCE (2026-10-08). */
+  kind?: string | null;
 };
 
 /** Add / edit / remove certifications. */

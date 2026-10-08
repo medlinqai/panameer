@@ -1,3 +1,4 @@
+import type { CredentialKind } from "@prisma/client";
 import { OFFERABLE, activeCatalogId } from "@/lib/catalog";
 import { creditInviteForNewUser } from "@/lib/colleague-invite";
 import { prisma } from "@/lib/prisma";
@@ -831,6 +832,7 @@ export async function getOnboardingState(viewer: Viewer) {
         attachmentPath: c.attachment_path,
         attachmentName: c.attachment_name,
         notes: c.notes,
+        kind: c.kind,
       })),
     },
   };
@@ -1622,6 +1624,7 @@ export async function applyProviderSection(
           attachment_path: c.attachmentPath?.trim() || null,
           attachment_name: c.attachmentName?.trim() || null,
           notes: c.notes?.trim() || null,
+          kind: (["CERTIFICATION", "LICENSE", "AWARD", "MEMBERSHIP", "INSURANCE"].includes(String(c.kind)) ? c.kind : "CERTIFICATION") as CredentialKind,
         }))
         .filter((c) => c.name);
 

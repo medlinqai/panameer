@@ -82,6 +82,7 @@ export type ProfilePayload = {
     attachmentPath: string | null;
     attachmentName: string | null;
     notes: string | null;
+    kind?: string | null;
   }[];
   skillIds?: string[];
   skillNames?: { id: string; name: string; area?: string | null; roleTypeId?: string | null }[];
@@ -236,6 +237,7 @@ export function draftFromStatus(p: NonNullable<StatusPayload["profile"]>): Provi
         attachmentPath: c.attachmentPath,
         attachmentName: c.attachmentName,
         notes: c.notes,
+        kind: c.kind ?? "CERTIFICATION",
       })),
       skillIds: p.skillIds ?? [],
       skillNames: p.skillNames ?? [],

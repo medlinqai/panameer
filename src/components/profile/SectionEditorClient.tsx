@@ -406,7 +406,7 @@ export function SectionEditorClient({ slug }: { slug: SectionSlug }) {
             onClick={() => setCertSignal((n) => n + 1)}
             className="text-[13.5px] font-bold text-magenta hover:underline"
           >
-            + Add Certification
+            + Add Credential
           </button>
           <CertificationCards
             items={draft.certifications}

@@ -66,7 +66,7 @@ export const PROFILE_SECTIONS: readonly SectionSpec[] = [
   { slug: "keywords", title: "Keywords", step: null, payload: null },
   {
     slug: "certifications",
-    title: "Certifications",
+    title: "Credentials",
     step: "certifications",
     payload: (d) => ({ certifications: d.certifications }),
   },
