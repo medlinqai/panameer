@@ -43,7 +43,7 @@ export function WhatsInside({ slug, courses, nextLessonId, canPlay }: { slug: st
                     <>
                       <StatusMark state={st} size={15} />
                       <span className={"min-w-0 flex-1 truncate " + (st === "now" ? "font-bold text-magenta-dark" : l.playable ? "" : "text-ink-3")}>{l.title}</span>
-                      <span className="shrink-0 text-[12px] text-ink-3">{l.playable ? (l.minutes ? `${l.minutes} min` : "") : "coming soon"}</span>
+                      {l.playable ? <span className="shrink-0 text-[12px] text-ink-3">{l.minutes ? `${l.minutes} min` : ""}</span> : <span className="shrink-0 border border-line px-1 text-[9.5px] font-bold tracking-[0.06em] text-ink-3">COMING SOON</span>}
                     </>
                   );
                   return (

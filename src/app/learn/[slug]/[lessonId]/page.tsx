@@ -75,6 +75,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
                   <>
                     <StatusMark state={st} size={14} />
                     <span className={"min-w-0 flex-1 truncate " + (st === "now" ? "font-bold text-magenta-dark" : l.playable ? "" : "text-ink-3")}>{l.title}</span>
+                    {!l.playable && <span className="shrink-0 border border-line px-1 text-[9.5px] font-bold tracking-[0.06em] text-ink-3">COMING SOON</span>}
                   </>
                 );
                 return (
