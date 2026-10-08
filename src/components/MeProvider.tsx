@@ -48,8 +48,14 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     alive.current = true;
     load();
+    // Counts stay live: refetch every 30s while visible and when the tab regains focus.
+    const tick = () => document.visibilityState === "visible" && load();
+    const t = window.setInterval(tick, 30_000);
+    window.addEventListener("focus", load);
     return () => {
       alive.current = false;
+      window.clearInterval(t);
+      window.removeEventListener("focus", load);
     };
   }, [load]);
 

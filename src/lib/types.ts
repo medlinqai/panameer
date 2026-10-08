@@ -8,6 +8,9 @@ export type Rates = {
 export type Me = {
   /** `P1-ALL` — unread AND delivered. Drives the bell badge. */
   notificationsUnread: number;
+  /** Unread messages, and notifications that need the person (messages excluded) — the avatar count is their sum. */
+  messagesUnread: number;
+  notificationsNeedAction: number;
   person: {
     id: string;
     firstName: string;

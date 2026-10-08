@@ -195,10 +195,18 @@ export async function getConversation(viewer: Viewer, otherUserId: string) {
 
 /** THE RECIPIENT'S ROWS ONLY. The `to_user_id: viewer.userId` clause is the */
 export async function markRead(viewer: Viewer, otherUserId: string) {
+  const now = new Date();
   await prisma.message.updateMany({
     where: { to_user_id: viewer.userId, from_user_id: otherUserId, read_at: null },
-    data: { read_at: new Date() },
+    data: { read_at: now },
   });
+  // Reading the thread also settles its "new message" notifications.
+  const ids = (await prisma.message.findMany({ where: { to_user_id: viewer.userId, from_user_id: otherUserId }, select: { id: true } })).map((m) => m.id);
+  if (ids.length)
+    await prisma.notification.updateMany({
+      where: { event_key: "message.received", entity_id: { in: ids }, person: { user_id: viewer.userId }, OR: [{ read_at: null }, { resolved_at: null }] },
+      data: { read_at: now, resolved_at: now },
+    });
 }
 
 /** One number, for the tab badge. Zero renders NOTHING — see `PageTabs`. */
