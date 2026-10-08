@@ -24,7 +24,7 @@ const minutesOf = (seconds: number | null, runTime: string | null) => {
   const m = runTime?.match(/(\d+):(\d{2})/);
   return m ? Math.max(1, Number(m[1]) + Math.round(Number(m[2]) / 60)) : null;
 };
-export const timeLabel = (min: number) => (!min ? null : min < 60 ? `${min} min` : `${Math.round((min / 60) * 2) / 2} h`);
+export { timeLabel } from "@/lib/learn-time";
 const nameOf = (p: { first_name: string | null; last_name: string | null }) => `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
 
 export async function learnCatalog(userId: string | null, opts: { slug?: string } = {}): Promise<CatPath[]> {

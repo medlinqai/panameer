@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CatPath } from "@/lib/learn-catalog";
-import { timeLabel } from "@/lib/learn-catalog";
+import { timeLabel } from "@/lib/learn-time";
 
 // One learning-path card (Learn status language): tag · area · title · teacher/courses/lessons/time · your bar · stats · buttons.
 const BTN_K = "inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover";
