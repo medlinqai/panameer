@@ -236,7 +236,7 @@ function ResultPanel({
         className={
           "rounded-brand border-2 p-7 text-center " +
           (result.passed
-            ? "border-emerald-500/40 bg-emerald-500/[0.06]"
+            ? "border-ink bg-[#C9CDDC]/25"
             : "border-amber-500/40 bg-amber-500/[0.06]")
         }
       >
@@ -254,7 +254,7 @@ function ResultPanel({
           <div className="mx-auto mt-5 max-w-md rounded-brand border border-line bg-white p-5 text-left">
             <p className="text-[15px] font-bold">Your certificate is issued.</p>
             <p className="mt-1 text-[14px] text-ink-2">
-              It&apos;s on your profile under Certifications, and anyone can check it
+              It&apos;s on your profile under Credentials, and anyone can check it
               here:
             </p>
             <Link
@@ -291,7 +291,7 @@ function ResultPanel({
             key={r.id}
             className={
               "rounded-brand border p-5 " +
-              (r.correct ? "border-emerald-500/30" : "border-red-500/30 bg-red-500/[0.03]")
+              (r.correct ? "border-ink/40" : "border-red-500/30 bg-red-500/[0.03]")
             }
           >
             <p className="text-[12.5px] font-bold uppercase tracking-wide text-ink-2">
@@ -308,7 +308,7 @@ function ResultPanel({
                     className={
                       "rounded-[8px] px-3 py-1.5 " +
                       (isRight
-                        ? "bg-emerald-500/10 font-semibold text-emerald-800"
+                        ? "bg-[#C9CDDC]/45 font-semibold text-ink"
                         : isMine
                           ? "bg-red-500/10 text-red-800"
                           : "text-ink-2")

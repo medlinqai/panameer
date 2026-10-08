@@ -37,11 +37,11 @@ export default async function TestPage({
       </h1>
 
       {state.passed ? (
-        <div className="mt-6 rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-6">
+        <div className="mt-6 border-2 border-ink bg-[#C9CDDC]/25 p-6">
           <p className="text-[16px] font-bold">You&apos;ve already passed this test.</p>
           <p className="mt-1 text-[14.5px] text-ink-2">
             Best score {state.best}%. Your certificate is on your profile under
-            Certifications.
+            Credentials.
           </p>
           <BackLink href={`/learn/${path.slug}`} label={path.title} />
         </div>
