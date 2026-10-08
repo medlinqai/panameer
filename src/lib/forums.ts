@@ -306,7 +306,7 @@ async function awardForumPost(personId: string, refId: string): Promise<void> {
 /** Start a thread. Author comes from the session; nothing else can set it. */
 export async function createThread(
   viewer: Viewer,
-  input: { boardSlug: string; title: string; body: string }
+  input: { boardSlug: string; title: string; body: string; lessonId?: string | null }
 ) {
   const person = await ownPerson(viewer);
   await requireIdentity(person.id);
@@ -327,6 +327,12 @@ export async function createThread(
     }
   }
 
+  // A lesson question must belong to this path's group.
+  if (input.lessonId) {
+    const lesson = await prisma.lesson.findUnique({ where: { id: input.lessonId }, select: { section: { select: { course: { select: { learning_path_id: true } } } } } });
+    if (!lesson || lesson.section.course.learning_path_id !== board.learning_path_id) throw new ForumError("That lesson isn't part of this group's path.", "INVALID");
+  }
+
   const title = input.title.trim();
   const body = input.body.trim();
   if (title.length < 5) {
@@ -343,6 +349,7 @@ export async function createThread(
       title: title.slice(0, 200),
       body: body.slice(0, 8000),
       last_post_at: new Date(),
+      ...(input.lessonId ? { lesson_id: input.lessonId } : {}),
     },
     select: { id: true },
   });

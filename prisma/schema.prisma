@@ -4897,6 +4897,8 @@ model ForumBoard {
 model ForumThread {
   id           String   @id @default(uuid()) @db.Uuid
   board_id     String   @db.Uuid
+  /// Asked from a lesson (2026-10-08): the question carries the lesson; the path group lists it as usual.
+  lesson_id    String?   @db.Uuid
   author_id    String   @db.Uuid
   title        String
   /// The opening post's text. Kept on the thread rather than as a first Post
@@ -4917,6 +4919,7 @@ model ForumThread {
   @@index([board_id, last_post_at])
   @@index([author_id])
   @@map("forum_threads")
+  @@index([lesson_id])
 }
 
 model ForumPost {

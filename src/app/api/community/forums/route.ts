@@ -17,6 +17,7 @@ const Body = z.discriminatedUnion("action", [
     boardSlug: z.string().min(1),
     title: z.string().trim().min(5, "Give the question a title people can scan.").max(200),
     body: z.string().trim().min(15, "Add a bit more detail so someone can answer.").max(8000),
+    lessonId: z.string().uuid().optional(),
   }),
   z.object({
     action: z.literal("reply"),
