@@ -352,12 +352,12 @@ const RECO_FORMATS: { label: string; text: (first: string) => string }[] = [
   },
 ];
 
-/** THE ASK WS-A) */
-function AskForRecommendation({
+/** THE ASK WS-A) — also opened by Recommend Me (2026-10-08). */
+export function AskForRecommendation({
   row,
   onClose,
 }: {
-  row: RosterRowView;
+  row: Pick<RosterRowView, "userId" | "name">;
   onClose: () => void;
 }) {
   const [note, setNote] = useState("");

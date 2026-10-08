@@ -77,6 +77,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
                       relation={p.pending ? "PENDING" : null}
                       incomingConnectionId={p.rel.has("invin") ? p.connectionId : null}
                     />
+                    {p.mentoring && <ConnectControls toUserId={p.userId} part="mentor" relation={null} tone="outline" mentorStatus={p.rel.has("mentor") ? "MENTOR" : p.rel.has("mentorreq") ? "REQUESTED" : null} />}
                     {p.profileHref ? (
                       <Link href={p.profileHref} className="border border-ink px-3.5 py-1.5 text-[13px] font-semibold hover:bg-black/[0.04]">View Profile</Link>
                     ) : null}

@@ -56,6 +56,7 @@ async function loadPeople(viewer: Viewer, scope: "connections" | "members" = "co
     if (e.kind === "COLLEAGUE" && e.status === "PENDING") r.rel.add(e.to_user_id === me ? "invin" : "invout");
     if (e.kind === "MENTOR" && e.status === "ACCEPTED") r.rel.add(e.from_user_id === me ? "mentor" : "mentee");
     if (e.kind === "FOLLOW" && e.status === "ACCEPTED") r.rel.add(e.from_user_id === me ? "following" : "follower");
+    if (e.kind === "MENTOR" && e.status === "PENDING" && e.from_user_id === me) r.rel.add("mentorreq");
     if (r.rel.has("colleague") || r.rel.has("mentor") || r.rel.has("mentee")) r.rel.add("connected");
     relOf.set(other, r);
   }

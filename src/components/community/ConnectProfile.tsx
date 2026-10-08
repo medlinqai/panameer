@@ -72,6 +72,7 @@ export function ConnectProfile({
   connect,
   mentor,
   follow,
+  recommend,
   previewAsBuyer = false,
 }: {
   p: ProviderProfileView;
@@ -100,6 +101,8 @@ export function ConnectProfile({
   mentor?: ReactNode;
   /** Follow (2026-10-08): one-way, visitor view only. */
   follow?: ReactNode;
+  /** Recommend Me — only once connected. */
+  recommend?: ReactNode;
   /** THE BUYER'S VIEW, EVEN WHEN THE OWNER IS LOOKING ( WS-D) */
   previewAsBuyer?: boolean;
 }) {
@@ -530,11 +533,21 @@ export function ConnectProfile({
             {connect && (
               <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-                  Connect as a Colleague
+                  Connect
                 </h3>
                 {connect}
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
-                  Colleagues can message each other.
+                  Connections can message each other.
+                </p>
+              </section>
+            )}
+
+            {recommend && (
+              <section className="mt-7 border-t border-line pt-5" data-recommend-section>
+                <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">Recommendation</h3>
+                {recommend}
+                <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
+                  Ask {p.person.firstName || "them"} to write a few lines about working with you.
                 </p>
               </section>
             )}
@@ -550,14 +563,12 @@ export function ConnectProfile({
             {mentor && p.openForMentoring && (
               <section className="mt-7 border-t border-line pt-5">
                 <h3 className="mb-2.5 font-display text-[14.5px] font-bold leading-tight">
-                  {/* BACK TO `Request to Mentor` item 3) */}
-                  Request to Mentor
+                  Mentoring
                 </h3>
                 {mentor}
                 <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
                   {/* IT SAYS WHAT THE BUTTON DOES. A `MENTOR` row is created `ACCEPTED` */}
-                  This provider is open to mentoring. They accept or decline your request;
-                  mentoring is free for now.
+                  Open for mentoring · they accept or decline.
                 </p>
               </section>
             )}

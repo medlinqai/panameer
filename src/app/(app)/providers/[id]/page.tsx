@@ -1,3 +1,4 @@
+import { RecommendMe } from "@/components/community/RecommendMe";
 import { followState } from "@/lib/follow";
 import { FollowButton } from "@/components/community/FollowButton";
 import Link from "next/link";
@@ -26,7 +27,7 @@ async function connectSlot(
   viewer: Awaited<ReturnType<typeof getSessionViewer>>,
   ownerUserId: string | null,
   isOwner: boolean
-): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode; follow?: React.ReactNode }> {
+): Promise<{ connect?: React.ReactNode; mentor?: React.ReactNode; follow?: React.ReactNode; recommend?: React.ReactNode }> {
   if (!viewer || !ownerUserId || isOwner) return {};
 
   const mine = await getMyCommunity(viewer);
@@ -47,10 +48,21 @@ async function connectSlot(
     tone: "block" as const,
   };
   const fs = await followState(viewer.userId, ownerUserId);
+  // Recommend Me only once connected; "Requested" while an ask to them is still open.
+  let recommend: React.ReactNode = undefined;
+  if (colleague?.rel === "ACCEPTED") {
+    const [owner, mine] = await Promise.all([
+      prisma.person.findFirst({ where: { user_id: ownerUserId }, select: { first_name: true, last_name: true, user: { select: { email: true } } } }),
+      prisma.providerProfile.findFirst({ where: { person: { user_id: viewer.userId } }, select: { id: true } }),
+    ]);
+    const asked = mine && owner?.user?.email ? await prisma.recommendationRequest.count({ where: { provider_profile_id: mine.id, contact_email: owner.user.email, status: "SENT" } }) : 0;
+    if (mine && owner) recommend = <RecommendMe block toUserId={ownerUserId} name={`${owner.first_name} ${owner.last_name}`.trim()} requested={asked > 0} />;
+  }
   return {
     connect: <ConnectControls {...common} part="colleague" />,
     mentor: <ConnectControls {...common} part="mentor" />,
     follow: <FollowButton toUserId={ownerUserId} initialFollowing={fs.following} initialCount={fs.followers} />,
+    recommend,
   };
 }
 

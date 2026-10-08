@@ -120,7 +120,7 @@ export function ConnectControls({
   if (rel === null) {
     colleagueControl = (
       <button type="button" className={PRIMARY_TONE} disabled={busy} onClick={connectColleague}>
-        {block ? "Connect" : "Connect as Colleague"}
+        Connect with Me
       </button>
     );
   } else if (rel === "PENDING" && incomingConnectionId) {
@@ -170,7 +170,7 @@ export function ConnectControls({
         {/* WHITE WITH AN INK BORDER ON THE PROFILE RAIL ( item 10) — Scott's words for */}
         {showMentor && mentor === null && (
           <button type="button" data-mentor-state="none" className={block ? BLOCK : tone === "outline" ? OUTLINE : GHOST} disabled={busy} onClick={toggleMentor}>
-            Request to Mentor
+            Mentor Me
           </button>
         )}
         {showMentor && mentor === "REQUESTED" && (
