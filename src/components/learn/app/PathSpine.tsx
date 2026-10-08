@@ -231,7 +231,7 @@ function CourseHead({
       <div className="flex items-center gap-3.5 px-4 py-3.5">
         {body}
         <Link
-          href={`/learn/${pathSlug}/course/${course.slug}`}
+          href={`/learn/${pathSlug}#course-${course.slug}`}
           className="shrink-0 bg-bg-soft px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 hover:text-magenta"
         >
           Open

@@ -64,7 +64,7 @@ export async function getLearnCourses(): Promise<CourseGroup[]> {
         title: c.title,
         slug: c.slug,
         summary: c.summary,
-        href: `/learn/${p.slug}/course/${c.slug}`,
+        href: `/learn/${p.slug}#course-${c.slug}`,
         pathSlug: p.slug,
         pathTitle: p.title,
         group: p.group,

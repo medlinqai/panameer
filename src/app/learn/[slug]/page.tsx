@@ -1,252 +1,137 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getLearnPath, viewerTeaches } from "@/lib/learn-home";
-import { LearnTabs } from "@/components/learn/app/LearnTabs";
-import { getAppPath } from "@/lib/learn-path-app";
-import { AppPath } from "@/components/learn/app/AppPath";
+import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
-import { getPathForumTeaser } from "@/lib/forums";
-import { AUDIENCE_LABEL, AUDIENCE_PREFIX, STYLE_LABEL } from "@/lib/learn";
-import { InstructorBadge } from "@/components/learn/InstructorBadge";
-import { EnrollButton } from "@/components/learn/EnrollButton";
-import { ProgressBar } from "@/components/learn/ProgressBar";
-import { LessonTable } from "@/components/learn/LessonTable";
-import { learnGaps } from "@/lib/gate-reads";
+import { viewerTeaches } from "@/lib/learn-home";
+import { learnCatalogue, timeLabel } from "@/lib/learn-catalogue";
+import { getSkillAreas } from "@/lib/skill-area-store";
+import { LearnTabs } from "@/components/learn/app/LearnTabs";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { ProgressRing } from "@/components/learn/ProgressRing";
+import { WhatsInside } from "@/components/learn/WhatsInside";
+import { Avatar } from "@/components/Avatar";
 
-function NotReadyNotice() {
-  return (
-    <div className="mb-7 rounded-brand border border-dashed border-line bg-bg-soft px-5 py-6">
-      <p className="font-display text-[17px] font-bold">
-        This Path Has No Videos Yet
-      </p>
-      <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-ink-2">
-        The outline below is real — these are the lessons this path will cover.
-        None of them has a video attached yet, so there is nothing to play.
-      </p>
-      <Link
-        href="/learn/paths"
-        className="mt-4 inline-block text-[14px] font-bold text-magenta hover:underline"
-      >
-        Browse Paths You Can Start &rarr;
-      </Link>
-    </div>
-  );
-}
+export const dynamic = "force-dynamic";
 
-export default async function LearningPathPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+// Learn › a learning path (2026-10-08, mockup B): hero, then What's Inside | Certification Test · Taught By · Path Group.
+export default async function LearningPathPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const viewer = await getSessionViewer();
-
-  if (viewer) {
-    const app = await getAppPath(slug, viewer);
-    if (!app) notFound();
-    return (
-      <>
-        {}
-        <LearnTabs active="paths" teaches={await viewerTeaches(viewer)} />
-        {!app.ready && (
-          <div className="mx-auto w-full max-w-5xl px-6 pt-8">
-            <NotReadyNotice />
-          </div>
-        )}
-        <AppPath path={app} signedIn learnGaps={await learnGaps(viewer.userId)} />
-      </>
-    );
-  }
-
-  const path = await getLearnPath(slug, null);
-  if (!path) notFound();
-
-  const forum = await getPathForumTeaser(viewer, path.id);
-
-  const firstPlayable = path.courses
-    .flatMap((c) => c.sections.flatMap((s) => s.lessons))
-    .find((l) => l.playable && !l.completed);
-  const singleCourse = path.courses.length === 1;
+  const [[p], areas, teaches] = await Promise.all([learnCatalogue(viewer?.userId ?? null, { slug }), getSkillAreas(), viewerTeaches(viewer)]);
+  if (!p) notFound();
+  const areaLabel = p.area ? areas.find((a) => a.code === p.area)?.label ?? p.area : null;
+  const board = await prisma.forumBoard.findFirst({ where: { learning_path_id: p.id }, select: { id: true, slug: true } });
+  const latest = board ? await prisma.forumThread.findFirst({ where: { board_id: board.id }, orderBy: { created_at: "desc" }, select: { id: true, title: true, reply_count: true, last_post_at: true } }) : null;
+  const first = p.courses.flatMap((c) => c.lessons).find((l) => l.playable) ?? null;
+  const next = p.mine?.next ?? null;
+  const signIn = `/login?callbackUrl=${encodeURIComponent(`/learn/${p.slug}`)}`;
+  const startHref = !viewer ? signIn : next ? `/learn/${p.slug}/${next.id}` : first ? `/learn/${p.slug}/${first.id}` : null;
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const ago = (d: Date) => {
+    const days = Math.floor((now - d.getTime()) / 86_400_000);
+    return days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  };
+  const picture = p.mine ? (
+    <ProgressRing done={p.mine.done} total={p.mine.total} />
+  ) : p.cover ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={p.cover} alt="" className="mx-auto aspect-[4/3] w-full max-w-[320px] object-cover" />
+  ) : (
+    <div className="mx-auto grid aspect-[4/3] w-full max-w-[320px] place-items-center bg-ink p-6 text-center text-[20px] font-bold text-surface">{p.title}</div>
+  );
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-8 sm:py-10">
-      {!path.ready && <NotReadyNotice />}
-      <nav className="text-[13.5px] text-ink-2">
-        <Link href="/learn" className="font-semibold hover:text-magenta">
-          Learn
-        </Link>
-        <span className="mx-2">/</span>
-        {}
-        <span>{`${AUDIENCE_PREFIX} ${AUDIENCE_LABEL[path.audience] ?? path.audience}`}</span>
-        {path.group && (
-          <>
-            <span className="mx-2">/</span>
-            <span>{path.group}</span>
-          </>
-        )}
-      </nav>
-
-      <div className="mt-4 flex flex-wrap items-start gap-6">
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[30px] font-bold leading-tight tracking-[-0.6px] sm:text-[36px]">
-            {path.title}
-          </h1>
-          {path.summary && (
-            <p className="mt-3 max-w-2xl text-[16px] leading-relaxed text-ink-2">
-              {path.summary}
-            </p>
-          )}
-
-          {path.instructors.length > 0 && (
-            <div className="mt-5">
-              {/* Lesson counts are shown here because on a multi-teacher path */}
-              <InstructorBadge instructors={path.instructors} showLessonCounts />
-            </div>
-          )}
-
-          <p className="mt-4 text-[14px] text-ink-2">
-            {path.courses.length} course{path.courses.length === 1 ? "" : "s"} ·{" "}
-            {path.lessons} lesson{path.lessons === 1 ? "" : "s"} · Free
-          </p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <EnrollButton
-              pathId={path.id}
-              slug={path.slug}
-              enrolled={path.enrolled}
-              signedIn={false}
-            />
-            {firstPlayable && (
-              <Link
-                href={`/learn/${path.slug}/${firstPlayable.id}`}
-                className="border-[1.5px] border-line px-6 py-2.5 text-[14.5px] font-bold text-ink transition-colors hover:border-magenta hover:text-magenta"
-              >
-                {path.completed > 0 ? "Continue" : "Start"} Watching
-              </Link>
-            )}
-          </div>
-
-          {path.enrolled && path.lessons > 0 && (
-            <div className="mt-5 max-w-md">
-              <ProgressBar
-                percent={path.progress}
-                label={`${path.completed} of ${path.lessons} lessons complete`}
-              />
-            </div>
-          )}
-
-          {/* THE PATH'S FORUM */}
-          <div className="mt-5 rounded-brand border border-line bg-white p-4">
-            <p className="text-[14.5px] font-bold">Path group</p>
-            {forum.threads > 0 ? (
-              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-                {forum.threads} question{forum.threads === 1 ? "" : "s"} asked by
-                the people taking this path, answered by the people who teach it.
-              </p>
-            ) : (
-              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">
-                A private group for the people taking this path — ask the people
-                who teach it.
-              </p>
-            )}
-            {forum.canOpen ? (
-              <Link
-                href={`/connect/groups/path-${path.slug}`}
-                className="mt-2 inline-block text-[13.5px] font-bold text-magenta hover:underline"
-              >
-                Open the group &rarr;
-              </Link>
-            ) : (
-              // THE DOOR IS NAMED, NOT HIDDEN. Somebody who cannot open it
-              <p className="mt-2 text-[13px] text-ink-2">
-                Enroll to read and ask questions.
-              </p>
-            )}
-          </div>
-
-          {/* The payoff, surfaced the moment it is earned (WS5). A certificate */}
-          {path.lessons > 0 && path.completed >= path.lessons && (
-            <div className="mt-5 max-w-md rounded-brand border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5">
-              <p className="text-[15.5px] font-bold">
-                You&apos;ve finished every lesson in this path.
-              </p>
-              <p className="mt-1 text-[14px] text-ink-2">
-                Pass the test and we&apos;ll issue you a certificate with a public
-                link you can put on LinkedIn.
-              </p>
-              <Link
-                href={`/learn/${path.slug}/test`}
-                className="mt-3 inline-block bg-magenta px-6 py-2.5 text-[14.5px] font-bold text-white transition-colors hover:bg-magenta-dark"
-              >
-                Take the Test
-              </Link>
-            </div>
-          )}
+    <>
+      {viewer && <LearnTabs active="paths" teaches={teaches} />}
+      <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learning-path={p.slug}>
+        <Link href={p.area ? `/learn/paths?area=${p.area}` : "/learn/paths"} className="text-[13px] font-bold text-ink-2 hover:text-magenta">‹ Learning Paths{areaLabel ? ` · ${areaLabel}` : ""}</Link>
+        <div className="mt-4">
+          <AccountHero
+            testId="path-hero"
+            picture={picture}
+            eyebrow={[areaLabel, p.group].filter(Boolean).join(" · ") || "Learning Path"}
+            title={p.title}
+            kpis={[
+              { value: p.courses.length, label: "COURSES" },
+              { value: p.lessons, label: "LESSONS" },
+              { value: timeLabel(p.minutes) ?? "—", label: "TO WATCH" },
+              { value: p.learners, label: "LEARNERS" },
+            ]}
+            paragraph={
+              <>
+                {p.summary}
+                {next ? <> Next up: <b className="text-ink">Lesson {next.index} · {next.title}</b>{next.minutes ? ` (${next.minutes} min)` : ""}.</> : null}
+                {!p.playable && <> <b className="text-ink">Coming soon</b> — the lessons below are planned; none has a video yet.</>}
+              </>
+            }
+            actions={
+              <>
+                {p.playable && startHref && (
+                  <Link href={startHref} className={HERO_BTN}>{next ? `Continue Lesson ${next.index}` : p.mine && p.mine.done === p.mine.total ? "Review" : "Start"}</Link>
+                )}
+                {p.test.ready && !p.test.passed && <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className={HERO_BTN_W}>Take the Certification Test</Link>}
+                {p.certificate?.verifyUrl && <Link href={p.certificate.verifyUrl} className={HERO_BTN_W}>View Certificate</Link>}
+              </>
+            }
+          />
         </div>
 
-        {path.coverImage && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={path.coverImage}
-            alt=""
-            className="h-40 w-56 shrink-0 rounded-brand border border-line object-cover"
-          />
-        )}
-      </div>
-
-      <div className="mt-10 space-y-8">
-        {path.courses.length === 0 && (
-          <p className="rounded-brand border border-line p-6 text-[14.5px] text-ink-2">
-            This path is still being built.
-          </p>
-        )}
-
-        {path.courses.map((course, i) => (
-          <section key={course.id} className="rounded-brand border border-line">
-            <header className="flex flex-wrap items-start gap-4 border-b border-line p-5">
-              <div className="min-w-0 flex-1">
-                {/* A single-course path — 17 of the 23 — doesn't get a "Course 1 of */}
-                {!singleCourse && (
-                  <p className="text-[12.5px] font-bold uppercase tracking-wide text-magenta">
-                    Course {i + 1} of {path.courses.length}
-                  </p>
-                )}
-                <h2 className="mt-0.5 font-display text-[21px] font-bold">
-                  <Link
-                    href={`/learn/${path.slug}/course/${course.slug}`}
-                    className="hover:text-magenta"
-                  >
-                    {course.title}
-                  </Link>
-                </h2>
-                {course.summary && (
-                  <p className="mt-1.5 max-w-2xl text-[14.5px] text-ink-2">
-                    {course.summary}
-                  </p>
-                )}
-                <p className="mt-2 text-[13px] text-ink-2">
-                  {course.lessons} lesson{course.lessons === 1 ? "" : "s"}
-                  {course.style && ` · ${STYLE_LABEL[course.style] ?? course.style}`}
-                  {course.completed > 0 && (
-                    <span className="font-semibold text-emerald-700">
-                      {" "}
-                      · {course.completed} done
-                    </span>
-                  )}
-                </p>
-              </div>
-              <Link
-                href={`/learn/${path.slug}/course/${course.slug}`}
-                className="shrink-0 border-[1.5px] border-line px-4 py-2 text-[13.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
-              >
-                Open Course
-              </Link>
-            </header>
-
-            <LessonTable pathSlug={path.slug} sections={course.sections} />
+        <div className="grid md:grid-cols-[1.35fr_1fr]">
+          <section className="min-w-0 py-6 md:pr-7">
+            <h2 className="text-[20px] font-bold">What&apos;s Inside <small className="ml-1 text-[12px] font-medium text-ink-3">{p.courses.length} courses · {p.lessons} lessons</small></h2>
+            <WhatsInside slug={p.slug} courses={p.courses} nextLessonId={next?.id ?? null} canPlay={!!viewer} />
           </section>
-        ))}
+          <aside className="min-w-0 border-t border-line py-6 md:border-l md:border-t-0 md:pl-7">
+            <section id="test" data-path-test>
+              <h2 className="text-[18px] font-bold">Certification Test</h2>
+              {p.test.ready ? (
+                <>
+                  <dl className="mt-2 grid grid-cols-3 gap-2">
+                    {[["Questions", p.test.questions], ["To pass", `${p.test.threshold}%`], ["Attempts", p.test.maxAttempts]].map(([k, v]) => (
+                      <div key={k as string}><dd className="text-[20px] font-medium tabular-nums">{v}</dd><dt className="text-[11px] font-semibold tracking-[0.06em] text-ink-3">{(k as string).toUpperCase()}</dt></div>
+                    ))}
+                  </dl>
+                  <p className="mt-2 text-[13px] text-ink-2">Pass it and the certificate goes on your profile under <b className="text-ink">Credentials</b>, verified by Panameer.</p>
+                  {p.test.passed ? (
+                    <p className="mt-3 text-[13.5px] font-bold">Certified ✓{p.test.best ? ` · ${p.test.best}%` : ""}</p>
+                  ) : (
+                    <Link href={viewer ? `/learn/${p.slug}/test` : signIn} className="mt-3 inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover">Take the Test</Link>
+                  )}
+                  {viewer && !p.test.passed && p.test.used > 0 && <p className="mt-1.5 text-[12px] text-ink-3">{Math.max(0, p.test.maxAttempts - p.test.used)} of {p.test.maxAttempts} attempts left</p>}
+                </>
+              ) : (
+                <p className="mt-2 text-[13.5px] text-ink-2">The test for this path isn&apos;t open yet. Your lessons count toward it the moment it opens.</p>
+              )}
+            </section>
+            {p.teacher && (
+              <section className="mt-6 border-t border-line pt-5" data-taught-by>
+                <h2 className="text-[18px] font-bold">Taught By</h2>
+                <div className="mt-2 flex items-center gap-3">
+                  <Avatar firstName={p.teacher.name.split(" ")[0] ?? ""} lastName={p.teacher.name.split(" ").slice(1).join(" ")} photoUrl={p.teacher.photoUrl} size={44} />
+                  <span className="min-w-0">
+                    <b className="block text-[14.5px]">{p.teacher.name}</b>
+                    {p.teacher.title && <span className="block truncate text-[12.5px] text-ink-2">{p.teacher.title}</span>}
+                  </span>
+                </div>
+                {p.teacher.profileId && <Link href={`/providers/${p.teacher.profileId}`} className="mt-3 inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-black/[0.04]">View Profile</Link>}
+              </section>
+            )}
+            <section className="mt-6 border-t border-line pt-5" data-path-group>
+              <h2 className="text-[18px] font-bold">Path Group <small className="ml-1 text-[12px] font-medium text-ink-3">{p.learners} {p.learners === 1 ? "member" : "members"}</small></h2>
+              {latest ? (
+                <Link href={`/connect/groups/thread/${latest.id}`} className="mt-2 block hover:underline">
+                  <b className="block text-[13.5px]">{latest.title}</b>
+                  <span className="text-[12px] text-ink-3">{latest.reply_count} {latest.reply_count === 1 ? "reply" : "replies"} · {ago(latest.last_post_at ?? new Date())}</span>
+                </Link>
+              ) : (
+                <p className="mt-2 text-[13px] text-ink-2">No questions yet. Ask the first one.</p>
+              )}
+              <Link href={board ? `/connect/groups/${board.slug}` : `/connect/groups/path-${p.slug}`} className="mt-3 inline-flex min-h-10 items-center border border-ink px-4 text-[13.5px] font-semibold hover:bg-black/[0.04]">Ask the Group</Link>
+            </section>
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

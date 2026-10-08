@@ -52,7 +52,7 @@ export function LessonActions({
     <div className="mt-8 border-t border-line pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href={`/learn/${pathSlug}/course/${courseSlug}`}
+          href={`/learn/${pathSlug}#course-${courseSlug}`}
           className="border-[1.5px] border-line px-7 py-2.5 text-[14.5px] font-bold transition-colors hover:border-magenta hover:text-magenta"
         >
           Back
