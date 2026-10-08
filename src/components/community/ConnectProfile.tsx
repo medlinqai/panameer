@@ -1,3 +1,4 @@
+import { CredentialsBody } from "@/components/profile/CredentialsBody";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/Avatar";
@@ -29,7 +30,6 @@ import type { MessagePermission } from "@/lib/messages";
 import { OwnerResumeRebuild } from "@/components/profile/OwnerResumeRebuild";
 import { CommunitySignalBlock } from "@/components/profile/CommunitySignal";
 import {
-  CertificationsBody,
   EducationBody,
   LanguagesBody,
   // ONE EDIT PATTERN ( WS-B item 6) — `EditLink` lives beside
@@ -748,14 +748,14 @@ export function ConnectProfile({
             id="certifications"
           // CLOSED AT LOAD , Scott 2026-09-30)
           open={false}
-            title="Certifications"
+            title="Credentials"
           count={p.certifications.length}
           showWhenEmpty={owner}
-            action={owner ? <CleanEdit href={editHref("certifications")} title="Certifications" /> : undefined}
+            action={owner ? <CleanEdit href={editHref("certifications")} title="Credentials" /> : undefined}
           >
-            <CertificationsBody
-              certifications={p.certifications}
-              empty="No certifications yet."
+            <CredentialsBody
+              credentials={p.certifications}
+              empty="No credentials yet."
               emptyAction={
                 owner ? (
                   // THE LINE SHIPS, BECAUSE THE TEST EXISTS ( WS-E 1)

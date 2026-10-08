@@ -398,6 +398,8 @@ export async function getProviderProfileView(
       url: c.url,
       attachmentName: c.attachment_name,
       notes: c.notes,
+      kind: c.kind,
+      publicUrl: c.public_credential_url,
     })),
     education: profile.education.map((e) => ({
       id: e.id,

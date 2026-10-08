@@ -233,6 +233,9 @@ export type CertificationItem = {
   // PROVENANCE . Optional because three callers fill this type and
   issuedFrom?: string | null;
   credentialId?: string | null;
+  /** Credential kind (2026-10-08); missing = CERTIFICATION. */
+  kind?: string | null;
+  publicUrl?: string | null;
 };
 
 // ---------------------------------------------------------------------------
