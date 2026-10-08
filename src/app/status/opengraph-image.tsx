@@ -16,7 +16,7 @@ const INK = "#272334";
 const MAGENTA = "#d72cd6";
 
 export default async function Image() {
-  const logo = await readFile(path.join(process.cwd(), "public/brand/panameer-lockup-on-dark.png"));
+  const logo = await readFile(path.join(process.cwd(), "public/brand/panameer-lockup-white.png"));
   const logoSrc = `data:image/png;base64,${logo.toString("base64")}`;
 
   let title = "Watch Panameer get built";
@@ -40,7 +40,7 @@ export default async function Image() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: INK, color: "#fff", padding: "64px 72px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoSrc} width={311} height={64} alt="" />
+        <img src={logoSrc} width={378} height={64} alt="" />
         <div style={{ marginTop: 70, fontSize: 24, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase", color: MAGENTA }}>
           Work Tracker · Built in public
         </div>
