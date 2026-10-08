@@ -97,14 +97,22 @@ export async function growthBoard(
   const { from, to } = windowRange(window, now);
   const range = dateFilter(from, to);
 
-  const senders = await prisma.colleagueInvite.groupBy({
-    by: ["inviter_person_id"],
-    where: {
-      inviter_person_id: { not: null },
-      ...(range ? { created_at: range } : {}),
-    },
-  });
-  const ids = senders.map((s) => s.inviter_person_id).filter((x): x is string => !!x);
+  // Two grouped counts for the whole board instead of two queries per person (Connect was slow to open).
+  const [senders, joins] = await Promise.all([
+    prisma.colleagueInvite.groupBy({
+      by: ["inviter_person_id"],
+      where: { inviter_person_id: { not: null }, ...(range ? { created_at: range } : {}) },
+      _count: { _all: true },
+    }),
+    prisma.colleagueInvite.groupBy({
+      by: ["inviter_person_id"],
+      where: { inviter_person_id: { not: null }, accepted_at: { not: null, ...(range ?? {}) } },
+      _count: { _all: true },
+    }),
+  ]);
+  const invitedBy = new Map(senders.map((s) => [s.inviter_person_id as string, s._count._all]));
+  const joinedBy = new Map(joins.map((s) => [s.inviter_person_id as string, s._count._all]));
+  const ids = [...invitedBy.keys()];
   if (ids.length === 0) return [];
 
   const people = await prisma.person.findMany({
@@ -112,13 +120,19 @@ export async function growthBoard(
     select: { id: true, first_name: true, last_name: true, photo_url: true },
   });
 
-  const scored = await Promise.all(
-    people.map(async (p) => ({
-      ...(await growthScore(p.id, window, now)),
+  const scored = people.map((p) => {
+    const invited = invitedBy.get(p.id) ?? 0;
+    const joined = joinedBy.get(p.id) ?? 0;
+    return {
+      personId: p.id,
+      invited,
+      joined,
+      active: null,
+      points: invited * GROWTH_WEIGHTS.INVITED + joined * GROWTH_WEIGHTS.JOINED,
       name: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "A member",
       photoUrl: p.photo_url,
-    }))
-  );
+    };
+  });
 
   return scored
     .filter((s) => s.points > 0)
