@@ -116,6 +116,8 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+      // No separate Courses tab (Scott 2026-10-08): the Learning Paths search finds courses and lessons.
+      { source: "/learn/courses", destination: "/learn/paths", permanent: true },
       // Beginners merged into Oracle Cloud Foundations (Scott 2026-10-08).
       { source: "/learn/end-user-beginners", destination: "/learn/oracle-cloud-foundations", permanent: true },
       { source: "/learn/end-user-beginners/:path*", destination: "/learn/oracle-cloud-foundations", permanent: true },

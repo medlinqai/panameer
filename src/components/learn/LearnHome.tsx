@@ -135,12 +135,6 @@ export function LearnHome({
                   </button>
 
                   {/* E216 — THE COURSE VIEWS JOIN THIS ROW rather than getting a second */}
-                  <Link
-                    href="/learn/courses"
-                    className="px-5 py-2 text-[14px] font-bold text-white/80 transition-colors hover:text-white"
-                  >
-                    All Courses
-                  </Link>
                 </div>
 
                 <div className="mt-4 max-w-md">

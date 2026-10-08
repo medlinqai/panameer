@@ -226,7 +226,7 @@ export function LearnPublic() {
                       {LEARN_CTA_LABEL}
                     </Link>
                     <Link
-                      href="/learn/courses"
+                      href="/learn/paths"
                       className={HERO_BUTTON_OUTLINE}
                     >
                       Browse the Catalog

@@ -26,10 +26,9 @@ export function LearnTabs({
         LEARN
       </span>
 
-      {/* Home · All Learning Paths · All Courses · My Learning (2026-10-08). */}
+      {/* Home · All Learning Paths · My Learning (Scott 2026-10-08: no separate Courses tab — search finds courses). */}
       {active === "home" ? <span className={ACTIVE}>Home</span> : <Link href="/learn" className={IDLE}>Home</Link>}
       {active === "paths" ? <span className={ACTIVE}>All Learning Paths</span> : <Link href="/learn/paths" className={IDLE}>All Learning Paths</Link>}
-      {active === "courses" ? <span className={ACTIVE}>All Courses</span> : <Link href="/learn/courses" className={IDLE}>All Courses</Link>}
       {active === "my-learning" ? <span className={ACTIVE}>My Learning</span> : <Link href="/learn/my" className={IDLE}>My Learning</Link>}
 
       <a href={anchor("certificates")} className={IDLE}>

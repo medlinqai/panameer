@@ -138,7 +138,6 @@ export const PAGE_TABS: Record<string, PageTabItem[]> = {
   "/learn": [
     { label: "Home", href: "/learn" },
     { label: "All Learning Paths", href: "/learn/paths" },
-    { label: "All Courses", href: "/learn/courses" },
     { label: "My Learning", href: "/learn/my" },
   ],
   "/my-services": [
