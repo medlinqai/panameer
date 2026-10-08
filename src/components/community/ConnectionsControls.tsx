@@ -24,7 +24,7 @@ type Props = {
 const href = (q: string) => (q ? `?${q}` : "?");
 const BTN = "inline-flex min-h-[40px] items-center border px-3.5 text-[13px] font-bold";
 
-export function ConnectionsControls({ f, total, chipCounts, invites, applied, tree, views, scope = "connections", options }: Props) {
+export function ConnectionsControls({ f, total, chipCounts, applied, tree, views, scope = "connections", options }: Props) {
   const members = scope === "members";
   const chips: readonly { key: string; label: string }[] = members ? MEMBER_CHIPS : CHIPS;
   const router = useRouter();
@@ -74,7 +74,7 @@ export function ConnectionsControls({ f, total, chipCounts, invites, applied, tr
               aria-current={on ? "true" : undefined}
               className={"shrink-0 whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink hover:border-ink")}
             >
-              {c.label} <span className={on ? "opacity-80" : "text-ink-3"}>{c.key === "invites" ? `${invites.in} in · ${invites.out} out` : chipCounts[c.key] ?? 0}</span>
+              {c.label} <span className={on ? "opacity-80" : "text-ink-3"}>{chipCounts[c.key] ?? 0}</span>
             </Link>
           );
         })}

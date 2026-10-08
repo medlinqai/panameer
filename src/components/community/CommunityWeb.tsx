@@ -147,7 +147,7 @@ export function CommunityWeb({ initial }: { initial: WebData }) {
         </li>
         <li>
           <i className="pm-web-key-invited" />
-          invited
+          invited to Panameer
         </li>
         <li>
           <i className="pm-web-key-reachable" />

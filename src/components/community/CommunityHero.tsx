@@ -89,7 +89,7 @@ export function CommunityHero({
 }
 
 /** Connections hero (2026-10-08, Health-page layout): picture left 340px, level + numbers right, one bottom rule, no box. */
-export function ConnectionsHero({ web, hero, standing, invitations }: { web: WebData; hero: HeroData | null; standing: LevelStanding | null; invitations: number }) {
+export function ConnectionsHero({ web, hero, standing, requests }: { web: WebData; hero: HeroData | null; standing: LevelStanding | null; invitations?: number; requests: number }) {
   const figures = webFigures(web);
   const rank = !hero ? null : hero.rank !== null ? (
     <><strong className="text-ink">#{hero.rank}</strong> of {hero.boardSize} {hero.boardSize === 1 ? "member" : "members"} with a score this month.{hero.move ? ` ${hero.move}` : ""}</>
@@ -127,12 +127,11 @@ export function ConnectionsHero({ web, hero, standing, invitations }: { web: Web
         )}
         <p className="mb-4 mt-2.5 text-[14px] text-ink-2">
           {rank}
-          {hero?.latestJoin ? <> <strong className="text-ink">{hero.latestJoin.name}</strong> joined from your invite.</> : null}
+          {hero?.latestJoin ? <> <strong className="text-ink">{hero.latestJoin.name}</strong> joined from your invitation.</> : null}
         </p>
         <div className="flex flex-wrap gap-3">
           <a href="/connect/invite" className="inline-flex min-h-[44px] items-center bg-ink px-5 text-[14px] font-bold text-surface hover:bg-ink-hover">Join Panameer</a>
-          <a href="/connect/invite" className="inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold hover:bg-ink/5">Invitations{invitations > 0 ? ` (${invitations})` : ""}</a>
-          <a href="/connect/leaders" className="inline-flex min-h-[44px] items-center border border-line px-5 text-[14px] font-bold hover:border-ink">See Leaders</a>
+          <a href="/connect/connections?chip=requests" className="inline-flex min-h-[44px] items-center border border-ink px-5 text-[14px] font-bold hover:bg-ink/5">Requests{requests > 0 ? ` (${requests})` : ""}</a>
         </div>
       </div>
     </section>

@@ -56,9 +56,9 @@ export const CHIPS = [
   { key: "worked", label: "Worked Together" },
   { key: "samecompany", label: "Same Company" },
   { key: "learn", label: "From Learn" },
-  { key: "invites", label: "Invites" },
   { key: "following", label: "Following" },
   { key: "followers", label: "Followers" },
+  { key: "requests", label: "Requests" },
 ] as const;
 
 /** Community tab (people you're not connected to yet). */

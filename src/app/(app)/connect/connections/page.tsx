@@ -9,6 +9,8 @@ import { unreadCount } from "@/lib/messages";
 import { connectionsView, parseFilters, appliedChips } from "@/lib/connections-filter";
 import { getProviderFieldTree } from "@/lib/catalog";
 import { ConnectionsControls } from "@/components/community/ConnectionsControls";
+import { RequestsPanel } from "@/components/community/RequestsPanel";
+import { listRequests } from "@/lib/requests";
 import { ConnectionsHero } from "@/components/community/CommunityHero";
 import { getCommunityHero } from "@/lib/community-hero";
 import { getCommunityWeb } from "@/lib/community-web";
@@ -21,7 +23,10 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
   await guardPage("authenticated");
   const viewer = await getSessionViewer();
   const unread = viewer ? await unreadCount(viewer) : 0;
-  const f = parseFilters(await searchParams);
+  const sp = await searchParams;
+  const f = parseFilters(sp);
+  const reqs = viewer ? await listRequests(viewer) : { received: [], sent: [] };
+  const requestCount = reqs.received.length + reqs.sent.length;
   const views = viewer ? await prisma.connectionView.findMany({ where: { user_id: viewer.userId }, orderBy: { created_at: "asc" }, select: { id: true, name: true, query: true } }) : [];
   const view = viewer ? await connectionsView(viewer, f, views.map((v) => v.query)) : null;
   const [fieldTree, skills] = await Promise.all([
@@ -69,17 +74,20 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
       />
       <div className="mx-auto max-w-5xl">
         <h1 className="sr-only">Connections</h1>
-        <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} />
+        <ConnectionsHero web={web} hero={hero} standing={standing} invitations={pendingCount} requests={requestCount} />
         <div className="mt-6 min-w-0 space-y-4">
           <ConnectionsControls
             f={f}
             total={view?.total ?? 0}
-            chipCounts={view?.chipCounts ?? {}}
+            chipCounts={{ ...(view?.chipCounts ?? {}), requests: requestCount }}
             invites={view?.invites ?? { in: 0, out: 0 }}
             applied={appliedChips(f, (id) => skillName.get(id))}
             tree={tree}
             views={views.map((v, i) => ({ ...v, count: view?.savedCounts[i] ?? 0 }))}
           />
+          {f.chip === "requests" ? (
+            <RequestsPanel received={reqs.received} sent={reqs.sent} tab={sp.rq === "sent" ? "sent" : "received"} />
+          ) : (
           <ColleagueRoster
             bare
             rows={rows.map((r) => ({
@@ -102,6 +110,7 @@ export default async function ConnectionsPage({ searchParams }: { searchParams: 
               matched: r.why.skill,
             }))}
           />
+          )}
         </div>
       </div>
     </>
