@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getLearnLesson, viewerTeaches } from "@/lib/learn-home";
 import { guardPage } from "@/lib/guard";
 import { vimeoEmbedUrl } from "@/lib/learn";
-import { learnCatalogue } from "@/lib/learn-catalogue";
+import { learnCatalog } from "@/lib/learn-catalog";
 import { ensurePathBoard } from "@/lib/forums";
 import { LessonPlayer } from "@/components/learn/LessonPlayer";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function LessonPage({ params }: { params: Promise<{ slug: string; lessonId: string }> }) {
   const viewer = await guardPage("authenticated");
   const { slug, lessonId } = await params;
-  const [view, [p], teaches] = await Promise.all([getLearnLesson(slug, lessonId, viewer.userId), learnCatalogue(viewer.userId, { slug }), viewerTeaches(viewer)]);
+  const [view, [p], teaches] = await Promise.all([getLearnLesson(slug, lessonId, viewer.userId), learnCatalog(viewer.userId, { slug }), viewerTeaches(viewer)]);
   if (!view || !p) notFound();
   const { lesson, instructor } = view;
   const embed = lesson.playable ? vimeoEmbedUrl(lesson.vimeoRef) : null;

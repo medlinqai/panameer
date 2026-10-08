@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalogue } from "@/lib/learn-catalogue";
+import { learnCatalog } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
-import { CataloguePathCard } from "@/components/learn/CataloguePathCard";
+import { CatalogPathCard } from "@/components/learn/CatalogPathCard";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const metadata = {
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function LearningPathsPage({ searchParams }: { searchParams: Promise<{ q?: string; area?: string; open?: string; test?: string; tab?: string }> }) {
   const viewer = await getSessionViewer();
   const sp = await searchParams;
-  const [all, areas, teaches] = await Promise.all([learnCatalogue(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
+  const [all, areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
   const label = new Map(areas.map((a) => [a.code, a.label]));
   const q = sp.q?.trim().toLowerCase() ?? "";
   const mineOnly = sp.tab === "mine";
@@ -85,7 +85,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
               {!sp.area && g.paths.length > 3 && <Link href={href({ area: g.code })} className="text-[13px] font-bold text-magenta-dark underline underline-offset-4">See all {g.paths.length}</Link>}
             </div>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <CataloguePathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
+              {(sp.area ? g.paths : g.paths.slice(0, 3)).map((p) => <CatalogPathCard key={p.id} p={p} areaLabel={p.area ? label.get(p.area) ?? null : null} notify={<NotifyMe pathId={p.id} initial={p.watching} signedIn={!!viewer} />} />)}
             </ul>
           </section>
         ))}

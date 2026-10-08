@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { CatPath } from "@/lib/learn-catalogue";
-import { timeLabel } from "@/lib/learn-catalogue";
+import type { CatPath } from "@/lib/learn-catalog";
+import { timeLabel } from "@/lib/learn-catalog";
 
 // One learning-path card (Learn status language): tag · area · title · teacher/courses/lessons/time · your bar · stats · buttons.
 const BTN_K = "inline-flex min-h-10 items-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-hover";
@@ -9,7 +9,7 @@ const OFF = "inline-flex min-h-10 cursor-not-allowed items-center border border-
 const TAG: Record<string, string> = { IN_PROGRESS: "IN PROGRESS", CERTIFIED: "CERTIFIED ✓", COMING_SOON: "COMING SOON" };
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
 
-export function CataloguePathCard({ p, areaLabel, notify }: { p: CatPath; areaLabel: string | null; notify?: React.ReactNode }) {
+export function CatalogPathCard({ p, areaLabel, notify }: { p: CatPath; areaLabel: string | null; notify?: React.ReactNode }) {
   const pct = p.mine && p.mine.total ? Math.round((p.mine.done / p.mine.total) * 100) : 0;
   const meta = [p.teacher?.name, `${p.courses.length} course${p.courses.length === 1 ? "" : "s"}`, `${p.lessons} lesson${p.lessons === 1 ? "" : "s"}`, timeLabel(p.minutes)].filter(Boolean).join(" · ");
   return (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalogue, timeLabel } from "@/lib/learn-catalogue";
+import { learnCatalog, timeLabel } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function CoursesPage({ searchParams }: { searchParams: Promise<{ q?: string; area?: string; video?: string; short?: string }> }) {
   const viewer = await getSessionViewer();
   const sp = await searchParams;
-  const [paths, areas, teaches] = await Promise.all([learnCatalogue(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
+  const [paths, areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
   const q = sp.q?.trim().toLowerCase() ?? "";
   const rows = paths
     .flatMap((p) => p.courses.map((c) => ({ p, c })))

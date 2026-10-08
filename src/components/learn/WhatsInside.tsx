@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { CatCourse } from "@/lib/learn-catalogue";
-import { timeLabel } from "@/lib/learn-catalogue";
+import type { CatCourse } from "@/lib/learn-catalog";
+import { timeLabel } from "@/lib/learn-catalog";
 import { StatusMark } from "@/components/learn/StatusMark";
 
 // What's Inside: courses as rows with marks; the current course open; click to open/close in place (#course-<slug> opens one).

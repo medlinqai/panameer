@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalogue, timeLabel } from "@/lib/learn-catalogue";
+import { learnCatalog, timeLabel } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function LearningPathPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const viewer = await getSessionViewer();
-  const [[p], areas, teaches] = await Promise.all([learnCatalogue(viewer?.userId ?? null, { slug }), getSkillAreas(), viewerTeaches(viewer)]);
+  const [[p], areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null, { slug }), getSkillAreas(), viewerTeaches(viewer)]);
   if (!p) notFound();
   const areaLabel = p.area ? areas.find((a) => a.code === p.area)?.label ?? p.area : null;
   const board = await prisma.forumBoard.findFirst({ where: { learning_path_id: p.id }, select: { id: true, slug: true } });

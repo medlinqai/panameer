@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { memberOrPublicTwin } from "@/lib/public-twin";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalogue } from "@/lib/learn-catalogue";
+import { learnCatalog } from "@/lib/learn-catalog";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
 import { CertificateTiles } from "@/components/learn/CertificateTiles";
@@ -17,7 +17,7 @@ const day = (d: Date | string) => new Date(d).toLocaleDateString("en-US", { mont
 export default async function MyLearningPage() {
   const viewer = await memberOrPublicTwin("/learn");
   const [paths, teaches, watched] = await Promise.all([
-    learnCatalogue(viewer.userId),
+    learnCatalog(viewer.userId),
     viewerTeaches(viewer),
     prisma.lessonProgress.findMany({ where: { user_id: viewer.userId }, select: { completed_at: true, lesson: { select: { section: { select: { course: { select: { learning_path_id: true } } } } } } } }),
   ]);

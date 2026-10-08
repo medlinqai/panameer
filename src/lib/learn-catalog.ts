@@ -27,7 +27,7 @@ const minutesOf = (seconds: number | null, runTime: string | null) => {
 export const timeLabel = (min: number) => (!min ? null : min < 60 ? `${min} min` : `${Math.round((min / 60) * 2) / 2} h`);
 const nameOf = (p: { first_name: string | null; last_name: string | null }) => `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
 
-export async function learnCatalogue(userId: string | null, opts: { slug?: string } = {}): Promise<CatPath[]> {
+export async function learnCatalog(userId: string | null, opts: { slug?: string } = {}): Promise<CatPath[]> {
   const paths = await prisma.learningPath.findMany({
     where: { status: "PUBLISHED", ...(opts.slug ? { slug: opts.slug } : {}) },
     orderBy: [{ sort_order: "asc" }, { title: "asc" }],
