@@ -80,6 +80,7 @@ export async function learnHomeData(userId: string, areaFilter?: string) {
     return { done: n, total: list.length, next: list.find((l) => !done.has(l.id)) ?? null };
   };
   const areaOf = (p: (typeof paths)[number]) => {
+    if (p.slug === "oracle-cloud-foundations" || /foundation/i.test(p.group ?? "")) return "START";
     const tally = new Map<string, number>();
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
     // No tagged skills yet: the same keyword rules the catalog uses, on the title and group (never AI).

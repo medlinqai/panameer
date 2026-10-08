@@ -25,6 +25,10 @@ const minutesOf = (seconds: number | null, runTime: string | null) => {
   return m ? Math.max(1, Number(m[1]) + Math.round(Number(m[2]) / 60)) : null;
 };
 export { timeLabel } from "@/lib/learn-time";
+
+/** Pseudo-area for foundational paths, shown first as "Start Here". */
+export const START_AREA = "START";
+export const START_AREA_LABEL = "Start Here";
 const nameOf = (p: { first_name: string | null; last_name: string | null }) => `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
 
 export async function learnCatalog(userId: string | null, opts: { slug?: string } = {}): Promise<CatPath[]> {
@@ -83,7 +87,9 @@ export async function learnCatalog(userId: string | null, opts: { slug?: string 
       : null;
     const tally = new Map<string, number>();
     for (const s of p.skills) if (s.skill.area) tally.set(s.skill.area, (tally.get(s.skill.area) ?? 0) + 1);
-    const area = [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? areaFor(p.title, p.group ? [p.group] : []);
+    // Foundational paths are where everyone starts (Scott 2026-10-08) — their own "Start Here" row, first.
+    const foundational = p.slug === "oracle-cloud-foundations" || /foundation/i.test(p.group ?? "");
+    const area = foundational ? START_AREA : [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? areaFor(p.title, p.group ? [p.group] : []);
     const myAttempts = attempts.filter((a) => a.learning_path_id === p.id);
     const cert = certs.find((c) => c.learning_path_id === p.id) ?? null;
     const passed = myAttempts.find((a) => a.passed) ?? null;

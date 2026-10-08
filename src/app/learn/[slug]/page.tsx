@@ -20,7 +20,7 @@ export default async function LearningPathPage({ params }: { params: Promise<{ s
   const viewer = await getSessionViewer();
   const [[p], areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null, { slug }), getSkillAreas(), viewerTeaches(viewer)]);
   if (!p) notFound();
-  const areaLabel = p.area ? areas.find((a) => a.code === p.area)?.label ?? p.area : null;
+  const areaLabel = p.area === "START" ? "Start Here" : p.area ? areas.find((a) => a.code === p.area)?.label ?? p.area : null;
   const board = await prisma.forumBoard.findFirst({ where: { learning_path_id: p.id }, select: { id: true, slug: true } });
   const latest = board ? await prisma.forumThread.findFirst({ where: { board_id: board.id }, orderBy: { created_at: "desc" }, select: { id: true, title: true, reply_count: true, last_post_at: true } }) : null;
   const first = p.courses.flatMap((c) => c.lessons).find((l) => l.playable) ?? null;

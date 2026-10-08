@@ -39,7 +39,7 @@ export function LearnHome({
     );
   }, [cards, tab, group, query]);
 
-  // THE CATALOGUE GROUPS BY TRACK, WITH A HEAD PER TRACK (WS-D item 5)
+  // THE CATALOG GROUPS BY TRACK, WITH A HEAD PER TRACK (WS-D item 5)
   const grouped = useMemo(() => {
     if (query.trim() || group) return null;
     const byGroup = new Map<string, LearnCard[]>();
@@ -57,7 +57,7 @@ export function LearnHome({
 
   // PLAYABLE LESSONS, NOT ALL LESSONS
   const totalLessons = cards.reduce((n, c) => n + c.playable, 0);
-  // THE CATALOGUE SENTENCE LIVES HERE , item 3)
+  // THE CATALOG SENTENCE LIVES HERE , item 3)
   const startablePaths = cards.filter((c) => c.ready).length;
   const totalCourses = cards.reduce((n, c) => n + c.courses, 0);
   const totalLessonsAll = cards.reduce((n, c) => n + c.lessons, 0);
@@ -70,7 +70,7 @@ export function LearnHome({
       {signedIn ? (
         <PatternHeader
           // NOT `LEARNING PATHS` — THAT DUPLICATED THE HEADLINE WORD FOR
-          eyebrow="THE CATALOGUE"
+          eyebrow="THE CATALOG"
           headline="Learning Paths"
           lede="Paths across procurement, finance, HR and implementation."
           figures={[
@@ -100,7 +100,7 @@ export function LearnHome({
                   Learn Oracle Cloud from the people who implement it
                 </h1>
                 {/* TWO SENTENCES, DELIBERATELY. Inside one clause a reader adds */}
-                {/* RULING 30 — 23 IS THE CATALOGUE'S SIZE, WITH ITS SPLIT */}
+                {/* RULING 30 — 23 IS THE CATALOG'S SIZE, WITH ITS SPLIT */}
                 <p className="mt-3 max-w-xl text-[15.5px] text-white/80">
                   {cards.length} paths — {startablePaths} you can start today,{" "}
                   {inProduction} in production. {totalLessons.toLocaleString()} lessons

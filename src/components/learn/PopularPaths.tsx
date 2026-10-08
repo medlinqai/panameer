@@ -12,6 +12,7 @@ const OFF = "inline-flex min-h-10 cursor-not-allowed items-center border border-
 
 export function PopularPaths({ cards, areas, area }: { cards: Card[]; areas: { code: string; label: string }[]; area: string }) {
   const label = new Map(areas.map((a) => [a.code, a.label]));
+  label.set("START", "Start Here");
   const chip = (on: boolean) => "shrink-0 whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink hover:border-ink");
   return (
     <section data-popular-paths className="border-t border-line py-7">

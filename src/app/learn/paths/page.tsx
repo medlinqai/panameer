@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSessionViewer } from "@/lib/session";
 import { viewerTeaches } from "@/lib/learn-home";
-import { learnCatalog } from "@/lib/learn-catalog";
+import { learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog";
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { CatalogPathCard } from "@/components/learn/CatalogPathCard";
@@ -19,6 +19,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
   const sp = await searchParams;
   const [all, areas, teaches] = await Promise.all([learnCatalog(viewer?.userId ?? null), getSkillAreas(), viewerTeaches(viewer)]);
   const label = new Map(areas.map((a) => [a.code, a.label]));
+  label.set(START_AREA, START_AREA_LABEL);
   const q = sp.q?.trim().toLowerCase() ?? "";
   const mineOnly = sp.tab === "mine";
   const shown = all.filter((p) => {
@@ -38,7 +39,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
   const chip = (on: boolean) => "shrink-0 whitespace-nowrap border px-3 py-1.5 text-[13px] font-semibold " + (on ? "border-ink bg-ink text-surface" : "border-line text-ink hover:border-ink");
   const countByArea = new Map<string, number>();
   for (const p of all) countByArea.set(p.area ?? "OTHER", (countByArea.get(p.area ?? "OTHER") ?? 0) + 1);
-  const groups = [...areas.filter((a) => !a.hidden).map((a) => a.code), "OTHER"]
+  const groups = [START_AREA, ...areas.filter((a) => !a.hidden).map((a) => a.code), "OTHER"]
     .map((code) => ({ code, label: code === "OTHER" ? "Other" : label.get(code) ?? code, paths: shown.filter((p) => (p.area ?? "OTHER") === code) }))
     .filter((g) => g.paths.length);
   const teachers = new Set(all.map((p) => p.teacher?.personId).filter(Boolean)).size;
@@ -54,7 +55,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
       {viewer && <LearnTabs active="paths" teaches={teaches} />}
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learning-paths>
         <header className="border-b border-line pb-6">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">THE CATALOGUE</p>
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">THE CATALOG</p>
           <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{mineOnly ? "My Learning Paths" : "Learning Paths"}</h1>
           <div className="mt-4 flex flex-wrap gap-x-11 gap-y-3">
             {kpis.map(([v, k]) => (
@@ -71,6 +72,7 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
         </form>
         <nav aria-label="Filters" className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
           <Link href={href({ area: undefined })} className={chip(!sp.area)}>All Areas</Link>
+          {countByArea.get(START_AREA) ? <Link href={href({ area: START_AREA })} className={chip(sp.area === START_AREA)}>{START_AREA_LABEL} <span className="opacity-70">{countByArea.get(START_AREA)}</span></Link> : null}
           {areas.filter((a) => !a.hidden && countByArea.get(a.code)).map((a) => (
             <Link key={a.code} href={href({ area: a.code })} className={chip(sp.area === a.code)}>{a.label} <span className="opacity-70">{countByArea.get(a.code)}</span></Link>
           ))}
