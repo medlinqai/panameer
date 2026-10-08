@@ -5,6 +5,9 @@ import { learnCatalog, START_AREA, START_AREA_LABEL } from "@/lib/learn-catalog"
 import { getSkillAreas } from "@/lib/skill-area-store";
 import { LearnTabs } from "@/components/learn/app/LearnTabs";
 import { CatalogPathCard } from "@/components/learn/CatalogPathCard";
+import { AccountHero, HERO_BTN, HERO_BTN_W } from "@/components/casing/AccountHero";
+import { BubbleField } from "@/components/casing/BubbleField";
+import { BEGINNER_PATH as START_SLUG } from "@/lib/learn-homepage";
 import { NotifyMe } from "@/components/learn/NotifyMe";
 
 export const metadata = {
@@ -42,28 +45,46 @@ export default async function LearningPathsPage({ searchParams }: { searchParams
   const groups = [START_AREA, ...areas.filter((a) => !a.hidden).map((a) => a.code), "OTHER"]
     .map((code) => ({ code, label: code === "OTHER" ? "Other" : label.get(code) ?? code, paths: shown.filter((p) => (p.area ?? "OTHER") === code) }))
     .filter((g) => g.paths.length);
-  const teachers = new Set(all.map((p) => p.teacher?.personId).filter(Boolean)).size;
+  const start = all.find((p) => p.slug === START_SLUG) ?? null;
   const kpis = [
     [all.length, "LEARNING PATHS"],
     [all.reduce((n, p) => n + p.courses.length, 0), "COURSES"],
     [all.reduce((n, p) => n + p.lessons, 0), "LESSONS"],
-    [teachers, "TEACHERS"],
+    ["Free", "EVERY ONE"],
   ] as const;
 
   return (
     <>
       {viewer && <LearnTabs active="paths" teaches={teaches} />}
       <div className="mx-auto w-full max-w-[1010px] px-4 py-6 sm:px-6" data-learning-paths>
-        <header className="border-b border-line pb-6">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-magenta">THE CATALOG</p>
-          <h1 className="mt-1.5 text-[30px] font-bold leading-tight">{mineOnly ? "My Learning Paths" : "Learning Paths"}</h1>
-          <div className="mt-4 flex flex-wrap gap-x-11 gap-y-3">
-            {kpis.map(([v, k]) => (
-              <div key={k}><b className="block text-[26px] font-medium tabular-nums">{v}</b><span className="text-[11px] font-semibold tracking-[0.08em] text-ink-2">{k}</span></div>
-            ))}
-          </div>
-        </header>
-        <form method="get" action="/learn/paths" className="mt-5 flex flex-wrap gap-2">
+        <AccountHero
+          wide
+          testId="paths-hero"
+          picture={
+            <BubbleField
+              bubbles={all.filter((p) => p.slug !== START_SLUG).map((p) => ({ key: p.id, href: `/learn/${p.slug}`, label: p.title, hover: `${p.title} · ${p.lessons} lessons${p.playable ? "" : " · coming soon"}`, size: p.lessons, fill: p.playable ? 1 : null }))}
+              centre={start ? { key: start.id, href: `/learn/${start.slug}`, label: start.title, hover: `${start.title} · ${start.lessons} lessons · start here`, size: start.lessons, fill: 1, badge: "START" } : undefined}
+              me="YOU"
+              caption="Bubble size = lessons · click one to open the path"
+              legend={[
+                { label: "start here", swatch: "ring" },
+                { label: "open now", swatch: "ink" },
+                { label: "coming soon", swatch: "quiet" },
+              ]}
+            />
+          }
+          eyebrow="The Catalog"
+          title="Learn Oracle Cloud From the People Who Implement It"
+          kpis={kpis.map(([v, k]) => ({ value: v, label: k }))}
+          paragraph={<>Taught by working consultants. Finish a path, pass the test, and the certificate goes on your profile.{start ? <> New to Oracle Cloud? Start with <b className="text-ink">{start.title}</b>.</> : null}</>}
+          actions={
+            <>
+              {start && <Link href={start.mine?.next ? `/learn/${start.slug}/${start.mine.next.id}` : `/learn/${start.slug}`} className={HERO_BTN}>Start {start.title}</Link>}
+              <a href="#areas" className={HERO_BTN_W}>Browse by Area</a>
+            </>
+          }
+        />
+        <form id="areas" method="get" action="/learn/paths" className="mt-7 flex scroll-mt-24 flex-wrap gap-2">
           {sp.area && <input type="hidden" name="area" value={sp.area} />}
           {sp.open && <input type="hidden" name="open" value={sp.open} />}
           {sp.test && <input type="hidden" name="test" value={sp.test} />}
