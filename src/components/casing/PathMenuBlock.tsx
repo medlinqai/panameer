@@ -46,7 +46,8 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
           {path.next ? (
             <>
               <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.1em] text-ink-2">
-                YOUR PATH · STEP {path.current + 1} OF {path.done.length}
+                {/* The graphic is the Your Path entry — its title opens the full page (no separate menu row). */}
+                <Link href="/your-path" onClick={onNavigate} className="hover:underline">YOUR PATH · STEP {path.current + 1} OF {path.done.length}</Link>
                 <LifecycleHelp onOpen={onNavigate} />
               </p>
               <div className={"mt-1.5 grid gap-1 " + (path.done.length === 9 ? "grid-cols-9" : "grid-cols-7")} aria-hidden>
@@ -63,14 +64,11 @@ export function PathMenuBlock({ onNavigate, rowClass }: { onNavigate: () => void
             </>
           ) : (
             <p className="flex items-center gap-1.5 text-[13px] font-bold">
-              ✓ Paid — every step is done <LifecycleHelp onOpen={onNavigate} />
+              <Link href="/your-path" onClick={onNavigate} className="hover:underline">✓ Paid — every step is done</Link> <LifecycleHelp onOpen={onNavigate} />
             </p>
           )}
         </div>
       )}
-      <Link href="/your-path" onClick={onNavigate} className={rowClass} data-menu-your-path>
-        Your Path
-      </Link>
     </>
   );
 }

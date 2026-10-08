@@ -344,7 +344,19 @@ export function AccountMenu({
             <MenuRow href="/join/provider" label="Start Selling" value={null} onClick={close} className={rowClass} />
           )}
           {me?.person?.roles && !me.person.roles.isRequester && !me.person.roles.isServiceBuyer && (
-            <MenuRow href="/join/requester" label="Start Buying" value={null} onClick={close} className={rowClass} />
+            // One click: turn the buying side on, then straight into the buyer steps (no "no buyer profile yet" page).
+            <button
+              type="button"
+              data-menu-start-buying
+              onClick={async () => {
+                close();
+                const r = await fetch("/api/onboarding/requester/enable", { method: "POST" }).catch(() => null);
+                window.location.assign(r?.ok ? "/join/requester/start" : "/join/requester");
+              }}
+              className={`${rowClass} w-full text-left`}
+            >
+              Start Buying
+            </button>
           )}
           {/* MY COMPANY (E099, and it REVERSES E225) */}
 
